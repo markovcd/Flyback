@@ -11,32 +11,46 @@ public sealed record CompileResult(CompiledPatch Program, IReadOnlyList<CompileI
 }
 
 /// <summary>
-/// Walks back from the Output node and lowers everything it reaches into a flat
-/// op list. Nodes that nothing depends on are simply never visited, so a patch
-/// costs only what is actually on screen.
+/// Walks back from a sink node and lowers everything it reaches into a flat op
+/// list. Nodes that nothing depends on are simply never visited, so a patch
+/// costs only what actually reaches that sink.
 /// </summary>
+/// <remarks>
+/// Compilation is rooted at a sink rather than at "the output", so one patch
+/// yields one program per sink: the screen and the speakers each get their own,
+/// and a module only the ear reaches costs the eye nothing.
+/// </remarks>
 public static class PatchCompiler
 {
-    public static CompileResult Compile(Patch patch)
+    /// <param name="sinkTypeId">Module type to compile backwards from.</param>
+    /// <param name="width">Registers the sink consumes — 3 for RGB, 2 for stereo.</param>
+    public static CompileResult Compile(
+        Patch patch,
+        string sinkTypeId = NodeCatalog.OutputTypeId,
+        int width = 3)
     {
         var issues = new List<CompileIssue>();
-        var output = patch.Nodes.FirstOrDefault(n => n.TypeId == NodeCatalog.OutputTypeId);
+        var sink = patch.Nodes.FirstOrDefault(n => n.TypeId == sinkTypeId);
 
-        if (output is null)
+        if (sink is null)
         {
-            issues.Add(new CompileIssue(null, "No Output node — add one to see anything."));
-            return new CompileResult(CompiledPatch.Black, issues);
+            // Only the video sink is worth nagging about: a patch with no audio
+            // is the normal case, not a mistake.
+            if (sinkTypeId == NodeCatalog.OutputTypeId)
+                issues.Add(new CompileIssue(null, "No Output node — add one to see anything."));
+
+            return new CompileResult(CompiledPatch.Constant(width), issues);
         }
 
         var emitter = new Emitter();
         var resolved = new Dictionary<Guid, Slot[]>();
         var visiting = new HashSet<Guid>();
 
-        var result = Resolve(output);
-        var colour = emitter.ToColour(result.Length > 0 ? result[0] : emitter.Constant(0f));
+        var result = Resolve(sink);
+        var value = emitter.PackChannels(result, width);
 
         return new CompileResult(
-            new CompiledPatch(emitter.ToProgram(), emitter.RegisterCount, colour.Base),
+            new CompiledPatch(emitter.ToProgram(), emitter.RegisterCount, value.Base, width),
             issues);
 
         Slot[] Resolve(NodeInstance node)
@@ -71,6 +85,13 @@ public static class PatchCompiler
                     value = incoming.SourcePort >= 0 && incoming.SourcePort < outputs.Length
                         ? outputs[incoming.SourcePort]
                         : emitter.Constant(0f);
+                }
+                else if (spec.NormalledFrom >= 0 && spec.NormalledFrom < port)
+                {
+                    // A normalled jack carries an earlier input through when
+                    // nothing is patched in. Only earlier ports can be named,
+                    // because inputs resolve in order.
+                    value = inputs[spec.NormalledFrom];
                 }
                 else
                 {

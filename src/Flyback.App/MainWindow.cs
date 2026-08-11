@@ -6,9 +6,11 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
+using Flyback.App.Audio;
 using Flyback.App.Controls;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
+using Flyback.Core.Render;
 
 namespace Flyback.App;
 
@@ -26,6 +28,8 @@ public sealed class MainWindow : Window
 
     private static readonly PixelSize ExportSize = new(1920, 1080);
 
+    private const int ExportSeconds = 10;
+
     private readonly NodeEditor _editor = new();
     private readonly PreviewSurface _preview = new();
     private readonly StackPanel _inspector = new() { Margin = new Thickness(12), Spacing = 8 };
@@ -37,6 +41,9 @@ public sealed class MainWindow : Window
     };
 
     private readonly ToggleButton _playButton = new() { Content = "Pause", Width = 78, IsChecked = true };
+    private readonly ToggleButton _audioButton = new() { Content = "Audio off", Width = 92 };
+
+    private readonly AudioEngine _audio = new(new WasapiAudioDevice());
 
     public MainWindow()
     {
@@ -141,7 +148,19 @@ public sealed class MainWindow : Window
         };
 
         var rewind = new Button { Content = "Rewind" };
-        rewind.Click += (_, _) => _preview.Rewind();
+        rewind.Click += (_, _) =>
+        {
+            _audio.Rewind();
+            _preview.Rewind();
+        };
+
+        // Off by default: launching a program should not make a noise.
+        ToolTip.SetTip(_audioButton, "Play the patch through the speakers. Needs an Audio Output module.");
+        _audioButton.IsCheckedChanged += (_, _) => SetAudioEnabled(_audioButton.IsChecked == true);
+
+        var exportAudio = new Button { Content = "Render audio…" };
+        ToolTip.SetTip(exportAudio, $"Render {ExportSeconds} seconds of the patch to a WAV file.");
+        exportAudio.Click += async (_, _) => await SaveAudioAsync();
 
         var resolution = new ComboBox
         {
@@ -179,6 +198,9 @@ public sealed class MainWindow : Window
         bar.Children.Add(Label("Preview"));
         bar.Children.Add(resolution);
         bar.Children.Add(exportFrame);
+        bar.Children.Add(Separator());
+        bar.Children.Add(_audioButton);
+        bar.Children.Add(exportAudio);
 
         return new Border
         {
@@ -457,14 +479,45 @@ public sealed class MainWindow : Window
 
     // --- compile and status -----------------------------------------------------
 
+    /// <summary>
+    /// One patch, one program per sink. The audio program is compiled even when
+    /// sound is off, so switching it on is instant and the status line can show
+    /// what the ear would cost.
+    /// </summary>
     private void Recompile()
     {
         var result = PatchCompiler.Compile(_editor.Patch);
         _preview.Program = result.Program;
+        _audio.Update(_editor.Patch);
 
         _issues.Text = result.HasIssues
             ? string.Join("  •  ", result.Issues.Select(i => i.Message))
             : string.Empty;
+    }
+
+    private void SetAudioEnabled(bool enabled)
+    {
+        _audioButton.Content = enabled ? "Audio on" : "Audio off";
+
+        if (enabled)
+        {
+            _audio.Update(_editor.Patch);
+            _audio.Start();
+
+            // Sound cannot stretch, so it leads and the picture follows.
+            _preview.Clock = () => _audio.Time;
+        }
+        else
+        {
+            _preview.Clock = null;
+            _audio.Stop();
+        }
+    }
+
+    protected override void OnClosed(EventArgs e)
+    {
+        _audio.Dispose();
+        base.OnClosed(e);
     }
 
     private void UpdateStatus()
@@ -559,6 +612,71 @@ public sealed class MainWindow : Window
         {
             _issues.Text = $"Could not save frame: {ex.Message}";
         }
+    }
+
+    private async Task SaveAudioAsync()
+    {
+        var file = await StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+        {
+            Title = "Render audio",
+            SuggestedFileName = "flyback",
+            DefaultExtension = "wav",
+            FileTypeChoices = [new FilePickerFileType("WAV audio") { Patterns = ["*.wav"] }],
+        });
+
+        if (file is null) return;
+
+        try
+        {
+            var path = file.TryGetLocalPath();
+            if (path is null)
+            {
+                _issues.Text = "That location can't be written to directly.";
+                return;
+            }
+
+            var patch = _editor.Patch;
+            await Task.Run(() => RenderAudioFile(patch, path));
+        }
+        catch (Exception ex)
+        {
+            _issues.Text = $"Could not render audio: {ex.Message}";
+        }
+    }
+
+    /// <summary>
+    /// Renders offline through a fresh renderer, so exporting never disturbs the
+    /// cursor or filter state of whatever is currently playing.
+    /// </summary>
+    private static void RenderAudioFile(Patch patch, string path)
+    {
+        const int sampleRate = 48_000;
+
+        var program = PatchCompiler
+            .Compile(patch, NodeCatalog.AudioOutputTypeId, NodeCatalog.AudioChannels)
+            .Program;
+
+        var buffer = new float[sampleRate * ExportSeconds * NodeCatalog.AudioChannels];
+        new AudioRenderer(sampleRate).Render(program, buffer, AudioScanFor(patch));
+
+        WavWriter.Write(path, buffer, sampleRate, NodeCatalog.AudioChannels);
+    }
+
+    private static AudioScan AudioScanFor(Patch patch)
+    {
+        var sink = patch.Nodes.FirstOrDefault(n => n.TypeId == NodeCatalog.AudioOutputTypeId);
+        var def = NodeCatalog.Get(NodeCatalog.AudioOutputTypeId);
+        if (sink is null || def is null) return AudioScan.TimeDriven;
+
+        float Knob(string name)
+        {
+            for (var i = 0; i < def.Inputs.Count; i++)
+                if (def.Inputs[i].Name == name)
+                    return i < sink.InputValues.Length ? sink.InputValues[i] : def.Inputs[i].Default;
+            return 0f;
+        }
+
+        return new AudioScan(Knob("scan") >= 0.5f, MathF.Max(Knob("scan rate"), 1f), 16f / 9f);
     }
 
     private static FilePickerFileType PatchFileType => new("Flyback patch")

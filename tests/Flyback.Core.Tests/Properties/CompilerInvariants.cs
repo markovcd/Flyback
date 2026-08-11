@@ -68,7 +68,7 @@ public class CompilerInvariants
 
         result.Issues.ShouldBeEmpty();
         result.Program.Ops.Length.ShouldBeGreaterThan(0);
-        result.Program.RegisterCount.ShouldBeGreaterThanOrEqualTo(result.Program.OutputBase + 3);
+        result.Program.RegisterCount.ShouldBeGreaterThanOrEqualTo(result.Program.OutputBase + result.Program.OutputWidth);
     }
 
     /// <summary>
@@ -82,8 +82,8 @@ public class CompilerInvariants
         var program = PatchCompiler.Compile(BuildPreset(presetName)).Program;
 
         program.OutputBase.ShouldBeGreaterThanOrEqualTo(0);
-        program.RegisterCount.ShouldBeGreaterThanOrEqualTo(program.OutputBase + 3);
-        program.AllocateRegisters().Length.ShouldBeGreaterThanOrEqualTo(program.OutputBase + 3);
+        program.RegisterCount.ShouldBeGreaterThanOrEqualTo(program.OutputBase + program.OutputWidth);
+        program.AllocateRegisters().Length.ShouldBeGreaterThanOrEqualTo(program.OutputBase + program.OutputWidth);
     }
 
     /// <summary>

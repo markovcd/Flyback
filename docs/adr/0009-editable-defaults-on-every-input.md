@@ -52,6 +52,12 @@ experimentation cheap and is the reason dragging a connected input away
 `Emitter.Constant` de-duplicates by value, so eight inputs defaulting to `0`
 share one register and one `Const` op.
 
+The hardware metaphor later became literal. `PortSpec.NormalledFrom` names an
+earlier input to fall back to instead of a constant, which is exactly what a
+normalled jack does on a real rig — leaving the Audio Output's `right` unpatched
+carries `left` through, so a mono patch is stereo without saying so
+([0022](0022-audio-and-video-are-two-sinks-over-one-patch.md)).
+
 Two costs. `InputValues` is a `float[]` positionally aligned with the
 definition's inputs, so reordering a module's ports silently reassigns saved
 values — see [0020](0020-json-patch-files-keyed-by-string-type-ids.md), which

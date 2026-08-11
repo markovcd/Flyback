@@ -40,7 +40,8 @@ public class PatchFuzzTests
         {
             var result = PatchCompiler.Compile(patch);
 
-            result.Program.RegisterCount.ShouldBeGreaterThanOrEqualTo(result.Program.OutputBase + 3);
+            result.Program.RegisterCount.ShouldBeGreaterThanOrEqualTo(
+                result.Program.OutputBase + result.Program.OutputWidth);
 
             var stride = Width * 4;
             var buffer = new byte[stride * Height];
@@ -72,6 +73,31 @@ public class PatchFuzzTests
 
             renderer.Reset();
             renderer.Render(program, 0f, Width, Height, buffer, stride);
+        });
+    }
+
+    /// <summary>
+    /// The same patches through the audio sink. Whatever a module does when fed
+    /// nonsense, it must not put a non-finite value or an out-of-range sample
+    /// into a speaker.
+    /// </summary>
+    [Fact]
+    public void Any_random_patch_renders_audio_within_the_representable_range()
+    {
+        Patches.Sample(patch =>
+        {
+            var program = PatchCompiler
+                .Compile(patch, NodeCatalog.AudioOutputTypeId, NodeCatalog.AudioChannels)
+                .Program;
+
+            var buffer = new float[256 * 2];
+            new AudioRenderer().Render(program, buffer, new AudioScan(true, 220f, 16f / 9f));
+
+            foreach (var sample in buffer)
+            {
+                float.IsFinite(sample).ShouldBeTrue();
+                sample.ShouldBeInRange(-1f, 1f);
+            }
         });
     }
 
@@ -127,13 +153,19 @@ public class PatchFuzzTests
             placed.Add((node, def));
         }
 
-        var output = builder.Add(NodeCatalog.OutputTypeId, 0, 0);
         var candidates = placed.Where(p => p.Def.Outputs.Count > 0).ToArray();
+
+        // Both sinks, so one generated patch fuzzes the eye and the ear at once.
+        var video = builder.Add(NodeCatalog.OutputTypeId, 0, 0);
+        var speaker = builder.Add(NodeCatalog.AudioOutputTypeId, 0, 0);
 
         if (candidates.Length > 0)
         {
             var (source, sourceDef) = candidates[Decide() % candidates.Length];
-            builder.Wire(source, Decide() % sourceDef.Outputs.Count, output, 0);
+            builder.Wire(source, Decide() % sourceDef.Outputs.Count, video, 0);
+
+            var (audioSource, audioDef) = candidates[Decide() % candidates.Length];
+            builder.Wire(audioSource, Decide() % audioDef.Outputs.Count, speaker, 0);
         }
 
         return builder.Patch;

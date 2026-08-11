@@ -59,3 +59,11 @@ module.
 
 If multiple Output nodes exist, the first in list order wins. That is arbitrary
 but harmless, and the alternative — rejecting the patch — would be worse.
+
+Rooting at a sink rather than at *the* output turned out to be the load-bearing
+choice. Adding sound meant parameterising which sink to start from and how wide
+the result is; everything else — ordering, sharing, dead-code elimination, the
+failure modes above — generalised without change
+([0022](0022-audio-and-video-are-two-sinks-over-one-patch.md)). Only the missing
+video sink still reports an issue, because a patch with no audio is the normal
+case rather than a mistake.

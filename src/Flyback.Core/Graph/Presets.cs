@@ -8,6 +8,7 @@ public static class Presets
         ("Plasma", Plasma),
         ("Kaleidoscope", Kaleidoscope),
         ("Feedback tunnel", FeedbackTunnel),
+        ("Drone", Drone),
         ("Empty", Empty),
     ];
 
@@ -75,6 +76,48 @@ public static class Presets
          .Wire(drift, 0, noise, 2)
          .Wire(noise, 0, colour, 0)
          .Wire(colour, 0, output, 0);
+
+        return b.Patch;
+    }
+
+    /// <summary>
+    /// One patch heard and seen at once. A single slow oscillator sets both the
+    /// hue of the image and the tremolo on the tone, so the two sinks are
+    /// visibly and audibly the same signal. Switch Audio on to hear it.
+    /// </summary>
+    public static Patch Drone()
+    {
+        var b = new PatchBuilder();
+
+        var coord = b.Add("coord", 40, 120);
+        var time = b.Add("time", 40, 380, (0, 1f));
+
+        // The shared control signal, remapped to 0..1 by amp and bias.
+        var slow = b.Add("osc.sine", 260, 340, (1, 0.15f), (3, 0.5f), (4, 0.5f));
+
+        // Ear.
+        var pitch = b.Add("audio.frequency", 260, 560, (0, 110f));
+        var tone = b.Add("osc.sine", 470, 560, (1, 110f));
+        var tremolo = b.Add("math.mul", 700, 580);
+        var speaker = b.Add(NodeCatalog.AudioOutputTypeId, 900, 600, (2, 0.6f));
+
+        // Eye.
+        var rings = b.Add("pattern.rings", 260, 80, (2, 3f));
+        var tint = b.Add("colour.hsv", 700, 140, (1, 0.85f));
+        var screen = b.Add(NodeCatalog.OutputTypeId, 920, 160);
+
+        b.Wire(time, 0, slow, 0)
+         .Wire(time, 0, tone, 0)
+         .Wire(pitch, 0, tone, 1)
+         .Wire(tone, 0, tremolo, 0)
+         .Wire(slow, 0, tremolo, 1)
+         .Wire(tremolo, 0, speaker, 0)
+         .Wire(coord, 0, rings, 0)
+         .Wire(coord, 1, rings, 1)
+         .Wire(time, 0, rings, 3)
+         .Wire(slow, 0, tint, 0)
+         .Wire(rings, 0, tint, 2)
+         .Wire(tint, 0, screen, 0);
 
         return b.Patch;
     }

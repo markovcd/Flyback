@@ -108,10 +108,43 @@ public sealed class Emitter
     {
         if (value.Width == 1) return value;
 
+        // Luma is only defined for RGB; anything else averages what it has, so
+        // this stays total no matter what width a future sink introduces.
+        if (value.Width != 3)
+        {
+            var sum = Slot.Scalar(value.Base);
+            for (var i = 1; i < value.Width; i++)
+                sum = Add(sum, Slot.Scalar(value.Base + i));
+            return Mul(sum, 1f / value.Width);
+        }
+
         var r = Mul(Slot.Scalar(value.Base + 0), 0.2126f);
         var g = Mul(Slot.Scalar(value.Base + 1), 0.7152f);
         var b = Mul(Slot.Scalar(value.Base + 2), 0.0722f);
         return Add(Add(r, g), b);
+    }
+
+    /// <summary>
+    /// Packs one slot per channel into a contiguous block of exactly
+    /// <paramref name="width"/> registers — the shape every renderer reads.
+    /// Missing channels are silence; a single colour channel passes straight
+    /// through, which is the video case.
+    /// </summary>
+    public Slot PackChannels(Slot[] channels, int width)
+    {
+        if (width == 3 && channels.Length == 1) return ToColour(channels[0]);
+
+        // Resolve every source before allocating the block, so the copies are
+        // emitted after the ops that produce what they read.
+        var sources = new Slot[width];
+        for (var i = 0; i < width; i++)
+            sources[i] = i < channels.Length ? ToScalar(channels[i]) : Constant(0f);
+
+        var first = Allocate(width);
+        for (var i = 0; i < width; i++)
+            Add(new Op(OpCode.Copy, first + i, sources[i].Base));
+
+        return new Slot(first, width);
     }
 
     /// <summary>Packs three scalars into a colour occupying consecutive registers.</summary>

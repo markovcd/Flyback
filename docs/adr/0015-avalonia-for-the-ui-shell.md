@@ -70,3 +70,9 @@ column to nothing; the flexible columns are star-sized as a result.
 The lock-in is contained. Core has no UI dependency
 ([0002](0002-split-engine-from-shell.md)), so everything Avalonia-specific is
 the 1,229 lines in `Flyback.App`.
+
+**Amended:** the Linux argument above no longer holds for the whole program.
+Audio output goes through WASAPI ([0024](0024-audio-device-in-the-shell.md)),
+which is Windows-only. The app still builds and runs elsewhere and audio is off
+by default, but sound needs a second `IAudioDevice` implementation before this
+claim is true again.

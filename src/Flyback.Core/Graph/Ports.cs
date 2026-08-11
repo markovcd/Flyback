@@ -26,12 +26,19 @@ public enum PortKind
 /// <param name="Default">Value used when nothing is plugged in.</param>
 /// <param name="Min">Lower end of the slider range in the editor.</param>
 /// <param name="Max">Upper end of the slider range in the editor.</param>
+/// <param name="NormalledFrom">
+/// Index of an earlier input this one falls back to when nothing is patched in,
+/// or -1 to fall back to <paramref name="Default"/>. This is the hardware
+/// normalled jack: on a real rig, leaving the right channel unpatched carries
+/// the left signal through rather than silence.
+/// </param>
 public readonly record struct PortSpec(
     string Name,
     PortKind Kind = PortKind.Scalar,
     float Default = 0f,
     float Min = -4f,
-    float Max = 4f)
+    float Max = 4f,
+    int NormalledFrom = -1)
 {
     public int Width => Kind == PortKind.Colour ? 3 : 1;
 }

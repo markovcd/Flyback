@@ -1,0 +1,87 @@
+using Flyback.Core.Compile;
+using Flyback.Core.Graph;
+using Flyback.Core.Render;
+
+namespace Flyback.App.Audio;
+
+/// <summary>
+/// Joins the compiled audio program to a sound device, and is the clock the
+/// video preview follows while sound is playing.
+/// </summary>
+/// <remarks>
+/// The callback never locks. Everything it needs is reachable through a single
+/// immutable <see cref="State"/> reference swapped with <see cref="Volatile"/>,
+/// so a recompile mid-buffer is a clean switch rather than a torn read — the
+/// same discipline ADR-0018 established for the video path.
+/// </remarks>
+public sealed class AudioEngine(IAudioDevice device) : IDisposable
+{
+    private sealed record State(CompiledPatch Program, AudioScan Scan);
+
+    private readonly AudioRenderer _renderer = new(device.SampleRate);
+    private State _state = new(CompiledPatch.Silent, AudioScan.TimeDriven);
+
+    public bool IsRunning => device.IsRunning;
+
+    /// <summary>Sample-accurate position, and the master timeline while sound is on.</summary>
+    public double Time => _renderer.Time;
+
+    public void Start()
+    {
+        if (!device.IsRunning) device.Start(Fill);
+    }
+
+    public void Stop() => device.Stop();
+
+    /// <summary>Rewinds the cursor and clears the decimation and DC filter state.</summary>
+    public void Rewind() => _renderer.Reset();
+
+    /// <summary>
+    /// Swaps in a freshly compiled patch. Sizing the register scratch happens
+    /// here, on the UI thread, so the callback never has to allocate.
+    /// </summary>
+    public void Update(Patch patch)
+    {
+        var program = PatchCompiler
+            .Compile(patch, NodeCatalog.AudioOutputTypeId, NodeCatalog.AudioChannels)
+            .Program;
+
+        _renderer.Prepare(program);
+        Volatile.Write(ref _state, new State(program, ScanFor(patch)));
+    }
+
+    /// <summary>
+    /// Scan mode is a property of how the program is driven, not of the program
+    /// itself — x and y are inputs the caller supplies. So it is read off the
+    /// node's knobs rather than compiled in.
+    /// </summary>
+    private static AudioScan ScanFor(Patch patch)
+    {
+        var sink = patch.Nodes.FirstOrDefault(n => n.TypeId == NodeCatalog.AudioOutputTypeId);
+        var def = NodeCatalog.Get(NodeCatalog.AudioOutputTypeId);
+
+        if (sink is null || def is null) return AudioScan.TimeDriven;
+
+        var scan = Knob(sink, def, "scan");
+        var rate = Knob(sink, def, "scan rate");
+
+        return new AudioScan(scan >= 0.5f, MathF.Max(rate, 1f), SynthRenderer.AspectOf(16, 9));
+    }
+
+    private static float Knob(NodeInstance node, NodeDef def, string port)
+    {
+        for (var i = 0; i < def.Inputs.Count; i++)
+            if (def.Inputs[i].Name == port)
+                return i < node.InputValues.Length ? node.InputValues[i] : def.Inputs[i].Default;
+
+        return 0f;
+    }
+
+    private void Fill(Span<float> buffer)
+    {
+        var state = Volatile.Read(ref _state);
+        _renderer.Render(state.Program, buffer, state.Scan);
+    }
+
+    public void Dispose() => device.Dispose();
+}

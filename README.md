@@ -49,6 +49,36 @@ you get the camera-pointed-at-its-own-monitor tunnel — the "Feedback tunnel"
 preset does exactly that. Values are clamped to 0..1 each frame, which is what
 stops the loop running away.
 
+## Sound
+
+The same modules drive the speakers. Add an **Audio Output** module, patch
+something into `left`, and press **Audio on**.
+
+Nothing about the catalogue changes: audio is the same machine with only `t`
+varying and a scalar coming out instead of a colour. Compilation is rooted at a
+sink, so one patch produces one program per sink — and each pays only for the
+modules it actually reaches. A noise field feeding the screen costs the speakers
+nothing.
+
+| | |
+|---|---|
+| Pitch | patch **Frequency** into an oscillator's `freq` — it is a knob in hertz rather than the single digits the visual modules use |
+| Stereo | leave `right` unpatched and it carries `left`, the way a normalled jack does |
+| `scan` | at 0 the patch is driven by Time; at 1 it sweeps the image and you hear the picture, at `scan rate` sweeps per second |
+| Export | **Render audio…** writes 10 seconds to a WAV |
+
+The **Drone** preset is the demonstration: one slow oscillator sets both the hue
+of the image and the tremolo on the tone, so the two sinks are visibly and
+audibly the same signal.
+
+Audio runs at 48 kHz, 4× oversampled and filtered before decimation, which keeps
+the naive `Saw` and `Square` from folding harmonics back down as buzzing. It
+reduces aliasing rather than removing it. While sound plays it is the master
+clock and the picture follows, since audio cannot be stretched to catch up.
+
+Sound output is Windows-only for now (WASAPI); everything else, including WAV
+export, is portable.
+
 ## Using the editor
 
 | | |

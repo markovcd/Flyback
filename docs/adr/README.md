@@ -46,6 +46,14 @@ were not mine to make.
 | [0017](0017-draw-the-node-editor-in-one-control.md) | Draw the node editor in one custom control |
 | [0018](0018-never-render-frames-on-the-ui-thread.md) | Never render frames on the UI thread |
 
+### Sound
+
+| # | Decision |
+|---|---|
+| [0022](0022-audio-and-video-are-two-sinks-over-one-patch.md) | Audio and video are two sinks over one patch |
+| [0023](0023-oversample-the-audio-path.md) | Oversample the audio path rather than band-limiting modules |
+| [0024](0024-audio-device-in-the-shell.md) | Sample generation in the engine, the audio device in the shell |
+
 ### Boundaries
 
 | # | Decision |

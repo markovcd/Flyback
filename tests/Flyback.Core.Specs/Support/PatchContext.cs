@@ -70,7 +70,24 @@ public sealed class PatchContext
     public void SetInput(string name, string port, float value) =>
         Node(name).InputValues[PortIndex(Definition(name).Inputs, port, name, "input")] = value;
 
-    public void Compile() => _result = PatchCompiler.Compile(Patch);
+    public void Compile() => CompileFor("video");
+
+    /// <summary>
+    /// Compiles from one sink or the other. The two programs are independent —
+    /// that independence is what most of the audio scenarios are about.
+    /// </summary>
+    public void CompileFor(string sink) =>
+        _result = sink.Equals("audio", StringComparison.OrdinalIgnoreCase)
+            ? PatchCompiler.Compile(Patch, NodeCatalog.AudioOutputTypeId, NodeCatalog.AudioChannels)
+            : PatchCompiler.Compile(Patch, NodeCatalog.OutputTypeId, 3);
+
+    /// <summary>Renders a short stereo buffer from the currently compiled program.</summary>
+    public float[] RenderAudio(int frames = 2_000)
+    {
+        var buffer = new float[frames * 2];
+        new AudioRenderer().Render(Program, buffer, AudioScan.TimeDriven);
+        return buffer;
+    }
 
     public int CountOps(OpCode code) => Program.Ops.Count(op => op.Code == code);
 

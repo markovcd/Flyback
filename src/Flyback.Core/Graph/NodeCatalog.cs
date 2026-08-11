@@ -11,6 +11,11 @@ public static class NodeCatalog
 {
     public const string OutputTypeId = "output";
 
+    public const string AudioOutputTypeId = "audio.output";
+
+    /// <summary>Stereo, so the audio sink reads two registers where video reads three.</summary>
+    public const int AudioChannels = 2;
+
     private const float Tau = 6.283185307179586f;
 
     private static readonly Dictionary<string, NodeDef> Index;
@@ -30,6 +35,10 @@ public static class NodeCatalog
         new(name, PortKind.Scalar, value, min, max);
 
     private static PortSpec Col(string name) => new(name, PortKind.Colour);
+
+    /// <summary>An input that carries an earlier one through when left unpatched.</summary>
+    private static PortSpec Normalled(string name, int from, float min = -4f, float max = 4f) =>
+        new(name, PortKind.Scalar, 0f, min, max, from);
 
     private static PortSpec Any(string name, float value = 0f, float min = -4f, float max = 4f) =>
         new(name, PortKind.Any, value, min, max);
@@ -55,6 +64,28 @@ public static class NodeCatalog
                 [Col("colour")], [],
                 (_, i) => [i[0]],
                 "The screen. Everything upstream of this is what you see."),
+
+            new NodeDef(
+                AudioOutputTypeId, "Audio Output", "Output",
+                [
+                    Num("left", 0f, -1f, 1f),
+                    Normalled("right", 0, -1f, 1f),
+                    Num("gain", 0.5f, 0f, 1f),
+                    Num("scan", 0f, 0f, 1f),
+                    Num("scan rate", 60f, 1f, 2000f),
+                ],
+                [],
+                (em, i) => [em.Mul(i[0], i[2]), em.Mul(i[1], i[2])],
+                "The speakers. Leave 'right' unpatched and it carries 'left' through, "
+                + "as a normalled jack would. 'scan' at 0 drives the patch from Time; at 1 "
+                + "it sweeps the image and you hear the picture, at 'scan rate' sweeps per second."),
+
+            new NodeDef(
+                "audio.frequency", "Frequency", "Output",
+                [Num("hz", 220f, 20f, 4000f)], [Num("out")],
+                (_, i) => [i[0]],
+                "A knob in hertz rather than in the single digits the visual modules use. "
+                + "Patch it into an oscillator's freq to work at audible pitches."),
 
             // ---------------------------------------------------------------- sources
             new NodeDef(

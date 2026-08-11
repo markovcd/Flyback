@@ -45,6 +45,26 @@ public sealed class PatchSteps(PatchContext context)
     [When("the patch is compiled")]
     public void WhenThePatchIsCompiled() => context.Compile();
 
+    [When("the patch is compiled for {word}")]
+    public void WhenThePatchIsCompiledFor(string sink) => context.CompileFor(sink);
+
+    [Then("the audio is silent")]
+    public void ThenTheAudioIsSilent() =>
+        context.RenderAudio().ShouldAllBe(v => v == 0f);
+
+    [Then("the audio is not silent")]
+    public void ThenTheAudioIsNotSilent() =>
+        context.RenderAudio().Any(v => Math.Abs(v) > 0.01f).ShouldBeTrue();
+
+    [Then("both audio channels are identical")]
+    public void ThenBothChannelsMatch()
+    {
+        var buffer = context.RenderAudio();
+
+        for (var frame = 0; frame < buffer.Length / 2; frame++)
+            buffer[frame * 2 + 1].ShouldBe(buffer[frame * 2]);
+    }
+
     [Then("compilation reports no issues")]
     public void ThenNoIssues() =>
         context.Result.Issues.ShouldBeEmpty(

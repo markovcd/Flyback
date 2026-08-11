@@ -48,6 +48,14 @@ public sealed class PreviewSurface : Control
 
     public bool IsPlaying { get; set; } = true;
 
+    /// <summary>
+    /// When set, the timeline is read from here instead of accumulated from
+    /// wall-clock deltas. Audio becomes the master clock while it is playing —
+    /// sound cannot be stretched to catch up, whereas video can drop a frame,
+    /// and without this a patch pulsing in both eye and ear visibly drifts.
+    /// </summary>
+    public Func<double>? Clock { get; set; }
+
     /// <summary>Cost of the last frame, for the status readout.</summary>
     public double FrameMilliseconds => _frameMilliseconds;
 
@@ -109,7 +117,16 @@ public sealed class PreviewSurface : Control
         var delta = now - _lastTick;
         _lastTick = now;
 
-        if (IsPlaying)
+        if (Clock is { } clock)
+        {
+            var driven = clock();
+
+            // A stopped audio clock holds its value; nothing to redraw.
+            if (driven == Time && !_dirty) return;
+
+            Time = driven;
+        }
+        else if (IsPlaying)
         {
             // Clamp so a stall (dragging the window, a slow recompile) doesn't jump time.
             Time += Math.Min(delta.TotalSeconds, 0.1);

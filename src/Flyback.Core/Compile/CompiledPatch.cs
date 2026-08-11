@@ -20,26 +20,32 @@ public readonly struct FeedbackFrame(float[]? pixels, int width, int height)
 /// walking <see cref="Ops"/> once, so there is no graph traversal, no virtual
 /// dispatch and no allocation in the inner loop.
 /// </summary>
-public sealed class CompiledPatch(Op[] ops, int registerCount, int outputBase)
+public sealed class CompiledPatch(Op[] ops, int registerCount, int outputBase, int outputWidth = 3)
 {
     public Op[] Ops { get; } = ops;
 
     public int RegisterCount { get; } = registerCount;
 
-    /// <summary>First of the three registers holding the final RGB.</summary>
+    /// <summary>First of the <see cref="OutputWidth"/> registers holding the result.</summary>
     public int OutputBase { get; } = outputBase;
 
-    /// <summary>A patch that renders nothing, used when there is no Output node.</summary>
-    public static CompiledPatch Black { get; } = new(
-        [
-            new Op(OpCode.Const, 0),
-            new Op(OpCode.Const, 1),
-            new Op(OpCode.Const, 2),
-        ],
-        3,
-        0);
+    /// <summary>3 for a video sink's RGB, 2 for an audio sink's stereo pair.</summary>
+    public int OutputWidth { get; } = outputWidth;
 
-    public float[] AllocateRegisters() => new float[Math.Max(RegisterCount, 3)];
+    /// <summary>A program whose output is all zeroes — the fallback when a sink is missing.</summary>
+    public static CompiledPatch Constant(int width) => new(
+        [.. Enumerable.Range(0, width).Select(i => new Op(OpCode.Const, i))],
+        width,
+        0,
+        width);
+
+    /// <summary>Renders nothing, used when there is no Output node.</summary>
+    public static CompiledPatch Black { get; } = Constant(3);
+
+    /// <summary>Plays nothing, used when there is no Audio Output node.</summary>
+    public static CompiledPatch Silent { get; } = Constant(2);
+
+    public float[] AllocateRegisters() => new float[Math.Max(RegisterCount, OutputWidth)];
 
     /// <summary>Runs the program for one pixel. <paramref name="registers"/> is reused across pixels.</summary>
     public void Evaluate(float x, float y, float t, Span<float> registers, in FeedbackFrame feedback)
