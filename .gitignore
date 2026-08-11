@@ -1,0 +1,38 @@
+# Build output
+[Bb]in/
+[Oo]bj/
+artifacts/
+
+# NuGet
+*.nupkg
+*.snupkg
+packages/
+
+# Rider / IntelliJ
+.idea/
+*.iml
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.userprefs
+*.sln.docstates
+
+# VS Code
+.vscode/
+
+# Claude Code — local machine settings; shared settings.json is not ignored
+.claude/settings.local.json
+
+# Diagnostics
+*.dmp
+*.nettrace
+*.speedscope.json
+
+# OS
+.DS_Store
+[Tt]humbs.db
+Desktop.ini
+$RECYCLE.BIN/

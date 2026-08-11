@@ -1,0 +1,6 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/VideoSynth.App/VideoSynth.App.csproj" />
+    <Project Path="src/VideoSynth.Core/VideoSynth.Core.csproj" />
+  </Folder>
+</Solution>

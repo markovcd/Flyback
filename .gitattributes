@@ -1,0 +1,12 @@
+# Normalise line endings on commit, check out native on each platform.
+* text=auto
+
+*.cs      text diff=csharp
+*.csproj  text
+*.props   text
+*.slnx    text
+*.json    text
+*.md      text
+*.vsynth  text
+
+*.png binary
