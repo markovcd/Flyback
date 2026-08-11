@@ -4,7 +4,7 @@
 
 ## Context
 
-`VideoSynth.Core` needs two things that are conventionally solved by taking a
+`Flyback.Core` needs two things that are conventionally solved by taking a
 package: writing PNG files, and generating coherent noise.
 
 For PNG, the usual answers are ImageSharp (licensing changed to a split
@@ -57,6 +57,13 @@ directional artefacts, but also less character. For a module driven through
 `Warp` and `Kaleidoscope` that is acceptable; a `Simplex` module would be a
 second opcode if the difference ever mattered.
 
-This does not extend to the shell. `VideoSynth.App` takes Avalonia
+This does not extend to the shell. `Flyback.App` takes Avalonia
 ([0015](0015-avalonia-for-the-ui-shell.md)) without hesitation, because writing a
 windowing and layout toolkit is not the same kind of trade at all.
+
+Nor does it extend to the test projects, which take Reqnroll, Verify, CsCheck
+and Shouldly freely. The constraint here is about what ships inside the engine
+and therefore has to deploy everywhere it does; test dependencies never leave
+the build machine. The hand-written PNG encoder is what the snapshot tests
+render *through*, so this ADR is what makes those tests possible rather than
+something they work around.

@@ -7,6 +7,6 @@
 *.slnx    text
 *.json    text
 *.md      text
-*.vsynth  text
+*.fbk     text
 
 *.png binary

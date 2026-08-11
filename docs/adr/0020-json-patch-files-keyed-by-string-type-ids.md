@@ -15,7 +15,7 @@ inserting a module at position 3 silently reinterprets every saved patch.
 
 ## Decision
 
-`System.Text.Json`, indented, with no custom converters. Extension `.vsynth`.
+`System.Text.Json`, indented, with no custom converters. Extension `.fbk`.
 
 Nodes store their module's **string** `TypeId` (`"osc.sine"`, `"space.kaleidoscope"`),
 never an index or a .NET type name. Connections store node `Guid`s plus port

@@ -1,4 +1,4 @@
-# VideoSynth
+# Flyback
 
 A patchable video synthesiser for .NET 10. Images are generated the way an
 analogue synth generates sound: oscillators, maths and feedback, evaluated per
@@ -13,7 +13,7 @@ Coordinates ──▶ Sine ──┘
 ## Running it
 
 ```bash
-dotnet run --project src/VideoSynth.App -c Release
+dotnet run --project src/Flyback.App -c Release
 ```
 
 ## How it works
@@ -68,12 +68,36 @@ patches need no constant modules at all.
 
 | Project | |
 |---|---|
-| `src/VideoSynth.Core` | graph model, compiler, renderer, PNG writer — no UI dependency |
-| `src/VideoSynth.App` | Avalonia editor and live preview, built in C# without XAML |
+| `src/Flyback.Core` | graph model, compiler, renderer, PNG writer — no UI dependency |
+| `src/Flyback.App` | Avalonia editor and live preview, built in C# without XAML |
 
 Why it is built this way is recorded in [docs/adr](docs/adr) — 21 decision
 records covering the compiler, the renderer, the shell and the boundaries
 between them.
+
+## Tests
+
+```bash
+dotnet test Flyback.slnx
+```
+
+| Project | |
+|---|---|
+| `tests/Flyback.Core.Specs` | Gherkin scenarios (Reqnroll) for the behaviour the ADRs specify — dead code, cycles, port typing, input defaults, feedback |
+| `tests/Flyback.Core.Tests` | snapshot tests of the rendered presets, plus property and fuzz tests over the compiler and interpreter |
+
+Each `.feature` file names the ADR it pins, so the records and the specs stay
+honest about each other.
+
+Snapshots compare decoded pixels rather than file bytes, because PNG compression
+and `MathF` results can both shift without any behaviour changing. When output
+legitimately changes, inspect the `.received.png` next to its `.verified.png`
+baseline and rename it to approve.
+
+The fuzzer generates random well-formed patches and pushes them through compile
+and render. It is the only test that reaches all 52 modules, and it is what
+guards the gap ADR-0008 describes: nothing links a module's declared ports to
+what its emit function actually indexes.
 
 ## Adding a module
 
@@ -99,5 +123,5 @@ works on both a scalar and a colour.
 
 ## Files
 
-Patches save as JSON (`.vsynth`). `Save frame…` renders the current moment at
+Patches save as JSON (`.fbk`). `Save frame…` renders the current moment at
 1920×1080 and writes a PNG.

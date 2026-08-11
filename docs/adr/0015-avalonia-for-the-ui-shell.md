@@ -69,4 +69,4 @@ column to nothing; the flexible columns are star-sized as a result.
 
 The lock-in is contained. Core has no UI dependency
 ([0002](0002-split-engine-from-shell.md)), so everything Avalonia-specific is
-the 1,229 lines in `VideoSynth.App`.
+the 1,229 lines in `Flyback.App`.

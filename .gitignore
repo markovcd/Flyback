@@ -26,6 +26,12 @@ packages/
 # Claude Code — local machine settings; shared settings.json is not ignored
 .claude/settings.local.json
 
+# Verify — *.verified.* are committed baselines, *.received.* are test output
+*.received.*
+
+# Reqnroll generates these next to the .feature files they come from
+*.feature.cs
+
 # Diagnostics
 *.dmp
 *.nettrace

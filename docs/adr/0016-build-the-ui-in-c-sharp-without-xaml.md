@@ -20,7 +20,7 @@ XAML is in the project.
 
 ## Decision
 
-No XAML. `SynthApp` adds `FluentTheme` to `Styles` in code, `MainWindow` builds
+No XAML. `FlybackApp` adds `FluentTheme` to `Styles` in code, `MainWindow` builds
 its layout in `BuildLayout()`, and there are no `.axaml` files.
 
 ## Consequences

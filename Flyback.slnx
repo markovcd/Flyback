@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Flyback.App/Flyback.App.csproj" />
+    <Project Path="src/Flyback.Core/Flyback.Core.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Flyback.Core.Specs/Flyback.Core.Specs.csproj" />
+    <Project Path="tests/Flyback.Core.Tests/Flyback.Core.Tests.csproj" />
+  </Folder>
+</Solution>
