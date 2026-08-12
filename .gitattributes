@@ -9,4 +9,6 @@
 *.md      text
 *.fbk     text
 
-*.png binary
+*.png  binary
+*.ico  binary
+*.icns binary

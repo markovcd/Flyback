@@ -17,7 +17,14 @@
     own dependencies, and a dependency file the resolver has to read.
   -->
   <ItemGroup>
+    <!--
+      Every platform backend, on every operating system: what these tests pin is
+      that a plugin for another platform still loads and still answers, so
+      leaving one out where it cannot play would remove the case under test.
+    -->
     <PluginProject Include="..\..\src\Flyback.Plugins.Wasapi\Flyback.Plugins.Wasapi.csproj" FolderName="Wasapi" />
+    <PluginProject Include="..\..\src\Flyback.Plugins.CoreAudio\Flyback.Plugins.CoreAudio.csproj" FolderName="CoreAudio" />
+    <PluginProject Include="..\..\src\Flyback.Plugins.Alsa\Flyback.Plugins.Alsa.csproj" FolderName="Alsa" />
     <PluginProject Include="..\Flyback.Plugins.Sample\Flyback.Plugins.Sample.csproj" FolderName="Sample" />
     <PluginProject Include="..\..\src\Flyback.Plugins.Supersaw\Flyback.Plugins.Supersaw.csproj" FolderName="Supersaw" />
     <PluginProject Include="..\..\src\Flyback.Plugins.Space\Flyback.Plugins.Space.csproj" FolderName="Space" />

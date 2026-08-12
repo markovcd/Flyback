@@ -7,22 +7,98 @@
 
       <ItemGroup>
         <PluginProject Include="..\Flyback.Plugins.Wasapi\Flyback.Plugins.Wasapi.csproj"
-                       FolderName="Wasapi" />
+                       FolderName="Wasapi"
+                       Platform="win" />
       </ItemGroup>
 
-    and it is built directly into $(OutDir)plugins\<FolderName>\ — assembly,
-    dependencies and .deps.json together — so running from the build output
-    finds it exactly the way an installed copy would.
+    and it is built directly into plugins\<FolderName>\ under both the build
+    output and the publish output — assembly, dependencies and .deps.json
+    together — so running from either finds it exactly the way an installed copy
+    would.
 
     Building into the folder rather than copying into it is deliberate: the SDK
     already knows which of a project's dependencies belong beside it, and a
     hand-written copy step would have to guess.
+
+    Platform is optional and names the one platform the plugin is for — win, osx
+    or linux, matching the leading part of a runtime identifier. A plugin that
+    declares one is left out of output built for anywhere else, because shipping
+    a Windows sound backend and its packages inside a macOS application would be
+    dead weight that still has to be signed. A plugin without it goes everywhere.
   -->
 
-  <Target Name="BuildPlugins" AfterTargets="Build" Condition="'@(PluginProject)' != ''">
-    <MSBuild Projects="%(PluginProject.Identity)"
+  <Target Name="SelectPlugins" Condition="'@(PluginProject)' != ''">
+
+    <PropertyGroup>
+      <!--
+        Which platform this output is for. A runtime identifier answers it when
+        there is one, whether it came from the command line or the project; when
+        there is not, the output runs here, so this machine is the answer.
+      -->
+      <PluginPlatform Condition="'$(RuntimeIdentifier)' != '' and $(RuntimeIdentifier.Contains('-'))"
+      >$(RuntimeIdentifier.Substring(0, $(RuntimeIdentifier.IndexOf('-'))))</PluginPlatform>
+      <PluginPlatform Condition="'$(PluginPlatform)' == '' and '$(RuntimeIdentifier)' != ''">$(RuntimeIdentifier)</PluginPlatform>
+      <PluginPlatform Condition="'$(PluginPlatform)' == '' and $([MSBuild]::IsOSPlatform('Windows'))">win</PluginPlatform>
+      <PluginPlatform Condition="'$(PluginPlatform)' == '' and $([MSBuild]::IsOSPlatform('OSX'))">osx</PluginPlatform>
+      <PluginPlatform Condition="'$(PluginPlatform)' == ''">linux</PluginPlatform>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ShippedPlugin Include="@(PluginProject)"
+                     Condition="'%(PluginProject.Platform)' == '' or '%(PluginProject.Platform)' == '$(PluginPlatform)'" />
+    </ItemGroup>
+
+  </Target>
+
+  <!--
+    The plugin is built portable, without the runtime identifier the host may
+    have been given. Removing it is what makes `dotnet publish -r <rid>` work at
+    all: the identifier is a global property, so it flows into this build, and a
+    project restored without it has no assets for that target — the failure is a
+    restore error naming the plugin, several steps from the publish that caused
+    it. Publishing options are removed for the same reason, one step earlier:
+    they would ask a plain class library to be trimmed, AOT-compiled or made
+    self-contained, none of which mean anything for a file the host loads.
+
+    Nothing here has native assets, so portable is also correct rather than
+    merely convenient. A plugin that did would set its own RuntimeIdentifiers.
+  -->
+  <PropertyGroup>
+    <PluginBuildProperties>RuntimeIdentifier;SelfContained;PublishDir;PublishProfile;PublishSingleFile;PublishTrimmed;PublishAot;PublishReadyToRun</PluginBuildProperties>
+  </PropertyGroup>
+
+  <Target Name="BuildPlugins" AfterTargets="Build" DependsOnTargets="SelectPlugins" Condition="'@(PluginProject)' != ''">
+
+    <PropertyGroup>
+      <!-- Combined rather than concatenated: OutDir is relative by default and absolute when one is given. -->
+      <PluginBuildRoot>$([MSBuild]::EnsureTrailingSlash($([System.IO.Path]::Combine('$(MSBuildProjectDirectory)', '$(OutDir)', 'plugins'))))</PluginBuildRoot>
+    </PropertyGroup>
+
+    <MSBuild Projects="%(ShippedPlugin.Identity)"
              Targets="Build"
-             Properties="Configuration=$(Configuration);OutDir=$(MSBuildProjectDirectory)\$(OutDir)plugins\%(PluginProject.FolderName)\" />
+             Properties="Configuration=$(Configuration);OutDir=$(PluginBuildRoot)%(ShippedPlugin.FolderName)/"
+             RemoveProperties="$(PluginBuildProperties)" />
+
+  </Target>
+
+  <Target Name="PublishPlugins" AfterTargets="Publish" DependsOnTargets="SelectPlugins" Condition="'@(PluginProject)' != ''">
+
+    <PropertyGroup>
+      <PluginPublishRoot>$([MSBuild]::EnsureTrailingSlash($([System.IO.Path]::Combine('$(MSBuildProjectDirectory)', '$(PublishDir)', 'plugins'))))</PluginPublishRoot>
+    </PropertyGroup>
+
+    <!--
+      Cleared first, unlike the build output: publishing twice into one folder is
+      normal, and a plugin left behind by the previous run — a different platform,
+      or one that has since been removed — would be loaded as if it belonged.
+    -->
+    <RemoveDir Directories="$(PluginPublishRoot)" />
+
+    <MSBuild Projects="%(ShippedPlugin.Identity)"
+             Targets="Build"
+             Properties="Configuration=$(Configuration);OutDir=$(PluginPublishRoot)%(ShippedPlugin.FolderName)/"
+             RemoveProperties="$(PluginBuildProperties)" />
+
   </Target>
 
   <Target Name="CleanPlugins" AfterTargets="Clean" Condition="'@(PluginProject)' != ''">

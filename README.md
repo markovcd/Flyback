@@ -22,6 +22,40 @@ Coordinates ──▶ Sine ──┘
 dotnet run --project src/Flyback.App -c Release
 ```
 
+## Publishing
+
+```bash
+dotnet publish src/Flyback.App -c Release -r win-x64 --self-contained -o artifacts/win-x64
+```
+
+`win-x64`, `win-arm64`, `osx-arm64`, `osx-x64` and `linux-x64` all work, from any
+of them — the engine and the shell are portable, and the parts that are not are
+plugins. Each build gets the plugins for the platform it is *for*, not the one it
+was made on: a macOS publish contains CoreAudio and no NAudio, a Linux one ALSA
+and neither, a Windows one WASAPI and nothing else.
+
+Anything cross-published from Windows onto a Unix arrives without an executable
+bit, because the filesystem writing it has no concept of one — `chmod +x Flyback`
+once, at the other end.
+
+macOS runs a bundle rather than a folder, so publishing for an `osx-*` identifier
+also lays out `Flyback.app` beside the publish output:
+
+```bash
+dotnet publish src/Flyback.App -c Release -r osx-arm64 --self-contained -o artifacts/osx-arm64/publish
+# → artifacts/osx-arm64/Flyback.app
+```
+
+A bundle cross-published from Windows needs one more thing besides that mode: the
+signature macOS on Apple silicon demands before it will run anything at all.
+Once, on the Mac:
+
+```bash
+chmod +x Flyback.app/Contents/MacOS/Flyback && codesign --force --deep --sign - Flyback.app
+```
+
+Publishing on macOS itself sets the mode, and leaves only the signature.
+
 ## How it works
 
 A patch is a graph, but the graph is never walked while rendering. It compiles
@@ -107,9 +141,11 @@ reduces aliasing rather than removing it. While sound plays it is the master
 clock and the picture follows, since audio cannot be stretched to catch up.
 
 The device itself comes from a plugin, so the application has no platform-specific
-code in it at all. WASAPI ships in the box and covers Windows; elsewhere the
-**Audio on** button is disabled until a backend is installed, and everything
-else — including WAV export — works unchanged.
+code in it at all. WASAPI covers Windows, CoreAudio covers macOS and ALSA covers
+Linux — routed by PipeWire or PulseAudio where either is running — and each ships
+only in the build for its own platform. Where none of them can open a device the
+**Audio on** button is disabled and says why; everything else, including WAV
+export, works unchanged.
 
 ## Plugins
 
@@ -136,21 +172,21 @@ Being asked whether you are supported must not open anything, so a plugin for
 another operating system stays loadable everywhere:
 
 ```csharp
-public sealed class AlsaPlugin : IFlybackPlugin
+public sealed class JackPlugin : IFlybackPlugin
 {
-    public PluginInfo Info { get; } = new("alsa", "ALSA output", "Linux sound via libasound.");
+    public PluginInfo Info { get; } = new("jack", "JACK output", "Low-latency Linux sound via JACK.");
 
-    public void Register(IPluginRegistry registry) => registry.AddAudioOutput(new AlsaOutput());
+    public void Register(IPluginRegistry registry) => registry.AddAudioOutput(new JackOutput());
 }
 
-public sealed class AlsaOutput : IAudioOutput
+public sealed class JackOutput : IAudioOutput
 {
-    public string Id => "alsa";
-    public string Name => "ALSA";
-    public int Priority => 50;                          // WASAPI is 100, and wins where both run
-    public bool IsSupported => OperatingSystem.IsLinux();
+    public string Id => "jack";
+    public string Name => "JACK";
+    public int Priority => 150;                         // the shipped ALSA backend is 100, and loses to this
+    public bool IsSupported => OperatingSystem.IsLinux() && JackIsRunning();
 
-    public IAudioDevice Create(AudioFormat format) => new AlsaDevice(format);
+    public IAudioDevice Create(AudioFormat format) => new JackDevice(format);
 }
 ```
 
@@ -166,8 +202,13 @@ a folder under `plugins/`. To ship one in the box instead, add a line to
 `Flyback.App.csproj`:
 
 ```xml
-<PluginProject Include="..\Flyback.Plugins.Alsa\Flyback.Plugins.Alsa.csproj" FolderName="Alsa" />
+<PluginProject Include="..\Flyback.Plugins.Alsa\Flyback.Plugins.Alsa.csproj" FolderName="Alsa" Platform="linux" />
 ```
+
+`Platform` is optional and names the one platform the plugin is for, matching the
+leading part of a runtime identifier. A plugin that declares one is left out of
+output built for anywhere else; a plugin without one goes everywhere, which is
+what a module plugin wants.
 
 Each plugin loads into its own `AssemblyLoadContext`, so two of them may depend
 on different versions of the same package. A broken, missing or hostile plugin is
@@ -293,11 +334,13 @@ patches need no constant modules at all.
 | `src/Flyback.Core` | graph model, compiler, renderer, PNG writer — no UI dependency |
 | `src/Flyback.App` | Avalonia editor and live preview, built in C# without XAML |
 | `src/Flyback.Plugins` | the plugin contract and the loader — no dependencies either |
-| `src/Flyback.Plugins.Wasapi` | Windows sound output; the only project that knows what an operating system is |
+| `src/Flyback.Plugins.Wasapi` | Windows sound output, via NAudio |
+| `src/Flyback.Plugins.CoreAudio` | macOS sound output, straight to the default output audio unit |
+| `src/Flyback.Plugins.Alsa` | Linux sound output, through libasound's default device |
 | `src/Flyback.Plugins.Supersaw` | the Supersaw oscillator, as a module plugin |
 | `src/Flyback.Plugins.Space` | delay and reverb — the only modules with a memory |
 
-Why it is built this way is recorded in [docs/adr](docs/adr) — 27 decision
+Why it is built this way is recorded in [docs/adr](docs/adr) — 29 decision
 records covering the compiler, the renderer, the shell and the boundaries
 between them.
 
@@ -311,7 +354,7 @@ dotnet test Flyback.slnx
 |---|---|
 | `tests/Flyback.Core.Specs` | Gherkin scenarios (Reqnroll) for the behaviour the ADRs specify — dead code, cycles, port typing, input defaults, feedback |
 | `tests/Flyback.Core.Tests` | snapshot tests of the rendered presets, plus property and fuzz tests over the compiler and interpreter |
-| `tests/Flyback.Plugins.Tests` | loads the real shipped plugin off disk — discovery, backend selection, and that a type crossing the boundary keeps one identity |
+| `tests/Flyback.Plugins.Tests` | loads the real shipped plugins off disk — discovery, which backend wins on this machine, and that a type crossing the boundary keeps one identity |
 
 Each `.feature` file names the ADR it pins, so the records and the specs stay
 honest about each other.

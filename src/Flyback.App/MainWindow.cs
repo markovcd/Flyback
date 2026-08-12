@@ -798,7 +798,23 @@ public sealed class MainWindow : Window
         if (enabled)
         {
             audio.Update(editor.Patch);
-            audio.Start();
+
+            try
+            {
+                audio.Start();
+            }
+            catch (Exception ex)
+            {
+                // A device is only really opened here, so this is where a card
+                // that is busy, unplugged or missing its library says so. The
+                // button goes back off and stays off: whatever it is will not
+                // have fixed itself by the next click, and ADR-0025 promises
+                // that nothing a plugin does takes the shell down.
+                Report($"Sound could not start — {ex.Message}", PluginSummary());
+                audioButton.IsEnabled = false;
+                audioButton.IsChecked = false;
+                return;
+            }
 
             // Sound cannot stretch, so it leads and the picture follows.
             preview.Clock = () => audio.Time;

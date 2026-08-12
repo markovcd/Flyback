@@ -1,0 +1,39 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>Flyback.Plugins.CoreAudio</RootNamespace>
+    <!--
+      Emits the .deps.json the host's AssemblyDependencyResolver reads, which is
+      also what marks the entry assembly among the files in the plugin folder.
+      This plugin has no package dependencies at all — the framework it calls is
+      part of the operating system — but the dependency file is still what makes
+      the folder identifiable as a plugin rather than a pile of assemblies.
+    -->
+    <EnableDynamicLoading>true</EnableDynamicLoading>
+    <!-- The render callback is a function pointer and the buffer is a raw one. -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!--
+      Both are host-owned; shipping either would give its types a second
+      identity and every cast across the boundary would fail. Core is named even
+      though this plugin does not use it, because the contract references it and
+      a transitive reference is copied local unless it is suppressed here too.
+
+      GlobalPropertiesToRemove stops the redirected OutDir the host build passes
+      in from flowing down here; without it the contract would be rebuilt into
+      the plugin folder, which is exactly what must not happen.
+    -->
+    <ProjectReference Include="..\Flyback.Plugins\Flyback.Plugins.csproj"
+                      Private="false"
+                      ExcludeAssets="runtime"
+                      GlobalPropertiesToRemove="OutDir" />
+
+    <ProjectReference Include="..\Flyback.Core\Flyback.Core.csproj"
+                      Private="false"
+                      ExcludeAssets="runtime"
+                      GlobalPropertiesToRemove="OutDir" />
+  </ItemGroup>
+
+</Project>

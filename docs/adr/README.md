@@ -57,6 +57,7 @@ they were not mine to make.
 | [0023](0023-oversample-the-audio-path.md) | Oversample the audio path rather than band-limiting modules |
 | [0024](0024-audio-device-in-the-shell.md) | Sample generation in the engine, the audio device in the shell |
 | [0027](0027-delay-lines-give-the-audio-path-a-memory.md) | Delay lines give the audio path a memory *(user-directed)* |
+| [0029](0029-linux-sound-through-alsa.md) | Linux sound through ALSA, on a thread of our own |
 
 ### Boundaries
 
@@ -66,3 +67,4 @@ they were not mine to make.
 | [0020](0020-json-patch-files-keyed-by-string-type-ids.md) | JSON patch files keyed by string type IDs |
 | [0025](0025-platform-io-behind-loadable-plugins.md) | Platform I/O behind plugins loaded at run time |
 | [0026](0026-modules-from-plugins-with-provenance-in-the-file.md) | Modules may come from plugins, and the file records which *(user-directed)* |
+| [0028](0028-publish-one-platform-at-a-time.md) | Publish one platform at a time, with only that platform's plugins |

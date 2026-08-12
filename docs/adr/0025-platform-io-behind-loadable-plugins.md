@@ -2,7 +2,9 @@
 
 **Status:** Accepted · 2026-08-12 · amended by
 [0026](0026-modules-from-plugins-with-provenance-in-the-file.md), which extends
-plugins to modules once a patch records where its modules came from
+plugins to modules once a patch records where its modules came from, and by
+[0028](0028-publish-one-platform-at-a-time.md), which decides which of them ship
+where
 
 ## Context
 
@@ -77,6 +79,8 @@ runs on one machine agree.
 platform-specific — which is what makes 0015's claim true again rather than
 aspirational. **This lifts the narrowing 0024 applied to it.** Sound on Linux is
 now a project someone can add without touching, or rebuilding, the shell.
+*(Added, and without touching it:
+[0029](0029-linux-sound-through-alsa.md).)*
 
 The failure modes are all quiet. No plugin folder, an empty one, a plugin built
 against another runtime, one that throws from its constructor — each is a line in
@@ -95,7 +99,9 @@ Shipping a plugin in the box costs one item in the consuming project:
 
 `Directory.Build.targets` builds it *into* `plugins\Wasapi\` rather than copying
 it there, because the SDK already knows which of a project's dependencies belong
-beside it and a hand-written copy step would have to guess. The one sharp edge:
+beside it and a hand-written copy step would have to guess. *(Into the build
+output only, which [0028](0028-publish-one-platform-at-a-time.md) corrects: a
+published application got no plugins at all.)* The one sharp edge:
 the redirected `OutDir` is a global property and flows down through project
 references, so the reference to the contract carries
 `GlobalPropertiesToRemove="OutDir"` — without it the contract is rebuilt into the

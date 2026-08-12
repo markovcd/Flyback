@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>CFBundleName</key>
+  <string>Flyback</string>
+
+  <key>CFBundleDisplayName</key>
+  <string>Flyback</string>
+
+  <!-- The apphost the SDK produces, which is named after AssemblyName. -->
+  <key>CFBundleExecutable</key>
+  <string>Flyback</string>
+
+  <key>CFBundleIdentifier</key>
+  <string>io.github.markovcd.flyback</string>
+
+  <key>CFBundleIconFile</key>
+  <string>flyback.icns</string>
+
+  <key>CFBundleInfoDictionaryVersion</key>
+  <string>6.0</string>
+
+  <key>CFBundlePackageType</key>
+  <string>APPL</string>
+
+  <key>CFBundleShortVersionString</key>
+  <string>1.0</string>
+
+  <key>CFBundleVersion</key>
+  <string>1.0</string>
+
+  <!-- Without this the window is scaled up from 1x and the preview looks soft. -->
+  <key>NSHighResolutionCapable</key>
+  <true/>
+
+  <!--
+    The application is the window: it belongs in the Dock and owns the menu bar,
+    rather than running as a background process the way a bare executable does.
+  -->
+  <key>LSApplicationCategoryType</key>
+  <string>public.app-category.music</string>
+
+  <!-- The oldest macOS the .NET 10 runtime supports. -->
+  <key>LSMinimumSystemVersion</key>
+  <string>13.0</string>
+</dict>
+</plist>

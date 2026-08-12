@@ -7,29 +7,34 @@ using Xunit;
 namespace Flyback.Plugins.Tests;
 
 /// <summary>
-/// Loads the WASAPI plugin that this test project builds into its own output,
+/// Loads the sound plugins that this test project builds into its own output,
 /// so what is exercised is a real separate assembly with real dependencies —
 /// the part a stub plugin would not prove.
 /// </summary>
 public class PluginHostTests
 {
+    /// <summary>The backends that ship in the box, one per operating system.</summary>
+    public static TheoryData<string> PlatformBackends => ["alsa", "coreaudio", "wasapi"];
+
     private static PluginCatalog Shipped() => PluginHost.Load();
 
-    [Fact]
-    public void The_shipped_plugin_is_found()
+    [Theory]
+    [MemberData(nameof(PlatformBackends))]
+    public void The_shipped_plugin_is_found(string id)
     {
         var catalog = Shipped();
 
         catalog.Problems.ShouldBeEmpty();
-        catalog.Plugins.Select(p => p.Info.Id).ShouldContain("wasapi");
+        catalog.Plugins.Select(p => p.Info.Id).ShouldContain(id);
     }
 
-    [Fact]
-    public void A_found_plugin_registers_what_it_offers()
+    [Theory]
+    [MemberData(nameof(PlatformBackends))]
+    public void A_found_plugin_registers_what_it_offers(string id)
     {
         var catalog = Shipped();
 
-        catalog.AudioOutputs.Select(o => o.Id).ShouldContain("wasapi");
+        catalog.AudioOutputs.Select(o => o.Id).ShouldContain(id);
     }
 
     /// <summary>
@@ -53,16 +58,51 @@ public class PluginHostTests
     }
 
     /// <summary>
-    /// The plugin loads everywhere; only the device is Windows-only. That split
-    /// is the whole point of separating <see cref="IAudioOutput"/> from
-    /// <see cref="IAudioDevice"/>, so it is worth pinning.
+    /// All three plugins load everywhere; only their devices are tied to one
+    /// system. That split is the whole point of separating
+    /// <see cref="IAudioOutput"/> from <see cref="IAudioDevice"/>, so it is
+    /// worth pinning.
     /// </summary>
+    /// <remarks>
+    /// ALSA is asserted in one direction only. Off Linux the answer is a flat
+    /// no; on Linux it also depends on whether libasound is installed, and a
+    /// test that decided that for itself would be asserting its own copy of the
+    /// implementation.
+    /// </remarks>
     [Fact]
     public void Support_is_answered_without_opening_a_device()
     {
-        var output = Shipped().AudioOutputs.Single(o => o.Id == "wasapi");
+        var outputs = Shipped().AudioOutputs;
 
-        output.IsSupported.ShouldBe(OperatingSystem.IsWindows());
+        outputs.Single(o => o.Id == "wasapi").IsSupported.ShouldBe(OperatingSystem.IsWindows());
+        outputs.Single(o => o.Id == "coreaudio").IsSupported.ShouldBe(OperatingSystem.IsMacOS());
+
+        if (!OperatingSystem.IsLinux())
+            outputs.Single(o => o.Id == "alsa").IsSupported.ShouldBeFalse();
+    }
+
+    /// <summary>
+    /// The three native backends claim the same priority, which is only safe
+    /// because no machine supports two of them. If that ever stopped being true
+    /// the choice would fall to the tie-break on id and Windows would quietly
+    /// start preferring ALSA, so pin the whole selection rather than the pieces.
+    /// </summary>
+    [Fact]
+    public void The_backend_chosen_here_is_the_one_for_this_operating_system()
+    {
+        var chosen = Shipped().PreferredAudioOutput?.Id;
+
+        // On Linux, either answer is correct and which one is a property of the
+        // machine: ALSA where libasound is installed, and otherwise nothing —
+        // which is what leaves the Audio button disabled rather than opening a
+        // device that cannot exist.
+        if (OperatingSystem.IsLinux())
+        {
+            (chosen is null or "alsa").ShouldBeTrue($"chose '{chosen}'");
+            return;
+        }
+
+        chosen.ShouldBe(OperatingSystem.IsWindows() ? "wasapi" : OperatingSystem.IsMacOS() ? "coreaudio" : null);
     }
 
     [Fact]

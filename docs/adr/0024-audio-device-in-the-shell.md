@@ -57,6 +57,9 @@ separate `net10.0-windows` project was not needed.
 Avalonia was chosen partly because it runs on Linux; `WasapiAudioDevice` does
 not. The app still builds and runs everywhere — audio is opt-in and off by
 default — but sound is Windows-only until a second `IAudioDevice` exists.
+*(Both other devices now exist — CoreAudio, shipped by
+[0028](0028-publish-one-platform-at-a-time.md), and ALSA, by
+[0029](0029-linux-sound-through-alsa.md) — so the narrowing is lifted.)*
 PortAudio, OpenAL and miniaudio bindings all fit the interface unchanged.
 
 The callback never locks and never allocates. Everything it needs hangs off a

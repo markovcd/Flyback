@@ -1,0 +1,70 @@
+<Project>
+
+  <!--
+    macOS does not run a folder of files: it runs a bundle. Publishing for an
+    osx runtime identifier therefore lays one out beside the publish output,
+
+      Flyback.app/
+        Contents/
+          Info.plist
+          MacOS/          the whole published payload, plugins included
+          Resources/
+            flyback.icns
+
+    which is what makes the program a Dock icon and a menu bar rather than a
+    process with no name. The publish folder itself is left exactly as the SDK
+    wrote it, because it is what a caller asked for; the bundle is a copy of it.
+
+    Cross-published from Windows this is a bundle with two things missing, and
+    neither can be supplied from here: a file mode, which the filesystem writing
+    it has no concept of, and a signature, which macOS on Apple silicon requires
+    before it will run anything at all. The target says so at the end of the
+    build rather than leaving it to be discovered on the other machine.
+  -->
+
+  <PropertyGroup>
+    <!-- Beside the publish output, not inside it: a bundle within its own payload would copy itself. -->
+    <MacBundlePath Condition="'$(MacBundlePath)' == ''"
+    >$([System.IO.Path]::GetFullPath($([System.IO.Path]::Combine('$(MSBuildProjectDirectory)', '$(PublishDir)', '..', 'Flyback.app'))))</MacBundlePath>
+  </PropertyGroup>
+
+  <Target Name="BundleForMac"
+          AfterTargets="Publish"
+          DependsOnTargets="PublishPlugins"
+          Condition="('$(RuntimeIdentifier)' != '' and $(RuntimeIdentifier.StartsWith('osx'))) or ('$(RuntimeIdentifier)' == '' and $([MSBuild]::IsOSPlatform('OSX')))">
+
+    <PropertyGroup>
+      <MacBundleContents>$([MSBuild]::EnsureTrailingSlash($([System.IO.Path]::Combine('$(MacBundlePath)', 'Contents'))))</MacBundleContents>
+      <MacBundleExecutable>$(MacBundleContents)MacOS/$(AssemblyName)</MacBundleExecutable>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <!-- Enumerated here rather than at evaluation time: the payload does not exist until Publish has run. -->
+      <MacBundlePayload Include="$(PublishDir)**\*" />
+    </ItemGroup>
+
+    <!-- Stale files in a bundle are indistinguishable from current ones, so the previous one goes. -->
+    <RemoveDir Directories="$(MacBundlePath)" />
+
+    <Copy SourceFiles="@(MacBundlePayload)"
+          DestinationFiles="@(MacBundlePayload->'$(MacBundleContents)MacOS/%(RecursiveDir)%(Filename)%(Extension)')" />
+
+    <Copy SourceFiles="$(MSBuildThisFileDirectory)Info.plist" DestinationFolder="$(MacBundleContents)" />
+    <Copy SourceFiles="$(MSBuildThisFileDirectory)..\..\flyback.icns" DestinationFolder="$(MacBundleContents)Resources" />
+
+    <!--
+      Only possible when the publishing machine has a file mode to set. Elsewhere
+      the message below is the whole of the fix.
+    -->
+    <Exec Command="chmod +x &quot;$(MacBundleExecutable)&quot;"
+          Condition="!$([MSBuild]::IsOSPlatform('Windows'))" />
+
+    <Message Importance="high" Text="Bundled $(MacBundlePath)" />
+
+    <Message Importance="high"
+             Condition="$([MSBuild]::IsOSPlatform('Windows'))"
+             Text="  Windows cannot finish a macOS bundle. On the Mac, before first run:%0A    chmod +x Flyback.app/Contents/MacOS/$(AssemblyName)%0A    codesign --force --deep --sign - Flyback.app" />
+
+  </Target>
+
+</Project>

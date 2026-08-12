@@ -6,6 +6,8 @@
     <Project Path="src/Flyback.App/Flyback.App.csproj" />
     <Project Path="src/Flyback.Core/Flyback.Core.csproj" />
     <Project Path="src/Flyback.Plugins/Flyback.Plugins.csproj" />
+    <Project Path="src/Flyback.Plugins.Alsa/Flyback.Plugins.Alsa.csproj" />
+    <Project Path="src/Flyback.Plugins.CoreAudio/Flyback.Plugins.CoreAudio.csproj" />
     <Project Path="src/Flyback.Plugins.Space/Flyback.Plugins.Space.csproj" />
     <Project Path="src/Flyback.Plugins.Supersaw/Flyback.Plugins.Supersaw.csproj" />
     <Project Path="src/Flyback.Plugins.Wasapi/Flyback.Plugins.Wasapi.csproj" />
