@@ -1,6 +1,8 @@
 # ADR-0022: Audio and video are two sinks over one patch
 
-**Status:** Accepted · 2026-08-12
+**Status:** Accepted · 2026-08-12 · amended by
+[0027](0027-delay-lines-give-the-audio-path-a-memory.md), which introduces the
+first modules that do their job in one sink's program and not the other's
 
 ## Context
 

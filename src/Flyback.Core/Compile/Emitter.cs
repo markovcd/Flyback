@@ -71,6 +71,23 @@ public sealed class Emitter
         return new Slot(first, width);
     }
 
+    /// <summary>
+    /// An op that owns a delay line. Scalar only, whatever arrives: a colour
+    /// would need three buffers, and there is nothing a delayed picture would
+    /// mean that <see cref="OpCode.SampleFeedback"/> does not already do better.
+    /// </summary>
+    /// <param name="maximum">
+    /// The longest delay this instance may ever be asked for. It sizes the
+    /// buffer, so it is fixed at compile time even though the delay itself is a
+    /// signal and may be swept.
+    /// </param>
+    public Slot DelayLine(OpCode code, Slot input, Slot gain, Slot time, float maximum)
+    {
+        var first = Allocate(1);
+        Add(new Op(code, first, input.Component(0), gain.Component(0), time.Component(0), maximum));
+        return Slot.Scalar(first);
+    }
+
     /// <summary>An op that writes three consecutive registers at once.</summary>
     public Slot Triple(OpCode code, Slot a, Slot b, Slot c = default)
     {

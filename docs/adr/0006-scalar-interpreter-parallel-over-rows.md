@@ -1,6 +1,8 @@
 # ADR-0006: Scalar interpreter parallelised over rows, not SIMD
 
-**Status:** Accepted · 2026-08-11
+**Status:** Accepted · 2026-08-11 · amended by
+[0027](0027-delay-lines-give-the-audio-path-a-memory.md), where the audio path
+gains stateful ops and the video path keeps the purity this relies on
 
 ## Context
 

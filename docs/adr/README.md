@@ -4,12 +4,14 @@ Each record captures one decision, the situation that forced it, and what it
 costs. Format is [Michael Nygard's](https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions):
 context, decision, consequences.
 
-Three records — [0003](0003-cpu-rendering-with-a-gpu-path-left-open.md),
-[0004](0004-visual-patch-editor-as-the-authoring-model.md) and
-[0026](0026-modules-from-plugins-with-provenance-in-the-file.md) — are marked
+Four records — [0003](0003-cpu-rendering-with-a-gpu-path-left-open.md),
+[0004](0004-visual-patch-editor-as-the-authoring-model.md),
+[0026](0026-modules-from-plugins-with-provenance-in-the-file.md) and
+[0027](0027-delay-lines-give-the-audio-path-a-memory.md) — are marked
 **user-directed**: they were chosen by the project owner, not derived. The first
-two sit upstream of almost everything else here; the third reverses a boundary an
-earlier record drew. All are recorded even though they were not mine to make.
+two sit upstream of almost everything else here; the last two each give up a
+property an earlier record relied on, knowingly. All are recorded even though
+they were not mine to make.
 
 ## Index
 
@@ -54,6 +56,7 @@ earlier record drew. All are recorded even though they were not mine to make.
 | [0022](0022-audio-and-video-are-two-sinks-over-one-patch.md) | Audio and video are two sinks over one patch |
 | [0023](0023-oversample-the-audio-path.md) | Oversample the audio path rather than band-limiting modules |
 | [0024](0024-audio-device-in-the-shell.md) | Sample generation in the engine, the audio device in the shell |
+| [0027](0027-delay-lines-give-the-audio-path-a-memory.md) | Delay lines give the audio path a memory *(user-directed)* |
 
 ### Boundaries
 

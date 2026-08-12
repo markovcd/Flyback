@@ -32,6 +32,14 @@ public sealed class CompiledPatch(Op[] ops, int registerCount, int outputBase, i
     /// <summary>3 for a video sink's RGB, 2 for an audio sink's stereo pair.</summary>
     public int OutputWidth { get; } = outputWidth;
 
+    /// <summary>
+    /// The longest delay each stateful op will ask for, in the order those ops
+    /// run. A renderer sizes one ring buffer per entry; a program with none — the
+    /// usual case — needs no state at all.
+    /// </summary>
+    public IReadOnlyList<float> DelayLengths { get; } =
+        [.. ops.Where(o => o.Code is OpCode.Delay or OpCode.Allpass).Select(o => o.K)];
+
     /// <summary>A program whose output is all zeroes — the fallback when a sink is missing.</summary>
     public static CompiledPatch Constant(int width) => new(
         [.. Enumerable.Range(0, width).Select(i => new Op(OpCode.Const, i))],
@@ -48,9 +56,25 @@ public sealed class CompiledPatch(Op[] ops, int registerCount, int outputBase, i
     public float[] AllocateRegisters() => new float[Math.Max(RegisterCount, OutputWidth)];
 
     /// <summary>Runs the program for one pixel. <paramref name="registers"/> is reused across pixels.</summary>
-    public void Evaluate(float x, float y, float t, Span<float> registers, in FeedbackFrame feedback)
+    /// <param name="delays">
+    /// Memory for the stateful ops, or null when there is none. Null is not a
+    /// failure: it is what the video path passes, because rows render in
+    /// parallel and a shared delay line has no meaning per pixel. Without it a
+    /// delay hands its input straight through, so a patch built for the speakers
+    /// still shows a picture.
+    /// </param>
+    public void Evaluate(
+        float x,
+        float y,
+        float t,
+        Span<float> registers,
+        in FeedbackFrame feedback,
+        DelayState? delays = null)
     {
         var ops = Ops;
+
+        // Which delay line an op uses is its position among the stateful ops.
+        var line = 0;
 
         for (var index = 0; index < ops.Length; index++)
         {
@@ -120,12 +144,48 @@ public sealed class CompiledPatch(Op[] ops, int registerCount, int outputBase, i
                 case OpCode.SampleFeedback:
                     Sample(feedback, registers[op.A], registers[op.B], registers[op.Out..(op.Out + 3)]);
                     break;
+
+                case OpCode.Delay:
+                {
+                    var slot = line++;
+                    if (delays is null) { registers[op.Out] = registers[op.A]; break; }
+
+                    // Read before write, so the shortest possible delay is one
+                    // evaluation. A zero-sample loop would be algebraic, and
+                    // there would be nothing for it to mean.
+                    var heard = delays.Read(slot, registers[op.C], op.K);
+                    delays.Write(slot, registers[op.A] + Feedback(registers[op.B]) * heard);
+                    registers[op.Out] = heard;
+                    break;
+                }
+
+                case OpCode.Allpass:
+                {
+                    var slot = line++;
+                    if (delays is null) { registers[op.Out] = registers[op.A]; break; }
+
+                    var heard = delays.Read(slot, registers[op.C], op.K);
+                    var gain = Feedback(registers[op.B]);
+                    var stored = registers[op.A] + gain * heard;
+
+                    delays.Write(slot, stored);
+                    registers[op.Out] = heard - gain * stored;
+                    break;
+                }
             }
         }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static float Guard(float v) => float.IsFinite(v) ? v : 0f;
+
+    /// <summary>
+    /// Feedback held below one. At exactly one a delay line never decays and at
+    /// more than one it doubles every pass, and unlike every other op in here
+    /// that damage persists after the knob is turned back down.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static float Feedback(float v) => float.IsFinite(v) ? Math.Clamp(v, -0.99f, 0.99f) : 0f;
 
     /// <summary>
     /// The largest float below 1. For a tiny negative input, <c>v - floor(v)</c>

@@ -68,6 +68,23 @@ public enum OpCode : byte
     /// <summary>out = value noise at (a, b, c)</summary>
     Noise3,
 
+    // --- stateful: these own a delay line, and are the only ops that remember ---
+
+    /// <summary>
+    /// out = line[now - c seconds], then line writes a + clamp(b) * out.
+    /// A feedback comb: the delay itself, and the building block of a reverb.
+    /// K is the longest delay this instance will ever be asked for, which is what
+    /// the buffer is sized from.
+    /// </summary>
+    Delay,
+
+    /// <summary>
+    /// out = line[now - c] - b * v, where v = a + b * line[now - c] is what gets
+    /// written. A Schroeder allpass: it smears a signal in time without colouring
+    /// it, which is what turns a bank of combs into a reverb rather than an echo.
+    /// </summary>
+    Allpass,
+
     // --- multi-register writes: these fill out, out+1, out+2 ---
     /// <summary>(out, out+1, out+2) = hsv2rgb(a, b, c)</summary>
     HsvToRgb,

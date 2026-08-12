@@ -44,6 +44,12 @@ public sealed class AudioRenderer
     private float[] registerBank = new float[64];
     private int historyPosition;
 
+    /// <summary>
+    /// The program's delay lines, if it has any. Held here rather than on the
+    /// program so that recompiling mid-buffer does not lose or duplicate them.
+    /// </summary>
+    private DelayState? delays;
+
     public AudioRenderer(int sampleRate = 48_000, int oversample = 4)
     {
         SampleRate = sampleRate;
@@ -68,6 +74,7 @@ public sealed class AudioRenderer
         Array.Clear(delayLines[1]);
         Array.Clear(dcPreviousInput);
         Array.Clear(dcPreviousOutput);
+        delays?.Clear();
     }
 
     public void SeekTo(double seconds) => Time = seconds;
@@ -81,6 +88,16 @@ public sealed class AudioRenderer
     {
         var needed = Math.Max(program.RegisterCount, program.OutputWidth);
         if (registerBank.Length < needed) registerBank = new float[needed];
+
+        // Delay lines run at the oversampled rate, because that is how often the
+        // program is actually evaluated. A recompile that changes the delays at
+        // all gets new buffers, and whatever was ringing in the old ones is lost
+        // — it belonged to a patch that no longer exists.
+        var rate = SampleRate * Oversample;
+
+        if (program.DelayLengths.Count == 0) delays = null;
+        else if (delays?.Fits(program.DelayLengths, rate) != true)
+            delays = new DelayState(program.DelayLengths, rate);
     }
 
     /// <summary>
@@ -109,8 +126,10 @@ public sealed class AudioRenderer
                 var (x, y) = Position(t, scan);
 
                 // Video feedback has no meaning here: there is no previous frame
-                // on the audio timeline, so SampleFeedback reads silence.
-                program.Evaluate(x, y, (float)t, registers, default);
+                // on the audio timeline, so SampleFeedback reads silence. Delay
+                // lines are the other way round — this is the only path that has
+                // them, because it is the only one that runs in order.
+                program.Evaluate(x, y, (float)t, registers, default, delays);
 
                 delayLines[0][historyPosition] = registers[left];
                 delayLines[1][historyPosition] = registers[right];

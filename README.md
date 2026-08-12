@@ -223,6 +223,24 @@ is peak-normalised as it mixes — turning `mix` up makes it wider, never louder
 Point it at the screen instead of the speakers and the detuning reads as a slow
 moiré, which is the same beating seen rather than heard.
 
+### Delay and reverb
+
+[`src/Flyback.Plugins.Space`](src/Flyback.Plugins.Space) adds **Delay** and
+**Reverb**, and the **Echo chamber** preset puts a plucked tone through both.
+They are the only modules in the synth that remember anything.
+
+| | |
+|---|---|
+| Delay | `time` in seconds, up to two, and sweepable — the line interpolates, so it glides rather than steps. `feedback` is how much comes round again |
+| Reverb | four feedback combs into two allpasses. `size` stretches every delay together, `decay` sets how long the tail lasts |
+
+Everything else here is a pure function of `(x, y, t)`, which is what lets the
+video renderer run rows in parallel. These two are not, so **they only work on
+the audio path**: the video program is given no delay state, a Delay becomes a
+wire, and a Reverb dims by one minus its feedback. That asymmetry is the price of
+having them at all, and [ADR-0027](docs/adr/0027-delay-lines-give-the-audio-path-a-memory.md)
+sets out why it cannot be avoided. For a picture with a past, use `Feedback`.
+
 ## Using the editor
 
 | | |
@@ -247,8 +265,9 @@ patches need no constant modules at all.
 | `src/Flyback.Plugins` | the plugin contract and the loader — no dependencies either |
 | `src/Flyback.Plugins.Wasapi` | Windows sound output; the only project that knows what an operating system is |
 | `src/Flyback.Plugins.Supersaw` | the Supersaw oscillator, as a module plugin |
+| `src/Flyback.Plugins.Space` | delay and reverb — the only modules with a memory |
 
-Why it is built this way is recorded in [docs/adr](docs/adr) — 26 decision
+Why it is built this way is recorded in [docs/adr](docs/adr) — 27 decision
 records covering the compiler, the renderer, the shell and the boundaries
 between them.
 
