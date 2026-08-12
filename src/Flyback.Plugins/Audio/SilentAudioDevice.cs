@@ -1,3 +1,5 @@
+using Flyback.Core.Render;
+
 namespace Flyback.Plugins.Audio;
 
 /// <summary>
@@ -11,7 +13,7 @@ namespace Flyback.Plugins.Audio;
 /// cursor would freeze — the shell disables sound outright when this is what
 /// it got, rather than pretending.
 /// </remarks>
-public sealed class SilentAudioDevice(int sampleRate = 48_000) : IAudioDevice
+public sealed class SilentAudioDevice(int sampleRate = AudioRenderer.DefaultSampleRate) : IAudioDevice
 {
     public int SampleRate { get; } = sampleRate;
 

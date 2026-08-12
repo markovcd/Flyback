@@ -13,7 +13,7 @@ namespace Flyback.Core.Tests.Rendering;
 /// </summary>
 public class AudioRendererTests
 {
-    private const int SampleRate = 48_000;
+    private const int SampleRate = AudioRenderer.DefaultSampleRate;
 
     /// <summary>A tone patch: Time into a sine, sine into the audio sink.</summary>
     private static CompiledPatch Tone(string oscillator, float hz, float gain = 1f)

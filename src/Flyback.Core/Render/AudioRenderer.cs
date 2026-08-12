@@ -33,6 +33,8 @@ public readonly record struct AudioScan(bool Scan, float Rate, float Aspect)
 /// </remarks>
 public sealed class AudioRenderer
 {
+    public const int DefaultSampleRate = 48_000;
+    
     private const int Taps = 64;
     private const float DcBlockerPole = 0.9993f;
 
@@ -50,7 +52,7 @@ public sealed class AudioRenderer
     /// </summary>
     private DelayState? delays;
 
-    public AudioRenderer(int sampleRate = 48_000, int oversample = 4)
+    public AudioRenderer(int sampleRate = DefaultSampleRate, int oversample = 4)
     {
         SampleRate = sampleRate;
         Oversample = Math.Max(1, oversample);

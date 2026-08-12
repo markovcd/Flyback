@@ -1,3 +1,5 @@
+using Flyback.Core.Render;
+
 namespace Flyback.Plugins.Audio;
 
 /// <summary>
@@ -17,7 +19,7 @@ public delegate void AudioCallback(Span<float> interleavedStereo);
 /// </summary>
 public readonly record struct AudioFormat(int SampleRate, int Channels, int LatencyMilliseconds)
 {
-    public static AudioFormat Default => new(48_000, 2, 30);
+    public static AudioFormat Default => new(AudioRenderer.DefaultSampleRate, 2, 30);
 }
 
 /// <summary>
