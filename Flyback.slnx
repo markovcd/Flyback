@@ -1,4 +1,7 @@
 <Solution>
+  <Folder Name="/docs/">
+    <Project Path="docs/adr/ADR.csproj" />
+  </Folder>
   <Folder Name="/src/">
     <Project Path="src/Flyback.App/Flyback.App.csproj" />
     <Project Path="src/Flyback.Core/Flyback.Core.csproj" />
