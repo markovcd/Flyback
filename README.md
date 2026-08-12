@@ -57,6 +57,22 @@ you get the camera-pointed-at-its-own-monitor tunnel — the "Feedback tunnel"
 preset does exactly that. Values are clamped to 0..1 each frame, which is what
 stops the loop running away.
 
+### Nebula
+
+The preset worth reading the patch of. Coordinates are turned, folded into eight
+wedges, bent by a noise field, taken as travelling rings, and laid over a
+dimmed, slowly rotating copy of the previous frame.
+
+The order of the fold and the bend is the whole trick, and it is not the obvious
+one. Warping *before* folding looks lovely and is not a kaleidoscope at all: the
+displacement varies per pixel, so the fold has nothing symmetric left to work
+with and the eight-fold structure disappears. Folding first and warping inside
+the wedge — by a field read from the folded plane, so it repeats with it — keeps
+the symmetry and bends it at the same time.
+
+At 79 ops it is the most expensive patch here, which is the other reason to keep
+it: it is what the renderer looks like under load.
+
 ## Sound
 
 The same modules drive the speakers. Add an **Audio Output** module, patch

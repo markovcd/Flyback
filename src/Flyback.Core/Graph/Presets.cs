@@ -15,6 +15,7 @@ public static class Presets
         new("Plasma", Plasma),
         new("Kaleidoscope", Kaleidoscope),
         new("Feedback tunnel", FeedbackTunnel),
+        new("Nebula", Nebula),
         new("Drone", Drone),
         new("Empty", Empty),
     ];
@@ -125,6 +126,111 @@ public static class Presets
          .Wire(slow, 0, tint, 0)
          .Wire(rings, 0, tint, 2)
          .Wire(tint, 0, screen, 0);
+
+        return b.Patch;
+    }
+
+    /// <summary>
+    /// Everything the video side can do, in one patch: coordinates turned, folded
+    /// into wedges, bent by a noise field read from inside the fold, taken as
+    /// travelling rings, and laid over a trail of its own previous frames.
+    /// </summary>
+    /// <remarks>
+    /// The step that matters is the Warp. Rotate, Kaleidoscope and Rings are all
+    /// geometry, and geometry alone looks like geometry however much of it you
+    /// stack up — the picture only stops looking constructed once the coordinates
+    /// themselves are displaced by something with no structure.
+    /// <para>
+    /// The order of those two is the whole trick, and it is not the obvious one.
+    /// Warping before folding looks marvellous and is not a kaleidoscope at all:
+    /// the displacement varies per pixel, so the fold has nothing symmetric left
+    /// to work with and the eight-fold structure vanishes. Folding first and
+    /// warping inside the wedge — by a field that is itself read from the folded
+    /// plane, so it repeats with it — keeps the symmetry and bends it at once.
+    /// </para>
+    /// <para>
+    /// Feeding that same field into the hue is what ties shape to colour, so it
+    /// reads as one moving thing rather than a pattern with a palette applied to
+    /// it. And it is the most expensive preset here by some way, which is also
+    /// the point of having it: it is what the renderer looks like under load.
+    /// </para>
+    /// </remarks>
+    public static Patch Nebula(ModuleCatalog modules)
+    {
+        var b = new PatchBuilder(modules);
+
+        var coord = b.Add("coord", 40, 300);
+
+        // Three clocks at different rates, so nothing in the picture ever quite
+        // lines up with anything else and it does not visibly loop.
+        var spin = b.Add("time", 40, 80, (0, 0.05f));
+        var boil = b.Add("time", 40, 560, (0, 0.12f));
+        var pulse = b.Add("time", 40, 720, (0, 0.2f));
+
+        var turn = b.Add("space.rotate", 250, 220);
+        var fold = b.Add("space.kaleidoscope", 450, 220, (2, 8f));
+
+        // Read from the folded plane, not the flat one, so the field is itself
+        // symmetric — warping by anything asymmetric here would quietly undo the
+        // fold and leave the picture looking like ordinary noise.
+        var field = b.Add("pattern.noise", 660, 560, (3, 1.4f));
+
+        var bend = b.Add("space.warp", 880, 240, (3, 0.5f));
+        var bands = b.Add("pattern.rings", 1080, 260, (2, 2.5f));
+
+        // Rings are a sine, so most of the frame is dark and only the crests
+        // survive as filaments.
+        var filament = b.Add("math.smoothstep", 1080, 320, (0, 0.15f), (1, 0.85f));
+
+        // Hue drifts with the field and with time, wrapped back into 0..1.
+        var drift = b.Add("math.add", 890, 620);
+        var hue = b.Add("math.fract", 1080, 620);
+
+        var fresh = b.Add("colour.hsv", 1270, 400, (1, 0.85f));
+
+        // The previous frame, zoomed out a hair and turned, so what is already on
+        // screen spirals outward while new filaments arrive underneath it.
+        var widen = b.Add("space.scale", 250, 900, (2, 0.99f));
+        var swirl = b.Add("space.rotate", 450, 900, (2, 0.015f));
+        var previous = b.Add("feedback", 660, 900);
+        var trail = b.Add("colour.gain", 870, 900, (1, 0.92f), (2, 0f));
+
+        // Max rather than a blend: a trail that is brighter than the new frame
+        // keeps its brightness, which is what makes the streaks read as trails
+        // rather than as a smeared copy.
+        var combine = b.Add("math.max", 1470, 620);
+        var screen = b.Add(NodeCatalog.VideoOutputTypeId, 1660, 640);
+
+        b.Wire(coord, 0, turn, 0)
+         .Wire(coord, 1, turn, 1)
+         .Wire(spin, 0, turn, 2)
+         .Wire(turn, 0, fold, 0)
+         .Wire(turn, 1, fold, 1)
+         .Wire(fold, 0, field, 0)
+         .Wire(fold, 1, field, 1)
+         .Wire(boil, 0, field, 2)
+         .Wire(fold, 0, bend, 0)
+         .Wire(fold, 1, bend, 1)
+         .Wire(field, 0, bend, 2)
+         .Wire(bend, 0, bands, 0)
+         .Wire(bend, 1, bands, 1)
+         .Wire(pulse, 0, bands, 3)
+         .Wire(bands, 0, filament, 2)
+         .Wire(field, 0, drift, 0)
+         .Wire(pulse, 0, drift, 1)
+         .Wire(drift, 0, hue, 0)
+         .Wire(hue, 0, fresh, 0)
+         .Wire(filament, 0, fresh, 2)
+         .Wire(coord, 0, widen, 0)
+         .Wire(coord, 1, widen, 1)
+         .Wire(widen, 0, swirl, 0)
+         .Wire(widen, 1, swirl, 1)
+         .Wire(swirl, 0, previous, 0)
+         .Wire(swirl, 1, previous, 1)
+         .Wire(previous, 0, trail, 0)
+         .Wire(trail, 0, combine, 0)
+         .Wire(fresh, 0, combine, 1)
+         .Wire(combine, 0, screen, 0);
 
         return b.Patch;
     }
