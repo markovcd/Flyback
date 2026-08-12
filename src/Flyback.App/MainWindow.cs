@@ -697,9 +697,8 @@ public sealed class MainWindow : Window
     /// </summary>
     private string PluginSummary()
     {
-        var lines = new List<string>();
+        var lines = new List<string> { plugins.Plugins.Count == 0 ? "No plugins loaded." : "Loaded:" };
 
-        lines.Add(plugins.Plugins.Count == 0 ? "No plugins loaded." : "Loaded:");
         lines.AddRange(plugins.Plugins.Select(p => $"    {p.Info.Name}  ({p.Info.Id})"));
 
         // Module providers are worth naming separately: they are what a saved
@@ -919,14 +918,12 @@ public sealed class MainWindow : Window
     /// </summary>
     private static void RenderAudioFile(Patch patch, string path)
     {
-        const int sampleRate = 48_000;
-
         var program = patch.CompileForAudio().Program;
+        var renderer = new AudioRenderer();
+        var buffer = new float[renderer.SampleRate * ExportSeconds * NodeCatalog.AudioChannels];
+        renderer.Render(program, buffer, AudioScanFor(patch));
 
-        var buffer = new float[sampleRate * ExportSeconds * NodeCatalog.AudioChannels];
-        new AudioRenderer(sampleRate).Render(program, buffer, AudioScanFor(patch));
-
-        WavWriter.Write(path, buffer, sampleRate, NodeCatalog.AudioChannels);
+        WavWriter.Write(path, buffer, renderer.SampleRate, NodeCatalog.AudioChannels);
     }
 
     private static AudioScan AudioScanFor(Patch patch)
@@ -935,6 +932,8 @@ public sealed class MainWindow : Window
         var def = NodeCatalog.Get(NodeCatalog.AudioOutputTypeId);
         if (sink is null || def is null) return AudioScan.TimeDriven;
 
+        return new AudioScan(Knob("scan") >= 0.5f, MathF.Max(Knob("scan rate"), 1f), 16f / 9f);
+
         float Knob(string name)
         {
             for (var i = 0; i < def.Inputs.Count; i++)
@@ -942,8 +941,6 @@ public sealed class MainWindow : Window
                     return i < sink.InputValues.Length ? sink.InputValues[i] : def.Inputs[i].Default;
             return 0f;
         }
-
-        return new AudioScan(Knob("scan") >= 0.5f, MathF.Max(Knob("scan rate"), 1f), 16f / 9f);
     }
 
     private static FilePickerFileType PatchFileType => new("Flyback patch")
