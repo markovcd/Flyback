@@ -6,6 +6,7 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <AssemblyName>Flyback</AssemblyName>
     <RootNamespace>Flyback.App</RootNamespace>
+    <ApplicationIcon>..\..\flyback.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
@@ -30,6 +31,12 @@
     <PackageReference Include="Avalonia.Desktop" Version="12.1.1" />
     <PackageReference Include="Avalonia.Fonts.Inter" Version="12.1.1" />
     <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\flyback.ico">
+      <Link>flyback.ico</Link>
+    </None>
   </ItemGroup>
 
 </Project>
