@@ -32,8 +32,23 @@ public sealed class PreviewSurface : Control
     private PixelSize resolution = new(640, 360);
     private CompiledPatch activeProgram = CompiledPatch.Black;
     private TimeSpan lastTick;
+    private TimeSpan restUntil;
     private bool rendering;
     private bool dirty = true;
+
+    /// <summary>
+    /// Fraction of a frame's own cost to idle for afterwards. A frame at 960x540
+    /// costs longer than the timer interval, so without this the preview renders
+    /// back to back and the machine never has a quiet moment — which is when the
+    /// audio callback misses its deadline.
+    /// </summary>
+    /// <remarks>
+    /// Proportional rather than a fixed cap, so it scales itself: a cheap patch
+    /// rests a millisecond and still reaches the full 60 Hz, while an expensive
+    /// one settles at about two thirds of the rate it would otherwise manage and
+    /// leaves the rest of the machine alone.
+    /// </remarks>
+    private const double RestFraction = 0.5;
 
     public PreviewSurface()
     {
@@ -112,6 +127,9 @@ public sealed class PreviewSurface : Control
         // A frame still in flight means we're not keeping up; skip rather than queue.
         if (rendering) return;
 
+        // And having just finished an expensive one, let the machine breathe.
+        if (frameClock.Elapsed < restUntil) return;
+
         var now = frameClock.Elapsed;
         var delta = now - lastTick;
         lastTick = now;
@@ -153,6 +171,7 @@ public sealed class PreviewSurface : Control
         finally
         {
             rendering = false;
+            restUntil = frameClock.Elapsed + TimeSpan.FromMilliseconds(FrameMilliseconds * RestFraction);
         }
     }
 

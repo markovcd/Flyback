@@ -130,6 +130,78 @@ public class AudioRendererTests
         Peak(buffer.AsSpan(buffer.Length - 2_000)).ShouldBeLessThan(0.02f);
     }
 
+    /// <summary>
+    /// A program with delay lines is really two things — the ops and the memory
+    /// they index into — and they have to be swapped together. Handed out rather
+    /// than stored, so a caller swapping under a live callback can put both into
+    /// one write; kept apart, a callback still on the previous program would
+    /// index into the new program's lines and fault if the count had changed.
+    /// </summary>
+    [Fact]
+    public void Delay_memory_belongs_to_the_program_that_asked_for_it()
+    {
+        var renderer = new AudioRenderer(SampleRate);
+
+        var none = new CompiledPatch([new Op(OpCode.Const, 0)], 1, 0, 1);
+        var one = Lines(0.25f);
+        var two = Lines(0.25f, 0.5f);
+
+        renderer.DelayMemoryFor(none).ShouldBeNull();
+
+        var first = renderer.DelayMemoryFor(one).ShouldNotBeNull();
+        first.Count.ShouldBe(1);
+
+        // The same shape keeps the same buffers, which is what lets a delay carry
+        // on ringing while a knob is turned.
+        renderer.DelayMemoryFor(one, first).ShouldBeSameAs(first);
+
+        // A different shape must not be handed the old lines.
+        renderer.DelayMemoryFor(two, first).ShouldNotBeSameAs(first);
+        renderer.DelayMemoryFor(two, first).ShouldNotBeNull().Count.ShouldBe(2);
+    }
+
+    /// <summary>Memory brought by the caller is used, and produces what the renderer's own would.</summary>
+    [Fact]
+    public void Rendering_with_borrowed_memory_matches_rendering_without()
+    {
+        var program = Echo();
+
+        var mine = new AudioRenderer(SampleRate);
+        var theirs = new AudioRenderer(SampleRate);
+
+        var withOwn = new float[4_000];
+        var withBorrowed = new float[4_000];
+
+        mine.Render(program, withOwn, AudioScan.TimeDriven);
+        theirs.Render(program, withBorrowed, AudioScan.TimeDriven, theirs.DelayMemoryFor(program));
+
+        withBorrowed.ShouldBe(withOwn);
+    }
+
+    /// <summary>A program that only declares delay lines, for shape comparisons.</summary>
+    private static CompiledPatch Lines(params float[] lengths)
+    {
+        var emitter = new Emitter();
+        var zero = emitter.Constant(0f);
+
+        foreach (var length in lengths)
+            emitter.DelayLine(OpCode.Delay, zero, zero, zero, length);
+
+        return new CompiledPatch(emitter.ToProgram(), emitter.RegisterCount, 0, 1);
+    }
+
+    /// <summary>A tone through a delay, so there is something for the memory to hold.</summary>
+    private static CompiledPatch Echo()
+    {
+        var emitter = new Emitter();
+
+        var tone = emitter.Unary(OpCode.Sin, emitter.Mul(emitter.Load(OpCode.LoadT), 1_382f));
+        var echoed = emitter.DelayLine(
+            OpCode.Delay, tone, emitter.Constant(0.6f), emitter.Constant(0.01f), 0.05f);
+
+        return new CompiledPatch(emitter.ToProgram(), emitter.RegisterCount, echoed.Base, 1);
+    }
+
     [Fact]
     public void A_patch_with_no_audio_sink_is_silent_rather_than_a_failure()
     {

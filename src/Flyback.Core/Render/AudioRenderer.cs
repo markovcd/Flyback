@@ -45,8 +45,8 @@ public sealed class AudioRenderer
     private int historyPosition;
 
     /// <summary>
-    /// The program's delay lines, if it has any. Held here rather than on the
-    /// program so that recompiling mid-buffer does not lose or duplicate them.
+    /// Delay lines for callers that do not manage their own — offline rendering
+    /// and tests, where nothing swaps a program underneath us.
     /// </summary>
     private DelayState? delays;
 
@@ -88,29 +88,56 @@ public sealed class AudioRenderer
     {
         var needed = Math.Max(program.RegisterCount, program.OutputWidth);
         if (registerBank.Length < needed) registerBank = new float[needed];
+    }
 
-        // Delay lines run at the oversampled rate, because that is how often the
-        // program is actually evaluated. A recompile that changes the delays at
-        // all gets new buffers, and whatever was ringing in the old ones is lost
-        // — it belonged to a patch that no longer exists.
+    /// <summary>
+    /// Delay memory for a program, reusing what is already there when the shape
+    /// has not changed — so turning a knob keeps the tail ringing and only adding
+    /// or removing a delay cuts it.
+    /// </summary>
+    /// <remarks>
+    /// Handed back rather than stored, because which lines a program needs is a
+    /// property of *that* program. A caller swapping programs under a live
+    /// callback has to swap both together or the old program will index into the
+    /// new program's lines — see the state record in <c>AudioEngine</c>. Lines run
+    /// at the oversampled rate, because that is how often the program is
+    /// evaluated.
+    /// </remarks>
+    public DelayState? DelayMemoryFor(CompiledPatch program, DelayState? existing = null)
+    {
+        if (program.DelayLengths.Count == 0) return null;
+
         var rate = SampleRate * Oversample;
 
-        if (program.DelayLengths.Count == 0) delays = null;
-        else if (delays?.Fits(program.DelayLengths, rate) != true)
-            delays = new DelayState(program.DelayLengths, rate);
+        return existing?.Fits(program.DelayLengths, rate) == true
+            ? existing
+            : new DelayState(program.DelayLengths, rate);
     }
 
     /// <summary>
     /// Fills an interleaved stereo buffer. Allocation-free once constructed, so
     /// it is safe to call from an audio callback.
     /// </summary>
-    public void Render(CompiledPatch program, Span<float> interleavedStereo, in AudioScan scan)
+    /// <param name="memory">
+    /// The program's delay lines. Pass them explicitly from anywhere that swaps
+    /// programs while this is running, so the pair is always consistent; leave it
+    /// null offline and this keeps its own, allocating them on the spot.
+    /// </param>
+    public void Render(
+        CompiledPatch program,
+        Span<float> interleavedStereo,
+        in AudioScan scan,
+        DelayState? memory = null)
     {
         var frames = interleavedStereo.Length / 2;
         if (frames == 0) return;
 
         Prepare(program);
         var registers = registerBank;
+
+        // Read once. Re-reading a field per sample would let a swap take effect
+        // halfway through a buffer, which is the one place it must not.
+        var lines = memory ?? Own(program);
 
         var left = program.OutputBase;
         var right = program.OutputWidth > 1 ? program.OutputBase + 1 : program.OutputBase;
@@ -129,7 +156,7 @@ public sealed class AudioRenderer
                 // on the audio timeline, so SampleFeedback reads silence. Delay
                 // lines are the other way round — this is the only path that has
                 // them, because it is the only one that runs in order.
-                program.Evaluate(x, y, (float)t, registers, default, delays);
+                program.Evaluate(x, y, (float)t, registers, default, lines);
 
                 delayLines[0][historyPosition] = registers[left];
                 delayLines[1][historyPosition] = registers[right];
@@ -142,6 +169,12 @@ public sealed class AudioRenderer
             Time += outerStep;
         }
     }
+
+    /// <summary>
+    /// Lines for a caller that did not bring any. Safe here only because such a
+    /// caller is by definition not swapping programs concurrently.
+    /// </summary>
+    private DelayState? Own(CompiledPatch program) => delays = DelayMemoryFor(program, delays);
 
     /// <summary>
     /// Where the patch is "looking" at time <paramref name="t"/>. The horizontal

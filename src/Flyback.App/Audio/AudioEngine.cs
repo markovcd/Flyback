@@ -18,10 +18,17 @@ namespace Flyback.App.Audio;
 /// </remarks>
 public sealed class AudioEngine(IAudioDevice device) : IDisposable
 {
-    private sealed record State(CompiledPatch Program, AudioScan Scan);
+    /// <summary>
+    /// A program and everything that goes with it. The delay lines belong here
+    /// rather than to the renderer because they are a property of one program:
+    /// swapped separately, a callback still rendering the previous program would
+    /// index into the new program's lines, and if the count differed at all — a
+    /// Delay added or removed — that is a fault on the audio thread.
+    /// </summary>
+    private sealed record State(CompiledPatch Program, AudioScan Scan, DelayState? Memory);
 
     private readonly AudioRenderer renderer = new(device.SampleRate);
-    private State activeState = new(CompiledPatch.Silent, AudioScan.TimeDriven);
+    private State activeState = new(CompiledPatch.Silent, AudioScan.TimeDriven, null);
 
     public bool IsRunning => device.IsRunning;
 
@@ -39,15 +46,21 @@ public sealed class AudioEngine(IAudioDevice device) : IDisposable
     public void Rewind() => renderer.Reset();
 
     /// <summary>
-    /// Swaps in a freshly compiled patch. Sizing the register scratch happens
-    /// here, on the UI thread, so the callback never has to allocate.
+    /// Swaps in a freshly compiled patch. Sizing the register scratch and the
+    /// delay lines happens here, on the UI thread, so the callback never has to
+    /// allocate — and both go in with the program they belong to, in one write.
     /// </summary>
     public void Update(Patch patch)
     {
         var program = patch.CompileForAudio().Program;
 
         renderer.Prepare(program);
-        Volatile.Write(ref activeState, new State(program, ScanFor(patch)));
+
+        // Reusing the lines when the shape has not changed is what keeps a delay
+        // ringing through an edit; only adding or removing one cuts the tail.
+        var memory = renderer.DelayMemoryFor(program, Volatile.Read(ref activeState).Memory);
+
+        Volatile.Write(ref activeState, new State(program, ScanFor(patch), memory));
     }
 
     /// <summary>
@@ -80,7 +93,7 @@ public sealed class AudioEngine(IAudioDevice device) : IDisposable
     private void Fill(Span<float> buffer)
     {
         var state = Volatile.Read(ref activeState);
-        renderer.Render(state.Program, buffer, state.Scan);
+        renderer.Render(state.Program, buffer, state.Scan, state.Memory);
     }
 
     public void Dispose() => device.Dispose();

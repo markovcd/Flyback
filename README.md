@@ -33,8 +33,16 @@ allocation; anything the Output node can't reach is never compiled, so unused
 modules cost nothing; and because each op is one line of arithmetic, the same
 op list is what a future GLSL backend would emit rather than interpret.
 
-Roughly 2 ms per 960×540 frame on a desktop CPU, so the preview has plenty of
-headroom at 60 Hz.
+Rendering a frame is the expensive thing here, not making sound. On a 12-core
+desktop a 960×540 frame of the Plasma preset costs about 23 ms of wall time and
+127 ms of CPU across the rows, so the preview settles below 60 Hz on anything
+elaborate — while a second of audio for the same patch costs around 6% of one
+core.
+
+That asymmetry is why the renderer leaves one core alone and why the preview
+rests between frames in proportion to what the last one cost. Sound has a
+deadline and a picture does not: a dropped frame is invisible, and a late audio
+buffer is a click.
 
 ### Coordinates
 

@@ -10,6 +10,23 @@ namespace Flyback.Core.Render;
 /// </summary>
 public sealed class SynthRenderer
 {
+    /// <summary>
+    /// One core is deliberately left alone. A frame at 960x540 costs more than a
+    /// frame interval, so this loop runs essentially back to back — and taking
+    /// every core with it leaves the audio callback nowhere to be scheduled. It
+    /// needs a twentieth of a core to keep up and gets none, which is heard as
+    /// the sound choking while the picture is busy.
+    /// </summary>
+    /// <remarks>
+    /// Reserving one costs a twelfth of the frame rate on a twelve-core machine
+    /// and buys back every dropout. On a single-core machine there is nothing to
+    /// reserve and this is 1, which is what the loop would have done anyway.
+    /// </remarks>
+    private static readonly ParallelOptions Spare = new()
+    {
+        MaxDegreeOfParallelism = Math.Max(1, Environment.ProcessorCount - 1),
+    };
+
     private float[] currentFrame = [];
     private float[] previousFrame = [];
     private int bufferWidth;
@@ -53,6 +70,7 @@ public sealed class SynthRenderer
         Parallel.For(
             0,
             height,
+            Spare,
             patch.AllocateRegisters,
             (y, _, registers) =>
             {

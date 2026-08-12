@@ -483,6 +483,7 @@ public sealed class MainWindow : Window
             FormatString = "0.###",
             FontSize = 12,
             VerticalAlignment = VerticalAlignment.Center,
+            ShowButtonSpinner = false,
         };
 
         var updating = false;
