@@ -22,25 +22,24 @@ namespace Flyback.App.Controls;
 /// </remarks>
 public sealed class PreviewSurface : Control
 {
-    private readonly SynthRenderer _renderer = new();
-    private readonly DispatcherTimer _timer;
-    private readonly Stopwatch _clock = Stopwatch.StartNew();
+    private readonly SynthRenderer renderer = new();
+    private readonly DispatcherTimer timer;
+    private readonly Stopwatch frameClock = Stopwatch.StartNew();
 
-    private WriteableBitmap? _bitmap;
-    private byte[] _backBuffer = [];
-    private PixelSize _bufferSize;
-    private PixelSize _resolution = new(640, 360);
-    private CompiledPatch _program = CompiledPatch.Black;
-    private TimeSpan _lastTick;
-    private double _frameMilliseconds;
-    private bool _rendering;
-    private bool _dirty = true;
+    private WriteableBitmap? bitmap;
+    private byte[] backBuffer = [];
+    private PixelSize bufferSize;
+    private PixelSize resolution = new(640, 360);
+    private CompiledPatch activeProgram = CompiledPatch.Black;
+    private TimeSpan lastTick;
+    private bool rendering;
+    private bool dirty = true;
 
     public PreviewSurface()
     {
-        _timer = new DispatcherTimer(DispatcherPriority.Background) { Interval = TimeSpan.FromMilliseconds(16) };
-        _timer.Tick += OnTick;
-        _timer.Start();
+        timer = new DispatcherTimer(DispatcherPriority.Background) { Interval = TimeSpan.FromMilliseconds(16) };
+        timer.Tick += OnTick;
+        timer.Start();
     }
 
     /// <summary>Patch time in seconds. This is what the Time module reads.</summary>
@@ -57,27 +56,27 @@ public sealed class PreviewSurface : Control
     public Func<double>? Clock { get; set; }
 
     /// <summary>Cost of the last frame, for the status readout.</summary>
-    public double FrameMilliseconds => _frameMilliseconds;
+    public double FrameMilliseconds { get; private set; }
 
     public PixelSize Resolution
     {
-        get => _resolution;
+        get => resolution;
         set
         {
-            if (_resolution == value) return;
+            if (resolution == value) return;
 
-            _resolution = value;
-            _dirty = true;
+            resolution = value;
+            dirty = true;
         }
     }
 
     public CompiledPatch Program
     {
-        get => _program;
+        get => activeProgram;
         set
         {
-            _program = value;
-            _dirty = true;
+            activeProgram = value;
+            dirty = true;
         }
     }
 
@@ -85,8 +84,8 @@ public sealed class PreviewSurface : Control
     public void Rewind()
     {
         Time = 0;
-        _renderer.Reset();
-        _dirty = true;
+        renderer.Reset();
+        dirty = true;
     }
 
     /// <summary>Renders a one-off frame at an arbitrary size and writes it as a PNG.</summary>
@@ -104,25 +103,29 @@ public sealed class PreviewSurface : Control
 
     protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
     {
-        _timer.Stop();
+        timer.Stop();
         base.OnDetachedFromVisualTree(e);
     }
 
     private async void OnTick(object? sender, EventArgs e)
     {
         // A frame still in flight means we're not keeping up; skip rather than queue.
-        if (_rendering) return;
+        if (rendering) return;
 
-        var now = _clock.Elapsed;
-        var delta = now - _lastTick;
-        _lastTick = now;
+        var now = frameClock.Elapsed;
+        var delta = now - lastTick;
+        lastTick = now;
 
         if (Clock is { } clock)
         {
             var driven = clock();
 
-            // A stopped audio clock holds its value; nothing to redraw.
-            if (driven == Time && !_dirty) return;
+            // A stopped audio clock holds its value; nothing to redraw. This is
+            // change detection against the double we ourselves stored last tick,
+            // not a numeric comparison — a tolerance here would drop real frames
+            // whenever the timeline advances slowly.
+            // ReSharper disable once CompareOfFloatsByEqualityOperator
+            if (driven == Time && !dirty) return;
 
             Time = driven;
         }
@@ -131,13 +134,13 @@ public sealed class PreviewSurface : Control
             // Clamp so a stall (dragging the window, a slow recompile) doesn't jump time.
             Time += Math.Min(delta.TotalSeconds, 0.1);
         }
-        else if (!_dirty)
+        else if (!dirty)
         {
             return;
         }
 
-        _dirty = false;
-        _rendering = true;
+        dirty = false;
+        rendering = true;
 
         try
         {
@@ -149,37 +152,37 @@ public sealed class PreviewSurface : Control
         }
         finally
         {
-            _rendering = false;
+            rendering = false;
         }
     }
 
     private async Task RenderFrameAsync()
     {
         // Snapshot everything the background pass needs while still on the UI thread.
-        var size = new PixelSize(Math.Max(_resolution.Width, 1), Math.Max(_resolution.Height, 1));
-        var program = _program;
+        var size = new PixelSize(Math.Max(resolution.Width, 1), Math.Max(resolution.Height, 1));
+        var program = activeProgram;
         var time = (float)Time;
 
-        if (_bufferSize != size)
+        if (bufferSize != size)
         {
-            _backBuffer = new byte[size.Width * 4 * size.Height];
-            _bufferSize = size;
+            backBuffer = new byte[size.Width * 4 * size.Height];
+            bufferSize = size;
         }
 
-        var buffer = _backBuffer;
+        var buffer = backBuffer;
         var stride = size.Width * 4;
 
-        var started = _clock.Elapsed;
-        await Task.Run(() => _renderer.Render(program, time, size.Width, size.Height, buffer, stride));
-        _frameMilliseconds = (_clock.Elapsed - started).TotalMilliseconds;
+        var started = frameClock.Elapsed;
+        await Task.Run(() => renderer.Render(program, time, size.Width, size.Height, buffer, stride));
+        FrameMilliseconds = (frameClock.Elapsed - started).TotalMilliseconds;
 
         // The control may have been resized or detached while we were rendering.
-        if (_bufferSize != size) return;
+        if (bufferSize != size) return;
 
-        if (_bitmap is null || _bitmap.PixelSize != size)
+        if (bitmap is null || bitmap.PixelSize != size)
         {
-            _bitmap?.Dispose();
-            _bitmap = new WriteableBitmap(size, new Vector(96, 96), PixelFormat.Bgra8888, AlphaFormat.Opaque);
+            bitmap?.Dispose();
+            bitmap = new WriteableBitmap(size, new Vector(96, 96), PixelFormat.Bgra8888, AlphaFormat.Opaque);
         }
 
         Blit(buffer, stride, size);
@@ -189,7 +192,7 @@ public sealed class PreviewSurface : Control
     /// <summary>Copies the finished frame into the bitmap. Cheap enough to keep on the UI thread.</summary>
     private unsafe void Blit(byte[] buffer, int stride, PixelSize size)
     {
-        using var locked = _bitmap!.Lock();
+        using var locked = bitmap!.Lock();
 
         fixed (byte* source = buffer)
         {
@@ -211,9 +214,9 @@ public sealed class PreviewSurface : Control
         var area = new Rect(Bounds.Size);
         context.FillRectangle(Brushes.Black, area);
 
-        if (_bitmap is null) return;
+        if (bitmap is null) return;
 
-        context.DrawImage(_bitmap, new Rect(_bitmap.Size), Letterbox(area, _bitmap.Size));
+        context.DrawImage(bitmap, new Rect(bitmap.Size), Letterbox(area, bitmap.Size));
     }
 
     /// <summary>Largest rect of the image's aspect that fits in <paramref name="area"/>, centred.</summary>

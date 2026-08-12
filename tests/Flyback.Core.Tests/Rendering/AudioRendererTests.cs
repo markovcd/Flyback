@@ -29,7 +29,7 @@ public class AudioRendererTests
     }
 
     private static CompiledPatch Compile(Patch patch) =>
-        PatchCompiler.Compile(patch, NodeCatalog.AudioOutputTypeId, NodeCatalog.AudioChannels).Program;
+        patch.CompileForAudio().Program;
 
     private static float[] Render(CompiledPatch program, int frames, int oversample = 4)
     {
@@ -133,11 +133,13 @@ public class AudioRendererTests
     [Fact]
     public void A_patch_with_no_audio_sink_is_silent_rather_than_a_failure()
     {
-        var result = PatchCompiler.Compile(
-            Presets.Plasma(), NodeCatalog.AudioOutputTypeId, NodeCatalog.AudioChannels);
+        var result = Presets.Plasma().CompileForAudio();
 
         result.Issues.ShouldBeEmpty();
 
+        // Silence means exactly zero, not nearly zero — a tolerance would pass
+        // on a patch that was quietly bleeding signal into the audio path.
+        // ReSharper disable once CompareOfFloatsByEqualityOperator
         Render(result.Program, 1_000).ShouldAllBe(v => v == 0f);
     }
 

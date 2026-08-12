@@ -30,20 +30,20 @@ public sealed class MainWindow : Window
 
     private const int ExportSeconds = 10;
 
-    private readonly NodeEditor _editor = new();
-    private readonly PreviewSurface _preview = new();
-    private readonly StackPanel _inspector = new() { Margin = new Thickness(12), Spacing = 8 };
-    private readonly TextBlock _status = new() { VerticalAlignment = VerticalAlignment.Center };
-    private readonly TextBlock _issues = new()
+    private readonly NodeEditor editor = new();
+    private readonly PreviewSurface preview = new();
+    private readonly StackPanel inspector = new() { Margin = new Thickness(12), Spacing = 8 };
+    private readonly TextBlock status = new() { VerticalAlignment = VerticalAlignment.Center };
+    private readonly TextBlock issues = new()
     {
         VerticalAlignment = VerticalAlignment.Center,
         Foreground = new SolidColorBrush(Color.FromRgb(0xFF, 0xB0, 0x40)),
     };
 
-    private readonly ToggleButton _playButton = new() { Content = "Pause", Width = 78, IsChecked = true };
-    private readonly ToggleButton _audioButton = new() { Content = "Audio off", Width = 92 };
+    private readonly ToggleButton playButton = new() { Content = "Pause", Width = 78, IsChecked = true };
+    private readonly ToggleButton audioButton = new() { Content = "Audio off", Width = 92 };
 
-    private readonly AudioEngine _audio = new(new WasapiAudioDevice());
+    private readonly AudioEngine audio = new(new WasapiAudioDevice());
 
     public MainWindow()
     {
@@ -55,12 +55,12 @@ public sealed class MainWindow : Window
         WindowStartupLocation = WindowStartupLocation.CenterScreen;
         Background = new SolidColorBrush(Color.FromRgb(0x16, 0x18, 0x1B));
 
-        _editor.PatchChanged += (_, _) => Recompile();
-        _editor.SelectionChanged += (_, _) => BuildInspector();
+        editor.PatchChanged += (_, _) => Recompile();
+        editor.SelectionChanged += (_, _) => BuildInspector();
 
         Content = BuildLayout();
 
-        _editor.Patch = Presets.Default();
+        editor.Patch = Presets.Default();
 
         var ticker = new DispatcherTimer(DispatcherPriority.Background) { Interval = TimeSpan.FromMilliseconds(250) };
         ticker.Tick += (_, _) => UpdateStatus();
@@ -94,7 +94,7 @@ public sealed class MainWindow : Window
 
         var palette = BuildPalette();
         Grid.SetColumn(palette, 0);
-        Grid.SetColumn(_editor, 2);
+        Grid.SetColumn(editor, 2);
 
         var leftSplitter = new GridSplitter { Width = 5, Background = Brushes.Transparent };
         Grid.SetColumn(leftSplitter, 1);
@@ -107,7 +107,7 @@ public sealed class MainWindow : Window
 
         columns.Children.Add(palette);
         columns.Children.Add(leftSplitter);
-        columns.Children.Add(_editor);
+        columns.Children.Add(editor);
         columns.Children.Add(rightSplitter);
         columns.Children.Add(right);
 
@@ -130,8 +130,8 @@ public sealed class MainWindow : Window
         {
             if (presets.SelectedIndex >= 0 && presets.SelectedIndex < Presets.All.Count)
             {
-                _editor.Patch = Presets.All[presets.SelectedIndex].Build();
-                _preview.Rewind();
+                editor.Patch = Presets.All[presets.SelectedIndex].Build();
+                preview.Rewind();
             }
         };
 
@@ -141,22 +141,22 @@ public sealed class MainWindow : Window
         var save = new Button { Content = "Save…" };
         save.Click += async (_, _) => await SavePatchAsync();
 
-        _playButton.IsCheckedChanged += (_, _) =>
+        playButton.IsCheckedChanged += (_, _) =>
         {
-            _preview.IsPlaying = _playButton.IsChecked == true;
-            _playButton.Content = _preview.IsPlaying ? "Pause" : "Play";
+            preview.IsPlaying = playButton.IsChecked == true;
+            playButton.Content = preview.IsPlaying ? "Pause" : "Play";
         };
 
         var rewind = new Button { Content = "Rewind" };
         rewind.Click += (_, _) =>
         {
-            _audio.Rewind();
-            _preview.Rewind();
+            audio.Rewind();
+            preview.Rewind();
         };
 
         // Off by default: launching a program should not make a noise.
-        ToolTip.SetTip(_audioButton, "Play the patch through the speakers. Needs an Audio Output module.");
-        _audioButton.IsCheckedChanged += (_, _) => SetAudioEnabled(_audioButton.IsChecked == true);
+        ToolTip.SetTip(audioButton, "Play the patch through the speakers. Needs an Audio Output module.");
+        audioButton.IsCheckedChanged += (_, _) => SetAudioEnabled(audioButton.IsChecked == true);
 
         var exportAudio = new Button { Content = "Render audio…" };
         ToolTip.SetTip(exportAudio, $"Render {ExportSeconds} seconds of the patch to a WAV file.");
@@ -171,9 +171,9 @@ public sealed class MainWindow : Window
         resolution.SelectionChanged += (_, _) =>
         {
             if (resolution.SelectedIndex >= 0)
-                _preview.Resolution = Resolutions[resolution.SelectedIndex].Size;
+                preview.Resolution = Resolutions[resolution.SelectedIndex].Size;
         };
-        _preview.Resolution = Resolutions[3].Size;
+        preview.Resolution = Resolutions[3].Size;
 
         var exportFrame = new Button { Content = "Save frame…" };
         ToolTip.SetTip(exportFrame, $"Render the current moment at {ExportSize.Width} x {ExportSize.Height} and write a PNG.");
@@ -192,14 +192,14 @@ public sealed class MainWindow : Window
         bar.Children.Add(open);
         bar.Children.Add(save);
         bar.Children.Add(Separator());
-        bar.Children.Add(_playButton);
+        bar.Children.Add(playButton);
         bar.Children.Add(rewind);
         bar.Children.Add(Separator());
         bar.Children.Add(Label("Preview"));
         bar.Children.Add(resolution);
         bar.Children.Add(exportFrame);
         bar.Children.Add(Separator());
-        bar.Children.Add(_audioButton);
+        bar.Children.Add(audioButton);
         bar.Children.Add(exportAudio);
 
         return new Border
@@ -220,8 +220,8 @@ public sealed class MainWindow : Window
             Margin = new Thickness(12, 5),
         };
 
-        bar.Children.Add(_status);
-        bar.Children.Add(_issues);
+        bar.Children.Add(status);
+        bar.Children.Add(issues);
 
         return new Border
         {
@@ -271,7 +271,7 @@ public sealed class MainWindow : Window
                     ToolTip.SetTip(button, def.Description);
 
                 var typeId = def.TypeId;
-                button.Click += (_, _) => _editor.AddNode(typeId);
+                button.Click += (_, _) => editor.AddNode(typeId);
                 list.Children.Add(button);
             }
         }
@@ -298,23 +298,23 @@ public sealed class MainWindow : Window
         var previewBox = new Border
         {
             Background = Brushes.Black,
-            Child = _preview,
+            Child = preview,
         };
         Grid.SetRow(previewBox, 0);
 
         var splitter = new GridSplitter { Background = Brushes.Transparent, Height = 5 };
         Grid.SetRow(splitter, 1);
 
-        var inspector = new Border
+        var inspectorBorder = new Border
         {
             Background = new SolidColorBrush(Color.FromRgb(0x1C, 0x1E, 0x22)),
-            Child = new ScrollViewer { Content = _inspector },
+            Child = new ScrollViewer { Content = inspector },
         };
-        Grid.SetRow(inspector, 2);
+        Grid.SetRow(inspectorBorder, 2);
 
         grid.Children.Add(previewBox);
         grid.Children.Add(splitter);
-        grid.Children.Add(inspector);
+        grid.Children.Add(inspectorBorder);
 
         return grid;
     }
@@ -327,11 +327,11 @@ public sealed class MainWindow : Window
     /// </summary>
     private void BuildInspector()
     {
-        _inspector.Children.Clear();
+        inspector.Children.Clear();
 
-        if (_editor.SelectedNode is not { } node || NodeCatalog.Get(node.TypeId) is not { } def)
+        if (editor.SelectedNode is not { } node || NodeCatalog.Get(node.TypeId) is not { } def)
         {
-            _inspector.Children.Add(new TextBlock
+            inspector.Children.Add(new TextBlock
             {
                 Text = "Select a module to edit its values.\n\n"
                      + "Drag from a socket to patch it into another.\n"
@@ -345,14 +345,14 @@ public sealed class MainWindow : Window
             return;
         }
 
-        _inspector.Children.Add(new TextBlock
+        inspector.Children.Add(new TextBlock
         {
             Text = def.Name,
             FontSize = 17,
             FontWeight = FontWeight.SemiBold,
         });
 
-        _inspector.Children.Add(new TextBlock
+        inspector.Children.Add(new TextBlock
         {
             Text = def.Category,
             FontSize = 11,
@@ -360,7 +360,7 @@ public sealed class MainWindow : Window
         });
 
         if (!string.IsNullOrEmpty(def.Description))
-            _inspector.Children.Add(new TextBlock
+            inspector.Children.Add(new TextBlock
             {
                 Text = def.Description,
                 TextWrapping = TextWrapping.Wrap,
@@ -370,10 +370,10 @@ public sealed class MainWindow : Window
             });
 
         for (var i = 0; i < def.Inputs.Count; i++)
-            _inspector.Children.Add(BuildInputRow(node, def.Inputs[i], i));
+            inspector.Children.Add(BuildInputRow(node, def.Inputs[i], i));
 
         if (def.Inputs.Count == 0)
-            _inspector.Children.Add(new TextBlock
+            inspector.Children.Add(new TextBlock
             {
                 Text = "This module has nothing to set — it only produces.",
                 Opacity = 0.5,
@@ -386,13 +386,13 @@ public sealed class MainWindow : Window
             Margin = new Thickness(0, 14, 0, 0),
             HorizontalAlignment = HorizontalAlignment.Left,
         };
-        delete.Click += (_, _) => _editor.DeleteSelected();
-        _inspector.Children.Add(delete);
+        delete.Click += (_, _) => editor.DeleteSelected();
+        inspector.Children.Add(delete);
     }
 
     private Control BuildInputRow(NodeInstance node, PortSpec spec, int index)
     {
-        var connected = _editor.Patch.IncomingTo(node.Id, index) is not null;
+        var connected = editor.Patch.IncomingTo(node.Id, index) is not null;
 
         var label = new TextBlock
         {
@@ -455,7 +455,7 @@ public sealed class MainWindow : Window
             numeric.Value = (decimal)next;
             updating = false;
 
-            _editor.NotifyPatchChanged();
+            editor.NotifyPatchChanged();
         }
 
         slider.PropertyChanged += (_, e) =>
@@ -486,53 +486,53 @@ public sealed class MainWindow : Window
     /// </summary>
     private void Recompile()
     {
-        var result = PatchCompiler.Compile(_editor.Patch);
-        _preview.Program = result.Program;
-        _audio.Update(_editor.Patch);
+        var result = editor.Patch.CompileForVideo();
+        preview.Program = result.Program;
+        audio.Update(editor.Patch);
 
-        _issues.Text = result.HasIssues
+        issues.Text = result.HasIssues
             ? string.Join("  •  ", result.Issues.Select(i => i.Message))
             : string.Empty;
     }
 
     private void SetAudioEnabled(bool enabled)
     {
-        _audioButton.Content = enabled ? "Audio on" : "Audio off";
+        audioButton.Content = enabled ? "Audio on" : "Audio off";
 
         if (enabled)
         {
-            _audio.Update(_editor.Patch);
-            _audio.Start();
+            audio.Update(editor.Patch);
+            audio.Start();
 
             // Sound cannot stretch, so it leads and the picture follows.
-            _preview.Clock = () => _audio.Time;
+            preview.Clock = () => audio.Time;
         }
         else
         {
-            _preview.Clock = null;
-            _audio.Stop();
+            preview.Clock = null;
+            audio.Stop();
         }
     }
 
     protected override void OnClosed(EventArgs e)
     {
-        _audio.Dispose();
+        audio.Dispose();
         base.OnClosed(e);
     }
 
     private void UpdateStatus()
     {
-        var nodes = _editor.Patch.Nodes.Count;
-        var wires = _editor.Patch.Connections.Count;
-        var ops = _preview.Program.Ops.Length;
-        var ms = _preview.FrameMilliseconds;
-        var size = _preview.Resolution;
+        var nodes = editor.Patch.Nodes.Count;
+        var wires = editor.Patch.Connections.Count;
+        var ops = preview.Program.Ops.Length;
+        var ms = preview.FrameMilliseconds;
+        var size = preview.Resolution;
 
         // The loop is capped at ~60 Hz, so report the cost of a frame rather
         // than a frame rate the timer would never let you observe.
-        _status.Text = string.Create(
+        status.Text = string.Create(
             CultureInfo.InvariantCulture,
-            $"{nodes} modules · {wires} wires · {ops} ops   |   t = {_preview.Time:0.00}s   |   {ms:0.0} ms to render {size.Width} × {size.Height}");
+            $"{nodes} modules · {wires} wires · {ops} ops   |   t = {preview.Time:0.00}s   |   {ms:0.0} ms to render {size.Width} × {size.Height}");
     }
 
     // --- files -------------------------------------------------------------------
@@ -552,12 +552,12 @@ public sealed class MainWindow : Window
         {
             await using var stream = await files[0].OpenReadAsync();
             using var reader = new StreamReader(stream);
-            _editor.Patch = PatchIo.FromJson(await reader.ReadToEndAsync());
-            _preview.Rewind();
+            editor.Patch = PatchIo.FromJson(await reader.ReadToEndAsync());
+            preview.Rewind();
         }
         catch (Exception ex)
         {
-            _issues.Text = $"Could not open patch: {ex.Message}";
+            issues.Text = $"Could not open patch: {ex.Message}";
         }
     }
 
@@ -577,11 +577,11 @@ public sealed class MainWindow : Window
         {
             await using var stream = await file.OpenWriteAsync();
             await using var writer = new StreamWriter(stream);
-            await writer.WriteAsync(PatchIo.ToJson(_editor.Patch));
+            await writer.WriteAsync(PatchIo.ToJson(editor.Patch));
         }
         catch (Exception ex)
         {
-            _issues.Text = $"Could not save patch: {ex.Message}";
+            issues.Text = $"Could not save patch: {ex.Message}";
         }
     }
 
@@ -602,15 +602,15 @@ public sealed class MainWindow : Window
             var path = file.TryGetLocalPath();
             if (path is null)
             {
-                _issues.Text = "That location can't be written to directly.";
+                issues.Text = "That location can't be written to directly.";
                 return;
             }
 
-            await PreviewSurface.SaveFrameAsync(_preview.Program, _preview.Time, path, ExportSize);
+            await PreviewSurface.SaveFrameAsync(preview.Program, preview.Time, path, ExportSize);
         }
         catch (Exception ex)
         {
-            _issues.Text = $"Could not save frame: {ex.Message}";
+            issues.Text = $"Could not save frame: {ex.Message}";
         }
     }
 
@@ -631,16 +631,16 @@ public sealed class MainWindow : Window
             var path = file.TryGetLocalPath();
             if (path is null)
             {
-                _issues.Text = "That location can't be written to directly.";
+                issues.Text = "That location can't be written to directly.";
                 return;
             }
 
-            var patch = _editor.Patch;
+            var patch = editor.Patch;
             await Task.Run(() => RenderAudioFile(patch, path));
         }
         catch (Exception ex)
         {
-            _issues.Text = $"Could not render audio: {ex.Message}";
+            issues.Text = $"Could not render audio: {ex.Message}";
         }
     }
 
@@ -652,9 +652,7 @@ public sealed class MainWindow : Window
     {
         const int sampleRate = 48_000;
 
-        var program = PatchCompiler
-            .Compile(patch, NodeCatalog.AudioOutputTypeId, NodeCatalog.AudioChannels)
-            .Program;
+        var program = patch.CompileForAudio().Program;
 
         var buffer = new float[sampleRate * ExportSeconds * NodeCatalog.AudioChannels];
         new AudioRenderer(sampleRate).Render(program, buffer, AudioScanFor(patch));

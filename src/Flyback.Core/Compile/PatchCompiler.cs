@@ -22,12 +22,21 @@ public sealed record CompileResult(CompiledPatch Program, IReadOnlyList<CompileI
 /// </remarks>
 public static class PatchCompiler
 {
+    /// <summary>Compiles the program the screen shows, rooted at the video sink.</summary>
+    public static CompileResult CompileForVideo(this Patch patch) =>
+        Compile(patch, NodeCatalog.VideoOutputTypeId, NodeCatalog.VideoChannels);
+
+    /// <summary>Compiles the program the speakers play, rooted at the audio sink.</summary>
+    public static CompileResult CompileForAudio(this Patch patch) =>
+        Compile(patch, NodeCatalog.AudioOutputTypeId, NodeCatalog.AudioChannels);
+
+    /// <param name="patch">The graph to lower.</param>
     /// <param name="sinkTypeId">Module type to compile backwards from.</param>
     /// <param name="width">Registers the sink consumes — 3 for RGB, 2 for stereo.</param>
-    public static CompileResult Compile(
+    private static CompileResult Compile(
         Patch patch,
-        string sinkTypeId = NodeCatalog.OutputTypeId,
-        int width = 3)
+        string sinkTypeId,
+        int width)
     {
         var issues = new List<CompileIssue>();
         var sink = patch.Nodes.FirstOrDefault(n => n.TypeId == sinkTypeId);
@@ -36,8 +45,8 @@ public static class PatchCompiler
         {
             // Only the video sink is worth nagging about: a patch with no audio
             // is the normal case, not a mistake.
-            if (sinkTypeId == NodeCatalog.OutputTypeId)
-                issues.Add(new CompileIssue(null, "No Output node — add one to see anything."));
+            if (sinkTypeId == NodeCatalog.VideoOutputTypeId)
+                issues.Add(new CompileIssue(null, "No Video Output node — add one to see anything."));
 
             return new CompileResult(CompiledPatch.Constant(width), issues);
         }

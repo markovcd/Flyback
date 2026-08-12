@@ -18,11 +18,11 @@ compiling at all.
 Recompile the entire patch on any change. One event, one handler:
 
 ```csharp
-_editor.PatchChanged += (_, _) => Recompile();
+editor.PatchChanged += (_, _) => Recompile();
 ```
 
-`Recompile` calls `PatchCompiler.Compile`, assigns the result to
-`_preview.Program`, and puts any issues in the status bar. There is no
+`Recompile` calls `editor.Patch.CompileForVideo()`, assigns the result to
+`preview.Program`, and puts any issues in the status bar. There is no
 incremental path and no special case for constants.
 
 ## Consequences

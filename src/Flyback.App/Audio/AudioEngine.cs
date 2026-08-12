@@ -18,13 +18,13 @@ public sealed class AudioEngine(IAudioDevice device) : IDisposable
 {
     private sealed record State(CompiledPatch Program, AudioScan Scan);
 
-    private readonly AudioRenderer _renderer = new(device.SampleRate);
-    private State _state = new(CompiledPatch.Silent, AudioScan.TimeDriven);
+    private readonly AudioRenderer renderer = new(device.SampleRate);
+    private State activeState = new(CompiledPatch.Silent, AudioScan.TimeDriven);
 
     public bool IsRunning => device.IsRunning;
 
     /// <summary>Sample-accurate position, and the master timeline while sound is on.</summary>
-    public double Time => _renderer.Time;
+    public double Time => renderer.Time;
 
     public void Start()
     {
@@ -34,7 +34,7 @@ public sealed class AudioEngine(IAudioDevice device) : IDisposable
     public void Stop() => device.Stop();
 
     /// <summary>Rewinds the cursor and clears the decimation and DC filter state.</summary>
-    public void Rewind() => _renderer.Reset();
+    public void Rewind() => renderer.Reset();
 
     /// <summary>
     /// Swaps in a freshly compiled patch. Sizing the register scratch happens
@@ -42,12 +42,10 @@ public sealed class AudioEngine(IAudioDevice device) : IDisposable
     /// </summary>
     public void Update(Patch patch)
     {
-        var program = PatchCompiler
-            .Compile(patch, NodeCatalog.AudioOutputTypeId, NodeCatalog.AudioChannels)
-            .Program;
+        var program = patch.CompileForAudio().Program;
 
-        _renderer.Prepare(program);
-        Volatile.Write(ref _state, new State(program, ScanFor(patch)));
+        renderer.Prepare(program);
+        Volatile.Write(ref activeState, new State(program, ScanFor(patch)));
     }
 
     /// <summary>
@@ -79,8 +77,8 @@ public sealed class AudioEngine(IAudioDevice device) : IDisposable
 
     private void Fill(Span<float> buffer)
     {
-        var state = Volatile.Read(ref _state);
-        _renderer.Render(state.Program, buffer, state.Scan);
+        var state = Volatile.Read(ref activeState);
+        renderer.Render(state.Program, buffer, state.Scan);
     }
 
     public void Dispose() => device.Dispose();

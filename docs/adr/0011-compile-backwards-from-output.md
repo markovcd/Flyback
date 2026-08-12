@@ -19,7 +19,7 @@ Start at the `Output` node and resolve dependencies recursively, memoising by
 node ID:
 
 ```csharp
-var output = patch.Nodes.FirstOrDefault(n => n.TypeId == NodeCatalog.OutputTypeId);
+var output = patch.Nodes.FirstOrDefault(n => n.TypeId == NodeCatalog.VideoOutputTypeId);
 var result = Resolve(output);
 ```
 
@@ -44,7 +44,7 @@ appended in dependency order by construction.
 
 Two failure modes are handled rather than thrown:
 
-- **No Output node.** Compilation returns `CompiledPatch.Black` with an issue
+- **No Video Output node.** Compilation returns `CompiledPatch.Black` with an issue
   reported to the status bar, rather than failing. Deleting the Output node
   leaves a working editor showing black.
 - **A cycle.** `visiting` catches it, the offending module resolves to

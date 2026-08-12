@@ -10,16 +10,16 @@ namespace Flyback.Core.Render;
 /// </summary>
 public sealed class SynthRenderer
 {
-    private float[] _current = [];
-    private float[] _previous = [];
-    private int _width;
-    private int _height;
+    private float[] currentFrame = [];
+    private float[] previousFrame = [];
+    private int bufferWidth;
+    private int bufferHeight;
 
     /// <summary>Coordinates run -1..1 vertically and -aspect..aspect horizontally.</summary>
     public static float AspectOf(int width, int height) => height == 0 ? 1f : (float)width / height;
 
     /// <summary>Clears the feedback history, so the next frame starts from black.</summary>
-    public void Reset() => Array.Clear(_previous);
+    public void Reset() => Array.Clear(previousFrame);
 
     /// <summary>Renders one frame into a BGRA8888 buffer.</summary>
     public void Render(CompiledPatch patch, float time, int width, int height, Span<byte> destination, int stride)
@@ -38,14 +38,14 @@ public sealed class SynthRenderer
     }
 
     /// <summary>Renders one frame into a BGRA8888 buffer that the caller has already pinned or mapped.</summary>
-    public unsafe void Render(CompiledPatch patch, float time, int width, int height, byte* destination, int stride)
+    private unsafe void Render(CompiledPatch patch, float time, int width, int height, byte* destination, int stride)
     {
         if (width <= 0 || height <= 0) return;
 
         EnsureBuffers(width, height);
 
-        var feedback = new FeedbackFrame(_previous, width, height);
-        var current = _current;
+        var feedback = new FeedbackFrame(previousFrame, width, height);
+        var current = currentFrame;
         var aspect = AspectOf(width, height);
         var outputBase = patch.OutputBase;
         var origin = (nint)destination;
@@ -88,17 +88,17 @@ public sealed class SynthRenderer
             },
             _ => { });
 
-        (_previous, _current) = (_current, _previous);
+        (previousFrame, currentFrame) = (currentFrame, previousFrame);
     }
 
     private void EnsureBuffers(int width, int height)
     {
-        if (_width == width && _height == height) return;
+        if (bufferWidth == width && bufferHeight == height) return;
 
-        _width = width;
-        _height = height;
-        _current = new float[width * height * 3];
-        _previous = new float[width * height * 3];
+        bufferWidth = width;
+        bufferHeight = height;
+        currentFrame = new float[width * height * 3];
+        previousFrame = new float[width * height * 3];
     }
 
     /// <summary>Clamps to the displayable range, which is also what stops a feedback loop running away.</summary>

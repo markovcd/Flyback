@@ -50,6 +50,8 @@ public sealed class PatchSteps(PatchContext context)
 
     [Then("the audio is silent")]
     public void ThenTheAudioIsSilent() =>
+        // Silence means exactly zero, not nearly zero — see AudioRendererTests.
+        // ReSharper disable once CompareOfFloatsByEqualityOperator
         context.RenderAudio().ShouldAllBe(v => v == 0f);
 
     [Then("the audio is not silent")]

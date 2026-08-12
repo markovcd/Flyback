@@ -6,18 +6,18 @@ Feature: Compiling a patch
 
   Specified by ADR-0011.
 
-  Scenario: A patch with no Output node renders black and says so
+  Scenario: A patch with no Video Output node renders black and says so
     Given a patch containing:
       | name | module   |
       | wave | osc.sine |
     When the patch is compiled
-    Then compilation reports an issue containing "No Output node"
+    Then compilation reports an issue containing "No Video Output node"
     And the rendered image is entirely black
 
   Scenario: An unknown module is reported rather than throwing
     Given a patch containing:
-      | name   | module |
-      | screen | output |
+      | name   | module       |
+      | screen | video.output |
     And a node named "mystery" of unknown type "module.from.the.future"
     And "mystery" output 0 is wired to "screen" input "colour"
     When the patch is compiled
@@ -26,10 +26,10 @@ Feature: Compiling a patch
 
   Scenario: A cycle is reported instead of hanging
     Given a patch containing:
-      | name   | module   |
-      | first  | math.add |
-      | second | math.add |
-      | screen | output   |
+      | name   | module       |
+      | first  | math.add     |
+      | second | math.add     |
+      | screen | video.output |
     And "first" output "out" is wired to "second" input "a"
     And "second" output "out" is wired to "first" input "a"
     And "second" output "out" is wired to "screen" input "colour"
@@ -38,10 +38,10 @@ Feature: Compiling a patch
 
   Scenario: A well-formed patch compiles cleanly
     Given a patch containing:
-      | name   | module     |
-      | coords | coord      |
-      | tint   | colour.hsv |
-      | screen | output     |
+      | name   | module       |
+      | coords | coord        |
+      | tint   | colour.hsv   |
+      | screen | video.output |
     And "coords" output "x" is wired to "tint" input "hue"
     And "tint" output "colour" is wired to "screen" input "colour"
     When the patch is compiled

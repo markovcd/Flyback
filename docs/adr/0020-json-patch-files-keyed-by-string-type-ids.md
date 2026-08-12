@@ -37,6 +37,13 @@ identifiers. Modules can be reordered, renamed in the UI (`Name` is separate fro
 `TypeId`), or moved between categories without touching saved patches. Renaming a
 `TypeId` is the one breaking change, and it is a visible one.
 
+That has happened exactly once. The video sink was `output`, unqualified because
+it predated sound, and became `video.output` to match `audio.output`
+([0022](0022-audio-and-video-are-two-sinks-over-one-patch.md)). It cost nothing
+because no patch had yet been saved anywhere — which is the only condition under
+which a `TypeId` rename is free. A later one needs a load-time alias table, not a
+rename.
+
 Unknown modules degrade rather than fail. `PatchCompiler` reports
 `"Unknown module 'x'"` as a compile issue and emits a constant zero
 ([0011](0011-compile-backwards-from-output.md)), so a patch using a module this

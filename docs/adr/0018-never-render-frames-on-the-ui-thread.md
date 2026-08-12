@@ -44,14 +44,14 @@ Frames are never rendered on the UI thread. `OnTick` snapshots what the render
 needs while still on the UI thread, hands the work to `Task.Run`, and awaits it:
 
 ```csharp
-var buffer = _backBuffer;                       // captured on the UI thread
-await Task.Run(() => _renderer.Render(program, time, size.Width, size.Height, buffer, stride));
+var buffer = backBuffer;                        // captured on the UI thread
+await Task.Run(() => renderer.Render(program, time, size.Width, size.Height, buffer, stride));
 Blit(buffer, stride, size);                     // back on the UI thread
 InvalidateVisual();
 ```
 
 Rendering targets a plain `byte[]`; only the `Buffer.MemoryCopy` into the locked
-`WriteableBitmap` touches the UI thread. An `_rendering` flag drops ticks that
+`WriteableBitmap` touches the UI thread. A `rendering` flag drops ticks that
 arrive while a frame is still in flight, rather than queueing them.
 
 `SaveFrameAsync` is `static` and takes its inputs as parameters for the same
@@ -70,7 +70,7 @@ new program that the *next* tick picks up. The buffer, size and time are locals
 captured before the `await`.
 
 `SynthRenderer` is not thread-safe: it owns the two feedback buffers and swaps
-them. The `_rendering` flag is what guarantees only one render runs at a time,
+them. The `rendering` flag is what guarantees only one render runs at a time,
 and it is load-bearing rather than an optimisation. Frame export deliberately
 constructs its own `SynthRenderer` so it cannot disturb the live feedback history.
 

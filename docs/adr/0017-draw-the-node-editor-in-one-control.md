@@ -40,7 +40,7 @@ Socket positions cannot drift out of sync with where wires attach, because
 `DrawConnections` and `HitPort` call the same `OutputPort`/`InputPort` methods
 that `DrawNode` used to place the dots.
 
-Zoom is `_zoom * Math.Pow(1.12, e.Delta.Y)` plus a pan correction that pins the
+Zoom is `zoom * Math.Pow(1.12, e.Delta.Y)` plus a pan correction that pins the
 point under the cursor. Text scales because it is drawn inside the transform.
 There are no per-node controls to invalidate, so a zoom is one `InvalidateVisual`.
 

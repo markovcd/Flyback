@@ -18,7 +18,7 @@ public static class Presets
     public static Patch Empty()
     {
         var b = new PatchBuilder();
-        b.Add(NodeCatalog.OutputTypeId, 640, 260);
+        b.Add(NodeCatalog.VideoOutputTypeId, 640, 260);
         return b.Patch;
     }
 
@@ -37,7 +37,7 @@ public static class Presets
         var sum = b.Add("math.add", 500, 200);
         var hue = b.Add("math.remap", 660, 200, (1, -2f), (2, 2f), (3, 0f), (4, 1f));
         var colour = b.Add("colour.hsv", 860, 200, (1, 0.85f), (2, 1f));
-        var output = b.Add(NodeCatalog.OutputTypeId, 1060, 220);
+        var output = b.Add(NodeCatalog.VideoOutputTypeId, 1060, 220);
 
         b.Wire(coord, 0, horizontal, 0)
          .Wire(coord, 1, vertical, 0)
@@ -64,7 +64,7 @@ public static class Presets
         var fold = b.Add("space.kaleidoscope", 470, 200, (2, 6f));
         var noise = b.Add("pattern.noise", 680, 240, (3, 2.5f));
         var colour = b.Add("colour.hsv", 890, 240, (1, 0.9f), (2, 1f));
-        var output = b.Add(NodeCatalog.OutputTypeId, 1090, 260);
+        var output = b.Add(NodeCatalog.VideoOutputTypeId, 1090, 260);
 
         b.Wire(coord, 0, rotate, 0)
          .Wire(coord, 1, rotate, 1)
@@ -104,7 +104,7 @@ public static class Presets
         // Eye.
         var rings = b.Add("pattern.rings", 260, 80, (2, 3f));
         var tint = b.Add("colour.hsv", 700, 140, (1, 0.85f));
-        var screen = b.Add(NodeCatalog.OutputTypeId, 920, 160);
+        var screen = b.Add(NodeCatalog.VideoOutputTypeId, 920, 160);
 
         b.Wire(time, 0, slow, 0)
          .Wire(time, 0, tone, 0)
@@ -145,7 +145,7 @@ public static class Presets
         var tint = b.Add("colour.hsv", 640, 520, (1, 1f));
 
         var combine = b.Add("math.max", 950, 300);
-        var output = b.Add(NodeCatalog.OutputTypeId, 1130, 320);
+        var output = b.Add(NodeCatalog.VideoOutputTypeId, 1130, 320);
 
         b.Wire(coord, 0, rotate, 0)
          .Wire(coord, 1, rotate, 1)

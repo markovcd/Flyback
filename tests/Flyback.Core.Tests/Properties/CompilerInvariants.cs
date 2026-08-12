@@ -28,8 +28,8 @@ public class CompilerInvariants
     {
         var patch = BuildPreset(presetName);
 
-        var first = PatchCompiler.Compile(patch);
-        var second = PatchCompiler.Compile(patch);
+        var first = patch.CompileForVideo();
+        var second = patch.CompileForVideo();
 
         Fingerprint(second.Program).ShouldBe(Fingerprint(first.Program));
         second.Program.RegisterCount.ShouldBe(first.Program.RegisterCount);
@@ -40,7 +40,7 @@ public class CompilerInvariants
     [MemberData(nameof(PresetNames))]
     public void Every_preset_compiles_without_issues(string presetName)
     {
-        var result = PatchCompiler.Compile(BuildPreset(presetName));
+        var result = BuildPreset(presetName).CompileForVideo();
 
         result.Issues.ShouldBeEmpty();
     }
@@ -54,17 +54,17 @@ public class CompilerInvariants
     [MemberData(nameof(ModuleTypeIds))]
     public void Every_module_compiles_when_wired_to_the_output(string typeId)
     {
-        if (typeId == NodeCatalog.OutputTypeId) return;
+        if (typeId == NodeCatalog.VideoOutputTypeId) return;
 
         var def = NodeCatalog.Require(typeId);
         var builder = new PatchBuilder();
         var module = builder.Add(typeId, 0, 0);
-        var output = builder.Add(NodeCatalog.OutputTypeId, 400, 0);
+        var output = builder.Add(NodeCatalog.VideoOutputTypeId, 400, 0);
 
         if (def.Outputs.Count > 0)
             builder.Wire(module, 0, output, 0);
 
-        var result = PatchCompiler.Compile(builder.Patch);
+        var result = builder.Patch.CompileForVideo();
 
         result.Issues.ShouldBeEmpty();
         result.Program.Ops.Length.ShouldBeGreaterThan(0);
@@ -79,7 +79,7 @@ public class CompilerInvariants
     [MemberData(nameof(PresetNames))]
     public void The_output_slot_always_fits_inside_the_register_file(string presetName)
     {
-        var program = PatchCompiler.Compile(BuildPreset(presetName)).Program;
+        var program = BuildPreset(presetName).CompileForVideo().Program;
 
         program.OutputBase.ShouldBeGreaterThanOrEqualTo(0);
         program.RegisterCount.ShouldBeGreaterThanOrEqualTo(program.OutputBase + program.OutputWidth);
@@ -95,7 +95,7 @@ public class CompilerInvariants
     [MemberData(nameof(PresetNames))]
     public void No_op_reads_a_register_before_it_is_written(string presetName)
     {
-        var program = PatchCompiler.Compile(BuildPreset(presetName)).Program;
+        var program = BuildPreset(presetName).CompileForVideo().Program;
         var written = new HashSet<int>();
 
         foreach (var op in program.Ops)

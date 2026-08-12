@@ -6,43 +6,42 @@ namespace Flyback.Core.Compile;
 /// </summary>
 public sealed class Emitter
 {
-    private readonly List<Op> _ops = [];
-    private readonly Dictionary<float, Slot> _constants = [];
-    private readonly Dictionary<OpCode, Slot> _loads = [];
-    private int _registerCount;
+    private readonly List<Op> ops = [];
+    private readonly Dictionary<float, Slot> constants = [];
+    private readonly Dictionary<OpCode, Slot> loads = [];
 
-    public int RegisterCount => _registerCount;
+    public int RegisterCount { get; private set; }
 
-    public Op[] ToProgram() => [.. _ops];
+    public Op[] ToProgram() => [.. ops];
 
-    public int Allocate(int count)
+    private int Allocate(int count)
     {
-        var first = _registerCount;
-        _registerCount += count;
+        var first = RegisterCount;
+        RegisterCount += count;
         return first;
     }
 
-    public void Add(Op op) => _ops.Add(op);
+    private void Add(Op op) => ops.Add(op);
 
     /// <summary>A scalar literal. Repeated values share a register.</summary>
     public Slot Constant(float value)
     {
-        if (_constants.TryGetValue(value, out var existing)) return existing;
+        if (constants.TryGetValue(value, out var existing)) return existing;
 
         var slot = Slot.Scalar(Allocate(1));
         Add(new Op(OpCode.Const, slot.Base, k: value));
-        _constants[value] = slot;
+        constants[value] = slot;
         return slot;
     }
 
     /// <summary>A per-pixel input (x, y or time). Emitted once and reused.</summary>
     public Slot Load(OpCode code)
     {
-        if (_loads.TryGetValue(code, out var existing)) return existing;
+        if (loads.TryGetValue(code, out var existing)) return existing;
 
         var slot = Slot.Scalar(Allocate(1));
         Add(new Op(code, slot.Base));
-        _loads[code] = slot;
+        loads[code] = slot;
         return slot;
     }
 
@@ -93,7 +92,7 @@ public sealed class Emitter
     public Slot Add(Slot a, float b) => Binary(OpCode.Add, a, Constant(b));
 
     /// <summary>Widens a scalar to three components; colours pass through.</summary>
-    public Slot ToColour(Slot value)
+    private Slot ToColour(Slot value)
     {
         if (value.Width == 3) return value;
 
@@ -104,7 +103,7 @@ public sealed class Emitter
     }
 
     /// <summary>Narrows a colour to a scalar using broadcast luma weights.</summary>
-    public Slot ToScalar(Slot value)
+    private Slot ToScalar(Slot value)
     {
         if (value.Width == 1) return value;
 

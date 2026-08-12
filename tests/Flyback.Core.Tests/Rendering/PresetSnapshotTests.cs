@@ -28,7 +28,7 @@ public class PresetSnapshotTests
     public async Task Preset_renders_as_approved(string presetName)
     {
         var patch = Presets.All.Single(p => p.Name == presetName).Build();
-        var program = PatchCompiler.Compile(patch).Program;
+        var program = patch.CompileForVideo().Program;
 
         var renderer = new SynthRenderer();
         var stride = Width * 4;

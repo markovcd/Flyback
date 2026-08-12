@@ -20,7 +20,7 @@ public class PatchFuzzTests
     private const int Height = 18;
 
     private static readonly NodeDef[] Modules =
-        [.. NodeCatalog.All.Where(d => d.TypeId != NodeCatalog.OutputTypeId)];
+        [.. NodeCatalog.All.Where(d => d.TypeId != NodeCatalog.VideoOutputTypeId)];
 
     /// <summary>
     /// Modules are only ever wired from ones placed before them, so the graph is
@@ -38,7 +38,7 @@ public class PatchFuzzTests
     {
         Patches.Sample(patch =>
         {
-            var result = PatchCompiler.Compile(patch);
+            var result = patch.CompileForVideo();
 
             result.Program.RegisterCount.ShouldBeGreaterThanOrEqualTo(
                 result.Program.OutputBase + result.Program.OutputWidth);
@@ -63,7 +63,7 @@ public class PatchFuzzTests
     {
         Patches.Sample(patch =>
         {
-            var program = PatchCompiler.Compile(patch).Program;
+            var program = patch.CompileForVideo().Program;
             var renderer = new SynthRenderer();
             var stride = Width * 4;
             var buffer = new byte[stride * Height];
@@ -86,9 +86,7 @@ public class PatchFuzzTests
     {
         Patches.Sample(patch =>
         {
-            var program = PatchCompiler
-                .Compile(patch, NodeCatalog.AudioOutputTypeId, NodeCatalog.AudioChannels)
-                .Program;
+            var program = patch.CompileForAudio().Program;
 
             var buffer = new float[256 * 2];
             new AudioRenderer().Render(program, buffer, new AudioScan(true, 220f, 16f / 9f));
@@ -156,7 +154,7 @@ public class PatchFuzzTests
         var candidates = placed.Where(p => p.Def.Outputs.Count > 0).ToArray();
 
         // Both sinks, so one generated patch fuzzes the eye and the ear at once.
-        var video = builder.Add(NodeCatalog.OutputTypeId, 0, 0);
+        var video = builder.Add(NodeCatalog.VideoOutputTypeId, 0, 0);
         var speaker = builder.Add(NodeCatalog.AudioOutputTypeId, 0, 0);
 
         if (candidates.Length > 0)

@@ -172,13 +172,13 @@ public class InterpreterInvariants
     /// </summary>
     private sealed class Machine
     {
-        private readonly CompiledPatch _program;
-        private readonly int _result;
+        private readonly CompiledPatch program;
+        private readonly int result;
 
         private Machine(CompiledPatch program, int result)
         {
-            _program = program;
-            _result = result;
+            this.program = program;
+            this.result = result;
         }
 
         public static Machine Unary(OpCode code) => Build(e => e.Unary(code, X(e)));
@@ -194,9 +194,9 @@ public class InterpreterInvariants
         /// </summary>
         public float Run(float x, float y, float t = 0f)
         {
-            var registers = _program.AllocateRegisters();
-            _program.Evaluate(x, y, t, registers, default);
-            return registers[_result];
+            var registers = program.AllocateRegisters();
+            program.Evaluate(x, y, t, registers, default);
+            return registers[result];
         }
 
         private static Slot X(Emitter e) => e.Load(OpCode.LoadX);

@@ -21,26 +21,33 @@ Three ways to add sound:
 
 ## Decision
 
-Option 3. Compilation is parameterised by the sink it starts from:
+Option 3. Compilation is parameterised by the sink it starts from, with one
+entry point per sink:
 
 ```csharp
-public static CompileResult Compile(
-    Patch patch,
-    string sinkTypeId = NodeCatalog.OutputTypeId,
-    int width = 3)
+public static CompileResult CompileForVideo(this Patch patch) =>
+    Compile(patch, NodeCatalog.VideoOutputTypeId, NodeCatalog.VideoChannels);
+
+public static CompileResult CompileForAudio(this Patch patch) =>
+    Compile(patch, NodeCatalog.AudioOutputTypeId, NodeCatalog.AudioChannels);
 ```
 
 A second sink module, `audio.output`, takes `left` and `right` and is compiled
-with `width: 2`. `CompiledPatch` carries `OutputWidth` alongside `OutputBase`.
+two registers wide. `CompiledPatch` carries `OutputWidth` alongside `OutputBase`.
+The shared `Compile(patch, sinkTypeId, width)` core is private: a sink is not an
+open-ended axis, and callers that pick a sink type by hand are how the two
+programs drift apart.
 
 ## Consequences
 
 The change was two lines of behaviour. `PatchCompiler` was already rooted at a
 sink and walked backwards ([0011](0011-compile-backwards-from-output.md)) — only
-*finding* the sink and *coercing* the result were video-specific. The defaulted
-parameter meant all eight existing call sites kept working untouched, which is
-what made "the existing 125 tests still pass" a real check rather than a
-formality.
+*finding* the sink and *coercing* the result were video-specific. As first
+written, `Compile` took the sink and width as defaulted parameters, so all eight
+existing call sites kept working untouched — which is what made "the existing 125
+tests still pass" a real check rather than a formality. The named entry points
+above replaced those defaults once the second sink was no longer new; see
+Amendments.
 
 Dead-code elimination across sinks falls out for free, because it was never a
 pass in the first place. A noise module only the screen reaches emits no ops in
@@ -66,3 +73,19 @@ The normalled input this needed (`right` carrying `left` when unpatched) turned
 out to generalise: `PortSpec.NormalledFrom` makes the hardware concept
 [0009](0009-editable-defaults-on-every-input.md) already invoked by name into
 something any module can declare.
+
+## Amendments
+
+**2026-08-12 — one entry point per sink.** The defaulted `sinkTypeId` and `width`
+parameters were removed and `Compile` made private, replaced by the
+`CompileForVideo` / `CompileForAudio` extension methods shown above. The defaults
+did their job during the change and became a liability after it: `Compile(patch)`
+silently meant *video*, and the two sinks read as one primary and one afterthought
+rather than as the pair this ADR argues for. The widths moved to
+`NodeCatalog.VideoChannels` and `NodeCatalog.AudioChannels`.
+
+**2026-08-12 — `output` renamed to `video.output`.** The video sink's `TypeId` was
+the unqualified `"output"`, predating audio; it is now `video.output`, matching
+`audio.output`. This is the breaking `TypeId` rename
+[0020](0020-json-patch-files-keyed-by-string-type-ids.md) warns about, done while
+no saved patches existed anywhere.

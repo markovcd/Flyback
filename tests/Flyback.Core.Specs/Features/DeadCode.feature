@@ -9,7 +9,7 @@ Feature: Only what the Output can reach is compiled
       | name    | module        |
       | coords  | coord         |
       | rubbish | pattern.noise |
-      | screen  | output        |
+      | screen  | video.output  |
     And "coords" output "x" is wired to "screen" input "colour"
     When the patch is compiled
     Then compilation reports no issues
@@ -19,10 +19,10 @@ Feature: Only what the Output can reach is compiled
   # everything it computes, including the radius and angle nobody asked for.
   Scenario: A module feeding several inputs is still emitted once
     Given a patch containing:
-      | name   | module     |
-      | coords | coord      |
-      | tint   | colour.hsv |
-      | screen | output     |
+      | name   | module       |
+      | coords | coord        |
+      | tint   | colour.hsv   |
+      | screen | video.output |
     And "coords" output "x" is wired to "tint" input "hue"
     And "coords" output "x" is wired to "tint" input "saturation"
     And "coords" output "x" is wired to "tint" input "value"

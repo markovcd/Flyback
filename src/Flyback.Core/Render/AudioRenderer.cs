@@ -36,20 +36,19 @@ public sealed class AudioRenderer
     private const int Taps = 64;
     private const float DcBlockerPole = 0.9993f;
 
-    private readonly float[][] _history = [new float[Taps], new float[Taps]];
-    private readonly float[] _taps;
-    private readonly float[] _dcPreviousInput = new float[2];
-    private readonly float[] _dcPreviousOutput = new float[2];
+    private readonly float[][] delayLines = [new float[Taps], new float[Taps]];
+    private readonly float[] filterTaps;
+    private readonly float[] dcPreviousInput = new float[2];
+    private readonly float[] dcPreviousOutput = new float[2];
 
-    private float[] _registers = new float[64];
-    private int _historyPosition;
-    private double _time;
+    private float[] registerBank = new float[64];
+    private int historyPosition;
 
     public AudioRenderer(int sampleRate = 48_000, int oversample = 4)
     {
         SampleRate = sampleRate;
         Oversample = Math.Max(1, oversample);
-        _taps = DesignLowpass(Taps, 0.45 / Oversample);
+        filterTaps = DesignLowpass(Taps, 0.45 / Oversample);
     }
 
     public int SampleRate { get; }
@@ -58,20 +57,20 @@ public sealed class AudioRenderer
     public int Oversample { get; }
 
     /// <summary>Sample-accurate position on the timeline. Audio cannot be advanced by wall-clock deltas.</summary>
-    public double Time => _time;
+    public double Time { get; private set; }
 
     /// <summary>Clears filter state and rewinds. Equivalent to the video renderer's Reset.</summary>
     public void Reset()
     {
-        _time = 0;
-        _historyPosition = 0;
-        Array.Clear(_history[0]);
-        Array.Clear(_history[1]);
-        Array.Clear(_dcPreviousInput);
-        Array.Clear(_dcPreviousOutput);
+        Time = 0;
+        historyPosition = 0;
+        Array.Clear(delayLines[0]);
+        Array.Clear(delayLines[1]);
+        Array.Clear(dcPreviousInput);
+        Array.Clear(dcPreviousOutput);
     }
 
-    public void SeekTo(double seconds) => _time = seconds;
+    public void SeekTo(double seconds) => Time = seconds;
 
     /// <summary>
     /// Sizes the register scratch for a program. Call this when swapping in a
@@ -81,7 +80,7 @@ public sealed class AudioRenderer
     public void Prepare(CompiledPatch program)
     {
         var needed = Math.Max(program.RegisterCount, program.OutputWidth);
-        if (_registers.Length < needed) _registers = new float[needed];
+        if (registerBank.Length < needed) registerBank = new float[needed];
     }
 
     /// <summary>
@@ -94,7 +93,7 @@ public sealed class AudioRenderer
         if (frames == 0) return;
 
         Prepare(program);
-        var registers = _registers;
+        var registers = registerBank;
 
         var left = program.OutputBase;
         var right = program.OutputWidth > 1 ? program.OutputBase + 1 : program.OutputBase;
@@ -106,22 +105,22 @@ public sealed class AudioRenderer
         {
             for (var k = 0; k < Oversample; k++)
             {
-                var t = _time + k * innerStep;
+                var t = Time + k * innerStep;
                 var (x, y) = Position(t, scan);
 
                 // Video feedback has no meaning here: there is no previous frame
                 // on the audio timeline, so SampleFeedback reads silence.
                 program.Evaluate(x, y, (float)t, registers, default);
 
-                _history[0][_historyPosition] = registers[left];
-                _history[1][_historyPosition] = registers[right];
-                _historyPosition = (_historyPosition + 1) % Taps;
+                delayLines[0][historyPosition] = registers[left];
+                delayLines[1][historyPosition] = registers[right];
+                historyPosition = (historyPosition + 1) % Taps;
             }
 
             interleavedStereo[frame * 2 + 0] = Finish(0);
             interleavedStereo[frame * 2 + 1] = Finish(1);
 
-            _time += outerStep;
+            Time += outerStep;
         }
     }
 
@@ -147,24 +146,24 @@ public sealed class AudioRenderer
     private float Finish(int channel)
     {
         var decimated = Oversample == 1
-            ? _history[channel][(_historyPosition - 1 + Taps) % Taps]
+            ? delayLines[channel][(historyPosition - 1 + Taps) % Taps]
             : Convolve(channel);
 
         // One-pole DC blocker. A patch holding a constant is trivially easy to
         // build and is pure DC — inaudible, but it eats headroom and thumps.
-        var blocked = decimated - _dcPreviousInput[channel] + DcBlockerPole * _dcPreviousOutput[channel];
-        _dcPreviousInput[channel] = decimated;
-        _dcPreviousOutput[channel] = blocked;
+        var blocked = decimated - dcPreviousInput[channel] + DcBlockerPole * dcPreviousOutput[channel];
+        dcPreviousInput[channel] = decimated;
+        dcPreviousOutput[channel] = blocked;
 
         return float.IsFinite(blocked) ? Math.Clamp(blocked, -1f, 1f) : 0f;
     }
 
     private float Convolve(int channel)
     {
-        var history = _history[channel];
-        var taps = _taps;
+        var history = delayLines[channel];
+        var taps = filterTaps;
         var sum = 0f;
-        var index = _historyPosition;
+        var index = historyPosition;
 
         // Walk backwards from the newest sample through the delay line.
         for (var i = 0; i < Taps; i++)
@@ -193,6 +192,12 @@ public sealed class AudioRenderer
         for (var n = 0; n < taps; n++)
         {
             var x = n - middle;
+
+            // x is an integer minus (taps-1)/2, so it is exactly representable
+            // and reaches zero exactly — at the centre tap, when taps is odd.
+            // At the current even Taps it never does, so this branch is there to
+            // keep the sinc singularity handled if that constant ever changes.
+            // ReSharper disable once CompareOfFloatsByEqualityOperator
             var sinc = x == 0
                 ? 2 * cutoff
                 : Math.Sin(2 * Math.PI * cutoff * x) / (Math.PI * x);

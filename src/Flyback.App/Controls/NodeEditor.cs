@@ -28,8 +28,8 @@ public sealed class NodeEditor : Control
     private static readonly IBrush LabelBrush = new SolidColorBrush(Color.FromRgb(0xC8, 0xCC, 0xD4));
     private static readonly IBrush ValueBrush = new SolidColorBrush(Color.FromRgb(0x8A, 0x92, 0xA0));
     private static readonly IBrush HeaderTextBrush = Brushes.White;
-    private static readonly IPen GridPen = new Pen(new SolidColorBrush(Color.FromRgb(0x24, 0x27, 0x2C)), 1);
-    private static readonly IPen GridPenMajor = new Pen(new SolidColorBrush(Color.FromRgb(0x2C, 0x30, 0x36)), 1);
+    private static readonly IPen GridPen = new Pen(new SolidColorBrush(Color.FromRgb(0x24, 0x27, 0x2C)));
+    private static readonly IPen GridPenMajor = new Pen(new SolidColorBrush(Color.FromRgb(0x2C, 0x30, 0x36)));
     private static readonly IPen NodeBorder = new Pen(new SolidColorBrush(Color.FromRgb(0x14, 0x15, 0x18)), 1.5);
     private static readonly IPen SelectionPen = new Pen(new SolidColorBrush(Color.FromRgb(0xFF, 0xB0, 0x40)), 2);
     private static readonly IPen PortOutline = new Pen(new SolidColorBrush(Color.FromRgb(0x14, 0x15, 0x18)), 1.2);
@@ -38,19 +38,19 @@ public sealed class NodeEditor : Control
     private static readonly Cursor PortCursor = new(StandardCursorType.Cross);
     private static readonly Cursor NodeCursor = new(StandardCursorType.SizeAll);
 
-    private Patch _patch = new();
-    private double _zoom = 1;
-    private Point _pan = new(40, 40);
-    private Guid? _selected;
+    private Patch patch = new();
+    private double zoom = 1;
+    private Point pan = new(40, 40);
+    private Guid? selected;
 
-    private bool _framePending = true;
-    private Drag _drag;
-    private Point _dragOrigin;
-    private Point _nodeOrigin;
-    private Guid _wireNode;
-    private int _wirePort;
-    private bool _wireFromOutput;
-    private Point _wireEnd;
+    private bool framePending = true;
+    private Drag drag;
+    private Point dragOrigin;
+    private Point nodeOrigin;
+    private Guid wireNode;
+    private int wirePort;
+    private bool wireFromOutput;
+    private Point wireEnd;
 
     public NodeEditor()
     {
@@ -66,19 +66,19 @@ public sealed class NodeEditor : Control
 
     public Patch Patch
     {
-        get => _patch;
+        get => patch;
         set
         {
-            _patch = value;
-            _selected = null;
-            _drag = Drag.None;
+            patch = value;
+            selected = null;
+            drag = Drag.None;
             FrameAll();
             SelectionChanged?.Invoke(this, EventArgs.Empty);
             PatchChanged?.Invoke(this, EventArgs.Empty);
         }
     }
 
-    public NodeInstance? SelectedNode => _selected is { } id ? _patch.Find(id) : null;
+    public NodeInstance? SelectedNode => selected is { } id ? patch.Find(id) : null;
 
     /// <summary>Call after editing a node from outside the canvas, e.g. the inspector.</summary>
     public void NotifyPatchChanged()
@@ -94,7 +94,7 @@ public sealed class NodeEditor : Control
         var centre = ToGraph(new Point(Bounds.Width / 2, Bounds.Height / 2));
 
         var node = NodeInstance.Create(def, centre.X - NodeGeometry.Width / 2, centre.Y - NodeGeometry.Height(def) / 2);
-        _patch.Nodes.Add(node);
+        patch.Nodes.Add(node);
         Select(node.Id);
         NotifyPatchChanged();
         return node;
@@ -102,9 +102,9 @@ public sealed class NodeEditor : Control
 
     public void DeleteSelected()
     {
-        if (_selected is not { } id) return;
+        if (selected is not { } id) return;
 
-        _patch.Remove(id);
+        patch.Remove(id);
         Select(null);
         NotifyPatchChanged();
     }
@@ -117,23 +117,23 @@ public sealed class NodeEditor : Control
     {
         if (Bounds.Width < 1 || Bounds.Height < 1)
         {
-            _framePending = true;
+            framePending = true;
             return;
         }
 
-        _framePending = false;
+        framePending = false;
 
-        if (_patch.Nodes.Count == 0)
+        if (patch.Nodes.Count == 0)
         {
-            _zoom = 1;
-            _pan = new Point(40, 40);
+            zoom = 1;
+            pan = new Point(40, 40);
             InvalidateVisual();
             return;
         }
 
         double left = double.MaxValue, top = double.MaxValue, right = double.MinValue, bottom = double.MinValue;
 
-        foreach (var node in _patch.Nodes)
+        foreach (var node in patch.Nodes)
         {
             var def = NodeCatalog.Get(node.TypeId);
             if (def is null) continue;
@@ -151,10 +151,10 @@ public sealed class NodeEditor : Control
         var scaleX = Bounds.Width / (right - left + margin * 2);
         var scaleY = Bounds.Height / (bottom - top + margin * 2);
 
-        _zoom = Math.Clamp(Math.Min(scaleX, scaleY), 0.2, 1.4);
-        _pan = new Point(
-            (Bounds.Width - (right - left) * _zoom) / 2 - left * _zoom,
-            (Bounds.Height - (bottom - top) * _zoom) / 2 - top * _zoom);
+        zoom = Math.Clamp(Math.Min(scaleX, scaleY), 0.2, 1.4);
+        pan = new Point(
+            (Bounds.Width - (right - left) * zoom) / 2 - left * zoom,
+            (Bounds.Height - (bottom - top) * zoom) / 2 - top * zoom);
 
         InvalidateVisual();
     }
@@ -163,16 +163,16 @@ public sealed class NodeEditor : Control
     {
         base.OnSizeChanged(e);
 
-        if (_framePending) FrameAll();
+        if (framePending) FrameAll();
     }
 
     // --- coordinate transforms ----------------------------------------------
 
     private Matrix GraphToScreen =>
-        Matrix.CreateScale(_zoom, _zoom) * Matrix.CreateTranslation(_pan.X, _pan.Y);
+        Matrix.CreateScale(zoom, zoom) * Matrix.CreateTranslation(pan.X, pan.Y);
 
     private Point ToGraph(Point screen) =>
-        new((screen.X - _pan.X) / _zoom, (screen.Y - _pan.Y) / _zoom);
+        new((screen.X - pan.X) / zoom, (screen.Y - pan.Y) / zoom);
 
     // --- painting ------------------------------------------------------------
 
@@ -185,7 +185,7 @@ public sealed class NodeEditor : Control
             DrawGrid(context);
             DrawConnections(context);
 
-            foreach (var node in _patch.Nodes)
+            foreach (var node in patch.Nodes)
                 if (NodeCatalog.Get(node.TypeId) is { } def)
                     DrawNode(context, node, def);
 
@@ -221,10 +221,10 @@ public sealed class NodeEditor : Control
 
     private void DrawConnections(DrawingContext context)
     {
-        foreach (var connection in _patch.Connections)
+        foreach (var connection in patch.Connections)
         {
-            var source = _patch.Find(connection.SourceNode);
-            var target = _patch.Find(connection.TargetNode);
+            var source = patch.Find(connection.SourceNode);
+            var target = patch.Find(connection.TargetNode);
             if (source is null || target is null) continue;
 
             var sourceDef = NodeCatalog.Get(source.TypeId);
@@ -243,16 +243,16 @@ public sealed class NodeEditor : Control
 
     private void DrawPendingWire(DrawingContext context)
     {
-        if (_drag != Drag.Wire) return;
-        if (_patch.Find(_wireNode) is not { } node) return;
+        if (drag != Drag.Wire) return;
+        if (patch.Find(wireNode) is not { } node) return;
         if (NodeCatalog.Get(node.TypeId) is not { } def) return;
 
         var pen = new Pen(new SolidColorBrush(Color.FromRgb(0xFF, 0xB0, 0x40), 0.9), 2.2, DashStyle.Dash);
 
-        if (_wireFromOutput)
-            DrawWire(context, NodeGeometry.OutputPort(node, _wirePort), _wireEnd, pen);
+        if (wireFromOutput)
+            DrawWire(context, NodeGeometry.OutputPort(node, wirePort), wireEnd, pen);
         else
-            DrawWire(context, _wireEnd, NodeGeometry.InputPort(node, def, _wirePort), pen);
+            DrawWire(context, wireEnd, NodeGeometry.InputPort(node, def, wirePort), pen);
     }
 
     /// <summary>A horizontal-tangent bezier, so wires leave and enter sockets cleanly.</summary>
@@ -274,7 +274,7 @@ public sealed class NodeEditor : Control
     private void DrawNode(DrawingContext context, NodeInstance node, NodeDef def)
     {
         var bounds = NodeGeometry.Bounds(node, def);
-        var isSelected = _selected == node.Id;
+        var isSelected = selected == node.Id;
         var accent = NodeGeometry.Accent(def.Category);
 
         context.DrawRectangle(
@@ -307,7 +307,7 @@ public sealed class NodeEditor : Control
         {
             var port = def.Inputs[i];
             var centre = NodeGeometry.InputPort(node, def, i);
-            var connected = _patch.IncomingTo(node.Id, i) is not null;
+            var connected = patch.IncomingTo(node.Id, i) is not null;
 
             var label = Text(port.Name, 11.5, LabelBrush, bounds.Width * 0.55, true);
             context.DrawText(label, new Point(bounds.X + 14, centre.Y - label.Height / 2));
@@ -362,11 +362,11 @@ public sealed class NodeEditor : Control
         var properties = e.GetCurrentPoint(this).Properties;
         var screen = e.GetPosition(this);
         var graph = ToGraph(screen);
-        _dragOrigin = screen;
+        dragOrigin = screen;
 
         if (properties.IsMiddleButtonPressed || properties.IsRightButtonPressed)
         {
-            _drag = Drag.Pan;
+            drag = Drag.Pan;
             e.Pointer.Capture(this);
             return;
         }
@@ -385,15 +385,15 @@ public sealed class NodeEditor : Control
         {
             Select(node.Id);
             BringToFront(node);
-            _drag = Drag.Node;
-            _nodeOrigin = new Point(node.X, node.Y);
+            drag = Drag.Node;
+            nodeOrigin = new Point(node.X, node.Y);
             e.Pointer.Capture(this);
             InvalidateVisual();
             return;
         }
 
         Select(null);
-        _drag = Drag.Pan;
+        drag = Drag.Pan;
         e.Pointer.Capture(this);
         InvalidateVisual();
     }
@@ -404,23 +404,23 @@ public sealed class NodeEditor : Control
     /// </summary>
     private void StartWire(Guid nodeId, int portIndex, bool isOutput, Point graph)
     {
-        if (!isOutput && _patch.IncomingTo(nodeId, portIndex) is { } existing)
+        if (!isOutput && patch.IncomingTo(nodeId, portIndex) is { } existing)
         {
-            _patch.Disconnect(nodeId, portIndex);
-            _wireNode = existing.SourceNode;
-            _wirePort = existing.SourcePort;
-            _wireFromOutput = true;
+            patch.Disconnect(nodeId, portIndex);
+            wireNode = existing.SourceNode;
+            wirePort = existing.SourcePort;
+            wireFromOutput = true;
             PatchChanged?.Invoke(this, EventArgs.Empty);
         }
         else
         {
-            _wireNode = nodeId;
-            _wirePort = portIndex;
-            _wireFromOutput = isOutput;
+            wireNode = nodeId;
+            wirePort = portIndex;
+            wireFromOutput = isOutput;
         }
 
-        _drag = Drag.Wire;
-        _wireEnd = graph;
+        drag = Drag.Wire;
+        wireEnd = graph;
     }
 
     protected override void OnPointerMoved(PointerEventArgs e)
@@ -430,23 +430,23 @@ public sealed class NodeEditor : Control
         var screen = e.GetPosition(this);
         var graph = ToGraph(screen);
 
-        switch (_drag)
+        switch (drag)
         {
             case Drag.Pan:
-                _pan += screen - _dragOrigin;
-                _dragOrigin = screen;
+                pan += screen - dragOrigin;
+                dragOrigin = screen;
                 InvalidateVisual();
                 return;
 
             case Drag.Node when SelectedNode is { } node:
-                var delta = (screen - _dragOrigin) / _zoom;
-                node.X = _nodeOrigin.X + delta.X;
-                node.Y = _nodeOrigin.Y + delta.Y;
+                var delta = (screen - dragOrigin) / zoom;
+                node.X = nodeOrigin.X + delta.X;
+                node.Y = nodeOrigin.Y + delta.Y;
                 InvalidateVisual();
                 return;
 
             case Drag.Wire:
-                _wireEnd = graph;
+                wireEnd = graph;
                 InvalidateVisual();
                 return;
 
@@ -462,10 +462,10 @@ public sealed class NodeEditor : Control
     {
         base.OnPointerReleased(e);
 
-        if (_drag == Drag.Wire)
+        if (drag == Drag.Wire)
             CompleteWire(ToGraph(e.GetPosition(this)));
 
-        _drag = Drag.None;
+        drag = Drag.None;
         e.Pointer.Capture(null);
         InvalidateVisual();
     }
@@ -475,12 +475,12 @@ public sealed class NodeEditor : Control
         if (!HitPort(graph, out var node, out var port, out var isOutput)) return;
 
         // A wire only means something between opposite kinds of socket.
-        if (isOutput == _wireFromOutput) return;
+        if (isOutput == wireFromOutput) return;
 
-        if (_wireFromOutput)
-            _patch.Connect(_wireNode, _wirePort, node, port);
+        if (wireFromOutput)
+            patch.Connect(wireNode, wirePort, node, port);
         else
-            _patch.Connect(node, port, _wireNode, _wirePort);
+            patch.Connect(node, port, wireNode, wirePort);
 
         PatchChanged?.Invoke(this, EventArgs.Empty);
     }
@@ -492,10 +492,10 @@ public sealed class NodeEditor : Control
         var screen = e.GetPosition(this);
         var anchor = ToGraph(screen);
 
-        _zoom = Math.Clamp(_zoom * Math.Pow(1.12, e.Delta.Y), 0.2, 3.0);
+        zoom = Math.Clamp(zoom * Math.Pow(1.12, e.Delta.Y), 0.2, 3.0);
 
         // Keep whatever was under the cursor pinned there.
-        _pan = new Point(screen.X - anchor.X * _zoom, screen.Y - anchor.Y * _zoom);
+        pan = new Point(screen.X - anchor.X * zoom, screen.Y - anchor.Y * zoom);
 
         InvalidateVisual();
         e.Handled = true;
@@ -523,9 +523,9 @@ public sealed class NodeEditor : Control
 
     private NodeInstance? HitNode(Point graph)
     {
-        for (var i = _patch.Nodes.Count - 1; i >= 0; i--)
+        for (var i = patch.Nodes.Count - 1; i >= 0; i--)
         {
-            var node = _patch.Nodes[i];
+            var node = patch.Nodes[i];
             var def = NodeCatalog.Get(node.TypeId);
 
             if (def is not null && NodeGeometry.Bounds(node, def).Contains(graph))
@@ -539,9 +539,9 @@ public sealed class NodeEditor : Control
     {
         var tolerance = NodeGeometry.PortRadius + NodeGeometry.HitPadding;
 
-        for (var i = _patch.Nodes.Count - 1; i >= 0; i--)
+        for (var i = patch.Nodes.Count - 1; i >= 0; i--)
         {
-            var node = _patch.Nodes[i];
+            var node = patch.Nodes[i];
             var def = NodeCatalog.Get(node.TypeId);
             if (def is null) continue;
 
@@ -575,16 +575,16 @@ public sealed class NodeEditor : Control
 
     private void Select(Guid? id)
     {
-        if (_selected == id) return;
+        if (selected == id) return;
 
-        _selected = id;
+        selected = id;
         SelectionChanged?.Invoke(this, EventArgs.Empty);
     }
 
     /// <summary>Nodes paint in list order, so the last one drawn is the one on top.</summary>
     private void BringToFront(NodeInstance node)
     {
-        _patch.Nodes.Remove(node);
-        _patch.Nodes.Add(node);
+        patch.Nodes.Remove(node);
+        patch.Nodes.Add(node);
     }
 }

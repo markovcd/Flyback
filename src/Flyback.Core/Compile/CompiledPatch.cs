@@ -39,7 +39,7 @@ public sealed class CompiledPatch(Op[] ops, int registerCount, int outputBase, i
         0,
         width);
 
-    /// <summary>Renders nothing, used when there is no Output node.</summary>
+    /// <summary>Renders nothing, used when there is no Video Output node.</summary>
     public static CompiledPatch Black { get; } = Constant(3);
 
     /// <summary>Plays nothing, used when there is no Audio Output node.</summary>
@@ -143,6 +143,12 @@ public sealed class CompiledPatch(Op[] ops, int registerCount, int outputBase, i
         return fraction < 1f ? fraction : JustBelowOne;
     }
 
+    // Exact equality is the point in the three guards below: they trap the one
+    // divisor that makes the result undefined. A tolerance would not be safer,
+    // it would be wrong — Divide(1, 1e-20f) is a legitimate 1e20, and an epsilon
+    // would silently flatten it to zero. Guard already handles the overflow.
+    // ReSharper disable CompareOfFloatsByEqualityOperator
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static float Divide(float a, float b) => b == 0f ? 0f : Guard(a / b);
 
@@ -156,6 +162,8 @@ public sealed class CompiledPatch(Op[] ops, int registerCount, int outputBase, i
         var t = Math.Clamp((x - edge0) / (edge1 - edge0), 0f, 1f);
         return t * t * (3f - 2f * t);
     }
+
+    // ReSharper restore CompareOfFloatsByEqualityOperator
 
     private static void HsvToRgb(float h, float s, float v, Span<float> rgb)
     {

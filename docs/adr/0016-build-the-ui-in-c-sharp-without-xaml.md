@@ -37,7 +37,7 @@ because there is no markup.
 
 No binding layer means no view models, no `INotifyPropertyChanged`, and no
 question about where state lives — it lives in the `Patch`. Wiring is direct
-event handlers, and the compile trigger is one line: `_editor.PatchChanged += (_, _) => Recompile();`
+event handlers, and the compile trigger is one line: `editor.PatchChanged += (_, _) => Recompile();`
 
 It also removed a whole class of build risk. The XAML compiler is version-
 sensitive, and this was Avalonia 12 rather than the 11.x the ecosystem's

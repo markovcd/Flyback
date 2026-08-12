@@ -14,22 +14,22 @@ public sealed class PatchContext
     private const int Width = 32;
     private const int Height = 18;
 
-    private readonly PatchBuilder _builder = new();
-    private readonly Dictionary<string, NodeInstance> _named = new(StringComparer.OrdinalIgnoreCase);
+    private readonly PatchBuilder builder = new();
+    private readonly Dictionary<string, NodeInstance> named = new(StringComparer.OrdinalIgnoreCase);
 
-    private CompileResult? _result;
+    private CompileResult? result;
 
-    public Patch Patch => _builder.Patch;
+    public Patch Patch => builder.Patch;
 
     public CompileResult Result =>
-        _result ?? throw new InvalidOperationException("The patch has not been compiled yet.");
+        result ?? throw new InvalidOperationException("The patch has not been compiled yet.");
 
     public CompiledPatch Program => Result.Program;
 
     public NodeInstance Add(string name, string typeId)
     {
-        var node = _builder.Add(typeId, 0, 0);
-        _named[name] = node;
+        var node = builder.Add(typeId, 0, 0);
+        named[name] = node;
         return node;
     }
 
@@ -38,12 +38,12 @@ public sealed class PatchContext
     {
         var node = new NodeInstance { Id = Guid.NewGuid(), TypeId = typeId, InputValues = [] };
         Patch.Nodes.Add(node);
-        _named[name] = node;
+        named[name] = node;
         return node;
     }
 
     public NodeInstance Node(string name) =>
-        _named.TryGetValue(name, out var node)
+        named.TryGetValue(name, out var node)
             ? node
             : throw new KeyNotFoundException($"No node named '{name}' in this scenario.");
 
@@ -77,9 +77,9 @@ public sealed class PatchContext
     /// that independence is what most of the audio scenarios are about.
     /// </summary>
     public void CompileFor(string sink) =>
-        _result = sink.Equals("audio", StringComparison.OrdinalIgnoreCase)
-            ? PatchCompiler.Compile(Patch, NodeCatalog.AudioOutputTypeId, NodeCatalog.AudioChannels)
-            : PatchCompiler.Compile(Patch, NodeCatalog.OutputTypeId, 3);
+        result = sink.Equals("audio", StringComparison.OrdinalIgnoreCase)
+            ? Patch.CompileForAudio()
+            : Patch.CompileForVideo();
 
     /// <summary>Renders a short stereo buffer from the currently compiled program.</summary>
     public float[] RenderAudio(int frames = 2_000)

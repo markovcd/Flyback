@@ -12,7 +12,7 @@ Feature: One patch, two sinks
       | grain   | pattern.noise |
       | clock   | time          |
       | tone    | osc.sine      |
-      | screen  | output        |
+      | screen  | video.output  |
       | speaker | audio.output  |
     And "coords" output "x" is wired to "grain" input "x"
     And "grain" output "out" is wired to "screen" input "colour"
@@ -43,17 +43,17 @@ Feature: One patch, two sinks
 
   Scenario: A patch with no Audio Output is silent, not broken
     Given a patch containing:
-      | name   | module     |
-      | tint   | colour.hsv |
-      | screen | output     |
+      | name   | module       |
+      | tint   | colour.hsv   |
+      | screen | video.output |
     And "tint" output "colour" is wired to "screen" input "colour"
     When the patch is compiled for audio
     Then compilation reports no issues
     And the audio is silent
 
-  Scenario: A patch with no video Output still says so
+  Scenario: A patch with no Video Output still says so
     Given a patch containing:
       | name    | module       |
       | speaker | audio.output |
     When the patch is compiled for video
-    Then compilation reports an issue containing "No Output node"
+    Then compilation reports an issue containing "No Video Output node"

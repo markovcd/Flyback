@@ -9,9 +9,14 @@ namespace Flyback.Core.Graph;
 /// </summary>
 public static class NodeCatalog
 {
-    public const string OutputTypeId = "output";
+    /// <summary>The screen sink. Paired with <see cref="AudioOutputTypeId"/> per ADR-0022.</summary>
+    public const string VideoOutputTypeId = "video.output";
 
+    /// <summary>The speaker sink. Paired with <see cref="VideoOutputTypeId"/> per ADR-0022.</summary>
     public const string AudioOutputTypeId = "audio.output";
+
+    /// <summary>RGB, so the video sink reads three registers.</summary>
+    public const int VideoChannels = 3;
 
     /// <summary>Stereo, so the audio sink reads two registers where video reads three.</summary>
     public const int AudioChannels = 2;
@@ -60,7 +65,7 @@ public static class NodeCatalog
         [
             // ---------------------------------------------------------------- output
             new NodeDef(
-                OutputTypeId, "Output", "Output",
+                VideoOutputTypeId, "Video Output", "Output",
                 [Col("colour")], [],
                 (_, i) => [i[0]],
                 "The screen. Everything upstream of this is what you see."),
@@ -182,13 +187,13 @@ public static class NodeCatalog
 
             new NodeDef(
                 "math.smoothstep", "Smoothstep", "Maths",
-                [Any("edge0", 0f), Any("edge1", 1f), Any("in")], [Any("out")],
+                [Any("edge0"), Any("edge1", 1f), Any("in")], [Any("out")],
                 (em, i) => [em.Ternary(OpCode.Smoothstep, i[0], i[1], i[2])],
                 "A soft 0-to-1 ramp between the two edges. The anti-aliased threshold."),
 
             new NodeDef(
                 "math.step", "Threshold", "Maths",
-                [Any("edge", 0f), Any("in")], [Any("out")],
+                [Any("edge"), Any("in")], [Any("out")],
                 (em, i) => [em.Binary(OpCode.Step, i[0], i[1])],
                 "0 below the edge, 1 above it. A hard threshold."),
 
@@ -275,7 +280,7 @@ public static class NodeCatalog
 
             new NodeDef(
                 "space.warp", "Warp", "Space",
-                [Num("x"), Num("y"), Num("by"), Num("amount", 0.5f, -4f, 4f)], [Num("x"), Num("y")],
+                [Num("x"), Num("y"), Num("by"), Num("amount", 0.5f)], [Num("x"), Num("y")],
                 (em, i) =>
                 {
                     var push = em.Mul(i[2], i[3]);

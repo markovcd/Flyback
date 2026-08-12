@@ -9,28 +9,28 @@ namespace Flyback.App.Audio;
 /// </summary>
 public sealed class WasapiAudioDevice(int sampleRate = 48_000, int latencyMilliseconds = 30) : IAudioDevice
 {
-    private WasapiOut? _output;
+    private WasapiOut? activeOutput;
 
     public int SampleRate { get; } = sampleRate;
 
-    public bool IsRunning => _output?.PlaybackState == PlaybackState.Playing;
+    public bool IsRunning => activeOutput?.PlaybackState == PlaybackState.Playing;
 
     public void Start(AudioCallback fill)
     {
-        if (_output is not null) return;
+        if (activeOutput is not null) return;
 
         var output = new WasapiOut(NAudio.CoreAudioApi.AudioClientShareMode.Shared, latencyMilliseconds);
         output.Init(new CallbackSampleProvider(WaveFormat.CreateIeeeFloatWaveFormat(SampleRate, 2), fill));
         output.Play();
 
-        _output = output;
+        activeOutput = output;
     }
 
     public void Stop()
     {
-        _output?.Stop();
-        _output?.Dispose();
-        _output = null;
+        activeOutput?.Stop();
+        activeOutput?.Dispose();
+        activeOutput = null;
     }
 
     public void Dispose() => Stop();

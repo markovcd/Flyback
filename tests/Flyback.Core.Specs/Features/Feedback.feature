@@ -7,9 +7,9 @@ Feature: Feedback reads the previous frame
 
   Scenario: Feedback reads black before any frame has been rendered
     Given a patch containing:
-      | name     | module   |
-      | previous | feedback |
-      | screen   | output   |
+      | name     | module       |
+      | previous | feedback     |
+      | screen   | video.output |
     And "previous" output "colour" is wired to "screen" input "colour"
     When the patch is compiled
     Then compilation reports no issues
@@ -22,10 +22,10 @@ Feature: Feedback reads the previous frame
   # rather than drifting.
   Scenario: Each frame accumulates on top of the one before it
     Given a patch containing:
-      | name     | module      |
-      | previous | feedback    |
-      | brighten | colour.gain |
-      | screen   | output      |
+      | name     | module       |
+      | previous | feedback     |
+      | brighten | colour.gain  |
+      | screen   | video.output |
     And "previous" output "colour" is wired to "brighten" input "colour"
     And "brighten" input "gain" is set to 1
     And "brighten" input "bias" is set to 0.1
@@ -37,10 +37,10 @@ Feature: Feedback reads the previous frame
 
   Scenario: Rewinding clears the accumulated history
     Given a patch containing:
-      | name     | module      |
-      | previous | feedback    |
-      | brighten | colour.gain |
-      | screen   | output      |
+      | name     | module       |
+      | previous | feedback     |
+      | brighten | colour.gain  |
+      | screen   | video.output |
     And "previous" output "colour" is wired to "brighten" input "colour"
     And "brighten" input "gain" is set to 1
     And "brighten" input "bias" is set to 0.1
