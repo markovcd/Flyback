@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <OutputType>Exe</OutputType>
+    <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Flyback.Plugins\Flyback.Plugins.csproj" />
+  </ItemGroup>
+
+  <!--
+    The loading tests run against the real shipped plugin rather than a stub, so
+    the thing under test is the one that has to work: a separate assembly, its
+    own dependencies, and a dependency file the resolver has to read.
+  -->
+  <ItemGroup>
+    <PluginProject Include="..\..\src\Flyback.Plugins.Wasapi\Flyback.Plugins.Wasapi.csproj" FolderName="Wasapi" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Shouldly" Version="4.3.0" />
+    <PackageReference Include="xunit.v3" Version="3.2.2" />
+  </ItemGroup>
+
+</Project>

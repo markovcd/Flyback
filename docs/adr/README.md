@@ -60,3 +60,4 @@ were not mine to make.
 |---|---|
 | [0019](0019-no-third-party-dependencies-in-the-engine.md) | No third-party dependencies in the engine |
 | [0020](0020-json-patch-files-keyed-by-string-type-ids.md) | JSON patch files keyed by string type IDs |
+| [0025](0025-platform-io-behind-loadable-plugins.md) | Platform I/O behind plugins loaded at run time |

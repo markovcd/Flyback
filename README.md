@@ -76,8 +76,67 @@ the naive `Saw` and `Square` from folding harmonics back down as buzzing. It
 reduces aliasing rather than removing it. While sound plays it is the master
 clock and the picture follows, since audio cannot be stretched to catch up.
 
-Sound output is Windows-only for now (WASAPI); everything else, including WAV
-export, is portable.
+The device itself comes from a plugin, so the application has no platform-specific
+code in it at all. WASAPI ships in the box and covers Windows; elsewhere the
+**Audio on** button is disabled until a backend is installed, and everything
+else — including WAV export — works unchanged.
+
+## Plugins
+
+Anything that differs per machine is loaded from disk at startup rather than
+referenced at build time. One folder per plugin, beside the executable:
+
+```
+Flyback.exe
+plugins/
+  Wasapi/
+    Flyback.Plugins.Wasapi.dll
+    Flyback.Plugins.Wasapi.deps.json
+    NAudio.dll …
+```
+
+The status bar says which backend is playing; hover it for what loaded, what did
+not and why, and where the folder is.
+
+A sound backend is one class that offers itself and one that opens the device.
+Being asked whether you are supported must not open anything, so a plugin for
+another operating system stays loadable everywhere:
+
+```csharp
+public sealed class AlsaPlugin : IFlybackPlugin
+{
+    public PluginInfo Info { get; } = new("alsa", "ALSA output", "Linux sound via libasound.");
+
+    public void Register(IPluginRegistry registry) => registry.AddAudioOutput(new AlsaOutput());
+}
+
+public sealed class AlsaOutput : IAudioOutput
+{
+    public string Id => "alsa";
+    public string Name => "ALSA";
+    public int Priority => 50;                          // WASAPI is 100, and wins where both run
+    public bool IsSupported => OperatingSystem.IsLinux();
+
+    public IAudioDevice Create(AudioFormat format) => new AlsaDevice(format);
+}
+```
+
+`IAudioDevice.Start` is handed a callback that fills an interleaved buffer on the
+audio thread; it must not block, allocate or throw. That is the entire contract —
+`Flyback.Plugins` has no dependencies, and neither need you.
+
+Reference `Flyback.Plugins` with `Private="false"`, set `EnableDynamicLoading`
+so the `.deps.json` the loader reads is produced, and drop the build output into
+a folder under `plugins/`. To ship one in the box instead, add a line to
+`Flyback.App.csproj`:
+
+```xml
+<PluginProject Include="..\Flyback.Plugins.Alsa\Flyback.Plugins.Alsa.csproj" FolderName="Alsa" />
+```
+
+Each plugin loads into its own `AssemblyLoadContext`, so two of them may depend
+on different versions of the same package. A broken, missing or hostile plugin is
+a note in the status bar, never a program that fails to start.
 
 ## Using the editor
 
@@ -100,8 +159,10 @@ patches need no constant modules at all.
 |---|---|
 | `src/Flyback.Core` | graph model, compiler, renderer, PNG writer — no UI dependency |
 | `src/Flyback.App` | Avalonia editor and live preview, built in C# without XAML |
+| `src/Flyback.Plugins` | the plugin contract and the loader — no dependencies either |
+| `src/Flyback.Plugins.Wasapi` | Windows sound output; the only project that knows what an operating system is |
 
-Why it is built this way is recorded in [docs/adr](docs/adr) — 21 decision
+Why it is built this way is recorded in [docs/adr](docs/adr) — 25 decision
 records covering the compiler, the renderer, the shell and the boundaries
 between them.
 
@@ -115,6 +176,7 @@ dotnet test Flyback.slnx
 |---|---|
 | `tests/Flyback.Core.Specs` | Gherkin scenarios (Reqnroll) for the behaviour the ADRs specify — dead code, cycles, port typing, input defaults, feedback |
 | `tests/Flyback.Core.Tests` | snapshot tests of the rendered presets, plus property and fuzz tests over the compiler and interpreter |
+| `tests/Flyback.Plugins.Tests` | loads the real shipped plugin off disk — discovery, backend selection, and that a type crossing the boundary keeps one identity |
 
 Each `.feature` file names the ADR it pins, so the records and the specs stay
 honest about each other.

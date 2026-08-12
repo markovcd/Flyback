@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>Flyback.Plugins.Wasapi</RootNamespace>
+    <!--
+      Emits the .deps.json that the host's AssemblyDependencyResolver reads, and
+      copies package dependencies beside the plugin rather than assuming the
+      application already has them. Without it only the entry assembly resolves
+      and NAudio would not be found.
+    -->
+    <EnableDynamicLoading>true</EnableDynamicLoading>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!--
+      The contract is host-owned: shipping a second copy in the plugin folder
+      would give its types a second identity and every cast across the boundary
+      would fail.
+    -->
+    <!--
+      GlobalPropertiesToRemove stops the redirected OutDir the host build passes
+      in from flowing down here; without it the contract would be rebuilt into
+      the plugin folder, which is exactly what must not happen.
+    -->
+    <ProjectReference Include="..\Flyback.Plugins\Flyback.Plugins.csproj"
+                      Private="false"
+                      ExcludeAssets="runtime"
+                      GlobalPropertiesToRemove="OutDir" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="NAudio" Version="2.3.0" />
+  </ItemGroup>
+
+</Project>

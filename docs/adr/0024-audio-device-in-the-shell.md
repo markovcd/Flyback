@@ -1,6 +1,8 @@
 # ADR-0024: Sample generation in the engine, the audio device in the shell
 
-**Status:** Accepted · 2026-08-12
+**Status:** Accepted · 2026-08-12 · amended by
+[0025](0025-platform-io-behind-loadable-plugins.md), which moves the device out
+of the shell and into a loadable plugin
 
 ## Context
 

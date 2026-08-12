@@ -11,6 +11,8 @@ using Flyback.App.Controls;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Core.Render;
+using Flyback.Plugins.Audio;
+using Flyback.Plugins.Hosting;
 
 namespace Flyback.App;
 
@@ -40,13 +42,30 @@ public sealed class MainWindow : Window
         Foreground = new SolidColorBrush(Color.FromRgb(0xFF, 0xB0, 0x40)),
     };
 
+    private readonly TextBlock backend = new()
+    {
+        VerticalAlignment = VerticalAlignment.Center,
+        FontSize = 12,
+        Opacity = 0.55,
+    };
+
     private readonly ToggleButton playButton = new() { Content = "Pause", Width = 78, IsChecked = true };
     private readonly ToggleButton audioButton = new() { Content = "Audio off", Width = 92 };
 
-    private readonly AudioEngine audio = new(new WasapiAudioDevice());
+    /// <summary>
+    /// Scanned once, before anything else exists. Nothing in the shell knows
+    /// which backends there are or what they are called.
+    /// </summary>
+    private readonly PluginCatalog plugins = PluginHost.Load();
+
+    private readonly AudioSetup sound;
+    private readonly AudioEngine audio;
 
     public MainWindow()
     {
+        sound = OpenAudio(plugins);
+        audio = new AudioEngine(sound.Device);
+
         Title = "Flyback — patchable video synthesiser";
         Width = 1280;
         Height = 800;
@@ -154,8 +173,12 @@ public sealed class MainWindow : Window
             preview.Rewind();
         };
 
-        // Off by default: launching a program should not make a noise.
-        ToolTip.SetTip(audioButton, "Play the patch through the speakers. Needs an Audio Output module.");
+        // Off by default: launching a program should not make a noise. And it
+        // cannot be switched on at all where no plugin offered a device.
+        audioButton.IsEnabled = sound.Output is not null;
+        ToolTip.SetTip(audioButton, sound.Output is { } output
+            ? $"Play the patch through {output.Name}. Needs an Audio Output module."
+            : "No sound backend is installed. See the status bar for where plugins are looked for.");
         audioButton.IsCheckedChanged += (_, _) => SetAudioEnabled(audioButton.IsChecked == true);
 
         var exportAudio = new Button { Content = "Render audio…" };
@@ -220,7 +243,11 @@ public sealed class MainWindow : Window
             Margin = new Thickness(12, 5),
         };
 
+        backend.Text = sound.Output is { } output ? $"sound: {output.Name}" : "sound: none";
+        ToolTip.SetTip(backend, PluginSummary());
+
         bar.Children.Add(status);
+        bar.Children.Add(backend);
         bar.Children.Add(issues);
 
         return new Border
@@ -475,6 +502,53 @@ public sealed class MainWindow : Window
         row.Children.Add(numeric);
 
         return row;
+    }
+
+    // --- plugins -----------------------------------------------------------------
+
+    /// <summary>The device that was opened, and what it came from — null when nothing could play.</summary>
+    private sealed record AudioSetup(IAudioDevice Device, IAudioOutput? Output, string? Failure);
+
+    /// <summary>
+    /// Opens the best backend the plugins offered. A machine with no sound
+    /// plugin, or one whose device refuses to open, gets silence and a disabled
+    /// button — never a program that will not start.
+    /// </summary>
+    private static AudioSetup OpenAudio(PluginCatalog plugins)
+    {
+        if (plugins.PreferredAudioOutput is not { } output)
+            return new AudioSetup(new SilentAudioDevice(), null, null);
+
+        try
+        {
+            return new AudioSetup(output.Create(AudioFormat.Default), output, null);
+        }
+        catch (Exception ex)
+        {
+            return new AudioSetup(new SilentAudioDevice(), null, $"{output.Name} — {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// What loaded and what did not. This is the only place a plugin failure is
+    /// reported, so it says where the folder is even when it is empty.
+    /// </summary>
+    private string PluginSummary()
+    {
+        var lines = new List<string>();
+
+        lines.Add(plugins.Plugins.Count == 0 ? "No plugins loaded." : "Loaded:");
+        lines.AddRange(plugins.Plugins.Select(p => $"    {p.Info.Name}  ({p.Info.Id})"));
+
+        if (sound.Failure is { } failure)
+            lines.Add($"Could not open sound: {failure}");
+
+        lines.AddRange(plugins.Problems.Select(p => $"Problem: {p}"));
+
+        lines.Add(string.Empty);
+        lines.Add(PluginHost.DefaultDirectory);
+
+        return string.Join(Environment.NewLine, lines);
     }
 
     // --- compile and status -----------------------------------------------------

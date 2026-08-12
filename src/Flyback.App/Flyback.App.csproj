@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
@@ -10,6 +10,17 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Flyback.Core\Flyback.Core.csproj" />
+    <ProjectReference Include="..\Flyback.Plugins\Flyback.Plugins.csproj" />
+  </ItemGroup>
+
+  <!--
+    Not a reference: the shell must not know what a WASAPI is. This only says
+    that the plugin ships in the box, and Directory.Build.targets puts it under
+    plugins\Wasapi\ in the output. Deleting these three lines removes Windows
+    sound and nothing else.
+  -->
+  <ItemGroup>
+    <PluginProject Include="..\Flyback.Plugins.Wasapi\Flyback.Plugins.Wasapi.csproj" FolderName="Wasapi" />
   </ItemGroup>
 
   <ItemGroup>
@@ -17,7 +28,6 @@
     <PackageReference Include="Avalonia.Desktop" Version="12.1.1" />
     <PackageReference Include="Avalonia.Fonts.Inter" Version="12.1.1" />
     <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.1" />
-    <PackageReference Include="NAudio" Version="2.3.0" />
   </ItemGroup>
 
 </Project>

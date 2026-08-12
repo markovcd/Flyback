@@ -1,0 +1,32 @@
+<Project>
+
+  <!--
+    Plugins are loaded from disk at run time, not referenced, so nothing in the
+    build graph would otherwise put them where the host looks. A project that
+    wants a plugin present declares it:
+
+      <ItemGroup>
+        <PluginProject Include="..\Flyback.Plugins.Wasapi\Flyback.Plugins.Wasapi.csproj"
+                       FolderName="Wasapi" />
+      </ItemGroup>
+
+    and it is built directly into $(OutDir)plugins\<FolderName>\ — assembly,
+    dependencies and .deps.json together — so running from the build output
+    finds it exactly the way an installed copy would.
+
+    Building into the folder rather than copying into it is deliberate: the SDK
+    already knows which of a project's dependencies belong beside it, and a
+    hand-written copy step would have to guess.
+  -->
+
+  <Target Name="BuildPlugins" AfterTargets="Build" Condition="'@(PluginProject)' != ''">
+    <MSBuild Projects="%(PluginProject.Identity)"
+             Targets="Build"
+             Properties="Configuration=$(Configuration);OutDir=$(MSBuildProjectDirectory)\$(OutDir)plugins\%(PluginProject.FolderName)\" />
+  </Target>
+
+  <Target Name="CleanPlugins" AfterTargets="Clean" Condition="'@(PluginProject)' != ''">
+    <RemoveDir Directories="$(MSBuildProjectDirectory)\$(OutDir)plugins" />
+  </Target>
+
+</Project>

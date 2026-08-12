@@ -1,12 +1,14 @@
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Core.Render;
+using Flyback.Plugins.Audio;
 
 namespace Flyback.App.Audio;
 
 /// <summary>
 /// Joins the compiled audio program to a sound device, and is the clock the
-/// video preview follows while sound is playing.
+/// video preview follows while sound is playing. The device arrives from a
+/// plugin, so this class is the last thing that is the same on every platform.
 /// </summary>
 /// <remarks>
 /// The callback never locks. Everything it needs is reachable through a single
