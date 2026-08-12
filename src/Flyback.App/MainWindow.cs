@@ -36,6 +36,25 @@ public sealed class MainWindow : Window
     private readonly NodeEditor editor = new();
     private readonly PreviewSurface preview = new();
 
+    /// <summary>
+    /// Behind the inspector, and brighter when there is nothing selected for it
+    /// to sit behind. Never hit-testable, so it cannot swallow a click meant for
+    /// a slider underneath.
+    /// </summary>
+    private readonly LogoMark watermark = new()
+    {
+        // Fills the panel and centres itself, so it grows with the splitter
+        // instead of being sized for one particular panel width.
+        HorizontalAlignment = HorizontalAlignment.Stretch,
+        VerticalAlignment = VerticalAlignment.Stretch,
+        Margin = new Thickness(20),
+
+        // The no-selection value, so it is never briefly full strength if
+        // something ever builds the panel before the first selection lands.
+        Opacity = 0.14,
+        IsHitTestVisible = false,
+    };
+
     private readonly StackPanel modules = new() { Margin = new Thickness(10, 0, 10, 8), Spacing = 2 };
     private readonly TextBox filter = new()
     {
@@ -493,10 +512,23 @@ public sealed class MainWindow : Window
         var splitter = new GridSplitter { Background = Brushes.Transparent, Height = 5 };
         Grid.SetRow(splitter, 1);
 
+        // The mark sits behind the inspector rather than beside it, and never
+        // takes a click — an empty panel is a better place for it than a corner
+        // of the toolbar, and it is out of the way once there is something to read.
         var inspectorBorder = new Border
         {
             Background = new SolidColorBrush(Color.FromRgb(0x1C, 0x1E, 0x22)),
-            Child = new ScrollViewer { Content = inspector },
+            Child = new Panel
+            {
+                Children =
+                {
+                    watermark,
+
+                    // Explicitly transparent: a theme that gave the scroll
+                    // viewer a background would paint straight over the mark.
+                    new ScrollViewer { Content = inspector, Background = Brushes.Transparent },
+                },
+            },
         };
         Grid.SetRow(inspectorBorder, 2);
 
@@ -516,6 +548,13 @@ public sealed class MainWindow : Window
     private void BuildInspector()
     {
         inspector.Children.Clear();
+
+        var selected = editor.SelectedNode is { } chosen && NodeCatalog.Get(chosen.TypeId) is not null;
+
+        // Louder with nothing in front of it, faint once there are values to
+        // read. A watermark that competed with a column of sliders would be a
+        // decoration in the way of the thing it decorates.
+        watermark.Opacity = selected ? 0.06 : 0.14;
 
         if (editor.SelectedNode is not { } node || NodeCatalog.Get(node.TypeId) is not { } def)
         {

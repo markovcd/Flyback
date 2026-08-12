@@ -1,8 +1,14 @@
+<img src="docs/logo.svg" width="88" align="right" alt="">
+
 # Flyback
 
 A patchable video synthesiser for .NET 10. Images are generated the way an
 analogue synth generates sound: oscillators, maths and feedback, evaluated per
 pixel. Nothing is drawn — every frame is a function of `(x, y, t)`.
+
+The mark is a sawtooth: the ramp that sweeps a CRT line and the fast retrace
+back to start the next one — the flyback the program is named after, and one of
+its own oscillators besides.
 
 ```
 Coordinates ──▶ Sine ──┐
