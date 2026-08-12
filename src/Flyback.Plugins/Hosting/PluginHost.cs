@@ -1,4 +1,5 @@
 using System.Reflection;
+using Flyback.Core.Graph;
 using Flyback.Plugins.Audio;
 
 namespace Flyback.Plugins.Hosting;
@@ -45,7 +46,8 @@ public static class PluginHost
         foreach (var folder in Directory.EnumerateDirectories(directory).Order(StringComparer.Ordinal))
             LoadFolder(folder, plugins, registry, problems);
 
-        return new PluginCatalog(plugins, registry.AudioOutputs, problems);
+        return new PluginCatalog(
+            plugins, registry.AudioOutputs, registry.Modules, registry.Presets, problems);
     }
 
     private static void LoadFolder(
@@ -177,6 +179,45 @@ public static class PluginHost
         public PluginInfo Source { get; set; } = new("", "");
 
         public IReadOnlyList<IAudioOutput> AudioOutputs => audioOutputs;
+
+        /// <summary>
+        /// Built up as plugins register, starting from the engine's own modules.
+        /// The catalogue itself decides what it will accept; refusals become
+        /// problems here so a plugin author sees them next to everything else
+        /// that went wrong.
+        /// </summary>
+        public ModuleCatalog Modules { get; private set; } = NodeCatalog.BuiltIn;
+
+        /// <summary>Starts as the engine's own presets; plugins append to it.</summary>
+        private readonly List<PatchPreset> presets = [.. Flyback.Core.Graph.Presets.All];
+
+        public IReadOnlyList<PatchPreset> Presets => presets;
+
+        public void AddPresets(IReadOnlyList<PatchPreset> offered)
+        {
+            foreach (var preset in offered)
+            {
+                if (presets.Any(p => p.Name == preset.Name))
+                {
+                    problems.Add(new PluginProblem(
+                        Source.Id,
+                        $"preset '{preset.Name}' is already offered and was ignored."));
+                    continue;
+                }
+
+                presets.Add(preset);
+            }
+        }
+
+        public void AddModules(ModuleProvider provider, IReadOnlyList<NodeDef> modules)
+        {
+            var added = Modules.With(provider, modules);
+
+            Modules = added.Catalog;
+
+            foreach (var rejection in added.Rejected)
+                problems.Add(new PluginProblem(Source.Id, rejection));
+        }
 
         public void AddAudioOutput(IAudioOutput output)
         {

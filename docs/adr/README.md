@@ -4,11 +4,12 @@ Each record captures one decision, the situation that forced it, and what it
 costs. Format is [Michael Nygard's](https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions):
 context, decision, consequences.
 
-Two records — [0003](0003-cpu-rendering-with-a-gpu-path-left-open.md) and
-[0004](0004-visual-patch-editor-as-the-authoring-model.md) — are marked
-**user-directed**: they were chosen by the project owner, not derived. They sit
-upstream of almost everything else here, so they are recorded even though they
-were not mine to make.
+Three records — [0003](0003-cpu-rendering-with-a-gpu-path-left-open.md),
+[0004](0004-visual-patch-editor-as-the-authoring-model.md) and
+[0026](0026-modules-from-plugins-with-provenance-in-the-file.md) — are marked
+**user-directed**: they were chosen by the project owner, not derived. The first
+two sit upstream of almost everything else here; the third reverses a boundary an
+earlier record drew. All are recorded even though they were not mine to make.
 
 ## Index
 
@@ -61,3 +62,4 @@ were not mine to make.
 | [0019](0019-no-third-party-dependencies-in-the-engine.md) | No third-party dependencies in the engine |
 | [0020](0020-json-patch-files-keyed-by-string-type-ids.md) | JSON patch files keyed by string type IDs |
 | [0025](0025-platform-io-behind-loadable-plugins.md) | Platform I/O behind plugins loaded at run time |
+| [0026](0026-modules-from-plugins-with-provenance-in-the-file.md) | Modules may come from plugins, and the file records which *(user-directed)* |

@@ -11,7 +11,8 @@ namespace Flyback.Plugins.Tests;
 /// </summary>
 public class AudioOutputSelectionTests
 {
-    private static PluginCatalog CatalogOf(params IAudioOutput[] outputs) => new([], outputs, []);
+    private static PluginCatalog CatalogOf(params IAudioOutput[] outputs) =>
+        new([], outputs, Core.Graph.NodeCatalog.BuiltIn, Core.Graph.Presets.All, []);
 
     [Fact]
     public void Nothing_installed_means_nothing_plays()

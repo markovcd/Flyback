@@ -33,6 +33,14 @@ public sealed record Connection(Guid SourceNode, int SourcePort, Guid TargetNode
 /// <summary>The whole document: modules plus the wires between them.</summary>
 public sealed class Patch
 {
+    /// <summary>
+    /// The plugins this patch cannot be opened without, stamped as it is
+    /// written. Null rather than empty when it uses nothing but the modules that
+    /// ship in the engine, so an ordinary patch file looks exactly as it always
+    /// did and one saved by an older build still loads.
+    /// </summary>
+    public List<ModuleProvider>? Requires { get; set; }
+
     public List<NodeInstance> Nodes { get; set; } = [];
 
     public List<Connection> Connections { get; set; } = [];

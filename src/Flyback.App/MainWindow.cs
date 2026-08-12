@@ -53,10 +53,10 @@ public sealed class MainWindow : Window
     private readonly ToggleButton audioButton = new() { Content = "Audio off", Width = 92 };
 
     /// <summary>
-    /// Scanned once, before anything else exists. Nothing in the shell knows
-    /// which backends there are or what they are called.
+    /// Read before this window existed, and already installed. Nothing here
+    /// knows which backends or modules there are, or what they are called.
     /// </summary>
-    private readonly PluginCatalog plugins = PluginHost.Load();
+    private readonly PluginCatalog plugins = Startup.Plugins;
 
     private readonly AudioSetup sound;
     private readonly AudioEngine audio;
@@ -139,18 +139,33 @@ public sealed class MainWindow : Window
 
     private Control BuildToolbar()
     {
+        // Plugin presets sit after the engine's own, so the list the app opens
+        // on is the same wherever it is installed.
+        var available = plugins.Presets;
+
         var presets = new ComboBox
         {
-            ItemsSource = Presets.All.Select(p => p.Name).ToList(),
+            ItemsSource = available.Select(p => p.Name).ToList(),
             SelectedIndex = 0,
             Width = 160,
         };
         presets.SelectionChanged += (_, _) =>
         {
-            if (presets.SelectedIndex >= 0 && presets.SelectedIndex < Presets.All.Count)
+            if (presets.SelectedIndex < 0 || presets.SelectedIndex >= available.Count) return;
+
+            var preset = available[presets.SelectedIndex];
+
+            try
             {
-                editor.Patch = Presets.All[presets.SelectedIndex].Build();
+                // A preset from a plugin is built here, not when it was
+                // registered, so this is where a plugin that offered a patch
+                // using modules it failed to add finally shows up.
+                editor.Patch = preset.Build(plugins.Modules);
                 preview.Rewind();
+            }
+            catch (Exception ex)
+            {
+                Report($"Could not build the '{preset.Name}' preset: {ex.Message}");
             }
         };
 
@@ -540,6 +555,17 @@ public sealed class MainWindow : Window
         lines.Add(plugins.Plugins.Count == 0 ? "No plugins loaded." : "Loaded:");
         lines.AddRange(plugins.Plugins.Select(p => $"    {p.Info.Name}  ({p.Info.Id})"));
 
+        // Module providers are worth naming separately: they are what a saved
+        // patch records, and what another machine would have to install.
+        var providers = plugins.Modules.Providers.Where(p => p.Id != NodeCatalog.BuiltInProvider.Id).ToList();
+
+        if (providers.Count > 0)
+        {
+            lines.Add(string.Empty);
+            lines.Add("Modules from:");
+            lines.AddRange(providers.Select(p => $"    {p.Name}  ({p.Id})"));
+        }
+
         if (sound.Failure is { } failure)
             lines.Add($"Could not open sound: {failure}");
 
@@ -564,9 +590,20 @@ public sealed class MainWindow : Window
         preview.Program = result.Program;
         audio.Update(editor.Patch);
 
-        issues.Text = result.HasIssues
+        Report(result.HasIssues
             ? string.Join("  •  ", result.Issues.Select(i => i.Message))
-            : string.Empty;
+            : string.Empty);
+    }
+
+    /// <summary>
+    /// The one place anything is said to the user. <paramref name="detail"/> is
+    /// for what will not fit on a status bar — a list of missing plugins, say —
+    /// and is cleared along with the line, so nothing stale hangs off it.
+    /// </summary>
+    private void Report(string message, string? detail = null)
+    {
+        issues.Text = message;
+        ToolTip.SetTip(issues, string.IsNullOrEmpty(detail) ? null : detail);
     }
 
     private void SetAudioEnabled(bool enabled)
@@ -626,12 +663,23 @@ public sealed class MainWindow : Window
         {
             await using var stream = await files[0].OpenReadAsync();
             using var reader = new StreamReader(stream);
-            editor.Patch = PatchIo.FromJson(await reader.ReadToEndAsync());
+            var loaded = PatchIo.Read(await reader.ReadToEndAsync());
+
+            // A patch short of a module would open with holes in it and compile
+            // to something that is not what was saved. Better to refuse it and
+            // say what is missing, leaving what is open where it was.
+            if (!loaded.IsComplete)
+            {
+                Report($"Not opened. {loaded.Summary}", loaded.Detail);
+                return;
+            }
+
+            editor.Patch = loaded.Patch;
             preview.Rewind();
         }
         catch (Exception ex)
         {
-            issues.Text = $"Could not open patch: {ex.Message}";
+            Report($"Could not open patch: {ex.Message}");
         }
     }
 
@@ -655,7 +703,7 @@ public sealed class MainWindow : Window
         }
         catch (Exception ex)
         {
-            issues.Text = $"Could not save patch: {ex.Message}";
+            Report($"Could not save patch: {ex.Message}");
         }
     }
 
@@ -676,7 +724,7 @@ public sealed class MainWindow : Window
             var path = file.TryGetLocalPath();
             if (path is null)
             {
-                issues.Text = "That location can't be written to directly.";
+                Report("That location can't be written to directly.");
                 return;
             }
 
@@ -684,7 +732,7 @@ public sealed class MainWindow : Window
         }
         catch (Exception ex)
         {
-            issues.Text = $"Could not save frame: {ex.Message}";
+            Report($"Could not save frame: {ex.Message}");
         }
     }
 
@@ -705,7 +753,7 @@ public sealed class MainWindow : Window
             var path = file.TryGetLocalPath();
             if (path is null)
             {
-                issues.Text = "That location can't be written to directly.";
+                Report("That location can't be written to directly.");
                 return;
             }
 
@@ -714,7 +762,7 @@ public sealed class MainWindow : Window
         }
         catch (Exception ex)
         {
-            issues.Text = $"Could not render audio: {ex.Message}";
+            Report($"Could not render audio: {ex.Message}");
         }
     }
 

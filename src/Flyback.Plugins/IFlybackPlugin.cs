@@ -1,3 +1,6 @@
+using Flyback.Core.Graph;
+using Flyback.Plugins.Audio;
+
 namespace Flyback.Plugins;
 
 /// <summary>
@@ -31,5 +34,20 @@ public interface IFlybackPlugin
 public interface IPluginRegistry
 {
     /// <summary>Offers a sound backend. Registering it does not open a device.</summary>
-    void AddAudioOutput(Audio.IAudioOutput output);
+    void AddAudioOutput(IAudioOutput output);
+
+    /// <summary>
+    /// Adds modules to the catalogue. Every type id must begin with
+    /// <c>provider.Id</c> and a dot; ones that do not are refused, because that
+    /// prefix is what a saved patch relies on to know which plugin a module it
+    /// contains came from.
+    /// </summary>
+    void AddModules(ModuleProvider provider, IReadOnlyList<NodeDef> modules);
+
+    /// <summary>
+    /// Adds patches to start from. A preset is built when it is chosen, not when
+    /// it is registered, so it may freely use modules this plugin added — by
+    /// then the catalogue is complete.
+    /// </summary>
+    void AddPresets(IReadOnlyList<PatchPreset> presets);
 }

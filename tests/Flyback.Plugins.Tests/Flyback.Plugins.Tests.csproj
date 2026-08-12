@@ -18,6 +18,8 @@
   -->
   <ItemGroup>
     <PluginProject Include="..\..\src\Flyback.Plugins.Wasapi\Flyback.Plugins.Wasapi.csproj" FolderName="Wasapi" />
+    <PluginProject Include="..\Flyback.Plugins.Sample\Flyback.Plugins.Sample.csproj" FolderName="Sample" />
+    <PluginProject Include="..\..\src\Flyback.Plugins.Supersaw\Flyback.Plugins.Supersaw.csproj" FolderName="Supersaw" />
   </ItemGroup>
 
   <ItemGroup>

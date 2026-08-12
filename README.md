@@ -93,6 +93,9 @@ plugins/
     Flyback.Plugins.Wasapi.dll
     Flyback.Plugins.Wasapi.deps.json
     NAudio.dll …
+  Supersaw/
+    Flyback.Plugins.Supersaw.dll
+    Flyback.Plugins.Supersaw.deps.json
 ```
 
 The status bar says which backend is playing; hover it for what loaded, what did
@@ -125,7 +128,9 @@ public sealed class AlsaOutput : IAudioOutput
 audio thread; it must not block, allocate or throw. That is the entire contract —
 `Flyback.Plugins` has no dependencies, and neither need you.
 
-Reference `Flyback.Plugins` with `Private="false"`, set `EnableDynamicLoading`
+Reference `Flyback.Plugins` **and** `Flyback.Core` with `Private="false"
+ExcludeAssets="runtime"` — both are host-owned, and naming only the first leaves
+the second to be copied in as a transitive reference. Set `EnableDynamicLoading`
 so the `.deps.json` the loader reads is produced, and drop the build output into
 a folder under `plugins/`. To ship one in the box instead, add a line to
 `Flyback.App.csproj`:
@@ -137,6 +142,86 @@ a folder under `plugins/`. To ship one in the box instead, add a line to
 Each plugin loads into its own `AssemblyLoadContext`, so two of them may depend
 on different versions of the same package. A broken, missing or hostile plugin is
 a note in the status bar, never a program that fails to start.
+
+### Modules from a plugin
+
+A plugin can also add modules. They are the same data as the built-in ones — the
+`NodeDef` from *Adding a module* below, written in another assembly:
+
+```csharp
+public sealed class SupersawPlugin : IFlybackPlugin
+{
+    private static readonly ModuleProvider Provider = new("flyback.supersaw", "Supersaw");
+
+    public PluginInfo Info { get; } = new("flyback.supersaw", "Supersaw");
+
+    public void Register(IPluginRegistry registry) => registry.AddModules(Provider,
+    [
+        new NodeDef("flyback.supersaw.osc", "Supersaw", "Oscillator", …),
+    ]);
+}
+```
+
+Every type id must start with the provider's id and a dot. That rule is what
+makes shadowing a built-in impossible, and what lets a saved patch name the
+plugin a module came from without having the plugin to ask.
+
+A plugin can offer **presets** too, which is how it ships a patch showing its
+modules wired properly. They appear in the Patch dropdown after the engine's own
+— the app always opens on `Plasma`, so what you see at startup never depends on
+what is installed:
+
+```csharp
+registry.AddPresets([new PatchPreset("Supersaw", SupersawPreset.Build)]);
+```
+
+A preset is handed the catalogue when it is picked rather than when it is
+registered, so it can freely use the modules the same plugin just added.
+
+Because a patch is keyed by type id, one that uses a plugin's modules writes
+down what it needs:
+
+```json
+{
+  "Requires": [ { "Id": "flyback.supersaw", "Name": "Supersaw" } ],
+  "Nodes": [ … ]
+}
+```
+
+Open it somewhere that plugin is not installed and it does not open — you get
+*"This patch needs Supersaw (flyback.supersaw)"*, and whatever you already
+had stays where it was. A patch that uses only the modules in the engine records
+nothing and is written exactly as it always was.
+
+Plugins are read once at startup, so installing one means restarting.
+
+### Supersaw
+
+[`src/Flyback.Plugins.Supersaw`](src/Flyback.Plugins.Supersaw) ships in the box
+and is the worked example — seven detuned saws in one module, under a hundred
+lines.
+
+| | |
+|---|---|
+| `detune` | spreads the voices apart, up to about ±1.4 semitones |
+| `mix` | fades the six outer voices in against the centre — at 0 it is *exactly* a plain Saw |
+| `out` / `wide` | the same voices at complementary weights; patch both for stereo, or use `out` alone |
+
+Pick **Supersaw** from the Patch dropdown for it wired up: 110 Hz from a
+Frequency module, both outputs to their own channel, and one slow sweep driving
+the detune of the sound and of the picture at once, so the bands on screen beat
+in step with what you hear. `freq` counts cycles per unit of `in` like every
+other oscillator here — reach for its knob instead of a Frequency module and you
+get a one-hertz saw, which is a click rather than a note.
+
+Seven voices, not a knob's worth: an emit function runs once at compile time and
+writes straight-line ops, so it never sees a knob value and a variable voice
+count would mean a variable number of instructions. Seven is what the sound is.
+The whole thing unrolls to about seventy ops, no branches and no state, and it
+is peak-normalised as it mixes — turning `mix` up makes it wider, never louder.
+
+Point it at the screen instead of the speakers and the detuning reads as a slow
+moiré, which is the same beating seen rather than heard.
 
 ## Using the editor
 
@@ -161,8 +246,9 @@ patches need no constant modules at all.
 | `src/Flyback.App` | Avalonia editor and live preview, built in C# without XAML |
 | `src/Flyback.Plugins` | the plugin contract and the loader — no dependencies either |
 | `src/Flyback.Plugins.Wasapi` | Windows sound output; the only project that knows what an operating system is |
+| `src/Flyback.Plugins.Supersaw` | the Supersaw oscillator, as a module plugin |
 
-Why it is built this way is recorded in [docs/adr](docs/adr) — 25 decision
+Why it is built this way is recorded in [docs/adr](docs/adr) — 26 decision
 records covering the compiler, the renderer, the shell and the boundaries
 between them.
 
@@ -195,7 +281,8 @@ what its emit function actually indexes.
 
 Everything about a module lives in one entry in `NodeCatalog`: its sockets and
 the ops it lowers to. Nothing else in the pipeline needs to change — it shows up
-in the palette and compiles on its own.
+in the palette and compiles on its own. The same entry works from a plugin; see
+*Modules from a plugin* above.
 
 ```csharp
 new NodeDef(

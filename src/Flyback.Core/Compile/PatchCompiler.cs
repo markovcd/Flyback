@@ -23,21 +23,29 @@ public sealed record CompileResult(CompiledPatch Program, IReadOnlyList<CompileI
 public static class PatchCompiler
 {
     /// <summary>Compiles the program the screen shows, rooted at the video sink.</summary>
-    public static CompileResult CompileForVideo(this Patch patch) =>
-        Compile(patch, NodeCatalog.VideoOutputTypeId, NodeCatalog.VideoChannels);
+    public static CompileResult CompileForVideo(this Patch patch, ModuleCatalog? modules = null) =>
+        Compile(patch, NodeCatalog.VideoOutputTypeId, NodeCatalog.VideoChannels, modules);
 
     /// <summary>Compiles the program the speakers play, rooted at the audio sink.</summary>
-    public static CompileResult CompileForAudio(this Patch patch) =>
-        Compile(patch, NodeCatalog.AudioOutputTypeId, NodeCatalog.AudioChannels);
+    public static CompileResult CompileForAudio(this Patch patch, ModuleCatalog? modules = null) =>
+        Compile(patch, NodeCatalog.AudioOutputTypeId, NodeCatalog.AudioChannels, modules);
 
     /// <param name="patch">The graph to lower.</param>
     /// <param name="sinkTypeId">Module type to compile backwards from.</param>
     /// <param name="width">Registers the sink consumes — 3 for RGB, 2 for stereo.</param>
+    /// <param name="modules">
+    /// Which catalogue the type ids mean, defaulting to the installed one. Named
+    /// explicitly, a patch can be compiled against a catalogue that is not the
+    /// running program's — which is what makes a plugin's modules testable.
+    /// </param>
     private static CompileResult Compile(
         Patch patch,
         string sinkTypeId,
-        int width)
+        int width,
+        ModuleCatalog? modules)
     {
+        var catalog = modules ?? NodeCatalog.Current;
+
         var issues = new List<CompileIssue>();
         var sink = patch.Nodes.FirstOrDefault(n => n.TypeId == sinkTypeId);
 
@@ -66,7 +74,7 @@ public static class PatchCompiler
         {
             if (resolved.TryGetValue(node.Id, out var cached)) return cached;
 
-            var def = NodeCatalog.Get(node.TypeId);
+            var def = catalog.Get(node.TypeId);
             if (def is null)
             {
                 issues.Add(new CompileIssue(node.Id, $"Unknown module '{node.TypeId}'."));

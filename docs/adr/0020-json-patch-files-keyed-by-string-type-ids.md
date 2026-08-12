@@ -1,6 +1,8 @@
 # ADR-0020: JSON patch files keyed by string type IDs
 
-**Status:** Accepted · 2026-08-11
+**Status:** Accepted · 2026-08-11 · amended by
+[0026](0026-modules-from-plugins-with-provenance-in-the-file.md), which adds a
+header naming the plugins a patch cannot be opened without
 
 ## Context
 

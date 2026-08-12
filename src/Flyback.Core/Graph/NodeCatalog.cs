@@ -7,8 +7,18 @@ namespace Flyback.Core.Graph;
 /// with the ops it lowers to; adding a module here makes it appear in the
 /// editor palette and compile with no other changes.
 /// </summary>
+/// <remarks>
+/// The definitions below are the ones that ship in the engine. A plugin may add
+/// more, so the lookups here read through <see cref="Current"/> — installed once
+/// at startup, before any patch is compiled, and never changed after. Anything
+/// that wants to reason about a catalogue that is not the running one should
+/// take a <see cref="ModuleCatalog"/> rather than come here.
+/// </remarks>
 public static class NodeCatalog
 {
+    /// <summary>The provider every module in this file belongs to. Reserved.</summary>
+    public static ModuleProvider BuiltInProvider { get; } = new("flyback", "Flyback");
+
     /// <summary>The screen sink. Paired with <see cref="AudioOutputTypeId"/> per ADR-0022.</summary>
     public const string VideoOutputTypeId = "video.output";
 
@@ -23,16 +33,27 @@ public static class NodeCatalog
 
     private const float Tau = 6.283185307179586f;
 
-    private static readonly Dictionary<string, NodeDef> Index;
+    /// <summary>Just the modules that ship in the engine, with nothing added.</summary>
+    public static ModuleCatalog BuiltIn { get; }
 
-    public static IReadOnlyList<NodeDef> All { get; }
+    /// <summary>The catalogue the running program uses.</summary>
+    public static ModuleCatalog Current { get; private set; }
 
-    public static IEnumerable<string> Categories => All.Select(d => d.Category).Distinct();
+    /// <summary>
+    /// Puts a composed catalogue in place. Called once during startup, after
+    /// plugins have been read and before any patch exists — a module appearing
+    /// or vanishing later would leave already-compiled programs describing a
+    /// catalogue that no longer matches.
+    /// </summary>
+    public static void Install(ModuleCatalog catalog) => Current = catalog;
 
-    public static NodeDef? Get(string typeId) => Index.GetValueOrDefault(typeId);
+    public static IReadOnlyList<NodeDef> All => Current.All;
 
-    public static NodeDef Require(string typeId) =>
-        Get(typeId) ?? throw new KeyNotFoundException($"Unknown node type '{typeId}'.");
+    public static IEnumerable<string> Categories => Current.Categories;
+
+    public static NodeDef? Get(string typeId) => Current.Get(typeId);
+
+    public static NodeDef Require(string typeId) => Current.Require(typeId);
 
     // --- port shorthands -----------------------------------------------------
 
@@ -61,7 +82,7 @@ public static class NodeCatalog
 
     static NodeCatalog()
     {
-        All =
+        NodeDef[] modules =
         [
             // ---------------------------------------------------------------- output
             new NodeDef(
@@ -360,7 +381,8 @@ public static class NodeCatalog
                 + "a Rotate or Scale to get the classic camera-pointed-at-its-own-monitor loop."),
         ];
 
-        Index = All.ToDictionary(d => d.TypeId);
+        BuiltIn = ModuleCatalog.Of(BuiltInProvider, modules);
+        Current = BuiltIn;
     }
 
     /// <summary>

@@ -27,8 +27,10 @@ public class PresetSnapshotTests
     [MemberData(nameof(PresetNames))]
     public async Task Preset_renders_as_approved(string presetName)
     {
-        var patch = Presets.All.Single(p => p.Name == presetName).Build();
-        var program = patch.CompileForVideo().Program;
+        // Built against the engine's own catalogue on purpose: a preset that
+        // ships with the synth must never need a plugin to be installed.
+        var patch = Presets.All.Single(p => p.Name == presetName).Build(NodeCatalog.BuiltIn);
+        var program = patch.CompileForVideo(NodeCatalog.BuiltIn).Program;
 
         var renderer = new SynthRenderer();
         var stride = Width * 4;

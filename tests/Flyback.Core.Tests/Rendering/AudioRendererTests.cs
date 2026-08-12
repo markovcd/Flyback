@@ -133,7 +133,7 @@ public class AudioRendererTests
     [Fact]
     public void A_patch_with_no_audio_sink_is_silent_rather_than_a_failure()
     {
-        var result = Presets.Plasma().CompileForAudio();
+        var result = Presets.Plasma(NodeCatalog.BuiltIn).CompileForAudio();
 
         result.Issues.ShouldBeEmpty();
 

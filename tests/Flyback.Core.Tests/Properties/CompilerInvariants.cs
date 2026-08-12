@@ -110,7 +110,7 @@ public class CompilerInvariants
     }
 
     private static Patch BuildPreset(string name) =>
-        Presets.All.Single(p => p.Name == name).Build();
+        Presets.All.Single(p => p.Name == name).Build(NodeCatalog.BuiltIn);
 
     private static IEnumerable<(OpCode, int, int, int, int, float)> Fingerprint(CompiledPatch program) =>
         program.Ops.Select(o => (o.Code, o.Out, o.A, o.B, o.C, o.K));

@@ -5,6 +5,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- A module is engine data, so contributing one means speaking Core's types. -->
+    <ProjectReference Include="..\Flyback.Core\Flyback.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <!-- PluginCatalog is built by the host, so its constructor is not public. -->
     <InternalsVisibleTo Include="Flyback.Plugins.Tests" />
   </ItemGroup>

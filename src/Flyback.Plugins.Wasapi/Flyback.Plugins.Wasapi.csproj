@@ -26,6 +26,17 @@
                       Private="false"
                       ExcludeAssets="runtime"
                       GlobalPropertiesToRemove="OutDir" />
+
+    <!--
+      Named even though this plugin does not use it: the contract references it,
+      and a transitive reference is copied local unless it is suppressed here
+      too. Left out, Flyback.Core is shipped inside the plugin folder — harmless
+      only because the loader refuses to load a host-owned assembly from there.
+    -->
+    <ProjectReference Include="..\Flyback.Core\Flyback.Core.csproj"
+                      Private="false"
+                      ExcludeAssets="runtime"
+                      GlobalPropertiesToRemove="OutDir" />
   </ItemGroup>
 
   <ItemGroup>

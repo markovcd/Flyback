@@ -1,6 +1,8 @@
 # ADR-0008: Modules are data in a single catalogue
 
-**Status:** Accepted · 2026-08-11
+**Status:** Accepted · 2026-08-11 · amended by
+[0026](0026-modules-from-plugins-with-provenance-in-the-file.md), where the
+catalogue is composed from the engine's modules plus any a plugin adds
 
 ## Context
 

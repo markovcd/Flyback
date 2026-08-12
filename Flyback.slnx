@@ -6,11 +6,13 @@
     <Project Path="src/Flyback.App/Flyback.App.csproj" />
     <Project Path="src/Flyback.Core/Flyback.Core.csproj" />
     <Project Path="src/Flyback.Plugins/Flyback.Plugins.csproj" />
+    <Project Path="src/Flyback.Plugins.Supersaw/Flyback.Plugins.Supersaw.csproj" />
     <Project Path="src/Flyback.Plugins.Wasapi/Flyback.Plugins.Wasapi.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Flyback.Core.Specs/Flyback.Core.Specs.csproj" />
     <Project Path="tests/Flyback.Core.Tests/Flyback.Core.Tests.csproj" />
+    <Project Path="tests/Flyback.Plugins.Sample/Flyback.Plugins.Sample.csproj" />
     <Project Path="tests/Flyback.Plugins.Tests/Flyback.Plugins.Tests.csproj" />
   </Folder>
 </Solution>

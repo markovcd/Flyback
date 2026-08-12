@@ -1,31 +1,38 @@
 namespace Flyback.Core.Graph;
 
+/// <summary>
+/// A patch to start from, and the name it appears under. Built on demand rather
+/// than held ready, because a preset from a plugin can only be assembled once
+/// that plugin's modules are in the catalogue.
+/// </summary>
+public sealed record PatchPreset(string Name, Func<ModuleCatalog, Patch> Build);
+
 /// <summary>Patches that ship with the synth, so it never opens on a blank canvas.</summary>
 public static class Presets
 {
-    public static IReadOnlyList<(string Name, Func<Patch> Build)> All =>
+    public static IReadOnlyList<PatchPreset> All =>
     [
-        ("Plasma", Plasma),
-        ("Kaleidoscope", Kaleidoscope),
-        ("Feedback tunnel", FeedbackTunnel),
-        ("Drone", Drone),
-        ("Empty", Empty),
+        new("Plasma", Plasma),
+        new("Kaleidoscope", Kaleidoscope),
+        new("Feedback tunnel", FeedbackTunnel),
+        new("Drone", Drone),
+        new("Empty", Empty),
     ];
 
-    public static Patch Default() => Plasma();
+    public static Patch Default() => Plasma(NodeCatalog.Current);
 
     /// <summary>Just an Output node with something to plug into.</summary>
-    public static Patch Empty()
+    public static Patch Empty(ModuleCatalog modules)
     {
-        var b = new PatchBuilder();
+        var b = new PatchBuilder(modules);
         b.Add(NodeCatalog.VideoOutputTypeId, 640, 260);
         return b.Patch;
     }
 
     /// <summary>Two sine fields crossed and read as hue — the "hello world" of video synths.</summary>
-    public static Patch Plasma()
+    public static Patch Plasma(ModuleCatalog modules)
     {
-        var b = new PatchBuilder();
+        var b = new PatchBuilder(modules);
 
         var coord = b.Add("coord", 40, 200);
         var time = b.Add("time", 40, 400, (0, 0.2f));
@@ -52,9 +59,9 @@ public static class Presets
     }
 
     /// <summary>Rotating wedges filled with noise that boils over time.</summary>
-    public static Patch Kaleidoscope()
+    public static Patch Kaleidoscope(ModuleCatalog modules)
     {
-        var b = new PatchBuilder();
+        var b = new PatchBuilder(modules);
 
         var coord = b.Add("coord", 40, 220);
         var spin = b.Add("time", 40, 60, (0, 0.15f));
@@ -85,9 +92,9 @@ public static class Presets
     /// hue of the image and the tremolo on the tone, so the two sinks are
     /// visibly and audibly the same signal. Switch Audio on to hear it.
     /// </summary>
-    public static Patch Drone()
+    public static Patch Drone(ModuleCatalog modules)
     {
-        var b = new PatchBuilder();
+        var b = new PatchBuilder(modules);
 
         var coord = b.Add("coord", 40, 120);
         var time = b.Add("time", 40, 380, (0, 1f));
@@ -126,9 +133,9 @@ public static class Presets
     /// The camera-pointed-at-its-own-monitor patch: each frame is re-read
     /// slightly rotated, scaled and dimmed, with fresh rings fed in on top.
     /// </summary>
-    public static Patch FeedbackTunnel()
+    public static Patch FeedbackTunnel(ModuleCatalog modules)
     {
-        var b = new PatchBuilder();
+        var b = new PatchBuilder(modules);
 
         var coord = b.Add("coord", 40, 240);
         var spin = b.Add("time", 40, 60, (0, 0.08f));

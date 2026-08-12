@@ -1,6 +1,8 @@
 # ADR-0025: Platform I/O behind plugins loaded at run time
 
-**Status:** Accepted · 2026-08-12
+**Status:** Accepted · 2026-08-12 · amended by
+[0026](0026-modules-from-plugins-with-provenance-in-the-file.md), which extends
+plugins to modules once a patch records where its modules came from
 
 ## Context
 
@@ -109,7 +111,10 @@ than restarting the program. Plugins also run in-process with full trust — thi
 is an extension point, not a sandbox, and a hostile plugin has the same reach as
 the shell.
 
-**This does not extend to modules.** [0008](0008-modules-as-data-in-one-catalogue.md)
+**This does not extend to modules.** *(Reversed by
+[0026](0026-modules-from-plugins-with-provenance-in-the-file.md): the objection
+below is to a dependency that is silent, and a patch that records what it needs
+does not have one.)* [0008](0008-modules-as-data-in-one-catalogue.md)
 keeps every module in one catalogue and
 [0020](0020-json-patch-files-keyed-by-string-type-ids.md) keys saved patches by
 its type ids; a plugin that added modules would make whether a `.fbk` file opens
