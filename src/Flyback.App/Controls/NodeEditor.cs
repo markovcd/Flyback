@@ -315,7 +315,7 @@ public sealed class NodeEditor : Control
             // An unconnected input shows the knob value it will compile to.
             if (!connected && i < node.InputValues.Length)
             {
-                var value = Text(Format(node.InputValues[i]), 11.5, ValueBrush, bounds.Width * 0.4, true);
+                var value = Text(port.Format(node.InputValues[i]), 11.5, ValueBrush, bounds.Width * 0.4, true);
                 context.DrawText(value, new Point(bounds.Right - 12 - value.Width, centre.Y - value.Height / 2));
             }
 
@@ -349,8 +349,6 @@ public sealed class NodeEditor : Control
 
         return formatted;
     }
-
-    private static string Format(float value) => value.ToString("0.###", CultureInfo.InvariantCulture);
 
     // --- interaction ---------------------------------------------------------
 

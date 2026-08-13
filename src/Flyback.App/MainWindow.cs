@@ -630,7 +630,11 @@ public sealed class MainWindow : Window
             TextTrimming = TextTrimming.CharacterEllipsis,
         };
 
-        var row = new Grid { ColumnDefinitions = new ColumnDefinitions("78,*,84") };
+        // A note knob gets a column for the name the number stands for, since
+        // "57" is not what anyone means by the note they are picking.
+        var named = spec.Display == PortDisplay.Note;
+
+        var row = new Grid { ColumnDefinitions = new ColumnDefinitions(named ? "78,*,84,40" : "78,*,84") };
         Grid.SetColumn(label, 0);
         row.Children.Add(label);
 
@@ -644,7 +648,7 @@ public sealed class MainWindow : Window
                 VerticalAlignment = VerticalAlignment.Center,
             };
             Grid.SetColumn(wired, 1);
-            Grid.SetColumnSpan(wired, 2);
+            Grid.SetColumnSpan(wired, named ? 3 : 2);
             row.Children.Add(wired);
             return row;
         }
@@ -659,16 +663,31 @@ public sealed class MainWindow : Window
             Value = value,
             VerticalAlignment = VerticalAlignment.Center,
             Margin = new Thickness(4, 0),
+
+            // Dragging a note knob lands on notes. The module snaps whatever it
+            // is given anyway, so a slider that stopped between two would only
+            // be showing a distinction the sound does not have.
+            IsSnapToTickEnabled = named,
+            TickFrequency = 1,
         };
 
         var numeric = new NumericUpDown
         {
             Value = (decimal)value,
-            Increment = 0.05m,
-            FormatString = "0.###",
+            Increment = named ? 1m : 0.05m,
+            FormatString = named ? "0.##" : "0.###",
             FontSize = 12,
             VerticalAlignment = VerticalAlignment.Center,
             ShowButtonSpinner = false,
+        };
+
+        var name = new TextBlock
+        {
+            Text = spec.Format(value),
+            FontSize = 12,
+            Opacity = 0.75,
+            Margin = new Thickness(6, 0, 0, 0),
+            VerticalAlignment = VerticalAlignment.Center,
         };
 
         var updating = false;
@@ -681,6 +700,7 @@ public sealed class MainWindow : Window
             if (index < node.InputValues.Length) node.InputValues[index] = next;
             slider.Value = next;
             numeric.Value = (decimal)next;
+            name.Text = spec.Format(next);
             updating = false;
 
             editor.NotifyPatchChanged();
@@ -701,6 +721,12 @@ public sealed class MainWindow : Window
         Grid.SetColumn(numeric, 2);
         row.Children.Add(slider);
         row.Children.Add(numeric);
+
+        if (named)
+        {
+            Grid.SetColumn(name, 3);
+            row.Children.Add(name);
+        }
 
         return row;
     }

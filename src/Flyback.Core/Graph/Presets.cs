@@ -17,6 +17,7 @@ public static class Presets
         new("Feedback tunnel", FeedbackTunnel),
         new("Nebula", Nebula),
         new("Drone", Drone),
+        new("Chromatic", Chromatic),
         new("Empty", Empty),
     ];
 
@@ -126,6 +127,77 @@ public static class Presets
          .Wire(slow, 0, tint, 0)
          .Wire(rings, 0, tint, 2)
          .Wire(tint, 0, screen, 0);
+
+        return b.Patch;
+    }
+
+    /// <summary>
+    /// The Note module on both sinks at once: one ramp, snapped to whole notes,
+    /// heard as a chromatic run and seen as the steps it climbs through.
+    /// </summary>
+    /// <remarks>
+    /// The ramp is smooth and nothing downstream of the snap is. That is the
+    /// whole demonstration, and it is why the same signal drives both sinks: the
+    /// ear hears a run of separate notes rather than a slide, and the eye sees
+    /// flat rings of colour rather than a gradient. Feed the ramp straight to a
+    /// Frequency knob instead and both become continuous.
+    /// <para>
+    /// The picture reads the ramp at every radius at once, which is the trick
+    /// worth stealing: the audio path pins x and y to zero, so the same Note
+    /// module the speakers hear one note from is showing the eye the fourteen
+    /// either side of it.
+    /// </para>
+    /// </remarks>
+    public static Patch Chromatic(ModuleCatalog modules)
+    {
+        var b = new PatchBuilder(modules);
+
+        var coord = b.Add("coord", 40, 320);
+        var time = b.Add("time", 40, 100, (0, 1f));
+
+        // Half an octave either way, over four seconds: six semitones up and
+        // six down from the note on the knob, then it starts again.
+        var ramp = b.Add("osc.saw", 250, 100, (1, 0.25f), (3, 0.5f));
+
+        // Distance from the centre on the same scale, subtracted rather than
+        // added so the rings travel outward as the ramp climbs.
+        var spread = b.Add("math.mul", 250, 340, (1, 0.6f));
+        var sweep = b.Add("math.sub", 460, 200);
+
+        // A3 on the knob, and whatever arrives snapped to the nearest semitone.
+        var note = b.Add("audio.note", 660, 220);
+
+        // Ear.
+        var tone = b.Add("osc.sine", 880, 460);
+        var speaker = b.Add(NodeCatalog.AudioOutputTypeId, 1100, 480, (2, 0.5f));
+
+        // Eye: one hue per semitone, wrapped so an octave is a full turn of the
+        // wheel and the same note always comes out the same colour.
+        var wheel = b.Add("math.mul", 880, 100, (1, 1f / 12f));
+        var hue = b.Add("math.fract", 1080, 100);
+
+        // Brightness is taken from the ramp itself rather than from the note, so
+        // the two are in one picture: a smooth glow with hard-edged colour rings
+        // sitting in it, which is the before and after of the snap.
+        var glow = b.Add("math.remap", 1080, 300, (1, -1.8f), (2, 0.5f), (3, 0.08f), (4, 1f));
+
+        var colour = b.Add("colour.hsv", 1270, 140, (1, 0.85f));
+        var screen = b.Add(NodeCatalog.VideoOutputTypeId, 1470, 160);
+
+        b.Wire(time, 0, ramp, 0)
+         .Wire(coord, 2, spread, 0)
+         .Wire(ramp, 0, sweep, 0)
+         .Wire(spread, 0, sweep, 1)
+         .Wire(sweep, 0, note, 1)
+         .Wire(time, 0, tone, 0)
+         .Wire(note, 0, tone, 1)
+         .Wire(tone, 0, speaker, 0)
+         .Wire(note, 1, wheel, 0)
+         .Wire(wheel, 0, hue, 0)
+         .Wire(sweep, 0, glow, 0)
+         .Wire(hue, 0, colour, 0)
+         .Wire(glow, 0, colour, 2)
+         .Wire(colour, 0, screen, 0);
 
         return b.Patch;
     }

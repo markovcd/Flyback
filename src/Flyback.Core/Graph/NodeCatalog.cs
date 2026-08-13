@@ -69,6 +69,10 @@ public static class NodeCatalog
     private static PortSpec Any(string name, float value = 0f, float min = -4f, float max = 4f) =>
         new(name, PortKind.Any, value, min, max);
 
+    /// <summary>A note number, which the editor writes out by name rather than as a number.</summary>
+    private static PortSpec Pitched(string name, float value) =>
+        new(name, PortKind.Scalar, value, 0f, 127f, -1, PortDisplay.Note);
+
     // --- emit shorthands -----------------------------------------------------
 
     private static NodeDef Unary(string id, string name, OpCode code, string description) => new(
@@ -112,6 +116,38 @@ public static class NodeCatalog
                 (_, i) => [i[0]],
                 "A knob in hertz rather than in the single digits the visual modules use. "
                 + "Patch it into an oscillator's freq to work at audible pitches."),
+
+            new NodeDef(
+                "audio.note", "Note", "Output",
+                [
+                    Pitched("note", 57f),
+                    Num("octave", 0f, -4f, 4f),
+                    Num("cents", 0f, -100f, 100f),
+                ],
+                [Num("hz"), Num("note")],
+                (em, i) =>
+                {
+                    // Octaves are twelve semitones, so anything patched into
+                    // 'octave' arrives on the same scale the note number is in
+                    // and the two simply add up before the snap.
+                    var wanted = em.Add(i[0], em.Mul(i[1], Pitch.Semitones));
+                    var note = em.Unary(OpCode.Floor, em.Add(wanted, 0.5f));
+
+                    // Detune is applied after the snap, which is the whole point
+                    // of having it: it is the one way to sit between two notes.
+                    var tuned = em.Add(note, em.Mul(i[2], 0.01f));
+                    var octaves = em.Mul(em.Add(tuned, -Pitch.ConcertNote), 1f / Pitch.Semitones);
+
+                    return
+                    [
+                        em.Mul(em.Binary(OpCode.Pow, em.Constant(2f), octaves), Pitch.ConcertPitch),
+                        note,
+                    ];
+                },
+                "Frequency, but in notes. Pick one on the knob — 57 is A3 — or patch a signal "
+                + "in and it snaps to the nearest whole note on its way through, which is what "
+                + "turns a sweep into a run up the chromatic scale. 'hz' goes to an oscillator's "
+                + "freq; 'note' hands the snapped number on, so a second Note can play an interval off it."),
 
             // ---------------------------------------------------------------- sources
             new NodeDef(
