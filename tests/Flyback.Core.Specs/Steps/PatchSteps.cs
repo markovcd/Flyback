@@ -129,6 +129,88 @@ public sealed class PatchSteps(PatchContext context)
     [Then("the rendered image is not black")]
     public void ThenTheImageIsNotBlack() => context.RenderedFrameIsBlack(1).ShouldBeFalse();
 
+    /// <summary>
+    /// Asks about the stored byte rather than about a fraction, which is the
+    /// only way to say that nothing was encoded on the way out (ADR-0014).
+    /// </summary>
+    [Then("the centre pixel is byte {int}")]
+    public void ThenTheCentrePixelIsByte(int expected) =>
+        context.Render().RedByteAt(PatchContext.Width / 2, PatchContext.Height / 2).ShouldBe((byte)expected);
+
+    [Then("the frame gets brighter towards the top")]
+    public void ThenTheFrameGetsBrighterUpwards()
+    {
+        var frame = context.Render();
+
+        var bottom = frame.AtFraction(0.5f, 0.9f).R;
+        var middle = frame.AtFraction(0.5f, 0.5f).R;
+        var top = frame.AtFraction(0.5f, 0.1f).R;
+
+        middle.ShouldBeGreaterThan(bottom, "the middle of the frame should outrank the bottom");
+        top.ShouldBeGreaterThan(middle, "the top of the frame should outrank the middle");
+    }
+
+    /// <summary>
+    /// Counts the disc across the middle row and down the middle column. If x
+    /// were normalised to -1..1 like y instead of being widened by the aspect
+    /// ratio, the disc would come out as an ellipse as wide as the frame's
+    /// shape and these two counts would differ by that ratio.
+    /// </summary>
+    [Then("a circle is as wide as it is tall at {int} by {int}")]
+    public void ThenACircleIsRound(int width, int height)
+    {
+        var (across, down) = context.Render(1, width, height).DarkExtent();
+
+        across.ShouldBeGreaterThan(0, "no disc was found on the middle row");
+        down.ShouldBeGreaterThan(0, "no disc was found down the middle column");
+
+        // A pixel either side: the middle row of an even-height frame is half a
+        // pixel off centre, so it cuts the disc just below its widest point.
+        Math.Abs(across - down)
+            .ShouldBeLessThanOrEqualTo(1, $"the disc is {across} across and {down} down");
+    }
+
+    /// <summary>
+    /// Renders the same patch at two densities and compares every pixel of the
+    /// coarser one against the point in the finer one that samples the same
+    /// coordinate.
+    /// </summary>
+    /// <remarks>
+    /// The two grids only line up if the finer is an <em>odd</em> multiple of
+    /// the coarser: pixel centres sit at <c>(i + 0.5) / size</c>, so pixel
+    /// <c>i</c> of the coarse grid and pixel <c>k * i + (k - 1) / 2</c> of the
+    /// fine one are the same point exactly when <c>k</c> is odd. That makes
+    /// this an equality between two samplings of one function rather than an
+    /// approximation, and it pins the half-pixel offset at the same time.
+    /// </remarks>
+    [Then("the frame at {int} by {int} matches the frame at {int} by {int}")]
+    public void ThenTheFramesMatch(int fineWidth, int fineHeight, int coarseWidth, int coarseHeight)
+    {
+        var scale = fineWidth / coarseWidth;
+
+        (fineWidth % coarseWidth).ShouldBe(0, "the finer frame must be a whole multiple of the coarser");
+        (fineHeight / coarseHeight).ShouldBe(scale, "both axes must be scaled by the same factor");
+        (scale % 2).ShouldBe(1, "the multiple must be odd for the two grids' pixel centres to coincide");
+
+        var coarse = context.Render(1, coarseWidth, coarseHeight);
+        var fine = context.Render(1, fineWidth, fineHeight);
+        var offset = (scale - 1) / 2;
+
+        for (var y = 0; y < coarseHeight; y++)
+        for (var x = 0; x < coarseWidth; x++)
+        {
+            var here = coarse.At(x, y);
+            var there = fine.At(x * scale + offset, y * scale + offset);
+            var where = $"at ({x}, {y}) of {coarseWidth}x{coarseHeight}";
+
+            // One byte of slack, for the two frames rounding a value that lands
+            // on a byte boundary in opposite directions.
+            here.R.ShouldBe(there.R, 1f / 255f, $"red {where}");
+            here.G.ShouldBe(there.G, 1f / 255f, $"green {where}");
+            here.B.ShouldBe(there.B, 1f / 255f, $"blue {where}");
+        }
+    }
+
     private static OpCode Parse(string name) =>
         Enum.TryParse<OpCode>(name, ignoreCase: true, out var code)
             ? code

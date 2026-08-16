@@ -11,8 +11,14 @@ namespace Flyback.Core.Specs.Support;
 /// </summary>
 public sealed class PatchContext
 {
-    private const int Width = 32;
-    private const int Height = 18;
+    /// <summary>
+    /// The size scenarios render at unless they name one. Small enough to be
+    /// quick and 16:9, so the aspect ratio a coordinate carries is the one a
+    /// real window would give it.
+    /// </summary>
+    public const int Width = 32;
+
+    public const int Height = 18;
 
     private readonly PatchBuilder builder = new();
     private readonly Dictionary<string, NodeInstance> named = new(StringComparer.OrdinalIgnoreCase);
@@ -95,18 +101,19 @@ public sealed class PatchContext
     /// Renders from a cold renderer each time, so a scenario that asks about
     /// frame 3 is not affected by one that asked about frame 1.
     /// </summary>
-    public (float R, float G, float B) RenderCentre(int frames)
+    public Frame Render(int frames = 1, int width = Width, int height = Height)
     {
         var renderer = new SynthRenderer();
-        var stride = Width * 4;
-        var buffer = new byte[stride * Height];
+        var stride = width * 4;
+        var buffer = new byte[stride * height];
 
         for (var frame = 0; frame < frames; frame++)
-            renderer.Render(Program, 0f, Width, Height, buffer, stride);
+            renderer.Render(Program, 0f, width, height, buffer, stride);
 
-        var pixel = (Height / 2) * stride + (Width / 2) * 4;
-        return (buffer[pixel + 2] / 255f, buffer[pixel + 1] / 255f, buffer[pixel + 0] / 255f);
+        return new Frame(buffer, width, height);
     }
+
+    public (float R, float G, float B) RenderCentre(int frames) => Render(frames).Centre;
 
     public float StoredInput(string name, string port) =>
         Node(name).InputValues[PortIndex(Definition(name).Inputs, port, name, "input")];
@@ -130,25 +137,10 @@ public sealed class PatchContext
         for (var frame = 0; frame < after; frame++)
             renderer.Render(Program, 0f, Width, Height, buffer, stride);
 
-        var pixel = (Height / 2) * stride + (Width / 2) * 4;
-        return (buffer[pixel + 2] / 255f, buffer[pixel + 1] / 255f, buffer[pixel + 0] / 255f);
+        return new Frame(buffer, Width, Height).Centre;
     }
 
-    public bool RenderedFrameIsBlack(int frames)
-    {
-        var renderer = new SynthRenderer();
-        var stride = Width * 4;
-        var buffer = new byte[stride * Height];
-
-        for (var frame = 0; frame < frames; frame++)
-            renderer.Render(Program, 0f, Width, Height, buffer, stride);
-
-        for (var i = 0; i < buffer.Length; i += 4)
-            if (buffer[i] != 0 || buffer[i + 1] != 0 || buffer[i + 2] != 0)
-                return false;
-
-        return true;
-    }
+    public bool RenderedFrameIsBlack(int frames) => Render(frames).IsBlack;
 
     private static int PortIndex(IReadOnlyList<PortSpec> ports, string name, string node, string kind)
     {
