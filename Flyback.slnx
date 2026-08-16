@@ -13,6 +13,7 @@
     <Project Path="src/Flyback.Plugins.Wasapi/Flyback.Plugins.Wasapi.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/Flyback.App.Tests/Flyback.App.Tests.csproj" />
     <Project Path="tests/Flyback.Core.Specs/Flyback.Core.Specs.csproj" />
     <Project Path="tests/Flyback.Core.Tests/Flyback.Core.Tests.csproj" />
     <Project Path="tests/Flyback.Plugins.Sample/Flyback.Plugins.Sample.csproj" />

@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <OutputType>Exe</OutputType>
+    <!--
+      Same runner arrangement as the other test projects: xunit.v3's in-process
+      runner on Microsoft.Testing.Platform, and no Microsoft.NET.Test.Sdk.
+    -->
+    <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
+  </PropertyGroup>
+
+  <!--
+    The shell is an Avalonia application, and nothing here starts one. What is
+    tested is the part of it that joins a compiled program to a sound device,
+    which touches no UI type at all — so these run headless like any other test.
+  -->
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Flyback.App\Flyback.App.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Shouldly" Version="4.3.0" />
+    <PackageReference Include="xunit.v3" Version="3.2.2" />
+  </ItemGroup>
+
+</Project>
