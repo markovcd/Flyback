@@ -41,14 +41,6 @@ public class NoteTests
 
     private static float Snapped(params (int Port, float Value)[] knobs) => Output(1, knobs);
 
-    /// <summary>
-    /// The same, with glide off. Anything asserting an exact note has to pin it:
-    /// at the default a value close enough to the halfway point is legitimately
-    /// mid-slide, and that is the point of the knob rather than a rounding error.
-    /// </summary>
-    private static float HardSnapped(params (int Port, float Value)[] knobs) =>
-        Output(1, [.. knobs, (3, 0f)]);
-
     [Fact]
     public void The_note_on_the_knob_is_the_pitch_that_comes_out()
     {
@@ -66,8 +58,8 @@ public class NoteTests
     [InlineData(56.5f)]
     public void An_incoming_value_snaps_to_the_nearest_whole_note(float value)
     {
-        Hz((0, value), (3, 0f)).ShouldBe(220f, 0.01f);
-        HardSnapped((0, value)).ShouldBe(A3);
+        Hz((0, value)).ShouldBe(220f, 0.01f);
+        Snapped((0, value)).ShouldBe(A3);
     }
 
     [Fact]
@@ -87,73 +79,23 @@ public class NoteTests
         var heard = new HashSet<float>();
 
         for (var i = 0; i <= 40; i++)
-            heard.Add(HardSnapped((0, 57f + i / 40f)));
+            heard.Add(Snapped((0, 57f + i / 40f)));
 
         heard.ShouldBe([57f, 58f], ignoreOrder: true);
     }
 
     /// <summary>
-    /// Glide is the fix for the click, and the click is a discontinuity, so this
-    /// is the property that matters: however finely the sweep is sampled, the
-    /// pitch never jumps. Sampling at a hundredth of a semitone would still find
-    /// a step of a whole one if the snap were hard.
+    /// Nothing eases, anywhere. A quantiser that slid between its notes would be
+    /// a portamento with extra steps, and the reason it does not have to is that
+    /// the click was never in here to begin with.
     /// </summary>
     [Fact]
-    public void Glide_carries_the_pitch_across_the_change_without_a_jump()
+    public void Every_value_in_a_step_gives_the_note_exactly_and_not_a_fraction_off()
     {
-        var biggest = 0f;
-        var previous = Snapped((0, 57f));
-
-        for (var i = 1; i <= 400; i++)
+        for (var i = 0; i <= 400; i++)
         {
-            var next = Snapped((0, 57f + i / 400f));
-            biggest = MathF.Max(biggest, MathF.Abs(next - previous));
-            previous = next;
-        }
-
-        // A quarter of the sampling step's share of the ramp, with room to spare:
-        // the point is that it is nowhere near the whole semitone a snap jumps.
-        biggest.ShouldBeLessThan(0.2f);
-    }
-
-    /// <summary>Glide costs the end of the step, and nothing else.</summary>
-    [Fact]
-    public void Glide_leaves_the_note_exact_for_all_but_the_end_of_its_step()
-    {
-        // Default glide is a fifth of a step, so the other four fifths are dead
-        // on the note.
-        Snapped((0, 57f)).ShouldBe(A3);
-        Snapped((0, 57.2f)).ShouldBe(A3);
-        Snapped((0, 56.6f)).ShouldBe(A3);
-
-        // ...and only inside that last fifth is it on its way to the next.
-        Snapped((0, 57.49f)).ShouldBeGreaterThan(A3);
-        Snapped((0, 57.49f)).ShouldBeLessThan(58f);
-    }
-
-    /// <summary>
-    /// Turning it off has to give back exactly what a quantiser is: nothing
-    /// approximate, and no leftover fraction of a semitone.
-    /// </summary>
-    [Fact]
-    public void Glide_at_zero_is_the_hard_snap_it_always_was()
-    {
-        for (var i = 0; i <= 40; i++)
-            HardSnapped((0, 57f + i / 40f)).ShouldBe(MathF.Floor(57f + i / 40f + 0.5f));
-    }
-
-    /// <summary>
-    /// Past 1 the ramp would not reach the next note before the step ended, so
-    /// the jump would come back — larger than the one it was there to remove.
-    /// </summary>
-    [Fact]
-    public void A_glide_past_the_end_of_its_range_is_held_there()
-    {
-        for (var i = 0; i <= 40; i++)
-        {
-            var value = 57f + i / 40f;
-            Snapped((0, value), (3, 4f)).ShouldBe(Snapped((0, value), (3, 1f)), 0.0001f);
-            Snapped((0, value), (3, -2f)).ShouldBe(HardSnapped((0, value)));
+            var value = 57f + i / 400f;
+            Snapped((0, value)).ShouldBe(MathF.Floor(value + 0.5f));
         }
     }
 
@@ -245,14 +187,11 @@ public class NoteTests
         var buffer = new float[sampleRate / 2 * 2];
         new AudioRenderer(sampleRate).Render(result.Program, buffer, AudioScan.TimeDriven);
 
-        // The ramp starts at the top of its travel and descends three semitones
-        // a second from B4, so the first note lasts a sixth of a second and each
-        // one after it a third. The sweep is descending, so each step is entered
-        // at its gliding end and settles a fifth of the way in — which is why
-        // the second window starts well after the change and the first, which
-        // has no change before it, does not have to.
-        Heard(0.02f, 0.15f).ShouldBe(Pitch.Frequency(63f), 8f);
-        Heard(0.25f, 0.48f).ShouldBe(Pitch.Frequency(62f), 5f);
+        // The ramp starts at the bottom of its travel and climbs three semitones
+        // a second from D#3, so the first note lasts a sixth of a second — half a
+        // step's worth — and each one after it a third.
+        Heard(0.02f, 0.16f).ShouldBe(Pitch.Frequency(51f), 5f);
+        Heard(0.18f, 0.49f).ShouldBe(Pitch.Frequency(52f), 3f);
 
         // Two zero crossings a cycle, over the left channel.
         float Heard(float from, float to)
@@ -274,39 +213,44 @@ public class NoteTests
 
     /// <summary>
     /// The click, as something a test can see: a note change used to move the
-    /// waveform thirty times further in one sample than the wave itself travels.
+    /// waveform far further in one sample than the wave itself travels.
     /// </summary>
     /// <remarks>
-    /// This only pins the first second, because that is the only part glide can
-    /// promise. The pitch an oscillator here actually produces is <c>freq</c>
-    /// plus <c>t</c> times how fast freq is moving — phase is 'in' times 'freq'
-    /// and nothing accumulates — so the same change measured at twenty seconds
-    /// is twenty times the excursion and tears the waveform again whatever the
-    /// glide. Removing it there needs an oscillator that carries its phase, and
-    /// that needs a stateful op on the audio path, the way ADR-0027 gave delay
-    /// lines one. A wider glide is the only lever this module has.
+    /// Measured twice, and the second time is the one that matters. When phase
+    /// was <c>in</c> times <c>freq</c> the pitch actually produced during a
+    /// change was <c>freq</c> plus <c>t</c> times how fast freq was moving, so a
+    /// tear grew with the clock: whatever was done to the ramp, the same note
+    /// change twenty seconds in was twenty times worse. An accumulated phase has
+    /// no <c>t</c> in it at all, and the two windows come out the same.
     /// </remarks>
-    [Fact]
-    public void The_chromatic_preset_does_not_tear_its_waveform_at_a_note_change()
+    [Theory]
+    [InlineData(0d)]
+    [InlineData(20d)]
+    public void The_chromatic_preset_does_not_tear_its_waveform_at_a_note_change(double from)
     {
         const int sampleRate = AudioRenderer.DefaultSampleRate;
 
         var program = Presets.Chromatic(NodeCatalog.BuiltIn).CompileForAudio(NodeCatalog.BuiltIn).Program;
 
+        var renderer = new AudioRenderer(sampleRate);
+        renderer.SeekTo(from);
+
         var buffer = new float[sampleRate * 2];
-        new AudioRenderer(sampleRate).Render(program, buffer, AudioScan.TimeDriven);
+        renderer.Render(program, buffer, AudioScan.TimeDriven);
 
         // Three note changes land inside this second, at a sixth, a half and
-        // five sixths. The first samples are skipped for the DC blocker.
+        // five sixths. The first samples are skipped for the DC blocker, and for
+        // the accumulator's own cold start: with no previous evaluation to
+        // measure against, the very first one cannot take a step.
         var steps = new List<float>();
         for (var frame = (int)(0.02 * sampleRate); frame < sampleRate; frame++)
             steps.Add(MathF.Abs(buffer[frame * 2] - buffer[(frame - 1) * 2]));
 
         // The wave's own sample-to-sample travel is the yardstick: a tear is a
         // step far larger than anything the sine does on its own, so this holds
-        // whatever the pitch and the amplitude happen to be. Hard-snapped it is
-        // fourteen times the median here, and at a twentieth of this glide — too
-        // fast to be gentle, too slow to be instant — it is twenty-seven.
+        // whatever the pitch and the amplitude happen to be. Multiplied out
+        // rather than accumulated, this was fourteen times the median in the
+        // first second and seventy-two at twenty.
         var typical = steps.Order().ElementAt(steps.Count / 2);
         steps.Max().ShouldBeLessThan(typical * 3f);
     }

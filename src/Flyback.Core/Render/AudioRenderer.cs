@@ -93,9 +93,9 @@ public sealed class AudioRenderer
     }
 
     /// <summary>
-    /// Delay memory for a program, reusing what is already there when the shape
-    /// has not changed — so turning a knob keeps the tail ringing and only adding
-    /// or removing a delay cuts it.
+    /// Memory for a program, reusing what is already there when the shape has not
+    /// changed — so turning a knob keeps the tail ringing and the oscillators in
+    /// phase, and only adding or removing a stateful op cuts either.
     /// </summary>
     /// <remarks>
     /// Handed back rather than stored, because which lines a program needs is a
@@ -107,13 +107,13 @@ public sealed class AudioRenderer
     /// </remarks>
     public DelayState? DelayMemoryFor(CompiledPatch program, DelayState? existing = null)
     {
-        if (program.DelayLengths.Count == 0) return null;
+        if (program.DelayLengths.Count == 0 && program.PhaseCount == 0) return null;
 
         var rate = SampleRate * Oversample;
 
-        return existing?.Fits(program.DelayLengths, rate) == true
+        return existing?.Fits(program.DelayLengths, rate, program.PhaseCount) == true
             ? existing
-            : new DelayState(program.DelayLengths, rate);
+            : new DelayState(program.DelayLengths, rate, program.PhaseCount);
     }
 
     /// <summary>

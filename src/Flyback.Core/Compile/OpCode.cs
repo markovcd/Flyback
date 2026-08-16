@@ -68,7 +68,10 @@ public enum OpCode : byte
     /// <summary>out = value noise at (a, b, c)</summary>
     Noise3,
 
-    // --- stateful: these own a delay line, and are the only ops that remember ---
+    // --- stateful: these remember something from the last evaluation, and are
+    //     the only ops that do. The video path renders pixels in parallel and
+    //     out of order, so it passes no state and each of them falls back to
+    //     something total there rather than refusing to compile.
 
     /// <summary>
     /// out = line[now - c seconds], then line writes a + clamp(b) * out.
@@ -84,6 +87,27 @@ public enum OpCode : byte
     /// it, which is what turns a bank of combs into a reverb rather than an echo.
     /// </summary>
     Allpass,
+
+    /// <summary>
+    /// out = fract(phase + (a - a_previous) * b) + c, where phase is carried
+    /// from the last evaluation. A phase accumulator: the running total of how
+    /// far the domain 'a' has moved, counted in cycles of 'b' as it was at each
+    /// step, with 'c' added on afterwards rather than integrated.
+    /// <para>
+    /// Integrating is what makes a frequency change silent. Multiplying instead
+    /// — phase = a * b, which is what this path did before it had any state —
+    /// makes phase jump by a times the change in b whenever b moves, so a
+    /// stepped pitch tears the waveform by more the longer the patch has run.
+    /// The accumulated phase moves by one step's worth however far b jumps, so
+    /// the wave's value stays continuous and only its slope changes.
+    /// </para>
+    /// <para>
+    /// Without state it falls back to a * b + c, which is exactly the old
+    /// multiply. A picture is one evaluation per pixel with no previous sample
+    /// to carry anything from, and there the two agree.
+    /// </para>
+    /// </summary>
+    Phase,
 
     // --- multi-register writes: these fill out, out+1, out+2 ---
     /// <summary>(out, out+1, out+2) = hsv2rgb(a, b, c)</summary>

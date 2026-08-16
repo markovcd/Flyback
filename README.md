@@ -128,7 +128,6 @@ nothing.
 |---|---|
 | Pitch | patch **Frequency** into an oscillator's `freq` — it is a knob in hertz rather than the single digits the visual modules use |
 | Notes | **Note** is the same thing in notes rather than hertz. Pick one on the knob — it reads as `A3`, not as 57 — or patch a signal in and it snaps to the nearest whole note, which is what turns a sweep into a run up the chromatic scale. `octave` transposes by twelve semitones a step, `cents` detunes past the snap, and `note` hands the snapped number on so a second **Note** can play an interval off it |
-| `glide` | how much of each step is spent sliding to the next, and why the pitch is not stepped instantly — see below |
 | Stereo | leave `right` unpatched and it carries `left`, the way a normalled jack does |
 | `scan` | at 0 the patch is driven by Time; at 1 it sweeps the image and you hear the picture, at `scan rate` sweeps per second |
 | Export | **Render audio…** writes 10 seconds to a WAV |
@@ -145,33 +144,43 @@ fourteen either side of it. Brightness is taken from the ramp before the snap, s
 a smooth glow and the rings sitting in it are the before and after of the same
 signal.
 
-### Why a stepped pitch clicks
+### Why a stepped pitch does not click
 
-An oscillator's phase here is `in × freq`; nothing accumulates, because the video
-path evaluates pixels in parallel and out of order and there is no "previous
-sample" to carry a phase in (ADR-0005, ADR-0006). So the pitch actually heard
-while `freq` moves is not `freq` but `freq + t × freq′` — and a `freq` that steps
-instantly is an infinite `freq′`, which tears the waveform. That tear is the
-click, and it grows with `t`: the same note change is worse a minute in than a
-second in.
+It very much used to. An oscillator's phase was `in × freq`, which is the natural
+shape for a machine that is otherwise a pure function of `(x, y, t)` — a picture
+has no previous sample to carry a phase in (ADR-0005, ADR-0006). But phase is the
+integral of frequency, not its product with time, and the two only agree while
+`freq` holds still. Step `freq` at time `t` and the product jumps by `t` times the
+change: ten seconds in, one semitone at A3 skips about 131 whole cycles and the
+wave restarts wherever that lands. The tear is the click, and it grows with the
+clock.
 
-`glide` on the **Note** module is the lever available. Measured on Chromatic as
-the largest sample-to-sample jump against the median one — a tear being a step
-far bigger than anything the wave does on its own:
+Smoothing the pitch cannot fix that, and trying is instructive. The pitch actually
+produced is `freq + t × freq′`, so a ramp across each step trades an infinite
+`freq′` for a finite one multiplied by `t` — a wobble of nearly 2 kHz on a 220 Hz
+tone, ten seconds in. A *narrow* ramp is worse than no ramp: the same excursion,
+held longer. Only a ramp wide enough to be a portamento sounds clean, at which
+point the quantiser is not one.
 
-| `glide` | first second | at twenty seconds |
+So the oscillators accumulate instead (ADR-0030). Each keeps a running phase and
+advances it by however far its `in` moved, in cycles of `freq` as it is *now*. A
+frequency that jumps moves the phase by one ordinary step regardless, so the
+wave's value carries straight across the change and only its slope differs — and
+a slope has no click in it. Nothing about the pitch is smoothed. Measured on
+Chromatic as the largest sample-to-sample jump against the median one, over a
+second of raw program output:
+
+| measured from | multiplied | accumulated |
 |---|---|---|
-| 0 (hard snap) | 14× | 72× |
-| 0.01 | 27× | 105× |
-| 0.2 (default) | 1.7× | 36× |
-| 1 (a slide, not a snap) | 1.7× | 2.6× |
+| 0 s | 237× | 1.6× |
+| 20 s | 538× | 1.8× |
+| 60 s | 648× | 2.6× |
 
-Two things fall out of that. A narrow glide is *worse* than none — the ramp is
-still fast enough to make `t × freq′` enormous, and now it lasts longer. And no
-setting fixes it late on: only an oscillator that carries its phase would, which
-means a stateful op on the audio path in the way ADR-0027 gave delay lines one.
-The default trades a fifth of each step for a change the waveform survives, and
-the run still sounds stepped rather than slurred.
+`in` stays the socket it was: the step is measured from the input rather than
+counted off a clock, so a domain that stops stops the tone and one running at
+twice the rate doubles the pitch, exactly as the multiply did. Drawn rather than
+heard, the accumulator *is* the multiply — one evaluation per pixel has nothing
+to accumulate — so an oscillator's picture is unchanged to the byte.
 
 Audio runs at 48 kHz, 4× oversampled and filtered before decimation, which keeps
 the naive `Saw` and `Square` from folding harmonics back down as buzzing. It
@@ -336,7 +345,8 @@ moiré, which is the same beating seen rather than heard.
 
 [`src/Flyback.Plugins.Space`](src/Flyback.Plugins.Space) adds **Delay** and
 **Reverb**, and the **Echo chamber** preset puts a plucked tone through both.
-They are the only modules in the synth that remember anything.
+Besides an oscillator's running phase, they are the only things in the synth that
+remember anything.
 
 | | |
 |---|---|
@@ -345,10 +355,14 @@ They are the only modules in the synth that remember anything.
 
 Everything else here is a pure function of `(x, y, t)`, which is what lets the
 video renderer run rows in parallel. These two are not, so **they only work on
-the audio path**: the video program is given no delay state, a Delay becomes a
-wire, and a Reverb dims by one minus its feedback. That asymmetry is the price of
+the audio path**: the video program is given no state, a Delay becomes a wire,
+and a Reverb dims by one minus its feedback. That asymmetry is the price of
 having them at all, and [ADR-0027](docs/adr/0027-delay-lines-give-the-audio-path-a-memory.md)
 sets out why it cannot be avoided. For a picture with a past, use `Feedback`.
+
+An oscillator's phase is carried the same way and falls back the same way, but
+you will not notice: what it falls back *to* is the multiply it replaced, so the
+picture is identical either way.
 
 ## Using the editor
 
@@ -376,9 +390,9 @@ patches need no constant modules at all.
 | `src/Flyback.Plugins.CoreAudio` | macOS sound output, straight to the default output audio unit |
 | `src/Flyback.Plugins.Alsa` | Linux sound output, through libasound's default device |
 | `src/Flyback.Plugins.Supersaw` | the Supersaw oscillator, as a module plugin |
-| `src/Flyback.Plugins.Space` | delay and reverb — the only modules with a memory |
+| `src/Flyback.Plugins.Space` | delay and reverb — the only modules with a memory of their own |
 
-Why it is built this way is recorded in [docs/adr](docs/adr) — 29 decision
+Why it is built this way is recorded in [docs/adr](docs/adr) — 30 decision
 records covering the compiler, the renderer, the shell and the boundaries
 between them.
 

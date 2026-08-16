@@ -19,11 +19,12 @@ namespace Flyback.App.Audio;
 public sealed class AudioEngine(IAudioDevice device) : IDisposable
 {
     /// <summary>
-    /// A program and everything that goes with it. The delay lines belong here
-    /// rather than to the renderer because they are a property of one program:
-    /// swapped separately, a callback still rendering the previous program would
-    /// index into the new program's lines, and if the count differed at all — a
-    /// Delay added or removed — that is a fault on the audio thread.
+    /// A program and everything that goes with it. The memory belongs here rather
+    /// than to the renderer because it is a property of one program: swapped
+    /// separately, a callback still rendering the previous program would index
+    /// into the new program's lines and phases, and if either count differed at
+    /// all — a Delay or an oscillator added or removed — that is a fault on the
+    /// audio thread.
     /// </summary>
     private sealed record State(CompiledPatch Program, AudioScan Scan, DelayState? Memory);
 
@@ -47,8 +48,8 @@ public sealed class AudioEngine(IAudioDevice device) : IDisposable
 
     /// <summary>
     /// Swaps in a freshly compiled patch. Sizing the register scratch and the
-    /// delay lines happens here, on the UI thread, so the callback never has to
-    /// allocate — and both go in with the program they belong to, in one write.
+    /// program's memory happens here, on the UI thread, so the callback never has
+    /// to allocate — and both go in with the program they belong to, in one write.
     /// </summary>
     public void Update(Patch patch)
     {
@@ -56,8 +57,9 @@ public sealed class AudioEngine(IAudioDevice device) : IDisposable
 
         renderer.Prepare(program);
 
-        // Reusing the lines when the shape has not changed is what keeps a delay
-        // ringing through an edit; only adding or removing one cuts the tail.
+        // Reusing it when the shape has not changed is what keeps a delay ringing
+        // and the oscillators in phase through an edit; only adding or removing a
+        // stateful op cuts the tail and restarts the tone.
         var memory = renderer.DelayMemoryFor(program, Volatile.Read(ref activeState).Memory);
 
         Volatile.Write(ref activeState, new State(program, ScanFor(patch), memory));

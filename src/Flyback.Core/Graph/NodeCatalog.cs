@@ -123,7 +123,6 @@ public static class NodeCatalog
                     Pitched("note", 57f),
                     Num("octave", 0f, -4f, 4f),
                     Num("cents", 0f, -100f, 100f),
-                    Num("glide", 0.2f, 0f, 1f),
                 ],
                 [Num("hz"), Num("note")],
                 (em, i) =>
@@ -133,35 +132,14 @@ public static class NodeCatalog
                     // and the two simply add up before the snap.
                     var wanted = em.Add(i[0], em.Mul(i[1], Pitch.Semitones));
 
-                    // Guarded rather than trusted, as everywhere a knob's range
-                    // only constrains the knob: past 1 the ramp would not have
-                    // reached the next note by the time the step ended, and the
-                    // jump glide exists to remove would come back worse.
-                    var glide = em.Ternary(OpCode.Clamp, i[3], em.Constant(0f), em.Constant(1f));
-
-                    // Halfway between two notes is where the snap belongs, so
-                    // the staircase is built on the note plus a half and every
-                    // step of it is one whole note wide.
-                    var step = em.Add(wanted, 0.5f);
-                    var whole = em.Unary(OpCode.Floor, step);
-                    var across = em.Unary(OpCode.Fract, step);
-
-                    // Flat for all of the step but the last 'glide' of it, then
-                    // a ramp that arrives exactly as the floor beneath it ticks
-                    // over. At glide 0 the two edges meet and Smoothstep is a
-                    // hard threshold again, which is the plain snap.
-                    //
-                    // The default is wide because of what the oscillators are:
-                    // phase is 'in' times 'freq', so the pitch actually heard
-                    // during a change is freq plus t times its rate of change.
-                    // A narrow ramp makes that second term enormous — measurably
-                    // worse than not ramping at all — so this trades a fifth of
-                    // each step for a change that does not tear the waveform.
-                    var note = em.Add(whole, em.Ternary(
-                        OpCode.Smoothstep,
-                        em.Sub(em.Constant(1f), glide),
-                        em.Constant(1f),
-                        across));
+                    // Halfway between two notes is where the snap belongs, and a
+                    // floor of the note plus a half is that. Instant, with
+                    // nothing smoothing it: a quantiser that eased into its notes
+                    // would not be one. The click this once cost never came from
+                    // here — an accumulated phase (ADR-0030) takes a frequency
+                    // this steps and moves the waveform's slope rather than its
+                    // value, and a slope has no click in it.
+                    var note = em.Unary(OpCode.Floor, em.Add(wanted, 0.5f));
 
                     // Detune is applied after the snap, which is the whole point
                     // of having it: it is the one way to sit between two notes.
@@ -176,12 +154,10 @@ public static class NodeCatalog
                 },
                 "Frequency, but in notes. Pick one on the knob — 57 is A3 — or patch a signal "
                 + "in and it snaps to the nearest whole note on its way through, which is what "
-                + "turns a sweep into a run up the chromatic scale. 'hz' goes to an oscillator's "
-                + "freq; 'note' hands the snapped number on, so a second Note can play an interval "
-                + "off it. 'glide' is how much of each step is spent sliding to the next one — 0 "
-                + "is an instant change, which is a true quantiser and clicks, because an "
-                + "oscillator's phase here is its input times its freq and stepping one steps the "
-                + "other. Narrow glides click louder than none at all; widen it until it is clean."),
+                + "turns a sweep into a run up the chromatic scale. The change is instant and "
+                + "silent: the oscillators carry their phase, so a pitch that steps bends the "
+                + "waveform rather than breaking it. 'hz' goes to an oscillator's freq; 'note' "
+                + "hands the snapped number on, so a second Note can play an interval off it."),
 
             // ---------------------------------------------------------------- sources
             new NodeDef(
@@ -234,7 +210,7 @@ public static class NodeCatalog
                 [Num("out")],
                 (em, i) =>
                 {
-                    var phase = em.Add(em.Mul(i[0], i[1]), i[2]);
+                    var phase = em.Phase(i[0], i[1], i[2]);
                     var wave = em.Add(em.Mul(em.Binary(OpCode.Step, i[3], em.Unary(OpCode.Fract, phase)), 2f), -1f);
                     return [em.Add(em.Mul(wave, i[4]), i[5])];
                 },
@@ -459,6 +435,12 @@ public static class NodeCatalog
     /// Builds one of the fixed-shape oscillator modules. They share a socket
     /// layout and differ only in the waveform applied to the running phase.
     /// </summary>
+    /// <remarks>
+    /// The phase is accumulated rather than multiplied out, which is the whole
+    /// of why a stepped pitch is silent on the audio path — see
+    /// <see cref="OpCode.Phase"/>. Drawn rather than heard it is the multiply it
+    /// always was, so the picture an oscillator makes is unchanged.
+    /// </remarks>
     private static NodeDef Oscillator(
         string id, string name, Func<Emitter, Slot, Slot> waveform, string description) => new(
         id, name, "Oscillator",
@@ -472,7 +454,7 @@ public static class NodeCatalog
         [Num("out")],
         (em, i) =>
         {
-            var phase = em.Add(em.Mul(i[0], i[1]), i[2]);
+            var phase = em.Phase(i[0], i[1], i[2]);
             return [em.Add(em.Mul(waveform(em, phase), i[3]), i[4])];
         },
         description);

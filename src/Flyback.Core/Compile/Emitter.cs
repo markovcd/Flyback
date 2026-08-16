@@ -88,6 +88,33 @@ public sealed class Emitter
         return Slot.Scalar(first);
     }
 
+    /// <summary>
+    /// A phase accumulator, carrying its running total from one evaluation to
+    /// the next. Scalar only, like the delay lines and for the same reason: a
+    /// colour has no phase, and nothing would read one.
+    /// </summary>
+    /// <param name="input">
+    /// The domain the oscillator runs over — Time, usually, but anything at all.
+    /// Only how far it moves is used, which is what lets a patch keep driving an
+    /// oscillator with a signal rather than a clock.
+    /// </param>
+    /// <param name="frequency">Cycles per unit of <paramref name="input"/>.</param>
+    /// <param name="offset">
+    /// Added after the accumulation rather than into it, so a phase input stays
+    /// the direct offset it reads as and modulating it is still modulation.
+    /// </param>
+    public Slot Phase(Slot input, Slot frequency, Slot offset)
+    {
+        var first = Allocate(1);
+        Add(new Op(
+            OpCode.Phase,
+            first,
+            input.Component(0),
+            frequency.Component(0),
+            offset.Component(0)));
+        return Slot.Scalar(first);
+    }
+
     /// <summary>An op that writes three consecutive registers at once.</summary>
     public Slot Triple(OpCode code, Slot a, Slot b, Slot c = default)
     {

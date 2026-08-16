@@ -142,13 +142,11 @@ public static class Presets
     /// flat rings of colour rather than a gradient. Feed the ramp straight to a
     /// Frequency knob instead and both become continuous.
     /// <para>
-    /// Everything the ear hears is continuous even so, which is not the same
-    /// thing as smooth: the notes are flat and the changes between them are not
-    /// instant. They cannot be. An oscillator's phase here is its input times
-    /// its freq, so a freq that jumps jumps the phase with it — by more the
-    /// longer the patch has been running — and a jump in the waveform is a
-    /// click. The Note module's glide is what keeps the steps hard and the
-    /// waveform whole; turn it to 0 and this preset clicks three times a second.
+    /// The steps are instant and the tone is clean, which sounds like a
+    /// contradiction and is the point of ADR-0030: the sine accumulates its
+    /// phase, so a frequency that jumps three times a second changes how fast
+    /// the wave is travelling without moving where it currently is. Nothing in
+    /// the pitch is smoothed. There is nothing to smooth.
     /// </para>
     /// <para>
     /// The picture reads the ramp at every radius at once, which is the trick
@@ -164,12 +162,11 @@ public static class Presets
         var coord = b.Add("coord", 40, 320);
         var time = b.Add("time", 40, 100, (0, 1f));
 
-        // Half an octave either way: six semitones above the note on the knob
-        // down to six below over four seconds, and back up over the next four.
-        // A triangle rather than a saw because a saw's reset is a jump, and a
-        // jump in the ramp is one place the Note module's glide cannot help —
-        // there is no room between two notes to slide across twelve of them.
-        var ramp = b.Add("osc.triangle", 250, 100, (1, 0.125f), (3, 0.5f));
+        // Half an octave either way, over four seconds: six semitones up and
+        // six down from the note on the knob, then it starts again. The reset is
+        // a jump of a whole octave and it costs nothing, for the same reason the
+        // semitones do.
+        var ramp = b.Add("osc.saw", 250, 100, (1, 0.25f), (3, 0.5f));
 
         // Distance from the centre on the same scale, subtracted rather than
         // added so the rings travel outward as the ramp climbs.

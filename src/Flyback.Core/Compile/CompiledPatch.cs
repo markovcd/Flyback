@@ -40,6 +40,14 @@ public sealed class CompiledPatch(Op[] ops, int registerCount, int outputBase, i
     public IReadOnlyList<float> DelayLengths { get; } =
         [.. ops.Where(o => o.Code is OpCode.Delay or OpCode.Allpass).Select(o => o.K)];
 
+    /// <summary>
+    /// How many phase accumulators the program runs. One cell each, so unlike a
+    /// delay line there is nothing to size — but a program with any of these
+    /// still needs state, and a renderer that gave it none would hand every
+    /// oscillator back its multiply.
+    /// </summary>
+    public int PhaseCount { get; } = ops.Count(o => o.Code is OpCode.Phase);
+
     /// <summary>A program whose output is all zeroes — the fallback when a sink is missing.</summary>
     public static CompiledPatch Constant(int width) => new(
         [.. Enumerable.Range(0, width).Select(i => new Op(OpCode.Const, i))],
@@ -73,8 +81,10 @@ public sealed class CompiledPatch(Op[] ops, int registerCount, int outputBase, i
     {
         var ops = Ops;
 
-        // Which delay line an op uses is its position among the stateful ops.
+        // Which line or cell an op uses is its position among the ops of its
+        // kind, so each kind is counted on its own.
         var line = 0;
+        var cell = 0;
 
         for (var index = 0; index < ops.Length; index++)
         {
@@ -170,6 +180,21 @@ public sealed class CompiledPatch(Op[] ops, int registerCount, int outputBase, i
 
                     delays.Write(slot, stored);
                     registers[op.Out] = heard - gain * stored;
+                    break;
+                }
+
+                case OpCode.Phase:
+                {
+                    var slot = cell++;
+                    float input = registers[op.A], frequency = registers[op.B];
+
+                    // Without state there is no previous evaluation to step from
+                    // — a picture's pixels are one evaluation each, in whatever
+                    // order the rows happen to run — so this is the multiply the
+                    // accumulator replaces, and over a still frame the two agree.
+                    registers[op.Out] = delays is null
+                        ? input * frequency + registers[op.C]
+                        : delays.Advance(slot, input, frequency) + registers[op.C];
                     break;
                 }
             }
