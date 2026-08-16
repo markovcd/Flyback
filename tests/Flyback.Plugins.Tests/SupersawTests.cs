@@ -209,9 +209,9 @@ public class SupersawTests
 
         for (var s = 0; s < AudioRenderer.DefaultSampleRate; s++)
         {
-            program.Evaluate(0f, 0f, s / (float)AudioRenderer.DefaultSampleRate, registers, default);
+            program.Evaluate(0f, 0f, s / (double)AudioRenderer.DefaultSampleRate, registers, default);
 
-            var value = registers[program.OutputBase];
+            var value = (float)registers[program.OutputBase];
             if (s > 0 && MathF.Abs(value - previous) > 0.1f) steps++;
             previous = value;
         }
@@ -291,7 +291,7 @@ public class SupersawTests
         return time =>
         {
             program.Evaluate(0f, 0f, time, registers, default);
-            return [registers[program.OutputBase], registers[program.OutputBase + 1]];
+            return [(float)registers[program.OutputBase], (float)registers[program.OutputBase + 1]];
         };
     }
 

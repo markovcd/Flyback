@@ -43,7 +43,7 @@ public sealed class AudioRenderer
     private readonly float[] dcPreviousInput = new float[2];
     private readonly float[] dcPreviousOutput = new float[2];
 
-    private float[] registerBank = new float[64];
+    private double[] registerBank = new double[64];
     private int historyPosition;
 
     /// <summary>
@@ -89,7 +89,7 @@ public sealed class AudioRenderer
     public void Prepare(CompiledPatch program)
     {
         var needed = Math.Max(program.RegisterCount, program.OutputWidth);
-        if (registerBank.Length < needed) registerBank = new float[needed];
+        if (registerBank.Length < needed) registerBank = new double[needed];
     }
 
     /// <summary>
@@ -158,10 +158,15 @@ public sealed class AudioRenderer
                 // on the audio timeline, so SampleFeedback reads silence. Delay
                 // lines are the other way round — this is the only path that has
                 // them, because it is the only one that runs in order.
-                program.Evaluate(x, y, (float)t, registers, default, lines);
+                //
+                // t goes in at full width. Narrowing it here is what ADR-0032
+                // removed: two consecutive sample times an hour into a session
+                // are the same float, and an oscillator measuring how far its
+                // input moved would be handed a staircase to run on.
+                program.Evaluate(x, y, t, registers, default, lines);
 
-                delayLines[0][historyPosition] = registers[left];
-                delayLines[1][historyPosition] = registers[right];
+                delayLines[0][historyPosition] = (float)registers[left];
+                delayLines[1][historyPosition] = (float)registers[right];
                 historyPosition = (historyPosition + 1) % Taps;
             }
 
@@ -183,16 +188,16 @@ public sealed class AudioRenderer
     /// sweep sets the pitch; the vertical position drifts at a fixed rate so
     /// changing pitch does not also change how fast the timbre evolves.
     /// </summary>
-    private static (float X, float Y) Position(double t, in AudioScan scan)
+    private static (double X, double Y) Position(double t, in AudioScan scan)
     {
-        if (!scan.Scan) return (0f, 0f);
+        if (!scan.Scan) return (0d, 0d);
 
         var horizontal = Fract(t * scan.Rate);
         var vertical = Fract(t * AudioScan.VerticalDriftHz);
 
         return (
-            (float)((horizontal * 2.0 - 1.0) * scan.Aspect),
-            (float)(1.0 - vertical * 2.0));
+            (horizontal * 2.0 - 1.0) * scan.Aspect,
+            1.0 - vertical * 2.0);
     }
 
     /// <summary>Decimate, remove DC, then clamp to what a speaker can be asked for.</summary>

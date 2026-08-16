@@ -111,7 +111,7 @@ public sealed class PreviewSurface : Control
             var buffer = new byte[stride * size.Height];
 
             // A fresh renderer so exporting never disturbs the live feedback buffer.
-            new SynthRenderer().Render(program, (float)time, size.Width, size.Height, buffer, stride);
+            new SynthRenderer().Render(program, time, size.Width, size.Height, buffer, stride);
 
             PngWriter.WriteBgra(path, buffer, size.Width, size.Height, stride);
         });
@@ -180,7 +180,7 @@ public sealed class PreviewSurface : Control
         // Snapshot everything the background pass needs while still on the UI thread.
         var size = new PixelSize(Math.Max(resolution.Width, 1), Math.Max(resolution.Height, 1));
         var program = activeProgram;
-        var time = (float)Time;
+        var time = Time;
 
         if (bufferSize != size)
         {

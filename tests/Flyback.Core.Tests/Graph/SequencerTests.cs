@@ -51,9 +51,9 @@ public class SequencerTests
             program.Evaluate(x, 0f, 0f, registers, default);
 
             readings.Add(new Reading(
-                registers[outputs[0].Base],
-                registers[outputs[1].Base],
-                registers[outputs[2].Base]));
+                (float)registers[outputs[0].Base],
+                (float)registers[outputs[1].Base],
+                (float)registers[outputs[2].Base]));
         }
 
         return [.. readings];

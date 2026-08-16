@@ -20,12 +20,19 @@ namespace Flyback.Core.Compile;
 /// </remarks>
 public sealed class DelayState
 {
+    /// <summary>
+    /// The lines stay <see cref="float"/> while the registers around them are
+    /// <see cref="double"/>: they hold a signal on its way to a speaker, and
+    /// twenty-four bits of mantissa is already four more than a sample gets. The
+    /// accumulators below are the opposite case — what they hold is a position on
+    /// a clock, which is exactly where a float runs out (ADR-0032).
+    /// </summary>
     private readonly float[][] lines;
     private readonly int[] positions;
     private readonly float[] lengths;
 
-    private readonly float[] phases;
-    private readonly float[] previousInputs;
+    private readonly double[] phases;
+    private readonly double[] previousInputs;
     private readonly bool[] running;
 
     /// <param name="lengthsInSeconds">Longest delay each line must hold, in program order.</param>
@@ -45,8 +52,8 @@ public sealed class DelayState
         lines = new float[lengthsInSeconds.Count][];
         positions = new int[lengthsInSeconds.Count];
 
-        phases = new float[phaseCount];
-        previousInputs = new float[phaseCount];
+        phases = new double[phaseCount];
+        previousInputs = new double[phaseCount];
         running = new bool[phaseCount];
 
         for (var i = 0; i < lines.Length; i++)
@@ -108,25 +115,25 @@ public sealed class DelayState
     /// the kind this exists to remove. So a cell begins at phase zero and the
     /// patch is heard from the start of a cycle.
     /// </remarks>
-    public float Advance(int cell, float input, float frequency)
+    public double Advance(int cell, double input, double frequency)
     {
         // A non-finite input carries no distance, so the phase holds where it is
         // rather than being poisoned by it — ADR-0013's rule, applied to
         // something that persists.
-        if (!float.IsFinite(input)) input = previousInputs[cell];
-        if (!float.IsFinite(frequency)) frequency = 0f;
+        if (!double.IsFinite(input)) input = previousInputs[cell];
+        if (!double.IsFinite(frequency)) frequency = 0d;
 
-        var step = running[cell] ? (input - previousInputs[cell]) * frequency : 0f;
+        var step = running[cell] ? (input - previousInputs[cell]) * frequency : 0d;
 
         previousInputs[cell] = input;
         running[cell] = true;
 
-        if (!float.IsFinite(step)) step = 0f;
+        if (!double.IsFinite(step)) step = 0d;
 
         var next = phases[cell] + step;
-        next -= MathF.Floor(next);
+        next -= Math.Floor(next);
 
-        return phases[cell] = float.IsFinite(next) ? next : 0f;
+        return phases[cell] = double.IsFinite(next) ? next : 0d;
     }
 
     /// <summary>
@@ -134,15 +141,15 @@ public sealed class DelayState
     /// ago, interpolated between the two samples either side so that sweeping the
     /// delay time glides instead of stepping.
     /// </summary>
-    public float Read(int slot, float seconds, float maximum)
+    public double Read(int slot, double seconds, float maximum)
     {
         var line = lines[slot];
         var limit = line.Length - 2;
 
-        if (!float.IsFinite(seconds)) seconds = 0f;
+        if (!double.IsFinite(seconds)) seconds = 0d;
 
-        var samples = Math.Clamp(seconds, 0f, maximum) * SampleRate;
-        samples = MathF.Min(samples, limit);
+        var samples = Math.Clamp(seconds, 0d, maximum) * SampleRate;
+        samples = Math.Min(samples, limit);
 
         var whole = (int)samples;
         var fraction = samples - whole;
@@ -155,12 +162,12 @@ public sealed class DelayState
     }
 
     /// <summary>Writes at the head of line <paramref name="slot"/> and advances it.</summary>
-    public void Write(int slot, float value)
+    public void Write(int slot, double value)
     {
         var line = lines[slot];
         var next = Index(positions[slot] + 1, line.Length);
 
-        line[next] = float.IsFinite(value) ? Math.Clamp(value, -16f, 16f) : 0f;
+        line[next] = double.IsFinite(value) ? (float)Math.Clamp(value, -16d, 16d) : 0f;
         positions[slot] = next;
     }
 

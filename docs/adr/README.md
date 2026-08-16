@@ -40,6 +40,7 @@ they were not mine to make.
 | [0014](0014-coordinate-and-value-conventions.md) | Coordinate and value conventions |
 | [0021](0021-recompile-the-whole-patch-on-every-edit.md) | Recompile the whole patch on every edit |
 | [0031](0031-a-sequencer-is-eight-inputs-and-no-memory.md) | A sequencer is eight inputs and no memory *(user-directed)* |
+| [0032](0032-the-registers-are-double-precision.md) | The registers are double precision |
 
 ### The shell
 

@@ -99,6 +99,54 @@ public class AudioRendererTests
     }
 
     /// <summary>
+    /// ADR-0032. A tone must be the same tone however long the synth has been
+    /// running, and this is the one defect in here that only appears with age:
+    /// a <c>float</c> t cannot hold two consecutive sample times apart once the
+    /// clock passes about a minute, and an oscillator measuring how far its
+    /// input moved is then handed a staircase instead of a ramp. What comes out
+    /// is a high ringing whose pitch falls as the session goes on — inaudible
+    /// for the first minute and unmissable after twenty.
+    /// </summary>
+    /// <remarks>
+    /// Measured as ADR-0030's ratio, the largest sample-to-sample step against
+    /// the median one: a tear is a step far larger than the wave's own travel.
+    /// A clean 220 Hz sine reads 1.40 wherever it is sampled from, to two
+    /// decimal places. Narrowing t back to a float reads 1.74 at five minutes,
+    /// 5.3 at a thousand seconds and 66 at an hour — so the five-minute case is
+    /// here to catch the defect while it is still only a measurement, and the
+    /// hour is what it had become by the time anyone heard it.
+    /// </remarks>
+    [Theory]
+    [InlineData(0)]
+    [InlineData(300)]
+    [InlineData(3_600)]
+    public void A_tone_is_as_clean_an_hour_in_as_it_is_at_the_start(double startSeconds)
+    {
+        var program = Tone("osc.sine", 220f);
+        var renderer = new AudioRenderer(SampleRate);
+        var memory = renderer.DelayMemoryFor(program);
+
+        renderer.SeekTo(startSeconds);
+
+        // Let the DC blocker settle and the decimation window fill first.
+        renderer.Render(program, new float[2_048 * 2], AudioScan.TimeDriven, memory);
+
+        var buffer = new float[4_096 * 2];
+        renderer.Render(program, buffer, AudioScan.TimeDriven, memory);
+
+        var steps = new float[buffer.Length / 2 - 1];
+        for (var i = 0; i < steps.Length; i++)
+            steps[i] = Math.Abs(buffer[(i + 1) * 2] - buffer[i * 2]);
+
+        var sorted = (float[])steps.Clone();
+        Array.Sort(sorted);
+        var median = sorted[sorted.Length / 2];
+
+        median.ShouldBeGreaterThan(0f);
+        (steps.Max() / median).ShouldBeLessThan(1.6f);
+    }
+
+    /// <summary>
     /// A tone above the output Nyquist should be filtered away rather than
     /// folded down. Point-sampling 30 kHz at 48 kHz aliases to 18 kHz; running
     /// the machine at 192 kHz and filtering before decimation removes it.

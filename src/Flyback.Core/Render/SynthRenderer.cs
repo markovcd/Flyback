@@ -39,7 +39,7 @@ public sealed class SynthRenderer
     public void Reset() => Array.Clear(previousFrame);
 
     /// <summary>Renders one frame into a BGRA8888 buffer.</summary>
-    public void Render(CompiledPatch patch, float time, int width, int height, Span<byte> destination, int stride)
+    public void Render(CompiledPatch patch, double time, int width, int height, Span<byte> destination, int stride)
     {
         if (width <= 0 || height <= 0) return;
         if (destination.Length < (long)stride * height)
@@ -55,7 +55,7 @@ public sealed class SynthRenderer
     }
 
     /// <summary>Renders one frame into a BGRA8888 buffer that the caller has already pinned or mapped.</summary>
-    private unsafe void Render(CompiledPatch patch, float time, int width, int height, byte* destination, int stride)
+    private unsafe void Render(CompiledPatch patch, double time, int width, int height, byte* destination, int stride)
     {
         if (width <= 0 || height <= 0) return;
 
@@ -78,11 +78,11 @@ public sealed class SynthRenderer
                 var scanline = y * width * 3;
 
                 // Screen y grows downwards; patch y grows upwards.
-                var py = 1f - 2f * (y + 0.5f) / height;
+                var py = 1d - 2d * (y + 0.5d) / height;
 
                 for (var x = 0; x < width; x++)
                 {
-                    var px = (2f * (x + 0.5f) / width - 1f) * aspect;
+                    var px = (2d * (x + 0.5d) / width - 1d) * aspect;
 
                     patch.Evaluate(px, py, time, registers, feedback);
 
@@ -90,10 +90,12 @@ public sealed class SynthRenderer
                     var g = Saturate(registers[outputBase + 1]);
                     var b = Saturate(registers[outputBase + 2]);
 
+                    // The frame history is a picture, so it is kept at the width
+                    // a picture needs — see DelayState on the same trade.
                     var sample = scanline + x * 3;
-                    current[sample + 0] = r;
-                    current[sample + 1] = g;
-                    current[sample + 2] = b;
+                    current[sample + 0] = (float)r;
+                    current[sample + 1] = (float)g;
+                    current[sample + 2] = (float)b;
 
                     var pixel = row + x * 4;
                     pixel[0] = ToByte(b);
@@ -121,8 +123,8 @@ public sealed class SynthRenderer
 
     /// <summary>Clamps to the displayable range, which is also what stops a feedback loop running away.</summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static float Saturate(float v) => float.IsFinite(v) ? Math.Clamp(v, 0f, 1f) : 0f;
+    private static double Saturate(double v) => double.IsFinite(v) ? Math.Clamp(v, 0d, 1d) : 0d;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static byte ToByte(float v) => (byte)(v * 255f + 0.5f);
+    private static byte ToByte(double v) => (byte)(v * 255d + 0.5d);
 }

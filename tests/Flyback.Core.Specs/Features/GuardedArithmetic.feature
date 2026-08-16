@@ -72,11 +72,13 @@ Feature: Degenerate arithmetic yields zero rather than NaN
     Then compilation reports no issues
     And the centre pixel is about 0.5, 0.5, 0.5
 
+    # The overflow case is stated in terms of the register width, which ADR-0032
+    # widened: exp overflows a float past about 88 and a double past about 710.
     Examples:
-      | module    | in  | what it would otherwise be |
-      | math.sqrt | -1  | NaN                        |
-      | math.log  | 0   | negative infinity          |
-      | math.exp  | 200 | infinity, overflowed       |
+      | module    | in   | what it would otherwise be |
+      | math.sqrt | -1   | NaN                        |
+      | math.log  | 0    | negative infinity          |
+      | math.exp  | 1000 | infinity, overflowed       |
 
   # Clamp is the one that would throw rather than return NaN: Math.Clamp rejects
   # a range whose low is above its high. Holding it at the low end is arbitrary,

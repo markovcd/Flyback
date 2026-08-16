@@ -48,7 +48,7 @@ public class PhaseAccumulatorInvariants
         for (var i = 0; i < domain.Length; i++)
         {
             program.Evaluate(domain[i], frequency[i], 0f, registers, default, memory);
-            output[i] = registers[program.OutputBase];
+            output[i] = (float)registers[program.OutputBase];
         }
 
         return output;
@@ -116,7 +116,7 @@ public class PhaseAccumulatorInvariants
 
             program.Evaluate(x, y, 0f, registers, default);
 
-            registers[program.OutputBase].ShouldBe(x * y + 0.25f);
+            registers[program.OutputBase].ShouldBe((double)x * y + 0.25d);
         }
     }
 

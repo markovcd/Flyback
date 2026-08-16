@@ -201,7 +201,7 @@ public class SpaceTests
             .. new[] { 0f, 0.25f, 0.5f, 1f }.Select(x =>
             {
                 program.Evaluate(x, 0f, 0f, registers, default);
-                return (x, registers[program.OutputBase]);
+                return (x, (float)registers[program.OutputBase]);
             }),
         ];
     }
@@ -248,8 +248,8 @@ public class SpaceTests
 
         for (var i = 0; i < signal.Length; i++)
         {
-            program.Evaluate(signal[i], 0f, i / (float)Rate, registers, default, delays);
-            output[i] = registers[program.OutputBase];
+            program.Evaluate(signal[i], 0f, i / (double)Rate, registers, default, delays);
+            output[i] = (float)registers[program.OutputBase];
         }
 
         return output;

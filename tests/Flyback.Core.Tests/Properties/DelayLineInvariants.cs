@@ -47,7 +47,7 @@ public class DelayLineInvariants
         for (var i = 0; i < signal.Length; i++)
         {
             program.Evaluate(signal[i], 0f, 0f, registers, default, delays);
-            output[i] = registers[program.OutputBase];
+            output[i] = (float)registers[program.OutputBase];
         }
 
         return output;

@@ -57,7 +57,7 @@ public class InterpreterInvariants
         var machine = Machine.Unary(code);
 
         Operand.Sample(x =>
-            float.IsFinite(machine.Run(x, 0f)).ShouldBeTrue($"{code}({x}) was not finite"));
+            double.IsFinite(machine.Run(x, 0f)).ShouldBeTrue($"{code}({x}) was not finite"));
     }
 
     [Theory]
@@ -67,7 +67,7 @@ public class InterpreterInvariants
         var machine = Machine.Binary(code);
 
         Gen.Select(Operand, Operand).Sample((x, y) =>
-            float.IsFinite(machine.Run(x, y)).ShouldBeTrue($"{code}({x}, {y}) was not finite"));
+            double.IsFinite(machine.Run(x, y)).ShouldBeTrue($"{code}({x}, {y}) was not finite"));
     }
 
     [Theory]
@@ -77,7 +77,7 @@ public class InterpreterInvariants
         var machine = Machine.Ternary(code);
 
         Gen.Select(Operand, Operand, Operand).Sample((x, y, t) =>
-            float.IsFinite(machine.Run(x, y, t)).ShouldBeTrue($"{code}({x}, {y}, {t}) was not finite"));
+            double.IsFinite(machine.Run(x, y, t)).ShouldBeTrue($"{code}({x}, {y}, {t}) was not finite"));
     }
 
     [Fact]
@@ -85,7 +85,7 @@ public class InterpreterInvariants
     {
         var machine = Machine.Binary(OpCode.Div);
 
-        Operand.Sample(x => machine.Run(x, 0f).ShouldBe(0f));
+        Operand.Sample(x => machine.Run(x, 0f).ShouldBe(0d));
     }
 
     [Fact]
@@ -93,7 +93,7 @@ public class InterpreterInvariants
     {
         var machine = Machine.Binary(OpCode.Mod);
 
-        Operand.Sample(x => machine.Run(x, 0f).ShouldBe(0f));
+        Operand.Sample(x => machine.Run(x, 0f).ShouldBe(0d));
     }
 
     [Fact]
@@ -101,7 +101,7 @@ public class InterpreterInvariants
     {
         var machine = Machine.Unary(OpCode.Sqrt);
 
-        Gen.Float[-1000f, 0f].Sample(x => machine.Run(x, 0f).ShouldBe(0f));
+        Gen.Float[-1000f, 0f].Sample(x => machine.Run(x, 0f).ShouldBe(0d));
     }
 
     [Fact]
@@ -109,7 +109,7 @@ public class InterpreterInvariants
     {
         var machine = Machine.Unary(OpCode.Log);
 
-        Gen.Float[-1000f, 0f].Sample(x => machine.Run(x, 0f).ShouldBe(0f));
+        Gen.Float[-1000f, 0f].Sample(x => machine.Run(x, 0f).ShouldBe(0d));
     }
 
     /// <summary>Fract wraps into 0..1, which is what every tiling module relies on.</summary>
@@ -121,8 +121,8 @@ public class InterpreterInvariants
         Gen.Float[-1000f, 1000f].Sample(x =>
         {
             var result = machine.Run(x, 0f);
-            result.ShouldBeGreaterThanOrEqualTo(0f);
-            result.ShouldBeLessThan(1f);
+            result.ShouldBeGreaterThanOrEqualTo(0d);
+            result.ShouldBeLessThan(1d);
         });
     }
 
@@ -133,7 +133,7 @@ public class InterpreterInvariants
         var machine = Machine.Ternary(OpCode.Noise3);
 
         Gen.Select(Gen.Float[-500f, 500f], Gen.Float[-500f, 500f], Gen.Float[-500f, 500f])
-            .Sample((x, y, z) => machine.Run(x, y, z).ShouldBeInRange(0f, 1f));
+            .Sample((x, y, z) => machine.Run(x, y, z).ShouldBeInRange(0d, 1d));
     }
 
     /// <summary>
@@ -192,7 +192,7 @@ public class InterpreterInvariants
         /// CsCheck samples in parallel, and a shared register file would let
         /// concurrent samples overwrite each other's intermediates.
         /// </summary>
-        public float Run(float x, float y, float t = 0f)
+        public double Run(float x, float y, float t = 0f)
         {
             var registers = program.AllocateRegisters();
             program.Evaluate(x, y, t, registers, default);

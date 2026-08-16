@@ -23,7 +23,7 @@ public class NoteTests
     /// to get a scalar out of a compiled patch, so gain is set to 1 and the
     /// result read straight out of the output register.
     /// </summary>
-    private static float Output(int port, params (int Port, float Value)[] knobs)
+    private static double Output(int port, params (int Port, float Value)[] knobs)
     {
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
         var note = builder.Add(TypeId, 0, 0, knobs);
@@ -37,9 +37,9 @@ public class NoteTests
         return registers[program.OutputBase];
     }
 
-    private static float Hz(params (int Port, float Value)[] knobs) => Output(0, knobs);
+    private static double Hz(params (int Port, float Value)[] knobs) => Output(0, knobs);
 
-    private static float Snapped(params (int Port, float Value)[] knobs) => Output(1, knobs);
+    private static double Snapped(params (int Port, float Value)[] knobs) => Output(1, knobs);
 
     [Fact]
     public void The_note_on_the_knob_is_the_pitch_that_comes_out()
@@ -76,12 +76,12 @@ public class NoteTests
     [Fact]
     public void A_sweep_across_a_note_produces_two_pitches_and_nothing_between()
     {
-        var heard = new HashSet<float>();
+        var heard = new HashSet<double>();
 
         for (var i = 0; i <= 40; i++)
             heard.Add(Snapped((0, 57f + i / 40f)));
 
-        heard.ShouldBe([57f, 58f], ignoreOrder: true);
+        heard.ShouldBe([57d, 58d], ignoreOrder: true);
     }
 
     /// <summary>

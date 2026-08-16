@@ -20,6 +20,15 @@ public readonly struct FeedbackFrame(float[]? pixels, int width, int height)
 /// walking <see cref="Ops"/> once, so there is no graph traversal, no virtual
 /// dispatch and no allocation in the inner loop.
 /// </summary>
+/// <remarks>
+/// Registers are <see cref="double"/>. Nothing a sink produces needs the extra
+/// mantissa — a pixel is eight bits and a sample is sixteen — but the *domain*
+/// does: on the audio path the machine runs at 192 kHz against a clock that
+/// keeps counting, and past about a minute a <see cref="float"/> cannot hold
+/// two consecutive sample times apart. See ADR-0032. The width costs nothing
+/// measurable, because this loop is bound by its own dispatch rather than by
+/// the arithmetic in it.
+/// </remarks>
 public sealed class CompiledPatch(Op[] ops, int registerCount, int outputBase, int outputWidth = 3)
 {
     public Op[] Ops { get; } = ops;
@@ -61,7 +70,7 @@ public sealed class CompiledPatch(Op[] ops, int registerCount, int outputBase, i
     /// <summary>Plays nothing, used when there is no Audio Output node.</summary>
     public static CompiledPatch Silent { get; } = Constant(2);
 
-    public float[] AllocateRegisters() => new float[Math.Max(RegisterCount, OutputWidth)];
+    public double[] AllocateRegisters() => new double[Math.Max(RegisterCount, OutputWidth)];
 
     /// <summary>Runs the program for one pixel. <paramref name="registers"/> is reused across pixels.</summary>
     /// <param name="delays">
@@ -72,10 +81,10 @@ public sealed class CompiledPatch(Op[] ops, int registerCount, int outputBase, i
     /// still shows a picture.
     /// </param>
     public void Evaluate(
-        float x,
-        float y,
-        float t,
-        Span<float> registers,
+        double x,
+        double y,
+        double t,
+        Span<double> registers,
         in FeedbackFrame feedback,
         DelayState? delays = null)
     {
@@ -99,42 +108,42 @@ public sealed class CompiledPatch(Op[] ops, int registerCount, int outputBase, i
                 case OpCode.Copy: registers[op.Out] = registers[op.A]; break;
 
                 case OpCode.Neg: registers[op.Out] = -registers[op.A]; break;
-                case OpCode.Abs: registers[op.Out] = MathF.Abs(registers[op.A]); break;
-                case OpCode.Sin: registers[op.Out] = MathF.Sin(registers[op.A]); break;
-                case OpCode.Cos: registers[op.Out] = MathF.Cos(registers[op.A]); break;
-                case OpCode.Tan: registers[op.Out] = Guard(MathF.Tan(registers[op.A])); break;
-                case OpCode.Sqrt: registers[op.Out] = registers[op.A] <= 0f ? 0f : MathF.Sqrt(registers[op.A]); break;
-                case OpCode.Floor: registers[op.Out] = MathF.Floor(registers[op.A]); break;
-                case OpCode.Ceil: registers[op.Out] = MathF.Ceiling(registers[op.A]); break;
+                case OpCode.Abs: registers[op.Out] = Math.Abs(registers[op.A]); break;
+                case OpCode.Sin: registers[op.Out] = Math.Sin(registers[op.A]); break;
+                case OpCode.Cos: registers[op.Out] = Math.Cos(registers[op.A]); break;
+                case OpCode.Tan: registers[op.Out] = Guard(Math.Tan(registers[op.A])); break;
+                case OpCode.Sqrt: registers[op.Out] = registers[op.A] <= 0d ? 0d : Math.Sqrt(registers[op.A]); break;
+                case OpCode.Floor: registers[op.Out] = Math.Floor(registers[op.A]); break;
+                case OpCode.Ceil: registers[op.Out] = Math.Ceiling(registers[op.A]); break;
                 case OpCode.Fract: registers[op.Out] = Fract(registers[op.A]); break;
-                case OpCode.Sign: registers[op.Out] = MathF.Sign(registers[op.A]); break;
-                case OpCode.Exp: registers[op.Out] = Guard(MathF.Exp(registers[op.A])); break;
-                case OpCode.Log: registers[op.Out] = registers[op.A] <= 0f ? 0f : MathF.Log(registers[op.A]); break;
+                case OpCode.Sign: registers[op.Out] = Math.Sign(registers[op.A]); break;
+                case OpCode.Exp: registers[op.Out] = Guard(Math.Exp(registers[op.A])); break;
+                case OpCode.Log: registers[op.Out] = registers[op.A] <= 0d ? 0d : Math.Log(registers[op.A]); break;
 
                 case OpCode.Add: registers[op.Out] = registers[op.A] + registers[op.B]; break;
                 case OpCode.Sub: registers[op.Out] = registers[op.A] - registers[op.B]; break;
                 case OpCode.Mul: registers[op.Out] = registers[op.A] * registers[op.B]; break;
                 case OpCode.Div: registers[op.Out] = Divide(registers[op.A], registers[op.B]); break;
                 case OpCode.Mod: registers[op.Out] = Modulo(registers[op.A], registers[op.B]); break;
-                case OpCode.Pow: registers[op.Out] = Guard(MathF.Pow(registers[op.A], registers[op.B])); break;
-                case OpCode.Min: registers[op.Out] = MathF.Min(registers[op.A], registers[op.B]); break;
-                case OpCode.Max: registers[op.Out] = MathF.Max(registers[op.A], registers[op.B]); break;
-                case OpCode.Atan2: registers[op.Out] = MathF.Atan2(registers[op.A], registers[op.B]); break;
-                case OpCode.Step: registers[op.Out] = registers[op.B] < registers[op.A] ? 0f : 1f; break;
+                case OpCode.Pow: registers[op.Out] = Guard(Math.Pow(registers[op.A], registers[op.B])); break;
+                case OpCode.Min: registers[op.Out] = Math.Min(registers[op.A], registers[op.B]); break;
+                case OpCode.Max: registers[op.Out] = Math.Max(registers[op.A], registers[op.B]); break;
+                case OpCode.Atan2: registers[op.Out] = Math.Atan2(registers[op.A], registers[op.B]); break;
+                case OpCode.Step: registers[op.Out] = registers[op.B] < registers[op.A] ? 0d : 1d; break;
                 case OpCode.Hypot:
                 {
-                    float a = registers[op.A], b = registers[op.B];
-                    registers[op.Out] = MathF.Sqrt(a * a + b * b);
+                    double a = registers[op.A], b = registers[op.B];
+                    registers[op.Out] = Math.Sqrt(a * a + b * b);
                     break;
                 }
 
                 case OpCode.Clamp:
-                    registers[op.Out] = Math.Clamp(registers[op.A], registers[op.B], MathF.Max(registers[op.B], registers[op.C]));
+                    registers[op.Out] = Math.Clamp(registers[op.A], registers[op.B], Math.Max(registers[op.B], registers[op.C]));
                     break;
 
                 case OpCode.Mix:
                 {
-                    float a = registers[op.A], b = registers[op.B], f = registers[op.C];
+                    double a = registers[op.A], b = registers[op.B], f = registers[op.C];
                     registers[op.Out] = a + (b - a) * f;
                     break;
                 }
@@ -186,7 +195,7 @@ public sealed class CompiledPatch(Op[] ops, int registerCount, int outputBase, i
                 case OpCode.Phase:
                 {
                     var slot = cell++;
-                    float input = registers[op.A], frequency = registers[op.B];
+                    double input = registers[op.A], frequency = registers[op.B];
 
                     // Without state there is no previous evaluation to step from
                     // — a picture's pixels are one evaluation each, in whatever
@@ -202,7 +211,7 @@ public sealed class CompiledPatch(Op[] ops, int registerCount, int outputBase, i
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static float Guard(float v) => float.IsFinite(v) ? v : 0f;
+    private static double Guard(double v) => double.IsFinite(v) ? v : 0d;
 
     /// <summary>
     /// Feedback held below one. At exactly one a delay line never decays and at
@@ -210,22 +219,22 @@ public sealed class CompiledPatch(Op[] ops, int registerCount, int outputBase, i
     /// that damage persists after the knob is turned back down.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static float Feedback(float v) => float.IsFinite(v) ? Math.Clamp(v, -0.99f, 0.99f) : 0f;
+    private static double Feedback(double v) => double.IsFinite(v) ? Math.Clamp(v, -0.99d, 0.99d) : 0d;
 
     /// <summary>
-    /// The largest float below 1. For a tiny negative input, <c>v - floor(v)</c>
-    /// is mathematically just under 1 but cancels to exactly 1.0 in single
+    /// The largest double below 1. For a tiny negative input, <c>v - floor(v)</c>
+    /// is mathematically just under 1 but cancels to exactly 1.0 at any finite
     /// precision. Fract is documented as half-open, and Saw and Tile both read
     /// it that way, so the result is pinned just below the boundary instead of
     /// being allowed to reach it.
     /// </summary>
-    private const float JustBelowOne = 0.99999994f;
+    private const double JustBelowOne = 0.99999999999999989d;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static float Fract(float v)
+    private static double Fract(double v)
     {
-        var fraction = v - MathF.Floor(v);
-        return fraction < 1f ? fraction : JustBelowOne;
+        var fraction = v - Math.Floor(v);
+        return fraction < 1d ? fraction : JustBelowOne;
     }
 
     // Exact equality is the point in the three guards below: they trap the one
@@ -235,31 +244,31 @@ public sealed class CompiledPatch(Op[] ops, int registerCount, int outputBase, i
     // ReSharper disable CompareOfFloatsByEqualityOperator
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static float Divide(float a, float b) => b == 0f ? 0f : Guard(a / b);
+    private static double Divide(double a, double b) => b == 0d ? 0d : Guard(a / b);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static float Modulo(float a, float b) => b == 0f ? 0f : Guard(a - b * MathF.Floor(a / b));
+    private static double Modulo(double a, double b) => b == 0d ? 0d : Guard(a - b * Math.Floor(a / b));
 
-    private static float Smoothstep(float edge0, float edge1, float x)
+    private static double Smoothstep(double edge0, double edge1, double x)
     {
-        if (edge0 == edge1) return x < edge0 ? 0f : 1f;
+        if (edge0 == edge1) return x < edge0 ? 0d : 1d;
 
-        var t = Math.Clamp((x - edge0) / (edge1 - edge0), 0f, 1f);
-        return t * t * (3f - 2f * t);
+        var t = Math.Clamp((x - edge0) / (edge1 - edge0), 0d, 1d);
+        return t * t * (3d - 2d * t);
     }
 
     // ReSharper restore CompareOfFloatsByEqualityOperator
 
-    private static void HsvToRgb(float h, float s, float v, Span<float> rgb)
+    private static void HsvToRgb(double h, double s, double v, Span<double> rgb)
     {
-        h = Fract(h) * 6f;
-        s = Math.Clamp(s, 0f, 1f);
+        h = Fract(h) * 6d;
+        s = Math.Clamp(s, 0d, 1d);
 
         var sector = (int)h;
         var f = h - sector;
-        var p = v * (1f - s);
-        var q = v * (1f - s * f);
-        var t = v * (1f - s * (1f - f));
+        var p = v * (1d - s);
+        var q = v * (1d - s * f);
+        var t = v * (1d - s * (1d - f));
 
         (rgb[0], rgb[1], rgb[2]) = sector switch
         {
@@ -273,23 +282,23 @@ public sealed class CompiledPatch(Op[] ops, int registerCount, int outputBase, i
     }
 
     /// <summary>Bilinear read of the previous frame in patch coordinates, clamped at the edges.</summary>
-    private static void Sample(in FeedbackFrame frame, float u, float v, Span<float> rgb)
+    private static void Sample(in FeedbackFrame frame, double u, double v, Span<double> rgb)
     {
         var pixels = frame.Pixels;
         if (pixels is null || frame.Width < 2 || frame.Height < 2)
         {
-            rgb[0] = rgb[1] = rgb[2] = 0f;
+            rgb[0] = rgb[1] = rgb[2] = 0d;
             return;
         }
 
-        var fx = (u / frame.Aspect * 0.5f + 0.5f) * (frame.Width - 1);
-        var fy = (0.5f - v * 0.5f) * (frame.Height - 1);
+        var fx = (u / frame.Aspect * 0.5d + 0.5d) * (frame.Width - 1);
+        var fy = (0.5d - v * 0.5d) * (frame.Height - 1);
 
-        fx = Math.Clamp(float.IsFinite(fx) ? fx : 0f, 0f, frame.Width - 1.001f);
-        fy = Math.Clamp(float.IsFinite(fy) ? fy : 0f, 0f, frame.Height - 1.001f);
+        fx = Math.Clamp(double.IsFinite(fx) ? fx : 0d, 0d, frame.Width - 1.001d);
+        fy = Math.Clamp(double.IsFinite(fy) ? fy : 0d, 0d, frame.Height - 1.001d);
 
         int x0 = (int)fx, y0 = (int)fy;
-        float tx = fx - x0, ty = fy - y0;
+        double tx = fx - x0, ty = fy - y0;
 
         var row0 = y0 * frame.Width;
         var row1 = row0 + frame.Width;
