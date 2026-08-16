@@ -1,6 +1,7 @@
 using Flyback.Core.Graph;
 using Flyback.Plugins.Assist;
 using Flyback.Plugins.Audio;
+using Flyback.Plugins.Secrets;
 
 namespace Flyback.Plugins;
 
@@ -59,4 +60,10 @@ public interface IPluginRegistry
     /// for one when somebody asks it a question.
     /// </summary>
     void AddPatchAssistant(IPatchAssistant assistant);
+
+    /// <summary>
+    /// Offers somewhere the operating system will hold a secret. Registering it
+    /// must not read or write one.
+    /// </summary>
+    void AddSecretStore(ISecretStore store);
 }

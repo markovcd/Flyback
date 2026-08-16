@@ -2,6 +2,7 @@ using System.Reflection;
 using Flyback.Core.Graph;
 using Flyback.Plugins.Assist;
 using Flyback.Plugins.Audio;
+using Flyback.Plugins.Secrets;
 
 namespace Flyback.Plugins.Hosting;
 
@@ -48,7 +49,13 @@ public static class PluginHost
             LoadFolder(folder, plugins, registry, problems);
 
         return new PluginCatalog(
-            plugins, registry.AudioOutputs, registry.Modules, registry.Presets, problems, registry.Assistants);
+            plugins,
+            registry.AudioOutputs,
+            registry.Modules,
+            registry.Presets,
+            problems,
+            registry.Assistants,
+            registry.SecretStores);
     }
 
     private static void LoadFolder(
@@ -176,6 +183,7 @@ public static class PluginHost
     {
         private readonly List<IAudioOutput> audioOutputs = [];
         private readonly List<IPatchAssistant> assistants = [];
+        private readonly List<ISecretStore> secretStores = [];
 
         /// <summary>Whoever is registering right now, for blaming in messages.</summary>
         public PluginInfo Source { get; set; } = new("", "");
@@ -183,6 +191,8 @@ public static class PluginHost
         public IReadOnlyList<IAudioOutput> AudioOutputs => audioOutputs;
 
         public IReadOnlyList<IPatchAssistant> Assistants => assistants;
+
+        public IReadOnlyList<ISecretStore> SecretStores => secretStores;
 
         /// <summary>
         /// Built up as plugins register, starting from the engine's own modules.
@@ -247,6 +257,19 @@ public static class PluginHost
             }
 
             assistants.Add(assistant);
+        }
+
+        public void AddSecretStore(ISecretStore store)
+        {
+            if (secretStores.Any(s => s.Id == store.Id))
+            {
+                problems.Add(new PluginProblem(
+                    Source.Id,
+                    $"secret store '{store.Id}' is already registered and was ignored."));
+                return;
+            }
+
+            secretStores.Add(store);
         }
     }
 }

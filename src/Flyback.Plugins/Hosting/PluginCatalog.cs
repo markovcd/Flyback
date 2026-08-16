@@ -1,6 +1,7 @@
 using Flyback.Core.Graph;
 using Flyback.Plugins.Assist;
 using Flyback.Plugins.Audio;
+using Flyback.Plugins.Secrets;
 
 namespace Flyback.Plugins.Hosting;
 
@@ -34,7 +35,8 @@ public sealed class PluginCatalog
         ModuleCatalog modules,
         IReadOnlyList<PatchPreset> presets,
         IReadOnlyList<PluginProblem> problems,
-        IReadOnlyList<IPatchAssistant>? assistants = null)
+        IReadOnlyList<IPatchAssistant>? assistants = null,
+        IReadOnlyList<ISecretStore>? secretStores = null)
     {
         Plugins = plugins;
         AudioOutputs = audioOutputs;
@@ -42,6 +44,7 @@ public sealed class PluginCatalog
         Presets = presets;
         Problems = problems;
         Assistants = assistants ?? [];
+        SecretStores = secretStores ?? [];
     }
 
     public IReadOnlyList<LoadedPlugin> Plugins { get; }
@@ -50,6 +53,9 @@ public sealed class PluginCatalog
 
     /// <summary>Everything installed that could author a patch.</summary>
     public IReadOnlyList<IPatchAssistant> Assistants { get; }
+
+    /// <summary>Everywhere installed that the operating system will hold a secret.</summary>
+    public IReadOnlyList<ISecretStore> SecretStores { get; }
 
     /// <summary>
     /// The engine's modules with every plugin's folded in. Install it before
@@ -97,6 +103,31 @@ public sealed class PluginCatalog
     /// <summary>The assistant a setting names, or null when it is no longer installed.</summary>
     public IPatchAssistant? Assistant(string id) =>
         Assistants.FirstOrDefault(a => string.Equals(a.Id, id, StringComparison.Ordinal));
+
+    /// <summary>
+    /// Where a secret should be kept here: supported, highest priority, ties
+    /// broken on id. Null when nothing installed can hold one — in which case a
+    /// key is used for the session and then forgotten, which the panel says
+    /// rather than appearing to have saved something.
+    /// </summary>
+    public ISecretStore? PreferredSecretStore => SecretStores
+        .Where(Supported)
+        .OrderByDescending(s => s.Priority)
+        .ThenBy(s => s.Id, StringComparer.Ordinal)
+        .FirstOrDefault();
+
+    /// <summary>A store that throws while answering whether it works here has answered no.</summary>
+    private static bool Supported(ISecretStore store)
+    {
+        try
+        {
+            return store.IsSupported;
+        }
+        catch
+        {
+            return false;
+        }
+    }
 
     /// <summary>
     /// A backend that throws while answering whether it is supported has
