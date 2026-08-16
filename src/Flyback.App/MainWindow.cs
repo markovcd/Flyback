@@ -129,6 +129,17 @@ public sealed class MainWindow : Window
 
         editor.Patch = Presets.Default();
 
+        // Sound on, if there is anything to make it with. This is the half of
+        // the instrument that a silent launch hides completely: the picture
+        // announces itself, and a patch whose audio side is doing nothing looks
+        // exactly like one whose audio side is working. Turned on here rather
+        // than in the toolbar because the toolbar is built before the preset is
+        // loaded, and the engine would be started on an empty patch.
+        //
+        // A device that will not open is not fatal — SetAudioEnabled reports it
+        // and puts the button back — so this cannot stop the window appearing.
+        audioButton.IsChecked = audioButton.IsEnabled;
+
         var ticker = new DispatcherTimer(DispatcherPriority.Background) { Interval = TimeSpan.FromMilliseconds(250) };
         ticker.Tick += (_, _) => UpdateStatus();
         ticker.Start();
@@ -236,8 +247,9 @@ public sealed class MainWindow : Window
             preview.Rewind();
         };
 
-        // Off by default: launching a program should not make a noise. And it
-        // cannot be switched on at all where no plugin offered a device.
+        // It cannot be switched on at all where no plugin offered a device. The
+        // constructor turns it on once there is a patch to play — see there for
+        // why it starts on rather than off.
         audioButton.IsEnabled = sound.Output is not null;
         ToolTip.SetTip(audioButton, sound.Output is { } output
             ? $"Play the patch through {output.Name}. Needs an Audio Output module."
