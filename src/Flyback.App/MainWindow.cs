@@ -97,8 +97,18 @@ public sealed class MainWindow : Window
         Opacity = 0.55,
     };
 
+    private readonly TextBlock helper = new()
+    {
+        VerticalAlignment = VerticalAlignment.Center,
+        FontSize = 12,
+        Opacity = 0.55,
+    };
+
     private readonly ToggleButton playButton = new() { Content = "Pause", Width = 78, IsChecked = true };
     private readonly ToggleButton audioButton = new() { Content = "Audio off", Width = 92 };
+    private readonly ToggleButton assistantButton = new() { Content = "Assistant", Width = 92 };
+
+    private AssistantPanel? assistant;
 
     /// <summary>
     /// Read before this window existed, and already installed. Nothing here
@@ -151,6 +161,20 @@ public sealed class MainWindow : Window
     {
         var root = new DockPanel();
 
+        // Before the bars, because both of them ask it what it is called.
+        assistant = new AssistantPanel(
+            plugins,
+            () => editor.Patch,
+            patch =>
+            {
+                editor.Patch = patch;
+                preview.Rewind();
+            },
+            Report)
+        {
+            IsVisible = false,
+        };
+
         var toolbar = BuildToolbar();
         var statusBar = BuildStatusBar();
         DockPanel.SetDock(toolbar, Dock.Top);
@@ -189,8 +213,15 @@ public sealed class MainWindow : Window
         columns.Children.Add(rightSplitter);
         columns.Children.Add(right);
 
+        // Docked after the status bar so it sits above it on screen, and full
+        // width because streamed prose wants width rather than a strip. Hidden
+        // costs nothing, which is why this needs no dialog — and this
+        // application has none.
+        DockPanel.SetDock(assistant, Dock.Bottom);
+
         root.Children.Add(toolbar);
         root.Children.Add(statusBar);
+        root.Children.Add(assistant);
         root.Children.Add(columns);
 
         return root;
@@ -296,9 +327,20 @@ public sealed class MainWindow : Window
         bar.Children.Add(Label("Preview"));
         bar.Children.Add(resolution);
         bar.Children.Add(exportFrame);
+        assistantButton.IsEnabled = plugins.Assistants.Count > 0;
+        ToolTip.SetTip(assistantButton, plugins.Assistants.Count > 0
+            ? "Describe a patch and have one built. Nothing is sent until you ask, and nothing applied until you accept."
+            : "No assistant plugin is installed. See the status bar for where plugins are looked for.");
+        assistantButton.IsCheckedChanged += (_, _) =>
+        {
+            if (assistant is not null) assistant.IsVisible = assistantButton.IsChecked == true;
+        };
+
         bar.Children.Add(Separator());
         bar.Children.Add(audioButton);
         bar.Children.Add(exportAudio);
+        bar.Children.Add(Separator());
+        bar.Children.Add(assistantButton);
 
         return new Border
         {
@@ -321,8 +363,14 @@ public sealed class MainWindow : Window
         backend.Text = sound.Output is { } output ? $"sound: {output.Name}" : "sound: none";
         ToolTip.SetTip(backend, PluginSummary());
 
+        // Always visible, so the capability's existence is never a surprise to
+        // somebody who did not go looking for it.
+        helper.Text = assistant?.Summary ?? "assistant: none";
+        ToolTip.SetTip(helper, PluginSummary());
+
         bar.Children.Add(status);
         bar.Children.Add(backend);
+        bar.Children.Add(helper);
         bar.Children.Add(issues);
 
         return new Border
@@ -791,6 +839,17 @@ public sealed class MainWindow : Window
 
         if (sound.Failure is { } failure)
             lines.Add($"Could not open sound: {failure}");
+
+        // Where a key would be kept, but never what it is. An assistant with no
+        // store behind it still works; it just forgets between runs, and saying
+        // so here is the difference between that and appearing to have saved one.
+        if (plugins.Assistants.Count > 0)
+        {
+            lines.Add(string.Empty);
+            lines.Add(plugins.PreferredSecretStore is { } store
+                ? $"Keys are kept by: {store.Name}"
+                : "No secret store is installed, so a key lasts only as long as the window.");
+        }
 
         lines.AddRange(plugins.Problems.Select(p => $"Problem: {p}"));
 
