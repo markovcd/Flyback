@@ -25,6 +25,7 @@
     <PluginProject Include="..\..\src\Flyback.Plugins.Wasapi\Flyback.Plugins.Wasapi.csproj" FolderName="Wasapi" />
     <PluginProject Include="..\..\src\Flyback.Plugins.CoreAudio\Flyback.Plugins.CoreAudio.csproj" FolderName="CoreAudio" />
     <PluginProject Include="..\..\src\Flyback.Plugins.Alsa\Flyback.Plugins.Alsa.csproj" FolderName="Alsa" />
+    <PluginProject Include="..\..\src\Flyback.Plugins.Dpapi\Flyback.Plugins.Dpapi.csproj" FolderName="Dpapi" />
     <PluginProject Include="..\Flyback.Plugins.Sample\Flyback.Plugins.Sample.csproj" FolderName="Sample" />
     <PluginProject Include="..\Flyback.Plugins.FakeAssistant\Flyback.Plugins.FakeAssistant.csproj" FolderName="FakeAssistant" />
     <PluginProject Include="..\..\src\Flyback.Plugins.Supersaw\Flyback.Plugins.Supersaw.csproj" FolderName="Supersaw" />

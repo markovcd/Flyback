@@ -29,6 +29,7 @@
     <PluginProject Include="..\Flyback.Plugins.Wasapi\Flyback.Plugins.Wasapi.csproj" FolderName="Wasapi" Platform="win" />
     <PluginProject Include="..\Flyback.Plugins.CoreAudio\Flyback.Plugins.CoreAudio.csproj" FolderName="CoreAudio" Platform="osx" />
     <PluginProject Include="..\Flyback.Plugins.Alsa\Flyback.Plugins.Alsa.csproj" FolderName="Alsa" Platform="linux" />
+    <PluginProject Include="..\Flyback.Plugins.Dpapi\Flyback.Plugins.Dpapi.csproj" FolderName="Dpapi" Platform="win" />
     <PluginProject Include="..\Flyback.Plugins.Supersaw\Flyback.Plugins.Supersaw.csproj" FolderName="Supersaw" />
     <PluginProject Include="..\Flyback.Plugins.Space\Flyback.Plugins.Space.csproj" FolderName="Space" />
   </ItemGroup>
