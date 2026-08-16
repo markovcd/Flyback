@@ -128,6 +128,7 @@ nothing.
 |---|---|
 | Pitch | patch **Frequency** into an oscillator's `freq` — it is a knob in hertz rather than the single digits the visual modules use |
 | Notes | **Note** is the same thing in notes rather than hertz. Pick one on the knob — it reads as `A3`, not as 57 — or patch a signal in and it snaps to the nearest whole note, which is what turns a sweep into a run up the chromatic scale. `octave` transposes by twelve semitones a step, `cents` detunes past the snap, and `note` hands the snapped number on so a second **Note** can play an interval off it |
+| Sequences | **Note Sequencer** is eight notes in a row — `out` to a **Note** for the pitch, `gate` into a multiply so a rest is heard as one, `index` to the screen. **Sequencer** is the same eight steps as a plain signal instead. `on` silences a step without losing it, so it doubles as that step's level, and `shape` sets how long the gate takes to open and close |
 | Stereo | leave `right` unpatched and it carries `left`, the way a normalled jack does |
 | `scan` | at 0 the patch is driven by Time; at 1 it sweeps the image and you hear the picture, at `scan rate` sweeps per second |
 | Export | **Render audio…** writes 10 seconds to a WAV |
@@ -143,6 +144,31 @@ the eye sees as flat rings of colour — and because the audio path pins `x` and
 fourteen either side of it. Brightness is taken from the ramp before the snap, so
 a smooth glow and the rings sitting in it are the before and after of the same
 signal.
+
+**Sequence** is a tune rather than a scale. Eight notes on eight knobs go to the
+speakers, and the sequencer's other two outputs go to the screen: `index` picks
+the hue and the number of rings, so the picture reorganises itself on the beat,
+and `gate` dims it exactly where it silences the note, so the rhythm is visible.
+Nothing is duplicated between the two sinks — every difference between what the
+ear gets and what the eye gets is a different output of the one module.
+
+Its gate ramps rather than switches, which is not a nicety. ADR-0030 stopped a
+stepped *pitch* clicking; a stepped *amplitude* is the same failure from the
+same cause, and nothing was catching it — the first version of this preset tore
+its waveform at nineteen times the wave's own travel, six times a second.
+Oversampling band-limits a discontinuity rather than removing one, so the fix is
+an envelope: four ops, no state, and the edges are a fraction of a step so they
+scale with the tempo.
+
+A sequencer needs no memory, which is why it is one of the few things here that
+behaves identically at both sinks. Which step is playing is a function of where
+its `in` has got to, not of what played before, so unlike a delay (ADR-0027) or
+an accumulated phase (ADR-0030) there is nothing to carry and nothing a
+recompile can disturb. `in` is a domain rather than a clock for the same reason
+an oscillator's is: stop it and the sequence stops, run it backwards and it runs
+backwards. And because the steps are ordinary inputs rather than a stored list,
+each one is a socket — patch an oscillator into step 3 and that note drifts
+while the other seven hold.
 
 ### Why a stepped pitch does not click
 

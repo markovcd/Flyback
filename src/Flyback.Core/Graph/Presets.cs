@@ -18,10 +18,80 @@ public static class Presets
         new("Nebula", Nebula),
         new("Drone", Drone),
         new("Chromatic", Chromatic),
+        new("Sequence", Sequence),
         new("Empty", Empty),
     ];
 
     public static Patch Default() => Plasma(NodeCatalog.Current);
+
+    /// <summary>
+    /// One sequencer, heard and seen at once. The steps are the tune; where the
+    /// sequence has got to is the colour, and the gate that makes a rest silent
+    /// is the same one that takes the light out of it.
+    /// </summary>
+    /// <remarks>
+    /// Nothing here is duplicated between the two sinks. Every difference
+    /// between what the ear gets and what the eye gets is a different output of
+    /// the one module — which is the point of it having three.
+    /// </remarks>
+    public static Patch Sequence(ModuleCatalog modules)
+    {
+        var b = new PatchBuilder(modules);
+
+        var time = b.Add("time", 40, 300);
+
+        // Three steps a second, and the gate closed for the last third of each
+        // so that two of the same note in a row are two notes.
+        var steps = b.Add("seq.notes", 240, 180, (1, 3f), (3, 0.66f));
+
+        // Ear: the step is a note number, so it goes in where a note goes.
+        var note = b.Add("audio.note", 640, 180);
+        var tone = b.Add("osc.sine", 840, 180);
+        var voiced = b.Add("math.mul", 1040, 200);
+        var speaker = b.Add(NodeCatalog.AudioOutputTypeId, 1240, 220, (2, 0.5f));
+
+        // Eye: rings whose count is the position in the pattern, so the picture
+        // reorganises itself on the beat rather than drifting through it.
+        var coord = b.Add("coord", 40, 620);
+        // Remapped rather than multiplied, so the first step of the pattern is a
+        // ring count of one and a half rather than of nothing: index starts at
+        // zero, and zero rings is a flat field with no pattern in it at all.
+        var depth = b.Add("math.remap", 400, 760, (1, 0f), (2, 1f), (3, 1.5f), (4, 9f));
+        var rings = b.Add("pattern.rings", 640, 620);
+        var glow = b.Add("math.remap", 840, 620, (1, -1f), (2, 1f), (3, 0.05f), (4, 1f));
+
+        // The gate dims the picture exactly where it silences the tone, so the
+        // rhythm is visible as well as audible — but only down to four tenths.
+        // Multiplying by the gate itself is the obvious wiring and the wrong
+        // one: the screen would be black for the third of every step that the
+        // note is not sounding, which reads as a fault rather than as a pulse.
+        var pulse = b.Add("math.remap", 1040, 860, (1, 0f), (2, 1f), (3, 0.4f), (4, 1f));
+        var lit = b.Add("math.mul", 1040, 700);
+        var colour = b.Add("colour.hsv", 1240, 620, (1, 0.8f));
+        var screen = b.Add(NodeCatalog.VideoOutputTypeId, 1440, 640);
+
+        b.Wire(time, 0, steps, 0)
+         .Wire(steps, 0, note, 0)
+         .Wire(time, 0, tone, 0)
+         .Wire(note, 0, tone, 1)
+         .Wire(tone, 0, voiced, 0)
+         .Wire(steps, 1, voiced, 1)
+         .Wire(voiced, 0, speaker, 0)
+
+         .Wire(coord, 0, rings, 0)
+         .Wire(coord, 1, rings, 1)
+         .Wire(steps, 2, depth, 0)
+         .Wire(depth, 0, rings, 2)
+         .Wire(rings, 0, glow, 0)
+         .Wire(steps, 1, pulse, 0)
+         .Wire(glow, 0, lit, 0)
+         .Wire(pulse, 0, lit, 1)
+         .Wire(steps, 2, colour, 0)
+         .Wire(lit, 0, colour, 2)
+         .Wire(colour, 0, screen, 0);
+
+        return b.Patch;
+    }
 
     /// <summary>Just an Output node with something to plug into.</summary>
     public static Patch Empty(ModuleCatalog modules)

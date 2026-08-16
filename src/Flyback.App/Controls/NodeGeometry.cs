@@ -37,6 +37,7 @@ internal static class NodeGeometry
         "Output" => Color.FromRgb(0xE0, 0x5A, 0x5A),
         "Source" => Color.FromRgb(0x4A, 0x9E, 0xDE),
         "Oscillator" => Color.FromRgb(0x4F, 0xC3, 0x87),
+        "Sequencer" => Color.FromRgb(0xD8, 0xB0, 0x4A),
         "Maths" => Color.FromRgb(0x7E, 0x86, 0x94),
         "Space" => Color.FromRgb(0xB4, 0x84, 0xE0),
         "Pattern" => Color.FromRgb(0xE0, 0xA8, 0x4A),

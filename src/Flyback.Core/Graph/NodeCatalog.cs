@@ -216,6 +216,26 @@ public static class NodeCatalog
                 },
                 "A square with an adjustable duty cycle."),
 
+            // ---------------------------------------------------------------- sequencers
+            StepSequencer(
+                "seq.notes", "Note Sequencer",
+                s => Pitched($"step {s + 1}", DefaultRiff[s]),
+                "Eight notes in a row. A step is a note on a knob — 57 reads as A3 — and 'on' "
+                + "silences one without losing it, so it doubles as that step's level. Send 'out' "
+                + "to a Note and 'gate' to something that multiplies the tone, so a rest is heard "
+                + "as one. 'shape' is how long the gate takes to open and close, as a fraction of a "
+                + "step: turn it up for a swell, and it never quite reaches nothing, because a gate "
+                + "that switched outright would click. 'index' is how far through the pattern the "
+                + "sequence has got, which is the output to reach for on the screen."),
+
+            StepSequencer(
+                "seq.values", "Sequencer",
+                s => Num($"step {s + 1}", DefaultShape[s], 0f, 1f),
+                "The same eight steps as a plain signal rather than as notes — a hue, a scale, a "
+                + "threshold, or a pitch by way of a Frequency. 'in' is a domain the way an "
+                + "oscillator's is: stop it and the sequence stops, run it backwards and it runs "
+                + "backwards, run it twice as fast and so does the pattern."),
+
             // ---------------------------------------------------------------- maths
             Binary("math.add", "Add", OpCode.Add, 0f, "a + b"),
             Binary("math.sub", "Subtract", OpCode.Sub, 0f, "a - b"),
@@ -429,6 +449,121 @@ public static class NodeCatalog
 
         BuiltIn = ModuleCatalog.Of(BuiltInProvider, modules);
         Current = BuiltIn;
+    }
+
+    /// <summary>
+    /// Eight steps is what fits on a node without the inspector turning into a
+    /// list to scroll, and two chained through one another is sixteen.
+    /// </summary>
+    private const int SequencerSteps = 8;
+
+    /// <summary>A minor pentatonic, so a Note Sequencer plays a tune the moment it is dropped.</summary>
+    private static readonly float[] DefaultRiff = [57f, 60f, 62f, 64f, 67f, 64f, 62f, 60f];
+
+    /// <summary>Up and back down — a shape, rather than the ramp 'index' already hands out.</summary>
+    private static readonly float[] DefaultShape = [0f, 0.25f, 0.5f, 0.75f, 1f, 0.75f, 0.5f, 0.25f];
+
+    /// <summary>
+    /// The shortest the gate's edges may be made, as a fraction of a step. A
+    /// knob turned to nothing would otherwise put the click back, and a gate
+    /// that clicks is not one — so the knob shapes the edge and this decides
+    /// that there is one. Two thousandths of a step is well under a millisecond
+    /// at any tempo, which is a hard attack rather than a discontinuity.
+    /// </summary>
+    private const float ShortestGateEdge = 0.002f;
+
+    /// <summary>
+    /// Builds one of the two step sequencers. They differ only in what a step's
+    /// knob means — a note number or an ordinary signal — because nothing below
+    /// this line can tell the difference: the same stepped value is a melody at
+    /// the speakers and a change of colour on the screen
+    /// ([0022](0022-audio-and-video-are-two-sinks-over-one-patch.md)).
+    /// </summary>
+    /// <param name="step">The value knob for step <paramref name="step"/>'s index, zero-based.</param>
+    private static NodeDef StepSequencer(
+        string id, string name, Func<int, PortSpec> step, string description) => new(
+        id, name, "Sequencer",
+        [
+            Num("in"),
+            Num("rate", 4f, 0f, 32f),
+            Num("steps", SequencerSteps, 1f, SequencerSteps),
+            Num("gate length", 0.5f, 0f, 1f),
+            Num("shape", 0.02f, 0f, 0.5f),
+            .. Enumerable.Range(0, SequencerSteps)
+                .SelectMany(s => new[] { step(s), Num($"on {s + 1}", 1f, 0f, 1f) }),
+        ],
+        [Num("out"), Num("gate"), Num("index")],
+        EmitSequence,
+        description);
+
+    /// <summary>
+    /// Which step the sequence is on is a function of where its input has got
+    /// to, not of what it played before, so a sequencer needs no state at all —
+    /// unlike a delay ([0027](0027-delay-lines-give-the-audio-path-a-memory.md))
+    /// or an accumulated phase ([0030](0030-oscillators-accumulate-their-phase.md)).
+    /// It draws the same thing it plays, and the video path pays nothing for it.
+    /// </summary>
+    /// <remarks>
+    /// Selection is a sum of windows rather than a branch, because the machine
+    /// has no branches. Each window is the difference between two thresholds on
+    /// the step index, so adjacent windows share an edge and exactly one is ever
+    /// open — which makes the sum the selected step and nothing else.
+    /// </remarks>
+    private static Slot[] EmitSequence(Emitter em, Slot[] i)
+    {
+        var count = em.Unary(OpCode.Floor,
+            em.Ternary(OpCode.Clamp, i[2], em.Constant(1f), em.Constant(SequencerSteps)));
+
+        // How far the input has travelled, counted in steps. Modulo is floored,
+        // so an input running backwards runs the sequence backwards rather than
+        // falling off the front of it.
+        var travelled = em.Mul(i[0], i[1]);
+        var index = em.Unary(OpCode.Floor, em.Binary(OpCode.Mod, travelled, count));
+
+        var edges = new Slot[SequencerSteps + 1];
+        edges[0] = em.Constant(1f);
+        edges[SequencerSteps] = em.Constant(0f);
+
+        for (var s = 1; s < SequencerSteps; s++)
+            edges[s] = em.Binary(OpCode.Step, em.Constant(s), index);
+
+        Slot value = default;
+        Slot open = default;
+
+        for (var s = 0; s < SequencerSteps; s++)
+        {
+            var window = em.Sub(edges[s], edges[s + 1]);
+            var here = em.Mul(i[5 + s * 2], window);
+            var sounds = em.Mul(i[6 + s * 2], window);
+
+            (value, open) = s == 0 ? (here, sounds) : (em.Add(value, here), em.Add(open, sounds));
+        }
+
+        // The gate shuts partway through each step, so two identical notes in a
+        // row are two notes rather than one held twice as long.
+        //
+        // It ramps rather than switches, and that is not a nicety. A switched
+        // gate steps the amplitude by its whole height in one sample, which is a
+        // discontinuity — and oversampling
+        // ([0023](0023-oversample-the-audio-path.md)) band-limits one of those
+        // rather than removing it, so it is heard as a click at every note.
+        // Ramping also hides the other edge in here: because the envelope is
+        // zero at each boundary, a step whose 'on' differs from the last one's
+        // fades in at its own level instead of jumping to it.
+        var within = em.Unary(OpCode.Fract, travelled);
+        var shape = em.Ternary(OpCode.Clamp, i[4], em.Constant(ShortestGateEdge), em.Constant(1f));
+        var length = em.Ternary(OpCode.Clamp, i[3], em.Constant(0f), em.Constant(1f));
+
+        var opening = em.Ternary(OpCode.Smoothstep, em.Constant(0f), shape, within);
+        var closing = em.Sub(em.Constant(1f),
+            em.Ternary(OpCode.Smoothstep, em.Sub(length, shape), length, within));
+
+        return
+        [
+            value,
+            em.Mul(em.Mul(open, opening), closing),
+            em.Binary(OpCode.Div, index, count),
+        ];
     }
 
     /// <summary>
