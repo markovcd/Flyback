@@ -128,6 +128,7 @@ nothing.
 |---|---|
 | Pitch | patch **Frequency** into an oscillator's `freq` — it is a knob in hertz rather than the single digits the visual modules use |
 | Notes | **Note** is the same thing in notes rather than hertz. Pick one on the knob — it reads as `A3`, not as 57 — or patch a signal in and it snaps to the nearest whole note, which is what turns a sweep into a run up the chromatic scale. `octave` transposes by twelve semitones a step, `cents` detunes past the snap, and `note` hands the snapped number on so a second **Note** can play an interval off it |
+| `glide` | how much of each step is spent sliding to the next, and why the pitch is not stepped instantly — see below |
 | Stereo | leave `right` unpatched and it carries `left`, the way a normalled jack does |
 | `scan` | at 0 the patch is driven by Time; at 1 it sweeps the image and you hear the picture, at `scan rate` sweeps per second |
 | Export | **Render audio…** writes 10 seconds to a WAV |
@@ -141,8 +142,36 @@ notes and sent to both sinks, so what the ear hears as a run of separate notes
 the eye sees as flat rings of colour — and because the audio path pins `x` and
 `y` to zero, the module the speakers hear one note from is showing the screen the
 fourteen either side of it. Brightness is taken from the ramp before the snap, so
-a smooth glow and the hard-edged rings sitting in it are the before and after of
-the same signal.
+a smooth glow and the rings sitting in it are the before and after of the same
+signal.
+
+### Why a stepped pitch clicks
+
+An oscillator's phase here is `in × freq`; nothing accumulates, because the video
+path evaluates pixels in parallel and out of order and there is no "previous
+sample" to carry a phase in (ADR-0005, ADR-0006). So the pitch actually heard
+while `freq` moves is not `freq` but `freq + t × freq′` — and a `freq` that steps
+instantly is an infinite `freq′`, which tears the waveform. That tear is the
+click, and it grows with `t`: the same note change is worse a minute in than a
+second in.
+
+`glide` on the **Note** module is the lever available. Measured on Chromatic as
+the largest sample-to-sample jump against the median one — a tear being a step
+far bigger than anything the wave does on its own:
+
+| `glide` | first second | at twenty seconds |
+|---|---|---|
+| 0 (hard snap) | 14× | 72× |
+| 0.01 | 27× | 105× |
+| 0.2 (default) | 1.7× | 36× |
+| 1 (a slide, not a snap) | 1.7× | 2.6× |
+
+Two things fall out of that. A narrow glide is *worse* than none — the ramp is
+still fast enough to make `t × freq′` enormous, and now it lasts longer. And no
+setting fixes it late on: only an oscillator that carries its phase would, which
+means a stateful op on the audio path in the way ADR-0027 gave delay lines one.
+The default trades a fifth of each step for a change the waveform survives, and
+the run still sounds stepped rather than slurred.
 
 Audio runs at 48 kHz, 4× oversampled and filtered before decimation, which keeps
 the naive `Saw` and `Square` from folding harmonics back down as buzzing. It
