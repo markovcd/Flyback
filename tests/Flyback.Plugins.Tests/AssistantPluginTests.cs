@@ -81,6 +81,48 @@ public class AssistantPluginTests
         proposed.Patch.CompileForVideo(NodeCatalog.BuiltIn).Issues.ShouldBeEmpty();
     }
 
+    // --- the real one, loaded off disk --------------------------------------
+
+    private static IPatchAssistant OpenAi =>
+        Loaded.Assistants.Single(a => a.Id == "openai");
+
+    [Fact]
+    public void The_chat_completions_assistant_reaches_the_catalogue()
+    {
+        var assistant = OpenAi;
+
+        assistant.Schema.BaseUrlEditable.ShouldBeTrue();
+        assistant.Schema.DefaultBaseUrl.ShouldNotBeNullOrWhiteSpace();
+        assistant.Schema.EnvironmentVariable.ShouldBe("OPENAI_API_KEY");
+    }
+
+    /// <summary>
+    /// Answered from the configuration alone. Nothing here opens a connection,
+    /// which is what lets the panel say what is missing before anybody has paid
+    /// for finding out.
+    /// </summary>
+    [Theory]
+    [InlineData("", "gpt-4o", null, "key")]
+    [InlineData("sk-something", "", null, "model")]
+    [InlineData("sk-something", "gpt-4o", "not-an-address", "http")]
+    public void What_is_missing_is_said_without_asking_anybody(
+        string key,
+        string model,
+        string? baseUrl,
+        string expected)
+    {
+        var excuse = OpenAi.Unavailable(new AssistantConfig(key, model, baseUrl));
+
+        excuse.ShouldNotBeNull();
+        excuse.ShouldContain(expected, Case.Insensitive);
+    }
+
+    [Fact]
+    public void A_complete_configuration_has_nothing_missing()
+    {
+        OpenAi.Unavailable(new AssistantConfig("sk-something", "gpt-4o")).ShouldBeNull();
+    }
+
     [Fact]
     public async Task A_run_that_goes_wrong_is_an_event_rather_than_an_exception()
     {

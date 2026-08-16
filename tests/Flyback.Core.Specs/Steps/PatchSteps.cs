@@ -72,6 +72,15 @@ public sealed class PatchSteps(PatchContext context)
         context.Result.Issues.ShouldBeEmpty(
             string.Join(" | ", context.Result.Issues.Select(i => i.Message)));
 
+    /// <summary>
+    /// Nothing is wrong, which is a weaker claim than nothing was said. A patch
+    /// may compile to exactly what was meant and still be worth a remark.
+    /// </summary>
+    [Then("compilation reports nothing wrong")]
+    public void ThenNothingWrong() =>
+        context.Result.HasErrors.ShouldBeFalse(
+            string.Join(" | ", context.Result.Issues.Select(i => i.Message)));
+
     [Then("compilation reports an issue containing {string}")]
     public void ThenAnIssueContaining(string fragment) =>
         context.Result.Issues

@@ -6,13 +6,40 @@ Feature: Compiling a patch
 
   Specified by ADR-0011.
 
-  Scenario: A patch with no Video Output node renders black and says so
+  # Said only because there is no Audio Output either. A sink missing while the
+  # other one is present is a choice; both missing is a patch that does nothing.
+  Scenario: A patch with no output at all renders black and says so
     Given a patch containing:
       | name | module   |
       | wave | osc.sine |
     When the patch is compiled
-    Then compilation reports an issue containing "No Video Output node"
+    Then compilation reports an issue containing "no output"
     And the rendered image is entirely black
+
+  # An oscillator accumulates how far its 'in' moved, so one left on its knob
+  # holds a single value: silence at the speakers, a flat field on the screen.
+  # The patch is exactly what was asked for and compiles to something valid,
+  # which is why this is said rather than refused.
+  Scenario: A module with nothing driving its domain is remarked on, not refused
+    Given a patch containing:
+      | name   | module       |
+      | osc    | osc.sine     |
+      | screen | video.output |
+    And "osc" output "out" is wired to "screen" input "colour"
+    When the patch is compiled
+    Then compilation reports an issue containing "never moves"
+    And compilation reports nothing wrong
+
+  Scenario: A domain that is driven is not remarked on
+    Given a patch containing:
+      | name   | module       |
+      | clock  | time         |
+      | osc    | osc.sine     |
+      | screen | video.output |
+    And "clock" output "t" is wired to "osc" input "in"
+    And "osc" output "out" is wired to "screen" input "colour"
+    When the patch is compiled
+    Then compilation reports no issues
 
   Scenario: An unknown module is reported rather than throwing
     Given a patch containing:

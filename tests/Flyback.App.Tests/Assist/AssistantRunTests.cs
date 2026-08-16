@@ -141,6 +141,33 @@ public class AssistantRunTests
         run.Running.ShouldBeFalse();
     }
 
+    /// <summary>
+    /// Why the panel keeps a flag of its own rather than asking this one.
+    /// </summary>
+    /// <remarks>
+    /// <see cref="AssistantRun.Ask"/> is an async iterator, so none of its body
+    /// runs until the sequence is first moved on — and <see cref="AssistantRun.Running"/>
+    /// is set in that body. Between calling <c>Ask</c> and consuming it the run
+    /// is working by any account that matters and says it is not, which had the
+    /// shell leaving Ask live and Stop dead for the whole of every turn. Pinned
+    /// here because it is a property of the iterator rather than of the shell,
+    /// and it would go unnoticed until somebody trusted it again.
+    /// </remarks>
+    [Fact]
+    public async Task A_run_does_not_call_itself_running_until_its_sequence_is_moved_on()
+    {
+        using var run = RunOf(new ScriptedAssistant(new PatchEvent.Did("a step")));
+
+        var events = run.Ask("go", TestContext.Current.CancellationToken);
+
+        run.Running.ShouldBeFalse();
+
+        await using var walking = events.GetAsyncEnumerator(TestContext.Current.CancellationToken);
+        await walking.MoveNextAsync();
+
+        run.Running.ShouldBeTrue();
+    }
+
     [Fact]
     public async Task A_conversation_runs_out_of_turns_rather_than_running_forever()
     {

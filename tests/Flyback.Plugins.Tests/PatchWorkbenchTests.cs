@@ -46,6 +46,26 @@ public class PatchWorkbenchTests
         return bench;
     }
 
+    /// <summary>
+    /// Builds the smallest patch that actually sounds, and has no screen at
+    /// all. The clock is not decoration: an oscillator accumulates how far its
+    /// 'in' moved, so one without it is silent however its freq is set.
+    /// </summary>
+    private static async Task<PatchWorkbench> Heard()
+    {
+        var bench = Bench();
+
+        await Call(bench, "add_module", """{"type_id":"time","handle":"clock1"}""");
+        await Call(bench, "add_module", """
+            {"type_id":"osc.sine","handle":"tone1","knobs":[{"port":"freq","value":440}]}
+            """);
+        await Call(bench, "add_module", """{"type_id":"audio.output","handle":"speaker1"}""");
+        await Call(bench, "connect", """{"from":"clock1","to":"tone1","to_port":"in"}""");
+        await Call(bench, "connect", """{"from":"tone1","to":"speaker1","to_port":"left"}""");
+
+        return bench;
+    }
+
     // --- the briefing -------------------------------------------------------
 
     /// <summary>
@@ -233,11 +253,11 @@ public class PatchWorkbenchTests
     }
 
     [Fact]
-    public async Task A_patch_with_no_screen_says_so_on_the_first_edit()
+    public async Task A_patch_that_reaches_nothing_says_so_on_the_first_edit()
     {
         var added = await Call(Bench(), "add_module", """{"type_id":"osc.sine"}""");
 
-        added.Text.ShouldContain("No Video Output");
+        added.Text.ShouldContain("no output");
     }
 
     // --- unwiring and removing ----------------------------------------------
@@ -286,11 +306,200 @@ public class PatchWorkbenchTests
     {
         var bench = Bench();
 
+        // A cycle the screen can reach. The tools allow one to be built — the
+        // compiler is what refuses it — so this is how a genuine fault gets in.
+        await Call(bench, "add_module", """{"type_id":"osc.sine","handle":"sine1"}""");
+        await Call(bench, "add_module", """{"type_id":"osc.sine","handle":"sine2"}""");
+        await Call(bench, "add_module", """{"type_id":"video.output","handle":"screen1"}""");
+        await Call(bench, "connect", """{"from":"sine1","to":"sine2","to_port":"in"}""");
+        await Call(bench, "connect", """{"from":"sine2","to":"sine1","to_port":"in"}""");
+        await Call(bench, "connect", """{"from":"sine1","to":"screen1","to_port":"colour"}""");
+
+        var offered = await Call(bench, "propose", """{"summary":"a tone"}""");
+
+        offered.Ok.ShouldBeFalse();
+        offered.Text.ShouldContain("feeds back into itself");
+        bench.HasProposal.ShouldBeFalse();
+    }
+
+    /// <summary>
+    /// A patch built for the speakers alone is a patch somebody meant, and may
+    /// be offered as it stands. Blocking it on the screen it deliberately does
+    /// not have left an Apply button that could never light up.
+    /// </summary>
+    [Fact]
+    public async Task A_patch_built_for_the_speakers_alone_can_be_proposed()
+    {
+        var bench = await Heard();
+
+        var offered = await Call(bench, "propose", """{"summary":"a 440 hz tone"}""");
+
+        offered.Ok.ShouldBeTrue(offered.Text);
+        bench.HasProposal.ShouldBeTrue();
+        bench.ProposalSummary.ShouldBe("a 440 hz tone");
+    }
+
+    /// <summary>
+    /// Now that the audio branch can be the whole point of a patch, it has to be
+    /// compiled before one is offered. The video pass never reaches a node only
+    /// the ear does, so on its own it would have said the patch was fine.
+    /// </summary>
+    [Fact]
+    public async Task A_fault_only_the_speakers_reach_still_stops_a_proposal()
+    {
+        var bench = await Heard();
+
+        await Call(bench, "add_module", """{"type_id":"osc.saw","handle":"saw1"}""");
+        await Call(bench, "connect", """{"from":"saw1","to":"tone1","to_port":"in"}""");
+        await Call(bench, "connect", """{"from":"tone1","to":"saw1","to_port":"in"}""");
+
+        var offered = await Call(bench, "propose", """{"summary":"a 440 hz tone"}""");
+
+        offered.Ok.ShouldBeFalse();
+        offered.Text.ShouldContain("feeds back into itself");
+        bench.HasProposal.ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task A_patch_that_reaches_neither_the_screen_nor_the_speakers_is_not_proposed()
+    {
+        var bench = Bench();
+
         await Call(bench, "add_module", """{"type_id":"osc.sine"}""");
         var offered = await Call(bench, "propose", """{"summary":"a tone"}""");
 
         offered.Ok.ShouldBeFalse();
+        offered.Text.ShouldContain("Audio Output");
         bench.HasProposal.ShouldBeFalse();
+    }
+
+    /// <summary>
+    /// An assistant reads this after every edit. A patch built for the speakers
+    /// used to trip the missing-screen warning on every one of them, and one
+    /// that reads that as something to fix spends the run fixing it.
+    /// </summary>
+    [Fact]
+    public async Task A_patch_built_for_the_speakers_is_not_nagged_about_the_screen()
+    {
+        var bench = await Heard();
+
+        var told = await Call(bench, "describe_patch");
+
+        told.Text.ShouldNotContain("no output");
+        (await Call(bench, "set_knobs", """
+            {"handle":"speaker1","knobs":[{"port":"gain","value":0.8}]}
+            """)).Text.ShouldContain("No issues.");
+    }
+
+    /// <summary>
+    /// The moment one sink arrives the complaint about the other goes, which is
+    /// what stops it being noise for the whole of the rest of the run.
+    /// </summary>
+    [Fact]
+    public async Task Adding_either_output_settles_the_complaint_about_having_none()
+    {
+        var bench = Bench();
+
+        (await Call(bench, "add_module", """{"type_id":"osc.sine"}"""))
+            .Text.ShouldContain("no output");
+
+        (await Call(bench, "add_module", """{"type_id":"audio.output"}"""))
+            .Text.ShouldContain("No issues.");
+    }
+
+    /// <summary>
+    /// The one an assistant cannot catch for itself: it cannot hear the patch,
+    /// and a still picture looks like a patch that works. Saying it after every
+    /// edit is the only feedback there is, so this is the loop closing.
+    /// </summary>
+    [Fact]
+    public async Task An_oscillator_with_nothing_driving_it_is_said_out_loud()
+    {
+        var bench = Bench();
+
+        await Call(bench, "add_module", """{"type_id":"osc.sine","handle":"tone1"}""");
+        await Call(bench, "add_module", """{"type_id":"video.output","handle":"screen1"}""");
+        var wired = await Call(bench, "connect", """{"from":"tone1","to":"screen1","to_port":"colour"}""");
+
+        wired.Text.ShouldContain("Worth knowing");
+        wired.Text.ShouldContain("never moves");
+        wired.Text.ShouldContain("Sine");
+    }
+
+    /// <summary>
+    /// The bug this exists for. Compiling backwards from the screen means the
+    /// video pass stops at the first line when there is no screen, so every
+    /// edit on a patch built for the speakers came back "No issues." — however
+    /// silent it was. An assistant cannot hear the patch, so that string was the
+    /// only thing standing between it and shipping silence, and it was lying.
+    /// </summary>
+    [Fact]
+    public async Task A_fault_only_the_speakers_reach_is_still_reported_on_every_edit()
+    {
+        var bench = Bench();
+
+        await Call(bench, "add_module", """{"type_id":"osc.sine","handle":"tone1"}""");
+        await Call(bench, "add_module", """{"type_id":"audio.output","handle":"speaker1"}""");
+        var wired = await Call(bench, "connect", """{"from":"tone1","to":"speaker1","to_port":"left"}""");
+
+        wired.Text.ShouldContain("Worth knowing");
+        wired.Text.ShouldContain("never moves");
+        wired.Text.ShouldContain("Sine");
+    }
+
+    /// <summary>
+    /// A module both sinks reach is compiled twice, and being told about it
+    /// twice in one breath reads as two separate problems.
+    /// </summary>
+    [Fact]
+    public async Task A_module_both_sinks_reach_is_only_complained_about_once()
+    {
+        var bench = Bench();
+
+        await Call(bench, "add_module", """{"type_id":"osc.sine","handle":"tone1"}""");
+        await Call(bench, "add_module", """{"type_id":"video.output","handle":"screen1"}""");
+        await Call(bench, "add_module", """{"type_id":"audio.output","handle":"speaker1"}""");
+        await Call(bench, "connect", """{"from":"tone1","to":"screen1","to_port":"colour"}""");
+        var wired = await Call(bench, "connect", """{"from":"tone1","to":"speaker1","to_port":"left"}""");
+
+        var said = wired.Text;
+        var first = said.IndexOf("never moves", StringComparison.Ordinal);
+
+        first.ShouldBeGreaterThan(-1);
+        said.IndexOf("never moves", first + 1, StringComparison.Ordinal).ShouldBe(-1);
+    }
+
+    [Fact]
+    public async Task A_driven_oscillator_is_not_remarked_on()
+    {
+        var bench = Bench();
+
+        await Call(bench, "add_module", """{"type_id":"time","handle":"clock1"}""");
+        await Call(bench, "add_module", """{"type_id":"osc.sine","handle":"tone1"}""");
+        await Call(bench, "add_module", """{"type_id":"video.output","handle":"screen1"}""");
+        await Call(bench, "connect", """{"from":"clock1","to":"tone1","to_port":"in"}""");
+        var wired = await Call(bench, "connect", """{"from":"tone1","to":"screen1","to_port":"colour"}""");
+
+        wired.Text.ShouldContain("No issues.");
+    }
+
+    /// <summary>
+    /// A patch that does not move is still a patch. The person may have meant a
+    /// still, and a warning that blocked would be an error wearing a hat.
+    /// </summary>
+    [Fact]
+    public async Task A_patch_that_does_not_move_can_still_be_proposed()
+    {
+        var bench = Bench();
+
+        await Call(bench, "add_module", """{"type_id":"osc.sine","handle":"tone1"}""");
+        await Call(bench, "add_module", """{"type_id":"video.output","handle":"screen1"}""");
+        await Call(bench, "connect", """{"from":"tone1","to":"screen1","to_port":"colour"}""");
+
+        var offered = await Call(bench, "propose", """{"summary":"a flat field"}""");
+
+        offered.Ok.ShouldBeTrue(offered.Text);
+        bench.HasProposal.ShouldBeTrue();
     }
 
     [Fact]
@@ -329,6 +538,22 @@ public class PatchWorkbenchTests
         Signature(looked.Png).ShouldBe("PNG");
         Width(looked.Png).ShouldBe(320 * 2);
         Height(looked.Png).ShouldBe(180);
+    }
+
+    /// <summary>
+    /// A patch for the speakers draws nothing, and the compiler no longer says
+    /// so — that is the point of it. Rendering one anyway would hand back a
+    /// black rectangle, which is the one thing an assistant must never be shown
+    /// for a patch that is working.
+    /// </summary>
+    [Fact]
+    public async Task A_patch_with_no_screen_is_not_rendered_black_at_it()
+    {
+        var looked = await Call(await Heard(), "render");
+
+        looked.Ok.ShouldBeFalse();
+        looked.Png.ShouldBeNull();
+        looked.Text.ShouldContain("no Video Output");
     }
 
     /// <summary>

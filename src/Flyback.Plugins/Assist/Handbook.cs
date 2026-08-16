@@ -43,7 +43,8 @@ internal static class Handbook
         - `x` is the same scale widened by the aspect ratio, so it runs about
           -1.78 to 1.78 on a 16:9 frame. That is what keeps circles circular:
           `Length(x, y)` is a true radius.
-        - `t` is seconds since the patch started.
+        - `t` is seconds since the patch started. It is not ambient — it
+          reaches a patch through the **Time** module and nowhere else.
         - What reaches the screen is 0..1 per channel, clamped, with no gamma. A
           value of 0.5 is mid grey; 4 and 1 are the same white; -1 is black.
           There is no headroom to pull back down later.
@@ -60,12 +61,44 @@ internal static class Handbook
         - A scalar entering a colour port broadcasts to all three channels. A
           colour entering a scalar port narrows to its luma.
 
+        ## The `in` socket, and why a patch sits still
+
+        Oscillators and sequencers have an `in`. It is the domain they are
+        read across, not an optional extra, and **nothing drives it for
+        you**. Left on its knob it is a constant, and a constant domain is a
+        patch that does not move:
+
+        - An oscillator accumulates `(in - in_before) x freq`. If `in` never
+          changes, the phase never advances and the output is one fixed
+          value — silence at the speakers, a flat field on the screen. Note
+          that `freq` alone does nothing about this; a frequency multiplied
+          by no movement is no movement.
+        - A sequencer is on whichever step its `in` has reached. If `in`
+          never changes it stays on step 1 forever.
+
+        So wire it:
+
+        - **For sound, patch Time's `t` into `in`.** That is what makes an
+          oscillator oscillate and a sequencer play. A melody needs Time
+          into the sequencer's `in` *and* into the oscillator's `in`.
+        - **For a picture**, patch a Coordinates output — `x` for upright
+          bands, `y` for flat ones, `radius` for rings — or Time, for
+          something that moves without varying across the frame.
+
+        This is the most common way to build a patch that reads correctly,
+        compiles without a single complaint, and does nothing at all. You
+        cannot hear the result, so check it by eye: every oscillator and
+        every sequencer should have a wire into `in`.
+
         ## Sinks
 
-        - A patch needs a **Video Output** to show anything. Without one it
-          compiles to black and says so.
-        - **Audio Output** is optional. A patch with none is silent, which is
-          the normal case rather than a mistake.
+        - A patch needs a **Video Output** to show anything and an **Audio
+          Output** to play anything. Either on its own is a whole patch: one
+          for the screen is silent, one for the speakers draws nothing, and
+          neither of those is a mistake. Nothing will nag you about the one
+          you left out.
+        - A patch with **neither** does nothing at all. That is the one case
+          the compiler remarks on, and it will not be proposed.
         - The two are compiled separately from one graph, and each pays only for
           the modules it actually reaches. A noise field feeding the screen
           costs the speakers nothing.

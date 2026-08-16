@@ -51,9 +51,12 @@ Feature: One patch, two sinks
     Then compilation reports no issues
     And the audio is silent
 
-  Scenario: A patch with no Video Output still says so
+  # The mirror of the scenario above. Neither sink is nagged about the other:
+  # a patch built for the speakers is as deliberate as one built for the screen,
+  # and saying so on every edit is noise rather than help.
+  Scenario: A patch built for the speakers alone is not nagged about the screen
     Given a patch containing:
       | name    | module       |
       | speaker | audio.output |
     When the patch is compiled for video
-    Then compilation reports an issue containing "No Video Output node"
+    Then compilation reports no issues

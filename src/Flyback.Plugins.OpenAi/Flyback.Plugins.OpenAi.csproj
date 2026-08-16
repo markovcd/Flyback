@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>Flyback.Plugins.OpenAi</RootNamespace>
+    <EnableDynamicLoading>true</EnableDynamicLoading>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Both are host-owned; shipping either would give its types a second identity. -->
+    <ProjectReference Include="..\Flyback.Plugins\Flyback.Plugins.csproj"
+                      Private="false"
+                      ExcludeAssets="runtime"
+                      GlobalPropertiesToRemove="OutDir" />
+    <ProjectReference Include="..\Flyback.Core\Flyback.Core.csproj"
+                      Private="false"
+                      ExcludeAssets="runtime"
+                      GlobalPropertiesToRemove="OutDir" />
+  </ItemGroup>
+
+  <!--
+    No package. The chat-completions shape is a dozen fields of JSON over one
+    POST, and writing it out is what lets this reach every endpoint that speaks
+    it — including a local runtime — rather than the one an SDK was built for.
+    The same reasoning that hand-wrote the PNG encoder and the ALSA bindings.
+  -->
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Flyback.Plugins.OpenAi.Tests" />
+  </ItemGroup>
+
+</Project>

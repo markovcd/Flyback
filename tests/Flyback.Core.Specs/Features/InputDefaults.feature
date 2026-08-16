@@ -43,5 +43,7 @@ Feature: Inputs carry their own value until something is patched in
     And "osc" has only 2 stored input values
     And "osc" output "out" is wired to "screen" input "colour"
     When the patch is compiled
-    Then compilation reports no issues
+    # Nothing wrong rather than nothing said: 'in' is deliberately on its knob
+    # here, which is a still picture and is remarked on for that reason.
+    Then compilation reports nothing wrong
     And the centre pixel is about 1, 1, 1

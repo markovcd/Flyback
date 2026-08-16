@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <OutputType>Exe</OutputType>
+    <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
+  </PropertyGroup>
+
+  <!--
+    A direct reference, unlike the tests that load plugins off disk. What is
+    being checked here is the translation to and from the wire, which is pure
+    and has nothing to do with how the assembly was loaded.
+  -->
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Flyback.Plugins.OpenAi\Flyback.Plugins.OpenAi.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Shouldly" Version="4.3.0" />
+    <PackageReference Include="xunit.v3" Version="3.2.2" />
+  </ItemGroup>
+
+</Project>

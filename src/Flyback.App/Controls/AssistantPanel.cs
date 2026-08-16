@@ -1,9 +1,11 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Shapes;
 using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
+using Avalonia.Threading;
 using Flyback.App.Assist;
 using Flyback.Core.Graph;
 using Flyback.Plugins.Assist;
@@ -32,6 +34,9 @@ public sealed class AssistantPanel : UserControl
     private static readonly IBrush Dim = new SolidColorBrush(Color.FromRgb(0x8A, 0x90, 0x99));
     private static readonly IBrush Amber = new SolidColorBrush(Color.FromRgb(0xFF, 0xB0, 0x40));
 
+    /// <summary>The middle of <see cref="LogoMark"/>'s sweep, borrowed for the one thing here that is alive.</summary>
+    private static readonly IBrush Live = new SolidColorBrush(Color.FromRgb(0x3F, 0xC8, 0xC8));
+
     private readonly PluginCatalog plugins;
     private readonly Func<Patch> current;
     private readonly Action<Patch> apply;
@@ -53,6 +58,42 @@ public sealed class AssistantPanel : UserControl
     private readonly ScrollViewer transcript = new();
     private readonly Image lastFrame = new() { Width = 160, Stretch = Stretch.Uniform };
     private readonly TextBlock footer = new() { FontSize = 11, Foreground = Dim, TextWrapping = TextWrapping.Wrap };
+
+    /// <summary>
+    /// Proof that something is still happening.
+    /// </summary>
+    /// <remarks>
+    /// A turn is minutes, not seconds, and most of it is spent waiting on a
+    /// provider with nothing to show: the transcript only fills in when an edit
+    /// lands, and a rate limit is waited out in silence by design. Without this
+    /// the panel is indistinguishable from one that has died — which is what
+    /// makes a beacon that moves the point of it, rather than a label that could
+    /// as easily be stale.
+    /// </remarks>
+    private readonly Ellipse beacon = new()
+    {
+        Width = 7,
+        Height = 7,
+        Fill = Live,
+        VerticalAlignment = VerticalAlignment.Center,
+    };
+
+    private readonly TextBlock progress = new()
+    {
+        FontSize = 11,
+        Foreground = Live,
+        VerticalAlignment = VerticalAlignment.Center,
+    };
+
+    private readonly StackPanel working = new()
+    {
+        Orientation = Orientation.Horizontal,
+        Spacing = 7,
+        Margin = new Thickness(0, 0, 0, 6),
+        IsVisible = false,
+    };
+
+    private readonly DispatcherTimer heartbeat = new() { Interval = TimeSpan.FromMilliseconds(200) };
 
     private readonly Button ask = new() { Content = "Ask", Width = 96 };
     private readonly Button stop = new() { Content = "Stop", Width = 96, IsEnabled = false };
@@ -76,6 +117,24 @@ public sealed class AssistantPanel : UserControl
     private AssistantRun? run;
     private Patch? before;
     private bool warnedAboutEdits;
+
+    /// <summary>
+    /// Whether a turn is in flight, as this panel knows it.
+    /// </summary>
+    /// <remarks>
+    /// Not <see cref="AssistantRun.Running"/>, which is the run's own answer and
+    /// arrives too late to be one: <c>Ask</c> is an async iterator, so its body
+    /// does not run — and the flag inside it is not set — until the first
+    /// <c>MoveNextAsync</c>, which happens after this panel has already refreshed
+    /// its buttons. Asking the run left Ask live and Stop dead for the whole of
+    /// every turn. This is set the moment somebody clicks, which is the moment
+    /// it becomes true from out here.
+    /// </remarks>
+    private bool asking;
+
+    private bool stopping;
+    private DateTime startedAt;
+    private int pulse;
 
     public AssistantPanel(
         PluginCatalog plugins,
@@ -116,7 +175,17 @@ public sealed class AssistantPanel : UserControl
         };
 
         ask.Click += async (_, _) => await AskAsync();
-        stop.Click += (_, _) => run?.Stop();
+
+        stop.Click += (_, _) =>
+        {
+            // Cancellation lands at the next thing the assistant does, which may
+            // be a whole request away. Saying so beats a button that goes dead
+            // and a panel that carries on as if nothing was asked of it.
+            stopping = true;
+            run?.Stop();
+            Beat();
+        };
+
         accept.Click += (_, _) => Accept();
         revert.Click += (_, _) => Revert();
 
@@ -134,9 +203,15 @@ public sealed class AssistantPanel : UserControl
         buttons.Children.Add(revert);
         buttons.Children.Add(settingsButton);
 
+        working.Children.Add(beacon);
+        working.Children.Add(progress);
+        heartbeat.Tick += (_, _) => Beat();
+
         var left = new DockPanel { Margin = new Thickness(0, 0, 10, 0) };
+        DockPanel.SetDock(working, Dock.Top);
         DockPanel.SetDock(instruction, Dock.Bottom);
         DockPanel.SetDock(footer, Dock.Bottom);
+        left.Children.Add(working);
         left.Children.Add(footer);
         left.Children.Add(instruction);
         left.Children.Add(transcript);
@@ -298,7 +373,7 @@ public sealed class AssistantPanel : UserControl
     /// </summary>
     private void Refresh()
     {
-        var busy = run?.Running == true;
+        var busy = asking;
         var config = Configured();
         var excuse = assistant is null
             ? "No assistant plugin is installed. See the status bar for where plugins are looked for."
@@ -334,6 +409,61 @@ public sealed class AssistantPanel : UserControl
             + $"to {assistant.Name}. {source}.";
     }
 
+    // --- showing that it is working -----------------------------------------
+
+    /// <summary>
+    /// One tick of the beacon. Everything here is read rather than remembered,
+    /// so a tick missed while the dispatcher was busy costs nothing.
+    /// </summary>
+    private void Beat()
+    {
+        if (!asking) return;
+
+        // A cosine rather than a blink: something that fades is obviously alive
+        // and does not compete with the transcript for attention, which a thing
+        // switching on and off twice a second would.
+        pulse++;
+        beacon.Opacity = 0.25d + (0.75d * ((Math.Cos(pulse * Math.PI / 5d) + 1d) / 2d));
+
+        var elapsed = DateTime.UtcNow - startedAt;
+        var bench = run?.Workbench;
+
+        var done = bench is null || bench.ToolCalls == 0
+            ? string.Empty
+            : $" · {Tally(bench.ToolCalls, "tool call")}, {Tally(bench.Edits, "edit")}";
+
+        progress.Text = stopping
+            ? $"Stopping — it ends at the next thing the assistant does · {Spell(elapsed)}"
+            : $"Working · {Spell(elapsed)}{done}";
+    }
+
+    private void StartWorking()
+    {
+        asking = true;
+        stopping = false;
+        startedAt = DateTime.UtcNow;
+        pulse = 0;
+
+        working.IsVisible = true;
+        heartbeat.Start();
+        Beat();
+    }
+
+    private void StopWorking()
+    {
+        heartbeat.Stop();
+        asking = false;
+        stopping = false;
+        working.IsVisible = false;
+    }
+
+    private static string Spell(TimeSpan elapsed) => elapsed.TotalSeconds < 60d
+        ? $"{elapsed.TotalSeconds:0}s"
+        : $"{(int)elapsed.TotalMinutes}m {elapsed.Seconds:00}s";
+
+    private static string Tally(int count, string noun) =>
+        count == 1 ? $"1 {noun}" : $"{count} {noun}s";
+
     private static string? Excuse(IPatchAssistant assistant, AssistantConfig config)
     {
         try
@@ -351,7 +481,7 @@ public sealed class AssistantPanel : UserControl
 
     private async Task AskAsync()
     {
-        if (run?.Running == true || assistant is null) return;
+        if (asking || assistant is null) return;
         if (Configured() is not { } config || Excuse(assistant, config) is not null) return;
 
         var wanted = instruction.Text ?? string.Empty;
@@ -367,12 +497,20 @@ public sealed class AssistantPanel : UserControl
         run = new AssistantRun(assistant, config, plugins.Modules, current());
 
         instruction.Text = string.Empty;
+
+        StartWorking();
         Refresh();
 
         try
         {
             await foreach (var happened in run.Ask(wanted))
+            {
                 Show(happened);
+
+                // The tallies move as the workbench is driven, and an edit that
+                // lands is the strongest sign of all that this is alive.
+                Beat();
+            }
         }
         catch (Exception ex)
         {
@@ -384,6 +522,7 @@ public sealed class AssistantPanel : UserControl
         }
         finally
         {
+            StopWorking();
             Refresh();
         }
     }

@@ -66,7 +66,12 @@ public class CompilerInvariants
 
         var result = builder.Patch.CompileForVideo();
 
-        result.Issues.ShouldBeEmpty();
+        // Nothing wrong rather than nothing said. A module standing on its own
+        // has nothing driving its domain, and being told so is correct — what
+        // this is checking is that every module lowers without falling over.
+        result.HasErrors.ShouldBeFalse(
+            string.Join(" | ", result.Issues.Select(i => i.Message)));
+
         result.Program.Ops.Length.ShouldBeGreaterThan(0);
         result.Program.RegisterCount.ShouldBeGreaterThanOrEqualTo(result.Program.OutputBase + result.Program.OutputWidth);
     }

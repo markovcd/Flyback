@@ -302,12 +302,31 @@ public sealed class PatchWorkbench
         if (!Text(arguments, "summary", out var summary))
             return ToolOutcome.Refused("'summary' is required: one line saying what this patch does.");
 
-        var issues = working.CompileForVideo(modules).Issues;
+        // Both programs, because either may be the one that was built for. A
+        // patch offered for its sound still has to have compiled its sound, and
+        // the video pass never reaches a node only the ear does.
+        var errors = working.CompileForVideo(modules).Issues
+            .Concat(working.CompileForAudio(modules).Issues)
+            .Where(i => i.Severity == IssueSeverity.Error)
+            .Select(i => i.Message)
+            .Distinct()
+            .ToArray();
 
-        if (issues.Count > 0)
+        if (errors.Length > 0)
             return ToolOutcome.Refused(
                 "this patch does not compile cleanly yet, so it is not worth proposing: "
-                + string.Join(" | ", issues.Select(i => i.Message)));
+                + string.Join(" | ", errors));
+
+        // Warnings do not block, but a patch with neither sink is not a patch:
+        // nothing is watching and nothing is listening, so there is nothing to
+        // offer whatever the modules add up to.
+        if (!working.Nodes.Any(n =>
+            n.TypeId == NodeCatalog.VideoOutputTypeId || n.TypeId == NodeCatalog.AudioOutputTypeId))
+        {
+            return ToolOutcome.Refused(
+                "this patch has no Video Output and no Audio Output, so nothing it does comes out "
+                + "anywhere. Add one before proposing.");
+        }
 
         proposal = summary;
         return Fine($"proposed. {summary}");
@@ -482,12 +501,30 @@ public sealed class PatchWorkbench
     private Task<ToolOutcome> RenderAsync(JsonElement arguments, CancellationToken cancel)
     {
         var requested = Times(arguments);
+
+        // Asked for directly, because the compiler no longer remarks on a
+        // missing screen once the speakers are wired — a patch built for sound
+        // is a deliberate thing, not a complaint waiting to happen. It is still
+        // nothing to look at: what would come back is a black rectangle, and an
+        // assistant shown black goes and "fixes" a patch that was working.
+        if (!working.Nodes.Any(n => n.TypeId == NodeCatalog.VideoOutputTypeId))
+        {
+            return Task.FromResult(ToolOutcome.Refused(
+                "this patch has no Video Output, so it draws nothing and there is nothing to "
+                + "look at. Add one if it is meant to be seen."));
+        }
+
         var patch = working.CompileForVideo(modules);
 
-        if (patch.Issues.Count > 0)
+        if (patch.HasIssues)
+        {
+            var why = patch.HasErrors
+                ? "this patch does not compile, so there is nothing to look at: "
+                : "there may be nothing to look at: ";
+
             return Task.FromResult(ToolOutcome.Refused(
-                "this patch does not compile, so there is nothing to look at: "
-                + string.Join(" | ", patch.Issues.Select(i => i.Message))));
+                why + string.Join(" | ", patch.Issues.Select(i => i.Message))));
+        }
 
         return Task.Run(
             () =>
@@ -712,7 +749,9 @@ public sealed class PatchWorkbench
 
             new("propose",
                 "Offers the patch to the person, with one line saying what it does. This ends your "
-                + "turn. The patch must compile cleanly first.",
+                + "turn. Nothing you have built reaches their editor until you call this. The patch "
+                + "must compile cleanly first, and must have an output — a Video Output, an Audio "
+                + "Output, or both.",
                 """
                 {
                   "properties": {
@@ -885,11 +924,42 @@ public sealed class PatchWorkbench
 
     private string Issues()
     {
-        var issues = working.CompileForVideo(modules).Issues;
+        // Both programs, for the reason 'propose' asks after both: the video
+        // pass stops at the first line when there is no screen, so a patch built
+        // for the speakers was reported flawless whatever was wrong with it.
+        // That is precisely what a silent patch looks like from this side — an
+        // assistant told "No issues." after every edit has no way left to find
+        // out, because it cannot hear the thing either.
+        var issues = working.CompileForVideo(modules).Issues
+            .Concat(working.CompileForAudio(modules).Issues)
+            .ToArray();
 
-        return issues.Count == 0
-            ? "No issues."
-            : "Issues: " + string.Join(" | ", issues.Select(i => i.Message)) + ".";
+        if (issues.Length == 0) return "No issues.";
+
+        // Distinct, because a module both sinks reach is compiled twice and
+        // would otherwise be complained about twice.
+        var faults = issues.Where(i => i.Severity == IssueSeverity.Error)
+            .Select(i => i.Message).Distinct().ToArray();
+
+        var notes = issues.Where(i => i.Severity != IssueSeverity.Error)
+            .Select(i => i.Message).Distinct().ToArray();
+
+        var text = new StringBuilder();
+
+        if (faults.Length > 0) text.Append("Issues: ").Append(string.Join(" | ", faults)).Append('.');
+
+        // Kept apart from the faults rather than listed with them. A warning is
+        // something to know, not something to clear — an assistant that cannot
+        // tell the two apart will spend the run clearing them instead of
+        // finishing, which is what a run that never proposed anything looks
+        // like from out here.
+        if (notes.Length > 0)
+        {
+            if (text.Length > 0) text.Append(' ');
+            text.Append("Worth knowing: ").Append(string.Join(" | ", notes)).Append('.');
+        }
+
+        return text.ToString();
     }
 
     private string Nearest(string typeId)

@@ -82,6 +82,18 @@ second of raw program output at 192 kHz:
 | 20 s | 538× | 1.8× |
 | 60 s | 648× | 2.6× |
 
+**An `in` left on its knob is now worth a warning, and did not used to be.**
+Under the multiply, `in × freq` with `in` constant was a fixed phase — wrong, but
+the same kind of wrong as any other constant. Under the accumulator it is
+structural: the phase moves by `(in − in_before) × freq`, so an `in` that never
+changes moves it by nothing at all, whatever `freq` says. A sine wired to a
+speaker with its `freq` correct and its `in` on the knob is silence, and reads
+like a working patch. `PortSpec.Domain` marks the socket and the compiler says so
+([0011](0011-compile-backwards-from-output.md)) — a `Warning`, because a still
+picture is a real thing to want, and because the patch it describes is exactly
+the one that was built. It is the first compile issue about a patch that is
+valid, which is what the severity is for.
+
 **Almost every audio patch now needs state, where before only a delay did.**
 `DelayMemoryFor` hands memory to any program with an accumulator, so a plain
 sine and a speaker allocates a `DelayState` — three small arrays, no buffers.

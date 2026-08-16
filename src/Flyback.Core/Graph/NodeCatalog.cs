@@ -62,6 +62,14 @@ public static class NodeCatalog
 
     private static PortSpec Col(string name) => new(name, PortKind.Colour);
 
+    /// <summary>
+    /// The axis a module is read across rather than a value it uses. Named at
+    /// the port because only the module knows which of its inputs that is, and
+    /// the compiler has no other way to tell one input from another.
+    /// </summary>
+    private static PortSpec Domain(string name) =>
+        new(name, PortKind.Scalar, Domain: true);
+
     /// <summary>An input that carries an earlier one through when left unpatched.</summary>
     private static PortSpec Normalled(string name, int from, float min = -4f, float max = 4f) =>
         new(name, PortKind.Scalar, 0f, min, max, from);
@@ -206,7 +214,7 @@ public static class NodeCatalog
 
             new NodeDef(
                 "osc.pulse", "Pulse", "Oscillator",
-                [Num("in"), Num("freq", 1f, 0f, 16f), Num("phase", 0f, 0f, 1f), Num("width", 0.5f, 0f, 1f), Num("amp", 1f, 0f, 2f), Num("bias", 0f, -2f, 2f)],
+                [Domain("in"), Num("freq", 1f, 0f, 16f), Num("phase", 0f, 0f, 1f), Num("width", 0.5f, 0f, 1f), Num("amp", 1f, 0f, 2f), Num("bias", 0f, -2f, 2f)],
                 [Num("out")],
                 (em, i) =>
                 {
@@ -484,7 +492,7 @@ public static class NodeCatalog
         string id, string name, Func<int, PortSpec> step, string description) => new(
         id, name, "Sequencer",
         [
-            Num("in"),
+            Domain("in"),
             Num("rate", 4f, 0f, 32f),
             Num("steps", SequencerSteps, 1f, SequencerSteps),
             Num("gate length", 0.5f, 0f, 1f),
@@ -580,7 +588,7 @@ public static class NodeCatalog
         string id, string name, Func<Emitter, Slot, Slot> waveform, string description) => new(
         id, name, "Oscillator",
         [
-            Num("in"),
+            Domain("in"),
             Num("freq", 1f, 0f, 16f),
             Num("phase", 0f, 0f, 1f),
             Num("amp", 1f, 0f, 2f),

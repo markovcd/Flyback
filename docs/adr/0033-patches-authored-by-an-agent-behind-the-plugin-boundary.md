@@ -73,6 +73,27 @@ the workbench holds a copy, the patch that was open is pristine throughout, so
 `editor.Patch = before` is an exact one-level undo in an application that has
 none.
 
+**`propose` is the only way anything reaches the editor, so an adapter must
+never end a turn quietly without one.** The copy is what makes the feature safe
+and it is also what makes stopping short invisible: the edits are listed in the
+transcript, the prose reads like success, and the only sign is an Apply button
+that never lights up. An adapter that sees the model stop without proposing owes
+the person either a proposal or a reason — it says so to the model once, and
+fails the turn with a sentence if that changes nothing. What a provider must not
+do is return an empty-handed success.
+
+**What may be proposed is a patch that reaches somebody**, which is not the same
+as a patch with no complaints. `propose` gates on `IssueSeverity.Error` across
+*both* programs ([0011](0011-compile-backwards-from-output.md),
+[0022](0022-audio-and-video-are-two-sinks-over-one-patch.md)) — the video pass
+never reaches a node only the ear does, so a patch offered for its sound has to
+have compiled its sound. A sink missing while the other is present is not
+remarked on at all and does not block; a patch with neither is refused outright,
+because nothing is watching and nothing is listening. `render` asks after the
+video sink itself rather than reading it off the issues, since the issue it used
+to lean on is gone — a black rectangle is the one thing an assistant must never
+be handed for a patch that works.
+
 ## Consequences
 
 **Nondeterminism enters a program that was deterministic end to end.** Every

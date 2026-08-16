@@ -872,9 +872,17 @@ public sealed class MainWindow : Window
         preview.Program = result.Program;
         audio.Update(editor.Patch);
 
-        Report(result.HasIssues
-            ? string.Join("  •  ", result.Issues.Select(i => i.Message))
-            : string.Empty);
+        // What the ear reaches is said too. Compiling backwards from one sink
+        // means the video pass never visits a module only the speakers reach —
+        // and stops at the first line when there is no screen at all — so a
+        // patch built for sound had nothing said about it, however wrong it was.
+        var said = result.Issues
+            .Concat(editor.Patch.CompileForAudio().Issues)
+            .Select(i => i.Message)
+            .Distinct()
+            .ToArray();
+
+        Report(said.Length > 0 ? string.Join("  •  ", said) : string.Empty);
     }
 
     /// <summary>

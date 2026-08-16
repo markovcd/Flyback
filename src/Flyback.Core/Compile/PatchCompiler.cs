@@ -2,12 +2,35 @@ using Flyback.Core.Graph;
 
 namespace Flyback.Core.Compile;
 
+/// <summary>
+/// How much an issue ought to stop something.
+/// </summary>
+/// <remarks>
+/// <see cref="Error"/> is first so it is the default of the enum and the default
+/// of <see cref="CompileIssue"/>'s parameter: a new complaint that nobody has
+/// thought about the weight of should block, not slip through.
+/// </remarks>
+public enum IssueSeverity
+{
+    /// <summary>The patch is wrong here. What compiled is a stand-in.</summary>
+    Error,
+
+    /// <summary>
+    /// Worth saying, but not wrong. A patch that trips only warnings is one
+    /// somebody may have meant, and is still worth offering.
+    /// </summary>
+    Warning,
+}
+
 /// <summary>Anything the compiler wants to tell the user about a patch.</summary>
-public sealed record CompileIssue(Guid? NodeId, string Message);
+public sealed record CompileIssue(Guid? NodeId, string Message, IssueSeverity Severity = IssueSeverity.Error);
 
 public sealed record CompileResult(CompiledPatch Program, IReadOnlyList<CompileIssue> Issues)
 {
     public bool HasIssues => Issues.Count > 0;
+
+    /// <summary>Whether anything here is wrong, as opposed to merely worth saying.</summary>
+    public bool HasErrors => Issues.Any(i => i.Severity == IssueSeverity.Error);
 }
 
 /// <summary>
@@ -51,10 +74,22 @@ public static class PatchCompiler
 
         if (sink is null)
         {
-            // Only the video sink is worth nagging about: a patch with no audio
-            // is the normal case, not a mistake.
-            if (sinkTypeId == NodeCatalog.VideoOutputTypeId)
-                issues.Add(new CompileIssue(null, "No Video Output node — add one to see anything."));
+            // A missing sink is only worth saying when the other one is missing
+            // too. Either on its own is a patch somebody meant — built for the
+            // screen, or built for the speakers — and nagging one of those about
+            // the sink it deliberately does not have is noise on every edit.
+            // With neither there is nothing to say it about but the patch, which
+            // does nothing at all, so this is reported once from the video root
+            // rather than twice from both.
+            if (sinkTypeId == NodeCatalog.VideoOutputTypeId
+                && !patch.Nodes.Any(n => n.TypeId == NodeCatalog.AudioOutputTypeId))
+            {
+                issues.Add(new CompileIssue(
+                    null,
+                    "This patch has no output. Add a Video Output to see it, "
+                    + "or an Audio Output to hear it.",
+                    IssueSeverity.Warning));
+            }
 
             return new CompileResult(CompiledPatch.Constant(width), issues);
         }
@@ -112,6 +147,22 @@ public static class PatchCompiler
                 }
                 else
                 {
+                    // A domain port left on its knob is a constant, and a module
+                    // read across a constant does not move: an oscillator holds
+                    // one value rather than oscillating, a sequencer holds one
+                    // step rather than playing. Both compile to something
+                    // perfectly valid, and that is the trouble with them — a
+                    // patch built this way is silent, or a flat field, with
+                    // nothing anywhere to say why.
+                    if (spec.Domain)
+                    {
+                        issues.Add(new CompileIssue(
+                            node.Id,
+                            $"Nothing is wired into {def.Name}'s '{spec.Name}', so it never moves. "
+                            + "Patch Time in to hear it, or Coordinates to draw with it.",
+                            IssueSeverity.Warning));
+                    }
+
                     value = emitter.Constant(DefaultFor(node, port, spec));
                 }
 
