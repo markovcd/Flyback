@@ -1,4 +1,5 @@
 using Flyback.Core.Graph;
+using Flyback.Plugins.Assist;
 using Flyback.Plugins.Audio;
 
 namespace Flyback.Plugins.Hosting;
@@ -22,23 +23,33 @@ public sealed class PluginCatalog
     public static PluginCatalog Empty { get; } =
         new([], [], NodeCatalog.BuiltIn, Flyback.Core.Graph.Presets.All, []);
 
+    /// <param name="assistants">
+    /// Last and optional so that every call written before assistants existed
+    /// still compiles — the same courtesy the registry interface extends to
+    /// plugins.
+    /// </param>
     internal PluginCatalog(
         IReadOnlyList<LoadedPlugin> plugins,
         IReadOnlyList<IAudioOutput> audioOutputs,
         ModuleCatalog modules,
         IReadOnlyList<PatchPreset> presets,
-        IReadOnlyList<PluginProblem> problems)
+        IReadOnlyList<PluginProblem> problems,
+        IReadOnlyList<IPatchAssistant>? assistants = null)
     {
         Plugins = plugins;
         AudioOutputs = audioOutputs;
         Modules = modules;
         Presets = presets;
         Problems = problems;
+        Assistants = assistants ?? [];
     }
 
     public IReadOnlyList<LoadedPlugin> Plugins { get; }
 
     public IReadOnlyList<IAudioOutput> AudioOutputs { get; }
+
+    /// <summary>Everything installed that could author a patch.</summary>
+    public IReadOnlyList<IPatchAssistant> Assistants { get; }
 
     /// <summary>
     /// The engine's modules with every plugin's folded in. Install it before
@@ -66,6 +77,26 @@ public sealed class PluginCatalog
         .OrderByDescending(o => o.Priority)
         .ThenBy(o => o.Id, StringComparer.Ordinal)
         .FirstOrDefault();
+
+    /// <summary>
+    /// The assistant to offer: highest priority, ties broken on id so the choice
+    /// is the same on every run. Null when none is installed.
+    /// </summary>
+    /// <remarks>
+    /// Deliberately not filtered by whether it can actually run, unlike
+    /// <see cref="PreferredAudioOutput"/>. That depends on a configuration this
+    /// catalogue has never seen, and an assistant with no key yet is still the
+    /// one to put in front of somebody — so the panel can say what is missing
+    /// instead of saying nothing at all.
+    /// </remarks>
+    public IPatchAssistant? PreferredAssistant => Assistants
+        .OrderByDescending(a => a.Priority)
+        .ThenBy(a => a.Id, StringComparer.Ordinal)
+        .FirstOrDefault();
+
+    /// <summary>The assistant a setting names, or null when it is no longer installed.</summary>
+    public IPatchAssistant? Assistant(string id) =>
+        Assistants.FirstOrDefault(a => string.Equals(a.Id, id, StringComparison.Ordinal));
 
     /// <summary>
     /// A backend that throws while answering whether it is supported has

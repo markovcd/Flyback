@@ -1,5 +1,6 @@
 using System.Reflection;
 using Flyback.Core.Graph;
+using Flyback.Plugins.Assist;
 using Flyback.Plugins.Audio;
 
 namespace Flyback.Plugins.Hosting;
@@ -47,7 +48,7 @@ public static class PluginHost
             LoadFolder(folder, plugins, registry, problems);
 
         return new PluginCatalog(
-            plugins, registry.AudioOutputs, registry.Modules, registry.Presets, problems);
+            plugins, registry.AudioOutputs, registry.Modules, registry.Presets, problems, registry.Assistants);
     }
 
     private static void LoadFolder(
@@ -174,11 +175,14 @@ public static class PluginHost
     private sealed class Registry(List<PluginProblem> problems) : IPluginRegistry
     {
         private readonly List<IAudioOutput> audioOutputs = [];
+        private readonly List<IPatchAssistant> assistants = [];
 
         /// <summary>Whoever is registering right now, for blaming in messages.</summary>
         public PluginInfo Source { get; set; } = new("", "");
 
         public IReadOnlyList<IAudioOutput> AudioOutputs => audioOutputs;
+
+        public IReadOnlyList<IPatchAssistant> Assistants => assistants;
 
         /// <summary>
         /// Built up as plugins register, starting from the engine's own modules.
@@ -230,6 +234,19 @@ public static class PluginHost
             }
 
             audioOutputs.Add(output);
+        }
+
+        public void AddPatchAssistant(IPatchAssistant assistant)
+        {
+            if (assistants.Any(a => a.Id == assistant.Id))
+            {
+                problems.Add(new PluginProblem(
+                    Source.Id,
+                    $"assistant '{assistant.Id}' is already registered and was ignored."));
+                return;
+            }
+
+            assistants.Add(assistant);
         }
     }
 }

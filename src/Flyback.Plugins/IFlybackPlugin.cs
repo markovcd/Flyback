@@ -1,4 +1,5 @@
 using Flyback.Core.Graph;
+using Flyback.Plugins.Assist;
 using Flyback.Plugins.Audio;
 
 namespace Flyback.Plugins;
@@ -50,4 +51,12 @@ public interface IPluginRegistry
     /// then the catalogue is complete.
     /// </summary>
     void AddPresets(IReadOnlyList<PatchPreset> presets);
+
+    /// <summary>
+    /// Offers something that can author a patch. Registering it must not open a
+    /// connection, must not need a credential to be present, and must not cost
+    /// anything — the shell registers every assistant it finds and only reaches
+    /// for one when somebody asks it a question.
+    /// </summary>
+    void AddPatchAssistant(IPatchAssistant assistant);
 }
