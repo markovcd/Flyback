@@ -456,8 +456,34 @@ public class PatchWorkbenchTests
         (await Call(bench, "add_module", """{"type_id":"osc.sine"}"""))
             .Text.ShouldContain("no output");
 
+        // Not "No issues.": the sink has only just arrived with nothing wired
+        // into it, which is its own remark. What has gone is the complaint that
+        // the patch has nowhere to come out at all.
         (await Call(bench, "add_module", """{"type_id":"audio.output"}"""))
-            .Text.ShouldContain("No issues.");
+            .Text.ShouldNotContain("no output");
+    }
+
+    /// <summary>
+    /// A sink standing on its own compiles to a constant — a flat field, or
+    /// silence — which is exactly what an assistant cannot tell apart from a
+    /// patch that works.
+    /// </summary>
+    [Fact]
+    public async Task A_sink_with_nothing_wired_into_it_is_said_out_loud()
+    {
+        var bench = Bench();
+
+        var added = await Call(bench, "add_module", """{"type_id":"video.output","handle":"screen1"}""");
+
+        added.Text.ShouldContain("Nothing is wired into the Video Output");
+    }
+
+    [Fact]
+    public async Task Wiring_the_sink_up_settles_it()
+    {
+        var lit = await Lit();
+
+        (await Call(lit, "describe_patch")).Text.ShouldNotContain("Nothing is wired into");
     }
 
     /// <summary>

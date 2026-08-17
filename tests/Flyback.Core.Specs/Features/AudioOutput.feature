@@ -51,6 +51,18 @@ Feature: One patch, two sinks
     Then compilation reports no issues
     And the audio is silent
 
+  # Silence is what an Audio Output holding its knobs produces, and it looks
+  # exactly like a patch that is working — so the one thing that can be said
+  # about it is said.
+  Scenario: An Audio Output with nothing wired into it is remarked on
+    Given a patch containing:
+      | name    | module       |
+      | speaker | audio.output |
+    When the patch is compiled for audio
+    Then compilation reports an issue containing "Nothing is wired into the Audio Output"
+    And compilation reports nothing wrong
+    And the audio is silent
+
   # The mirror of the scenario above. Neither sink is nagged about the other:
   # a patch built for the speakers is as deliberate as one built for the screen,
   # and saying so on every edit is noise rather than help.

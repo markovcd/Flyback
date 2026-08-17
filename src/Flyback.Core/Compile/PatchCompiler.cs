@@ -94,6 +94,23 @@ public static class PatchCompiler
             return new CompileResult(CompiledPatch.Constant(width), issues);
         }
 
+        // A sink with no wire into it compiles to a constant: the screen is one
+        // flat colour and the speakers hold one value, which is silence. Both
+        // are legal programs, and neither is a patch — this is the same
+        // complaint as a domain left on its knob, made about the one node whose
+        // knobs were never going to be the point.
+        if (!patch.Connections.Any(c => c.TargetNode == sink.Id))
+        {
+            issues.Add(new CompileIssue(
+                sink.Id,
+                sinkTypeId == NodeCatalog.VideoOutputTypeId
+                    ? "Nothing is wired into the Video Output, so the screen is one flat colour. "
+                    + "Patch something into its 'colour'."
+                    : "Nothing is wired into the Audio Output, so there is nothing to hear. "
+                    + "Patch something into its 'left'.",
+                IssueSeverity.Warning));
+        }
+
         var emitter = new Emitter();
         var resolved = new Dictionary<Guid, Slot[]>();
         var visiting = new HashSet<Guid>();

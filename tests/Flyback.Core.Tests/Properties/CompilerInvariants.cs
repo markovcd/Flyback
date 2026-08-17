@@ -42,6 +42,16 @@ public class CompilerInvariants
     {
         var result = BuildPreset(presetName).CompileForVideo();
 
+        // 'Empty' is the blank canvas — a Video Output with nothing in it yet —
+        // so the one thing the compiler remarks on is the thing the preset is
+        // for. It still has to be a patch nothing is wrong with.
+        if (presetName == "Empty")
+        {
+            result.HasErrors.ShouldBeFalse(
+                string.Join(" | ", result.Issues.Select(i => i.Message)));
+            return;
+        }
+
         result.Issues.ShouldBeEmpty();
     }
 

@@ -16,6 +16,26 @@ Feature: Compiling a patch
     Then compilation reports an issue containing "no output"
     And the rendered image is entirely black
 
+  # The other half of the scenario above: the sink is there and nothing reaches
+  # it. What compiles is a constant — one flat colour, or silence — which is a
+  # legal program and not a patch anybody meant.
+  Scenario: A sink with nothing wired into it is remarked on
+    Given a patch containing:
+      | name   | module       |
+      | screen | video.output |
+    When the patch is compiled
+    Then compilation reports an issue containing "Nothing is wired into the Video Output"
+    And compilation reports nothing wrong
+
+  Scenario: A sink with something wired into it is not remarked on
+    Given a patch containing:
+      | name   | module       |
+      | knob   | value        |
+      | screen | video.output |
+    And "knob" output "out" is wired to "screen" input "colour"
+    When the patch is compiled
+    Then compilation reports no issues
+
   # An oscillator accumulates how far its 'in' moved, so one left on its knob
   # holds a single value: silence at the speakers, a flat field on the screen.
   # The patch is exactly what was asked for and compiles to something valid,

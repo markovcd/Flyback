@@ -410,6 +410,11 @@ picture is identical either way.
 Any input with nothing plugged into it uses the value shown on the node, so most
 patches need no constant modules at all.
 
+The status bar carries whatever the compiler wants to say about the patch as it
+stands, in amber. Most of it is about the patches that compile perfectly and do
+nothing: an oscillator with nothing driving its `in`, or an output with nothing
+wired into it at all — one flat colour on the screen, silence at the speakers.
+
 ## Layout
 
 | Project | |

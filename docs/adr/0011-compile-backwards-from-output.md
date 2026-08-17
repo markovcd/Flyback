@@ -94,3 +94,20 @@ failure modes above — generalised without change
 reports an issue for being absent while the other is present, because a patch
 aimed at one of them is the normal case rather than a mistake; only a patch
 aimed at neither is remarked on.
+
+## Amendments
+
+**2026-08-17 — one sink each, and an empty one is remarked on.** Two paragraphs
+above have moved. "If multiple Output nodes exist, the first in list order wins"
+is no longer a case that arises: a patch now holds at most one Video Output and
+one Audio Output, refused where modules are placed rather than where they are
+compiled ([0022](0022-audio-and-video-are-two-sinks-over-one-patch.md)). The
+traversal is untouched — it still takes the first, and now that is the only one.
+
+The domain warning had a sibling it was missing: a sink with no wire into it at
+all. That compiles to a constant — one flat colour on the screen, silence at the
+speakers — for the same reason and with the same nothing said about why, so it
+is reported the same way and at the same weight. `Warning` rather than `Error`,
+because a sink nothing reaches yet is what every patch looks like a moment after
+the Output is placed; the `Empty` preset is exactly that and nothing else, and it
+is now the one preset that compiles with something to say.
