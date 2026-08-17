@@ -23,15 +23,27 @@ public enum CredentialSource
 /// </summary>
 /// <remarks>
 /// <para>
-/// The environment wins and is never written back. That is free, and it is the
-/// answer for anyone who would rather Flyback stayed nowhere near their
-/// credentials — and for a machine with no keyring at all.
+/// A key somebody entered wins, because entering one is a deliberate act and an
+/// exported variable is the room somebody is standing in. The other way round —
+/// which this did until it was tried — means typing a key into the settings on a
+/// machine that exports one has no effect whatever, and cannot be made to have
+/// one from inside the application at all.
 /// </para>
 /// <para>
-/// Failing that, the operating system's store, if a plugin offered one. Failing
-/// that, memory for this run only: honest, and better than a file we would have
-/// to pretend was safe. Nothing here ever writes a secret to disk itself; see
-/// ADR-0034.
+/// This session first, then the store: <see cref="Accept"/> writes both when it
+/// is asked to keep, so they agree whenever they can, and where they cannot it
+/// is because somebody just typed a key and declined to keep it. That one is the
+/// newer, and answering with the old one would be the same bug in miniature.
+/// </para>
+/// <para>
+/// Then the environment, which is never written back — someone who exports a key
+/// has said where it lives, and taking a copy would be deciding otherwise on
+/// their behalf. That was always the rule that mattered, and losing the top spot
+/// costs it nothing. <see cref="Forget"/> is the way back to it, which is what
+/// makes an entered key safe to prefer.
+/// </para>
+/// <para>
+/// Nothing here ever writes a secret to disk itself; see ADR-0034.
 /// </para>
 /// </remarks>
 public sealed class Credentials(ISecretStore? store)
@@ -45,15 +57,46 @@ public sealed class Credentials(ISecretStore? store)
 
     /// <summary>The key to use, or null when there is none.</summary>
     public string? Of(string account, string environmentVariable) =>
-        FromEnvironment(environmentVariable) ?? FromStore(account) ?? session.GetValueOrDefault(account);
+        session.GetValueOrDefault(account) ?? FromStore(account) ?? FromEnvironment(environmentVariable);
+
+    /// <summary>
+    /// Whether a key somebody entered here exists at all. Not the same question
+    /// as <see cref="SourceOf"/>, which names the one in force: this is what
+    /// <see cref="Forget"/> would have to work on, and what tells a panel that
+    /// an entered key is sitting on top of an environment variable it could fall
+    /// back to.
+    /// </summary>
+    public bool HasEntered(string account) =>
+        FromStore(account) is not null || session.ContainsKey(account);
 
     /// <summary>Where <see cref="Of"/> would get it, so the panel can say so.</summary>
     public CredentialSource SourceOf(string account, string environmentVariable)
     {
-        if (FromEnvironment(environmentVariable) is not null) return CredentialSource.Environment;
-        if (FromStore(account) is not null) return CredentialSource.Kept;
+        // The same order as Of, and it has to stay the same order: this is the
+        // sentence the panel prints, and one that disagreed with what was
+        // actually sent would be worse than no sentence at all.
+        var entered = session.GetValueOrDefault(account);
+        var kept = FromStore(account);
 
-        return session.ContainsKey(account) ? CredentialSource.Session : CredentialSource.None;
+        if (entered is not null)
+        {
+            // Kept rather than Session when the store has the same secret, even
+            // though the session is holding it too. Accept keeps a copy in
+            // memory whatever happens, so that it survives a store that failed —
+            // but reporting "gone when this window closes" about a key that is
+            // on disk is the lie ADR-0034 exists to prevent, and in the other
+            // direction. Read back rather than assumed, for the same reason:
+            // Keep not throwing is not the same as Keep having worked.
+            return string.Equals(entered, kept, StringComparison.Ordinal)
+                ? CredentialSource.Kept
+                : CredentialSource.Session;
+        }
+
+        if (kept is not null) return CredentialSource.Kept;
+
+        return FromEnvironment(environmentVariable) is not null
+            ? CredentialSource.Environment
+            : CredentialSource.None;
     }
 
     /// <summary>
@@ -76,6 +119,31 @@ public sealed class Credentials(ISecretStore? store)
         {
             // The store refused. The key still works for this run, and the panel
             // reads the source back rather than trusting that this worked.
+        }
+    }
+
+    /// <summary>
+    /// Puts the key already in hand into the store, for somebody who typed one
+    /// and then decided to keep it.
+    /// </summary>
+    /// <remarks>
+    /// The field empties itself once a key has been taken, so without this the
+    /// only way to change one's mind about keeping is to type the whole secret
+    /// again — a secret this is already holding, and which the person may well
+    /// have pasted from somewhere they have since closed.
+    /// </remarks>
+    public void KeepWhatIsHeld(string account)
+    {
+        if (Store is null || session.GetValueOrDefault(account) is not { } secret) return;
+
+        try
+        {
+            Store.Keep(account, secret);
+        }
+        catch
+        {
+            // As Accept: the key still works for this run, and the panel reads
+            // the source back rather than trusting that this worked.
         }
     }
 

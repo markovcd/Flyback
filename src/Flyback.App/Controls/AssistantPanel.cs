@@ -101,6 +101,25 @@ public sealed class AssistantPanel : UserControl
     private readonly Button revert = new() { Content = "Put it back", Width = 96, IsEnabled = false };
 
     private readonly TextBox keyBox = new() { PasswordChar = '•', FontSize = 12, Width = 260 };
+
+    /// <summary>
+    /// What is under the key field, since the field itself cannot say it.
+    /// </summary>
+    /// <remarks>
+    /// A key that is set is never read back into the box — ADR-0034, and the
+    /// reason the box is blank however many keys are in force. Blank is exactly
+    /// what "no key" looks like too, though, so without this the one screen
+    /// somebody opens to check cannot answer the question they opened it to ask.
+    /// </remarks>
+    private readonly TextBlock keyNote = new()
+    {
+        FontSize = 11,
+        Foreground = Dim,
+        Width = 260,
+        TextWrapping = TextWrapping.Wrap,
+    };
+
+    private readonly Button forget = new() { Content = "Forget key", Width = 100 };
     private readonly TextBox modelBox = new() { FontSize = 12, Width = 260 };
     private readonly TextBox baseUrlBox = new() { FontSize = 12, Width = 260 };
     private readonly CheckBox rememberBox = new() { Content = "Keep this key", FontSize = 12 };
@@ -190,11 +209,19 @@ public sealed class AssistantPanel : UserControl
         revert.Click += (_, _) => Revert();
 
         var settingsButton = new Button { Content = "Settings", Width = 96 };
-        settingsButton.Flyout = new Flyout
+        var settingsFlyout = new Flyout
         {
             Content = BuildSettings(),
             Placement = PlacementMode.TopEdgeAlignedRight,
         };
+
+        // Read again on the way open. A key can arrive or leave without this
+        // panel touching anything — exported into the environment from another
+        // window, or dropped into the store by something else — and this is the
+        // one screen that claims to say which.
+        settingsFlyout.Opened += (_, _) => Refresh();
+
+        settingsButton.Flyout = settingsFlyout;
 
         var buttons = new StackPanel { Spacing = 6, Width = 96 };
         buttons.Children.Add(ask);
@@ -271,6 +298,7 @@ public sealed class AssistantPanel : UserControl
         fields.Children.Add(baseUrlBox);
         fields.Children.Add(Caption("API key"));
         fields.Children.Add(keyBox);
+        fields.Children.Add(keyNote);
         fields.Children.Add(rememberBox);
         fields.Children.Add(visionBox);
         fields.Children.Add(Caption("Effort"));
@@ -279,7 +307,6 @@ public sealed class AssistantPanel : UserControl
         var save = new Button { Content = "Save", Width = 84 };
         save.Click += (_, _) => SaveSettings();
 
-        var forget = new Button { Content = "Forget key", Width = 100 };
         forget.Click += (_, _) =>
         {
             if (assistant is null) return;
@@ -335,8 +362,30 @@ public sealed class AssistantPanel : UserControl
         settings.RememberKey = rememberBox.IsChecked == true;
         settings.Effort = (AssistantEffort)Math.Max(0, effortBox.SelectedIndex);
 
-        if (assistant is not null && !string.IsNullOrWhiteSpace(keyBox.Text))
-            credentials.Accept(assistant.Id, keyBox.Text, settings.RememberKey && credentials.CanKeep);
+        if (assistant is not null)
+        {
+            var keep = settings.RememberKey && credentials.CanKeep;
+
+            if (!string.IsNullOrWhiteSpace(keyBox.Text))
+            {
+                credentials.Accept(assistant.Id, keyBox.Text, keep);
+
+                // Emptied once it has been taken. Left there it would hold the
+                // secret in a control for the life of the window, and the line
+                // that says where the key actually lives could never appear.
+                keyBox.Text = string.Empty;
+                SayWhereTheKeyWent();
+            }
+            else if (keep && credentials.HasEntered(assistant.Id))
+            {
+                // Ticking the box after the fact, with nothing typed. The key is
+                // already in hand and the field is empty because this emptied
+                // it, so asking for the secret again would be this program's
+                // fault presented as the person's problem.
+                credentials.KeepWhatIsHeld(assistant.Id);
+                SayWhereTheKeyWent();
+            }
+        }
 
         try
         {
@@ -385,6 +434,7 @@ public sealed class AssistantPanel : UserControl
         revert.IsEnabled = !busy && before is not null;
 
         ToolTip.SetTip(ask, excuse);
+        ShowKeyState();
 
         if (excuse is not null)
         {
@@ -463,6 +513,89 @@ public sealed class AssistantPanel : UserControl
 
     private static string Tally(int count, string noun) =>
         count == 1 ? $"1 {noun}" : $"{count} {noun}s";
+
+    /// <summary>
+    /// Says whether there is a key without ever showing one.
+    /// </summary>
+    /// <remarks>
+    /// The three sources differ in what they promise and in what can be done
+    /// about them, so each is named rather than reduced to a tick: one from the
+    /// environment cannot be removed from here at all, and saying "forget it"
+    /// under a button that would not is worse than saying nothing.
+    /// </remarks>
+    private void ShowKeyState()
+    {
+        if (assistant is null)
+        {
+            keyNote.Text = string.Empty;
+            forget.IsEnabled = false;
+            return;
+        }
+
+        var variable = assistant.Schema.EnvironmentVariable;
+        var source = credentials.SourceOf(assistant.Id, variable);
+
+        keyBox.PlaceholderText = source switch
+        {
+            CredentialSource.Environment => $"A key is set, from {variable}",
+            CredentialSource.Kept => "A key is set, and kept",
+            CredentialSource.Session => "A key is set, for this window",
+            _ => "Paste a key",
+        };
+
+        var overruled = credentials.HasEntered(assistant.Id)
+            && !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable(variable));
+
+        // What a key entered here is standing on top of, since it is the reason
+        // "Forget key" does something other than leave nothing behind.
+        var falls = overruled ? $" Forget it to go back to {variable}." : string.Empty;
+
+        keyNote.Text = source switch
+        {
+            CredentialSource.Session =>
+                "In force, held for this window only and gone when it closes. It is never shown back "
+                + "here — type a new one to replace it." + falls,
+
+            CredentialSource.Kept =>
+                $"In force, kept by {credentials.Store?.Name}. It is never shown back here — type a new "
+                + "one to replace it." + falls,
+
+            CredentialSource.Environment =>
+                $"In force, from {variable}. Flyback never wrote it and never will. A key entered here "
+                + "takes precedence over it, and forgetting that one comes back to this.",
+
+            _ => assistant.Schema.CredentialHelp,
+        };
+
+        // Nothing to forget, or nothing this could reach if it tried: an
+        // environment variable is not this application's to remove.
+        forget.IsEnabled = credentials.HasEntered(assistant.Id);
+    }
+
+    /// <summary>
+    /// Which of the two happened, read back rather than assumed. ADR-0034's own
+    /// warning is that "held for this run" and "saved" look identical until the
+    /// next launch, and a program that appeared to save something and did not is
+    /// worse than one that never offered.
+    /// </summary>
+    private void SayWhereTheKeyWent()
+    {
+        if (assistant is null) return;
+
+        var source = credentials.SourceOf(assistant.Id, assistant.Schema.EnvironmentVariable);
+
+        report(
+            source switch
+            {
+                CredentialSource.Kept => $"Key saved, and kept by {credentials.Store?.Name}.",
+                _ when !credentials.CanKeep =>
+                    "Key saved, for this window only — nothing installed can keep one.",
+                _ when settings.RememberKey =>
+                    "Key saved, but it could not be kept — it will last this window only.",
+                _ => "Key saved, for this window only.",
+            },
+            null);
+    }
 
     private static string? Excuse(IPatchAssistant assistant, AssistantConfig config)
     {

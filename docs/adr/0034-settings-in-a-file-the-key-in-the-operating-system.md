@@ -51,12 +51,30 @@ Nothing here invents a scheme, chooses a cipher, or holds a derived key.
 
 **A key resolves in three steps, and the panel says which one happened:**
 
-1. **An environment variable, when set.** It wins, and it is never written
-   anywhere — someone who exports a key has said where it lives, and taking a
-   copy would be deciding otherwise on their behalf.
+1. **This session**, when somebody has typed one into the panel. Entering a key
+   is a deliberate act; an exported variable is the room they are standing in,
+   and the deliberate act wins.
 2. **The operating system's store**, when a plugin offers one and the person
-   asked for the key to be kept.
-3. **This session only**, held in memory and gone with the window.
+   asked for the key to be kept. Below the session because `Accept` writes both
+   when it is asked to keep — so they agree whenever they can, and where they
+   disagree it is because a key was just typed and *not* kept, which makes the
+   typed one the newer.
+3. **An environment variable, when set.** It is never written anywhere — someone
+   who exports a key has said where it lives, and taking a copy would be
+   deciding otherwise on their behalf.
+
+**Amended.** The environment was first, and was tried that way. On a machine
+exporting a key, typing one into the settings had no effect whatever: the field
+emptied itself, the panel went on naming the variable, and nothing available
+from inside the application could change which key was sent. That is not a
+disclosure problem to be worded around — the settings field was simply inert,
+and it is the only key entry point the program has.
+
+Preferring an entered key costs the original rule nothing, because the rule that
+mattered was *never write the variable back*, not *always obey it*. The variable
+is still never copied, and `Forget` drops straight back to it — which is what
+makes preferring an entered key safe rather than a trap, and why one bad key
+typed in is not permanent on a machine whose variable was right all along.
 
 **A store that fails degrades to the session, never to a readable file.** That is
 the one direction this must not fall.
