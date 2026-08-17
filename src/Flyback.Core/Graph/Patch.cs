@@ -47,6 +47,24 @@ public sealed class Patch
 
     public NodeInstance? Find(Guid id) => Nodes.FirstOrDefault(n => n.Id == id);
 
+    /// <summary>The first module of a type, or null where the patch has none.</summary>
+    public NodeInstance? FirstOf(string typeId) => Nodes.FirstOrDefault(n => n.TypeId == typeId);
+
+    /// <summary>
+    /// Whether another module of this type may be placed. Everything says yes
+    /// but the two sinks, which a patch holds at most one of each.
+    /// </summary>
+    /// <remarks>
+    /// A second Video Output is not a second screen and a second Audio Output is
+    /// not a second pair of speakers. Compilation roots at one sink and walks
+    /// backwards from it ([0022](0022-audio-and-video-are-two-sinks-over-one-patch.md),
+    /// [0011](0011-compile-backwards-from-output.md)), so the other one is never
+    /// reached: whatever is wired into it looks connected, renders nothing, and
+    /// there is no complaint to read, because the patch compiled. Refusing the
+    /// second is the only place that confusion can be prevented.
+    /// </remarks>
+    public bool CanAdd(string typeId) => !NodeCatalog.IsSink(typeId) || FirstOf(typeId) is null;
+
     /// <summary>The wire feeding an input, if any. An input takes at most one.</summary>
     public Connection? IncomingTo(Guid node, int port) =>
         Connections.FirstOrDefault(c => c.TargetNode == node && c.TargetPort == port);

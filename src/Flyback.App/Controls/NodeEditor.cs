@@ -87,10 +87,25 @@ public sealed class NodeEditor : Control
         PatchChanged?.Invoke(this, EventArgs.Empty);
     }
 
-    /// <summary>Drops a new module in the middle of the current view.</summary>
-    public NodeInstance AddNode(string typeId)
+    /// <summary>
+    /// Drops a new module in the middle of the current view and hands it back,
+    /// or returns null having added nothing where the patch may hold only one of
+    /// that module — the two sinks. Rather than do nothing at all, that case
+    /// selects the one already there: whoever asked for that module wanted it,
+    /// and this is where it is.
+    /// </summary>
+    public NodeInstance? AddNode(string typeId)
     {
         var def = NodeCatalog.Require(typeId);
+
+        if (!patch.CanAdd(typeId))
+        {
+            if (patch.FirstOf(typeId) is { } already) Select(already.Id);
+
+            InvalidateVisual();
+            return null;
+        }
+
         var centre = ToGraph(new Point(Bounds.Width / 2, Bounds.Height / 2));
 
         var node = NodeInstance.Create(def, centre.X - NodeGeometry.Width / 2, centre.Y - NodeGeometry.Height(def) / 2);

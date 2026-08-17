@@ -99,6 +99,12 @@ internal static class Handbook
           you left out.
         - A patch with **neither** does nothing at all. That is the one case
           the compiler remarks on, and it will not be proposed.
+        - A patch has **at most one of each**. There is one screen and one
+          pair of speakers, so a second of either is refused: compilation
+          starts at one sink and never reaches another, which would leave
+          you with a patch that compiles and half a patch that plays. To
+          send several things to the screen, mix them into the one Video
+          Output you have.
         - The two are compiled separately from one graph, and each pays only for
           the modules it actually reaches. A noise field feeding the screen
           costs the speakers nothing.

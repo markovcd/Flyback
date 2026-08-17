@@ -124,6 +124,11 @@ sink, so one patch produces one program per sink — and each pays only for the
 modules it actually reaches. A noise field feeding the screen costs the speakers
 nothing.
 
+A patch has one of each. Once a **Video Output** or an **Audio Output** is
+placed, the palette greys that one out: compilation starts at the sink it finds
+and never reaches a second, so the extra would sit there wired up to nothing
+anybody can see or hear.
+
 | | |
 |---|---|
 | Pitch | patch **Frequency** into an oscillator's `freq` — it is a knob in hertz rather than the single digits the visual modules use |

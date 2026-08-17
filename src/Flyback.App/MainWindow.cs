@@ -82,6 +82,14 @@ public sealed class MainWindow : Window
     /// </summary>
     private readonly HashSet<string> hidden = [];
 
+    /// <summary>
+    /// The palette buttons for the two sinks, with the tooltip each carries
+    /// while it can still be clicked. Held on to so the pair can be greyed out
+    /// as the patch gains and loses them without rebuilding the whole list,
+    /// which is what turning a knob would otherwise cost.
+    /// </summary>
+    private readonly Dictionary<string, (Button Button, string Tip)> sinkButtons = [];
+
     private readonly StackPanel inspector = new() { Margin = new Thickness(12), Spacing = 8 };
     private readonly TextBlock status = new() { VerticalAlignment = VerticalAlignment.Center };
     private readonly TextBlock issues = new()
@@ -137,7 +145,11 @@ public sealed class MainWindow : Window
         WindowStartupLocation = WindowStartupLocation.CenterScreen;
         Background = new SolidColorBrush(Color.FromRgb(0x16, 0x18, 0x1B));
 
-        editor.PatchChanged += (_, _) => Recompile();
+        editor.PatchChanged += (_, _) =>
+        {
+            Recompile();
+            MarkSinksTaken();
+        };
         editor.SelectionChanged += (_, _) => BuildInspector();
 
         Content = BuildLayout();
@@ -504,6 +516,7 @@ public sealed class MainWindow : Window
         var matches = NodeCatalog.All.Where(d => Matches(d, text)).ToList();
 
         modules.Children.Clear();
+        sinkButtons.Clear();
 
         if (matches.Count == 0)
         {
@@ -547,13 +560,34 @@ public sealed class MainWindow : Window
                     ? string.Empty
                     : $"{Environment.NewLine}{Environment.NewLine}From {from.Name} ({from.Id})";
 
-                if (def.Description.Length + origin.Length > 0)
-                    ToolTip.SetTip(button, def.Description + origin);
+                var tip = def.Description + origin;
+                if (tip.Length > 0) ToolTip.SetTip(button, tip);
 
                 var typeId = def.TypeId;
                 button.Click += (_, _) => editor.AddNode(typeId);
                 modules.Children.Add(button);
+
+                if (NodeCatalog.IsSink(typeId)) sinkButtons[typeId] = (button, tip);
             }
+        }
+
+        MarkSinksTaken();
+    }
+
+    /// <summary>
+    /// Greys out the sink a patch already has, since it may have only one of
+    /// each. The tooltip says why rather than leaving a dead button to be
+    /// puzzled over, and the button comes back the moment the sink is deleted.
+    /// </summary>
+    private void MarkSinksTaken()
+    {
+        foreach (var (typeId, (button, tip)) in sinkButtons)
+        {
+            var free = editor.Patch.CanAdd(typeId);
+
+            button.IsEnabled = free;
+            ToolTip.SetTip(button, free ? tip : $"{button.Content} is already in this patch, "
+                + "and a patch has one of each output. Delete it to place another.");
         }
     }
 

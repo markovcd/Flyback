@@ -86,6 +86,17 @@ silently meant *video*, and the two sinks read as one primary and one afterthoug
 rather than as the pair this ADR argues for. The widths moved to
 `NodeCatalog.VideoChannels` and `NodeCatalog.AudioChannels`.
 
+**2026-08-17 — a patch holds at most one of each sink.** Compilation roots at
+`Nodes.FirstOrDefault(n => n.TypeId == sinkTypeId)`, which was written as though
+a second could not happen and quietly picked a winner when it did. A second
+`video.output` is not a second screen: it is never reached, so whatever is wired
+into it draws nothing, and the patch compiles without a word about it — the
+worst shape a mistake can take in an instrument you debug by looking at it. The
+rule now lives on the graph as `Patch.CanAdd`, because the editor is not the
+only thing that places modules: the palette greys the sink out once it is there,
+and the assistant's `add_module` refuses and names the one already placed. The
+compiler is untouched — it still takes the first, and now there is only one.
+
 **2026-08-12 — `output` renamed to `video.output`.** The video sink's `TypeId` was
 the unqualified `"output"`, predating audio; it is now `video.output`, matching
 `audio.output`. This is the breaking `TypeId` rename

@@ -260,6 +260,59 @@ public class PatchWorkbenchTests
         added.Text.ShouldContain("no output");
     }
 
+    /// <summary>
+    /// The refusal names the sink that is already there, because the useful next
+    /// move is to wire into it — an assistant told only "no" removes the one it
+    /// has and adds it again.
+    /// </summary>
+    [Fact]
+    public async Task A_second_screen_is_refused_and_the_first_one_named()
+    {
+        var bench = await Lit();
+
+        var again = await Call(bench, "add_module", """{"type_id":"video.output","handle":"screen2"}""");
+
+        again.Ok.ShouldBeFalse();
+        again.Text.ShouldContain("screen1");
+        bench.Snapshot().Nodes.Count(n => n.TypeId == NodeCatalog.VideoOutputTypeId).ShouldBe(1);
+    }
+
+    [Fact]
+    public async Task A_second_pair_of_speakers_is_refused_too()
+    {
+        var bench = await Heard();
+
+        var again = await Call(bench, "add_module", """{"type_id":"audio.output"}""");
+
+        again.Ok.ShouldBeFalse();
+        again.Text.ShouldContain("speaker1");
+    }
+
+    /// <summary>One of each is the pair ADR-0022 is about, and is not one too many.</summary>
+    [Fact]
+    public async Task A_patch_with_a_screen_still_takes_an_audio_output()
+    {
+        var bench = await Lit();
+
+        var speakers = await Call(bench, "add_module", """{"type_id":"audio.output"}""");
+
+        speakers.Ok.ShouldBeTrue(speakers.Text);
+    }
+
+    [Fact]
+    public async Task A_refused_sink_leaves_the_patch_as_it_was()
+    {
+        var bench = await Lit();
+        var edits = bench.Edits;
+
+        await Call(bench, "add_module", """{"type_id":"video.output"}""");
+
+        // A refusal that had half-placed the module would leave a handle
+        // reserved for a node that is not there.
+        bench.Edits.ShouldBe(edits);
+        bench.Snapshot().Nodes.Count.ShouldBe(2);
+    }
+
     // --- unwiring and removing ----------------------------------------------
 
     [Fact]

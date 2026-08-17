@@ -148,6 +148,15 @@ public sealed class PatchWorkbench
             return ToolOutcome.Refused(
                 $"this patch already has {limits.MaxNodes} modules, which is as many as a patch may have.");
 
+        // A patch has one screen and one pair of speakers. The second sink is
+        // the mistake that hides itself — compilation roots at the first one and
+        // never reaches the other, so the patch compiles, says nothing, and half
+        // of what was wired up is simply not there.
+        if (!working.CanAdd(typeId) && working.FirstOf(typeId) is { } sink)
+            return ToolOutcome.Refused(
+                $"this patch already has a {def.Name}, as {Handle(sink)}, and may have only one. "
+                + "Wire into that one, or remove it first if it is in the wrong place.");
+
         string handle;
 
         if (Text(arguments, "handle", out var wanted))

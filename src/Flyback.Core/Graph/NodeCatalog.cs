@@ -25,6 +25,13 @@ public static class NodeCatalog
     /// <summary>The speaker sink. Paired with <see cref="VideoOutputTypeId"/> per ADR-0022.</summary>
     public const string AudioOutputTypeId = "audio.output";
 
+    /// <summary>
+    /// Whether a module is one of the two sinks, of which a patch holds at most
+    /// one each — see <see cref="Patch.CanAdd"/> for why.
+    /// </summary>
+    public static bool IsSink(string typeId) =>
+        typeId is VideoOutputTypeId or AudioOutputTypeId;
+
     /// <summary>RGB, so the video sink reads three registers.</summary>
     public const int VideoChannels = 3;
 
