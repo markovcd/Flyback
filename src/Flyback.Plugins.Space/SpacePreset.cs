@@ -29,13 +29,13 @@ internal static class SpacePreset
 
         var echo = b.Add("flyback.space.delay", 840, 620, (1, 0.33f), (2, 0.5f), (3, 0.45f));
         var room = b.Add("flyback.space.reverb", 1030, 660, (1, 0.7f), (2, 0.75f), (3, 0.35f));
-        var speaker = b.Add(NodeCatalog.AudioOutputTypeId, 1230, 700, (2, 0.5f));
 
         // Eye: the same envelope as brightness, so you can see the pluck the
         // repeats are made of even though the repeats themselves are not visible.
         var rings = b.Add("pattern.rings", 250, 120, (2, 2.5f));
         var colour = b.Add("colour.hsv", 660, 160, (0, 0.55f), (1, 0.7f));
-        var screen = b.Add(NodeCatalog.VideoOutputTypeId, 900, 180);
+
+        var output = b.Add(NodeCatalog.OutputTypeId, 1230, 420, (NodeCatalog.OutputGainPort, 0.5f));
 
         b.Wire(time, 0, pluck, 0)
          .Wire(time, 0, tone, 0)
@@ -44,12 +44,12 @@ internal static class SpacePreset
          .Wire(pluck, 0, struck, 1)
          .Wire(struck, 0, echo, 0)
          .Wire(echo, 0, room, 0)
-         .Wire(room, 0, speaker, 0)
+         .Wire(room, 0, output, NodeCatalog.OutputLeftPort)
          .Wire(coord, 0, rings, 0)
          .Wire(coord, 1, rings, 1)
          .Wire(time, 0, rings, 3)
          .Wire(rings, 0, colour, 2)
-         .Wire(colour, 0, screen, 0);
+         .Wire(colour, 0, output, NodeCatalog.OutputColourPort);
 
         return b.Patch;
     }

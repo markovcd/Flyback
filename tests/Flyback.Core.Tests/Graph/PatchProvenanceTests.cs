@@ -32,7 +32,7 @@ public class PatchProvenanceTests
     [Fact]
     public void A_patch_of_built_in_modules_records_nothing()
     {
-        var json = PatchIo.ToJson(PatchUsing(NodeCatalog.BuiltIn.Require("video.output")), With());
+        var json = PatchIo.ToJson(PatchUsing(NodeCatalog.BuiltIn.Require("output")), With());
 
         json.ShouldNotContain("Requires");
     }
@@ -66,7 +66,11 @@ public class PatchProvenanceTests
         var loaded = PatchIo.Read(json, With());
 
         loaded.IsComplete.ShouldBeTrue();
-        loaded.Patch.Nodes.ShouldHaveSingleItem().TypeId.ShouldBe("test.extras.double");
+
+        // Two, because reading gives every patch its Output. What the plugin
+        // contributed is the other one.
+        loaded.Patch.Nodes.Select(n => n.TypeId)
+            .ShouldBe(["test.extras.double", NodeCatalog.OutputTypeId]);
     }
 
     [Fact]
@@ -111,7 +115,7 @@ public class PatchProvenanceTests
     {
         var json = """
             {
-              "Nodes": [ { "Id": "8f9d1d3e-0000-4000-8000-000000000002", "TypeId": "video.output" } ],
+              "Nodes": [ { "Id": "8f9d1d3e-0000-4000-8000-000000000002", "TypeId": "output" } ],
               "Connections": []
             }
             """;

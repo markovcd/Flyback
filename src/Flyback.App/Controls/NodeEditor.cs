@@ -70,6 +70,13 @@ public sealed class NodeEditor : Control
         set
         {
             patch = value;
+
+            // The last gate before a patch is shown. Presets, files and the
+            // assistant all place one already; this is what makes "every patch
+            // has an Output" true of anything that reaches the canvas, rather
+            // than true of each route to it separately.
+            patch.EnsureOutput();
+
             selected = null;
             drag = Drag.None;
             FrameAll();
@@ -89,10 +96,10 @@ public sealed class NodeEditor : Control
 
     /// <summary>
     /// Drops a new module in the middle of the current view and hands it back,
-    /// or returns null having added nothing where the patch may hold only one of
-    /// that module — the two sinks. Rather than do nothing at all, that case
-    /// selects the one already there: whoever asked for that module wanted it,
-    /// and this is where it is.
+    /// or returns null having added nothing where the patch may not hold another
+    /// of that module — the Output, of which there is always exactly one. Rather
+    /// than do nothing at all, that case selects the one already there: whoever
+    /// asked for it wanted it, and this is where it is.
     /// </summary>
     public NodeInstance? AddNode(string typeId)
     {
@@ -115,11 +122,17 @@ public sealed class NodeEditor : Control
         return node;
     }
 
+    /// <summary>
+    /// Removes the selected module, unless it is the Output — which the graph
+    /// refuses. Refused, the selection is left where it was rather than cleared:
+    /// pressing Delete on the Output should do nothing at all, and losing the
+    /// selection would take its settings panel away with it.
+    /// </summary>
     public void DeleteSelected()
     {
         if (selected is not { } id) return;
+        if (!patch.Remove(id)) return;
 
-        patch.Remove(id);
         Select(null);
         NotifyPatchChanged();
     }

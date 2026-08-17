@@ -29,7 +29,7 @@ public class PatchIoTests
         var coords = builder.Add("coord", 40, 12);
         var tint = builder.Add("colour.hsv", -180.5, 260, (1, 0.25f), (2, 0.75f));
         var gain = builder.Add("colour.gain", 90, 300, (1, 1.5f), (2, -0.125f));
-        var screen = builder.Add(NodeCatalog.VideoOutputTypeId, 520, 140);
+        var screen = builder.Add(NodeCatalog.OutputTypeId, 520, 140);
 
         builder
             .Wire(coords, 0, tint, 0)
@@ -112,12 +112,17 @@ public class PatchIoTests
         actual.Program.OutputBase.ShouldBe(expected.Program.OutputBase);
     }
 
+    /// <summary>
+    /// Empty means nothing patched, not nothing at all: reading gives a patch
+    /// its Output if the file did not carry one, so the emptiest thing that can
+    /// come back is still an instrument with somewhere to go.
+    /// </summary>
     [Fact]
-    public void An_empty_patch_round_trips_as_an_empty_patch()
+    public void An_empty_patch_round_trips_as_the_output_alone()
     {
         var after = RoundTrip(new Patch());
 
-        after.Nodes.ShouldBeEmpty();
+        after.Nodes.ShouldHaveSingleItem().TypeId.ShouldBe(NodeCatalog.OutputTypeId);
         after.Connections.ShouldBeEmpty();
     }
 
@@ -136,7 +141,9 @@ public class PatchIoTests
         osc.InputValues = [0.25f, 1f];
         patch.Nodes.Add(osc);
 
-        RoundTrip(patch).Nodes.ShouldHaveSingleItem().InputValues.ShouldBe([0.25f, 1f]);
+        RoundTrip(patch).Nodes
+            .Single(n => n.TypeId == "osc.sine")
+            .InputValues.ShouldBe([0.25f, 1f]);
     }
 
     /// <summary>

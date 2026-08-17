@@ -43,6 +43,9 @@ public sealed class AviWriter : IDisposable
     private readonly int sampleRate;
     private readonly List<(int ChunkId, uint Offset, uint Size)> index = [];
 
+    /// <summary>Reused across frames, since a movie is thousands of these.</summary>
+    private byte[] pcm = [];
+
     private long moviPosition;
     private long headerPosition;
     private long videoStreamPosition;
@@ -98,12 +101,13 @@ public sealed class AviWriter : IDisposable
         if (channels == 0) throw new InvalidOperationException("This file was opened without an audio stream.");
         if (interleaved.Length == 0) return;
 
-        var bytes = new byte[interleaved.Length * sizeof(short)];
+        var wanted = interleaved.Length * sizeof(short);
+        if (pcm.Length < wanted) pcm = new byte[wanted];
 
         for (var i = 0; i < interleaved.Length; i++)
-            BinaryPrimitives.WriteInt16LittleEndian(bytes.AsSpan(i * sizeof(short)), WavWriter.ToPcm16(interleaved[i]));
+            BinaryPrimitives.WriteInt16LittleEndian(pcm.AsSpan(i * sizeof(short)), WavWriter.ToPcm16(interleaved[i]));
 
-        WriteChunk(AudioChunkId, bytes);
+        WriteChunk(AudioChunkId, pcm.AsSpan(0, wanted));
         audioSamples += interleaved.Length / channels;
     }
 
@@ -116,12 +120,15 @@ public sealed class AviWriter : IDisposable
         var moviEnd = output.Position;
         WriteIndex();
 
+        // Read before the first Patch, because patching seeks and every length
+        // below is measured against where the file actually ended.
         var end = output.Position;
+        var seconds = frames / FramesPerSecond;
 
-        Patch(4, (uint)(end - 8));                              // RIFF size
+        Patch(4, (uint)(end - 8));                                     // RIFF size
         Patch(moviPosition - 4, (uint)(moviEnd - moviPosition + 4));   // 'movi' LIST size
 
-        Patch(headerPosition + 4, (uint)Math.Round(BytesPerSecond()));
+        Patch(headerPosition + 4, seconds > 0d ? (uint)Math.Round(end / seconds) : 0u);
         Patch(headerPosition + 16, (uint)frames);
         Patch(headerPosition + 28, (uint)largestChunk);
 
@@ -136,12 +143,6 @@ public sealed class AviWriter : IDisposable
 
         output.Seek(end, SeekOrigin.Begin);
         output.Flush();
-    }
-
-    private double BytesPerSecond()
-    {
-        var seconds = frames / FramesPerSecond;
-        return seconds <= 0d ? 0d : output.Position / seconds;
     }
 
     // --- chunks ------------------------------------------------------------------
@@ -194,6 +195,17 @@ public sealed class AviWriter : IDisposable
 
     // --- headers -----------------------------------------------------------------
 
+    /// <summary>A chunk's fourcc and its length field, ahead of the payload.</summary>
+    private const int ChunkHeader = 8;
+
+    /// <summary>The fixed size of an AVIStreamHeader.</summary>
+    private const int StreamHeader = 56;
+
+    // A stream's LIST holds its fourcc, a strh and a strf; the strf is a
+    // BITMAPINFOHEADER for video and a WAVEFORMATEX for audio.
+    private const int VideoList = 4 + ChunkHeader + StreamHeader + ChunkHeader + 40;
+    private const int AudioList = 4 + ChunkHeader + StreamHeader + ChunkHeader + 18;
+
     private void WriteHeaders()
     {
         var streams = channels > 0 ? 2 : 1;
@@ -203,7 +215,10 @@ public sealed class AviWriter : IDisposable
         WriteFourCc("AVI ");
 
         WriteFourCc("LIST");
-        WriteUInt32((uint)(4 + 8 + 56 + streams * (8 + 4 + 8 + 56 + 8) + 40 + (channels > 0 ? 18 : 0)));
+        WriteUInt32((uint)(4
+            + ChunkHeader + StreamHeader
+            + ChunkHeader + VideoList
+            + (channels > 0 ? ChunkHeader + AudioList : 0)));
         WriteFourCc("hdrl");
 
         WriteFourCc("avih");
@@ -237,11 +252,11 @@ public sealed class AviWriter : IDisposable
     private void WriteVideoStream()
     {
         WriteFourCc("LIST");
-        WriteUInt32(4 + 8 + 56 + 8 + 40);
+        WriteUInt32(VideoList);
         WriteFourCc("strl");
 
         WriteFourCc("strh");
-        WriteUInt32(56);
+        WriteUInt32(StreamHeader);
         videoStreamPosition = output.Position;
 
         WriteFourCc("vids");
@@ -281,11 +296,11 @@ public sealed class AviWriter : IDisposable
         var blockAlign = channels * sizeof(short);
 
         WriteFourCc("LIST");
-        WriteUInt32(4 + 8 + 56 + 8 + 18);
+        WriteUInt32(AudioList);
         WriteFourCc("strl");
 
         WriteFourCc("strh");
-        WriteUInt32(56);
+        WriteUInt32(StreamHeader);
         audioStreamPosition = output.Position;
 
         WriteFourCc("auds");

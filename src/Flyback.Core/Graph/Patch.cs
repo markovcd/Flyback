@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace Flyback.Core.Graph;
 
 /// <summary>One placed module: a node type, where it sits, and its knob values.</summary>
@@ -51,19 +53,62 @@ public sealed class Patch
     public NodeInstance? FirstOf(string typeId) => Nodes.FirstOrDefault(n => n.TypeId == typeId);
 
     /// <summary>
-    /// Whether another module of this type may be placed. Everything says yes
-    /// but the two sinks, which a patch holds at most one of each.
+    /// The Output. Every patch has exactly one — <see cref="EnsureOutput"/> puts
+    /// it there and <see cref="Remove"/> will not take it away.
     /// </summary>
     /// <remarks>
-    /// A second Video Output is not a second screen and a second Audio Output is
-    /// not a second pair of speakers. Compilation roots at one sink and walks
-    /// backwards from it ([0022](0022-audio-and-video-are-two-sinks-over-one-patch.md),
-    /// [0011](0011-compile-backwards-from-output.md)), so the other one is never
-    /// reached: whatever is wired into it looks connected, renders nothing, and
-    /// there is no complaint to read, because the patch compiled. Refusing the
-    /// second is the only place that confusion can be prevented.
+    /// Ignored by the serialiser, which would otherwise write it as a second
+    /// copy of a node already in <see cref="Nodes"/> — and would throw on the
+    /// way past a patch that has not been given one yet.
     /// </remarks>
-    public bool CanAdd(string typeId) => !NodeCatalog.IsSink(typeId) || FirstOf(typeId) is null;
+    [JsonIgnore]
+    public NodeInstance Output =>
+        FirstOf(NodeCatalog.OutputTypeId)
+        ?? throw new InvalidOperationException("This patch has no Output. Call EnsureOutput after building it by hand.");
+
+    /// <summary>
+    /// Whether another module of this type may be placed. Everything says yes
+    /// but the Output, of which a patch has exactly one, always.
+    /// </summary>
+    /// <remarks>
+    /// A second Output is not a second screen. Compilation roots at the one it
+    /// finds and walks backwards from it
+    /// ([0011](0011-compile-backwards-from-output.md)), so a second is never
+    /// reached: whatever is wired into it looks connected, renders nothing, and
+    /// there is no complaint to read, because the patch compiled.
+    /// </remarks>
+    public bool CanAdd(string typeId) => !NodeCatalog.IsSink(typeId);
+
+    /// <summary>
+    /// Puts the Output in place if it is not already there, and hands it back.
+    /// Called on every patch that enters the program — built, loaded or
+    /// assembled by a plugin — so that nothing downstream has to cope with a
+    /// patch that has no sink.
+    /// </summary>
+    /// <remarks>
+    /// A patch is not a document that may or may not have somewhere to go: it is
+    /// an instrument, and an instrument with no output is not a state worth
+    /// being able to represent. Making it unremovable rather than merely
+    /// re-addable is what lets the shell hang every audio and video setting off
+    /// it — see ADR-0037.
+    /// </remarks>
+    public NodeInstance EnsureOutput(ModuleCatalog? modules = null)
+    {
+        if (FirstOf(NodeCatalog.OutputTypeId) is { } existing) return existing;
+
+        var catalog = modules ?? NodeCatalog.Current;
+        var node = NodeInstance.Create(catalog.Require(NodeCatalog.OutputTypeId), OutputX, OutputY);
+
+        Nodes.Add(node);
+        return node;
+    }
+
+    /// <summary>
+    /// Where a freshly made Output lands. To the right of centre, because the
+    /// editor frames the whole patch and a sink is what everything else points at.
+    /// </summary>
+    private const double OutputX = 1100;
+    private const double OutputY = 320;
 
     /// <summary>The wire feeding an input, if any. An input takes at most one.</summary>
     public Connection? IncomingTo(Guid node, int port) =>
@@ -84,9 +129,19 @@ public sealed class Patch
     public void Disconnect(Guid targetNode, int targetPort) =>
         Connections.RemoveAll(c => c.TargetNode == targetNode && c.TargetPort == targetPort);
 
-    public void Remove(Guid nodeId)
+    /// <summary>
+    /// Takes a module out, along with every wire touching it. The Output is
+    /// refused: it is the one module a patch cannot be without, so there is no
+    /// state in which removing it would be an edit rather than a mistake.
+    /// </summary>
+    /// <returns>Whether anything was removed.</returns>
+    public bool Remove(Guid nodeId)
     {
-        Nodes.RemoveAll(n => n.Id == nodeId);
+        if (Find(nodeId) is { } node && NodeCatalog.IsSink(node.TypeId)) return false;
+
+        var removed = Nodes.RemoveAll(n => n.Id == nodeId) > 0;
         Connections.RemoveAll(c => c.SourceNode == nodeId || c.TargetNode == nodeId);
+
+        return removed;
     }
 }

@@ -6,32 +6,34 @@ Feature: Compiling a patch
 
   Specified by ADR-0011.
 
-  # Said only because there is no Audio Output either. A sink missing while the
-  # other one is present is a choice; both missing is a patch that does nothing.
-  Scenario: A patch with no output at all renders black and says so
+  # Only a graph assembled by hand can be in this state — every patch that comes
+  # from a preset, a file or the editor carries its Output. Answered with a
+  # value rather than a throw all the same: saying what is wrong with a patch is
+  # the compiler's job, and refusing to look at one is not.
+  Scenario: A patch with no Output at all renders black and says so
     Given a patch containing:
       | name | module   |
       | wave | osc.sine |
     When the patch is compiled
-    Then compilation reports an issue containing "no output"
+    Then compilation reports an issue containing "no Output"
     And the rendered image is entirely black
 
-  # The other half of the scenario above: the sink is there and nothing reaches
-  # it. What compiles is a constant — one flat colour, or silence — which is a
+  # The ordinary case: the sink is there, as it always is, and nothing reaches
+  # it. What compiles is a constant — one flat colour and silence — which is a
   # legal program and not a patch anybody meant.
   Scenario: A sink with nothing wired into it is remarked on
     Given a patch containing:
-      | name   | module       |
-      | screen | video.output |
+      | name   | module |
+      | screen | output |
     When the patch is compiled
-    Then compilation reports an issue containing "Nothing is wired into the Video Output"
+    Then compilation reports an issue containing "Nothing is wired into the Output"
     And compilation reports nothing wrong
 
   Scenario: A sink with something wired into it is not remarked on
     Given a patch containing:
       | name   | module       |
       | knob   | value        |
-      | screen | video.output |
+      | screen | output       |
     And "knob" output "out" is wired to "screen" input "colour"
     When the patch is compiled
     Then compilation reports no issues
@@ -44,7 +46,7 @@ Feature: Compiling a patch
     Given a patch containing:
       | name   | module       |
       | osc    | osc.sine     |
-      | screen | video.output |
+      | screen | output       |
     And "osc" output "out" is wired to "screen" input "colour"
     When the patch is compiled
     Then compilation reports an issue containing "never moves"
@@ -55,7 +57,7 @@ Feature: Compiling a patch
       | name   | module       |
       | clock  | time         |
       | osc    | osc.sine     |
-      | screen | video.output |
+      | screen | output       |
     And "clock" output "t" is wired to "osc" input "in"
     And "osc" output "out" is wired to "screen" input "colour"
     When the patch is compiled
@@ -64,7 +66,7 @@ Feature: Compiling a patch
   Scenario: An unknown module is reported rather than throwing
     Given a patch containing:
       | name   | module       |
-      | screen | video.output |
+      | screen | output       |
     And a node named "mystery" of unknown type "module.from.the.future"
     And "mystery" output 0 is wired to "screen" input "colour"
     When the patch is compiled
@@ -76,7 +78,7 @@ Feature: Compiling a patch
       | name   | module       |
       | first  | math.add     |
       | second | math.add     |
-      | screen | video.output |
+      | screen | output       |
     And "first" output "out" is wired to "second" input "a"
     And "second" output "out" is wired to "first" input "a"
     And "second" output "out" is wired to "screen" input "colour"
@@ -88,7 +90,7 @@ Feature: Compiling a patch
       | name   | module       |
       | coords | coord        |
       | tint   | colour.hsv   |
-      | screen | video.output |
+      | screen | output       |
     And "coords" output "x" is wired to "tint" input "hue"
     And "tint" output "colour" is wired to "screen" input "colour"
     When the patch is compiled

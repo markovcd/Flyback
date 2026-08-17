@@ -108,6 +108,8 @@ void main()
     float r1 = r0;
     float r2 = r0;
     float r3 = r0;
+    float r4 = r0 * r0;
+    float r5 = r0 * r0;
 
     fragColour = vec4(sat(r1), sat(r2), sat(r3), 1.0);
 }

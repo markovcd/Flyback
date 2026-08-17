@@ -45,17 +45,16 @@ public sealed record CompileResult(CompiledPatch Program, IReadOnlyList<CompileI
 /// </remarks>
 public static class PatchCompiler
 {
-    /// <summary>Compiles the program the screen shows, rooted at the video sink.</summary>
+    /// <summary>Compiles the program the screen shows, reading the Output's colour.</summary>
     public static CompileResult CompileForVideo(this Patch patch, ModuleCatalog? modules = null) =>
-        Compile(patch, NodeCatalog.VideoOutputTypeId, NodeCatalog.VideoChannels, modules);
+        Compile(patch, NodeCatalog.Screen, modules);
 
-    /// <summary>Compiles the program the speakers play, rooted at the audio sink.</summary>
+    /// <summary>Compiles the program the speakers play, reading the Output's left and right.</summary>
     public static CompileResult CompileForAudio(this Patch patch, ModuleCatalog? modules = null) =>
-        Compile(patch, NodeCatalog.AudioOutputTypeId, NodeCatalog.AudioChannels, modules);
+        Compile(patch, NodeCatalog.Speakers, modules);
 
     /// <param name="patch">The graph to lower.</param>
-    /// <param name="sinkTypeId">Module type to compile backwards from.</param>
-    /// <param name="width">Registers the sink consumes — 3 for RGB, 2 for stereo.</param>
+    /// <param name="sink">Which of the Output's results this program reads.</param>
     /// <param name="modules">
     /// Which catalogue the type ids mean, defaulting to the installed one. Named
     /// explicitly, a patch can be compiled against a catalogue that is not the
@@ -63,51 +62,44 @@ public static class PatchCompiler
     /// </param>
     private static CompileResult Compile(
         Patch patch,
-        string sinkTypeId,
-        int width,
+        NodeCatalog.SinkKind sink,
         ModuleCatalog? modules)
     {
         var catalog = modules ?? NodeCatalog.Current;
+        var width = sink.Width;
 
         var issues = new List<CompileIssue>();
-        var sink = patch.Nodes.FirstOrDefault(n => n.TypeId == sinkTypeId);
+        var root = patch.FirstOf(NodeCatalog.OutputTypeId);
 
-        if (sink is null)
+        if (root is null)
         {
-            // A missing sink is only worth saying when the other one is missing
-            // too. Either on its own is a patch somebody meant — built for the
-            // screen, or built for the speakers — and nagging one of those about
-            // the sink it deliberately does not have is noise on every edit.
-            // With neither there is nothing to say it about but the patch, which
-            // does nothing at all, so this is reported once from the video root
-            // rather than twice from both.
-            if (sinkTypeId == NodeCatalog.VideoOutputTypeId
-                && !patch.Nodes.Any(n => n.TypeId == NodeCatalog.AudioOutputTypeId))
-            {
-                issues.Add(new CompileIssue(
-                    null,
-                    "This patch has no output. Add a Video Output to see it, "
-                    + "or an Audio Output to hear it.",
-                    IssueSeverity.Warning));
-            }
+            // Every patch is supposed to carry one, so reaching here means a
+            // graph assembled by hand rather than through Patch.EnsureOutput.
+            // Still a value rather than a throw: the compiler's job is to say
+            // what is wrong with a patch, not to refuse to look at it.
+            issues.Add(new CompileIssue(
+                null,
+                "This patch has no Output. It cannot be seen or heard until one is put back.",
+                IssueSeverity.Warning));
 
             return new CompileResult(CompiledPatch.Constant(width), issues);
         }
 
-        // A sink with no wire into it compiles to a constant: the screen is one
-        // flat colour and the speakers hold one value, which is silence. Both
-        // are legal programs, and neither is a patch — this is the same
-        // complaint as a domain left on its knob, made about the one node whose
-        // knobs were never going to be the point.
-        if (!patch.Connections.Any(c => c.TargetNode == sink.Id))
+        // An Output with nothing wired into it at all compiles to a constant:
+        // one flat colour and silence. That is a legal program and not a patch,
+        // and it is the same complaint as a domain left on its knob, made about
+        // the one node whose knobs were never going to be the point.
+        //
+        // Said only when *nothing* reaches it. A patch wired for the eye and not
+        // the ear is as deliberate as one wired the other way, and nagging
+        // either about the half it does not use would be noise on every edit —
+        // which is what ADR-0022 established when these were two nodes.
+        if (!patch.Connections.Any(c => c.TargetNode == root.Id))
         {
             issues.Add(new CompileIssue(
-                sink.Id,
-                sinkTypeId == NodeCatalog.VideoOutputTypeId
-                    ? "Nothing is wired into the Video Output, so the screen is one flat colour. "
-                    + "Patch something into its 'colour'."
-                    : "Nothing is wired into the Audio Output, so there is nothing to hear. "
-                    + "Patch something into its 'left'.",
+                root.Id,
+                "Nothing is wired into the Output, so there is nothing to see or hear. "
+                + "Patch something into its 'colour' or its 'left'.",
                 IssueSeverity.Warning));
         }
 
@@ -115,7 +107,9 @@ public static class PatchCompiler
         var resolved = new Dictionary<Guid, Slot[]>();
         var visiting = new HashSet<Guid>();
 
-        var result = Resolve(sink);
+        // Only this program's share of the sink's results. Everything upstream
+        // of the other half is never resolved, so it emits no ops.
+        var result = Resolve(root)[sink.Results];
         var value = emitter.PackChannels(result, width);
 
         return new CompileResult(
@@ -142,8 +136,27 @@ public static class PatchCompiler
 
             var inputs = new Slot[def.Inputs.Count];
 
+            // On the sink, only the sockets this program is rooted at. The rest
+            // stand in as zero.
+            //
+            // The emit function still runs whole, so the other half's own ops
+            // survive as a multiply by nothing: two of them in a video program,
+            // none in an audio one. That is the price of the sink staying data
+            // like every other module (ADR-0008) rather than the compiler
+            // knowing what an Output does — everything *patched into* the other
+            // half is still never visited, which is where all the cost is.
+            var (firstPort, portCount) = node.Id == root.Id
+                ? sink.Inputs.GetOffsetAndLength(inputs.Length)
+                : (0, inputs.Length);
+
             for (var port = 0; port < inputs.Length; port++)
             {
+                if (port < firstPort || port >= firstPort + portCount)
+                {
+                    inputs[port] = emitter.Constant(0f);
+                    continue;
+                }
+
                 var spec = def.Inputs[port];
                 var incoming = patch.IncomingTo(node.Id, port);
                 Slot value;

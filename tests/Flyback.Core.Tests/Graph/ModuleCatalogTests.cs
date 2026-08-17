@@ -24,7 +24,7 @@ public class ModuleCatalogTests
         var catalog = NodeCatalog.BuiltIn;
 
         catalog.Providers.ShouldHaveSingleItem().Id.ShouldBe(NodeCatalog.BuiltInProvider.Id);
-        catalog.ProviderOf("video.output").ShouldBe(NodeCatalog.BuiltInProvider);
+        catalog.ProviderOf("output").ShouldBe(NodeCatalog.BuiltInProvider);
     }
 
     [Fact]

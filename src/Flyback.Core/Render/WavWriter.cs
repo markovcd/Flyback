@@ -59,7 +59,11 @@ public static class WavWriter
     /// Scales by 32767 rather than 32768 so that +1.0 and -1.0 are both
     /// representable without one of them wrapping.
     /// </summary>
-    private static short ToPcm16(float value)
+    /// <remarks>
+    /// Shared with <see cref="AviWriter"/>, whose audio stream is the same PCM
+    /// in a different container. Two conversions would be two chances to differ.
+    /// </remarks>
+    internal static short ToPcm16(float value)
     {
         if (!float.IsFinite(value)) return 0;
 

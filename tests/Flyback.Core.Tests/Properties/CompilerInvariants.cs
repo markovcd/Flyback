@@ -64,12 +64,12 @@ public class CompilerInvariants
     [MemberData(nameof(ModuleTypeIds))]
     public void Every_module_compiles_when_wired_to_the_output(string typeId)
     {
-        if (typeId == NodeCatalog.VideoOutputTypeId) return;
+        if (typeId == NodeCatalog.OutputTypeId) return;
 
         var def = NodeCatalog.Require(typeId);
         var builder = new PatchBuilder();
         var module = builder.Add(typeId, 0, 0);
-        var output = builder.Add(NodeCatalog.VideoOutputTypeId, 400, 0);
+        var output = builder.Add(NodeCatalog.OutputTypeId, 400, 0);
 
         if (def.Outputs.Count > 0)
             builder.Wire(module, 0, output, 0);

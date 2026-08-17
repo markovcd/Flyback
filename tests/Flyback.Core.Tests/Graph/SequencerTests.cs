@@ -229,7 +229,7 @@ public class SequencerTests
 
         var time = builder.Add("time", 0, 0);
         var sequence = builder.Add(Values, 0, 0);
-        var screen = builder.Add(NodeCatalog.VideoOutputTypeId, 0, 0);
+        var screen = builder.Add(NodeCatalog.OutputTypeId, 0, 0);
 
         builder.Wire(time, 0, sequence, 0).Wire(sequence, 0, screen, 0);
 

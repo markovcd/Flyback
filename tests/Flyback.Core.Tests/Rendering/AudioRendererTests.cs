@@ -21,9 +21,9 @@ public class AudioRendererTests
         var builder = new PatchBuilder();
         var time = builder.Add("time", 0, 0, (0, 1f));
         var osc = builder.Add(oscillator, 0, 0, (1, hz));
-        var sink = builder.Add(NodeCatalog.AudioOutputTypeId, 0, 0, (2, gain));
+        var sink = builder.Add(NodeCatalog.OutputTypeId, 0, 0, (NodeCatalog.OutputGainPort, gain));
 
-        builder.Wire(time, 0, osc, 0).Wire(osc, 0, sink, 0);
+        builder.Wire(time, 0, osc, 0).Wire(osc, 0, sink, NodeCatalog.OutputLeftPort);
 
         return Compile(builder.Patch);
     }
@@ -168,8 +168,8 @@ public class AudioRendererTests
     {
         var builder = new PatchBuilder();
         var knob = builder.Add("value", 0, 0, (0, 1f));
-        var sink = builder.Add(NodeCatalog.AudioOutputTypeId, 0, 0, (2, 1f));
-        builder.Wire(knob, 0, sink, 0);
+        var sink = builder.Add(NodeCatalog.OutputTypeId, 0, 0, (NodeCatalog.OutputGainPort, 1f));
+        builder.Wire(knob, 0, sink, NodeCatalog.OutputLeftPort);
 
         var buffer = Render(Compile(builder.Patch), SampleRate);
 
@@ -250,8 +250,13 @@ public class AudioRendererTests
         return new CompiledPatch(emitter.ToProgram(), emitter.RegisterCount, echoed.Base, 1);
     }
 
+    /// <summary>
+    /// And says nothing about it. Every patch has an Output now, so a patch
+    /// built for the eye alone is one whose 'left' is empty — which is a
+    /// deliberate thing, not a complaint waiting to happen.
+    /// </summary>
     [Fact]
-    public void A_patch_with_no_audio_sink_is_silent_rather_than_a_failure()
+    public void A_patch_with_nothing_wired_to_the_speakers_is_silent_rather_than_a_failure()
     {
         var result = Presets.Plasma(NodeCatalog.BuiltIn).CompileForAudio();
 
@@ -270,8 +275,8 @@ public class AudioRendererTests
         // signal, while the same patch driven by time alone sits at x = 0.
         var builder = new PatchBuilder();
         var coords = builder.Add("coord", 0, 0);
-        var sink = builder.Add(NodeCatalog.AudioOutputTypeId, 0, 0, (2, 1f));
-        builder.Wire(coords, 0, sink, 0);
+        var sink = builder.Add(NodeCatalog.OutputTypeId, 0, 0, (NodeCatalog.OutputGainPort, 1f));
+        builder.Wire(coords, 0, sink, NodeCatalog.OutputLeftPort);
 
         var program = Compile(builder.Patch);
 

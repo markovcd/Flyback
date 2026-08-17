@@ -188,7 +188,7 @@ public class SpaceTests
 
         var coord = Add(patch, "coord");
         var effect = Add(patch, typeId, (3, 1f));
-        var screen = Add(patch, NodeCatalog.VideoOutputTypeId);
+        var screen = Add(patch, NodeCatalog.OutputTypeId);
 
         patch.Connect(coord.Id, 0, effect.Id, 0);
         patch.Connect(effect.Id, 0, screen.Id, 0);
@@ -236,10 +236,10 @@ public class SpaceTests
 
         var coord = Add(patch, "coord");
         var effect = Add(patch, typeId, knobs);
-        var sink = Add(patch, NodeCatalog.AudioOutputTypeId, (2, 1f));
+        var sink = Add(patch, NodeCatalog.OutputTypeId, (NodeCatalog.OutputGainPort, 1f));
 
         patch.Connect(coord.Id, 0, effect.Id, 0);
-        patch.Connect(effect.Id, 0, sink.Id, 0);
+        patch.Connect(effect.Id, 0, sink.Id, NodeCatalog.OutputLeftPort);
 
         var program = patch.CompileForAudio(Catalog).Program;
         var delays = new DelayState(program.DelayLengths, Rate);

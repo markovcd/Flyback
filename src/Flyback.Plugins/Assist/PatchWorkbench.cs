@@ -148,14 +148,14 @@ public sealed class PatchWorkbench
             return ToolOutcome.Refused(
                 $"this patch already has {limits.MaxNodes} modules, which is as many as a patch may have.");
 
-        // A patch has one screen and one pair of speakers. The second sink is
-        // the mistake that hides itself — compilation roots at the first one and
-        // never reaches the other, so the patch compiles, says nothing, and half
-        // of what was wired up is simply not there.
+        // Every patch already has its Output and cannot have a second. The
+        // second sink is the mistake that hides itself — compilation roots at
+        // the first one and never reaches the other, so the patch compiles, says
+        // nothing, and half of what was wired up is simply not there.
         if (!working.CanAdd(typeId) && working.FirstOf(typeId) is { } sink)
             return ToolOutcome.Refused(
-                $"this patch already has a {def.Name}, as {Handle(sink)}, and may have only one. "
-                + "Wire into that one, or remove it first if it is in the wrong place.");
+                $"every patch already has its {def.Name}, as {Handle(sink)}, and cannot have a second. "
+                + "Wire into that one — 'colour' for the picture, 'left' for the sound.");
 
         string handle;
 
@@ -326,15 +326,15 @@ public sealed class PatchWorkbench
                 "this patch does not compile cleanly yet, so it is not worth proposing: "
                 + string.Join(" | ", errors));
 
-        // Warnings do not block, but a patch with neither sink is not a patch:
+        // Warnings do not block, but an Output nothing reaches is not a patch:
         // nothing is watching and nothing is listening, so there is nothing to
-        // offer whatever the modules add up to.
-        if (!working.Nodes.Any(n =>
-            n.TypeId == NodeCatalog.VideoOutputTypeId || n.TypeId == NodeCatalog.AudioOutputTypeId))
+        // offer whatever the modules add up to. The sink itself is always there,
+        // so what has to be checked is whether anything arrives at it.
+        if (!working.Connections.Any(c => c.TargetNode == working.Output.Id))
         {
             return ToolOutcome.Refused(
-                "this patch has no Video Output and no Audio Output, so nothing it does comes out "
-                + "anywhere. Add one before proposing.");
+                "nothing is wired into the Output, so nothing this patch does comes out anywhere. "
+                + "Patch something into its 'colour' or its 'left' before proposing.");
         }
 
         proposal = summary;
@@ -511,16 +511,16 @@ public sealed class PatchWorkbench
     {
         var requested = Times(arguments);
 
-        // Asked for directly, because the compiler no longer remarks on a
-        // missing screen once the speakers are wired — a patch built for sound
+        // Asked for directly, because the compiler does not remark on a colour
+        // socket left empty while the sound is wired — a patch built for the ear
         // is a deliberate thing, not a complaint waiting to happen. It is still
         // nothing to look at: what would come back is a black rectangle, and an
         // assistant shown black goes and "fixes" a patch that was working.
-        if (!working.Nodes.Any(n => n.TypeId == NodeCatalog.VideoOutputTypeId))
+        if (working.IncomingTo(working.Output.Id, NodeCatalog.OutputColourPort) is null)
         {
             return Task.FromResult(ToolOutcome.Refused(
-                "this patch has no Video Output, so it draws nothing and there is nothing to "
-                + "look at. Add one if it is meant to be seen."));
+                "nothing is wired into the Output's 'colour', so this patch draws nothing and "
+                + "there is nothing to look at. Patch something in if it is meant to be seen."));
         }
 
         var patch = working.CompileForVideo(modules);
@@ -818,6 +818,12 @@ public sealed class PatchWorkbench
     private void Adopt(Patch patch)
     {
         working = patch;
+
+        // Before the handles are made, so the Output gets one like everything
+        // else and the assistant has something to wire into. It cannot add one
+        // and cannot remove one, so this is where it has to arrive.
+        working.EnsureOutput(modules);
+
         byHandle.Clear();
         handleOf.Clear();
 

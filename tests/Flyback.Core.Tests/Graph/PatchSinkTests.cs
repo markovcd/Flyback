@@ -4,10 +4,12 @@ using Shouldly;
 namespace Flyback.Core.Tests.Graph;
 
 /// <summary>
-/// A patch holds at most one Video Output and one Audio Output. The rule lives
-/// on the graph rather than in the editor, because the editor is not the only
-/// thing that places modules — an assistant does too.
+/// Every patch holds exactly one Output: it cannot be added and it cannot be
+/// taken away. The rule lives on the graph rather than in the editor, because
+/// the editor is not the only thing that places modules — an assistant does too,
+/// and a file is a third way a patch can arrive.
 /// </summary>
+/// <remarks>Specified by ADR-0037.</remarks>
 public class PatchSinkTests
 {
     private static Patch PatchOf(params string[] typeIds)
@@ -21,63 +23,24 @@ public class PatchSinkTests
     }
 
     [Fact]
-    public void The_two_sinks_are_the_sinks_and_nothing_else_is()
+    public void The_output_is_the_sink_and_nothing_else_is()
     {
-        NodeCatalog.IsSink(NodeCatalog.VideoOutputTypeId).ShouldBeTrue();
-        NodeCatalog.IsSink(NodeCatalog.AudioOutputTypeId).ShouldBeTrue();
+        NodeCatalog.IsSink(NodeCatalog.OutputTypeId).ShouldBeTrue();
 
-        // Named 'Output' in the palette and no such thing to the compiler.
+        // Sat in the Output category of the palette, and no such thing to the compiler.
         NodeCatalog.IsSink("audio.frequency").ShouldBeFalse();
         NodeCatalog.IsSink("osc.sine").ShouldBeFalse();
     }
 
     [Fact]
-    public void An_empty_patch_takes_either_sink()
+    public void The_output_can_never_be_added_because_there_is_always_one()
     {
-        var patch = PatchOf();
-
-        patch.CanAdd(NodeCatalog.VideoOutputTypeId).ShouldBeTrue();
-        patch.CanAdd(NodeCatalog.AudioOutputTypeId).ShouldBeTrue();
+        PatchOf().CanAdd(NodeCatalog.OutputTypeId).ShouldBeFalse();
+        PatchOf(NodeCatalog.OutputTypeId).CanAdd(NodeCatalog.OutputTypeId).ShouldBeFalse();
     }
 
     [Fact]
-    public void A_patch_with_a_screen_takes_no_second_screen()
-    {
-        var patch = PatchOf(NodeCatalog.VideoOutputTypeId);
-
-        patch.CanAdd(NodeCatalog.VideoOutputTypeId).ShouldBeFalse();
-    }
-
-    [Fact]
-    public void A_patch_with_a_screen_still_takes_speakers()
-    {
-        // The pair is the point of ADR-0022: one of each, not one in total.
-        var patch = PatchOf(NodeCatalog.VideoOutputTypeId);
-
-        patch.CanAdd(NodeCatalog.AudioOutputTypeId).ShouldBeTrue();
-    }
-
-    [Fact]
-    public void A_patch_with_both_takes_neither_again()
-    {
-        var patch = PatchOf(NodeCatalog.VideoOutputTypeId, NodeCatalog.AudioOutputTypeId);
-
-        patch.CanAdd(NodeCatalog.VideoOutputTypeId).ShouldBeFalse();
-        patch.CanAdd(NodeCatalog.AudioOutputTypeId).ShouldBeFalse();
-    }
-
-    [Fact]
-    public void Deleting_the_sink_lets_another_be_placed()
-    {
-        var patch = PatchOf(NodeCatalog.VideoOutputTypeId);
-
-        patch.Remove(patch.Nodes[0].Id);
-
-        patch.CanAdd(NodeCatalog.VideoOutputTypeId).ShouldBeTrue();
-    }
-
-    [Fact]
-    public void Everything_that_is_not_a_sink_may_be_placed_as_often_as_you_like()
+    public void Everything_that_is_not_the_sink_may_be_placed_as_often_as_you_like()
     {
         var patch = PatchOf("osc.sine", "osc.sine", "value");
 
@@ -86,11 +49,96 @@ public class PatchSinkTests
     }
 
     [Fact]
+    public void Ensuring_the_output_puts_one_there()
+    {
+        var patch = PatchOf();
+
+        var output = patch.EnsureOutput(NodeCatalog.BuiltIn);
+
+        output.TypeId.ShouldBe(NodeCatalog.OutputTypeId);
+        patch.Nodes.ShouldHaveSingleItem();
+    }
+
+    [Fact]
+    public void Ensuring_it_twice_does_not_make_a_second()
+    {
+        var patch = PatchOf("value");
+
+        var first = patch.EnsureOutput(NodeCatalog.BuiltIn);
+        var again = patch.EnsureOutput(NodeCatalog.BuiltIn);
+
+        again.ShouldBeSameAs(first);
+        patch.Nodes.Count(n => n.TypeId == NodeCatalog.OutputTypeId).ShouldBe(1);
+    }
+
+    /// <summary>
+    /// The whole point of it being permanent. Everything the shell hangs off the
+    /// Output — the preview size, the renderer, the exports — would have nowhere
+    /// to live the moment somebody pressed Delete on it.
+    /// </summary>
+    [Fact]
+    public void The_output_cannot_be_removed()
+    {
+        var patch = PatchOf("value", NodeCatalog.OutputTypeId);
+        var output = patch.Output;
+
+        patch.Remove(output.Id).ShouldBeFalse();
+
+        patch.Nodes.ShouldContain(output);
+    }
+
+    [Fact]
+    public void Everything_else_can_still_be_removed()
+    {
+        var patch = PatchOf("value", NodeCatalog.OutputTypeId);
+        var knob = patch.Nodes[0];
+
+        patch.Remove(knob.Id).ShouldBeTrue();
+
+        patch.Nodes.ShouldNotContain(knob);
+    }
+
+    /// <summary>Removing something takes its wires with it, including those into the sink.</summary>
+    [Fact]
+    public void Removing_a_module_unplugs_it_from_the_output()
+    {
+        var patch = PatchOf("value", NodeCatalog.OutputTypeId);
+        var knob = patch.Nodes[0];
+
+        patch.Connect(knob.Id, 0, patch.Output.Id, NodeCatalog.OutputColourPort);
+        patch.Remove(knob.Id);
+
+        patch.Connections.ShouldBeEmpty();
+    }
+
+    [Fact]
     public void The_sink_a_patch_holds_can_be_found_to_be_wired_into()
     {
-        var patch = PatchOf("value", NodeCatalog.VideoOutputTypeId);
+        var patch = PatchOf("value", NodeCatalog.OutputTypeId);
 
-        patch.FirstOf(NodeCatalog.VideoOutputTypeId).ShouldBe(patch.Nodes[1]);
-        patch.FirstOf(NodeCatalog.AudioOutputTypeId).ShouldBeNull();
+        patch.Output.ShouldBe(patch.Nodes[1]);
+        patch.FirstOf(NodeCatalog.OutputTypeId).ShouldBe(patch.Nodes[1]);
+    }
+
+    /// <summary>
+    /// A graph assembled by hand is the one way to get a patch without a sink,
+    /// and asking for it should say so rather than hand back something wrong.
+    /// </summary>
+    [Fact]
+    public void A_patch_built_without_one_says_so_when_asked()
+    {
+        Should.Throw<InvalidOperationException>(() => PatchOf("value").Output);
+    }
+
+    [Fact]
+    public void Every_preset_ships_with_its_output()
+    {
+        foreach (var preset in Presets.All)
+        {
+            var patch = preset.Build(NodeCatalog.BuiltIn);
+
+            patch.Nodes.Count(n => n.TypeId == NodeCatalog.OutputTypeId)
+                .ShouldBe(1, $"the '{preset.Name}' preset");
+        }
     }
 }

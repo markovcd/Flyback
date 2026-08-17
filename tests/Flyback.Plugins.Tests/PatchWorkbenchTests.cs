@@ -40,8 +40,7 @@ public class PatchWorkbenchTests
         await Call(bench, "add_module", $$"""
             {"type_id":"value","handle":"knob1","knobs":[{"port":"value","value":{{value}}}]}
             """);
-        await Call(bench, "add_module", """{"type_id":"video.output","handle":"screen1"}""");
-        await Call(bench, "connect", """{"from":"knob1","to":"screen1","to_port":"colour"}""");
+        await Call(bench, "connect", """{"from":"knob1","to":"output1","to_port":"colour"}""");
 
         return bench;
     }
@@ -59,9 +58,8 @@ public class PatchWorkbenchTests
         await Call(bench, "add_module", """
             {"type_id":"osc.sine","handle":"tone1","knobs":[{"port":"freq","value":440}]}
             """);
-        await Call(bench, "add_module", """{"type_id":"audio.output","handle":"speaker1"}""");
         await Call(bench, "connect", """{"from":"clock1","to":"tone1","to_port":"in"}""");
-        await Call(bench, "connect", """{"from":"tone1","to":"speaker1","to_port":"left"}""");
+        await Call(bench, "connect", """{"from":"tone1","to":"output1","to_port":"left"}""");
 
         return bench;
     }
@@ -181,9 +179,8 @@ public class PatchWorkbenchTests
         var bench = Bench();
 
         await Call(bench, "add_module", """{"type_id":"osc.sine","handle":"sine1"}""");
-        await Call(bench, "add_module", """{"type_id":"video.output","handle":"screen1"}""");
 
-        var wired = await Call(bench, "connect", """{"from":"sine1","to":"screen1","to_port":"colour"}""");
+        var wired = await Call(bench, "connect", """{"from":"sine1","to":"output1","to_port":"colour"}""");
         wired.Ok.ShouldBeTrue(wired.Text);
     }
 
@@ -193,9 +190,8 @@ public class PatchWorkbenchTests
         var bench = Bench();
 
         await Call(bench, "add_module", """{"type_id":"coord","handle":"coords1"}""");
-        await Call(bench, "add_module", """{"type_id":"video.output","handle":"screen1"}""");
 
-        var wired = await Call(bench, "connect", """{"from":"coords1","to":"screen1","to_port":"colour"}""");
+        var wired = await Call(bench, "connect", """{"from":"coords1","to":"output1","to_port":"colour"}""");
 
         wired.Ok.ShouldBeFalse();
         wired.Text.ShouldContain("radius");
@@ -210,10 +206,9 @@ public class PatchWorkbenchTests
 
         await Call(bench, "add_module", """{"type_id":"osc.sine","handle":"sine1"}""");
         await Call(bench, "add_module", """{"type_id":"osc.saw","handle":"saw1"}""");
-        await Call(bench, "add_module", """{"type_id":"video.output","handle":"screen1"}""");
 
-        await Call(bench, "connect", """{"from":"sine1","to":"screen1","to_port":"colour"}""");
-        var second = await Call(bench, "connect", """{"from":"saw1","to":"screen1","to_port":"colour"}""");
+        await Call(bench, "connect", """{"from":"sine1","to":"output1","to_port":"colour"}""");
+        var second = await Call(bench, "connect", """{"from":"saw1","to":"output1","to_port":"colour"}""");
 
         second.Ok.ShouldBeTrue(second.Text);
         second.Text.ShouldContain("replacing sine1");
@@ -243,9 +238,8 @@ public class PatchWorkbenchTests
 
         await Call(bench, "add_module", """{"type_id":"math.add","handle":"add1"}""");
         await Call(bench, "add_module", """{"type_id":"math.add","handle":"add2"}""");
-        await Call(bench, "add_module", """{"type_id":"video.output","handle":"screen1"}""");
 
-        await Call(bench, "connect", """{"from":"add2","to":"screen1","to_port":"colour"}""");
+        await Call(bench, "connect", """{"from":"add2","to":"output1","to_port":"colour"}""");
         await Call(bench, "connect", """{"from":"add1","to":"add2","to_port":"a"}""");
         var closed = await Call(bench, "connect", """{"from":"add2","to":"add1","to_port":"a"}""");
 
@@ -257,7 +251,7 @@ public class PatchWorkbenchTests
     {
         var added = await Call(Bench(), "add_module", """{"type_id":"osc.sine"}""");
 
-        added.Text.ShouldContain("no output");
+        added.Text.ShouldContain("Nothing is wired into the Output");
     }
 
     /// <summary>
@@ -266,37 +260,37 @@ public class PatchWorkbenchTests
     /// has and adds it again.
     /// </summary>
     [Fact]
-    public async Task A_second_screen_is_refused_and_the_first_one_named()
+    public async Task Adding_the_output_is_refused_and_the_one_already_there_named()
     {
         var bench = await Lit();
 
-        var again = await Call(bench, "add_module", """{"type_id":"video.output","handle":"screen2"}""");
+        var again = await Call(bench, "add_module", """{"type_id":"output","handle":"output2"}""");
 
         again.Ok.ShouldBeFalse();
-        again.Text.ShouldContain("screen1");
-        bench.Snapshot().Nodes.Count(n => n.TypeId == NodeCatalog.VideoOutputTypeId).ShouldBe(1);
+        again.Text.ShouldContain("output1");
+        bench.Snapshot().Nodes.Count(n => n.TypeId == NodeCatalog.OutputTypeId).ShouldBe(1);
+    }
+
+    /// <summary>
+    /// The refusal names both sockets, because an assistant that wanted "an
+    /// audio output" needs telling that what it is after is a socket on the
+    /// block already in front of it.
+    /// </summary>
+    [Fact]
+    public async Task The_refusal_says_which_sockets_to_use_instead()
+    {
+        var again = await Call(await Lit(), "add_module", """{"type_id":"output"}""");
+
+        again.Text.ShouldContain("colour");
+        again.Text.ShouldContain("left");
     }
 
     [Fact]
-    public async Task A_second_pair_of_speakers_is_refused_too()
+    public async Task Every_bench_starts_with_its_output_already_placed()
     {
-        var bench = await Heard();
+        var bench = Bench();
 
-        var again = await Call(bench, "add_module", """{"type_id":"audio.output"}""");
-
-        again.Ok.ShouldBeFalse();
-        again.Text.ShouldContain("speaker1");
-    }
-
-    /// <summary>One of each is the pair ADR-0022 is about, and is not one too many.</summary>
-    [Fact]
-    public async Task A_patch_with_a_screen_still_takes_an_audio_output()
-    {
-        var bench = await Lit();
-
-        var speakers = await Call(bench, "add_module", """{"type_id":"audio.output"}""");
-
-        speakers.Ok.ShouldBeTrue(speakers.Text);
+        bench.Snapshot().Nodes.ShouldHaveSingleItem().TypeId.ShouldBe(NodeCatalog.OutputTypeId);
     }
 
     [Fact]
@@ -305,7 +299,7 @@ public class PatchWorkbenchTests
         var bench = await Lit();
         var edits = bench.Edits;
 
-        await Call(bench, "add_module", """{"type_id":"video.output"}""");
+        await Call(bench, "add_module", """{"type_id":"output"}""");
 
         // A refusal that had half-placed the module would leave a handle
         // reserved for a node that is not there.
@@ -320,7 +314,7 @@ public class PatchWorkbenchTests
     {
         var bench = await Lit(0.25f);
 
-        var cut = await Call(bench, "disconnect", """{"handle":"screen1","port":"colour"}""");
+        var cut = await Call(bench, "disconnect", """{"handle":"output1","port":"colour"}""");
 
         cut.Ok.ShouldBeTrue(cut.Text);
         bench.Snapshot().Connections.ShouldBeEmpty();
@@ -349,7 +343,9 @@ public class PatchWorkbenchTests
         await Call(bench, "add_module", """{"type_id":"osc.sine"}""");
         await Call(bench, "reset");
 
-        bench.Snapshot().Nodes.ShouldBeEmpty();
+        // Back to what was open, which is never nothing: the Output survives a
+        // reset because every patch has one.
+        bench.Snapshot().Nodes.ShouldHaveSingleItem().TypeId.ShouldBe(NodeCatalog.OutputTypeId);
     }
 
     // --- proposing ----------------------------------------------------------
@@ -363,10 +359,9 @@ public class PatchWorkbenchTests
         // compiler is what refuses it — so this is how a genuine fault gets in.
         await Call(bench, "add_module", """{"type_id":"osc.sine","handle":"sine1"}""");
         await Call(bench, "add_module", """{"type_id":"osc.sine","handle":"sine2"}""");
-        await Call(bench, "add_module", """{"type_id":"video.output","handle":"screen1"}""");
         await Call(bench, "connect", """{"from":"sine1","to":"sine2","to_port":"in"}""");
         await Call(bench, "connect", """{"from":"sine2","to":"sine1","to_port":"in"}""");
-        await Call(bench, "connect", """{"from":"sine1","to":"screen1","to_port":"colour"}""");
+        await Call(bench, "connect", """{"from":"sine1","to":"output1","to_port":"colour"}""");
 
         var offered = await Call(bench, "propose", """{"summary":"a tone"}""");
 
@@ -422,7 +417,7 @@ public class PatchWorkbenchTests
         var offered = await Call(bench, "propose", """{"summary":"a tone"}""");
 
         offered.Ok.ShouldBeFalse();
-        offered.Text.ShouldContain("Audio Output");
+        offered.Text.ShouldContain("nothing is wired into the Output");
         bench.HasProposal.ShouldBeFalse();
     }
 
@@ -440,27 +435,26 @@ public class PatchWorkbenchTests
 
         told.Text.ShouldNotContain("no output");
         (await Call(bench, "set_knobs", """
-            {"handle":"speaker1","knobs":[{"port":"gain","value":0.8}]}
+            {"handle":"output1","knobs":[{"port":"gain","value":0.8}]}
             """)).Text.ShouldContain("No issues.");
     }
 
     /// <summary>
-    /// The moment one sink arrives the complaint about the other goes, which is
-    /// what stops it being noise for the whole of the rest of the run.
+    /// The moment anything reaches the sink the complaint goes, which is what
+    /// stops it being noise for the whole of the rest of the run. There is no
+    /// longer a complaint about *having* no output — the block is always there,
+    /// so the only thing left to say is that nothing arrives at it.
     /// </summary>
     [Fact]
-    public async Task Adding_either_output_settles_the_complaint_about_having_none()
+    public async Task Wiring_the_output_settles_the_complaint_about_reaching_nothing()
     {
         var bench = Bench();
 
-        (await Call(bench, "add_module", """{"type_id":"osc.sine"}"""))
-            .Text.ShouldContain("no output");
+        (await Call(bench, "add_module", """{"type_id":"value","handle":"knob1"}"""))
+            .Text.ShouldContain("Nothing is wired into the Output");
 
-        // Not "No issues.": the sink has only just arrived with nothing wired
-        // into it, which is its own remark. What has gone is the complaint that
-        // the patch has nowhere to come out at all.
-        (await Call(bench, "add_module", """{"type_id":"audio.output"}"""))
-            .Text.ShouldNotContain("no output");
+        (await Call(bench, "connect", """{"from":"knob1","to":"output1","to_port":"colour"}"""))
+            .Text.ShouldNotContain("Nothing is wired into the Output");
     }
 
     /// <summary>
@@ -473,9 +467,9 @@ public class PatchWorkbenchTests
     {
         var bench = Bench();
 
-        var added = await Call(bench, "add_module", """{"type_id":"video.output","handle":"screen1"}""");
+        var added = await Call(bench, "add_module", """{"type_id":"osc.sine"}""");
 
-        added.Text.ShouldContain("Nothing is wired into the Video Output");
+        added.Text.ShouldContain("Nothing is wired into the Output");
     }
 
     [Fact]
@@ -497,8 +491,7 @@ public class PatchWorkbenchTests
         var bench = Bench();
 
         await Call(bench, "add_module", """{"type_id":"osc.sine","handle":"tone1"}""");
-        await Call(bench, "add_module", """{"type_id":"video.output","handle":"screen1"}""");
-        var wired = await Call(bench, "connect", """{"from":"tone1","to":"screen1","to_port":"colour"}""");
+        var wired = await Call(bench, "connect", """{"from":"tone1","to":"output1","to_port":"colour"}""");
 
         wired.Text.ShouldContain("Worth knowing");
         wired.Text.ShouldContain("never moves");
@@ -518,8 +511,7 @@ public class PatchWorkbenchTests
         var bench = Bench();
 
         await Call(bench, "add_module", """{"type_id":"osc.sine","handle":"tone1"}""");
-        await Call(bench, "add_module", """{"type_id":"audio.output","handle":"speaker1"}""");
-        var wired = await Call(bench, "connect", """{"from":"tone1","to":"speaker1","to_port":"left"}""");
+        var wired = await Call(bench, "connect", """{"from":"tone1","to":"output1","to_port":"left"}""");
 
         wired.Text.ShouldContain("Worth knowing");
         wired.Text.ShouldContain("never moves");
@@ -536,10 +528,8 @@ public class PatchWorkbenchTests
         var bench = Bench();
 
         await Call(bench, "add_module", """{"type_id":"osc.sine","handle":"tone1"}""");
-        await Call(bench, "add_module", """{"type_id":"video.output","handle":"screen1"}""");
-        await Call(bench, "add_module", """{"type_id":"audio.output","handle":"speaker1"}""");
-        await Call(bench, "connect", """{"from":"tone1","to":"screen1","to_port":"colour"}""");
-        var wired = await Call(bench, "connect", """{"from":"tone1","to":"speaker1","to_port":"left"}""");
+        await Call(bench, "connect", """{"from":"tone1","to":"output1","to_port":"colour"}""");
+        var wired = await Call(bench, "connect", """{"from":"tone1","to":"output1","to_port":"left"}""");
 
         var said = wired.Text;
         var first = said.IndexOf("never moves", StringComparison.Ordinal);
@@ -555,9 +545,8 @@ public class PatchWorkbenchTests
 
         await Call(bench, "add_module", """{"type_id":"time","handle":"clock1"}""");
         await Call(bench, "add_module", """{"type_id":"osc.sine","handle":"tone1"}""");
-        await Call(bench, "add_module", """{"type_id":"video.output","handle":"screen1"}""");
         await Call(bench, "connect", """{"from":"clock1","to":"tone1","to_port":"in"}""");
-        var wired = await Call(bench, "connect", """{"from":"tone1","to":"screen1","to_port":"colour"}""");
+        var wired = await Call(bench, "connect", """{"from":"tone1","to":"output1","to_port":"colour"}""");
 
         wired.Text.ShouldContain("No issues.");
     }
@@ -572,8 +561,7 @@ public class PatchWorkbenchTests
         var bench = Bench();
 
         await Call(bench, "add_module", """{"type_id":"osc.sine","handle":"tone1"}""");
-        await Call(bench, "add_module", """{"type_id":"video.output","handle":"screen1"}""");
-        await Call(bench, "connect", """{"from":"tone1","to":"screen1","to_port":"colour"}""");
+        await Call(bench, "connect", """{"from":"tone1","to":"output1","to_port":"colour"}""");
 
         var offered = await Call(bench, "propose", """{"summary":"a flat field"}""");
 
@@ -601,7 +589,7 @@ public class PatchWorkbenchTests
         var told = await Call(await Lit(0.25f), "describe_patch");
 
         told.Text.ShouldContain("knob1 = value");
-        told.Text.ShouldContain("screen1 = video.output");
+        told.Text.ShouldContain("output1 = output");
         told.Text.ShouldContain("colour <- knob1.out");
         told.Text.ShouldContain("0.25");
     }
@@ -632,7 +620,7 @@ public class PatchWorkbenchTests
 
         looked.Ok.ShouldBeFalse();
         looked.Png.ShouldBeNull();
-        looked.Text.ShouldContain("no Video Output");
+        looked.Text.ShouldContain("'colour'");
     }
 
     /// <summary>
@@ -650,10 +638,9 @@ public class PatchWorkbenchTests
         await Call(bench, "add_module", """
             {"type_id":"colour.gain","handle":"gain1","knobs":[{"port":"gain","value":1},{"port":"bias","value":0.1}]}
             """);
-        await Call(bench, "add_module", """{"type_id":"video.output","handle":"screen1"}""");
 
         await Call(bench, "connect", """{"from":"previous1","to":"gain1","to_port":"colour"}""");
-        var wired = await Call(bench, "connect", """{"from":"gain1","to":"screen1","to_port":"colour"}""");
+        var wired = await Call(bench, "connect", """{"from":"gain1","to":"output1","to_port":"colour"}""");
         wired.Ok.ShouldBeTrue(wired.Text);
 
         var cold = await Call(bench, "render", """{"times":[0]}""");
@@ -684,7 +671,7 @@ public class PatchWorkbenchTests
         var patch = (await Lit()).Snapshot();
 
         var knob = patch.Nodes.Single(n => n.TypeId == "value");
-        var screen = patch.Nodes.Single(n => n.TypeId == NodeCatalog.VideoOutputTypeId);
+        var screen = patch.Nodes.Single(n => n.TypeId == NodeCatalog.OutputTypeId);
 
         screen.X.ShouldBeGreaterThan(knob.X);
     }
@@ -747,13 +734,14 @@ public class PatchWorkbenchTests
     [Fact]
     public async Task Running_out_of_room_for_modules_is_said_rather_than_thrown()
     {
-        var bench = Bench(new WorkbenchLimits(MaxNodes: 1));
+        // Two, because the Output is already one of them before anything is added.
+        var bench = Bench(new WorkbenchLimits(MaxNodes: 2));
 
         (await Call(bench, "add_module", """{"type_id":"osc.sine"}""")).Ok.ShouldBeTrue();
 
         var second = await Call(bench, "add_module", """{"type_id":"osc.saw"}""");
         second.Ok.ShouldBeFalse();
-        second.Text.ShouldContain("1 modules");
+        second.Text.ShouldContain("2 modules");
     }
 
     [Fact]

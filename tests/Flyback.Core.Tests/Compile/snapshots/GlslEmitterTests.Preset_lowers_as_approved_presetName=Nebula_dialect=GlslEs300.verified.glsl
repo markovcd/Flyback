@@ -196,6 +196,8 @@ void main()
     float r79 = max(r24, r76);
     float r80 = max(r25, r77);
     float r81 = max(r26, r78);
+    float r82 = r20 * r20;
+    float r83 = r20 * r20;
 
     fragColour = vec4(sat(r79), sat(r80), sat(r81), 1.0);
 }

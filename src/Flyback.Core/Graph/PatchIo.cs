@@ -104,6 +104,13 @@ public static class PatchIo
             .Order(StringComparer.Ordinal)
             .ToList();
 
+        // A file is the one way a patch can arrive without one — hand-edited,
+        // or written by a build that had a different idea of the sink. Given
+        // back rather than refused: a patch short of its Output is a patch with
+        // an Output added, and everything else in the file still means what it
+        // said.
+        if (unknown.Count == 0) patch.EnsureOutput(catalog);
+
         return new PatchLoad(patch, missing, unknown);
     }
 

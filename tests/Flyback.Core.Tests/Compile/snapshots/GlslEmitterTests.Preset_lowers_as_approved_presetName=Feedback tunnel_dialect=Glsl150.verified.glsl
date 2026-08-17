@@ -158,6 +158,8 @@ void main()
     float r44 = max(r26, r41);
     float r45 = max(r27, r42);
     float r46 = max(r28, r43);
+    float r47 = r22 * r22;
+    float r48 = r22 * r22;
 
     fragColour = vec4(sat(r44), sat(r45), sat(r46), 1.0);
 }

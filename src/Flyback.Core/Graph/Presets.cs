@@ -48,7 +48,6 @@ public static class Presets
         var note = b.Add("audio.note", 640, 180);
         var tone = b.Add("osc.sine", 840, 180);
         var voiced = b.Add("math.mul", 1040, 200);
-        var speaker = b.Add(NodeCatalog.AudioOutputTypeId, 1240, 220, (2, 0.5f));
 
         // Eye: rings whose count is the position in the pattern, so the picture
         // reorganises itself on the beat rather than drifting through it.
@@ -68,7 +67,8 @@ public static class Presets
         var pulse = b.Add("math.remap", 1040, 860, (1, 0f), (2, 1f), (3, 0.4f), (4, 1f));
         var lit = b.Add("math.mul", 1040, 700);
         var colour = b.Add("colour.hsv", 1240, 620, (1, 0.8f));
-        var screen = b.Add(NodeCatalog.VideoOutputTypeId, 1440, 640);
+
+        var output = b.Add(NodeCatalog.OutputTypeId, 1440, 420, (NodeCatalog.OutputGainPort, 0.5f));
 
         b.Wire(time, 0, steps, 0)
          .Wire(steps, 0, note, 0)
@@ -76,7 +76,7 @@ public static class Presets
          .Wire(note, 0, tone, 1)
          .Wire(tone, 0, voiced, 0)
          .Wire(steps, 1, voiced, 1)
-         .Wire(voiced, 0, speaker, 0)
+         .Wire(voiced, 0, output, NodeCatalog.OutputLeftPort)
 
          .Wire(coord, 0, rings, 0)
          .Wire(coord, 1, rings, 1)
@@ -88,16 +88,16 @@ public static class Presets
          .Wire(pulse, 0, lit, 1)
          .Wire(steps, 2, colour, 0)
          .Wire(lit, 0, colour, 2)
-         .Wire(colour, 0, screen, 0);
+         .Wire(colour, 0, output, NodeCatalog.OutputColourPort);
 
         return b.Patch;
     }
 
-    /// <summary>Just an Output node with something to plug into.</summary>
+    /// <summary>Just the Output, with everything still to plug into it.</summary>
     public static Patch Empty(ModuleCatalog modules)
     {
         var b = new PatchBuilder(modules);
-        b.Add(NodeCatalog.VideoOutputTypeId, 640, 260);
+        b.Add(NodeCatalog.OutputTypeId, 640, 260);
         return b.Patch;
     }
 
@@ -116,7 +116,7 @@ public static class Presets
         var sum = b.Add("math.add", 500, 200);
         var hue = b.Add("math.remap", 660, 200, (1, -2f), (2, 2f), (3, 0f), (4, 1f));
         var colour = b.Add("colour.hsv", 860, 200, (1, 0.85f), (2, 1f));
-        var output = b.Add(NodeCatalog.VideoOutputTypeId, 1060, 220);
+        var output = b.Add(NodeCatalog.OutputTypeId, 1060, 220);
 
         b.Wire(coord, 0, horizontal, 0)
          .Wire(coord, 1, vertical, 0)
@@ -143,7 +143,7 @@ public static class Presets
         var fold = b.Add("space.kaleidoscope", 470, 200, (2, 6f));
         var noise = b.Add("pattern.noise", 680, 240, (3, 2.5f));
         var colour = b.Add("colour.hsv", 890, 240, (1, 0.9f), (2, 1f));
-        var output = b.Add(NodeCatalog.VideoOutputTypeId, 1090, 260);
+        var output = b.Add(NodeCatalog.OutputTypeId, 1090, 260);
 
         b.Wire(coord, 0, rotate, 0)
          .Wire(coord, 1, rotate, 1)
@@ -178,25 +178,27 @@ public static class Presets
         var pitch = b.Add("audio.frequency", 260, 560, (0, 110f));
         var tone = b.Add("osc.sine", 470, 560, (1, 110f));
         var tremolo = b.Add("math.mul", 700, 580);
-        var speaker = b.Add(NodeCatalog.AudioOutputTypeId, 900, 600, (2, 0.6f));
 
         // Eye.
         var rings = b.Add("pattern.rings", 260, 80, (2, 3f));
         var tint = b.Add("colour.hsv", 700, 140, (1, 0.85f));
-        var screen = b.Add(NodeCatalog.VideoOutputTypeId, 920, 160);
+
+        // Both halves land on the one block, which is what makes the shared
+        // oscillator legible: two wires into the same module, from the same sine.
+        var output = b.Add(NodeCatalog.OutputTypeId, 920, 340, (NodeCatalog.OutputGainPort, 0.6f));
 
         b.Wire(time, 0, slow, 0)
          .Wire(time, 0, tone, 0)
          .Wire(pitch, 0, tone, 1)
          .Wire(tone, 0, tremolo, 0)
          .Wire(slow, 0, tremolo, 1)
-         .Wire(tremolo, 0, speaker, 0)
+         .Wire(tremolo, 0, output, NodeCatalog.OutputLeftPort)
          .Wire(coord, 0, rings, 0)
          .Wire(coord, 1, rings, 1)
          .Wire(time, 0, rings, 3)
          .Wire(slow, 0, tint, 0)
          .Wire(rings, 0, tint, 2)
-         .Wire(tint, 0, screen, 0);
+         .Wire(tint, 0, output, NodeCatalog.OutputColourPort);
 
         return b.Patch;
     }
@@ -248,7 +250,6 @@ public static class Presets
 
         // Ear.
         var tone = b.Add("osc.sine", 880, 460);
-        var speaker = b.Add(NodeCatalog.AudioOutputTypeId, 1100, 480, (2, 0.5f));
 
         // Eye: one hue per semitone, wrapped so an octave is a full turn of the
         // wheel and the same note always comes out the same colour.
@@ -261,7 +262,8 @@ public static class Presets
         var glow = b.Add("math.remap", 1080, 300, (1, -1.8f), (2, 0.5f), (3, 0.08f), (4, 1f));
 
         var colour = b.Add("colour.hsv", 1270, 140, (1, 0.85f));
-        var screen = b.Add(NodeCatalog.VideoOutputTypeId, 1470, 160);
+
+        var output = b.Add(NodeCatalog.OutputTypeId, 1470, 300, (NodeCatalog.OutputGainPort, 0.5f));
 
         b.Wire(time, 0, ramp, 0)
          .Wire(coord, 2, spread, 0)
@@ -270,13 +272,13 @@ public static class Presets
          .Wire(sweep, 0, note, 1)
          .Wire(time, 0, tone, 0)
          .Wire(note, 0, tone, 1)
-         .Wire(tone, 0, speaker, 0)
+         .Wire(tone, 0, output, NodeCatalog.OutputLeftPort)
          .Wire(note, 1, wheel, 0)
          .Wire(wheel, 0, hue, 0)
          .Wire(sweep, 0, glow, 0)
          .Wire(hue, 0, colour, 0)
          .Wire(glow, 0, colour, 2)
-         .Wire(colour, 0, screen, 0);
+         .Wire(colour, 0, output, NodeCatalog.OutputColourPort);
 
         return b.Patch;
     }
@@ -350,7 +352,7 @@ public static class Presets
         // keeps its brightness, which is what makes the streaks read as trails
         // rather than as a smeared copy.
         var combine = b.Add("math.max", 1470, 620);
-        var screen = b.Add(NodeCatalog.VideoOutputTypeId, 1660, 640);
+        var output = b.Add(NodeCatalog.OutputTypeId, 1660, 640);
 
         b.Wire(coord, 0, turn, 0)
          .Wire(coord, 1, turn, 1)
@@ -381,7 +383,7 @@ public static class Presets
          .Wire(previous, 0, trail, 0)
          .Wire(trail, 0, combine, 0)
          .Wire(fresh, 0, combine, 1)
-         .Wire(combine, 0, screen, 0);
+         .Wire(combine, 0, output, NodeCatalog.OutputColourPort);
 
         return b.Patch;
     }
@@ -409,7 +411,7 @@ public static class Presets
         var tint = b.Add("colour.hsv", 640, 520, (1, 1f));
 
         var combine = b.Add("math.max", 950, 300);
-        var output = b.Add(NodeCatalog.VideoOutputTypeId, 1130, 320);
+        var output = b.Add(NodeCatalog.OutputTypeId, 1130, 320);
 
         b.Wire(coord, 0, rotate, 0)
          .Wire(coord, 1, rotate, 1)

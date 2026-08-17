@@ -9,7 +9,7 @@ Feature: Inputs carry their own value until something is patched in
     Given a patch containing:
       | name   | module       |
       | knob   | value        |
-      | screen | video.output |
+      | screen | output       |
     And "knob" input "value" is set to 0.25
     And "knob" output "out" is wired to "screen" input "colour"
     When the patch is compiled
@@ -20,7 +20,7 @@ Feature: Inputs carry their own value until something is patched in
       | name   | module       |
       | knob   | value        |
       | sum    | math.add     |
-      | screen | video.output |
+      | screen | output       |
     And "sum" input "a" is set to 0.9
     And "sum" input "b" is set to 0
     And "knob" input "value" is set to 0.2
@@ -37,7 +37,7 @@ Feature: Inputs carry their own value until something is patched in
     Given a patch containing:
       | name   | module       |
       | osc    | osc.sine     |
-      | screen | video.output |
+      | screen | output       |
     And "osc" input "in" is set to 0.25
     And "osc" input "freq" is set to 1
     And "osc" has only 2 stored input values

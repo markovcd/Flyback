@@ -30,7 +30,7 @@ public class ModulePluginTests
     [Fact]
     public void The_engines_own_modules_are_still_there()
     {
-        Shipped().Get("video.output").ShouldNotBeNull();
+        Shipped().Get("output").ShouldNotBeNull();
     }
 
     [Fact]
@@ -50,7 +50,7 @@ public class ModulePluginTests
 
         var patch = new Patch();
         var ripple = NodeInstance.Create(catalog.Require(Ripple), 0, 0);
-        var output = NodeInstance.Create(catalog.Require("video.output"), 200, 0);
+        var output = NodeInstance.Create(catalog.Require("output"), 200, 0);
 
         patch.Nodes.Add(ripple);
         patch.Nodes.Add(output);

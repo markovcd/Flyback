@@ -25,8 +25,8 @@ public class SessionTests
     private static readonly (string Name, string Arguments)[] Building =
     [
         ("add_module", """{"type_id":"value","handle":"knob1","knobs":[{"port":"value","value":0.5}]}"""),
-        ("add_module", """{"type_id":"video.output","handle":"screen1"}"""),
-        ("connect", """{"from":"knob1","to":"screen1","to_port":"colour"}"""),
+        // The Output is already there under the handle the workbench gave it.
+        ("connect", """{"from":"knob1","to":"output1","to_port":"colour"}"""),
     ];
 
     [Fact]

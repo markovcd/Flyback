@@ -1,6 +1,7 @@
 # ADR-0011: Compile backwards from the Output node
 
-**Status:** Accepted · 2026-08-11
+**Status:** Accepted · 2026-08-11 · amended by
+[0037](0037-one-output-block-that-every-patch-has.md)
 
 ## Context
 
@@ -96,6 +97,15 @@ aimed at one of them is the normal case rather than a mistake; only a patch
 aimed at neither is remarked on.
 
 ## Amendments
+
+**2026-08-17 (later) — one sink, and it is always there.**
+[0037](0037-one-output-block-that-every-patch-has.md) merged the two sink modules
+into one `output` that every patch carries. The traversal is still untouched and
+still takes the first it finds; what changed is that the walk now starts from a
+*subset of that node's inputs* rather than from whichever of two nodes was asked
+for, so the two programs stay as separate as they were. The amendment below is
+superseded in its first paragraph and stands in its second: a sink nothing
+reaches is still remarked on, once, and is still a `Warning`.
 
 **2026-08-17 — one sink each, and an empty one is remarked on.** Two paragraphs
 above have moved. "If multiple Output nodes exist, the first in list order wins"

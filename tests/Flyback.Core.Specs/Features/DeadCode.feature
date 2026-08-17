@@ -9,7 +9,7 @@ Feature: Only what the Output can reach is compiled
       | name    | module        |
       | coords  | coord         |
       | rubbish | pattern.noise |
-      | screen  | video.output  |
+      | screen  | output        |
     And "coords" output "x" is wired to "screen" input "colour"
     When the patch is compiled
     Then compilation reports no issues
@@ -22,7 +22,7 @@ Feature: Only what the Output can reach is compiled
       | name   | module       |
       | coords | coord        |
       | tint   | colour.hsv   |
-      | screen | video.output |
+      | screen | output       |
     And "coords" output "x" is wired to "tint" input "hue"
     And "coords" output "x" is wired to "tint" input "saturation"
     And "coords" output "x" is wired to "tint" input "value"

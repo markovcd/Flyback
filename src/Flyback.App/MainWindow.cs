@@ -31,7 +31,54 @@ public sealed class MainWindow : Window
 
     private static readonly PixelSize ExportSize = new(1920, 1080);
 
-    private const int ExportSeconds = 10;
+    /// <summary>
+    /// How long an export runs. The only thing about an export that cannot be
+    /// defaulted sensibly — a patch is an endless function of time, so where to
+    /// stop is a decision rather than a setting — which is why it is a control
+    /// on the toolbar rather than a constant in here, and why both exports read
+    /// the same one.
+    /// </summary>
+    private readonly NumericUpDown length = new()
+    {
+        Value = 10m,
+        Minimum = 1m,
+        Maximum = 600m,
+        Increment = 5m,
+        FormatString = "0",
+        Width = 96,
+    };
+
+    /// <summary>
+    /// Fixed width, because its label becomes the one that stops an export and
+    /// a button that resizes mid-render drags the panel around with it.
+    /// </summary>
+    private readonly Button exportVideo = new() { Content = "Export video…", Width = 118 };
+
+    private readonly Button exportAudio = new() { Content = "Render audio…" };
+    private readonly Button exportFrame = new() { Content = "Save frame…" };
+
+    private readonly ComboBox resolution = new()
+    {
+        ItemsSource = Resolutions.Select(r => r.Label).ToList(),
+        SelectedIndex = DefaultResolution,
+        HorizontalAlignment = HorizontalAlignment.Stretch,
+    };
+
+    /// <summary>960 x 540: enough to judge a patch by, cheap enough to keep up.</summary>
+    private const int DefaultResolution = 3;
+
+    /// <summary>
+    /// The Output's own panel, assembled once and shown whenever that block is
+    /// selected. Its contents outlive the inspector being rebuilt.
+    /// </summary>
+    private readonly StackPanel outputSettings = new()
+    {
+        Spacing = 8,
+        Margin = new Thickness(0, 16, 0, 0),
+    };
+
+    /// <summary>Live while an export is running, and the only thing that says one is.</summary>
+    private CancellationTokenSource? export;
 
     private readonly NodeEditor editor = new();
     private readonly PreviewHost preview = new();
@@ -81,14 +128,6 @@ public sealed class MainWindow : Window
     /// found and ticked.
     /// </summary>
     private readonly HashSet<string> hidden = [];
-
-    /// <summary>
-    /// The palette buttons for the two sinks, with the tooltip each carries
-    /// while it can still be clicked. Held on to so the pair can be greyed out
-    /// as the patch gains and loses them without rebuilding the whole list,
-    /// which is what turning a knob would otherwise cost.
-    /// </summary>
-    private readonly Dictionary<string, (Button Button, string Tip)> sinkButtons = [];
 
     private readonly StackPanel inspector = new() { Margin = new Thickness(12), Spacing = 8 };
     private readonly TextBlock status = new() { VerticalAlignment = VerticalAlignment.Center };
@@ -150,12 +189,13 @@ public sealed class MainWindow : Window
         WindowStartupLocation = WindowStartupLocation.CenterScreen;
         Background = new SolidColorBrush(Color.FromRgb(0x16, 0x18, 0x1B));
 
-        editor.PatchChanged += (_, _) =>
-        {
-            Recompile();
-            MarkSinksTaken();
-        };
+        editor.PatchChanged += (_, _) => Recompile();
         editor.SelectionChanged += (_, _) => BuildInspector();
+
+        // Before the layout, because these are live from the moment the window
+        // is: the preview needs its resolution and its backend whether or not
+        // anybody has selected the Output to look at them.
+        WireOutputControls();
 
         Content = BuildLayout();
 
@@ -296,6 +336,76 @@ public sealed class MainWindow : Window
         assistantRow.Height = shown ? assistantShare : new GridLength(0);
     }
 
+    /// <summary>
+    /// Sets up the controls that live on the Output's panel. Called once, from
+    /// the constructor, rather than while building that panel: these are the
+    /// state of the instrument and not of a selection, so they have to work
+    /// before anything has been selected and keep their values after the panel
+    /// showing them has been torn down and rebuilt.
+    /// </summary>
+    private void WireOutputControls()
+    {
+        resolution.SelectionChanged += (_, _) =>
+        {
+            if (resolution.SelectedIndex >= 0)
+                preview.Resolution = Resolutions[resolution.SelectedIndex].Size;
+        };
+        preview.Resolution = Resolutions[DefaultResolution].Size;
+
+        // On by default, because it is the one that keeps up with a large patch.
+        // Turning it off is how two backends get compared, and the answer to a
+        // long session drifting — see ADR-0035 on float32 and the phase
+        // accumulator. It disables itself if the GPU turns out to be unusable.
+        gpuButton.IsChecked = true;
+        gpuButton.IsCheckedChanged += (_, _) =>
+            preview.Use(gpuButton.IsChecked == true ? PreviewBackend.Gpu : PreviewBackend.Cpu);
+
+        preview.BackendChanged += message =>
+        {
+            gpuButton.IsChecked = preview.Backend == PreviewBackend.Gpu;
+            gpuButton.IsEnabled = preview.GpuAvailable;
+            ToolTip.SetTip(gpuButton, preview.GpuAvailable ? GpuTip : message);
+            Report(message);
+        };
+
+        ToolTip.SetTip(exportFrame, $"Render the current moment at {ExportSize.Width} x {ExportSize.Height} and write a PNG.");
+        exportFrame.Click += async (_, _) => await SaveFrameAsync();
+
+        // It cannot be switched on at all where no plugin offered a device. The
+        // constructor turns it on once there is a patch to play — see there for
+        // why it starts on rather than off.
+        audioButton.IsEnabled = sound.Output is not null;
+        ToolTip.SetTip(audioButton, sound.Output is { } output
+            ? $"Play the patch through {output.Name}. Needs something wired into 'left'."
+            : "No sound backend is installed. See the status bar for where plugins are looked for.");
+        audioButton.IsCheckedChanged += (_, _) => SetAudioEnabled(audioButton.IsChecked == true);
+
+        ToolTip.SetTip(length, "How many seconds either export writes.");
+
+        ToolTip.SetTip(exportAudio, "Render the patch to a WAV file, for as long as Length says.");
+        exportAudio.Click += async (_, _) => await SaveAudioAsync();
+
+        ToolTip.SetTip(exportVideo,
+            "Render both halves of the Output to an AVI — the picture as Motion JPEG at " +
+            $"{MovieRenderer.DefaultFrameRate:0} frames a second, the sound alongside it. " +
+            "The frame is whatever Size says.");
+        exportVideo.Click += async (_, _) =>
+        {
+            // The same button stops it. An export is the one thing here that
+            // runs long enough to be worth abandoning, and it is already the
+            // control your eye is on.
+            if (export is not null)
+            {
+                export.Cancel();
+                return;
+            }
+
+            await SaveVideoAsync();
+        };
+
+        BuildOutputSettings();
+    }
+
     private Control BuildToolbar()
     {
         // Plugin presets sit after the engine's own, so the list the app opens
@@ -347,52 +457,6 @@ public sealed class MainWindow : Window
             preview.Rewind();
         };
 
-        // It cannot be switched on at all where no plugin offered a device. The
-        // constructor turns it on once there is a patch to play — see there for
-        // why it starts on rather than off.
-        audioButton.IsEnabled = sound.Output is not null;
-        ToolTip.SetTip(audioButton, sound.Output is { } output
-            ? $"Play the patch through {output.Name}. Needs an Audio Output module."
-            : "No sound backend is installed. See the status bar for where plugins are looked for.");
-        audioButton.IsCheckedChanged += (_, _) => SetAudioEnabled(audioButton.IsChecked == true);
-
-        var exportAudio = new Button { Content = "Render audio…" };
-        ToolTip.SetTip(exportAudio, $"Render {ExportSeconds} seconds of the patch to a WAV file.");
-        exportAudio.Click += async (_, _) => await SaveAudioAsync();
-
-        var resolution = new ComboBox
-        {
-            ItemsSource = Resolutions.Select(r => r.Label).ToList(),
-            SelectedIndex = 3,
-            Width = 130,
-        };
-        resolution.SelectionChanged += (_, _) =>
-        {
-            if (resolution.SelectedIndex >= 0)
-                preview.Resolution = Resolutions[resolution.SelectedIndex].Size;
-        };
-        preview.Resolution = Resolutions[3].Size;
-
-        // On by default, because it is the one that keeps up with a large patch.
-        // Turning it off is how two backends get compared, and the answer to a
-        // long session drifting — see ADR-0035 on float32 and the phase
-        // accumulator. It disables itself if the GPU turns out to be unusable.
-        gpuButton.IsChecked = true;
-        gpuButton.IsCheckedChanged += (_, _) =>
-            preview.Use(gpuButton.IsChecked == true ? PreviewBackend.Gpu : PreviewBackend.Cpu);
-
-        preview.BackendChanged += message =>
-        {
-            gpuButton.IsChecked = preview.Backend == PreviewBackend.Gpu;
-            gpuButton.IsEnabled = preview.GpuAvailable;
-            ToolTip.SetTip(gpuButton, preview.GpuAvailable ? GpuTip : message);
-            Report(message);
-        };
-
-        var exportFrame = new Button { Content = "Save frame…" };
-        ToolTip.SetTip(exportFrame, $"Render the current moment at {ExportSize.Width} x {ExportSize.Height} and write a PNG.");
-        exportFrame.Click += async (_, _) => await SaveFrameAsync();
-
         var bar = new StackPanel
         {
             Orientation = Orientation.Horizontal,
@@ -409,20 +473,12 @@ public sealed class MainWindow : Window
         bar.Children.Add(playButton);
         bar.Children.Add(rewind);
         bar.Children.Add(Separator());
-        bar.Children.Add(Label("Preview"));
-        bar.Children.Add(resolution);
-        bar.Children.Add(gpuButton);
-        bar.Children.Add(exportFrame);
         assistantButton.IsEnabled = plugins.Assistants.Count > 0;
         ToolTip.SetTip(assistantButton, plugins.Assistants.Count > 0
             ? "Describe a patch and have one built. Nothing is sent until you ask, and nothing applied until you accept."
             : "No assistant plugin is installed. See the status bar for where plugins are looked for.");
         assistantButton.IsCheckedChanged += (_, _) => ShowAssistant(assistantButton.IsChecked == true);
 
-        bar.Children.Add(Separator());
-        bar.Children.Add(audioButton);
-        bar.Children.Add(exportAudio);
-        bar.Children.Add(Separator());
         bar.Children.Add(assistantButton);
 
         return new Border
@@ -538,7 +594,6 @@ public sealed class MainWindow : Window
         var matches = NodeCatalog.All.Where(d => Matches(d, text)).ToList();
 
         modules.Children.Clear();
-        sinkButtons.Clear();
 
         if (matches.Count == 0)
         {
@@ -588,28 +643,7 @@ public sealed class MainWindow : Window
                 var typeId = def.TypeId;
                 button.Click += (_, _) => editor.AddNode(typeId);
                 modules.Children.Add(button);
-
-                if (NodeCatalog.IsSink(typeId)) sinkButtons[typeId] = (button, tip);
             }
-        }
-
-        MarkSinksTaken();
-    }
-
-    /// <summary>
-    /// Greys out the sink a patch already has, since it may have only one of
-    /// each. The tooltip says why rather than leaving a dead button to be
-    /// puzzled over, and the button comes back the moment the sink is deleted.
-    /// </summary>
-    private void MarkSinksTaken()
-    {
-        foreach (var (typeId, (button, tip)) in sinkButtons)
-        {
-            var free = editor.Patch.CanAdd(typeId);
-
-            button.IsEnabled = free;
-            ToolTip.SetTip(button, free ? tip : $"{button.Content} is already in this patch, "
-                + "and a patch has one of each output. Delete it to place another.");
         }
     }
 
@@ -638,6 +672,11 @@ public sealed class MainWindow : Window
     /// </summary>
     private bool Matches(NodeDef def, string text)
     {
+        // The Output is never listed. Every patch has one already and cannot
+        // have a second, so a button for it could only ever select the one that
+        // is there — and a palette entry that never adds anything is a puzzle.
+        if (NodeCatalog.IsSink(def.TypeId)) return false;
+
         if (plugins.Modules.ProviderOf(def.TypeId) is { } from && hidden.Contains(from.Id)) return false;
 
         return text.Length == 0
@@ -725,7 +764,12 @@ public sealed class MainWindow : Window
         {
             inspector.Children.Add(new TextBlock
             {
+                // The Output is named first because everything that used to be
+                // along the top of the window is now behind it, and a setting
+                // nobody can find is worse than one in the wrong place.
                 Text = "Select a module to edit its values.\n\n"
+                     + "Select the Output for the preview size, the renderer, "
+                     + "sound, and saving a frame or a clip.\n\n"
                      + "Drag from a socket to patch it into another.\n"
                      + "Drag a connected input to unplug it.\n"
                      + "Right-drag or drag the background to pan, wheel to zoom.\n"
@@ -772,6 +816,17 @@ public sealed class MainWindow : Window
                 FontSize = 12,
             });
 
+        // Everything about seeing and hearing the patch hangs off the one module
+        // that does both, instead of being spread along a toolbar. Nothing here
+        // is saved with the patch — a preview size is a property of the machine
+        // you are working on, not of the instrument — but this is where you go
+        // looking for it, because this is the block it acts on.
+        if (NodeCatalog.IsSink(node.TypeId))
+        {
+            inspector.Children.Add(outputSettings);
+            return;
+        }
+
         var delete = new Button
         {
             Content = "Delete module",
@@ -780,6 +835,71 @@ public sealed class MainWindow : Window
         };
         delete.Click += (_, _) => editor.DeleteSelected();
         inspector.Children.Add(delete);
+    }
+
+    /// <summary>
+    /// The screen-and-speakers half of the Output's panel: what the picture is
+    /// rendered at and by, and the four ways of getting either of them out.
+    /// </summary>
+    /// <remarks>
+    /// Built once and kept, not rebuilt per selection like the knob rows above
+    /// it. These controls hold live state, and a control may have one parent at
+    /// a time — putting <see cref="resolution"/> into a freshly made row on
+    /// every selection would leave it owned by the row before.
+    /// </remarks>
+    private void BuildOutputSettings()
+    {
+        outputSettings.Children.Add(Heading("Picture"));
+        outputSettings.Children.Add(Field("Size", resolution));
+        outputSettings.Children.Add(Field("Render", gpuButton));
+        outputSettings.Children.Add(exportFrame);
+
+        outputSettings.Children.Add(Heading("Sound"));
+        outputSettings.Children.Add(audioButton);
+
+        outputSettings.Children.Add(Heading("Export"));
+
+        // The seconds box with its unit beside it, so the number is not a bare
+        // one on a panel where every other number is in patch units.
+        outputSettings.Children.Add(Field("Length", new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            Spacing = 6,
+            Children = { length, Label("seconds") },
+        }));
+
+        outputSettings.Children.Add(exportAudio);
+        outputSettings.Children.Add(exportVideo);
+    }
+
+    private static TextBlock Heading(string text) => new()
+    {
+        Text = text.ToUpperInvariant(),
+        FontSize = 10.5,
+        FontWeight = FontWeight.SemiBold,
+        Opacity = 0.6,
+        Margin = new Thickness(0, 10, 0, 2),
+    };
+
+    /// <summary>A labelled row on the same 78-pixel gutter the knob rows use.</summary>
+    private static Control Field(string name, Control control)
+    {
+        var row = new Grid { ColumnDefinitions = new ColumnDefinitions("78,*") };
+
+        var label = new TextBlock
+        {
+            Text = name,
+            FontSize = 12,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+
+        Grid.SetColumn(label, 0);
+        Grid.SetColumn(control, 1);
+
+        row.Children.Add(label);
+        row.Children.Add(control);
+
+        return row;
     }
 
     private Control BuildInputRow(NodeInstance node, PortSpec spec, int index)
@@ -1170,7 +1290,8 @@ public sealed class MainWindow : Window
             }
 
             var patch = editor.Patch;
-            await Task.Run(() => RenderAudioFile(patch, path));
+            var seconds = ExportSeconds;
+            await Task.Run(() => RenderAudioFile(patch, path, seconds));
         }
         catch (Exception ex)
         {
@@ -1179,23 +1300,110 @@ public sealed class MainWindow : Window
     }
 
     /// <summary>
+    /// Writes both sinks to one file. Unlike every other export here this takes
+    /// long enough to watch, so it reports as it goes and can be stopped —
+    /// rendering a minute of an expensive patch is minutes of work, and a
+    /// program that merely appears to have hung during it is not acceptable.
+    /// </summary>
+    private async Task SaveVideoAsync()
+    {
+        var file = await StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+        {
+            Title = "Export video",
+            SuggestedFileName = "flyback",
+            DefaultExtension = "avi",
+            FileTypeChoices = [new FilePickerFileType("AVI video") { Patterns = ["*.avi"] }],
+        });
+
+        if (file is null) return;
+
+        var path = file.TryGetLocalPath();
+        if (path is null)
+        {
+            Report("That location can't be written to directly.");
+            return;
+        }
+
+        // Everything the background pass needs, taken while the patch is still
+        // sitting still. An export is a picture of the patch as it is now, so
+        // editing during one changes the next export and not this one.
+        var patch = editor.Patch;
+        var size = preview.Resolution;
+        var seconds = ExportSeconds;
+        var settings = new MovieSettings(size.Width, size.Height, seconds);
+
+        var video = patch.CompileForVideo().Program;
+        var sound = HasSound(patch) ? patch.CompileForAudio().Program : null;
+        var scan = AudioScanFor(patch);
+
+        using var stopping = new CancellationTokenSource();
+        export = stopping;
+        exportVideo.Content = "Stop";
+        length.IsEnabled = false;
+
+        var progress = new Progress<double>(done => Report(
+            $"Exporting {seconds:0}s at {size.Width} × {size.Height} — {done:P0}"));
+
+        try
+        {
+            var written = await Task.Run(
+                () => MovieRenderer.Render(path, video, sound, scan, settings, progress, stopping.Token),
+                stopping.Token);
+
+            var duration = written / settings.FramesPerSecond;
+
+            Report(written < settings.FrameCount
+                ? $"Stopped — kept the {duration:0.0}s already rendered in {Path.GetFileName(path)}."
+                : $"Wrote {duration:0.0}s to {Path.GetFileName(path)}.");
+        }
+        catch (Exception ex)
+        {
+            Report($"Could not export video: {ex.Message}");
+        }
+        finally
+        {
+            export = null;
+            exportVideo.Content = "Export video…";
+            length.IsEnabled = true;
+        }
+    }
+
+    /// <summary>The length control, as the number both exports actually want.</summary>
+    private double ExportSeconds => (double)(length.Value ?? 10m);
+
+    /// <summary>
     /// Renders offline through a fresh renderer, so exporting never disturbs the
     /// cursor or filter state of whatever is currently playing.
     /// </summary>
-    private static void RenderAudioFile(Patch patch, string path)
+    private static void RenderAudioFile(Patch patch, string path, double seconds)
     {
         var program = patch.CompileForAudio().Program;
         var renderer = new AudioRenderer();
-        var buffer = new float[renderer.SampleRate * ExportSeconds * NodeCatalog.AudioChannels];
+        var frames = (int)Math.Round(renderer.SampleRate * seconds);
+        var buffer = new float[frames * NodeCatalog.AudioChannels];
         renderer.Render(program, buffer, AudioScanFor(patch));
 
         WavWriter.Write(path, buffer, renderer.SampleRate, NodeCatalog.AudioChannels);
     }
 
+    /// <summary>
+    /// Whether anything actually reaches the speakers. The Output is always
+    /// there, so its presence says nothing — what matters is whether either
+    /// channel has a wire in it, which is the difference between an export with
+    /// a silent track and one with no track at all.
+    /// </summary>
+    private static bool HasSound(Patch patch)
+    {
+        var output = patch.Output.Id;
+
+        return patch.IncomingTo(output, NodeCatalog.OutputLeftPort) is not null
+            || patch.IncomingTo(output, NodeCatalog.OutputRightPort) is not null;
+    }
+
     private static AudioScan AudioScanFor(Patch patch)
     {
-        var sink = patch.Nodes.FirstOrDefault(n => n.TypeId == NodeCatalog.AudioOutputTypeId);
-        var def = NodeCatalog.Get(NodeCatalog.AudioOutputTypeId);
+        var sink = patch.FirstOf(NodeCatalog.OutputTypeId);
+        var def = NodeCatalog.Get(NodeCatalog.OutputTypeId);
         if (sink is null || def is null) return AudioScan.TimeDriven;
 
         return new AudioScan(Knob("scan") >= 0.5f, MathF.Max(Knob("scan rate"), 1f), 16f / 9f);

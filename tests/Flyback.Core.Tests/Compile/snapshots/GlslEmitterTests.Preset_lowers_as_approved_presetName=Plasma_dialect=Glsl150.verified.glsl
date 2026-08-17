@@ -133,6 +133,8 @@ void main()
     float r29 = uK[8];
     vec3 t30 = hsv(r28, r29, r6);
     float r30 = t30.x; float r31 = t30.y; float r32 = t30.z;
+    float r33 = r5 * r5;
+    float r34 = r5 * r5;
 
     fragColour = vec4(sat(r30), sat(r31), sat(r32), 1.0);
 }

@@ -1,23 +1,23 @@
-Feature: One patch, two sinks
-  The same modules drive the screen and the speakers. Compilation is rooted at a
-  sink, so a patch yields one program per sink — and each pays only for what it
-  actually reaches.
+Feature: One patch, one Output, two programs
+  The same modules drive the screen and the speakers, through one block that
+  carries both. Compilation walks back from the socket a given program is rooted
+  at, so a patch still yields one program per sink — and each still pays only for
+  what actually reaches it.
 
-  Specified by ADR-0022.
+  Specified by ADR-0022, amended by ADR-0037.
 
-  Scenario: The two sinks compile to independent programs
+  Scenario: The two halves compile to independent programs
     Given a patch containing:
-      | name    | module        |
-      | coords  | coord         |
-      | grain   | pattern.noise |
-      | clock   | time          |
-      | tone    | osc.sine      |
-      | screen  | video.output  |
-      | speaker | audio.output  |
+      | name   | module        |
+      | coords | coord         |
+      | grain  | pattern.noise |
+      | clock  | time          |
+      | tone   | osc.sine      |
+      | out    | output        |
     And "coords" output "x" is wired to "grain" input "x"
-    And "grain" output "out" is wired to "screen" input "colour"
+    And "grain" output "out" is wired to "out" input "colour"
     And "clock" output "t" is wired to "tone" input "in"
-    And "tone" output "out" is wired to "speaker" input "left"
+    And "tone" output "out" is wired to "out" input "left"
     When the patch is compiled for video
     Then compilation reports no issues
     And the program contains at least one "Noise3" op
@@ -30,45 +30,50 @@ Feature: One patch, two sinks
   # ADR-0009 named the normalled jack; here it is literally one.
   Scenario: An unpatched right channel carries the left one
     Given a patch containing:
-      | name    | module       |
-      | clock   | time         |
-      | tone    | osc.sine     |
-      | speaker | audio.output |
+      | name  | module   |
+      | clock | time     |
+      | tone  | osc.sine |
+      | out   | output   |
     And "tone" input "freq" is set to 220
     And "clock" output "t" is wired to "tone" input "in"
-    And "tone" output "out" is wired to "speaker" input "left"
+    And "tone" output "out" is wired to "out" input "left"
     When the patch is compiled for audio
     Then both audio channels are identical
     And the audio is not silent
 
-  Scenario: A patch with no Audio Output is silent, not broken
+  Scenario: A patch with nothing wired to the speakers is silent, not broken
     Given a patch containing:
-      | name   | module       |
-      | tint   | colour.hsv   |
-      | screen | video.output |
-    And "tint" output "colour" is wired to "screen" input "colour"
+      | name | module     |
+      | tint | colour.hsv |
+      | out  | output     |
+    And "tint" output "colour" is wired to "out" input "colour"
     When the patch is compiled for audio
     Then compilation reports no issues
     And the audio is silent
 
-  # Silence is what an Audio Output holding its knobs produces, and it looks
-  # exactly like a patch that is working — so the one thing that can be said
-  # about it is said.
-  Scenario: An Audio Output with nothing wired into it is remarked on
-    Given a patch containing:
-      | name    | module       |
-      | speaker | audio.output |
-    When the patch is compiled for audio
-    Then compilation reports an issue containing "Nothing is wired into the Audio Output"
-    And compilation reports nothing wrong
-    And the audio is silent
-
-  # The mirror of the scenario above. Neither sink is nagged about the other:
+  # The mirror of the scenario above. Neither half is nagged about the other:
   # a patch built for the speakers is as deliberate as one built for the screen,
   # and saying so on every edit is noise rather than help.
   Scenario: A patch built for the speakers alone is not nagged about the screen
     Given a patch containing:
-      | name    | module       |
-      | speaker | audio.output |
+      | name  | module   |
+      | clock | time     |
+      | tone  | osc.sine |
+      | out   | output   |
+    And "clock" output "t" is wired to "tone" input "in"
+    And "tone" output "out" is wired to "out" input "left"
     When the patch is compiled for video
     Then compilation reports no issues
+    And the rendered image is entirely black
+
+  # An Output nothing reaches produces one flat colour and silence, which looks
+  # exactly like a patch that is working — so the one thing that can be said
+  # about it is said, once, whichever program is being built.
+  Scenario: An Output with nothing wired into it at all is remarked on
+    Given a patch containing:
+      | name | module |
+      | out  | output |
+    When the patch is compiled for audio
+    Then compilation reports an issue containing "Nothing is wired into the Output"
+    And compilation reports nothing wrong
+    And the audio is silent

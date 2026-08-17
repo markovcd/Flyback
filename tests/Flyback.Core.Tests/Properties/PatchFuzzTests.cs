@@ -20,7 +20,7 @@ public class PatchFuzzTests
     private const int Height = 18;
 
     private static readonly NodeDef[] Modules =
-        [.. NodeCatalog.All.Where(d => d.TypeId != NodeCatalog.VideoOutputTypeId)];
+        [.. NodeCatalog.All.Where(d => d.TypeId != NodeCatalog.OutputTypeId)];
 
     /// <summary>
     /// Modules are only ever wired from ones placed before them, so the graph is
@@ -153,17 +153,18 @@ public class PatchFuzzTests
 
         var candidates = placed.Where(p => p.Def.Outputs.Count > 0).ToArray();
 
-        // Both sinks, so one generated patch fuzzes the eye and the ear at once.
-        var video = builder.Add(NodeCatalog.VideoOutputTypeId, 0, 0);
-        var speaker = builder.Add(NodeCatalog.AudioOutputTypeId, 0, 0);
+        // Both halves of the one sink, so a generated patch fuzzes the eye and
+        // the ear at once — and, since they are now sockets on the same module,
+        // fuzzes the split between them too.
+        var output = builder.Add(NodeCatalog.OutputTypeId, 0, 0);
 
         if (candidates.Length > 0)
         {
             var (source, sourceDef) = candidates[Decide() % candidates.Length];
-            builder.Wire(source, Decide() % sourceDef.Outputs.Count, video, 0);
+            builder.Wire(source, Decide() % sourceDef.Outputs.Count, output, NodeCatalog.OutputColourPort);
 
             var (audioSource, audioDef) = candidates[Decide() % candidates.Length];
-            builder.Wire(audioSource, Decide() % audioDef.Outputs.Count, speaker, 0);
+            builder.Wire(audioSource, Decide() % audioDef.Outputs.Count, output, NodeCatalog.OutputLeftPort);
         }
 
         return builder.Patch;

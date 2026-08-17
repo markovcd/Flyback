@@ -58,9 +58,12 @@ public class AudioEngineTests
 
         var time = builder.Add("time", 0, 0, (0, 1f));
         var osc = builder.Add("osc.sine", 0, 0, (1, hz));
-        var speaker = builder.Add(NodeCatalog.AudioOutputTypeId, 0, 0, (2, 1f));
+        var speaker = builder.Add(NodeCatalog.OutputTypeId, 0, 0, (NodeCatalog.OutputGainPort, 1f));
 
-        return builder.Wire(time, 0, osc, 0).Wire(osc, 0, speaker, 0).Patch;
+        return builder
+            .Wire(time, 0, osc, 0)
+            .Wire(osc, 0, speaker, NodeCatalog.OutputLeftPort)
+            .Patch;
     }
 
     private static float LeftAt(float[] buffer, int frame) => buffer[frame * 2];
@@ -169,7 +172,7 @@ public class AudioEngineTests
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
 
         var tint = builder.Add("colour.hsv", 0, 0);
-        var screen = builder.Add(NodeCatalog.VideoOutputTypeId, 0, 0);
+        var screen = builder.Add(NodeCatalog.OutputTypeId, 0, 0);
         builder.Wire(tint, 0, screen, 0);
 
         engine.Update(builder.Patch);
@@ -202,8 +205,13 @@ public class AudioEngineTests
             var builder = new PatchBuilder(NodeCatalog.BuiltIn);
 
             var coords = builder.Add("coord", 0, 0);
-            var speaker = builder.Add(NodeCatalog.AudioOutputTypeId, 0, 0, (2, 1f), (3, scan), (4, 60f));
-            builder.Wire(coords, 0, speaker, 0);
+            var speaker = builder.Add(
+                NodeCatalog.OutputTypeId, 0, 0,
+                (NodeCatalog.OutputGainPort, 1f),
+                (NodeCatalog.OutputScanPort, scan),
+                (NodeCatalog.OutputScanRatePort, 60f));
+
+            builder.Wire(coords, 0, speaker, NodeCatalog.OutputLeftPort);
 
             engine.Update(builder.Patch);
             engine.Start();

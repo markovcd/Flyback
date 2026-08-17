@@ -20,7 +20,7 @@ Feature: What the numbers on a patch mean
       | name   | module         |
       | coords | coord          |
       | rings  | pattern.rings  |
-      | screen | video.output   |
+      | screen | output   |
     And "coords" output "x" is wired to "rings" input "x"
     And "coords" output "y" is wired to "rings" input "y"
     And "rings" input "freq" is set to 3
@@ -37,7 +37,7 @@ Feature: What the numbers on a patch mean
       | name   | module       |
       | coords | coord        |
       | spread | math.remap   |
-      | screen | video.output |
+      | screen | output       |
     And "coords" output "y" is wired to "spread" input "in"
     And "spread" output "out" is wired to "screen" input "colour"
     When the patch is compiled
@@ -52,7 +52,7 @@ Feature: What the numbers on a patch mean
       | name   | module       |
       | coords | coord        |
       | edge   | math.step    |
-      | screen | video.output |
+      | screen | output       |
     And "coords" output "radius" is wired to "edge" input "in"
     And "edge" input "edge" is set to 0.5
     And "edge" output "out" is wired to "screen" input "colour"
@@ -68,7 +68,7 @@ Feature: What the numbers on a patch mean
     Given a patch containing:
       | name   | module       |
       | knob   | value        |
-      | screen | video.output |
+      | screen | output       |
     And "knob" input "value" is set to 0.5
     And "knob" output "out" is wired to "screen" input "colour"
     When the patch is compiled
@@ -81,7 +81,7 @@ Feature: What the numbers on a patch mean
     Given a patch containing:
       | name   | module       |
       | knob   | value        |
-      | screen | video.output |
+      | screen | output       |
     And "knob" input "value" is set to 4
     And "knob" output "out" is wired to "screen" input "colour"
     When the patch is compiled
@@ -91,7 +91,7 @@ Feature: What the numbers on a patch mean
     Given a patch containing:
       | name   | module       |
       | knob   | value        |
-      | screen | video.output |
+      | screen | output       |
     And "knob" input "value" is set to -1
     And "knob" output "out" is wired to "screen" input "colour"
     When the patch is compiled

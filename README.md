@@ -115,8 +115,8 @@ it: it is what the renderer looks like under load.
 
 ## Sound
 
-The same modules drive the speakers. Add an **Audio Output** module, patch
-something into `left`, and press **Audio on**.
+The same modules drive the speakers. Patch something into the **Output**'s
+`left`, select that block, and press **Audio on** in its panel.
 
 Nothing about the catalogue changes: audio is the same machine with only `t`
 varying and a scalar coming out instead of a colour. Compilation is rooted at a
@@ -124,10 +124,12 @@ sink, so one patch produces one program per sink — and each pays only for the
 modules it actually reaches. A noise field feeding the screen costs the speakers
 nothing.
 
-A patch has one of each. Once a **Video Output** or an **Audio Output** is
-placed, the palette greys that one out: compilation starts at the sink it finds
-and never reaches a second, so the extra would sit there wired up to nothing
-anybody can see or hear.
+Screen and speakers are two halves of one block rather than two modules, and
+every patch has exactly one of it: it is not in the palette, it cannot be
+deleted, and everything about seeing or hearing the patch lives in its panel.
+What each half costs is still separate — the picture's program walks back from
+`colour` alone and the sound's from `left` and `right`, so neither pays for the
+other.
 
 | | |
 |---|---|
@@ -136,7 +138,7 @@ anybody can see or hear.
 | Sequences | **Note Sequencer** is eight notes in a row — `out` to a **Note** for the pitch, `gate` into a multiply so a rest is heard as one, `index` to the screen. **Sequencer** is the same eight steps as a plain signal instead. `on` silences a step without losing it, so it doubles as that step's level, and `shape` sets how long the gate takes to open and close |
 | Stereo | leave `right` unpatched and it carries `left`, the way a normalled jack does |
 | `scan` | at 0 the patch is driven by Time; at 1 it sweeps the image and you hear the picture, at `scan rate` sweeps per second |
-| Export | **Render audio…** writes 10 seconds to a WAV |
+| Export | **Render audio…** writes a WAV, **Export video…** an AVI with both — see *Files* |
 
 The **Drone** preset is the demonstration: one slow oscillator sets both the hue
 of the image and the tremolo on the tone, so the two sinks are visibly and
@@ -404,11 +406,25 @@ picture is identical either way.
 | Unplug | drag a connected input away |
 | Pan / zoom | drag the background or right-drag / mouse wheel |
 | Frame the patch | `F` |
-| Delete a module | `Delete` |
+| Delete a module | `Delete` — except the Output, which every patch keeps |
 | Set exact values | select a module, use the inspector on the right |
+| Everything else | select the **Output** |
 
 Any input with nothing plugged into it uses the value shown on the node, so most
 patches need no constant modules at all.
+
+The Output's panel is where the instrument is set rather than the patch: how
+large the preview is and whether the processor or the GPU draws it, whether
+sound is playing, and the four ways of getting a picture or a sound out of the
+program. None of it is saved with the patch — a preview size belongs to the
+machine you are working at — but it sits with the block it acts on rather than
+along a toolbar.
+
+| | |
+|---|---|
+| Picture | **Size**, **Render** (GPU or processor), **Save frame…** |
+| Sound | **Audio on** |
+| Export | **Length** in seconds, **Render audio…**, **Export video…** |
 
 The status bar carries whatever the compiler wants to say about the patch as it
 stands, in amber. Most of it is about the patches that compile perfectly and do
@@ -419,7 +435,7 @@ wired into it at all — one flat colour on the screen, silence at the speakers.
 
 | Project | |
 |---|---|
-| `src/Flyback.Core` | graph model, compiler, renderer, PNG writer — no UI dependency |
+| `src/Flyback.Core` | graph model, compiler, renderer, PNG/WAV/JPEG/AVI writers — no UI dependency |
 | `src/Flyback.App` | Avalonia editor and live preview, built in C# without XAML |
 | `src/Flyback.Plugins` | the plugin contract and the loader — no dependencies either |
 | `src/Flyback.Plugins.Wasapi` | Windows sound output, via NAudio |
@@ -485,3 +501,31 @@ works on both a scalar and a colour.
 
 Patches save as JSON (`.fbk`). `Save frame…` renders the current moment at
 1920×1080 and writes a PNG.
+
+**Export video…** writes the thing the instrument actually makes: a moving
+picture with its own sound under it. Set the length in seconds in the same panel
+— it is the one parameter of an export that cannot be defaulted, since a patch is
+an endless function of `(x, y, t)` — and the same number governs `Render audio…`.
+The frame is whatever **Size** says, a few rows above it.
+
+The file is an AVI: every frame an independent JPEG, 16-bit PCM interleaved
+alongside. Both encoders are written here beside the PNG and WAV ones, so export
+needs nothing installed and works headlessly. A patch with nothing wired into the
+Output's `left` or `right` gets a video-only file rather than a silent track.
+
+| | |
+|---|---|
+| Rate | 30 frames a second |
+| Size | 1.5 to 2.5 MB a second at 960×540 depending on the patch, and AVI stops at 4 GB — half an hour or so |
+| Cost | the picture is rendered on the processor even when the preview is on the GPU, so an expensive patch takes longer to write than to watch |
+| Stopping | the button becomes **Stop**, and stopping keeps what was rendered as a shorter video rather than a broken one |
+
+Feedback works in an export and does not in `Save frame…`: one renderer runs the
+whole clip, so each frame reads the one before it exactly as on screen. The sound
+is byte-for-byte what `Render audio…` writes for the same patch — one oscillator
+phase and one delay tail, running the length of the clip.
+
+MJPEG is an old compression and every frame pays full price, which is the cost of
+a container simple enough to write by hand under
+[ADR-0019](docs/adr/0019-no-third-party-dependencies-in-the-engine.md). Anything
+wanting an MP4 can transcode one; this is a file every tool accepts as input.

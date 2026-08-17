@@ -19,24 +19,55 @@ public static class NodeCatalog
     /// <summary>The provider every module in this file belongs to. Reserved.</summary>
     public static ModuleProvider BuiltInProvider { get; } = new("flyback", "Flyback");
 
-    /// <summary>The screen sink. Paired with <see cref="AudioOutputTypeId"/> per ADR-0022.</summary>
-    public const string VideoOutputTypeId = "video.output";
-
-    /// <summary>The speaker sink. Paired with <see cref="VideoOutputTypeId"/> per ADR-0022.</summary>
-    public const string AudioOutputTypeId = "audio.output";
+    /// <summary>
+    /// The one sink. Screen and speakers are sockets on a single module rather
+    /// than two modules, and every patch has exactly one — see ADR-0037.
+    /// </summary>
+    public const string OutputTypeId = "output";
 
     /// <summary>
-    /// Whether a module is one of the two sinks, of which a patch holds at most
-    /// one each — see <see cref="Patch.CanAdd"/> for why.
+    /// Whether a module is the sink. A patch always has one and never has two,
+    /// so this is what keeps it out of the palette and out of the delete key —
+    /// see <see cref="Patch.CanAdd"/> and <see cref="Patch.Remove"/>.
     /// </summary>
-    public static bool IsSink(string typeId) =>
-        typeId is VideoOutputTypeId or AudioOutputTypeId;
+    public static bool IsSink(string typeId) => typeId == OutputTypeId;
 
-    /// <summary>RGB, so the video sink reads three registers.</summary>
+    /// <summary>RGB, so the screen reads three registers.</summary>
     public const int VideoChannels = 3;
 
-    /// <summary>Stereo, so the audio sink reads two registers where video reads three.</summary>
+    /// <summary>Stereo, so the speakers read two registers where the screen reads three.</summary>
     public const int AudioChannels = 2;
+
+    /// <summary>
+    /// One of the two programs a patch yields. Both root at the same Output and
+    /// differ only in which of its results they read, which is what still buys
+    /// ADR-0022's dead-code elimination now that there is one node rather than
+    /// two: a module only the ear reaches is never visited by the screen's walk.
+    /// </summary>
+    /// <param name="Inputs">
+    /// Which of the Output's sockets this program walks back from. The other
+    /// sockets are not merely unread — they are never resolved, so nothing
+    /// upstream of them emits an op. This is the whole of ADR-0022's cross-sink
+    /// dead-code elimination, and with one node it has to be said here rather
+    /// than falling out of there being two.
+    /// </param>
+    /// <param name="Results">Which of the sink's emit results this program reads.</param>
+    public readonly record struct SinkKind(string Name, Range Inputs, Range Results, int Width);
+
+    /// <summary>The screen's program, walking back from the Output's colour.</summary>
+    public static SinkKind Screen => new("screen", OutputColourPort..OutputLeftPort, 0..1, VideoChannels);
+
+    /// <summary>The speakers' program, walking back from left, right and gain.</summary>
+    public static SinkKind Speakers => new("speakers", OutputLeftPort..OutputScanPort, 1..3, AudioChannels);
+
+    // Port indices on the Output, named because three separate places index it
+    // and a shifted socket would otherwise be a silent change of meaning.
+    public const int OutputColourPort = 0;
+    public const int OutputLeftPort = 1;
+    public const int OutputRightPort = 2;
+    public const int OutputGainPort = 3;
+    public const int OutputScanPort = 4;
+    public const int OutputScanRatePort = 5;
 
     private const float Tau = 6.283185307179586f;
 
@@ -105,25 +136,26 @@ public static class NodeCatalog
         [
             // ---------------------------------------------------------------- output
             new NodeDef(
-                VideoOutputTypeId, "Video Output", "Output",
-                [Col("colour")], [],
-                (_, i) => [i[0]],
-                "The screen. Everything upstream of this is what you see."),
-
-            new NodeDef(
-                AudioOutputTypeId, "Audio Output", "Output",
+                OutputTypeId, "Output", "Output",
                 [
+                    Col("colour"),
                     Num("left", 0f, -1f, 1f),
-                    Normalled("right", 0, -1f, 1f),
+                    Normalled("right", OutputLeftPort, -1f, 1f),
                     Num("gain", 0.5f, 0f, 1f),
                     Num("scan", 0f, 0f, 1f),
                     Num("scan rate", 60f, 1f, 2000f),
                 ],
                 [],
-                (em, i) => [em.Mul(i[0], i[2]), em.Mul(i[1], i[2])],
-                "The speakers. Leave 'right' unpatched and it carries 'left' through, "
-                + "as a normalled jack would. 'scan' at 0 drives the patch from Time; at 1 "
-                + "it sweeps the image and you hear the picture, at 'scan rate' sweeps per second."),
+
+                // Three results from one node: the screen reads the first and
+                // the speakers the other two. Which of them a given program
+                // takes is the only difference between the two compilations.
+                (em, i) => [i[0], em.Mul(i[1], i[3]), em.Mul(i[2], i[3])],
+                "The screen and the speakers. Everything upstream of 'colour' is what you "
+                + "see; everything upstream of 'left' is what you hear. Leave 'right' "
+                + "unpatched and it carries 'left' through, as a normalled jack would. "
+                + "'scan' at 0 drives the patch from Time; at 1 it sweeps the image and you "
+                + "hear the picture, at 'scan rate' sweeps per second."),
 
             new NodeDef(
                 "audio.frequency", "Frequency", "Output",

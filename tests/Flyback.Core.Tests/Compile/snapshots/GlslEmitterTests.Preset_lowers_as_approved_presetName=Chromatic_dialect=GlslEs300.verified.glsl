@@ -152,6 +152,8 @@ void main()
     float r45 = r41 + (r1 - r41) * r44;
     vec3 t46 = hsv(r38, r39, r45);
     float r46 = t46.x; float r47 = t46.y; float r48 = t46.z;
+    float r49 = r5 * r5;
+    float r50 = r5 * r5;
 
     fragColour = vec4(sat(r46), sat(r47), sat(r48), 1.0);
 }

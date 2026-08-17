@@ -4,18 +4,21 @@ Each record captures one decision, the situation that forced it, and what it
 costs. Format is [Michael Nygard's](https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions):
 context, decision, consequences.
 
-Seven records — [0003](0003-cpu-rendering-with-a-gpu-path-left-open.md),
+Nine records — [0003](0003-cpu-rendering-with-a-gpu-path-left-open.md),
 [0004](0004-visual-patch-editor-as-the-authoring-model.md),
 [0026](0026-modules-from-plugins-with-provenance-in-the-file.md),
 [0027](0027-delay-lines-give-the-audio-path-a-memory.md),
 [0031](0031-a-sequencer-is-eight-inputs-and-no-memory.md),
-[0033](0033-patches-authored-by-an-agent-behind-the-plugin-boundary.md) and
-[0034](0034-settings-in-a-file-the-key-in-the-operating-system.md) — are marked
+[0033](0033-patches-authored-by-an-agent-behind-the-plugin-boundary.md),
+[0034](0034-settings-in-a-file-the-key-in-the-operating-system.md),
+[0036](0036-export-video-as-motion-jpeg-in-an-avi.md) and
+[0037](0037-one-output-block-that-every-patch-has.md) — are marked
 **user-directed**: they were chosen by the project owner, not derived. The first
 two sit upstream of almost everything else here; 0026 and 0027 each give up a
-property an earlier record relied on, knowingly; the last three each let the
-instrument do something it could not do at all. All are recorded even though they
-were not mine to make.
+property an earlier record relied on, knowingly; 0031, 0033, 0034 and 0036 each
+let the instrument do something it could not do at all; and 0037 is the first
+that takes something away, retiring a rule 0022 established. All are recorded
+even though they were not mine to make.
 
 [0035](0035-a-glsl-backend-for-the-video-path.md) is the first record where two
 backends disagree by design: the picture on screen and the picture in an exported
@@ -71,6 +74,8 @@ to differ in their last bits.
 | [0027](0027-delay-lines-give-the-audio-path-a-memory.md) | Delay lines give the audio path a memory *(user-directed)* |
 | [0029](0029-linux-sound-through-alsa.md) | Linux sound through ALSA, on a thread of our own |
 | [0030](0030-oscillators-accumulate-their-phase.md) | Oscillators accumulate their phase on the audio path |
+| [0036](0036-export-video-as-motion-jpeg-in-an-avi.md) | Export video as Motion JPEG in an AVI *(user-directed)* |
+| [0037](0037-one-output-block-that-every-patch-has.md) | One Output block, which every patch has *(user-directed)* |
 
 ### Boundaries
 

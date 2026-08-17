@@ -2,7 +2,9 @@
 
 **Status:** Accepted · 2026-08-12 · amended by
 [0027](0027-delay-lines-give-the-audio-path-a-memory.md), which introduces the
-first modules that do their job in one sink's program and not the other's
+first modules that do their job in one sink's program and not the other's, and by
+[0037](0037-one-output-block-that-every-patch-has.md), which merges the two sink
+*modules* into one while keeping the two *programs*
 
 ## Context
 
@@ -77,6 +79,16 @@ out to generalise: `PortSpec.NormalledFrom` makes the hardware concept
 something any module can declare.
 
 ## Amendments
+
+**2026-08-17 — one sink module, still two programs.**
+[0037](0037-one-output-block-that-every-patch-has.md) merges `video.output` and
+`audio.output` into a single `output` that every patch carries, and retires the
+one-of-each rule the 2026-08-17 amendment below introduced. What this record is
+actually about is untouched: there are still two programs, still rooted at a
+sink, still paying only for what they reach. What changes is that the split is
+now between *sockets on one module* rather than between two modules, so which
+sockets a program walks back from has to be stated rather than being implied by
+which node it started at.
 
 **2026-08-12 — one entry point per sink.** The defaulted `sinkTypeId` and `width`
 parameters were removed and `Compile` made private, replaced by the

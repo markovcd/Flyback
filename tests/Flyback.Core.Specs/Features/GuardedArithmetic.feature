@@ -22,7 +22,7 @@ Feature: Degenerate arithmetic yields zero rather than NaN
       | tint     | colour.hsv   |
       | broken   | math.div     |
       | brighten | colour.gain  |
-      | screen   | video.output |
+      | screen   | output       |
     And "coords" output "x" is wired to "tint" input "hue"
     And "broken" input "a" is set to 1
     And "broken" input "b" is set to 0
@@ -42,7 +42,7 @@ Feature: Degenerate arithmetic yields zero rather than NaN
       | name   | module       |
       | maths  | <module>     |
       | offset | math.add     |
-      | screen | video.output |
+      | screen | output       |
     And "maths" input "a" is set to <a>
     And "maths" input "b" is set to <b>
     And "maths" output "out" is wired to "offset" input "a"
@@ -63,7 +63,7 @@ Feature: Degenerate arithmetic yields zero rather than NaN
       | name   | module       |
       | maths  | <module>     |
       | offset | math.add     |
-      | screen | video.output |
+      | screen | output       |
     And "maths" input "in" is set to <in>
     And "maths" output "out" is wired to "offset" input "a"
     And "offset" input "b" is set to 0.5
@@ -89,7 +89,7 @@ Feature: Degenerate arithmetic yields zero rather than NaN
       | name   | module       |
       | knob   | value        |
       | hold   | math.clamp   |
-      | screen | video.output |
+      | screen | output       |
     And "knob" input "value" is set to 0.75
     And "knob" output "out" is wired to "hold" input "in"
     And "hold" input "low" is set to 0.25
@@ -110,7 +110,7 @@ Feature: Degenerate arithmetic yields zero rather than NaN
       | broken   | math.div     |
       | offset   | math.add     |
       | brighten | colour.gain  |
-      | screen   | video.output |
+      | screen   | output       |
     And "broken" input "a" is set to 1
     And "broken" input "b" is set to 0
     And "broken" output "out" is wired to "offset" input "a"

@@ -129,6 +129,8 @@ void main()
     float r22 = sin(r21);
     vec3 t23 = hsv(r11, r12, r22);
     float r23 = t23.x; float r24 = t23.y; float r25 = t23.z;
+    float r26 = r4 * r4;
+    float r27 = r4 * r4;
 
     fragColour = vec4(sat(r23), sat(r24), sat(r25), 1.0);
 }

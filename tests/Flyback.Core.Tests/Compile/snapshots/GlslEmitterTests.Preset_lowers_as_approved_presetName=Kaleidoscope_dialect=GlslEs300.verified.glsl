@@ -5,7 +5,7 @@ precision highp sampler2D;
 
 uniform float uTime;
 uniform float uAspect;
-uniform float uK[8];
+uniform float uK[9];
 
 in vec2 vUv;
 out vec4 fragColour;
@@ -143,6 +143,9 @@ void main()
     float r36 = uK[7];
     vec3 t37 = hsv(r34, r35, r36);
     float r37 = t37.x; float r38 = t37.y; float r39 = t37.z;
+    float r40 = uK[8];
+    float r41 = r40 * r40;
+    float r42 = r40 * r40;
 
     fragColour = vec4(sat(r37), sat(r38), sat(r39), 1.0);
 }

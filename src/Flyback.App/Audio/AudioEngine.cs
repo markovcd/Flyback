@@ -72,8 +72,8 @@ public sealed class AudioEngine(IAudioDevice device) : IDisposable
     /// </summary>
     private static AudioScan ScanFor(Patch patch)
     {
-        var sink = patch.Nodes.FirstOrDefault(n => n.TypeId == NodeCatalog.AudioOutputTypeId);
-        var def = NodeCatalog.Get(NodeCatalog.AudioOutputTypeId);
+        var sink = patch.FirstOf(NodeCatalog.OutputTypeId);
+        var def = NodeCatalog.Get(NodeCatalog.OutputTypeId);
 
         if (sink is null || def is null) return AudioScan.TimeDriven;
 

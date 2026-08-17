@@ -9,7 +9,7 @@ Feature: Scalars and colours travel down the same wires
     Given a patch containing:
       | name   | module       |
       | knob   | value        |
-      | screen | video.output |
+      | screen | output       |
     And "knob" input "value" is set to 0.5
     And "knob" output "out" is wired to "screen" input "colour"
     When the patch is compiled
@@ -21,7 +21,7 @@ Feature: Scalars and colours travel down the same wires
       | name   | module       |
       | red    | colour.rgb   |
       | turn   | space.rotate |
-      | screen | video.output |
+      | screen | output       |
     And "red" input "r" is set to 1
     And "red" input "g" is set to 0
     And "red" input "b" is set to 0
@@ -35,7 +35,7 @@ Feature: Scalars and colours travel down the same wires
       | name   | module       |
       | tint   | colour.rgb   |
       | half   | math.mul     |
-      | screen | video.output |
+      | screen | output       |
     And "tint" input "r" is set to 1
     And "tint" input "g" is set to 0.5
     And "tint" input "b" is set to 0
@@ -51,7 +51,7 @@ Feature: Scalars and colours travel down the same wires
       | name    | module       |
       | tint    | colour.rgb   |
       | channel | colour.split |
-      | screen  | video.output |
+      | screen  | output       |
     And "tint" input "r" is set to 0.75
     And "tint" input "g" is set to 0.25
     And "tint" input "b" is set to 1
