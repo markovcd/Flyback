@@ -66,6 +66,7 @@ public sealed class GpuPreviewSurface : OpenGlControlBase, IPreviewSurface
 
     private long frameCostBits;
     private int contextLosses;
+    private TimeSpan waitingSince;
     private volatile bool running;
     private volatile bool finished;
 
@@ -156,7 +157,11 @@ public sealed class GpuPreviewSurface : OpenGlControlBase, IPreviewSurface
 
     private void OnTick(object? sender, EventArgs e)
     {
-        if (renderer is null && frameClock.Elapsed > ContextPatience)
+        // Measured from when this started waiting, not from when the control was
+        // built. A context lost after an hour is waited for as patiently as one
+        // at startup, which is what lets a driver reset be recovered from rather
+        // than being read as a machine that never had a GPU.
+        if (renderer is null && frameClock.Elapsed - waitingSince > ContextPatience)
         {
             Fail("No OpenGL context — the picture is being drawn on the processor.");
             return;
@@ -238,9 +243,15 @@ public sealed class GpuPreviewSurface : OpenGlControlBase, IPreviewSurface
     protected override void OnOpenGlLost()
     {
         // The objects are already gone, so there is nothing to hand back — only
-        // names that no longer mean anything.
+        // names that no longer mean anything. Handing them to the dead context to
+        // be freed is the one thing that must not happen here.
         renderer?.Dispose(null);
         renderer = null;
+
+        // The history goes with them. A feedback patch restarts from black, which
+        // is what SynthRenderer.Reset does and the only honest answer: the frames
+        // it was built from were in memory the driver has already reclaimed.
+        waitingSince = frameClock.Elapsed;
 
         if (++contextLosses > TolerableContextLosses)
             Fail("The graphics context keeps being lost.");
