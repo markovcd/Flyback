@@ -1,6 +1,8 @@
 # ADR-0003: Render on the CPU, leave a GPU backend possible
 
-**Status:** Accepted (user-directed) · 2026-08-11
+**Status:** Accepted (user-directed) · 2026-08-11 · discharged by
+[0035](0035-a-glsl-backend-for-the-video-path.md), where the backend this leaves
+room for is built
 
 ## Context
 
@@ -43,3 +45,9 @@ The measured cost of staying on the CPU is lower than expected: 3.5 ms per
 960×540 frame in the running app, 5.3 ms in a headless Release benchmark. That
 is 3–6× headroom at 60 Hz, and 1080p is comfortably reachable. The GPU backend
 is therefore not urgent, which is the outcome that makes this decision cheap.
+
+That headroom was measured on a small patch, and it is spent by a larger one:
+the cost is linear in the op count, so a patch worth building is a patch that
+runs out of it. [0035](0035-a-glsl-backend-for-the-video-path.md) is the backend
+this record left room for, built five days later. Both of the non-transfers named
+above were real and cost about what is predicted here.

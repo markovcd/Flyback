@@ -2,7 +2,9 @@
 
 **Status:** Accepted · 2026-08-11 · amended by
 [0027](0027-delay-lines-give-the-audio-path-a-memory.md), where the audio path
-gains stateful ops and the video path keeps the purity this relies on
+gains stateful ops and the video path keeps the purity this relies on, and by
+[0035](0035-a-glsl-backend-for-the-video-path.md), where this stops being the
+only renderer
 
 ## Context
 
@@ -52,3 +54,11 @@ need rethinking.
 
 `Parallel.For` on the UI thread turned out to be actively dangerous, for reasons
 unrelated to performance — see [0018](0018-never-render-frames-on-the-ui-thread.md).
+
+The finding that this loop is dispatch-bound is what
+[0035](0035-a-glsl-backend-for-the-video-path.md) acts on: a cost that is
+linear in the op count is one a larger patch spends. This interpreter is no
+longer the only renderer, but it is still three things — the reference semantics,
+the frame export, and the fallback for a machine with no usable GPU. The reserved
+core above stands for exactly that last reason: it runs on the machines that have
+nothing else to render with.

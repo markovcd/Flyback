@@ -3,7 +3,9 @@
 **Status:** Accepted · 2026-08-16 · settles the open question in
 [0030](0030-oscillators-accumulate-their-phase.md), amends
 [0005](0005-compile-to-a-flat-register-machine.md) and
-[0006](0006-scalar-interpreter-parallel-over-rows.md)
+[0006](0006-scalar-interpreter-parallel-over-rows.md) · amended by
+[0035](0035-a-glsl-backend-for-the-video-path.md), where the video path gets a
+second backend that cannot hold a double
 
 ## Context
 
@@ -118,6 +120,17 @@ property of evaluation, not of the patch.
 **The register banks double, and they were never the memory that mattered.** A
 row's scratch is one array of `RegisterCount` — Nebula's 78, Sequence's 109 —
 against a frame history of `width × height × 3` floats that has not changed.
+
+**The picture now has a backend that cannot hold a double.** GLSL has no usable
+one on any target the shader backend runs on
+([0035](0035-a-glsl-backend-for-the-video-path.md)), so the video path there is
+`float` throughout, and the mechanism described above arrives on it: `Phase`
+falls back to a multiply on that path, and past about an hour of continuous
+playback a fast oscillator stairsteps visibly. The reason this is a note rather
+than a retraction is that **the audio path never touches the GPU** — the renderer
+still evaluates in `double` against a `double` accumulator, so the ringing this
+record fixed cannot return. The picture has an escape hatch the speakers never
+needed: a switch that puts it back on the interpreter.
 
 What this does not do: the waveforms are still naive
 ([0030](0030-oscillators-accumulate-their-phase.md)), `Saw` and `Square` still

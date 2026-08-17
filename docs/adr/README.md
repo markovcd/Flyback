@@ -17,6 +17,11 @@ property an earlier record relied on, knowingly; the last three each let the
 instrument do something it could not do at all. All are recorded even though they
 were not mine to make.
 
+[0035](0035-a-glsl-backend-for-the-video-path.md) is the first record where two
+backends disagree by design: the picture on screen and the picture in an exported
+PNG are computed by different machines, at different precisions, and are allowed
+to differ in their last bits.
+
 ## Index
 
 ### Scope and shape
@@ -45,6 +50,7 @@ were not mine to make.
 | [0021](0021-recompile-the-whole-patch-on-every-edit.md) | Recompile the whole patch on every edit |
 | [0031](0031-a-sequencer-is-eight-inputs-and-no-memory.md) | A sequencer is eight inputs and no memory *(user-directed)* |
 | [0032](0032-the-registers-are-double-precision.md) | The registers are double precision |
+| [0035](0035-a-glsl-backend-for-the-video-path.md) | A GLSL backend for the video path |
 
 ### The shell
 

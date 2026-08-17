@@ -1,6 +1,8 @@
 # ADR-0013: Guard arithmetic instead of propagating NaN
 
-**Status:** Accepted · 2026-08-11
+**Status:** Accepted · 2026-08-11 · amended by
+[0035](0035-a-glsl-backend-for-the-video-path.md), which bounds the backend
+divergence anticipated below
 
 ## Context
 
@@ -48,6 +50,14 @@ selects. A patch that relies on `1/0 == 0` would look different on the two
 backends. That divergence is accepted; the alternative is a tool that goes black
 while you use it.
 
+The backend was built ([0035](0035-a-glsl-backend-for-the-video-path.md)), and
+the divergence turned out to be narrower than this expected. Each guard is
+transcribed rather than mapped onto the builtin that resembles it, so `Div`,
+`Mod`, `Sqrt`, `Log`, `Fract`, `Clamp`, `Step` and `Smoothstep` agree exactly and
+`1/0` is still 0 on both. What remains is NaN: `v == v` is what a shader has to
+test with, and a driver built with fast-math may fold it to true, so a NaN
+reaching the output could show white there where it shows black here.
+
 Silence is the real cost. There is no indication that a guard fired, so a patch
 can be quietly wrong — a `Log` clamped to zero over half the frame looks like a
 flat region rather than an error. The status bar reports compile issues but not
@@ -56,3 +66,10 @@ runtime guards, and counting them per frame would be a reasonable addition.
 `MathF.Sign` and integer overflow in the noise hash are not guarded, because
 neither can produce a non-finite float. The hash relies on C#'s default
 unchecked arithmetic.
+
+`Math.Sign` does not produce a non-finite value, but it *throws* on one, which is
+the one place in the interpreter where a degenerate patch raises rather than
+returning something plausible. Reaching it takes an unguarded multiply large
+enough to overflow a `double` feeding a `Sin`, so it is remote rather than
+impossible; the shader guards its input because it has nowhere to throw to, and
+the interpreter should probably follow.

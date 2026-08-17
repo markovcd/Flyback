@@ -1,6 +1,8 @@
 # ADR-0012: Feedback is an explicit module, not a graph cycle
 
-**Status:** Accepted · 2026-08-11
+**Status:** Accepted · 2026-08-11 · amended by
+[0035](0035-a-glsl-backend-for-the-video-path.md), where the history becomes a
+pair of textures and loses some of the precision this record asks for
 
 ## Context
 
@@ -49,6 +51,13 @@ History is kept in linear float RGB, not as bytes. A feedback loop re-reads its
 own output every frame, so 8-bit quantisation would compound — after thirty
 frames a slowly dimming image would visibly posterise into bands. Floats cost
 12 bytes per pixel (6 MB of history at 960×540) and avoid it entirely.
+
+On the GPU backend ([0035](0035-a-glsl-backend-for-the-video-path.md)) the same
+history is a ping-ponged pair of `RGBA16F` textures: eleven bits of mantissa
+rather than twenty-four, which is well clear of the eight this is about. Where
+half floats are not colour-renderable it falls back to eight and the status bar
+says so — the posterising described above is then exactly what happens, and
+naming it is the least that record can do.
 
 Values are clamped to 0..1 as they are written
 ([0014](0014-coordinate-and-value-conventions.md)). This is what stops a loop

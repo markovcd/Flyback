@@ -1,6 +1,8 @@
 # ADR-0018: Never render frames on the UI thread
 
-**Status:** Accepted · 2026-08-11
+**Status:** Accepted · 2026-08-11 · amended by
+[0035](0035-a-glsl-backend-for-the-video-path.md), where the rule holds by a
+different mechanism
 
 ## Context
 
@@ -80,3 +82,11 @@ time advances by wall-clock delta, clamped to 100 ms so a stall does not jump.
 
 The reason is recorded in a comment on `PreviewSurface`, because "render on the
 timer tick" is exactly the simplification someone would reintroduce.
+
+The GPU backend ([0035](0035-a-glsl-backend-for-the-video-path.md)) keeps this
+rule and cannot break it: its frame is drawn from `OnOpenGlRender` on the
+compositor's own render thread, and the chain above needs a `Parallel.For` on the
+dispatcher for a re-entrant paint to wait behind. There is none, so it cannot
+form. The discipline that replaces the `rendering` flag there is a lock around
+the snapshot the two threads share — also load-bearing rather than an
+optimisation, and for the same kind of reason.

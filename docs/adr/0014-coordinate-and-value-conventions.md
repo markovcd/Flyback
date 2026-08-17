@@ -31,6 +31,13 @@ clamps and rejects non-finite values; `ToByte` multiplies by 255.
 
 Pixel centres are sampled — hence the `+ 0.5f`.
 
+On the GPU backend ([0035](0035-a-glsl-backend-for-the-video-path.md)) all three
+of these fall out of the rasteriser: an interpolated `vUv` lands on
+`(index + 0.5) / size` already, so the half-pixel offset is free, and the two
+lines above are the only arithmetic the shader's `main` does before the program.
+The y-up inversion is the convention most easily broken by a backend, and it is
+the one worth checking first when a picture comes out wrong.
+
 ## Consequences
 
 Patches are resolution-independent. The same patch at 320×180 and 1920×1080
