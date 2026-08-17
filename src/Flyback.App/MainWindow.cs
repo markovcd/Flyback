@@ -109,6 +109,11 @@ public sealed class MainWindow : Window
     private readonly ToggleButton assistantButton = new() { Content = "Assistant", Width = 92 };
 
     private AssistantPanel? assistant;
+    private RowDefinition? assistantRow;
+    private GridSplitter? assistantSplitter;
+
+    /// <summary>How much of the window the assistant had when it was last open.</summary>
+    private GridLength assistantShare = new(1, GridUnitType.Star);
 
     /// <summary>
     /// Read before this window existed, and already installed. Nothing here
@@ -213,18 +218,65 @@ public sealed class MainWindow : Window
         columns.Children.Add(rightSplitter);
         columns.Children.Add(right);
 
-        // Docked after the status bar so it sits above it on screen, and full
-        // width because streamed prose wants width rather than a strip. Hidden
-        // costs nothing, which is why this needs no dialog — and this
+        // Rows rather than a dock, so the edge between the patch and the
+        // assistant can be dragged. Both flexible rows are star-sized for the
+        // reason the columns above are: a GridSplitter redistributes star
+        // weights, and a fixed-pixel track beside a star one just gets squeezed.
+        // Full width rather than a column, because streamed prose wants width.
+        var body = new Grid
+        {
+            RowDefinitions =
+            [
+                new RowDefinition(new GridLength(2.2, GridUnitType.Star)) { MinHeight = 160 },
+                new RowDefinition(GridLength.Auto),
+                new RowDefinition(assistantShare),
+            ],
+        };
+
+        assistantRow = body.RowDefinitions[2];
+        assistantSplitter = new GridSplitter { Background = Brushes.Transparent, Height = 5 };
+
+        Grid.SetRow(columns, 0);
+        Grid.SetRow(assistantSplitter, 1);
+        Grid.SetRow(assistant, 2);
+
+        body.Children.Add(columns);
+        body.Children.Add(assistantSplitter);
+        body.Children.Add(assistant);
+
+        // Hidden costs nothing, which is why this needs no dialog — and this
         // application has none.
-        DockPanel.SetDock(assistant, Dock.Bottom);
+        ShowAssistant(false);
 
         root.Children.Add(toolbar);
         root.Children.Add(statusBar);
-        root.Children.Add(assistant);
-        root.Children.Add(columns);
+        root.Children.Add(body);
 
         return root;
+    }
+
+    /// <summary>
+    /// Opens or closes the assistant, and gives its share of the window back
+    /// when it closes.
+    /// </summary>
+    /// <remarks>
+    /// A star row keeps its weight whether or not anything in it is visible, so
+    /// hiding the panel alone would leave a third of the window empty. The share
+    /// is kept rather than recomputed, so a panel dragged to a size somebody
+    /// liked comes back that size — and the row's minimum has to go with it,
+    /// since a minimum outranks a height of zero and would hold the gap open.
+    /// </remarks>
+    private void ShowAssistant(bool shown)
+    {
+        if (assistant is null || assistantRow is null || assistantSplitter is null) return;
+
+        if (!shown && assistant.IsVisible) assistantShare = assistantRow.Height;
+
+        assistant.IsVisible = shown;
+        assistantSplitter.IsVisible = shown;
+
+        assistantRow.MinHeight = shown ? 140d : 0d;
+        assistantRow.Height = shown ? assistantShare : new GridLength(0);
     }
 
     private Control BuildToolbar()
@@ -331,10 +383,7 @@ public sealed class MainWindow : Window
         ToolTip.SetTip(assistantButton, plugins.Assistants.Count > 0
             ? "Describe a patch and have one built. Nothing is sent until you ask, and nothing applied until you accept."
             : "No assistant plugin is installed. See the status bar for where plugins are looked for.");
-        assistantButton.IsCheckedChanged += (_, _) =>
-        {
-            if (assistant is not null) assistant.IsVisible = assistantButton.IsChecked == true;
-        };
+        assistantButton.IsCheckedChanged += (_, _) => ShowAssistant(assistantButton.IsChecked == true);
 
         bar.Children.Add(Separator());
         bar.Children.Add(audioButton);

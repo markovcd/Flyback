@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Shapes;
 using Avalonia.Input;
+using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
@@ -49,14 +50,26 @@ public sealed class AssistantPanel : UserControl
     {
         AcceptsReturn = true,
         TextWrapping = TextWrapping.Wrap,
-        PlaceholderText = "Describe the patch you want. Ctrl+Enter to ask.",
+        PlaceholderText = "Describe the patch you want. Enter to ask, Ctrl+Enter for a new line.",
         FontSize = 12,
         MinHeight = 64,
     };
 
     private readonly StackPanel said = new() { Spacing = 4, Margin = new Thickness(10, 8) };
     private readonly ScrollViewer transcript = new();
-    private readonly Image lastFrame = new() { Width = 160, Stretch = Stretch.Uniform };
+    /// <summary>
+    /// The last frame the assistant looked at, and nothing at all until it has
+    /// looked at one. Hidden rather than merely empty: a fixed width in an Auto
+    /// column holds its 160 pixels open whether or not there is a picture in it,
+    /// and that is a strip of dead panel beside the transcript and the
+    /// instruction box for the whole of every run that never renders.
+    /// </summary>
+    private readonly Image lastFrame = new()
+    {
+        Width = 160,
+        Stretch = Stretch.Uniform,
+        IsVisible = false,
+    };
     private readonly TextBlock footer = new() { FontSize = 11, Foreground = Dim, TextWrapping = TextWrapping.Wrap };
 
     /// <summary>
@@ -95,7 +108,6 @@ public sealed class AssistantPanel : UserControl
 
     private readonly DispatcherTimer heartbeat = new() { Interval = TimeSpan.FromMilliseconds(200) };
 
-    private readonly Button ask = new() { Content = "Ask", Width = 96 };
     private readonly Button stop = new() { Content = "Stop", Width = 96, IsEnabled = false };
     private readonly Button accept = new() { Content = "Apply", Width = 96, IsEnabled = false };
     private readonly Button revert = new() { Content = "Put it back", Width = 96, IsEnabled = false };
@@ -145,9 +157,9 @@ public sealed class AssistantPanel : UserControl
     /// arrives too late to be one: <c>Ask</c> is an async iterator, so its body
     /// does not run — and the flag inside it is not set — until the first
     /// <c>MoveNextAsync</c>, which happens after this panel has already refreshed
-    /// its buttons. Asking the run left Ask live and Stop dead for the whole of
-    /// every turn. This is set the moment somebody clicks, which is the moment
-    /// it becomes true from out here.
+    /// its buttons. Asking the run left Stop dead for the whole of every turn.
+    /// This is set the moment somebody presses Enter, which is the moment it
+    /// becomes true from out here.
     /// </remarks>
     private bool asking;
 
@@ -185,15 +197,11 @@ public sealed class AssistantPanel : UserControl
         transcript.Content = said;
         transcript.VerticalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Auto;
 
-        instruction.KeyDown += (_, e) =>
-        {
-            if (e.Key != Key.Enter || !e.KeyModifiers.HasFlag(KeyModifiers.Control)) return;
-
-            e.Handled = true;
-            _ = AskAsync();
-        };
-
-        ask.Click += async (_, _) => await AskAsync();
+        // Tunnelling, and both halves of the gesture answered here: the box would
+        // otherwise take Enter for itself on the way back up, and what it does
+        // with a modifier held is its business rather than something to bet the
+        // one way of sending a message on.
+        instruction.AddHandler(KeyDownEvent, Typed, RoutingStrategies.Tunnel);
 
         stop.Click += (_, _) =>
         {
@@ -223,8 +231,17 @@ public sealed class AssistantPanel : UserControl
 
         settingsButton.Flyout = settingsFlyout;
 
-        var buttons = new StackPanel { Spacing = 6, Width = 96 };
-        buttons.Children.Add(ask);
+        // Sat on the bottom edge, level with the instruction box and the footer.
+        // What is left here is reached for occasionally rather than every turn —
+        // sending is a keystroke now — but it still belongs beside the box rather
+        // than a panel's height away from it, which is a distance that changes
+        // now the panel is draggable.
+        var buttons = new StackPanel
+        {
+            Spacing = 6,
+            Width = 96,
+            VerticalAlignment = VerticalAlignment.Bottom,
+        };
         buttons.Children.Add(stop);
         buttons.Children.Add(accept);
         buttons.Children.Add(revert);
@@ -264,12 +281,16 @@ public sealed class AssistantPanel : UserControl
         columns.Children.Add(lastFrame);
         columns.Children.Add(buttons);
 
+        // No height of its own. What this is worth is entirely a matter of what
+        // is being read — a one-line refusal or forty turns of transcript — so
+        // the window owns the split and this only says how small is too small
+        // for the instruction box and a button to both still be there.
         return new Border
         {
             Background = new SolidColorBrush(Color.FromRgb(0x1C, 0x1E, 0x22)),
             BorderBrush = new SolidColorBrush(Color.FromRgb(0x10, 0x11, 0x14)),
             BorderThickness = new Thickness(0, 1, 0, 0),
-            Height = 240,
+            MinHeight = 140,
             Child = columns,
         };
     }
@@ -326,6 +347,39 @@ public sealed class AssistantPanel : UserControl
 
     private static TextBlock Caption(string text) =>
         new() { Text = text, FontSize = 11, Foreground = Dim };
+
+    /// <summary>
+    /// Enter asks; Ctrl+Enter — and Shift+Enter, which every other message box
+    /// in the world accepts — breaks the line.
+    /// </summary>
+    /// <remarks>
+    /// The line break is put in by hand rather than left to the box. Whether a
+    /// <see cref="TextBox"/> types a newline for a gesture with a modifier held
+    /// is an implementation detail of Avalonia's, and the alternative to knowing
+    /// is a message that silently refuses to grow a second line.
+    /// </remarks>
+    private void Typed(object? sender, KeyEventArgs e)
+    {
+        if (e.Key != Key.Enter) return;
+
+        e.Handled = true;
+
+        var breaking = e.KeyModifiers.HasFlag(KeyModifiers.Control)
+            || e.KeyModifiers.HasFlag(KeyModifiers.Shift);
+
+        if (!breaking)
+        {
+            _ = AskAsync();
+            return;
+        }
+
+        var text = instruction.Text ?? string.Empty;
+        var from = Math.Clamp(Math.Min(instruction.SelectionStart, instruction.SelectionEnd), 0, text.Length);
+        var to = Math.Clamp(Math.Max(instruction.SelectionStart, instruction.SelectionEnd), from, text.Length);
+
+        instruction.Text = string.Concat(text.AsSpan(0, from), "\n", text.AsSpan(to));
+        instruction.CaretIndex = from + 1;
+    }
 
     // --- settings -----------------------------------------------------------
 
@@ -428,12 +482,14 @@ public sealed class AssistantPanel : UserControl
             ? "No assistant plugin is installed. See the status bar for where plugins are looked for."
             : config is null ? null : Excuse(assistant, config);
 
-        ask.IsEnabled = !busy && excuse is null;
         stop.IsEnabled = busy;
         accept.IsEnabled = !busy && run?.Proposal is not null;
         revert.IsEnabled = !busy && before is not null;
 
-        ToolTip.SetTip(ask, excuse);
+        // On the box, since the box is what sending is done from now. The footer
+        // says the same thing in amber a few pixels below, so nothing is lost to
+        // anybody who never hovers.
+        ToolTip.SetTip(instruction, excuse);
         ShowKeyState();
 
         if (excuse is not null)
@@ -622,6 +678,7 @@ public sealed class AssistantPanel : UserControl
 
         said.Children.Clear();
         lastFrame.Source = null;
+        lastFrame.IsVisible = false;
         warnedAboutEdits = false;
 
         Add(wanted, Brushes.White, 12);
@@ -701,11 +758,13 @@ public sealed class AssistantPanel : UserControl
         try
         {
             lastFrame.Source = new Bitmap(new MemoryStream(png));
+            lastFrame.IsVisible = true;
         }
         catch
         {
-            // A frame that will not decode is not worth the window. The caption
-            // that came with it is already in the transcript.
+            // A frame that will not decode is not worth the window, and it does
+            // not get to claim the width either. The caption that came with it
+            // is already in the transcript.
         }
     }
 
