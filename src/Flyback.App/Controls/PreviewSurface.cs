@@ -20,7 +20,7 @@ namespace Flyback.App.Controls;
 /// the dispatcher pumps messages while waiting, a paint re-enters, and the
 /// compositor batch that paint waits on can never be committed.
 /// </remarks>
-public sealed class PreviewSurface : Control
+public sealed class PreviewSurface : Control, IPreviewSurface
 {
     private readonly SynthRenderer renderer = new();
     private readonly DispatcherTimer timer;
@@ -58,7 +58,7 @@ public sealed class PreviewSurface : Control
     }
 
     /// <summary>Patch time in seconds. This is what the Time module reads.</summary>
-    public double Time { get; private set; }
+    public double Time { get; set; }
 
     public bool IsPlaying { get; set; } = true;
 

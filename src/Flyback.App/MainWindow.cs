@@ -34,7 +34,7 @@ public sealed class MainWindow : Window
     private const int ExportSeconds = 10;
 
     private readonly NodeEditor editor = new();
-    private readonly PreviewSurface preview = new();
+    private readonly PreviewHost preview = new();
 
     /// <summary>
     /// Behind the inspector, and brighter when there is nothing selected for it
@@ -114,6 +114,11 @@ public sealed class MainWindow : Window
 
     private readonly ToggleButton playButton = new() { Content = "Pause", Width = 78, IsChecked = true };
     private readonly ToggleButton audioButton = new() { Content = "Audio off", Width = 92 };
+    private readonly ToggleButton gpuButton = new() { Content = "GPU", Width = 60 };
+
+    private const string GpuTip =
+        "Render the picture with a shader instead of the processor. Turn it off to " +
+        "compare the two, or if a long session starts to look stepped.";
     private readonly ToggleButton assistantButton = new() { Content = "Assistant", Width = 92 };
 
     private AssistantPanel? assistant;
@@ -368,6 +373,22 @@ public sealed class MainWindow : Window
         };
         preview.Resolution = Resolutions[3].Size;
 
+        // On by default, because it is the one that keeps up with a large patch.
+        // Turning it off is how two backends get compared, and the answer to a
+        // long session drifting — see ADR-0035 on float32 and the phase
+        // accumulator. It disables itself if the GPU turns out to be unusable.
+        gpuButton.IsChecked = true;
+        gpuButton.IsCheckedChanged += (_, _) =>
+            preview.Use(gpuButton.IsChecked == true ? PreviewBackend.Gpu : PreviewBackend.Cpu);
+
+        preview.BackendChanged += message =>
+        {
+            gpuButton.IsChecked = preview.Backend == PreviewBackend.Gpu;
+            gpuButton.IsEnabled = preview.GpuAvailable;
+            ToolTip.SetTip(gpuButton, preview.GpuAvailable ? GpuTip : message);
+            Report(message);
+        };
+
         var exportFrame = new Button { Content = "Save frame…" };
         ToolTip.SetTip(exportFrame, $"Render the current moment at {ExportSize.Width} x {ExportSize.Height} and write a PNG.");
         exportFrame.Click += async (_, _) => await SaveFrameAsync();
@@ -390,6 +411,7 @@ public sealed class MainWindow : Window
         bar.Children.Add(Separator());
         bar.Children.Add(Label("Preview"));
         bar.Children.Add(resolution);
+        bar.Children.Add(gpuButton);
         bar.Children.Add(exportFrame);
         assistantButton.IsEnabled = plugins.Assistants.Count > 0;
         ToolTip.SetTip(assistantButton, plugins.Assistants.Count > 0
@@ -1029,10 +1051,11 @@ public sealed class MainWindow : Window
         var size = preview.Resolution;
 
         // The loop is capped at ~60 Hz, so report the cost of a frame rather
-        // than a frame rate the timer would never let you observe.
+        // than a frame rate the timer would never let you observe. Which renderer
+        // produced the number is part of what it means, so it is said alongside.
         status.Text = string.Create(
             CultureInfo.InvariantCulture,
-            $"{nodes} modules · {wires} wires · {ops} ops   |   t = {preview.Time:0.00}s   |   {ms:0.0} ms to render {size.Width} × {size.Height}");
+            $"{nodes} modules · {wires} wires · {ops} ops   |   t = {preview.Time:0.00}s   |   {ms:0.0} ms to render {size.Width} × {size.Height} on the {preview.BackendName}");
     }
 
     // --- files -------------------------------------------------------------------

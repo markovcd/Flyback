@@ -12,5 +12,13 @@ internal static class ModuleInit
     /// change, and neither should fail a test.
     /// </summary>
     [ModuleInitializer]
-    public static void Initialize() => VerifyImageMagick.Initialize();
+    public static void Initialize()
+    {
+        VerifyImageMagick.Initialize();
+
+        // Shader sources are approved as text, not as an opaque blob. Verify
+        // assumes an unknown extension is binary, and a binary diff of GLSL is
+        // exactly the thing those snapshots exist to avoid.
+        EmptyFiles.FileExtensions.AddTextExtension("glsl");
+    }
 }
