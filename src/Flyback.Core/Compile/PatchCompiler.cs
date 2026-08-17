@@ -200,7 +200,14 @@ public static class PatchCompiler
                 inputs[port] = spec.Kind == PortKind.Any ? value : emitter.Coerce(value, spec.Width);
             }
 
-            var outputsOfNode = def.Emit(emitter, inputs);
+            // Held to what can actually be played on the way in, so the emit
+            // never has to defend itself against a zero length or a volume out
+            // of range — a hand-edited file is the only way either arrives.
+            var steps = node.Steps is { Count: > 0 } notes
+                ? notes.Select(s => s.Sane()).ToArray()
+                : [];
+
+            var outputsOfNode = def.Emit(emitter, new EmitContext(inputs, steps));
             visiting.Remove(node.Id);
             return resolved[node.Id] = outputsOfNode;
         }

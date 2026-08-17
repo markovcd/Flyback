@@ -808,7 +808,12 @@ public sealed class MainWindow : Window
         for (var i = 0; i < def.Inputs.Count; i++)
             inspector.Children.Add(BuildInputRow(node, def.Inputs[i], i));
 
-        if (def.Inputs.Count == 0)
+        // A sequencer's tune is a list rather than a row of knobs (ADR-0038),
+        // so it is edited as one — added to, taken from and reordered.
+        if (def.DefaultSteps is not null)
+            inspector.Children.Add(new StepList(node, def, editor.NotifyPatchChanged).View);
+
+        if (def.Inputs.Count == 0 && def.DefaultSteps is null)
             inspector.Children.Add(new TextBlock
             {
                 Text = "This module has nothing to set — it only produces.",
@@ -916,8 +921,11 @@ public sealed class MainWindow : Window
         };
 
         // A note knob gets a column for the name the number stands for, since
-        // "57" is not what anyone means by the note they are picking.
+        // "57" is not what anyone means by the note they are picking. A count
+        // needs no such column — the number is already what it stands for — but
+        // it lands on whole numbers for the same reason a note does.
         var named = spec.Display == PortDisplay.Note;
+        var whole = spec.Stepped;
 
         var row = new Grid { ColumnDefinitions = new ColumnDefinitions(named ? "78,*,84,40" : "78,*,84") };
         Grid.SetColumn(label, 0);
@@ -949,18 +957,19 @@ public sealed class MainWindow : Window
             VerticalAlignment = VerticalAlignment.Center,
             Margin = new Thickness(4, 0),
 
-            // Dragging a note knob lands on notes. The module snaps whatever it
-            // is given anyway, so a slider that stopped between two would only
-            // be showing a distinction the sound does not have.
-            IsSnapToTickEnabled = named,
+            // Dragging a note or a count lands on whole numbers. The module
+            // quantises whatever it is given anyway, so a slider that stopped
+            // between two would only be showing a distinction the patch does
+            // not have.
+            IsSnapToTickEnabled = whole,
             TickFrequency = 1,
         };
 
         var numeric = new NumericUpDown
         {
             Value = (decimal)value,
-            Increment = named ? 1m : 0.05m,
-            FormatString = named ? "0.##" : "0.###",
+            Increment = whole ? 1m : 0.05m,
+            FormatString = whole ? "0.##" : "0.###",
             FontSize = 12,
             VerticalAlignment = VerticalAlignment.Center,
             ShowButtonSpinner = false,

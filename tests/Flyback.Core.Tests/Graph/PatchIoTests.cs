@@ -113,6 +113,48 @@ public class PatchIoTests
     }
 
     /// <summary>
+    /// A sequencer's tune is the one thing a node carries that is not a knob
+    /// (ADR-0038), so it is the one thing a round trip could quietly drop.
+    /// </summary>
+    [Fact]
+    public void A_sequencers_notes_survive_the_trip()
+    {
+        var builder = new PatchBuilder(NodeCatalog.BuiltIn);
+        var sequencer = builder.Add("seq.notes", 0, 0);
+
+        sequencer.Steps = [new Step(60f), new Step(62f, 2.5f), new Step(64f, 1f, 0.25f)];
+
+        var after = RoundTrip(builder.Patch).Nodes.Single(n => n.TypeId == "seq.notes");
+
+        after.Steps.ShouldBe(sequencer.Steps);
+    }
+
+    [Fact]
+    public void A_full_length_tune_survives_the_trip()
+    {
+        var builder = new PatchBuilder(NodeCatalog.BuiltIn);
+        var sequencer = builder.Add("seq.values", 0, 0);
+
+        sequencer.Steps = [.. Enumerable.Range(0, NodeCatalog.MaxSteps).Select(s => new Step(s / 32f))];
+
+        RoundTrip(builder.Patch).Nodes
+            .Single(n => n.TypeId == "seq.values").Steps!.Count.ShouldBe(NodeCatalog.MaxSteps);
+    }
+
+    /// <summary>
+    /// Written only where there is a tune to write, so every other module's JSON
+    /// reads exactly as it always did.
+    /// </summary>
+    [Fact]
+    public void A_module_with_no_notes_writes_none()
+    {
+        var builder = new PatchBuilder(NodeCatalog.BuiltIn);
+        builder.Add("osc.sine", 0, 0);
+
+        PatchIo.ToJson(builder.Patch, NodeCatalog.BuiltIn).ShouldNotContain("Steps");
+    }
+
+    /// <summary>
     /// Empty means nothing patched, not nothing at all: reading gives a patch
     /// its Output if the file did not carry one, so the emptiest thing that can
     /// come back is still an instrument with somewhere to go.

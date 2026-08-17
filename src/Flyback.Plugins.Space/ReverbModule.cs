@@ -54,7 +54,7 @@ internal static class ReverbModule
         + "hall; 'decay' is how long the tail takes to die. Audio only — on the picture it has "
         + "nothing to remember, and dims rather than passing through.");
 
-    private static Slot[] Emit(Emitter em, Slot[] inputs)
+    private static Slot[] Emit(Emitter em, EmitContext inputs)
     {
         var dry = inputs[0];
         var size = em.Ternary(OpCode.Clamp, inputs[1], em.Constant(0f), em.Constant(1f));

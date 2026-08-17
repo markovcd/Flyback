@@ -40,9 +40,11 @@ public static class Presets
 
         var time = b.Add("time", 40, 300);
 
-        // Three steps a second, and the gate closed for the last third of each
-        // so that two of the same note in a row are two notes.
-        var steps = b.Add("seq.notes", 240, 180, (1, 3f), (3, 0.66f));
+        // Three notes a second, and the gate closed for the last third of each
+        // so that two of the same note in a row are two notes. Ports are in,
+        // rate, gate length, shape — the notes themselves are a list on the
+        // node rather than knobs on it (ADR-0038).
+        var steps = b.Add("seq.notes", 240, 180, (1, 3f), (2, 0.66f));
 
         // Ear: the step is a note number, so it goes in where a note goes.
         var note = b.Add("audio.note", 640, 180);

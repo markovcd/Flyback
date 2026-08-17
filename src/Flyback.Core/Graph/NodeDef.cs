@@ -3,11 +3,31 @@ using Flyback.Core.Compile;
 namespace Flyback.Core.Graph;
 
 /// <summary>
-/// Lowers one node to register-machine ops. Inputs arrive already resolved —
-/// either the upstream node's result or a constant from the port default — and
-/// already coerced to the width the port declared.
+/// What one node is lowered from: its resolved inputs, and whatever the instance
+/// carries that is not a knob.
 /// </summary>
-public delegate Slot[] EmitFn(Emitter emitter, Slot[] inputs);
+/// <remarks>
+/// Indexes straight through to <see cref="Inputs"/>, so a module that wants
+/// nothing but its sockets reads exactly as it always did — <c>i[0]</c> is input
+/// zero. Only the sequencers look further, and only at <see cref="Steps"/>.
+/// </remarks>
+/// <param name="Inputs">
+/// One slot per declared input, already resolved — either the upstream node's
+/// result or a constant from the port default — and already coerced to the width
+/// the port declared.
+/// </param>
+/// <param name="Steps">
+/// The instance's notes, empty for every module that has none. These are values
+/// rather than slots on purpose: a sequencer folds its lengths into running sums
+/// at compile time, which it could not do with a register.
+/// </param>
+public readonly record struct EmitContext(Slot[] Inputs, IReadOnlyList<Step> Steps)
+{
+    public Slot this[int port] => Inputs[port];
+}
+
+/// <summary>Lowers one node to register-machine ops.</summary>
+public delegate Slot[] EmitFn(Emitter emitter, EmitContext node);
 
 /// <summary>
 /// The static description of a node type: its sockets and how it compiles.
@@ -21,4 +41,27 @@ public sealed record NodeDef(
     IReadOnlyList<PortSpec> Inputs,
     IReadOnlyList<PortSpec> Outputs,
     EmitFn Emit,
-    string Description = "");
+    string Description = "")
+{
+    /// <summary>
+    /// The notes a freshly placed instance carries, or null for a module that
+    /// holds none. An init property rather than a constructor parameter, so a
+    /// plugin compiled against an earlier build still finds the constructor it
+    /// was compiled against.
+    /// </summary>
+    public IReadOnlyList<Step>? DefaultSteps { get; init; }
+
+    /// <summary>How a step's value should be written out, when this module has steps.</summary>
+    public PortDisplay StepDisplay { get; init; }
+
+    /// <summary>The range a step's value is edited within, when this module has steps.</summary>
+    public (float Min, float Max) StepRange { get; init; } = (0f, 1f);
+
+    /// <summary>
+    /// A step's value described as though it were a socket, so the editor formats
+    /// and snaps it with the same code every knob already uses — a note in a list
+    /// reads "A3" for the same reason a note on a knob does.
+    /// </summary>
+    public PortSpec StepValue => new(
+        "value", PortKind.Scalar, 0f, StepRange.Min, StepRange.Max, -1, StepDisplay);
+}

@@ -135,7 +135,8 @@ other.
 |---|---|
 | Pitch | patch **Frequency** into an oscillator's `freq` — it is a knob in hertz rather than the single digits the visual modules use |
 | Notes | **Note** is the same thing in notes rather than hertz. Pick one on the knob — it reads as `A3`, not as 57 — or patch a signal in and it snaps to the nearest whole note, which is what turns a sweep into a run up the chromatic scale. `octave` transposes by twelve semitones a step, `cents` detunes past the snap, and `note` hands the snapped number on so a second **Note** can play an interval off it |
-| Sequences | **Note Sequencer** is eight notes in a row — `out` to a **Note** for the pitch, `gate` into a multiply so a rest is heard as one, `index` to the screen. **Sequencer** is the same eight steps as a plain signal instead. `on` silences a step without losing it, so it doubles as that step's level, and `shape` sets how long the gate takes to open and close |
+| Sequences | **Note Sequencer** is a list of notes, edited in the inspector — `out` to a **Note** for the pitch, `gate` into a multiply so a rest is heard as one, `index` to the screen. **Sequencer** is the same list as plain signals instead. `shape` sets how long the gate takes to open and close |
+| Writing a tune | up to 32 notes, added and removed anywhere in the list and dragged into any order. Each carries a **length** in steps, so a note can be held twice as long as its neighbour, and a **volume** — a level rather than a switch, so it silences a note without losing it and doubles as its velocity |
 | Stereo | leave `right` unpatched and it carries `left`, the way a normalled jack does |
 | `scan` | at 0 the patch is driven by Time; at 1 it sweeps the image and you hear the picture, at `scan rate` sweeps per second |
 | Export | **Render audio…** writes a WAV, **Export video…** an AVI with both — see *Files* |
@@ -152,7 +153,7 @@ fourteen either side of it. Brightness is taken from the ramp before the snap, s
 a smooth glow and the rings sitting in it are the before and after of the same
 signal.
 
-**Sequence** is a tune rather than a scale. Eight notes on eight knobs go to the
+**Sequence** is a tune rather than a scale. Eight notes in a list go to the
 speakers, and the sequencer's other two outputs go to the screen: `index` picks
 the hue and the number of rings, so the picture reorganises itself on the beat,
 and `gate` dims it exactly where it silences the note, so the rhythm is visible.
@@ -173,9 +174,15 @@ its `in` has got to, not of what played before, so unlike a delay (ADR-0027) or
 an accumulated phase (ADR-0030) there is nothing to carry and nothing a
 recompile can disturb. `in` is a domain rather than a clock for the same reason
 an oscillator's is: stop it and the sequence stops, run it backwards and it runs
-backwards. And because the steps are ordinary inputs rather than a stored list,
-each one is a socket — patch an oscillator into step 3 and that note drifts
-while the other seven hold.
+backwards.
+
+The notes themselves are a list on the module rather than knobs on it, which is
+what lets a pattern be any length and a note any duration
+([ADR-0038](docs/adr/0038-a-sequencers-notes-are-a-list-on-the-node.md)). That
+list is the one thing here a module carries that is not a knob, and it costs the
+one thing the old row of sockets could do: a step is no longer something you can
+patch into. Where every note is the same length the module compiles to exactly
+the ops it always did; only an uneven pattern pays for being uneven.
 
 ### Why a stepped pitch does not click
 

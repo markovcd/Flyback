@@ -1,0 +1,480 @@
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Input;
+using Avalonia.Layout;
+using Avalonia.Media;
+using Flyback.Core.Graph;
+
+namespace Flyback.App.Controls;
+
+/// <summary>
+/// The tune a sequencer plays, as a list you can add to, take from and reorder.
+/// </summary>
+/// <remarks>
+/// Composed from ordinary controls rather than drawn, which is the opposite call
+/// to <see cref="NodeEditor"/>'s. That control draws itself because it zooms and
+/// because a wire has to end exactly where a socket was painted
+/// ([0017](0017-draw-the-node-editor-in-one-control.md)); neither is true of a
+/// list in a panel, and drawing one by hand would mean hand-rolling text entry
+/// and giving up the keyboard — the costs that record accepted for the canvas
+/// and has no reason to accept here. The one exception is the volume, which is
+/// a <see cref="LevelBar"/>: thirty-two sliders with thumbs on them read as
+/// thirty-two controls rather than as a pattern.
+/// </remarks>
+internal sealed class StepList
+{
+    private const double RowHeight = 26;
+    private const double InsertHeight = 6;
+    private const double ControlHeight = 22;
+
+    private static readonly IBrush Faint = new SolidColorBrush(Color.FromRgb(0x8A, 0x90, 0x9A));
+    private static readonly IBrush Accent = new SolidColorBrush(Color.FromRgb(0x4A, 0x9E, 0xDE));
+
+    private readonly NodeInstance node;
+    private readonly NodeDef def;
+    private readonly Action changed;
+    private readonly StackPanel rows = new();
+
+    private Control? dragging;
+    private int dragFrom;
+    private int dragTo;
+    private Point dragOrigin;
+
+    public StepList(NodeInstance node, NodeDef def, Action changed)
+    {
+        this.node = node;
+        this.def = def;
+        this.changed = changed;
+
+        node.Steps ??= [];
+
+        View = new StackPanel
+        {
+            Margin = new Thickness(0, 14, 0, 0),
+            Children = { Heading(), rows },
+        };
+
+        Fill();
+    }
+
+    public Control View { get; }
+
+    private List<Step> Steps => node.Steps!;
+
+    /// <summary>Whether a value stands for something other than itself — a note number.</summary>
+    private bool Named => def.StepDisplay == PortDisplay.Note;
+
+    /// <summary>
+    /// handle · number · value · [name] · length · volume · remove.
+    /// The volume takes the slack, because it is the only one of them that reads
+    /// as a shape across the whole list rather than as a number on its own row.
+    /// </summary>
+    private string Columns => Named ? "16,20,58,34,50,*,22" : "16,20,58,50,*,22";
+
+    private Control Heading()
+    {
+        var head = new Grid
+        {
+            ColumnDefinitions = new ColumnDefinitions(Columns),
+            Margin = new Thickness(0, 0, 0, 3),
+        };
+
+        head.Children.Add(Column(Label(Named ? "note" : "value"), 2));
+        head.Children.Add(Column(Label("length"), Named ? 4 : 3));
+        head.Children.Add(Column(Label("volume"), Named ? 5 : 4));
+
+        return head;
+    }
+
+    // --- building ----------------------------------------------------------------
+
+    /// <summary>
+    /// Rebuilt whole on any change of shape. A sequence is at most thirty-two
+    /// rows and the panel is rebuilt on every selection anyway, so there is
+    /// nothing here worth the bookkeeping of patching it in place.
+    /// </summary>
+    private void Fill()
+    {
+        rows.Children.Clear();
+
+        for (var i = 0; i < Steps.Count; i++)
+        {
+            rows.Children.Add(Inserter(i));
+            rows.Children.Add(Row(i));
+        }
+
+        rows.Children.Add(Inserter(Steps.Count));
+
+        if (Steps.Count == 0)
+            rows.Children.Add(new TextBlock
+            {
+                Text = "No notes yet — the sequencer holds still until it has one.",
+                TextWrapping = TextWrapping.Wrap,
+                FontSize = 11,
+                Opacity = 0.5,
+                Margin = new Thickness(2, 4, 2, 0),
+            });
+    }
+
+    private void Rebuild()
+    {
+        Fill();
+        changed();
+    }
+
+    /// <summary>
+    /// The gap between two notes, and the way one is put there. Nearly invisible
+    /// until the pointer finds it, so thirty-three of them do not read as
+    /// thirty-three controls.
+    /// </summary>
+    private Control Inserter(int at)
+    {
+        var room = Steps.Count < NodeCatalog.MaxSteps;
+
+        var line = new Border
+        {
+            Height = 2,
+            Background = Accent,
+            Opacity = 0,
+            VerticalAlignment = VerticalAlignment.Center,
+            Margin = new Thickness(16, 0, 22, 0),
+        };
+
+        var strip = new Panel
+        {
+            Height = InsertHeight,
+            Background = Brushes.Transparent,
+            Cursor = room ? new Cursor(StandardCursorType.Hand) : Cursor.Default,
+            Children = { line },
+        };
+
+        if (!room)
+        {
+            ToolTip.SetTip(strip, $"A sequence holds at most {NodeCatalog.MaxSteps} notes.");
+            return strip;
+        }
+
+        ToolTip.SetTip(strip, "Add a note here");
+
+        strip.PointerEntered += (_, _) => line.Opacity = 0.85;
+        strip.PointerExited += (_, _) => line.Opacity = 0;
+
+        strip.PointerPressed += (_, _) =>
+        {
+            // Copied from the note it follows, so adding to a tune extends it
+            // rather than dropping a stranger into the middle of it.
+            var like = Steps.Count == 0 ? new Step(Middle) : Steps[Math.Max(at - 1, 0)];
+
+            Steps.Insert(at, like);
+            Rebuild();
+        };
+
+        return strip;
+    }
+
+    /// <summary>A value in the middle of the range, for the very first note of an empty list.</summary>
+    private float Middle => (def.StepRange.Min + def.StepRange.Max) / 2f;
+
+    private Control Row(int index)
+    {
+        var step = Steps[index];
+
+        var row = new Grid
+        {
+            ColumnDefinitions = new ColumnDefinitions(Columns),
+            Height = RowHeight,
+        };
+
+        var handle = new TextBlock
+        {
+            Text = "⠿",
+            FontSize = 13,
+            Foreground = Faint,
+            VerticalAlignment = VerticalAlignment.Center,
+            Cursor = new Cursor(StandardCursorType.SizeAll),
+        };
+
+        ToolTip.SetTip(handle, "Drag to reorder");
+        Reorder(handle, row, index);
+
+        var value = Number(step.Value, def.StepRange.Min, def.StepRange.Max, Named ? 1m : 0.05m,
+            Named ? "0" : "0.##",
+            v => Set(index, s => s with { Value = v }));
+
+        var length = Number(step.Length, Step.ShortestLength, 16f, 0.25m, "0.##",
+            v => Set(index, s => s with { Length = v }));
+
+        ToolTip.SetTip(length, "How long this note lasts, in steps. 2 is twice as long as 1.");
+
+        var volume = new LevelBar
+        {
+            Value = step.Volume,
+            Margin = new Thickness(3, 0, 6, 0),
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+
+        ToolTip.SetTip(volume, "How loud, and a rest at nothing — a level rather than a switch.");
+        volume.ValueChanged += v => Set(index, s => s with { Volume = (float)v });
+
+        var remove = new Button
+        {
+            Content = "✕",
+            FontSize = 10,
+            Padding = new Thickness(0),
+            Width = 18,
+            Height = 18,
+            Background = Brushes.Transparent,
+            BorderThickness = new Thickness(0),
+            Opacity = 0.45,
+            VerticalAlignment = VerticalAlignment.Center,
+            HorizontalAlignment = HorizontalAlignment.Right,
+        };
+
+        ToolTip.SetTip(remove, "Remove this note");
+        remove.PointerEntered += (_, _) => remove.Opacity = 1;
+        remove.PointerExited += (_, _) => remove.Opacity = 0.45;
+        remove.Click += (_, _) =>
+        {
+            Steps.RemoveAt(index);
+            Rebuild();
+        };
+
+        var column = 0;
+        row.Children.Add(Column(handle, column++));
+        row.Children.Add(Column(new TextBlock
+        {
+            Text = (index + 1).ToString(),
+            FontSize = 10.5,
+            Opacity = 0.4,
+            VerticalAlignment = VerticalAlignment.Center,
+        }, column++));
+
+        row.Children.Add(Column(value, column++));
+
+        if (Named)
+            row.Children.Add(Column(new TextBlock
+            {
+                Text = def.StepValue.Format(step.Value),
+                FontSize = 11.5,
+                Opacity = 0.75,
+                Margin = new Thickness(5, 0, 0, 0),
+                VerticalAlignment = VerticalAlignment.Center,
+            }, column++));
+
+        row.Children.Add(Column(length, column++));
+        row.Children.Add(Column(volume, column++));
+        row.Children.Add(Column(remove, column));
+
+        return row;
+    }
+
+    /// <summary>
+    /// A compact number box. Fluent gives one a height that would overflow a row
+    /// this tight, so the height is stated rather than inherited — the rows have
+    /// to line up with the handles that reorder them.
+    /// </summary>
+    private static NumericUpDown Number(
+        float value, float min, float max, decimal increment, string format, Action<float> apply)
+    {
+        var box = new NumericUpDown
+        {
+            Value = (decimal)value,
+            Minimum = (decimal)min,
+            Maximum = (decimal)max,
+            Increment = increment,
+            FormatString = format,
+            FontSize = 11.5,
+            Padding = new Thickness(4, 0),
+            MinHeight = ControlHeight,
+            Height = ControlHeight,
+            Margin = new Thickness(0, 0, 4, 0),
+            ShowButtonSpinner = false,
+            VerticalAlignment = VerticalAlignment.Center,
+            VerticalContentAlignment = VerticalAlignment.Center,
+        };
+
+        box.ValueChanged += (_, e) =>
+        {
+            if (e.NewValue is { } d) apply((float)d);
+        };
+
+        return box;
+    }
+
+    /// <summary>
+    /// Writes one note back and tells the patch. The row is not rebuilt — the
+    /// control the pointer is in has to survive being typed into — so the note
+    /// name, which is the one thing showing a value twice, is refreshed by hand.
+    /// </summary>
+    private void Set(int index, Func<Step, Step> edit)
+    {
+        if (index >= Steps.Count) return;
+
+        var next = edit(Steps[index]).Sane();
+        if (next == Steps[index]) return;
+
+        Steps[index] = next;
+
+        if (Named
+            && rows.Children.Count > index * 2 + 1
+            && rows.Children[index * 2 + 1] is Grid row
+            && row.Children.FirstOrDefault(c => Grid.GetColumn(c) == 3) is TextBlock name)
+        {
+            name.Text = def.StepValue.Format(next.Value);
+        }
+
+        changed();
+    }
+
+    // --- reordering --------------------------------------------------------------
+
+    /// <summary>
+    /// Drag a note to a new place in the list. The row follows the pointer and
+    /// the list is left alone until the drag ends: rebuilding it mid-gesture
+    /// would destroy the control holding the pointer capture.
+    /// </summary>
+    private void Reorder(Control handle, Control row, int index)
+    {
+        handle.PointerPressed += (_, e) =>
+        {
+            dragging = row;
+            dragFrom = index;
+            dragTo = index;
+            dragOrigin = e.GetPosition(rows);
+
+            e.Pointer.Capture(handle);
+            row.ZIndex = 1;
+            row.Opacity = 0.8;
+        };
+
+        handle.PointerMoved += (_, e) =>
+        {
+            if (dragging != row) return;
+
+            var moved = e.GetPosition(rows).Y - dragOrigin.Y;
+
+            row.RenderTransform = new TranslateTransform(0, moved);
+            dragTo = Math.Clamp(
+                index + (int)Math.Round(moved / (RowHeight + InsertHeight)), 0, Steps.Count - 1);
+        };
+
+        handle.PointerReleased += (_, e) =>
+        {
+            if (dragging != row) return;
+
+            dragging = null;
+            row.RenderTransform = null;
+            row.ZIndex = 0;
+            row.Opacity = 1;
+            e.Pointer.Capture(null);
+
+            if (dragTo == dragFrom) return;
+
+            var moved = Steps[dragFrom];
+            Steps.RemoveAt(dragFrom);
+            Steps.Insert(dragTo, moved);
+
+            Rebuild();
+        };
+    }
+
+    // --- small helpers -----------------------------------------------------------
+
+    private static Control Column(Control control, int column)
+    {
+        Grid.SetColumn(control, column);
+        return control;
+    }
+
+    private static TextBlock Label(string text) => new()
+    {
+        Text = text,
+        FontSize = 9.5,
+        Opacity = 0.4,
+        VerticalAlignment = VerticalAlignment.Bottom,
+    };
+}
+
+/// <summary>
+/// A level, drawn as how full it is rather than as a thumb on a track. Avalonia
+/// has no knob or dial — its only "knob" is the puck inside a ToggleSwitch — and
+/// a column of Sliders reads as a column of controls, where a column of these
+/// reads as the shape of a pattern.
+/// </summary>
+internal sealed class LevelBar : Control
+{
+    private static readonly IBrush Track = new SolidColorBrush(Color.FromRgb(0x2C, 0x30, 0x36));
+    private static readonly IBrush Fill = new SolidColorBrush(Color.FromRgb(0x4F, 0xC3, 0x87));
+    private static readonly IBrush Empty = new SolidColorBrush(Color.FromRgb(0x5A, 0x60, 0x6A));
+
+    private double level;
+
+    public LevelBar()
+    {
+        Height = 12;
+        MinWidth = 40;
+        Cursor = new Cursor(StandardCursorType.Hand);
+    }
+
+    public event Action<double>? ValueChanged;
+
+    public double Value
+    {
+        get => level;
+        set
+        {
+            var next = Math.Clamp(value, 0d, 1d);
+            if (Math.Abs(next - level) < 1e-6) return;
+
+            level = next;
+            InvalidateVisual();
+        }
+    }
+
+    public override void Render(DrawingContext context)
+    {
+        var full = new Rect(Bounds.Size);
+        var radius = full.Height / 2;
+
+        context.DrawRectangle(Track, null, new RoundedRect(full, radius));
+
+        if (level <= 0)
+        {
+            // A rest still shows something, or an empty row looks like a row
+            // that failed to draw rather than one deliberately silenced.
+            var dot = new Rect(0, 0, full.Height, full.Height).Deflate(3);
+            context.DrawEllipse(Empty, null, dot.Center, dot.Width / 2, dot.Height / 2);
+            return;
+        }
+
+        var width = Math.Max(full.Width * level, full.Height);
+        context.DrawRectangle(Fill, null, new RoundedRect(full.WithWidth(width), radius));
+    }
+
+    protected override void OnPointerPressed(PointerPressedEventArgs e)
+    {
+        base.OnPointerPressed(e);
+        e.Pointer.Capture(this);
+        Track_(e.GetPosition(this).X);
+    }
+
+    protected override void OnPointerMoved(PointerEventArgs e)
+    {
+        base.OnPointerMoved(e);
+        if (Equals(e.Pointer.Captured, this)) Track_(e.GetPosition(this).X);
+    }
+
+    protected override void OnPointerReleased(PointerReleasedEventArgs e)
+    {
+        base.OnPointerReleased(e);
+        e.Pointer.Capture(null);
+    }
+
+    private void Track_(double x)
+    {
+        if (Bounds.Width <= 0) return;
+
+        Value = x / Bounds.Width;
+        ValueChanged?.Invoke(level);
+    }
+}

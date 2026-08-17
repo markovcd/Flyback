@@ -113,6 +113,7 @@ public sealed class PatchWorkbench
                 "describe_patch" => Fine(DescribePatch()),
                 "add_module" => AddModule(arguments),
                 "set_knobs" => SetKnobs(arguments),
+                "set_steps" => SetSteps(arguments),
                 "connect" => Connect(arguments),
                 "disconnect" => Disconnect(arguments),
                 "remove_module" => RemoveModule(arguments),
@@ -198,6 +199,77 @@ public sealed class PatchWorkbench
         if (Turn(node, def, knobs) is { } bad) return ToolOutcome.Refused(bad);
 
         return Fine($"set. {Sockets(node, def)} {Issues()}");
+    }
+
+    /// <summary>
+    /// Replaces a sequencer's tune outright rather than editing it a note at a
+    /// time. A model rewriting eight notes in one call cannot get them into the
+    /// wrong order, and eight calls that each have to land correctly is eight
+    /// chances to end up with a tune nobody asked for.
+    /// </summary>
+    private ToolOutcome SetSteps(JsonElement arguments)
+    {
+        if (!Node(arguments, "handle", out var node, out var def, out var refusal))
+            return ToolOutcome.Refused(refusal);
+
+        if (def.DefaultSteps is null)
+            return ToolOutcome.Refused(
+                $"{Handle(node)} is a {def.Name}, which has no notes. Only the sequencers do.");
+
+        if (!arguments.TryGetProperty("notes", out var given) || given.ValueKind != JsonValueKind.Array)
+            return ToolOutcome.Refused("'notes' is required: a list of {value, length, volume}.");
+
+        if (given.GetArrayLength() > NodeCatalog.MaxSteps)
+            return ToolOutcome.Refused(
+                $"a sequence holds at most {NodeCatalog.MaxSteps} notes, and that is "
+                + $"{given.GetArrayLength()}.");
+
+        var notes = new List<Step>();
+
+        foreach (var note in given.EnumerateArray())
+        {
+            if (note.ValueKind != JsonValueKind.Object)
+                return ToolOutcome.Refused("every note has to be an object of {value, length, volume}.");
+
+            if (!Real(note, "value", out var value))
+                return ToolOutcome.Refused("every note needs a 'value'.");
+
+            // Both optional, because the ordinary note is one step long and
+            // fully open, and saying so on every note of a tune is noise.
+            notes.Add(new Step(
+                value,
+                Real(note, "length", out var length) ? length : 1f,
+                Real(note, "volume", out var volume) ? volume : 1f).Sane());
+        }
+
+        node.Steps = notes;
+        Edits++;
+
+        return Fine($"set {notes.Count} notes on {Handle(node)}. {Notes(node)} {Issues()}");
+    }
+
+    private static bool Real(JsonElement element, string name, out float value)
+    {
+        value = 0f;
+
+        return element.TryGetProperty(name, out var found)
+            && found.ValueKind == JsonValueKind.Number
+            && found.TryGetSingle(out value);
+    }
+
+    /// <summary>A sequencer's tune, written out the way it would be typed back in.</summary>
+    private static string Notes(NodeInstance node)
+    {
+        if (node.Steps is not { Count: > 0 } steps) return "It has no notes.";
+
+        var written = steps.Select(s =>
+            s.Length == 1f && s.Volume == 1f
+                ? s.Value.ToString(CultureInfo.InvariantCulture)
+                : $"{s.Value.ToString(CultureInfo.InvariantCulture)}"
+                  + $"/{s.Length.ToString(CultureInfo.InvariantCulture)}"
+                  + $"@{s.Volume.ToString(CultureInfo.InvariantCulture)}");
+
+        return $"Notes: {string.Join(" ", written)}.";
     }
 
     private ToolOutcome Connect(JsonElement arguments)
@@ -362,6 +434,12 @@ public sealed class PatchWorkbench
 
             if (def.Outputs.Count > 0)
                 text.Append("  out").AppendLine(FanOut(node, def));
+
+            // A tune is not wiring and does not show up in either of the two
+            // lines above, so a sequencer would otherwise read as a module with
+            // nothing set on it at all.
+            if (def.DefaultSteps is not null)
+                text.Append("  ").AppendLine(Notes(node));
         }
 
         text.Append(working.Nodes.Count).Append(" modules, ")
@@ -715,6 +793,35 @@ public sealed class PatchWorkbench
                     }
                   },
                   "required": ["handle", "knobs"]
+                }
+                """),
+
+            new("set_steps",
+                "Replaces the whole tune on a sequencer. Its notes are a list on the module rather "
+                + "than knobs, so this is the only way to write one — send every note in order, "
+                + "because this replaces what was there. 'value' is a note number on a Note "
+                + "Sequencer (57 is A3) and an ordinary signal on a Sequencer. 'length' is how "
+                + "many steps the note lasts and defaults to 1; 'volume' is 0 to 1, a level rather "
+                + "than a switch, and defaults to 1 — a note at 0 is a rest that still holds its "
+                + "value.",
+                """
+                {
+                  "properties": {
+                    "handle": { "type": "string" },
+                    "notes": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "value": { "type": "number" },
+                          "length": { "type": "number" },
+                          "volume": { "type": "number" }
+                        },
+                        "required": ["value"]
+                      }
+                    }
+                  },
+                  "required": ["handle", "notes"]
                 }
                 """),
 

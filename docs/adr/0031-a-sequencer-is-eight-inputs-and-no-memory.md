@@ -1,8 +1,16 @@
 # ADR-0031: A sequencer is eight inputs and no memory
 
-**Status:** Accepted · 2026-08-16 · *user-directed* · extends
+**Status:** Superseded in part · 2026-08-16 · *user-directed* · extends
 [0009](0009-editable-defaults-on-every-input.md) and
-[0022](0022-audio-and-video-are-two-sinks-over-one-patch.md)
+[0022](0022-audio-and-video-are-two-sinks-over-one-patch.md) · its central
+decision — that the steps are ordinary inputs — is superseded by
+[0038](0038-a-sequencers-notes-are-a-list-on-the-node.md), which makes them a
+list on the node so that a pattern may be any length and its notes any duration
+
+Everything else here still holds, and 0038 leans on it: the sequencer still has
+no memory, selection is still a sum of windows, `in` is still a domain rather
+than a clock, and the gate still ramps for the reason set out below. What is gone
+is "a step is a socket", and with it the ability to patch into one.
 
 ## Context
 

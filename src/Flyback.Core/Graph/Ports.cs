@@ -3,11 +3,18 @@ using System.Globalization;
 namespace Flyback.Core.Graph;
 
 /// <summary>
-/// How an input's value should be read back. This is presentation only — the
-/// number compiles the same either way — and lives beside <see cref="PortSpec.Min"/>
-/// and <see cref="PortSpec.Max"/>, which are already the editor's business
-/// rather than the compiler's.
+/// How an input's value should be read back. The compiler never consults it —
+/// any given number lowers the same whatever this says — so it lives beside
+/// <see cref="PortSpec.Min"/> and <see cref="PortSpec.Max"/>, which are already
+/// the editor's business rather than the compiler's.
 /// </summary>
+/// <remarks>
+/// As well as writing a value out, it says whether the editor should let the
+/// control rest between whole numbers — see <see cref="PortSpec.Stepped"/>.
+/// That is still the editor's business in the same way a slider range is:
+/// nothing here changes what a stored number means, and a signal arriving down
+/// a wire is untouched by any of it.
+/// </remarks>
 public enum PortDisplay
 {
     /// <summary>A plain number.</summary>
@@ -77,7 +84,16 @@ public readonly record struct PortSpec(
     /// node on the canvas and the row in the inspector have to agree about what
     /// a knob currently says.
     /// </summary>
-    public string Format(float value) => Display == PortDisplay.Note
-        ? Pitch.Name(value)
-        : value.ToString("0.###", CultureInfo.InvariantCulture);
+    /// <remarks>
+    /// The case matches how the module reads the number, which is the whole
+    /// point: <see cref="PortDisplay.Note"/> rounds because Note rounds.
+    /// </remarks>
+    public string Format(float value) => Display switch
+    {
+        PortDisplay.Note => Pitch.Name(value),
+        _ => value.ToString("0.###", CultureInfo.InvariantCulture),
+    };
+
+    /// <summary>Whether the editor should let this value rest only on whole numbers.</summary>
+    public bool Stepped => Display is PortDisplay.Note;
 }

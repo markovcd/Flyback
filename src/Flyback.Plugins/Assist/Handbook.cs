@@ -142,6 +142,8 @@ internal static class Handbook
         name. `~` marks a colour port, `*` a port that takes whatever is plugged
         in, `->n` an input that falls back to input `n` when nothing is wired to
         it, and `note` a knob that reads as a note name rather than a number.
+        A `notes` line means the module carries a list of notes instead of step
+        knobs — write it with `set_steps`.
 
         """;
 
@@ -177,6 +179,13 @@ internal static class Handbook
 
         Sockets(text, "in ", def.Inputs, knobs: true);
         Sockets(text, "out", def.Outputs, knobs: false);
+
+        // Said per module rather than only in the preamble, because this is the
+        // one place a model looks to find out what a module has — and a
+        // sequencer's inputs say nothing about the tune it plays.
+        if (def.DefaultSteps is not null)
+            text.Append("  notes  a list of up to ").Append(NodeCatalog.MaxSteps)
+                .AppendLine(", set with set_steps — not knobs");
 
         if (prose && def.Description.Length > 0)
             text.Append("  ").AppendLine(def.Description);

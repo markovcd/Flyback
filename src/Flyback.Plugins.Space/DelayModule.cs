@@ -33,7 +33,7 @@ internal static class DelayModule
         + "rather than steps. 'feedback' is how much comes back round for the next repeat. "
         + "Audio only: with no picture to remember, it passes straight through.");
 
-    private static Slot[] Emit(Emitter em, Slot[] inputs)
+    private static Slot[] Emit(Emitter em, EmitContext inputs)
     {
         var dry = inputs[0];
 

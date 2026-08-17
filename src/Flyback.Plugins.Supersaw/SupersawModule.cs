@@ -80,7 +80,7 @@ internal static class SupersawModule
     /// -1..1 at every setting and 'amp' means the same here as on every other
     /// oscillator. Turning mix up makes it wider, never louder.
     /// </summary>
-    private static Slot[] Emit(Emitter em, Slot[] inputs)
+    private static Slot[] Emit(Emitter em, EmitContext inputs)
     {
         var drive = inputs[0];
         var freq = inputs[1];
