@@ -70,27 +70,13 @@ public sealed partial class MainWindow
     /// </summary>
     /// <remarks>
     /// Closing it by its own frame is Cancel, which is the answer that loses
-    /// nothing. That is why Cancel is the enum's default as well: an answer
-    /// nobody gave should never be the destructive one.
+    /// nothing. That is why Cancel is the enum's default as well: a dialog closed
+    /// without setting a result comes back as <c>default</c>, so the answer
+    /// nobody gave is the harmless one by the language's own rule rather than by
+    /// a line of code remembering to make it so.
     /// </remarks>
     private async Task<Unsaved> AskAboutUnsavedAsync()
     {
-        var answer = Unsaved.Cancel;
-        Window? dialog = null;
-
-        Button Answering(string text, Unsaved with, bool wide = false)
-        {
-            var button = new Button { Content = text, MinWidth = wide ? 120 : 96 };
-
-            button.Click += (_, _) =>
-            {
-                answer = with;
-                dialog?.Close();
-            };
-
-            return button;
-        }
-
         var buttons = new StackPanel
         {
             Orientation = Orientation.Horizontal,
@@ -119,11 +105,15 @@ public sealed partial class MainWindow
             },
         };
 
-        dialog = Dialog.Around("Unsaved changes", asking);
+        return await this.ShowDialog<Unsaved>("Unsaved changes", asking);
 
-        await dialog.ShowDialog(this);
-
-        return answer;
+        static Button Answering(string text, Unsaved with, bool wide = false)
+        {
+            var button = new Button { Content = text, MinWidth = wide ? 120 : 96 };
+            button.Click += (_, _) => (GetTopLevel(button) as Window)?.Close(with);
+            
+            return button;
+        }
     }
 
     /// <summary>

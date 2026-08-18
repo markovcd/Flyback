@@ -19,6 +19,19 @@ namespace Flyback.App.Controls;
 /// </remarks>
 internal static class Dialog
 {
+    extension(Window owner)
+    {
+        public Task<TResult> ShowDialog<TResult>(string title, Control content)
+        {
+            return Around(title, content).ShowDialog<TResult>(owner);
+        }
+
+        public Task ShowDialog(string title, Control content)
+        {
+            return Around(title, content).ShowDialog(owner);
+        }
+    }
+    
     /// <summary>
     /// A modal window around some content, to be shown with
     /// <see cref="Window.ShowDialog(Window)"/>.
@@ -30,7 +43,7 @@ internal static class Dialog
     /// by its own frame is allowed, and what that means is the caller's to
     /// decide — the answer nobody gave should be the one that loses nothing.
     /// </remarks>
-    public static Window Around(string title, Control content) => new()
+    private static Window Around(string title, Control content) => new()
     {
         Title = title,
         Content = content,
