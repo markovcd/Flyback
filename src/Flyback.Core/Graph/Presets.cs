@@ -19,6 +19,7 @@ public static class Presets
         new("Drone", Drone),
         new("Chromatic", Chromatic),
         new("Sequence", Sequence),
+        new("Four voices", FourVoices),
         new("Empty", Empty),
     ];
 
@@ -432,6 +433,105 @@ public static class Presets
          .Wire(dim, 0, combine, 0)
          .Wire(tint, 0, combine, 1)
          .Wire(combine, 0, output, 0);
+
+        return b.Patch;
+    }
+
+    /// <summary>
+    /// Four voices, each with a fader, through one Mixer at each sink. The
+    /// faders are the shared signal: level three on the chord is level three on
+    /// the screen, so what fades up in the sound is the same thing that fades up
+    /// in the picture.
+    /// </summary>
+    /// <remarks>
+    /// The patch is laid out as four channel strips, one voice a row, because
+    /// that is what it is. Each row is a note and a sine at it for the ear, the
+    /// same oscillator read across the screen instead of across time for the
+    /// eye, and one slow sine setting both of their levels — which is the whole
+    /// point of a level being a socket rather than only a knob.
+    /// <para>
+    /// Two Mixers rather than one, because the two sinks carry different things
+    /// — and the same module twice, because its sockets are untyped: the chord
+    /// sums four scalars and the picture sums four colours, by the same four
+    /// multiplies and three adds.
+    /// </para>
+    /// <para>
+    /// Both sinks pull the sum back down, and not by the same amount. A mixer
+    /// sums rather than averages, so four voices at full are four times over —
+    /// the Output's gain is a quarter, which is exactly that, and puts the worst
+    /// case at full scale rather than past it. The picture's Gain is a good deal
+    /// more generous, because the two sinks fail differently: light that runs
+    /// over clips to white and reads as brightness, and sound that runs over
+    /// clips to distortion and reads as a fault.
+    /// </para>
+    /// </remarks>
+    public static Patch FourVoices(ModuleCatalog modules)
+    {
+        var b = new PatchBuilder(modules);
+
+        var time = b.Add("time", 40, 300);
+        var coord = b.Add("coord", 40, 480);
+
+        var chord = b.Add("math.mixer", 1380, 60);
+        var picture = b.Add("math.mixer", 1380, 320);
+
+        var tame = b.Add("colour.gain", 1620, 400, (1, 0.6f));
+        var output = b.Add(NodeCatalog.OutputTypeId, 1840, 180, (NodeCatalog.OutputGainPort, 0.25f));
+
+        b.Wire(chord, 0, output, NodeCatalog.OutputLeftPort)
+         .Wire(picture, 0, tame, 0)
+         .Wire(tame, 0, output, NodeCatalog.OutputColourPort);
+
+        // An A major triad spread over two octaves, one voice a note: the root,
+        // the fifth, the octave and the third above it. The band count climbs
+        // with the voice, so how many rings are on screen is which note is
+        // sounding — and the hues sit far enough apart that two voices at once
+        // read as a third colour rather than as a brighter one of the first.
+        //
+        // The fader rates share no common factor worth the name, so the four
+        // never come up together twice and the patch does not visibly loop.
+        (float Note, float Bands, float Hue, float Rate, float Phase)[] voices =
+        [
+            (45f, 1f, 0.00f, 0.06f, 0.00f),
+            (52f, 2f, 0.33f, 0.09f, 0.30f),
+            (57f, 3f, 0.58f, 0.13f, 0.60f),
+            (61f, 4f, 0.83f, 0.17f, 0.85f),
+        ];
+
+        for (var v = 0; v < voices.Length; v++)
+        {
+            var (note, bands, hue, rate, phase) = voices[v];
+            var row = 60 + v * 180;
+
+            // The fader. Amp and bias put a sine's -1..1 into the 0..1 a level
+            // is edited within, so it opens and closes rather than going through
+            // zero and coming back the other way up.
+            var level = b.Add("osc.sine", 280, row, (1, rate), (2, phase), (3, 0.5f), (4, 0.5f));
+
+            // Ear: the note, and a sine at it.
+            var pitch = b.Add("audio.note", 500, row, (0, note));
+            var tone = b.Add("osc.sine", 700, row);
+
+            // Eye: the same oscillator run over the radius instead of over the
+            // clock, so it stands still as bands out from the centre rather than
+            // travelling as a tone.
+            var band = b.Add("osc.sine", 940, row, (1, bands), (3, 0.5f), (4, 0.5f));
+            var tint = b.Add("colour.hsv", 1160, row, (0, hue));
+
+            // Channel v of both mixers: the input, then the level beside it.
+            var channel = v * 2;
+
+            b.Wire(time, 0, level, 0)
+             .Wire(time, 0, tone, 0)
+             .Wire(pitch, 0, tone, 1)
+             .Wire(tone, 0, chord, channel)
+             .Wire(level, 0, chord, channel + 1)
+
+             .Wire(coord, 2, band, 0)
+             .Wire(band, 0, tint, 2)
+             .Wire(tint, 0, picture, channel)
+             .Wire(level, 0, picture, channel + 1);
+        }
 
         return b.Patch;
     }

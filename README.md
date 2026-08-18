@@ -137,6 +137,7 @@ other.
 | Notes | **Note** is the same thing in notes rather than hertz. Pick one on the knob — it reads as `A3`, not as 57 — or patch a signal in and it snaps to the nearest whole note, which is what turns a sweep into a run up the chromatic scale. `octave` transposes by twelve semitones a step, `cents` detunes past the snap, and `note` hands the snapped number on so a second **Note** can play an interval off it |
 | Sequences | **Note Sequencer** is a list of notes, edited in the inspector — `out` to a **Note** for the pitch, `gate` into a multiply so a rest is heard as one, `index` to the screen. **Sequencer** is the same list as plain signals instead. `shape` sets how long the gate takes to open and close |
 | Writing a tune | up to 32 notes, added and removed anywhere in the list and dragged into any order. Each carries a **length** in steps, so a note can be held twice as long as its neighbour, and a **volume** — a level rather than a switch, so it silences a note without losing it and doubles as its velocity |
+| Mixing | **Mixer** sums four inputs, each through its own level, where a row of Multiplies into a chain of Adds used to be. Levels are sockets like everything else here, so a fader is something an oscillator can sweep as well as something a hand can set — and because its sockets are untyped, the same module mixes four pictures as readily as four tones. The **Four voices** preset is it wired up at both sinks at once |
 | Stereo | leave `right` unpatched and it carries `left`, the way a normalled jack does |
 | `scan` | at 0 the patch is driven by Time; at 1 it sweeps the image and you hear the picture, at `scan rate` sweeps per second |
 | Export | **Export…** writes a WAV of the sound or an AVI of both — see *Files* |
@@ -183,6 +184,23 @@ list is the one thing here a module carries that is not a knob, and it costs the
 one thing the old row of sockets could do: a step is no longer something you can
 patch into. Where every note is the same length the module compiles to exactly
 the ops it always did; only an uneven pattern pays for being uneven.
+
+**Four voices** is the **Mixer** wired up, and it is laid out as four channel
+strips because that is what it is. Each row is one voice: a note and a sine at it
+for the ear, the same oscillator read across the radius instead of across the
+clock for the eye, and one slow sine setting both of their levels. The faders are
+the only thing the two sinks share — level three on the chord is level three on
+the screen — so what fades up in the sound is visibly the thing that fades up in
+the picture.
+
+There are two Mixers in it and only one module: the chord sums four scalars, the
+picture sums four colours, and both do it with the same four multiplies and three
+adds, because the sockets are untyped like the maths modules'. What differs is
+what each sink does with a sum that overflows. The Output's gain is a quarter,
+which is exactly four voices at full and puts the worst case at full scale rather
+than past it; the picture's Gain is far more generous, since light that runs over
+clips to white and reads as brightness, while sound that runs over reads as a
+fault.
 
 ### Why a stepped pitch does not click
 
@@ -477,7 +495,7 @@ legitimately changes, inspect the `.received.png` next to its `.verified.png`
 baseline and rename it to approve.
 
 The fuzzer generates random well-formed patches and pushes them through compile
-and render. It is the only test that reaches all 55 modules, and it is what
+and render. It is the only test that reaches all 56 modules, and it is what
 guards the gap ADR-0008 describes: nothing links a module's declared ports to
 what its emit function actually indexes.
 

@@ -318,6 +318,8 @@ public static class NodeCatalog
                 (em, i) => [em.Ternary(OpCode.Mix, i[0], i[1], i[2])],
                 "Blends from a to b as t goes 0 to 1."),
 
+            Mixer(),
+
             new NodeDef(
                 "math.smoothstep", "Smoothstep", "Maths",
                 [Any("edge0"), Any("edge1", 1f), Any("in")], [Any("out")],
@@ -701,6 +703,45 @@ public static class NodeCatalog
             em.Mul(em.Mul(open, opening), closing),
             which,
         ];
+    }
+
+    /// <summary>
+    /// Four inputs, a level on each, summed into one — the desk, rather than
+    /// four Multiplies wired into a chain of Adds.
+    /// </summary>
+    /// <remarks>
+    /// Every socket is an <see cref="PortKind.Any"/>, so this is one module for
+    /// both halves of the machine: four tones sum to a chord and four fields sum
+    /// to an image, by the same ops. A level is a socket like any other besides,
+    /// which is what makes a fader something an oscillator can sweep rather than
+    /// only something a hand can set.
+    /// </remarks>
+    private static NodeDef Mixer()
+    {
+        const int channels = 4;
+
+        var ports = new PortSpec[channels * 2];
+        for (var ch = 0; ch < channels; ch++)
+        {
+            ports[ch * 2] = Any($"in {ch + 1}");
+            ports[ch * 2 + 1] = Any($"level {ch + 1}", 1f, 0f, 1f);
+        }
+
+        return new NodeDef(
+            "math.mixer", "Mixer", "Maths",
+            ports, [Any("out")],
+            (em, i) =>
+            {
+                var sum = em.Mul(i[0], i[1]);
+                for (var ch = 1; ch < channels; ch++)
+                    sum = em.Add(sum, em.Mul(i[ch * 2], i[ch * 2 + 1]));
+                return [sum];
+            },
+            "Four signals summed, each through its own level. It sums the way a desk does "
+            + "rather than averaging, so four things at full is four times as loud — pull the "
+            + "levels down, or the Output's gain. An unused input rests on a knob at zero, so it "
+            + "adds nothing until something is patched in. Colours mix as readily as tones: patch "
+            + "a picture into any input and the levels are a four-way blend of pictures.");
     }
 
     /// <summary>
