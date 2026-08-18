@@ -433,10 +433,25 @@ picture is identical either way.
 | Frame the patch | `F` |
 | Delete a module | `Delete` — except the Output, which every patch keeps |
 | Set exact values | select a module, use the inspector on the right |
+| Undo / redo | `Ctrl+Z` and `Ctrl+Shift+Z`, or the two buttons in the toolbar. `Ctrl+Y` redoes as well, and `Cmd` does what `Ctrl` does |
 | Everything else | select the **Output** |
 
 Any input with nothing plugged into it uses the value shown on the node, so most
 patches need no constant modules at all.
+
+Undo goes back two hundred edits: a module added, removed or moved, a wire
+plugged or pulled, a knob turned, a note edited. A step is the whole patch
+rather than an inverse of the edit that made it, so anything that survives being
+saved survives being undone and nothing has to be taught what a particular edit
+was — which is also why moving a module undoes, having cost nothing to include.
+
+What counts as one step is the one thing it does have an opinion about. A slider
+dragged across its range makes an edit a frame and is one press of undo, not a
+hundred; unplugging a wire and plugging it in somewhere else is two edits and one
+gesture, and goes back in one press as well. Opening a patch, picking a preset or
+accepting one from the assistant starts again with nothing behind it: undoing
+into the patch you had before you opened a file would not be undo, it would be
+losing the file.
 
 The Output's panel is where the instrument is set rather than the patch: how
 large the preview is and whether the processor or the GPU draws it, whether

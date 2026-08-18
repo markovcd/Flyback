@@ -449,6 +449,177 @@ public class NodeEditorTests : UiTest
         return pixels;
     }
 
+    // --- undo and redo ------------------------------------------------------
+
+    /// <summary>
+    /// What is on the canvas now, looked up by id. A restore hands back a fresh
+    /// set of objects, so nothing a test held before an undo means anything
+    /// after one — which is the property worth writing the lookup out for.
+    /// </summary>
+    private static NodeInstance? Now(NodeEditor editor, NodeInstance node) => editor.Patch.Find(node.Id);
+
+    [AvaloniaFact]
+    public void There_is_nothing_to_undo_on_a_patch_nobody_has_edited()
+    {
+        var (editor, _) = Editing(Pair(out _, out _));
+
+        editor.CanUndo.ShouldBeFalse();
+        editor.CanRedo.ShouldBeFalse();
+        editor.Undo().ShouldBeFalse();
+    }
+
+    [AvaloniaFact]
+    public void Undo_takes_an_added_module_back_out_and_redo_puts_it_back()
+    {
+        var (editor, window) = Editing(Pair(out _, out _));
+
+        var added = editor.AddNode("math.mixer").ShouldNotBeNull();
+        Settle(window);
+
+        editor.Undo().ShouldBeTrue();
+        Now(editor, added).ShouldBeNull();
+
+        editor.Redo().ShouldBeTrue();
+        Now(editor, added).ShouldNotBeNull();
+    }
+
+    /// <summary>
+    /// A deleted module takes its wires with it, so putting it back has to put
+    /// them back too. Nothing in the editor arranges that — the step is the
+    /// whole document, and the wires were part of it.
+    /// </summary>
+    [AvaloniaFact]
+    public void Undo_brings_a_deleted_module_back_with_its_wiring()
+    {
+        var patch = Pair(out var source, out var sink);
+        patch.Connect(source.Id, 0, sink.Id, NodeCatalog.OutputLeftPort);
+
+        var (editor, window) = Editing(patch);
+
+        ClickAt(editor, window, Body(source));
+        editor.DeleteSelected();
+        Settle(window);
+
+        editor.Patch.Connections.ShouldBeEmpty();
+
+        editor.Undo().ShouldBeTrue();
+
+        Now(editor, source).ShouldNotBeNull();
+        editor.Patch.IncomingTo(sink.Id, NodeCatalog.OutputLeftPort).ShouldNotBeNull();
+    }
+
+    [AvaloniaFact]
+    public void Undo_unplugs_a_wire_that_was_just_patched()
+    {
+        var patch = Pair(out var source, out var sink);
+        var (editor, window) = Editing(patch);
+
+        Drag(editor, window,
+            NodeGeometry.OutputPort(source, 0),
+            NodeGeometry.InputPort(sink, Sink, NodeCatalog.OutputLeftPort));
+
+        patch.IncomingTo(sink.Id, NodeCatalog.OutputLeftPort).ShouldNotBeNull();
+
+        editor.Undo().ShouldBeTrue();
+        editor.Patch.Connections.ShouldBeEmpty();
+    }
+
+    /// <summary>
+    /// Moving a wire from one socket to another unplugs it and plugs it in
+    /// again, which is two edits and one thing somebody did. One press of undo
+    /// puts it back where it was rather than leaving it dangling halfway.
+    /// </summary>
+    [AvaloniaFact]
+    public void Undo_treats_a_re_patch_as_the_one_gesture_it_was()
+    {
+        var patch = Pair(out var source, out var sink);
+        patch.Connect(source.Id, 0, sink.Id, NodeCatalog.OutputColourPort);
+
+        var (editor, window) = Editing(patch);
+
+        Drag(editor, window,
+            NodeGeometry.InputPort(sink, Sink, NodeCatalog.OutputColourPort),
+            NodeGeometry.InputPort(sink, Sink, NodeCatalog.OutputLeftPort));
+
+        patch.IncomingTo(sink.Id, NodeCatalog.OutputLeftPort).ShouldNotBeNull("the wire moved");
+
+        editor.Undo().ShouldBeTrue();
+
+        editor.Patch.IncomingTo(sink.Id, NodeCatalog.OutputColourPort)
+            .ShouldNotBeNull("and goes back to the socket it came off, in one press");
+    }
+
+    /// <summary>
+    /// A module put down in the wrong place is an edit like any other, and the
+    /// one edit here that nothing downstream can hear — so it goes in the
+    /// history without asking anything to recompile.
+    /// </summary>
+    [AvaloniaFact]
+    public void Undo_puts_a_moved_module_back_without_rebuilding_the_program()
+    {
+        var patch = Pair(out var source, out _);
+        var (editor, window) = Editing(patch);
+
+        var recompiles = 0;
+        editor.PatchChanged += (_, _) => recompiles++;
+
+        var from = Body(source);
+        Drag(editor, window, from, from + new Vector(180, 120));
+
+        Now(editor, source).ShouldNotBeNull().X.ShouldBe(180, 1);
+        recompiles.ShouldBe(0, "where a module sits is not in the program");
+        editor.CanUndo.ShouldBeTrue();
+
+        editor.Undo().ShouldBeTrue();
+        Now(editor, source).ShouldNotBeNull().X.ShouldBe(0, 1);
+    }
+
+    /// <summary>
+    /// Opening something else is not an edit to what was open. Undoing back into
+    /// the patch somebody had before they loaded a file would lose them the file.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_patch_that_arrives_from_outside_is_not_something_to_undo_into()
+    {
+        var (editor, window) = Editing(Pair(out _, out _));
+
+        editor.AddNode("math.mixer");
+        Settle(window);
+        editor.CanUndo.ShouldBeTrue();
+
+        editor.Patch = Presets.Plasma(NodeCatalog.BuiltIn);
+        Settle(window);
+
+        editor.CanUndo.ShouldBeFalse();
+        editor.CanRedo.ShouldBeFalse();
+    }
+
+    /// <summary>
+    /// The selection is what the inspector is showing, so an undo that removes
+    /// the selected module has to let go of it — and one that does not, must
+    /// keep it, or every undo would close the panel somebody is working in.
+    /// </summary>
+    [AvaloniaFact]
+    public void Undo_keeps_the_selection_where_what_it_named_is_still_there()
+    {
+        var patch = Pair(out var source, out _);
+        var (editor, window) = Editing(patch);
+
+        ClickAt(editor, window, Body(source));
+
+        source.InputValues[0] = 0.5f;
+        editor.NotifyPatchChanged();
+
+        editor.Undo().ShouldBeTrue();
+        editor.SelectedNode.ShouldNotBeNull().Id.ShouldBe(source.Id);
+
+        var added = editor.AddNode("math.mixer").ShouldNotBeNull();
+        editor.SelectedNode.ShouldNotBeNull().Id.ShouldBe(added.Id);
+
+        editor.Undo().ShouldBeTrue();
+        editor.SelectedNode.ShouldBeNull("what was selected is no longer there");
+    }
+
     /// <summary>The middle of a node's header, which is body rather than socket.</summary>
     private static Point Body(NodeInstance node) =>
         new(node.X + NodeGeometry.Width / 2, node.Y + NodeGeometry.HeaderHeight / 2);

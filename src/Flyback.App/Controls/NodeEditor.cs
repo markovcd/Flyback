@@ -50,6 +50,8 @@ public sealed class NodeEditor : Control
     private static readonly Cursor PortCursor = new(StandardCursorType.Cross);
     private static readonly Cursor NodeCursor = new(StandardCursorType.SizeAll);
 
+    private readonly PatchHistory history = new();
+
     private Patch patch = new();
     private double zoom = 1;
     private Point pan = new(40, 40);
@@ -62,6 +64,18 @@ public sealed class NodeEditor : Control
     private Guid wireNode;
     private int wirePort;
     private bool wireFromOutput;
+
+    /// <summary>
+    /// Which re-patch this is. Unplugging an input and plugging it in somewhere
+    /// else is two edits and one gesture, so both carry this and fold into one
+    /// step — while two unpluggings in a row stay two, which counting is what
+    /// tells them apart.
+    /// </summary>
+    private int wireGesture;
+
+    /// <summary>The name this re-patch records its edits under.</summary>
+    private string WireGesture => $"wire {wireGesture}";
+
     private Point wireEnd;
 
     public NodeEditor()
@@ -76,6 +90,14 @@ public sealed class NodeEditor : Control
     /// <summary>Raised when a different node becomes selected.</summary>
     public event EventHandler? SelectionChanged;
 
+    /// <summary>
+    /// Raised when what can be undone or redone changed. Separate from
+    /// <see cref="PatchChanged"/> because the two do not always coincide: moving
+    /// a module is an edit worth taking back and not one the program can hear,
+    /// so it goes in the history without asking anything to recompile.
+    /// </summary>
+    public event EventHandler? HistoryChanged;
+
     public Patch Patch
     {
         get => patch;
@@ -89,21 +111,76 @@ public sealed class NodeEditor : Control
             // than true of each route to it separately.
             patch.EnsureOutput();
 
+            // A different document rather than an edit to this one, so what
+            // came before it is not something to undo into.
+            history.Opened(patch);
+
             selected = null;
             drag = Drag.None;
             FrameAll();
             SelectionChanged?.Invoke(this, EventArgs.Empty);
             PatchChanged?.Invoke(this, EventArgs.Empty);
+            HistoryChanged?.Invoke(this, EventArgs.Empty);
         }
     }
 
     public NodeInstance? SelectedNode => selected is { } id ? patch.Find(id) : null;
 
-    /// <summary>Call after editing a node from outside the canvas, e.g. the inspector.</summary>
-    public void NotifyPatchChanged()
+    public bool CanUndo => history.CanUndo;
+
+    public bool CanRedo => history.CanRedo;
+
+    /// <summary>
+    /// Call after editing a node from outside the canvas, e.g. the inspector.
+    /// </summary>
+    /// <param name="coalesce">
+    /// Names the gesture, where the edit is one frame of a control being held
+    /// down — see <see cref="PatchHistory.Record"/>. A slider dragged across
+    /// its range is one thing somebody did and wants back in one press.
+    /// </param>
+    public void NotifyPatchChanged(string? coalesce = null)
     {
+        history.Record(patch, coalesce);
         InvalidateVisual();
         PatchChanged?.Invoke(this, EventArgs.Empty);
+        HistoryChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>Puts the patch back as it was before the last edit.</summary>
+    /// <returns>Whether there was one.</returns>
+    public bool Undo() => Restore(history.Undo());
+
+    /// <summary>Puts back the edit the last undo took away.</summary>
+    public bool Redo() => Restore(history.Redo());
+
+    /// <summary>
+    /// Shows a patch that came out of the history. Not the <see cref="Patch"/>
+    /// setter, which is for a document arriving from outside and resets both the
+    /// view and the history — neither of which an undo should touch. The canvas
+    /// stays exactly where it was, because the thing being looked at is the edit
+    /// that just came back rather than the patch as a whole.
+    /// </summary>
+    private bool Restore(Patch? restored)
+    {
+        if (restored is null) return false;
+
+        patch = restored;
+        patch.EnsureOutput();
+
+        // Every module on the canvas is a fresh object after a restore, so
+        // anything holding one — the inspector, a step list — has to be built
+        // again whether or not the selection itself changed. Which is why this
+        // is raised even when the id is the one it already was, and why the
+        // selection is only cleared when what it named is no longer there.
+        if (selected is { } id && patch.Find(id) is null) selected = null;
+
+        drag = Drag.None;
+        InvalidateVisual();
+        SelectionChanged?.Invoke(this, EventArgs.Empty);
+        PatchChanged?.Invoke(this, EventArgs.Empty);
+        HistoryChanged?.Invoke(this, EventArgs.Empty);
+
+        return true;
     }
 
     /// <summary>
@@ -475,13 +552,15 @@ public sealed class NodeEditor : Control
     /// </summary>
     private void StartWire(Guid nodeId, int portIndex, bool isOutput, Point graph)
     {
+        wireGesture++;
+
         if (!isOutput && patch.IncomingTo(nodeId, portIndex) is { } existing)
         {
             patch.Disconnect(nodeId, portIndex);
             wireNode = existing.SourceNode;
             wirePort = existing.SourcePort;
             wireFromOutput = true;
-            PatchChanged?.Invoke(this, EventArgs.Empty);
+            NotifyPatchChanged(WireGesture);
         }
         else
         {
@@ -536,6 +615,17 @@ public sealed class NodeEditor : Control
         if (drag == Drag.Wire)
             CompleteWire(ToGraph(e.GetPosition(this)));
 
+        // Where a module sits is worth being able to take back and is nothing
+        // the program can hear, so it goes into the history without asking
+        // anything to recompile — a picture and a sound rebuilt because a block
+        // was nudged would be work done for a change neither of them has in it.
+        if (drag == Drag.Node && SelectedNode is { } moved
+            && (moved.X != nodeOrigin.X || moved.Y != nodeOrigin.Y))
+        {
+            history.Record(patch);
+            HistoryChanged?.Invoke(this, EventArgs.Empty);
+        }
+
         drag = Drag.None;
         e.Pointer.Capture(null);
         InvalidateVisual();
@@ -553,7 +643,7 @@ public sealed class NodeEditor : Control
         else
             patch.Connect(node, port, wireNode, wirePort);
 
-        PatchChanged?.Invoke(this, EventArgs.Empty);
+        NotifyPatchChanged(WireGesture);
     }
 
     protected override void OnPointerWheelChanged(PointerWheelEventArgs e)

@@ -162,6 +162,10 @@ public sealed class MainWindow : Window
         "compare the two, or if a long session starts to look stepped.";
     private readonly ToggleButton assistantButton = new() { Content = "Assistant", Width = 92 };
 
+    private readonly Button undoButton = new() { Content = "Undo", Width = 66 };
+    private readonly Button redoButton = new() { Content = "Redo", Width = 66 };
+
+
     private AssistantPanel? assistant;
     private RowDefinition? assistantRow;
     private GridSplitter? assistantSplitter;
@@ -193,6 +197,8 @@ public sealed class MainWindow : Window
 
         editor.PatchChanged += (_, _) => Recompile();
         editor.SelectionChanged += (_, _) => BuildInspector();
+        editor.HistoryChanged += (_, _) => RefreshHistory();
+
 
         // Before the layout, because these are live from the moment the window
         // is: the preview needs its resolution and its backend whether or not
@@ -443,6 +449,15 @@ public sealed class MainWindow : Window
         var save = new Button { Content = "Save…" };
         save.Click += async (_, _) => await SavePatchAsync();
 
+        undoButton.Click += (_, _) => editor.Undo();
+        redoButton.Click += (_, _) => editor.Redo();
+
+        ToolTip.SetTip(undoButton, "Take back the last edit  (Ctrl+Z)");
+        ToolTip.SetTip(redoButton, "Put it back  (Ctrl+Shift+Z)");
+
+        RefreshHistory();
+
+
         playButton.IsCheckedChanged += (_, _) =>
         {
             preview.IsPlaying = playButton.IsChecked == true;
@@ -469,6 +484,10 @@ public sealed class MainWindow : Window
         bar.Children.Add(open);
         bar.Children.Add(save);
         bar.Children.Add(Separator());
+        bar.Children.Add(undoButton);
+        bar.Children.Add(redoButton);
+        bar.Children.Add(Separator());
+
         bar.Children.Add(playButton);
         bar.Children.Add(rewind);
         bar.Children.Add(Separator());
@@ -810,7 +829,7 @@ public sealed class MainWindow : Window
         // A sequencer's tune is a list rather than a row of knobs (ADR-0038),
         // so it is edited as one — added to, taken from and reordered.
         if (def.DefaultSteps is not null)
-            inspector.Children.Add(new StepList(node, def, editor.NotifyPatchChanged).View);
+            inspector.Children.Add(new StepList(node, def, because => editor.NotifyPatchChanged(because)).View);
 
         if (def.Inputs.Count == 0 && def.DefaultSteps is null)
             inspector.Children.Add(new TextBlock
@@ -995,7 +1014,9 @@ public sealed class MainWindow : Window
             name.Text = spec.Format(next);
             updating = false;
 
-            editor.NotifyPatchChanged();
+            // Named after the socket, so a slider dragged across its range is one
+            // step to undo rather than one per frame of the drag.
+            editor.NotifyPatchChanged($"{node.Id} input {index}");
         }
 
         slider.PropertyChanged += (_, e) =>
@@ -1509,7 +1530,60 @@ public sealed class MainWindow : Window
 
     // --- small helpers -------------------------------------------------------------
 
+    /// <summary>
+    /// Undo and redo, from wherever the focus happens to be. Handled on the
+    /// window rather than on the canvas because an edit is as likely to have
+    /// been made in the inspector as on it, and a shortcut that worked only
+    /// while the canvas had the focus would be one somebody learns not to
+    /// trust. Anything that already dealt with the key keeps it — a text box
+    /// undoing its own typing is doing the same job at its own scale.
+    /// </summary>
+    /// <remarks>
+    /// Command as well as Control, so the shortcut is the one the machine uses:
+    /// Ctrl+Z on Windows and Linux, Cmd+Z on a Mac. Both are accepted
+    /// everywhere rather than asked which platform this is, since neither is a
+    /// gesture anything else here claims.
+    /// </remarks>
+    protected override void OnKeyDown(KeyEventArgs e)
+    {
+        base.OnKeyDown(e);
+
+        if (e.Handled) return;
+        if ((e.KeyModifiers & (KeyModifiers.Control | KeyModifiers.Meta)) == 0) return;
+
+        var again = (e.KeyModifiers & KeyModifiers.Shift) != 0;
+
+        switch (e.Key)
+        {
+            case Key.Z:
+                if (again) editor.Redo();
+                else editor.Undo();
+                e.Handled = true;
+                break;
+
+            // The other half of the convention Windows carries: Ctrl+Y is redo
+            // where Ctrl+Shift+Z is, and somebody who reaches for one is not
+            // going to enjoy discovering which this program wanted.
+            case Key.Y:
+                editor.Redo();
+                e.Handled = true;
+                break;
+        }
+    }
+
+    /// <summary>
+    /// Greys the two out when there is nothing behind or ahead. The same
+    /// question the button would answer by doing nothing, asked where it can be
+    /// seen instead.
+    /// </summary>
+    private void RefreshHistory()
+    {
+        undoButton.IsEnabled = editor.CanUndo;
+        redoButton.IsEnabled = editor.CanRedo;
+    }
+
     private static TextBlock Label(string text) => new()
+
     {
         Text = text,
         Opacity = 0.6,

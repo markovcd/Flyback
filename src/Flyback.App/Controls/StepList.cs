@@ -39,7 +39,14 @@ internal sealed class StepList
 
     private readonly NodeInstance node;
     private readonly NodeDef def;
-    private readonly Action changed;
+    /// <summary>
+    /// Told that the notes changed, and under what name to file it. A volume is
+    /// a bar one drags, so a note's own edits carry the row they came from and
+    /// fold into one step; adding, removing and reordering are discrete and
+    /// carry nothing.
+    /// </summary>
+    private readonly Action<string?> changed;
+
     private readonly StackPanel rows = new();
 
     private Control? dragging;
@@ -47,7 +54,7 @@ internal sealed class StepList
     private int dragTo;
     private Point dragOrigin;
 
-    public StepList(NodeInstance node, NodeDef def, Action changed)
+    public StepList(NodeInstance node, NodeDef def, Action<string?> changed)
     {
         this.node = node;
         this.def = def;
@@ -150,7 +157,7 @@ internal sealed class StepList
     private void Rebuild()
     {
         Fill();
-        changed();
+        changed(null);
     }
 
     /// <summary>
@@ -355,7 +362,7 @@ internal sealed class StepList
             name.Text = def.StepValue.Format(next.Value);
         }
 
-        changed();
+        changed($"{node.Id} step {index}");
     }
 
     // --- reordering --------------------------------------------------------------
