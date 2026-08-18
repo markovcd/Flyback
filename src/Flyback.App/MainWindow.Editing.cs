@@ -164,6 +164,17 @@ public sealed partial class MainWindow
         base.OnKeyDown(e);
 
         if (e.Handled) return;
+
+        // Before the modifier check, because Escape carries none. Only while the
+        // preview has the window: everywhere else Escape belongs to the module
+        // filter, which handles its own before this is ever reached.
+        if (e.Key == Key.Escape && previewIsFullScreen)
+        {
+            ShowFullScreenPreview(false);
+            e.Handled = true;
+            return;
+        }
+
         if ((e.KeyModifiers & (KeyModifiers.Control | KeyModifiers.Meta)) == 0) return;
 
         var again = (e.KeyModifiers & KeyModifiers.Shift) != 0;

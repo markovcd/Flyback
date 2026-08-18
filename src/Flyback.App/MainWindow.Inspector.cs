@@ -109,7 +109,7 @@ public sealed partial class MainWindow
         BuildOutputSettings();
     }
 
-    private Control BuildRightPanel()
+    private Grid BuildRightPanel()
     {
         var grid = new Grid
         {
@@ -121,11 +121,21 @@ public sealed partial class MainWindow
             ],
         };
 
-        var previewBox = new Border
+        previewBox = new Border
         {
             Background = Brushes.Black,
             Child = preview,
         };
+
+        // Double-click the picture and it takes the window; double-click it or
+        // press Escape to put everything back. The gesture every video player
+        // already has, on the one control here that is a video.
+        previewBox.DoubleTapped += (_, e) =>
+        {
+            ToggleFullScreenPreview();
+            e.Handled = true;
+        };
+
         Grid.SetRow(previewBox, 0);
 
         var splitter = new GridSplitter { Background = Brushes.Transparent, Height = 5 };

@@ -62,6 +62,17 @@ public sealed partial class MainWindow : Window
     private readonly PreviewHost preview = new();
 
     /// <summary>
+    /// The pieces of the shell the fullscreen preview puts away and has to bring
+    /// back. Nullable only because the layout is built after the fields are, and
+    /// never null once <see cref="BuildLayout"/> has run.
+    /// </summary>
+    private Grid? columns;
+    private Grid? rightPanel;
+    private Border? previewBox;
+    private Control? toolbar;
+    private Control? statusBar;
+
+    /// <summary>
     /// Behind the inspector, and brighter when there is nothing selected for it
     /// to sit behind. Never hit-testable, so it cannot swallow a click meant for
     /// a slider underneath.
@@ -216,14 +227,14 @@ public sealed partial class MainWindow : Window
             IsVisible = false,
         };
 
-        var toolbar = BuildToolbar();
-        var statusBar = BuildStatusBar();
+        toolbar = BuildToolbar();
+        statusBar = BuildStatusBar();
         DockPanel.SetDock(toolbar, Dock.Top);
         DockPanel.SetDock(statusBar, Dock.Bottom);
 
         // The two flexible columns are star-sized: GridSplitter redistributes
         // star weights, and a fixed-pixel column next to one just gets squeezed.
-        var columns = new Grid
+        columns = new Grid
         {
             ColumnDefinitions =
             [
@@ -275,7 +286,7 @@ public sealed partial class MainWindow : Window
         var rightSplitter = new GridSplitter { Width = 5, Background = Brushes.Transparent };
         Grid.SetColumn(rightSplitter, 3);
 
-        var right = BuildRightPanel();
+        var right = rightPanel = BuildRightPanel();
         Grid.SetColumn(right, 4);
 
         columns.Children.Add(palette);
