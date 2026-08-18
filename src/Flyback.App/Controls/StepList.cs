@@ -34,8 +34,8 @@ internal sealed class StepList
     /// <summary>Marks the grids that are rows of this list, for the UI tests.</summary>
     internal const string RowTag = "step-row";
 
-    private static readonly IBrush Faint = new SolidColorBrush(Color.FromRgb(0x8A, 0x90, 0x9A));
-    private static readonly IBrush Accent = new SolidColorBrush(Color.FromRgb(0x4A, 0x9E, 0xDE));
+    private static readonly IBrush Faint = new SolidColorBrush(Colours.Muted);
+    private static readonly IBrush Accent = new SolidColorBrush(Colours.Source);
 
     private readonly NodeInstance node;
     private readonly NodeDef def;
@@ -435,9 +435,9 @@ internal sealed class StepList
 /// </summary>
 internal sealed class LevelBar : Control
 {
-    private static readonly IBrush Track = new SolidColorBrush(Color.FromRgb(0x2C, 0x30, 0x36));
-    private static readonly IBrush Fill = new SolidColorBrush(Color.FromRgb(0x4F, 0xC3, 0x87));
-    private static readonly IBrush Empty = new SolidColorBrush(Color.FromRgb(0x5A, 0x60, 0x6A));
+    private static readonly IBrush Track = new SolidColorBrush(Colours.GridMajor);
+    private static readonly IBrush Fill = new SolidColorBrush(Colours.Oscillator);
+    private static readonly IBrush Empty = new SolidColorBrush(Colours.Inactive);
 
     private double level;
 

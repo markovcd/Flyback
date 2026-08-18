@@ -32,11 +32,11 @@ namespace Flyback.App.Controls;
 /// </remarks>
 public sealed class AssistantPanel : UserControl
 {
-    private static readonly IBrush Dim = new SolidColorBrush(Color.FromRgb(0x8A, 0x90, 0x99));
-    private static readonly IBrush Amber = new SolidColorBrush(Color.FromRgb(0xFF, 0xB0, 0x40));
+    private static readonly IBrush Dim = new SolidColorBrush(Colours.Muted);
+    private static readonly IBrush Amber = new SolidColorBrush(Colours.Attention);
 
     /// <summary>The middle of <see cref="LogoMark"/>'s sweep, borrowed for the one thing here that is alive.</summary>
-    private static readonly IBrush Live = new SolidColorBrush(Color.FromRgb(0x3F, 0xC8, 0xC8));
+    private static readonly IBrush Live = new SolidColorBrush(Colours.Feedback);
 
     private readonly PluginCatalog plugins;
     private readonly Func<Patch> current;
@@ -287,8 +287,8 @@ public sealed class AssistantPanel : UserControl
         // for the instruction box and a button to both still be there.
         return new Border
         {
-            Background = new SolidColorBrush(Color.FromRgb(0x1C, 0x1E, 0x22)),
-            BorderBrush = new SolidColorBrush(Color.FromRgb(0x10, 0x11, 0x14)),
+            Background = new SolidColorBrush(Colours.Panel),
+            BorderBrush = new SolidColorBrush(Colours.Edge),
             BorderThickness = new Thickness(0, 1, 0, 0),
             MinHeight = 140,
             Child = columns,

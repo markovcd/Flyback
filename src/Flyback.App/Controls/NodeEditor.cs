@@ -22,17 +22,17 @@ public sealed class NodeEditor : Control
         Wire,
     }
 
-    private static readonly IBrush Background = new SolidColorBrush(Color.FromRgb(0x1A, 0x1C, 0x20));
-    private static readonly IBrush NodeFill = new SolidColorBrush(Color.FromRgb(0x2A, 0x2D, 0x34));
-    private static readonly IBrush NodeFillSelected = new SolidColorBrush(Color.FromRgb(0x32, 0x36, 0x3E));
-    private static readonly IBrush LabelBrush = new SolidColorBrush(Color.FromRgb(0xC8, 0xCC, 0xD4));
-    private static readonly IBrush ValueBrush = new SolidColorBrush(Color.FromRgb(0x8A, 0x92, 0xA0));
+    private static readonly IBrush Background = new SolidColorBrush(Colours.Canvas);
+    private static readonly IBrush NodeFill = new SolidColorBrush(Colours.Node);
+    private static readonly IBrush NodeFillSelected = new SolidColorBrush(Colours.NodeSelected);
+    private static readonly IBrush LabelBrush = new SolidColorBrush(Colours.Label);
+    private static readonly IBrush ValueBrush = new SolidColorBrush(Colours.Value);
     private static readonly IBrush HeaderTextBrush = Brushes.White;
-    private static readonly IPen GridPen = new Pen(new SolidColorBrush(Color.FromRgb(0x24, 0x27, 0x2C)));
-    private static readonly IPen GridPenMajor = new Pen(new SolidColorBrush(Color.FromRgb(0x2C, 0x30, 0x36)));
-    private static readonly IPen NodeBorder = new Pen(new SolidColorBrush(Color.FromRgb(0x14, 0x15, 0x18)), 1.5);
-    private static readonly IPen SelectionPen = new Pen(new SolidColorBrush(Color.FromRgb(0xFF, 0xB0, 0x40)), 2);
-    private static readonly IPen PortOutline = new Pen(new SolidColorBrush(Color.FromRgb(0x14, 0x15, 0x18)), 1.2);
+    private static readonly IPen GridPen = new Pen(new SolidColorBrush(Colours.Grid));
+    private static readonly IPen GridPenMajor = new Pen(new SolidColorBrush(Colours.GridMajor));
+    private static readonly IPen NodeBorder = new Pen(new SolidColorBrush(Colours.Outline), 1.5);
+    private static readonly IPen SelectionPen = new Pen(new SolidColorBrush(Colours.Attention), 2);
+    private static readonly IPen PortOutline = new Pen(new SolidColorBrush(Colours.Outline), 1.2);
 
     private static readonly Cursor ArrowCursor = new(StandardCursorType.Arrow);
     private static readonly Cursor PortCursor = new(StandardCursorType.Cross);
@@ -268,7 +268,7 @@ public sealed class NodeEditor : Control
 
             var from = NodeGeometry.OutputPort(source, connection.SourcePort);
             var to = NodeGeometry.InputPort(target, targetDef, connection.TargetPort);
-            var colour = NodeGeometry.PortColour(sourceDef.Outputs[connection.SourcePort].Kind);
+            var colour = Colours.PortColour(sourceDef.Outputs[connection.SourcePort].Kind);
 
             DrawWire(context, from, to, new Pen(new SolidColorBrush(colour, 0.85), 2.2));
         }
@@ -280,7 +280,7 @@ public sealed class NodeEditor : Control
         if (patch.Find(wireNode) is not { } node) return;
         if (NodeCatalog.Get(node.TypeId) is not { } def) return;
 
-        var pen = new Pen(new SolidColorBrush(Color.FromRgb(0xFF, 0xB0, 0x40), 0.9), 2.2, DashStyle.Dash);
+        var pen = new Pen(new SolidColorBrush(Colours.Attention, 0.9), 2.2, DashStyle.Dash);
 
         if (wireFromOutput)
             DrawWire(context, NodeGeometry.OutputPort(node, wirePort), wireEnd, pen);
@@ -308,7 +308,7 @@ public sealed class NodeEditor : Control
     {
         var bounds = NodeGeometry.Bounds(node, def);
         var isSelected = selected == node.Id;
-        var accent = NodeGeometry.Accent(def.Category);
+        var accent = Colours.Accent(def.Category);
 
         context.DrawRectangle(
             isSelected ? NodeFillSelected : NodeFill,
@@ -358,7 +358,7 @@ public sealed class NodeEditor : Control
 
     private static void DrawPort(DrawingContext context, Point centre, PortKind kind) =>
         context.DrawEllipse(
-            new SolidColorBrush(NodeGeometry.PortColour(kind)),
+            new SolidColorBrush(Colours.PortColour(kind)),
             PortOutline,
             centre,
             NodeGeometry.PortRadius,

@@ -45,16 +45,18 @@ public sealed class MainWindow : Window
         Maximum = 600m,
         Increment = 5m,
         FormatString = "0",
-        Width = 96,
+        Width = 112,
     };
 
     /// <summary>
-    /// Fixed width, because its label becomes the one that stops an export and
-    /// a button that resizes mid-render drags the panel around with it.
+    /// One button for both kinds of file, because which kind you get is a
+    /// property of the name you give it rather than of which control you
+    /// pressed — and because a patch that makes no sound has nothing to put
+    /// behind a second one. Fixed width: its label becomes the one that stops an
+    /// export, and a button that resizes mid-render drags the panel about.
     /// </summary>
-    private readonly Button exportVideo = new() { Content = "Export video…", Width = 118 };
+    private readonly Button exportButton = new() { Content = "Export…", Width = 118 };
 
-    private readonly Button exportAudio = new() { Content = "Render audio…" };
     private readonly Button exportFrame = new() { Content = "Save frame…" };
 
     private readonly ComboBox resolution = new()
@@ -134,7 +136,7 @@ public sealed class MainWindow : Window
     private readonly TextBlock issues = new()
     {
         VerticalAlignment = VerticalAlignment.Center,
-        Foreground = new SolidColorBrush(Color.FromRgb(0xFF, 0xB0, 0x40)),
+        Foreground = new SolidColorBrush(Colours.Attention),
     };
 
     private readonly TextBlock backend = new()
@@ -187,7 +189,7 @@ public sealed class MainWindow : Window
         MinWidth = 860;
         MinHeight = 560;
         WindowStartupLocation = WindowStartupLocation.CenterScreen;
-        Background = new SolidColorBrush(Color.FromRgb(0x16, 0x18, 0x1B));
+        Background = new SolidColorBrush(Colours.Window);
 
         editor.PatchChanged += (_, _) => Recompile();
         editor.SelectionChanged += (_, _) => BuildInspector();
@@ -380,16 +382,13 @@ public sealed class MainWindow : Window
             : "No sound backend is installed. See the status bar for where plugins are looked for.");
         audioButton.IsCheckedChanged += (_, _) => SetAudioEnabled(audioButton.IsChecked == true);
 
-        ToolTip.SetTip(length, "How many seconds either export writes.");
+        ToolTip.SetTip(length, "How many seconds an export writes.");
 
-        ToolTip.SetTip(exportAudio, "Render the patch to a WAV file, for as long as Length says.");
-        exportAudio.Click += async (_, _) => await SaveAudioAsync();
+        // Shown while it is greyed out too, because a disabled control that will
+        // not say why is the most annoying thing a panel can contain.
+        ToolTip.SetShowOnDisabled(exportButton, true);
 
-        ToolTip.SetTip(exportVideo,
-            "Render both halves of the Output to an AVI — the picture as Motion JPEG at " +
-            $"{MovieRenderer.DefaultFrameRate:0} frames a second, the sound alongside it. " +
-            "The frame is whatever Size says.");
-        exportVideo.Click += async (_, _) =>
+        exportButton.Click += async (_, _) =>
         {
             // The same button stops it. An export is the one thing here that
             // runs long enough to be worth abandoning, and it is already the
@@ -400,7 +399,7 @@ public sealed class MainWindow : Window
                 return;
             }
 
-            await SaveVideoAsync();
+            await ExportAsync();
         };
 
         BuildOutputSettings();
@@ -483,8 +482,8 @@ public sealed class MainWindow : Window
 
         return new Border
         {
-            Background = new SolidColorBrush(Color.FromRgb(0x22, 0x25, 0x2A)),
-            BorderBrush = new SolidColorBrush(Color.FromRgb(0x10, 0x11, 0x14)),
+            Background = new SolidColorBrush(Colours.Toolbar),
+            BorderBrush = new SolidColorBrush(Colours.Edge),
             BorderThickness = new Thickness(0, 0, 0, 1),
             Child = bar,
         };
@@ -514,8 +513,8 @@ public sealed class MainWindow : Window
 
         return new Border
         {
-            Background = new SolidColorBrush(Color.FromRgb(0x1C, 0x1E, 0x22)),
-            BorderBrush = new SolidColorBrush(Color.FromRgb(0x10, 0x11, 0x14)),
+            Background = new SolidColorBrush(Colours.Panel),
+            BorderBrush = new SolidColorBrush(Colours.Edge),
             BorderThickness = new Thickness(0, 1, 0, 0),
             Child = bar,
         };
@@ -578,7 +577,7 @@ public sealed class MainWindow : Window
 
         return new Border
         {
-            Background = new SolidColorBrush(Color.FromRgb(0x1C, 0x1E, 0x22)),
+            Background = new SolidColorBrush(Colours.Panel),
             Child = panel,
         };
     }
@@ -614,7 +613,7 @@ public sealed class MainWindow : Window
                 Text = category.ToUpperInvariant(),
                 FontSize = 10.5,
                 FontWeight = FontWeight.SemiBold,
-                Foreground = new SolidColorBrush(NodeGeometry.Accent(category)),
+                Foreground = new SolidColorBrush(Colours.Accent(category)),
                 Margin = new Thickness(2, 12, 2, 4),
             });
 
@@ -721,7 +720,7 @@ public sealed class MainWindow : Window
         // of the toolbar, and it is out of the way once there is something to read.
         var inspectorBorder = new Border
         {
-            Background = new SolidColorBrush(Color.FromRgb(0x1C, 0x1E, 0x22)),
+            Background = new SolidColorBrush(Colours.Panel),
             Child = new Panel
             {
                 Children =
@@ -792,7 +791,7 @@ public sealed class MainWindow : Window
         {
             Text = def.Category,
             FontSize = 11,
-            Foreground = new SolidColorBrush(NodeGeometry.Accent(def.Category)),
+            Foreground = new SolidColorBrush(Colours.Accent(def.Category)),
         });
 
         if (!string.IsNullOrEmpty(def.Description))
@@ -873,8 +872,7 @@ public sealed class MainWindow : Window
             Children = { length, Label("seconds") },
         }));
 
-        outputSettings.Children.Add(exportAudio);
-        outputSettings.Children.Add(exportVideo);
+        outputSettings.Children.Add(exportButton);
     }
 
     private static TextBlock Heading(string text) => new()
@@ -1117,7 +1115,37 @@ public sealed class MainWindow : Window
             .ToArray();
 
         Report(said.Length > 0 ? string.Join("  •  ", said) : string.Empty);
+
+        MarkExportable();
     }
+
+    /// <summary>
+    /// Greys the export out while there is nothing to write, which is the same
+    /// question the dialog would have asked a moment later — better answered on
+    /// the button than by a file picker with nothing in its list.
+    /// </summary>
+    /// <remarks>
+    /// An export already running keeps it enabled whatever the patch says: the
+    /// button is <c>Stop</c> by then, and editing the patch mid-render must not
+    /// take away the only way to abandon it.
+    /// </remarks>
+    private void MarkExportable()
+    {
+        var kinds = ExportKinds(editor.Patch);
+
+        exportButton.IsEnabled = export is not null || kinds.Count > 0;
+
+        ToolTip.SetTip(exportButton, kinds.Count > 0 ? ExportTip : NothingToExport);
+    }
+
+    private static readonly string ExportTip =
+        "Write the patch to a file, for as long as Length says. Pick AVI for the picture "
+        + $"— Motion JPEG at {MovieRenderer.DefaultFrameRate:0} frames a second, at whatever "
+        + "Size says, with the sound alongside it — or WAV for the sound on its own.";
+
+    private const string NothingToExport =
+        "Nothing is wired into the Output, so there is nothing to write. "
+        + "Patch something into its 'colour' or its 'left'.";
 
     /// <summary>
     /// The one place anything is said to the user. <paramref name="detail"/> is
@@ -1277,51 +1305,84 @@ public sealed class MainWindow : Window
         }
     }
 
-    private async Task SaveAudioAsync()
+
+    /// <summary>What a patch has to offer, and therefore what it can be written to.</summary>
+    /// <remarks>
+    /// The Output is always there, so its presence says nothing — what matters
+    /// is whether anything reaches each half of it. A picture nothing draws is a
+    /// black rectangle and a track nothing feeds is silence, and neither is
+    /// worth a file.
+    /// </remarks>
+    private static (bool Picture, bool Sound) Reaches(Patch patch)
     {
-        var file = await StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
-        {
-            Title = "Render audio",
-            SuggestedFileName = "flyback",
-            DefaultExtension = "wav",
-            FileTypeChoices = [new FilePickerFileType("WAV audio") { Patterns = ["*.wav"] }],
-        });
+        var output = patch.Output.Id;
 
-        if (file is null) return;
+        return (
+            patch.IncomingTo(output, NodeCatalog.OutputColourPort) is not null,
+            patch.IncomingTo(output, NodeCatalog.OutputLeftPort) is not null
+            || patch.IncomingTo(output, NodeCatalog.OutputRightPort) is not null);
+    }
 
-        try
-        {
-            var path = file.TryGetLocalPath();
-            if (path is null)
-            {
-                Report("That location can't be written to directly.");
-                return;
-            }
+    private static FilePickerFileType Avi => new("AVI video") { Patterns = ["*.avi"] };
 
-            var patch = editor.Patch;
-            var seconds = ExportSeconds;
-            await Task.Run(() => RenderAudioFile(patch, path, seconds));
-        }
-        catch (Exception ex)
+    private static FilePickerFileType Wav => new("WAV audio") { Patterns = ["*.wav"] };
+
+    /// <summary>
+    /// The kinds of file this patch could be written to, in the order the dialog
+    /// should offer them.
+    /// </summary>
+    /// <remarks>
+    /// Video first when there is one, because an AVI carries the sound too and
+    /// is therefore the whole of what the patch does. A patch that draws nothing
+    /// is offered no AVI and one that makes no sound is offered no WAV, so the
+    /// dialog can never produce a file that is only a black rectangle or only
+    /// silence. Empty means there is nothing to write at all.
+    /// </remarks>
+    internal static IReadOnlyList<FilePickerFileType> ExportKinds(Patch patch)
+    {
+        var (picture, sound) = Reaches(patch);
+
+        return (picture, sound) switch
         {
-            Report($"Could not render audio: {ex.Message}");
-        }
+            (true, true) => [Avi, Wav],
+            (true, false) => [Avi],
+            (false, true) => [Wav],
+            _ => [],
+        };
     }
 
     /// <summary>
-    /// Writes both sinks to one file. Unlike every other export here this takes
-    /// long enough to watch, so it reports as it goes and can be stopped —
-    /// rendering a minute of an expensive patch is minutes of work, and a
-    /// program that merely appears to have hung during it is not acceptable.
+    /// Writes the patch to a file. One button and one dialog for both kinds,
+    /// because which kind you want is the same decision as what to call it —
+    /// and the dialog offers only the kinds this patch actually has, so a silent
+    /// patch is never offered a WAV of silence.
     /// </summary>
-    private async Task SaveVideoAsync()
+    /// <remarks>
+    /// Unlike every other export here a video takes long enough to watch, so it
+    /// reports as it goes and can be stopped: rendering a minute of an expensive
+    /// patch is minutes of work, and a program that merely appears to have hung
+    /// during it is not acceptable.
+    /// </remarks>
+    private async Task ExportAsync()
     {
+        var patch = editor.Patch;
+        var kinds = ExportKinds(patch);
+
+        if (kinds.Count == 0)
+        {
+            Report("Nothing is wired into the Output, so there is nothing to write.");
+            return;
+        }
+
         var file = await StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
         {
-            Title = "Export video",
+            Title = "Export",
             SuggestedFileName = "flyback",
-            DefaultExtension = "avi",
-            FileTypeChoices = [new FilePickerFileType("AVI video") { Patterns = ["*.avi"] }],
+
+            // The first kind offered is the one the patch is most fully
+            // described by, so it is also the extension a name gets by default.
+            DefaultExtension = kinds[0] == Wav ? "wav" : "avi",
+            FileTypeChoices = [.. kinds],
         });
 
         if (file is null) return;
@@ -1333,21 +1394,46 @@ public sealed class MainWindow : Window
             return;
         }
 
+        // The name decides, because the name is what the person actually chose
+        // — a dialog's selected filter is not carried back on every platform,
+        // and the extension is.
+        if (Path.GetExtension(path).Equals(".wav", StringComparison.OrdinalIgnoreCase))
+            await ExportSoundAsync(patch, path);
+        else
+            await ExportPictureAsync(patch, path);
+    }
+
+    private async Task ExportSoundAsync(Patch patch, string path)
+    {
+        var seconds = ExportSeconds;
+
+        try
+        {
+            await Task.Run(() => RenderAudioFile(patch, path, seconds));
+            Report($"Wrote {seconds:0.0}s to {Path.GetFileName(path)}.");
+        }
+        catch (Exception ex)
+        {
+            Report($"Could not render audio: {ex.Message}");
+        }
+    }
+
+    private async Task ExportPictureAsync(Patch patch, string path)
+    {
         // Everything the background pass needs, taken while the patch is still
         // sitting still. An export is a picture of the patch as it is now, so
         // editing during one changes the next export and not this one.
-        var patch = editor.Patch;
         var size = preview.Resolution;
         var seconds = ExportSeconds;
         var settings = new MovieSettings(size.Width, size.Height, seconds);
 
         var video = patch.CompileForVideo().Program;
-        var sound = HasSound(patch) ? patch.CompileForAudio().Program : null;
+        var sound = Reaches(patch).Sound ? patch.CompileForAudio().Program : null;
         var scan = AudioScanFor(patch);
 
         using var stopping = new CancellationTokenSource();
         export = stopping;
-        exportVideo.Content = "Stop";
+        exportButton.Content = "Stop";
         length.IsEnabled = false;
 
         var progress = new Progress<double>(done => Report(
@@ -1372,12 +1458,16 @@ public sealed class MainWindow : Window
         finally
         {
             export = null;
-            exportVideo.Content = "Export video…";
+            exportButton.Content = "Export…";
             length.IsEnabled = true;
+
+            // The patch may have been edited while this ran, so what there is
+            // to write is asked again rather than assumed to be what it was.
+            MarkExportable();
         }
     }
 
-    /// <summary>The length control, as the number both exports actually want.</summary>
+    /// <summary>The length control, as the number an export actually wants.</summary>
     private double ExportSeconds => (double)(length.Value ?? 10m);
 
     /// <summary>
@@ -1393,20 +1483,6 @@ public sealed class MainWindow : Window
         renderer.Render(program, buffer, AudioScanFor(patch));
 
         WavWriter.Write(path, buffer, renderer.SampleRate, NodeCatalog.AudioChannels);
-    }
-
-    /// <summary>
-    /// Whether anything actually reaches the speakers. The Output is always
-    /// there, so its presence says nothing — what matters is whether either
-    /// channel has a wire in it, which is the difference between an export with
-    /// a silent track and one with no track at all.
-    /// </summary>
-    private static bool HasSound(Patch patch)
-    {
-        var output = patch.Output.Id;
-
-        return patch.IncomingTo(output, NodeCatalog.OutputLeftPort) is not null
-            || patch.IncomingTo(output, NodeCatalog.OutputRightPort) is not null;
     }
 
     private static AudioScan AudioScanFor(Patch patch)
@@ -1445,6 +1521,6 @@ public sealed class MainWindow : Window
     {
         Width = 1,
         Margin = new Thickness(4, 4),
-        Background = new SolidColorBrush(Color.FromRgb(0x3A, 0x3E, 0x46)),
+        Background = new SolidColorBrush(Colours.Separator),
     };
 }

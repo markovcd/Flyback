@@ -139,7 +139,7 @@ other.
 | Writing a tune | up to 32 notes, added and removed anywhere in the list and dragged into any order. Each carries a **length** in steps, so a note can be held twice as long as its neighbour, and a **volume** — a level rather than a switch, so it silences a note without losing it and doubles as its velocity |
 | Stereo | leave `right` unpatched and it carries `left`, the way a normalled jack does |
 | `scan` | at 0 the patch is driven by Time; at 1 it sweeps the image and you hear the picture, at `scan rate` sweeps per second |
-| Export | **Render audio…** writes a WAV, **Export video…** an AVI with both — see *Files* |
+| Export | **Export…** writes a WAV of the sound or an AVI of both — see *Files* |
 
 The **Drone** preset is the demonstration: one slow oscillator sets both the hue
 of the image and the tremolo on the tone, so the two sinks are visibly and
@@ -431,7 +431,7 @@ along a toolbar.
 |---|---|
 | Picture | **Size**, **Render** (GPU or processor), **Save frame…** |
 | Sound | **Audio on** |
-| Export | **Length** in seconds, **Render audio…**, **Export video…** |
+| Export | **Length** in seconds, and **Export…** |
 
 The status bar carries whatever the compiler wants to say about the patch as it
 stands, in amber. Most of it is about the patches that compile perfectly and do
@@ -509,13 +509,19 @@ works on both a scalar and a colour.
 Patches save as JSON (`.fbk`). `Save frame…` renders the current moment at
 1920×1080 and writes a PNG.
 
-**Export video…** writes the thing the instrument actually makes: a moving
-picture with its own sound under it. Set the length in seconds in the same panel
-— it is the one parameter of an export that cannot be defaulted, since a patch is
-an endless function of `(x, y, t)` — and the same number governs `Render audio…`.
-The frame is whatever **Size** says, a few rows above it.
+**Export…** writes the thing the instrument actually makes: a moving picture with
+its own sound under it. Set the length in seconds in the same panel — it is the
+one parameter of an export that cannot be defaulted, since a patch is an endless
+function of `(x, y, t)`. The frame is whatever **Size** says, a few rows above it.
 
-The file is an AVI: every frame an independent JPEG, 16-bit PCM interleaved
+There is one button and the file name decides what you get. The dialog offers
+**AVI** for the picture, with the sound alongside it, and **WAV** for the sound
+on its own — but only the ones this patch actually has. Wire nothing into
+`colour` and it offers no AVI; wire nothing into `left` or `right` and it offers
+no WAV. A patch that reaches neither says so instead of opening a dialog that
+could only produce a file of nothing.
+
+The video file is an AVI: every frame an independent JPEG, 16-bit PCM interleaved
 alongside. Both encoders are written here beside the PNG and WAV ones, so export
 needs nothing installed and works headlessly. A patch with nothing wired into the
 Output's `left` or `right` gets a video-only file rather than a silent track.
@@ -525,11 +531,11 @@ Output's `left` or `right` gets a video-only file rather than a silent track.
 | Rate | 30 frames a second |
 | Size | 1.5 to 2.5 MB a second at 960×540 depending on the patch, and AVI stops at 4 GB — half an hour or so |
 | Cost | the picture is rendered on the processor even when the preview is on the GPU, so an expensive patch takes longer to write than to watch |
-| Stopping | the button becomes **Stop**, and stopping keeps what was rendered as a shorter video rather than a broken one |
+| Stopping | the Export button becomes **Stop**, and stopping keeps what was rendered as a shorter video rather than a broken one |
 
 Feedback works in an export and does not in `Save frame…`: one renderer runs the
 whole clip, so each frame reads the one before it exactly as on screen. The sound
-is byte-for-byte what `Render audio…` writes for the same patch — one oscillator
+in it is byte-for-byte the WAV the same patch writes on its own — one oscillator
 phase and one delay tail, running the length of the clip.
 
 MJPEG is an old compression and every frame pays full price, which is the cost of

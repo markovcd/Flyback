@@ -66,7 +66,7 @@ public class OutputSettingsTests : UiTest
 
     /// <summary>The panel is present exactly when its export button is in the tree.</summary>
     private static bool ShowingSettings(MainWindow window) =>
-        All<Button>(window).Any(b => b.Content as string == "Export video…");
+        All<Button>(window).Any(b => b.Content as string == "Export…");
 
     private static ComboBox Size(MainWindow window) =>
         All<ComboBox>(window).Single(c => c.ItemsSource is IEnumerable<string> items && items.Any(i => i.Contains(" x ")));
@@ -99,7 +99,7 @@ public class OutputSettingsTests : UiTest
 
         ShowingSettings(window).ShouldBeTrue();
         All<Button>(window).Select(b => b.Content as string).ShouldContain("Save frame…");
-        All<Button>(window).Select(b => b.Content as string).ShouldContain("Render audio…");
+        All<Button>(window).Select(b => b.Content as string).ShouldContain("Export…");
     }
 
     [AvaloniaFact]
@@ -181,6 +181,78 @@ public class OutputSettingsTests : UiTest
 
         preview.Resolution.ShouldNotBe(before);
         preview.Resolution.Width.ShouldBe(320);
+    }
+
+    // --- the export button --------------------------------------------------
+
+    private static Button Export(MainWindow window) =>
+        All<Button>(window).Single(b => b.Content as string is "Export…" or "Stop");
+
+    /// <summary>The preset it opens on draws something, so there is a file to write.</summary>
+    [AvaloniaFact]
+    public void The_export_is_offered_when_the_patch_reaches_something()
+    {
+        var window = Open();
+        Select(window, Editor(window).Patch.Output);
+
+        Export(window).IsEnabled.ShouldBeTrue();
+    }
+
+    /// <summary>
+    /// Nothing wired into either half of the Output means nothing to write, and
+    /// the button says so by being greyed rather than by opening a dialog with
+    /// an empty list of file types.
+    /// </summary>
+    [AvaloniaFact]
+    public void The_export_is_greyed_out_when_the_patch_reaches_nothing()
+    {
+        var window = Open();
+        var editor = Editor(window);
+
+        editor.Patch = Presets.Empty(NodeCatalog.BuiltIn);
+        Select(window, editor.Patch.Output);
+
+        Export(window).IsEnabled.ShouldBeFalse();
+    }
+
+    /// <summary>
+    /// And it comes back the moment something reaches it — the state follows the
+    /// patch rather than being decided once when the panel was built.
+    /// </summary>
+    [AvaloniaFact]
+    public void Wiring_something_up_brings_the_export_back()
+    {
+        var window = Open();
+        var editor = Editor(window);
+
+        editor.Patch = Presets.Empty(NodeCatalog.BuiltIn);
+        Select(window, editor.Patch.Output);
+        Export(window).IsEnabled.ShouldBeFalse();
+
+        var knob = editor.AddNode("value");
+        knob.ShouldNotBeNull();
+        editor.Patch.Connect(knob.Id, 0, editor.Patch.Output.Id, NodeCatalog.OutputColourPort);
+        editor.NotifyPatchChanged();
+
+        Select(window, editor.Patch.Output);
+
+        Export(window).IsEnabled.ShouldBeTrue();
+    }
+
+    /// <summary>A greyed control that will not say why is worse than no control.</summary>
+    [AvaloniaFact]
+    public void The_greyed_export_says_why()
+    {
+        var window = Open();
+        var editor = Editor(window);
+
+        editor.Patch = Presets.Empty(NodeCatalog.BuiltIn);
+        Select(window, editor.Patch.Output);
+
+        var button = Export(window);
+
+        ToolTip.GetShowOnDisabled(button).ShouldBeTrue("or the reason is never read");
+        (ToolTip.GetTip(button) as string).ShouldNotBeNull().ShouldContain("nothing to write");
     }
 
     /// <summary>A sequencer gets its own list, and the Output does not.</summary>
