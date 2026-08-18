@@ -388,9 +388,10 @@ public static class NodeCatalog
                 [Num("x"), Num("y"), Num("tiles", 3f, 1f, 16f)], [Num("x"), Num("y")],
                 (em, i) =>
                 {
+                    return [Cell(i[0]), Cell(i[1])];
+
                     Slot Cell(Slot v) =>
                         em.Add(em.Mul(em.Unary(OpCode.Fract, em.Add(em.Mul(em.Mul(v, i[2]), 0.5f), 0.5f)), 2f), -1f);
-                    return [Cell(i[0]), Cell(i[1])];
                 },
                 "Repeats the coordinate system into a grid of identical cells."),
 

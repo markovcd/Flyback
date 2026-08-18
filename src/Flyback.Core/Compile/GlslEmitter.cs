@@ -391,11 +391,6 @@ public static class GlslEmitter
         // interpreter walking a freshly allocated register file would have found.
         var written = new bool[Math.Max(patch.RegisterCount, patch.OutputBase + patch.OutputWidth)];
 
-        // An operand of -1 means the op does not use that slot — Triple leaves C
-        // unset for SampleFeedback — and reads as zero for the same reason.
-        string Read(int register) =>
-            register >= 0 && register < written.Length && written[register] ? $"r{register}" : "0.0";
-
         var constant = 0;
 
         foreach (var op in patch.Ops)
@@ -502,5 +497,10 @@ public static class GlslEmitter
         }
 
         return written;
+
+        // An operand of -1 means the op does not use that slot — Triple leaves C
+        // unset for SampleFeedback — and reads as zero for the same reason.
+        string Read(int register) =>
+            register >= 0 && register < written.Length && written[register] ? $"r{register}" : "0.0";
     }
 }

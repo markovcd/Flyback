@@ -428,22 +428,6 @@ public sealed partial class MainWindow
 
         var updating = false;
 
-        void Apply(float next)
-        {
-            if (updating) return;
-
-            updating = true;
-            if (index < node.InputValues.Length) node.InputValues[index] = next;
-            slider.Value = next;
-            numeric.Value = (decimal)next;
-            name.Text = spec.Format(next);
-            updating = false;
-
-            // Named after the socket, so a slider dragged across its range is one
-            // step to undo rather than one per frame of the drag.
-            editor.NotifyPatchChanged($"{node.Id} input {index}");
-        }
-
         slider.PropertyChanged += (_, e) =>
         {
             if (e.Property == RangeBase.ValueProperty && e.NewValue is double d)
@@ -467,5 +451,21 @@ public sealed partial class MainWindow
         }
 
         return row;
+
+        void Apply(float next)
+        {
+            if (updating) return;
+
+            updating = true;
+            if (index < node.InputValues.Length) node.InputValues[index] = next;
+            slider.Value = next;
+            numeric.Value = (decimal)next;
+            name.Text = spec.Format(next);
+            updating = false;
+
+            // Named after the socket, so a slider dragged across its range is one
+            // step to undo rather than one per frame of the drag.
+            editor.NotifyPatchChanged($"{node.Id} input {index}");
+        }
     }
 }

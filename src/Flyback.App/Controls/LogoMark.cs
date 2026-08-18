@@ -38,8 +38,6 @@ public sealed class LogoMark : Control
         var left = (Bounds.Width - side) / 2;
         var top = (Bounds.Height - side) / 2;
 
-        Point At(double x, double y) => new(left + x * scale, top + y * scale);
-
         var sweep = new LinearGradientBrush
         {
             StartPoint = new RelativePoint(At(56, 184), RelativeUnit.Absolute),
@@ -64,5 +62,8 @@ public sealed class LogoMark : Control
 
         context.DrawEllipse(Beam, null, At(200, 72), 13 * scale, 13 * scale);
         context.DrawEllipse(Core, null, At(200, 72), 5.5 * scale, 5.5 * scale);
+        return;
+
+        Point At(double x, double y) => new(left + x * scale, top + y * scale);
     }
 }

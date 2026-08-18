@@ -125,8 +125,6 @@ public class PatchFuzzTests
         var placed = new List<(NodeInstance Node, NodeDef Def)>();
         var next = 0;
 
-        int Decide() => decisions[next++ % decisions.Length];
-
         foreach (var index in moduleIndices)
         {
             var def = Modules[index];
@@ -168,6 +166,8 @@ public class PatchFuzzTests
         }
 
         return builder.Patch;
+
+        int Decide() => decisions[next++ % decisions.Length];
     }
 
     /// <summary>Spreads the knob across the module's own declared range.</summary>

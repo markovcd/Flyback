@@ -349,13 +349,6 @@ public sealed partial class MainWindow : Window
         var showing = 0;
         var restoring = false;
 
-        void PutTheBoxBack()
-        {
-            restoring = true;
-            presets.SelectedIndex = showing;
-            restoring = false;
-        }
-
         presets.SelectionChanged += async (_, _) =>
         {
             if (restoring) return;
@@ -451,6 +444,13 @@ public sealed partial class MainWindow : Window
             BorderThickness = new Thickness(0, 0, 0, 1),
             Child = bar,
         };
+
+        void PutTheBoxBack()
+        {
+            restoring = true;
+            presets.SelectedIndex = showing;
+            restoring = false;
+        }
     }
 
     /// <summary>
