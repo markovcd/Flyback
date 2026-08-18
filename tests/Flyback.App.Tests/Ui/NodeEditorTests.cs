@@ -9,7 +9,6 @@ using Avalonia.Platform;
 using Flyback.App.Controls;
 using Flyback.Core.Graph;
 using Shouldly;
-using Xunit;
 
 namespace Flyback.App.Tests.Ui;
 

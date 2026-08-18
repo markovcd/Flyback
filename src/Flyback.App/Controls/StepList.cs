@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
@@ -80,7 +81,7 @@ internal sealed class StepList
             {
                 new Setter(Layoutable.MinHeightProperty, ControlHeight),
                 new Setter(Layoutable.MinWidthProperty, 0d),
-                new Setter(TextBox.PaddingProperty, new Thickness(5, 0)),
+                new Setter(TemplatedControl.PaddingProperty, new Thickness(5, 0)),
                 new Setter(TextBox.VerticalContentAlignmentProperty, VerticalAlignment.Center),
             },
         });

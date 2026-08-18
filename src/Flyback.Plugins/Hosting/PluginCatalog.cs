@@ -24,11 +24,17 @@ public sealed class PluginCatalog
     public static PluginCatalog Empty { get; } =
         new([], [], NodeCatalog.BuiltIn, Flyback.Core.Graph.Presets.All, []);
 
+    /// <param name="problems">What went wrong on the way, one entry per plugin that could not be loaded or was refused.</param>
     /// <param name="assistants">
     /// Last and optional so that every call written before assistants existed
     /// still compiles — the same courtesy the registry interface extends to
     /// plugins.
     /// </param>
+    /// <param name="plugins">Everything that loaded, whether or not it registered anything.</param>
+    /// <param name="audioOutputs">The sound backends offered, in no particular order — priority is asked for later.</param>
+    /// <param name="modules">The engine's catalogue with every plugin's modules added to it.</param>
+    /// <param name="presets">Patches to start from: the engine's own first, then each plugin's.</param>
+    /// <param name="secretStores">The places a key may be kept, or none where nothing can keep one.</param>
     internal PluginCatalog(
         IReadOnlyList<LoadedPlugin> plugins,
         IReadOnlyList<IAudioOutput> audioOutputs,

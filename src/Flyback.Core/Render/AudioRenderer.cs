@@ -120,11 +120,14 @@ public sealed class AudioRenderer
     /// Fills an interleaved stereo buffer. Allocation-free once constructed, so
     /// it is safe to call from an audio callback.
     /// </summary>
+    /// <param name="scan">Whether to sweep the image instead of running on time alone, and how fast.</param>
     /// <param name="memory">
     /// The program's delay lines. Pass them explicitly from anywhere that swaps
     /// programs while this is running, so the pair is always consistent; leave it
     /// null offline and this keeps its own, allocating them on the spot.
     /// </param>
+    /// <param name="program">The sound's own compiled program, rooted at the Output's left and right.</param>
+    /// <param name="interleavedStereo">Where the samples go, left and right alternating. Its length decides how many frames this call renders.</param>
     public void Render(
         CompiledPatch program,
         Span<float> interleavedStereo,

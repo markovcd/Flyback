@@ -276,8 +276,8 @@ public sealed partial class MainWindow
         var seconds = ExportSeconds;
         var settings = new MovieSettings(size.Width, size.Height, seconds);
 
-        var video = patch.CompileForVideo().Program;
-        var sound = Reaches(patch).Sound ? patch.CompileForAudio().Program : null;
+        var videoPatch = patch.CompileForVideo().Program;
+        var soundPatch = Reaches(patch).Sound ? patch.CompileForAudio().Program : null;
         var scan = AudioScanFor(patch);
 
         using var stopping = new CancellationTokenSource();
@@ -291,7 +291,7 @@ public sealed partial class MainWindow
         try
         {
             var written = await Task.Run(
-                () => MovieRenderer.Render(path, video, sound, scan, settings, progress, stopping.Token),
+                () => MovieRenderer.Render(path, videoPatch, soundPatch, scan, settings, progress, stopping.Token),
                 stopping.Token);
 
             var duration = written / settings.FramesPerSecond;

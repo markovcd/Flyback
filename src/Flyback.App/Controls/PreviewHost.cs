@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Avalonia;
 using Avalonia.Controls;
 using Flyback.Core.Compile;
@@ -40,9 +41,14 @@ public enum PreviewBackend
 /// </remarks>
 public sealed class PreviewHost : Decorator, IPreviewSurface
 {
-    private IPreviewSurface active = null!;
+    /// <summary>
+    /// The renderer on screen. Empty for exactly as long as the constructor
+    /// takes to put one there, which is why <see cref="Switch"/> promises to
+    /// fill it rather than this being left nullable for every reader after.
+    /// </summary>
+    private IPreviewSurface active;
 
-    public PreviewHost() => Use(PreviewBackend.Gpu);
+    public PreviewHost() => Switch(PreviewBackend.Gpu);
 
     /// <summary>Which renderer is drawing now.</summary>
     public PreviewBackend Backend { get; private set; }
@@ -96,9 +102,26 @@ public sealed class PreviewHost : Decorator, IPreviewSurface
     /// <summary>Switches renderer, or does nothing if that one is already running.</summary>
     public void Use(PreviewBackend backend)
     {
-        if (active is not null && Backend == backend) return;
+        if (Backend == backend) return;
         if (backend == PreviewBackend.Gpu && !GpuAvailable) return;
 
+        Switch(backend);
+    }
+
+    /// <summary>
+    /// Puts a renderer in place, whatever was there before.
+    /// </summary>
+    /// <remarks>
+    /// Separate from <see cref="Use"/> because that one is allowed to decline —
+    /// the same backend twice, or a GPU that has already refused — and the
+    /// constructor is not: something has to be in <see cref="active"/> before
+    /// anything can read it, and saying so here is what lets every reader after
+    /// treat it as a surface rather than as a maybe.
+    /// </remarks>
+    /// <param name="backend">Which renderer to build and hand the timeline to.</param>
+    [MemberNotNull(nameof(active))]
+    private void Switch(PreviewBackend backend)
+    {
         if (backend == PreviewBackend.Gpu)
         {
             var gpu = new GpuPreviewSurface();
@@ -137,9 +160,13 @@ public sealed class PreviewHost : Decorator, IPreviewSurface
     /// otherwise keep ticking, and a preview that is not on screen is a patch
     /// being evaluated for nobody — which on the CPU path is most of a machine.
     /// </remarks>
+    /// <param name="surface">The renderer taking over, already built.</param>
+    [MemberNotNull(nameof(active))]
     private void Activate<TSurface>(TSurface surface)
         where TSurface : Control, IPreviewSurface
     {
+        // Null for the one call that comes from the constructor, and a renderer
+        // with a timeline to hand over for every call after it.
         if (active is not null)
         {
             surface.Program = active.Program;

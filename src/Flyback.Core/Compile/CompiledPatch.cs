@@ -73,6 +73,7 @@ public sealed class CompiledPatch(Op[] ops, int registerCount, int outputBase, i
     public double[] AllocateRegisters() => new double[Math.Max(RegisterCount, OutputWidth)];
 
     /// <summary>Runs the program for one pixel. <paramref name="registers"/> is reused across pixels.</summary>
+    /// <param name="feedback">The frame before this one, for <see cref="OpCode.SampleFeedback"/> to read. Empty on the first frame and off the audio path, where a sample has no previous picture.</param>
     /// <param name="delays">
     /// Memory for the stateful ops, or null when there is none. Null is not a
     /// failure: it is what the video path passes, because rows render in
@@ -80,6 +81,10 @@ public sealed class CompiledPatch(Op[] ops, int registerCount, int outputBase, i
     /// delay hands its input straight through, so a patch built for the speakers
     /// still shows a picture.
     /// </param>
+    /// <param name="x">Horizontal position, widened by the aspect ratio. Pinned to zero on the audio path.</param>
+    /// <param name="y">Vertical position, -1 at the bottom to 1 at the top. Pinned to zero on the audio path.</param>
+    /// <param name="t">Seconds since the patch started, which is the only one of the three that moves for the ear.</param>
+    /// <param name="registers">Scratch for the whole program, sized by <see cref="RegisterCount"/> and reused across pixels rather than allocated per one.</param>
     public void Evaluate(
         double x,
         double y,

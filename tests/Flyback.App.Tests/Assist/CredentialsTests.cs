@@ -349,7 +349,7 @@ public class CredentialsTests
 
         public void Keep(string account, string secret) => throw new InvalidOperationException("no");
 
-        public string? Recall(string account) => throw new InvalidOperationException("no");
+        public string Recall(string account) => throw new InvalidOperationException("no");
 
         public void Forget(string account) => throw new InvalidOperationException("no");
     }

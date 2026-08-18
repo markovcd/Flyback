@@ -159,12 +159,12 @@ public static class PatchCompiler
 
                 var spec = def.Inputs[port];
                 var incoming = patch.IncomingTo(node.Id, port);
-                Slot value;
+                Slot slotValue;
 
                 if (incoming is not null && patch.Find(incoming.SourceNode) is { } source)
                 {
                     var outputs = Resolve(source);
-                    value = incoming.SourcePort >= 0 && incoming.SourcePort < outputs.Length
+                    slotValue = incoming.SourcePort >= 0 && incoming.SourcePort < outputs.Length
                         ? outputs[incoming.SourcePort]
                         : emitter.Constant(0f);
                 }
@@ -173,7 +173,7 @@ public static class PatchCompiler
                     // A normalled jack carries an earlier input through when
                     // nothing is patched in. Only earlier ports can be named,
                     // because inputs resolve in order.
-                    value = inputs[spec.NormalledFrom];
+                    slotValue = inputs[spec.NormalledFrom];
                 }
                 else
                 {
@@ -193,11 +193,11 @@ public static class PatchCompiler
                             IssueSeverity.Warning));
                     }
 
-                    value = emitter.Constant(DefaultFor(node, port, spec));
+                    slotValue = emitter.Constant(DefaultFor(node, port, spec));
                 }
 
                 // An Any port takes whatever arrives; typed ports coerce.
-                inputs[port] = spec.Kind == PortKind.Any ? value : emitter.Coerce(value, spec.Width);
+                inputs[port] = spec.Kind == PortKind.Any ? slotValue : emitter.Coerce(slotValue, spec.Width);
             }
 
             // Held to what can actually be played on the way in, so the emit

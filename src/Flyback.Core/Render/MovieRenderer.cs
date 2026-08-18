@@ -61,15 +61,20 @@ public static class MovieRenderer
         return Render(file, video, audio, scan, settings, progress, cancellation);
     }
 
+    /// <param name="video">The picture's compiled program, rooted at the Output's colour.</param>
     /// <param name="audio">
     /// Null writes a video-only file, which is what a patch with no Audio Output
     /// has to say.
     /// </param>
+    /// <param name="progress">Told how far along this is, 0 to 1, once a frame. Null asks for nothing.</param>
     /// <param name="cancellation">
     /// Stops at the next frame boundary rather than throwing. What has been
     /// rendered is kept and the file is closed properly, so stopping a long
     /// export leaves a shorter video rather than a broken one.
     /// </param>
+    /// <param name="output">Where the file is written.</param>
+    /// <param name="scan">Passed to the audio renderer unchanged — see <see cref="AudioScan"/>.</param>
+    /// <param name="settings">Size, length, rate and quality: everything about the file that is not a program.</param>
     /// <returns>Frames written — fewer than <see cref="MovieSettings.FrameCount"/> if stopped.</returns>
     public static int Render(
         Stream output,

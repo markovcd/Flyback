@@ -67,12 +67,15 @@ internal sealed class OpenAiSession : IPatchSession
     private readonly Uri endpoint;
     private readonly JsonArray messages = [];
 
+    /// <param name="fallbackBaseUrl">Where to send requests when the configuration names nowhere.</param>
     /// <param name="transport">
     /// Where the requests actually go, defaulting to the network. Named only so
     /// the loop can be driven by canned replies: how a turn ends is this class's
     /// whole job, and it should not take an endpoint to find out that it ends
     /// wrongly.
     /// </param>
+    /// <param name="workbench">The patch being built, and the only thing here that may touch it.</param>
+    /// <param name="config">Model, key and effort, as the panel has them.</param>
     public OpenAiSession(
         PatchWorkbench workbench,
         AssistantConfig config,

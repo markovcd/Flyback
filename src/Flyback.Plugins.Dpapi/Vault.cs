@@ -28,12 +28,12 @@ internal static class Vault
     {
         Directory.CreateDirectory(Folder);
 
-        var sealed_ = ProtectedData.Protect(
+        var @sealed = ProtectedData.Protect(
             Encoding.UTF8.GetBytes(secret),
             Entropy,
             DataProtectionScope.CurrentUser);
 
-        File.WriteAllBytes(PathFor(account), sealed_);
+        File.WriteAllBytes(PathFor(account), @sealed);
     }
 
     public static string? Recall(string account)

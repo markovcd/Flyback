@@ -61,7 +61,7 @@ public class SessionTests
 
         // It was asked to finish rather than left to stop, and asked as a user
         // turn: there is no tool call outstanding to answer at that point.
-        var asked = sent[^1]!["messages"]!.AsArray()
+        var asked = sent[^1]["messages"]!.AsArray()
             .Where(m => m!["role"]!.GetValue<string>() == "user")
             .Select(m => m!["content"]!.ToString())
             .ToArray();

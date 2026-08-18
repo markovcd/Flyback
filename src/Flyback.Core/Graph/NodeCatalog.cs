@@ -106,7 +106,7 @@ public static class NodeCatalog
     /// the compiler has no other way to tell one input from another.
     /// </summary>
     private static PortSpec Domain(string name) =>
-        new(name, PortKind.Scalar, Domain: true);
+        new(name, Domain: true);
 
     /// <summary>An input that carries an earlier one through when left unpatched.</summary>
     private static PortSpec Normalled(string name, int from, float min = -4f, float max = 4f) =>
@@ -168,7 +168,7 @@ public static class NodeCatalog
                 "audio.note", "Note", "Output",
                 [
                     Pitched("note", 57f),
-                    Num("octave", 0f, -4f, 4f),
+                    Num("octave"),
                     Num("cents", 0f, -100f, 100f),
                 ],
                 [Num("hz"), Num("note")],
@@ -334,7 +334,7 @@ public static class NodeCatalog
 
             new NodeDef(
                 "math.remap", "Remap", "Maths",
-                [Any("in"), Num("in low", -1f), Num("in high", 1f), Num("out low", 0f), Num("out high", 1f)],
+                [Any("in"), Num("in low", -1f), Num("in high", 1f), Num("out low"), Num("out high", 1f)],
                 [Any("out")],
                 (em, i) =>
                 {
@@ -482,7 +482,7 @@ public static class NodeCatalog
 
             new NodeDef(
                 "colour.gain", "Gain", "Colour",
-                [Col("colour"), Any("gain", 1f, 0f, 4f), Any("bias", 0f, -1f, 1f)], [Col("colour")],
+                [Col("colour"), Any("gain", 1f, 0f), Any("bias", 0f, -1f, 1f)], [Col("colour")],
                 (em, i) => [em.Binary(OpCode.Add, em.Binary(OpCode.Mul, i[0], i[1]), i[2])],
                 "Brightness and contrast, as multiply then add."),
 
@@ -509,11 +509,11 @@ public static class NodeCatalog
 
     /// <summary>A minor pentatonic, so a Note Sequencer plays a tune the moment it is dropped.</summary>
     private static readonly Step[] DefaultRiff =
-        [.. new float[] { 57f, 60f, 62f, 64f, 67f, 64f, 62f, 60f }.Select(n => new Step(n))];
+        [.. new[] { 57f, 60f, 62f, 64f, 67f, 64f, 62f, 60f }.Select(n => new Step(n))];
 
     /// <summary>Up and back down — a shape, rather than the ramp 'index' already hands out.</summary>
     private static readonly Step[] DefaultShape =
-        [.. new float[] { 0f, 0.25f, 0.5f, 0.75f, 1f, 0.75f, 0.5f, 0.25f }.Select(v => new Step(v))];
+        [.. new[] { 0f, 0.25f, 0.5f, 0.75f, 1f, 0.75f, 0.5f, 0.25f }.Select(v => new Step(v))];
 
     /// <summary>
     /// The shortest the gate's edges may be made, as a fraction of a step. A
@@ -531,9 +531,12 @@ public static class NodeCatalog
     /// the speakers and a change of colour on the screen
     /// ([0022](0022-audio-and-video-are-two-sinks-over-one-patch.md)).
     /// </summary>
+    /// <param name="name">What it is called in the palette and on the node.</param>
     /// <param name="notes">The tune a freshly placed one carries.</param>
     /// <param name="display">How a note's value reads — by name on the Note Sequencer.</param>
     /// <param name="range">The span a note's value is edited within.</param>
+    /// <param name="id">The module's type id, which is what a saved patch names it by.</param>
+    /// <param name="description">The line the inspector shows under it.</param>
     private static NodeDef StepSequencer(
         string id,
         string name,
@@ -624,12 +627,12 @@ public static class NodeCatalog
                 : em.Binary(OpCode.Div, travelled, em.Constant(unit));
 
             var index = em.Unary(OpCode.Floor,
-                em.Binary(OpCode.Mod, counted, em.Constant((float)count)));
+                em.Binary(OpCode.Mod, counted, em.Constant(count)));
 
             cursor = index;
             thresholds = [.. Enumerable.Range(0, count + 1).Select(s => (float)s)];
             within = em.Unary(OpCode.Fract, counted);
-            which = em.Binary(OpCode.Div, index, em.Constant((float)count));
+            which = em.Binary(OpCode.Div, index, em.Constant(count));
         }
         else
         {

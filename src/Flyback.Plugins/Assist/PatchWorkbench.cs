@@ -184,7 +184,7 @@ public sealed class PatchWorkbench
         if (arguments.TryGetProperty("knobs", out var knobs) && Turn(node, def, knobs) is { } refused)
             return ToolOutcome.Refused(refused);
 
-        report.Append(' ').Append(Sockets(node, def)).Append(' ').Append(Issues());
+        report.Append(' ').Append(Sockets(def)).Append(' ').Append(Issues());
         return Fine(report.ToString());
     }
 
@@ -198,7 +198,7 @@ public sealed class PatchWorkbench
 
         if (Turn(node, def, knobs) is { } bad) return ToolOutcome.Refused(bad);
 
-        return Fine($"set. {Sockets(node, def)} {Issues()}");
+        return Fine($"set. {Sockets(def)} {Issues()}");
     }
 
     /// <summary>
@@ -1042,7 +1042,7 @@ public sealed class PatchWorkbench
     private static float Knob(NodeInstance node, int port, NodeDef def) =>
         port < node.InputValues.Length ? node.InputValues[port] : def.Inputs[port].Default;
 
-    private string Sockets(NodeInstance node, NodeDef def) => $"Its ports: in {List(def.Inputs)}; out {List(def.Outputs)}.";
+    private static string Sockets(NodeDef def) => $"Its ports: in {List(def.Inputs)}; out {List(def.Outputs)}.";
 
     private string Issues()
     {

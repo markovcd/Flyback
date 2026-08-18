@@ -3,9 +3,9 @@ using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Flyback.App.Controls;
 using Flyback.Core.Graph;
+using Flyback.Plugins.Assist;
 using Flyback.Plugins.Hosting;
 using Shouldly;
-using Xunit;
 
 namespace Flyback.App.Tests.Ui;
 
@@ -78,6 +78,34 @@ public class AssistantPanelTests : UiTest
             Settle(dialog);
             dialog.Close();
         }
+    }
+
+    /// <summary>
+    /// The rows come from the enum, so the box cannot offer a level that does
+    /// not exist. What it can still do is offer the wrong ones: the setting is
+    /// stored as the index of the row somebody picked, so the levels are named
+    /// here, in order, rather than compared against the enum they came from.
+    /// </summary>
+    /// <remarks>
+    /// Order is load-bearing and membership is not enough to pin. Nothing refers
+    /// to these members by name anywhere else, so dropping one as unused — or
+    /// swapping two — shifts every value below it and relabels what was already
+    /// saved, without anything failing to compile.
+    /// </remarks>
+    [AvaloniaFact]
+    public void The_effort_box_offers_exactly_the_levels_there_are()
+    {
+        var window = Showing();
+        var panel = All<AssistantPanel>(window).Single();
+
+        var host = new Window { Content = panel.SettingsSection() };
+        host.Show();
+        Settle(host);
+
+        var box = All<ComboBox>(host).Single(c => c.Name == "effort");
+        var offered = ((IEnumerable<string>)box.ItemsSource!).ToArray();
+
+        offered.ShouldBe(["Low", "Medium", "High"]);
     }
 
     /// <summary>

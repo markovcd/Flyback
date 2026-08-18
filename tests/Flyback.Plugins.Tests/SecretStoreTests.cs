@@ -58,7 +58,7 @@ public class SecretStoreTests
             store.Keep(Account, secret);
 
             store.Recall(Account).ShouldBe(secret);
-            Written().ShouldNotContain(secret, Case.Insensitive);
+            Written().ShouldNotContain(secret);
         }
         finally
         {

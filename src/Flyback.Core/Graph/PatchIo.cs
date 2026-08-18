@@ -114,12 +114,6 @@ public static class PatchIo
         return new PatchLoad(patch, missing, unknown);
     }
 
-    public static void Save(Patch patch, string path, ModuleCatalog? against = null) =>
-        File.WriteAllText(path, ToJson(patch, against));
-
-    public static PatchLoad Load(string path, ModuleCatalog? against = null) =>
-        Read(File.ReadAllText(path), against);
-
     /// <summary>
     /// Every provider the patch's modules come from, except the engine's own —
     /// listing that would be noise on every file ever saved. Null when there is

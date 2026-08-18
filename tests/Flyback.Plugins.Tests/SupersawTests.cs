@@ -75,14 +75,14 @@ public class SupersawTests
     public void It_never_leaves_minus_one_to_one()
     {
         foreach (var detune in new[] { 0f, 0.25f, 0.5f, 1f })
-        foreach (var mix in new[] { 0f, 0.3f, 0.75f, 1f })
-        for (var step = 0; step < 400; step++)
-        {
-            var value = Evaluate(Supersaw, step * 0.017f, (Freq, 3f), (Detune, detune), (Mix, mix));
+            foreach (var mix in new[] { 0f, 0.3f, 0.75f, 1f })
+                for (var step = 0; step < 400; step++)
+                {
+                    var value = Evaluate(Supersaw, step * 0.017f, (Freq, 3f), (Detune, detune), (Mix, mix));
 
-            value[0].ShouldBeInRange(-1.0001f, 1.0001f);
-            value[1].ShouldBeInRange(-1.0001f, 1.0001f);
-        }
+                    value[0].ShouldBeInRange(-1.0001f, 1.0001f);
+                    value[1].ShouldBeInRange(-1.0001f, 1.0001f);
+                }
     }
 
     /// <summary>Out of range on a patched input must not divide by a cancelled sum.</summary>
@@ -134,8 +134,8 @@ public class SupersawTests
         var presets = PluginHost.Load().Presets;
 
         presets.Select(p => p.Name).ShouldContain("Supersaw");
-        presets.Take(Core.Graph.Presets.All.Count).Select(p => p.Name)
-            .ShouldBe(Core.Graph.Presets.All.Select(p => p.Name));
+        presets.Take(Presets.All.Count).Select(p => p.Name)
+            .ShouldBe(Presets.All.Select(p => p.Name));
     }
 
     /// <summary>

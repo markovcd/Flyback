@@ -76,11 +76,15 @@ public sealed class Emitter
     /// would need three buffers, and there is nothing a delayed picture would
     /// mean that <see cref="OpCode.SampleFeedback"/> does not already do better.
     /// </summary>
+    /// <param name="time">How far back to read, in seconds, and a signal rather than a constant so it can be swept.</param>
     /// <param name="maximum">
     /// The longest delay this instance may ever be asked for. It sizes the
     /// buffer, so it is fixed at compile time even though the delay itself is a
     /// signal and may be swept.
     /// </param>
+    /// <param name="code">Which of the delay ops this is — a plain line, or one with a filter in it.</param>
+    /// <param name="input">The signal going into the line.</param>
+    /// <param name="gain">How much of what comes out is sent round again.</param>
     public Slot DelayLine(OpCode code, Slot input, Slot gain, Slot time, float maximum)
     {
         var first = Allocate(1);

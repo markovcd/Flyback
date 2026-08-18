@@ -114,7 +114,7 @@ public class AssistantPluginTests
         var excuse = OpenAi.Unavailable(new AssistantConfig(key, model, baseUrl));
 
         excuse.ShouldNotBeNull();
-        excuse.ShouldContain(expected, Case.Insensitive);
+        excuse.ShouldContain(expected);
     }
 
     [Fact]

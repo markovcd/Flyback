@@ -165,7 +165,7 @@ public sealed class AlsaAudioDevice(AudioFormat format) : IAudioDevice
                     return LibAsound.Recover(pcm, (int)written, silent: 1) >= 0;
                 }
 
-                cursor += (nint)written * channels;
+                cursor += written * channels;
                 remaining -= (nuint)written;
             }
         }

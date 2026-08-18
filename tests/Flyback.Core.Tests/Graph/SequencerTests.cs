@@ -469,14 +469,12 @@ public class SequencerTests
     [Fact]
     public void The_sequence_preset_does_not_click_when_a_note_starts_or_stops()
     {
-        const int sampleRate = AudioRenderer.DefaultSampleRate;
-
         var program = SequencePreset().CompileForAudio(NodeCatalog.BuiltIn).Program;
-        var buffer = new float[sampleRate * 2];
+        var buffer = new float[AudioRenderer.DefaultSampleRate * 2];
 
-        new AudioRenderer(sampleRate).Render(program, buffer, AudioScan.TimeDriven);
+        new AudioRenderer().Render(program, buffer, AudioScan.TimeDriven);
 
-        NoClicks(buffer, sampleRate);
+        NoClicks(buffer, AudioRenderer.DefaultSampleRate);
     }
 
     /// <summary>
@@ -488,7 +486,6 @@ public class SequencerTests
     [Fact]
     public void A_pattern_of_uneven_notes_does_not_click_either()
     {
-        const int sampleRate = AudioRenderer.DefaultSampleRate;
 
         var patch = SequencePreset();
         var sequencer = patch.Nodes.Single(n => n.TypeId == Notes);
@@ -499,11 +496,11 @@ public class SequencerTests
             sequencer.Steps[s] = sequencer.Steps[s] with { Length = s % 2 == 0 ? 1.5f : 0.5f };
 
         var program = patch.CompileForAudio(NodeCatalog.BuiltIn).Program;
-        var buffer = new float[sampleRate * 2];
+        var buffer = new float[AudioRenderer.DefaultSampleRate * 2];
 
-        new AudioRenderer(sampleRate).Render(program, buffer, AudioScan.TimeDriven);
+        new AudioRenderer().Render(program, buffer, AudioScan.TimeDriven);
 
-        NoClicks(buffer, sampleRate);
+        NoClicks(buffer, AudioRenderer.DefaultSampleRate);
     }
 
     private static void NoClicks(float[] buffer, int sampleRate)

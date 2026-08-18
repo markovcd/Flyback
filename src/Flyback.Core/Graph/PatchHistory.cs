@@ -93,6 +93,7 @@ public sealed class PatchHistory(ModuleCatalog? modules = null)
     /// Take note of an edit that has already happened. The patch is read as it
     /// now stands, and what is kept is how it stood before.
     /// </summary>
+    /// <param name="patch">The document as it now stands, read rather than kept: what is stored is a snapshot of the text, so the caller may go on editing this.</param>
     /// <param name="coalesce">
     /// Names the gesture an edit came from, when it is one a hand holds down: a
     /// slider being dragged makes an edit a frame, and a hundred of those are

@@ -13,8 +13,6 @@ namespace Flyback.Core.Tests.Rendering;
 /// </summary>
 public class AudioRendererTests
 {
-    private const int SampleRate = AudioRenderer.DefaultSampleRate;
-
     /// <summary>A tone patch: Time into a sine, sine into the audio sink.</summary>
     private static CompiledPatch Tone(string oscillator, float hz, float gain = 1f)
     {
@@ -34,19 +32,19 @@ public class AudioRendererTests
     private static float[] Render(CompiledPatch program, int frames, int oversample = 4)
     {
         var buffer = new float[frames * 2];
-        new AudioRenderer(SampleRate, oversample).Render(program, buffer, AudioScan.TimeDriven);
+        new AudioRenderer(oversample: oversample).Render(program, buffer, AudioScan.TimeDriven);
         return buffer;
     }
 
     [Fact]
     public void A_220_hz_sine_really_comes_out_at_220_hz()
     {
-        var buffer = Render(Tone("osc.sine", 220f), SampleRate);
+        var buffer = Render(Tone("osc.sine", 220f), AudioRenderer.DefaultSampleRate);
 
         // Two zero crossings per cycle. Skip the first few samples: the DC
         // blocker settles from a cold start.
         var crossings = 0;
-        for (var frame = 20; frame < SampleRate - 1; frame++)
+        for (var frame = 20; frame < AudioRenderer.DefaultSampleRate - 1; frame++)
         {
             var a = buffer[frame * 2];
             var b = buffer[(frame + 1) * 2];
@@ -88,10 +86,10 @@ public class AudioRendererTests
         var program = Tone("osc.sine", 440f);
 
         var whole = new float[2_048 * 2];
-        new AudioRenderer(SampleRate).Render(program, whole, AudioScan.TimeDriven);
+        new AudioRenderer().Render(program, whole, AudioScan.TimeDriven);
 
         var split = new float[2_048 * 2];
-        var renderer = new AudioRenderer(SampleRate);
+        var renderer = new AudioRenderer();
         renderer.Render(program, split.AsSpan(0, 1_024 * 2), AudioScan.TimeDriven);
         renderer.Render(program, split.AsSpan(1_024 * 2), AudioScan.TimeDriven);
 
@@ -123,7 +121,7 @@ public class AudioRendererTests
     public void A_tone_is_as_clean_an_hour_in_as_it_is_at_the_start(double startSeconds)
     {
         var program = Tone("osc.sine", 220f);
-        var renderer = new AudioRenderer(SampleRate);
+        var renderer = new AudioRenderer();
         var memory = renderer.DelayMemoryFor(program);
 
         renderer.SeekTo(startSeconds);
@@ -171,7 +169,7 @@ public class AudioRendererTests
         var sink = builder.Add(NodeCatalog.OutputTypeId, 0, 0, (NodeCatalog.OutputGainPort, 1f));
         builder.Wire(knob, 0, sink, NodeCatalog.OutputLeftPort);
 
-        var buffer = Render(Compile(builder.Patch), SampleRate);
+        var buffer = Render(Compile(builder.Patch), AudioRenderer.DefaultSampleRate);
 
         // Starts as a step, then settles: pure DC carries no sound.
         Peak(buffer.AsSpan(0, 200)).ShouldBeGreaterThan(0.5f);
@@ -188,7 +186,7 @@ public class AudioRendererTests
     [Fact]
     public void Delay_memory_belongs_to_the_program_that_asked_for_it()
     {
-        var renderer = new AudioRenderer(SampleRate);
+        var renderer = new AudioRenderer();
 
         var none = new CompiledPatch([new Op(OpCode.Const, 0)], 1, 0, 1);
         var one = Lines(0.25f);
@@ -214,8 +212,8 @@ public class AudioRendererTests
     {
         var program = Echo();
 
-        var mine = new AudioRenderer(SampleRate);
-        var theirs = new AudioRenderer(SampleRate);
+        var mine = new AudioRenderer();
+        var theirs = new AudioRenderer();
 
         var withOwn = new float[4_000];
         var withBorrowed = new float[4_000];
@@ -281,10 +279,10 @@ public class AudioRendererTests
         var program = Compile(builder.Patch);
 
         var still = new float[4_000 * 2];
-        new AudioRenderer(SampleRate).Render(program, still, AudioScan.TimeDriven);
+        new AudioRenderer().Render(program, still, AudioScan.TimeDriven);
 
         var scanned = new float[4_000 * 2];
-        new AudioRenderer(SampleRate).Render(program, scanned, new AudioScan(true, 220f, 16f / 9f));
+        new AudioRenderer().Render(program, scanned, new AudioScan(true, 220f, 16f / 9f));
 
         Peak(still).ShouldBeLessThan(0.01f);
         Peak(scanned).ShouldBeGreaterThan(0.3f);
@@ -296,14 +294,14 @@ public class AudioRendererTests
         var samples = Render(Tone("osc.sine", 440f), 1_000);
 
         using var stream = new MemoryStream();
-        WavWriter.Write(stream, samples, SampleRate, 2);
+        WavWriter.Write(stream, samples, AudioRenderer.DefaultSampleRate, 2);
         var bytes = stream.ToArray();
 
         Ascii(bytes, 0).ShouldBe("RIFF");
         Ascii(bytes, 8).ShouldBe("WAVE");
         Ascii(bytes, 36).ShouldBe("data");
         BinaryPrimitives.ReadInt16LittleEndian(bytes.AsSpan(22, 2)).ShouldBe((short)2);
-        BinaryPrimitives.ReadInt32LittleEndian(bytes.AsSpan(24, 4)).ShouldBe(SampleRate);
+        BinaryPrimitives.ReadInt32LittleEndian(bytes.AsSpan(24, 4)).ShouldBe(AudioRenderer.DefaultSampleRate);
         BinaryPrimitives.ReadInt32LittleEndian(bytes.AsSpan(40, 4)).ShouldBe(samples.Length * 2);
         bytes.Length.ShouldBe(44 + samples.Length * 2);
 

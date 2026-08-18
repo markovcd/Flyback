@@ -68,8 +68,9 @@ public sealed class AssistantPanel : UserControl
         Padding = new Thickness(8, 6, 8, 34),
     };
 
-    private readonly StackPanel said = new() { Spacing = 4, Margin = new Thickness(10, 8) };
+    private readonly StackPanel saidPanel = new() { Spacing = 4, Margin = new Thickness(10, 8) };
     private readonly ScrollViewer transcript = new();
+
     /// <summary>
     /// The last frame the assistant looked at, and nothing at all until it has
     /// looked at one. Hidden rather than merely empty: a fixed width in an Auto
@@ -182,7 +183,8 @@ public sealed class AssistantPanel : UserControl
     {
         FontSize = 12,
         Width = 260,
-        ItemsSource = new[] { "Low", "Medium", "High" },
+        Name = "effort",
+        ItemsSource = Enum.GetNames<AssistantEffort>(),
     };
 
     private IPatchAssistant? assistant;
@@ -243,7 +245,7 @@ public sealed class AssistantPanel : UserControl
 
     private Control Build()
     {
-        transcript.Content = said;
+        transcript.Content = saidPanel;
         transcript.VerticalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Auto;
 
         // Tunnelling, and both halves of the gesture answered here: the box would
@@ -597,10 +599,8 @@ public sealed class AssistantPanel : UserControl
             footer.Foreground = Amber;
             return;
         }
-
-       
-        footer.Foreground = Dim;
         
+        footer.Foreground = Dim;
     }
 
     /// <summary>
@@ -785,7 +785,7 @@ public sealed class AssistantPanel : UserControl
         var wanted = instruction.Text ?? string.Empty;
         if (string.IsNullOrWhiteSpace(wanted)) return;
 
-        said.Children.Clear();
+        saidPanel.Children.Clear();
         lastFrame.Source = null;
         lastFrame.IsVisible = false;
 
@@ -880,7 +880,7 @@ public sealed class AssistantPanel : UserControl
 
     private void Add(string text, IBrush colour, double size)
     {
-        said.Children.Add(new SelectableTextBlock
+        saidPanel.Children.Add(new SelectableTextBlock
         {
             Text = text,
             TextWrapping = TextWrapping.Wrap,
@@ -892,7 +892,7 @@ public sealed class AssistantPanel : UserControl
     /// <summary>Streamed prose arrives in pieces, so it lands on the end of the last one.</summary>
     private void Append(string text)
     {
-        if (said.Children.Count > 0 && said.Children[^1] is SelectableTextBlock last && last.FontSize > 11.5)
+        if (saidPanel.Children.Count > 0 && saidPanel.Children[^1] is SelectableTextBlock last && last.FontSize > 11.5)
         {
             last.Text += text;
             return;

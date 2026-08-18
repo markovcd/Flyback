@@ -141,8 +141,6 @@ public class NoteTests
     [Fact]
     public void A_note_into_a_sine_really_comes_out_at_that_pitch()
     {
-        const int sampleRate = AudioRenderer.DefaultSampleRate;
-
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
         var time = builder.Add("time", 0, 0, (0, 1f));
         var note = builder.Add(TypeId, 0, 0, (0, A3));
@@ -153,14 +151,14 @@ public class NoteTests
             .Wire(note, 0, osc, 1)
             .Wire(osc, 0, sink, NodeCatalog.OutputLeftPort);
 
-        var buffer = new float[sampleRate * 2];
-        new AudioRenderer(sampleRate).Render(
+        var buffer = new float[AudioRenderer.DefaultSampleRate * 2];
+        new AudioRenderer().Render(
             builder.Patch.CompileForAudio(NodeCatalog.BuiltIn).Program,
             buffer,
             AudioScan.TimeDriven);
 
         var crossings = 0;
-        for (var frame = 20; frame < sampleRate - 1; frame++)
+        for (var frame = 20; frame < AudioRenderer.DefaultSampleRate - 1; frame++)
         {
             var a = buffer[frame * 2];
             var b = buffer[(frame + 1) * 2];
@@ -179,13 +177,12 @@ public class NoteTests
     [Fact]
     public void The_chromatic_preset_plays_one_note_and_then_the_next()
     {
-        const int sampleRate = AudioRenderer.DefaultSampleRate;
 
         var result = Presets.Chromatic(NodeCatalog.BuiltIn).CompileForAudio(NodeCatalog.BuiltIn);
         result.Issues.ShouldBeEmpty();
 
-        var buffer = new float[sampleRate / 2 * 2];
-        new AudioRenderer(sampleRate).Render(result.Program, buffer, AudioScan.TimeDriven);
+        var buffer = new float[AudioRenderer.DefaultSampleRate / 2 * 2];
+        new AudioRenderer().Render(result.Program, buffer, AudioScan.TimeDriven);
 
         // The ramp starts at the bottom of its travel and climbs three semitones
         // a second from D#3, so the first note lasts a sixth of a second — half a
@@ -196,8 +193,8 @@ public class NoteTests
         // Two zero crossings a cycle, over the left channel.
         float Heard(float from, float to)
         {
-            var first = (int)(from * sampleRate);
-            var last = (int)(to * sampleRate);
+            var first = (int)(from * AudioRenderer.DefaultSampleRate);
+            var last = (int)(to * AudioRenderer.DefaultSampleRate);
             var crossings = 0;
 
             for (var frame = first; frame < last; frame++)
@@ -228,14 +225,13 @@ public class NoteTests
     [InlineData(20d)]
     public void The_chromatic_preset_does_not_tear_its_waveform_at_a_note_change(double from)
     {
-        const int sampleRate = AudioRenderer.DefaultSampleRate;
 
         var program = Presets.Chromatic(NodeCatalog.BuiltIn).CompileForAudio(NodeCatalog.BuiltIn).Program;
 
-        var renderer = new AudioRenderer(sampleRate);
+        var renderer = new AudioRenderer();
         renderer.SeekTo(from);
 
-        var buffer = new float[sampleRate * 2];
+        var buffer = new float[AudioRenderer.DefaultSampleRate * 2];
         renderer.Render(program, buffer, AudioScan.TimeDriven);
 
         // Three note changes land inside this second, at a sixth, a half and
@@ -243,7 +239,7 @@ public class NoteTests
         // the accumulator's own cold start: with no previous evaluation to
         // measure against, the very first one cannot take a step.
         var steps = new List<float>();
-        for (var frame = (int)(0.02 * sampleRate); frame < sampleRate; frame++)
+        for (var frame = (int)(0.02 * AudioRenderer.DefaultSampleRate); frame < AudioRenderer.DefaultSampleRate; frame++)
             steps.Add(MathF.Abs(buffer[frame * 2] - buffer[(frame - 1) * 2]));
 
         // The wave's own sample-to-sample travel is the yardstick: a tear is a

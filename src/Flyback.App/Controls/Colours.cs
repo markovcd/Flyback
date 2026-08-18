@@ -83,9 +83,6 @@ internal static class Colours
     /// </summary>
     public static Color Attention { get; } = Color.FromRgb(0xFF, 0xB0, 0x40);
 
-    /// <summary>An assistant that is still talking.</summary>
-    public static Color Live { get; } = Feedback;
-
     // --- module accents -----------------------------------------------------
 
     public static Color Sink { get; } = Color.FromRgb(0xE0, 0x5A, 0x5A);

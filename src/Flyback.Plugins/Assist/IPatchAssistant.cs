@@ -8,9 +8,9 @@ namespace Flyback.Plugins.Assist;
 /// </remarks>
 public enum AssistantEffort
 {
-    Low,
-    Medium,
-    High,
+    Low = 0,
+    Medium = 1,
+    High = 2,
 }
 
 /// <summary>

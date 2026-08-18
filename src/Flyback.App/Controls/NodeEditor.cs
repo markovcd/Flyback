@@ -406,6 +406,7 @@ public sealed class NodeEditor : Control
         }
     }
 
+    /// <param name="context">Where the canvas is drawing.</param>
     /// <param name="lifted">The module being dragged, or null while none is.</param>
     /// <param name="theirs">
     /// Which half of the wires this pass draws: that module's own, or all the

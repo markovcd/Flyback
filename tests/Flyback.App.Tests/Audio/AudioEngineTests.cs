@@ -1,5 +1,6 @@
 using Flyback.App.Audio;
 using Flyback.Core.Graph;
+using Flyback.Core.Render;
 using Flyback.Plugins.Audio;
 using Shouldly;
 using Xunit;
@@ -21,7 +22,6 @@ namespace Flyback.App.Tests.Audio;
 /// </remarks>
 public class AudioEngineTests
 {
-    private const int SampleRate = 48_000;
     private const int BufferFrames = 512;
 
     /// <summary>
@@ -33,7 +33,7 @@ public class AudioEngineTests
     {
         private AudioCallback? fill;
 
-        public int SampleRate { get; } = AudioEngineTests.SampleRate;
+        public int SampleRate => AudioRenderer.DefaultSampleRate;
 
         public bool IsRunning => fill is not null;
 

@@ -23,10 +23,13 @@ public class PhaseAccumulatorInvariants
     /// Runs a single accumulator over a domain and a frequency, one evaluation
     /// per entry, and hands back the phase that came out of each.
     /// </summary>
+    /// <param name="offset">Added after the accumulation, so it stays the direct phase offset it reads as.</param>
     /// <param name="state">
     /// Null builds one to fit, which is what a program with no delay lines and
     /// one oscillator gets. Passing one in is how a test spans two runs.
     /// </param>
+    /// <param name="domain">Where the oscillator is read across — Time, usually, but the point is that anything may be.</param>
+    /// <param name="frequency">Cycles per unit of the domain, as it stands at each step.</param>
     private static float[] Run(
         float[] domain,
         float[] frequency,

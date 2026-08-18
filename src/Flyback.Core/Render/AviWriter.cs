@@ -56,11 +56,15 @@ public sealed class AviWriter : IDisposable
     private int largestChunk;
     private bool closed;
 
+    /// <param name="framesPerSecond">The rate the header claims, which is what a player paces the file by.</param>
     /// <param name="sampleRate">Ignored when <paramref name="channels"/> is zero.</param>
     /// <param name="channels">
     /// Zero writes a video-only file. A patch with no Audio Output has nothing
     /// to say, and a silent track claiming otherwise is worse than no track.
     /// </param>
+    /// <param name="output">Where the file is written. Left open for the caller to dispose.</param>
+    /// <param name="width">Frame width in pixels.</param>
+    /// <param name="height">Frame height in pixels.</param>
     public AviWriter(Stream output, int width, int height, double framesPerSecond, int sampleRate = 0, int channels = 0)
     {
         if (!output.CanSeek) throw new ArgumentException("An AVI header is patched after the fact, so this has to seek.", nameof(output));

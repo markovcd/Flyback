@@ -45,6 +45,7 @@ public class UiTest
     /// Puts a control in a window and lays it out, which is what makes its
     /// templates real. Everything below the window is the control under test.
     /// </summary>
+    /// <param name="content">The control under test, which becomes the whole of the window.</param>
     /// <param name="width">
     /// The inspector's own minimum, so a test sees the layout at the narrowest
     /// the panel is allowed to be rather than at whatever a window happened to be.

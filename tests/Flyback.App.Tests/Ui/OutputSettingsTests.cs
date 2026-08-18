@@ -6,7 +6,6 @@ using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
-using Flyback.App;
 using Flyback.App.Controls;
 using Flyback.Core.Graph;
 using Shouldly;
@@ -210,7 +209,7 @@ public class OutputSettingsTests : UiTest
 
         tip.ShouldNotBeNullOrWhiteSpace();
         tip.ShouldNotBe(button.Content as string, "the tip is a sentence, not the glyph again");
-        tip!.Length.ShouldBeGreaterThan(8);
+        tip.Length.ShouldBeGreaterThan(8);
     }
 
     /// <summary>

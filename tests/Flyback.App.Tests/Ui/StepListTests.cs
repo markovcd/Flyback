@@ -1,6 +1,5 @@
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.VisualTree;
 using Avalonia.Input;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
@@ -19,7 +18,7 @@ namespace Flyback.App.Tests.Ui;
 /// </summary>
 public class StepListTests : UiTest
 {
-    private static (StepList List, NodeInstance Node) Build(string typeId = "seq.notes", int edits = 0)
+    private static (StepList List, NodeInstance Node) Build(string typeId = "seq.notes")
     {
         var def = NodeCatalog.BuiltIn.Require(typeId);
         var node = NodeInstance.Create(def, 0, 0);
@@ -334,7 +333,7 @@ public class StepListTests : UiTest
         using var frame = window.CaptureRenderedFrame();
 
         frame.ShouldNotBeNull();
-        frame!.Size.Width.ShouldBeGreaterThan(0);
+        frame.Size.Width.ShouldBeGreaterThan(0);
         frame.Size.Height.ShouldBeGreaterThan(0);
     }
 }
