@@ -1,8 +1,11 @@
+using System.Runtime.InteropServices;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
+using Avalonia.Media;
+using Avalonia.Platform;
 using Flyback.App.Controls;
 using Flyback.Core.Graph;
 using Shouldly;
@@ -268,6 +271,182 @@ public class NodeEditorTests : UiTest
         Settle(window);
 
         patch.Nodes.ShouldNotContain(source);
+    }
+
+    // --- what a drag looks like ---------------------------------------------
+
+    /// <summary>
+    /// A source wired across the canvas to the Output, with a third module
+    /// sitting on top of the wire. The obstacle is added last, so the ordinary
+    /// painting order puts it over the wire — which is the thing dragging has to
+    /// overturn.
+    /// </summary>
+    private static Patch Crossing(out NodeInstance source, out NodeInstance obstacle)
+    {
+        var builder = new PatchBuilder(NodeCatalog.BuiltIn);
+
+        source = builder.Add("value", 0, 0);
+        var sink = builder.Add(NodeCatalog.OutputTypeId, 420, 200);
+        obstacle = builder.Add("math.add", 230, 100);
+
+        builder.Wire(source, 0, sink, NodeCatalog.OutputColourPort);
+
+        return builder.Patch;
+    }
+
+    /// <summary>
+    /// Where the wire runs over open canvas rather than over a module: past the
+    /// source's right edge and short of the obstacle's left one.
+    /// </summary>
+    private const double OpenColumn = 213;
+
+    /// <summary>
+    /// Pressed and not released, which is a module mid-drag. It has not been
+    /// moved, so every wire is where it was and the only thing that can differ
+    /// between the two frames is how they are drawn.
+    /// </summary>
+    private static void HoldDown(NodeEditor editor, Window window, NodeInstance node)
+    {
+        window.MouseDown(Screen(editor, window, Body(node)), MouseButton.Left);
+        Settle(window);
+    }
+
+    [AvaloniaFact]
+    public void A_wire_is_hidden_by_a_module_it_passes_behind()
+    {
+        var patch = Crossing(out _, out var obstacle);
+        var (editor, window) = Editing(patch);
+
+        WirePixelsOver(editor, window, obstacle).ShouldBe(0);
+    }
+
+    /// <summary>
+    /// And is not, once the module it belongs to is being moved. Which wire goes
+    /// where is the whole question a drag asks, and it cannot be answered by a
+    /// wire that disappears behind the third module along.
+    /// </summary>
+    [AvaloniaFact]
+    public void Dragging_a_module_brings_its_own_wires_in_front_of_the_others()
+    {
+        var patch = Crossing(out var source, out var obstacle);
+        var (editor, window) = Editing(patch);
+
+        HoldDown(editor, window, source);
+
+        WirePixelsOver(editor, window, obstacle).ShouldBeGreaterThan(0);
+    }
+
+    /// <summary>
+    /// Drawn heavier as well as in front, measured where nothing else is: the
+    /// same wire, unmoved, covering more of the column it crosses than it did at
+    /// rest.
+    /// </summary>
+    [AvaloniaFact]
+    public void And_draws_them_heavier_than_they_rest_at()
+    {
+        var patch = Crossing(out var source, out _);
+        var (editor, window) = Editing(patch);
+
+        var resting = WireWidth(editor, window, OpenColumn);
+        resting.ShouldBeGreaterThan(0, "the wire has to be visible at rest as well");
+
+        HoldDown(editor, window, source);
+
+        WireWidth(editor, window, OpenColumn).ShouldBeGreaterThan(resting);
+    }
+
+    // --- reading the pixels -------------------------------------------------
+
+    /// <summary>
+    /// How many pixels of wire are visible inside a module's body. Inset off its
+    /// own outline, which is drawn in a colour of its own and would otherwise be
+    /// counted as part of what is on top of it.
+    /// </summary>
+    private static int WirePixelsOver(NodeEditor editor, Window window, NodeInstance node)
+    {
+        var def = NodeCatalog.BuiltIn.Require(node.TypeId);
+        var bounds = NodeGeometry.Bounds(node, def).Deflate(6);
+
+        var topLeft = Screen(editor, window, bounds.TopLeft);
+        var bottomRight = Screen(editor, window, bounds.BottomRight);
+
+        var pixels = Frame(window);
+        var count = 0;
+
+        for (var y = (int)Math.Ceiling(topLeft.Y); y < (int)bottomRight.Y; y++)
+        for (var x = (int)Math.Ceiling(topLeft.X); x < (int)bottomRight.X; x++)
+            if (Within(pixels, x, y) && Near(pixels[x, y], Colours.ScalarPort))
+                count++;
+
+        return count;
+    }
+
+    /// <summary>
+    /// How many pixels down one column of the canvas the wire covers — its
+    /// thickness, read off the picture rather than off the pen that drew it.
+    /// </summary>
+    /// <remarks>
+    /// A column with no module on it, so everything light in it is wire: the
+    /// canvas and both weights of grid line are far darker than this, and the
+    /// wire clears it at either opacity.
+    /// </remarks>
+    private static int WireWidth(NodeEditor editor, Window window, double graphX)
+    {
+        const byte lit = 120;
+
+        var column = (int)Math.Round(Screen(editor, window, new Point(graphX, 0)).X);
+        var pixels = Frame(window);
+        var count = 0;
+
+        for (var y = 0; y < pixels.GetLength(1); y++)
+            if (Within(pixels, column, y) && pixels[column, y].R >= lit)
+                count++;
+
+        return count;
+    }
+
+    private static bool Within(Color[,] pixels, int x, int y) =>
+        x >= 0 && y >= 0 && x < pixels.GetLength(0) && y < pixels.GetLength(1);
+
+    /// <summary>
+    /// Close enough to be that colour. A tolerance rather than equality because
+    /// a stroke is antialiased even down its middle, and wide enough only to
+    /// cover that — a socket label is three times this far from a wire.
+    /// </summary>
+    private static bool Near(Color pixel, Color wanted, int tolerance = 8) =>
+        Math.Abs(pixel.R - wanted.R) <= tolerance
+        && Math.Abs(pixel.G - wanted.G) <= tolerance
+        && Math.Abs(pixel.B - wanted.B) <= tolerance;
+
+    /// <summary>
+    /// What the window actually drew. Skia is under the headless platform for
+    /// this: a draw order is not a thing any property exposes, so the only place
+    /// to read it is off the frame.
+    /// </summary>
+    private static Color[,] Frame(Window window)
+    {
+        using var frame = window.CaptureRenderedFrame()
+            ?? throw new InvalidOperationException("the window rendered nothing");
+
+        using var locked = frame.Lock();
+
+        var bytes = new byte[locked.RowBytes * locked.Size.Height];
+        Marshal.Copy(locked.Address, bytes, 0, bytes.Length);
+
+        var pixels = new Color[locked.Size.Width, locked.Size.Height];
+        var bgra = locked.Format == PixelFormat.Bgra8888;
+
+        for (var y = 0; y < locked.Size.Height; y++)
+        for (var x = 0; x < locked.Size.Width; x++)
+        {
+            var at = y * locked.RowBytes + x * 4;
+
+            pixels[x, y] = bgra
+                ? Color.FromRgb(bytes[at + 2], bytes[at + 1], bytes[at + 0])
+                : Color.FromRgb(bytes[at + 0], bytes[at + 1], bytes[at + 2]);
+        }
+
+        return pixels;
     }
 
     /// <summary>The middle of a node's header, which is body rather than socket.</summary>

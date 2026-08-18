@@ -34,6 +34,18 @@ public sealed class NodeEditor : Control
     private static readonly IPen SelectionPen = new Pen(new SolidColorBrush(Colours.Attention), 2);
     private static readonly IPen PortOutline = new Pen(new SolidColorBrush(Colours.Outline), 1.2);
 
+    /// <summary>How thick a wire is drawn, and how far under full strength.</summary>
+    private const double WireThickness = 2.2;
+
+    private const double RestingWireOpacity = 0.85;
+
+    /// <summary>
+    /// A wire on the module being dragged. Heavier rather than differently
+    /// coloured, because a wire's colour already says what flows down it and
+    /// that is not what has changed about this one.
+    /// </summary>
+    private const double LiftedWireThickness = 3.4;
+
     private static readonly Cursor ArrowCursor = new(StandardCursorType.Arrow);
     private static readonly Cursor PortCursor = new(StandardCursorType.Cross);
     private static readonly Cursor NodeCursor = new(StandardCursorType.SizeAll);
@@ -216,11 +228,21 @@ public sealed class NodeEditor : Control
         using (context.PushTransform(GraphToScreen))
         {
             DrawGrid(context);
-            DrawConnections(context);
+
+            // A module being dragged is the only thing on the canvas that is
+            // moving, and its wires are what one is watching while it moves. So
+            // they are drawn after the modules rather than before: nothing the
+            // block is pulled across can hide where it is still patched, which
+            // is the whole question being asked by the drag.
+            var lifted = drag == Drag.Node ? selected : null;
+
+            DrawConnections(context, lifted, theirs: false);
 
             foreach (var node in patch.Nodes)
                 if (NodeCatalog.Get(node.TypeId) is { } def)
                     DrawNode(context, node, def);
+
+            DrawConnections(context, lifted, theirs: true);
 
             DrawPendingWire(context);
         }
@@ -252,10 +274,22 @@ public sealed class NodeEditor : Control
         }
     }
 
-    private void DrawConnections(DrawingContext context)
+    /// <param name="lifted">The module being dragged, or null while none is.</param>
+    /// <param name="theirs">
+    /// Which half of the wires this pass draws: that module's own, or all the
+    /// rest. One loop serves both, so a wire cannot be drawn twice or missed
+    /// entirely — the two passes partition the same set rather than each
+    /// deciding for themselves what belongs in it.
+    /// </param>
+    private void DrawConnections(DrawingContext context, Guid? lifted, bool theirs)
     {
         foreach (var connection in patch.Connections)
         {
+            var mine = lifted is { } moving
+                && (connection.SourceNode == moving || connection.TargetNode == moving);
+
+            if (mine != theirs) continue;
+
             var source = patch.Find(connection.SourceNode);
             var target = patch.Find(connection.TargetNode);
             if (source is null || target is null) continue;
@@ -270,7 +304,13 @@ public sealed class NodeEditor : Control
             var to = NodeGeometry.InputPort(target, targetDef, connection.TargetPort);
             var colour = Colours.PortColour(sourceDef.Outputs[connection.SourcePort].Kind);
 
-            DrawWire(context, from, to, new Pen(new SolidColorBrush(colour, 0.85), 2.2));
+            // Heavier and at full strength, which is the same signal the pending
+            // wire gives: this one is in play.
+            var pen = theirs
+                ? new Pen(new SolidColorBrush(colour), LiftedWireThickness)
+                : new Pen(new SolidColorBrush(colour, RestingWireOpacity), WireThickness);
+
+            DrawWire(context, from, to, pen);
         }
     }
 
