@@ -453,6 +453,15 @@ accepting one from the assistant starts again with nothing behind it: undoing
 into the patch you had before you opened a file would not be undo, it would be
 losing the file.
 
+A patch that has been edited and not written out says so with a dot beside the
+name in the title bar, and anything that would close it asks first — quitting,
+opening a file, picking a preset, accepting a patch from the assistant — offering
+to save it, to discard the changes, or to stay where you are. Cancelling the save
+dialog cancels the whole thing rather than the save alone: somebody who asked to
+save and then thought better of where has not agreed to lose the patch. Undoing
+back to what you started with settles it again, for the same reason a step is the
+whole document — what is compared is the patch, not whether anybody typed.
+
 The Output's panel is where the instrument is set rather than the patch: how
 large the preview is and whether the processor or the GPU draws it, whether
 sound is playing, and the four ways of getting a picture or a sound out of the

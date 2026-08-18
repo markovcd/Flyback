@@ -42,7 +42,19 @@ public sealed class PatchHistory(ModuleCatalog? modules = null)
     private readonly List<string> future = [];
 
     private string current = string.Empty;
+    private string saved = string.Empty;
     private string? gesture;
+
+    /// <summary>
+    /// Whether the patch differs from the one last opened or written out.
+    /// </summary>
+    /// <remarks>
+    /// A comparison of the two snapshots rather than a flag set by editing,
+    /// which is what makes undoing back to where you started stop counting as a
+    /// change: it is the same document again, and the whole document is what a
+    /// step here already is.
+    /// </remarks>
+    public bool IsModified => current != saved;
 
     public bool CanUndo => past.Count > 0;
 
@@ -63,6 +75,18 @@ public sealed class PatchHistory(ModuleCatalog? modules = null)
         future.Clear();
         gesture = null;
         current = Snapshot(patch);
+        saved = current;
+    }
+
+    /// <summary>
+    /// The patch as it now stands has been written out, so this is what there is
+    /// nothing to lose from. The steps behind it are left alone: saving is not
+    /// an edit, and it is no reason to stop being able to take one back.
+    /// </summary>
+    public void Saved(Patch patch)
+    {
+        current = Snapshot(patch);
+        saved = current;
     }
 
     /// <summary>

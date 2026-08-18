@@ -312,4 +312,97 @@ public class PatchHistoryTests
             .Steps.ShouldNotBeNull()
             .Count.ShouldBe(before);
     }
+
+    // --- what there is to lose ----------------------------------------------
+
+    [Fact]
+    public void A_patch_nobody_has_touched_has_nothing_to_lose()
+    {
+        Opened(Wired(out _, out _)).IsModified.ShouldBeFalse();
+    }
+
+    [Fact]
+    public void An_edit_is_something_to_lose()
+    {
+        var patch = Wired(out var source, out _);
+        var history = Opened(patch);
+
+        source.InputValues[0] = 0.5f;
+        history.Record(patch);
+
+        history.IsModified.ShouldBeTrue();
+    }
+
+    /// <summary>
+    /// The whole reason this is a comparison rather than a flag. Undoing back to
+    /// where it started leaves the same document that was opened, and prompting
+    /// to save that would be asking about nothing.
+    /// </summary>
+    [Fact]
+    public void Undoing_back_to_the_start_leaves_nothing_to_lose()
+    {
+        var patch = Wired(out var source, out _);
+        var history = Opened(patch);
+
+        source.InputValues[0] = 0.5f;
+        history.Record(patch);
+
+        history.Undo().ShouldNotBeNull();
+
+        history.IsModified.ShouldBeFalse();
+    }
+
+    [Fact]
+    public void Saving_settles_it_and_the_next_edit_unsettles_it_again()
+    {
+        var patch = Wired(out var source, out _);
+        var history = Opened(patch);
+
+        source.InputValues[0] = 0.5f;
+        history.Record(patch);
+
+        history.Saved(patch);
+        history.IsModified.ShouldBeFalse();
+
+        // And is no reason to stop being able to take the edit back.
+        history.CanUndo.ShouldBeTrue();
+
+        source.InputValues[0] = 0.75f;
+        history.Record(patch);
+        history.IsModified.ShouldBeTrue();
+    }
+
+    /// <summary>
+    /// Undone past what was written out, there is unsaved work again — the file
+    /// on disk and the patch on the canvas no longer say the same thing.
+    /// </summary>
+    [Fact]
+    public void Undoing_past_a_save_is_something_to_lose_again()
+    {
+        var patch = Wired(out var source, out _);
+        var history = Opened(patch);
+
+        source.InputValues[0] = 0.5f;
+        history.Record(patch);
+        history.Saved(patch);
+
+        history.Undo().ShouldNotBeNull();
+
+        history.IsModified.ShouldBeTrue();
+    }
+
+    [Fact]
+    public void Opening_something_else_is_a_patch_with_nothing_to_lose()
+    {
+        var patch = Wired(out var source, out _);
+        var history = Opened(patch);
+
+        source.InputValues[0] = 0.5f;
+        history.Record(patch);
+        history.IsModified.ShouldBeTrue();
+
+        history.Opened(Presets.Plasma(Catalog));
+
+        history.IsModified.ShouldBeFalse();
+    }
 }

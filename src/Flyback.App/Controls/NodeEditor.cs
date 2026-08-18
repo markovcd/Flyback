@@ -131,6 +131,25 @@ public sealed class NodeEditor : Control
     public bool CanRedo => history.CanRedo;
 
     /// <summary>
+    /// Whether the patch differs from the one that was opened, or from the last
+    /// one written out. Undoing back to where it started clears it again, since
+    /// what is being compared is the document rather than whether anybody typed.
+    /// </summary>
+    public bool IsModified => history.IsModified;
+
+    /// <summary>
+    /// The patch as it stands has been written to a file, so there is nothing
+    /// in it left to lose. What can be undone is untouched: saving is not an
+    /// edit, and no reason to stop being able to take one back.
+    /// </summary>
+    public void MarkSaved()
+    {
+        history.Saved(patch);
+        HistoryChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+
+    /// <summary>
     /// Call after editing a node from outside the canvas, e.g. the inspector.
     /// </summary>
     /// <param name="coalesce">

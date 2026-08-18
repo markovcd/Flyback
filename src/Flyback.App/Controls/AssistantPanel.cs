@@ -40,7 +40,14 @@ public sealed class AssistantPanel : UserControl
 
     private readonly PluginCatalog plugins;
     private readonly Func<Patch> current;
-    private readonly Action<Patch> apply;
+    /// <summary>
+    /// Hands a patch to the canvas, and says whether it got there. It may not:
+    /// replacing the open patch is something the shell asks about first when
+    /// there is unsaved work in it, and a refusal there has to leave this panel
+    /// as it was rather than showing a proposal as applied.
+    /// </summary>
+    private readonly Func<Patch, Task<bool>> apply;
+
     private readonly Action<string, string?> report;
 
     private readonly AssistantSettings settings = AssistantSettings.Load();
@@ -170,7 +177,7 @@ public sealed class AssistantPanel : UserControl
     public AssistantPanel(
         PluginCatalog plugins,
         Func<Patch> current,
-        Action<Patch> apply,
+        Func<Patch, Task<bool>> apply,
         Action<string, string?> report)
     {
         this.plugins = plugins;
@@ -213,8 +220,8 @@ public sealed class AssistantPanel : UserControl
             Beat();
         };
 
-        accept.Click += (_, _) => Accept();
-        revert.Click += (_, _) => Revert();
+        accept.Click += async (_, _) => await Accept();
+        revert.Click += async (_, _) => await Revert();
 
         var settingsButton = new Button { Content = "Settings", Width = 96 };
         var settingsFlyout = new Flyout
@@ -793,7 +800,7 @@ public sealed class AssistantPanel : UserControl
 
     // --- accepting ----------------------------------------------------------
 
-    private void Accept()
+    private async Task Accept()
     {
         if (run?.Proposal is not { } proposed) return;
 
@@ -806,17 +813,23 @@ public sealed class AssistantPanel : UserControl
             return;
         }
 
-        before = current();
-        apply(proposed);
+        // Read before the canvas is handed anything, and kept only once it
+        // took it: a proposal that was refused is not one there is anything to
+        // revert to.
+        var previous = current();
+
+        if (!await apply(proposed)) return;
+
+        before = previous;
         report(string.Empty, null);
         Refresh();
     }
 
-    private void Revert()
+    private async Task Revert()
     {
         if (before is not { } previous) return;
+        if (!await apply(previous)) return;
 
-        apply(previous);
         before = null;
         Refresh();
     }

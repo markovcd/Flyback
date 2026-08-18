@@ -620,6 +620,51 @@ public class NodeEditorTests : UiTest
         editor.SelectedNode.ShouldBeNull("what was selected is no longer there");
     }
 
+    /// <summary>
+    /// What the shell asks before it lets a patch go. The logic is the history's
+    /// and is tested there; what matters here is that the canvas reports it for
+    /// the edits somebody actually makes on it.
+    /// </summary>
+    [AvaloniaFact]
+    public void The_canvas_says_whether_there_is_unsaved_work_on_it()
+    {
+        var (editor, window) = Editing(Pair(out _, out _));
+
+        editor.IsModified.ShouldBeFalse("nothing has been done to it yet");
+
+        editor.AddNode("math.mixer");
+        Settle(window);
+        editor.IsModified.ShouldBeTrue();
+
+        editor.Undo().ShouldBeTrue();
+        editor.IsModified.ShouldBeFalse("undone back to the patch that was opened");
+
+        editor.AddNode("math.mixer");
+        Settle(window);
+
+        editor.MarkSaved();
+        editor.IsModified.ShouldBeFalse("written out is written out");
+        editor.CanUndo.ShouldBeTrue("and saving is not a reason to stop being able to undo");
+
+        editor.Undo().ShouldBeTrue();
+        editor.IsModified.ShouldBeTrue("undone back past what was written out");
+    }
+
+    [AvaloniaFact]
+    public void A_patch_that_arrives_from_outside_has_nothing_unsaved_in_it()
+    {
+        var (editor, window) = Editing(Pair(out _, out _));
+
+        editor.AddNode("math.mixer");
+        Settle(window);
+        editor.IsModified.ShouldBeTrue();
+
+        editor.Patch = Presets.Plasma(NodeCatalog.BuiltIn);
+        Settle(window);
+
+        editor.IsModified.ShouldBeFalse();
+    }
+
     /// <summary>The middle of a node's header, which is body rather than socket.</summary>
     private static Point Body(NodeInstance node) =>
         new(node.X + NodeGeometry.Width / 2, node.Y + NodeGeometry.HeaderHeight / 2);

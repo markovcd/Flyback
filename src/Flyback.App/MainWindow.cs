@@ -165,6 +165,18 @@ public sealed class MainWindow : Window
     private readonly Button undoButton = new() { Content = "Undo", Width = 66 };
     private readonly Button redoButton = new() { Content = "Redo", Width = 66 };
 
+    /// <summary>The window title, before anything is said about the patch in it.</summary>
+    private const string BaseTitle = "Flyback";
+
+    /// <summary>
+    /// Set once the question about unsaved work has been asked and answered, so
+    /// the second Close does not ask it again. A close has to be cancelled to
+    /// put a dialog up at all — nothing may block inside OnClosing — so the way
+    /// back out is to close again once there is an answer.
+    /// </summary>
+    private bool leaving;
+
+
 
     private AssistantPanel? assistant;
     private RowDefinition? assistantRow;
@@ -187,7 +199,7 @@ public sealed class MainWindow : Window
         sound = OpenAudio(plugins);
         audio = new AudioEngine(sound.Device);
 
-        Title = "Flyback — patchable video synthesiser";
+        Title = BaseTitle;
         Width = 1280;
         Height = 800;
         MinWidth = 860;
@@ -197,7 +209,7 @@ public sealed class MainWindow : Window
 
         editor.PatchChanged += (_, _) => Recompile();
         editor.SelectionChanged += (_, _) => BuildInspector();
-        editor.HistoryChanged += (_, _) => RefreshHistory();
+        editor.HistoryChanged += (_, _) => RefreshEditState();
 
 
         // Before the layout, because these are live from the moment the window
@@ -235,10 +247,13 @@ public sealed class MainWindow : Window
         assistant = new AssistantPanel(
             plugins,
             () => editor.Patch,
-            patch =>
+            async patch =>
             {
+                if (!await MayReplaceThePatchAsync()) return false;
+
                 editor.Patch = patch;
                 preview.Rewind();
+                return true;
             },
             Report)
         {
@@ -423,11 +438,35 @@ public sealed class MainWindow : Window
             SelectedIndex = 0,
             Width = 160,
         };
-        presets.SelectionChanged += (_, _) =>
-        {
-            if (presets.SelectedIndex < 0 || presets.SelectedIndex >= available.Count) return;
 
-            var preset = available[presets.SelectedIndex];
+        // Which preset is on the canvas, so a refused change can put the box
+        // back where it was. Setting the index raises this same handler, hence
+        // the flag around it.
+        var showing = 0;
+        var restoring = false;
+
+        void PutTheBoxBack()
+        {
+            restoring = true;
+            presets.SelectedIndex = showing;
+            restoring = false;
+        }
+
+        presets.SelectionChanged += async (_, _) =>
+        {
+            if (restoring) return;
+            if (presets.SelectedIndex < 0 || presets.SelectedIndex >= available.Count) return;
+            if (presets.SelectedIndex == showing) return;
+
+            var wanted = presets.SelectedIndex;
+
+            if (!await MayReplaceThePatchAsync())
+            {
+                PutTheBoxBack();
+                return;
+            }
+
+            var preset = available[wanted];
 
             try
             {
@@ -436,15 +475,21 @@ public sealed class MainWindow : Window
                 // using modules it failed to add finally shows up.
                 editor.Patch = preset.Build(plugins.Modules);
                 preview.Rewind();
+                showing = wanted;
             }
             catch (Exception ex)
             {
                 Report($"Could not build the '{preset.Name}' preset: {ex.Message}");
+                PutTheBoxBack();
             }
         };
 
+
         var open = new Button { Content = "Open…" };
-        open.Click += async (_, _) => await OpenPatchAsync();
+        open.Click += async (_, _) =>
+        {
+            if (await MayReplaceThePatchAsync()) await OpenPatchAsync();
+        };
 
         var save = new Button { Content = "Save…" };
         save.Click += async (_, _) => await SavePatchAsync();
@@ -455,7 +500,7 @@ public sealed class MainWindow : Window
         ToolTip.SetTip(undoButton, "Take back the last edit  (Ctrl+Z)");
         ToolTip.SetTip(redoButton, "Put it back  (Ctrl+Shift+Z)");
 
-        RefreshHistory();
+        RefreshEditState();
 
 
         playButton.IsCheckedChanged += (_, _) =>
@@ -1273,7 +1318,8 @@ public sealed class MainWindow : Window
         }
     }
 
-    private async Task SavePatchAsync()
+    /// <returns>Whether a file was written. A cancelled picker is not one.</returns>
+    private async Task<bool> SavePatchAsync()
     {
         var file = await StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
         {
@@ -1283,17 +1329,25 @@ public sealed class MainWindow : Window
             FileTypeChoices = [PatchFileType],
         });
 
-        if (file is null) return;
+        if (file is null) return false;
 
         try
         {
-            await using var stream = await file.OpenWriteAsync();
-            await using var writer = new StreamWriter(stream);
-            await writer.WriteAsync(PatchIo.ToJson(editor.Patch));
+            await using (var stream = await file.OpenWriteAsync())
+            await using (var writer = new StreamWriter(stream))
+            {
+                await writer.WriteAsync(PatchIo.ToJson(editor.Patch));
+            }
+
+            // Only once it is actually on disk. A patch that failed to write is
+            // still a patch with everything to lose.
+            editor.MarkSaved();
+            return true;
         }
         catch (Exception ex)
         {
             Report($"Could not save patch: {ex.Message}");
+            return false;
         }
     }
 
@@ -1530,7 +1584,130 @@ public sealed class MainWindow : Window
 
     // --- small helpers -------------------------------------------------------------
 
+    // --- unsaved work ---------------------------------------------------------
+
+    /// <summary>What to do about a patch that has been edited and not written out.</summary>
+    private enum Unsaved
+    {
+        /// <summary>Refused, and whatever asked should not go ahead.</summary>
+        Cancel,
+
+        Save,
+
+        Discard,
+    }
+
     /// <summary>
+    /// Whether the thing about to replace or close the patch may go ahead. Asks
+    /// only when there is something to lose, so every caller can front its own
+    /// action with this and none of them has to know whether anything was
+    /// edited.
+    /// </summary>
+    private async Task<bool> MayReplaceThePatchAsync()
+    {
+        if (!editor.IsModified) return true;
+
+        return await AskAboutUnsavedAsync() switch
+        {
+            // A cancelled save picker is a cancelled close: somebody who asked
+            // to save and then thought better of where has not agreed to lose
+            // the patch, and the safe reading of that is to stay put.
+            Unsaved.Save => await SavePatchAsync(),
+            Unsaved.Discard => true,
+            _ => false,
+        };
+    }
+
+    /// <summary>
+    /// The three answers, as a window rather than as a system message box —
+    /// there is no such thing here, and one built by hand is the same three
+    /// buttons in the same palette as the rest of the shell.
+    /// </summary>
+    /// <remarks>
+    /// Closing it by its own frame is Cancel, which is the answer that loses
+    /// nothing. That is why Cancel is the enum's default as well: an answer
+    /// nobody gave should never be the destructive one.
+    /// </remarks>
+    private async Task<Unsaved> AskAboutUnsavedAsync()
+    {
+        var answer = Unsaved.Cancel;
+
+        var dialog = new Window
+        {
+            Title = "Unsaved changes",
+            SizeToContent = SizeToContent.WidthAndHeight,
+            WindowStartupLocation = WindowStartupLocation.CenterOwner,
+            CanResize = false,
+            ShowInTaskbar = false,
+            Background = new SolidColorBrush(Colours.Panel),
+        };
+
+        Button Answering(string text, Unsaved with, bool wide = false)
+        {
+            var button = new Button { Content = text, MinWidth = wide ? 120 : 96 };
+
+            button.Click += (_, _) =>
+            {
+                answer = with;
+                dialog.Close();
+            };
+
+            return button;
+        }
+
+        var buttons = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            Spacing = 8,
+            HorizontalAlignment = HorizontalAlignment.Right,
+        };
+
+        buttons.Children.Add(Answering("Save…", Unsaved.Save));
+        buttons.Children.Add(Answering("Discard changes", Unsaved.Discard, wide: true));
+        buttons.Children.Add(Answering("Cancel", Unsaved.Cancel));
+
+        dialog.Content = new StackPanel
+        {
+            Margin = new Thickness(20),
+            Spacing = 16,
+            MaxWidth = 420,
+            Children =
+            {
+                new TextBlock
+                {
+                    Text = "This patch has changes that have not been saved. "
+                        + "Closing it now would lose them.",
+                    TextWrapping = TextWrapping.Wrap,
+                },
+                buttons,
+            },
+        };
+
+        await dialog.ShowDialog(this);
+
+        return answer;
+    }
+
+    /// <summary>
+    /// Nothing may block inside a closing handler, so a window with unsaved work
+    /// in it cancels the close, asks, and closes itself again on the way back.
+    /// </summary>
+    protected override async void OnClosing(WindowClosingEventArgs e)
+    {
+        base.OnClosing(e);
+
+        if (e.Cancel || leaving || !editor.IsModified) return;
+
+        e.Cancel = true;
+
+        if (!await MayReplaceThePatchAsync()) return;
+
+        leaving = true;
+        Close();
+    }
+
+    /// <summary>
+
     /// Undo and redo, from wherever the focus happens to be. Handled on the
     /// window rather than on the canvas because an edit is as likely to have
     /// been made in the inspector as on it, and a shortcut that worked only
@@ -1572,14 +1749,18 @@ public sealed class MainWindow : Window
     }
 
     /// <summary>
-    /// Greys the two out when there is nothing behind or ahead. The same
-    /// question the button would answer by doing nothing, asked where it can be
-    /// seen instead.
+    /// Greys the two out when there is nothing behind or ahead — the same
+    /// question a button would answer by doing nothing, asked where it can be
+    /// seen instead — and says in the title whether there is unsaved work.
     /// </summary>
-    private void RefreshHistory()
+    private void RefreshEditState()
     {
         undoButton.IsEnabled = editor.CanUndo;
         redoButton.IsEnabled = editor.CanRedo;
+
+        // A dot rather than the word, because the title bar is read at a glance
+        // and the question it answers is only whether there is anything to lose.
+        Title = editor.IsModified ? BaseTitle + " •" : BaseTitle;
     }
 
     private static TextBlock Label(string text) => new()
