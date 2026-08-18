@@ -466,7 +466,7 @@ public sealed partial class MainWindow : Window
         // The panel's own controls, lent to the window rather than built for it,
         // so that what a key or a provider was last set to is still on them the
         // next time this is opened.
-        await Dialog.Around("Settings", panel.SettingsSection()).ShowDialog(this);
+        await this.ShowDialog("Settings", panel.SettingsSection());
     }
 
     /// <summary>
@@ -475,7 +475,7 @@ public sealed partial class MainWindow : Window
     /// into, so there is nothing to carry from one opening to the next.
     /// </summary>
     private async Task ShowAboutAsync() =>
-        await Dialog.Around("About", About.View()).ShowDialog(this);
+        await this.ShowDialog("About", About.View());
 
     private Control BuildStatusBar()
     {

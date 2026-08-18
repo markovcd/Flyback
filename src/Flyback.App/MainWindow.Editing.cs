@@ -119,10 +119,8 @@ public sealed partial class MainWindow
             },
         };
 
-        dialog = Dialog.Around("Unsaved changes", asking);
-
-        await dialog.ShowDialog(this);
-
+        await this.ShowDialog("Unsaved changes", asking);
+        
         return answer;
     }
 

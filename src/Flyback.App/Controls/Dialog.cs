@@ -30,14 +30,19 @@ internal static class Dialog
     /// by its own frame is allowed, and what that means is the caller's to
     /// decide — the answer nobody gave should be the one that loses nothing.
     /// </remarks>
-    public static Window Around(string title, Control content) => new()
+    public static Task ShowDialog(this Window owner, string title, Control content)
     {
-        Title = title,
-        Content = content,
-        SizeToContent = SizeToContent.WidthAndHeight,
-        WindowStartupLocation = WindowStartupLocation.CenterOwner,
-        CanResize = false,
-        ShowInTaskbar = false,
-        Background = new SolidColorBrush(Colours.Panel),
-    };
+        var dialog = new Window
+        {
+            Title = title,
+            Content = content,
+            SizeToContent = SizeToContent.WidthAndHeight,
+            WindowStartupLocation = WindowStartupLocation.CenterOwner,
+            CanResize = false,
+            ShowInTaskbar = false,
+            Background = new SolidColorBrush(Colours.Panel),
+        };
+
+        return dialog.ShowDialog(owner);
+    }
 }
