@@ -196,7 +196,12 @@ public sealed class NodeEditor : Control
 
     // --- coordinate transforms ----------------------------------------------
 
-    private Matrix GraphToScreen =>
+    /// <summary>
+    /// Internal rather than private because the UI tests need it: painting works
+    /// inside this transform and so never asks where a socket ended up on the
+    /// control, which is precisely the question a test about hit-testing asks.
+    /// </summary>
+    internal Matrix GraphToScreen =>
         Matrix.CreateScale(zoom, zoom) * Matrix.CreateTranslation(pan.X, pan.Y);
 
     private Point ToGraph(Point screen) =>
