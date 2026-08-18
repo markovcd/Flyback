@@ -694,12 +694,62 @@ public sealed class NodeEditor : Control
         // A wire only means something between opposite kinds of socket.
         if (isOutput == wireFromOutput) return;
 
-        if (wireFromOutput)
-            patch.Connect(wireNode, wirePort, node, port);
-        else
-            patch.Connect(node, port, wireNode, wirePort);
+        var (sourceNode, sourcePort, targetNode, targetPort) = wireFromOutput
+            ? (wireNode, wirePort, node, port)
+            : (node, port, wireNode, wirePort);
+
+        // A wire that runs backwards has the delay its loop needs put on it, so
+        // that drawing the cycle is the whole gesture. Placed as a module rather
+        // than implied by the compiler: what carries a loop round is worth being
+        // able to see, move and take back, and it is the one thing on the canvas
+        // that can say the loop is heard rather than seen.
+        if (patch.WouldCycle(sourceNode, targetNode)
+            && InsertUnitDelay(sourceNode, sourcePort, targetNode, targetPort))
+        {
+            return;
+        }
+
+        patch.Connect(sourceNode, sourcePort, targetNode, targetPort);
 
         NotifyPatchChanged(WireGesture);
+    }
+
+    /// <summary>
+    /// Puts a Unit Delay between two sockets and runs the loop through it, as one
+    /// step of the history: the wire and the module that makes it legal arrived in
+    /// a single gesture and come back the same way.
+    /// </summary>
+    /// <returns>
+    /// Whether it went in. Answering false leaves the caller to draw the wire as
+    /// asked and lets the compiler complain about it, which is what a build
+    /// without the module wants — a refusal that can be read beats a gesture that
+    /// quietly does nothing.
+    /// </returns>
+    private bool InsertUnitDelay(Guid sourceNode, int sourcePort, Guid targetNode, int targetPort)
+    {
+        if (NodeCatalog.Get(NodeCatalog.UnitDelayTypeId) is not { } def) return false;
+        if (patch.Find(sourceNode) is not { } from) return false;
+        if (patch.Find(targetNode) is not { } to) return false;
+
+        // Between the two it joins, and a node's height below them. A back-edge
+        // runs right to left, so the space between its ends is where the rest of
+        // the loop already is — dropping under it keeps the new module clear of
+        // what it was threaded into.
+        var unit = NodeInstance.Create(
+            def,
+            (from.X + to.X) / 2,
+            ((from.Y + to.Y) / 2) + NodeGeometry.Height(def));
+
+        patch.Nodes.Add(unit);
+        patch.Connect(sourceNode, sourcePort, unit.Id, 0);
+        patch.Connect(unit.Id, 0, targetNode, targetPort);
+
+        // Selected because it is what just appeared, and because its panel is
+        // where the one evaluation of delay is explained.
+        Select(unit.Id);
+        NotifyPatchChanged(WireGesture);
+
+        return true;
     }
 
     protected override void OnPointerWheelChanged(PointerWheelEventArgs e)

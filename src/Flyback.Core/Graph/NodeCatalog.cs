@@ -32,6 +32,12 @@ public static class NodeCatalog
     /// </summary>
     public static bool IsSink(string typeId) => typeId == OutputTypeId;
 
+    /// <summary>
+    /// The one evaluation of delay a loop needs, and the module the editor puts on
+    /// a wire that would otherwise close a cycle — see <see cref="Patch.WouldCycle"/>.
+    /// </summary>
+    public const string UnitDelayTypeId = "feedback.unit";
+
     /// <summary>RGB, so the screen reads three registers.</summary>
     public const int VideoChannels = 3;
 
@@ -495,7 +501,7 @@ public static class NodeCatalog
                 + "a Rotate or Scale to get the classic camera-pointed-at-its-own-monitor loop."),
 
             new NodeDef(
-                "feedback.unit", "Unit Delay", "Feedback",
+                UnitDelayTypeId, "Unit Delay", "Feedback",
                 [Num("in")], [Num("out")],
 
                 // Never called. The compiler recognises a cycle breaker and lowers

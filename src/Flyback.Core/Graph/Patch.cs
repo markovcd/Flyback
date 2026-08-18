@@ -75,6 +75,20 @@ public sealed record Connection(Guid SourceNode, int SourcePort, Guid TargetNode
 public sealed class Patch
 {
     /// <summary>
+    /// Which layout of the file this came from, stamped as it is written and
+    /// declared first so it is the first thing in the text and the first thing a
+    /// reader can act on.
+    /// </summary>
+    /// <remarks>
+    /// Null on a patch that has not been through <see cref="PatchIo.ToJson"/>,
+    /// and on every file written before the stamp existed — which is why reading
+    /// treats null as <see cref="PatchIo.FirstVersion"/> rather than as a fault.
+    /// A patch in memory has no version of its own; it has whatever the file it
+    /// last passed through said, and this is where that is kept.
+    /// </remarks>
+    public int? Version { get; set; }
+
+    /// <summary>
     /// The plugins this patch cannot be opened without, stamped as it is
     /// written. Null rather than empty when it uses nothing but the modules that
     /// ship in the engine, so an ordinary patch file looks exactly as it always
@@ -152,6 +166,53 @@ public sealed class Patch
     /// <summary>The wire feeding an input, if any. An input takes at most one.</summary>
     public Connection? IncomingTo(Guid node, int port) =>
         Connections.FirstOrDefault(c => c.TargetNode == node && c.TargetPort == port);
+
+    /// <summary>
+    /// Whether wiring <paramref name="source"/>'s output into
+    /// <paramref name="target"/>'s input would close a loop the compiler refuses.
+    /// </summary>
+    /// <remarks>
+    /// Signal runs from a source to a target, so the new wire completes a loop
+    /// exactly when the target can already reach the source by following wires
+    /// forward. A loop with a cycle breaker anywhere on it is not one the compiler
+    /// minds — the break is already in it — so the walk stops at every breaker it
+    /// meets, and a wire leaving one is answered without walking at all: every
+    /// loop such a wire could complete runs through the breaker it came from.
+    /// <para>
+    /// Kept here rather than in the editor because it is a fact about the graph,
+    /// and the editor is not the only thing that assembles one.
+    /// </para>
+    /// </remarks>
+    public bool WouldCycle(Guid source, Guid target, ModuleCatalog? modules = null)
+    {
+        var catalog = modules ?? NodeCatalog.Current;
+
+        // Connect refuses a wire from a node to itself, so this agrees with it
+        // rather than reporting a loop nothing can draw.
+        if (source == target) return false;
+        if (IsBreaker(source)) return false;
+
+        var seen = new HashSet<Guid>();
+        var walk = new Stack<Guid>();
+        walk.Push(target);
+
+        while (walk.Count > 0)
+        {
+            var at = walk.Pop();
+
+            if (at == source) return true;
+            if (!seen.Add(at) || IsBreaker(at)) continue;
+
+            foreach (var wire in Connections)
+                if (wire.SourceNode == at)
+                    walk.Push(wire.TargetNode);
+        }
+
+        return false;
+
+        bool IsBreaker(Guid id) =>
+            Find(id) is { } node && catalog.Get(node.TypeId) is { IsCycleBreaker: true };
+    }
 
     /// <summary>
     /// Wires two sockets together, replacing whatever already fed the target

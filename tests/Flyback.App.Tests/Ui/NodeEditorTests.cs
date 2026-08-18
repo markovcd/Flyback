@@ -7,6 +7,7 @@ using Avalonia.Input;
 using Avalonia.Media;
 using Avalonia.Platform;
 using Flyback.App.Controls;
+using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Shouldly;
 
@@ -692,4 +693,128 @@ public class NodeEditorTests : UiTest
     /// <summary>The middle of a node's header, which is body rather than socket.</summary>
     private static Point Body(NodeInstance node) =>
         new(node.X + NodeGeometry.Width / 2, node.Y + NodeGeometry.HeaderHeight / 2);
+
+    // --- cycles -------------------------------------------------------------
+
+    /// <summary>
+    /// An oscillator, something reading it, and the Output — everything needed to
+    /// draw a loop by wiring the second back into the first.
+    /// </summary>
+    private static Patch Loop(out NodeInstance osc, out NodeInstance gain, out NodeInstance sink)
+    {
+        var builder = new PatchBuilder(NodeCatalog.BuiltIn);
+
+        osc = builder.Add("osc.sine", 0, 0);
+        gain = builder.Add("math.mul", 300, 260);
+        sink = builder.Add(NodeCatalog.OutputTypeId, 620, 0);
+
+        builder.Wire(osc, 0, gain, 0).Wire(osc, 0, sink, NodeCatalog.OutputLeftPort);
+
+        return builder.Patch;
+    }
+
+    /// <summary>
+    /// Drawing a wire that runs backwards is the whole gesture: the Unit Delay the
+    /// loop needs is put on it, so a cycle can be patched the way a rack lets you
+    /// patch one, without the compiler having to guess what a cycle means.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_wire_that_closes_a_loop_gets_a_unit_delay_put_on_it()
+    {
+        var patch = Loop(out var osc, out var gain, out _);
+        var (editor, window) = Editing(patch);
+
+        var sine = NodeCatalog.BuiltIn.Require("osc.sine");
+
+        // gain.out -> sine.phase, which closes sine -> gain -> sine.
+        Drag(editor, window,
+            NodeGeometry.OutputPort(gain, 0),
+            NodeGeometry.InputPort(osc, sine, 2));
+
+        var unit = patch.Nodes.SingleOrDefault(n => n.TypeId == NodeCatalog.UnitDelayTypeId);
+        unit.ShouldNotBeNull("a Unit Delay should have been placed on the wire");
+
+        // The loop runs through it rather than around it.
+        patch.IncomingTo(unit.Id, 0).ShouldNotBeNull().SourceNode.ShouldBe(gain.Id);
+
+        var closing = patch.IncomingTo(osc.Id, 2);
+        closing.ShouldNotBeNull("the oscillator's phase should be fed");
+        closing.SourceNode.ShouldBe(unit.Id, "and fed through the delay, not straight from the gain");
+
+        // Which is the point of all of it: the patch is legal now.
+        patch.CompileForAudio(NodeCatalog.BuiltIn).HasErrors.ShouldBeFalse();
+    }
+
+    /// <summary>
+    /// One gesture, so one press of undo — the module and the two wires it sits
+    /// between arrived together and have to leave together, or taking back a
+    /// mis-drag would leave a stray delay on the canvas.
+    /// </summary>
+    [AvaloniaFact]
+    public void Taking_back_that_wire_takes_the_unit_delay_with_it()
+    {
+        var patch = Loop(out var osc, out var gain, out _);
+        var (editor, window) = Editing(patch);
+
+        var sine = NodeCatalog.BuiltIn.Require("osc.sine");
+
+        Drag(editor, window,
+            NodeGeometry.OutputPort(gain, 0),
+            NodeGeometry.InputPort(osc, sine, 2));
+
+        editor.Undo().ShouldBeTrue();
+
+        editor.Patch.Nodes.ShouldNotContain(n => n.TypeId == NodeCatalog.UnitDelayTypeId);
+        editor.Patch.IncomingTo(osc.Id, 2).ShouldBeNull("and the wire is gone with it");
+    }
+
+    /// <summary>
+    /// A wire that runs forwards is left alone. Nothing about this should put a
+    /// delay on an ordinary connection.
+    /// </summary>
+    [AvaloniaFact]
+    public void An_ordinary_wire_gets_nothing_put_on_it()
+    {
+        var patch = Loop(out _, out var gain, out var sink);
+        var (editor, window) = Editing(patch);
+
+        Drag(editor, window,
+            NodeGeometry.OutputPort(gain, 0),
+            NodeGeometry.InputPort(sink, Sink, NodeCatalog.OutputRightPort));
+
+        patch.Nodes.ShouldNotContain(n => n.TypeId == NodeCatalog.UnitDelayTypeId);
+        patch.IncomingTo(sink.Id, NodeCatalog.OutputRightPort)
+            .ShouldNotBeNull()
+            .SourceNode.ShouldBe(gain.Id, "the wire should be exactly what was drawn");
+    }
+
+    /// <summary>
+    /// A loop that already has a delay on it gets no second one. Otherwise every
+    /// re-patch of an existing cycle would stack another evaluation of latency
+    /// onto it.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_loop_that_is_already_broken_gets_no_second_delay()
+    {
+        var patch = Loop(out var osc, out var gain, out _);
+        var (editor, window) = Editing(patch);
+
+        var sine = NodeCatalog.BuiltIn.Require("osc.sine");
+        var phase = NodeGeometry.InputPort(osc, sine, 2);
+
+        Drag(editor, window, NodeGeometry.OutputPort(gain, 0), phase);
+        patch.Nodes.Count(n => n.TypeId == NodeCatalog.UnitDelayTypeId).ShouldBe(1);
+
+        // Unplug the closing wire and draw it again. The delay is still on the
+        // loop, so the second drag is an ordinary re-patch.
+        var unit = patch.Nodes.Single(n => n.TypeId == NodeCatalog.UnitDelayTypeId);
+
+        patch.Disconnect(osc.Id, 2);
+        editor.NotifyPatchChanged();
+
+        Drag(editor, window, NodeGeometry.OutputPort(unit, 0), phase);
+
+        patch.Nodes.Count(n => n.TypeId == NodeCatalog.UnitDelayTypeId)
+            .ShouldBe(1, "the loop was already broken, so nothing more was needed");
+    }
 }

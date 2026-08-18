@@ -1,5 +1,6 @@
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
+using Flyback.Core.Render;
 using Shouldly;
 
 namespace Flyback.Core.Tests.Properties;
@@ -136,20 +137,25 @@ public class CycleInvariants
     /// exists for, and the one a rack of one-sample modules would let you draw
     /// without asking.
     /// </summary>
-    private static Patch FeedbackFm()
+    /// <param name="index">
+    /// How hard the previous evaluation bends the next phase. Zero is the same
+    /// patch with the loop carrying nothing, which is what the timbre is compared
+    /// against.
+    /// </param>
+    private static Patch FeedbackFm(float index = 0.5f)
     {
         var b = new PatchBuilder();
 
         var time = b.Add("time", 0, 0);
         var sine = b.Add("osc.sine", 200, 0);
-        var index = b.Add("value", 200, 200, (0, 0.5f));
+        var depth = b.Add("value", 200, 200, (0, index));
         var gain = b.Add("math.mul", 400, 100);
         var unit = b.Add("feedback.unit", 600, 100);
         var sink = b.Add(NodeCatalog.OutputTypeId, 800, 0, (NodeCatalog.OutputGainPort, 1f));
 
         b.Wire(time, 0, sine, 0)
          .Wire(sine, 0, gain, 0)
-         .Wire(index, 0, gain, 1)
+         .Wire(depth, 0, gain, 1)
          .Wire(gain, 0, unit, 0)
          .Wire(unit, 0, sine, 2)
          .Wire(sine, 0, sink, NodeCatalog.OutputLeftPort);
@@ -381,5 +387,57 @@ public class CycleInvariants
 
         video.Program.UnitCount.ShouldBe(0);
         video.Program.Ops.ShouldNotContain(o => o.Code == OpCode.UnitRead || o.Code == OpCode.UnitWrite);
+    }
+
+    /// <summary>
+    /// The whole stack, through the renderer that actually plays it: a sine whose
+    /// output bends its own phase must come out a different and richer shape than
+    /// one whose does not. Everything above tests a piece — this is the only test
+    /// that says the pieces add up to feedback.
+    /// </summary>
+    [Fact]
+    public void A_loop_through_the_renderer_changes_the_sound()
+    {
+        var plain = Heard(FeedbackFm(index: 0f));
+        var bent = Heard(FeedbackFm(index: 0.8f));
+
+        // A cycle has no coefficient anywhere in it, so staying bounded is the
+        // first thing worth knowing about one.
+        bent.ShouldAllBe(v => float.IsFinite(v));
+        bent.Max().ShouldBeInRange(0.1f, 1.1f);
+
+        // It is doing something at all.
+        plain.Zip(bent, (a, b) => Math.Abs(a - b)).Max().ShouldBeGreaterThan(0.05f);
+
+        // And what it does is add harmonics, which a plain sine has none of. Sign
+        // changes stand in for a spectrum: cheap, and monotone in what is being
+        // asked about.
+        Crossings(bent).ShouldBeGreaterThan(Crossings(plain));
+    }
+
+    /// <summary>A second of the left channel, rendered the way the speakers get it.</summary>
+    private static float[] Heard(Patch patch)
+    {
+        var program = patch.CompileForAudio().Program;
+        var renderer = new AudioRenderer();
+        renderer.Prepare(program);
+
+        var frames = AudioRenderer.DefaultSampleRate;
+        var buffer = new float[frames * 2];
+        renderer.Render(program, buffer, AudioScan.TimeDriven);
+
+        return [.. Enumerable.Range(0, frames).Select(i => buffer[i * 2])];
+    }
+
+    /// <summary>Sign changes, which rise with the harmonics a self-modulated sine gains.</summary>
+    private static int Crossings(float[] signal)
+    {
+        var count = 0;
+
+        for (var i = 1; i < signal.Length; i++)
+            if ((signal[i - 1] < 0f) != (signal[i] < 0f))
+                count++;
+
+        return count;
     }
 }
