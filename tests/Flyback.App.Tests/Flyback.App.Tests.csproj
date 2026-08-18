@@ -12,9 +12,11 @@
   </PropertyGroup>
 
   <!--
-    The shell is an Avalonia application, and nothing here starts one. What is
-    tested is the part of it that joins a compiled program to a sound device,
-    which touches no UI type at all — so these run headless like any other test.
+    Two halves, and they run the same way. One is the part of the shell that
+    joins a compiled program to a sound device and touches no UI type at all;
+    the other drives real controls through Avalonia's headless platform, which
+    lays out and renders without a window server. Both are ordinary tests — see
+    Ui/UiTest.cs for what a UI one costs.
   -->
   <ItemGroup>
     <ProjectReference Include="..\..\src\Flyback.App\Flyback.App.csproj" />
@@ -23,6 +25,20 @@
   <ItemGroup>
     <PackageReference Include="Shouldly" Version="4.3.0" />
     <PackageReference Include="xunit.v3" Version="3.2.2" />
+  </ItemGroup>
+
+  <!--
+    Headless gives layout, input and rendering with no window server. The Skia
+    reference is what makes CaptureRenderedFrame produce actual pixels rather
+    than throwing: the default headless drawing backend does no rasterising, and
+    a test that cannot see what it drew is the kind that passed while the number
+    boxes in the step list rendered empty.
+  -->
+  <ItemGroup>
+    <PackageReference Include="Avalonia.Headless" Version="12.1.1" />
+    <PackageReference Include="Avalonia.Headless.XUnit" Version="12.1.1" />
+    <PackageReference Include="Avalonia.Skia" Version="12.1.1" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.1" />
   </ItemGroup>
 
 </Project>

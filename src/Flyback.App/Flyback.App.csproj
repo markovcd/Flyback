@@ -14,6 +14,11 @@
     <ProjectReference Include="..\Flyback.Plugins\Flyback.Plugins.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- The controls the inspector is built from are internal, and the UI tests drive them. -->
+    <InternalsVisibleTo Include="Flyback.App.Tests" />
+  </ItemGroup>
+
   <!--
     Not a reference: the shell must not know what a WASAPI is. This only says
     that the plugin ships in the box, and Directory.Build.targets puts it under

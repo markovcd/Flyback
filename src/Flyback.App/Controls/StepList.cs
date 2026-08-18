@@ -26,7 +26,13 @@ internal sealed class StepList
 {
     private const double RowHeight = 28;
     private const double InsertHeight = 6;
+
+    /// <summary>The height of an insert strip, so a test can pick one out of the tree.</summary>
+    internal const double InsertHeightForTests = InsertHeight;
     private const double ControlHeight = 23;
+
+    /// <summary>Marks the grids that are rows of this list, for the UI tests.</summary>
+    internal const string RowTag = "step-row";
 
     private static readonly IBrush Faint = new SolidColorBrush(Color.FromRgb(0x8A, 0x90, 0x9A));
     private static readonly IBrush Accent = new SolidColorBrush(Color.FromRgb(0x4A, 0x9E, 0xDE));
@@ -56,17 +62,25 @@ internal sealed class StepList
         };
 
         // Fluent sizes a text box for a form, and a tune is a list of thirty-two
-        // of them. Reaching into the template is the only way down: the height
-        // lives on the TextBox inside a NumericUpDown, so setting it on the
-        // NumericUpDown squashes the frame and hides the number.
+        // of them. Both of its natural sizes have to be undone, and both live on
+        // the TextBox inside the template rather than on the NumericUpDown:
+        // setting the height outside squashes the frame and hides the number,
+        // and leaving the width alone makes a box wider than its column, which
+        // a Grid answers by letting it spill over its neighbours.
         panel.Styles.Add(new Style(x => x.OfType<NumericUpDown>().Descendant().OfType<TextBox>())
         {
             Setters =
             {
                 new Setter(Layoutable.MinHeightProperty, ControlHeight),
+                new Setter(Layoutable.MinWidthProperty, 0d),
                 new Setter(TextBox.PaddingProperty, new Thickness(5, 0)),
                 new Setter(TextBox.VerticalContentAlignmentProperty, VerticalAlignment.Center),
             },
+        });
+
+        panel.Styles.Add(new Style(x => x.OfType<NumericUpDown>())
+        {
+            Setters = { new Setter(Layoutable.MinWidthProperty, 0d) },
         });
 
         View = panel;
@@ -200,6 +214,10 @@ internal sealed class StepList
         {
             ColumnDefinitions = new ColumnDefinitions(Columns),
             Height = RowHeight,
+
+            // Named so a test can find a row without having to guess which of
+            // the grids in the tree are rows and which belong to a template.
+            Tag = RowTag,
         };
 
         var handle = new TextBlock
