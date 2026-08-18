@@ -205,13 +205,13 @@ public sealed partial class MainWindow : Window
         assistant = new AssistantPanel(
             plugins,
             () => editor.Patch,
-            async patch =>
+            // An edit rather than a new document, so it undoes like every other
+            // edit and there is nothing to ask about first: what it replaced is
+            // one press of Ctrl+Z away rather than gone.
+            patch =>
             {
-                if (!await MayReplaceThePatchAsync()) return false;
-
-                editor.Patch = patch;
+                editor.ApplyEdit(patch);
                 preview.Rewind();
-                return true;
             },
             Report)
         {
@@ -237,9 +237,39 @@ public sealed partial class MainWindow : Window
             ],
         };
 
+        // Rows rather than a dock, so the edge between the patch and the
+        // assistant can be dragged. Both flexible rows are star-sized for the
+        // reason the columns are: a GridSplitter redistributes star weights, and
+        // a fixed-pixel track beside a star one just gets squeezed.
+        //
+        // In the canvas column rather than across the window, because what the
+        // assistant is talking about is the patch — the palette and the
+        // inspector are no part of the conversation, and pushing them up out of
+        // reach to make room for it costs more than the width it buys.
+        var canvas = new Grid
+        {
+            RowDefinitions =
+            [
+                new RowDefinition(new GridLength(2.2, GridUnitType.Star)) { MinHeight = 160 },
+                new RowDefinition(GridLength.Auto),
+                new RowDefinition(assistantShare),
+            ],
+        };
+
+        assistantRow = canvas.RowDefinitions[2];
+        assistantSplitter = new GridSplitter { Background = Brushes.Transparent, Height = 5 };
+
+        Grid.SetRow(editor, 0);
+        Grid.SetRow(assistantSplitter, 1);
+        Grid.SetRow(assistant, 2);
+
+        canvas.Children.Add(editor);
+        canvas.Children.Add(assistantSplitter);
+        canvas.Children.Add(assistant);
+
         var palette = BuildPalette();
         Grid.SetColumn(palette, 0);
-        Grid.SetColumn(editor, 2);
+        Grid.SetColumn(canvas, 2);
 
         var leftSplitter = new GridSplitter { Width = 5, Background = Brushes.Transparent };
         Grid.SetColumn(leftSplitter, 1);
@@ -252,35 +282,9 @@ public sealed partial class MainWindow : Window
 
         columns.Children.Add(palette);
         columns.Children.Add(leftSplitter);
-        columns.Children.Add(editor);
+        columns.Children.Add(canvas);
         columns.Children.Add(rightSplitter);
         columns.Children.Add(right);
-
-        // Rows rather than a dock, so the edge between the patch and the
-        // assistant can be dragged. Both flexible rows are star-sized for the
-        // reason the columns above are: a GridSplitter redistributes star
-        // weights, and a fixed-pixel track beside a star one just gets squeezed.
-        // Full width rather than a column, because streamed prose wants width.
-        var body = new Grid
-        {
-            RowDefinitions =
-            [
-                new RowDefinition(new GridLength(2.2, GridUnitType.Star)) { MinHeight = 160 },
-                new RowDefinition(GridLength.Auto),
-                new RowDefinition(assistantShare),
-            ],
-        };
-
-        assistantRow = body.RowDefinitions[2];
-        assistantSplitter = new GridSplitter { Background = Brushes.Transparent, Height = 5 };
-
-        Grid.SetRow(columns, 0);
-        Grid.SetRow(assistantSplitter, 1);
-        Grid.SetRow(assistant, 2);
-
-        body.Children.Add(columns);
-        body.Children.Add(assistantSplitter);
-        body.Children.Add(assistant);
 
         // Hidden costs nothing, which is why this needs no dialog — and this
         // application has none.
@@ -288,7 +292,7 @@ public sealed partial class MainWindow : Window
 
         root.Children.Add(toolbar);
         root.Children.Add(statusBar);
-        root.Children.Add(body);
+        root.Children.Add(columns);
 
         return root;
     }
@@ -433,6 +437,14 @@ public sealed partial class MainWindow : Window
 
         bar.Children.Add(assistantButton);
 
+        var settings = new Button { Content = "Settings", Width = 96 };
+        settings.Click += async (_, _) => await ShowSettingsAsync();
+
+        ToolTip.SetTip(settings, "Which assistant to use, and the key it needs.");
+
+        bar.Children.Add(Separator());
+        bar.Children.Add(settings);
+
         return new Border
         {
             Background = new SolidColorBrush(Colours.Toolbar),
@@ -440,6 +452,22 @@ public sealed partial class MainWindow : Window
             BorderThickness = new Thickness(0, 0, 0, 1),
             Child = bar,
         };
+    }
+
+    /// <summary>
+    /// The settings window. One button on the toolbar rather than one per thing
+    /// that has settings, so what it holds can grow without the bar doing the
+    /// same — today that is the assistant's provider and key, which is all there
+    /// is in this program that a person has to tell it rather than show it.
+    /// </summary>
+    private async Task ShowSettingsAsync()
+    {
+        if (assistant is not { } panel) return;
+
+        // The panel's own controls, lent to the window rather than built for it,
+        // so that what a key or a provider was last set to is still on them the
+        // next time this is opened.
+        await Dialog.Around("Settings", panel.SettingsSection()).ShowDialog(this);
     }
 
     private Control BuildStatusBar()

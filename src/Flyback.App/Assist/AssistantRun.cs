@@ -69,9 +69,10 @@ public sealed class AssistantRun : IDisposable
     public int Turns { get; private set; }
 
     /// <summary>
-    /// Whether the person edited the patch themselves while this was running. If
-    /// they did, applying a proposal would throw their work away without saying
-    /// so — the caller is expected to ask before it does.
+    /// Whether the person edited the patch themselves while this was running.
+    /// A proposal replaces whatever they did, so the caller is expected to say
+    /// so — which is all it need do, now that applying one is an edit somebody
+    /// can take back rather than a document that arrived in place of theirs.
     /// </summary>
     public bool EditedUnderneath(Patch current) =>
         !ReferenceEquals(current, Before)

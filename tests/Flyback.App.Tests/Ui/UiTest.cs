@@ -32,6 +32,12 @@ public class UiTest
     public static AppBuilder BuildAvaloniaApp() => AppBuilder
         .Configure<TestApp>()
         .UseSkia()
+
+        // The same font the program ships with, so a test that looks at what
+        // was drawn is looking at what a user would see. It is also the only
+        // way to find out here whether a glyph the shell asks for exists —
+        // a missing one is a box on a button rather than a failure anywhere.
+        .WithInterFont()
         .UseHeadless(new AvaloniaHeadlessPlatformOptions { UseHeadlessDrawing = false });
 
     /// <summary>

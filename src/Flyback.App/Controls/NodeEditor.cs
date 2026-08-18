@@ -183,23 +183,59 @@ public sealed class NodeEditor : Control
     {
         if (restored is null) return false;
 
-        patch = restored;
+        Show(restored);
+        Announce();
+
+        return true;
+    }
+
+    /// <summary>
+    /// Shows a patch built from the one that was open rather than opened in its
+    /// place — the assistant's work, which is a large edit and not a new
+    /// document. Recorded like any other edit, so one press of undo puts back
+    /// what was there before it, and one of redo brings it round again.
+    /// </summary>
+    /// <remarks>
+    /// Framed, which an undo is not. Nothing about where an assistant lays its
+    /// modules out has to resemble what was on screen, so the canvas would
+    /// otherwise be left pointed at a stretch of empty grid where the old patch
+    /// used to be.
+    /// </remarks>
+    public void ApplyEdit(Patch edited)
+    {
+        Show(edited);
+        history.Record(patch);
+        FrameAll();
+        Announce();
+    }
+
+    /// <summary>
+    /// Puts a patch on the canvas without saying where it came from. The
+    /// selection survives only if what it named does — everything here is a
+    /// fresh object, so an id is the one thing that can be carried across.
+    /// </summary>
+    private void Show(Patch next)
+    {
+        patch = next;
         patch.EnsureOutput();
 
-        // Every module on the canvas is a fresh object after a restore, so
-        // anything holding one — the inspector, a step list — has to be built
-        // again whether or not the selection itself changed. Which is why this
-        // is raised even when the id is the one it already was, and why the
-        // selection is only cleared when what it named is no longer there.
         if (selected is { } id && patch.Find(id) is null) selected = null;
 
         drag = Drag.None;
         InvalidateVisual();
+    }
+
+    /// <summary>
+    /// Every module on the canvas is a fresh object after the patch is swapped,
+    /// so anything holding one — the inspector, a step list — has to be built
+    /// again whether or not the selection itself changed. Which is why the
+    /// selection is announced even when the id is the one it already was.
+    /// </summary>
+    private void Announce()
+    {
         SelectionChanged?.Invoke(this, EventArgs.Empty);
         PatchChanged?.Invoke(this, EventArgs.Empty);
         HistoryChanged?.Invoke(this, EventArgs.Empty);
-
-        return true;
     }
 
     /// <summary>

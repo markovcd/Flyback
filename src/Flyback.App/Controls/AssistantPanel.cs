@@ -41,12 +41,12 @@ public sealed class AssistantPanel : UserControl
     private readonly PluginCatalog plugins;
     private readonly Func<Patch> current;
     /// <summary>
-    /// Hands a patch to the canvas, and says whether it got there. It may not:
-    /// replacing the open patch is something the shell asks about first when
-    /// there is unsaved work in it, and a refusal there has to leave this panel
-    /// as it was rather than showing a proposal as applied.
+    /// Hands a patch to the canvas, where it lands as an edit rather than as a
+    /// new document. Nothing can refuse it and nothing needs to: an assistant's
+    /// patch goes into the history like any other edit, so the way back out is
+    /// the one every other edit already has.
     /// </summary>
-    private readonly Func<Patch, Task<bool>> apply;
+    private readonly Action<Patch> apply;
 
     private readonly Action<string, string?> report;
 
@@ -59,7 +59,13 @@ public sealed class AssistantPanel : UserControl
         TextWrapping = TextWrapping.Wrap,
         PlaceholderText = "Describe the patch you want. Enter to ask, Ctrl+Enter for a new line.",
         FontSize = 12,
-        MinHeight = 64,
+        MinHeight = 68,
+
+        // A strip along the bottom for the send button to sit in. Reserved as
+        // padding rather than left to overlap, so no line of a long message ever
+        // runs underneath it — and across the whole width rather than down the
+        // right-hand side, so every other line still has the box to itself.
+        Padding = new Thickness(8, 6, 8, 34),
     };
 
     private readonly StackPanel said = new() { Spacing = 4, Margin = new Thickness(10, 8) };
@@ -115,9 +121,37 @@ public sealed class AssistantPanel : UserControl
 
     private readonly DispatcherTimer heartbeat = new() { Interval = TimeSpan.FromMilliseconds(200) };
 
-    private readonly Button stop = new() { Content = "Stop", Width = 96, IsEnabled = false };
-    private readonly Button accept = new() { Content = "Apply", Width = 96, IsEnabled = false };
-    private readonly Button revert = new() { Content = "Put it back", Width = 96, IsEnabled = false };
+    /// <summary>What the one button shows in each of its two jobs.</summary>
+    private const string SendGlyph = "⏎";
+
+    private const string StopGlyph = "■";
+
+    /// <summary>
+    /// Send and stop, which are one button because they are never both offered:
+    /// a turn is either wanted or under way. Putting them together also puts the
+    /// way to interrupt a run exactly where the hand that started it last was.
+    /// </summary>
+    /// <remarks>
+    /// Small, square and in the instruction box's own bottom-right corner rather
+    /// than out in the column with Apply and Settings. This is part of writing
+    /// the message rather than something done to a proposal afterwards — and it
+    /// is the first thing here to say that a message can be sent at all, which
+    /// until now was a keystroke mentioned in a placeholder and nowhere else.
+    /// </remarks>
+    private readonly Button send = new()
+    {
+        Content = SendGlyph,
+        Width = 30,
+        Height = 26,
+        Padding = new Thickness(0),
+        FontSize = 15,
+        HorizontalAlignment = HorizontalAlignment.Right,
+        VerticalAlignment = VerticalAlignment.Bottom,
+        HorizontalContentAlignment = HorizontalAlignment.Center,
+        VerticalContentAlignment = VerticalAlignment.Center,
+        Margin = new Thickness(0, 0, 7, 7),
+        IsEnabled = false,
+    };
 
     private readonly TextBox keyBox = new() { PasswordChar = '•', FontSize = 12, Width = 260 };
 
@@ -153,8 +187,9 @@ public sealed class AssistantPanel : UserControl
 
     private IPatchAssistant? assistant;
     private AssistantRun? run;
-    private Patch? before;
-    private bool warnedAboutEdits;
+
+    /// <summary>Built the first time the settings window asks for it, and kept.</summary>
+    private Control? section;
 
     /// <summary>
     /// Whether a turn is in flight, as this panel knows it.
@@ -171,13 +206,20 @@ public sealed class AssistantPanel : UserControl
     private bool asking;
 
     private bool stopping;
+
+    /// <summary>
+    /// Why a message cannot be sent, or null when one can. Kept rather than
+    /// asked for, because the button is refreshed on every keystroke and the
+    /// answer comes from the credential store.
+    /// </summary>
+    private string? blocked;
     private DateTime startedAt;
     private int pulse;
 
     public AssistantPanel(
         PluginCatalog plugins,
         Func<Patch> current,
-        Func<Patch, Task<bool>> apply,
+        Action<Patch> apply,
         Action<string, string?> report)
     {
         this.plugins = plugins;
@@ -210,8 +252,14 @@ public sealed class AssistantPanel : UserControl
         // one way of sending a message on.
         instruction.AddHandler(KeyDownEvent, Typed, RoutingStrategies.Tunnel);
 
-        stop.Click += (_, _) =>
+        send.Click += (_, _) =>
         {
+            if (!asking)
+            {
+                _ = AskAsync();
+                return;
+            }
+
             // Cancellation lands at the next thing the assistant does, which may
             // be a whole request away. Saying so beats a button that goes dead
             // and a panel that carries on as if nothing was asked of it.
@@ -220,39 +268,13 @@ public sealed class AssistantPanel : UserControl
             Beat();
         };
 
-        accept.Click += async (_, _) => await Accept();
-        revert.Click += async (_, _) => await Revert();
-
-        var settingsButton = new Button { Content = "Settings", Width = 96 };
-        var settingsFlyout = new Flyout
+        // Whether there is anything to send changes on every keystroke, and
+        // asking the whole of Refresh that often would go to the credential
+        // store for an answer it already has.
+        instruction.PropertyChanged += (_, e) =>
         {
-            Content = BuildSettings(),
-            Placement = PlacementMode.TopEdgeAlignedRight,
+            if (e.Property == TextBox.TextProperty) ShowSendState();
         };
-
-        // Read again on the way open. A key can arrive or leave without this
-        // panel touching anything — exported into the environment from another
-        // window, or dropped into the store by something else — and this is the
-        // one screen that claims to say which.
-        settingsFlyout.Opened += (_, _) => Refresh();
-
-        settingsButton.Flyout = settingsFlyout;
-
-        // Sat on the bottom edge, level with the instruction box and the footer.
-        // What is left here is reached for occasionally rather than every turn —
-        // sending is a keystroke now — but it still belongs beside the box rather
-        // than a panel's height away from it, which is a distance that changes
-        // now the panel is draggable.
-        var buttons = new StackPanel
-        {
-            Spacing = 6,
-            Width = 96,
-            VerticalAlignment = VerticalAlignment.Bottom,
-        };
-        buttons.Children.Add(stop);
-        buttons.Children.Add(accept);
-        buttons.Children.Add(revert);
-        buttons.Children.Add(settingsButton);
 
         working.Children.Add(beacon);
         working.Children.Add(progress);
@@ -260,13 +282,22 @@ public sealed class AssistantPanel : UserControl
 
         var left = new DockPanel { Margin = new Thickness(0, 0, 10, 0) };
         DockPanel.SetDock(working, Dock.Top);
-        DockPanel.SetDock(instruction, Dock.Bottom);
+        // The button floats over the corner of the box rather than sitting
+        // beside it, so the two are one thing to lay out.
+        var writing = new Panel();
+        writing.Children.Add(instruction);
+        writing.Children.Add(send);
+
+        DockPanel.SetDock(writing, Dock.Bottom);
         DockPanel.SetDock(footer, Dock.Bottom);
         left.Children.Add(working);
         left.Children.Add(footer);
-        left.Children.Add(instruction);
+        left.Children.Add(writing);
         left.Children.Add(transcript);
 
+        // Two columns, since the settings went to the toolbar and nothing else
+        // here was ever a button: what is left is the conversation and, when
+        // there has been one, the frame the assistant last looked at.
         var columns = new Grid
         {
             Margin = new Thickness(12, 10),
@@ -274,19 +305,14 @@ public sealed class AssistantPanel : UserControl
             [
                 new ColumnDefinition(GridLength.Star),
                 new ColumnDefinition(GridLength.Auto),
-                new ColumnDefinition(GridLength.Auto),
             ],
         };
 
         Grid.SetColumn(left, 0);
         Grid.SetColumn(lastFrame, 1);
-        Grid.SetColumn(buttons, 2);
-
-        lastFrame.Margin = new Thickness(0, 0, 10, 0);
 
         columns.Children.Add(left);
         columns.Children.Add(lastFrame);
-        columns.Children.Add(buttons);
 
         // No height of its own. What this is worth is entirely a matter of what
         // is being read — a one-line refusal or forty turns of transcript — so
@@ -300,6 +326,37 @@ public sealed class AssistantPanel : UserControl
             MinHeight = 140,
             Child = columns,
         };
+    }
+
+    /// <summary>
+    /// This panel's part of the settings window. Kept and lent out rather than
+    /// built afresh, because these are fields with handlers already on them and
+    /// a second set would answer for a first that nothing can see.
+    /// </summary>
+    /// <remarks>
+    /// The credential state is read again every time it is asked for. A key can
+    /// arrive or leave without this panel touching anything — exported into the
+    /// environment from another window, or dropped into the store by something
+    /// else — and this is the one screen that claims to say which.
+    /// <para>
+    /// Lending the same controls out is also what keeps a half-typed endpoint or
+    /// a changed provider on the form between one opening of the window and the
+    /// next, which a set built fresh each time would lose.
+    /// </para>
+    /// </remarks>
+    public Control SettingsSection()
+    {
+        Refresh();
+
+        section ??= BuildSettings();
+
+        // Taken back from whoever last borrowed it, rather than left to them to
+        // return. A control has one parent and a closed window still holds the
+        // one it was showing, so without this the settings would open exactly
+        // once a session and throw on the second try.
+        if (section.Parent is ContentControl lender) lender.Content = null;
+
+        return section;
     }
 
     private Control BuildSettings()
@@ -316,7 +373,9 @@ public sealed class AssistantPanel : UserControl
             Refresh();
         };
 
-        var fields = new StackPanel { Spacing = 8, Margin = new Thickness(4), Width = 280 };
+        // Its own padding, because it is the whole of a window now rather than a
+        // flyout hanging off the button that opened it.
+        var fields = new StackPanel { Spacing = 8, Margin = new Thickness(18), Width = 280 };
 
         fields.Children.Add(Caption("Provider"));
         fields.Children.Add(providerBox);
@@ -333,7 +392,15 @@ public sealed class AssistantPanel : UserControl
         fields.Children.Add(effortBox);
 
         var save = new Button { Content = "Save", Width = 84 };
-        save.Click += (_, _) => SaveSettings();
+        save.Click += (_, _) =>
+        {
+            SaveSettings();
+
+            // Saving is the end of the errand, so the window goes with it.
+            // Forgetting a key is not: somebody who has just taken one out is as
+            // likely as not about to put another in.
+            DismissSettings();
+        };
 
         forget.Click += (_, _) =>
         {
@@ -350,6 +417,33 @@ public sealed class AssistantPanel : UserControl
         fields.Children.Add(row);
 
         return fields;
+    }
+
+    /// <summary>
+    /// Closes the window the settings are being shown in.
+    /// </summary>
+    /// <remarks>
+    /// Found rather than held, because this section belongs to whichever window
+    /// borrowed it — see <see cref="SettingsSection"/> — and the panel has no
+    /// business keeping a reference to one it does not own.
+    /// <para>
+    /// The panel's own window is left alone on purpose. Nothing shows the
+    /// settings there today, and the day something does, closing it would close
+    /// the program.
+    /// </para>
+    /// <para>
+    /// Internal rather than private because the UI tests need it: clicking Save
+    /// writes the real settings file, so the half worth exercising is this one,
+    /// which is also the half with somewhere to go wrong.
+    /// </para>
+    /// </remarks>
+    internal void DismissSettings()
+    {
+        if (section is null) return;
+        if (TopLevel.GetTopLevel(section) is not Window host) return;
+        if (ReferenceEquals(host, TopLevel.GetTopLevel(this))) return;
+
+        host.Close();
     }
 
     private static TextBlock Caption(string text) =>
@@ -483,15 +577,13 @@ public sealed class AssistantPanel : UserControl
     /// </summary>
     private void Refresh()
     {
-        var busy = asking;
         var config = Configured();
         var excuse = assistant is null
             ? "No assistant plugin is installed. See the status bar for where plugins are looked for."
             : config is null ? null : Excuse(assistant, config);
 
-        stop.IsEnabled = busy;
-        accept.IsEnabled = !busy && run?.Proposal is not null;
-        revert.IsEnabled = !busy && before is not null;
+        blocked = excuse;
+        ShowSendState();
 
         // On the box, since the box is what sending is done from now. The footer
         // says the same thing in amber a few pixels below, so nothing is lost to
@@ -506,20 +598,30 @@ public sealed class AssistantPanel : UserControl
             return;
         }
 
-        var source = credentials.SourceOf(assistant!.Id, assistant.Schema.EnvironmentVariable) switch
-        {
-            CredentialSource.Environment => $"key from {assistant.Schema.EnvironmentVariable}",
-            CredentialSource.Kept => $"key kept by {credentials.Store?.Name}",
-            CredentialSource.Session => credentials.CanKeep
-                ? "key held for this session only"
-                : "key held for this session only — nothing installed can keep one",
-            _ => "no key",
-        };
-
+       
         footer.Foreground = Dim;
-        footer.Text =
-            $"Sends your instruction, the module list and the patch — including rendered frames of it — "
-            + $"to {assistant.Name}. {source}.";
+        
+    }
+
+    /// <summary>
+    /// The one button, in whichever of its two jobs applies. Reads and does not
+    /// ask, because it runs on every keystroke.
+    /// </summary>
+    /// <remarks>
+    /// Dead until there is something to send, which is the button saying what
+    /// the panel already knew and never showed: an empty box or a missing key is
+    /// why pressing Enter appeared to do nothing at all.
+    /// </remarks>
+    private void ShowSendState()
+    {
+        send.Content = asking ? StopGlyph : SendGlyph;
+
+        send.IsEnabled = asking
+            || (blocked is null && !string.IsNullOrWhiteSpace(instruction.Text));
+
+        ToolTip.SetTip(send, asking
+            ? "Stop — it ends at the next thing the assistant does"
+            : blocked ?? "Ask  (Enter)");
     }
 
     // --- showing that it is working -----------------------------------------
@@ -686,7 +788,6 @@ public sealed class AssistantPanel : UserControl
         said.Children.Clear();
         lastFrame.Source = null;
         lastFrame.IsVisible = false;
-        warnedAboutEdits = false;
 
         Add(wanted, Brushes.White, 12);
 
@@ -708,6 +809,8 @@ public sealed class AssistantPanel : UserControl
                 // lands is the strongest sign of all that this is alive.
                 Beat();
             }
+
+            Deliver();
         }
         catch (Exception ex)
         {
@@ -800,37 +903,38 @@ public sealed class AssistantPanel : UserControl
 
     // --- accepting ----------------------------------------------------------
 
-    private async Task Accept()
+    /// <summary>
+    /// Puts what the assistant made on the canvas, which is how every turn that
+    /// made anything ends.
+    /// </summary>
+    /// <remarks>
+    /// There is no button for it, and there is no button to take it back
+    /// either. A proposal nobody applied is a proposal nobody can see, and now
+    /// that this arrives as an edit rather than as a new document, undo is the
+    /// way back — which is a better offer than the pair of buttons this
+    /// replaced, since those only ever knew about the last one.
+    /// <para>
+    /// Editing the patch while a turn ran used to take two clicks to overrule.
+    /// It takes none now: the edits are replaced, and saying so is enough,
+    /// because one press of undo has them back.
+    /// </para>
+    /// </remarks>
+    private void Deliver()
     {
         if (run?.Proposal is not { } proposed) return;
 
-        // Applying would throw away whatever they did in the meantime, so it
-        // takes two clicks once and one thereafter.
-        if (run.EditedUnderneath(current()) && !warnedAboutEdits)
-        {
-            warnedAboutEdits = true;
-            report("You edited the patch while this ran — applying will replace your edits. Click Apply again to go ahead.", null);
-            return;
-        }
+        // A turn somebody stopped is not one to act on. What it reached is in
+        // the transcript, and asking again is a keystroke.
+        if (stopping) return;
 
-        // Read before the canvas is handed anything, and kept only once it
-        // took it: a proposal that was refused is not one there is anything to
-        // revert to.
-        var previous = current();
+        var overwrote = run.EditedUnderneath(current());
 
-        if (!await apply(proposed)) return;
+        apply(proposed);
 
-        before = previous;
+        Add(overwrote
+            ? "Applied — this replaced the edits you made while it ran. Ctrl+Z puts them back."
+            : "Applied. Ctrl+Z puts the patch back as it was.", Dim, 11);
+
         report(string.Empty, null);
-        Refresh();
-    }
-
-    private async Task Revert()
-    {
-        if (before is not { } previous) return;
-        if (!await apply(previous)) return;
-
-        before = null;
-        Refresh();
     }
 }

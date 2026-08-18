@@ -76,16 +76,7 @@ public sealed partial class MainWindow
     private async Task<Unsaved> AskAboutUnsavedAsync()
     {
         var answer = Unsaved.Cancel;
-
-        var dialog = new Window
-        {
-            Title = "Unsaved changes",
-            SizeToContent = SizeToContent.WidthAndHeight,
-            WindowStartupLocation = WindowStartupLocation.CenterOwner,
-            CanResize = false,
-            ShowInTaskbar = false,
-            Background = new SolidColorBrush(Colours.Panel),
-        };
+        Window? dialog = null;
 
         Button Answering(string text, Unsaved with, bool wide = false)
         {
@@ -94,7 +85,7 @@ public sealed partial class MainWindow
             button.Click += (_, _) =>
             {
                 answer = with;
-                dialog.Close();
+                dialog?.Close();
             };
 
             return button;
@@ -111,7 +102,7 @@ public sealed partial class MainWindow
         buttons.Children.Add(Answering("Discard changes", Unsaved.Discard, wide: true));
         buttons.Children.Add(Answering("Cancel", Unsaved.Cancel));
 
-        dialog.Content = new StackPanel
+        var asking = new StackPanel
         {
             Margin = new Thickness(20),
             Spacing = 16,
@@ -127,6 +118,8 @@ public sealed partial class MainWindow
                 buttons,
             },
         };
+
+        dialog = Dialog.Around("Unsaved changes", asking);
 
         await dialog.ShowDialog(this);
 

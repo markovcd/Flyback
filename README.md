@@ -448,19 +448,24 @@ was — which is also why moving a module undoes, having cost nothing to include
 What counts as one step is the one thing it does have an opinion about. A slider
 dragged across its range makes an edit a frame and is one press of undo, not a
 hundred; unplugging a wire and plugging it in somewhere else is two edits and one
-gesture, and goes back in one press as well. Opening a patch, picking a preset or
-accepting one from the assistant starts again with nothing behind it: undoing
-into the patch you had before you opened a file would not be undo, it would be
-losing the file.
+gesture, and goes back in one press as well. Opening a patch or picking a preset
+starts again with nothing behind it: undoing into the patch you had before you
+opened a file would not be undo, it would be losing the file. What
+the assistant makes is the other way about — it is an edit to your patch rather
+than a document in place of it, however much of it changes, so it lands in the
+history like anything else and one press of undo has your patch back.
 
 A patch that has been edited and not written out says so with a dot beside the
 name in the title bar, and anything that would close it asks first — quitting,
-opening a file, picking a preset, accepting a patch from the assistant — offering
-to save it, to discard the changes, or to stay where you are. Cancelling the save
-dialog cancels the whole thing rather than the save alone: somebody who asked to
-save and then thought better of where has not agreed to lose the patch. Undoing
-back to what you started with settles it again, for the same reason a step is the
-whole document — what is compared is the patch, not whether anybody typed.
+opening a file, picking a preset — offering to save it, to discard the changes,
+or to stay where you are. The assistant is not among them and does not need to
+be: what it does is an edit, so there is nothing there to lose.
+
+Cancelling the save dialog cancels the whole thing rather than the save alone:
+somebody who asked to save and then thought better of where has not agreed to
+lose the patch. Undoing back to what you started with settles it again, for the
+same reason a step is the whole document — what is compared is the patch, not
+whether anybody typed.
 
 The Output's panel is where the instrument is set rather than the patch: how
 large the preview is and whether the processor or the GPU draws it, whether

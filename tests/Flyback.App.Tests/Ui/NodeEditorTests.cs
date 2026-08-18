@@ -665,6 +665,31 @@ public class NodeEditorTests : UiTest
         editor.IsModified.ShouldBeFalse();
     }
 
+    /// <summary>
+    /// The assistant's whole patch, which arrives as an edit rather than as a
+    /// new document. Nothing about it is small, and that is exactly why it has
+    /// to undo: it replaces everything on the canvas at once.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_patch_applied_as_an_edit_undoes_like_any_other()
+    {
+        var patch = Pair(out var source, out _);
+        var (editor, window) = Editing(patch);
+
+        editor.ApplyEdit(Presets.Plasma(NodeCatalog.BuiltIn));
+        Settle(window);
+
+        Now(editor, source).ShouldBeNull("the new patch is on the canvas");
+        editor.CanUndo.ShouldBeTrue();
+        editor.IsModified.ShouldBeTrue("and none of it has been saved");
+
+        editor.Undo().ShouldBeTrue();
+        Now(editor, source).ShouldNotBeNull("undo puts back what was there before it");
+
+        editor.Redo().ShouldBeTrue();
+        Now(editor, source).ShouldBeNull("and redo brings it round again");
+    }
+
     /// <summary>The middle of a node's header, which is body rather than socket.</summary>
     private static Point Body(NodeInstance node) =>
         new(node.X + NodeGeometry.Width / 2, node.Y + NodeGeometry.HeaderHeight / 2);
