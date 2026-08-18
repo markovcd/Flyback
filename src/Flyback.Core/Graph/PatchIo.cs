@@ -8,18 +8,37 @@ namespace Flyback.Core.Graph;
 /// Separating the two lets the caller decide what an incomplete patch means —
 /// the editor refuses it, where a batch renderer might report and carry on.
 /// </summary>
+/// <param name="Version">
+/// The layout the file declared, or <see cref="PatchIo.FirstVersion"/> where it
+/// declared none.
+/// </param>
 public sealed record PatchLoad(
     Patch Patch,
     IReadOnlyList<ModuleProvider> MissingProviders,
-    IReadOnlyList<string> UnknownModules)
+    IReadOnlyList<string> UnknownModules,
+    int Version = PatchIo.FirstVersion)
 {
-    public bool IsComplete => MissingProviders.Count == 0 && UnknownModules.Count == 0;
+    /// <summary>
+    /// Whether the file was written by a build that knows a layout this one does
+    /// not. The one problem here that cannot be described any further: a newer
+    /// layout may mean anything, so nothing else read out of the file — not its
+    /// modules, not its plugins — is worth reporting alongside it.
+    /// </summary>
+    public bool TooNew => Version > PatchIo.FormatVersion;
+
+    public bool IsComplete => !TooNew && MissingProviders.Count == 0 && UnknownModules.Count == 0;
 
     /// <summary>One line naming what is missing. Empty when nothing is.</summary>
     public string Summary
     {
         get
         {
+            if (TooNew)
+            {
+                return "This patch was saved by a newer version of Flyback "
+                    + $"(file layout {Version}, this build reads {PatchIo.FormatVersion}).";
+            }
+
             var parts = new List<string>();
 
             if (MissingProviders.Count > 0)
@@ -38,6 +57,13 @@ public sealed record PatchLoad(
         get
         {
             if (IsComplete) return string.Empty;
+
+            if (TooNew)
+            {
+                return "Nothing here can be trusted to mean what it says, so none of it was read. "
+                    + "Update Flyback and open it again, or save it from the build that wrote it "
+                    + "in a layout this one knows.";
+            }
 
             var lines = new List<string>();
 
@@ -64,6 +90,32 @@ public static class PatchIo
 {
     public const string FileExtension = "fbk";
 
+    /// <summary>
+    /// The layout this build writes, and the highest it can read.
+    /// </summary>
+    /// <remarks>
+    /// Raised only when the <em>shape</em> of the file changes in a way an older
+    /// reader would get wrong: a field renamed, a number that starts counting
+    /// from somewhere else, a list that starts meaning something new. Adding a
+    /// module is not such a change and must not raise it — a file naming a module
+    /// this build has never heard of is already answered, by name and in detail,
+    /// through <see cref="PatchLoad.UnknownModules"/>. Raising it for that would
+    /// refuse whole patches over one block they might not even miss.
+    /// <para>
+    /// Every raise owes a step in <c>Upgrade</c>, because a file that was legal
+    /// once stays legal: the version says which reading is right, not whether the
+    /// file is still welcome.
+    /// </para>
+    /// </remarks>
+    public const int FormatVersion = 1;
+
+    /// <summary>
+    /// What a file with no stamp on it is: every patch written before there was a
+    /// stamp to write. Deliberately a named constant rather than a bare 1 —
+    /// <see cref="FormatVersion"/> will move and this one never can.
+    /// </summary>
+    public const int FirstVersion = 1;
+
     private static readonly JsonSerializerOptions Options = new()
     {
         WriteIndented = true,
@@ -71,13 +123,16 @@ public static class PatchIo
     };
 
     /// <summary>
-    /// Writes the patch, stamping which plugins it depends on first. The stamp
-    /// is put on the patch rather than only into the text, so the object and the
-    /// file it was written to agree about what it requires.
+    /// Writes the patch, stamping the layout and which plugins it depends on
+    /// first. Both stamps are put on the patch rather than only into the text, so
+    /// the object and the file it was written to agree about what it is and what
+    /// it requires.
     /// </summary>
     public static string ToJson(Patch patch, ModuleCatalog? against = null)
     {
+        patch.Version = FormatVersion;
         patch.Requires = RequirementsOf(patch, against ?? NodeCatalog.Current);
+
         return JsonSerializer.Serialize(patch, Options);
     }
 
@@ -91,7 +146,25 @@ public static class PatchIo
     public static PatchLoad Read(string json, ModuleCatalog? against = null)
     {
         var catalog = against ?? NodeCatalog.Current;
-        var patch = JsonSerializer.Deserialize<Patch>(json, Options) ?? new Patch();
+        var version = VersionOf(json);
+
+        // Read out of the raw text and answered before anything else, because a
+        // layout this build does not know is the one problem that makes the rest
+        // of the file unreadable rather than merely incomplete. Deserialising
+        // first would be guessing at a shape nobody has described yet, and would
+        // throw on the shapes it guessed wrong — an exception where there is a
+        // perfectly good sentence to say instead.
+        if (version > FormatVersion)
+        {
+            var empty = new Patch();
+            empty.EnsureOutput(catalog);
+
+            return new PatchLoad(empty, [], [], version);
+        }
+
+        var patch = Upgrade(
+            JsonSerializer.Deserialize<Patch>(json, Options) ?? new Patch(),
+            version);
 
         var missing = (patch.Requires ?? [])
             .Where(r => !catalog.HasProvider(r.Id))
@@ -111,7 +184,56 @@ public static class PatchIo
         // said.
         if (unknown.Count == 0) patch.EnsureOutput(catalog);
 
-        return new PatchLoad(patch, missing, unknown);
+        return new PatchLoad(patch, missing, unknown, version);
+    }
+
+    /// <summary>
+    /// The layout a file declares, taken from the raw text rather than from a
+    /// deserialised patch — the whole point being to learn this about files that
+    /// cannot be deserialised into one.
+    /// </summary>
+    /// <remarks>
+    /// Anything unreadable as a version is <see cref="FirstVersion"/>. For a file
+    /// with no stamp that is the truth. For one whose stamp is nonsense it is
+    /// merely the answer that keeps this quiet: the file is malformed and the
+    /// deserialiser below will say so in the ordinary way, which is a better
+    /// complaint than either guessing a layout or reporting a file from the
+    /// future that nobody wrote.
+    /// </remarks>
+    private static int VersionOf(string json)
+    {
+        using var document = JsonDocument.Parse(json);
+
+        // The kind is checked before the value because TryGetInt32 throws rather
+        // than answering false when the element is not a number at all — the one
+        // case a stamp somebody typed by hand is most likely to be.
+        return document.RootElement.ValueKind == JsonValueKind.Object
+            && document.RootElement.TryGetProperty(nameof(Patch.Version), out var stamp)
+            && stamp.ValueKind == JsonValueKind.Number
+            && stamp.TryGetInt32(out var version)
+                ? version
+                : FirstVersion;
+    }
+
+    /// <summary>
+    /// Brings a patch read from an older layout up to what this build expects.
+    /// </summary>
+    /// <remarks>
+    /// Empty, because version 1 is the only layout there has ever been. It is
+    /// called anyway, and written out rather than left to be invented later, so
+    /// that the first change to the format has one obvious place to go and cannot
+    /// be done by quietly reinterpreting a field instead.
+    /// <para>
+    /// Steps belong here in order and each must stand alone — a file at version 1
+    /// opened by a build at version 4 runs 1→2, 2→3 and 3→4 in turn, so no step
+    /// may assume anything but the layout immediately before it.
+    /// </para>
+    /// </remarks>
+    /// <param name="from">The layout the file was written in, never above <see cref="FormatVersion"/>.</param>
+    private static Patch Upgrade(Patch patch, int from)
+    {
+        _ = from;
+        return patch;
     }
 
     /// <summary>
