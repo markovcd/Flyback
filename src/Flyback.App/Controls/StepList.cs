@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Avalonia.Styling;
 using Flyback.Core.Graph;
 
 namespace Flyback.App.Controls;
@@ -23,9 +24,9 @@ namespace Flyback.App.Controls;
 /// </remarks>
 internal sealed class StepList
 {
-    private const double RowHeight = 26;
+    private const double RowHeight = 28;
     private const double InsertHeight = 6;
-    private const double ControlHeight = 22;
+    private const double ControlHeight = 23;
 
     private static readonly IBrush Faint = new SolidColorBrush(Color.FromRgb(0x8A, 0x90, 0x9A));
     private static readonly IBrush Accent = new SolidColorBrush(Color.FromRgb(0x4A, 0x9E, 0xDE));
@@ -48,11 +49,27 @@ internal sealed class StepList
 
         node.Steps ??= [];
 
-        View = new StackPanel
+        var panel = new StackPanel
         {
             Margin = new Thickness(0, 14, 0, 0),
             Children = { Heading(), rows },
         };
+
+        // Fluent sizes a text box for a form, and a tune is a list of thirty-two
+        // of them. Reaching into the template is the only way down: the height
+        // lives on the TextBox inside a NumericUpDown, so setting it on the
+        // NumericUpDown squashes the frame and hides the number.
+        panel.Styles.Add(new Style(x => x.OfType<NumericUpDown>().Descendant().OfType<TextBox>())
+        {
+            Setters =
+            {
+                new Setter(Layoutable.MinHeightProperty, ControlHeight),
+                new Setter(TextBox.PaddingProperty, new Thickness(5, 0)),
+                new Setter(TextBox.VerticalContentAlignmentProperty, VerticalAlignment.Center),
+            },
+        });
+
+        View = panel;
 
         Fill();
     }
@@ -269,9 +286,10 @@ internal sealed class StepList
     }
 
     /// <summary>
-    /// A compact number box. Fluent gives one a height that would overflow a row
-    /// this tight, so the height is stated rather than inherited — the rows have
-    /// to line up with the handles that reorder them.
+    /// A compact number box. Its height is left to the theme and brought down by
+    /// the style on the panel instead — setting it here squashes the frame
+    /// without squashing the text box inside the template, and the number
+    /// vanishes rather than shrinking.
     /// </summary>
     private static NumericUpDown Number(
         float value, float min, float max, decimal increment, string format, Action<float> apply)
@@ -284,13 +302,9 @@ internal sealed class StepList
             Increment = increment,
             FormatString = format,
             FontSize = 11.5,
-            Padding = new Thickness(4, 0),
-            MinHeight = ControlHeight,
-            Height = ControlHeight,
-            Margin = new Thickness(0, 0, 4, 0),
+            Margin = new Thickness(0, 0, 5, 0),
             ShowButtonSpinner = false,
             VerticalAlignment = VerticalAlignment.Center,
-            VerticalContentAlignment = VerticalAlignment.Center,
         };
 
         box.ValueChanged += (_, e) =>
