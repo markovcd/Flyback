@@ -39,8 +39,6 @@ public sealed partial class MainWindow : Window
     /// </summary>
     private readonly Button exportButton = new() { Content = "Export…", Width = 118 };
 
-    private readonly Button exportFrame = new() { Content = "Save frame…" };
-
     private readonly ComboBox resolution = new()
     {
         ItemsSource = Resolutions.Select(r => r.Label).ToList(),
@@ -131,7 +129,6 @@ public sealed partial class MainWindow : Window
         Opacity = 0.55,
     };
 
-    private readonly ToggleButton playButton = new() { Content = "Pause", Width = 78, IsChecked = true };
     private readonly ToggleButton audioButton = new() { Content = "Audio off", Width = 92 };
     private readonly ToggleButton gpuButton = new() { Content = "GPU", Width = 60 };
     private readonly ToggleButton assistantButton = new() { Content = "Assistant", Width = 92 };
@@ -396,19 +393,6 @@ public sealed partial class MainWindow : Window
 
         RefreshEditState();
 
-        playButton.IsCheckedChanged += (_, _) =>
-        {
-            preview.IsPlaying = playButton.IsChecked == true;
-            playButton.Content = preview.IsPlaying ? "Pause" : "Play";
-        };
-
-        var rewind = new Button { Content = "Rewind" };
-        rewind.Click += (_, _) =>
-        {
-            audio.Rewind();
-            preview.Rewind();
-        };
-
         var bar = new StackPanel
         {
             Orientation = Orientation.Horizontal,
@@ -426,12 +410,9 @@ public sealed partial class MainWindow : Window
         bar.Children.Add(redoButton);
         bar.Children.Add(Separator());
 
-        bar.Children.Add(playButton);
-        bar.Children.Add(rewind);
-        bar.Children.Add(Separator());
         assistantButton.IsEnabled = plugins.Assistants.Count > 0;
         ToolTip.SetTip(assistantButton, plugins.Assistants.Count > 0
-            ? "Describe a patch and have one built. Nothing is sent until you ask, and nothing applied until you accept."
+            ? "Describe a patch and have one built. Nothing is sent until you ask, and what comes back is an edit Ctrl+Z takes off again."
             : "No assistant plugin is installed. See the status bar for where plugins are looked for.");
         assistantButton.IsCheckedChanged += (_, _) => ShowAssistant(assistantButton.IsChecked == true);
 

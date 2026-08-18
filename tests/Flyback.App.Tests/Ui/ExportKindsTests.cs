@@ -6,8 +6,8 @@ using Xunit;
 namespace Flyback.App.Tests.Ui;
 
 /// <summary>
-/// Which kinds of file the export dialog offers. One button writes either an
-/// AVI or a WAV and the name decides which, so the only thing standing between
+/// Which kinds of file the export dialog offers. One button writes an AVI, a
+/// WAV or a PNG and the name decides which, so the only thing standing between
 /// a person and a file of nothing is this list.
 /// </summary>
 public class ExportKindsTests
@@ -28,17 +28,27 @@ public class ExportKindsTests
         [.. MainWindow.ExportKinds(patch).Select(k => k.Name)];
 
     [Fact]
-    public void A_patch_with_both_is_offered_both()
+    public void A_patch_with_both_is_offered_all_three()
     {
         // Video first: an AVI carries the sound too, so it is the whole of what
-        // the patch does and the sensible default.
-        Names(Wired(picture: true, sound: true)).ShouldBe(["AVI video", "WAV audio"]);
+        // the patch does and the sensible default. The still follows it, being
+        // the same picture stopped.
+        Names(Wired(picture: true, sound: true)).ShouldBe(["AVI video", "PNG image", "WAV audio"]);
     }
 
     /// <summary>Nothing reaches the speakers, so a WAV could only be silence.</summary>
     [Fact]
-    public void A_patch_with_no_sound_is_offered_only_video() =>
-        Names(Wired(picture: true, sound: false)).ShouldBe(["AVI video"]);
+    public void A_patch_with_no_sound_is_offered_the_two_that_are_pictures() =>
+        Names(Wired(picture: true, sound: false)).ShouldBe(["AVI video", "PNG image"]);
+
+    /// <summary>
+    /// And a still is a picture, so a patch that draws nothing is offered no PNG
+    /// either — a frame of a black rectangle is as much a file of nothing as a
+    /// video of one.
+    /// </summary>
+    [Fact]
+    public void A_patch_with_no_picture_is_offered_no_still() =>
+        Names(Wired(picture: false, sound: true)).ShouldNotContain("PNG image");
 
     /// <summary>Nothing reaches the screen, so an AVI could only be a black rectangle.</summary>
     [Fact]

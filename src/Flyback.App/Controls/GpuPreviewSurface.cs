@@ -91,8 +91,6 @@ public sealed class GpuPreviewSurface : OpenGlControlBase, IPreviewSurface
         set { lock (gate) time = value; }
     }
 
-    public bool IsPlaying { get; set; } = true;
-
     /// <summary>
     /// When set, the timeline is read from here instead of accumulated from
     /// wall-clock deltas. Audio becomes the master clock while it is playing, for
@@ -195,15 +193,11 @@ public sealed class GpuPreviewSurface : OpenGlControlBase, IPreviewSurface
 
                 time = driven;
             }
-            else if (IsPlaying)
+            else
             {
                 // Clamped so a stall — dragging the window, a slow recompile —
                 // does not jump the patch forward.
                 time += Math.Min(delta.TotalSeconds, 0.1);
-            }
-            else if (!dirty)
-            {
-                return;
             }
 
             dirty = false;

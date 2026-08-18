@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
@@ -64,6 +65,10 @@ public class OutputSettingsTests : UiTest
         window.UpdateLayout();
     }
 
+    /// <summary>What every button in the window is labelled, in tree order.</summary>
+    private static IEnumerable<string?> Buttons(MainWindow window) =>
+        All<Button>(window).Select(b => b.Content as string);
+
     /// <summary>The panel is present exactly when its export button is in the tree.</summary>
     private static bool ShowingSettings(MainWindow window) =>
         All<Button>(window).Any(b => b.Content as string == "Export…");
@@ -86,8 +91,70 @@ public class OutputSettingsTests : UiTest
 
         // Nothing is selected on open, so none of it should be anywhere.
         ShowingSettings(window).ShouldBeFalse();
-        All<Button>(window).Select(b => b.Content as string)
-            .ShouldNotContain("Save frame…", "the picture settings belong to the Output now");
+
+        Buttons(window).ShouldNotContain("Rewind", "the timeline belongs to the Output now");
+    }
+
+    /// <summary>
+    /// Everything that writes a file is the one button. There was a second for
+    /// stills until a PNG became one of the kinds the first offers, and the
+    /// difference between them was never anything a person would have said out
+    /// loud — both write what the patch is doing to a file.
+    /// </summary>
+    [AvaloniaFact]
+    public void There_is_one_button_for_writing_a_file()
+    {
+        var window = Open();
+
+        Select(window, Editor(window).Patch.Output);
+
+        Buttons(window).ShouldContain("Export…");
+        Buttons(window).ShouldNotContain("Save frame…");
+    }
+
+    /// <summary>
+    /// The assistant opens under the canvas rather than across the window, so
+    /// the palette and the inspector keep their height while a conversation is
+    /// going on. Both are the same width because they are the same column.
+    /// </summary>
+    [AvaloniaFact]
+    public void The_assistant_shares_the_canvas_column()
+    {
+        var window = Open();
+
+        var assistant = All<AssistantPanel>(window).Single();
+        var editor = Editor(window);
+
+        assistant.GetVisualParent().ShouldBeSameAs(
+            editor.GetVisualParent(),
+            "the two are stacked in one column, not one above the whole window");
+
+        var toggle = All<ToggleButton>(window).Single(b => b.Content as string == "Assistant");
+
+        toggle.IsChecked = true;
+        window.UpdateLayout();
+        Dispatcher.UIThread.RunJobs();
+        window.UpdateLayout();
+
+        assistant.IsVisible.ShouldBeTrue();
+        assistant.Bounds.Width.ShouldBe(editor.Bounds.Width, 1);
+        assistant.Bounds.Width.ShouldBeLessThan(window.Bounds.Width - 200, "the side panels are still beside it");
+    }
+
+    /// <summary>
+    /// Rewind moves the picture and the sound together, so it lives with the
+    /// rest of the instrument rather than on the toolbar it used to sit on.
+    /// </summary>
+    [AvaloniaFact]
+    public void Rewind_is_on_the_output_panel()
+    {
+        var window = Open();
+
+        Buttons(window).ShouldNotContain("Rewind");
+
+        Select(window, Editor(window).Patch.Output);
+
+        Buttons(window).ShouldContain("Rewind");
     }
 
     [AvaloniaFact]
@@ -98,8 +165,9 @@ public class OutputSettingsTests : UiTest
         Select(window, Editor(window).Patch.Output);
 
         ShowingSettings(window).ShouldBeTrue();
-        All<Button>(window).Select(b => b.Content as string).ShouldContain("Save frame…");
-        All<Button>(window).Select(b => b.Content as string).ShouldContain("Export…");
+
+        Buttons(window).ShouldContain("Export…");
+        Buttons(window).ShouldContain("Rewind");
     }
 
     [AvaloniaFact]

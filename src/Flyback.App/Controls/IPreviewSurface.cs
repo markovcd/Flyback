@@ -24,8 +24,6 @@ public interface IPreviewSurface
     /// </summary>
     double Time { get; set; }
 
-    bool IsPlaying { get; set; }
-
     /// <summary>
     /// When set, the timeline is read from here instead of accumulated from
     /// wall-clock deltas — audio becomes the master clock while it is playing.

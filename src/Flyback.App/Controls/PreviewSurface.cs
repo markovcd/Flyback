@@ -60,8 +60,6 @@ public sealed class PreviewSurface : Control, IPreviewSurface
     /// <summary>Patch time in seconds. This is what the Time module reads.</summary>
     public double Time { get; set; }
 
-    public bool IsPlaying { get; set; } = true;
-
     /// <summary>
     /// When set, the timeline is read from here instead of accumulated from
     /// wall-clock deltas. Audio becomes the master clock while it is playing —
@@ -147,14 +145,10 @@ public sealed class PreviewSurface : Control, IPreviewSurface
 
             Time = driven;
         }
-        else if (IsPlaying)
+        else
         {
             // Clamp so a stall (dragging the window, a slow recompile) doesn't jump time.
             Time += Math.Min(delta.TotalSeconds, 0.1);
-        }
-        else if (!dirty)
-        {
-            return;
         }
 
         dirty = false;

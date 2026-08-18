@@ -77,9 +77,6 @@ public sealed partial class MainWindow
             Report(message);
         };
 
-        ToolTip.SetTip(exportFrame, $"Render the current moment at {ExportSize.Width} x {ExportSize.Height} and write a PNG.");
-        exportFrame.Click += async (_, _) => await SaveFrameAsync();
-
         // It cannot be switched on at all where no plugin offered a device. The
         // constructor turns it on once there is a patch to play — see there for
         // why it starts on rather than off.
@@ -273,10 +270,30 @@ public sealed partial class MainWindow
         outputSettings.Children.Add(Heading("Picture"));
         outputSettings.Children.Add(Field("Size", resolution));
         outputSettings.Children.Add(Field("Render", gpuButton));
-        outputSettings.Children.Add(exportFrame);
 
         outputSettings.Children.Add(Heading("Sound"));
         outputSettings.Children.Add(audioButton);
+
+        // Under Sound rather than under a heading of its own, though it moves
+        // both halves: a rewind that took the picture back and left the sound
+        // where it was would pull the two apart, and they are one instrument on
+        // one timeline.
+        //
+        // The width is the audio button's. Everything standalone on this panel
+        // sits at its left edge and is only as wide as it needs to be, so one
+        // control stretched to the far side reads as a misalignment rather than
+        // as emphasis — and these two being the same width says they are a pair.
+        var rewind = new Button { Content = "Rewind", Width = 92 };
+
+        rewind.Click += (_, _) =>
+        {
+            audio.Rewind();
+            preview.Rewind();
+        };
+
+        ToolTip.SetTip(rewind, "Take the patch back to zero seconds, in the picture and in the sound.");
+
+        outputSettings.Children.Add(rewind);
 
         outputSettings.Children.Add(Heading("Export"));
 

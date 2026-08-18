@@ -38,9 +38,11 @@ public sealed partial class MainWindow
     }
 
     private static readonly string ExportTip =
-        "Write the patch to a file, for as long as Length says. Pick AVI for the picture "
+        "Write the patch to a file. The name decides which: AVI for the moving picture "
         + $"— Motion JPEG at {MovieRenderer.DefaultFrameRate:0} frames a second, at whatever "
-        + "Size says, with the sound alongside it — or WAV for the sound on its own.";
+        + "Size says, with the sound alongside it — WAV for the sound on its own, or PNG "
+        + $"for one frame at {ExportSize.Width} x {ExportSize.Height}. Length says how long "
+        + "the first two run for; a still ignores it.";
 
     private const string NothingToExport =
         "Nothing is wired into the Output, so there is nothing to write. "
@@ -114,35 +116,6 @@ public sealed partial class MainWindow
         }
     }
 
-    private async Task SaveFrameAsync()
-    {
-        var file = await StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
-        {
-            Title = "Save frame",
-            SuggestedFileName = "frame",
-            DefaultExtension = "png",
-            FileTypeChoices = [FilePickerFileTypes.ImagePng],
-        });
-
-        if (file is null) return;
-
-        try
-        {
-            var path = file.TryGetLocalPath();
-            if (path is null)
-            {
-                Report("That location can't be written to directly.");
-                return;
-            }
-
-            await PreviewSurface.SaveFrameAsync(preview.Program, preview.Time, path, ExportSize);
-        }
-        catch (Exception ex)
-        {
-            Report($"Could not save frame: {ex.Message}");
-        }
-    }
-
     /// <summary>What a patch has to offer, and therefore what it can be written to.</summary>
     /// <remarks>
     /// The Output is always there, so its presence says nothing — what matters
@@ -164,16 +137,23 @@ public sealed partial class MainWindow
 
     private static FilePickerFileType Wav => new("WAV audio") { Patterns = ["*.wav"] };
 
+    private static FilePickerFileType Png => new("PNG image") { Patterns = ["*.png"] };
+
     /// <summary>
     /// The kinds of file this patch could be written to, in the order the dialog
     /// should offer them.
     /// </summary>
     /// <remarks>
     /// Video first when there is one, because an AVI carries the sound too and
-    /// is therefore the whole of what the patch does. A patch that draws nothing
-    /// is offered no AVI and one that makes no sound is offered no WAV, so the
-    /// dialog can never produce a file that is only a black rectangle or only
-    /// silence. Empty means there is nothing to write at all.
+    /// is therefore the whole of what the patch does. A PNG follows it wherever
+    /// there is a picture: it is the same picture, stopped — one frame at the
+    /// moment on screen, and the one kind here that ignores the length entirely.
+    /// <para>
+    /// A patch that draws nothing is offered neither, and one that makes no
+    /// sound is offered no WAV, so the dialog can never produce a file that is
+    /// only a black rectangle or only silence. Empty means there is nothing to
+    /// write at all.
+    /// </para>
     /// </remarks>
     internal static IReadOnlyList<FilePickerFileType> ExportKinds(Patch patch)
     {
@@ -181,8 +161,8 @@ public sealed partial class MainWindow
 
         return (picture, sound) switch
         {
-            (true, true) => [Avi, Wav],
-            (true, false) => [Avi],
+            (true, true) => [Avi, Png, Wav],
+            (true, false) => [Avi, Png],
             (false, true) => [Wav],
             _ => [],
         };
@@ -218,7 +198,7 @@ public sealed partial class MainWindow
 
             // The first kind offered is the one the patch is most fully
             // described by, so it is also the extension a name gets by default.
-            DefaultExtension = kinds[0] == Wav ? "wav" : "avi",
+            DefaultExtension = kinds[0].Patterns is ["*.wav"] ? "wav" : "avi",
             FileTypeChoices = [.. kinds],
         });
 
@@ -234,10 +214,42 @@ public sealed partial class MainWindow
         // The name decides, because the name is what the person actually chose
         // — a dialog's selected filter is not carried back on every platform,
         // and the extension is.
-        if (Path.GetExtension(path).Equals(".wav", StringComparison.OrdinalIgnoreCase))
+        var kind = Path.GetExtension(path);
+
+        if (kind.Equals(".wav", StringComparison.OrdinalIgnoreCase))
             await ExportSoundAsync(patch, path);
+        else if (kind.Equals(".png", StringComparison.OrdinalIgnoreCase))
+            await ExportFrameAsync(path);
         else
             await ExportPictureAsync(patch, path);
+    }
+
+    /// <summary>
+    /// One frame, at the moment the preview is showing, at export size rather
+    /// than at preview size.
+    /// </summary>
+    /// <remarks>
+    /// The only export that finishes before the button could become Stop, so it
+    /// neither starts a run nor reports a length: what is written is what was on
+    /// screen when it was asked for, and the seconds on the panel mean nothing
+    /// to it.
+    /// <para>
+    /// Rendered afresh rather than lifted off the preview, which is why it is
+    /// full size whatever Size says — and why feedback, which is a frame's
+    /// memory of the one before, comes out of a still as a single pass with
+    /// nothing behind it.
+    /// </para>
+    /// </remarks>
+    private async Task ExportFrameAsync(string path)
+    {
+        try
+        {
+            await PreviewSurface.SaveFrameAsync(preview.Program, preview.Time, path, ExportSize);
+        }
+        catch (Exception ex)
+        {
+            Report($"Could not save the frame: {ex.Message}");
+        }
     }
 
     private async Task ExportSoundAsync(Patch patch, string path)

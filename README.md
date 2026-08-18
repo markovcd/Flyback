@@ -476,8 +476,9 @@ along a toolbar.
 
 | | |
 |---|---|
-| Picture | **Size**, **Render** (GPU or processor), **Save frame…** |
+| Picture | **Size** and **Render** (GPU or processor) |
 | Sound | **Audio on** |
+| Timeline | **Rewind**, which takes the picture and the sound back to zero together |
 | Export | **Length** in seconds, and **Export…** |
 
 The status bar carries whatever the compiler wants to say about the patch as it
@@ -553,20 +554,25 @@ works on both a scalar and a colour.
 
 ## Files
 
-Patches save as JSON (`.fbk`). `Save frame…` renders the current moment at
-1920×1080 and writes a PNG.
+Patches save as JSON (`.fbk`).
 
-**Export…** writes the thing the instrument actually makes: a moving picture with
-its own sound under it. Set the length in seconds in the same panel — it is the
-one parameter of an export that cannot be defaulted, since a patch is an endless
-function of `(x, y, t)`. The frame is whatever **Size** says, a few rows above it.
+**Export…** writes the thing the instrument actually makes, and there is one
+button for all of it. Set the length in seconds in the same panel — it is the
+one parameter of a moving export that cannot be defaulted, since a patch is an
+endless function of `(x, y, t)`. The frame is whatever **Size** says, a few rows
+above it.
 
-There is one button and the file name decides what you get. The dialog offers
-**AVI** for the picture, with the sound alongside it, and **WAV** for the sound
-on its own — but only the ones this patch actually has. Wire nothing into
-`colour` and it offers no AVI; wire nothing into `left` or `right` and it offers
-no WAV. A patch that reaches neither says so instead of opening a dialog that
-could only produce a file of nothing.
+The file name decides what you get, and the dialog offers only the kinds this
+patch has: **AVI** for the moving picture with the sound alongside it, **PNG**
+for one frame of it, and **WAV** for the sound on its own. Wire nothing into
+`colour` and it offers neither picture; wire nothing into `left` or `right` and
+it offers no WAV. A patch that reaches neither says so instead of opening a
+dialog that could only produce a file of nothing.
+
+A PNG is the odd one of the three. It ignores the length, being a single frame
+at the moment on screen, and it is written at 1920×1080 whatever **Size** says —
+the preview's resolution is a matter of keeping up, and a still has nothing to
+keep up with.
 
 The video file is an AVI: every frame an independent JPEG, 16-bit PCM interleaved
 alongside. Both encoders are written here beside the PNG and WAV ones, so export
@@ -580,7 +586,7 @@ Output's `left` or `right` gets a video-only file rather than a silent track.
 | Cost | the picture is rendered on the processor even when the preview is on the GPU, so an expensive patch takes longer to write than to watch |
 | Stopping | the Export button becomes **Stop**, and stopping keeps what was rendered as a shorter video rather than a broken one |
 
-Feedback works in an export and does not in `Save frame…`: one renderer runs the
+Feedback works in a moving export and does not in a still: one renderer runs the
 whole clip, so each frame reads the one before it exactly as on screen. The sound
 in it is byte-for-byte the WAV the same patch writes on its own — one oscillator
 phase and one delay tail, running the length of the clip.

@@ -73,12 +73,6 @@ public sealed class PreviewHost : Decorator, IPreviewSurface
         set => active.Time = value;
     }
 
-    public bool IsPlaying
-    {
-        get => active.IsPlaying;
-        set => active.IsPlaying = value;
-    }
-
     public Func<double>? Clock
     {
         get => active.Clock;
@@ -150,7 +144,6 @@ public sealed class PreviewHost : Decorator, IPreviewSurface
         {
             surface.Program = active.Program;
             surface.Resolution = active.Resolution;
-            surface.IsPlaying = active.IsPlaying;
             surface.Time = active.Time;
             surface.Clock = active.Clock;
 
