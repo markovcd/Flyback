@@ -65,6 +65,7 @@ to differ in their last bits.
 | [0016](0016-build-the-ui-in-c-sharp-without-xaml.md) | Build the UI in C#, without XAML |
 | [0017](0017-draw-the-node-editor-in-one-control.md) | Draw the node editor in one custom control |
 | [0018](0018-never-render-frames-on-the-ui-thread.md) | Never render frames on the UI thread |
+| [0039](0039-one-window-class-across-a-file-per-region.md) | One window class, across a file per region |
 
 ### Sound
 

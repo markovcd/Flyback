@@ -485,7 +485,7 @@ wired into it at all — one flat colour on the screen, silence at the speakers.
 | Project | |
 |---|---|
 | `src/Flyback.Core` | graph model, compiler, renderer, PNG/WAV/JPEG/AVI writers — no UI dependency |
-| `src/Flyback.App` | Avalonia editor and live preview, built in C# without XAML |
+| `src/Flyback.App` | Avalonia editor and live preview, built in C# without XAML — the window is one class across a file per region ([ADR-0039](docs/adr/0039-one-window-class-across-a-file-per-region.md)) |
 | `src/Flyback.Plugins` | the plugin contract and the loader — no dependencies either |
 | `src/Flyback.Plugins.Wasapi` | Windows sound output, via NAudio |
 | `src/Flyback.Plugins.CoreAudio` | macOS sound output, straight to the default output audio unit |
@@ -493,7 +493,7 @@ wired into it at all — one flat colour on the screen, silence at the speakers.
 | `src/Flyback.Plugins.Supersaw` | the Supersaw oscillator, as a module plugin |
 | `src/Flyback.Plugins.Space` | delay and reverb — the only modules with a memory of their own |
 
-Why it is built this way is recorded in [docs/adr](docs/adr) — 30 decision
+Why it is built this way is recorded in [docs/adr](docs/adr) — 39 decision
 records covering the compiler, the renderer, the shell and the boundaries
 between them.
 

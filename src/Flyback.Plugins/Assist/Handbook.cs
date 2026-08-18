@@ -32,7 +32,7 @@ internal static class Handbook
     private const string Conventions = """
         # Flyback
 
-        A patchable video synthesiser. Nothing is drawn: every frame is a
+        A patchable video/audio synthesiser. Nothing is drawn: every frame is a
         function evaluated once per pixel, and every sample is the same function
         evaluated once per tick. You build that function by placing modules and
         wiring them together.
