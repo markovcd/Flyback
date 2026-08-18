@@ -35,6 +35,16 @@ public sealed class DelayState
     private readonly double[] previousInputs;
     private readonly bool[] running;
 
+    /// <summary>
+    /// One cell per <see cref="OpCode.UnitRead"/>/<see cref="OpCode.UnitWrite"/>
+    /// pair: what a cycle in the patch carries from one evaluation to the next.
+    /// <see cref="double"/> like the accumulators rather than <see cref="float"/>
+    /// like the lines, because what sits here is a register on its way back round
+    /// a loop rather than a sample on its way to a speaker — it may be a phase, a
+    /// modulation index or a coordinate, and none of those is sixteen bits.
+    /// </summary>
+    private readonly double[] units;
+
     /// <param name="lengthsInSeconds">Longest delay each line must hold, in program order.</param>
     /// <param name="sampleRate">
     /// Evaluations per second — the *oversampled* rate on the audio path, since
@@ -45,7 +55,15 @@ public sealed class DelayState
     /// no rate: an accumulator measures how far its input moved, and the step it
     /// takes is whatever that was.
     /// </param>
-    public DelayState(IReadOnlyList<float> lengthsInSeconds, int sampleRate, int phaseCount = 0)
+    /// <param name="unitCount">
+    /// How many one-evaluation cells the program needs — one per cycle in the
+    /// patch. A cell, like an accumulator, is a single number and needs no rate.
+    /// </param>
+    public DelayState(
+        IReadOnlyList<float> lengthsInSeconds,
+        int sampleRate,
+        int phaseCount = 0,
+        int unitCount = 0)
     {
         SampleRate = sampleRate;
         lengths = [.. lengthsInSeconds];
@@ -55,6 +73,8 @@ public sealed class DelayState
         phases = new double[phaseCount];
         previousInputs = new double[phaseCount];
         running = new bool[phaseCount];
+
+        units = new double[unitCount];
 
         for (var i = 0; i < lines.Length; i++)
         {
@@ -71,16 +91,22 @@ public sealed class DelayState
 
     public int PhaseCount => phases.Length;
 
+    public int UnitCount => units.Length;
+
     /// <summary>
     /// Whether this state still fits a program. Op order decides which buffer is
     /// which, so a recompile that changes the delays at all gets fresh buffers —
     /// and the tail that was ringing is lost, which is the honest outcome: the
     /// old tail belonged to a patch that no longer exists.
     /// </summary>
-    public bool Fits(IReadOnlyList<float> lengthsInSeconds, int sampleRate, int phaseCount = 0)
+    public bool Fits(
+        IReadOnlyList<float> lengthsInSeconds,
+        int sampleRate,
+        int phaseCount = 0,
+        int unitCount = 0)
     {
         if (sampleRate != SampleRate || lengthsInSeconds.Count != lengths.Length) return false;
-        if (phaseCount != phases.Length) return false;
+        if (phaseCount != phases.Length || unitCount != units.Length) return false;
 
         for (var i = 0; i < lengths.Length; i++)
             if (lengths[i] != lengthsInSeconds[i])
@@ -100,7 +126,28 @@ public sealed class DelayState
         Array.Clear(phases);
         Array.Clear(previousInputs);
         Array.Clear(running);
+        Array.Clear(units);
     }
+
+    /// <summary>
+    /// What cell <paramref name="slot"/> was left holding, which is zero until
+    /// something has written one — so a loop starts from silence rather than from
+    /// whatever a previous patch left behind.
+    /// </summary>
+    public double ReadUnit(int slot) => units[slot];
+
+    /// <summary>Puts a value in cell <paramref name="slot"/> for the next evaluation to read.</summary>
+    /// <remarks>
+    /// Bounded exactly as <see cref="Write"/> is, and for a sharper version of the
+    /// same reason. A delay line's feedback is clamped below one before it ever
+    /// reaches the buffer; a cycle drawn as wires has no such coefficient anywhere
+    /// in it, so a loop with a gain above one is not merely possible but easy, and
+    /// this is the only place it can be caught. Clamping rather than refusing
+    /// keeps the runaway audible as a value pinned at the rails — which is what a
+    /// real rack does too — instead of turning the patch into silent NaN.
+    /// </remarks>
+    public void WriteUnit(int slot, double value) =>
+        units[slot] = double.IsFinite(value) ? Math.Clamp(value, -16d, 16d) : 0d;
 
     /// <summary>
     /// Advances accumulator <paramref name="cell"/> by however far

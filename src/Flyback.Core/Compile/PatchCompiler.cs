@@ -106,10 +106,26 @@ public static class PatchCompiler
         var emitter = new Emitter();
         var resolved = new Dictionary<Guid, Slot[]>();
         var visiting = new HashSet<Guid>();
+        var loops = new Queue<(NodeInstance Node, NodeDef Def, int Slot)>();
 
         // Only this program's share of the sink's results. Everything upstream
         // of the other half is never resolved, so it emits no ops.
         var result = Resolve(root)[sink.Results];
+
+        // Now close whatever loops that walk found. Every read in the program is
+        // emitted by the time the first write is, and that ordering is the whole
+        // of a cycle's latency: a value handed to a cell here cannot be seen
+        // until the next evaluation, however the wires run.
+        //
+        // Drained as a queue rather than resolved in place, because a breaker's
+        // own input may reach a breaker the walk above never touched — and that
+        // one's write has to land after every read just as much as this one's.
+        while (loops.Count > 0)
+        {
+            var (node, def, slot) = loops.Dequeue();
+            emitter.UnitWrite(slot, ResolveInput(node, def, 0));
+        }
+
         var value = emitter.PackChannels(result, width);
 
         return new CompileResult(
@@ -127,10 +143,35 @@ public static class PatchCompiler
                 return resolved[node.Id] = [emitter.Constant(0f)];
             }
 
+            // A cycle breaker is the one module this walk does not enter, and that
+            // is the whole of how a patch may hold a loop: a wire running
+            // backwards is allowed to land here, and the walk stops rather than
+            // arriving somewhere it is already inside. What it hands back is the
+            // cell as the previous evaluation left it — the write that fills the
+            // cell is deferred to the drain above.
+            if (def.IsCycleBreaker)
+            {
+                var slot = emitter.AllocateUnitSlot();
+                var outputs = new[] { emitter.UnitRead(slot) };
+
+                // Cached before the write is queued, so a breaker that two things
+                // read from is still one cell, read once and written once.
+                resolved[node.Id] = outputs;
+
+                // Nothing to carry round when there is no socket to carry it from,
+                // which only a module declared by hand could manage. Reads zero
+                // for ever rather than reaching for an input that is not there.
+                if (def.Inputs.Count > 0) loops.Enqueue((node, def, slot));
+
+                return outputs;
+            }
+
             if (!visiting.Add(node.Id))
             {
                 issues.Add(new CompileIssue(node.Id,
-                    $"'{def.Name}' feeds back into itself. Use a Feedback module to read the previous frame."));
+                    $"'{def.Name}' feeds back into itself. Put a Unit Delay somewhere in the loop "
+                    + "to carry the previous evaluation round, or a Feedback module to read the "
+                    + "previous frame."));
                 return [.. def.Outputs.Select(_ => emitter.Constant(0f))];
             }
 
@@ -163,10 +204,7 @@ public static class PatchCompiler
 
                 if (incoming is not null && patch.Find(incoming.SourceNode) is { } source)
                 {
-                    var outputs = Resolve(source);
-                    slotValue = incoming.SourcePort >= 0 && incoming.SourcePort < outputs.Length
-                        ? outputs[incoming.SourcePort]
-                        : emitter.Constant(0f);
+                    slotValue = Pick(Resolve(source), incoming.SourcePort);
                 }
                 else if (spec.NormalledFrom >= 0 && spec.NormalledFrom < port)
                 {
@@ -211,6 +249,27 @@ public static class PatchCompiler
             visiting.Remove(node.Id);
             return resolved[node.Id] = outputsOfNode;
         }
+
+        // The value on one of a node's inputs: whatever is wired in, or the knob
+        // it rests on. Narrower than the loop inside Resolve — no normalling, no
+        // sink port range, no complaint about a domain — because its only caller
+        // is a cycle breaker, whose single socket is none of those things.
+        Slot ResolveInput(NodeInstance node, NodeDef def, int port)
+        {
+            var spec = def.Inputs[port];
+            var incoming = patch.IncomingTo(node.Id, port);
+
+            var slotValue = incoming is not null && patch.Find(incoming.SourceNode) is { } source
+                ? Pick(Resolve(source), incoming.SourcePort)
+                : emitter.Constant(DefaultFor(node, port, spec));
+
+            return spec.Kind == PortKind.Any ? slotValue : emitter.Coerce(slotValue, spec.Width);
+        }
+
+        // Which of a node's results a wire carries, and silence for a socket that
+        // is not there — a saved patch outliving a change to the module it names.
+        Slot Pick(Slot[] outputs, int port) =>
+            port >= 0 && port < outputs.Length ? outputs[port] : emitter.Constant(0f);
     }
 
     /// <summary>

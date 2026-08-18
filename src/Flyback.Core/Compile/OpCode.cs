@@ -109,6 +109,34 @@ public enum OpCode : byte
     /// </summary>
     Phase,
 
+    /// <summary>
+    /// out = the value slot K held when the previous evaluation finished, and
+    /// zero before there has been one.
+    /// </summary>
+    /// <remarks>
+    /// Half of a pair, and the half that stands where the graph wants a value.
+    /// Its <see cref="UnitWrite"/> is emitted after every read in the program, so
+    /// what a read hands back is always one evaluation old however the wires run.
+    /// That gap is the whole point: it is what lets a patch hold a loop at all,
+    /// and it is one evaluation for the same reason a rack of one-sample modules
+    /// gives you one — there is nowhere shorter for a cycle to be.
+    /// <para>
+    /// Unlike the delay lines, K here is a slot number rather than a length. The
+    /// read and the write are separate ops that must agree about which cell they
+    /// mean, and counting positions the way <see cref="Delay"/> does would leave
+    /// that agreement resting on emit order — which for these two, unlike every
+    /// other stateful op, is deliberately not the same.
+    /// </para>
+    /// </remarks>
+    UnitRead,
+
+    /// <summary>
+    /// slot K = a. The one op that writes no register at all, because what it
+    /// writes is read by the next evaluation's <see cref="UnitRead"/> rather than
+    /// by anything in this one. <c>Out</c> is -1 to say so.
+    /// </summary>
+    UnitWrite,
+
     // --- multi-register writes: these fill out, out+1, out+2 ---
     /// <summary>(out, out+1, out+2) = hsv2rgb(a, b, c)</summary>
     HsvToRgb,

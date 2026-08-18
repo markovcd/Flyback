@@ -19,6 +19,13 @@ public class GlslEmitterTests
         [.. from preset in Presets.All from dialect in Enum.GetValues<GlslDialect>() select (preset.Name, dialect)];
 
     /// <summary>
+    /// Ops that write no register, and so lower to no line. Named one by one
+    /// rather than detected, so that adding one is a decision somebody made here
+    /// rather than a silent hole in the theory below.
+    /// </summary>
+    private static bool WritesNothing(OpCode code) => code is OpCode.UnitWrite;
+
+    /// <summary>
     /// The test that matters: it fails the day an opcode is added and the shader
     /// is not told about it, which is otherwise a black region on screen that
     /// nobody traces back to this file.
@@ -28,6 +35,16 @@ public class GlslEmitterTests
     public void Every_opcode_lowers_to_a_line(OpCode code)
     {
         var source = GlslEmitter.Emit(OneOp(code), GlslDialect.GlslEs300);
+
+        if (WritesNothing(code))
+        {
+            // Not merely allowed to have no line — required to. Its result is the
+            // next evaluation's, there is no state on this path to keep one in,
+            // and the register it would assign to does not exist: a program that
+            // means it writes r-1, which is not a name GLSL has.
+            source.PatchFragment.ShouldNotContain("r3");
+            return;
+        }
 
         // Registers 0..2 hold the operands, so the op under test writes r3 —
         // either directly or, for the ops that fill three registers, off a vec3.

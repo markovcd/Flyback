@@ -111,11 +111,19 @@ internal static class Handbook
 
         ## Feedback
 
-        The graph must be acyclic — a pixel cannot depend on itself. Wiring a
-        cycle is an error and the tools will refuse it. To read the previous
-        frame, use the `feedback` module, which is an explicit one-frame delay.
-        Route it back towards the output through a `space.rotate` or
-        `space.scale` for the camera-pointed-at-its-own-monitor tunnel.
+        A value cannot depend on itself within one evaluation, so every loop needs
+        something in it that remembers. Wiring a cycle with nothing of the kind in
+        it is an error and the tools will refuse it.
+
+        - To read the previous *frame*, use the `feedback` module, which is an
+          explicit one-frame delay. Route it back towards the output through a
+          `space.rotate` or `space.scale` for the camera-pointed-at-its-own-monitor
+          tunnel. This is the one to reach for on the screen.
+        - To close a loop the way a modular rack does, put a `feedback.unit`
+          anywhere in it. It is one evaluation of delay, it is the only module a
+          wire may run backwards into, and it makes the cycle legal — an
+          oscillator into its own phase, a filter into its own input. Audio only:
+          a picture is drawn all at once and has no previous evaluation to read.
 
         ## What you can check
 

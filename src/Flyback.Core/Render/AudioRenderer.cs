@@ -107,13 +107,14 @@ public sealed class AudioRenderer
     /// </remarks>
     public DelayState? DelayMemoryFor(CompiledPatch program, DelayState? existing = null)
     {
-        if (program.DelayLengths.Count == 0 && program.PhaseCount == 0) return null;
+        if (program.DelayLengths.Count == 0 && program.PhaseCount == 0 && program.UnitCount == 0)
+            return null;
 
         var rate = SampleRate * Oversample;
 
-        return existing?.Fits(program.DelayLengths, rate, program.PhaseCount) == true
+        return existing?.Fits(program.DelayLengths, rate, program.PhaseCount, program.UnitCount) == true
             ? existing
-            : new DelayState(program.DelayLengths, rate, program.PhaseCount);
+            : new DelayState(program.DelayLengths, rate, program.PhaseCount, program.UnitCount);
     }
 
     /// <summary>

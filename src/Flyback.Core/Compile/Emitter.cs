@@ -12,6 +12,16 @@ public sealed class Emitter
 
     public int RegisterCount { get; private set; }
 
+    /// <summary>
+    /// How many one-evaluation cells have been handed out. Unlike a register these
+    /// are not SSA — a cell is read and then written, which is the point of it —
+    /// so they are counted separately and by hand.
+    /// </summary>
+    public int UnitSlotCount { get; private set; }
+
+    /// <summary>Claims a cell for one cycle in the patch to carry a value round.</summary>
+    public int AllocateUnitSlot() => UnitSlotCount++;
+
     public Op[] ToProgram() => [.. ops];
 
     private int Allocate(int count)
@@ -118,6 +128,27 @@ public sealed class Emitter
             offset.Component(0)));
         return Slot.Scalar(first);
     }
+
+    /// <summary>
+    /// Reads what cycle <paramref name="slot"/> was carrying when the previous
+    /// evaluation ended. Emitted where the graph asks for the value; the
+    /// <see cref="UnitWrite"/> that fills the cell comes later, which is what puts
+    /// an evaluation between the two.
+    /// </summary>
+    public Slot UnitRead(int slot)
+    {
+        var first = Allocate(1);
+        Add(new Op(OpCode.UnitRead, first, k: slot));
+        return Slot.Scalar(first);
+    }
+
+    /// <summary>
+    /// Hands a value to cycle <paramref name="slot"/> for the next evaluation.
+    /// Returns nothing, because there is no register to return: what this writes
+    /// cannot be read again until the program runs anew.
+    /// </summary>
+    public void UnitWrite(int slot, Slot value) =>
+        Add(new Op(OpCode.UnitWrite, -1, value.Component(0), k: slot));
 
     /// <summary>An op that writes three consecutive registers at once.</summary>
     public Slot Triple(OpCode code, Slot a, Slot b, Slot c = default)

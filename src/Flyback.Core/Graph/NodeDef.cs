@@ -51,6 +51,25 @@ public sealed record NodeDef(
     /// </summary>
     public IReadOnlyList<Step>? DefaultSteps { get; init; }
 
+    /// <summary>
+    /// Whether a wire may run backwards into this module — whether, in other
+    /// words, a patch may hold a cycle that passes through it.
+    /// </summary>
+    /// <remarks>
+    /// A module that says yes is not compiled the way every other module is. The
+    /// walk stops when it reaches one and hands back what the cycle was carrying
+    /// at the end of the previous evaluation, and the module's own input is
+    /// resolved afterwards, once every such read in the program has been emitted.
+    /// So <see cref="Emit"/> is never called on it — see
+    /// <c>PatchCompiler</c> — and the latency that makes the loop mean something
+    /// comes from that ordering rather than from anything the module does.
+    /// <para>
+    /// One input and one output, both scalar. Nothing enforces that, but a breaker
+    /// with a different shape has sockets the compiler will not look at.
+    /// </para>
+    /// </remarks>
+    public bool IsCycleBreaker { get; init; }
+
     /// <summary>How a step's value should be written out, when this module has steps.</summary>
     public PortDisplay StepDisplay { get; init; }
 

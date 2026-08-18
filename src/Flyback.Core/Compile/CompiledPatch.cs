@@ -57,6 +57,21 @@ public sealed class CompiledPatch(Op[] ops, int registerCount, int outputBase, i
     /// </summary>
     public int PhaseCount { get; } = ops.Count(o => o.Code is OpCode.Phase);
 
+    /// <summary>
+    /// How many one-evaluation cells the program needs — one per cycle in the
+    /// patch it came from.
+    /// </summary>
+    /// <remarks>
+    /// Taken from the highest slot any op names rather than from how many ops name
+    /// one, because a read and its write are two ops sharing a cell and counting
+    /// them would count each cell twice.
+    /// </remarks>
+    public int UnitCount { get; } = ops
+        .Where(o => o.Code is OpCode.UnitRead or OpCode.UnitWrite)
+        .Select(o => (int)o.K + 1)
+        .DefaultIfEmpty(0)
+        .Max();
+
     /// <summary>A program whose output is all zeroes — the fallback when a sink is missing.</summary>
     public static CompiledPatch Constant(int width) => new(
         [.. Enumerable.Range(0, width).Select(i => new Op(OpCode.Const, i))],
@@ -196,6 +211,19 @@ public sealed class CompiledPatch(Op[] ops, int registerCount, int outputBase, i
                     registers[op.Out] = heard - gain * stored;
                     break;
                 }
+
+                // The two halves of a cycle. Without state a read is zero and a
+                // write goes nowhere, so a loop drawn on the video path is simply
+                // open — the same fallback the delay lines take, for the same
+                // reason: pixels are evaluated in parallel and in whatever order,
+                // and there is no "previous evaluation" for one to mean.
+                case OpCode.UnitRead:
+                    registers[op.Out] = delays?.ReadUnit((int)op.K) ?? 0d;
+                    break;
+
+                case OpCode.UnitWrite:
+                    delays?.WriteUnit((int)op.K, registers[op.A]);
+                    break;
 
                 case OpCode.Phase:
                 {

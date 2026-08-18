@@ -400,6 +400,12 @@ public static class GlslEmitter
 
         foreach (var op in patch.Ops)
         {
+            // The one op with no result, and so the one op with no line. There is
+            // no state on this path for it to write to, and a declaration of r-1
+            // would not compile. What it fed is left as dead code for the driver
+            // to drop, which is the same deal the other half of a sink gets.
+            if (op.Code == OpCode.UnitWrite) continue;
+
             string a = Read(op.A), b = Read(op.B), c = Read(op.C);
 
             var expression = op.Code switch
@@ -463,6 +469,11 @@ public static class GlslEmitter
                 OpCode.Delay => a,
                 OpCode.Allpass => a,
                 OpCode.Phase => $"{a} * {b} + {c}",
+
+                // A cycle with no cell behind it reads as nothing, which leaves the
+                // loop open rather than closed — again what the interpreter does
+                // when it is handed no state.
+                OpCode.UnitRead => "0.0",
 
                 OpCode.HsvToRgb => $"hsv({a}, {b}, {c})",
                 OpCode.SampleFeedback => $"fb({a}, {b})",
