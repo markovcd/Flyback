@@ -142,6 +142,22 @@ public class OutputSettingsTests : UiTest
     }
 
     /// <summary>
+    /// About is on the toolbar rather than in the Output's panel: it is about
+    /// the program, and nothing there is about a patch at all.
+    /// </summary>
+    [AvaloniaFact]
+    public void About_is_on_the_toolbar_whatever_is_selected()
+    {
+        var window = Open();
+
+        Buttons(window).ShouldContain("About");
+
+        Select(window, Editor(window).Patch.Output);
+
+        Buttons(window).ShouldContain("About");
+    }
+
+    /// <summary>
     /// Rewind moves the picture and the sound together, so it lives with the
     /// rest of the instrument rather than on the toolbar it used to sit on.
     /// </summary>

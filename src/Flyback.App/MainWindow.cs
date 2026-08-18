@@ -423,8 +423,14 @@ public sealed partial class MainWindow : Window
 
         ToolTip.SetTip(settings, "Which assistant to use, and the key it needs.");
 
+        var about = new Button { Content = "About", Width = 80 };
+        about.Click += async (_, _) => await ShowAboutAsync();
+
+        ToolTip.SetTip(about, "What this is, who wrote it, and what it may be done with.");
+
         bar.Children.Add(Separator());
         bar.Children.Add(settings);
+        bar.Children.Add(about);
 
         return new Border
         {
@@ -450,6 +456,14 @@ public sealed partial class MainWindow : Window
         // next time this is opened.
         await Dialog.Around("Settings", panel.SettingsSection()).ShowDialog(this);
     }
+
+    /// <summary>
+    /// The About window. Its contents are built fresh each time rather than kept
+    /// like the settings section: nothing in it is a control anybody has typed
+    /// into, so there is nothing to carry from one opening to the next.
+    /// </summary>
+    private async Task ShowAboutAsync() =>
+        await Dialog.Around("About", About.View()).ShowDialog(this);
 
     private Control BuildStatusBar()
     {
