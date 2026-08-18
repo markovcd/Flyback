@@ -131,10 +131,11 @@ public sealed partial class MainWindow : Window
 
     private readonly ToggleButton audioButton = new() { Content = "Audio off", Width = 92 };
     private readonly ToggleButton gpuButton = new() { Content = "GPU", Width = 60 };
-    private readonly ToggleButton assistantButton = new() { Content = "Assistant", Width = 92 };
+    private readonly ToggleButton assistantButton =
+        Toggle("assistant", "✦", "Describe a patch and have one built.");
 
-    private readonly Button undoButton = new() { Content = "Undo", Width = 66 };
-    private readonly Button redoButton = new() { Content = "Redo", Width = 66 };
+    private readonly Button undoButton = Glyph("undo", "↶", "Take back the last edit  (Ctrl+Z)");
+    private readonly Button redoButton = Glyph("redo", "↷", "Put it back  (Ctrl+Shift+Z)");
 
     private AssistantPanel? assistant;
     private RowDefinition? assistantRow;
@@ -376,61 +377,61 @@ public sealed partial class MainWindow : Window
             }
         };
 
-        var open = new Button { Content = "Open…" };
+        var open = Drawn("open", Glyphs.Open(), "Open a patch…");
         open.Click += async (_, _) =>
         {
             if (await MayReplaceThePatchAsync()) await OpenPatchAsync();
         };
 
-        var save = new Button { Content = "Save…" };
+        var save = Drawn("save", Glyphs.Save(), "Save this patch…");
         save.Click += async (_, _) => await SavePatchAsync();
 
         undoButton.Click += (_, _) => editor.Undo();
         redoButton.Click += (_, _) => editor.Redo();
 
-        ToolTip.SetTip(undoButton, "Take back the last edit  (Ctrl+Z)");
-        ToolTip.SetTip(redoButton, "Put it back  (Ctrl+Shift+Z)");
-
         RefreshEditState();
 
-        var bar = new StackPanel
-        {
-            Orientation = Orientation.Horizontal,
-            Spacing = 8,
-            Margin = new Thickness(12, 8),
-            VerticalAlignment = VerticalAlignment.Center,
-        };
+        // What is done to the patch, in the order it is done: pick one, open or
+        // save one, take an edit back.
+        var patchwork = Row();
 
-        bar.Children.Add(Label("Patch"));
-        bar.Children.Add(presets);
-        bar.Children.Add(open);
-        bar.Children.Add(save);
-        bar.Children.Add(Separator());
-        bar.Children.Add(undoButton);
-        bar.Children.Add(redoButton);
-        bar.Children.Add(Separator());
+        patchwork.Children.Add(Label("Patch"));
+        patchwork.Children.Add(presets);
+        patchwork.Children.Add(open);
+        patchwork.Children.Add(save);
+        patchwork.Children.Add(Separator());
+        patchwork.Children.Add(undoButton);
+        patchwork.Children.Add(redoButton);
 
         assistantButton.IsEnabled = plugins.Assistants.Count > 0;
         ToolTip.SetTip(assistantButton, plugins.Assistants.Count > 0
-            ? "Describe a patch and have one built. Nothing is sent until you ask, and what comes back is an edit Ctrl+Z takes off again."
+            ? "Describe a patch and have one built. Nothing is sent until you ask, and what "
+              + "comes back is an edit Ctrl+Z takes off again."
             : "No assistant plugin is installed. See the status bar for where plugins are looked for.");
         assistantButton.IsCheckedChanged += (_, _) => ShowAssistant(assistantButton.IsChecked == true);
 
-        bar.Children.Add(assistantButton);
-
-        var settings = new Button { Content = "Settings", Width = 96 };
+        var settings = Glyph("settings", "⚙", "Which assistant to use, and the key it needs.");
         settings.Click += async (_, _) => await ShowSettingsAsync();
 
-        ToolTip.SetTip(settings, "Which assistant to use, and the key it needs.");
-
-        var about = new Button { Content = "About", Width = 80 };
+        var about = Glyph("about", "ⓘ", "What this is, who wrote it, and what it may be done with.");
         about.Click += async (_, _) => await ShowAboutAsync();
 
-        ToolTip.SetTip(about, "What this is, who wrote it, and what it may be done with.");
+        // The other end of the bar, because none of these is about the patch:
+        // they are the program itself, and a thing reached for once a session
+        // does not belong in the path of the things reached for constantly.
+        var program = Row();
 
-        bar.Children.Add(Separator());
-        bar.Children.Add(settings);
-        bar.Children.Add(about);
+        program.Children.Add(assistantButton);
+        program.Children.Add(settings);
+        program.Children.Add(about);
+
+        var bar = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto") };
+
+        Grid.SetColumn(patchwork, 0);
+        Grid.SetColumn(program, 2);
+
+        bar.Children.Add(patchwork);
+        bar.Children.Add(program);
 
         return new Border
         {
@@ -497,6 +498,55 @@ public sealed partial class MainWindow : Window
     }
 
     // --- shared bits of chrome -----------------------------------------------
+
+    /// <summary>One group of toolbar controls, laid out along it.</summary>
+    private static StackPanel Row() => new()
+    {
+        Orientation = Orientation.Horizontal,
+        Spacing = 8,
+        Margin = new Thickness(12, 8),
+        VerticalAlignment = VerticalAlignment.Center,
+    };
+
+    /// <summary>
+    /// A toolbar button that is a symbol rather than a word.
+    /// </summary>
+    /// <remarks>
+    /// The tip is not decoration here: with the labels gone it is the only place
+    /// the button says what it does, so every one of these has one and it is a
+    /// sentence rather than a repeat of the icon's name.
+    /// <para>
+    /// Named as well, because a test can no longer find a button by reading it —
+    /// and a glyph is a poor thing to write an assertion against.
+    /// </para>
+    /// </remarks>
+    private static Button Glyph(string name, string glyph, string tip) =>
+        Marked(new Button(), name, glyph, tip);
+
+    /// <summary>The same, for the two icons that are drawn rather than typed.</summary>
+    private static Button Drawn(string name, Control icon, string tip) =>
+        Marked(new Button(), name, icon, tip);
+
+    /// <summary>The same, for a button that stays down.</summary>
+    private static ToggleButton Toggle(string name, string glyph, string tip) =>
+        Marked(new ToggleButton(), name, glyph, tip);
+
+    private static T Marked<T>(T button, string name, object content, string tip)
+        where T : ContentControl
+    {
+        button.Name = name;
+        button.Content = content;
+        button.Width = 34;
+        button.Height = 30;
+        button.Padding = new Thickness(0);
+        button.FontSize = 15;
+        button.HorizontalContentAlignment = HorizontalAlignment.Center;
+        button.VerticalContentAlignment = VerticalAlignment.Center;
+
+        ToolTip.SetTip(button, tip);
+
+        return button;
+    }
 
     private static TextBlock Label(string text) => new()
     {

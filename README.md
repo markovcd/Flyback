@@ -435,7 +435,8 @@ picture is identical either way.
 | Frame the patch | `F` |
 | Delete a module | `Delete` — except the Output, which every patch keeps |
 | Set exact values | select a module, use the inspector on the right |
-| Undo / redo | `Ctrl+Z` and `Ctrl+Shift+Z`, or the two buttons in the toolbar. `Ctrl+Y` redoes as well, and `Cmd` does what `Ctrl` does |
+| Undo / redo | `Ctrl+Z` and `Ctrl+Shift+Z`, or `↶` and `↷` on the toolbar. `Ctrl+Y` redoes as well, and `Cmd` does what `Ctrl` does |
+| Toolbar | symbols rather than words, and every one of them says what it is if you rest on it. What is done to the patch is on the left, what belongs to the program — the assistant, the settings, the about — on the right |
 | Everything else | select the **Output** |
 
 Any input with nothing plugged into it uses the value shown on the node, so most

@@ -10,6 +10,7 @@ using Flyback.App;
 using Flyback.App.Controls;
 using Flyback.Core.Graph;
 using Shouldly;
+using Xunit;
 
 namespace Flyback.App.Tests.Ui;
 
@@ -64,6 +65,14 @@ public class OutputSettingsTests : UiTest
         Dispatcher.UIThread.RunJobs();
         window.UpdateLayout();
     }
+
+    /// <summary>
+    /// A toolbar control by the name it was given. The buttons up there are
+    /// glyphs now, and a glyph is a poor thing to write an assertion against.
+    /// </summary>
+    private static T Named<T>(MainWindow window, string name)
+        where T : Control =>
+        All<T>(window).Single(c => c.Name == name);
 
     /// <summary>What every button in the window is labelled, in tree order.</summary>
     private static IEnumerable<string?> Buttons(MainWindow window) =>
@@ -129,7 +138,7 @@ public class OutputSettingsTests : UiTest
             editor.GetVisualParent(),
             "the two are stacked in one column, not one above the whole window");
 
-        var toggle = All<ToggleButton>(window).Single(b => b.Content as string == "Assistant");
+        var toggle = Named<ToggleButton>(window, "assistant");
 
         toggle.IsChecked = true;
         window.UpdateLayout();
@@ -150,11 +159,58 @@ public class OutputSettingsTests : UiTest
     {
         var window = Open();
 
-        Buttons(window).ShouldContain("About");
+        Named<Button>(window, "about").ShouldNotBeNull();
 
         Select(window, Editor(window).Patch.Output);
 
-        Buttons(window).ShouldContain("About");
+        Named<Button>(window, "about").ShouldNotBeNull();
+    }
+
+    /// <summary>
+    /// Open and save are drawn rather than typed. A folder and a floppy disk are
+    /// what those two look like everywhere, and neither is a character any font
+    /// here can be relied on to have — the code points exist, and on Windows
+    /// they resolve to the colour emoji font, which would put two full-colour
+    /// pictures in a bar of thin grey strokes.
+    /// </summary>
+    [AvaloniaTheory]
+    [InlineData("open")]
+    [InlineData("save")]
+    public void The_file_icons_are_drawn_rather_than_typed(string name)
+    {
+        var window = Open();
+        var icon = Named<Button>(window, name).Content.ShouldBeOfType<Avalonia.Controls.Shapes.Path>();
+
+        icon.Data.ShouldNotBeNull();
+
+        // Taken from the button rather than set here, so that hovering, pressing
+        // and grey-out all reach it. A binding that failed to resolve leaves this
+        // null and draws nothing at all.
+        icon.Stroke.ShouldNotBeNull("the stroke follows the button's own foreground");
+    }
+
+    /// <summary>
+    /// Every toolbar button is a symbol now, so the tip is the only place it
+    /// says what it does. One without is a button nobody can identify.
+    /// </summary>
+    [AvaloniaTheory]
+    [InlineData("open")]
+    [InlineData("save")]
+    [InlineData("undo")]
+    [InlineData("redo")]
+    [InlineData("assistant")]
+    [InlineData("settings")]
+    [InlineData("about")]
+    public void Every_toolbar_icon_says_what_it_is(string name)
+    {
+        var window = Open();
+        var button = Named<ContentControl>(window, name);
+
+        var tip = ToolTip.GetTip(button) as string;
+
+        tip.ShouldNotBeNullOrWhiteSpace();
+        tip.ShouldNotBe(button.Content as string, "the tip is a sentence, not the glyph again");
+        tip!.Length.ShouldBeGreaterThan(8);
     }
 
     /// <summary>

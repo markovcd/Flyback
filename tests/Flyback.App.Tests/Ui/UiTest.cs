@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
+using Avalonia.Styling;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Avalonia.Themes.Fluent;
@@ -85,7 +86,17 @@ public class UiTest
 }
 
 /// <summary>Nothing but the theme — the shell's own App does far more than a test wants.</summary>
+/// <remarks>
+/// The dark variant as well as the theme, because the program asks for it and a
+/// test that looked at a light one would be looking at a window nobody has. It
+/// is what decides the foreground of a button, so an icon drawn in its parent's
+/// colour comes out black here and light where it actually runs.
+/// </remarks>
 public sealed class TestApp : Application
 {
-    public override void Initialize() => Styles.Add(new FluentTheme());
+    public override void Initialize()
+    {
+        Styles.Add(new FluentTheme());
+        RequestedThemeVariant = ThemeVariant.Dark;
+    }
 }
