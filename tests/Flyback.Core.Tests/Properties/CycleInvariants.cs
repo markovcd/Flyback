@@ -29,10 +29,9 @@ public class CycleInvariants
     /// Runs a program once per entry in <paramref name="x"/> and hands back what
     /// its output register held each time.
     /// </summary>
-    /// <param name="state">
-    /// Null builds one to fit. Passing null on purpose is how the video path is
-    /// tested — see <see cref="A_loop_with_no_state_behind_it_is_simply_open"/>.
-    /// </param>
+    /// <param name="program"></param>
+    /// <param name="x"></param>
+    /// <param name="stateless"></param>
     private static float[] Run(CompiledPatch program, float[] x, bool stateless = false)
     {
         var memory = stateless

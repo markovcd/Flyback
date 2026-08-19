@@ -59,11 +59,13 @@ public static class PatchCompiler
     /// Output is never visited, so nothing upstream of it is lowered and the
     /// picture the patch makes costs nothing while its chart is up.
     /// </summary>
+    /// <param name="patch"></param>
     /// <param name="probe">
     /// Which module to root at. A node that is not in the patch — a selection
     /// outliving the module it named — compiles the ordinary picture instead,
     /// because the alternative is a black screen with nothing to say why.
     /// </param>
+    /// <param name="modules"></param>
     public static CompileResult CompileForProbe(this Patch patch, Guid probe, ModuleCatalog? modules = null) =>
         Compile(patch, NodeCatalog.Screen, modules, probe);
 

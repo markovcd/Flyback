@@ -229,6 +229,7 @@ public static class PatchIo
     /// may assume anything but the layout immediately before it.
     /// </para>
     /// </remarks>
+    /// <param name="patch"></param>
     /// <param name="from">The layout the file was written in, never above <see cref="FormatVersion"/>.</param>
     private static Patch Upgrade(Patch patch, int from)
     {

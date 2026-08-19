@@ -239,7 +239,7 @@ public class MarqueeSelectTests : UiTest
     [AvaloniaFact]
     public void Drawing_a_band_moves_nothing()
     {
-        var patch = Row(out var a, out var b, out _);
+        var patch = Row(out _, out _, out _);
         var (editor, window) = Editing(patch);
 
         var before = patch.Nodes.ToDictionary(n => n.Id, n => (n.X, n.Y));

@@ -391,7 +391,10 @@ public class TimbreTests
     /// Feeds a signal through one module into the audio sink, one sample at a
     /// time, with whatever state the program asked for.
     /// </summary>
+    /// <param name="signal"></param>
     /// <param name="port">Which of the module's outputs to listen to.</param>
+    /// <param name="typeId"></param>
+    /// <param name="knobs"></param>
     private static float[] Through(
         string typeId, float[] signal, int port, params (int Port, float Value)[] knobs)
     {

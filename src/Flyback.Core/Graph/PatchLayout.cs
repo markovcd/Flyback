@@ -90,7 +90,7 @@ public static class PatchLayout
         if (defs.Count == 0) return;
 
         var (into, outOf) = Wires(patch, defs);
-        var columns = Columns(patch, defs, into, outOf, catalog);
+        var columns = Columns(patch, defs, into, outOf);
 
         Order(columns, into, outOf, patch);
         Place(patch, defs, into, columns, size);
@@ -149,8 +149,7 @@ public static class PatchLayout
         Patch patch,
         Dictionary<Guid, NodeDef> defs,
         ILookup<Guid, Connection> into,
-        ILookup<Guid, Connection> outOf,
-        ModuleCatalog catalog)
+        ILookup<Guid, Connection> outOf)
     {
         var rank = new Dictionary<Guid, int>();
         foreach (var node in patch.Nodes)

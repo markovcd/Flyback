@@ -1,5 +1,4 @@
 using Avalonia;
-using Avalonia.Controls;
 using Flyback.App.Controls;
 
 namespace Flyback.App;

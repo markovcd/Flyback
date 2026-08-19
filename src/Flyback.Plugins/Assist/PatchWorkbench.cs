@@ -263,7 +263,7 @@ public sealed class PatchWorkbench
         if (node.Steps is not { Count: > 0 } steps) return "It has no notes.";
 
         var written = steps.Select(s =>
-            s.Length == 1f && s.Volume == 1f
+            s is { Length: 1f, Volume: 1f }
                 ? s.Value.ToString(CultureInfo.InvariantCulture)
                 : $"{s.Value.ToString(CultureInfo.InvariantCulture)}"
                   + $"/{s.Length.ToString(CultureInfo.InvariantCulture)}"

@@ -7,7 +7,6 @@ using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Flyback.App.Controls;
 using Shouldly;
-using Xunit;
 
 namespace Flyback.App.Tests.Ui;
 

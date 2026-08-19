@@ -845,7 +845,7 @@ public static class NodeCatalog
         // the picture, which is what makes the grid the axis: however wide the
         // preview is, a square is an eighth of the window and a quarter of the
         // scale.
-        const float Division = 0.25f;
+        const float division = 0.25f;
 
         return new NodeDef(
             ProbeTypeId, "Probe", "Output",
@@ -928,8 +928,8 @@ public static class NodeCatalog
                 // the aspect ratio has done to x.
                 Slot Lattice(Slot u)
                 {
-                    var cell = em.Unary(OpCode.Fract, em.Add(em.Mul(u, 1f / Division), 0.5f));
-                    var away = em.Mul(em.Unary(OpCode.Abs, em.Add(cell, -0.5f)), Division);
+                    var cell = em.Unary(OpCode.Fract, em.Add(em.Mul(u, 1f / division), 0.5f));
+                    var away = em.Mul(em.Unary(OpCode.Abs, em.Add(cell, -0.5f)), division);
 
                     return em.Sub(one, em.Ternary(
                         OpCode.Smoothstep, em.Constant(0.0015f), em.Constant(0.005f), away));
@@ -995,7 +995,7 @@ public static class NodeCatalog
         // How far a value of one 'scale' pushes the trace off the loop, as a
         // fraction of the radius. Half, so a signal that fits reads as a ring
         // with a waveform around it rather than as a disc.
-        const float Swing = 0.5f;
+        const float swing = 0.5f;
 
         return new NodeDef(
             ScanTypeId, "Scan", "Output",
@@ -1003,9 +1003,9 @@ public static class NodeCatalog
                 Swept("in"),
                 Domain("clock"),
                 Num("rate", 220f, 0f, 4000f),
-                Num("radius", 0.5f, 0f, 4f),
-                Num("x", 0f, -4f, 4f),
-                Num("y", 0f, -4f, 4f),
+                Num("radius", 0.5f, 0f),
+                Num("x"),
+                Num("y"),
                 Num("scale", 1f, 0.01f, 16f),
             ],
             [Num("out"), Col("view")],
@@ -1052,7 +1052,7 @@ public static class NodeCatalog
 
                 var trace = em.Add(
                     radius,
-                    em.Mul(em.Mul(em.Binary(OpCode.Div, value, node[6]), radius), Swing));
+                    em.Mul(em.Mul(em.Binary(OpCode.Div, value, node[6]), radius), swing));
 
                 var lit = em.Sub(one, em.Ternary(
                     OpCode.Smoothstep,

@@ -653,8 +653,8 @@ public sealed class NodeEditor : Control
     /// </remarks>
     private (double X, double Y) WhereToPaste(IReadOnlyList<NodeInstance> arriving)
     {
-        const double Step = 28;
-        const int Tries = 40;
+        const double step = 28;
+        const int tries = 40;
 
         var group = BoxAround(arriving);
         var taken = patch.Nodes.Select(node => BoxAround([node])).ToArray();
@@ -663,15 +663,15 @@ public sealed class NodeEditor : Control
         var dx = centre.X - group.Center.X;
         var dy = centre.Y - group.Center.Y;
 
-        for (var step = 0; step < Tries; step++)
+        for (var s = 0; s < tries; s++)
         {
             // Inflated, so that "clear of" means with room to see the edge
             // rather than merely not overlapping by a pixel.
-            var moved = group.Translate(new Vector(dx, dy)).Inflate(Step);
+            var moved = group.Translate(new Vector(dx, dy)).Inflate(step);
             if (!taken.Any(box => box.Intersects(moved))) break;
 
-            dx += Step;
-            dy += Step;
+            dx += step;
+            dy += step;
         }
 
         return (dx, dy);

@@ -492,13 +492,13 @@ public class ModulationTests
     /// </summary>
     private static float Spread(float[] signal, int from, int to)
     {
-        const int Window = 400;
+        const int window = 400;
 
         float loudest = 0f, quietest = float.MaxValue;
 
-        for (var start = from; start + Window <= to && start + Window <= signal.Length; start += Window)
+        for (var start = from; start + window <= to && start + window <= signal.Length; start += window)
         {
-            var level = Peak(signal, start, start + Window);
+            var level = Peak(signal, start, start + window);
 
             loudest = MathF.Max(loudest, level);
             quietest = MathF.Min(quietest, level);

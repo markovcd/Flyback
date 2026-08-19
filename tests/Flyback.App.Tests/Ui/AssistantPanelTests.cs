@@ -3,7 +3,6 @@ using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Flyback.App.Controls;
 using Flyback.Core.Graph;
-using Flyback.Plugins.Assist;
 using Flyback.Plugins.Hosting;
 using Shouldly;
 

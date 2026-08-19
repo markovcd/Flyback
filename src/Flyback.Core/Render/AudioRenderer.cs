@@ -34,11 +34,13 @@ public readonly record struct AudioScan(bool Scan, float Rate, float Aspect)
     /// the one thing the sockets cannot do, here as on screen.
     /// </para>
     /// </remarks>
+    /// <param name="patch"></param>
     /// <param name="aspect">
     /// The frame the sweep should cover, which belongs to whoever is rendering
     /// rather than to the patch: an export at one size and a preview at another
     /// hear the same picture across a different width.
     /// </param>
+    /// <param name="modules"></param>
     public static AudioScan For(Patch patch, float aspect, ModuleCatalog? modules = null)
     {
         var sink = patch.FirstOf(NodeCatalog.OutputTypeId);

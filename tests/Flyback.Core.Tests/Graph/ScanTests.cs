@@ -41,12 +41,17 @@ public class ScanTests
     /// wherever the caller asks — the speakers to hear the loop, the screen to
     /// see it.
     /// </summary>
+    /// <param name="sinkPort"></param>
     /// <param name="overCoordinates">
     /// Whether the source is a field, and so wants Coordinates in its first two
     /// sockets. Left off it is read at one point and there is nothing to scan —
     /// which is a mistake worth being able to make on purpose, and not one to
     /// make by accident in every test here.
     /// </param>
+    /// <param name="watched"></param>
+    /// <param name="sourcePort"></param>
+    /// <param name="scanOutput"></param>
+    /// <param name="knobs"></param>
     private static (Patch Patch, NodeInstance Scanner) Scanning(
         string watched,
         int sourcePort = 0,

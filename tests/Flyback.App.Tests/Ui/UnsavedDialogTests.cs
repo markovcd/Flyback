@@ -55,7 +55,7 @@ public class UnsavedDialogTests : UiTest
     {
         var button = All<Button>(dialog).Single(b => b.Content as string == labelled);
 
-        button.RaiseEvent(new RoutedEventArgs(Avalonia.Controls.Button.ClickEvent));
+        button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();
     }
 
