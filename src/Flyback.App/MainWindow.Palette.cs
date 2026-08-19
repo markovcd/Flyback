@@ -26,7 +26,11 @@ public sealed partial class MainWindow
     private void BuildPalette()
     {
         palette = new ModulePalette(plugins.Modules, Add);
+
         paletteFlyout.Content = palette;
+        paletteFlyout.FlyoutPresenterClasses.Add(ModulePalette.PresenterClass);
+
+        Styles.Add(ModulePalette.Trim());
 
         editor.MenuRequested += (_, at) =>
         {

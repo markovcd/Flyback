@@ -5,6 +5,7 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Avalonia.Styling;
 using Flyback.Core.Graph;
 
 namespace Flyback.App.Controls;
@@ -33,10 +34,21 @@ public sealed class ModulePalette : UserControl
 
     private const double PopupWidth = 240;
 
+    /// <summary>How solid the list is over the patch it is being added to.</summary>
+    public const double Translucency = 0.8;
+
+    /// <summary>
+    /// The class the flyout presenter holding this is given, so that
+    /// <see cref="Trim"/> can find it. The presenter's own padding and border
+    /// are sized for a menu of a few words and are far too much around a list
+    /// that brings its own.
+    /// </summary>
+    public const string PresenterClass = "palette";
+
     private readonly ModuleCatalog catalog;
     private readonly Action<string> chosen;
 
-    private readonly StackPanel modules = new() { Margin = new Thickness(10, 0, 10, 8), Spacing = 2 };
+    private readonly StackPanel modules = new() { Margin = new Thickness(6, 0, 6, 6), Spacing = 2 };
 
     private readonly TextBox filter = new()
     {
@@ -90,6 +102,12 @@ public sealed class ModulePalette : UserControl
 
         Width = PopupWidth;
         Name = "palette";
+
+        // Slightly see-through, so the patch under it is still readable while
+        // you are choosing what to add to it. On the whole control rather than
+        // on its background, because a solid list of text over a translucent
+        // panel reads as a mistake rather than as a decision.
+        Opacity = Translucency;
 
         filter.PropertyChanged += (_, e) =>
         {
@@ -158,7 +176,7 @@ public sealed class ModulePalette : UserControl
         DescribeSources();
         Fill();
 
-        var header = new StackPanel { Spacing = 6, Margin = new Thickness(10, 8, 10, 0) };
+        var header = new StackPanel { Spacing = 4, Margin = new Thickness(6, 6, 6, 0) };
         header.Children.Add(filter);
 
         // With nothing installed there is only the engine's own entry, and a
@@ -178,11 +196,45 @@ public sealed class ModulePalette : UserControl
             HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
         });
 
+        // The list brings its own edge, because the presenter's is given away by
+        // Trim below — one border rather than two boxes a few pixels apart.
         Content = new Border
         {
             Background = new SolidColorBrush(Colours.Panel),
+            BorderBrush = new SolidColorBrush(Colours.Edge),
+            BorderThickness = new Thickness(1),
+            CornerRadius = new CornerRadius(4),
             Child = panel,
         };
+    }
+
+    /// <summary>
+    /// Takes the padding and the border off the flyout presenter that holds one
+    /// of these, and stops it painting a background of its own.
+    /// </summary>
+    /// <remarks>
+    /// A presenter is dressed for a menu of a few words: sixteen pixels of
+    /// padding all round, a border and a corner radius. Around a list that is
+    /// already a panel with its own margins that reads as a wide empty frame,
+    /// and its opaque background would sit behind the translucency rather than
+    /// under it. So the presenter gives up all three and the list keeps them.
+    /// <para>
+    /// A style rather than properties on the flyout, because a presenter is made
+    /// by the flyout when it opens and there is nothing to set them on until
+    /// then. Added to the window's own styles, so it reaches the popup wherever
+    /// that ends up in the tree.
+    /// </para>
+    /// </remarks>
+    public static Style Trim()
+    {
+        var style = new Style(x => x.OfType<FlyoutPresenter>().Class(PresenterClass));
+
+        style.Setters.Add(new Setter(TemplatedControl.PaddingProperty, new Thickness(0)));
+        style.Setters.Add(new Setter(TemplatedControl.BorderThicknessProperty, new Thickness(0)));
+        style.Setters.Add(new Setter(TemplatedControl.BackgroundProperty, Brushes.Transparent));
+        style.Setters.Add(new Setter(TemplatedControl.CornerRadiusProperty, new CornerRadius(4)));
+
+        return style;
     }
 
     /// <summary>

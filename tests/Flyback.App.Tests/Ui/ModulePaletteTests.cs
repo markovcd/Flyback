@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
@@ -153,6 +154,34 @@ public class ModulePaletteTests : UiTest
         Settle(window);
 
         editor.GraphToScreen.Transform(new Point(0, 0)).ShouldBe(before, "the view should not have moved");
+    }
+
+    // --- how it looks --------------------------------------------------------
+
+    /// <summary>
+    /// The presenter holding the list gives up its padding, its border and its
+    /// background, and the list keeps them. Worth pinning because the way this
+    /// fails is silent: a selector that matches nothing leaves the presenter
+    /// dressed as a menu and there is no error anywhere.
+    /// </summary>
+    [AvaloniaFact]
+    public void The_flyout_presenter_gives_its_frame_up_to_the_list()
+    {
+        var window = Open();
+
+        RightClick(window, Empty(window));
+
+        var palette = Palette(window).ShouldNotBeNull();
+        var presenter = All<FlyoutPresenter>(window)
+            .First(p => p.Classes.Contains(ModulePalette.PresenterClass));
+
+        presenter.Padding.ShouldBe(new Thickness(0));
+        presenter.BorderThickness.ShouldBe(new Thickness(0));
+
+        // The list is the one thing painting a background, so the translucency
+        // has nothing opaque sitting behind it.
+        palette.Opacity.ShouldBe(ModulePalette.Translucency);
+        palette.Content.ShouldBeOfType<Border>().Background.ShouldNotBeNull();
     }
 
     // --- the keyboard --------------------------------------------------------
