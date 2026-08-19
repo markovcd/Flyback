@@ -547,8 +547,8 @@ moiré, which is the same beating seen rather than heard.
 
 [`src/Flyback.Plugins.Space`](src/Flyback.Plugins.Space) adds **Delay** and
 **Reverb**, and the **Echo chamber** preset puts a plucked tone through both.
-Besides an oscillator's running phase, they are the only things in the synth that
-remember anything.
+They are the only things here that remember more than one evaluation — an
+oscillator's running phase and the Filter below remember exactly one.
 
 | | |
 |---|---|
@@ -565,6 +565,50 @@ sets out why it cannot be avoided. For a picture with a past, use `Feedback`.
 An oscillator's phase is carried the same way and falls back the same way, but
 you will not notice: what it falls back *to* is the multiply it replaced, so the
 picture is identical either way.
+
+### Filter and fold
+
+[`src/Flyback.Plugins.Timbre`](src/Flyback.Plugins.Timbre) adds **Filter**,
+**Fold** and **Drive** — the modules that decide what a patch sounds like rather
+than where its signal goes. Until they existed the catalogue had five
+oscillators and nothing whatever to shape one with. The **Filter sweep** preset
+is all three of them wired up.
+
+| | |
+|---|---|
+| Filter | a resonant state-variable filter, with `low`, `band` and `high` coming out at once rather than one at a time behind a switch. `cutoff` is in hertz and is meant to be swept — patch an oscillator or an envelope into it, which is the sound the module exists for. `resonance` peaks the corner and will ring on a sharp edge |
+| Fold | folds a signal back on itself where it runs past full scale, which *adds* harmonics where a filter can only take them away. At a `drive` of 1 it is exactly a wire; `bias` shifts the signal first, so the folds stop being symmetric and even harmonics appear |
+| Drive | soft saturation — the peaks rounded off rather than turned round. Peak-normalised as it goes, like the Supersaw, so more drive is dirtier and never louder. What it does instead is bring the quiet parts up, which is why a compressor and a distortion are the same arithmetic at different settings |
+
+The two shaping modules are pure and untyped, so they do the same thing at both
+sinks and to a colour as readily as to a tone: the harmonics the ear hears from
+a Fold are the bands the eye sees in a gradient, from one knob. That is what the
+preset shows — one ring field and one saw through the same folder at the same
+drive, so the picture bands exactly as the tone brightens.
+
+The Filter is the one with a memory, and it is audio-only for the reason
+everything else here with a memory is. What it does on the video path is a
+choice rather than an accident, though: a picture is one evaluation per pixel
+with nothing before it, so what the filter sees there is a signal that never
+moves — and its response to a signal that never moves is everything through the
+lowpass and nothing through the other two. Put one in a patch and the picture is
+the picture it already was.
+
+Two things are worth knowing about the sound. The cutoff is in hertz and means
+it: the coefficient is prewarped, so the corner lands on the frequency asked for
+rather than near it. And the topology solves its own feedback loop rather than
+iterating it, which is what keeps a fast sweep stable at every cutoff it passes
+through on the way to wherever it is going.
+
+None of this needed the engine changed, which is the part worth reading the
+plugin for. The filter's integrators are one-evaluation cells taken from the
+emitter — the same cells the Unit Delay uses to let a patch draw a loop by
+hand — and it works out its own sample rate by measuring how far the clock moved,
+the way an oscillator measures its own domain. So a filter, a slew limiter or a
+sample and hold is now something anybody can write outside `Flyback.Core`; what
+still cannot be is anything needing a *buffer*, which is why Delay and Allpass
+remain opcodes. [ADR-0041](docs/adr/0041-a-plugin-can-hold-state-without-a-new-opcode.md)
+sets out the whole of it.
 
 ## Using the editor
 
@@ -642,9 +686,10 @@ wired into it at all — one flat colour on the screen, silence at the speakers.
 | `src/Flyback.Plugins.CoreAudio` | macOS sound output, straight to the default output audio unit |
 | `src/Flyback.Plugins.Alsa` | Linux sound output, through libasound's default device |
 | `src/Flyback.Plugins.Supersaw` | the Supersaw oscillator, as a module plugin |
-| `src/Flyback.Plugins.Space` | delay and reverb — the only modules with a memory of their own |
+| `src/Flyback.Plugins.Space` | delay and reverb — the only modules that remember more than one evaluation |
+| `src/Flyback.Plugins.Timbre` | filter, wavefolder and saturator, holding their state in the emitter's own cells |
 
-Why it is built this way is recorded in [docs/adr](docs/adr) — 39 decision
+Why it is built this way is recorded in [docs/adr](docs/adr) — 41 decision
 records covering the compiler, the renderer, the shell and the boundaries
 between them.
 

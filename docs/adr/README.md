@@ -4,7 +4,7 @@ Each record captures one decision, the situation that forced it, and what it
 costs. Format is [Michael Nygard's](https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions):
 context, decision, consequences.
 
-Eleven records — [0003](0003-cpu-rendering-with-a-gpu-path-left-open.md),
+Twelve records — [0003](0003-cpu-rendering-with-a-gpu-path-left-open.md),
 [0004](0004-visual-patch-editor-as-the-authoring-model.md),
 [0026](0026-modules-from-plugins-with-provenance-in-the-file.md),
 [0027](0027-delay-lines-give-the-audio-path-a-memory.md),
@@ -13,15 +13,18 @@ Eleven records — [0003](0003-cpu-rendering-with-a-gpu-path-left-open.md),
 [0034](0034-settings-in-a-file-the-key-in-the-operating-system.md),
 [0036](0036-export-video-as-motion-jpeg-in-an-avi.md),
 [0037](0037-one-output-block-that-every-patch-has.md),
-[0038](0038-a-sequencers-notes-are-a-list-on-the-node.md) and
-[0040](0040-a-probe-is-a-second-compile-root.md) — are marked
+[0038](0038-a-sequencers-notes-are-a-list-on-the-node.md),
+[0040](0040-a-probe-is-a-second-compile-root.md) and
+[0041](0041-a-plugin-can-hold-state-without-a-new-opcode.md) — are marked
 **user-directed**: they were chosen by the project owner, not derived. The first
 two sit upstream of almost everything else here; 0026 and 0027 each give up a
 property an earlier record relied on, knowingly; 0031, 0033, 0034, 0036 and 0040
 each let the instrument do something it could not do at all — 0040 lets it be
 looked at; and 0037 and 0038 each take something away — 0037 retires a rule 0022
 established, and 0038 supersedes the central decision of 0031, which is
-user-directed itself. All are recorded even though they were not mine to make.
+user-directed itself. 0041 is the odd one: it takes nothing away and adds no
+machinery, and simply finds that a rule 0027 stated as a limit had stopped being
+true. All are recorded even though they were not mine to make.
 
 [0035](0035-a-glsl-backend-for-the-video-path.md) is the first record where two
 backends disagree by design: the picture on screen and the picture in an exported
@@ -82,6 +85,7 @@ to differ in their last bits.
 | [0036](0036-export-video-as-motion-jpeg-in-an-avi.md) | Export video as Motion JPEG in an AVI *(user-directed)* |
 | [0038](0038-a-sequencers-notes-are-a-list-on-the-node.md) | A sequencer's notes are a list on the node *(user-directed)* |
 | [0037](0037-one-output-block-that-every-patch-has.md) | One Output block, which every patch has *(user-directed)* |
+| [0041](0041-a-plugin-can-hold-state-without-a-new-opcode.md) | A plugin can hold state without a new opcode *(user-directed)* |
 
 ### Boundaries
 

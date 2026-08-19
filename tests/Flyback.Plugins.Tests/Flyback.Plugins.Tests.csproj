@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <IsPackable>false</IsPackable>
@@ -31,6 +31,7 @@
     <PluginProject Include="..\Flyback.Plugins.FakeAssistant\Flyback.Plugins.FakeAssistant.csproj" FolderName="FakeAssistant" />
     <PluginProject Include="..\..\src\Flyback.Plugins.Supersaw\Flyback.Plugins.Supersaw.csproj" FolderName="Supersaw" />
     <PluginProject Include="..\..\src\Flyback.Plugins.Space\Flyback.Plugins.Space.csproj" FolderName="Space" />
+    <PluginProject Include="..\..\src\Flyback.Plugins.Timbre\Flyback.Plugins.Timbre.csproj" FolderName="Timbre" />
   </ItemGroup>
 
   <ItemGroup>

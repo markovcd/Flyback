@@ -15,6 +15,7 @@
     <Project Path="src/Flyback.Plugins.OpenAi/Flyback.Plugins.OpenAi.csproj" />
     <Project Path="src/Flyback.Plugins.Space/Flyback.Plugins.Space.csproj" />
     <Project Path="src/Flyback.Plugins.Supersaw/Flyback.Plugins.Supersaw.csproj" />
+    <Project Path="src/Flyback.Plugins.Timbre/Flyback.Plugins.Timbre.csproj" />
     <Project Path="src/Flyback.Plugins.Wasapi/Flyback.Plugins.Wasapi.csproj" />
   </Folder>
   <Folder Name="/tests/">

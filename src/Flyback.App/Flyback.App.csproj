@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <!--
@@ -71,6 +71,7 @@
     <PluginProject Include="..\Flyback.Plugins.OpenAi\Flyback.Plugins.OpenAi.csproj" FolderName="OpenAi" />
     <PluginProject Include="..\Flyback.Plugins.Supersaw\Flyback.Plugins.Supersaw.csproj" FolderName="Supersaw" />
     <PluginProject Include="..\Flyback.Plugins.Space\Flyback.Plugins.Space.csproj" FolderName="Space" />
+    <PluginProject Include="..\Flyback.Plugins.Timbre\Flyback.Plugins.Timbre.csproj" FolderName="Timbre" />
   </ItemGroup>
 
   <ItemGroup>
