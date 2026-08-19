@@ -273,7 +273,7 @@ public class SupersawTests
     {
         var patch = new Patch();
 
-        var clock = Add(patch, "time", (0, 1f));
+        var clock = Add(patch, "time");
         var osc = Add(patch, typeId, knobs);
         var sink = Add(patch, NodeCatalog.OutputTypeId, (NodeCatalog.OutputGainPort, 1f));
 

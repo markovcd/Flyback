@@ -41,6 +41,20 @@ public sealed class AssistantSettings
 
     public bool Vision { get; set; } = true;
 
+    /// <summary>
+    /// Whether the sound may be listened to at all. Off unless somebody says
+    /// otherwise, because it spends a second model — see
+    /// <see cref="AssistantConfig.Hearing"/>.
+    /// </summary>
+    public bool Hearing { get; set; }
+
+    /// <summary>
+    /// Which model does the listening. Empty means the provider's first one that
+    /// can — see <see cref="AssistantConfig.EarModel"/> for why it is not the
+    /// model doing the building.
+    /// </summary>
+    public string EarModel { get; set; } = string.Empty;
+
     public AssistantEffort Effort { get; set; } = AssistantEffort.Medium;
 
     /// <summary>

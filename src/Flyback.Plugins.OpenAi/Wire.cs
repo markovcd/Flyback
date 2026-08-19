@@ -29,8 +29,23 @@ internal sealed record Reply(
 /// </remarks>
 internal static class Wire
 {
+    /// <param name="tools">
+    /// What the model may call. An empty list leaves both tool fields out
+    /// altogether rather than sending an empty array: a request with no tools is
+    /// a question rather than a turn of a loop — the ear is asked one — and
+    /// endpoints differ on whether an empty <c>tools</c> beside a
+    /// <c>tool_choice</c> of "auto" is a contradiction worth a 400.
+    /// </param>
     public static JsonObject Request(string model, JsonArray messages, IReadOnlyList<PatchTool> tools)
     {
+        var request = new JsonObject
+        {
+            ["model"] = model,
+            ["messages"] = messages,
+        };
+
+        if (tools.Count == 0) return request;
+
         var declared = new JsonArray();
 
         foreach (var tool in tools)
@@ -47,13 +62,10 @@ internal static class Wire
             });
         }
 
-        return new JsonObject
-        {
-            ["model"] = model,
-            ["messages"] = messages,
-            ["tools"] = declared,
-            ["tool_choice"] = "auto",
-        };
+        request["tools"] = declared;
+        request["tool_choice"] = "auto";
+
+        return request;
     }
 
     /// <summary>
@@ -103,7 +115,40 @@ internal static class Wire
     /// one reply, which is the rule that matters — an unanswered one makes the
     /// whole next request a 400.
     /// </remarks>
-    public static JsonObject UserWithPictures(string text, IEnumerable<byte[]> pictures)
+    public static JsonObject UserWithPictures(string text, IEnumerable<byte[]> pictures) =>
+        UserWithMedia(text, pictures, []);
+
+    /// <summary>
+    /// Whatever the tools produced that is not words, as one user turn.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// One message rather than one per medium, because a turn that both rendered
+    /// and listened produced one set of observations about one patch, and
+    /// splitting them would put a bare "here is the sound" between the picture
+    /// and the words about it.
+    /// </para>
+    /// <para>
+    /// The two parts are spelled quite differently and neither spelling is
+    /// negotiable. A picture is an <c>image_url</c> carrying a data URL, which is
+    /// the one part of this format every vision endpoint agrees on. A sound is an
+    /// <c>input_audio</c> carrying bare base64 and a separate <c>format</c> — no
+    /// data URL, no media type — and it is accepted only by the audio models.
+    /// Sending one to a model that does not take it is a 400 naming the
+    /// parameter, which is why the tool that produces one is offered only when
+    /// somebody has said the model can hear.
+    /// </para>
+    /// <para>
+    /// Nothing asks for audio <em>back</em>. That would want a <c>modalities</c>
+    /// on the request and an <c>audio</c> beside it, and would answer in speech —
+    /// this conversation is a tool loop, and the reply it needs is a function
+    /// call.
+    /// </para>
+    /// </remarks>
+    public static JsonObject UserWithMedia(
+        string text,
+        IEnumerable<byte[]> pictures,
+        IEnumerable<byte[]> sounds)
     {
         var content = new JsonArray { new JsonObject { ["type"] = "text", ["text"] = text } };
 
@@ -115,6 +160,19 @@ internal static class Wire
                 ["image_url"] = new JsonObject
                 {
                     ["url"] = "data:image/png;base64," + Convert.ToBase64String(picture),
+                },
+            });
+        }
+
+        foreach (var sound in sounds)
+        {
+            content.Add(new JsonObject
+            {
+                ["type"] = "input_audio",
+                ["input_audio"] = new JsonObject
+                {
+                    ["data"] = Convert.ToBase64String(sound),
+                    ["format"] = "wav",
                 },
             });
         }

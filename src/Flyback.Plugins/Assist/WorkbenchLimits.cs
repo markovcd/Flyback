@@ -21,6 +21,18 @@ namespace Flyback.Plugins.Assist;
 /// before it, so a render that jumped straight to its target time would show a
 /// history that never happened.
 /// </param>
+/// <param name="ListenRate">
+/// The sample rate a <c>listen</c> renders at, which is not the rate the
+/// speakers run at. What comes back is base64 in a request body, so it is sized
+/// for a listener rather than for a release: half the rate is half the bytes,
+/// and 24 kHz still carries everything under 12 kHz — which is every pitch this
+/// instrument makes and most of what sits on top of one.
+/// </param>
+/// <param name="LongestListen">
+/// The most sound one call may render, in seconds. Short on purpose: a patch is
+/// judged by ear in a second or two, and the cost of this is paid per turn for
+/// the rest of the conversation.
+/// </param>
 public sealed record WorkbenchLimits(
     int MaxNodes = 120,
     int MaxToolCalls = 200,
@@ -28,4 +40,6 @@ public sealed record WorkbenchLimits(
     int FrameHeight = 180,
     int MaxFrames = 4,
     double LatestTime = 8d,
-    double WarmUpStep = 1d / 30d);
+    double WarmUpStep = 1d / 30d,
+    int ListenRate = 24_000,
+    double LongestListen = 4d);

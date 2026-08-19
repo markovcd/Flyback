@@ -33,6 +33,8 @@ public class AssistantSettingsTests : IDisposable
             Model = "claude-opus-5",
             BaseUrl = "https://example.invalid/v1",
             Vision = false,
+            Hearing = true,
+            EarModel = "some-ear",
             Effort = AssistantEffort.High,
             RememberKey = true,
         }.Save(path);
@@ -43,6 +45,8 @@ public class AssistantSettingsTests : IDisposable
         read.Model.ShouldBe("claude-opus-5");
         read.BaseUrl.ShouldBe("https://example.invalid/v1");
         read.Vision.ShouldBeFalse();
+        read.Hearing.ShouldBeTrue();
+        read.EarModel.ShouldBe("some-ear");
         read.Effort.ShouldBe(AssistantEffort.High);
         read.RememberKey.ShouldBeTrue();
     }
@@ -54,6 +58,10 @@ public class AssistantSettingsTests : IDisposable
 
         settings.Provider.ShouldBeEmpty();
         settings.Vision.ShouldBeTrue();
+
+        // Off where sight is on: a picture reaches every endpoint this adapter
+        // speaks to, and a sound reaches only the few models built to take one.
+        settings.Hearing.ShouldBeFalse();
         settings.Effort.ShouldBe(AssistantEffort.Medium);
     }
 

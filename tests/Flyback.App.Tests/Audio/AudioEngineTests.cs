@@ -56,7 +56,7 @@ public class AudioEngineTests
     {
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
 
-        var time = builder.Add("time", 0, 0, (0, 1f));
+        var time = builder.Add("time", 0, 0);
         var osc = builder.Add("osc.sine", 0, 0, (1, hz));
         var speaker = builder.Add(NodeCatalog.OutputTypeId, 0, 0, (NodeCatalog.OutputGainPort, 1f));
 

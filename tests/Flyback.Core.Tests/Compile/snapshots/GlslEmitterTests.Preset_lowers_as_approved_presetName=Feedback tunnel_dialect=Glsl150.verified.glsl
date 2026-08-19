@@ -117,9 +117,9 @@ void main()
     float r1 = py;
     float r2 = sqrt(r0 * r0 + r1 * r1);
     float r3 = at2(r1, r0);
-    float r4 = uK[0];
-    float r5 = uTime;
-    float r6 = r5 * r4;
+    float r4 = uTime;
+    float r5 = uK[0];
+    float r6 = r4 * r5;
     float r7 = cos(r6);
     float r8 = sin(r6);
     float r9 = r0 * r7;
@@ -142,7 +142,7 @@ void main()
     float r27 = r24 + r22;
     float r28 = r25 + r22;
     float r29 = uK[4];
-    float r30 = r5 * r29;
+    float r30 = r4 * r29;
     float r31 = uK[5];
     float r32 = uK[6];
     float r33 = uK[7];

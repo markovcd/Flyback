@@ -34,7 +34,10 @@ public sealed class RehearsedAssistant : IPatchAssistant
 
     public AssistantSchema Schema { get; } = new(
         "rehearsal",
-        ["rehearsal"],
+
+        // Neither, and truthfully so: this one answers from a script and has
+        // nowhere to send a picture or a sound even if it wanted one.
+        [new AssistantModel("rehearsal", Vision: false)],
         "FLYBACK_REHEARSED_KEY",
         "No key is needed; this one has already decided what it is going to do.");
 

@@ -17,7 +17,7 @@ public class AudioRendererTests
     private static CompiledPatch Tone(string oscillator, float hz, float gain = 1f)
     {
         var builder = new PatchBuilder();
-        var time = builder.Add("time", 0, 0, (0, 1f));
+        var time = builder.Add("time", 0, 0);
         var osc = builder.Add(oscillator, 0, 0, (1, hz));
         var sink = builder.Add(NodeCatalog.OutputTypeId, 0, 0, (NodeCatalog.OutputGainPort, gain));
 
@@ -36,22 +36,53 @@ public class AudioRendererTests
         return buffer;
     }
 
+    /// <summary>
+    /// Time is seconds, so the freq knob is the pitch and nothing upstream
+    /// quietly disagrees with it.
+    /// </summary>
+    /// <remarks>
+    /// Written for ADR-0048. Time used to carry a rate knob, which multiplied
+    /// `t` before anything downstream saw it — so a Time at 0.2 turned a 440 Hz
+    /// oscillator into an 88 Hz one while its own knob went on saying 440.
+    /// Nothing about the patch showed where the fifth went, and it is the kind
+    /// of wrong that is only audible.
+    /// </remarks>
+    [Fact]
+    public void Nothing_between_time_and_an_oscillator_can_change_its_pitch()
+    {
+        NodeCatalog.BuiltIn.Require("time").Inputs.ShouldBeEmpty();
+
+        var buffer = Render(Tone("osc.sine", 440f), AudioRenderer.DefaultSampleRate);
+
+        Crossings(buffer).ShouldBeInRange(878, 881);
+    }
+
     [Fact]
     public void A_220_hz_sine_really_comes_out_at_220_hz()
     {
         var buffer = Render(Tone("osc.sine", 220f), AudioRenderer.DefaultSampleRate);
 
-        // Two zero crossings per cycle. Skip the first few samples: the DC
-        // blocker settles from a cold start.
+        Crossings(buffer).ShouldBeInRange(438, 441);
+    }
+
+    /// <summary>
+    /// Zero crossings in one second of the left channel, which is twice the
+    /// pitch. The first few samples are skipped: the DC blocker settles from a
+    /// cold start.
+    /// </summary>
+    private static int Crossings(float[] buffer)
+    {
         var crossings = 0;
-        for (var frame = 20; frame < AudioRenderer.DefaultSampleRate - 1; frame++)
+
+        for (var frame = 20; frame < buffer.Length / 2 - 1; frame++)
         {
             var a = buffer[frame * 2];
             var b = buffer[(frame + 1) * 2];
+
             if ((a < 0f && b >= 0f) || (a >= 0f && b < 0f)) crossings++;
         }
 
-        crossings.ShouldBeInRange(438, 441);
+        return crossings;
     }
 
     /// <summary>ADR-0009's normalled jack, now literal: unpatched right carries left.</summary>

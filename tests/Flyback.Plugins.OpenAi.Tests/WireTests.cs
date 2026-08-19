@@ -111,6 +111,41 @@ public class WireTests
             .ShouldStartWith("data:image/png;base64,");
     }
 
+    /// <summary>
+    /// A sound is spelled quite differently from a picture, and neither spelling
+    /// is negotiable: bare base64 and a separate format, where a picture is a
+    /// data URL. This is the part that fails as a 400 naming the parameter
+    /// rather than as anything visible from here.
+    /// </summary>
+    [Fact]
+    public void A_sound_travels_as_bare_base64_with_its_format_beside_it()
+    {
+        byte[] wav = [0x52, 0x49, 0x46, 0x46];
+
+        var content = Wire.UserWithMedia("here", [], [wav])["content"]!.AsArray();
+
+        content[0]!["type"]!.GetValue<string>().ShouldBe("text");
+        content[1]!["type"]!.GetValue<string>().ShouldBe("input_audio");
+        content[1]!["input_audio"]!["format"]!.GetValue<string>().ShouldBe("wav");
+        content[1]!["input_audio"]!["data"]!.GetValue<string>().ShouldBe(Convert.ToBase64String(wav));
+    }
+
+    /// <summary>
+    /// The two spellings side by side, which is the only place they can be
+    /// compared. Nothing sends both at once — a picture goes to the model being
+    /// driven and a sound goes to the ear — but one method spells both, and a
+    /// method that muddled them would put a WAV in an <c>image_url</c>.
+    /// </summary>
+    [Fact]
+    public void A_picture_and_a_sound_are_spelled_differently_in_the_same_message()
+    {
+        var content = Wire.UserWithMedia("here", [[0x89, 0x50]], [[0x52, 0x49]])["content"]!.AsArray();
+
+        content.Count.ShouldBe(3);
+        content[1]!["type"]!.GetValue<string>().ShouldBe("image_url");
+        content[2]!["type"]!.GetValue<string>().ShouldBe("input_audio");
+    }
+
     [Fact]
     public void A_tool_result_names_the_call_it_answers()
     {

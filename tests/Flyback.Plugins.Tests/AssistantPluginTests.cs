@@ -123,6 +123,101 @@ public class AssistantPluginTests
         OpenAi.Unavailable(new AssistantConfig("sk-something", "gpt-4o")).ShouldBeNull();
     }
 
+    /// <summary>
+    /// The default has to be one of the suggestions, or the box opens on a name
+    /// its own list does not contain.
+    /// </summary>
+    [Fact]
+    public void The_model_it_starts_on_is_one_of_the_ones_it_offers()
+    {
+        OpenAi.Schema.SuggestedModels.Select(m => m.Id).ShouldContain(OpenAi.Schema.DefaultModel);
+        OpenAi.Schema.Known(OpenAi.Schema.DefaultModel).ShouldNotBeNull();
+    }
+
+    /// <summary>
+    /// A model is an ear or a driver, and here nothing is both. That is not a
+    /// rule this enforces — it is what these models are, and it is the whole
+    /// reason the sound goes to a second one: driving with an ear would build
+    /// blind, and a conversation driven by one is refused on its first turn for
+    /// carrying no audio.
+    /// </summary>
+    [Fact]
+    public void Nothing_that_listens_here_can_also_look()
+    {
+        var ears = OpenAi.Schema.Ears.ToArray();
+
+        ears.ShouldNotBeEmpty("there is nothing to listen with otherwise");
+        ears.ShouldAllBe(m => !m.Vision);
+
+        // And the one that drives by default is the other way round.
+        OpenAi.Schema.Known(OpenAi.Schema.DefaultModel)!.Vision.ShouldBeTrue();
+    }
+
+    /// <summary>
+    /// The longest match wins, and this is the pair that makes it matter:
+    /// <c>gpt-4o-audio-preview</c> begins with <c>gpt-4o</c>, so a shortest- or
+    /// first-match rule would read the audio model as the one model in the list
+    /// that would take away the capability it was chosen for.
+    /// </summary>
+    [Theory]
+    [InlineData("gpt-4o", "gpt-4o", true, false)]
+    [InlineData("gpt-4o-audio-preview", "gpt-4o-audio-preview", false, true)]
+    [InlineData("gpt-audio", "gpt-audio", false, true)]
+    [InlineData("llama3.1", "llama3.1", false, false)]
+    public void What_a_model_accepts_is_read_off_the_name(
+        string typed,
+        string expected,
+        bool vision,
+        bool hearing)
+    {
+        var known = OpenAi.Schema.Known(typed).ShouldNotBeNull();
+
+        known.Id.ShouldBe(expected);
+        known.Vision.ShouldBe(vision);
+        known.Hearing.ShouldBe(hearing);
+    }
+
+    /// <summary>
+    /// A dated snapshot is the model it is a snapshot of. Matching whole names
+    /// would make every one of these a stranger, on a form where a stranger
+    /// means "you decide" rather than "it can".
+    /// </summary>
+    [Theory]
+    [InlineData("gpt-4o-2024-11-20", "gpt-4o", false)]
+    [InlineData("gpt-4o-audio-preview-2024-12-17", "gpt-4o-audio-preview", true)]
+    [InlineData("gpt-4o-mini-audio-preview-2024-12-17", "gpt-4o-mini-audio-preview", true)]
+    public void A_dated_snapshot_is_recognised_as_what_it_is_a_snapshot_of(
+        string typed,
+        string expected,
+        bool hearing)
+    {
+        var known = OpenAi.Schema.Known(typed).ShouldNotBeNull();
+
+        known.Id.ShouldBe(expected);
+        known.Hearing.ShouldBe(hearing);
+    }
+
+    /// <summary>
+    /// Null is "nobody here knows", not "it cannot" — the endpoint is a field,
+    /// so most of what this reaches was never written down here.
+    /// </summary>
+    /// <remarks>
+    /// The middle three are the ones this rule exists for. Every one of them
+    /// begins with the name of a model that <em>is</em> written down, and not
+    /// one of them is that model: a bare prefix match would answer for all
+    /// three, and would answer wrongly in the direction that takes a switch away
+    /// from somebody who knows better than this list does.
+    /// </remarks>
+    [Theory]
+    [InlineData("mistral-large")]
+    [InlineData("gpt-4o-transcribe")]
+    [InlineData("gpt-4o-realtime-preview")]
+    [InlineData("gpt-4o-search-preview")]
+    [InlineData("")]
+    [InlineData(null)]
+    public void A_model_nobody_wrote_down_is_a_stranger_rather_than_a_refusal(string? typed) =>
+        OpenAi.Schema.Known(typed).ShouldBeNull();
+
     [Fact]
     public async Task A_run_that_goes_wrong_is_an_event_rather_than_an_exception()
     {

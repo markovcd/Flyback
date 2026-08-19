@@ -29,7 +29,7 @@ public class CopyPasteTests : UiTest
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
 
-        time = b.Add("time", 0, 0, (0, 1f));
+        time = b.Add("time", 0, 0);
         osc = b.Add("osc.sine", 0, 260, (1, 220f));
         sink = b.Add(NodeCatalog.OutputTypeId, 520, 120);
 

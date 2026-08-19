@@ -157,7 +157,7 @@ public class PatchLayoutTests
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
 
-        var time = b.Add("time", 0, 0, (0, 1f));
+        var time = b.Add("time", 0, 0);
         var osc = b.Add("osc.sine", 0, 0, (1, 220f));
         var mix = b.Add("math.add", 0, 0);
         var delay = b.Add(NodeCatalog.UnitDelayTypeId, 0, 0);
@@ -187,7 +187,7 @@ public class PatchLayoutTests
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
 
-        var time = b.Add("time", 0, 0, (0, 1f));
+        var time = b.Add("time", 0, 0);
         var top = b.Add("osc.sine", 0, 0, (1, 220f));
         var bottom = b.Add("osc.sine", 0, 0, (1, 330f));
 

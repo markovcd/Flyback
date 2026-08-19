@@ -27,8 +27,9 @@ public sealed class AssistantRun : IDisposable
 {
     private readonly IPatchSession session;
     private readonly int maxTurns;
-    private readonly int startingNodes;
-    private readonly int startingWires;
+
+    private int startingNodes;
+    private int startingWires;
 
     private CancellationTokenSource? working;
     private bool spent;
@@ -47,7 +48,7 @@ public sealed class AssistantRun : IDisposable
         startingNodes = startingPoint.Nodes.Count;
         startingWires = startingPoint.Connections.Count;
 
-        Workbench = new PatchWorkbench(modules, startingPoint, config.Vision, limits);
+        Workbench = new PatchWorkbench(modules, startingPoint, config.Vision, config.Hearing, limits);
         session = assistant.Start(Workbench, config);
     }
 
@@ -55,7 +56,10 @@ public sealed class AssistantRun : IDisposable
     /// The patch as it was before any of this, still exactly as it was. Putting
     /// it back is assigning this to the editor.
     /// </summary>
-    public Patch Before { get; }
+    public Patch Before { get; private set; }
+
+    /// <summary>Whether this conversation has had all the turns it may have.</summary>
+    public bool Exhausted => Turns >= maxTurns;
 
     public PatchWorkbench Workbench { get; }
 
@@ -78,6 +82,24 @@ public sealed class AssistantRun : IDisposable
         !ReferenceEquals(current, Before)
         || current.Nodes.Count != startingNodes
         || current.Connections.Count != startingWires;
+
+    /// <summary>
+    /// Takes the patch just applied as the new starting point, so that what this
+    /// run itself put in the editor does not read as somebody editing behind it.
+    /// </summary>
+    /// <remarks>
+    /// Called after a proposal has been applied, and it is what lets a
+    /// conversation carry on afterwards. Without it the next message would find
+    /// the editor holding something other than <see cref="Before"/>, conclude
+    /// the person had changed the patch underneath, and start again — throwing
+    /// away the history and the workbench that produced what they just accepted.
+    /// </remarks>
+    public void Rebase(Patch applied)
+    {
+        Before = applied;
+        startingNodes = applied.Nodes.Count;
+        startingWires = applied.Connections.Count;
+    }
 
     /// <summary>Asks for the current turn to stop. It ends at the next thing the assistant does.</summary>
     public void Stop() => working?.Cancel();
@@ -108,6 +130,14 @@ public sealed class AssistantRun : IDisposable
         }
 
         Turns++;
+
+        // Last turn's patch is not this turn's answer. A conversation that
+        // carries on past a proposal would otherwise leave one standing, and the
+        // caller — which applies whatever is here when a turn ends — would put
+        // the same patch in the editor again for a message that never asked for
+        // one.
+        Proposal = null;
+        ProposalSummary = string.Empty;
 
         using var mine = CancellationTokenSource.CreateLinkedTokenSource(cancel);
         working = mine;

@@ -44,10 +44,17 @@ public sealed class PatchWorkbench
     private Patch working = new();
     private string? proposal;
 
+    /// <param name="vision">Whether the model may be shown a frame, which offers <c>render</c>.</param>
+    /// <param name="hearing">
+    /// Whether the model may be played the sound, which offers <c>listen</c>.
+    /// Off by default, unlike <paramref name="vision"/>: every model worth
+    /// pointing this at can see, and only a few can hear.
+    /// </param>
     public PatchWorkbench(
         ModuleCatalog modules,
         Patch startingPoint,
         bool vision = true,
+        bool hearing = false,
         WorkbenchLimits? limits = null)
     {
         this.modules = modules;
@@ -59,11 +66,11 @@ public sealed class PatchWorkbench
 
         Adopt(PatchIo.Read(this.startingPoint, modules).Patch);
 
-        var prose = Handbook.Render(modules, prose: true);
+        var prose = Handbook.Render(modules, prose: true, hearing);
         var large = prose.Length > Handbook.ProseBudget;
 
-        Briefing = large ? Handbook.Render(modules, prose: false) : prose;
-        Tools = BuildTools(vision, lookups: large);
+        Briefing = large ? Handbook.Render(modules, prose: false, hearing) : prose;
+        Tools = BuildTools(vision, hearing, lookups: large);
     }
 
     /// <summary>The conventions and the catalogue, as a model should be told them.</summary>
@@ -72,6 +79,19 @@ public sealed class PatchWorkbench
     public IReadOnlyList<PatchTool> Tools { get; }
 
     public bool HasProposal => proposal is not null;
+
+    /// <summary>
+    /// Takes the proposal back down, leaving everything built so far in place.
+    /// </summary>
+    /// <remarks>
+    /// What a conversation does after a proposal is carry on from it — "now make
+    /// it slower" is the second thing anybody says — so the working patch stays
+    /// exactly as it was and only the offer is withdrawn. An adapter calls this
+    /// as a turn begins. One that did not would find a proposal already standing
+    /// before the model had said anything, and would hand the same patch over
+    /// again as this turn's answer.
+    /// </remarks>
+    public void Reopen() => proposal = null;
 
     public string ProposalSummary => proposal ?? string.Empty;
 
@@ -120,6 +140,7 @@ public sealed class PatchWorkbench
                 "reset" => Reset(),
                 "propose" => Propose(arguments),
                 "render" => await RenderAsync(arguments, cancel).ConfigureAwait(false),
+                "listen" => await ListenAsync(arguments, cancel).ConfigureAwait(false),
                 "describe_module" => DescribeModule(arguments),
                 "find_modules" => FindModules(arguments),
                 _ => ToolOutcome.Refused($"there is no tool called '{tool}'."),
@@ -682,6 +703,160 @@ public sealed class PatchWorkbench
         return asked.Length == 0 ? fallback : asked;
     }
 
+    // --- listening ----------------------------------------------------------
+
+    /// <summary>
+    /// Renders a stretch of the patch's sound and hands it back as a WAV.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// On a pool thread for the same reason <see cref="RenderAsync"/> is, though
+    /// the cost is nothing like the same: the audio program is evaluated about
+    /// 100k times a second against the video program's 31M, so a couple of
+    /// seconds of sound is cheaper than a single frame. What it is not cheap in
+    /// is the request body it becomes, which is why
+    /// <see cref="WorkbenchLimits.LongestListen"/> is short and
+    /// <see cref="WorkbenchLimits.ListenRate"/> is half what the speakers use.
+    /// </para>
+    /// <para>
+    /// Warmed from zero rather than sought to, exactly as a render is. The audio
+    /// path is the one with delay lines and <c>feedback.unit</c> behind it
+    /// (ADR-0027), so a patch started halfway along would be handed empty
+    /// memory and would sound like something nobody would ever hear.
+    /// </para>
+    /// <para>
+    /// Silence comes back as words rather than as a WAV. It is the failure this
+    /// instrument produces most — an oscillator whose <c>in</c> nothing drives
+    /// is legal, compiles without a word and does not move — and a model played
+    /// two seconds of nothing tends to conclude the tool is broken. Saying so,
+    /// and saying where to look, costs a sentence instead of a payload.
+    /// </para>
+    /// </remarks>
+    private Task<ToolOutcome> ListenAsync(JsonElement arguments, CancellationToken cancel)
+    {
+        // Asked of the graph rather than of the compiler, which is content with
+        // an unwired sink: silence is a legal program, and what would come back
+        // is a WAV full of zeroes rather than a complaint.
+        if (!working.Reaches().Sound)
+        {
+            return Task.FromResult(ToolOutcome.Refused(
+                "nothing is wired into the Output's 'left' or 'right', so this patch makes no "
+                + "sound and there is nothing to hear. Patch something in if it is meant to be heard."));
+        }
+
+        var patch = working.CompileForAudio(modules);
+
+        if (patch.HasIssues)
+        {
+            var why = patch.HasErrors
+                ? "this patch does not compile, so there is nothing to hear: "
+                : "there may be nothing to hear: ";
+
+            return Task.FromResult(ToolOutcome.Refused(
+                why + string.Join(" | ", patch.Issues.Select(i => i.Message))));
+        }
+
+        var (from, seconds) = Window(arguments);
+
+        return Task.Run(
+            () =>
+            {
+                var renderer = new AudioRenderer(limits.ListenRate);
+                var scan = AudioScan.For(
+                    working,
+                    SynthRenderer.AspectOf(limits.FrameWidth, limits.FrameHeight),
+                    modules);
+
+                // Thrown away, but not skipped: this is the warm-up, and what it
+                // leaves behind in the delay lines is the whole point of it.
+                if (from > 0)
+                {
+                    var skipped = new float[Samples(from)];
+                    renderer.Render(patch.Program, skipped, scan);
+                }
+
+                cancel.ThrowIfCancellationRequested();
+
+                var samples = new float[Samples(seconds)];
+                renderer.Render(patch.Program, samples, scan);
+
+                var (peak, rms) = Levels(samples);
+
+                if (peak < SilenceFloor)
+                {
+                    return ToolOutcome.Fine(
+                        $"{Number(seconds)}s from {Number(from)}s is silence — nothing above "
+                        + "-66 dBFS came out, so there is no point playing it to you. The "
+                        + "compiler has already said whatever it can see, so look at what it "
+                        + "cannot: 'gain' on the Output sitting at zero, or an 'in' that is wired "
+                        + "but never moves — a knob, or anything else holding one value, drives a "
+                        + "phase exactly as far as nothing does. Only a signal that changes with "
+                        + "'t' makes an oscillator oscillate. A constant reaching 'left' is "
+                        + "silent too: it is pure DC, and the DC blocker removes it.");
+                }
+
+                var wav = new MemoryStream();
+                WavWriter.Write(wav, samples, renderer.SampleRate, NodeCatalog.AudioChannels);
+
+                var caption = new StringBuilder(
+                    $"{Number(seconds)}s of sound from {Number(from)}s, in stereo at "
+                    + $"{limits.ListenRate / 1000} kHz. Peak {Decibels(peak)}, rms {Decibels(rms)}. "
+                    + "It was rendered from zero, so anything with a delay in it has the tail it "
+                    + "would really have.");
+
+                // Worth saying, because it changes what the sound even is: a
+                // scanning patch is being swept across its own picture, so what
+                // is heard is the image and editing the picture edits the sound.
+                if (scan.Scan)
+                    caption.Append($" The Output is scanning at {Number(scan.Rate)} sweeps a second, "
+                        + "so this is the picture being heard rather than a patch running on time.");
+
+                return ToolOutcome.Played(wav.ToArray(), caption.ToString());
+            },
+            cancel);
+    }
+
+    /// <summary>Below this a buffer is called silence: -66 dBFS, and nothing a speaker would utter.</summary>
+    private const float SilenceFloor = 0.0005f;
+
+    private int Samples(double seconds) =>
+        (int)Math.Round(limits.ListenRate * seconds) * NodeCatalog.AudioChannels;
+
+    /// <summary>Which stretch of the timeline to render, clamped to what one call may spend.</summary>
+    private (double From, double Seconds) Window(JsonElement arguments)
+    {
+        var from = arguments.TryGetProperty("from", out var start) && start.ValueKind == JsonValueKind.Number
+            ? Math.Clamp(start.GetDouble(), 0d, limits.LatestTime)
+            : 0d;
+
+        var seconds = arguments.TryGetProperty("seconds", out var length)
+            && length.ValueKind == JsonValueKind.Number
+                ? Math.Clamp(length.GetDouble(), 0.25d, limits.LongestListen)
+                : Math.Min(2d, limits.LongestListen);
+
+        return (from, seconds);
+    }
+
+    /// <summary>Peak and rms of an interleaved buffer, over both channels at once.</summary>
+    private static (float Peak, float Rms) Levels(ReadOnlySpan<float> samples)
+    {
+        var peak = 0f;
+        var sum = 0d;
+
+        foreach (var sample in samples)
+        {
+            var size = Math.Abs(sample);
+            if (size > peak) peak = size;
+            sum += (double)sample * sample;
+        }
+
+        return (peak, samples.Length == 0 ? 0f : (float)Math.Sqrt(sum / samples.Length));
+    }
+
+    private static string Decibels(float level) => level <= 0f
+        ? "-inf dBFS"
+        : (20 * Math.Log10(level)).ToString("0.0", CultureInfo.InvariantCulture) + " dBFS";
+
     // --- layout -------------------------------------------------------------
 
     /// <summary>
@@ -700,7 +875,7 @@ public sealed class PatchWorkbench
 
     // --- the vocabulary itself ----------------------------------------------
 
-    private IReadOnlyList<PatchTool> BuildTools(bool vision, bool lookups)
+    private IReadOnlyList<PatchTool> BuildTools(bool vision, bool hearing, bool lookups)
     {
         List<PatchTool> tools =
         [
@@ -857,6 +1032,31 @@ public sealed class PatchWorkbench
                       "items": { "type": "number" }
                     },
                     "note": { "type": "string", "description": "What you are looking for, for your own record." }
+                  }
+                }
+                """));
+        }
+
+        if (hearing)
+        {
+            tools.Add(new PatchTool(
+                "listen",
+                "Renders the patch's sound, measures it, and has a model that can hear describe it "
+                + "to you. Use it once the sound is wired, and again after adjusting what was "
+                + "described. It is the only way to find out whether a patch built for the speakers "
+                + "is anything at all, as opposed to merely legal.",
+                $$"""
+                {
+                  "properties": {
+                    "seconds": {
+                      "type": "number",
+                      "description": "How much to render, from 0.25 to {{Number(limits.LongestListen)}}. Defaults to 2."
+                    },
+                    "from": {
+                      "type": "number",
+                      "description": "Where on the timeline to start, up to {{Number(limits.LatestTime)}}. Defaults to 0. Everything before it is still rendered, so delays arrive with the tail they would really have."
+                    },
+                    "note": { "type": "string", "description": "What you are listening for. This is put to the model that hears it, so say what would settle the question — 'is the bass clean or buzzing', 'does the melody land on the beat'." }
                   }
                 }
                 """));

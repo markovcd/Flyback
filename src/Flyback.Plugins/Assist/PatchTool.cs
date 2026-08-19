@@ -25,7 +25,16 @@ public sealed record PatchTool(string Name, string Description, string Schema);
 /// turn. The same reasoning already governs <see cref="Hosting.PluginProblem"/>
 /// and <see cref="Core.Graph.ModuleAddition"/>.
 /// </remarks>
-public sealed record ToolOutcome(bool Ok, string Text, byte[]? Png = null)
+/// <param name="Png">A picture the model should be shown, or null.</param>
+/// <param name="Wav">
+/// A sound the model should be played, as a RIFF/WAVE file, or null. Kept
+/// beside <paramref name="Png"/> rather than folded into one "media" field
+/// because the two are not interchangeable anywhere they are used: a provider
+/// that takes a picture may well not take a sound, the panel shows one and
+/// lists the other, and a caller that handled "some bytes" without knowing
+/// which it had would be a caller that could send a WAV as a PNG.
+/// </param>
+public sealed record ToolOutcome(bool Ok, string Text, byte[]? Png = null, byte[]? Wav = null)
 {
     public static ToolOutcome Fine(string text) => new(true, text);
 
@@ -33,4 +42,7 @@ public sealed record ToolOutcome(bool Ok, string Text, byte[]? Png = null)
 
     /// <summary>A picture and the words that go with it — see <c>render</c>.</summary>
     public static ToolOutcome Looked(byte[] png, string caption) => new(true, caption, png);
+
+    /// <summary>A sound and the words that go with it — see <c>listen</c>.</summary>
+    public static ToolOutcome Played(byte[] wav, string caption) => new(true, caption, null, wav);
 }

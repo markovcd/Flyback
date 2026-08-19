@@ -115,9 +115,9 @@ void main()
     float r11 = r10 * r6;
     float r12 = r11 + r5;
     float r13 = uK[4];
-    float r14 = uK[5];
-    float r15 = uTime;
-    float r16 = r15 * r14;
+    float r14 = uTime;
+    float r15 = uK[5];
+    float r16 = r14 * r15;
     float r17 = r1 * r13 + r16;
     float r18 = r17 * r8;
     float r19 = sin(r18);

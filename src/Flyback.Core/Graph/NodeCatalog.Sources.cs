@@ -23,11 +23,19 @@ public partial class NodeCatalog
             },
             "Where you are on screen. y runs -1..1, x is widened by the aspect ratio.");
 
+        // No rate knob, and that is the decision rather than an omission — see
+        // ADR-0048. It was a second, hidden speed control: a Time at 0.2 feeding
+        // an oscillator divides its pitch by five while the freq knob goes on
+        // saying otherwise, and nothing about the patch shows where the fifth
+        // went. Multiply is how you scale a signal here, as it is for every
+        // other signal in the catalogue.
         yield return new NodeDef(
             "time", "Time", "Source",
-            [Num("rate", 1f, 0f, 8f)], [Num("t")],
-            (em, i) => [em.Mul(em.Load(OpCode.LoadT), i[0])],
-            "Seconds since the patch started, scaled by rate.");
+            [], [Num("t")],
+            (em, _) => [em.Load(OpCode.LoadT)],
+            "Seconds since the patch started. To run something slower, put a Multiply after "
+            + "this — 0.2 for a fifth of the speed. Into an oscillator's 'in' it needs no "
+            + "scaling at all: that is what the oscillator's 'freq' is.");
 
         yield return new NodeDef(
             "value", "Value", "Source",

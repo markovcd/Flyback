@@ -25,7 +25,7 @@ public class PatchClipboardTests
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
 
-        time = b.Add("time", 0, 0, (0, 1f));
+        time = b.Add("time", 0, 0);
         osc = b.Add("osc.sine", 300, 0, (1, 220f));
         gain = b.Add("math.mul", 600, 0, (1, 0.5f));
         sink = b.Add(NodeCatalog.OutputTypeId, 900, 0);

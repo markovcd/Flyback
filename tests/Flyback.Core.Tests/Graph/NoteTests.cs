@@ -142,7 +142,7 @@ public class NoteTests
     public void A_note_into_a_sine_really_comes_out_at_that_pitch()
     {
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
-        var time = builder.Add("time", 0, 0, (0, 1f));
+        var time = builder.Add("time", 0, 0);
         var note = builder.Add(TypeId, 0, 0, (0, A3));
         var osc = builder.Add("osc.sine", 0, 0);
         var sink = builder.Add(NodeCatalog.OutputTypeId, 0, 0, (NodeCatalog.OutputGainPort, 1f));

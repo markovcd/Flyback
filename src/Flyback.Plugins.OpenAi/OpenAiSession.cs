@@ -33,9 +33,14 @@ internal sealed class OpenAiSession : IPatchSession
 {
     /// <summary>
     /// How many times the model may be asked in one turn. The workbench caps
-    /// tool calls too; this catches the other runaway, where it talks without
-    /// ever doing anything.
+    /// tool calls too; this bounds the exchange around them, including the
+    /// requests that carry a picture back and cost nothing in tool calls.
     /// </summary>
+    /// <remarks>
+    /// Reached only by a model that never stops asking for things. One that
+    /// stops — with a patch, with a question, or with nothing at all — ends its
+    /// own turn, and none of those is this program's business to argue with.
+    /// </remarks>
     private const int MaxModelTurns = 40;
 
     /// <summary>
@@ -49,17 +54,6 @@ internal sealed class OpenAiSession : IPatchSession
     /// beyond it is a quota, and no amount of waiting is the answer to a quota.
     /// </summary>
     private static readonly TimeSpan LongestWait = TimeSpan.FromSeconds(20);
-
-    /// <summary>
-    /// What to say to a model that has stopped talking without offering a patch.
-    /// Worth spending a turn on: from the panel's side, stopping short looks
-    /// exactly like working — prose in the transcript, edits listed above it —
-    /// and the only sign is an Apply button that never lights up.
-    /// </summary>
-    private const string Unfinished =
-        "You stopped without calling 'propose', so none of that reaches the person's editor "
-        + "and there is nothing for them to apply. Call 'propose' now with a one-line summary, "
-        + "or say plainly what is stopping you from proposing.";
 
     private readonly PatchWorkbench workbench;
     private readonly AssistantConfig config;
@@ -105,9 +99,11 @@ internal sealed class OpenAiSession : IPatchSession
         string instruction,
         [EnumeratorCancellation] CancellationToken cancel)
     {
-        messages.Add(Wire.User(instruction));
+        // Whatever was offered last time is not this turn's answer. The patch
+        // itself stays: a conversation carries on from what it built.
+        workbench.Reopen();
 
-        var nudged = false;
+        messages.Add(Wire.User(instruction));
 
         for (var turn = 0; turn < MaxModelTurns; turn++)
         {
@@ -154,20 +150,31 @@ internal sealed class OpenAiSession : IPatchSession
                 foreach (var call in reply.Calls)
                 {
                     var outcome = await Answer(call, cancel).ConfigureAwait(false);
+                    var said = outcome.Text;
+
+                    // A sound is described before it is answered for, because
+                    // what goes back to this model is the description: the ear
+                    // is a different model and this one may well not have one.
+                    if (outcome.Wav is { } wav)
+                        said += "\n\n" + await Described(wav, Note(call), cancel).ConfigureAwait(false);
 
                     // Every call gets exactly one reply, refusals included. One
                     // left unanswered makes the whole next request a 400, which
                     // would end the conversation rather than the call.
-                    messages.Add(Wire.ToolResult(call.Id, outcome.Text));
+                    messages.Add(Wire.ToolResult(call.Id, said));
 
                     if (outcome.Png is { } png)
                     {
                         seen.Add(png);
-                        yield return new PatchEvent.Saw(png, outcome.Text);
+                        yield return new PatchEvent.Saw(png, said);
+                    }
+                    else if (outcome.Wav is { } sound)
+                    {
+                        yield return new PatchEvent.Heard(sound, said);
                     }
                     else
                     {
-                        yield return new PatchEvent.Did(outcome.Text);
+                        yield return new PatchEvent.Did(said);
                     }
                 }
 
@@ -183,24 +190,110 @@ internal sealed class OpenAiSession : IPatchSession
                 yield break;
             }
 
-            if (reply.Calls.Count > 0) continue;
-
-            // It has stopped asking for things without having offered anything.
-            // Ending here is what leaves the panel with an Apply button that
-            // will not light up and no word of why, so it gets told once.
-            if (nudged)
-            {
-                yield return new PatchEvent.Failed(
-                    "stopped without proposing a patch, so there is nothing to apply.");
-                yield break;
-            }
-
-            nudged = true;
-            messages.Add(Wire.User(Unfinished));
+            // It has stopped asking for things and has not proposed anything,
+            // which is an ordinary way for a turn to end rather than a failure.
+            // A question needs an answer, and a model that has said it needs one
+            // more instruction is not stuck — the conversation is multi-turn and
+            // whatever it said is already in the transcript, so the next thing
+            // to happen is the person typing. Anything said here instead would
+            // be this program arguing with an answer it was given.
+            if (reply.Calls.Count == 0) yield break;
         }
 
+        // Only a model that kept asking for things until the fuse ran out gets
+        // here. One that stopped of its own accord has already returned above,
+        // and this says nothing about whether a patch was proposed.
         yield return new PatchEvent.Failed(
-            $"stopped after {MaxModelTurns} exchanges without a patch being proposed.");
+            $"stopped after {MaxModelTurns} exchanges in one turn, which is as many as there are.");
+    }
+
+    /// <summary>
+    /// What the ear is told before it is played anything. Deliberately about
+    /// listening rather than about synthesis: it is being asked what a sound
+    /// <em>is</em>, and a model told what the patch was meant to do will hear
+    /// what it was told rather than what came out.
+    /// </summary>
+    private const string Ear = """
+        You are listening on behalf of somebody building a sound on a modular
+        synthesiser, who cannot hear it. Describe what you actually hear, in
+        three or four sentences: pitch and whether it is steady, timbre, how it
+        moves over the clip, and anything wrong with it — clicks, a tearing
+        buzz, distortion, a tail that cuts off. Say plainly if it is a plain
+        tone and nothing more. Do not guess at how it was made, do not
+        speculate about what it was for, and do not offer advice.
+        """;
+
+    /// <summary>
+    /// What one model heard, as words for the model that cannot.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// A separate request rather than a turn of the conversation, and that is
+    /// forced rather than chosen. The models that take a sound require every
+    /// request to carry one — a conversation driven by one 400s on its first
+    /// turn, before anything has been rendered to listen to — and they do not
+    /// take a picture, so driving with one would trade the patch's eyes for its
+    /// ears. Asked on its own, the ear answers one question about one sound and
+    /// the loop is driven by whatever model is best at driving it.
+    /// </para>
+    /// <para>
+    /// The WAV is sent once and is never part of the conversation, which is the
+    /// other thing this buys: the alternative left a few hundred kilobytes of
+    /// base64 in the history to be paid for again on every turn that followed.
+    /// </para>
+    /// <para>
+    /// A failure here is a sentence in the tool result rather than the end of
+    /// the turn. The sound was rendered and the levels are already known; not
+    /// being able to describe it is worth saying and worth carrying on from.
+    /// </para>
+    /// </remarks>
+    private async Task<string> Described(byte[] wav, string? listeningFor, CancellationToken cancel)
+    {
+        var ear = config.EarModel;
+
+        if (string.IsNullOrWhiteSpace(ear))
+            return "No model is set to listen with, so nobody has heard this.";
+
+        var asked = listeningFor is { Length: > 0 }
+            ? $"Here is the sound. The person building it is listening for: {listeningFor}"
+            : "Here is the sound.";
+
+        var body = Wire.Request(
+            ear,
+            [Wire.System(Ear), Wire.UserWithMedia(asked, [], [wav])],
+            []);
+
+        try
+        {
+            var heard = Wire.Parse(await Post(body.ToJsonString(), cancel).ConfigureAwait(false));
+
+            return heard.Text is { Length: > 0 } text
+                ? $"{ear} listened to it and says: {text}"
+                : $"{ear} was played it and said nothing.";
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            return $"It could not be played to {ear}: {ex.Message} The levels above are still measured "
+                + "from the sound itself, so use those and say you have not heard it.";
+        }
+    }
+
+    /// <summary>What the model said it was listening for, or null when it did not say.</summary>
+    private static string? Note(Call call)
+    {
+        try
+        {
+            return JsonNode.Parse(string.IsNullOrWhiteSpace(call.Arguments) ? "{}" : call.Arguments)
+                ?["note"]?.GetValue<string>();
+        }
+        catch (Exception ex) when (ex is JsonException or InvalidOperationException)
+        {
+            return null;
+        }
     }
 
     private async Task<ToolOutcome> Answer(Call call, CancellationToken cancel)
@@ -228,6 +321,16 @@ internal sealed class OpenAiSession : IPatchSession
         var body = Wire.Request(config.Model, (JsonArray)messages.DeepClone(), workbench.Tools)
             .ToJsonString();
 
+        return Wire.Parse(await Post(body, cancel).ConfigureAwait(false));
+    }
+
+    /// <summary>
+    /// One request, retried where the endpoint asked to be. Shared by the
+    /// conversation and by the ear, so a rate limit is absorbed the same way
+    /// whichever of them met it.
+    /// </summary>
+    private async Task<JsonNode?> Post(string body, CancellationToken cancel)
+    {
         for (var attempt = 1; ; attempt++)
         {
             // Built inside the loop: an HttpContent that has been sent once
@@ -237,7 +340,7 @@ internal sealed class OpenAiSession : IPatchSession
 
             var said = await response.Content.ReadAsStringAsync(cancel).ConfigureAwait(false);
 
-            if (response.IsSuccessStatusCode) return Wire.Parse(JsonNode.Parse(said));
+            if (response.IsSuccessStatusCode) return JsonNode.Parse(said);
 
             var status = (int)response.StatusCode;
             var wait = Wire.RetryAfter(response) ?? Backoff(attempt);

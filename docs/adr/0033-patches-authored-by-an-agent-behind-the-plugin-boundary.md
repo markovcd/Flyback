@@ -82,6 +82,16 @@ the person either a proposal or a reason — it says so to the model once, and
 fails the turn with a sentence if that changes nothing. What a provider must not
 do is return an empty-handed success.
 
+> **Reversed.** *(2026-08-20, user-directed.)* The reason was already there: it
+> is whatever the model said, and it reaches the transcript on its own. A turn
+> ending without a proposal is most often a question — a choice only the person
+> can make, an instruction that could be read two ways — and answering one with
+> "call propose now" argues with a fair answer and spends a turn doing it. An
+> adapter now lets a turn end where the model ended it. The conversation is
+> multi-turn and keeps the workbench, so the next thing to happen is the person
+> typing, which is what a question is for. What must still never happen is an
+> *empty* turn: the prose is the reason, so it has to reach the panel.
+
 **What may be proposed is a patch that reaches somebody**, which is not the same
 as a patch with no complaints. `propose` gates on `IssueSeverity.Error` across
 *both* programs ([0011](0011-compile-backwards-from-output.md),
@@ -135,6 +145,9 @@ besides.
 **The agent cannot hear.** It can see the picture and reason about the sound from
 the modules, and the handbook tells it to say so plainly rather than pretend. A
 patch built for the speakers is the one case where the loop is open.
+[0047](0047-the-agent-may-listen-where-the-model-can.md) closes it without
+disturbing a word of this: the agent still cannot hear, and is given an ear
+instead — a second model that can, asked on its own and answering in prose.
 
 What this does not do: there is no way to steer a run once it has started beyond
 stopping it; a proposal is all-or-nothing rather than a diff; and the handbook is

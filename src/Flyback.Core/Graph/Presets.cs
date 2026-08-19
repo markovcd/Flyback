@@ -111,7 +111,11 @@ public static class Presets
         var b = new PatchBuilder(modules);
 
         var coord = b.Add("coord", 40, 200);
-        var time = b.Add("time", 40, 400, (0, 0.2f));
+        var time = b.Add("time", 40, 400);
+
+        // A fifth of a radian a second into the phase below. Time is seconds and
+        // nothing else, so a patch that wants less than that says so here.
+        var slowly = b.Add("math.mul", 150, 400, (1, 0.2f));
 
         // Sine along x, and a second along y whose phase drifts with time.
         var horizontal = b.Add("osc.sine", 260, 120, (1, 1.5f));
@@ -124,7 +128,8 @@ public static class Presets
 
         b.Wire(coord, 0, horizontal, 0)
          .Wire(coord, 1, vertical, 0)
-         .Wire(time, 0, vertical, 2)
+         .Wire(time, 0, slowly, 0)
+         .Wire(slowly, 0, vertical, 2)
          .Wire(horizontal, 0, sum, 0)
          .Wire(vertical, 0, sum, 1)
          .Wire(sum, 0, hue, 0)
@@ -140,8 +145,13 @@ public static class Presets
         var b = new PatchBuilder(modules);
 
         var coord = b.Add("coord", 40, 220);
-        var spin = b.Add("time", 40, 60, (0, 0.15f));
-        var drift = b.Add("time", 40, 460, (0, 0.3f));
+
+        // One clock and two speeds off it, rather than two clocks. An output
+        // fans out to as many inputs as you like, so what a patch needs more
+        // than one of is the scaling, not the time.
+        var clock = b.Add("time", 40, 260);
+        var spin = b.Add("math.mul", 150, 60, (1, 0.15f));
+        var drift = b.Add("math.mul", 150, 460, (1, 0.3f));
 
         var rotate = b.Add("space.rotate", 260, 160);
         var fold = b.Add("space.kaleidoscope", 470, 200, (2, 6f));
@@ -151,6 +161,8 @@ public static class Presets
 
         b.Wire(coord, 0, rotate, 0)
          .Wire(coord, 1, rotate, 1)
+         .Wire(clock, 0, spin, 0)
+         .Wire(clock, 0, drift, 0)
          .Wire(spin, 0, rotate, 2)
          .Wire(rotate, 0, fold, 0)
          .Wire(rotate, 1, fold, 1)
@@ -173,7 +185,7 @@ public static class Presets
         var b = new PatchBuilder(modules);
 
         var coord = b.Add("coord", 40, 120);
-        var time = b.Add("time", 40, 380, (0, 1f));
+        var time = b.Add("time", 40, 380);
 
         // The shared control signal, remapped to 0..1 by amp and bias.
         var slow = b.Add("osc.sine", 260, 340, (1, 0.15f), (3, 0.5f), (4, 0.5f));
@@ -249,7 +261,7 @@ public static class Presets
     {
         var b = new PatchBuilder(modules);
 
-        var time = b.Add("time", 40, 420, (0, 1f));
+        var time = b.Add("time", 40, 420);
         var coord = b.Add("coord", 40, 120);
 
         // The field, and the only thing in the patch that makes the waveform.
@@ -330,7 +342,7 @@ public static class Presets
         var b = new PatchBuilder(modules);
 
         var coord = b.Add("coord", 40, 320);
-        var time = b.Add("time", 40, 100, (0, 1f));
+        var time = b.Add("time", 40, 100);
 
         // Half an octave either way, over four seconds: six semitones up and
         // six down from the note on the knob, then it starts again. The reset is
@@ -412,11 +424,14 @@ public static class Presets
 
         var coord = b.Add("coord", 40, 300);
 
-        // Three clocks at different rates, so nothing in the picture ever quite
-        // lines up with anything else and it does not visibly loop.
-        var spin = b.Add("time", 40, 80, (0, 0.05f));
-        var boil = b.Add("time", 40, 560, (0, 0.12f));
-        var pulse = b.Add("time", 40, 720, (0, 0.2f));
+        // One clock read at three speeds, so nothing in the picture ever quite
+        // lines up with anything else and it does not visibly loop. The three
+        // are Multiplies rather than three Times: seconds are seconds, and what
+        // differs between these is only how much of them each part wants.
+        var clock = b.Add("time", 40, 400);
+        var spin = b.Add("math.mul", 150, 80, (1, 0.05f));
+        var boil = b.Add("math.mul", 150, 560, (1, 0.12f));
+        var pulse = b.Add("math.mul", 150, 720, (1, 0.2f));
 
         var turn = b.Add("space.rotate", 250, 220);
         var fold = b.Add("space.kaleidoscope", 450, 220, (2, 8f));
@@ -452,7 +467,10 @@ public static class Presets
         var combine = b.Add("math.max", 1470, 620);
         var output = b.Add(NodeCatalog.OutputTypeId, 1660, 640);
 
-        b.Wire(coord, 0, turn, 0)
+        b.Wire(clock, 0, spin, 0)
+         .Wire(clock, 0, boil, 0)
+         .Wire(clock, 0, pulse, 0)
+         .Wire(coord, 0, turn, 0)
          .Wire(coord, 1, turn, 1)
          .Wire(spin, 0, turn, 2)
          .Wire(turn, 0, fold, 0)
@@ -495,8 +513,10 @@ public static class Presets
         var b = new PatchBuilder(modules);
 
         var coord = b.Add("coord", 40, 240);
-        var spin = b.Add("time", 40, 60, (0, 0.08f));
-        var pulse = b.Add("time", 40, 560, (0, 0.25f));
+
+        var clock = b.Add("time", 40, 300);
+        var spin = b.Add("math.mul", 150, 60, (1, 0.08f));
+        var pulse = b.Add("math.mul", 150, 560, (1, 0.25f));
 
         var rotate = b.Add("space.rotate", 250, 140);
         var scale = b.Add("space.scale", 440, 160, (2, 1.05f));
@@ -511,7 +531,9 @@ public static class Presets
         var combine = b.Add("math.max", 950, 300);
         var output = b.Add(NodeCatalog.OutputTypeId, 1130, 320);
 
-        b.Wire(coord, 0, rotate, 0)
+        b.Wire(clock, 0, spin, 0)
+         .Wire(clock, 0, pulse, 0)
+         .Wire(coord, 0, rotate, 0)
          .Wire(coord, 1, rotate, 1)
          .Wire(spin, 0, rotate, 2)
          .Wire(rotate, 0, scale, 0)

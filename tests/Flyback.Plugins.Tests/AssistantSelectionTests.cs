@@ -67,7 +67,8 @@ public class AssistantSelectionTests
     {
         public string Name => Id;
 
-        public AssistantSchema Schema { get; } = new("some-model", ["some-model"], "SOME_KEY", "somewhere");
+        public AssistantSchema Schema { get; } =
+            new("some-model", [new AssistantModel("some-model")], "SOME_KEY", "somewhere");
 
         public string? Unavailable(AssistantConfig config) => Excuse;
 

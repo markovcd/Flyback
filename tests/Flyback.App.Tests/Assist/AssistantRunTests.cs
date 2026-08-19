@@ -54,6 +54,85 @@ public class AssistantRunTests
     }
 
     /// <summary>
+    /// Last turn's patch is not this turn's answer.
+    /// </summary>
+    /// <remarks>
+    /// The bug this exists for only appears once a conversation outlives a
+    /// proposal, which is what the panel now does. The caller applies whatever
+    /// is on the run when a turn ends, so a proposal left standing from an
+    /// earlier turn is put on the canvas again — for a message that asked a
+    /// question, or asked for nothing at all.
+    /// </remarks>
+    [Fact]
+    public async Task A_proposal_does_not_survive_into_the_next_turn()
+    {
+        var built = new Patch();
+        built.Nodes.Add(NodeInstance.Create(NodeCatalog.BuiltIn.Require("value"), 0, 0));
+
+        using var run = RunOf(ScriptedAssistant.Conversation(
+            [new PatchEvent.Proposed(built, "one knob")],
+            [new PatchEvent.Said("it is the one above.")]));
+
+        await Drain(run, "build me one");
+        run.Proposal.ShouldBe(built);
+
+        // The second turn answers a question and offers nothing.
+        await Drain(run, "what did you build?");
+
+        run.Proposal.ShouldBeNull();
+        run.ProposalSummary.ShouldBeEmpty();
+    }
+
+    /// <summary>
+    /// A run has to be usable more than once, or the conversation it holds is
+    /// worth nothing: the workbench keeps everything built so far, and that is
+    /// what a second message is asked against.
+    /// </summary>
+    [Fact]
+    public async Task A_run_takes_more_than_one_message()
+    {
+        using var run = RunOf(ScriptedAssistant.Editing());
+
+        await Drain(run, "add a knob");
+        await Drain(run, "and another");
+
+        run.Turns.ShouldBe(2);
+        run.Workbench.Edits.ShouldBe(2, "the second message edited the patch the first one built");
+    }
+
+    /// <summary>
+    /// What the run itself put on the canvas is not somebody editing behind it.
+    /// Without this the panel reads the applied patch as an outside change and
+    /// starts a new conversation, throwing away the one that just succeeded.
+    /// </summary>
+    [Fact]
+    public async Task A_patch_this_run_proposed_and_had_applied_is_not_an_edit_underneath()
+    {
+        var built = new Patch();
+        built.Nodes.Add(NodeInstance.Create(NodeCatalog.BuiltIn.Require("value"), 0, 0));
+
+        using var run = RunOf(new ScriptedAssistant(new PatchEvent.Proposed(built, "one knob")));
+
+        await Drain(run);
+
+        run.EditedUnderneath(built).ShouldBeTrue("nothing has told it the editor took this");
+
+        run.Rebase(built);
+
+        run.EditedUnderneath(built).ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task A_conversation_that_has_had_its_turns_says_so()
+    {
+        using var run = RunOf(new ScriptedAssistant(new PatchEvent.Said("hello")), maxTurns: 1);
+
+        run.Exhausted.ShouldBeFalse();
+        await Drain(run);
+        run.Exhausted.ShouldBeTrue();
+    }
+
+    /// <summary>
     /// The property the whole undo story rests on. The workbench takes a copy,
     /// so whatever was open is still exactly what it was — which is what makes
     /// "put it back" a single assignment in an application that has no undo.
@@ -219,6 +298,7 @@ public class AssistantRunTests
         private string? throwsAfterStarting;
         private bool refusesToStart;
         private bool edits;
+        private Queue<PatchEvent[]>? turns;
 
         public static ScriptedAssistant Throwing(string message) =>
             new() { throwsAfterStarting = message };
@@ -228,13 +308,22 @@ public class AssistantRunTests
         /// <summary>One that actually builds something, so a copy can be told from the original.</summary>
         public static ScriptedAssistant Editing() => new() { edits = true };
 
+        /// <summary>
+        /// One with something different to say each time it is asked, which is
+        /// what a conversation is. The flat script replays per turn, which is
+        /// what most of these want and what a multi-turn test must not have.
+        /// </summary>
+        public static ScriptedAssistant Conversation(params PatchEvent[][] turns) =>
+            new() { turns = new Queue<PatchEvent[]>(turns) };
+
         public string Id => "scripted";
 
         public string Name => "Scripted";
 
         public int Priority => 0;
 
-        public AssistantSchema Schema { get; } = new("scripted", ["scripted"], "NONE", "none needed");
+        public AssistantSchema Schema { get; } =
+            new("scripted", [new AssistantModel("scripted")], "NONE", "none needed");
 
         public string? Unavailable(AssistantConfig config) => null;
 
@@ -254,13 +343,20 @@ public class AssistantRunTests
             {
                 var added = await bench.InvokeAsync(
                     "add_module",
-                    JsonSerializer.Deserialize<JsonElement>("""{"type_id":"value","handle":"knob1"}"""),
+                    // No handle asked for: the workbench names each one, so this
+                    // can be told to build twice without the second refusing
+                    // over a name the first took.
+                    JsonSerializer.Deserialize<JsonElement>("""{"type_id":"value"}"""),
                     cancel);
 
                 yield return new PatchEvent.Did(added.Text);
             }
 
-            foreach (var happened in script)
+            var saying = turns is null
+                ? script
+                : turns.Count > 0 ? turns.Dequeue() : [];
+
+            foreach (var happened in saying)
             {
                 cancel.ThrowIfCancellationRequested();
                 await Task.Yield();

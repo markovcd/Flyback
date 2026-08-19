@@ -26,6 +26,17 @@ public abstract record PatchEvent
     public sealed record Saw(byte[] Png, string Caption) : PatchEvent;
 
     /// <summary>
+    /// A stretch of sound it rendered and listened to, as a WAV file.
+    /// </summary>
+    /// <remarks>
+    /// Separate from <see cref="Saw"/> for the reason the two payloads are
+    /// separate on <see cref="ToolOutcome"/>: a window shows a picture and can
+    /// only offer to play a sound, so a panel that could not tell them apart
+    /// would have to guess which it had been handed.
+    /// </remarks>
+    public sealed record Heard(byte[] Wav, string Caption) : PatchEvent;
+
+    /// <summary>
     /// The finished patch, laid out and copied. The turn is over; nothing has
     /// reached the editor.
     /// </summary>

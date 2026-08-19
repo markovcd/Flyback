@@ -10,8 +10,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- PluginCatalog is built by the host, so its constructor is not public. -->
+    <!-- PluginCatalog is built by the host, so its constructor is not public.
+         The shell's tests need it too: a panel that shows what a provider can do
+         cannot be tested in front of no provider, and everything it got wrong
+         was in that half. -->
     <InternalsVisibleTo Include="Flyback.Plugins.Tests" />
+    <InternalsVisibleTo Include="Flyback.App.Tests" />
   </ItemGroup>
 
 </Project>

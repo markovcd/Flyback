@@ -26,8 +26,11 @@ public class PatchWorkbenchTests
         [new PortSpec("out")],
         (em, i) => [em.Mul(i[0], 2f)]);
 
-    private static PatchWorkbench Bench(WorkbenchLimits? limits = null, bool vision = true) =>
-        new(NodeCatalog.BuiltIn, new Patch(), vision, limits);
+    private static PatchWorkbench Bench(
+        WorkbenchLimits? limits = null,
+        bool vision = true,
+        bool hearing = true) =>
+        new(NodeCatalog.BuiltIn, new Patch(), vision, hearing, limits);
 
     private static Task<ToolOutcome> Call(PatchWorkbench bench, string tool, string arguments = "{}") =>
         bench.InvokeAsync(tool, JsonSerializer.Deserialize<JsonElement>(arguments), CancellationToken.None);
@@ -751,6 +754,183 @@ public class PatchWorkbenchTests
         looked.Png.ShouldBeNull();
     }
 
+    // --- listening ----------------------------------------------------------
+
+    [Fact]
+    public void Listening_is_offered_only_when_the_model_can_hear()
+    {
+        Bench().Tools.Select(t => t.Name).ShouldContain("listen");
+        Bench(hearing: false).Tools.Select(t => t.Name).ShouldNotContain("listen");
+    }
+
+    /// <summary>
+    /// Off by default where sight is on, because a sound reaches only the few
+    /// models built to take one and a picture reaches all of them.
+    /// </summary>
+    [Fact]
+    public void Hearing_is_not_assumed_the_way_sight_is()
+    {
+        var tools = new PatchWorkbench(NodeCatalog.BuiltIn, new Patch()).Tools.Select(t => t.Name).ToArray();
+
+        tools.ShouldContain("render");
+        tools.ShouldNotContain("listen");
+    }
+
+    [Fact]
+    public async Task A_listen_is_a_wav_of_the_length_it_says()
+    {
+        var heard = await Call(await Heard(), "listen", """{"seconds":1}""");
+
+        heard.Ok.ShouldBeTrue(heard.Text);
+        heard.Wav.ShouldNotBeNull();
+        heard.Png.ShouldBeNull();
+
+        Riff(heard.Wav).ShouldBe("RIFF");
+        Format(heard.Wav).ShouldBe("WAVE");
+        Channels(heard.Wav).ShouldBe(2);
+        Rate(heard.Wav).ShouldBe(24_000);
+
+        // One second, stereo, two bytes a sample.
+        DataBytes(heard.Wav).ShouldBe(24_000 * 2 * 2);
+    }
+
+    /// <summary>
+    /// The caption is the only thing said about a payload the model hears rather
+    /// than reads, so the number in it has to be the number in the file. A sine
+    /// through the Output's default gain of 0.5 peaks at half of full scale,
+    /// which is −6 dBFS.
+    /// </summary>
+    [Fact]
+    public async Task What_it_is_told_about_the_level_is_the_level_it_is_sent()
+    {
+        var heard = await Call(await Heard(), "listen", """{"seconds":0.5}""");
+
+        heard.Text.ShouldContain("Peak -6");
+        heard.Text.ShouldContain("dBFS");
+    }
+
+    /// <summary>
+    /// The counterpart of the black-frame rule. A patch built for the screen is
+    /// silent on purpose and the compiler no longer remarks on it, so playing
+    /// one would hand back two seconds of nothing — which reads as a broken tool
+    /// rather than as a patch that was never meant to make a sound.
+    /// </summary>
+    [Fact]
+    public async Task A_patch_with_no_sound_is_not_played_silence_at_it()
+    {
+        var heard = await Call(await Lit(0.5f), "listen");
+
+        heard.Ok.ShouldBeFalse();
+        heard.Wav.ShouldBeNull();
+        heard.Text.ShouldContain("'left'");
+    }
+
+    /// <summary>
+    /// A patch that is wired, compiles without a word, and makes no sound. The
+    /// compiler catches the loud version of this — an oscillator with nothing at
+    /// all on its 'in' is a warning — so what is left for the ear is the quiet
+    /// version: everything correct, and the gain at zero. Playing the model half
+    /// a second of nothing would tell it far less than the sentence does, and
+    /// costs a payload to say it.
+    /// </summary>
+    [Fact]
+    public async Task A_patch_that_compiles_cleanly_and_makes_no_sound_comes_back_as_a_sentence()
+    {
+        var bench = await Heard();
+
+        var turned = await Call(bench, "set_knobs", """
+            {"handle":"output1","knobs":[{"port":"gain","value":0}]}
+            """);
+        turned.Ok.ShouldBeTrue(turned.Text);
+
+        var heard = await Call(bench, "listen", """{"seconds":0.5}""");
+
+        heard.Wav.ShouldBeNull();
+        heard.Text.ShouldContain("silence");
+        heard.Text.ShouldContain("gain");
+    }
+
+    /// <summary>
+    /// The other half of the same rule, and the one the compiler does see: a
+    /// warning is enough to stop this. Rendering it anyway would spend a payload
+    /// on a recording of a patch that has already been diagnosed in words.
+    /// </summary>
+    [Fact]
+    public async Task An_oscillator_with_nothing_driving_it_is_answered_by_the_compiler_not_by_the_ear()
+    {
+        var bench = Bench();
+
+        await Call(bench, "add_module", """
+            {"type_id":"osc.sine","handle":"tone1","knobs":[{"port":"freq","value":440}]}
+            """);
+        var wired = await Call(bench, "connect", """{"from":"tone1","to":"output1","to_port":"left"}""");
+        wired.Ok.ShouldBeTrue(wired.Text);
+
+        var heard = await Call(bench, "listen", """{"seconds":0.5}""");
+
+        heard.Ok.ShouldBeFalse();
+        heard.Wav.ShouldBeNull();
+        heard.Text.ShouldContain("'in'");
+    }
+
+    [Fact]
+    public async Task A_patch_that_does_not_compile_cannot_be_listened_to()
+    {
+        var bench = Bench();
+
+        await Call(bench, "add_module", """{"type_id":"osc.sine"}""");
+        var heard = await Call(bench, "listen");
+
+        heard.Ok.ShouldBeFalse();
+        heard.Wav.ShouldBeNull();
+    }
+
+    /// <summary>
+    /// What one call may spend is the workbench's to decide, not the model's:
+    /// this goes into a request body as base64 and is paid for again on every
+    /// turn that follows.
+    /// </summary>
+    [Fact]
+    public async Task A_listen_longer_than_the_limit_is_cut_to_it()
+    {
+        var bench = new PatchWorkbench(
+            NodeCatalog.BuiltIn,
+            (await Heard()).Snapshot(),
+            vision: false,
+            hearing: true,
+            new WorkbenchLimits(LongestListen: 1d));
+
+        var heard = await Call(bench, "listen", """{"seconds":30}""");
+
+        heard.Wav.ShouldNotBeNull();
+        DataBytes(heard.Wav).ShouldBe(24_000 * 2 * 2);
+    }
+
+    /// <summary>
+    /// The audio path is the one with a memory — delay lines and
+    /// <c>feedback.unit</c>, per ADR-0027 — so a stretch starting at two seconds
+    /// has to arrive with the two seconds behind it having actually happened.
+    /// A phasing patch is the cheapest thing that proves it: a delayed copy
+    /// against the original cancels differently once the line has filled.
+    /// </summary>
+    [Fact]
+    public async Task Sound_from_further_in_is_warmed_up_to_rather_than_sought_to()
+    {
+        var bench = await Heard();
+
+        var start = await Call(bench, "listen", """{"seconds":0.5}""");
+        var later = await Call(bench, "listen", """{"seconds":0.5,"from":2}""");
+
+        start.Wav.ShouldNotBeNull();
+        later.Wav.ShouldNotBeNull();
+
+        // Same length, different samples: a 440 Hz sine two seconds along is not
+        // where it was at zero, and a renderer that had been sought rather than
+        // run would hand back the same buffer twice.
+        DataBytes(later.Wav).ShouldBe(DataBytes(start.Wav));
+        later.Wav.ShouldNotBe(start.Wav);
+    }
+
     // --- what comes out -----------------------------------------------------
 
     [Fact]
@@ -855,4 +1035,23 @@ public class PatchWorkbenchTests
 
     private static int BigEndian(byte[] bytes, int at) =>
         (bytes[at] << 24) | (bytes[at + 1] << 16) | (bytes[at + 2] << 8) | bytes[at + 3];
+
+    // A RIFF header, read at the offsets WavWriter writes it at. Little-endian,
+    // where PNG is big — which is most of why these are two sets of helpers.
+    private static string Riff(byte[] wav) => System.Text.Encoding.ASCII.GetString(wav, 0, 4);
+
+    private static string Format(byte[] wav) => System.Text.Encoding.ASCII.GetString(wav, 8, 4);
+
+    private static int Channels(byte[] wav) => LittleEndian(wav, 22, 2);
+
+    private static int Rate(byte[] wav) => LittleEndian(wav, 24, 4);
+
+    private static int DataBytes(byte[] wav) => LittleEndian(wav, 40, 4);
+
+    private static int LittleEndian(byte[] bytes, int at, int width)
+    {
+        var value = 0;
+        for (var i = width - 1; i >= 0; i--) value = (value << 8) | bytes[at + i];
+        return value;
+    }
 }

@@ -11,10 +11,11 @@ namespace Flyback.Plugins.OpenAi.Tests;
 /// How a turn ends, driven by canned replies rather than by an endpoint.
 /// </summary>
 /// <remarks>
-/// The workbench is a copy, so an assistant that stops without calling
-/// <c>propose</c> has changed nothing anyone can see: the editor is untouched,
-/// the transcript is full of edits that went nowhere, and Apply stays grey. That
-/// is indistinguishable from working, which is why it is pinned here.
+/// A turn ends in one of three ways and all three are ordinary: with a patch
+/// proposed, with the model having stopped talking, or with the person having
+/// cancelled it. The workbench is a copy, so the two that reach no proposal have
+/// changed nothing anyone can see — which is why they are ends rather than
+/// failures, and why nothing here answers one by asking again.
 /// </remarks>
 public class SessionTests
 {
@@ -27,6 +28,20 @@ public class SessionTests
         ("add_module", """{"type_id":"value","handle":"knob1","knobs":[{"port":"value","value":0.5}]}"""),
         // The Output is already there under the handle the workbench gave it.
         ("connect", """{"from":"knob1","to":"output1","to_port":"color"}"""),
+    ];
+
+    /// <summary>
+    /// The smallest patch that actually sounds. The clock is not decoration: an
+    /// oscillator accumulates how far its 'in' has moved, so one without it is
+    /// silent whatever its freq says — and silence comes back as a sentence
+    /// rather than as a WAV.
+    /// </summary>
+    private static readonly (string Name, string Arguments)[] Sounding =
+    [
+        ("add_module", """{"type_id":"time","handle":"clock1"}"""),
+        ("add_module", """{"type_id":"osc.sine","handle":"tone1","knobs":[{"port":"freq","value":440}]}"""),
+        ("connect", """{"from":"clock1","to":"tone1","to_port":"in"}"""),
+        ("connect", """{"from":"tone1","to":"output1","to_port":"left"}"""),
     ];
 
     [Fact]
@@ -44,65 +59,150 @@ public class SessionTests
     }
 
     /// <summary>
-    /// The bug this was written for. The model built a patch, wrote a summary in
-    /// prose and asked for nothing further — and the loop returned in silence,
-    /// which reaches the window as an Apply button that never lights up.
+    /// A second message is asked of the same conversation, carrying everything
+    /// the first one said and built.
     /// </summary>
     [Fact]
-    public async Task A_model_that_stops_short_is_told_that_nothing_has_reached_the_editor()
+    public async Task A_second_message_keeps_the_first_ones_history()
     {
-        var (events, sent) = await Run(
-            Asking(Building),
-            Prose("There you go — a flat grey field."),
-            Asking(("propose", """{"summary":"a flat grey field"}""")));
+        var canned = new Canned(
+            new Answer(Asking(Building)),
+            new Answer(Prose("Done. Grey enough?")),
+            new Answer(Asking(("propose", """{"summary":"a flat grey field"}"""))));
 
-        events.OfType<PatchEvent.Proposed>().ShouldHaveSingleItem()
-            .Summary.ShouldBe("a flat grey field");
+        var workbench = new PatchWorkbench(NodeCatalog.BuiltIn, new Patch(), vision: false);
 
-        // It was asked to finish rather than left to stop, and asked as a user
-        // turn: there is no tool call outstanding to answer at that point.
-        var asked = sent[^1]["messages"]!.AsArray()
-            .Where(m => m!["role"]!.GetValue<string>() == "user")
-            .Select(m => m!["content"]!.ToString())
-            .ToArray();
+        using var session = new OpenAiSession(
+            workbench,
+            new AssistantConfig("no-key-needed", "some-model"),
+            "https://nowhere.invalid/v1",
+            canned);
 
-        asked.ShouldContain(text => text.Contains("propose", StringComparison.Ordinal)
-            && text.Contains("editor", StringComparison.Ordinal));
-    }
+        await Drain(session, "make a grey field");
+        var second = await Drain(session, "yes, propose it");
 
-    [Fact]
-    public async Task A_model_that_will_not_propose_says_so_rather_than_going_quiet()
-    {
-        var (events, sent) = await Run(
-            Asking(Building),
-            Prose("There you go."),
-            Prose("I would rather not."));
+        second.OfType<PatchEvent.Proposed>().ShouldHaveSingleItem()
+            .Patch.Nodes.Count.ShouldBe(2, "it proposed the patch the first message built");
 
-        events.OfType<PatchEvent.Proposed>().ShouldBeEmpty();
+        // Both messages are in the last request, and so is what it said between
+        // them. A session that started over would have sent one.
+        var sent = canned.Sent[^1].ToJsonString();
 
-        // The turn ends with a reason, so the panel has something to show for a
-        // button it is about to leave disabled.
-        events.OfType<PatchEvent.Failed>().ShouldHaveSingleItem()
-            .Message.ShouldContain("nothing to apply");
-
-        // Nudged once, not once per turn. Prodding it repeatedly would spend the
-        // whole turn budget arguing.
-        sent.Count.ShouldBe(3);
+        sent.ShouldContain("make a grey field");
+        sent.ShouldContain("Grey enough?");
+        sent.ShouldContain("yes, propose it");
     }
 
     /// <summary>
-    /// The prose it wrote on the way to stopping is still worth showing; the
-    /// nudge adds to a turn rather than replacing it.
+    /// A proposal belongs to the turn that made it. The workbench remembers one
+    /// until it is told otherwise, so a conversation carrying on past a proposal
+    /// would hand the same patch over again — as the answer to a message that
+    /// only asked a question.
+    /// </summary>
+    [Fact]
+    public async Task A_proposal_is_not_offered_a_second_time_by_the_next_message()
+    {
+        var canned = new Canned(
+            new Answer(Asking(Building)),
+            new Answer(Asking(("propose", """{"summary":"a flat grey field"}"""))),
+            new Answer(Prose("It is the one I just offered you.")));
+
+        var workbench = new PatchWorkbench(NodeCatalog.BuiltIn, new Patch(), vision: false);
+
+        using var session = new OpenAiSession(
+            workbench,
+            new AssistantConfig("no-key-needed", "some-model"),
+            "https://nowhere.invalid/v1",
+            canned);
+
+        (await Drain(session, "make a grey field")).OfType<PatchEvent.Proposed>().ShouldHaveSingleItem();
+
+        var second = await Drain(session, "what did you build?");
+
+        second.OfType<PatchEvent.Proposed>().ShouldBeEmpty();
+        second.OfType<PatchEvent.Said>().ShouldHaveSingleItem();
+
+        // The patch itself is still there to carry on from — only the offer was
+        // taken back.
+        workbench.Snapshot().Nodes.Count.ShouldBe(2);
+    }
+
+    /// <summary>
+    /// A question is an answer. A model that stops to ask something has ended
+    /// its turn on purpose, and the turn ends there — no proposal, no failure,
+    /// and nothing sent back arguing with it.
+    /// </summary>
+    /// <remarks>
+    /// This replaced a nudge: a turn that ended without a proposal used to be
+    /// answered with an instruction to propose, and then failed if it still did
+    /// not. It was written for a model that trailed off, and it caught a model
+    /// asking a fair question just as often — which is a conversation, not a
+    /// fault, and the panel is a conversation with a box to type in.
+    /// </remarks>
+    [Fact]
+    public async Task A_model_that_stops_to_ask_something_is_left_to_stop()
+    {
+        var (events, sent) = await Run(
+            Asking(Building),
+            Prose("Should the field be grey, or did you want it to move?"));
+
+        events.OfType<PatchEvent.Said>().Select(s => s.Text)
+            .ShouldContain(text => text.Contains("did you want it to move", StringComparison.Ordinal));
+
+        events.OfType<PatchEvent.Proposed>().ShouldBeEmpty();
+        events.OfType<PatchEvent.Failed>().ShouldBeEmpty();
+
+        // Two requests: the one that built and the one that asked. Nothing
+        // followed the question, because the next thing to happen is the person
+        // answering it.
+        sent.Count.ShouldBe(2);
+    }
+
+    /// <summary>
+    /// The same, without even a question. Stopping with nothing to show is the
+    /// model's to do, and the transcript already carries whatever it said.
+    /// </summary>
+    [Fact]
+    public async Task A_model_that_will_not_propose_is_not_argued_with()
+    {
+        var (events, sent) = await Run(
+            Asking(Building),
+            Prose("I would rather not."));
+
+        events.OfType<PatchEvent.Proposed>().ShouldBeEmpty();
+        events.OfType<PatchEvent.Failed>().ShouldBeEmpty();
+
+        sent.Count.ShouldBe(2);
+    }
+
+    /// <summary>
+    /// A turn whose whole content is prose still reaches the transcript. It is
+    /// the only thing that turn produced, and with nothing arguing back it is
+    /// the only thing the person has to answer.
     /// </summary>
     [Fact]
     public async Task What_it_said_before_stopping_still_reaches_the_transcript()
     {
-        var (events, _) = await Run(
-            Prose("Thinking about it."),
-            Prose("Still thinking."));
+        var (events, _) = await Run(Prose("Thinking about it."));
 
-        events.OfType<PatchEvent.Said>().Select(s => s.Text)
-            .ShouldBe(["Thinking about it.", "Still thinking."]);
+        events.OfType<PatchEvent.Said>().Select(s => s.Text).ShouldBe(["Thinking about it."]);
+    }
+
+    /// <summary>
+    /// Prose in the middle of working is not stopping. A model that says what it
+    /// is about to do and then does it carries on, because the turn ends on
+    /// having nothing left to ask for rather than on having spoken.
+    /// </summary>
+    [Fact]
+    public async Task Saying_something_while_still_working_does_not_end_the_turn()
+    {
+        var (events, sent) = await Run(
+            Talking("Adding the field now.", Building),
+            Asking(("propose", """{"summary":"a flat grey field"}""")));
+
+        events.OfType<PatchEvent.Said>().ShouldHaveSingleItem();
+        events.OfType<PatchEvent.Proposed>().ShouldHaveSingleItem();
+        sent.Count.ShouldBe(2);
     }
 
     [Fact]
@@ -185,6 +285,134 @@ public class SessionTests
         canned.Sent.Count.ShouldBe(1);
     }
 
+    /// <summary>
+    /// A sound goes to a second model on its own, and never into the
+    /// conversation.
+    /// </summary>
+    /// <remarks>
+    /// Both halves are the point. The models that take a sound require every
+    /// request to carry one, so a conversation driven by one is refused on its
+    /// first turn — before anything has been rendered to listen to — and they do
+    /// not take a picture besides. Asked on its own, the ear answers one
+    /// question about one sound, and the WAV is sent once rather than left in a
+    /// history that is resent every turn.
+    /// </remarks>
+    [Fact]
+    public async Task A_sound_goes_to_the_ear_alone_and_never_into_the_conversation()
+    {
+        var (events, sent) = await Listening(
+            Asking(Sounding),
+            Asking(("listen", """{"seconds":0.5}""")),
+            Prose("A steady mid tone, clean, with no movement in it."),
+            Asking(("propose", """{"summary":"a sine at 440"}""")));
+
+        var heard = events.OfType<PatchEvent.Heard>().ShouldHaveSingleItem();
+        heard.Wav.Length.ShouldBeGreaterThan(44);
+
+        var toTheEar = sent.Where(r => r["model"]!.GetValue<string>() == Ears).ShouldHaveSingleItem();
+
+        // Asked as a question rather than as a turn of a loop: no tools, so
+        // nothing can come back but the words.
+        toTheEar["tools"].ShouldBeNull();
+        toTheEar["tool_choice"].ShouldBeNull();
+
+        var sound = toTheEar["messages"]!.AsArray()
+            .Select(m => m!["content"])
+            .OfType<JsonArray>()
+            .SelectMany(content => content)
+            .Where(part => part!["type"]!.GetValue<string>() == "input_audio")
+            .ToArray()
+            .ShouldHaveSingleItem();
+
+        // Bare base64, with no data URL around it. A picture is spelled the
+        // other way and the two are not interchangeable.
+        var data = sound!["input_audio"]!["data"]!.GetValue<string>();
+
+        sound["input_audio"]!["format"]!.GetValue<string>().ShouldBe("wav");
+        data.ShouldNotStartWith("data:");
+        Convert.FromBase64String(data).Length.ShouldBe(heard.Wav.Length);
+
+        // And not one byte of it in the conversation, on any turn.
+        sent.Where(r => r["model"]!.GetValue<string>() != Ears)
+            .ShouldAllBe(r => !r.ToJsonString().Contains("input_audio"));
+    }
+
+    /// <summary>
+    /// What the ear said comes back as the answer to the tool call, because that
+    /// is the only way the model driving this ever learns it.
+    /// </summary>
+    [Fact]
+    public async Task What_the_ear_heard_is_what_answers_the_call()
+    {
+        var (events, sent) = await Listening(
+            Asking(Sounding),
+            Asking(("listen", """{"seconds":0.5,"note":"is the tone clean or buzzing"}""")),
+            Prose("A steady mid tone, clean, with no buzz on it."),
+            Asking(("propose", """{"summary":"a sine at 440"}""")));
+
+        // The question it asked was put to the ear rather than kept as a note.
+        var asked = sent.Single(r => r["model"]!.GetValue<string>() == Ears).ToJsonString();
+
+        asked.ShouldContain("is the tone clean or buzzing");
+
+        var answer = sent[^1]["messages"]!.AsArray()
+            .Where(m => m!["role"]!.GetValue<string>() == "tool")
+            .Select(m => m!["content"]!.GetValue<string>())
+            .Single(text => text.Contains("dBFS", StringComparison.Ordinal));
+
+        // Both halves: what was measured here, and what was heard there.
+        answer.ShouldContain("Peak -6");
+        answer.ShouldContain("no buzz on it");
+
+        events.OfType<PatchEvent.Heard>().ShouldHaveSingleItem()
+            .Caption.ShouldContain("no buzz on it");
+    }
+
+    /// <summary>
+    /// An ear that will not answer costs the description, not the turn. The
+    /// sound was rendered and its levels are already measured, so there is
+    /// something true to carry on from.
+    /// </summary>
+    [Fact]
+    public async Task An_ear_that_fails_is_a_sentence_rather_than_the_end_of_the_run()
+    {
+        var canned = new Canned(
+            new Answer(Asking(Sounding)),
+            new Answer(Asking(("listen", """{"seconds":0.5}"""))),
+            new Answer("""{"error":{"message":"that model is not available here."}}""", HttpStatusCode.NotFound),
+            new Answer(Asking(("propose", """{"summary":"a sine at 440"}"""))));
+
+        var events = await Drive(canned, hearing: true);
+
+        events.OfType<PatchEvent.Proposed>().ShouldHaveSingleItem();
+        events.OfType<PatchEvent.Failed>().ShouldBeEmpty();
+
+        var heard = events.OfType<PatchEvent.Heard>().ShouldHaveSingleItem();
+
+        heard.Caption.ShouldContain("not available here");
+        heard.Caption.ShouldContain("Peak -6", Case.Sensitive);
+    }
+
+    /// <summary>
+    /// Nothing asks for audio back, from either model. This is a tool loop, and
+    /// the ear is asked what it hears rather than asked to speak.
+    /// </summary>
+    [Fact]
+    public async Task Nothing_ever_asks_a_model_to_answer_in_sound()
+    {
+        var (_, sent) = await Listening(
+            Asking(Sounding),
+            Asking(("listen", """{"seconds":0.5}""")),
+            Prose("A steady mid tone."),
+            Asking(("propose", """{"summary":"a sine at 440"}""")));
+
+        foreach (var request in sent)
+        {
+            request["modalities"].ShouldBeNull();
+            request["audio"].ShouldBeNull();
+        }
+    }
+
     // --- driving it ---------------------------------------------------------
 
     private static async Task<(List<PatchEvent> Events, List<JsonNode> Sent)> Run(params string[] replies)
@@ -193,13 +421,42 @@ public class SessionTests
         return (await Drive(canned), canned.Sent);
     }
 
-    private static async Task<List<PatchEvent>> Drive(Canned canned)
+    private static async Task<(List<PatchEvent> Events, List<JsonNode> Sent)> Listening(
+        params string[] replies)
     {
-        var workbench = new PatchWorkbench(NodeCatalog.BuiltIn, new Patch(), vision: false);
+        var canned = new Canned([.. replies.Select(r => new Answer(r))]);
+        return (await Drive(canned, hearing: true), canned.Sent);
+    }
+
+    /// <summary>The model that listens, which is never the one being driven.</summary>
+    private const string Ears = "some-ear";
+
+    /// <summary>One message put to a session that may be asked another.</summary>
+    private static async Task<List<PatchEvent>> Drain(IPatchSession session, string instruction)
+    {
+        var events = new List<PatchEvent>();
+
+        await foreach (var happened in session.Ask(instruction, TestContext.Current.CancellationToken))
+            events.Add(happened);
+
+        return events;
+    }
+
+    private static async Task<List<PatchEvent>> Drive(Canned canned, bool hearing = false)
+    {
+        var workbench = new PatchWorkbench(
+            NodeCatalog.BuiltIn,
+            new Patch(),
+            vision: false,
+            hearing);
 
         using var session = new OpenAiSession(
             workbench,
-            new AssistantConfig("no-key-needed", "some-model"),
+            new AssistantConfig(
+                "no-key-needed",
+                "some-model",
+                Hearing: hearing,
+                EarModel: hearing ? Ears : null),
             "https://nowhere.invalid/v1",
             canned);
 
@@ -224,7 +481,11 @@ public class SessionTests
         },
     }.ToJsonString();
 
-    private static string Asking(params (string Name, string Arguments)[] calls)
+    private static string Asking(params (string Name, string Arguments)[] calls) =>
+        Talking(null, calls);
+
+    /// <summary>Tool calls with a word about them, which is how a model narrates.</summary>
+    private static string Talking(string? said, params (string Name, string Arguments)[] calls)
     {
         var asked = new JsonArray();
 
@@ -251,7 +512,7 @@ public class SessionTests
                     ["message"] = new JsonObject
                     {
                         ["role"] = "assistant",
-                        ["content"] = null,
+                        ["content"] = said,
                         ["tool_calls"] = asked,
                     },
                 },

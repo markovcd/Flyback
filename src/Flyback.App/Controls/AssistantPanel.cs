@@ -50,7 +50,7 @@ public sealed class AssistantPanel : UserControl
 
     private readonly Action<string, string?> report;
 
-    private readonly AssistantSettings settings = AssistantSettings.Load();
+    private readonly AssistantSettings settings;
     private readonly Credentials credentials;
 
     private readonly TextBox instruction = new()
@@ -174,10 +174,40 @@ public sealed class AssistantPanel : UserControl
     };
 
     private readonly Button forget = new() { Content = "Forget key", Width = 100 };
-    private readonly TextBox modelBox = new() { FontSize = 12, Width = 260 };
+    /// <summary>
+    /// The models the provider suggests, and anything else that can be typed
+    /// over them. Editable rather than a plain list because the endpoint is a
+    /// field — a suggestion is what a provider knows about, not what it allows.
+    /// </summary>
+    private readonly ComboBox modelBox = new()
+    {
+        FontSize = 12,
+        Width = 260,
+        Name = "model",
+        IsEditable = true,
+    };
+
+    /// <summary>What the chosen model will and will not accept being handed.</summary>
+    private readonly TextBlock modelNote = new()
+    {
+        FontSize = 11,
+        Foreground = Dim,
+        Width = 260,
+        TextWrapping = TextWrapping.Wrap,
+    };
     private readonly TextBox baseUrlBox = new() { FontSize = 12, Width = 260 };
     private readonly CheckBox rememberBox = new() { Content = "Keep this key", FontSize = 12 };
     private readonly CheckBox visionBox = new() { Content = "Let it look at the picture", FontSize = 12 };
+    private readonly CheckBox hearingBox = new() { Content = "Let it listen to the sound", FontSize = 12 };
+
+    /// <summary>
+    /// Which model is played the sound, which is never the one doing the
+    /// building — see <see cref="AssistantConfig.EarModel"/>. A plain list
+    /// rather than an editable one: this is a capability rather than a
+    /// preference, and a name typed here that cannot hear fails one tool call
+    /// at a time, in the middle of a run.
+    /// </summary>
+    private readonly ComboBox earBox = new() { FontSize = 12, Width = 260, Name = "ear" };
     private readonly ComboBox providerBox = new() { FontSize = 12, Width = 260 };
     private readonly ComboBox effortBox = new()
     {
@@ -189,6 +219,23 @@ public sealed class AssistantPanel : UserControl
 
     private IPatchAssistant? assistant;
     private AssistantRun? run;
+
+    /// <summary>
+    /// What the conversation in <see cref="run"/> was started with. A session is
+    /// built around one model at one endpoint and cannot be moved to another, so
+    /// these are what say whether it is still the right conversation to be
+    /// having — see <see cref="Restarting"/>.
+    /// </summary>
+    private AssistantConfig? runConfig;
+
+    private IPatchAssistant? runAssistant;
+
+    /// <summary>
+    /// The paragraph the assistant is in the middle of, or null when it is not
+    /// in the middle of one. Held rather than found, because what "the last
+    /// block" is changes the moment anything else is written.
+    /// </summary>
+    private SelectableTextBlock? saying;
 
     /// <summary>Built the first time the settings window asks for it, and kept.</summary>
     private Control? section;
@@ -218,12 +265,20 @@ public sealed class AssistantPanel : UserControl
     private DateTime startedAt;
     private int pulse;
 
+    /// <param name="saved">
+    /// The choices to open on, defaulting to the ones on this machine. Named
+    /// only so a test can put a set in front of the panel without writing the
+    /// file somebody is actually using — what these controls make of a given set
+    /// of choices is most of what this class does.
+    /// </param>
     public AssistantPanel(
         PluginCatalog plugins,
         Func<Patch> current,
         Action<Patch> apply,
-        Action<string, string?> report)
+        Action<string, string?> report,
+        AssistantSettings? saved = null)
     {
+        settings = saved ?? AssistantSettings.Load();
         this.plugins = plugins;
         this.current = current;
         this.apply = apply;
@@ -233,6 +288,13 @@ public sealed class AssistantPanel : UserControl
         assistant = Choose();
 
         Content = Build();
+
+        // Subscribed here rather than where the settings window is put together.
+        // That window is built the first time somebody opens one, which is long
+        // after the saved choices are restored below — so a handler living there
+        // would not run for the tick this restores, and the ear would sit greyed
+        // out beside a box that says listening is on.
+        hearingBox.IsCheckedChanged += (_, _) => ShowEarState();
 
         ReadSettingsIntoControls();
         Refresh();
@@ -370,9 +432,20 @@ public sealed class AssistantPanel : UserControl
 
             assistant = plugins.Assistants[providerBox.SelectedIndex];
             settings.Provider = assistant.Id;
+            OfferModels(assistant);
+            OfferEars(assistant);
             modelBox.Text = assistant.Schema.DefaultModel;
             baseUrlBox.Text = assistant.Schema.DefaultBaseUrl ?? string.Empty;
             Refresh();
+        };
+
+        // Typing is what actually decides the model — a name may be picked from
+        // the list, typed over it, or arrive from the settings file — so what
+        // the form says about the model follows the text rather than the
+        // selection.
+        modelBox.PropertyChanged += (_, e) =>
+        {
+            if (e.Property == ComboBox.TextProperty) ShowModelState();
         };
 
         // Its own padding, because it is the whole of a window now rather than a
@@ -383,6 +456,7 @@ public sealed class AssistantPanel : UserControl
         fields.Children.Add(providerBox);
         fields.Children.Add(Caption("Model"));
         fields.Children.Add(modelBox);
+        fields.Children.Add(modelNote);
         fields.Children.Add(Caption("Endpoint"));
         fields.Children.Add(baseUrlBox);
         fields.Children.Add(Caption("API key"));
@@ -390,6 +464,8 @@ public sealed class AssistantPanel : UserControl
         fields.Children.Add(keyNote);
         fields.Children.Add(rememberBox);
         fields.Children.Add(visionBox);
+        fields.Children.Add(hearingBox);
+        fields.Children.Add(earBox);
         fields.Children.Add(Caption("Effort"));
         fields.Children.Add(effortBox);
 
@@ -490,8 +566,140 @@ public sealed class AssistantPanel : UserControl
         (settings.Provider.Length > 0 ? plugins.Assistant(settings.Provider) : null)
         ?? plugins.PreferredAssistant;
 
+    /// <summary>
+    /// Fills the model list from whichever provider is chosen. Names only: what
+    /// each one accepts is said in a sentence under the box rather than crammed
+    /// into a row somebody is choosing from.
+    /// </summary>
+    private void OfferModels(IPatchAssistant from) =>
+        modelBox.ItemsSource = from.Schema.SuggestedModels.Select(m => m.Id).ToList();
+
+    /// <summary>
+    /// Fills the list of models that can listen, and says whether there is any
+    /// point in it. A provider with no ear at all disables the tick itself —
+    /// there is nothing to turn on.
+    /// </summary>
+    private void OfferEars(IPatchAssistant from)
+    {
+        var ears = from.Schema.Ears.Select(m => m.Id).ToList();
+
+        earBox.ItemsSource = ears;
+        earBox.SelectedIndex = ears.Count == 0
+            ? -1
+            : Math.Max(0, ears.IndexOf(settings.EarModel));
+
+        hearingBox.IsEnabled = ears.Count > 0;
+
+        ToolTip.SetTip(
+            hearingBox,
+            ears.Count > 0 ? null : $"{from.Name} has no model that takes a sound.");
+
+        ShowEarState();
+    }
+
+    /// <summary>
+    /// The ear is only a question while the answer is wanted: shown where there
+    /// is anything to listen with, and enabled while listening is on.
+    /// </summary>
+    /// <remarks>
+    /// Read off the list and the tick rather than off the checkbox's own
+    /// enabled state, which is another thing that has to have been set first.
+    /// This is called from anywhere either could have changed, and has to be
+    /// right whichever order they were set in.
+    /// </remarks>
+    private void ShowEarState()
+    {
+        var any = earBox.ItemCount > 0;
+
+        earBox.IsVisible = any;
+        earBox.IsEnabled = any && hearingBox.IsChecked == true;
+    }
+
+    /// <summary>What is known about the model in the box, or null when it is a stranger.</summary>
+    private AssistantModel? Chosen() => assistant?.Schema.Known(ModelName());
+
+    private string ModelName() => string.IsNullOrWhiteSpace(modelBox.Text)
+        ? assistant?.Schema.DefaultModel ?? string.Empty
+        : modelBox.Text;
+
+    /// <summary>Which model listens, or null when this provider has none.</summary>
+    private string? EarName() => earBox.SelectedItem as string;
+
+    /// <summary>
+    /// Puts what the model accepts in front of the person choosing it, and takes
+    /// away the two switches it would refuse.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Only sight is the model in the box's business. The sound never goes to
+    /// it — it goes to the ear, which is a different model chosen separately —
+    /// so hearing turns on whether the <em>provider</em> has one, not whether
+    /// this model does.
+    /// </para>
+    /// <para>
+    /// The tick itself is left alone, which is deliberate. A disabled box that
+    /// keeps its state is a preference parked; one that clears itself is a
+    /// preference destroyed by passing through a model on the way to another.
+    /// <see cref="Configured"/> is what makes it safe — it sends no picture to a
+    /// model recorded as refusing one, whatever the box still shows.
+    /// </para>
+    /// <para>
+    /// A model nobody here has heard of is left alone rather than disabled. Not
+    /// knowing is not the same as knowing it cannot, and the whole point of an
+    /// editable endpoint is that it reaches things this was never told about.
+    /// </para>
+    /// </remarks>
+    private void ShowModelState()
+    {
+        var known = Chosen();
+
+        visionBox.IsEnabled = known?.Vision != false;
+        ToolTip.SetTip(visionBox, visionBox.IsEnabled ? null : $"{known!.Id} does not take pictures.");
+
+        modelNote.Text = known is null
+            ? "Nothing is known about this one here, so the switch below is yours to set. An "
+              + "endpoint that will not take a picture answers with a 400."
+            : Handles(known);
+    }
+
+    /// <summary>
+    /// One line naming what the model doing the building accepts. It names the
+    /// model it matched rather than what was typed, so a dated snapshot says
+    /// which family it was read as — see <see cref="AssistantSchema.Known"/>.
+    /// </summary>
+    private static string Handles(AssistantModel model) => (model.Vision, model.Hearing) switch
+    {
+        (true, _) => $"{model.Id} takes pictures.",
+
+        // Worth saying rather than leaving somebody to wonder why they chose an
+        // audio model and lost the ability to look at anything: this one belongs
+        // in the ear below, where the sound actually goes.
+        (false, true) => $"{model.Id} is a listener — it takes sound and not pictures, which is what "
+            + "the ear below is for. Driving with it works, but it builds blind.",
+
+        _ => $"{model.Id} takes no pictures, so it builds from the compiler alone.",
+    };
+
+    /// <summary>
+    /// Puts the saved choices in the controls.
+    /// </summary>
+    /// <remarks>
+    /// The switches go first, and the order is load-bearing rather than tidy:
+    /// what the model note says and whether the ear may be chosen are both read
+    /// off them, so anything filled in above a tick that has not been restored
+    /// yet is showing the state of a session nobody had. That is one half of a
+    /// box that opened greyed out and came right the moment its tick was
+    /// touched; the other half is that the tick's handler is subscribed where
+    /// this can reach it rather than in the settings window, which is not built
+    /// until somebody opens one.
+    /// </remarks>
     private void ReadSettingsIntoControls()
     {
+        visionBox.IsChecked = settings.Vision;
+        hearingBox.IsChecked = settings.Hearing;
+        rememberBox.IsChecked = settings.RememberKey;
+        effortBox.SelectedIndex = (int)settings.Effort;
+
         if (assistant is not null)
         {
             providerBox.SelectedIndex = plugins.Assistants
@@ -501,14 +709,15 @@ public sealed class AssistantPanel : UserControl
                 .DefaultIfEmpty(-1)
                 .First();
 
+            OfferModels(assistant);
+            OfferEars(assistant);
             modelBox.Text = settings.Model.Length > 0 ? settings.Model : assistant.Schema.DefaultModel;
             baseUrlBox.Text = settings.BaseUrl ?? assistant.Schema.DefaultBaseUrl ?? string.Empty;
             baseUrlBox.IsEnabled = assistant.Schema.BaseUrlEditable;
         }
 
-        visionBox.IsChecked = settings.Vision;
-        rememberBox.IsChecked = settings.RememberKey;
-        effortBox.SelectedIndex = (int)settings.Effort;
+        ShowModelState();
+        ShowEarState();
     }
 
     private void SaveSettings()
@@ -516,6 +725,8 @@ public sealed class AssistantPanel : UserControl
         settings.Model = modelBox.Text ?? string.Empty;
         settings.BaseUrl = string.IsNullOrWhiteSpace(baseUrlBox.Text) ? null : baseUrlBox.Text;
         settings.Vision = visionBox.IsChecked == true;
+        settings.Hearing = hearingBox.IsChecked == true;
+        settings.EarModel = EarName() ?? string.Empty;
         settings.RememberKey = rememberBox.IsChecked == true;
         settings.Effort = (AssistantEffort)Math.Max(0, effortBox.SelectedIndex);
 
@@ -561,14 +772,27 @@ public sealed class AssistantPanel : UserControl
         if (assistant is null) return null;
 
         var key = credentials.Of(assistant.Id, assistant.Schema.EnvironmentVariable) ?? string.Empty;
-        var model = string.IsNullOrWhiteSpace(modelBox.Text) ? assistant.Schema.DefaultModel : modelBox.Text;
+        var model = ModelName();
         var url = string.IsNullOrWhiteSpace(baseUrlBox.Text) ? assistant.Schema.DefaultBaseUrl : baseUrlBox.Text;
+
+        // What the model is recorded as refusing is not sent, whatever the box
+        // still shows. The tick is a preference and this is a fact about the
+        // model, so the fact wins for this run and the preference survives to
+        // mean something again at the next model — see ShowModelState.
+        var known = assistant.Schema.Known(model);
+
+        // Hearing without an ear is nothing to turn on rather than something
+        // that fails later: the tool would be offered, called, and answered with
+        // a sentence saying nobody heard it.
+        var ear = EarName();
 
         return new AssistantConfig(
             key,
             model,
             url,
-            visionBox.IsChecked == true,
+            visionBox.IsChecked == true && known?.Vision != false,
+            hearingBox.IsChecked == true && ear is not null,
+            ear,
             (AssistantEffort)Math.Max(0, effortBox.SelectedIndex));
     }
 
@@ -777,6 +1001,69 @@ public sealed class AssistantPanel : UserControl
 
     // --- asking -------------------------------------------------------------
 
+    /// <summary>
+    /// Why this message has to begin a new conversation, or null to carry the
+    /// one already going.
+    /// </summary>
+    /// <remarks>
+    /// Three reasons, and each of them is a conversation that could not honestly
+    /// continue rather than a tidy-up. A run holds a copy of the patch it
+    /// started from, so a patch edited underneath it would be quietly discarded
+    /// by the next proposal. A run holds a session built around one model at one
+    /// endpoint, so changed settings are a different correspondent. And a run
+    /// has a turn budget, which is there to stop a conversation growing without
+    /// end.
+    /// </remarks>
+    private string? Restarting(AssistantConfig config)
+    {
+        if (run is null) return string.Empty;
+        if (run.Exhausted) return "That conversation had its turns. Starting another.";
+        if (!ReferenceEquals(runAssistant, assistant) || runConfig != config)
+            return "The settings changed, so this is a new conversation.";
+
+        return run.EditedUnderneath(current())
+            ? "The patch changed underneath, so this is a new conversation about the one on screen."
+            : null;
+    }
+
+    /// <summary>
+    /// The conversation this message belongs to, which is the one already going
+    /// unless it cannot be.
+    /// </summary>
+    /// <remarks>
+    /// Keeping it is the whole of what a second message is for: the history, the
+    /// workbench with everything built in it, and whatever prefix cache the
+    /// provider holds for the briefing. A panel that started again per message
+    /// is one where "you did not propose it" reaches a model with no memory of
+    /// having built anything, and it answers — correctly, and uselessly — that
+    /// it has not designed a patch yet.
+    /// </remarks>
+    private AssistantRun Conversation(IPatchAssistant with, AssistantConfig config)
+    {
+        var because = Restarting(config);
+
+        if (because is null && run is { } going) return going;
+
+        run?.Dispose();
+        run = new AssistantRun(with, config, plugins.Modules, current());
+        runConfig = config;
+        runAssistant = with;
+
+        // Said rather than silently done, and only where there was something to
+        // lose: the transcript emptying is otherwise the only sign that the
+        // thing being talked to has just been replaced.
+        if (saidPanel.Children.Count > 0)
+        {
+            saidPanel.Children.Clear();
+            if (because is { Length: > 0 }) Add(because, Dim, 11);
+        }
+
+        lastFrame.Source = null;
+        lastFrame.IsVisible = false;
+
+        return run;
+    }
+
     private async Task AskAsync()
     {
         if (asking || assistant is null) return;
@@ -785,14 +1072,9 @@ public sealed class AssistantPanel : UserControl
         var wanted = instruction.Text ?? string.Empty;
         if (string.IsNullOrWhiteSpace(wanted)) return;
 
-        saidPanel.Children.Clear();
-        lastFrame.Source = null;
-        lastFrame.IsVisible = false;
+        var conversation = Conversation(assistant, config);
 
-        Add(wanted, Brushes.White, 12);
-
-        run?.Dispose();
-        run = new AssistantRun(assistant, config, plugins.Modules, current());
+        Asked(wanted);
 
         instruction.Text = string.Empty;
 
@@ -801,7 +1083,7 @@ public sealed class AssistantPanel : UserControl
 
         try
         {
-            await foreach (var happened in run.Ask(wanted))
+            await foreach (var happened in conversation.Ask(wanted))
             {
                 Show(happened);
 
@@ -844,6 +1126,15 @@ public sealed class AssistantPanel : UserControl
                 Picture(saw.Png);
                 break;
 
+            // The caption and nothing else. The WAV went to the model rather
+            // than to the speakers, and a panel that started playing sound while
+            // the patch under the cursor is already playing would be two things
+            // at once — the transcript says a sound was rendered and heard,
+            // which is what somebody watching this needs to know.
+            case PatchEvent.Heard heard:
+                Add(heard.Caption, Dim, 11);
+                break;
+
             case PatchEvent.Cost cost:
                 Add(
                     $"{cost.Input} in ({cost.CacheRead} cached), {cost.Output} out.",
@@ -880,6 +1171,12 @@ public sealed class AssistantPanel : UserControl
 
     private void Add(string text, IBrush color, double size)
     {
+        // Anything else in the transcript ends the paragraph the assistant was
+        // in the middle of. Without this, prose lands on the end of whatever
+        // block happens to be last and of about the right size — which was the
+        // person's own message, run together with the reply to it.
+        saying = null;
+
         saidPanel.Children.Add(new SelectableTextBlock
         {
             Text = text,
@@ -889,16 +1186,47 @@ public sealed class AssistantPanel : UserControl
         });
     }
 
+    /// <summary>
+    /// What the person just asked for, set apart from what comes back.
+    /// </summary>
+    /// <remarks>
+    /// A conversation is kept now rather than cleared per message, so the two
+    /// sides have to be told apart by looking: a gap above, and the accent the
+    /// rest of the panel uses for its own voice.
+    /// </remarks>
+    private void Asked(string text)
+    {
+        saying = null;
+
+        saidPanel.Children.Add(new SelectableTextBlock
+        {
+            Text = text,
+            TextWrapping = TextWrapping.Wrap,
+            Foreground = Brushes.White,
+            FontSize = 12,
+            FontWeight = FontWeight.SemiBold,
+            Margin = new Thickness(0, saidPanel.Children.Count > 0 ? 14 : 0, 0, 2),
+        });
+    }
+
     /// <summary>Streamed prose arrives in pieces, so it lands on the end of the last one.</summary>
     private void Append(string text)
     {
-        if (saidPanel.Children.Count > 0 && saidPanel.Children[^1] is SelectableTextBlock last && last.FontSize > 11.5)
+        if (saying is not null)
         {
-            last.Text += text;
+            saying.Text += text;
             return;
         }
 
-        Add(text, Brushes.White, 12);
+        saying = new SelectableTextBlock
+        {
+            Text = text,
+            TextWrapping = TextWrapping.Wrap,
+            Foreground = Brushes.White,
+            FontSize = 12,
+        };
+
+        saidPanel.Children.Add(saying);
     }
 
     // --- accepting ----------------------------------------------------------
@@ -930,6 +1258,11 @@ public sealed class AssistantPanel : UserControl
         var overwrote = run.EditedUnderneath(current());
 
         apply(proposed);
+
+        // What this run just put on the canvas is not somebody editing behind
+        // it, so the next message carries on the same conversation rather than
+        // starting one about a patch it does not remember building.
+        run.Rebase(proposed);
 
         Add(overwrote
             ? "Applied — this replaced the edits you made while it ran. Ctrl+Z puts them back."

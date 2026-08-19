@@ -1,8 +1,10 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
+using Flyback.App.Assist;
 using Flyback.App.Controls;
 using Flyback.Core.Graph;
+using Flyback.Plugins.Assist;
 using Flyback.Plugins.Hosting;
 using Shouldly;
 
@@ -13,30 +15,73 @@ namespace Flyback.App.Tests.Ui;
 /// run it started.
 /// </summary>
 /// <remarks>
-/// Built with no plugins, which is the state every machine is in until one is
-/// installed and the only one a test can put this panel in: the catalogue's
-/// constructor is internal to the plugin assembly, so a fake assistant cannot be
-/// handed to it from here. That still covers the claim worth making about a
-/// button — that it is dead when pressing it could do nothing — and leaves the
-/// asking itself to the plugin tests, where a real run can be driven.
+/// Mostly with no plugins, which is the state every machine is in until one is
+/// installed. Where a provider is needed, one is handed in: the catalogue's
+/// constructor is internal and this assembly is now named on it, because the
+/// half of this panel that reacts to what a provider can do is the half that
+/// went wrong, and it cannot be looked at in front of no provider. Driving an
+/// actual run is still the plugin tests' job.
 /// </remarks>
 public class AssistantPanelTests : UiTest
 {
     /// <summary>What the button shows when pressing it would ask.</summary>
     private const string Send = "⏎";
 
-    private static Window Showing()
+    private static Window Showing(PluginCatalog? plugins = null, AssistantSettings? saved = null)
     {
         var panel = new AssistantPanel(
-            PluginCatalog.Empty,
+            plugins ?? PluginCatalog.Empty,
             () => Presets.Plasma(NodeCatalog.BuiltIn),
             _ => { },
-            (_, _) => { });
+            (_, _) => { },
+            saved);
 
         var window = Show(panel, 760);
         Settle(window);
 
         return window;
+    }
+
+    /// <summary>
+    /// A catalogue holding one provider, which is the only way to see the half
+    /// of this panel that reacts to what a provider can do.
+    /// </summary>
+    private static PluginCatalog With(IPatchAssistant assistant) =>
+        new([], [], NodeCatalog.BuiltIn, [], [], [assistant]);
+
+    /// <summary>The settings, in a window of their own, as opening them makes one.</summary>
+    private static Window Settings(Window panel)
+    {
+        var host = new Window { Content = All<AssistantPanel>(panel).Single().SettingsSection() };
+
+        host.Show();
+        Settle(host);
+
+        return host;
+    }
+
+    /// <summary>
+    /// One provider that can see and one model that can hear, which is the shape
+    /// every real provider here has: nothing does both.
+    /// </summary>
+    private sealed class Hearing : IPatchAssistant
+    {
+        public string Id => "hearing";
+
+        public string Name => "Can hear";
+
+        public int Priority => 0;
+
+        public AssistantSchema Schema { get; } = new(
+            "sees",
+            [new AssistantModel("sees"), new AssistantModel("hears", Vision: false, Hearing: true)],
+            "NONE",
+            "none needed");
+
+        public string? Unavailable(AssistantConfig config) => null;
+
+        public IPatchSession Start(PatchWorkbench workbench, AssistantConfig config) =>
+            throw new NotSupportedException("this one is only ever asked what it can do.");
     }
 
     private static Button SendButton(Window window) =>
@@ -105,6 +150,115 @@ public class AssistantPanelTests : UiTest
         var offered = ((IEnumerable<string>)box.ItemsSource!).ToArray();
 
         offered.ShouldBe(["Low", "Medium", "High"]);
+    }
+
+    /// <summary>
+    /// The model list is a set of suggestions, not a set of choices. The
+    /// endpoint is a field — an OpenAI-shaped one reaches a dozen providers and
+    /// a local runtime besides — so a name nobody wrote down here still has to
+    /// be typeable, and an ordinary drop-down would make it not.
+    /// </summary>
+    [AvaloniaFact]
+    public void The_model_box_takes_a_name_that_is_not_on_its_list()
+    {
+        var window = Showing();
+        var panel = All<AssistantPanel>(window).Single();
+
+        var host = new Window { Content = panel.SettingsSection() };
+        host.Show();
+        Settle(host);
+
+        var box = All<ComboBox>(host).Single(c => c.Name == "model");
+
+        box.IsEditable.ShouldBeTrue();
+
+        box.Text = "something-nobody-here-has-heard-of";
+        Settle(host);
+
+        box.Text.ShouldBe("something-nobody-here-has-heard-of");
+    }
+
+    /// <summary>
+    /// A setting that was on when the window closed is on, and usable, when it
+    /// opens again.
+    /// </summary>
+    /// <remarks>
+    /// The bug this was written for: the ear sat greyed out under a ticked box
+    /// saying listening was on, and came right the instant the tick was touched.
+    /// Two causes, either of which would do it on its own — the ear's state was
+    /// worked out before the tick had been restored, and the handler that keeps
+    /// the two in step was subscribed while building the settings window, which
+    /// is not built until somebody opens one, long after the restoring is done.
+    /// </remarks>
+    [AvaloniaFact]
+    public void An_ear_is_ready_to_change_the_moment_the_settings_are_opened()
+    {
+        var window = Showing(
+            With(new Hearing()),
+            new AssistantSettings { Provider = "hearing", Hearing = true, EarModel = "hears" });
+
+        var host = Settings(window);
+        var ear = All<ComboBox>(host).Single(c => c.Name == "ear");
+
+        ear.IsVisible.ShouldBeTrue();
+        ear.IsEnabled.ShouldBeTrue("listening is on, so the model doing it is a live choice");
+        ear.SelectedItem.ShouldBe("hears");
+    }
+
+    /// <summary>
+    /// And the other way round, so what is pinned above is the tick being read
+    /// rather than the box simply always being on.
+    /// </summary>
+    [AvaloniaFact]
+    public void An_ear_nobody_asked_for_is_shown_but_not_a_choice_yet()
+    {
+        var window = Showing(
+            With(new Hearing()),
+            new AssistantSettings { Provider = "hearing", Hearing = false });
+
+        var host = Settings(window);
+        var ear = All<ComboBox>(host).Single(c => c.Name == "ear");
+
+        ear.IsVisible.ShouldBeTrue("the provider has one, so it is worth showing what it would be");
+        ear.IsEnabled.ShouldBeFalse();
+    }
+
+    /// <summary>
+    /// A provider with nothing that can hear has nothing to offer here, and the
+    /// tick above it is not a question either.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_provider_that_cannot_hear_at_all_offers_no_ear()
+    {
+        var window = Showing(PluginCatalog.Empty, new AssistantSettings { Hearing = true });
+
+        var host = Settings(window);
+        var ear = All<ComboBox>(host).Single(c => c.Name == "ear");
+
+        ear.IsVisible.ShouldBeFalse();
+    }
+
+    /// <summary>
+    /// Not knowing what a model accepts is not the same as knowing it refuses.
+    /// With no provider installed nothing is known about anything, and the two
+    /// switches stay the person's to set rather than being taken away.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_model_nobody_knows_anything_about_leaves_both_switches_alone()
+    {
+        var window = Showing();
+        var panel = All<AssistantPanel>(window).Single();
+
+        var host = new Window { Content = panel.SettingsSection() };
+        host.Show();
+        Settle(host);
+
+        var switches = All<CheckBox>(host)
+            .Where(c => c.Content is string content && content.Contains("Let it"))
+            .ToArray();
+
+        switches.Length.ShouldBe(2, "one for the picture and one for the sound");
+        switches.ShouldAllBe(c => c.IsEnabled);
     }
 
     /// <summary>

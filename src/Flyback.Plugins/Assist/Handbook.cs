@@ -81,6 +81,13 @@ internal static class Handbook
         - **For sound, patch Time's `t` into `in`.** That is what makes an
           oscillator oscillate and a sequencer play. A melody needs Time
           into the sequencer's `in` *and* into the oscillator's `in`.
+          Straight in, unscaled: `freq` is the pitch, and anything that
+          slows the domain down divides that pitch by the same amount. A
+          440 Hz oscillator fed a fifth of a second per second is an 88 Hz
+          oscillator with a knob that says 440.
+        - **To slow a picture down**, put a Multiply after Time — 0.2 for a
+          fifth of the speed. Time itself is seconds and nothing else, so
+          the place a patch runs slowly is visible in the patch.
         - **For a picture**, patch a Coordinates output — `x` for upright
           bands, `y` for flat ones, `radius` for rings — or Time, for
           something that moves without varying across the frame.
@@ -132,16 +139,62 @@ internal static class Handbook
         the result — that is the only way to find out whether it is *anything*,
         as opposed to merely legal.
 
+        """;
+
+    /// <summary>
+    /// What to say about the sound, which is the one thing the briefing cannot
+    /// state without knowing how this run is configured.
+    /// </summary>
+    /// <remarks>
+    /// Both halves are worth their place. A model told nothing would assume it
+    /// can hear — every other tool it has answers when called — and would
+    /// describe a sound it never heard. A model that <em>can</em> hear has to be
+    /// told to, because the loop it already knows is build, render, look, and a
+    /// patch with no picture in it offers nothing to look at.
+    /// </remarks>
+    private const string Deaf = """
         You cannot hear the sound. If the patch makes noise, reason about it
         from the modules and say plainly that you have not heard it.
 
+        """;
+
+    private const string Hearing = """
+        You have an ear, though it is not yours. `listen` renders a stretch of
+        the sound, measures it, and plays it to a second model that can hear —
+        what comes back to you is that model's description in words, along with
+        the peak and rms levels, which are measured from the samples rather
+        than described. Use it on any patch wired to the Output's `left` or
+        `right`, the way you use `render` on one wired to `color`: a patch
+        built for the speakers has nothing to look at, and this is the only
+        check it has.
+
+        Two things follow from the description being second-hand. It answers
+        what you tell it you are listening for, so put that in `note` — "is
+        the bass tone clean or buzzing" gets a better answer than a bare call
+        does. And it is one listener's account rather than the sound itself,
+        so say where a claim about the sound came from, and trust the measured
+        levels over the prose where the two disagree.
+
+        Silence never reaches the ear at all: it comes back as a sentence
+        saying so, and it usually means something on the way to the Output
+        holds still.
+
+        """;
+
+    private const string Working = """
         ## How to work
 
         Call `describe_patch` first to see what is already there. Build with
         `add_module`, `connect` and `set_knobs`; read the issues that come back;
-        `render` when the shape is right and adjust what you see. When you are
+        check it when the shape is right and adjust what you found. When you are
         happy, call `propose` with a one-line summary. Nothing you do reaches
         the person's editor until they accept that proposal, so work freely.
+
+        You do not have to end on a proposal. If what was asked for is unclear,
+        or there is a choice only the person can make, say so and stop —
+        that ends your turn and they will answer. This is a conversation and
+        it keeps everything you have built, so asking is cheaper than guessing
+        at something they will have to undo.
 
         # The modules
 
@@ -160,9 +213,17 @@ internal static class Handbook
     /// description, which is what makes a large catalogue fit — see
     /// <see cref="ProseBudget"/>.
     /// </summary>
-    public static string Render(ModuleCatalog modules, bool prose)
+    /// <param name="hearing">
+    /// Whether this run has the <c>listen</c> tool. It changes one paragraph,
+    /// and it has to change it: the briefing is the only place the model is told
+    /// what it can check, and being wrong about that either wastes a tool it has
+    /// or invents a sound it does not.
+    /// </param>
+    public static string Render(ModuleCatalog modules, bool prose, bool hearing = false)
     {
-        var text = new StringBuilder(Conventions);
+        var text = new StringBuilder(Conventions)
+            .Append(hearing ? Hearing : Deaf)
+            .Append(Working);
 
         // Catalogue order, not sorted: it is already deterministic (built-ins in
         // declaration order, then each plugin in load order) and re-sorting here

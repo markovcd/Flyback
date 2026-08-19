@@ -30,9 +30,41 @@ public sealed class OpenAiAssistant : IPatchAssistant
 
     public int Priority => 50;
 
+    /// <remarks>
+    /// <para>
+    /// The default is a model that can see, because looking is what most of this
+    /// is. The two audio models are listed rather than defaulted to for the
+    /// reason <see cref="AssistantConfig.Hearing"/> is off by default: they are
+    /// the only ones here that take a sound, and they are not the ones to reach
+    /// for otherwise.
+    /// </para>
+    /// <para>
+    /// The three audio models take a sound and <em>not</em> a picture, which is
+    /// why they are recorded with sight off and why they are an ear rather than
+    /// a driver — see <see cref="AssistantConfig.EarModel"/>. Chosen as the
+    /// model in the box they still work, and the form takes sight away rather
+    /// than sending them something they will refuse.
+    /// </para>
+    /// <para>
+    /// The last two are named as a local runtime names them, and both are the
+    /// text-only weights — the multimodal ones are separate models under
+    /// separate names. Saying so is the point of recording this at all: a
+    /// picture sent to either is a 400, and until it was written down the shell
+    /// had no way to know that and offered to send one.
+    /// </para>
+    /// </remarks>
     public AssistantSchema Schema { get; } = new(
         "gpt-4o",
-        ["gpt-4o", "gpt-4o-mini", "gpt-4.1", "llama3.1", "qwen2.5"],
+        [
+            new AssistantModel("gpt-4o"),
+            new AssistantModel("gpt-4o-mini"),
+            new AssistantModel("gpt-4.1"),
+            new AssistantModel("gpt-4o-audio-preview", Vision: false, Hearing: true),
+            new AssistantModel("gpt-4o-mini-audio-preview", Vision: false, Hearing: true),
+            new AssistantModel("gpt-audio", Vision: false, Hearing: true),
+            new AssistantModel("llama3.1", Vision: false),
+            new AssistantModel("qwen2.5", Vision: false),
+        ],
         "OPENAI_API_KEY",
         "Any endpoint that speaks chat completions. A local runtime such as Ollama "
         + "will accept any value as a key.",
