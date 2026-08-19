@@ -17,6 +17,7 @@ public static class Presets
         new("Feedback tunnel", FeedbackTunnel),
         new("Nebula", Nebula),
         new("Drone", Drone),
+        new("Ring scan", RingScan),
         new("Chromatic", Chromatic),
         new("Sequence", Sequence),
         new("Four voices", FourVoices),
@@ -202,6 +203,100 @@ public static class Presets
          .Wire(slow, 0, tint, 0)
          .Wire(rings, 0, tint, 2)
          .Wire(tint, 0, output, NodeCatalog.OutputColourPort);
+
+        return b.Patch;
+    }
+
+    /// <summary>
+    /// The picture played rather than drawn. A circle is swept round a field of
+    /// rings at audio rate and what it passes over is the waveform, so the tone
+    /// is not made by an oscillator anywhere — it is the image, read along a
+    /// line.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The rings are centred on the origin and the loop is not, which is the
+    /// whole of why this makes a sound. Distance from the origin is what Rings
+    /// is a function of, so a loop centred there sits on one ring for the entire
+    /// turn and reads a constant; pushed off centre it crosses several, and the
+    /// crossing is the waveform. Slide the Scan's 'x' back to nothing and the
+    /// patch goes silent with the picture unchanged, which is the fastest way to
+    /// see what the module is actually doing.
+    /// </para>
+    /// <para>
+    /// What it is doing is FM. The value along the loop is the sine of a
+    /// distance that varies smoothly round the turn, and a sine of a periodic
+    /// function is a phase-modulated one — so the Rings' own 'freq' is the
+    /// modulation index and winding it up blooms the harmonics rather than
+    /// changing the pitch. The pitch is the Scan's 'rate' and nothing else.
+    /// </para>
+    /// <para>
+    /// The slow sine walks the loop's centre outward and back, which is a
+    /// wavetable sweep: the table is the field, and where the loop is cut
+    /// through it is the position in the table. That is the knob this patch is
+    /// really for. The Scan's 'view' is laid over the rings so the loop can be
+    /// seen where it runs, with the value it is reading swinging the trace off
+    /// it — the X-Y display to a Probe's chart.
+    /// </para>
+    /// <para>
+    /// The rings are lowered twice here, once for the eye and once inside the
+    /// sweep (ADR-0040): the two are the same module read at different places,
+    /// and two readings cannot share a register. It costs ops rather than
+    /// correctness, and it is the price of seeing the thing being scanned.
+    /// </para>
+    /// </remarks>
+    public static Patch RingScan(ModuleCatalog modules)
+    {
+        var b = new PatchBuilder(modules);
+
+        var time = b.Add("time", 40, 420, (0, 1f));
+        var coord = b.Add("coord", 40, 120);
+
+        // The field, and the only thing in the patch that makes the waveform.
+        // 'freq' is the modulation index rather than a pitch: more rings under
+        // the loop is more harmonics, at the same note.
+        var rings = b.Add("pattern.rings", 300, 120, (2, 4f));
+
+        // Where the loop is cut through the field, walked outward and back twice
+        // a second. Kept clear of zero at the bottom of the sweep, because a loop
+        // concentric with the rings reads a constant and is silent.
+        var sweep = b.Add("osc.sine", 300, 600, (1, 0.2f));
+        var where = b.Add("math.remap", 540, 640, (1, -1f), (2, 1f), (3, 0.2f), (4, 0.75f));
+
+        var pitch = b.Add("audio.frequency", 300, 780, (0, 110f));
+
+        // 'clock' is the sweep's own time base; 'rate' is the pitch; 'radius'
+        // and 'x' choose which loop through the field is read.
+        var scan = b.Add(NodeCatalog.ScanTypeId, 800, 420, (3, 0.35f), (6, 1f));
+
+        // Eye: the field under the trace, dim enough that the loop reads on top
+        // of it rather than competing with it.
+        var glow = b.Add("math.remap", 540, 120, (1, -1f), (2, 1f), (3, 0.05f), (4, 0.55f));
+        var tint = b.Add("colour.hsv", 800, 120, (1, 0.7f));
+        var lit = b.Add("math.add", 1080, 220);
+
+        var output = b.Add(NodeCatalog.OutputTypeId, 1320, 300, (NodeCatalog.OutputGainPort, 0.45f));
+
+        b.Wire(coord, 0, rings, 0)
+         .Wire(coord, 1, rings, 1)
+
+         // Ear: the field itself into the sweep, and out the other side as a
+         // sample. Nothing between the picture and the speakers but the loop.
+         .Wire(rings, 0, scan, 0)
+         .Wire(time, 0, scan, 1)
+         .Wire(pitch, 0, scan, 2)
+         .Wire(time, 0, sweep, 0)
+         .Wire(sweep, 0, where, 0)
+         .Wire(where, 0, scan, 4)
+         .Wire(scan, 0, output, NodeCatalog.OutputLeftPort)
+
+         // Eye: the field, with the loop drawn over it.
+         .Wire(rings, 0, glow, 0)
+         .Wire(where, 0, tint, 0)
+         .Wire(glow, 0, tint, 2)
+         .Wire(tint, 0, lit, 0)
+         .Wire(scan, 1, lit, 1)
+         .Wire(lit, 0, output, NodeCatalog.OutputColourPort);
 
         return b.Patch;
     }

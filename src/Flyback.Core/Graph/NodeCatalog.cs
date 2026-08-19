@@ -45,6 +45,14 @@ public static class NodeCatalog
     /// </summary>
     public const string ProbeTypeId = "probe";
 
+    /// <summary>
+    /// The Probe read backwards: a loop swept across the picture at audio rate,
+    /// so that what a chart draws of a signal, this hears of a field. Named here
+    /// only for the tests and the preset that build one — the shell treats it as
+    /// the ordinary module it is.
+    /// </summary>
+    public const string ScanTypeId = "scan";
+
     /// <summary>RGB, so the screen reads three registers.</summary>
     public const int VideoChannels = 3;
 
@@ -237,6 +245,7 @@ public static class NodeCatalog
                 + "hands the snapped number on, so a second Note can play an interval off it."),
 
             Probe(),
+            Scan(),
 
             // ---------------------------------------------------------------- sources
             new NodeDef(
@@ -944,6 +953,142 @@ public static class NodeCatalog
             + "on screen. What it cannot show is memory: drawn rather than heard, an oscillator "
             + "does not accumulate its phase and a delay line passes straight through, so a "
             + "chart of either is what the screen makes of it rather than what the speakers do.");
+    }
+
+    /// <summary>
+    /// One loop swept round the picture at audio rate, and the value it passes
+    /// over: a field read as a waveform rather than a waveform drawn as a field.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The Probe the other way about, and the same mechanism upside down. A
+    /// Probe pushes a <em>time</em> that varies across the picture and lowers
+    /// its input under it; this pushes an <em>(x, y)</em> that varies along a
+    /// loop. Everything upstream of <c>in</c> is therefore lowered reading a
+    /// position on that loop instead of the pixel's own — see
+    /// <see cref="PortSpec.Swept"/> — and what comes back is one ordinary
+    /// scalar per evaluation, which is what a sample is.
+    /// </para>
+    /// <para>
+    /// The loop is a circle and not a raster because of what the two do to the
+    /// sound. A raster's <c>fract</c> jumps once a line, and a step in the
+    /// waveform every cycle is a sawtooth edge that is there whatever the
+    /// picture holds — which is why a scanned image mostly sounds like the scan.
+    /// A circle closes on itself, so the sweep contributes no discontinuity at
+    /// all and the whole of the waveform is the picture. What that leaves is
+    /// wavetable synthesis with the field as the table: <c>radius</c>, <c>x</c>
+    /// and <c>y</c> choose which loop through it is read, and moving them is the
+    /// table sweep.
+    /// </para>
+    /// <para>
+    /// Where on the loop one evaluation sits is the one thing the two sinks
+    /// cannot agree on: the ear is at a moment and the eye is at a pixel. So the
+    /// bearing is chosen on <see cref="Emitter.HasMemory"/> — the speakers take
+    /// the accumulated phase, the screen takes the pixel's own angle from the
+    /// centre, and every pixel then lands on the point of the loop it is looking
+    /// at. One lowering serves both (ADR-0043), and the picture that falls out
+    /// is the X-Y display an oscilloscope shows in the mode the Probe is not.
+    /// </para>
+    /// </remarks>
+    private static NodeDef Scan()
+    {
+        // How far a value of one 'scale' pushes the trace off the loop, as a
+        // fraction of the radius. Half, so a signal that fits reads as a ring
+        // with a waveform around it rather than as a disc.
+        const float Swing = 0.5f;
+
+        return new NodeDef(
+            ScanTypeId, "Scan", "Output",
+            [
+                Swept("in"),
+                Domain("clock"),
+                Num("rate", 220f, 0f, 4000f),
+                Num("radius", 0.5f, 0f, 4f),
+                Num("x", 0f, -4f, 4f),
+                Num("y", 0f, -4f, 4f),
+                Num("scale", 1f, 0.01f, 16f),
+            ],
+            [Num("out"), Col("view")],
+            (em, node) =>
+            {
+                var one = em.Constant(1f);
+
+                var radius = node[3];
+                var centreX = node[4];
+                var centreY = node[5];
+
+                // Where this pixel stands relative to the loop, which is the
+                // eye's only way of asking where on the loop it is looking.
+                var awayX = em.Sub(em.Load(OpCode.LoadX), centreX);
+                var awayY = em.Sub(em.Load(OpCode.LoadY), centreY);
+
+                // Accumulated rather than multiplied out, for ADR-0030's reason:
+                // a rate that steps then bends the waveform instead of breaking
+                // it, which is what makes this playable from a Note.
+                var turns = em.Phase(node[1], node[2], em.Constant(0f));
+
+                var angle = em.Ternary(
+                    OpCode.Mix,
+                    em.Binary(OpCode.Atan2, awayY, awayX),
+                    em.Mul(turns, Tau),
+                    em.HasMemory());
+
+                // Read before the push, so it is the renderer's clock the sweep
+                // is carried on and not something the sweep has just replaced.
+                var now = em.Load(OpCode.LoadT);
+
+                em.PushDomain(
+                    em.Add(centreX, em.Mul(radius, em.Unary(OpCode.Cos, angle))),
+                    em.Add(centreY, em.Mul(radius, em.Unary(OpCode.Sin, angle))),
+                    now);
+                var value = em.Coerce(node.Resolve(0), 1);
+                em.PopDomain();
+
+                // The display: the loop drawn where it runs, with the value it
+                // is passing over pushing the trace off it. A circle is the only
+                // path whose point-at-this-bearing is closed form, and that is
+                // what keeps this one evaluation a pixel rather than a march.
+                var away = em.Binary(OpCode.Hypot, awayX, awayY);
+
+                var trace = em.Add(
+                    radius,
+                    em.Mul(em.Mul(em.Binary(OpCode.Div, value, node[6]), radius), Swing));
+
+                var lit = em.Sub(one, em.Ternary(
+                    OpCode.Smoothstep,
+                    em.Constant(0.006f),
+                    em.Constant(0.02f),
+                    em.Unary(OpCode.Abs, em.Sub(away, trace))));
+
+                // The unmodulated loop under it, faint, because a trace swinging
+                // about nothing is otherwise indistinguishable from one sitting
+                // still at the wrong radius.
+                var guide = em.Sub(one, em.Ternary(
+                    OpCode.Smoothstep,
+                    em.Constant(0.002f),
+                    em.Constant(0.006f),
+                    em.Unary(OpCode.Abs, em.Sub(away, radius))));
+
+                return
+                [
+                    value,
+                    em.Mul(
+                        em.Combine(em.Constant(0.45f), one, em.Constant(0.72f)),
+                        em.Add(lit, em.Mul(guide, 0.25f))),
+                ];
+            },
+            "Hears the picture. A circle is swept round the image 'rate' times a second and "
+            + "whatever is patched into 'in' is read along it, so one turn of the loop is one "
+            + "cycle of a waveform and 'rate' is the pitch. 'radius', 'x' and 'y' choose which "
+            + "loop is read: the image is the wavetable and moving them sweeps through it, "
+            + "which is the knob to reach for rather than the pitch. Patch Time into 'clock'. "
+            + "A closed loop is the whole point — a raster's retrace would put a sawtooth edge "
+            + "in every cycle whatever the picture held, and a circle contributes nothing of "
+            + "its own. 'out' is the sample; 'view' is the loop drawn where it runs with the "
+            + "value swinging the trace off it, which is the X-Y display to the Probe's chart. "
+            + "A loop that follows the picture's own contours reads a constant and is silent — "
+            + "a circle centred on Rings is the way to hear nothing, and moving it off centre "
+            + "is the way to hear everything.");
     }
 
     /// <summary>
