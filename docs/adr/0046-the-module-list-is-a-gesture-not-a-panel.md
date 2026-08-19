@@ -59,6 +59,25 @@ the filter would be one or the other at random.
 **Escape empties the filter, and empties nothing a second time** — so the same
 key then closes the list. One key, and it always takes a step back.
 
+**A wire let go over bare canvas opens it too, and what is picked arrives
+plugged in.** The same list, unfiltered: there is nothing to filter by. The
+compiler broadcasts a scalar to three channels and takes luma from a colour, and
+`CompleteWire` enforces no rule of its own, so every socket in the catalogue
+accepts every wire. Only one module of sixty could be excluded even by
+direction — Coordinates, which has no inputs — and it is not worth a rule.
+
+**Which socket it lands on is the real question, and it has three answers in
+order.** First a port marked `Domain` or `Swept`: those name the axis a module
+is read across and the signal it reads under a domain of its own, which is to
+say the socket the module exists to have something in. The compiler already
+agrees — it warns about a Domain port left on its knob and about no other. Then
+an exact match of kind, which is what tells a Scan's `view` from its `out` when
+a colour was wanted, and puts a stray scalar into a Blend's `t` rather than
+broadcasting it to grey down `a`. Then the first socket, which is where this
+would land anyway: the catalogue is written with the principal port first, and
+today the two rules above agree with it everywhere. They are there for the
+almost.
+
 ## Consequences
 
 **The canvas gained 225 pixels and the layout lost two tracks.** Which shifted

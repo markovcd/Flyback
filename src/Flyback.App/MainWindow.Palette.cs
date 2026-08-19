@@ -28,7 +28,19 @@ public sealed partial class MainWindow
         palette = new ModulePalette(plugins.Modules, Add);
         paletteFlyout.Content = palette;
 
-        editor.MenuRequested += (_, at) => ShowPalette(at);
+        editor.MenuRequested += (_, at) =>
+        {
+            wiring = null;
+            ShowPalette(at);
+        };
+
+        // A wire let go over bare canvas asks the same question with one more
+        // thing known: what it is going to be plugged into.
+        editor.WireDropped += (_, drop) =>
+        {
+            wiring = drop;
+            ShowPalette(drop.At);
+        };
 
         // Where the last one was asked for, so that what is picked lands where
         // the canvas was clicked rather than wherever the view is centred. Held
@@ -36,7 +48,9 @@ public sealed partial class MainWindow
         void Add(string typeId)
         {
             paletteFlyout.Hide();
-            editor.AddNode(typeId, addingAt);
+
+            if (wiring is { } drop) editor.AddNodeWired(typeId, drop);
+            else editor.AddNode(typeId, addingAt);
 
             // Back to the canvas, or the next keypress would go to a filter box
             // that is no longer on screen.
@@ -46,6 +60,14 @@ public sealed partial class MainWindow
 
     /// <summary>Where the module about to be picked belongs, in graph space.</summary>
     private Point? addingAt;
+
+    /// <summary>
+    /// The wire the module about to be picked should arrive plugged into, or
+    /// null where the list was opened without one — a right-click or the space
+    /// bar. Cleared by those, so a module added afterwards is not wired to
+    /// whatever the last dropped wire happened to be.
+    /// </summary>
+    private WireDrop? wiring;
 
     private void ShowPalette(Point at)
     {

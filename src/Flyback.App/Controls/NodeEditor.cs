@@ -9,6 +9,20 @@ using Flyback.Core.Graph;
 namespace Flyback.App.Controls;
 
 /// <summary>
+/// A wire let go over empty canvas: where it landed, and which socket is still
+/// holding the other end.
+/// </summary>
+/// <param name="At">Where it was dropped, in graph space — where the new module goes.</param>
+/// <param name="Node">The module the wire is still attached to.</param>
+/// <param name="Port">Which of that module's sockets.</param>
+/// <param name="FromOutput">
+/// True when the loose end is looking for an input, because the end still held
+/// is an output. The whole of which direction the new wire runs.
+/// </param>
+/// <param name="Kind">What flows down it, which is a hint about where it belongs on the far end.</param>
+public readonly record struct WireDrop(Point At, Guid Node, int Port, bool FromOutput, PortKind Kind);
+
+/// <summary>
 /// The patch bay. Everything is drawn directly rather than built from controls,
 /// which keeps panning and zooming over a few hundred modules cheap and puts
 /// layout, painting and hit-testing in one place.
@@ -198,6 +212,14 @@ public sealed class NodeEditor : Control
     /// </remarks>
     public event EventHandler<Point>? MenuRequested;
 
+    /// <summary>
+    /// Raised when a wire is let go over empty canvas, carrying the loose end
+    /// and where it was dropped. What the shell puts there is the module list,
+    /// narrowed to what could actually take the wire — and whatever is picked
+    /// arrives already plugged in.
+    /// </summary>
+    public event EventHandler<WireDrop>? WireDropped;
+
     public Patch Patch
     {
         get => patch;
@@ -384,6 +406,99 @@ public sealed class NodeEditor : Control
         Select(node.Id);
         NotifyPatchChanged();
         return node;
+    }
+
+    /// <summary>
+    /// Adds a module where a wire was dropped and plugs the wire into it, as one
+    /// edit — the module and the wire arrived in one gesture and come back the
+    /// same way.
+    /// </summary>
+    /// <remarks>
+    /// Which socket it lands on is <see cref="Fitting"/>'s decision. Nothing is
+    /// refused for being the wrong kind, because nothing is: the compiler
+    /// broadcasts a scalar to three channels and takes luma from a colour, so
+    /// every socket accepts every wire and the question is only which one was
+    /// meant.
+    /// </remarks>
+    public NodeInstance? AddNodeWired(string typeId, WireDrop drop)
+    {
+        var def = NodeCatalog.Require(typeId);
+
+        if (!patch.CanAdd(typeId)) return AddNode(typeId, drop.At);
+
+        var centre = drop.At;
+        var node = NodeInstance.Create(def, centre.X - NodeGeometry.Width / 2, centre.Y - NodeGeometry.Height(def) / 2);
+
+        patch.Nodes.Add(node);
+
+        // Both halves before the one record, so one press of undo takes the
+        // module and the wire away together.
+        var sockets = drop.FromOutput ? def.Inputs : def.Outputs;
+
+        if (Fitting(sockets, drop.Kind) is { } socket)
+        {
+            if (drop.FromOutput) patch.Connect(drop.Node, drop.Port, node.Id, socket);
+            else patch.Connect(node.Id, socket, drop.Node, drop.Port);
+        }
+
+        Select(node.Id);
+        NotifyPatchChanged();
+        return node;
+    }
+
+    /// <summary>
+    /// Which socket of a new module a dropped wire belongs on, or null where the
+    /// module has none of that kind at all.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The port a module is <em>about</em> comes first:
+    /// <see cref="PortSpec.Domain"/> is the axis it is read across and
+    /// <see cref="PortSpec.Swept"/> is what it reads under a domain of its own,
+    /// and both are the socket the module exists to have something in. The
+    /// compiler already says as much — it warns about a Domain port left on its
+    /// knob, and about no other.
+    /// </para>
+    /// <para>
+    /// Then an exact match of kind, which is what tells a Scan's <c>view</c>
+    /// from its <c>out</c> when a colour was wanted, and puts a scalar into a
+    /// Blend's <c>t</c> rather than broadcasting it to grey down <c>a</c>.
+    /// </para>
+    /// <para>
+    /// Then the first socket, which is where this would land anyway: the
+    /// catalogue is written with the principal one first, and the two rules
+    /// above agree with it almost everywhere. They are here for the almost.
+    /// </para>
+    /// </remarks>
+    private static int? Fitting(IReadOnlyList<PortSpec> sockets, PortKind kind)
+    {
+        if (sockets.Count == 0) return null;
+
+        for (var i = 0; i < sockets.Count; i++)
+            if (sockets[i].Domain || sockets[i].Swept)
+                return i;
+
+        for (var i = 0; i < sockets.Count; i++)
+            if (sockets[i].Kind == kind)
+                return i;
+
+        return 0;
+    }
+
+    /// <summary>
+    /// A wire let go over bare canvas, handed to whoever can offer something to
+    /// plug it into.
+    /// </summary>
+    private void OfferSomethingToPlugInto(Point graph)
+    {
+        if (patch.Find(wireNode) is not { } holding) return;
+        if (NodeCatalog.Get(holding.TypeId) is not { } def) return;
+
+        var sockets = wireFromOutput ? def.Outputs : def.Inputs;
+        if (wirePort < 0 || wirePort >= sockets.Count) return;
+
+        WireDropped?.Invoke(this, new WireDrop(
+            graph, wireNode, wirePort, wireFromOutput, sockets[wirePort].Kind));
     }
 
     /// <summary>
@@ -1183,7 +1298,15 @@ public sealed class NodeEditor : Control
 
     private void CompleteWire(Point graph)
     {
-        if (!HitPort(graph, out var node, out var port, out var isOutput)) return;
+        if (!HitPort(graph, out var node, out var port, out var isOutput))
+        {
+            // Let go over nothing at all. Dropped on a module's body it is a
+            // miss — the sockets are where a wire means something — but dropped
+            // on bare canvas it is a request for something to plug into.
+            if (HitNode(graph) is null) OfferSomethingToPlugInto(graph);
+
+            return;
+        }
 
         // A wire only means something between opposite kinds of socket.
         if (isOutput == wireFromOutput) return;
