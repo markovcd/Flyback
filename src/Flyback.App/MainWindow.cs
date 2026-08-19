@@ -397,10 +397,14 @@ public sealed partial class MainWindow : Window
         undoButton.Click += (_, _) => editor.Undo();
         redoButton.Click += (_, _) => editor.Redo();
 
+        var tidy = Drawn("tidy", Glyphs.Tidy(), "Lay the modules out so the patch reads left to right  (Ctrl+L)");
+        tidy.Click += (_, _) => editor.Tidy();
+
         RefreshEditState();
 
         // What is done to the patch, in the order it is done: pick one, open or
-        // save one, take an edit back.
+        // save one, take an edit back. Tidy sits with undo and redo rather than
+        // with the files, because it is an edit and is taken back like one.
         var patchwork = Row();
 
         patchwork.Children.Add(Label("Patch"));
@@ -410,6 +414,7 @@ public sealed partial class MainWindow : Window
         patchwork.Children.Add(Separator());
         patchwork.Children.Add(undoButton);
         patchwork.Children.Add(redoButton);
+        patchwork.Children.Add(tidy);
 
         assistantButton.IsEnabled = plugins.Assistants.Count > 0;
         ToolTip.SetTip(assistantButton, plugins.Assistants.Count > 0

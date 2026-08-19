@@ -282,6 +282,26 @@ public sealed class NodeEditor : Control
     }
 
     /// <summary>
+    /// Lays the patch out so it reads left to right with its wires clear of one
+    /// another, and frames the result. One edit, so one Ctrl+Z puts every node
+    /// back where it was.
+    /// </summary>
+    /// <remarks>
+    /// Only coordinates change — no wire is added, removed or rerouted — so the
+    /// patch compiles to exactly the same program before and after, and the
+    /// picture and the sound are untouched. See ADR-0044.
+    /// </remarks>
+    public void Tidy()
+    {
+        if (patch.Nodes.Count == 0) return;
+
+        PatchLayout.Arrange(patch, NodeCatalog.Current, NodeGeometry.Metrics);
+
+        NotifyPatchChanged();
+        FrameAll();
+    }
+
+    /// <summary>
     /// Fits every node into view. A patch is usually loaded before the control
     /// has been measured, so this defers until there is a viewport to fit into.
     /// </summary>

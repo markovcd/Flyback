@@ -184,6 +184,13 @@ public sealed partial class MainWindow
                 editor.Redo();
                 e.Handled = true;
                 break;
+
+            // Lay out. Beside the two above because it is the same kind of
+            // thing: an edit to the patch that Ctrl+Z takes off again.
+            case Key.L:
+                editor.Tidy();
+                e.Handled = true;
+                break;
         }
     }
 

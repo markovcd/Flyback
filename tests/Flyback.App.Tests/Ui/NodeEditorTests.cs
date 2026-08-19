@@ -817,4 +817,71 @@ public class NodeEditorTests : UiTest
         patch.Nodes.Count(n => n.TypeId == NodeCatalog.UnitDelayTypeId)
             .ShouldBe(1, "the loop was already broken, so nothing more was needed");
     }
+
+    // --- laying out ---------------------------------------------------------
+
+    /// <summary>
+    /// The layout lives in the engine and is handed the editor's own dimensions,
+    /// because the assistant's workbench wants the same routine and has no canvas
+    /// to ask. Nothing in the type system holds the two together, so this does:
+    /// a node laid out to a size it is not drawn at overlaps its neighbour, which
+    /// is the exact fault the layout was written to remove.
+    /// </summary>
+    [AvaloniaFact]
+    public void The_layout_is_told_the_size_a_node_is_actually_drawn()
+    {
+        var metrics = NodeGeometry.Metrics;
+
+        metrics.Width.ShouldBe(NodeGeometry.Width);
+        metrics.HeaderHeight.ShouldBe(NodeGeometry.HeaderHeight);
+        metrics.RowHeight.ShouldBe(NodeGeometry.RowHeight);
+        metrics.FooterPadding.ShouldBe(NodeGeometry.FooterPadding);
+
+        // And the derived measurements agree, which is what actually gets used.
+        var node = NodeInstance.Create(Sink, 0, 0);
+
+        metrics.Height(Sink).ShouldBe(NodeGeometry.Height(Sink));
+
+        for (var port = 0; port < Sink.Inputs.Count; port++)
+            metrics.InputPort(Sink, port).ShouldBe(NodeGeometry.InputPort(node, Sink, port).Y);
+    }
+
+    /// <summary>
+    /// Laying out is one edit. Ctrl+Z has to put every node back at once —
+    /// a button that took eleven presses to undo would be worse than no button.
+    /// </summary>
+    [AvaloniaFact]
+    public void Laying_out_is_a_single_undo()
+    {
+        var patch = Presets.Drone(NodeCatalog.BuiltIn);
+        var (editor, _) = Editing(patch);
+
+        var before = patch.Nodes.ToDictionary(n => n.Id, n => (n.X, n.Y));
+
+        editor.Tidy();
+        editor.Patch.Nodes
+            .ShouldContain(n => n.X != before[n.Id].X || n.Y != before[n.Id].Y, "something should have moved");
+
+        editor.Undo().ShouldBeTrue();
+
+        foreach (var node in editor.Patch.Nodes)
+            (node.X, node.Y).ShouldBe(before[node.Id]);
+    }
+
+    /// <summary>
+    /// And it is only an edit to the positions: the patch still compiles to the
+    /// same program, so the picture and the sound are exactly what they were.
+    /// </summary>
+    [AvaloniaFact]
+    public void Laying_out_leaves_the_program_alone()
+    {
+        var patch = Presets.Sequence(NodeCatalog.BuiltIn);
+        var (editor, _) = Editing(patch);
+
+        var before = patch.CompileForVideo(NodeCatalog.BuiltIn).Program.Ops;
+
+        editor.Tidy();
+
+        editor.Patch.CompileForVideo(NodeCatalog.BuiltIn).Program.Ops.ShouldBe(before);
+    }
 }

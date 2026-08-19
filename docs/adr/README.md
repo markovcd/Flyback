@@ -16,7 +16,8 @@ Twelve records — [0003](0003-cpu-rendering-with-a-gpu-path-left-open.md),
 [0038](0038-a-sequencers-notes-are-a-list-on-the-node.md),
 [0040](0040-a-probe-is-a-second-compile-root.md) and
 [0041](0041-a-plugin-can-hold-state-without-a-new-opcode.md) and
-[0043](0043-a-scan-is-a-probe-read-backwards.md) — are marked
+[0043](0043-a-scan-is-a-probe-read-backwards.md) and
+[0044](0044-lay-patches-out-in-layers-not-with-springs.md) — are marked
 **user-directed**: they were chosen by the project owner, not derived. The first
 two sit upstream of almost everything else here; 0026 and 0027 each give up a
 property an earlier record relied on, knowingly; 0031, 0033, 0034, 0036 and 0040
@@ -27,7 +28,9 @@ user-directed itself. 0041 is the odd one: it takes nothing away and adds no
 machinery, and simply finds that a rule 0027 stated as a limit had stopped being
 true. 0043 is 0040 turned round: that one let the instrument be looked at, and
 this one lets a picture be listened to, out of the same mechanism upside down.
-All are recorded even though they were not mine to make.
+0044 is the odd one of these: it was asked for as a physics simulation and is
+recorded as the layered drawing that was proposed instead, which is the part
+worth keeping. All are recorded even though they were not mine to make.
 
 [0035](0035-a-glsl-backend-for-the-video-path.md) is the first record where two
 backends disagree by design: the picture on screen and the picture in an exported
@@ -75,6 +78,7 @@ to differ in their last bits.
 | [0017](0017-draw-the-node-editor-in-one-control.md) | Draw the node editor in one custom control |
 | [0018](0018-never-render-frames-on-the-ui-thread.md) | Never render frames on the UI thread |
 | [0039](0039-one-window-class-across-a-file-per-region.md) | One window class, across a file per region |
+| [0044](0044-lay-patches-out-in-layers-not-with-springs.md) | Lay patches out in layers, not with springs *(user-directed)* |
 
 ### Sound
 

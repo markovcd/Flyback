@@ -166,16 +166,19 @@ public class OutputSettingsTests : UiTest
     }
 
     /// <summary>
-    /// Open and save are drawn rather than typed. A folder and a floppy disk are
-    /// what those two look like everywhere, and neither is a character any font
-    /// here can be relied on to have — the code points exist, and on Windows
-    /// they resolve to the colour emoji font, which would put two full-colour
-    /// pictures in a bar of thin grey strokes.
+    /// Three of the buttons are drawn rather than typed. A folder and a floppy
+    /// disk are what open and save look like everywhere, and neither is a
+    /// character any font here can be relied on to have — the code points exist,
+    /// and on Windows they resolve to the colour emoji font, which would put
+    /// full-colour pictures in a bar of thin grey strokes. Tidy is drawn for the
+    /// opposite reason: no character means what it does, so it is a patch in
+    /// miniature instead.
     /// </summary>
     [AvaloniaTheory]
     [InlineData("open")]
     [InlineData("save")]
-    public void The_file_icons_are_drawn_rather_than_typed(string name)
+    [InlineData("tidy")]
+    public void The_drawn_icons_are_drawn_rather_than_typed(string name)
     {
         var window = Open();
         var icon = Named<Button>(window, name).Content.ShouldBeOfType<Avalonia.Controls.Shapes.Path>();
@@ -200,6 +203,7 @@ public class OutputSettingsTests : UiTest
     [InlineData("assistant")]
     [InlineData("settings")]
     [InlineData("about")]
+    [InlineData("tidy")]
     public void Every_toolbar_icon_says_what_it_is(string name)
     {
         var window = Open();

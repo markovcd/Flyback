@@ -30,4 +30,22 @@ internal static class NodeGeometry
 
     public static Point InputPort(NodeInstance node, NodeDef def, int index) =>
         new(node.X, node.Y + HeaderHeight + (def.Outputs.Count + index + 0.5) * RowHeight);
+
+    /// <summary>
+    /// These same numbers, in the shape the layout wants them — plus how much
+    /// room to leave between the nodes, which is the only part of this the
+    /// editor decides rather than draws.
+    /// </summary>
+    /// <remarks>
+    /// The layout lives in the engine because the assistant's workbench wants it
+    /// too and has no canvas to ask. So the sizes travel to it rather than the
+    /// other way round, and this is the one place they are handed over.
+    /// <para>
+    /// Wide enough between columns for the wires to be followed, and about a
+    /// row's worth between nodes: closer and two modules read as one block, and
+    /// further and a patch of any size stops fitting on a screen.
+    /// </para>
+    /// </remarks>
+    public static PatchLayout.Metrics Metrics => new(
+        Width, HeaderHeight, RowHeight, FooterPadding, ColumnGap: 108, RowGap: 40);
 }

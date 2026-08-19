@@ -689,51 +689,14 @@ public sealed class PatchWorkbench
     /// The assistant never thinks about coordinates; without this every node
     /// would arrive stacked at the origin.
     /// </summary>
-    private void Arrange()
-    {
-        const double columnWidth = 220d;
-        const double rowHeight = 130d;
-
-        var depth = new Dictionary<Guid, int>();
-        foreach (var node in working.Nodes) Depth(node.Id, depth, []);
-
-        var deepest = depth.Count == 0 ? 0 : depth.Values.Max();
-        var filled = new Dictionary<int, int>();
-
-        foreach (var node in working.Nodes)
-        {
-            var column = deepest - depth[node.Id];
-            var row = filled.GetValueOrDefault(column);
-
-            filled[column] = row + 1;
-            node.X = column * columnWidth;
-            node.Y = row * rowHeight;
-        }
-    }
-
-    /// <summary>
-    /// How far a node is from the far end of the patch, counted in wires. A node
-    /// already being measured scores zero rather than recursing: the compiler
-    /// refuses cycles, but the working patch is allowed to hold one for as long
-    /// as it takes the assistant to notice.
-    /// </summary>
-    private int Depth(Guid id, Dictionary<Guid, int> known, HashSet<Guid> walking)
-    {
-        if (known.TryGetValue(id, out var already)) return already;
-        if (!walking.Add(id)) return 0;
-
-        var deepest = 0;
-
-        foreach (var wire in working.Connections)
-        {
-            if (wire.SourceNode != id) continue;
-
-            deepest = Math.Max(deepest, 1 + Depth(wire.TargetNode, known, walking));
-        }
-
-        walking.Remove(id);
-        return known[id] = deepest;
-    }
+    /// <remarks>
+    /// The same routine the editor's own tidy button runs, which is the point of
+    /// it being shared: a patch that arrives from here is laid out exactly as one
+    /// the user has just tidied, so there is nothing to clean up after. What it
+    /// replaced counted columns and stacked them at a fixed pitch, and the pitch
+    /// was shorter than a tall module — see ADR-0044.
+    /// </remarks>
+    private void Arrange() => PatchLayout.Arrange(working, modules);
 
     // --- the vocabulary itself ----------------------------------------------
 

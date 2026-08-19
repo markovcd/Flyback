@@ -6,7 +6,7 @@ using Avalonia.Media;
 namespace Flyback.App.Controls;
 
 /// <summary>
-/// The two toolbar icons that are drawn rather than typed.
+/// The toolbar icons that are drawn rather than typed.
 /// </summary>
 /// <remarks>
 /// A folder and a floppy disk are what open and save look like everywhere, and
@@ -35,6 +35,20 @@ internal static class Glyphs
         "M2.5,2.5 L11.5,2.5 L13.5,4.5 L13.5,13.5 L2.5,13.5 Z "
         + "M5.5,2.5 L10.5,2.5 L10.5,6 L5.5,6 Z "
         + "M4.5,9.5 L11.5,9.5 L11.5,13.5 L4.5,13.5 Z");
+
+    /// <summary>
+    /// A patch in miniature: two modules on the left feeding one on the right,
+    /// which is what the button does to the canvas said in the canvas's own
+    /// terms. Drawn rather than typed for the same reason the other two are —
+    /// no character here means "lay this out", and the ones that come close
+    /// resolve to the emoji font on Windows.
+    /// </summary>
+    public static Control Tidy() => Stroked(
+        "M2,2.5 L6,2.5 L6,6.5 L2,6.5 Z "
+        + "M2,9.5 L6,9.5 L6,13.5 L2,13.5 Z "
+        + "M10,6 L14,6 L14,10 L10,10 Z "
+        + "M6,4.5 L8,4.5 L8,11.5 L6,11.5 "
+        + "M8,8 L10,8");
 
     /// <summary>
     /// Outlined rather than filled, to sit at the weight of the glyphs beside
