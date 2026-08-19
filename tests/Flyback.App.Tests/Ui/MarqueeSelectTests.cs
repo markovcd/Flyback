@@ -254,10 +254,8 @@ public class MarqueeSelectTests : UiTest
 
     // --- the buttons that did not change --------------------------------------
 
-    [AvaloniaTheory]
-    [InlineData(MouseButton.Middle)]
-    [InlineData(MouseButton.Right)]
-    public void The_other_buttons_still_pan_and_select_nothing(MouseButton button)
+    [AvaloniaFact]
+    public void The_middle_button_still_pans_and_selects_nothing()
     {
         var patch = Row(out _, out _, out _);
         var (editor, window) = Editing(patch);
@@ -265,10 +263,29 @@ public class MarqueeSelectTests : UiTest
         var before = editor.GraphToScreen.Transform(new Point(0, 0));
 
         // The same drag that would draw a band with the left button.
-        Sweep(editor, window, new Point(-40, -40), new Point(240, 300), button);
+        Sweep(editor, window, new Point(-40, -40), new Point(240, 300), MouseButton.Middle);
 
-        editor.SelectedNodes.ShouldBeEmpty($"{button} pans, it does not select");
+        editor.SelectedNodes.ShouldBeEmpty("the middle button pans, it does not select");
         editor.GraphToScreen.Transform(new Point(0, 0)).ShouldNotBe(before, "the view should have moved");
+    }
+
+    /// <summary>
+    /// The right button gave up panning when it took on the module list: a
+    /// button cannot both open something on a click and stay silent for one.
+    /// Panning is the middle button and nothing else.
+    /// </summary>
+    [AvaloniaFact]
+    public void The_right_button_no_longer_pans()
+    {
+        var patch = Row(out _, out _, out _);
+        var (editor, window) = Editing(patch);
+
+        var before = editor.GraphToScreen.Transform(new Point(0, 0));
+
+        Sweep(editor, window, new Point(-40, -40), new Point(240, 300), MouseButton.Right);
+
+        editor.GraphToScreen.Transform(new Point(0, 0)).ShouldBe(before, "the view should not have moved");
+        editor.SelectedNodes.ShouldBeEmpty();
     }
 
     /// <summary>

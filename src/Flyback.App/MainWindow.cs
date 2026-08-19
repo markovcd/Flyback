@@ -91,32 +91,19 @@ public sealed partial class MainWindow : Window
         IsHitTestVisible = false,
     };
 
-    private readonly StackPanel modules = new() { Margin = new Thickness(10, 0, 10, 8), Spacing = 2 };
-    private readonly TextBox filter = new()
-    {
-        PlaceholderText = "Filter modules",
-        FontSize = 12,
-    };
-
     /// <summary>
-    /// Opens the list of plugins to show modules from. The engine's own are one
-    /// entry among the rest, because that is exactly what the catalogue thinks
-    /// they are.
+    /// The module list, shown at the pointer when the canvas is right-clicked
+    /// rather than standing open down one side — ADR-0046. Built once and kept,
+    /// because it holds which plugins are ticked and that is a setting rather
+    /// than something to be re-answered on every opening.
     /// </summary>
-    private readonly Button sources = new()
-    {
-        FontSize = 12,
-        HorizontalAlignment = HorizontalAlignment.Stretch,
-        HorizontalContentAlignment = HorizontalAlignment.Left,
-        Padding = new Thickness(8, 4),
-    };
+    private ModulePalette? palette;
 
-    /// <summary>
-    /// Providers whose modules are hidden. Stored as what is *off* rather than
-    /// what is on, so a plugin installed later shows up without having to be
-    /// found and ticked.
-    /// </summary>
-    private readonly HashSet<string> hidden = [];
+    private readonly Flyout paletteFlyout = new()
+    {
+        Placement = PlacementMode.Pointer,
+        ShowMode = FlyoutShowMode.Standard,
+    };
 
     private readonly StackPanel inspector = new() { Margin = new Thickness(12), Spacing = 8 };
     private readonly TextBlock status = new() { VerticalAlignment = VerticalAlignment.Center };
@@ -241,10 +228,12 @@ public sealed partial class MainWindow : Window
         // star weights, and a fixed-pixel column next to one just gets squeezed.
         columns = new Grid
         {
+            // Named because the fullscreen preview's test has to find exactly
+            // this grid, and counting its columns stopped telling it apart from
+            // the toolbar's the moment the palette left the layout.
+            Name = "columns",
             ColumnDefinitions =
             [
-                new ColumnDefinition(220, GridUnitType.Pixel) { MinWidth = 150 },
-                new ColumnDefinition(GridLength.Auto),
                 new ColumnDefinition(new GridLength(3, GridUnitType.Star)) { MinWidth = 280 },
                 new ColumnDefinition(GridLength.Auto),
                 new ColumnDefinition(new GridLength(1.6, GridUnitType.Star)) { MinWidth = 300 },
@@ -281,21 +270,15 @@ public sealed partial class MainWindow : Window
         canvas.Children.Add(assistantSplitter);
         canvas.Children.Add(assistant);
 
-        var palette = BuildPalette();
-        Grid.SetColumn(palette, 0);
-        Grid.SetColumn(canvas, 2);
-
-        var leftSplitter = new GridSplitter { Width = 5, Background = Brushes.Transparent };
-        Grid.SetColumn(leftSplitter, 1);
+        BuildPalette();
+        Grid.SetColumn(canvas, 0);
 
         var rightSplitter = new GridSplitter { Width = 5, Background = Brushes.Transparent };
-        Grid.SetColumn(rightSplitter, 3);
+        Grid.SetColumn(rightSplitter, 1);
 
         var right = rightPanel = BuildRightPanel();
-        Grid.SetColumn(right, 4);
+        Grid.SetColumn(right, 2);
 
-        columns.Children.Add(palette);
-        columns.Children.Add(leftSplitter);
         columns.Children.Add(canvas);
         columns.Children.Add(rightSplitter);
         columns.Children.Add(right);

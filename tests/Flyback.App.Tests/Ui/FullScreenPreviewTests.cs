@@ -37,9 +37,13 @@ public class FullScreenPreviewTests : UiTest
 
     private static NodeEditor Editor(MainWindow window) => All<NodeEditor>(window).Single();
 
-    /// <summary>The grid the shell's panels are laid across, palette to inspector.</summary>
+    /// <summary>
+    /// The grid the shell's panels are laid across, canvas to inspector. Found
+    /// by name: the toolbar is a grid of three columns too, and counting them
+    /// stopped telling the two apart when the module list left the layout.
+    /// </summary>
     private static Grid Columns(MainWindow window) =>
-        All<Grid>(window).First(g => g.ColumnDefinitions.Count >= 5);
+        All<Grid>(window).First(g => g.Name == "columns");
 
     private static List<double> Widths(Grid grid) =>
         [.. grid.ColumnDefinitions.Select(c => c.ActualWidth)];

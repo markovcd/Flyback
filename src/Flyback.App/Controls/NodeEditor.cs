@@ -132,6 +132,13 @@ public sealed class NodeEditor : Control
     /// </summary>
     private readonly HashSet<Guid> marqueeBase = [];
 
+    /// <summary>
+    /// Where the pointer was last seen, in graph space. Kept so that a gesture
+    /// with no position of its own — the space bar — can still open the module
+    /// list where the hand is rather than in the middle of the view.
+    /// </summary>
+    private Point? lastPointer;
+
     private Guid wireNode;
     private int wirePort;
     private bool wireFromOutput;
@@ -176,6 +183,20 @@ public sealed class NodeEditor : Control
     /// the window does.
     /// </summary>
     public event EventHandler<string>? Reported;
+
+    /// <summary>
+    /// Raised by a right-click on empty canvas, carrying the point in graph
+    /// space that was clicked. What the shell puts there is the module palette,
+    /// and what is picked from it belongs at this point rather than wherever the
+    /// view happens to be centred.
+    /// </summary>
+    /// <remarks>
+    /// A click and not a drag: the right button still pans, so this waits for
+    /// the button to come up and asks whether the pointer went anywhere. And not
+    /// over a module, because a right-click there is about that module rather
+    /// than about adding another beside it.
+    /// </remarks>
+    public event EventHandler<Point>? MenuRequested;
 
     public Patch Patch
     {
@@ -332,13 +353,19 @@ public sealed class NodeEditor : Control
     }
 
     /// <summary>
-    /// Drops a new module in the middle of the current view and hands it back,
-    /// or returns null having added nothing where the patch may not hold another
-    /// of that module — the Output, of which there is always exactly one. Rather
-    /// than do nothing at all, that case selects the one already there: whoever
-    /// asked for it wanted it, and this is where it is.
+    /// Drops a new module on the canvas and hands it back, or returns null
+    /// having added nothing where the patch may not hold another of that module
+    /// — the Output, of which there is always exactly one. Rather than do
+    /// nothing at all, that case selects the one already there: whoever asked
+    /// for it wanted it, and this is where it is.
     /// </summary>
-    public NodeInstance? AddNode(string typeId)
+    /// <param name="typeId">Which module to add.</param>
+    /// <param name="at">
+    /// Where to centre it, in graph space. The middle of the view when nothing
+    /// says otherwise — which is what a module added from anywhere but the
+    /// canvas gets, since nowhere else has a place in mind.
+    /// </param>
+    public NodeInstance? AddNode(string typeId, Point? at = null)
     {
         var def = NodeCatalog.Require(typeId);
 
@@ -350,7 +377,7 @@ public sealed class NodeEditor : Control
             return null;
         }
 
-        var centre = ToGraph(new Point(Bounds.Width / 2, Bounds.Height / 2));
+        var centre = at ?? ToGraph(new Point(Bounds.Width / 2, Bounds.Height / 2));
 
         var node = NodeInstance.Create(def, centre.X - NodeGeometry.Width / 2, centre.Y - NodeGeometry.Height(def) / 2);
         patch.Nodes.Add(node);
@@ -904,10 +931,24 @@ public sealed class NodeEditor : Control
         var graph = ToGraph(screen);
         dragOrigin = screen;
 
-        if (properties.IsMiddleButtonPressed || properties.IsRightButtonPressed)
+        // Panning is the middle button and nothing else. The right one used to
+        // do it as well, and gave that up when it took on the module list —
+        // ADR-0046 — because a button cannot both open something on a click and
+        // stay silent for one.
+        if (properties.IsMiddleButtonPressed)
         {
             drag = Drag.Pan;
             e.Pointer.Capture(this);
+            return;
+        }
+
+        if (properties.IsRightButtonPressed)
+        {
+            // Not over a module: a right-click there is about that module rather
+            // than about adding another one beside it.
+            if (!HitPort(graph, out _, out _, out _) && HitNode(graph) is null)
+                MenuRequested?.Invoke(this, graph);
+
             return;
         }
 
@@ -1059,6 +1100,8 @@ public sealed class NodeEditor : Control
 
         var screen = e.GetPosition(this);
         var graph = ToGraph(screen);
+
+        lastPointer = graph;
 
         switch (drag)
         {
@@ -1268,6 +1311,17 @@ public sealed class NodeEditor : Control
 
             case Key.F:
                 FrameAll();
+                e.Handled = true;
+                break;
+
+            // The module list, from the keyboard. Opened where the pointer last
+            // was, so it lands under the hand the way the right-click does —
+            // and in the middle of the view when the pointer has never been
+            // over the canvas at all.
+            case Key.Space:
+                MenuRequested?.Invoke(
+                    this,
+                    lastPointer ?? ToGraph(new Point(Bounds.Width / 2, Bounds.Height / 2)));
                 e.Handled = true;
                 break;
         }

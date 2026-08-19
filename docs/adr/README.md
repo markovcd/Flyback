@@ -4,7 +4,7 @@ Each record captures one decision, the situation that forced it, and what it
 costs. Format is [Michael Nygard's](https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions):
 context, decision, consequences.
 
-Twelve records — [0003](0003-cpu-rendering-with-a-gpu-path-left-open.md),
+Sixteen records — [0003](0003-cpu-rendering-with-a-gpu-path-left-open.md),
 [0004](0004-visual-patch-editor-as-the-authoring-model.md),
 [0026](0026-modules-from-plugins-with-provenance-in-the-file.md),
 [0027](0027-delay-lines-give-the-audio-path-a-memory.md),
@@ -14,11 +14,12 @@ Twelve records — [0003](0003-cpu-rendering-with-a-gpu-path-left-open.md),
 [0036](0036-export-video-as-motion-jpeg-in-an-avi.md),
 [0037](0037-one-output-block-that-every-patch-has.md),
 [0038](0038-a-sequencers-notes-are-a-list-on-the-node.md),
-[0040](0040-a-probe-is-a-second-compile-root.md) and
-[0041](0041-a-plugin-can-hold-state-without-a-new-opcode.md) and
-[0043](0043-a-scan-is-a-probe-read-backwards.md) and
-[0044](0044-lay-patches-out-in-layers-not-with-springs.md) and
-[0045](0045-what-is-copied-is-a-patch-file.md) — are marked
+[0040](0040-a-probe-is-a-second-compile-root.md),
+[0041](0041-a-plugin-can-hold-state-without-a-new-opcode.md),
+[0043](0043-a-scan-is-a-probe-read-backwards.md),
+[0044](0044-lay-patches-out-in-layers-not-with-springs.md),
+[0045](0045-what-is-copied-is-a-patch-file.md) and
+[0046](0046-the-module-list-is-a-gesture-not-a-panel.md) — are marked
 **user-directed**: they were chosen by the project owner, not derived. The first
 two sit upstream of almost everything else here; 0026 and 0027 each give up a
 property an earlier record relied on, knowingly; 0031, 0033, 0034, 0036 and 0040
@@ -33,8 +34,10 @@ this one lets a picture be listened to, out of the same mechanism upside down.
 recorded as the layered drawing that was proposed instead, which is the part
 worth keeping. 0045 adds nothing to the format it uses: what a selection is
 written as turns out to be what a patch is already written as, and the record is
-mostly about what that buys. All are recorded even though they were not mine to
-make.
+mostly about what that buys. 0046 is the only one of these that takes something
+away rather than adding: a panel, and with it the last part of the shell that
+stood open whether or not it was wanted. All are recorded even though they were
+not mine to make.
 
 [0035](0035-a-glsl-backend-for-the-video-path.md) is the first record where two
 backends disagree by design: the picture on screen and the picture in an exported
@@ -84,6 +87,7 @@ to differ in their last bits.
 | [0039](0039-one-window-class-across-a-file-per-region.md) | One window class, across a file per region |
 | [0044](0044-lay-patches-out-in-layers-not-with-springs.md) | Lay patches out in layers, not with springs *(user-directed)* |
 | [0045](0045-what-is-copied-is-a-patch-file.md) | What is copied is a patch file *(user-directed)* |
+| [0046](0046-the-module-list-is-a-gesture-not-a-panel.md) | The module list is a gesture, not a panel *(user-directed)* |
 
 ### Sound
 

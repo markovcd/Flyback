@@ -187,16 +187,24 @@ public sealed partial class MainWindow
         {
             inspector.Children.Add(new TextBlock
             {
-                // The Output is named first because everything that used to be
-                // along the top of the window is now behind it, and a setting
-                // nobody can find is worse than one in the wrong place.
-                Text = "Select a module to edit its values.\n\n"
+                // Adding a module is named first, and no longer because it is
+                // important: the list used to stand open down the left of the
+                // window, and now nothing on screen says where it went. The
+                // Output is named next for the same reason — everything that
+                // used to be along the top is behind it, and a setting nobody
+                // can find is worse than one in the wrong place.
+                Text = "Right-click the canvas — or press Space — to add a module. "
+                     + "Type to narrow the list, arrows to move through it, Enter to add.\n\n"
+                     + "Select a module to edit its values.\n\n"
                      + "Select the Output for the preview size, the renderer, "
                      + "sound, and saving a frame or a clip.\n\n"
                      + "Drag from a socket to patch it into another.\n"
                      + "Drag a connected input to unplug it.\n"
-                     + "Right-drag or drag the background to pan, wheel to zoom.\n"
-                     + "Delete removes the selected module, F frames the patch.",
+                     + "Drag the background to select, middle-drag to pan, "
+                     + "wheel to zoom.\n"
+                     + "Ctrl+click adds to a selection, Ctrl+A takes everything.\n"
+                     + "Ctrl+C, Ctrl+X and Ctrl+V copy, cut and paste.\n"
+                     + "Delete removes what is selected, F frames the patch.",
                 TextWrapping = TextWrapping.Wrap,
                 Opacity = 0.5,
                 FontSize = 12,
