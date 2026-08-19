@@ -67,9 +67,19 @@ RUN --mount=type=cache,target=/root/.nuget/packages \
 # build for. Not --no-build: a build for another platform is a different build
 # from the one the tests just ran against.
 #
+# Two programs per platform, into one folder. The shell and the command line are
+# the same engine, the same plugin host and the same runtime behind two fronts,
+# so publishing them over each other leaves one copy of all of it: the second
+# publish rewrites the shared files with the same bytes and adds an executable,
+# its deps.json and its runtimeconfig.json. Two folders would be two runtimes.
+#
+# The shell goes first, because on macOS its publish is what lays out the bundle
+# — and after that the command line goes *inside* the bundle, where the payload
+# it shares now lives.
+#
 # macOS goes one folder deeper and then loses that folder again. Publishing for
-# an osx identifier also lays out Flyback.app *beside* the publish output, so
-# the payload goes to osx-arm64/publish and the bundle lands at
+# an osx identifier lays out Flyback.app *beside* the publish output, so the
+# payload goes to osx-arm64/publish and the bundle lands at
 # osx-arm64/Flyback.app rather than inside its own payload — and once it has,
 # the payload is every one of those files a second time, since the bundle is a
 # copy of it. MacBundle.targets leaves it alone because a person who typed -o
@@ -83,7 +93,10 @@ RUN --mount=type=cache,target=/root/.nuget/packages \
         *)     out=/out/${rid} ;; \
       esac; \
       dotnet publish src/Flyback.App -c ${CONFIGURATION} -r ${rid} -o ${out}; \
-      case ${rid} in osx-*) rm -rf ${out} ;; esac; \
+      case ${rid} in \
+        osx-*) rm -rf ${out}; out=/out/${rid}/Flyback.app/Contents/MacOS ;; \
+      esac; \
+      dotnet publish src/Flyback.Cli -c ${CONFIGURATION} -r ${rid} -o ${out}; \
     done
 
 # Nothing but the artifacts, so that `--output` writes the publish folders and

@@ -26,32 +26,39 @@ dotnet run --project src/Flyback.App -c Release
 
 ## Publishing
 
+Both programs go into one folder — the window, and the command line described
+below:
+
 ```bash
 dotnet publish src/Flyback.App -c Release -r win-x64 -o artifacts/win-x64
+dotnet publish src/Flyback.Cli -c Release -r win-x64 -o artifacts/win-x64
 ```
 
-What comes out is three things and nothing else:
-
 ```
-Flyback.exe          the program, the runtime it needs, and every library either uses
-Flyback.Core.dll     ┐ the plugin boundary
-Flyback.Plugins.dll  ┘
-plugins/             one folder per plugin
+Flyback.exe          the shell
+flyback-cli.exe      the command line
+Flyback.Core.dll     ┐ the plugin boundary, and with it everything the two share:
+Flyback.Plugins.dll  ┘ one engine, one plugin host, one runtime
+plugins/             one folder per plugin, read by both
 ```
 
-The executable is self-contained, so the machine it lands on needs no .NET
-installed, and it is a single file: the assemblies are bundled into it, and so
-are the native libraries Skia and HarfBuzz bring, which the program unpacks to a
-temporary directory the first time a given build is run. Symbols are not
-published — they are in the build output, where a debugger looks for them.
+They are self-contained, so the machine they land on needs no .NET installed.
+They are deliberately *not* single files, and sharing the folder is why: two
+shells over one engine have almost every byte in common, and two bundles would
+carry two copies of it — 109 MB together this way against 172 MB apart. Symbols
+are not published either; they are in the build output, where a debugger looks
+for them.
 
-The two in the middle are deliberately left beside the executable rather than
-bundled into it, because a copy inside a single file is a copy nothing can be
-compiled against — and those two are what a plugin is compiled against. They are
-the pair `PluginLoadContext` calls host-owned, under 300 KB together, and they
-are still the host's own at run time: a plugin's load context refuses to resolve
-a host-owned name itself, so the contract keeps one identity wherever it is
-shipped from.
+Run from a terminal, both behave the way a program should: the shell waits, and
+anything written — an unhandled exception, whatever Avalonia complains about —
+comes back on that terminal rather than nowhere. On Windows that takes a console
+subsystem, which also means a console of its own when the window is started from
+Explorer instead; it hands that one back at startup, so what you see is a console
+that flickers and closes rather than one that stays.
+
+`Flyback.Core.dll` and `Flyback.Plugins.dll` are the pair `PluginLoadContext`
+calls host-owned — what a plugin is written against — and their being on disk is
+what lets anyone build a plugin against the exact version a build shipped.
 
 `win-x64`, `win-arm64`, `osx-arm64`, `osx-x64` and `linux-x64` all work, from any
 of them — the engine and the shell are portable, and the parts that are not are
@@ -90,12 +97,11 @@ test in the solution, and one self-contained publish per platform.
 docker build --output artifacts .
 ```
 
-That leaves `artifacts/win-x64` and `artifacts/linux-x64` — each the executable,
-`Flyback.Plugins.dll` and `plugins/`, as above — and `artifacts/osx-arm64`,
-holding `Flyback.app` and nothing else, since the bundle is a complete copy of
-the payload it was laid out from. The tests are a step in the build rather than
-something you run afterwards, so a red one fails the `docker build` and nothing
-is written.
+That leaves `artifacts/win-x64` and `artifacts/linux-x64`, each holding both
+programs exactly as above, and `artifacts/osx-arm64`, where the same folder is
+inside `Flyback.app` — the bundle holds the whole payload, so nothing is left
+beside it. The tests are a step in the build rather than something you run
+afterwards, so a red one fails the `docker build` and nothing is written.
 
 The other two identifiers are an argument rather than an edit, and each is a
 whole copy of the runtime, so ask for what you need:
@@ -115,7 +121,55 @@ docker build --output type=tar,dest=flyback.tar .
 The macOS signature is still the one thing that has to happen on a Mac.
 
 Leave `--output` off and the build is a pure check — everything compiles,
-everything passes — which is what it is worth running in CI.
+everything passes — which is what it is worth running in CI. `--output` writes
+into the directory rather than replacing it, so delete `artifacts` first if you
+want to be sure nothing from a previous build is still lying there.
+
+## From the command line
+
+`flyback-cli` is a second shell over the same engine, published into the same
+folder as the window. It carries no Avalonia, and therefore needs no display, no
+fonts and no X libraries on the machine that runs it: a patch renders on a build
+server the same way it renders on a desk.
+
+```bash
+flyback-cli render nebula.fbk -o nebula.png --size 1920x1080 --at 2.5
+flyback-cli render drone.fbk  -o drone.avi  --seconds 30 --fps 30
+flyback-cli render drone.fbk  -o drone.wav  --seconds 30
+flyback-cli check nebula.fbk
+flyback-cli info  nebula.fbk
+```
+
+The extension decides what `render` writes — a still of one moment, a clip of
+both halves, or the sound alone. It always renders on the interpreter rather
+than the shader backend, which needs a context and a window; that is also what
+makes it repeatable, since the two backends are allowed to differ in their last
+bits ([ADR-0035](docs/adr/0035-a-glsl-backend-for-the-video-path.md)). The same
+patch at the same moment is the same bytes.
+
+`check` compiles both sinks and reports what the compiler has to say. It is the
+one worth putting in CI, because the exit code carries the answer: **0** when
+there is nothing wrong, **1** when the patch has errors in it — warnings do not
+fail, since a patch that only warns is one somebody may have meant — and **2**
+when the job could not be done at all, a file missing or a size that is not one.
+`render` refuses a patch with errors rather than writing a file made of
+stand-ins.
+
+`info` says what a patch is made of and what each half of it costs, which is the
+gap that dead-code elimination buys:
+
+```
+nebula.fbk
+  modules   19
+  wires     30
+  requires  flyback
+  picture   80 ops, 84 registers
+  sound     6 ops, 6 registers, nothing wired in
+```
+
+`check` and `info` both take `--json`. Everything a command produces goes to
+stdout and everything it says about the work goes to stderr, so a redirect
+catches the one without the other.
 
 ## How it works
 

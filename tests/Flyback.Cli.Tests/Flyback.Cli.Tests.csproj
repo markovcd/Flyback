@@ -1,0 +1,25 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <OutputType>Exe</OutputType>
+    <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
+  </PropertyGroup>
+
+  <!--
+    The commands rather than the process. Each one is a function of a patch and
+    some options onto a pair of writers and an exit code, which is what makes
+    them testable at all — nothing here starts flyback and reads its output,
+    because that would be testing System.CommandLine.
+  -->
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Flyback.Cli\Flyback.Cli.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Shouldly" Version="4.3.0" />
+    <PackageReference Include="xunit.v3" Version="3.2.2" />
+  </ItemGroup>
+
+</Project>

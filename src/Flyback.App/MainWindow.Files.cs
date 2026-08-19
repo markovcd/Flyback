@@ -116,22 +116,11 @@ public sealed partial class MainWindow
         }
     }
 
-    /// <summary>What a patch has to offer, and therefore what it can be written to.</summary>
-    /// <remarks>
-    /// The Output is always there, so its presence says nothing — what matters
-    /// is whether anything reaches each half of it. A picture nothing draws is a
-    /// black rectangle and a track nothing feeds is silence, and neither is
-    /// worth a file.
-    /// </remarks>
-    private static (bool Picture, bool Sound) Reaches(Patch patch)
-    {
-        var output = patch.Output.Id;
-
-        return (
-            patch.IncomingTo(output, NodeCatalog.OutputColourPort) is not null,
-            patch.IncomingTo(output, NodeCatalog.OutputLeftPort) is not null
-            || patch.IncomingTo(output, NodeCatalog.OutputRightPort) is not null);
-    }
+    /// <summary>
+    /// The frame an export is written at, as a ratio. Only the sound needs it —
+    /// a scanned patch sweeps a width, and it should be the width being written.
+    /// </summary>
+    private static float ExportAspect => (float)ExportSize.Width / ExportSize.Height;
 
     private static FilePickerFileType Avi => new("AVI video") { Patterns = ["*.avi"] };
 
@@ -157,7 +146,7 @@ public sealed partial class MainWindow
     /// </remarks>
     internal static IReadOnlyList<FilePickerFileType> ExportKinds(Patch patch)
     {
-        var (picture, sound) = Reaches(patch);
+        var (picture, sound) = patch.Reaches();
 
         return (picture, sound) switch
         {
@@ -277,8 +266,8 @@ public sealed partial class MainWindow
         var settings = new MovieSettings(size.Width, size.Height, seconds);
 
         var videoPatch = patch.CompileForVideo().Program;
-        var soundPatch = Reaches(patch).Sound ? patch.CompileForAudio().Program : null;
-        var scan = AudioScanFor(patch);
+        var soundPatch = patch.Reaches().Sound ? patch.CompileForAudio().Program : null;
+        var scan = AudioScan.For(patch, ExportAspect);
 
         using var stopping = new CancellationTokenSource();
         export = stopping;
@@ -329,26 +318,9 @@ public sealed partial class MainWindow
         var renderer = new AudioRenderer();
         var frames = (int)Math.Round(renderer.SampleRate * seconds);
         var buffer = new float[frames * NodeCatalog.AudioChannels];
-        renderer.Render(program, buffer, AudioScanFor(patch));
+        renderer.Render(program, buffer, AudioScan.For(patch, ExportAspect));
 
         WavWriter.Write(path, buffer, renderer.SampleRate, NodeCatalog.AudioChannels);
-    }
-
-    private static AudioScan AudioScanFor(Patch patch)
-    {
-        var sink = patch.FirstOf(NodeCatalog.OutputTypeId);
-        var def = NodeCatalog.Get(NodeCatalog.OutputTypeId);
-        if (sink is null || def is null) return AudioScan.TimeDriven;
-
-        return new AudioScan(Knob("scan") >= 0.5f, MathF.Max(Knob("scan rate"), 1f), 16f / 9f);
-
-        float Knob(string name)
-        {
-            for (var i = 0; i < def.Inputs.Count; i++)
-                if (def.Inputs[i].Name == name)
-                    return i < sink.InputValues.Length ? sink.InputValues[i] : def.Inputs[i].Default;
-            return 0f;
-        }
     }
 
     private static FilePickerFileType PatchFileType => new("Flyback patch")

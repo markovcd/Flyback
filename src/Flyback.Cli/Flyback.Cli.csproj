@@ -1,0 +1,46 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <AssemblyName>flyback-cli</AssemblyName>
+    <RootNamespace>Flyback.Cli</RootNamespace>
+  </PropertyGroup>
+
+  <!--
+    Published into the shell's own folder, which is why there is no single file
+    here and none there. The two programs are the same engine, the same plugin
+    host and the same runtime with a different front on each; in one folder that
+    is one copy of all of it and two small executables, and as two bundles it
+    would be two of everything.
+  -->
+  <PropertyGroup Condition="'$(RuntimeIdentifier)' != ''">
+    <SelfContained>true</SelfContained>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Flyback.Core\Flyback.Core.csproj" />
+    <ProjectReference Include="..\Flyback.Plugins\Flyback.Plugins.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.CommandLine" Version="2.0.11" />
+  </ItemGroup>
+
+  <!--
+    No PluginProject items, unlike the shell. Plugins live in one folder beside
+    the two programs and both read it, so declaring them here would mean laying
+    the same folder out twice — and the target that does it clears the folder
+    first, so the second program to publish would take away the first one's
+    sound backends on its way past.
+
+    What this program actually needs from there is the module providers, and the
+    shell ships those. Run out of its own build output rather than a publish and
+    there are no plugins beside it, which costs a patch that names a plugin's
+    module and nothing else.
+  -->
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Flyback.Cli.Tests" />
+  </ItemGroup>
+
+</Project>

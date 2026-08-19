@@ -126,4 +126,28 @@
     <RemoveDir Directories="$(MSBuildProjectDirectory)\$(OutDir)plugins" />
   </Target>
 
+  <!--
+    No symbols in anything published, by anything here. A pdb is for a debugger
+    attached to a build, not for the machine a program is handed to: the shell
+    shipped five of them at 101 MB against a 104 MB executable, most of it
+    Skia's and none of it from this repository at all.
+
+    Here rather than in one project because there is more than one program now,
+    and a rule that only the shell obeyed is a rule the next program quietly
+    breaks — which is precisely how the command line came to publish its own
+    symbols the first time it was built. The plugin folders are swept by
+    PublishPlugins above, separately and for a different reason: those files
+    arrive from a Build and are never in this list to be filtered out of.
+
+    Publishing only. Every build output keeps its symbols, which is where a
+    debugger goes looking for them.
+  -->
+  <Target Name="LeaveSymbolsOutOfThePublish" AfterTargets="ComputeResolvedFilesToPublishList">
+
+    <ItemGroup>
+      <ResolvedFileToPublish Remove="@(ResolvedFileToPublish)" Condition="'%(Extension)' == '.pdb'" />
+    </ItemGroup>
+
+  </Target>
+
 </Project>

@@ -168,6 +168,27 @@ public sealed class Patch
         Connections.FirstOrDefault(c => c.TargetNode == node && c.TargetPort == port);
 
     /// <summary>
+    /// Which halves of the Output have anything wired into them: whether there
+    /// is a picture to see, and whether there is a sound to hear.
+    /// </summary>
+    /// <remarks>
+    /// Both compile whatever the answer — an unwired sink is a flat colour and
+    /// silence, which are legal programs. What this is for is the question
+    /// before that: whether writing a file of either would be writing anything
+    /// at all. A patch with no Output has neither, and says so rather than
+    /// throwing, because the callers are the ones deciding what to offer.
+    /// </remarks>
+    public (bool Picture, bool Sound) Reaches()
+    {
+        if (FirstOf(NodeCatalog.OutputTypeId) is not { } sink) return (false, false);
+
+        return (
+            IncomingTo(sink.Id, NodeCatalog.OutputColourPort) is not null,
+            IncomingTo(sink.Id, NodeCatalog.OutputLeftPort) is not null
+            || IncomingTo(sink.Id, NodeCatalog.OutputRightPort) is not null);
+    }
+
+    /// <summary>
     /// Whether wiring <paramref name="source"/>'s output into
     /// <paramref name="target"/>'s input would close a loop the compiler refuses.
     /// </summary>

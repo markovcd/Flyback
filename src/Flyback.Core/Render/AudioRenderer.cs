@@ -1,5 +1,6 @@
 using System.Runtime.CompilerServices;
 using Flyback.Core.Compile;
+using Flyback.Core.Graph;
 
 namespace Flyback.Core.Render;
 
@@ -18,6 +19,45 @@ public readonly record struct AudioScan(bool Scan, float Rate, float Aspect)
     public const float VerticalDriftHz = 0.5f;
 
     public static AudioScan TimeDriven => new(false, 0f, 1f);
+
+    /// <summary>
+    /// What the Output of <paramref name="patch"/> asks for, read off its knobs.
+    /// </summary>
+    /// <remarks>
+    /// Every caller that renders a patch offline needs this and none of them
+    /// should work it out again — it is two socket indices and a threshold, and
+    /// three places disagreeing about which is which is exactly the silent kind
+    /// of wrong.
+    /// <para>
+    /// The knobs rather than the signals: a value patched into 'scan' arrives per
+    /// sample, and this is a property of the whole render. Sweeping the sweep is
+    /// the one thing the sockets cannot do, here as on screen.
+    /// </para>
+    /// </remarks>
+    /// <param name="aspect">
+    /// The frame the sweep should cover, which belongs to whoever is rendering
+    /// rather than to the patch: an export at one size and a preview at another
+    /// hear the same picture across a different width.
+    /// </param>
+    public static AudioScan For(Patch patch, float aspect, ModuleCatalog? modules = null)
+    {
+        var sink = patch.FirstOf(NodeCatalog.OutputTypeId);
+        var def = (modules ?? NodeCatalog.Current).Get(NodeCatalog.OutputTypeId);
+
+        if (sink is null || def is null) return TimeDriven;
+
+        return new AudioScan(
+            Knob(NodeCatalog.OutputScanPort) >= 0.5f,
+            MathF.Max(Knob(NodeCatalog.OutputScanRatePort), 1f),
+            aspect);
+
+        // The instance's value, the definition's default for a file saved before
+        // the socket existed, and zero for a definition that has since lost it.
+        float Knob(int port) =>
+            port < sink.InputValues.Length ? sink.InputValues[port]
+            : port < def.Inputs.Count ? def.Inputs[port].Default
+            : 0f;
+    }
 }
 
 /// <summary>
