@@ -10,6 +10,12 @@ public sealed class Emitter
     private readonly Dictionary<float, Slot> constants = [];
     private readonly Dictionary<OpCode, Slot> loads = [];
 
+    /// <summary>
+    /// The (x, y, t) that <see cref="Load"/> hands back in place of the pixel's
+    /// own, while something is being read over a domain the patch supplies.
+    /// </summary>
+    private readonly Stack<(Slot X, Slot Y, Slot T)> domains = new();
+
     public int RegisterCount { get; private set; }
 
     /// <summary>
@@ -44,9 +50,48 @@ public sealed class Emitter
         return slot;
     }
 
+    /// <summary>
+    /// Reads what follows over a domain the patch supplies rather than the one
+    /// the renderer does: every Coordinates and every Time resolved before the
+    /// matching <see cref="PopDomain"/> is handed these three registers instead
+    /// of the pixel's own.
+    /// </summary>
+    /// <remarks>
+    /// This is how a Probe charts a signal. What it draws is the signal at a
+    /// moment that varies along the picture, and in a program with one (x, y, t)
+    /// per evaluation the only way to say that is to substitute the three where
+    /// the subtree reads them. Nothing downstream can tell: what comes back are
+    /// ordinary registers, so both backends run the result without knowing a
+    /// domain was ever swapped.
+    /// <para>
+    /// A stack rather than three fields, because a Probe is an ordinary module
+    /// and one may be read from inside another one's sweep.
+    /// </para>
+    /// </remarks>
+    public void PushDomain(Slot x, Slot y, Slot t) => domains.Push((x, y, t));
+
+    /// <summary>Puts back the domain that was in force before the matching push.</summary>
+    public void PopDomain() => domains.Pop();
+
     /// <summary>A per-pixel input (x, y or time). Emitted once and reused.</summary>
     public Slot Load(OpCode code)
     {
+        // A substituted domain neither reads the cache nor writes to it: these
+        // registers belong to the sweep that pushed them, and the next sweep
+        // will want different ones. Only the renderer's own x, y and t are
+        // emitted once and shared by everything that asks for them.
+        if (domains.Count > 0)
+        {
+            var (x, y, t) = domains.Peek();
+
+            switch (code)
+            {
+                case OpCode.LoadX: return x;
+                case OpCode.LoadY: return y;
+                case OpCode.LoadT: return t;
+            }
+        }
+
         if (loads.TryGetValue(code, out var existing)) return existing;
 
         var slot = Slot.Scalar(Allocate(1));

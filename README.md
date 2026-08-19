@@ -115,6 +115,35 @@ the symmetry and bends it at the same time.
 At 79 ops it is the most expensive patch here, which is the other reason to keep
 it: it is what the renderer looks like under load.
 
+### Looking at a value
+
+Patch an output into a **Probe** and select it, and the screen shows a chart of
+that value instead of the picture — the middle column is now, the left is the
+past and the right is the future, which a machine that is a pure function of `t`
+can draw as readily as its own history. `window` is how much time the chart
+covers and `scale` is the value at the top edge; one grid square is an eighth of
+the first and a quarter of the second. The timebase is marked in decades, the way
+a scope's is, because the same knob has to reach from one cycle of an audible
+tone to half a minute of an LFO — it reads as the time it is, from `100 µs` to
+`31.62 s`, and a signal patched into it sweeps the chart exponentially. Select anything else and the picture comes
+back. The sound is never interrupted, because the speakers root at the Output
+whatever the screen has been asked for.
+
+Nothing is measured and nothing is read back: a chart of a signal is itself a
+function of `(x, y, t)`, so the probe is an ordinary module compiling to ordinary
+ops, and the GPU backend draws it without being told it exists
+([ADR-0040](docs/adr/0040-a-probe-is-a-second-compile-root.md)). What makes it
+work is that its input is read over a *different* domain from the pixel drawing
+it — time swept across the picture, x and y pinned to the middle — so what you
+get is the signal at the centre of the screen over a couple of seconds, not the
+field it makes.
+
+The one thing it cannot show is memory. Drawn rather than heard, an oscillator
+does not accumulate its phase and a delay line passes straight through, so a
+chart of either is what the screen makes of it rather than what the speakers do.
+Its own `out` is the chart as a colour, so it can also be patched into the Output
+and left on screen beside the thing it is watching.
+
 ## Sound
 
 The same modules drive the speakers. Patch something into the **Output**'s

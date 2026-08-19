@@ -38,6 +38,13 @@ public static class NodeCatalog
     /// </summary>
     public const string UnitDelayTypeId = "feedback.unit";
 
+    /// <summary>
+    /// The chart module. Named here because the shell roots the picture at one
+    /// when it is the selected module, which is the only thing about a probe
+    /// that is not ordinary — see <see cref="Compile.PatchCompiler"/>.
+    /// </summary>
+    public const string ProbeTypeId = "probe";
+
     /// <summary>RGB, so the screen reads three registers.</summary>
     public const int VideoChannels = 3;
 
@@ -121,9 +128,26 @@ public static class NodeCatalog
     private static PortSpec Any(string name, float value = 0f, float min = -4f, float max = 4f) =>
         new(name, PortKind.Any, value, min, max);
 
+    /// <summary>
+    /// An input the module reads over a domain of its own rather than over the
+    /// pixel's — see <see cref="PortSpec.Swept"/>. Untyped like the maths
+    /// modules', so a colour may be looked at as readily as a scalar.
+    /// </summary>
+    private static PortSpec Swept(string name) =>
+        new(name, PortKind.Any, Swept: true);
+
     /// <summary>A note number, which the editor writes out by name rather than as a number.</summary>
     private static PortSpec Pitched(string name, float value) =>
         new(name, PortKind.Scalar, value, 0f, 127f, -1, PortDisplay.Note);
+
+    /// <summary>
+    /// A length of time, held in decades of seconds and written out as the time
+    /// it is — see <see cref="PortDisplay.Duration"/>. The range is a hundred
+    /// microseconds to half a minute, which is one audio cycle at the bottom and
+    /// a slow LFO at the top.
+    /// </summary>
+    private static PortSpec Seconds(string name, float value) =>
+        new(name, PortKind.Scalar, value, -4f, 1.5f, -1, PortDisplay.Duration);
 
     // --- emit shorthands -----------------------------------------------------
 
@@ -211,6 +235,8 @@ public static class NodeCatalog
                 + "silent: the oscillators carry their phase, so a pitch that steps bends the "
                 + "waveform rather than breaking it. 'hz' goes to an oscillator's freq; 'note' "
                 + "hands the snapped number on, so a second Note can play an interval off it."),
+
+            Probe(),
 
             // ---------------------------------------------------------------- sources
             new NodeDef(
@@ -771,6 +797,153 @@ public static class NodeCatalog
             + "levels down, or the Output's gain. An unused input rests on a knob at zero, so it "
             + "adds nothing until something is patched in. Colours mix as readily as tones: patch "
             + "a picture into any input and the levels are a four-way blend of pictures.");
+    }
+
+    /// <summary>
+    /// One socket and a picture of what arrives at it: the value over time,
+    /// drawn as a chart rather than used as one.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Nothing is measured here and nothing is read back. A chart of a signal is
+    /// itself a function of (x, y, t) — the value at this column, against the
+    /// height of this row — so the probe is an ordinary module emitting ordinary
+    /// ops, and both backends draw it without knowing what it is.
+    /// </para>
+    /// <para>
+    /// What makes it different from every other module is the domain its input
+    /// is read over. Time runs across the picture instead of the clock, which is
+    /// why <c>in</c> is <see cref="PortSpec.Swept"/>: the compiler leaves it
+    /// alone until the sweep has been pushed, and everything upstream of it is
+    /// then lowered reading that time rather than the frame's. x and y are
+    /// pinned to nothing while it does, so what is charted is the signal at the
+    /// middle of the picture — a module that draws with Coordinates has a value
+    /// per pixel, and there is no one line that is all of them.
+    /// </para>
+    /// <para>
+    /// The middle column is now; the left is the past and the right is the
+    /// future, which a machine that is a pure function of t can show as readily
+    /// as its history. The one thing it cannot show is memory: the video path
+    /// evaluates pixels in parallel and passes no state, so an accumulated phase
+    /// is the multiply it replaces and a delay line is a wire — see
+    /// <see cref="OpCode.Phase"/>. What the probe draws of those is what the
+    /// screen already makes of them, not what the speakers hear.
+    /// </para>
+    /// </remarks>
+    private static NodeDef Probe()
+    {
+        // One grid square, in screen units. Eight of them across the middle of
+        // the picture, which is what makes the grid the axis: however wide the
+        // preview is, a square is an eighth of the window and a quarter of the
+        // scale.
+        const float Division = 0.25f;
+
+        return new NodeDef(
+            ProbeTypeId, "Probe", "Output",
+            [
+                Swept("in"),
+                Seconds("window", 0.3f),
+                Num("scale", 1f, 0.01f, 16f),
+            ],
+            [Col("out")],
+            (em, node) =>
+            {
+                var one = em.Constant(1f);
+                var zero = em.Constant(0f);
+
+                var x = em.Load(OpCode.LoadX);
+                var y = em.Load(OpCode.LoadY);
+
+                // The timebase is in decades, so that one knob reaches from a
+                // fraction of an audio cycle to half a minute — see
+                // PortDisplay.Duration. Two ops, and a signal patched into it
+                // sweeps the chart exponentially, which is the only way a sweep
+                // across that range is any use.
+                var window = em.Binary(OpCode.Pow, em.Constant(10f), node[1]);
+
+                // Time across the picture: the middle column is the moment the
+                // frame is for, and a column half the window to the right of it
+                // is half a window later.
+                var when = em.Add(em.Load(OpCode.LoadT), em.Mul(x, em.Mul(window, 0.5f)));
+
+                em.PushDomain(zero, zero, when);
+                var value = em.Coerce(node.Resolve(0), 1);
+                em.PopDomain();
+
+                // Where that value sits on the screen. 'scale' is the value at
+                // the top edge, so a signal that fits reads directly off the
+                // grid and one that does not runs off it — which the marker
+                // below is for.
+                var height = em.Binary(OpCode.Div, value, node[2]);
+
+                var trace = em.Sub(one, em.Ternary(
+                    OpCode.Smoothstep,
+                    em.Constant(0.006f),
+                    em.Constant(0.02f),
+                    em.Unary(OpCode.Abs, em.Sub(y, height))));
+
+                // Filled from the line down to zero, which is what keeps the
+                // chart readable when the signal moves faster than the pixels
+                // can follow: a trace alone breaks into dots there, and the fill
+                // becomes the envelope a scope shows at the same sweep.
+                var fill = em.Mul(
+                    em.Binary(OpCode.Step, em.Binary(OpCode.Min, height, zero), y),
+                    em.Binary(OpCode.Step, y, em.Binary(OpCode.Max, height, zero)));
+
+                var grid = em.Add(Lattice(x), Lattice(y));
+                var axes = em.Add(Axis(x), Axis(y));
+
+                // A bar along whichever edge the signal has gone off, because a
+                // value past the top of the chart is otherwise indistinguishable
+                // from no signal at all.
+                var over = em.Binary(OpCode.Step, one, em.Unary(OpCode.Abs, height));
+                var edge = em.Binary(OpCode.Step, em.Constant(0.96f), em.Unary(OpCode.Abs, y));
+                var side = em.Binary(OpCode.Step, zero, em.Mul(height, y));
+                var clipped = em.Mul(em.Mul(over, edge), side);
+
+                var ink = em.Add(
+                    em.Add(em.Mul(grid, 0.09f), em.Mul(axes, 0.2f)),
+                    em.Add(em.Mul(fill, 0.22f), trace));
+
+                var lit = em.Mul(
+                    em.Combine(em.Constant(0.45f), one, em.Constant(0.72f)),
+                    ink);
+
+                return
+                [
+                    em.Add(lit, em.Mul(em.Combine(one, em.Constant(0.25f), em.Constant(0.2f)), clipped)),
+                ];
+
+                // Lines every division, measured back into the coordinate's own
+                // units so that both axes are ruled the same thickness whatever
+                // the aspect ratio has done to x.
+                Slot Lattice(Slot u)
+                {
+                    var cell = em.Unary(OpCode.Fract, em.Add(em.Mul(u, 1f / Division), 0.5f));
+                    var away = em.Mul(em.Unary(OpCode.Abs, em.Add(cell, -0.5f)), Division);
+
+                    return em.Sub(one, em.Ternary(
+                        OpCode.Smoothstep, em.Constant(0.0015f), em.Constant(0.005f), away));
+                }
+
+                // Zero on the vertical, now on the horizontal.
+                Slot Axis(Slot u) => em.Sub(one, em.Ternary(
+                    OpCode.Smoothstep,
+                    em.Constant(0.004f),
+                    em.Constant(0.012f),
+                    em.Unary(OpCode.Abs, u)));
+            },
+            "A chart of whatever is patched into it, in place of the picture. Select it and "
+            + "the screen shows the value of its 'in' over time instead of the patch: the "
+            + "middle column is now, the left is the past and the right is the future, and one "
+            + "grid square is an eighth of 'window' across and a quarter of 'scale' up. "
+            + "'window' is marked in decades so that one knob covers a single cycle of an "
+            + "audible tone as well as a minute of an LFO — it reads as the time it is. Select "
+            + "anything else and the picture comes back. It is an ordinary module besides — its "
+            + "'out' is the chart as a colour, so it can be patched into the Output to keep it "
+            + "on screen. What it cannot show is memory: drawn rather than heard, an oscillator "
+            + "does not accumulate its phase and a delay line passes straight through, so a "
+            + "chart of either is what the screen makes of it rather than what the speakers do.");
     }
 
     /// <summary>

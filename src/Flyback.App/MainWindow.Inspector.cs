@@ -362,11 +362,12 @@ public sealed partial class MainWindow
             TextTrimming = TextTrimming.CharacterEllipsis,
         };
 
-        // A note knob gets a column for the name the number stands for, since
-        // "57" is not what anyone means by the note they are picking. A count
-        // needs no such column — the number is already what it stands for — but
-        // it lands on whole numbers for the same reason a note does.
-        var named = spec.Display == PortDisplay.Note;
+        // A knob whose number is not what it means gets a column for what it
+        // does mean, since "57" is not what anyone means by the note they are
+        // picking and "-3" is not what they mean by a millisecond. A count needs
+        // no such column — the number is already what it stands for — but it
+        // lands on whole numbers for the same reason a note does.
+        var named = spec.Display != PortDisplay.Number;
         var whole = spec.Stepped;
 
         var row = new Grid { ColumnDefinitions = new ColumnDefinitions(named ? "78,*,84,40" : "78,*,84") };

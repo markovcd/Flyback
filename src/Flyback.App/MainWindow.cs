@@ -178,7 +178,11 @@ public sealed partial class MainWindow : Window
         Background = new SolidColorBrush(Colours.Window);
 
         editor.PatchChanged += (_, _) => Recompile();
-        editor.SelectionChanged += (_, _) => BuildInspector();
+        editor.SelectionChanged += (_, _) =>
+        {
+            BuildInspector();
+            ProbeSelectionChanged();
+        };
         editor.HistoryChanged += (_, _) => RefreshEditState();
 
         // Before the layout, because these are live from the moment the window

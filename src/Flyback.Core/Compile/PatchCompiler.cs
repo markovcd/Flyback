@@ -53,6 +53,20 @@ public static class PatchCompiler
     public static CompileResult CompileForAudio(this Patch patch, ModuleCatalog? modules = null) =>
         Compile(patch, NodeCatalog.Speakers, modules);
 
+    /// <summary>
+    /// Compiles the program a Probe shows, rooted at the probe rather than at the
+    /// Output. What the screen would have shown is not merely covered up: the
+    /// Output is never visited, so nothing upstream of it is lowered and the
+    /// picture the patch makes costs nothing while its chart is up.
+    /// </summary>
+    /// <param name="probe">
+    /// Which module to root at. A node that is not in the patch — a selection
+    /// outliving the module it named — compiles the ordinary picture instead,
+    /// because the alternative is a black screen with nothing to say why.
+    /// </param>
+    public static CompileResult CompileForProbe(this Patch patch, Guid probe, ModuleCatalog? modules = null) =>
+        Compile(patch, NodeCatalog.Screen, modules, probe);
+
     /// <param name="patch">The graph to lower.</param>
     /// <param name="sink">Which of the Output's results this program reads.</param>
     /// <param name="modules">
@@ -60,16 +74,33 @@ public static class PatchCompiler
     /// explicitly, a patch can be compiled against a catalogue that is not the
     /// running program's — which is what makes a plugin's modules testable.
     /// </param>
+    /// <param name="probe">
+    /// A module to root at in place of the Output, or null for the sink itself.
+    /// Everything below reads this as "is this a probe compilation", because a
+    /// rooted-elsewhere program has no sink in it: the port range that splits the
+    /// screen from the speakers means nothing, and what a missing wire costs is
+    /// said about a different node.
+    /// </param>
     private static CompileResult Compile(
         Patch patch,
         NodeCatalog.SinkKind sink,
-        ModuleCatalog? modules)
+        ModuleCatalog? modules,
+        Guid? probe = null)
     {
         var catalog = modules ?? NodeCatalog.Current;
         var width = sink.Width;
 
         var issues = new List<CompileIssue>();
-        var root = patch.FirstOf(NodeCatalog.OutputTypeId);
+
+        // The probe first, and forgotten again when the patch no longer holds
+        // it: a stale id falls back to the picture rather than to nothing, and
+        // everything below reads 'probe' as "is this rooted somewhere other than
+        // the sink". From here the two compile the same way, and only what the
+        // walk starts at differs.
+        var probed = probe is { } id ? patch.Find(id) : null;
+        probe = probed?.Id;
+
+        var root = probed ?? patch.FirstOf(NodeCatalog.OutputTypeId);
 
         if (root is null)
         {
@@ -98,8 +129,11 @@ public static class PatchCompiler
         {
             issues.Add(new CompileIssue(
                 root.Id,
-                "Nothing is wired into the Output, so there is nothing to see or hear. "
-                + "Patch something into its 'colour' or its 'left'.",
+                probe is null
+                    ? "Nothing is wired into the Output, so there is nothing to see or hear. "
+                      + "Patch something into its 'colour' or its 'left'."
+                    : "Nothing is wired into the Probe, so it is charting its own knob. "
+                      + "Patch the output you want to look at into its 'in'.",
                 IssueSeverity.Warning));
         }
 
@@ -110,7 +144,17 @@ public static class PatchCompiler
 
         // Only this program's share of the sink's results. Everything upstream
         // of the other half is never resolved, so it emits no ops.
-        var result = Resolve(root)[sink.Results];
+        //
+        // A probe is not a sink and its results are not split between two of
+        // them, so it contributes its first output and nothing else — and a
+        // module with no outputs at all, which only a hand-passed id could root
+        // this at, contributes silence rather than throwing.
+        var outputs = Resolve(root);
+
+        Slot[] result;
+        if (probe is null) result = outputs[sink.Results];
+        else if (outputs.Length > 0) result = [outputs[0]];
+        else result = [emitter.Constant(0f)];
 
         // Now close whatever loops that walk found. Every read in the program is
         // emitted by the time the first write is, and that ordering is the whole
@@ -186,7 +230,10 @@ public static class PatchCompiler
             // like every other module (ADR-0008) rather than the compiler
             // knowing what an Output does — everything *patched into* the other
             // half is still never visited, which is where all the cost is.
-            var (firstPort, portCount) = node.Id == root.Id
+            // Nothing to split when the root is a probe: the Output is not in
+            // this program at all, and the module that is has no half the
+            // speakers might want.
+            var (firstPort, portCount) = probe is null && node.Id == root.Id
                 ? sink.Inputs.GetOffsetAndLength(inputs.Length)
                 : (0, inputs.Length);
 
@@ -199,6 +246,17 @@ public static class PatchCompiler
                 }
 
                 var spec = def.Inputs[port];
+
+                // A swept input is lowered by the module rather than for it, so
+                // that whatever the module does to the domain first is in force
+                // by the time anything upstream reads one. It rests on its knob
+                // until then, which is what a module that never asks gets.
+                if (spec.Swept)
+                {
+                    inputs[port] = emitter.Constant(DefaultFor(node, port, spec));
+                    continue;
+                }
+
                 var incoming = patch.IncomingTo(node.Id, port);
                 Slot slotValue;
 
@@ -245,15 +303,45 @@ public static class PatchCompiler
                 ? notes.Select(s => s.Sane()).ToArray()
                 : [];
 
-            var outputsOfNode = def.Emit(emitter, new EmitContext(inputs, steps));
+            var outputsOfNode = def.Emit(
+                emitter,
+                new EmitContext(inputs, steps) { Resolver = port => Sweep(node, def, port) });
+
             visiting.Remove(node.Id);
             return resolved[node.Id] = outputsOfNode;
         }
 
+        // A swept input, lowered where the module asked for it rather than
+        // before the module was entered — see PortSpec.Swept.
+        //
+        // Under its own cache, because by now the emitter is likely reading a
+        // substituted domain: a module resolved in here is being read at a
+        // different (x, y, t) from the same module resolved outside, and two
+        // readings of one node are two values however much they share a graph.
+        // Sharing a register between them would chart the wrong moment. Nothing
+        // else is scoped — a cycle detected in here is still a cycle, and a
+        // breaker found in here still writes its cell after every read in the
+        // whole program.
+        Slot Sweep(NodeInstance node, NodeDef def, int port)
+        {
+            var outer = resolved;
+            resolved = [];
+
+            try
+            {
+                return ResolveInput(node, def, port);
+            }
+            finally
+            {
+                resolved = outer;
+            }
+        }
+
         // The value on one of a node's inputs: whatever is wired in, or the knob
         // it rests on. Narrower than the loop inside Resolve — no normalling, no
-        // sink port range, no complaint about a domain — because its only caller
-        // is a cycle breaker, whose single socket is none of those things.
+        // sink port range, no complaint about a domain — because its callers are
+        // a cycle breaker, whose single socket is none of those things, and a
+        // swept input, which is none of them either.
         Slot ResolveInput(NodeInstance node, NodeDef def, int port)
         {
             var spec = def.Inputs[port];

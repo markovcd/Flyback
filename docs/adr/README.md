@@ -4,7 +4,7 @@ Each record captures one decision, the situation that forced it, and what it
 costs. Format is [Michael Nygard's](https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions):
 context, decision, consequences.
 
-Ten records — [0003](0003-cpu-rendering-with-a-gpu-path-left-open.md),
+Eleven records — [0003](0003-cpu-rendering-with-a-gpu-path-left-open.md),
 [0004](0004-visual-patch-editor-as-the-authoring-model.md),
 [0026](0026-modules-from-plugins-with-provenance-in-the-file.md),
 [0027](0027-delay-lines-give-the-audio-path-a-memory.md),
@@ -12,15 +12,16 @@ Ten records — [0003](0003-cpu-rendering-with-a-gpu-path-left-open.md),
 [0033](0033-patches-authored-by-an-agent-behind-the-plugin-boundary.md),
 [0034](0034-settings-in-a-file-the-key-in-the-operating-system.md),
 [0036](0036-export-video-as-motion-jpeg-in-an-avi.md),
-[0037](0037-one-output-block-that-every-patch-has.md) and
-[0038](0038-a-sequencers-notes-are-a-list-on-the-node.md) — are marked
+[0037](0037-one-output-block-that-every-patch-has.md),
+[0038](0038-a-sequencers-notes-are-a-list-on-the-node.md) and
+[0040](0040-a-probe-is-a-second-compile-root.md) — are marked
 **user-directed**: they were chosen by the project owner, not derived. The first
 two sit upstream of almost everything else here; 0026 and 0027 each give up a
-property an earlier record relied on, knowingly; 0031, 0033, 0034 and 0036 each
-let the instrument do something it could not do at all; and 0037 and 0038 each
-take something away — 0037 retires a rule 0022 established, and 0038 supersedes
-the central decision of 0031, which is user-directed itself. All are recorded
-even though they were not mine to make.
+property an earlier record relied on, knowingly; 0031, 0033, 0034, 0036 and 0040
+each let the instrument do something it could not do at all — 0040 lets it be
+looked at; and 0037 and 0038 each take something away — 0037 retires a rule 0022
+established, and 0038 supersedes the central decision of 0031, which is
+user-directed itself. All are recorded even though they were not mine to make.
 
 [0035](0035-a-glsl-backend-for-the-video-path.md) is the first record where two
 backends disagree by design: the picture on screen and the picture in an exported
@@ -56,6 +57,7 @@ to differ in their last bits.
 | [0031](0031-a-sequencer-is-eight-inputs-and-no-memory.md) | A sequencer is eight inputs and no memory *(user-directed)* |
 | [0032](0032-the-registers-are-double-precision.md) | The registers are double precision |
 | [0035](0035-a-glsl-backend-for-the-video-path.md) | A GLSL backend for the video path |
+| [0040](0040-a-probe-is-a-second-compile-root.md) | A probe is a second compile root, not a second machine *(user-directed)* |
 
 ### The shell
 

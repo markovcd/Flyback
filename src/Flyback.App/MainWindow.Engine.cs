@@ -87,13 +87,47 @@ public sealed partial class MainWindow
     }
 
     /// <summary>
+    /// The probe the picture is rooted at: the selected module, when that is a
+    /// Probe and not something else.
+    /// </summary>
+    /// <remarks>
+    /// Selection rather than a mode, because a chart is something you look at
+    /// rather than something a patch is left in: clicking the module shows it
+    /// and clicking away puts the picture back, and nothing about the patch or
+    /// the file changes either way. It leaves the sound alone as well — the
+    /// speakers root at the Output whatever the screen is doing, so a patch can
+    /// be heard while a chart of one corner of it is being read.
+    /// </remarks>
+    private NodeInstance? Probed =>
+        editor.SelectedNode is { TypeId: NodeCatalog.ProbeTypeId } probe ? probe : null;
+
+    /// <summary>Which probe the picture was last compiled for, or null for the patch itself.</summary>
+    private Guid? showingProbe;
+
+    /// <summary>
+    /// Selecting a Probe is what puts its chart on the screen and selecting
+    /// anything else is what takes it off again. No other selection changes the
+    /// picture, so this recompiles only when that one does.
+    /// </summary>
+    private void ProbeSelectionChanged()
+    {
+        if (Probed?.Id != showingProbe) Recompile();
+    }
+
+    /// <summary>
     /// One patch, one program per sink. The audio program is compiled even when
     /// sound is off, so switching it on is instant and the status line can show
     /// what the ear would cost.
     /// </summary>
     private void Recompile()
     {
-        var result = editor.Patch.CompileForVideo();
+        var probe = Probed;
+        showingProbe = probe?.Id;
+
+        var result = probe is null
+            ? editor.Patch.CompileForVideo()
+            : editor.Patch.CompileForProbe(probe.Id);
+
         preview.Program = result.Program;
         audio.Update(editor.Patch);
 
@@ -104,10 +138,15 @@ public sealed partial class MainWindow
         var said = result.Issues
             .Concat(editor.Patch.CompileForAudio().Issues)
             .Select(i => i.Message)
-            .Distinct()
-            .ToArray();
+            .Distinct();
 
-        Report(said.Length > 0 ? string.Join("  •  ", said) : string.Empty);
+        // That the screen is showing a chart rather than the patch is said here
+        // and nowhere else. Without it a probe left selected looks exactly like
+        // a patch that has stopped working.
+        if (probe is not null)
+            said = said.Prepend("Showing the Probe — select another module for the picture.");
+
+        Report(string.Join("  •  ", said));
 
         MarkExportable();
     }

@@ -14,7 +14,8 @@ namespace Flyback.Core.Graph;
 /// <param name="Inputs">
 /// One slot per declared input, already resolved — either the upstream node's
 /// result or a constant from the port default — and already coerced to the width
-/// the port declared.
+/// the port declared. A <see cref="PortSpec.Swept"/> input is the exception: it
+/// holds its knob until <see cref="Resolve"/> is called for it.
 /// </param>
 /// <param name="Steps">
 /// The instance's notes, empty for every module that has none. These are values
@@ -24,6 +25,27 @@ namespace Flyback.Core.Graph;
 public readonly record struct EmitContext(Slot[] Inputs, IReadOnlyList<Step> Steps)
 {
     public Slot this[int port] => Inputs[port];
+
+    /// <summary>
+    /// Lowers whatever a <see cref="PortSpec.Swept"/> input is fed by, now
+    /// rather than before the module was entered.
+    /// </summary>
+    /// <remarks>
+    /// The whole point of the delay is what may have happened in between: a
+    /// Probe pushes a domain of its own onto the emitter first, so everything
+    /// upstream of the socket is lowered reading that instead of the pixel's own
+    /// x, y and t. Nothing resolved here is shared with anything resolved
+    /// outside the call, because a module read at one moment and the same module
+    /// read at another are two different values.
+    /// <para>
+    /// Falls back to the port's knob when there is no resolver, so a module that
+    /// calls this is still safe to emit outside a compilation.
+    /// </para>
+    /// </remarks>
+    public Slot Resolve(int port) => Resolver is null ? Inputs[port] : Resolver(port);
+
+    /// <summary>How the compiler resolves a deferred input, supplied by it.</summary>
+    public Func<int, Slot>? Resolver { get; init; }
 }
 
 /// <summary>Lowers one node to register-machine ops.</summary>

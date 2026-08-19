@@ -227,6 +227,11 @@ internal static class Handbook
 
             if (port.NormalledFrom >= 0) text.Append("->").Append(port.NormalledFrom);
             if (port.Display == PortDisplay.Note) text.Append(" note");
+
+            // Said because the number is not the quantity: a patch that wants a
+            // fiftieth of a second here has to write -1.7, and an agent told
+            // only the range would write 0.02 and be three decades out.
+            if (port.Display == PortDisplay.Duration) text.Append(" log10-seconds");
         }
 
         text.AppendLine();

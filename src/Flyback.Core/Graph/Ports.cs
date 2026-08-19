@@ -22,6 +22,21 @@ public enum PortDisplay
 
     /// <summary>A note number, shown by name: 57 reads as "A3".</summary>
     Note,
+
+    /// <summary>
+    /// A length of time held as its power of ten, shown as the time it is: -3
+    /// reads as "1 ms" and 0.3 as "2 s".
+    /// </summary>
+    /// <remarks>
+    /// The same trick as <see cref="Note"/> — a number on the module's own scale,
+    /// written out as what it stands for — and it is here for a reason a linear
+    /// knob cannot answer. A probe's timebase runs from a fraction of one audio
+    /// cycle to half a minute of an LFO, and no slider spans five decades: at a
+    /// maximum of thirty seconds, every audio-rate setting is inside the first
+    /// thousandth of the travel. In decades the whole range is one even sweep,
+    /// which is exactly why the control on a scope is marked the way it is.
+    /// </remarks>
+    Duration,
 }
 
 /// <summary>What flows down a wire.</summary>
@@ -67,6 +82,19 @@ public enum PortKind
 /// compile perfectly, which is exactly why the compiler says so — see
 /// <see cref="Compile.IssueSeverity.Warning"/>.
 /// </param>
+/// <param name="Swept">
+/// True when the module reads this input over a domain of its own making rather
+/// than over the pixel's. The compiler leaves such an input unresolved and hands
+/// the module a way to resolve it itself, so that whatever it does to the domain
+/// first — a Probe sweeping time across the picture — is in force by the time
+/// everything upstream is lowered. See <see cref="EmitContext.Resolve"/>.
+/// <para>
+/// The opposite of <paramref name="Domain"/>, which names an input the module is
+/// read <em>across</em>. This one names an input read <em>under</em> a domain the
+/// module supplies, and it is the module rather than the port that says what
+/// that domain is.
+/// </para>
+/// </param>
 public readonly record struct PortSpec(
     string Name,
     PortKind Kind = PortKind.Scalar,
@@ -75,7 +103,8 @@ public readonly record struct PortSpec(
     float Max = 4f,
     int NormalledFrom = -1,
     PortDisplay Display = PortDisplay.Number,
-    bool Domain = false)
+    bool Domain = false,
+    bool Swept = false)
 {
     public int Width => Kind == PortKind.Colour ? 3 : 1;
 
@@ -91,8 +120,31 @@ public readonly record struct PortSpec(
     public string Format(float value) => Display switch
     {
         PortDisplay.Note => Pitch.Name(value),
+        PortDisplay.Duration => Time(value),
         _ => value.ToString("0.###", CultureInfo.InvariantCulture),
     };
+
+    /// <summary>
+    /// A power of ten of seconds, in the unit that leaves it readable — the same
+    /// number every time, said in microseconds down at an audio cycle and in
+    /// seconds up where an LFO lives.
+    /// </summary>
+    private static string Time(float decades)
+    {
+        var seconds = MathF.Pow(10f, decades);
+
+        // Anything a patch could put on the socket arrives here, and a knob is
+        // the least of it: this is also what a swept timebase reads as while it
+        // is being swept.
+        if (!float.IsFinite(seconds)) return "—";
+
+        return seconds switch
+        {
+            < 1e-3f => string.Create(CultureInfo.InvariantCulture, $"{seconds * 1e6f:0.#} µs"),
+            < 1f => string.Create(CultureInfo.InvariantCulture, $"{seconds * 1e3f:0.#} ms"),
+            _ => string.Create(CultureInfo.InvariantCulture, $"{seconds:0.##} s"),
+        };
+    }
 
     /// <summary>Whether the editor should let this value rest only on whole numbers.</summary>
     public bool Stepped => Display is PortDisplay.Note;
