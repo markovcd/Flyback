@@ -61,14 +61,20 @@ RUN --mount=type=cache,target=/root/.nuget/packages \
 RUN --mount=type=cache,target=/root/.nuget/packages \
     dotnet test Flyback.slnx -c ${CONFIGURATION} --no-build
 
-# One publish per identifier, each restoring its own runtime pack. Not
-# --no-build: a self-contained build for another platform is a different build
+# One publish per identifier, each restoring its own runtime pack. Self-contained
+# and single-file are the project's own doing rather than flags here — see
+# Flyback.App.csproj, which turns both on the moment there is an identifier to
+# build for. Not --no-build: a build for another platform is a different build
 # from the one the tests just ran against.
 #
-# macOS goes one folder deeper, because publishing for an osx identifier also
-# lays out Flyback.app *beside* the publish output — put the payload at
-# osx-arm64/publish and the bundle lands at osx-arm64/Flyback.app rather than
-# inside its own payload.
+# macOS goes one folder deeper and then loses that folder again. Publishing for
+# an osx identifier also lays out Flyback.app *beside* the publish output, so
+# the payload goes to osx-arm64/publish and the bundle lands at
+# osx-arm64/Flyback.app rather than inside its own payload — and once it has,
+# the payload is every one of those files a second time, since the bundle is a
+# copy of it. MacBundle.targets leaves it alone because a person who typed -o
+# asked for it; nobody asked for this one, so out it goes and the identifier is
+# left holding the bundle alone.
 RUN --mount=type=cache,target=/root/.nuget/packages \
     set -eu; \
     for rid in ${RIDS}; do \
@@ -76,7 +82,8 @@ RUN --mount=type=cache,target=/root/.nuget/packages \
         osx-*) out=/out/${rid}/publish ;; \
         *)     out=/out/${rid} ;; \
       esac; \
-      dotnet publish src/Flyback.App -c ${CONFIGURATION} -r ${rid} --self-contained -o ${out}; \
+      dotnet publish src/Flyback.App -c ${CONFIGURATION} -r ${rid} -o ${out}; \
+      case ${rid} in osx-*) rm -rf ${out} ;; esac; \
     done
 
 # Nothing but the artifacts, so that `--output` writes the publish folders and

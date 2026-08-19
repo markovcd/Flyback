@@ -99,6 +99,27 @@
              Properties="Configuration=$(Configuration);OutDir=$(PluginPublishRoot)%(ShippedPlugin.FolderName)/"
              RemoveProperties="$(PluginBuildProperties)" />
 
+    <!--
+      And no symbols, matching what the host does with its own — the shell holds
+      every pdb out of its publish, and a plugin folder full of them beside a
+      single-file executable is the same thing said twice. It has to be said
+      twice all the same: these arrive from a Build rather than a Publish, so
+      they are never in the ResolvedFileToPublish list that the other rule
+      filters (see Flyback.App.csproj).
+
+      Only the publish. The plugins built beside a development build keep
+      theirs, which is where a debugger is ever attached to one.
+
+      Deleted rather than suppressed at the source: a pdb here can come from a
+      package as easily as from the plugin project, and a property on the build
+      would only answer for the second kind.
+    -->
+    <ItemGroup>
+      <PublishedPluginSymbol Include="$(PluginPublishRoot)**/*.pdb" />
+    </ItemGroup>
+
+    <Delete Files="@(PublishedPluginSymbol)" />
+
   </Target>
 
   <Target Name="CleanPlugins" AfterTargets="Clean" Condition="'@(PluginProject)' != ''">

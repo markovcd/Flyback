@@ -27,8 +27,31 @@ dotnet run --project src/Flyback.App -c Release
 ## Publishing
 
 ```bash
-dotnet publish src/Flyback.App -c Release -r win-x64 --self-contained -o artifacts/win-x64
+dotnet publish src/Flyback.App -c Release -r win-x64 -o artifacts/win-x64
 ```
+
+What comes out is three things and nothing else:
+
+```
+Flyback.exe          the program, the runtime it needs, and every library either uses
+Flyback.Core.dll     ┐ the plugin boundary
+Flyback.Plugins.dll  ┘
+plugins/             one folder per plugin
+```
+
+The executable is self-contained, so the machine it lands on needs no .NET
+installed, and it is a single file: the assemblies are bundled into it, and so
+are the native libraries Skia and HarfBuzz bring, which the program unpacks to a
+temporary directory the first time a given build is run. Symbols are not
+published — they are in the build output, where a debugger looks for them.
+
+The two in the middle are deliberately left beside the executable rather than
+bundled into it, because a copy inside a single file is a copy nothing can be
+compiled against — and those two are what a plugin is compiled against. They are
+the pair `PluginLoadContext` calls host-owned, under 300 KB together, and they
+are still the host's own at run time: a plugin's load context refuses to resolve
+a host-owned name itself, so the contract keeps one identity wherever it is
+shipped from.
 
 `win-x64`, `win-arm64`, `osx-arm64`, `osx-x64` and `linux-x64` all work, from any
 of them — the engine and the shell are portable, and the parts that are not are
@@ -44,7 +67,7 @@ macOS runs a bundle rather than a folder, so publishing for an `osx-*` identifie
 also lays out `Flyback.app` beside the publish output:
 
 ```bash
-dotnet publish src/Flyback.App -c Release -r osx-arm64 --self-contained -o artifacts/osx-arm64/publish
+dotnet publish src/Flyback.App -c Release -r osx-arm64 -o artifacts/osx-arm64/publish
 # → artifacts/osx-arm64/Flyback.app
 ```
 
@@ -67,10 +90,12 @@ test in the solution, and one self-contained publish per platform.
 docker build --output artifacts .
 ```
 
-That leaves `artifacts/win-x64`, `artifacts/osx-arm64` — with `Flyback.app` beside
-its `publish/` payload — and `artifacts/linux-x64`. The tests are a step in the
-build rather than something you run afterwards, so a red one fails the `docker
-build` and nothing is written.
+That leaves `artifacts/win-x64` and `artifacts/linux-x64` — each the executable,
+`Flyback.Plugins.dll` and `plugins/`, as above — and `artifacts/osx-arm64`,
+holding `Flyback.app` and nothing else, since the bundle is a complete copy of
+the payload it was laid out from. The tests are a step in the build rather than
+something you run afterwards, so a red one fails the `docker build` and nothing
+is written.
 
 The other two identifiers are an argument rather than an edit, and each is a
 whole copy of the runtime, so ask for what you need:

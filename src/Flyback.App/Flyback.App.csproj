@@ -9,10 +9,76 @@
     <ApplicationIcon>..\..\flyback.ico</ApplicationIcon>
   </PropertyGroup>
 
+  <!--
+    Publishing for a platform produces one executable that runs on a machine
+    with no .NET on it: the runtime is inside it, and so is everything the shell
+    is built from. Self-contained is the property that makes "no .NET installed"
+    work and single-file is the one that makes it a file rather than a folder;
+    without the second, the first is two hundred assemblies around the program.
+
+    Native code goes in too. Avalonia brings three or four native libraries per
+    platform — Skia, HarfBuzz, the macOS backend — and left out of the bundle
+    they sit beside the executable, which is a folder again with most of the
+    files gone. Inside, they are unpacked to a temporary directory the first
+    time a given build runs, and found there on every run after.
+
+    Conditioned on there being a runtime identifier because a single file is a
+    thing built *for* a platform. `dotnet run` and a plain `dotnet build` have
+    no identifier and want none of this.
+  -->
+  <PropertyGroup Condition="'$(RuntimeIdentifier)' != ''">
+    <SelfContained>true</SelfContained>
+    <PublishSingleFile>true</PublishSingleFile>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+  </PropertyGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\Flyback.Core\Flyback.Core.csproj" />
     <ProjectReference Include="..\Flyback.Plugins\Flyback.Plugins.csproj" />
   </ItemGroup>
+
+  <!--
+    The plugin boundary stays on disk. These two are the assemblies a plugin is
+    written against — the same pair PluginLoadContext.HostOwned names, and for
+    the same reason it names them — and a copy inside a single executable is a
+    copy nobody can reference: the files have to be beside the program for
+    anyone to build a plugin for that build. Together they are under 300 KB
+    against a hundred megabytes, so what it costs is the two lines in a folder
+    listing rather than anything measurable.
+
+    Nothing about run time changes either way, and that was checked rather than
+    assumed: a plugin's load context refuses to resolve a host-owned name itself
+    and falls through to the default one, which finds it wherever it lives. The
+    contract keeps the single identity that makes a cast across the boundary
+    work whether it is bundled or beside.
+  -->
+  <Target Name="LeaveThePluginBoundaryBesideTheExecutable"
+          AfterTargets="ComputeResolvedFilesToPublishList"
+          Condition="'$(PublishSingleFile)' == 'true'">
+
+    <ItemGroup>
+      <ResolvedFileToPublish
+        Condition="'%(Filename)%(Extension)' == 'Flyback.Plugins.dll' Or '%(Filename)%(Extension)' == 'Flyback.Core.dll'">
+        <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      </ResolvedFileToPublish>
+    </ItemGroup>
+
+  </Target>
+
+  <!--
+    And no symbols, which are the other way a publish stops being one file. Five
+    of them ship by default and they came to 101 MB against a 104 MB program —
+    84 of it Skia's, from the package rather than from anything here. A pdb is
+    for a debugger attached to a build, not for the machine the program is
+    handed to; the build output still has every one of them.
+  -->
+  <Target Name="LeaveSymbolsOutOfThePublish" AfterTargets="ComputeResolvedFilesToPublishList">
+
+    <ItemGroup>
+      <ResolvedFileToPublish Remove="@(ResolvedFileToPublish)" Condition="'%(Extension)' == '.pdb'" />
+    </ItemGroup>
+
+  </Target>
 
   <ItemGroup>
     <!-- The controls the inspector is built from are internal, and the UI tests drive them. -->
