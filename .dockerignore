@@ -1,0 +1,24 @@
+# The build context is copied whole, so what is not here ends up in the image.
+# Build output is the part that matters: an obj/ from the host carries absolute
+# paths and a restore of its own, and the container would try to build against
+# both.
+**/bin/
+**/obj/
+artifacts/
+
+.git/
+.github/
+.idea/
+.vs/
+.vscode/
+.claude/
+
+Dockerfile
+.dockerignore
+
+*.user
+*.suo
+*.received.*
+*.dmp
+*.nettrace
+.DS_Store

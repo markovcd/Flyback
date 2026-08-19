@@ -58,6 +58,40 @@ chmod +x Flyback.app/Contents/MacOS/Flyback && codesign --force --deep --sign - 
 
 Publishing on macOS itself sets the mode, and leaves only the signature.
 
+## Building with Docker
+
+The whole release without a .NET SDK on the machine: restore, compile, every
+test in the solution, and one self-contained publish per platform.
+
+```bash
+docker build --output artifacts .
+```
+
+That leaves `artifacts/win-x64`, `artifacts/osx-arm64` — with `Flyback.app` beside
+its `publish/` payload — and `artifacts/linux-x64`. The tests are a step in the
+build rather than something you run afterwards, so a red one fails the `docker
+build` and nothing is written.
+
+The other two identifiers are an argument rather than an edit, and each is a
+whole copy of the runtime, so ask for what you need:
+
+```bash
+docker build --build-arg RIDS="win-x64 win-arm64 osx-arm64 osx-x64 linux-x64" --output artifacts .
+```
+
+Building on Linux is also how the executables get their mode — the thing a
+cross-publish from Windows cannot do. `--output artifacts` onto an NTFS drive
+loses it again, so to carry a Unix build to a Unix machine, take the tar:
+
+```bash
+docker build --output type=tar,dest=flyback.tar .
+```
+
+The macOS signature is still the one thing that has to happen on a Mac.
+
+Leave `--output` off and the build is a pure check — everything compiles,
+everything passes — which is what it is worth running in CI.
+
 ## How it works
 
 A patch is a graph, but the graph is never walked while rendering. It compiles

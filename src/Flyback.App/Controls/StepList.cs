@@ -230,11 +230,26 @@ internal sealed class StepList
 
         var handle = new TextBlock
         {
-            Text = "⠿",
+            // Three bars rather than the six braille dots this was. The dots
+            // are the conventional mark for a grip and they are also a glyph the
+            // shipped font has never had — on a machine with nothing to fall
+            // back to, which is any bare Linux one, the handle drew nothing at
+            // all. This is in the font, so the handle is visible everywhere the
+            // program runs.
+            Text = "≡",
             FontSize = 13,
             Foreground = Faint,
             VerticalAlignment = VerticalAlignment.Center,
             Cursor = new Cursor(StandardCursorType.SizeAll),
+
+            // Drawing it is not the same as being able to grab it. Without a
+            // brush behind it a control is hit-tested against the ink itself, so
+            // the gaps between the bars are holes a pointer falls through to the
+            // panel below — and with the glyph missing the whole handle was one,
+            // which is how a note came to be undraggable on Linux while the
+            // cursor still promised otherwise. Filling it makes the box the
+            // target, which is what a handle should be either way.
+            Background = Brushes.Transparent,
         };
 
         ToolTip.SetTip(handle, "Drag to reorder");
