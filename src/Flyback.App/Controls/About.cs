@@ -155,7 +155,7 @@ internal static class About
     {
         Text = text,
         FontSize = 12,
-        Foreground = new SolidColorBrush(Colours.Muted),
+        Foreground = new SolidColorBrush(Colors.Muted),
         TextWrapping = TextWrapping.Wrap,
     };
 
@@ -170,6 +170,6 @@ internal static class About
     private static Control Rule() => new Border
     {
         Height = 1,
-        Background = new SolidColorBrush(Colours.Separator),
+        Background = new SolidColorBrush(Colors.Separator),
     };
 }

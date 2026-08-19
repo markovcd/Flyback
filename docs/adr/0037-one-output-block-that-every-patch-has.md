@@ -26,11 +26,11 @@ palette greyed out whichever was placed, the assistant refused a second and had
 to be told to add a first, `Patch.CanAdd` existed for it, and every preset wired
 two nodes that were always drawn a few hundred pixels apart. It bought the
 ability to build a patch with no picture, which nothing wants: a patch with
-nothing in its `colour` is exactly the same thing and needs no rule.
+nothing in its `color` is exactly the same thing and needs no rule.
 
 ## Decision
 
-**One `output` module, on every patch, always.** It carries `colour`, `left`,
+**One `output` module, on every patch, always.** It carries `color`, `left`,
 `right`, `gain`, `scan` and `scan rate` — the two old sinks' sockets on one
 block. It cannot be added, because there is already one; it cannot be deleted;
 and it is not in the palette, since a button that can never place anything is a
@@ -45,7 +45,7 @@ that it did.
 That was the whole of 0022 and it survives, but it no longer falls out of there
 being two nodes, so it is said explicitly: a `SinkKind` names which of the
 Output's *sockets* a program walks back from as well as which of its results it
-reads. The screen resolves `colour` and nothing else; the speakers resolve
+reads. The screen resolves `color` and nothing else; the speakers resolve
 `left`, `right` and `gain`. Anything patched into the other half is never
 visited and emits nothing.
 

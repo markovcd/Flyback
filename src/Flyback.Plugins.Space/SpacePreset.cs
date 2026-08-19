@@ -33,7 +33,7 @@ internal static class SpacePreset
         // Eye: the same envelope as brightness, so you can see the pluck the
         // repeats are made of even though the repeats themselves are not visible.
         var rings = b.Add("pattern.rings", 250, 120, (2, 2.5f));
-        var colour = b.Add("colour.hsv", 660, 160, (0, 0.55f), (1, 0.7f));
+        var color = b.Add("color.hsv", 660, 160, (0, 0.55f), (1, 0.7f));
 
         var output = b.Add(NodeCatalog.OutputTypeId, 1230, 420, (NodeCatalog.OutputGainPort, 0.5f));
 
@@ -48,8 +48,8 @@ internal static class SpacePreset
          .Wire(coord, 0, rings, 0)
          .Wire(coord, 1, rings, 1)
          .Wire(time, 0, rings, 3)
-         .Wire(rings, 0, colour, 2)
-         .Wire(colour, 0, output, NodeCatalog.OutputColourPort);
+         .Wire(rings, 0, color, 2)
+         .Wire(color, 0, output, NodeCatalog.OutputColorPort);
 
         return b.Patch;
     }

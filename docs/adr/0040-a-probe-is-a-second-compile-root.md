@@ -30,7 +30,7 @@ evaluated once per pixel has one `t`.
 ## Decision
 
 **The Probe is an ordinary module, and its chart is ordinary ops.** It declares
-one input, two knobs and a colour output, and it lowers to about forty
+one input, two knobs and a color output, and it lowers to about forty
 instructions of arithmetic — a trace, a fill, a grid and a marker for a value off
 the top of the scale. Nothing in either renderer knows it exists; the GLSL
 backend draws it because it is the same op list as everything else.
@@ -38,7 +38,7 @@ backend draws it because it is the same op list as everything else.
 **The screen is compiled from the probe rather than from the Output while one is
 selected.** `CompileForProbe` roots the walk at the probe node, which makes the
 patch's own picture not merely covered up but never lowered: the Output is not
-reached, so nothing upstream of `colour` emits an op. That is
+reached, so nothing upstream of `color` emits an op. That is
 [0011](0011-compile-backwards-from-output.md) used exactly as written, with a
 root that happens not to be a sink. The speakers are unaffected — they root at
 the Output whatever the screen has been asked for, so a patch can be heard while
@@ -75,7 +75,7 @@ decision, deliberately not taken here.
 **x and y are pinned inside the sweep.** A module read with Coordinates has a
 value per pixel and there is no one line that is all of them, so the probe charts
 the signal at the middle of the picture. Charting a field would be a second mode
-drawing false colour rather than a trace, and it would need the unswept domain;
+drawing false color rather than a trace, and it would need the unswept domain;
 one module doing both would lower its input twice.
 
 **A module read inside a sweep and outside it is lowered twice.** The two

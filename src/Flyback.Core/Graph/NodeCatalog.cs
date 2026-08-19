@@ -41,15 +41,15 @@ public static partial class NodeCatalog
     /// <param name="Results">Which of the sink's emit results this program reads.</param>
     public readonly record struct SinkKind(string Name, Range Inputs, Range Results, int Width);
 
-    /// <summary>The screen's program, walking back from the Output's colour.</summary>
-    public static SinkKind Screen => new("screen", OutputColourPort..OutputLeftPort, 0..1, VideoChannels);
+    /// <summary>The screen's program, walking back from the Output's color.</summary>
+    public static SinkKind Screen => new("screen", OutputColorPort..OutputLeftPort, 0..1, VideoChannels);
 
     /// <summary>The speakers' program, walking back from left, right and gain.</summary>
     public static SinkKind Speakers => new("speakers", OutputLeftPort..OutputScanPort, 1..3, AudioChannels);
 
     // Port indices on the Output, named because three separate places index it
     // and a shifted socket would otherwise be a silent change of meaning.
-    public const int OutputColourPort = 0;
+    public const int OutputColorPort = 0;
     public const int OutputLeftPort = 1;
     public const int OutputRightPort = 2;
     public const int OutputGainPort = 3;
@@ -85,7 +85,7 @@ public static partial class NodeCatalog
     private static PortSpec Num(string name, float value = 0f, float min = -4f, float max = 4f) =>
         new(name, PortKind.Scalar, value, min, max);
 
-    private static PortSpec Col(string name) => new(name, PortKind.Colour);
+    private static PortSpec Col(string name) => new(name, PortKind.Color);
 
     /// <summary>
     /// The axis a module is read across rather than a value it uses. Named at

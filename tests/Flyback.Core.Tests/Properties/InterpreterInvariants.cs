@@ -126,7 +126,7 @@ public class InterpreterInvariants
         });
     }
 
-    /// <summary>Value noise is documented as 0..1; the colour modules assume it.</summary>
+    /// <summary>Value noise is documented as 0..1; the color modules assume it.</summary>
     [Fact]
     public void Value_noise_stays_within_zero_to_one()
     {
@@ -138,17 +138,17 @@ public class InterpreterInvariants
 
     /// <summary>
     /// ADR-0007: a scalar broadcasts across all three components, so scaling a
-    /// colour by 1.0 must be the identity rather than a narrowing.
+    /// color by 1.0 must be the identity rather than a narrowing.
     /// </summary>
     [Fact]
-    public void Multiplying_a_colour_by_one_leaves_it_unchanged()
+    public void Multiplying_a_color_by_one_leaves_it_unchanged()
     {
         var emitter = new Emitter();
         var r = emitter.Load(OpCode.LoadX);
         var g = emitter.Load(OpCode.LoadY);
         var b = emitter.Load(OpCode.LoadT);
-        var colour = emitter.Combine(r, g, b);
-        var scaled = emitter.Binary(OpCode.Mul, colour, emitter.Constant(1f));
+        var color = emitter.Combine(r, g, b);
+        var scaled = emitter.Binary(OpCode.Mul, color, emitter.Constant(1f));
 
         scaled.Width.ShouldBe(3);
 

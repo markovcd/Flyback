@@ -10,6 +10,7 @@ using Flyback.App.Controls;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Shouldly;
+using Colors = Flyback.App.Controls.Colors;
 
 namespace Flyback.App.Tests.Ui;
 
@@ -176,15 +177,15 @@ public class NodeEditorTests : UiTest
     public void Dragging_a_connected_input_moves_the_wire_rather_than_dropping_it()
     {
         var patch = Pair(out var source, out var sink);
-        patch.Connect(source.Id, 0, sink.Id, NodeCatalog.OutputColourPort);
+        patch.Connect(source.Id, 0, sink.Id, NodeCatalog.OutputColorPort);
 
         var (editor, window) = Editing(patch);
 
         Drag(editor, window,
-            NodeGeometry.InputPort(sink, Sink, NodeCatalog.OutputColourPort),
+            NodeGeometry.InputPort(sink, Sink, NodeCatalog.OutputColorPort),
             NodeGeometry.InputPort(sink, Sink, NodeCatalog.OutputLeftPort));
 
-        patch.IncomingTo(sink.Id, NodeCatalog.OutputColourPort)
+        patch.IncomingTo(sink.Id, NodeCatalog.OutputColorPort)
             .ShouldBeNull("the wire should have left the socket it was picked up from");
 
         var moved = patch.IncomingTo(sink.Id, NodeCatalog.OutputLeftPort);
@@ -204,12 +205,12 @@ public class NodeEditorTests : UiTest
     public void Dragging_a_connected_input_into_space_unplugs_it()
     {
         var patch = Pair(out var source, out var sink);
-        patch.Connect(source.Id, 0, sink.Id, NodeCatalog.OutputColourPort);
+        patch.Connect(source.Id, 0, sink.Id, NodeCatalog.OutputColorPort);
 
         var (editor, window) = Editing(patch);
 
         Drag(editor, window,
-            NodeGeometry.InputPort(sink, Sink, NodeCatalog.OutputColourPort),
+            NodeGeometry.InputPort(sink, Sink, NodeCatalog.OutputColorPort),
             new Point(sink.X + 100, sink.Y + 420));
 
         patch.Connections.ShouldBeEmpty();
@@ -224,16 +225,16 @@ public class NodeEditorTests : UiTest
         var second = builder.Add("value", 0, 260);
         var sink = builder.Add(NodeCatalog.OutputTypeId, 420, 0);
 
-        builder.Patch.Connect(first.Id, 0, sink.Id, NodeCatalog.OutputColourPort);
+        builder.Patch.Connect(first.Id, 0, sink.Id, NodeCatalog.OutputColorPort);
 
         var (editor, window) = Editing(builder.Patch);
 
         Drag(editor, window,
             NodeGeometry.OutputPort(second, 0),
-            NodeGeometry.InputPort(sink, Sink, NodeCatalog.OutputColourPort));
+            NodeGeometry.InputPort(sink, Sink, NodeCatalog.OutputColorPort));
 
         builder.Patch.Connections.Count.ShouldBe(1);
-        builder.Patch.IncomingTo(sink.Id, NodeCatalog.OutputColourPort)!.SourceNode.ShouldBe(second.Id);
+        builder.Patch.IncomingTo(sink.Id, NodeCatalog.OutputColorPort)!.SourceNode.ShouldBe(second.Id);
     }
 
     // --- the sink is not deletable ------------------------------------------
@@ -289,7 +290,7 @@ public class NodeEditorTests : UiTest
         var sink = builder.Add(NodeCatalog.OutputTypeId, 420, 200);
         obstacle = builder.Add("math.add", 230, 100);
 
-        builder.Wire(source, 0, sink, NodeCatalog.OutputColourPort);
+        builder.Wire(source, 0, sink, NodeCatalog.OutputColorPort);
 
         return builder.Patch;
     }
@@ -359,7 +360,7 @@ public class NodeEditorTests : UiTest
 
     /// <summary>
     /// How many pixels of wire are visible inside a module's body. Inset off its
-    /// own outline, which is drawn in a colour of its own and would otherwise be
+    /// own outline, which is drawn in a color of its own and would otherwise be
     /// counted as part of what is on top of it.
     /// </summary>
     private static int WirePixelsOver(NodeEditor editor, Window window, NodeInstance node)
@@ -375,7 +376,7 @@ public class NodeEditorTests : UiTest
 
         for (var y = (int)Math.Ceiling(topLeft.Y); y < (int)bottomRight.Y; y++)
         for (var x = (int)Math.Ceiling(topLeft.X); x < (int)bottomRight.X; x++)
-            if (Within(pixels, x, y) && Near(pixels[x, y], Colours.ScalarPort))
+            if (Within(pixels, x, y) && Near(pixels[x, y], Colors.ScalarPort))
                 count++;
 
         return count;
@@ -409,7 +410,7 @@ public class NodeEditorTests : UiTest
         x >= 0 && y >= 0 && x < pixels.GetLength(0) && y < pixels.GetLength(1);
 
     /// <summary>
-    /// Close enough to be that colour. A tolerance rather than equality because
+    /// Close enough to be that color. A tolerance rather than equality because
     /// a stroke is antialiased even down its middle, and wide enough only to
     /// cover that — a socket label is three times this far from a wire.
     /// </summary>
@@ -533,19 +534,19 @@ public class NodeEditorTests : UiTest
     public void Undo_treats_a_re_patch_as_the_one_gesture_it_was()
     {
         var patch = Pair(out var source, out var sink);
-        patch.Connect(source.Id, 0, sink.Id, NodeCatalog.OutputColourPort);
+        patch.Connect(source.Id, 0, sink.Id, NodeCatalog.OutputColorPort);
 
         var (editor, window) = Editing(patch);
 
         Drag(editor, window,
-            NodeGeometry.InputPort(sink, Sink, NodeCatalog.OutputColourPort),
+            NodeGeometry.InputPort(sink, Sink, NodeCatalog.OutputColorPort),
             NodeGeometry.InputPort(sink, Sink, NodeCatalog.OutputLeftPort));
 
         patch.IncomingTo(sink.Id, NodeCatalog.OutputLeftPort).ShouldNotBeNull("the wire moved");
 
         editor.Undo().ShouldBeTrue();
 
-        editor.Patch.IncomingTo(sink.Id, NodeCatalog.OutputColourPort)
+        editor.Patch.IncomingTo(sink.Id, NodeCatalog.OutputColorPort)
             .ShouldNotBeNull("and goes back to the socket it came off, in one press");
     }
 

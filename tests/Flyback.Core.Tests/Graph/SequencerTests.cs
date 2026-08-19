@@ -136,7 +136,7 @@ public class SequencerTests
     /// <summary>
     /// A rest is the gate closing, not the value disappearing. Holding the value
     /// through a rest is what lets one sequencer drive a pitch and its own
-    /// rhythm at once — and on the screen the colour simply stays put.
+    /// rhythm at once — and on the screen the color simply stays put.
     /// </summary>
     [Fact]
     public void A_rest_closes_the_gate_and_leaves_the_value_alone()

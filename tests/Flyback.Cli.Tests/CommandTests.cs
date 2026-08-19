@@ -27,7 +27,7 @@ public class CommandTests
 
         // Wired in, or the compiler never walks to it: an unknown module nothing
         // reaches costs nothing and is rightly not complained about.
-        patch.Connect(patch.Nodes[^1].Id, 0, patch.Output.Id, NodeCatalog.OutputColourPort);
+        patch.Connect(patch.Nodes[^1].Id, 0, patch.Output.Id, NodeCatalog.OutputColorPort);
 
         return patch;
     }

@@ -39,7 +39,7 @@ internal static class FoldModule
         + "rather than removing them. At a drive of 1 it is exactly a wire; turn it up and a "
         + "sine grows a spectrum. 'bias' shifts the signal before the fold, so the folds stop "
         + "being symmetric and even harmonics appear. Untyped like the maths modules, so it "
-        + "folds a colour as readily as a tone — and on the screen the same knob turns a "
+        + "folds a color as readily as a tone — and on the screen the same knob turns a "
         + "gradient into bands.");
 
     private static Slot[] Emit(Emitter em, EmitContext inputs)

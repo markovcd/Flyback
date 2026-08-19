@@ -40,7 +40,7 @@ public class PatchWorkbenchTests
         await Call(bench, "add_module", $$"""
             {"type_id":"value","handle":"knob1","knobs":[{"port":"value","value":{{value}}}]}
             """);
-        await Call(bench, "connect", """{"from":"knob1","to":"output1","to_port":"colour"}""");
+        await Call(bench, "connect", """{"from":"knob1","to":"output1","to_port":"color"}""");
 
         return bench;
     }
@@ -145,13 +145,13 @@ public class PatchWorkbenchTests
         var bench = Bench();
 
         await Call(bench, "add_module", """{"type_id":"osc.sine","handle":"sine1"}""");
-        await Call(bench, "add_module", """{"type_id":"colour.hsv","handle":"tint1"}""");
+        await Call(bench, "add_module", """{"type_id":"color.hsv","handle":"tint1"}""");
 
         var wired = await Call(bench, "connect", """{"from":"sine1","to":"tint1","to_port":"value"}""");
         wired.Ok.ShouldBeTrue(wired.Text);
 
         var patch = bench.Snapshot();
-        var tint = patch.Nodes.Single(n => n.TypeId == "colour.hsv");
+        var tint = patch.Nodes.Single(n => n.TypeId == "color.hsv");
 
         // hue, saturation, value — "value" is the third.
         patch.IncomingTo(tint.Id, 2).ShouldNotBeNull();
@@ -163,7 +163,7 @@ public class PatchWorkbenchTests
         var bench = Bench();
 
         await Call(bench, "add_module", """{"type_id":"osc.sine","handle":"sine1"}""");
-        await Call(bench, "add_module", """{"type_id":"colour.hsv","handle":"tint1"}""");
+        await Call(bench, "add_module", """{"type_id":"color.hsv","handle":"tint1"}""");
 
         var wired = await Call(bench, "connect", """{"from":"sine1","to":"tint1","to_port":"brightness"}""");
 
@@ -180,7 +180,7 @@ public class PatchWorkbenchTests
 
         await Call(bench, "add_module", """{"type_id":"osc.sine","handle":"sine1"}""");
 
-        var wired = await Call(bench, "connect", """{"from":"sine1","to":"output1","to_port":"colour"}""");
+        var wired = await Call(bench, "connect", """{"from":"sine1","to":"output1","to_port":"color"}""");
         wired.Ok.ShouldBeTrue(wired.Text);
     }
 
@@ -191,7 +191,7 @@ public class PatchWorkbenchTests
 
         await Call(bench, "add_module", """{"type_id":"coord","handle":"coords1"}""");
 
-        var wired = await Call(bench, "connect", """{"from":"coords1","to":"output1","to_port":"colour"}""");
+        var wired = await Call(bench, "connect", """{"from":"coords1","to":"output1","to_port":"color"}""");
 
         wired.Ok.ShouldBeFalse();
         wired.Text.ShouldContain("radius");
@@ -207,8 +207,8 @@ public class PatchWorkbenchTests
         await Call(bench, "add_module", """{"type_id":"osc.sine","handle":"sine1"}""");
         await Call(bench, "add_module", """{"type_id":"osc.saw","handle":"saw1"}""");
 
-        await Call(bench, "connect", """{"from":"sine1","to":"output1","to_port":"colour"}""");
-        var second = await Call(bench, "connect", """{"from":"saw1","to":"output1","to_port":"colour"}""");
+        await Call(bench, "connect", """{"from":"sine1","to":"output1","to_port":"color"}""");
+        var second = await Call(bench, "connect", """{"from":"saw1","to":"output1","to_port":"color"}""");
 
         second.Ok.ShouldBeTrue(second.Text);
         second.Text.ShouldContain("replacing sine1");
@@ -239,7 +239,7 @@ public class PatchWorkbenchTests
         await Call(bench, "add_module", """{"type_id":"math.add","handle":"add1"}""");
         await Call(bench, "add_module", """{"type_id":"math.add","handle":"add2"}""");
 
-        await Call(bench, "connect", """{"from":"add2","to":"output1","to_port":"colour"}""");
+        await Call(bench, "connect", """{"from":"add2","to":"output1","to_port":"color"}""");
         await Call(bench, "connect", """{"from":"add1","to":"add2","to_port":"a"}""");
         var closed = await Call(bench, "connect", """{"from":"add2","to":"add1","to_port":"a"}""");
 
@@ -281,7 +281,7 @@ public class PatchWorkbenchTests
     {
         var again = await Call(await Lit(), "add_module", """{"type_id":"output"}""");
 
-        again.Text.ShouldContain("colour");
+        again.Text.ShouldContain("color");
         again.Text.ShouldContain("left");
     }
 
@@ -314,7 +314,7 @@ public class PatchWorkbenchTests
     {
         var bench = await Lit(0.25f);
 
-        var cut = await Call(bench, "disconnect", """{"handle":"output1","port":"colour"}""");
+        var cut = await Call(bench, "disconnect", """{"handle":"output1","port":"color"}""");
 
         cut.Ok.ShouldBeTrue(cut.Text);
         bench.Snapshot().Connections.ShouldBeEmpty();
@@ -361,7 +361,7 @@ public class PatchWorkbenchTests
         await Call(bench, "add_module", """{"type_id":"osc.sine","handle":"sine2"}""");
         await Call(bench, "connect", """{"from":"sine1","to":"sine2","to_port":"in"}""");
         await Call(bench, "connect", """{"from":"sine2","to":"sine1","to_port":"in"}""");
-        await Call(bench, "connect", """{"from":"sine1","to":"output1","to_port":"colour"}""");
+        await Call(bench, "connect", """{"from":"sine1","to":"output1","to_port":"color"}""");
 
         var offered = await Call(bench, "propose", """{"summary":"a tone"}""");
 
@@ -453,7 +453,7 @@ public class PatchWorkbenchTests
         (await Call(bench, "add_module", """{"type_id":"value","handle":"knob1"}"""))
             .Text.ShouldContain("Nothing is wired into the Output");
 
-        (await Call(bench, "connect", """{"from":"knob1","to":"output1","to_port":"colour"}"""))
+        (await Call(bench, "connect", """{"from":"knob1","to":"output1","to_port":"color"}"""))
             .Text.ShouldNotContain("Nothing is wired into the Output");
     }
 
@@ -579,7 +579,7 @@ public class PatchWorkbenchTests
         var bench = Bench();
 
         await Call(bench, "add_module", """{"type_id":"osc.sine","handle":"tone1"}""");
-        var wired = await Call(bench, "connect", """{"from":"tone1","to":"output1","to_port":"colour"}""");
+        var wired = await Call(bench, "connect", """{"from":"tone1","to":"output1","to_port":"color"}""");
 
         wired.Text.ShouldContain("Worth knowing");
         wired.Text.ShouldContain("never moves");
@@ -616,7 +616,7 @@ public class PatchWorkbenchTests
         var bench = Bench();
 
         await Call(bench, "add_module", """{"type_id":"osc.sine","handle":"tone1"}""");
-        await Call(bench, "connect", """{"from":"tone1","to":"output1","to_port":"colour"}""");
+        await Call(bench, "connect", """{"from":"tone1","to":"output1","to_port":"color"}""");
         var wired = await Call(bench, "connect", """{"from":"tone1","to":"output1","to_port":"left"}""");
 
         var said = wired.Text;
@@ -634,7 +634,7 @@ public class PatchWorkbenchTests
         await Call(bench, "add_module", """{"type_id":"time","handle":"clock1"}""");
         await Call(bench, "add_module", """{"type_id":"osc.sine","handle":"tone1"}""");
         await Call(bench, "connect", """{"from":"clock1","to":"tone1","to_port":"in"}""");
-        var wired = await Call(bench, "connect", """{"from":"tone1","to":"output1","to_port":"colour"}""");
+        var wired = await Call(bench, "connect", """{"from":"tone1","to":"output1","to_port":"color"}""");
 
         wired.Text.ShouldContain("No issues.");
     }
@@ -649,7 +649,7 @@ public class PatchWorkbenchTests
         var bench = Bench();
 
         await Call(bench, "add_module", """{"type_id":"osc.sine","handle":"tone1"}""");
-        await Call(bench, "connect", """{"from":"tone1","to":"output1","to_port":"colour"}""");
+        await Call(bench, "connect", """{"from":"tone1","to":"output1","to_port":"color"}""");
 
         var offered = await Call(bench, "propose", """{"summary":"a flat field"}""");
 
@@ -678,7 +678,7 @@ public class PatchWorkbenchTests
 
         told.Text.ShouldContain("knob1 = value");
         told.Text.ShouldContain("output1 = output");
-        told.Text.ShouldContain("colour <- knob1.out");
+        told.Text.ShouldContain("color <- knob1.out");
         told.Text.ShouldContain("0.25");
     }
 
@@ -708,7 +708,7 @@ public class PatchWorkbenchTests
 
         looked.Ok.ShouldBeFalse();
         looked.Png.ShouldBeNull();
-        looked.Text.ShouldContain("'colour'");
+        looked.Text.ShouldContain("'color'");
     }
 
     /// <summary>
@@ -724,11 +724,11 @@ public class PatchWorkbenchTests
 
         await Call(bench, "add_module", """{"type_id":"feedback","handle":"previous1"}""");
         await Call(bench, "add_module", """
-            {"type_id":"colour.gain","handle":"gain1","knobs":[{"port":"gain","value":1},{"port":"bias","value":0.1}]}
+            {"type_id":"color.gain","handle":"gain1","knobs":[{"port":"gain","value":1},{"port":"bias","value":0.1}]}
             """);
 
-        await Call(bench, "connect", """{"from":"previous1","to":"gain1","to_port":"colour"}""");
-        var wired = await Call(bench, "connect", """{"from":"gain1","to":"output1","to_port":"colour"}""");
+        await Call(bench, "connect", """{"from":"previous1","to":"gain1","to_port":"color"}""");
+        var wired = await Call(bench, "connect", """{"from":"gain1","to":"output1","to_port":"color"}""");
         wired.Ok.ShouldBeTrue(wired.Text);
 
         var cold = await Call(bench, "render", """{"times":[0]}""");

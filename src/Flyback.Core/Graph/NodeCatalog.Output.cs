@@ -37,7 +37,7 @@ public partial class NodeCatalog
         yield return new NodeDef(
             OutputTypeId, "Output", "Output",
             [
-                Col("colour"),
+                Col("color"),
                 Num("left", 0f, -1f, 1f),
                 Normalled("right", OutputLeftPort, -1f, 1f),
                 Num("gain", 0.5f, 0f, 1f),
@@ -50,7 +50,7 @@ public partial class NodeCatalog
             // the speakers the other two. Which of them a given program
             // takes is the only difference between the two compilations.
             (em, i) => [i[0], em.Mul(i[1], i[3]), em.Mul(i[2], i[3])],
-            "The screen and the speakers. Everything upstream of 'colour' is what you "
+            "The screen and the speakers. Everything upstream of 'color' is what you "
             + "see; everything upstream of 'left' is what you hear. Leave 'right' "
             + "unpatched and it carries 'left' through, as a normalled jack would. "
             + "'scan' at 0 drives the patch from Time; at 1 it sweeps the image and you "
@@ -250,7 +250,7 @@ public partial class NodeCatalog
             + "'window' is marked in decades so that one knob covers a single cycle of an "
             + "audible tone as well as a minute of an LFO — it reads as the time it is. Select "
             + "anything else and the picture comes back. It is an ordinary module besides — its "
-            + "'out' is the chart as a colour, so it can be patched into the Output to keep it "
+            + "'out' is the chart as a color, so it can be patched into the Output to keep it "
             + "on screen. What it cannot show is memory: drawn rather than heard, an oscillator "
             + "does not accumulate its phase and a delay line passes straight through, so a "
             + "chart of either is what the screen makes of it rather than what the speakers do.");
@@ -399,7 +399,7 @@ public partial class NodeCatalog
     /// <summary>
     /// An input the module reads over a domain of its own rather than over the
     /// pixel's — see <see cref="PortSpec.Swept"/>. Untyped like the maths
-    /// modules', so a colour may be looked at as readily as a scalar.
+    /// modules', so a color may be looked at as readily as a scalar.
     /// </summary>
     private static PortSpec Swept(string name) =>
         new(name, PortKind.Any, Swept: true);

@@ -114,6 +114,6 @@ nothing goes in a column of its own before the first, rather than among the
 sources it is not one of.
 
 **The tidy icon is drawn rather than typed.** No character means "lay this out",
-and the ones that come close resolve to the colour emoji font on Windows — the
+and the ones that come close resolve to the color emoji font on Windows — the
 same finding `Glyphs` already recorded for the folder and the floppy disk. It is
 a patch in miniature: two modules feeding one.

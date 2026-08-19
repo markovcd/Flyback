@@ -156,7 +156,7 @@ public sealed class PatchWorkbench
         if (!working.CanAdd(typeId) && working.FirstOf(typeId) is { } sink)
             return ToolOutcome.Refused(
                 $"every patch already has its {def.Name}, as {Handle(sink)}, and cannot have a second. "
-                + "Wire into that one — 'colour' for the picture, 'left' for the sound.");
+                + "Wire into that one — 'color' for the picture, 'left' for the sound.");
 
         string handle;
 
@@ -406,7 +406,7 @@ public sealed class PatchWorkbench
         {
             return ToolOutcome.Refused(
                 "nothing is wired into the Output, so nothing this patch does comes out anywhere. "
-                + "Patch something into its 'colour' or its 'left' before proposing.");
+                + "Patch something into its 'color' or its 'left' before proposing.");
         }
 
         proposal = summary;
@@ -554,7 +554,7 @@ public sealed class PatchWorkbench
             text.Append("  in  ").Append(i).Append(' ').Append(port.Name)
                 .Append(" = ").Append(port.Format(port.Default))
                 .Append(" [").Append(Number(port.Min)).Append("..").Append(Number(port.Max)).Append(']')
-                .AppendLine(port.Kind == PortKind.Colour ? " colour" : port.Kind == PortKind.Any ? " any" : "");
+                .AppendLine(port.Kind == PortKind.Color ? " color" : port.Kind == PortKind.Any ? " any" : "");
         }
 
         for (var i = 0; i < def.Outputs.Count; i++)
@@ -589,15 +589,15 @@ public sealed class PatchWorkbench
     {
         var requested = Times(arguments);
 
-        // Asked for directly, because the compiler does not remark on a colour
+        // Asked for directly, because the compiler does not remark on a color
         // socket left empty while the sound is wired — a patch built for the ear
         // is a deliberate thing, not a complaint waiting to happen. It is still
         // nothing to look at: what would come back is a black rectangle, and an
         // assistant shown black goes and "fixes" a patch that was working.
-        if (working.IncomingTo(working.Output.Id, NodeCatalog.OutputColourPort) is null)
+        if (working.IncomingTo(working.Output.Id, NodeCatalog.OutputColorPort) is null)
         {
             return Task.FromResult(ToolOutcome.Refused(
-                "nothing is wired into the Output's 'colour', so this patch draws nothing and "
+                "nothing is wired into the Output's 'color', so this patch draws nothing and "
                 + "there is nothing to look at. Patch something in if it is meant to be seen."));
         }
 
@@ -846,7 +846,7 @@ public sealed class PatchWorkbench
             tools.Add(new PatchTool(
                 "render",
                 "Draws the patch and shows you the result: several frames side by side, so you can "
-                + "see movement as well as colour. Use it once the shape is right, and again after "
+                + "see movement as well as color. Use it once the shape is right, and again after "
                 + "adjusting what you saw.",
                 $$"""
                 {

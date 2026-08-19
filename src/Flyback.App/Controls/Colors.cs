@@ -4,26 +4,26 @@ using Flyback.Core.Graph;
 namespace Flyback.App.Controls;
 
 /// <summary>
-/// Every colour the shell uses, in one place — the theme file.
+/// Every color the shell uses, in one place — the theme file.
 /// </summary>
 /// <remarks>
-/// Colours rather than brushes, deliberately. A brush is a resource with a
-/// lifetime and the controls that need one already cache their own; a colour is
+/// Colors rather than brushes, deliberately. A brush is a resource with a
+/// lifetime and the controls that need one already cache their own; a color is
 /// a value, and half the uses here are not fills at all — a pen, a gradient
 /// stop, the same hue at four fifths opacity. Keeping the palette to values
 /// means there is exactly one definition of each and no question about who owns
 /// what.
 /// <para>
-/// Named Colours rather than Theme because every Avalonia StyledElement
+/// Named Colors rather than Theme because every Avalonia StyledElement
 /// already has a Theme property, and a static class of that name would be
 /// shadowed inside every control that wanted it. This is the part of a theme
 /// that XAML would have given for free, without the
 /// binding layer that comes with it — see ADR-0016 for why the markup itself is
-/// still declined. Before this, thirty-one colours were spread across six files
+/// still declined. Before this, thirty-one colors were spread across six files
 /// and two of them had already drifted a shade apart.
 /// </para>
 /// </remarks>
-internal static class Colours
+internal static class Colors
 {
     // --- surfaces, darkest first --------------------------------------------
 
@@ -75,11 +75,11 @@ internal static class Colours
     /// <summary>A level turned all the way down, which still has to be visible.</summary>
     public static Color Inactive { get; } = Color.FromRgb(0x5A, 0x60, 0x6A);
 
-    // --- the one colour that means "look here" ------------------------------
+    // --- the one color that means "look here" ------------------------------
 
     /// <summary>
     /// Selection, the wire being dragged, and whatever the compiler wants to
-    /// say. One colour for all three on purpose: they are the same request.
+    /// say. One color for all three on purpose: they are the same request.
     /// </summary>
     public static Color Attention { get; } = Color.FromRgb(0xFF, 0xB0, 0x40);
 
@@ -99,12 +99,12 @@ internal static class Colours
     public static Color Unknown { get; } = Color.FromRgb(0x88, 0x88, 0x88);
 
     /// <summary>
-    /// What colour a module's category is drawn in — its header on the canvas
+    /// What color a module's category is drawn in — its header on the canvas
     /// and its heading in the palette.
     /// </summary>
     /// <remarks>
     /// Here rather than on <c>NodeGeometry</c>, which is about where the parts
-    /// of a node sit and had no business also deciding what colour they are.
+    /// of a node sit and had no business also deciding what color they are.
     /// </remarks>
     public static Color Accent(string category) => category switch
     {
@@ -115,21 +115,21 @@ internal static class Colours
         "Maths" => Maths,
         "Space" => Space,
         "Pattern" => Pattern,
-        "Colour" => Tint,
+        "Color" => Tint,
         "Feedback" => Feedback,
         _ => Unknown,
     };
 
     // --- sockets ------------------------------------------------------------
 
-    public static Color ColourPort { get; } = Color.FromRgb(0xE8, 0xC8, 0x60);
+    public static Color ColorPort { get; } = Color.FromRgb(0xE8, 0xC8, 0x60);
     public static Color AnyPort { get; } = Color.FromRgb(0x9E, 0xC8, 0x9E);
     public static Color ScalarPort { get; } = Color.FromRgb(0xB8, 0xBC, 0xC4);
 
-    /// <summary>What flows down a wire, said in colour.</summary>
-    public static Color PortColour(PortKind kind) => kind switch
+    /// <summary>What flows down a wire, said in color.</summary>
+    public static Color PortColor(PortKind kind) => kind switch
     {
-        PortKind.Colour => ColourPort,
+        PortKind.Color => ColorPort,
         PortKind.Any => AnyPort,
         _ => ScalarPort,
     };

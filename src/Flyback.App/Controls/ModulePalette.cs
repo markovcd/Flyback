@@ -200,8 +200,8 @@ public sealed class ModulePalette : UserControl
         // Trim below — one border rather than two boxes a few pixels apart.
         Content = new Border
         {
-            Background = new SolidColorBrush(Colours.Panel),
-            BorderBrush = new SolidColorBrush(Colours.Edge),
+            Background = new SolidColorBrush(Colors.Panel),
+            BorderBrush = new SolidColorBrush(Colors.Edge),
             BorderThickness = new Thickness(1),
             CornerRadius = new CornerRadius(4),
             Child = panel,
@@ -284,7 +284,7 @@ public sealed class ModulePalette : UserControl
                 Text = category.ToUpperInvariant(),
                 FontSize = 10.5,
                 FontWeight = FontWeight.SemiBold,
-                Foreground = new SolidColorBrush(Colours.Accent(category)),
+                Foreground = new SolidColorBrush(Colors.Accent(category)),
                 Margin = new Thickness(2, 12, 2, 4),
             });
 
@@ -343,7 +343,7 @@ public sealed class ModulePalette : UserControl
             listed[highlighted].ClearValue(BackgroundProperty);
 
         highlighted = wanted;
-        listed[highlighted].Background = new SolidColorBrush(Colours.Attention, 0.28);
+        listed[highlighted].Background = new SolidColorBrush(Colors.Attention, 0.28);
         listed[highlighted].BringIntoView();
     }
 

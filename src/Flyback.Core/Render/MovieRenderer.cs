@@ -61,7 +61,7 @@ public static class MovieRenderer
         return Render(file, video, audio, scan, settings, progress, cancellation);
     }
 
-    /// <param name="video">The picture's compiled program, rooted at the Output's colour.</param>
+    /// <param name="video">The picture's compiled program, rooted at the Output's color.</param>
     /// <param name="audio">
     /// Null writes a video-only file, which is what a patch with no Audio Output
     /// has to say.

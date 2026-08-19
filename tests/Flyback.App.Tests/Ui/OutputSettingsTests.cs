@@ -169,8 +169,8 @@ public class OutputSettingsTests : UiTest
     /// Three of the buttons are drawn rather than typed. A folder and a floppy
     /// disk are what open and save look like everywhere, and neither is a
     /// character any font here can be relied on to have — the code points exist,
-    /// and on Windows they resolve to the colour emoji font, which would put
-    /// full-colour pictures in a bar of thin grey strokes. Tidy is drawn for the
+    /// and on Windows they resolve to the color emoji font, which would put
+    /// full-color pictures in a bar of thin grey strokes. Tidy is drawn for the
     /// opposite reason: no character means what it does, so it is a patch in
     /// miniature instead.
     /// </summary>
@@ -374,7 +374,7 @@ public class OutputSettingsTests : UiTest
 
         var knob = editor.AddNode("value");
         knob.ShouldNotBeNull();
-        editor.Patch.Connect(knob.Id, 0, editor.Patch.Output.Id, NodeCatalog.OutputColourPort);
+        editor.Patch.Connect(knob.Id, 0, editor.Patch.Output.Id, NodeCatalog.OutputColorPort);
         editor.NotifyPatchChanged();
 
         Select(window, editor.Patch.Output);

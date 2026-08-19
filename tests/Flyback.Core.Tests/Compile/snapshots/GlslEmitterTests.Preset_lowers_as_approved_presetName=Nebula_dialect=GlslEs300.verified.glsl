@@ -8,7 +8,7 @@ uniform float uAspect;
 uniform float uK[14];
 
 in vec2 vUv;
-out vec4 fragColour;
+out vec4 fragColor;
 
 // The exact zero tests below are the point, not an oversight: they trap the
 // one divisor that makes a result undefined. See the same reasoning spelled
@@ -199,5 +199,5 @@ void main()
     float r82 = r20 * r20;
     float r83 = r20 * r20;
 
-    fragColour = vec4(sat(r79), sat(r80), sat(r81), 1.0);
+    fragColor = vec4(sat(r79), sat(r80), sat(r81), 1.0);
 }

@@ -46,7 +46,7 @@ public sealed partial class MainWindow
 
     private const string NothingToExport =
         "Nothing is wired into the Output, so there is nothing to write. "
-        + "Patch something into its 'colour' or its 'left'.";
+        + "Patch something into its 'color' or its 'left'.";
 
     private async Task OpenPatchAsync()
     {

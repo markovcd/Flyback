@@ -28,7 +28,7 @@ public static class Presets
 
     /// <summary>
     /// One sequencer, heard and seen at once. The steps are the tune; where the
-    /// sequence has got to is the colour, and the gate that makes a rest silent
+    /// sequence has got to is the color, and the gate that makes a rest silent
     /// is the same one that takes the light out of it.
     /// </summary>
     /// <remarks>
@@ -70,7 +70,7 @@ public static class Presets
         // note is not sounding, which reads as a fault rather than as a pulse.
         var pulse = b.Add("math.remap", 1040, 860, (1, 0f), (2, 1f), (3, 0.4f), (4, 1f));
         var lit = b.Add("math.mul", 1040, 700);
-        var colour = b.Add("colour.hsv", 1240, 620, (1, 0.8f));
+        var color = b.Add("color.hsv", 1240, 620, (1, 0.8f));
 
         var output = b.Add(NodeCatalog.OutputTypeId, 1440, 420, (NodeCatalog.OutputGainPort, 0.5f));
 
@@ -90,9 +90,9 @@ public static class Presets
          .Wire(steps, 1, pulse, 0)
          .Wire(glow, 0, lit, 0)
          .Wire(pulse, 0, lit, 1)
-         .Wire(steps, 2, colour, 0)
-         .Wire(lit, 0, colour, 2)
-         .Wire(colour, 0, output, NodeCatalog.OutputColourPort);
+         .Wire(steps, 2, color, 0)
+         .Wire(lit, 0, color, 2)
+         .Wire(color, 0, output, NodeCatalog.OutputColorPort);
 
         return b.Patch;
     }
@@ -119,7 +119,7 @@ public static class Presets
 
         var sum = b.Add("math.add", 500, 200);
         var hue = b.Add("math.remap", 660, 200, (1, -2f), (2, 2f), (3, 0f), (4, 1f));
-        var colour = b.Add("colour.hsv", 860, 200, (1, 0.85f), (2, 1f));
+        var color = b.Add("color.hsv", 860, 200, (1, 0.85f), (2, 1f));
         var output = b.Add(NodeCatalog.OutputTypeId, 1060, 220);
 
         b.Wire(coord, 0, horizontal, 0)
@@ -128,8 +128,8 @@ public static class Presets
          .Wire(horizontal, 0, sum, 0)
          .Wire(vertical, 0, sum, 1)
          .Wire(sum, 0, hue, 0)
-         .Wire(hue, 0, colour, 0)
-         .Wire(colour, 0, output, 0);
+         .Wire(hue, 0, color, 0)
+         .Wire(color, 0, output, 0);
 
         return b.Patch;
     }
@@ -146,7 +146,7 @@ public static class Presets
         var rotate = b.Add("space.rotate", 260, 160);
         var fold = b.Add("space.kaleidoscope", 470, 200, (2, 6f));
         var noise = b.Add("pattern.noise", 680, 240, (3, 2.5f));
-        var colour = b.Add("colour.hsv", 890, 240, (1, 0.9f), (2, 1f));
+        var color = b.Add("color.hsv", 890, 240, (1, 0.9f), (2, 1f));
         var output = b.Add(NodeCatalog.OutputTypeId, 1090, 260);
 
         b.Wire(coord, 0, rotate, 0)
@@ -157,8 +157,8 @@ public static class Presets
          .Wire(fold, 0, noise, 0)
          .Wire(fold, 1, noise, 1)
          .Wire(drift, 0, noise, 2)
-         .Wire(noise, 0, colour, 0)
-         .Wire(colour, 0, output, 0);
+         .Wire(noise, 0, color, 0)
+         .Wire(color, 0, output, 0);
 
         return b.Patch;
     }
@@ -185,7 +185,7 @@ public static class Presets
 
         // Eye.
         var rings = b.Add("pattern.rings", 260, 80, (2, 3f));
-        var tint = b.Add("colour.hsv", 700, 140, (1, 0.85f));
+        var tint = b.Add("color.hsv", 700, 140, (1, 0.85f));
 
         // Both halves land on the one block, which is what makes the shared
         // oscillator legible: two wires into the same module, from the same sine.
@@ -202,7 +202,7 @@ public static class Presets
          .Wire(time, 0, rings, 3)
          .Wire(slow, 0, tint, 0)
          .Wire(rings, 0, tint, 2)
-         .Wire(tint, 0, output, NodeCatalog.OutputColourPort);
+         .Wire(tint, 0, output, NodeCatalog.OutputColorPort);
 
         return b.Patch;
     }
@@ -272,7 +272,7 @@ public static class Presets
         // Eye: the field under the trace, dim enough that the loop reads on top
         // of it rather than competing with it.
         var glow = b.Add("math.remap", 540, 120, (1, -1f), (2, 1f), (3, 0.05f), (4, 0.55f));
-        var tint = b.Add("colour.hsv", 800, 120, (1, 0.7f));
+        var tint = b.Add("color.hsv", 800, 120, (1, 0.7f));
         var lit = b.Add("math.add", 1080, 220);
 
         var output = b.Add(NodeCatalog.OutputTypeId, 1320, 300, (NodeCatalog.OutputGainPort, 0.45f));
@@ -296,7 +296,7 @@ public static class Presets
          .Wire(glow, 0, tint, 2)
          .Wire(tint, 0, lit, 0)
          .Wire(scan, 1, lit, 1)
-         .Wire(lit, 0, output, NodeCatalog.OutputColourPort);
+         .Wire(lit, 0, output, NodeCatalog.OutputColorPort);
 
         return b.Patch;
     }
@@ -309,7 +309,7 @@ public static class Presets
     /// The ramp is smooth and nothing downstream of the snap is. That is the
     /// whole demonstration, and it is why the same signal drives both sinks: the
     /// ear hears a run of separate notes rather than a slide, and the eye sees
-    /// flat rings of colour rather than a gradient. Feed the ramp straight to a
+    /// flat rings of color rather than a gradient. Feed the ramp straight to a
     /// Frequency knob instead and both become continuous.
     /// <para>
     /// The steps are instant and the tone is clean, which sounds like a
@@ -350,16 +350,16 @@ public static class Presets
         var tone = b.Add("osc.sine", 880, 460);
 
         // Eye: one hue per semitone, wrapped so an octave is a full turn of the
-        // wheel and the same note always comes out the same colour.
+        // wheel and the same note always comes out the same color.
         var wheel = b.Add("math.mul", 880, 100, (1, 1f / 12f));
         var hue = b.Add("math.fract", 1080, 100);
 
         // Brightness is taken from the ramp itself rather than from the note, so
-        // the two are in one picture: a smooth glow with hard-edged colour rings
+        // the two are in one picture: a smooth glow with hard-edged color rings
         // sitting in it, which is the before and after of the snap.
         var glow = b.Add("math.remap", 1080, 300, (1, -1.8f), (2, 0.5f), (3, 0.08f), (4, 1f));
 
-        var colour = b.Add("colour.hsv", 1270, 140, (1, 0.85f));
+        var color = b.Add("color.hsv", 1270, 140, (1, 0.85f));
 
         var output = b.Add(NodeCatalog.OutputTypeId, 1470, 300, (NodeCatalog.OutputGainPort, 0.5f));
 
@@ -374,9 +374,9 @@ public static class Presets
          .Wire(note, 1, wheel, 0)
          .Wire(wheel, 0, hue, 0)
          .Wire(sweep, 0, glow, 0)
-         .Wire(hue, 0, colour, 0)
-         .Wire(glow, 0, colour, 2)
-         .Wire(colour, 0, output, NodeCatalog.OutputColourPort);
+         .Wire(hue, 0, color, 0)
+         .Wire(glow, 0, color, 2)
+         .Wire(color, 0, output, NodeCatalog.OutputColorPort);
 
         return b.Patch;
     }
@@ -400,7 +400,7 @@ public static class Presets
     /// plane, so it repeats with it — keeps the symmetry and bends it at once.
     /// </para>
     /// <para>
-    /// Feeding that same field into the hue is what ties shape to colour, so it
+    /// Feeding that same field into the hue is what ties shape to color, so it
     /// reads as one moving thing rather than a pattern with a palette applied to
     /// it. And it is the most expensive preset here by some way, which is also
     /// the point of having it: it is what the renderer looks like under load.
@@ -437,14 +437,14 @@ public static class Presets
         var drift = b.Add("math.add", 890, 620);
         var hue = b.Add("math.fract", 1080, 620);
 
-        var fresh = b.Add("colour.hsv", 1270, 400, (1, 0.85f));
+        var fresh = b.Add("color.hsv", 1270, 400, (1, 0.85f));
 
         // The previous frame, zoomed out a hair and turned, so what is already on
         // screen spirals outward while new filaments arrive underneath it.
         var widen = b.Add("space.scale", 250, 900, (2, 0.99f));
         var swirl = b.Add("space.rotate", 450, 900, (2, 0.015f));
         var previous = b.Add("feedback", 660, 900);
-        var trail = b.Add("colour.gain", 870, 900, (1, 0.92f), (2, 0f));
+        var trail = b.Add("color.gain", 870, 900, (1, 0.92f), (2, 0f));
 
         // Max rather than a blend: a trail that is brighter than the new frame
         // keeps its brightness, which is what makes the streaks read as trails
@@ -481,7 +481,7 @@ public static class Presets
          .Wire(previous, 0, trail, 0)
          .Wire(trail, 0, combine, 0)
          .Wire(fresh, 0, combine, 1)
-         .Wire(combine, 0, output, NodeCatalog.OutputColourPort);
+         .Wire(combine, 0, output, NodeCatalog.OutputColorPort);
 
         return b.Patch;
     }
@@ -501,12 +501,12 @@ public static class Presets
         var rotate = b.Add("space.rotate", 250, 140);
         var scale = b.Add("space.scale", 440, 160, (2, 1.05f));
         var previous = b.Add("feedback", 620, 180);
-        var dim = b.Add("colour.gain", 790, 180, (1, 0.95f), (2, 0f));
+        var dim = b.Add("color.gain", 790, 180, (1, 0.95f), (2, 0f));
 
         // Fresh material: bright rings that travel outward.
         var rings = b.Add("pattern.rings", 250, 460, (2, 1.5f));
         var spark = b.Add("math.smoothstep", 450, 500, (0, 0.8f), (1, 1f));
-        var tint = b.Add("colour.hsv", 640, 520, (1, 1f));
+        var tint = b.Add("color.hsv", 640, 520, (1, 1f));
 
         var combine = b.Add("math.max", 950, 300);
         var output = b.Add(NodeCatalog.OutputTypeId, 1130, 320);
@@ -547,7 +547,7 @@ public static class Presets
     /// <para>
     /// Two Mixers rather than one, because the two sinks carry different things
     /// — and the same module twice, because its sockets are untyped: the chord
-    /// sums four scalars and the picture sums four colours, by the same four
+    /// sums four scalars and the picture sums four colors, by the same four
     /// multiplies and three adds.
     /// </para>
     /// <para>
@@ -570,18 +570,18 @@ public static class Presets
         var chord = b.Add("math.mixer", 1380, 60);
         var picture = b.Add("math.mixer", 1380, 320);
 
-        var tame = b.Add("colour.gain", 1620, 400, (1, 0.6f));
+        var tame = b.Add("color.gain", 1620, 400, (1, 0.6f));
         var output = b.Add(NodeCatalog.OutputTypeId, 1840, 180, (NodeCatalog.OutputGainPort, 0.25f));
 
         b.Wire(chord, 0, output, NodeCatalog.OutputLeftPort)
          .Wire(picture, 0, tame, 0)
-         .Wire(tame, 0, output, NodeCatalog.OutputColourPort);
+         .Wire(tame, 0, output, NodeCatalog.OutputColorPort);
 
         // An A major triad spread over two octaves, one voice a note: the root,
         // the fifth, the octave and the third above it. The band count climbs
         // with the voice, so how many rings are on screen is which note is
         // sounding — and the hues sit far enough apart that two voices at once
-        // read as a third colour rather than as a brighter one of the first.
+        // read as a third color rather than as a brighter one of the first.
         //
         // The fader rates share no common factor worth the name, so the four
         // never come up together twice and the patch does not visibly loop.
@@ -611,7 +611,7 @@ public static class Presets
             // clock, so it stands still as bands out from the centre rather than
             // travelling as a tone.
             var band = b.Add("osc.sine", 940, row, (1, bands), (3, 0.5f), (4, 0.5f));
-            var tint = b.Add("colour.hsv", 1160, row, (0, hue));
+            var tint = b.Add("color.hsv", 1160, row, (0, hue));
 
             // Channel v of both mixers: the input, then the level beside it.
             var channel = v * 2;

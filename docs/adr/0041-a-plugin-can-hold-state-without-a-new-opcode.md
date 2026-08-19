@@ -64,7 +64,7 @@ after.
 **The folder and the saturator beside it are pure and shared.** Neither has any
 state, so neither needs any of the above: the same arithmetic runs at both sinks,
 and the harmonics the ear hears from a fold are the bands the eye sees in a
-gradient, from one knob. Their ports are `Any`, so they shape a colour the way a
+gradient, from one knob. Their ports are `Any`, so they shape a color the way a
 Multiply does.
 
 ## Consequences

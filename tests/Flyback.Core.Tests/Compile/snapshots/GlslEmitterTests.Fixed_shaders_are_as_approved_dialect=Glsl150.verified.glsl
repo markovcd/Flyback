@@ -30,9 +30,9 @@ void main()
 uniform sampler2D uTexture;
 
 in vec2 vUv;
-out vec4 fragColour;
+out vec4 fragColor;
 
 void main()
 {
-    fragColour = vec4(texture(uTexture, vUv).rgb, 1.0);
+    fragColor = vec4(texture(uTexture, vUv).rgb, 1.0);
 }

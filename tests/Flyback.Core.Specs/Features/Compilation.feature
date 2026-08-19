@@ -19,7 +19,7 @@ Feature: Compiling a patch
     And the rendered image is entirely black
 
   # The ordinary case: the sink is there, as it always is, and nothing reaches
-  # it. What compiles is a constant — one flat colour and silence — which is a
+  # it. What compiles is a constant — one flat color and silence — which is a
   # legal program and not a patch anybody meant.
   Scenario: A sink with nothing wired into it is remarked on
     Given a patch containing:
@@ -34,7 +34,7 @@ Feature: Compiling a patch
       | name   | module       |
       | knob   | value        |
       | screen | output       |
-    And "knob" output "out" is wired to "screen" input "colour"
+    And "knob" output "out" is wired to "screen" input "color"
     When the patch is compiled
     Then compilation reports no issues
 
@@ -47,7 +47,7 @@ Feature: Compiling a patch
       | name   | module       |
       | osc    | osc.sine     |
       | screen | output       |
-    And "osc" output "out" is wired to "screen" input "colour"
+    And "osc" output "out" is wired to "screen" input "color"
     When the patch is compiled
     Then compilation reports an issue containing "never moves"
     And compilation reports nothing wrong
@@ -59,7 +59,7 @@ Feature: Compiling a patch
       | osc    | osc.sine     |
       | screen | output       |
     And "clock" output "t" is wired to "osc" input "in"
-    And "osc" output "out" is wired to "screen" input "colour"
+    And "osc" output "out" is wired to "screen" input "color"
     When the patch is compiled
     Then compilation reports no issues
 
@@ -68,7 +68,7 @@ Feature: Compiling a patch
       | name   | module       |
       | screen | output       |
     And a node named "mystery" of unknown type "module.from.the.future"
-    And "mystery" output 0 is wired to "screen" input "colour"
+    And "mystery" output 0 is wired to "screen" input "color"
     When the patch is compiled
     Then compilation reports an issue containing "Unknown module"
     And the rendered image is entirely black
@@ -81,7 +81,7 @@ Feature: Compiling a patch
       | screen | output       |
     And "first" output "out" is wired to "second" input "a"
     And "second" output "out" is wired to "first" input "a"
-    And "second" output "out" is wired to "screen" input "colour"
+    And "second" output "out" is wired to "screen" input "color"
     When the patch is compiled
     Then compilation reports an issue containing "feeds back into itself"
 
@@ -89,10 +89,10 @@ Feature: Compiling a patch
     Given a patch containing:
       | name   | module       |
       | coords | coord        |
-      | tint   | colour.hsv   |
+      | tint   | color.hsv   |
       | screen | output       |
     And "coords" output "x" is wired to "tint" input "hue"
-    And "tint" output "colour" is wired to "screen" input "colour"
+    And "tint" output "color" is wired to "screen" input "color"
     When the patch is compiled
     Then compilation reports no issues
     And the program contains at least one "HsvToRgb" op

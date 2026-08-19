@@ -27,7 +27,7 @@ public static class PngWriter
         BinaryPrimitives.WriteInt32BigEndian(header[..4], width);
         BinaryPrimitives.WriteInt32BigEndian(header.Slice(4, 4), height);
         header[8] = 8;  // bit depth
-        header[9] = 2;  // colour type: truecolour RGB
+        header[9] = 2;  // color type: truecolor RGB
         header[10] = 0; // deflate
         header[11] = 0; // adaptive filtering
         header[12] = 0; // no interlace

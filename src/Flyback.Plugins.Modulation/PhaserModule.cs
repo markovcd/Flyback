@@ -121,7 +121,7 @@ internal static class PhaserModule
 
         // With no memory the stages are wired straight through and the notches
         // are nowhere, so the honest thing is to stand aside entirely rather than
-        // colour the picture with the arithmetic that happens to be left.
+        // color the picture with the arithmetic that happens to be left.
         return [em.Ternary(OpCode.Mix, dry, signal, em.Mul(inputs[4], live)), lfo];
     }
 }

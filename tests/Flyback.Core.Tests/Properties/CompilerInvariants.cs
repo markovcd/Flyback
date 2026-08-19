@@ -87,7 +87,7 @@ public class CompilerInvariants
     }
 
     /// <summary>
-    /// The output colour must be three registers that actually exist, or the
+    /// The output color must be three registers that actually exist, or the
     /// renderer reads past the end of its scratch buffer.
     /// </summary>
     [Theory]

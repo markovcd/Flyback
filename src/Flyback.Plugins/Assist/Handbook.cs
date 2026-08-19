@@ -58,8 +58,8 @@ internal static class Handbook
         - An input takes at most one wire. Wiring a second one replaces the
           first, and the tool will tell you when it did.
         - An output may fan out to as many inputs as you like.
-        - A scalar entering a colour port broadcasts to all three channels. A
-          colour entering a scalar port narrows to its luma.
+        - A scalar entering a color port broadcasts to all three channels. A
+          color entering a scalar port narrows to its luma.
 
         ## The `in` socket, and why a patch sits still
 
@@ -147,7 +147,7 @@ internal static class Handbook
 
         Format: `type id | name | category`, then inputs and outputs as
         `index name`, then what it is for. A knob's default and range follow its
-        name. `~` marks a colour port, `*` a port that takes whatever is plugged
+        name. `~` marks a color port, `*` a port that takes whatever is plugged
         in, `->n` an input that falls back to input `n` when nothing is wired to
         it, and `note` a knob that reads as a note name rather than a number.
         A `notes` line means the module carries a list of notes instead of step
@@ -215,7 +215,7 @@ internal static class Handbook
 
             text.Append("  ").Append(i).Append(' ');
 
-            if (port.Kind == PortKind.Colour) text.Append('~');
+            if (port.Kind == PortKind.Color) text.Append('~');
             else if (port.Kind == PortKind.Any) text.Append('*');
 
             text.Append(port.Name);

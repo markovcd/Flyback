@@ -38,25 +38,25 @@ public sealed class NodeEditor : Control
         Marquee,
     }
 
-    private static readonly IBrush Background = new SolidColorBrush(Colours.Canvas);
-    private static readonly IBrush NodeFill = new SolidColorBrush(Colours.Node);
-    private static readonly IBrush NodeFillSelected = new SolidColorBrush(Colours.NodeSelected);
-    private static readonly IBrush LabelBrush = new SolidColorBrush(Colours.Label);
-    private static readonly IBrush ValueBrush = new SolidColorBrush(Colours.Value);
+    private static readonly IBrush Background = new SolidColorBrush(Colors.Canvas);
+    private static readonly IBrush NodeFill = new SolidColorBrush(Colors.Node);
+    private static readonly IBrush NodeFillSelected = new SolidColorBrush(Colors.NodeSelected);
+    private static readonly IBrush LabelBrush = new SolidColorBrush(Colors.Label);
+    private static readonly IBrush ValueBrush = new SolidColorBrush(Colors.Value);
     private static readonly IBrush HeaderTextBrush = Brushes.White;
-    private static readonly IPen GridPen = new Pen(new SolidColorBrush(Colours.Grid));
-    private static readonly IPen GridPenMajor = new Pen(new SolidColorBrush(Colours.GridMajor));
-    private static readonly IPen NodeBorder = new Pen(new SolidColorBrush(Colours.Outline), 1.5);
-    private static readonly IPen SelectionPen = new Pen(new SolidColorBrush(Colours.Attention), 2);
+    private static readonly IPen GridPen = new Pen(new SolidColorBrush(Colors.Grid));
+    private static readonly IPen GridPenMajor = new Pen(new SolidColorBrush(Colors.GridMajor));
+    private static readonly IPen NodeBorder = new Pen(new SolidColorBrush(Colors.Outline), 1.5);
+    private static readonly IPen SelectionPen = new Pen(new SolidColorBrush(Colors.Attention), 2);
 
     /// <summary>
-    /// Selected, but not the one the inspector is showing. The same colour at
-    /// half strength rather than a second colour: what these modules are is
+    /// Selected, but not the one the inspector is showing. The same color at
+    /// half strength rather than a second color: what these modules are is
     /// selected, and the difference between them and the bright one is which of
     /// them the panel on the right is currently about.
     /// </summary>
     private static readonly IPen SelectionPenSecondary =
-        new Pen(new SolidColorBrush(Colours.Attention, 0.5), 2);
+        new Pen(new SolidColorBrush(Colors.Attention, 0.5), 2);
 
     /// <summary>
     /// The rubber band. Dashed, because it is a gesture in progress rather than
@@ -65,12 +65,12 @@ public sealed class NodeEditor : Control
     /// zoomed out.
     /// </summary>
     private static readonly IPen MarqueePen = new Pen(
-        new SolidColorBrush(Colours.Attention),
+        new SolidColorBrush(Colors.Attention),
         1,
         new DashStyle([4, 3], 0));
 
-    private static readonly IBrush MarqueeFill = new SolidColorBrush(Colours.Attention, 0.08);
-    private static readonly IPen PortOutline = new Pen(new SolidColorBrush(Colours.Outline), 1.2);
+    private static readonly IBrush MarqueeFill = new SolidColorBrush(Colors.Attention, 0.08);
+    private static readonly IPen PortOutline = new Pen(new SolidColorBrush(Colors.Outline), 1.2);
 
     /// <summary>How thick a wire is drawn, and how far under full strength.</summary>
     private const double WireThickness = 2.2;
@@ -79,7 +79,7 @@ public sealed class NodeEditor : Control
 
     /// <summary>
     /// A wire on the module being dragged. Heavier rather than differently
-    /// coloured, because a wire's colour already says what flows down it and
+    /// colored, because a wire's color already says what flows down it and
     /// that is not what has changed about this one.
     /// </summary>
     private const double LiftedWireThickness = 3.4;
@@ -416,7 +416,7 @@ public sealed class NodeEditor : Control
     /// <remarks>
     /// Which socket it lands on is <see cref="Fitting"/>'s decision. Nothing is
     /// refused for being the wrong kind, because nothing is: the compiler
-    /// broadcasts a scalar to three channels and takes luma from a colour, so
+    /// broadcasts a scalar to three channels and takes luma from a color, so
     /// every socket accepts every wire and the question is only which one was
     /// meant.
     /// </remarks>
@@ -461,7 +461,7 @@ public sealed class NodeEditor : Control
     /// </para>
     /// <para>
     /// Then an exact match of kind, which is what tells a Scan's <c>view</c>
-    /// from its <c>out</c> when a colour was wanted, and puts a scalar into a
+    /// from its <c>out</c> when a color was wanted, and puts a scalar into a
     /// Blend's <c>t</c> rather than broadcasting it to grey down <c>a</c>.
     /// </para>
     /// <para>
@@ -913,13 +913,13 @@ public sealed class NodeEditor : Control
 
             var from = NodeGeometry.OutputPort(source, connection.SourcePort);
             var to = NodeGeometry.InputPort(target, targetDef, connection.TargetPort);
-            var colour = Colours.PortColour(sourceDef.Outputs[connection.SourcePort].Kind);
+            var color = Colors.PortColor(sourceDef.Outputs[connection.SourcePort].Kind);
 
             // Heavier and at full strength, which is the same signal the pending
             // wire gives: this one is in play.
             var pen = theirs
-                ? new Pen(new SolidColorBrush(colour), LiftedWireThickness)
-                : new Pen(new SolidColorBrush(colour, RestingWireOpacity), WireThickness);
+                ? new Pen(new SolidColorBrush(color), LiftedWireThickness)
+                : new Pen(new SolidColorBrush(color, RestingWireOpacity), WireThickness);
 
             DrawWire(context, from, to, pen);
         }
@@ -931,7 +931,7 @@ public sealed class NodeEditor : Control
         if (patch.Find(wireNode) is not { } node) return;
         if (NodeCatalog.Get(node.TypeId) is not { } def) return;
 
-        var pen = new Pen(new SolidColorBrush(Colours.Attention, 0.9), 2.2, DashStyle.Dash);
+        var pen = new Pen(new SolidColorBrush(Colors.Attention, 0.9), 2.2, DashStyle.Dash);
 
         if (wireFromOutput)
             DrawWire(context, NodeGeometry.OutputPort(node, wirePort), wireEnd, pen);
@@ -959,7 +959,7 @@ public sealed class NodeEditor : Control
     {
         var bounds = NodeGeometry.Bounds(node, def);
         var isSelected = selection.Contains(node.Id);
-        var accent = Colours.Accent(def.Category);
+        var accent = Colors.Accent(def.Category);
 
         context.DrawRectangle(
             isSelected ? NodeFillSelected : NodeFill,
@@ -1009,7 +1009,7 @@ public sealed class NodeEditor : Control
 
     private static void DrawPort(DrawingContext context, Point centre, PortKind kind) =>
         context.DrawEllipse(
-            new SolidColorBrush(Colours.PortColour(kind)),
+            new SolidColorBrush(Colors.PortColor(kind)),
             PortOutline,
             centre,
             NodeGeometry.PortRadius,

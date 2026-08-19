@@ -61,7 +61,7 @@ carries `left` through, so a mono patch is stereo without saying so
 Two costs. `InputValues` is a `float[]` positionally aligned with the
 definition's inputs, so reordering a module's ports silently reassigns saved
 values — see [0020](0020-json-patch-files-keyed-by-string-type-ids.md), which
-handles length changes but not reordering. And there is no way to give a colour
-port a default: `PortSpec.Default` is a single float, so an unwired colour input
-compiles to a broadcast grey. In practice colour inputs are essentially always
+handles length changes but not reordering. And there is no way to give a color
+port a default: `PortSpec.Default` is a single float, so an unwired color input
+compiles to a broadcast grey. In practice color inputs are essentially always
 patched, so this has not bitten.

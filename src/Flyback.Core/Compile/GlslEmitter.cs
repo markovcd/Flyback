@@ -186,11 +186,11 @@ public static class GlslEmitter
         uniform sampler2D uTexture;
 
         in vec2 vUv;
-        out vec4 fragColour;
+        out vec4 fragColor;
 
         void main()
         {
-            fragColour = vec4(texture(uTexture, vUv).rgb, 1.0);
+            fragColor = vec4(texture(uTexture, vUv).rgb, 1.0);
         }
 
         """;
@@ -338,7 +338,7 @@ public static class GlslEmitter
 
         text.AppendLine();
         text.AppendLine("in vec2 vUv;");
-        text.AppendLine("out vec4 fragColour;");
+        text.AppendLine("out vec4 fragColor;");
         text.AppendLine();
         text.Append(Helpers);
 
@@ -362,7 +362,7 @@ public static class GlslEmitter
 
         text.AppendLine();
         text.AppendLine(
-            $"    fragColour = vec4({Output(patch, written, 0)}, " +
+            $"    fragColor = vec4({Output(patch, written, 0)}, " +
             $"{Output(patch, written, 1)}, {Output(patch, written, 2)}, 1.0);");
         text.AppendLine("}");
 

@@ -209,7 +209,7 @@ public sealed class Emitter
     }
 
     /// <summary>
-    /// An op that owns a delay line. Scalar only, whatever arrives: a colour
+    /// An op that owns a delay line. Scalar only, whatever arrives: a color
     /// would need three buffers, and there is nothing a delayed picture would
     /// mean that <see cref="OpCode.SampleFeedback"/> does not already do better.
     /// </summary>
@@ -232,7 +232,7 @@ public sealed class Emitter
     /// <summary>
     /// A phase accumulator, carrying its running total from one evaluation to
     /// the next. Scalar only, like the delay lines and for the same reason: a
-    /// colour has no phase, and nothing would read one.
+    /// color has no phase, and nothing would read one.
     /// </summary>
     /// <param name="input">
     /// The domain the oscillator runs over — Time, usually, but anything at all.
@@ -282,7 +282,7 @@ public sealed class Emitter
     {
         var first = Allocate(3);
         Add(new Op(code, first, a.Component(0), b.Component(0), c.Width == 0 ? -1 : c.Component(0)));
-        return Slot.Colour(first);
+        return Slot.Color(first);
     }
 
     // --- convenience wrappers used all over the node catalogue ---
@@ -297,18 +297,18 @@ public sealed class Emitter
 
     public Slot Add(Slot a, float b) => Binary(OpCode.Add, a, Constant(b));
 
-    /// <summary>Widens a scalar to three components; colours pass through.</summary>
-    private Slot ToColour(Slot value)
+    /// <summary>Widens a scalar to three components; colors pass through.</summary>
+    private Slot ToColor(Slot value)
     {
         if (value.Width == 3) return value;
 
         var first = Allocate(3);
         for (var i = 0; i < 3; i++)
             Add(new Op(OpCode.Copy, first + i, value.Base));
-        return Slot.Colour(first);
+        return Slot.Color(first);
     }
 
-    /// <summary>Narrows a colour to a scalar using broadcast luma weights.</summary>
+    /// <summary>Narrows a color to a scalar using broadcast luma weights.</summary>
     private Slot ToScalar(Slot value)
     {
         if (value.Width == 1) return value;
@@ -332,12 +332,12 @@ public sealed class Emitter
     /// <summary>
     /// Packs one slot per channel into a contiguous block of exactly
     /// <paramref name="width"/> registers — the shape every renderer reads.
-    /// Missing channels are silence; a single colour channel passes straight
+    /// Missing channels are silence; a single color channel passes straight
     /// through, which is the video case.
     /// </summary>
     public Slot PackChannels(Slot[] channels, int width)
     {
-        if (width == 3 && channels.Length == 1) return ToColour(channels[0]);
+        if (width == 3 && channels.Length == 1) return ToColor(channels[0]);
 
         // Resolve every source before allocating the block, so the copies are
         // emitted after the ops that produce what they read.
@@ -352,16 +352,16 @@ public sealed class Emitter
         return new Slot(first, width);
     }
 
-    /// <summary>Packs three scalars into a colour occupying consecutive registers.</summary>
+    /// <summary>Packs three scalars into a color occupying consecutive registers.</summary>
     public Slot Combine(Slot r, Slot g, Slot b)
     {
         var first = Allocate(3);
         Add(new Op(OpCode.Copy, first + 0, r.Component(0)));
         Add(new Op(OpCode.Copy, first + 1, g.Component(0)));
         Add(new Op(OpCode.Copy, first + 2, b.Component(0)));
-        return Slot.Colour(first);
+        return Slot.Color(first);
     }
 
     /// <summary>Coerces a value to the width a port expects.</summary>
-    public Slot Coerce(Slot value, int width) => width == 3 ? ToColour(value) : ToScalar(value);
+    public Slot Coerce(Slot value, int width) => width == 3 ? ToColor(value) : ToScalar(value);
 }

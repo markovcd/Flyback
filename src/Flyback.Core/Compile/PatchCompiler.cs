@@ -45,7 +45,7 @@ public sealed record CompileResult(CompiledPatch Program, IReadOnlyList<CompileI
 /// </remarks>
 public static class PatchCompiler
 {
-    /// <summary>Compiles the program the screen shows, reading the Output's colour.</summary>
+    /// <summary>Compiles the program the screen shows, reading the Output's color.</summary>
     public static CompileResult CompileForVideo(this Patch patch, ModuleCatalog? modules = null) =>
         Compile(patch, NodeCatalog.Screen, modules);
 
@@ -119,7 +119,7 @@ public static class PatchCompiler
         }
 
         // An Output with nothing wired into it at all compiles to a constant:
-        // one flat colour and silence. That is a legal program and not a patch,
+        // one flat color and silence. That is a legal program and not a patch,
         // and it is the same complaint as a domain left on its knob, made about
         // the one node whose knobs were never going to be the point.
         //
@@ -133,7 +133,7 @@ public static class PatchCompiler
                 root.Id,
                 probe is null
                     ? "Nothing is wired into the Output, so there is nothing to see or hear. "
-                      + "Patch something into its 'colour' or its 'left'."
+                      + "Patch something into its 'color' or its 'left'."
                     : "Nothing is wired into the Probe, so it is charting its own knob. "
                       + "Patch the output you want to look at into its 'in'.",
                 IssueSeverity.Warning));

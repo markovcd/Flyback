@@ -26,7 +26,7 @@ public class SessionTests
     [
         ("add_module", """{"type_id":"value","handle":"knob1","knobs":[{"port":"value","value":0.5}]}"""),
         // The Output is already there under the handle the workbench gave it.
-        ("connect", """{"from":"knob1","to":"output1","to_port":"colour"}"""),
+        ("connect", """{"from":"knob1","to":"output1","to_port":"color"}"""),
     ];
 
     [Fact]

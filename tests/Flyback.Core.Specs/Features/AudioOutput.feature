@@ -15,7 +15,7 @@ Feature: One patch, one Output, two programs
       | tone   | osc.sine      |
       | out    | output        |
     And "coords" output "x" is wired to "grain" input "x"
-    And "grain" output "out" is wired to "out" input "colour"
+    And "grain" output "out" is wired to "out" input "color"
     And "clock" output "t" is wired to "tone" input "in"
     And "tone" output "out" is wired to "out" input "left"
     When the patch is compiled for video
@@ -44,9 +44,9 @@ Feature: One patch, one Output, two programs
   Scenario: A patch with nothing wired to the speakers is silent, not broken
     Given a patch containing:
       | name | module     |
-      | tint | colour.hsv |
+      | tint | color.hsv |
       | out  | output     |
-    And "tint" output "colour" is wired to "out" input "colour"
+    And "tint" output "color" is wired to "out" input "color"
     When the patch is compiled for audio
     Then compilation reports no issues
     And the audio is silent
@@ -66,7 +66,7 @@ Feature: One patch, one Output, two programs
     Then compilation reports no issues
     And the rendered image is entirely black
 
-  # An Output nothing reaches produces one flat colour and silence, which looks
+  # An Output nothing reaches produces one flat color and silence, which looks
   # exactly like a patch that is working — so the one thing that can be said
   # about it is said, once, whichever program is being built.
   Scenario: An Output with nothing wired into it at all is remarked on

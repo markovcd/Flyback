@@ -14,7 +14,7 @@ namespace Flyback.Core.Render;
 /// numbers is the difference between a video export existing and not.
 ///
 /// An instance rather than a static class, unlike its two siblings, because a
-/// movie is thousands of calls rather than one: the colour planes are the
+/// movie is thousands of calls rather than one: the color planes are the
 /// largest thing here and reusing them across frames costs nothing.
 /// </remarks>
 public sealed class JpegWriter
@@ -76,7 +76,7 @@ public sealed class JpegWriter
         WriteMarker(output, 0xD9);                          // EOI
     }
 
-    // --- colour ------------------------------------------------------------------
+    // --- color ------------------------------------------------------------------
 
     /// <summary>
     /// BGRA to three planes of BT.601 YCbCr, chroma boxed down to half in each
@@ -196,7 +196,7 @@ public sealed class JpegWriter
     /// <summary>
     /// Reads an 8x8 block out of a plane, level-shifted by -128. A frame is
     /// almost never a whole number of macroblocks, so the edges are replicated
-    /// rather than padded with a colour — a hard edge against grey is a step the
+    /// rather than padded with a color — a hard edge against grey is a step the
     /// transform then has to spend its coefficients describing.
     /// </summary>
     private void Gather(byte[] plane, int width, int height, int left, int top)

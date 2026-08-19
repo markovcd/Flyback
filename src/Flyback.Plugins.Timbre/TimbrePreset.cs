@@ -47,7 +47,7 @@ internal static class TimbrePreset
         var bands = b.Add(FoldModule.TypeId, 470, 120);
         var hue = b.Add("math.remap", 700, 120, (3, 0.45f), (4, 0.95f));
         var lit = b.Add("math.remap", 700, 320, (3, 0.35f), (4, 1f));
-        var colour = b.Add("colour.hsv", 930, 180, (1, 0.8f));
+        var color = b.Add("color.hsv", 930, 180, (1, 0.8f));
 
         var output = b.Add(
             NodeCatalog.OutputTypeId, 1250, 400, (NodeCatalog.OutputGainPort, 0.45f));
@@ -71,9 +71,9 @@ internal static class TimbrePreset
          .Wire(drive, 0, bands, 1)
          .Wire(bands, 0, hue, 0)
          .Wire(sweep, 0, lit, 0)
-         .Wire(hue, 0, colour, 0)
-         .Wire(lit, 0, colour, 2)
-         .Wire(colour, 0, output, NodeCatalog.OutputColourPort);
+         .Wire(hue, 0, color, 0)
+         .Wire(lit, 0, color, 2)
+         .Wire(color, 0, output, NodeCatalog.OutputColorPort);
 
         return b.Patch;
     }

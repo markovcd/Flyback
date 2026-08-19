@@ -171,7 +171,7 @@ public class AudioEngineTests
         using var engine = new AudioEngine(device);
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
 
-        var tint = builder.Add("colour.hsv", 0, 0);
+        var tint = builder.Add("color.hsv", 0, 0);
         var screen = builder.Add(NodeCatalog.OutputTypeId, 0, 0);
         builder.Wire(tint, 0, screen, 0);
 

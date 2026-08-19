@@ -61,7 +61,7 @@ to differ in their last bits.
 |---|---|
 | [0005](0005-compile-to-a-flat-register-machine.md) | Compile patches to a flat register machine |
 | [0006](0006-scalar-interpreter-parallel-over-rows.md) | Scalar interpreter parallelised over rows, not SIMD |
-| [0007](0007-register-slots-with-scalar-broadcast.md) | Values are register slots; scalars broadcast to colours |
+| [0007](0007-register-slots-with-scalar-broadcast.md) | Values are register slots; scalars broadcast to colors |
 | [0008](0008-modules-as-data-in-one-catalogue.md) | Modules are data in a single catalogue |
 | [0009](0009-editable-defaults-on-every-input.md) | Every input port carries an editable default |
 | [0010](0010-any-typed-ports-for-polymorphic-maths.md) | `Any`-typed ports make maths modules polymorphic |

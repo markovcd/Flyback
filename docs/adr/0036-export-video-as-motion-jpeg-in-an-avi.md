@@ -39,7 +39,7 @@ Option 4. **Every frame is an independent JPEG; the AVI interleaves those with
 
 - `JpegWriter` — baseline, 4:2:0, the Annex K tables, no restart markers. An
   instance rather than a static class, unlike `PngWriter` and `WavWriter`,
-  because a movie is thousands of calls and the colour planes are worth keeping
+  because a movie is thousands of calls and the color planes are worth keeping
   between them.
 - `AviWriter` — RIFF, one video stream and optionally one audio stream, `idx1`
   at the end.

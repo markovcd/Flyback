@@ -17,7 +17,7 @@ public class ExportKindsTests
         var source = builder.Add("value", 0, 0);
         var output = builder.Add(NodeCatalog.OutputTypeId, 400, 0);
 
-        if (picture) builder.Wire(source, 0, output, NodeCatalog.OutputColourPort);
+        if (picture) builder.Wire(source, 0, output, NodeCatalog.OutputColorPort);
         if (sound) builder.Wire(source, 0, output, NodeCatalog.OutputLeftPort);
 
         return builder.Patch;

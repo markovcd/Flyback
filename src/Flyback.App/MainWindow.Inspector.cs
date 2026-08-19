@@ -5,6 +5,7 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Flyback.App.Controls;
 using Flyback.Core.Graph;
+using Colors = Flyback.App.Controls.Colors;
 
 namespace Flyback.App;
 
@@ -146,7 +147,7 @@ public sealed partial class MainWindow
         // of the toolbar, and it is out of the way once there is something to read.
         var inspectorBorder = new Border
         {
-            Background = new SolidColorBrush(Colours.Panel),
+            Background = new SolidColorBrush(Colors.Panel),
             Child = new Panel
             {
                 Children =
@@ -224,7 +225,7 @@ public sealed partial class MainWindow
         {
             Text = def.Category,
             FontSize = 11,
-            Foreground = new SolidColorBrush(Colours.Accent(def.Category)),
+            Foreground = new SolidColorBrush(Colors.Accent(def.Category)),
         });
 
         if (!string.IsNullOrEmpty(def.Description))

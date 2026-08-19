@@ -23,10 +23,10 @@ where that reinterpretation happens would be invisible in the patch.
 
 ## Decision
 
-Feedback is a source module with coordinate inputs and a colour output:
+Feedback is a source module with coordinate inputs and a color output:
 
 ```
-feedback(x, y) -> colour     // samples the previous frame at (x, y)
+feedback(x, y) -> color     // samples the previous frame at (x, y)
 ```
 
 The graph stays a DAG. `SampleFeedback` reads a `FeedbackFrame` handed to
@@ -55,7 +55,7 @@ frames a slowly dimming image would visibly posterise into bands. Floats cost
 On the GPU backend ([0035](0035-a-glsl-backend-for-the-video-path.md)) the same
 history is a ping-ponged pair of `RGBA16F` textures: eleven bits of mantissa
 rather than twenty-four, which is well clear of the eight this is about. Where
-half floats are not colour-renderable it falls back to eight and the status bar
+half floats are not color-renderable it falls back to eight and the status bar
 says so — the posterising described above is then exactly what happens, and
 naming it is the least that record can do.
 

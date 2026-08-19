@@ -159,7 +159,7 @@ public class PatchFuzzTests
         if (candidates.Length > 0)
         {
             var (source, sourceDef) = candidates[Decide() % candidates.Length];
-            builder.Wire(source, Decide() % sourceDef.Outputs.Count, output, NodeCatalog.OutputColourPort);
+            builder.Wire(source, Decide() % sourceDef.Outputs.Count, output, NodeCatalog.OutputColorPort);
 
             var (audioSource, audioDef) = candidates[Decide() % candidates.Length];
             builder.Wire(audioSource, Decide() % audioDef.Outputs.Count, output, NodeCatalog.OutputLeftPort);

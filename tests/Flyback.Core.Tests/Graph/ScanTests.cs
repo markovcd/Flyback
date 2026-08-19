@@ -234,7 +234,7 @@ public class ScanTests
         var (patch, _) = Scanning(
             Coordinates,
             scanOutput: Out,
-            sinkPort: NodeCatalog.OutputColourPort,
+            sinkPort: NodeCatalog.OutputColorPort,
             knobs: [(Radius, 0.6f)]);
 
         // Due east of the centre: the loop point is (0.6, 0), so scanning x
@@ -258,7 +258,7 @@ public class ScanTests
         var (patch, _) = Scanning(
             Coordinates,
             scanOutput: View,
-            sinkPort: NodeCatalog.OutputColourPort,
+            sinkPort: NodeCatalog.OutputColorPort,
             knobs: [(Radius, 0.6f), (CentreX, 0f), (CentreY, 0f)]);
 
         // Green is the phosphor, so it carries the most of whatever ink is here.
@@ -277,7 +277,7 @@ public class ScanTests
         var (patch, _) = Scanning(
             Rings,
             scanOutput: Out,
-            sinkPort: NodeCatalog.OutputColourPort,
+            sinkPort: NodeCatalog.OutputColorPort,
             overCoordinates: true);
 
         var program = patch.CompileForVideo().Program;

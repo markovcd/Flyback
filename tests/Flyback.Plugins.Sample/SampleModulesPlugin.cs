@@ -47,6 +47,6 @@ public sealed class SampleModulesPlugin : IFlybackPlugin
             [new PortSpec("in", PortKind.Any)],
             [new PortSpec("out", PortKind.Any)],
             (em, i) => [em.Mul(i[0], 0.5f)],
-            "Halves whatever arrives — scalar or colour."),
+            "Halves whatever arrives — scalar or color."),
     ]);
 }

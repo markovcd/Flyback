@@ -111,7 +111,7 @@ public partial class NodeCatalog
             "Four signals summed, each through its own level. It sums the way a desk does "
             + "rather than averaging, so four things at full is four times as loud — pull the "
             + "levels down, or the Output's gain. An unused input rests on a knob at zero, so it "
-            + "adds nothing until something is patched in. Colours mix as readily as tones: patch "
+            + "adds nothing until something is patched in. Colors mix as readily as tones: patch "
             + "a picture into any input and the levels are a four-way blend of pictures.");
     }
 }

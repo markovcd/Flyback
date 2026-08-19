@@ -41,7 +41,7 @@ public class ProbeTests
             registers[program.OutputBase + 2]);
     }
 
-    /// <summary>How much of the chart's ink is at a pixel. Green is the trace colour, so it carries the most.</summary>
+    /// <summary>How much of the chart's ink is at a pixel. Green is the trace color, so it carries the most.</summary>
     private static double Ink(CompiledPatch program, double x, double y, double t) =>
         Pixel(program, x, y, t).G;
 
@@ -63,7 +63,7 @@ public class ProbeTests
         var output = b.Add(NodeCatalog.OutputTypeId, 900, 0);
         var seen = b.Add(Coordinates, 0, 0);
         var picture = b.Add(Sine, 300, 0);
-        b.Wire(seen, 0, picture, 0).Wire(picture, 0, output, NodeCatalog.OutputColourPort);
+        b.Wire(seen, 0, picture, 0).Wire(picture, 0, output, NodeCatalog.OutputColorPort);
 
         var source = b.Add(watched, 300, 300);
         var probe = b.Add(Probe, 600, 300, knobs);
@@ -218,11 +218,11 @@ public class ProbeTests
 
     /// <summary>
     /// A probe is a module besides being a root, so its chart can be patched on
-    /// like any other colour — which is what keeps it on screen next to the
+    /// like any other color — which is what keeps it on screen next to the
     /// thing it is charting rather than instead of it.
     /// </summary>
     [Fact]
-    public void The_chart_is_also_a_colour_the_Output_can_take()
+    public void The_chart_is_also_a_color_the_Output_can_take()
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
 
@@ -230,7 +230,7 @@ public class ProbeTests
         var clock = b.Add(Time, 0, 0);
         var probe = b.Add(Probe, 300, 0, (Scale, 1f));
 
-        b.Wire(clock, 0, probe, In).Wire(probe, 0, output, NodeCatalog.OutputColourPort);
+        b.Wire(clock, 0, probe, In).Wire(probe, 0, output, NodeCatalog.OutputColorPort);
 
         var result = b.Patch.CompileForVideo(NodeCatalog.BuiltIn);
         result.HasErrors.ShouldBeFalse();

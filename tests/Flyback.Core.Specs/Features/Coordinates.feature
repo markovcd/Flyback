@@ -1,5 +1,5 @@
 Feature: What the numbers on a patch mean
-  Every module that touches space or colour has to agree on what its numbers
+  Every module that touches space or color has to agree on what its numbers
   mean. Three conventions fix that: y runs -1 to 1 bottom to top, x is the same
   scale widened by the aspect ratio, and an output of 0..1 is what a channel
   gets with nothing applied on the way out.
@@ -24,7 +24,7 @@ Feature: What the numbers on a patch mean
     And "coords" output "x" is wired to "rings" input "x"
     And "coords" output "y" is wired to "rings" input "y"
     And "rings" input "freq" is set to 3
-    And "rings" output "out" is wired to "screen" input "colour"
+    And "rings" output "out" is wired to "screen" input "color"
     When the patch is compiled
     Then compilation reports no issues
     And the frame at 96 by 54 matches the frame at 32 by 18
@@ -39,7 +39,7 @@ Feature: What the numbers on a patch mean
       | spread | math.remap   |
       | screen | output       |
     And "coords" output "y" is wired to "spread" input "in"
-    And "spread" output "out" is wired to "screen" input "colour"
+    And "spread" output "out" is wired to "screen" input "color"
     When the patch is compiled
     Then compilation reports no issues
     And the frame gets brighter towards the top
@@ -55,7 +55,7 @@ Feature: What the numbers on a patch mean
       | screen | output       |
     And "coords" output "radius" is wired to "edge" input "in"
     And "edge" input "edge" is set to 0.5
-    And "edge" output "out" is wired to "screen" input "colour"
+    And "edge" output "out" is wired to "screen" input "color"
     When the patch is compiled
     Then compilation reports no issues
     And a circle is as wide as it is tall at 320 by 180
@@ -70,7 +70,7 @@ Feature: What the numbers on a patch mean
       | knob   | value        |
       | screen | output       |
     And "knob" input "value" is set to 0.5
-    And "knob" output "out" is wired to "screen" input "colour"
+    And "knob" output "out" is wired to "screen" input "color"
     When the patch is compiled
     Then the centre pixel is byte 128
 
@@ -83,7 +83,7 @@ Feature: What the numbers on a patch mean
       | knob   | value        |
       | screen | output       |
     And "knob" input "value" is set to 4
-    And "knob" output "out" is wired to "screen" input "colour"
+    And "knob" output "out" is wired to "screen" input "color"
     When the patch is compiled
     Then the centre pixel is byte 255
 
@@ -93,7 +93,7 @@ Feature: What the numbers on a patch mean
       | knob   | value        |
       | screen | output       |
     And "knob" input "value" is set to -1
-    And "knob" output "out" is wired to "screen" input "colour"
+    And "knob" output "out" is wired to "screen" input "color"
     When the patch is compiled
     Then the centre pixel is byte 0
     And the rendered image is entirely black

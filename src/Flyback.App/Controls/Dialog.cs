@@ -51,6 +51,6 @@ internal static class Dialog
         WindowStartupLocation = WindowStartupLocation.CenterOwner,
         CanResize = false,
         ShowInTaskbar = false,
-        Background = new SolidColorBrush(Colours.Panel),
+        Background = new SolidColorBrush(Colors.Panel),
     };
 }

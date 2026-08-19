@@ -75,7 +75,7 @@ public class ProbeSelectionTests : UiTest
         var coordinates = b.Add("coord", 40, 40);
         var picture = b.Add("osc.sine", 340, 40);
 
-        b.Wire(coordinates, 0, picture, 0).Wire(picture, 0, output, NodeCatalog.OutputColourPort);
+        b.Wire(coordinates, 0, picture, 0).Wire(picture, 0, output, NodeCatalog.OutputColorPort);
 
         var clock = b.Add("time", 40, 320);
         var probe = b.Add(NodeCatalog.ProbeTypeId, 340, 320);

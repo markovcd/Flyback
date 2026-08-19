@@ -4,7 +4,7 @@
 
 ## Context
 
-Every module that touches space or colour has to agree on what the numbers mean.
+Every module that touches space or color has to agree on what the numbers mean.
 Get this wrong and patches stop being portable between resolutions, circles come
 out as ellipses, or maths that reads naturally produces something off-screen.
 
@@ -60,7 +60,7 @@ gets, so a `Value` of 0.5 is byte 128. Applying sRGB encoding would be more
 correct for physical light, but it would mean the numbers on a node no longer
 predict the output, and for an instrument that directness matters more than
 photometric accuracy. It also means gradients are perceptually darker in the
-midtones than a colour-managed renderer would produce.
+midtones than a color-managed renderer would produce.
 
 Clamping at 0..1 discards headroom. A patch computing 4.0 sees the same white as
 one computing 1.0, so there is no HDR range to pull back down with a later `Gain`.

@@ -10,7 +10,7 @@ Feature: Feedback reads the previous frame
       | name     | module       |
       | previous | feedback     |
       | screen   | output       |
-    And "previous" output "colour" is wired to "screen" input "colour"
+    And "previous" output "color" is wired to "screen" input "color"
     When the patch is compiled
     Then compilation reports no issues
     And the program contains at least one "SampleFeedback" op
@@ -24,12 +24,12 @@ Feature: Feedback reads the previous frame
     Given a patch containing:
       | name     | module       |
       | previous | feedback     |
-      | brighten | colour.gain  |
+      | brighten | color.gain  |
       | screen   | output       |
-    And "previous" output "colour" is wired to "brighten" input "colour"
+    And "previous" output "color" is wired to "brighten" input "color"
     And "brighten" input "gain" is set to 1
     And "brighten" input "bias" is set to 0.1
-    And "brighten" output "colour" is wired to "screen" input "colour"
+    And "brighten" output "color" is wired to "screen" input "color"
     When the patch is compiled
     Then rendering 1 frame gives a centre brightness of about 0.1
     And rendering 2 frames gives a centre brightness of about 0.2
@@ -39,11 +39,11 @@ Feature: Feedback reads the previous frame
     Given a patch containing:
       | name     | module       |
       | previous | feedback     |
-      | brighten | colour.gain  |
+      | brighten | color.gain  |
       | screen   | output       |
-    And "previous" output "colour" is wired to "brighten" input "colour"
+    And "previous" output "color" is wired to "brighten" input "color"
     And "brighten" input "gain" is set to 1
     And "brighten" input "bias" is set to 0.1
-    And "brighten" output "colour" is wired to "screen" input "colour"
+    And "brighten" output "color" is wired to "screen" input "color"
     When the patch is compiled
     Then rewinding after 5 frames and rendering 1 frame gives a centre brightness of about 0.1

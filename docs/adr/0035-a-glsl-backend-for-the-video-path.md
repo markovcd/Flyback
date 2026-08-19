@@ -83,7 +83,7 @@ The left column climbs and the right one barely moves, which is the whole claim.
 
 **The two backends agree.** Rendering the same frozen frame both ways and
 comparing the preview differed by 0.16 of a byte per channel on average and 9 at
-the worst pixel — and that is measured through a screen capture of a steep colour
+the worst pixel — and that is measured through a screen capture of a steep color
 gradient, so most of it is sampling rather than arithmetic.
 
 **Where the fence goes turned out to matter more than whether there is one.**
@@ -107,7 +107,7 @@ framebuffers with the same convention, and they agree.
 texel — the two scale uniforms carry the whole of `CompiledPatch.Sample`, linear
 filtering does its bilinear read and clamping to the edge does its clamp — but
 the precision drops from 24 bits to 11, and to 8 on a stack where half floats are
-not colour-renderable. The status bar says so when that happens, because a
+not color-renderable. The status bar says so when that happens, because a
 posterised feedback loop is exactly what 0012 predicts and someone should be told
 which one they are looking at. `Rewind` clears both, and so does a resolution
 change and a lost context.

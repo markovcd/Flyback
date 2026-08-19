@@ -14,22 +14,22 @@ Feature: Degenerate arithmetic yields zero rather than NaN
 
   # The half-wired Divide is downstream of a working image and upstream of the
   # screen, which is where an unguarded one does its damage: an infinity added
-  # to a colour takes the whole frame with it, not just the branch it is on.
+  # to a color takes the whole frame with it, not just the branch it is on.
   Scenario: A patch mid-edit shows an image rather than going black
     Given a patch containing:
       | name     | module       |
       | coords   | coord        |
-      | tint     | colour.hsv   |
+      | tint     | color.hsv   |
       | broken   | math.div     |
-      | brighten | colour.gain  |
+      | brighten | color.gain  |
       | screen   | output       |
     And "coords" output "x" is wired to "tint" input "hue"
     And "broken" input "a" is set to 1
     And "broken" input "b" is set to 0
-    And "tint" output "colour" is wired to "brighten" input "colour"
+    And "tint" output "color" is wired to "brighten" input "color"
     And "brighten" input "gain" is set to 1
     And "broken" output "out" is wired to "brighten" input "bias"
-    And "brighten" output "colour" is wired to "screen" input "colour"
+    And "brighten" output "color" is wired to "screen" input "color"
     When the patch is compiled
     Then compilation reports no issues
     And the rendered image is not black
@@ -47,7 +47,7 @@ Feature: Degenerate arithmetic yields zero rather than NaN
     And "maths" input "b" is set to <b>
     And "maths" output "out" is wired to "offset" input "a"
     And "offset" input "b" is set to 0.5
-    And "offset" output "out" is wired to "screen" input "colour"
+    And "offset" output "out" is wired to "screen" input "color"
     When the patch is compiled
     Then compilation reports no issues
     And the centre pixel is about 0.5, 0.5, 0.5
@@ -67,7 +67,7 @@ Feature: Degenerate arithmetic yields zero rather than NaN
     And "maths" input "in" is set to <in>
     And "maths" output "out" is wired to "offset" input "a"
     And "offset" input "b" is set to 0.5
-    And "offset" output "out" is wired to "screen" input "colour"
+    And "offset" output "out" is wired to "screen" input "color"
     When the patch is compiled
     Then compilation reports no issues
     And the centre pixel is about 0.5, 0.5, 0.5
@@ -94,7 +94,7 @@ Feature: Degenerate arithmetic yields zero rather than NaN
     And "knob" output "out" is wired to "hold" input "in"
     And "hold" input "low" is set to 0.25
     And "hold" input "high" is set to -1
-    And "hold" output "out" is wired to "screen" input "colour"
+    And "hold" output "out" is wired to "screen" input "color"
     When the patch is compiled
     Then compilation reports no issues
     And the centre pixel is about 0.25, 0.25, 0.25
@@ -109,16 +109,16 @@ Feature: Degenerate arithmetic yields zero rather than NaN
       | previous | feedback     |
       | broken   | math.div     |
       | offset   | math.add     |
-      | brighten | colour.gain  |
+      | brighten | color.gain  |
       | screen   | output       |
     And "broken" input "a" is set to 1
     And "broken" input "b" is set to 0
     And "broken" output "out" is wired to "offset" input "a"
     And "offset" input "b" is set to 0.1
-    And "previous" output "colour" is wired to "brighten" input "colour"
+    And "previous" output "color" is wired to "brighten" input "color"
     And "brighten" input "gain" is set to 1
     And "offset" output "out" is wired to "brighten" input "bias"
-    And "brighten" output "colour" is wired to "screen" input "colour"
+    And "brighten" output "color" is wired to "screen" input "color"
     When the patch is compiled
     Then compilation reports no issues
     And rendering 1 frame gives a centre brightness of about 0.1

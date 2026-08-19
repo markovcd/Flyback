@@ -105,7 +105,7 @@ public class PatchSinkTests
         var patch = PatchOf("value", NodeCatalog.OutputTypeId);
         var knob = patch.Nodes[0];
 
-        patch.Connect(knob.Id, 0, patch.Output.Id, NodeCatalog.OutputColourPort);
+        patch.Connect(knob.Id, 0, patch.Output.Id, NodeCatalog.OutputColorPort);
         patch.Remove(knob.Id);
 
         patch.Connections.ShouldBeEmpty();

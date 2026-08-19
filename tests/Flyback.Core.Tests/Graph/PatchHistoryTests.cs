@@ -94,7 +94,7 @@ public class PatchHistoryTests
         var patch = Wired(out var source, out var sink);
         var history = Opened(patch);
 
-        patch.Connect(source.Id, 0, sink.Id, NodeCatalog.OutputColourPort);
+        patch.Connect(source.Id, 0, sink.Id, NodeCatalog.OutputColorPort);
         history.Record(patch);
 
         var back = history.Undo().ShouldNotBeNull();

@@ -24,7 +24,7 @@ public class PatchVersionTests
         var coords = builder.Add("coord", 10, 20);
         var screen = builder.Add(NodeCatalog.OutputTypeId, 300, 20);
 
-        builder.Wire(coords, 0, screen, NodeCatalog.OutputColourPort);
+        builder.Wire(coords, 0, screen, NodeCatalog.OutputColorPort);
 
         return builder.Patch;
     }

@@ -95,7 +95,7 @@ internal static class WholeRackPreset
         var count = b.Add("math.remap", 470, 300, (3, 0.8f), (4, 2.6f));
         var bands = b.Add(Fold, 940, 140);
 
-        // The bands are light rather than colour. Hue tracking them would change
+        // The bands are light rather than color. Hue tracking them would change
         // as fast as they do, which reads as a moiré rather than as an image;
         // hue drifts instead, and the beat arrives as brightness on top of the
         // banding rather than beside it.
@@ -103,7 +103,7 @@ internal static class WholeRackPreset
         var pulse = b.Add("math.remap", 1150, 320, (1, 0f), (3, 0.35f), (4, 1f));
         var value = b.Add("math.mul", 1360, 220);
         var hue = b.Add("math.remap", 1150, 500, (3, 0.5f), (4, 0.95f));
-        var colour = b.Add("colour.hsv", 1570, 240, (1, 0.85f));
+        var color = b.Add("color.hsv", 1570, 240, (1, 0.85f));
 
         var output = b.Add(
             NodeCatalog.OutputTypeId, 2470, 560, (NodeCatalog.OutputGainPort, 0.45f));
@@ -143,9 +143,9 @@ internal static class WholeRackPreset
          .Wire(lit, 0, value, 0)
          .Wire(pulse, 0, value, 1)
          .Wire(drift, 0, hue, 0)
-         .Wire(hue, 0, colour, 0)
-         .Wire(value, 0, colour, 2)
-         .Wire(colour, 0, output, NodeCatalog.OutputColourPort);
+         .Wire(hue, 0, color, 0)
+         .Wire(value, 0, color, 2)
+         .Wire(color, 0, output, NodeCatalog.OutputColorPort);
 
         return b.Patch;
     }

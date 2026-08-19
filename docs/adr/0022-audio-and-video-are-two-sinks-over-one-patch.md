@@ -11,7 +11,7 @@ first modules that do their job in one sink's program and not the other's, and b
 The engine evaluates `(x, y, t) → value` through a flat register machine
 ([0005](0005-compile-to-a-flat-register-machine.md)). Audio is that same machine
 in a degenerate case: only `t` varies, and the result is a scalar rather than a
-colour. So the 52 modules that make pictures can make sound, and the question is
+color. So the 52 modules that make pictures can make sound, and the question is
 only what shape the seam takes.
 
 Three ways to add sound:

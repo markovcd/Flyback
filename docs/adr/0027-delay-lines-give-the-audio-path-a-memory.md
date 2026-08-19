@@ -87,6 +87,6 @@ happens in `Prepare`, which `AudioEngine` already calls on the UI thread, with
 
 What this does not do: there is no damping inside the comb loop, so the tail is
 brighter than a real room's; the reverb is mono, where the usual trick is a
-second bank offset by a few samples; and a patch cannot delay a colour, because
+second bank offset by a few samples; and a patch cannot delay a color, because
 three buffers per line would buy nothing that
 [0012](0012-feedback-as-a-module-not-a-cycle.md) does not already do better.

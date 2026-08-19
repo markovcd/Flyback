@@ -20,9 +20,9 @@ public sealed class LogoMark : Control
     private const double Box = 256;
     private const double Thickness = 21;
 
-    private static readonly IBrush Retrace = new SolidColorBrush(Colours.Sink);
-    private static readonly IBrush Beam = new SolidColorBrush(Colours.Pattern);
-    private static readonly IBrush Core = new SolidColorBrush(Colours.BeamCore);
+    private static readonly IBrush Retrace = new SolidColorBrush(Colors.Sink);
+    private static readonly IBrush Beam = new SolidColorBrush(Colors.Pattern);
+    private static readonly IBrush Core = new SolidColorBrush(Colors.BeamCore);
 
     /// <summary>
     /// Draws the largest square that fits, centred in whatever it is given. The
@@ -44,9 +44,9 @@ public sealed class LogoMark : Control
             EndPoint = new RelativePoint(At(200, 72), RelativeUnit.Absolute),
             GradientStops =
             {
-                new GradientStop(Colours.Sweep.Start, 0),
-                new GradientStop(Colours.Sweep.Middle, 0.5),
-                new GradientStop(Colours.Sweep.End, 1),
+                new GradientStop(Colors.Sweep.Start, 0),
+                new GradientStop(Colors.Sweep.Middle, 0.5),
+                new GradientStop(Colors.Sweep.End, 1),
             },
         };
 

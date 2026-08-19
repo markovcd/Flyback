@@ -57,7 +57,7 @@ internal sealed class Rehearsal(PatchWorkbench workbench) : IPatchSession
 
         // No sink is added: every patch arrives with its Output already placed,
         // under the handle the workbench gave it.
-        ("connect", """{"from":"knob1","to":"output1","to_port":"colour"}"""),
+        ("connect", """{"from":"knob1","to":"output1","to_port":"color"}"""),
         ("render", """{"times":[0.5]}"""),
         ("propose", """{"summary":"a flat grey field"}"""),
     ];

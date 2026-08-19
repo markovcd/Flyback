@@ -115,7 +115,7 @@ compiled ([0022](0022-audio-and-video-are-two-sinks-over-one-patch.md)). The
 traversal is untouched — it still takes the first, and now that is the only one.
 
 The domain warning had a sibling it was missing: a sink with no wire into it at
-all. That compiles to a constant — one flat colour on the screen, silence at the
+all. That compiles to a constant — one flat color on the screen, silence at the
 speakers — for the same reason and with the same nothing said about why, so it
 is reported the same way and at the same weight. `Warning` rather than `Error`,
 because a sink nothing reaches yet is what every patch looks like a moment after

@@ -8,6 +8,7 @@ using Flyback.App.Audio;
 using Flyback.App.Controls;
 using Flyback.Core.Graph;
 using Flyback.Plugins.Hosting;
+using Colors = Flyback.App.Controls.Colors;
 
 namespace Flyback.App;
 
@@ -110,7 +111,7 @@ public sealed partial class MainWindow : Window
     private readonly TextBlock issues = new()
     {
         VerticalAlignment = VerticalAlignment.Center,
-        Foreground = new SolidColorBrush(Colours.Attention),
+        Foreground = new SolidColorBrush(Colors.Attention),
     };
 
     private readonly TextBlock backend = new()
@@ -162,7 +163,7 @@ public sealed partial class MainWindow : Window
         MinWidth = 860;
         MinHeight = 560;
         WindowStartupLocation = WindowStartupLocation.CenterScreen;
-        Background = new SolidColorBrush(Colours.Window);
+        Background = new SolidColorBrush(Colors.Window);
 
         editor.PatchChanged += (_, _) => Recompile();
         editor.SelectionChanged += (_, _) =>
@@ -432,8 +433,8 @@ public sealed partial class MainWindow : Window
 
         return new Border
         {
-            Background = new SolidColorBrush(Colours.Toolbar),
-            BorderBrush = new SolidColorBrush(Colours.Edge),
+            Background = new SolidColorBrush(Colors.Toolbar),
+            BorderBrush = new SolidColorBrush(Colors.Edge),
             BorderThickness = new Thickness(0, 0, 0, 1),
             Child = bar,
         };
@@ -494,8 +495,8 @@ public sealed partial class MainWindow : Window
 
         return new Border
         {
-            Background = new SolidColorBrush(Colours.Panel),
-            BorderBrush = new SolidColorBrush(Colours.Edge),
+            Background = new SolidColorBrush(Colors.Panel),
+            BorderBrush = new SolidColorBrush(Colors.Edge),
             BorderThickness = new Thickness(0, 1, 0, 0),
             Child = bar,
         };
@@ -564,6 +565,6 @@ public sealed partial class MainWindow : Window
     {
         Width = 1,
         Margin = new Thickness(4, 4),
-        Background = new SolidColorBrush(Colours.Separator),
+        Background = new SolidColorBrush(Colors.Separator),
     };
 }

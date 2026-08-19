@@ -18,7 +18,7 @@ namespace Flyback.App.Tests.Ui;
 /// <remarks>
 /// Which socket it lands on is the whole of what is interesting here. Nothing is
 /// refused for being the wrong kind, because nothing is — the compiler
-/// broadcasts a scalar to three channels and takes luma from a colour, so every
+/// broadcasts a scalar to three channels and takes luma from a color, so every
 /// socket accepts every wire. The question is only which one was meant, and the
 /// answer is the port the module is <em>about</em> before the port that matches.
 /// </remarks>
@@ -239,8 +239,8 @@ public class WireDropTests : UiTest
         DragFrom(window, NodeGeometry.OutputPort(time, 0), Bare(window));
         Pick(window, "Blend");
 
-        var added = editor.Patch.Nodes.Last(n => n.TypeId == "colour.mix");
-        var def = NodeCatalog.BuiltIn.Require("colour.mix");
+        var added = editor.Patch.Nodes.Last(n => n.TypeId == "color.mix");
+        var def = NodeCatalog.BuiltIn.Require("color.mix");
 
         var landed = Enumerable.Range(0, def.Inputs.Count)
             .Single(p => editor.Patch.IncomingTo(added.Id, p) is not null);
@@ -250,31 +250,31 @@ public class WireDropTests : UiTest
     }
 
     /// <summary>
-    /// And the same rule the other way about: a wire pulled out of a colour
-    /// socket takes a Scan's <c>view</c>, which is its only colour output, over
+    /// And the same rule the other way about: a wire pulled out of a color
+    /// socket takes a Scan's <c>view</c>, which is its only color output, over
     /// the <c>out</c> that comes first.
     /// </summary>
     [AvaloniaFact]
-    public void A_colour_input_takes_the_colour_output_rather_than_the_first_one()
+    public void A_color_input_takes_the_color_output_rather_than_the_first_one()
     {
         var window = Open();
         var editor = Editor(window);
         var sink = editor.Patch.Output;
         var def = NodeCatalog.BuiltIn.Require(NodeCatalog.OutputTypeId);
 
-        // Dragged backwards, out of the Output's colour socket.
+        // Dragged backwards, out of the Output's color socket.
         DragFrom(
             window,
-            NodeGeometry.InputPort(sink, def, NodeCatalog.OutputColourPort),
+            NodeGeometry.InputPort(sink, def, NodeCatalog.OutputColorPort),
             Bare(window));
 
         Pick(window, "Scan");
 
         var added = editor.Patch.Nodes.Last(n => n.TypeId == NodeCatalog.ScanTypeId);
-        var wire = editor.Patch.IncomingTo(sink.Id, NodeCatalog.OutputColourPort).ShouldNotBeNull();
+        var wire = editor.Patch.IncomingTo(sink.Id, NodeCatalog.OutputColorPort).ShouldNotBeNull();
 
         wire.SourceNode.ShouldBe(added.Id);
-        wire.SourcePort.ShouldBe(1, "'view' is the colour one; 'out' is a scalar");
+        wire.SourcePort.ShouldBe(1, "'view' is the color one; 'out' is a scalar");
     }
 
     /// <summary>

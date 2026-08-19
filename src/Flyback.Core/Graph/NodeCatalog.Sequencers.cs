@@ -55,7 +55,7 @@ public partial class NodeCatalog
     /// Builds one of the two step sequencers. They differ only in what a step's
     /// knob means — a note number or an ordinary signal — because nothing below
     /// this line can tell the difference: the same stepped value is a melody at
-    /// the speakers and a change of colour on the screen
+    /// the speakers and a change of color on the screen
     /// ([0022](0022-audio-and-video-are-two-sinks-over-one-patch.md)).
     /// </summary>
     /// <param name="name">What it is called in the palette and on the node.</param>

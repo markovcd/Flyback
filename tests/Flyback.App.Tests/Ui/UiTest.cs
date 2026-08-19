@@ -91,7 +91,7 @@ public class UiTest
 /// The dark variant as well as the theme, because the program asks for it and a
 /// test that looked at a light one would be looking at a window nobody has. It
 /// is what decides the foreground of a button, so an icon drawn in its parent's
-/// colour comes out black here and light where it actually runs.
+/// color comes out black here and light where it actually runs.
 /// </remarks>
 public sealed class TestApp : Application
 {

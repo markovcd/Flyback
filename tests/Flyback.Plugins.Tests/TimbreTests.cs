@@ -276,21 +276,21 @@ public class TimbreTests
     }
 
     /// <summary>
-    /// Its ports are untyped, like the maths modules', so one Fold bands a colour
+    /// Its ports are untyped, like the maths modules', so one Fold bands a color
     /// as readily as it brightens a tone — three channels folded independently,
     /// and nothing in the module aware that there were three.
     /// </summary>
     [Fact]
-    public void A_fold_works_on_a_colour_channel_by_channel()
+    public void A_fold_works_on_a_color_channel_by_channel()
     {
         var patch = new Patch();
 
-        var colour = Add(patch, "colour.rgb", (0, 0.25f), (1, 0.9f), (2, 0.6f));
+        var color = Add(patch, "color.rgb", (0, 0.25f), (1, 0.9f), (2, 0.6f));
         var fold = Add(patch, FoldType, (1, 3f));
         var screen = Add(patch, NodeCatalog.OutputTypeId, (NodeCatalog.OutputGainPort, 1f));
 
-        patch.Connect(colour.Id, 0, fold.Id, 0);
-        patch.Connect(fold.Id, 0, screen.Id, NodeCatalog.OutputColourPort);
+        patch.Connect(color.Id, 0, fold.Id, 0);
+        patch.Connect(fold.Id, 0, screen.Id, NodeCatalog.OutputColorPort);
 
         var program = patch.CompileForVideo(Catalog).Program;
         var registers = program.AllocateRegisters();
@@ -434,7 +434,7 @@ public class TimbreTests
         var screen = Add(patch, NodeCatalog.OutputTypeId);
 
         patch.Connect(coord.Id, 0, effect.Id, 0);
-        patch.Connect(effect.Id, port, screen.Id, NodeCatalog.OutputColourPort);
+        patch.Connect(effect.Id, port, screen.Id, NodeCatalog.OutputColorPort);
 
         var program = patch.CompileForVideo(Catalog).Program;
         var registers = program.AllocateRegisters();

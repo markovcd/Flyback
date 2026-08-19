@@ -27,8 +27,8 @@ public class PatchIoTests
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
 
         var coords = builder.Add("coord", 40, 12);
-        var tint = builder.Add("colour.hsv", -180.5, 260, (1, 0.25f), (2, 0.75f));
-        var gain = builder.Add("colour.gain", 90, 300, (1, 1.5f), (2, -0.125f));
+        var tint = builder.Add("color.hsv", -180.5, 260, (1, 0.25f), (2, 0.75f));
+        var gain = builder.Add("color.gain", 90, 300, (1, 1.5f), (2, -0.125f));
         var screen = builder.Add(NodeCatalog.OutputTypeId, 520, 140);
 
         builder

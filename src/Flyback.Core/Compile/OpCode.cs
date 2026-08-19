@@ -83,7 +83,7 @@ public enum OpCode : byte
 
     /// <summary>
     /// out = line[now - c] - b * v, where v = a + b * line[now - c] is what gets
-    /// written. A Schroeder allpass: it smears a signal in time without colouring
+    /// written. A Schroeder allpass: it smears a signal in time without coloring
     /// it, which is what turns a bank of combs into a reverb rather than an echo.
     /// </summary>
     Allpass,

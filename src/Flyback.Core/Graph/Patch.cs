@@ -172,7 +172,7 @@ public sealed class Patch
     /// is a picture to see, and whether there is a sound to hear.
     /// </summary>
     /// <remarks>
-    /// Both compile whatever the answer — an unwired sink is a flat colour and
+    /// Both compile whatever the answer — an unwired sink is a flat color and
     /// silence, which are legal programs. What this is for is the question
     /// before that: whether writing a file of either would be writing anything
     /// at all. A patch with no Output has neither, and says so rather than
@@ -183,7 +183,7 @@ public sealed class Patch
         if (FirstOf(NodeCatalog.OutputTypeId) is not { } sink) return (false, false);
 
         return (
-            IncomingTo(sink.Id, NodeCatalog.OutputColourPort) is not null,
+            IncomingTo(sink.Id, NodeCatalog.OutputColorPort) is not null,
             IncomingTo(sink.Id, NodeCatalog.OutputLeftPort) is not null
             || IncomingTo(sink.Id, NodeCatalog.OutputRightPort) is not null);
     }

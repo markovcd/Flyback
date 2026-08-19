@@ -35,10 +35,10 @@ internal static class SupersawPreset
         // Eye: the same module across x, its output mapped to 0..1 by amp and
         // bias. It drives brightness rather than hue — the voices beating in and
         // out of step is the thing worth seeing, and reading it as hue would
-        // wrap it through the whole colour wheel and bury it. The sweep takes
-        // the hue instead, so the picture drifts in colour as the sound widens.
+        // wrap it through the whole color wheel and bury it. The sweep takes
+        // the hue instead, so the picture drifts in color as the sound widens.
         var bands = b.Add(SupersawModule.TypeId, 480, 90, (1, 2f), (3, 1f), (5, 0.5f), (6, 0.5f));
-        var colour = b.Add("colour.hsv", 800, 140, (1, 0.8f));
+        var color = b.Add("color.hsv", 800, 140, (1, 0.8f));
 
         var output = b.Add(NodeCatalog.OutputTypeId, 1030, 380, (NodeCatalog.OutputGainPort, 0.5f));
 
@@ -50,9 +50,9 @@ internal static class SupersawPreset
          .Wire(voice, 1, output, NodeCatalog.OutputRightPort)
          .Wire(coord, 0, bands, 0)
          .Wire(sweep, 0, bands, 2)
-         .Wire(sweep, 0, colour, 0)
-         .Wire(bands, 0, colour, 2)
-         .Wire(colour, 0, output, NodeCatalog.OutputColourPort);
+         .Wire(sweep, 0, color, 0)
+         .Wire(bands, 0, color, 2)
+         .Wire(color, 0, output, NodeCatalog.OutputColorPort);
 
         return b.Patch;
     }

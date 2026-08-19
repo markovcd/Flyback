@@ -46,11 +46,11 @@ public enum PortKind
     Scalar,
 
     /// <summary>Three signals travelling together as red, green and blue.</summary>
-    Colour,
+    Color,
 
     /// <summary>
     /// Whatever is plugged in, passed through unchanged. Maths modules use this
-    /// so a single Multiply works on both a scalar and a colour, the way a
+    /// so a single Multiply works on both a scalar and a color, the way a
     /// shading language overloads its operators.
     /// </summary>
     Any,
@@ -61,7 +61,7 @@ public enum PortKind
 /// that is editable on the node itself, so most patches need no constant nodes.
 /// </summary>
 /// <param name="Name">Label shown next to the socket.</param>
-/// <param name="Kind">Scalar or colour.</param>
+/// <param name="Kind">Scalar or color.</param>
 /// <param name="Default">Value used when nothing is plugged in.</param>
 /// <param name="Min">Lower end of the slider range in the editor.</param>
 /// <param name="Max">Upper end of the slider range in the editor.</param>
@@ -106,7 +106,7 @@ public readonly record struct PortSpec(
     bool Domain = false,
     bool Swept = false)
 {
-    public int Width => Kind == PortKind.Colour ? 3 : 1;
+    public int Width => Kind == PortKind.Color ? 3 : 1;
 
     /// <summary>
     /// The value as it should be shown for this socket. One place, because the

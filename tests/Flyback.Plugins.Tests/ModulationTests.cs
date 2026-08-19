@@ -442,7 +442,7 @@ public class ModulationTests
         var screen = Add(patch, NodeCatalog.OutputTypeId);
 
         patch.Connect(coord.Id, 0, effect.Id, 0);
-        patch.Connect(effect.Id, port, screen.Id, NodeCatalog.OutputColourPort);
+        patch.Connect(effect.Id, port, screen.Id, NodeCatalog.OutputColorPort);
 
         return patch.CompileForVideo(Catalog).Program;
     }

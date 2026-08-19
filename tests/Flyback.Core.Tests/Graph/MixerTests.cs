@@ -12,7 +12,7 @@ namespace Flyback.Core.Tests.Graph;
 /// <remarks>
 /// Its sockets are untyped, so the interesting property is not the arithmetic
 /// but that there is only one of it: the same module runs at both sinks, mixing
-/// pictures where a colour arrives and tones where a scalar does. Both are run
+/// pictures where a color arrives and tones where a scalar does. Both are run
 /// here through a whole patch rather than through the emit alone, because the
 /// coercion that makes that work happens at the port and at the sink rather
 /// than inside the module.
@@ -129,17 +129,17 @@ public class MixerTests
     }
 
     /// <summary>
-    /// The same module at the other sink. A colour patched into any input makes
-    /// the mix a colour, and a scalar on another channel broadcasts across all
+    /// The same module at the other sink. A color patched into any input makes
+    /// the mix a color, and a scalar on another channel broadcasts across all
     /// three the way a shading language would — so four pictures at four levels
     /// is the mixer doing exactly what it does for four tones.
     /// </summary>
     [Fact]
-    public void A_colour_on_any_input_makes_the_mix_a_colour()
+    public void A_color_on_any_input_makes_the_mix_a_color()
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
-        var red = b.Add("colour.rgb", 0, 0, (0, 1f), (1, 0f), (2, 0f));
-        var green = b.Add("colour.rgb", 0, 200, (0, 0f), (1, 1f), (2, 0f));
+        var red = b.Add("color.rgb", 0, 0, (0, 1f), (1, 0f), (2, 0f));
+        var green = b.Add("color.rgb", 0, 200, (0, 0f), (1, 1f), (2, 0f));
 
         // Two pictures at half each, and a scalar third channel that lifts every
         // component together — the broadcast is the part worth pinning.
@@ -151,7 +151,7 @@ public class MixerTests
 
         b.Wire(red, 0, mixer, In(1))
          .Wire(green, 0, mixer, In(2))
-         .Wire(mixer, 0, output, NodeCatalog.OutputColourPort);
+         .Wire(mixer, 0, output, NodeCatalog.OutputColorPort);
 
         var result = b.Patch.CompileForVideo(NodeCatalog.BuiltIn);
         result.HasErrors.ShouldBeFalse();
