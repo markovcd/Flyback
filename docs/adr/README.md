@@ -86,6 +86,7 @@ to differ in their last bits.
 | [0038](0038-a-sequencers-notes-are-a-list-on-the-node.md) | A sequencer's notes are a list on the node *(user-directed)* |
 | [0037](0037-one-output-block-that-every-patch-has.md) | One Output block, which every patch has *(user-directed)* |
 | [0041](0041-a-plugin-can-hold-state-without-a-new-opcode.md) | A plugin can hold state without a new opcode *(user-directed)* |
+| [0042](0042-the-clock-and-the-memory-flag-belong-to-the-emitter.md) | The clock and the memory flag belong to the emitter |
 
 ### Boundaries
 

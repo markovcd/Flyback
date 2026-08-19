@@ -547,8 +547,9 @@ moiré, which is the same beating seen rather than heard.
 
 [`src/Flyback.Plugins.Space`](src/Flyback.Plugins.Space) adds **Delay** and
 **Reverb**, and the **Echo chamber** preset puts a plucked tone through both.
-They are the only things here that remember more than one evaluation — an
-oscillator's running phase and the Filter below remember exactly one.
+They are the two that remember longest: everything else here with a memory —
+an oscillator's phase, the Filter and Phaser below — remembers one evaluation,
+and a reverb tail is thousands.
 
 | | |
 |---|---|
@@ -609,6 +610,83 @@ sample and hold is now something anybody can write outside `Flyback.Core`; what
 still cannot be is anything needing a *buffer*, which is why Delay and Allpass
 remain opcodes. [ADR-0041](docs/adr/0041-a-plugin-can-hold-state-without-a-new-opcode.md)
 sets out the whole of it.
+
+### Chorus, flanger and phaser
+
+[`src/Flyback.Plugins.Modulation`](src/Flyback.Plugins.Modulation) adds the three
+effects that move on their own. Each is a copy of the signal put slightly out of
+step with itself and mixed back in, and the whole difference between them is how
+far out of step and by what means. The **Moving parts** preset is all three in
+the order a pedalboard would have them.
+
+| | |
+|---|---|
+| Chorus | a delay of about 15 ms, swept slowly, so the copy is never quite in tune with the original. `out` and `wide` are swept in *opposite* directions — patch both for stereo, or take `out` alone |
+| Flanger | the same an order of magnitude shorter, where the copy cancels the original instead of thickening it. Sweeping drags a comb of notches through the sound. `feedback` sharpens them, and its sign is two different effects: negative puts the notches where the peaks were |
+| Phaser | two notches that are not related to each other, from four allpass stages added back to the dry signal. `feedback` sharpens them too |
+
+All three carry their own sweep rather than taking one on a socket, which is the
+one place this plugin departs from how the rest of the synth is wired. The
+argument for a socket is real and the argument against is stronger: the effect
+*is* its own movement, and a chorus whose sweep has to be assembled by hand out
+of a Sine and a Remap is three modules pretending to be one.
+
+What it costs is paid back on an extra output. Each module hands its sweep out on
+`lfo`, so the movement can drive something else — and that output is the one part
+of these modules the picture can use, since a phase accumulator falls back to the
+multiply it replaced where there is no state. The preset is built on exactly
+that: the chorus slides the image, the phaser picks the hue and the flanger
+drains the colour out of it, so the three motions the eye sees are the three the
+ear hears. Nothing is duplicated between the sinks.
+
+Reaching for an LFO does cost the module that produces it. Dead code is
+eliminated a module at a time rather than an op at a time — an emit function runs
+whole or not at all — so a picture wanting the sweep also gets the delay lines
+beside it. They are inert there rather than wasteful: with no state a line is a
+wire.
+
+The Chorus and the Flanger are delay lines and are audio-only for the reason
+every delay line here is. The Phaser is not a delay line at all: it is four
+one-evaluation cells, which is what a first-order allpass needs and what
+[ADR-0041](docs/adr/0041-a-plugin-can-hold-state-without-a-new-opcode.md) made
+possible without an opcode. It is also what made the machinery worth sharing —
+the interval a module measures its own sample rate with, and the flag it asks
+whether there is any memory at all, now belong to the emitter rather than to
+each module that wants them
+([ADR-0042](docs/adr/0042-the-clock-and-the-memory-flag-belong-to-the-emitter.md)).
+All three are exactly a wire at a mix of zero, and on the picture.
+
+### Whole rack
+
+The showcase, and the one preset that reaches across a plugin boundary: all six
+modules the two plugins added, in one chain and in the order a rack would have
+them. A note sequencer plays a riff; a saw is folded and driven into harmonics,
+then filtered back out of them; the phaser, flanger and chorus move what is left,
+and the chorus's two outputs make it stereo.
+
+The gesture worth listening for is the **gate opening the filter as well as the
+note**. One Remap from the sequencer's `gate` to the Filter's `cutoff` is the
+whole envelope — four ops — and it is the difference between a note that starts
+and a note that arrives.
+
+On screen, the Fold does the work, because it is the only one of the six that
+means anything to a picture. Rings travel outward with as many of them as the
+step the tune has reached, the same slow sine that folds the tone folds them into
+bands, and the gate that opens the filter brightens the image on the beat.
+
+Its colour drifts from a sine of its own rather than from a chorus's `lfo`, which
+is how *Moving parts* does it and is the one thing here done deliberately
+differently. A module is resolved whole: reaching for one of its outputs compiles
+everything upstream of *all* its inputs, because an emit function is one function
+and the compiler cannot know that `lfo` ignores `in`. At the end of a chain six
+effects long that costs the video program the entire chain — 314 ops against the
+141 of the next most expensive preset that ships. A separate sine costs eleven.
+
+A preset that needs a plugin cannot record that the way a saved patch does, since
+it is code rather than a file. It is built when it is picked rather than when it
+is registered, so a missing plugin surfaces there, and this one checks first so
+that what you get is *"it needs the Filter and fold plugin"* rather than the id
+of a module nobody asked about.
 
 ## Using the editor
 
@@ -688,8 +766,9 @@ wired into it at all — one flat colour on the screen, silence at the speakers.
 | `src/Flyback.Plugins.Supersaw` | the Supersaw oscillator, as a module plugin |
 | `src/Flyback.Plugins.Space` | delay and reverb — the only modules that remember more than one evaluation |
 | `src/Flyback.Plugins.Timbre` | filter, wavefolder and saturator, holding their state in the emitter's own cells |
+| `src/Flyback.Plugins.Modulation` | chorus, flanger and phaser — the effects that carry their own movement |
 
-Why it is built this way is recorded in [docs/adr](docs/adr) — 41 decision
+Why it is built this way is recorded in [docs/adr](docs/adr) — 42 decision
 records covering the compiler, the renderer, the shell and the boundaries
 between them.
 

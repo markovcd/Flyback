@@ -17,9 +17,11 @@ namespace Flyback.Plugins.Timbre;
 /// hands out for the cycles a patch draws by hand. A module that wants a memory
 /// of exactly one sample can take one without asking the engine for anything.
 /// <para>
-/// Two consequences follow from that, and both are decided in <see cref="Emit"/>:
-/// the filter has to work out its own sample rate, and it has to say what it
-/// means on a path that has no rate at all. See ADR-0041.
+/// Two things follow from that, and neither turns out to be the filter's own: it
+/// has to work out what rate it is running at, and it has to say what it means on
+/// a path that has no rate at all. <see cref="Emitter.Interval"/> and
+/// <see cref="Emitter.HasMemory"/> answer both, once per program rather than once
+/// per module. See ADR-0041 and ADR-0042.
 /// </para>
 /// </remarks>
 internal static class FilterModule
@@ -64,24 +66,13 @@ internal static class FilterModule
     {
         var dry = inputs[0];
 
-        // Nothing in a module is told the sample rate — an oscillator gets its
-        // timebase from how far its domain moved (ADR-0030), and this does the
-        // same thing by hand. One cell holds the clock as it was last evaluation,
-        // so the difference is the interval the filter is running at: 1/192000
-        // on the audio path, whatever the renderer happens to be doing elsewhere.
-        var now = em.Load(OpCode.LoadT);
-        var clock = em.AllocateUnitSlot();
-        var step = em.Sub(now, em.UnitRead(clock));
-        em.UnitWrite(clock, now);
-
-        // Whether there is any memory behind this program at all: a cell written
-        // one and read back as one from the second evaluation onwards, and read
-        // as zero for ever where the renderer passes no state. It is the only
-        // honest way to ask the question — an emit function runs once, at compile
-        // time, long before anything knows which sink is about to run it.
-        var alive = em.AllocateUnitSlot();
-        var live = em.UnitRead(alive);
-        em.UnitWrite(alive, em.Constant(1f));
+        // Nothing in a module is told the sample rate, and neither of these is a
+        // socket: the interval is measured off the renderer's own clock and the
+        // flag says whether there is a memory behind this program at all. Both
+        // belong to the emitter rather than to the filter, because both answer
+        // the same for everything in one program — ADR-0042.
+        var step = em.Interval();
+        var live = em.HasMemory();
 
         var zero = em.Constant(0f);
         var one = em.Constant(1f);

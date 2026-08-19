@@ -169,11 +169,11 @@ public class TimbreTests
     }
 
     /// <summary>
-    /// Two of them in one patch take eight cells rather than sharing four. Which
-    /// cell an op means is a number the emitter handed out at compile time, so
-    /// nothing about a module knows or cares how many copies of it a patch holds
-    /// — and two filters in series are steeper than one, which is the audible
-    /// form of the same fact.
+    /// Six cells rather than eight: each filter keeps its own two integrators,
+    /// and both read the one clock and the one flag the emitter holds for the
+    /// whole program (ADR-0042). What is separate is what has to be — two filters
+    /// in series are steeper than one, which is the audible form of the same
+    /// fact — and what is shared is what could not differ.
     /// </summary>
     [Fact]
     public void Two_filters_in_one_patch_keep_their_cells_apart()
@@ -190,9 +190,9 @@ public class TimbreTests
         patch.Connect(second.Id, 0, sink.Id, NodeCatalog.OutputLeftPort);
 
         var program = patch.CompileForAudio(Catalog).Program;
-        program.UnitCount.ShouldBe(8);
+        program.UnitCount.ShouldBe(6);
 
-        var delays = new DelayState(program.DelayLengths, Rate, program.PhaseCount, 8);
+        var delays = new DelayState(program.DelayLengths, Rate, program.PhaseCount, program.UnitCount);
         var registers = program.AllocateRegisters();
         var tone = Tone(4_000f, 4_000);
         var twice = new float[tone.Length];

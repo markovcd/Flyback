@@ -72,6 +72,7 @@
     <PluginProject Include="..\Flyback.Plugins.Supersaw\Flyback.Plugins.Supersaw.csproj" FolderName="Supersaw" />
     <PluginProject Include="..\Flyback.Plugins.Space\Flyback.Plugins.Space.csproj" FolderName="Space" />
     <PluginProject Include="..\Flyback.Plugins.Timbre\Flyback.Plugins.Timbre.csproj" FolderName="Timbre" />
+    <PluginProject Include="..\Flyback.Plugins.Modulation\Flyback.Plugins.Modulation.csproj" FolderName="Modulation" />
   </ItemGroup>
 
   <ItemGroup>

@@ -90,7 +90,9 @@ could be rewritten this way is true and is not being claimed as done here.
 same trick pays another two cells and gets the same answer, and four modules
 doing it would ask the renderer for eight cells that all hold the same number.
 This is cheap enough not to matter and repetitive enough to be worth noticing if
-a third module wants it.
+a third module wants it. *(A third one did, and
+[0042](0042-the-clock-and-the-memory-flag-belong-to-the-emitter.md) moved both
+onto the emitter, where they are emitted once for the whole program.)*
 
 **Prewarping puts the corner where the knob says and does not straighten the
 rest of the curve.** A decade above the cutoff the response is a little under the

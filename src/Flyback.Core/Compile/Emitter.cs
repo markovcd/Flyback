@@ -16,6 +16,15 @@ public sealed class Emitter
     /// </summary>
     private readonly Stack<(Slot X, Slot Y, Slot T)> domains = new();
 
+    /// <summary>
+    /// The two cells every stateful module wants and none of them owns — see
+    /// <see cref="Interval"/> and <see cref="HasMemory"/>. Held here rather than
+    /// asked for twice, so a patch with four filters in it costs two cells and
+    /// not eight.
+    /// </summary>
+    private Slot? interval;
+    private Slot? memory;
+
     public int RegisterCount { get; private set; }
 
     /// <summary>
@@ -92,12 +101,85 @@ public sealed class Emitter
             }
         }
 
+        return Renderers(code);
+    }
+
+    /// <summary>The renderer's own input, whatever domain a sweep has pushed over it.</summary>
+    private Slot Renderers(OpCode code)
+    {
         if (loads.TryGetValue(code, out var existing)) return existing;
 
         var slot = Slot.Scalar(Allocate(1));
         Add(new Op(code, slot.Base));
         loads[code] = slot;
         return slot;
+    }
+
+    /// <summary>
+    /// How far the renderer's clock moved since the previous evaluation, in
+    /// seconds — which is the sample rate, said the other way round.
+    /// </summary>
+    /// <remarks>
+    /// Nothing tells a module what rate it runs at, and this is how one finds
+    /// out: a cell holds the clock as it was, and the difference is the interval.
+    /// It is <see cref="Phase"/>'s trick written out — an oscillator advances by
+    /// how far its domain moved (ADR-0030), and this measures how far time did —
+    /// and it is what lets a filter turn a cutoff in hertz into a coefficient
+    /// without the engine handing it anything.
+    /// <para>
+    /// Emitted once and shared by everything that asks, because what it measures
+    /// is a property of the evaluation rather than of the module asking: two
+    /// filters in one patch are stepping at the same rate by definition. A
+    /// pushed domain does not change it for the same reason — a Probe sweeping
+    /// time across the picture is drawing, and the clock it is drawn against is
+    /// still the renderer's.
+    /// </para>
+    /// <para>
+    /// Zero on the first evaluation, since there is no previous one to have
+    /// moved from, and meaningless where the program has no state at all — see
+    /// <see cref="HasMemory"/>, which is how a module says what it means there.
+    /// </para>
+    /// </remarks>
+    public Slot Interval()
+    {
+        if (interval is { } existing) return existing;
+
+        var now = Renderers(OpCode.LoadT);
+        var cell = AllocateUnitSlot();
+        var moved = Binary(OpCode.Sub, now, UnitRead(cell));
+
+        UnitWrite(cell, now);
+
+        return (interval = moved).Value;
+    }
+
+    /// <summary>
+    /// One where the program has a memory behind it, zero where it has none.
+    /// </summary>
+    /// <remarks>
+    /// A cell written one and read back as one from the second evaluation
+    /// onwards — and read as zero for ever on the video path, where the renderer
+    /// passes no state and a write goes nowhere. It is the only way for a module
+    /// to ask the question at all: an emit function runs once, at compile time,
+    /// long before anything knows which sink is about to run the program.
+    /// <para>
+    /// What it is for is choosing what a stateful module means where there is
+    /// nothing to remember. Mixing on it gives a picture a decided answer —
+    /// ADR-0041 — instead of whatever the arithmetic happens to fall out at.
+    /// Shared like <see cref="Interval"/>, and for the same reason: the question
+    /// has one answer per program.
+    /// </para>
+    /// </remarks>
+    public Slot HasMemory()
+    {
+        if (memory is { } existing) return existing;
+
+        var cell = AllocateUnitSlot();
+        var live = UnitRead(cell);
+
+        UnitWrite(cell, Constant(1f));
+
+        return (memory = live).Value;
     }
 
     public Slot Unary(OpCode code, Slot a)
