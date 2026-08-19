@@ -17,7 +17,8 @@ Twelve records — [0003](0003-cpu-rendering-with-a-gpu-path-left-open.md),
 [0040](0040-a-probe-is-a-second-compile-root.md) and
 [0041](0041-a-plugin-can-hold-state-without-a-new-opcode.md) and
 [0043](0043-a-scan-is-a-probe-read-backwards.md) and
-[0044](0044-lay-patches-out-in-layers-not-with-springs.md) — are marked
+[0044](0044-lay-patches-out-in-layers-not-with-springs.md) and
+[0045](0045-what-is-copied-is-a-patch-file.md) — are marked
 **user-directed**: they were chosen by the project owner, not derived. The first
 two sit upstream of almost everything else here; 0026 and 0027 each give up a
 property an earlier record relied on, knowingly; 0031, 0033, 0034, 0036 and 0040
@@ -30,7 +31,10 @@ true. 0043 is 0040 turned round: that one let the instrument be looked at, and
 this one lets a picture be listened to, out of the same mechanism upside down.
 0044 is the odd one of these: it was asked for as a physics simulation and is
 recorded as the layered drawing that was proposed instead, which is the part
-worth keeping. All are recorded even though they were not mine to make.
+worth keeping. 0045 adds nothing to the format it uses: what a selection is
+written as turns out to be what a patch is already written as, and the record is
+mostly about what that buys. All are recorded even though they were not mine to
+make.
 
 [0035](0035-a-glsl-backend-for-the-video-path.md) is the first record where two
 backends disagree by design: the picture on screen and the picture in an exported
@@ -79,6 +83,7 @@ to differ in their last bits.
 | [0018](0018-never-render-frames-on-the-ui-thread.md) | Never render frames on the UI thread |
 | [0039](0039-one-window-class-across-a-file-per-region.md) | One window class, across a file per region |
 | [0044](0044-lay-patches-out-in-layers-not-with-springs.md) | Lay patches out in layers, not with springs *(user-directed)* |
+| [0045](0045-what-is-copied-is-a-patch-file.md) | What is copied is a patch file *(user-directed)* |
 
 ### Sound
 

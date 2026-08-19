@@ -2,6 +2,7 @@ using System.Globalization;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Input.Platform;
 using Avalonia.Media;
 using Flyback.Core.Graph;
 
@@ -20,6 +21,7 @@ public sealed class NodeEditor : Control
         Pan,
         Node,
         Wire,
+        Marquee,
     }
 
     private static readonly IBrush Background = new SolidColorBrush(Colours.Canvas);
@@ -41,6 +43,19 @@ public sealed class NodeEditor : Control
     /// </summary>
     private static readonly IPen SelectionPenSecondary =
         new Pen(new SolidColorBrush(Colours.Attention, 0.5), 2);
+
+    /// <summary>
+    /// The rubber band. Dashed, because it is a gesture in progress rather than
+    /// anything in the patch, and drawn over the canvas rather than in it — so
+    /// the dashes and the hairline stay the same size however far the view is
+    /// zoomed out.
+    /// </summary>
+    private static readonly IPen MarqueePen = new Pen(
+        new SolidColorBrush(Colours.Attention),
+        1,
+        new DashStyle([4, 3], 0));
+
+    private static readonly IBrush MarqueeFill = new SolidColorBrush(Colours.Attention, 0.08);
     private static readonly IPen PortOutline = new Pen(new SolidColorBrush(Colours.Outline), 1.2);
 
     /// <summary>How thick a wire is drawn, and how far under full strength.</summary>
@@ -101,6 +116,22 @@ public sealed class NodeEditor : Control
     /// </summary>
     private Guid? pendingCollapse;
 
+    /// <summary>
+    /// The two corners of the rubber band, in graph space so that it stays over
+    /// the same modules whatever the zoom.
+    /// </summary>
+    private Point marqueeFrom;
+    private Point marqueeTo;
+
+    /// <summary>
+    /// What was selected when the rubber band was started. A band with the
+    /// modifier held adds to it, so the modules it sweeps have to be added to
+    /// something that does not itself change as the band moves — sweeping back
+    /// off a module must take it out again, and it cannot if the previous frame
+    /// has already been folded in.
+    /// </summary>
+    private readonly HashSet<Guid> marqueeBase = [];
+
     private Guid wireNode;
     private int wirePort;
     private bool wireFromOutput;
@@ -137,6 +168,14 @@ public sealed class NodeEditor : Control
     /// so it goes in the history without asking anything to recompile.
     /// </summary>
     public event EventHandler? HistoryChanged;
+
+    /// <summary>
+    /// Raised when something the canvas was asked to do has to be explained
+    /// rather than done — a paste of something that is not a patch, or of one
+    /// naming a module this build has not got. The canvas has nowhere to say it;
+    /// the window does.
+    /// </summary>
+    public event EventHandler<string>? Reported;
 
     public Patch Patch
     {
@@ -354,6 +393,170 @@ public sealed class NodeEditor : Control
         NotifyPatchChanged();
     }
 
+    // --- copy and paste ------------------------------------------------------
+
+    /// <summary>
+    /// Puts the selected modules on the system clipboard, as the JSON a patch is
+    /// saved as. Nothing happens where the selection holds nothing that can be
+    /// copied — the Output alone, or an empty canvas — rather than the clipboard
+    /// being emptied by a gesture that found nothing.
+    /// </summary>
+    /// <remarks>
+    /// The system clipboard rather than a buffer of this program's own, because
+    /// a copy that cannot leave the window is not really one: what this writes is
+    /// a patch file, so it pastes into another Flyback, and into a text editor as
+    /// something readable. See ADR-0045.
+    /// </remarks>
+    /// <returns>What to say about it, or null where there is nothing to say.</returns>
+    public async Task<string?> CopySelectionAsync()
+    {
+        if (selection.Count == 0) return null;
+        if (TopLevel.GetTopLevel(this)?.Clipboard is not { } clipboard) return null;
+
+        var fragment = PatchClipboard.Copy(patch, selection);
+
+        // Selected, and yet none of it can be copied — which can only be the
+        // Output on its own. Said, because a gesture that silently does nothing
+        // reads as a broken one.
+        if (fragment.Nodes.Count == 0) return "The Output cannot be copied.";
+
+        await clipboard.SetTextAsync(PatchIo.ToJson(fragment, NodeCatalog.Current));
+        return null;
+    }
+
+    /// <summary>
+    /// Copies the selection and then deletes it. Nothing is deleted where
+    /// nothing could be copied, so a cut that fails leaves the patch alone.
+    /// </summary>
+    public async Task<string?> CutSelectionAsync()
+    {
+        var trouble = await CopySelectionAsync();
+        if (trouble is null && selection.Count > 0) DeleteSelected();
+
+        return trouble;
+    }
+
+    /// <summary>
+    /// Reads a patch off the clipboard and merges it in, centred on the view,
+    /// with what arrived left selected so it can be dragged straight into place.
+    /// </summary>
+    /// <remarks>
+    /// One edit, so one Ctrl+Z takes the whole paste back. The text is read the
+    /// way a file is — a fragment naming a module this build has not got is
+    /// refused with the sentence <see cref="PatchLoad.Summary"/> already words,
+    /// rather than pasted with holes in it.
+    /// </remarks>
+    /// <returns>What to say about it, or null where there is nothing to say.</returns>
+    public async Task<string?> PasteAsync()
+    {
+        if (TopLevel.GetTopLevel(this)?.Clipboard is not { } clipboard) return null;
+
+        var text = await clipboard.TryGetTextAsync();
+        if (string.IsNullOrWhiteSpace(text)) return null;
+
+        PatchLoad loaded;
+
+        try
+        {
+            loaded = PatchIo.Read(text, NodeCatalog.Current);
+        }
+        catch (Exception)
+        {
+            // Whatever was on the clipboard was not a patch. Said plainly and
+            // without the parser's own wording, because the ordinary way to
+            // reach this is having copied something else entirely.
+            return "Nothing to paste: the clipboard does not hold a patch.";
+        }
+
+        if (!loaded.IsComplete) return $"Not pasted. {loaded.Summary}";
+
+        var arriving = loaded.Patch.Nodes.Where(n => !NodeCatalog.IsSink(n.TypeId)).ToArray();
+        if (arriving.Length == 0) return null;
+
+        var (dx, dy) = WhereToPaste(arriving);
+        var added = PatchClipboard.Paste(patch, loaded.Patch, dx, dy);
+
+        if (added.Count == 0) return null;
+
+        selection.Clear();
+        foreach (var node in added) selection.Add(node.Id);
+        focus = added[^1].Id;
+
+        SelectionChanged?.Invoke(this, EventArgs.Empty);
+        NotifyPatchChanged();
+
+        return null;
+    }
+
+    /// <summary>
+    /// How far to shift what is arriving so that it lands in the middle of what
+    /// is on screen, clear of anything already there.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The middle of the view rather than where the modules were copied from,
+    /// which is the same choice <see cref="AddNode"/> makes and for the same
+    /// reason: a paste has to arrive somewhere it can be seen, and where it came
+    /// from may be a screen away.
+    /// </para>
+    /// <para>
+    /// Then stepped down and right until it is not sitting on anything. Landing
+    /// on top of what is already there reads as nothing having happened, and it
+    /// is the ordinary case rather than the rare one — the middle of the view is
+    /// where the patch is. The step is capped because a dense enough patch has
+    /// no clear middle at all, and walking off the edge looking for one would be
+    /// worse than overlapping: what arrives is selected, and dragging it
+    /// somewhere better is one gesture.
+    /// </para>
+    /// </remarks>
+    private (double X, double Y) WhereToPaste(IReadOnlyList<NodeInstance> arriving)
+    {
+        const double Step = 28;
+        const int Tries = 40;
+
+        var group = BoxAround(arriving);
+        var taken = patch.Nodes.Select(node => BoxAround([node])).ToArray();
+
+        var centre = ToGraph(new Point(Bounds.Width / 2, Bounds.Height / 2));
+        var dx = centre.X - group.Center.X;
+        var dy = centre.Y - group.Center.Y;
+
+        for (var step = 0; step < Tries; step++)
+        {
+            // Inflated, so that "clear of" means with room to see the edge
+            // rather than merely not overlapping by a pixel.
+            var moved = group.Translate(new Vector(dx, dy)).Inflate(Step);
+            if (!taken.Any(box => box.Intersects(moved))) break;
+
+            dx += Step;
+            dy += Step;
+        }
+
+        return (dx, dy);
+    }
+
+    /// <summary>The one rectangle that holds all of these modules.</summary>
+    private static Rect BoxAround(IReadOnlyList<NodeInstance> nodes)
+    {
+        double left = double.MaxValue, top = double.MaxValue;
+        double right = double.MinValue, bottom = double.MinValue;
+
+        foreach (var node in nodes)
+        {
+            // A module whose plugin is missing has no height to ask for. Counted
+            // at nothing rather than skipped, so its corner still keeps a paste
+            // off it.
+            var height = NodeCatalog.Get(node.TypeId) is { } def ? NodeGeometry.Height(def) : 0;
+
+            left = Math.Min(left, node.X);
+            top = Math.Min(top, node.Y);
+            right = Math.Max(right, node.X + NodeGeometry.Width);
+            bottom = Math.Max(bottom, node.Y + height);
+        }
+
+        return left > right ? default : new Rect(left, top, right - left, bottom - top);
+    }
+
     /// <summary>
     /// Lays the patch out so it reads left to right with its wires clear of one
     /// another, and frames the result. One edit, so one Ctrl+Z puts every node
@@ -471,7 +674,43 @@ public sealed class NodeEditor : Control
 
             DrawPendingWire(context);
         }
+
+        // Outside the transform, so a hairline stays a hairline and the dashes
+        // keep their spacing however far out the view is zoomed. It is drawn on
+        // the canvas rather than in it — nothing about it is part of the patch.
+        DrawMarquee(context);
     }
+
+    private void DrawMarquee(DrawingContext context)
+    {
+        if (drag != Drag.Marquee) return;
+
+        var band = Band(
+            GraphToScreen.Transform(marqueeFrom),
+            GraphToScreen.Transform(marqueeTo));
+
+        // A band with no width or height is a click that has not moved yet, and
+        // a line of dashes across the canvas is not what that looks like.
+        if (band.Width < 1 || band.Height < 1) return;
+
+        context.DrawRectangle(MarqueeFill, MarqueePen, band);
+    }
+
+    /// <summary>
+    /// The rectangle between two corners, whichever way round they are.
+    /// </summary>
+    /// <remarks>
+    /// Built by hand rather than from <c>new Rect(a, b)</c>, which takes the
+    /// first point as the top left and subtracts. Started from any corner but
+    /// the top left that gives a negative width or height — a rectangle which
+    /// draws nothing and intersects nothing, so the band would appear to do
+    /// nothing at all.
+    /// </remarks>
+    private static Rect Band(Point a, Point b) => new(
+        Math.Min(a.X, b.X),
+        Math.Min(a.Y, b.Y),
+        Math.Abs(b.X - a.X),
+        Math.Abs(b.Y - a.Y));
 
     private void DrawGrid(DrawingContext context)
     {
@@ -692,14 +931,57 @@ public sealed class NodeEditor : Control
             return;
         }
 
-        // Clicking empty canvas clears the selection — unless the modifier is
-        // down, where the gesture was about adding to it and finding nothing is
-        // no reason to throw away what was already there.
-        if (!adding) Select(null);
+        // Left on empty canvas draws a rubber band. Panning is the middle and
+        // right buttons, which is where it was already and where it stays.
+        //
+        // Nothing is deselected here: a band that sweeps nothing ends by
+        // selecting nothing, which is the same thing a click on empty canvas
+        // always did, and it arrives through the one path rather than two.
+        marqueeFrom = marqueeTo = graph;
 
-        drag = Drag.Pan;
+        marqueeBase.Clear();
+        if (adding) marqueeBase.UnionWith(selection);
+
+        drag = Drag.Marquee;
+        Sweep();
+
         e.Pointer.Capture(this);
         InvalidateVisual();
+    }
+
+    /// <summary>
+    /// Selects what the rubber band is currently over, together with whatever it
+    /// was told to keep.
+    /// </summary>
+    /// <remarks>
+    /// A module counts as swept when the band touches it rather than when it
+    /// swallows it whole. Touching is the more forgiving of the two and it is
+    /// what the gesture looks like it should do — dragging across a row of
+    /// modules takes the row, without having to reach past the ends of it.
+    /// </remarks>
+    private void Sweep()
+    {
+        var band = Band(marqueeFrom, marqueeTo);
+        var wanted = new HashSet<Guid>(marqueeBase);
+
+        foreach (var node in patch.Nodes)
+            if (NodeCatalog.Get(node.TypeId) is { } def && NodeGeometry.Bounds(node, def).Intersects(band))
+                wanted.Add(node.Id);
+
+        // Only when it actually changed. This runs on every pointer move, and
+        // the inspector is rebuilt from scratch whenever a selection is
+        // announced — saying so sixty times a second for a band moving across
+        // empty canvas would be sixty rebuilds of the same panel.
+        if (wanted.Count == selection.Count && wanted.All(selection.Contains)) return;
+
+        selection.Clear();
+        selection.UnionWith(wanted);
+
+        // The last in the patch's own order, which is the module drawn on top —
+        // the same rule SelectAll and Toggle use.
+        focus = patch.Nodes.LastOrDefault(node => selection.Contains(node.Id))?.Id;
+
+        SelectionChanged?.Invoke(this, EventArgs.Empty);
     }
 
     /// <summary>
@@ -800,6 +1082,12 @@ public sealed class NodeEditor : Control
                 InvalidateVisual();
                 return;
 
+            case Drag.Marquee:
+                marqueeTo = graph;
+                Sweep();
+                InvalidateVisual();
+                return;
+
             case Drag.Wire:
                 wireEnd = graph;
                 InvalidateVisual();
@@ -843,6 +1131,7 @@ public sealed class NodeEditor : Control
 
         pendingCollapse = null;
         dragOrigins.Clear();
+        marqueeBase.Clear();
 
         drag = Drag.None;
         e.Pointer.Capture(null);
@@ -934,6 +1223,42 @@ public sealed class NodeEditor : Control
     {
         base.OnKeyDown(e);
 
+        // Copy and paste are handled here rather than on the window, unlike undo
+        // and redo. Ctrl+C in a text box means the text in it, and a window-wide
+        // handler would have to know which of the two was meant; the canvas only
+        // sees these while the canvas has the focus, which is the same question
+        // answered by not asking it.
+        if ((e.KeyModifiers & (KeyModifiers.Control | KeyModifiers.Meta)) != 0)
+        {
+            switch (e.Key)
+            {
+                case Key.C:
+                    Clipboard(CopySelectionAsync);
+                    e.Handled = true;
+                    return;
+
+                case Key.X:
+                    Clipboard(CutSelectionAsync);
+                    e.Handled = true;
+                    return;
+
+                case Key.V:
+                    Clipboard(PasteAsync);
+                    e.Handled = true;
+                    return;
+
+                case Key.A:
+                    SelectAll();
+                    e.Handled = true;
+                    return;
+            }
+
+            // Anything else with a modifier on it is somebody else's — undo and
+            // redo are the window's, and marking them handled here would take
+            // them off it.
+            return;
+        }
+
         switch (e.Key)
         {
             case Key.Delete or Key.Back:
@@ -945,6 +1270,26 @@ public sealed class NodeEditor : Control
                 FrameAll();
                 e.Handled = true;
                 break;
+        }
+    }
+
+    /// <summary>
+    /// Runs one of the clipboard gestures and passes on whatever it has to say.
+    /// </summary>
+    /// <remarks>
+    /// Void and asynchronous, which is what a key press is: there is nobody to
+    /// hand a task back to. So the catch is not optional — an exception escaping
+    /// here would have no caller to reach and would take the program with it.
+    /// </remarks>
+    private async void Clipboard(Func<Task<string?>> gesture)
+    {
+        try
+        {
+            if (await gesture() is { } trouble) Reported?.Invoke(this, trouble);
+        }
+        catch (Exception ex)
+        {
+            Reported?.Invoke(this, $"Clipboard unavailable: {ex.Message}");
         }
     }
 
@@ -1000,6 +1345,45 @@ public sealed class NodeEditor : Control
         var dx = a.X - b.X;
         var dy = a.Y - b.Y;
         return dx * dx + dy * dy <= tolerance * tolerance;
+    }
+
+    /// <summary>
+    /// Selects every module on the canvas.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Every module that is <em>drawn</em>, which is not quite the same thing: a
+    /// module whose plugin is missing has no size, so the canvas neither paints
+    /// it nor lets a click reach it. Putting one into a selection would be the
+    /// one way to drag or delete something invisible, and "all" ought to mean
+    /// what can be seen.
+    /// </para>
+    /// <para>
+    /// The Output is included, because it is on the canvas and this is not a
+    /// gesture that does anything to it. What follows already knows: copy leaves
+    /// it out (ADR-0045) and delete refuses it, so selecting everything and
+    /// pressing either does the sensible thing without this having to guess
+    /// which was coming.
+    /// </para>
+    /// </remarks>
+    public void SelectAll()
+    {
+        var all = patch.Nodes
+            .Where(node => NodeCatalog.Get(node.TypeId) is not null)
+            .Select(node => node.Id)
+            .ToArray();
+
+        if (all.Length == selection.Count && all.All(selection.Contains)) return;
+
+        selection.Clear();
+        foreach (var id in all) selection.Add(id);
+
+        // The last in the patch's own order, which is the one drawn on top —
+        // the same module Toggle falls back to, for the same reason.
+        focus = all.Length == 0 ? null : all[^1];
+
+        SelectionChanged?.Invoke(this, EventArgs.Empty);
+        InvalidateVisual();
     }
 
     /// <summary>

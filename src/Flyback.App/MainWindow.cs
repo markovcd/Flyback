@@ -184,6 +184,7 @@ public sealed partial class MainWindow : Window
             ProbeSelectionChanged();
         };
         editor.HistoryChanged += (_, _) => RefreshEditState();
+        editor.Reported += (_, message) => Report(message);
 
         // Before the layout, because these are live from the moment the window
         // is: the preview needs its resolution and its backend whether or not

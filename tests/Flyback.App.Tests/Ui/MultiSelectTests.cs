@@ -364,4 +364,111 @@ public class MultiSelectTests : UiTest
 
         Selected(editor).ShouldBe(["time", "value"]);
     }
+
+    // --- selecting everything -----------------------------------------------
+
+    /// <summary>
+    /// The Output comes too. It is on the canvas, and this is not a gesture that
+    /// does anything to it — what follows already knows to leave it alone.
+    /// </summary>
+    [AvaloniaFact]
+    public void Select_all_takes_every_module_including_the_output()
+    {
+        var patch = Three(out _, out _, out _);
+        var (editor, _) = Editing(patch);
+
+        editor.SelectAll();
+
+        Selected(editor).ShouldBe(["coord", NodeCatalog.OutputTypeId, "time", "value"]);
+        editor.SelectedNode.ShouldNotBeNull("something has to be the one the inspector is about");
+    }
+
+    /// <summary>
+    /// A module whose plugin is missing is not drawn and cannot be clicked, so
+    /// selecting it would be the one way to drag or delete something invisible.
+    /// </summary>
+    [AvaloniaFact]
+    public void Select_all_leaves_out_what_the_canvas_cannot_draw()
+    {
+        var patch = Three(out _, out _, out _);
+        patch.Nodes.Add(new NodeInstance { Id = Guid.NewGuid(), TypeId = "nobody.knows", X = 40, Y = 40 });
+
+        var (editor, _) = Editing(patch);
+
+        editor.SelectAll();
+
+        Selected(editor).ShouldNotContain("nobody.knows");
+        editor.SelectedNodes.Count.ShouldBe(4);
+    }
+
+    [AvaloniaFact]
+    public void Select_all_on_an_empty_canvas_selects_the_output_and_nothing_else()
+    {
+        var (editor, _) = Editing(new Patch());
+
+        editor.SelectAll();
+
+        Selected(editor).ShouldBe([NodeCatalog.OutputTypeId], "every patch has one (ADR-0037)");
+    }
+
+    /// <summary>
+    /// Selecting everything and pressing Delete clears the patch down to the
+    /// Output, which the graph refuses to remove. The two gestures already agree
+    /// about that without select-all having to know which was coming.
+    /// </summary>
+    [AvaloniaFact]
+    public void Select_all_and_delete_leaves_the_output_standing()
+    {
+        var patch = Three(out _, out _, out _);
+        var (editor, _) = Editing(patch);
+
+        editor.SelectAll();
+        editor.DeleteSelected();
+
+        patch.Nodes.Select(n => n.TypeId).ShouldBe([NodeCatalog.OutputTypeId]);
+    }
+
+    [AvaloniaFact]
+    public void Control_a_is_the_gesture_and_the_canvas_takes_it()
+    {
+        var patch = Three(out var a, out _, out _);
+        var (editor, window) = Editing(patch);
+
+        Click(editor, window, Body(a));
+        Selected(editor).Length.ShouldBe(1);
+
+        var pressed = new KeyEventArgs
+        {
+            RoutedEvent = InputElement.KeyDownEvent,
+            Key = Key.A,
+            KeyModifiers = KeyModifiers.Control,
+            Source = editor,
+        };
+
+        editor.RaiseEvent(pressed);
+
+        pressed.Handled.ShouldBeTrue();
+        Selected(editor).ShouldBe(["coord", NodeCatalog.OutputTypeId, "time", "value"]);
+    }
+
+    /// <summary>Plain A is not the gesture — it would fire on anyone typing.</summary>
+    [AvaloniaFact]
+    public void A_on_its_own_selects_nothing()
+    {
+        var patch = Three(out _, out _, out _);
+        var (editor, _) = Editing(patch);
+
+        var pressed = new KeyEventArgs
+        {
+            RoutedEvent = InputElement.KeyDownEvent,
+            Key = Key.A,
+            KeyModifiers = KeyModifiers.None,
+            Source = editor,
+        };
+
+        editor.RaiseEvent(pressed);
+
+        pressed.Handled.ShouldBeFalse();
+        editor.SelectedNodes.ShouldBeEmpty();
+    }
 }
