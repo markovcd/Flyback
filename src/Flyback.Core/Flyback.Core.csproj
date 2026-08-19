@@ -5,4 +5,34 @@
     <Optimize Condition="'$(Configuration)' == 'Release'">true</Optimize>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Compile Update="Graph\NodeCatalog.Color.cs">
+      <DependentUpon>NodeCatalog.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Graph\NodeCatalog.Feedback.cs">
+      <DependentUpon>NodeCatalog.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Graph\NodeCatalog.Maths.cs">
+      <DependentUpon>NodeCatalog.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Graph\NodeCatalog.Oscillators.cs">
+      <DependentUpon>NodeCatalog.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Graph\NodeCatalog.Output.cs">
+      <DependentUpon>NodeCatalog.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Graph\NodeCatalog.Patterns.cs">
+      <DependentUpon>NodeCatalog.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Graph\NodeCatalog.Sequencers.cs">
+      <DependentUpon>NodeCatalog.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Graph\NodeCatalog.Sources.cs">
+      <DependentUpon>NodeCatalog.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Graph\NodeCatalog.Space.cs">
+      <DependentUpon>NodeCatalog.cs</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
 </Project>
