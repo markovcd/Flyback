@@ -255,9 +255,15 @@ public sealed partial class MainWindow
             return;
         }
 
+        // Delete takes the whole selection, the same as the key does, so the
+        // label counts it. Sinks are left out of the count because the graph
+        // refuses them: a button offering to delete three when it can only
+        // manage two would be lying about what pressing it does.
+        var going = editor.SelectedNodes.Count(n => !NodeCatalog.IsSink(n.TypeId));
+
         var delete = new Button
         {
-            Content = "Delete module",
+            Content = going > 1 ? $"Delete {going} modules" : "Delete module",
             Margin = new Thickness(0, 14, 0, 0),
             HorizontalAlignment = HorizontalAlignment.Left,
         };

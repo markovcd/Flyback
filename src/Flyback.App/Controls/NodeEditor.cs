@@ -32,6 +32,15 @@ public sealed class NodeEditor : Control
     private static readonly IPen GridPenMajor = new Pen(new SolidColorBrush(Colours.GridMajor));
     private static readonly IPen NodeBorder = new Pen(new SolidColorBrush(Colours.Outline), 1.5);
     private static readonly IPen SelectionPen = new Pen(new SolidColorBrush(Colours.Attention), 2);
+
+    /// <summary>
+    /// Selected, but not the one the inspector is showing. The same colour at
+    /// half strength rather than a second colour: what these modules are is
+    /// selected, and the difference between them and the bright one is which of
+    /// them the panel on the right is currently about.
+    /// </summary>
+    private static readonly IPen SelectionPenSecondary =
+        new Pen(new SolidColorBrush(Colours.Attention, 0.5), 2);
     private static readonly IPen PortOutline = new Pen(new SolidColorBrush(Colours.Outline), 1.2);
 
     /// <summary>How thick a wire is drawn, and how far under full strength.</summary>
@@ -55,12 +64,43 @@ public sealed class NodeEditor : Control
     private Patch patch = new();
     private double zoom = 1;
     private Point pan = new(40, 40);
-    private Guid? selected;
+
+    /// <summary>
+    /// Every selected module. A set rather than one id, so that a gesture can
+    /// name several — which is what dragging a group and copying one need, and
+    /// neither of those can be built on a selection that holds one thing.
+    /// </summary>
+    private readonly HashSet<Guid> selection = [];
+
+    /// <summary>
+    /// Which of the selected modules the inspector is about. Always one of
+    /// <see cref="selection"/> or nothing at all, and it is the last one the
+    /// pointer named: a panel has room for one module's values, and the one
+    /// just clicked is the one that was being asked about.
+    /// </summary>
+    private Guid? focus;
 
     private bool framePending = true;
     private Drag drag;
     private Point dragOrigin;
-    private Point nodeOrigin;
+
+    /// <summary>
+    /// Where each module of the selection was when the drag began. Recorded for
+    /// all of them rather than tracked as one offset, so that a drag ending
+    /// exactly where it started can be told from one that moved — which is what
+    /// decides whether the history gains a step.
+    /// </summary>
+    private readonly Dictionary<Guid, Point> dragOrigins = [];
+
+    /// <summary>
+    /// A module pressed while it was already part of a larger selection, which
+    /// is a click that cannot be resolved until the button comes back up.
+    /// Pressing it must not collapse the selection, or a group could never be
+    /// dragged by one of its own members; releasing it without having dragged
+    /// must, or there would be no way to pick one module out of a group.
+    /// </summary>
+    private Guid? pendingCollapse;
+
     private Guid wireNode;
     private int wirePort;
     private bool wireFromOutput;
@@ -115,7 +155,8 @@ public sealed class NodeEditor : Control
             // came before it is not something to undo into.
             history.Opened(patch);
 
-            selected = null;
+            selection.Clear();
+            focus = null;
             drag = Drag.None;
             FrameAll();
             SelectionChanged?.Invoke(this, EventArgs.Empty);
@@ -124,7 +165,19 @@ public sealed class NodeEditor : Control
         }
     }
 
-    public NodeInstance? SelectedNode => selected is { } id ? patch.Find(id) : null;
+    /// <summary>
+    /// The module the inspector is about — the last one the pointer named, of
+    /// however many are selected. Null when nothing is.
+    /// </summary>
+    public NodeInstance? SelectedNode => focus is { } id ? patch.Find(id) : null;
+
+    /// <summary>
+    /// Every selected module, in the order the patch holds them so that what
+    /// comes out of a selection reads the same way twice. Empty when nothing is
+    /// selected, and one entry deep for the ordinary click.
+    /// </summary>
+    public IReadOnlyList<NodeInstance> SelectedNodes =>
+        [.. patch.Nodes.Where(node => selection.Contains(node.Id))];
 
     public bool CanUndo => history.CanUndo;
 
@@ -219,7 +272,8 @@ public sealed class NodeEditor : Control
         patch = next;
         patch.EnsureOutput();
 
-        if (selected is { } id && patch.Find(id) is null) selected = null;
+        selection.RemoveWhere(id => patch.Find(id) is null);
+        if (focus is { } kept && !selection.Contains(kept)) focus = null;
 
         drag = Drag.None;
         InvalidateVisual();
@@ -267,17 +321,36 @@ public sealed class NodeEditor : Control
     }
 
     /// <summary>
-    /// Removes the selected module, unless it is the Output — which the graph
-    /// refuses. Refused, the selection is left where it was rather than cleared:
-    /// pressing Delete on the Output should do nothing at all, and losing the
-    /// selection would take its settings panel away with it.
+    /// Removes every selected module except the Output, which the graph refuses.
+    /// A refused module is left selected rather than cleared: pressing Delete on
+    /// the Output should do nothing at all, and losing the selection would take
+    /// its settings panel away with it.
     /// </summary>
+    /// <remarks>
+    /// One edit however many modules go, because one gesture asked for all of
+    /// them — the same reason laying out is one edit (ADR-0044). Deleting five
+    /// and undoing them one at a time would be five presses for something
+    /// nobody did five times.
+    /// </remarks>
     public void DeleteSelected()
     {
-        if (selected is not { } id) return;
-        if (!patch.Remove(id)) return;
+        if (selection.Count == 0) return;
 
-        Select(null);
+        var went = false;
+
+        foreach (var id in selection.ToArray())
+            if (patch.Remove(id))
+            {
+                selection.Remove(id);
+                went = true;
+            }
+
+        if (!went) return;
+
+        if (focus is { } kept && !selection.Contains(kept))
+            focus = selection.Count == 0 ? null : SelectedNodes[^1].Id;
+
+        SelectionChanged?.Invoke(this, EventArgs.Empty);
         NotifyPatchChanged();
     }
 
@@ -386,7 +459,7 @@ public sealed class NodeEditor : Control
             // they are drawn after the modules rather than before: nothing the
             // block is pulled across can hide where it is still patched, which
             // is the whole question being asked by the drag.
-            var lifted = drag == Drag.Node ? selected : null;
+            var lifted = drag == Drag.Node ? selection : [];
 
             DrawConnections(context, lifted, theirs: false);
 
@@ -427,19 +500,23 @@ public sealed class NodeEditor : Control
     }
 
     /// <param name="context">Where the canvas is drawing.</param>
-    /// <param name="lifted">The module being dragged, or null while none is.</param>
+    /// <param name="lifted">
+    /// The modules being dragged, empty while none are. A set rather than one
+    /// id because a drag may carry a whole selection, and a wire between two of
+    /// its members is as much in play as one leaving it.
+    /// </param>
     /// <param name="theirs">
-    /// Which half of the wires this pass draws: that module's own, or all the
+    /// Which half of the wires this pass draws: those modules' own, or all the
     /// rest. One loop serves both, so a wire cannot be drawn twice or missed
     /// entirely — the two passes partition the same set rather than each
     /// deciding for themselves what belongs in it.
     /// </param>
-    private void DrawConnections(DrawingContext context, Guid? lifted, bool theirs)
+    private void DrawConnections(DrawingContext context, IReadOnlySet<Guid> lifted, bool theirs)
     {
         foreach (var connection in patch.Connections)
         {
-            var mine = lifted is { } moving
-                && (connection.SourceNode == moving || connection.TargetNode == moving);
+            var mine = lifted.Contains(connection.SourceNode)
+                || lifted.Contains(connection.TargetNode);
 
             if (mine != theirs) continue;
 
@@ -500,12 +577,12 @@ public sealed class NodeEditor : Control
     private void DrawNode(DrawingContext context, NodeInstance node, NodeDef def)
     {
         var bounds = NodeGeometry.Bounds(node, def);
-        var isSelected = selected == node.Id;
+        var isSelected = selection.Contains(node.Id);
         var accent = Colours.Accent(def.Category);
 
         context.DrawRectangle(
             isSelected ? NodeFillSelected : NodeFill,
-            isSelected ? SelectionPen : NodeBorder,
+            !isSelected ? NodeBorder : focus == node.Id ? SelectionPen : SelectionPenSecondary,
             new RoundedRect(bounds, NodeGeometry.CornerRadius));
 
         // Header band, square at the bottom so it reads as a title bar.
@@ -605,21 +682,66 @@ public sealed class NodeEditor : Control
             return;
         }
 
+        var adding = (e.KeyModifiers & (KeyModifiers.Control | KeyModifiers.Meta)) != 0;
+
         if (HitNode(graph) is { } node)
         {
-            Select(node.Id);
-            BringToFront(node);
-            drag = Drag.Node;
-            nodeOrigin = new Point(node.X, node.Y);
+            PressNode(node, adding);
             e.Pointer.Capture(this);
             InvalidateVisual();
             return;
         }
 
-        Select(null);
+        // Clicking empty canvas clears the selection — unless the modifier is
+        // down, where the gesture was about adding to it and finding nothing is
+        // no reason to throw away what was already there.
+        if (!adding) Select(null);
+
         drag = Drag.Pan;
         e.Pointer.Capture(this);
         InvalidateVisual();
+    }
+
+    /// <summary>
+    /// What a press on a module does to the selection, and the start of a drag
+    /// of whatever that leaves selected.
+    /// </summary>
+    /// <remarks>
+    /// The awkward case is a plain press on a module already in a larger
+    /// selection, and it cannot be answered here: collapsing to it would make a
+    /// group impossible to drag by one of its own members, and not collapsing
+    /// would make one impossible to pick apart. So it is deferred to the release
+    /// — see <see cref="pendingCollapse"/> — which is the same answer every
+    /// editor that has this problem arrives at.
+    /// </remarks>
+    private void PressNode(NodeInstance node, bool adding)
+    {
+        pendingCollapse = null;
+
+        if (adding) Toggle(node.Id);
+        else if (!selection.Contains(node.Id)) Select(node.Id);
+        else
+        {
+            pendingCollapse = node.Id;
+
+            // The panel follows the pointer even when the set does not, so
+            // pressing one module of a group is how its values are reached.
+            if (focus != node.Id)
+            {
+                focus = node.Id;
+                SelectionChanged?.Invoke(this, EventArgs.Empty);
+            }
+        }
+
+        // Everything selected comes to the front together, so a group being
+        // dragged does not pass under members of itself.
+        foreach (var moving in SelectedNodes) BringToFront(moving);
+
+        drag = Drag.Node;
+
+        dragOrigins.Clear();
+        foreach (var moving in SelectedNodes)
+            dragOrigins[moving.Id] = new Point(moving.X, moving.Y);
     }
 
     /// <summary>
@@ -664,10 +786,17 @@ public sealed class NodeEditor : Control
                 InvalidateVisual();
                 return;
 
-            case Drag.Node when SelectedNode is { } node:
+            case Drag.Node when dragOrigins.Count > 0:
                 var delta = (screen - dragOrigin) / zoom;
-                node.X = nodeOrigin.X + delta.X;
-                node.Y = nodeOrigin.Y + delta.Y;
+
+                foreach (var moving in SelectedNodes)
+                {
+                    if (!dragOrigins.TryGetValue(moving.Id, out var from)) continue;
+
+                    moving.X = from.X + delta.X;
+                    moving.Y = from.Y + delta.Y;
+                }
+
                 InvalidateVisual();
                 return;
 
@@ -695,12 +824,25 @@ public sealed class NodeEditor : Control
         // the program can hear, so it goes into the history without asking
         // anything to recompile — a picture and a sound rebuilt because a block
         // was nudged would be work done for a change neither of them has in it.
-        if (drag == Drag.Node && SelectedNode is { } moved
-            && (moved.X != nodeOrigin.X || moved.Y != nodeOrigin.Y))
+        if (drag == Drag.Node)
         {
-            history.Record(patch);
-            HistoryChanged?.Invoke(this, EventArgs.Empty);
+            var moved = SelectedNodes.Any(node =>
+                dragOrigins.TryGetValue(node.Id, out var from)
+                && (node.X != from.X || node.Y != from.Y));
+
+            if (moved)
+            {
+                history.Record(patch);
+                HistoryChanged?.Invoke(this, EventArgs.Empty);
+            }
+
+            // A press on one module of a group that turned out not to be a drag
+            // was a click, and a click picks that module out of the group.
+            else if (pendingCollapse is { } one) Select(one);
         }
+
+        pendingCollapse = null;
+        dragOrigins.Clear();
 
         drag = Drag.None;
         e.Pointer.Capture(null);
@@ -860,11 +1002,47 @@ public sealed class NodeEditor : Control
         return dx * dx + dy * dy <= tolerance * tolerance;
     }
 
+    /// <summary>
+    /// Makes the selection exactly this one module, or nothing at all. What an
+    /// ordinary click does, and what every caller outside the pointer handling
+    /// wants — adding a module selects it rather than joining it to whatever was
+    /// selected before.
+    /// </summary>
     private void Select(Guid? id)
     {
-        if (selected == id) return;
+        if (focus == id && selection.Count == (id is null ? 0 : 1)) return;
 
-        selected = id;
+        selection.Clear();
+        if (id is { } one) selection.Add(one);
+
+        focus = id;
+        SelectionChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>
+    /// Adds a module to the selection, or takes it out again if it was already
+    /// in — what Ctrl (or Command) held down turns a click into.
+    /// </summary>
+    /// <remarks>
+    /// Taking the focused one out moves the focus rather than dropping it, so
+    /// the inspector keeps showing something for as long as anything is
+    /// selected. Whatever is last in the patch's own order is picked, which is
+    /// the module drawn on top.
+    /// </remarks>
+    private void Toggle(Guid id)
+    {
+        if (!selection.Add(id))
+        {
+            selection.Remove(id);
+
+            if (focus == id)
+                focus = selection.Count == 0 ? null : SelectedNodes[^1].Id;
+        }
+        else
+        {
+            focus = id;
+        }
+
         SelectionChanged?.Invoke(this, EventArgs.Empty);
     }
 
