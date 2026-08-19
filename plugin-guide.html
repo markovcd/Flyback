@@ -1,0 +1,833 @@
+<title>Authoring Flyback Plugins</title>
+
+<style>
+  /* ---- tokens: light is the bare :root, dark redefines only colours ---- */
+  :root {
+    --paper:      #F5F3F7;
+    --surface:    #FFFFFF;
+    --sunk:       #EDEAF1;
+    --ink:        #1B1622;
+    --body:       #332D3D;
+    --muted:      #6E6579;
+    --rule:       #DDD7E4;
+    --rule-soft:  #E9E4EE;
+    --accent:     #B81A6E;
+    --accent-dim: #8E1355;
+    --signal:     #12708C;
+    --code-ink:   #2A2333;
+    --code-key:   #8E1355;
+    --code-str:   #12708C;
+    --code-com:   #857C90;
+    --warn-bg:    #FBF0F5;
+    --warn-edge:  #E4B8CF;
+
+    --sans: "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", sans-serif;
+    --serif: Georgia, "Iowan Old Style", "Times New Roman", serif;
+    --mono: "Cascadia Mono", "Cascadia Code", Consolas, ui-monospace, "SF Mono", Menlo, monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper:      #15111C;
+      --surface:    #1D1826;
+      --sunk:       #241E2F;
+      --ink:        #F2EEF7;
+      --body:       #CFC7DA;
+      --muted:      #968CA4;
+      --rule:       #332B41;
+      --rule-soft:  #2A2335;
+      --accent:     #F268AB;
+      --accent-dim: #C74B87;
+      --signal:     #56C2DD;
+      --code-ink:   #DDD5E6;
+      --code-key:   #F268AB;
+      --code-str:   #56C2DD;
+      --code-com:   #857C90;
+      --warn-bg:    #26192270;
+      --warn-edge:  #5C3049;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --paper:      #15111C;
+    --surface:    #1D1826;
+    --sunk:       #241E2F;
+    --ink:        #F2EEF7;
+    --body:       #CFC7DA;
+    --muted:      #968CA4;
+    --rule:       #332B41;
+    --rule-soft:  #2A2335;
+    --accent:     #F268AB;
+    --accent-dim: #C74B87;
+    --signal:     #56C2DD;
+    --code-ink:   #DDD5E6;
+    --code-key:   #F268AB;
+    --code-str:   #56C2DD;
+    --code-com:   #857C90;
+    --warn-bg:    #26192270;
+    --warn-edge:  #5C3049;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background: var(--paper);
+    color: var(--body);
+    font-family: var(--serif);
+    font-size: 17px;
+    line-height: 1.65;
+    margin: 0;
+    padding: 0 24px 96px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap { max-width: 1080px; margin: 0 auto; }
+
+  /* ---- masthead ---- */
+  header.mast { padding: 64px 0 0; max-width: 44rem; }
+
+  .eyebrow {
+    font-family: var(--sans);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 20px;
+  }
+
+  h1 {
+    font-family: var(--sans);
+    font-size: clamp(38px, 6vw, 58px);
+    line-height: 1.04;
+    letter-spacing: -0.028em;
+    font-weight: 700;
+    color: var(--ink);
+    margin: 0;
+    text-wrap: balance;
+  }
+
+  .standfirst {
+    font-size: 20px;
+    line-height: 1.55;
+    color: var(--muted);
+    margin: 22px 0 0;
+    text-wrap: pretty;
+  }
+
+  /* ---- the sawtooth rule: the mark the synth is named for ---- */
+  .saw { display: block; width: 100%; height: 9px; color: var(--rule); margin: 40px 0; }
+  .saw.accent { color: var(--accent); opacity: 0.55; }
+  .defs { position: absolute; width: 0; height: 0; overflow: hidden; }
+
+  /* ---- layout ---- */
+  .cols { display: grid; grid-template-columns: 1fr; gap: 48px; align-items: start; }
+
+  @media (min-width: 1000px) {
+    .cols { grid-template-columns: 200px minmax(0, 1fr); gap: 64px; }
+    nav.toc { position: sticky; top: 32px; }
+  }
+
+  nav.toc { font-family: var(--sans); font-size: 13.5px; line-height: 1.5; }
+  nav.toc p {
+    font-size: 11px; font-weight: 700; letter-spacing: 0.13em; text-transform: uppercase;
+    color: var(--muted); margin: 0 0 14px;
+  }
+  nav.toc ol { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 9px; }
+  nav.toc a { color: var(--body); text-decoration: none; border-left: 2px solid var(--rule); padding-left: 12px; display: block; }
+  nav.toc a:hover, nav.toc a:focus-visible { color: var(--accent); border-left-color: var(--accent); }
+
+  main { min-width: 0; max-width: 44rem; display: flex; flex-direction: column; gap: 8px; }
+
+  section { padding-top: 16px; }
+
+  h2 {
+    font-family: var(--sans);
+    font-size: 29px;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    font-weight: 700;
+    color: var(--ink);
+    margin: 44px 0 4px;
+    text-wrap: balance;
+  }
+
+  h2 .num {
+    display: block;
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    color: var(--accent);
+    margin-bottom: 10px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  h3 {
+    font-family: var(--sans);
+    font-size: 18.5px;
+    letter-spacing: -0.008em;
+    font-weight: 650;
+    color: var(--ink);
+    margin: 34px 0 0;
+    text-wrap: balance;
+  }
+
+  p { margin: 14px 0 0; text-wrap: pretty; }
+
+  a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+  a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px; }
+
+  strong { color: var(--ink); font-weight: 700; }
+  em { font-style: italic; }
+
+  ul, ol.steps { margin: 14px 0 0; padding-left: 22px; }
+  li { margin: 7px 0; }
+  li::marker { color: var(--muted); }
+
+  code {
+    font-family: var(--mono);
+    font-size: 0.855em;
+    background: var(--sunk);
+    color: var(--code-ink);
+    padding: 1.5px 5px;
+    border-radius: 3px;
+  }
+
+  pre {
+    font-family: var(--mono);
+    font-size: 13.5px;
+    line-height: 1.62;
+    background: var(--surface);
+    color: var(--code-ink);
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    padding: 18px 20px;
+    margin: 20px 0 0;
+    overflow-x: auto;
+  }
+  pre code { background: none; padding: 0; font-size: inherit; color: inherit; }
+
+  .k { color: var(--code-key); }
+  .s { color: var(--code-str); }
+  .c { color: var(--code-com); font-style: italic; }
+
+  figure { margin: 24px 0 0; }
+  figcaption {
+    font-family: var(--sans);
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 12px;
+    line-height: 1.5;
+  }
+
+  .scroll { overflow-x: auto; margin: 22px 0 0; }
+
+  table { border-collapse: collapse; width: 100%; font-size: 15px; min-width: 460px; }
+  caption { text-align: left; font-family: var(--sans); font-size: 13px; color: var(--muted); padding-bottom: 10px; }
+  th, td { text-align: left; padding: 10px 14px 10px 0; border-bottom: 1px solid var(--rule-soft); vertical-align: top; }
+  th {
+    font-family: var(--sans); font-size: 11.5px; font-weight: 700;
+    letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted);
+    border-bottom: 1px solid var(--rule);
+  }
+  td code { font-size: 12.8px; white-space: nowrap; }
+
+  .note {
+    background: var(--warn-bg);
+    border: 1px solid var(--warn-edge);
+    border-radius: 6px;
+    padding: 16px 20px;
+    margin: 24px 0 0;
+    font-size: 16px;
+  }
+  .note p:first-child { margin-top: 0; }
+  .note .tag {
+    font-family: var(--sans); font-size: 11px; font-weight: 700;
+    letter-spacing: 0.13em; text-transform: uppercase; color: var(--accent);
+    display: block; margin-bottom: 8px;
+  }
+
+  .tiers { display: grid; gap: 14px; margin: 24px 0 0; }
+  @media (min-width: 720px) { .tiers { grid-template-columns: repeat(3, 1fr); } }
+  .tier {
+    background: var(--surface); border: 1px solid var(--rule);
+    border-top: 3px solid var(--accent); border-radius: 5px; padding: 16px 18px 18px;
+  }
+  .tier:nth-child(2) { border-top-color: var(--signal); }
+  .tier:nth-child(3) { border-top-color: var(--muted); }
+  .tier h4 {
+    font-family: var(--sans); font-size: 15px; font-weight: 700; color: var(--ink);
+    margin: 0 0 6px; letter-spacing: -0.005em;
+  }
+  .tier p { font-size: 14.5px; line-height: 1.55; margin: 6px 0 0; }
+  .tier .where {
+    font-family: var(--sans); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--muted); display: block; margin-top: 10px;
+  }
+
+  footer {
+    font-family: var(--sans); font-size: 13.5px; color: var(--muted);
+    margin-top: 56px; padding-top: 24px; border-top: 1px solid var(--rule);
+    max-width: 44rem;
+  }
+
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+
+<svg class="defs" aria-hidden="true">
+  <defs>
+    <pattern id="sawtooth" width="18" height="9" patternUnits="userSpaceOnUse">
+      <path d="M0 8 L18 1.5 L18 8" fill="none" stroke="currentColor" stroke-width="1.25"/>
+    </pattern>
+  </defs>
+</svg>
+
+<div class="wrap">
+
+<header class="mast">
+  <p class="eyebrow">Flyback · extending the engine</p>
+  <h1>Authoring Flyback Plugins</h1>
+  <p class="standfirst">Everything that differs per machine, and everything the engine deliberately does not
+  know about, arrives from a folder on disk. This is how to put something in it.</p>
+</header>
+
+<svg class="saw accent" preserveAspectRatio="none" viewBox="0 0 720 9" aria-hidden="true"><rect width="720" height="9" fill="url(#sawtooth)"/></svg>
+
+<div class="cols">
+
+  <nav class="toc" aria-label="Contents">
+    <p>Contents</p>
+    <ol>
+      <li><a href="#what">What a plugin is</a></li>
+      <li><a href="#project">The project file</a></li>
+      <li><a href="#entry">The entry point</a></li>
+      <li><a href="#surface">What you can contribute</a></li>
+      <li><a href="#module">Authoring a module</a></li>
+      <li><a href="#state">Modules that remember</a></li>
+      <li><a href="#presets">Shipping a patch</a></li>
+      <li><a href="#audio">Sound backends</a></li>
+      <li><a href="#install">Building and installing</a></li>
+      <li><a href="#refuse">How things fail</a></li>
+      <li><a href="#testing">Testing</a></li>
+      <li><a href="#rules">Rules of thumb</a></li>
+    </ol>
+  </nav>
+
+  <main>
+
+  <section id="what">
+    <h2><span class="num">01</span>What a plugin is</h2>
+
+    <p>A plugin is one .NET assembly in its own folder under <code>plugins/</code>, beside the executable.
+    Nothing references it at build time. The host enumerates the folders at startup, loads each into its own
+    <code>AssemblyLoadContext</code>, and asks whatever it finds inside what it would like to contribute.</p>
+
+    <p>Two assemblies are <strong>host-owned</strong>: <code>Flyback.Plugins</code>, which is the contract,
+    and <code>Flyback.Core</code>, which is the engine — the graph, the compiler, the renderer. A plugin
+    compiles against both and ships neither. That rule is not a convention; it is what stops the same type
+    having two identities and every cast across the boundary failing.</p>
+
+    <p>Both are left on disk rather than folded into a single-file bundle when the shell is published, so you
+    can build a plugin against the exact version a given release shipped.</p>
+
+    <figure>
+      <svg viewBox="0 0 700 260" width="100%" role="img" aria-label="Flyback.exe loads three plugin folders, each into its own load context; Flyback.Core and Flyback.Plugins resolve back to the host's copy.">
+        <g font-family="ui-sans-serif, system-ui, sans-serif" font-size="12.5">
+          <rect x="1" y="30" width="188" height="86" rx="5" fill="var(--surface)" stroke="var(--ink)" stroke-width="1.5"/>
+          <text x="18" y="56" fill="var(--ink)" font-size="13.5" font-weight="700">Flyback.exe</text>
+          <text x="18" y="78" fill="var(--muted)">Flyback.Core.dll</text>
+          <text x="18" y="97" fill="var(--muted)">Flyback.Plugins.dll</text>
+          <text x="18" y="134" fill="var(--accent)" font-size="11" letter-spacing="1.4">HOST-OWNED</text>
+
+          <g stroke="var(--rule)" stroke-width="1.5" fill="none">
+            <path d="M189 73 L262 73"/>
+            <path d="M330 73 L400 45"/>
+            <path d="M330 73 L400 118"/>
+            <path d="M330 73 L400 191"/>
+          </g>
+
+          <rect x="262" y="52" width="68" height="42" rx="4" fill="var(--sunk)" stroke="var(--rule)" stroke-width="1.5"/>
+          <text x="296" y="70" fill="var(--body)" text-anchor="middle" font-size="11.5">plugins/</text>
+          <text x="296" y="85" fill="var(--muted)" text-anchor="middle" font-size="11.5">folder</text>
+
+          <g>
+            <rect x="400" y="22" width="298" height="46" rx="4" fill="var(--surface)" stroke="var(--rule)" stroke-width="1.5"/>
+            <text x="416" y="41" fill="var(--ink)" font-weight="650">Timbre/</text>
+            <text x="416" y="58" fill="var(--muted)" font-size="11.5">Flyback.Plugins.Timbre.dll · .deps.json</text>
+
+            <rect x="400" y="95" width="298" height="46" rx="4" fill="var(--surface)" stroke="var(--rule)" stroke-width="1.5"/>
+            <text x="416" y="114" fill="var(--ink)" font-weight="650">Wasapi/</text>
+            <text x="416" y="131" fill="var(--muted)" font-size="11.5">Flyback.Plugins.Wasapi.dll · NAudio.dll</text>
+
+            <rect x="400" y="168" width="298" height="46" rx="4" fill="var(--surface)" stroke="var(--rule)" stroke-width="1.5"/>
+            <text x="416" y="187" fill="var(--ink)" font-weight="650">Yours/</text>
+            <text x="416" y="204" fill="var(--muted)" font-size="11.5">whatever you depend on</text>
+          </g>
+
+          <text x="400" y="240" fill="var(--muted)" font-size="11.5">one load context each — two plugins may use different versions of one package</text>
+        </g>
+      </svg>
+      <figcaption>The boundary. Everything to the right of the folder is yours; the two assemblies on the
+      left always resolve to the host's copy, even if a stray duplicate is sitting in your folder.</figcaption>
+    </figure>
+  </section>
+
+  <svg class="saw" preserveAspectRatio="none" viewBox="0 0 720 9" aria-hidden="true"><rect width="720" height="9" fill="url(#sawtooth)"/></svg>
+
+  <section id="project">
+    <h2><span class="num">02</span>The project file</h2>
+
+    <p>Four things matter, and each of them fixes a specific failure.</p>
+
+    <pre><code>&lt;<span class="k">Project</span> Sdk=<span class="s">"Microsoft.NET.Sdk"</span>&gt;
+
+  &lt;<span class="k">PropertyGroup</span>&gt;
+    &lt;RootNamespace&gt;Flyback.Plugins.Yours&lt;/RootNamespace&gt;
+    &lt;EnableDynamicLoading&gt;<span class="s">true</span>&lt;/EnableDynamicLoading&gt;
+  &lt;/<span class="k">PropertyGroup</span>&gt;
+
+  &lt;<span class="k">ItemGroup</span>&gt;
+    <span class="c">&lt;!-- Both are host-owned; shipping either gives its types a second identity. --&gt;</span>
+    &lt;<span class="k">ProjectReference</span> Include=<span class="s">"..\Flyback.Plugins\Flyback.Plugins.csproj"</span>
+                      Private=<span class="s">"false"</span>
+                      ExcludeAssets=<span class="s">"runtime"</span>
+                      GlobalPropertiesToRemove=<span class="s">"OutDir"</span> /&gt;
+    &lt;<span class="k">ProjectReference</span> Include=<span class="s">"..\Flyback.Core\Flyback.Core.csproj"</span>
+                      Private=<span class="s">"false"</span>
+                      ExcludeAssets=<span class="s">"runtime"</span>
+                      GlobalPropertiesToRemove=<span class="s">"OutDir"</span> /&gt;
+  &lt;/<span class="k">ItemGroup</span>&gt;
+
+&lt;/<span class="k">Project</span>&gt;</code></pre>
+
+    <ul>
+      <li><code>EnableDynamicLoading</code> produces the <code>.deps.json</code> the resolver reads. Without
+      it, nothing but the entry assembly resolves and your first dependency fails at load.</li>
+      <li><code>Private="false" ExcludeAssets="runtime"</code> compiles against the host's assemblies without
+      copying them next to yours.</li>
+      <li><strong>Name both references.</strong> Naming only <code>Flyback.Plugins</code> leaves
+      <code>Flyback.Core</code> to be copied in as a transitive reference, which is the same bug by a quieter
+      route.</li>
+      <li>Reference packages of your own freely. Your folder is your own load context, so your version of
+      something does not have to agree with anyone else's.</li>
+    </ul>
+  </section>
+
+  <svg class="saw" preserveAspectRatio="none" viewBox="0 0 720 9" aria-hidden="true"><rect width="720" height="9" fill="url(#sawtooth)"/></svg>
+
+  <section id="entry">
+    <h2><span class="num">03</span>The entry point</h2>
+
+    <p>One public, non-abstract class with a parameterless constructor implementing
+    <code>IFlybackPlugin</code>. The host finds it by reflection, constructs it, and calls
+    <code>Register</code> once.</p>
+
+    <pre><code><span class="k">public sealed class</span> YoursPlugin : IFlybackPlugin
+{
+    <span class="k">private static readonly</span> ModuleProvider Provider = <span class="k">new</span>(<span class="s">"yours"</span>, <span class="s">"Your modules"</span>);
+
+    <span class="k">public</span> PluginInfo Info { <span class="k">get</span>; } = <span class="k">new</span>(
+        <span class="s">"yours"</span>,                       <span class="c">// stable, machine-readable</span>
+        <span class="s">"Your modules"</span>,                <span class="c">// what a person sees</span>
+        <span class="s">"One line about what this is."</span>);
+
+    <span class="k">public void</span> Register(IPluginRegistry registry) =&gt;
+        registry.AddModules(Provider, [ YourModule.Definition ]);
+}</code></pre>
+
+    <div class="note">
+      <span class="tag">The one hard rule about Register</span>
+      <p>It runs on the UI thread during startup, for every installed plugin, before the window is usable.
+      It must be cheap, and it must not open a device, read a credential, or reach the network. Deciding
+      whether something can actually run belongs on the thing being registered — that is what
+      <code>IsSupported</code> is for.</p>
+    </div>
+
+    <p>Nothing stops an assembly holding more than one plugin class, and each is instantiated. Two plugins
+    claiming the same <code>Info.Id</code> is refused: the first wins and the second becomes a note in the
+    status bar.</p>
+  </section>
+
+  <svg class="saw" preserveAspectRatio="none" viewBox="0 0 720 9" aria-hidden="true"><rect width="720" height="9" fill="url(#sawtooth)"/></svg>
+
+  <section id="surface">
+    <h2><span class="num">04</span>What you can contribute</h2>
+
+    <p><code>IPluginRegistry</code> has five methods. New kinds of extension arrive as new methods, so a
+    plugin compiled against an older contract keeps working.</p>
+
+    <div class="scroll">
+      <table>
+        <caption>The whole extension surface.</caption>
+        <thead>
+          <tr><th scope="col">Method</th><th scope="col">Contributes</th><th scope="col">Must not, when registering</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>AddModules</code></td><td>Modules in the palette, keyed by a provider</td><td>—</td></tr>
+          <tr><td><code>AddPresets</code></td><td>Patches in the Patch dropdown</td><td>—</td></tr>
+          <tr><td><code>AddAudioOutput</code></td><td>A sound backend</td><td>Open a device</td></tr>
+          <tr><td><code>AddSecretStore</code></td><td>Somewhere the OS holds a secret</td><td>Read or write one</td></tr>
+          <tr><td><code>AddPatchAssistant</code></td><td>Something that can author a patch</td><td>Open a connection, or need a credential present</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>A single plugin may call several. The Timbre plugin adds three modules and a preset; a sound backend
+    adds one output and nothing else.</p>
+  </section>
+
+  <svg class="saw" preserveAspectRatio="none" viewBox="0 0 720 9" aria-hidden="true"><rect width="720" height="9" fill="url(#sawtooth)"/></svg>
+
+  <section id="module">
+    <h2><span class="num">05</span>Authoring a module</h2>
+
+    <p>A module is one <code>NodeDef</code>: its sockets, and a function that lowers it to ops. It is the
+    same data the built-in modules are declared with — there is no second-class plugin module. Adding one
+    changes nothing else in the pipeline; it appears in the palette and compiles on its own.</p>
+
+    <pre><code><span class="k">public static</span> NodeDef Definition { <span class="k">get</span>; } = <span class="k">new</span>(
+    <span class="s">"yours.rings"</span>, <span class="s">"Rings"</span>, <span class="s">"Pattern"</span>,
+    [
+        <span class="k">new</span> PortSpec(<span class="s">"x"</span>),
+        <span class="k">new</span> PortSpec(<span class="s">"y"</span>),
+        <span class="k">new</span> PortSpec(<span class="s">"freq"</span>, PortKind.Scalar, 4f, 0f, 32f),
+    ],
+    [<span class="k">new</span> PortSpec(<span class="s">"out"</span>)],
+    (em, i) =&gt;
+    {
+        <span class="k">var</span> radius = em.Binary(OpCode.Hypot, i[0], i[1]);
+        <span class="k">return</span> [em.Unary(OpCode.Sin, em.Mul(em.Mul(radius, i[2]), MathF.Tau))];
+    },
+    <span class="s">"Concentric sine rings."</span>);</code></pre>
+
+    <h3>The type id prefix rule</h3>
+
+    <p>Every type id must begin with your provider's id and a dot. That single rule does three jobs: it makes
+    shadowing a built-in impossible, it makes a collision between two plugins impossible, and it means the
+    provider of a module can be read off a saved patch file without having the plugin that defines it. Ids
+    that break it are dropped individually — one bad module costs that module, not the plugin.</p>
+
+    <h3>Sockets</h3>
+
+    <p><code>PortSpec</code> carries more than a name. Most of it is the editor's business rather than the
+    compiler's: a stored number means the same thing whatever these say.</p>
+
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr><th scope="col">Field</th><th scope="col">What it does</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>Kind</code></td><td><code>Scalar</code>, <code>Colour</code>, or <code>Any</code>. <code>Any</code> passes through whatever arrives, which is how one Multiply works on both a tone and a picture.</td></tr>
+          <tr><td><code>Default</code>, <code>Min</code>, <code>Max</code></td><td>The knob on the node, and the range the editor gives it.</td></tr>
+          <tr><td><code>NormalledFrom</code></td><td>Index of an earlier input this one falls back to when nothing is patched in — the hardware normalled jack. The Output's <code>right</code> carries <code>left</code> this way.</td></tr>
+          <tr><td><code>Display</code></td><td><code>Number</code>, <code>Note</code> (57 reads as A3), or <code>Duration</code> (a power of ten of seconds, shown as the time it is).</td></tr>
+          <tr><td><code>Domain</code></td><td>True when this is the axis the module is read <em>across</em> rather than a value it uses. A constant on one is never sensible, so the compiler warns.</td></tr>
+          <tr><td><code>Swept</code></td><td>True when the module supplies the domain this input is read <em>under</em>. Resolve it yourself with <code>EmitContext.Resolve</code>.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>The emit function</h3>
+
+    <p>It runs <strong>once, at compile time</strong>, and writes straight-line ops into a flat register
+    machine. This is the fact that shapes everything else about writing one:</p>
+
+    <ul>
+      <li>It never sees a knob's value, so nothing about the shape of what you emit can depend on one. The
+      Supersaw has seven voices rather than a knob's worth for exactly this reason.</li>
+      <li>There are no branches. A choice is arithmetic — <code>Step</code>, <code>Mix</code>,
+      <code>Clamp</code> — not an <code>if</code>.</li>
+      <li>It runs whole or not at all. Reaching for one output compiles everything upstream of <em>all</em>
+      your inputs, because the compiler cannot know which output uses which.</li>
+      <li>Loops that unroll are fine and normal. Seventy ops with no branches is what the Supersaw is.</li>
+    </ul>
+
+    <p>The <code>Emitter</code> gives you the instruction set: <code>Unary</code>, <code>Binary</code>,
+    <code>Ternary</code> over <code>OpCode</code>, plus <code>Constant</code>, <code>Load</code> for the
+    pixel's x, y and t, and shorthands <code>Add</code>, <code>Sub</code>, <code>Mul</code>. Widths broadcast
+    the way a shading language would: a scalar meeting a colour is applied to all three channels.</p>
+  </section>
+
+  <svg class="saw" preserveAspectRatio="none" viewBox="0 0 720 9" aria-hidden="true"><rect width="720" height="9" fill="url(#sawtooth)"/></svg>
+
+  <section id="state">
+    <h2><span class="num">06</span>Modules that remember</h2>
+
+    <p>The engine renders a picture by evaluating the program once per pixel, with rows in parallel and in no
+    particular order. That is why most modules are pure functions of <code>(x, y, t)</code> — and why a module
+    with a memory is a different kind of thing, which works for the speakers and has to say what it means for
+    the screen.</p>
+
+    <p>There are three tiers, and it is worth knowing which one you need before you start.</p>
+
+    <div class="tiers">
+      <div class="tier">
+        <h4>Pure</h4>
+        <p>No memory at all. Identical at both sinks, free on the video path, survives to the GPU backend
+        untouched. Reach for this unless you cannot.</p>
+        <span class="where">Most modules</span>
+      </div>
+      <div class="tier">
+        <h4>One evaluation</h4>
+        <p>A cell that carries a value from the last evaluation to this one. Filters, allpass stages, slew
+        limiters, sample-and-hold. Available to any plugin, no engine change.</p>
+        <span class="where">Emitter cells</span>
+      </div>
+      <div class="tier">
+        <h4>A buffer</h4>
+        <p>Thousands of past samples — a delay line or a reverb tail. Needs an opcode, so it cannot come from
+        a plugin; use the two that exist.</p>
+        <span class="where">Delay · Allpass</span>
+      </div>
+    </div>
+
+    <h3>Taking a cell</h3>
+
+    <p><code>AllocateUnitSlot</code> hands you a cell; <code>UnitRead</code> gets what it held last
+    evaluation and <code>UnitWrite</code> puts this evaluation's value in it. Read before you write, and the
+    gap between the two is the one evaluation of latency that makes it a memory.</p>
+
+    <pre><code><span class="k">var</span> cell = em.AllocateUnitSlot();
+<span class="k">var</span> previous = em.UnitRead(cell);        <span class="c">// what it held last time</span>
+<span class="k">var</span> smoothed = em.Ternary(OpCode.Mix, previous, input, amount);
+em.UnitWrite(cell, smoothed);           <span class="c">// what it holds next time</span></code></pre>
+
+    <h3>The two questions every stateful module has</h3>
+
+    <p>Both are answered by the emitter, once per program rather than once per module, so four filters in one
+    patch cost two cells between them and not eight.</p>
+
+    <ul>
+      <li><code>em.Interval()</code> — how far the clock moved since the previous evaluation. Nothing tells a
+      module its sample rate; this <em>is</em> the sample rate, said the other way round. It is what turns a
+      cutoff in hertz into a coefficient.</li>
+      <li><code>em.HasMemory()</code> — one where the program has state behind it, zero where it has none.</li>
+    </ul>
+
+    <p>The second matters more than it looks. An emit function runs at compile time, long before anything
+    knows which sink is about to run the program, so this flag is the only way to ask. Mixing on it gives the
+    video path an answer you chose:</p>
+
+    <pre><code><span class="c">// A picture is one evaluation with nothing before it, so what a filter</span>
+<span class="c">// sees there is a signal that never moves — and its response to that is</span>
+<span class="c">// everything through the lowpass and nothing through the other two.</span>
+<span class="k">var</span> live = em.HasMemory();
+
+<span class="k">return</span>
+[
+    em.Ternary(OpCode.Mix, dry, lowpass, live),   <span class="c">// a wire, with no state</span>
+    em.Mul(bandpass, live),                       <span class="c">// silent</span>
+    em.Mul(highpass, live),                       <span class="c">// silent</span>
+];</code></pre>
+
+    <div class="note">
+      <span class="tag">What the video path does on its own</span>
+      <p>With no state passed, <code>UnitRead</code> gives zero and <code>UnitWrite</code> goes nowhere, a
+      <code>Delay</code> hands its input straight through, and <code>Phase</code> becomes the multiply it
+      replaced. Those fallbacks are total and will not crash — but whether they <em>mean</em> anything is
+      yours to decide. A delay line becomes a wire for free; a bank of allpass stages becomes whatever the
+      arithmetic happens to leave, which is why it should say so explicitly instead.</p>
+    </div>
+
+    <h3>Buffers</h3>
+
+    <p>For a real delay, <code>em.DelayLine(OpCode.Delay, input, feedback, time, maximum)</code>. The time is
+    a signal and may be swept — reads interpolate, so it glides rather than steps — but the maximum is fixed
+    at compile time, because it sizes a buffer and a buffer cannot be resized from the audio thread.
+    <code>OpCode.Allpass</code> is the same shape and smears without colouring.</p>
+
+    <p>Note the cost: two seconds at the oversampled audio rate is about 1.5 MB per line. Ask for what you
+    need.</p>
+  </section>
+
+  <svg class="saw" preserveAspectRatio="none" viewBox="0 0 720 9" aria-hidden="true"><rect width="720" height="9" fill="url(#sawtooth)"/></svg>
+
+  <section id="presets">
+    <h2><span class="num">07</span>Shipping a patch</h2>
+
+    <p>A preset is how a plugin shows its modules wired up properly. It is a name and a function, and the
+    function is handed the catalogue when the preset is <em>picked</em>, not when it is registered — so it can
+    freely use the modules the same plugin just added.</p>
+
+    <pre><code>registry.AddPresets([<span class="k">new</span> PatchPreset(<span class="s">"Your preset"</span>, Build)]);
+
+<span class="k">static</span> Patch Build(ModuleCatalog modules)
+{
+    <span class="k">var</span> b = <span class="k">new</span> PatchBuilder(modules);
+
+    <span class="k">var</span> coord = b.Add(<span class="s">"coord"</span>, 40, 120);
+    <span class="k">var</span> rings = b.Add(<span class="s">"yours.rings"</span>, 260, 120, (2, 2.5f));   <span class="c">// (port, knob)</span>
+    <span class="k">var</span> output = b.Add(NodeCatalog.OutputTypeId, 520, 200);
+
+    b.Wire(coord, 0, rings, 0)
+     .Wire(coord, 1, rings, 1)
+     .Wire(rings, 0, output, NodeCatalog.OutputColourPort);
+
+    <span class="k">return</span> b.Patch;
+}</code></pre>
+
+    <p>Presets from plugins appear after the engine's own, so what the app opens on never depends on what is
+    installed. Because a patch is keyed by type id, one that uses your modules records what it needs, and
+    opening it somewhere your plugin is absent refuses cleanly rather than loading a broken graph.</p>
+
+    <p>A preset that reaches for <em>another</em> plugin's modules is allowed and worth a moment's care: it is
+    built when it is picked, so a missing plugin surfaces there. Check first with
+    <code>modules.HasProvider(id)</code> and throw something that names the plugin, or the reader gets a
+    module id they never asked about.</p>
+  </section>
+
+  <svg class="saw" preserveAspectRatio="none" viewBox="0 0 720 9" aria-hidden="true"><rect width="720" height="9" fill="url(#sawtooth)"/></svg>
+
+  <section id="audio">
+    <h2><span class="num">08</span>Sound backends</h2>
+
+    <p>The application has no platform-specific code in it at all; every sound device is a plugin. A backend
+    is two classes — one that offers itself, one that opens the device.</p>
+
+    <pre><code><span class="k">public sealed class</span> JackOutput : IAudioOutput
+{
+    <span class="k">public string</span> Id =&gt; <span class="s">"jack"</span>;
+    <span class="k">public string</span> Name =&gt; <span class="s">"JACK"</span>;
+    <span class="k">public int</span> Priority =&gt; 150;      <span class="c">// the shipped ALSA backend is 100, and loses</span>
+    <span class="k">public bool</span> IsSupported =&gt; OperatingSystem.IsLinux() &amp;&amp; JackIsRunning();
+
+    <span class="k">public</span> IAudioDevice Create(AudioFormat format) =&gt; <span class="k">new</span> JackDevice(format);
+}</code></pre>
+
+    <p><code>IsSupported</code> must answer without opening anything and without throwing — that is what lets
+    a plugin for another operating system stay loadable everywhere. Higher <code>Priority</code> wins; ties
+    break on <code>Id</code>.</p>
+
+    <p><code>IAudioDevice.Start</code> is handed a callback that fills an interleaved stereo buffer on the
+    audio thread. It <strong>must not block, allocate or throw</strong>. If you cannot honour the requested
+    format exactly, open the nearest thing you can and report the truth through
+    <code>SampleRate</code>.</p>
+  </section>
+
+  <svg class="saw" preserveAspectRatio="none" viewBox="0 0 720 9" aria-hidden="true"><rect width="720" height="9" fill="url(#sawtooth)"/></svg>
+
+  <section id="install">
+    <h2><span class="num">09</span>Building and installing</h2>
+
+    <p>Drop your build output into a folder under <code>plugins/</code> beside the executable — assembly,
+    dependencies and <code>.deps.json</code> together. To ship one in the box instead, add a line to
+    <code>Flyback.App.csproj</code> and the build lays it out for you:</p>
+
+    <pre><code>&lt;<span class="k">PluginProject</span> Include=<span class="s">"..\Flyback.Plugins.Yours\Flyback.Plugins.Yours.csproj"</span>
+               FolderName=<span class="s">"Yours"</span> /&gt;</code></pre>
+
+    <p>An optional <code>Platform</code> attribute — <code>win</code>, <code>osx</code> or
+    <code>linux</code>, matching the leading part of a runtime identifier — names the one platform the plugin
+    is for, and leaves it out of builds for anywhere else. A module plugin wants no platform at all, so that
+    it goes everywhere.</p>
+
+    <div class="note">
+      <span class="tag">Two things that catch people out</span>
+      <p><strong>Plugins are read once, at startup.</strong> Installing one means restarting the
+      application.</p>
+      <p><strong>The command line has no plugins of its own.</strong> Both programs share one folder beside
+      them, and the shell is what lays it out — so a CLI run from its own build output, rather than from a
+      publish, will not find your modules.</p>
+    </div>
+  </section>
+
+  <svg class="saw" preserveAspectRatio="none" viewBox="0 0 720 9" aria-hidden="true"><rect width="720" height="9" fill="url(#sawtooth)"/></svg>
+
+  <section id="refuse">
+    <h2><span class="num">10</span>How things fail</h2>
+
+    <p>A broken, missing or hostile plugin is a note in the status bar, never a program that fails to start.
+    Failures are values rather than exceptions, and they are scoped as narrowly as they can be: one bad
+    module costs that module, not the plugin and not the program. Hover the status bar for what loaded, what
+    did not, and why.</p>
+
+    <div class="scroll">
+      <table>
+        <caption>What gets refused, and what it costs.</caption>
+        <thead>
+          <tr><th scope="col">Situation</th><th scope="col">Result</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>A type id missing the provider prefix</td><td>That module is ignored</td></tr>
+          <tr><td>The same type id twice</td><td>The later one is ignored</td></tr>
+          <tr><td>Provider id is <code>flyback</code></td><td>Refused — reserved for the engine</td></tr>
+          <tr><td>Provider id already loaded, or blank</td><td>Refused</td></tr>
+          <tr><td>A provider claiming ids that already exist</td><td>Refused — it could answer for modules saved patches mean something else by</td></tr>
+          <tr><td>Two plugins with one <code>Info.Id</code></td><td>The second is ignored</td></tr>
+          <tr><td>A stray host-owned dll in your folder</td><td>Ignored, and the host's copy used</td></tr>
+          <tr><td>A throw from <code>Register</code> or a preset</td><td>Reported; everything else carries on</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>A provider appears only if at least one of its modules was accepted, so a patch can never come to
+    require a plugin that contributed nothing.</p>
+  </section>
+
+  <svg class="saw" preserveAspectRatio="none" viewBox="0 0 720 9" aria-hidden="true"><rect width="720" height="9" fill="url(#sawtooth)"/></svg>
+
+  <section id="testing">
+    <h2><span class="num">11</span>Testing</h2>
+
+    <p>Test against the real plugin loaded off disk, not a stub — that way the thing under test is the thing
+    that has to work: a separate assembly, its own dependencies, and a deps file the resolver has to read.
+    Add a <code>PluginProject</code> item to the test project and load the catalogue the way the app does.</p>
+
+    <p>To drive a module sample by sample, feed the signal in through the Coordinates module's <code>x</code>
+    and the clock through <code>t</code>. <code>Evaluate</code> takes both per evaluation, which makes it the
+    one way to push an arbitrary waveform through a module without building an oscillator to produce it.</p>
+
+    <pre><code><span class="k">var</span> program = patch.CompileForAudio(catalog).Program;
+<span class="k">var</span> delays = <span class="k">new</span> DelayState(
+    program.DelayLengths, rate, program.PhaseCount, program.UnitCount);
+
+<span class="k">var</span> registers = program.AllocateRegisters();
+
+<span class="k">for</span> (<span class="k">var</span> i = 0; i &lt; signal.Length; i++)
+{
+    program.Evaluate(signal[i], 0f, i / (<span class="k">double</span>)rate, registers, <span class="k">default</span>, delays);
+    output[i] = (<span class="k">float</span>)registers[program.OutputBase];
+}</code></pre>
+
+    <p>Compile for video as well, and pin what your module does with no state — passing <code>null</code>
+    for the delays is exactly what the renderer does. A test that says "with no state this is a wire" is
+    worth more than one that says the filter filters.</p>
+
+    <p><code>flyback-cli check</code> compiles both sinks of a patch and carries the answer in its exit code,
+    which makes it the one to put in CI.</p>
+  </section>
+
+  <svg class="saw" preserveAspectRatio="none" viewBox="0 0 720 9" aria-hidden="true"><rect width="720" height="9" fill="url(#sawtooth)"/></svg>
+
+  <section id="rules">
+    <h2><span class="num">12</span>Rules of thumb</h2>
+
+    <ul>
+      <li><strong>Be a wire at zero.</strong> Every effect here is exactly its input at a mix of zero, and
+      exactly a plain Saw at a detune of zero. It costs nothing and it makes a module comprehensible by
+      turning one knob.</li>
+      <li><strong>Normalise as you go.</strong> Peak-normalise inside the module so turning a knob up makes
+      the sound dirtier or wider, never louder. A module that gets louder as it does its job is one nobody
+      can leave in a patch.</li>
+      <li><strong>Clamp what persists.</strong> Degenerate arithmetic is forgotten immediately; a bad value
+      in a cell or a delay line is not, and turning the knob back down will not undo it.</li>
+      <li><strong>Type your maths ports <code>Any</code>.</strong> A module that shapes a number shapes a
+      colour for free, and then it works at both sinks.</li>
+      <li><strong>Decide what you mean on the screen.</strong> Not what the arithmetic leaves — what you
+      would have chosen. Then write it in the description, so the palette says so too.</li>
+      <li><strong>Say it in the description.</strong> It is the only documentation a person gets while
+      patching, and the audio-only ones especially need it.</li>
+    </ul>
+  </section>
+
+  <footer>
+    <p>Written against the engine as it stands. The architecture decision records under
+    <code>docs/adr</code> carry the reasoning behind the boundary — 0025 for why platform I/O is a plugin,
+    0026 for provenance in the patch file, 0027 for the delay opcodes, and 0041 and 0042 for how a plugin
+    came to hold state without one.</p>
+  </footer>
+
+  </main>
+</div>
+</div>
