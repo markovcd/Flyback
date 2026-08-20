@@ -156,7 +156,7 @@ internal sealed class OpenAiSession : IPatchSession
                     // what goes back to this model is the description: the ear
                     // is a different model and this one may well not have one.
                     if (outcome.Wav is { } wav)
-                        said += "\n\n" + await Described(wav, Note(call), cancel).ConfigureAwait(false);
+                        said += "\n\n" + await Described(wav, cancel).ConfigureAwait(false);
 
                     // Every call gets exactly one reply, refusals included. One
                     // left unanswered makes the whole next request a 400, which
@@ -214,13 +214,22 @@ internal sealed class OpenAiSession : IPatchSession
     /// what it was told rather than what came out.
     /// </summary>
     private const string Ear = """
-        You are listening on behalf of somebody building a sound on a modular
-        synthesiser, who cannot hear it. Describe what you actually hear, in
-        three or four sentences: pitch and whether it is steady, timbre, how it
-        moves over the clip, and anything wrong with it — clicks, a tearing
-        buzz, distortion, a tail that cuts off. Say plainly if it is a plain
-        tone and nothing more. Do not guess at how it was made, do not
-        speculate about what it was for, and do not offer advice.
+        You are listening on behalf of somebody who cannot hear this clip. You
+        are not told what it is or what it was meant to be, and you should not
+        try to work it out — describe only what is there.
+
+        Answer in three or four sentences, covering: how many separate things
+        you can hear and roughly what pitch each sits at; whether the clip is
+        continuous or has separate hits in it, and if it has hits, how often;
+        whether anything changes over the clip or it stays as it starts; and
+        anything wrong with it — clicks, a tearing buzz, distortion, a tail
+        that cuts off.
+
+        Most of what you will be sent is plain and unmusical, and saying so is
+        the useful answer: "two steady tones, one low and one high, and nothing
+        else" is worth far more than a generous reading. Do not name instruments
+        unless what you hear genuinely sounds like one. Do not guess at how it
+        was made, and do not offer advice.
         """;
 
     /// <summary>
@@ -246,21 +255,27 @@ internal sealed class OpenAiSession : IPatchSession
     /// the turn. The sound was rendered and the levels are already known; not
     /// being able to describe it is worth saying and worth carrying on from.
     /// </para>
+    /// <para>
+    /// The ear is told nothing about the patch, and that is the correction to
+    /// the first version of this. It used to be handed what the model said it
+    /// was listening for, on the reasoning that a focused question gets a better
+    /// answer. What it actually got was agreement: asked to listen for a
+    /// kickdrum, a hihat and a melody, it reported a kickdrum, a hihat and a
+    /// melody — over a clip that measured as three steady tones with no hit in
+    /// it anywhere. A description worth having is one that could have come back
+    /// wrong, so nothing here tells it what wrong would look like.
+    /// </para>
     /// </remarks>
-    private async Task<string> Described(byte[] wav, string? listeningFor, CancellationToken cancel)
+    private async Task<string> Described(byte[] wav, CancellationToken cancel)
     {
         var ear = config.EarModel;
 
         if (string.IsNullOrWhiteSpace(ear))
             return "No model is set to listen with, so nobody has heard this.";
 
-        var asked = listeningFor is { Length: > 0 }
-            ? $"Here is the sound. The person building it is listening for: {listeningFor}"
-            : "Here is the sound.";
-
         var body = Wire.Request(
             ear,
-            [Wire.System(Ear), Wire.UserWithMedia(asked, [], [wav])],
+            [Wire.System(Ear), Wire.UserWithMedia("Here is the clip.", [], [wav])],
             []);
 
         try
@@ -279,20 +294,6 @@ internal sealed class OpenAiSession : IPatchSession
         {
             return $"It could not be played to {ear}: {ex.Message} The levels above are still measured "
                 + "from the sound itself, so use those and say you have not heard it.";
-        }
-    }
-
-    /// <summary>What the model said it was listening for, or null when it did not say.</summary>
-    private static string? Note(Call call)
-    {
-        try
-        {
-            return JsonNode.Parse(string.IsNullOrWhiteSpace(call.Arguments) ? "{}" : call.Arguments)
-                ?["note"]?.GetValue<string>();
-        }
-        catch (Exception ex) when (ex is JsonException or InvalidOperationException)
-        {
-            return null;
         }
     }
 

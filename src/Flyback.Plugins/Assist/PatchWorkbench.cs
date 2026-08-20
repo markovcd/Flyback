@@ -800,9 +800,10 @@ public sealed class PatchWorkbench
 
                 var caption = new StringBuilder(
                     $"{Number(seconds)}s of sound from {Number(from)}s, in stereo at "
-                    + $"{limits.ListenRate / 1000} kHz. Peak {Decibels(peak)}, rms {Decibels(rms)}. "
-                    + "It was rendered from zero, so anything with a delay in it has the tail it "
-                    + "would really have.");
+                    + $"{limits.ListenRate / 1000} kHz. It was rendered from zero, so anything with "
+                    + "a delay in it has the tail it would really have.");
+
+                caption.Append("\n\n").Append(Measured(samples, peak, rms));
 
                 // Worth saying, because it changes what the sound even is: a
                 // scanning patch is being swept across its own picture, so what
@@ -818,6 +819,72 @@ public sealed class PatchWorkbench
 
     /// <summary>Below this a buffer is called silence: -66 dBFS, and nothing a speaker would utter.</summary>
     private const float SilenceFloor = 0.0005f;
+
+    /// <summary>How many slices the level is reported over. Enough to see a beat in a second or two.</summary>
+    private const int Slices = 16;
+
+    /// <summary>
+    /// What the samples say about themselves, as against what a listener says
+    /// about them.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This exists because a listener was believed once too often. A model asked
+    /// to describe a patch built from three steady tones reported a thumping
+    /// kickdrum and a crisp hihat — the words it had been given rather than the
+    /// sound it was played — and nothing in the reply contradicted it, though
+    /// the levels sitting beside the prose already did.
+    /// </para>
+    /// <para>
+    /// Crest is the measurement that catches exactly that. It is the distance
+    /// between the loudest sample and the average one, so it says whether
+    /// anything in the clip is a *hit*: a steady tone has almost none and
+    /// percussion has a great deal, and no description can talk its way out of
+    /// the number. The slices are the same question over time — a rhythm shows
+    /// as a level that moves, and a drone as a row of near-identical figures.
+    /// </para>
+    /// <para>
+    /// Reported as numbers with the yardstick beside them rather than as a
+    /// verdict. What counts as percussive enough is the reader's to judge; what
+    /// is not the reader's to judge is what the samples measure.
+    /// </para>
+    /// </remarks>
+    private static string Measured(ReadOnlySpan<float> samples, float peak, float rms)
+    {
+        var text = new StringBuilder("Measured from the samples, not heard: peak ")
+            .Append(Decibels(peak))
+            .Append(", rms ")
+            .Append(Decibels(rms))
+            .Append(", crest ")
+            .Append(Gap(peak, rms))
+            .Append(". Crest is peak above rms: a steady tone sits near 3 dB, a mix with drum "
+                + "hits in it 12 dB or more. Level in ")
+            .Append(Slices)
+            .Append(" slices across the clip, in dBFS:");
+
+        var frames = samples.Length / NodeCatalog.AudioChannels;
+        var slice = Math.Max(1, frames / Slices);
+
+        for (var i = 0; i < Slices; i++)
+        {
+            var start = i * slice * NodeCatalog.AudioChannels;
+            if (start >= samples.Length) break;
+
+            var length = Math.Min(slice * NodeCatalog.AudioChannels, samples.Length - start);
+
+            text.Append(' ').Append(Decibels(Levels(samples.Slice(start, length)).Rms).Replace(" dBFS", ""));
+        }
+
+        text.Append(". A row of near-identical figures is something continuous; a rhythm moves.");
+
+        return text.ToString();
+    }
+
+    /// <summary>The distance between two levels, which is a ratio rather than a level.</summary>
+    private static string Gap(float above, float below) =>
+        above <= 0f || below <= 0f
+            ? "n/a"
+            : (20 * Math.Log10(above / below)).ToString("0.0", CultureInfo.InvariantCulture) + " dB";
 
     private int Samples(double seconds) =>
         (int)Math.Round(limits.ListenRate * seconds) * NodeCatalog.AudioChannels;
@@ -1056,7 +1123,7 @@ public sealed class PatchWorkbench
                       "type": "number",
                       "description": "Where on the timeline to start, up to {{Number(limits.LatestTime)}}. Defaults to 0. Everything before it is still rendered, so delays arrive with the tail they would really have."
                     },
-                    "note": { "type": "string", "description": "What you are listening for. This is put to the model that hears it, so say what would settle the question — 'is the bass clean or buzzing', 'does the melody land on the beat'." }
+                    "note": { "type": "string", "description": "What you are listening for, for your own record. It is deliberately not passed on: whoever listens is told nothing about the patch, so that what comes back could disagree with you." }
                   }
                 }
                 """));

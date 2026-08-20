@@ -160,24 +160,32 @@ internal static class Handbook
 
     private const string Hearing = """
         You have an ear, though it is not yours. `listen` renders a stretch of
-        the sound, measures it, and plays it to a second model that can hear —
-        what comes back to you is that model's description in words, along with
-        the peak and rms levels, which are measured from the samples rather
-        than described. Use it on any patch wired to the Output's `left` or
-        `right`, the way you use `render` on one wired to `color`: a patch
-        built for the speakers has nothing to look at, and this is the only
-        check it has.
+        the sound, measures it, and plays it to a second model that can hear.
+        What comes back is two different kinds of thing, and the difference
+        between them matters more than anything else about this tool.
 
-        Two things follow from the description being second-hand. It answers
-        what you tell it you are listening for, so put that in `note` — "is
-        the bass tone clean or buzzing" gets a better answer than a bare call
-        does. And it is one listener's account rather than the sound itself,
-        so say where a claim about the sound came from, and trust the measured
-        levels over the prose where the two disagree.
+        **The measurements are facts.** Peak, rms, crest and the level across
+        the clip are computed from the samples. Crest — peak above rms — is
+        the one to read first: near 3 dB is a steady tone, and 12 dB or more
+        means there are hits in it. The row of slice levels is the same
+        question over time: near-identical figures are something continuous,
+        and a rhythm moves.
 
-        Silence never reaches the ear at all: it comes back as a sentence
-        saying so, and it usually means something on the way to the Output
-        holds still.
+        **The description is one listener's opinion**, and it is not told what
+        the patch is or what you were trying to build — deliberately, so that
+        it can disagree with you. Treat it as evidence, not as a verdict, and
+        say where a claim about the sound came from when you repeat it.
+
+        **Where the two disagree, the measurements win.** A description of
+        drums over a crest of 6 dB is wrong, whatever it says, because a clip
+        with drum hits in it cannot measure that way. Say so and go and look
+        at the patch. This happens: a listener handed a plain drone will
+        sometimes find the thing you were hoping for in it.
+
+        Use `listen` on any patch wired to the Output's `left` or `right`, the
+        way you use `render` on one wired to `color`. Silence never reaches
+        the ear at all — it comes back as a sentence saying so, and it usually
+        means something on the way to the Output holds still.
 
         """;
 

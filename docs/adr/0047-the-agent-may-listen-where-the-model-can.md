@@ -132,11 +132,25 @@ would describe a sound it never heard.
 
 ## Consequences
 
-**What the agent knows about the sound is second-hand.** It reads one listener's
-account rather than hearing anything, and the handbook says so and tells it to
-attribute what it repeats. The peak and rms in the same reply are the corrective:
-those are measured from the samples, so where the prose and the numbers disagree
-the numbers are the sound and the prose is an opinion of it.
+**What the agent knows about the sound is second-hand**, and a second-hand
+account will agree with you if you let it. The first version of this forwarded
+the `note` — what the model said it was listening for — on the reasoning that a
+focused question gets a better answer. Asked to listen for a kickdrum, a hihat
+and a melody, the ear reported a kickdrum, a hihat and a melody. The clip was
+three steady tones with no hit in it anywhere: 60 Hz, 6 kHz, and a wandering mid
+tone, crest 6 dB where percussion is 12 or more.
+
+Two things came out of that, and they are what makes the ear worth having at all:
+
+*The ear is told nothing.* Not what the patch is, not what it was hoped to be.
+A description that could not have come back wrong is not evidence.
+
+*The samples answer for themselves.* Peak, rms, **crest**, and the level across
+sixteen slices go back with the description, measured here. Crest is the one that
+catches this exact failure — it says whether anything in the clip is a hit, and
+no account of the sound can talk its way past the number. The handbook states
+the rule plainly: where the description and the measurements disagree, the
+measurements win.
 
 **A listen is two requests and two models.** The second is small — one sound,
 four seconds at most, at 24 kHz rather than the speakers' 48 — and it is sent

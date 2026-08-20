@@ -346,14 +346,9 @@ public class SessionTests
     {
         var (events, sent) = await Listening(
             Asking(Sounding),
-            Asking(("listen", """{"seconds":0.5,"note":"is the tone clean or buzzing"}""")),
+            Asking(("listen", """{"seconds":0.5}""")),
             Prose("A steady mid tone, clean, with no buzz on it."),
             Asking(("propose", """{"summary":"a sine at 440"}""")));
-
-        // The question it asked was put to the ear rather than kept as a note.
-        var asked = sent.Single(r => r["model"]!.GetValue<string>() == Ears).ToJsonString();
-
-        asked.ShouldContain("is the tone clean or buzzing");
 
         var answer = sent[^1]["messages"]!.AsArray()
             .Where(m => m!["role"]!.GetValue<string>() == "tool")
@@ -361,11 +356,61 @@ public class SessionTests
             .Single(text => text.Contains("dBFS", StringComparison.Ordinal));
 
         // Both halves: what was measured here, and what was heard there.
-        answer.ShouldContain("Peak -6");
+        answer.ShouldContain("peak -6");
         answer.ShouldContain("no buzz on it");
 
         events.OfType<PatchEvent.Heard>().ShouldHaveSingleItem()
             .Caption.ShouldContain("no buzz on it");
+    }
+
+    /// <summary>
+    /// The ear is told nothing about the patch — not what it is, not what the
+    /// model was hoping to hear.
+    /// </summary>
+    /// <remarks>
+    /// The bug this exists for. `note` used to be forwarded as "the person
+    /// building it is listening for: …", and a model asked to listen for a
+    /// kickdrum, a hihat and a melody duly reported a kickdrum, a hihat and a
+    /// melody — over a clip that measured as three steady tones with no hit in
+    /// it anywhere. A description that could not have come back wrong is not
+    /// evidence, so the expectation stays on this side of the request.
+    /// </remarks>
+    [Fact]
+    public async Task The_ear_is_never_told_what_it_is_supposed_to_hear()
+    {
+        var (_, sent) = await Listening(
+            Asking(Sounding),
+            Asking(("listen", """{"seconds":0.5,"note":"checking the kickdrum and the hihat"}""")),
+            Prose("One steady low tone and nothing else."),
+            Asking(("propose", """{"summary":"a sine at 440"}""")));
+
+        var asked = sent.Single(r => r["model"]!.GetValue<string>() == Ears).ToJsonString();
+
+        asked.ShouldNotContain("kickdrum");
+        asked.ShouldNotContain("hihat");
+    }
+
+    /// <summary>
+    /// Crest is the measurement that catches a listener agreeing with a
+    /// description of drums over a clip that has none: a steady tone cannot
+    /// measure like something with hits in it, whatever anybody says about it.
+    /// </summary>
+    [Fact]
+    public async Task What_the_samples_say_goes_back_beside_what_the_ear_says()
+    {
+        var (events, _) = await Listening(
+            Asking(Sounding),
+            Asking(("listen", """{"seconds":0.5}""")),
+            Prose("Thumping drums throughout."),
+            Asking(("propose", """{"summary":"a sine at 440"}""")));
+
+        var heard = events.OfType<PatchEvent.Heard>().ShouldHaveSingleItem();
+
+        // A sine is about 3 dB of crest, and the reply says so beside the
+        // figure — which is what makes "thumping drums" checkable from here.
+        heard.Caption.ShouldContain("crest 3.");
+        heard.Caption.ShouldContain("12 dB or more");
+        heard.Caption.ShouldContain("Measured from the samples, not heard");
     }
 
     /// <summary>
@@ -390,7 +435,7 @@ public class SessionTests
         var heard = events.OfType<PatchEvent.Heard>().ShouldHaveSingleItem();
 
         heard.Caption.ShouldContain("not available here");
-        heard.Caption.ShouldContain("Peak -6", Case.Sensitive);
+        heard.Caption.ShouldContain("peak -6", Case.Sensitive);
     }
 
     /// <summary>
