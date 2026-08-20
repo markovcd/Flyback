@@ -6,7 +6,7 @@ namespace Flyback.App.Controls;
 
 /// <summary>
 /// The Flyback mark, drawn rather than loaded. Avalonia cannot rasterise an SVG
-/// without a package for it, and this one is two sweeps, a retrace and a beam —
+/// without a package for it, and this one is two ramps, a retrace and a beam —
 /// less work than the dependency would be.
 /// </summary>
 /// <remarks>
@@ -40,8 +40,8 @@ public sealed class LogoMark : Control
 
         var sweep = new LinearGradientBrush
         {
-            StartPoint = new RelativePoint(At(56, 184), RelativeUnit.Absolute),
-            EndPoint = new RelativePoint(At(200, 72), RelativeUnit.Absolute),
+            StartPoint = new RelativePoint(At(73, 92), RelativeUnit.Absolute),
+            EndPoint = new RelativePoint(At(183, 56), RelativeUnit.Absolute),
             GradientStops =
             {
                 new GradientStop(Colors.Sweep.Start, 0),
@@ -52,16 +52,16 @@ public sealed class LogoMark : Control
 
         var stroke = Thickness * scale;
 
-        // Retrace underneath, as in the file: the sweeps meet it at both ends and
-        // should be the ones that overlap.
-        context.DrawLine(new Pen(Retrace, stroke, lineCap: PenLineCap.Round), At(128, 72), At(128, 184));
+        // Retrace underneath, as in the file: the ramps land on it and should be
+        // the ones that overlap.
+        context.DrawLine(new Pen(Retrace, stroke, lineCap: PenLineCap.Round), At(73, 92), At(73, 200));
 
         var pen = new Pen(sweep, stroke, lineCap: PenLineCap.Round);
-        context.DrawLine(pen, At(56, 184), At(128, 72));
-        context.DrawLine(pen, At(128, 184), At(200, 72));
+        context.DrawLine(pen, At(73, 92), At(183, 56));
+        context.DrawLine(pen, At(73, 148), At(165, 118));
 
-        context.DrawEllipse(Beam, null, At(200, 72), 13 * scale, 13 * scale);
-        context.DrawEllipse(Core, null, At(200, 72), 5.5 * scale, 5.5 * scale);
+        context.DrawEllipse(Beam, null, At(165, 118), 13 * scale, 13 * scale);
+        context.DrawEllipse(Core, null, At(165, 118), 5.5 * scale, 5.5 * scale);
         return;
 
         Point At(double x, double y) => new(left + x * scale, top + y * scale);

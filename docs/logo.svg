@@ -3,12 +3,19 @@
 
   <!--
     The mark is the signal the program is named after. A flyback is the retrace
-    of a CRT beam: the ramp that sweeps the screen, then the snap back to start
-    the next line. Drawn out that is a sawtooth — which is also one of the synth's
-    own oscillators, so the same shape says video and audio at once.
+    of a CRT beam: the ramp that sweeps a line, then the snap back to start the
+    next one. Drawn out that is a sawtooth — which is also one of the synth's own
+    oscillators, so the same shape says video and audio at once.
 
     One cycle, not three. Three read as a waveform at full size and as a smudge
     at sixteen pixels, and an icon has to survive the smaller of those.
+
+    The cycle is laid out the way the beam actually moves rather than the way an
+    oscilloscope stacks it: the ramps climb left to right and the retrace falls
+    down the left margin, where the next line begins. That puts the fall on the
+    outside with two ramps hanging off it, and the cycle spells an F on its own —
+    the letter is a thing the waveform does, not a shape imposed on it. The stem
+    runs on past the second ramp because there is always another line coming.
 
     The sweep is cool and the retrace is warm, both from the node editor's own
     category accents: Source blue through Feedback cyan to Oscillator green for
@@ -16,7 +23,7 @@
   -->
 
   <defs>
-    <linearGradient id="sweep" x1="56" y1="184" x2="200" y2="72" gradientUnits="userSpaceOnUse">
+    <linearGradient id="sweep" x1="73" y1="92" x2="183" y2="56" gradientUnits="userSpaceOnUse">
       <stop offset="0" stop-color="#4A9EDE"/>
       <stop offset="0.5" stop-color="#3FC8C8"/>
       <stop offset="1" stop-color="#4FC387"/>
@@ -32,19 +39,21 @@
   <rect x="2" y="2" width="252" height="252" rx="54" fill="none" stroke="#2E333B" stroke-width="4"/>
 
   <g fill="none" stroke-linecap="round" stroke-width="21">
+    <!-- Underneath, so the ramps are the ones that overlap where they land on it. -->
     <g stroke="#E05A5A">
-      <path d="M128 72V184" filter="url(#hot)" opacity="0.5"/>
-      <path d="M128 72V184"/>
+      <path d="M73 92V200" filter="url(#hot)" opacity="0.5"/>
+      <path d="M73 92V200"/>
     </g>
 
+    <!-- Both ramps take the same slope: one sweep rate, two lines. -->
     <g stroke="url(#sweep)">
-      <path d="M56 184L128 72"/>
-      <path d="M128 184L200 72"/>
+      <path d="M73 92L183 56"/>
+      <path d="M73 148L165 118"/>
     </g>
   </g>
 
-  <!-- The beam, at the end of the sweep with nowhere left to go. -->
-  <circle cx="200" cy="72" r="20" fill="#E0A84A" opacity="0.3" filter="url(#hot)"/>
-  <circle cx="200" cy="72" r="13" fill="#E0A84A"/>
-  <circle cx="200" cy="72" r="5.5" fill="#FFF3DC"/>
+  <!-- The beam, part way along the second line: the one the tube is drawing now. -->
+  <circle cx="165" cy="118" r="20" fill="#E0A84A" opacity="0.3" filter="url(#hot)"/>
+  <circle cx="165" cy="118" r="13" fill="#E0A84A"/>
+  <circle cx="165" cy="118" r="5.5" fill="#FFF3DC"/>
 </svg>
