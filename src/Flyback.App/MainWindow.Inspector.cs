@@ -78,6 +78,11 @@ public sealed partial class MainWindow
             Report(message);
         };
 
+        // The picture a take was reading has gone. Finishing the file is the only
+        // useful thing left to do with it — what is already written is a
+        // recording, and what would follow is the same frame for ever.
+        preview.CaptureLost += Stop;
+
         // It cannot be switched on at all where no plugin offered a device. The
         // constructor turns it on once there is a patch to play — see there for
         // why it starts on rather than off.
@@ -105,6 +110,21 @@ public sealed partial class MainWindow
             }
 
             await ExportAsync();
+        };
+
+        ToolTip.SetShowOnDisabled(recordButton, true);
+
+        recordButton.Click += async (_, _) =>
+        {
+            // The same button ends it. A take has no length, so stopping it is
+            // the only way it ever finishes.
+            if (recorder is not null)
+            {
+                Stop();
+                return;
+            }
+
+            await RecordAsync();
         };
 
         BuildOutputSettings();
@@ -333,6 +353,7 @@ public sealed partial class MainWindow
         }));
 
         outputSettings.Children.Add(exportButton);
+        outputSettings.Children.Add(recordButton);
     }
 
     private static TextBlock Heading(string text) => new()

@@ -4,7 +4,7 @@ Each record captures one decision, the situation that forced it, and what it
 costs. Format is [Michael Nygard's](https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions):
 context, decision, consequences.
 
-Eighteen records — [0003](0003-cpu-rendering-with-a-gpu-path-left-open.md),
+Nineteen records — [0003](0003-cpu-rendering-with-a-gpu-path-left-open.md),
 [0004](0004-visual-patch-editor-as-the-authoring-model.md),
 [0026](0026-modules-from-plugins-with-provenance-in-the-file.md),
 [0027](0027-delay-lines-give-the-audio-path-a-memory.md),
@@ -20,8 +20,9 @@ Eighteen records — [0003](0003-cpu-rendering-with-a-gpu-path-left-open.md),
 [0044](0044-lay-patches-out-in-layers-not-with-springs.md),
 [0045](0045-what-is-copied-is-a-patch-file.md),
 [0046](0046-the-module-list-is-a-gesture-not-a-panel.md) and
-[0047](0047-the-agent-may-listen-where-the-model-can.md) and
-[0048](0048-time-is-seconds-and-nothing-else.md) — are marked
+[0047](0047-the-agent-may-listen-where-the-model-can.md),
+[0048](0048-time-is-seconds-and-nothing-else.md) and
+[0049](0049-record-the-gpu-frame-not-the-interpreter.md) — are marked
 **user-directed**: they were chosen by the project owner, not derived. The first
 two sit upstream of almost everything else here; 0026 and 0027 each give up a
 property an earlier record relied on, knowingly; 0031, 0033, 0034, 0036 and 0040
@@ -43,13 +44,20 @@ open and left open on purpose, and closes it sideways: the model doing the
 building still cannot hear, and is handed what a second model heard instead.
 0048 takes a knob off a module and is the first record where the agent of 0033
 is the *evidence* rather than the subject: it kept setting a rate low, which was
-a fair reading of a control that should not have existed. All are recorded even
-though they were not mine to make.
+a fair reading of a control that should not have existed. 0049 is the first that
+asks the instrument to be played rather than authored: everything before it
+writes a file from a patch, and this one writes a file from a performance, which
+turns out to need a different source for the frames and a different thing to
+believe about time. All are recorded even though they were not mine to make.
 
 [0035](0035-a-glsl-backend-for-the-video-path.md) is the first record where two
 backends disagree by design: the picture on screen and the picture in an exported
 PNG are computed by different machines, at different precisions, and are allowed
 to differ in their last bits.
+[0049](0049-record-the-gpu-frame-not-the-interpreter.md) is where that stops
+being a tolerated difference and becomes the point: a recording is the screen's
+truth rather than the reference render's, because the screen is the only one of
+the two that was there while the knobs were moving.
 
 ## Index
 
@@ -108,6 +116,7 @@ to differ in their last bits.
 | [0029](0029-linux-sound-through-alsa.md) | Linux sound through ALSA, on a thread of our own |
 | [0030](0030-oscillators-accumulate-their-phase.md) | Oscillators accumulate their phase on the audio path |
 | [0036](0036-export-video-as-motion-jpeg-in-an-avi.md) | Export video as Motion JPEG in an AVI *(user-directed)* |
+| [0049](0049-record-the-gpu-frame-not-the-interpreter.md) | Record the GPU frame, not the interpreter *(user-directed)* |
 | [0038](0038-a-sequencers-notes-are-a-list-on-the-node.md) | A sequencer's notes are a list on the node *(user-directed)* |
 | [0037](0037-one-output-block-that-every-patch-has.md) | One Output block, which every patch has *(user-directed)* |
 | [0041](0041-a-plugin-can-hold-state-without-a-new-opcode.md) | A plugin can hold state without a new opcode *(user-directed)* |

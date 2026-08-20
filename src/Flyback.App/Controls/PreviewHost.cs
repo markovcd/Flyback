@@ -1,6 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 using Avalonia;
 using Avalonia.Controls;
+using Flyback.App.Capture;
 using Flyback.Core.Compile;
 
 namespace Flyback.App.Controls;
@@ -99,6 +100,47 @@ public sealed class PreviewHost : Decorator, IPreviewSurface
 
     public void Rewind() => active.Rewind();
 
+    /// <summary>
+    /// Raised when a recording in progress loses the renderer it was reading —
+    /// the GPU failing over to the processor mid-take. The message is written
+    /// for the status bar.
+    /// </summary>
+    public event Action<string>? CaptureLost;
+
+    private IFrameSink? capturing;
+
+    /// <summary>
+    /// Points the renderer at a sink, and keeps it pointed there across whatever
+    /// happens to the backend. Returns why it cannot, or null having started.
+    /// </summary>
+    /// <remarks>
+    /// Only the GPU path can do this, and deliberately so: reading frames back
+    /// off the card is the whole reason a recording can keep up with a
+    /// performance, and the interpreter that stands in for it cannot draw fast
+    /// enough to be worth recording. Saying no is better than recording a
+    /// slideshow.
+    /// </remarks>
+    internal string? BeginCapture(IFrameSink sink)
+    {
+        if (active is not GpuPreviewSurface gpu)
+            return "The picture is being drawn on the processor, which is too slow to record from.";
+
+        if (gpu.CaptureUnavailable is { } why) return why;
+
+        capturing = sink;
+        gpu.Capture = sink;
+
+        return null;
+    }
+
+    /// <summary>Stops feeding frames. Harmless when nothing was being recorded.</summary>
+    internal void EndCapture()
+    {
+        capturing = null;
+
+        if (active is GpuPreviewSurface gpu) gpu.Capture = null;
+    }
+
     /// <summary>Switches renderer, or does nothing if that one is already running.</summary>
     public void Use(PreviewBackend backend)
     {
@@ -179,5 +221,20 @@ public sealed class PreviewHost : Decorator, IPreviewSurface
 
         active = surface;
         Child = surface;
+
+        // A take reading from a renderer that has just been dropped would go on
+        // writing the last frame it got, for as long as anyone left it running.
+        // Better to say the picture has gone than to fill a file with it.
+        if (capturing is null) return;
+
+        if (surface is GpuPreviewSurface incoming)
+        {
+            incoming.Capture = capturing;
+        }
+        else
+        {
+            capturing = null;
+            CaptureLost?.Invoke("The recording lost the GPU renderer and has been stopped.");
+        }
     }
 }

@@ -1,3 +1,4 @@
+using Flyback.App.Capture;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Core.Render;
@@ -30,8 +31,23 @@ public sealed class AudioEngine(IAudioDevice device) : IDisposable
 
     private readonly AudioRenderer renderer = new(device.SampleRate);
     private State activeState = new(CompiledPatch.Silent, AudioScan.TimeDriven, null);
+    private IAudioSink? capture;
 
     public bool IsRunning => device.IsRunning;
+
+    /// <summary>The rate the device actually opened at, which a recording has to match.</summary>
+    public int SampleRate => device.SampleRate;
+
+    /// <summary>
+    /// Where a recording listens, while one is running. A reference, swapped the
+    /// same way the program is, so the callback sees one sink or none and never
+    /// half of a change.
+    /// </summary>
+    internal IAudioSink? Capture
+    {
+        get => Volatile.Read(ref capture);
+        set => Volatile.Write(ref capture, value);
+    }
 
     /// <summary>Sample-accurate position, and the master timeline while sound is on.</summary>
     public double Time => renderer.Time;
@@ -96,6 +112,11 @@ public sealed class AudioEngine(IAudioDevice device) : IDisposable
     {
         var state = Volatile.Read(ref activeState);
         renderer.Render(state.Program, buffer, state.Scan, state.Memory);
+
+        // After the render and before anything else, so what is recorded is what
+        // was heard — the same samples, not a second evaluation that would drift
+        // from them the moment a knob moved between the two.
+        Volatile.Read(ref capture)?.WriteAudio(buffer);
     }
 
     public void Dispose() => device.Dispose();

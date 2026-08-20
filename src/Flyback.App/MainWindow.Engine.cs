@@ -199,6 +199,11 @@ public sealed partial class MainWindow
 
     protected override void OnClosed(EventArgs e)
     {
+        // Before the device goes, and before anything else: a take whose header
+        // was never patched is not a file, so closing the window mid-recording
+        // has to finish it rather than abandon it.
+        Stop();
+
         audio.Dispose();
         base.OnClosed(e);
     }

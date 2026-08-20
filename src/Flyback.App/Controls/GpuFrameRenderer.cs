@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.OpenGL;
+using Flyback.App.Capture;
 using Flyback.Core.Compile;
 using static Avalonia.OpenGL.GlConsts;
 
@@ -68,9 +69,20 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
 
     private readonly int[] textures = [0, 0];
     private readonly int[] framebuffers = [0, 0];
+    private readonly GpuReadback readback = new();
     private PixelSize size;
     private int read;
     private bool clearPending = true;
+
+    /// <summary>
+    /// Who wants the frames, if anybody does. Set from the UI thread and read on
+    /// the render thread, which is a reference and so is atomic either way; a
+    /// recording that starts one frame late is not a thing anyone can perceive.
+    /// </summary>
+    public IFrameSink? Capture { get; set; }
+
+    /// <summary>Why frames cannot be read back here, or null when they can.</summary>
+    public string? CaptureUnavailable => readback.Unavailable;
 
     /// <summary>
     /// True when the frame history had to fall back to eight bits per channel
@@ -121,6 +133,10 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
         blitTexture = gl.GetUniformLocationString(blit, "uTexture");
         blitScaleX = gl.GetUniformLocationString(blit, "uScaleX");
         blitScaleY = gl.GetUniformLocationString(blit, "uScaleY");
+
+        // Not fatal when it fails: a machine that cannot read frames back can
+        // still show them, and only a recording is refused.
+        readback.Initialise(gl);
 
         return null;
     }
@@ -217,6 +233,11 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
 
         // The frame just drawn becomes the one the next frame reads back.
         read = 1 - read;
+
+        // Before the blit, while the frame is still the whole picture rather than
+        // a letterboxed corner of a control. A recording wants what the patch
+        // drew, not what the window happened to be shaped like.
+        if (Capture is { } sink) readback.Capture(gl, framebuffers[read], resolution, EightBitFeedback, sink);
 
         DrawBlit(gl, framebuffer, control, resolution);
 
@@ -412,6 +433,10 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
     /// </summary>
     public void Dispose(GlInterface? gl)
     {
+        // Unconditionally, because it owns unmanaged memory as well as GL names
+        // and that has to go back whether or not there is still a context.
+        readback.Release(gl);
+
         if (gl is not null)
         {
             Release(gl);

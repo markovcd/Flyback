@@ -35,6 +35,8 @@ public sealed partial class MainWindow
         exportButton.IsEnabled = export is not null || kinds.Count > 0;
 
         ToolTip.SetTip(exportButton, kinds.Count > 0 ? ExportTip : NothingToExport);
+
+        MarkRecordable();
     }
 
     private static readonly string ExportTip =
@@ -152,6 +154,37 @@ public sealed partial class MainWindow
         {
             (true, true) => [Avi, Png, Wav],
             (true, false) => [Avi, Png],
+            (false, true) => [Wav],
+            _ => [],
+        };
+    }
+
+    /// <summary>
+    /// The kinds a recording could be written to. The same question
+    /// <see cref="ExportKinds"/> answers, asked about a take rather than a
+    /// render.
+    /// </summary>
+    /// <remarks>
+    /// No PNG, because a still is not a recording — there is nothing about one
+    /// moment that needs the performance to be running. Otherwise the rule is the
+    /// export's rule: a patch that draws nothing is offered no video and one that
+    /// makes no sound is offered no WAV, so a take can never come out as a black
+    /// rectangle or as silence.
+    /// <para>
+    /// A patch that draws but makes no sound is still offered an AVI, and that
+    /// AVI simply has no audio stream. It is a recording of everything the patch
+    /// does, which is the test — a silent one is only wrong when there was sound
+    /// to be had.
+    /// </para>
+    /// </remarks>
+    internal static IReadOnlyList<FilePickerFileType> RecordKinds(Patch patch)
+    {
+        var (picture, sound) = patch.Reaches();
+
+        return (picture, sound) switch
+        {
+            (true, true) => [Avi, Wav],
+            (true, false) => [Avi],
             (false, true) => [Wav],
             _ => [],
         };

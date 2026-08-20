@@ -19,18 +19,45 @@ public static class WavWriter
         Write(file, interleaved, sampleRate, channels);
     }
 
+    /// <summary>Where the RIFF size sits, for whoever has to go back and fill it in.</summary>
+    internal const int RiffSizeOffset = 4;
+
+    /// <summary>Where the data size sits, likewise.</summary>
+    internal const int DataSizeOffset = 40;
+
+    /// <summary>How much of the file is header, before any sample.</summary>
+    internal const int HeaderBytes = 44;
+
     public static void Write(Stream output, ReadOnlySpan<float> interleaved, int sampleRate, int channels)
     {
         if (channels < 1) throw new ArgumentOutOfRangeException(nameof(channels));
 
-        var dataBytes = interleaved.Length * sizeof(short);
+        WriteHeader(output, interleaved.Length * sizeof(short), sampleRate, channels);
+
+        Span<byte> sample = stackalloc byte[sizeof(short)];
+        foreach (var value in interleaved)
+        {
+            BinaryPrimitives.WriteInt16LittleEndian(sample, ToPcm16(value));
+            output.Write(sample);
+        }
+    }
+
+    /// <summary>
+    /// The 44 bytes every WAV starts with. Shared with
+    /// <see cref="WavStreamWriter"/>, which writes it claiming nothing and comes
+    /// back for the two sizes once the take has ended — so a recorded file and an
+    /// exported one differ in nothing but how they learned their length.
+    /// </summary>
+    /// <param name="dataBytes">Length of the sample data that will follow, in bytes.</param>
+    internal static void WriteHeader(Stream output, int dataBytes, int sampleRate, int channels)
+    {
         var byteRate = sampleRate * channels * (BitsPerSample / 8);
         var blockAlign = channels * (BitsPerSample / 8);
 
-        Span<byte> header = stackalloc byte[44];
+        Span<byte> header = stackalloc byte[HeaderBytes];
 
         Ascii(header[..4], "RIFF");
-        BinaryPrimitives.WriteInt32LittleEndian(header.Slice(4, 4), 36 + dataBytes);
+        BinaryPrimitives.WriteInt32LittleEndian(header.Slice(RiffSizeOffset, 4), 36 + dataBytes);
         Ascii(header.Slice(8, 4), "WAVE");
 
         Ascii(header.Slice(12, 4), "fmt ");
@@ -43,16 +70,9 @@ public static class WavWriter
         BinaryPrimitives.WriteInt16LittleEndian(header.Slice(34, 2), BitsPerSample);
 
         Ascii(header.Slice(36, 4), "data");
-        BinaryPrimitives.WriteInt32LittleEndian(header.Slice(40, 4), dataBytes);
+        BinaryPrimitives.WriteInt32LittleEndian(header.Slice(DataSizeOffset, 4), dataBytes);
 
         output.Write(header);
-
-        Span<byte> sample = stackalloc byte[sizeof(short)];
-        foreach (var value in interleaved)
-        {
-            BinaryPrimitives.WriteInt16LittleEndian(sample, ToPcm16(value));
-            output.Write(sample);
-        }
     }
 
     /// <summary>

@@ -4,6 +4,7 @@ using Avalonia.Controls;
 using Avalonia.OpenGL;
 using Avalonia.OpenGL.Controls;
 using Avalonia.Threading;
+using Flyback.App.Capture;
 using Flyback.Core.Compile;
 
 namespace Flyback.App.Controls;
@@ -62,6 +63,7 @@ public sealed class GpuPreviewSurface : OpenGlControlBase, IPreviewSurface
     private PixelSize controlPixels;
     private double time;
     private bool rewindPending;
+    private IFrameSink? capture;
     private bool dirty = true;
 
     private long frameCostBits;
@@ -103,6 +105,29 @@ public sealed class GpuPreviewSurface : OpenGlControlBase, IPreviewSurface
 
     /// <summary>Whether the frame history had to be kept at eight bits per channel.</summary>
     public bool EightBitFeedback => renderer?.EightBitFeedback ?? false;
+
+    /// <summary>
+    /// Who wants the frames, while a recording lasts. Set from the UI thread and
+    /// handed to the renderer on the render thread, where everything else about
+    /// a frame is decided.
+    /// </summary>
+    internal IFrameSink? Capture
+    {
+        get { lock (gate) return capture; }
+        set
+        {
+            lock (gate)
+            {
+                capture = value;
+                dirty = true;
+            }
+        }
+    }
+
+    /// <summary>Why frames cannot be read back here, or null when they can.</summary>
+    internal string? CaptureUnavailable => renderer is { } active
+        ? active.CaptureUnavailable
+        : "The graphics context is not up yet.";
 
     public PixelSize Resolution
     {
@@ -259,6 +284,7 @@ public sealed class GpuPreviewSurface : OpenGlControlBase, IPreviewSurface
         PixelSize size, control;
         double at;
         bool rewind;
+        IFrameSink? sink;
 
         lock (gate)
         {
@@ -268,7 +294,13 @@ public sealed class GpuPreviewSurface : OpenGlControlBase, IPreviewSurface
             at = time;
             rewind = rewindPending;
             rewindPending = false;
+            sink = capture;
         }
+
+        // Carried across with everything else the frame is a snapshot of, so a
+        // recording starting or stopping lands on a frame boundary rather than
+        // in the middle of one.
+        active.Capture = sink;
 
         if (rewind) active.Rewind();
 

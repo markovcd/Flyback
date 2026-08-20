@@ -40,6 +40,15 @@ public sealed partial class MainWindow : Window
     /// </summary>
     private readonly Button exportButton = new() { Content = "Export…", Width = 118 };
 
+    /// <summary>
+    /// Beside the export and deliberately not folded into it. They answer
+    /// different questions — one writes what the patch would do, the other what
+    /// it did — and a take has no length to set, so there is nothing for them to
+    /// share but the file dialog. Same fixed width, for the same reason: its
+    /// label becomes the one that stops a take.
+    /// </summary>
+    private readonly Button recordButton = new() { Content = "Record…", Width = 118 };
+
     private readonly ComboBox resolution = new()
     {
         ItemsSource = Resolutions.Select(r => r.Label).ToList(),
