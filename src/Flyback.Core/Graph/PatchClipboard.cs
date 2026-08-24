@@ -62,6 +62,7 @@ public static class PatchClipboard
             {
                 Id = node.Id,
                 TypeId = node.TypeId,
+                Name = node.Name,
                 X = node.X,
                 Y = node.Y,
                 InputValues = [.. node.InputValues],
@@ -129,6 +130,7 @@ public static class PatchClipboard
             {
                 Id = Guid.NewGuid(),
                 TypeId = node.TypeId,
+                Name = node.Name,
                 X = node.X + dx,
                 Y = node.Y + dy,
                 InputValues = [.. node.InputValues],

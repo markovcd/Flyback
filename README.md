@@ -231,16 +231,10 @@ it: it is what the renderer looks like under load.
 ### Looking at a value
 
 Patch an output into a **Probe** and select it, and the screen shows a chart of
-that value instead of the picture — the middle column is now, the left is the
-past and the right is the future, which a machine that is a pure function of `t`
-can draw as readily as its own history. `window` is how much time the chart
-covers and `scale` is the value at the top edge; one grid square is an eighth of
-the first and a quarter of the second. The timebase is marked in decades, the way
-a scope's is, because the same knob has to reach from one cycle of an audible
-tone to half a minute of an LFO — it reads as the time it is, from `100 µs` to
-`31.62 s`, and a signal patched into it sweeps the chart exponentially. Select anything else and the picture comes
-back. The sound is never interrupted, because the speakers root at the Output
-whatever the screen has been asked for.
+that value instead of the picture — the future half of it as readily as the past,
+which is what a machine that is a pure function of `t` can do and a scope cannot.
+Its own panel explains the rest. The sound is never interrupted while you look,
+because the speakers root at the Output whatever the screen has been asked for.
 
 Nothing is measured and nothing is read back: a chart of a signal is itself a
 function of `(x, y, t)`, so the probe is an ordinary module compiling to ordinary
@@ -251,16 +245,9 @@ it — time swept across the picture, x and y pinned to the middle — so what y
 get is the signal at the centre of the screen over a couple of seconds, not the
 field it makes.
 
-The one thing it cannot show is memory. Drawn rather than heard, an oscillator
-does not accumulate its phase and a delay line passes straight through, so a
-chart of either is what the screen makes of it rather than what the speakers do.
-Its own `out` is the chart as a colour, so it can also be patched into the Output
-and left on screen beside the thing it is watching.
-
 ## Sound
 
-The same modules drive the speakers. Patch something into the **Output**'s
-`left`, select that block, and press **Audio on** in its panel.
+The same modules drive the speakers.
 
 Nothing about the catalogue changes: audio is the same machine with only `t`
 varying and a scalar coming out instead of a colour. Compilation is rooted at a
@@ -275,16 +262,16 @@ What each half costs is still separate — the picture's program walks back from
 `colour` alone and the sound's from `left` and `right`, so neither pays for the
 other.
 
-| | |
-|---|---|
-| Pitch | patch **Frequency** into an oscillator's `freq` — it is a knob in hertz rather than the single digits the visual modules use |
-| Notes | **Note** is the same thing in notes rather than hertz. Pick one on the knob — it reads as `A3`, not as 57 — or patch a signal in and it snaps to the nearest whole note, which is what turns a sweep into a run up the chromatic scale. `octave` transposes by twelve semitones a step, `cents` detunes past the snap, and `note` hands the snapped number on so a second **Note** can play an interval off it |
-| Sequences | **Note Sequencer** is a list of notes, edited in the inspector — `out` to a **Note** for the pitch, `gate` into a multiply so a rest is heard as one, `index` to the screen. **Sequencer** is the same list as plain signals instead. `shape` sets how long the gate takes to open and close |
-| Writing a tune | up to 32 notes, added and removed anywhere in the list and dragged into any order. Each carries a **length** in steps, so a note can be held twice as long as its neighbour, and a **volume** — a level rather than a switch, so it silences a note without losing it and doubles as its velocity |
-| Mixing | **Mixer** sums four inputs, each through its own level, where a row of Multiplies into a chain of Adds used to be. Levels are sockets like everything else here, so a fader is something an oscillator can sweep as well as something a hand can set — and because its sockets are untyped, the same module mixes four pictures as readily as four tones. The **Four voices** preset is it wired up at both sinks at once |
-| Stereo | leave `right` unpatched and it carries `left`, the way a normalled jack does |
-| `scan` | at 0 the patch is driven by Time; at 1 it sweeps the image and you hear the picture, at `scan rate` sweeps per second |
-| Export | **Export…** writes a WAV of the sound or an AVI of both — see *Files* |
+The audio side of the catalogue is **Frequency** and **Note** for pitch, **Note
+Sequencer** and **Sequencer** for a tune, **Mixer** for summing, and the
+Output's own `scan` for hearing the picture instead of the clock. Each explains
+itself on its panel. Two details are on none of them: a Note's `octave`
+transposes by twelve semitones a step, and its `cents` detunes past the snap.
+
+A **Mixer**'s levels are sockets like everything else here, which is the part
+worth saying twice — a fader is something an oscillator can sweep as well as
+something a hand can set, and because its sockets are untyped the same module
+mixes four pictures as readily as four tones.
 
 The **Drone** preset is the demonstration: one slow oscillator sets both the hue
 of the image and the tremolo on the tone, so the two sinks are visibly and
@@ -521,12 +508,6 @@ Plugins are read once at startup, so installing one means restarting.
 and is the worked example — seven detuned saws in one module, under a hundred
 lines.
 
-| | |
-|---|---|
-| `detune` | spreads the voices apart, up to about ±1.4 semitones |
-| `mix` | fades the six outer voices in against the centre — at 0 it is *exactly* a plain Saw |
-| `out` / `wide` | the same voices at complementary weights; patch both for stereo, or use `out` alone |
-
 Pick **Supersaw** from the Patch dropdown for it wired up: 110 Hz from a
 Frequency module, both outputs to their own channel, and one slow sweep driving
 the detune of the sound and of the picture at once, so the bands on screen beat
@@ -551,10 +532,7 @@ They are the two that remember longest: everything else here with a memory —
 an oscillator's phase, the Filter and Phaser below — remembers one evaluation,
 and a reverb tail is thousands.
 
-| | |
-|---|---|
-| Delay | `time` in seconds, up to two, and sweepable — the line interpolates, so it glides rather than steps. `feedback` is how much comes round again |
-| Reverb | four feedback combs into two allpasses. `size` stretches every delay together, `decay` sets how long the tail lasts |
+The Reverb is four feedback combs into two allpasses.
 
 Everything else here is a pure function of `(x, y, t)`, which is what lets the
 video renderer run rows in parallel. These two are not, so **they only work on
@@ -575,11 +553,8 @@ than where its signal goes. Until they existed the catalogue had five
 oscillators and nothing whatever to shape one with. The **Filter sweep** preset
 is all three of them wired up.
 
-| | |
-|---|---|
-| Filter | a resonant state-variable filter, with `low`, `band` and `high` coming out at once rather than one at a time behind a switch. `cutoff` is in hertz and is meant to be swept — patch an oscillator or an envelope into it, which is the sound the module exists for. `resonance` peaks the corner and will ring on a sharp edge |
-| Fold | folds a signal back on itself where it runs past full scale, which *adds* harmonics where a filter can only take them away. At a `drive` of 1 it is exactly a wire; `bias` shifts the signal first, so the folds stop being symmetric and even harmonics appear |
-| Drive | soft saturation — the peaks rounded off rather than turned round. Peak-normalised as it goes, like the Supersaw, so more drive is dirtier and never louder. What it does instead is bring the quiet parts up, which is why a compressor and a distortion are the same arithmetic at different settings |
+The Filter is a state-variable one, with `low`, `band` and `high` coming out at
+once rather than one at a time behind a switch.
 
 The two shaping modules are pure and untyped, so they do the same thing at both
 sinks and to a colour as readily as to a tone: the harmonics the ear hears from
@@ -619,11 +594,7 @@ step with itself and mixed back in, and the whole difference between them is how
 far out of step and by what means. The **Moving parts** preset is all three in
 the order a pedalboard would have them.
 
-| | |
-|---|---|
-| Chorus | a delay of about 15 ms, swept slowly, so the copy is never quite in tune with the original. `out` and `wide` are swept in *opposite* directions — patch both for stereo, or take `out` alone |
-| Flanger | the same an order of magnitude shorter, where the copy cancels the original instead of thickening it. Sweeping drags a comb of notches through the sound. `feedback` sharpens them, and its sign is two different effects: negative puts the notches where the peaks were |
-| Phaser | two notches that are not related to each other, from four allpass stages added back to the dry signal. `feedback` sharpens them too |
+The chorus delays by about 15 ms; the flanger by an order of magnitude less.
 
 All three carry their own sweep rather than taking one on a socket, which is the
 one place this plugin departs from how the rest of the synth is wired. The
@@ -690,27 +661,22 @@ of a module nobody asked about.
 
 ## Using the editor
 
-| | |
-|---|---|
-| Add a module | click it in the left palette |
-| Patch | drag from one socket to another |
-| Unplug | drag a connected input away |
-| Pan / zoom | drag the background or right-drag / mouse wheel |
-| Frame the patch | `F` |
-| Delete a module | `Delete` — except the Output, which every patch keeps |
-| Set exact values | select a module, use the inspector on the right |
-| Undo / redo | `Ctrl+Z` and `Ctrl+Shift+Z`, or `↶` and `↷` on the toolbar. `Ctrl+Y` redoes as well, and `Cmd` does what `Ctrl` does |
-| Toolbar | symbols rather than words, and every one of them says what it is if you rest on it. What is done to the patch is on the left, what belongs to the program — the assistant, the settings, the about — on the right |
-| Everything else | select the **Output** |
+The inspector lists every gesture whenever nothing is selected — adding a
+module, patching, unplugging, selecting, panning, copy and paste, delete,
+framing, renaming — and every toolbar symbol says what it is if you rest on it.
+Three things are on neither: `Ctrl+Y` redoes as well as `Ctrl+Shift+Z`, `Cmd`
+does whatever `Ctrl` does, and the Output is the one module `Delete` will not
+take.
 
 Any input with nothing plugged into it uses the value shown on the node, so most
 patches need no constant modules at all.
 
 Undo goes back two hundred edits: a module added, removed or moved, a wire
-plugged or pulled, a knob turned, a note edited. A step is the whole patch
-rather than an inverse of the edit that made it, so anything that survives being
-saved survives being undone and nothing has to be taught what a particular edit
-was — which is also why moving a module undoes, having cost nothing to include.
+plugged or pulled, a knob turned, a note edited, a module renamed. A step is the
+whole patch rather than an inverse of the edit that made it, so anything that
+survives being saved survives being undone and nothing has to be taught what a
+particular edit was — which is also why moving a module undoes, having cost
+nothing to include.
 
 What counts as one step is the one thing it does have an opinion about. A slider
 dragged across its range makes an edit a frame and is one press of undo, not a
@@ -724,9 +690,8 @@ history like anything else and one press of undo has your patch back.
 
 A patch that has been edited and not written out says so with a dot beside the
 name in the title bar, and anything that would close it asks first — quitting,
-opening a file, picking a preset — offering to save it, to discard the changes,
-or to stay where you are. The assistant is not among them and does not need to
-be: what it does is an edit, so there is nothing there to lose.
+opening a file, picking a preset. The assistant is not among them and does not
+need to be: what it does is an edit, so there is nothing there to lose.
 
 Cancelling the save dialog cancels the whole thing rather than the save alone:
 somebody who asked to save and then thought better of where has not agreed to
@@ -741,17 +706,9 @@ program. None of it is saved with the patch — a preview size belongs to the
 machine you are working at — but it sits with the block it acts on rather than
 along a toolbar.
 
-| | |
-|---|---|
-| Picture | **Size** and **Render** (GPU or processor) |
-| Sound | **Audio on** |
-| Timeline | **Rewind**, which takes the picture and the sound back to zero together |
-| Export | **Length** in seconds, and **Export…** |
-
 The status bar carries whatever the compiler wants to say about the patch as it
 stands, in amber. Most of it is about the patches that compile perfectly and do
-nothing: an oscillator with nothing driving its `in`, or an output with nothing
-wired into it at all — one flat colour on the screen, silence at the speakers.
+nothing, which is the class of mistake nothing else here would catch.
 
 ## Layout
 
@@ -826,22 +783,15 @@ works on both a scalar and a colour.
 Patches save as JSON (`.fbk`).
 
 **Export…** writes the thing the instrument actually makes, and there is one
-button for all of it. Set the length in seconds in the same panel — it is the
-one parameter of a moving export that cannot be defaulted, since a patch is an
-endless function of `(x, y, t)`. The frame is whatever **Size** says, a few rows
-above it.
+button for all of it: the file name decides what you get, and the dialog offers
+only the kinds this patch actually reaches — rather than opening one that could
+produce a file of nothing. **Length** is the one parameter of a moving export
+that cannot be defaulted, since a patch is an endless function of `(x, y, t)`.
 
-The file name decides what you get, and the dialog offers only the kinds this
-patch has: **AVI** for the moving picture with the sound alongside it, **PNG**
-for one frame of it, and **WAV** for the sound on its own. Wire nothing into
-`colour` and it offers neither picture; wire nothing into `left` or `right` and
-it offers no WAV. A patch that reaches neither says so instead of opening a
-dialog that could only produce a file of nothing.
-
-A PNG is the odd one of the three. It ignores the length, being a single frame
-at the moment on screen, and it is written at 1920×1080 whatever **Size** says —
-the preview's resolution is a matter of keeping up, and a still has nothing to
-keep up with.
+A PNG is the odd one out. It ignores the length, being a single frame at the
+moment on screen, and it is written at 1920×1080 whatever **Size** says — the
+preview's resolution is a matter of keeping up, and a still has nothing to keep
+up with.
 
 The video file is an AVI: every frame an independent JPEG, 16-bit PCM interleaved
 alongside. Both encoders are written here beside the PNG and WAV ones, so export
@@ -853,7 +803,7 @@ Output's `left` or `right` gets a video-only file rather than a silent track.
 | Rate | 30 frames a second |
 | Size | 1.5 to 2.5 MB a second at 960×540 depending on the patch, and AVI stops at 4 GB — half an hour or so |
 | Cost | the picture is rendered on the processor even when the preview is on the GPU, so an expensive patch takes longer to write than to watch |
-| Stopping | the Export button becomes **Stop**, and stopping keeps what was rendered as a shorter video rather than a broken one |
+| Stopping | keeps what was rendered as a shorter video rather than a broken one |
 
 Feedback works in a moving export and does not in a still: one renderer runs the
 whole clip, so each frame reads the one before it exactly as on screen. The sound

@@ -974,7 +974,7 @@ public sealed class NodeEditor : Control
             new RoundedRect(header, NodeGeometry.CornerRadius, NodeGeometry.CornerRadius, 0, 0));
 
         context.DrawText(
-            Text(def.Name, 12.5, HeaderTextBrush, bounds.Width - 16, true),
+            Text(node.Title(def), 12.5, HeaderTextBrush, bounds.Width - 16, true),
             new Point(bounds.X + 9, bounds.Y + 5));
 
         for (var i = 0; i < def.Outputs.Count; i++)

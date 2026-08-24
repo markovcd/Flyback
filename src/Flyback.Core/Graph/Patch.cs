@@ -30,6 +30,13 @@ public readonly record struct Step(float Value, float Length = 1f, float Volume 
 /// <summary>One placed module: a node type, where it sits, and its knob values.</summary>
 public sealed class NodeInstance
 {
+    /// <summary>
+    /// The longest a module may be renamed to. Not a limit anybody working will
+    /// meet — it is there so that a name pasted from somewhere else cannot make
+    /// a patch file enormous or a header undrawable.
+    /// </summary>
+    public const int NameLimit = 26;
+
     public required Guid Id { get; init; }
 
     public required string TypeId { get; init; }
@@ -37,6 +44,23 @@ public sealed class NodeInstance
     public double X { get; set; }
 
     public double Y { get; set; }
+
+    /// <summary>
+    /// What this one has been renamed to, and null where it has not been — which
+    /// is nearly always, so it is null rather than a copy of the definition's
+    /// name and an unrenamed module writes no name into the file at all.
+    /// </summary>
+    /// <remarks>
+    /// A label and nothing more: the compiler roots at the sink and reaches
+    /// modules through wires, so nothing is ever found by name and two modules
+    /// called the same thing is no more a problem than two called nothing.
+    /// <para>
+    /// Set through <see cref="Rename"/>, which is what makes "null means the
+    /// definition's name" true of every module rather than of the ones that
+    /// happened to go through the inspector.
+    /// </para>
+    /// </remarks>
+    public string? Name { get; set; }
 
     /// <summary>
     /// Per-input constants, used for any input with nothing wired into it.
@@ -56,6 +80,34 @@ public sealed class NodeInstance
     /// what that costs — a step is no longer a socket.
     /// </remarks>
     public List<Step>? Steps { get; set; }
+
+    /// <summary>
+    /// What to call this one: the name it was given, or its definition's where
+    /// it was given none. The one way anything should ask, so that a renamed
+    /// module reads the same on the canvas, in the panel and in a complaint the
+    /// compiler makes about it.
+    /// </summary>
+    public string Title(NodeDef def) => Name ?? def.Name;
+
+    /// <summary>
+    /// Renames this module, or puts it back to its definition's name.
+    /// </summary>
+    /// <param name="def">The definition, which is what "no name" means.</param>
+    /// <param name="to">
+    /// The new name. Blank puts it back — an empty box is how the panel asks for
+    /// the default, and there is no other way to mean it. So is the definition's
+    /// own name typed out: it is not a rename, and storing it would leave a file
+    /// claiming a name that would change under it the day the module is renamed
+    /// in the catalogue.
+    /// </param>
+    public void Rename(NodeDef def, string? to)
+    {
+        var trimmed = to?.Trim();
+
+        if (trimmed is { Length: > NameLimit }) trimmed = trimmed[..NameLimit].TrimEnd();
+
+        Name = string.IsNullOrEmpty(trimmed) || trimmed == def.Name ? null : trimmed;
+    }
 
     public static NodeInstance Create(NodeDef def, double x, double y) => new()
     {

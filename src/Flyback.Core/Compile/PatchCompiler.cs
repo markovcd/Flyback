@@ -215,7 +215,7 @@ public static class PatchCompiler
             if (!visiting.Add(node.Id))
             {
                 issues.Add(new CompileIssue(node.Id,
-                    $"'{def.Name}' feeds back into itself. Put a Unit Delay somewhere in the loop "
+                    $"'{node.Title(def)}' feeds back into itself. Put a Unit Delay somewhere in the loop "
                     + "to carry the previous evaluation round, or a Feedback module to read the "
                     + "previous frame."));
                 return [.. def.Outputs.Select(_ => emitter.Constant(0f))];
@@ -286,7 +286,7 @@ public static class PatchCompiler
                     {
                         issues.Add(new CompileIssue(
                             node.Id,
-                            $"Nothing is wired into {def.Name}'s '{spec.Name}', so it never moves. "
+                            $"Nothing is wired into {node.Title(def)}'s '{spec.Name}', so it never moves. "
                             + "Patch Time in to hear it, or Coordinates to draw with it.",
                             IssueSeverity.Warning));
                     }

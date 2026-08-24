@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
+using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Flyback.App.Controls;
@@ -258,7 +259,8 @@ public sealed partial class MainWindow
                 // can find is worse than one in the wrong place.
                 Text = "Right-click the canvas — or press Space — to add a module. "
                      + "Type to narrow the list, arrows to move through it, Enter to add.\n\n"
-                     + "Select a module to edit its values.\n\n"
+                     + "Select a module to edit its values, and double-click its "
+                     + "name here to call it something else.\n\n"
                      + "Select the Output for the preview size, the renderer, "
                      + "sound, and saving a frame or a clip.\n\n"
                      + "Drag from a socket to patch it into another, or onto bare "
@@ -276,12 +278,7 @@ public sealed partial class MainWindow
             return;
         }
 
-        inspector.Children.Add(new TextBlock
-        {
-            Text = def.Name,
-            FontSize = 17,
-            FontWeight = FontWeight.SemiBold,
-        });
+        inspector.Children.Add(BuildTitle(node, def));
 
         inspector.Children.Add(new TextBlock
         {
@@ -341,6 +338,119 @@ public sealed partial class MainWindow
         };
         delete.Click += (_, _) => editor.DeleteSelected();
         inspector.Children.Add(delete);
+    }
+
+    /// <summary>
+    /// The name at the top of the panel, which a double-click turns into a box
+    /// to type another one into.
+    /// </summary>
+    /// <remarks>
+    /// A module is a thing on a canvas before it is a type, and a patch with
+    /// four Mixers in it is one you have to follow a wire to read. The name is
+    /// only ever a label — nothing is found by it, and two modules called the
+    /// same thing is no more a problem than two called nothing.
+    /// <para>
+    /// Transparent rather than unpainted, because a <see cref="TextBlock"/> with
+    /// no background of any kind is not there as far as the pointer is
+    /// concerned, and the double-click would land on the panel behind it.
+    /// </para>
+    /// </remarks>
+    private Control BuildTitle(NodeInstance node, NodeDef def)
+    {
+        var title = new TextBlock
+        {
+            Text = node.Title(def),
+            FontSize = 17,
+            FontWeight = FontWeight.SemiBold,
+            TextTrimming = TextTrimming.CharacterEllipsis,
+            Background = Brushes.Transparent,
+        };
+
+        ToolTip.SetTip(title, node.Name is null
+            ? "Double-click to give this module a name of its own."
+            : $"Double-click to rename. Empty the box to go back to '{def.Name}'.");
+
+        title.DoubleTapped += (_, e) =>
+        {
+            e.Handled = true;
+            BeginRename(node, def, title);
+        };
+
+        return title;
+    }
+
+    /// <summary>
+    /// Swaps the name for a box to type one into. Enter keeps what was typed and
+    /// so does clicking away; Escape abandons it; and an empty box is how the
+    /// module goes back to being called whatever its definition calls it.
+    /// </summary>
+    /// <remarks>
+    /// The one place here that swaps a control in rather than rebuilding the
+    /// panel around a flag. The box has to take the keyboard the moment it
+    /// appears, which means being in the tree already, and it puts itself back
+    /// from inside its own <c>LostFocus</c> — where tearing down the panel that
+    /// is raising the event is more than this row needs to do.
+    /// </remarks>
+    private void BeginRename(NodeInstance node, NodeDef def, Control title)
+    {
+        var at = inspector.Children.IndexOf(title);
+        if (at < 0) return;
+
+        var box = new TextBox
+        {
+            // The name it has, not the one it shows. Opening this on a module
+            // nobody has renamed leaves an empty box, because empty is what it
+            // means — and the definition's name is in the watermark, where it
+            // reads as the thing you would get back rather than as text to
+            // delete before typing.
+            Text = node.Name ?? string.Empty,
+            PlaceholderText = def.Name,
+            MaxLength = NodeInstance.NameLimit,
+            FontSize = 17,
+            FontWeight = FontWeight.SemiBold,
+        };
+
+        // Enter takes the focus off the box as it closes it, which would bring
+        // the focus handler round a second time. Every way out goes through the
+        // one flag instead.
+        var closed = false;
+
+        box.KeyDown += (_, e) =>
+        {
+            switch (e.Key)
+            {
+                case Key.Enter: Close(keep: true); break;
+                case Key.Escape: Close(keep: false); break;
+                default: return;
+            }
+
+            e.Handled = true;
+        };
+
+        box.LostFocus += (_, _) => Close(keep: true);
+
+        inspector.Children[at] = box;
+
+        box.Focus();
+        box.SelectAll();
+
+        void Close(bool keep)
+        {
+            if (closed) return;
+            closed = true;
+
+            var before = node.Name;
+            if (keep) node.Rename(def, box.Text);
+
+            var where = inspector.Children.IndexOf(box);
+            if (where >= 0) inspector.Children[where] = BuildTitle(node, def);
+
+            // Only where it is actually a rename: the canvas draws its headers
+            // from the same name and this is what redraws them, and a step in
+            // the history for opening a box and closing it again would be one
+            // press of undo that puts nothing back.
+            if (node.Name != before) editor.NotifyPatchChanged();
+        }
     }
 
     /// <summary>
