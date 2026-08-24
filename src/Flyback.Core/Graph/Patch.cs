@@ -264,6 +264,32 @@ public sealed class Patch
         Connections.FirstOrDefault(c => c.TargetNode == node && c.TargetPort == port);
 
     /// <summary>
+    /// The one wire leaving an output, or null where none does or several do.
+    /// </summary>
+    /// <remarks>
+    /// The counterpart of <see cref="IncomingTo"/>, and not quite its mirror:
+    /// an input takes at most one wire by construction, and an output may fan
+    /// out to as many as it likes. So "the wire from here" is a question with an
+    /// answer only when there happens to be exactly one, and this says so rather
+    /// than handing back the first of several — the editor lifts a wire off an
+    /// output by it, and lifting one of four would be picking for the user.
+    /// </remarks>
+    public Connection? SoleOutgoingFrom(Guid node, int port)
+    {
+        Connection? only = null;
+
+        foreach (var wire in Connections)
+        {
+            if (wire.SourceNode != node || wire.SourcePort != port) continue;
+            if (only is not null) return null;
+
+            only = wire;
+        }
+
+        return only;
+    }
+
+    /// <summary>
     /// Which halves of the Output have anything wired into them: whether there
     /// is a picture to see, and whether there is a sound to hear.
     /// </summary>

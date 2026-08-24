@@ -730,6 +730,21 @@ Three things are on neither: `Ctrl+Y` redoes as well as `Ctrl+Shift+Z`, `Cmd`
 does whatever `Ctrl` does, and the Output is the one module `Delete` will not
 take.
 
+A wire is re-patched by picking it up at either end, and which end decides what
+the gesture is asking. Drag a **connected input** and the plug comes out of that
+input; the wire keeps its source and goes looking for a new target — *where
+should this go instead*. `Ctrl+drag` an **output** and the plug comes out of
+there; the wire stays in the input it feeds and goes looking for a new source —
+*where should this come from instead*.
+
+The modifier is on the second one only because an input holds one wire and an
+output holds any number: dragging from an output already means *start another*,
+which is the common thing to want and could not be given up. So `Ctrl` reaches
+for the wire that is there, and only when exactly one leaves that socket. With
+none, or with several, it does nothing and you get a new wire — a gesture that
+picked one of four for you would be worse than one that declines. Either way,
+pulling a wire out and plugging it in again is one press of undo.
+
 Any input with nothing plugged into it uses the value shown on the node, so most
 patches need no constant modules at all. The exception is a socket that is
 normalled: it names the module driving it in place of a number, has no knob in

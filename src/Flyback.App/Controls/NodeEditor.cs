@@ -1232,19 +1232,23 @@ public sealed class NodeEditor : Control
 
         if (!properties.IsLeftButtonPressed) return;
 
+        // Ctrl means two things, and which one depends entirely on what is under
+        // the pointer: over a module it adds to the selection, over an output it
+        // lifts the wire off. They never meet — a press is over one or the other
+        // — so one modifier serves both without either having to know.
+        var ctrl = (e.KeyModifiers & (KeyModifiers.Control | KeyModifiers.Meta)) != 0;
+
         if (HitPort(graph, out var portNode, out var portIndex, out var isOutput))
         {
-            StartWire(portNode, portIndex, isOutput, graph);
+            StartWire(portNode, portIndex, isOutput, lifting: ctrl, graph);
             e.Pointer.Capture(this);
             InvalidateVisual();
             return;
         }
 
-        var adding = (e.KeyModifiers & (KeyModifiers.Control | KeyModifiers.Meta)) != 0;
-
         if (HitNode(graph) is { } node)
         {
-            PressNode(node, adding);
+            PressNode(node, ctrl);
             e.Pointer.Capture(this);
             InvalidateVisual();
             return;
@@ -1259,7 +1263,7 @@ public sealed class NodeEditor : Control
         marqueeFrom = marqueeTo = graph;
 
         marqueeBase.Clear();
-        if (adding) marqueeBase.UnionWith(selection);
+        if (ctrl) marqueeBase.UnionWith(selection);
 
         drag = Drag.Marquee;
         Sweep();
@@ -1428,10 +1432,33 @@ public sealed class NodeEditor : Control
     }
 
     /// <summary>
-    /// Grabbing a connected input picks the existing wire up by its far end,
-    /// so re-patching works the way it does on a real rig.
+    /// Grabbing a connected socket picks the existing wire up by the end that
+    /// was not grabbed, so re-patching works the way it does on a real rig: the
+    /// far end stays plugged in and the end in your hand goes somewhere else.
     /// </summary>
-    private void StartWire(Guid nodeId, int portIndex, bool isOutput, Point graph)
+    /// <remarks>
+    /// Which end that leaves free is the whole of the difference between the two
+    /// gestures. Grabbing an input takes the plug out of it, so what is being
+    /// chosen is a new input for a signal that keeps its source. Grabbing an
+    /// output takes the plug out of <em>that</em>, so what is being chosen is a
+    /// new source for a socket that keeps being fed — the question "where should
+    /// this come from instead", which nothing here could ask before.
+    /// </remarks>
+    /// <param name="lifting">
+    /// Whether Ctrl was held, which only matters on an output. An input is
+    /// unplugged by being dragged and needs no modifier: it holds one wire, so
+    /// grabbing it can only mean that one. An output holds any number, and
+    /// dragging from one has always meant "start another" — which is the common
+    /// thing to want and cannot be given up. So reaching for the wire that is
+    /// already there asks for the modifier, and asks for it only where the answer
+    /// is not a guess: exactly one wire leaves the socket.
+    /// <para>
+    /// With none, or with several, this falls back to starting a new wire —
+    /// silently, because a modifier that does nothing is better than a gesture
+    /// that picks one of four wires for you.
+    /// </para>
+    /// </param>
+    private void StartWire(Guid nodeId, int portIndex, bool isOutput, bool lifting, Point graph)
     {
         wireGesture++;
 
@@ -1441,6 +1468,20 @@ public sealed class NodeEditor : Control
             wireNode = existing.SourceNode;
             wirePort = existing.SourcePort;
             wireFromOutput = true;
+            NotifyPatchChanged(WireGesture);
+        }
+        else if (isOutput && lifting && patch.SoleOutgoingFrom(nodeId, portIndex) is { } sole)
+        {
+            // The mirror of the case above, and mirrored in every part: the wire
+            // comes off the socket that was grabbed and stays in the one at its
+            // far end. Grabbing an input keeps the source and looks for a new
+            // target; grabbing an output keeps the target and looks for a new
+            // source, so what is being changed is where the signal comes from
+            // while what it feeds stays put.
+            patch.Disconnect(sole.TargetNode, sole.TargetPort);
+            wireNode = sole.TargetNode;
+            wirePort = sole.TargetPort;
+            wireFromOutput = false;
             NotifyPatchChanged(WireGesture);
         }
         else
