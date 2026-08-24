@@ -174,7 +174,16 @@ public sealed partial class MainWindow : Window
         WindowStartupLocation = WindowStartupLocation.CenterScreen;
         Background = new SolidColorBrush(Colors.Window);
 
-        editor.PatchChanged += (_, _) => Recompile();
+        editor.PatchChanged += (_, _) =>
+        {
+            Recompile();
+
+            // Patching an input takes its knob away and unpatching gives it
+            // back, and neither is a selection change — so the panel is asked
+            // here as well, and answers only when a wire actually moved.
+            SyncInspector();
+        };
+
         editor.SelectionChanged += (_, _) =>
         {
             BuildInspector();

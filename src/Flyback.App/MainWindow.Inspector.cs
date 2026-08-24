@@ -190,11 +190,53 @@ public sealed partial class MainWindow
     }
 
     /// <summary>
-    /// Rebuilt whenever selection changes. The canvas handles patching; exact
+    /// What the panel's rows <em>are</em>, as against what is in them: which
+    /// module is being shown, and which of its inputs have a wire on them.
+    /// </summary>
+    /// <remarks>
+    /// A row is a knob or the word "patched" and never both, so a wire landing
+    /// on the module already selected changes the panel as much as selecting a
+    /// different one does. Nothing else the canvas reports does — a knob turned
+    /// is a value and not a row — which is what keeps a slider mid-drag from
+    /// being torn down under the hand holding it.
+    /// </remarks>
+    private string inspectorShape = string.Empty;
+
+    /// <summary>
+    /// Rebuilds the panel if a wire has arrived at or left the module it is
+    /// showing. Hung off every patch change, because patching is not a selection
+    /// change and the panel has no other way to hear about it.
+    /// </summary>
+    private void SyncInspector()
+    {
+        if (InspectorShape() != inspectorShape) BuildInspector();
+    }
+
+    /// <summary>
+    /// The selected module and which of its inputs are patched, as one string to
+    /// compare against the one the panel standing was built from.
+    /// </summary>
+    private string InspectorShape()
+    {
+        if (editor.SelectedNode is not { } node || NodeCatalog.Get(node.TypeId) is not { } def)
+            return string.Empty;
+
+        var patched = new char[def.Inputs.Count];
+
+        for (var i = 0; i < patched.Length; i++)
+            patched[i] = editor.Patch.IncomingTo(node.Id, i) is null ? '.' : 'w';
+
+        return $"{node.Id:N}{new string(patched)}";
+    }
+
+    /// <summary>
+    /// Rebuilt whenever the selection changes, and whenever a wire changes what
+    /// the selected module's rows are. The canvas handles patching; exact
     /// numbers are easier to set with real controls than by dragging on a knob.
     /// </summary>
     private void BuildInspector()
     {
+        inspectorShape = InspectorShape();
         inspector.Children.Clear();
 
         var selected = editor.SelectedNode is { } chosen && NodeCatalog.Get(chosen.TypeId) is not null;
