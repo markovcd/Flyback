@@ -26,6 +26,15 @@ public sealed class SpacePlugin : IFlybackPlugin
     public void Register(IPluginRegistry registry)
     {
         registry.AddModules(Provider, [DelayModule.Definition, ReverbModule.Definition]);
-        registry.AddPresets([new PatchPreset(SpacePreset.Name, SpacePreset.Build)]);
+
+        // Two: one for what the delay and the reverb do on their own, and one
+        // that is a whole generative patch played into them — which is the thing
+        // both modules are really for, and the one preset in the box with no
+        // clock anywhere in it.
+        registry.AddPresets(
+        [
+            new PatchPreset(SpacePreset.Name, SpacePreset.Build),
+            new PatchPreset(SlowWeatherPreset.Name, SlowWeatherPreset.Build),
+        ]);
     }
 }
