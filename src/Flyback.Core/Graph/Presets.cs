@@ -21,6 +21,7 @@ public static class Presets
         new("Chromatic", Chromatic),
         new("Sequence", Sequence),
         new("Four voices", FourVoices),
+        new("Kick", Kick),
         new("Empty", Empty),
     ];
 
@@ -93,6 +94,121 @@ public static class Presets
          .Wire(steps, 2, color, 0)
          .Wire(lit, 0, color, 2)
          .Wire(color, 0, output, NodeCatalog.OutputColorPort);
+
+        return b.Patch;
+    }
+
+    /// <summary>
+    /// A kick drum at 120 beats a minute, which is two envelopes and an
+    /// oscillator: one shapes how loud it is and one shapes what pitch it is,
+    /// and the second of those is the whole difference between a drum and a
+    /// beep.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// A kick is a sine whose pitch falls out from under it. The pitch envelope
+    /// is the short one — forty milliseconds, against three hundred for the
+    /// level — so the note starts at two hundred hertz and has dropped to
+    /// forty-five before it is half over. What the ear hears at the top is the
+    /// beater and what it hears after is the shell, and both are one oscillator.
+    /// </para>
+    /// <para>
+    /// The trigger is a Pulse rather than a sequencer, because every beat here is
+    /// the same beat and a pattern of one repeated note is a list saying nothing.
+    /// Its 'freq' is where the tempo lands: 120 beats a minute is two beats a
+    /// second is two hertz, and the Tempo module is what lets that be typed as
+    /// 120 rather than worked out. How long its gate is held barely matters:
+    /// sustain is nothing, so the level has fallen to it long before the gate
+    /// lets go, and what decides the length of a kick is the envelope.
+    /// </para>
+    /// <para>
+    /// For the eye, the same level envelope lights a disc. The envelopes have no
+    /// memory on the video path so what the screen actually gets is the gate —
+    /// a flash a beat, in time with what the ear is hearing rather than shaped
+    /// like it. Which is the honest picture of a drum: the rhythm is the part of
+    /// it a still frame can carry.
+    /// </para>
+    /// </remarks>
+    public static Patch Kick(ModuleCatalog modules)
+    {
+        var b = new PatchBuilder(modules);
+
+        var time = b.Add("time", 40, 420);
+
+        // 120 a minute, and the module that says so in those words.
+        var tempo = b.Add(NodeCatalog.TempoTypeId, 40, 200, (0, 120f));
+
+        // 'width' is how much of each beat the pulse is shut for, so a small one
+        // opens just after the beat and stays open until just before the next.
+        // Held far longer than the drum lasts, which is deliberate: what decides
+        // how long a kick is, is the envelope and never the gate.
+        var beat = b.Add("osc.pulse", 260, 200, (3, 0.02f));
+
+        // Ear. Level and pitch, in that order down the column, and the pitch one
+        // an order of magnitude shorter — see above.
+        var level = b.Add(NodeCatalog.AdsrTypeId, 520, 200,
+            (1, -2.7f), (2, -0.52f), (3, 0f), (4, -1.3f));
+
+        var sweep = b.Add(NodeCatalog.AdsrTypeId, 520, 480,
+            (1, -3f), (2, -1.35f), (3, 0f), (4, -2f));
+
+        // The envelope is nought to one and a pitch is in hertz, so it is
+        // remapped rather than multiplied: the bottom of the sweep is where the
+        // drum sits and the top is how far above it the beater is.
+        var pitch = b.Add("math.remap", 780, 480, (1, 0f), (2, 1f), (3, 45f), (4, 200f));
+
+        var body = b.Add("osc.sine", 1020, 480);
+        var struck = b.Add("math.mul", 1260, 300);
+
+        // Eye. A disc, brightest in the middle and gone by the edge of the frame.
+        var coord = b.Add("coord", 40, 760);
+        var disc = b.Add("math.remap", 300, 760, (1, 0f), (2, 0.9f), (3, 1f), (4, 0f));
+
+        // What lights it is a saw at the tempo and not the level envelope, which
+        // cannot help here: an envelope has no memory on the video path, so all
+        // it can hand over is its gate — and that gate is open for all but a
+        // fiftieth of each beat. A disc lit by it is not a drum being struck but
+        // a lamp that is on, with a ten-millisecond gap in it that a frame is too
+        // long to catch reliably. What you see then is a light blinking at
+        // whatever rate the two happen to beat against each other.
+        //
+        // A saw is the shape the envelope would be if it could run: it resets on
+        // the beat and falls away, and being a pure function of time it needs no
+        // memory to do it. Its 'phase' puts the reset where the Pulse's edge is,
+        // so the flash and the strike land together.
+        var fall = b.Add("osc.saw", 300, 980, (2, 0.98f));
+
+        // Bright on the beat, down to nothing two thirds of the way to the next
+        // — the same share of a beat the level envelope's decay takes, so what
+        // the eye is given is the length of the drum rather than of the gate.
+        var shape = b.Add("math.remap", 540, 980, (1, -1f), (2, 1f), (3, 1f), (4, -0.5f));
+        var visible = b.Add("math.clamp", 780, 980, (1, 0f), (2, 1f));
+
+        var flash = b.Add("math.mul", 1020, 860);
+        var skin = b.Add("color.hsv", 1260, 760, (0, 0.04f), (1, 0.85f));
+
+        var output = b.Add(NodeCatalog.OutputTypeId, 1500, 420, (NodeCatalog.OutputGainPort, 0.8f));
+
+        b.Wire(tempo, 0, beat, 1)
+         .Wire(time, 0, beat, 0)
+         .Wire(beat, 0, level, 0)
+         .Wire(beat, 0, sweep, 0)
+         .Wire(sweep, 0, pitch, 0)
+         .Wire(time, 0, body, 0)
+         .Wire(pitch, 0, body, 1)
+         .Wire(body, 0, struck, 0)
+         .Wire(level, 0, struck, 1)
+         .Wire(struck, 0, output, NodeCatalog.OutputLeftPort)
+
+         .Wire(coord, 2, disc, 0)
+         .Wire(time, 0, fall, 0)
+         .Wire(tempo, 0, fall, 1)
+         .Wire(fall, 0, shape, 0)
+         .Wire(shape, 0, visible, 0)
+         .Wire(disc, 0, flash, 0)
+         .Wire(visible, 0, flash, 1)
+         .Wire(flash, 0, skin, 2)
+         .Wire(skin, 0, output, NodeCatalog.OutputColorPort);
 
         return b.Patch;
     }

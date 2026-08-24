@@ -395,11 +395,12 @@ public static class GlslEmitter
 
         foreach (var op in patch.Ops)
         {
-            // The one op with no result, and so the one op with no line. There is
-            // no state on this path for it to write to, and a declaration of r-1
-            // would not compile. What it fed is left as dead code for the driver
-            // to drop, which is the same deal the other half of a sink gets.
-            if (op.Code == OpCode.UnitWrite) continue;
+            // The two ops with no result, and so the two ops with no line. There
+            // is no state on this path for either to write to, and a declaration
+            // of r-1 would not compile. What they fed is left as dead code for
+            // the driver to drop, which is the same deal the other half of a sink
+            // gets.
+            if (op.Code is OpCode.UnitWrite or OpCode.ClockWrite) continue;
 
             string a = Read(op.A), b = Read(op.B), c = Read(op.C);
 

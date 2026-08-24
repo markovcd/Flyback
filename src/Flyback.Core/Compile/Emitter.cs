@@ -148,7 +148,11 @@ public sealed class Emitter
         var cell = AllocateUnitSlot();
         var moved = Binary(OpCode.Sub, now, UnitRead(cell));
 
-        UnitWrite(cell, now);
+        // Written as a clock rather than as a signal, which is the difference
+        // between a cell that is bounded to the rails and one that is not. What
+        // goes in here is the time itself, and the time passes sixteen after
+        // sixteen seconds — see OpCode.ClockWrite.
+        ClockWrite(cell, now);
 
         return (interval = moved).Value;
     }
@@ -276,6 +280,14 @@ public sealed class Emitter
     /// </summary>
     public void UnitWrite(int slot, Slot value) =>
         Add(new Op(OpCode.UnitWrite, -1, value.Component(0), k: slot));
+
+    /// <summary>
+    /// The same, for a cell holding the renderer's clock. Not for anything a
+    /// patch can reach — see <see cref="OpCode.ClockWrite"/> for why the two are
+    /// different ops.
+    /// </summary>
+    private void ClockWrite(int slot, Slot value) =>
+        Add(new Op(OpCode.ClockWrite, -1, value.Component(0), k: slot));
 
     /// <summary>An op that writes three consecutive registers at once.</summary>
     public Slot Triple(OpCode code, Slot a, Slot b, Slot c = default)

@@ -137,6 +137,22 @@ public enum OpCode : byte
     /// </summary>
     UnitWrite,
 
+    /// <summary>
+    /// slot K = a, unbounded. <see cref="UnitWrite"/> for a cell holding the
+    /// renderer's clock rather than a signal from the patch.
+    /// </summary>
+    /// <remarks>
+    /// The two differ only in the bound, and the bound is the whole point. A
+    /// cell a patch can draw a wire into may be part of a loop with a gain above
+    /// one, so what goes into it is clamped to the rails — which is what keeps a
+    /// runaway audible instead of turning it into silent NaN. A clock is not
+    /// that: no wire reaches it, it cannot run away, and it passes any bound
+    /// simply by the patch being left playing. Clamped, it sticks, and every
+    /// module that measures its own rate off it is handed a rate that grows
+    /// without end.
+    /// </remarks>
+    ClockWrite,
+
     // --- multi-register writes: these fill out, out+1, out+2 ---
     /// <summary>(out, out+1, out+2) = hsv2rgb(a, b, c)</summary>
     HsvToRgb,

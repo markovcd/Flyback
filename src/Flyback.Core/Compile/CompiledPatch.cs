@@ -67,7 +67,7 @@ public sealed class CompiledPatch(Op[] ops, int registerCount, int outputBase, i
     /// them would count each cell twice.
     /// </remarks>
     public int UnitCount { get; } = ops
-        .Where(o => o.Code is OpCode.UnitRead or OpCode.UnitWrite)
+        .Where(o => o.Code is OpCode.UnitRead or OpCode.UnitWrite or OpCode.ClockWrite)
         .Select(o => (int)o.K + 1)
         .DefaultIfEmpty(0)
         .Max();
@@ -223,6 +223,10 @@ public sealed class CompiledPatch(Op[] ops, int registerCount, int outputBase, i
 
                 case OpCode.UnitWrite:
                     delays?.WriteUnit((int)op.K, registers[op.A]);
+                    break;
+
+                case OpCode.ClockWrite:
+                    delays?.WriteClock((int)op.K, registers[op.A]);
                     break;
 
                 case OpCode.Phase:

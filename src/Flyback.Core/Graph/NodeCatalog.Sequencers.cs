@@ -29,8 +29,29 @@ public partial class NodeCatalog
     /// </summary>
     private const float ShortestGateEdge = 0.002f;
     
+    public const string TempoTypeId = "seq.tempo";
+
+    /// <summary>Seconds in a minute, which is the whole of what a tempo knob converts.</summary>
+    private const float Minute = 60f;
+
     private static IEnumerable<NodeDef> Sequencers()
     {
+        // Everything here counts in beats a second, because everything here is a
+        // frequency and that is what a frequency is. Nobody writes music in
+        // those: a tempo is a number between about 60 and 180 and it is written
+        // down in beats a minute. This is the one module that knows the
+        // difference, exactly as Frequency is the one that knows a pitch is in
+        // hertz rather than in the single digits a picture is drawn from.
+        yield return new NodeDef(
+            TempoTypeId, "Tempo", "Sequencer",
+            [Num("bpm", 120f, 20f, 300f)],
+            [Num("out")],
+            (em, node) => [em.Mul(node[0], 1f / Minute)],
+            "A knob in beats per minute, handed on as beats per second. Patch 'out' into a "
+            + "sequencer's 'rate' for one step a beat, or through a Multiply first for "
+            + "anything faster — four for sixteenths. It is also what drives a Pulse to give "
+            + "a drum something to be triggered by.");
+
         yield return StepSequencer(
             "seq.notes", "Note Sequencer", DefaultRiff, PortDisplay.Note, (0f, 127f),
             "A list of notes, edited in the inspector rather than on the node. A note is a "
@@ -234,4 +255,4 @@ public partial class NodeCatalog
             which,
         ];
     }
-}
+}

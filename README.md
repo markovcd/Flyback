@@ -263,10 +263,19 @@ What each half costs is still separate — the picture's program walks back from
 other.
 
 The audio side of the catalogue is **Frequency** and **Note** for pitch, **Note
-Sequencer** and **Sequencer** for a tune, **Mixer** for summing, and the
-Output's own `scan` for hearing the picture instead of the clock. Each explains
-itself on its panel. Two details are on none of them: a Note's `octave`
-transposes by twelve semitones a step, and its `cents` detunes past the snap.
+Sequencer** and **Sequencer** for a tune, **Tempo** for saying how fast in beats
+a minute rather than in beats a second, **ADSR** for the shape a note has over
+time, **Mixer** for summing, and the Output's own `scan` for hearing the picture
+instead of the clock. Each explains itself on its panel. Two details are on none
+of them: a Note's `octave` transposes by twelve semitones a step, and its
+`cents` detunes past the snap.
+
+The **ADSR** is the one module here with a memory that is not a delay line. It
+holds its level and one latch in a pair of the one-evaluation cells ADR-0041
+gave the filter, so it needed no opcode of its own — and like everything else
+with a memory it is audio only. A picture is one evaluation with nothing before
+it, so there is no time for a shape to happen in and what comes out is the gate
+at its sustain level.
 
 A **Mixer**'s levels are sockets like everything else here, which is the part
 worth saying twice — a fader is something an oscillator can sweep as well as
@@ -332,6 +341,25 @@ which is exactly four voices at full and puts the worst case at full scale rathe
 than past it; the picture's Gain is far more generous, since light that runs over
 clips to white and reads as brightness, while sound that runs over reads as a
 fault.
+
+**Kick** is a drum, and the one preset here whose parts are all times. A **Pulse**
+at two hertz — 120 beats a minute, off a **Tempo** knob that says so in those
+words — triggers two **ADSR**s at once. One shapes how loud the note is over three
+hundred milliseconds; the other shapes what pitch it is over forty, and that
+second one is the whole difference between a drum and a beep: the note starts
+around two hundred hertz and has fallen to forty-five before the first is half
+gone. What the ear hears at the top is the beater and what it hears after is the
+shell, and both are one oscillator.
+
+The eye gets a disc struck on the beat and fading out before the next one — and
+what lights it is a **Saw** at the same tempo rather than the level envelope.
+An envelope has no memory on the video path, so all it can hand the screen is its
+gate, and a gate is open for all but a fiftieth of each beat: a disc lit by one is
+not a drum being struck but a lamp that is on, with a ten-millisecond hole in it.
+That hole is shorter than a video frame, so whether any frame lands in it is
+luck, and the disc appears to blink at whatever rate the two beat against each
+other. A saw is the shape the envelope would be if it could run, and being a pure
+function of time it needs no memory to do it.
 
 ### Why a stepped pitch does not click
 
@@ -751,7 +779,7 @@ legitimately changes, inspect the `.received.png` next to its `.verified.png`
 baseline and rename it to approve.
 
 The fuzzer generates random well-formed patches and pushes them through compile
-and render. It is the only test that reaches all 56 modules, and it is what
+and render. It is the only test that reaches all 62 modules, and it is what
 guards the gap ADR-0008 describes: nothing links a module's declared ports to
 what its emit function actually indexes.
 

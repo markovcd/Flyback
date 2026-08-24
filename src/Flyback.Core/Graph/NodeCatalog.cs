@@ -104,6 +104,7 @@ public static partial class NodeCatalog
             .Concat(Sources())
             .Concat(Oscillators())
             .Concat(Sequencers())
+            .Concat(Envelopes())
             .Concat(Maths())
             .Concat(Space())
             .Concat(Patterns())

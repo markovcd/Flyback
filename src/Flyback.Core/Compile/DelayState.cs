@@ -150,6 +150,22 @@ public sealed class DelayState
         units[slot] = double.IsFinite(value) ? Math.Clamp(value, -16d, 16d) : 0d;
 
     /// <summary>
+    /// The same, for a cell holding the renderer's clock rather than a signal —
+    /// bounded to what a number can be and to nothing else.
+    /// </summary>
+    /// <remarks>
+    /// The clamp above is for a value a wire can reach, where a loop with a gain
+    /// above one is easy to draw and pinning it at the rails is the only way to
+    /// keep it audible rather than NaN. A clock is neither: nothing in a patch
+    /// can write one and nothing can make it run away. What it does do is pass
+    /// sixteen, after sixteen seconds — and clamped, it stops there for good,
+    /// leaving every module that measures its own rate off it to see an interval
+    /// that grows for the rest of the session. See <see cref="OpCode.ClockWrite"/>.
+    /// </remarks>
+    public void WriteClock(int slot, double value) =>
+        units[slot] = double.IsFinite(value) ? value : 0d;
+
+    /// <summary>
     /// Advances accumulator <paramref name="cell"/> by however far
     /// <paramref name="input"/> has moved since the last evaluation, counted in
     /// cycles of <paramref name="frequency"/>, and returns the phase that
