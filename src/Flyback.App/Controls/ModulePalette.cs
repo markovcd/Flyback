@@ -32,7 +32,7 @@ public sealed class ModulePalette : UserControl
     /// <summary>How tall the list is allowed to get before it scrolls.</summary>
     private const double TallestList = 420;
 
-    private const double PopupWidth = 240;
+    private const double PopupWidth = 180;
 
     /// <summary>How solid the list is over the patch it is being added to.</summary>
     public const double Translucency = 0.8;
