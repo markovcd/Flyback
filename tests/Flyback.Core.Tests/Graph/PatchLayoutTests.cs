@@ -223,13 +223,16 @@ public class PatchLayoutTests
     public void A_module_that_is_not_in_the_catalogue_is_left_alone()
     {
         var patch = Preset("Drone");
-        var unknown = new NodeInstance { Id = Guid.NewGuid(), TypeId = "nobody.knows", X = 1234, Y = 5678 };
+        // Somewhere arbitrary, and inside the canvas: a coordinate outside it
+        // would be held to the edge on its way in and this would then be a test
+        // of the bound rather than of the layout.
+        var unknown = new NodeInstance { Id = Guid.NewGuid(), TypeId = "nobody.knows", X = 1234, Y = 2678 };
         patch.Nodes.Add(unknown);
 
         PatchLayout.Arrange(patch, NodeCatalog.BuiltIn);
 
         unknown.X.ShouldBe(1234);
-        unknown.Y.ShouldBe(5678);
+        unknown.Y.ShouldBe(2678);
     }
 
     [Fact]

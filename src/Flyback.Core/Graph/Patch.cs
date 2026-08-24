@@ -37,13 +37,44 @@ public sealed class NodeInstance
     /// </summary>
     public const int NameLimit = 26;
 
+    /// <summary>
+    /// How far from the origin a module may sit, on each axis, in graph units.
+    /// The canvas is that square and nothing may be put outside it.
+    /// </summary>
+    /// <remarks>
+    /// Ten thousand units across, which is about thirty modules wide at the
+    /// spacing the layout uses and some six times the span of the largest preset
+    /// in the box. Room to work in rather than room to get lost in: a module
+    /// flung far enough away is a module that cannot be got back, because
+    /// framing the patch clamps its zoom — past a certain distance pressing F
+    /// shows an empty grid with the patch somewhere off it, and the only way
+    /// back would be to close the file without saving.
+    /// <para>
+    /// Held on the coordinate rather than on the gesture, so it is true of a
+    /// module however it was placed — dragged, pasted, laid out, read from a file
+    /// somebody edited by hand, or positioned by an assistant that has never seen
+    /// the canvas.
+    /// </para>
+    /// </remarks>
+    public const double Extent = 5_000d;
+
     public required Guid Id { get; init; }
 
     public required string TypeId { get; init; }
 
-    public double X { get; set; }
+    /// <summary>Where it sits. Always inside the canvas — see <see cref="Extent"/>.</summary>
+    public double X
+    {
+        get;
+        set => field = Inside(value);
+    }
 
-    public double Y { get; set; }
+    /// <inheritdoc cref="X"/>
+    public double Y
+    {
+        get;
+        set => field = Inside(value);
+    }
 
     /// <summary>
     /// What this one has been renamed to, and null where it has not been — which
@@ -80,6 +111,19 @@ public sealed class NodeInstance
     /// what that costs — a step is no longer a socket.
     /// </remarks>
     public List<Step>? Steps { get; set; }
+
+    /// <summary>
+    /// One coordinate held inside the canvas.
+    /// </summary>
+    /// <remarks>
+    /// Not a number at all becomes the origin rather than the near edge: NaN is
+    /// not far away in some direction, it is a coordinate that was never
+    /// computed, and it would otherwise poison every comparison that looks for
+    /// the corners of a patch. Infinity is genuinely far away in a direction and
+    /// lands on the edge like any other overshoot.
+    /// </remarks>
+    private static double Inside(double value) =>
+        double.IsNaN(value) ? 0d : Math.Clamp(value, -Extent, Extent);
 
     /// <summary>
     /// What to call this one: the name it was given, or its definition's where

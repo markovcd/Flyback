@@ -72,6 +72,25 @@ public sealed class NodeEditor : Control
     private static readonly IBrush MarqueeFill = new SolidColorBrush(Colors.Attention, 0.08);
     private static readonly IPen PortOutline = new Pen(new SolidColorBrush(Colors.Outline), 1.2);
 
+    /// <summary>
+    /// Past the edge of the canvas. Darker than the canvas and never ruled, so
+    /// that ground no module may stand on does not look like ground one may.
+    /// </summary>
+    /// <remarks>
+    /// The darkest surface in the palette rather than the window's own, which is
+    /// four parts in two hundred and fifty-five away from the canvas — a
+    /// difference no eye finds across a strip a few hundred units wide, and one a
+    /// test cannot tell from rounding either.
+    /// </remarks>
+    private static readonly IBrush Beyond = new SolidColorBrush(Colors.Edge);
+
+    /// <summary>
+    /// The edge of the canvas. Brighter than any grid line and a little heavier,
+    /// because it is the one line out there that means something other than
+    /// "this is where another forty-eight units went".
+    /// </summary>
+    private static readonly IPen EdgePen = new Pen(new SolidColorBrush(Colors.Separator), 2);
+
     /// <summary>How thick a wire is drawn, and how far under full strength.</summary>
     private const double WireThickness = 2.2;
 
@@ -89,6 +108,38 @@ public sealed class NodeEditor : Control
     private static readonly Cursor NodeCursor = new(StandardCursorType.SizeAll);
 
     private readonly PatchHistory history = new();
+
+    /// <summary>
+    /// How far past the canvas the view may be scrolled, in graph units: a strip
+    /// of the ground beyond, so the edge reads as an edge with something on the
+    /// far side of it rather than as the window's own frame.
+    /// </summary>
+    /// <remarks>
+    /// Nothing is ever out there to be looked at — a module is held wholly
+    /// inside the canvas, body and all — so this is as much room as the line
+    /// needs to be seen and no more. Scaled by the zoom like everything else in
+    /// graph units, which puts it between a thin band and a comfortable one
+    /// across the range the wheel allows.
+    /// </remarks>
+    internal const double ViewMargin = 160;
+
+    /// <summary>How far from the origin the view may see, on each axis.</summary>
+    internal const double ViewReach = NodeInstance.Extent + ViewMargin;
+
+    /// <summary>
+    /// The canvas itself, in graph units: the square a module may stand on.
+    /// </summary>
+    /// <remarks>
+    /// Drawn rather than merely enforced. A bound nothing shows is a wall in the
+    /// dark — the grid used to run on past it in every direction, which said the
+    /// canvas went on as well, so a drag that stopped had nothing to blame but
+    /// the program.
+    /// </remarks>
+    internal static readonly Rect CanvasBounds = new(
+        -NodeInstance.Extent,
+        -NodeInstance.Extent,
+        NodeInstance.Extent * 2,
+        NodeInstance.Extent * 2);
 
     private Patch patch = new();
     private double zoom = 1;
@@ -233,6 +284,12 @@ public sealed class NodeEditor : Control
             // than true of each route to it separately.
             patch.EnsureOutput();
 
+            // And the same gate for where its modules stand. A file written
+            // before the canvas was bounded, or by hand, may put one half off
+            // the edge — brought in here, before the history opens on it, so
+            // that what a patch was opened as is a patch that fits.
+            HoldInside();
+
             // A different document rather than an edit to this one, so what
             // came before it is not something to undo into.
             history.Opened(patch);
@@ -294,6 +351,12 @@ public sealed class NodeEditor : Control
     /// </param>
     public void NotifyPatchChanged(string? coalesce = null)
     {
+        // Before the step is recorded, so what can be undone into is a patch
+        // whose modules are all on the canvas. Every edit that places one comes
+        // through here — a paste, a module added, a layout — and none of them
+        // knows how large what it placed is.
+        HoldInside();
+
         history.Record(patch, coalesce);
         InvalidateVisual();
         PatchChanged?.Invoke(this, EventArgs.Empty);
@@ -353,6 +416,7 @@ public sealed class NodeEditor : Control
     {
         patch = next;
         patch.EnsureOutput();
+        HoldInside();
 
         selection.RemoveWhere(id => patch.Find(id) is null);
         if (focus is { } kept && !selection.Contains(kept)) focus = null;
@@ -736,7 +800,7 @@ public sealed class NodeEditor : Control
         if (patch.Nodes.Count == 0)
         {
             zoom = 1;
-            pan = new Point(40, 40);
+            PanTo(new Point(40, 40));
             InvalidateVisual();
             return;
         }
@@ -762,9 +826,15 @@ public sealed class NodeEditor : Control
         var scaleY = Bounds.Height / (bottom - top + margin * 2);
 
         zoom = Math.Clamp(Math.Min(scaleX, scaleY), 0.2, 1.4);
-        pan = new Point(
+
+        // Centred on what it is framing, and then held inside the canvas — so a
+        // patch built hard against an edge is pushed off centre rather than
+        // being centred over ground the view is not allowed to be on. It stays
+        // wholly in sight either way: the view is wider than what it frames,
+        // and holding it only ever slides it back towards the middle.
+        PanTo(new Point(
             (Bounds.Width - (right - left) * zoom) / 2 - left * zoom,
-            (Bounds.Height - (bottom - top) * zoom) / 2 - top * zoom);
+            (Bounds.Height - (bottom - top) * zoom) / 2 - top * zoom));
 
         InvalidateVisual();
     }
@@ -773,7 +843,54 @@ public sealed class NodeEditor : Control
     {
         base.OnSizeChanged(e);
 
-        if (framePending) FrameAll();
+        if (framePending)
+        {
+            FrameAll();
+            return;
+        }
+
+        // A window pulled wider shows more canvas without the view having
+        // moved, which is the one way to end up outside it without panning.
+        PanTo(pan);
+        InvalidateVisual();
+    }
+
+    /// <summary>
+    /// Moves the view, held so that it never leaves the canvas.
+    /// </summary>
+    /// <remarks>
+    /// Every pan goes through here, the one a zoom performs included: zooming
+    /// out in a corner walks the view outwards as surely as dragging it does,
+    /// and a guard on the drag alone is one the wheel steps straight past.
+    /// <para>
+    /// What it holds is the view rather than its centre, so the far side of the
+    /// canvas comes to the far side of the window and stops. The reach is a
+    /// little wider than <see cref="NodeInstance.Extent"/>, because that holds a
+    /// module's corner and its body hangs below and to the right of it — a view
+    /// stopped on the coordinate itself would cut the last module in half and
+    /// refuse to show the rest.
+    /// </para>
+    /// <para>
+    /// A view wider than the canvas cannot be held inside it, so it is centred
+    /// on it instead — and that is a real case rather than a defensive one. The
+    /// zoom stops at a fifth, which puts five windows' worth of units across the
+    /// view, so any window past about two thousand pixels can see the whole
+    /// canvas at once with room to spare. There is then nowhere to pan to, and
+    /// the canvas sits in the middle of the window where it belongs.
+    /// </para>
+    /// </remarks>
+    private void PanTo(Point to)
+    {
+        pan = new Point(Held(to.X, Bounds.Width), Held(to.Y, Bounds.Height));
+
+        double Held(double offset, double viewport)
+        {
+            var edge = ViewReach * zoom;
+
+            return viewport > edge * 2
+                ? viewport / 2
+                : Math.Clamp(offset, viewport - edge, edge);
+        }
     }
 
     // --- coordinate transforms ----------------------------------------------
@@ -793,7 +910,12 @@ public sealed class NodeEditor : Control
 
     public override void Render(DrawingContext context)
     {
-        context.FillRectangle(Background, new Rect(Bounds.Size));
+        // Two grounds rather than one. The canvas is a sheet of finite size and
+        // the rest of the control is whatever lies past it, which the bounded
+        // pan lets you see a little of — that strip is the whole of what makes
+        // the edge a thing to look at rather than a stop to walk into.
+        context.FillRectangle(Beyond, new Rect(Bounds.Size));
+        context.FillRectangle(Background, OnScreen(CanvasBounds));
 
         using (context.PushTransform(GraphToScreen))
         {
@@ -818,10 +940,26 @@ public sealed class NodeEditor : Control
         }
 
         // Outside the transform, so a hairline stays a hairline and the dashes
-        // keep their spacing however far out the view is zoomed. It is drawn on
-        // the canvas rather than in it — nothing about it is part of the patch.
+        // keep their spacing however far out the view is zoomed. These are drawn
+        // on the canvas rather than in it — neither is part of the patch.
+        DrawEdge(context);
         DrawMarquee(context);
     }
+
+    /// <summary>
+    /// Rules the edge of the canvas.
+    /// </summary>
+    /// <remarks>
+    /// Over the modules rather than under them, so that the one standing hard
+    /// against an edge has the line across it and the rest of its body out on
+    /// the far side. That is what the module's own bound looks like: a
+    /// coordinate names a corner, and the body hangs off it.
+    /// </remarks>
+    private void DrawEdge(DrawingContext context) =>
+        context.DrawRectangle(null, EdgePen, OnScreen(CanvasBounds));
+
+    /// <summary>A rectangle of graph units, in the control's own coordinates.</summary>
+    private Rect OnScreen(Rect graph) => graph.TransformToAABB(GraphToScreen);
 
     private void DrawMarquee(DrawingContext context)
     {
@@ -856,27 +994,40 @@ public sealed class NodeEditor : Control
 
     private void DrawGrid(DrawingContext context)
     {
-        var topLeft = ToGraph(new Point(0, 0));
-        var bottomRight = ToGraph(new Point(Bounds.Width, Bounds.Height));
+        // What is being looked at, and never more of it than there is canvas.
+        // The grid is what says where a module would land, so ruling ground no
+        // module may stand on would be a lie told in the one part of the view
+        // that has nothing else in it to read.
+        var visible = new Rect(
+                ToGraph(new Point(0, 0)),
+                ToGraph(new Point(Bounds.Width, Bounds.Height)))
+            .Intersect(CanvasBounds);
+
+        // Zoomed in hard against an edge, the canvas can be off the view
+        // entirely bar the line around it.
+        if (visible.Width <= 0 || visible.Height <= 0) return;
 
         const double spacing = 48;
 
         // Zoomed far out the grid stops being useful and only costs draw calls.
-        if ((bottomRight.X - topLeft.X) / spacing > 400) return;
+        if (visible.Width / spacing > 400) return;
 
-        var firstX = Math.Floor(topLeft.X / spacing) * spacing;
-        var firstY = Math.Floor(topLeft.Y / spacing) * spacing;
+        // Rounded up rather than down, which is what the viewport wanted: a line
+        // started just short of the canvas used to be off the control and
+        // invisible, and would now be out on the ground past the edge.
+        var firstX = Math.Ceiling(visible.X / spacing) * spacing;
+        var firstY = Math.Ceiling(visible.Y / spacing) * spacing;
 
-        for (var x = firstX; x <= bottomRight.X; x += spacing)
+        for (var x = firstX; x <= visible.Right; x += spacing)
         {
             var pen = Math.Abs(x % (spacing * 5)) < 0.5 ? GridPenMajor : GridPen;
-            context.DrawLine(pen, new Point(x, topLeft.Y), new Point(x, bottomRight.Y));
+            context.DrawLine(pen, new Point(x, visible.Y), new Point(x, visible.Bottom));
         }
 
-        for (var y = firstY; y <= bottomRight.Y; y += spacing)
+        for (var y = firstY; y <= visible.Bottom; y += spacing)
         {
             var pen = Math.Abs(y % (spacing * 5)) < 0.5 ? GridPenMajor : GridPen;
-            context.DrawLine(pen, new Point(topLeft.X, y), new Point(bottomRight.X, y));
+            context.DrawLine(pen, new Point(visible.X, y), new Point(visible.Right, y));
         }
     }
 
@@ -1183,6 +1334,88 @@ public sealed class NodeEditor : Control
     }
 
     /// <summary>
+    /// As much of a drag as keeps every module in it inside the canvas.
+    /// </summary>
+    /// <remarks>
+    /// The whole gesture is cut back to what the nearest module to an edge can
+    /// take, rather than each module being clamped where it lands. Clamping
+    /// them one at a time would hold the group together right up until it met
+    /// the edge and then flatten it against it — the ones already there stopped
+    /// while the rest kept coming — and letting go would leave a selection
+    /// nothing puts back. Cut as one vector, the group slides up to the wall
+    /// whole and stays in the shape it was picked up in.
+    /// <para>
+    /// Each axis is narrowed by every module in turn. All of the ranges hold
+    /// zero, because a module is inside the canvas before it is dragged, so
+    /// there is always some part of the gesture left to allow — standing still
+    /// at worst.
+    /// </para>
+    /// </remarks>
+    private Vector Held(Vector delta, Dictionary<Guid, Point> origins)
+    {
+        var (x, y) = (delta.X, delta.Y);
+
+        foreach (var (id, from) in origins)
+        {
+            if (patch.Find(id) is not { } node) continue;
+            if (NodeCatalog.Get(node.TypeId) is not { } def) continue;
+
+            var room = Room(def);
+
+            x = Math.Clamp(x, room.X - from.X, room.Right - from.X);
+            y = Math.Clamp(y, room.Y - from.Y, room.Bottom - from.Y);
+        }
+
+        return new Vector(x, y);
+    }
+
+    /// <summary>
+    /// Where a module's corner may be put, so that the whole of the module is on
+    /// the canvas: the canvas less the room the module itself takes up.
+    /// </summary>
+    /// <remarks>
+    /// A coordinate names the top left of a module and the body hangs below and
+    /// to the right of it, so holding the coordinate inside the canvas leaves the
+    /// body outside — a module dragged to the edge stood entirely on the far side
+    /// of the line, which is what the line is drawn to say cannot happen.
+    /// </remarks>
+    private static Rect Room(NodeDef def) => new(
+        CanvasBounds.X,
+        CanvasBounds.Y,
+        Math.Max(0, CanvasBounds.Width - NodeGeometry.Width),
+        Math.Max(0, CanvasBounds.Height - NodeGeometry.Height(def)));
+
+    /// <summary>
+    /// Puts every module wholly inside the canvas.
+    /// </summary>
+    /// <remarks>
+    /// The coordinate holds itself to <see cref="NodeInstance.Extent"/> on its
+    /// own, and that is the backstop against a module being lost altogether. It
+    /// cannot do this part: what it holds is a corner, and how far the body
+    /// reaches past that corner depends on how many sockets the module has —
+    /// which is the view's arithmetic and not the engine's. So a paste, a layout
+    /// or a file may still leave a module standing half off the canvas, and this
+    /// is where it is known enough to be put right.
+    /// <para>
+    /// A module the catalogue does not have is left exactly where it is, the same
+    /// as the layout leaves it: nothing here can measure one, and a guessed size
+    /// would move it for no reason anybody could see.
+    /// </para>
+    /// </remarks>
+    private void HoldInside()
+    {
+        foreach (var node in patch.Nodes)
+        {
+            if (NodeCatalog.Get(node.TypeId) is not { } def) continue;
+
+            var room = Room(def);
+
+            node.X = Math.Clamp(node.X, room.X, room.Right);
+            node.Y = Math.Clamp(node.Y, room.Y, room.Bottom);
+        }
+    }
+
+    /// <summary>
     /// Grabbing a connected input picks the existing wire up by its far end,
     /// so re-patching works the way it does on a real rig.
     /// </summary>
@@ -1221,13 +1454,18 @@ public sealed class NodeEditor : Control
         switch (drag)
         {
             case Drag.Pan:
-                pan += screen - dragOrigin;
+                PanTo(pan + (screen - dragOrigin));
+
+                // Taken from where the pointer is rather than from where the
+                // view ended up, so that a drag pushing at an edge does not
+                // build up a debt of movement to be paid back before the view
+                // will come away from it again.
                 dragOrigin = screen;
                 InvalidateVisual();
                 return;
 
             case Drag.Node when dragOrigins.Count > 0:
-                var delta = (screen - dragOrigin) / zoom;
+                var delta = Held((screen - dragOrigin) / zoom, dragOrigins);
 
                 foreach (var moving in SelectedNodes)
                 {
@@ -1378,8 +1616,10 @@ public sealed class NodeEditor : Control
 
         zoom = Math.Clamp(zoom * Math.Pow(1.12, e.Delta.Y), 0.2, 3.0);
 
-        // Keep whatever was under the cursor pinned there.
-        pan = new Point(screen.X - anchor.X * zoom, screen.Y - anchor.Y * zoom);
+        // Keep whatever was under the cursor pinned there — as far as the edge
+        // of the canvas allows, since zooming out in a corner walks the view
+        // outwards as surely as dragging it does.
+        PanTo(new Point(screen.X - anchor.X * zoom, screen.Y - anchor.Y * zoom));
 
         InvalidateVisual();
         e.Handled = true;
