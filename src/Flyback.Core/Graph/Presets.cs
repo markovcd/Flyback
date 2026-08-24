@@ -22,6 +22,7 @@ public static class Presets
         new("Sequence", Sequence),
         new("Four voices", FourVoices),
         new("Kick", Kick),
+        new("Whole band", WholeBand),
         new("Empty", Empty),
     ];
 
@@ -746,6 +747,512 @@ public static class Presets
              .Wire(tint, 0, picture, channel)
              .Wire(level, 0, picture, channel + 1);
         }
+
+        return b.Patch;
+    }
+
+    /// <summary>
+    /// Four instruments off four sequencers, and one picture off three of them.
+    /// A bass line, a two-oscillator lead with a fifth over it, a kick and a
+    /// hi-hat, mixed to a stereo pair — and the same steps that play them are
+    /// what turns, folds, colors and lights the image.
+    /// </summary>
+    /// <remarks>
+    /// The largest patch in the box, and it is here to show what one patch can
+    /// be rather than to teach a single idea the way the others do. Every module
+    /// in it is one the palette already holds, and nothing it does with them is
+    /// something the smaller presets have not each done once.
+    /// <para>
+    /// One Tempo drives all four sequencers and nothing anywhere is timed off
+    /// anything else. The bass runs in eighths and the lead, the kick and the
+    /// hats in sixteenths — two Multiplies off the one knob, which is the whole
+    /// of the tempo structure. The bass is twelve notes of uneven length adding
+    /// to two bars and the lead is twenty even ones adding to five beats, so the
+    /// two come back into line every ten bars rather than every one, and the
+    /// tune stops sounding like a loop long before the picture stops looking
+    /// like one.
+    /// </para>
+    /// <para>
+    /// Which sequencer drives which part of the image is the decision worth
+    /// reading. The bass moves the geometry: it changes chord about once a bar,
+    /// so the rotation and the number of kaleidoscope wedges change with it, at
+    /// a rate the eye can follow. The lead moves the color: it steps four times
+    /// a beat, which is far too fast to rebuild a shape with and exactly right
+    /// for hue. The kick moves the light — the zoom pump, the brightness and the
+    /// twist on the feedback are all its gate. The hats are heard and not seen,
+    /// which is the one instrument that is: a sixteenth-note shimmer would read
+    /// as a flicker rather than as a rhythm.
+    /// </para>
+    /// <para>
+    /// The kick's gate is read on the video path rather than an envelope of it,
+    /// because an envelope has no memory drawn and hands over its gate anyway.
+    /// That works here where it did not in <see cref="Kick"/> only because this
+    /// gate comes from a sequencer rather than from a Pulse: it is open for
+    /// about a third of a sixteenth, which at thirty frames a second is a frame
+    /// or two of flash against four of dark rather than the other way about.
+    /// </para>
+    /// <para>
+    /// The hi-hat has no noise module behind it because there is no noise module
+    /// that would do: Noise is a field in x and y, and the audio path stands at
+    /// one point of the plane, so a hat made of it would be a held tone. What
+    /// makes the hiss instead is the hash every shader writes — the fraction of
+    /// a sine of a large multiple of the clock, which lands somewhere else
+    /// entirely from one sample to the next. It is a constant per frame on the
+    /// video path, where it is never read, and it is the only place in the
+    /// preset where a number is chosen for being large rather than for meaning
+    /// something.
+    /// </para>
+    /// <para>
+    /// Stereo comes from the detune and not from a pan knob. The lead is two
+    /// saws a few cents apart, and the two Mixers differ in which of them they
+    /// take — left gets the one at pitch, right gets the one the vibrato is
+    /// bending — so the width is the beating between them rather than one signal
+    /// made quieter on one side. The hats lean right by the same trick, and the
+    /// kick and the bass sit dead centre, which is where a kick and a bass
+    /// belong.
+    /// </para>
+    /// <para>
+    /// Both sinks are clipped rather than trusted. Four instruments through a
+    /// Mixer sum the way a desk sums, so the master Multiply is deliberately
+    /// past unity and the Clamp after it is what makes that safe; the picture is
+    /// clamped before the HSV for the same reason, because a value past one is
+    /// not brighter, it is only wrong.
+    /// </para>
+    /// </remarks>
+    public static Patch WholeBand(ModuleCatalog modules)
+    {
+        var b = new PatchBuilder(modules);
+
+        // --- the clock -------------------------------------------------------
+
+        // Here for the things that have to be told to move and are not an 'in':
+        // the Noise's z, three drift rates, and the hash the hats are made of.
+        var clock = b.Add("time", 40, 1560);
+
+        var tempo = b.Add(NodeCatalog.TempoTypeId, 40, 1840, (0, 112f));
+        var eighths = b.Add("math.mul", 250, 1840, (1, 2f));
+        var sixteenths = b.Add("math.mul", 250, 2000, (1, 4f));
+
+        // --- the sequences ---------------------------------------------------
+
+        // Am, G, F, E over two bars of eighths, with the last chord held. The
+        // lengths are uneven and that is the groove: the dotted eighth into a
+        // sixteenth at the top of each bar is what stops it walking.
+        var bassSeq = b.Add("seq.notes", 480, 1620, (2, 0.55f), (3, 0.02f));
+        bassSeq.Steps =
+        [
+            new Step(33f, 1.5f), new Step(33f, 0.5f, 0.55f),
+            new Step(40f, 1f, 0.8f), new Step(33f, 1f, 0.65f),
+            new Step(31f, 1.5f), new Step(31f, 0.5f, 0.55f),
+            new Step(38f, 1f, 0.8f), new Step(31f, 1f, 0.65f),
+            new Step(29f, 1.5f), new Step(36f, 0.5f, 0.6f),
+            new Step(29f, 2f, 0.85f), new Step(28f, 4f),
+        ];
+
+        // Twenty sixteenths — five beats, against the bass's eight. The rests
+        // are a volume rather than a note, which is what a volume being a level
+        // and not a switch is for: the pitch stays where it was, so the notes
+        // either side of a rest are one phrase rather than three.
+        var leadSeq = b.Add("seq.notes", 480, 2000, (2, 0.62f), (3, 0.045f));
+        leadSeq.Steps =
+        [
+            new Step(69f), new Step(72f, 1f, 0.8f), new Step(76f, 1f, 0.9f), new Step(72f, 1f, 0.6f),
+            new Step(77f), new Step(76f, 1f, 0.85f), new Step(76f, 1f, 0f), new Step(74f, 1f, 0.9f),
+            new Step(71f, 1f, 0.8f), new Step(74f, 1f, 0.7f), new Step(79f), new Step(77f, 1f, 0.85f),
+            new Step(76f, 1f, 0.9f), new Step(74f, 1f, 0.6f), new Step(72f, 1f, 0.95f), new Step(72f, 1f, 0f),
+            new Step(71f, 1f, 0.85f), new Step(69f), new Step(67f, 1f, 0.7f), new Step(69f, 1f, 0.8f),
+        ];
+
+        // The drum pattern, as volumes: the four beats, a ghost off the second
+        // and another at the end of the bar, which is what makes it a groove
+        // rather than a metronome. A step's own value is nothing to do with the sound
+        // here — the Note Sequencer's would be a pitch and this one's is spare,
+        // so it rests at zero and the volumes carry the whole pattern.
+        var kickSeq = b.Add("seq.values", 480, 2380, (2, 0.32f), (3, 0.01f));
+        kickSeq.Steps =
+        [
+            new Step(0f), new Step(0f, 1f, 0f), new Step(0f, 1f, 0f), new Step(0f, 1f, 0f),
+            new Step(0f, 1f, 0.9f), new Step(0f, 1f, 0f), new Step(0f, 1f, 0.5f), new Step(0f, 1f, 0f),
+            new Step(0f, 1f, 0.95f), new Step(0f, 1f, 0f), new Step(0f, 1f, 0f), new Step(0f, 1f, 0f),
+            new Step(0f, 1f, 0.85f), new Step(0f, 1f, 0f), new Step(0f, 1f, 0.55f), new Step(0f, 1f, 0f),
+        ];
+
+        // Here the value is used, and it is the one gesture that needs a
+        // Sequencer rather than a Note Sequencer: it opens the hat. The step
+        // goes to the decay knob of the hat's envelope, so a high step rings for
+        // a seventh of a second and a low one is a tick — closed hats all the
+        // way through with two open ones in the bar, out of a list of numbers
+        // rather than out of two instruments.
+        var hatSeq = b.Add("seq.values", 480, 2760, (2, 0.4f), (3, 0.01f));
+        hatSeq.Steps =
+        [
+            new Step(0.15f, 1f, 0.9f), new Step(0.1f, 1f, 0.35f),
+            new Step(0.15f, 1f, 0.6f), new Step(0.1f, 1f, 0.3f),
+            new Step(0.15f, 1f, 0.85f), new Step(0.1f, 1f, 0.35f),
+            new Step(0.55f, 1f, 0.7f), new Step(0.1f, 1f, 0.3f),
+            new Step(0.15f, 1f, 0.9f), new Step(0.1f, 1f, 0.35f),
+            new Step(0.15f, 1f, 0.6f), new Step(0.1f, 1f, 0.3f),
+            new Step(0.15f, 1f, 0.8f), new Step(0.1f, 1f, 0.4f),
+            new Step(1f, 1f, 0.85f), new Step(0.1f, 1f, 0.5f),
+        ];
+
+        b.Wire(tempo, 0, eighths, 0)
+         .Wire(tempo, 0, sixteenths, 0)
+         .Wire(eighths, 0, bassSeq, 1)
+         .Wire(sixteenths, 0, leadSeq, 1)
+         .Wire(sixteenths, 0, kickSeq, 1)
+         .Wire(sixteenths, 0, hatSeq, 1);
+
+        // --- bass ------------------------------------------------------------
+
+        // A saw at the note and a sine an octave under it. The sub is a second
+        // Note rather than an oscillator at half the frequency, because a pitch
+        // here is a note number and an octave is a socket on the module that
+        // knows what one of those is.
+        var bassNote = b.Add("audio.note", 730, 1560);
+        var subNote = b.Add("audio.note", 730, 1780, (1, -1f));
+
+        var bassSaw = b.Add("osc.saw", 960, 1500, (3, 0.8f));
+        var bassSub = b.Add("osc.sine", 960, 1720, (3, 0.6f));
+        var bassSum = b.Add("math.add", 1190, 1560);
+
+        var bassEnv = b.Add(NodeCatalog.AdsrTypeId, 960, 1920,
+            (1, -3f), (2, -1.1f), (3, 0.35f), (4, -1.2f));
+
+        var bassVca = b.Add("math.mul", 1420, 1560);
+
+        // Overdriven and then clipped, which is the cheapest waveshaper there
+        // is: everything under the wall passes and everything over it flattens,
+        // and a flattened saw is a saw with more harmonics in it. Only the bass
+        // is treated this way — the same two modules across the lead would take
+        // its envelope off it and leave a drone.
+        var bassHot = b.Add("math.mul", 1650, 1560, (1, 2.4f));
+        var bassOut = b.Add("math.clamp", 1880, 1560, (1, -1f), (2, 1f));
+
+        b.Wire(bassSeq, 0, bassNote, 0)
+         .Wire(bassSeq, 0, subNote, 0)
+         .Wire(bassNote, 0, bassSaw, 1)
+         .Wire(subNote, 0, bassSub, 1)
+         .Wire(bassSaw, 0, bassSum, 0)
+         .Wire(bassSub, 0, bassSum, 1)
+         .Wire(bassSeq, 1, bassEnv, 0)
+         .Wire(bassSum, 0, bassVca, 0)
+         .Wire(bassEnv, 0, bassVca, 1)
+         .Wire(bassVca, 0, bassHot, 0)
+         .Wire(bassHot, 0, bassOut, 0);
+
+        // --- lead ------------------------------------------------------------
+
+        var leadNote = b.Add("audio.note", 730, 2000);
+
+        // The twin, taken off the first Note's 'note' output rather than off the
+        // sequencer again: it is the same snapped number, and the detune is put
+        // on after the snap because cents are the one control that can sit
+        // between two semitones. Nine of them, swung by a slow sine, so the pair
+        // beat against each other at a rate that keeps changing.
+        var vibrato = b.Add("osc.sine", 730, 2200, (1, 5.4f), (3, 9f));
+        var wide = b.Add("audio.note", 960, 2180);
+
+        var leadA = b.Add("osc.saw", 1190, 1980, (3, 0.7f));
+        var leadB = b.Add("osc.saw", 1190, 2160, (3, 0.7f));
+
+        // A fifth over the tune, on a triangle so it fills rather than competes,
+        // and faded in and out by a sine slow enough that it is never quite the
+        // same phrase twice. Adding seven before the Note is the interval: the
+        // sequencer hands out note numbers, and seven of those is a fifth.
+        var fifth = b.Add("math.add", 730, 2560, (1, 7f));
+        var fifthNote = b.Add("audio.note", 960, 2560);
+        var fifthOsc = b.Add("osc.triangle", 1190, 2560, (3, 0.5f));
+        var swell = b.Add("osc.sine", 960, 2780, (1, 0.043f), (3, 0.5f), (4, 0.5f));
+        var fifthLevel = b.Add("math.mul", 1420, 2560);
+
+        // Left and right differ in which saw they carry and in nothing else,
+        // which is where the width comes from.
+        var stackL = b.Add("math.add", 1420, 1980);
+        var stackR = b.Add("math.add", 1420, 2180);
+
+        var leadEnv = b.Add(NodeCatalog.AdsrTypeId, 1190, 2340,
+            (1, -2.7f), (2, -1.15f), (3, 0.28f), (4, -1.4f));
+
+        var voiceL = b.Add("math.mul", 1650, 1980);
+        var voiceR = b.Add("math.mul", 1650, 2180);
+
+        b.Wire(leadSeq, 0, leadNote, 0)
+         .Wire(leadNote, 1, wide, 0)
+         .Wire(vibrato, 0, wide, 2)
+         .Wire(leadNote, 0, leadA, 1)
+         .Wire(wide, 0, leadB, 1)
+
+         .Wire(leadSeq, 0, fifth, 0)
+         .Wire(fifth, 0, fifthNote, 0)
+         .Wire(fifthNote, 0, fifthOsc, 1)
+         .Wire(fifthOsc, 0, fifthLevel, 0)
+         .Wire(swell, 0, fifthLevel, 1)
+
+         .Wire(leadA, 0, stackL, 0)
+         .Wire(fifthLevel, 0, stackL, 1)
+         .Wire(leadB, 0, stackR, 0)
+         .Wire(fifthLevel, 0, stackR, 1)
+
+         .Wire(leadSeq, 1, leadEnv, 0)
+         .Wire(stackL, 0, voiceL, 0)
+         .Wire(leadEnv, 0, voiceL, 1)
+         .Wire(stackR, 0, voiceR, 0)
+         .Wire(leadEnv, 0, voiceR, 1);
+
+        // --- kick ------------------------------------------------------------
+
+        // Two envelopes and a sine, which is the whole of a kick drum: one
+        // shapes how loud it is and the shorter one shapes what pitch it is. See
+        // <see cref="Kick"/> for why the second of those is the difference
+        // between a drum and a beep.
+        var kickLevel = b.Add(NodeCatalog.AdsrTypeId, 730, 2380,
+            (1, -2.9f), (2, -0.62f), (3, 0f), (4, -1.1f));
+
+        var kickSweep = b.Add(NodeCatalog.AdsrTypeId, 730, 2960,
+            (1, -3.3f), (2, -1.4f), (3, 0f), (4, -1.8f));
+
+        var kickPitch = b.Add("math.remap", 960, 2960, (1, 0f), (2, 1f), (3, 47f), (4, 205f));
+        var kickBody = b.Add("osc.sine", 1190, 2960);
+        var kickOut = b.Add("math.mul", 1420, 2900);
+
+        b.Wire(kickSeq, 1, kickLevel, 0)
+         .Wire(kickSeq, 1, kickSweep, 0)
+         .Wire(kickSweep, 0, kickPitch, 0)
+         .Wire(kickPitch, 0, kickBody, 1)
+         .Wire(kickBody, 0, kickOut, 0)
+         .Wire(kickLevel, 0, kickOut, 1);
+
+        // --- hats ------------------------------------------------------------
+
+        // The hiss. Nothing in the catalogue makes a noise a point in the plane
+        // can hear — see the remarks — so it is built: a large multiple of the
+        // clock, a sine of it, a larger multiple of that, and the fraction.
+        var grain = b.Add("math.mul", 730, 3180, (1, 3571f));
+        var hash = b.Add("math.sin", 960, 3180);
+        var scatter = b.Add("math.mul", 1190, 3180, (1, 4371.3f));
+        var white = b.Add("math.fract", 1420, 3180);
+        var hiss = b.Add("math.remap", 1650, 3180, (1, 0f), (2, 1f), (3, -1f), (4, 1f));
+
+        // The step, as a decay time. That knob is in decades, so this is three
+        // milliseconds at the bottom of the sequence and a seventh of a second
+        // at the top of it.
+        var hatOpen = b.Add("math.remap", 730, 2760, (1, 0f), (2, 1f), (3, -2.5f), (4, -0.85f));
+        var hatEnv = b.Add(NodeCatalog.AdsrTypeId, 960, 2760, (1, -3.7f), (3, 0f), (4, -2.2f));
+        var hatOut = b.Add("math.mul", 1880, 3060);
+
+        b.Wire(clock, 0, grain, 0)
+         .Wire(grain, 0, hash, 0)
+         .Wire(hash, 0, scatter, 0)
+         .Wire(scatter, 0, white, 0)
+         .Wire(white, 0, hiss, 0)
+         .Wire(hatSeq, 0, hatOpen, 0)
+         .Wire(hatOpen, 0, hatEnv, 2)
+         .Wire(hatSeq, 1, hatEnv, 0)
+         .Wire(hiss, 0, hatOut, 0)
+         .Wire(hatEnv, 0, hatOut, 1);
+
+        // --- the desk --------------------------------------------------------
+
+        var deskL = b.Add("math.mixer", 2110, 1900, (1, 0.55f), (3, 0.72f), (5, 1f), (7, 0.55f));
+        var deskR = b.Add("math.mixer", 2110, 2400, (1, 0.55f), (3, 0.72f), (5, 1f), (7, 0.8f));
+
+        var driveL = b.Add("math.mul", 2340, 1900, (1, 1.2f));
+        var driveR = b.Add("math.mul", 2340, 2400, (1, 1.2f));
+
+        var limitL = b.Add("math.clamp", 2570, 1900, (1, -1f), (2, 1f));
+        var limitR = b.Add("math.clamp", 2570, 2400, (1, -1f), (2, 1f));
+
+        var output = b.Add(NodeCatalog.OutputTypeId, 3240, 1180, (NodeCatalog.OutputGainPort, 0.62f));
+
+        b.Wire(bassOut, 0, deskL, 0)
+         .Wire(voiceL, 0, deskL, 2)
+         .Wire(kickOut, 0, deskL, 4)
+         .Wire(hatOut, 0, deskL, 6)
+
+         .Wire(bassOut, 0, deskR, 0)
+         .Wire(voiceR, 0, deskR, 2)
+         .Wire(kickOut, 0, deskR, 4)
+         .Wire(hatOut, 0, deskR, 6)
+
+         .Wire(deskL, 0, driveL, 0)
+         .Wire(deskR, 0, driveR, 0)
+         .Wire(driveL, 0, limitL, 0)
+         .Wire(driveR, 0, limitR, 0)
+         .Wire(limitL, 0, output, NodeCatalog.OutputLeftPort)
+         .Wire(limitR, 0, output, NodeCatalog.OutputRightPort);
+
+        // --- the picture: geometry -------------------------------------------
+
+        // One clock read at four speeds. They are Multiplies rather than four
+        // Times for the reason Nebula gives: seconds are seconds, and what
+        // differs between these is only how much of them each part wants.
+        var spin = b.Add("math.mul", 250, 120, (1, 0.055f));
+        var boil = b.Add("math.mul", 250, 460, (1, 0.18f));
+        var drift = b.Add("math.mul", 250, 620, (1, 0.4f));
+        var crawl = b.Add("math.mul", 250, 780, (1, 0.02f));
+
+        // The bass moves the frame: where it has got to in the pattern is added
+        // to the rotation, and is how many wedges the fold has. It changes chord
+        // about once a bar, which is slow enough that the picture rebuilding
+        // itself reads as an arrangement rather than as a fault.
+        var stride = b.Add("math.remap", 250, 280, (1, 0f), (2, 1f), (3, -0.4f), (4, 0.4f));
+        var angle = b.Add("math.add", 480, 180);
+        var turn = b.Add("space.rotate", 710, 140);
+
+        // The kick moves the light. Its gate is read directly rather than
+        // through an envelope — see the remarks — and it is doing three things
+        // at once: the zoom, the brightness, and the twist on the feedback.
+        var pump = b.Add("math.remap", 480, 380, (1, 0f), (2, 1f), (3, 0.96f), (4, 1.3f));
+        var zoom = b.Add("space.scale", 940, 160);
+
+        var segments = b.Add("math.remap", 710, 400, (1, 0f), (2, 1f), (3, 3f), (4, 10f));
+        var fold = b.Add("space.kaleidoscope", 1170, 180);
+
+        // Geometry alone looks like geometry, so the plane is bent by a field
+        // read from inside the fold — symmetric, so it repeats with the wedges
+        // instead of quietly undoing them. Nebula's trick, and in Nebula's
+        // order: fold first, warp inside it.
+        var field = b.Add("pattern.noise", 1400, 400, (3, 2.1f));
+        var breath = b.Add("osc.sine", 1170, 620, (1, 0.071f), (3, 0.5f), (4, 0.5f));
+        var reach = b.Add("math.remap", 1400, 620, (1, 0f), (2, 1f), (3, 0.2f), (4, 0.7f));
+        var bend = b.Add("space.warp", 1630, 200);
+
+        // The lead's gate widens the rings, so a sixteenth arrives as a band
+        // rather than as a change of color alone.
+        var count = b.Add("math.remap", 1400, 780, (1, 0f), (2, 1f), (3, 2.6f), (4, 5.5f));
+        var bands = b.Add("pattern.rings", 1860, 220);
+
+        // Rings are a sine, so most of the frame is dark and only the crests
+        // survive as filaments.
+        var filament = b.Add("math.smoothstep", 2090, 260, (0, 0.2f), (1, 0.95f));
+
+        b.Wire(clock, 0, spin, 0)
+         .Wire(clock, 0, boil, 0)
+         .Wire(clock, 0, drift, 0)
+         .Wire(clock, 0, crawl, 0)
+
+         .Wire(bassSeq, 2, stride, 0)
+         .Wire(spin, 0, angle, 0)
+         .Wire(stride, 0, angle, 1)
+         .Wire(angle, 0, turn, 2)
+
+         .Wire(kickSeq, 1, pump, 0)
+         .Wire(turn, 0, zoom, 0)
+         .Wire(turn, 1, zoom, 1)
+         .Wire(pump, 0, zoom, 2)
+
+         .Wire(bassSeq, 2, segments, 0)
+         .Wire(zoom, 0, fold, 0)
+         .Wire(zoom, 1, fold, 1)
+         .Wire(segments, 0, fold, 2)
+
+         .Wire(fold, 0, field, 0)
+         .Wire(fold, 1, field, 1)
+         .Wire(boil, 0, field, 2)
+
+         .Wire(breath, 0, reach, 0)
+         .Wire(fold, 0, bend, 0)
+         .Wire(fold, 1, bend, 1)
+         .Wire(field, 0, bend, 2)
+         .Wire(reach, 0, bend, 3)
+
+         .Wire(leadSeq, 1, count, 0)
+         .Wire(bend, 0, bands, 0)
+         .Wire(bend, 1, bands, 1)
+         .Wire(count, 0, bands, 2)
+         .Wire(drift, 0, bands, 3)
+         .Wire(bands, 0, filament, 2);
+
+        // --- the picture: color ----------------------------------------------
+
+        // The lead moves the hue. The field and the slowest of the four clocks
+        // are added under it so that the same step of the tune is never quite
+        // the same color twice, and the whole is wrapped rather than clamped,
+        // because a hue is a wheel.
+        var stepped = b.Add("math.mul", 1400, 940, (1, 0.8f));
+        var wash = b.Add("math.mul", 1630, 940, (1, 0.9f));
+        var blend = b.Add("math.add", 1860, 940);
+        var slide = b.Add("math.add", 2090, 940);
+        var hue = b.Add("math.fract", 2320, 940);
+
+        // The bass's gate takes the color out of the image between its notes,
+        // which is the same rhythm the ear is getting from it.
+        var saturation = b.Add("math.remap", 2320, 780, (1, 0f), (2, 1f), (3, 0.55f), (4, 0.95f));
+
+        var glow = b.Add("math.remap", 1860, 560, (1, 0f), (2, 1f), (3, 0.75f), (4, 1.7f));
+        var lit = b.Add("math.mul", 2320, 340);
+        var visible = b.Add("math.clamp", 2550, 340, (1, 0f), (2, 1f));
+
+        var fresh = b.Add("color.hsv", 2780, 620);
+
+        b.Wire(leadSeq, 2, stepped, 0)
+         .Wire(field, 0, wash, 0)
+         .Wire(stepped, 0, blend, 0)
+         .Wire(wash, 0, blend, 1)
+         .Wire(blend, 0, slide, 0)
+         .Wire(crawl, 0, slide, 1)
+         .Wire(slide, 0, hue, 0)
+
+         .Wire(bassSeq, 1, saturation, 0)
+
+         .Wire(kickSeq, 1, glow, 0)
+         .Wire(filament, 0, lit, 0)
+         .Wire(glow, 0, lit, 1)
+         .Wire(lit, 0, visible, 0)
+
+         .Wire(hue, 0, fresh, 0)
+         .Wire(saturation, 0, fresh, 1)
+         .Wire(visible, 0, fresh, 2);
+
+        // --- the picture: feedback -------------------------------------------
+
+        // Two readings of the last frame rather than one, turning opposite ways:
+        // one zoomed in a little and one out, with the red taken from the first
+        // and the green and blue from the second. What that makes is a chromatic
+        // tunnel — the fringes drift apart as the trail ages, the way a lens
+        // splits light, and there is no lens anywhere in it.
+        var inward = b.Add("space.scale", 1170, 1080, (2, 1.035f));
+        var twist = b.Add("math.remap", 1170, 1240, (1, 0f), (2, 1f), (3, 0.012f), (4, 0.05f));
+        var inTurn = b.Add("space.rotate", 1400, 1080);
+        var pastIn = b.Add("feedback", 1630, 1080);
+        var warm = b.Add("color.split", 1860, 1080);
+
+        var outward = b.Add("space.scale", 1170, 1380, (2, 0.972f));
+        var outTurn = b.Add("space.rotate", 1400, 1380, (2, -0.016f));
+        var pastOut = b.Add("feedback", 1630, 1380);
+        var cool = b.Add("color.split", 1860, 1380);
+
+        var ghost = b.Add("color.rgb", 2320, 1180);
+        var trail = b.Add("color.gain", 2550, 1180, (1, 0.85f), (2, 0f));
+
+        // Max rather than a blend, for FeedbackTunnel's reason: a trail brighter
+        // than the new frame keeps its brightness, which is what makes a streak
+        // read as a streak rather than as a smeared copy.
+        var combine = b.Add("math.max", 3010, 900);
+
+        b.Wire(kickSeq, 1, twist, 0)
+         .Wire(inward, 0, inTurn, 0)
+         .Wire(inward, 1, inTurn, 1)
+         .Wire(twist, 0, inTurn, 2)
+         .Wire(inTurn, 0, pastIn, 0)
+         .Wire(inTurn, 1, pastIn, 1)
+         .Wire(pastIn, 0, warm, 0)
+
+         .Wire(outward, 0, outTurn, 0)
+         .Wire(outward, 1, outTurn, 1)
+         .Wire(outTurn, 0, pastOut, 0)
+         .Wire(outTurn, 1, pastOut, 1)
+         .Wire(pastOut, 0, cool, 0)
+
+         .Wire(warm, 0, ghost, 0)
+         .Wire(cool, 1, ghost, 1)
+         .Wire(cool, 2, ghost, 2)
+         .Wire(ghost, 0, trail, 0)
+
+         .Wire(trail, 0, combine, 0)
+         .Wire(fresh, 0, combine, 1)
+         .Wire(combine, 0, output, NodeCatalog.OutputColorPort);
 
         return b.Patch;
     }

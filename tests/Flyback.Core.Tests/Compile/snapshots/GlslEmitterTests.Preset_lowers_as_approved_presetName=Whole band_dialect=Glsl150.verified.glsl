@@ -1,0 +1,719 @@
+﻿#version 150
+
+uniform float uTime;
+uniform float uAspect;
+uniform float uK[83];
+
+in vec2 vUv;
+out vec4 fragColor;
+
+// The exact zero tests below are the point, not an oversight: they trap the
+// one divisor that makes a result undefined. See the same reasoning spelled
+// out over Divide in CompiledPatch.
+const float BIG = 3.402823e38;
+const float JUST_BELOW_ONE = 0.99999994;
+
+bool  fin(float v)          { return v == v && abs(v) < BIG; }
+float gd (float v)          { return fin(v) ? v : 0.0; }
+float fr (float v)          { float f = v - floor(v); return f < 1.0 ? f : JUST_BELOW_ONE; }
+float dv (float a, float b) { return b == 0.0 ? 0.0 : gd(a / b); }
+float md (float a, float b) { return b == 0.0 ? 0.0 : gd(a - b * floor(a / b)); }
+float sq (float a)          { return a <= 0.0 ? 0.0 : sqrt(a); }
+float lg (float a)          { return a <= 0.0 ? 0.0 : log(a); }
+float sat(float v)          { return fin(v) ? clamp(v, 0.0, 1.0) : 0.0; }
+
+// GLSL leaves atan undefined at the origin, where Math.Atan2 answers zero.
+float at2(float y, float x) { return (x == 0.0 && y == 0.0) ? 0.0 : atan(y, x); }
+
+// GLSL leaves pow undefined for a negative base, where Math.Pow(-2, 3) is -8.
+// The cases that are NaN or infinite on the CPU are the ones Guard turns to
+// zero, so they are answered directly here.
+float pw(float a, float b)
+{
+    if (a > 0.0)       return gd(pow(a, b));
+    if (a == 0.0)      return b == 0.0 ? 1.0 : 0.0;
+    if (b != floor(b)) return 0.0;
+
+    float m = gd(pow(-a, b));
+    return mod(abs(b), 2.0) == 1.0 ? -m : m;
+}
+
+// GLSL's smoothstep divides by zero when the edges meet; the interpreter
+// answers a step there.
+float sm(float e0, float e1, float x)
+{
+    if (e0 == e1) return x < e0 ? 0.0 : 1.0;
+
+    float t = clamp((x - e0) / (e1 - e0), 0.0, 1.0);
+    return t * t * (3.0 - 2.0 * t);
+}
+
+// Noise, transcribed from Noise.cs. Converting a negative int to uint keeps
+// the bit pattern in both languages, so the hash agrees exactly, which is
+// what stops a noisy patch looking like a different patch on the GPU.
+float hsh(int x, int y, int z)
+{
+    uint h = uint(x) * 374761393u + uint(y) * 668265263u + uint(z) * 1274126177u;
+    h = (h ^ (h >> 13)) * 1274126177u;
+    h ^= h >> 16;
+    return float(h & 0xFFFFFFu) * (1.0 / 16777215.0);
+}
+
+float fade(float t) { return t * t * (3.0 - 2.0 * t); }
+float lrp (float a, float b, float t) { return a + (b - a) * t; }
+
+float nz(float x, float y, float z)
+{
+    if (!(fin(x) && fin(y) && fin(z))) return 0.0;
+
+    int xi = int(floor(x)), yi = int(floor(y)), zi = int(floor(z));
+    float u = fade(x - float(xi)), v = fade(y - float(yi)), w = fade(z - float(zi));
+
+    float z0 = lrp(lrp(hsh(xi, yi,     zi), hsh(xi + 1, yi,     zi), u),
+                   lrp(hsh(xi, yi + 1, zi), hsh(xi + 1, yi + 1, zi), u), v);
+    float z1 = lrp(lrp(hsh(xi, yi,     zi + 1), hsh(xi + 1, yi,     zi + 1), u),
+                   lrp(hsh(xi, yi + 1, zi + 1), hsh(xi + 1, yi + 1, zi + 1), u), v);
+
+    return lrp(z0, z1, w);
+}
+
+vec3 hsv(float h, float s, float v)
+{
+    h = fr(h) * 6.0;
+    s = clamp(s, 0.0, 1.0);
+
+    int sector = int(h);
+    float f = h - float(sector);
+    float p = v * (1.0 - s);
+    float q = v * (1.0 - s * f);
+    float w = v * (1.0 - s * (1.0 - f));
+
+    if (sector == 0) return vec3(v, w, p);
+    if (sector == 1) return vec3(q, v, p);
+    if (sector == 2) return vec3(p, v, w);
+    if (sector == 3) return vec3(p, q, v);
+    if (sector == 4) return vec3(w, p, v);
+    return vec3(v, p, q);
+}
+
+uniform sampler2D uPrevious;
+uniform float uFeedbackScaleX;
+uniform float uFeedbackScaleY;
+
+vec3 fb(float u, float v)
+{
+    u = fin(u) ? u : -uAspect;
+    v = fin(v) ? v :  1.0;
+
+    return texture(uPrevious, vec2(u * uFeedbackScaleX + 0.5, v * uFeedbackScaleY + 0.5)).rgb;
+}
+
+void main()
+{
+    float px = (vUv.x * 2.0 - 1.0) * uAspect;
+    float py = vUv.y * 2.0 - 1.0;
+
+    float r0 = px;
+    float r1 = py;
+    float r2 = sqrt(r0 * r0 + r1 * r1);
+    float r3 = at2(r1, r0);
+    float r4 = uK[0];
+    float r5 = r0 * r4;
+    float r6 = r1 * r4;
+    float r7 = uTime;
+    float r8 = uK[1];
+    float r9 = uK[2];
+    float r10 = r8 * r9;
+    float r11 = uK[3];
+    float r12 = r10 * r11;
+    float r13 = uK[4];
+    float r14 = uK[5];
+    float r15 = r7 * r12;
+    float r16 = uK[6];
+    float r17 = md(r15, r16);
+    float r18 = floor(r17);
+    float r19 = fr(r15);
+    float r20 = dv(r18, r16);
+    float r21 = uK[7];
+    float r22 = uK[8];
+    float r23 = step(r21, r18);
+    float r24 = uK[9];
+    float r25 = step(r24, r18);
+    float r26 = uK[10];
+    float r27 = step(r26, r18);
+    float r28 = step(r11, r18);
+    float r29 = uK[11];
+    float r30 = step(r29, r18);
+    float r31 = uK[12];
+    float r32 = step(r31, r18);
+    float r33 = uK[13];
+    float r34 = step(r33, r18);
+    float r35 = uK[14];
+    float r36 = step(r35, r18);
+    float r37 = uK[15];
+    float r38 = step(r37, r18);
+    float r39 = uK[16];
+    float r40 = step(r39, r18);
+    float r41 = uK[17];
+    float r42 = step(r41, r18);
+    float r43 = uK[18];
+    float r44 = step(r43, r18);
+    float r45 = uK[19];
+    float r46 = step(r45, r18);
+    float r47 = uK[20];
+    float r48 = step(r47, r18);
+    float r49 = uK[21];
+    float r50 = step(r49, r18);
+    float r51 = r21 - r23;
+    float r52 = r51 * r22;
+    float r53 = r51 * r21;
+    float r54 = r23 - r25;
+    float r55 = r54 * r22;
+    float r56 = r54 * r22;
+    float r57 = r52 + r55;
+    float r58 = r53 + r56;
+    float r59 = r25 - r27;
+    float r60 = r59 * r22;
+    float r61 = r59 * r22;
+    float r62 = r57 + r60;
+    float r63 = r58 + r61;
+    float r64 = r27 - r28;
+    float r65 = r64 * r22;
+    float r66 = r64 * r22;
+    float r67 = r62 + r65;
+    float r68 = r63 + r66;
+    float r69 = r28 - r30;
+    float r70 = r69 * r22;
+    float r71 = uK[22];
+    float r72 = r69 * r71;
+    float r73 = r67 + r70;
+    float r74 = r68 + r72;
+    float r75 = r30 - r32;
+    float r76 = r75 * r22;
+    float r77 = r75 * r22;
+    float r78 = r73 + r76;
+    float r79 = r74 + r77;
+    float r80 = r32 - r34;
+    float r81 = r80 * r22;
+    float r82 = uK[23];
+    float r83 = r80 * r82;
+    float r84 = r78 + r81;
+    float r85 = r79 + r83;
+    float r86 = r34 - r36;
+    float r87 = r86 * r22;
+    float r88 = r86 * r22;
+    float r89 = r84 + r87;
+    float r90 = r85 + r88;
+    float r91 = r36 - r38;
+    float r92 = r91 * r22;
+    float r93 = uK[24];
+    float r94 = r91 * r93;
+    float r95 = r89 + r92;
+    float r96 = r90 + r94;
+    float r97 = r38 - r40;
+    float r98 = r97 * r22;
+    float r99 = r97 * r22;
+    float r100 = r95 + r98;
+    float r101 = r96 + r99;
+    float r102 = r40 - r42;
+    float r103 = r102 * r22;
+    float r104 = r102 * r22;
+    float r105 = r100 + r103;
+    float r106 = r101 + r104;
+    float r107 = r42 - r44;
+    float r108 = r107 * r22;
+    float r109 = r107 * r22;
+    float r110 = r105 + r108;
+    float r111 = r106 + r109;
+    float r112 = r44 - r46;
+    float r113 = r112 * r22;
+    float r114 = uK[25];
+    float r115 = r112 * r114;
+    float r116 = r110 + r113;
+    float r117 = r111 + r115;
+    float r118 = r46 - r48;
+    float r119 = r118 * r22;
+    float r120 = r118 * r22;
+    float r121 = r116 + r119;
+    float r122 = r117 + r120;
+    float r123 = r48 - r50;
+    float r124 = r123 * r22;
+    float r125 = uK[26];
+    float r126 = r123 * r125;
+    float r127 = r121 + r124;
+    float r128 = r122 + r126;
+    float r129 = r50 - r22;
+    float r130 = r129 * r22;
+    float r131 = r129 * r22;
+    float r132 = r127 + r130;
+    float r133 = r128 + r131;
+    float r134 = uK[27];
+    float r135 = clamp(r14, r134, max(r134, r21));
+    float r136 = clamp(r13, r22, max(r22, r21));
+    float r137 = sm(r22, r135, r19);
+    float r138 = r136 - r135;
+    float r139 = sm(r138, r136, r19);
+    float r140 = r21 - r139;
+    float r141 = r133 * r137;
+    float r142 = r141 * r140;
+    float r143 = uK[28];
+    float r144 = uK[29];
+    float r145 = r142 - r22;
+    float r146 = r21 - r22;
+    float r147 = dv(r145, r146);
+    float r148 = r143 + (r144 - r143) * r147;
+    float r149 = cos(r148);
+    float r150 = sin(r148);
+    float r151 = r5 * r149;
+    float r152 = r6 * r150;
+    float r153 = r151 - r152;
+    float r154 = r5 * r150;
+    float r155 = r6 * r149;
+    float r156 = r154 + r155;
+    vec3 t157 = fb(r153, r156);
+    float r157 = t157.x; float r158 = t157.y; float r159 = t157.z;
+    float r160 = uK[30];
+    float r161 = r0 * r160;
+    float r162 = r1 * r160;
+    float r163 = uK[31];
+    float r164 = cos(r163);
+    float r165 = sin(r163);
+    float r166 = r161 * r164;
+    float r167 = r162 * r165;
+    float r168 = r166 - r167;
+    float r169 = r161 * r165;
+    float r170 = r162 * r164;
+    float r171 = r169 + r170;
+    vec3 t172 = fb(r168, r171);
+    float r172 = t172.x; float r173 = t172.y; float r174 = t172.z;
+    float r175 = r157;
+    float r176 = r173;
+    float r177 = r174;
+    float r178 = r175 * r114;
+    float r179 = r176 * r114;
+    float r180 = r177 * r114;
+    float r181 = r178 + r22;
+    float r182 = r179 + r22;
+    float r183 = r180 + r22;
+    float r184 = uK[32];
+    float r185 = uK[33];
+    float r186 = r7 * r12;
+    float r187 = uK[34];
+    float r188 = md(r186, r187);
+    float r189 = floor(r188);
+    float r190 = fr(r186);
+    float r191 = dv(r189, r187);
+    float r192 = step(r21, r189);
+    float r193 = step(r24, r189);
+    float r194 = step(r26, r189);
+    float r195 = step(r11, r189);
+    float r196 = step(r29, r189);
+    float r197 = step(r31, r189);
+    float r198 = step(r33, r189);
+    float r199 = step(r35, r189);
+    float r200 = step(r37, r189);
+    float r201 = step(r39, r189);
+    float r202 = step(r41, r189);
+    float r203 = step(r43, r189);
+    float r204 = step(r45, r189);
+    float r205 = step(r47, r189);
+    float r206 = step(r49, r189);
+    float r207 = step(r16, r189);
+    float r208 = uK[35];
+    float r209 = step(r208, r189);
+    float r210 = uK[36];
+    float r211 = step(r210, r189);
+    float r212 = uK[37];
+    float r213 = step(r212, r189);
+    float r214 = r21 - r192;
+    float r215 = uK[38];
+    float r216 = r214 * r215;
+    float r217 = r214 * r21;
+    float r218 = r192 - r193;
+    float r219 = uK[39];
+    float r220 = r218 * r219;
+    float r221 = uK[40];
+    float r222 = r218 * r221;
+    float r223 = r216 + r220;
+    float r224 = r217 + r222;
+    float r225 = r193 - r194;
+    float r226 = uK[41];
+    float r227 = r225 * r226;
+    float r228 = r225 * r71;
+    float r229 = r223 + r227;
+    float r230 = r224 + r228;
+    float r231 = r194 - r195;
+    float r232 = r231 * r219;
+    float r233 = uK[42];
+    float r234 = r231 * r233;
+    float r235 = r229 + r232;
+    float r236 = r230 + r234;
+    float r237 = r195 - r196;
+    float r238 = uK[43];
+    float r239 = r237 * r238;
+    float r240 = r237 * r21;
+    float r241 = r235 + r239;
+    float r242 = r236 + r240;
+    float r243 = r196 - r197;
+    float r244 = r243 * r226;
+    float r245 = r243 * r114;
+    float r246 = r241 + r244;
+    float r247 = r242 + r245;
+    float r248 = r197 - r198;
+    float r249 = r248 * r226;
+    float r250 = r248 * r22;
+    float r251 = r246 + r249;
+    float r252 = r247 + r250;
+    float r253 = r198 - r199;
+    float r254 = uK[44];
+    float r255 = r253 * r254;
+    float r256 = r253 * r71;
+    float r257 = r251 + r255;
+    float r258 = r252 + r256;
+    float r259 = r199 - r200;
+    float r260 = uK[45];
+    float r261 = r259 * r260;
+    float r262 = r259 * r221;
+    float r263 = r257 + r261;
+    float r264 = r258 + r262;
+    float r265 = r200 - r201;
+    float r266 = r265 * r254;
+    float r267 = uK[46];
+    float r268 = r265 * r267;
+    float r269 = r263 + r266;
+    float r270 = r264 + r268;
+    float r271 = r201 - r202;
+    float r272 = uK[47];
+    float r273 = r271 * r272;
+    float r274 = r271 * r21;
+    float r275 = r269 + r273;
+    float r276 = r270 + r274;
+    float r277 = r202 - r203;
+    float r278 = r277 * r238;
+    float r279 = r277 * r114;
+    float r280 = r275 + r278;
+    float r281 = r276 + r279;
+    float r282 = r203 - r204;
+    float r283 = r282 * r226;
+    float r284 = r282 * r71;
+    float r285 = r280 + r283;
+    float r286 = r281 + r284;
+    float r287 = r204 - r205;
+    float r288 = r287 * r254;
+    float r289 = r287 * r233;
+    float r290 = r285 + r288;
+    float r291 = r286 + r289;
+    float r292 = r205 - r206;
+    float r293 = r292 * r219;
+    float r294 = r292 * r93;
+    float r295 = r290 + r293;
+    float r296 = r291 + r294;
+    float r297 = r206 - r207;
+    float r298 = r297 * r219;
+    float r299 = r297 * r22;
+    float r300 = r295 + r298;
+    float r301 = r296 + r299;
+    float r302 = r207 - r209;
+    float r303 = r302 * r260;
+    float r304 = r302 * r114;
+    float r305 = r300 + r303;
+    float r306 = r301 + r304;
+    float r307 = r209 - r211;
+    float r308 = r307 * r215;
+    float r309 = r307 * r21;
+    float r310 = r305 + r308;
+    float r311 = r306 + r309;
+    float r312 = r211 - r213;
+    float r313 = uK[48];
+    float r314 = r312 * r313;
+    float r315 = r312 * r267;
+    float r316 = r310 + r314;
+    float r317 = r311 + r315;
+    float r318 = r213 - r22;
+    float r319 = r318 * r215;
+    float r320 = r318 * r221;
+    float r321 = r316 + r319;
+    float r322 = r317 + r320;
+    float r323 = clamp(r185, r134, max(r134, r21));
+    float r324 = clamp(r184, r22, max(r22, r21));
+    float r325 = sm(r22, r323, r190);
+    float r326 = r324 - r323;
+    float r327 = sm(r326, r324, r190);
+    float r328 = r21 - r327;
+    float r329 = r322 * r325;
+    float r330 = r329 * r328;
+    float r331 = r191 * r221;
+    float r332 = uK[49];
+    float r333 = r7 * r332;
+    float r334 = r10 * r24;
+    float r335 = uK[50];
+    float r336 = r7 * r334;
+    float r337 = md(r336, r16);
+    float r338 = uK[51];
+    float r339 = step(r338, r337);
+    float r340 = step(r24, r337);
+    float r341 = step(r26, r337);
+    float r342 = step(r11, r337);
+    float r343 = uK[52];
+    float r344 = step(r343, r337);
+    float r345 = step(r31, r337);
+    float r346 = step(r33, r337);
+    float r347 = step(r35, r337);
+    float r348 = uK[53];
+    float r349 = step(r348, r337);
+    float r350 = step(r39, r337);
+    float r351 = step(r43, r337);
+    float r352 = r21 - r339;
+    float r353 = uK[54];
+    float r354 = r352 * r353;
+    float r355 = r352 * r21;
+    float r356 = r352 * r22;
+    float r357 = r352 * r338;
+    float r358 = r352 * r22;
+    float r359 = r339 - r340;
+    float r360 = r359 * r353;
+    float r361 = r359 * r125;
+    float r362 = r354 + r360;
+    float r363 = r355 + r361;
+    float r364 = r359 * r338;
+    float r365 = r359 * r82;
+    float r366 = uK[55];
+    float r367 = r359 * r366;
+    float r368 = r356 + r364;
+    float r369 = r357 + r365;
+    float r370 = r358 + r367;
+    float r371 = r340 - r341;
+    float r372 = uK[56];
+    float r373 = r371 * r372;
+    float r374 = r371 * r221;
+    float r375 = r362 + r373;
+    float r376 = r363 + r374;
+    float r377 = r371 * r24;
+    float r378 = r371 * r21;
+    float r379 = uK[57];
+    float r380 = r371 * r379;
+    float r381 = r368 + r377;
+    float r382 = r369 + r378;
+    float r383 = r370 + r380;
+    float r384 = r341 - r342;
+    float r385 = r384 * r353;
+    float r386 = uK[58];
+    float r387 = r384 * r386;
+    float r388 = r375 + r385;
+    float r389 = r376 + r387;
+    float r390 = r384 * r26;
+    float r391 = r384 * r21;
+    float r392 = uK[59];
+    float r393 = r384 * r392;
+    float r394 = r381 + r390;
+    float r395 = r382 + r391;
+    float r396 = r383 + r393;
+    float r397 = r342 - r344;
+    float r398 = uK[60];
+    float r399 = r397 * r398;
+    float r400 = r397 * r21;
+    float r401 = r388 + r399;
+    float r402 = r389 + r400;
+    float r403 = r397 * r11;
+    float r404 = r397 * r338;
+    float r405 = uK[61];
+    float r406 = r397 * r405;
+    float r407 = r394 + r403;
+    float r408 = r395 + r404;
+    float r409 = r396 + r406;
+    float r410 = r344 - r345;
+    float r411 = r410 * r398;
+    float r412 = r410 * r125;
+    float r413 = r401 + r411;
+    float r414 = r402 + r412;
+    float r415 = r410 * r343;
+    float r416 = r410 * r82;
+    float r417 = uK[62];
+    float r418 = r410 * r417;
+    float r419 = r407 + r415;
+    float r420 = r408 + r416;
+    float r421 = r409 + r418;
+    float r422 = r345 - r346;
+    float r423 = uK[63];
+    float r424 = r422 * r423;
+    float r425 = r422 * r221;
+    float r426 = r413 + r424;
+    float r427 = r414 + r425;
+    float r428 = r422 * r31;
+    float r429 = r422 * r21;
+    float r430 = r422 * r82;
+    float r431 = r419 + r428;
+    float r432 = r420 + r429;
+    float r433 = r421 + r430;
+    float r434 = r346 - r347;
+    float r435 = r434 * r398;
+    float r436 = r434 * r386;
+    float r437 = r426 + r435;
+    float r438 = r427 + r436;
+    float r439 = r434 * r33;
+    float r440 = r434 * r21;
+    float r441 = uK[64];
+    float r442 = r434 * r441;
+    float r443 = r431 + r439;
+    float r444 = r432 + r440;
+    float r445 = r433 + r442;
+    float r446 = r347 - r349;
+    float r447 = uK[65];
+    float r448 = r446 * r447;
+    float r449 = r446 * r21;
+    float r450 = r437 + r448;
+    float r451 = r438 + r449;
+    float r452 = r446 * r35;
+    float r453 = r446 * r338;
+    float r454 = uK[66];
+    float r455 = r446 * r454;
+    float r456 = r443 + r452;
+    float r457 = r444 + r453;
+    float r458 = r445 + r455;
+    float r459 = r349 - r350;
+    float r460 = uK[67];
+    float r461 = r459 * r460;
+    float r462 = r459 * r233;
+    float r463 = r450 + r461;
+    float r464 = r451 + r462;
+    float r465 = r459 * r348;
+    float r466 = r459 * r82;
+    float r467 = uK[68];
+    float r468 = r459 * r467;
+    float r469 = r456 + r465;
+    float r470 = r457 + r466;
+    float r471 = r458 + r468;
+    float r472 = r350 - r351;
+    float r473 = r472 * r447;
+    float r474 = r472 * r114;
+    float r475 = r463 + r473;
+    float r476 = r464 + r474;
+    float r477 = r472 * r39;
+    float r478 = r472 * r24;
+    float r479 = uK[69];
+    float r480 = r472 * r479;
+    float r481 = r469 + r477;
+    float r482 = r470 + r478;
+    float r483 = r471 + r480;
+    float r484 = r351 - r22;
+    float r485 = uK[70];
+    float r486 = r484 * r485;
+    float r487 = r484 * r21;
+    float r488 = r475 + r486;
+    float r489 = r476 + r487;
+    float r490 = r484 * r43;
+    float r491 = r484 * r11;
+    float r492 = uK[71];
+    float r493 = r484 * r492;
+    float r494 = r481 + r490;
+    float r495 = r482 + r491;
+    float r496 = r483 + r493;
+    float r497 = r337 - r494;
+    float r498 = dv(r497, r495);
+    float r499 = clamp(r335, r134, max(r134, r21));
+    float r500 = clamp(r125, r22, max(r22, r21));
+    float r501 = sm(r22, r499, r498);
+    float r502 = r500 - r499;
+    float r503 = sm(r502, r500, r498);
+    float r504 = r21 - r503;
+    float r505 = r489 * r501;
+    float r506 = r505 * r504;
+    float r507 = uK[72];
+    float r508 = uK[73];
+    float r509 = r496 - r22;
+    float r510 = r21 - r22;
+    float r511 = dv(r509, r510);
+    float r512 = r507 + (r508 - r507) * r511;
+    float r513 = r333 + r512;
+    float r514 = cos(r513);
+    float r515 = sin(r513);
+    float r516 = r0 * r514;
+    float r517 = r1 * r515;
+    float r518 = r516 - r517;
+    float r519 = r0 * r515;
+    float r520 = r1 * r514;
+    float r521 = r519 + r520;
+    float r522 = uK[74];
+    float r523 = uK[75];
+    float r524 = r142 - r22;
+    float r525 = r21 - r22;
+    float r526 = dv(r524, r525);
+    float r527 = r522 + (r523 - r522) * r526;
+    float r528 = r518 * r527;
+    float r529 = r521 * r527;
+    float r530 = r496 - r22;
+    float r531 = r21 - r22;
+    float r532 = dv(r530, r531);
+    float r533 = r26 + (r39 - r26) * r532;
+    float r534 = sqrt(r528 * r528 + r529 * r529);
+    float r535 = at2(r529, r528);
+    float r536 = uK[76];
+    float r537 = dv(r536, r533);
+    float r538 = r537 * r82;
+    float r539 = md(r535, r537);
+    float r540 = r539 - r538;
+    float r541 = abs(r540);
+    float r542 = cos(r541);
+    float r543 = r542 * r534;
+    float r544 = sin(r541);
+    float r545 = r544 * r534;
+    float r546 = uK[77];
+    float r547 = r7 * r546;
+    float r548 = uK[78];
+    float r549 = r543 * r548;
+    float r550 = r545 * r548;
+    float r551 = nz(r549, r550, r547);
+    float r552 = r551 * r71;
+    float r553 = r331 + r552;
+    float r554 = r7 * r335;
+    float r555 = r553 + r554;
+    float r556 = fr(r555);
+    float r557 = r506 - r22;
+    float r558 = r21 - r22;
+    float r559 = dv(r557, r558);
+    float r560 = r125 + (r93 - r125) * r559;
+    float r561 = uK[79];
+    float r562 = uK[80];
+    float r563 = r7 * r562 + r22;
+    float r564 = r563 * r536;
+    float r565 = sin(r564);
+    float r566 = r565 * r82;
+    float r567 = r566 + r82;
+    float r568 = r567 - r22;
+    float r569 = r21 - r22;
+    float r570 = dv(r568, r569);
+    float r571 = r561 + (r267 - r561) * r570;
+    float r572 = r551 * r571;
+    float r573 = r543 + r572;
+    float r574 = r572 * r536;
+    float r575 = sin(r574);
+    float r576 = r545 + r575;
+    float r577 = uK[81];
+    float r578 = r330 - r22;
+    float r579 = r21 - r22;
+    float r580 = dv(r578, r579);
+    float r581 = r577 + (r343 - r577) * r580;
+    float r582 = r7 * r508;
+    float r583 = sqrt(r573 * r573 + r576 * r576);
+    float r584 = r583 * r581;
+    float r585 = r584 + r582;
+    float r586 = r585 * r536;
+    float r587 = sin(r586);
+    float r588 = sm(r561, r93, r587);
+    float r589 = uK[82];
+    float r590 = r142 - r22;
+    float r591 = r21 - r22;
+    float r592 = dv(r590, r591);
+    float r593 = r467 + (r589 - r467) * r592;
+    float r594 = r588 * r593;
+    float r595 = clamp(r594, r22, max(r22, r21));
+    vec3 t596 = hsv(r556, r560, r595);
+    float r596 = t596.x; float r597 = t596.y; float r598 = t596.z;
+    float r599 = max(r181, r596);
+    float r600 = max(r182, r597);
+    float r601 = max(r183, r598);
+    float r602 = r22 * r22;
+    float r603 = r22 * r22;
+
+    fragColor = vec4(sat(r599), sat(r600), sat(r601), 1.0);
+}
