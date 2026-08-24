@@ -12,3 +12,8 @@
 *.png  binary
 *.ico  binary
 *.icns binary
+
+# Verify snapshots: the comparer rejects any \r in a *.verified.* baseline, so
+# these must stay LF in the working tree even on Windows.
+*.verified.*     text eol=lf working-tree-encoding=UTF-8
+*.verified.png   binary
