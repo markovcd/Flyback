@@ -297,6 +297,8 @@ public sealed partial class MainWindow
                 Margin = new Thickness(0, 4, 0, 6),
             });
 
+        if (BuildNormalledNote(node, def) is { } normalled) inspector.Children.Add(normalled);
+
         for (var i = 0; i < def.Inputs.Count; i++)
             inspector.Children.Add(BuildInputRow(node, def.Inputs[i], i));
 
@@ -538,6 +540,60 @@ public sealed partial class MainWindow
         return row;
     }
 
+    /// <summary>
+    /// What is driving this module's unpatched sockets, and why nothing on the
+    /// canvas shows it. Null where every socket is either patched or on a knob,
+    /// which is most of the catalogue.
+    /// </summary>
+    /// <remarks>
+    /// Said here rather than only in the row, because the row can say which
+    /// module and not why there is no wire from it. The absence is the part that
+    /// needs explaining: everything else in this editor is visible in the patch,
+    /// and a signal arriving from nowhere is the one thing that is not.
+    /// <para>
+    /// Sockets that have since been patched drop out of the list, which is what
+    /// makes this a description of the module as it stands rather than of the
+    /// module as catalogued. <see cref="InspectorShape"/> already counts a wire
+    /// arriving as a reason to rebuild, so it keeps up on its own.
+    /// </para>
+    /// </remarks>
+    private Control? BuildNormalledNote(NodeInstance node, NodeDef def)
+    {
+        var reading = new List<string>();
+
+        for (var i = 0; i < def.Inputs.Count; i++)
+        {
+            if (editor.Patch.IncomingTo(node.Id, i) is not null) continue;
+            if (NodeCatalog.Normalled(def.Inputs[i]) is not { } source) continue;
+
+            reading.Add($"'{def.Inputs[i].Name}' is reading {source}");
+        }
+
+        if (reading.Count == 0) return null;
+
+        return new TextBlock
+        {
+            Text = Sentence(reading)
+                 + ", with no wire to show for it: the module behind that is hidden, and one of "
+                 + "it is shared by the whole patch. It is the unplugged jack of a rack, already "
+                 + "carrying the signal you would have plugged in. Patch the socket to read "
+                 + "something else instead — unplug it again and this comes back.",
+            TextWrapping = TextWrapping.Wrap,
+            Opacity = 0.6,
+            FontSize = 12,
+            Margin = new Thickness(0, 0, 0, 6),
+        };
+
+        // "a", "a and b", "a, b and c" — an inspector is prose, and a list
+        // joined with commas to the end reads as a table that lost its rules.
+        static string Sentence(List<string> parts) => parts.Count switch
+        {
+            1 => parts[0],
+            2 => $"{parts[0]} and {parts[1]}",
+            _ => $"{string.Join(", ", parts[..^1])} and {parts[^1]}",
+        };
+    }
+
     private Control BuildInputRow(NodeInstance node, PortSpec spec, int index)
     {
         var connected = editor.Patch.IncomingTo(node.Id, index) is not null;
@@ -575,6 +631,27 @@ public sealed partial class MainWindow
             Grid.SetColumn(wired, 1);
             Grid.SetColumnSpan(wired, named ? 3 : 2);
             row.Children.Add(wired);
+            return row;
+        }
+
+        // A normalled socket has no knob to show. It is already carrying a
+        // signal — one the patch does not draw, because there is no module on
+        // the canvas for a wire to come from — so the row says which, in the
+        // place a slider would have been. Why it is not a slider is the whole
+        // point of it: there is nothing to set here until something is patched
+        // in, and a control that did nothing would be worse than none.
+        if (NodeCatalog.Normalled(spec) is { } normalled)
+        {
+            var implied = new TextBlock
+            {
+                Text = $"◀ {normalled}, without a wire",
+                FontSize = 12,
+                Opacity = 0.55,
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+            Grid.SetColumn(implied, 1);
+            Grid.SetColumnSpan(implied, named ? 3 : 2);
+            row.Children.Add(implied);
             return row;
         }
 

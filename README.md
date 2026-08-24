@@ -161,7 +161,7 @@ gap that dead-code elimination buys:
 ```
 nebula.fbk
   modules   19
-  wires     30
+  wires     29
   requires  flyback
   picture   80 ops, 84 registers
   sound     6 ops, 6 registers, nothing wired in
@@ -203,6 +203,40 @@ buffer is a click.
 
 `y` runs −1 (bottom) to 1 (top). `x` is the same scale widened by the aspect
 ratio, so a circle stays a circle. `t` is seconds since the patch started.
+
+### Wires you do not have to draw
+
+Two wires used to be in almost every patch, and they were the same two every
+time: **Time** into an oscillator's or a sequencer's `in`, and **Coordinates**
+into the `x` and `y` of anything that reads a position. Neither was a decision.
+An oscillator without the first holds one value — silence, or a flat field — and
+a Rings without the second reads the single point at the middle of the screen.
+
+Those sockets are now *normalled*
+([ADR-0050](docs/adr/0050-normalled-sockets-carry-a-signal-with-no-wire.md)),
+which is the rack's word for a jack that is already carrying something before you
+plug into it. Place an oscillator and it is oscillating; place a Rotate and it is
+turning the picture. Patching the socket overrides it and unplugging brings it
+back, exactly as a wire overrides a knob.
+
+The module behind a normal is hidden and shared: there is no Time on the canvas
+and no wire from it, one hidden Time serves every socket normalled to it, and it
+is loaded once per program however many oscillators read it. A normalled socket
+has no knob — nothing would read the value — so the node names what is driving it
+where the number would be, and the inspector says why there is no wire. To hold
+something still on purpose, patch a **Value** in; the constant then reads off the
+patch rather than off a socket nobody looks at.
+
+What is *not* normalled is anything whose common source is Time rather than its
+only sensible one — Noise's `z`, Rings' `offset`, an angle to turn a Rotate by.
+A still noise field is a thing worth being able to have.
+
+The presets are written this way, which took 18 modules and 55 wires out of the
+sixteen that ship without changing one op of any of them. What is left is the
+wire that is a decision: Plasma keeps both its Coordinates wires because a sine
+across `x` and another across `y` *is* the patch, Chromatic keeps a Coordinates
+for `radius`, and Drone keeps a Time for the Rings' `offset`. Every source module
+still in a preset is there because that patch needed a source.
 
 ### Feedback
 
@@ -697,7 +731,9 @@ does whatever `Ctrl` does, and the Output is the one module `Delete` will not
 take.
 
 Any input with nothing plugged into it uses the value shown on the node, so most
-patches need no constant modules at all.
+patches need no constant modules at all. The exception is a socket that is
+normalled: it names the module driving it in place of a number, has no knob in
+the inspector, and the panel says which module and why there is no wire to see.
 
 Undo goes back two hundred edits: a module added, removed or moved, a wire
 plugged or pulled, a knob turned, a note edited, a module renamed. A step is the
@@ -753,7 +789,7 @@ nothing, which is the class of mistake nothing else here would catch.
 | `src/Flyback.Plugins.Timbre` | filter, wavefolder and saturator, holding their state in the emitter's own cells |
 | `src/Flyback.Plugins.Modulation` | chorus, flanger and phaser — the effects that carry their own movement |
 
-Why it is built this way is recorded in [docs/adr](docs/adr) — 42 decision
+Why it is built this way is recorded in [docs/adr](docs/adr) — 50 decision
 records covering the compiler, the renderer, the shell and the boundaries
 between them.
 
@@ -793,7 +829,7 @@ in the palette and compiles on its own. The same entry works from a plugin; see
 ```csharp
 new NodeDef(
     "pattern.rings", "Rings", "Pattern",
-    [Num("x"), Num("y"), Num("freq", 4f, 0f, 32f), Num("offset")],
+    [..Position(), Num("freq", 4f, 0f, 32f), Num("offset")],
     [Num("out")],
     (em, i) =>
     {
@@ -805,6 +841,13 @@ new NodeDef(
 
 Ports typed `Any` pass through whatever arrives, which is how one `Multiply`
 works on both a scalar and a colour.
+
+`Position()` is the `x` and `y` pair normalled to Coordinates, and `Domain()` is
+a socket normalled to Time; a port declares either by naming a module and one of
+its outputs in `NormalledTo`, which a plugin's port may do as readily as one
+here. Normal a socket only where the module is useless without that source — see
+[ADR-0050](docs/adr/0050-normalled-sockets-carry-a-signal-with-no-wire.md), where
+`offset` above is the example of a socket deliberately left alone.
 
 ## Files
 

@@ -488,8 +488,8 @@
     <pre><code><span class="k">public static</span> NodeDef Definition { <span class="k">get</span>; } = <span class="k">new</span>(
     <span class="s">"yours.rings"</span>, <span class="s">"Rings"</span>, <span class="s">"Pattern"</span>,
     [
-        <span class="k">new</span> PortSpec(<span class="s">"x"</span>),
-        <span class="k">new</span> PortSpec(<span class="s">"y"</span>),
+        <span class="k">new</span> PortSpec(<span class="s">"x"</span>, NormalledTo: NodeCatalog.Across),
+        <span class="k">new</span> PortSpec(<span class="s">"y"</span>, NormalledTo: NodeCatalog.Down),
         <span class="k">new</span> PortSpec(<span class="s">"freq"</span>, PortKind.Scalar, 4f, 0f, 32f),
     ],
     [<span class="k">new</span> PortSpec(<span class="s">"out"</span>)],
@@ -521,8 +521,9 @@
           <tr><td><code>Kind</code></td><td><code>Scalar</code>, <code>Colour</code>, or <code>Any</code>. <code>Any</code> passes through whatever arrives, which is how one Multiply works on both a tone and a picture.</td></tr>
           <tr><td><code>Default</code>, <code>Min</code>, <code>Max</code></td><td>The knob on the node, and the range the editor gives it.</td></tr>
           <tr><td><code>NormalledFrom</code></td><td>Index of an earlier input this one falls back to when nothing is patched in — the hardware normalled jack. The Output's <code>right</code> carries <code>left</code> this way.</td></tr>
+          <tr><td><code>NormalledTo</code></td><td>A module driving this input while nothing is patched into it, named as <code>new PortNormal(typeId, port)</code>. The module is hidden — no node, no wire — and one instance is shared by every socket normalled to it. The socket then has no knob: the value stored against it is never read, so the editor names the module where the number would be. Name a module the engine ships (<code>NodeCatalog.Clock</code> is Time, <code>Across</code> and <code>Down</code> are Coordinates) or one of your own; a type id the running catalogue lacks drops the socket back to its knob.</td></tr>
           <tr><td><code>Display</code></td><td><code>Number</code>, <code>Note</code> (57 reads as A3), or <code>Duration</code> (a power of ten of seconds, shown as the time it is).</td></tr>
-          <tr><td><code>Domain</code></td><td>True when this is the axis the module is read <em>across</em> rather than a value it uses. A constant on one is never sensible, so the compiler warns.</td></tr>
+          <tr><td><code>Domain</code></td><td>True when this is the axis the module is read <em>across</em> rather than a value it uses. A constant on one is never sensible, which is why every domain in the catalogue is <code>NormalledTo</code> Time; the compiler still warns about one that is normalled to nothing.</td></tr>
           <tr><td><code>Swept</code></td><td>True when the module supplies the domain this input is read <em>under</em>. Resolve it yourself with <code>EmitContext.Resolve</code>.</td></tr>
         </tbody>
       </table>

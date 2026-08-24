@@ -43,8 +43,9 @@ internal static class Handbook
         - `x` is the same scale widened by the aspect ratio, so it runs about
           -1.78 to 1.78 on a 16:9 frame. That is what keeps circles circular:
           `Length(x, y)` is a true radius.
-        - `t` is seconds since the patch started. It is not ambient — it
-          reaches a patch through the **Time** module and nowhere else.
+        - `t` is seconds since the patch started. It reaches a patch through
+          the **Time** module, or through a socket normalled to it — see
+          below.
         - What reaches the screen is 0..1 per channel, clamped, with no gamma. A
           value of 0.5 is mid grey; 4 and 1 are the same white; -1 is black.
           There is no headroom to pull back down later.
@@ -61,41 +62,59 @@ internal static class Handbook
         - A scalar entering a color port broadcasts to all three channels. A
           color entering a scalar port narrows to its luma.
 
-        ## The `in` socket, and why a patch sits still
+        ## Normalled sockets: wires you do not have to draw
 
-        Oscillators and sequencers have an `in`. It is the domain they are
-        read across, not an optional extra, and **nothing drives it for
-        you**. Left on its knob it is a constant, and a constant domain is a
-        patch that does not move:
+        Some sockets are already carrying a signal with nothing patched into
+        them. `describe_patch` writes them as
+        `in <- Time (normalled, no wire)`, and there is no module on the
+        canvas to see: one hidden Time and one hidden Coordinates are shared
+        by the whole patch.
 
-        - An oscillator accumulates `(in - in_before) x freq`. If `in` never
-          changes, the phase never advances and the output is one fixed
-          value — silence at the speakers, a flat field on the screen. Note
-          that `freq` alone does nothing about this; a frequency multiplied
-          by no movement is no movement.
-        - A sequencer is on whichever step its `in` has reached. If `in`
-          never changes it stays on step 1 forever.
+        - **`in` on every oscillator and every sequencer is normalled to
+          Time.** So an oscillator you place and never wire is already
+          oscillating, and a sequencer you place and never wire is already
+          playing. This is the common case and needs no work from you.
+        - **`x` and `y` on every Space, Pattern and Feedback module are
+          normalled to Coordinates.** So Rotate, Tile, Noise, Rings, Checker
+          and Feedback already read the pixel's own position.
+        - **A wire overrides the normal**, exactly as a wire overrides a
+          knob. Pull the wire and the normal comes back.
+        - **A normalled socket has no knob.** `set_knobs` on one is refused:
+          the value would never be read. If what you want there really is a
+          constant, patch a **Value** module in — then the patch shows it.
 
-        So wire it:
+        What is *not* normalled, and still has to be wired if it should move:
 
-        - **For sound, patch Time's `t` into `in`.** That is what makes an
-          oscillator oscillate and a sequencer play. A melody needs Time
-          into the sequencer's `in` *and* into the oscillator's `in`.
-          Straight in, unscaled: `freq` is the pitch, and anything that
-          slows the domain down divides that pitch by the same amount. A
-          440 Hz oscillator fed a fifth of a second per second is an 88 Hz
-          oscillator with a knob that says 440.
-        - **To slow a picture down**, put a Multiply after Time — 0.2 for a
-          fifth of the speed. Time itself is seconds and nothing else, so
-          the place a patch runs slowly is visible in the patch.
-        - **For a picture**, patch a Coordinates output — `x` for upright
-          bands, `y` for flat ones, `radius` for rings — or Time, for
-          something that moves without varying across the frame.
+        - Noise's `z`, Rings' `offset`, an angle on Rotate, a `dx`/`dy` on
+          Translate: wire **Time** into these to make a picture move.
+        - Anything expecting a sound: a Filter's `in`, a Delay's `in`, the
+          Output's `left` and `right`.
 
-        This is the most common way to build a patch that reads correctly,
-        compiles without a single complaint, and does nothing at all. You
-        cannot hear the result, so check it by eye: every oscillator and
-        every sequencer should have a wire into `in`.
+        ## Why `in` still matters
+
+        It is the domain a module is read across, and what is on it decides
+        what the module does:
+
+        - An oscillator accumulates `(in - in_before) x freq`, so its pitch
+          is how fast `in` moves multiplied by `freq`. Time moves at one
+          second per second, which is why `freq` on a Time-driven
+          oscillator is the frequency it says it is. **Do not put a
+          Multiply between Time and `in` to slow a tone down** — that
+          divides the pitch and leaves the knob lying. A 440 Hz oscillator
+          fed a fifth of a second per second is an 88 Hz oscillator with a
+          knob that says 440.
+        - A sequencer is on whichever step its `in` has reached, at `rate`
+          steps per unit of `in`.
+        - Patch a **Coordinates** output into `in` to draw with it instead
+          of playing it — `x` for upright bands, `y` for flat ones,
+          `radius` for rings. That is the one common reason to wire `in` at
+          all.
+        - Patch a constant in — a **Value** — to deliberately hold a module
+          still. It compiles fine and is a still picture, which is
+          sometimes what is wanted.
+        - **To slow a picture down**, put a Multiply after Time and wire it
+          in. Time itself is seconds and nothing else, so the place a patch
+          runs slowly is visible in the patch.
 
         ## Sinks
 
@@ -211,6 +230,8 @@ internal static class Handbook
         name. `~` marks a color port, `*` a port that takes whatever is plugged
         in, `->n` an input that falls back to input `n` when nothing is wired to
         it, and `note` a knob that reads as a note name rather than a number.
+        `<-Module` in place of a default marks a normalled input: it has no knob
+        and is already reading that module with no wire.
         A `notes` line means the module carries a list of notes instead of step
         knobs — write it with `set_steps`.
 
@@ -254,8 +275,8 @@ internal static class Handbook
 
         text.AppendLine();
 
-        Sockets(text, "in ", def.Inputs, knobs: true);
-        Sockets(text, "out", def.Outputs, knobs: false);
+        Sockets(text, "in ", def.Inputs, modules, knobs: true);
+        Sockets(text, "out", def.Outputs, modules, knobs: false);
 
         // Said per module rather than only in the preamble, because this is the
         // one place a model looks to find out what a module has — and a
@@ -268,7 +289,12 @@ internal static class Handbook
             text.Append("  ").AppendLine(def.Description);
     }
 
-    private static void Sockets(StringBuilder text, string label, IReadOnlyList<PortSpec> ports, bool knobs)
+    private static void Sockets(
+        StringBuilder text,
+        string label,
+        IReadOnlyList<PortSpec> ports,
+        ModuleCatalog modules,
+        bool knobs)
     {
         text.Append("  ").Append(label);
 
@@ -290,6 +316,15 @@ internal static class Handbook
             text.Append(port.Name);
 
             if (!knobs) continue;
+
+            // A normalled socket has no knob and no range worth printing: it
+            // reads the module named here until something is patched in, and a
+            // default beside it would read as a number that could be set.
+            if (modules.Normalled(port) is { } source)
+            {
+                text.Append("<-").Append(source.Replace(' ', '.'));
+                continue;
+            }
 
             text.Append('=').Append(Number(port.Default));
             text.Append(" [").Append(Number(port.Min)).Append("..").Append(Number(port.Max)).Append(']');

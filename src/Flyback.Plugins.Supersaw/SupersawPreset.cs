@@ -22,8 +22,11 @@ internal static class SupersawPreset
     {
         var b = new PatchBuilder(modules);
 
+        // Here because the eye's Supersaw is read across x rather than across
+        // the clock, and that is the one thing a normal cannot give it: 'in' is
+        // normalled to Time, so overriding it takes a wire (ADR-0050). The two
+        // that are meant to run on time take none.
         var coord = b.Add("coord", 40, 120);
-        var time = b.Add("time", 40, 460, (0, 1f));
 
         // 0..1 over about sixteen seconds, from amp and bias at a half.
         var sweep = b.Add("osc.sine", 250, 380, (1, 0.06f), (3, 0.5f), (4, 0.5f));
@@ -42,9 +45,7 @@ internal static class SupersawPreset
 
         var output = b.Add(NodeCatalog.OutputTypeId, 1030, 380, (NodeCatalog.OutputGainPort, 0.5f));
 
-        b.Wire(time, 0, sweep, 0)
-         .Wire(time, 0, voice, 0)
-         .Wire(pitch, 0, voice, 1)
+        b.Wire(pitch, 0, voice, 1)
          .Wire(sweep, 0, voice, 2)
          .Wire(voice, 0, output, NodeCatalog.OutputLeftPort)
          .Wire(voice, 1, output, NodeCatalog.OutputRightPort)

@@ -16,8 +16,10 @@ internal static class SpacePreset
     {
         var b = new PatchBuilder(modules);
 
-        var coord = b.Add("coord", 40, 120);
-        var time = b.Add("time", 40, 520, (0, 1f));
+        // Here for the Rings' 'offset' alone: every 'in' in the patch is
+        // normalled to Time and the Rings' x and y to Coordinates (ADR-0050),
+        // so the only socket left that has to be told to move is that one.
+        var time = b.Add("time", 40, 520);
 
         // A saw falling from 1 to 0 twice a second, used as a pluck envelope:
         // sharp attack, and the tail is what the delay and reverb are fed.
@@ -37,16 +39,12 @@ internal static class SpacePreset
 
         var output = b.Add(NodeCatalog.OutputTypeId, 1230, 420, (NodeCatalog.OutputGainPort, 0.5f));
 
-        b.Wire(time, 0, pluck, 0)
-         .Wire(time, 0, tone, 0)
-         .Wire(pitch, 0, tone, 1)
+        b.Wire(pitch, 0, tone, 1)
          .Wire(tone, 0, struck, 0)
          .Wire(pluck, 0, struck, 1)
          .Wire(struck, 0, echo, 0)
          .Wire(echo, 0, room, 0)
          .Wire(room, 0, output, NodeCatalog.OutputLeftPort)
-         .Wire(coord, 0, rings, 0)
-         .Wire(coord, 1, rings, 1)
          .Wire(time, 0, rings, 3)
          .Wire(rings, 0, color, 2)
          .Wire(color, 0, output, NodeCatalog.OutputColorPort);

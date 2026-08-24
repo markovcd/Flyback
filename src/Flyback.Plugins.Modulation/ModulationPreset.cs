@@ -23,8 +23,9 @@ internal static class ModulationPreset
     {
         var b = new PatchBuilder(modules);
 
-        var coord = b.Add("coord", 40, 120);
-        var time = b.Add("time", 40, 700, (0, 1f));
+        // No clock and no Coordinates: the saw's 'in' is normalled to Time and
+        // the Translate's x and y to Coordinates (ADR-0050), so the whole patch
+        // is effects and the two things they are applied to.
 
         // Ear: one saw, and then nothing but movement.
         var pitch = b.Add("audio.frequency", 250, 720, (0, 165f));
@@ -48,16 +49,13 @@ internal static class ModulationPreset
         var output = b.Add(
             NodeCatalog.OutputTypeId, 1420, 440, (NodeCatalog.OutputGainPort, 0.6f));
 
-        b.Wire(time, 0, saw, 0)
-         .Wire(pitch, 0, saw, 1)
+        b.Wire(pitch, 0, saw, 1)
          .Wire(saw, 0, flanger, 0)
          .Wire(flanger, 0, phaser, 0)
          .Wire(phaser, 0, chorus, 0)
          .Wire(chorus, 0, output, NodeCatalog.OutputLeftPort)
          .Wire(chorus, 1, output, NodeCatalog.OutputRightPort)
 
-         .Wire(coord, 0, slide, 0)
-         .Wire(coord, 1, slide, 1)
          .Wire(chorus, 2, slide, 2)
          .Wire(slide, 0, rings, 0)
          .Wire(slide, 1, rings, 1)

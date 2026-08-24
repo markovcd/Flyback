@@ -356,15 +356,22 @@ public sealed class PatchWorkbench
             return ToolOutcome.Refused(
                 $"{Handle(node)} has no input called '{portName}'. Its inputs are: {List(def.Inputs)}.");
 
+        // What a socket falls back to when nothing is patched into it: the module
+        // it is normalled to where there is one, and its knob otherwise. Both
+        // messages below need it, and neither is worth being wrong about — an
+        // assistant told a socket is on a knob will go looking for the knob.
+        var resting = modules.Normalled(def.Inputs[port]) is { } source
+            ? $"{source}, which it is normalled to"
+            : $"its knob at {def.Inputs[port].Format(Knob(node, port, def))}";
+
         if (working.IncomingTo(node.Id, port) is null)
-            return Fine($"nothing was wired to {Handle(node)}.{def.Inputs[port].Name}; its knob is in use.");
+            return Fine($"nothing was wired to {Handle(node)}.{def.Inputs[port].Name}; it is on {resting}.");
 
         working.Disconnect(node.Id, port);
         Edits++;
 
         return Fine(
-            $"unwired {Handle(node)}.{def.Inputs[port].Name}, which is back on its knob "
-            + $"at {def.Inputs[port].Format(Knob(node, port, def))}. {Issues()}");
+            $"unwired {Handle(node)}.{def.Inputs[port].Name}, which is back on {resting}. {Issues()}");
     }
 
     private ToolOutcome RemoveModule(JsonElement arguments)
@@ -497,6 +504,14 @@ public sealed class PatchWorkbench
             else if (port.NormalledFrom >= 0)
             {
                 parts.Add($"{port.Name} = {port.Format(Knob(node, i, def))} (or {def.Inputs[port.NormalledFrom].Name})");
+            }
+            else if (modules.Normalled(port) is { } source)
+            {
+                // No knob is printed here, because none is read: a normalled
+                // socket compiles to the module it is normalled to and not to
+                // the value stored against it. Printing both would read as a
+                // knob that could be turned, which is the one thing this is not.
+                parts.Add($"{port.Name} <- {source} (normalled, no wire)");
             }
             else
             {
@@ -1243,6 +1258,19 @@ public sealed class PatchWorkbench
 
             if (!Port(def.Inputs, portName, out var port))
                 return $"{Handle(node)} has no input called '{portName}'. Its inputs are: {List(def.Inputs)}.";
+
+            // A normalled socket has no knob to turn: it compiles to the module
+            // it is normalled to, and the value stored against it is never read.
+            // Refused rather than stored quietly, because storing it would look
+            // like it worked and the patch would not change — which is the kind
+            // of thing an assistant can spend a whole run failing to notice.
+            if (modules.Normalled(def.Inputs[port]) is { } source)
+            {
+                return $"{Handle(node)}'s '{portName}' is normalled to {source} and has no knob: "
+                    + "it is already reading that, with no wire, and a value set here would not be "
+                    + $"read. Patch something into '{portName}' to drive it with that instead — a "
+                    + "Value module if what you want there really is a constant.";
+            }
 
             Grow(node, def);
             node.InputValues[port] = (float)value.GetDouble();

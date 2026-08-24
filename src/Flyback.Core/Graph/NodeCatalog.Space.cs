@@ -8,7 +8,7 @@ public partial class NodeCatalog
     {
         yield return new NodeDef(
             "space.rotate", "Rotate", "Space",
-            [Num("x"), Num("y"), Num("angle", 0f, -Tau, Tau)], [Num("x"), Num("y")],
+            [..Position(), Num("angle", 0f, -Tau, Tau)], [Num("x"), Num("y")],
             (em, i) =>
             {
                 var cos = em.Unary(OpCode.Cos, i[2]);
@@ -23,25 +23,25 @@ public partial class NodeCatalog
 
         yield return new NodeDef(
             "space.scale", "Scale", "Space",
-            [Num("x"), Num("y"), Num("scale", 1f, 0f, 16f)], [Num("x"), Num("y")],
+            [..Position(), Num("scale", 1f, 0f, 16f)], [Num("x"), Num("y")],
             (em, i) => [em.Mul(i[0], i[2]), em.Mul(i[1], i[2])],
             "Zooms the coordinate system. Larger scale packs more pattern in.");
 
         yield return new NodeDef(
             "space.translate", "Translate", "Space",
-            [Num("x"), Num("y"), Num("dx"), Num("dy")], [Num("x"), Num("y")],
+            [..Position(), Num("dx"), Num("dy")], [Num("x"), Num("y")],
             (em, i) => [em.Binary(OpCode.Sub, i[0], i[2]), em.Binary(OpCode.Sub, i[1], i[3])],
             "Slides the coordinate system, moving the pattern by (dx, dy).");
 
         yield return new NodeDef(
             "space.polar", "To polar", "Space",
-            [Num("x"), Num("y")], [Num("radius"), Num("angle")],
+            [..Position()], [Num("radius"), Num("angle")],
             (em, i) => [em.Binary(OpCode.Hypot, i[0], i[1]), em.Binary(OpCode.Atan2, i[1], i[0])],
             "Cartesian to polar. Patterns built on radius and angle go circular.");
 
         yield return new NodeDef(
             "space.tile", "Tile", "Space",
-            [Num("x"), Num("y"), Num("tiles", 3f, 1f, 16f)], [Num("x"), Num("y")],
+            [..Position(), Num("tiles", 3f, 1f, 16f)], [Num("x"), Num("y")],
             (em, i) =>
             {
                 return [Cell(i[0]), Cell(i[1])];
@@ -53,13 +53,13 @@ public partial class NodeCatalog
 
         yield return new NodeDef(
             "space.mirror", "Mirror", "Space",
-            [Num("x"), Num("y")], [Num("x"), Num("y")],
+            [..Position()], [Num("x"), Num("y")],
             (em, i) => [em.Unary(OpCode.Abs, i[0]), em.Unary(OpCode.Abs, i[1])],
             "Folds each axis about zero, so one quadrant is reflected into all four.");
 
         yield return new NodeDef(
             "space.kaleidoscope", "Kaleidoscope", "Space",
-            [Num("x"), Num("y"), Num("segments", 6f, 1f, 24f)], [Num("x"), Num("y")],
+            [..Position(), Num("segments", 6f, 1f, 24f)], [Num("x"), Num("y")],
             (em, i) =>
             {
                 var radius = em.Binary(OpCode.Hypot, i[0], i[1]);
@@ -78,7 +78,7 @@ public partial class NodeCatalog
 
         yield return new NodeDef(
             "space.warp", "Warp", "Space",
-            [Num("x"), Num("y"), Num("by"), Num("amount", 0.5f)], [Num("x"), Num("y")],
+            [..Position(), Num("by"), Num("amount", 0.5f)], [Num("x"), Num("y")],
             (em, i) =>
             {
                 var push = em.Mul(i[2], i[3]);

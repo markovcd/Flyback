@@ -47,10 +47,15 @@ public class InspectorWiringTests : UiTest
     /// Output the oscillator already feeds.
     /// </summary>
     /// <param name="wired">
-    /// Whether the clock is already on the oscillator's first input. The panel
-    /// is then correct the moment it is built, which is what the unplugging test
+    /// Whether the clock is already on the oscillator's 'freq'. The panel is
+    /// then correct the moment it is built, which is what the unplugging test
     /// needs: starting from a panel that is already stale would let it pass
     /// against the very bug it is here for.
+    /// <para>
+    /// 'freq' rather than 'in' because what is being watched is a knob coming
+    /// and going, and 'in' has none to come or go — it is normalled to Time.
+    /// Nothing here cares what the patch sounds like.
+    /// </para>
     /// </param>
     private static (Patch Patch, NodeInstance Sine, NodeInstance Clock) Board(bool wired = false)
     {
@@ -61,7 +66,7 @@ public class InspectorWiringTests : UiTest
         var clock = b.Add("time", 40, 40);
 
         b.Wire(sine, 0, output, NodeCatalog.OutputColorPort);
-        if (wired) b.Wire(clock, 0, sine, 0);
+        if (wired) b.Wire(clock, 0, sine, 1);
 
         return (b.Patch, sine, clock);
     }
@@ -102,13 +107,21 @@ public class InspectorWiringTests : UiTest
 
     /// <summary>How many rows say the socket is wired rather than offering a knob.</summary>
     private static int Wired(MainWindow window) =>
-        All<TextBlock>(window).Count(t => t.Text?.Contains("patched") == true);
+        All<TextBlock>(window).Count(t => t.Text?.Contains("◀ patched") == true);
+
+    /// <summary>How many rows say the socket is driven with no wire to show for it.</summary>
+    private static int Normalled(MainWindow window) =>
+        All<TextBlock>(window).Count(t => t.Text?.Contains("◀ Time, without a wire") == true);
 
     private static Point Input(NodeInstance node, int index) =>
         NodeGeometry.InputPort(node, NodeCatalog.BuiltIn.Require(node.TypeId), index);
 
-    /// <summary>Five inputs on a Sine, none of them wired to begin with.</summary>
-    private const int SineInputs = 5;
+    /// <summary>
+    /// How many knobs a Sine offers with nothing wired into it. Five inputs, and
+    /// four of them: 'in' is normalled to Time, and a normalled socket has no
+    /// knob because nothing would read the value one was turned to.
+    /// </summary>
+    private const int SineKnobs = 4;
 
     [AvaloniaFact]
     public void A_wire_arriving_takes_the_knob_away_without_reselecting()
@@ -118,15 +131,17 @@ public class InspectorWiringTests : UiTest
 
         Select(window, sine);
 
-        Knobs(window).ShouldBe(SineInputs);
+        Knobs(window).ShouldBe(SineKnobs);
         Wired(window).ShouldBe(0);
 
-        DragFrom(window, NodeGeometry.OutputPort(clock, 0), Input(sine, 0));
+        // Onto 'freq', which is a knob. Wiring 'in' would take nothing away —
+        // there was no knob under it to lose.
+        DragFrom(window, NodeGeometry.OutputPort(clock, 0), Input(sine, 1));
 
         // Nothing has been selected in between: this is the same panel, asked
         // again because the patch changed under it.
-        Editor(window).Patch.IncomingTo(sine.Id, 0).ShouldNotBeNull();
-        Knobs(window).ShouldBe(SineInputs - 1);
+        Editor(window).Patch.IncomingTo(sine.Id, 1).ShouldNotBeNull();
+        Knobs(window).ShouldBe(SineKnobs - 1);
         Wired(window).ShouldBe(1);
     }
 
@@ -138,17 +153,43 @@ public class InspectorWiringTests : UiTest
 
         Select(window, sine);
 
-        Knobs(window).ShouldBe(SineInputs - 1);
+        Knobs(window).ShouldBe(SineKnobs - 1);
         Wired(window).ShouldBe(1);
 
         // Grabbing a wired input picks the wire up by its far end; dropped on a
         // module's body it is a miss, so the wire is simply gone. Bare canvas
         // would open the module list instead, which is a different gesture.
+        DragFrom(window, Input(sine, 1), Body(sine));
+
+        Editor(window).Patch.IncomingTo(sine.Id, 1).ShouldBeNull();
+        Knobs(window).ShouldBe(SineKnobs);
+        Wired(window).ShouldBe(0);
+    }
+
+    /// <summary>
+    /// A socket that is driven without a wire says so where its knob would have
+    /// been, and goes back to saying it when a wire that was there is pulled.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_normalled_socket_names_what_is_driving_it_instead_of_a_knob()
+    {
+        var (patch, sine, clock) = Board();
+        var window = Open(patch);
+
+        Select(window, sine);
+
+        Normalled(window).ShouldBe(1);
+
+        DragFrom(window, NodeGeometry.OutputPort(clock, 0), Input(sine, 0));
+
+        Editor(window).Patch.IncomingTo(sine.Id, 0).ShouldNotBeNull();
+        Normalled(window).ShouldBe(0);
+        Wired(window).ShouldBe(1);
+
         DragFrom(window, Input(sine, 0), Body(sine));
 
         Editor(window).Patch.IncomingTo(sine.Id, 0).ShouldBeNull();
-        Knobs(window).ShouldBe(SineInputs);
-        Wired(window).ShouldBe(0);
+        Normalled(window).ShouldBe(1);
     }
 
     /// <summary>
@@ -165,6 +206,8 @@ public class InspectorWiringTests : UiTest
 
         Select(window, sine);
 
+        // The first knob on a Sine is 'freq': 'in' is above it and is normalled,
+        // so it has a row and no slider in it.
         var knob = All<Slider>(window).First();
         var was = knob.Value;
 
@@ -172,6 +215,6 @@ public class InspectorWiringTests : UiTest
         Settle(window);
 
         All<Slider>(window).ShouldContain(knob);
-        sine.InputValues[0].ShouldBe((float)(was + 0.25), 0.001f);
+        sine.InputValues[1].ShouldBe((float)(was + 0.25), 0.001f);
     }
 }

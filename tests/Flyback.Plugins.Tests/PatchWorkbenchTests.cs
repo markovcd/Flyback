@@ -572,41 +572,85 @@ public class PatchWorkbenchTests
     }
 
     /// <summary>
-    /// The one an assistant cannot catch for itself: it cannot hear the patch,
-    /// and a still picture looks like a patch that works. Saying it after every
-    /// edit is the only feedback there is, so this is the loop closing.
+    /// The mistake an assistant could not catch for itself — it cannot hear the
+    /// patch, and a still picture looks like one that works — and it cannot be
+    /// made any more: an oscillator with nothing in its 'in' is reading the
+    /// clock it is normalled to, so there is nothing to say about it.
     /// </summary>
     [Fact]
-    public async Task An_oscillator_with_nothing_driving_it_is_said_out_loud()
+    public async Task An_oscillator_with_nothing_driving_it_runs_on_what_it_is_normalled_to()
     {
         var bench = Bench();
 
         await Call(bench, "add_module", """{"type_id":"osc.sine","handle":"tone1"}""");
         var wired = await Call(bench, "connect", """{"from":"tone1","to":"output1","to_port":"color"}""");
 
-        wired.Text.ShouldContain("Worth knowing");
-        wired.Text.ShouldContain("never moves");
-        wired.Text.ShouldContain("Sine");
+        wired.Text.ShouldContain("No issues.");
+    }
+
+    /// <summary>
+    /// And the description says so, which is the half that matters here: an
+    /// assistant reading "in = 0" would go on believing it had to wire a clock
+    /// up, and reading nothing at all would not know what the socket was doing.
+    /// </summary>
+    [Fact]
+    public async Task A_normalled_socket_is_described_as_wired_without_a_wire()
+    {
+        var bench = Bench();
+
+        await Call(bench, "add_module", """{"type_id":"osc.sine","handle":"tone1"}""");
+        var told = await Call(bench, "describe_patch");
+
+        told.Text.ShouldContain("in <- Time (normalled, no wire)");
+    }
+
+    /// <summary>
+    /// There is no knob behind a normalled socket, and an assistant that set one
+    /// would watch the patch not change. Refused with the reason, rather than
+    /// stored where nothing will read it.
+    /// </summary>
+    [Fact]
+    public async Task Turning_a_knob_that_is_normalled_is_refused_with_the_reason()
+    {
+        var bench = Bench();
+
+        await Call(bench, "add_module", """{"type_id":"osc.sine","handle":"tone1"}""");
+
+        var turned = await Call(bench, "set_knobs", """
+            {"handle":"tone1","knobs":[{"port":"in","value":0.25}]}
+            """);
+
+        turned.Ok.ShouldBeFalse();
+        turned.Text.ShouldContain("normalled to Time");
+        turned.Text.ShouldContain("Value module");
     }
 
     /// <summary>
     /// The bug this exists for. Compiling backwards from the screen means the
     /// video pass stops at the first line when there is no screen, so every
     /// edit on a patch built for the speakers came back "No issues." — however
-    /// silent it was. An assistant cannot hear the patch, so that string was the
+    /// broken it was. An assistant cannot hear the patch, so that string was the
     /// only thing standing between it and shipping silence, and it was lying.
     /// </summary>
+    /// <remarks>
+    /// A cycle is the fault used here because it is one only the speakers reach:
+    /// nothing is wired into 'color', so the video pass stops at the first line
+    /// and never sees it. What is on trial is the second compilation happening
+    /// at all, not what it happens to find.
+    /// </remarks>
     [Fact]
     public async Task A_fault_only_the_speakers_reach_is_still_reported_on_every_edit()
     {
         var bench = Bench();
 
-        await Call(bench, "add_module", """{"type_id":"osc.sine","handle":"tone1"}""");
-        var wired = await Call(bench, "connect", """{"from":"tone1","to":"output1","to_port":"left"}""");
+        await Call(bench, "add_module", """{"type_id":"math.add","handle":"sum1"}""");
+        await Call(bench, "add_module", """{"type_id":"math.add","handle":"sum2"}""");
+        await Call(bench, "connect", """{"from":"sum1","to":"sum2","to_port":"a"}""");
+        await Call(bench, "connect", """{"from":"sum2","to":"sum1","to_port":"a"}""");
+        var wired = await Call(bench, "connect", """{"from":"sum2","to":"output1","to_port":"left"}""");
 
-        wired.Text.ShouldContain("Worth knowing");
-        wired.Text.ShouldContain("never moves");
-        wired.Text.ShouldContain("Sine");
+        wired.Text.ShouldContain("Issues:");
+        wired.Text.ShouldContain("feeds back into itself");
     }
 
     /// <summary>
@@ -618,15 +662,18 @@ public class PatchWorkbenchTests
     {
         var bench = Bench();
 
-        await Call(bench, "add_module", """{"type_id":"osc.sine","handle":"tone1"}""");
-        await Call(bench, "connect", """{"from":"tone1","to":"output1","to_port":"color"}""");
-        var wired = await Call(bench, "connect", """{"from":"tone1","to":"output1","to_port":"left"}""");
+        await Call(bench, "add_module", """{"type_id":"math.add","handle":"sum1"}""");
+        await Call(bench, "add_module", """{"type_id":"math.add","handle":"sum2"}""");
+        await Call(bench, "connect", """{"from":"sum1","to":"sum2","to_port":"a"}""");
+        await Call(bench, "connect", """{"from":"sum2","to":"sum1","to_port":"a"}""");
+        await Call(bench, "connect", """{"from":"sum2","to":"output1","to_port":"color"}""");
+        var wired = await Call(bench, "connect", """{"from":"sum2","to":"output1","to_port":"left"}""");
 
         var said = wired.Text;
-        var first = said.IndexOf("never moves", StringComparison.Ordinal);
+        var first = said.IndexOf("feeds back into itself", StringComparison.Ordinal);
 
         first.ShouldBeGreaterThan(-1);
-        said.IndexOf("never moves", first + 1, StringComparison.Ordinal).ShouldBe(-1);
+        said.IndexOf("feeds back into itself", first + 1, StringComparison.Ordinal).ShouldBe(-1);
     }
 
     [Fact]
@@ -646,12 +693,20 @@ public class PatchWorkbenchTests
     /// A patch that does not move is still a patch. The person may have meant a
     /// still, and a warning that blocked would be an error wearing a hat.
     /// </summary>
+    /// <remarks>
+    /// Held still by a Value on the oscillator's 'in', which is what standing
+    /// one still now takes: the socket carries the clock unless something says
+    /// otherwise, so a constant there is a decision somebody made rather than
+    /// one they failed to.
+    /// </remarks>
     [Fact]
     public async Task A_patch_that_does_not_move_can_still_be_proposed()
     {
         var bench = Bench();
 
+        await Call(bench, "add_module", """{"type_id":"value","handle":"knob1"}""");
         await Call(bench, "add_module", """{"type_id":"osc.sine","handle":"tone1"}""");
+        await Call(bench, "connect", """{"from":"knob1","to":"tone1","to_port":"in"}""");
         await Call(bench, "connect", """{"from":"tone1","to":"output1","to_port":"color"}""");
 
         var offered = await Call(bench, "propose", """{"summary":"a flat field"}""");
@@ -851,26 +906,49 @@ public class PatchWorkbenchTests
     }
 
     /// <summary>
-    /// The other half of the same rule, and the one the compiler does see: a
-    /// warning is enough to stop this. Rendering it anyway would spend a payload
-    /// on a recording of a patch that has already been diagnosed in words.
+    /// The other half of the same rule, and the one the compiler does see:
+    /// anything it has to say is enough to stop this. Rendering it anyway would
+    /// spend a payload on a recording of a patch already diagnosed in words.
     /// </summary>
     [Fact]
-    public async Task An_oscillator_with_nothing_driving_it_is_answered_by_the_compiler_not_by_the_ear()
+    public async Task A_fault_the_compiler_can_see_is_answered_by_it_and_not_by_the_ear()
     {
         var bench = Bench();
 
-        await Call(bench, "add_module", """
-            {"type_id":"osc.sine","handle":"tone1","knobs":[{"port":"freq","value":440}]}
-            """);
-        var wired = await Call(bench, "connect", """{"from":"tone1","to":"output1","to_port":"left"}""");
+        await Call(bench, "add_module", """{"type_id":"math.add","handle":"sum1"}""");
+        await Call(bench, "add_module", """{"type_id":"math.add","handle":"sum2"}""");
+        await Call(bench, "connect", """{"from":"sum1","to":"sum2","to_port":"a"}""");
+        await Call(bench, "connect", """{"from":"sum2","to":"sum1","to_port":"a"}""");
+        var wired = await Call(bench, "connect", """{"from":"sum2","to":"output1","to_port":"left"}""");
         wired.Ok.ShouldBeTrue(wired.Text);
 
         var heard = await Call(bench, "listen", """{"seconds":0.5}""");
 
         heard.Ok.ShouldBeFalse();
         heard.Wav.ShouldBeNull();
-        heard.Text.ShouldContain("'in'");
+        heard.Text.ShouldContain("feeds back into itself");
+    }
+
+    /// <summary>
+    /// An oscillator with nothing patched into it used to be the case above.
+    /// It is a sound now, and one that can be listened to: the socket carries
+    /// the clock without a wire, so there is nothing for the compiler to catch
+    /// and nothing to keep the ear from being asked.
+    /// </summary>
+    [Fact]
+    public async Task An_oscillator_with_nothing_driving_it_can_be_heard()
+    {
+        var bench = Bench();
+
+        await Call(bench, "add_module", """
+            {"type_id":"osc.sine","handle":"tone1","knobs":[{"port":"freq","value":440}]}
+            """);
+        await Call(bench, "connect", """{"from":"tone1","to":"output1","to_port":"left"}""");
+
+        var heard = await Call(bench, "listen", """{"seconds":0.5}""");
+
+        heard.Ok.ShouldBeTrue(heard.Text);
+        heard.Wav.ShouldNotBeNull();
     }
 
     [Fact]

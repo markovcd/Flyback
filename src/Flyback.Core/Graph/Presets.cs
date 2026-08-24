@@ -36,17 +36,22 @@ public static class Presets
     /// Nothing here is duplicated between the two sinks. Every difference
     /// between what the ear gets and what the eye gets is a different output of
     /// the one module — which is the point of it having three.
+    /// <para>
+    /// There is no clock in it and no Coordinates either. The sequencer's and
+    /// the oscillator's <c>in</c> are normalled to Time and the Rings' <c>x</c>
+    /// and <c>y</c> to Coordinates (ADR-0050), so both are already driven and
+    /// the whole patch is the part somebody chose.
+    /// </para>
     /// </remarks>
     public static Patch Sequence(ModuleCatalog modules)
     {
         var b = new PatchBuilder(modules);
 
-        var time = b.Add("time", 40, 300);
-
         // Three notes a second, and the gate closed for the last third of each
         // so that two of the same note in a row are two notes. Ports are in,
         // rate, gate length, shape — the notes themselves are a list on the
-        // node rather than knobs on it (ADR-0038).
+        // node rather than knobs on it (ADR-0038). 'in' takes no wire: it runs
+        // on the clock every domain socket is normalled to.
         var steps = b.Add("seq.notes", 240, 180, (1, 3f), (2, 0.66f));
 
         // Ear: the step is a note number, so it goes in where a note goes.
@@ -56,7 +61,7 @@ public static class Presets
 
         // Eye: rings whose count is the position in the pattern, so the picture
         // reorganises itself on the beat rather than drifting through it.
-        var coord = b.Add("coord", 40, 620);
+        //
         // Remapped rather than multiplied, so the first step of the pattern is a
         // ring count of one and a half rather than of nothing: index starts at
         // zero, and zero rings is a flat field with no pattern in it at all.
@@ -75,16 +80,12 @@ public static class Presets
 
         var output = b.Add(NodeCatalog.OutputTypeId, 1440, 420, (NodeCatalog.OutputGainPort, 0.5f));
 
-        b.Wire(time, 0, steps, 0)
-         .Wire(steps, 0, note, 0)
-         .Wire(time, 0, tone, 0)
+        b.Wire(steps, 0, note, 0)
          .Wire(note, 0, tone, 1)
          .Wire(tone, 0, voiced, 0)
          .Wire(steps, 1, voiced, 1)
          .Wire(voiced, 0, output, NodeCatalog.OutputLeftPort)
 
-         .Wire(coord, 0, rings, 0)
-         .Wire(coord, 1, rings, 1)
          .Wire(steps, 2, depth, 0)
          .Wire(depth, 0, rings, 2)
          .Wire(rings, 0, glow, 0)
@@ -132,8 +133,6 @@ public static class Presets
     public static Patch Kick(ModuleCatalog modules)
     {
         var b = new PatchBuilder(modules);
-
-        var time = b.Add("time", 40, 420);
 
         // 120 a minute, and the module that says so in those words.
         var tempo = b.Add(NodeCatalog.TempoTypeId, 40, 200, (0, 120f));
@@ -190,18 +189,15 @@ public static class Presets
         var output = b.Add(NodeCatalog.OutputTypeId, 1500, 420, (NodeCatalog.OutputGainPort, 0.8f));
 
         b.Wire(tempo, 0, beat, 1)
-         .Wire(time, 0, beat, 0)
          .Wire(beat, 0, level, 0)
          .Wire(beat, 0, sweep, 0)
          .Wire(sweep, 0, pitch, 0)
-         .Wire(time, 0, body, 0)
          .Wire(pitch, 0, body, 1)
          .Wire(body, 0, struck, 0)
          .Wire(level, 0, struck, 1)
          .Wire(struck, 0, output, NodeCatalog.OutputLeftPort)
 
          .Wire(coord, 2, disc, 0)
-         .Wire(time, 0, fall, 0)
          .Wire(tempo, 0, fall, 1)
          .Wire(fall, 0, shape, 0)
          .Wire(shape, 0, visible, 0)
@@ -260,11 +256,13 @@ public static class Presets
     {
         var b = new PatchBuilder(modules);
 
-        var coord = b.Add("coord", 40, 220);
-
         // One clock and two speeds off it, rather than two clocks. An output
         // fans out to as many inputs as you like, so what a patch needs more
         // than one of is the scaling, not the time.
+        //
+        // It is here at all only because both speeds are scaled. The Rotate's
+        // own x and y need no such module: they are normalled to Coordinates
+        // and are already reading the pixel's position (ADR-0050).
         var clock = b.Add("time", 40, 260);
         var spin = b.Add("math.mul", 150, 60, (1, 0.15f));
         var drift = b.Add("math.mul", 150, 460, (1, 0.3f));
@@ -275,9 +273,7 @@ public static class Presets
         var color = b.Add("color.hsv", 890, 240, (1, 0.9f), (2, 1f));
         var output = b.Add(NodeCatalog.OutputTypeId, 1090, 260);
 
-        b.Wire(coord, 0, rotate, 0)
-         .Wire(coord, 1, rotate, 1)
-         .Wire(clock, 0, spin, 0)
+        b.Wire(clock, 0, spin, 0)
          .Wire(clock, 0, drift, 0)
          .Wire(spin, 0, rotate, 2)
          .Wire(rotate, 0, fold, 0)
@@ -300,7 +296,10 @@ public static class Presets
     {
         var b = new PatchBuilder(modules);
 
-        var coord = b.Add("coord", 40, 120);
+        // Here for the Rings' 'offset' and nothing else — the two oscillators
+        // and the Rings' own x and y are normalled and take no wire (ADR-0050).
+        // What is left is the one socket in the patch that has to be told to
+        // move, which is what a Time module is now for.
         var time = b.Add("time", 40, 380);
 
         // The shared control signal, remapped to 0..1 by amp and bias.
@@ -319,14 +318,10 @@ public static class Presets
         // oscillator legible: two wires into the same module, from the same sine.
         var output = b.Add(NodeCatalog.OutputTypeId, 920, 340, (NodeCatalog.OutputGainPort, 0.6f));
 
-        b.Wire(time, 0, slow, 0)
-         .Wire(time, 0, tone, 0)
-         .Wire(pitch, 0, tone, 1)
+        b.Wire(pitch, 0, tone, 1)
          .Wire(tone, 0, tremolo, 0)
          .Wire(slow, 0, tremolo, 1)
          .Wire(tremolo, 0, output, NodeCatalog.OutputLeftPort)
-         .Wire(coord, 0, rings, 0)
-         .Wire(coord, 1, rings, 1)
          .Wire(time, 0, rings, 3)
          .Wire(slow, 0, tint, 0)
          .Wire(rings, 0, tint, 2)
@@ -377,9 +372,6 @@ public static class Presets
     {
         var b = new PatchBuilder(modules);
 
-        var time = b.Add("time", 40, 420);
-        var coord = b.Add("coord", 40, 120);
-
         // The field, and the only thing in the patch that makes the waveform.
         // 'freq' is the modulation index rather than a pitch: more rings under
         // the loop is more harmonics, at the same note.
@@ -393,8 +385,9 @@ public static class Presets
 
         var pitch = b.Add("audio.frequency", 300, 780, (0, 110f));
 
-        // 'clock' is the sweep's own time base; 'rate' is the pitch; 'radius'
-        // and 'x' choose which loop through the field is read.
+        // 'clock' is the sweep's own time base and takes no wire — it is a
+        // domain, so it is normalled to Time; 'rate' is the pitch; 'radius' and
+        // 'x' choose which loop through the field is read.
         var scan = b.Add(NodeCatalog.ScanTypeId, 800, 420, (3, 0.35f), (6, 1f));
 
         // Eye: the field under the trace, dim enough that the loop reads on top
@@ -405,15 +398,10 @@ public static class Presets
 
         var output = b.Add(NodeCatalog.OutputTypeId, 1320, 300, (NodeCatalog.OutputGainPort, 0.45f));
 
-        b.Wire(coord, 0, rings, 0)
-         .Wire(coord, 1, rings, 1)
-
-         // Ear: the field itself into the sweep, and out the other side as a
-         // sample. Nothing between the picture and the speakers but the loop.
-         .Wire(rings, 0, scan, 0)
-         .Wire(time, 0, scan, 1)
+        // Ear: the field itself into the sweep, and out the other side as a
+        // sample. Nothing between the picture and the speakers but the loop.
+        b.Wire(rings, 0, scan, 0)
          .Wire(pitch, 0, scan, 2)
-         .Wire(time, 0, sweep, 0)
          .Wire(sweep, 0, where, 0)
          .Wire(where, 0, scan, 4)
          .Wire(scan, 0, output, NodeCatalog.OutputLeftPort)
@@ -457,8 +445,10 @@ public static class Presets
     {
         var b = new PatchBuilder(modules);
 
+        // Here for 'radius', which is the one Coordinates output nothing is
+        // normalled to: x and y arrive at a module that wants a position on
+        // their own, and a distance from the centre never does.
         var coord = b.Add("coord", 40, 320);
-        var time = b.Add("time", 40, 100);
 
         // Half an octave either way, over four seconds: six semitones up and
         // six down from the note on the knob, then it starts again. The reset is
@@ -491,12 +481,10 @@ public static class Presets
 
         var output = b.Add(NodeCatalog.OutputTypeId, 1470, 300, (NodeCatalog.OutputGainPort, 0.5f));
 
-        b.Wire(time, 0, ramp, 0)
-         .Wire(coord, 2, spread, 0)
+        b.Wire(coord, 2, spread, 0)
          .Wire(ramp, 0, sweep, 0)
          .Wire(spread, 0, sweep, 1)
          .Wire(sweep, 0, note, 1)
-         .Wire(time, 0, tone, 0)
          .Wire(note, 0, tone, 1)
          .Wire(tone, 0, output, NodeCatalog.OutputLeftPort)
          .Wire(note, 1, wheel, 0)
@@ -538,12 +526,14 @@ public static class Presets
     {
         var b = new PatchBuilder(modules);
 
-        var coord = b.Add("coord", 40, 300);
-
         // One clock read at three speeds, so nothing in the picture ever quite
         // lines up with anything else and it does not visibly loop. The three
         // are Multiplies rather than three Times: seconds are seconds, and what
         // differs between these is only how much of them each part wants.
+        //
+        // Nineteen modules and this is the only source in the patch. Both
+        // geometry chains start from a Rotate or a Scale whose x and y are
+        // normalled to Coordinates, so neither needs anything in front of it.
         var clock = b.Add("time", 40, 400);
         var spin = b.Add("math.mul", 150, 80, (1, 0.05f));
         var boil = b.Add("math.mul", 150, 560, (1, 0.12f));
@@ -586,8 +576,6 @@ public static class Presets
         b.Wire(clock, 0, spin, 0)
          .Wire(clock, 0, boil, 0)
          .Wire(clock, 0, pulse, 0)
-         .Wire(coord, 0, turn, 0)
-         .Wire(coord, 1, turn, 1)
          .Wire(spin, 0, turn, 2)
          .Wire(turn, 0, fold, 0)
          .Wire(turn, 1, fold, 1)
@@ -606,8 +594,6 @@ public static class Presets
          .Wire(drift, 0, hue, 0)
          .Wire(hue, 0, fresh, 0)
          .Wire(filament, 0, fresh, 2)
-         .Wire(coord, 0, widen, 0)
-         .Wire(coord, 1, widen, 1)
          .Wire(widen, 0, swirl, 0)
          .Wire(widen, 1, swirl, 1)
          .Wire(swirl, 0, previous, 0)
@@ -628,8 +614,6 @@ public static class Presets
     {
         var b = new PatchBuilder(modules);
 
-        var coord = b.Add("coord", 40, 240);
-
         var clock = b.Add("time", 40, 300);
         var spin = b.Add("math.mul", 150, 60, (1, 0.08f));
         var pulse = b.Add("math.mul", 150, 560, (1, 0.25f));
@@ -649,16 +633,12 @@ public static class Presets
 
         b.Wire(clock, 0, spin, 0)
          .Wire(clock, 0, pulse, 0)
-         .Wire(coord, 0, rotate, 0)
-         .Wire(coord, 1, rotate, 1)
          .Wire(spin, 0, rotate, 2)
          .Wire(rotate, 0, scale, 0)
          .Wire(rotate, 1, scale, 1)
          .Wire(scale, 0, previous, 0)
          .Wire(scale, 1, previous, 1)
          .Wire(previous, 0, dim, 0)
-         .Wire(coord, 0, rings, 0)
-         .Wire(coord, 1, rings, 1)
          .Wire(pulse, 0, rings, 3)
          .Wire(rings, 0, spark, 2)
          .Wire(pulse, 0, tint, 0)
@@ -702,7 +682,10 @@ public static class Presets
     {
         var b = new PatchBuilder(modules);
 
-        var time = b.Add("time", 40, 300);
+        // For 'radius', which is what makes the eye's half of each voice a
+        // standing field rather than a travelling tone. Nothing else in the
+        // patch needs a source: every oscillator's 'in' is normalled to Time,
+        // and the four that are heard take it as it comes.
         var coord = b.Add("coord", 40, 480);
 
         var chord = b.Add("math.mixer", 1380, 60);
@@ -754,9 +737,7 @@ public static class Presets
             // Channel v of both mixers: the input, then the level beside it.
             var channel = v * 2;
 
-            b.Wire(time, 0, level, 0)
-             .Wire(time, 0, tone, 0)
-             .Wire(pitch, 0, tone, 1)
+            b.Wire(pitch, 0, tone, 1)
              .Wire(tone, 0, chord, channel)
              .Wire(level, 0, chord, channel + 1)
 

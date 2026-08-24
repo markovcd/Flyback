@@ -57,6 +57,30 @@ public enum PortKind
 }
 
 /// <summary>
+/// A module the compiler patches into a socket that nothing else is patched
+/// into — the rack's normalled bus, where an unplugged jack is already carrying
+/// the signal that socket is nearly always used with.
+/// </summary>
+/// <remarks>
+/// Named by type id rather than held as a definition, so a socket and the module
+/// it is normalled to need not be declared in the same place: a plugin can
+/// normal one of its own sockets to <c>time</c> without the engine knowing that
+/// plugin exists. A type id the running catalogue does not hold is not an error —
+/// the socket falls back to its knob, which is what it did before it was
+/// normalled to anything.
+/// <para>
+/// What is patched in is one hidden instance shared by every socket normalled to
+/// it, so a patch with eight oscillators in it reads the clock once rather than
+/// eight times. It carries no knobs of its own: there is no node on the canvas
+/// for anybody to have turned one on, so it is emitted with every input on the
+/// definition's own default.
+/// </para>
+/// </remarks>
+/// <param name="TypeId">The module to read, as a saved patch would name it.</param>
+/// <param name="Port">Which of that module's outputs.</param>
+public readonly record struct PortNormal(string TypeId, int Port = 0);
+
+/// <summary>
 /// One input or output socket on a node. Inputs carry a <see cref="Default"/>
 /// that is editable on the node itself, so most patches need no constant nodes.
 /// </summary>
@@ -72,6 +96,23 @@ public enum PortKind
 /// the left signal through rather than silence.
 /// </param>
 /// <param name="Display">How the editor should write the value out.</param>
+/// <param name="NormalledTo">
+/// A hidden module driving this input while nothing is patched into it, or null
+/// to rest on <paramref name="Default"/>. Where <paramref name="NormalledFrom"/>
+/// carries an earlier socket of the same module through, this carries a module
+/// that is not in the patch at all: an oscillator's <c>in</c> is normalled to
+/// Time and a Rotate's <c>x</c> to Coordinates, so the two wires nearly every
+/// patch begins by drawing are already drawn. A wire overrides it exactly as a
+/// wire overrides a knob, and unplugging brings it back.
+/// <para>
+/// A normalled socket has no knob left to turn: the value stored against it is
+/// not read while the normal holds, because the thing the knob would have said
+/// is now a signal. The editor says which module is driving it in the place the
+/// number used to be. A patch that wants a constant there puts a Value module
+/// in, which is the same trade ADR-0048 made for a scaled clock — the constant
+/// becomes visible in the patch rather than hiding on a socket nobody looks at.
+/// </para>
+/// </param>
 /// <param name="Domain">
 /// True when this input is the axis the module is read across rather than a
 /// value it uses — an oscillator's phase source, a sequencer's position. What
@@ -79,8 +120,15 @@ public enum PortKind
 /// sensible thing to leave on it: an oscillator accumulates how far its domain
 /// moved, so one that does not move produces a fixed value, and a sequencer sits
 /// on whichever step its domain has reached. Neither is an error and both
-/// compile perfectly, which is exactly why the compiler says so — see
+/// compile perfectly, which is what made a domain left alone the one mistake
+/// nothing could catch.
+/// <para>
+/// So every domain in the catalogue is <paramref name="NormalledTo"/> Time, and
+/// there is nothing left to leave alone. The complaint survives for a domain
+/// that is normalled to nothing — a plugin's, or one whose module is not
+/// installed — because there it still means what it always did; see
 /// <see cref="Compile.IssueSeverity.Warning"/>.
+/// </para>
 /// </param>
 /// <param name="Swept">
 /// True when the module reads this input over a domain of its own making rather
@@ -103,6 +151,7 @@ public readonly record struct PortSpec(
     float Max = 4f,
     int NormalledFrom = -1,
     PortDisplay Display = PortDisplay.Number,
+    PortNormal? NormalledTo = null,
     bool Domain = false,
     bool Swept = false)
 {

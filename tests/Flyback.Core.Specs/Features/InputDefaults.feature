@@ -3,7 +3,8 @@ Feature: Inputs carry their own value until something is patched in
   node rather than a separate module wired in. Patching one overrides the knob;
   unplugging brings it back, because it was never lost.
 
-  Specified by ADR-0009 and ADR-0020.
+  Specified by ADR-0009 and ADR-0020 — and by ADR-0050 for the one kind of
+  input that has no knob to carry.
 
   Scenario: An unwired input compiles to the value on the node
     Given a patch containing:
@@ -36,14 +37,18 @@ Feature: Inputs carry their own value until something is patched in
   Scenario: A patch saved without the newer inputs falls back to the defaults
     Given a patch containing:
       | name   | module       |
+      | knob   | value        |
       | osc    | osc.sine     |
       | screen | output       |
-    And "osc" input "in" is set to 0.25
+    # A quarter of a cycle, wired in rather than left on the socket: 'in' is
+    # normalled to Time, and a normalled socket does not read the value stored
+    # against it. What is on trial here is 'amp' and 'bias', which are not
+    # stored at all.
+    And "knob" input "value" is set to 0.25
     And "osc" input "freq" is set to 1
     And "osc" has only 2 stored input values
+    And "knob" output "out" is wired to "osc" input "in"
     And "osc" output "out" is wired to "screen" input "color"
     When the patch is compiled
-    # Nothing wrong rather than nothing said: 'in' is deliberately on its knob
-    # here, which is a still picture and is remarked on for that reason.
-    Then compilation reports nothing wrong
+    Then compilation reports no issues
     And the centre pixel is about 1, 1, 1

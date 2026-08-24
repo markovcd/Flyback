@@ -61,7 +61,12 @@ internal static class SupersawModule
     public static NodeDef Definition { get; } = new(
         TypeId, "Supersaw", "Oscillator",
         [
-            new PortSpec("in"),
+            // The domain the seven voices are read across, and normalled to Time
+            // like every other oscillator's — a plugin's socket may name a
+            // module the engine ships, and this is the one worth naming. Left on
+            // a knob it was seven saws holding still, which is the same nothing
+            // one saw holds.
+            new PortSpec("in", NormalledTo: NodeCatalog.Clock, Domain: true),
             new PortSpec("freq", PortKind.Scalar, 1f, 0f, 16f),
             new PortSpec("detune", PortKind.Scalar, 0.3f, 0f, 1f),
             new PortSpec("mix", PortKind.Scalar, 0.75f, 0f, 1f),

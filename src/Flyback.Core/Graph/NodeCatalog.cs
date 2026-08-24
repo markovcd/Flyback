@@ -80,6 +80,9 @@ public static partial class NodeCatalog
 
     public static NodeDef Require(string typeId) => Current.Require(typeId);
 
+    /// <inheritdoc cref="ModuleCatalog.Normalled"/>
+    public static string? Normalled(PortSpec spec) => Current.Normalled(spec);
+
     // --- port shorthands -----------------------------------------------------
 
     private static PortSpec Num(string name, float value = 0f, float min = -4f, float max = 4f) =>
@@ -87,14 +90,46 @@ public static partial class NodeCatalog
 
     private static PortSpec Col(string name) => new(name, PortKind.Color);
 
+    /// <summary>The hidden clock every domain socket is normalled to.</summary>
+    public static PortNormal Clock => new(TimeTypeId);
+
+    /// <summary>The hidden x and y every socket that wants a position is normalled to.</summary>
+    public static PortNormal Across => new(CoordTypeId, CoordXPort);
+
+    public static PortNormal Down => new(CoordTypeId, CoordYPort);
+
     /// <summary>
     /// The axis a module is read across rather than a value it uses. Named at
     /// the port because only the module knows which of its inputs that is, and
     /// the compiler has no other way to tell one input from another.
     /// </summary>
+    /// <remarks>
+    /// Normalled to Time, because a domain resting on a knob is a module that
+    /// does not move and there is no reading of it that anybody wanted — see
+    /// <see cref="PortSpec.NormalledTo"/>. Every other domain in the catalogue
+    /// is built through here, so this one line is the whole of "an oscillator
+    /// runs unless you say otherwise".
+    /// </remarks>
     private static PortSpec Domain(string name) =>
-        new(name, Domain: true);
-    
+        new(name, NormalledTo: Clock, Domain: true);
+
+    /// <summary>
+    /// Where on the screen a module is being asked about, normalled to
+    /// Coordinates so that the pixel's own position is what it reads until a
+    /// patch says different.
+    /// </summary>
+    /// <remarks>
+    /// The pair is declared together because it is always a pair: a module given
+    /// one of the two and left holding a knob on the other reads along a line
+    /// through the picture rather than across it, which is a stranger thing than
+    /// either socket on its own suggests.
+    /// </remarks>
+    private static PortSpec[] Position() =>
+    [
+        new("x", NormalledTo: Across),
+        new("y", NormalledTo: Down),
+    ];
+
     private static PortSpec Any(string name, float value = 0f, float min = -4f, float max = 4f) =>
         new(name, PortKind.Any, value, min, max);
     

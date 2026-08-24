@@ -43,6 +43,7 @@ public sealed class NodeEditor : Control
     private static readonly IBrush NodeFillSelected = new SolidColorBrush(Colors.NodeSelected);
     private static readonly IBrush LabelBrush = new SolidColorBrush(Colors.Label);
     private static readonly IBrush ValueBrush = new SolidColorBrush(Colors.Value);
+    private static readonly IBrush NormalBrush = new SolidColorBrush(Colors.Normalled);
     private static readonly IBrush HeaderTextBrush = Brushes.White;
     private static readonly IPen GridPen = new Pen(new SolidColorBrush(Colors.Grid));
     private static readonly IPen GridPenMajor = new Pen(new SolidColorBrush(Colors.GridMajor));
@@ -1147,8 +1148,19 @@ public sealed class NodeEditor : Control
             var label = Text(port.Name, 11.5, LabelBrush, bounds.Width * 0.55, true);
             context.DrawText(label, new Point(bounds.X + 14, centre.Y - label.Height / 2));
 
-            // An unconnected input shows the knob value it will compile to.
-            if (!connected && i < node.InputValues.Length)
+            // An unconnected input shows what it will compile to: the module
+            // normalled to it where there is one — no wire is drawn for a wire
+            // that is not in the patch — and otherwise the knob value.
+            if (!connected && NodeCatalog.Normalled(port) is { } source)
+            {
+                // Wider than the column a number gets, because this is a module
+                // name and a qualified one at that — "Coordinates x" does not
+                // fit where "0.25" does, and trimmed to "Coordinates…" it would
+                // stop telling x from y.
+                var name = Text(source, 11.5, NormalBrush, bounds.Width * 0.5, true);
+                context.DrawText(name, new Point(bounds.Right - 12 - name.Width, centre.Y - name.Height / 2));
+            }
+            else if (!connected && i < node.InputValues.Length)
             {
                 var value = Text(port.Format(node.InputValues[i]), 11.5, ValueBrush, bounds.Width * 0.4, true);
                 context.DrawText(value, new Point(bounds.Right - 12 - value.Width, centre.Y - value.Height / 2));

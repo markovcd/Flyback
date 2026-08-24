@@ -49,8 +49,10 @@ internal static class WholeRackPreset
 
         var b = new PatchBuilder(modules);
 
-        var coord = b.Add("coord", 40, 140);
-        var time = b.Add("time", 40, 700, (0, 1f));
+        // Here for the Rings' 'offset', which is the one socket in the patch
+        // that has to be told to move: every 'in' is normalled to Time already,
+        // and so are the Rings' own x and y to Coordinates (ADR-0050).
+        var time = b.Add("time", 40, 700);
 
         // The tune, four steps a second, with a gate that swells rather than
         // switches. Everything else in the patch is timed off these three
@@ -108,11 +110,7 @@ internal static class WholeRackPreset
         var output = b.Add(
             NodeCatalog.OutputTypeId, 2470, 560, (NodeCatalog.OutputGainPort, 0.45f));
 
-        b.Wire(time, 0, riff, 0)
-         .Wire(time, 0, tone, 0)
-         .Wire(time, 0, breath, 0)
-         .Wire(time, 0, drift, 0)
-         .Wire(breath, 0, reach, 0)
+        b.Wire(breath, 0, reach, 0)
 
          .Wire(riff, 0, note, 0)
          .Wire(note, 0, tone, 1)
@@ -131,8 +129,6 @@ internal static class WholeRackPreset
          .Wire(chorus, 0, output, NodeCatalog.OutputLeftPort)
          .Wire(chorus, 1, output, NodeCatalog.OutputRightPort)
 
-         .Wire(coord, 0, rings, 0)
-         .Wire(coord, 1, rings, 1)
          .Wire(riff, 2, count, 0)
          .Wire(count, 0, rings, 2)
          .Wire(time, 0, rings, 3)

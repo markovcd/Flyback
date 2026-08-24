@@ -4,7 +4,7 @@ Each record captures one decision, the situation that forced it, and what it
 costs. Format is [Michael Nygard's](https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions):
 context, decision, consequences.
 
-Nineteen records — [0003](0003-cpu-rendering-with-a-gpu-path-left-open.md),
+Twenty records — [0003](0003-cpu-rendering-with-a-gpu-path-left-open.md),
 [0004](0004-visual-patch-editor-as-the-authoring-model.md),
 [0026](0026-modules-from-plugins-with-provenance-in-the-file.md),
 [0027](0027-delay-lines-give-the-audio-path-a-memory.md),
@@ -22,7 +22,8 @@ Nineteen records — [0003](0003-cpu-rendering-with-a-gpu-path-left-open.md),
 [0046](0046-the-module-list-is-a-gesture-not-a-panel.md) and
 [0047](0047-the-agent-may-listen-where-the-model-can.md),
 [0048](0048-time-is-seconds-and-nothing-else.md) and
-[0049](0049-record-the-gpu-frame-not-the-interpreter.md) — are marked
+[0049](0049-record-the-gpu-frame-not-the-interpreter.md) and
+[0050](0050-normalled-sockets-carry-a-signal-with-no-wire.md) — are marked
 **user-directed**: they were chosen by the project owner, not derived. The first
 two sit upstream of almost everything else here; 0026 and 0027 each give up a
 property an earlier record relied on, knowingly; 0031, 0033, 0034, 0036 and 0040
@@ -48,7 +49,12 @@ a fair reading of a control that should not have existed. 0049 is the first that
 asks the instrument to be played rather than authored: everything before it
 writes a file from a patch, and this one writes a file from a performance, which
 turns out to need a different source for the frames and a different thing to
-believe about time. All are recorded even though they were not mine to make.
+believe about time. 0050 is 0048's other half and the pair reads oddly together:
+that one took away a control for scaling the clock, and this one takes away the
+wire that carried it, so a socket which used to need both a module and a knob
+now needs neither. It is also the second record with the agent of 0033 as
+evidence — it was the handbook's longest section that made the case, not an
+argument about sockets. All are recorded even though they were not mine to make.
 
 [0035](0035-a-glsl-backend-for-the-video-path.md) is the first record where two
 backends disagree by design: the picture on screen and the picture in an exported
@@ -91,6 +97,7 @@ the two that was there while the knobs were moving.
 | [0040](0040-a-probe-is-a-second-compile-root.md) | A probe is a second compile root, not a second machine *(user-directed)* |
 | [0043](0043-a-scan-is-a-probe-read-backwards.md) | A Scan is a Probe read backwards *(user-directed)* |
 | [0048](0048-time-is-seconds-and-nothing-else.md) | Time is seconds, and nothing else *(user-directed)* |
+| [0050](0050-normalled-sockets-carry-a-signal-with-no-wire.md) | Normalled sockets carry a signal with no wire *(user-directed)* |
 
 ### The shell
 

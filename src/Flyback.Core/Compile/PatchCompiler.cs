@@ -141,6 +141,17 @@ public static class PatchCompiler
 
         var emitter = new Emitter();
         var resolved = new Dictionary<Guid, Slot[]>();
+
+        // The hidden modules, one instance each however many sockets are
+        // normalled to them — see PortSpec.NormalledTo. Keyed by type id because
+        // that is all a normal names and all it needs to: there is no node here
+        // to tell one from another, which is exactly what "shared" means.
+        //
+        // Swapped with 'resolved' inside a sweep, and for the same reason: a
+        // clock read under a Probe's substituted domain is a different value
+        // from the one read outside it.
+        var normals = new Dictionary<string, Slot[]>();
+
         var visiting = new HashSet<Guid>();
         var loops = new Queue<(NodeInstance Node, NodeDef Def, int Slot)>();
 
@@ -273,6 +284,14 @@ public static class PatchCompiler
                     // because inputs resolve in order.
                     slotValue = inputs[spec.NormalledFrom];
                 }
+                else if (spec.NormalledTo is { } bus && Hidden(bus) is { } carried)
+                {
+                    // The other kind of normalled jack: not an earlier socket of
+                    // this module, but a module that is not in the patch at all.
+                    // An oscillator left alone is reading the clock, which is
+                    // what an oscillator in a rack does with nothing plugged in.
+                    slotValue = carried;
+                }
                 else
                 {
                     // A domain port left on its knob is a constant, and a module
@@ -282,6 +301,12 @@ public static class PatchCompiler
                     // perfectly valid, and that is the trouble with them — a
                     // patch built this way is silent, or a flat field, with
                     // nothing anywhere to say why.
+                    //
+                    // Every domain in the catalogue is normalled to Time, so
+                    // reaching here at all means a domain that is normalled to
+                    // nothing, or to a module this catalogue does not hold — a
+                    // plugin's port, or a patch opened without the plugin that
+                    // wrote it. The complaint means there what it always meant.
                     if (spec.Domain)
                     {
                         issues.Add(new CompileIssue(
@@ -329,6 +354,9 @@ public static class PatchCompiler
             var outer = resolved;
             resolved = [];
 
+            var outerNormals = normals;
+            normals = [];
+
             try
             {
                 return ResolveInput(node, def, port);
@@ -336,22 +364,60 @@ public static class PatchCompiler
             finally
             {
                 resolved = outer;
+                normals = outerNormals;
             }
         }
 
-        // The value on one of a node's inputs: whatever is wired in, or the knob
-        // it rests on. Narrower than the loop inside Resolve — no normalling, no
-        // sink port range, no complaint about a domain — because its callers are
-        // a cycle breaker, whose single socket is none of those things, and a
-        // swept input, which is none of them either.
+        // The one hidden instance of a module sockets are normalled to, emitted
+        // the first time something asks for it — see PortSpec.NormalledTo. Null
+        // where the catalogue does not hold it, or holds it with no such output,
+        // which drops the socket back to its knob rather than to silence.
+        //
+        // Its own inputs are the definition's defaults and nothing else. There is
+        // no node for anybody to have turned a knob on, and resolving them as
+        // sockets would be the one way this could recurse: a module normalled to
+        // a module normalled back to it has no instance to detect a cycle
+        // through.
+        Slot? Hidden(PortNormal bus)
+        {
+            if (!normals.TryGetValue(bus.TypeId, out var outputs))
+            {
+                if (catalog.Get(bus.TypeId) is not { } def) return null;
+
+                var knobs = new Slot[def.Inputs.Count];
+
+                for (var i = 0; i < knobs.Length; i++)
+                    knobs[i] = emitter.Coerce(emitter.Constant(def.Inputs[i].Default), def.Inputs[i].Width);
+
+                outputs = normals[bus.TypeId] =
+                    def.Emit(emitter, new EmitContext(knobs, def.DefaultSteps ?? []));
+            }
+
+            return bus.Port >= 0 && bus.Port < outputs.Length ? outputs[bus.Port] : null;
+        }
+
+        // The value on one of a node's inputs: whatever is wired in, whatever it
+        // is normalled to, or the knob it rests on. Narrower than the loop inside
+        // Resolve — no normalling from an earlier socket, no sink port range, no
+        // complaint about a domain — because its callers are a cycle breaker,
+        // whose single socket is none of those things, and a swept input, which
+        // is none of them either.
+        //
+        // A normal is honoured here because it is the only one of those three a
+        // caller could sensibly declare, and a socket that read its module in one
+        // place and its knob in the other would be a difference nothing states.
         Slot ResolveInput(NodeInstance node, NodeDef def, int port)
         {
             var spec = def.Inputs[port];
             var incoming = patch.IncomingTo(node.Id, port);
+            Slot slotValue;
 
-            var slotValue = incoming is not null && patch.Find(incoming.SourceNode) is { } source
-                ? Pick(Resolve(source), incoming.SourcePort)
-                : emitter.Constant(DefaultFor(node, port, spec));
+            if (incoming is not null && patch.Find(incoming.SourceNode) is { } source)
+                slotValue = Pick(Resolve(source), incoming.SourcePort);
+            else if (spec.NormalledTo is { } bus && Hidden(bus) is { } carried)
+                slotValue = carried;
+            else
+                slotValue = emitter.Constant(DefaultFor(node, port, spec));
 
             return spec.Kind == PortKind.Any ? slotValue : emitter.Coerce(slotValue, spec.Width);
         }

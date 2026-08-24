@@ -66,6 +66,15 @@ internal static class Colors
     public static Color Value { get; } = Color.FromRgb(0x8A, 0x92, 0xA0);
 
     /// <summary>
+    /// The module driving a socket nothing is patched into, where the number
+    /// would otherwise be. Quieter again than a number, because it is not a
+    /// setting: nobody chose it and nothing about the patch changes it, and a
+    /// module name at the weight of a value would read as one more thing to
+    /// check down a column of them.
+    /// </summary>
+    public static Color Normalled { get; } = Color.FromRgb(0x6C, 0x74, 0x82);
+
+    /// <summary>
     /// Text that is there to be read once and then ignored — a drag handle, a
     /// line of provenance. Two of these had drifted a shade apart before the
     /// palette was one thing; they are the same grey now.

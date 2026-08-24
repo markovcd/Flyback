@@ -59,6 +59,33 @@ public sealed class ModuleCatalog
     /// <summary>Which provider defines a module, or null if nothing here does.</summary>
     public ModuleProvider? ProviderOf(string typeId) => owners.GetValueOrDefault(typeId);
 
+    /// <summary>
+    /// What is driving a socket nothing is patched into, named as it should be
+    /// written out, or null where the socket is on its own knob.
+    /// </summary>
+    /// <remarks>
+    /// One place, because the node on the canvas, the row in the inspector and
+    /// the line an assistant reads have to agree about what an unpatched socket
+    /// is reading — the same reason <see cref="PortSpec.Format"/> is one place.
+    /// <para>
+    /// Asked of a catalogue rather than of the running one, because whether a
+    /// normal holds depends on which catalogue the patch is being compiled
+    /// against: a socket normalled to a plugin's module is on its knob wherever
+    /// that plugin is not loaded, and saying otherwise would be the one reading
+    /// nothing here could correct.
+    /// </para>
+    /// </remarks>
+    public string? Normalled(PortSpec spec)
+    {
+        if (spec.NormalledTo is not { } bus || Get(bus.TypeId) is not { } def) return null;
+        if (bus.Port < 0 || bus.Port >= def.Outputs.Count) return null;
+
+        // The module alone where it has one output and there is nothing to pick
+        // between, both where it has several: "Time" says all there is to say,
+        // and "Coordinates" on its own would not tell x from radius.
+        return def.Outputs.Count == 1 ? def.Name : $"{def.Name} {def.Outputs[bus.Port].Name}";
+    }
+
     public bool HasProvider(string providerId) => Providers.Any(p => p.Id == providerId);
 
     /// <summary>

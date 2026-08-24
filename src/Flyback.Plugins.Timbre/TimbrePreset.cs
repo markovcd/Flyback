@@ -23,8 +23,10 @@ internal static class TimbrePreset
     {
         var b = new PatchBuilder(modules);
 
-        var coord = b.Add("coord", 40, 120);
-        var time = b.Add("time", 40, 620, (0, 1f));
+        // No clock and no Coordinates. Every oscillator here runs on the Time
+        // its 'in' is normalled to, and the Rings on the Coordinates its x and
+        // y are — so the patch is nothing but the two hands and what they are
+        // on (ADR-0050).
 
         // The two hands on the instrument, both far below audio rate: one opens
         // the filter, the other drives the fold. Every knob in the patch that
@@ -52,12 +54,9 @@ internal static class TimbrePreset
         var output = b.Add(
             NodeCatalog.OutputTypeId, 1250, 400, (NodeCatalog.OutputGainPort, 0.45f));
 
-        b.Wire(time, 0, sweep, 0)
-         .Wire(time, 0, wobble, 0)
-         .Wire(sweep, 0, cutoff, 0)
+        b.Wire(sweep, 0, cutoff, 0)
          .Wire(wobble, 0, drive, 0)
 
-         .Wire(time, 0, saw, 0)
          .Wire(pitch, 0, saw, 1)
          .Wire(saw, 0, fold, 0)
          .Wire(drive, 0, fold, 1)
@@ -65,8 +64,6 @@ internal static class TimbrePreset
          .Wire(cutoff, 0, filter, 1)
          .Wire(filter, 0, output, NodeCatalog.OutputLeftPort)
 
-         .Wire(coord, 0, rings, 0)
-         .Wire(coord, 1, rings, 1)
          .Wire(rings, 0, bands, 0)
          .Wire(drive, 0, bands, 1)
          .Wire(bands, 0, hue, 0)

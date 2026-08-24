@@ -14,7 +14,7 @@ public partial class NodeCatalog
     {
         yield return new NodeDef(
             "feedback", "Feedback", "Feedback",
-            [Num("x"), Num("y")], [Col("color")],
+            [..Position()], [Col("color")],
             (em, i) => [em.Triple(OpCode.SampleFeedback, i[0], i[1])],
             "Samples the previous frame. Wire the output back towards Output through "
             + "a Rotate or Scale to get the classic camera-pointed-at-its-own-monitor loop.");
