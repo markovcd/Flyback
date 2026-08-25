@@ -309,11 +309,24 @@ public sealed class Emitter
         Add(new Op(OpCode.UnitWrite, -1, value.Component(0), k: slot));
 
     /// <summary>
-    /// The same, for a cell holding the renderer's clock. Not for anything a
-    /// patch can reach — see <see cref="OpCode.ClockWrite"/> for why the two are
-    /// different ops.
+    /// The same, for a cell holding a reading of a domain rather than a signal —
+    /// see <see cref="OpCode.ClockWrite"/> for why the two are different ops.
     /// </summary>
-    private void ClockWrite(int slot, Slot value) =>
+    /// <remarks>
+    /// The difference is the bound. A signal is clamped to the rails on its way
+    /// into a cell, because a cycle drawn as wires has no coefficient to tame it
+    /// and pinning a runaway is the only way to catch one. A domain reading is
+    /// not a signal and that bound would be nonsense on it: the clock passes
+    /// sixteen after sixteen seconds, and a cell that stopped there would take a
+    /// module with it.
+    /// <para>
+    /// Public because a module may legitimately want to remember where a domain
+    /// had got to — a Sample keeps the position its last trigger arrived at, and
+    /// that is a clock reading in everything but name. Reach for
+    /// <see cref="UnitWrite"/> for anything that is a signal.
+    /// </para>
+    /// </remarks>
+    public void ClockWrite(int slot, Slot value) =>
         Add(new Op(OpCode.ClockWrite, -1, value.Component(0), k: slot));
 
     /// <summary>An op that writes three consecutive registers at once.</summary>

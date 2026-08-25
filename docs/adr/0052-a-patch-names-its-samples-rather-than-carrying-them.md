@@ -54,13 +54,41 @@ loops, a negative slope reverses, an envelope scrubs. The second output is the
 clip's length, so a patch can do any of that without being told how long the file
 is. This is the same argument 0048 made when it took the rate knob off Time.
 
-**Audio only.** `OpCode.Table` reads silence where the program carries no clips,
-and the compiler resolves them for the speakers' program alone. The interpreter
-could perfectly well read a clip per pixel; the shader cannot without a texture
-upload, and two backends disagreeing about what is on screen is worse than
-neither drawing it (ADR-0035 allows them to differ in their last bits, not in
-what they show). Delay and the ADSR are audio-only for a different reason and say
-so the same way.
+**The trigger re-zeroes the position rather than running a playhead.** `trigger`
+remembers where `in` had got to at the last rising edge and the clip is read at
+the difference, so firing one while it is still sounding starts it again — the
+retrigger falls out of the arithmetic instead of being a case. An edge and not a
+level, which is the opposite of the Quantiser's `hold` and right for the opposite
+reason: "hold this note" is an interval, "start again" is an instant.
+
+The socket rests **low**, and that is load-bearing. Resting it high was tried
+first, so that an unpatched player would be one triggered as the patch began —
+and it takes the zero from wherever `in` happens to be on the first evaluation.
+That is nought for a clock, a saw or a sine, and it is *not* nought for a clip
+being played backwards. A default that quietly breaks reverse is not a default.
+
+The cost of resting low is that a player with a trigger wired in still plays once
+as the patch begins: until the first edge it is a player with no trigger, and
+that is what one of those does. Telling the two apart would mean knowing whether
+a socket is patched, which is the same wall 0050 met — a normalled socket answers
+it by never needing to ask, and 0051's `hold` answers it by being a level. An
+edge can do neither, so this one carries the wrinkle and says so.
+
+**The eye reads clips too, and the shader stands down for them.** This was the
+other way about first: the screen was handed no clips at all, so that the shader
+drawing silence and the interpreter drawing a waveform could not disagree. What
+that overlooked is the Probe, which is a video program (ADR-0040) — so the one
+tool for seeing what a signal does charted a flat line for the one signal that
+comes from outside the patch, which is exactly the signal somebody would most
+want to look at.
+
+So the compiler resolves clips for whichever sink asks, and the backends are kept
+in step in the shell instead: a program carrying a table is drawn on the
+processor, because the shader cannot draw it. It costs nothing anywhere else —
+dead code is eliminated per sink (ADR-0022), so a Sample wired only to the
+speakers puts no table in the video program at all. It is a property of the
+program rather than a setting, so the choice of renderer is remembered and comes
+back with the next patch that can use it.
 
 ## Consequences
 
@@ -87,7 +115,16 @@ float, walks chunks rather than assuming the audio starts at byte 44, and gives
 back what was there when a file is truncated. Compressed payloads are refused by
 name — they are a codec each, and ADR-0019 says no dependencies.
 
-**The picture cannot show a sample.** Not even in a Probe, which compiles as a
-video program. That is the price of the two backends agreeing, and it is the one
-part of this worth revisiting: a clip uploaded as a texture would work on both,
-since `SampleFeedback` already proves a texture read lowers to GLSL.
+**A patch that plays a sample on screen gives up the shader.** That is the price
+of the two backends agreeing, and it is paid by the patch that asks rather than
+by everybody. It is also the one part of this worth revisiting: a clip uploaded
+as a texture would work on both, since `SampleFeedback` already proves a texture
+read lowers to GLSL — and then nothing would have to stand down at all.
+
+**The preview now has two answers to "which renderer", and they can differ.**
+`Wanted` is the choice and `Backend` is the fact. Before this there was only one,
+because the only way to lose the GPU was for it to fail, and a failure is
+permanent. A program the shader cannot draw is neither permanent nor a failure,
+so the button shows the choice and the status bar shows what is actually
+drawing — and a button that unticked itself would have been read as the setting
+changing, and would have changed it.

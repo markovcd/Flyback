@@ -506,6 +506,26 @@ The **Sample** module reads a WAV. `in` is how far into it to read, *in seconds*
 — and because that is a domain it is normalled to Time, so a player dropped on
 the canvas plays the file once at its recorded speed and then stops.
 
+`trigger` is the socket that makes it an instrument. On a rising edge it takes
+the position it arrived at as the start of the clip, so the file plays from its
+beginning at its own pitch and tempo — and an edge arriving *while it is still
+sounding* cuts that short and starts again, which is what a drum machine does
+with a fast roll. Patch the same gate that opens an envelope. It is an edge and
+not a level, so the width does not matter: a spike one evaluation wide fires it
+exactly as a long gate does. Left alone it does nothing, and the player is what
+it always was.
+
+The trigger runs no playhead of its own. It remembers where `in` had got to when
+the last edge came, and reads the difference — so the retrigger falls out rather
+than being handled, and driving `in` with something other than the clock
+re-zeroes against that instead.
+
+There is one wrinkle: a player with a trigger wired in still plays once as the
+patch begins, before any edge has arrived. Until then it is a player with no
+trigger, and that is what one of those does — telling the two apart would mean
+knowing whether the socket is patched, which nothing here can ask. A gate on the
+output from the same trigger is the fix, and a drum wants one anyway.
+
 Everything else is what you drive it with rather than a knob it carries: a `Saw`
 times `length` loops it, a negative slope plays it backwards, `Time × 2` is
 double speed an octave up, and an envelope into `in` scrubs. Off either end is
@@ -538,10 +558,22 @@ recording would have been — so the editor goes on drawing while you find it.
 
 Mono, and WAV only: 8 to 32 bit PCM or 32/64 bit float, with a stereo file summed
 on the way in because the op that reads one is scalar like every other signal
-here. Audio only, too — a picture is drawn all at once and a recording is a thing
-that happens over time, so on the screen a player is silence. That is what keeps
-the two backends agreeing: the interpreter could read a clip per pixel and the
-shader could not.
+here.
+
+The eye reads clips as well as the ear, which is what lets you point a **Probe**
+at a player and see the waveform — the Probe sweeps time across the picture, so
+each column is the clip at a different moment. A shader has no recording to read,
+though, so a patch whose *picture* reaches a Sample is drawn on the processor for
+as long as it does, and the status bar says so. Nothing else pays for that: dead
+code is eliminated per sink, so a player wired only to `left` leaves the picture
+on the shader exactly as before.
+
+What a Probe **cannot** show is the triggering. A trigger is something that
+happened before now, and the screen has no before — the same reason a Probe
+cannot show a delay line or an accumulated phase. So the chart is the clip read
+at `in` with the trigger ignored, which for an `in` on the clock means you see
+the file only while the transport is inside it: rewind, or set `window` to about
+the clip's length, and the waveform is there.
 
 Audio runs at 48 kHz, 4× oversampled and filtered before decimation, which keeps
 the naive `Saw` and `Square` from folding harmonics back down as buzzing. It

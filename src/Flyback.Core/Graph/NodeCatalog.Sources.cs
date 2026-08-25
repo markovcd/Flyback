@@ -65,34 +65,26 @@ public partial class NodeCatalog
 
         yield return new NodeDef(
             SampleTypeId, "Sample", "Source",
-            [Domain("in"), Num("level", 1f, 0f, 2f)],
+            [Domain("in"), Num("level", 1f, 0f, 2f), Num("trigger", 0f, 0f, 1f)],
             [Num("out"), Num("length")],
-            (em, node) =>
-            {
-                // No clip is silence, and 'length' is nothing to divide a patch
-                // by. Three things arrive here the same way — no file chosen, a
-                // file that has gone, and the screen, which cannot play one —
-                // and silence is the right answer to each. The complaint about
-                // the first two has already been made by the compiler.
-                if (node.Sample is not { } clip) return [em.Constant(0f), em.Constant(0f)];
-
-                return
-                [
-                    em.Mul(em.Table(node[0], clip), node[1]),
-                    em.Constant(clip.Seconds),
-                ];
-            },
+            EmitSample,
             "Plays a sound file. 'in' is how far into it to read, in seconds — so with nothing "
             + "patched it runs on the clock and plays once, at the speed it was recorded, and "
-            + "then stops. Everything else is what you drive it with rather than a knob it "
-            + "carries: a Saw times 'length' loops it, a negative slope plays it backwards, "
-            + "Time times two is double speed an octave up, and an envelope into 'in' scrubs. "
-            + "Off either end is silence, which is how a one-shot ends. 'length' is how long "
-            + "the file is in seconds, so a patch can loop or scale without being told. Mono, "
-            + "16 to 32 bit WAV. The patch stores the path rather than the audio, so the file "
-            + "has to stay where it is — one that has moved is reported by name. Audio only: a "
-            + "picture is drawn all at once and a recording is a thing that happens over time, "
-            + "so on the screen this is silence.")
+            + "then stops. Off either end is silence, which is how a one-shot ends. "
+            + "'trigger' restarts it: on the way up it takes the position as zero, so the clip "
+            + "plays from its beginning at its own pitch and tempo, and a trigger arriving "
+            + "while it is still sounding cuts that short and starts again. Patch the same "
+            + "gate that opens an envelope. Left alone it does nothing at all, so a player "
+            + "with nothing patched here is what it always was. "
+            + "Everything else is what you drive 'in' with rather than a knob this carries: a "
+            + "Saw times 'length' loops it, a negative slope plays it backwards, Time times two "
+            + "is double speed an octave up, and an envelope into 'in' scrubs. 'length' is how "
+            + "long the file is in seconds, so a patch can loop or scale without being told. "
+            + "Mono, 8 to 32 bit WAV. The patch stores the path rather than the audio, so the "
+            + "file has to stay where it is — one that has moved is reported by name. A Probe "
+            + "charts it, but not the triggering: a trigger is something that happened before "
+            + "now and the screen has no before, so what is drawn is the clip read at 'in' with "
+            + "the trigger ignored. Rewind to see the start of it.")
         {
             TakesSample = true,
         };
@@ -102,5 +94,98 @@ public partial class NodeCatalog
             [Num("value", 0.5f)], [Num("out")],
             (_, i) => [i[0]],
             "A knob. Handy when several modules should share one number.");
+    }
+
+    /// <summary>
+    /// A clip read at a position, with a trigger that takes the position it
+    /// arrives at as the start of the clip.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The trigger does not run a playhead of its own. It remembers where 'in'
+    /// had got to when the last edge came, and what is read is the difference —
+    /// so a clip driven by the clock plays at its own speed from the moment it
+    /// was fired, and one driven by anything else is re-zeroed against that
+    /// instead. Retriggering falls out rather than being handled: an edge
+    /// arriving mid-clip moves the zero to now, and the position is nought
+    /// again on the very evaluation it lands.
+    /// </para>
+    /// <para>
+    /// An edge and not a level, which is the opposite of the Quantiser's 'hold'
+    /// and right for the opposite reason. "Hold this note" is an interval and
+    /// says when the note may not move; "start again" is an instant. So a
+    /// trigger of any width works, down to a single evaluation.
+    /// </para>
+    /// <para>
+    /// The socket rests low, and that is what lets it be optional: a knob at
+    /// nought never rises, so the zero stays where the cell began and the
+    /// position is <c>in</c> itself — which is exactly what this module did
+    /// before the socket existed. That mattered more than it looks. Resting it
+    /// high was tried first and takes the zero from wherever <c>in</c> happened
+    /// to be on the first evaluation, which is nought for a clock, a saw or a
+    /// sine and is <em>not</em> nought for a clip being played backwards. A
+    /// default that quietly broke reverse is not a default.
+    /// </para>
+    /// <para>
+    /// The cost of resting low is that a player with a trigger wired in still
+    /// plays once as the patch begins, before any edge has arrived: until then
+    /// it is a player with no trigger, and that is what one of those does.
+    /// Telling the two apart would mean knowing whether the socket is patched,
+    /// which nothing here can ask — the same wall the Quantiser's 'hold' met and
+    /// answered by being a level. An edge cannot answer it that way, so this
+    /// carries the wrinkle instead. A gate on the output from the same trigger
+    /// is the patch-level fix, and a drum wants one anyway.
+    /// </para>
+    /// <para>
+    /// Two cells. Where the clip is being read from is written as a clock rather
+    /// than as a signal — see <see cref="Emitter.ClockWrite"/> — because it is a
+    /// reading of a domain and the rails a signal is held to would stop it
+    /// sixteen seconds into a session. The other is the trigger as it was, which
+    /// is what makes an edge an edge.
+    /// </para>
+    /// </remarks>
+    private static Slot[] EmitSample(Emitter em, EmitContext node)
+    {
+        // No clip is silence, and 'length' is nothing to divide a patch by.
+        // Three things arrive here the same way — no file chosen, a file that
+        // has gone, and the screen, which cannot play one — and silence is the
+        // right answer to each. The complaint about the first two has already
+        // been made by the compiler.
+        if (node.Sample is not { } clip) return [em.Constant(0f), em.Constant(0f)];
+
+        var one = em.Constant(1f);
+        var position = node[0];
+
+        var startCell = em.AllocateUnitSlot();
+        var edgeCell = em.AllocateUnitSlot();
+
+        var up = em.Binary(OpCode.Step, em.Constant(GateOpen), node[2]);
+        var rise = em.Mul(up, em.Sub(one, em.UnitRead(edgeCell)));
+
+        // Where the clip is being read from: moved to here on an edge, held
+        // between them, and nought where no edge has ever come. Taken on the
+        // evaluation the edge lands rather than the one after, so a trigger and
+        // the sound it starts are the same moment.
+        //
+        // And nought again wherever there is no memory, which is the screen —
+        // see Emitter.HasMemory. A trigger is a thing that happened before now,
+        // so on a path with no before it cannot mean anything, and the honest
+        // answer there is the module without one: the clip read at 'in'. Left
+        // out, the cell behind the edge reads nought at every pixel, every
+        // evaluation with the trigger up looks like a rising edge, and the chart
+        // fills with the first sample of the clip — which is neither what the
+        // speakers do nor what a memoryless reading of the patch is.
+        var start = em.Mul(
+            em.Ternary(OpCode.Mix, em.UnitRead(startCell), position, rise),
+            em.HasMemory());
+
+        em.ClockWrite(startCell, start);
+        em.UnitWrite(edgeCell, up);
+
+        return
+        [
+            em.Mul(em.Table(em.Sub(position, start), clip), node[1]),
+            em.Constant(clip.Seconds),
+        ];
     }
 }

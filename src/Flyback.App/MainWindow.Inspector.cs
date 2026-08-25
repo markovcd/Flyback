@@ -74,7 +74,12 @@ public sealed partial class MainWindow
 
         preview.BackendChanged += message =>
         {
-            gpuButton.IsChecked = preview.Backend == PreviewBackend.Gpu;
+            // The choice rather than what is running: a patch the shader cannot
+            // draw puts the picture on the processor without anybody having
+            // asked, and a button that unticked itself would then be read as the
+            // setting having changed — and would change it, through this very
+            // handler, the next time anything touched it.
+            gpuButton.IsChecked = preview.Wanted == PreviewBackend.Gpu;
             gpuButton.IsEnabled = preview.GpuAvailable;
             ToolTip.SetTip(gpuButton, preview.GpuAvailable ? GpuTip : message);
             Report(message);

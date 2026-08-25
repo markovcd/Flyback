@@ -394,14 +394,18 @@ public static class PatchCompiler
 
         // The clip a node plays, and the complaint when it has not got one.
         //
-        // The complaint is made on both compilations and the clip is resolved
-        // only on the one that can play it. A file that has gone is a fault in
-        // the patch whichever half of it you are looking at — it is the whole
-        // cost of a sample being a reference rather than a copy, so it is said
-        // wherever the module is reached. The audio itself is no use to the
-        // screen: a picture is drawn all at once and a clip is a thing that
-        // happens over time, so what the eye gets is silence and both backends
-        // agree about it.
+        // Resolved for whichever sink asked, the eye as well as the ear. That
+        // was not so at first: the screen was given nothing, on the grounds that
+        // a shader cannot read a clip and two backends showing different
+        // pictures is worse than neither showing one. What that overlooked is
+        // the Probe, which is a video program (ADR-0040) — so looking at a
+        // sample charted a flat line, and the one tool for seeing what a signal
+        // does could not see the one signal that comes from outside the patch.
+        //
+        // The backends are kept in step somewhere better instead: a program that
+        // reads a clip is drawn on the processor, because the shader cannot draw
+        // it. Only a Sample the screen actually reaches puts a table in the
+        // video program, so nothing else in the catalogue pays for it.
         LoadedSample? Clip(NodeInstance node, NodeDef def)
         {
             if (!def.TakesSample) return null;
@@ -417,7 +421,7 @@ public static class PatchCompiler
                 return null;
             }
 
-            if (samples?.Find(node.Sample) is { } loaded) return sink.Name == NodeCatalog.Speakers.Name ? loaded : null;
+            if (samples?.Find(node.Sample) is { } loaded) return loaded;
 
             issues.Add(new CompileIssue(
                 node.Id,

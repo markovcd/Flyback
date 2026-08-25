@@ -131,6 +131,168 @@ public class SampleTests : IDisposable
         Heard(patch.CompileForAudio(NodeCatalog.BuiltIn, Library())).ShouldBe(0.125, 0.01);
     }
 
+    // --- the trigger ----------------------------------------------------------
+
+    /// <summary>
+    /// A player driven by the clock and fired by a gate, stepped in order the
+    /// way the renderer steps it — the trigger remembers, so it cannot be
+    /// sampled at scattered moments.
+    /// </summary>
+    /// <param name="fall">
+    /// A clip that falls from 1 to 0 over its length, so the level read back
+    /// says exactly where the playhead is: 1 is the very start and 0 the end.
+    /// That is what makes "it went back to the beginning" a thing a test can
+    /// see rather than infer.
+    /// </param>
+    private sealed class Triggered
+    {
+        private const int Rate = 4_000;
+
+        private readonly CompiledPatch program;
+        private readonly double[] registers;
+        private readonly DelayState memory;
+
+        public Triggered(string fall, float triggerHz, float width = 0.05f)
+        {
+            var b = new PatchBuilder(NodeCatalog.BuiltIn);
+
+            var player = b.Add(NodeCatalog.SampleTypeId, 0, 0);
+            player.Sample = fall;
+
+            var sink = b.Add(NodeCatalog.OutputTypeId, 300, 0, (NodeCatalog.OutputGainPort, 1f));
+            b.Wire(player, 0, sink, NodeCatalog.OutputLeftPort);
+
+            if (triggerHz > 0)
+            {
+                var pulse = b.Add("osc.pulse", -400, 200, (1, triggerHz), (3, width));
+                b.Wire(pulse, 0, player, 2);
+            }
+
+            var library = new SampleLibrary { Beside = Path.GetDirectoryName(fall) };
+
+            program = b.Patch.CompileForAudio(NodeCatalog.BuiltIn, library).Program;
+            registers = program.AllocateRegisters();
+            memory = new DelayState(program.DelayLengths, Rate, program.PhaseCount, program.UnitCount);
+        }
+
+        /// <summary>Steps to <paramref name="seconds"/> and answers what is coming out there.</summary>
+        public double At(double seconds)
+        {
+            var last = 0d;
+
+            while (Evaluations <= seconds * Rate)
+            {
+                program.Evaluate(0f, 0f, (float)(Evaluations / (double)Rate), registers, default, memory);
+                last = registers[program.OutputBase];
+                Evaluations++;
+            }
+
+            return last;
+        }
+
+        public int Evaluations { get; private set; }
+    }
+
+    /// <summary>A clip that falls from 1 to 0 over <paramref name="seconds"/>.</summary>
+    private string Falling(double seconds, string name = "fall.wav")
+    {
+        const int rate = 4_000;
+
+        var pcm = new float[(int)(rate * seconds)];
+        for (var i = 0; i < pcm.Length; i++) pcm[i] = 1f - (i / (float)pcm.Length);
+
+        var path = Path.Combine(folder, name);
+        WavWriter.Write(path, pcm, rate, 1);
+
+        return path;
+    }
+
+    /// <summary>
+    /// The whole of what the socket is for: each trigger starts the clip again
+    /// from its beginning, at the speed it was recorded.
+    /// </summary>
+    [Fact]
+    public void A_trigger_starts_the_clip_from_the_beginning()
+    {
+        var rig = new Triggered(Falling(0.8), triggerHz: 0.8f);
+
+        // Just after the first edge, which the pulse puts a twentieth of a
+        // cycle in — the very start of the clip.
+        rig.At(0.08).ShouldBe(1d, 0.05);
+
+        // Halfway through the clip, halfway down the ramp.
+        rig.At(0.47).ShouldBe(0.5, 0.05);
+
+        // Past the end and silent, because nothing has retriggered it.
+        rig.At(1.0).ShouldBe(0d);
+
+        // And the next edge starts it over.
+        rig.At(1.33).ShouldBe(1d, 0.05);
+    }
+
+    /// <summary>
+    /// The half that was asked for by name: an edge arriving while the clip is
+    /// still sounding cuts it short rather than being ignored or layered.
+    /// </summary>
+    [Fact]
+    public void A_trigger_arriving_mid_clip_starts_it_again()
+    {
+        // Triggered twice a second, with a clip that runs for eight tenths — so
+        // every edge lands three tenths before it would have finished.
+        var rig = new Triggered(Falling(0.8), triggerHz: 2f);
+
+        rig.At(0.47).ShouldBe(0.5, 0.06, "should be halfway down the ramp");
+        rig.At(0.53).ShouldBeGreaterThan(0.9, "the edge should have put it back to the start");
+
+        // And it never runs out, because it never gets to the end.
+        rig.At(3.0).ShouldBeGreaterThan(0.4);
+    }
+
+    /// <summary>
+    /// An edge and not a level, so the width of the trigger does not matter —
+    /// a spike one evaluation wide fires it exactly as a long gate does.
+    /// </summary>
+    [Fact]
+    public void A_trigger_of_any_width_fires_it()
+    {
+        var spike = new Triggered(Falling(0.8, "spike.wav"), triggerHz: 2f, width: 0.001f);
+
+        spike.At(0.53).ShouldBeGreaterThan(0.9);
+        spike.At(1.03).ShouldBeGreaterThan(0.9);
+    }
+
+    /// <summary>
+    /// Where the clip was started from is a reading of the clock, not a signal,
+    /// so it is written to a cell that is not held to the rails a signal is —
+    /// see Emitter.ClockWrite. Bounded at sixteen, a player would stop working
+    /// sixteen seconds into a session, which is the sort of thing nobody finds
+    /// until a set is half an hour old.
+    /// </summary>
+    [Fact]
+    public void A_trigger_still_works_long_after_a_signal_would_have_run_out_of_room()
+    {
+        var rig = new Triggered(Falling(0.8), triggerHz: 0.8f);
+
+        // Well past sixteen seconds, and past a hundred.
+        rig.At(120.08).ShouldBe(1d, 0.06);
+        rig.At(120.47).ShouldBe(0.5, 0.06);
+    }
+
+    /// <summary>
+    /// Nothing patched into it leaves the module exactly as it was: the clip is
+    /// read at 'in' itself, which is the clock, so it plays once and stops.
+    /// </summary>
+    [Fact]
+    public void With_no_trigger_it_is_the_player_it_always_was()
+    {
+        var rig = new Triggered(Falling(0.8), triggerHz: 0f);
+
+        rig.At(0.02).ShouldBeGreaterThan(0.9);
+        rig.At(0.4).ShouldBe(0.5, 0.05);
+        rig.At(1.0).ShouldBe(0d);
+        rig.At(5.0).ShouldBe(0d);
+    }
+
     // --- the file, and what happens without it -------------------------------
 
     /// <summary>
@@ -215,26 +377,116 @@ public class SampleTests : IDisposable
     }
 
     /// <summary>
-    /// Audio only. A picture is drawn all at once and a recording is a thing that
-    /// happens over time, so the screen gets silence — and both backends agree
-    /// about that, which is the reason it is silence rather than the waveform the
-    /// interpreter could perfectly well have read.
+    /// The eye is given the clip as well as the ear, and the Probe is why.
     /// </summary>
+    /// <remarks>
+    /// The screen was handed nothing at first, on the grounds that a shader
+    /// cannot read a clip and two backends showing different pictures is worse
+    /// than neither showing one. What that overlooked is that a Probe is a video
+    /// program (ADR-0040) — so pointing one at a sample charted a flat line, and
+    /// the one tool for seeing what a signal does could not see the one signal
+    /// that comes from outside the patch.
+    /// <para>
+    /// The backends are kept in step in the shell instead, by drawing a program
+    /// that reads a clip on the processor. What is checked here is the half that
+    /// makes that necessary and worthwhile: the interpreter reads the recording
+    /// wherever it is asked to.
+    /// </para>
+    /// </remarks>
     [Fact]
-    public void On_the_screen_it_is_silence()
+    public void The_screen_reads_the_clip_too_so_a_probe_can_chart_it()
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
 
-        var player = b.Add(NodeCatalog.SampleTypeId, 0, 0, (0, 0.5f));
+        var position = b.Add("value", -200, 0, (0, 0.5f));
+        var player = b.Add(NodeCatalog.SampleTypeId, 0, 0);
         player.Sample = Ramp();
 
         var sink = b.Add(NodeCatalog.OutputTypeId, 200, 0);
-        b.Wire(player, 0, sink, NodeCatalog.OutputColorPort);
+
+        b.Wire(position, 0, player, 0)
+         .Wire(player, 0, sink, NodeCatalog.OutputColorPort);
 
         var compiled = b.Patch.CompileForVideo(NodeCatalog.BuiltIn, Library());
 
-        compiled.Program.Tables.ShouldBeEmpty();
-        Heard(compiled).ShouldBe(0d);
+        compiled.Program.Tables.Count.ShouldBe(1);
+        Heard(compiled).ShouldBe(0.5, 0.01);
+    }
+
+    /// <summary>
+    /// A trigger means nothing where there is no memory, and the screen has
+    /// none — so what the eye gets is the module without one: the clip read at
+    /// 'in'.
+    /// </summary>
+    /// <remarks>
+    /// The defect this was written for, and it charted as a dead flat line. The
+    /// cell holding the trigger as it was reads nought at every pixel, so every
+    /// evaluation with the trigger up looked like a rising edge; the start moved
+    /// to wherever the position was; and the clip was read at nought — its first
+    /// sample, which on a drum is silence. Neither what the speakers do nor a
+    /// memoryless reading of the patch, but something a third way that happened
+    /// to look exactly like the module not working.
+    /// </remarks>
+    [Fact]
+    public void A_trigger_is_ignored_on_the_screen_rather_than_flattening_the_clip()
+    {
+        var b = new PatchBuilder(NodeCatalog.BuiltIn);
+
+        var held = b.Add("value", -400, 100, (0, 1f));
+        var position = b.Add("value", -400, 0, (0, 0.5f));
+
+        var player = b.Add(NodeCatalog.SampleTypeId, 0, 0);
+        player.Sample = Ramp();
+
+        var sink = b.Add(NodeCatalog.OutputTypeId, 200, 0);
+
+        b.Wire(position, 0, player, 0)
+         .Wire(held, 0, player, 2)
+         .Wire(player, 0, sink, NodeCatalog.OutputColorPort);
+
+        // Halfway up the ramp, exactly as it reads with no trigger at all —
+        // rather than the nought a collapsed position would give.
+        Heard(b.Patch.CompileForVideo(NodeCatalog.BuiltIn, Library())).ShouldBe(0.5, 0.01);
+    }
+
+    /// <summary>
+    /// And a Probe rooted at one charts it, which is the case the whole rule was
+    /// changed for. The Probe sweeps time across the picture, so a column away
+    /// from the middle is the clip at a different moment — which is what makes
+    /// the chart a waveform rather than a flat line.
+    /// </summary>
+    [Fact]
+    public void A_probe_pointed_at_a_player_charts_the_recording()
+    {
+        var b = new PatchBuilder(NodeCatalog.BuiltIn);
+
+        var player = b.Add(NodeCatalog.SampleTypeId, 0, 0);
+        player.Sample = Ramp();
+
+        var probe = b.Add(NodeCatalog.ProbeTypeId, 200, 0);
+        var sink = b.Add(NodeCatalog.OutputTypeId, 400, 0);
+
+        b.Wire(player, 0, probe, 0)
+         .Wire(probe, 0, sink, NodeCatalog.OutputColorPort);
+
+        var compiled = b.Patch.CompileForProbe(probe.Id, NodeCatalog.BuiltIn, Library());
+
+        compiled.HasErrors.ShouldBeFalse();
+        compiled.Program.Tables.Count.ShouldBe(1, "the chart has nothing to draw without the clip");
+    }
+
+    /// <summary>
+    /// A Sample the screen never reaches puts no table in the video program at
+    /// all, so nothing about the picture changes for a patch that only plays
+    /// one — which is what keeps the processor fallback rare.
+    /// </summary>
+    [Fact]
+    public void A_player_only_the_speakers_reach_leaves_the_picture_alone()
+    {
+        var (patch, _) = Playing(Ramp(), at: 0.5f);
+
+        patch.CompileForVideo(NodeCatalog.BuiltIn, Library()).Program.Tables.ShouldBeEmpty();
+        patch.CompileForAudio(NodeCatalog.BuiltIn, Library()).Program.Tables.Count.ShouldBe(1);
     }
 
     /// <summary>
