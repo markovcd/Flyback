@@ -6,6 +6,7 @@ using Avalonia.Media;
 using Avalonia.Threading;
 using Flyback.App.Audio;
 using Flyback.App.Controls;
+using Flyback.Core.Render;
 using Flyback.Core.Graph;
 using Flyback.Plugins.Hosting;
 using Colors = Flyback.App.Controls.Colors;
@@ -69,6 +70,13 @@ public sealed partial class MainWindow : Window
     private CancellationTokenSource? export;
 
     private readonly NodeEditor editor = new();
+
+    /// <summary>
+    /// The sound files the patch names, read once each and kept. Owned by the
+    /// window because it is the window that knows where the patch was opened
+    /// from, and handed to every compile from here.
+    /// </summary>
+    private readonly SampleLibrary samples = new();
     private readonly PreviewHost preview = new();
 
     /// <summary>
@@ -233,7 +241,8 @@ public sealed partial class MainWindow : Window
                 editor.ApplyEdit(patch);
                 preview.Rewind();
             },
-            Report)
+            Report,
+            samples: samples)
         {
             IsVisible = false,
         };

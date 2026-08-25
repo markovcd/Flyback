@@ -68,6 +68,7 @@ public static class PatchClipboard
                 InputValues = [.. node.InputValues],
                 Steps = node.Steps is { } steps ? [.. steps] : null,
                 Scale = node.Scale is { } scale ? [.. scale] : null,
+                Sample = node.Sample,
             });
         }
 
@@ -137,6 +138,7 @@ public static class PatchClipboard
                 InputValues = [.. node.InputValues],
                 Steps = node.Steps is { } steps ? [.. steps] : null,
                 Scale = node.Scale is { } scale ? [.. scale] : null,
+                Sample = node.Sample,
             };
 
             renamed[node.Id] = fresh.Id;

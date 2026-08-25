@@ -24,10 +24,16 @@ internal sealed record Cost(int Ops, int Registers, int Delays, int Phases, int 
 /// </remarks>
 internal static class InfoCommand
 {
-    public static int Run(Patch patch, string name, bool json, TextWriter output, TextWriter error)
+    public static int Run(
+        Patch patch,
+        string name,
+        bool json,
+        TextWriter output,
+        TextWriter error,
+        ISampleLibrary? samples = null)
     {
-        var picture = Costed(patch.CompileForVideo().Program);
-        var sound = Costed(patch.CompileForAudio().Program);
+        var picture = Costed(patch.CompileForVideo(samples: samples).Program);
+        var sound = Costed(patch.CompileForAudio(samples: samples).Program);
         var reaches = patch.Reaches();
 
         var requires = (patch.Requires ?? [])

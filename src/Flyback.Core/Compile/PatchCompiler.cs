@@ -46,12 +46,18 @@ public sealed record CompileResult(CompiledPatch Program, IReadOnlyList<CompileI
 public static class PatchCompiler
 {
     /// <summary>Compiles the program the screen shows, reading the Output's color.</summary>
-    public static CompileResult CompileForVideo(this Patch patch, ModuleCatalog? modules = null) =>
-        Compile(patch, NodeCatalog.Screen, modules);
+    public static CompileResult CompileForVideo(
+        this Patch patch,
+        ModuleCatalog? modules = null,
+        ISampleLibrary? samples = null) =>
+        Compile(patch, NodeCatalog.Screen, modules, samples: samples);
 
     /// <summary>Compiles the program the speakers play, reading the Output's left and right.</summary>
-    public static CompileResult CompileForAudio(this Patch patch, ModuleCatalog? modules = null) =>
-        Compile(patch, NodeCatalog.Speakers, modules);
+    public static CompileResult CompileForAudio(
+        this Patch patch,
+        ModuleCatalog? modules = null,
+        ISampleLibrary? samples = null) =>
+        Compile(patch, NodeCatalog.Speakers, modules, samples: samples);
 
     /// <summary>
     /// Compiles the program a Probe shows, rooted at the probe rather than at the
@@ -66,8 +72,12 @@ public static class PatchCompiler
     /// because the alternative is a black screen with nothing to say why.
     /// </param>
     /// <param name="modules"></param>
-    public static CompileResult CompileForProbe(this Patch patch, Guid probe, ModuleCatalog? modules = null) =>
-        Compile(patch, NodeCatalog.Screen, modules, probe);
+    public static CompileResult CompileForProbe(
+        this Patch patch,
+        Guid probe,
+        ModuleCatalog? modules = null,
+        ISampleLibrary? samples = null) =>
+        Compile(patch, NodeCatalog.Screen, modules, probe, samples);
 
     /// <param name="patch">The graph to lower.</param>
     /// <param name="sink">Which of the Output's results this program reads.</param>
@@ -87,7 +97,8 @@ public static class PatchCompiler
         Patch patch,
         NodeCatalog.SinkKind sink,
         ModuleCatalog? modules,
-        Guid? probe = null)
+        Guid? probe = null,
+        ISampleLibrary? samples = null)
     {
         var catalog = modules ?? NodeCatalog.Current;
         var width = sink.Width;
@@ -186,7 +197,8 @@ public static class PatchCompiler
         var value = emitter.PackChannels(result, width);
 
         return new CompileResult(
-            new CompiledPatch(emitter.ToProgram(), emitter.RegisterCount, value.Base, width),
+            new CompiledPatch(
+                emitter.ToProgram(), emitter.RegisterCount, value.Base, width, emitter.Tables),
             issues);
 
         Slot[] Resolve(NodeInstance node)
@@ -339,7 +351,12 @@ public static class PatchCompiler
 
             var outputsOfNode = def.Emit(
                 emitter,
-                new EmitContext(inputs, steps) { Scale = scale, Resolver = port => Sweep(node, def, port) });
+                new EmitContext(inputs, steps)
+                {
+                    Scale = scale,
+                    Sample = Clip(node, def),
+                    Resolver = port => Sweep(node, def, port),
+                });
 
             visiting.Remove(node.Id);
             return resolved[node.Id] = outputsOfNode;
@@ -373,6 +390,43 @@ public static class PatchCompiler
                 resolved = outer;
                 normals = outerNormals;
             }
+        }
+
+        // The clip a node plays, and the complaint when it has not got one.
+        //
+        // The complaint is made on both compilations and the clip is resolved
+        // only on the one that can play it. A file that has gone is a fault in
+        // the patch whichever half of it you are looking at — it is the whole
+        // cost of a sample being a reference rather than a copy, so it is said
+        // wherever the module is reached. The audio itself is no use to the
+        // screen: a picture is drawn all at once and a clip is a thing that
+        // happens over time, so what the eye gets is silence and both backends
+        // agree about it.
+        LoadedSample? Clip(NodeInstance node, NodeDef def)
+        {
+            if (!def.TakesSample) return null;
+
+            if (string.IsNullOrWhiteSpace(node.Sample))
+            {
+                issues.Add(new CompileIssue(
+                    node.Id,
+                    $"'{node.Title(def)}' has no sound file chosen, so it plays silence. "
+                    + "Pick one in the panel.",
+                    IssueSeverity.Warning));
+
+                return null;
+            }
+
+            if (samples?.Find(node.Sample) is { } loaded) return sink.Name == NodeCatalog.Speakers.Name ? loaded : null;
+
+            issues.Add(new CompileIssue(
+                node.Id,
+                $"'{node.Title(def)}' cannot read {node.Sample} — "
+                + (samples?.Explain(node.Sample) ?? "nothing here can open a sound file.")
+                + " A patch names its samples rather than carrying them, so this one has to be "
+                + "somewhere it can be found."));
+
+            return null;
         }
 
         // The one hidden instance of a module sockets are normalled to, emitted

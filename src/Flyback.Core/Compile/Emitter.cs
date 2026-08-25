@@ -10,6 +10,9 @@ public sealed class Emitter
     private readonly Dictionary<float, Slot> constants = [];
     private readonly Dictionary<OpCode, Slot> loads = [];
 
+    /// <summary>The clips this program reads, one entry per distinct one.</summary>
+    private readonly List<LoadedSample> tables = [];
+
     /// <summary>
     /// The (x, y, t) that <see cref="Load"/> hands back in place of the pixel's
     /// own, while something is being read over a domain the patch supplies.
@@ -226,6 +229,30 @@ public sealed class Emitter
     /// <param name="code">Which of the delay ops this is — a plain line, or one with a filter in it.</param>
     /// <param name="input">The signal going into the line.</param>
     /// <param name="gain">How much of what comes out is sent round again.</param>
+    /// <summary>
+    /// Reads a loaded clip at a position in seconds. Two modules given the same
+    /// clip share one table, the way two of them given the same number share one
+    /// literal.
+    /// </summary>
+    public Slot Table(Slot position, LoadedSample clip)
+    {
+        var index = tables.IndexOf(clip);
+
+        if (index < 0)
+        {
+            index = tables.Count;
+            tables.Add(clip);
+        }
+
+        var first = Allocate(1);
+        Add(new Op(OpCode.Table, first, position.Component(0), k: index));
+
+        return Slot.Scalar(first);
+    }
+
+    /// <summary>The clips this program reads, in the order their ops name them.</summary>
+    public IReadOnlyList<LoadedSample> Tables => tables;
+
     public Slot DelayLine(OpCode code, Slot input, Slot gain, Slot time, float maximum)
     {
         var first = Allocate(1);

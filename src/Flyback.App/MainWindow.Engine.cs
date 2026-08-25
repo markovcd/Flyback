@@ -125,18 +125,18 @@ public sealed partial class MainWindow
         showingProbe = probe?.Id;
 
         var result = probe is null
-            ? editor.Patch.CompileForVideo()
-            : editor.Patch.CompileForProbe(probe.Id);
+            ? editor.Patch.CompileForVideo(samples: samples)
+            : editor.Patch.CompileForProbe(probe.Id, samples: samples);
 
         preview.Program = result.Program;
-        audio.Update(editor.Patch);
+        audio.Update(editor.Patch, samples);
 
         // What the ear reaches is said too. Compiling backwards from one sink
         // means the video pass never visits a module only the speakers reach —
         // and stops at the first line when there is no screen at all — so a
         // patch built for sound had nothing said about it, however wrong it was.
         var said = result.Issues
-            .Concat(editor.Patch.CompileForAudio().Issues)
+            .Concat(editor.Patch.CompileForAudio(samples: samples).Issues)
             .Select(i => i.Message)
             .Distinct();
 

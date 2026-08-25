@@ -72,6 +72,24 @@ public readonly record struct EmitContext(Slot[] Inputs, IReadOnlyList<Step> Ste
         get => field ?? [];
         init;
     }
+
+    /// <summary>
+    /// The clip this instance plays, already loaded, and null where there is
+    /// none to play.
+    /// </summary>
+    /// <remarks>
+    /// Null covers three things a module treats the same way, which is why it is
+    /// worth their sharing one: no file has been chosen, the file has gone, and
+    /// the program being compiled is the screen's. A player with no clip is
+    /// silence, and that is the right answer to all three.
+    /// <para>
+    /// Loaded rather than a path, because an emit function cannot read a file and
+    /// must not want to. What is here has been through
+    /// <see cref="ISampleLibrary"/> already, and the complaint about a file that
+    /// was not there has already been made.
+    /// </para>
+    /// </remarks>
+    public LoadedSample? Sample { get; init; }
 }
 
 /// <summary>Lowers one node to register-machine ops.</summary>
@@ -106,6 +124,14 @@ public sealed record NodeDef(
     /// <see cref="DefaultSteps"/> is what tells it to offer a list of notes.
     /// </summary>
     public IReadOnlyList<int>? DefaultScale { get; init; }
+
+    /// <summary>
+    /// Whether an instance of this module reads an audio file — see
+    /// <see cref="NodeInstance.Sample"/>. What tells the editor to offer a file
+    /// to choose and the compiler to go looking for one, the same way
+    /// <see cref="DefaultScale"/> is what says a module has a scale.
+    /// </summary>
+    public bool TakesSample { get; init; }
 
     /// <summary>
     /// Whether a wire may run backwards into this module — whether, in other

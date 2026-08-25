@@ -14,6 +14,13 @@ public partial class NodeCatalog
     /// <summary>Where on the screen you are, for the same reason.</summary>
     public const string CoordTypeId = "coord";
 
+    /// <summary>
+    /// The sample player. Named here because it is the one module whose instance
+    /// carries a file, and the editor, the compiler and the assistant all have to
+    /// ask whether a given node is it — see <see cref="NodeInstance.Sample"/>.
+    /// </summary>
+    public const string SampleTypeId = "audio.sample";
+
     public const int CoordXPort = 0;
     public const int CoordYPort = 1;
 
@@ -55,6 +62,40 @@ public partial class NodeCatalog
             + "To run something slower, put a Multiply after this — 0.2 for a fifth of the "
             + "speed. Into an oscillator's 'in' it needs no scaling at all: that is what the "
             + "oscillator's 'freq' is.");
+
+        yield return new NodeDef(
+            SampleTypeId, "Sample", "Source",
+            [Domain("in"), Num("level", 1f, 0f, 2f)],
+            [Num("out"), Num("length")],
+            (em, node) =>
+            {
+                // No clip is silence, and 'length' is nothing to divide a patch
+                // by. Three things arrive here the same way — no file chosen, a
+                // file that has gone, and the screen, which cannot play one —
+                // and silence is the right answer to each. The complaint about
+                // the first two has already been made by the compiler.
+                if (node.Sample is not { } clip) return [em.Constant(0f), em.Constant(0f)];
+
+                return
+                [
+                    em.Mul(em.Table(node[0], clip), node[1]),
+                    em.Constant(clip.Seconds),
+                ];
+            },
+            "Plays a sound file. 'in' is how far into it to read, in seconds — so with nothing "
+            + "patched it runs on the clock and plays once, at the speed it was recorded, and "
+            + "then stops. Everything else is what you drive it with rather than a knob it "
+            + "carries: a Saw times 'length' loops it, a negative slope plays it backwards, "
+            + "Time times two is double speed an octave up, and an envelope into 'in' scrubs. "
+            + "Off either end is silence, which is how a one-shot ends. 'length' is how long "
+            + "the file is in seconds, so a patch can loop or scale without being told. Mono, "
+            + "16 to 32 bit WAV. The patch stores the path rather than the audio, so the file "
+            + "has to stay where it is — one that has moved is reported by name. Audio only: a "
+            + "picture is drawn all at once and a recording is a thing that happens over time, "
+            + "so on the screen this is silence.")
+        {
+            TakesSample = true,
+        };
 
         yield return new NodeDef(
             "value", "Value", "Source",

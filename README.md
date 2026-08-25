@@ -500,6 +500,49 @@ uneven because a pentatonic's gaps are two and three semitones rather than one:
 the widths *are* the scale. The note you are hearing is the colour in the middle
 of the picture.
 
+### Playing a recording
+
+The **Sample** module reads a WAV. `in` is how far into it to read, *in seconds*
+— and because that is a domain it is normalled to Time, so a player dropped on
+the canvas plays the file once at its recorded speed and then stops.
+
+Everything else is what you drive it with rather than a knob it carries: a `Saw`
+times `length` loops it, a negative slope plays it backwards, `Time × 2` is
+double speed an octave up, and an envelope into `in` scrubs. Off either end is
+silence, which is how a one-shot ends. The second output is the clip's length in
+seconds, so a patch can loop or rescale without being told how long the file is.
+Reading by position rather than by rate also means the file's own sample rate
+never comes into it — a 44.1 kHz clip plays at the right pitch in a 48 kHz render
+because "half a second in" means the same thing to both.
+
+**A patch names its sample rather than carrying it**
+([ADR-0052](docs/adr/0052-a-patch-names-its-samples-rather-than-carrying-them.md)).
+That is the one place a `.fbk` stops being self-contained, and it is not a
+shortcut: the undo history snapshots the whole document on every edit and keeps
+two hundred of them, so a megabyte of PCM in the file would be a megabyte per
+undo step and a re-serialisation of it per knob turn.
+
+So a file that has moved is reported by name, through the same channel as every
+other complaint — the status bar, the assistant's issue list, and
+`flyback-cli check`'s exit code:
+
+```
+broken.fbk
+  error    Sample: 'Sample' cannot read missing.wav — there is no file there.
+1 error, 0 warnings.
+```
+
+A relative path is measured from wherever the patch is, so a patch and the sounds
+beside it travel together. The patch still compiles — to silence where the
+recording would have been — so the editor goes on drawing while you find it.
+
+Mono, and WAV only: 8 to 32 bit PCM or 32/64 bit float, with a stereo file summed
+on the way in because the op that reads one is scalar like every other signal
+here. Audio only, too — a picture is drawn all at once and a recording is a thing
+that happens over time, so on the screen a player is silence. That is what keeps
+the two backends agreeing: the interpreter could read a clip per pixel and the
+shader could not.
+
 Audio runs at 48 kHz, 4× oversampled and filtered before decimation, which keeps
 the naive `Saw` and `Square` from folding harmonics back down as buzzing. It
 reduces aliasing rather than removing it. While sound plays it is the master
@@ -871,7 +914,7 @@ nothing, which is the class of mistake nothing else here would catch.
 | `src/Flyback.Plugins.Timbre` | filter, wavefolder and saturator, holding their state in the emitter's own cells |
 | `src/Flyback.Plugins.Modulation` | chorus, flanger and phaser — the effects that carry their own movement |
 
-Why it is built this way is recorded in [docs/adr](docs/adr) — 51 decision
+Why it is built this way is recorded in [docs/adr](docs/adr) — 52 decision
 records covering the compiler, the renderer, the shell and the boundaries
 between them.
 
@@ -897,7 +940,7 @@ legitimately changes, inspect the `.received.png` next to its `.verified.png`
 baseline and rename it to approve.
 
 The fuzzer generates random well-formed patches and pushes them through compile
-and render. It is the only test that reaches all 64 modules, and it is what
+and render. It is the only test that reaches all 65 modules, and it is what
 guards the gap ADR-0008 describes: nothing links a module's declared ports to
 what its emit function actually indexes.
 

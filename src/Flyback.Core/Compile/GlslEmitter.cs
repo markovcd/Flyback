@@ -463,6 +463,12 @@ public static class GlslEmitter
                 // whatever order the rasteriser likes, so this is the same branch
                 // the interpreter takes on the video path — not a simplification.
                 OpCode.Delay => a,
+
+                // A shader has no clip to read: the tables travel with the
+                // interpreter's program and there is no texture for one here.
+                // Silence, which is what the video program the interpreter runs
+                // says too — see OpCode.Table.
+                OpCode.Table => "0.0",
                 OpCode.Allpass => a,
                 OpCode.Phase => $"{a} * {b} + {c}",
 

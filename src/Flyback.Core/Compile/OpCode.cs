@@ -153,6 +153,26 @@ public enum OpCode : byte
     /// </remarks>
     ClockWrite,
 
+    /// <summary>
+    /// out = clip K at a seconds from its start, interpolated, and silence
+    /// either side of it.
+    /// </summary>
+    /// <remarks>
+    /// The one op that reads something the patch did not compute. K is which
+    /// clip rather than how long a buffer is, and the audio behind it is carried
+    /// by the program itself — see <see cref="CompiledPatch.Tables"/> — because
+    /// it is the same for every evaluation and for every renderer.
+    /// <para>
+    /// Not stateful, despite sitting beside the ops that are: a clip is a
+    /// function of the position asked for and of nothing that happened before.
+    /// It is listed here because it is the other op whose answer comes from
+    /// outside the register file, and because it shares their fallback — a
+    /// program compiled with no clips reads silence, which is what the shader
+    /// does and what the screen gets.
+    /// </para>
+    /// </remarks>
+    Table,
+
     // --- multi-register writes: these fill out, out+1, out+2 ---
     /// <summary>(out, out+1, out+2) = hsv2rgb(a, b, c)</summary>
     HsvToRgb,

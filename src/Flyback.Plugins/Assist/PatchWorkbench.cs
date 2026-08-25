@@ -36,6 +36,7 @@ namespace Flyback.Plugins.Assist;
 public sealed class PatchWorkbench
 {
     private readonly ModuleCatalog modules;
+    private readonly ISampleLibrary? samples;
     private readonly WorkbenchLimits limits;
     private readonly string startingPoint;
     private readonly Dictionary<string, NodeInstance> byHandle = new(StringComparer.OrdinalIgnoreCase);
@@ -50,14 +51,20 @@ public sealed class PatchWorkbench
     /// Off by default, unlike <paramref name="vision"/>: every model worth
     /// pointing this at can see, and only a few can hear.
     /// </param>
+    /// <param name="samples">
+    /// Where a Sample module's file is looked up, and null where nothing can
+    /// look one up — which makes every player silent and every path a complaint.
+    /// </param>
     public PatchWorkbench(
         ModuleCatalog modules,
         Patch startingPoint,
         bool vision = true,
         bool hearing = false,
-        WorkbenchLimits? limits = null)
+        WorkbenchLimits? limits = null,
+        ISampleLibrary? samples = null)
     {
         this.modules = modules;
+        this.samples = samples;
         this.limits = limits ?? new WorkbenchLimits();
 
         // Kept as text so Reset cannot hand back something an earlier edit
@@ -135,6 +142,7 @@ public sealed class PatchWorkbench
                 "set_knobs" => SetKnobs(arguments),
                 "set_steps" => SetSteps(arguments),
                 "set_scale" => SetScale(arguments),
+                "set_sample" => SetSample(arguments),
                 "connect" => Connect(arguments),
                 "disconnect" => Disconnect(arguments),
                 "remove_module" => RemoveModule(arguments),
@@ -321,6 +329,42 @@ public sealed class PatchWorkbench
         return Fine($"set the scale on {Handle(node)}. {Scale(node)} {Issues()}");
     }
 
+    /// <summary>
+    /// Points a player at a sound file. A path is neither a knob nor a wire, so
+    /// this is the only way to set one.
+    /// </summary>
+    /// <remarks>
+    /// The answer carries what the compiler makes of it rather than taking the
+    /// path on trust. A file that is not there is the one mistake this tool can
+    /// make, and an assistant that will not find out until something else
+    /// complains would go on building around a player that is silent.
+    /// </remarks>
+    private ToolOutcome SetSample(JsonElement arguments)
+    {
+        if (!Node(arguments, "handle", out var node, out var def, out var refusal))
+            return ToolOutcome.Refused(refusal);
+
+        if (!def.TakesSample)
+        {
+            return ToolOutcome.Refused(
+                $"{Handle(node)} is a {def.Name}, which reads no file. Only the Sample module does.");
+        }
+
+        if (!Text(arguments, "path", out var path))
+            return ToolOutcome.Refused("'path' is required: where the WAV file is.");
+
+        node.Sample = path;
+        Edits++;
+
+        return Fine($"{Handle(node)} now reads {path}. {Issues()}");
+    }
+
+    /// <summary>Which file a player reads, and that it reads one at all.</summary>
+    private static string Sample(NodeInstance node) =>
+        string.IsNullOrWhiteSpace(node.Sample)
+            ? "No file chosen, so it plays silence."
+            : $"File: {node.Sample}.";
+
     /// <summary>A quantiser's scale, written out by name and as it would be typed back in.</summary>
     private static string Scale(NodeInstance node)
     {
@@ -471,8 +515,8 @@ public sealed class PatchWorkbench
         // Both programs, because either may be the one that was built for. A
         // patch offered for its sound still has to have compiled its sound, and
         // the video pass never reaches a node only the ear does.
-        var errors = working.CompileForVideo(modules).Issues
-            .Concat(working.CompileForAudio(modules).Issues)
+        var errors = working.CompileForVideo(modules, samples).Issues
+            .Concat(working.CompileForAudio(modules, samples).Issues)
             .Where(i => i.Severity == IssueSeverity.Error)
             .Select(i => i.Message)
             .Distinct()
@@ -530,13 +574,18 @@ public sealed class PatchWorkbench
             // socket nor a wire, so nothing above would show it at all.
             if (def.DefaultScale is not null)
                 text.Append("  ").AppendLine(Scale(node));
+
+            // And which file a player reads, for the same reason: it is the one
+            // thing about that module nothing else in this listing would show.
+            if (def.TakesSample)
+                text.Append("  ").AppendLine(Sample(node));
         }
 
         text.Append(working.Nodes.Count).Append(" modules, ")
             .Append(working.Connections.Count).AppendLine(" wires.");
 
-        var video = working.CompileForVideo(modules);
-        var audio = working.CompileForAudio(modules);
+        var video = working.CompileForVideo(modules, samples);
+        var audio = working.CompileForAudio(modules, samples);
 
         text.Append("video: ").Append(video.Program.Ops.Length).Append(" ops");
         if (video.Issues.Count > 0)
@@ -669,6 +718,9 @@ public sealed class PatchWorkbench
             text.Append("  scale  which of the ").Append(Pitch.Classes)
                 .AppendLine(" pitch classes are on, set with set_scale — not knobs");
 
+        if (def.TakesSample)
+            text.AppendLine("  file   a path to a WAV, set with set_sample — not a knob");
+
         if (def.Description.Length > 0) text.AppendLine(def.Description);
     }
 
@@ -710,7 +762,7 @@ public sealed class PatchWorkbench
                 + "there is nothing to look at. Patch something in if it is meant to be seen."));
         }
 
-        var patch = working.CompileForVideo(modules);
+        var patch = working.CompileForVideo(modules, samples);
 
         if (patch.HasIssues)
         {
@@ -832,7 +884,7 @@ public sealed class PatchWorkbench
                 + "sound and there is nothing to hear. Patch something in if it is meant to be heard."));
         }
 
-        var patch = working.CompileForAudio(modules);
+        var patch = working.CompileForAudio(modules, samples);
 
         if (patch.HasIssues)
         {
@@ -1140,6 +1192,24 @@ public sealed class PatchWorkbench
                 }
                 """),
 
+            new("set_sample",
+                "Points a Sample module at a sound file. The path is neither a knob nor a wire, "
+                + "so this is the only way to set one — and it is the one thing in a patch that "
+                + "refers to something outside it, so the file has to exist where you say it "
+                + "does. A WAV: mono or stereo, 8 to 32 bit or float, no other format. The "
+                + "answer says whether it could be read, so a path that is wrong is answered "
+                + "now rather than by silence later. Ask the person for a path rather than "
+                + "guessing at one — nothing here can list what is on their machine.",
+                """
+                {
+                  "properties": {
+                    "handle": { "type": "string" },
+                    "path": { "type": "string", "description": "Where the WAV is, absolute or beside the patch." }
+                  },
+                  "required": ["handle", "path"]
+                }
+                """),
+
             new("connect",
                 "Wires an output to an input. 'from_port' may be left out when the source has only "
                 + "one output, which most modules do. An input takes one wire, so this replaces "
@@ -1405,8 +1475,8 @@ public sealed class PatchWorkbench
         // That is precisely what a silent patch looks like from this side — an
         // assistant told "No issues." after every edit has no way left to find
         // out, because it cannot hear the thing either.
-        var issues = working.CompileForVideo(modules).Issues
-            .Concat(working.CompileForAudio(modules).Issues)
+        var issues = working.CompileForVideo(modules, samples).Issues
+            .Concat(working.CompileForAudio(modules, samples).Issues)
             .ToArray();
 
         if (issues.Length == 0) return "No issues.";

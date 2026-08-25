@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Plugins.Assist;
 
@@ -40,7 +41,8 @@ public sealed class AssistantRun : IDisposable
         ModuleCatalog modules,
         Patch startingPoint,
         int maxTurns = 12,
-        WorkbenchLimits? limits = null)
+        WorkbenchLimits? limits = null,
+        ISampleLibrary? samples = null)
     {
         Before = startingPoint;
         this.maxTurns = maxTurns;
@@ -48,7 +50,8 @@ public sealed class AssistantRun : IDisposable
         startingNodes = startingPoint.Nodes.Count;
         startingWires = startingPoint.Connections.Count;
 
-        Workbench = new PatchWorkbench(modules, startingPoint, config.Vision, config.Hearing, limits);
+        Workbench = new PatchWorkbench(
+            modules, startingPoint, config.Vision, config.Hearing, limits, samples);
         session = assistant.Start(Workbench, config);
     }
 

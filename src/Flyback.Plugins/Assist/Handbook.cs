@@ -290,6 +290,9 @@ internal static class Handbook
             text.Append("  scale  which of the ").Append(Pitch.Classes)
                 .AppendLine(" pitch classes are on, set with set_scale — not knobs");
 
+        if (def.TakesSample)
+            text.AppendLine("  file   a path to a WAV, set with set_sample — not a knob");
+
         if (prose && def.Description.Length > 0)
             text.Append("  ").AppendLine(def.Description);
     }

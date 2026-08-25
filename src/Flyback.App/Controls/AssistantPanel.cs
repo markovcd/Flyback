@@ -8,6 +8,7 @@ using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using Flyback.App.Assist;
+using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Plugins.Assist;
 using Flyback.Plugins.Hosting;
@@ -40,6 +41,12 @@ public sealed class AssistantPanel : UserControl
 
     private readonly PluginCatalog plugins;
     private readonly Func<Patch> current;
+
+    /// <summary>
+    /// Where a Sample module's file is looked up, so what the assistant hears is
+    /// what the editor plays. Null in a test, which makes every player silent.
+    /// </summary>
+    private readonly ISampleLibrary? samples;
     /// <summary>
     /// Hands a patch to the canvas, where it lands as an edit rather than as a
     /// new document. Nothing can refuse it and nothing needs to: an assistant's
@@ -276,9 +283,11 @@ public sealed class AssistantPanel : UserControl
         Func<Patch> current,
         Action<Patch> apply,
         Action<string, string?> report,
-        AssistantSettings? saved = null)
+        AssistantSettings? saved = null,
+        ISampleLibrary? samples = null)
     {
         settings = saved ?? AssistantSettings.Load();
+        this.samples = samples;
         this.plugins = plugins;
         this.current = current;
         this.apply = apply;
@@ -1045,7 +1054,7 @@ public sealed class AssistantPanel : UserControl
         if (because is null && run is { } going) return going;
 
         run?.Dispose();
-        run = new AssistantRun(with, config, plugins.Modules, current());
+        run = new AssistantRun(with, config, plugins.Modules, current(), samples: samples);
         runConfig = config;
         runAssistant = with;
 

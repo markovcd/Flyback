@@ -67,9 +67,9 @@ public sealed class AudioEngine(IAudioDevice device) : IDisposable
     /// program's memory happens here, on the UI thread, so the callback never has
     /// to allocate — and both go in with the program they belong to, in one write.
     /// </summary>
-    public void Update(Patch patch)
+    public void Update(Patch patch, ISampleLibrary? samples = null)
     {
-        var program = patch.CompileForAudio().Program;
+        var program = patch.CompileForAudio(samples: samples).Program;
 
         renderer.Prepare(program);
 

@@ -29,9 +29,26 @@ public readonly struct FeedbackFrame(float[]? pixels, int width, int height)
 /// measurable, because this loop is bound by its own dispatch rather than by
 /// the arithmetic in it.
 /// </remarks>
-public sealed class CompiledPatch(Op[] ops, int registerCount, int outputBase, int outputWidth = 3)
+public sealed class CompiledPatch(
+    Op[] ops,
+    int registerCount,
+    int outputBase,
+    int outputWidth = 3,
+    IReadOnlyList<LoadedSample>? tables = null)
 {
     public Op[] Ops { get; } = ops;
+
+    /// <summary>
+    /// The clips <see cref="OpCode.Table"/> reads, indexed by its K.
+    /// </summary>
+    /// <remarks>
+    /// Carried by the program rather than handed to it per evaluation, unlike a
+    /// delay line: a clip is the same for every evaluation and for every
+    /// renderer, and there is nothing to allocate fresh. Empty where the patch
+    /// asked for none, and empty on the video path whatever it asked for — see
+    /// OpCode.Table.
+    /// </remarks>
+    public IReadOnlyList<LoadedSample> Tables { get; } = tables ?? [];
 
     public int RegisterCount { get; } = registerCount;
 
@@ -183,6 +200,18 @@ public sealed class CompiledPatch(Op[] ops, int registerCount, int outputBase, i
                 case OpCode.SampleFeedback:
                     Sample(feedback, registers[op.A], registers[op.B], registers[op.Out..(op.Out + 3)]);
                     break;
+
+                case OpCode.Table:
+                {
+                    var clip = (int)op.K;
+
+                    // Silence where the program carries no clips, which is every
+                    // video program and any audio one whose file was not there.
+                    registers[op.Out] = clip >= 0 && clip < Tables.Count
+                        ? Tables[clip].At(registers[op.A])
+                        : 0d;
+                    break;
+                }
 
                 case OpCode.Delay:
                 {

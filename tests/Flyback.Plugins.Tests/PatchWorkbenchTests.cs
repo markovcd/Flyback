@@ -672,6 +672,81 @@ public class PatchWorkbenchTests
         briefing.ShouldContain("pitch class");
     }
 
+    // --- a player's file ------------------------------------------------------
+
+    /// <summary>
+    /// The path is neither a knob nor a wire, so this is the only way to set
+    /// one — and it is the one thing in a patch that refers outside it.
+    /// </summary>
+    [Fact]
+    public async Task A_players_file_can_be_pointed_at()
+    {
+        var bench = Bench();
+        await Call(bench, "add_module", $$"""{"type_id":"{{NodeCatalog.SampleTypeId}}","handle":"clip1"}""");
+
+        var set = await Call(bench, "set_sample", """{"handle":"clip1","path":"drums.wav"}""");
+
+        set.Ok.ShouldBeTrue(set.Text);
+        bench.Snapshot().Nodes.Single(n => n.TypeId == NodeCatalog.SampleTypeId).Sample
+            .ShouldBe("drums.wav");
+    }
+
+    /// <summary>
+    /// Answered by the compiler rather than taken on trust, so a path that is
+    /// wrong is known now. Nothing in these tests can read a file, so every path
+    /// is wrong here — which is exactly the case worth checking.
+    /// </summary>
+    [Fact]
+    public async Task A_file_that_cannot_be_read_is_said_so_by_the_call_that_set_it()
+    {
+        var bench = Bench();
+        await Call(bench, "add_module", $$"""{"type_id":"{{NodeCatalog.SampleTypeId}}","handle":"clip1"}""");
+        await Call(bench, "connect", """{"from":"clip1","from_port":"out","to":"output1","to_port":"left"}""");
+
+        var set = await Call(bench, "set_sample", """{"handle":"clip1","path":"gone.wav"}""");
+
+        set.Text.ShouldContain("gone.wav");
+        set.Text.ShouldContain("Issues:");
+    }
+
+    [Fact]
+    public async Task A_module_that_reads_no_file_says_so_rather_than_growing_one()
+    {
+        var bench = Bench();
+        await Call(bench, "add_module", """{"type_id":"osc.sine","handle":"tone1"}""");
+
+        var set = await Call(bench, "set_sample", """{"handle":"tone1","path":"drums.wav"}""");
+
+        set.Ok.ShouldBeFalse();
+        set.Text.ShouldContain("reads no file");
+    }
+
+    /// <summary>
+    /// A path is neither wiring nor a knob, so without this a player reads as a
+    /// module with nothing set on it and the model would set it again.
+    /// </summary>
+    [Fact]
+    public async Task Describing_the_patch_shows_which_file_a_player_reads()
+    {
+        var bench = Bench();
+        await Call(bench, "add_module", $$"""{"type_id":"{{NodeCatalog.SampleTypeId}}","handle":"clip1"}""");
+
+        (await Call(bench, "describe_patch")).Text.ShouldContain("No file chosen");
+
+        await Call(bench, "set_sample", """{"handle":"clip1","path":"drums.wav"}""");
+
+        (await Call(bench, "describe_patch")).Text.ShouldContain("File: drums.wav");
+    }
+
+    [Fact]
+    public void The_briefing_says_a_player_carries_a_file()
+    {
+        var briefing = Bench().Briefing;
+
+        briefing.ShouldContain("set_sample");
+        briefing.ShouldContain("a path to a WAV");
+    }
+
     private static IReadOnlyList<int> Scale(PatchWorkbench bench) =>
         bench.Snapshot().Nodes
             .Single(n => n.TypeId == NodeCatalog.QuantiserTypeId).Scale

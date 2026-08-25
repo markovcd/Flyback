@@ -2,6 +2,7 @@ using System.CommandLine;
 using System.CommandLine.Parsing;
 using System.Globalization;
 using System.Text;
+using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Core.Render;
 using Flyback.Plugins.Hosting;
@@ -106,8 +107,13 @@ internal static class Program
 
         command.SetAction((result, cancellation) =>
         {
-            var loaded = Patches.Read(result.GetRequiredValue(patch), Console.Error);
+            var file = result.GetRequiredValue(patch);
+            var loaded = Patches.Read(file, Console.Error);
             if (loaded is null) return Task.FromResult(Exit.Failed);
+
+            // A sample named relatively is measured from wherever the patch is,
+            // so a patch and its sounds travel together.
+            var samples = new SampleLibrary { Beside = file.DirectoryName };
 
             var (width, height) = result.GetValue(size);
 
@@ -121,7 +127,7 @@ internal static class Program
                 result.GetValue(quality));
 
             return Task.FromResult(
-                RenderCommand.Run(loaded, options, Console.Error, Progress(), cancellation));
+                RenderCommand.Run(loaded, options, Console.Error, Progress(), cancellation, samples));
         });
 
         return command;
@@ -147,7 +153,7 @@ internal static class Program
         Command command,
         Argument<FileInfo> patch,
         Option<bool> json,
-        Func<Patch, string, bool, TextWriter, TextWriter, int> run)
+        Func<Patch, string, bool, TextWriter, TextWriter, ISampleLibrary?, int> run)
     {
         command.Arguments.Add(patch);
         command.Options.Add(json);
@@ -159,7 +165,13 @@ internal static class Program
 
             return loaded is null
                 ? Exit.Failed
-                : run(loaded, file.Name, result.GetValue(json), Console.Out, Console.Error);
+                : run(
+                    loaded,
+                    file.Name,
+                    result.GetValue(json),
+                    Console.Out,
+                    Console.Error,
+                    new SampleLibrary { Beside = file.DirectoryName });
         });
 
         return command;

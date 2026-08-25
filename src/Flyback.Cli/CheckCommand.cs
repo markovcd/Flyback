@@ -23,10 +23,16 @@ internal sealed record Complaint(string Severity, string? Module, string Message
 /// </remarks>
 internal static class CheckCommand
 {
-    public static int Run(Patch patch, string name, bool json, TextWriter output, TextWriter error)
+    public static int Run(
+        Patch patch,
+        string name,
+        bool json,
+        TextWriter output,
+        TextWriter error,
+        ISampleLibrary? samples = null)
     {
-        var video = patch.CompileForVideo();
-        var audio = patch.CompileForAudio();
+        var video = patch.CompileForVideo(samples: samples);
+        var audio = patch.CompileForAudio(samples: samples);
 
         // Deduplicated across the two, the way the window's status line does it:
         // a module both sinks reach complains once about the same thing, and

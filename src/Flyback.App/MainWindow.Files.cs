@@ -76,6 +76,10 @@ public sealed partial class MainWindow
                 return;
             }
 
+            // Where a relative sample path is measured from, before the patch
+            // that names one is compiled for the first time.
+            samples.Beside = Path.GetDirectoryName(files[0].TryGetLocalPath());
+
             editor.Patch = loaded.Patch;
             preview.Rewind();
         }
@@ -109,6 +113,12 @@ public sealed partial class MainWindow
             // Only once it is actually on disk. A patch that failed to write is
             // still a patch with everything to lose.
             editor.MarkSaved();
+
+            // A patch saved somewhere new measures its samples from there now,
+            // which is what lets one be written beside the sounds it names.
+            samples.Beside = Path.GetDirectoryName(file.TryGetLocalPath());
+            Recompile();
+
             return true;
         }
         catch (Exception ex)
@@ -280,7 +290,7 @@ public sealed partial class MainWindow
 
         try
         {
-            await Task.Run(() => RenderAudioFile(patch, path, seconds));
+            await Task.Run(() => RenderAudioFile(patch, path, seconds, samples));
             Report($"Wrote {seconds:0.0}s to {Path.GetFileName(path)}.");
         }
         catch (Exception ex)
@@ -298,8 +308,8 @@ public sealed partial class MainWindow
         var seconds = ExportSeconds;
         var settings = new MovieSettings(size.Width, size.Height, seconds);
 
-        var videoPatch = patch.CompileForVideo().Program;
-        var soundPatch = patch.Reaches().Sound ? patch.CompileForAudio().Program : null;
+        var videoPatch = patch.CompileForVideo(samples: samples).Program;
+        var soundPatch = patch.Reaches().Sound ? patch.CompileForAudio(samples: samples).Program : null;
         var scan = AudioScan.For(patch, ExportAspect);
 
         using var stopping = new CancellationTokenSource();
@@ -345,9 +355,13 @@ public sealed partial class MainWindow
     /// Renders offline through a fresh renderer, so exporting never disturbs the
     /// cursor or filter state of whatever is currently playing.
     /// </summary>
-    private static void RenderAudioFile(Patch patch, string path, double seconds)
+    private static void RenderAudioFile(
+        Patch patch,
+        string path,
+        double seconds,
+        ISampleLibrary? samples)
     {
-        var program = patch.CompileForAudio().Program;
+        var program = patch.CompileForAudio(samples: samples).Program;
         var renderer = new AudioRenderer();
         var frames = (int)Math.Round(renderer.SampleRate * seconds);
         var buffer = new float[frames * NodeCatalog.AudioChannels];

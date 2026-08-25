@@ -4,6 +4,7 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Avalonia.Platform.Storage;
 using Flyback.App.Controls;
 using Flyback.Core.Graph;
 using Colors = Flyback.App.Controls.Colors;
@@ -316,6 +317,11 @@ public sealed partial class MainWindow
         if (def.DefaultScale is not null)
             inspector.Children.Add(new ScaleKeys(node, def, because => editor.NotifyPatchChanged(because)).View);
 
+        // The third thing a node carries that is not a knob, and the only one
+        // that is not a number — so it is a name and a button rather than a
+        // control with a range.
+        if (def.TakesSample) inspector.Children.Add(BuildSampleRow(node));
+
         if (def.Inputs.Count == 0 && def.DefaultSteps is null && def.DefaultScale is null)
             inspector.Children.Add(new TextBlock
             {
@@ -602,6 +608,98 @@ public sealed partial class MainWindow
             _ => $"{string.Join(", ", parts[..^1])} and {parts[^1]}",
         };
     }
+
+    /// <summary>
+    /// The sound file a player reads: what it is called, and a button to pick
+    /// another.
+    /// </summary>
+    /// <remarks>
+    /// The name alone rather than the whole path, because a path is far wider
+    /// than the panel and the last part of it is the part anybody recognises.
+    /// The full one is on the tooltip, which is where it is wanted — a file that
+    /// has gone is found again by knowing where it was supposed to be.
+    /// <para>
+    /// Nothing here says whether the file could be read. That is the compiler's
+    /// to say and it says it in the status bar with everything else, naming the
+    /// module: a second, quieter version of the same complaint on the panel
+    /// would be one more thing to keep true.
+    /// </para>
+    /// </remarks>
+    private Control BuildSampleRow(NodeInstance node)
+    {
+        var chosen = node.Sample ?? string.Empty;
+
+        var row = new Grid
+        {
+            ColumnDefinitions = new ColumnDefinitions("78,*,Auto"),
+            Margin = new Thickness(0, 8, 0, 0),
+        };
+
+        var label = new TextBlock
+        {
+            Text = "file",
+            Width = 78,
+            FontSize = 12,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+
+        var name = new TextBlock
+        {
+            Text = chosen.Length == 0 ? "none chosen" : Path.GetFileName(chosen),
+            FontSize = 12,
+            Opacity = chosen.Length == 0 ? 0.45 : 0.75,
+            VerticalAlignment = VerticalAlignment.Center,
+            TextTrimming = TextTrimming.CharacterEllipsis,
+            Margin = new Thickness(4, 0),
+        };
+
+        if (chosen.Length > 0) ToolTip.SetTip(name, chosen);
+
+        var choose = new Button { Content = "Choose…", FontSize = 11 };
+
+        choose.Click += async (_, _) =>
+        {
+            var files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+            {
+                Title = "Choose a sound",
+                AllowMultiple = false,
+                FileTypeFilter = [SoundFileType],
+            });
+
+            if (files.Count == 0 || files[0].TryGetLocalPath() is not { } picked) return;
+
+            node.Sample = picked;
+
+            // Forgotten first, so a file that has been replaced since it was
+            // last read is read again rather than answered from the cache.
+            samples.Forget(picked);
+
+            // The shape of the panel has not changed, so it is not rebuilt — the
+            // one row that did is written here, the way a knob writes its own.
+            name.Text = Path.GetFileName(picked);
+            name.Opacity = 0.75;
+            ToolTip.SetTip(name, picked);
+
+            editor.NotifyPatchChanged();
+        };
+
+        Grid.SetColumn(label, 0);
+        Grid.SetColumn(name, 1);
+        Grid.SetColumn(choose, 2);
+
+        row.Children.Add(label);
+        row.Children.Add(name);
+        row.Children.Add(choose);
+
+        return row;
+    }
+
+    /// <summary>What the sound picker offers, which is what the reader can read.</summary>
+    private static FilePickerFileType SoundFileType => new("WAV audio")
+    {
+        Patterns = ["*.wav"],
+        MimeTypes = ["audio/wav", "audio/x-wav"],
+    };
 
     private Control BuildInputRow(NodeInstance node, PortSpec spec, int index)
     {

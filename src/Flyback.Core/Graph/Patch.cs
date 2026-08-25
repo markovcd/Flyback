@@ -130,6 +130,28 @@ public sealed class NodeInstance
     public List<int>? Scale { get; set; }
 
     /// <summary>
+    /// The audio file a player reads, and null for every module that reads none
+    /// — the third thing an instance carries that is not a knob, and the first
+    /// that is not a number.
+    /// </summary>
+    /// <remarks>
+    /// A path rather than the audio. A patch is a document that is snapshotted
+    /// whole on every edit and kept two hundred deep (see
+    /// <see cref="PatchHistory"/>), and a megabyte of PCM in it would be a
+    /// megabyte per undo step and a re-serialisation of it per knob turn. The
+    /// cost of the other choice is that a patch is no longer self-contained,
+    /// which is the one thing this gives up and is why a file that has gone is
+    /// reported by name rather than passed over.
+    /// <para>
+    /// It passes the test ADR-0051 set for a third field of this kind: it is a
+    /// decision about the piece rather than a signal in it, and there is no
+    /// arrangement of sockets that expresses it — a socket carries a number, and
+    /// this is not one.
+    /// </para>
+    /// </remarks>
+    public string? Sample { get; set; }
+
+    /// <summary>
     /// One coordinate held inside the canvas.
     /// </summary>
     /// <remarks>
@@ -179,6 +201,10 @@ public sealed class NodeInstance
         InputValues = [.. def.Inputs.Select(p => p.Default)],
         Steps = def.DefaultSteps is { } notes ? [.. notes] : null,
         Scale = def.DefaultScale is { } scale ? Pitch.Scale(scale) : null,
+
+        // Empty rather than null, so a module that reads a file always has
+        // somewhere to put one and the panel always has a row to show.
+        Sample = def.TakesSample ? string.Empty : null,
     };
 }
 
