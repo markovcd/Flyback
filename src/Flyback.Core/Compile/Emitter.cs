@@ -253,6 +253,17 @@ public sealed class Emitter
     /// <summary>The clips this program reads, in the order their ops name them.</summary>
     public IReadOnlyList<LoadedSample> Tables => tables;
 
+    /// <summary>
+    /// Keeps <paramref name="value"/> where something outside the program can
+    /// look at it, and returns nothing because there is nothing to return.
+    /// </summary>
+    /// <param name="scope">
+    /// Which trace, counted the same way in both of a patch's programs so that
+    /// the one writing and the one drawing agree about which is which.
+    /// </param>
+    public void Tap(int scope, Slot value) =>
+        Add(new Op(OpCode.Tap, -1, value.Component(0), k: scope));
+
     public Slot DelayLine(OpCode code, Slot input, Slot gain, Slot time, float maximum)
     {
         var first = Allocate(1);

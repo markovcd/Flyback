@@ -105,6 +105,11 @@ public static class PatchCompiler
 
         var issues = new List<CompileIssue>();
 
+        // What every Scope in the patch contributes, which is opposite things to
+        // the two programs — a tap to the one that plays, a buffer to the one
+        // that draws. See TapSpec.
+        var taps = new List<TapSpec>();
+
         // The probe first, and forgotten again when the patch no longer holds
         // it: a stale id falls back to the picture rather than to nothing, and
         // everything below reads 'probe' as "is this rooted somewhere other than
@@ -112,6 +117,12 @@ public static class PatchCompiler
         // walk starts at differs.
         var probed = probe is { } id ? patch.Find(id) : null;
         probe = probed?.Id;
+
+        // Whether this is the program that is actually heard. Only that one taps
+        // a Scope, because a trace is a record of evaluations in order and the
+        // picture's are neither in order nor the sound. A chart rooted at a
+        // Probe is a picture like any other.
+        var plays = probe is null && sink.Name == NodeCatalog.Speakers.Name;
 
         var root = probed ?? patch.FirstOf(NodeCatalog.OutputTypeId);
 
@@ -180,6 +191,28 @@ public static class PatchCompiler
         else if (outputs.Length > 0) result = [outputs[0]];
         else result = [emitter.Constant(0f)];
 
+        // And then the roots the sink does not reach. A Scope's whole use is a
+        // side effect, so nothing downstream depends on it and the walk above
+        // would never have visited what it is looking at — this is the one place
+        // the program is deliberately made larger than what it computes, and it
+        // is only the program the speakers run, because that is the only one
+        // whose evaluations happen in order and are the sound.
+        //
+        // After the sink and before the loops drain, so that a tap whose input
+        // reaches a cycle breaker still has its read emitted ahead of every
+        // write.
+        if (plays)
+        {
+            foreach (var node in patch.Nodes)
+            {
+                if (catalog.Get(node.TypeId) is not { TapsSignal: true } def) continue;
+                if (def.Inputs.Count == 0) continue;
+
+                emitter.Tap(taps.Count, ResolveInput(node, def, 0));
+                taps.Add(new TapSpec(node.Id, WindowOf(node, def), Traces.Silence));
+            }
+        }
+
         // Now close whatever loops that walk found. Every read in the program is
         // emitted by the time the first write is, and that ordering is the whole
         // of a cycle's latency: a value handed to a cell here cannot be seen
@@ -198,7 +231,7 @@ public static class PatchCompiler
 
         return new CompileResult(
             new CompiledPatch(
-                emitter.ToProgram(), emitter.RegisterCount, value.Base, width, emitter.Tables),
+                emitter.ToProgram(), emitter.RegisterCount, value.Base, width, emitter.Tables, taps),
             issues);
 
         Slot[] Resolve(NodeInstance node)
@@ -355,6 +388,7 @@ public static class PatchCompiler
                 {
                     Scale = scale,
                     Sample = Clip(node, def),
+                    Trace = Watched(node, def),
                     Resolver = port => Sweep(node, def, port),
                 });
 
@@ -433,6 +467,26 @@ public static class PatchCompiler
             return null;
         }
 
+        // The buffer a Scope charts, and null for every module that charts
+        // nothing and for the program that does the playing rather than the
+        // drawing.
+        //
+        // Made here, as the walk reaches the module, rather than for every Scope
+        // in the patch: one the picture never arrives at draws no chart, so a
+        // buffer for it would be refilled sixty times a second for nobody. The
+        // speakers' side is the other way round and deliberately so — there
+        // every Scope is visited whether or not anything reaches it, because
+        // being reached is precisely what it does not need.
+        LoadedSample? Watched(NodeInstance node, NodeDef def)
+        {
+            if (!def.TapsSignal || plays || def.Inputs.Count == 0) return null;
+
+            var buffer = Traces.Buffer();
+            taps.Add(new TapSpec(node.Id, WindowOf(node, def), buffer));
+
+            return buffer;
+        }
+
         // The one hidden instance of a module sockets are normalled to, emitted
         // the first time something asks for it — see PortSpec.NormalledTo. Null
         // where the catalogue does not hold it, or holds it with no such output,
@@ -492,6 +546,37 @@ public static class PatchCompiler
         // is not there — a saved patch outliving a change to the module it names.
         Slot Pick(Slot[] outputs, int port) =>
             port >= 0 && port < outputs.Length ? outputs[port] : emitter.Constant(0f);
+    }
+
+    /// <summary>
+    /// How much of the past a Scope is asking for, in seconds: its first
+    /// duration knob, which is marked in decades like every other one.
+    /// </summary>
+    /// <remarks>
+    /// Found by <see cref="PortDisplay.Duration"/> rather than by position, so
+    /// that a plugin's own Scope declares its window by saying what the socket
+    /// is instead of by counting sockets. A module with none asks for a
+    /// fiftieth of a second, which is a few cycles of anything audible.
+    /// <para>
+    /// The knob and not the wire. What acts on this is the refill, which runs
+    /// once a frame and outside the program entirely — a value arriving per
+    /// sample is not something it could do anything with, and the same is true
+    /// of the sweep the Output reads off its knobs for the same reason.
+    /// </para>
+    /// </remarks>
+    private static float WindowOf(NodeInstance node, NodeDef def)
+    {
+        for (var port = 0; port < def.Inputs.Count; port++)
+        {
+            if (def.Inputs[port].Display != PortDisplay.Duration) continue;
+
+            var decades = DefaultFor(node, port, def.Inputs[port]);
+            if (!float.IsFinite(decades)) break;
+
+            return Math.Clamp(MathF.Pow(10f, decades), 0.0001f, 2f);
+        }
+
+        return 0.02f;
     }
 
     /// <summary>

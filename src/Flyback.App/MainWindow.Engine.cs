@@ -87,8 +87,8 @@ public sealed partial class MainWindow
     }
 
     /// <summary>
-    /// The probe the picture is rooted at: the selected module, when that is a
-    /// Probe and not something else.
+    /// The chart the picture is rooted at: the selected module, when that is a
+    /// Probe or a Scope and not something else.
     /// </summary>
     /// <remarks>
     /// Selection rather than a mode, because a chart is something you look at
@@ -99,7 +99,7 @@ public sealed partial class MainWindow
     /// be heard while a chart of one corner of it is being read.
     /// </remarks>
     private NodeInstance? Probed =>
-        editor.SelectedNode is { TypeId: NodeCatalog.ProbeTypeId } probe ? probe : null;
+        editor.SelectedNode is { } selected && NodeCatalog.IsChart(selected.TypeId) ? selected : null;
 
     /// <summary>Which probe the picture was last compiled for, or null for the patch itself.</summary>
     private Guid? showingProbe;
@@ -144,7 +144,12 @@ public sealed partial class MainWindow
         // and nowhere else. Without it a probe left selected looks exactly like
         // a patch that has stopped working.
         if (probe is not null)
-            said = said.Prepend("Showing the Probe — select another module for the picture.");
+        {
+            said = said.Prepend(probe.TypeId == NodeCatalog.ScopeTypeId
+                ? "Showing the Scope — it charts what the speakers played, so switch sound on "
+                  + "to see anything. Select another module for the picture."
+                : "Showing the Probe — select another module for the picture.");
+        }
 
         Report(string.Join("  •  ", said));
 
@@ -187,8 +192,19 @@ public sealed partial class MainWindow
                 return;
             }
 
-            // Sound cannot stretch, so it leads and the picture follows.
-            preview.Clock = () => audio.Time;
+            // Sound cannot stretch, so it leads and the picture follows — and
+            // the same tick is where a Scope's chart is refilled from what the
+            // speakers have just played. Here rather than in the renderer
+            // because this is the one moment in the loop when the two paths are
+            // both stopped: the callback is not mid-buffer as far as anything
+            // here can tell, and the frame has not started. It is also the exact
+            // scope of the promise the module makes — no clock, no sound, and
+            // nothing new to chart.
+            preview.Clock = () =>
+            {
+                audio.RefreshTraces(preview.Program);
+                return audio.Time;
+            };
         }
         else
         {

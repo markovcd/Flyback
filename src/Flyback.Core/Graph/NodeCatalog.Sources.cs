@@ -84,7 +84,9 @@ public partial class NodeCatalog
             + "file has to stay where it is — one that has moved is reported by name. A Probe "
             + "charts it, but not the triggering: a trigger is something that happened before "
             + "now and the screen has no before, so what is drawn is the clip read at 'in' with "
-            + "the trigger ignored. Rewind to see the start of it.")
+            + "the trigger ignored. Rewind to see the start of it. A Scope does show the "
+            + "triggering, because it charts what the speakers played rather than working the "
+            + "signal out again.")
         {
             TakesSample = true,
         };

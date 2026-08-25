@@ -395,12 +395,18 @@ public static class GlslEmitter
 
         foreach (var op in patch.Ops)
         {
-            // The two ops with no result, and so the two ops with no line. There
-            // is no state on this path for either to write to, and a declaration
+            // The ops with no result, and so the ops with no line. There is no
+            // state on this path for any of them to write to, and a declaration
             // of r-1 would not compile. What they fed is left as dead code for
             // the driver to drop, which is the same deal the other half of a sink
             // gets.
-            if (op.Code is OpCode.UnitWrite or OpCode.ClockWrite) continue;
+            //
+            // A tap never reaches here at all — only the speakers' program has
+            // one — but it is in the list because "writes nothing" is the thing
+            // these three have in common, and an op that fell through to the
+            // switch would take the backend down rather than draw a wrong
+            // picture.
+            if (op.Code is OpCode.UnitWrite or OpCode.ClockWrite or OpCode.Tap) continue;
 
             string a = Read(op.A), b = Read(op.B), c = Read(op.C);
 

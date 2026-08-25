@@ -90,6 +90,25 @@ public readonly record struct EmitContext(Slot[] Inputs, IReadOnlyList<Step> Ste
     /// </para>
     /// </remarks>
     public LoadedSample? Sample { get; init; }
+
+    /// <summary>
+    /// The buffer this instance charts — the stretch of the past something
+    /// outside the program keeps refilling — and null where the program being
+    /// compiled is the one doing the playing rather than the drawing.
+    /// </summary>
+    /// <remarks>
+    /// A <see cref="LoadedSample"/> like <see cref="Sample"/>, and read the same
+    /// way, which is the point: a chart of what was played is a table read, and
+    /// the module drawing it needs to know nothing about rings, threads or
+    /// sound cards. What differs is who fills it — a clip arrives loaded and
+    /// never changes, and this one changes every frame.
+    /// <para>
+    /// Null on the speakers' program is not a fallback but the ordinary case:
+    /// there the Scope is not drawn at all, and what it contributes is a
+    /// <see cref="OpCode.Tap"/> the compiler emits without entering the module.
+    /// </para>
+    /// </remarks>
+    public LoadedSample? Trace { get; init; }
 }
 
 /// <summary>Lowers one node to register-machine ops.</summary>
@@ -132,6 +151,21 @@ public sealed record NodeDef(
     /// <see cref="DefaultScale"/> is what says a module has a scale.
     /// </summary>
     public bool TakesSample { get; init; }
+
+    /// <summary>
+    /// Whether an instance of this module watches what the speakers played —
+    /// whether, in other words, its first input is a root of the audio program
+    /// as well as a socket.
+    /// </summary>
+    /// <remarks>
+    /// The one flag that changes what the compiler <em>walks</em> rather than
+    /// what it hands a module. Everything else here is data a module reads; this
+    /// says that a node nothing downstream depends on must be visited anyway,
+    /// because the whole of its use is a side effect — see
+    /// <see cref="OpCode.Tap"/>. Declared rather than assumed of the one module
+    /// that wants it, so that a plugin can want it too.
+    /// </remarks>
+    public bool TapsSignal { get; init; }
 
     /// <summary>
     /// Whether a wire may run backwards into this module — whether, in other

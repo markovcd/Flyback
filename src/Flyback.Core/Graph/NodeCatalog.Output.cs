@@ -16,7 +16,19 @@ public partial class NodeCatalog
     /// that is not ordinary — see <see cref="Compile.PatchCompiler"/>.
     /// </summary>
     public const string ProbeTypeId = "probe";
-    
+
+    /// <summary>
+    /// The chart of what was played. Named here for the same reason the Probe
+    /// is — the shell roots the picture at one when it is selected — and for one
+    /// more: the compiler has to know which nodes' inputs are extra roots of the
+    /// audio program, though it asks that through
+    /// <see cref="NodeDef.TapsSignal"/> rather than by name.
+    /// </summary>
+    public const string ScopeTypeId = "scope";
+
+    /// <summary>Whether a module is one of the two the shell will show in place of the picture.</summary>
+    public static bool IsChart(string typeId) => typeId is ProbeTypeId or ScopeTypeId;
+
     /// <summary>
     /// The Probe read backwards: a loop swept across the picture at audio rate,
     /// so that what a chart draws of a signal, this hears of a field. Named here
@@ -114,7 +126,103 @@ public partial class NodeCatalog
 
         yield return Quantiser();
         yield return Probe();
+        yield return Scope();
         yield return Scan();
+    }
+
+    /// <summary>
+    /// One grid square, in screen units. Eight of them across the middle of the
+    /// picture, which is what makes the grid the axis: however wide the preview
+    /// is, a square is an eighth of the window and a quarter of the scale.
+    /// </summary>
+    private const float Division = 0.25f;
+
+    /// <summary>
+    /// A chart, given where the signal sits: the trace, the fill under it, the
+    /// grid it is read against, and the bar along whichever edge it has run off.
+    /// </summary>
+    /// <remarks>
+    /// Shared by the two modules that draw one, which arrive at
+    /// <paramref name="height"/> by opposite routes — a Probe computes the
+    /// signal at this column, a Scope looks up what was played at it — and are
+    /// the same picture from there on. Worth one function rather than two
+    /// copies, because what a reader wants of them is that a chart of the past
+    /// and a chart of the future can be laid side by side and compared, and two
+    /// copies is exactly how that stops being true.
+    /// </remarks>
+    /// <param name="height">
+    /// Where the trace goes, in screen units — the value already divided by
+    /// whatever the top of the chart is worth.
+    /// </param>
+    /// <param name="visible">
+    /// Where there is a signal to draw at all, or null for a chart that covers
+    /// the whole picture. The grid is drawn either way: a Scope's window is a
+    /// box inside the frame, and ruling past it is what says the box is where
+    /// the chart is rather than where the picture ends.
+    /// </param>
+    private static Slot Charted(Emitter em, Slot x, Slot y, Slot height, Slot? visible = null)
+    {
+        var one = em.Constant(1f);
+        var zero = em.Constant(0f);
+
+        var trace = em.Sub(one, em.Ternary(
+            OpCode.Smoothstep,
+            em.Constant(0.006f),
+            em.Constant(0.02f),
+            em.Unary(OpCode.Abs, em.Sub(y, height))));
+
+        // Filled from the line down to zero, which is what keeps the chart
+        // readable when the signal moves faster than the pixels can follow: a
+        // trace alone breaks into dots there, and the fill becomes the envelope
+        // a scope shows at the same sweep.
+        var fill = em.Mul(
+            em.Binary(OpCode.Step, em.Binary(OpCode.Min, height, zero), y),
+            em.Binary(OpCode.Step, y, em.Binary(OpCode.Max, height, zero)));
+
+        // A bar along whichever edge the signal has gone off, because a value
+        // past the top of the chart is otherwise indistinguishable from no
+        // signal at all.
+        var over = em.Binary(OpCode.Step, one, em.Unary(OpCode.Abs, height));
+        var edge = em.Binary(OpCode.Step, em.Constant(0.96f), em.Unary(OpCode.Abs, y));
+        var side = em.Binary(OpCode.Step, zero, em.Mul(height, y));
+        var clipped = em.Mul(em.Mul(over, edge), side);
+
+        if (visible is { } where)
+        {
+            trace = em.Mul(trace, where);
+            fill = em.Mul(fill, where);
+            clipped = em.Mul(clipped, where);
+        }
+
+        var grid = em.Add(Lattice(x), Lattice(y));
+        var axes = em.Add(Axis(x), Axis(y));
+
+        var ink = em.Add(
+            em.Add(em.Mul(grid, 0.09f), em.Mul(axes, 0.2f)),
+            em.Add(em.Mul(fill, 0.22f), trace));
+
+        var lit = em.Mul(em.Combine(em.Constant(0.45f), one, em.Constant(0.72f)), ink);
+
+        return em.Add(lit, em.Mul(em.Combine(one, em.Constant(0.25f), em.Constant(0.2f)), clipped));
+
+        // Lines every division, measured back into the coordinate's own units so
+        // that both axes are ruled the same thickness whatever the aspect ratio
+        // has done to x.
+        Slot Lattice(Slot u)
+        {
+            var cell = em.Unary(OpCode.Fract, em.Add(em.Mul(u, 1f / Division), 0.5f));
+            var away = em.Mul(em.Unary(OpCode.Abs, em.Add(cell, -0.5f)), Division);
+
+            return em.Sub(one, em.Ternary(
+                OpCode.Smoothstep, em.Constant(0.0015f), em.Constant(0.005f), away));
+        }
+
+        // Zero on the vertical, now on the horizontal.
+        Slot Axis(Slot u) => em.Sub(one, em.Ternary(
+            OpCode.Smoothstep,
+            em.Constant(0.004f),
+            em.Constant(0.012f),
+            em.Unary(OpCode.Abs, u)));
     }
 
     /// <summary>
@@ -345,15 +453,8 @@ public partial class NodeCatalog
     /// screen already makes of them, not what the speakers hear.
     /// </para>
     /// </remarks>
-    private static NodeDef Probe()
-    {
-        // One grid square, in screen units. Eight of them across the middle of
-        // the picture, which is what makes the grid the axis: however wide the
-        // preview is, a square is an eighth of the window and a quarter of the
-        // scale.
-        const float division = 0.25f;
-
-        return new NodeDef(
+    private static NodeDef Probe() =>
+        new NodeDef(
             ProbeTypeId, "Probe", "Output",
             [
                 Swept("in"),
@@ -363,7 +464,6 @@ public partial class NodeCatalog
             [Col("out")],
             (em, node) =>
             {
-                var one = em.Constant(1f);
                 var zero = em.Constant(0f);
 
                 var x = em.Load(OpCode.LoadX);
@@ -391,62 +491,7 @@ public partial class NodeCatalog
                 // below is for.
                 var height = em.Binary(OpCode.Div, value, node[2]);
 
-                var trace = em.Sub(one, em.Ternary(
-                    OpCode.Smoothstep,
-                    em.Constant(0.006f),
-                    em.Constant(0.02f),
-                    em.Unary(OpCode.Abs, em.Sub(y, height))));
-
-                // Filled from the line down to zero, which is what keeps the
-                // chart readable when the signal moves faster than the pixels
-                // can follow: a trace alone breaks into dots there, and the fill
-                // becomes the envelope a scope shows at the same sweep.
-                var fill = em.Mul(
-                    em.Binary(OpCode.Step, em.Binary(OpCode.Min, height, zero), y),
-                    em.Binary(OpCode.Step, y, em.Binary(OpCode.Max, height, zero)));
-
-                var grid = em.Add(Lattice(x), Lattice(y));
-                var axes = em.Add(Axis(x), Axis(y));
-
-                // A bar along whichever edge the signal has gone off, because a
-                // value past the top of the chart is otherwise indistinguishable
-                // from no signal at all.
-                var over = em.Binary(OpCode.Step, one, em.Unary(OpCode.Abs, height));
-                var edge = em.Binary(OpCode.Step, em.Constant(0.96f), em.Unary(OpCode.Abs, y));
-                var side = em.Binary(OpCode.Step, zero, em.Mul(height, y));
-                var clipped = em.Mul(em.Mul(over, edge), side);
-
-                var ink = em.Add(
-                    em.Add(em.Mul(grid, 0.09f), em.Mul(axes, 0.2f)),
-                    em.Add(em.Mul(fill, 0.22f), trace));
-
-                var lit = em.Mul(
-                    em.Combine(em.Constant(0.45f), one, em.Constant(0.72f)),
-                    ink);
-
-                return
-                [
-                    em.Add(lit, em.Mul(em.Combine(one, em.Constant(0.25f), em.Constant(0.2f)), clipped)),
-                ];
-
-                // Lines every division, measured back into the coordinate's own
-                // units so that both axes are ruled the same thickness whatever
-                // the aspect ratio has done to x.
-                Slot Lattice(Slot u)
-                {
-                    var cell = em.Unary(OpCode.Fract, em.Add(em.Mul(u, 1f / division), 0.5f));
-                    var away = em.Mul(em.Unary(OpCode.Abs, em.Add(cell, -0.5f)), division);
-
-                    return em.Sub(one, em.Ternary(
-                        OpCode.Smoothstep, em.Constant(0.0015f), em.Constant(0.005f), away));
-                }
-
-                // Zero on the vertical, now on the horizontal.
-                Slot Axis(Slot u) => em.Sub(one, em.Ternary(
-                    OpCode.Smoothstep,
-                    em.Constant(0.004f),
-                    em.Constant(0.012f),
-                    em.Unary(OpCode.Abs, u)));
+                return [Charted(em, x, y, height)];
             },
             "A chart of whatever is patched into it, in place of the picture. Select it and "
             + "the screen shows the value of its 'in' over time instead of the patch: the "
@@ -458,8 +503,100 @@ public partial class NodeCatalog
             + "'out' is the chart as a color, so it can be patched into the Output to keep it "
             + "on screen. What it cannot show is memory: drawn rather than heard, an oscillator "
             + "does not accumulate its phase and a delay line passes straight through, so a "
-            + "chart of either is what the screen makes of it rather than what the speakers do.");
-    }
+            + "chart of either is what the screen makes of it rather than what the speakers do. "
+            + "A Scope shows that instead — what was actually played, which is the past only.");
+
+    /// <summary>
+    /// The Probe's opposite number: a chart of what the speakers have already
+    /// played, rather than of what the screen computes the signal to be.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// A separate module rather than a mode on the Probe, because the two
+    /// genuinely disagree and both are right. A Probe is a second compile root
+    /// (ADR-0040): it recomputes the signal at every column, which is why it can
+    /// draw the future, and why it draws an oscillator without its accumulated
+    /// phase and a delay line as a wire — the video path has no memory to show
+    /// and does not pretend to. A Scope shows the one thing that has memory,
+    /// because it does not compute anything: the speakers' program hands it one
+    /// evaluation at a time, in order, and it keeps the last few thousand.
+    /// </para>
+    /// <para>
+    /// Which means it is a chart with three cliffs, all of them the same cliff.
+    /// It shows nothing until sound is switched on. It shows nothing the
+    /// speakers do not reach — a signal wired only to the picture is not
+    /// played, so there is nothing of it to have kept. And it shows only the
+    /// past, because that is all anything that has already happened can be. Put
+    /// a Probe and a Scope on the same node and the two charts will differ
+    /// wherever the patch has memory in it; that difference is the useful thing
+    /// about having both.
+    /// </para>
+    /// <para>
+    /// Mechanically it is the only module in the catalogue whose input is a root
+    /// of a program — see <see cref="NodeDef.TapsSignal"/> and
+    /// <see cref="OpCode.Tap"/> — and the only one whose table changes while the
+    /// program is running. Everything else about it is an ordinary chart, drawn
+    /// by the same <see cref="Charted"/> the Probe uses.
+    /// </para>
+    /// </remarks>
+    private static NodeDef Scope() =>
+        new NodeDef(
+            ScopeTypeId, "Scope", "Output",
+            [
+                // Swept, and never resolved: the whole point is that this
+                // module does not evaluate its input. What is charted came from
+                // the run that made the sound, and lowering the signal here as
+                // well would put the whole chain into the picture's program to
+                // compute a value nothing would look at.
+                Swept("in"),
+                Seconds("window", -1.7f),
+                Num("scale", 1f, 0.01f, 16f),
+            ],
+            [Col("out")],
+            (em, node) =>
+            {
+                var one = em.Constant(1f);
+
+                var x = em.Load(OpCode.LoadX);
+                var y = em.Load(OpCode.LoadY);
+
+                // The buffer holds exactly the window, whatever the window is —
+                // something outside the program keeps it that way, see
+                // Traces.Buffer — so all this has to say is how far across the
+                // chart the column is. Which is why 'window' appears nowhere in
+                // these ops: turning it changes what is put in the buffer, not
+                // what is done with it.
+                var across = node.Trace is { } trace
+                    ? em.Table(em.Mul(em.Add(x, one), 0.5f * trace.Seconds), trace)
+                    : em.Constant(0f);
+
+                var height = em.Binary(OpCode.Div, across, node[2]);
+
+                // The chart is the eight squares in the middle and no wider. A
+                // Probe fills the frame because its signal is defined at every
+                // column; this one has a definite extent, and drawing past it
+                // would be holding the oldest and newest values out flat as
+                // though they were signal.
+                var inside = em.Mul(
+                    em.Binary(OpCode.Step, x, one),
+                    em.Binary(OpCode.Step, em.Constant(-1f), x));
+
+                return [Charted(em, x, y, height, inside)];
+            },
+            "A chart of what the speakers actually played. Patch the signal you want to "
+            + "watch into its 'in' and select it, and the screen shows the last 'window' "
+            + "seconds of it — the right edge is now and the left is 'window' ago, one grid "
+            + "square being an eighth of the window across and a quarter of 'scale' up. "
+            + "Unlike a Probe it shows memory: an oscillator's accumulated phase, a delay "
+            + "line's tail, a sample playing, an envelope that was triggered. What it cannot "
+            + "do is show the future, or anything at all while sound is off, or anything the "
+            + "Output's 'left' and 'right' do not reach — it is a record of what was played, "
+            + "so a branch of the patch that only draws was never played and has nothing to "
+            + "show. Use a Probe for those. Its 'out' is the chart as a color, so it can be "
+            + "patched into the Output to keep it on screen alongside the picture.")
+        {
+            TapsSignal = true,
+        };
 
     /// <summary>
     /// One loop swept round the picture at audio rate, and the value it passes

@@ -1,4 +1,5 @@
 using Flyback.App.Audio;
+using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Core.Render;
 using Flyback.Plugins.Audio;
@@ -218,6 +219,49 @@ public class AudioEngineTests
 
             return device.Pump(4_096);
         }
+    }
+
+    /// <summary>
+    /// A Scope's chart comes out of the run that made the sound, so the engine
+    /// is where the two paths meet: it holds the one reference that pairs a
+    /// program with the memory it filled.
+    /// </summary>
+    /// <remarks>
+    /// Worth a test here rather than only in the compiler's, because the whole
+    /// hazard is the pairing. A caller reading the program and the memory
+    /// separately could be handed a mismatched pair by a recompile in between,
+    /// and what that produces is not an exception but a chart of the wrong node.
+    /// </remarks>
+    [Fact]
+    public void A_scope_is_charted_from_what_the_engine_actually_played()
+    {
+        using var device = new LoopbackDevice();
+        using var engine = new AudioEngine(device);
+
+        var builder = new PatchBuilder(NodeCatalog.BuiltIn);
+
+        var held = builder.Add("value", 0, 0, (0, 0.5f));
+        var scope = builder.Add(NodeCatalog.ScopeTypeId, 0, 0);
+        builder.Add(NodeCatalog.OutputTypeId, 0, 0);
+
+        builder.Wire(held, 0, scope, 0);
+
+        var drawn = builder.Patch.CompileForProbe(scope.Id, NodeCatalog.BuiltIn).Program;
+
+        engine.Update(builder.Patch);
+        engine.Start();
+
+        // Nothing played yet, so nothing charted: the promise is that it shows
+        // what happened, never what would have.
+        engine.RefreshTraces(drawn);
+        drawn.Taps[0].Trace.Samples.ShouldAllBe(v => v == 0f);
+
+        // A fiftieth of a second is under a thousand frames, so this fills the
+        // whole window several times over.
+        device.Pump(8_192);
+        engine.RefreshTraces(drawn);
+
+        drawn.Taps[0].Trace.Samples.ShouldAllBe(v => Math.Abs(v - 0.5f) < 1e-4f);
     }
 
     /// <summary>The device is the engine's to hold, and closing one closes the other.</summary>

@@ -82,6 +82,23 @@ public sealed class AudioEngine(IAudioDevice device) : IDisposable
     }
 
     /// <summary>
+    /// Refills every Scope in <paramref name="drawn"/> from what has been played
+    /// since this last ran.
+    /// </summary>
+    /// <remarks>
+    /// The one place the two programs of a patch meet while both are running,
+    /// and it belongs here because the rings belong to the state this swaps: a
+    /// caller holding the audio program and its memory separately could be
+    /// handed a mismatched pair by a recompile between the two reads. One
+    /// <see cref="Volatile"/> read, exactly as the callback takes.
+    /// </remarks>
+    public void RefreshTraces(CompiledPatch drawn)
+    {
+        var state = Volatile.Read(ref activeState);
+        Traces.Refresh(drawn, state.Program, state.Memory);
+    }
+
+    /// <summary>
     /// Scan mode is a property of how the program is driven, not of the program
     /// itself — x and y are inputs the caller supplies. So it is read off the
     /// node's knobs rather than compiled in.

@@ -45,6 +45,27 @@ public sealed class DelayState
     /// </summary>
     private readonly double[] units;
 
+    /// <summary>
+    /// One ring per Scope in the patch: the last stretch of what the speakers
+    /// played, kept so the eye can be shown it.
+    /// </summary>
+    /// <remarks>
+    /// The only state here that nothing in the program ever reads back. A delay
+    /// line, an accumulator and a cell are all written so the next evaluation
+    /// can read them; a trace is written for something outside the program
+    /// entirely — see <see cref="OpCode.Tap"/>. It lives here anyway because
+    /// this is the object the audio path already carries, and because it is
+    /// per-run rather than per-program in exactly the way everything else here
+    /// is.
+    /// <para>
+    /// <see cref="float"/> like the delay lines and for the same reason: what
+    /// goes in is a signal on its way to a speaker, and a chart of one needs
+    /// fewer bits than that rather than more.
+    /// </para>
+    /// </remarks>
+    private readonly float[][] traces;
+    private readonly int[] traceHeads;
+
     /// <param name="lengthsInSeconds">Longest delay each line must hold, in program order.</param>
     /// <param name="sampleRate">
     /// Evaluations per second — the *oversampled* rate on the audio path, since
@@ -63,7 +84,8 @@ public sealed class DelayState
         IReadOnlyList<float> lengthsInSeconds,
         int sampleRate,
         int phaseCount = 0,
-        int unitCount = 0)
+        int unitCount = 0,
+        int traceCount = 0)
     {
         SampleRate = sampleRate;
         lengths = [.. lengthsInSeconds];
@@ -75,6 +97,11 @@ public sealed class DelayState
         running = new bool[phaseCount];
 
         units = new double[unitCount];
+
+        traces = new float[traceCount][];
+        traceHeads = new int[traceCount];
+
+        for (var i = 0; i < traceCount; i++) traces[i] = new float[TraceSamples];
 
         for (var i = 0; i < lines.Length; i++)
         {
@@ -93,6 +120,96 @@ public sealed class DelayState
 
     public int UnitCount => units.Length;
 
+    public int TraceCount => traces.Length;
+
+    /// <summary>
+    /// How much of the past a Scope keeps, in evaluations — two seconds at the
+    /// oversampled audio rate, which is longer than any window a chart offers.
+    /// </summary>
+    public const int TraceSamples = 48_000 * 4 * 2;
+
+    /// <summary>Puts one evaluation into trace <paramref name="slot"/>.</summary>
+    /// <remarks>
+    /// Called from the sound callback, so it allocates nothing and takes no
+    /// lock. What reads it is <see cref="CopyTrace"/>, on the thread that draws
+    /// — which may therefore read across a write. A chart with a seam in it for
+    /// one frame is a better answer than a lock on the audio thread, and it is
+    /// the same trade <c>AudioRing</c> already makes for a recording.
+    /// </remarks>
+    public void Tap(int slot, double value)
+    {
+        if ((uint)slot >= (uint)traces.Length) return;
+
+        var ring = traces[slot];
+
+        ring[traceHeads[slot]] = double.IsFinite(value) ? (float)value : 0f;
+        traceHeads[slot] = (traceHeads[slot] + 1) % ring.Length;
+    }
+
+    /// <summary>
+    /// Lays the newest <paramref name="span"/> evaluations of a trace out across
+    /// <paramref name="into"/>, oldest first, so what the caller holds is a
+    /// stretch of the past in the order it happened and at whatever width it
+    /// means to draw.
+    /// </summary>
+    /// <remarks>
+    /// Each cell is the furthest from nought of the evaluations that fall in it,
+    /// keeping its sign. A window is always more evaluations than there are
+    /// columns — a fiftieth of a second is four thousand of them, two seconds is
+    /// four hundred thousand — so something has to be chosen, and which is
+    /// chosen decides what a long timebase looks like.
+    /// <para>
+    /// Taking one per cell aliases: a tone whose period happens to divide the
+    /// step charts as a slow wobble or a straight line, which is the one failure
+    /// a scope must not have. Averaging is worse still at the far end — a
+    /// waveform is symmetric about nought, so a bucket holding whole cycles of
+    /// it averages to nothing and two seconds of a loud tone draws as silence.
+    /// The peak has neither problem: a bucket of many cycles gives its
+    /// amplitude, adjacent buckets take opposite sides of the wave, and with the
+    /// fill under the trace that is the solid band a real scope shows at a sweep
+    /// far slower than the signal. A bucket of one evaluation is that evaluation,
+    /// so nothing is done to a chart that did not need decimating.
+    /// </para>
+    /// <para>
+    /// May be read across a write, and is meant to be: see <see cref="Tap"/>.
+    /// </para>
+    /// </remarks>
+    public void CopyTrace(int slot, Span<float> into, int span)
+    {
+        if ((uint)slot >= (uint)traces.Length || into.Length == 0)
+        {
+            into.Clear();
+            return;
+        }
+
+        var ring = traces[slot];
+
+        span = Math.Clamp(span, 1, ring.Length);
+
+        // Where the newest evaluation is not: the head is the next cell to be
+        // written, so the span ends just before it.
+        var start = traceHeads[slot] - span;
+
+        for (var i = 0; i < into.Length; i++)
+        {
+            var from = start + (int)((long)i * span / into.Length);
+            var to = start + (int)((long)(i + 1) * span / into.Length);
+
+            // A window shorter than the chart is wide: cells share evaluations
+            // rather than some of them holding none.
+            if (to <= from) to = from + 1;
+
+            var peak = 0f;
+            for (var j = from; j < to; j++)
+            {
+                var value = ring[Index(j, ring.Length)];
+                if (MathF.Abs(value) > MathF.Abs(peak)) peak = value;
+            }
+
+            into[i] = peak;
+        }
+    }
+
     /// <summary>
     /// Whether this state still fits a program. Op order decides which buffer is
     /// which, so a recompile that changes the delays at all gets fresh buffers —
@@ -103,10 +220,12 @@ public sealed class DelayState
         IReadOnlyList<float> lengthsInSeconds,
         int sampleRate,
         int phaseCount = 0,
-        int unitCount = 0)
+        int unitCount = 0,
+        int traceCount = 0)
     {
         if (sampleRate != SampleRate || lengthsInSeconds.Count != lengths.Length) return false;
         if (phaseCount != phases.Length || unitCount != units.Length) return false;
+        if (traceCount != traces.Length) return false;
 
         for (var i = 0; i < lengths.Length; i++)
             if (lengths[i] != lengthsInSeconds[i])
@@ -127,6 +246,15 @@ public sealed class DelayState
         Array.Clear(previousInputs);
         Array.Clear(running);
         Array.Clear(units);
+
+        // The traces too: a rewind puts the patch back at nought, and a chart
+        // still showing what was played before it would be a picture of a
+        // moment that no longer exists on the timeline.
+        for (var i = 0; i < traces.Length; i++)
+        {
+            Array.Clear(traces[i]);
+            traceHeads[i] = 0;
+        }
     }
 
     /// <summary>

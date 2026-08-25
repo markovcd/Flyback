@@ -4,7 +4,7 @@ Each record captures one decision, the situation that forced it, and what it
 costs. Format is [Michael Nygard's](https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions):
 context, decision, consequences.
 
-Twenty-two records — [0003](0003-cpu-rendering-with-a-gpu-path-left-open.md),
+Twenty-three records — [0003](0003-cpu-rendering-with-a-gpu-path-left-open.md),
 [0004](0004-visual-patch-editor-as-the-authoring-model.md),
 [0026](0026-modules-from-plugins-with-provenance-in-the-file.md),
 [0027](0027-delay-lines-give-the-audio-path-a-memory.md),
@@ -25,7 +25,8 @@ Twenty-two records — [0003](0003-cpu-rendering-with-a-gpu-path-left-open.md),
 [0049](0049-record-the-gpu-frame-not-the-interpreter.md) and
 [0050](0050-normalled-sockets-carry-a-signal-with-no-wire.md) and
 [0051](0051-a-quantisers-scale-is-a-set-on-the-node.md) and
-[0052](0052-a-patch-names-its-samples-rather-than-carrying-them.md) — are marked
+[0052](0052-a-patch-names-its-samples-rather-than-carrying-them.md) and
+[0053](0053-a-scope-records-what-the-speakers-played.md) — are marked
 **user-directed**: they were chosen by the project owner, not derived. The first
 two sit upstream of almost everything else here; 0026 and 0027 each give up a
 property an earlier record relied on, knowingly; 0031, 0033, 0034, 0036 and 0040
@@ -61,8 +62,11 @@ made a sequencer's tune the one thing an instance carries that is not a knob, an
 this one makes it two, which turns an exception into a rule and is the part of it
 worth watching. 0052 is the first record that takes something away from the file
 rather than from a module: a patch with a sample in it is no longer everything it
-needs, which is a promise about the filesystem where there used to be none. All
-are recorded even though they were not mine to make.
+needs, which is a promise about the filesystem where there used to be none. 0053
+is the answer to the limit 0040 recorded and left standing — a Probe cannot show
+memory, so this adds the module that can, and pays for it by giving up 0022's
+dead-code elimination in the one program where a chart of the past can come
+from. All are recorded even though they were not mine to make.
 
 [0035](0035-a-glsl-backend-for-the-video-path.md) is the first record where two
 backends disagree by design: the picture on screen and the picture in an exported
@@ -108,6 +112,7 @@ the two that was there while the knobs were moving.
 | [0050](0050-normalled-sockets-carry-a-signal-with-no-wire.md) | Normalled sockets carry a signal with no wire *(user-directed)* |
 | [0051](0051-a-quantisers-scale-is-a-set-on-the-node.md) | A quantiser's scale is a set on the node *(user-directed)* |
 | [0052](0052-a-patch-names-its-samples-rather-than-carrying-them.md) | A patch names its samples rather than carrying them *(user-directed)* |
+| [0053](0053-a-scope-records-what-the-speakers-played.md) | A Scope records what the speakers played *(user-directed)* |
 
 ### The shell
 

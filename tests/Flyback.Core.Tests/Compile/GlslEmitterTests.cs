@@ -24,7 +24,7 @@ public class GlslEmitterTests
     /// rather than a silent hole in the theory below.
     /// </summary>
     private static bool WritesNothing(OpCode code) =>
-        code is OpCode.UnitWrite or OpCode.ClockWrite;
+        code is OpCode.UnitWrite or OpCode.ClockWrite or OpCode.Tap;
 
     /// <summary>
     /// The test that matters: it fails the day an opcode is added and the shader

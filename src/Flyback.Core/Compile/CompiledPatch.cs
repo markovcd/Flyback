@@ -34,9 +34,23 @@ public sealed class CompiledPatch(
     int registerCount,
     int outputBase,
     int outputWidth = 3,
-    IReadOnlyList<LoadedSample>? tables = null)
+    IReadOnlyList<LoadedSample>? tables = null,
+    IReadOnlyList<TapSpec>? taps = null)
 {
     public Op[] Ops { get; } = ops;
+
+    /// <summary>
+    /// The Scopes this program has something to do with, in the order
+    /// <see cref="OpCode.Tap"/> numbers them.
+    /// </summary>
+    /// <remarks>
+    /// Both programs of a patch carry this and they mean opposite halves of it.
+    /// The speakers' program has one tap op per entry and no buffer; the
+    /// screen's program has one table read per entry and no tap. What pairs them
+    /// is the node id, because the two are compiled separately and throw away
+    /// different dead code — see <see cref="Traces.Refresh"/>.
+    /// </remarks>
+    public IReadOnlyList<TapSpec> Taps { get; } = taps ?? [];
 
     /// <summary>
     /// The clips <see cref="OpCode.Table"/> reads, indexed by its K.
@@ -65,6 +79,21 @@ public sealed class CompiledPatch(
     /// </summary>
     public IReadOnlyList<float> DelayLengths { get; } =
         [.. ops.Where(o => o.Code is OpCode.Delay or OpCode.Allpass).Select(o => o.K)];
+
+    /// <summary>
+    /// How many traces this program keeps — one per Scope whose input it
+    /// evaluates, which is the speakers' program and no other.
+    /// </summary>
+    /// <remarks>
+    /// Counted from the highest slot rather than from how many taps there are,
+    /// because a scope wired to nothing emits none and would otherwise shift
+    /// every scope after it.
+    /// </remarks>
+    public int TraceCount { get; } = ops
+        .Where(o => o.Code is OpCode.Tap)
+        .Select(o => (int)o.K + 1)
+        .DefaultIfEmpty(0)
+        .Max();
 
     /// <summary>
     /// How many phase accumulators the program runs. One cell each, so unlike a
@@ -199,6 +228,10 @@ public sealed class CompiledPatch(
 
                 case OpCode.SampleFeedback:
                     Sample(feedback, registers[op.A], registers[op.B], registers[op.Out..(op.Out + 3)]);
+                    break;
+
+                case OpCode.Tap:
+                    delays?.Tap((int)op.K, registers[op.A]);
                     break;
 
                 case OpCode.Table:

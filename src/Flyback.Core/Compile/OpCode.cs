@@ -173,6 +173,25 @@ public enum OpCode : byte
     /// </remarks>
     Table,
 
+    /// <summary>
+    /// trace K keeps a, and nothing is written to a register.
+    /// </summary>
+    /// <remarks>
+    /// The one op whose whole purpose is outside the program. Everything else
+    /// here computes something the next op or the sink will read; this hands a
+    /// value to whoever is watching and produces nothing. A Scope is the only
+    /// module that emits one — see <see cref="DelayState.Tap"/>.
+    /// <para>
+    /// It is also the one op that makes a program larger than what it computes.
+    /// A Scope is not reachable from the speakers, so the audio walk would never
+    /// visit what it is looking at; the compiler roots at every tap as well as
+    /// at the sink, which keeps its input alive on a path that has no other use
+    /// for it. That is exactly the dead-code elimination of ADR-0022 being given
+    /// up on purpose, for the one thing that cannot work without it.
+    /// </para>
+    /// </remarks>
+    Tap,
+
     // --- multi-register writes: these fill out, out+1, out+2 ---
     /// <summary>(out, out+1, out+2) = hsv2rgb(a, b, c)</summary>
     HsvToRgb,

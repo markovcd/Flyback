@@ -279,6 +279,33 @@ it — time swept across the picture, x and y pinned to the middle — so what y
 get is the signal at the centre of the screen over a couple of seconds, not the
 field it makes.
 
+### Looking at what was played
+
+A Probe recomputes the signal at every column, which is what lets it draw the
+future — and also why it draws an oscillator without its accumulated phase and a
+delay line as a wire. The video path has no memory, and the Probe does not
+pretend otherwise.
+
+A **Scope** is the other half of that. It computes nothing: while sound is
+playing, the speakers' program hands it one evaluation at a time, in order, and
+it keeps the last stretch. Select it and you see what was actually heard —
+including everything the Probe structurally cannot show, an envelope that was
+triggered, a sample playing, a delay tail, a filter settling.
+
+The cost is three cliffs that are really one. It shows nothing until sound is
+switched on; it shows nothing the Output's `left` and `right` do not reach, since
+a branch that only draws was never played; and it shows only the past. Put a
+Probe and a Scope on the same node and the two charts differ wherever the patch
+has memory in it. That disagreement is the point of having both, and is why the
+Scope is a separate module rather than a switch on the Probe.
+
+Mechanically it is the only module whose input is a *root* of a program: nothing
+downstream reads a Scope, so the walk from the speakers would never reach what it
+is looking at, and the compiler roots at every tap as well as at the sink. That
+is the per-sink dead-code elimination given up on purpose, for the one thing that
+cannot work without it
+([ADR-0053](docs/adr/0053-a-scope-records-what-the-speakers-played.md)).
+
 ## Sound
 
 The same modules drive the speakers.
@@ -573,7 +600,8 @@ happened before now, and the screen has no before — the same reason a Probe
 cannot show a delay line or an accumulated phase. So the chart is the clip read
 at `in` with the trigger ignored, which for an `in` on the clock means you see
 the file only while the transport is inside it: rewind, or set `window` to about
-the clip's length, and the waveform is there.
+the clip's length, and the waveform is there. A **Scope** shows the triggering,
+because it is a recording of what came out rather than a second evaluation.
 
 Audio runs at 48 kHz, 4× oversampled and filtered before decimation, which keeps
 the naive `Saw` and `Square` from folding harmonics back down as buzzing. It
