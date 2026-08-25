@@ -21,6 +21,24 @@ public enum OpCode : byte
     /// <summary>out = current time in seconds</summary>
     LoadT,
 
+    /// <summary>out = how far x reaches, which is half the frame's width in y's units</summary>
+    /// <remarks>
+    /// The frame the program is being drawn into, which every other op manages
+    /// without: y is always -1 to 1 and x is -this to this, so a module that
+    /// wants to reach the left and right edges needs the number and cannot work
+    /// it out from a pixel. It is 1 wherever there is no frame — the audio path
+    /// driven by time alone, and anything evaluating a program without saying
+    /// what it is drawing into — which is the square picture those would be if
+    /// they were one.
+    /// <para>
+    /// A load rather than a constant folded in at compile time, because it is
+    /// not a property of the patch. One program is drawn at preview size, at
+    /// export size and into a movie, and a chart compiled to fit the first would
+    /// be wrong in the other two.
+    /// </para>
+    /// </remarks>
+    LoadAspect,
+
     /// <summary>out = a</summary>
     Copy,
 

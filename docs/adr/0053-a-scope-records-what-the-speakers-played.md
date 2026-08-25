@@ -72,6 +72,28 @@ program's job is only to say how far across the picture a column is. `window`
 therefore appears in none of the module's ops: turning it changes what is put in
 the buffer, not what is done with it, and nothing recompiles.
 
+**The chart is the frame, which needed a new load.** A Probe can ignore the shape
+of the picture: its signal is defined at every column, so whatever the frame is,
+it has something to draw there. A chart of a *recording* has a definite extent,
+and one fixed in x-units left dead margins either side of it on any frame that
+was not square. `OpCode.LoadAspect` hands the program how far x reaches — the
+shader had `uAspect` already, and the interpreter simply never had a way to ask —
+so the window is stretched edge to edge and the graticule is eight divisions
+across whatever the frame turns out to be. The squares are then wider than they
+are tall on a wide preview, which is what a scope's graticule does anyway, and
+the readout keeps meaning what it says: a square is an eighth of `window` across
+and a quarter of `scale` up.
+
+**Now is the right-hand edge, and the phosphor says so rather than a rule.** The
+first attempt ruled a bright vertical line at the moment, as the Probe does. That
+works when the moment is a column with a future beyond it and does not work at
+all when the moment is the edge of the picture: the line is half off-screen and a
+pixel wide, which is not a marker but the look of one. So the Scope passes no
+rule and dims the trace towards the past instead. It reads instantly, it is what
+a slow tube actually does, and it degrades into "slightly dimmer on the left"
+rather than into nothing. The graticule is not dimmed with it — a grid that faded
+would be unreadable exactly where the oldest values are.
+
 **The two programs are paired by node id.** They are compiled separately and throw
 away different dead code, so a Scope's position in one has nothing to do with its
 position in the other. `CompiledPatch.Taps` carries the ids, and
@@ -101,6 +123,13 @@ since a branch that only draws was never played. And it shows only the past. All
 three are the same fact — it is a record of what happened, not a computation of
 what would — and the module's own description says all three rather than letting
 somebody discover them as bugs.
+
+**Two new opcodes, and the second is nothing to do with sound.**
+`OpCode.LoadAspect` fell out of this and belongs to nobody: it is the shape of
+the frame, the shader has had it as a uniform since ADR-0035, and the
+interpreter's `Evaluate` simply had no parameter for it. Any module that wants
+to reach the edges of the picture can now ask — a gap that had gone unnoticed
+because until this one, nothing in the catalogue had a definite width.
 
 **A Scope on screen gives up the shader,** through the mechanism 0052 already
 built rather than a new one: its program carries a table, and a program carrying

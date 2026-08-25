@@ -84,7 +84,7 @@ public sealed class SynthRenderer
                 {
                     var px = (2d * (x + 0.5d) / width - 1d) * aspect;
 
-                    patch.Evaluate(px, py, time, registers, feedback);
+                    patch.Evaluate(px, py, time, registers, feedback, aspect: aspect);
 
                     var r = Saturate(registers[outputBase + 0]);
                     var g = Saturate(registers[outputBase + 1]);

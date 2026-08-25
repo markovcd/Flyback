@@ -154,13 +154,34 @@ public partial class NodeCatalog
     /// Where the trace goes, in screen units — the value already divided by
     /// whatever the top of the chart is worth.
     /// </param>
-    /// <param name="visible">
-    /// Where there is a signal to draw at all, or null for a chart that covers
-    /// the whole picture. The grid is drawn either way: a Scope's window is a
-    /// box inside the frame, and ruling past it is what says the box is where
-    /// the chart is rather than where the picture ends.
+    /// <param name="now">
+    /// Where to rule the bright vertical line that marks the moment, or null for
+    /// a chart whose moment is the edge of the frame and so needs none — a line
+    /// there would be half off the picture and a pixel wide, which is not a
+    /// marker but the look of one.
     /// </param>
-    private static Slot Charted(Emitter em, Slot x, Slot y, Slot height, Slot? visible = null)
+    /// <param name="glow">
+    /// How brightly to draw the signal, per column, or null for evenly. What a
+    /// chart of the past uses to say which end of it is now: a phosphor fading
+    /// behind the beam, which is the one cue that works when the moment is the
+    /// edge rather than a column. The grid is not dimmed with it — a graticule
+    /// that faded would be unreadable exactly where the oldest values are.
+    /// </param>
+    /// <param name="across">
+    /// How wide a grid square is, or null for the fixed <see cref="Division"/>.
+    /// A Scope rules a fixed eight of them across the frame however wide it is,
+    /// so its squares are a value rather than a constant — which is the whole
+    /// difference between a graticule that says how long the window is and one
+    /// that says how many screen units a column happens to be.
+    /// </param>
+    private static Slot Charted(
+        Emitter em,
+        Slot x,
+        Slot y,
+        Slot height,
+        Slot? now = null,
+        Slot? across = null,
+        Slot? glow = null)
     {
         var one = em.Constant(1f);
         var zero = em.Constant(0f);
@@ -187,31 +208,35 @@ public partial class NodeCatalog
         var side = em.Binary(OpCode.Step, zero, em.Mul(height, y));
         var clipped = em.Mul(em.Mul(over, edge), side);
 
-        if (visible is { } where)
-        {
-            trace = em.Mul(trace, where);
-            fill = em.Mul(fill, where);
-            clipped = em.Mul(clipped, where);
-        }
+        var signal = em.Add(em.Mul(fill, 0.22f), trace);
 
-        var grid = em.Add(Lattice(x), Lattice(y));
-        var axes = em.Add(Axis(x), Axis(y));
+        // Where the moment is, said one way or the other. A Probe recomputes
+        // the signal either side of it, so its now is a column in the middle and
+        // a rule down it is exactly right. A Scope's now is the edge of the
+        // frame, where a rule would be half off the picture — so it says the
+        // same thing by brightness instead, and passes no rule at all rather
+        // than borrowing the Probe's, which down the centre of a scope would
+        // look like it meant something and would mean half a window ago.
+        if (glow is { } brightness) signal = em.Mul(signal, brightness);
+
+        var grid = em.Add(Lattice(x, across ?? em.Constant(Division)), Lattice(y, em.Constant(Division)));
+        var axes = now is { } when ? em.Add(Axis(em.Sub(x, when)), Axis(y)) : Axis(y);
 
         var ink = em.Add(
             em.Add(em.Mul(grid, 0.09f), em.Mul(axes, 0.2f)),
-            em.Add(em.Mul(fill, 0.22f), trace));
+            signal);
 
         var lit = em.Mul(em.Combine(em.Constant(0.45f), one, em.Constant(0.72f)), ink);
 
         return em.Add(lit, em.Mul(em.Combine(one, em.Constant(0.25f), em.Constant(0.2f)), clipped));
 
         // Lines every division, measured back into the coordinate's own units so
-        // that both axes are ruled the same thickness whatever the aspect ratio
-        // has done to x.
-        Slot Lattice(Slot u)
+        // that both axes are ruled the same thickness whatever the division is
+        // and whatever the aspect ratio has done to x.
+        Slot Lattice(Slot u, Slot division)
         {
-            var cell = em.Unary(OpCode.Fract, em.Add(em.Mul(u, 1f / Division), 0.5f));
-            var away = em.Mul(em.Unary(OpCode.Abs, em.Add(cell, -0.5f)), Division);
+            var cell = em.Unary(OpCode.Fract, em.Add(em.Binary(OpCode.Div, u, division), 0.5f));
+            var away = em.Mul(em.Unary(OpCode.Abs, em.Add(cell, -0.5f)), division);
 
             return em.Sub(one, em.Ternary(
                 OpCode.Smoothstep, em.Constant(0.0015f), em.Constant(0.005f), away));
@@ -491,7 +516,9 @@ public partial class NodeCatalog
                 // below is for.
                 var height = em.Binary(OpCode.Div, value, node[2]);
 
-                return [Charted(em, x, y, height)];
+                // Ruled down the middle: the moment is a column here, with the
+                // past to its left and the future to its right.
+                return [Charted(em, x, y, height, now: zero)];
             },
             "A chart of whatever is patched into it, in place of the picture. Select it and "
             + "the screen shows the value of its 'in' over time instead of the patch: the "
@@ -555,38 +582,58 @@ public partial class NodeCatalog
             [Col("out")],
             (em, node) =>
             {
-                var one = em.Constant(1f);
-
                 var x = em.Load(OpCode.LoadX);
                 var y = em.Load(OpCode.LoadY);
+
+                // How far x reaches, which is where the newest evaluation goes.
+                // A Probe can leave the frame out of it because its signal is
+                // defined at every column, so whatever the picture's shape it
+                // has something to draw there; this one has a definite extent,
+                // and an extent that did not reach the edges would be a chart
+                // with the past cut off it and dead margins either side.
+                var edge = em.Load(OpCode.LoadAspect);
 
                 // The buffer holds exactly the window, whatever the window is —
                 // something outside the program keeps it that way, see
                 // Traces.Buffer — so all this has to say is how far across the
-                // chart the column is. Which is why 'window' appears nowhere in
+                // frame the column is. Which is why 'window' appears nowhere in
                 // these ops: turning it changes what is put in the buffer, not
                 // what is done with it.
-                var across = node.Trace is { } trace
-                    ? em.Table(em.Mul(em.Add(x, one), 0.5f * trace.Seconds), trace)
+                var age = em.Binary(OpCode.Div, em.Add(x, edge), em.Mul(edge, 2f));
+
+                var played = node.Trace is { } trace
+                    ? em.Table(em.Mul(age, trace.Seconds), trace)
                     : em.Constant(0f);
 
-                var height = em.Binary(OpCode.Div, across, node[2]);
+                var height = em.Binary(OpCode.Div, played, node[2]);
 
-                // The chart is the eight squares in the middle and no wider. A
-                // Probe fills the frame because its signal is defined at every
-                // column; this one has a definite extent, and drawing past it
-                // would be holding the oldest and newest values out flat as
-                // though they were signal.
-                var inside = em.Mul(
-                    em.Binary(OpCode.Step, x, one),
-                    em.Binary(OpCode.Step, em.Constant(-1f), x));
-
-                return [Charted(em, x, y, height, inside)];
+                // Eight divisions across whatever the frame turns out to be, so
+                // the graticule keeps saying what it says however the window is
+                // shaped: a square is an eighth of 'window' across and a quarter
+                // of 'scale' up. They are wider than they are tall on a wide
+                // preview, which is what a scope's graticule does too.
+                //
+                // No rule for the moment, because the moment is the right-hand
+                // edge and a line there would be half off the picture. The
+                // phosphor says it instead — full brightness at the beam, fading
+                // back into the past, which is what a scope with a slow tube
+                // looks like and reads instantly as which end is now.
+                return
+                [
+                    Charted(
+                        em, x, y, height,
+                        across: em.Mul(edge, 0.25f),
+                        glow: em.Add(em.Mul(age, 0.62f), 0.38f)),
+                ];
             },
             "A chart of what the speakers actually played. Patch the signal you want to "
             + "watch into its 'in' and select it, and the screen shows the last 'window' "
-            + "seconds of it — the right edge is now and the left is 'window' ago, one grid "
-            + "square being an eighth of the window across and a quarter of 'scale' up. "
+            + "seconds of it, across the whole width. Time runs left to right: the right-hand "
+            + "edge is now — the bright vertical line — and the left-hand edge is 'window' "
+            + "ago. One grid square is an eighth of the window across and a quarter of "
+            + "'scale' up, whatever shape the picture is. A Probe puts its line down the "
+            + "middle because it has a future to draw on the other side of it; this one has "
+            + "none, so the newest sample is the last column and there is nothing past it. "
             + "Unlike a Probe it shows memory: an oscillator's accumulated phase, a delay "
             + "line's tail, a sample playing, an envelope that was triggered. What it cannot "
             + "do is show the future, or anything at all while sound is off, or anything the "

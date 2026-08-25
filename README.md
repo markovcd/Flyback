@@ -292,6 +292,12 @@ it keeps the last stretch. Select it and you see what was actually heard —
 including everything the Probe structurally cannot show, an envelope that was
 triggered, a sample playing, a delay tail, a filter settling.
 
+The window is stretched across the whole frame, with `now` at the right-hand
+edge, and the trace fades into the past behind it the way a slow tube does — so
+which end is the moment is something you see rather than something you have to be
+told. The graticule is eight divisions across whatever the frame turns out to be,
+so a square stays an eighth of `window` across and a quarter of `scale` up.
+
 The cost is three cliffs that are really one. It shows nothing until sound is
 switched on; it shows nothing the Output's `left` and `right` do not reach, since
 a branch that only draws was never played; and it shows only the past. Put a

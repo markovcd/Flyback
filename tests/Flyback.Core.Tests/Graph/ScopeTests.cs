@@ -27,6 +27,18 @@ public class ScopeTests
     private const int In = 0;
     private const int Window = 1;
 
+    /// <summary>
+    /// How much of the chart's ink is at a pixel. Green carries the most of it,
+    /// the same measurement the Probe's tests take.
+    /// </summary>
+    private static double Ink(CompiledPatch program, double x, double y, double aspect = 1d)
+    {
+        var registers = program.AllocateRegisters();
+        program.Evaluate(x, y, 0d, registers, default, aspect: aspect);
+
+        return registers[program.OutputBase + 1];
+    }
+
     private static int Count(CompiledPatch program, OpCode code) =>
         program.Ops.Count(op => op.Code == code);
 
@@ -242,6 +254,89 @@ public class ScopeTests
         // amplitude, on one side or the other. Averaging the bucket would put
         // every one of them at nought instead.
         chart.Count(v => Math.Abs(v) > 0.9f).ShouldBeGreaterThan(Traces.Points - 64);
+    }
+
+    /// <summary>
+    /// Which end is now has to be visible, because it is the one thing about the
+    /// chart nobody can work out by looking at the trace. A Probe rules a line
+    /// down the moment, having a future to draw on the far side of it. This one
+    /// has no such column — its moment is the right-hand edge — so it says the
+    /// same thing with the phosphor: brightest at the beam, fading back.
+    /// </summary>
+    [Theory]
+    [InlineData(1d)]
+    [InlineData(16d / 9d)]
+    public void The_trace_is_brightest_at_now_and_fades_into_the_past(double aspect)
+    {
+        var (patch, scope, _) = Watching(Value, (0, 0.5f));
+
+        var heard = patch.CompileForAudio(NodeCatalog.BuiltIn).Program;
+        var drawn = patch.CompileForProbe(scope.Id, NodeCatalog.BuiltIn).Program;
+
+        Traces.Refresh(drawn, heard, Played(heard));
+
+        // The same trace at the same height, read at each end of it — so the
+        // only thing that can differ is how brightly it is drawn.
+        var newest = Ink(drawn, aspect - 0.02d, 0.5d, aspect);
+        var oldest = Ink(drawn, -aspect + 0.02d, 0.5d, aspect);
+
+        newest.ShouldBeGreaterThan(oldest * 1.5d);
+        oldest.ShouldBeGreaterThan(0.2d);
+    }
+
+    /// <summary>
+    /// And nothing is ruled down the middle of it, which is what a Probe does
+    /// there and would mean half a window ago here. The two share the drawing,
+    /// so this is worth pinning on both.
+    /// </summary>
+    [Fact]
+    public void Only_a_probe_rules_the_middle()
+    {
+        var (patch, scope, _) = Watching(Value, (0, 0f));
+
+        var b = new PatchBuilder(NodeCatalog.BuiltIn);
+        b.Add(NodeCatalog.OutputTypeId, 900, 0);
+        var probe = b.Add(NodeCatalog.ProbeTypeId, 400, 0);
+
+        // Well clear of the trace and of the horizontal axis, so what is
+        // measured is the vertical rule and nothing else. The middle column is
+        // a grid line on both charts, which is worth 0.09; a rule on top of it
+        // is worth 0.2 more, so the threshold sits between the two.
+        Ink(b.Patch.CompileForProbe(probe.Id, NodeCatalog.BuiltIn).Program, 0d, 0.6d)
+            .ShouldBeGreaterThan(0.15d);
+
+        Ink(patch.CompileForProbe(scope.Id, NodeCatalog.BuiltIn).Program, 0d, 0.6d)
+            .ShouldBeLessThan(0.15d);
+    }
+
+    /// <summary>
+    /// The chart reaches both edges of the frame however wide it is. A window
+    /// that stopped short would be a chart with the oldest of the past cut off
+    /// it and a dead margin either side, which is what a fixed extent gave.
+    /// </summary>
+    [Theory]
+    [InlineData(1d)]
+    [InlineData(16d / 9d)]
+    [InlineData(2.4d)]
+    public void The_window_is_stretched_across_the_whole_frame(double aspect)
+    {
+        var (patch, scope, _) = Watching(Value, (0, 0.5f));
+
+        var heard = patch.CompileForAudio(NodeCatalog.BuiltIn).Program;
+        var drawn = patch.CompileForProbe(scope.Id, NodeCatalog.BuiltIn).Program;
+
+        Traces.Refresh(drawn, heard, Played(heard));
+
+        // The trace sits at half of 'scale', so this is where it is and nowhere
+        // else — at both edges as well as the middle, which is the whole claim.
+        // The upper threshold clears what the phosphor leaves of the oldest
+        // column; the lower one is below a bare grid line, and the readings are
+        // taken off the graticule so that neither is what is being measured.
+        foreach (var column in new[] { -aspect + 0.02d, 0.03d, aspect - 0.02d })
+        {
+            Ink(drawn, column, 0.5d, aspect).ShouldBeGreaterThan(0.2d);
+            Ink(drawn, column, -0.6d, aspect).ShouldBeLessThan(0.05d);
+        }
     }
 
     /// <summary>

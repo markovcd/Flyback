@@ -214,7 +214,12 @@ public sealed class AudioRenderer
                 // removed: two consecutive sample times an hour into a session
                 // are the same float, and an oscillator measuring how far its
                 // input moved would be handed a staircase to run on.
-                program.Evaluate(x, y, t, registers, default, lines);
+                // The frame goes in even here. Nothing the speakers reach is
+                // drawn into one, but a scanned patch sweeps x across exactly
+                // this width — so a module asking how far x reaches is told the
+                // same thing on both paths rather than a different picture per
+                // sink.
+                program.Evaluate(x, y, t, registers, default, lines, scan.Aspect);
 
                 delayLines[0][historyPosition] = (float)registers[left];
                 delayLines[1][historyPosition] = (float)registers[right];

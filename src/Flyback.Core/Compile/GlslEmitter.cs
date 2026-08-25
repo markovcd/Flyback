@@ -416,6 +416,7 @@ public static class GlslEmitter
                 OpCode.LoadX => "px",
                 OpCode.LoadY => "py",
                 OpCode.LoadT => "uTime",
+                OpCode.LoadAspect => "uAspect",
                 OpCode.Copy => a,
 
                 OpCode.Neg => $"-{a}",

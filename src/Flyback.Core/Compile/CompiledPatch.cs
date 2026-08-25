@@ -146,13 +146,19 @@ public sealed class CompiledPatch(
     /// <param name="y">Vertical position, -1 at the bottom to 1 at the top. Pinned to zero on the audio path.</param>
     /// <param name="t">Seconds since the patch started, which is the only one of the three that moves for the ear.</param>
     /// <param name="registers">Scratch for the whole program, sized by <see cref="RegisterCount"/> and reused across pixels rather than allocated per one.</param>
+    /// <param name="aspect">
+    /// How far <paramref name="x"/> reaches at the edge of the frame, for
+    /// <see cref="OpCode.LoadAspect"/>. Defaults to a square picture, which is
+    /// what a caller that is not drawing one has.
+    /// </param>
     public void Evaluate(
         double x,
         double y,
         double t,
         Span<double> registers,
         in FeedbackFrame feedback,
-        DelayState? delays = null)
+        DelayState? delays = null,
+        double aspect = 1d)
     {
         var ops = Ops;
 
@@ -171,6 +177,7 @@ public sealed class CompiledPatch(
                 case OpCode.LoadX: registers[op.Out] = x; break;
                 case OpCode.LoadY: registers[op.Out] = y; break;
                 case OpCode.LoadT: registers[op.Out] = t; break;
+                case OpCode.LoadAspect: registers[op.Out] = aspect; break;
                 case OpCode.Copy: registers[op.Out] = registers[op.A]; break;
 
                 case OpCode.Neg: registers[op.Out] = -registers[op.A]; break;
