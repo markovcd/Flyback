@@ -24,6 +24,13 @@ public partial class NodeCatalog
     /// the ordinary module it is.
     /// </summary>
     public const string ScanTypeId = "scan";
+
+    /// <summary>
+    /// The scale quantiser. Named here because it is the one module whose
+    /// instance carries a scale, and the editor and the assistant both have to
+    /// ask whether a given node is it — see <see cref="NodeInstance.Scale"/>.
+    /// </summary>
+    public const string QuantiserTypeId = "audio.quantiser";
     
     /// <summary>
     /// Whether a module is the sink. A patch always has one and never has two,
@@ -105,8 +112,136 @@ public partial class NodeCatalog
             + "waveform rather than breaking it. 'hz' goes to an oscillator's freq; 'note' "
             + "hands the snapped number on, so a second Note can play an interval off it.");
 
+        yield return Quantiser();
         yield return Probe();
         yield return Scan();
+    }
+
+    /// <summary>
+    /// The notes a freshly placed Quantiser snaps to: a major scale, which is
+    /// the one every ear recognises and the one that makes the module audibly
+    /// do something the moment it is placed.
+    /// </summary>
+    /// <remarks>
+    /// Chromatic would be the neutral choice and is the wrong one: every note
+    /// switched on is a scale that snaps to the nearest semitone, which the Note
+    /// module already does — a module that arrives doing nothing is a module
+    /// nobody finds out the point of.
+    /// </remarks>
+    private static readonly int[] Major = [0, 2, 4, 5, 7, 9, 11];
+
+    /// <summary>
+    /// A pitch quantiser with a scale on it: the note nearest to what arrives,
+    /// out of the ones the scale has switched on.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The scale is a list on the node rather than twelve sockets, for the
+    /// reason ADR-0038 gives about a tune. Twelve switches would be twelve
+    /// inputs on a module nobody could read, and unlike a knob none of them is
+    /// a thing a patch could drive: what a scale holds is which notes exist,
+    /// and that is a decision about the piece rather than a signal in it.
+    /// </para>
+    /// <para>
+    /// What it lowers to depends on which notes are on, which is the whole
+    /// reason the scale is a compile-time value — see
+    /// <see cref="EmitContext.Scale"/>. Each note switched on contributes one
+    /// candidate and the notes switched off contribute nothing, so a five-note
+    /// scale is a little over half the ops of a nine-note one and the two ends
+    /// of the range are special cases worth taking: all twelve is the nearest
+    /// semitone and none at all is a wire.
+    /// </para>
+    /// </remarks>
+    private static NodeDef Quantiser() => new(
+        QuantiserTypeId, "Quantiser", "Output",
+        [Pitched("in", 57f)],
+        [Num("note")],
+        EmitQuantiser,
+        "Snaps what arrives to the nearest note the scale has switched on, in whatever "
+        + "octave that lands in — so a sweep becomes a run up the scale and a wandering "
+        + "signal becomes a tune. The twelve switches are pitch classes: turning A on puts "
+        + "every A in the scale, not one of them. Patch its 'note' into a Note module to "
+        + "hear it, or use it anywhere a stepped signal is wanted. All twelve on is the "
+        + "nearest semitone, which is what a Note does on its own; none on is a wire, since "
+        + "there is nothing to snap to.")
+    {
+        DefaultScale = Major,
+    };
+
+    /// <summary>
+    /// One candidate per note in the scale, and the closest of them.
+    /// </summary>
+    /// <remarks>
+    /// The nearest note of pitch class <c>p</c> to a signal <c>n</c> is
+    /// <c>12·round((n − p)/12) + p</c> — the octave that puts <c>p</c> closest,
+    /// which is a rounding rather than a search. Every scale note gives one, and
+    /// the answer is whichever of them the signal is least far from. So there is
+    /// no loop and no branch: a fixed candidate per switch that is on, and a
+    /// running minimum over them, which is the same unrolling the Supersaw uses
+    /// for its seven voices.
+    /// <para>
+    /// The division by twelve is done once, before the candidates, and the
+    /// subtraction of the pitch class folds into the same constant the rounding
+    /// adds — so a candidate costs a floor and three arithmetic ops rather than
+    /// the six the formula reads as.
+    /// </para>
+    /// <para>
+    /// Ties go to the note the scale names later, which after
+    /// <see cref="Pitch.Scale"/> is always the higher pitch class. Reaching one
+    /// takes a signal landing exactly halfway between two notes of the scale, so
+    /// what settles it matters less than its being settled the same way twice.
+    /// </para>
+    /// </remarks>
+    private static Slot[] EmitQuantiser(Emitter em, EmitContext node)
+    {
+        var signal = node[0];
+        var scale = node.Scale;
+
+        // Nothing switched on: there is no note to snap to, so what comes out is
+        // what went in. The same answer a Delay with nothing to remember gives,
+        // and it is what makes the twelve switches safe to turn off one at a
+        // time — the module fades out of the patch rather than falling out of it.
+        if (scale.Count == 0) return [signal];
+
+        // Every note switched on: the nearest of all twelve is the nearest
+        // semitone, and that is a rounding rather than twelve candidates.
+        if (scale.Count == Pitch.Classes)
+            return [em.Unary(OpCode.Floor, em.Add(signal, 0.5f))];
+
+        // The signal in octaves. Every candidate is a floor of this plus a
+        // constant, so it is worth one op here rather than one per note.
+        var octaves = em.Mul(signal, 1f / Pitch.Semitones);
+
+        var best = em.Constant(0f);
+        var nearest = em.Constant(0f);
+
+        for (var i = 0; i < scale.Count; i++)
+        {
+            // round((signal - class) / 12), with the shift and the half folded
+            // into the one constant a floor needs.
+            var octave = em.Unary(
+                OpCode.Floor,
+                em.Add(octaves, 0.5f - (scale[i] / Pitch.Semitones)));
+
+            var candidate = em.Add(em.Mul(octave, Pitch.Semitones), scale[i]);
+            var away = em.Unary(OpCode.Abs, em.Sub(signal, candidate));
+
+            if (i == 0)
+            {
+                best = candidate;
+                nearest = away;
+                continue;
+            }
+
+            // 1 where this candidate is at least as close as the best so far,
+            // and the two Mixes are the branch a register machine does not have.
+            var closer = em.Binary(OpCode.Step, away, nearest);
+
+            best = em.Ternary(OpCode.Mix, best, candidate, closer);
+            nearest = em.Ternary(OpCode.Mix, nearest, away, closer);
+        }
+
+        return [best];
     }
     
     /// <summary>

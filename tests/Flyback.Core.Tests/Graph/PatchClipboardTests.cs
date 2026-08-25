@@ -173,6 +173,35 @@ public class PatchClipboardTests
     }
 
     /// <summary>
+    /// The two things a node carries that are not knobs, and the two a copy
+    /// could quietly leave behind — neither is a socket, so nothing else about
+    /// the pasted module would show they had gone.
+    /// </summary>
+    [Fact]
+    public void Pasted_modules_carry_what_is_not_a_knob()
+    {
+        var builder = new PatchBuilder(NodeCatalog.BuiltIn);
+        builder.Add(NodeCatalog.OutputTypeId, 0, 0);
+
+        var sequencer = builder.Add("seq.notes", 0, 0);
+        var quantiser = builder.Add(NodeCatalog.QuantiserTypeId, 0, 0);
+
+        sequencer.Steps = [new Step(60f), new Step(64f, 2f)];
+        quantiser.Scale = [0, 3, 7];
+
+        var fragment = PatchClipboard.Copy(builder.Patch, [sequencer.Id, quantiser.Id]);
+        var pasted = PatchClipboard.Paste(builder.Patch, fragment);
+
+        pasted.Single(n => n.TypeId == "seq.notes").Steps.ShouldBe(sequencer.Steps);
+        pasted.Single(n => n.TypeId == NodeCatalog.QuantiserTypeId).Scale.ShouldBe(quantiser.Scale);
+
+        // Its own copy, not the one it was pasted from: editing the new module's
+        // scale must not reach back into the module it came from.
+        pasted.Single(n => n.TypeId == NodeCatalog.QuantiserTypeId).Scale!.Clear();
+        quantiser.Scale.ShouldBe([0, 3, 7]);
+    }
+
+    /// <summary>
     /// A whole saved patch on the clipboard is a thing worth being able to
     /// paste, and it means everything in it but the sink.
     /// </summary>

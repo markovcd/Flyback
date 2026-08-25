@@ -14,7 +14,7 @@ they are the same two every time.
 and [0030](0030-oscillators-accumulate-their-phase.md) is why: an oscillator
 advances by how far its `in` moved, so one whose `in` does not move produces a
 fixed value. Left alone it is silence at the speakers and a flat field on the
-screen. Nine of the eleven presets wire a Time into it; so does every patch an
+screen. Most of the presets wire a Time into it; so does every patch an
 agent has built that worked.
 
 **Coordinates into `x` and `y`.** Every Space module, every Pattern module and
@@ -80,7 +80,7 @@ nothing is remarked on exactly as it always was.
 ## Consequences
 
 **Nothing renders differently, before or after the presets were rewritten.** All
-eleven preset snapshots and all twenty-two approved shaders are byte-for-byte
+twelve preset snapshots and all twenty-four approved shaders are byte-for-byte
 unchanged — first because every preset drew both wires by hand and an explicit
 wire still wins, and then again with those wires gone, down to the register
 numbering. The second of those is the stronger check: the hidden module is
@@ -89,8 +89,8 @@ preset that draws the wire and one that does not are the same program and not
 merely the same picture.
 
 **The presets say it the new way.** Every preset was rewritten to drop what it no
-longer has to draw: **18 modules and 55 wires** out of sixteen patches, and not
-one op out of any program. Fourteen of the sixteen changed. Nine lost a source
+longer has to draw: **18 modules and 55 wires** out of seventeen patches, and
+not one op out of any program. Fourteen of the seventeen changed. Nine lost a source
 module outright — Sequence lost both its Time and its Coordinates and is now
 eleven modules of nothing but the thing it does.
 

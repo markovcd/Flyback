@@ -310,7 +310,13 @@ public sealed partial class MainWindow
         if (def.DefaultSteps is not null)
             inspector.Children.Add(new StepList(node, def, because => editor.NotifyPatchChanged(because)).View);
 
-        if (def.Inputs.Count == 0 && def.DefaultSteps is null)
+        // A quantiser's scale is the other list a node may carry, and it is a
+        // set rather than a sequence — so it is edited as the octave it is a
+        // subset of rather than as a list of numbers.
+        if (def.DefaultScale is not null)
+            inspector.Children.Add(new ScaleKeys(node, def, because => editor.NotifyPatchChanged(because)).View);
+
+        if (def.Inputs.Count == 0 && def.DefaultSteps is null && def.DefaultScale is null)
             inspector.Children.Add(new TextBlock
             {
                 Text = "This module has nothing to set — it only produces.",

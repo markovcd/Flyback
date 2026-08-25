@@ -113,6 +113,23 @@ public sealed class NodeInstance
     public List<Step>? Steps { get; set; }
 
     /// <summary>
+    /// Which notes of the octave a quantiser will snap to, and null for every
+    /// module that snaps to none — the second thing an instance carries that is
+    /// not a knob.
+    /// </summary>
+    /// <remarks>
+    /// Pitch classes, so a scale names every A rather than one of them, and a
+    /// set rather than a sequence — see <see cref="Pitch.Scale"/>. Not
+    /// <see cref="Steps"/> reused, though the two are both lists on a node: a
+    /// tune is ordered and may repeat a note, a scale is neither, and a Step
+    /// would carry a length and a volume that mean nothing here. Not
+    /// <see cref="InputValues"/> either, for ADR-0038's reason — twelve sockets
+    /// for twelve switches is a module nobody can read, and none of the twelve
+    /// is a thing a patch could sensibly drive.
+    /// </remarks>
+    public List<int>? Scale { get; set; }
+
+    /// <summary>
     /// One coordinate held inside the canvas.
     /// </summary>
     /// <remarks>
@@ -161,6 +178,7 @@ public sealed class NodeInstance
         Y = y,
         InputValues = [.. def.Inputs.Select(p => p.Default)],
         Steps = def.DefaultSteps is { } notes ? [.. notes] : null,
+        Scale = def.DefaultScale is { } scale ? Pitch.Scale(scale) : null,
     };
 }
 

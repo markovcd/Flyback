@@ -19,6 +19,7 @@ public static class Presets
         new("Drone", Drone),
         new("Ring scan", RingScan),
         new("Chromatic", Chromatic),
+        new("In key", InKey),
         new("Sequence", Sequence),
         new("Four voices", FourVoices),
         new("Kick", Kick),
@@ -494,6 +495,166 @@ public static class Presets
          .Wire(hue, 0, color, 0)
          .Wire(glow, 0, color, 2)
          .Wire(color, 0, output, NodeCatalog.OutputColorPort);
+
+        return b.Patch;
+    }
+
+    /// <summary>
+    /// A noise field played as a melody and drawn as the terraces it is being
+    /// snapped to: one Quantiser, in a pentatonic, feeding both sinks.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The Noise is one module read two ways, which is what makes the picture
+    /// honest rather than illustrative. On the audio path x and y are nothing —
+    /// there is no pixel — so what the ear gets is a walk along <c>z</c> alone: a
+    /// value stepping once a beat, and a melody once the scale has pulled it
+    /// onto notes. On the video path the same module reads the pixel's own
+    /// position at that same <c>z</c>, so what the eye gets is the walk laid out
+    /// across the screen. The note you hear is the colour at the middle of the
+    /// picture.
+    /// </para>
+    /// <para>
+    /// That <c>z</c> is a staircase and not a ramp, which is the half of playing
+    /// in a key that snapping does not cover — see the sample and hold below.
+    /// It also ties the picture to the beat: the terraces reorganise on it
+    /// rather than drifting through it, the way Sequence's rings do.
+    /// </para>
+    /// <para>
+    /// A pentatonic because it is the scale with no wrong note in it: a signal
+    /// with no idea what key it is in lands somewhere musical whatever it does,
+    /// which is the whole argument for quantising in the first place. The five
+    /// notes are also what makes the terraces uneven — the gaps between them are
+    /// two and three semitones rather than one, so the bands are visibly
+    /// different widths and the widths <em>are</em> the scale.
+    /// </para>
+    /// <para>
+    /// Hue is quantised and brightness is not, which is the before and after of
+    /// the snap in one picture: hard-edged bands of colour sitting inside the
+    /// smooth field they were cut from. Chromatic does the same trick a semitone
+    /// at a time; this one does it a scale at a time, and the difference between
+    /// the two pictures is the difference between the two modules.
+    /// </para>
+    /// <para>
+    /// The pitch steps and the tone does not click, for ADR-0030's reason — the
+    /// oscillator carries its phase, so a frequency that jumps bends the waveform
+    /// rather than breaking it. Nothing here smooths anything, and the one place
+    /// that turned out to be a liability is the sample and hold below: not
+    /// clicking is exactly what makes a pitch change mid-note sound like a slide
+    /// instead of like a mistake.
+    /// </para>
+    /// </remarks>
+    public static Patch InKey(ModuleCatalog modules)
+    {
+        var b = new PatchBuilder(modules);
+
+        // One tempo for the whole patch, because the two things it sets have to
+        // be the same number: how often a note is plucked, and how often the
+        // melody is allowed to move. 180 a minute is three a second.
+        var tempo = b.Add(NodeCatalog.TempoTypeId, 40, 700, (0, 180f));
+
+        // For the field's 'z', which is the one socket in the patch that has to
+        // be told to move: 'z' is depth through the noise rather than a position
+        // in it, so nothing is normalled to it (ADR-0050).
+        var time = b.Add("time", 40, 460);
+
+        // Sample and hold, which the catalogue has no module for and needs none:
+        // a floor of the clock counted in beats is a staircase, and a field read
+        // at a staircase holds still between the steps.
+        //
+        // This is the whole difference between a melody and a glide, and it took
+        // hearing it to find. A note's pitch has to be settled before the note
+        // starts and stay settled until it has finished — and with 'z' running
+        // smoothly the field crossed into the next note of the scale at whatever
+        // moment it happened to, which was as often as not in the middle of one.
+        // The pitch stepped cleanly when it did (ADR-0030 is what stops that
+        // clicking), and a clean step in the middle of a sounding note is heard
+        // as the note sliding to the next one, because that is what it is.
+        var beats = b.Add("math.mul", 250, 460);
+        var held = b.Add("math.floor", 460, 460);
+        var wander = b.Add("math.mul", 660, 460, (1, 0.1f));
+
+        // The one module both sinks read, and the reason they hear and see the
+        // same thing. Its x and y need no wire: on the screen they are the
+        // pixel's own, and at the speakers there is no pixel and they are zero.
+        var field = b.Add("pattern.noise", 880, 300, (3, 2.2f));
+
+        // Two octaves from A2, which is low enough to sound like a bass line at
+        // the bottom and high enough to sing at the top.
+        var range = b.Add("math.remap", 1090, 300, (1, 0f), (2, 1f), (3, 45f), (4, 69f));
+
+        // A minor pentatonic — A C D E G, the same five notes as C major
+        // pentatonic. The scale is a set on the module rather than sockets on it
+        // (ADR-0051), so nothing is wired here and the notes are on the node.
+        var key = b.Add(NodeCatalog.QuantiserTypeId, 1300, 300);
+        key.Scale = [0, 2, 4, 7, 9];
+
+        // Ear: the snapped note as a pitch, plucked three times a second.
+        var note = b.Add("audio.note", 1520, 480);
+        var tone = b.Add("osc.sine", 1740, 480);
+
+        // 'width' is how much of each beat the trigger is shut for, so a small
+        // one opens just after the beat and holds until just before the next.
+        var beat = b.Add("osc.pulse", 1300, 700, (3, 0.12f));
+
+        // Percussive: nothing sustained, so a note has decayed to silence well
+        // inside its own beat. That is the second half of the same fix — the
+        // staircase moves the pitch on the beat, and this makes sure nothing is
+        // still sounding when it does.
+        var pluck = b.Add(NodeCatalog.AdsrTypeId, 1520, 700, (1, -2.4f), (2, -0.85f), (3, 0f), (4, -1.5f));
+        var struck = b.Add("math.mul", 1960, 560);
+
+        // Eye: the snapped note as a hue, one turn of the wheel to the octave —
+        // so a note is the same colour wherever on screen it turns up, and the
+        // one at the middle is the one being played.
+        //
+        // Wrapped rather than run across the whole range, which was the first
+        // thing tried and does not work: two and a half octaves spread over one
+        // sweep of hue puts adjacent notes a twentieth of the wheel apart, and
+        // the terraces come out as a gradient with faint creases in it. Per
+        // octave, the five notes of the scale are a sixth of the wheel apart at
+        // the closest, which is the difference between a band and a crease.
+        var wheel = b.Add("math.mul", 1520, 40, (1, 1f / 12f));
+        var octave = b.Add("math.fract", 1520, 120);
+
+        // Warm at the bottom of the octave and cool at the top, over rather less
+        // than the whole wheel: a full turn puts red beside green beside purple,
+        // which reads as a test card rather than as a field with steps in it.
+        // Half a turn keeps neighbouring notes related and still tells them
+        // apart, and the seam where an octave rolls over is a real edge.
+        var height = b.Add("math.remap", 1520, 200, (1, 0f), (2, 1f), (3, 0.02f), (4, 0.6f));
+
+        // And the field itself as brightness, unsnapped. This is the whole
+        // demonstration: the gradient is what arrived and the bands are what the
+        // Quantiser made of it, and both are on screen at once.
+        var glow = b.Add("math.remap", 1520, 320, (1, 0f), (2, 1f), (3, 0.22f), (4, 0.95f));
+        var map = b.Add("color.hsv", 1740, 160, (1, 0.6f));
+
+        var output = b.Add(NodeCatalog.OutputTypeId, 2180, 320, (NodeCatalog.OutputGainPort, 0.55f));
+
+        b.Wire(time, 0, beats, 0)
+         .Wire(tempo, 0, beats, 1)
+         .Wire(beats, 0, held, 0)
+         .Wire(held, 0, wander, 0)
+         .Wire(wander, 0, field, 2)
+         .Wire(field, 0, range, 0)
+         .Wire(range, 0, key, 0)
+
+         .Wire(key, 0, note, 0)
+         .Wire(note, 0, tone, 1)
+         .Wire(tempo, 0, beat, 1)
+         .Wire(beat, 0, pluck, 0)
+         .Wire(tone, 0, struck, 0)
+         .Wire(pluck, 0, struck, 1)
+         .Wire(struck, 0, output, NodeCatalog.OutputLeftPort)
+
+         .Wire(key, 0, wheel, 0)
+         .Wire(wheel, 0, octave, 0)
+         .Wire(octave, 0, height, 0)
+         .Wire(field, 0, glow, 0)
+         .Wire(height, 0, map, 0)
+         .Wire(glow, 0, map, 2)
+         .Wire(map, 0, output, NodeCatalog.OutputColorPort);
 
         return b.Patch;
     }

@@ -151,7 +151,46 @@ public class PatchIoTests
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
         builder.Add("osc.sine", 0, 0);
 
-        PatchIo.ToJson(builder.Patch, NodeCatalog.BuiltIn).ShouldNotContain("Steps");
+        var json = PatchIo.ToJson(builder.Patch, NodeCatalog.BuiltIn);
+
+        json.ShouldNotContain("Steps");
+        json.ShouldNotContain("Scale");
+    }
+
+    /// <summary>
+    /// The other thing a node carries that is not a knob, and the same risk: a
+    /// scale is neither a socket nor a wire, so nothing else in the file would
+    /// say what it was.
+    /// </summary>
+    [Fact]
+    public void A_quantisers_scale_survives_the_trip()
+    {
+        var builder = new PatchBuilder(NodeCatalog.BuiltIn);
+        var quantiser = builder.Add(NodeCatalog.QuantiserTypeId, 0, 0);
+
+        quantiser.Scale = [0, 3, 5, 7, 10];
+
+        var after = RoundTrip(builder.Patch).Nodes.Single(n => n.TypeId == NodeCatalog.QuantiserTypeId);
+
+        after.Scale.ShouldBe(quantiser.Scale);
+    }
+
+    /// <summary>
+    /// An empty scale is a state somebody chose — the module passes its signal
+    /// through — so it has to come back as itself rather than as the major scale
+    /// a fresh one carries.
+    /// </summary>
+    [Fact]
+    public void An_empty_scale_comes_back_empty_rather_than_as_the_default()
+    {
+        var builder = new PatchBuilder(NodeCatalog.BuiltIn);
+        var quantiser = builder.Add(NodeCatalog.QuantiserTypeId, 0, 0);
+
+        quantiser.Scale!.Count.ShouldBeGreaterThan(0);
+        quantiser.Scale = [];
+
+        RoundTrip(builder.Patch).Nodes
+            .Single(n => n.TypeId == NodeCatalog.QuantiserTypeId).Scale.ShouldBeEmpty();
     }
 
     /// <summary>

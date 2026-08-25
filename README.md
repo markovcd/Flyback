@@ -232,7 +232,7 @@ only sensible one — Noise's `z`, Rings' `offset`, an angle to turn a Rotate by
 A still noise field is a thing worth being able to have.
 
 The presets are written this way, which took 18 modules and 55 wires out of the
-sixteen that ship without changing one op of any of them. What is left is the
+ones that ship without changing one op of any of them. What is left is the
 wire that is a decision: Plasma keeps both its Coordinates wires because a sine
 across `x` and another across `y` *is* the patch, Chromatic keeps a Coordinates
 for `radius`, and Drone keeps a Time for the Rings' `offset`. Every source module
@@ -432,6 +432,56 @@ counted off a clock, so a domain that stops stops the tone and one running at
 twice the rate doubles the pitch, exactly as the multiply did. Drawn rather than
 heard, the accumulator *is* the multiply — one evaluation per pixel has nothing
 to accumulate — so an oscillator's picture is unchanged to the byte.
+
+### Playing in a key
+
+`Note` pulls a signal onto the nearest semitone, and a **Quantiser** pulls it
+onto the nearest note of a scale — so a sweep becomes a run up that scale and a
+noise field becomes a tune in it. Its twelve switches are pitch classes: turning
+`A` on puts every A in the scale rather than one of them, which is what makes a
+scale repeat up the keyboard.
+
+They are a set on the module rather than twelve sockets, for the reason a
+sequencer's notes are a list on the module
+([ADR-0038](docs/adr/0038-a-sequencers-notes-are-a-list-on-the-node.md)): which
+notes exist is a decision about the piece, not a signal in it, and twelve inputs
+would be a module nobody could read. So they are edited as the octave they are a
+subset of — an actual keyboard in the panel, since C major is a picture before it
+is a list of numbers.
+
+What is switched on decides what the module *compiles to* and not only what it
+computes. Each note in the scale contributes one candidate — the octave that puts
+that pitch class nearest, which is a rounding rather than a search — and the notes
+left out contribute nothing at all, so a five-note scale costs a little over half
+what a nine-note one does. Both ends of the range collapse: all twelve is the
+nearest semitone, in two ops, and none at all is a wire.
+
+**In key** is the preset for it, and the one to read the patch of if the module
+seems abstract. A noise field wanders over two octaves and a Quantiser pulls it
+onto a pentatonic, which is the scale with no wrong note in it — so a signal with
+no idea what key it is in comes out as a melody. Half a minute of it plays A2 C3
+D3 E3 G3 A3 C4 D4 E4 G4 A4 and nothing else.
+
+The field is read through a staircase — a `Floor` of the clock counted in beats,
+which is a sample and hold and needs no module of its own — and that is not a
+detail. Snapping a note cleanly is only half of playing in a key; the other half
+is that the pitch has to be settled before a note starts and stay settled until
+it has finished. Driven smoothly, the field crossed into the next note of the
+scale at whatever moment it happened to, which was as often as not in the middle
+of one. The pitch stepped perfectly when it did — and a perfect step in the
+middle of a held note is heard as that note *sliding* to the next, because with
+the phase carried across (ADR-0030) there is nothing to hear but the change of
+slope. Held on the beat instead, every change lands in silence.
+
+The Noise is one module read two ways, which is what makes the picture honest
+rather than illustrative. At the speakers there is no pixel, so `x` and `y` are
+nothing and what the ear gets is a walk along `z` alone. On screen the same
+module reads the pixel's own position, so what the eye gets is that wander laid
+out across the frame — terraced into flat bands of colour, one per note, with the
+unsnapped field still visible underneath as brightness. The band widths are
+uneven because a pentatonic's gaps are two and three semitones rather than one:
+the widths *are* the scale. The note you are hearing is the colour in the middle
+of the picture.
 
 Audio runs at 48 kHz, 4× oversampled and filtered before decimation, which keeps
 the naive `Saw` and `Square` from folding harmonics back down as buzzing. It
@@ -804,7 +854,7 @@ nothing, which is the class of mistake nothing else here would catch.
 | `src/Flyback.Plugins.Timbre` | filter, wavefolder and saturator, holding their state in the emitter's own cells |
 | `src/Flyback.Plugins.Modulation` | chorus, flanger and phaser — the effects that carry their own movement |
 
-Why it is built this way is recorded in [docs/adr](docs/adr) — 50 decision
+Why it is built this way is recorded in [docs/adr](docs/adr) — 51 decision
 records covering the compiler, the renderer, the shell and the boundaries
 between them.
 
@@ -830,7 +880,7 @@ legitimately changes, inspect the `.received.png` next to its `.verified.png`
 baseline and rename it to approve.
 
 The fuzzer generates random well-formed patches and pushes them through compile
-and render. It is the only test that reaches all 62 modules, and it is what
+and render. It is the only test that reaches all 63 modules, and it is what
 guards the gap ADR-0008 describes: nothing links a module's declared ports to
 what its emit function actually indexes.
 

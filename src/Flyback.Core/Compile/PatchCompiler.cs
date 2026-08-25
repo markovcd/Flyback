@@ -330,9 +330,16 @@ public static class PatchCompiler
                 ? notes.Select(s => s.Sane()).ToArray()
                 : [];
 
+            // The same tidying for the other list a node may carry, and here it
+            // is load-bearing rather than defensive: a scale naming a note twice
+            // would lower to two identical candidates, and one naming a
+            // thirteenth would lower to a candidate outside the octave. Both
+            // compile, and neither is a scale.
+            var scale = node.Scale is { Count: > 0 } classes ? Pitch.Scale(classes) : [];
+
             var outputsOfNode = def.Emit(
                 emitter,
-                new EmitContext(inputs, steps) { Resolver = port => Sweep(node, def, port) });
+                new EmitContext(inputs, steps) { Scale = scale, Resolver = port => Sweep(node, def, port) });
 
             visiting.Remove(node.Id);
             return resolved[node.Id] = outputsOfNode;
@@ -389,8 +396,9 @@ public static class PatchCompiler
                 for (var i = 0; i < knobs.Length; i++)
                     knobs[i] = emitter.Coerce(emitter.Constant(def.Inputs[i].Default), def.Inputs[i].Width);
 
-                outputs = normals[bus.TypeId] =
-                    def.Emit(emitter, new EmitContext(knobs, def.DefaultSteps ?? []));
+                outputs = normals[bus.TypeId] = def.Emit(
+                    emitter,
+                    new EmitContext(knobs, def.DefaultSteps ?? []) { Scale = def.DefaultScale ?? [] });
             }
 
             return bus.Port >= 0 && bus.Port < outputs.Length ? outputs[bus.Port] : null;

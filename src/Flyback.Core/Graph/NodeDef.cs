@@ -46,6 +46,32 @@ public readonly record struct EmitContext(Slot[] Inputs, IReadOnlyList<Step> Ste
 
     /// <summary>How the compiler resolves a deferred input, supplied by it.</summary>
     public Func<int, Slot>? Resolver { get; init; }
+
+    /// <summary>
+    /// The instance's scale — the notes of the octave a quantiser snaps to, and
+    /// empty for every module that carries none.
+    /// </summary>
+    /// <remarks>
+    /// Values rather than slots for the reason <see cref="Steps"/> is, and a
+    /// stronger one. A quantiser emits one candidate per note in its scale and
+    /// nothing at all for the notes left out, so what is here decides how many
+    /// ops the module lowers to rather than only what they compute. A register
+    /// could not do that: the shape of the program would have to cover all
+    /// twelve however few were switched on.
+    /// <para>
+    /// An init property rather than a constructor parameter, for the same reason
+    /// <see cref="NodeDef.DefaultSteps"/> is one: a plugin compiled against an
+    /// earlier build still finds the constructor it was compiled against, and
+    /// this type is part of what a plugin is written against. The getter answers
+    /// with an empty list rather than null so that an emit function may read it
+    /// without asking, including on a context that was never given one.
+    /// </para>
+    /// </remarks>
+    public IReadOnlyList<int> Scale
+    {
+        get => field ?? [];
+        init;
+    }
 }
 
 /// <summary>Lowers one node to register-machine ops.</summary>
@@ -72,6 +98,14 @@ public sealed record NodeDef(
     /// was compiled against.
     /// </summary>
     public IReadOnlyList<Step>? DefaultSteps { get; init; }
+
+    /// <summary>
+    /// The scale a freshly placed instance carries, or null for a module that
+    /// has none — see <see cref="NodeInstance.Scale"/>. The presence of one is
+    /// also what tells the editor to offer the twelve toggles, exactly as
+    /// <see cref="DefaultSteps"/> is what tells it to offer a list of notes.
+    /// </summary>
+    public IReadOnlyList<int>? DefaultScale { get; init; }
 
     /// <summary>
     /// Whether a wire may run backwards into this module — whether, in other

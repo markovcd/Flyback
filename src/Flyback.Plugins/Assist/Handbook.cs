@@ -233,7 +233,8 @@ internal static class Handbook
         `<-Module` in place of a default marks a normalled input: it has no knob
         and is already reading that module with no wire.
         A `notes` line means the module carries a list of notes instead of step
-        knobs — write it with `set_steps`.
+        knobs — write it with `set_steps`. A `scale` line means it carries a set
+        of pitch classes — write it with `set_scale`.
 
         """;
 
@@ -284,6 +285,10 @@ internal static class Handbook
         if (def.DefaultSteps is not null)
             text.Append("  notes  a list of up to ").Append(NodeCatalog.MaxSteps)
                 .AppendLine(", set with set_steps — not knobs");
+
+        if (def.DefaultScale is not null)
+            text.Append("  scale  which of the ").Append(Pitch.Classes)
+                .AppendLine(" pitch classes are on, set with set_scale — not knobs");
 
         if (prose && def.Description.Length > 0)
             text.Append("  ").AppendLine(def.Description);

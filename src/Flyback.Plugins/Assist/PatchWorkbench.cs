@@ -134,6 +134,7 @@ public sealed class PatchWorkbench
                 "add_module" => AddModule(arguments),
                 "set_knobs" => SetKnobs(arguments),
                 "set_steps" => SetSteps(arguments),
+                "set_scale" => SetScale(arguments),
                 "connect" => Connect(arguments),
                 "disconnect" => Disconnect(arguments),
                 "remove_module" => RemoveModule(arguments),
@@ -276,6 +277,62 @@ public sealed class PatchWorkbench
         return element.TryGetProperty(name, out var found)
             && found.ValueKind == JsonValueKind.Number
             && found.TryGetSingle(out value);
+    }
+
+    /// <summary>
+    /// Replaces a quantiser's scale outright, for the reason a tune is replaced
+    /// outright: a set sent whole cannot come out in the wrong order or half
+    /// applied, and twelve calls to switch twelve notes is twelve chances to end
+    /// up with a scale nobody asked for.
+    /// </summary>
+    private ToolOutcome SetScale(JsonElement arguments)
+    {
+        if (!Node(arguments, "handle", out var node, out var def, out var refusal))
+            return ToolOutcome.Refused(refusal);
+
+        if (def.DefaultScale is null)
+            return ToolOutcome.Refused(
+                $"{Handle(node)} is a {def.Name}, which has no scale. Only the Quantiser has one.");
+
+        if (!arguments.TryGetProperty("notes", out var given) || given.ValueKind != JsonValueKind.Array)
+            return ToolOutcome.Refused(
+                "'notes' is required: a list of pitch classes, 0 to 11, where 0 is C and 9 is A. "
+                + "Send the whole scale — this replaces what was there.");
+
+        var classes = new List<int>();
+
+        foreach (var note in given.EnumerateArray())
+        {
+            if (note.ValueKind != JsonValueKind.Number || !note.TryGetInt32(out var pitchClass))
+                return ToolOutcome.Refused("every note has to be a whole number from 0 to 11.");
+
+            if (pitchClass is < 0 or >= Pitch.Classes)
+                return ToolOutcome.Refused(
+                    $"{pitchClass} is not a pitch class. They run 0 to 11, C to B, and a scale "
+                    + "names every octave of a note at once rather than one of them — so a C is "
+                    + "0 whichever octave you were thinking of.");
+
+            classes.Add(pitchClass);
+        }
+
+        node.Scale = Pitch.Scale(classes);
+        Edits++;
+
+        return Fine($"set the scale on {Handle(node)}. {Scale(node)} {Issues()}");
+    }
+
+    /// <summary>A quantiser's scale, written out by name and as it would be typed back in.</summary>
+    private static string Scale(NodeInstance node)
+    {
+        if (node.Scale is not { Count: > 0 } scale)
+            return "Its scale is empty, so it passes the signal through unchanged.";
+
+        var named = string.Join(" ", scale.Select(Pitch.ClassName));
+        var numbers = string.Join(", ", scale);
+
+        return scale.Count == Pitch.Classes
+            ? $"Scale: all twelve ({numbers}), which is the nearest semitone."
+            : $"Scale: {named} ({numbers}).";
     }
 
     /// <summary>A sequencer's tune, written out the way it would be typed back in.</summary>
@@ -468,6 +525,11 @@ public sealed class PatchWorkbench
             // nothing set on it at all.
             if (def.DefaultSteps is not null)
                 text.Append("  ").AppendLine(Notes(node));
+
+            // And a quantiser's scale for the same reason: it is neither a
+            // socket nor a wire, so nothing above would show it at all.
+            if (def.DefaultScale is not null)
+                text.Append("  ").AppendLine(Scale(node));
         }
 
         text.Append(working.Nodes.Count).Append(" modules, ")
@@ -595,6 +657,17 @@ public sealed class PatchWorkbench
 
         for (var i = 0; i < def.Outputs.Count; i++)
             text.Append("  out ").Append(i).Append(' ').AppendLine(def.Outputs[i].Name);
+
+        // What the module carries that is neither a socket nor a knob, which
+        // the two loops above cannot show — the whole reason a model asking
+        // about a Sequencer or a Quantiser would otherwise miss half of it.
+        if (def.DefaultSteps is not null)
+            text.Append("  notes  a list of up to ").Append(NodeCatalog.MaxSteps)
+                .AppendLine(", set with set_steps — not knobs");
+
+        if (def.DefaultScale is not null)
+            text.Append("  scale  which of the ").Append(Pitch.Classes)
+                .AppendLine(" pitch classes are on, set with set_scale — not knobs");
 
         if (def.Description.Length > 0) text.AppendLine(def.Description);
     }
@@ -1039,6 +1112,28 @@ public sealed class PatchWorkbench
                         },
                         "required": ["value"]
                       }
+                    }
+                  },
+                  "required": ["handle", "notes"]
+                }
+                """),
+
+            new("set_scale",
+                "Replaces the whole scale on a Quantiser. Its notes are a list on the module "
+                + "rather than knobs, so this is the only way to set one — send every note you "
+                + "want, because this replaces what was there. They are pitch classes, 0 to 11, "
+                + "where 0 is C, 2 is D, 4 is E and 9 is A: naming one puts every octave of it "
+                + "in the scale rather than a single note, which is what makes a scale repeat up "
+                + "the keyboard. Order and repeats do not matter. C major is [0,2,4,5,7,9,11] "
+                + "and a minor pentatonic on A is [0,3,5,7,10]. All twelve snaps to the nearest "
+                + "semitone, which is what a Note module already does; an empty list is a wire.",
+                """
+                {
+                  "properties": {
+                    "handle": { "type": "string" },
+                    "notes": {
+                      "type": "array",
+                      "items": { "type": "integer", "minimum": 0, "maximum": 11 }
                     }
                   },
                   "required": ["handle", "notes"]
