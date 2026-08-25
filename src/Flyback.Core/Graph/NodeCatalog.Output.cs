@@ -154,7 +154,7 @@ public partial class NodeCatalog
     /// </remarks>
     private static NodeDef Quantiser() => new(
         QuantiserTypeId, "Quantiser", "Output",
-        [Pitched("in", 57f)],
+        [Pitched("in", 57f), Num("hold", 0f, 0f, 1f)],
         [Num("note")],
         EmitQuantiser,
         "Snaps what arrives to the nearest note the scale has switched on, in whatever "
@@ -163,7 +163,14 @@ public partial class NodeCatalog
         + "every A in the scale, not one of them. Patch its 'note' into a Note module to "
         + "hear it, or use it anywhere a stepped signal is wanted. All twelve on is the "
         + "nearest semitone, which is what a Note does on its own; none on is a wire, since "
-        + "there is nothing to snap to.")
+        + "there is nothing to snap to. "
+        + "'hold' freezes the note for as long as it is up: patch the same gate that opens "
+        + "the envelope into it and the pitch is settled before the note starts and cannot "
+        + "move until it has finished, which is the difference between a melody and one long "
+        + "note sliding about. Left alone it snaps continuously, which is what it did before "
+        + "the socket existed. Audio only, like every hold — a picture has no previous "
+        + "evaluation to have held anything, so on the screen it snaps continuously whatever "
+        + "is patched here.")
     {
         DefaultScale = Major,
     };
@@ -201,12 +208,12 @@ public partial class NodeCatalog
         // what went in. The same answer a Delay with nothing to remember gives,
         // and it is what makes the twelve switches safe to turn off one at a
         // time — the module fades out of the patch rather than falling out of it.
-        if (scale.Count == 0) return [signal];
+        if (scale.Count == 0) return [Frozen(em, node, signal)];
 
         // Every note switched on: the nearest of all twelve is the nearest
         // semitone, and that is a rounding rather than twelve candidates.
         if (scale.Count == Pitch.Classes)
-            return [em.Unary(OpCode.Floor, em.Add(signal, 0.5f))];
+            return [Frozen(em, node, em.Unary(OpCode.Floor, em.Add(signal, 0.5f)))];
 
         // The signal in octaves. Every candidate is a floor of this plus a
         // constant, so it is worth one op here rather than one per note.
@@ -241,7 +248,70 @@ public partial class NodeCatalog
             nearest = em.Ternary(OpCode.Mix, nearest, away, closer);
         }
 
-        return [best];
+        return [Frozen(em, node, best)];
+    }
+
+    /// <summary>
+    /// The note, frozen for as long as 'hold' is up.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// A level rather than an edge, and that is the decision worth recording.
+    /// Every quantiser in a rack has a socket like this and most of them take a
+    /// trigger — but a trigger has to be told apart from no trigger at all, and
+    /// nothing here can: a socket resting on its knob hands the emit function a
+    /// register like any other, so "nothing is patched" is not a question this
+    /// can ask. A level answers it by not needing to. Nought is down, an
+    /// unpatched socket is nought, and a module nobody has wired anything into
+    /// snaps continuously exactly as it did before the socket existed.
+    /// </para>
+    /// <para>
+    /// It also states the guarantee the right way round. An edge says when the
+    /// note may change; a level says when it may not, and what anybody actually
+    /// wants is that it cannot move while a note is sounding. Wire the gate that
+    /// opens the envelope and the two are the same interval by construction.
+    /// </para>
+    /// <para>
+    /// The cost is that a short trigger holds only for as long as it is up. That
+    /// is the wrong shape for this socket, and there is nothing in the catalogue
+    /// that makes one: every gate here — a Pulse's, a sequencer's, anything that
+    /// drives an ADSR — is open for the length of a note.
+    /// </para>
+    /// <para>
+    /// Two cells, and the same scaling the Sample &amp; Hold uses for the same
+    /// reason: a cell is clamped to ±16 and a note number runs to 127. See
+    /// <see cref="HoldHeadroom"/>.
+    /// </para>
+    /// </remarks>
+    private static Slot Frozen(Emitter em, EmitContext node, Slot note)
+    {
+        var one = em.Constant(1f);
+        var live = em.HasMemory();
+
+        var heldCell = em.AllocateUnitSlot();
+        var edgeCell = em.AllocateUnitSlot();
+
+        var held = em.Mul(em.UnitRead(heldCell), HoldHeadroom);
+        var before = em.UnitRead(edgeCell);
+
+        var up = em.Binary(OpCode.Step, em.Constant(GateOpen), node[1]);
+
+        // Taken while the hold is down, and on the evaluation it goes up — so
+        // what is frozen is the note as it stood the moment the gate opened
+        // rather than the one before it.
+        var rise = em.Mul(up, em.Sub(one, before));
+        var take = em.Binary(OpCode.Max, rise, em.Sub(one, up));
+
+        // And wherever there is nothing to have held: the screen, and the first
+        // evaluation of a program, which is what primes the cell.
+        take = em.Binary(OpCode.Max, take, em.Sub(one, live));
+
+        var next = em.Ternary(OpCode.Mix, held, note, take);
+
+        em.UnitWrite(heldCell, em.Mul(next, 1f / HoldHeadroom));
+        em.UnitWrite(edgeCell, up);
+
+        return next;
     }
     
     /// <summary>

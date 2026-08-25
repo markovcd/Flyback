@@ -31,8 +31,41 @@ public partial class NodeCatalog
     
     public const string TempoTypeId = "seq.tempo";
 
+    /// <summary>
+    /// The sample and hold. Named here because a preset builds one and because
+    /// it is the module a patch reaches for when a signal has to stop moving
+    /// between one note and the next.
+    /// </summary>
+    public const string HoldTypeId = "seq.hold";
+
     /// <summary>Seconds in a minute, which is the whole of what a tempo knob converts.</summary>
     private const float Minute = 60f;
+
+    /// <summary>
+    /// What a held value is divided by on its way into a cell and multiplied by
+    /// on the way out.
+    /// </summary>
+    /// <remarks>
+    /// A cell is clamped to ±16 — see <see cref="DelayState.WriteUnit"/> — and
+    /// that bound is not negotiable from here: it is the only place a cycle
+    /// drawn as wires can be caught running away, since nothing in a loop of
+    /// wires is obliged to have a coefficient under one in it.
+    /// <para>
+    /// It is a sensible bound for a signal and a useless one for the two things
+    /// anybody most wants to hold. A note number runs to 127 and a frequency to
+    /// thousands, and either would come back pinned at sixteen — a wrong note,
+    /// silently, with the patch looking perfectly correct. So this module keeps
+    /// what it holds on a scale of its own. Two multiplies, a power of two so
+    /// they are exact, and the bound moves to ±4096.
+    /// </para>
+    /// <para>
+    /// The clamp still catches a Hold wired into its own input. It now catches
+    /// it four thousand times further out, which is still finite, still pinned
+    /// at the rails rather than turned to NaN, and still clamped again at the
+    /// sink like everything else.
+    /// </para>
+    /// </remarks>
+    private const float HoldHeadroom = 256f;
 
     private static IEnumerable<NodeDef> Sequencers()
     {
@@ -51,6 +84,22 @@ public partial class NodeCatalog
             + "sequencer's 'rate' for one step a beat, or through a Multiply first for "
             + "anything faster — four for sixteenths. It is also what drives a Pulse to give "
             + "a drum something to be triggered by.");
+
+        yield return new NodeDef(
+            HoldTypeId, "Sample & Hold", "Sequencer",
+            [Num("in"), Num("trigger", 0f, 0f, 1f)],
+            [Num("out")],
+            EmitHold,
+            "Catches whatever is on 'in' the moment 'trigger' goes up, and holds it until the "
+            + "next time. What it is for is the gap between a signal that is always moving and "
+            + "a note that must not: patch a wandering signal into 'in' and the same gate that "
+            + "opens the envelope into 'trigger', and the pitch is settled before the note "
+            + "starts and stays settled until it has finished. Without it a signal crossing "
+            + "into the next note halfway through one is heard as that note sliding, since an "
+            + "oscillator carries its phase and there is no click to mark the change. Audio "
+            + "only: a picture is one evaluation with nothing before it, so there is nothing "
+            + "to have held and 'in' passes straight through, the way a Delay with nothing to "
+            + "remember is a wire.");
 
         yield return StepSequencer(
             "seq.notes", "Note Sequencer", DefaultRiff, PortDisplay.Note, (0f, 127f),
@@ -108,6 +157,62 @@ public partial class NodeCatalog
         StepRange = range,
     };
     
+    /// <summary>
+    /// One cell for what is being held and one for the trigger as it was, which
+    /// is the whole module: an edge is a rise only if there was nothing to rise
+    /// from.
+    /// </summary>
+    /// <remarks>
+    /// Stateful, and holding that state in the one-evaluation cells
+    /// <see cref="Emitter.AllocateUnitSlot"/> hands out rather than in an opcode
+    /// of its own — the same way the ADSR holds its level and ADR-0041 has a
+    /// plugin hold a filter's integrators. Nothing in the engine had to change
+    /// for it, which is the third time that has been true and is worth counting.
+    /// <para>
+    /// The level cell is read before it is written and both happen inside one
+    /// evaluation, so what comes out on the evaluation the trigger rises is the
+    /// <em>new</em> sample rather than the one before it. That matters here more
+    /// than it does for an envelope: the gate that fires this is usually the gate
+    /// that opens the envelope, so a value that arrived one evaluation late would
+    /// be the previous note's pitch heard at the start of this one.
+    /// </para>
+    /// <para>
+    /// <see cref="Emitter.HasMemory"/> answers no on the video path and on the
+    /// very first evaluation of an audio one, and both are handled by the same
+    /// term: it takes a sample. On the screen that makes it a wire, which is
+    /// what a hold means where there is no before; at the start of a program it
+    /// primes the cell, so the first note is the signal rather than the nothing a
+    /// cell begins at. Without that the patch would play one note of silence, or
+    /// worse, whatever nought means to whatever is downstream.
+    /// </para>
+    /// </remarks>
+    private static Slot[] EmitHold(Emitter em, EmitContext node)
+    {
+        var one = em.Constant(1f);
+        var live = em.HasMemory();
+
+        var heldCell = em.AllocateUnitSlot();
+        var edgeCell = em.AllocateUnitSlot();
+
+        // Back onto the scale the patch is using — see HoldHeadroom.
+        var held = em.Mul(em.UnitRead(heldCell), HoldHeadroom);
+        var before = em.UnitRead(edgeCell);
+
+        // Up rather than high: what matters is the crossing, so a trigger left
+        // open holds one sample rather than tracking.
+        var up = em.Binary(OpCode.Step, em.Constant(GateOpen), node[1]);
+        var rise = em.Mul(up, em.Sub(one, before));
+
+        // Either edge or nothing to remember. Max is the or, both being 0 or 1.
+        var take = em.Binary(OpCode.Max, rise, em.Sub(one, live));
+        var next = em.Ternary(OpCode.Mix, held, node[0], take);
+
+        em.UnitWrite(heldCell, em.Mul(next, 1f / HoldHeadroom));
+        em.UnitWrite(edgeCell, up);
+
+        return [next];
+    }
+
     /// <summary>
     /// Which step the sequence is on is a function of where its input has got
     /// to, not of what it played before, so a sequencer needs no state at all —

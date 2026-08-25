@@ -441,6 +441,16 @@ noise field becomes a tune in it. Its twelve switches are pitch classes: turning
 `A` on puts every A in the scale rather than one of them, which is what makes a
 scale repeat up the keyboard.
 
+Its `hold` freezes the note for as long as it is up, which is the socket every
+quantiser in a rack has. It is a level rather than a trigger, and that is what
+lets it be optional: nought is down, an unpatched socket is nought, and one
+nobody has wired anything into snaps continuously as it always did. A level also
+states the guarantee the right way round — an edge says when the note *may*
+change, and what anybody wants is that it *cannot* while a note is sounding.
+Wire the gate that opens the envelope and the two are the same interval by
+construction. A **Sample & Hold** does the same job for any other signal, and
+holds it the same way.
+
 They are a set on the module rather than twelve sockets, for the reason a
 sequencer's notes are a list on the module
 ([ADR-0038](docs/adr/0038-a-sequencers-notes-are-a-list-on-the-node.md)): which
@@ -462,16 +472,23 @@ onto a pentatonic, which is the scale with no wrong note in it — so a signal w
 no idea what key it is in comes out as a melody. Half a minute of it plays A2 C3
 D3 E3 G3 A3 C4 D4 E4 G4 A4 and nothing else.
 
-The field is read through a staircase — a `Floor` of the clock counted in beats,
-which is a sample and hold and needs no module of its own — and that is not a
-detail. Snapping a note cleanly is only half of playing in a key; the other half
-is that the pitch has to be settled before a note starts and stay settled until
-it has finished. Driven smoothly, the field crossed into the next note of the
-scale at whatever moment it happened to, which was as often as not in the middle
-of one. The pitch stepped perfectly when it did — and a perfect step in the
-middle of a held note is heard as that note *sliding* to the next, because with
-the phase carried across (ADR-0030) there is nothing to hear but the change of
-slope. Held on the beat instead, every change lands in silence.
+The gate that opens the envelope also goes into the Quantiser's `hold`, and that
+is not a detail. Snapping a note cleanly is only half of playing in a key; the
+other half is that the pitch has to be settled before a note starts and stay
+settled until it has finished. Left free, the field crossed into the next note of
+the scale at whatever moment it happened to, which was as often as not in the
+middle of one. The pitch stepped perfectly when it did — and a perfect step in
+the middle of a held note is not heard as a new note at all: with the phase
+carried across (ADR-0030) there is no onset to mark it, so the ear takes it for
+the note it was already listening to, *sliding*. With that second wire in, the
+interval the note is frozen for is the interval it is sounding for, by
+construction rather than by arithmetic.
+
+`hold` is also where the two sinks part company, and it is the second thing in
+the patch read two ways. The ear needs the note to stop moving while one is
+sounding; the eye needs it not to, or the picture would snap on the beat instead
+of drifting. A hold is exactly that difference — it holds where there is a
+previous evaluation to hold from, and there is none on the screen.
 
 The Noise is one module read two ways, which is what makes the picture honest
 rather than illustrative. At the speakers there is no pixel, so `x` and `y` are
@@ -880,7 +897,7 @@ legitimately changes, inspect the `.received.png` next to its `.verified.png`
 baseline and rename it to approve.
 
 The fuzzer generates random well-formed patches and pushes them through compile
-and render. It is the only test that reaches all 63 modules, and it is what
+and render. It is the only test that reaches all 64 modules, and it is what
 guards the gap ADR-0008 describes: nothing links a module's declared ports to
 what its emit function actually indexes.
 

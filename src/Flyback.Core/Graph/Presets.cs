@@ -515,10 +515,14 @@ public static class Presets
     /// picture.
     /// </para>
     /// <para>
-    /// That <c>z</c> is a staircase and not a ramp, which is the half of playing
-    /// in a key that snapping does not cover — see the sample and hold below.
-    /// It also ties the picture to the beat: the terraces reorganise on it
-    /// rather than drifting through it, the way Sequence's rings do.
+    /// <para>
+    /// The two sinks part company at the Sample & Hold, which is the other
+    /// module here that is read two ways. The ear needs the field to stop moving
+    /// between one note and the next; the eye needs it not to, or the picture
+    /// would snap on the beat instead of drifting. A Hold is exactly that
+    /// difference — it holds where there is a before to hold from and is a wire
+    /// where there is not, so the speakers get a melody in steps and the screen
+    /// goes on drifting, out of one module and one wire.
     /// </para>
     /// <para>
     /// A pentatonic because it is the scale with no wrong note in it: a signal
@@ -539,9 +543,9 @@ public static class Presets
     /// The pitch steps and the tone does not click, for ADR-0030's reason — the
     /// oscillator carries its phase, so a frequency that jumps bends the waveform
     /// rather than breaking it. Nothing here smooths anything, and the one place
-    /// that turned out to be a liability is the sample and hold below: not
-    /// clicking is exactly what makes a pitch change mid-note sound like a slide
-    /// instead of like a mistake.
+    /// that turned out to be a liability is why there is a Hold in it at all:
+    /// not clicking is exactly what makes a pitch change mid-note sound like a
+    /// slide instead of like a mistake.
     /// </para>
     /// </remarks>
     public static Patch InKey(ModuleCatalog modules)
@@ -558,21 +562,7 @@ public static class Presets
         // in it, so nothing is normalled to it (ADR-0050).
         var time = b.Add("time", 40, 460);
 
-        // Sample and hold, which the catalogue has no module for and needs none:
-        // a floor of the clock counted in beats is a staircase, and a field read
-        // at a staircase holds still between the steps.
-        //
-        // This is the whole difference between a melody and a glide, and it took
-        // hearing it to find. A note's pitch has to be settled before the note
-        // starts and stay settled until it has finished — and with 'z' running
-        // smoothly the field crossed into the next note of the scale at whatever
-        // moment it happened to, which was as often as not in the middle of one.
-        // The pitch stepped cleanly when it did (ADR-0030 is what stops that
-        // clicking), and a clean step in the middle of a sounding note is heard
-        // as the note sliding to the next one, because that is what it is.
-        var beats = b.Add("math.mul", 250, 460);
-        var held = b.Add("math.floor", 460, 460);
-        var wander = b.Add("math.mul", 660, 460, (1, 0.1f));
+        var wander = b.Add("math.mul", 250, 460, (1, 0.3f));
 
         // The one module both sinks read, and the reason they hear and see the
         // same thing. Its x and y need no wire: on the screen they are the
@@ -586,6 +576,20 @@ public static class Presets
         // A minor pentatonic — A C D E G, the same five notes as C major
         // pentatonic. The scale is a set on the module rather than sockets on it
         // (ADR-0051), so nothing is wired here and the notes are on the node.
+        //
+        // Its 'hold' is the whole difference between a melody and a glide, and
+        // it took hearing it to find. A note's pitch has to be settled before the
+        // note starts and stay settled until it has finished — and a field that
+        // moves freely crosses into the next note of the scale at whatever moment
+        // it happens to, which is as often as not in the middle of one. The pitch
+        // steps cleanly when it does (ADR-0030 is what stops that clicking), and
+        // a clean step in the middle of a sounding note is not heard as a new
+        // note at all: with no onset to mark it, the ear takes it for the note it
+        // was already listening to, sliding.
+        //
+        // The gate that opens the envelope goes into 'hold' as well, so the
+        // interval the note is frozen for is the interval it is sounding for, by
+        // construction rather than by arithmetic.
         var key = b.Add(NodeCatalog.QuantiserTypeId, 1300, 300);
         key.Scale = [0, 2, 4, 7, 9];
 
@@ -598,9 +602,8 @@ public static class Presets
         var beat = b.Add("osc.pulse", 1300, 700, (3, 0.12f));
 
         // Percussive: nothing sustained, so a note has decayed to silence well
-        // inside its own beat. That is the second half of the same fix — the
-        // staircase moves the pitch on the beat, and this makes sure nothing is
-        // still sounding when it does.
+        // inside its own beat, and the pitch the Hold catches on the next one
+        // lands on a note starting rather than on one still ringing.
         var pluck = b.Add(NodeCatalog.AdsrTypeId, 1520, 700, (1, -2.4f), (2, -0.85f), (3, 0f), (4, -1.5f));
         var struck = b.Add("math.mul", 1960, 560);
 
@@ -632,13 +635,15 @@ public static class Presets
 
         var output = b.Add(NodeCatalog.OutputTypeId, 2180, 320, (NodeCatalog.OutputGainPort, 0.55f));
 
-        b.Wire(time, 0, beats, 0)
-         .Wire(tempo, 0, beats, 1)
-         .Wire(beats, 0, held, 0)
-         .Wire(held, 0, wander, 0)
+        b.Wire(time, 0, wander, 0)
          .Wire(wander, 0, field, 2)
+
          .Wire(field, 0, range, 0)
          .Wire(range, 0, key, 0)
+
+         // The beat into the Quantiser's 'hold' as well as the envelope's
+         // 'gate'. That second wire is the one that keeps a note at one pitch.
+         .Wire(beat, 0, key, 1)
 
          .Wire(key, 0, note, 0)
          .Wire(note, 0, tone, 1)
