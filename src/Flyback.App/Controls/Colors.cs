@@ -44,6 +44,19 @@ internal static class Colors
 
     public static Color Toolbar { get; } = Color.FromRgb(0x22, 0x25, 0x2A);
 
+    /// <summary>
+    /// Over the whole window while a dialog is up, and the only thing that says
+    /// the rest of the program is not listening.
+    /// </summary>
+    /// <remarks>
+    /// The one colour here with an alpha, because that is what it is for: a
+    /// solid one would be a second window, and the point of dimming the shell
+    /// rather than covering it is that the patch you are being asked about is
+    /// still there behind the question. Dark rather than merely translucent —
+    /// laid over a dark window, a pale scrim reads as a fault in the display.
+    /// </remarks>
+    public static Color Scrim { get; } = Color.FromArgb(0xAA, 0x0A, 0x0B, 0x0D);
+
     /// <summary>The canvas grid, and the brighter line every tenth of it.</summary>
     public static Color Grid { get; } = Color.FromRgb(0x24, 0x27, 0x2C);
 

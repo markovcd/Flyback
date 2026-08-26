@@ -110,8 +110,8 @@ public sealed partial class MainWindow
         static Button Answering(string text, Unsaved with, bool wide = false)
         {
             var button = new Button { Content = text, MinWidth = wide ? 120 : 96 };
-            button.Click += (_, _) => (GetTopLevel(button) as Window)?.Close(with);
-            
+            button.Click += (_, _) => Dialog.Close(button, with);
+
             return button;
         }
     }
