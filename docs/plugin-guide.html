@@ -529,6 +529,55 @@
       </table>
     </div>
 
+    <h3>Carrying something that is not a knob</h3>
+
+    <p>A socket carries a number a patch can drive. Some decisions are not that — they are decisions
+    <em>about</em> the piece rather than signals <em>in</em> it, and no arrangement of sockets expresses one.
+    The engine carries three of its own that way: a sequencer's notes, a quantiser's scale, a player's file.
+    Your module can carry its own by declaring a <code>NodeExtra</code>.</p>
+
+    <p>You declare a key and the values it holds. Everything else — seeding a fresh instance, storing it in
+    the patch file, folding it onto the context your emit function reads, describing it to the assistant — has
+    a default written in terms of that declaration, so there is nothing else to override.</p>
+
+    <pre><code><span class="k">public sealed record</span> GlideExtra : NodeExtra
+{
+    <span class="k">public override string</span> Key =&gt; <span class="s">"glide"</span>;
+
+    <span class="k">public override</span> IReadOnlyList&lt;ExtraField&gt; Fields =&gt;
+    [
+        <span class="k">new</span> ExtraField.Number(<span class="s">"time"</span>, <span class="s">"time"</span>, <span class="k">new</span> PortSpec(<span class="s">"time"</span>, PortKind.Scalar, 0.1f, 0f, 1f)),
+        <span class="k">new</span> ExtraField.Toggle(<span class="s">"legato"</span>, <span class="s">"legato"</span>),
+    ];
+}
+
+<span class="c">// on the NodeDef</span>
+Extras = [<span class="k">new</span> GlideExtra()],
+
+<span class="c">// in the emit function</span>
+<span class="k">var</span> state = node.Extra&lt;ExtraState&gt;(<span class="s">"glide"</span>);
+<span class="k">var</span> time = state?.Number(<span class="s">"time"</span>) ?? 0.1f;</code></pre>
+
+    <p><strong>You do not ship a control.</strong> The shell draws the rows from what you declared, which is
+    why a plugin never references Avalonia and is never pinned to the version of it a given build shipped. An
+    <code>ExtraField.Number</code> takes a whole <code>PortSpec</code>, so your row gets the same slider,
+    snapping and formatting a socket's knob has — declare <code>Display</code> as <code>Note</code> and 57
+    reads as A3, exactly as it would on a knob.</p>
+
+    <p>The same declaration is what lets an assistant set your state, through one <code>set_extra</code> tool
+    that works for any plugin's kind. There is nothing to write for it.</p>
+
+    <p>Two shapes exist — <code>Number</code> and <code>Toggle</code> — and the vocabulary grows only when a
+    plugin is genuinely blocked on a third. What it deliberately cannot express is a control of your own: no
+    keyboard, no waveform display, no list you reorder. The engine's own three kinds all needed one, and none
+    of them could have been written as a plugin. If yours is that shape, say so — the trade is recorded in
+    ADR-0055 and is meant to be revisited by a real case, not guessed at.</p>
+
+    <p>Your values live under your key in the patch file and are round-tripped whether or not the plugin is
+    loaded, so a patch opened without you keeps what it carried. What arrives is only ever what somebody could
+    have typed into the file, so every read is held to the range you declared — a number outside it is clamped
+    rather than refused, and nonsense reads as your default.</p>
+
     <h3>The emit function</h3>
 
     <p>It runs <strong>once, at compile time</strong>, and writes straight-line ops into a flat register

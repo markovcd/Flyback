@@ -1,3 +1,4 @@
+using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 
 namespace Flyback.Core.Graph;
@@ -152,6 +153,55 @@ public sealed class NodeInstance
     public string? Sample { get; set; }
 
     /// <summary>
+    /// What a plugin's own kind of extra carries, keyed by
+    /// <see cref="NodeExtra.Key"/>, and null for every module whose extras are
+    /// the engine's own.
+    /// </summary>
+    /// <remarks>
+    /// The open half of the store. <see cref="Steps"/>, <see cref="Scale"/> and
+    /// <see cref="Sample"/> are the kinds the engine ships and they stay typed
+    /// fields — a saved patch reads as it always did, and the emit functions that
+    /// use them are unchanged. Anything a plugin invents lands here instead,
+    /// because this class is sealed and a plugin cannot add a field to it.
+    /// <para>
+    /// <see cref="JsonNode"/> rather than a typed value, because the engine does
+    /// not know what shape a plugin's kind is and must round-trip it without
+    /// understanding it. It also keeps the file ordinary: an extra writes an
+    /// object under its own name, which reads and edits like the rest of the
+    /// patch. Turning it into something an emit function can use is
+    /// <see cref="NodeExtra.Fold"/>'s, and so is tolerating a file somebody
+    /// edited into a shape that means nothing — the same contract
+    /// <see cref="Step.Sane"/> has.
+    /// </para>
+    /// </remarks>
+    public Dictionary<string, JsonNode>? State { get; set; }
+
+    /// <summary>
+    /// What the extra called <paramref name="key"/> has stored here, or null
+    /// where it has stored nothing.
+    /// </summary>
+    public JsonNode? StateOf(string key) =>
+        State is { } held && held.TryGetValue(key, out var value) ? value : null;
+
+    /// <summary>
+    /// Stores an extra's state under its key, making the dictionary on first use
+    /// and taking it away again when the last entry goes — so a module that
+    /// carries nothing writes no empty object into the file.
+    /// </summary>
+    public void SetState(string key, JsonNode? value)
+    {
+        if (value is null)
+        {
+            State?.Remove(key);
+            if (State is { Count: 0 }) State = null;
+
+            return;
+        }
+
+        (State ??= [])[key] = value;
+    }
+
+    /// <summary>
     /// One coordinate held inside the canvas.
     /// </summary>
     /// <remarks>
@@ -225,6 +275,13 @@ public sealed class NodeInstance
         Steps = Steps is { } steps ? [.. steps] : null,
         Scale = Scale is { } scale ? [.. scale] : null,
         Sample = Sample,
+
+        // Deep here too, and it has to be said explicitly: a JsonNode is a
+        // mutable tree, so copying the dictionary alone would hand the copy
+        // the very nodes the original goes on being edited through.
+        State = State is { } held
+            ? held.ToDictionary(entry => entry.Key, entry => entry.Value.DeepClone())
+            : null,
     };
 
     public static NodeInstance Create(NodeDef def, double x, double y)

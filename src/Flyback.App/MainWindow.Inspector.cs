@@ -1,3 +1,4 @@
+using System.Text.Json.Nodes;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
@@ -635,8 +636,112 @@ public sealed partial class MainWindow
         // button rather than a control with a range.
         SampleExtra => BuildSampleRow(node),
 
+        // Anything else is a plugin's own kind, which ships no control and is
+        // drawn from what it declares instead — see ADR-0055. A kind that
+        // declares nothing gets no rows, which is the same nothing an
+        // unrecognised one used to get.
+        _ => BuildDeclaredRows(node, extra),
+    };
+
+    /// <summary>
+    /// A plugin's extra, drawn from its <see cref="NodeExtra.Fields"/>.
+    /// </summary>
+    /// <remarks>
+    /// The whole of the App's knowledge of a plugin's state is here, and it is
+    /// knowledge of the vocabulary rather than of any plugin: nothing in this
+    /// method could tell you which plugin it is drawing. A field shape this build
+    /// has never heard of is skipped rather than drawn wrongly, so a patch made
+    /// by a newer build stays editable in the parts this one understands.
+    /// </remarks>
+    private Control? BuildDeclaredRows(NodeInstance node, NodeExtra extra)
+    {
+        if (extra.Fields.Count == 0) return null;
+
+        var panel = new StackPanel { Margin = new Thickness(0, 8, 0, 0) };
+
+        panel.Children.Add(new TextBlock
+        {
+            Text = extra.Key,
+            FontSize = 9.5,
+            Opacity = 0.4,
+            Margin = new Thickness(0, 0, 0, 4),
+        });
+
+        foreach (var field in extra.Fields)
+            if (BuildFieldRow(node, extra, field) is { } control)
+                panel.Children.Add(control);
+
+        return panel;
+    }
+
+    private Control? BuildFieldRow(NodeInstance node, NodeExtra extra, ExtraField field) => field switch
+    {
+        ExtraField.Number number => ValueRow(
+            field.Label,
+            number.Spec,
+            number.Value(node.StateOf(extra.Key)?[field.Key]),
+            $"{node.Id} {extra.Key} {field.Key}",
+            next => Store(node, extra, field, JsonValue.Create(next))),
+
+        ExtraField.Toggle toggle => ToggleRow(
+            field.Label,
+            toggle.Value(node.StateOf(extra.Key)?[field.Key]),
+            $"{node.Id} {extra.Key} {field.Key}",
+            next => Store(node, extra, field, JsonValue.Create(next))),
+
         _ => null,
     };
+
+    /// <summary>
+    /// Writes one field of a plugin's extra back, making the stored object first
+    /// where the module arrived without one — a patch written before the plugin
+    /// declared this field, or edited by hand into a shape that has no room for
+    /// it.
+    /// </summary>
+    /// <remarks>
+    /// Through the field's own tidying, so a declared range is what is stored and
+    /// not merely what the slider offered. This is where an extra's range differs
+    /// from a knob's: a socket's <see cref="PortSpec.Min"/> is the editor's
+    /// suggestion and a saved value outside it widens the slider, where a field's
+    /// range is what the value means and is held to on every path into it.
+    /// </remarks>
+    private static void Store(NodeInstance node, NodeExtra extra, ExtraField field, JsonNode value)
+    {
+        var held = extra.Stored(node.StateOf(extra.Key));
+        held[field.Key] = field.Sane(value);
+
+        node.SetState(extra.Key, held);
+    }
+
+    /// <summary>A label and a switch, laid out on the same grid a knob's row uses.</summary>
+    private Control ToggleRow(string label, bool value, string because, Action<bool> store)
+    {
+        var row = new Grid { ColumnDefinitions = new ColumnDefinitions("78,*") };
+
+        var caption = new TextBlock
+        {
+            Text = label,
+            Width = 78,
+            FontSize = 12,
+            VerticalAlignment = VerticalAlignment.Center,
+            TextTrimming = TextTrimming.CharacterEllipsis,
+        };
+
+        var box = new CheckBox { IsChecked = value, VerticalAlignment = VerticalAlignment.Center };
+
+        box.IsCheckedChanged += (_, _) =>
+        {
+            store(box.IsChecked == true);
+            editor.NotifyPatchChanged(because);
+        };
+
+        Grid.SetColumn(caption, 0);
+        Grid.SetColumn(box, 1);
+        row.Children.Add(caption);
+        row.Children.Add(box);
+
+        return row;
+    }
 
     /// <summary>
     /// The sound file a player reads: what it is called, and a button to pick
@@ -793,6 +898,62 @@ public sealed partial class MainWindow
 
         var value = index < node.InputValues.Length ? node.InputValues[index] : spec.Default;
 
+        // Named after the socket, so a slider dragged across its range is one
+        // step to undo rather than one per frame of the drag.
+        return ValueRow(spec.Name, spec, value, $"{node.Id} input {index}", next =>
+        {
+            if (index < node.InputValues.Length) node.InputValues[index] = next;
+        });
+    }
+
+    /// <summary>
+    /// A label, a slider, a number box, and — where the number is not what it
+    /// means — what it does mean written beside them.
+    /// </summary>
+    /// <remarks>
+    /// Shared by a socket's knob and by a plugin's declared number field, which
+    /// is the point: a plugin gets snapping, formatting and the widened range for
+    /// nothing, and its row reads exactly like the knob two rows above it because
+    /// it is the same control. The caller says where the value lives; nothing
+    /// here knows whether that is an input array or a stored object.
+    /// </remarks>
+    /// <param name="label">What to write in the left column.</param>
+    /// <param name="spec">The range, the display and whether it snaps.</param>
+    /// <param name="value">What it starts at.</param>
+    /// <param name="because">
+    /// What to file the edit under, so that dragging is one undo step rather than
+    /// one per frame.
+    /// </param>
+    /// <param name="store">Where the new value goes.</param>
+    private Control ValueRow(
+        string label,
+        PortSpec spec,
+        float value,
+        string because,
+        Action<float> store)
+    {
+        // A knob whose number is not what it means gets a column for what it
+        // does mean, since "57" is not what anyone means by the note they are
+        // picking and "-3" is not what they mean by a millisecond. A count needs
+        // no such column — the number is already what it stands for — but it
+        // lands on whole numbers for the same reason a note does.
+        var named = spec.Display != PortDisplay.Number;
+        var whole = spec.Stepped;
+
+        var row = new Grid { ColumnDefinitions = new ColumnDefinitions(named ? "78,*,84,40" : "78,*,84") };
+
+        var caption = new TextBlock
+        {
+            Text = label,
+            Width = 78,
+            FontSize = 12,
+            VerticalAlignment = VerticalAlignment.Center,
+            TextTrimming = TextTrimming.CharacterEllipsis,
+        };
+
+        Grid.SetColumn(caption, 0);
+        row.Children.Add(caption);
+
         var slider = new Slider
         {
             // Widen the range if a saved value sits outside the module's usual span.
@@ -860,15 +1021,13 @@ public sealed partial class MainWindow
             if (updating) return;
 
             updating = true;
-            if (index < node.InputValues.Length) node.InputValues[index] = next;
+            store(next);
             slider.Value = next;
             numeric.Value = (decimal)next;
             name.Text = spec.Format(next);
             updating = false;
 
-            // Named after the socket, so a slider dragged across its range is one
-            // step to undo rather than one per frame of the drag.
-            editor.NotifyPatchChanged($"{node.Id} input {index}");
+            editor.NotifyPatchChanged(because);
         }
     }
 }

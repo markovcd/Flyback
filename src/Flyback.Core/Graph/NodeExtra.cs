@@ -1,3 +1,4 @@
+using System.Text.Json.Nodes;
 using Flyback.Core.Compile;
 
 namespace Flyback.Core.Graph;
@@ -62,27 +63,51 @@ public readonly record struct ExtraEnv(
 /// kind adds a file and no member, so a plugin compiled against an earlier build
 /// still finds the constructor it was compiled against.
 /// <para>
-/// What is virtual here is exactly what lives in this assembly and applies to
-/// every kind. The inspector's editor is not: it needs Avalonia, which the
-/// engine does not reference, so the App maps an extra to a control of its own.
-/// Nor is serialisation: the state stays in typed fields on
-/// <see cref="NodeInstance"/>, so a saved patch reads as it always did and can
-/// still be edited by hand.
+/// A plugin may write its own. The engine's three store in typed fields on
+/// <see cref="NodeInstance"/>, which is why a saved patch reads as it always
+/// did; a plugin's stores under <see cref="Key"/> in
+/// <see cref="NodeInstance.State"/> and folds onto
+/// <see cref="EmitContext.Extras"/>, because that class is sealed and a plugin
+/// cannot add a field to it.
 /// </para>
 /// <para>
-/// Which is also the limit of this, and it is worth knowing before deriving one:
-/// the kinds here are the kinds there are. A plugin may write its own and the
-/// loops will call it, but <see cref="NodeInstance"/> is sealed and holds three
-/// fields, <see cref="EmitContext"/> holds the matching four, and a patch is
-/// serialised from the former's declared properties — so <see cref="Seed"/> and
-/// <see cref="Fold"/> have nowhere to put anything new. Only
-/// <see cref="Announce"/> and <see cref="Report"/> work, which makes a plugin's
-/// own kind able to describe state it cannot hold. Storing in a field that
-/// already exists is the one arrangement that works throughout.
+/// What is not here is the editor: it needs Avalonia, which the engine does not
+/// reference. The engine's three are drawn by controls the App holds, and a
+/// plugin's is drawn from what <see cref="Fields"/> declares
+/// ([0055](0055-a-plugins-extra-declares-its-editor.md)) — so no plugin ships
+/// UI, and the same declaration is what lets an assistant read and write the
+/// state without a tool written for it.
 /// </para>
 /// </remarks>
 public abstract record NodeExtra
 {
+    /// <summary>
+    /// A short, stable word for this kind. What a plugin's state is filed under
+    /// in <see cref="NodeInstance.State"/> and <see cref="EmitContext.Extras"/>,
+    /// and what a saved patch names it by — so changing one is a change to the
+    /// file format of every patch that holds the module.
+    /// </summary>
+    /// <remarks>
+    /// The engine's own three carry one too, though they store in typed fields
+    /// rather than by key. It is what a listing calls them, and it keeps "which
+    /// extra is this" answerable without a type test.
+    /// </remarks>
+    public abstract string Key { get; }
+
+    /// <summary>
+    /// The values this kind carries, described so that the App can draw them and
+    /// an assistant can set them. Empty for the engine's own three, which are
+    /// drawn by controls written for them.
+    /// </summary>
+    /// <remarks>
+    /// Declaring these is the whole of what a plugin has to do: everything below
+    /// has a default written in terms of them, so a plugin's extra overrides
+    /// <see cref="Key"/> and this and nothing else. A kind that declares none and
+    /// overrides nothing carries nothing, which is a legal and useless module —
+    /// so the emptiness is not defended against here.
+    /// </remarks>
+    public virtual IReadOnlyList<ExtraField> Fields => [];
+
     /// <summary>What a freshly placed instance carries.</summary>
     /// <remarks>
     /// Seeding is here and copying is not. Copying an instance is
@@ -90,32 +115,92 @@ public abstract record NodeExtra
     /// build has no definition for — a fragment from a plugin that is not
     /// loaded still has to keep its notes rather than lose them quietly.
     /// </remarks>
-    public abstract void Seed(NodeInstance node);
+    public virtual void Seed(NodeInstance node)
+    {
+        if (Fields.Count == 0) return;
+
+        node.SetState(Key, Stored(null));
+    }
 
     /// <summary>
     /// Reads the state onto the context the emit function is handed, tidying it
     /// on the way — a hand-edited file is the one way an unplayable value
     /// arrives, and the emit should not have to defend itself against one.
     /// </summary>
-    public abstract EmitContext Fold(EmitContext ctx, NodeInstance node, ExtraEnv env);
+    public virtual EmitContext Fold(EmitContext ctx, NodeInstance node, ExtraEnv env) =>
+        Fields.Count == 0 ? ctx : ctx.With(Key, new ExtraState(Fields, node.StateOf(Key)));
 
     /// <summary>
     /// What this instance is carrying, as prose. What an assistant reading a
     /// patch sees, and the one place it would otherwise miss: this is neither a
     /// socket nor a wire, so a listing of either shows nothing of it.
     /// </summary>
-    public abstract string Report(NodeInstance node);
+    public virtual string Report(NodeInstance node)
+    {
+        if (Fields.Count == 0) return $"{Key}: nothing.";
+
+        var held = node.StateOf(Key);
+        var written = Fields.Select(f => $"{f.Label} {f.Format(held?[f.Key])}");
+
+        return $"{Key}: {string.Join(", ", written)}.";
+    }
 
     /// <summary>
     /// That the module carries this at all, and how to set it — for the listing
     /// of what a module is, as opposed to what one instance holds.
     /// </summary>
-    public abstract string Announce();
+    public virtual string Announce()
+    {
+        var named = string.Join(", ", Fields.Select(f => f.Key));
+
+        return $"  {Key,-6} {named}, set with set_extra — not knobs";
+    }
+
+    /// <summary>
+    /// This kind's state as it is stored: every declared field, held to what it
+    /// can mean. Passing null builds the state a fresh instance carries, because
+    /// "no value yet" and "a value that means nothing" are the same question.
+    /// </summary>
+    public JsonObject Stored(JsonNode? from)
+    {
+        var stored = new JsonObject();
+
+        foreach (var field in Fields) stored[field.Key] = field.Sane(from?[field.Key]);
+
+        return stored;
+    }
+}
+
+/// <summary>
+/// One instance's worth of a declared extra, parsed and ready for an emit
+/// function — what a plugin reads back out of
+/// <see cref="EmitContext.Extras"/>.
+/// </summary>
+/// <remarks>
+/// Typed at the point of use, which is the whole reason this exists rather than
+/// the emit function being handed the JSON. A plugin knows its own schema, so
+/// asking for a field by name and getting a <c>float</c> is the natural reading,
+/// and the tolerance for a file that means nothing has already been applied by
+/// the time anything here is called.
+/// </remarks>
+public sealed class ExtraState(IReadOnlyList<ExtraField> fields, JsonNode? stored)
+{
+    /// <summary>What a number field holds, or its default where nothing sensible does.</summary>
+    public float Number(string key) =>
+        Field(key) is ExtraField.Number field ? field.Value(stored?[key]) : 0f;
+
+    /// <summary>What a toggle field holds, or its default where nothing sensible does.</summary>
+    public bool Toggle(string key) =>
+        Field(key) is ExtraField.Toggle field && field.Value(stored?[key]);
+
+    private ExtraField? Field(string key) => fields.FirstOrDefault(f => f.Key == key);
 }
 
 /// <summary>The notes a sequencer plays — see <see cref="NodeInstance.Steps"/>.</summary>
 public sealed record StepsExtra(StepSpec Spec) : NodeExtra
 {
+    public override string Key => "notes";
+
     public override void Seed(NodeInstance node) => node.Steps = [.. Spec.Default];
 
     /// <remarks>
@@ -150,6 +235,8 @@ public sealed record StepsExtra(StepSpec Spec) : NodeExtra
 /// <summary>The notes of the octave a quantiser snaps to — see <see cref="NodeInstance.Scale"/>.</summary>
 public sealed record ScaleExtra(IReadOnlyList<int> Default) : NodeExtra
 {
+    public override string Key => "scale";
+
     public override void Seed(NodeInstance node) => node.Scale = Pitch.Scale(Default);
 
     /// <remarks>
@@ -184,6 +271,8 @@ public sealed record ScaleExtra(IReadOnlyList<int> Default) : NodeExtra
 /// <summary>The audio file a player reads — see <see cref="NodeInstance.Sample"/>.</summary>
 public sealed record SampleExtra : NodeExtra
 {
+    public override string Key => "file";
+
     /// <remarks>
     /// Empty rather than null, so a module that reads a file always has
     /// somewhere to put one and the panel always has a row to show.

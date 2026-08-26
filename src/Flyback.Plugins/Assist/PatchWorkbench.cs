@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Core.Render;
@@ -143,6 +144,7 @@ public sealed class PatchWorkbench
                 "set_steps" => SetSteps(arguments),
                 "set_scale" => SetScale(arguments),
                 "set_sample" => SetSample(arguments),
+                "set_extra" => SetExtra(arguments),
                 "connect" => Connect(arguments),
                 "disconnect" => Disconnect(arguments),
                 "remove_module" => RemoveModule(arguments),
@@ -357,6 +359,100 @@ public sealed class PatchWorkbench
         Edits++;
 
         return Fine($"{Handle(node)} now reads {path}. {Issues()}");
+    }
+
+    /// <summary>
+    /// Sets one field of an extra a plugin defined.
+    /// </summary>
+    /// <remarks>
+    /// One tool for every kind a plugin will ever add, which is the whole return
+    /// on declaring a schema rather than shipping a control
+    /// ([0055](0055-a-plugins-extra-declares-its-editor.md)): the three built-in
+    /// kinds each needed a tool written for them, and no plugin's will.
+    /// <para>
+    /// A field at a time rather than the whole object, which is the opposite call
+    /// to <c>set_steps</c>'s and made for the opposite reason. A tune is a list
+    /// whose order is the point, so half of one applied is a tune nobody asked
+    /// for; these are named values that do not depend on each other, and setting
+    /// one is exactly as safe as setting a knob.
+    /// </para>
+    /// </remarks>
+    private ToolOutcome SetExtra(JsonElement arguments)
+    {
+        if (!Node(arguments, "handle", out var node, out var def, out var refusal))
+            return ToolOutcome.Refused(refusal);
+
+        if (!Text(arguments, "extra", out var key))
+            return ToolOutcome.Refused("'extra' is required: which of the module's extras to set.");
+
+        if (def.Extras.FirstOrDefault(e => e.Key == key) is not { } extra)
+        {
+            var carries = def.Extras.Count == 0
+                ? "it carries none"
+                : $"it carries {string.Join(", ", def.Extras.Select(e => e.Key))}";
+
+            return ToolOutcome.Refused($"{Handle(node)} has no '{key}' — {carries}.");
+        }
+
+        if (extra.Fields.Count == 0)
+        {
+            return ToolOutcome.Refused(
+                $"'{key}' on {Handle(node)} is not set this way. The built-in notes, scale and "
+                + "file have set_steps, set_scale and set_sample.");
+        }
+
+        if (!Text(arguments, "field", out var name))
+            return ToolOutcome.Refused("'field' is required: which of the extra's values to set.");
+
+        if (extra.Fields.FirstOrDefault(f => f.Key == name) is not { } field)
+        {
+            return ToolOutcome.Refused(
+                $"'{key}' has no '{name}' — it holds "
+                + $"{string.Join(", ", extra.Fields.Select(f => f.Key))}.");
+        }
+
+        if (!arguments.TryGetProperty("value", out var given))
+            return ToolOutcome.Refused("'value' is required.");
+
+        // Checked against the shape the field declared rather than taken on
+        // trust, so that a model sending a string where a number belongs is told
+        // so here instead of having it quietly become the default.
+        JsonNode value;
+
+        switch (field)
+        {
+            case ExtraField.Number when given.ValueKind == JsonValueKind.Number:
+                value = JsonValue.Create(given.GetSingle());
+                break;
+
+            case ExtraField.Number number:
+                return ToolOutcome.Refused(
+                    $"'{name}' is a number from {number.Spec.Min} to {number.Spec.Max}.");
+
+            case ExtraField.Toggle when given.ValueKind is JsonValueKind.True or JsonValueKind.False:
+                value = JsonValue.Create(given.ValueKind == JsonValueKind.True);
+                break;
+
+            case ExtraField.Toggle:
+                return ToolOutcome.Refused($"'{name}' is a switch: true or false.");
+
+            default:
+                return ToolOutcome.Refused(
+                    $"'{name}' is a kind of value this build cannot set. It was added by a "
+                    + "newer one.");
+        }
+
+        // The new value through the field's own tidying, not just the ones that
+        // were already there: a number outside the declared range is held to it
+        // as it is stored, so what a later listing reads back is what the module
+        // will actually compile with.
+        var held = extra.Stored(node.StateOf(key));
+        held[name] = field.Sane(value);
+        node.SetState(key, held);
+
+        Edits++;
+
+        return Fine($"set {key}.{name} on {Handle(node)}. {extra.Report(node)} {Issues()}");
     }
 
     private ToolOutcome Connect(JsonElement arguments)
@@ -1153,6 +1249,26 @@ public sealed class PatchWorkbench
                     "path": { "type": "string", "description": "Where the WAV is, absolute or beside the patch." }
                   },
                   "required": ["handle", "path"]
+                }
+                """),
+
+            new("set_extra",
+                "Sets one named value on a module that carries something a plugin defined — the "
+                + "rows a module listing writes under a name of their own, like 'notes' or "
+                + "'chord', rather than as 'in N'. Take the extra's name and the field's from "
+                + "that listing; describe_module says what a given module carries and what each "
+                + "field may hold. A number is clamped to the field's range and a switch takes "
+                + "true or false. The built-in notes, scale and file are not set this way: they "
+                + "have set_steps, set_scale and set_sample.",
+                """
+                {
+                  "properties": {
+                    "handle": { "type": "string" },
+                    "extra": { "type": "string", "description": "Which extra, as the listing names it." },
+                    "field": { "type": "string", "description": "Which of its values." },
+                    "value": { "description": "A number or a boolean, matching the field." }
+                  },
+                  "required": ["handle", "extra", "field", "value"]
                 }
                 """),
 

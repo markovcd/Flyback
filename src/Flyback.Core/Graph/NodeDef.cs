@@ -109,6 +109,52 @@ public readonly record struct EmitContext(Slot[] Inputs, IReadOnlyList<Step> Ste
     /// </para>
     /// </remarks>
     public LoadedSample? Trace { get; init; }
+
+    /// <summary>
+    /// What a plugin's own kinds of extra folded onto this context, keyed by
+    /// <see cref="NodeExtra.Key"/>. Empty for every module in the engine's own
+    /// catalogue, all of which read the typed properties above instead.
+    /// </summary>
+    /// <remarks>
+    /// <c>object</c> because the engine does not know the shape and does not need
+    /// to: what goes in here is put there by a plugin's own
+    /// <see cref="NodeExtra.Fold"/> and read by that same plugin's emit function,
+    /// and the pair agree about the type without anything between them having an
+    /// opinion. Read it with <see cref="Extra{T}"/> rather than by hand.
+    /// <para>
+    /// Already parsed, so an emit function never sees the JSON: turning a stored
+    /// tree into something usable — and tolerating one that means nothing —
+    /// happened in <c>Fold</c>, before the module was entered.
+    /// </para>
+    /// </remarks>
+    public IReadOnlyDictionary<string, object> Extras
+    {
+        get => field ?? EmptyExtras;
+        init;
+    }
+
+    /// <summary>
+    /// What the extra called <paramref name="key"/> folded on, or null where it
+    /// folded nothing or folded something else.
+    /// </summary>
+    /// <remarks>
+    /// Null rather than a throw on the wrong type, for the reason every other
+    /// read here is forgiving: a module compiled with a stale patch, or against a
+    /// catalogue that has moved under it, should lower to something rather than
+    /// take the compilation down.
+    /// </remarks>
+    public T? Extra<T>(string key) where T : class =>
+        Extras.TryGetValue(key, out var value) ? value as T : null;
+
+    /// <summary>
+    /// The same context with one more extra folded on, which is what
+    /// <see cref="NodeExtra.Fold"/> hands back.
+    /// </summary>
+    public EmitContext With(string key, object value) =>
+        this with { Extras = new Dictionary<string, object>(Extras) { [key] = value } };
+
+    /// <summary>Shared and empty, so a context that was never given any allocates nothing.</summary>
+    private static readonly Dictionary<string, object> EmptyExtras = [];
 }
 
 /// <summary>Lowers one node to register-machine ops.</summary>
