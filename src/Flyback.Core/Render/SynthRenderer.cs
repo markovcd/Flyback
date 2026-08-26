@@ -39,7 +39,20 @@ public sealed class SynthRenderer
     public void Reset() => Array.Clear(previousFrame);
 
     /// <summary>Renders one frame into a BGRA8888 buffer.</summary>
-    public void Render(CompiledPatch patch, double time, int width, int height, Span<byte> destination, int stride)
+    /// <param name="live">
+    /// What is being played into the patch as this frame is drawn, or null when
+    /// nothing is. One reading for the whole frame, which is what a frame is: a
+    /// key pressed while the rows are still going down belongs to the next
+    /// picture rather than to half of this one.
+    /// </param>
+    public void Render(
+        CompiledPatch patch,
+        double time,
+        int width,
+        int height,
+        Span<byte> destination,
+        int stride,
+        LiveValues? live = null)
     {
         if (width <= 0 || height <= 0) return;
         if (destination.Length < (long)stride * height)
@@ -49,13 +62,20 @@ public sealed class SynthRenderer
         {
             fixed (byte* pinned = destination)
             {
-                Render(patch, time, width, height, pinned, stride);
+                Render(patch, time, width, height, pinned, stride, live);
             }
         }
     }
 
     /// <summary>Renders one frame into a BGRA8888 buffer that the caller has already pinned or mapped.</summary>
-    private unsafe void Render(CompiledPatch patch, double time, int width, int height, byte* destination, int stride)
+    private unsafe void Render(
+        CompiledPatch patch,
+        double time,
+        int width,
+        int height,
+        byte* destination,
+        int stride,
+        LiveValues? live)
     {
         if (width <= 0 || height <= 0) return;
 
@@ -84,7 +104,7 @@ public sealed class SynthRenderer
                 {
                     var px = (2d * (x + 0.5d) / width - 1d) * aspect;
 
-                    patch.Evaluate(px, py, time, registers, feedback, aspect: aspect);
+                    patch.Evaluate(px, py, time, registers, feedback, aspect: aspect, live: live);
 
                     var r = Saturate(registers[outputBase + 0]);
                     var g = Saturate(registers[outputBase + 1]);

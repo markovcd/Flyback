@@ -193,6 +193,13 @@ public sealed class ExtraState(IReadOnlyList<ExtraField> fields, JsonNode? store
     public bool Toggle(string key) =>
         Field(key) is ExtraField.Toggle field && field.Value(stored?[key]);
 
+    /// <summary>
+    /// Which option a choice field holds, or its fallback where nothing sensible
+    /// does — and the empty string for a key that is not a choice at all.
+    /// </summary>
+    public string Chosen(string key) =>
+        Field(key) is ExtraField.Choice field ? field.Value(stored?[key]) : string.Empty;
+
     private ExtraField? Field(string key) => fields.FirstOrDefault(f => f.Key == key);
 }
 

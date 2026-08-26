@@ -4,6 +4,7 @@ using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Flyback.App.Controls;
+using Flyback.Core.Graph;
 
 namespace Flyback.App;
 
@@ -165,6 +166,18 @@ public sealed partial class MainWindow
             return;
         }
 
+        // The computer's keyboard as an instrument. A note is a bare keystroke
+        // and nothing else, so a key carrying a command modifier is left for
+        // whatever claimed it: Ctrl+Z is undo, and it stays undo in a patch
+        // being played with a hand on the Z. Only while something is actually
+        // listening, so a patch with no MIDI In in it types the way it always
+        // did.
+        if (Bare(e.KeyModifiers) && Playing && PlayKey(e.Key))
+        {
+            e.Handled = true;
+            return;
+        }
+
         if ((e.KeyModifiers & (KeyModifiers.Control | KeyModifiers.Meta)) == 0) return;
 
         var again = (e.KeyModifiers & KeyModifiers.Shift) != 0;
@@ -193,6 +206,92 @@ public sealed partial class MainWindow
                 break;
         }
     }
+
+    /// <summary>
+    /// Lets a note go, whatever else is going on.
+    /// </summary>
+    /// <remarks>
+    /// None of the guards that stand in front of pressing a key stand here, and
+    /// that asymmetry is the point: a key going down can start something and so
+    /// has to be sure it was meant, and a key coming up can only ever stop one.
+    /// Every guard is a way for a release to be missed, and a missed release is
+    /// a note that sounds for the rest of the session.
+    /// <para>
+    /// So a modifier taken hold of while a key is down, a module deleted, a
+    /// device picked, or a text box clicked into mid-note all end the note rather
+    /// than stranding it. Releasing one that was never played does nothing, which
+    /// is what makes ignoring the guards safe. Nothing is marked handled, because
+    /// nothing else in the shell listens for a key coming up.
+    /// </para>
+    /// </remarks>
+    protected override void OnKeyUp(KeyEventArgs e)
+    {
+        base.OnKeyUp(e);
+
+        midi.KeyUp(e.Key);
+    }
+
+    /// <summary>
+    /// Whether a keystroke is a plain one, with nothing held that turns a letter
+    /// into a command.
+    /// </summary>
+    /// <remarks>
+    /// Shift is deliberately not one of them. It is part of typing a letter
+    /// rather than a way of asking for something else — no gesture in the shell
+    /// is Shift and a letter on its own — so a capital Z is still a Z and still
+    /// plays. Ctrl, Cmd and Alt all mean the keystroke was aimed somewhere else.
+    /// </remarks>
+    private static bool Bare(KeyModifiers modifiers) =>
+        (modifiers & (KeyModifiers.Control | KeyModifiers.Meta | KeyModifiers.Alt)) == 0;
+
+    /// <summary>
+    /// Whether the computer's keyboard is an instrument right now — whether, in
+    /// other words, either of the running programs is reading it.
+    /// </summary>
+    /// <remarks>
+    /// Asked of the compiled programs rather than of the patch, and that is what
+    /// makes it exact rather than nearly right. A MIDI In sitting on the canvas
+    /// wired to nothing is not read by either program, so it should not be taking
+    /// keystrokes away from the editor; one wired only to the speakers is read by
+    /// the audio program and not the picture's, and it should. Dead-code
+    /// elimination has already answered both questions (ADR-0022), and asking the
+    /// patch would be a second, worse answer to them.
+    /// </remarks>
+    private bool Playing =>
+        !Typing
+        && (Reads(preview.Program.LiveInputs) || Reads(audio.Live.Keys));
+
+    private static bool Reads(IReadOnlyList<string> inputs) =>
+        inputs.Any(key => key.StartsWith(MidiSources.Keyboard + "/", StringComparison.Ordinal));
+
+    /// <summary>
+    /// Whether the keystroke belongs to something being typed into rather than to
+    /// the instrument.
+    /// </summary>
+    /// <remarks>
+    /// The whole reason the notes are on bare letters and can still be. A text
+    /// box does not mark an ordinary key press handled — what it acts on is the
+    /// text input that follows — so without this, naming a patch would play a
+    /// tune, and every letter of the name would be a note nobody could stop.
+    /// </remarks>
+    private bool Typing => FocusManager?.GetFocusedElement() is TextBox;
+
+    /// <summary>
+    /// One key, as either a note or the pair that moves the two rows. Null-ish by
+    /// design: anything that is neither is left alone and goes on meaning
+    /// whatever it meant.
+    /// </summary>
+    private bool PlayKey(Key key)
+    {
+        if (midi.Shift(key) is { } moved)
+        {
+            Report(moved);
+            return true;
+        }
+
+        return midi.KeyDown(key);
+    }
+
 
     /// <summary>
     /// Greys the two out when there is nothing behind or ahead — the same

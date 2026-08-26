@@ -102,6 +102,14 @@ public sealed class PreviewHost : Decorator, IPreviewSurface
         }
     }
 
+    public LiveValues Live
+    {
+        get => active.Live;
+        set => active.Live = value;
+    }
+
+    public void Refresh() => active.Refresh();
+
     /// <summary>
     /// Which renderer was asked for, as against <see cref="Backend"/>, which is
     /// the one running. The two differ while a patch is being drawn on the
@@ -279,6 +287,7 @@ public sealed class PreviewHost : Decorator, IPreviewSurface
         if (active is not null)
         {
             surface.Program = active.Program;
+            surface.Live = active.Live;
             surface.Resolution = active.Resolution;
             surface.Time = active.Time;
             surface.Clock = active.Clock;

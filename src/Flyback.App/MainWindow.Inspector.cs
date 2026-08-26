@@ -280,7 +280,7 @@ public sealed partial class MainWindow
                      + "wheel to zoom.\n"
                      + "Ctrl+click adds to a selection, Ctrl+A takes everything.\n"
                      + "Ctrl+C, Ctrl+X and Ctrl+V copy, cut and paste.\n"
-                     + "Delete removes what is selected, F frames the patch.",
+                     + "Delete removes what is selected, Ctrl+F frames the patch.",
                 TextWrapping = TextWrapping.Wrap,
                 Opacity = 0.5,
                 FontSize = 12,
@@ -689,8 +689,69 @@ public sealed partial class MainWindow
             $"{node.Id} {extra.Key} {field.Key}",
             next => Store(node, extra, field, JsonValue.Create(next))),
 
+        ExtraField.Choice choice => ChoiceRow(
+            choice,
+            choice.Value(node.StateOf(extra.Key)?[field.Key]),
+            $"{node.Id} {extra.Key} {field.Key}",
+            next => Store(node, extra, field, JsonValue.Create(next))),
+
         _ => null,
     };
+
+    /// <summary>
+    /// A label and a list to pick from, on the same grid a knob's row uses.
+    /// </summary>
+    /// <remarks>
+    /// What is stored may not be in the list — a device that is switched off, a
+    /// patch written on another machine — and that is shown rather than
+    /// corrected: an entry for it is added at the end, named the way
+    /// <see cref="ExtraField.Choice.Name"/> writes one that is not here, so the
+    /// picker shows what the patch actually means. Picking anything else drops
+    /// it, which is the only way it goes.
+    /// </remarks>
+    private Control ChoiceRow(ExtraField.Choice choice, string value, string because, Action<string> store)
+    {
+        var row = new Grid { ColumnDefinitions = new ColumnDefinitions("78,*") };
+
+        var caption = new TextBlock
+        {
+            Text = choice.Label,
+            Width = 78,
+            FontSize = 12,
+            VerticalAlignment = VerticalAlignment.Center,
+            TextTrimming = TextTrimming.CharacterEllipsis,
+        };
+
+        var options = choice.Options.ToList();
+
+        if (options.All(option => option.Id != value))
+            options.Add(new ChoiceOption(value, choice.Name(value)));
+
+        var list = new Picker
+        {
+            ItemsSource = options,
+            DisplayMemberBinding = new Avalonia.Data.Binding(nameof(ChoiceOption.Name)),
+            SelectedIndex = options.FindIndex(option => option.Id == value),
+            FontSize = 12,
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+
+        list.SelectionChanged += (_, _) =>
+        {
+            if (list.SelectedItem is not ChoiceOption picked || picked.Id == value) return;
+
+            store(picked.Id);
+            editor.NotifyPatchChanged(because);
+        };
+
+        Grid.SetColumn(caption, 0);
+        Grid.SetColumn(list, 1);
+        row.Children.Add(caption);
+        row.Children.Add(list);
+
+        return row;
+    }
 
     /// <summary>
     /// Writes one field of a plugin's extra back, making the stored object first

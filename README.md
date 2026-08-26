@@ -332,8 +332,9 @@ other.
 The audio side of the catalogue is **Frequency** and **Note** for pitch, **Note
 Sequencer** and **Sequencer** for a tune, **Tempo** for saying how fast in beats
 a minute rather than in beats a second, **ADSR** for the shape a note has over
-time, **Mixer** for summing, and the Output's own `scan` for hearing the picture
-instead of the clock. Each explains itself on its panel. Two details are on none
+time, **Mixer** for summing, **MIDI In** for playing the patch by hand rather
+than programming it, and the Output's own `scan` for hearing the picture instead
+of the clock. Each explains itself on its panel. Two details are on none
 of them: a Note's `octave` transposes by twelve semitones a step, and its
 `cents` detunes past the snap.
 
@@ -608,6 +609,94 @@ at `in` with the trigger ignored, which for an `in` on the clock means you see
 the file only while the transport is inside it: rewind, or set `window` to about
 the clip's length, and the waveform is there. A **Scope** shows the triggering,
 because it is a recording of what came out rather than a second evaluation.
+
+### Playing it
+
+Everything above is a patch reading itself. **MIDI In** is the module that lets a
+hand in: it has no inputs at all and four outputs — `pitch` as a note number,
+`gate` while a key is down, `velocity`, and `trigger`, a single evaluation high
+each time a note is struck. Into a `Note` and an `ADSR` that is an instrument you
+play; into a `Sample`'s own `trigger` it is a drum pad.
+
+Its panel asks which keyboard. A fresh one listens to the **computer keyboard**,
+which needs no driver and is what ships today — the bottom two rows are the white
+and black notes of an octave in the tracker layout, the top two rows are the
+octave above, and Page Up and Page Down move both. So `Z` is C3, `S` is the C
+sharp over it, `Q` is the C above them all, and the status bar says where the
+rows have got to when you move them. The keys are read by position rather than by
+the letter printed on them, so it stays a piano on a keyboard whose letters are
+somewhere else.
+
+The letters only play while something in the patch is actually listening to them.
+That is answered off the compiled programs rather than off the canvas — a MIDI In
+sitting there wired to nothing is not read by either sink, and takes no
+keystrokes. Typing into a box is never playing.
+
+**A note is a bare keystroke and nothing else.** Anything carrying `Ctrl`, `Cmd`
+or `Alt` is left for whatever claimed it, so `Ctrl+Z` is undo in a patch being
+played with a hand on the Z, and so are `Ctrl+Y`, `Ctrl+L` and the clipboard —
+every one of which lands on a letter the layout also plays. `Shift` is not one of
+them: no gesture here is Shift and a letter, so a capital Z is still a Z. Framing
+moved from `F` to `Ctrl+F` to keep the rule whole; `F` was not in the layout that
+ships, but a gesture that worked only until somebody added a key to it is worse
+than one that reads like its neighbours.
+
+Letting a key go carries none of those guards, and that asymmetry is deliberate:
+a key going down can start something and has to be sure it was meant, and a key
+coming up can only ever stop one. Take hold of `Ctrl` mid-note, delete the
+module, click into a text box — the note still ends. Every guard in front of a
+release is a way for one to be missed, and a missed release lasts the rest of the
+session.
+
+**One note at a time**, with the newest key taking the voice: letting it go hands
+the voice back to whichever key is still down, so a trill is a trill rather than
+a stutter. The gate still reopens for a fraction of a sample at each new note,
+which is what makes an envelope articulate every note of a run played legato
+instead of sliding through it.
+
+The picture is played as well as the speakers, which is the point of putting this
+in a video synth. Both backends read it: the interpreter is handed the block of
+live values beside the delay lines, and the shader is handed them as uniforms
+uploaded before each frame — one reading of the keys per frame, and one per audio
+buffer, so nothing is ever half of two moments. What is **not** played is an
+export: a rendered movie has nobody at the keys, so every output of this module
+sits at rest and the patch draws what it draws with no note down. A patch holding
+one is a performance rather than a recipe, and that is the one place where the
+file is no longer the whole of what you will get.
+
+A device that is not there is said rather than swapped. Pick a keyboard, save the
+patch, open it on a machine without one, and the module still names it and the
+status bar explains the silence — the same bargain a Sample makes with a file
+that has moved.
+
+**Played** is the preset for it, and the one to open if the module seems
+abstract. `pitch` goes into a Note for the ear and — through a Clamp into four
+octaves — picks both the hue and how tight the rings are for the eye. `gate`
+opens an ADSR, which is the note at the speakers and the light on the screen.
+`trigger` does the thing only it can: it fires a **Sample & Hold** that catches a
+wandering Noise and parks it on the Pulse's `width`, so every note struck has a
+timbre of its own, settled the instant it starts and steady for as long as you
+hold it. Without the hold, the same Noise straight into `width` would smear the
+tone about *while* a note was sounding, which is a different and much less
+musical instrument.
+
+Velocity is deliberately left unwired: a typist strikes every key the same, so a
+wire from it would be one that does nothing until hardware arrives — better an
+obvious empty socket than a knob that lies. The trigger reaches the ear and not
+the eye, for the reason above, and the Sample & Hold is in the same position and
+stops holding there for the same one. So the picture is given the two outputs
+that mean something with no past behind them: which note, and whether one is
+down. Nothing held reads as note nought — the same answer a program nobody is
+playing gives — which the Clamp turns into the bottom of the range rather than
+into wherever nought happened to land.
+
+Hardware MIDI is not here yet. It is a plugin's worth of work behind the same
+seam the sound devices sit behind ([ADR-0025](docs/adr/0025-platform-io-behind-loadable-plugins.md)),
+and the picker, the patch format and the module are all built for it: an
+instrument is named by a string, and nothing above this line knows what is behind
+one. [ADR-0056](docs/adr/0056-a-patch-can-be-played-and-what-plays-it-is-one-opcode.md)
+records what a live value costs the engine — one opcode, and the first thing a
+program can read that may be different on the very next evaluation.
 
 Audio runs at 48 kHz, 4× oversampled and filtered before decimation, which keeps
 the naive `Saw` and `Square` from folding harmonics back down as buzzing. It
@@ -905,6 +994,19 @@ framing, renaming — and every toolbar symbol says what it is if you rest on it
 Three things are on neither: `Ctrl+Y` redoes as well as `Ctrl+Shift+Z`, `Cmd`
 does whatever `Ctrl` does, and the Output is the one module `Delete` will not
 take.
+
+Every gesture on a letter carries `Ctrl`, and that is a rule rather than a
+convention: bare letters belong to the instrument, since a patch holding a
+[MIDI In](#playing-it) plays them. `Delete`, `Space` and `Escape` are the
+exceptions, being keys no keyboard layout has a note on.
+
+The lists — the patch to start from, the preview size, the instrument a MIDI In
+listens to — are pointed at rather than typed at. A dropdown ordinarily answers
+the keyboard twice over, an arrow moving the selection and a letter jumping to
+the first entry beginning with it, and both *commit*: arrowing down the patch
+list would throw the patch away once per step. So a keystroke at a focused list
+does nothing to it, and goes on to mean whatever it would have meant with nothing
+focused.
 
 A wire is re-patched by picking it up at either end, and which end decides what
 the gesture is asking. Drag a **connected input** and the plug comes out of that

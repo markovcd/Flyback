@@ -39,6 +39,30 @@ public enum OpCode : byte
     /// </remarks>
     LoadAspect,
 
+    /// <summary>out = live input K, which is 0 wherever nothing is playing one</summary>
+    /// <remarks>
+    /// The one op whose answer comes from outside the program and from outside
+    /// the patch. <see cref="Table"/> reads something settled before the program
+    /// ran, and <see cref="UnitRead"/> reads what the program itself left behind;
+    /// this reads what somebody is doing to a keyboard right now, and it may be a
+    /// different number on the very next evaluation for no reason the ops around
+    /// it can see.
+    /// <para>
+    /// K is a position in <see cref="CompiledPatch.LiveInputs"/> — which signal
+    /// of which instrument, named there by a string the program carries. Named
+    /// rather than numbered because the two ends never meet: a module asks for
+    /// "keyboard/gate" while it is being compiled, and something outside fills
+    /// that in whenever a key moves. Neither could count the other's slots.
+    /// </para>
+    /// <para>
+    /// Not stateful, though it sits beside the ops that are: nothing in the
+    /// register file produced it, and where no block is passed it reads zero.
+    /// That fallback is what an offline render and a headless compile get, and it
+    /// is the honest answer — nobody was playing.
+    /// </para>
+    /// </remarks>
+    LoadLive,
+
     /// <summary>out = a</summary>
     Copy,
 

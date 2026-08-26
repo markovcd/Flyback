@@ -1,5 +1,6 @@
 using System.Globalization;
 using Avalonia.Controls;
+using Flyback.App.Midi;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Plugins.Audio;
@@ -130,6 +131,13 @@ public sealed partial class MainWindow
 
         preview.Program = result.Program;
         audio.Update(editor.Patch, samples);
+
+        // Both programs are new, so both of their blocks are, and whatever is
+        // being held has to be written into them before the next frame or the
+        // next buffer. Turning a knob while playing a note recompiles the patch,
+        // and the note must not be cut off by the edit.
+        preview.Live = new LiveValues(result.Program.LiveInputs);
+        midi.Follow(preview.Live, audio.Live);
 
         // What the ear reaches is said too. Compiling backwards from one sink
         // means the video pass never visits a module only the speakers reach —

@@ -7,6 +7,7 @@ using Avalonia.Media;
 using Avalonia.Threading;
 using Flyback.App.Audio;
 using Flyback.App.Controls;
+using Flyback.App.Midi;
 using Flyback.Core.Render;
 using Flyback.Core.Graph;
 using Flyback.Plugins.Hosting;
@@ -51,7 +52,7 @@ public sealed partial class MainWindow : Window
     /// </summary>
     private readonly Button recordButton = new() { Content = "Record…", Width = 118 };
 
-    private readonly ComboBox resolution = new()
+    private readonly ComboBox resolution = new Picker
     {
         ItemsSource = Resolutions.Select(r => r.Label).ToList(),
         SelectedIndex = DefaultResolution,
@@ -179,10 +180,34 @@ public sealed partial class MainWindow : Window
     private readonly AudioSetup sound;
     private readonly AudioEngine audio;
 
+    /// <summary>
+    /// Everything that plays the patch from outside it. The mirror of
+    /// <see cref="audio"/>, which takes what the patch makes to a device.
+    /// </summary>
+    private readonly MidiHub midi = new();
+
     public MainWindow()
     {
         sound = OpenAudio(plugins);
         audio = new AudioEngine(sound.Device);
+
+        // Before anything is compiled and before a panel is drawn, because a
+        // MIDI In asks this what there is to listen to as soon as either
+        // happens. Installed here rather than in Startup because the list is the
+        // window's — the computer's keyboard is only an instrument while there
+        // is a window for it to be typed into.
+        MidiSources.Install(() => midi.Sources);
+
+        // A key going down while the clock is stopped changes the picture and
+        // moves nothing else, so the preview has to be told there is a new frame
+        // to draw. Everything else it redraws for, it can see for itself.
+        midi.Played += () => preview.Refresh();
+
+        // Everything let go when this stops being the window you are typing
+        // into. A key released over another program is a key this never hears
+        // about, and the note would hang until something else happened to move
+        // it — alt-tabbing away mid-chord should not leave a drone behind.
+        Deactivated += (_, _) => midi.AllOff();
 
         Title = BaseTitle;
         Width = 1280;
@@ -376,7 +401,11 @@ public sealed partial class MainWindow : Window
         // on is the same wherever it is installed.
         var available = plugins.Presets;
 
-        var presets = new ComboBox
+        // A Picker rather than a plain list, and this is the one where it matters
+        // most: every change here throws the patch on the canvas away, so a
+        // keystroke that moved the selection would be a keystroke that discarded
+        // somebody's work — fourteen times over if it were an arrow held down.
+        var presets = new Picker
         {
             ItemsSource = available.Select(p => p.Name).ToList(),
             SelectedIndex = 0,

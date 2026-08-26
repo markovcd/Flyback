@@ -27,10 +27,20 @@ public sealed class AudioEngine(IAudioDevice device) : IDisposable
     /// all — a Delay or an oscillator added or removed — that is a fault on the
     /// audio thread.
     /// </summary>
-    private sealed record State(CompiledPatch Program, AudioScan Scan, DelayState? Memory);
+    /// <param name="Live">
+    /// What the patch is being played with. Here for the same reason the memory
+    /// is: it is sized from one program's live inputs, so a callback still
+    /// rendering the previous program must be reading that program's block and
+    /// not the new one's.
+    /// </param>
+    private sealed record State(
+        CompiledPatch Program,
+        AudioScan Scan,
+        DelayState? Memory,
+        LiveValues Live);
 
     private readonly AudioRenderer renderer = new(device.SampleRate);
-    private State activeState = new(CompiledPatch.Silent, AudioScan.TimeDriven, null);
+    private State activeState = new(CompiledPatch.Silent, AudioScan.TimeDriven, null, LiveValues.None);
     private IAudioSink? capture;
 
     public bool IsRunning => device.IsRunning;
@@ -78,8 +88,28 @@ public sealed class AudioEngine(IAudioDevice device) : IDisposable
         // stateful op cuts the tail and restarts the tone.
         var memory = renderer.DelayMemoryFor(program, Volatile.Read(ref activeState).Memory);
 
-        Volatile.Write(ref activeState, new State(program, ScanFor(patch), memory));
+        // A fresh block rather than the old one carried over, even where the
+        // program asks for the same inputs. What was being held is written back
+        // into it at once by whoever is following, so nothing is dropped, and
+        // sharing one across a swap would mean the callback reading a block being
+        // resized under it.
+        var live = new LiveValues(program.LiveInputs);
+
+        Volatile.Write(ref activeState, new State(program, ScanFor(patch), memory, live));
     }
+
+    /// <summary>
+    /// The block whoever is playing should be writing into — the one belonging to
+    /// the program that is actually being heard.
+    /// </summary>
+    /// <remarks>
+    /// Read after every <see cref="Update"/>, because each one makes a new one:
+    /// a recompile may have added a module listening to something, and a block
+    /// sized for the program before it has nowhere to put that. What was held
+    /// across the edit is written in again by whoever is following — see
+    /// <c>MidiHub.Follow</c>.
+    /// </remarks>
+    public LiveValues Live => Volatile.Read(ref activeState).Live;
 
     /// <summary>
     /// Refills every Scope in <paramref name="drawn"/> from what has been played
@@ -128,7 +158,7 @@ public sealed class AudioEngine(IAudioDevice device) : IDisposable
     private void Fill(Span<float> buffer)
     {
         var state = Volatile.Read(ref activeState);
-        renderer.Render(state.Program, buffer, state.Scan, state.Memory);
+        renderer.Render(state.Program, buffer, state.Scan, state.Memory, state.Live);
 
         // After the render and before anything else, so what is recorded is what
         // was heard — the same samples, not a second evaluation that would drift

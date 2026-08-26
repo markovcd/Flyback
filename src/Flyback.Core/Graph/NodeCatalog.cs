@@ -137,6 +137,7 @@ public static partial class NodeCatalog
     {
         var modules = Output()
             .Concat(Sources())
+            .Concat(Midi())
             .Concat(Oscillators())
             .Concat(Sequencers())
             .Concat(Envelopes())

@@ -35,9 +35,42 @@ public sealed class CompiledPatch(
     int outputBase,
     int outputWidth = 3,
     IReadOnlyList<LoadedSample>? tables = null,
-    IReadOnlyList<TapSpec>? taps = null)
+    IReadOnlyList<TapSpec>? taps = null,
+    IReadOnlyList<string>? liveInputs = null)
 {
     public Op[] Ops { get; } = ops;
+
+    /// <summary>
+    /// What this program is played with: the live inputs
+    /// <see cref="OpCode.LoadLive"/> reads, in the order its K numbers them.
+    /// </summary>
+    /// <remarks>
+    /// Names rather than values, and that is the whole of the join: a program
+    /// says which signals of which instrument it wants, and whoever is running it
+    /// builds a <see cref="LiveValues"/> from this list and fills that in as the
+    /// keys move. Empty for the great majority of patches, which are played by
+    /// nothing but their own clock.
+    /// </remarks>
+    public IReadOnlyList<string> LiveInputs { get; } = liveInputs ?? [];
+
+    /// <summary>
+    /// How many live inputs the ops actually read, which is what a backend has to
+    /// make room for.
+    /// </summary>
+    /// <remarks>
+    /// Counted from the highest K rather than from <see cref="LiveInputs"/>, the
+    /// way <see cref="TraceCount"/> and <see cref="UnitCount"/> are counted from
+    /// theirs. The two agree for every program the compiler builds, and the
+    /// difference is what keeps a program assembled by hand — a test, or a tool
+    /// writing ops directly — from producing a shader that reads past the end of
+    /// an array it declared.
+    /// </remarks>
+    public int LiveCount { get; } = Math.Max(
+        liveInputs?.Count ?? 0,
+        ops.Where(o => o.Code is OpCode.LoadLive)
+            .Select(o => (int)o.K + 1)
+            .DefaultIfEmpty(0)
+            .Max());
 
     /// <summary>
     /// The Scopes this program has something to do with, in the order
@@ -151,6 +184,13 @@ public sealed class CompiledPatch(
     /// <see cref="OpCode.LoadAspect"/>. Defaults to a square picture, which is
     /// what a caller that is not drawing one has.
     /// </param>
+    /// <param name="live">
+    /// What is being played into the program from outside it, or null when
+    /// nothing is. Null is the ordinary case rather than a failure — an offline
+    /// render, a test and a headless compile all have nobody at the keys — and
+    /// there every live input reads zero, which is what an instrument nobody is
+    /// touching does.
+    /// </param>
     public void Evaluate(
         double x,
         double y,
@@ -158,7 +198,8 @@ public sealed class CompiledPatch(
         Span<double> registers,
         in FeedbackFrame feedback,
         DelayState? delays = null,
-        double aspect = 1d)
+        double aspect = 1d,
+        LiveValues? live = null)
     {
         var ops = Ops;
 
@@ -178,6 +219,7 @@ public sealed class CompiledPatch(
                 case OpCode.LoadY: registers[op.Out] = y; break;
                 case OpCode.LoadT: registers[op.Out] = t; break;
                 case OpCode.LoadAspect: registers[op.Out] = aspect; break;
+                case OpCode.LoadLive: registers[op.Out] = live?.At((int)op.K) ?? 0d; break;
                 case OpCode.Copy: registers[op.Out] = registers[op.A]; break;
 
                 case OpCode.Neg: registers[op.Out] = -registers[op.A]; break;

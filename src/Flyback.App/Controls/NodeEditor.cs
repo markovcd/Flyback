@@ -1710,6 +1710,16 @@ public sealed class NodeEditor : Control
                     SelectAll();
                     e.Handled = true;
                     return;
+
+                // Under Control with the rest of them, rather than on a bare
+                // letter of its own. Every bare letter belongs to the instrument
+                // now — see MainWindow's key handling — and a gesture that
+                // depended on no MIDI In being in the patch would be one that
+                // worked until somebody wanted to play.
+                case Key.F:
+                    FrameAll();
+                    e.Handled = true;
+                    return;
             }
 
             // Anything else with a modifier on it is somebody else's — undo and
@@ -1722,11 +1732,6 @@ public sealed class NodeEditor : Control
         {
             case Key.Delete or Key.Back:
                 DeleteSelected();
-                e.Handled = true;
-                break;
-
-            case Key.F:
-                FrameAll();
                 e.Handled = true;
                 break;
 

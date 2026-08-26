@@ -27,6 +27,12 @@ public enum GlslDialect
 /// Whether the fragment shader reads <c>uPrevious</c>. A patch without a Feedback
 /// module needs no texture bound and no previous frame kept.
 /// </param>
+/// <param name="LiveCount">
+/// Length of the <c>uLive</c> array — how many live inputs the patch is played
+/// with. Uploaded per frame rather than per program, unlike <c>uK</c>: what a
+/// knob holds changes when somebody edits the patch, and what a key holds changes
+/// while they are looking at it.
+/// </param>
 public sealed record ShaderSource(
     string PatchVertex,
     string PatchFragment,
@@ -34,7 +40,8 @@ public sealed record ShaderSource(
     string BlitFragment,
     int ConstantCount,
     bool UsesFeedback,
-    int OpCount);
+    int OpCount,
+    int LiveCount = 0);
 
 /// <summary>
 /// Lowers a compiled patch to a fragment shader. This is the second backend
@@ -91,7 +98,8 @@ public static class GlslEmitter
             BlitFragment: Header(dialect, fragment: true) + BlitFragmentBody,
             ConstantCount: constants,
             UsesFeedback: feedback,
-            OpCount: patch.Ops.Length);
+            OpCount: patch.Ops.Length,
+            LiveCount: patch.LiveCount);
     }
 
     // --- headers -----------------------------------------------------------------
@@ -336,6 +344,10 @@ public static class GlslEmitter
         // but loads genuinely has no constants in it.
         if (constants > 0) text.AppendLine($"uniform float uK[{constants}];");
 
+        // The same rule, for the same reason. A patch nobody is playing declares
+        // no array and reads none.
+        if (patch.LiveCount > 0) text.AppendLine($"uniform float uLive[{patch.LiveCount}];");
+
         text.AppendLine();
         text.AppendLine("in vec2 vUv;");
         text.AppendLine("out vec4 fragColor;");
@@ -417,6 +429,13 @@ public static class GlslEmitter
                 OpCode.LoadY => "py",
                 OpCode.LoadT => "uTime",
                 OpCode.LoadAspect => "uAspect",
+
+                // The one load whose value the shader is handed per frame rather
+                // than per program. A picture drawn while a key is down is drawn
+                // with the key down: the uniform is uploaded before the draw, so
+                // every pixel of one frame sees the same moment — which is what
+                // a frame is.
+                OpCode.LoadLive => $"uLive[{(int)op.K}]",
                 OpCode.Copy => a,
 
                 OpCode.Neg => $"-{a}",

@@ -175,12 +175,19 @@ public sealed class AudioRenderer
     /// null offline and this keeps its own, allocating them on the spot.
     /// </param>
     /// <param name="program">The sound's own compiled program, rooted at the Output's left and right.</param>
+    /// <param name="live">
+    /// What is being played into the program while this buffer is filled. Read
+    /// once here rather than per sample, so every sample of one buffer hears the
+    /// same moment — a key that moved halfway through is heard at the start of
+    /// the next one, which is a few milliseconds late and never half a note.
+    /// </param>
     /// <param name="interleavedStereo">Where the samples go, left and right alternating. Its length decides how many frames this call renders.</param>
     public void Render(
         CompiledPatch program,
         Span<float> interleavedStereo,
         in AudioScan scan,
-        DelayState? memory = null)
+        DelayState? memory = null,
+        LiveValues? live = null)
     {
         var frames = interleavedStereo.Length / 2;
         if (frames == 0) return;
@@ -219,7 +226,7 @@ public sealed class AudioRenderer
                 // this width — so a module asking how far x reaches is told the
                 // same thing on both paths rather than a different picture per
                 // sink.
-                program.Evaluate(x, y, t, registers, default, lines, scan.Aspect);
+                program.Evaluate(x, y, t, registers, default, lines, scan.Aspect, live);
 
                 delayLines[0][historyPosition] = (float)registers[left];
                 delayLines[1][historyPosition] = (float)registers[right];

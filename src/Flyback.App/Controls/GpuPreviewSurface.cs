@@ -59,6 +59,7 @@ public sealed class GpuPreviewSurface : OpenGlControlBase, IPreviewSurface
     private GpuFrameRenderer? renderer;
 
     private CompiledPatch program = CompiledPatch.Black;
+    private LiveValues live = LiveValues.None;
     private PixelSize resolution = new(640, 360);
     private PixelSize controlPixels;
     private double time;
@@ -155,6 +156,26 @@ public sealed class GpuPreviewSurface : OpenGlControlBase, IPreviewSurface
                 dirty = true;
             }
         }
+    }
+
+    /// <summary>What is being played into the patch as it is drawn.</summary>
+    public LiveValues Live
+    {
+        get { lock (gate) return live; }
+        set
+        {
+            lock (gate)
+            {
+                live = value;
+                dirty = true;
+            }
+        }
+    }
+
+    /// <summary>A key moved, so the next tick has something to draw after all.</summary>
+    public void Refresh()
+    {
+        lock (gate) dirty = true;
     }
 
     /// <summary>Rewinds to zero and clears the feedback history.</summary>
@@ -281,6 +302,7 @@ public sealed class GpuPreviewSurface : OpenGlControlBase, IPreviewSurface
         if (renderer is not { } active || finished) return;
 
         CompiledPatch snapshot;
+        LiveValues played;
         PixelSize size, control;
         double at;
         bool rewind;
@@ -289,6 +311,7 @@ public sealed class GpuPreviewSurface : OpenGlControlBase, IPreviewSurface
         lock (gate)
         {
             snapshot = program;
+            played = live;
             size = resolution;
             control = controlPixels;
             at = time;
@@ -310,7 +333,7 @@ public sealed class GpuPreviewSurface : OpenGlControlBase, IPreviewSurface
             return;
         }
 
-        if (active.Render(gl, fb, control, size, at) is { } renderError)
+        if (active.Render(gl, fb, control, size, at, played) is { } renderError)
         {
             Fail(renderError);
             return;

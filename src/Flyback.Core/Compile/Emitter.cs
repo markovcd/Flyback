@@ -10,8 +10,17 @@ public sealed class Emitter
     private readonly Dictionary<float, Slot> constants = [];
     private readonly Dictionary<OpCode, Slot> loads = [];
 
+    /// <summary>The register each live input was read into, so it is read once.</summary>
+    private readonly Dictionary<string, Slot> lives = [];
+
     /// <summary>The clips this program reads, one entry per distinct one.</summary>
     private readonly List<LoadedSample> tables = [];
+
+    /// <summary>
+    /// The live inputs this program reads, one entry per distinct one — see
+    /// <see cref="Live"/>.
+    /// </summary>
+    private readonly List<string> liveInputs = [];
 
     /// <summary>
     /// The (x, y, t) that <see cref="Load"/> hands back in place of the pixel's
@@ -252,6 +261,47 @@ public sealed class Emitter
 
     /// <summary>The clips this program reads, in the order their ops name them.</summary>
     public IReadOnlyList<LoadedSample> Tables => tables;
+
+    /// <summary>
+    /// Reads whatever is being played into <paramref name="key"/> right now — a
+    /// value that comes from outside the patch and may differ on the very next
+    /// evaluation.
+    /// </summary>
+    /// <remarks>
+    /// Two modules asking for the same key share one register, the way two given
+    /// the same clip share one table and two given the same number share one
+    /// literal. That is not merely a saving: two MIDI modules reading one
+    /// keyboard have to agree about what it is doing, and sharing the register is
+    /// how they cannot fail to.
+    /// <para>
+    /// Read once, where the walk first asks, and every later ask hands back that
+    /// same register — so a key read by two modules reads the same in both,
+    /// whatever order the walk reached them in. That is the promise
+    /// <see cref="Load"/> makes about the clock, and it matters here for a
+    /// sharper reason: one evaluation is one moment, and a key that was down for
+    /// half of it was not down twice.
+    /// </para>
+    /// </remarks>
+    public Slot Live(string key)
+    {
+        var index = liveInputs.IndexOf(key);
+
+        if (index < 0)
+        {
+            index = liveInputs.Count;
+            liveInputs.Add(key);
+        }
+
+        if (lives.TryGetValue(key, out var existing)) return existing;
+
+        var slot = Slot.Scalar(Allocate(1));
+        Add(new Op(OpCode.LoadLive, slot.Base, k: index));
+
+        return lives[key] = slot;
+    }
+
+    /// <summary>What this program is played with, in the order its ops name them.</summary>
+    public IReadOnlyList<string> LiveInputs => liveInputs;
 
     /// <summary>
     /// Keeps <paramref name="value"/> where something outside the program can

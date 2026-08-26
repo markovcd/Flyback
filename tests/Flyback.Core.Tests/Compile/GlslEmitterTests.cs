@@ -71,6 +71,37 @@ public class GlslEmitterTests
         GlslEmitter.Emit(patch, dialect).PatchFragment.ShouldNotContain("uK[0]");
     }
 
+    [Theory]
+    [MemberData(nameof(AllDialects))]
+    public void A_patch_nobody_is_playing_declares_no_live_array(GlslDialect dialect)
+    {
+        var patch = new CompiledPatch([new Op(OpCode.LoadX, 0)], 1, 0, 1);
+
+        GlslEmitter.Emit(patch, dialect).PatchFragment.ShouldNotContain("uLive");
+    }
+
+    /// <summary>
+    /// The shader is handed what is being played as uniforms, so a note held
+    /// while a frame is drawn is in that frame — the picture and the speakers
+    /// hear the same keyboard.
+    /// </summary>
+    [Fact]
+    public void A_live_input_is_read_from_a_uniform_the_frame_is_given()
+    {
+        var patch = new CompiledPatch(
+            [new Op(OpCode.LoadLive, 0, k: 0), new Op(OpCode.LoadLive, 1, k: 1)],
+            2,
+            0,
+            1,
+            liveInputs: ["keyboard/pitch", "keyboard/gate"]);
+
+        var source = GlslEmitter.Emit(patch, GlslDialect.GlslEs300);
+
+        source.LiveCount.ShouldBe(2);
+        source.PatchFragment.ShouldContain("uniform float uLive[2];");
+        source.PatchFragment.ShouldContain("float r1 = uLive[1];");
+    }
+
     [Fact]
     public void Constants_are_uploaded_in_the_order_the_shader_indexes_them()
     {

@@ -231,7 +231,13 @@ public static class PatchCompiler
 
         return new CompileResult(
             new CompiledPatch(
-                emitter.ToProgram(), emitter.RegisterCount, value.Base, width, emitter.Tables, taps),
+                emitter.ToProgram(),
+                emitter.RegisterCount,
+                value.Base,
+                width,
+                emitter.Tables,
+                taps,
+                emitter.LiveInputs),
             issues);
 
         Slot[] Resolve(NodeInstance node)

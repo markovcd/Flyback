@@ -47,4 +47,41 @@ public class PresetSnapshotTests
             .UseDirectory("snapshots")
             .UseParameters(presetName);
     }
+
+    /// <summary>
+    /// The one preset that is played rather than run, drawn with a key held down.
+    /// </summary>
+    /// <remarks>
+    /// Every image above is what a patch does on its own, and for this one that
+    /// is the picture of nobody touching it — which is worth approving too, but
+    /// is not what the preset is for. This is the other half: the same program,
+    /// evaluated with a note in the block, which is the only way the live path
+    /// gets an approved picture at all.
+    /// </remarks>
+    [Fact]
+    public async Task The_played_preset_renders_as_approved_with_a_note_held()
+    {
+        var patch = Presets.All.Single(p => p.Name == "Played").Build(NodeCatalog.BuiltIn);
+        var program = patch.CompileForVideo(NodeCatalog.BuiltIn).Program;
+
+        var live = new LiveValues(program.LiveInputs);
+
+        // A4, held, having been struck once. Velocity is left at nothing, which
+        // is what a typist plays with and what this patch reads none of.
+        live.Set(MidiSignal.Key(MidiSources.Keyboard, MidiSignal.Pitch), 69f);
+        live.Set(MidiSignal.Key(MidiSources.Keyboard, MidiSignal.Gate), 1f);
+        live.Set(MidiSignal.Key(MidiSources.Keyboard, MidiSignal.Strikes), 1f);
+
+        var renderer = new SynthRenderer();
+        var stride = Width * 4;
+        var buffer = new byte[stride * Height];
+
+        renderer.Render(program, 0d, Width, Height, buffer, stride, live);
+
+        var png = new MemoryStream();
+        PngWriter.WriteBgra(png, buffer, Width, Height, stride);
+        png.Position = 0;
+
+        await Verify(png, "png").UseDirectory("snapshots");
+    }
 }

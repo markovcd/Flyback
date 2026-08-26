@@ -23,6 +23,7 @@ public static class Presets
         new("Sequence", Sequence),
         new("Four voices", FourVoices),
         new("Kick", Kick),
+        new("Played", Played),
         new("Whole band", WholeBand),
         new("Empty", Empty),
     ];
@@ -206,6 +207,150 @@ public static class Presets
          .Wire(disc, 0, flash, 0)
          .Wire(visible, 0, flash, 1)
          .Wire(flash, 0, skin, 2)
+         .Wire(skin, 0, output, NodeCatalog.OutputColorPort);
+
+        return b.Patch;
+    }
+
+    /// <summary>
+    /// The one preset you have to play. Nothing in it moves on its own: a MIDI
+    /// In drives the pitch, the envelope and the timbre, and with no key down it
+    /// is silent and the picture is dim.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// All three of the module's useful outputs are here, and each is wired the
+    /// way only it can be. 'pitch' is a note number, so it goes where a note goes
+    /// — into a Note for the ear, and through a Clamp into a pair of Remaps for
+    /// the eye, where it picks both the hue and how tight the rings are. 'gate'
+    /// opens the envelope.
+    /// 'trigger' is the one that needs the least obvious wiring and earns its
+    /// place: it is a single evaluation high at each note struck, which is
+    /// exactly what a Sample &amp; Hold's own trigger wants.
+    /// </para>
+    /// <para>
+    /// What the hold catches is a Noise wandering on the clock, and what it does
+    /// with it is set the Pulse's duty cycle — so every note struck has a timbre
+    /// of its own, settled the instant it starts and steady for as long as it is
+    /// held. Sampling a moving signal is the whole point of the module; doing it
+    /// on a note rather than on a beat is what a keyboard adds to it. Without the
+    /// hold, the same Noise straight into 'width' would smear the tone about
+    /// while a note was sounding, which is a different and much less musical
+    /// instrument.
+    /// </para>
+    /// <para>
+    /// Velocity is deliberately not wired. A typist strikes every key the same,
+    /// so a patch that shipped with it wired would be a patch with a knob that
+    /// does nothing until hardware arrives — worse than one with an obvious
+    /// place to add a wire.
+    /// </para>
+    /// <para>
+    /// The trigger reaches the ear and not the eye, and that is not an oversight.
+    /// A picture is one evaluation with nothing before it, so there is no
+    /// previous count for the module to have differenced — see ADR-0056 — and a
+    /// trigger on the screen is nought at every pixel by decision rather than by
+    /// accident. The Sample &amp; Hold is in the same position and stops holding
+    /// there for the same reason. So the eye is given the two outputs that mean
+    /// something without a past: which note, and whether one is down.
+    /// </para>
+    /// <para>
+    /// The screen dims rather than going black between notes, exactly as
+    /// <see cref="Sequence"/>'s does and for the same reason: a patch that is
+    /// black until you touch it reads as one that is broken.
+    /// </para>
+    /// </remarks>
+    public static Patch Played(ModuleCatalog modules)
+    {
+        var b = new PatchBuilder(modules);
+
+        // No knobs on it at all. Which keyboard it listens to is the one thing it
+        // carries, and a fresh one carries the computer's own.
+        var keys = b.Add(NodeCatalog.MidiTypeId, 40, 420);
+
+        // Ear. The note number goes in where a note number goes, and comes out
+        // as hertz.
+        var note = b.Add("audio.note", 360, 120);
+
+        // A pulse rather than a saw, because its width is somewhere for the
+        // held value to go. 'in' takes no wire: it runs on the clock every
+        // domain socket is normalled to (ADR-0050).
+        var tone = b.Add("osc.pulse", 1120, 120);
+
+        // A pluck: quick on, most of the way down in a fifth of a second, and
+        // held at half while the key is. The times are decades of seconds — see
+        // PortDisplay.Duration — so -2.4 is about four milliseconds.
+        var env = b.Add(NodeCatalog.AdsrTypeId, 360, 420,
+            (1, -2.4f), (2, -0.7f), (3, 0.5f), (4, -1f));
+
+        var voiced = b.Add("math.mul", 1400, 220);
+
+        // The timbre, which is the whole of what 'trigger' is here for. A clock
+        // into 'z' is what makes the field wander rather than sit still; x and y
+        // are nothing at the speakers, so what the ear's copy of this walks is a
+        // line through the noise rather than a picture of it.
+        var clock = b.Add("time", 360, 700);
+        var drift = b.Add("math.mul", 560, 700, (1, 3f));
+        var wander = b.Add("pattern.noise", 760, 700);
+        var caught = b.Add(NodeCatalog.HoldTypeId, 960, 700);
+
+        // Never all the way to either end: a duty cycle of nought or one is
+        // silence, and a note that happened to catch one would simply not sound.
+        var width = b.Add("math.remap", 1160, 700, (1, 0f), (2, 1f), (3, 0.12f), (4, 0.88f));
+
+        // Eye. Two readings of the same note number — what colour it is, and how
+        // finely the rings are drawn — over the two octaves either side of
+        // middle C, which is wider than the two rows of a typewriter reach and
+        // leaves room for a keyboard that reaches further.
+        //
+        // Held into that range before either reading, which does two things at
+        // once. An eighty-eight-key keyboard runs past both ends of it, and past
+        // the ends the hue would wrap round to a colour the other end is already
+        // using. And it settles what an unplayed patch looks like: nobody playing
+        // reads as nought — the same answer a program with no block at all gives
+        // — and nought is not a note anybody will strike, so the picture rests at
+        // the bottom of the range it draws rather than wherever nought lands.
+        var range = b.Add("math.clamp", 360, 1080, (1, 36f), (2, 84f));
+
+        var hue = b.Add("math.remap", 620, 1000, (1, 36f), (2, 84f), (3, 0.55f), (4, 0f));
+        var fineness = b.Add("math.remap", 620, 1160, (1, 36f), (2, 84f), (3, 2f), (4, 11f));
+
+        var rings = b.Add("pattern.rings", 900, 1080);
+        var glow = b.Add("math.remap", 1160, 1080, (1, -1f), (2, 1f), (3, 0.1f), (4, 1f));
+
+        // What the envelope hands the screen is its gate, since an envelope has
+        // no memory to run a shape in on the video path. Held rather than struck,
+        // that is the right picture of a keyboard: the light is on while the key
+        // is down. Dimmed to a quarter rather than to nothing between notes.
+        var lift = b.Add("math.remap", 1160, 1300, (1, 0f), (2, 1f), (3, 0.25f), (4, 1f));
+        var lit = b.Add("math.mul", 1400, 1080);
+        var skin = b.Add("color.hsv", 1660, 1000, (1, 0.8f));
+
+        var output = b.Add(NodeCatalog.OutputTypeId, 1920, 560, (NodeCatalog.OutputGainPort, 0.6f));
+
+        b.Wire(keys, 0, note, 0)
+         .Wire(note, 0, tone, 1)
+         .Wire(keys, 1, env, 0)
+         .Wire(tone, 0, voiced, 0)
+         .Wire(env, 0, voiced, 1)
+         .Wire(voiced, 0, output, NodeCatalog.OutputLeftPort)
+
+         .Wire(clock, 0, drift, 0)
+         .Wire(drift, 0, wander, 2)
+         .Wire(wander, 0, caught, 0)
+         .Wire(keys, 3, caught, 1)
+         .Wire(caught, 0, width, 0)
+         .Wire(width, 0, tone, 3)
+
+         .Wire(keys, 0, range, 0)
+         .Wire(range, 0, hue, 0)
+         .Wire(range, 0, fineness, 0)
+         .Wire(fineness, 0, rings, 2)
+         .Wire(rings, 0, glow, 0)
+         .Wire(env, 0, lift, 0)
+         .Wire(glow, 0, lit, 0)
+         .Wire(lift, 0, lit, 1)
+         .Wire(hue, 0, skin, 0)
+         .Wire(lit, 0, skin, 2)
          .Wire(skin, 0, output, NodeCatalog.OutputColorPort);
 
         return b.Patch;

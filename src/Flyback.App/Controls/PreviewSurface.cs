@@ -31,6 +31,7 @@ public sealed class PreviewSurface : Control, IPreviewSurface
     private PixelSize bufferSize;
     private PixelSize resolution = new(640, 360);
     private CompiledPatch activeProgram = CompiledPatch.Black;
+    private LiveValues live = LiveValues.None;
     private TimeSpan lastTick;
     private TimeSpan restUntil;
     private bool rendering;
@@ -92,6 +93,20 @@ public sealed class PreviewSurface : Control, IPreviewSurface
             dirty = true;
         }
     }
+
+    /// <summary>What is being played into the patch as it is drawn.</summary>
+    public LiveValues Live
+    {
+        get => live;
+        set
+        {
+            live = value;
+            dirty = true;
+        }
+    }
+
+    /// <summary>A key moved, so the next tick has something to draw after all.</summary>
+    public void Refresh() => dirty = true;
 
     /// <summary>Rewinds to zero and clears the feedback history.</summary>
     public void Rewind()
@@ -179,6 +194,12 @@ public sealed class PreviewSurface : Control, IPreviewSurface
         var program = activeProgram;
         var time = Time;
 
+        // Snapshotted with the rest, so every row of one frame is drawn with the
+        // same reference — the block itself may still be written into while the
+        // rows run, and a note landing mid-frame shows up in the next one rather
+        // than halfway down this one.
+        var played = live;
+
         if (bufferSize != size)
         {
             backBuffer = new byte[size.Width * 4 * size.Height];
@@ -189,7 +210,8 @@ public sealed class PreviewSurface : Control, IPreviewSurface
         var stride = size.Width * 4;
 
         var started = frameClock.Elapsed;
-        await Task.Run(() => renderer.Render(program, time, size.Width, size.Height, buffer, stride));
+        await Task.Run(() =>
+            renderer.Render(program, time, size.Width, size.Height, buffer, stride, played));
         FrameMilliseconds = (frameClock.Elapsed - started).TotalMilliseconds;
 
         // The control may have been resized or detached while we were rendering.

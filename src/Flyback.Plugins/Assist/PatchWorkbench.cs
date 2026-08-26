@@ -436,6 +436,17 @@ public sealed class PatchWorkbench
             case ExtraField.Toggle:
                 return ToolOutcome.Refused($"'{name}' is a switch: true or false.");
 
+            // The id rather than the name, and the list of ids in the refusal —
+            // what a device is called is for a person to read and is not stable
+            // enough to be written into a patch.
+            case ExtraField.Choice when given.ValueKind == JsonValueKind.String:
+                value = JsonValue.Create(given.GetString() ?? string.Empty);
+                break;
+
+            case ExtraField.Choice choice:
+                return ToolOutcome.Refused(
+                    $"'{name}' is one of {Offered(choice)}, as a string.");
+
             default:
                 return ToolOutcome.Refused(
                     $"'{name}' is a kind of value this build cannot set. It was added by a "
@@ -454,6 +465,17 @@ public sealed class PatchWorkbench
 
         return Fine($"set {key}.{name} on {Handle(node)}. {extra.Report(node)} {Issues()}");
     }
+
+    /// <summary>
+    /// What a choice currently offers, for saying so in a refusal. Empty is a
+    /// real answer rather than an omission: a picker for something that is not
+    /// plugged in has nothing in it, and saying "one of nothing" is more use than
+    /// an empty list would be.
+    /// </summary>
+    private static string Offered(ExtraField.Choice choice) =>
+        choice.Options.Count == 0
+            ? "nothing — there is none of that here at the moment"
+            : string.Join(", ", choice.Options.Select(option => $"'{option.Id}'"));
 
     private ToolOutcome Connect(JsonElement arguments)
     {
@@ -1257,16 +1279,18 @@ public sealed class PatchWorkbench
                 + "rows a module listing writes under a name of their own, like 'notes' or "
                 + "'chord', rather than as 'in N'. Take the extra's name and the field's from "
                 + "that listing; describe_module says what a given module carries and what each "
-                + "field may hold. A number is clamped to the field's range and a switch takes "
-                + "true or false. The built-in notes, scale and file are not set this way: they "
-                + "have set_steps, set_scale and set_sample.",
+                + "field may hold. A number is clamped to the field's range, a switch takes "
+                + "true or false, and a choice takes the id of one of the things it offers — "
+                + "describe_module lists them, and a refusal names them too. The built-in "
+                + "notes, scale and file are not set this way: they have set_steps, set_scale "
+                + "and set_sample.",
                 """
                 {
                   "properties": {
                     "handle": { "type": "string" },
                     "extra": { "type": "string", "description": "Which extra, as the listing names it." },
                     "field": { "type": "string", "description": "Which of its values." },
-                    "value": { "description": "A number or a boolean, matching the field." }
+                    "value": { "description": "A number, a boolean, or a choice's id as a string — matching the field." }
                   },
                   "required": ["handle", "extra", "field", "value"]
                 }

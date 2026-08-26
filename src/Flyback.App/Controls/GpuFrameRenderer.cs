@@ -50,6 +50,14 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
     private int patchFeedbackY = -1;
     private int[] patchConstants = [];
     private float[] constants = [];
+
+    /// <summary>
+    /// Where <c>uLive</c>'s elements are, and somewhere to lay a block out before
+    /// uploading it. Kept between frames rather than allocated per one: this runs
+    /// sixty times a second and the length only changes with the program.
+    /// </summary>
+    private int[] patchLive = [];
+    private float[] played = [];
     private bool usesFeedback;
 
     /// <summary>
@@ -183,6 +191,16 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
         for (var i = 0; i < patchConstants.Length; i++)
             patchConstants[i] = gl.GetUniformLocationString(compiled, $"uK[{i}]");
 
+        // The same, for what the patch is being played with. Where the constants
+        // are uploaded from a snapshot taken when the program was set, these are
+        // read fresh every frame — a knob changes with the patch and a key
+        // changes while you are looking at it.
+        patchLive = new int[shaders.LiveCount];
+        played = new float[shaders.LiveCount];
+
+        for (var i = 0; i < patchLive.Length; i++)
+            patchLive[i] = gl.GetUniformLocationString(compiled, $"uLive[{i}]");
+
         return null;
     }
 
@@ -198,7 +216,8 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
         int framebuffer,
         PixelSize control,
         PixelSize resolution,
-        double time)
+        double time,
+        LiveValues? live = null)
     {
         if (patchProgram == 0) return null;
         if (resolution.Width <= 0 || resolution.Height <= 0) return null;
@@ -227,7 +246,7 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
         }
 
         var started = clock.Elapsed;
-        DrawPatch(gl, resolution, time);
+        DrawPatch(gl, resolution, time, live);
         gl.Finish();
         PatchMilliseconds = (clock.Elapsed - started).TotalMilliseconds;
 
@@ -251,7 +270,7 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
         return null;
     }
 
-    private void DrawPatch(GlInterface gl, PixelSize resolution, double time)
+    private void DrawPatch(GlInterface gl, PixelSize resolution, double time, LiveValues? live)
     {
         gl.BindFramebuffer(GL_FRAMEBUFFER, framebuffers[1 - read]);
         gl.Viewport(0, 0, resolution.Width, resolution.Height);
@@ -265,6 +284,20 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
         for (var i = 0; i < patchConstants.Length && i < constants.Length; i++)
             if (patchConstants[i] >= 0)
                 gl.Uniform1f(patchConstants[i], constants[i]);
+
+        // Copied out of the block before any of it is uploaded, so the whole
+        // frame is drawn with one reading of the keys. Read element by element
+        // while the driver was being called, a note landing mid-upload could put
+        // a new pitch in the picture beside the old gate.
+        if (patchLive.Length > 0)
+        {
+            if (live is null) Array.Clear(played);
+            else live.CopyTo(played);
+
+            for (var i = 0; i < patchLive.Length && i < played.Length; i++)
+                if (patchLive[i] >= 0)
+                    gl.Uniform1f(patchLive[i], played[i]);
+        }
 
         if (usesFeedback)
         {

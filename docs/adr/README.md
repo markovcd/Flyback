@@ -4,7 +4,7 @@ Each record captures one decision, the situation that forced it, and what it
 costs. Format is [Michael Nygard's](https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions):
 context, decision, consequences.
 
-Twenty-five records — [0003](0003-cpu-rendering-with-a-gpu-path-left-open.md),
+Twenty-six records — [0003](0003-cpu-rendering-with-a-gpu-path-left-open.md),
 [0004](0004-visual-patch-editor-as-the-authoring-model.md),
 [0026](0026-modules-from-plugins-with-provenance-in-the-file.md),
 [0027](0027-delay-lines-give-the-audio-path-a-memory.md),
@@ -28,7 +28,8 @@ Twenty-five records — [0003](0003-cpu-rendering-with-a-gpu-path-left-open.md),
 [0052](0052-a-patch-names-its-samples-rather-than-carrying-them.md) and
 [0053](0053-a-scope-records-what-the-speakers-played.md) and
 [0054](0054-what-a-module-carries-is-a-part-not-a-subtype.md) and
-[0055](0055-a-plugins-extra-declares-its-editor.md) — are marked
+[0055](0055-a-plugins-extra-declares-its-editor.md) and
+[0056](0056-a-patch-can-be-played-and-what-plays-it-is-one-opcode.md) — are marked
 **user-directed**: they were chosen by the project owner, not derived. The first
 two sit upstream of almost everything else here; 0026 and 0027 each give up a
 property an earlier record relied on, knowingly; 0031, 0033, 0034, 0036 and 0040
@@ -75,8 +76,14 @@ an argument that there should be one. 0055 opens the door 0054 recorded as shut,
 and the interesting part is which way: a plugin was going to be allowed to ship a
 control until the load context said what that would cost, so it declares its
 editor instead and the shell draws it — which turns out to hand the assistant one
-tool for every kind a plugin will ever add. All are recorded even though they
-were not mine to make.
+tool for every kind a plugin will ever add. 0056 is the first record about
+something being done *to* the instrument while it runs: everything before it is a
+patch reading itself, and this one lets a hand into the program — which turns out
+to need one opcode, and to sit oddly beside 0041, since that record's argument
+that a plugin needs no new op was about state and this is not state. It is also
+where 0055's promised third field shape arrives, and the module that arrived with
+it is the one that could not be written without one. All are recorded even though
+they were not mine to make.
 
 [0035](0035-a-glsl-backend-for-the-video-path.md) is the first record where two
 backends disagree by design: the picture on screen and the picture in an exported
@@ -118,6 +125,7 @@ the two that was there while the knobs were moving.
 | [0035](0035-a-glsl-backend-for-the-video-path.md) | A GLSL backend for the video path |
 | [0040](0040-a-probe-is-a-second-compile-root.md) | A probe is a second compile root, not a second machine *(user-directed)* |
 | [0043](0043-a-scan-is-a-probe-read-backwards.md) | A Scan is a Probe read backwards *(user-directed)* |
+| [0056](0056-a-patch-can-be-played-and-what-plays-it-is-one-opcode.md) | A patch can be played, and what plays it is one opcode *(user-directed)* |
 | [0048](0048-time-is-seconds-and-nothing-else.md) | Time is seconds, and nothing else *(user-directed)* |
 | [0050](0050-normalled-sockets-carry-a-signal-with-no-wire.md) | Normalled sockets carry a signal with no wire *(user-directed)* |
 | [0051](0051-a-quantisers-scale-is-a-set-on-the-node.md) | A quantiser's scale is a set on the node *(user-directed)* |
