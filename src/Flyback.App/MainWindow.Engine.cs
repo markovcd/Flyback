@@ -151,21 +151,35 @@ public sealed partial class MainWindow
                 : "Showing the Probe — select another module for the picture.");
         }
 
-        Report(string.Join("  •  ", said));
+        // Each of them, rather than one sentence with bullets between: they are
+        // separate problems, they arrive and are fixed separately, and the log
+        // behind the line gives each its own row. The bar joins them back up,
+        // because there is only one line to say them on.
+        Report(said.ToList());
 
         MarkExportable();
     }
 
     /// <summary>
     /// The one place anything is said to the user. <paramref name="detail"/> is
-    /// for what will not fit on a status bar — a list of missing plugins, say —
-    /// and is cleared along with the line, so nothing stale hangs off it.
+    /// for what will not fit on a status bar — a list of missing plugins, say.
     /// </summary>
-    private void Report(string message, string? detail = null)
-    {
-        issues.Text = message;
-        ToolTip.SetTip(issues, string.IsNullOrEmpty(detail) ? null : detail);
-    }
+    /// <param name="progress">
+    /// That this is the last message again with a new number in it, so the log
+    /// behind the line keeps one entry for the run rather than one per update.
+    /// </param>
+    /// <remarks>
+    /// The line itself, and what becomes of what it used to say, are
+    /// <see cref="ReportLine"/>'s business — this stays the one door into it.
+    /// </remarks>
+    private void Report(string message, string? detail = null, bool progress = false) =>
+        report.Say(message, detail, progress);
+
+    /// <summary>
+    /// The same, for everything a compile found at once. Each is a line of its
+    /// own in the log; the bar joins them, having only the one line.
+    /// </summary>
+    private void Report(IReadOnlyList<string> messages) => report.Say(messages);
 
     private void SetAudioEnabled(bool enabled)
     {

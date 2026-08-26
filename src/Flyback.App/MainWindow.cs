@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
@@ -124,12 +125,21 @@ public sealed partial class MainWindow : Window
     };
 
     private readonly StackPanel inspector = new() { Margin = new Thickness(12), Spacing = 8 };
-    private readonly TextBlock status = new() { VerticalAlignment = VerticalAlignment.Center };
-    private readonly TextBlock issues = new()
+    private readonly TextBlock status = new()
     {
         VerticalAlignment = VerticalAlignment.Center,
-        Foreground = new SolidColorBrush(Colors.Attention),
+
+        // Every line on this bar shares one row of a narrow window, so this one
+        // gives way the same way the report beside it does rather than being
+        // sheared off at whatever character the edge fell on.
+        TextTrimming = TextTrimming.CharacterEllipsis,
     };
+
+    /// <summary>
+    /// The one line anything is said on, and the log of what has been said. See
+    /// <see cref="Report"/>, which is the only thing that writes to it.
+    /// </summary>
+    private readonly ReportLine report = new();
 
     private readonly TextBlock backend = new()
     {
@@ -200,6 +210,17 @@ public sealed partial class MainWindow : Window
         editor.HistoryChanged += (_, _) => RefreshEditState();
         editor.Reported += (_, message) => Report(message);
 
+        // The other copy of everything said. A status bar is written over by the
+        // next compile and the log behind it is five deep, so a run watched from
+        // a terminal — which is the run anybody debugging is having — would
+        // otherwise keep no account of itself at all. Trace rather than the
+        // console directly: Program.Main is where it is decided whether there is
+        // a terminal worth writing to, Avalonia's own diagnostics already go
+        // there, and a second destination is a second listener rather than a
+        // second call here.
+        report.Said += (_, message) =>
+            Trace.WriteLine($"{DateTime.Now:HH:mm:ss}  {message}");
+
         // Before the layout, because these are live from the moment the window
         // is: the preview needs its resolution and its backend whether or not
         // anybody has selected the Output to look at them.
@@ -241,7 +262,10 @@ public sealed partial class MainWindow : Window
                 editor.ApplyEdit(patch);
                 preview.Rewind();
             },
-            Report,
+            // Wrapped rather than handed over as it stands, because the third
+            // thing Report takes is about how a line ages in the log and the
+            // panel has no business knowing there is one.
+            (message, detail) => Report(message, detail),
             samples: samples)
         {
             IsVisible = false,
@@ -498,14 +522,36 @@ public sealed partial class MainWindow : Window
     private async Task ShowAboutAsync() =>
         await this.ShowDialog("About", About.View());
 
+    /// <summary>
+    /// The bar along the bottom: what the patch costs, what it is being played
+    /// through, and whatever there is to say about it.
+    /// </summary>
+    /// <remarks>
+    /// A grid rather than a row of controls, because a row hands every child all
+    /// the width it asks for and lets the last of them fall off the end — which
+    /// is exactly what used to happen to the report, the one thing here that a
+    /// person actually has to read. The two prose columns share what the two
+    /// fixed ones leave, and each says so with an ellipsis when its share is not
+    /// enough.
+    /// <para>
+    /// Not evenly. The counts on the left are a fixed sentence of a known
+    /// length, and the split is the one that fits all of it in a window of the
+    /// size this one opens at — a share rather than that length, so a longer
+    /// word in it never pushes the report off the end again.
+    /// </para>
+    /// </remarks>
     private Control BuildStatusBar()
     {
-        var bar = new StackPanel
+        var bar = new Grid
         {
-            Orientation = Orientation.Horizontal,
-            Spacing = 16,
+            ColumnDefinitions = new ColumnDefinitions("1.4*,Auto,Auto,*"),
             Margin = new Thickness(12, 5),
         };
+
+        // The popup behind the report hangs off the window rather than off the
+        // line, so what it is to look like has to be said here — the same way
+        // the palette's is, and for the same reason.
+        Styles.Add(ReportLine.Trim());
 
         backend.Text = sound.Output is { } output ? $"sound: {output.Name}" : "sound: none";
         ToolTip.SetTip(backend, PluginSummary());
@@ -515,10 +561,22 @@ public sealed partial class MainWindow : Window
         helper.Text = assistant?.Summary ?? "assistant: none";
         ToolTip.SetTip(helper, PluginSummary());
 
+        // The gap a StackPanel used to give for free. On the children rather
+        // than the grid, so the first column starts at the margin and the last
+        // one keeps every pixel it is given.
+        backend.Margin = new Thickness(16, 0, 0, 0);
+        helper.Margin = new Thickness(16, 0, 0, 0);
+        report.Margin = new Thickness(16, 0, 0, 0);
+
+        Grid.SetColumn(status, 0);
+        Grid.SetColumn(backend, 1);
+        Grid.SetColumn(helper, 2);
+        Grid.SetColumn(report, 3);
+
         bar.Children.Add(status);
         bar.Children.Add(backend);
         bar.Children.Add(helper);
-        bar.Children.Add(issues);
+        bar.Children.Add(report);
 
         return new Border
         {

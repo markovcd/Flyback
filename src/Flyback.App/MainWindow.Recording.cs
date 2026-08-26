@@ -166,9 +166,11 @@ public sealed partial class MainWindow
         var repeated = status.Duplicated > 0 ? $", {status.Duplicated} repeated" : string.Empty;
         var lost = status.AudioDropped > 0 ? "  •  dropping sound — the disk is not keeping up" : string.Empty;
 
-        Report(status.Frames > 0
-            ? $"Recording {status.Seconds:0.0}s — {status.Frames} frames{repeated} → {name}{lost}"
-            : $"Recording {status.Seconds:0.0}s → {name}{lost}");
+        Report(
+            status.Frames > 0
+                ? $"Recording {status.Seconds:0.0}s — {status.Frames} frames{repeated} → {name}{lost}"
+                : $"Recording {status.Seconds:0.0}s → {name}{lost}",
+            progress: true);
     }
 
     /// <summary>

@@ -318,7 +318,8 @@ public sealed partial class MainWindow
         length.IsEnabled = false;
 
         var progress = new Progress<double>(done => Report(
-            $"Exporting {seconds:0}s at {size.Width} × {size.Height} — {done:P0}"));
+            $"Exporting {seconds:0}s at {size.Width} × {size.Height} — {done:P0}",
+            progress: true));
 
         try
         {

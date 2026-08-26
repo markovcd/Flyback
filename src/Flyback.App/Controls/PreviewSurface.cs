@@ -160,7 +160,10 @@ public sealed class PreviewSurface : Control, IPreviewSurface
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"Preview render failed: {ex}");
+            // Trace rather than Debug: a preview that will not render is worth
+            // knowing about in a build somebody is using, and Debug is compiled
+            // out of exactly those. Program.Main puts this on the terminal.
+            Trace.WriteLine($"Preview render failed: {ex}");
         }
         finally
         {
