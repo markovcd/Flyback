@@ -311,23 +311,15 @@ public sealed partial class MainWindow
         for (var i = 0; i < def.Inputs.Count; i++)
             inspector.Children.Add(BuildInputRow(node, def.Inputs[i], i));
 
-        // A sequencer's tune is a list rather than a row of knobs (ADR-0038),
-        // so it is edited as one — added to, taken from and reordered.
-        if (def.DefaultSteps is not null)
-            inspector.Children.Add(new StepList(node, def, because => editor.NotifyPatchChanged(because)).View);
+        // Whatever the module carries that is not a knob, each kind edited by the
+        // control that suits it. This mapping lives here rather than on the extra
+        // because it is the one part of a kind that needs Avalonia, which the
+        // engine does not reference.
+        foreach (var extra in def.Extras)
+            if (EditorFor(extra, node, def) is { } control)
+                inspector.Children.Add(control);
 
-        // A quantiser's scale is the other list a node may carry, and it is a
-        // set rather than a sequence — so it is edited as the octave it is a
-        // subset of rather than as a list of numbers.
-        if (def.DefaultScale is not null)
-            inspector.Children.Add(new ScaleKeys(node, def, because => editor.NotifyPatchChanged(because)).View);
-
-        // The third thing a node carries that is not a knob, and the only one
-        // that is not a number — so it is a name and a button rather than a
-        // control with a range.
-        if (def.TakesSample) inspector.Children.Add(BuildSampleRow(node));
-
-        if (def.Inputs.Count == 0 && def.DefaultSteps is null && def.DefaultScale is null)
+        if (def.Inputs.Count == 0 && def.Extras.Count == 0)
             inspector.Children.Add(new TextBlock
             {
                 Text = "This module has nothing to set — it only produces.",
@@ -613,6 +605,38 @@ public sealed partial class MainWindow
             _ => $"{string.Join(", ", parts[..^1])} and {parts[^1]}",
         };
     }
+
+    /// <summary>
+    /// Which control edits one of the things a module carries that is not a knob.
+    /// </summary>
+    /// <remarks>
+    /// The one place the App knows the kinds apart, and the reason it is a lookup
+    /// here rather than a method on <see cref="NodeExtra"/>: the rest of what a
+    /// kind does lives in the engine, and the engine does not reference Avalonia.
+    /// <para>
+    /// A kind with nothing here shows nothing rather than throwing, so a plugin
+    /// that carries state this build has never heard of costs it a row on the
+    /// panel and not the panel.
+    /// </para>
+    /// </remarks>
+    private Control? EditorFor(NodeExtra extra, NodeInstance node, NodeDef def) => extra switch
+    {
+        // A sequencer's tune is a list rather than a row of knobs (ADR-0038),
+        // so it is edited as one — added to, taken from and reordered.
+        StepsExtra steps =>
+            new StepList(node, steps.Spec, because => editor.NotifyPatchChanged(because)).View,
+
+        // A quantiser's scale is a set rather than a sequence, so it is edited
+        // as the octave it is a subset of rather than as a list of numbers.
+        ScaleExtra =>
+            new ScaleKeys(node, def, because => editor.NotifyPatchChanged(because)).View,
+
+        // The one a node carries that is not a number, so it is a name and a
+        // button rather than a control with a range.
+        SampleExtra => BuildSampleRow(node),
+
+        _ => null,
+    };
 
     /// <summary>
     /// The sound file a player reads: what it is called, and a button to pick

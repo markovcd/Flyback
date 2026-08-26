@@ -75,7 +75,7 @@ public class SequencerTests
 
         // Sanitised the way the compiler sanitises them, so these runs and a
         // real patch see the same notes.
-        var steps = (notes ?? def.DefaultSteps ?? []).Select(s => s.Sane()).ToArray();
+        var steps = (notes ?? def.Extra<StepsExtra>()?.Spec.Default ?? []).Select(s => s.Sane()).ToArray();
         var outputs = def.Emit(emitter, new EmitContext(inputs, steps));
 
         return (new CompiledPatch(emitter.ToProgram(), emitter.RegisterCount, outputs[0].Base, 1), outputs);
@@ -91,8 +91,11 @@ public class SequencerTests
     private static float[] EveryStepMidpoint(int steps = 8) =>
         [.. Enumerable.Range(0, steps).Select(Midpoint)];
 
-    private static IReadOnlyList<Step> DefaultsOf(string typeId) =>
-        NodeCatalog.BuiltIn.Require(typeId).DefaultSteps!;
+    private static IReadOnlyList<Step> DefaultsOf(string typeId) => Spec(NodeCatalog.BuiltIn.Require(typeId)).Default;
+
+    /// <summary>The steps a module declares, asserting on the way that it declares any.</summary>
+    private static StepSpec Spec(NodeDef def) =>
+        def.Extra<StepsExtra>()?.Spec ?? throw new InvalidOperationException($"{def.Name} carries no notes.");
 
     private static float DefaultOf(string typeId, int step) => DefaultsOf(typeId)[step].Value;
 
@@ -243,9 +246,9 @@ public class SequencerTests
     {
         var def = NodeCatalog.BuiltIn.Require(Notes);
 
-        def.StepDisplay.ShouldBe(PortDisplay.Note);
-        def.StepValue.Format(57f).ShouldBe("A3");
-        def.StepValue.Stepped.ShouldBeTrue("a note lands on notes");
+        Spec(def).Display.ShouldBe(PortDisplay.Note);
+        Spec(def).AsPort.Format(57f).ShouldBe("A3");
+        Spec(def).AsPort.Stepped.ShouldBeTrue("a note lands on notes");
 
         // ...and its default riff is a tune rather than a row of zeroes.
         Pitch.Name(DefaultOf(Notes, 0)).ShouldBe("A3");
@@ -256,8 +259,8 @@ public class SequencerTests
     {
         var def = NodeCatalog.BuiltIn.Require(Values);
 
-        def.StepDisplay.ShouldBe(PortDisplay.Number);
-        def.StepValue.Format(0.25f).ShouldBe("0.25");
+        Spec(def).Display.ShouldBe(PortDisplay.Number);
+        Spec(def).AsPort.Format(0.25f).ShouldBe("0.25");
     }
 
     // --- length -------------------------------------------------------------

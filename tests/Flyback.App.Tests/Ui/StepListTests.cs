@@ -23,7 +23,7 @@ public class StepListTests : UiTest
         var def = NodeCatalog.BuiltIn.Require(typeId);
         var node = NodeInstance.Create(def, 0, 0);
 
-        return (new StepList(node, def, _ => { }), node);
+        return (new StepList(node, def.Extra<StepsExtra>()!.Spec, _ => { }), node);
     }
 
     private static Window Showing(out NodeInstance node, string typeId = "seq.notes")

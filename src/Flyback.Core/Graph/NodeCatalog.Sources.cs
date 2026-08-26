@@ -88,7 +88,7 @@ public partial class NodeCatalog
             + "triggering, because it charts what the speakers played rather than working the "
             + "signal out again.")
         {
-            TakesSample = true,
+            Extras = [new SampleExtra()],
         };
 
         yield return new NodeDef(

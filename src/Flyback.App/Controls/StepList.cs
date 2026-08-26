@@ -39,7 +39,7 @@ internal sealed class StepList
     private static readonly IBrush Accent = new SolidColorBrush(Colors.Source);
 
     private readonly NodeInstance node;
-    private readonly NodeDef def;
+    private readonly StepSpec spec;
     /// <summary>
     /// Told that the notes changed, and under what name to file it. A volume is
     /// a bar one drags, so a note's own edits carry the row they came from and
@@ -55,10 +55,10 @@ internal sealed class StepList
     private int dragTo;
     private Point dragOrigin;
 
-    public StepList(NodeInstance node, NodeDef def, Action<string?> changed)
+    public StepList(NodeInstance node, StepSpec spec, Action<string?> changed)
     {
         this.node = node;
-        this.def = def;
+        this.spec = spec;
         this.changed = changed;
 
         node.Steps ??= [];
@@ -101,7 +101,7 @@ internal sealed class StepList
     private List<Step> Steps => node.Steps!;
 
     /// <summary>Whether a value stands for something other than itself — a note number.</summary>
-    private bool Named => def.StepDisplay == PortDisplay.Note;
+    private bool Named => spec.Display == PortDisplay.Note;
 
     /// <summary>
     /// handle · number · value · [name] · length · volume · remove.
@@ -212,7 +212,7 @@ internal sealed class StepList
     }
 
     /// <summary>A value in the middle of the range, for the very first note of an empty list.</summary>
-    private float Middle => (def.StepRange.Min + def.StepRange.Max) / 2f;
+    private float Middle => (spec.Range.Min + spec.Range.Max) / 2f;
 
     private Control Row(int index)
     {
@@ -255,7 +255,7 @@ internal sealed class StepList
         ToolTip.SetTip(handle, "Drag to reorder");
         Reorder(handle, row, index);
 
-        var value = Number(step.Value, def.StepRange.Min, def.StepRange.Max, Named ? 1m : 0.05m,
+        var value = Number(step.Value, spec.Range.Min, spec.Range.Max, Named ? 1m : 0.05m,
             Named ? "0" : "0.##",
             v => Set(index, s => s with { Value = v }));
 
@@ -312,7 +312,7 @@ internal sealed class StepList
         if (Named)
             row.Children.Add(Column(new TextBlock
             {
-                Text = def.StepValue.Format(step.Value),
+                Text = spec.AsPort.Format(step.Value),
                 FontSize = 11.5,
                 Opacity = 0.75,
                 Margin = new Thickness(5, 0, 0, 0),
@@ -375,7 +375,7 @@ internal sealed class StepList
             && rows.Children[index * 2 + 1] is Grid row
             && row.Children.FirstOrDefault(c => Grid.GetColumn(c) == 3) is TextBlock name)
         {
-            name.Text = def.StepValue.Format(next.Value);
+            name.Text = spec.AsPort.Format(next.Value);
         }
 
         changed($"{node.Id} step {index}");

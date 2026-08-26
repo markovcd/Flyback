@@ -4,7 +4,7 @@ Each record captures one decision, the situation that forced it, and what it
 costs. Format is [Michael Nygard's](https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions):
 context, decision, consequences.
 
-Twenty-three records — [0003](0003-cpu-rendering-with-a-gpu-path-left-open.md),
+Twenty-four records — [0003](0003-cpu-rendering-with-a-gpu-path-left-open.md),
 [0004](0004-visual-patch-editor-as-the-authoring-model.md),
 [0026](0026-modules-from-plugins-with-provenance-in-the-file.md),
 [0027](0027-delay-lines-give-the-audio-path-a-memory.md),
@@ -26,7 +26,8 @@ Twenty-three records — [0003](0003-cpu-rendering-with-a-gpu-path-left-open.md)
 [0050](0050-normalled-sockets-carry-a-signal-with-no-wire.md) and
 [0051](0051-a-quantisers-scale-is-a-set-on-the-node.md) and
 [0052](0052-a-patch-names-its-samples-rather-than-carrying-them.md) and
-[0053](0053-a-scope-records-what-the-speakers-played.md) — are marked
+[0053](0053-a-scope-records-what-the-speakers-played.md) and
+[0054](0054-what-a-module-carries-is-a-part-not-a-subtype.md) — are marked
 **user-directed**: they were chosen by the project owner, not derived. The first
 two sit upstream of almost everything else here; 0026 and 0027 each give up a
 property an earlier record relied on, knowingly; 0031, 0033, 0034, 0036 and 0040
@@ -66,7 +67,11 @@ needs, which is a promise about the filesystem where there used to be none. 0053
 is the answer to the limit 0040 recorded and left standing — a Probe cannot show
 memory, so this adds the module that can, and pays for it by giving up 0022's
 dead-code elimination in the one program where a chart of the past can come
-from. All are recorded even though they were not mine to make.
+from. 0054 is the record 0051 warned about arriving: three kinds of carried state
+had been added by naming each of them in six places, so this makes a kind a part
+rather than a member — and is careful to note that making the fourth easy is not
+an argument that there should be one. All are recorded even though they were not
+mine to make.
 
 [0035](0035-a-glsl-backend-for-the-video-path.md) is the first record where two
 backends disagree by design: the picture on screen and the picture in an exported
@@ -113,6 +118,7 @@ the two that was there while the knobs were moving.
 | [0051](0051-a-quantisers-scale-is-a-set-on-the-node.md) | A quantiser's scale is a set on the node *(user-directed)* |
 | [0052](0052-a-patch-names-its-samples-rather-than-carrying-them.md) | A patch names its samples rather than carrying them *(user-directed)* |
 | [0053](0053-a-scope-records-what-the-speakers-played.md) | A Scope records what the speakers played *(user-directed)* |
+| [0054](0054-what-a-module-carries-is-a-part-not-a-subtype.md) | What a module carries is a part, not a subtype *(user-directed)* |
 
 ### The shell
 

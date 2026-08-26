@@ -282,16 +282,7 @@ internal static class Handbook
         // Said per module rather than only in the preamble, because this is the
         // one place a model looks to find out what a module has — and a
         // sequencer's inputs say nothing about the tune it plays.
-        if (def.DefaultSteps is not null)
-            text.Append("  notes  a list of up to ").Append(NodeCatalog.MaxSteps)
-                .AppendLine(", set with set_steps — not knobs");
-
-        if (def.DefaultScale is not null)
-            text.Append("  scale  which of the ").Append(Pitch.Classes)
-                .AppendLine(" pitch classes are on, set with set_scale — not knobs");
-
-        if (def.TakesSample)
-            text.AppendLine("  file   a path to a WAV, set with set_sample — not a knob");
+        foreach (var extra in def.Extras) text.AppendLine(extra.Announce());
 
         if (prose && def.Description.Length > 0)
             text.Append("  ").AppendLine(def.Description);

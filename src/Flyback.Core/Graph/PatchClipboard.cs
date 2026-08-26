@@ -53,24 +53,10 @@ public static class PatchClipboard
         var copy = new Patch();
 
         // Deep, so that what is held is a picture of the patch as it was rather
-        // than a view onto one that may go on being edited. The arrays are the
-        // whole of a module's settings and sharing one would let a knob turned
-        // afterwards change what a paste produces.
-        foreach (var node in taking)
-        {
-            copy.Nodes.Add(new NodeInstance
-            {
-                Id = node.Id,
-                TypeId = node.TypeId,
-                Name = node.Name,
-                X = node.X,
-                Y = node.Y,
-                InputValues = [.. node.InputValues],
-                Steps = node.Steps is { } steps ? [.. steps] : null,
-                Scale = node.Scale is { } scale ? [.. scale] : null,
-                Sample = node.Sample,
-            });
-        }
+        // than a view onto one that may go on being edited — see
+        // NodeInstance.Clone. Keeping the ids, because a fragment is matched to
+        // its wires by them and the paste is what makes them fresh.
+        foreach (var node in taking) copy.Nodes.Add(node.Clone());
 
         foreach (var wire in patch.Connections)
             if (inside.Contains(wire.SourceNode) && inside.Contains(wire.TargetNode))
@@ -128,18 +114,7 @@ public static class PatchClipboard
 
         foreach (var node in arriving)
         {
-            var fresh = new NodeInstance
-            {
-                Id = Guid.NewGuid(),
-                TypeId = node.TypeId,
-                Name = node.Name,
-                X = node.X + dx,
-                Y = node.Y + dy,
-                InputValues = [.. node.InputValues],
-                Steps = node.Steps is { } steps ? [.. steps] : null,
-                Scale = node.Scale is { } scale ? [.. scale] : null,
-                Sample = node.Sample,
-            };
+            var fresh = node.Clone(Guid.NewGuid(), dx, dy);
 
             renamed[node.Id] = fresh.Id;
             into.Nodes.Add(fresh);

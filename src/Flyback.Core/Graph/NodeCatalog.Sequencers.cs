@@ -152,9 +152,7 @@ public partial class NodeCatalog
         EmitSequence,
         description)
     {
-        DefaultSteps = notes,
-        StepDisplay = display,
-        StepRange = range,
+        Extras = [new StepsExtra(new StepSpec(notes, display, range))],
     };
     
     /// <summary>

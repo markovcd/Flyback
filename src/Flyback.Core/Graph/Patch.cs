@@ -192,20 +192,59 @@ public sealed class NodeInstance
         Name = string.IsNullOrEmpty(trimmed) || trimmed == def.Name ? null : trimmed;
     }
 
-    public static NodeInstance Create(NodeDef def, double x, double y) => new()
+    /// <summary>
+    /// A deep copy of this module, optionally with a fresh identity and shifted
+    /// on the canvas.
+    /// </summary>
+    /// <remarks>
+    /// Deep, so that what a clipboard holds is a picture of the patch as it was
+    /// rather than a view onto one that goes on being edited: the lists are the
+    /// whole of a module's settings, and sharing one would let a knob turned
+    /// afterwards change what a paste produces.
+    /// <para>
+    /// The one place that names every field an instance carries, and deliberately
+    /// so — it is the file those fields are declared in, and adding a field
+    /// without copying it here is the mistake this being next to them is meant to
+    /// prevent. Not routed through <see cref="NodeDef.Extras"/> like seeding is,
+    /// because a copy must not need a definition: a fragment naming a module this
+    /// build has no plugin for still has to keep its notes, and looking one up to
+    /// find nothing would drop them without a word.
+    /// </para>
+    /// </remarks>
+    /// <param name="id">The copy's identity, or null to keep this one's.</param>
+    /// <param name="dx">How far to move it across.</param>
+    /// <param name="dy">How far to move it down.</param>
+    public NodeInstance Clone(Guid? id = null, double dx = 0d, double dy = 0d) => new()
     {
-        Id = Guid.NewGuid(),
-        TypeId = def.TypeId,
-        X = x,
-        Y = y,
-        InputValues = [.. def.Inputs.Select(p => p.Default)],
-        Steps = def.DefaultSteps is { } notes ? [.. notes] : null,
-        Scale = def.DefaultScale is { } scale ? Pitch.Scale(scale) : null,
-
-        // Empty rather than null, so a module that reads a file always has
-        // somewhere to put one and the panel always has a row to show.
-        Sample = def.TakesSample ? string.Empty : null,
+        Id = id ?? Id,
+        TypeId = TypeId,
+        Name = Name,
+        X = X + dx,
+        Y = Y + dy,
+        InputValues = [.. InputValues],
+        Steps = Steps is { } steps ? [.. steps] : null,
+        Scale = Scale is { } scale ? [.. scale] : null,
+        Sample = Sample,
     };
+
+    public static NodeInstance Create(NodeDef def, double x, double y)
+    {
+        var node = new NodeInstance
+        {
+            Id = Guid.NewGuid(),
+            TypeId = def.TypeId,
+            X = x,
+            Y = y,
+            InputValues = [.. def.Inputs.Select(p => p.Default)],
+        };
+
+        // Whatever this module carries that is not a knob, each kind filling in
+        // its own field — see NodeExtra. A module with none, which is nearly all
+        // of them, leaves every one of them null.
+        foreach (var extra in def.Extras) extra.Seed(node);
+
+        return node;
+    }
 }
 
 /// <summary>A wire from one node's output socket to another node's input socket.</summary>

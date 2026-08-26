@@ -59,12 +59,12 @@ public readonly record struct EmitContext(Slot[] Inputs, IReadOnlyList<Step> Ste
     /// could not do that: the shape of the program would have to cover all
     /// twelve however few were switched on.
     /// <para>
-    /// An init property rather than a constructor parameter, for the same reason
-    /// <see cref="NodeDef.DefaultSteps"/> is one: a plugin compiled against an
-    /// earlier build still finds the constructor it was compiled against, and
-    /// this type is part of what a plugin is written against. The getter answers
-    /// with an empty list rather than null so that an emit function may read it
-    /// without asking, including on a context that was never given one.
+    /// An init property rather than a constructor parameter: a plugin compiled
+    /// against an earlier build still finds the constructor it was compiled
+    /// against, and this type is part of what a plugin is written against. The
+    /// getter answers with an empty list rather than null so that an emit
+    /// function may read it without asking, including on a context that was
+    /// never given one.
     /// </para>
     /// </remarks>
     public IReadOnlyList<int> Scale
@@ -129,28 +129,32 @@ public sealed record NodeDef(
     string Description = "")
 {
     /// <summary>
-    /// The notes a freshly placed instance carries, or null for a module that
-    /// holds none. An init property rather than a constructor parameter, so a
-    /// plugin compiled against an earlier build still finds the constructor it
-    /// was compiled against.
+    /// Everything an instance of this module carries that is not a knob: a
+    /// sequencer's notes, a quantiser's scale, a player's file. Empty for the
+    /// great majority of modules, which are their sockets and nothing else.
     /// </summary>
-    public IReadOnlyList<Step>? DefaultSteps { get; init; }
+    /// <remarks>
+    /// A list of parts rather than a member per kind, and rather than a subtype
+    /// per kind ([0054](0054-what-a-module-carries-is-a-part-not-a-subtype.md)).
+    /// What each kind does with a fresh instance, a copied one and a compiled
+    /// one lives on the part — see <see cref="NodeExtra"/> — so adding a fourth
+    /// kind adds a file rather than an edit to every place that used to name the
+    /// three.
+    /// <para>
+    /// An init property rather than a constructor parameter, so a plugin
+    /// compiled against an earlier build still finds the constructor it was
+    /// compiled against.
+    /// </para>
+    /// </remarks>
+    public IReadOnlyList<NodeExtra> Extras { get; init; } = [];
 
     /// <summary>
-    /// The scale a freshly placed instance carries, or null for a module that
-    /// has none — see <see cref="NodeInstance.Scale"/>. The presence of one is
-    /// also what tells the editor to offer the twelve toggles, exactly as
-    /// <see cref="DefaultSteps"/> is what tells it to offer a list of notes.
+    /// The extra of a given kind this module carries, or null where it carries
+    /// none. The one way to ask, so that "has notes" is a question about the
+    /// module rather than an observation that some default happens not to be
+    /// null.
     /// </summary>
-    public IReadOnlyList<int>? DefaultScale { get; init; }
-
-    /// <summary>
-    /// Whether an instance of this module reads an audio file — see
-    /// <see cref="NodeInstance.Sample"/>. What tells the editor to offer a file
-    /// to choose and the compiler to go looking for one, the same way
-    /// <see cref="DefaultScale"/> is what says a module has a scale.
-    /// </summary>
-    public bool TakesSample { get; init; }
+    public T? Extra<T>() where T : NodeExtra => Extras.OfType<T>().FirstOrDefault();
 
     /// <summary>
     /// Whether an instance of this module watches what the speakers played —
@@ -185,18 +189,4 @@ public sealed record NodeDef(
     /// </para>
     /// </remarks>
     public bool IsCycleBreaker { get; init; }
-
-    /// <summary>How a step's value should be written out, when this module has steps.</summary>
-    public PortDisplay StepDisplay { get; init; }
-
-    /// <summary>The range a step's value is edited within, when this module has steps.</summary>
-    public (float Min, float Max) StepRange { get; init; } = (0f, 1f);
-
-    /// <summary>
-    /// A step's value described as though it were a socket, so the editor formats
-    /// and snaps it with the same code every knob already uses — a note in a list
-    /// reads "A3" for the same reason a note on a knob does.
-    /// </summary>
-    public PortSpec StepValue => new(
-        "value", PortKind.Scalar, 0f, StepRange.Min, StepRange.Max, -1, StepDisplay);
 }

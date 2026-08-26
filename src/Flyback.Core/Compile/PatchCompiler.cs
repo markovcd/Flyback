@@ -368,29 +368,19 @@ public static class PatchCompiler
                 inputs[port] = spec.Kind == PortKind.Any ? slotValue : emitter.Coerce(slotValue, spec.Width);
             }
 
-            // Held to what can actually be played on the way in, so the emit
-            // never has to defend itself against a zero length or a volume out
-            // of range — a hand-edited file is the only way either arrives.
-            var steps = node.Steps is { Count: > 0 } notes
-                ? notes.Select(s => s.Sane()).ToArray()
-                : [];
-
-            // The same tidying for the other list a node may carry, and here it
-            // is load-bearing rather than defensive: a scale naming a note twice
-            // would lower to two identical candidates, and one naming a
-            // thirteenth would lower to a candidate outside the octave. Both
-            // compile, and neither is a scale.
-            var scale = node.Scale is { Count: > 0 } classes ? Pitch.Scale(classes) : [];
-
-            var outputsOfNode = def.Emit(
-                emitter,
-                new EmitContext(inputs, steps)
+            // Whatever this module carries that is not a knob, each kind reading
+            // and tidying its own — see NodeExtra. A module with none, which is
+            // nearly all of them, folds nothing and pays nothing.
+            var context = Carried(
+                new EmitContext(inputs, [])
                 {
-                    Scale = scale,
-                    Sample = Clip(node, def),
                     Trace = Watched(node, def),
                     Resolver = port => Sweep(node, def, port),
-                });
+                },
+                node,
+                def);
+
+            var outputsOfNode = def.Emit(emitter, context);
 
             visiting.Remove(node.Id);
             return resolved[node.Id] = outputsOfNode;
@@ -426,45 +416,34 @@ public static class PatchCompiler
             }
         }
 
-        // The clip a node plays, and the complaint when it has not got one.
+        // What a node carries that is not a knob, read onto the context the
+        // module is about to be handed. Each kind knows its own field, its own
+        // tidying and its own complaints — see NodeExtra — so what is left here
+        // is lending them the three things a node cannot tell them: what it is
+        // called, where a file is found, and where a complaint goes.
         //
-        // Resolved for whichever sink asked, the eye as well as the ear. That
-        // was not so at first: the screen was given nothing, on the grounds that
-        // a shader cannot read a clip and two backends showing different
-        // pictures is worse than neither showing one. What that overlooked is
-        // the Probe, which is a video program (ADR-0040) — so looking at a
-        // sample charted a flat line, and the one tool for seeing what a signal
-        // does could not see the one signal that comes from outside the patch.
+        // A clip is resolved for whichever sink asked, the eye as well as the
+        // ear. That was not so at first: the screen was given nothing, on the
+        // grounds that a shader cannot read a clip and two backends showing
+        // different pictures is worse than neither showing one. What that
+        // overlooked is the Probe, which is a video program (ADR-0040) — so
+        // looking at a sample charted a flat line, and the one tool for seeing
+        // what a signal does could not see the one signal that comes from
+        // outside the patch.
         //
         // The backends are kept in step somewhere better instead: a program that
         // reads a clip is drawn on the processor, because the shader cannot draw
         // it. Only a Sample the screen actually reaches puts a table in the
         // video program, so nothing else in the catalogue pays for it.
-        LoadedSample? Clip(NodeInstance node, NodeDef def)
+        EmitContext Carried(EmitContext ctx, NodeInstance node, NodeDef def)
         {
-            if (!def.TakesSample) return null;
+            if (def.Extras.Count == 0) return ctx;
 
-            if (string.IsNullOrWhiteSpace(node.Sample))
-            {
-                issues.Add(new CompileIssue(
-                    node.Id,
-                    $"'{node.Title(def)}' has no sound file chosen, so it plays silence. "
-                    + "Pick one in the panel.",
-                    IssueSeverity.Warning));
+            var env = new ExtraEnv(node.Title(def), samples, issues.Add);
 
-                return null;
-            }
+            foreach (var extra in def.Extras) ctx = extra.Fold(ctx, node, env);
 
-            if (samples?.Find(node.Sample) is { } loaded) return loaded;
-
-            issues.Add(new CompileIssue(
-                node.Id,
-                $"'{node.Title(def)}' cannot read {node.Sample} — "
-                + (samples?.Explain(node.Sample) ?? "nothing here can open a sound file.")
-                + " A patch names its samples rather than carrying them, so this one has to be "
-                + "somewhere it can be found."));
-
-            return null;
+            return ctx;
         }
 
         // The buffer a Scope charts, and null for every module that charts
@@ -508,9 +487,17 @@ public static class PatchCompiler
                 for (var i = 0; i < knobs.Length; i++)
                     knobs[i] = emitter.Coerce(emitter.Constant(def.Inputs[i].Default), def.Inputs[i].Width);
 
+                // Its extras come from a scratch instance seeded the way a freshly
+                // placed one is, rather than from a second reading of the
+                // definition's defaults. One path, so a hidden module carries
+                // what a placed one would — which it did not before: a normal
+                // pointing at a module that reads a file got no clip at all,
+                // because nothing here went looking for one.
+                var scratch = NodeInstance.Create(def, 0d, 0d);
+
                 outputs = normals[bus.TypeId] = def.Emit(
                     emitter,
-                    new EmitContext(knobs, def.DefaultSteps ?? []) { Scale = def.DefaultScale ?? [] });
+                    Carried(new EmitContext(knobs, []), scratch, def));
             }
 
             return bus.Port >= 0 && bus.Port < outputs.Length ? outputs[bus.Port] : null;

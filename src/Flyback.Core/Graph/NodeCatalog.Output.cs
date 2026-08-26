@@ -305,7 +305,7 @@ public partial class NodeCatalog
         + "evaluation to have held anything, so on the screen it snaps continuously whatever "
         + "is patched here.")
     {
-        DefaultScale = Major,
+        Extras = [new ScaleExtra(Major)],
     };
 
     /// <summary>

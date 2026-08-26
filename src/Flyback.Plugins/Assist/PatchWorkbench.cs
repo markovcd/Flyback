@@ -242,7 +242,7 @@ public sealed class PatchWorkbench
         if (!Node(arguments, "handle", out var node, out var def, out var refusal))
             return ToolOutcome.Refused(refusal);
 
-        if (def.DefaultSteps is null)
+        if (def.Extra<StepsExtra>() is not { } carries)
             return ToolOutcome.Refused(
                 $"{Handle(node)} is a {def.Name}, which has no notes. Only the sequencers do.");
 
@@ -275,7 +275,7 @@ public sealed class PatchWorkbench
         node.Steps = notes;
         Edits++;
 
-        return Fine($"set {notes.Count} notes on {Handle(node)}. {Notes(node)} {Issues()}");
+        return Fine($"set {notes.Count} notes on {Handle(node)}. {carries.Report(node)} {Issues()}");
     }
 
     private static bool Real(JsonElement element, string name, out float value)
@@ -298,7 +298,7 @@ public sealed class PatchWorkbench
         if (!Node(arguments, "handle", out var node, out var def, out var refusal))
             return ToolOutcome.Refused(refusal);
 
-        if (def.DefaultScale is null)
+        if (def.Extra<ScaleExtra>() is not { } carries)
             return ToolOutcome.Refused(
                 $"{Handle(node)} is a {def.Name}, which has no scale. Only the Quantiser has one.");
 
@@ -326,7 +326,7 @@ public sealed class PatchWorkbench
         node.Scale = Pitch.Scale(classes);
         Edits++;
 
-        return Fine($"set the scale on {Handle(node)}. {Scale(node)} {Issues()}");
+        return Fine($"set the scale on {Handle(node)}. {carries.Report(node)} {Issues()}");
     }
 
     /// <summary>
@@ -344,7 +344,7 @@ public sealed class PatchWorkbench
         if (!Node(arguments, "handle", out var node, out var def, out var refusal))
             return ToolOutcome.Refused(refusal);
 
-        if (!def.TakesSample)
+        if (def.Extra<SampleExtra>() is null)
         {
             return ToolOutcome.Refused(
                 $"{Handle(node)} is a {def.Name}, which reads no file. Only the Sample module does.");
@@ -357,41 +357,6 @@ public sealed class PatchWorkbench
         Edits++;
 
         return Fine($"{Handle(node)} now reads {path}. {Issues()}");
-    }
-
-    /// <summary>Which file a player reads, and that it reads one at all.</summary>
-    private static string Sample(NodeInstance node) =>
-        string.IsNullOrWhiteSpace(node.Sample)
-            ? "No file chosen, so it plays silence."
-            : $"File: {node.Sample}.";
-
-    /// <summary>A quantiser's scale, written out by name and as it would be typed back in.</summary>
-    private static string Scale(NodeInstance node)
-    {
-        if (node.Scale is not { Count: > 0 } scale)
-            return "Its scale is empty, so it passes the signal through unchanged.";
-
-        var named = string.Join(" ", scale.Select(Pitch.ClassName));
-        var numbers = string.Join(", ", scale);
-
-        return scale.Count == Pitch.Classes
-            ? $"Scale: all twelve ({numbers}), which is the nearest semitone."
-            : $"Scale: {named} ({numbers}).";
-    }
-
-    /// <summary>A sequencer's tune, written out the way it would be typed back in.</summary>
-    private static string Notes(NodeInstance node)
-    {
-        if (node.Steps is not { Count: > 0 } steps) return "It has no notes.";
-
-        var written = steps.Select(s =>
-            s is { Length: 1f, Volume: 1f }
-                ? s.Value.ToString(CultureInfo.InvariantCulture)
-                : $"{s.Value.ToString(CultureInfo.InvariantCulture)}"
-                  + $"/{s.Length.ToString(CultureInfo.InvariantCulture)}"
-                  + $"@{s.Volume.ToString(CultureInfo.InvariantCulture)}");
-
-        return $"Notes: {string.Join(" ", written)}.";
     }
 
     private ToolOutcome Connect(JsonElement arguments)
@@ -564,21 +529,11 @@ public sealed class PatchWorkbench
             if (def.Outputs.Count > 0)
                 text.Append("  out").AppendLine(FanOut(node, def));
 
-            // A tune is not wiring and does not show up in either of the two
-            // lines above, so a sequencer would otherwise read as a module with
-            // nothing set on it at all.
-            if (def.DefaultSteps is not null)
-                text.Append("  ").AppendLine(Notes(node));
-
-            // And a quantiser's scale for the same reason: it is neither a
-            // socket nor a wire, so nothing above would show it at all.
-            if (def.DefaultScale is not null)
-                text.Append("  ").AppendLine(Scale(node));
-
-            // And which file a player reads, for the same reason: it is the one
-            // thing about that module nothing else in this listing would show.
-            if (def.TakesSample)
-                text.Append("  ").AppendLine(Sample(node));
+            // What it carries that is not a knob. None of it is wiring, so it
+            // shows up in neither of the two lines above — a sequencer would
+            // otherwise read as a module with nothing set on it at all.
+            foreach (var extra in def.Extras)
+                text.Append("  ").AppendLine(extra.Report(node));
         }
 
         text.Append(working.Nodes.Count).Append(" modules, ")
@@ -710,16 +665,7 @@ public sealed class PatchWorkbench
         // What the module carries that is neither a socket nor a knob, which
         // the two loops above cannot show — the whole reason a model asking
         // about a Sequencer or a Quantiser would otherwise miss half of it.
-        if (def.DefaultSteps is not null)
-            text.Append("  notes  a list of up to ").Append(NodeCatalog.MaxSteps)
-                .AppendLine(", set with set_steps — not knobs");
-
-        if (def.DefaultScale is not null)
-            text.Append("  scale  which of the ").Append(Pitch.Classes)
-                .AppendLine(" pitch classes are on, set with set_scale — not knobs");
-
-        if (def.TakesSample)
-            text.AppendLine("  file   a path to a WAV, set with set_sample — not a knob");
+        foreach (var extra in def.Extras) text.AppendLine(extra.Announce());
 
         if (def.Description.Length > 0) text.AppendLine(def.Description);
     }
