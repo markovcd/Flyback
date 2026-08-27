@@ -30,6 +30,7 @@
     <PluginProject Include="..\..\src\Flyback.Plugins.Keychain\Flyback.Plugins.Keychain.csproj" FolderName="Keychain" />
     <PluginProject Include="..\..\src\Flyback.Plugins.Keyring\Flyback.Plugins.Keyring.csproj" FolderName="Keyring" />
     <PluginProject Include="..\..\src\Flyback.Plugins.WinMidi\Flyback.Plugins.WinMidi.csproj" FolderName="WinMidi" />
+    <PluginProject Include="..\..\src\Flyback.Plugins.AlsaMidi\Flyback.Plugins.AlsaMidi.csproj" FolderName="AlsaMidi" />
     <PluginProject Include="..\..\src\Flyback.Plugins.OpenAi\Flyback.Plugins.OpenAi.csproj" FolderName="OpenAi" />
     <PluginProject Include="..\Flyback.Plugins.Sample\Flyback.Plugins.Sample.csproj" FolderName="Sample" />
     <PluginProject Include="..\Flyback.Plugins.FakeAssistant\Flyback.Plugins.FakeAssistant.csproj" FolderName="FakeAssistant" />

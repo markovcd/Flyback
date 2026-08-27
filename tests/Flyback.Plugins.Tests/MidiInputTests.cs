@@ -53,10 +53,17 @@ public class MidiInputTests
             Should.NotThrow(() => input.Ports);
     }
 
+    /// <summary>
+    /// Two backends ship and neither ever competes with the other: each is
+    /// supported only where the other is not. Linux is allowed to choose nothing
+    /// as well, because a machine with no libasound on it has no MIDI to offer
+    /// and says so rather than failing.
+    /// </summary>
     [Fact]
     public void The_backend_chosen_here_is_the_one_for_this_operating_system()
     {
-        Shipped().PreferredMidiInput?.Id.ShouldBe(OperatingSystem.IsWindows() ? "winmm" : null);
+        Shipped().PreferredMidiInput?.Id.ShouldBe(
+            OperatingSystem.IsWindows() ? "winmm" : OperatingSystem.IsLinux() ? "alsaseq" : null);
     }
 
     /// <summary>A device that is not plugged in must be refused, not stood in for.</summary>
@@ -80,6 +87,50 @@ public class MidiInputTests
 
         input.Ports.ShouldBeEmpty();
         Should.Throw<PlatformNotSupportedException>(() => input.Open("midi:anything", _ => { }));
+    }
+
+    // ---- and the same of the Linux one -----------------------------------------
+
+    [Fact]
+    public void The_linux_backend_is_found_and_registers_itself()
+    {
+        var catalog = Shipped();
+
+        catalog.Problems.ShouldBeEmpty();
+        catalog.Plugins.Select(p => p.Info.Id).ShouldContain("alsa.midi");
+        catalog.MidiInputs.Select(i => i.Id).ShouldContain("alsaseq");
+    }
+
+    /// <summary>
+    /// Unlike the Windows one this is not answered by the operating system
+    /// alone: a container or a server install has no libasound, and the backend
+    /// has to find that out without a device and without throwing. So what is
+    /// pinned here is the half that is certain — off Linux it is always no.
+    /// </summary>
+    [Fact]
+    public void Off_linux_the_alsa_backend_refuses_rather_than_pretending()
+    {
+        var input = Shipped().MidiInputs.Single(i => i.Id == "alsaseq");
+
+        Assert.SkipWhen(OperatingSystem.IsLinux(), "this is the backend for this machine.");
+
+        input.IsSupported.ShouldBeFalse();
+        input.Ports.ShouldBeEmpty();
+        Should.Throw<PlatformNotSupportedException>(() => input.Open("midi:anything", _ => { }));
+    }
+
+    /// <summary>A device that is not plugged in must be refused, not stood in for.</summary>
+    [Fact]
+    public void Opening_something_that_is_not_there_fails_on_linux_too()
+    {
+        var input = Shipped().MidiInputs.Single(i => i.Id == "alsaseq");
+
+        Assert.SkipUnless(
+            OperatingSystem.IsLinux() && input.IsSupported,
+            "the ALSA backend only opens on Linux, and only where there is a libasound.");
+
+        Should.Throw<InvalidOperationException>(
+            () => input.Open("midi:no-such-device-is-plugged-in", _ => { }));
     }
 
     // ---- what three bytes mean -------------------------------------------------

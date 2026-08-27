@@ -112,7 +112,8 @@ picker is built for it and lists what there is, which today is one thing.
 `IMidiPort` split the way `IAudioOutput` and `IAudioDevice` do — what might exist
 against what is open — and `Flyback.Plugins.WinMidi` is the first backend behind
 them, `Platform="win"`, over the multimedia library Windows already has. CoreMIDI
-and the ALSA sequencer are the other two thirds and are not written.
+and the ALSA sequencer are the other two thirds; the sequencer is written now, in
+the amendment below, and CoreMIDI is not.
 
 Nothing above the hub changed to accept it, which is the part worth recording:
 the picker already listed whatever `MidiSources.All` said, the patch format
@@ -141,6 +142,51 @@ own, so the hub is guarded by a lock the playing thread never takes —
 it from deadlocking is written where it can be seen: a device is never opened or
 closed with that lock held, because closing one waits for the driver's thread and
 the driver's thread may be waiting for the lock.
+
+**Amended: Linux, through the sequencer rather than the raw device.**
+`Flyback.Plugins.AlsaMidi`, `Platform="linux"`, beside the sound plugin
+[0029](0029-linux-sound-through-alsa.md) put there and for the same reason —
+ALSA is what is underneath whatever else the machine is running.
+
+There are two ALSA MIDI interfaces and the choice between them is not close.
+`snd_rawmidi` is bytes off a piece of hardware, which is fewer entry points and
+is only the hardware: a keyboard plugged into the machine, and nothing else.
+The sequencer is the kernel's routing table, and a keyboard, another program's
+output, a virtual port and PipeWire's MIDI bridge all appear in it alike. The
+deciding fact is the same one 0029 turned on: choosing the layer underneath
+means being routed by whatever is above it rather than requiring that thing to
+be absent. What it costs is a longer binding — the sequencer has no "how many
+devices" call, so what is plugged in is found by walking every client and every
+port — and a decoded event instead of three bytes, which `snd_midi_event_decode`
+turns back into the three bytes `MidiMessages.Of` already reads. That call is
+also what keeps `snd_seq_event_t` from being described in C# at all: it arrives
+as a pointer and leaves as bytes, and nothing here knows where its unions fell.
+
+**The reader polls, at a millisecond, rather than blocking.** This is the third
+backend and the second that has to own a thread, and it is the only one where
+the obvious loop is wrong. A blocking `snd_seq_event_input` cannot be closed: a
+device is handed back whenever the patch is rewired, and a thread parked in a
+read on the handle about to be closed is a crash, while a thread parked waiting
+for a note that may not come for an hour never learns it was asked to stop —
+0029's writer checks its flag every period, and this one would check it never.
+So the sequencer is opened non-blocking and the reader wakes every millisecond,
+which makes closing a port the matter of setting a flag it is on every other
+backend. A millisecond is a fortieth of the block the sound path already asks
+for; it is not where the latency of this program is.
+
+**Listing what is plugged in opens a sequencer client, and that is still not
+opening a device.** 0025's rule is that enumerating must not touch hardware, and
+this does not: a client is a row in the routing table, it takes no card, blocks
+nobody, and is closed again before the list is returned. Subscribing is the call
+that would claim a keyboard, and only `Open` makes it.
+
+**A port is shown as the device's name, joined to the client's only when it does
+not already contain it.** The kernel usually names a card's ports after the card
+— "Launchkey Mini MK3" holding "Launchkey Mini MK3 MIDI 1" — and printing both
+unconditionally would stutter on every hardware device to spell one port called
+plain "MIDI 1". What a patch stores is the id `MidiPorts.Named` makes of that
+display name, exactly as on Windows, so the two backends agree about what an
+instrument is called without either knowing about the other.
 
 ## Consequences
 
