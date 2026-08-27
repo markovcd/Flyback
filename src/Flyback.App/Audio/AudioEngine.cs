@@ -112,8 +112,9 @@ public sealed class AudioEngine(IAudioDevice device) : IDisposable
     public LiveValues Live => Volatile.Read(ref activeState).Live;
 
     /// <summary>
-    /// Refills every Scope in <paramref name="drawn"/> from what has been played
-    /// since this last ran.
+    /// Hands the picture what has been played since this last ran: every Scope in
+    /// <paramref name="drawn"/> refilled, and every Meter's reading played into
+    /// <paramref name="watching"/>.
     /// </summary>
     /// <remarks>
     /// The one place the two programs of a patch meet while both are running,
@@ -121,11 +122,37 @@ public sealed class AudioEngine(IAudioDevice device) : IDisposable
     /// caller holding the audio program and its memory separately could be
     /// handed a mismatched pair by a recompile between the two reads. One
     /// <see cref="Volatile"/> read, exactly as the callback takes.
+    /// <para>
+    /// Both blocks are written, not just the screen's, because a level may be
+    /// wired back into the sound as readily as into the picture — and the block
+    /// the speakers read is this one, which the caller has no business holding.
+    /// It is the same dual write <c>MidiHub.Follow</c> makes for a keyboard, for
+    /// the same reason: one value, two programs, named rather than numbered.
+    /// </para>
     /// </remarks>
-    public void RefreshTraces(CompiledPatch drawn)
+    public void Listen(CompiledPatch drawn, LiveValues watching)
     {
         var state = Volatile.Read(ref activeState);
+
         Traces.Refresh(drawn, state.Program, state.Memory);
+        Meters.Refresh(state.Program, state.Memory, watching, state.Live);
+    }
+
+    /// <summary>
+    /// Every Meter back to nothing, for when the sound is switched off while the
+    /// picture goes on being drawn.
+    /// </summary>
+    /// <remarks>
+    /// Said rather than left, and it is the one place this differs from a Scope,
+    /// which holds its last sweep the way a scope with the beam stopped does. A
+    /// level that stayed where it was would be a picture lit by a sound that is
+    /// not playing, and nothing about it would say so.
+    /// </remarks>
+    public void Deafen(LiveValues watching)
+    {
+        var state = Volatile.Read(ref activeState);
+
+        Meters.Silence(state.Program, watching, state.Live);
     }
 
     /// <summary>

@@ -23,6 +23,7 @@ public static class Presets
         new("Sequence", Sequence),
         new("Four voices", FourVoices),
         new("Kick", Kick),
+        new("Heard", Heard),
         new("Played", Played),
         new("Whole band", WholeBand),
         new("Empty", Empty),
@@ -133,6 +134,98 @@ public static class Presets
     /// it a still frame can carry.
     /// </para>
     /// </remarks>
+    /// <summary>
+    /// The same drum as <see cref="Kick"/>, with the picture listening to it
+    /// rather than being told about the beat.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The Kick's own note says what this is here to answer: its envelopes have
+    /// no memory on the video path, so what the screen gets of a drum is the
+    /// gate — a flash a beat, in time with what the ear hears rather than shaped
+    /// like it. Every patch before this one that wanted the eye and the ear to
+    /// agree did it the same way, by sending one modulator to both, which is a
+    /// patch saying a thing twice rather than one half of it hearing the other.
+    /// </para>
+    /// <para>
+    /// Here nothing is sent to both. The picture is driven by a Meter, and a
+    /// Meter is not computed by the picture at all: it is a reading of what the
+    /// speakers actually played, handed to the frame the way a note somebody is
+    /// holding down is handed to it. So what lights the rings is the envelope
+    /// itself — the fall of it as well as the start — and the colour leans with
+    /// the loudness rather than snapping with the trigger.
+    /// </para>
+    /// <para>
+    /// Turn the sound off and the picture stops moving — it does not go out,
+    /// because a floor under the reading keeps the field dimly lit, but nothing
+    /// in it changes. That is the honest statement of what the module is and the
+    /// one thing to know before building on it: there is no level without a
+    /// speaker. Both readings are used, because the difference between them is
+    /// most of the point: 'peak' is the hit and lights the rings, 'level' is the
+    /// loudness of the window and takes the hue, so the colour lags the flash by
+    /// exactly as much as a room does.
+    /// </para>
+    /// <para>
+    /// The window is a thirtieth of a second, which is about a frame. Shorter
+    /// than that and the picture is sampling a slice of each frame and reads as
+    /// a flicker; much longer and a drum this short is diluted into the silence
+    /// around it. It is the only smoothing there is, which is why it is the knob
+    /// to reach for first.
+    /// </para>
+    /// </remarks>
+    public static Patch Heard(ModuleCatalog modules)
+    {
+        var b = new PatchBuilder(modules);
+
+        // Two beats a second, and a gate short enough that the envelope decides
+        // how long the drum is rather than the trigger — the same arrangement
+        // the Kick uses and for the same reason.
+        var beat = b.Add("osc.pulse", 80, 300, (1, 2f), (3, 0.08f));
+
+        var level = b.Add(NodeCatalog.AdsrTypeId, 320, 300, (1, -2.6f), (2, -0.9f), (3, 0f), (4, -1f));
+
+        var pitch = b.Add("audio.frequency", 80, 560, (0, 70f));
+        var tone = b.Add("osc.sine", 320, 560);
+        var voiced = b.Add("math.mul", 580, 420);
+
+        // The one wire that is new in the machine: a signal on its way to the
+        // speakers, read by something that hands the picture a number for it.
+        // 'in' is swept, so nothing upstream of here is lowered into the frame —
+        // the drum is not computed per pixel to be looked at.
+        var heard = b.Add(NodeCatalog.MeterTypeId, 840, 420, (1, -1.5f));
+
+        var rings = b.Add("pattern.rings", 840, 120, (2, 5f));
+        var glow = b.Add("math.remap", 1080, 120, (1, -1f), (2, 1f), (3, 0.1f), (4, 1f));
+
+        // A floor under the reading, for the reason the Sequence preset puts one
+        // under its gate: a picture that is black whenever nothing is sounding
+        // reads as a fault rather than as a pulse — and with the sound switched
+        // off altogether it would be a preset that draws nothing at all.
+        var swell = b.Add("math.add", 1080, 420, (1, 0.18f));
+        var lit = b.Add("math.mul", 1320, 200);
+        var color = b.Add("color.hsv", 1560, 240, (1, 0.75f));
+
+        var output = b.Add(
+            NodeCatalog.OutputTypeId, 1800, 420, (NodeCatalog.OutputGainPort, 0.6f));
+
+        b.Wire(beat, 0, level, 0)
+         .Wire(pitch, 0, tone, 1)
+         .Wire(tone, 0, voiced, 0)
+         .Wire(level, 0, voiced, 1)
+         .Wire(voiced, 0, output, NodeCatalog.OutputLeftPort)
+
+         .Wire(voiced, 0, heard, 0)
+         .Wire(rings, 0, glow, 0)
+         .Wire(glow, 0, lit, 0)
+         .Wire(heard, 1, swell, 0)
+         .Wire(swell, 0, lit, 1)
+         .Wire(heard, 0, color, 0)
+         .Wire(lit, 0, color, 2)
+         .Wire(color, 0, output, NodeCatalog.OutputColorPort);
+
+        return b.Patch;
+    }
+
     public static Patch Kick(ModuleCatalog modules)
     {
         var b = new PatchBuilder(modules);

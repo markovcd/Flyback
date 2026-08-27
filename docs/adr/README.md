@@ -4,7 +4,7 @@ Each record captures one decision, the situation that forced it, and what it
 costs. Format is [Michael Nygard's](https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions):
 context, decision, consequences.
 
-Twenty-seven records — [0003](0003-cpu-rendering-with-a-gpu-path-left-open.md),
+Twenty-eight records — [0003](0003-cpu-rendering-with-a-gpu-path-left-open.md),
 [0004](0004-visual-patch-editor-as-the-authoring-model.md),
 [0026](0026-modules-from-plugins-with-provenance-in-the-file.md),
 [0027](0027-delay-lines-give-the-audio-path-a-memory.md),
@@ -30,7 +30,8 @@ Twenty-seven records — [0003](0003-cpu-rendering-with-a-gpu-path-left-open.md)
 [0054](0054-what-a-module-carries-is-a-part-not-a-subtype.md) and
 [0055](0055-a-plugins-extra-declares-its-editor.md) and
 [0056](0056-a-patch-can-be-played-and-what-plays-it-is-one-opcode.md) and
-[0057](0057-a-shape-is-a-distance-and-one-module-inks-it.md) — are marked
+[0057](0057-a-shape-is-a-distance-and-one-module-inks-it.md) and
+[0058](0058-the-picture-is-told-how-loud-the-sound-is.md) — are marked
 **user-directed**: they were chosen by the project owner, not derived. The first
 two sit upstream of almost everything else here; 0026 and 0027 each give up a
 property an earlier record relied on, knowingly; 0031, 0033, 0034, 0036 and 0040
@@ -89,7 +90,12 @@ backend ones: four plugins had been written and every one of them was for the
 ear, so the picture could still make any texture at all and no thing. What makes
 it a record rather than a plugin is the convention it settles — a shape is a
 distance, which turns out to mean the catalogue had held the combinators for one
-all along. All are recorded even though they were not mine to make.
+all along. 0058 is the one that was expected to need an opcode and did not: the
+picture could not hear the sound, and what it turned out to want was not a new
+instruction but the one 0056 added for a keyboard — a number from outside,
+named, arriving between frames. It is 0041's finding a second time, on a
+mechanism rather than on state. All are recorded even though they were not mine
+to make.
 
 [0035](0035-a-glsl-backend-for-the-video-path.md) is the first record where two
 backends disagree by design: the picture on screen and the picture in an exported
@@ -137,6 +143,7 @@ the two that was there while the knobs were moving.
 | [0051](0051-a-quantisers-scale-is-a-set-on-the-node.md) | A quantiser's scale is a set on the node *(user-directed)* |
 | [0052](0052-a-patch-names-its-samples-rather-than-carrying-them.md) | A patch names its samples rather than carrying them *(user-directed)* |
 | [0053](0053-a-scope-records-what-the-speakers-played.md) | A Scope records what the speakers played *(user-directed)* |
+| [0058](0058-the-picture-is-told-how-loud-the-sound-is.md) | The picture is told how loud the sound is *(user-directed)* |
 | [0054](0054-what-a-module-carries-is-a-part-not-a-subtype.md) | What a module carries is a part, not a subtype *(user-directed)* |
 | [0055](0055-a-plugins-extra-declares-its-editor.md) | A plugin's extra declares its editor *(user-directed)* |
 | [0057](0057-a-shape-is-a-distance-and-one-module-inks-it.md) | A shape is a distance, and one module inks it *(user-directed)* |

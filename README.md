@@ -314,6 +314,48 @@ is the per-sink dead-code elimination given up on purpose, for the one thing tha
 cannot work without it
 ([ADR-0053](docs/adr/0053-a-scope-records-what-the-speakers-played.md)).
 
+### Drawing with what was played
+
+A Scope is a picture *of* the sound. A **Meter** is a number *about* it, and it is
+the one thing here that lets a patch stop saying itself twice.
+
+Everything before it that made the eye and the ear agree did it by sending one
+modulator to both — the Drone's sweep, the Sequence's gate. The Kick preset says
+what that costs: its envelopes have no memory on the video path, so what the
+screen gets of a drum is the gate, a flash a beat, in time with the sound rather
+than shaped like it. Patch the drum into a Meter instead and the picture has the
+envelope, the fall of it included, because what is driving the picture is a
+reading of what the speakers actually played. The **Heard** preset is exactly
+that patch.
+
+It taps its input the way a Scope does, and everything after that is the opposite
+of one. `level` is the loudness of the last `window` seconds — the steady one —
+and `peak` is the furthest that stretch got from silence, which is the one that
+hits; both come off one pass, because the difference between them is most of what
+you want. `window` is the whole of the smoothing: a few milliseconds follows every
+drum, half a second leans into the music.
+
+Two things make it cheap, and they are the reason it is a separate module rather
+than a mode on the Scope. Its input is swept, so the signal it is listening to is
+never lowered into the picture's program — a hue that follows a bass line does not
+compute a bass line per pixel, it reads one number. And that number arrives as a
+**live input**, the same way a note somebody is holding down does, so it lowers to
+a uniform and the preview keeps the GPU. A Scope cannot: a chart is a table read,
+and a table is the one thing the shader cannot draw.
+
+Which is the part worth knowing about how it works. There is no arithmetic in the
+module and no opcode behind it — the picture does not work out how loud the sound
+is, and nothing in a program could, since a frame is one evaluation per pixel with
+no past to reduce. Something outside both programs listens to the same ring the
+Scope charts, once a frame, and plays the answer in
+([ADR-0058](docs/adr/0058-the-picture-is-told-how-loud-the-sound-is.md)).
+
+So a Meter reads nothing where nothing is playing: a still has no past to be loud
+in, and with the sound switched off every one of them is zero — which is worth a
+floor under whatever it drives, or the patch draws black and looks broken. An
+export is the exception, and measures itself: `render` to an AVI writes each
+frame's audio before the frame, so a clip is lit by the sound it is played with.
+
 ## Sound
 
 The same modules drive the speakers.
@@ -430,6 +472,14 @@ That hole is shorter than a video frame, so whether any frame lands in it is
 luck, and the disc appears to blink at whatever rate the two beat against each
 other. A saw is the shape the envelope would be if it could run, and being a pure
 function of time it needs no memory to do it.
+
+**Heard** is that same drum with the picture listening to it instead — a Meter on
+the voice, its `peak` lighting the rings and its `level` taking the hue. Nothing
+is sent to both sinks: what the eye gets is a reading of what the ear was actually
+played, so the flash has the envelope's shape rather than the trigger's, and the
+colour leans after the hit the way a room does. Switch the sound off and it stops
+moving, which is the honest thing a Meter has to say
+([ADR-0058](docs/adr/0058-the-picture-is-told-how-loud-the-sound-is.md)).
 
 ### Why a stepped pitch does not click
 

@@ -165,6 +165,23 @@ public sealed class AudioRenderer
     }
 
     /// <summary>
+    /// The memory this renderer keeps for itself, and null until it has rendered
+    /// something that needs any.
+    /// </summary>
+    /// <remarks>
+    /// Only ever the offline case. A caller that swaps programs passes its own
+    /// (see the parameter on <see cref="Render"/>) and this stays null, which is
+    /// exactly right: what this hands out is what <em>it</em> has been filling,
+    /// and a caller holding its own does not need to be told about it.
+    /// <para>
+    /// Here so that an export can read the rings back — a Meter offline is
+    /// measured from the same tap a Meter on screen is, and there is nobody else
+    /// offline to hold them. See <see cref="MovieRenderer"/>.
+    /// </para>
+    /// </remarks>
+    public DelayState? Memory => delays;
+
+    /// <summary>
     /// Fills an interleaved stereo buffer. Allocation-free once constructed, so
     /// it is safe to call from an audio callback.
     /// </summary>

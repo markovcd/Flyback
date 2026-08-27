@@ -221,6 +221,68 @@ public class MovieRendererTests
         }
     }
 
+    /// <summary>
+    /// A Meter works in an export, which is the one place the picture and the
+    /// sound are made by the same loop rather than by two threads. So the frames
+    /// of a patch lit by its own sound differ from each other, and the first one
+    /// is not the black a picture told nothing would be.
+    /// </summary>
+    /// <remarks>
+    /// This is what moved the audio for a frame ahead of the frame itself. The
+    /// preview cannot do that — a level there is what was played up to now,
+    /// because now is all there is — but an export holds the whole clip, so a
+    /// frame can be lit by the sound it is played with rather than by the sound
+    /// before it. Nothing else about the loop changed, and the tests above pin
+    /// that: the samples are still counted from the frame number, and they are
+    /// still written after the picture.
+    /// </remarks>
+    [Fact]
+    public void A_picture_lit_by_its_own_sound_is_lit_in_an_export()
+    {
+        var b = new PatchBuilder(NodeCatalog.BuiltIn);
+
+        var output = b.Add(NodeCatalog.OutputTypeId, 900, 0, (NodeCatalog.OutputGainPort, 1f));
+        var voice = b.Add("osc.sine", 0, 0, (1, 110f));
+
+        // A slow tremolo, so the level has something to follow: the frames of the
+        // export must differ from one another, and by the thing being measured.
+        var swell = b.Add("osc.sine", 0, 200, (1, 2f), (3, 0.5f), (4, 0.5f));
+        var swelled = b.Add("math.mul", 200, 100);
+
+        var meter = b.Add(NodeCatalog.MeterTypeId, 400, 0, (1, -1.5f));
+
+        b.Wire(voice, 0, swelled, 0)
+         .Wire(swell, 0, swelled, 1)
+         .Wire(swelled, 0, output, NodeCatalog.OutputLeftPort)
+         .Wire(swelled, 0, meter, 0)
+         .Wire(meter, 0, output, NodeCatalog.OutputColorPort);
+
+        var file = new MemoryStream();
+
+        MovieRenderer.Render(
+            file,
+            b.Patch.CompileForVideo(NodeCatalog.BuiltIn).Program,
+            b.Patch.CompileForAudio(NodeCatalog.BuiltIn).Program,
+            AudioScan.TimeDriven,
+            new MovieSettings(32, 24, 1d, 20d),
+            cancellation: TestContext.Current.CancellationToken);
+
+        var avi = file.ToArray();
+        var frames = Movi(avi, "00dc");
+
+        frames.Count.ShouldBe(20);
+
+        // Compressed frames of a flat colour, so their sizes say nothing — what
+        // says something is that the bytes are not all the same picture.
+        var distinct = frames
+            .Select(f => Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(
+                avi.AsSpan(f.Offset, (int)f.Size))))
+            .Distinct()
+            .Count();
+
+        distinct.ShouldBeGreaterThan(4);
+    }
+
     private static string Ascii(byte[] data, int offset) => Encoding.ASCII.GetString(data, offset, 4);
 
     private static int Find(byte[] data, string fourCc)

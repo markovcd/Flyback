@@ -380,6 +380,7 @@ public static class PatchCompiler
             var context = Carried(
                 new EmitContext(inputs, [])
                 {
+                    Node = node.Id,
                     Trace = Watched(node, def),
                     Resolver = port => Sweep(node, def, port),
                 },
@@ -464,7 +465,11 @@ public static class PatchCompiler
         // being reached is precisely what it does not need.
         LoadedSample? Watched(NodeInstance node, NodeDef def)
         {
-            if (!def.TapsSignal || plays || def.Inputs.Count == 0) return null;
+            // Charting rather than tapping, because the two are no longer the
+            // same question — see NodeDef.ChartsSignal. A module that measures
+            // what it taps wants no buffer here and no refill, and asking about
+            // the tap would have given it both.
+            if (!def.ChartsSignal || plays || def.Inputs.Count == 0) return null;
 
             var buffer = Traces.Buffer();
             taps.Add(new TapSpec(node.Id, WindowOf(node, def), buffer));

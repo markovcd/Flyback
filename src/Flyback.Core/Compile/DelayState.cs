@@ -211,6 +211,58 @@ public sealed class DelayState
     }
 
     /// <summary>
+    /// How loud trace <paramref name="slot"/> has been over its newest
+    /// <paramref name="span"/> evaluations: the furthest any of them got from
+    /// nought, and the root mean square of all of them.
+    /// </summary>
+    /// <remarks>
+    /// The same ring <see cref="CopyTrace"/> draws, reduced to two numbers
+    /// instead of laid out across a chart — and both are wanted at once because
+    /// they are read off one pass and answer different questions. The peak is
+    /// what hits: a single loud sample moves it and nothing makes it fall but
+    /// time. The root mean square is what a level meter shows, being the power in
+    /// the window rather than its extreme, and it is the one that reads as
+    /// loudness. Neither is smoothed here — the window is the smoothing, and it
+    /// is a knob.
+    /// <para>
+    /// Squares are summed in a <see cref="double"/> because the span is hundreds
+    /// of thousands of samples at the oversampled rate, and a float accumulator
+    /// stops noticing new ones about a hundred thousand in — which would read as
+    /// a meter that goes deaf the longer its window.
+    /// </para>
+    /// <para>
+    /// May be read across a write, and is meant to be: see <see cref="Tap"/>. A
+    /// meter that catches one sample of the next buffer is out by that sample,
+    /// which is not a quantity anything downstream of it can express.
+    /// </para>
+    /// </remarks>
+    public (float Peak, float Level) Measure(int slot, int span)
+    {
+        if ((uint)slot >= (uint)traces.Length) return (0f, 0f);
+
+        var ring = traces[slot];
+
+        span = Math.Clamp(span, 1, ring.Length);
+
+        // The head is the next cell to be written, so the newest span ends just
+        // before it — the same arithmetic CopyTrace walks, without the buckets.
+        var start = traceHeads[slot] - span;
+
+        var peak = 0f;
+        var power = 0d;
+
+        for (var i = 0; i < span; i++)
+        {
+            var value = ring[Index(start + i, ring.Length)];
+
+            peak = MathF.Max(peak, MathF.Abs(value));
+            power += (double)value * value;
+        }
+
+        return (peak, (float)Math.Sqrt(power / span));
+    }
+
+    /// <summary>
     /// Whether this state still fits a program. Op order decides which buffer is
     /// which, so a recompile that changes the delays at all gets fresh buffers —
     /// and the tail that was ringing is lost, which is the honest outcome: the

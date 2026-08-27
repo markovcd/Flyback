@@ -30,6 +30,103 @@ public partial class NodeCatalog
     public static bool IsChart(string typeId) => typeId is ProbeTypeId or ScopeTypeId;
 
     /// <summary>
+    /// The level meter. Named here because what it reads is filled in from
+    /// outside the program, and the thing doing the filling has to find it — see
+    /// <see cref="Compile.Meters"/>.
+    /// </summary>
+    public const string MeterTypeId = "meter";
+
+    /// <summary>
+    /// How loud the speakers are, as a number the picture can use.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The gap this closes was the sharpest one left in a machine whose whole
+    /// premise is one patch making a picture and a sound: the picture could not
+    /// hear. A Scope charts what was played, and everything else the eye knows
+    /// about the ear it knows by sharing a modulator — the same sweep sent to two
+    /// places, which is a patch saying two things at once rather than one half of
+    /// it listening to the other.
+    /// </para>
+    /// <para>
+    /// It taps its input the way a Scope does — the socket is a root of the
+    /// speakers' program whether or not anything downstream reads this module,
+    /// and is <see cref="PortSpec.Swept"/> so that the screen never lowers the
+    /// signal chain behind it. That second part is the whole cost model: a
+    /// picture driven by a bass line does not compute a bass line per pixel, it
+    /// reads one number.
+    /// </para>
+    /// <para>
+    /// And it reads it as a live input, which is the part worth noticing. There
+    /// is no opcode here and no arithmetic: the module is two
+    /// <see cref="OpCode.LoadLive"/>s and a divide, so what the picture does with
+    /// the sound's loudness is exactly what it does with a note somebody is
+    /// holding down — it is told. <see cref="Meters"/> does the telling, once a
+    /// frame, from the same ring the Scope charts. The consequence that matters is
+    /// that this survives to the shader, where a Scope cannot: a uniform is a
+    /// uniform, and a table is a table.
+    /// </para>
+    /// <para>
+    /// 'window' is how much of the past is being weighed, and it is the only
+    /// smoothing there is. Short is a level that jumps on every hit; long is one
+    /// that leans. It is read off the knob at compile time rather than out of a
+    /// register, for the reason the Scope's is: what fills the answer in runs once
+    /// a frame, outside the program, and cannot act on a value that arrives per
+    /// sample.
+    /// </para>
+    /// <para>
+    /// Both readings at once, off one pass over the window, because they answer
+    /// different questions and a patch that wants the difference between them
+    /// should not need two of these. 'scale' is an ordinary socket by contrast —
+    /// it is applied to the number after it arrives, so it may be swept, and it is
+    /// how a quiet signal is brought up to something a hue can use.
+    /// </para>
+    /// </remarks>
+    private static NodeDef Meter() =>
+        new NodeDef(
+            MeterTypeId, "Meter", "Output",
+            [
+                Swept("in"),
+                Seconds("window", -1.3f),
+                Num("scale", 1f, 0.01f, 16f),
+            ],
+            [Num("level"), Num("peak")],
+            (em, node) =>
+            {
+                // Nought where there is no instance to be addressed as — the
+                // hidden module a normalled socket reads. Nothing outside could
+                // fill in a reading for a node that is not in the patch.
+                if (node.Node == Guid.Empty) return [em.Constant(0f), em.Constant(0f)];
+
+                var scale = em.Binary(OpCode.Max, node[2], em.Constant(0.01f));
+
+                return
+                [
+                    em.Binary(OpCode.Div, em.Live(Meters.Key(node.Node, Meters.Level)), scale),
+                    em.Binary(OpCode.Div, em.Live(Meters.Key(node.Node, Meters.Peak)), scale),
+                ];
+            },
+            "How loud the sound is, as a number to draw with. Patch the signal you want it to "
+            + "listen to into 'in' — the Output's own 'left' for everything, or one voice for "
+            + "just that — and drive a hue, a size or a brightness from what comes out. 'level' "
+            + "is the loudness of the last 'window' seconds and is the steady one; 'peak' is the "
+            + "furthest that stretch got from silence and is the one that hits. Both are 0 for "
+            + "silence and about 1 for a signal at full scale, divided by 'scale' on the way "
+            + "out, so turn that up to make a quiet signal reach. 'window' is the whole of the "
+            + "smoothing: a few milliseconds follows every drum, half a second leans into the "
+            + "music. Unlike a Scope this costs the picture nothing and keeps the GPU, because "
+            + "what arrives is one number rather than a stretch of the past — it is played into "
+            + "the patch the way a keyboard is. It reads nothing at all where no sound is "
+            + "running: an exported still has no past to be loud in, and a movie is measured as "
+            + "it is written.")
+        {
+            // Tapped but not charted: what it wants from the ring is two numbers
+            // rather than a buffer, so no chart is allocated for it and nothing
+            // refills one. See NodeDef.ChartsSignal.
+            TapsSignal = true,
+        };
+
+    /// <summary>
     /// The Probe read backwards: a loop swept across the picture at audio rate,
     /// so that what a chart draws of a signal, this hears of a field. Named here
     /// only for the tests and the preset that build one — the shell treats it as
@@ -127,6 +224,7 @@ public partial class NodeCatalog
         yield return Quantiser();
         yield return Probe();
         yield return Scope();
+        yield return Meter();
         yield return Scan();
     }
 
@@ -643,6 +741,7 @@ public partial class NodeCatalog
             + "patched into the Output to keep it on screen alongside the picture.")
         {
             TapsSignal = true,
+            ChartsSignal = true,
         };
 
     /// <summary>

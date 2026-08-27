@@ -253,15 +253,71 @@ public class AudioEngineTests
 
         // Nothing played yet, so nothing charted: the promise is that it shows
         // what happened, never what would have.
-        engine.RefreshTraces(drawn);
+        engine.Listen(drawn, LiveValues.None);
         drawn.Taps[0].Trace.Samples.ShouldAllBe(v => v == 0f);
 
         // A fiftieth of a second is under a thousand frames, so this fills the
         // whole window several times over.
         device.Pump(8_192);
-        engine.RefreshTraces(drawn);
+        engine.Listen(drawn, LiveValues.None);
 
         drawn.Taps[0].Trace.Samples.ShouldAllBe(v => Math.Abs(v - 0.5f) < 1e-4f);
+    }
+
+    /// <summary>
+    /// The other half of what the engine hands the picture, and the newer one: a
+    /// Meter's reading, played into the block the frame reads rather than copied
+    /// into a buffer the frame charts.
+    /// </summary>
+    /// <remarks>
+    /// Through the real device loop rather than through <c>Meters</c> directly,
+    /// because the thing being pinned is the engine's part of it: one read of the
+    /// state, both blocks written, and nothing published before anything was
+    /// played.
+    /// </remarks>
+    [Fact]
+    public void A_meter_is_played_into_the_picture_from_what_the_engine_heard()
+    {
+        using var device = new LoopbackDevice();
+        using var engine = new AudioEngine(device);
+
+        var builder = new PatchBuilder(NodeCatalog.BuiltIn);
+
+        var held = builder.Add("value", 0, 0, (0, 0.5f));
+        var meter = builder.Add(NodeCatalog.MeterTypeId, 0, 0);
+        var output = builder.Add(NodeCatalog.OutputTypeId, 0, 0, (NodeCatalog.OutputGainPort, 1f));
+
+        builder.Wire(held, 0, meter, 0)
+               .Wire(held, 0, output, NodeCatalog.OutputLeftPort)
+               .Wire(meter, 0, output, NodeCatalog.OutputColorPort);
+
+        var drawn = builder.Patch.CompileForVideo(NodeCatalog.BuiltIn).Program;
+        var watching = new LiveValues(drawn.LiveInputs);
+
+        engine.Update(builder.Patch);
+        engine.Start();
+
+        var level = Meters.Key(meter.Id, Meters.Level);
+
+        // Nothing played yet, so nothing heard.
+        engine.Listen(drawn, watching);
+        watching.At(watching.Keys.ToList().IndexOf(level)).ShouldBe(0d);
+
+        device.Pump(8_192);
+        engine.Listen(drawn, watching);
+
+        watching.At(watching.Keys.ToList().IndexOf(level)).ShouldBe(0.5d, 0.01d);
+
+        // The speakers' block is written too, and names nothing here because
+        // nothing in this patch's sound reads the level — a meter whose reading
+        // only lights the picture is eliminated from the audio program like any
+        // other unread module, and being written to by name costs it nothing.
+        engine.Live.Reads(level).ShouldBeFalse();
+
+        // And back to nothing when the sound is switched off, which is the one
+        // place this differs from a Scope — a chart holds its last sweep.
+        engine.Deafen(watching);
+        watching.At(watching.Keys.ToList().IndexOf(level)).ShouldBe(0d);
     }
 
     /// <summary>The device is the engine's to hold, and closing one closes the other.</summary>

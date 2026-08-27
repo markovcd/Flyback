@@ -114,18 +114,17 @@ public static class MovieRenderer
             speaker?.SampleRate ?? 0,
             speaker is null ? 0 : NodeCatalog.AudioChannels);
 
+        // What the picture is told about the sound — a Meter's reading, and
+        // nothing else offline, since nobody is playing a keyboard into a file.
+        // Empty for a patch with no Meter in it, which is the great majority, and
+        // then this whole apparatus is one allocation of nothing.
+        var heard = new LiveValues(video.LiveInputs);
+
         for (var frame = 0; frame < total; frame++)
         {
             if (cancellation.IsCancellationRequested) break;
 
-            // From the frame number, not from an accumulated delta: a rounding
-            // error repeated a few thousand times is audible against a sound
-            // track that counts its own samples exactly.
-            frames.Render(video, frame / rate, width, height, pixels, stride);
-
-            encoded.SetLength(0);
-            jpeg.WriteBgra(encoded, pixels, width, height, stride);
-            avi.WriteFrame(encoded.GetBuffer().AsSpan(0, (int)encoded.Length));
+            var sounded = 0;
 
             if (speaker is not null && audio is not null)
             {
@@ -139,16 +138,34 @@ public static class MovieRenderer
 
                 if (count > 0)
                 {
-                    var wanted = count * NodeCatalog.AudioChannels;
-                    if (samples.Length < wanted) samples = new float[wanted];
+                    sounded = count * NodeCatalog.AudioChannels;
+                    if (samples.Length < sounded) samples = new float[sounded];
 
-                    var slice = samples.AsSpan(0, wanted);
-                    speaker.Render(audio, slice, scan);
-                    avi.WriteAudio(slice);
-
+                    speaker.Render(audio, samples.AsSpan(0, sounded), scan);
                     written = due;
                 }
+
+                // Before the frame rather than after it, which is the one place
+                // this differs from the preview and is the better answer of the
+                // two. On screen a Meter reads what was played up to now, because
+                // now is the only thing there is; here the whole clip exists, so
+                // a frame can be lit by the sound it is played with rather than
+                // by the sound before it. Nothing else in the loop moved: the
+                // samples are still counted from the frame number, and they are
+                // still written to the file after the picture.
+                Meters.Refresh(audio, speaker.Memory, heard);
             }
+
+            // From the frame number, not from an accumulated delta: a rounding
+            // error repeated a few thousand times is audible against a sound
+            // track that counts its own samples exactly.
+            frames.Render(video, frame / rate, width, height, pixels, stride, heard);
+
+            encoded.SetLength(0);
+            jpeg.WriteBgra(encoded, pixels, width, height, stride);
+            avi.WriteFrame(encoded.GetBuffer().AsSpan(0, (int)encoded.Length));
+
+            if (sounded > 0) avi.WriteAudio(samples.AsSpan(0, sounded));
 
             progress?.Report((frame + 1) / (double)total);
         }

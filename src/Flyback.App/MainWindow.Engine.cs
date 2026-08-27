@@ -215,16 +215,17 @@ public sealed partial class MainWindow
             }
 
             // Sound cannot stretch, so it leads and the picture follows — and
-            // the same tick is where a Scope's chart is refilled from what the
-            // speakers have just played. Here rather than in the renderer
+            // the same tick is where the picture is told what the speakers have
+            // just played: a Scope's chart refilled, and a Meter's reading put
+            // where the frame will read it. Here rather than in the renderer
             // because this is the one moment in the loop when the two paths are
             // both stopped: the callback is not mid-buffer as far as anything
             // here can tell, and the frame has not started. It is also the exact
-            // scope of the promise the module makes — no clock, no sound, and
-            // nothing new to chart.
+            // scope of the promise both modules make — no clock, no sound, and
+            // nothing new to hear.
             preview.Clock = () =>
             {
-                audio.RefreshTraces(preview.Program);
+                audio.Listen(preview.Program, preview.Live);
                 return audio.Time;
             };
         }
@@ -232,6 +233,12 @@ public sealed partial class MainWindow
         {
             preview.Clock = null;
             audio.Stop();
+
+            // The picture goes on being drawn with nothing playing, so every
+            // Meter has to be told that rather than left holding its last
+            // reading. A Scope is left, which is the difference between a chart
+            // of the past and a measurement of now.
+            audio.Deafen(preview.Live);
         }
     }
 

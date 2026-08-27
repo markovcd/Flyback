@@ -48,6 +48,28 @@ public readonly record struct EmitContext(Slot[] Inputs, IReadOnlyList<Step> Ste
     public Func<int, Slot>? Resolver { get; init; }
 
     /// <summary>
+    /// Which instance is being lowered, for the one kind of module that has to
+    /// be addressable from outside the program.
+    /// </summary>
+    /// <remarks>
+    /// Identity rather than state, which is why it sits apart from
+    /// <see cref="Sample"/> and the rest: those are things an instance
+    /// <em>carries</em> and this is only which instance it is. A module needs it
+    /// when its value is not computed by the program at all but played into it —
+    /// see <see cref="OpCode.LoadLive"/> — because the name it listens on has to
+    /// mean the same thing in the screen's program, in the speakers', and to
+    /// whatever outside is filling it in. A node id is the only thing all three
+    /// can agree on: the two programs are compiled separately and share no
+    /// numbering, exactly as <see cref="TapSpec.Node"/> found.
+    /// <para>
+    /// Empty where a module is lowered without an instance behind it — the hidden
+    /// one a normalled socket reads. Such a module has no node to be addressed
+    /// as, and a meter normalled to a socket would be measuring nothing anyway.
+    /// </para>
+    /// </remarks>
+    public Guid Node { get; init; }
+
+    /// <summary>
     /// The instance's scale — the notes of the octave a quantiser snaps to, and
     /// empty for every module that carries none.
     /// </summary>
@@ -216,6 +238,26 @@ public sealed record NodeDef(
     /// that wants it, so that a plugin can want it too.
     /// </remarks>
     public bool TapsSignal { get; init; }
+
+    /// <summary>
+    /// Whether the screen reads that stretch of the past back as a picture of
+    /// itself — whether this module is a chart rather than a measurement.
+    /// </summary>
+    /// <remarks>
+    /// The second half of <see cref="TapsSignal"/>, and separate from it because
+    /// the two things a module can do with what the speakers played are not the
+    /// same size. A chart wants the whole window, which is a buffer per instance,
+    /// refilled every frame and read as a table — and a table is the one thing
+    /// the shader cannot draw, so a patch charting one draws on the CPU. A
+    /// measurement wants a number, which is filled in from outside like a note
+    /// on a keyboard and costs the picture nothing at all.
+    /// <para>
+    /// So a module says which it is, and a module that only measures pays for
+    /// neither the buffer nor the refill. Both still tap: the ring the speakers
+    /// write is the same ring either way.
+    /// </para>
+    /// </remarks>
+    public bool ChartsSignal { get; init; }
 
     /// <summary>
     /// Whether a wire may run backwards into this module — whether, in other
