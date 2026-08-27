@@ -40,6 +40,7 @@
     <PluginProject Include="..\..\src\Flyback.Plugins.Timbre\Flyback.Plugins.Timbre.csproj" FolderName="Timbre" />
     <PluginProject Include="..\..\src\Flyback.Plugins.Modulation\Flyback.Plugins.Modulation.csproj" FolderName="Modulation" />
     <PluginProject Include="..\..\src\Flyback.Plugins.Noise\Flyback.Plugins.Noise.csproj" FolderName="Noise" />
+    <PluginProject Include="..\..\src\Flyback.Plugins.Colour\Flyback.Plugins.Colour.csproj" FolderName="Colour" />
     <PluginProject Include="..\..\src\Flyback.Plugins.Shapes\Flyback.Plugins.Shapes.csproj" FolderName="Shapes" />
   </ItemGroup>
 

@@ -1185,6 +1185,58 @@ to and start running where they were pushed. Nothing is sent to both sinks — t
 speakers have no pixel, so what the ear gets of each field is the slow wander it
 makes at the origin, one drifting the pitch and the other swelling the level.
 
+### Colour
+
+[`src/Flyback.Plugins.Colour`](src/Flyback.Plugins.Colour) adds **Palette**, **To
+HSV**, **Grade** and **Posterise**. The catalogue had five colour modules and
+between them they could build a colour, take one apart into channels, blend two
+and multiply one. What they could not do was choose a colour well, read one back,
+or change one after the fact — so every picture the machine made was coloured the
+same way, by putting a signal into HSV's hue, and every one came out a rainbow.
+
+**Palette** is the one that changes what patches look like. A hue sweep walks the
+whole wheel and passes through every colour there is on the way to the one that
+was wanted; a palette walks a handful that are neighbours. It is Iñigo Quílez's
+cosine palette — `brightness + contrast · cos(2π(cycles · t + offset))`,
+evaluated three times with the channels' offsets a fixed step apart — and that
+step, `spread`, is the knob to reach for. A third is exactly the rainbow, because
+three channels a third of a cycle apart is what a hue sweep is. Below it the
+channels move nearly together and the palette runs through tints of one colour:
+the sunsets, the teals, the golds. At nothing it is grey. **Every value of it is
+a palette somebody could have meant**, which is the useful property — a knob that
+cannot be turned to something ugly.
+
+**To HSV** is the missing inverse, and the one real asymmetry the catalogue had:
+Split is RGB's own inverse and nothing was HSV's, so a patch could build a colour
+and never read one. That cost anything depending on the colour a patch already
+has — rotating a hue, keying on one, taking the saturation out of a picture
+without touching what colour it was. It is written without a branch, because the
+register machine has none: which channel is largest picks one of three
+expressions by being multiplied by whether it won. The test that matters is the
+round trip, and it holds to four decimal places over the whole wheel.
+
+**Grade** is the three adjustments a finished picture wants, none of which is the
+multiply that Gain already was. Saturation mixes towards the picture's own
+brightness — the weighted one the eye uses, so a pure green greys to something
+bright and a pure blue to something dark. Contrast leans on the middle grey
+rather than on black, which is the whole difference between contrast and gain.
+Gamma deepens what is under the middle and leaves white alone. All three are
+neutral at 1, and in that state the module is exactly a wire.
+
+**Posterise** is three ops nobody finds. The levels are placed on the ends rather
+than between them, which is the part that is easy to get wrong — the obvious
+arithmetic never reaches white — so black stays black, white stays white, and
+posterising a posterised picture changes nothing. Each channel is stepped on its
+own, so the three sets of bands cross and there are many more than `levels`
+colours in the result.
+
+The **Spectrum** preset is deliberately the Plasma preset's own two sines, so
+that what is being shown is the colour and nothing else: one slow sweep walks
+`spread` from nothing to a third, and the picture travels from tints of one
+colour, through the sunsets in between, to the rainbow Plasma is stuck at. The
+same wire opens a pulse from one partial to a stack, so the sound does what the
+colour does.
+
 ## Using the editor
 
 The inspector lists every gesture whenever nothing is selected — adding a
