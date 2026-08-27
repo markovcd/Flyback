@@ -245,4 +245,48 @@ public class PanBoundsTests : UiTest
         View(editor).Right.ShouldBeGreaterThan(
             NodeInstance.Extent, "some of the ground past the edge should be reachable");
     }
+
+    /// <summary>
+    /// The cursor while the view is being dragged, and after.
+    /// </summary>
+    /// <remarks>
+    /// A hand rather than the four-way arrow a module drag wears, because a pan
+    /// moves no part of the patch — the sheet goes under the pointer and nothing
+    /// on it has changed. Given back at the end from where the pointer is
+    /// standing rather than merely reset, since a pan usually ends over
+    /// something other than what it began over.
+    /// </remarks>
+    [AvaloniaFact]
+    public void Dragging_the_view_shows_a_hand_and_gives_the_cursor_back()
+    {
+        var (editor, window) = Editing();
+
+        var from = new Point(Wide / 2, Tall / 2);
+        var to = from - new Point(160, 0);
+
+        window.MouseMove(from);
+        Settle(window);
+
+        var resting = editor.Cursor;
+
+        window.MouseDown(from, MouseButton.Middle);
+        window.MouseMove(to);
+        Settle(window);
+
+        var panning = editor.Cursor.ShouldNotBeNull();
+        panning.ShouldNotBeSameAs(resting, "a pan is not what standing still looks like");
+
+        window.MouseUp(to, MouseButton.Middle);
+        Settle(window);
+
+        var after = editor.Cursor;
+        after.ShouldNotBeSameAs(panning, "the hand goes when the drag does");
+
+        // And what it went back to is what standing there means, whatever the
+        // pan happened to leave under the pointer.
+        window.MouseMove(to);
+        Settle(window);
+
+        editor.Cursor.ShouldBeSameAs(after);
+    }
 }

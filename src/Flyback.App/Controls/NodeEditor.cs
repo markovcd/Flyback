@@ -91,11 +91,48 @@ public sealed class NodeEditor : Control
     /// </summary>
     private static readonly IBrush GroupHeaderFill = new SolidColorBrush(Colors.Outline, 0.85);
 
-    /// <summary>The dashed ring round a group that is open — see OpenGroup.</summary>
+    /// <summary>
+    /// The dashed ring round a group that is open — see OpenGroup.
+    /// </summary>
+    /// <remarks>
+    /// In the separator colour rather than the outline one, at half strength. A
+    /// box's border is drawn <em>on</em> a module, where a grey darker than the
+    /// canvas reads as an edge; this is drawn on the canvas itself, which is
+    /// lighter than that grey — so the ring meant to say "these belong together"
+    /// was saying it at six values in two hundred and fifty-five. Half strength
+    /// because the full one goes the other way and reads as a thing in the
+    /// patch: this is furniture, and furniture that shouts is furniture in the
+    /// way. Dashed for the same reason, an open group being a region rather
+    /// than a thing.
+    /// </remarks>
     private static readonly IPen OpenGroupPen = new Pen(
-        new SolidColorBrush(Colors.Outline, 0.7),
-        1.2,
-        new DashStyle([5, 4], 0));
+        new SolidColorBrush(Colors.Separator, 0.5),
+        1.5,
+        new DashStyle([6, 4], 0));
+
+    /// <summary>
+    /// The same ring while everything inside it is selected.
+    /// </summary>
+    /// <remarks>
+    /// A shut box turns its border the selected colour and an open one had
+    /// nothing that did, so the one picture saying which modules a gesture is
+    /// about went missing exactly when the group was opened up to work on. Held
+    /// well under <see cref="SelectionPen"/>, which is what a module wears: the
+    /// modules inside are already ringed one by one, and this is only the line
+    /// round the lot of them.
+    /// </remarks>
+    private static readonly IPen OpenGroupPenSelected = new Pen(
+        new SolidColorBrush(Colors.Attention, 0.55),
+        1.5,
+        new DashStyle([6, 4], 0));
+
+    /// <summary>
+    /// The ground inside the ring. Faint to the edge of being nothing, on
+    /// purpose: it is drawn under the wires and under the modules both, so it
+    /// has to say "this area" at a glance without becoming a second background
+    /// for everything standing on it.
+    /// </summary>
+    private static readonly IBrush OpenGroupFill = new SolidColorBrush(Colors.Separator, 0.06);
 
     private static readonly IBrush Beyond = new SolidColorBrush(Colors.Edge);
 
@@ -121,6 +158,28 @@ public sealed class NodeEditor : Control
     private static readonly Cursor ArrowCursor = new(StandardCursorType.Arrow);
     private static readonly Cursor PortCursor = new(StandardCursorType.Cross);
     private static readonly Cursor NodeCursor = new(StandardCursorType.SizeAll);
+
+    /// <summary>
+    /// While the middle button is dragging the view.
+    /// </summary>
+    /// <remarks>
+    /// A hand rather than the four-way arrow a module gets, because what is
+    /// moving is not in the patch: the sheet is going under the pointer and
+    /// nothing on it has changed. The same distinction the two gestures already
+    /// make — a module drag edits the patch and a pan does not — said in the one
+    /// place a person is looking while doing either.
+    /// <para>
+    /// The pointing hand and not a grabbing one, because there is no grabbing
+    /// one to have: Windows ships sixteen cursors and no hand but this, and
+    /// <c>grab</c> is a picture browsers carry themselves rather than anything
+    /// the system knows about. <c>DragMove</c> is not the way round it — on
+    /// Windows that is the OLE drag icon, an arrow wearing a small box, and it
+    /// falls back to an <em>up arrow</em> when ole32 declines to give it up.
+    /// The four-way arrow is the other candidate and is what a module drag
+    /// already wears, which is the one thing this is here to say it is not.
+    /// </para>
+    /// </remarks>
+    private static readonly Cursor PanCursor = new(StandardCursorType.Hand);
 
     private readonly PatchHistory history = new();
 
@@ -1524,6 +1583,24 @@ public sealed class NodeEditor : Control
     private const double OpenGroupPadding = 24;
     private const double OpenGroupHandle = 20;
 
+    /// <summary>
+    /// The ring, the ground inside it and the title above it, for every group
+    /// that is open.
+    /// </summary>
+    /// <remarks>
+    /// A wash as well as a line, because a line alone out here is nearly
+    /// nothing: this is drawn under the wires and the modules, on ground a
+    /// person is reading past rather than at. Both are held faint. What an open
+    /// group has to do is say where it is while somebody works inside it, and a
+    /// region that draws the eye harder than the modules standing in it is a
+    /// region in the way of the work.
+    /// <para>
+    /// The strip is left bare, and the title on it stays the muted grey the rest
+    /// of the canvas furniture is written in. Filling it made a header, and a
+    /// header is what a group wears when it is <em>shut</em> — a second one up
+    /// here reads as a box that is somehow both.
+    /// </para>
+    /// </remarks>
     private void DrawOpenGroups(DrawingContext context)
     {
         if (patch.Groups is null) return;
@@ -1532,8 +1609,15 @@ public sealed class NodeEditor : Control
         {
             if (OpenGroup(group) is not var (outline, handle)) continue;
 
+            // Selected when its modules are, which is the rule a shut box uses —
+            // and it is the same gesture that selects them, since pressing the
+            // strip takes the group.
+            var isSelected = group.Members.Count > 0 && group.Members.All(selection.Contains);
+
             context.DrawRectangle(
-                null, OpenGroupPen, new RoundedRect(outline, NodeGeometry.CornerRadius));
+                OpenGroupFill,
+                isSelected ? OpenGroupPenSelected : OpenGroupPen,
+                new RoundedRect(outline, NodeGeometry.CornerRadius));
 
             var label = Text(group.Title(), 11.5, NormalBrush, outline.Width - 12, true);
             context.DrawText(label, new Point(handle.X + 6, handle.Y + (handle.Height - label.Height) / 2));
@@ -1660,6 +1744,7 @@ public sealed class NodeEditor : Control
         if (properties.IsMiddleButtonPressed)
         {
             drag = Drag.Pan;
+            Cursor = PanCursor;
             e.Pointer.Capture(this);
             return;
         }
@@ -2022,11 +2107,31 @@ public sealed class NodeEditor : Control
                 return;
 
             default:
-                Cursor = HitPort(graph, out _, out _, out _) ? PortCursor
-                    : HitNode(graph) is not null ? NodeCursor
-                    : ArrowCursor;
+                Cursor = CursorOver(graph);
                 return;
         }
+    }
+
+    /// <summary>
+    /// What the pointer should look like over <paramref name="graph"/>.
+    /// </summary>
+    /// <remarks>
+    /// A box, and the strip above an open group, answer here exactly as a module
+    /// does — because they are taken hold of exactly as one is: pressing either
+    /// selects what is inside and the drag that follows is the ordinary module
+    /// drag, moving the modules with the box drawn from where they are. A cursor
+    /// that went on saying "nothing here" over the one part of a group meant to
+    /// be grabbed was the picture disagreeing with the gesture.
+    /// </remarks>
+    private Cursor CursorOver(Point graph)
+    {
+        if (HitPort(graph, out _, out _, out _)) return PortCursor;
+
+        var draggable = HitNode(graph) is not null
+            || HitBox(graph) is not null
+            || HitOpenGroupHandle(graph) is not null;
+
+        return draggable ? NodeCursor : ArrowCursor;
     }
 
     protected override void OnPointerReleased(PointerReleasedEventArgs e)
@@ -2062,6 +2167,15 @@ public sealed class NodeEditor : Control
         marqueeBase.Clear();
 
         drag = Drag.None;
+
+        // The hand a pan put on goes back to whatever the pointer is standing
+        // over now, which after a pan is rarely what it was standing over when
+        // the pan began. Taken from the position rather than simply reset,
+        // because the pointer may well have come to rest on a module and the
+        // next move is not guaranteed — a hand left on a socket is a cursor
+        // lying about what a click would do.
+        Cursor = CursorOver(ToGraph(e.GetPosition(this)));
+
         e.Pointer.Capture(null);
         InvalidateVisual();
     }

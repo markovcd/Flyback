@@ -393,6 +393,46 @@ public class GroupTests : UiTest
         editor.Patch.Groups.ShouldBeNull();
     }
 
+    /// <summary>
+    /// A box, and the strip above an open group, take the cursor a module takes.
+    /// </summary>
+    /// <remarks>
+    /// They are taken hold of exactly as a module is — pressing either selects
+    /// what is inside and the drag that follows is the ordinary one — so a
+    /// pointer that went on saying "nothing here" over them was the picture
+    /// disagreeing with the gesture. Compared against what a module gives rather
+    /// than against a named cursor, because what matters is that the two agree.
+    /// </remarks>
+    [AvaloniaFact]
+    public void A_box_and_the_strip_above_an_open_one_take_the_cursor_a_module_does()
+    {
+        var patch = Chain(out var feed, out var first, out var second, out _);
+        var (editor, window) = Editing(patch);
+
+        var group = GroupTheMiddle(editor, window, first, second);
+
+        Hover(editor, window, Body(feed));
+        var onModule = editor.Cursor.ShouldNotBeNull();
+
+        Hover(editor, window, new Point(feed.X + 40, feed.Y + 320));
+        editor.Cursor.ShouldNotBeSameAs(onModule, "bare canvas is not something to pick up");
+
+        Hover(editor, window, BoxHeader(patch, group));
+        editor.Cursor.ShouldBeSameAs(onModule);
+
+        editor.ToggleBox(group);
+        Settle(window);
+
+        Hover(editor, window, OpenHandle(patch, group));
+        editor.Cursor.ShouldBeSameAs(onModule);
+    }
+
+    private static void Hover(NodeEditor editor, Window window, Point graph)
+    {
+        window.MouseMove(Screen(editor, window, graph));
+        Settle(window);
+    }
+
     private static Point BoxHeader(Patch patch, NodeGroup group)
     {
         var bounds = NodeGeometry.GroupBounds(patch, group, patch.SocketsOf(group));
