@@ -235,7 +235,12 @@ public sealed partial class MainWindow
         if (editor.SelectedGroup is { } group)
         {
             var sockets = editor.Patch.SocketsOf(group);
-            var shape = new StringBuilder($"g{group.Id:N}{(group.Collapsed ? 'c' : 'o')}");
+
+            // The name is in here as well, because the panel does not only show
+            // it: the button that keeps a group in the module list is offered on
+            // the strength of it, and is refused to a group with none. So a
+            // rename has to rebuild this panel and not only the title in it.
+            var shape = new StringBuilder($"g{group.Id:N}{(group.Collapsed ? 'c' : 'o')}{group.Name}");
 
             // Whether each is wired as well as which they are: a socket keeps its
             // row when the wire comes off, but it grows the button that takes it
@@ -471,6 +476,37 @@ public sealed partial class MainWindow
             });
 
         Act(group.Collapsed ? "Open group" : "Close group", editor.ToggleSelectedGroup, 14);
+
+        // Keeping one is not an edit to the patch, so it sits with the two that
+        // are not either and above the two that are. What the module list will
+        // call it is its name and nothing else — so a group with none is offered
+        // the button greyed rather than a button that saves "3 modules" under a
+        // heading full of other things called "3 modules". The way out is one
+        // gesture up: the title at the top of this panel renames on a
+        // double-click.
+
+        // The button hands itself to what it does, because the answer to it may
+        // have to be asked in the place the button is standing — see KeepGroup.
+        Button keep = null!;
+
+        keep = Act("Save to palette", () => KeepGroup(group, keep), 8);
+        keep.IsEnabled = !string.IsNullOrWhiteSpace(group.Name);
+
+        // Which of the two things pressing it does, said before it is pressed.
+        // Replacing is the one worth knowing about in advance — it is somebody
+        // else's group going, and the name is the only warning there is.
+        ToolTip.SetTip(keep, !keep.IsEnabled
+            ? "The module list calls a kept group by its name — double-click the title above to give it one."
+            : groups?.Named(group.Name) is not null
+                ? $"Replaces the “{group.Name}” already in the module list. It will ask first."
+                : $"Keeps “{group.Name}” under Groups in the module list, ready to add again.");
+
+        // The greyed one is precisely the one with something to explain, and a
+        // tip that will not show on a disabled control explains it to nobody.
+        // The two buttons in the toolbar above that grey themselves out do the
+        // same for the same reason.
+        ToolTip.SetShowOnDisabled(keep, true);
+
         Act("Ungroup", editor.UngroupSelected, 8);
         Act($"Delete {group.Members.Count} modules", editor.DeleteSelected, 8);
 
@@ -536,7 +572,7 @@ public sealed partial class MainWindow
             return row;
         }
 
-        void Act(string caption, Action gesture, double above)
+        Button Act(string caption, Action gesture, double above)
         {
             var button = new Button
             {
@@ -547,6 +583,117 @@ public sealed partial class MainWindow
 
             button.Click += (_, _) => gesture();
             inspector.Children.Add(button);
+
+            return button;
+        }
+    }
+
+    /// <summary>
+    /// Keeps a group in the module list, asking first where doing so would
+    /// replace one already kept under that name.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Replacing is what saving under a name already taken means, and it is also
+    /// somebody's group going for good — a file deleted, with nothing on this
+    /// side of it to undo. The two are not in tension: it still replaces, it
+    /// just does not do it because a hand was in the neighbourhood of a button.
+    /// A name typed a second time by accident is the ordinary way to lose one,
+    /// and the panel offers no clue that this is what the press would do.
+    /// </para>
+    /// <para>
+    /// Asked in the place the button was standing, the way the module list asks
+    /// about the row that is going: no sheet over the window, nothing to move
+    /// the panel under the hand, and the question at the height the answer will
+    /// be given. A dialog would be right if this could lose work — it cannot,
+    /// and what it can lose is one entry in a list of them.
+    /// </para>
+    /// </remarks>
+    private void KeepGroup(NodeGroup group, Button keep)
+    {
+        if (groups is null || string.IsNullOrWhiteSpace(group.Name)) return;
+
+        var at = inspector.Children.IndexOf(keep);
+
+        // Nothing kept under that name, or no button left to ask in — either way
+        // there is nothing to ask about.
+        if (groups.Named(group.Name) is null || at < 0)
+        {
+            SaveGroup(group);
+            return;
+        }
+
+        inspector.Children[at] = Ask(
+            $"Replace “{group.Name}”?",
+            keep.Margin,
+            $"Replace the kept “{group.Name}” with this group.",
+            "Leave the kept one alone.",
+            replace =>
+            {
+                if (replace) SaveGroup(group);
+
+                // Put back exactly what a fresh panel would have, which is the
+                // button reading whatever it should read now — a replaced group
+                // is one this list already knows, so its tip changes.
+                BuildInspector();
+            });
+    }
+
+    /// <summary>
+    /// A question and its two answers on one row: the tick acts, the cross backs
+    /// out.
+    /// </summary>
+    /// <remarks>
+    /// The same shape and the same two glyphs the module list uses to ask about
+    /// a row it is being told to forget, because it is the same kind of
+    /// question — small, immediate, and about the thing directly under it. Two
+    /// words on two buttons would be a dialog with the frame left off.
+    /// </remarks>
+    private static Control Ask(
+        string question, Thickness margin, string yesTip, string noTip, Action<bool> answered)
+    {
+        var row = new DockPanel { Margin = margin };
+
+        var answers = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            Spacing = 1,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+
+        answers.Children.Add(Answer("✔", yesTip, 1, () => answered(true)));
+        answers.Children.Add(Answer("✕", noTip, 0.55, () => answered(false)));
+
+        DockPanel.SetDock(answers, Dock.Right);
+        row.Children.Add(answers);
+
+        row.Children.Add(new TextBlock
+        {
+            Text = question,
+            FontSize = 12,
+            TextTrimming = TextTrimming.CharacterEllipsis,
+            VerticalAlignment = VerticalAlignment.Center,
+            Margin = new Thickness(0, 0, 6, 0),
+        });
+
+        return row;
+
+        static Button Answer(string glyph, string tip, double strength, Action taken)
+        {
+            var button = new Button
+            {
+                Content = glyph,
+                FontSize = 11,
+                Padding = new Thickness(6, 2),
+                Background = Brushes.Transparent,
+                Opacity = strength,
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+
+            ToolTip.SetTip(button, tip);
+            button.Click += (_, _) => taken();
+
+            return button;
         }
     }
 

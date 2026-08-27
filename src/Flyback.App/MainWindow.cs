@@ -191,8 +191,21 @@ public sealed partial class MainWindow : Window
     /// </remarks>
     private readonly MidiHub midi;
 
-    public MainWindow()
+    /// <summary>
+    /// Where the kept groups are read from and written to, or null for the usual
+    /// place. Held because <see cref="BuildPalette"/> runs later than the
+    /// constructor's argument list does.
+    /// </summary>
+    private readonly string? groupFolder;
+
+    /// <param name="groupFolder">
+    /// Where the kept groups live. Null is the usual place; a path is for the
+    /// tests, which must not write into the folder a person's own groups are in.
+    /// </param>
+    public MainWindow(string? groupFolder = null)
     {
+        this.groupFolder = groupFolder;
+
         sound = OpenAudio(plugins);
         audio = new AudioEngine(sound.Device);
 

@@ -1087,6 +1087,28 @@ same reason a wire with one end outside the selection is left behind — a box
 short of a member would arrive a different shape, with different sockets, from
 the one on the canvas.
 
+**Save to palette** keeps a box for good. The button is in the group's own panel,
+and what the list will call it is its name — so a group that has none is offered
+the button greyed, and the title above it renames on a double-click. Kept groups
+are listed under `GROUPS` at the top of the module list, above the catalogue, and
+picking one adds it where you right-clicked: the modules, the wires between them,
+the knobs as they were left, and the box round the lot — shut, whether or not it
+was shut when it was kept, because arriving as one thing is the whole of what a
+kept group is for. A double-click opens it. It is a copy and not an instance —
+editing what you added does nothing to what is kept, which is the same thing a
+group being a drawing rather than a definition says everywhere else.
+
+Each one is a patch file in `groups` beside the settings, which is the whole of
+the storage: no library format, no index to fall out of step. So a `.fbk` dropped
+into that folder is on the list next time it is opened, and a group kept here can
+be mailed to somebody. A `✕` on the row takes one off again — it asks first, in
+the row itself, because the entry is a file and there is no undo out there to put
+one back with. Saving under a name already kept replaces it, and asks first for
+the same reason — the row it would replace is a file, and a name typed twice by
+accident is the ordinary way to lose one. Both questions are the same shape: the
+thing being asked about turns into `Replace “Voice”?  ✔ ✕` where it stands, and
+the cross puts it back.
+
 A wire is re-patched by picking it up at either end, and which end decides what
 the gesture is asking. Drag a **connected input** and the plug comes out of that
 input; the wire keeps its source and goes looking for a new target — *where

@@ -1,5 +1,6 @@
 using Avalonia;
 using Flyback.App.Controls;
+using Flyback.Core.Graph;
 
 namespace Flyback.App;
 
@@ -24,7 +25,8 @@ public sealed partial class MainWindow
 {
     private void BuildPalette()
     {
-        palette = new ModulePalette(plugins.Modules, Add);
+        groups = new GroupLibrary(plugins.Modules, groupFolder);
+        palette = new ModulePalette(plugins.Modules, Add, groups, AddGroup);
 
         paletteFlyout.Content = palette;
         paletteFlyout.FlyoutPresenterClasses.Add(ModulePalette.PresenterClass);
@@ -59,8 +61,77 @@ public sealed partial class MainWindow
             // that is no longer on screen.
             editor.Focus();
         }
+
+        // A kept group arrives as what it is — a fragment, box and all — rather
+        // than as a module, because that is what one is. See GroupLibrary.
+        void AddGroup(SavedGroup entry)
+        {
+            paletteFlyout.Hide();
+
+            // Refused by name rather than added with holes in it, which is the
+            // same answer pasting such a fragment gives and the same sentence.
+            if (!entry.IsComplete)
+            {
+                Report($"“{entry.Name}” was not added. {entry.Load.Summary}", entry.Load.Detail);
+                editor.Focus();
+                return;
+            }
+
+            var added = editor.AddFragment(entry.Fragment, addingAt);
+
+            // A wire dropped on bare canvas asked what to plug into, and a box
+            // has more than one answer to that — so it is left where it was and
+            // said so, rather than guessed at. Which socket a module gets is
+            // Fitting's decision; a group has no such thing to consult.
+            Report(wiring is null
+                ? $"Added “{entry.Name}” — {added.Count} modules."
+                : $"Added “{entry.Name}”. The wire was left loose: a box has more than one socket to choose from.");
+
+            editor.Focus();
+        }
     }
 
+
+    /// <summary>
+    /// The groups somebody kept, listed above the catalogue in the module list.
+    /// Built once beside the palette, because the palette is what shows it.
+    /// </summary>
+    private GroupLibrary? groups;
+
+    /// <summary>
+    /// Keeps a group, so it can be added again from the module list.
+    /// </summary>
+    /// <remarks>
+    /// The name is what the list calls it, which is why the button offering this
+    /// is refused to a group that has none — see the group inspector. Saving one
+    /// under a name already kept replaces it, the way saving anything under a
+    /// name it already has does, and says which of the two happened.
+    /// </remarks>
+    private void SaveGroup(NodeGroup group)
+    {
+        if (groups is null || string.IsNullOrWhiteSpace(group.Name)) return;
+
+        var replacing = groups.All.Any(entry =>
+            string.Equals(entry.Name, group.Name, StringComparison.CurrentCultureIgnoreCase));
+
+        try
+        {
+            var kept = groups.Save(group, editor.Patch);
+
+            Report(
+                replacing
+                    ? $"Replaced “{kept.Name}” in the module list."
+                    : $"Kept “{kept.Name}”. It is under Groups in the module list.",
+                $"Saved as {kept.Path}");
+        }
+        catch (Exception ex)
+        {
+            // Said rather than swallowed: silently failing to keep what somebody
+            // just asked to keep is the one outcome they cannot see for
+            // themselves until the day they go looking for it.
+            Report($"Could not keep “{group.Name}”: {ex.Message}", GroupLibrary.DefaultFolder);
+        }
+    }
     /// <summary>Where the module about to be picked belongs, in graph space.</summary>
     private Point? addingAt;
 

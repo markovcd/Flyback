@@ -756,13 +756,42 @@ public sealed class NodeEditor : Control
 
         if (!loaded.IsComplete) return $"Not pasted. {loaded.Summary}";
 
-        var arriving = loaded.Patch.Nodes.Where(n => !NodeCatalog.IsSink(n.TypeId)).ToArray();
-        if (arriving.Length == 0) return null;
+        AddFragment(loaded.Patch);
+        return null;
+    }
 
-        var (dx, dy) = WhereToPaste(arriving);
-        var added = PatchClipboard.Paste(patch, loaded.Patch, dx, dy);
+    /// <summary>
+    /// Merges a fragment into the patch and leaves what arrived selected, so it
+    /// can be dragged straight into place.
+    /// </summary>
+    /// <remarks>
+    /// The graph half of this is <see cref="PatchClipboard.Paste"/> and knows
+    /// nothing about a canvas; what is here is the two things that need one —
+    /// where it lands and what is selected afterwards. One edit either way, so
+    /// one Ctrl+Z takes the whole of it back.
+    /// <para>
+    /// Where it lands is the whole difference between the two ways in. A paste
+    /// has no point of its own and goes to the middle of the view, stepped clear
+    /// of what is already there; something picked out of the module list was
+    /// picked <em>somewhere</em>, and lands there exactly as a module does — see
+    /// <see cref="AddNode"/>.
+    /// </para>
+    /// </remarks>
+    /// <param name="fragment">What to add. Not modified, so the same one may be added again.</param>
+    /// <param name="at">Where its middle should land, or null for the middle of the view.</param>
+    public IReadOnlyList<NodeInstance> AddFragment(Patch fragment, Point? at = null)
+    {
+        var arriving = fragment.Nodes.Where(n => !NodeCatalog.IsSink(n.TypeId)).ToArray();
+        if (arriving.Length == 0) return [];
 
-        if (added.Count == 0) return null;
+        var box = BoxAround(arriving);
+
+        var (dx, dy) = at is { } point
+            ? (point.X - box.Center.X, point.Y - box.Center.Y)
+            : WhereToPaste(arriving);
+
+        var added = PatchClipboard.Paste(patch, fragment, dx, dy);
+        if (added.Count == 0) return [];
 
         selection.Clear();
         foreach (var node in added) selection.Add(node.Id);
@@ -771,9 +800,8 @@ public sealed class NodeEditor : Control
         SelectionChanged?.Invoke(this, EventArgs.Empty);
         NotifyPatchChanged();
 
-        return null;
+        return added;
     }
-
     /// <summary>
     /// How far to shift what is arriving so that it lands in the middle of what
     /// is on screen, clear of anything already there.

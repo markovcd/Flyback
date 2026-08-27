@@ -115,3 +115,39 @@ opposite reason: it is where you got to last time and never what you want next.
 measure it, which is what catches a popup that opens with no size — but a
 screenshot of the window does not include it, so what it looks like is checked by
 a person rather than by a test.
+
+**Amended: the list holds kept groups as well as the catalogue.** A box saved
+from the group inspector is listed above the modules under `GROUPS`, and picking
+one adds a fragment rather than a module — the modules, their wires, their knobs
+and the box round them, landing where the list was opened exactly as a module
+does. Which is a second kind of thing in a list built out of a catalogue, so it
+is worth saying what keeps it honest: they are not modules and are not pretended
+to be. They have no type id, no category and no plugin, they are filtered by name
+alone, and the section takes no accent colour because a group has no category to
+take one from.
+
+**They are patch files in a folder, and there is no library.** One `.fbk` per
+kept group in `groups` beside the settings, each the same fragment the clipboard
+carries ([0045](0045-what-is-copied-is-a-patch-file.md)) — so there is no format
+to invent, no index to keep in step with the disk, and a patch dropped into the
+folder by hand is simply on the list. The name shown is the one on the box inside
+rather than the file's, because a name is a title and a file name has been
+through a sieve to get there.
+
+**A kept group can be removed from the list, and the row asks first.** The `✕` is
+the one the group inspector puts on a socket that can come off the edge, and the
+row turns into its own question rather than putting a dialog over the window: the
+list is a popup already, and a modal over the shell to ask about one line of it
+would take the popup down on the way, since a flyout closes when something else
+takes the focus. Asked at all because the entry is a file — nothing out here has
+an undo to put one back with.
+
+**Amended: replacing a kept group asks in the panel, the way removing one asks
+in the list.** Saving under a name already kept still replaces — that is what
+saving under a name it already has means — but not on the strength of one press:
+the row it would replace is a file, and a name typed a second time by accident is
+the ordinary way to lose one. So the button turns into `Replace “Voice”? ✔ ✕`
+where it stands. In the panel and not over the window, for the reason the list's
+own question is in the list: it can lose one entry and not any work, and a sheet
+over the shell for that would move the panel under the hand that just pressed the
+button.

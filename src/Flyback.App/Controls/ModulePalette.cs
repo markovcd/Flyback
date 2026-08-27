@@ -47,6 +47,21 @@ public sealed class ModulePalette : UserControl
 
     private readonly ModuleCatalog catalog;
     private readonly Action<string> chosen;
+    private readonly GroupLibrary groups;
+    private readonly Action<SavedGroup> adding;
+
+    /// <summary>
+    /// Which kept group has been asked about, and so is showing a confirm in
+    /// place of its row.
+    /// </summary>
+    /// <remarks>
+    /// A row that turns into its own question rather than a dialog over the
+    /// window: the list is a popup already, and a popup that puts a second thing
+    /// over the window to ask about one line of itself is two layers deep for a
+    /// yes. Held here rather than on the row, because the list is rebuilt on
+    /// every keystroke and a row does not outlive one.
+    /// </remarks>
+    private SavedGroup? removing;
 
     private readonly StackPanel modules = new() { Margin = new Thickness(6, 0, 6, 6), Spacing = 2 };
 
@@ -95,10 +110,18 @@ public sealed class ModulePalette : UserControl
 
     /// <param name="catalog">Every module that may be added, and which plugin each came from.</param>
     /// <param name="chosen">Called with the type id of whatever is picked.</param>
-    public ModulePalette(ModuleCatalog catalog, Action<string> chosen)
+    /// <param name="groups">The groups somebody kept, which are listed above the catalogue.</param>
+    /// <param name="adding">Called with the kept group that was picked.</param>
+    public ModulePalette(
+        ModuleCatalog catalog,
+        Action<string> chosen,
+        GroupLibrary groups,
+        Action<SavedGroup> adding)
     {
         this.catalog = catalog;
         this.chosen = chosen;
+        this.groups = groups;
+        this.adding = adding;
 
         Width = PopupWidth;
         Name = "palette";
@@ -152,6 +175,35 @@ public sealed class ModulePalette : UserControl
 
             e.Handled = true;
         };
+
+        // Escape from anywhere in the list, and not only from the filter box:
+        // the ✕ that asks whether to remove a kept group takes the focus when it
+        // is clicked, so the key that means "never mind" arrives at a button
+        // rather than at the box above it.
+        //
+        // Every row that turned into a question goes back to being a row. A
+        // question nobody answered must not still be on the list the next time
+        // it is opened, and Escape is how a question is not answered.
+        //
+        // Deliberately not handled here, and deliberately not a step of its own.
+        // Escape goes on to mean exactly what it always meant — empty the box,
+        // or, with the box already empty, let the popup close on it. A key that
+        // needed pressing twice to leave, because a row somewhere was
+        // mid-question, would have stopped being the way out.
+        //
+        // handledEventsToo, because the filter box marks Escape handled when it
+        // empties itself, and a question left standing behind a cleared filter
+        // is the very thing this is here to prevent.
+        AddHandler(
+            KeyDownEvent,
+            (_, e) =>
+            {
+                if (e.Key != Key.Escape || removing is null) return;
+
+                Asking(null);
+            },
+            RoutingStrategies.Bubble,
+            handledEventsToo: true);
 
         var ticks = new StackPanel { Spacing = 2, Margin = new Thickness(4) };
 
@@ -244,14 +296,46 @@ public sealed class ModulePalette : UserControl
     /// </summary>
     public void Reset()
     {
+        // Read off the disk again on the way open, which is the only moment
+        // anybody could notice it happening. So a group kept a minute ago is on
+        // the list — the panel that keeps one is behind this popup and cannot
+        // reach in to say so — and so is a patch file dropped into the folder by
+        // hand while the program was running.
+        groups.Reload();
+        removing = null;
+
         filter.Text = string.Empty;
+
+        // Explicitly, because emptying a box that was already empty raises
+        // nothing, and the list would then be the one the last visit left —
+        // filtered, or with a row still asking whether to remove itself.
+        Fill();
+
         filter.Focus();
         filter.SelectAll();
 
-        // Explicitly, because emptying a box that was already empty raises
-        // nothing and would leave the highlight wherever the last visit left
-        // it — halfway down a list nobody is looking at yet.
         Highlight(0);
+    }
+
+    /// <summary>
+    /// Puts the list into — or out of — asking whether to remove a kept group,
+    /// and hands the keyboard back to the filter box.
+    /// </summary>
+    /// <remarks>
+    /// The focus is the part that is easy to miss. Everything the keyboard does
+    /// here is handled on the filter box because the filter box is what holds
+    /// the focus the whole time the list is open, and a row's ✕ takes it away by
+    /// being clicked — then the rebuild below deletes the very button holding
+    /// it, leaving the focus nowhere at all. A list with the focus nowhere
+    /// answers no keys: not the arrows, not Enter, and not Escape, which is the
+    /// way out.
+    /// </remarks>
+    private void Asking(SavedGroup? entry)
+    {
+        removing = entry;
+
+        Fill();
+        filter.Focus();
     }
 
     /// <summary>
@@ -263,12 +347,13 @@ public sealed class ModulePalette : UserControl
     {
         var text = filter.Text?.Trim() ?? string.Empty;
         var matches = catalog.All.Where(d => Matches(d, text)).ToList();
+        var kept = groups.All.Where(entry => Matches(entry, text)).ToList();
 
         modules.Children.Clear();
         listed.Clear();
         highlighted = -1;
 
-        if (matches.Count == 0)
+        if (matches.Count == 0 && kept.Count == 0)
         {
             modules.Children.Add(Hint(
                 hidden.Count == catalog.Providers.Count ? "No plugins are ticked."
@@ -277,16 +362,22 @@ public sealed class ModulePalette : UserControl
             return;
         }
 
+        // Above the catalogue rather than below it. There are a handful of these
+        // and hundreds of modules, they are the only things in the list somebody
+        // made themselves, and a section of one's own things under a screenful
+        // of everything else is a section nobody scrolls to. The heading takes
+        // no accent colour because a group has no category — the same reason a
+        // box's header is the one colour on the canvas that means nothing.
+        if (kept.Count > 0)
+        {
+            modules.Children.Add(Heading("GROUPS", Colors.Muted));
+
+            foreach (var entry in kept) modules.Children.Add(Kept(entry));
+        }
+
         foreach (var category in matches.Select(d => d.Category).Distinct())
         {
-            modules.Children.Add(new TextBlock
-            {
-                Text = category.ToUpperInvariant(),
-                FontSize = 10.5,
-                FontWeight = FontWeight.SemiBold,
-                Foreground = new SolidColorBrush(Colors.Accent(category)),
-                Margin = new Thickness(2, 12, 2, 4),
-            });
+            modules.Children.Add(Heading(category.ToUpperInvariant(), Colors.Accent(category)));
 
             foreach (var def in matches.Where(d => d.Category == category))
             {
@@ -361,6 +452,165 @@ public sealed class ModulePalette : UserControl
             _ => $"{showing} of {providers.Count} plugins  ▾",
         };
     }
+
+    /// <summary>
+    /// One kept group: the button that adds it, and the ✕ that asks whether to
+    /// forget it.
+    /// </summary>
+    /// <remarks>
+    /// The ✕ is the one the group inspector puts on a socket that can come off
+    /// the edge, in the same place at the same weight, because it is the same
+    /// offer — the row it is on can go. Asked rather than done, since a kept
+    /// group is a file and there is no undo out here to take one back with.
+    /// <para>
+    /// An entry this build cannot make is still listed, and dimmed. It is a real
+    /// thing somebody kept; what happens when it is picked is a sentence naming
+    /// the plugin it wants, which is what opening such a patch would say.
+    /// </para>
+    /// </remarks>
+    private Control Kept(SavedGroup entry)
+    {
+        if (removing is { } asked && asked.Path == entry.Path) return Confirm(entry);
+
+        var row = new DockPanel { Margin = new Thickness(0, 0, 0, 1) };
+
+        var forget = new Button
+        {
+            Content = "✕",
+            FontSize = 10,
+            Padding = new Thickness(5, 0, 5, 0),
+            Background = Brushes.Transparent,
+            Opacity = 0.55,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+
+        ToolTip.SetTip(forget, $"Take “{entry.Name}” off this list.");
+
+        forget.Click += (_, _) => Asking(entry);
+
+        DockPanel.SetDock(forget, Dock.Right);
+        row.Children.Add(forget);
+
+        var add = new Button
+        {
+            Content = entry.Name,
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            HorizontalContentAlignment = HorizontalAlignment.Left,
+            Padding = new Thickness(8, 4),
+            FontSize = 12,
+            Opacity = entry.IsComplete ? 1 : 0.55,
+        };
+
+        ToolTip.SetTip(add, entry.IsComplete
+            ? entry.Modules == 1 ? "1 module." : $"{entry.Modules} modules, drawn as one box."
+            : entry.Load.Summary);
+
+        add.Click += (_, _) => adding(entry);
+
+        row.Children.Add(add);
+        listed.Add(add);
+
+        return row;
+    }
+
+    /// <summary>
+    /// The row a kept group's ✕ turns into: the question and its two answers, on
+    /// the one line the row was taking anyway.
+    /// </summary>
+    /// <remarks>
+    /// In the list rather than over the window. This is a popup already, and a
+    /// dialog put over the whole shell to ask about one line of it would be two
+    /// layers deep for a yes — as well as taking the popup down on the way,
+    /// since a flyout closes when something else takes the focus.
+    /// <para>
+    /// One line and not two, so the list does not jump under the hand that has
+    /// just reached for a row: the question stands exactly where the row was, at
+    /// the height it was, and the answers are where the ✕ that asked it is. Which
+    /// is also why they are a ✔ and a ✕ rather than two words — the ✕ is the one
+    /// already under the pointer, and it now means what it always meant on this
+    /// row, which is "no, put it back".
+    /// </para>
+    /// </remarks>
+    private Control Confirm(SavedGroup entry)
+    {
+        var row = new DockPanel { Margin = new Thickness(0, 0, 0, 1) };
+
+        var answers = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            Spacing = 1,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+
+        answers.Children.Add(Answer("✔", $"Remove “{entry.Name}”.", 1, () =>
+        {
+            // A file that will not go stays on the list, which is the truth
+            // about it and better than a row that vanishes and comes back the
+            // next time the folder is read.
+            try
+            {
+                groups.Remove(entry);
+            }
+            catch (Exception)
+            {
+                // Nothing to say it with out here — see the remarks above. The
+                // row still being there is what says it.
+            }
+
+            Asking(null);
+        }));
+
+        answers.Children.Add(Answer("✕", "Keep it.", 0.55, () => Asking(null)));
+
+        DockPanel.SetDock(answers, Dock.Right);
+        row.Children.Add(answers);
+
+        row.Children.Add(new TextBlock
+        {
+            Text = $"Remove “{entry.Name}”?",
+            FontSize = 11.5,
+            TextTrimming = TextTrimming.CharacterEllipsis,
+            VerticalAlignment = VerticalAlignment.Center,
+            Margin = new Thickness(8, 0, 4, 0),
+        });
+
+        return row;
+
+        Button Answer(string glyph, string tip, double strength, Action taken)
+        {
+            var button = new Button
+            {
+                Content = glyph,
+                FontSize = 10,
+                Padding = new Thickness(5, 0, 5, 0),
+                Background = Brushes.Transparent,
+                Opacity = strength,
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+
+            ToolTip.SetTip(button, tip);
+            button.Click += (_, _) => taken();
+
+            return button;
+        }
+    }
+
+    private static TextBlock Heading(string text, Color color) => new()
+    {
+        Text = text,
+        FontSize = 10.5,
+        FontWeight = FontWeight.SemiBold,
+        Foreground = new SolidColorBrush(color),
+        Margin = new Thickness(2, 12, 2, 4),
+    };
+
+    /// <summary>
+    /// A kept group matches on its name, which is all it has: the modules inside
+    /// are its business rather than the list's, and matching them would put
+    /// "Voice" under a search for "sine" without saying why.
+    /// </summary>
+    private static bool Matches(SavedGroup entry, string text) =>
+        text.Length == 0 || entry.Name.Contains(text, StringComparison.OrdinalIgnoreCase);
 
     /// <summary>
     /// Text matches name, category and type id, but deliberately not the
