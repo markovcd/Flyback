@@ -1129,6 +1129,62 @@ is a test that says so in every dialect.
 out the whole of it, including what the eye is still missing — which is more than
 what arrived.
 
+### Noise
+
+[`src/Flyback.Plugins.Noise`](src/Flyback.Plugins.Noise) adds **Fractal** and
+**Cells**. What shipped in the engine was one octave of value noise — a field of
+smooth blobs, all the same size, which is a texture nothing in the world has.
+Every picture that looks like weather, stone, smoke, terrain, rust or skin is
+built out of one of these two, and a patch could assemble neither: the first
+would have taken eight Noise modules and thirty wires, and the second is not
+assemblable at all, because it needs one field read at nine places that depend on
+where you are.
+
+**Fractal** is the same noise summed at several sizes — each octave twice the
+frequency and a fraction of the height of the one before. `smooth` adds them as
+they come and is cloud; `folded` adds each one's distance from the middle
+instead, which creases the field everywhere the noise crossed it and is smoke,
+flame and hammered metal. One minus `folded` is ridges, and a mountain — one
+Subtract, which is why it is not a third output. `roughness` is how much each
+octave keeps of the last: at 0 the module is exactly a single **Noise**, and the
+tests say so to nine decimal places.
+
+**The octave count is on the node rather than on a socket**, and it is the one
+thing here worth reading twice. Every other number is a value the program
+computes with; this one decides how long the program *is*. A socket could not say
+it — the program would have to cover eight octaves however few were asked for,
+and every patch would pay for the most anybody might want. So it is carried, the
+way a Quantiser carries its scale
+([ADR-0051](docs/adr/0051-a-quantisers-scale-is-a-set-on-the-node.md)), and
+declared rather than drawn
+([ADR-0055](docs/adr/0055-a-plugins-extra-declares-its-editor.md)) so that no
+plugin ships a control. It is the first shipped plugin to carry anything at all.
+
+**Cells** is the other half of the subject and nothing like the first: value
+noise is smooth everywhere and can only look like weather, and this is built out
+of distance to scattered points, so it has *edges*. `distance` shades each cell
+outward from its point; `edge` goes to nothing exactly on the line between two
+cells, so a Threshold on it is a crack; and `cell` is one flat number for a whole
+cell and a different one next door — the only value in the catalogue that is
+constant across a region and jumps at its border, which is what makes a mosaic.
+
+It is also the most expensive module here by a wide margin, and the reason is
+worth knowing. What it wants per square is a *hash*, and the machine has no hash
+op. The one a shader would normally use — `fract(sin(x) * 43758.5)` — is a way of
+turning rounding error into randomness, and gives a different answer at every
+precision: the interpreter and the shader would draw different cells, which is
+much worse than drawing them slowly. Noise is the only agreed randomness in the
+machine, so Cells is nine squares times two lookups, eighteen noise a pixel. On
+the GPU that is nothing much; on the interpreter — the preview with the shader
+off, and every command-line render — expect a still to take seconds.
+
+The **Marble** preset is the third famous thing in the subject, and needs no
+module for it: a Fractal into the **Warp** the catalogue has always had, into a
+second Fractal. Three wires, and the veins stop running where the noise happens
+to and start running where they were pushed. Nothing is sent to both sinks — the
+speakers have no pixel, so what the ear gets of each field is the slow wander it
+makes at the origin, one drifting the pitch and the other swelling the level.
+
 ## Using the editor
 
 The inspector lists every gesture whenever nothing is selected — adding a
