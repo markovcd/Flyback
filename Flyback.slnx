@@ -12,6 +12,8 @@
     <Project Path="src/Flyback.Plugins.Alsa/Flyback.Plugins.Alsa.csproj" />
     <Project Path="src/Flyback.Plugins.CoreAudio/Flyback.Plugins.CoreAudio.csproj" />
     <Project Path="src/Flyback.Plugins.Dpapi/Flyback.Plugins.Dpapi.csproj" />
+    <Project Path="src/Flyback.Plugins.Keychain/Flyback.Plugins.Keychain.csproj" />
+    <Project Path="src/Flyback.Plugins.Keyring/Flyback.Plugins.Keyring.csproj" />
     <Project Path="src/Flyback.Plugins.OpenAi/Flyback.Plugins.OpenAi.csproj" />
     <Project Path="src/Flyback.Plugins.Space/Flyback.Plugins.Space.csproj" />
     <Project Path="src/Flyback.Plugins.Supersaw/Flyback.Plugins.Supersaw.csproj" />

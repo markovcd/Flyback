@@ -81,13 +81,40 @@ the one direction this must not fall.
 
 ## Consequences
 
-**Only Windows has a store today.** macOS and Linux fall through to the
-environment variable or to session-only, and the panel and the plugin summary
-say which — because "held for this run" and "saved" look identical until the
-next launch, and a program that appeared to save something and did not is worse
-than one that never offered. The other two are about forty lines each in the
-same shape, shelling out to `security` and `secret-tool`; nothing about this
-decision is waiting on them.
+**Where there is no store, a key is held for the run and the panel says so** —
+because "held for this run" and "saved" look identical until the next launch,
+and a program that appeared to save something and did not is worse than one that
+never offered.
+
+**Amended: all three platforms have a store.** This shipped with only the
+Windows one, and said the other two would be about forty lines each in the same
+shape, shelling out to `security` and `secret-tool`. They are, and they do:
+`flyback.keychain` under `Platform="osx"` and `flyback.keyring` under
+`Platform="linux"`, each one class that offers the store and one that talks to
+the machine, exactly as `DpapiPlugin` and `Vault` are. Nothing in the shell
+changed to accept them — the panel already named whichever store it was handed,
+which is what 0025 is for.
+
+The command line rather than the library, in both cases and for the same reason
+in neither. On macOS the Security framework would mean CoreFoundation
+dictionaries, constants read out by symbol and a lifetime rule per object, for
+three operations, in the one place where a bug is a disclosure; on Linux
+libsecret is GLib all the way down, and `secret-tool` is the front that library
+itself ships for this. Both tools come with the system that has the store.
+
+**The macOS store passes the key as an argument, and that is the best of the
+options.** For the length of one call another program run by this same user
+could read it out of the process list — and that same program could ask
+`security` for the key outright, so it widens nothing. The alternative is worse:
+`security` asked for a password it was not given reads it from the terminal, so
+a Flyback started from one would hang instead of saving. The Linux store has no
+such trade to make; `secret-tool` takes the secret on standard input.
+
+**The Linux store asks three questions where the others ask one.** Being on
+Linux is not enough: `secret-tool` has to be installed, and there has to be a
+session bus for it to reach a keyring over. A server or a container frequently
+has the first and not the second, and that is exactly the machine where a key
+would otherwise appear to have been saved and not be there next time.
 
 **`ProtectedData` is Windows-only and arrives as a package**, so it lives in the
 `Platform="win"` plugin and nowhere else, and the type that touches it sits in
@@ -97,7 +124,10 @@ without ever resolving it.
 
 **The platform analyser cannot see through a helper**, so the Windows guard is
 written out at all three call sites rather than shared. It looks like something
-worth tidying up and is not; there is a comment there saying so.
+worth tidying up and is not; there is a comment there saying so. The other two
+stores do share theirs, because starting a program is not an API for one
+operating system and there is no analyser to satisfy — which is a difference a
+reader will notice, so each of them says why.
 
 **The settings file is not load-bearing.** Missing, unreadable, or written by a
 later version all mean the defaults. Losing a preference is not worth failing to
@@ -116,6 +146,10 @@ which is tolerable precisely because the panel says that is what will happen.
 **A blob that cannot be decrypted is treated as no key.** Written by a different
 account, copied from another machine, or corrupted — none of it is something
 anybody can act on, so the panel asks for a key rather than reporting a fault.
+A keychain that is locked and a keyring that is not answering are read the same
+way, for the same reason. Keeping one is the other direction and does fail
+loudly: `Credentials` catches it, the key still works for this run, and the
+panel reads the source back rather than trusting that a write worked.
 
 What this does not do: there is no passphrase option for a machine with no
 keyring, so headless Linux is environment-variable-or-nothing; nothing is stored

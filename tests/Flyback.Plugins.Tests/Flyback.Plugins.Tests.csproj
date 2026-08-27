@@ -18,14 +18,17 @@
   -->
   <ItemGroup>
     <!--
-      Every platform backend, on every operating system: what these tests pin is
-      that a plugin for another platform still loads and still answers, so
-      leaving one out where it cannot play would remove the case under test.
+      Every platform backend and every credential store, on every operating
+      system: what these tests pin is that a plugin for another platform still
+      loads and still answers, so leaving one out where it cannot work would
+      remove the case under test.
     -->
     <PluginProject Include="..\..\src\Flyback.Plugins.Wasapi\Flyback.Plugins.Wasapi.csproj" FolderName="Wasapi" />
     <PluginProject Include="..\..\src\Flyback.Plugins.CoreAudio\Flyback.Plugins.CoreAudio.csproj" FolderName="CoreAudio" />
     <PluginProject Include="..\..\src\Flyback.Plugins.Alsa\Flyback.Plugins.Alsa.csproj" FolderName="Alsa" />
     <PluginProject Include="..\..\src\Flyback.Plugins.Dpapi\Flyback.Plugins.Dpapi.csproj" FolderName="Dpapi" />
+    <PluginProject Include="..\..\src\Flyback.Plugins.Keychain\Flyback.Plugins.Keychain.csproj" FolderName="Keychain" />
+    <PluginProject Include="..\..\src\Flyback.Plugins.Keyring\Flyback.Plugins.Keyring.csproj" FolderName="Keyring" />
     <PluginProject Include="..\..\src\Flyback.Plugins.OpenAi\Flyback.Plugins.OpenAi.csproj" FolderName="OpenAi" />
     <PluginProject Include="..\Flyback.Plugins.Sample\Flyback.Plugins.Sample.csproj" FolderName="Sample" />
     <PluginProject Include="..\Flyback.Plugins.FakeAssistant\Flyback.Plugins.FakeAssistant.csproj" FolderName="FakeAssistant" />

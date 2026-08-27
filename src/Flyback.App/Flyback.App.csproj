@@ -58,16 +58,18 @@
     plugins\Wasapi\ in the output. Deleting one of these lines removes sound on
     that platform and nothing else.
 
-    Platform keeps each sound backend out of the other platforms' builds: they
-    are the only projects here that are for one system rather than all of them,
-    and all three would otherwise be shipped everywhere to answer "not
-    supported" twice over.
+    Platform keeps each sound backend and each credential store out of the other
+    platforms' builds: they are the only projects here that are for one system
+    rather than all of them, and every one of them would otherwise be shipped
+    everywhere to answer "not supported" twice over.
   -->
   <ItemGroup>
     <PluginProject Include="..\Flyback.Plugins.Wasapi\Flyback.Plugins.Wasapi.csproj" FolderName="Wasapi" Platform="win" />
     <PluginProject Include="..\Flyback.Plugins.CoreAudio\Flyback.Plugins.CoreAudio.csproj" FolderName="CoreAudio" Platform="osx" />
     <PluginProject Include="..\Flyback.Plugins.Alsa\Flyback.Plugins.Alsa.csproj" FolderName="Alsa" Platform="linux" />
     <PluginProject Include="..\Flyback.Plugins.Dpapi\Flyback.Plugins.Dpapi.csproj" FolderName="Dpapi" Platform="win" />
+    <PluginProject Include="..\Flyback.Plugins.Keychain\Flyback.Plugins.Keychain.csproj" FolderName="Keychain" Platform="osx" />
+    <PluginProject Include="..\Flyback.Plugins.Keyring\Flyback.Plugins.Keyring.csproj" FolderName="Keyring" Platform="linux" />
     <PluginProject Include="..\Flyback.Plugins.OpenAi\Flyback.Plugins.OpenAi.csproj" FolderName="OpenAi" />
     <PluginProject Include="..\Flyback.Plugins.Supersaw\Flyback.Plugins.Supersaw.csproj" FolderName="Supersaw" />
     <PluginProject Include="..\Flyback.Plugins.Space\Flyback.Plugins.Space.csproj" FolderName="Space" />
