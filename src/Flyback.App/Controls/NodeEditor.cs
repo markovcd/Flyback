@@ -83,6 +83,20 @@ public sealed class NodeEditor : Control
     /// difference no eye finds across a strip a few hundred units wide, and one a
     /// test cannot tell from rounding either.
     /// </remarks>
+    /// <summary>
+    /// A box's header, in the one colour on the canvas that belongs to no
+    /// category. A module's header is tinted by what it does; a group does
+    /// nothing, so it is drawn in the outline colour and reads as canvas
+    /// furniture rather than as a module whose kind you have forgotten.
+    /// </summary>
+    private static readonly IBrush GroupHeaderFill = new SolidColorBrush(Colors.Outline, 0.85);
+
+    /// <summary>The dashed ring round a group that is open — see OpenGroup.</summary>
+    private static readonly IPen OpenGroupPen = new Pen(
+        new SolidColorBrush(Colors.Outline, 0.7),
+        1.2,
+        new DashStyle([5, 4], 0));
+
     private static readonly IBrush Beyond = new SolidColorBrush(Colors.Edge);
 
     /// <summary>
@@ -176,11 +190,17 @@ public sealed class NodeEditor : Control
     /// <summary>
     /// A module pressed while it was already part of a larger selection, which
     /// is a click that cannot be resolved until the button comes back up.
-    /// Pressing it must not collapse the selection, or a group could never be
+    /// Pressing it must not narrow the selection, or a set could never be
     /// dragged by one of its own members; releasing it without having dragged
-    /// must, or there would be no way to pick one module out of a group.
+    /// must, or there would be no way to pick one module out of a set.
     /// </summary>
-    private Guid? pendingCollapse;
+    /// <remarks>
+    /// "Narrow" rather than "collapse", which since <see cref="NodeGroup"/> means
+    /// the other thing: drawing several modules as one box. Nothing here has
+    /// anything to do with that — this is about how many modules a click leaves
+    /// selected.
+    /// </remarks>
+    private Guid? pendingNarrow;
 
     /// <summary>
     /// The two corners of the rubber band, in graph space so that it stays over
@@ -929,11 +949,18 @@ public sealed class NodeEditor : Control
             // is the whole question being asked by the drag.
             var lifted = drag == Drag.Node ? selection : [];
 
+            // Under the modules and under the wires both, because it is the
+            // ground a group stands on rather than anything in the patch.
+            DrawOpenGroups(context);
+
             DrawConnections(context, lifted, theirs: false);
 
             foreach (var node in patch.Nodes)
-                if (NodeCatalog.Get(node.TypeId) is { } def)
+                if (!Shut(node.Id) && NodeCatalog.Get(node.TypeId) is { } def)
                     DrawNode(context, node, def);
+
+            foreach (var (group, sockets, bounds) in Boxes())
+                DrawBox(context, group, sockets, bounds);
 
             DrawConnections(context, lifted, theirs: true);
 
@@ -1053,6 +1080,11 @@ public sealed class NodeEditor : Control
 
             if (mine != theirs) continue;
 
+            // A wire with both ends inside one collapsed box is a wire the box
+            // is standing in front of. Not drawn faintly or routed around — it
+            // is simply not on the canvas while the box is shut.
+            if (Hidden(connection)) continue;
+
             var source = patch.Find(connection.SourceNode);
             var target = patch.Find(connection.TargetNode);
             if (source is null || target is null) continue;
@@ -1063,8 +1095,8 @@ public sealed class NodeEditor : Control
             if (connection.SourcePort >= sourceDef.Outputs.Count) continue;
             if (connection.TargetPort >= targetDef.Inputs.Count) continue;
 
-            var from = NodeGeometry.OutputPort(source, connection.SourcePort);
-            var to = NodeGeometry.InputPort(target, targetDef, connection.TargetPort);
+            var from = OutputAnchor(source, connection.SourcePort);
+            var to = InputAnchor(target, targetDef, connection.TargetPort);
             var color = Colors.PortColor(sourceDef.Outputs[connection.SourcePort].Kind);
 
             // Heavier and at full strength, which is the same signal the pending
@@ -1077,18 +1109,40 @@ public sealed class NodeEditor : Control
         }
     }
 
+    /// <summary>
+    /// Where the wire being dragged is anchored, and null when none is.
+    /// </summary>
+    /// <remarks>
+    /// What <see cref="DrawPendingWire"/> draws from, rather than a second
+    /// reading of the same question: the anchor is a port that may be behind a
+    /// box, so it has to come through the anchors like every other wire, and one
+    /// of the two going back to <see cref="NodeGeometry"/> directly is exactly
+    /// the bug this had. One of them can be tested and the other cannot, so they
+    /// are the same one.
+    /// </remarks>
+    public Point? PendingWireFrom
+    {
+        get
+        {
+            if (drag != Drag.Wire) return null;
+            if (patch.Find(wireNode) is not { } node) return null;
+            if (NodeCatalog.Get(node.TypeId) is not { } def) return null;
+
+            return wireFromOutput ? OutputAnchor(node, wirePort) : InputAnchor(node, def, wirePort);
+        }
+    }
+
     private void DrawPendingWire(DrawingContext context)
     {
-        if (drag != Drag.Wire) return;
-        if (patch.Find(wireNode) is not { } node) return;
-        if (NodeCatalog.Get(node.TypeId) is not { } def) return;
+        if (PendingWireFrom is not { } anchor) return;
 
         var pen = new Pen(new SolidColorBrush(Colors.Attention, 0.9), 2.2, DashStyle.Dash);
 
-        if (wireFromOutput)
-            DrawWire(context, NodeGeometry.OutputPort(node, wirePort), wireEnd, pen);
-        else
-            DrawWire(context, wireEnd, NodeGeometry.InputPort(node, def, wirePort), pen);
+        // The anchor decides where it starts and the pointer where it ends, and
+        // the two are handed to DrawWire in whichever order makes the curve leave
+        // an output and arrive at an input.
+        if (wireFromOutput) DrawWire(context, anchor, wireEnd, pen);
+        else DrawWire(context, wireEnd, anchor, pen);
     }
 
     /// <summary>A horizontal-tangent bezier, so wires leave and enter sockets cleanly.</summary>
@@ -1168,6 +1222,396 @@ public sealed class NodeEditor : Control
 
             DrawPort(context, centre, port.Kind);
         }
+    }
+
+    // --- groups ---------------------------------------------------------------
+    //
+    // Everything below is drawing and pointing. Nothing here touches the graph:
+    // a collapsed box is several modules that are not being painted and one that
+    // is, and every wire still runs between exactly the modules it always ran
+    // between. See NodeGroup.
+
+    /// <summary>
+    /// Every group that is currently a box, with the sockets it shows and the
+    /// room it takes up.
+    /// </summary>
+    /// <remarks>
+    /// Worked out afresh each time rather than kept: the sockets come off the
+    /// wires and their order comes off where the modules sit, so a cache would
+    /// have to be dropped on every wire drawn, every module moved and every undo
+    /// — three chances to forget, to save arithmetic over a few dozen wires.
+    /// </remarks>
+    private IEnumerable<(NodeGroup Group, GroupSockets Sockets, Rect Bounds)> Boxes()
+    {
+        if (patch.Groups is null) yield break;
+
+        foreach (var group in patch.Groups)
+        {
+            if (!group.Collapsed) continue;
+
+            var sockets = patch.SocketsOf(group);
+            var bounds = NodeGeometry.GroupBounds(patch, group, sockets);
+
+            if (bounds.Width > 0) yield return (group, sockets, bounds);
+        }
+    }
+
+    /// <summary>Whether this module is inside a box, and so is not drawn itself.</summary>
+    private bool Shut(Guid nodeId) => patch.CollapsedGroupOf(nodeId) is not null;
+
+    /// <summary>Whether both ends of a wire are inside the same box.</summary>
+    private bool Hidden(Connection wire) =>
+        patch.CollapsedGroupOf(wire.SourceNode) is { } group
+        && ReferenceEquals(patch.CollapsedGroupOf(wire.TargetNode), group);
+
+    /// <summary>
+    /// Where an output is to be reached, which is the box standing in front of it
+    /// where one is and the module itself where none is.
+    /// </summary>
+    /// <remarks>
+    /// The one seam the whole feature hangs on. Painting, hit-testing and wire
+    /// dragging all ask this rather than <see cref="NodeGeometry"/> directly, so
+    /// none of them has to know that a box can exist — a socket on a box names a
+    /// module and a port, so what comes back is still an answer about the module,
+    /// only somewhere else on the screen.
+    /// </remarks>
+    private Point OutputAnchor(NodeInstance node, int port)
+    {
+        if (patch.CollapsedGroupOf(node.Id) is { } group)
+        {
+            var sockets = patch.SocketsOf(group);
+            var row = sockets.IndexOfOutput(new GroupSocket(node.Id, port, IsOutput: true));
+
+            if (row >= 0)
+                return NodeGeometry.GroupOutputPort(
+                    NodeGeometry.GroupBounds(patch, group, sockets), row);
+        }
+
+        return NodeGeometry.OutputPort(node, port);
+    }
+
+    /// <inheritdoc cref="OutputAnchor"/>
+    private Point InputAnchor(NodeInstance node, NodeDef def, int port)
+    {
+        if (patch.CollapsedGroupOf(node.Id) is { } group)
+        {
+            var sockets = patch.SocketsOf(group);
+            var row = sockets.IndexOfInput(new GroupSocket(node.Id, port, IsOutput: false));
+
+            if (row >= 0)
+                return NodeGeometry.GroupInputPort(
+                    NodeGeometry.GroupBounds(patch, group, sockets), sockets, row);
+        }
+
+        return NodeGeometry.InputPort(node, def, port);
+    }
+
+    private NodeGroup? HitBox(Point graph)
+    {
+        foreach (var (group, _, bounds) in Boxes())
+            if (bounds.Contains(graph))
+                return group;
+
+        return null;
+    }
+
+    private NodeGroup? HitOpenGroupHandle(Point graph)
+    {
+        if (patch.Groups is null) return null;
+
+        foreach (var group in patch.Groups)
+            if (OpenGroup(group) is var (_, handle) && handle.Contains(graph))
+                return group;
+
+        return null;
+    }
+
+    /// <summary>
+    /// How many of the selected modules a group would actually take, which is
+    /// every one of them but the sink.
+    /// </summary>
+    /// <remarks>
+    /// The same count the delete button shows and for the same reason: a gesture
+    /// that says it will take six and takes five is lying about what it does.
+    /// Selecting everything and grouping it is the case that makes the
+    /// difference, because Ctrl+A takes the Output too.
+    /// <para>
+    /// A module already in another group is counted, because it is taken: it
+    /// leaves the group it was in, since two boxes both claiming to draw one
+    /// module is a picture that means nothing. This has to agree with
+    /// <see cref="Patch.Group"/> exactly or the label is the lie above.
+    /// </para>
+    /// </remarks>
+    public int Groupable => SelectedNodes.Count(n => !NodeCatalog.IsSink(n.TypeId));
+
+    /// <summary>
+    /// The group the selection is exactly, and null where it is anything else —
+    /// which is what tells "ungroup this" from "group these".
+    /// </summary>
+    public NodeGroup? SelectedGroup
+    {
+        get
+        {
+            if (patch.Groups is null || selection.Count == 0) return null;
+
+            foreach (var group in patch.Groups)
+                if (group.Members.Count == selection.Count && group.Members.All(selection.Contains))
+                    return group;
+
+            return null;
+        }
+    }
+
+    /// <summary>Draws the selected modules as one box.</summary>
+    public void GroupSelected()
+    {
+        if (patch.Group(selection) is not { } made)
+        {
+            // Said rather than ignored, but only where something was actually
+            // selected: a key pressed on an empty canvas is a key pressed by
+            // mistake, and the status bar is not the place to point that out.
+            if (Groupable > 0)
+                Reported?.Invoke(
+                    this,
+                    $"A group needs {NodeGroup.Fewest} modules or more — a box round one "
+                    + "would be the module again with a second name.");
+
+            return;
+        }
+
+        // The box stands for what was selected, and what was selected is what
+        // stays selected — so the panel goes on showing the same modules and a
+        // second Ctrl+G has something to ungroup.
+        selection.Clear();
+        foreach (var id in made.Members) selection.Add(id);
+
+        focus = made.Members[^1];
+
+        SelectionChanged?.Invoke(this, EventArgs.Empty);
+        NotifyPatchChanged();
+        Reported?.Invoke(
+            this,
+            $"Grouped {made.Members.Count} modules. "
+            + "Ctrl+Shift+G ungroups them, double-click opens them.");
+    }
+
+    /// <summary>
+    /// Stops drawing whatever groups the selection is inside, leaving every
+    /// module and every wire exactly where they were.
+    /// </summary>
+    public void UngroupSelected()
+    {
+        if (patch.Groups is null || selection.Count == 0) return;
+
+        var going = patch.Groups
+            .Where(g => g.Members.Any(selection.Contains))
+            .Select(g => g.Id)
+            .ToArray();
+
+        if (going.Length == 0) return;
+
+        foreach (var id in going) patch.Ungroup(id);
+
+        NotifyPatchChanged();
+        Reported?.Invoke(this, going.Length == 1 ? "Ungrouped." : $"Ungrouped {going.Length} groups.");
+    }
+
+    /// <summary>Shuts a group that is open, or opens one that is shut.</summary>
+    public void ToggleBox(NodeGroup group)
+    {
+        group.Collapsed = !group.Collapsed;
+
+        // Opening one selects what came out, so the panel is about the modules
+        // rather than about a box that is no longer there.
+        if (!group.Collapsed)
+        {
+            selection.Clear();
+            foreach (var id in group.Members) selection.Add(id);
+
+            focus = group.Members.Count == 0 ? null : group.Members[^1];
+            SelectionChanged?.Invoke(this, EventArgs.Empty);
+        }
+
+        NotifyPatchChanged();
+    }
+
+    /// <summary>Toggles whatever group the selection is exactly, if it is one.</summary>
+    public void ToggleSelectedGroup()
+    {
+        if (SelectedGroup is { } group) ToggleBox(group);
+    }
+
+    /// <summary>
+    /// Takes a socket off a box's edge.
+    /// </summary>
+    /// <remarks>
+    /// Refused while a wire is on it, and not out of caution: a crossing wire is
+    /// a socket whatever the stored list says, so this would appear to do nothing
+    /// and the row would still be there afterwards. Unplug it first, which is the
+    /// order the panel offers them in anyway.
+    /// </remarks>
+    public void HideSocket(NodeGroup group, GroupSocket socket)
+    {
+        if (patch.Wired(group, socket)) return;
+        if (!group.Hide(socket)) return;
+
+        NotifyPatchChanged();
+    }
+
+    /// <summary>
+    /// A press on a box, or on the strip above an open group: what is inside is
+    /// what gets selected.
+    /// </summary>
+    private void PressGroup(NodeGroup group, bool adding)
+    {
+        pendingNarrow = null;
+
+        if (!adding) selection.Clear();
+
+        foreach (var id in group.Members) selection.Add(id);
+
+        focus = group.Members.Count == 0 ? null : group.Members[^1];
+        SelectionChanged?.Invoke(this, EventArgs.Empty);
+
+        foreach (var moving in SelectedNodes) BringToFront(moving);
+
+        drag = Drag.Node;
+
+        dragOrigins.Clear();
+        foreach (var moving in SelectedNodes)
+            dragOrigins[moving.Id] = new Point(moving.X, moving.Y);
+    }
+
+    /// <summary>
+    /// The outline drawn round a group that is open, and the strip above it that
+    /// shuts it again.
+    /// </summary>
+    /// <remarks>
+    /// An open group has no box, so without this there would be nothing on the
+    /// canvas to say one was there and no way back to the box but the inspector.
+    /// The strip is where a double-click lands, which is the same gesture that
+    /// opened it — a thing that opens by being double-clicked should shut the
+    /// same way.
+    /// </remarks>
+    private (Rect Outline, Rect Handle)? OpenGroup(NodeGroup group)
+    {
+        if (group.Collapsed) return null;
+
+        var x = double.MaxValue;
+        var y = double.MaxValue;
+        var right = double.MinValue;
+        var bottom = double.MinValue;
+
+        foreach (var id in group.Members)
+            if (patch.Find(id) is { } node && NodeCatalog.Get(node.TypeId) is { } def)
+            {
+                var bounds = NodeGeometry.Bounds(node, def);
+
+                x = Math.Min(x, bounds.X);
+                y = Math.Min(y, bounds.Y);
+                right = Math.Max(right, bounds.Right);
+                bottom = Math.Max(bottom, bounds.Bottom);
+            }
+
+        if (x == double.MaxValue) return null;
+
+        var outline = new Rect(x, y, right - x, bottom - y).Inflate(OpenGroupPadding);
+        var handle = new Rect(outline.X, outline.Y - OpenGroupHandle, outline.Width, OpenGroupHandle);
+
+        return (outline, handle);
+    }
+
+    private const double OpenGroupPadding = 24;
+    private const double OpenGroupHandle = 20;
+
+    private void DrawOpenGroups(DrawingContext context)
+    {
+        if (patch.Groups is null) return;
+
+        foreach (var group in patch.Groups)
+        {
+            if (OpenGroup(group) is not var (outline, handle)) continue;
+
+            context.DrawRectangle(
+                null, OpenGroupPen, new RoundedRect(outline, NodeGeometry.CornerRadius));
+
+            var label = Text(group.Title(), 11.5, NormalBrush, outline.Width - 12, true);
+            context.DrawText(label, new Point(handle.X + 6, handle.Y + (handle.Height - label.Height) / 2));
+        }
+    }
+
+    private void DrawBox(DrawingContext context, NodeGroup group, GroupSockets sockets, Rect bounds)
+    {
+        // Selected when its modules are, because pressing the box is what selects
+        // them — there is nothing else it could mean for a box to be picked.
+        var isSelected = group.Members.Count > 0 && group.Members.All(selection.Contains);
+
+        context.DrawRectangle(
+            isSelected ? NodeFillSelected : NodeFill,
+            isSelected ? SelectionPenSecondary : NodeBorder,
+            new RoundedRect(bounds, NodeGeometry.CornerRadius));
+
+        var header = new Rect(bounds.X, bounds.Y, bounds.Width, NodeGeometry.HeaderHeight);
+        context.DrawRectangle(
+            GroupHeaderFill,
+            null,
+            new RoundedRect(header, NodeGeometry.CornerRadius, NodeGeometry.CornerRadius, 0, 0));
+
+        context.DrawText(
+            Text(group.Title(), 12.5, HeaderTextBrush, bounds.Width - 16, true),
+            new Point(bounds.X + 9, bounds.Y + 5));
+
+        for (var i = 0; i < sockets.Outputs.Count; i++)
+            DrawBoxSocket(context, sockets.Outputs[i], NodeGeometry.GroupOutputPort(bounds, i), bounds);
+
+        for (var i = 0; i < sockets.Inputs.Count; i++)
+            DrawBoxSocket(
+                context, sockets.Inputs[i], NodeGeometry.GroupInputPort(bounds, sockets, i), bounds);
+    }
+
+    /// <summary>
+    /// One socket of a box, named for the port inside that it stands for.
+    /// </summary>
+    /// <remarks>
+    /// "filter.cutoff" rather than a name of its own, and that is deliberate: the
+    /// socket is a way of pointing at an inner port and reads as one. It also
+    /// means renaming a module inside relabels the box for nothing, which is the
+    /// whole of how a group gets a readable edge.
+    /// </remarks>
+    private void DrawBoxSocket(DrawingContext context, GroupSocket socket, Point centre, Rect bounds)
+    {
+        if (Named(socket) is not var (label, spec)) return;
+
+        var text = Text(label, 11.5, LabelBrush, bounds.Width - 26, true);
+
+        context.DrawText(
+            text,
+            socket.IsOutput
+                ? new Point(bounds.Right - 14 - text.Width, centre.Y - text.Height / 2)
+                : new Point(bounds.X + 14, centre.Y - text.Height / 2));
+
+        DrawPort(context, centre, spec.Kind);
+    }
+
+    /// <summary>
+    /// What a socket is called and what it is, or null where it names a module or
+    /// a port that is not there.
+    /// </summary>
+    /// <remarks>
+    /// "filter.cutoff" rather than a name of its own, and that is deliberate: the
+    /// socket is a way of pointing at an inner port and reads as one. It also
+    /// means renaming a module inside relabels the box for nothing, which is the
+    /// whole of how a group gets a readable edge.
+    /// </remarks>
+    public (string Label, PortSpec Spec)? Named(GroupSocket socket)
+    {
+        if (patch.Find(socket.Node) is not { } node) return null;
+        if (NodeCatalog.Get(node.TypeId) is not { } def) return null;
+
+        var ports = socket.IsOutput ? def.Outputs : def.Inputs;
+        if (socket.Port >= ports.Count) return null;
+
+        return ($"{node.Title(def)}.{ports[socket.Port].Name}", ports[socket.Port]);
     }
 
     private static void DrawPort(DrawingContext context, Point centre, PortKind kind) =>
@@ -1254,6 +1698,31 @@ public sealed class NodeEditor : Control
             return;
         }
 
+        // A box, or the strip above an open group. Both answer a double-click by
+        // changing which of the two the group is; a single click on a box selects
+        // what is inside it, which is what makes dragging one work without a drag
+        // of its own — the modules are selected, so the ordinary group drag moves
+        // them and the box follows because it is drawn from where they are.
+        if (HitBox(graph) is { } box)
+        {
+            if (e.ClickCount == 2) ToggleBox(box);
+            else PressGroup(box, ctrl);
+
+            e.Pointer.Capture(this);
+            InvalidateVisual();
+            return;
+        }
+
+        if (HitOpenGroupHandle(graph) is { } opened)
+        {
+            if (e.ClickCount == 2) ToggleBox(opened);
+            else PressGroup(opened, ctrl);
+
+            e.Pointer.Capture(this);
+            InvalidateVisual();
+            return;
+        }
+
         // Left on empty canvas draws a rubber band. Panning is the middle and
         // right buttons, which is where it was already and where it stays.
         //
@@ -1288,8 +1757,18 @@ public sealed class NodeEditor : Control
         var wanted = new HashSet<Guid>(marqueeBase);
 
         foreach (var node in patch.Nodes)
-            if (NodeCatalog.Get(node.TypeId) is { } def && NodeGeometry.Bounds(node, def).Intersects(band))
+            if (!Shut(node.Id)
+                && NodeCatalog.Get(node.TypeId) is { } def
+                && NodeGeometry.Bounds(node, def).Intersects(band))
                 wanted.Add(node.Id);
+
+        // A box is swept as the modules it stands for, all of them together and
+        // none of them without the rest. Sweeping half a box would select a
+        // module the band never touched — the one under it — which is the same
+        // reason a module under a box does not answer a click.
+        foreach (var (group, _, bounds) in Boxes())
+            if (bounds.Intersects(band))
+                wanted.UnionWith(group.Members);
 
         // Only when it actually changed. This runs on every pointer move, and
         // the inspector is rebuilt from scratch whenever a selection is
@@ -1316,18 +1795,18 @@ public sealed class NodeEditor : Control
     /// selection, and it cannot be answered here: collapsing to it would make a
     /// group impossible to drag by one of its own members, and not collapsing
     /// would make one impossible to pick apart. So it is deferred to the release
-    /// — see <see cref="pendingCollapse"/> — which is the same answer every
+    /// — see <see cref="pendingNarrow"/> — which is the same answer every
     /// editor that has this problem arrives at.
     /// </remarks>
     private void PressNode(NodeInstance node, bool adding)
     {
-        pendingCollapse = null;
+        pendingNarrow = null;
 
         if (adding) Toggle(node.Id);
         else if (!selection.Contains(node.Id)) Select(node.Id);
         else
         {
-            pendingCollapse = node.Id;
+            pendingNarrow = node.Id;
 
             // The panel follows the pointer even when the set does not, so
             // pressing one module of a group is how its values are reached.
@@ -1575,10 +2054,10 @@ public sealed class NodeEditor : Control
 
             // A press on one module of a group that turned out not to be a drag
             // was a click, and a click picks that module out of the group.
-            else if (pendingCollapse is { } one) Select(one);
+            else if (pendingNarrow is { } one) Select(one);
         }
 
-        pendingCollapse = null;
+        pendingNarrow = null;
         dragOrigins.Clear();
         marqueeBase.Clear();
 
@@ -1711,6 +2190,16 @@ public sealed class NodeEditor : Control
                     e.Handled = true;
                     return;
 
+                // Group and ungroup, on the letter every editor with a canvas
+                // uses for it. Shift tells them apart rather than a second key,
+                // which is the same pairing undo and redo already use.
+                case Key.G:
+                    if ((e.KeyModifiers & KeyModifiers.Shift) != 0) UngroupSelected();
+                    else GroupSelected();
+
+                    e.Handled = true;
+                    return;
+
                 // Under Control with the rest of them, rather than on a bare
                 // letter of its own. Every bare letter belongs to the instrument
                 // now — see MainWindow's key handling — and a gesture that
@@ -1777,6 +2266,11 @@ public sealed class NodeEditor : Control
             var node = patch.Nodes[i];
             var def = NodeCatalog.Get(node.TypeId);
 
+            // A module inside a shut box is not on the canvas, so nothing can
+            // land on it. Without this a click would reach a module it cannot
+            // see and drag it out from under the box drawn over it.
+            if (Shut(node.Id)) continue;
+
             if (def is not null && NodeGeometry.Bounds(node, def).Contains(graph))
                 return node;
         }
@@ -1784,15 +2278,49 @@ public sealed class NodeEditor : Control
         return null;
     }
 
+    /// <summary>
+    /// Which port is under the pointer, whether it is drawn on a module or on the
+    /// box standing in front of one.
+    /// </summary>
+    /// <remarks>
+    /// A box's socket answers with the module and port it stands for, so
+    /// everything downstream of this — starting a wire, lifting one, dropping one
+    /// — goes on working on the graph without ever learning that groups exist.
+    /// That is the whole dividend of a socket being a pointer rather than a port
+    /// of its own.
+    /// </remarks>
     private bool HitPort(Point graph, out Guid nodeId, out int portIndex, out bool isOutput)
     {
         var tolerance = NodeGeometry.PortRadius + NodeGeometry.HitPadding;
+
+        // Boxes first, because they are painted over the modules they stand for
+        // and a click should reach whatever is on top.
+        foreach (var (_, sockets, bounds) in Boxes())
+        {
+            for (var p = 0; p < sockets.Outputs.Count; p++)
+            {
+                if (!Near(NodeGeometry.GroupOutputPort(bounds, p), graph, tolerance)) continue;
+
+                var socket = sockets.Outputs[p];
+                (nodeId, portIndex, isOutput) = (socket.Node, socket.Port, true);
+                return true;
+            }
+
+            for (var p = 0; p < sockets.Inputs.Count; p++)
+            {
+                if (!Near(NodeGeometry.GroupInputPort(bounds, sockets, p), graph, tolerance)) continue;
+
+                var socket = sockets.Inputs[p];
+                (nodeId, portIndex, isOutput) = (socket.Node, socket.Port, false);
+                return true;
+            }
+        }
 
         for (var i = patch.Nodes.Count - 1; i >= 0; i--)
         {
             var node = patch.Nodes[i];
             var def = NodeCatalog.Get(node.TypeId);
-            if (def is null) continue;
+            if (def is null || Shut(node.Id)) continue;
 
             for (var p = 0; p < def.Outputs.Count; p++)
             {

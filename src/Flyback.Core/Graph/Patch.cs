@@ -336,7 +336,240 @@ public sealed class Patch
 
     public List<Connection> Connections { get; set; } = [];
 
+    /// <summary>
+    /// Which modules are drawn together as one box, and null on a patch where
+    /// none are — which is nearly all of them, so an ordinary file looks exactly
+    /// as it always did and one saved by an older build still loads.
+    /// </summary>
+    /// <remarks>
+    /// The one field here that says nothing about what the patch computes. A
+    /// reader that does not know about groups reads every module and every wire
+    /// correctly and merely draws them all separately, which is the only reason
+    /// this could be added to the format without moving
+    /// <see cref="PatchIo.FormatVersion"/>. See <see cref="NodeGroup"/>.
+    /// </remarks>
+    public List<NodeGroup>? Groups { get; set; }
+
     public NodeInstance? Find(Guid id) => Nodes.FirstOrDefault(n => n.Id == id);
+
+    /// <summary>The group holding <paramref name="nodeId"/>, or null where none does.</summary>
+    public NodeGroup? GroupOf(Guid nodeId)
+    {
+        if (Groups is null) return null;
+
+        foreach (var group in Groups)
+            if (group.Members.Contains(nodeId))
+                return group;
+
+        return null;
+    }
+
+    /// <summary>
+    /// The group holding <paramref name="nodeId"/> if it is collapsed, and null
+    /// where it is not or where the module is in none — which is the question
+    /// every drawing and hit-testing decision actually asks.
+    /// </summary>
+    public NodeGroup? CollapsedGroupOf(Guid nodeId) =>
+        GroupOf(nodeId) is { Collapsed: true } group ? group : null;
+
+    /// <summary>
+    /// Draws <paramref name="members"/> together, and hands back the group. The
+    /// sink is left out rather than refused, the way copying leaves it out
+    /// ([0045](0045-what-is-copied-is-a-patch-file.md)): selecting everything and
+    /// grouping it should group everything that can be, not nothing.
+    /// </summary>
+    /// <remarks>
+    /// A module already in a group leaves it, because two boxes that both claim
+    /// to draw one module is a picture with no meaning. The group it left is
+    /// dropped when it is worn down past <see cref="NodeGroup.Fewest"/>.
+    /// </remarks>
+    /// <returns>
+    /// The new group, or null where what was asked for would not be one — an
+    /// empty selection, the sink on its own, or a single module, which
+    /// <see cref="NodeGroup.Fewest"/> says is not a group.
+    /// </returns>
+    public NodeGroup? Group(IEnumerable<Guid> members)
+    {
+        var inside = members
+            .Distinct()
+            .Where(id => Find(id) is { } node && !NodeCatalog.IsSink(node.TypeId))
+            .ToList();
+
+        if (inside.Count < NodeGroup.Fewest) return null;
+
+        foreach (var id in inside) Forget(id);
+
+        var group = new NodeGroup { Id = Guid.NewGuid(), Members = inside, Collapsed = true };
+
+        // The edge it is born with: whatever is wired across it right now, kept
+        // so that unplugging one of those wires leaves the socket behind rather
+        // than taking it away. See NodeGroup.Exposed.
+        var sockets = SocketsOf(group);
+
+        foreach (var socket in sockets.Inputs) group.Expose(socket);
+        foreach (var socket in sockets.Outputs) group.Expose(socket);
+
+        (Groups ??= []).Add(group);
+        return group;
+    }
+
+    /// <summary>Stops drawing a group, without touching anything inside it.</summary>
+    public bool Ungroup(Guid groupId)
+    {
+        if (Groups is null) return false;
+
+        var went = Groups.RemoveAll(g => g.Id == groupId) > 0;
+
+        if (Groups.Count == 0) Groups = null;
+
+        return went;
+    }
+
+    /// <summary>
+    /// Takes a module out of whatever group holds it, dropping any group that
+    /// leaves with too few to be one.
+    /// </summary>
+    /// <remarks>
+    /// Past <see cref="NodeGroup.Fewest"/> rather than at empty, so that the rule
+    /// against a box round one module holds after an edit and not only at the
+    /// moment one is made. Deleting the second-to-last module of a group takes
+    /// the group with it, and the one left over goes back to being an ordinary
+    /// module on the canvas.
+    /// </remarks>
+    private void Forget(Guid nodeId)
+    {
+        if (Groups is null) return;
+
+        foreach (var group in Groups)
+        {
+            group.Members.Remove(nodeId);
+
+            // And the sockets that were pointing at it. A socket names a module,
+            // so one whose module has left the box is a socket onto nothing —
+            // SocketsOf would decline to draw it either way, and leaving it here
+            // would be leaving it to come back if the module ever rejoined.
+            group.Exposed.RemoveAll(s => s.Node == nodeId);
+        }
+
+        Groups.RemoveAll(g => g.Members.Count < NodeGroup.Fewest);
+
+        if (Groups.Count == 0) Groups = null;
+    }
+
+    /// <summary>
+    /// Every port of <paramref name="group"/> at which a wire crosses its
+    /// boundary — see <see cref="GroupSockets"/> for what is and is not one.
+    /// </summary>
+    /// <remarks>
+    /// Two things put a socket on the edge and either is enough: a wire crossing
+    /// there right now, and <see cref="NodeGroup.Exposed"/> saying one belongs
+    /// there. The first is why a box drawn round a wired-up chain arrives with an
+    /// edge already on it; the second is why taking a wire off does not take the
+    /// socket with it. Kept as a union rather than trusting the stored list
+    /// alone, so a hand-edited file with a wire and no entry for it is drawn
+    /// correctly rather than drawn with a wire going nowhere.
+    /// <para>
+    /// Ordered down the canvas and then across it, so the sockets on the box come
+    /// in the order the modules behind them were already sitting in. That order
+    /// is free to change on the next edit because nothing writes it down: a
+    /// socket is a <see cref="GroupSocket"/>, which names a module and a port,
+    /// and the position of a row is only ever where it is drawn this frame.
+    /// </para>
+    /// </remarks>
+    public GroupSockets SocketsOf(NodeGroup group)
+    {
+        var inside = group.Members.ToHashSet();
+
+        var arriving = new List<GroupSocket>();
+        var leaving = new List<GroupSocket>();
+
+        foreach (var wire in Connections)
+        {
+            var from = inside.Contains(wire.SourceNode);
+            var to = inside.Contains(wire.TargetNode);
+
+            // Both ends inside is a wire the box hides; both ends outside is a
+            // wire it has nothing to do with. Only one of each is a crossing.
+            if (from == to) continue;
+
+            if (to)
+            {
+                var socket = new GroupSocket(wire.TargetNode, wire.TargetPort, IsOutput: false);
+                if (!arriving.Contains(socket)) arriving.Add(socket);
+            }
+            else
+            {
+                var socket = new GroupSocket(wire.SourceNode, wire.SourcePort, IsOutput: true);
+                if (!leaving.Contains(socket)) leaving.Add(socket);
+            }
+        }
+
+        foreach (var socket in group.Exposed)
+        {
+            // Dropped rather than drawn where it names a module that has left the
+            // group or gone from the patch, or a port that module no longer has —
+            // a socket onto nothing is worse than a socket that is missing.
+            if (!inside.Contains(socket.Node)) continue;
+            if (Find(socket.Node) is not { } node) continue;
+            if (NodeCatalog.Get(node.TypeId) is not { } def) continue;
+
+            var side = socket.IsOutput ? leaving : arriving;
+            var ports = socket.IsOutput ? def.Outputs : def.Inputs;
+
+            if (socket.Port < ports.Count && !side.Contains(socket)) side.Add(socket);
+        }
+
+        arriving.Sort(Down);
+        leaving.Sort(Down);
+
+        return new GroupSockets(arriving, leaving);
+    }
+
+    /// <summary>
+    /// Whether a wire is on this socket right now — which is what decides
+    /// whether it can be taken off the edge, since one that is wired comes
+    /// straight back.
+    /// </summary>
+    public bool Wired(NodeGroup group, GroupSocket socket)
+    {
+        var inside = group.Members.ToHashSet();
+
+        foreach (var wire in Connections)
+        {
+            if (socket.IsOutput)
+            {
+                if (wire.SourceNode == socket.Node
+                    && wire.SourcePort == socket.Port
+                    && !inside.Contains(wire.TargetNode))
+                    return true;
+            }
+            else if (wire.TargetNode == socket.Node
+                && wire.TargetPort == socket.Port
+                && !inside.Contains(wire.SourceNode))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>Down the canvas, then across it, then by port.</summary>
+    private int Down(GroupSocket a, GroupSocket b)
+    {
+        var first = Find(a.Node);
+        var second = Find(b.Node);
+
+        if (first is null || second is null) return 0;
+
+        var vertical = first.Y.CompareTo(second.Y);
+        if (vertical != 0) return vertical;
+
+        var horizontal = first.X.CompareTo(second.X);
+        if (horizontal != 0) return horizontal;
+
+        return a.Port.CompareTo(b.Port);
+    }
 
     /// <summary>The first module of a type, or null where the patch has none.</summary>
     public NodeInstance? FirstOf(string typeId) => Nodes.FirstOrDefault(n => n.TypeId == typeId);
@@ -507,6 +740,31 @@ public sealed class Patch
 
         Connections.RemoveAll(c => c.TargetNode == targetNode && c.TargetPort == targetPort);
         Connections.Add(new Connection(sourceNode, sourcePort, targetNode, targetPort));
+
+        // A wire drawn across a box's edge puts a socket there for good. Done
+        // here rather than where the wire was drawn, so that it is true of one
+        // made by the canvas, by an assistant, or by a preset — and not done in
+        // Disconnect, which is the whole point: taking the wire off leaves the
+        // socket. See NodeGroup.Exposed.
+        Cross(sourceNode, sourcePort, targetNode, targetPort);
+    }
+
+    /// <summary>
+    /// Puts a socket on the edge of whichever box a new wire crosses, at each end
+    /// of it that a box has an edge at.
+    /// </summary>
+    private void Cross(Guid sourceNode, int sourcePort, Guid targetNode, int targetPort)
+    {
+        if (Groups is null) return;
+
+        var from = GroupOf(sourceNode);
+        var to = GroupOf(targetNode);
+
+        // A wire inside one box crosses nothing, so it puts no socket anywhere.
+        if (ReferenceEquals(from, to)) return;
+
+        from?.Expose(new GroupSocket(sourceNode, sourcePort, IsOutput: true));
+        to?.Expose(new GroupSocket(targetNode, targetPort, IsOutput: false));
     }
 
     public void Disconnect(Guid targetNode, int targetPort) =>
@@ -524,6 +782,10 @@ public sealed class Patch
 
         var removed = Nodes.RemoveAll(n => n.Id == nodeId) > 0;
         Connections.RemoveAll(c => c.SourceNode == nodeId || c.TargetNode == nodeId);
+
+        // A box may not go on claiming to draw a module that is not there any
+        // more, and one emptied by this stops existing — see Forget.
+        if (removed) Forget(nodeId);
 
         return removed;
     }

@@ -1017,6 +1017,47 @@ list would throw the patch away once per step. So a keystroke at a focused list
 does nothing to it, and goes on to mean whatever it would have meant with nothing
 focused.
 
+`Ctrl+G` draws a selection as one box and `Ctrl+Shift+G` puts it back;
+double-clicking a box opens it, and double-clicking the strip above an open one
+shuts it again. Both are on the inspector too, above the delete button.
+
+A box is a fact about the canvas and about nothing else. The modules stay where
+they were, the wires between them stay as they were drawn, and the compiler is
+never told — a patch sounds and looks exactly the same whether it is boxed up or
+laid out flat, and a build that knew nothing about groups would read the file and
+simply draw everything separately.
+
+Its sockets are not declared, they are *put there by wiring*: drawing a wire
+across the edge adds one, named for the module and port inside that it stands for
+— `filter.cutoff`. Wires with both ends inside are hidden, an input nothing has
+ever been wired to is not a socket at all, and several wires leaving one inner
+output arrive at one socket the way fan-out already looks anywhere else. So
+renaming a module inside relabels the edge for nothing.
+
+**Taking a wire off leaves the socket.** The edge of a box is a thing you arrange
+rather than a thing that happens to you, and a socket that vanished when you
+unplugged it would shrink the box under the hand that had just unplugged
+something — and could never be plugged back into. So the wire goes and the socket
+stays; the inspector lists them and offers an `✕` on any with nothing in it, and
+a wire puts it straight back. Which is also what makes patching *into* a shut box
+possible: the socket is there to aim at.
+
+What is written down is the module and the port, exactly as a wire already
+records them — never a numbered port of the box's own. That is the distinction
+that keeps this safe: nothing outside a group ever refers to a socket by
+position, so rearranging the inside renumbers nothing.
+
+One thing does follow from being only a drawing: grouping cannot make a
+*definition*. Two boxes made the same way are two boxes, and editing one does
+nothing to the other.
+
+It takes two modules. A box round one shows exactly the sockets that module
+already has, in the same order, so it is the module again with a second name and
+one more thing to open — `Ctrl+G` declines and says why. The rule holds after an
+edit as well as at the moment one is made: delete your way down to a single
+member and the box goes, leaving an ordinary module behind. The Output is never
+in one, so selecting everything and grouping it groups everything else.
+
 A wire is re-patched by picking it up at either end, and which end decides what
 the gesture is asking. Drag a **connected input** and the plug comes out of that
 input; the wire keeps its source and goes looking for a new target — *where

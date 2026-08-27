@@ -1,3 +1,4 @@
+using System.Text;
 using System.Text.Json.Nodes;
 using Avalonia;
 using Avalonia.Controls;
@@ -226,6 +227,28 @@ public sealed partial class MainWindow
     /// </summary>
     private string InspectorShape()
     {
+        // A group's panel is its edge, and the edge moves whenever a wire is
+        // drawn across it — which, like patching a module's input, is not a
+        // selection change and would otherwise leave a stale list on screen.
+        // Whether it is open is in here for the same reason: the button that
+        // opens it says which way it goes.
+        if (editor.SelectedGroup is { } group)
+        {
+            var sockets = editor.Patch.SocketsOf(group);
+            var shape = new StringBuilder($"g{group.Id:N}{(group.Collapsed ? 'c' : 'o')}");
+
+            // Whether each is wired as well as which they are: a socket keeps its
+            // row when the wire comes off, but it grows the button that takes it
+            // off the edge — so unplugging changes the panel without changing
+            // which sockets are on it.
+            foreach (var socket in sockets.Inputs.Concat(sockets.Outputs))
+                shape.Append(
+                    $"{(socket.IsOutput ? 'o' : 'i')}{socket.Node:N}.{socket.Port}"
+                    + $"{(editor.Patch.Wired(group, socket) ? '+' : '-')}");
+
+            return shape.ToString();
+        }
+
         if (editor.SelectedNode is not { } node || NodeCatalog.Get(node.TypeId) is not { } def)
             return string.Empty;
 
@@ -280,11 +303,23 @@ public sealed partial class MainWindow
                      + "wheel to zoom.\n"
                      + "Ctrl+click adds to a selection, Ctrl+A takes everything.\n"
                      + "Ctrl+C, Ctrl+X and Ctrl+V copy, cut and paste.\n"
+                     + "Ctrl+G draws a selection as one box and Ctrl+Shift+G "
+                     + "puts it back; double-click a box to open it.\n"
                      + "Delete removes what is selected, Ctrl+F frames the patch.",
                 TextWrapping = TextWrapping.Wrap,
                 Opacity = 0.5,
                 FontSize = 12,
             });
+            return;
+        }
+
+        // A selection that is exactly a group is about the group, not about
+        // whichever of its modules the pointer last came down on. Ahead of
+        // everything below, because none of it applies: a box has no knobs, no
+        // description and no category — what it has is an edge.
+        if (editor.SelectedGroup is { } group)
+        {
+            BuildGroupInspector(group);
             return;
         }
 
@@ -339,20 +374,40 @@ public sealed partial class MainWindow
             return;
         }
 
+        // Grouping sits above deleting rather than beside it, so the destructive
+        // button keeps the place it has always had: a panel that grows a control
+        // should not move the one a hand already knows where to find.
+        //
+        // Its label counts the same way delete's does, off the same rule — see
+        // NodeEditor.Groupable — and it is offered on the same terms Ctrl+G is,
+        // which is NodeGroup.Fewest and up. A button reading "Group 1 module"
+        // would be offering something the graph refuses.
+        //
+        // Ungrouping is not here, because a selection that is exactly a group
+        // never reaches this far — it gets a panel of its own above.
+        if (editor.Groupable >= NodeGroup.Fewest)
+            Act($"Group {editor.Groupable} modules", editor.GroupSelected, 14);
+
         // Delete takes the whole selection, the same as the key does, so the
         // label counts it. Sinks are left out of the count because the graph
         // refuses them: a button offering to delete three when it can only
         // manage two would be lying about what pressing it does.
         var going = editor.SelectedNodes.Count(n => !NodeCatalog.IsSink(n.TypeId));
 
-        var delete = new Button
+        Act(going > 1 ? $"Delete {going} modules" : "Delete module", editor.DeleteSelected, 14);
+
+        void Act(string caption, Action gesture, double above)
         {
-            Content = going > 1 ? $"Delete {going} modules" : "Delete module",
-            Margin = new Thickness(0, 14, 0, 0),
-            HorizontalAlignment = HorizontalAlignment.Left,
-        };
-        delete.Click += (_, _) => editor.DeleteSelected();
-        inspector.Children.Add(delete);
+            var button = new Button
+            {
+                Content = caption,
+                Margin = new Thickness(0, above, 0, 0),
+                HorizontalAlignment = HorizontalAlignment.Left,
+            };
+
+            button.Click += (_, _) => gesture();
+            inspector.Children.Add(button);
+        }
     }
 
     /// <summary>
@@ -370,6 +425,163 @@ public sealed partial class MainWindow
     /// concerned, and the double-click would land on the panel behind it.
     /// </para>
     /// </remarks>
+    /// <summary>
+    /// What a group shows: its name, its edge, and what can be done to it.
+    /// </summary>
+    /// <remarks>
+    /// The edge rather than the contents, and that is the whole point of the
+    /// panel. A box is a promise that several modules can be thought about as one
+    /// thing, and the only way to keep it is to say what that one thing takes and
+    /// gives — a list of the knobs inside would be the box admitting it was never
+    /// really one module at all. Open it to reach those.
+    /// </remarks>
+    private void BuildGroupInspector(NodeGroup group)
+    {
+        inspector.Children.Add(BuildGroupTitle(group));
+
+        inspector.Children.Add(new TextBlock
+        {
+            Text = group.Name is null ? "Group" : $"Group · {group.Counted}",
+            FontSize = 11,
+            Opacity = 0.6,
+        });
+
+        inspector.Children.Add(new TextBlock
+        {
+            Text = "Several modules drawn as one. Nothing about the patch changes — the modules "
+                 + "are where they were and so are the wires between them.",
+            TextWrapping = TextWrapping.Wrap,
+            Opacity = 0.6,
+            FontSize = 12,
+            Margin = new Thickness(0, 4, 0, 6),
+        });
+
+        var sockets = editor.Patch.SocketsOf(group);
+
+        Edge("In", sockets.Inputs);
+        Edge("Out", sockets.Outputs);
+
+        if (sockets.Rows == 0)
+            inspector.Children.Add(new TextBlock
+            {
+                Text = "Nothing has been wired across its edge, so the box has no sockets yet.",
+                TextWrapping = TextWrapping.Wrap,
+                Opacity = 0.5,
+                FontSize = 12,
+            });
+
+        Act(group.Collapsed ? "Open group" : "Close group", editor.ToggleSelectedGroup, 14);
+        Act("Ungroup", editor.UngroupSelected, 8);
+        Act($"Delete {group.Members.Count} modules", editor.DeleteSelected, 8);
+
+        // One heading and a row per socket, each named for the module and port
+        // inside that it stands for — which is exactly what the box draws, so
+        // the panel and the canvas read the same.
+        void Edge(string heading, IReadOnlyList<GroupSocket> sockets)
+        {
+            if (sockets.Count == 0) return;
+
+            inspector.Children.Add(new TextBlock
+            {
+                Text = heading,
+                FontSize = 11,
+                FontWeight = FontWeight.SemiBold,
+                Opacity = 0.7,
+                Margin = new Thickness(0, 10, 0, 2),
+            });
+
+            foreach (var socket in sockets)
+                if (editor.Named(socket) is var (label, spec))
+                    inspector.Children.Add(Socket(socket, label, spec));
+        }
+
+        // A row, and — on one with nothing plugged into it — the way to take it
+        // off the edge again. Only there while it is unwired: a socket a wire is
+        // on comes back the moment anything asks, so a button offering to remove
+        // one would appear to do nothing.
+        Control Socket(GroupSocket socket, string label, PortSpec spec)
+        {
+            var row = new DockPanel { Margin = new Thickness(0, 0, 0, 1) };
+
+            var text = new TextBlock
+            {
+                Text = label,
+                FontSize = 12,
+                Opacity = 0.85,
+                TextTrimming = TextTrimming.CharacterEllipsis,
+                VerticalAlignment = VerticalAlignment.Center,
+                Foreground = new SolidColorBrush(Colors.PortColor(spec.Kind)),
+            };
+
+            if (!editor.Patch.Wired(group, socket))
+            {
+                var remove = new Button
+                {
+                    Content = "✕",
+                    FontSize = 10,
+                    Padding = new Thickness(5, 0, 5, 0),
+                    Background = Brushes.Transparent,
+                    Opacity = 0.55,
+                    VerticalAlignment = VerticalAlignment.Center,
+                };
+
+                ToolTip.SetTip(remove, "Take this socket off the edge. A wire puts it back.");
+                remove.Click += (_, _) => editor.HideSocket(group, socket);
+
+                DockPanel.SetDock(remove, Dock.Right);
+                row.Children.Add(remove);
+            }
+
+            row.Children.Add(text);
+            return row;
+        }
+
+        void Act(string caption, Action gesture, double above)
+        {
+            var button = new Button
+            {
+                Content = caption,
+                Margin = new Thickness(0, above, 0, 0),
+                HorizontalAlignment = HorizontalAlignment.Left,
+            };
+
+            button.Click += (_, _) => gesture();
+            inspector.Children.Add(button);
+        }
+    }
+
+    private Control BuildGroupTitle(NodeGroup group)
+    {
+        var title = new TextBlock
+        {
+            Text = group.Title(),
+            FontSize = 17,
+            FontWeight = FontWeight.SemiBold,
+            TextTrimming = TextTrimming.CharacterEllipsis,
+            Background = Brushes.Transparent,
+        };
+
+        ToolTip.SetTip(title, group.Name is null
+            ? "Double-click to give this group a name of its own."
+            : $"Double-click to rename. Empty the box to go back to '{group.Counted}'.");
+
+        title.DoubleTapped += (_, e) =>
+        {
+            e.Handled = true;
+
+            BeginRename(
+                title,
+                group.Name,
+                group.Counted,
+                NodeGroup.NameLimit,
+                typed => group.Rename(typed),
+                () => group.Name,
+                () => BuildGroupTitle(group));
+        };
+
+        return title;
+    }
+
     private Control BuildTitle(NodeInstance node, NodeDef def)
     {
         var title = new TextBlock
@@ -406,21 +618,55 @@ public sealed partial class MainWindow
     /// from inside its own <c>LostFocus</c> — where tearing down the panel that
     /// is raising the event is more than this row needs to do.
     /// </remarks>
-    private void BeginRename(NodeInstance node, NodeDef def, Control title)
+    private void BeginRename(NodeInstance node, NodeDef def, Control title) =>
+        BeginRename(
+            title,
+            node.Name,
+            def.Name,
+            NodeInstance.NameLimit,
+            typed => node.Rename(def, typed),
+            () => node.Name,
+            () => BuildTitle(node, def));
+
+    /// <summary>
+    /// Turns a title into a box to type another name into, and puts the title
+    /// back when the box closes.
+    /// </summary>
+    /// <remarks>
+    /// Written against what a name <em>is</em> rather than against what carries
+    /// one, because two things carry one now: a module and a group. Everything
+    /// that made this worth getting right — Enter keeping, Escape discarding,
+    /// losing the focus keeping, and only the edits that changed something
+    /// reaching the history — is the same for both, and a second copy of it would
+    /// be a second place for one of those to stop being true.
+    /// </remarks>
+    /// <param name="held">The name it has, which is null on one nobody has named.</param>
+    /// <param name="fallback">What it is called when it has no name of its own.</param>
+    /// <param name="rename">Takes what was typed, with whatever tidying the thing does to one.</param>
+    /// <param name="current">The name as it stands, read again afterwards to see whether it moved.</param>
+    /// <param name="rebuild">The title to put back.</param>
+    private void BeginRename(
+        Control title,
+        string? held,
+        string fallback,
+        int limit,
+        Action<string?> rename,
+        Func<string?> current,
+        Func<Control> rebuild)
     {
         var at = inspector.Children.IndexOf(title);
         if (at < 0) return;
 
         var box = new TextBox
         {
-            // The name it has, not the one it shows. Opening this on a module
+            // The name it has, not the one it shows. Opening this on something
             // nobody has renamed leaves an empty box, because empty is what it
-            // means — and the definition's name is in the watermark, where it
-            // reads as the thing you would get back rather than as text to
-            // delete before typing.
-            Text = node.Name ?? string.Empty,
-            PlaceholderText = def.Name,
-            MaxLength = NodeInstance.NameLimit,
+            // means — and what it would go back to is in the watermark, where it
+            // reads as the thing you would get rather than as text to delete
+            // before typing.
+            Text = held ?? string.Empty,
+            PlaceholderText = fallback,
+            MaxLength = limit,
             FontSize = 17,
             FontWeight = FontWeight.SemiBold,
         };
@@ -454,17 +700,17 @@ public sealed partial class MainWindow
             if (closed) return;
             closed = true;
 
-            var before = node.Name;
-            if (keep) node.Rename(def, box.Text);
+            var before = current();
+            if (keep) rename(box.Text);
 
             var where = inspector.Children.IndexOf(box);
-            if (where >= 0) inspector.Children[where] = BuildTitle(node, def);
+            if (where >= 0) inspector.Children[where] = rebuild();
 
             // Only where it is actually a rename: the canvas draws its headers
             // from the same name and this is what redraws them, and a step in
             // the history for opening a box and closing it again would be one
             // press of undo that puts nothing back.
-            if (node.Name != before) editor.NotifyPatchChanged();
+            if (current() != before) editor.NotifyPatchChanged();
         }
     }
 
