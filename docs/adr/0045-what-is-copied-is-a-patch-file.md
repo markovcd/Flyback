@@ -49,6 +49,20 @@ The ids in a fragment are the ones it was copied from, so without this a paste
 into the patch it came from would name the modules already there rather than
 adding any.
 
+**Amended: a box travels with what is in it, and only whole.** A group is a
+drawing and not a definition, and the `Groups` list is already part of the file
+— so a fragment carries one at no cost and no new format. `Copy` takes a group
+every one of whose members is coming; `Paste` draws it again round the modules
+that arrived, with a fresh id of its own for the same reason the modules get
+fresh ids. A group with a member left behind is dropped rather than clipped:
+what arrived would be a different box from the one on the canvas — a different
+shape, with a different set of sockets — which is the objection the
+half-selected wire gets, in the other direction. The sockets on the edge name a
+module and a port rather than a number of the box's own, so pasting rewrites
+them to the ids they now point at, and the ones with nothing wired to them come
+too — the edge of a box is arranged rather than derived, and a paste that
+recomputed it from the wires would hand back a box somebody had already tidied.
+
 **The stamp is what checks the plugins.** `ToJson` records which providers the
 modules came from and `Read` reports the ones this build has not got, so pasting
 a fragment that needs a missing plugin is refused with the sentence

@@ -37,6 +37,14 @@ public static class PatchClipboard
     /// and may not hold two (ADR-0037), so it is not a thing that can be pasted
     /// — the same reason Delete leaves it alone.
     /// </para>
+    /// <para>
+    /// A box comes with what is in it, and only where <em>all</em> of it is
+    /// coming. A group with a member left behind would arrive as a different box
+    /// from the one on the canvas — a different shape and a different set of
+    /// sockets — which is the same objection as the half-selected wire above. So
+    /// it is dropped rather than clipped, and what was inside it arrives as
+    /// ordinary modules.
+    /// </para>
     /// </remarks>
     /// <param name="patch">Where the modules are now. Not modified.</param>
     /// <param name="ids">Which modules to take. Anything not in the patch is ignored.</param>
@@ -61,6 +69,14 @@ public static class PatchClipboard
         foreach (var wire in patch.Connections)
             if (inside.Contains(wire.SourceNode) && inside.Contains(wire.TargetNode))
                 copy.Connections.Add(wire);
+
+        // The boxes drawn round what is coming, whole or not at all. Their ids
+        // travel exactly as the modules' do, and the paste is what makes them
+        // fresh. See NodeGroup: a group is a fact about the canvas, so this is
+        // the one thing copied here that the compiler will never be told about.
+        foreach (var group in patch.Groups ?? [])
+            if (group.Members.Count >= NodeGroup.Fewest && group.Members.All(inside.Contains))
+                (copy.Groups ??= []).Add(group.Clone());
 
         // Not stamped with a version or a plugin list here: writing it out is
         // what does that, and PatchIo is the one place that knows how. Which is
@@ -96,6 +112,15 @@ public static class PatchClipboard
     /// rather than to paste with holes in it, and the caller is where there is
     /// somewhere to say it — see <see cref="PatchLoad.IsComplete"/>.
     /// </para>
+    /// <para>
+    /// A group in the fragment is drawn again round the modules that arrived,
+    /// with a fresh id of its own and its sockets pointed at their new ones —
+    /// the ones with nothing wired to them included, so a box arrives with the
+    /// edge somebody arranged rather than the one its wires would imply. Made
+    /// after the wires rather than before, so that <see cref="Patch.Connect"/>
+    /// does not read them as crossing an edge and put back sockets that had been
+    /// taken off it.
+    /// </para>
     /// </remarks>
     public static IReadOnlyList<NodeInstance> Paste(
         Patch into,
@@ -130,6 +155,34 @@ public static class PatchClipboard
             if (!renamed.TryGetValue(wire.TargetNode, out var target)) continue;
 
             into.Connect(source, wire.SourcePort, target, wire.TargetPort);
+        }
+
+        foreach (var group in fragment.Groups ?? [])
+        {
+            var members = group.Members
+                .Where(renamed.ContainsKey)
+                .Select(id => renamed[id])
+                .ToList();
+
+            // Worn down past what a group may be by whatever did not arrive —
+            // a sink that was dropped, or a fragment somebody hand-edited. The
+            // rule Patch.Forget keeps after a delete, kept here too rather than
+            // pasting the box round one module that Ctrl+G declines to draw.
+            if (members.Count < NodeGroup.Fewest) continue;
+
+            (into.Groups ??= []).Add(new NodeGroup
+            {
+                Id = Guid.NewGuid(),
+                Name = group.Name,
+                Collapsed = group.Collapsed,
+                Members = members,
+                Exposed =
+                [
+                    .. group.Exposed
+                        .Where(socket => renamed.ContainsKey(socket.Node))
+                        .Select(socket => socket with { Node = renamed[socket.Node] }),
+                ],
+            });
         }
 
         return added;

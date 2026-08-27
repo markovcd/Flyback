@@ -32,6 +32,15 @@ public sealed partial class MainWindow
     /// </summary>
     private bool leaving;
 
+    /// <summary>
+    /// Set while the question is on the screen and being answered. The dialog is
+    /// a panel over this window rather than a window of its own, so the frame's
+    /// cross stays live underneath it; a second close arriving while the first
+    /// is still being dealt with is ignored rather than allowed to stack a
+    /// second copy of the same question.
+    /// </summary>
+    private bool questionIsUp;
+
     /// <summary>What to do about a patch that has been edited and not written out.</summary>
     private enum Unsaved
     {
@@ -53,15 +62,29 @@ public sealed partial class MainWindow
     {
         if (!editor.IsModified) return true;
 
-        return await AskAboutUnsavedAsync() switch
+        // The same question is already up. Whatever asked again is refused
+        // rather than queued behind the first answer: it is the same patch and
+        // the same three buttons, and one set of them is already on the screen.
+        if (questionIsUp) return false;
+
+        questionIsUp = true;
+
+        try
         {
-            // A cancelled save picker is a cancelled close: somebody who asked
-            // to save and then thought better of where has not agreed to lose
-            // the patch, and the safe reading of that is to stay put.
-            Unsaved.Save => await SavePatchAsync(),
-            Unsaved.Discard => true,
-            _ => false,
-        };
+            return await AskAboutUnsavedAsync() switch
+            {
+                // A cancelled save picker is a cancelled close: somebody who asked
+                // to save and then thought better of where has not agreed to lose
+                // the patch, and the safe reading of that is to stay put.
+                Unsaved.Save => await SavePatchAsync(),
+                Unsaved.Discard => true,
+                _ => false,
+            };
+        }
+        finally
+        {
+            questionIsUp = false;
+        }
     }
 
     /// <summary>
@@ -125,7 +148,19 @@ public sealed partial class MainWindow
     {
         base.OnClosing(e);
 
-        if (e.Cancel || leaving || !editor.IsModified) return;
+        if (e.Cancel || leaving) return;
+
+        // Already asking. The close is refused and nothing else happens: putting
+        // the question up a second time is the one response that would make the
+        // window look broken, and there is nothing else to do with a close that
+        // arrived while the same close is still being answered.
+        if (questionIsUp)
+        {
+            e.Cancel = true;
+            return;
+        }
+
+        if (!editor.IsModified) return;
 
         e.Cancel = true;
 

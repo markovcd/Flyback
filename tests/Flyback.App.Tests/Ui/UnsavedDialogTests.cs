@@ -198,6 +198,37 @@ public class UnsavedDialogTests : UiTest
         All<ModalOverlay>(window).ShouldHaveSingleItem("the question should still be up");
     }
 
+    /// <summary>
+    /// Closing again while the question is up is ignored. The dialog is a panel
+    /// over the window rather than a window of its own, so the frame's cross is
+    /// still there to be clicked a second time — and a second question stacked
+    /// on the first would have to be answered twice to get out of one close.
+    /// </summary>
+    [AvaloniaFact]
+    public void Closing_again_while_the_question_is_up_does_not_ask_twice()
+    {
+        var window = OpenAndEdit();
+
+        window.Close();
+        Asking(window);
+
+        window.Close();
+        Settle(window);
+        Dispatcher.UIThread.RunJobs();
+
+        All<ModalOverlay>(window).ShouldHaveSingleItem("the second close should have been ignored");
+
+        // And the one question still answers for the whole thing: cancelling
+        // leaves the window up rather than leaving a second close pending.
+        Press(All<ModalOverlay>(window).Single(), "Cancel");
+
+        for (var attempt = 0; attempt < 20 && window.IsVisible; attempt++)
+            Dispatcher.UIThread.RunJobs();
+
+        window.IsVisible.ShouldBeTrue("cancelling should have kept the window");
+        All<ModalOverlay>(window).ShouldBeEmpty();
+    }
+
     // --- and that it is actually modal ---------------------------------------
 
     /// <summary>The sheet is over all of the window, or there is a way round it.</summary>

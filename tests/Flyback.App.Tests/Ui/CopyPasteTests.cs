@@ -251,6 +251,43 @@ public class CopyPasteTests : UiTest
         patch.Nodes.Count(n => NodeCatalog.IsSink(n.TypeId)).ShouldBe(1);
     }
 
+    // --- the boxes ----------------------------------------------------------
+
+    /// <summary>
+    /// A box copied is a box pasted. Pressing one selects the modules inside it,
+    /// so without this the gesture reads as copying a group and getting a
+    /// handful of loose modules back.
+    /// </summary>
+    [AvaloniaFact]
+    public async Task A_box_is_pasted_as_a_box()
+    {
+        var patch = Chain(out var time, out var osc, out _);
+        var (editor, window) = Editing(patch);
+
+        Click(editor, window, time);
+        Click(editor, window, osc, RawInputModifiers.Control);
+
+        editor.GroupSelected();
+        Settle(window);
+
+        var box = editor.SelectedGroup.ShouldNotBeNull();
+        box.Rename("Voice");
+
+        (await editor.CopySelectionAsync()).ShouldBeNull();
+        (await editor.PasteAsync()).ShouldBeNull();
+
+        patch.Groups.ShouldNotBeNull().Count.ShouldBe(2);
+
+        // What arrived is what is selected, and it is exactly a box — so the
+        // very next Ctrl+Shift+G has something to put back.
+        var pasted = editor.SelectedGroup.ShouldNotBeNull();
+
+        pasted.Id.ShouldNotBe(box.Id);
+        pasted.Title().ShouldBe("Voice");
+        pasted.Members.Count.ShouldBe(2);
+        pasted.Members.ShouldNotContain(id => id == time.Id || id == osc.Id);
+    }
+
     // --- cutting ------------------------------------------------------------
 
     [AvaloniaFact]

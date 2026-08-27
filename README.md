@@ -1077,6 +1077,16 @@ edit as well as at the moment one is made: delete your way down to a single
 member and the box goes, leaving an ordinary module behind. The Output is never
 in one, so selecting everything and grouping it groups everything else.
 
+Copy and paste carry the box along with what is in it — the modules, the wires
+between them, the name on the header, and the sockets on the edge including the
+ones nothing is wired to. What arrives is a second box and not the same one:
+fresh ids throughout, so editing it does nothing to the one it came from, which
+is the same thing being a drawing rather than a definition says everywhere else.
+Only whole boxes come. Copying half of one pastes those modules loose, for the
+same reason a wire with one end outside the selection is left behind — a box
+short of a member would arrive a different shape, with different sockets, from
+the one on the canvas.
+
 A wire is re-patched by picking it up at either end, and which end decides what
 the gesture is asking. Drag a **connected input** and the plug comes out of that
 input; the wire keeps its source and goes looking for a new target — *where
