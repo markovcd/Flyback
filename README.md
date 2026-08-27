@@ -1151,6 +1151,14 @@ name in the title bar, and anything that would close it asks first — quitting,
 opening a file, picking a preset. The assistant is not among them and does not
 need to be: what it does is an edit, so there is nothing there to lose.
 
+The name is whichever way the patch arrived: the file it was opened from or last
+written to, or the preset it was built from — `Drone — Flyback`, and with the dot
+after it once there is unsaved work. Picking from the preset list renames it the
+same way an open does, because that is a document arriving too. The save dialog
+offers the same name back, so saving something opened as `drone.fbk` suggests
+`drone.fbk`, and saving one built from a preset suggests the preset's name rather
+than `patch`.
+
 Cancelling the save dialog cancels the whole thing rather than the save alone:
 somebody who asked to save and then thought better of where has not agreed to
 lose the patch. Undoing back to what you started with settles it again, for the

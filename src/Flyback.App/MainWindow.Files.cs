@@ -80,6 +80,11 @@ public sealed partial class MainWindow
             // that names one is compiled for the first time.
             samples.Beside = Path.GetDirectoryName(files[0].TryGetLocalPath());
 
+            // Before the patch and not after: setting it is what tells the
+            // window to draw the title again, and a name arriving a line later
+            // would be a title bar one edit out of date.
+            patchName = Path.GetFileNameWithoutExtension(files[0].Name);
+
             editor.Patch = loaded.Patch;
             preview.Rewind();
         }
@@ -95,7 +100,10 @@ public sealed partial class MainWindow
         var file = await StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
         {
             Title = "Save patch",
-            SuggestedFileName = "patch",
+            // What it is called now, or "patch" for one nobody has named — the
+            // dialog is where a name is chosen, so it is where the one already
+            // chosen belongs.
+            SuggestedFileName = patchName ?? "patch",
             DefaultExtension = PatchIo.FileExtension,
             FileTypeChoices = [PatchFileType],
         });
@@ -112,6 +120,7 @@ public sealed partial class MainWindow
 
             // Only once it is actually on disk. A patch that failed to write is
             // still a patch with everything to lose.
+            patchName = Path.GetFileNameWithoutExtension(file.Name);
             editor.MarkSaved();
 
             // A patch saved somewhere new measures its samples from there now,

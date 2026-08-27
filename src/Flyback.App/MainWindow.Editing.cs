@@ -25,6 +25,25 @@ public sealed partial class MainWindow
     private const string BaseTitle = "Flyback";
 
     /// <summary>
+    /// What the patch on the canvas is called, or null for one with no name of
+    /// its own yet.
+    /// </summary>
+    /// <remarks>
+    /// The file it was opened from or last written to, without the extension, or
+    /// the preset it was built from — the three ways a patch arrives, and every
+    /// one of them arrives with something to call it. Kept rather than worked
+    /// out, because after a Save As there is no other record of which of the two
+    /// files on the disk is the one on screen.
+    /// <para>
+    /// Written down without the extension, because a preset has none and the
+    /// title bar should not read as though one kind of patch were more real than
+    /// the other. It is also what the save dialog offers back, and a picker adds
+    /// the extension itself.
+    /// </para>
+    /// </remarks>
+    private string? patchName;
+
+    /// <summary>
     /// Set once the question about unsaved work has been asked and answered, so
     /// the second Close does not ask it again. A close has to be cancelled to
     /// put a dialog up at all — nothing may block inside OnClosing — so the way
@@ -327,19 +346,24 @@ public sealed partial class MainWindow
         return midi.KeyDown(key);
     }
 
-
     /// <summary>
     /// Greys the two out when there is nothing behind or ahead — the same
     /// question a button would answer by doing nothing, asked where it can be
-    /// seen instead — and says in the title whether there is unsaved work.
+    /// seen instead — and says in the title what the patch is and whether there
+    /// is unsaved work in it.
     /// </summary>
     private void RefreshEditState()
     {
         undoButton.IsEnabled = editor.CanUndo;
         redoButton.IsEnabled = editor.CanRedo;
 
+        // The name first and the program second, which is the way round every
+        // other window on the machine says it: what is on screen is the patch,
+        // and which program is drawing it is the thing already known.
+        var named = patchName is null ? BaseTitle : $"{patchName} — {BaseTitle}";
+
         // A dot rather than the word, because the title bar is read at a glance
         // and the question it answers is only whether there is anything to lose.
-        Title = editor.IsModified ? BaseTitle + " •" : BaseTitle;
+        Title = editor.IsModified ? named + " •" : named;
     }
 }
