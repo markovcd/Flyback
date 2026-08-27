@@ -54,8 +54,8 @@ public class MidiInputTests
     }
 
     /// <summary>
-    /// Two backends ship and neither ever competes with the other: each is
-    /// supported only where the other is not. Linux is allowed to choose nothing
+    /// Three backends ship and none ever competes with the others: each is
+    /// supported only where the rest are not. Linux is allowed to choose nothing
     /// as well, because a machine with no libasound on it has no MIDI to offer
     /// and says so rather than failing.
     /// </summary>
@@ -63,7 +63,10 @@ public class MidiInputTests
     public void The_backend_chosen_here_is_the_one_for_this_operating_system()
     {
         Shipped().PreferredMidiInput?.Id.ShouldBe(
-            OperatingSystem.IsWindows() ? "winmm" : OperatingSystem.IsLinux() ? "alsaseq" : null);
+            OperatingSystem.IsWindows() ? "winmm"
+            : OperatingSystem.IsMacOS() ? "coremidi"
+            : OperatingSystem.IsLinux() ? "alsaseq"
+            : null);
     }
 
     /// <summary>A device that is not plugged in must be refused, not stood in for.</summary>
@@ -128,6 +131,52 @@ public class MidiInputTests
         Assert.SkipUnless(
             OperatingSystem.IsLinux() && input.IsSupported,
             "the ALSA backend only opens on Linux, and only where there is a libasound.");
+
+        Should.Throw<InvalidOperationException>(
+            () => input.Open("midi:no-such-device-is-plugged-in", _ => { }));
+    }
+
+    // ---- and the same of the macOS one -----------------------------------------
+
+    [Fact]
+    public void The_macos_backend_is_found_and_registers_itself()
+    {
+        var catalog = Shipped();
+
+        catalog.Problems.ShouldBeEmpty();
+        catalog.Plugins.Select(p => p.Info.Id).ShouldContain("coremidi.midi");
+        catalog.MidiInputs.Select(i => i.Id).ShouldContain("coremidi");
+    }
+
+    /// <summary>
+    /// Answered by the operating system alone, like the Windows one and unlike
+    /// the Linux one: CoreMIDI is part of macOS, so there is no machine that has
+    /// the right system and not the framework.
+    /// </summary>
+    [Fact]
+    public void Support_for_the_macos_backend_is_the_operating_system_and_nothing_else()
+    {
+        Shipped().MidiInputs.Single(i => i.Id == "coremidi").IsSupported.ShouldBe(OperatingSystem.IsMacOS());
+    }
+
+    [Fact]
+    public void Off_macos_the_coremidi_backend_refuses_rather_than_pretending()
+    {
+        var input = Shipped().MidiInputs.Single(i => i.Id == "coremidi");
+
+        Assert.SkipWhen(OperatingSystem.IsMacOS(), "this is the backend for this machine.");
+
+        input.Ports.ShouldBeEmpty();
+        Should.Throw<PlatformNotSupportedException>(() => input.Open("midi:anything", _ => { }));
+    }
+
+    /// <summary>A device that is not plugged in must be refused, not stood in for.</summary>
+    [Fact]
+    public void Opening_something_that_is_not_there_fails_on_macos_too()
+    {
+        var input = Shipped().MidiInputs.Single(i => i.Id == "coremidi");
+
+        Assert.SkipUnless(OperatingSystem.IsMacOS(), "the CoreMIDI backend only opens on macOS.");
 
         Should.Throw<InvalidOperationException>(
             () => input.Open("midi:no-such-device-is-plugged-in", _ => { }));

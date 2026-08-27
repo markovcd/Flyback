@@ -112,8 +112,8 @@ picker is built for it and lists what there is, which today is one thing.
 `IMidiPort` split the way `IAudioOutput` and `IAudioDevice` do — what might exist
 against what is open — and `Flyback.Plugins.WinMidi` is the first backend behind
 them, `Platform="win"`, over the multimedia library Windows already has. CoreMIDI
-and the ALSA sequencer are the other two thirds; the sequencer is written now, in
-the amendment below, and CoreMIDI is not.
+and the ALSA sequencer are the other two thirds, and both are written now, in the
+amendments below.
 
 Nothing above the hub changed to accept it, which is the part worth recording:
 the picker already listed whatever `MidiSources.All` said, the patch format
@@ -187,6 +187,66 @@ unconditionally would stutter on every hardware device to spell one port called
 plain "MIDI 1". What a patch stores is the id `MidiPorts.Named` makes of that
 display name, exactly as on Windows, so the two backends agree about what an
 instrument is called without either knowing about the other.
+
+**Amended: macOS, and with it the last of the three.**
+`Flyback.Plugins.CoreMidi`, `Platform="osx"`, beside the sound plugin
+[0025](0025-platform-io-behind-loadable-plugins.md) and
+[0028](0028-publish-one-platform-at-a-time.md) put there. Every operating system
+this ships for can now be played, and the contract has not changed by a word
+since the first backend was written against it — which is the strongest thing
+that can be said for the split between `IMidiInput` and `IMidiPort`.
+
+**The deprecated call, deliberately.** macOS 11 added
+`MIDIInputPortCreateWithProtocol` and marked `MIDIInputPortCreate` deprecated,
+and the newer one cannot be called from here at all: it takes an Objective-C
+block where the old one takes a function pointer, and a block is a structure
+whose first field is a class pointer exported by libSystem — machinery to be
+fabricated by hand, in the one place where a mistake is made on a thread that
+cannot report anything. The old call takes exactly the kind of function pointer
+`WinMidiPort` already hands to winmm and `CoreAudioDevice` to its audio unit,
+and the packets it delivers are the bytes a cable carried. A deprecation is not
+a removal, and this is what every program that reads MIDI on a Mac still does.
+
+**Nobody owns a thread here.** The MIDI server calls us, on a high-priority
+thread of its own, which makes this the Windows arrangement rather than the
+Linux one — no reader, no poll, no flag to be seen from two places but the one
+that says whether a callback still has anybody to deliver to. The ALSA backend
+remains the odd one, and the reason it is odd remains the sequencer's rather
+than this program's.
+
+**A packet is a run of messages, and cutting it up is CoreMIDI's alone.** winmm
+delivers one message per callback; the sequencer has a decoder that produces
+one; a packet here holds everything that arrived in the same instant, so three
+keys struck together arrive as one call. What makes that a length table rather
+than a parser is Apple's own rule: every message in a packet is complete and
+carries its own status byte, running status never appears, and a packet holding
+a system-exclusive message holds nothing else. So the walk steps by what the
+status byte says the message is worth and hands each one to `MidiMessages.Of`,
+which is still where the meaning lives. The table stays in the plugin rather
+than moving up beside `Of` — it is a fact about MIDI, but it answers a question
+only this backend has, and a second backend needing it would be the moment to
+move it.
+
+**The packet structures are laid out differently on the two Macs, and both are
+written out.** `MIDIServices.h` packs them to four bytes on ARM and leaves them
+natural everywhere else, which decides where the first packet sits after the
+count — four in one, eight in the other — and whether the next packet's address
+is rounded up. Both are what the framework's own `MIDIPacketNext` compiles to on
+each side of that same `#if`, and neither can be had from a `sizeof`: the
+structure declares room for 256 bytes and a packet occupies only as many as it
+carries, so stepping by the size of the type would walk off the end of the first
+list it was given.
+
+**The property keys are read off the framework by symbol.**
+`kMIDIPropertyDisplayName` is a `CFStringRef` the framework owns, not the eleven
+characters it happens to spell, so it is looked up in the loaded image rather
+than rebuilt here — the same instinct that has the ALSA binding ask libasound
+how big its own structures are. And listing is still not opening: counting the
+sources and naming them needs no client and takes no hardware, and connecting a
+port to one is the only call in the file that changes anything on the machine.
+There is no `Display` join to be done either, unlike Linux — CoreMIDI has
+already put the device's name and the port's together where they differ, which
+is what Audio MIDI Setup shows, and `MidiPorts.Named` makes the id out of that.
 
 ## Consequences
 

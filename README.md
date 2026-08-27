@@ -63,10 +63,10 @@ what lets anyone build a plugin against the exact version a build shipped.
 `win-x64`, `win-arm64`, `osx-arm64`, `osx-x64` and `linux-x64` all work, from any
 of them — the engine and the shell are portable, and the parts that are not are
 plugins. Each build gets the plugins for the platform it is *for*, not the one it
-was made on: a macOS publish contains CoreAudio and no NAudio, a Linux one ALSA's
-sound and ALSA's MIDI and neither, and a Windows one WASAPI, data protection and
-winmm's MIDI — each build carrying its own platform's plugins and none of
-anybody else's.
+was made on: a macOS publish contains CoreAudio and CoreMIDI and no NAudio, a
+Linux one ALSA's sound and ALSA's MIDI and neither, and a Windows one WASAPI,
+data protection and winmm's MIDI — each build carrying its own platform's plugins
+and none of anybody else's.
 
 Anything cross-published from Windows onto a Unix arrives without an executable
 bit, because the filesystem writing it has no concept of one — `chmod +x Flyback`
@@ -705,12 +705,12 @@ offers a backend and `IMidiPort` is one device that is open, split the way
 `IAudioOutput` and `IAudioDevice` are. Whatever is plugged in joins the computer's
 own keys in the same picker, and the module cannot tell them apart — an instrument
 is named by a string, and nothing above that line knows what is behind one.
-Windows is covered, through the multimedia library it already has, and Linux
-through the ALSA sequencer — which is where a keyboard, another program's port
-and PipeWire's bridge all appear alike, so what a picker offers there is
-everything on the machine that plays notes rather than only the hardware. macOS
-falls back to the computer's keyboard until CoreMIDI is written, which is one
-plugin in the shape the other two now set.
+All three systems are covered: Windows through the multimedia library it already
+has, Linux through the ALSA sequencer, and macOS through CoreMIDI. The last two
+are routing tables rather than lists of hardware — a keyboard, another program's
+port, PipeWire's bridge, the IAC bus macOS ships — so what a picker offers there
+is everything on the machine that plays notes rather than only the things with
+sockets on them.
 
 A device is only held while something is listening to it. A MIDI In wired to
 nothing has been compiled away, so it opens nothing and the keyboard stays free
@@ -1191,6 +1191,7 @@ nothing, which is the class of mistake nothing else here would catch.
 | `src/Flyback.Plugins.CoreAudio` | macOS sound output, straight to the default output audio unit |
 | `src/Flyback.Plugins.Alsa` | Linux sound output, through libasound's default device |
 | `src/Flyback.Plugins.WinMidi` | Windows MIDI input, through winmm — what a **MIDI In** listens to when it is not the computer's own keys |
+| `src/Flyback.Plugins.CoreMidi` | the same on macOS, through CoreMIDI — whatever the MIDI server has, which is whatever Audio MIDI Setup shows |
 | `src/Flyback.Plugins.AlsaMidi` | the same on Linux, through the ALSA sequencer — hardware, other programs' ports and PipeWire's bridge alike |
 | `src/Flyback.Plugins.Supersaw` | the Supersaw oscillator, as a module plugin |
 | `src/Flyback.Plugins.Space` | delay and reverb — the only modules that remember more than one evaluation |
