@@ -859,12 +859,21 @@ They are the two that remember longest: everything else here with a memory —
 an oscillator's phase, the Filter and Phaser below — remembers one evaluation,
 and a reverb tail is thousands.
 
-The Reverb is four feedback combs into two allpasses.
+The Reverb is eight damped feedback combs into two chains of four allpasses,
+which is the Schroeder arrangement with Moorer's correction to it. The damping
+is the part that matters: a comb with a plain gain in its loop hands every
+repeat back as bright as the last, so the tail keeps one timbre all the way
+down, and that fixed metallic ring is what a cheap reverb sounds like. A room
+loses its highs first, and this one does too — at a fixed corner rather than on
+a knob, because how absorbent a wall is describes the room and is not a gesture
+anyone performs. The two allpass chains differ only in their lengths, so `out`
+and `wide` are one tail smeared two ways — patch both for stereo, or take `out`
+alone for the mono version.
 
 Everything else here is a pure function of `(x, y, t)`, which is what lets the
 video renderer run rows in parallel. These two are not, so **they only work on
-the audio path**: the video program is given no state, a Delay becomes a wire,
-and a Reverb dims by one minus its feedback. That asymmetry is the price of
+the audio path**: the video program is given no state, and both become wires.
+That asymmetry is the price of
 having them at all, and [ADR-0027](docs/adr/0027-delay-lines-give-the-audio-path-a-memory.md)
 sets out why it cannot be avoided. For a picture with a past, use `Feedback`.
 

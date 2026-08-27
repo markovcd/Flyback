@@ -44,7 +44,11 @@ internal static class SpacePreset
          .Wire(pluck, 0, struck, 1)
          .Wire(struck, 0, echo, 0)
          .Wire(echo, 0, room, 0)
+         // Both of the room's outputs, which is the one thing this preset exists
+         // to show that a knob cannot: the same tail smeared two ways is what
+         // puts the repeats around the listener rather than in front of them.
          .Wire(room, 0, output, NodeCatalog.OutputLeftPort)
+         .Wire(room, 1, output, NodeCatalog.OutputRightPort)
          .Wire(time, 0, rings, 3)
          .Wire(rings, 0, color, 2)
          .Wire(color, 0, output, NodeCatalog.OutputColorPort);
