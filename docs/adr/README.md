@@ -4,7 +4,7 @@ Each record captures one decision, the situation that forced it, and what it
 costs. Format is [Michael Nygard's](https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions):
 context, decision, consequences.
 
-Twenty-six records — [0003](0003-cpu-rendering-with-a-gpu-path-left-open.md),
+Twenty-seven records — [0003](0003-cpu-rendering-with-a-gpu-path-left-open.md),
 [0004](0004-visual-patch-editor-as-the-authoring-model.md),
 [0026](0026-modules-from-plugins-with-provenance-in-the-file.md),
 [0027](0027-delay-lines-give-the-audio-path-a-memory.md),
@@ -29,7 +29,8 @@ Twenty-six records — [0003](0003-cpu-rendering-with-a-gpu-path-left-open.md),
 [0053](0053-a-scope-records-what-the-speakers-played.md) and
 [0054](0054-what-a-module-carries-is-a-part-not-a-subtype.md) and
 [0055](0055-a-plugins-extra-declares-its-editor.md) and
-[0056](0056-a-patch-can-be-played-and-what-plays-it-is-one-opcode.md) — are marked
+[0056](0056-a-patch-can-be-played-and-what-plays-it-is-one-opcode.md) and
+[0057](0057-a-shape-is-a-distance-and-one-module-inks-it.md) — are marked
 **user-directed**: they were chosen by the project owner, not derived. The first
 two sit upstream of almost everything else here; 0026 and 0027 each give up a
 property an earlier record relied on, knowingly; 0031, 0033, 0034, 0036 and 0040
@@ -82,8 +83,13 @@ patch reading itself, and this one lets a hand into the program — which turns 
 to need one opcode, and to sit oddly beside 0041, since that record's argument
 that a plugin needs no new op was about state and this is not state. It is also
 where 0055's promised third field shape arrives, and the module that arrived with
-it is the one that could not be written without one. All are recorded even though
-they were not mine to make.
+it is the one that could not be written without one. 0057 is 0041 again on the
+other half of the machine, and is the first record about the *eye* since the
+backend ones: four plugins had been written and every one of them was for the
+ear, so the picture could still make any texture at all and no thing. What makes
+it a record rather than a plugin is the convention it settles — a shape is a
+distance, which turns out to mean the catalogue had held the combinators for one
+all along. All are recorded even though they were not mine to make.
 
 [0035](0035-a-glsl-backend-for-the-video-path.md) is the first record where two
 backends disagree by design: the picture on screen and the picture in an exported
@@ -133,6 +139,7 @@ the two that was there while the knobs were moving.
 | [0053](0053-a-scope-records-what-the-speakers-played.md) | A Scope records what the speakers played *(user-directed)* |
 | [0054](0054-what-a-module-carries-is-a-part-not-a-subtype.md) | What a module carries is a part, not a subtype *(user-directed)* |
 | [0055](0055-a-plugins-extra-declares-its-editor.md) | A plugin's extra declares its editor *(user-directed)* |
+| [0057](0057-a-shape-is-a-distance-and-one-module-inks-it.md) | A shape is a distance, and one module inks it *(user-directed)* |
 
 ### The shell
 

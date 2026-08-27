@@ -1018,6 +1018,58 @@ is registered, so a missing plugin surfaces there, and this one checks first so
 that what you get is *"it needs the Filter and fold plugin"* rather than the id
 of a module nobody asked about.
 
+### Shapes
+
+[`src/Flyback.Plugins.Shapes`](src/Flyback.Plugins.Shapes) adds **Circle**,
+**Box**, **Polygon**, **Star**, **Combine** and **Fill** — and is the first
+plugin written for the eye rather than the ear. Every module the picture had was
+an infinite field: Noise, Checker, Rings and the oscillators go on for ever in
+every direction, and the eight under Space bend the plane they go on for ever
+across. So a patch could make a texture of any kind and could not make a *thing*.
+There was no circle.
+
+**A shape here is a distance rather than a picture of itself** — one number per
+point, negative inside the form, zero on its edge, positive outside, in the same
+units the Coordinates module hands out. That is the whole plugin, and everything
+else falls out of it. Union is the smaller of two distances and intersection the
+larger, which is to say Minimum and Maximum, which the catalogue has always had.
+Growing a shape is subtracting from it. An outline is the distance to the edge
+with the sign thrown away.
+
+So a shape's output is not something to look at until a **Fill** has turned it
+into ink: 1 inside, 0 outside, and an edge as soft as you ask for. There is one
+Fill for a whole assembly of forms rather than a fill knob on each of them, and
+it hands out the form and its own outline together — two readings of one number,
+the way the Filter hands out three responses at once. **Combine** is the other
+module that could not be assembled from what was there: the same three operations
+Minimum and Maximum already do, with a seam that melts the crease where two forms
+meet, so two blobs flow into one another instead of overlapping.
+
+Sizes are in the picture's own units and there is no pixel anywhere, because
+nothing in a compiled program knows how big the frame is — the same patch is
+drawn at preview size, at export size and into a movie. A softness of a hundredth
+is three pixels on a 540-line preview and six on a 1080-line render, which is
+what makes a still and the preview of it the same image.
+
+The **Shape scan** preset is a star with a hole cut through it, rocking, and the
+same field read as a waveform. That is the part worth having the sound on for:
+the Scan sweeps a loop through the distance field and hands what it passes over
+to the speakers, so the star's five points are five bumps in every cycle and
+sharpening them brightens the tone. Nothing here has a memory, so both sinks run
+the same arithmetic — what you hear is the shape rather than something chosen to
+go with it.
+
+Nothing needed the engine changed, not even the one-evaluation cells the Filter
+takes. That matters more here than it would for a module aimed at the speakers:
+the preview draws on the GPU wherever it can, and a video program containing a
+table read — a clip or a trace — cannot be drawn by the shader at all and takes
+the preview back to the CPU, quietly, for as long as the patch is loaded. All six
+of these are arithmetic over x and y, so all six survive to the shader, and there
+is a test that says so in every dialect.
+[ADR-0057](docs/adr/0057-a-shape-is-a-distance-and-one-module-inks-it.md) sets
+out the whole of it, including what the eye is still missing — which is more than
+what arrived.
+
 ## Using the editor
 
 The inspector lists every gesture whenever nothing is selected — adding a

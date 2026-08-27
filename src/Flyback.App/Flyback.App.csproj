@@ -78,6 +78,7 @@
     <PluginProject Include="..\Flyback.Plugins.Space\Flyback.Plugins.Space.csproj" FolderName="Space" />
     <PluginProject Include="..\Flyback.Plugins.Timbre\Flyback.Plugins.Timbre.csproj" FolderName="Timbre" />
     <PluginProject Include="..\Flyback.Plugins.Modulation\Flyback.Plugins.Modulation.csproj" FolderName="Modulation" />
+    <PluginProject Include="..\Flyback.Plugins.Shapes\Flyback.Plugins.Shapes.csproj" FolderName="Shapes" />
   </ItemGroup>
 
   <ItemGroup>
