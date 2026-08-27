@@ -60,6 +60,10 @@ public sealed class ShapesPlugin : IFlybackPlugin
                 FillModule.Definition,
             ]);
 
-        registry.AddPresets([new PatchPreset(ShapesPreset.Name, ShapesPreset.Build)]);
+        registry.AddPresets(
+        [
+            new PatchPreset(FourFormsPreset.Name, FourFormsPreset.Build),
+            new PatchPreset(ShapesPreset.Name, ShapesPreset.Build),
+        ]);
     }
 }

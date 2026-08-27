@@ -1051,6 +1051,15 @@ drawn at preview size, at export size and into a movie. A softness of a hundredt
 is three pixels on a 540-line preview and six on a 1080-line render, which is
 what makes a still and the preview of it the same image.
 
+Two presets ship with it. **Four forms** is the showcase: all four shapes on a
+ring, rocking, with the seam between them opening and closing — so they are four
+separate things, then one body with a hole through the middle, then four again. A
+Minimum would have put them in one picture perfectly well; what it cannot do is
+the crease, and four shapes meeting at corners read as four shapes overlapping.
+The same sweep that melts the seam is the Pulse's width, so what the eye sees as
+four forms flowing together the ear hears as a thin buzz opening out into a
+hollow square. One number, arriving in two places.
+
 The **Shape scan** preset is a star with a hole cut through it, rocking, and the
 same field read as a waveform. That is the part worth having the sound on for:
 the Scan sweeps a loop through the distance field and hands what it passes over

@@ -510,7 +510,68 @@ public class ShapesTests
             GlslEmitter.Emit(video.Program, dialect).PatchFragment.ShouldNotBeNullOrEmpty();
     }
 
+    /// <summary>
+    /// The showcase: all four forms, three Combines and one Fill, with the seam
+    /// and the pulse width on one wire between them.
+    /// </summary>
+    [Fact]
+    public void The_showcase_preset_holds_every_form_and_compiles_for_both_sinks()
+    {
+        var loaded = PluginHost.Load();
+        var patch = loaded.Presets.Single(p => p.Name == FormsPresetName).Build(loaded.Modules);
+
+        var types = patch.Nodes.Select(n => n.TypeId).ToList();
+
+        foreach (var typeId in new[] { CircleType, BoxType, PolygonType, StarType, FillType })
+            types.ShouldContain(typeId);
+
+        types.Count(t => t == CombineType).ShouldBe(3);
+
+        var video = patch.CompileForVideo(loaded.Modules);
+        var audio = patch.CompileForAudio(loaded.Modules);
+
+        video.Issues.ShouldBeEmpty();
+        audio.Issues.ShouldBeEmpty();
+
+        video.Program.UnitCount.ShouldBe(0);
+        video.Program.DelayLengths.ShouldBeEmpty();
+
+        foreach (var dialect in Enum.GetValues<GlslDialect>())
+            GlslEmitter.Emit(video.Program, dialect).PatchFragment.ShouldNotBeNullOrEmpty();
+    }
+
+    /// <summary>
+    /// One sweep is the seam and the pulse's width both, which is the whole
+    /// argument for the preset: what the eye sees as four forms flowing together
+    /// is what the ear hears as a thin buzz opening into a square. A patch where
+    /// the two had a sweep each would look and sound the same at any one moment
+    /// and would drift apart over a minute, which is the failure this pins.
+    /// </summary>
+    [Fact]
+    public void The_showcase_preset_moves_both_sinks_from_one_sweep()
+    {
+        var loaded = PluginHost.Load();
+        var patch = loaded.Presets.Single(p => p.Name == FormsPresetName).Build(loaded.Modules);
+
+        // The only oscillators are the two sweeps, and the voice the ear hears.
+        var sweeps = patch.Nodes.Where(n => n.TypeId == "osc.sine").ToList();
+        sweeps.Count.ShouldBe(2);
+
+        var melt = sweeps.Single(sweep => patch.Connections.Count(w => w.SourceNode == sweep.Id) > 1);
+        var driven = patch.Connections.Where(w => w.SourceNode == melt.Id).ToList();
+
+        // Three seams, the hue, and the pulse.
+        driven.Count(w => Type(patch, w.TargetNode) == CombineType).ShouldBe(3);
+        driven.Count(w => Type(patch, w.TargetNode) == "osc.pulse").ShouldBe(1);
+        driven.Count(w => Type(patch, w.TargetNode) == "color.hsv").ShouldBe(1);
+    }
+
+    private static string Type(Patch patch, Guid node) =>
+        patch.Nodes.Single(n => n.Id == node).TypeId;
+
     private const string ShapesPresetName = "Shape scan";
+
+    private const string FormsPresetName = "Four forms";
 
     // --- harness ---------------------------------------------------------------
 
