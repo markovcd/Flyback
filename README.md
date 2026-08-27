@@ -64,7 +64,8 @@ what lets anyone build a plugin against the exact version a build shipped.
 of them — the engine and the shell are portable, and the parts that are not are
 plugins. Each build gets the plugins for the platform it is *for*, not the one it
 was made on: a macOS publish contains CoreAudio and no NAudio, a Linux one ALSA
-and neither, a Windows one WASAPI and nothing else.
+and neither, and a Windows one WASAPI, data protection and winmm's MIDI — each
+build carrying its own platform's plugins and none of anybody else's.
 
 Anything cross-published from Windows onto a Unix arrives without an executable
 bit, because the filesystem writing it has no concept of one — `chmod +x Flyback`
@@ -618,10 +619,17 @@ hand in: it has no inputs at all and four outputs — `pitch` as a note number,
 each time a note is struck. Into a `Note` and an `ADSR` that is an instrument you
 play; into a `Sample`'s own `trigger` it is a drum pad.
 
-Its panel asks which keyboard. A fresh one listens to the **computer keyboard**,
-which needs no driver and is what ships today — the bottom two rows are the white
-and black notes of an octave in the tracker layout, the top two rows are the
-octave above, and Page Up and Page Down move both. So `Z` is C3, `S` is the C
+Its panel asks which keyboard, and the list is whatever is plugged in with the
+**computer keyboard** in front of it. Plug one in with the panel already open and
+it is there the next time the list is opened, rather than after clicking away and
+back. A device that a patch names and this machine has not got is left named
+rather than quietly swapped — the patch means that keyboard, and the status bar
+says it is not here.
+
+A fresh one listens to the computer keyboard, which needs no driver and is always
+there — the bottom two rows are the white and black notes of an octave in the
+tracker layout, the top two rows are the octave above, and Page Up and Page Down
+move both. So `Z` is C3, `S` is the C
 sharp over it, `Q` is the C above them all, and the status bar says where the
 rows have got to when you move them. The keys are read by position rather than by
 the letter printed on them, so it stays a piano on a keyboard whose letters are
@@ -690,11 +698,22 @@ down. Nothing held reads as note nought — the same answer a program nobody is
 playing gives — which the Clamp turns into the bottom of the range rather than
 into wherever nought happened to land.
 
-Hardware MIDI is not here yet. It is a plugin's worth of work behind the same
-seam the sound devices sit behind ([ADR-0025](docs/adr/0025-platform-io-behind-loadable-plugins.md)),
-and the picker, the patch format and the module are all built for it: an
-instrument is named by a string, and nothing above this line knows what is behind
-one. [ADR-0056](docs/adr/0056-a-patch-can-be-played-and-what-plays-it-is-one-opcode.md)
+Hardware sits behind the same seam the sound devices do
+([ADR-0025](docs/adr/0025-platform-io-behind-loadable-plugins.md)): `IMidiInput`
+offers a backend and `IMidiPort` is one device that is open, split the way
+`IAudioOutput` and `IAudioDevice` are. Whatever is plugged in joins the computer's
+own keys in the same picker, and the module cannot tell them apart — an instrument
+is named by a string, and nothing above that line knows what is behind one.
+Windows is covered, through the multimedia library it already has; macOS and Linux
+fall back to the computer's keyboard until CoreMIDI and the ALSA sequencer are
+written, which is a plugin each in the shape the first one now sets.
+
+A device is only held while something is listening to it. A MIDI In wired to
+nothing has been compiled away, so it opens nothing and the keyboard stays free
+for whatever else wants it; wiring one up opens the device, and unwiring it hands
+the device back. Every channel plays the one voice, since the module has nowhere
+to name a channel.
+[ADR-0056](docs/adr/0056-a-patch-can-be-played-and-what-plays-it-is-one-opcode.md)
 records what a live value costs the engine — one opcode, and the first thing a
 program can read that may be different on the very next evaluation.
 
@@ -1127,6 +1146,7 @@ nothing, which is the class of mistake nothing else here would catch.
 | `src/Flyback.Plugins.Wasapi` | Windows sound output, via NAudio |
 | `src/Flyback.Plugins.CoreAudio` | macOS sound output, straight to the default output audio unit |
 | `src/Flyback.Plugins.Alsa` | Linux sound output, through libasound's default device |
+| `src/Flyback.Plugins.WinMidi` | Windows MIDI input, through winmm — what a **MIDI In** listens to when it is not the computer's own keys |
 | `src/Flyback.Plugins.Supersaw` | the Supersaw oscillator, as a module plugin |
 | `src/Flyback.Plugins.Space` | delay and reverb — the only modules that remember more than one evaluation |
 | `src/Flyback.Plugins.Timbre` | filter, wavefolder and saturator, holding their state in the emitter's own cells |

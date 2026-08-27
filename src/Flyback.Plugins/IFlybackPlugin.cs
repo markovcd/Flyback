@@ -1,6 +1,7 @@
 using Flyback.Core.Graph;
 using Flyback.Plugins.Assist;
 using Flyback.Plugins.Audio;
+using Flyback.Plugins.Midi;
 using Flyback.Plugins.Secrets;
 
 namespace Flyback.Plugins;
@@ -66,4 +67,11 @@ public interface IPluginRegistry
     /// must not read or write one.
     /// </summary>
     void AddSecretStore(ISecretStore store);
+
+    /// <summary>
+    /// Offers a way of hearing what is plugged in. Registering it must not open
+    /// a device and must not enumerate one — the shell asks for the list when
+    /// somebody opens a picker, which is a different moment and a later one.
+    /// </summary>
+    void AddMidiInput(IMidiInput input);
 }

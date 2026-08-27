@@ -184,12 +184,22 @@ public sealed partial class MainWindow : Window
     /// Everything that plays the patch from outside it. The mirror of
     /// <see cref="audio"/>, which takes what the patch makes to a device.
     /// </summary>
-    private readonly MidiHub midi = new();
+    /// <remarks>
+    /// Assigned in the constructor rather than beside the declaration, because it
+    /// is handed the MIDI backend the plugins offered and a field initializer
+    /// would be depending on <see cref="plugins"/> being declared above it.
+    /// </remarks>
+    private readonly MidiHub midi;
 
     public MainWindow()
     {
         sound = OpenAudio(plugins);
         audio = new AudioEngine(sound.Device);
+
+        // Nothing is opened by this. The backend is asked what is plugged in
+        // when a picker is drawn, and asked for a device only once a compiled
+        // program is actually reading one — see MidiHub.Listen.
+        midi = new MidiHub(plugins.PreferredMidiInput);
 
         // Before anything is compiled and before a panel is drawn, because a
         // MIDI In asks this what there is to listen to as soon as either
@@ -202,6 +212,10 @@ public sealed partial class MainWindow : Window
         // moves nothing else, so the preview has to be told there is a new frame
         // to draw. Everything else it redraws for, it can see for itself.
         midi.Played += () => preview.Refresh();
+
+        // A device that would not open. The patch goes on naming it and goes on
+        // being silent, and this line is the only thing that would say why.
+        midi.Trouble += message => Report(message);
 
         // Everything let go when this stops being the window you are typing
         // into. A key released over another program is a key this never hears

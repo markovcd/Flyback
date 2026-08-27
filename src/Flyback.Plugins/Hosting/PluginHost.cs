@@ -2,6 +2,7 @@ using System.Reflection;
 using Flyback.Core.Graph;
 using Flyback.Plugins.Assist;
 using Flyback.Plugins.Audio;
+using Flyback.Plugins.Midi;
 using Flyback.Plugins.Secrets;
 
 namespace Flyback.Plugins.Hosting;
@@ -55,7 +56,8 @@ public static class PluginHost
             registry.Presets,
             problems,
             registry.Assistants,
-            registry.SecretStores);
+            registry.SecretStores,
+            registry.MidiInputs);
     }
 
     private static void LoadFolder(
@@ -184,6 +186,7 @@ public static class PluginHost
         private readonly List<IAudioOutput> audioOutputs = [];
         private readonly List<IPatchAssistant> assistants = [];
         private readonly List<ISecretStore> secretStores = [];
+        private readonly List<IMidiInput> midiInputs = [];
 
         /// <summary>Whoever is registering right now, for blaming in messages.</summary>
         public PluginInfo Source { get; set; } = new("", "");
@@ -193,6 +196,8 @@ public static class PluginHost
         public IReadOnlyList<IPatchAssistant> Assistants => assistants;
 
         public IReadOnlyList<ISecretStore> SecretStores => secretStores;
+
+        public IReadOnlyList<IMidiInput> MidiInputs => midiInputs;
 
         /// <summary>
         /// Built up as plugins register, starting from the engine's own modules.
@@ -270,6 +275,19 @@ public static class PluginHost
             }
 
             secretStores.Add(store);
+        }
+
+        public void AddMidiInput(IMidiInput input)
+        {
+            if (midiInputs.Any(i => i.Id == input.Id))
+            {
+                problems.Add(new PluginProblem(
+                    Source.Id,
+                    $"MIDI input '{input.Id}' is already registered and was ignored."));
+                return;
+            }
+
+            midiInputs.Add(input);
         }
     }
 }

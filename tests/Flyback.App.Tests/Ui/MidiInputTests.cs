@@ -105,6 +105,49 @@ public class MidiInputTests : UiTest
         ((ChoiceOption)picker.SelectedItem!).Id.ShouldBe(MidiSources.Keyboard);
     }
 
+    /// <summary>
+    /// A keyboard plugged in while this panel was already on screen. The list is
+    /// asked again as it opens, because the alternative is telling somebody to
+    /// click on another module and back — which nobody would guess.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_device_plugged_in_after_the_panel_was_drawn_is_there_when_the_list_opens()
+    {
+        var (patch, midi) = Board();
+        var window = Open(patch);
+
+        Select(window, midi);
+
+        var picker = All<ComboBox>(window)
+            .First(box => box.ItemsSource?.Cast<object>().Any(o => o is ChoiceOption) == true);
+
+        picker.ItemsSource!.Cast<ChoiceOption>().ShouldNotContain(option => option.Id == "midi:arrived-late");
+
+        try
+        {
+            MidiSources.Install(() =>
+            [
+                new MidiSource(MidiSources.Keyboard, "Computer keyboard"),
+                new MidiSource("midi:arrived-late", "Arrived Late"),
+            ]);
+
+            picker.IsDropDownOpen = true;
+            Settle(window);
+
+            picker.ItemsSource!.Cast<ChoiceOption>().ShouldContain(option => option.Id == "midi:arrived-late");
+
+            // And the module is still listening to what it was listening to.
+            ((ChoiceOption)picker.SelectedItem!).Id.ShouldBe(MidiSources.Keyboard);
+        }
+        finally
+        {
+            // Back to the machine with nothing plugged in, which is what every
+            // other test here assumes and what the next window would install
+            // anyway.
+            MidiSources.Install(() => [new MidiSource(MidiSources.Keyboard, "Computer keyboard")]);
+        }
+    }
+
     [AvaloniaFact]
     public void A_patch_holding_one_is_compiled_to_read_the_keyboard()
     {

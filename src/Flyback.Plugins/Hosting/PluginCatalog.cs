@@ -1,6 +1,7 @@
 using Flyback.Core.Graph;
 using Flyback.Plugins.Assist;
 using Flyback.Plugins.Audio;
+using Flyback.Plugins.Midi;
 using Flyback.Plugins.Secrets;
 
 namespace Flyback.Plugins.Hosting;
@@ -35,6 +36,7 @@ public sealed class PluginCatalog
     /// <param name="modules">The engine's catalogue with every plugin's modules added to it.</param>
     /// <param name="presets">Patches to start from: the engine's own first, then each plugin's.</param>
     /// <param name="secretStores">The places a key may be kept, or none where nothing can keep one.</param>
+    /// <param name="midiInputs">The ways of hearing what is plugged in, or none where there is no such way.</param>
     internal PluginCatalog(
         IReadOnlyList<LoadedPlugin> plugins,
         IReadOnlyList<IAudioOutput> audioOutputs,
@@ -42,7 +44,8 @@ public sealed class PluginCatalog
         IReadOnlyList<PatchPreset> presets,
         IReadOnlyList<PluginProblem> problems,
         IReadOnlyList<IPatchAssistant>? assistants = null,
-        IReadOnlyList<ISecretStore>? secretStores = null)
+        IReadOnlyList<ISecretStore>? secretStores = null,
+        IReadOnlyList<IMidiInput>? midiInputs = null)
     {
         Plugins = plugins;
         AudioOutputs = audioOutputs;
@@ -51,6 +54,7 @@ public sealed class PluginCatalog
         Problems = problems;
         Assistants = assistants ?? [];
         SecretStores = secretStores ?? [];
+        MidiInputs = midiInputs ?? [];
     }
 
     public IReadOnlyList<LoadedPlugin> Plugins { get; }
@@ -62,6 +66,9 @@ public sealed class PluginCatalog
 
     /// <summary>Everywhere installed that the operating system will hold a secret.</summary>
     public IReadOnlyList<ISecretStore> SecretStores { get; }
+
+    /// <summary>Every way installed of hearing what is plugged in.</summary>
+    public IReadOnlyList<IMidiInput> MidiInputs { get; }
 
     /// <summary>
     /// The engine's modules with every plugin's folded in. Install it before
@@ -128,6 +135,37 @@ public sealed class PluginCatalog
         try
         {
             return store.IsSupported;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// How to hear what is plugged in here: supported, highest priority, ties
+    /// broken on id. Null where nothing installed can listen — in which case the
+    /// only instrument is the computer's own keyboard, which needs no backend
+    /// and is always there.
+    /// </summary>
+    /// <remarks>
+    /// One rather than all of them, the way a sound backend is chosen. Two
+    /// backends on one machine would be two ways to the same socket, and a
+    /// picker offering every keyboard twice under two names is worse than a
+    /// picker offering it once under the better one.
+    /// </remarks>
+    public IMidiInput? PreferredMidiInput => MidiInputs
+        .Where(Supported)
+        .OrderByDescending(i => i.Priority)
+        .ThenBy(i => i.Id, StringComparer.Ordinal)
+        .FirstOrDefault();
+
+    /// <summary>A backend that throws while answering whether it works here has answered no.</summary>
+    private static bool Supported(IMidiInput input)
+    {
+        try
+        {
+            return input.IsSupported;
         }
         catch
         {

@@ -20,6 +20,7 @@
     <Project Path="src/Flyback.Plugins.Timbre/Flyback.Plugins.Timbre.csproj" />
     <Project Path="src/Flyback.Plugins.Modulation/Flyback.Plugins.Modulation.csproj" />
     <Project Path="src/Flyback.Plugins.Wasapi/Flyback.Plugins.Wasapi.csproj" />
+    <Project Path="src/Flyback.Plugins.WinMidi/Flyback.Plugins.WinMidi.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Flyback.App.Tests/Flyback.App.Tests.csproj" />

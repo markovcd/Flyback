@@ -939,7 +939,15 @@ public sealed partial class MainWindow
             choice,
             choice.Value(node.StateOf(extra.Key)?[field.Key]),
             $"{node.Id} {extra.Key} {field.Key}",
-            next => Store(node, extra, field, JsonValue.Create(next))),
+            next => Store(node, extra, field, JsonValue.Create(next)),
+
+            // What the same field would say if asked again. An extra is free to
+            // compute its fields afresh — MidiExtra does, because what it lists
+            // is what is plugged in — and this is how the list gets a second
+            // chance to be right without the panel being rebuilt.
+            () => extra.Fields
+                .OfType<ExtraField.Choice>()
+                .FirstOrDefault(again => again.Key == field.Key)?.Options ?? choice.Options),
 
         _ => null,
     };
@@ -954,8 +962,21 @@ public sealed partial class MainWindow
     /// <see cref="ExtraField.Choice.Name"/> writes one that is not here, so the
     /// picker shows what the patch actually means. Picking anything else drops
     /// it, which is the only way it goes.
+    /// <para>
+    /// <paramref name="fresh"/> is asked again as the list is opened, which is
+    /// the one moment it matters: a MIDI keyboard plugged in while this panel was
+    /// already on screen would otherwise not be there to pick, and clicking on
+    /// another module and back is not an obvious thing to be asked to do. Only
+    /// the opening — a list that changed under a pointer already inside it would
+    /// move the row somebody was reaching for.
+    /// </para>
     /// </remarks>
-    private Control ChoiceRow(ExtraField.Choice choice, string value, string because, Action<string> store)
+    private Control ChoiceRow(
+        ExtraField.Choice choice,
+        string value,
+        string because,
+        Action<string> store,
+        Func<IReadOnlyList<ChoiceOption>>? fresh = null)
     {
         var row = new Grid { ColumnDefinitions = new ColumnDefinitions("78,*") };
 
@@ -968,10 +989,18 @@ public sealed partial class MainWindow
             TextTrimming = TextTrimming.CharacterEllipsis,
         };
 
-        var options = choice.Options.ToList();
+        // What is stored is always in the list, whether or not it is here.
+        List<ChoiceOption> Offer(IReadOnlyList<ChoiceOption> from)
+        {
+            var offered = from.ToList();
 
-        if (options.All(option => option.Id != value))
-            options.Add(new ChoiceOption(value, choice.Name(value)));
+            if (offered.All(option => option.Id != value))
+                offered.Add(new ChoiceOption(value, choice.Name(value)));
+
+            return offered;
+        }
+
+        var options = Offer(choice.Options);
 
         var list = new Picker
         {
@@ -990,6 +1019,22 @@ public sealed partial class MainWindow
             store(picked.Id);
             editor.NotifyPatchChanged(because);
         };
+
+        if (fresh is not null)
+            list.DropDownOpened += (_, _) =>
+            {
+                var offered = Offer(fresh());
+
+                // Left alone when nothing has changed, which is nearly always.
+                // Replacing the items clears the selection on the way past, and
+                // doing that for no reason is how a picker loses its place.
+                if (offered.Select(option => option.Id).SequenceEqual(options.Select(option => option.Id))) return;
+
+                options = offered;
+
+                list.ItemsSource = options;
+                list.SelectedIndex = options.FindIndex(option => option.Id == value);
+            };
 
         Grid.SetColumn(caption, 0);
         Grid.SetColumn(list, 1);

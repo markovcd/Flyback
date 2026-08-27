@@ -243,6 +243,11 @@ public sealed partial class MainWindow
         Stop();
 
         audio.Dispose();
+
+        // And the instruments, which are hardware somebody else may want back. A
+        // port left open outlives the window that was reading it.
+        midi.Dispose();
+
         base.OnClosed(e);
     }
 

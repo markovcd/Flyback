@@ -108,6 +108,40 @@ is `IMidiSource`-shaped work behind [0025](0025-platform-io-behind-loadable-plug
 and [0028](0028-publish-one-platform-at-a-time.md) that has not been done; the
 picker is built for it and lists what there is, which today is one thing.
 
+**Amended: hardware arrives, and the shape above was right.** `IMidiInput` and
+`IMidiPort` split the way `IAudioOutput` and `IAudioDevice` do — what might exist
+against what is open — and `Flyback.Plugins.WinMidi` is the first backend behind
+them, `Platform="win"`, over the multimedia library Windows already has. CoreMIDI
+and the ALSA sequencer are the other two thirds and are not written.
+
+Nothing above the hub changed to accept it, which is the part worth recording:
+the picker already listed whatever `MidiSources.All` said, the patch format
+already stored a string, and the module already compiled to whatever that string
+named. What was added below the line is a second kind of instrument and the
+question of when to open one.
+
+**A device is held only while a program is reading it**, which is the same rule
+the computer's keys already followed and now matters more. A MIDI In on the
+canvas wired to nothing has been eliminated from both programs, so it opens
+nothing — the keyboard stays available to whatever else is using it, and a patch
+becomes an instrument the moment it is wired to one rather than the moment it is
+drawn. Recompiling reconciles the two: devices a program reads are opened,
+devices it no longer reads are handed back.
+
+**Losing the focus stops meaning "let everything go".** It never should have
+meant that for hardware: a MIDI keyboard goes on playing while another program is
+in front, and the window has no business cutting a held chord off because
+somebody alt-tabbed. It still means it for the computer's keys, which is the case
+it was written for — a key released over another program is a key this never
+hears about.
+
+**The note now arrives on a thread nobody here owns.** A driver calls in on its
+own, so the hub is guarded by a lock the playing thread never takes —
+`LiveValues` is single floats and was built for exactly that. The rule that keeps
+it from deadlocking is written where it can be seen: a device is never opened or
+closed with that lock held, because closing one waits for the driver's thread and
+the driver's thread may be waiting for the lock.
+
 ## Consequences
 
 **A patch is a thing you can perform, and the picture performs with it.** That is

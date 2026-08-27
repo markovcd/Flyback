@@ -1,5 +1,6 @@
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
+using Flyback.Plugins.Midi;
 
 namespace Flyback.App.Midi;
 
@@ -20,21 +21,43 @@ namespace Flyback.App.Midi;
 /// running, and both renderers then read plain floats with nobody to call.
 /// </para>
 /// <para>
-/// One backend so far, and it is the one that needs no driver: the keyboard the
-/// computer already has. Hardware arrives as more entries in
-/// <see cref="Sources"/> and more voices in the same dictionary — nothing else
-/// here changes shape, because a program names its instrument by a string and
-/// does not care what is behind it.
+/// Two kinds of instrument, and the difference between them is only where the
+/// notes come from. The computer's keyboard needs no driver and is always there;
+/// hardware arrives through <see cref="IMidiInput"/>, one plugin per platform,
+/// and becomes more entries in <see cref="Sources"/> and more voices in the same
+/// dictionary. Nothing below this line knows which is which — a program names its
+/// instrument by a string and does not care what is behind it.
+/// </para>
+/// <para>
+/// <b>Three threads and one rule.</b> Keys arrive on the UI thread, notes arrive
+/// on a thread the MIDI driver owns, and both are read by the thread that plays.
+/// Everything this class holds is guarded by <see cref="gate"/>; the reading
+/// thread takes no lock at all, because <see cref="LiveValues"/> is single floats
+/// and is built for exactly that. The rule that keeps it from deadlocking is that
+/// a device is never opened or closed with the lock held — closing one waits for
+/// the driver's thread, and that thread may be waiting for this lock.
 /// </para>
 /// </remarks>
-internal sealed class MidiHub
+internal sealed class MidiHub(IMidiInput? hardware = null) : IDisposable
 {
+    /// <summary>
+    /// Guards everything below. Held briefly and never across a call into a
+    /// device — see the note above about which way that deadlock runs.
+    /// </summary>
+    private readonly Lock gate = new();
+
     /// <summary>
     /// One voice per instrument, made the first time anything asks. Keyed by the
     /// same id a patch stores, so a device that comes back finds its own voice
     /// rather than a fresh one.
     /// </summary>
     private readonly Dictionary<string, MidiVoice> voices = new(StringComparer.Ordinal);
+
+    /// <summary>
+    /// The devices currently listening, keyed the same way. Only ever the ones a
+    /// running program is actually reading — see <see cref="Listen"/>.
+    /// </summary>
+    private readonly Dictionary<string, IMidiPort> listening = new(StringComparer.Ordinal);
 
     /// <summary>
     /// The blocks of the programs currently running — the picture's and the
@@ -49,22 +72,43 @@ internal sealed class MidiHub
     /// when nothing has changed, and a key going down while the clock is stopped
     /// is exactly that: a change with no time behind it.
     /// </summary>
+    /// <remarks>
+    /// Raised on whichever thread played the note, which for hardware is the
+    /// driver's. That is safe because of what is on the other end and only
+    /// because of it: both preview surfaces answer <c>Refresh</c> by setting a
+    /// flag their own timer reads, and neither touches the visual tree. A handler
+    /// added here that did would need marshalling of its own — and would be
+    /// paying for it on every note, which is why this does not do it for
+    /// everybody in advance.
+    /// </remarks>
     public event Action? Played;
 
     /// <summary>
-    /// What there is to play with. Only the computer's own keys so far —
-    /// hardware is a plugin that has not been written, and until it is this is
-    /// the honest list rather than an empty one.
+    /// A device would not open. Said out loud rather than swallowed, because the
+    /// patch goes on naming an instrument that is now silent and nothing else
+    /// would explain why.
     /// </summary>
-    public IReadOnlyList<MidiSource> Sources { get; } =
-        [new MidiSource(MidiSources.Keyboard, "Computer keyboard")];
+    public event Action<string>? Trouble;
+
+    /// <summary>
+    /// What there is to play with: the computer's own keys, and then whatever is
+    /// plugged in.
+    /// </summary>
+    /// <remarks>
+    /// Asked afresh every time rather than listed once, because devices are
+    /// plugged in and pulled out while the program runs. The keyboard is first
+    /// and is always there, which is what makes this list never empty and the
+    /// picker never a dead end.
+    /// </remarks>
+    public IReadOnlyList<MidiSource> Sources =>
+        [new MidiSource(MidiSources.Keyboard, "Computer keyboard"), .. Ports().Select(p => new MidiSource(p.Id, p.Name))];
 
     /// <summary>The keys under your hands, mapped to notes.</summary>
     public ComputerKeyboard Keyboard { get; } = new();
 
     /// <summary>
-    /// Points this at the programs that are now running, and fills their blocks
-    /// with what is already held.
+    /// Points this at the programs that are now running, fills their blocks with
+    /// what is already held, and opens or closes devices to match what they read.
     /// </summary>
     /// <remarks>
     /// Filling immediately is the whole reason this is not just an assignment. An
@@ -76,16 +120,13 @@ internal sealed class MidiHub
     /// </remarks>
     public void Follow(params LiveValues[] blocks)
     {
-        following = blocks;
+        lock (gate) following = blocks;
+
+        // Outside the lock, and it has to be: closing a device waits for the
+        // driver's thread, which may at that moment be waiting to deliver a note.
+        Listen(blocks);
+
         Publish();
-    }
-
-    /// <summary>The voice of one instrument, made if this is the first anyone has heard of it.</summary>
-    public MidiVoice Voice(string source)
-    {
-        if (voices.TryGetValue(source, out var existing)) return existing;
-
-        return voices[source] = new MidiVoice();
     }
 
     /// <summary>
@@ -97,7 +138,8 @@ internal sealed class MidiHub
     {
         if (Keyboard.Note(key) is not { } note) return false;
 
-        Voice(MidiSources.Keyboard).Down(note, ComputerKeyboard.Velocity);
+        lock (gate) Voice(MidiSources.Keyboard).Down(note, ComputerKeyboard.Velocity);
+
         Publish();
 
         return true;
@@ -107,7 +149,8 @@ internal sealed class MidiHub
     {
         if (Keyboard.Note(key) is not { } note) return false;
 
-        Voice(MidiSources.Keyboard).Up(note);
+        lock (gate) Voice(MidiSources.Keyboard).Up(note);
+
         Publish();
 
         return true;
@@ -133,8 +176,12 @@ internal sealed class MidiHub
 
         if (moved == 0) return null;
 
-        Voice(MidiSources.Keyboard).Silence();
-        Keyboard.Octave += moved;
+        lock (gate)
+        {
+            Voice(MidiSources.Keyboard).Silence();
+            Keyboard.Octave += moved;
+        }
+
         Publish();
 
         return $"Keyboard octave: {Keyboard.Range}.";
@@ -145,25 +192,231 @@ internal sealed class MidiHub
     /// you are typing into: a key released over another program is a key this
     /// never hears about, and the note would hang for ever.
     /// </summary>
+    /// <remarks>
+    /// The computer's keys only. A MIDI keyboard is not the window's to lose —
+    /// its notes go on arriving while another program has the focus, and letting
+    /// them go because somebody alt-tabbed would cut a held chord off for no
+    /// reason the person could see.
+    /// </remarks>
     public void AllOff()
     {
-        var sounding = false;
+        bool sounding;
 
-        foreach (var voice in voices.Values)
+        lock (gate)
         {
-            sounding |= voice.Playing;
+            var voice = Voice(MidiSources.Keyboard);
+            sounding = voice.Playing;
             voice.Silence();
         }
 
         if (sounding) Publish();
     }
 
-    /// <summary>Writes every voice into every running program's block.</summary>
+    /// <summary>
+    /// Closes every device. The window's, at the end — a port left open outlives
+    /// the window that was reading it and holds hardware another program wants.
+    /// </summary>
+    public void Dispose()
+    {
+        List<IMidiPort> ports;
+
+        lock (gate)
+        {
+            ports = [.. listening.Values];
+            listening.Clear();
+        }
+
+        foreach (var port in ports) Shut(port);
+    }
+
+    /// <summary>What is plugged in, and nothing at all where nothing can be asked.</summary>
+    /// <remarks>
+    /// Total, whatever a backend does. Enumerating hardware is reading something
+    /// that may be busy, half-installed or gone since the last call, and none of
+    /// that is a reason for a picker not to draw — the same bargain
+    /// <see cref="MidiSources.All"/> makes one layer up, kept here as well so the
+    /// list this hands out is already safe.
+    /// </remarks>
+    private IReadOnlyList<MidiPortInfo> Ports()
+    {
+        if (hardware is null) return [];
+
+        try
+        {
+            return hardware.Ports ?? [];
+        }
+        catch
+        {
+            return [];
+        }
+    }
+
+    /// <summary>
+    /// Opens the devices the running programs read, and closes the ones they do
+    /// not.
+    /// </summary>
+    /// <remarks>
+    /// A device is hardware somebody else may want, so it is held only while
+    /// something is listening to it. A MIDI In sitting on the canvas wired to
+    /// nothing has been eliminated from both programs (ADR-0022) and reads
+    /// nothing, so it does not take the keyboard away from whatever else is
+    /// using it — the same question <c>MainWindow.Playing</c> asks about the
+    /// computer's own keys, asked of the compiled programs for the same reason.
+    /// </remarks>
+    private void Listen(LiveValues[] blocks)
+    {
+        if (hardware is null) return;
+
+        var wanted = Ports()
+            .Select(port => port.Id)
+            .Where(id => blocks.Any(block => Reads(block, id)))
+            .ToHashSet(StringComparer.Ordinal);
+
+        List<IMidiPort> shutting;
+        List<string> opening;
+
+        lock (gate)
+        {
+            shutting = [.. listening.Where(entry => !wanted.Contains(entry.Key)).Select(entry => entry.Value)];
+
+            foreach (var port in shutting) listening.Remove(port.Id);
+
+            opening = [.. wanted.Where(id => !listening.ContainsKey(id))];
+        }
+
+        // Both outside the lock. Either one waits on a driver, and a driver may
+        // at that moment be waiting to hand us a note.
+        foreach (var port in shutting) Shut(port);
+
+        foreach (var id in opening) Start(id);
+    }
+
+    /// <summary>Whether a program reads any of one instrument's signals.</summary>
+    /// <remarks>
+    /// All four asked rather than one, because a patch is free to use only the
+    /// pitch, and dead-code elimination will have dropped the three it does not
+    /// touch. Asking about the gate alone would leave a keyboard unopened for a
+    /// patch that only wanted the note.
+    /// </remarks>
+    private static bool Reads(LiveValues block, string source) =>
+        block.Reads(MidiSignal.Key(source, MidiSignal.Pitch))
+        || block.Reads(MidiSignal.Key(source, MidiSignal.Gate))
+        || block.Reads(MidiSignal.Key(source, MidiSignal.Velocity))
+        || block.Reads(MidiSignal.Key(source, MidiSignal.Strikes));
+
+    /// <summary>
+    /// Opens one device and starts listening to it. A device that will not open
+    /// is said out loud and then let alone — it is not tried again until
+    /// something recompiles, because a device another program has taken will
+    /// still be taken a millisecond later.
+    /// </summary>
+    private void Start(string id)
+    {
+        try
+        {
+            var port = hardware!.Open(id, message => Receive(id, message));
+
+            lock (gate) listening[id] = port;
+        }
+        catch (Exception ex)
+        {
+            Trouble?.Invoke($"Could not open {Named(id)}: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Closes one device, and lets go of whatever it was holding down.
+    /// </summary>
+    /// <remarks>
+    /// The silence is the point. A device closed mid-chord sends no note-offs —
+    /// there is nobody left to send them to — so the notes it was holding would
+    /// stay held for the rest of the session, which is the one failure this whole
+    /// class exists to avoid.
+    /// </remarks>
+    private void Shut(IMidiPort port)
+    {
+        try
+        {
+            port.Dispose();
+        }
+        catch
+        {
+            // A device that will not close cleanly is not something anybody can
+            // act on, and it is certainly not worth taking the window down for.
+        }
+
+        lock (gate)
+        {
+            if (!voices.TryGetValue(port.Id, out var voice) || !voice.Playing) return;
+
+            voice.Silence();
+        }
+
+        Publish();
+    }
+
+    /// <summary>
+    /// Something arrived from a device. Called on a thread the driver owns, so
+    /// what happens here is the write and nothing else — the picture is asked for
+    /// on the UI thread by <see cref="Publish"/>.
+    /// </summary>
+    private void Receive(string source, MidiMessage message)
+    {
+        lock (gate)
+        {
+            var voice = Voice(source);
+
+            switch (message.Action)
+            {
+                case MidiAction.Down:
+                    voice.Down(message.Note, message.Velocity);
+                    break;
+
+                case MidiAction.Up:
+                    voice.Up(message.Note);
+                    break;
+
+                case MidiAction.AllOff:
+                    voice.Silence();
+                    break;
+            }
+        }
+
+        Publish();
+    }
+
+    /// <summary>What the picker calls an instrument, for saying which one would not open.</summary>
+    private string Named(string id) =>
+        Ports().FirstOrDefault(port => port.Id == id).Name is { Length: > 0 } name ? name : id;
+
+    /// <summary>
+    /// The voice of one instrument, made if this is the first anyone has heard of
+    /// it. Call it holding <see cref="gate"/> — it writes the dictionary that
+    /// every thread here reads.
+    /// </summary>
+    private MidiVoice Voice(string source)
+    {
+        if (voices.TryGetValue(source, out var existing)) return existing;
+
+        return voices[source] = new MidiVoice();
+    }
+
+    /// <summary>
+    /// Writes every voice into every running program's block, and asks for a
+    /// frame.
+    /// </summary>
+    /// <remarks>
+    /// The write is under the lock and the asking is not, which is what keeps a
+    /// handler free to call back in here without meeting itself.
+    /// </remarks>
     private void Publish()
     {
-        foreach (var block in following)
-            foreach (var (source, voice) in voices)
-                voice.WriteTo(block, source);
+        lock (gate)
+        {
+            foreach (var block in following)
+                foreach (var (source, voice) in voices)
+                    voice.WriteTo(block, source);
+        }
 
         Played?.Invoke();
     }
