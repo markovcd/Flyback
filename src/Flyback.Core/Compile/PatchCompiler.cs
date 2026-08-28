@@ -383,7 +383,7 @@ public static class PatchCompiler
             // and tidying its own — see NodeExtra. A module with none, which is
             // nearly all of them, folds nothing and pays nothing.
             var context = Carried(
-                new EmitContext(inputs, [])
+                new EmitContext(inputs)
                 {
                     Node = node.Id,
                     Trace = Watched(node, def),
@@ -520,7 +520,7 @@ public static class PatchCompiler
 
                 outputs = normals[bus.TypeId] = def.Emit(
                     emitter,
-                    Carried(new EmitContext(knobs, []), scratch, def));
+                    Carried(new EmitContext(knobs), scratch, def));
             }
 
             return bus.Port >= 0 && bus.Port < outputs.Length ? outputs[bus.Port] : null;

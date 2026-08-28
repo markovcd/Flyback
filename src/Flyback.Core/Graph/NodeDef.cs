@@ -10,6 +10,25 @@ namespace Flyback.Core.Graph;
 /// Indexes straight through to <see cref="Inputs"/>, so a module that wants
 /// nothing but its sockets reads exactly as it always did — <c>i[0]</c> is input
 /// zero. Only the sequencers look further, and only at <see cref="Steps"/>.
+/// <para>
+/// What is on it falls in three groups, and they are laid out below in that
+/// order because reading them as one is a mistake worth preventing. The sockets
+/// come first and every module has them. Then what the compiler knows about this
+/// node and the module cannot — its identity, and the buffer a Scope charts;
+/// these are supplied where the context is built, and are not carried state
+/// however much <see cref="Trace"/> looks like it. Last, what the instance
+/// actually carries, every one of them put here by a
+/// <see cref="NodeExtra.Fold"/>.
+/// </para>
+/// <para>
+/// Everything but <see cref="Inputs"/> is an init property with a default that
+/// means "none", so a context may be built for a module that wants none of it
+/// and an emit function may read any of it without asking first. That is also
+/// what keeps this type's constructor out of the plugin ABI
+/// ([0051](0051-a-quantisers-scale-is-a-set-on-the-node.md)): a group gaining a
+/// member is a property added, which a plugin compiled against an earlier build
+/// does not notice.
+/// </para>
 /// </remarks>
 /// <param name="Inputs">
 /// One slot per declared input, already resolved — either the upstream node's
@@ -17,12 +36,7 @@ namespace Flyback.Core.Graph;
 /// the port declared. A <see cref="PortSpec.Swept"/> input is the exception: it
 /// holds its knob until <see cref="Resolve"/> is called for it.
 /// </param>
-/// <param name="Steps">
-/// The instance's notes, empty for every module that has none. These are values
-/// rather than slots on purpose: a sequencer folds its lengths into running sums
-/// at compile time, which it could not do with a register.
-/// </param>
-public readonly record struct EmitContext(Slot[] Inputs, IReadOnlyList<Step> Steps)
+public readonly record struct EmitContext(Slot[] Inputs)
 {
     public Slot this[int port] => Inputs[port];
 
@@ -47,13 +61,15 @@ public readonly record struct EmitContext(Slot[] Inputs, IReadOnlyList<Step> Ste
     /// <summary>How the compiler resolves a deferred input, supplied by it.</summary>
     public Func<int, Slot>? Resolver { get; init; }
 
+    // --- what the compiler knows and the module cannot ---------------------------
+
     /// <summary>
     /// Which instance is being lowered, for the one kind of module that has to
     /// be addressable from outside the program.
     /// </summary>
     /// <remarks>
-    /// Identity rather than state, which is why it sits apart from
-    /// <see cref="Sample"/> and the rest: those are things an instance
+    /// Identity rather than state, which is why it sits here rather than below
+    /// with <see cref="Sample"/> and the rest: those are things an instance
     /// <em>carries</em> and this is only which instance it is. A module needs it
     /// when its value is not computed by the program at all but played into it —
     /// see <see cref="OpCode.LoadLive"/> — because the name it listens on has to
@@ -70,6 +86,56 @@ public readonly record struct EmitContext(Slot[] Inputs, IReadOnlyList<Step> Ste
     public Guid Node { get; init; }
 
     /// <summary>
+    /// The buffer this instance charts — the stretch of the past something
+    /// outside the program keeps refilling — and null where the program being
+    /// compiled is the one doing the playing rather than the drawing.
+    /// </summary>
+    /// <remarks>
+    /// A <see cref="LoadedSample"/> like <see cref="Sample"/>, and read the same
+    /// way, which is the point: a chart of what was played is a table read, and
+    /// the module drawing it needs to know nothing about rings, threads or sound
+    /// cards. What differs is who fills it — a clip arrives loaded and never
+    /// changes, and this one changes every frame.
+    /// <para>
+    /// And who <em>puts</em> it here, which is why it sits in this group and not
+    /// the next one. Nothing an instance carries says anything about a Scope: a
+    /// buffer is not in the patch file, is not seeded, and cannot be. The
+    /// compiler supplies it where the context is built, the way it supplies
+    /// <see cref="Node"/> — so there is no <c>TraceExtra</c> to look for, and
+    /// looking for one is the reading this grouping is here to prevent.
+    /// </para>
+    /// <para>
+    /// Null on the speakers' program is not a fallback but the ordinary case:
+    /// there the Scope is not drawn at all, and what it contributes is a
+    /// <see cref="OpCode.Tap"/> the compiler emits without entering the module.
+    /// </para>
+    /// </remarks>
+    public LoadedSample? Trace { get; init; }
+
+    // --- what the instance carries, each put here by a Fold ----------------------
+
+    /// <summary>
+    /// The instance's notes, empty for every module that has none.
+    /// </summary>
+    /// <remarks>
+    /// Values rather than slots on purpose: a sequencer folds its lengths into
+    /// running sums at compile time, which it could not do with a register.
+    /// <para>
+    /// An init property rather than the constructor parameter it used to be. It
+    /// was the first of these and predates the convention the other three were
+    /// added under ([0051](0051-a-quantisers-scale-is-a-set-on-the-node.md)),
+    /// which left it as the one piece of carried state in the plugin ABI — and
+    /// left the compiler passing an empty list at both construction sites for
+    /// <see cref="StepsExtra.Fold"/> to overwrite a moment later.
+    /// </para>
+    /// </remarks>
+    public IReadOnlyList<Step> Steps
+    {
+        get => field ?? [];
+        init;
+    }
+
+    /// <summary>
     /// The instance's scale — the notes of the octave a quantiser snaps to, and
     /// empty for every module that carries none.
     /// </summary>
@@ -81,12 +147,9 @@ public readonly record struct EmitContext(Slot[] Inputs, IReadOnlyList<Step> Ste
     /// could not do that: the shape of the program would have to cover all
     /// twelve however few were switched on.
     /// <para>
-    /// An init property rather than a constructor parameter: a plugin compiled
-    /// against an earlier build still finds the constructor it was compiled
-    /// against, and this type is part of what a plugin is written against. The
-    /// getter answers with an empty list rather than null so that an emit
+    /// The getter answers with an empty list rather than null so that an emit
     /// function may read it without asking, including on a context that was
-    /// never given one.
+    /// never given one — which is every module but the Quantiser.
     /// </para>
     /// </remarks>
     public IReadOnlyList<int> Scale
@@ -126,25 +189,6 @@ public readonly record struct EmitContext(Slot[] Inputs, IReadOnlyList<Step> Ste
     /// answer is in whether it was given anything.
     /// </remarks>
     public LoadedImage? Picture { get; init; }
-
-    /// <summary>
-    /// The buffer this instance charts — the stretch of the past something
-    /// outside the program keeps refilling — and null where the program being
-    /// compiled is the one doing the playing rather than the drawing.
-    /// </summary>
-    /// <remarks>
-    /// A <see cref="LoadedSample"/> like <see cref="Sample"/>, and read the same
-    /// way, which is the point: a chart of what was played is a table read, and
-    /// the module drawing it needs to know nothing about rings, threads or
-    /// sound cards. What differs is who fills it — a clip arrives loaded and
-    /// never changes, and this one changes every frame.
-    /// <para>
-    /// Null on the speakers' program is not a fallback but the ordinary case:
-    /// there the Scope is not drawn at all, and what it contributes is a
-    /// <see cref="OpCode.Tap"/> the compiler emits without entering the module.
-    /// </para>
-    /// </remarks>
-    public LoadedSample? Trace { get; init; }
 
     /// <summary>
     /// What a plugin's own kinds of extra folded onto this context, keyed by

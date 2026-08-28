@@ -33,7 +33,7 @@ public class TempoTests
         var def = NodeCatalog.BuiltIn.Require(NodeCatalog.TempoTypeId);
         var emitter = new Emitter();
 
-        var outputs = def.Emit(emitter, new EmitContext([emitter.Constant(bpm)], []));
+        var outputs = def.Emit(emitter, new EmitContext([emitter.Constant(bpm)]));
         var program = new CompiledPatch(
             emitter.ToProgram(), emitter.RegisterCount, outputs[0].Base, 1);
 
@@ -82,7 +82,7 @@ public class AdsrTests
             inputs[port] = emitter.Constant(named < 0 ? def.Inputs[port].Default : knobs[named].Value);
         }
 
-        var outputs = def.Emit(emitter, new EmitContext(inputs, []));
+        var outputs = def.Emit(emitter, new EmitContext(inputs));
         var program = new CompiledPatch(emitter.ToProgram(), emitter.RegisterCount, outputs[0].Base, 1);
 
         var registers = program.AllocateRegisters();

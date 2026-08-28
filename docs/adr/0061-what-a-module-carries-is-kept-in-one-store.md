@@ -112,3 +112,31 @@ not being one, and nothing warns about it.
 for "carries none" and for "carries an empty one" alike, so the two are told
 apart with `StateOf(Key) is null` where it matters — which is a question about
 the file rather than about the module, and only tests have had to ask it.
+
+**`EmitContext` was left alone, deliberately, and the same question was asked of
+it.** It has the shape `NodeInstance` had — four typed properties for the
+engine's kinds beside an open `Extras` — so the symmetric change is available.
+It is not worth making. The whole payoff above was `Clone`, and there is no
+`Clone`: the type is a `readonly record struct` built per node inside one compile
+and thrown away, `with` copies every member for free, and nothing serialises it.
+Folding the four into `Extras` would close no bug class and would spend the one
+claim of 0054 that survives this record — that `node.Sample is not { } clip`
+inside an emit function is the feature. The two stores look alike and are not:
+`State` is JSON because it must round-trip a shape the engine cannot understand,
+`Extras` is `object` because it must carry one within a compile, and neither
+constraint applies to the four kinds the engine understands end to end.
+
+**Two smaller things on it were worth fixing, and are.** `Steps` was a
+constructor parameter — the first of these, added before
+[0051](0051-a-quantisers-scale-is-a-set-on-the-node.md) made the rest init
+properties to keep this constructor out of the plugin ABI. So the one piece of
+carried state that was in the ABI was the one nothing needed there: both compiler
+sites passed an empty list for `StepsExtra.Fold` to overwrite a moment later. It
+is an init property now and the constructor is `EmitContext(Slot[] Inputs)`,
+which is what every member added since already assumed. And the members are
+grouped, because the type has three kinds of thing on it and read as one: the
+sockets, then what the compiler knows and the module cannot, then what a `Fold`
+put there. `Trace` belongs to the middle group and looks like it belongs to the
+last — 0054's own consequences say "`Steps`, `Scale`, `Sample` and `Trace` stay
+what they are, and `Fold` sets them", and no `Fold` has ever set `Trace`. There
+is no `TraceExtra` to find, and the grouping is there so nobody goes looking.

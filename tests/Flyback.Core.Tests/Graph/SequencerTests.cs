@@ -76,7 +76,7 @@ public class SequencerTests
         // Sanitised the way the compiler sanitises them, so these runs and a
         // real patch see the same notes.
         var steps = (notes ?? def.Extra<StepsExtra>()?.Spec.Default ?? []).Select(s => s.Sane()).ToArray();
-        var outputs = def.Emit(emitter, new EmitContext(inputs, steps));
+        var outputs = def.Emit(emitter, new EmitContext(inputs) { Steps = steps });
 
         return (new CompiledPatch(emitter.ToProgram(), emitter.RegisterCount, outputs[0].Base, 1), outputs);
     }

@@ -180,7 +180,7 @@ public class MixerTests
         for (var port = 0; port < inputs.Length; port++)
             inputs[port] = emitter.Load(OpCode.LoadT);
 
-        def.Emit(emitter, new EmitContext(inputs, []));
+        def.Emit(emitter, new EmitContext(inputs));
 
         var program = emitter.ToProgram();
         program.Count(o => o.Code == OpCode.Mul).ShouldBe(4);
