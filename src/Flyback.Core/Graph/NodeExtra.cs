@@ -192,14 +192,22 @@ public abstract record NodeExtra
     }
 
     /// <summary>
-    /// That the module carries this at all, and how to set it — for the listing
-    /// of what a module is, as opposed to what one instance holds.
+    /// That the module carries this at all — for the listing of what a module
+    /// is, as opposed to what one instance holds.
     /// </summary>
+    /// <remarks>
+    /// What it carries and not how to write it. Which tool writes a kind is the
+    /// assistant's vocabulary, declared and dispatched in a project that
+    /// references this one, so a name for it here would be a name this assembly
+    /// cannot reference, rename with, or check — see <c>Assist.Vocabulary</c>,
+    /// which appends that half. An override that names a tool anyway still
+    /// works; it will simply say so twice.
+    /// </remarks>
     public virtual string Announce()
     {
         var named = string.Join(", ", Fields.Select(f => f.Key));
 
-        return $"  {Key,-6} {named}, set with set_extra — not knobs";
+        return $"  {Key,-6} {named} — not knobs";
     }
 
     /// <summary>
@@ -320,7 +328,7 @@ public sealed record StepsExtra(StepSpec Spec) : NodeExtra
     }
 
     public override string Announce() =>
-        $"  notes  a list of up to {NodeCatalog.MaxSteps}, set with set_steps — not knobs";
+        $"  notes  a list of up to {NodeCatalog.MaxSteps} — not knobs";
 
     private static string Number(float value) =>
         value.ToString(System.Globalization.CultureInfo.InvariantCulture);
@@ -377,7 +385,7 @@ public sealed record ScaleExtra(IReadOnlyList<int> Default) : NodeExtra
     }
 
     public override string Announce() =>
-        $"  scale  which of the {Pitch.Classes} pitch classes are on, set with set_scale — not knobs";
+        $"  scale  which of the {Pitch.Classes} pitch classes are on — not knobs";
 }
 
 /// <summary>The audio file a player reads.</summary>
@@ -460,7 +468,7 @@ public sealed record SampleExtra : NodeExtra
     }
 
     public override string Announce() =>
-        "  file   a path to a WAV, set with set_sample — not a knob";
+        "  file   a path to a WAV — not a knob";
 }
 
 /// <summary>The picture a module shows.</summary>
@@ -547,5 +555,5 @@ public sealed record PictureExtra : NodeExtra
     }
 
     public override string Announce() =>
-        "  picture   a path to a PNG, set with set_picture — not a knob";
+        "  picture   a path to a PNG — not a knob";
 }

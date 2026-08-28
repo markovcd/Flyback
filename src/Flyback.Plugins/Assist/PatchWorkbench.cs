@@ -146,11 +146,11 @@ public sealed class PatchWorkbench
                 "describe_patch" => Fine(DescribePatch()),
                 "add_module" => AddModule(arguments),
                 "set_knobs" => SetKnobs(arguments),
-                "set_steps" => SetSteps(arguments),
-                "set_scale" => SetScale(arguments),
-                "set_sample" => SetSample(arguments),
-                "set_picture" => SetPicture(arguments),
-                "set_extra" => SetExtra(arguments),
+                Vocabulary.SetSteps => SetSteps(arguments),
+                Vocabulary.SetScale => SetScale(arguments),
+                Vocabulary.SetSample => SetSample(arguments),
+                Vocabulary.SetPicture => SetPicture(arguments),
+                Vocabulary.SetExtra => SetExtra(arguments),
                 "connect" => Connect(arguments),
                 "disconnect" => Disconnect(arguments),
                 "remove_module" => RemoveModule(arguments),
@@ -426,11 +426,15 @@ public sealed class PatchWorkbench
             return ToolOutcome.Refused($"{Handle(node)} has no '{key}' — {carries}.");
         }
 
+        // A kind with no declared fields is one this tool cannot write, and every
+        // one of them is an engine kind with a tool of its own. Named from the
+        // same place the module listing names it, so the refusal cannot send a
+        // model somewhere the listing did not.
         if (extra.Fields.Count == 0)
         {
             return ToolOutcome.Refused(
-                $"'{key}' on {Handle(node)} is not set this way. The built-in notes, scale and "
-                + "file have set_steps, set_scale, set_sample and set_picture.");
+                $"'{key}' on {Handle(node)} is not set this way — use "
+                + $"{Vocabulary.ToolFor(key)}.");
         }
 
         if (!Text(arguments, "field", out var name))
@@ -815,7 +819,7 @@ public sealed class PatchWorkbench
         // What the module carries that is neither a socket nor a knob, which
         // the two loops above cannot show — the whole reason a model asking
         // about a Sequencer or a Quantiser would otherwise miss half of it.
-        foreach (var extra in def.Extras) text.AppendLine(extra.Announce());
+        foreach (var extra in def.Extras) text.AppendLine(Vocabulary.Announce(extra));
 
         if (def.Description.Length > 0) text.AppendLine(def.Description);
     }
@@ -1237,7 +1241,7 @@ public sealed class PatchWorkbench
                 }
                 """),
 
-            new("set_steps",
+            new(Vocabulary.SetSteps,
                 "Replaces the whole tune on a sequencer. Its notes are a list on the module rather "
                 + "than knobs, so this is the only way to write one — send every note in order, "
                 + "because this replaces what was there. 'value' is a note number on a Note "
@@ -1266,7 +1270,7 @@ public sealed class PatchWorkbench
                 }
                 """),
 
-            new("set_scale",
+            new(Vocabulary.SetScale,
                 "Replaces the whole scale on a Quantiser. Its notes are a list on the module "
                 + "rather than knobs, so this is the only way to set one — send every note you "
                 + "want, because this replaces what was there. They are pitch classes, 0 to 11, "
@@ -1288,7 +1292,7 @@ public sealed class PatchWorkbench
                 }
                 """),
 
-            new("set_sample",
+            new(Vocabulary.SetSample,
                 "Points a Sample module at a sound file. The path is neither a knob nor a wire, "
                 + "so this is the only way to set one — and it is the one thing in a patch that "
                 + "refers to something outside it, so the file has to exist where you say it "
@@ -1306,7 +1310,7 @@ public sealed class PatchWorkbench
                 }
                 """),
 
-            new("set_picture",
+            new(Vocabulary.SetPicture,
                 "Points an Image module at a picture file. The path is neither a knob nor a wire, "
                 + "so this is the only way to set one, and like a sample it refers to something "
                 + "outside the patch — the file has to exist where you say it does. A PNG: 8 or 16 "
@@ -1324,7 +1328,7 @@ public sealed class PatchWorkbench
                 }
                 """),
 
-            new("set_extra",
+            new(Vocabulary.SetExtra,
                 "Sets one named value on a module that carries something a plugin defined — the "
                 + "rows a module listing writes under a name of their own, like 'notes' or "
                 + "'chord', rather than as 'in N'. Take the extra's name and the field's from "

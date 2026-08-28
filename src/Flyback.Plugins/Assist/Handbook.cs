@@ -232,9 +232,9 @@ internal static class Handbook
         it, and `note` a knob that reads as a note name rather than a number.
         `<-Module` in place of a default marks a normalled input: it has no knob
         and is already reading that module with no wire.
-        A `notes` line means the module carries a list of notes instead of step
-        knobs — write it with `set_steps`. A `scale` line means it carries a set
-        of pitch classes — write it with `set_scale`.
+        A line that is neither an input nor an output means the module carries
+        something that is not a knob at all — a tune, a scale, a file — and it
+        names the tool that writes it.
 
         """;
 
@@ -282,7 +282,7 @@ internal static class Handbook
         // Said per module rather than only in the preamble, because this is the
         // one place a model looks to find out what a module has — and a
         // sequencer's inputs say nothing about the tune it plays.
-        foreach (var extra in def.Extras) text.AppendLine(extra.Announce());
+        foreach (var extra in def.Extras) text.AppendLine(Vocabulary.Announce(extra));
 
         if (prose && def.Description.Length > 0)
             text.Append("  ").AppendLine(def.Description);

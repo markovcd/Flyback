@@ -190,6 +190,6 @@ public sealed record MidiExtra : NodeExtra
         var offered = string.Join(", ", MidiSources.All.Select(source => source.Id));
 
         return $"  midi   device, which instrument it listens to — one of {offered}, "
-            + "set with set_extra as a string; not a knob";
+            + "as a string; not a knob";
     }
 }
