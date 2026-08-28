@@ -123,7 +123,7 @@ and the box round them, landing where the list was opened exactly as a module
 does. Which is a second kind of thing in a list built out of a catalogue, so it
 is worth saying what keeps it honest: they are not modules and are not pretended
 to be. They have no type id, no category and no plugin, they are filtered by name
-alone, and the section takes no accent colour because a group has no category to
+alone, and the section takes no accent color because a group has no category to
 take one from.
 
 **They are patch files in a folder, and there is no library.** One `.fbk` per

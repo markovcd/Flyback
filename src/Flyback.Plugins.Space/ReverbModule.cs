@@ -216,7 +216,7 @@ internal static class ReverbModule
 
             // A one-pole lowpass, running at whatever rate the program runs at.
             // Its gain at DC is one, which leaves the level below untouched:
-            // damping changes the colour of the tail and never how loud it is.
+            // damping changes the color of the tail and never how loud it is.
             var previous = em.UnitRead(stored);
             var damped = em.Add(previous, em.Mul(damping, em.Sub(heard, previous)));
 

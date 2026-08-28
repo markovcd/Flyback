@@ -73,28 +73,28 @@ public class PngReaderTests
     // --- what it can read ------------------------------------------------------
 
     /// <summary>
-    /// Every colour type, at both depths the format has above a byte. Each is
+    /// Every color type, at both depths the format has above a byte. Each is
     /// built with one known pixel in it, so what is checked is that the channels
     /// landed where they belong rather than that something came back.
     /// </summary>
     [Theory]
     [InlineData(0, 8)]   // grey
     [InlineData(0, 16)]
-    [InlineData(2, 8)]   // truecolour
+    [InlineData(2, 8)]   // truecolor
     [InlineData(2, 16)]
     [InlineData(4, 8)]   // grey and alpha
-    [InlineData(6, 8)]   // truecolour and alpha
+    [InlineData(6, 8)]   // truecolor and alpha
     [InlineData(6, 16)]
-    public void Every_colour_type_reads(int colour, int depth)
+    public void Every_color_type_reads(int color, int depth)
     {
-        var picture = Read(Png(colour, depth)).ShouldNotBeNull();
+        var picture = Read(Png(color, depth)).ShouldNotBeNull();
 
         picture.Width.ShouldBe(2);
         picture.Height.ShouldBe(2);
 
         // Whatever the file said, the first pixel is a full-strength red where
-        // it has colour and a mid grey where it does not.
-        if (colour is 2 or 6)
+        // it has color and a mid grey where it does not.
+        if (color is 2 or 6)
         {
             picture.Pixels[0].ShouldBe(1f, 1e-4f);
             picture.Pixels[1].ShouldBe(0f, 1e-4f);
@@ -121,15 +121,15 @@ public class PngReaderTests
         picture.Pixels[1].ShouldBe(1f, 1e-4f);
         picture.Pixels[2].ShouldBe(0f, 1e-4f);
 
-        // The transparent entry, which is the colour it names multiplied by
-        // nothing rather than the colour it names.
+        // The transparent entry, which is the color it names multiplied by
+        // nothing rather than the color it names.
         picture.Pixels[3].ShouldBe(0f);
         picture.Pixels[4].ShouldBe(0f);
         picture.Pixels[5].ShouldBe(0f);
     }
 
     /// <summary>
-    /// Alpha is multiplied in rather than kept, so a half-transparent colour is
+    /// Alpha is multiplied in rather than kept, so a half-transparent color is
     /// a half-strength one — which is the same answer a place outside the picture
     /// gets, and is why a patch sees one rule about the edges rather than two.
     /// </summary>
@@ -280,12 +280,12 @@ public class PngReaderTests
         PngReader.Read(new MemoryStream(png), out fault);
 
     /// <summary>
-    /// A two-by-two PNG of whatever colour type and depth is asked for, filtered
+    /// A two-by-two PNG of whatever color type and depth is asked for, filtered
     /// with none so that what is being tested is the unpacking rather than the
     /// prediction.
     /// </summary>
     private static byte[] Png(
-        int colour,
+        int color,
         int depth,
         byte[]? palette = null,
         byte[]? alphas = null,
@@ -294,7 +294,7 @@ public class PngReaderTests
         int width = 2,
         int height = 2)
     {
-        var channels = colour switch { 0 => 1, 2 => 3, 3 => 1, 4 => 2, 6 => 4, _ => 1 };
+        var channels = color switch { 0 => 1, 2 => 3, 3 => 1, 4 => 2, 6 => 4, _ => 1 };
         var bytes = depth == 16 ? 2 : 1;
 
         var raw = new List<byte>();
@@ -307,20 +307,20 @@ public class PngReaderTests
             for (var channel = 0; channel < channels; channel++)
             {
                 // The first pixel is a red, or a mid grey where there is no
-                // colour to be red in; everything else is whatever is left.
+                // color to be red in; everything else is whatever is left.
                 var value = samples is { } given
                     ? given[(x + y * width) * channels % given.Length + channel % given.Length]
-                    : Sample(colour, x, y, channel);
+                    : Sample(color, x, y, channel);
 
                 if (bytes == 2) raw.Add(value);
                 raw.Add(value);
             }
         }
 
-        return Assemble(width, height, depth, colour, interlace, [.. raw], palette, alphas);
+        return Assemble(width, height, depth, color, interlace, [.. raw], palette, alphas);
     }
 
-    private static byte Sample(int colour, int x, int y, int channel) => colour switch
+    private static byte Sample(int color, int x, int y, int channel) => color switch
     {
         3 => 0,
         0 or 4 when x == 0 && y == 0 => channel == 0 ? (byte)128 : (byte)255,
@@ -379,7 +379,7 @@ public class PngReaderTests
     }
 
     private static byte[] Assemble(
-        int width, int height, int depth, int colour, int interlace,
+        int width, int height, int depth, int color, int interlace,
         byte[] raw, byte[]? palette, byte[]? alphas)
     {
         var file = new MemoryStream();
@@ -389,7 +389,7 @@ public class PngReaderTests
         BinaryPrimitives.WriteInt32BigEndian(header, width);
         BinaryPrimitives.WriteInt32BigEndian(header.AsSpan(4), height);
         header[8] = (byte)depth;
-        header[9] = (byte)colour;
+        header[9] = (byte)color;
         header[12] = (byte)interlace;
 
         Chunk(file, "IHDR", header);

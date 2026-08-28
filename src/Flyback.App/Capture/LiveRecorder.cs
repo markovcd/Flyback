@@ -37,7 +37,7 @@ internal readonly record struct RecordingStatus(
 /// <para>
 /// Nothing here runs on a thread that can afford it. <see cref="Accept"/> is the
 /// render thread and does one copy; <see cref="WriteAudio"/> is the sound
-/// callback and does one copy into a ring. Everything expensive — the colour
+/// callback and does one copy into a ring. Everything expensive — the color
 /// conversion, the JPEG, the file — is on this class's own thread, which is
 /// allowed to fall behind because <see cref="CapturePacer"/> makes falling
 /// behind mean a repeated frame rather than a broken file.
@@ -272,7 +272,7 @@ internal sealed class LiveRecorder : IFrameSink, IAudioSink, IDisposable
         if (pacer is null) return;
 
         // Asked before anything is collected, so a moment with no frame due costs
-        // no colour conversion and no JPEG. The preview draws far faster than the
+        // no color conversion and no JPEG. The preview draws far faster than the
         // file wants, and this is where that surplus is discarded.
         var due = pacer.Due(Elapsed);
         if (due <= 0) return;

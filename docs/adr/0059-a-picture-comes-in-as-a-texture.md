@@ -41,14 +41,14 @@ last row across everything beyond it and reads as a fault; tiling is something a
 patch says with a Tile. Running off the edge is how a picture ends, exactly as
 running off the end is how a clip does — and it is the same rule transparency
 gets, since alpha is multiplied in as the file is read rather than carried. Three
-numbers is what a colour is here, and a fourth would have been a second opcode.
+numbers is what a color is here, and a fourth would have been a second opcode.
 
 **PNG, and the decoder is ours.** [0019](0019-no-third-party-dependencies-in-the-engine.md)
 says no imaging dependency, and the writer at the other end of this was already
 hand-written for that reason — so the two are a pair, and *what this program can
 read is what it can write*. The hard half was never ours: `DeflateStream` is in
 the framework and is where `PngWriter` already gets its deflate, so the reader is
-chunk-walking, un-filtering and unpacking. Every colour type at 8 and 16 bits;
+chunk-walking, un-filtering and unpacking. Every color type at 8 and 16 bits;
 interlaced files and sub-byte depths are refused by name rather than read wrongly,
 which is the same call `WavReader` makes about compressed payloads.
 

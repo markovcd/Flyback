@@ -105,7 +105,7 @@ public sealed class CompiledPatch(
     /// Carried the way <see cref="Tables"/> is, and unlike it on the one point
     /// that matters: this list is filled on the <em>video</em> path, since a
     /// picture is a thing to look at. What the speakers make of an Image is one
-    /// evaluation of a still, which is a colour that never moves, so the audio
+    /// evaluation of a still, which is a color that never moves, so the audio
     /// program carries none of these and reads black.
     /// <para>
     /// It is also what the shader is handed before a frame: one texture per

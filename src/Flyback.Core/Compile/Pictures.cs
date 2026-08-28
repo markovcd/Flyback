@@ -19,7 +19,7 @@ namespace Flyback.Core.Compile;
 /// </para>
 /// <para>
 /// The values are what the bytes said, divided by their maximum and nothing
-/// else. No colour management, no gamma, because the writer at the other end of
+/// else. No color management, no gamma, because the writer at the other end of
 /// this does the same in reverse — so a frame rendered to a PNG and read back in
 /// is the frame it was, to the eight bits it was written with.
 /// </para>
@@ -34,7 +34,7 @@ public sealed record LoadedImage(float[] Pixels, int Width, int Height)
     public float Aspect => Height <= 0 ? 1f : (float)Width / Height;
 
     /// <summary>
-    /// The colour at a place, where the picture spans -1 to 1 downward and its
+    /// The color at a place, where the picture spans -1 to 1 downward and its
     /// own aspect either side of the middle — and black everywhere outside it.
     /// </summary>
     /// <remarks>

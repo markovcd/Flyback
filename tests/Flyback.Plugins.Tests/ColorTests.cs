@@ -7,22 +7,22 @@ using Xunit;
 namespace Flyback.Plugins.Tests;
 
 /// <summary>
-/// The four colour modules: one to choose a colour, one to read one back, and
+/// The four color modules: one to choose a color, one to read one back, and
 /// two to change one after the fact.
 /// </summary>
 /// <remarks>
 /// Every one of these is a pure function of the numbers going into it, so most
-/// of what is here is a table of colours and the numbers that come back. The one
+/// of what is here is a table of colors and the numbers that come back. The one
 /// exception is the way To HSV is checked: it is the inverse of a module that
 /// already existed, and the honest test of an inverse is the round trip, so that
 /// is what it gets.
 /// </remarks>
-public class ColourTests
+public class ColorTests
 {
-    private const string Palette = "flyback.colour.palette";
-    private const string ToHsv = "flyback.colour.hsv";
-    private const string Grade = "flyback.colour.grade";
-    private const string Posterise = "flyback.colour.posterise";
+    private const string Palette = "flyback.color.palette";
+    private const string ToHsv = "flyback.color.hsv";
+    private const string Grade = "flyback.color.grade";
+    private const string Posterise = "flyback.color.posterise";
 
     private const string Hsv = "color.hsv";
     private const string Rgb = "color.rgb";
@@ -39,7 +39,7 @@ public class ColourTests
             Catalog.Get(typeId).ShouldNotBeNull();
             Catalog.ProviderOf(typeId).ShouldBe(Catalog.ProviderOf(Palette));
 
-            // The engine's own colour section rather than one of their own: they
+            // The engine's own color section rather than one of their own: they
             // are the same kind of thing as what is already there.
             Catalog.Require(typeId).Category.ShouldBe(Catalog.Require(Rgb).Category);
         }
@@ -56,7 +56,7 @@ public class ColourTests
     [Fact]
     public void A_palette_is_one_cosine_read_at_three_phases()
     {
-        var swatch = Colour(Palette);
+        var swatch = Color(Palette);
 
         swatch(0f).ShouldBe((1f, 0.25f, 0.25f), 1e-5f);
         swatch(0.5f).ShouldBe((0f, 0.75f, 0.75f), 1e-5f);
@@ -71,8 +71,8 @@ public class ColourTests
     [Fact]
     public void No_spread_is_a_grey_ramp_and_a_third_is_the_rainbow()
     {
-        var grey = Colour(Palette, (2, 0f));
-        var rainbow = Colour(Palette);
+        var grey = Color(Palette, (2, 0f));
+        var rainbow = Color(Palette);
 
         foreach (var t in Along())
         {
@@ -83,7 +83,7 @@ public class ColourTests
         }
 
         // A third apart pulls the channels as far from each other as they go, so
-        // somewhere along it the picture is thoroughly coloured. Not to the
+        // somewhere along it the picture is thoroughly colored. Not to the
         // corners of the cube, though, and that is the palette rather than a
         // shortfall: three cosines a third apart are never at one and nought
         // together, which is exactly why what it passes through are neighbours.
@@ -93,7 +93,7 @@ public class ColourTests
     [Fact]
     public void The_default_palette_fills_nought_to_one_and_leaves_neither_end()
     {
-        var swatch = Colour(Palette);
+        var swatch = Color(Palette);
 
         var seen = Along(64).Select(swatch).ToList();
 
@@ -105,21 +105,21 @@ public class ColourTests
     [Fact]
     public void Cycles_repeats_the_palette_across_the_input()
     {
-        var twice = Colour(Palette, (1, 2f));
+        var twice = Color(Palette, (1, 2f));
 
         foreach (var t in Along()) twice(t + 0.5f).ShouldBe(twice(t), 1e-5f);
     }
 
     /// <summary>
     /// Contrast is how far either side of the middle the palette reaches, so at
-    /// nothing there is no palette left — one flat colour, whatever is asked of
+    /// nothing there is no palette left — one flat color, whatever is asked of
     /// it. Which is the sane thing for a knob to do at its bottom rather than a
     /// division by nothing or a black frame.
     /// </summary>
     [Fact]
-    public void No_contrast_is_one_flat_colour()
+    public void No_contrast_is_one_flat_color()
     {
-        var flat = Colour(Palette, (3, 0.3f), (4, 0f));
+        var flat = Color(Palette, (3, 0.3f), (4, 0f));
 
         foreach (var t in Along()) flat(t).ShouldBe((0.3f, 0.3f, 0.3f), 1e-6f);
     }
@@ -132,7 +132,7 @@ public class ColourTests
     /// and the numbers have to be the ones that went in.
     /// </summary>
     [Fact]
-    public void A_colour_built_from_hsv_reads_back_as_the_hsv_it_was_built_from()
+    public void A_color_built_from_hsv_reads_back_as_the_hsv_it_was_built_from()
     {
         var round = RoundTrip();
 
@@ -142,7 +142,7 @@ public class ColourTests
         {
             var (hue, saturation, value) = round(h, s, v);
 
-            // The hue of a colour is a circle, so a hue that came back at the
+            // The hue of a color is a circle, so a hue that came back at the
             // other end of it is the same answer.
             var apart = MathF.Abs(hue - h);
 
@@ -217,7 +217,7 @@ public class ColourTests
     /// <summary>
     /// Contrast about the middle rather than about black, which is the whole
     /// difference between it and the Gain that was already here: the middle grey
-    /// is the one colour no amount of it moves.
+    /// is the one color no amount of it moves.
     /// </summary>
     [Theory]
     [InlineData(0f)]
@@ -371,8 +371,8 @@ public class ColourTests
 
     // --- harness ---------------------------------------------------------------
 
-    /// <summary>A module read as a colour, as a function of one scalar into its first port.</summary>
-    private static Func<float, (float R, float G, float B)> Colour(
+    /// <summary>A module read as a color, as a function of one scalar into its first port.</summary>
+    private static Func<float, (float R, float G, float B)> Color(
         string typeId, params (int Port, float Value)[] knobs)
     {
         var patch = new Patch();
@@ -396,7 +396,7 @@ public class ColourTests
         };
     }
 
-    /// <summary>A module taking a colour and handing one back, read swatch by swatch.</summary>
+    /// <summary>A module taking a color and handing one back, read swatch by swatch.</summary>
     private static Func<float, float, float, (float R, float G, float B)> Through(
         string typeId, params (int Port, float Value)[] knobs)
     {
@@ -428,7 +428,7 @@ public class ColourTests
         };
     }
 
-    /// <summary>One colour taken apart, which is the whole of what To HSV is for.</summary>
+    /// <summary>One color taken apart, which is the whole of what To HSV is for.</summary>
     private static (float Hue, float Saturation, float Value) Taken(float r, float g, float b)
     {
         var patch = new Patch();
@@ -453,7 +453,7 @@ public class ColourTests
         return Read(program, registers);
     }
 
-    /// <summary>HSV in, a colour, and the HSV read back off it.</summary>
+    /// <summary>HSV in, a color, and the HSV read back off it.</summary>
     private static Func<float, float, float, (float Hue, float Saturation, float Value)> RoundTrip()
     {
         var patch = new Patch();
@@ -512,22 +512,22 @@ public class ColourTests
             (float)registers[program.OutputBase + 1],
             (float)registers[program.OutputBase + 2]);
 
-    /// <summary>How far apart the channels are, which is how coloured a colour is.</summary>
-    private static float Chroma((float R, float G, float B) colour) =>
-        Channels(colour).Max() - Channels(colour).Min();
+    /// <summary>How far apart the channels are, which is how colored a color is.</summary>
+    private static float Chroma((float R, float G, float B) color) =>
+        Channels(color).Max() - Channels(color).Min();
 
-    private static IEnumerable<float> Channels((float R, float G, float B) colour)
+    private static IEnumerable<float> Channels((float R, float G, float B) color)
     {
-        yield return colour.R;
-        yield return colour.G;
-        yield return colour.B;
+        yield return color.R;
+        yield return color.G;
+        yield return color.B;
     }
 
     /// <summary>Positions along a palette, off the ends so none of them is a special case.</summary>
     private static IEnumerable<float> Along(int count = 16) =>
         Enumerable.Range(0, count).Select(i => (i + 0.37f) / count);
 
-    /// <summary>Colours to put through a module, including the corners and a few in between.</summary>
+    /// <summary>Colors to put through a module, including the corners and a few in between.</summary>
     private static IEnumerable<(float R, float G, float B)> Swatches()
     {
         yield return (0f, 0f, 0f);
@@ -539,9 +539,9 @@ public class ColourTests
     }
 }
 
-internal static class ColourAssertions
+internal static class ColorAssertions
 {
-    /// <summary>Three channels at once, so a failure names the colour rather than a register.</summary>
+    /// <summary>Three channels at once, so a failure names the color rather than a register.</summary>
     public static void ShouldBe(
         this (float R, float G, float B) actual, (float R, float G, float B) expected, float tolerance)
     {

@@ -146,7 +146,7 @@ public class NoiseTests
     /// <summary>
     /// Adding octaves adds detail rather than brightness. Both readings stay
     /// inside 0 to 1 whatever is asked of them, which is what lets either drive a
-    /// colour without a Clamp after it.
+    /// color without a Clamp after it.
     /// </summary>
     [Theory]
     [InlineData(0f)]

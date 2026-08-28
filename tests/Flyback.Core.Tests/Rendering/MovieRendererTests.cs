@@ -272,7 +272,7 @@ public class MovieRendererTests
 
         frames.Count.ShouldBe(20);
 
-        // Compressed frames of a flat colour, so their sizes say nothing — what
+        // Compressed frames of a flat color, so their sizes say nothing — what
         // says something is that the bytes are not all the same picture.
         var distinct = frames
             .Select(f => Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(

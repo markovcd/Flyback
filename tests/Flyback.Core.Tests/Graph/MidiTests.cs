@@ -37,7 +37,7 @@ public class MidiTests
                 [MidiExtra.DeviceField] = device,
             });
 
-        // Both sinks at once: the same signal into the colour and into the left
+        // Both sinks at once: the same signal into the color and into the left
         // channel, so one patch answers for the eye and the ear and neither is a
         // different patch that happens to look alike.
         builder.Wire(midi, port, sink, NodeCatalog.OutputColorPort);

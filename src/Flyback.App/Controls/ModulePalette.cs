@@ -366,8 +366,8 @@ public sealed class ModulePalette : UserControl
         // and hundreds of modules, they are the only things in the list somebody
         // made themselves, and a section of one's own things under a screenful
         // of everything else is a section nobody scrolls to. The heading takes
-        // no accent colour because a group has no category — the same reason a
-        // box's header is the one colour on the canvas that means nothing.
+        // no accent color because a group has no category — the same reason a
+        // box's header is the one color on the canvas that means nothing.
         if (kept.Count > 0)
         {
             modules.Children.Add(Heading("GROUPS", Colors.Muted));

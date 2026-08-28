@@ -79,7 +79,7 @@
     <PluginProject Include="..\Flyback.Plugins.Timbre\Flyback.Plugins.Timbre.csproj" FolderName="Timbre" />
     <PluginProject Include="..\Flyback.Plugins.Modulation\Flyback.Plugins.Modulation.csproj" FolderName="Modulation" />
     <PluginProject Include="..\Flyback.Plugins.Noise\Flyback.Plugins.Noise.csproj" FolderName="Noise" />
-    <PluginProject Include="..\Flyback.Plugins.Colour\Flyback.Plugins.Colour.csproj" FolderName="Colour" />
+    <PluginProject Include="..\Flyback.Plugins.Color\Flyback.Plugins.Color.csproj" FolderName="Color" />
     <PluginProject Include="..\Flyback.Plugins.Shapes\Flyback.Plugins.Shapes.csproj" FolderName="Shapes" />
   </ItemGroup>
 

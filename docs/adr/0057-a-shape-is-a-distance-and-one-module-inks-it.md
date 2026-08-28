@@ -112,7 +112,7 @@ the shape rather than something chosen to go with it — which is the property
 somewhere it could not before.
 
 **What is still missing from the eye is larger than what arrived.** One octave of
-noise and no fBm, no Voronoi; five colour modules and no palette, no RGB back to
+noise and no fBm, no Voronoi; five color modules and no palette, no RGB back to
 HSV; a Feedback that can be sampled anywhere and nothing built on that; and no
 way at all to read a picture in. The first of those is another plugin of pure
 arithmetic. The last is an opcode, and

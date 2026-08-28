@@ -1,25 +1,25 @@
 using Flyback.Core.Graph;
 
-namespace Flyback.Plugins.Colour;
+namespace Flyback.Plugins.Color;
 
 /// <summary>
-/// The Plasma preset's own field, coloured out of a palette instead of off the
+/// The Plasma preset's own field, colored out of a palette instead of off the
 /// hue wheel — and then graded, posterised, and read back apart again.
 /// </summary>
 /// <remarks>
 /// Deliberately the same two sines the engine's first preset is built on, so
-/// that what is being demonstrated is the colour and nothing else. Plasma sends
+/// that what is being demonstrated is the color and nothing else. Plasma sends
 /// that field into HSV's hue and comes out a rainbow, because that is the only
-/// thing the catalogue could do with a number that wanted to be a colour. Here
+/// thing the catalogue could do with a number that wanted to be a color. Here
 /// the same number goes into a Palette, and a slow sweep walks 'spread' from
-/// nothing to a third — from tints of one colour, through the sunsets and teals
+/// nothing to a third — from tints of one color, through the sunsets and teals
 /// in between, to the rainbow Plasma is stuck at. The whole plugin is in that
 /// one knob moving.
 /// <para>
 /// After it: a Grade leaning on the contrast, and a Posterise whose level count
 /// is swept, so the picture resolves from flat bands into a gradient and back.
-/// Both are on the finished colour rather than on the signal behind it, which is
-/// the point of their being colour modules — a patch can be coloured first and
+/// Both are on the finished color rather than on the signal behind it, which is
+/// the point of their being color modules — a patch can be colored first and
 /// corrected afterwards, the way a picture is.
 /// </para>
 /// <para>
@@ -27,7 +27,7 @@ namespace Flyback.Plugins.Colour;
 /// here: x and y are the pixel's own position and the speakers have no pixel, so
 /// the field is one flat number to them. What the sweep does to the sound is what
 /// it does to the picture — the tone opens out from one partial to a stack of
-/// them as the palette opens out from one colour to all of them, both from the
+/// them as the palette opens out from one color to all of them, both from the
 /// same wire.
 /// </para>
 /// </remarks>
@@ -59,7 +59,7 @@ internal static class SpectrumPreset
         var graded = b.Add(GradeModule.TypeId, 1220, 200, (1, 1.15f), (2, 1.25f), (3, 1.1f));
 
         // Swept the other way from the palette, so the picture is at its flattest
-        // where the colours are at their calmest.
+        // where the colors are at their calmest.
         var levels = b.Add("math.remap", 320, 900, (1, 0f), (2, 1f), (3, 3f), (4, 24f));
         var banded = b.Add(PosteriseModule.TypeId, 1440, 200);
 

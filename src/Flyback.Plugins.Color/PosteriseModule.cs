@@ -1,7 +1,7 @@
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 
-namespace Flyback.Plugins.Colour;
+namespace Flyback.Plugins.Color;
 
 /// <summary>
 /// A picture held to a fixed number of levels a channel, which is what turns a
@@ -19,19 +19,19 @@ namespace Flyback.Plugins.Colour;
 /// means nought, a third, two thirds and one — the darkest is black and the
 /// brightest is white, and a gradient posterised and then posterised again is
 /// unchanged. Two levels is the useful extreme: every channel is off or on, which
-/// is the eight-colour picture a very old machine would have drawn.
+/// is the eight-color picture a very old machine would have drawn.
 /// </para>
 /// <para>
 /// Untyped in the same sense the maths modules are — it is written against a
-/// colour and the ops do not care, so each channel is stepped on its own and the
+/// color and the ops do not care, so each channel is stepped on its own and the
 /// bands of the three cross each other. That crossing is what makes a posterised
 /// picture look like a poster rather than like a contour map: three sets of bands
-/// at different places give far more than three colours.
+/// at different places give far more than three colors.
 /// </para>
 /// </remarks>
 internal static class PosteriseModule
 {
-    public const string TypeId = "flyback.colour.posterise";
+    public const string TypeId = "flyback.color.posterise";
 
     public static NodeDef Definition { get; } = new(
         TypeId, "Posterise", "Color",
@@ -43,9 +43,9 @@ internal static class PosteriseModule
         Emit,
         "Holds each channel to a fixed number of levels, which turns a gradient into flat "
         + "bands. The levels reach both ends, so black stays black and white stays white and "
-        + "2 is every channel off or on — the eight colours a very old machine had. 'levels' is "
+        + "2 is every channel off or on — the eight colors a very old machine had. 'levels' is "
         + "rounded down and never goes below two. Each channel is stepped on its own, so the "
-        + "three sets of bands cross and there are many more than 'levels' colours in the "
+        + "three sets of bands cross and there are many more than 'levels' colors in the "
         + "result. Sweep it from an oscillator to make a picture resolve.");
 
     private static Slot[] Emit(Emitter em, EmitContext node)

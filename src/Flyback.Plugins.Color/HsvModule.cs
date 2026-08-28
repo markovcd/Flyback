@@ -1,19 +1,19 @@
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 
-namespace Flyback.Plugins.Colour;
+namespace Flyback.Plugins.Color;
 
 /// <summary>
-/// A colour taken apart into hue, saturation and value — the HSV module run
+/// A color taken apart into hue, saturation and value — the HSV module run
 /// backwards.
 /// </summary>
 /// <remarks>
-/// The catalogue could build a colour out of a hue and could never read one back
+/// The catalogue could build a color out of a hue and could never read one back
 /// out, which is an asymmetry rather than an omission: every other conversion in
 /// the machine goes both ways, and Split is RGB's own inverse. What the missing
-/// half costs is anything that depends on the colour a patch already has —
+/// half costs is anything that depends on the color a patch already has —
 /// rotating a hue, keying on one, holding a saturation while everything else
-/// moves, or feeding a Feedback loop's own colour back into where it goes next.
+/// moves, or feeding a Feedback loop's own color back into where it goes next.
 /// All of those are this module and then the one that already existed.
 /// <para>
 /// It is written without a branch, because the register machine has none. Which
@@ -35,7 +35,7 @@ namespace Flyback.Plugins.Colour;
 /// </remarks>
 internal static class HsvModule
 {
-    public const string TypeId = "flyback.colour.hsv";
+    public const string TypeId = "flyback.color.hsv";
 
     /// <summary>Sixths of the wheel, which is how the hue falls out before it is normalised.</summary>
     private const float Sectors = 6f;
@@ -49,11 +49,11 @@ internal static class HsvModule
             new PortSpec("value", PortKind.Scalar, 0f, 0f, 1f),
         ],
         Emit,
-        "Pulls a colour apart into hue, saturation and value — the HSV module backwards, and "
+        "Pulls a color apart into hue, saturation and value — the HSV module backwards, and "
         + "the half of it the catalogue was missing. It is what anything depending on the "
-        + "colour a patch already has needs: rotate a hue by adding to this and building the "
-        + "colour again, key on one by thresholding it, or take the saturation out of a "
-        + "picture without touching what colour it was. All three come out 0 to 1. A grey has "
+        + "color a patch already has needs: rotate a hue by adding to this and building the "
+        + "color again, key on one by thresholding it, or take the saturation out of a "
+        + "picture without touching what color it was. All three come out 0 to 1. A grey has "
         + "no hue to report and says nought, which is red — threshold the saturation if that "
         + "matters.");
 

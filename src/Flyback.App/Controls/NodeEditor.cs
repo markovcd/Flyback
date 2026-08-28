@@ -84,9 +84,9 @@ public sealed class NodeEditor : Control
     /// test cannot tell from rounding either.
     /// </remarks>
     /// <summary>
-    /// A box's header, in the one colour on the canvas that belongs to no
+    /// A box's header, in the one color on the canvas that belongs to no
     /// category. A module's header is tinted by what it does; a group does
-    /// nothing, so it is drawn in the outline colour and reads as canvas
+    /// nothing, so it is drawn in the outline color and reads as canvas
     /// furniture rather than as a module whose kind you have forgotten.
     /// </summary>
     private static readonly IBrush GroupHeaderFill = new SolidColorBrush(Colors.Outline, 0.85);
@@ -95,7 +95,7 @@ public sealed class NodeEditor : Control
     /// The dashed ring round a group that is open — see OpenGroup.
     /// </summary>
     /// <remarks>
-    /// In the separator colour rather than the outline one, at half strength. A
+    /// In the separator color rather than the outline one, at half strength. A
     /// box's border is drawn <em>on</em> a module, where a grey darker than the
     /// canvas reads as an edge; this is drawn on the canvas itself, which is
     /// lighter than that grey — so the ring meant to say "these belong together"
@@ -114,7 +114,7 @@ public sealed class NodeEditor : Control
     /// The same ring while everything inside it is selected.
     /// </summary>
     /// <remarks>
-    /// A shut box turns its border the selected colour and an open one had
+    /// A shut box turns its border the selected color and an open one had
     /// nothing that did, so the one picture saying which modules a gesture is
     /// about went missing exactly when the group was opened up to work on. Held
     /// well under <see cref="SelectionPen"/>, which is what a module wears: the

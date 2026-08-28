@@ -48,7 +48,7 @@ the shape of a patch drops the past along with the delay tails, which is the sam
 answer 0018 already gives.
 
 **A Scope's input is a root of the audio program.** This is the part that gives
-something up. Nothing downstream reads a Scope — its output is a colour — so the
+something up. Nothing downstream reads a Scope — its output is a color — so the
 walk back from the speakers would never visit what it is looking at, and the
 chart would be of a signal that was never evaluated. So the compiler roots at
 every tap as well as at the sink. `NodeDef.TapsSignal` declares it, rather than

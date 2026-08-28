@@ -73,7 +73,7 @@ internal static class ShapesPreset
          .Wire(turn, 1, star, 1)
          .Wire(grow, 0, star, 4)
 
-         // Cut, filled, and coloured.
+         // Cut, filled, and colored.
          .Wire(star, 0, cut, 0)
          .Wire(hole, 0, cut, 1)
          .Wire(cut, 2, ink, 0)

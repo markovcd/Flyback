@@ -452,7 +452,7 @@ public static class PatchCompiler
             if (def.Extras.Count == 0) return ctx;
 
             // The picture library only where the picture is being drawn. An Image
-            // in an audio program is one evaluation of a still — a colour that
+            // in an audio program is one evaluation of a still — a color that
             // never moves and that nothing can hear — so the speakers' walk is
             // handed nothing to read a file with, and the module lowers to black
             // without anybody having to open one. It is the same arrangement the

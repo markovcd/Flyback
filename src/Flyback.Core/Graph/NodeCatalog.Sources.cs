@@ -112,7 +112,7 @@ public partial class NodeCatalog
             + "being asked about, so a Scale before it zooms, a Translate slides it, a Rotate "
             + "turns it and a Warp bends it — the module decides nothing about the mapping "
             + "except what it is when nothing is patched in. PNG, 8 or 16 bit, not interlaced; "
-            + "transparency is taken as black, since a colour here is three numbers and not "
+            + "transparency is taken as black, since a color here is three numbers and not "
             + "four. The patch stores the path rather than the picture, so the file has to stay "
             + "where it is — one that has moved is reported by name. Silent: the speakers have "
             + "nothing to do with a picture, so on that path it is black and the file is not "

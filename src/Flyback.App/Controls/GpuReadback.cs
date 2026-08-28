@@ -141,7 +141,7 @@ internal sealed class GpuReadback
 
         gl.BindFramebuffer(GL_READ_FRAMEBUFFER, source);
 
-        // One colour attachment, so this is already the read buffer — said out
+        // One color attachment, so this is already the read buffer — said out
         // loud because a framebuffer arriving from elsewhere might not be.
         if (gl.IsReadBufferAvailable) gl.ReadBuffer(GL_COLOR_ATTACHMENT0);
 

@@ -107,7 +107,7 @@ the same bytes for the same samples.
 
 **[0018](0018-never-render-frames-on-the-ui-thread.md) gains a second thread to
 stay off.** The render thread does one copy into a three-buffer mailbox and the
-sound callback does one copy into a ring; the colour conversion, the JPEG and
+sound callback does one copy into a ring; the color conversion, the JPEG and
 the file are all on the recorder's own thread. Neither realtime thread can be
 made to wait by a slow disk, and neither allocates.
 

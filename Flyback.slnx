@@ -12,7 +12,7 @@
     <Project Path="src/Flyback.Plugins.Alsa/Flyback.Plugins.Alsa.csproj" />
     <Project Path="src/Flyback.Plugins.AlsaMidi/Flyback.Plugins.AlsaMidi.csproj" />
     <Project Path="src/Flyback.Plugins.CoreAudio/Flyback.Plugins.CoreAudio.csproj" />
-    <Project Path="src/Flyback.Plugins.Colour/Flyback.Plugins.Colour.csproj" />
+    <Project Path="src/Flyback.Plugins.Color/Flyback.Plugins.Color.csproj" />
     <Project Path="src/Flyback.Plugins.CoreMidi/Flyback.Plugins.CoreMidi.csproj" />
     <Project Path="src/Flyback.Plugins.Dpapi/Flyback.Plugins.Dpapi.csproj" />
     <Project Path="src/Flyback.Plugins.Keychain/Flyback.Plugins.Keychain.csproj" />

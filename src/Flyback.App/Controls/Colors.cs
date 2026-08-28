@@ -49,7 +49,7 @@ internal static class Colors
     /// the rest of the program is not listening.
     /// </summary>
     /// <remarks>
-    /// The one colour here with an alpha, because that is what it is for: a
+    /// The one color here with an alpha, because that is what it is for: a
     /// solid one would be a second window, and the point of dimming the shell
     /// rather than covering it is that the patch you are being asked about is
     /// still there behind the question. Dark rather than merely translucent —

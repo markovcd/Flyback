@@ -94,7 +94,7 @@ public class CanvasEdgeTests : UiTest
     }
 
     /// <summary>
-    /// Every colour down one column of the frame, which is how a band of ground
+    /// Every color down one column of the frame, which is how a band of ground
     /// is told from a band of ground with lines ruled across it.
     /// </summary>
     private static IEnumerable<Color> Column(Color[,] pixels, int x)

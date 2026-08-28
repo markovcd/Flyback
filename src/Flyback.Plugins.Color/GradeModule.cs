@@ -1,17 +1,17 @@
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 
-namespace Flyback.Plugins.Colour;
+namespace Flyback.Plugins.Color;
 
 /// <summary>
-/// The three adjustments every picture wants after it is drawn: how colourful,
+/// The three adjustments every picture wants after it is drawn: how colorful,
 /// how contrasty, how dark in the middle.
 /// </summary>
 /// <remarks>
 /// The catalogue's Gain is a multiply and an add, which is brightness and a kind
 /// of contrast, and it is the only thing here that could be done to a finished
 /// picture. What it cannot do is anything that treats the three channels as a
-/// colour rather than as three signals: taking the colour out of one is not a
+/// color rather than as three signals: taking the color out of one is not a
 /// multiply, and neither is deepening its shadows without moving its highlights.
 /// <para>
 /// Saturation is a mix between the picture and its own brightness — not the
@@ -30,19 +30,19 @@ namespace Flyback.Plugins.Colour;
 /// </para>
 /// <para>
 /// All three are neutral at one, and in that state this module is exactly a wire.
-/// The order is fixed and is the order a grading desk uses: colour, then
+/// The order is fixed and is the order a grading desk uses: color, then
 /// contrast, then gamma. Three of these in a row is the same as one with the
 /// numbers multiplied out, which is why there is only one.
 /// </para>
 /// </remarks>
 internal static class GradeModule
 {
-    public const string TypeId = "flyback.colour.grade";
+    public const string TypeId = "flyback.color.grade";
 
     /// <summary>
     /// What the eye takes brightness to be, which is mostly green and hardly any
     /// blue. The same weights the engine uses where it has to make one number out
-    /// of a colour.
+    /// of a color.
     /// </summary>
     private const float Red = 0.2126f;
 
@@ -63,7 +63,7 @@ internal static class GradeModule
         ],
         [new PortSpec("color", PortKind.Color)],
         Emit,
-        "Colour, contrast and gamma, in the order a grading desk has them, and a wire when all "
+        "Color, contrast and gamma, in the order a grading desk has them, and a wire when all "
         + "three are 1. 'saturation' mixes towards the picture's own brightness — 0 is a proper "
         + "greyscale and past 1 keeps going. 'contrast' leans on the middle grey rather than on "
         + "black, which is what makes it contrast rather than gain: white and black stay where "

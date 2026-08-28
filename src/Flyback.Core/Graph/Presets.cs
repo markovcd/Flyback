@@ -152,7 +152,7 @@ public static class Presets
     /// Meter is not computed by the picture at all: it is a reading of what the
     /// speakers actually played, handed to the frame the way a note somebody is
     /// holding down is handed to it. So what lights the rings is the envelope
-    /// itself — the fall of it as well as the start — and the colour leans with
+    /// itself — the fall of it as well as the start — and the color leans with
     /// the loudness rather than snapping with the trigger.
     /// </para>
     /// <para>
@@ -162,7 +162,7 @@ public static class Presets
     /// one thing to know before building on it: there is no level without a
     /// speaker. Both readings are used, because the difference between them is
     /// most of the point: 'peak' is the hit and lights the rings, 'level' is the
-    /// loudness of the window and takes the hue, so the colour lags the flash by
+    /// loudness of the window and takes the hue, so the color lags the flash by
     /// exactly as much as a room does.
     /// </para>
     /// <para>
@@ -390,14 +390,14 @@ public static class Presets
         // silence, and a note that happened to catch one would simply not sound.
         var width = b.Add("math.remap", 1160, 700, (1, 0f), (2, 1f), (3, 0.12f), (4, 0.88f));
 
-        // Eye. Two readings of the same note number — what colour it is, and how
+        // Eye. Two readings of the same note number — what color it is, and how
         // finely the rings are drawn — over the two octaves either side of
         // middle C, which is wider than the two rows of a typewriter reach and
         // leaves room for a keyboard that reaches further.
         //
         // Held into that range before either reading, which does two things at
         // once. An eighty-eight-key keyboard runs past both ends of it, and past
-        // the ends the hue would wrap round to a colour the other end is already
+        // the ends the hue would wrap round to a color the other end is already
         // using. And it settles what an unplayed patch looks like: nobody playing
         // reads as nought — the same answer a program with no block at all gives
         // — and nought is not a note anybody will strike, so the picture rests at
@@ -749,7 +749,7 @@ public static class Presets
     /// value stepping once a beat, and a melody once the scale has pulled it
     /// onto notes. On the video path the same module reads the pixel's own
     /// position at that same <c>z</c>, so what the eye gets is the walk laid out
-    /// across the screen. The note you hear is the colour at the middle of the
+    /// across the screen. The note you hear is the color at the middle of the
     /// picture.
     /// </para>
     /// <para>
@@ -772,7 +772,7 @@ public static class Presets
     /// </para>
     /// <para>
     /// Hue is quantised and brightness is not, which is the before and after of
-    /// the snap in one picture: hard-edged bands of colour sitting inside the
+    /// the snap in one picture: hard-edged bands of color sitting inside the
     /// smooth field they were cut from. Chromatic does the same trick a semitone
     /// at a time; this one does it a scale at a time, and the difference between
     /// the two pictures is the difference between the two modules.
@@ -846,7 +846,7 @@ public static class Presets
         var struck = b.Add("math.mul", 1960, 560);
 
         // Eye: the snapped note as a hue, one turn of the wheel to the octave —
-        // so a note is the same colour wherever on screen it turns up, and the
+        // so a note is the same color wherever on screen it turns up, and the
         // one at the middle is the one being played.
         //
         // Wrapped rather than run across the whole range, which was the first

@@ -175,7 +175,7 @@ public class ScaleKeysTests : UiTest
 
     /// <summary>
     /// A key that is on has to look different from one that is off, or the
-    /// control says nothing at all. The colours are what the panel is for.
+    /// control says nothing at all. The colors are what the panel is for.
     /// </summary>
     [AvaloniaFact]
     public void A_key_that_is_on_is_painted_differently_from_one_that_is_off()

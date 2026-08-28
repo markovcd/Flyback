@@ -20,7 +20,7 @@ public class ImageTests
     private const string Image = NodeCatalog.PictureTypeId;
 
     /// <summary>
-    /// A picture with a known colour in every corner and a different one in the
+    /// A picture with a known color in every corner and a different one in the
     /// middle, so that where it landed can be read off what came back.
     /// </summary>
     private static LoadedImage Swatches { get; } = new(

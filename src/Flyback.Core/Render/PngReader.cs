@@ -35,7 +35,7 @@ public enum PngFault
 /// unpacking, and the hard half of the format was never ours to do.
 /// </para>
 /// <para>
-/// What it reads is every colour type at 8 and 16 bits — grey, truecolour,
+/// What it reads is every color type at 8 and 16 bits — grey, truecolor,
 /// palette, and either of the first two with alpha — which is everything a
 /// non-interlaced PNG can be. Interlaced ones are refused by name rather than
 /// read wrongly: Adam7 is seven passes with their own filtering, it is rare
@@ -46,7 +46,7 @@ public enum PngFault
 /// </para>
 /// <para>
 /// Alpha is multiplied in rather than kept. Three channels is what an op carries
-/// and what a colour is here, and a transparent corner reading as a black one is
+/// and what a color is here, and a transparent corner reading as a black one is
 /// the same answer <see cref="LoadedImage.At"/> gives for a place outside the
 /// picture — so a patch sees one rule rather than two.
 /// </para>
@@ -310,10 +310,10 @@ public static class PngReader
 
                 float red, green, blue, alpha = 1f;
 
-                if (header.Colour == 3)
+                if (header.Color == 3)
                 {
                     // A palette index is a byte whatever the depth says, and a
-                    // file naming a colour the palette does not hold is a file
+                    // file naming a color the palette does not hold is a file
                     // that will read as black rather than as a fault.
                     var index = raw[at];
                     var entry = index * 3;
@@ -348,22 +348,22 @@ public static class PngReader
     private static float Channel(byte[] raw, int at, bool wide) =>
         wide ? (raw[at] << 8 | raw[at + 1]) / 65535f : raw[at] / 255f;
 
-    /// <summary>How many numbers a pixel is stored as, and false for a colour type there is no such thing as.</summary>
+    /// <summary>How many numbers a pixel is stored as, and false for a color type there is no such thing as.</summary>
     private static bool Channels(Header header, out int channels)
     {
-        channels = header.Colour switch
+        channels = header.Color switch
         {
             0 => 1, // grey
-            2 => 3, // truecolour
+            2 => 3, // truecolor
             3 => 1, // palette index
             4 => 2, // grey and alpha
-            6 => 4, // truecolour and alpha
+            6 => 4, // truecolor and alpha
             _ => 0,
         };
 
         // A paletted file is a byte an index whatever it claims, and sixteen bits
         // of index is not a thing the format has.
-        return channels > 0 && (header.Colour != 3 || header.Depth == 8);
+        return channels > 0 && (header.Color != 3 || header.Depth == 8);
     }
 
     /// <summary>
@@ -409,5 +409,5 @@ public static class PngReader
         return true;
     }
 
-    private readonly record struct Header(int Width, int Height, byte Depth, byte Colour, byte Interlace);
+    private readonly record struct Header(int Width, int Height, byte Depth, byte Color, byte Interlace);
 }
