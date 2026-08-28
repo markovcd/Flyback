@@ -71,7 +71,7 @@ public class ScaleKeysTests : UiTest
     {
         Open(out var node, out _);
 
-        node.Scale.ShouldBe(Major);
+        ScaleExtra.Of(node).ShouldBe(Major);
     }
 
     [AvaloniaFact]
@@ -79,11 +79,11 @@ public class ScaleKeysTests : UiTest
     {
         var window = Open(out var node, out var edits);
 
-        node.Scale.ShouldNotBeNull().ShouldNotContain(1);
+        ScaleExtra.Of(node).ShouldNotContain(1);
 
         Press(Key(window, 1));
 
-        node.Scale.ShouldNotBeNull().ShouldContain(1);
+        ScaleExtra.Of(node).ShouldContain(1);
         edits().ShouldBe(1);
     }
 
@@ -92,11 +92,11 @@ public class ScaleKeysTests : UiTest
     {
         var window = Open(out var node, out _);
 
-        node.Scale.ShouldNotBeNull().ShouldContain(4);
+        ScaleExtra.Of(node).ShouldContain(4);
 
         Press(Key(window, 4));
 
-        node.Scale.ShouldNotBeNull().ShouldNotContain(4);
+        ScaleExtra.Of(node).ShouldNotContain(4);
     }
 
     /// <summary>
@@ -108,13 +108,13 @@ public class ScaleKeysTests : UiTest
     {
         var window = Open(out var node, out _);
 
-        node.Scale!.Clear();
+        ScaleExtra.Set(node, []);
 
         Press(Key(window, 7));
         Press(Key(window, 0));
         Press(Key(window, 4));
 
-        node.Scale.ShouldBe([0, 4, 7]);
+        ScaleExtra.Of(node).ShouldBe([0, 4, 7]);
     }
 
     /// <summary>
@@ -128,7 +128,7 @@ public class ScaleKeysTests : UiTest
 
         foreach (var pitchClass in Major) Press(Key(window, pitchClass));
 
-        node.Scale.ShouldBeEmpty();
+        ScaleExtra.Of(node).ShouldBeEmpty();
     }
 
     /// <summary>
@@ -207,7 +207,7 @@ public class ScaleKeysTests : UiTest
         Summary(window).ShouldContain("7 notes");
 
         foreach (var pitchClass in Enumerable.Range(0, Pitch.Classes))
-            if (!node.Scale!.Contains(pitchClass))
+            if (!ScaleExtra.Of(node).Contains(pitchClass))
                 Press(Key(window, pitchClass));
 
         Summary(window).ShouldContain("nearest semitone");
@@ -234,10 +234,10 @@ public class ScaleKeysTests : UiTest
         var window = Open(out var node, out _);
 
         Press(Shortcut(window, "All"));
-        node.Scale!.Count.ShouldBe(Pitch.Classes);
+        ScaleExtra.Of(node).Count.ShouldBe(Pitch.Classes);
 
         Press(Shortcut(window, "None"));
-        node.Scale.ShouldBeEmpty();
+        ScaleExtra.Of(node).ShouldBeEmpty();
 
         static Button Shortcut(Window window, string label) =>
             All<Button>(window).Single(b =>

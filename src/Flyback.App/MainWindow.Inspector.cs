@@ -1261,12 +1261,12 @@ public sealed partial class MainWindow
     /// </remarks>
     private Control BuildSampleRow(NodeInstance node) => BuildFileRow(
         "file",
-        node.Sample,
+        SampleExtra.Of(node),
         "Choose a sound",
         SoundFileType,
         picked =>
         {
-            node.Sample = picked;
+            SampleExtra.Set(node, picked);
 
             // Forgotten first, so a file that has been replaced since it was
             // last read is read again rather than answered from the cache.
@@ -1276,12 +1276,12 @@ public sealed partial class MainWindow
     /// <summary>The same row for the other kind of file — see <see cref="PictureExtra"/>.</summary>
     private Control BuildPictureRow(NodeInstance node) => BuildFileRow(
         "picture",
-        node.Picture,
+        PictureExtra.Of(node),
         "Choose a picture",
         PictureFileType,
         picked =>
         {
-            node.Picture = picked;
+            PictureExtra.Set(node, picked);
             pictureFolder.Forget(picked);
         });
 

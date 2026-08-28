@@ -437,15 +437,19 @@ public class SequencerTests
     {
         var placed = NodeInstance.Create(NodeCatalog.BuiltIn.Require(Notes), 0, 0);
 
-        placed.Steps.ShouldNotBeNull().Count.ShouldBe(8);
-        placed.Steps![0].Value.ShouldBe(57f);
-        placed.Steps.ShouldAllBe(s => s.Length == 1f && s.Volume == 1f);
+        StepsExtra.Of(placed).Count.ShouldBe(8);
+        StepsExtra.Of(placed)[0].Value.ShouldBe(57f);
+        StepsExtra.Of(placed).ShouldAllBe(s => s.Length == 1f && s.Volume == 1f);
     }
 
     [Fact]
     public void A_module_that_is_not_a_sequencer_carries_none()
     {
-        NodeInstance.Create(NodeCatalog.BuiltIn.Require("osc.sine"), 0, 0).Steps.ShouldBeNull();
+        // Asked of the store rather than of StepsExtra: what is being pinned is
+        // that nothing is filed under the key at all, where Of would answer the
+        // empty tune for that and for a sequencer somebody emptied alike.
+        NodeInstance.Create(NodeCatalog.BuiltIn.Require("osc.sine"), 0, 0)
+            .StateOf(StepsExtra.Name).ShouldBeNull();
     }
 
     private static Patch SequencePreset() =>
@@ -495,8 +499,12 @@ public class SequencerTests
 
         // Long, short, long, short — the boundaries now fall at uneven places,
         // and every one of them is a chance to tear.
-        for (var s = 0; s < sequencer.Steps!.Count; s++)
-            sequencer.Steps[s] = sequencer.Steps[s] with { Length = s % 2 == 0 ? 1.5f : 0.5f };
+        var uneven = StepsExtra.Of(sequencer);
+
+        for (var s = 0; s < uneven.Count; s++)
+            uneven[s] = uneven[s] with { Length = s % 2 == 0 ? 1.5f : 0.5f };
+
+        StepsExtra.Set(sequencer, uneven);
 
         var program = patch.CompileForAudio(NodeCatalog.BuiltIn).Program;
         var buffer = new float[AudioRenderer.DefaultSampleRate * 2];

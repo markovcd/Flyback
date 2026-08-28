@@ -47,7 +47,7 @@ public class SampleTests : IDisposable
     /// still has to say so, the same way a patch would.
     /// </remarks>
     private static (Patch Patch, NodeInstance Player) Playing(
-        string? path,
+        string path,
         float at = 0f,
         float level = 1f)
     {
@@ -55,7 +55,7 @@ public class SampleTests : IDisposable
 
         var position = b.Add("value", -200, 0, (0, at));
         var player = b.Add(NodeCatalog.SampleTypeId, 0, 0, (1, level));
-        player.Sample = path;
+        SampleExtra.Set(player, path);
 
         var sink = b.Add(NodeCatalog.OutputTypeId, 200, 0, (NodeCatalog.OutputGainPort, 1f));
 
@@ -114,7 +114,7 @@ public class SampleTests : IDisposable
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
 
         var player = b.Add(NodeCatalog.SampleTypeId, 0, 0);
-        player.Sample = Ramp("half.wav", 500);
+        SampleExtra.Set(player, Ramp("half.wav", 500));
 
         var sink = b.Add(NodeCatalog.OutputTypeId, 200, 0, (NodeCatalog.OutputGainPort, 1f));
         b.Wire(player, 1, sink, NodeCatalog.OutputLeftPort);
@@ -157,7 +157,7 @@ public class SampleTests : IDisposable
             var b = new PatchBuilder(NodeCatalog.BuiltIn);
 
             var player = b.Add(NodeCatalog.SampleTypeId, 0, 0);
-            player.Sample = fall;
+            SampleExtra.Set(player, fall);
 
             var sink = b.Add(NodeCatalog.OutputTypeId, 300, 0, (NodeCatalog.OutputGainPort, 1f));
             b.Wire(player, 0, sink, NodeCatalog.OutputLeftPort);
@@ -336,7 +336,7 @@ public class SampleTests : IDisposable
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
 
         var player = b.Add(NodeCatalog.SampleTypeId, 0, 0);
-        player.Sample = Path.Combine(folder, "gone.wav");
+        SampleExtra.Set(player, Path.Combine(folder, "gone.wav"));
 
         var sink = b.Add(NodeCatalog.OutputTypeId, 200, 0);
         b.Wire(player, 0, sink, NodeCatalog.OutputColorPort);
@@ -400,7 +400,7 @@ public class SampleTests : IDisposable
 
         var position = b.Add("value", -200, 0, (0, 0.5f));
         var player = b.Add(NodeCatalog.SampleTypeId, 0, 0);
-        player.Sample = Ramp();
+        SampleExtra.Set(player, Ramp());
 
         var sink = b.Add(NodeCatalog.OutputTypeId, 200, 0);
 
@@ -436,7 +436,7 @@ public class SampleTests : IDisposable
         var position = b.Add("value", -400, 0, (0, 0.5f));
 
         var player = b.Add(NodeCatalog.SampleTypeId, 0, 0);
-        player.Sample = Ramp();
+        SampleExtra.Set(player, Ramp());
 
         var sink = b.Add(NodeCatalog.OutputTypeId, 200, 0);
 
@@ -461,7 +461,7 @@ public class SampleTests : IDisposable
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
 
         var player = b.Add(NodeCatalog.SampleTypeId, 0, 0);
-        player.Sample = Ramp();
+        SampleExtra.Set(player, Ramp());
 
         var probe = b.Add(NodeCatalog.ProbeTypeId, 200, 0);
         var sink = b.Add(NodeCatalog.OutputTypeId, 400, 0);
@@ -536,8 +536,8 @@ public class SampleTests : IDisposable
         var first = b.Add(NodeCatalog.SampleTypeId, 0, 0);
         var second = b.Add(NodeCatalog.SampleTypeId, 0, 100);
 
-        first.Sample = path;
-        second.Sample = path;
+        SampleExtra.Set(first, path);
+        SampleExtra.Set(second, path);
 
         var mix = b.Add("math.add", 200, 0);
         var sink = b.Add(NodeCatalog.OutputTypeId, 400, 0, (NodeCatalog.OutputGainPort, 1f));

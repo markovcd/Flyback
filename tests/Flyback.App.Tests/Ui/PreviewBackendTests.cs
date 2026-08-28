@@ -42,7 +42,7 @@ public class PreviewBackendTests : UiTest
 
         var playing = new PatchBuilder(NodeCatalog.BuiltIn);
         var player = playing.Add(NodeCatalog.SampleTypeId, 0, 0);
-        player.Sample = path;
+        SampleExtra.Set(player, path);
         var playingSink = playing.Add(NodeCatalog.OutputTypeId, 200, 0);
         playing.Wire(player, 0, playingSink, NodeCatalog.OutputColorPort);
 

@@ -279,7 +279,7 @@ public class CommandTests
         var patch = Preset("Plasma");
         var shown = NodeInstance.Create(NodeCatalog.BuiltIn.Require(NodeCatalog.PictureTypeId), 0, 0);
 
-        shown.Picture = "moon.png";
+        PictureExtra.Set(shown, "moon.png");
         patch.Nodes.Add(shown);
         patch.Connect(shown.Id, 0, patch.Output.Id, NodeCatalog.OutputColorPort);
 
@@ -344,7 +344,7 @@ public class CommandTests
         var patch = Preset("Plasma");
         var shown = NodeInstance.Create(NodeCatalog.BuiltIn.Require(NodeCatalog.PictureTypeId), 0, 0);
 
-        shown.Picture = "gone.png";
+        PictureExtra.Set(shown, "gone.png");
         patch.Nodes.Add(shown);
         patch.Connect(shown.Id, 0, patch.Output.Id, NodeCatalog.OutputColorPort);
 

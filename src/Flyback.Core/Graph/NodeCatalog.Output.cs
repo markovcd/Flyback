@@ -137,7 +137,7 @@ public partial class NodeCatalog
     /// <summary>
     /// The scale quantiser. Named here because it is the one module whose
     /// instance carries a scale, and the editor and the assistant both have to
-    /// ask whether a given node is it — see <see cref="NodeInstance.Scale"/>.
+    /// ask whether a given node is it — see <see cref="ScaleExtra"/>.
     /// </summary>
     public const string QuantiserTypeId = "audio.quantiser";
     

@@ -280,7 +280,7 @@ public sealed class PatchWorkbench
                 Real(note, "volume", out var volume) ? volume : 1f).Sane());
         }
 
-        node.Steps = notes;
+        StepsExtra.Set(node, notes);
         Edits++;
 
         return Fine($"set {notes.Count} notes on {Handle(node)}. {carries.Report(node)} {Issues()}");
@@ -331,7 +331,7 @@ public sealed class PatchWorkbench
             classes.Add(pitchClass);
         }
 
-        node.Scale = Pitch.Scale(classes);
+        ScaleExtra.Set(node, Pitch.Scale(classes));
         Edits++;
 
         return Fine($"set the scale on {Handle(node)}. {carries.Report(node)} {Issues()}");
@@ -361,7 +361,7 @@ public sealed class PatchWorkbench
         if (!Text(arguments, "path", out var path))
             return ToolOutcome.Refused("'path' is required: where the WAV file is.");
 
-        node.Sample = path;
+        SampleExtra.Set(node, path);
         Edits++;
 
         return Fine($"{Handle(node)} now reads {path}. {Issues()}");
@@ -387,7 +387,7 @@ public sealed class PatchWorkbench
         if (!Text(arguments, "path", out var path))
             return ToolOutcome.Refused("'path' is required: where the PNG file is.");
 
-        node.Picture = path;
+        PictureExtra.Set(node, path);
         Edits++;
 
         return Fine($"{Handle(node)} now shows {path}. {Issues()}");

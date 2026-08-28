@@ -74,10 +74,6 @@ internal sealed class ScaleKeys
 
         on = new SolidColorBrush(Colors.Accent(def.Category));
 
-        // A module that has one always has one, so a file that arrived without
-        // it gets the empty scale rather than a null nothing here can toggle.
-        node.Scale ??= [];
-
         var panel = new StackPanel { Margin = new Thickness(0, 14, 0, 0) };
 
         panel.Children.Add(new TextBlock
@@ -209,7 +205,7 @@ internal sealed class ScaleKeys
 
             button.Click += (_, _) =>
             {
-                node.Scale = [.. scale];
+                ScaleExtra.Set(node, scale);
                 Refresh();
                 changed(null);
             };
@@ -220,11 +216,11 @@ internal sealed class ScaleKeys
 
     private void Toggle(int pitchClass)
     {
-        node.Scale ??= [];
+        var scale = ScaleExtra.Of(node);
 
-        if (!node.Scale.Remove(pitchClass)) node.Scale.Add(pitchClass);
+        if (!scale.Remove(pitchClass)) scale.Add(pitchClass);
 
-        node.Scale = Pitch.Scale(node.Scale);
+        ScaleExtra.Set(node, Pitch.Scale(scale));
 
         Refresh();
         changed(null);
@@ -241,7 +237,7 @@ internal sealed class ScaleKeys
     /// </remarks>
     private void Refresh()
     {
-        var scale = node.Scale ?? [];
+        var scale = ScaleExtra.Of(node);
 
         foreach (var (pitchClass, key) in keys)
         {

@@ -122,11 +122,11 @@ public class PatchIoTests
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
         var sequencer = builder.Add("seq.notes", 0, 0);
 
-        sequencer.Steps = [new Step(60f), new Step(62f, 2.5f), new Step(64f, 1f, 0.25f)];
+        StepsExtra.Set(sequencer, [new Step(60f), new Step(62f, 2.5f), new Step(64f, 1f, 0.25f)]);
 
         var after = RoundTrip(builder.Patch).Nodes.Single(n => n.TypeId == "seq.notes");
 
-        after.Steps.ShouldBe(sequencer.Steps);
+        StepsExtra.Of(after).ShouldBe(StepsExtra.Of(sequencer));
     }
 
     [Fact]
@@ -135,26 +135,46 @@ public class PatchIoTests
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
         var sequencer = builder.Add("seq.values", 0, 0);
 
-        sequencer.Steps = [.. Enumerable.Range(0, NodeCatalog.MaxSteps).Select(s => new Step(s / 32f))];
+        StepsExtra.Set(
+            sequencer, [.. Enumerable.Range(0, NodeCatalog.MaxSteps).Select(s => new Step(s / 32f))]);
 
-        RoundTrip(builder.Patch).Nodes
-            .Single(n => n.TypeId == "seq.values").Steps!.Count.ShouldBe(NodeCatalog.MaxSteps);
+        StepsExtra.Of(RoundTrip(builder.Patch).Nodes.Single(n => n.TypeId == "seq.values"))
+            .Count.ShouldBe(NodeCatalog.MaxSteps);
     }
 
     /// <summary>
-    /// Written only where there is a tune to write, so every other module's JSON
-    /// reads exactly as it always did.
+    /// A module carrying nothing writes no store at all, rather than an empty
+    /// object per node.
     /// </summary>
+    /// <remarks>
+    /// It is nearly every module, so the difference is the whole file: forty
+    /// nodes each with <c>"State": {}</c> on them is a patch nobody can read down
+    /// the middle of.
+    /// </remarks>
     [Fact]
-    public void A_module_with_no_notes_writes_none()
+    public void A_module_with_nothing_to_carry_writes_no_store()
     {
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
         builder.Add("osc.sine", 0, 0);
 
+        PatchIo.ToJson(builder.Patch, NodeCatalog.BuiltIn).ShouldNotContain("State");
+    }
+
+    /// <summary>
+    /// And one that carries something writes it under the extra's own key, which
+    /// is the whole of the file format for carried state — a name a person can
+    /// read and an extra can be found by.
+    /// </summary>
+    [Fact]
+    public void What_a_module_carries_is_written_under_its_key()
+    {
+        var builder = new PatchBuilder(NodeCatalog.BuiltIn);
+        builder.Add(NodeCatalog.QuantiserTypeId, 0, 0);
+
         var json = PatchIo.ToJson(builder.Patch, NodeCatalog.BuiltIn);
 
-        json.ShouldNotContain("Steps");
-        json.ShouldNotContain("Scale");
+        json.ShouldContain("\"State\"");
+        json.ShouldContain($"\"{ScaleExtra.Name}\"");
     }
 
     /// <summary>
@@ -168,11 +188,11 @@ public class PatchIoTests
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
         var quantiser = builder.Add(NodeCatalog.QuantiserTypeId, 0, 0);
 
-        quantiser.Scale = [0, 3, 5, 7, 10];
+        ScaleExtra.Set(quantiser, [0, 3, 5, 7, 10]);
 
         var after = RoundTrip(builder.Patch).Nodes.Single(n => n.TypeId == NodeCatalog.QuantiserTypeId);
 
-        after.Scale.ShouldBe(quantiser.Scale);
+        ScaleExtra.Of(after).ShouldBe(ScaleExtra.Of(quantiser));
     }
 
     /// <summary>
@@ -186,11 +206,11 @@ public class PatchIoTests
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
         var quantiser = builder.Add(NodeCatalog.QuantiserTypeId, 0, 0);
 
-        quantiser.Scale!.Count.ShouldBeGreaterThan(0);
-        quantiser.Scale = [];
+        ScaleExtra.Of(quantiser).Count.ShouldBeGreaterThan(0);
+        ScaleExtra.Set(quantiser, []);
 
-        RoundTrip(builder.Patch).Nodes
-            .Single(n => n.TypeId == NodeCatalog.QuantiserTypeId).Scale.ShouldBeEmpty();
+        ScaleExtra.Of(RoundTrip(builder.Patch).Nodes
+            .Single(n => n.TypeId == NodeCatalog.QuantiserTypeId)).ShouldBeEmpty();
     }
 
     /// <summary>

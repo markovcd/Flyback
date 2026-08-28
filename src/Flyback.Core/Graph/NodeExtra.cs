@@ -1,3 +1,4 @@
+using System.Text.Json;
 using System.Text.Json.Nodes;
 using Flyback.Core.Compile;
 
@@ -70,12 +71,14 @@ public readonly record struct ExtraEnv(
 /// kind adds a file and no member, so a plugin compiled against an earlier build
 /// still finds the constructor it was compiled against.
 /// <para>
-/// A plugin may write its own. The engine's three store in typed fields on
-/// <see cref="NodeInstance"/>, which is why a saved patch reads as it always
-/// did; a plugin's stores under <see cref="Key"/> in
-/// <see cref="NodeInstance.State"/> and folds onto
-/// <see cref="EmitContext.Extras"/>, because that class is sealed and a plugin
-/// cannot add a field to it.
+/// A plugin may write its own, and it stores the way the engine's own kinds do:
+/// under <see cref="Key"/> in <see cref="NodeInstance.State"/>
+/// ([0061](0061-what-a-module-carries-is-kept-in-one-store.md)). The engine's
+/// four each own the shape they keep there and hand it back typed — see
+/// <see cref="StepsExtra.Of"/> — where a plugin's is described by
+/// <see cref="Fields"/> and folded onto <see cref="EmitContext.Extras"/>. What
+/// is uniform is the storage, not the shape: a tune and a path are neither of
+/// them anything <see cref="ExtraField"/> can describe.
 /// </para>
 /// <para>
 /// What is not here is the editor: it needs Avalonia, which the engine does not
@@ -95,9 +98,10 @@ public abstract record NodeExtra
     /// file format of every patch that holds the module.
     /// </summary>
     /// <remarks>
-    /// The engine's own three carry one too, though they store in typed fields
-    /// rather than by key. It is what a listing calls them, and it keeps "which
-    /// extra is this" answerable without a type test.
+    /// The one address a kind's state has: everything an instance carries that
+    /// is not a knob is filed under one of these. It is also what a listing
+    /// calls them, and it keeps "which extra is this" answerable without a type
+    /// test.
     /// </remarks>
     public abstract string Key { get; }
 
@@ -117,10 +121,12 @@ public abstract record NodeExtra
 
     /// <summary>What a freshly placed instance carries.</summary>
     /// <remarks>
-    /// Seeding is here and copying is not. Copying an instance is
-    /// <see cref="NodeInstance.Clone"/>'s, because it must work on a module this
-    /// build has no definition for — a fragment from a plugin that is not
-    /// loaded still has to keep its notes rather than lose them quietly.
+    /// Seeding is here and copying is not, and for a better reason than it used
+    /// to be: copying is one deep clone of <see cref="NodeInstance.State"/> and
+    /// so is not a thing a kind has to answer at all. It could not be asked of
+    /// one anyway — a copy has to work on a module this build has no definition
+    /// for, and there is no kind to ask about a fragment naming a plugin that is
+    /// not loaded.
     /// </remarks>
     public virtual void Seed(NodeInstance node)
     {
@@ -209,6 +215,35 @@ public abstract record NodeExtra
 
         return stored;
     }
+
+    /// <summary>
+    /// What a kind that keeps a shape of its own reads back out of the store,
+    /// or <paramref name="fallback"/> where the file says nothing it can use.
+    /// </summary>
+    /// <remarks>
+    /// The tolerance is the point. State is an opaque tree that anybody may have
+    /// typed into, so a scale written as a string or a note missing its value
+    /// has to come back as "no scale" rather than as an exception out of the
+    /// middle of loading a patch — which is what the same file did when these
+    /// were typed fields the deserialiser had to satisfy.
+    /// </remarks>
+    private protected static T Read<T>(JsonNode? stored, T fallback)
+    {
+        if (stored is null) return fallback;
+
+        try
+        {
+            return stored.Deserialize<T>() ?? fallback;
+        }
+        catch (JsonException)
+        {
+            return fallback;
+        }
+    }
+
+    /// <summary>The other half of <see cref="Read{T}"/>, for a kind's own shape.</summary>
+    private protected static JsonNode Write<T>(T value) =>
+        JsonSerializer.SerializeToNode(value) ?? new JsonObject();
 }
 
 /// <summary>
@@ -243,26 +278,38 @@ public sealed class ExtraState(IReadOnlyList<ExtraField> fields, JsonNode? store
     private ExtraField? Field(string key) => fields.FirstOrDefault(f => f.Key == key);
 }
 
-/// <summary>The notes a sequencer plays — see <see cref="NodeInstance.Steps"/>.</summary>
+/// <summary>The notes a sequencer plays.</summary>
 public sealed record StepsExtra(StepSpec Spec) : NodeExtra
 {
-    public override string Key => "notes";
+    /// <summary>
+    /// Where a tune is filed in <see cref="NodeInstance.State"/>. A constant as
+    /// well as the <see cref="Key"/> override, so that <see cref="Of"/> and
+    /// <see cref="Set"/> can be asked of a node without a definition to hand —
+    /// which is what a preset builder and the inspector both have.
+    /// </summary>
+    public const string Name = "notes";
 
-    public override void Seed(NodeInstance node) => node.Steps = [.. Spec.Default];
+    public override string Key => Name;
+
+    /// <summary>The tune this instance plays, and none where it carries no notes.</summary>
+    public static List<Step> Of(NodeInstance node) => Read<List<Step>>(node.StateOf(Name), []);
+
+    /// <summary>Replaces the tune outright — a list is edited whole or not at all.</summary>
+    public static void Set(NodeInstance node, IEnumerable<Step> notes) =>
+        node.SetState(Name, Write(notes.ToList()));
+
+    public override void Seed(NodeInstance node) => Set(node, Spec.Default);
 
     /// <remarks>
     /// Held to what can actually be played on the way in, so the emit never has
     /// to defend itself against a zero length or a volume out of range.
     /// </remarks>
     public override EmitContext Fold(EmitContext ctx, NodeInstance node, ExtraEnv env) =>
-        ctx with
-        {
-            Steps = node.Steps is { Count: > 0 } notes ? [.. notes.Select(s => s.Sane())] : [],
-        };
+        ctx with { Steps = [.. Of(node).Select(s => s.Sane())] };
 
     public override string Report(NodeInstance node)
     {
-        if (node.Steps is not { Count: > 0 } steps) return "It has no notes.";
+        if (Of(node) is not { Count: > 0 } steps) return "It has no notes.";
 
         var written = steps.Select(s =>
             s is { Length: 1f, Volume: 1f }
@@ -279,12 +326,30 @@ public sealed record StepsExtra(StepSpec Spec) : NodeExtra
         value.ToString(System.Globalization.CultureInfo.InvariantCulture);
 }
 
-/// <summary>The notes of the octave a quantiser snaps to — see <see cref="NodeInstance.Scale"/>.</summary>
+/// <summary>The notes of the octave a quantiser snaps to.</summary>
 public sealed record ScaleExtra(IReadOnlyList<int> Default) : NodeExtra
 {
-    public override string Key => "scale";
+    /// <inheritdoc cref="StepsExtra.Name"/>
+    public const string Name = "scale";
 
-    public override void Seed(NodeInstance node) => node.Scale = Pitch.Scale(Default);
+    public override string Key => Name;
+
+    /// <summary>
+    /// The pitch classes this instance snaps to, and none where it snaps to
+    /// none. As stored rather than tidied — <see cref="Fold"/> is where a scale
+    /// is held to being one, because the keyboard has to be able to show what
+    /// was actually switched on.
+    /// </summary>
+    public static List<int> Of(NodeInstance node) => Read<List<int>>(node.StateOf(Name), []);
+
+    /// <summary>
+    /// Replaces the scale outright, for the reason a tune is replaced outright:
+    /// a set sent whole cannot come out half applied.
+    /// </summary>
+    public static void Set(NodeInstance node, IEnumerable<int> classes) =>
+        node.SetState(Name, Write(classes.ToList()));
+
+    public override void Seed(NodeInstance node) => Set(node, Pitch.Scale(Default));
 
     /// <remarks>
     /// The tidying here is load-bearing rather than defensive: a scale naming a
@@ -295,12 +360,12 @@ public sealed record ScaleExtra(IReadOnlyList<int> Default) : NodeExtra
     public override EmitContext Fold(EmitContext ctx, NodeInstance node, ExtraEnv env) =>
         ctx with
         {
-            Scale = node.Scale is { Count: > 0 } classes ? Pitch.Scale(classes) : [],
+            Scale = Of(node) is { Count: > 0 } classes ? Pitch.Scale(classes) : [],
         };
 
     public override string Report(NodeInstance node)
     {
-        if (node.Scale is not { Count: > 0 } scale)
+        if (Of(node) is not { Count: > 0 } scale)
             return "Its scale is empty, so it passes the signal through unchanged.";
 
         var named = string.Join(" ", scale.Select(Pitch.ClassName));
@@ -315,16 +380,30 @@ public sealed record ScaleExtra(IReadOnlyList<int> Default) : NodeExtra
         $"  scale  which of the {Pitch.Classes} pitch classes are on, set with set_scale — not knobs";
 }
 
-/// <summary>The audio file a player reads — see <see cref="NodeInstance.Sample"/>.</summary>
+/// <summary>The audio file a player reads.</summary>
 public sealed record SampleExtra : NodeExtra
 {
-    public override string Key => "file";
+    /// <inheritdoc cref="StepsExtra.Name"/>
+    public const string Name = "file";
+
+    public override string Key => Name;
+
+    /// <summary>
+    /// The path this instance names, and the empty string where it names none —
+    /// which is also what a module that reads no file at all answers, since
+    /// asking a Sine for its sample is a question about the wrong module rather
+    /// than a state a Sine can be in.
+    /// </summary>
+    public static string Of(NodeInstance node) => Read(node.StateOf(Name), string.Empty);
+
+    /// <summary>Points this instance at a file.</summary>
+    public static void Set(NodeInstance node, string path) => node.SetState(Name, Write(path));
 
     /// <remarks>
-    /// Empty rather than null, so a module that reads a file always has
+    /// Empty rather than nothing, so a module that reads a file always has
     /// somewhere to put one and the panel always has a row to show.
     /// </remarks>
-    public override void Seed(NodeInstance node) => node.Sample = string.Empty;
+    public override void Seed(NodeInstance node) => Set(node, string.Empty);
 
     /// <remarks>
     /// The one extra that can fail, and the complaints are its own rather than
@@ -333,7 +412,9 @@ public sealed record SampleExtra : NodeExtra
     /// </remarks>
     public override EmitContext Fold(EmitContext ctx, NodeInstance node, ExtraEnv env)
     {
-        if (string.IsNullOrWhiteSpace(node.Sample))
+        var path = Of(node);
+
+        if (string.IsNullOrWhiteSpace(path))
         {
             env.Report(new CompileIssue(
                 node.Id,
@@ -343,36 +424,46 @@ public sealed record SampleExtra : NodeExtra
             return ctx;
         }
 
-        if (env.Samples?.Find(node.Sample) is { } loaded) return ctx with { Sample = loaded };
+        if (env.Samples?.Find(path) is { } loaded) return ctx with { Sample = loaded };
 
         env.Report(new CompileIssue(
             node.Id,
-            $"'{env.Title}' cannot read {node.Sample} — "
-            + (env.Samples?.Explain(node.Sample) ?? "nothing here can open a sound file.")
+            $"'{env.Title}' cannot read {path} — "
+            + (env.Samples?.Explain(path) ?? "nothing here can open a sound file.")
             + " A patch names its samples rather than carrying them, so this one has to be "
             + "somewhere it can be found."));
 
         return ctx;
     }
 
-    public override IEnumerable<string> Files(NodeInstance node) =>
-        string.IsNullOrWhiteSpace(node.Sample) ? [] : [node.Sample];
+    public override IEnumerable<string> Files(NodeInstance node)
+    {
+        var path = Of(node);
+
+        return string.IsNullOrWhiteSpace(path) ? [] : [path];
+    }
 
     public override void Rebase(NodeInstance node, Func<string, string> renamed)
     {
-        if (!string.IsNullOrWhiteSpace(node.Sample)) node.Sample = renamed(node.Sample);
+        var path = Of(node);
+
+        if (!string.IsNullOrWhiteSpace(path)) Set(node, renamed(path));
     }
 
-    public override string Report(NodeInstance node) =>
-        string.IsNullOrWhiteSpace(node.Sample)
+    public override string Report(NodeInstance node)
+    {
+        var path = Of(node);
+
+        return string.IsNullOrWhiteSpace(path)
             ? "No file chosen, so it plays silence."
-            : $"File: {node.Sample}.";
+            : $"File: {path}.";
+    }
 
     public override string Announce() =>
         "  file   a path to a WAV, set with set_sample — not a knob";
 }
 
-/// <summary>The picture a module shows — see <see cref="NodeInstance.Picture"/>.</summary>
+/// <summary>The picture a module shows.</summary>
 /// <remarks>
 /// <see cref="SampleExtra"/> for the other kind of file, and written as a
 /// separate kind rather than as a parameter on that one for the reason
@@ -384,10 +475,19 @@ public sealed record SampleExtra : NodeExtra
 /// </remarks>
 public sealed record PictureExtra : NodeExtra
 {
-    public override string Key => "picture";
+    /// <inheritdoc cref="StepsExtra.Name"/>
+    public const string Name = "picture";
+
+    public override string Key => Name;
+
+    /// <inheritdoc cref="SampleExtra.Of"/>
+    public static string Of(NodeInstance node) => Read(node.StateOf(Name), string.Empty);
+
+    /// <summary>Points this instance at a picture.</summary>
+    public static void Set(NodeInstance node, string path) => node.SetState(Name, Write(path));
 
     /// <inheritdoc cref="SampleExtra.Seed"/>
-    public override void Seed(NodeInstance node) => node.Picture = string.Empty;
+    public override void Seed(NodeInstance node) => Set(node, string.Empty);
 
     /// <remarks>
     /// Silent on the audio path, and that is the whole of how this module knows
@@ -400,7 +500,9 @@ public sealed record PictureExtra : NodeExtra
     {
         if (env.Pictures is not { } library) return ctx;
 
-        if (string.IsNullOrWhiteSpace(node.Picture))
+        var path = Of(node);
+
+        if (string.IsNullOrWhiteSpace(path))
         {
             env.Report(new CompileIssue(
                 node.Id,
@@ -410,29 +512,39 @@ public sealed record PictureExtra : NodeExtra
             return ctx;
         }
 
-        if (library.Find(node.Picture) is { } loaded) return ctx with { Picture = loaded };
+        if (library.Find(path) is { } loaded) return ctx with { Picture = loaded };
 
         env.Report(new CompileIssue(
             node.Id,
-            $"'{env.Title}' cannot read {node.Picture} — {library.Explain(node.Picture)}"
+            $"'{env.Title}' cannot read {path} — {library.Explain(path)}"
             + " A patch names its pictures rather than carrying them, so this one has to be"
             + " somewhere it can be found."));
 
         return ctx;
     }
 
-    public override IEnumerable<string> Files(NodeInstance node) =>
-        string.IsNullOrWhiteSpace(node.Picture) ? [] : [node.Picture];
+    public override IEnumerable<string> Files(NodeInstance node)
+    {
+        var path = Of(node);
+
+        return string.IsNullOrWhiteSpace(path) ? [] : [path];
+    }
 
     public override void Rebase(NodeInstance node, Func<string, string> renamed)
     {
-        if (!string.IsNullOrWhiteSpace(node.Picture)) node.Picture = renamed(node.Picture);
+        var path = Of(node);
+
+        if (!string.IsNullOrWhiteSpace(path)) Set(node, renamed(path));
     }
 
-    public override string Report(NodeInstance node) =>
-        string.IsNullOrWhiteSpace(node.Picture)
+    public override string Report(NodeInstance node)
+    {
+        var path = Of(node);
+
+        return string.IsNullOrWhiteSpace(path)
             ? "No picture chosen, so it shows black."
-            : $"Picture: {node.Picture}.";
+            : $"Picture: {path}.";
+    }
 
     public override string Announce() =>
         "  picture   a path to a PNG, set with set_picture — not a knob";

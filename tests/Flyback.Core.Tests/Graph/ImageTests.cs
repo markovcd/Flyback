@@ -57,13 +57,13 @@ public class ImageTests
         // every other module that wants one.
         NodeCatalog.BuiltIn.Normalled(def.Inputs[0]).ShouldBe("Coordinates x");
 
-        NodeInstance.Create(def, 0, 0).Picture.ShouldBe(string.Empty);
+        PictureExtra.Of(NodeInstance.Create(def, 0, 0)).ShouldBe(string.Empty);
     }
 
     /// <summary>
     /// A patch names its pictures rather than carrying them, so the name has to
-    /// survive being written down — the fourth field of its kind on a node, and
-    /// the first that nothing in the file format was changed for.
+    /// survive being written down — under its own key in the store, like
+    /// everything else a module carries that is not a knob.
     /// </summary>
     [Fact]
     public void The_path_survives_a_save_and_a_load()
@@ -71,12 +71,12 @@ public class ImageTests
         var patch = new Patch();
         var node = NodeInstance.Create(NodeCatalog.BuiltIn.Require(Image), 40, 50);
 
-        node.Picture = "pictures/moon.png";
+        PictureExtra.Set(node, "pictures/moon.png");
         patch.Nodes.Add(node);
 
         var back = PatchIo.Read(PatchIo.ToJson(patch)).Patch;
 
-        back.Nodes.Single(n => n.TypeId == Image).Picture.ShouldBe("pictures/moon.png");
+        PictureExtra.Of(back.Nodes.Single(n => n.TypeId == Image)).ShouldBe("pictures/moon.png");
     }
 
     // --- where the picture lands -----------------------------------------------
@@ -216,7 +216,7 @@ public class ImageTests
         foreach (var path in new[] { "a.png", "a.png", "b.png" })
         {
             var node = Add(patch, Image);
-            node.Picture = path;
+            PictureExtra.Set(node, path);
             patch.Connect(node.Id, 0, mix.Id, into);
             into += 2;
         }
@@ -274,7 +274,7 @@ public class ImageTests
         foreach (var path in new[] { "a.png", "b.png" })
         {
             var node = Add(patch, Image);
-            node.Picture = path;
+            PictureExtra.Set(node, path);
             patch.Connect(node.Id, 0, mix.Id, into);
             into += 2;
         }
@@ -367,7 +367,7 @@ public class ImageTests
         var patch = new Patch();
 
         var node = Add(patch, Image);
-        node.Picture = path;
+        PictureExtra.Set(node, path);
 
         var output = Add(patch, NodeCatalog.OutputTypeId);
         patch.Connect(node.Id, 0, output.Id, NodeCatalog.OutputColorPort);

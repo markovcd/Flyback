@@ -50,6 +50,16 @@ internal sealed class StepList
 
     private readonly StackPanel rows = new();
 
+    /// <summary>
+    /// The tune being edited. Held here rather than read back off the node on
+    /// every touch: a list is inserted into, taken from and reordered in place,
+    /// and <see cref="StepsExtra.Of"/> hands back a fresh copy each time it is
+    /// asked. Written back by <see cref="Save"/> at every point the patch is
+    /// told something changed, so the two never disagree for longer than one
+    /// statement.
+    /// </summary>
+    private readonly List<Step> notes;
+
     private Control? dragging;
     private int dragFrom;
     private int dragTo;
@@ -61,7 +71,7 @@ internal sealed class StepList
         this.spec = spec;
         this.changed = changed;
 
-        node.Steps ??= [];
+        notes = StepsExtra.Of(node);
 
         var panel = new StackPanel
         {
@@ -97,8 +107,6 @@ internal sealed class StepList
     }
 
     public Control View { get; }
-
-    private List<Step> Steps => node.Steps!;
 
     /// <summary>Whether a value stands for something other than itself — a note number.</summary>
     private bool Named => spec.Display == PortDisplay.Note;
@@ -136,15 +144,15 @@ internal sealed class StepList
     {
         rows.Children.Clear();
 
-        for (var i = 0; i < Steps.Count; i++)
+        for (var i = 0; i < notes.Count; i++)
         {
             rows.Children.Add(Inserter(i));
             rows.Children.Add(Row(i));
         }
 
-        rows.Children.Add(Inserter(Steps.Count));
+        rows.Children.Add(Inserter(notes.Count));
 
-        if (Steps.Count == 0)
+        if (notes.Count == 0)
             rows.Children.Add(new TextBlock
             {
                 Text = "No notes yet — the sequencer holds still until it has one.",
@@ -157,9 +165,19 @@ internal sealed class StepList
 
     private void Rebuild()
     {
+        Save();
         Fill();
         changed(null);
     }
+
+    /// <summary>
+    /// Puts the tune back on the node. Called on every change rather than when
+    /// the panel closes, because there is no moment a panel closes: a patch is
+    /// snapshotted for the undo stack the instant <see cref="changed"/> is told,
+    /// and a tune still sitting in this list at that moment is a tune the
+    /// snapshot did not get.
+    /// </summary>
+    private void Save() => StepsExtra.Set(node, notes);
 
     /// <summary>
     /// The gap between two notes, and the way one is put there. Nearly invisible
@@ -168,7 +186,7 @@ internal sealed class StepList
     /// </summary>
     private Control Inserter(int at)
     {
-        var room = Steps.Count < NodeCatalog.MaxSteps;
+        var room = notes.Count < NodeCatalog.MaxSteps;
 
         var line = new Border
         {
@@ -202,9 +220,9 @@ internal sealed class StepList
         {
             // Copied from the note it follows, so adding to a tune extends it
             // rather than dropping a stranger into the middle of it.
-            var like = Steps.Count == 0 ? new Step(Middle) : Steps[Math.Max(at - 1, 0)];
+            var like = notes.Count == 0 ? new Step(Middle) : notes[Math.Max(at - 1, 0)];
 
-            Steps.Insert(at, like);
+            notes.Insert(at, like);
             Rebuild();
         };
 
@@ -216,7 +234,7 @@ internal sealed class StepList
 
     private Control Row(int index)
     {
-        var step = Steps[index];
+        var step = notes[index];
 
         var row = new Grid
         {
@@ -293,7 +311,7 @@ internal sealed class StepList
         remove.PointerExited += (_, _) => remove.Opacity = 0.45;
         remove.Click += (_, _) =>
         {
-            Steps.RemoveAt(index);
+            notes.RemoveAt(index);
             Rebuild();
         };
 
@@ -363,12 +381,13 @@ internal sealed class StepList
     /// </summary>
     private void Set(int index, Func<Step, Step> edit)
     {
-        if (index >= Steps.Count) return;
+        if (index >= notes.Count) return;
 
-        var next = edit(Steps[index]).Sane();
-        if (next == Steps[index]) return;
+        var next = edit(notes[index]).Sane();
+        if (next == notes[index]) return;
 
-        Steps[index] = next;
+        notes[index] = next;
+        Save();
 
         if (Named
             && rows.Children.Count > index * 2 + 1
@@ -410,7 +429,7 @@ internal sealed class StepList
 
             row.RenderTransform = new TranslateTransform(0, moved);
             dragTo = Math.Clamp(
-                index + (int)Math.Round(moved / (RowHeight + InsertHeight)), 0, Steps.Count - 1);
+                index + (int)Math.Round(moved / (RowHeight + InsertHeight)), 0, notes.Count - 1);
         };
 
         handle.PointerReleased += (_, e) =>
@@ -425,9 +444,9 @@ internal sealed class StepList
 
             if (dragTo == dragFrom) return;
 
-            var moved = Steps[dragFrom];
-            Steps.RemoveAt(dragFrom);
-            Steps.Insert(dragTo, moved);
+            var moved = notes[dragFrom];
+            notes.RemoveAt(dragFrom);
+            notes.Insert(dragTo, moved);
 
             Rebuild();
         };

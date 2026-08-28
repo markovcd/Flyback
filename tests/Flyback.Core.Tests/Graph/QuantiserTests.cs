@@ -39,7 +39,10 @@ public class QuantiserTests
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
 
         var quantiser = builder.Add(NodeCatalog.QuantiserTypeId, 0, 0, (0, value));
-        quantiser.Scale = scale is null ? null : [.. scale];
+        // Null is the module carrying no scale at all, which a hand-edited file
+        // can be and the store says by holding nothing under the key.
+        if (scale is null) quantiser.SetState(ScaleExtra.Name, null);
+        else ScaleExtra.Set(quantiser, scale);
 
         var sink = builder.Add(NodeCatalog.OutputTypeId, 0, 0, (NodeCatalog.OutputGainPort, 1f));
         builder.Wire(quantiser, 0, sink, NodeCatalog.OutputLeftPort);
@@ -207,12 +210,15 @@ public class QuantiserTests
         var def = NodeCatalog.BuiltIn.Require(NodeCatalog.QuantiserTypeId);
         var node = NodeInstance.Create(def, 0, 0);
 
-        node.Scale.ShouldBe(Major);
+        ScaleExtra.Of(node).ShouldBe(Major);
 
         // Its own copy: turning a note off on one must not turn it off on the
         // definition every other instance is made from.
-        node.Scale!.Remove(0);
-        NodeInstance.Create(def, 0, 0).Scale.ShouldBe(Major);
+        var fewer = ScaleExtra.Of(node);
+        fewer.Remove(0);
+        ScaleExtra.Set(node, fewer);
+
+        ScaleExtra.Of(NodeInstance.Create(def, 0, 0)).ShouldBe(Major);
     }
 
     /// <summary>
@@ -242,7 +248,7 @@ public class QuantiserTests
             gate = b.Add("value", 0, 100, (0, 0f));
 
             var quantiser = b.Add(NodeCatalog.QuantiserTypeId, 200, 0);
-            quantiser.Scale = [.. scale];
+            ScaleExtra.Set(quantiser, [.. scale]);
 
             var sink = b.Add(NodeCatalog.OutputTypeId, 400, 0, (NodeCatalog.OutputGainPort, 1f));
 
@@ -387,9 +393,8 @@ public class QuantiserTests
     {
         const int rate = 4_000;
 
-        var scale = Presets.InKey(NodeCatalog.BuiltIn).Nodes
-            .Single(n => n.TypeId == NodeCatalog.QuantiserTypeId).Scale
-            .ShouldNotBeNull();
+        var scale = ScaleExtra.Of(Presets.InKey(NodeCatalog.BuiltIn).Nodes
+            .Single(n => n.TypeId == NodeCatalog.QuantiserTypeId));
 
         var program = Audible(NodeCatalog.QuantiserTypeId);
         var registers = program.AllocateRegisters();
@@ -510,7 +515,7 @@ public class QuantiserTests
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
 
         var quantiser = builder.Add(NodeCatalog.QuantiserTypeId, 0, 0, (0, 61.4f));
-        quantiser.Scale = [.. Major];
+        ScaleExtra.Set(quantiser, [.. Major]);
 
         var sink = builder.Add(NodeCatalog.OutputTypeId, 0, 0, (NodeCatalog.OutputGainPort, 1f));
         builder.Wire(quantiser, 0, sink, NodeCatalog.OutputLeftPort);

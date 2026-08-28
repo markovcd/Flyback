@@ -302,14 +302,15 @@ public class PatchHistoryTests
 
         var patch = builder.Patch;
         var history = Opened(patch);
-        var before = sequencer.Steps!.Count;
+        var before = StepsExtra.Of(sequencer).Count;
 
-        sequencer.Steps!.RemoveAt(0);
+        var shortened = StepsExtra.Of(sequencer);
+        shortened.RemoveAt(0);
+        StepsExtra.Set(sequencer, shortened);
+
         history.Record(patch);
 
-        history.Undo().ShouldNotBeNull()
-            .Find(sequencer.Id).ShouldNotBeNull()
-            .Steps.ShouldNotBeNull()
+        StepsExtra.Of(history.Undo().ShouldNotBeNull().Find(sequencer.Id).ShouldNotBeNull())
             .Count.ShouldBe(before);
     }
 

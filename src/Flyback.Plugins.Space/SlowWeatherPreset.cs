@@ -148,24 +148,24 @@ internal static class SlowWeatherPreset
         // covers, so setting it to the length of the list is what makes the
         // whole scale reachable and nothing beyond it.
         var padSteps = b.Add("seq.notes", 730, 1180, (1, 8f), (2, 1f), (3, 0.5f));
-        padSteps.Steps =
+        StepsExtra.Set(padSteps,
         [
             new Step(57f), new Step(60f), new Step(62f), new Step(65f),
             new Step(67f), new Step(69f), new Step(72f), new Step(74f),
-        ];
+        ]);
 
         var bellSteps = b.Add("seq.notes", 730, 1620, (1, 7f), (2, 1f), (3, 0.5f));
-        bellSteps.Steps =
+        StepsExtra.Set(bellSteps,
         [
             new Step(60f), new Step(62f), new Step(65f), new Step(67f),
             new Step(69f), new Step(72f), new Step(74f),
-        ];
+        ]);
 
         var rootSteps = b.Add("seq.notes", 730, 2060, (1, 5f), (2, 1f), (3, 0.5f));
-        rootSteps.Steps =
+        StepsExtra.Set(rootSteps,
         [
             new Step(38f), new Step(43f), new Step(45f), new Step(41f), new Step(36f),
-        ];
+        ]);
 
         b.Wire(wander, 0, padSteps, 0)
          .Wire(flutter, 0, bellSteps, 0)

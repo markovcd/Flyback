@@ -101,99 +101,34 @@ public sealed class NodeInstance
     public float[] InputValues { get; set; } = [];
 
     /// <summary>
-    /// The notes a sequencer plays, and null for every other module — the one
-    /// thing an instance carries that is not a knob.
+    /// Everything this instance carries that is not a knob — a sequencer's
+    /// notes, a quantiser's scale, a player's file, a plugin's own invention —
+    /// each under its <see cref="NodeExtra.Key"/>, and null for the great
+    /// majority of modules, which carry nothing.
     /// </summary>
     /// <remarks>
-    /// ADR-0031 refused exactly this and was right to at the time: a pattern of
-    /// eight fixed steps is a row of knobs, and knobs already existed. A pattern
-    /// that can be inserted into, deleted from and reordered is a list, and no
-    /// arrangement of a fixed <see cref="InputValues"/> is one. See ADR-0038 for
-    /// what that costs — a step is no longer a socket.
-    /// </remarks>
-    public List<Step>? Steps { get; set; }
-
-    /// <summary>
-    /// Which notes of the octave a quantiser will snap to, and null for every
-    /// module that snaps to none — the second thing an instance carries that is
-    /// not a knob.
-    /// </summary>
-    /// <remarks>
-    /// Pitch classes, so a scale names every A rather than one of them, and a
-    /// set rather than a sequence — see <see cref="Pitch.Scale"/>. Not
-    /// <see cref="Steps"/> reused, though the two are both lists on a node: a
-    /// tune is ordered and may repeat a note, a scale is neither, and a Step
-    /// would carry a length and a volume that mean nothing here. Not
-    /// <see cref="InputValues"/> either, for ADR-0038's reason — twelve sockets
-    /// for twelve switches is a module nobody can read, and none of the twelve
-    /// is a thing a patch could sensibly drive.
-    /// </remarks>
-    public List<int>? Scale { get; set; }
-
-    /// <summary>
-    /// The audio file a player reads, and null for every module that reads none
-    /// — the third thing an instance carries that is not a knob, and the first
-    /// that is not a number.
-    /// </summary>
-    /// <remarks>
-    /// A path rather than the audio. A patch is a document that is snapshotted
-    /// whole on every edit and kept two hundred deep (see
-    /// <see cref="PatchHistory"/>), and a megabyte of PCM in it would be a
-    /// megabyte per undo step and a re-serialisation of it per knob turn. The
-    /// cost of the other choice is that a patch is no longer self-contained,
-    /// which is the one thing this gives up and is why a file that has gone is
-    /// reported by name rather than passed over.
-    /// <para>
-    /// It passes the test ADR-0051 set for a third field of this kind: it is a
-    /// decision about the piece rather than a signal in it, and there is no
-    /// arrangement of sockets that expresses it — a socket carries a number, and
-    /// this is not one.
-    /// </para>
-    /// </remarks>
-    public string? Sample { get; set; }
-
-    /// <summary>
-    /// The picture this instance shows, as the path a patch stores rather than
-    /// as the pixels — and null for every module that shows none.
-    /// </summary>
-    /// <remarks>
-    /// The fourth field of this kind, and the one
-    /// [0054](0054-what-a-module-carries-is-a-part-not-a-subtype.md) said would
-    /// be easier to argue for than the third was. It is worth saying that it
-    /// meets the test [0051](0051-a-quantisers-scale-is-a-set-on-the-node.md)
-    /// set rather than merely being convenient: which picture a patch shows is a
-    /// decision about the piece and not a signal in it, and no arrangement of
-    /// sockets says it, because a socket carries a number and a path is not one.
-    /// <para>
-    /// A path rather than the picture for the reasons
-    /// [0052](0052-a-patch-names-its-samples-rather-than-carrying-them.md) gives
-    /// about audio, and they are stronger here: a patch file is JSON held in an
-    /// undo stack, and a photograph in it would be several megabytes per undo
-    /// step and a re-serialisation of them per knob turn.
-    /// </para>
-    /// </remarks>
-    public string? Picture { get; set; }
-
-    /// <summary>
-    /// What a plugin's own kind of extra carries, keyed by
-    /// <see cref="NodeExtra.Key"/>, and null for every module whose extras are
-    /// the engine's own.
-    /// </summary>
-    /// <remarks>
-    /// The open half of the store. <see cref="Steps"/>, <see cref="Scale"/> and
-    /// <see cref="Sample"/> are the kinds the engine ships and they stay typed
-    /// fields — a saved patch reads as it always did, and the emit functions that
-    /// use them are unchanged. Anything a plugin invents lands here instead,
-    /// because this class is sealed and a plugin cannot add a field to it.
+    /// One store rather than a field per kind
+    /// ([0061](0061-what-a-module-carries-is-kept-in-one-store.md)). The four
+    /// the engine ships used to be typed fields here and the open half was for
+    /// plugins; the split bought nothing but the asymmetry, and cost
+    /// <see cref="Clone"/> having to name every field an instance could carry —
+    /// which is the one place a field added and not copied goes wrong quietly.
     /// <para>
     /// <see cref="JsonNode"/> rather than a typed value, because the engine does
     /// not know what shape a plugin's kind is and must round-trip it without
-    /// understanding it. It also keeps the file ordinary: an extra writes an
-    /// object under its own name, which reads and edits like the rest of the
-    /// patch. Turning it into something an emit function can use is
-    /// <see cref="NodeExtra.Fold"/>'s, and so is tolerating a file somebody
-    /// edited into a shape that means nothing — the same contract
-    /// <see cref="Step.Sane"/> has.
+    /// understanding it — and because that is what lets a copy be a deep clone
+    /// of this and nothing else, including for a module this build has no
+    /// definition for. It also keeps the file ordinary: an extra writes under
+    /// its own name, which reads and edits like the rest of the patch.
+    /// </para>
+    /// <para>
+    /// Getting a shape back out of it is the kind's, not this class's:
+    /// <see cref="StepsExtra.Of"/> and its three siblings hand back a
+    /// <c>List&lt;Step&gt;</c>, a scale or a path, and
+    /// <see cref="NodeExtra.Fold"/> puts it on the <see cref="EmitContext"/>
+    /// typed, so nothing on the compile path reads JSON. Tolerating a file
+    /// somebody edited into a shape that means nothing is theirs too — the same
+    /// contract <see cref="Step.Sane"/> has.
     /// </para>
     /// </remarks>
     public Dictionary<string, JsonNode>? State { get; set; }
@@ -270,17 +205,17 @@ public sealed class NodeInstance
     /// </summary>
     /// <remarks>
     /// Deep, so that what a clipboard holds is a picture of the patch as it was
-    /// rather than a view onto one that goes on being edited: the lists are the
-    /// whole of a module's settings, and sharing one would let a knob turned
-    /// afterwards change what a paste produces.
+    /// rather than a view onto one that goes on being edited: the knobs and the
+    /// store are the whole of a module's settings, and sharing either would let
+    /// an edit made afterwards change what a paste produces.
     /// <para>
-    /// The one place that names every field an instance carries, and deliberately
-    /// so — it is the file those fields are declared in, and adding a field
-    /// without copying it here is the mistake this being next to them is meant to
-    /// prevent. Not routed through <see cref="NodeDef.Extras"/> like seeding is,
-    /// because a copy must not need a definition: a fragment naming a module this
-    /// build has no plugin for still has to keep its notes, and looking one up to
-    /// find nothing would drop them without a word.
+    /// Two lines rather than one per kind of carried state, which is what
+    /// putting all of it in <see cref="State"/> bought
+    /// ([0061](0061-what-a-module-carries-is-kept-in-one-store.md)). Still not
+    /// routed through <see cref="NodeDef.Extras"/> like seeding is, and now it
+    /// need not be: a copy must not need a definition — a fragment naming a
+    /// module this build has no plugin for still has to keep its notes — and a
+    /// clone of the store keeps them without knowing what any of them are.
     /// </para>
     /// </remarks>
     /// <param name="id">The copy's identity, or null to keep this one's.</param>
@@ -294,10 +229,6 @@ public sealed class NodeInstance
         X = X + dx,
         Y = Y + dy,
         InputValues = [.. InputValues],
-        Steps = Steps is { } steps ? [.. steps] : null,
-        Scale = Scale is { } scale ? [.. scale] : null,
-        Sample = Sample,
-        Picture = Picture,
 
         // Deep here too, and it has to be said explicitly: a JsonNode is a
         // mutable tree, so copying the dictionary alone would hand the copy
@@ -318,9 +249,9 @@ public sealed class NodeInstance
             InputValues = [.. def.Inputs.Select(p => p.Default)],
         };
 
-        // Whatever this module carries that is not a knob, each kind filling in
-        // its own field — see NodeExtra. A module with none, which is nearly all
-        // of them, leaves every one of them null.
+        // Whatever this module carries that is not a knob, each kind writing
+        // under its own key — see NodeExtra. A module with none, which is nearly
+        // all of them, leaves State null.
         foreach (var extra in def.Extras) extra.Seed(node);
 
         return node;

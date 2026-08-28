@@ -17,7 +17,7 @@ public partial class NodeCatalog
     /// <summary>
     /// The sample player. Named here because it is the one module whose instance
     /// carries a file, and the editor, the compiler and the assistant all have to
-    /// ask whether a given node is it — see <see cref="NodeInstance.Sample"/>.
+    /// ask whether a given node is it — see <see cref="SampleExtra"/>.
     /// </summary>
     public const string SampleTypeId = "audio.sample";
 
@@ -25,7 +25,7 @@ public partial class NodeCatalog
     /// The picture module. Named here for the reason the sample player is: it is
     /// the one module whose instance carries a picture, and the editor, the
     /// compiler and the assistant all have to ask whether a given node is it —
-    /// see <see cref="NodeInstance.Picture"/>.
+    /// see <see cref="PictureExtra"/>.
     /// </summary>
     public const string PictureTypeId = "picture";
 

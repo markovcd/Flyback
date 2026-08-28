@@ -51,10 +51,10 @@ public class PatchBundleTests
 
         var read = PatchBundle.Read(new MemoryStream(archive), NodeCatalog.BuiltIn);
 
-        read.Patch.Nodes.Single(n => n.TypeId == NodeCatalog.SampleTypeId).Sample
+        SampleExtra.Of(read.Patch.Nodes.Single(n => n.TypeId == NodeCatalog.SampleTypeId))
             .ShouldBe("files/drums.wav");
 
-        read.Patch.Nodes.Single(n => n.TypeId == NodeCatalog.PictureTypeId).Picture
+        PictureExtra.Of(read.Patch.Nodes.Single(n => n.TypeId == NodeCatalog.PictureTypeId))
             .ShouldBe("files/moon.png");
 
         read.Files.Keys.ShouldBe(["files/drums.wav", "files/moon.png"], ignoreOrder: true);
@@ -72,8 +72,8 @@ public class PatchBundleTests
 
         Packed(patch, out _);
 
-        patch.Nodes.Single(n => n.TypeId == NodeCatalog.SampleTypeId).Sample.ShouldBe(Wav);
-        patch.Nodes.Single(n => n.TypeId == NodeCatalog.PictureTypeId).Picture.ShouldBe(Png);
+        SampleExtra.Of(patch.Nodes.Single(n => n.TypeId == NodeCatalog.SampleTypeId)).ShouldBe(Wav);
+        PictureExtra.Of(patch.Nodes.Single(n => n.TypeId == NodeCatalog.PictureTypeId)).ShouldBe(Png);
     }
 
     /// <summary>
@@ -89,7 +89,7 @@ public class PatchBundleTests
         foreach (var _ in new[] { 1, 2 })
         {
             var node = Add(patch, NodeCatalog.PictureTypeId);
-            node.Picture = Png;
+            PictureExtra.Set(node, Png);
         }
 
         var report = Packed(patch, out var archive);
@@ -99,7 +99,7 @@ public class PatchBundleTests
 
         PatchBundle.Read(new MemoryStream(archive), NodeCatalog.BuiltIn).Patch.Nodes
             .Where(n => n.TypeId == NodeCatalog.PictureTypeId)
-            .ShouldAllBe(n => n.Picture == "files/moon.png");
+            .ShouldAllBe(n => PictureExtra.Of(n) == "files/moon.png");
     }
 
     /// <summary>
@@ -115,7 +115,7 @@ public class PatchBundleTests
         foreach (var path in new[] { @"C:\one\moon.png", @"C:\two\moon.png" })
         {
             var node = Add(patch, NodeCatalog.PictureTypeId);
-            node.Picture = path;
+            PictureExtra.Set(node, path);
         }
 
         var report = Packed(patch, out var archive, _ => [1, 2, 3]);
@@ -128,7 +128,7 @@ public class PatchBundleTests
 
         read.Patch.Nodes
             .Where(n => n.TypeId == NodeCatalog.PictureTypeId)
-            .Select(n => n.Picture)
+            .Select(n => PictureExtra.Of(n))
             .ShouldBe(["files/moon.png", "files/moon (2).png"], ignoreOrder: true);
     }
 
@@ -151,10 +151,10 @@ public class PatchBundleTests
         // The one that was carried is rewritten and the one that was not is left
         // saying what it always said, so a bundle made on the wrong machine can
         // still be repaired by putting the file back where the patch says.
-        read.Patch.Nodes.Single(n => n.TypeId == NodeCatalog.SampleTypeId).Sample
+        SampleExtra.Of(read.Patch.Nodes.Single(n => n.TypeId == NodeCatalog.SampleTypeId))
             .ShouldBe("files/drums.wav");
 
-        read.Patch.Nodes.Single(n => n.TypeId == NodeCatalog.PictureTypeId).Picture.ShouldBe(Png);
+        PictureExtra.Of(read.Patch.Nodes.Single(n => n.TypeId == NodeCatalog.PictureTypeId)).ShouldBe(Png);
     }
 
     /// <summary>
@@ -170,7 +170,8 @@ public class PatchBundleTests
         // Once each, however many modules name it.
         var twice = new Patch();
 
-        foreach (var _ in new[] { 1, 2 }) Add(twice, NodeCatalog.PictureTypeId).Picture = Png;
+        foreach (var _ in new[] { 1, 2 })
+            PictureExtra.Set(Add(twice, NodeCatalog.PictureTypeId), Png);
 
         PatchBundle.Files(twice, NodeCatalog.BuiltIn).ShouldBe([Png]);
 
@@ -205,7 +206,7 @@ public class PatchBundleTests
 
         var patch = new Patch();
         var shown = Add(patch, NodeCatalog.PictureTypeId);
-        shown.Picture = Png;
+        PictureExtra.Set(shown, Png);
 
         var output = Add(patch, NodeCatalog.OutputTypeId);
         patch.Connect(shown.Id, 0, output.Id, NodeCatalog.OutputColorPort);
@@ -257,7 +258,7 @@ public class PatchBundleTests
 
         var patch = new Patch();
         var shown = Add(patch, NodeCatalog.PictureTypeId);
-        shown.Picture = Png;
+        PictureExtra.Set(shown, Png);
         Add(patch, NodeCatalog.OutputTypeId);
 
         var first = new MemoryStream();
@@ -383,10 +384,10 @@ public class PatchBundleTests
         var patch = new Patch();
 
         var player = Add(patch, NodeCatalog.SampleTypeId);
-        player.Sample = Wav;
+        SampleExtra.Set(player, Wav);
 
         var shown = Add(patch, NodeCatalog.PictureTypeId);
-        shown.Picture = Png;
+        PictureExtra.Set(shown, Png);
 
         Add(patch, NodeCatalog.OutputTypeId);
 

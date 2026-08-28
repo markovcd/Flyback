@@ -186,19 +186,25 @@ public class PatchClipboardTests
         var sequencer = builder.Add("seq.notes", 0, 0);
         var quantiser = builder.Add(NodeCatalog.QuantiserTypeId, 0, 0);
 
-        sequencer.Steps = [new Step(60f), new Step(64f, 2f)];
-        quantiser.Scale = [0, 3, 7];
+        StepsExtra.Set(sequencer, [new Step(60f), new Step(64f, 2f)]);
+        ScaleExtra.Set(quantiser, [0, 3, 7]);
 
         var fragment = PatchClipboard.Copy(builder.Patch, [sequencer.Id, quantiser.Id]);
         var pasted = PatchClipboard.Paste(builder.Patch, fragment);
 
-        pasted.Single(n => n.TypeId == "seq.notes").Steps.ShouldBe(sequencer.Steps);
-        pasted.Single(n => n.TypeId == NodeCatalog.QuantiserTypeId).Scale.ShouldBe(quantiser.Scale);
+        var pastedSequencer = pasted.Single(n => n.TypeId == "seq.notes");
+        var pastedQuantiser = pasted.Single(n => n.TypeId == NodeCatalog.QuantiserTypeId);
+
+        StepsExtra.Of(pastedSequencer).ShouldBe(StepsExtra.Of(sequencer));
+        ScaleExtra.Of(pastedQuantiser).ShouldBe(ScaleExtra.Of(quantiser));
 
         // Its own copy, not the one it was pasted from: editing the new module's
-        // scale must not reach back into the module it came from.
-        pasted.Single(n => n.TypeId == NodeCatalog.QuantiserTypeId).Scale!.Clear();
-        quantiser.Scale.ShouldBe([0, 3, 7]);
+        // scale must not reach back into the module it came from. Reached through
+        // the store rather than through ScaleExtra, because the shape a kind
+        // hands back is a copy either way — what is being pinned here is that the
+        // trees underneath are two trees.
+        pastedQuantiser.StateOf(ScaleExtra.Name).ShouldNotBeNull().AsArray().Clear();
+        ScaleExtra.Of(quantiser).ShouldBe([0, 3, 7]);
     }
 
     /// <summary>

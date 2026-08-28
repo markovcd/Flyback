@@ -829,7 +829,7 @@ public static class Presets
         // interval the note is frozen for is the interval it is sounding for, by
         // construction rather than by arithmetic.
         var key = b.Add(NodeCatalog.QuantiserTypeId, 1300, 300);
-        key.Scale = [0, 2, 4, 7, 9];
+        ScaleExtra.Set(key, [0, 2, 4, 7, 9]);
 
         // Ear: the snapped note as a pitch, plucked three times a second.
         var note = b.Add("audio.note", 1520, 480);
@@ -1243,7 +1243,7 @@ public static class Presets
         // lengths are uneven and that is the groove: the dotted eighth into a
         // sixteenth at the top of each bar is what stops it walking.
         var bassSeq = b.Add("seq.notes", 480, 1620, (2, 0.55f), (3, 0.02f));
-        bassSeq.Steps =
+        StepsExtra.Set(bassSeq,
         [
             new Step(33f, 1.5f), new Step(33f, 0.5f, 0.55f),
             new Step(40f, 1f, 0.8f), new Step(33f, 1f, 0.65f),
@@ -1251,21 +1251,21 @@ public static class Presets
             new Step(38f, 1f, 0.8f), new Step(31f, 1f, 0.65f),
             new Step(29f, 1.5f), new Step(36f, 0.5f, 0.6f),
             new Step(29f, 2f, 0.85f), new Step(28f, 4f),
-        ];
+        ]);
 
         // Twenty sixteenths — five beats, against the bass's eight. The rests
         // are a volume rather than a note, which is what a volume being a level
         // and not a switch is for: the pitch stays where it was, so the notes
         // either side of a rest are one phrase rather than three.
         var leadSeq = b.Add("seq.notes", 480, 2000, (2, 0.62f), (3, 0.045f));
-        leadSeq.Steps =
+        StepsExtra.Set(leadSeq,
         [
             new Step(69f), new Step(72f, 1f, 0.8f), new Step(76f, 1f, 0.9f), new Step(72f, 1f, 0.6f),
             new Step(77f), new Step(76f, 1f, 0.85f), new Step(76f, 1f, 0f), new Step(74f, 1f, 0.9f),
             new Step(71f, 1f, 0.8f), new Step(74f, 1f, 0.7f), new Step(79f), new Step(77f, 1f, 0.85f),
             new Step(76f, 1f, 0.9f), new Step(74f, 1f, 0.6f), new Step(72f, 1f, 0.95f), new Step(72f, 1f, 0f),
             new Step(71f, 1f, 0.85f), new Step(69f), new Step(67f, 1f, 0.7f), new Step(69f, 1f, 0.8f),
-        ];
+        ]);
 
         // The drum pattern, as volumes: the four beats, a ghost off the second
         // and another at the end of the bar, which is what makes it a groove
@@ -1273,13 +1273,13 @@ public static class Presets
         // here — the Note Sequencer's would be a pitch and this one's is spare,
         // so it rests at zero and the volumes carry the whole pattern.
         var kickSeq = b.Add("seq.values", 480, 2380, (2, 0.32f), (3, 0.01f));
-        kickSeq.Steps =
+        StepsExtra.Set(kickSeq,
         [
             new Step(0f), new Step(0f, 1f, 0f), new Step(0f, 1f, 0f), new Step(0f, 1f, 0f),
             new Step(0f, 1f, 0.9f), new Step(0f, 1f, 0f), new Step(0f, 1f, 0.5f), new Step(0f, 1f, 0f),
             new Step(0f, 1f, 0.95f), new Step(0f, 1f, 0f), new Step(0f, 1f, 0f), new Step(0f, 1f, 0f),
             new Step(0f, 1f, 0.85f), new Step(0f, 1f, 0f), new Step(0f, 1f, 0.55f), new Step(0f, 1f, 0f),
-        ];
+        ]);
 
         // Here the value is used, and it is the one gesture that needs a
         // Sequencer rather than a Note Sequencer: it opens the hat. The step
@@ -1288,7 +1288,7 @@ public static class Presets
         // way through with two open ones in the bar, out of a list of numbers
         // rather than out of two instruments.
         var hatSeq = b.Add("seq.values", 480, 2760, (2, 0.4f), (3, 0.01f));
-        hatSeq.Steps =
+        StepsExtra.Set(hatSeq,
         [
             new Step(0.15f, 1f, 0.9f), new Step(0.1f, 1f, 0.35f),
             new Step(0.15f, 1f, 0.6f), new Step(0.1f, 1f, 0.3f),
@@ -1298,7 +1298,7 @@ public static class Presets
             new Step(0.15f, 1f, 0.6f), new Step(0.1f, 1f, 0.3f),
             new Step(0.15f, 1f, 0.8f), new Step(0.1f, 1f, 0.4f),
             new Step(1f, 1f, 0.85f), new Step(0.1f, 1f, 0.5f),
-        ];
+        ]);
 
         b.Wire(tempo, 0, eighths, 0)
          .Wire(tempo, 0, sixteenths, 0)

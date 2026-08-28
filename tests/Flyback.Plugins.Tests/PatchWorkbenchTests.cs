@@ -478,7 +478,7 @@ public class PatchWorkbenchTests
 
         set.Ok.ShouldBeTrue(set.Text);
 
-        var notes = bench.Snapshot().Nodes.Single(n => n.TypeId == "seq.notes").Steps.ShouldNotBeNull();
+        var notes = StepsExtra.Of(bench.Snapshot().Nodes.Single(n => n.TypeId == "seq.notes"));
 
         notes.Count.ShouldBe(3);
         notes[0].ShouldBe(new Step(60f));
@@ -496,7 +496,7 @@ public class PatchWorkbenchTests
         await Call(bench, "set_steps", """{"handle":"tune1","notes":[{"value":1},{"value":2}]}""");
         await Call(bench, "set_steps", """{"handle":"tune1","notes":[{"value":9}]}""");
 
-        bench.Snapshot().Nodes.Single(n => n.TypeId == "seq.notes").Steps!.Count.ShouldBe(1);
+        StepsExtra.Of(bench.Snapshot().Nodes.Single(n => n.TypeId == "seq.notes")).Count.ShouldBe(1);
     }
 
     [Fact]
@@ -687,7 +687,7 @@ public class PatchWorkbenchTests
         var set = await Call(bench, "set_sample", """{"handle":"clip1","path":"drums.wav"}""");
 
         set.Ok.ShouldBeTrue(set.Text);
-        bench.Snapshot().Nodes.Single(n => n.TypeId == NodeCatalog.SampleTypeId).Sample
+        SampleExtra.Of(bench.Snapshot().Nodes.Single(n => n.TypeId == NodeCatalog.SampleTypeId))
             .ShouldBe("drums.wav");
     }
 
@@ -736,7 +736,7 @@ public class PatchWorkbenchTests
         var set = await Call(bench, "set_picture", """{"handle":"shown1","path":"moon.png"}""");
 
         set.Ok.ShouldBeTrue(set.Text);
-        bench.Snapshot().Nodes.Single(n => n.TypeId == NodeCatalog.PictureTypeId).Picture
+        PictureExtra.Of(bench.Snapshot().Nodes.Single(n => n.TypeId == NodeCatalog.PictureTypeId))
             .ShouldBe("moon.png");
 
         // And refused on anything that shows none, rather than quietly stored.
@@ -775,9 +775,8 @@ public class PatchWorkbenchTests
     }
 
     private static IReadOnlyList<int> Scale(PatchWorkbench bench) =>
-        bench.Snapshot().Nodes
-            .Single(n => n.TypeId == NodeCatalog.QuantiserTypeId).Scale
-            .ShouldNotBeNull();
+        ScaleExtra.Of(bench.Snapshot().Nodes
+            .Single(n => n.TypeId == NodeCatalog.QuantiserTypeId));
 
     /// <summary>
     /// A sink standing on its own compiles to a constant — a flat field, or

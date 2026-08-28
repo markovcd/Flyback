@@ -41,7 +41,7 @@ public class StepListTests : UiTest
 
         // Three number boxes are two per row plus none spare: the value and the
         // length. Counting them is counting rows without depending on layout.
-        All<NumericUpDown>(window).Count().ShouldBe(node.Steps!.Count * 2);
+        All<NumericUpDown>(window).Count().ShouldBe(StepsExtra.Of(node).Count * 2);
     }
 
     /// <summary>
@@ -67,7 +67,7 @@ public class StepListTests : UiTest
         }
 
         // And the first one is showing the first note rather than nothing.
-        text[0].Text.ShouldBe(((int)node.Steps![0].Value).ToString());
+        text[0].Text.ShouldBe(((int)StepsExtra.Of(node)[0].Value).ToString());
     }
 
     /// <summary>
@@ -133,7 +133,7 @@ public class StepListTests : UiTest
         value.Value = 64m;
         Settle(window);
 
-        node.Steps![0].Value.ShouldBe(64f);
+        StepsExtra.Of(node)[0].Value.ShouldBe(64f);
     }
 
     /// <summary>
@@ -161,19 +161,19 @@ public class StepListTests : UiTest
         All<NumericUpDown>(window).Skip(1).First().Value = 0m;
         Settle(window);
 
-        node.Steps![0].Length.ShouldBeGreaterThanOrEqualTo(Step.ShortestLength);
+        StepsExtra.Of(node)[0].Length.ShouldBeGreaterThanOrEqualTo(Step.ShortestLength);
     }
 
     [AvaloniaFact]
     public void Removing_a_note_takes_its_row_with_it()
     {
         var window = Showing(out var node);
-        var before = node.Steps!.Count;
+        var before = StepsExtra.Of(node).Count;
 
         Click(window, Rows(window)[0].Children.OfType<Button>().Single());
 
-        node.Steps.Count.ShouldBe(before - 1);
-        All<NumericUpDown>(window).Count().ShouldBe(node.Steps.Count * 2);
+        StepsExtra.Of(node).Count.ShouldBe(before - 1);
+        All<NumericUpDown>(window).Count().ShouldBe(StepsExtra.Of(node).Count * 2);
     }
 
     /// <summary>Adding is the strip between two rows, and there is one above the first.</summary>
@@ -181,12 +181,12 @@ public class StepListTests : UiTest
     public void Clicking_between_two_rows_puts_a_note_there()
     {
         var window = Showing(out var node);
-        var before = node.Steps!.Count;
+        var before = StepsExtra.Of(node).Count;
 
         // The strip above the first row, which is the one that can insert at the top.
         Click(window, Strips(window)[0]);
 
-        node.Steps.Count.ShouldBe(before + 1);
+        StepsExtra.Of(node).Count.ShouldBe(before + 1);
     }
 
     /// <summary>The rows of the list, told apart from the grids inside control templates.</summary>
@@ -213,25 +213,27 @@ public class StepListTests : UiTest
     public void A_note_dragged_by_its_handle_lands_where_it_was_dropped(int from, int to)
     {
         var window = Showing(out var node);
-        var moving = node.Steps![from];
-        var others = node.Steps.Where((_, i) => i != from).ToList();
+        var moving = StepsExtra.Of(node)[from];
+        var others = StepsExtra.Of(node).Where((_, i) => i != from).ToList();
 
         Drag(window, from, to);
 
-        node.Steps[to].ShouldBe(moving, "the note should have landed on the row it was dropped on");
-        node.Steps.Where((_, i) => i != to).ShouldBe(others, "the rest should keep their order");
-        node.Steps.Count.ShouldBe(others.Count + 1);
+        StepsExtra.Of(node)[to]
+            .ShouldBe(moving, "the note should have landed on the row it was dropped on");
+        StepsExtra.Of(node).Where((_, i) => i != to)
+            .ShouldBe(others, "the rest should keep their order");
+        StepsExtra.Of(node).Count.ShouldBe(others.Count + 1);
     }
 
     [AvaloniaFact]
     public void A_note_dropped_where_it_started_changes_nothing()
     {
         var window = Showing(out var node);
-        var before = node.Steps!.ToList();
+        var before = StepsExtra.Of(node).ToList();
 
         Drag(window, 2, 2);
 
-        node.Steps.ShouldBe(before);
+        StepsExtra.Of(node).ShouldBe(before);
     }
 
     /// <summary>Dragging past the ends stops at them rather than losing the note.</summary>
@@ -239,11 +241,11 @@ public class StepListTests : UiTest
     public void A_note_dragged_off_the_top_stops_at_the_first_row()
     {
         var window = Showing(out var node);
-        var moving = node.Steps![4];
+        var moving = StepsExtra.Of(node)[4];
 
         DragBy(window, 4, -40 * RowPitch);
 
-        node.Steps[0].ShouldBe(moving);
+        StepsExtra.Of(node)[0].ShouldBe(moving);
     }
 
     /// <summary>Row height plus the strip above it — the distance between two rows.</summary>
@@ -299,7 +301,7 @@ public class StepListTests : UiTest
         window.MouseUp(at, MouseButton.Left);
         Settle(window);
 
-        node.Steps![0].Volume.ShouldBe((float)across, 0.05f);
+        StepsExtra.Of(node)[0].Volume.ShouldBe((float)across, 0.05f);
     }
 
     /// <summary>Nothing at the far left, which is how a rest is made.</summary>
@@ -315,7 +317,7 @@ public class StepListTests : UiTest
         window.MouseUp(at, MouseButton.Left);
         Settle(window);
 
-        node.Steps![0].Volume.ShouldBe(0f);
+        StepsExtra.Of(node)[0].Volume.ShouldBe(0f);
     }
 
     // --- what it looks like -------------------------------------------------
