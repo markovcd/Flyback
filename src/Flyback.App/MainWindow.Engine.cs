@@ -126,8 +126,8 @@ public sealed partial class MainWindow
         showingProbe = probe?.Id;
 
         var result = probe is null
-            ? editor.Patch.CompileForVideo(samples: samples)
-            : editor.Patch.CompileForProbe(probe.Id, samples: samples);
+            ? editor.Patch.CompileForVideo(samples: samples, pictures: pictures)
+            : editor.Patch.CompileForProbe(probe.Id, samples: samples, pictures: pictures);
 
         preview.Program = result.Program;
         audio.Update(editor.Patch, samples);

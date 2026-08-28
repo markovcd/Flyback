@@ -21,6 +21,14 @@ public partial class NodeCatalog
     /// </summary>
     public const string SampleTypeId = "audio.sample";
 
+    /// <summary>
+    /// The picture module. Named here for the reason the sample player is: it is
+    /// the one module whose instance carries a picture, and the editor, the
+    /// compiler and the assistant all have to ask whether a given node is it —
+    /// see <see cref="NodeInstance.Picture"/>.
+    /// </summary>
+    public const string PictureTypeId = "picture";
+
     public const int CoordXPort = 0;
     public const int CoordYPort = 1;
 
@@ -92,11 +100,52 @@ public partial class NodeCatalog
         };
 
         yield return new NodeDef(
+            PictureTypeId, "Image", "Source",
+            [..Position()],
+            [Col("color")],
+            EmitPicture,
+            "Shows a picture from a file. The one module that brings something into a patch "
+            + "from outside rather than working it out — everything else here is arithmetic, "
+            + "and this is a photograph. It is placed at its own shape, filling the height and "
+            + "as much of the width as it is wide, with black beyond its edges: a frame this "
+            + "program exported lands exactly where it came from. 'x' and 'y' are where it is "
+            + "being asked about, so a Scale before it zooms, a Translate slides it, a Rotate "
+            + "turns it and a Warp bends it — the module decides nothing about the mapping "
+            + "except what it is when nothing is patched in. PNG, 8 or 16 bit, not interlaced; "
+            + "transparency is taken as black, since a colour here is three numbers and not "
+            + "four. The patch stores the path rather than the picture, so the file has to stay "
+            + "where it is — one that has moved is reported by name. Silent: the speakers have "
+            + "nothing to do with a picture, so on that path it is black and the file is not "
+            + "even opened.")
+        {
+            Extras = [new PictureExtra()],
+        };
+
+        yield return new NodeDef(
             "value", "Value", "Source",
             [Num("value", 0.5f)], [Num("out")],
             (_, i) => [i[0]],
             "A knob. Handy when several modules should share one number.");
     }
+
+    /// <summary>
+    /// A picture read at a place, and black where there is no picture to read.
+    /// </summary>
+    /// <remarks>
+    /// Three lines, because everything that makes this module hard happens
+    /// elsewhere: the file is read by a library outside the compiler, placed by
+    /// <see cref="LoadedImage.At"/>, and lowered to a texture by the shader
+    /// backend. What is left here is the one decision the module itself makes,
+    /// which is what to do when it has nothing — black, for the reason the
+    /// player answers silence, and the same black that lies outside a picture's
+    /// own edges. So a patch showing a file that has gone draws what a patch
+    /// showing a file that is entirely off the side of the frame draws, and
+    /// there is one rule rather than two.
+    /// </remarks>
+    private static Slot[] EmitPicture(Emitter em, EmitContext node) =>
+        node.Picture is { } picture
+            ? [em.Picture(node[0], node[1], picture)]
+            : [em.Coerce(em.Constant(0f), VideoChannels)];
 
     /// <summary>
     /// A clip read at a position, with a trigger that takes the position it

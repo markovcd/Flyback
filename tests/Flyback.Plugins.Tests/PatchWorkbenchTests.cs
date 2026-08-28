@@ -722,6 +722,33 @@ public class PatchWorkbenchTests
     }
 
     /// <summary>
+    /// The other kind of file, and its own tool for the reason a sample has one:
+    /// a path is neither a knob nor a wire, and an Image with nothing pointed at
+    /// it shows black. The extra tool is what stops a model placing one and
+    /// having no way to finish it.
+    /// </summary>
+    [Fact]
+    public async Task An_images_picture_can_be_pointed_at()
+    {
+        var bench = Bench();
+        await Call(bench, "add_module", $$"""{"type_id":"{{NodeCatalog.PictureTypeId}}","handle":"shown1"}""");
+
+        var set = await Call(bench, "set_picture", """{"handle":"shown1","path":"moon.png"}""");
+
+        set.Ok.ShouldBeTrue(set.Text);
+        bench.Snapshot().Nodes.Single(n => n.TypeId == NodeCatalog.PictureTypeId).Picture
+            .ShouldBe("moon.png");
+
+        // And refused on anything that shows none, rather than quietly stored.
+        await Call(bench, "add_module", """{"type_id":"osc.sine","handle":"tone1"}""");
+
+        var wrong = await Call(bench, "set_picture", """{"handle":"tone1","path":"moon.png"}""");
+
+        wrong.Ok.ShouldBeFalse();
+        wrong.Text.ShouldContain("shows no picture");
+    }
+
+    /// <summary>
     /// A path is neither wiring nor a knob, so without this a player reads as a
     /// module with nothing set on it and the model would set it again.
     /// </summary>

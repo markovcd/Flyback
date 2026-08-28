@@ -29,9 +29,10 @@ internal static class CheckCommand
         bool json,
         TextWriter output,
         TextWriter error,
-        ISampleLibrary? samples = null)
+        ISampleLibrary? samples = null,
+        IImageLibrary? pictures = null)
     {
-        var video = patch.CompileForVideo(samples: samples);
+        var video = patch.CompileForVideo(samples: samples, pictures: pictures);
         var audio = patch.CompileForAudio(samples: samples);
 
         // Deduplicated across the two, the way the window's status line does it:

@@ -16,6 +16,9 @@ public sealed class Emitter
     /// <summary>The clips this program reads, one entry per distinct one.</summary>
     private readonly List<LoadedSample> tables = [];
 
+    /// <summary>The pictures this program reads, one entry per distinct one.</summary>
+    private readonly List<LoadedImage> pictures = [];
+
     /// <summary>
     /// The live inputs this program reads, one entry per distinct one — see
     /// <see cref="Live"/>.
@@ -261,6 +264,31 @@ public sealed class Emitter
 
     /// <summary>The clips this program reads, in the order their ops name them.</summary>
     public IReadOnlyList<LoadedSample> Tables => tables;
+
+    /// <summary>
+    /// Reads a loaded picture at a place. Two modules given the same picture
+    /// share one texture, the way two given the same clip share one table — which
+    /// matters more here, because the sharing is what stops a patch showing one
+    /// file four times from uploading it four times.
+    /// </summary>
+    public Slot Picture(Slot x, Slot y, LoadedImage image)
+    {
+        var index = pictures.IndexOf(image);
+
+        if (index < 0)
+        {
+            index = pictures.Count;
+            pictures.Add(image);
+        }
+
+        var first = Allocate(3);
+        Add(new Op(OpCode.SamplePicture, first, x.Component(0), y.Component(0), k: index));
+
+        return Slot.Color(first);
+    }
+
+    /// <summary>The pictures this program reads, in the order their ops name them.</summary>
+    public IReadOnlyList<LoadedImage> Pictures => pictures;
 
     /// <summary>
     /// Reads whatever is being played into <paramref name="key"/> right now — a

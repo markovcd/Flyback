@@ -45,10 +45,17 @@ public sealed record StepSpec(
 /// extra that wanted one says so in the ordinary way.
 /// </param>
 /// <param name="Report">Where a complaint about this node goes.</param>
+/// <param name="Pictures">
+/// Where a path is turned into a picture, and null where nothing in this program
+/// can open one. Null the same way <paramref name="Samples"/> is null and for
+/// the same reasons — and additionally on every audio program, since a picture
+/// is a thing to look at and the speakers have nothing to do with one.
+/// </param>
 public readonly record struct ExtraEnv(
     string Title,
     ISampleLibrary? Samples,
-    Action<CompileIssue> Report);
+    Action<CompileIssue> Report,
+    IImageLibrary? Pictures = null);
 
 /// <summary>
 /// One thing an instance carries that is not a knob: a sequencer's notes, a
@@ -322,4 +329,62 @@ public sealed record SampleExtra : NodeExtra
 
     public override string Announce() =>
         "  file   a path to a WAV, set with set_sample — not a knob";
+}
+
+/// <summary>The picture a module shows — see <see cref="NodeInstance.Picture"/>.</summary>
+/// <remarks>
+/// <see cref="SampleExtra"/> for the other kind of file, and written as a
+/// separate kind rather than as a parameter on that one for the reason
+/// [0054](0054-what-a-module-carries-is-a-part-not-a-subtype.md) made kinds
+/// parts: what they share is the shape of the field, and what they do not share
+/// is the library, the fault, the sentence and — the one that decides it — which
+/// program is allowed to read one at all. A clip is read by the speakers and a
+/// picture by the screen, so the two are never even asked the same question.
+/// </remarks>
+public sealed record PictureExtra : NodeExtra
+{
+    public override string Key => "picture";
+
+    /// <inheritdoc cref="SampleExtra.Seed"/>
+    public override void Seed(NodeInstance node) => node.Picture = string.Empty;
+
+    /// <remarks>
+    /// Silent on the audio path, and that is the whole of how this module knows
+    /// which program it is in: the compiler hands a picture library to the walk
+    /// that draws and nothing at all to the walk that plays. So the speakers get
+    /// no picture, no complaint about a file they were never going to show, and
+    /// no file opened on their behalf.
+    /// </remarks>
+    public override EmitContext Fold(EmitContext ctx, NodeInstance node, ExtraEnv env)
+    {
+        if (env.Pictures is not { } library) return ctx;
+
+        if (string.IsNullOrWhiteSpace(node.Picture))
+        {
+            env.Report(new CompileIssue(
+                node.Id,
+                $"'{env.Title}' has no picture chosen, so it shows black. Pick one in the panel.",
+                IssueSeverity.Warning));
+
+            return ctx;
+        }
+
+        if (library.Find(node.Picture) is { } loaded) return ctx with { Picture = loaded };
+
+        env.Report(new CompileIssue(
+            node.Id,
+            $"'{env.Title}' cannot read {node.Picture} — {library.Explain(node.Picture)}"
+            + " A patch names its pictures rather than carrying them, so this one has to be"
+            + " somewhere it can be found."));
+
+        return ctx;
+    }
+
+    public override string Report(NodeInstance node) =>
+        string.IsNullOrWhiteSpace(node.Picture)
+            ? "No picture chosen, so it shows black."
+            : $"Picture: {node.Picture}.";
+
+    public override string Announce() =>
+        "  picture   a path to a PNG, set with set_picture — not a knob";
 }

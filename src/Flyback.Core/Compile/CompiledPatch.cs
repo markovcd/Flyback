@@ -36,7 +36,8 @@ public sealed class CompiledPatch(
     int outputWidth = 3,
     IReadOnlyList<LoadedSample>? tables = null,
     IReadOnlyList<TapSpec>? taps = null,
-    IReadOnlyList<string>? liveInputs = null)
+    IReadOnlyList<string>? liveInputs = null,
+    IReadOnlyList<LoadedImage>? pictures = null)
 {
     public Op[] Ops { get; } = ops;
 
@@ -96,6 +97,23 @@ public sealed class CompiledPatch(
     /// OpCode.Table.
     /// </remarks>
     public IReadOnlyList<LoadedSample> Tables { get; } = tables ?? [];
+
+    /// <summary>
+    /// The pictures <see cref="OpCode.SamplePicture"/> reads, indexed by its K.
+    /// </summary>
+    /// <remarks>
+    /// Carried the way <see cref="Tables"/> is, and unlike it on the one point
+    /// that matters: this list is filled on the <em>video</em> path, since a
+    /// picture is a thing to look at. What the speakers make of an Image is one
+    /// evaluation of a still, which is a colour that never moves, so the audio
+    /// program carries none of these and reads black.
+    /// <para>
+    /// It is also what the shader is handed before a frame: one texture per
+    /// entry, in this order, which is how a uniform finds the picture its op
+    /// names.
+    /// </para>
+    /// </remarks>
+    public IReadOnlyList<LoadedImage> Pictures { get; } = pictures ?? [];
 
     public int RegisterCount { get; } = registerCount;
 
@@ -278,6 +296,22 @@ public sealed class CompiledPatch(
                 case OpCode.SampleFeedback:
                     Sample(feedback, registers[op.A], registers[op.B], registers[op.Out..(op.Out + 3)]);
                     break;
+
+                case OpCode.SamplePicture:
+                {
+                    var picture = (int)op.K;
+                    var rgb = registers[op.Out..(op.Out + 3)];
+
+                    // Black where the program carries no pictures, which is
+                    // every audio program and any video one whose file was not
+                    // there — the same answer a Table gives silence for.
+                    if (picture >= 0 && picture < Pictures.Count)
+                        Pictures[picture].At(registers[op.A], registers[op.B], rgb);
+                    else
+                        rgb[0] = rgb[1] = rgb[2] = 0d;
+
+                    break;
+                }
 
                 case OpCode.Tap:
                     delays?.Tap((int)op.K, registers[op.A]);

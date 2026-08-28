@@ -38,6 +38,9 @@ public sealed class PatchWorkbench
 {
     private readonly ModuleCatalog modules;
     private readonly ISampleLibrary? samples;
+
+    /// <summary>Where an Image module.s file is looked up, and null where nothing can.</summary>
+    private readonly IImageLibrary? pictures;
     private readonly WorkbenchLimits limits;
     private readonly string startingPoint;
     private readonly Dictionary<string, NodeInstance> byHandle = new(StringComparer.OrdinalIgnoreCase);
@@ -62,10 +65,12 @@ public sealed class PatchWorkbench
         bool vision = true,
         bool hearing = false,
         WorkbenchLimits? limits = null,
-        ISampleLibrary? samples = null)
+        ISampleLibrary? samples = null,
+        IImageLibrary? pictures = null)
     {
         this.modules = modules;
         this.samples = samples;
+        this.pictures = pictures;
         this.limits = limits ?? new WorkbenchLimits();
 
         // Kept as text so Reset cannot hand back something an earlier edit
@@ -144,6 +149,7 @@ public sealed class PatchWorkbench
                 "set_steps" => SetSteps(arguments),
                 "set_scale" => SetScale(arguments),
                 "set_sample" => SetSample(arguments),
+                "set_picture" => SetPicture(arguments),
                 "set_extra" => SetExtra(arguments),
                 "connect" => Connect(arguments),
                 "disconnect" => Disconnect(arguments),
@@ -362,6 +368,32 @@ public sealed class PatchWorkbench
     }
 
     /// <summary>
+    /// Points an Image module at a picture. <see cref="SetSample"/> for the other
+    /// kind of file, written out again rather than shared with it for the reason
+    /// the two libraries are two classes: what they have in common is four lines,
+    /// and what they do not is every sentence a person reads.
+    /// </summary>
+    private ToolOutcome SetPicture(JsonElement arguments)
+    {
+        if (!Node(arguments, "handle", out var node, out var def, out var refusal))
+            return ToolOutcome.Refused(refusal);
+
+        if (def.Extra<PictureExtra>() is null)
+        {
+            return ToolOutcome.Refused(
+                $"{Handle(node)} is a {def.Name}, which shows no picture. Only the Image module does.");
+        }
+
+        if (!Text(arguments, "path", out var path))
+            return ToolOutcome.Refused("'path' is required: where the PNG file is.");
+
+        node.Picture = path;
+        Edits++;
+
+        return Fine($"{Handle(node)} now shows {path}. {Issues()}");
+    }
+
+    /// <summary>
     /// Sets one field of an extra a plugin defined.
     /// </summary>
     /// <remarks>
@@ -398,7 +430,7 @@ public sealed class PatchWorkbench
         {
             return ToolOutcome.Refused(
                 $"'{key}' on {Handle(node)} is not set this way. The built-in notes, scale and "
-                + "file have set_steps, set_scale and set_sample.");
+                + "file have set_steps, set_scale, set_sample and set_picture.");
         }
 
         if (!Text(arguments, "field", out var name))
@@ -598,7 +630,7 @@ public sealed class PatchWorkbench
         // Both programs, because either may be the one that was built for. A
         // patch offered for its sound still has to have compiled its sound, and
         // the video pass never reaches a node only the ear does.
-        var errors = working.CompileForVideo(modules, samples).Issues
+        var errors = working.CompileForVideo(modules, samples, pictures).Issues
             .Concat(working.CompileForAudio(modules, samples).Issues)
             .Where(i => i.Severity == IssueSeverity.Error)
             .Select(i => i.Message)
@@ -657,7 +689,7 @@ public sealed class PatchWorkbench
         text.Append(working.Nodes.Count).Append(" modules, ")
             .Append(working.Connections.Count).AppendLine(" wires.");
 
-        var video = working.CompileForVideo(modules, samples);
+        var video = working.CompileForVideo(modules, samples, pictures);
         var audio = working.CompileForAudio(modules, samples);
 
         text.Append("video: ").Append(video.Program.Ops.Length).Append(" ops");
@@ -826,7 +858,7 @@ public sealed class PatchWorkbench
                 + "there is nothing to look at. Patch something in if it is meant to be seen."));
         }
 
-        var patch = working.CompileForVideo(modules, samples);
+        var patch = working.CompileForVideo(modules, samples, pictures);
 
         if (patch.HasIssues)
         {
@@ -1274,6 +1306,24 @@ public sealed class PatchWorkbench
                 }
                 """),
 
+            new("set_picture",
+                "Points an Image module at a picture file. The path is neither a knob nor a wire, "
+                + "so this is the only way to set one, and like a sample it refers to something "
+                + "outside the patch — the file has to exist where you say it does. A PNG: 8 or 16 "
+                + "bit, not interlaced. The answer says whether it could be read, so a path that is "
+                + "wrong is answered now rather than by a black picture later. Ask the person for a "
+                + "path rather than guessing at one — nothing here can list what is on their "
+                + "machine.",
+                """
+                {
+                  "properties": {
+                    "handle": { "type": "string" },
+                    "path": { "type": "string", "description": "Where the PNG is, absolute or beside the patch." }
+                  },
+                  "required": ["handle", "path"]
+                }
+                """),
+
             new("set_extra",
                 "Sets one named value on a module that carries something a plugin defined — the "
                 + "rows a module listing writes under a name of their own, like 'notes' or "
@@ -1282,8 +1332,8 @@ public sealed class PatchWorkbench
                 + "field may hold. A number is clamped to the field's range, a switch takes "
                 + "true or false, and a choice takes the id of one of the things it offers — "
                 + "describe_module lists them, and a refusal names them too. The built-in "
-                + "notes, scale and file are not set this way: they have set_steps, set_scale "
-                + "and set_sample.",
+                + "notes, scale, file and picture are not set this way: they have set_steps, "
+                + "set_scale, set_sample and set_picture.",
                 """
                 {
                   "properties": {
@@ -1561,7 +1611,7 @@ public sealed class PatchWorkbench
         // That is precisely what a silent patch looks like from this side — an
         // assistant told "No issues." after every edit has no way left to find
         // out, because it cannot hear the thing either.
-        var issues = working.CompileForVideo(modules, samples).Issues
+        var issues = working.CompileForVideo(modules, samples, pictures).Issues
             .Concat(working.CompileForAudio(modules, samples).Issues)
             .ToArray();
 

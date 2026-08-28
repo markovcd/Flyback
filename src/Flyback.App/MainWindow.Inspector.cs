@@ -1028,6 +1028,7 @@ public sealed partial class MainWindow
         // The one a node carries that is not a number, so it is a name and a
         // button rather than a control with a range.
         SampleExtra => BuildSampleRow(node),
+        PictureExtra => BuildPictureRow(node),
 
         // Anything else is a plugin's own kind, which ships no control and is
         // drawn from what it declares instead — see ADR-0055. A kind that
@@ -1258,9 +1259,50 @@ public sealed partial class MainWindow
     /// would be one more thing to keep true.
     /// </para>
     /// </remarks>
-    private Control BuildSampleRow(NodeInstance node)
+    private Control BuildSampleRow(NodeInstance node) => BuildFileRow(
+        "file",
+        node.Sample,
+        "Choose a sound",
+        SoundFileType,
+        picked =>
+        {
+            node.Sample = picked;
+
+            // Forgotten first, so a file that has been replaced since it was
+            // last read is read again rather than answered from the cache.
+            samples.Forget(picked);
+        });
+
+    /// <summary>The same row for the other kind of file — see <see cref="PictureExtra"/>.</summary>
+    private Control BuildPictureRow(NodeInstance node) => BuildFileRow(
+        "picture",
+        node.Picture,
+        "Choose a picture",
+        PictureFileType,
+        picked =>
+        {
+            node.Picture = picked;
+            pictures.Forget(picked);
+        });
+
+    /// <summary>
+    /// A file this instance carries: what it is called, what it currently is,
+    /// and a button that goes and finds another.
+    /// </summary>
+    /// <remarks>
+    /// One row for both kinds, because the two differ in four strings and
+    /// nothing else — the picker's title, the label, the filter, and what to do
+    /// with what comes back. Written twice it would have been sixty lines said
+    /// again, and the second copy is where the tooltip stops being set.
+    /// </remarks>
+    private Control BuildFileRow(
+        string label,
+        string? held,
+        string title,
+        FilePickerFileType kind,
+        Action<string> store)
     {
-        var chosen = node.Sample ?? string.Empty;
+        var chosen = held ?? string.Empty;
 
         var row = new Grid
         {
@@ -1268,9 +1310,9 @@ public sealed partial class MainWindow
             Margin = new Thickness(0, 8, 0, 0),
         };
 
-        var label = new TextBlock
+        var caption = new TextBlock
         {
-            Text = "file",
+            Text = label,
             Width = 78,
             FontSize = 12,
             VerticalAlignment = VerticalAlignment.Center,
@@ -1294,18 +1336,14 @@ public sealed partial class MainWindow
         {
             var files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
             {
-                Title = "Choose a sound",
+                Title = title,
                 AllowMultiple = false,
-                FileTypeFilter = [SoundFileType],
+                FileTypeFilter = [kind],
             });
 
             if (files.Count == 0 || files[0].TryGetLocalPath() is not { } picked) return;
 
-            node.Sample = picked;
-
-            // Forgotten first, so a file that has been replaced since it was
-            // last read is read again rather than answered from the cache.
-            samples.Forget(picked);
+            store(picked);
 
             // The shape of the panel has not changed, so it is not rebuilt — the
             // one row that did is written here, the way a knob writes its own.
@@ -1316,11 +1354,11 @@ public sealed partial class MainWindow
             editor.NotifyPatchChanged();
         };
 
-        Grid.SetColumn(label, 0);
+        Grid.SetColumn(caption, 0);
         Grid.SetColumn(name, 1);
         Grid.SetColumn(choose, 2);
 
-        row.Children.Add(label);
+        row.Children.Add(caption);
         row.Children.Add(name);
         row.Children.Add(choose);
 
@@ -1332,6 +1370,13 @@ public sealed partial class MainWindow
     {
         Patterns = ["*.wav"],
         MimeTypes = ["audio/wav", "audio/x-wav"],
+    };
+
+    /// <summary>And what the picture picker offers, for the same reason.</summary>
+    private static FilePickerFileType PictureFileType => new("PNG images")
+    {
+        Patterns = ["*.png"],
+        MimeTypes = ["image/png"],
     };
 
     private Control BuildInputRow(NodeInstance node, PortSpec spec, int index)

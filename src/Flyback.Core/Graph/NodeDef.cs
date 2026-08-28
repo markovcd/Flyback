@@ -114,6 +114,20 @@ public readonly record struct EmitContext(Slot[] Inputs, IReadOnlyList<Step> Ste
     public LoadedSample? Sample { get; init; }
 
     /// <summary>
+    /// The picture this instance shows, already read, and null where there is
+    /// none to show.
+    /// </summary>
+    /// <remarks>
+    /// Null covers the same three things <see cref="Sample"/>'s does — no file
+    /// chosen, a file that has gone, and a program that cannot show one — and
+    /// the third is the interesting one: it is every audio program, because the
+    /// compiler hands the speakers' walk no picture library at all. So a module
+    /// reading this needs no way to ask which sink it is being lowered for; the
+    /// answer is in whether it was given anything.
+    /// </remarks>
+    public LoadedImage? Picture { get; init; }
+
+    /// <summary>
     /// The buffer this instance charts — the stretch of the past something
     /// outside the program keeps refilling — and null where the program being
     /// compiled is the one doing the playing rather than the drawing.

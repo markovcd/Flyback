@@ -30,9 +30,10 @@ internal static class InfoCommand
         bool json,
         TextWriter output,
         TextWriter error,
-        ISampleLibrary? samples = null)
+        ISampleLibrary? samples = null,
+        IImageLibrary? pictures = null)
     {
-        var picture = Costed(patch.CompileForVideo(samples: samples).Program);
+        var picture = Costed(patch.CompileForVideo(samples: samples, pictures: pictures).Program);
         var sound = Costed(patch.CompileForAudio(samples: samples).Program);
         var reaches = patch.Reaches();
 

@@ -38,7 +38,8 @@ internal static class RenderCommand
         TextWriter error,
         IProgress<double>? progress = null,
         CancellationToken cancellation = default,
-        ISampleLibrary? samples = null)
+        ISampleLibrary? samples = null,
+        IImageLibrary? pictures = null)
     {
         var kind = options.Out.Extension.ToLowerInvariant();
 
@@ -54,7 +55,7 @@ internal static class RenderCommand
         var wantsPicture = kind is ".png" or ".avi";
         var wantsSound = kind is ".wav" or ".avi";
 
-        var video = wantsPicture ? patch.CompileForVideo(samples: samples) : null;
+        var video = wantsPicture ? patch.CompileForVideo(samples: samples, pictures: pictures) : null;
         var audio = wantsSound ? patch.CompileForAudio(samples: samples) : null;
 
         var issues = (video?.Issues ?? [])

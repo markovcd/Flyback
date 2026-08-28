@@ -33,6 +33,12 @@ public enum GlslDialect
 /// knob holds changes when somebody edits the patch, and what a key holds changes
 /// while they are looking at it.
 /// </param>
+/// <param name="PictureCount">
+/// How many textures the fragment shader wants bound, and how many
+/// <c>uPicture</c> samplers it declares. They are the patch's own
+/// <see cref="CompiledPatch.Pictures"/>, in that order, so the uploader reads
+/// the pixels off the program rather than out of here.
+/// </param>
 public sealed record ShaderSource(
     string PatchVertex,
     string PatchFragment,
@@ -41,7 +47,8 @@ public sealed record ShaderSource(
     int ConstantCount,
     bool UsesFeedback,
     int OpCount,
-    int LiveCount = 0);
+    int LiveCount = 0,
+    int PictureCount = 0);
 
 /// <summary>
 /// Lowers a compiled patch to a fragment shader. This is the second backend
@@ -99,7 +106,8 @@ public static class GlslEmitter
             ConstantCount: constants,
             UsesFeedback: feedback,
             OpCount: patch.Ops.Length,
-            LiveCount: patch.LiveCount);
+            LiveCount: patch.LiveCount,
+            PictureCount: Textures(patch));
     }
 
     // --- headers -----------------------------------------------------------------
@@ -333,6 +341,66 @@ public static class GlslEmitter
 
         """;
 
+    /// <summary>
+    /// How many samplers the shader declares, counted off the ops that name one
+    /// rather than off the list of pictures beside them.
+    /// </summary>
+    /// <remarks>
+    /// The two agree for anything the compiler produced — an op is emitted and a
+    /// picture added in the same breath. Counting the ops is what makes the text
+    /// answerable on its own all the same: a program assembled by hand, which is
+    /// what every test of a single opcode is, would otherwise call a function
+    /// that had not been declared and produce a shader nothing could compile.
+    /// </remarks>
+    private static int Textures(CompiledPatch patch)
+    {
+        var most = patch.Pictures.Count;
+
+        foreach (var op in patch.Ops)
+            if (op.Code == OpCode.SamplePicture)
+                most = Math.Max(most, (int)op.K + 1);
+
+        return most;
+    }
+
+    /// <summary>
+    /// One picture: the texture it was uploaded into, the shape it is drawn at,
+    /// and the read that has to agree with <see cref="LoadedImage.At"/> down to
+    /// what happens off the edges.
+    /// </summary>
+    /// <remarks>
+    /// The aspect is a uniform rather than a constant folded into the text,
+    /// because it belongs to the file rather than to the patch: the same program
+    /// draws whatever picture is bound to it, and a shader recompiled because
+    /// somebody chose a photograph of a different shape would be a shader
+    /// recompiled for nothing.
+    /// <para>
+    /// Black outside is written out rather than left to the sampler's wrapping.
+    /// Clamping to the edge is what the texture is set up to do — it is what a
+    /// linear filter needs at the last row — so the picture's own extent is
+    /// tested here, which is also the one arrangement that agrees with the
+    /// processor at every one of the four edges.
+    /// </para>
+    /// </remarks>
+    private static string PictureHelper(int index) =>
+        $$"""
+        uniform sampler2D uPicture{{index}};
+        uniform float uPictureAspect{{index}};
+
+        vec3 pic{{index}}(float x, float y)
+        {
+            if (!(fin(x) && fin(y))) return vec3(0.0);
+
+            float u = (x / uPictureAspect{{index}} + 1.0) * 0.5;
+            float v = (1.0 - y) * 0.5;
+
+            if (u < 0.0 || u > 1.0 || v < 0.0 || v > 1.0) return vec3(0.0);
+
+            return texture(uPicture{{index}}, vec2(u, v)).rgb;
+        }
+
+        """;
+
     private static string PatchFragment(CompiledPatch patch, GlslDialect dialect, int constants, bool feedback)
     {
         var text = new StringBuilder(Header(dialect, fragment: true));
@@ -358,6 +426,15 @@ public static class GlslEmitter
         {
             text.AppendLine();
             text.Append(FeedbackHelper);
+        }
+
+        // One sampler and one shape per picture, declared rather than arrayed:
+        // an array of samplers may only be indexed by a constant in ES, and the
+        // index here is one anyway — every op names its picture at compile time.
+        for (var picture = 0; picture < Textures(patch); picture++)
+        {
+            text.AppendLine();
+            text.Append(PictureHelper(picture));
         }
 
         text.AppendLine();
@@ -505,13 +582,14 @@ public static class GlslEmitter
 
                 OpCode.HsvToRgb => $"hsv({a}, {b}, {c})",
                 OpCode.SampleFeedback => $"fb({a}, {b})",
+                OpCode.SamplePicture => $"pic{(int)op.K}({a}, {b})",
 
                 _ => throw new NotSupportedException(
                     $"{op.Code} has no GLSL lowering. Every opcode needs one, or the GPU " +
                     "backend renders a different patch from the one the interpreter does."),
             };
 
-            if (op.Code is OpCode.HsvToRgb or OpCode.SampleFeedback)
+            if (op.Code is OpCode.HsvToRgb or OpCode.SampleFeedback or OpCode.SamplePicture)
             {
                 text.AppendLine($"    vec3 t{op.Out} = {expression};");
                 text.AppendLine(

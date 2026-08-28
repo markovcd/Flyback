@@ -47,6 +47,7 @@ public sealed class AssistantPanel : UserControl
     /// what the editor plays. Null in a test, which makes every player silent.
     /// </summary>
     private readonly ISampleLibrary? samples;
+    private readonly IImageLibrary? pictures;
     /// <summary>
     /// Hands a patch to the canvas, where it lands as an edit rather than as a
     /// new document. Nothing can refuse it and nothing needs to: an assistant's
@@ -284,10 +285,12 @@ public sealed class AssistantPanel : UserControl
         Action<Patch> apply,
         Action<string, string?> report,
         AssistantSettings? saved = null,
-        ISampleLibrary? samples = null)
+        ISampleLibrary? samples = null,
+        IImageLibrary? pictures = null)
     {
         settings = saved ?? AssistantSettings.Load();
         this.samples = samples;
+        this.pictures = pictures;
         this.plugins = plugins;
         this.current = current;
         this.apply = apply;
@@ -1054,7 +1057,8 @@ public sealed class AssistantPanel : UserControl
         if (because is null && run is { } going) return going;
 
         run?.Dispose();
-        run = new AssistantRun(with, config, plugins.Modules, current(), samples: samples);
+        run = new AssistantRun(
+            with, config, plugins.Modules, current(), samples: samples, pictures: pictures);
         runConfig = config;
         runAssistant = with;
 

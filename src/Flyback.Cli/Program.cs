@@ -111,9 +111,10 @@ internal static class Program
             var loaded = Patches.Read(file, Console.Error);
             if (loaded is null) return Task.FromResult(Exit.Failed);
 
-            // A sample named relatively is measured from wherever the patch is,
-            // so a patch and its sounds travel together.
+            // A file named relatively is measured from wherever the patch is, so a
+            // patch and the sounds and pictures it names travel together.
             var samples = new SampleLibrary { Beside = file.DirectoryName };
+            var pictures = new ImageLibrary { Beside = file.DirectoryName };
 
             var (width, height) = result.GetValue(size);
 
@@ -127,7 +128,8 @@ internal static class Program
                 result.GetValue(quality));
 
             return Task.FromResult(
-                RenderCommand.Run(loaded, options, Console.Error, Progress(), cancellation, samples));
+                RenderCommand.Run(
+                    loaded, options, Console.Error, Progress(), cancellation, samples, pictures));
         });
 
         return command;
@@ -153,7 +155,7 @@ internal static class Program
         Command command,
         Argument<FileInfo> patch,
         Option<bool> json,
-        Func<Patch, string, bool, TextWriter, TextWriter, ISampleLibrary?, int> run)
+        Func<Patch, string, bool, TextWriter, TextWriter, ISampleLibrary?, IImageLibrary?, int> run)
     {
         command.Arguments.Add(patch);
         command.Options.Add(json);
@@ -171,7 +173,8 @@ internal static class Program
                     result.GetValue(json),
                     Console.Out,
                     Console.Error,
-                    new SampleLibrary { Beside = file.DirectoryName });
+                    new SampleLibrary { Beside = file.DirectoryName },
+                    new ImageLibrary { Beside = file.DirectoryName });
         });
 
         return command;

@@ -662,6 +662,52 @@ the file only while the transport is inside it: rewind, or set `window` to about
 the clip's length, and the waveform is there. A **Scope** shows the triggering,
 because it is a recording of what came out rather than a second evaluation.
 
+### Showing a picture
+
+The **Image** module reads a PNG, and it is the one module in the catalogue that
+is not arithmetic. Everything else here works out what it draws; this one brings
+a photograph in from outside.
+
+It is placed at its own shape — filling the height, reaching its own aspect
+either side of the middle, black beyond all four edges. Which gives the property
+the whole thing is worth having for: **a frame this program rendered, read back
+in, is exactly the frame it was.**
+
+```bash
+flyback-cli render nebula.fbk -o frame.png --size 480x270 --at 3
+```
+
+Point an Image at `frame.png`, render *that* patch to a PNG, and the two files
+are byte for byte the same. From there the picture is a field like any other —
+`x` and `y` are where it is being asked about, so a **Scale** zooms it, a
+**Translate** slides it, a **Rotate** turns it, a **Kaleidoscope** folds it and a
+**Warp** bends it. The module decides nothing about the mapping except what it is
+when nothing is patched in.
+
+Unlike a Sample, **this keeps the GPU**. That is the whole reason it is an opcode
+rather than a fudge: a clip is a buffer a shader has nowhere to put, and a picture
+is a texture, which is what a shader is made to read — so a photograph goes up
+as one and the preview never leaves the shader
+([ADR-0059](docs/adr/0059-a-picture-comes-in-as-a-texture.md)). One texture per
+distinct file, so a patch showing the same picture in four places uploads it once.
+
+Everything else follows the sample's rules, because they are the same rules: the
+patch stores the *path*, a relative one is measured from wherever the patch is, a
+file that has moved is reported by name, and the patch still compiles — to black
+where the picture would have been. Transparency is taken as black too, since a
+colour here is three numbers and not four, and that is the same answer everywhere
+outside the picture's own edges gets.
+
+The decoder is ours, for the reason the writer already was: no imaging dependency
+in the engine ([ADR-0019](docs/adr/0019-no-third-party-dependencies-in-the-engine.md)),
+which makes the two a pair — what this program can read is what it can write. Every
+colour type at 8 and 16 bits. Interlaced files and sub-byte depths are refused by
+name rather than read wrongly, and a moving picture is not here at all: a video is
+a container and a codec each, where a PNG's compression came out of the framework.
+
+Silent, and not merely quiet: the speakers' walk is handed no picture library, so
+on that path an Image is black and the file is never even opened.
+
 ### Playing it
 
 Everything above is a patch reading itself. **MIDI In** is the module that lets a

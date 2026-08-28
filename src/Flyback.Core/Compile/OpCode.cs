@@ -240,4 +240,27 @@ public enum OpCode : byte
 
     /// <summary>(out, out+1, out+2) = previous frame sampled at (a, b)</summary>
     SampleFeedback,
+
+    /// <summary>
+    /// (out, out+1, out+2) = picture K sampled at (a, b), and black off its
+    /// edges. K is a position in <see cref="CompiledPatch.Pictures"/>.
+    /// </summary>
+    /// <remarks>
+    /// The one op that reads something the patch did not compute and the program
+    /// did not remember — a file, named by the patch and loaded before any of
+    /// this ran. <see cref="Table"/> is its counterpart for the ear and was the
+    /// op that could not be drawn: a clip is a buffer the shader has nowhere to
+    /// put, so a patch playing one gives up the GPU. A picture has somewhere to
+    /// go, because a texture is what a shader is made to read and
+    /// <see cref="SampleFeedback"/> already proved the path. So this is the first
+    /// op to bring something from outside into a program and stay on both
+    /// backends.
+    /// <para>
+    /// The picture is placed at its own shape, spanning -1 to 1 down the frame
+    /// and its own aspect either side of the middle, with black beyond — see
+    /// <see cref="LoadedImage.At"/>, which is what this lowers to on the
+    /// processor and what the shader is written to agree with.
+    /// </para>
+    /// </remarks>
+    SamplePicture,
 }

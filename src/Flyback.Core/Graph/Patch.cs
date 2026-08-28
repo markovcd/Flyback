@@ -153,6 +153,28 @@ public sealed class NodeInstance
     public string? Sample { get; set; }
 
     /// <summary>
+    /// The picture this instance shows, as the path a patch stores rather than
+    /// as the pixels — and null for every module that shows none.
+    /// </summary>
+    /// <remarks>
+    /// The fourth field of this kind, and the one
+    /// [0054](0054-what-a-module-carries-is-a-part-not-a-subtype.md) said would
+    /// be easier to argue for than the third was. It is worth saying that it
+    /// meets the test [0051](0051-a-quantisers-scale-is-a-set-on-the-node.md)
+    /// set rather than merely being convenient: which picture a patch shows is a
+    /// decision about the piece and not a signal in it, and no arrangement of
+    /// sockets says it, because a socket carries a number and a path is not one.
+    /// <para>
+    /// A path rather than the picture for the reasons
+    /// [0052](0052-a-patch-names-its-samples-rather-than-carrying-them.md) gives
+    /// about audio, and they are stronger here: a patch file is JSON held in an
+    /// undo stack, and a photograph in it would be several megabytes per undo
+    /// step and a re-serialisation of them per knob turn.
+    /// </para>
+    /// </remarks>
+    public string? Picture { get; set; }
+
+    /// <summary>
     /// What a plugin's own kind of extra carries, keyed by
     /// <see cref="NodeExtra.Key"/>, and null for every module whose extras are
     /// the engine's own.
@@ -275,6 +297,7 @@ public sealed class NodeInstance
         Steps = Steps is { } steps ? [.. steps] : null,
         Scale = Scale is { } scale ? [.. scale] : null,
         Sample = Sample,
+        Picture = Picture,
 
         // Deep here too, and it has to be said explicitly: a JsonNode is a
         // mutable tree, so copying the dictionary alone would hand the copy

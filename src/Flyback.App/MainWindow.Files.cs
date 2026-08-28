@@ -79,6 +79,7 @@ public sealed partial class MainWindow
             // Where a relative sample path is measured from, before the patch
             // that names one is compiled for the first time.
             samples.Beside = Path.GetDirectoryName(files[0].TryGetLocalPath());
+            pictures.Beside = samples.Beside;
 
             // Before the patch and not after: setting it is what tells the
             // window to draw the title again, and a name arriving a line later
@@ -126,6 +127,7 @@ public sealed partial class MainWindow
             // A patch saved somewhere new measures its samples from there now,
             // which is what lets one be written beside the sounds it names.
             samples.Beside = Path.GetDirectoryName(file.TryGetLocalPath());
+            pictures.Beside = samples.Beside;
             Recompile();
 
             return true;
@@ -317,7 +319,7 @@ public sealed partial class MainWindow
         var seconds = ExportSeconds;
         var settings = new MovieSettings(size.Width, size.Height, seconds);
 
-        var videoPatch = patch.CompileForVideo(samples: samples).Program;
+        var videoPatch = patch.CompileForVideo(samples: samples, pictures: pictures).Program;
         var soundPatch = patch.Reaches().Sound ? patch.CompileForAudio(samples: samples).Program : null;
         var scan = AudioScan.For(patch, ExportAspect);
 

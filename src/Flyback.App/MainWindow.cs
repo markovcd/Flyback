@@ -79,6 +79,9 @@ public sealed partial class MainWindow : Window
     /// from, and handed to every compile from here.
     /// </summary>
     private readonly SampleLibrary samples = new();
+
+    /// <summary>The pictures a patch shows, cached the way its sounds are.</summary>
+    private readonly ImageLibrary pictures = new();
     private readonly PreviewHost preview = new();
 
     /// <summary>
@@ -322,7 +325,8 @@ public sealed partial class MainWindow : Window
             // thing Report takes is about how a line ages in the log and the
             // panel has no business knowing there is one.
             (message, detail) => Report(message, detail),
-            samples: samples)
+            samples: samples,
+            pictures: pictures)
         {
             IsVisible = false,
         };

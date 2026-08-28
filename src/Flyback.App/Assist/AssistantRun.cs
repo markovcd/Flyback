@@ -42,7 +42,8 @@ public sealed class AssistantRun : IDisposable
         Patch startingPoint,
         int maxTurns = 12,
         WorkbenchLimits? limits = null,
-        ISampleLibrary? samples = null)
+        ISampleLibrary? samples = null,
+        IImageLibrary? pictures = null)
     {
         Before = startingPoint;
         this.maxTurns = maxTurns;
@@ -51,7 +52,7 @@ public sealed class AssistantRun : IDisposable
         startingWires = startingPoint.Connections.Count;
 
         Workbench = new PatchWorkbench(
-            modules, startingPoint, config.Vision, config.Hearing, limits, samples);
+            modules, startingPoint, config.Vision, config.Hearing, limits, samples, pictures);
         session = assistant.Start(Workbench, config);
     }
 

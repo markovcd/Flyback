@@ -60,6 +60,12 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
     private float[] played = [];
     private bool usesFeedback;
 
+    /// <summary>The textures the patch's pictures are in, and which pictures those are.</summary>
+    private int[] pictures = [];
+    private LoadedImage[] shown = [];
+    private int[] patchPictures = [];
+    private int[] patchPictureAspects = [];
+
     /// <summary>
     /// What is on the GPU now. Comparing sources rather than patches is what
     /// keeps a knob drag from recompiling: ADR-0021 rebuilds the whole program on
@@ -162,6 +168,11 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
         // does not, so this is picked up whether or not the shader is rebuilt.
         constants = GlslEmitter.Constants(patch);
 
+        // Before the early return below, because the pictures change without the
+        // text changing: a different photograph of the same shape is the same
+        // program reading a different texture.
+        Upload(gl, patch.Pictures);
+
         if (shaders.PatchFragment == liveSource) return null;
         if (shaders.PatchFragment == refusedSource) return null;
 
@@ -201,8 +212,103 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
         for (var i = 0; i < patchLive.Length; i++)
             patchLive[i] = gl.GetUniformLocationString(compiled, $"uLive[{i}]");
 
+        // One sampler and one shape per picture the patch shows. Their locations
+        // belong to the program and are found here; the pictures behind them do
+        // not, and are uploaded above — a patch that swaps one photograph for
+        // another of the same shape emits identical text and rebuilds nothing.
+        patchPictures = new int[shaders.PictureCount];
+        patchPictureAspects = new int[shaders.PictureCount];
+
+        for (var i = 0; i < patchPictures.Length; i++)
+        {
+            patchPictures[i] = gl.GetUniformLocationString(compiled, $"uPicture{i}");
+            patchPictureAspects[i] = gl.GetUniformLocationString(compiled, $"uPictureAspect{i}");
+        }
+
         return null;
     }
+
+    /// <summary>
+    /// Puts the patch's pictures on the GPU, and takes down whatever was there
+    /// before. One texture each, in the order the program names them.
+    /// </summary>
+    /// <remarks>
+    /// Keyed on the pictures themselves rather than on the shader text, because
+    /// the two do not change together: choosing a different photograph of the
+    /// same shape produces the same program and needs a different texture, and
+    /// turning a knob produces a different program and needs the same one. The
+    /// library upstream hands back the very same <see cref="LoadedImage"/> for a
+    /// path it has already read (ADR-0021 recompiles on every edit), so the
+    /// comparison is by reference and a knob drag uploads nothing.
+    /// <para>
+    /// Eight-bit textures with linear filtering, which is what the file held and
+    /// what <see cref="LoadedImage.At"/> does by hand on the other backend. Not
+    /// the half-float the feedback history needs: that is about a loop
+    /// accumulating its own error, and a photograph is read once.
+    /// </para>
+    /// </remarks>
+    private void Upload(GlInterface gl, IReadOnlyList<LoadedImage> wanted)
+    {
+        if (pictures.Length == wanted.Count)
+        {
+            var same = true;
+            for (var i = 0; i < pictures.Length; i++) same &= ReferenceEquals(shown[i], wanted[i]);
+
+            if (same) return;
+        }
+
+        foreach (var texture in pictures) gl.DeleteTexture(texture);
+
+        pictures = new int[wanted.Count];
+        shown = [.. wanted];
+
+        for (var i = 0; i < wanted.Count; i++)
+        {
+            var picture = wanted[i];
+            var bytes = new byte[picture.Width * picture.Height * 4];
+
+            for (var pixel = 0; pixel < picture.Width * picture.Height; pixel++)
+            {
+                bytes[pixel * 4 + 0] = Byte(picture.Pixels[pixel * 3 + 0]);
+                bytes[pixel * 4 + 1] = Byte(picture.Pixels[pixel * 3 + 1]);
+                bytes[pixel * 4 + 2] = Byte(picture.Pixels[pixel * 3 + 2]);
+                bytes[pixel * 4 + 3] = 255;
+            }
+
+            pictures[i] = gl.GenTexture();
+            gl.BindTexture(GL_TEXTURE_2D, pictures[i]);
+
+            var pinned = System.Runtime.InteropServices.GCHandle.Alloc(
+                bytes, System.Runtime.InteropServices.GCHandleType.Pinned);
+
+            try
+            {
+                gl.TexImage2D(
+                    GL_TEXTURE_2D, 0, GL_RGBA8,
+                    picture.Width, picture.Height, 0,
+                    GL_RGBA, GL_UNSIGNED_BYTE, pinned.AddrOfPinnedObject());
+            }
+            finally
+            {
+                pinned.Free();
+            }
+
+            // Linear is the bilinear read the interpreter does by hand, and
+            // clamping is what it needs at the last row and column — everything
+            // outside the picture is refused by the shader before it gets here,
+            // so the clamp is never seen.
+            gl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            gl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            gl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            gl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        }
+
+        gl.BindTexture(GL_TEXTURE_2D, 0);
+    }
+
+    /// <summary>The eight bits a picture was read from, put back.</summary>
+    private static byte Byte(float value) =>
+        (byte)Math.Clamp((int)MathF.Round(value * 255f), 0, 255);
 
     /// <summary>Clears the feedback history, so the next frame starts from black.</summary>
     public void Rewind() => clearPending = true;
@@ -314,6 +420,19 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
 
             if (patchFeedbackY >= 0)
                 gl.Uniform1f(patchFeedbackY, 0.5f * (resolution.Height - 1) / resolution.Height);
+        }
+
+        // From unit one upward, because nought is the previous frame's and a
+        // patch may want both. Every unit is bound whether or not the feedback
+        // took its, so a picture's number is its position in the program rather
+        // than something that shifts with what else the patch does.
+        for (var i = 0; i < pictures.Length && i < shown.Length; i++)
+        {
+            gl.ActiveTexture(GL_TEXTURE0 + 1 + i);
+            gl.BindTexture(GL_TEXTURE_2D, pictures[i]);
+
+            if (patchPictures[i] >= 0) gl.Uniform1i(patchPictures[i], 1 + i);
+            if (patchPictureAspects[i] >= 0) gl.Uniform1f(patchPictureAspects[i], shown[i].Aspect);
         }
 
         gl.DrawArrays(GlTriangleStrip, 0, Quad);
@@ -474,6 +593,13 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
         {
             Release(gl);
 
+            // The pictures go here rather than in Release, which is also the
+            // resize path: a new size wants new framebuffers and the same
+            // photographs, and taking them down there would leave the samplers
+            // reading a name that had been handed back the moment somebody
+            // dragged the window.
+            foreach (var texture in pictures) gl.DeleteTexture(texture);
+
             if (patchProgram != 0) gl.DeleteProgram(patchProgram);
             if (blitProgram != 0) gl.DeleteProgram(blitProgram);
             if (vertexArray != 0) gl.DeleteVertexArray(vertexArray);
@@ -481,6 +607,13 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
 
         Array.Clear(framebuffers);
         Array.Clear(textures);
+
+        // Emptied whether or not there was a context to hand them back to. After
+        // a loss the names mean nothing, and an upload that believed it had
+        // already done this would bind whatever those numbers now belong to.
+        pictures = [];
+        shown = [];
+
         patchProgram = 0;
         blitProgram = 0;
         vertexArray = 0;

@@ -49,15 +49,17 @@ public static class PatchCompiler
     public static CompileResult CompileForVideo(
         this Patch patch,
         ModuleCatalog? modules = null,
-        ISampleLibrary? samples = null) =>
-        Compile(patch, NodeCatalog.Screen, modules, samples: samples);
+        ISampleLibrary? samples = null,
+        IImageLibrary? pictures = null) =>
+        Compile(patch, NodeCatalog.Screen, modules, samples: samples, pictures: pictures);
 
     /// <summary>Compiles the program the speakers play, reading the Output's left and right.</summary>
     public static CompileResult CompileForAudio(
         this Patch patch,
         ModuleCatalog? modules = null,
-        ISampleLibrary? samples = null) =>
-        Compile(patch, NodeCatalog.Speakers, modules, samples: samples);
+        ISampleLibrary? samples = null,
+        IImageLibrary? pictures = null) =>
+        Compile(patch, NodeCatalog.Speakers, modules, samples: samples, pictures: pictures);
 
     /// <summary>
     /// Compiles the program a Probe shows, rooted at the probe rather than at the
@@ -76,8 +78,9 @@ public static class PatchCompiler
         this Patch patch,
         Guid probe,
         ModuleCatalog? modules = null,
-        ISampleLibrary? samples = null) =>
-        Compile(patch, NodeCatalog.Screen, modules, probe, samples);
+        ISampleLibrary? samples = null,
+        IImageLibrary? pictures = null) =>
+        Compile(patch, NodeCatalog.Screen, modules, probe, samples, pictures);
 
     /// <param name="patch">The graph to lower.</param>
     /// <param name="sink">Which of the Output's results this program reads.</param>
@@ -98,7 +101,8 @@ public static class PatchCompiler
         NodeCatalog.SinkKind sink,
         ModuleCatalog? modules,
         Guid? probe = null,
-        ISampleLibrary? samples = null)
+        ISampleLibrary? samples = null,
+        IImageLibrary? pictures = null)
     {
         var catalog = modules ?? NodeCatalog.Current;
         var width = sink.Width;
@@ -237,7 +241,8 @@ public static class PatchCompiler
                 width,
                 emitter.Tables,
                 taps,
-                emitter.LiveInputs),
+                emitter.LiveInputs,
+                emitter.Pictures),
             issues);
 
         Slot[] Resolve(NodeInstance node)
@@ -446,7 +451,14 @@ public static class PatchCompiler
         {
             if (def.Extras.Count == 0) return ctx;
 
-            var env = new ExtraEnv(node.Title(def), samples, issues.Add);
+            // The picture library only where the picture is being drawn. An Image
+            // in an audio program is one evaluation of a still — a colour that
+            // never moves and that nothing can hear — so the speakers' walk is
+            // handed nothing to read a file with, and the module lowers to black
+            // without anybody having to open one. It is the same arrangement the
+            // Scope's buffer has, upside down.
+            var env = new ExtraEnv(
+                node.Title(def), samples, issues.Add, plays ? null : pictures);
 
             foreach (var extra in def.Extras) ctx = extra.Fold(ctx, node, env);
 
