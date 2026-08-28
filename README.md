@@ -140,6 +140,7 @@ flyback-cli render drone.fbk  -o drone.avi  --seconds 30 --fps 30
 flyback-cli render drone.fbk  -o drone.wav  --seconds 30
 flyback-cli check nebula.fbk
 flyback-cli info  nebula.fbk
+flyback-cli pack  nebula.fbk -o nebula.fbkp
 ```
 
 The extension decides what `render` writes — a still of one moment, a clip of
@@ -172,6 +173,86 @@ nebula.fbk
 `check` and `info` both take `--json`. Everything a command produces goes to
 stdout and everything it says about the work goes to stderr, so a redirect
 catches the one without the other.
+
+Every command takes a **bundle** wherever it takes a patch, and a bundle carries
+its own files — so this works in a folder holding nothing else at all:
+
+```bash
+flyback-cli render nebula.fbkp -o frame.png
+```
+
+Nothing is unpacked to do it. The archive is read into memory and the patch is
+compiled against what was read beside it, so a build server that has never seen
+the photographs and recordings a patch names still draws it, and writes nothing
+but the frame it was asked for.
+
+## Bundles
+
+A `.fbk` is a document full of paths, and paths mean something only on the
+machine that wrote them. A `.fbkp` is that document with everything it names
+travelling beside it:
+
+```bash
+flyback-cli pack nebula.fbk -o nebula.fbkp
+```
+
+```
+nebula.fbkp
+  carried  2 files
+    C:\sounds\drums.wav
+    D:\pictures\moon.png
+```
+
+**It is an ordinary zip**, which is most of the argument for it. The format is in
+the framework, so it adds no dependency
+([ADR-0019](docs/adr/0019-no-third-party-dependencies-in-the-engine.md)); every
+operating system already opens one, so a bundle this program some day cannot read
+is still a folder somebody can get their work out of; and the zip's own directory
+is the manifest, so there is nothing to keep in step.
+
+```
+patch.fbk
+files/drums.wav
+files/moon.png
+```
+
+The patch inside is not quite the patch outside: every path it holds is rewritten
+to name the copy in the archive. That is the whole trick, because a relative path
+is already measured from wherever the patch is — so **an unpacked bundle is a
+working patch with nothing else arranged**, whether it was unpacked by this
+program or by double-clicking it in a file manager. There is no `unpack` command
+for that reason.
+
+The window offers a bundle beside a patch in both pickers, and **a bundle is a
+document rather than a copy of one**: saving it marks the patch saved, takes the
+name in the title bar, and answers the question about unsaved changes. The two
+kinds of file differ in what is in them and in nothing else.
+
+Opening one writes nothing anywhere. The archive is held as it came and the
+folder stays behind it, so a module pointed at a file on this machine a moment
+later means the file on this machine. Saving it again writes the same bytes back
+— a photograph is not re-encoded on the way through, which would quietly make a
+sixteen-bit file an eight-bit one.
+
+That costs one copy of the compressed bytes for as long as the bundle is open,
+and costs the undo history nothing: the history is snapshots of the patch, the
+patch is paths, and payloads sit beside the document exactly as the caches
+already do. Which is the whole of what
+[ADR-0052](docs/adr/0052-a-patch-names-its-samples-rather-than-carrying-them.md)
+was about, untouched.
+
+Saving a bundle as a loose `.fbk` writes what it was carrying beside it, under
+the names the patch already uses — the inverse of packing, and the one place
+saving writes more than the file it was given. Nothing already there is
+overwritten.
+
+A file that has gone is reported and the bundle is written anyway, which is the
+same call `check` makes: the patch opens, compiles and draws without it. What is
+missing is the claim to be self-contained, and `pack` exits **1** to say so.
+
+What goes in is asked of the modules rather than listed here — a kind of carried
+state that names a file says so, so a third kind of file is carried without the
+packer being touched.
 
 ## How it works
 
@@ -1525,7 +1606,8 @@ here. Normal a socket only where the module is useless without that source — s
 
 ## Files
 
-Patches save as JSON (`.fbk`).
+Patches save as JSON (`.fbk`), and as a **bundle** (`.fbkp`) where the sounds and
+pictures they name should travel with them — see [Bundles](#bundles).
 
 **Export…** writes the thing the instrument actually makes, and there is one
 button for all of it: the file name decides what you get, and the dialog offers

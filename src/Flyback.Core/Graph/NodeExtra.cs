@@ -138,6 +138,39 @@ public abstract record NodeExtra
         Fields.Count == 0 ? ctx : ctx.With(Key, new ExtraState(Fields, node.StateOf(Key)));
 
     /// <summary>
+    /// The files this instance names, and none for the great majority of kinds,
+    /// which name nothing outside the patch.
+    /// </summary>
+    /// <remarks>
+    /// What a bundle is packed from — see <see cref="PatchBundle"/>. Asked of the
+    /// kind rather than read off the node, so that nothing doing the packing has
+    /// to know that a Sample holds a WAV and an Image holds a PNG: a kind that
+    /// names a file says so here and is carried, and a kind added later is
+    /// carried without the packer being touched.
+    /// <para>
+    /// A path as the patch stores it, which may be relative and may point at
+    /// nothing. Whether it can be read is not this method's question — the thing
+    /// asking has to open it either way, and what it does about a file that is
+    /// not there is its own decision.
+    /// </para>
+    /// </remarks>
+    public virtual IEnumerable<string> Files(NodeInstance node) => [];
+
+    /// <summary>
+    /// Points this instance at the same files under different names, which is
+    /// what packing one into a bundle and unpacking it again are.
+    /// </summary>
+    /// <remarks>
+    /// The other half of <see cref="Files"/>, and separate from it because the
+    /// two happen at different moments: a bundle is written by asking every node
+    /// what it names, deciding what to call each one inside the archive, and only
+    /// then telling the nodes. <paramref name="renamed"/> answers for a path it
+    /// knows and hands back what it was given for one it does not, so a kind may
+    /// pass every path it holds through without checking.
+    /// </remarks>
+    public virtual void Rebase(NodeInstance node, Func<string, string> renamed) { }
+
+    /// <summary>
     /// What this instance is carrying, as prose. What an assistant reading a
     /// patch sees, and the one place it would otherwise miss: this is neither a
     /// socket nor a wire, so a listing of either shows nothing of it.
@@ -322,6 +355,14 @@ public sealed record SampleExtra : NodeExtra
         return ctx;
     }
 
+    public override IEnumerable<string> Files(NodeInstance node) =>
+        string.IsNullOrWhiteSpace(node.Sample) ? [] : [node.Sample];
+
+    public override void Rebase(NodeInstance node, Func<string, string> renamed)
+    {
+        if (!string.IsNullOrWhiteSpace(node.Sample)) node.Sample = renamed(node.Sample);
+    }
+
     public override string Report(NodeInstance node) =>
         string.IsNullOrWhiteSpace(node.Sample)
             ? "No file chosen, so it plays silence."
@@ -378,6 +419,14 @@ public sealed record PictureExtra : NodeExtra
             + " somewhere it can be found."));
 
         return ctx;
+    }
+
+    public override IEnumerable<string> Files(NodeInstance node) =>
+        string.IsNullOrWhiteSpace(node.Picture) ? [] : [node.Picture];
+
+    public override void Rebase(NodeInstance node, Func<string, string> renamed)
+    {
+        if (!string.IsNullOrWhiteSpace(node.Picture)) node.Picture = renamed(node.Picture);
     }
 
     public override string Report(NodeInstance node) =>

@@ -50,6 +50,7 @@ internal static class Program
             Render(patch),
             Check(patch, json),
             Info(patch, json),
+            Pack(patch),
         };
 
         var parsed = root.Parse(args);
@@ -108,13 +109,15 @@ internal static class Program
         command.SetAction((result, cancellation) =>
         {
             var file = result.GetRequiredValue(patch);
-            var loaded = Patches.Read(file, Console.Error);
-            if (loaded is null) return Task.FromResult(Exit.Failed);
 
-            // A file named relatively is measured from wherever the patch is, so a
-            // patch and the sounds and pictures it names travel together.
-            var samples = new SampleLibrary { Beside = file.DirectoryName };
-            var pictures = new ImageLibrary { Beside = file.DirectoryName };
+            // A file named relatively is measured from wherever the patch is, so
+            // a patch and the sounds and pictures beside it travel together — and
+            // a bundle carries them, so one of those needs nothing beside it at
+            // all. Which of the two this is, is settled here and nowhere else.
+            if (Patches.Open(file, Console.Error) is not { } opened)
+                return Task.FromResult(Exit.Failed);
+
+            var (loaded, samples, pictures) = opened;
 
             var (width, height) = result.GetValue(size);
 
@@ -131,6 +134,36 @@ internal static class Program
                 RenderCommand.Run(
                     loaded, options, Console.Error, Progress(), cancellation, samples, pictures));
         });
+
+        return command;
+    }
+
+    /// <summary>
+    /// Packs a patch and its files into a bundle. Not built on
+    /// <see cref="Run"/> like the two below it: those answer questions about a
+    /// patch and this writes a file, so it takes an output path rather than a
+    /// <c>--json</c>.
+    /// </summary>
+    private static Command Pack(Argument<FileInfo> patch)
+    {
+        var output = new Option<FileInfo>("--out", "-o")
+        {
+            Description = $"Where to write the bundle. {PatchBundle.Extension} by convention.",
+            Required = true,
+        };
+
+        var command = new Command(
+            "pack",
+            "Put a patch and every file it names into one bundle.")
+        {
+            patch, output,
+        };
+
+        command.SetAction(result => PackCommand.Run(
+            result.GetRequiredValue(patch),
+            result.GetRequiredValue(output),
+            Console.Error,
+            Console.Out));
 
         return command;
     }
@@ -163,18 +196,17 @@ internal static class Program
         command.SetAction(result =>
         {
             var file = result.GetRequiredValue(patch);
-            var loaded = Patches.Read(file, Console.Error);
 
-            return loaded is null
+            return Patches.Open(file, Console.Error) is not { } opened
                 ? Exit.Failed
                 : run(
-                    loaded,
+                    opened.Patch,
                     file.Name,
                     result.GetValue(json),
                     Console.Out,
                     Console.Error,
-                    new SampleLibrary { Beside = file.DirectoryName },
-                    new ImageLibrary { Beside = file.DirectoryName });
+                    opened.Samples,
+                    opened.Pictures);
         });
 
         return command;

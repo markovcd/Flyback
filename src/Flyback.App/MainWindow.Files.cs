@@ -56,10 +56,16 @@ public sealed partial class MainWindow
         {
             Title = "Open patch",
             AllowMultiple = false,
-            FileTypeFilter = [PatchFileType],
+            FileTypeFilter = [PatchFileType, BundleFileType],
         });
 
         if (files.Count == 0) return;
+
+        if (Bundled(files[0]))
+        {
+            await OpenBundleAsync(files[0]);
+            return;
+        }
 
         try
         {
@@ -78,8 +84,15 @@ public sealed partial class MainWindow
 
             // Where a relative sample path is measured from, before the patch
             // that names one is compiled for the first time.
-            samples.Beside = Path.GetDirectoryName(files[0].TryGetLocalPath());
-            pictures.Beside = samples.Beside;
+            soundFolder.Beside = Path.GetDirectoryName(files[0].TryGetLocalPath());
+            pictureFolder.Beside = soundFolder.Beside;
+
+            // Whatever bundle was open is not open any more. A loose patch is
+            // backed by a folder, and leaving the last one's files in front of
+            // that folder would answer for paths this document knows nothing
+            // about.
+            carried = null;
+            bundled = false;
 
             // Before the patch and not after: setting it is what tells the
             // window to draw the title again, and a name arriving a line later
@@ -95,6 +108,200 @@ public sealed partial class MainWindow
         }
     }
 
+    /// <summary>
+    /// Writes the patch and everything it names into one file, which is a save
+    /// like any other.
+    /// </summary>
+    /// <remarks>
+    /// A bundle is a document rather than a copy of one: writing it marks the
+    /// patch saved, takes the name in the title bar, and is what the question
+    /// about unsaved changes accepts as an answer. The two kinds of file differ
+    /// in what is in them and in nothing else.
+    /// <para>
+    /// A bundle already open is written out of what it is carrying rather than
+    /// out of the disk, so saving one that was never unpacked writes the same
+    /// bytes back — a photograph is not re-encoded on its way through, which
+    /// would quietly make a sixteen-bit file an eight-bit one.
+    /// </para>
+    /// </remarks>
+    private async Task<bool> SaveBundleAsync(IStorageFile file)
+    {
+        try
+        {
+            BundleReport report;
+
+            // Into memory first: a zip is written by seeking back over its own
+            // directory, and what a picker hands back cannot always be seeked.
+            using var packed = new MemoryStream();
+
+            report = PatchBundle.Write(packed, editor.Patch, Bytes, plugins.Modules);
+
+            packed.Position = 0;
+
+            await using (var stream = await file.OpenWriteAsync()) await packed.CopyToAsync(stream);
+
+            patchName = Path.GetFileNameWithoutExtension(file.Name);
+            bundled = true;
+            editor.MarkSaved();
+
+            Report(report.Whole
+                ? $"Saved {file.Name}, carrying {report.Carried.Count} file(s)."
+                : $"Saved {file.Name}, without {report.Missing.Count} file(s) that could not be read.",
+                report.Whole ? null : string.Join(Environment.NewLine, report.Missing));
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Report($"Could not write bundle: {ex.Message}");
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Writes what an open bundle is carrying into <paramref name="folder"/>,
+    /// under the names the patch already calls them by, and stops being a bundle.
+    /// </summary>
+    /// <remarks>
+    /// What saving a bundle as a loose patch has to do, and the exact inverse of
+    /// packing: the paths in the patch are the archive's own names, they are
+    /// relative, and a relative path is measured from beside the patch — so
+    /// writing them there is all it takes for the saved document to work.
+    /// <para>
+    /// Only what the patch still names. A bundle may be carrying a picture whose
+    /// module has since been deleted, and spilling that onto somebody's disk
+    /// would be leaving litter behind a save they did not ask about.
+    /// </para>
+    /// <para>
+    /// Nothing is overwritten. A file already there is one somebody put there,
+    /// and the copy in the bundle is not automatically the better of the two —
+    /// so the patch goes on naming what is on the disk, which is what it would
+    /// have read anyway.
+    /// </para>
+    /// </remarks>
+    /// <returns>How many files were written.</returns>
+    private int Scatter(string folder)
+    {
+        if (carried is not { } held) return 0;
+
+        var written = 0;
+
+        foreach (var path in PatchBundle.Files(editor.Patch, plugins.Modules))
+        {
+            if (Path.IsPathRooted(path) || !held.Bytes.TryGetValue(path, out var bytes)) continue;
+
+            var into = Path.Combine(folder, path.Replace('/', Path.DirectorySeparatorChar));
+
+            if (File.Exists(into)) continue;
+
+            Directory.CreateDirectory(Path.GetDirectoryName(into)!);
+            File.WriteAllBytes(into, bytes);
+
+            written++;
+        }
+
+        // A document backed by a folder from here on. What it names is on the
+        // disk now, and the copies in memory would only be a second answer to
+        // the same question.
+        carried = null;
+        bundled = false;
+
+        return written;
+    }
+
+    /// <summary>
+    /// The bytes of a file the patch names: out of the bundle that is open where
+    /// it holds one, and off the disk where it does not.
+    /// </summary>
+    /// <remarks>
+    /// The same order the libraries look in, so what is packed is what the
+    /// picture was actually drawn from — a bundle cannot come out holding a file
+    /// nothing was reading.
+    /// </remarks>
+    private byte[]? Bytes(string path)
+    {
+        if (carried is { } held && held.Bytes.TryGetValue(path, out var bytes)) return bytes;
+
+        try
+        {
+            var full = Path.IsPathRooted(path) || soundFolder.Beside is not { Length: > 0 } folder
+                ? path
+                : Path.Combine(folder, path);
+
+            return File.Exists(full) ? File.ReadAllBytes(full) : null;
+        }
+        catch (Exception)
+        {
+            return null;
+        }
+    }
+
+    /// <summary>Whether a file the picker handed back is a bundle rather than a patch.</summary>
+    private static bool Bundled(IStorageFile file) =>
+        file.Name.EndsWith(PatchBundle.Extension, StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// Opens a bundle by unpacking it into a folder beside itself and opening
+    /// what comes out.
+    /// </summary>
+    /// <remarks>
+    /// Unpacked rather than read where it lies, which the command line does
+    /// instead — and the two are right for opposite reasons. The command line
+    /// draws a bundle and writes nothing; this is where somebody is going to
+    /// change the patch, so the files it names have to be files they can find,
+    /// replace and save beside. Reading it into memory would mean a document
+    /// whose pictures vanish the first time it is saved anywhere.
+    /// <para>
+    /// Nothing is written anywhere, which is the whole of what makes a bundle a
+    /// document here rather than an archive to be spilled onto the disk first.
+    /// The files are held as they came — see <see cref="carried"/> — and the
+    /// folder libraries stay behind them, so a module pointed at something on
+    /// this machine a moment later means the thing on this machine.
+    /// </para>
+    /// <para>
+    /// Where a loose patch is opened from is left alone on purpose. A bundle has
+    /// no folder to measure a relative path from, and the paths inside one are
+    /// the archive's own names, so nothing about this document is measured from
+    /// anywhere.
+    /// </para>
+    /// </remarks>
+    private async Task OpenBundleAsync(IStorageFile file)
+    {
+        try
+        {
+            LoadedBundle bundle;
+
+            await using (var reading = await file.OpenReadAsync())
+            {
+                // Copied out of the stream first, because a zip is read by
+                // seeking about in it and what a picker hands back is not always
+                // something that can be.
+                using var whole = new MemoryStream();
+
+                await reading.CopyToAsync(whole);
+                whole.Position = 0;
+
+                bundle = PatchBundle.Read(whole, plugins.Modules);
+            }
+
+            carried = new BundleFiles(bundle.Files, soundFolder, pictureFolder);
+            bundled = true;
+
+            patchName = Path.GetFileNameWithoutExtension(file.Name);
+
+            editor.Patch = bundle.Patch;
+            preview.Rewind();
+
+            Report(bundle.Files.Count == 0
+                ? $"Opened {file.Name}."
+                : $"Opened {file.Name}, carrying {bundle.Files.Count} file(s).");
+        }
+        catch (Exception ex)
+        {
+            Report($"Could not open bundle: {ex.Message}");
+        }
+    }
+
     /// <returns>Whether a file was written. A cancelled picker is not one.</returns>
     private async Task<bool> SavePatchAsync()
     {
@@ -105,11 +312,19 @@ public sealed partial class MainWindow
             // dialog is where a name is chosen, so it is where the one already
             // chosen belongs.
             SuggestedFileName = patchName ?? "patch",
-            DefaultExtension = PatchIo.FileExtension,
-            FileTypeChoices = [PatchFileType],
+
+            // Whichever kind this document already is. A bundle saved again
+            // should stay one without anybody having to type the extension.
+            DefaultExtension = bundled ? PatchBundle.Extension[1..] : PatchIo.FileExtension,
+            FileTypeChoices = bundled
+                ? [BundleFileType, PatchFileType]
+                : [PatchFileType, BundleFileType],
         });
 
         if (file is null) return false;
+
+        // The name decides which, the way it does for an export.
+        if (Bundled(file)) return await SaveBundleAsync(file);
 
         try
         {
@@ -119,16 +334,26 @@ public sealed partial class MainWindow
                 await writer.WriteAsync(PatchIo.ToJson(editor.Patch));
             }
 
+            // A patch saved somewhere new measures its samples from there now,
+            // which is what lets one be written beside the sounds it names.
+            var folder = Path.GetDirectoryName(file.TryGetLocalPath());
+
+            // And a bundle saved as a loose patch has to put what it was
+            // carrying where the patch now says it is, or what has just been
+            // written names files that exist nowhere. The inverse of packing,
+            // and the one place saving writes more than the file it was given.
+            var spilled = folder is { Length: > 0 } ? Scatter(folder) : 0;
+
             // Only once it is actually on disk. A patch that failed to write is
             // still a patch with everything to lose.
             patchName = Path.GetFileNameWithoutExtension(file.Name);
             editor.MarkSaved();
 
-            // A patch saved somewhere new measures its samples from there now,
-            // which is what lets one be written beside the sounds it names.
-            samples.Beside = Path.GetDirectoryName(file.TryGetLocalPath());
-            pictures.Beside = samples.Beside;
+            soundFolder.Beside = folder;
+            pictureFolder.Beside = folder;
             Recompile();
+
+            if (spilled > 0) Report($"Saved {file.Name}, and {spilled} file(s) beside it.");
 
             return true;
         }
@@ -301,7 +526,7 @@ public sealed partial class MainWindow
 
         try
         {
-            await Task.Run(() => RenderAudioFile(patch, path, seconds, samples));
+            await Task.Run(() => RenderAudioFile(patch, path, seconds, Sounds));
             Report($"Wrote {seconds:0.0}s to {Path.GetFileName(path)}.");
         }
         catch (Exception ex)
@@ -319,8 +544,8 @@ public sealed partial class MainWindow
         var seconds = ExportSeconds;
         var settings = new MovieSettings(size.Width, size.Height, seconds);
 
-        var videoPatch = patch.CompileForVideo(samples: samples, pictures: pictures).Program;
-        var soundPatch = patch.Reaches().Sound ? patch.CompileForAudio(samples: samples).Program : null;
+        var videoPatch = patch.CompileForVideo(samples: Sounds, pictures: Pictures).Program;
+        var soundPatch = patch.Reaches().Sound ? patch.CompileForAudio(samples: Sounds).Program : null;
         var scan = AudioScan.For(patch, ExportAspect);
 
         using var stopping = new CancellationTokenSource();
@@ -385,5 +610,16 @@ public sealed partial class MainWindow
     private static FilePickerFileType PatchFileType => new("Flyback patch")
     {
         Patterns = [$"*.{PatchIo.FileExtension}"],
+    };
+
+    /// <summary>
+    /// A patch and everything it names, in one file — see
+    /// <see cref="PatchBundle"/>. Offered beside the patch rather than instead
+    /// of it: a bundle is what you send somebody, and a patch is what you work
+    /// on.
+    /// </summary>
+    private static FilePickerFileType BundleFileType => new("Flyback bundle")
+    {
+        Patterns = [$"*{PatchBundle.Extension}"],
     };
 }

@@ -44,6 +44,13 @@ public sealed partial class MainWindow
     private string? patchName;
 
     /// <summary>
+    /// Whether this document is a bundle. What it decides is small and worth
+    /// having: which kind the save dialog offers first, so that a bundle saved
+    /// again stays one without anybody typing an extension.
+    /// </summary>
+    private bool bundled;
+
+    /// <summary>
     /// Set once the question about unsaved work has been asked and answered, so
     /// the second Close does not ask it again. A close has to be cancelled to
     /// put a dialog up at all — nothing may block inside OnClosing — so the way

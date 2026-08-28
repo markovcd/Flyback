@@ -1,3 +1,5 @@
+using Flyback.Core.Compile;
+using Flyback.Core.Render;
 using Flyback.Core.Graph;
 
 namespace Flyback.Cli;
@@ -20,9 +22,64 @@ internal static class Exit
     public const int Failed = 2;
 }
 
+/// <summary>
+/// A patch off disk and the files it names, however they were named: a folder
+/// beside the patch, or a bundle holding both.
+/// </summary>
+/// <remarks>
+/// The one place either kind is opened, so nothing downstream of it knows there
+/// are two. A bundle is read into memory and never unpacked — which is the whole
+/// case for reading one this way: a build server holding a single file can render
+/// a patch whose photographs and recordings it has never seen, and writes nothing
+/// but the frame it was asked for.
+/// </remarks>
+internal readonly record struct Opened(
+    Patch Patch,
+    ISampleLibrary Samples,
+    IImageLibrary Pictures);
+
 /// <summary>Reading a patch off disk, and saying why when that does not work.</summary>
 internal static class Patches
 {
+    /// <summary>
+    /// The patch a path names together with its files, or null with the reason
+    /// already written to <paramref name="error"/>.
+    /// </summary>
+    public static Opened? Open(FileInfo file, TextWriter error)
+    {
+        if (!Bundled(file))
+        {
+            return Read(file, error) is { } loose
+                ? new Opened(
+                    loose,
+                    new SampleLibrary { Beside = file.DirectoryName },
+                    new ImageLibrary { Beside = file.DirectoryName })
+                : null;
+        }
+
+        try
+        {
+            using var archive = File.OpenRead(file.FullName);
+
+            var bundle = PatchBundle.Read(archive);
+            var files = BundleFiles.Of(bundle);
+
+            return new Opened(bundle.Patch, files, files);
+        }
+        catch (Exception ex)
+        {
+            // The same breadth Read takes below, for the same reason: a file that
+            // is not a bundle, one that is damaged and one that cannot be opened
+            // are one sentence to whoever typed the path.
+            error.WriteLine($"flyback: {file.Name}: {ex.Message}");
+            return null;
+        }
+    }
+
+    /// <summary>Whether a path names a bundle rather than a patch.</summary>
+    public static bool Bundled(FileInfo file) =>
+        string.Equals(file.Extension, PatchBundle.Extension, StringComparison.OrdinalIgnoreCase);
+
     /// <summary>
     /// The patch in a file, or null with the reason already written to
     /// <paramref name="error"/>.

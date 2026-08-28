@@ -4,7 +4,7 @@ Each record captures one decision, the situation that forced it, and what it
 costs. Format is [Michael Nygard's](https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions):
 context, decision, consequences.
 
-Twenty-nine records — [0003](0003-cpu-rendering-with-a-gpu-path-left-open.md),
+Thirty records — [0003](0003-cpu-rendering-with-a-gpu-path-left-open.md),
 [0004](0004-visual-patch-editor-as-the-authoring-model.md),
 [0026](0026-modules-from-plugins-with-provenance-in-the-file.md),
 [0027](0027-delay-lines-give-the-audio-path-a-memory.md),
@@ -32,7 +32,8 @@ Twenty-nine records — [0003](0003-cpu-rendering-with-a-gpu-path-left-open.md),
 [0056](0056-a-patch-can-be-played-and-what-plays-it-is-one-opcode.md) and
 [0057](0057-a-shape-is-a-distance-and-one-module-inks-it.md) and
 [0058](0058-the-picture-is-told-how-loud-the-sound-is.md) and
-[0059](0059-a-picture-comes-in-as-a-texture.md) — are marked
+[0059](0059-a-picture-comes-in-as-a-texture.md) and
+[0060](0060-a-bundle-is-a-patch-and-what-it-names.md) — are marked
 **user-directed**: they were chosen by the project owner, not derived. The first
 two sit upstream of almost everything else here; 0026 and 0027 each give up a
 property an earlier record relied on, knowingly; 0031, 0033, 0034, 0036 and 0040
@@ -100,7 +101,11 @@ that record gave up the shader for a patch that plays a sample and said in as ma
 words that a picture would not have to, because a texture is what a shader is made
 to read. It is the first time a file has come into a program and cost the GPU
 nothing — and the first record where the thing that had to be written from
-scratch was a decoder. All are recorded even though they were not mine to make.
+scratch was a decoder. 0060 is the bill for both of those coming due: 0052 and
+0059 each gave up a patch being everything it needs, for reasons about the undo
+stack that are still true, and this is the other file rather than a change to
+that one — the first record whose whole subject is a format nothing in the engine
+reads. All are recorded even though they were not mine to make.
 
 [0035](0035-a-glsl-backend-for-the-video-path.md) is the first record where two
 backends disagree by design: the picture on screen and the picture in an exported
@@ -190,6 +195,7 @@ the two that was there while the knobs were moving.
 |---|---|
 | [0019](0019-no-third-party-dependencies-in-the-engine.md) | No third-party dependencies in the engine |
 | [0020](0020-json-patch-files-keyed-by-string-type-ids.md) | JSON patch files keyed by string type IDs |
+| [0060](0060-a-bundle-is-a-patch-and-what-it-names.md) | A bundle is a patch and what it names *(user-directed)* |
 | [0025](0025-platform-io-behind-loadable-plugins.md) | Platform I/O behind plugins loaded at run time |
 | [0026](0026-modules-from-plugins-with-provenance-in-the-file.md) | Modules may come from plugins, and the file records which *(user-directed)* |
 | [0028](0028-publish-one-platform-at-a-time.md) | Publish one platform at a time, with only that platform's plugins |

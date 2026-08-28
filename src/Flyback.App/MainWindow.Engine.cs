@@ -126,11 +126,11 @@ public sealed partial class MainWindow
         showingProbe = probe?.Id;
 
         var result = probe is null
-            ? editor.Patch.CompileForVideo(samples: samples, pictures: pictures)
-            : editor.Patch.CompileForProbe(probe.Id, samples: samples, pictures: pictures);
+            ? editor.Patch.CompileForVideo(samples: Sounds, pictures: Pictures)
+            : editor.Patch.CompileForProbe(probe.Id, samples: Sounds, pictures: Pictures);
 
         preview.Program = result.Program;
-        audio.Update(editor.Patch, samples);
+        audio.Update(editor.Patch, Sounds);
 
         // Both programs are new, so both of their blocks are, and whatever is
         // being held has to be written into them before the next frame or the
@@ -144,7 +144,7 @@ public sealed partial class MainWindow
         // and stops at the first line when there is no screen at all — so a
         // patch built for sound had nothing said about it, however wrong it was.
         var said = result.Issues
-            .Concat(editor.Patch.CompileForAudio(samples: samples).Issues)
+            .Concat(editor.Patch.CompileForAudio(samples: Sounds).Issues)
             .Select(i => i.Message)
             .Distinct();
 

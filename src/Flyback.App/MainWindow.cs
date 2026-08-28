@@ -8,6 +8,7 @@ using Avalonia.Threading;
 using Flyback.App.Audio;
 using Flyback.App.Controls;
 using Flyback.App.Midi;
+using Flyback.Core.Compile;
 using Flyback.Core.Render;
 using Flyback.Core.Graph;
 using Flyback.Plugins.Hosting;
@@ -78,10 +79,40 @@ public sealed partial class MainWindow : Window
     /// window because it is the window that knows where the patch was opened
     /// from, and handed to every compile from here.
     /// </summary>
-    private readonly SampleLibrary samples = new();
+    private readonly SampleLibrary soundFolder = new();
 
     /// <summary>The pictures a patch shows, cached the way its sounds are.</summary>
-    private readonly ImageLibrary pictures = new();
+    private readonly ImageLibrary pictureFolder = new();
+
+    /// <summary>
+    /// The files a bundle carries, while one is open, and null while the
+    /// document is a loose patch backed by a folder.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Held rather than unpacked, which is the whole of what makes a bundle a
+    /// document here instead of an archive somebody has to spill onto their disk
+    /// before working on it: nothing is written anywhere until they save.
+    /// </para>
+    /// <para>
+    /// It costs one copy of the compressed bytes for as long as the bundle is
+    /// open, and costs the undo history nothing at all — the history is snapshots
+    /// of the patch, the patch is paths, and payloads sit beside the document
+    /// exactly as the two caches above already do. That distinction is the whole
+    /// of what ADR-0052 was about, and it is untouched.
+    /// </para>
+    /// </remarks>
+    private BundleFiles? carried;
+
+    /// <summary>
+    /// Where a sound is looked for: the bundle first while one is open, and the
+    /// folder behind it — because a module pointed at a file on this machine
+    /// while a bundle is open means the file on this machine.
+    /// </summary>
+    private ISampleLibrary Sounds => carried ?? (ISampleLibrary)soundFolder;
+
+    /// <inheritdoc cref="Sounds"/>
+    private IImageLibrary Pictures => carried ?? (IImageLibrary)pictureFolder;
     private readonly PreviewHost preview = new();
 
     /// <summary>
@@ -325,8 +356,8 @@ public sealed partial class MainWindow : Window
             // thing Report takes is about how a line ages in the log and the
             // panel has no business knowing there is one.
             (message, detail) => Report(message, detail),
-            samples: samples,
-            pictures: pictures)
+            samples: Sounds,
+            pictures: Pictures)
         {
             IsVisible = false,
         };

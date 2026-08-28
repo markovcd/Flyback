@@ -1,3 +1,4 @@
+using Flyback.Core.Render;
 using System.Text.Json;
 using Flyback.Core.Graph;
 using Shouldly;
@@ -256,6 +257,126 @@ public class CommandTests
         }
 
         File.ReadAllBytes(first.FullName).ShouldBe(File.ReadAllBytes(second.FullName));
+    }
+
+    // --- pack ----------------------------------------------------------------
+
+    /// <summary>
+    /// The whole case for a bundle, end to end: a patch and its picture packed
+    /// into one file, and that file rendered somewhere the picture has never
+    /// been. Nothing is unpacked on the way — a build server holding one file
+    /// writes one frame.
+    /// </summary>
+    [Fact]
+    public void A_bundle_renders_where_none_of_its_files_are()
+    {
+        using var made = new Scratch();
+        using var elsewhere = new Scratch();
+
+        var picture = made.File("moon.png");
+        WritePicture(picture);
+
+        var patch = Preset("Plasma");
+        var shown = NodeInstance.Create(NodeCatalog.BuiltIn.Require(NodeCatalog.PictureTypeId), 0, 0);
+
+        shown.Picture = "moon.png";
+        patch.Nodes.Add(shown);
+        patch.Connect(shown.Id, 0, patch.Output.Id, NodeCatalog.OutputColorPort);
+
+        var file = made.File("shown.fbk");
+        File.WriteAllText(file.FullName, PatchIo.ToJson(patch, NodeCatalog.BuiltIn));
+
+        var bundle = elsewhere.File("shown.fbkp");
+
+        var (code, output, _) = Run((o, e) => PackCommand.Run(file, bundle, e, o));
+
+        code.ShouldBe(Exit.Ok);
+        output.ShouldContain("moon.png");
+        bundle.Refresh();
+        bundle.Exists.ShouldBeTrue();
+
+        // Nothing beside it but itself, which is the case a loose patch fails.
+        Directory.GetFiles(bundle.DirectoryName!).ShouldHaveSingleItem();
+
+        var frame = elsewhere.File("out.png");
+
+        Run((o, e) => RenderCommand.Run(
+                Patches.Open(bundle, e)!.Value.Patch,
+                new RenderOptions(frame, 32, 18, 0d, 1d, 30d, 80),
+                e,
+                null,
+                default,
+                Patches.Open(bundle, e)!.Value.Samples,
+                Patches.Open(bundle, e)!.Value.Pictures))
+            .Code.ShouldBe(Exit.Ok);
+
+        frame.Refresh();
+        frame.Exists.ShouldBeTrue();
+
+        // The picture is a flat red, so the middle of the frame it drew is red —
+        // which says the bytes went in, came out and were decoded, rather than
+        // merely that a file appeared.
+        //
+        // The middle rather than a corner, because a square picture on a wide
+        // frame is placed at its own shape and the corners are the black beside
+        // it. That is the module's rule, not a shortcoming of the bundle.
+        var drawn = PngReader.Read(frame.FullName, out _).ShouldNotBeNull();
+        var centre = ((drawn.Height / 2) * drawn.Width + drawn.Width / 2) * 3;
+
+        drawn.Pixels[centre].ShouldBe(1f, 0.02f);
+        drawn.Pixels[centre + 1].ShouldBe(0f, 0.02f);
+
+        // And a corner is the black beside it, which is the same rule said the
+        // other way round.
+        drawn.Pixels[0].ShouldBe(0f, 0.02f);
+    }
+
+    /// <summary>
+    /// A file that has gone is said and the bundle is still written, which is the
+    /// same call check makes: the patch opens, compiles and draws without it, so
+    /// what is refused is the claim to be self-contained rather than the file.
+    /// </summary>
+    [Fact]
+    public void A_bundle_missing_a_file_is_written_and_reported()
+    {
+        using var scratch = new Scratch();
+
+        var patch = Preset("Plasma");
+        var shown = NodeInstance.Create(NodeCatalog.BuiltIn.Require(NodeCatalog.PictureTypeId), 0, 0);
+
+        shown.Picture = "gone.png";
+        patch.Nodes.Add(shown);
+        patch.Connect(shown.Id, 0, patch.Output.Id, NodeCatalog.OutputColorPort);
+
+        var file = scratch.File("shown.fbk");
+        File.WriteAllText(file.FullName, PatchIo.ToJson(patch, NodeCatalog.BuiltIn));
+
+        var bundle = scratch.File("shown.fbkp");
+        var (code, _, error) = Run((o, e) => PackCommand.Run(file, bundle, e, o));
+
+        code.ShouldBe(Exit.Problems);
+        error.ShouldContain("gone.png");
+
+        bundle.Refresh();
+        bundle.Exists.ShouldBeTrue();
+    }
+
+    /// <summary>A small red PNG, written the way the program writes every other one.</summary>
+    private static void WritePicture(FileInfo file)
+    {
+        const int width = 4;
+        const int height = 4;
+
+        var stride = width * 4;
+        var bgra = new byte[stride * height];
+
+        for (var i = 0; i < width * height; i++)
+        {
+            bgra[i * 4 + 2] = 255;
+            bgra[i * 4 + 3] = 255;
+        }
+
+        PngWriter.WriteBgra(file.FullName, bgra, width, height, stride);
     }
 
     /// <summary>A directory of its own per test, taken away afterwards.</summary>

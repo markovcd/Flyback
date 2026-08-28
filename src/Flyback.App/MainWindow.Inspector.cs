@@ -1270,7 +1270,7 @@ public sealed partial class MainWindow
 
             // Forgotten first, so a file that has been replaced since it was
             // last read is read again rather than answered from the cache.
-            samples.Forget(picked);
+            soundFolder.Forget(picked);
         });
 
     /// <summary>The same row for the other kind of file — see <see cref="PictureExtra"/>.</summary>
@@ -1282,7 +1282,7 @@ public sealed partial class MainWindow
         picked =>
         {
             node.Picture = picked;
-            pictures.Forget(picked);
+            pictureFolder.Forget(picked);
         });
 
     /// <summary>
