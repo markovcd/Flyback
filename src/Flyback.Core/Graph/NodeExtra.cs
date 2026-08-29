@@ -8,11 +8,8 @@ namespace Flyback.Core.Graph;
 /// The notes a module carries, and how one of them is read and edited.
 /// </summary>
 /// <remarks>
-/// One record rather than three members on the definition, because the three
-/// only ever mean anything together: a display and a range describe a step, and
-/// a module with no steps has nothing for them to describe. Held that way, the
-/// state that used to be legal and meaningless — a range on a module that has no
-/// notes — cannot be written down.
+/// One record rather than three members on the definition, because the display
+/// and range only make sense with a sequence of notes.
 /// </remarks>
 /// <param name="Default">The tune a freshly placed instance carries.</param>
 /// <param name="Display">How a step's value reads: by name on the Note Sequencer.</param>

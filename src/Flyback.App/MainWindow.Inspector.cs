@@ -287,11 +287,8 @@ public sealed partial class MainWindow
             inspector.Children.Add(new TextBlock
             {
                 // Adding a module is named first, and no longer because it is
-                // important: the list used to stand open down the left of the
-                // window, and now nothing on screen says where it went. The
-                // Output is named next for the same reason — everything that
-                // used to be along the top is behind it, and a setting nobody
-                // can find is worse than one in the wrong place.
+                // important: the list now opens where it is asked for, and the
+                // Output sits behind the preview so the controls stay discoverable.
                 Text = "Right-click the canvas — or press Space — to add a module. "
                      + "Type to narrow the list, arrows to move through it, Enter to add.\n\n"
                      + "Select a module to edit its values, and double-click its "

@@ -69,11 +69,8 @@ public sealed class WinMidiInput : IMidiInput
     /// Opens one device by the id a patch stored.
     /// </summary>
     /// <remarks>
-    /// The id is turned back into winmm's device number by finding it in the
-    /// list again, rather than by remembering what it was when the picker was
-    /// last drawn. That is the whole point of an id that is not a number: the
-    /// device may have moved since, and something else may be at the number it
-    /// used to be.
+    /// The id is resolved by looking it up in the current device list, so a
+    /// device can move without the patch breaking.
     /// </remarks>
     public IMidiPort Open(string port, MidiCallback deliver)
     {

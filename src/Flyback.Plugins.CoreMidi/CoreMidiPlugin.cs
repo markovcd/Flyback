@@ -94,11 +94,8 @@ public sealed class CoreMidiInput : IMidiInput
     /// Opens one device by the id a patch stored.
     /// </summary>
     /// <remarks>
-    /// The id is turned back into an endpoint by asking the server again, rather
-    /// than by remembering what it was when the picker was last drawn. That is
-    /// the whole point of an id that is not a number: the device may have been
-    /// unplugged and put back since, and something else may hold the reference
-    /// it used to have.
+    /// The id is resolved from the current server state, so a source can be
+    /// unplugged and reinserted without a stale reference.
     /// </remarks>
     public IMidiPort Open(string port, MidiCallback deliver)
     {

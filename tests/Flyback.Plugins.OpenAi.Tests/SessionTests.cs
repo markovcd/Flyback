@@ -133,11 +133,7 @@ public class SessionTests
     /// and nothing sent back arguing with it.
     /// </summary>
     /// <remarks>
-    /// This replaced a nudge: a turn that ended without a proposal used to be
-    /// answered with an instruction to propose, and then failed if it still did
-    /// not. It was written for a model that trailed off, and it caught a model
-    /// asking a fair question just as often — which is a conversation, not a
-    /// fault, and the panel is a conversation with a box to type in.
+    /// A model may stop to ask a question instead of proposing a patch.
     /// </remarks>
     [Fact]
     public async Task A_model_that_stops_to_ask_something_is_left_to_stop()

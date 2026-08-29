@@ -100,17 +100,12 @@ public readonly record struct PortNormal(string TypeId, int Port = 0);
 /// A hidden module driving this input while nothing is patched into it, or null
 /// to rest on <paramref name="Default"/>. Where <paramref name="NormalledFrom"/>
 /// carries an earlier socket of the same module through, this carries a module
-/// that is not in the patch at all: an oscillator's <c>in</c> is normalled to
-/// Time and a Rotate's <c>x</c> to Coordinates, so the two wires nearly every
-/// patch begins by drawing are already drawn. A wire overrides it exactly as a
-/// wire overrides a knob, and unplugging brings it back.
+/// not shown in the patch. A wire overrides it exactly as a wire overrides a
+/// knob, and unplugging brings it back.
 /// <para>
-/// A normalled socket has no knob left to turn: the value stored against it is
-/// not read while the normal holds, because the thing the knob would have said
-/// is now a signal. The editor says which module is driving it in the place the
-/// number used to be. A patch that wants a constant there puts a Value module
-/// in, which is the same trade ADR-0048 made for a scaled clock — the constant
-/// becomes visible in the patch rather than hiding on a socket nobody looks at.
+/// A normalled socket has no knob to turn while the normal holds, because the
+/// signal is the live value. A patch that wants a constant there adds a Value
+/// module instead.
 /// </para>
 /// </param>
 /// <param name="Domain">

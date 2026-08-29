@@ -85,11 +85,8 @@ public sealed class AlsaMidiInput : IMidiInput
     /// Opens one device by the id a patch stored.
     /// </summary>
     /// <remarks>
-    /// The id is turned back into a client and port number by walking the
-    /// machine again, rather than by remembering what they were when the picker
-    /// was last drawn. That is the whole point of an id that is not a number: the
-    /// device may have been unplugged and put back since, and something else may
-    /// be at the address it used to have.
+    /// The id is resolved against the current ALSA state, so unplugged devices can
+    /// be reconnected without stale references.
     /// </remarks>
     public IMidiPort Open(string port, MidiCallback deliver)
     {

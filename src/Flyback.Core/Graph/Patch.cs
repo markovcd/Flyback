@@ -8,9 +8,9 @@ namespace Flyback.Core.Graph;
 /// </summary>
 /// <param name="Value">A note number on a Note Sequencer, an ordinary signal on a Sequencer.</param>
 /// <param name="Length">
-/// In steps, so 1 is the ordinary step every note used to be and 2 is a note
-/// held twice as long. Never zero — a note of no duration has nowhere to sound
-/// and would divide by nothing when the gate asks how far through it we are.
+/// In steps, so 1 is a single step and 2 is a note held twice as long. Never
+/// zero — a note of no duration has nowhere to sound and would divide by
+/// nothing when the gate asks how far through it we are.
 /// </param>
 /// <param name="Volume">
 /// 0 to 1, and a level rather than a switch: a rest and a quiet note are the
@@ -108,17 +108,13 @@ public sealed class NodeInstance
     /// </summary>
     /// <remarks>
     /// One store rather than a field per kind
-    /// ([0061](0061-what-a-module-carries-is-kept-in-one-store.md)). The four
-    /// the engine ships used to be typed fields here and the open half was for
-    /// plugins; the split bought nothing but the asymmetry, and cost
-    /// <see cref="Clone"/> having to name every field an instance could carry —
-    /// which is the one place a field added and not copied goes wrong quietly.
+    /// ([0061](0061-what-a-module-carries-is-kept-in-one-store.md)). It holds all
+    /// extra state in one dictionary so a plugin can add its own data without the
+    /// engine needing to know its shape.
     /// <para>
     /// <see cref="JsonNode"/> rather than a typed value, because the engine does
     /// not know what shape a plugin's kind is and must round-trip it without
-    /// understanding it — and because that is what lets a copy be a deep clone
-    /// of this and nothing else, including for a module this build has no
-    /// definition for. It also keeps the file ordinary: an extra writes under
+    /// understanding it. It also keeps the file ordinary: an extra writes under
     /// its own name, which reads and edits like the rest of the patch.
     /// </para>
     /// <para>
@@ -126,9 +122,7 @@ public sealed class NodeInstance
     /// <see cref="StepsExtra.Of"/> and its three siblings hand back a
     /// <c>List&lt;Step&gt;</c>, a scale or a path, and
     /// <see cref="NodeExtra.Fold"/> puts it on the <see cref="EmitContext"/>
-    /// typed, so nothing on the compile path reads JSON. Tolerating a file
-    /// somebody edited into a shape that means nothing is theirs too — the same
-    /// contract <see cref="Step.Sane"/> has.
+    /// typed, so nothing on the compile path reads JSON.
     /// </para>
     /// </remarks>
     public Dictionary<string, JsonNode>? State { get; set; }

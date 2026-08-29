@@ -118,16 +118,8 @@ public readonly record struct EmitContext(Slot[] Inputs)
     /// The instance's notes, empty for every module that has none.
     /// </summary>
     /// <remarks>
-    /// Values rather than slots on purpose: a sequencer folds its lengths into
-    /// running sums at compile time, which it could not do with a register.
-    /// <para>
-    /// An init property rather than the constructor parameter it used to be. It
-    /// was the first of these and predates the convention the other three were
-    /// added under ([0051](0051-a-quantisers-scale-is-a-set-on-the-node.md)),
-    /// which left it as the one piece of carried state in the plugin ABI — and
-    /// left the compiler passing an empty list at both construction sites for
-    /// <see cref="StepsExtra.Fold"/> to overwrite a moment later.
-    /// </para>
+    /// Values rather than slots: a sequencer folds its lengths into running sums
+    /// at compile time, which a register could not do.
     /// </remarks>
     public IReadOnlyList<Step> Steps
     {

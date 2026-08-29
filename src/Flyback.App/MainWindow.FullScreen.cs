@@ -19,14 +19,8 @@ public sealed partial class MainWindow
     /// What each track was set to before the preview took over, in order.
     /// </summary>
     /// <remarks>
-    /// The sizes are copied out and written back rather than the definition
-    /// collections being swapped for flat ones and swapped back. Handing a grid
-    /// the collection it used to have does not put the layout back — the objects
-    /// return, and the widths they used to decide do not — so what is saved here
-    /// is the numbers, and what is changed is the definitions the grid is already
-    /// holding. That is also how a splitter works on them, which is what makes it
-    /// the arrangement somebody dragged that comes back rather than the one the
-    /// window opened with.
+    /// The sizes are copied out and restored, rather than swapping in a new grid
+    /// definition. That keeps the dragged layout when the preview is toggled.
     /// </remarks>
     private (GridLength Size, double Minimum)[]? columnsBefore;
     private (GridLength Size, double Minimum)[]? rightRowsBefore;

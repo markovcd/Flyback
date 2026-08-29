@@ -15,16 +15,13 @@ namespace Flyback.App.Controls;
 /// </summary>
 /// <remarks>
 /// <para>
-/// A loop over the catalogue rather than markup, which is what makes a module
-/// added anywhere — the engine or a plugin — appear here with no change to the
-/// shell at all. Nothing in this file names a single module.
+/// A loop over the catalogue rather than markup, so a module added by the
+/// engine or a plugin appears here without shell changes.
 /// </para>
 /// <para>
 /// A control of its own rather than a region of the window, because it is shown
 /// where it is asked for: right-clicking the canvas opens it at the pointer and
-/// what is picked lands there. It used to be a column down the left, standing
-/// open whether or not anything was being added, and the width of the canvas is
-/// worth more than that — see ADR-0046.
+/// what is picked lands there.
 /// </para>
 /// </remarks>
 public sealed class ModulePalette : UserControl

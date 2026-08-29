@@ -239,31 +239,21 @@ internal sealed class OpenAiSession : IPatchSession
     /// <para>
     /// A separate request rather than a turn of the conversation, and that is
     /// forced rather than chosen. The models that take a sound require every
-    /// request to carry one — a conversation driven by one 400s on its first
-    /// turn, before anything has been rendered to listen to — and they do not
-    /// take a picture, so driving with one would trade the patch's eyes for its
-    /// ears. Asked on its own, the ear answers one question about one sound and
-    /// the loop is driven by whatever model is best at driving it.
+    /// request to carry one, and they do not take a picture, so this keeps the
+    /// patch's ears and eyes separate.
     /// </para>
     /// <para>
-    /// The WAV is sent once and is never part of the conversation, which is the
-    /// other thing this buys: the alternative left a few hundred kilobytes of
-    /// base64 in the history to be paid for again on every turn that followed.
+    /// The WAV is sent once and is never part of the conversation, which keeps
+    /// the transcript smaller and the transcript history honest.
     /// </para>
     /// <para>
-    /// A failure here is a sentence in the tool result rather than the end of
-    /// the turn. The sound was rendered and the levels are already known; not
-    /// being able to describe it is worth saying and worth carrying on from.
+    /// A failure here is a sentence in the tool result rather than the end of the
+    /// turn. The sound was rendered and the levels are already known; being unable
+    /// to describe it is still useful information.
     /// </para>
     /// <para>
-    /// The ear is told nothing about the patch, and that is the correction to
-    /// the first version of this. It used to be handed what the model said it
-    /// was listening for, on the reasoning that a focused question gets a better
-    /// answer. What it actually got was agreement: asked to listen for a
-    /// kickdrum, a hihat and a melody, it reported a kickdrum, a hihat and a
-    /// melody — over a clip that measured as three steady tones with no hit in
-    /// it anywhere. A description worth having is one that could have come back
-    /// wrong, so nothing here tells it what wrong would look like.
+    /// The ear is told nothing about the patch. It only hears the clip, which is a
+    /// better description of what is actually there.
     /// </para>
     /// </remarks>
     private async Task<string> Described(byte[] wav, CancellationToken cancel)

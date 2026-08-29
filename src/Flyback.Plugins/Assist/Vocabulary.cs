@@ -6,23 +6,8 @@ namespace Flyback.Plugins.Assist;
 /// Which tool writes what a module carries that is not a knob.
 /// </summary>
 /// <remarks>
-/// One fact in one place, on the side of the boundary that owns it. A tool name
-/// is the assistant's vocabulary: it is declared in
-/// <see cref="PatchWorkbench.Tools"/>, dispatched in
-/// <see cref="PatchWorkbench.InvokeAsync"/>, and explained in
-/// <see cref="Handbook"/> — three things in this project. It used to be a fourth
-/// thing in <see cref="NodeExtra.Announce"/>, which is in the engine and cannot
-/// see any of them: <c>Flyback.Plugins</c> references <c>Flyback.Core</c> and not
-/// the other way round, so the engine was naming a tool it could not reference,
-/// could not rename with, and could not check.
-/// <para>
-/// It had already gone wrong quietly, which is the argument for this being a
-/// class rather than a tidy-up: the Handbook's preamble explained <c>notes</c>
-/// and <c>scale</c> and never gained a line for <c>file</c> or <c>picture</c>,
-/// because nothing connects the two. Renaming a tool would have gone wrong the
-/// same way and worse — every module would have gone on telling the model to
-/// call the old name, with nothing failing to say so.
-/// </para>
+/// The tool name is declared once, dispatched by the workbench, and described in
+/// the handbook.
 /// </remarks>
 internal static class Vocabulary
 {

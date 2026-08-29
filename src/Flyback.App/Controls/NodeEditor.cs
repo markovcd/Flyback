@@ -74,15 +74,8 @@ public sealed class NodeEditor : Control
     private static readonly IPen PortOutline = new Pen(new SolidColorBrush(Colors.Outline), 1.2);
 
     /// <summary>
-    /// Past the edge of the canvas. Darker than the canvas and never ruled, so
-    /// that ground no module may stand on does not look like ground one may.
+    /// Ground beyond the canvas edge.
     /// </summary>
-    /// <remarks>
-    /// The darkest surface in the palette rather than the window's own, which is
-    /// four parts in two hundred and fifty-five away from the canvas — a
-    /// difference no eye finds across a strip a few hundred units wide, and one a
-    /// test cannot tell from rounding either.
-    /// </remarks>
     /// <summary>
     /// A box's header, in the one color on the canvas that belongs to no
     /// category. A module's header is tinted by what it does; a group does
@@ -475,9 +468,8 @@ public sealed class NodeEditor : Control
     /// </summary>
     /// <remarks>
     /// Framed, which an undo is not. Nothing about where an assistant lays its
-    /// modules out has to resemble what was on screen, so the canvas would
-    /// otherwise be left pointed at a stretch of empty grid where the old patch
-    /// used to be.
+    /// modules out has to resemble the current canvas, so the patch does not end
+    /// up pointing at an empty section of the grid.
     /// </remarks>
     public void ApplyEdit(Patch edited)
     {

@@ -59,20 +59,8 @@ public sealed class NodeGroup
     /// Ports the box shows whether or not a wire is on them.
     /// </summary>
     /// <remarks>
-    /// A socket used to be nothing but an observation — a wire crosses here, so
-    /// draw one — and unplugging made it vanish and the box shrink under the
-    /// hand that had just unplugged it. Which is wrong twice over: the edge of a
-    /// box is a thing you arrange and not a thing that happens to you, and a
-    /// socket that only exists while something is in it is a socket nothing can
-    /// ever be plugged into.
-    /// <para>
-    /// So a crossing wire still <em>puts</em> a socket here, and taking the wire
-    /// off leaves it. What is stored is the module and the port, exactly as a
-    /// <see cref="Connection"/> stores them — not a numbered port of the box's
-    /// own. That distinction is the whole reason this is safe to write down:
-    /// nothing outside ever refers to a socket by position, so nothing renumbers
-    /// when the inside is rearranged.
-    /// </para>
+    /// A group socket names a real port on one member. It stays visible while the
+    /// wire is connected, and remains on the edge once the wire is removed.
     /// </remarks>
     public List<GroupSocket> Exposed { get; set; } = [];
 
