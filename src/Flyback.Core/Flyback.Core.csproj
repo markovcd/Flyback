@@ -33,6 +33,12 @@
     <Compile Update="Graph\NodeCatalog.Space.cs">
       <DependentUpon>NodeCatalog.cs</DependentUpon>
     </Compile>
+    <Compile Update="Graph\NodeCatalog.Envelopes.cs">
+      <DependentUpon>NodeCatalog.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Graph\NodeCatalog.Midi.cs">
+      <DependentUpon>NodeCatalog.cs</DependentUpon>
+    </Compile>
   </ItemGroup>
 
 </Project>

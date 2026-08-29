@@ -23,26 +23,8 @@ public partial class NodeCatalog
                 Num("trigger", 0f, 0f, 1f),
             ],
             EmitMidi,
-            "Plays the patch from a keyboard. Pick which one in the panel — a MIDI device, "
-            + "or the computer's own keyboard, which is what a fresh one listens to. "
-            + "'pitch' is the note being held, as a number, so it goes straight into a "
-            + "Note and on into an oscillator's 'freq', or into a Quantiser to be pinned "
-            + "to a scale. 'gate' is high while a key is down: into an ADSR, and that into "
-            + "a multiply, is a note with edges. 'velocity' is how hard it was struck, 0 to "
-            + "1 — into the same multiply, or into a filter's cutoff. 'trigger' is a single "
-            + "evaluation high each time a note is struck, which is what a Sample's own "
-            + "'trigger' socket wants. "
-            + "One note at a time: a new key takes the voice over, and letting it go hands "
-            + "back whichever key is still down, so a run played legato slides rather than "
-            + "restarting. The gate still reopens for each new note, so an envelope "
-            + "articulates every one of them. "
-            + "On the computer's keyboard the bottom two rows are the white and black notes "
-            + "of one octave and the top two rows the octave above, and Page Up and Page "
-            + "Down move both. "
-            + "The picture is played as well as the speakers: a frame is drawn with whatever "
-            + "was held as it started. A rendered movie is not — an export has nobody at the "
-            + "keys, so every output here sits at rest and the patch draws what it draws "
-            + "with no note down.")
+            "Keyboard or MIDI input. 'pitch' is the current note; 'gate' is high while a key is held; "
+            + "'velocity' follows note strength; 'trigger' fires on each note start. Only one note is active at a time." )
         {
             Extras = [new MidiExtra()],
         };

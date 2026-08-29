@@ -80,44 +80,24 @@ public partial class NodeCatalog
             [Num("bpm", 120f, 20f, 300f)],
             [Num("out")],
             (em, node) => [em.Mul(node[0], 1f / Minute)],
-            "A knob in beats per minute, handed on as beats per second. Patch 'out' into a "
-            + "sequencer's 'rate' for one step a beat, or through a Multiply first for "
-            + "anything faster — four for sixteenths. It is also what drives a Pulse to give "
-            + "a drum something to be triggered by.");
+            "Tempo in BPM, converted to beats per second. Patch it into a sequencer's rate for one step per beat.");
 
         yield return new NodeDef(
             HoldTypeId, "Sample & Hold", "Sequencer",
             [Num("in"), Num("trigger", 0f, 0f, 1f)],
             [Num("out")],
             EmitHold,
-            "Catches whatever is on 'in' the moment 'trigger' goes up, and holds it until the "
-            + "next time. What it is for is the gap between a signal that is always moving and "
-            + "a note that must not: patch a wandering signal into 'in' and the same gate that "
-            + "opens the envelope into 'trigger', and the pitch is settled before the note "
-            + "starts and stays settled until it has finished. Without it a signal crossing "
-            + "into the next note halfway through one is heard as that note sliding, since an "
-            + "oscillator carries its phase and there is no click to mark the change. Audio "
-            + "only: a picture is one evaluation with nothing before it, so there is nothing "
-            + "to have held and 'in' passes straight through, the way a Delay with nothing to "
-            + "remember is a wire.");
+            "Captures the value on 'in' when 'trigger' rises, and holds it until the next trigger. "
+            + "Useful for locking a changing signal to a note or gate.");
 
         yield return StepSequencer(
             "seq.notes", "Note Sequencer", DefaultRiff, PortDisplay.Note, (0f, 127f),
-            "A list of notes, edited in the inspector rather than on the node. A note is a "
-            + "number — 57 reads as A3 — with a length in steps and a volume, and volume "
-            + "silences a note without losing it, so it doubles as its level. Send 'out' to a "
-            + "Note and 'gate' to something that multiplies the tone, so a rest is heard as "
-            + "one. 'shape' is how long the gate takes to open and close, as a fraction of the "
-            + "note: turn it up for a swell, and it never quite reaches nothing, because a "
-            + "gate that switched outright would click. 'index' is how far through the pattern "
-            + "the sequence has got, which is the output to reach for on the screen.");
+            "Step sequence of notes. Use 'out' as a pitch source and 'gate' to shape note timing. "
+            + "The sequence index is exposed for pattern control and display.");
 
         yield return StepSequencer(
             "seq.values", "Sequencer", DefaultShape, PortDisplay.Number, (0f, 1f),
-            "The same list as plain signals rather than as notes — a hue, a scale, a "
-            + "threshold, or a pitch by way of a Frequency. 'in' is a domain the way an "
-            + "oscillator's is: stop it and the sequence stops, run it backwards and it runs "
-            + "backwards, run it twice as fast and so does the pattern.");
+            "Step sequence of ordinary signals. It follows the incoming domain, so reversing or speeding up 'in' also reverses or speeds up the pattern.");
     }
 
     

@@ -49,10 +49,8 @@ public partial class NodeCatalog
                     em.Binary(OpCode.Atan2, y, x),
                 ];
             },
-            "Where you are on screen. y runs -1..1, x is widened by the aspect ratio. Every "
-            + "'x' and 'y' socket is already reading this without a wire, so reach for one of "
-            + "these when you want 'radius' or 'angle', or when the position going into a "
-            + "module should be something other than the pixel's own.");
+            "Screen position. x and y are normalized; x is widened by the aspect ratio. "
+            + "Use radius or angle when a module needs polar coordinates.");
 
         // No rate knob, and that is the decision rather than an omission — see
         // ADR-0048. It was a second, hidden speed control: a Time at 0.2 feeding
@@ -64,37 +62,17 @@ public partial class NodeCatalog
             TimeTypeId, "Time", "Source",
             [], [Num("t")],
             (em, _) => [em.Load(OpCode.LoadT)],
-            "Seconds since the patch started. Every 'in' socket is already reading this "
-            + "without a wire, so you need one of these only where a socket that is not an "
-            + "'in' should move — Noise's 'z' to make it boil, or an angle to make it turn. "
-            + "To run something slower, put a Multiply after this — 0.2 for a fifth of the "
-            + "speed. Into an oscillator's 'in' it needs no scaling at all: that is what the "
-            + "oscillator's 'freq' is.");
+            "Elapsed seconds since the patch started. Use it for motion or time-varying signals. "
+            + "Scale it with Multiply when you want a slower rhythm.");
 
         yield return new NodeDef(
             SampleTypeId, "Sample", "Source",
             [Domain("in"), Num("level", 1f, 0f, 2f), Num("trigger", 0f, 0f, 1f)],
             [Num("out"), Num("length")],
             EmitSample,
-            "Plays a sound file. 'in' is how far into it to read, in seconds — so with nothing "
-            + "patched it runs on the clock and plays once, at the speed it was recorded, and "
-            + "then stops. Off either end is silence, which is how a one-shot ends. "
-            + "'trigger' restarts it: on the way up it takes the position as zero, so the clip "
-            + "plays from its beginning at its own pitch and tempo, and a trigger arriving "
-            + "while it is still sounding cuts that short and starts again. Patch the same "
-            + "gate that opens an envelope. Left alone it does nothing at all, so a player "
-            + "with nothing patched here is what it always was. "
-            + "Everything else is what you drive 'in' with rather than a knob this carries: a "
-            + "Saw times 'length' loops it, a negative slope plays it backwards, Time times two "
-            + "is double speed an octave up, and an envelope into 'in' scrubs. 'length' is how "
-            + "long the file is in seconds, so a patch can loop or scale without being told. "
-            + "Mono, 8 to 32 bit WAV. The patch stores the path rather than the audio, so the "
-            + "file has to stay where it is — one that has moved is reported by name. A Probe "
-            + "charts it, but not the triggering: a trigger is something that happened before "
-            + "now and the screen has no before, so what is drawn is the clip read at 'in' with "
-            + "the trigger ignored. Rewind to see the start of it. A Scope does show the "
-            + "triggering, because it charts what the speakers played rather than working the "
-            + "signal out again.")
+            "Plays a WAV file. 'in' is playback position in seconds; 'trigger' restarts from zero. "
+            + "Use 'length' for loop timing or scrubbing. The file path is stored with the patch, "
+            + "so moving or renaming it will break playback.")
         {
             Extras = [new SampleExtra()],
         };
@@ -104,19 +82,8 @@ public partial class NodeCatalog
             [..Position()],
             [Col("color")],
             EmitPicture,
-            "Shows a picture from a file. The one module that brings something into a patch "
-            + "from outside rather than working it out — everything else here is arithmetic, "
-            + "and this is a photograph. It is placed at its own shape, filling the height and "
-            + "as much of the width as it is wide, with black beyond its edges: a frame this "
-            + "program exported lands exactly where it came from. 'x' and 'y' are where it is "
-            + "being asked about, so a Scale before it zooms, a Translate slides it, a Rotate "
-            + "turns it and a Warp bends it — the module decides nothing about the mapping "
-            + "except what it is when nothing is patched in. PNG, 8 or 16 bit, not interlaced; "
-            + "transparency is taken as black, since a color here is three numbers and not "
-            + "four. The patch stores the path rather than the picture, so the file has to stay "
-            + "where it is — one that has moved is reported by name. Silent: the speakers have "
-            + "nothing to do with a picture, so on that path it is black and the file is not "
-            + "even opened.")
+            "Loads an image file. x and y sample the image at that position; outside the image, "
+            + "the result is black. Scale, translate, rotate, and warp control how it is mapped.")
         {
             Extras = [new PictureExtra()],
         };

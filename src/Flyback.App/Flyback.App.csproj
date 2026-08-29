@@ -100,6 +100,30 @@
     <None Include="Info.plist" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Update="MainWindow.Editing.cs">
+      <DependentUpon>MainWindow.cs</DependentUpon>
+    </Compile>
+    <Compile Update="MainWindow.Engine.cs">
+      <DependentUpon>MainWindow.cs</DependentUpon>
+    </Compile>
+    <Compile Update="MainWindow.Files.cs">
+      <DependentUpon>MainWindow.cs</DependentUpon>
+    </Compile>
+    <Compile Update="MainWindow.FullScreen.cs">
+      <DependentUpon>MainWindow.cs</DependentUpon>
+    </Compile>
+    <Compile Update="MainWindow.Inspector.cs">
+      <DependentUpon>MainWindow.cs</DependentUpon>
+    </Compile>
+    <Compile Update="MainWindow.Palette.cs">
+      <DependentUpon>MainWindow.cs</DependentUpon>
+    </Compile>
+    <Compile Update="MainWindow.Recording.cs">
+      <DependentUpon>MainWindow.cs</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
   <!-- Turns the macOS publish output into something the Finder will launch. -->
   <Import Project="MacBundle.targets" />
 

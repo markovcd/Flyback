@@ -166,11 +166,8 @@ public partial class NodeCatalog
             // the speakers the other two. Which of them a given program
             // takes is the only difference between the two compilations.
             (em, i) => [i[0], em.Mul(i[1], i[3]), em.Mul(i[2], i[3])],
-            "The screen and the speakers. Everything upstream of 'color' is what you "
-            + "see; everything upstream of 'left' is what you hear. Leave 'right' "
-            + "unpatched and it carries 'left' through, as a normalled jack would. "
-            + "'scan' at 0 drives the patch from Time; at 1 it sweeps the image and you "
-            + "hear the picture, at 'scan rate' sweeps per second.");
+            "Video and audio outputs in one node. 'color' drives the screen; 'left' and 'right' drive the speakers. "
+            + "'scan' sweeps the image over time when you need a visual signal.");
 
         yield return new NodeDef(
             "audio.frequency", "Frequency", "Output",
@@ -214,12 +211,7 @@ public partial class NodeCatalog
                     note,
                 ];
             },
-            "Frequency, but in notes. Pick one on the knob — 57 is A3 — or patch a signal "
-            + "in and it snaps to the nearest whole note on its way through, which is what "
-            + "turns a sweep into a run up the chromatic scale. The change is instant and "
-            + "silent: the oscillators carry their phase, so a pitch that steps bends the "
-            + "waveform rather than breaking it. 'hz' goes to an oscillator's freq; 'note' "
-            + "hands the snapped number on, so a second Note can play an interval off it.");
+            "Pitch in note numbers. Patch in a signal to snap it to the nearest semitone, or use the knob for a direct note value.");
 
         yield return Quantiser();
         yield return Probe();

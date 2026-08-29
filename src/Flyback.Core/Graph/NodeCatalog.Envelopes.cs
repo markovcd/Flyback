@@ -33,14 +33,7 @@ public partial class NodeCatalog
             ],
             [Num("out")],
             EmitAdsr,
-            "The shape a note has over time, from a gate. It rises to one over 'attack', "
-            + "falls to 'sustain' over 'decay', stays there for as long as the gate is held, "
-            + "and falls to nothing over 'release' once it is let go — so a sequencer's "
-            + "'gate' into here and this into a multiply is a run of notes with edges rather "
-            + "than a switch. The three times are marked in decades, from 100 µs to half a "
-            + "minute. Audio only: a picture is one evaluation with nothing before it, so "
-            + "there is no time for the shape to happen in and what comes out is the gate "
-            + "itself, the way a Delay with nothing to remember is a wire.");
+            "ADSR envelope. Gate in, shaped level out. Attack, decay, sustain, and release define the note contour." );
     }
 
     /// <summary>
