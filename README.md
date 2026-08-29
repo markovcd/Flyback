@@ -25,6 +25,7 @@ dotnet run --project src/Flyback.App -c Release
 - CLI tools for rendering, checking, inspecting and bundling patches
 - Plugin-based architecture for platform-specific audio/video backends and extensions
 - Patch bundles that package the patch with its referenced sample and image files
+- Agentic patch authoring through a model-backed assistant that can listen, propose changes and work inside the same patch graph
 - Cross-platform publish targets for Windows, macOS and Linux
 
 ## Build and publish
