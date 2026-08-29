@@ -335,7 +335,7 @@ public sealed partial class MainWindow
     /// text input that follows — so without this, naming a patch would play a
     /// tune, and every letter of the name would be a note nobody could stop.
     /// </remarks>
-    private bool Typing => FocusManager?.GetFocusedElement() is TextBox;
+    private bool Typing => FocusManager.GetFocusedElement() is TextBox;
 
     /// <summary>
     /// One key, as either a note or the pair that moves the two rows. Null-ish by

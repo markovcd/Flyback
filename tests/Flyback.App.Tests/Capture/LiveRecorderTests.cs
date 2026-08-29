@@ -82,7 +82,6 @@ public class LiveRecorderTests : IDisposable
     /// </remarks>
     private static int Chunks(byte[] file, string fourcc)
     {
-        var wanted = Encoding.ASCII.GetBytes(fourcc);
         var movi = Find(file, "movi");
 
         movi.ShouldBeGreaterThan(0, "the file should have a movi list");

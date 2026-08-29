@@ -206,7 +206,7 @@ public class ModulePaletteTests : UiTest
         Settle(window);
 
         var palette = Palette(window).ShouldNotBeNull();
-        Press(All<Button>(palette).First(b => (b.Content as string) == "Sine"));
+        Press(All<Button>(palette).First(b => b.Content as string == "Sine"));
         Settle(window);
 
         var added = editor.Patch.Nodes.Last(n => n.TypeId == "osc.sine");
@@ -344,7 +344,7 @@ public class ModulePaletteTests : UiTest
         RightClick(window, onWindow);
 
         var palette = Palette(window).ShouldNotBeNull();
-        var button = All<Button>(palette).First(b => (b.Content as string) == "Sine");
+        var button = All<Button>(palette).First(b => b.Content as string == "Sine");
 
         Press(button);
         Settle(window);
@@ -367,7 +367,7 @@ public class ModulePaletteTests : UiTest
         RightClick(window, Empty(window));
 
         var palette = Palette(window).ShouldNotBeNull();
-        Press(All<Button>(palette).First(b => (b.Content as string) == "Sine"));
+        Press(All<Button>(palette).First(b => b.Content as string == "Sine"));
         Settle(window);
 
         editor.SelectedNode.ShouldNotBeNull().TypeId.ShouldBe("osc.sine");
@@ -387,7 +387,7 @@ public class ModulePaletteTests : UiTest
 
         var palette = Palette(window).ShouldNotBeNull();
 
-        All<Button>(palette).ShouldNotContain(b => (b.Content as string) == "Output");
+        All<Button>(palette).ShouldNotContain(b => b.Content as string == "Output");
     }
 
     /// <summary>

@@ -256,7 +256,7 @@ public static class WavReader
             // the convention every wider one follows.
             8 => (raw[0] - 128) / 128d,
             16 => BinaryPrimitives.ReadInt16LittleEndian(raw) / 32768d,
-            24 => ((raw[0] | (raw[1] << 8) | ((sbyte)raw[2] << 16)) / 8_388_608d),
+            24 => (raw[0] | (raw[1] << 8) | ((sbyte)raw[2] << 16)) / 8_388_608d,
             _ => BinaryPrimitives.ReadInt32LittleEndian(raw) / 2_147_483_648d,
         };
     }

@@ -434,7 +434,7 @@ public class CycleInvariants
         var count = 0;
 
         for (var i = 1; i < signal.Length; i++)
-            if ((signal[i - 1] < 0f) != (signal[i] < 0f))
+            if (signal[i - 1] < 0f != signal[i] < 0f)
                 count++;
 
         return count;

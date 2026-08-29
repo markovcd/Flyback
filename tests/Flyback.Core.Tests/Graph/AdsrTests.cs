@@ -174,7 +174,7 @@ public class AdsrTests
     [Fact]
     public void A_second_note_retriggers_from_where_the_release_had_got_to()
     {
-        var knobs = new (string, float)[]
+        var knobs = new[]
         {
             ("attack", Decades(0.05f)),
             ("decay", Decades(0.01f)),

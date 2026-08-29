@@ -217,7 +217,7 @@ public class MeterTests
     [Fact]
     public void What_the_speakers_played_reaches_the_picture()
     {
-        var (patch, meter) = Listening(Sine, (Window, -1.3f));
+        var patch = Listening(Sine, (Window, -1.3f));
 
         var drawn = patch.CompileForVideo(NodeCatalog.BuiltIn).Program;
         var heard = patch.CompileForAudio(NodeCatalog.BuiltIn).Program;
@@ -250,7 +250,7 @@ public class MeterTests
     [Fact]
     public void Scale_brings_a_quiet_signal_up()
     {
-        var (patch, _) = Listening(Sine, (Window, -1.3f), (Scale, 0.25f));
+        var patch = Listening(Sine, (Window, -1.3f), (Scale, 0.25f));
 
         var drawn = patch.CompileForVideo(NodeCatalog.BuiltIn).Program;
         var heard = patch.CompileForAudio(NodeCatalog.BuiltIn).Program;
@@ -298,7 +298,7 @@ public class MeterTests
     /// A patch whose Output is lit by a meter listening to <paramref name="watched"/>,
     /// and whose sound is that same signal.
     /// </summary>
-    private static (Patch Patch, NodeInstance Meter) Listening(
+    private static Patch Listening(
         string watched, params (int Port, float Value)[] knobs)
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
@@ -311,7 +311,7 @@ public class MeterTests
          .Wire(source, 0, output, NodeCatalog.OutputLeftPort)
          .Wire(meter, Level, output, NodeCatalog.OutputColorPort);
 
-        return (b.Patch, meter);
+        return b.Patch;
     }
 
     /// <summary>What the picture makes of it, read off the red channel.</summary>
@@ -326,7 +326,7 @@ public class MeterTests
     /// <summary>Runs the sound long enough to fill any window a knob can ask for.</summary>
     private static DelayState? Played(CompiledPatch heard, int frames = 8_192)
     {
-        var renderer = new AudioRenderer(48_000, 4);
+        var renderer = new AudioRenderer();
         var memory = renderer.DelayMemoryFor(heard);
 
         renderer.Render(heard, new float[frames * 2], AudioScan.TimeDriven, memory);

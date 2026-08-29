@@ -460,9 +460,9 @@ public class GroupTests : UiTest
                 y = Math.Min(y, node.Y);
             }
 
-        const double Padding = 24;
-        const double Strip = 20;
+        const double padding = 24;
+        const double strip = 20;
 
-        return new Point(x - Padding + (NodeGeometry.Width / 2), y - Padding - (Strip / 2));
+        return new Point(x - padding + NodeGeometry.Width / 2, y - padding - strip / 2);
     }
 }

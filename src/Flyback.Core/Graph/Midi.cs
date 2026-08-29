@@ -68,7 +68,7 @@ public static class MidiSources
 
             try
             {
-                offered = ask() ?? [];
+                offered = ask();
             }
             catch
             {

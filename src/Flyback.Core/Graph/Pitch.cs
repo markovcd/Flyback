@@ -42,7 +42,7 @@ public static class Pitch
     /// names: choosing A puts every A in the scale rather than one of them.
     /// </summary>
     public static string ClassName(int pitchClass) =>
-        Names[((pitchClass % Classes) + Classes) % Classes];
+        Names[(pitchClass % Classes + Classes) % Classes];
 
     /// <summary>
     /// A scale held to what one can be: inside the octave, each note named at

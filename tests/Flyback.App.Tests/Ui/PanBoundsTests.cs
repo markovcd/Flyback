@@ -67,7 +67,7 @@ public class PanBoundsTests : UiTest
         // stay there and then come away again cleanly, which one jump would
         // never ask.
         for (var i = 1; i <= 10; i++)
-            window.MouseMove(from + (by * i / 10));
+            window.MouseMove(from + by * i / 10);
 
         window.MouseUp(from + by, MouseButton.Middle);
         Settle(window);

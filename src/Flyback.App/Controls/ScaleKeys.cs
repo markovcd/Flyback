@@ -46,7 +46,7 @@ internal sealed class ScaleKeys
     private static readonly IBrush Off = new SolidColorBrush(Colors.Node);
     private static readonly IBrush OnText = Brushes.Black;
     private static readonly IBrush OffText = new SolidColorBrush(Colors.Value);
-    private static readonly IPen Edge = new Pen(new SolidColorBrush(Colors.Outline), 1);
+    private static readonly IPen Edge = new Pen(new SolidColorBrush(Colors.Outline));
 
     private readonly NodeInstance node;
     private readonly Action<string?> changed;
@@ -143,7 +143,7 @@ internal sealed class ScaleKeys
 
             var key = Key(sharp, KeyWidth - 9, SharpHeight);
 
-            Canvas.SetLeft(key, ((i + 1) * KeyWidth) - ((KeyWidth - 9) / 2) - 0.5);
+            Canvas.SetLeft(key, (i + 1) * KeyWidth - (KeyWidth - 9) / 2 - 0.5);
             Canvas.SetTop(key, 0);
             board.Children.Add(key);
         }

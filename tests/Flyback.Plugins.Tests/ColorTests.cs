@@ -410,7 +410,7 @@ public class ColorTests
         patch.Connect(module.Id, 0, screen.Id, NodeCatalog.OutputColorPort);
 
         var program = patch.CompileForVideo(Catalog).Program;
-        var registers = program.AllocateRegisters();
+        program.AllocateRegisters();
 
         return (r, g, b) =>
         {

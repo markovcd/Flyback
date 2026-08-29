@@ -192,7 +192,7 @@ public class SampleTests : IDisposable
             return last;
         }
 
-        public int Evaluations { get; private set; }
+        private int Evaluations { get; set; }
     }
 
     /// <summary>A clip that falls from 1 to 0 over <paramref name="seconds"/>.</summary>
@@ -201,7 +201,7 @@ public class SampleTests : IDisposable
         const int rate = 4_000;
 
         var pcm = new float[(int)(rate * seconds)];
-        for (var i = 0; i < pcm.Length; i++) pcm[i] = 1f - (i / (float)pcm.Length);
+        for (var i = 0; i < pcm.Length; i++) pcm[i] = 1f - i / (float)pcm.Length;
 
         var path = Path.Combine(folder, name);
         WavWriter.Write(path, pcm, rate, 1);

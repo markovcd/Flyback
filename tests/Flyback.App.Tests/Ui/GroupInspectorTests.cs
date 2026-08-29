@@ -22,7 +22,7 @@ namespace Flyback.App.Tests.Ui;
 /// </remarks>
 public class GroupInspectorTests : UiTest
 {
-    private static MainWindow Open(out NodeGroup group, out NodeInstance sine, out NodeInstance mul)
+    private static MainWindow Open(out NodeGroup group)
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
 
@@ -45,8 +45,8 @@ public class GroupInspectorTests : UiTest
         editor.Patch = b.Patch;
         Settle(window);
 
-        sine = editor.Patch.Find(osc.Id)!;
-        mul = editor.Patch.Find(product.Id)!;
+        var sine = editor.Patch.Find(osc.Id)!;
+        var mul = editor.Patch.Find(product.Id)!;
 
         group = editor.Patch.Group([sine.Id, mul.Id])!;
         editor.NotifyPatchChanged();
@@ -61,7 +61,7 @@ public class GroupInspectorTests : UiTest
     {
         var editor = Editor(window);
         var bounds = NodeGeometry.GroupBounds(patch, group, patch.SocketsOf(group));
-        var header = new Point(bounds.Center.X, bounds.Y + (NodeGeometry.HeaderHeight / 2));
+        var header = new Point(bounds.Center.X, bounds.Y + NodeGeometry.HeaderHeight / 2);
 
         var at = editor.TranslatePoint(editor.GraphToScreen.Transform(header), window)
             ?? throw new InvalidOperationException("the editor is not in this window");
@@ -86,7 +86,7 @@ public class GroupInspectorTests : UiTest
     [AvaloniaFact]
     public void The_panel_is_about_the_group_rather_than_a_module_inside_it()
     {
-        var window = Open(out _, out _, out _);
+        var window = Open(out _);
 
         // Not "Sine" or "Multiply", which is what pressing the box selects.
         Title(window).Text.ShouldBe("2 modules");
@@ -100,7 +100,7 @@ public class GroupInspectorTests : UiTest
     [AvaloniaFact]
     public void The_panel_lists_the_ports_where_wires_cross_the_edge()
     {
-        var window = Open(out _, out _, out _);
+        var window = Open(out _);
         var lines = Lines(window);
 
         lines.ShouldContain("In");
@@ -118,7 +118,7 @@ public class GroupInspectorTests : UiTest
     [AvaloniaFact]
     public void The_panel_offers_opening_ungrouping_and_deleting()
     {
-        var window = Open(out _, out _, out _);
+        var window = Open(out _);
         var buttons = Buttons(window);
 
         buttons.ShouldContain("Open group");
@@ -133,7 +133,7 @@ public class GroupInspectorTests : UiTest
     [AvaloniaFact]
     public void Opening_the_group_turns_the_button_round()
     {
-        var window = Open(out var group, out _, out _);
+        var window = Open(out var group);
 
         Press(window, "Open group");
 
@@ -144,7 +144,7 @@ public class GroupInspectorTests : UiTest
     [AvaloniaFact]
     public void Double_clicking_the_name_turns_it_into_a_box()
     {
-        var window = Open(out _, out _, out _);
+        var window = Open(out _);
 
         DoubleClickTitle(window);
 
@@ -158,7 +158,7 @@ public class GroupInspectorTests : UiTest
     [AvaloniaFact]
     public void What_is_typed_becomes_the_name_on_the_panel_and_on_the_canvas()
     {
-        var window = Open(out var group, out _, out _);
+        var window = Open(out var group);
 
         DoubleClickTitle(window);
 
@@ -177,7 +177,7 @@ public class GroupInspectorTests : UiTest
     [AvaloniaFact]
     public void Emptying_the_box_takes_the_name_off_again()
     {
-        var window = Open(out var group, out _, out _);
+        var window = Open(out var group);
 
         group.Rename("Voice");
 
@@ -197,7 +197,7 @@ public class GroupInspectorTests : UiTest
     [AvaloniaFact]
     public void Escape_leaves_the_name_alone()
     {
-        var window = Open(out var group, out _, out _);
+        var window = Open(out var group);
 
         DoubleClickTitle(window);
 
@@ -213,7 +213,7 @@ public class GroupInspectorTests : UiTest
 
     private static void Press(MainWindow window, string caption)
     {
-        var button = All<Button>(window).First(b => (b.Content as string) == caption);
+        var button = All<Button>(window).First(b => b.Content as string == caption);
         var at = button.TranslatePoint(new Point(button.Bounds.Width / 2, button.Bounds.Height / 2), window)
             ?? throw new InvalidOperationException("the button is not in this window");
 

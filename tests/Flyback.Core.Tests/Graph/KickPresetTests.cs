@@ -163,7 +163,7 @@ public class KickPresetTests
     public void It_is_still_a_drum_once_the_clock_has_passed_sixteen()
     {
         var audio = Presets.Kick(NodeCatalog.BuiltIn).CompileForAudio();
-        var renderer = new AudioRenderer(Rate);
+        var renderer = new AudioRenderer();
 
         var buffer = new float[Rate / 10 * 2];      // a tenth of a second a block
         var early = 0f;

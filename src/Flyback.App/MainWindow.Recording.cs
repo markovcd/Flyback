@@ -147,7 +147,7 @@ public sealed partial class MainWindow
         recordingTicker.Tick += (_, _) => ShowProgress();
         recordingTicker.Start();
 
-        Report($"Recording to {System.IO.Path.GetFileName(path)}…");
+        Report($"Recording to {Path.GetFileName(path)}…");
     }
 
     private void ShowProgress()
@@ -162,7 +162,7 @@ public sealed partial class MainWindow
             return;
         }
 
-        var name = System.IO.Path.GetFileName(running.Path);
+        var name = Path.GetFileName(running.Path);
         var repeated = status.Duplicated > 0 ? $", {status.Duplicated} repeated" : string.Empty;
         var lost = status.AudioDropped > 0 ? "  •  dropping sound — the disk is not keeping up" : string.Empty;
 
@@ -190,7 +190,7 @@ public sealed partial class MainWindow
         recordingTicker = null;
 
         var status = running.Status;
-        var name = System.IO.Path.GetFileName(running.Path);
+        var name = Path.GetFileName(running.Path);
 
         running.Dispose();
         recorder = null;

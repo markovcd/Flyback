@@ -413,7 +413,7 @@ public class QuantiserTests
         foreach (var note in played)
         {
             note.ShouldBe(MathF.Floor(note), $"{note} is not a whole note");
-            scale.ShouldContain((int)(((note % Pitch.Classes) + Pitch.Classes) % Pitch.Classes));
+            scale.ShouldContain((int)((note % Pitch.Classes + Pitch.Classes) % Pitch.Classes));
         }
 
         // And a melody rather than one held note: the field wanders across most

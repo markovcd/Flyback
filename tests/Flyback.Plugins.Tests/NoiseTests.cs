@@ -24,7 +24,6 @@ public class NoiseTests
     private const string Cells = "flyback.noise.cells";
     private const string Noise = "pattern.noise";
 
-    private const int Z = 2;
     private const int Scale = 3;
     private const int Roughness = 4;
     private const int Jitter = 4;

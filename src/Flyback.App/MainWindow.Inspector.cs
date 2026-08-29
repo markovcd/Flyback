@@ -486,7 +486,8 @@ public sealed partial class MainWindow
         // have to be asked in the place the button is standing — see KeepGroup.
         Button keep = null!;
 
-        keep = Act("Save to palette", () => KeepGroup(group, keep), 8);
+        var keepCopy = keep;
+        keep = Act("Save to palette", () => KeepGroup(group, keepCopy), 8);
         keep.IsEnabled = !string.IsNullOrWhiteSpace(group.Name);
 
         // Which of the two things pressing it does, said before it is pressed.
@@ -1397,7 +1398,6 @@ public sealed partial class MainWindow
         // no such column — the number is already what it stands for — but it
         // lands on whole numbers for the same reason a note does.
         var named = spec.Display != PortDisplay.Number;
-        var whole = spec.Stepped;
 
         var row = new Grid { ColumnDefinitions = new ColumnDefinitions(named ? "78,*,84,40" : "78,*,84") };
         Grid.SetColumn(label, 0);

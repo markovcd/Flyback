@@ -150,7 +150,7 @@ public class DragBoundsTests : UiTest
         var hanging = builder.Add("value", NodeInstance.Extent, NodeInstance.Extent);
         builder.Add(NodeCatalog.OutputTypeId, 0, 0);
 
-        var (_, _) = Editing(builder.Patch);
+        Editing(builder.Patch);
 
         var def = NodeCatalog.BuiltIn.Require(hanging.TypeId);
         var body = NodeGeometry.Bounds(hanging, def);

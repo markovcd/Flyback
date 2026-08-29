@@ -454,7 +454,7 @@ public partial class NodeCatalog
             // into the one constant a floor needs.
             var octave = em.Unary(
                 OpCode.Floor,
-                em.Add(octaves, 0.5f - (scale[i] / Pitch.Semitones)));
+                em.Add(octaves, 0.5f - scale[i] / Pitch.Semitones));
 
             var candidate = em.Add(em.Mul(octave, Pitch.Semitones), scale[i]);
             var away = em.Unary(OpCode.Abs, em.Sub(signal, candidate));

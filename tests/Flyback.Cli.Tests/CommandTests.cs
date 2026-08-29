@@ -300,7 +300,7 @@ public class CommandTests
 
         var frame = elsewhere.File("out.png");
 
-        Run((o, e) => RenderCommand.Run(
+        Run((_, e) => RenderCommand.Run(
                 Patches.Open(bundle, e)!.Value.Patch,
                 new RenderOptions(frame, 32, 18, 0d, 1d, 30d, 80),
                 e,
@@ -321,7 +321,7 @@ public class CommandTests
         // frame is placed at its own shape and the corners are the black beside
         // it. That is the module's rule, not a shortcoming of the bundle.
         var drawn = PngReader.Read(frame.FullName, out _).ShouldNotBeNull();
-        var centre = ((drawn.Height / 2) * drawn.Width + drawn.Width / 2) * 3;
+        var centre = (drawn.Height / 2 * drawn.Width + drawn.Width / 2) * 3;
 
         drawn.Pixels[centre].ShouldBe(1f, 0.02f);
         drawn.Pixels[centre + 1].ShouldBe(0f, 0.02f);

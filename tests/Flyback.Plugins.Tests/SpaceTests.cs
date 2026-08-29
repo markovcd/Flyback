@@ -221,15 +221,15 @@ public class SpaceTests
     [Fact]
     public void The_tail_darkens_as_it_dies()
     {
-        const int Heard = 48_000;
+        const int heard = 48_000;
 
-        var signal = new float[Heard];
-        for (var i = 0; i < Heard / 100; i++) signal[i] = 1f;
+        var signal = new float[heard];
+        for (var i = 0; i < heard / 100; i++) signal[i] = 1f;
 
-        var tail = ThroughAt(Heard, ReverbType, signal, (1, 0.5f), (2, 0.9f), (3, 1f));
+        var tail = ThroughAt(heard, ReverbType, signal, (1, 0.5f), (2, 0.9f), (3, 1f));
 
-        var young = Brightness(tail, Heard / 10, Heard / 5);
-        var old = Brightness(tail, Heard / 2, Heard);
+        var young = Brightness(tail, heard / 10, heard / 5);
+        var old = Brightness(tail, heard / 2, heard);
 
         // A third of the brightness it started with, and the fraction is what
         // makes this a test rather than a formality: a bank with no filter in it
@@ -522,8 +522,8 @@ public class SpaceTests
 
         for (var i = 0; i < length; i++)
         {
-            state = (state * 1_664_525u) + 1_013_904_223u;
-            signal[i] = ((state >> 8) / (float)(1 << 23)) - 1f;
+            state = state * 1_664_525u + 1_013_904_223u;
+            signal[i] = (state >> 8) / (float)(1 << 23) - 1f;
         }
 
         return signal;

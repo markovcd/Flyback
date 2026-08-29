@@ -109,7 +109,7 @@ public class NodeBoundsTests
         var sine = b.Add("osc.sine", 40, 20);
 
         var fragment = PatchClipboard.Copy(b.Patch, [sine.Id]);
-        var pasted = PatchClipboard.Paste(new Patch(), fragment, NodeInstance.Extent * 3, 0);
+        var pasted = PatchClipboard.Paste(new Patch(), fragment, NodeInstance.Extent * 3);
 
         pasted.ShouldHaveSingleItem().X.ShouldBe(NodeInstance.Extent);
     }

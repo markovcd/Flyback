@@ -880,7 +880,7 @@ public sealed class AssistantPanel : UserControl
         // and does not compete with the transcript for attention, which a thing
         // switching on and off twice a second would.
         pulse++;
-        beacon.Opacity = 0.25d + (0.75d * ((Math.Cos(pulse * Math.PI / 5d) + 1d) / 2d));
+        beacon.Opacity = 0.25d + 0.75d * ((Math.Cos(pulse * Math.PI / 5d) + 1d) / 2d);
 
         var elapsed = DateTime.UtcNow - startedAt;
         var bench = run?.Workbench;

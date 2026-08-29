@@ -243,7 +243,7 @@ internal sealed class MidiHub(IMidiInput? hardware = null) : IDisposable
 
         try
         {
-            return hardware.Ports ?? [];
+            return hardware.Ports;
         }
         catch
         {

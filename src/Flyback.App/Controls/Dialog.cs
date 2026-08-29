@@ -60,7 +60,7 @@ internal static class Dialog
             // Where the keyboard was, so it can be put back. The overlay takes
             // the focus, and giving it to the canvas afterwards instead of to
             // whatever had it is its own small rudeness.
-            var before = owner.FocusManager?.GetFocusedElement();
+            var before = owner.FocusManager.GetFocusedElement();
 
             var overlay = new ModalOverlay(title, content);
 

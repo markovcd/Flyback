@@ -219,7 +219,7 @@ public class WireLiftTests : UiTest
         var palette = All<ModulePalette>(board.Window).FirstOrDefault()
             .ShouldNotBeNull("the list should be up");
 
-        var button = All<Button>(palette).First(b => (b.Content as string) == "Saw");
+        var button = All<Button>(palette).First(b => b.Content as string == "Saw");
 
         button.Focus();
         button.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));

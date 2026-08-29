@@ -72,7 +72,7 @@ public class ScopeTests
     /// </summary>
     private static DelayState? Played(CompiledPatch heard, int frames = 4096)
     {
-        var renderer = new AudioRenderer(48_000, 4);
+        var renderer = new AudioRenderer();
         var memory = renderer.DelayMemoryFor(heard);
 
         renderer.Render(heard, new float[frames * 2], AudioScan.TimeDriven, memory);

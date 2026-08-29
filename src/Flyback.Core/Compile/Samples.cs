@@ -37,7 +37,7 @@ public sealed record LoadedSample(float[] Samples, int SampleRate)
         var first = Samples[whole];
         var second = whole + 1 < Samples.Length ? Samples[whole + 1] : 0f;
 
-        return first + ((second - first) * fraction);
+        return first + (second - first) * fraction;
     }
 }
 

@@ -2263,7 +2263,7 @@ public sealed class NodeEditor : Control
         var unit = NodeInstance.Create(
             def,
             (from.X + to.X) / 2,
-            ((from.Y + to.Y) / 2) + NodeGeometry.Height(def));
+            (from.Y + to.Y) / 2 + NodeGeometry.Height(def));
 
         patch.Nodes.Add(unit);
         patch.Connect(sourceNode, sourcePort, unit.Id, 0);

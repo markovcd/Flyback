@@ -74,7 +74,7 @@ public class SavedGroupTests : UiTest, IDisposable
     {
         var editor = Editor(window);
         var bounds = NodeGeometry.GroupBounds(patch, group, patch.SocketsOf(group));
-        var header = new Point(bounds.Center.X, bounds.Y + (NodeGeometry.HeaderHeight / 2));
+        var header = new Point(bounds.Center.X, bounds.Y + NodeGeometry.HeaderHeight / 2);
 
         var at = editor.TranslatePoint(editor.GraphToScreen.Transform(header), window)
             ?? throw new InvalidOperationException("the editor is not in this window");
@@ -98,7 +98,7 @@ public class SavedGroupTests : UiTest, IDisposable
     }
 
     private static Button Button(Visual root, string caption) =>
-        All<Button>(root).First(b => (b.Content as string) == caption);
+        All<Button>(root).First(b => b.Content as string == caption);
 
     private static void Press(MainWindow window, Visual root, string caption)
     {
@@ -354,7 +354,7 @@ public class SavedGroupTests : UiTest, IDisposable
     [AvaloniaFact]
     public void Backing_out_of_a_replacement_keeps_what_was_there()
     {
-        var window = Open(out var group);
+        var window = Open(out _);
         var editor = Editor(window);
 
         Press(window, window, "Save to palette");

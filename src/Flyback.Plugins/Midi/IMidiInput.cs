@@ -175,8 +175,8 @@ public static class MidiMessages
         // them as whatever command happened to share its top nibble.
         if (status >= Command) return null;
 
-        var note = (int)(first & 0x7F);
-        var value = (int)(second & 0x7F);
+        var note = first & 0x7F;
+        var value = second & 0x7F;
 
         return (status & Command) switch
         {

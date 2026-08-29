@@ -97,7 +97,7 @@ public class WireDropTests : UiTest
     private static void Pick(MainWindow window, string name)
     {
         var palette = Palette(window).ShouldNotBeNull("the list should be up");
-        var button = All<Button>(palette).First(b => (b.Content as string) == name);
+        var button = All<Button>(palette).First(b => b.Content as string == name);
 
         button.Focus();
         button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));

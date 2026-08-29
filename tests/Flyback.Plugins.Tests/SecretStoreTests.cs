@@ -101,7 +101,7 @@ public class SecretStoreTests
     {
         Assert.SkipWhen(Here is null, "nothing installed on this machine can hold a secret.");
 
-        var store = Here!;
+        var store = Here;
         const string secret = "sk-a-value-that-is-not-a-real-key";
 
         try
@@ -121,7 +121,7 @@ public class SecretStoreTests
     {
         Assert.SkipWhen(Here is null, "nothing installed on this machine can hold a secret.");
 
-        Here!.Recall(Absent).ShouldBeNull();
+        Here.Recall(Absent).ShouldBeNull();
     }
 
     [Fact]
@@ -129,7 +129,7 @@ public class SecretStoreTests
     {
         Assert.SkipWhen(Here is null, "nothing installed on this machine can hold a secret.");
 
-        var store = Here!;
+        var store = Here;
 
         store.Keep(Account, "sk-briefly");
         store.Forget(Account);
@@ -142,7 +142,7 @@ public class SecretStoreTests
     {
         Assert.SkipWhen(Here is null, "nothing installed on this machine can hold a secret.");
 
-        Should.NotThrow(() => Here!.Forget(Absent));
+        Should.NotThrow(() => Here.Forget(Absent));
     }
 
     /// <summary>

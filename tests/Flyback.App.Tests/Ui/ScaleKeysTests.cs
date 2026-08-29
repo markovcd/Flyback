@@ -240,6 +240,6 @@ public class ScaleKeysTests : UiTest
 
         static Button Shortcut(Window window, string label) =>
             All<Button>(window).Single(b =>
-                !b.Classes.Contains(ScaleKeys.KeyTag) && (b.Content as string) == label);
+                !b.Classes.Contains(ScaleKeys.KeyTag) && b.Content as string == label);
     }
 }

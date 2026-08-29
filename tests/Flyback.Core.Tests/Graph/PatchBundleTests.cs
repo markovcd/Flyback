@@ -328,7 +328,7 @@ public class PatchBundleTests
     {
         public int Asked { get; private set; }
 
-        public LoadedImage? Find(string path)
+        public LoadedImage Find(string path)
         {
             Asked++;
             return new LoadedImage([1f, 1f, 1f], 1, 1);
