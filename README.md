@@ -12,13 +12,20 @@ Flyback is a patchable synthesiser for .NET 10. One graph can generate both a pi
 dotnet run --project src/Flyback.App -c Release
 ```
 
-## What is included
+## Features
 
-- A patch editor and live preview
-- Audio output and video rendering from the same patch
-- CLI rendering/checking for automation and CI
-- Plugin-based runtime for platform-specific backends
-- Bundle support for patches plus their referenced assets
+- Visual patch editor for building synth graphs by wiring modules together
+- One patch generates both a picture and a sound from the same graph
+- Per-pixel signal synthesis driven by coordinates and time
+- Normalled sockets so common sources such as time and coordinates are present by default
+- Feedback and iterative image generation via feedback modules and previous-frame sampling
+- Sequencers, oscillators, shapes, probes, noise, filters, colour/math modules and presets
+- Live preview, output settings, recording and video export in the app shell
+- MIDI input support through platform backends (Windows, macOS and Linux)
+- CLI tools for rendering, checking, inspecting and bundling patches
+- Plugin-based architecture for platform-specific audio/video backends and extensions
+- Patch bundles that package the patch with its referenced sample and image files
+- Cross-platform publish targets for Windows, macOS and Linux
 
 ## Build and publish
 
