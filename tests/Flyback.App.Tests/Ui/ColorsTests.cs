@@ -1,5 +1,4 @@
 using Avalonia.Media;
-using Flyback.App.Controls;
 using Flyback.Core.Graph;
 using Shouldly;
 using Xunit;

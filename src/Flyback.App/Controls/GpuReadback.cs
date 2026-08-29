@@ -120,10 +120,14 @@ internal sealed class GpuReadback
     /// Reads <paramref name="framebuffer"/> and hands the frame before it to
     /// <paramref name="sink"/>. Leaves no buffer bound.
     /// </summary>
+    /// <param name="resolution"></param>
     /// <param name="eightBit">
     /// Whether the frame is already a normalised eight-bit surface. When it is
     /// not, and it cannot be blitted to one, it cannot be read as bytes at all.
     /// </param>
+    /// <param name="gl"></param>
+    /// <param name="framebuffer"></param>
+    /// <param name="sink"></param>
     public void Capture(GlInterface gl, int framebuffer, PixelSize resolution, bool eightBit, IFrameSink sink)
     {
         if (readPixels is null || Unavailable is not null) return;

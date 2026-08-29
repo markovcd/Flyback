@@ -2028,6 +2028,7 @@ public sealed class NodeEditor : Control
     /// new source for a socket that keeps being fed — the question "where should
     /// this come from instead", which nothing here could ask before.
     /// </remarks>
+    /// <param name="isOutput"></param>
     /// <param name="lifting">
     /// Whether Ctrl was held, which only matters on an output. An input is
     /// unplugged by being dragged and needs no modifier: it holds one wire, so
@@ -2042,6 +2043,9 @@ public sealed class NodeEditor : Control
     /// that picks one of four wires for you.
     /// </para>
     /// </param>
+    /// <param name="nodeId"></param>
+    /// <param name="portIndex"></param>
+    /// <param name="graph"></param>
     private void StartWire(Guid nodeId, int portIndex, bool isOutput, bool lifting, Point graph)
     {
         wireGesture++;

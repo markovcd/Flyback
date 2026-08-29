@@ -7,7 +7,6 @@ using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
-using Avalonia.Threading;
 using Flyback.App.Controls;
 using Shouldly;
 using Colors = Flyback.App.Controls.Colors;

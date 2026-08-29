@@ -94,6 +94,7 @@ public static class PatchBundle
     /// Writes <paramref name="patch"/> and everything it names into
     /// <paramref name="archive"/>.
     /// </summary>
+    /// <param name="patch"></param>
     /// <param name="open">
     /// Hands back the bytes of a file the patch names, or null where there are
     /// none to be had. Called once per distinct path, so a patch showing one
@@ -104,6 +105,7 @@ public static class PatchBundle
     /// it is written and read back through <see cref="PatchIo"/>, so a module
     /// from a plugin has to be nameable.
     /// </param>
+    /// <param name="archive"></param>
     public static BundleReport Write(
         Stream archive,
         Patch patch,

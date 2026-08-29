@@ -178,6 +178,7 @@ internal sealed class ReportLine : UserControl
     /// <summary>
     /// Puts <paramref name="message"/> on the line and into the log.
     /// </summary>
+    /// <param name="message"></param>
     /// <param name="detail">
     /// What will not fit on a status bar — a list of missing plugins, say. It is
     /// kept with the message rather than only hung off a tooltip, so it is still
@@ -320,6 +321,7 @@ internal sealed class ReportLine : UserControl
     }
 
     /// <summary>One row of the log: when, and what.</summary>
+    /// <param name="entry"></param>
     /// <param name="current">
     /// Whether this is the line still on the status bar, which is shown in its
     /// own color so that what is still true is told apart from what merely was.

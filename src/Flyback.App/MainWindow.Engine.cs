@@ -1,6 +1,4 @@
 using System.Globalization;
-using Avalonia.Controls;
-using Flyback.App.Midi;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Plugins.Audio;
@@ -172,10 +170,12 @@ public sealed partial class MainWindow
     /// The one place anything is said to the user. <paramref name="detail"/> is
     /// for what will not fit on a status bar — a list of missing plugins, say.
     /// </summary>
+    /// <param name="detail"></param>
     /// <param name="progress">
     /// That this is the last message again with a new number in it, so the log
     /// behind the line keeps one entry for the run rather than one per update.
     /// </param>
+    /// <param name="message"></param>
     /// <remarks>
     /// The line itself, and what becomes of what it used to say, are
     /// <see cref="ReportLine"/>'s business — this stays the one door into it.

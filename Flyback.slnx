@@ -1,5 +1,6 @@
 <Solution>
   <Folder Name="/docs/">
+    <File Path="README.md" />
     <Project Path="docs/adr/ADR.csproj">
       <Build Project="false" />
     </Project>

@@ -80,6 +80,7 @@ public sealed class DelayState
     /// How many one-evaluation cells the program needs — one per cycle in the
     /// patch. A cell, like an accumulator, is a single number and needs no rate.
     /// </param>
+    /// <param name="traceCount"></param>
     public DelayState(
         IReadOnlyList<float> lengthsInSeconds,
         int sampleRate,

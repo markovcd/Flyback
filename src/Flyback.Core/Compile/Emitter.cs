@@ -232,15 +232,8 @@ public sealed class Emitter
     /// would need three buffers, and there is nothing a delayed picture would
     /// mean that <see cref="OpCode.SampleFeedback"/> does not already do better.
     /// </summary>
-    /// <param name="time">How far back to read, in seconds, and a signal rather than a constant so it can be swept.</param>
-    /// <param name="maximum">
-    /// The longest delay this instance may ever be asked for. It sizes the
-    /// buffer, so it is fixed at compile time even though the delay itself is a
-    /// signal and may be swept.
-    /// </param>
-    /// <param name="code">Which of the delay ops this is — a plain line, or one with a filter in it.</param>
-    /// <param name="input">The signal going into the line.</param>
-    /// <param name="gain">How much of what comes out is sent round again.</param>
+    /// <param name="position"></param>
+    /// <param name="clip"></param>
     /// <summary>
     /// Reads a loaded clip at a position in seconds. Two modules given the same
     /// clip share one table, the way two of them given the same number share one
@@ -339,6 +332,7 @@ public sealed class Emitter
     /// Which trace, counted the same way in both of a patch's programs so that
     /// the one writing and the one drawing agree about which is which.
     /// </param>
+    /// <param name="value"></param>
     public void Tap(int scope, Slot value) =>
         Add(new Op(OpCode.Tap, -1, value.Component(0), k: scope));
 

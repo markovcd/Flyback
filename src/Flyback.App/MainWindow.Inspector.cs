@@ -784,8 +784,10 @@ public sealed partial class MainWindow
     /// reaching the history — is the same for both, and a second copy of it would
     /// be a second place for one of those to stop being true.
     /// </remarks>
+    /// <param name="title"></param>
     /// <param name="held">The name it has, which is null on one nobody has named.</param>
     /// <param name="fallback">What it is called when it has no name of its own.</param>
+    /// <param name="limit"></param>
     /// <param name="rename">Takes what was typed, with whatever tidying the thing does to one.</param>
     /// <param name="current">The name as it stands, read again afterwards to see whether it moved.</param>
     /// <param name="rebuild">The title to put back.</param>

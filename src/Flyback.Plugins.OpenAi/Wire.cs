@@ -29,6 +29,7 @@ internal sealed record Reply(
 /// </remarks>
 internal static class Wire
 {
+    /// <param name="messages"></param>
     /// <param name="tools">
     /// What the model may call. An empty list leaves both tool fields out
     /// altogether rather than sending an empty array: a request with no tools is
@@ -36,6 +37,7 @@ internal static class Wire
     /// endpoints differ on whether an empty <c>tools</c> beside a
     /// <c>tool_choice</c> of "auto" is a contradiction worth a 400.
     /// </param>
+    /// <param name="model"></param>
     public static JsonObject Request(string model, JsonArray messages, IReadOnlyList<PatchTool> tools)
     {
         var request = new JsonObject

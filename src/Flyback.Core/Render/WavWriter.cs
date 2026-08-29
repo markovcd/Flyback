@@ -48,7 +48,10 @@ public static class WavWriter
     /// back for the two sizes once the take has ended — so a recorded file and an
     /// exported one differ in nothing but how they learned their length.
     /// </summary>
+    /// <param name="output"></param>
     /// <param name="dataBytes">Length of the sample data that will follow, in bytes.</param>
+    /// <param name="sampleRate"></param>
+    /// <param name="channels"></param>
     internal static void WriteHeader(Stream output, int dataBytes, int sampleRate, int channels)
     {
         var byteRate = sampleRate * channels * (BitsPerSample / 8);

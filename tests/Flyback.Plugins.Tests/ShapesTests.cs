@@ -227,13 +227,13 @@ public class ShapesTests
         var crease = MathF.PI / points;
 
         foreach (var radius in new[] { 0.2f, 0.35f, 0.7f, 1.1f })
-        for (var k = 0; k < points * 2; k++)
-        {
-            var angle = (k + 0.5f) * crease;
+            for (var k = 0; k < points * 2; k++)
+            {
+                var angle = (k + 0.5f) * crease;
 
-            Slope(shape, radius * MathF.Sin(angle), radius * MathF.Cos(angle))
-                .ShouldBe(1d, 0.02);
-        }
+                Slope(shape, radius * MathF.Sin(angle), radius * MathF.Cos(angle))
+                    .ShouldBe(1d, 0.02);
+            }
     }
 
     /// <summary>
@@ -419,14 +419,14 @@ public class ShapesTests
             var ports = Catalog.Require(typeId).Inputs.Count;
 
             for (var port = 2; port < ports; port++)
-            foreach (var value in wild)
-            {
-                var shape = Shape(typeId, (port, value));
+                foreach (var value in wild)
+                {
+                    var shape = Shape(typeId, (port, value));
 
-                foreach (var (x, y) in Ring(0.7f).Concat(Ring(0f)))
-                    double.IsFinite(shape.At(x, y)).ShouldBeTrue(
-                        $"{typeId} port {port} at {value}");
-            }
+                    foreach (var (x, y) in Ring(0.7f).Concat(Ring(0f)))
+                        double.IsFinite(shape.At(x, y)).ShouldBeTrue(
+                            $"{typeId} port {port} at {value}");
+                }
         }
     }
 

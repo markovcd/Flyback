@@ -178,8 +178,8 @@ public class CanvasEdgeTests : UiTest
         var pixels = Frame(window);
 
         foreach (var y in (int[])[4, (int)Tall - 5])
-        for (var x = 0; x < (int)Wide; x++)
-            Near(pixels[x, y], Colors.Edge).ShouldBeFalse(
-                $"({x}, {y}) should be canvas, not the ground past it");
+            for (var x = 0; x < (int)Wide; x++)
+                Near(pixels[x, y], Colors.Edge).ShouldBeFalse(
+                    $"({x}, {y}) should be canvas, not the ground past it");
     }
 }

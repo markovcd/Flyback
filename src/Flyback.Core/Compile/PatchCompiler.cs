@@ -74,6 +74,8 @@ public static class PatchCompiler
     /// because the alternative is a black screen with nothing to say why.
     /// </param>
     /// <param name="modules"></param>
+    /// <param name="samples"></param>
+    /// <param name="pictures"></param>
     public static CompileResult CompileForProbe(
         this Patch patch,
         Guid probe,
@@ -96,6 +98,8 @@ public static class PatchCompiler
     /// screen from the speakers means nothing, and what a missing wire costs is
     /// said about a different node.
     /// </param>
+    /// <param name="samples"></param>
+    /// <param name="pictures"></param>
     private static CompileResult Compile(
         Patch patch,
         NodeCatalog.SinkKind sink,

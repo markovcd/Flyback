@@ -138,12 +138,6 @@ public class SampleTests : IDisposable
     /// way the renderer steps it — the trigger remembers, so it cannot be
     /// sampled at scattered moments.
     /// </summary>
-    /// <param name="fall">
-    /// A clip that falls from 1 to 0 over its length, so the level read back
-    /// says exactly where the playhead is: 1 is the very start and 0 the end.
-    /// That is what makes "it went back to the beginning" a thing a test can
-    /// see rather than infer.
-    /// </param>
     private sealed class Triggered
     {
         private const int Rate = 4_000;
@@ -152,6 +146,14 @@ public class SampleTests : IDisposable
         private readonly double[] registers;
         private readonly DelayState memory;
 
+        /// <param name="fall">
+        /// A clip that falls from 1 to 0 over its length, so the level read back
+        /// says exactly where the playhead is: 1 is the very start and 0 the end.
+        /// That is what makes "it went back to the beginning" a thing a test can
+        /// see rather than infer.
+        /// </param>
+        /// <param name="triggerHz"></param>
+        /// <param name="width"></param>
         public Triggered(string fall, float triggerHz, float width = 0.05f)
         {
             var b = new PatchBuilder(NodeCatalog.BuiltIn);

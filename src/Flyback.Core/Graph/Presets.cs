@@ -753,7 +753,6 @@ public static class Presets
     /// picture.
     /// </para>
     /// <para>
-    /// <para>
     /// The two sinks part company at the Sample & Hold, which is the other
     /// module here that is read two ways. The ear needs the field to stop moving
     /// between one note and the next; the eye needs it not to, or the picture

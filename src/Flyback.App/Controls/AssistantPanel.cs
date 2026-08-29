@@ -273,12 +273,18 @@ public sealed class AssistantPanel : UserControl
     private DateTime startedAt;
     private int pulse;
 
+    /// <param name="report"></param>
     /// <param name="saved">
     /// The choices to open on, defaulting to the ones on this machine. Named
     /// only so a test can put a set in front of the panel without writing the
     /// file somebody is actually using — what these controls make of a given set
     /// of choices is most of what this class does.
     /// </param>
+    /// <param name="plugins"></param>
+    /// <param name="current"></param>
+    /// <param name="apply"></param>
+    /// <param name="samples"></param>
+    /// <param name="pictures"></param>
     public AssistantPanel(
         PluginCatalog plugins,
         Func<Patch> current,

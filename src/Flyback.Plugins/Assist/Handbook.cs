@@ -243,12 +243,14 @@ internal static class Handbook
     /// description, which is what makes a large catalogue fit — see
     /// <see cref="ProseBudget"/>.
     /// </summary>
+    /// <param name="prose"></param>
     /// <param name="hearing">
     /// Whether this run has the <c>listen</c> tool. It changes one paragraph,
     /// and it has to change it: the briefing is the only place the model is told
     /// what it can check, and being wrong about that either wastes a tool it has
     /// or invents a sound it does not.
     /// </param>
+    /// <param name="modules"></param>
     public static string Render(ModuleCatalog modules, bool prose, bool hearing = false)
     {
         var text = new StringBuilder(Conventions)

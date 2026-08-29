@@ -240,6 +240,7 @@ public partial class NodeCatalog
     /// and a chart of the future can be laid side by side and compared, and two
     /// copies is exactly how that stops being true.
     /// </remarks>
+    /// <param name="y"></param>
     /// <param name="height">
     /// Where the trace goes, in screen units — the value already divided by
     /// whatever the top of the chart is worth.
@@ -264,6 +265,8 @@ public partial class NodeCatalog
     /// difference between a graticule that says how long the window is and one
     /// that says how many screen units a column happens to be.
     /// </param>
+    /// <param name="em"></param>
+    /// <param name="x"></param>
     private static Slot Charted(
         Emitter em,
         Slot x,

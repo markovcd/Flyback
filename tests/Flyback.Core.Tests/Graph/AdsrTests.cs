@@ -65,6 +65,7 @@ public class AdsrTests
     /// Whether the program is given somewhere to remember, which is the whole
     /// difference between the two sinks. Null runs it as the picture does.
     /// </param>
+    /// <param name="knobs"></param>
     private static float[] Run(
         IEnumerable<float> gate,
         bool memory = true,

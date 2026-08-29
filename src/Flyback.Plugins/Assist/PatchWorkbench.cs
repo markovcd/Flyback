@@ -49,16 +49,20 @@ public sealed class PatchWorkbench
     private Patch working = new();
     private string? proposal;
 
+    /// <param name="startingPoint"></param>
     /// <param name="vision">Whether the model may be shown a frame, which offers <c>render</c>.</param>
     /// <param name="hearing">
     /// Whether the model may be played the sound, which offers <c>listen</c>.
     /// Off by default, unlike <paramref name="vision"/>: every model worth
     /// pointing this at can see, and only a few can hear.
     /// </param>
+    /// <param name="limits"></param>
     /// <param name="samples">
     /// Where a Sample module's file is looked up, and null where nothing can
     /// look one up — which makes every player silent and every path a complaint.
     /// </param>
+    /// <param name="modules"></param>
+    /// <param name="pictures"></param>
     public PatchWorkbench(
         ModuleCatalog modules,
         Patch startingPoint,

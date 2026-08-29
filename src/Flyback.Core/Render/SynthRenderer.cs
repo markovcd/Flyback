@@ -39,12 +39,18 @@ public sealed class SynthRenderer
     public void Reset() => Array.Clear(previousFrame);
 
     /// <summary>Renders one frame into a BGRA8888 buffer.</summary>
+    /// <param name="stride"></param>
     /// <param name="live">
     /// What is being played into the patch as this frame is drawn, or null when
     /// nothing is. One reading for the whole frame, which is what a frame is: a
     /// key pressed while the rows are still going down belongs to the next
     /// picture rather than to half of this one.
     /// </param>
+    /// <param name="patch"></param>
+    /// <param name="time"></param>
+    /// <param name="width"></param>
+    /// <param name="height"></param>
+    /// <param name="destination"></param>
     public void Render(
         CompiledPatch patch,
         double time,
