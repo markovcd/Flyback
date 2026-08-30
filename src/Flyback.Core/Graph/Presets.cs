@@ -21,6 +21,7 @@ public static class Presets
         new("Chromatic", Chromatic),
         new("In key", InKey),
         new("Sequence", Sequence),
+        new("Random melody", RandomMelody),
         new("Four voices", FourVoices),
         new("Kick", Kick),
         new("Heard", Heard),
@@ -901,6 +902,61 @@ public static class Presets
          .Wire(height, 0, map, 0)
          .Wire(glow, 0, map, 2)
          .Wire(map, 0, output, NodeCatalog.OutputColorPort);
+
+        return b.Patch;
+    }
+
+    /// <summary>
+    /// A generative melody: smooth noise is sampled once per beat, held between
+    /// beats, and snapped to a minor pentatonic scale before it reaches the voice.
+    /// </summary>
+    public static Patch RandomMelody(ModuleCatalog modules)
+    {
+        var b = new PatchBuilder(modules);
+
+        var tempo = b.Add(NodeCatalog.TempoTypeId, 40, 700, (0, 132f));
+        var time = b.Add(NodeCatalog.TimeTypeId, 40, 460);
+        var drift = b.Add("math.mul", 250, 460, (1, 0.35f));
+        var noise = b.Add("pattern.noise", 500, 300, (3, 1.6f));
+        var range = b.Add("math.remap", 720, 300, (1, 0f), (2, 1f), (3, 45f), (4, 69f));
+        var beat = b.Add("osc.pulse", 500, 700, (3, 0.15f));
+        var held = b.Add(NodeCatalog.HoldTypeId, 940, 300);
+        var quantiser = b.Add(NodeCatalog.QuantiserTypeId, 1160, 300);
+        ScaleExtra.Set(quantiser, [0, 2, 3, 5, 7, 10]);
+
+        var note = b.Add("audio.note", 1380, 460);
+        var tone = b.Add("osc.saw", 1600, 460, (3, 0.35f));
+        var envelope = b.Add(NodeCatalog.AdsrTypeId, 1380, 700,
+            (1, -2.2f), (2, -0.8f), (3, 0.35f), (4, -1.2f));
+        var voice = b.Add("math.mul", 1820, 560);
+
+        var hue = b.Add("math.mul", 1380, 80, (1, 1f / 12f));
+        var wrapped = b.Add("math.fract", 1600, 80);
+        var brightness = b.Add("math.remap", 1380, 220,
+            (1, 0f), (2, 1f), (3, 0.15f), (4, 0.9f));
+        var color = b.Add("color.hsv", 1820, 160, (1, 0.75f));
+        var output = b.Add(NodeCatalog.OutputTypeId, 2100, 360,
+            (NodeCatalog.OutputGainPort, 0.5f));
+
+        b.Wire(time, 0, drift, 0)
+         .Wire(drift, 0, noise, 2)
+         .Wire(noise, 0, range, 0)
+         .Wire(range, 0, held, 0)
+         .Wire(beat, 0, held, 1)
+         .Wire(held, 0, quantiser, 0)
+         .Wire(quantiser, 0, note, 0)
+         .Wire(note, 0, tone, 1)
+         .Wire(tone, 0, voice, 0)
+         .Wire(beat, 0, envelope, 0)
+         .Wire(envelope, 0, voice, 1)
+         .Wire(voice, 0, output, NodeCatalog.OutputLeftPort)
+         .Wire(quantiser, 0, hue, 0)
+         .Wire(hue, 0, wrapped, 0)
+         .Wire(wrapped, 0, color, 0)
+         .Wire(noise, 0, brightness, 0)
+         .Wire(brightness, 0, color, 2)
+         .Wire(color, 0, output, NodeCatalog.OutputColorPort)
+         .Wire(tempo, 0, beat, 1);
 
         return b.Patch;
     }
