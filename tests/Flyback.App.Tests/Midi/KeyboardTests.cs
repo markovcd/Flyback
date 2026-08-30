@@ -26,6 +26,8 @@ public class KeyboardTests
     private static readonly string Pitch2 = MidiSignal.Key(MidiSources.Keyboard, 2, MidiSignal.Pitch);
     private static readonly string Gate2 = MidiSignal.Key(MidiSources.Keyboard, 2, MidiSignal.Gate);
     private static readonly string Strikes2 = MidiSignal.Key(MidiSources.Keyboard, 2, MidiSignal.Strikes);
+    private static readonly string Pitch3 = MidiSignal.Key(MidiSources.Keyboard, 3, MidiSignal.Pitch);
+    private static readonly string Gate3 = MidiSignal.Key(MidiSources.Keyboard, 3, MidiSignal.Gate);
 
     /// <summary>A block reading everything one keyboard carries.</summary>
     private static LiveValues Block() => new([Pitch, Gate, Velocity, Strikes, Pitch2, Gate2, Strikes2]);
@@ -158,6 +160,29 @@ public class KeyboardTests
         Read(block, Gate).ShouldBe(1d);
 
         Read(block, Gate2).ShouldBe(0d);
+    }
+
+    /// <summary>
+    /// When all configured voices are occupied, the next key steals voice one
+    /// rather than being routed to an unconfigured voice.
+    /// </summary>
+    [Fact]
+    public void A_third_key_reuses_the_first_configured_voice()
+    {
+        var hub = new MidiHub();
+        var block = Block();
+        hub.Follow(block);
+
+        hub.KeyDown(Key.Z);
+        hub.KeyDown(Key.X);
+        hub.KeyDown(Key.C);
+
+        Read(block, Pitch).ShouldBe(52d);
+        Read(block, Gate).ShouldBe(1d);
+        Read(block, Pitch2).ShouldBe(50d);
+        Read(block, Gate2).ShouldBe(1d);
+        Read(block, Pitch3).ShouldBe(0d);
+        Read(block, Gate3).ShouldBe(0d);
     }
 
     /// <summary>

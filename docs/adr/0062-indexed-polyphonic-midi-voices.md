@@ -41,6 +41,11 @@ and hardware devices use the same allocation path.
 duplicate device messages do not create another strike or require another
 note-off.
 
+**Allocation is limited to indices used by the running patch.** If all configured
+voices are occupied, the next note reuses voice 1 rather than being assigned to
+an unobserved higher index. This makes a patch with two MIDI modules behave as a
+two-voice instrument even though the runtime supports eight slots.
+
 **Each MIDI module reads only its selected indexed voice.** The module's pitch,
 gate, velocity and trigger signals are loaded from that voice; no subgraph
 cloning or special polyphonic module is added to the compiler.
@@ -52,9 +57,9 @@ patch graph or adding a new module type. Their indices are explicit and saved
 with the patch, so changing module order does not change which voice a module
 reads.
 
-Voice capacity is deliberately bounded at 8. Notes beyond the available slots
-reuse the first slot, preserving a bounded allocation and avoiding unbounded
-state when a device sends unmatched note-ons.
+Voice capacity is deliberately bounded at 8. Notes beyond the configured slots
+reuse the first configured slot, preserving a bounded allocation and avoiding
+silent notes routed to modules the patch does not contain.
 
 The computer keyboard's old last-note-priority behavior is no longer the
 contract. Existing patches that use only voice 1 retain their original live

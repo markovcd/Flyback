@@ -405,11 +405,40 @@ internal sealed class MidiHub(IMidiInput? hardware = null) : IDisposable
     private void Down(string source, int note, float velocity)
     {
         var voices = Voices(source);
-        var voice = voices.FirstOrDefault(candidate => candidate.Playing && candidate.Pitch == Math.Clamp(note, 0, 127))
-            ?? voices.FirstOrDefault(candidate => !candidate.Playing)
-            ?? voices[0];
+        var indexes = ReadIndexes(source);
+        var voice = indexes
+            .Select(index => voices[index - 1])
+            .FirstOrDefault(candidate => candidate.Playing && candidate.Pitch == Math.Clamp(note, 0, 127));
+
+        if (voice is null)
+        {
+            voice = indexes
+                .Select(index => voices[index - 1])
+                .FirstOrDefault(candidate => !candidate.Playing);
+        }
+
+        if (voice is null)
+        {
+            // No configured voice is free: cycle back to the first module rather
+            // than assigning the note to an index the patch cannot hear.
+            voice = voices[indexes[0] - 1];
+            voice.Silence();
+        }
 
         voice.Down(note, velocity);
+    }
+
+    private IReadOnlyList<int> ReadIndexes(string source)
+    {
+        var indexes = Enumerable.Range(1, VoiceCount)
+            .Where(index => following.Any(block =>
+                block.Reads(MidiSignal.Key(source, index, MidiSignal.Pitch))
+                || block.Reads(MidiSignal.Key(source, index, MidiSignal.Gate))
+                || block.Reads(MidiSignal.Key(source, index, MidiSignal.Velocity))
+                || block.Reads(MidiSignal.Key(source, index, MidiSignal.Strikes))))
+            .ToList();
+
+        return indexes.Count > 0 ? indexes : Enumerable.Range(1, VoiceCount).ToArray();
     }
 
     private void Up(string source, int note)
