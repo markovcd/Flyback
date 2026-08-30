@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Flyback.Core;
 using Flyback.Plugins.Assist;
 
 namespace Flyback.App.Assist;
@@ -63,11 +64,7 @@ public sealed class AssistantSettings
     /// </summary>
     public bool RememberKey { get; set; }
 
-    public static string Folder => Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-        "Flyback");
-
-    public static string File => Path.Combine(Folder, "assistant.json");
+    public static string File => Path.Combine(GlobalConstants.DataFolder, "assistant.json");
 
     /// <summary>Never throws. A settings file is not worth a failure to start.</summary>
     /// <param name="path">Somewhere other than the usual place, for the tests.</param>
@@ -96,7 +93,7 @@ public sealed class AssistantSettings
     {
         var to = path ?? File;
 
-        Directory.CreateDirectory(Path.GetDirectoryName(to) ?? Folder);
+        Directory.CreateDirectory(Path.GetDirectoryName(to) ?? GlobalConstants.DataFolder);
         System.IO.File.WriteAllText(to, JsonSerializer.Serialize(this, Options));
     }
 }

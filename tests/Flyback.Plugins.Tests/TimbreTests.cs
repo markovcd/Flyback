@@ -1,3 +1,4 @@
+using Flyback.Core;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Plugins.Hosting;
@@ -24,7 +25,7 @@ public class TimbreTests
     private const string FoldType = "flyback.timbre.fold";
     private const string DriveType = "flyback.timbre.drive";
 
-    private const int Rate = 48_000;
+    private const int Rate = GlobalConstants.SampleRate;
 
     private static readonly ModuleCatalog Catalog = PluginHost.Load().Modules;
 

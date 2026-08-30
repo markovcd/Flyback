@@ -155,7 +155,7 @@ public class MeterTests
     [Fact]
     public void A_tone_measures_its_own_height_and_its_own_loudness()
     {
-        const int rate = 48_000;
+        const int rate = GlobalConstants.SampleRate;
         const float height = 0.8f;
 
         var memory = new DelayState([], rate, traceCount: 1);
@@ -172,7 +172,7 @@ public class MeterTests
     [Fact]
     public void Silence_measures_as_nothing_and_an_empty_ring_as_nothing()
     {
-        var memory = new DelayState([], 48_000, traceCount: 1);
+        var memory = new DelayState([], GlobalConstants.SampleRate, traceCount: 1);
 
         memory.Measure(0, 4_800).ShouldBe((0f, 0f));
 
@@ -189,7 +189,7 @@ public class MeterTests
     [Fact]
     public void A_longer_window_dilutes_a_burst_that_a_short_one_is_full_of()
     {
-        const int rate = 48_000;
+        const int rate = GlobalConstants.SampleRate;
 
         var memory = new DelayState([], rate, traceCount: 1);
 

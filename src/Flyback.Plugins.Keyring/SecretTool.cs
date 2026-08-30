@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Text;
+using Flyback.Core;
 
 namespace Flyback.Plugins.Keyring;
 
@@ -36,7 +37,7 @@ internal static class SecretTool
     /// </summary>
     private const string ServiceAttribute = "service";
 
-    private const string Service = "Flyback";
+    private const string Service = GlobalConstants.ApplicationName;
 
     private const string AccountAttribute = "account";
 
@@ -116,7 +117,7 @@ internal static class SecretTool
     public static void Keep(string account, string secret)
     {
         var outcome = Run(
-            ["store", $"--label=Flyback ({account})", ServiceAttribute, Service, AccountAttribute, account],
+            ["store", $"--label={GlobalConstants.ApplicationName} ({account})", ServiceAttribute, Service, AccountAttribute, account],
             secret);
 
         if (outcome.Status != 0)

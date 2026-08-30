@@ -4,6 +4,7 @@ using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Flyback.App.Controls;
+using Flyback.Core;
 using Flyback.Core.Graph;
 
 namespace Flyback.App;
@@ -22,7 +23,7 @@ namespace Flyback.App;
 public sealed partial class MainWindow
 {
     /// <summary>The window title, before anything is said about the patch in it.</summary>
-    private const string BaseTitle = "Flyback";
+    private const string BaseTitle = GlobalConstants.ApplicationName;
 
     /// <summary>
     /// What the patch on the canvas is called, or null for one with no name of

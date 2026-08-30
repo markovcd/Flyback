@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Text;
 using Avalonia;
 using Flyback.App.Capture;
+using Flyback.Core;
 using Shouldly;
 using Xunit;
 
@@ -15,7 +16,7 @@ namespace Flyback.App.Tests.Capture;
 /// </summary>
 public class LiveRecorderTests : IDisposable
 {
-    private const int SampleRate = 48_000;
+    private const int SampleRate = GlobalConstants.SampleRate;
     private const int Channels = 2;
     private const double Rate = 30d;
 

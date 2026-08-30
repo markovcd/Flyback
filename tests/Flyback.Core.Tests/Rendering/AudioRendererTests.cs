@@ -52,7 +52,7 @@ public class AudioRendererTests
     {
         NodeCatalog.BuiltIn.Require("time").Inputs.ShouldBeEmpty();
 
-        var buffer = Render(Tone("osc.sine", 440f), AudioRenderer.DefaultSampleRate);
+        var buffer = Render(Tone("osc.sine", 440f), GlobalConstants.SampleRate);
 
         Crossings(buffer).ShouldBeInRange(878, 881);
     }
@@ -60,7 +60,7 @@ public class AudioRendererTests
     [Fact]
     public void A_220_hz_sine_really_comes_out_at_220_hz()
     {
-        var buffer = Render(Tone("osc.sine", 220f), AudioRenderer.DefaultSampleRate);
+        var buffer = Render(Tone("osc.sine", 220f), GlobalConstants.SampleRate);
 
         Crossings(buffer).ShouldBeInRange(438, 441);
     }
@@ -200,7 +200,7 @@ public class AudioRendererTests
         var sink = builder.Add(NodeCatalog.OutputTypeId, 0, 0, (NodeCatalog.OutputGainPort, 1f));
         builder.Wire(knob, 0, sink, NodeCatalog.OutputLeftPort);
 
-        var buffer = Render(Compile(builder.Patch), AudioRenderer.DefaultSampleRate);
+        var buffer = Render(Compile(builder.Patch), GlobalConstants.SampleRate);
 
         // Starts as a step, then settles: pure DC carries no sound.
         Peak(buffer.AsSpan(0, 200)).ShouldBeGreaterThan(0.5f);
@@ -325,14 +325,14 @@ public class AudioRendererTests
         var samples = Render(Tone("osc.sine", 440f), 1_000);
 
         using var stream = new MemoryStream();
-        WavWriter.Write(stream, samples, AudioRenderer.DefaultSampleRate, 2);
+        WavWriter.Write(stream, samples, GlobalConstants.SampleRate, 2);
         var bytes = stream.ToArray();
 
         Ascii(bytes, 0).ShouldBe("RIFF");
         Ascii(bytes, 8).ShouldBe("WAVE");
         Ascii(bytes, 36).ShouldBe("data");
         BinaryPrimitives.ReadInt16LittleEndian(bytes.AsSpan(22, 2)).ShouldBe((short)2);
-        BinaryPrimitives.ReadInt32LittleEndian(bytes.AsSpan(24, 4)).ShouldBe(AudioRenderer.DefaultSampleRate);
+        BinaryPrimitives.ReadInt32LittleEndian(bytes.AsSpan(24, 4)).ShouldBe(GlobalConstants.SampleRate);
         BinaryPrimitives.ReadInt32LittleEndian(bytes.AsSpan(40, 4)).ShouldBe(samples.Length * 2);
         bytes.Length.ShouldBe(44 + samples.Length * 2);
 

@@ -1,5 +1,6 @@
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using Flyback.Core;
 using Flyback.Plugins.Midi;
 
 namespace Flyback.Plugins.CoreMidi;
@@ -45,7 +46,7 @@ namespace Flyback.Plugins.CoreMidi;
 internal sealed unsafe class CoreMidiPort : IMidiPort
 {
     /// <summary>What this program is called in Audio MIDI Setup, and in every other program's picker.</summary>
-    private const string ClientName = "Flyback";
+    private const string ClientName = GlobalConstants.ApplicationName;
 
     private const string PortName = "MIDI In";
 

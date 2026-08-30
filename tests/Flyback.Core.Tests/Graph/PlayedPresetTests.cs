@@ -20,7 +20,7 @@ namespace Flyback.Core.Tests.Graph;
 /// </remarks>
 public class PlayedPresetTests
 {
-    private const int Rate = 48_000;
+    private const int Rate = GlobalConstants.SampleRate;
 
     private static Patch Patch() => Presets.All.Single(p => p.Name == "Played").Build(NodeCatalog.BuiltIn);
 

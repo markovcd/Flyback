@@ -12,7 +12,7 @@ namespace Flyback.Core.Tests.Rendering;
 /// </summary>
 public class WavStreamWriterTests
 {
-    private const int SampleRate = 48_000;
+    private const int SampleRate = GlobalConstants.SampleRate;
     private const int Channels = 2;
 
     /// <summary>A ramp through the whole range, including both rails.</summary>

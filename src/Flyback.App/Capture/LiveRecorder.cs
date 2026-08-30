@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Avalonia;
+using Flyback.Core;
 using Flyback.Core.Render;
 
 namespace Flyback.App.Capture;
@@ -136,7 +137,7 @@ internal sealed class LiveRecorder : IFrameSink, IAudioSink, IDisposable
             drained = [];
         }
 
-        worker = new Thread(Run) { IsBackground = true, Name = "Flyback capture" };
+        worker = new Thread(Run) { IsBackground = true, Name = $"{GlobalConstants.ApplicationName} capture" };
         worker.Start();
     }
 

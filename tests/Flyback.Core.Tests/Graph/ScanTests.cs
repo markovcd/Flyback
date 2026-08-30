@@ -81,7 +81,7 @@ public class ScanTests
     }
 
     /// <summary>One frame of the left channel, at unity gain.</summary>
-    private static float[] Heard(Patch patch, int frames = AudioRenderer.DefaultSampleRate)
+    private static float[] Heard(Patch patch, int frames = GlobalConstants.SampleRate)
     {
         var buffer = new float[frames * 2];
         new AudioRenderer().Render(patch.CompileForAudio().Program, buffer, AudioScan.TimeDriven);

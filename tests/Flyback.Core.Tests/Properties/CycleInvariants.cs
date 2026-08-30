@@ -421,7 +421,7 @@ public class CycleInvariants
         var renderer = new AudioRenderer();
         renderer.Prepare(program);
 
-        var frames = AudioRenderer.DefaultSampleRate;
+        var frames = GlobalConstants.SampleRate;
         var buffer = new float[frames * 2];
         renderer.Render(program, buffer, AudioScan.TimeDriven);
 

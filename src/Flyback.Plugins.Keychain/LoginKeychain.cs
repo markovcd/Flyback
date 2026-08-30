@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Text;
+using Flyback.Core;
 
 namespace Flyback.Plugins.Keychain;
 
@@ -36,7 +37,7 @@ internal static class LoginKeychain
     /// The service every item is filed under, so that the accounts inside it are
     /// the provider ids and nothing else of ours is mixed in with them.
     /// </summary>
-    private const string Service = "Flyback";
+    private const string Service = GlobalConstants.ApplicationName;
 
     /// <summary>
     /// What <c>security</c> exits with when the item is not in the keychain. It

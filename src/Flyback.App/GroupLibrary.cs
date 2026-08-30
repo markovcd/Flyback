@@ -1,3 +1,4 @@
+using Flyback.Core;
 using Flyback.Core.Graph;
 
 namespace Flyback.App;
@@ -59,10 +60,7 @@ public sealed class GroupLibrary
     /// because these are documents rather than preferences — there may be many,
     /// they are individually named, and a person may well want to look at them.
     /// </summary>
-    public static string DefaultFolder => Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-        "Flyback",
-        "groups");
+    public static string DefaultFolder => Path.Combine(GlobalConstants.DataFolder, "groups");
 
     private readonly ModuleCatalog catalog;
     private List<SavedGroup> kept = [];

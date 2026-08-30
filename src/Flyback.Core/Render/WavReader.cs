@@ -75,7 +75,7 @@ public static class WavReader
     /// is far past anything anybody plays from a module and well short of a file
     /// that would exhaust memory before saying anything useful.
     /// </summary>
-    public const int MostSamples = 48_000 * 60 * 10;
+    public const int MostSamples = GlobalConstants.SampleRate * 60 * 10;
 
     public static LoadedSample? Read(string path, out WavFault fault)
     {

@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Flyback.App.Controls;
+using Flyback.Core;
 using Shouldly;
 
 namespace Flyback.App.Tests.Ui;
@@ -32,7 +33,7 @@ public class AboutTests : UiTest
         var window = Showing();
         var said = Words(window).ToList();
 
-        said.ShouldContain(About.Name);
+        said.ShouldContain(GlobalConstants.ApplicationName);
         said.ShouldContain(About.Description);
         said.ShouldContain($"Version {About.Version}");
         said.ShouldContain($"by {About.Author}");

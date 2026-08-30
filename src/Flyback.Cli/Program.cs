@@ -2,6 +2,7 @@ using System.CommandLine;
 using System.CommandLine.Parsing;
 using System.Globalization;
 using System.Text;
+using Flyback.Core;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Core.Render;
@@ -45,7 +46,7 @@ internal static class Program
         var patch = new Argument<FileInfo>("patch") { Description = "The patch file to read." };
         var json = new Option<bool>("--json") { Description = "Write the answer as JSON instead of prose." };
 
-        var root = new RootCommand("Flyback — a patchable synthesiser, from the command line.")
+        var root = new RootCommand($"{GlobalConstants.ApplicationName} — a patchable synthesiser, from the command line.")
         {
             Render(patch),
             Check(patch, json),

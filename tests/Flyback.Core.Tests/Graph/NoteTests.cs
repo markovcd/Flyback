@@ -151,14 +151,14 @@ public class NoteTests
             .Wire(note, 0, osc, 1)
             .Wire(osc, 0, sink, NodeCatalog.OutputLeftPort);
 
-        var buffer = new float[AudioRenderer.DefaultSampleRate * 2];
+        var buffer = new float[GlobalConstants.SampleRate * 2];
         new AudioRenderer().Render(
             builder.Patch.CompileForAudio(NodeCatalog.BuiltIn).Program,
             buffer,
             AudioScan.TimeDriven);
 
         var crossings = 0;
-        for (var frame = 20; frame < AudioRenderer.DefaultSampleRate - 1; frame++)
+        for (var frame = 20; frame < GlobalConstants.SampleRate - 1; frame++)
         {
             var a = buffer[frame * 2];
             var b = buffer[(frame + 1) * 2];
@@ -181,7 +181,7 @@ public class NoteTests
         var result = Presets.Chromatic(NodeCatalog.BuiltIn).CompileForAudio(NodeCatalog.BuiltIn);
         result.Issues.ShouldBeEmpty();
 
-        var buffer = new float[AudioRenderer.DefaultSampleRate / 2 * 2];
+        var buffer = new float[GlobalConstants.SampleRate / 2 * 2];
         new AudioRenderer().Render(result.Program, buffer, AudioScan.TimeDriven);
 
         // The ramp starts at the bottom of its travel and climbs three semitones
@@ -193,8 +193,8 @@ public class NoteTests
         // Two zero crossings a cycle, over the left channel.
         float Heard(float from, float to)
         {
-            var first = (int)(from * AudioRenderer.DefaultSampleRate);
-            var last = (int)(to * AudioRenderer.DefaultSampleRate);
+            var first = (int)(from * GlobalConstants.SampleRate);
+            var last = (int)(to * GlobalConstants.SampleRate);
             var crossings = 0;
 
             for (var frame = first; frame < last; frame++)
@@ -231,7 +231,7 @@ public class NoteTests
         var renderer = new AudioRenderer();
         renderer.SeekTo(from);
 
-        var buffer = new float[AudioRenderer.DefaultSampleRate * 2];
+        var buffer = new float[GlobalConstants.SampleRate * 2];
         renderer.Render(program, buffer, AudioScan.TimeDriven);
 
         // Three note changes land inside this second, at a sixth, a half and
@@ -239,7 +239,7 @@ public class NoteTests
         // the accumulator's own cold start: with no previous evaluation to
         // measure against, the very first one cannot take a step.
         var steps = new List<float>();
-        for (var frame = (int)(0.02 * AudioRenderer.DefaultSampleRate); frame < AudioRenderer.DefaultSampleRate; frame++)
+        for (var frame = (int)(0.02 * GlobalConstants.SampleRate); frame < GlobalConstants.SampleRate; frame++)
             steps.Add(MathF.Abs(buffer[frame * 2] - buffer[(frame - 1) * 2]));
 
         // The wave's own sample-to-sample travel is the yardstick: a tear is a

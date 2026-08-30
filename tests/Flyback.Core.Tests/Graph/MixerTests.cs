@@ -205,7 +205,7 @@ public class MixerTests
         var patch = Presets.All.Single(p => p.Name == "Four voices").Build(NodeCatalog.BuiltIn);
         var program = patch.CompileForAudio(NodeCatalog.BuiltIn).Program;
 
-        var buffer = new float[AudioRenderer.DefaultSampleRate * 12 * NodeCatalog.AudioChannels];
+        var buffer = new float[GlobalConstants.SampleRate * 12 * NodeCatalog.AudioChannels];
         new AudioRenderer().Render(program, buffer, AudioScan.TimeDriven);
 
         var peak = buffer.Max(Math.Abs);

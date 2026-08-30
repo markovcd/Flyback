@@ -75,7 +75,7 @@ public readonly record struct AudioScan(bool Scan, float Rate, float Aspect)
 /// </remarks>
 public sealed class AudioRenderer
 {
-    public const int DefaultSampleRate = 48_000;
+    private const int DefaultSampleRate = GlobalConstants.SampleRate;
     
     private const int Taps = 64;
     private const float DcBlockerPole = 0.9993f;

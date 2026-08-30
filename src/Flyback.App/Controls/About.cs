@@ -4,6 +4,7 @@ using Avalonia.Controls;
 using Avalonia.Input.Platform;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Flyback.Core;
 
 namespace Flyback.App.Controls;
 
@@ -19,8 +20,6 @@ namespace Flyback.App.Controls;
 /// </remarks>
 internal static class About
 {
-    public const string Name = "Flyback";
-
     /// <summary>
     /// What it is, in one line. Not a video synthesiser: the same patch is a
     /// picture and a sound, and calling it one or the other names half of it.
@@ -74,7 +73,7 @@ internal static class About
 
         titles.Children.Add(new TextBlock
         {
-            Text = Name,
+            Text = GlobalConstants.ApplicationName,
             FontSize = 22,
             FontWeight = FontWeight.SemiBold,
         });

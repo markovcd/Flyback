@@ -1,3 +1,4 @@
+using Flyback.Core;
 using Flyback.Plugins.Audio;
 
 namespace Flyback.Plugins.Alsa;
@@ -82,7 +83,7 @@ public sealed class AlsaAudioDevice(AudioFormat format) : IAudioDevice
         block = new float[Math.Clamp(SampleRate * format.LatencyMilliseconds / 4000, 64, 4096) * channels];
 
         running = true;
-        writer = new Thread(Write) { IsBackground = true, Name = "Flyback audio" };
+        writer = new Thread(Write) { IsBackground = true, Name = $"{GlobalConstants.ApplicationName} audio" };
         writer.Start();
     }
 

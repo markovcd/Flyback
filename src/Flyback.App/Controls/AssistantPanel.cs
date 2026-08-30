@@ -8,6 +8,7 @@ using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using Flyback.App.Assist;
+using Flyback.Core;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Plugins.Assist;
@@ -968,7 +969,7 @@ public sealed class AssistantPanel : UserControl
                 + "one to replace it." + falls,
 
             CredentialSource.Environment =>
-                $"In force, from {variable}. Flyback never wrote it and never will. A key entered here "
+                $"In force, from {variable}. {GlobalConstants.ApplicationName} never wrote it and never will. A key entered here "
                 + "takes precedence over it, and forgetting that one comes back to this.",
 
             _ => assistant.Schema.CredentialHelp,

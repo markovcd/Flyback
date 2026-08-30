@@ -233,7 +233,7 @@ public class QuantiserTests
     /// </remarks>
     private sealed class Held
     {
-        private const int Rate = 48_000;
+        private const int Rate = GlobalConstants.SampleRate;
 
         private readonly Patch patch;
         private readonly NodeInstance signal;
@@ -441,7 +441,7 @@ public class QuantiserTests
     [Fact]
     public void The_preset_only_changes_pitch_while_nothing_is_sounding()
     {
-        const int rate = 48_000;
+        const int rate = GlobalConstants.SampleRate;
 
         // One evaluation of the shortest thing in the patch — a four
         // millisecond attack — which is how far a note can have got on the

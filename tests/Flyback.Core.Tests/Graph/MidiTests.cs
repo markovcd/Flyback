@@ -62,7 +62,7 @@ public class MidiTests
         for (var i = 0; i < moments.Length; i++)
         {
             moments[i](live);
-            program.Evaluate(0d, 0d, i / 48_000d, registers, default, memory, live: live);
+            program.Evaluate(0d, 0d, i / (double)GlobalConstants.SampleRate, registers, default, memory, live: live);
             heard[i] = registers[program.OutputBase];
         }
 

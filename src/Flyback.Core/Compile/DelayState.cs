@@ -127,7 +127,7 @@ public sealed class DelayState
     /// How much of the past a Scope keeps, in evaluations — two seconds at the
     /// oversampled audio rate, which is longer than any window a chart offers.
     /// </summary>
-    public const int TraceSamples = 48_000 * 4 * 2;
+    public const int TraceSamples = GlobalConstants.SampleRate * 4 * 2;
 
     /// <summary>Puts one evaluation into trace <paramref name="slot"/>.</summary>
     /// <remarks>

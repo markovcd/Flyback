@@ -15,7 +15,7 @@ namespace Flyback.Core.Tests.Graph;
 /// </remarks>
 public class HoldTests
 {
-    private const int Rate = 48_000;
+    private const int Rate = GlobalConstants.SampleRate;
 
     /// <summary>
     /// A Hold reading two Values, so both its sockets can be moved from outside

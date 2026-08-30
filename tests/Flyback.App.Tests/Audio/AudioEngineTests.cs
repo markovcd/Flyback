@@ -1,4 +1,5 @@
 using Flyback.App.Audio;
+using Flyback.Core;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Core.Render;
@@ -34,7 +35,7 @@ public class AudioEngineTests
     {
         private AudioCallback? fill;
 
-        public int SampleRate => AudioRenderer.DefaultSampleRate;
+        public int SampleRate => GlobalConstants.SampleRate;
 
         public bool IsRunning => fill is not null;
 

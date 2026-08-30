@@ -31,7 +31,7 @@ internal sealed class PluginLoadContext(string entryAssemblyPath)
     private static readonly string[] HostOwned =
     [
         typeof(IFlybackPlugin).Assembly.GetName().Name!,
-        "Flyback.Core",
+        $"{nameof(Flyback)}.{nameof(Core)}",
     ];
 
     private readonly AssemblyDependencyResolver resolver = new(entryAssemblyPath);

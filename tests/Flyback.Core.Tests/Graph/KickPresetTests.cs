@@ -20,7 +20,7 @@ namespace Flyback.Core.Tests.Graph;
 /// </remarks>
 public class KickPresetTests
 {
-    private const int Rate = 48_000;
+    private const int Rate = GlobalConstants.SampleRate;
 
     /// <summary>Loud enough to be the drum rather than the tail of the one before.</summary>
     private const float Audible = 0.05f;

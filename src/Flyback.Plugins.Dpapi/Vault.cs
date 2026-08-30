@@ -1,6 +1,7 @@
 using System.Runtime.Versioning;
 using System.Security.Cryptography;
 using System.Text;
+using Flyback.Core;
 
 namespace Flyback.Plugins.Dpapi;
 
@@ -19,10 +20,7 @@ internal static class Vault
     /// </summary>
     private static readonly byte[] Entropy = Encoding.UTF8.GetBytes("Flyback.Assist.v1");
 
-    private static string Folder => Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-        "Flyback",
-        "secrets");
+    private static string Folder => Path.Combine(GlobalConstants.DataFolder, "secrets");
 
     public static void Keep(string account, string secret)
     {

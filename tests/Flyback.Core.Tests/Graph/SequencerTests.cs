@@ -477,11 +477,11 @@ public class SequencerTests
     public void The_sequence_preset_does_not_click_when_a_note_starts_or_stops()
     {
         var program = SequencePreset().CompileForAudio(NodeCatalog.BuiltIn).Program;
-        var buffer = new float[AudioRenderer.DefaultSampleRate * 2];
+        var buffer = new float[GlobalConstants.SampleRate * 2];
 
         new AudioRenderer().Render(program, buffer, AudioScan.TimeDriven);
 
-        NoClicks(buffer, AudioRenderer.DefaultSampleRate);
+        NoClicks(buffer, GlobalConstants.SampleRate);
     }
 
     /// <summary>
@@ -507,11 +507,11 @@ public class SequencerTests
         StepsExtra.Set(sequencer, uneven);
 
         var program = patch.CompileForAudio(NodeCatalog.BuiltIn).Program;
-        var buffer = new float[AudioRenderer.DefaultSampleRate * 2];
+        var buffer = new float[GlobalConstants.SampleRate * 2];
 
         new AudioRenderer().Render(program, buffer, AudioScan.TimeDriven);
 
-        NoClicks(buffer, AudioRenderer.DefaultSampleRate);
+        NoClicks(buffer, GlobalConstants.SampleRate);
     }
 
     private static void NoClicks(float[] buffer, int sampleRate)

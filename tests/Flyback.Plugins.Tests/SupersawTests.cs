@@ -1,6 +1,6 @@
+using Flyback.Core;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
-using Flyback.Core.Render;
 using Flyback.Plugins.Hosting;
 using Shouldly;
 using Xunit;
@@ -207,9 +207,9 @@ public class SupersawTests
         var previous = 0f;
         var steps = 0;
 
-        for (var s = 0; s < AudioRenderer.DefaultSampleRate; s++)
+        for (var s = 0; s < GlobalConstants.SampleRate; s++)
         {
-            program.Evaluate(0f, 0f, s / (double)AudioRenderer.DefaultSampleRate, registers, default);
+            program.Evaluate(0f, 0f, s / (double)GlobalConstants.SampleRate, registers, default);
 
             var value = (float)registers[program.OutputBase];
             if (s > 0 && MathF.Abs(value - previous) > 0.1f) steps++;
@@ -253,7 +253,7 @@ public class SupersawTests
             var peak = 0f;
 
             for (var s = 0; s < samples; s++)
-                peak = MathF.Max(peak, MathF.Abs(signal((w * samples + s) / (float)AudioRenderer.DefaultSampleRate)[0]));
+                peak = MathF.Max(peak, MathF.Abs(signal((w * samples + s) / (float)GlobalConstants.SampleRate)[0]));
 
             peaks[w] = peak;
         }

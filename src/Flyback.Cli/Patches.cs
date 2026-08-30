@@ -1,3 +1,4 @@
+using Flyback.Core;
 using Flyback.Core.Compile;
 using Flyback.Core.Render;
 using Flyback.Core.Graph;
@@ -71,7 +72,7 @@ internal static class Patches
             // The same breadth Read takes below, for the same reason: a file that
             // is not a bundle, one that is damaged and one that cannot be opened
             // are one sentence to whoever typed the path.
-            error.WriteLine($"flyback: {file.Name}: {ex.Message}");
+            error.WriteLine($"{GlobalConstants.ApplicationName}: {file.Name}: {ex.Message}");
             return null;
         }
     }
@@ -94,7 +95,7 @@ internal static class Patches
     {
         if (!file.Exists)
         {
-            error.WriteLine($"flyback: {file.FullName}: no such file");
+            error.WriteLine($"{GlobalConstants.ApplicationName}: {file.FullName}: no such file");
             return null;
         }
 
@@ -109,13 +110,13 @@ internal static class Patches
             // A file that is not a patch at all, or one this cannot get at.
             // Deliberately broad: every one of them is the same sentence to
             // whoever typed the path, and none of them should be a stack trace.
-            error.WriteLine($"flyback: {file.Name}: {ex.Message}");
+            error.WriteLine($"{GlobalConstants.ApplicationName}: {file.Name}: {ex.Message}");
             return null;
         }
 
         if (!load.IsComplete)
         {
-            error.WriteLine($"flyback: {file.Name}: this patch did not load completely.");
+            error.WriteLine($"{GlobalConstants.ApplicationName}: {file.Name}: this patch did not load completely.");
             error.WriteLine(load.Detail);
 
             // Handed back all the same when there is something to work with. A

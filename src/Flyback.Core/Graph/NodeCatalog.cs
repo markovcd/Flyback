@@ -17,7 +17,7 @@ namespace Flyback.Core.Graph;
 public static partial class NodeCatalog
 {
     /// <summary>The provider every module in this file belongs to. Reserved.</summary>
-    public static ModuleProvider BuiltInProvider { get; } = new("flyback", "Flyback");
+    public static ModuleProvider BuiltInProvider { get; } = new("flyback", GlobalConstants.ApplicationName);
     
     /// <summary>RGB, so the screen reads three registers.</summary>
     public const int VideoChannels = 3;

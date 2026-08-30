@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Platform.Storage;
 using Flyback.App.Controls;
+using Flyback.Core;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Core.Render;
@@ -462,7 +463,7 @@ public sealed partial class MainWindow
         var file = await StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
         {
             Title = "Export",
-            SuggestedFileName = "flyback",
+            SuggestedFileName = "flyback", // todo, change to name of patch
 
             // The first kind offered is the one the patch is most fully
             // described by, so it is also the extension a name gets by default.
@@ -607,7 +608,7 @@ public sealed partial class MainWindow
         WavWriter.Write(path, buffer, renderer.SampleRate, NodeCatalog.AudioChannels);
     }
 
-    private static FilePickerFileType PatchFileType => new("Flyback patch")
+    private static FilePickerFileType PatchFileType => new($"{GlobalConstants.ApplicationName} patch")
     {
         Patterns = [$"*.{PatchIo.FileExtension}"],
     };
@@ -618,7 +619,7 @@ public sealed partial class MainWindow
     /// of it: a bundle is what you send somebody, and a patch is what you work
     /// on.
     /// </summary>
-    private static FilePickerFileType BundleFileType => new("Flyback bundle")
+    private static FilePickerFileType BundleFileType => new($"{GlobalConstants.ApplicationName} bundle")
     {
         Patterns = [$"*{PatchBundle.Extension}"],
     };

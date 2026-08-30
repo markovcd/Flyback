@@ -35,7 +35,7 @@ public sealed record PatchLoad(
         {
             if (TooNew)
             {
-                return "This patch was saved by a newer version of Flyback "
+                return $"This patch was saved by a newer version of {GlobalConstants.ApplicationName} "
                     + $"(file layout {Version}, this build reads {PatchIo.FormatVersion}).";
             }
 
@@ -61,7 +61,7 @@ public sealed record PatchLoad(
             if (TooNew)
             {
                 return "Nothing here can be trusted to mean what it says, so none of it was read. "
-                    + "Update Flyback and open it again, or save it from the build that wrote it "
+                    + $"Update {GlobalConstants.ApplicationName} and open it again, or save it from the build that wrote it "
                     + "in a layout this one knows.";
             }
 

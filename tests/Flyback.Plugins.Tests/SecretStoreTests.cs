@@ -1,3 +1,4 @@
+using Flyback.Core;
 using Flyback.Plugins.Hosting;
 using Flyback.Plugins.Secrets;
 using Shouldly;
@@ -204,11 +205,7 @@ public class SecretStoreTests
     /// <summary>What the Windows store has on disk under that account name, or empty if there is nothing.</summary>
     private static string Written()
     {
-        var file = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-            "Flyback",
-            "secrets",
-            Account + ".bin");
+        var file = Path.Combine(GlobalConstants.DataFolder, "secrets", Account + ".bin");
 
         return File.Exists(file) ? System.Text.Encoding.UTF8.GetString(File.ReadAllBytes(file)) : string.Empty;
     }

@@ -103,10 +103,10 @@ public class MovieRendererTests
         var samples = AudioSamples(avi);
         var frames = TotalFrames(avi);
 
-        var due = (long)Math.Round(frames / rate * AudioRenderer.DefaultSampleRate);
+        var due = (long)Math.Round(frames / rate * GlobalConstants.SampleRate);
 
         // Within one frame's worth, which is the granularity audio is appended at.
-        Math.Abs(samples - due).ShouldBeLessThanOrEqualTo((long)(AudioRenderer.DefaultSampleRate / rate));
+        Math.Abs(samples - due).ShouldBeLessThanOrEqualTo((long)(GlobalConstants.SampleRate / rate));
     }
 
     [Fact]

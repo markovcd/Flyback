@@ -1,3 +1,4 @@
+using Flyback.Core;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Plugins.Hosting;
@@ -22,7 +23,7 @@ public class ModulationTests
     private const string FlangerType = "flyback.mod.flanger";
     private const string PhaserType = "flyback.mod.phaser";
 
-    private const int Rate = 48_000;
+    private const int Rate = GlobalConstants.SampleRate;
 
     private static readonly ModuleCatalog Catalog = PluginHost.Load().Modules;
 

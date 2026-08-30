@@ -1,3 +1,4 @@
+using Flyback.Core;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Plugins.Hosting;
@@ -221,7 +222,7 @@ public class SpaceTests
     [Fact]
     public void The_tail_darkens_as_it_dies()
     {
-        const int heard = 48_000;
+        const int heard = GlobalConstants.SampleRate;
 
         var signal = new float[heard];
         for (var i = 0; i < heard / 100; i++) signal[i] = 1f;

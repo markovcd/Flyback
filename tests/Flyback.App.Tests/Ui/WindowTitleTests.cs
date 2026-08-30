@@ -2,6 +2,7 @@ using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Threading;
 using Flyback.App.Controls;
+using Flyback.Core;
 using Flyback.Core.Graph;
 using Shouldly;
 
@@ -20,7 +21,7 @@ namespace Flyback.App.Tests.Ui;
 /// </remarks>
 public class WindowTitleTests : UiTest
 {
-    private const string Program = "Flyback";
+    private const string Program = GlobalConstants.ApplicationName;
 
     private static MainWindow Open()
     {

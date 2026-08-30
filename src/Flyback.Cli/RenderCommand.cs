@@ -1,3 +1,4 @@
+using Flyback.Core;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Core.Render;
@@ -45,7 +46,7 @@ internal static class RenderCommand
 
         if (kind is not (".png" or ".wav" or ".avi"))
         {
-            error.WriteLine($"flyback: {options.Out.Name}: write a .png, a .wav or an .avi.");
+            error.WriteLine($"{GlobalConstants.ApplicationName}: {options.Out.Name}: write a .png, a .wav or an .avi.");
             return Exit.Failed;
         }
 
@@ -64,14 +65,14 @@ internal static class RenderCommand
             .ToArray();
 
         foreach (var issue in issues)
-            error.WriteLine($"flyback: {(issue.Severity == IssueSeverity.Error ? "error" : "warning")}: {issue.Message}");
+            error.WriteLine($"{GlobalConstants.ApplicationName}: {(issue.Severity == IssueSeverity.Error ? "error" : "warning")}: {issue.Message}");
 
         // A warning is a patch somebody may have meant, so it is said and the
         // file is written anyway. An error means part of what compiled is a
         // stand-in, and a file made of stand-ins looks exactly like a real one.
         if (issues.Any(i => i.Severity == IssueSeverity.Error))
         {
-            error.WriteLine("flyback: refusing to render a patch with errors in it.");
+            error.WriteLine($"{GlobalConstants.ApplicationName}: refusing to render a patch with errors in it.");
             return Exit.Problems;
         }
 
@@ -93,7 +94,7 @@ internal static class RenderCommand
         }
         catch (Exception ex)
         {
-            error.WriteLine($"flyback: {options.Out.Name}: {ex.Message}");
+            error.WriteLine($"{GlobalConstants.ApplicationName}: {options.Out.Name}: {ex.Message}");
             return Exit.Failed;
         }
 
@@ -149,7 +150,7 @@ internal static class RenderCommand
         // Stopped partway. The file is whole and shorter, which is worth saying
         // plainly rather than leaving to be discovered on playback.
         error.WriteLine(
-            $"flyback: stopped after {written} of {settings.FrameCount} frames — "
+            $"{GlobalConstants.ApplicationName}: stopped after {written} of {settings.FrameCount} frames — "
             + $"{options.Out.Name} holds the {written / settings.FramesPerSecond:0.0}s already rendered.");
 
         return Exit.Failed;

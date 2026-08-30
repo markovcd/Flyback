@@ -1,3 +1,4 @@
+using Flyback.Core;
 using Flyback.Plugins.Midi;
 
 namespace Flyback.Plugins.AlsaMidi;
@@ -97,7 +98,7 @@ internal sealed unsafe class AlsaMidiPort : IMidiPort
 
             // What this program is called in everyone else's patch bay. Failing
             // to be named is not failing to hear, so it is not checked.
-            LibAsoundSeq.SetClientName(seq, "Flyback");
+            LibAsoundSeq.SetClientName(seq, GlobalConstants.ApplicationName);
 
             var port = LibAsoundSeq.CreateSimplePort(
                 seq, "MIDI In", LibAsoundSeq.Writable, LibAsoundSeq.GenericMidi | LibAsoundSeq.Application);
@@ -114,7 +115,7 @@ internal sealed unsafe class AlsaMidiPort : IMidiPort
 
             open = true;
 
-            reader = new Thread(Listen) { IsBackground = true, Name = $"Flyback MIDI ({id})" };
+            reader = new Thread(Listen) { IsBackground = true, Name = $"{GlobalConstants.ApplicationName} MIDI ({id})" };
             reader.Start();
         }
         catch

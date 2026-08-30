@@ -1,3 +1,4 @@
+using Flyback.Core;
 using Flyback.Core.Graph;
 
 namespace Flyback.Cli;
@@ -38,7 +39,7 @@ internal static class PackCommand
         }
         catch (Exception ex)
         {
-            error.WriteLine($"flyback: {output.Name}: {ex.Message}");
+            error.WriteLine($"{GlobalConstants.ApplicationName}: {output.Name}: {ex.Message}");
             return Exit.Failed;
         }
 
@@ -53,7 +54,7 @@ internal static class PackCommand
         // not is self-contained, which is the whole point of having made one. So
         // it is written, and the exit code says the patch has something wrong
         // with it, exactly as check does about a missing file.
-        error.WriteLine($"flyback: {output.Name}: {report.Missing.Count} file(s) could not be read.");
+        error.WriteLine($"{GlobalConstants.ApplicationName}: {output.Name}: {report.Missing.Count} file(s) could not be read.");
 
         foreach (var missing in report.Missing) error.WriteLine($"    {missing}");
 
