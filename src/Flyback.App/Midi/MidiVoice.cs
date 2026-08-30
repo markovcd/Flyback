@@ -69,10 +69,9 @@ internal sealed class MidiVoice
     {
         note = Math.Clamp(note, 0, 127);
 
-        // The same key twice without a release in between — an auto-repeat, or a
-        // device sending a second note-on. It moves to the front rather than
-        // appearing twice, so releasing it once really does release it.
-        held.RemoveAll(entry => entry.Note == note);
+        // The same key twice without a release in between is keyboard auto-repeat
+        // (or a duplicate device message), not a new strike.
+        if (held.Any(entry => entry.Note == note)) return;
 
         if (held.Count >= MostHeld) held.RemoveAt(0);
 

@@ -37,6 +37,10 @@ lowest free slot, note-off releases the slot holding that note, and an
 all-notes-off event clears every slot for that source. The computer keyboard
 and hardware devices use the same allocation path.
 
+**Repeated note-ons for a held note are ignored.** Keyboard auto-repeat and
+duplicate device messages do not create another strike or require another
+note-off.
+
 **Each MIDI module reads only its selected indexed voice.** The module's pitch,
 gate, velocity and trigger signals are loaded from that voice; no subgraph
 cloning or special polyphonic module is added to the compiler.

@@ -161,8 +161,8 @@ public class KeyboardTests
     }
 
     /// <summary>
-    /// Auto-repeat is a key already down being pressed again. Held twice it would
-    /// need letting go twice, and the second half of that never comes.
+    /// Auto-repeat is a key already down being pressed again. It must not create a
+    /// second strike or require a second release.
     /// </summary>
     [Fact]
     public void Holding_a_key_down_does_not_make_it_two_notes()
@@ -179,6 +179,8 @@ public class KeyboardTests
 
         Read(block, Pitch).ShouldBe(48d);
         Read(block, Gate).ShouldBe(1d);
+        Read(block, Strikes).ShouldBe(1d);
+        Read(block, Strikes2).ShouldBe(1d);
     }
 
     /// <summary>
