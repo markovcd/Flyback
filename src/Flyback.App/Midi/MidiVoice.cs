@@ -9,17 +9,8 @@ namespace Flyback.App.Midi;
 /// struck since the program started.
 /// </summary>
 /// <remarks>
-/// Monophonic, with last-note priority — the oldest arrangement there is, and the
-/// one a rack with a single pitch and a single gate has always had. A new key
-/// takes the voice over; letting it go hands the voice back to whichever key is
-/// still down, in the order they were pressed. That is why the notes are kept as
-/// a list rather than a count: "which note now" is a question about what is still
-/// held, and a count cannot answer it.
-/// <para>
-/// Polyphony is not here and is not hidden here either. It is not a bigger list —
-/// it is a module with four sets of outputs and a patch built four times over,
-/// and neither of those is something this class could grow into quietly.
-/// </para>
+/// One indexed voice. Polyphony is supplied by <see cref="MidiHub"/>, which owns
+/// a fixed set of these and assigns each new note to the first free voice.
 /// <para>
 /// Written on the thread the keys arrive on and read on the thread that plays,
 /// which is what <see cref="LiveValues"/> is built for: single floats, no lock,
@@ -128,13 +119,13 @@ internal sealed class MidiVoice
     /// <summary>Whether anything is held, which is what a stuck note looks like from outside.</summary>
     public bool Playing => held.Count > 0;
 
-    /// <summary>Puts this voice into a program's block, under its instrument's name.</summary>
-    public void WriteTo(LiveValues block, string source)
+    /// <summary>Puts this indexed voice into a program's live-input block.</summary>
+    public void WriteTo(LiveValues block, string source, int index)
     {
-        block.Set(MidiSignal.Key(source, MidiSignal.Pitch), Pitch);
-        block.Set(MidiSignal.Key(source, MidiSignal.Gate), Gate);
-        block.Set(MidiSignal.Key(source, MidiSignal.Velocity), Velocity);
-        block.Set(MidiSignal.Key(source, MidiSignal.Strikes), Strikes);
+        block.Set(MidiSignal.Key(source, index, MidiSignal.Pitch), Pitch);
+        block.Set(MidiSignal.Key(source, index, MidiSignal.Gate), Gate);
+        block.Set(MidiSignal.Key(source, index, MidiSignal.Velocity), Velocity);
+        block.Set(MidiSignal.Key(source, index, MidiSignal.Strikes), Strikes);
     }
 
     private void Take((int Note, float Velocity) entry)

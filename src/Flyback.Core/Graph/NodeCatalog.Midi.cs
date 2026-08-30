@@ -24,7 +24,7 @@ public partial class NodeCatalog
             ],
             EmitMidi,
             "Keyboard or MIDI input. 'pitch' is the current note; 'gate' is high while a key is held; "
-            + "'velocity' follows note strength; 'trigger' fires on each note start. Only one note is active at a time." )
+            + "'velocity' follows note strength; 'trigger' fires on each note start. The index selects a polyphonic voice." )
         {
             Extras = [new MidiExtra()],
         };
@@ -68,17 +68,19 @@ public partial class NodeCatalog
     /// </remarks>
     private static Slot[] EmitMidi(Emitter em, EmitContext node)
     {
-        var device = node.Extra<ExtraState>(MidiExtra.StateKey)?.Chosen(MidiExtra.DeviceField);
+        var state = node.Extra<ExtraState>(MidiExtra.StateKey);
+        var device = state?.Chosen(MidiExtra.DeviceField);
+        var index = (int)(state?.Number(MidiExtra.IndexField) ?? 1f);
 
         // A patch edited by hand is the one way an empty device arrives, and the
         // keyboard is the honest thing to fall back to: it is what a fresh module
         // listens to, and it is always there.
         if (string.IsNullOrWhiteSpace(device)) device = MidiSources.Keyboard;
 
-        var pitch = em.Live(MidiSignal.Key(device, MidiSignal.Pitch));
-        var gate = em.Live(MidiSignal.Key(device, MidiSignal.Gate));
-        var velocity = em.Live(MidiSignal.Key(device, MidiSignal.Velocity));
-        var strikes = em.Live(MidiSignal.Key(device, MidiSignal.Strikes));
+        var pitch = em.Live(MidiSignal.Key(device, index, MidiSignal.Pitch));
+        var gate = em.Live(MidiSignal.Key(device, index, MidiSignal.Gate));
+        var velocity = em.Live(MidiSignal.Key(device, index, MidiSignal.Velocity));
+        var strikes = em.Live(MidiSignal.Key(device, index, MidiSignal.Strikes));
 
         var cell = em.AllocateUnitSlot();
         var moved = em.Unary(OpCode.Abs, em.Sub(strikes, em.UnitRead(cell)));
@@ -100,7 +102,7 @@ public partial class NodeCatalog
 }
 
 /// <summary>
-/// Which instrument a MIDI In is listening to.
+/// Which instrument and polyphonic voice a MIDI In is listening to.
 /// </summary>
 /// <remarks>
 /// The first extra in the engine that declares its editor rather than having one
@@ -120,8 +122,9 @@ public sealed record MidiExtra : NodeExtra
     /// <summary>What this is filed under, in a saved patch and on a context.</summary>
     public const string StateKey = "midi";
 
-    /// <summary>The one field: which instrument.</summary>
+    /// <summary>The fields selecting the instrument and polyphonic voice.</summary>
     public const string DeviceField = "device";
+    public const string IndexField = "index";
 
     public override string Key => StateKey;
 
@@ -132,6 +135,7 @@ public sealed record MidiExtra : NodeExtra
             "listens to",
             [.. MidiSources.All.Select(source => new ChoiceOption(source.Id, source.Name))],
             MidiSources.Keyboard),
+        new ExtraField.Number(IndexField, "voice", new PortSpec("voice", PortKind.Scalar, 1f, 1f, 32f, 1, PortDisplay.Integer)),
     ];
 
     /// <summary>
@@ -172,6 +176,6 @@ public sealed record MidiExtra : NodeExtra
         var offered = string.Join(", ", MidiSources.All.Select(source => source.Id));
 
         return $"  midi   device, which instrument it listens to — one of {offered}, "
-            + "as a string; not a knob";
+            + "as a string; not a knob; voice, the polyphonic index from 1 to 32";
     }
 }

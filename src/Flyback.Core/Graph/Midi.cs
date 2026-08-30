@@ -119,5 +119,12 @@ public static class MidiSignal
     /// What one signal of one instrument is called in
     /// <see cref="Compile.CompiledPatch.LiveInputs"/>.
     /// </summary>
-    public static string Key(string source, string signal) => $"{source}/{signal}";
+    public static string Key(string source, string signal) => Key(source, 1, signal);
+
+    /// <summary>
+    /// The signal of one indexed voice. Index one keeps the original key shape so
+    /// patches written before indexed MIDI continue to receive their first voice.
+    /// </summary>
+    public static string Key(string source, int index, string signal) =>
+        index == 1 ? $"{source}/{signal}" : $"{source}/{index}/{signal}";
 }

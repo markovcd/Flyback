@@ -37,6 +37,9 @@ public enum PortDisplay
     /// which is exactly why the control on a scope is marked the way it is.
     /// </remarks>
     Duration,
+
+    /// <summary>A whole-number setting.</summary>
+    Integer,
 }
 
 /// <summary>What flows down a wire.</summary>
@@ -165,6 +168,7 @@ public readonly record struct PortSpec(
     {
         PortDisplay.Note => Pitch.Name(value),
         PortDisplay.Duration => Time(value),
+        PortDisplay.Integer => value.ToString("0", CultureInfo.InvariantCulture),
         _ => value.ToString("0.###", CultureInfo.InvariantCulture),
     };
 
@@ -191,5 +195,5 @@ public readonly record struct PortSpec(
     }
 
     /// <summary>Whether the editor should let this value rest only on whole numbers.</summary>
-    public bool Stepped => Display is PortDisplay.Note;
+    public bool Stepped => Display is PortDisplay.Note or PortDisplay.Integer;
 }

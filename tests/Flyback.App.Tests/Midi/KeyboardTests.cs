@@ -9,13 +9,13 @@ namespace Flyback.App.Tests.Midi;
 
 /// <summary>
 /// The half of a MIDI In that lives in the shell: two rows of a typewriter read
-/// as a piano, and one voice handed back and forth between whatever is held.
+/// as a piano, with simultaneous keys assigned to indexed voices.
 /// </summary>
 /// <remarks>
-/// What is worth pinning here is the note priority. Everything else about the
-/// module is arithmetic the engine's own tests cover; this is where a key going
-/// down and coming up in the wrong order leaves a note sounding for the rest of
-/// the session, and that is not a failure a render test would ever see.
+/// What is worth pinning here is voice allocation and release. Everything else
+/// about the module is arithmetic the engine's own tests cover; this is where a
+/// key going down and coming up in the wrong order can leave a note sounding for
+/// the rest of the session.
 /// </remarks>
 public class KeyboardTests
 {
@@ -23,9 +23,12 @@ public class KeyboardTests
     private static readonly string Gate = MidiSignal.Key(MidiSources.Keyboard, MidiSignal.Gate);
     private static readonly string Velocity = MidiSignal.Key(MidiSources.Keyboard, MidiSignal.Velocity);
     private static readonly string Strikes = MidiSignal.Key(MidiSources.Keyboard, MidiSignal.Strikes);
+    private static readonly string Pitch2 = MidiSignal.Key(MidiSources.Keyboard, 2, MidiSignal.Pitch);
+    private static readonly string Gate2 = MidiSignal.Key(MidiSources.Keyboard, 2, MidiSignal.Gate);
+    private static readonly string Strikes2 = MidiSignal.Key(MidiSources.Keyboard, 2, MidiSignal.Strikes);
 
     /// <summary>A block reading everything one keyboard carries.</summary>
-    private static LiveValues Block() => new([Pitch, Gate, Velocity, Strikes]);
+    private static LiveValues Block() => new([Pitch, Gate, Velocity, Strikes, Pitch2, Gate2, Strikes2]);
 
     private static double Read(LiveValues block, string key) =>
         block.At(block.Keys.ToList().IndexOf(key));
@@ -121,10 +124,7 @@ public class KeyboardTests
         Read(block, Pitch).ShouldBe(48d);
     }
 
-    /// <summary>
-    /// Last-note priority, which is the whole of what one voice and two hands
-    /// means: the newest key wins.
-    /// </summary>
+    /// <summary>Two computer keys occupy two indexed voices independently.</summary>
     [Fact]
     public void A_second_key_takes_the_voice_over()
     {
@@ -135,14 +135,14 @@ public class KeyboardTests
         hub.KeyDown(Key.Z);
         hub.KeyDown(Key.X);
 
-        Read(block, Pitch).ShouldBe(50d);
-        Read(block, Strikes).ShouldBe(2d);
+        Read(block, Pitch).ShouldBe(48d);
+        Read(block, Strikes).ShouldBe(1d);
+        Read(block, Pitch2).ShouldBe(50d);
+        Read(block, Gate2).ShouldBe(1d);
+        Read(block, Strikes2).ShouldBe(1d);
     }
 
-    /// <summary>
-    /// And letting it go hands the voice back rather than stopping. This is what
-    /// a trill is, and a version that shut the gate would make one stutter.
-    /// </summary>
+    /// <summary>Releasing one computer key does not release the other voice.</summary>
     [Fact]
     public void Letting_the_newer_key_go_falls_back_to_the_one_still_held()
     {
@@ -157,9 +157,7 @@ public class KeyboardTests
         Read(block, Pitch).ShouldBe(48d);
         Read(block, Gate).ShouldBe(1d);
 
-        // Not a fresh strike: nothing was played, something stopped being. An
-        // envelope should not restart for a key coming up.
-        Read(block, Strikes).ShouldBe(2d);
+        Read(block, Gate2).ShouldBe(0d);
     }
 
     /// <summary>

@@ -47,11 +47,13 @@ internal sealed class MidiHub(IMidiInput? hardware = null) : IDisposable
     private readonly Lock gate = new();
 
     /// <summary>
-    /// One voice per instrument, made the first time anything asks. Keyed by the
-    /// same id a patch stores, so a device that comes back finds its own voice
-    /// rather than a fresh one.
+    /// A fixed set of indexed voices per instrument, made the first time anything
+    /// asks. Keyed by the same id a patch stores, so a device that comes back
+    /// finds its own voices rather than fresh ones.
     /// </summary>
-    private readonly Dictionary<string, MidiVoice> voices = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, List<MidiVoice>> voices = new(StringComparer.Ordinal);
+
+    private const int VoiceCount = 32;
 
     /// <summary>
     /// The devices currently listening, keyed the same way. Only ever the ones a
@@ -138,7 +140,7 @@ internal sealed class MidiHub(IMidiInput? hardware = null) : IDisposable
     {
         if (Keyboard.Note(key) is not { } note) return false;
 
-        lock (gate) Voice(MidiSources.Keyboard).Down(note, ComputerKeyboard.Velocity);
+        lock (gate) Down(MidiSources.Keyboard, note, ComputerKeyboard.Velocity);
 
         Publish();
 
@@ -149,7 +151,7 @@ internal sealed class MidiHub(IMidiInput? hardware = null) : IDisposable
     {
         if (Keyboard.Note(key) is not { } note) return false;
 
-        lock (gate) Voice(MidiSources.Keyboard).Up(note);
+        lock (gate) Up(MidiSources.Keyboard, note);
 
         Publish();
 
@@ -178,7 +180,7 @@ internal sealed class MidiHub(IMidiInput? hardware = null) : IDisposable
 
         lock (gate)
         {
-            Voice(MidiSources.Keyboard).Silence();
+            foreach (var voice in Voices(MidiSources.Keyboard)) voice.Silence();
             Keyboard.Octave += moved;
         }
 
@@ -204,9 +206,9 @@ internal sealed class MidiHub(IMidiInput? hardware = null) : IDisposable
 
         lock (gate)
         {
-            var voice = Voice(MidiSources.Keyboard);
-            sounding = voice.Playing;
-            voice.Silence();
+            var voices = Voices(MidiSources.Keyboard);
+            sounding = voices.Any(voice => voice.Playing);
+            foreach (var voice in voices) voice.Silence();
         }
 
         if (sounding) Publish();
@@ -347,9 +349,10 @@ internal sealed class MidiHub(IMidiInput? hardware = null) : IDisposable
 
         lock (gate)
         {
-            if (!voices.TryGetValue(port.Id, out var voice) || !voice.Playing) return;
+            if (!voices.TryGetValue(port.Id, out var sourceVoices)
+                || !sourceVoices.Any(voice => voice.Playing)) return;
 
-            voice.Silence();
+            foreach (var voice in sourceVoices) voice.Silence();
         }
 
         Publish();
@@ -364,20 +367,18 @@ internal sealed class MidiHub(IMidiInput? hardware = null) : IDisposable
     {
         lock (gate)
         {
-            var voice = Voice(source);
-
             switch (message.Action)
             {
                 case MidiAction.Down:
-                    voice.Down(message.Note, message.Velocity);
+                    Down(source, message.Note, message.Velocity);
                     break;
 
                 case MidiAction.Up:
-                    voice.Up(message.Note);
+                    Up(source, message.Note);
                     break;
 
                 case MidiAction.AllOff:
-                    voice.Silence();
+                    foreach (var voice in Voices(source)) voice.Silence();
                     break;
             }
         }
@@ -394,11 +395,33 @@ internal sealed class MidiHub(IMidiInput? hardware = null) : IDisposable
     /// it. Call it holding <see cref="gate"/> — it writes the dictionary that
     /// every thread here reads.
     /// </summary>
-    private MidiVoice Voice(string source)
+    private List<MidiVoice> Voices(string source)
     {
         if (voices.TryGetValue(source, out var existing)) return existing;
 
-        return voices[source] = new MidiVoice();
+        return voices[source] = Enumerable.Range(0, VoiceCount).Select(_ => new MidiVoice()).ToList();
+    }
+
+    private void Down(string source, int note, float velocity)
+    {
+        var voices = Voices(source);
+        var voice = voices.FirstOrDefault(candidate => candidate.Playing && candidate.Pitch == Math.Clamp(note, 0, 127))
+            ?? voices.FirstOrDefault(candidate => !candidate.Playing)
+            ?? voices[0];
+
+        voice.Down(note, velocity);
+    }
+
+    private void Up(string source, int note)
+    {
+        foreach (var voice in Voices(source))
+        {
+            if (voice.Playing && voice.Pitch == Math.Clamp(note, 0, 127))
+            {
+                voice.Up(note);
+                return;
+            }
+        }
     }
 
     /// <summary>
@@ -414,8 +437,9 @@ internal sealed class MidiHub(IMidiInput? hardware = null) : IDisposable
         lock (gate)
         {
             foreach (var block in following)
-                foreach (var (source, voice) in voices)
-                    voice.WriteTo(block, source);
+                foreach (var (source, sourceVoices) in voices)
+                    for (var i = 0; i < sourceVoices.Count; i++)
+                        sourceVoices[i].WriteTo(block, source, i + 1);
         }
 
         Played?.Invoke();
