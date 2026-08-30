@@ -486,8 +486,7 @@ public sealed partial class MainWindow
         // have to be asked in the place the button is standing — see KeepGroup.
         Button keep = null!;
 
-        var keepCopy = keep;
-        keep = Act("Save to palette", () => KeepGroup(group, keepCopy), 8);
+        keep = Act("Save to palette", () => KeepGroup(group, keep), 8);
         keep.IsEnabled = !string.IsNullOrWhiteSpace(group.Name);
 
         // Which of the two things pressing it does, said before it is pressed.
