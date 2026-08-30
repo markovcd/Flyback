@@ -53,7 +53,7 @@ internal sealed class MidiHub(IMidiInput? hardware = null) : IDisposable
     /// </summary>
     private readonly Dictionary<string, List<MidiVoice>> voices = new(StringComparer.Ordinal);
 
-    private const int VoiceCount = 32;
+    private const int VoiceCount = 8;
 
     /// <summary>
     /// The devices currently listening, keyed the same way. Only ever the ones a

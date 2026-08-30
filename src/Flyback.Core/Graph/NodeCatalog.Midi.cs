@@ -135,7 +135,7 @@ public sealed record MidiExtra : NodeExtra
             "listens to",
             [.. MidiSources.All.Select(source => new ChoiceOption(source.Id, source.Name))],
             MidiSources.Keyboard),
-        new ExtraField.Number(IndexField, "voice", new PortSpec("voice", PortKind.Scalar, 1f, 1f, 32f, 1, PortDisplay.Integer)),
+        new ExtraField.Number(IndexField, "voice", new PortSpec("voice", PortKind.Scalar, 1f, 1f, 8f, 1, PortDisplay.Integer)),
     ];
 
     /// <summary>
@@ -176,6 +176,6 @@ public sealed record MidiExtra : NodeExtra
         var offered = string.Join(", ", MidiSources.All.Select(source => source.Id));
 
         return $"  midi   device, which instrument it listens to — one of {offered}, "
-            + "as a string; not a knob; voice, the polyphonic index from 1 to 32";
+            + "as a string; not a knob; voice, the polyphonic index from 1 to 8";
     }
 }
