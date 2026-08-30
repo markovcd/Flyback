@@ -23,9 +23,10 @@ multiple indexed MIDI modules in the same way as hardware input.
 
 ## Decision
 
-**MIDI In carries a persisted, 1-based `voice` index from 1 to 8.** The index
-is instance data in `MidiExtra`, alongside the selected device, and is edited
-with the declarative numeric field mechanism. A fresh module remains voice 1.
+**MIDI In carries a persisted `voice` index from 0 to 8.** Index 0 means
+automatic assignment; explicit indices 1 through 8 reserve a particular voice.
+The index is instance data in `MidiExtra`, alongside the selected device, and is
+edited with the declarative numeric field mechanism.
 
 **Live signal names include the source and voice index.** Voice 1 retains the
 original `source/signal` spelling for compatibility; higher voices use
@@ -45,6 +46,11 @@ note-off.
 voices are occupied, the next note reuses voice 1 rather than being assigned to
 an unobserved higher index. This makes a patch with two MIDI modules behave as a
 two-voice instrument even though the runtime supports eight slots.
+
+**Automatic modules receive stable per-module live keys.** The compiler includes
+the node identity in an automatic voice key, and the hub maps automatic modules
+to the remaining available voices in patch order. This keeps two automatic
+modules independent while allowing explicit indices to reserve voices.
 
 **Each MIDI module reads only its selected indexed voice.** The module's pitch,
 gate, velocity and trigger signals are loaded from that voice; no subgraph

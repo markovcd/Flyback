@@ -154,7 +154,8 @@ public class MidiInputTests : UiTest
         var (patch, _) = Board();
         var window = Open(patch);
 
-        Drawn(window).ShouldContain(MidiSignal.Key(MidiSources.Keyboard, MidiSignal.Pitch));
+        Drawn(window).ShouldContain(key => key.StartsWith("keyboard/auto/", StringComparison.Ordinal)
+            && key.EndsWith("/pitch", StringComparison.Ordinal));
     }
 
     /// <summary>
@@ -414,9 +415,11 @@ public class MidiInputTests : UiTest
 
     private static double Held(PreviewHost preview, string signal)
     {
-        var key = MidiSignal.Key(MidiSources.Keyboard, signal);
         var block = preview.Live;
+        var key = block.Keys.FirstOrDefault(candidate =>
+            candidate.StartsWith(MidiSources.Keyboard + "/auto/", StringComparison.Ordinal)
+            && candidate.EndsWith("/" + signal, StringComparison.Ordinal));
 
-        return block.At(block.Keys.ToList().IndexOf(key));
+        return key is null ? 0d : block.At(block.Keys.ToList().IndexOf(key));
     }
 }

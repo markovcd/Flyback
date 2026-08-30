@@ -126,5 +126,8 @@ public static class MidiSignal
     /// patches written before indexed MIDI continue to receive their first voice.
     /// </summary>
     public static string Key(string source, int index, string signal) =>
-        index == 1 ? $"{source}/{signal}" : $"{source}/{index}/{signal}";
+        index == 0 ? $"{source}/auto/{signal}" : index == 1 ? $"{source}/{signal}" : $"{source}/{index}/{signal}";
+
+    public static string AutoKey(string source, Guid node, string signal) =>
+        $"{source}/auto/{node:N}/{signal}";
 }

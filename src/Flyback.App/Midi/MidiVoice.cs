@@ -120,11 +120,14 @@ internal sealed class MidiVoice
 
     /// <summary>Puts this indexed voice into a program's live-input block.</summary>
     public void WriteTo(LiveValues block, string source, int index)
+        => WriteTo(block, signal => MidiSignal.Key(source, index, signal));
+
+    public void WriteTo(LiveValues block, Func<string, string> key)
     {
-        block.Set(MidiSignal.Key(source, index, MidiSignal.Pitch), Pitch);
-        block.Set(MidiSignal.Key(source, index, MidiSignal.Gate), Gate);
-        block.Set(MidiSignal.Key(source, index, MidiSignal.Velocity), Velocity);
-        block.Set(MidiSignal.Key(source, index, MidiSignal.Strikes), Strikes);
+        block.Set(key(MidiSignal.Pitch), Pitch);
+        block.Set(key(MidiSignal.Gate), Gate);
+        block.Set(key(MidiSignal.Velocity), Velocity);
+        block.Set(key(MidiSignal.Strikes), Strikes);
     }
 
     private void Take((int Note, float Velocity) entry)

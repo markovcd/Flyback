@@ -405,7 +405,7 @@ internal sealed class MidiHub(IMidiInput? hardware = null) : IDisposable
     private void Down(string source, int note, float velocity)
     {
         var voices = Voices(source);
-        var indexes = ReadIndexes(source);
+        var indexes = ReadIndexes(source).Select(index => index.Voice).ToList();
         var voice = indexes
             .Select(index => voices[index - 1])
             .FirstOrDefault(candidate => candidate.Playing && candidate.Pitch == Math.Clamp(note, 0, 127));
@@ -428,18 +428,36 @@ internal sealed class MidiHub(IMidiInput? hardware = null) : IDisposable
         voice.Down(note, velocity);
     }
 
-    private IReadOnlyList<int> ReadIndexes(string source)
+    private IReadOnlyList<(int Voice, Guid? Auto)> ReadIndexes(string source)
     {
-        var indexes = Enumerable.Range(1, VoiceCount)
-            .Where(index => following.Any(block =>
-                block.Reads(MidiSignal.Key(source, index, MidiSignal.Pitch))
-                || block.Reads(MidiSignal.Key(source, index, MidiSignal.Gate))
-                || block.Reads(MidiSignal.Key(source, index, MidiSignal.Velocity))
-                || block.Reads(MidiSignal.Key(source, index, MidiSignal.Strikes))))
-            .ToList();
+        var explicitIndexes = Enumerable.Range(1, VoiceCount)
+            .Where(index => following.Any(block => Reads(block, source, index)))
+            .Select(index => (Voice: index, Auto: (Guid?)null));
+        var automatic = following
+            .SelectMany(block => block.Keys)
+            .Select(key => key.Split('/'))
+            .Where(parts => parts.Length == 4 && parts[0] == source && parts[1] == "auto")
+            .Select(parts => Guid.TryParse(parts[2], out var node) ? (Guid?)node : null)
+            .Where(node => node is not null)
+            .Distinct()
+            .Select((node, offset) => (Voice: Enumerable.Range(1, VoiceCount)
+                .Except(explicitIndexes.Select(index => index.Item1))
+                .ElementAtOrDefault(offset), Auto: node));
 
-        return indexes.Count > 0 ? indexes : Enumerable.Range(1, VoiceCount).ToArray();
+        var indexes = explicitIndexes.Concat(automatic).Where(index => index.Voice > 0).ToList();
+        return indexes.Count > 0 ? indexes : Enumerable.Range(1, VoiceCount).Select(index => (index, (Guid?)null)).ToArray();
     }
+
+    private static bool Reads(LiveValues block, string source, int index) =>
+        (index == 1 && (
+            block.Reads(MidiSignal.Key(source, MidiSignal.Pitch))
+            || block.Reads(MidiSignal.Key(source, MidiSignal.Gate))
+            || block.Reads(MidiSignal.Key(source, MidiSignal.Velocity))
+            || block.Reads(MidiSignal.Key(source, MidiSignal.Strikes))))
+        || block.Reads(MidiSignal.Key(source, index, MidiSignal.Pitch))
+        || block.Reads(MidiSignal.Key(source, index, MidiSignal.Gate))
+        || block.Reads(MidiSignal.Key(source, index, MidiSignal.Velocity))
+        || block.Reads(MidiSignal.Key(source, index, MidiSignal.Strikes));
 
     private void Up(string source, int note)
     {
@@ -464,12 +482,20 @@ internal sealed class MidiHub(IMidiInput? hardware = null) : IDisposable
     private void Publish()
     {
         lock (gate)
-        {
             foreach (var block in following)
                 foreach (var (source, sourceVoices) in voices)
-                    for (var i = 0; i < sourceVoices.Count; i++)
-                        sourceVoices[i].WriteTo(block, source, i + 1);
-        }
+                    foreach (var indexed in ReadIndexes(source))
+                    {
+                        if (indexed.Auto is { } node)
+                        {
+                            sourceVoices[indexed.Voice - 1].WriteTo(
+                                block, signal => MidiSignal.AutoKey(source, node, signal));
+                            if (indexed.Voice == 1)
+                                sourceVoices[indexed.Voice - 1].WriteTo(block, source, indexed.Voice);
+                        }
+                        else
+                            sourceVoices[indexed.Voice - 1].WriteTo(block, source, indexed.Voice);
+                    }
 
         Played?.Invoke();
     }

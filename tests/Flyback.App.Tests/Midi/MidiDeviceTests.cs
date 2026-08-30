@@ -40,6 +40,17 @@ public class MidiDeviceTests
         return block.At(block.Keys.ToList().IndexOf(key));
     }
 
+    private static double ReadAutomatic(LiveValues block, string source, Guid node, string signal) =>
+        block.At(block.Keys.ToList().IndexOf(MidiSignal.AutoKey(source, node, signal)));
+
+    private static LiveValues Automatic(string source, Guid node) => new(
+    [
+        MidiSignal.AutoKey(source, node, MidiSignal.Pitch),
+        MidiSignal.AutoKey(source, node, MidiSignal.Gate),
+        MidiSignal.AutoKey(source, node, MidiSignal.Velocity),
+        MidiSignal.AutoKey(source, node, MidiSignal.Strikes),
+    ]);
+
     [Fact]
     public void The_computer_keyboard_comes_first_and_the_devices_after_it()
     {
@@ -170,6 +181,36 @@ public class MidiDeviceTests
         // Each writes its own, and neither writes the other's.
         Read(keys, MidiSources.Keyboard, MidiSignal.Pitch).ShouldBe(48);
         Read(device, Device, MidiSignal.Pitch).ShouldBe(64);
+    }
+
+    [Fact]
+    public void Automatic_modules_are_assigned_distinct_voices_and_reuse_them()
+    {
+        var firstNode = Guid.NewGuid();
+        var secondNode = Guid.NewGuid();
+        var first = Automatic(MidiSources.Keyboard, firstNode);
+        var second = Automatic(MidiSources.Keyboard, secondNode);
+        using var hub = new MidiHub();
+
+        hub.Follow(first, second);
+
+        hub.KeyDown(Key.Z);
+        ReadAutomatic(first, MidiSources.Keyboard, firstNode, MidiSignal.Pitch).ShouldBe(48);
+        ReadAutomatic(first, MidiSources.Keyboard, firstNode, MidiSignal.Gate).ShouldBe(1);
+        ReadAutomatic(second, MidiSources.Keyboard, secondNode, MidiSignal.Gate).ShouldBe(0);
+
+        hub.KeyDown(Key.X);
+        ReadAutomatic(first, MidiSources.Keyboard, firstNode, MidiSignal.Pitch).ShouldBe(48);
+        ReadAutomatic(second, MidiSources.Keyboard, secondNode, MidiSignal.Pitch).ShouldBe(50);
+        ReadAutomatic(second, MidiSources.Keyboard, secondNode, MidiSignal.Gate).ShouldBe(1);
+
+        hub.KeyUp(Key.Z);
+        ReadAutomatic(first, MidiSources.Keyboard, firstNode, MidiSignal.Gate).ShouldBe(0);
+        ReadAutomatic(second, MidiSources.Keyboard, secondNode, MidiSignal.Gate).ShouldBe(1);
+
+        hub.KeyDown(Key.C);
+        ReadAutomatic(first, MidiSources.Keyboard, firstNode, MidiSignal.Pitch).ShouldBe(52);
+        ReadAutomatic(second, MidiSources.Keyboard, secondNode, MidiSignal.Pitch).ShouldBe(50);
     }
 
     [Fact]

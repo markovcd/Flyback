@@ -359,6 +359,10 @@ public static class Presets
         // No knobs on it at all. Which keyboard it listens to is the one thing it
         // carries, and a fresh one carries the computer's own.
         var keys = b.Add(NodeCatalog.MidiTypeId, 40, 420);
+        keys.SetState(MidiExtra.StateKey, new System.Text.Json.Nodes.JsonObject
+        {
+            [MidiExtra.IndexField] = 1f,
+        });
 
         // Ear. The note number goes in where a note number goes, and comes out
         // as hertz.

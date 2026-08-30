@@ -158,7 +158,9 @@ public class PickerTests : UiTest
         Settle(window);
 
         var preview = All<PreviewHost>(window).Single();
-        var gate = MidiSignal.Key(MidiSources.Keyboard, MidiSignal.Gate);
+        var gate = preview.Live.Keys.First(key =>
+            key.StartsWith(MidiSources.Keyboard + "/auto/", StringComparison.Ordinal)
+            && key.EndsWith("/" + MidiSignal.Gate, StringComparison.Ordinal));
 
         preview.Live.At(preview.Live.Keys.ToList().IndexOf(gate)).ShouldBe(1d);
     }

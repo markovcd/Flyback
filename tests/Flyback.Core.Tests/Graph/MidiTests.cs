@@ -29,12 +29,17 @@ public class MidiTests
     {
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
         var midi = builder.Add(NodeCatalog.MidiTypeId, 0, 0);
+        midi.SetState(MidiExtra.StateKey, new System.Text.Json.Nodes.JsonObject
+        {
+            [MidiExtra.IndexField] = 1f,
+        });
         var sink = builder.Add(NodeCatalog.OutputTypeId, 0, 0, (NodeCatalog.OutputGainPort, 1f));
 
         if (device is not null)
             midi.SetState(MidiExtra.StateKey, new System.Text.Json.Nodes.JsonObject
             {
                 [MidiExtra.DeviceField] = device,
+                [MidiExtra.IndexField] = 1f,
             });
 
         // Both sinks at once: the same signal into the color and into the left
@@ -255,6 +260,14 @@ public class MidiTests
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
         var first = builder.Add(NodeCatalog.MidiTypeId, 0, 0);
         var second = builder.Add(NodeCatalog.MidiTypeId, 0, 0);
+        first.SetState(MidiExtra.StateKey, new System.Text.Json.Nodes.JsonObject
+        {
+            [MidiExtra.IndexField] = 1f,
+        });
+        second.SetState(MidiExtra.StateKey, new System.Text.Json.Nodes.JsonObject
+        {
+            [MidiExtra.IndexField] = 1f,
+        });
         var sink = builder.Add(NodeCatalog.OutputTypeId, 0, 0, (NodeCatalog.OutputGainPort, 1f));
 
         builder.Wire(first, Pitch, sink, NodeCatalog.OutputLeftPort);
