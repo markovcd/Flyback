@@ -40,6 +40,12 @@ public sealed class EffectsPlugin : IFlybackPlugin
                 "Flanger, phaser and chorus in the order a pedalboard would have them.",
                 PresetKind.Idea),
             new PatchPreset(
+                AcidPreset.Name,
+                AcidPreset.Build,
+                "A whole acid techno track: a 303 line through a resonant filter into two "
+                + "delays, on sequences that take forty-two bars to come round.",
+                PresetKind.Showcase),
+            new PatchPreset(
                 SlowWeatherPreset.Name,
                 SlowWeatherPreset.Build,
                 "A generative patch with no clock in it, played into the two effects.",
