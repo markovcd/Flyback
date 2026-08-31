@@ -139,11 +139,10 @@ public partial class NodeCatalog
     /// <para>
     /// The socket rests low, and that is what lets it be optional: a knob at
     /// nought never rises, so the zero stays where the cell began and the
-    /// position is <c>in</c> itself — which is exactly what this module did
-    /// before the socket existed. That mattered more than it looks. Resting it
-    /// high was tried first and takes the zero from wherever <c>in</c> happened
-    /// to be on the first evaluation, which is nought for a clock, a saw or a
-    /// sine and is <em>not</em> nought for a clip being played backwards. A
+    /// position is <c>in</c> itself, exactly as if there were no trigger at
+    /// all. Resting it high would instead take the zero from wherever <c>in</c>
+    /// happened to be on the first evaluation — nought for a clock, a saw or a
+    /// sine, but <em>not</em> nought for a clip being played backwards. A
     /// default that quietly broke reverse is not a default.
     /// </para>
     /// <para>

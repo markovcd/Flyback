@@ -152,8 +152,7 @@ public class PatchFuzzTests
         var candidates = placed.Where(p => p.Def.Outputs.Count > 0).ToArray();
 
         // Both halves of the one sink, so a generated patch fuzzes the eye and
-        // the ear at once — and, since they are now sockets on the same module,
-        // fuzzes the split between them too.
+        // the ear at once, and fuzzes the split between them too.
         var output = builder.Add(NodeCatalog.OutputTypeId, 0, 0);
 
         if (candidates.Length > 0)

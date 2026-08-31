@@ -353,9 +353,9 @@ public sealed record NodeDef(
 /// evaluation the screen does not have.
 /// <para>
 /// Written down so that the palette can badge it and the assistant's handbook
-/// can carry it — both of which used to have to infer it from a description, or
-/// not know at all. It is not what decides which sink a program reaches: that
-/// falls out of the walk back from the Output and always did.
+/// can carry it, rather than infer it from a description. It is not what
+/// decides which sink a program reaches: that falls out of the walk back from
+/// the Output.
 /// </para>
 /// </remarks>
 public enum ModuleSinks

@@ -14,13 +14,10 @@ namespace Flyback.Plugins.Effects;
 /// onto — which is most of why a rack of three sounds unlike any one of them
 /// turned up.
 /// <para>
-/// Nothing is drawn. Each module hands its own LFO back out, and this used to
-/// send those three to a hue, a saturation and a Translate, so the eye got three
-/// unrelated motions over one image. It read well and it was a picture of the
-/// control signals rather than of the effects: what a flanger does is comb its
-/// input, and the comb is exactly the part that has a delay line in it and so is
-/// a wire on the screen. The LFO outputs are still there for a patch that wants
-/// them; this one is about what they are driving.
+/// Nothing is drawn. Each module hands its own LFO back out for a patch that
+/// wants them, but this one is about what they are driving: what a flanger
+/// does is comb its input, and the comb is exactly the part that has a delay
+/// line in it and so is a wire on the screen.
 /// </para>
 /// </remarks>
 internal static class ModulationPreset

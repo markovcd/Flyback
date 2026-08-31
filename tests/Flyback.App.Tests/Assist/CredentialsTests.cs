@@ -150,10 +150,9 @@ public class CredentialsTests
     }
 
     /// <summary>
-    /// The bug this order exists for. Typing a key on a machine that exports one
-    /// used to do nothing at all, and nothing inside the application could make
-    /// it do anything — the field simply emptied itself and the panel went on
-    /// naming the variable.
+    /// Why this order matters: without it, typing a key on a machine that
+    /// exports one would do nothing at all — the field would simply empty
+    /// itself and the panel would go on naming the variable.
     /// </summary>
     [Fact]
     public void A_key_entered_here_beats_the_environment()

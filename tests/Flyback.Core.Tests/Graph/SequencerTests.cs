@@ -354,8 +354,7 @@ public class SequencerTests
 
     /// <summary>
     /// The reason the notes are a list and not thirty-two sockets: a pattern
-    /// costs what it plays. A four-note sequence used to cost the same as an
-    /// eight-note one, and a thirty-two-note one could not be built at all.
+    /// costs what it plays, rather than what it could hold.
     /// </summary>
     [Fact]
     public void The_program_is_no_longer_than_the_pattern_it_plays()

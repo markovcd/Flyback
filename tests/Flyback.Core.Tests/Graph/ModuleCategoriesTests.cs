@@ -9,14 +9,10 @@ namespace Flyback.Core.Tests.Graph;
 /// out in the order somebody chose them in.
 /// </summary>
 /// <remarks>
-/// Both were missing while a category was only a word a module wrote down, and
-/// what went wrong was not something a reader of any one file could have caught.
-/// Two providers meant different things by "Space" — the engine's Rotate and a
-/// plugin's Reverb — so the palette drew a room and a rotation as one section.
-/// Two meant nearly the same thing by different words, because "Shape" was taken
-/// by the waveshapers and the shapes had to be called something else. And the
-/// sections came out in registration order, so installing a plugin could move
-/// them about.
+/// A category is a bare string, so nothing stops two providers meaning
+/// different things by the same word, two meaning nearly the same thing by
+/// different words, or the shown order depending on load order. The tests
+/// below close off each of those.
 /// </remarks>
 public class ModuleCategoriesTests
 {

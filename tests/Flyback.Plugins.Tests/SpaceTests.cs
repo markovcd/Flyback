@@ -164,7 +164,7 @@ public class SpaceTests
             // depends on what is played through it — and this harness runs at
             // 1 kHz, where interpolating a fractional delay costs far more of the
             // band than it does at the rate the speakers see — but tight enough
-            // that the twenty the old scaling cost would not fit inside it.
+            // to catch a badly mis-scaled tail.
             came.ShouldBeGreaterThan(went * 0.5f);
             came.ShouldBeLessThan(went * 2f);
 
@@ -298,11 +298,11 @@ public class SpaceTests
     }
 
     /// <summary>
-    /// And so is a Reverb, which it did not used to be. With no state the bank is
-    /// eight wires in parallel, so what it would hand the picture back is some
-    /// multiple of itself — and which multiple depends on the decay, so the
-    /// brightness of a video patch would follow a knob about how long a sound
-    /// takes to die. The memory flag decides it instead: no memory, no room.
+    /// And so is a Reverb. With no state the bank is eight wires in parallel,
+    /// so what it would hand the picture back is some multiple of itself — and
+    /// which multiple depends on the decay, so the brightness of a video patch
+    /// would follow a knob about how long a sound takes to die. The memory flag
+    /// decides it instead: no memory, no room.
     /// </summary>
     [Fact]
     public void With_no_state_a_reverb_passes_the_picture_through()

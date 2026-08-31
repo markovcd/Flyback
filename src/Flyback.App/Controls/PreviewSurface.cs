@@ -36,10 +36,11 @@ public sealed class PreviewSurface : Control, IPreviewSurface
     private TimeSpan restUntil;
     private bool rendering;
     /// <summary>
-    /// Volatile because <see cref="Refresh"/> is now called from outside this
-    /// thread: a note from a MIDI device arrives on the driver's thread and asks
-    /// for a frame from there. Everything else that sets it is the UI thread, and
-    /// the GPU surface guards its own copy with the lock it already has.
+    /// Volatile because <see cref="Refresh"/> is called from outside this
+    /// thread as well: a note from a MIDI device arrives on the driver's thread
+    /// and asks for a frame from there. Everything else that sets it is the UI
+    /// thread, and the GPU surface guards its own copy with the lock it already
+    /// has.
     /// </summary>
     private volatile bool dirty = true;
 

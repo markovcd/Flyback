@@ -197,9 +197,8 @@ public sealed class NodeEditor : Control
     /// The canvas itself, in graph units: the square a module may stand on.
     /// </summary>
     /// <remarks>
-    /// Drawn rather than merely enforced. A bound nothing shows is a wall in the
-    /// dark — the grid used to run on past it in every direction, which said the
-    /// canvas went on as well, so a drag that stopped had nothing to blame but
+    /// Drawn rather than merely enforced: a bound with nothing to show is a wall
+    /// in the dark, and a drag that stops there would have nothing to blame but
     /// the program.
     /// </remarks>
     internal static readonly Rect CanvasBounds = new(
@@ -1119,9 +1118,9 @@ public sealed class NodeEditor : Control
         // Zoomed far out the grid stops being useful and only costs draw calls.
         if (visible.Width / spacing > 400) return;
 
-        // Rounded up rather than down, which is what the viewport wanted: a line
-        // started just short of the canvas used to be off the control and
-        // invisible, and would now be out on the ground past the edge.
+        // Rounded up rather than down: a line started just short of the canvas
+        // would land off the control and invisible, rather than ruling the
+        // ground past the edge.
         var firstX = Math.Ceiling(visible.X / spacing) * spacing;
         var firstY = Math.Ceiling(visible.Y / spacing) * spacing;
 
@@ -1757,10 +1756,9 @@ public sealed class NodeEditor : Control
         var graph = ToGraph(screen);
         dragOrigin = screen;
 
-        // Panning is the middle button and nothing else. The right one used to
-        // do it as well, and gave that up when it took on the module list —
-        // ADR-0046 — because a button cannot both open something on a click and
-        // stay silent for one.
+        // Panning is the middle button and nothing else: the right one opens
+        // the module list instead — ADR-0046 — because a button cannot both
+        // open something on a click and stay silent for one.
         if (properties.IsMiddleButtonPressed)
         {
             drag = Drag.Pan;

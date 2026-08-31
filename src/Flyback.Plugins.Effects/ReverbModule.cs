@@ -259,16 +259,15 @@ internal static class ReverbModule
     /// that went in.
     /// </summary>
     /// <remarks>
-    /// This is the number that decides whether the reverb is audible at all, and
-    /// getting it from the wrong end of the comb's response is what made the old
-    /// one a whisper. A comb's gain at DC is one over one minus its feedback —
-    /// but that is the top of its tallest peak, not what it does to a signal. A
-    /// tail is broadband, and what a comb does to broadband is set by its energy:
-    /// the repeats are a geometric train, so the power gain is one over one minus
-    /// the feedback squared and the amplitude gain is the root of it. Between the
-    /// two lies six decibels at the shortest decay and twenty at the longest, all
-    /// of it taken off the wet path and none off the dry — which is why turning
-    /// 'mix' up used to turn the sound down.
+    /// This is the number that decides whether the reverb is audible at all. A
+    /// comb's gain at DC is one over one minus its feedback — but that is the top
+    /// of its tallest peak, not what it does to a signal. A tail is broadband,
+    /// and what a comb does to broadband is set by its energy: the repeats are a
+    /// geometric train, so the power gain is one over one minus the feedback
+    /// squared and the amplitude gain is the root of it. Between the two lies six
+    /// decibels at the shortest decay and twenty at the longest, all of it taken
+    /// off the wet path and none off the dry — which is why the level has to come
+    /// from the energy figure rather than the DC one.
     /// <para>
     /// Eight combs and not one, and their delays are mutually prime precisely so
     /// that what comes out of them does not line up. Uncorrelated signals add as
@@ -288,9 +287,9 @@ internal static class ReverbModule
     /// A room has no mode at DC and neither should this, but the reason to spend
     /// four ops saying so is what the combs would otherwise do with one. DC is
     /// the single frequency they amplify most — fifty times over at the longest
-    /// decay — and it is the one thing the scaling above deliberately no longer
-    /// protects against, since protecting against it is what cost the tail its
-    /// twenty decibels.
+    /// decay — and the broadband scaling above does nothing to hold it down,
+    /// since a measure tuned to a tail's energy says nothing about any one
+    /// frequency's own gain.
     /// <para>
     /// A microphone would rarely hand a reverb any DC to worry about. This is not
     /// a microphone: a pluck envelope, an offset Remap and a slow LFO are all

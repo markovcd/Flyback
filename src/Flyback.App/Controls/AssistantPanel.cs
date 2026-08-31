@@ -1257,14 +1257,13 @@ public sealed class AssistantPanel : UserControl
     /// </summary>
     /// <remarks>
     /// There is no button for it, and there is no button to take it back
-    /// either. A proposal nobody applied is a proposal nobody can see, and now
-    /// that this arrives as an edit rather than as a new document, undo is the
-    /// way back — which is a better offer than the pair of buttons this
-    /// replaced, since those only ever knew about the last one.
+    /// either. A proposal nobody applied is a proposal nobody can see, and
+    /// because this arrives as an edit rather than as a new document, undo is
+    /// the way back.
     /// <para>
-    /// Editing the patch while a turn ran used to take two clicks to overrule.
-    /// It takes none now: the edits are replaced, and saying so is enough,
-    /// because one press of undo has them back.
+    /// Editing the patch while a turn ran takes nothing to overrule: the
+    /// edits are replaced, and saying so is enough, because one press of
+    /// undo has them back.
     /// </para>
     /// </remarks>
     private void Deliver()

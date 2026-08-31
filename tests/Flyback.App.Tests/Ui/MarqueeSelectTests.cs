@@ -15,9 +15,9 @@ namespace Flyback.App.Tests.Ui;
 /// sweeps.
 /// </summary>
 /// <remarks>
-/// The gesture it took over is panning, which is now the middle and right
-/// buttons alone — so half of what is below is about the band doing what it
-/// should, and half is about the two buttons that must not have changed.
+/// Panning is the middle and right buttons alone — so half of what is below is
+/// about the band doing what it should, and half is about the two buttons that
+/// must not do it too.
 /// </remarks>
 public class MarqueeSelectTests : UiTest
 {
@@ -270,9 +270,9 @@ public class MarqueeSelectTests : UiTest
     }
 
     /// <summary>
-    /// The right button gave up panning when it took on the module list: a
-    /// button cannot both open something on a click and stay silent for one.
-    /// Panning is the middle button and nothing else.
+    /// The right button opens the module list, so it cannot also stay silent
+    /// for a click meant as a pan. Panning is the middle button and nothing
+    /// else.
     /// </summary>
     [AvaloniaFact]
     public void The_right_button_no_longer_pans()

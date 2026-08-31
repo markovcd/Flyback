@@ -286,9 +286,9 @@ public sealed partial class MainWindow
         {
             inspector.Children.Add(new TextBlock
             {
-                // Adding a module is named first, and no longer because it is
-                // important: the list now opens where it is asked for, and the
-                // Output sits behind the preview so the controls stay discoverable.
+                // Adding a module is named first because the list opens where it
+                // is asked for, and the Output sits behind the preview so the
+                // controls stay discoverable.
                 Text = "Right-click the canvas — or press Space — to add a module. "
                      + "Type to narrow the list, arrows to move through it, Enter to add.\n\n"
                      + "Select a module to edit its values, and double-click its "
@@ -1031,8 +1031,7 @@ public sealed partial class MainWindow
 
         // Anything else is a plugin's own kind, which ships no control and is
         // drawn from what it declares instead — see ADR-0055. A kind that
-        // declares nothing gets no rows, which is the same nothing an
-        // unrecognised one used to get.
+        // declares nothing simply gets no rows.
         _ => BuildDeclaredRows(node, extra),
     };
 

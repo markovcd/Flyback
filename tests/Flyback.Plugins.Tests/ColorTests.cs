@@ -348,12 +348,10 @@ public class ColorTests
     /// the palette and flattening the posterise together.
     /// </summary>
     /// <remarks>
-    /// That sweep used to reach a third place — a Pulse's width, so the tone
-    /// widened as the palette did. It has gone with the preset's sound. The ear
-    /// cannot read the field at all here, x and y being the pixel's own position
-    /// and the speakers having no pixel, so what the tone was made of was the one
-    /// knob and nothing else; sharing a knob with a picture is not the picture
-    /// being heard.
+    /// The ear cannot read the field at all here, x and y being the pixel's own
+    /// position and the speakers having no pixel, so sharing this knob with a
+    /// sound would not be the picture being heard. It drives only the palette's
+    /// spread and the posterise's levels.
     /// </remarks>
     [Fact]
     public void The_preset_builds_and_is_one_gesture()

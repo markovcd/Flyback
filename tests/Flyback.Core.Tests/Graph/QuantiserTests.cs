@@ -317,9 +317,9 @@ public class QuantiserTests
     }
 
     /// <summary>
-    /// The socket left alone is the module as it was before the socket existed.
-    /// A level rather than an edge is what buys that: nought is down, and an
-    /// unpatched socket is nought.
+    /// Left unpatched, the socket behaves as if it were not there. A level
+    /// rather than an edge is what buys that: nought is down, and an unpatched
+    /// socket is nought.
     /// </summary>
     [Fact]
     public void Left_alone_it_snaps_continuously()

@@ -69,9 +69,9 @@ public class IntervalTests
     }
 
     /// <summary>
-    /// The regression. Sixteen is where a cell's clamp used to catch the clock
-    /// and hold it, after which the interval was the whole of the time since —
-    /// growing without end, and never the step again.
+    /// The regression. Sixteen is where an ordinary cell's clamp would catch
+    /// the clock and hold it, turning the interval into the whole of the time
+    /// since — growing without end, and never the step again.
     /// </summary>
     [Theory]
     [InlineData(15.9)]

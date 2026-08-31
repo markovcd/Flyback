@@ -308,14 +308,9 @@ public class ModulationTests
     /// The preset builds, compiles, and reaches the speakers and nothing else.
     /// </summary>
     /// <remarks>
-    /// The video half is asserted as an absence now rather than as a cost. It
-    /// used to send each module's own LFO to a hue, a saturation and a Translate,
-    /// and this test measured what that cost the picture: dead code is eliminated
-    /// a module at a time rather than an op at a time, so a frame that wanted the
-    /// sweep got the delay lines and the cells beside it. Inert rather than
-    /// wasteful, but paid for — and paid for to draw the control signal rather
-    /// than the effect. With no picture in the patch the walk back from the
-    /// Output's colour reaches nothing at all, which is what the counts below say.
+    /// Dead code is eliminated a module at a time rather than an op at a time,
+    /// so with nothing wired to the Output's colour the walk back from it
+    /// reaches nothing at all — the video program is empty, not merely inert.
     /// </remarks>
     [Fact]
     public void The_preset_builds_and_reaches_the_speakers_alone()

@@ -9,11 +9,9 @@ namespace Flyback.Core.Tests.Graph;
 /// The rules the shipped patches keep, as tests rather than as a convention.
 /// </summary>
 /// <remarks>
-/// Both of these were house style before they were assertions, and both had been
-/// quietly broken by the time anybody counted. A preset is written to teach
-/// something, and the failure mode is always the same shape: the patch grows a
-/// second half at the other sink that is not what it is teaching, and a reader
-/// has to see past it to find the point.
+/// A preset is written to teach something, and the failure mode is always the
+/// same shape: the patch grows a second half at the other sink that is not
+/// what it is teaching, and a reader has to see past it to find the point.
 /// <para>
 /// Checked against the engine's own catalogue, which is also the promise a
 /// shipped preset makes: it must never need a plugin to be installed. A plugin's
@@ -128,13 +126,12 @@ public class PresetRulesTests
     /// Whether anything in the patch drives a given sink.
     /// </summary>
     /// <remarks>
-    /// Asked of the wires rather than of the compiled program, which was tried
-    /// first and does not work: a sink always emits something. The speakers'
-    /// program multiplies by the gain and clamps to the rails whether or not
-    /// anything is patched in, so an op count says every patch makes a sound.
-    /// What actually settles it is whether the Output's own socket for that sink
-    /// has a wire in it — which is also where the compiler's walk starts, so the
-    /// two agree by construction.
+    /// Asked of the wires rather than of the compiled program: a sink always
+    /// emits something. The speakers' program multiplies by the gain and clamps
+    /// to the rails whether or not anything is patched in, so an op count says
+    /// every patch makes a sound. What actually settles it is whether the
+    /// Output's own socket for that sink has a wire in it — which is also where
+    /// the compiler's walk starts, so the two agree by construction.
     /// </remarks>
     private static bool Driven(Patch patch, params int[] ports) =>
         patch.Connections.Any(wire =>

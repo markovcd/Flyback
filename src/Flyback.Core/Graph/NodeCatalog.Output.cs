@@ -41,12 +41,11 @@ public partial class NodeCatalog
     /// </summary>
     /// <remarks>
     /// <para>
-    /// The gap this closes was the sharpest one left in a machine whose whole
-    /// premise is one patch making a picture and a sound: the picture could not
-    /// hear. A Scope charts what was played, and everything else the eye knows
-    /// about the ear it knows by sharing a modulator — the same sweep sent to two
-    /// places, which is a patch saying two things at once rather than one half of
-    /// it listening to the other.
+    /// This is the one place the eye actually listens to the ear, rather than
+    /// sharing a modulator with it. A Scope charts what was played, but
+    /// everything else the eye knows about the ear otherwise comes from sharing
+    /// a sweep between two places — a patch saying two things at once rather
+    /// than one half of it listening to the other.
     /// </para>
     /// <para>
     /// It taps its input the way a Scope does — the socket is a root of the
@@ -490,7 +489,7 @@ public partial class NodeCatalog
     /// register like any other, so "nothing is patched" is not a question this
     /// can ask. A level answers it by not needing to. Nought is down, an
     /// unpatched socket is nought, and a module nobody has wired anything into
-    /// snaps continuously exactly as it did before the socket existed.
+    /// snaps continuously.
     /// </para>
     /// <para>
     /// It also states the guarantee the right way round. An edge says when the

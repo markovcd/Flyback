@@ -5,10 +5,10 @@ using Flyback.Core.Render;
 namespace Flyback.Core.Tests.Rendering;
 
 /// <summary>
-/// Automates the check that was previously done by eye: render each preset and
-/// compare it against an approved image. This is the only test that covers the
-/// full path — catalogue, compiler, interpreter, coordinate conventions and
-/// feedback history — as a single observable result.
+/// Renders each preset and compares it against an approved image. This is the
+/// only test that covers the full path — catalogue, compiler, interpreter,
+/// coordinate conventions and feedback history — as a single observable
+/// result.
 /// </summary>
 public class PresetSnapshotTests
 {

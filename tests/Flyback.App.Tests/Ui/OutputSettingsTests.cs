@@ -104,10 +104,9 @@ public class OutputSettingsTests : UiTest
     }
 
     /// <summary>
-    /// Everything that writes a file is the one button. There was a second for
-    /// stills until a PNG became one of the kinds the first offers, and the
-    /// difference between them was never anything a person would have said out
-    /// loud — both write what the patch is doing to a file.
+    /// Everything that writes a file is the one button: a PNG is one of the
+    /// kinds it offers, and the distinction was never anything a person would
+    /// have said out loud — both write what the patch is doing to a file.
     /// </summary>
     [AvaloniaFact]
     public void There_is_one_button_for_writing_a_file()
@@ -218,7 +217,7 @@ public class OutputSettingsTests : UiTest
 
     /// <summary>
     /// Rewind moves the picture and the sound together, so it lives with the
-    /// rest of the instrument rather than on the toolbar it used to sit on.
+    /// rest of the instrument rather than on the toolbar.
     /// </summary>
     [AvaloniaFact]
     public void Rewind_is_on_the_output_panel()

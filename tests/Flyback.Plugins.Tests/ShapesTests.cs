@@ -547,12 +547,6 @@ public class ShapesTests
     /// look the same at any one moment and would drift apart over a minute, which
     /// is the failure this pins.
     /// </summary>
-    /// <remarks>
-    /// The same sweep used to reach a Pulse as well, so the seam widening was
-    /// also a duty cycle widening. That has gone with the preset's sound: the two
-    /// were related by having been handed the same number and by nothing else,
-    /// which is not what a patch carrying both sinks is for.
-    /// </remarks>
     [Fact]
     public void The_showcase_preset_moves_the_picture_from_one_sweep()
     {

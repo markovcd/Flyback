@@ -76,12 +76,9 @@ public static class Presets
     /// worth meeting in.
     /// <para>
     /// The rule the <see cref="PresetKind.Idea"/> group keeps is that a patch
-    /// teaching one thing reaches one sink. It was not kept before, and what that
-    /// cost is visible in what has gone: a drum whose picture was a saw
-    /// impersonating an envelope, a reverb whose picture was an envelope standing
-    /// in for a room, and a fractal with an unrelated drone beside it. Each of
-    /// those had two halves and only one subject, and the half that was not the
-    /// subject was the half a reader had to see past.
+    /// teaching one thing reaches one sink: the half that is not the subject is
+    /// decoration, and decoration is the half a reader has to see past to find
+    /// the point.
     /// </para>
     /// </remarks>
     public static IReadOnlyList<PatchPreset> All =>

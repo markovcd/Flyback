@@ -274,10 +274,8 @@ public class MidiInputTests : UiTest
     /// editor's gestures, so that every bare letter belongs to the instrument.
     /// </summary>
     /// <remarks>
-    /// F was not a note under the layout that ships, so this was not a conflict
-    /// yet. It moved anyway: a gesture that worked only until somebody added a
-    /// key to the layout is worse than one that reads by the same rule as its
-    /// neighbours.
+    /// A gesture that works only until somebody adds a key to the layout is
+    /// worse than one that reads by the same rule as its neighbours.
     /// </remarks>
     [AvaloniaFact]
     public void Ctrl_F_frames_the_patch_and_F_alone_no_longer_does()

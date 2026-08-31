@@ -23,10 +23,9 @@ namespace Flyback.App.Tests.Ui;
 /// exception. The only way to find out is to press one, so these press one.
 /// <para>
 /// The other half is that it is a panel over the window rather than a window of
-/// its own, so nothing about being modal comes from the platform any more. What
-/// used to be the operating system's promise — that the shell behind cannot be
-/// clicked or typed at — is now three lines of this program's, and is tested
-/// here as such.
+/// its own, so nothing about being modal comes from the platform: the shell
+/// not answering a click or a keypress while the question is up is three lines
+/// of this program's, and is tested here as such.
 /// </para>
 /// </remarks>
 public class UnsavedDialogTests : UiTest

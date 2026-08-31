@@ -136,17 +136,17 @@ public enum OpCode : byte
     /// far the domain 'a' has moved, counted in cycles of 'b' as it was at each
     /// step, with 'c' added on afterwards rather than integrated.
     /// <para>
-    /// Integrating is what makes a frequency change silent. Multiplying instead
-    /// — phase = a * b, which is what this path did before it had any state —
-    /// makes phase jump by a times the change in b whenever b moves, so a
-    /// stepped pitch tears the waveform by more the longer the patch has run.
-    /// The accumulated phase moves by one step's worth however far b jumps, so
-    /// the wave's value stays continuous and only its slope changes.
+    /// Integrating is what makes a frequency change silent: a plain multiply,
+    /// phase = a * b, would make phase jump by a times the change in b
+    /// whenever b moves, so a stepped pitch would tear the waveform by more
+    /// the longer the patch has run. The accumulated phase instead moves by
+    /// one step's worth however far b jumps, so the wave's value stays
+    /// continuous and only its slope changes.
     /// </para>
     /// <para>
-    /// Without state it falls back to a * b + c, which is exactly the old
-    /// multiply. A picture is one evaluation per pixel with no previous sample
-    /// to carry anything from, and there the two agree.
+    /// Without state it falls back to a * b + c. A picture is one evaluation
+    /// per pixel with no previous sample to carry anything from, and there
+    /// the two agree.
     /// </para>
     /// </summary>
     Phase,

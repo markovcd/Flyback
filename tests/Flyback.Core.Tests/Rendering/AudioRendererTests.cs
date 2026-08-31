@@ -41,11 +41,11 @@ public class AudioRendererTests
     /// quietly disagrees with it.
     /// </summary>
     /// <remarks>
-    /// Written for ADR-0048. Time used to carry a rate knob, which multiplied
-    /// `t` before anything downstream saw it — so a Time at 0.2 turned a 440 Hz
-    /// oscillator into an 88 Hz one while its own knob went on saying 440.
-    /// Nothing about the patch showed where the fifth went, and it is the kind
-    /// of wrong that is only audible.
+    /// Written for ADR-0048: a rate knob sitting between Time and an oscillator,
+    /// scaling `t` before anything downstream sees it, would turn a 440 Hz
+    /// oscillator into an 88 Hz one while its own knob went on saying 440, with
+    /// nothing about the patch showing where the fifth went — the kind of wrong
+    /// that is only audible.
     /// </remarks>
     [Fact]
     public void Nothing_between_time_and_an_oscillator_can_change_its_pitch()
@@ -280,9 +280,9 @@ public class AudioRendererTests
     }
 
     /// <summary>
-    /// And says nothing about it. Every patch has an Output now, so a patch
-    /// built for the eye alone is one whose 'left' is empty — which is a
-    /// deliberate thing, not a complaint waiting to happen.
+    /// And says nothing about it. Every patch has one Output, so a patch built
+    /// for the eye alone is one whose 'left' is empty — which is deliberate, not
+    /// a complaint waiting to happen.
     /// </summary>
     [Fact]
     public void A_patch_with_nothing_wired_to_the_speakers_is_silent_rather_than_a_failure()

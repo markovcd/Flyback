@@ -356,8 +356,8 @@ public class ReportLineTests : UiTest
     }
 
     /// <summary>
-    /// What will not fit on the bar is in the popup as well, so it outlives the
-    /// hover it used to be the only reward for.
+    /// What will not fit on the bar is in the popup as well, so a message's
+    /// detail stays visible after the pointer that revealed it has moved on.
     /// </summary>
     [AvaloniaFact]
     public void The_detail_behind_a_message_is_in_the_popup_too()
@@ -495,9 +495,9 @@ public class ReportLineTests : UiTest
     // --- and where it lives -------------------------------------------------
 
     /// <summary>
-    /// The bar it is on has to leave it room. It used to be the last thing in a
-    /// row that handed every earlier child all the width it asked for, so it was
-    /// pushed off the end of the window entirely.
+    /// The bar it is on has to leave it room: without a reserved share of the
+    /// width, earlier children can claim all of it and push the report off the
+    /// end of the window entirely.
     /// </summary>
     [AvaloniaFact]
     public void The_status_bar_keeps_a_share_of_its_width_for_the_report()

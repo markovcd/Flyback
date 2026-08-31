@@ -95,8 +95,8 @@ public class PhaseAccumulatorInvariants
     }
 
     /// <summary>
-    /// The video path passes no state, and there the op has to be exactly the
-    /// multiply it replaced — not approximately, or every approved frame in the
+    /// The video path passes no state, so there the op has to reduce to exactly
+    /// a plain multiply — not approximately, or every approved frame in the
     /// snapshot tests would have to be redrawn for a change the audio path asked
     /// for.
     /// </summary>
@@ -124,8 +124,8 @@ public class PhaseAccumulatorInvariants
     }
 
     /// <summary>
-    /// Nothing changes for a patch that was already working: at a steady
-    /// frequency the running total and the multiply are the same number.
+    /// At a steady frequency, the running total and the multiply give the same
+    /// number.
     /// </summary>
     [Fact]
     public void A_steady_frequency_accumulates_the_phase_the_multiply_would_have()

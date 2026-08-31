@@ -20,12 +20,10 @@ namespace Flyback.Plugins.Picture;
 /// the creases are the dark and the body is the light.
 /// </para>
 /// <para>
-/// There is no sound in it, and there was: the same two fields used to be read
-/// at the point the speakers stand and turned into a drone that wandered. It
-/// worked, and it was a second patch sharing a canvas with this one. Nothing was
-/// sent to both sinks, so nothing about the drone said anything about the stone
-/// — a listener could not have told which picture it belonged to, which is the
-/// test a patch that carries both halves has to pass.
+/// There is no sound in it. A patch that carries both a picture and a sound
+/// only earns having both if a listener could tell which picture the sound
+/// belonged to — reading these fields into an audio sink without sharing any
+/// real structure with what is drawn would not pass that test.
 /// </para>
 /// <para>
 /// Three octaves on the warp and five on the veins, set on the nodes rather than

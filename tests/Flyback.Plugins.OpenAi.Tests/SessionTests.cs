@@ -364,11 +364,10 @@ public class SessionTests
     /// model was hoping to hear.
     /// </summary>
     /// <remarks>
-    /// The bug this exists for. `note` used to be forwarded as "the person
-    /// building it is listening for: …", and a model asked to listen for a
-    /// kickdrum, a hihat and a melody duly reported a kickdrum, a hihat and a
-    /// melody — over a clip that measured as three steady tones with no hit in
-    /// it anywhere. A description that could not have come back wrong is not
+    /// A model told what it is listening for can echo that expectation back
+    /// regardless of the clip — asked to listen for a kickdrum, a hihat and a
+    /// melody, it will duly report one even over three steady tones with no
+    /// hit anywhere. A description that could not have come back wrong is not
     /// evidence, so the expectation stays on this side of the request.
     /// </remarks>
     [Fact]

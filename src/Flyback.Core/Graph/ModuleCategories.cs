@@ -14,9 +14,8 @@ namespace Flyback.Core.Graph;
 /// right where it stands, and only wrong beside a word in another assembly.
 /// <para>
 /// So the names live here, together, where picking one is a choice between the
-/// ones that already exist. <see cref="All"/> is also the display order, which is
-/// the second thing that was missing: sections used to come out in whatever order
-/// the modules were registered, so installing a plugin could move them.
+/// ones that already exist. <see cref="All"/> is also the display order, which
+/// keeps a plugin's installation from moving any section around.
 /// </para>
 /// <para>
 /// A plugin may still name a category of its own — nothing refuses an unknown
@@ -39,10 +38,7 @@ public static class ModuleCategories
     /// <summary>Shapes with edges, as distance fields to fill and combine.</summary>
     public const string Forms = "Forms";
 
-    /// <summary>
-    /// What bends the plane a field is read across. Was "Space", which a plugin's
-    /// reverb also claimed; a room and a rotation are not the same subject.
-    /// </summary>
+    /// <summary>What bends the plane a field is read across.</summary>
     public const string Geometry = "Geometry";
 
     /// <summary>Building a color, taking one apart, and correcting one.</summary>
@@ -59,14 +55,11 @@ public static class ModuleCategories
 
     /// <summary>
     /// What decides when something happens: tempo, the two step sequencers, the
-    /// envelope and the hold. Was "Sequencer", which the envelope is not.
+    /// envelope and the hold.
     /// </summary>
     public const string Timing = "Timing";
 
-    /// <summary>
-    /// What is done to a waveform's shape — folding, driving, filtering. Was
-    /// "Shape" and "Filter", which were one subject in two sections.
-    /// </summary>
+    /// <summary>What is done to a waveform's shape — folding, driving, filtering.</summary>
     public const string Shaping = "Shaping";
 
     /// <summary>
@@ -80,7 +73,7 @@ public static class ModuleCategories
 
     /// <summary>
     /// What looks at a signal rather than making one: the two charts, the meter
-    /// and the scan. Lived under "Output", which they are not.
+    /// and the scan.
     /// </summary>
     public const string Measurement = "Measurement";
 

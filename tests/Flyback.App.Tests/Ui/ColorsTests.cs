@@ -49,9 +49,8 @@ public class ColorsTests
     }
 
     /// <summary>
-    /// The palette is what stops two greys drifting a shade apart, which is
-    /// exactly what had happened to the two it replaced. Every entry earns its
-    /// place by being distinct from every other.
+    /// The palette exists to stop two greys drifting a shade apart. Every entry
+    /// earns its place by being distinct from every other.
     /// </summary>
     [Fact]
     public void No_two_entries_are_the_same_color()

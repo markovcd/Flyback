@@ -1183,9 +1183,8 @@ public sealed class PatchWorkbench
     /// <remarks>
     /// The same routine the editor's own tidy button runs, which is the point of
     /// it being shared: a patch that arrives from here is laid out exactly as one
-    /// the user has just tidied, so there is nothing to clean up after. What it
-    /// replaced counted columns and stacked them at a fixed pitch, and the pitch
-    /// was shorter than a tall module — see ADR-0044.
+    /// the user has just tidied, so there is nothing to clean up after — see
+    /// ADR-0044.
     /// </remarks>
     private void Arrange() => PatchLayout.Arrange(working, modules);
 

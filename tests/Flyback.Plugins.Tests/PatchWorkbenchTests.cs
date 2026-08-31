@@ -391,8 +391,8 @@ public class PatchWorkbenchTests
     }
 
     /// <summary>
-    /// Now that the audio branch can be the whole point of a patch, it has to be
-    /// compiled before one is offered. The video pass never reaches a node only
+    /// The audio branch can be the whole point of a patch, so it has to be
+    /// compiled before one is offered: the video pass never reaches a node only
     /// the ear does, so on its own it would have said the patch was fine.
     /// </summary>
     [Fact]
@@ -425,9 +425,9 @@ public class PatchWorkbenchTests
     }
 
     /// <summary>
-    /// An assistant reads this after every edit. A patch built for the speakers
-    /// used to trip the missing-screen warning on every one of them, and one
-    /// that reads that as something to fix spends the run fixing it.
+    /// An assistant reads this after every edit, so a patch built for the
+    /// speakers alone must not trip the missing-screen warning — one that read
+    /// that as something to fix would spend the run fixing it.
     /// </summary>
     [Fact]
     public async Task A_patch_built_for_the_speakers_is_not_nagged_about_the_screen()
@@ -444,9 +444,8 @@ public class PatchWorkbenchTests
 
     /// <summary>
     /// The moment anything reaches the sink the complaint goes, which is what
-    /// stops it being noise for the whole of the rest of the run. There is no
-    /// longer a complaint about *having* no output — the block is always there,
-    /// so the only thing left to say is that nothing arrives at it.
+    /// stops it being noise for the whole of the rest of the run. The block is
+    /// always there, so the only thing left to say is that nothing arrives at it.
     /// </summary>
     [Fact]
     public async Task Wiring_the_output_settles_the_complaint_about_reaching_nothing()
@@ -984,8 +983,8 @@ public class PatchWorkbenchTests
     }
 
     /// <summary>
-    /// A patch for the speakers draws nothing, and the compiler no longer says
-    /// so — that is the point of it. Rendering one anyway would hand back a
+    /// A patch for the speakers draws nothing, and the compiler does not remark
+    /// on it — that is the point of it. Rendering one anyway would hand back a
     /// black rectangle, which is the one thing an assistant must never be shown
     /// for a patch that is working.
     /// </summary>
@@ -1096,7 +1095,7 @@ public class PatchWorkbenchTests
 
     /// <summary>
     /// The counterpart of the black-frame rule. A patch built for the screen is
-    /// silent on purpose and the compiler no longer remarks on it, so playing
+    /// silent on purpose and the compiler does not remark on it, so playing
     /// one would hand back two seconds of nothing — which reads as a broken tool
     /// rather than as a patch that was never meant to make a sound.
     /// </summary>
@@ -1160,10 +1159,10 @@ public class PatchWorkbenchTests
     }
 
     /// <summary>
-    /// An oscillator with nothing patched into it used to be the case above.
-    /// It is a sound now, and one that can be listened to: the socket carries
-    /// the clock without a wire, so there is nothing for the compiler to catch
-    /// and nothing to keep the ear from being asked.
+    /// An oscillator with nothing patched into it is a sound that can be
+    /// listened to: the socket carries the clock without a wire, so there is
+    /// nothing for the compiler to catch and nothing to keep the ear from
+    /// being asked.
     /// </summary>
     [Fact]
     public async Task An_oscillator_with_nothing_driving_it_can_be_heard()

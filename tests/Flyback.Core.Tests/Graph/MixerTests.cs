@@ -6,8 +6,7 @@ using Shouldly;
 namespace Flyback.Core.Tests.Graph;
 
 /// <summary>
-/// The four-channel mixer. Four inputs, a level on each and one output, which
-/// is the module a desk of Multiplies and Adds used to be.
+/// The four-channel mixer. Four inputs, a level on each and one output.
 /// </summary>
 /// <remarks>
 /// Its sockets are untyped, so the interesting property is not the arithmetic

@@ -30,19 +30,11 @@ public class KickTests
     /// The drum, built here rather than taken from a preset.
     /// </summary>
     /// <remarks>
-    /// It used to be the Kick preset, which has gone: its picture was a saw
-    /// impersonating an envelope the video path cannot run, and a patch teaching
-    /// one idea about sound should not ship half a picture to go with it. What
-    /// the preset was worth was never the wiring — Whole band builds the same
-    /// drum inside a larger patch, and Heard builds the level half of it — but
-    /// this file, which is the one place the modules are checked against each
-    /// other rather than on their own.
-    /// <para>
-    /// So the arrangement moved here, where it is the fixture rather than the
-    /// product. Two envelopes and an oscillator: one shapes how loud it is and
-    /// the shorter one shapes what pitch it is, and the second of those is the
-    /// whole difference between a drum and a beep.
-    /// </para>
+    /// Built here rather than taken from a preset, because a patch teaching one
+    /// idea about sound should not also ship a picture to go with it. Two
+    /// envelopes and an oscillator: one shapes how loud it is and the shorter
+    /// one shapes what pitch it is, and the second of those is the whole
+    /// difference between a drum and a beep.
     /// </remarks>
     private static Patch Kick(ModuleCatalog modules)
     {
@@ -210,9 +202,9 @@ public class KickTests
 
     /// <summary>
     /// It is still a drum a long way into a session. The envelope measures how
-    /// far the clock moved to know how far to travel, and the clock used to stop
-    /// being readable after sixteen seconds — from which point every strike
-    /// finished inside one sample and the kick was a click nobody could hear.
+    /// far the clock moved to know how far to travel, and a clock that stopped
+    /// being readable past sixteen seconds would make every strike finish
+    /// inside one sample — a kick that is a click nobody can hear.
     /// </summary>
     /// <remarks>
     /// Rendered through the real <see cref="AudioRenderer"/> rather than by

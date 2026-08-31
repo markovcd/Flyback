@@ -156,7 +156,7 @@ public static class PatchCompiler
         // Said only when *nothing* reaches it. A patch wired for the eye and not
         // the ear is as deliberate as one wired the other way, and nagging
         // either about the half it does not use would be noise on every edit —
-        // which is what ADR-0022 established when these were two nodes.
+        // see ADR-0022.
         if (!patch.Connections.Any(c => c.TargetNode == root.Id))
         {
             issues.Add(new CompileIssue(
@@ -439,18 +439,13 @@ public static class PatchCompiler
         // called, where a file is found, and where a complaint goes.
         //
         // A clip is resolved for whichever sink asked, the eye as well as the
-        // ear. That was not so at first: the screen was given nothing, on the
-        // grounds that a shader cannot read a clip and two backends showing
-        // different pictures is worse than neither showing one. What that
-        // overlooked is the Probe, which is a video program (ADR-0040) — so
-        // looking at a sample charted a flat line, and the one tool for seeing
-        // what a signal does could not see the one signal that comes from
-        // outside the patch.
+        // ear: a Probe is a video program (ADR-0040), and it needs to be able
+        // to chart what a Sample does rather than seeing a flat line.
         //
-        // The backends are kept in step somewhere better instead: a program that
-        // reads a clip is drawn on the processor, because the shader cannot draw
-        // it. Only a Sample the screen actually reaches puts a table in the
-        // video program, so nothing else in the catalogue pays for it.
+        // The backends stay in step by drawing on the processor whenever a
+        // program reads a clip, because the shader cannot draw it. Only a
+        // Sample the screen actually reaches puts a table in the video
+        // program, so nothing else in the catalogue pays for it.
         EmitContext Carried(EmitContext ctx, NodeInstance node, NodeDef def)
         {
             if (def.Extras.Count == 0) return ctx;
@@ -517,9 +512,8 @@ public static class PatchCompiler
                 // Its extras come from a scratch instance seeded the way a freshly
                 // placed one is, rather than from a second reading of the
                 // definition's defaults. One path, so a hidden module carries
-                // what a placed one would — which it did not before: a normal
-                // pointing at a module that reads a file got no clip at all,
-                // because nothing here went looking for one.
+                // what a placed one would — including a clip, for a normal
+                // pointing at a module that reads a file.
                 var scratch = NodeInstance.Create(def, 0d, 0d);
 
                 outputs = normals[bus.TypeId] = def.Emit(

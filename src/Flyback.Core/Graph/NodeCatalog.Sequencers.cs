@@ -254,8 +254,9 @@ public partial class NodeCatalog
         {
             var unit = notes[0].Length;
 
-            // Left alone at the usual length of one, so the commonest pattern
-            // emits exactly the ops it emitted before notes had a length.
+            // Left alone at the usual length of one, the division folds away,
+            // so the commonest pattern pays nothing for having a per-note
+            // length at all.
             var counted = unit == 1f
                 ? travelled
                 : em.Binary(OpCode.Div, travelled, em.Constant(unit));

@@ -382,15 +382,13 @@ public class SampleTests : IDisposable
     /// The eye is given the clip as well as the ear, and the Probe is why.
     /// </summary>
     /// <remarks>
-    /// The screen was handed nothing at first, on the grounds that a shader
-    /// cannot read a clip and two backends showing different pictures is worse
-    /// than neither showing one. What that overlooked is that a Probe is a video
-    /// program (ADR-0040) — so pointing one at a sample charted a flat line, and
-    /// the one tool for seeing what a signal does could not see the one signal
-    /// that comes from outside the patch.
+    /// A Probe is a video program (ADR-0040), so the screen has to be able to
+    /// read a clip too — otherwise pointing one at a sample would chart a flat
+    /// line, and the one tool for seeing what a signal does could not see the
+    /// one signal that comes from outside the patch.
     /// <para>
-    /// The backends are kept in step in the shell instead, by drawing a program
-    /// that reads a clip on the processor. What is checked here is the half that
+    /// The backends are kept in step in the shell, by drawing a program that
+    /// reads a clip on the processor. What is checked here is the half that
     /// makes that necessary and worthwhile: the interpreter reads the recording
     /// wherever it is asked to.
     /// </para>
@@ -421,13 +419,12 @@ public class SampleTests : IDisposable
     /// 'in'.
     /// </summary>
     /// <remarks>
-    /// The defect this was written for, and it charted as a dead flat line. The
-    /// cell holding the trigger as it was reads nought at every pixel, so every
-    /// evaluation with the trigger up looked like a rising edge; the start moved
-    /// to wherever the position was; and the clip was read at nought — its first
-    /// sample, which on a drum is silence. Neither what the speakers do nor a
-    /// memoryless reading of the patch, but something a third way that happened
-    /// to look exactly like the module not working.
+    /// Reading the trigger cell at every pixel instead would read nought
+    /// everywhere, since there is no memory on the screen — so every pixel would
+    /// look like a rising edge, restarting the clip at that pixel's own position
+    /// and reading it at its first sample, which on a drum is silence. That is
+    /// neither what the speakers do nor a memoryless reading of the patch, but a
+    /// third thing that happens to look exactly like the module not working.
     /// </remarks>
     [Fact]
     public void A_trigger_is_ignored_on_the_screen_rather_than_flattening_the_clip()

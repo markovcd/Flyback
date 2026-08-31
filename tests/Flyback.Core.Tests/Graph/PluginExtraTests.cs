@@ -203,9 +203,7 @@ public class PluginExtraTests
 
         // Its name and every field it declares, which is the whole of what this
         // assembly can say about a kind it has never heard of. Which tool writes
-        // one is the assistant's word and is added there — see VocabularyTests,
-        // where this used to assert "set_extra" and could not check that any such
-        // tool existed.
+        // one is the assistant's word and is added there — see VocabularyTests.
         extra.Announce().ShouldContain("chord");
 
         foreach (var field in extra.Fields) extra.Announce().ShouldContain(field.Key);

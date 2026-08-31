@@ -484,8 +484,7 @@ public sealed partial class MainWindow : Window
             // Two lines per row in the dropdown: what it is called, and the one
             // sentence saying what it is for. The descriptions are the part of
             // each preset's documentation a person choosing between twenty names
-            // actually needs, and until now they reached nobody — they were in
-            // the source and nowhere else.
+            // actually needs.
             ItemTemplate = new FuncDataTemplate<PatchPreset>((preset, _) =>
                 preset is null
                     ? null
@@ -668,11 +667,10 @@ public sealed partial class MainWindow : Window
     /// </summary>
     /// <remarks>
     /// A grid rather than a row of controls, because a row hands every child all
-    /// the width it asks for and lets the last of them fall off the end — which
-    /// is exactly what used to happen to the report, the one thing here that a
-    /// person actually has to read. The two prose columns share what the two
-    /// fixed ones leave, and each says so with an ellipsis when its share is not
-    /// enough.
+    /// the width it asks for and lets the last of them fall off the end — and
+    /// the report is the one thing here that a person actually has to read. The
+    /// two prose columns share what the two fixed ones leave, and each says so
+    /// with an ellipsis when its share is not enough.
     /// <para>
     /// Not evenly. The counts on the left are a fixed sentence of a known
     /// length, and the split is the one that fits all of it in a window of the
@@ -701,9 +699,9 @@ public sealed partial class MainWindow : Window
         helper.Text = assistant?.Summary ?? "assistant: none";
         ToolTip.SetTip(helper, PluginSummary());
 
-        // The gap a StackPanel used to give for free. On the children rather
-        // than the grid, so the first column starts at the margin and the last
-        // one keeps every pixel it is given.
+        // The gap a StackPanel gives for free, added by hand here since this is
+        // a grid. On the children rather than the grid, so the first column
+        // starts at the margin and the last one keeps every pixel it is given.
         backend.Margin = new Thickness(16, 0, 0, 0);
         helper.Margin = new Thickness(16, 0, 0, 0);
         report.Margin = new Thickness(16, 0, 0, 0);
@@ -746,8 +744,8 @@ public sealed partial class MainWindow : Window
     /// the button says what it does, so every one of these has one and it is a
     /// sentence rather than a repeat of the icon's name.
     /// <para>
-    /// Named as well, because a test can no longer find a button by reading it —
-    /// and a glyph is a poor thing to write an assertion against.
+    /// Named as well, so a test can find the button without reading it — a
+    /// glyph is a poor thing to write an assertion against.
     /// </para>
     /// </remarks>
     private static Button Glyph(string name, string glyph, string tip) =>

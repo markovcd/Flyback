@@ -43,10 +43,10 @@ internal static class Dialog
         /// frame provides: the cross on it, and Escape.
         /// </summary>
         /// <remarks>
-        /// Dismissing it comes back as <c>default</c>, which is the same promise
-        /// the window frame used to make: the answer nobody gave should be the
-        /// one that loses nothing, and an enum whose first member is Cancel gets
-        /// that from the language rather than from a line of code remembering.
+        /// Dismissing it comes back as <c>default</c>: the answer nobody gave
+        /// should be the one that loses nothing, and an enum whose first member
+        /// is Cancel gets that from the language rather than from a line of code
+        /// remembering.
         /// </remarks>
         public async Task<TResult> ShowDialog<TResult>(string title, Control content)
         {
@@ -84,9 +84,7 @@ internal static class Dialog
     /// </summary>
     /// <remarks>
     /// The control finds its own dialog rather than being handed one, because
-    /// the content is built before there is a dialog to hand it. It is the same
-    /// arrangement as before, when a button walked up to the window it was in
-    /// and closed that.
+    /// the content is built before there is a dialog to hand it.
     /// </remarks>
     public static void Close<TResult>(Control from, TResult result) =>
         from.FindAncestorOfType<ModalOverlay>()?.Answer(result);
@@ -213,8 +211,8 @@ internal sealed class ModalOverlay : Border
             VerticalAlignment = VerticalAlignment.Center,
         };
 
-        // What the window frame used to provide, and the only way out of the two
-        // dialogs that ask nothing and so have no buttons of their own.
+        // The only way out of the two dialogs that ask nothing and so have no
+        // buttons of their own.
         var dismiss = new Button
         {
             Name = "dismiss",
@@ -265,8 +263,7 @@ internal sealed class ModalOverlay : Border
             BorderThickness = new Thickness(1),
             CornerRadius = new CornerRadius(6),
 
-            // Centred and no bigger than it has to be, which is what the window
-            // it replaced did by sizing to its content.
+            // Centred and no bigger than it has to be.
             HorizontalAlignment = HorizontalAlignment.Center,
             VerticalAlignment = VerticalAlignment.Center,
             Margin = new Thickness(Inset),

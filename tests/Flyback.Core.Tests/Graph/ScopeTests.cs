@@ -312,7 +312,7 @@ public class ScopeTests
     /// <summary>
     /// The chart reaches both edges of the frame however wide it is. A window
     /// that stopped short would be a chart with the oldest of the past cut off
-    /// it and a dead margin either side, which is what a fixed extent gave.
+    /// it and a dead margin either side.
     /// </summary>
     [Theory]
     [InlineData(1d)]

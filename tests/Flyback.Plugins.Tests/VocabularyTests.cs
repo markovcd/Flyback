@@ -10,7 +10,7 @@ namespace Flyback.Plugins.Tests;
 /// actually offers.
 /// </summary>
 /// <remarks>
-/// The one thing nothing checked. A tool name used to be written out in four
+/// The one thing nothing checked. A tool name is written out in four
 /// places — declared, dispatched, explained in the handbook's preamble, and
 /// named again inside the engine's <see cref="NodeExtra.Announce"/>, which is in
 /// an assembly that cannot see any of the other three. Renaming a tool would

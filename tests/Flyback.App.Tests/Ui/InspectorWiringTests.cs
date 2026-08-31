@@ -17,12 +17,10 @@ namespace Flyback.App.Tests.Ui;
 /// </summary>
 /// <remarks>
 /// Patching is not a selection change, and the panel is rebuilt from nothing
-/// each time the selection moves. So a knob went on standing under a socket that
-/// had just been wired, showing a number the patch had stopped reading, until
-/// something else was clicked and it silently turned into "patched". What the
-/// panel now compares is which rows it has rather than what is in them, which is
-/// also what keeps a slider being dragged from being torn down under the hand
-/// holding it — the last test here is that half.
+/// each time the selection moves — so it compares which rows it has rather than
+/// what is in them, keeping a freshly-wired socket from showing a stale knob.
+/// The same check is also what keeps a slider being dragged from being torn
+/// down under the hand holding it — the last test here is that half.
 /// </remarks>
 public class InspectorWiringTests : UiTest
 {

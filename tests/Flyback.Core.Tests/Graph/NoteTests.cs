@@ -18,17 +18,10 @@ public class NoteTests
     /// The chromatic ramp, built here rather than taken from a preset.
     /// </summary>
     /// <remarks>
-    /// It used to be the Chromatic preset, which has gone: it was the third
-    /// patch in the box about pitch snapping, and In key says the same thing
-    /// about a scale rather than about a semitone. What it was worth is these two
-    /// tests, which are about the module and not about the patch — a ramp snapped
-    /// to whole notes is the smallest thing that exercises both the snap and the
-    /// accumulated phase behind it (ADR-0030).
-    /// <para>
-    /// The audio half only. The preset drew the same ramp at every radius at
-    /// once, which was a good picture and is nothing either of these tests looked
-    /// at.
-    /// </para>
+    /// These two tests are about the module rather than about a whole patch — a
+    /// ramp snapped to whole notes is the smallest thing that exercises both the
+    /// snap and the accumulated phase behind it (ADR-0030). Audio only; neither
+    /// test looks at the picture.
     /// </remarks>
     private static Patch Chromatic(ModuleCatalog modules)
     {
@@ -245,16 +238,14 @@ public class NoteTests
     }
 
     /// <summary>
-    /// The click, as something a test can see: a note change used to move the
-    /// waveform far further in one sample than the wave itself travels.
+    /// The click, as something a test can see: a note change must not move the
+    /// waveform further in one sample than the wave itself travels.
     /// </summary>
     /// <remarks>
-    /// Measured twice, and the second time is the one that matters. When phase
-    /// was <c>in</c> times <c>freq</c> the pitch actually produced during a
-    /// change was <c>freq</c> plus <c>t</c> times how fast freq was moving, so a
-    /// tear grew with the clock: whatever was done to the ramp, the same note
-    /// change twenty seconds in was twenty times worse. An accumulated phase has
-    /// no <c>t</c> in it at all, and the two windows come out the same.
+    /// Measured twice, twenty seconds apart. An accumulated phase has no
+    /// dependency on elapsed time, so a tear at a note change is the same size
+    /// wherever it happens — measuring only once could hide a tear that grows
+    /// with the clock.
     /// </remarks>
     [Theory]
     [InlineData(0d)]
@@ -280,9 +271,7 @@ public class NoteTests
 
         // The wave's own sample-to-sample travel is the yardstick: a tear is a
         // step far larger than anything the sine does on its own, so this holds
-        // whatever the pitch and the amplitude happen to be. Multiplied out
-        // rather than accumulated, this was fourteen times the median in the
-        // first second and seventy-two at twenty.
+        // whatever the pitch and the amplitude happen to be.
         var typical = steps.Order().ElementAt(steps.Count / 2);
         steps.Max().ShouldBeLessThan(typical * 3f);
     }

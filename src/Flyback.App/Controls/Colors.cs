@@ -19,8 +19,7 @@ namespace Flyback.App.Controls;
 /// shadowed inside every control that wanted it. This is the part of a theme
 /// that XAML would have given for free, without the
 /// binding layer that comes with it — see ADR-0016 for why the markup itself is
-/// still declined. Before this, thirty-one colors were spread across six files
-/// and two of them had already drifted a shade apart.
+/// still declined.
 /// </para>
 /// </remarks>
 internal static class Colors
@@ -89,8 +88,7 @@ internal static class Colors
 
     /// <summary>
     /// Text that is there to be read once and then ignored — a drag handle, a
-    /// line of provenance. Two of these had drifted a shade apart before the
-    /// palette was one thing; they are the same grey now.
+    /// line of provenance.
     /// </summary>
     public static Color Muted { get; } = Color.FromRgb(0x8A, 0x90, 0x9A);
 

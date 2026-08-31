@@ -12,8 +12,7 @@ namespace Flyback.App;
 /// <para>
 /// The list itself is <see cref="ModulePalette"/> and knows nothing about how it
 /// is shown. All that is here is where it appears and what happens to what is
-/// picked from it — which is the whole of what changed when it stopped being a
-/// column down the left of the window (ADR-0046).
+/// picked from it — see ADR-0046.
 /// </para>
 /// <para>
 /// One palette, built once and kept. It holds which plugins are ticked, and that

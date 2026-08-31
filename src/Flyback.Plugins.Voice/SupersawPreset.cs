@@ -15,11 +15,9 @@ namespace Flyback.Plugins.Voice;
 /// module is for. Both outputs go to their own channel, so the width is real
 /// rather than a copy of one signal sent to two ears.
 /// <para>
-/// Nothing is drawn. It used to show a second Supersaw read across x rather than
-/// across the clock, with the same sweep on its detune — which looked well and
-/// was a picture of a different instance of the module, standing beside the one
-/// being heard. Seven voices beating against each other is a thing for the ear;
-/// a still frame of it is a stripe pattern that happens to share a knob.
+/// Nothing is drawn: seven voices beating against each other is a thing for
+/// the ear, and a still frame of it is only a stripe pattern that happens to
+/// share a knob.
 /// </para>
 /// </remarks>
 internal static class SupersawPreset

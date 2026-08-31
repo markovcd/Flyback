@@ -7,8 +7,8 @@ namespace Flyback.Plugins.Picture;
 /// colors chosen rather than swept, and the two famous noises.
 /// </summary>
 /// <remarks>
-/// One plugin out of three that used to be separate — Shapes, Color and Noise —
-/// and the line it is drawn on is one the code already kept and never named.
+/// One plugin covering what reads as three distinct subjects — Shapes, Color
+/// and Noise — on a line the code already kept and never named.
 /// Every module here is pure arithmetic over ops the engine already has. None
 /// reaches for a table, a cell or a delay line, so all of them cost the same at
 /// either sink and all of them survive to the shader. That last is the gate that

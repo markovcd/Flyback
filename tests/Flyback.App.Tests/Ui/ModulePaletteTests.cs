@@ -15,11 +15,9 @@ namespace Flyback.App.Tests.Ui;
 /// The module list, and the gesture that opens it.
 /// </summary>
 /// <remarks>
-/// It used to be a column down the left of the window, standing open whether or
-/// not anything was being added. Now it appears at the pointer when the canvas
-/// is right-clicked, and what is picked lands where the click was — so what is
-/// checked here is that gesture, and that the right button has not lost the
-/// panning it also does.
+/// It appears at the pointer when the canvas is right-clicked, and what is
+/// picked lands where the click was — so what is checked here is that gesture,
+/// and that panning still belongs to the middle button alone.
 /// </remarks>
 public class ModulePaletteTests : UiTest
 {
@@ -132,8 +130,8 @@ public class ModulePaletteTests : UiTest
     }
 
     /// <summary>
-    /// The right button no longer pans — that is the middle one alone. It opens
-    /// on the press, which it can now that nothing has to be told apart from it.
+    /// Panning is the middle button alone; the right button opens on the press,
+    /// since nothing else needs telling apart from it.
     /// </summary>
     [AvaloniaFact]
     public void The_right_button_opens_the_list_and_does_not_pan()
@@ -419,12 +417,11 @@ public class ModulePaletteTests : UiTest
     /// The sections are the ones the engine names, in the order it names them.
     /// </summary>
     /// <remarks>
-    /// The list used to take its sections from whatever order the modules came
-    /// out of the catalogue in, so installing a plugin could move the engine's
-    /// own about — and two providers meaning different things by one word drew
-    /// them as a single section. Both are settled in
-    /// <see cref="ModuleCategories"/> now, and this is the assertion that the
-    /// list actually follows it.
+    /// Sections come from <see cref="ModuleCategories"/> rather than from
+    /// whatever order the modules happen to arrive in, so a plugin cannot move
+    /// the engine's own sections about, and two providers meaning different
+    /// things by one word still draw as two sections rather than one. This is
+    /// the assertion that the list actually follows the declared order.
     /// </remarks>
     [AvaloniaFact]
     public void The_sections_are_the_declared_ones_in_the_declared_order()
@@ -451,7 +448,7 @@ public class ModulePaletteTests : UiTest
 
         headings.Where(wanted.Contains).ShouldBe(wanted);
 
-        // And the two that used to collide are two sections now, not one.
+        // The two draw as separate sections, not merged into one.
         headings.ShouldContain(ModuleCategories.Geometry.ToUpperInvariant());
         headings.ShouldNotContain("SPACE");
         headings.ShouldNotContain("SHAPE");

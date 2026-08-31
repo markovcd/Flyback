@@ -68,9 +68,9 @@ public class WindowTitleTests : UiTest
     }
 
     /// <summary>
-    /// The dot the title already carried, now after the name rather than instead
-    /// of one. It is the only thing in the title that is about the work rather
-    /// than about which patch this is.
+    /// The dot marks an edit, appended after the patch's name. It is the only
+    /// part of the title that is about the work rather than about which patch
+    /// this is.
     /// </summary>
     [AvaloniaFact]
     public void An_edit_marks_the_title_and_undoing_it_takes_the_mark_off()

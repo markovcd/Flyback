@@ -7,10 +7,8 @@ namespace Flyback.Plugins.Voice;
 /// the stacked oscillator, and the three ways of changing a waveform's shape.
 /// </summary>
 /// <remarks>
-/// Two plugins joined — Supersaw, which was one module in an assembly of its
-/// own, and Timbre, which contributed to two categories that were one subject.
-/// What is left has a single boundary: everything in it is part of one voice, in
-/// the order a voice is built. Make the harmonics, then take them away.
+/// Everything here has a single boundary: it is part of one voice, in the
+/// order a voice is built. Make the harmonics, then take them away.
 /// <para>
 /// The Filter is the one module here that is not pure. It carries its
 /// integrators in the one-evaluation cells

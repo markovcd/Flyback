@@ -23,12 +23,10 @@ namespace Flyback.Plugins.Picture;
 /// corrected afterwards, the way a picture is.
 /// </para>
 /// <para>
-/// There is no sound in it, and there was: the same sweep opened a pulse from one
-/// partial to a stack, so the tone widened as the palette widened. It was the
-/// house style rather than the patch — the ear cannot read the field at all,
-/// because x and y are the pixel's own position and the speakers have no pixel,
-/// so what the sound was actually made of was the one knob and nothing else. A
-/// tone that shares a knob with a picture is not the picture being heard.
+/// There is no sound in it. The ear cannot read the field at all, because x and
+/// y are the pixel's own position and the speakers have no pixel — so any tone
+/// here could only share a knob with the picture, not share the picture. A tone
+/// that shares a knob with a picture is not the picture being heard.
 /// </para>
 /// </remarks>
 internal static class SpectrumPreset

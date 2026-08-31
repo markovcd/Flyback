@@ -20,17 +20,6 @@ namespace Flyback.Plugins.Picture;
 /// centre. That is the arrangement rather than an accident of it: the ring is set
 /// so the four close on their neighbours and not on the middle.
 /// <para>
-/// That signal used to do one other thing: it was a Pulse's width, so what the
-/// eye saw as four shapes flowing together the ear heard as a thin buzz opening
-/// into a hollow square. It has gone, and the reason is worth keeping. The seam
-/// is a fact about distance fields and the duty cycle is a fact about a
-/// waveform, and the two were related only by having been handed the same
-/// number. A patch that shares a signal between the sinks is showing that the
-/// two sinks are one graph; a patch that shares a signal between two unrelated
-/// things is showing that a number can be sent to two places, which nobody
-/// needed telling.
-/// </para>
-/// <para>
 /// The forms sit on a ring rather than in a row because a row would need the
 /// whole width of the frame and would leave the picture the shape of the window.
 /// A ring is centred, so it reads the same on a square preview and a wide one.

@@ -12,18 +12,15 @@ namespace Flyback.Plugins.Tests;
 /// </summary>
 /// <remarks>
 /// The engine's own presets are covered in <c>PresetRulesTests</c>, against the
-/// built-in catalogue. These are the ones a plugin registers, and until this
-/// existed nothing called their <c>Build</c> at all: each plugin tested the one
-/// or two presets it happened to care about, so a preset could name a module id
-/// that no longer existed and nothing would say so until somebody picked it in
-/// the app.
+/// built-in catalogue. These are the ones a plugin registers, so building every
+/// one here is what catches a preset naming a module id the catalogue does not
+/// hold — a failure no snapshot, compile test or module test would otherwise
+/// notice until somebody picked it in the app.
 /// <para>
-/// Which is exactly what happened. Slow weather guards on a provider id, because
-/// it reaches across a boundary for its Filter — and a provider that had been
-/// renamed left the guard looking for a plugin nobody ships, so the preset threw
-/// the moment it was chosen. A patch that cannot be built is the one failure a
-/// preset can have that no snapshot, no compile test and no module test would
-/// notice.
+/// The concrete case: Slow weather guards on a provider id because it reaches
+/// across a boundary for its Filter, and a provider that had been renamed left
+/// the guard looking for a plugin nobody ships — so the preset threw the moment
+/// it was chosen.
 /// </para>
 /// </remarks>
 public class ShippedPresetTests
@@ -75,11 +72,10 @@ public class ShippedPresetTests
     /// The one-idea-one-sink rule, applied to the presets a plugin registers.
     /// </summary>
     /// <remarks>
-    /// The same rule the engine's own presets keep, and the plugins were the
-    /// worse offenders: an audio plugin's preset used to draw something so the
-    /// window was not black, and a video plugin's used to make a noise so the
-    /// speakers were not silent. Both halves were decoration, and in each case
-    /// the preset's own documentation said so.
+    /// The same rule the engine's own presets keep. A preset that reaches a
+    /// sink only for decoration — drawing something so the window is not black,
+    /// or making a noise so the speakers are not silent — should drop that half
+    /// rather than keep it for its own sake.
     /// </remarks>
     [Theory]
     [MemberData(nameof(Every))]

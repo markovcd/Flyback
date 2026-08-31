@@ -44,18 +44,22 @@ internal static class About
     public const string BitcoinAddress = "";
 
     /// <summary>
-    /// The build's version, without the commit that source-link appends to it.
+    /// The build's version — a release's own, or a dev build's plus the commit
+    /// it was built from.
     /// </summary>
     /// <remarks>
     /// Read from the assembly rather than written down, so it can only ever say
-    /// what was actually built. Nothing sets a version in this repository yet, so
-    /// what it reports today is the 1.0.0 the compiler defaults to.
+    /// what was actually built. Set by the <c>Version</c> MSBuild property —
+    /// <c>0.1.0</c> by default, or whatever a release passes with
+    /// <c>-p:Version=X.Y.Z</c> (see Directory.Build.props, the Dockerfile and
+    /// the release workflow). Directory.Build.props also decides whether the
+    /// commit is appended at all: only the default carries one, since a real
+    /// release's version already names something real on its own.
     /// </remarks>
     public static string Version =>
-        (typeof(About).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
-         ?? typeof(About).Assembly.GetName().Version?.ToString()
-         ?? "unknown")
-        .Split('+')[0];
+        typeof(About).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
+        ?? typeof(About).Assembly.GetName().Version?.ToString()
+        ?? "unknown";
 
     /// <summary>The contents of the About window.</summary>
     public static Control View()

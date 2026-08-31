@@ -12,9 +12,8 @@ namespace Flyback.Plugins.Effects;
 /// omission. Both modules carry a delay line, a delay line is a memory
 /// ([0027](0027-delay-lines-give-the-audio-path-a-memory.md)), and the video path
 /// has none — so on the screen this whole patch is a wire and there is nothing of
-/// it to show. It used to ship with a ring pattern lit by the pluck envelope,
-/// which showed the thing going in rather than either of the two modules the
-/// preset is named for; a picture of the input is not a picture of the effect.
+/// it to show. A picture of the input is not a picture of the effect, and
+/// lighting a pattern off the pluck envelope would be exactly that.
 /// <para>
 /// Both of the room's outputs are used, which is the one thing this preset exists
 /// to show that a knob cannot: the same tail smeared two ways is what puts the

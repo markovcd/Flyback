@@ -228,13 +228,12 @@ public class MovieRendererTests
     /// is not the black a picture told nothing would be.
     /// </summary>
     /// <remarks>
-    /// This is what moved the audio for a frame ahead of the frame itself. The
-    /// preview cannot do that — a level there is what was played up to now,
-    /// because now is all there is — but an export holds the whole clip, so a
-    /// frame can be lit by the sound it is played with rather than by the sound
-    /// before it. Nothing else about the loop changed, and the tests above pin
-    /// that: the samples are still counted from the frame number, and they are
-    /// still written after the picture.
+    /// An export holds the whole clip, so a frame can be lit by the sound it is
+    /// played with — its audio is rendered ahead of the frame itself. The
+    /// preview cannot do that: a level there is only ever what was played up to
+    /// now, because now is all there is. The rest of the loop is unaffected, as
+    /// the tests above pin: the samples are still counted from the frame
+    /// number, and are still written after the picture.
     /// </remarks>
     [Fact]
     public void A_picture_lit_by_its_own_sound_is_lit_in_an_export()

@@ -46,12 +46,10 @@ public class PickerTests : UiTest
     /// It still looks like a list.
     /// </summary>
     /// <remarks>
-    /// The one this class got wrong, and the one every other test here was blind
-    /// to. A theme is found by type, and a control that does not say to look for
-    /// its base type's is given no template — so the list went on holding its
-    /// items, raising SelectionChanged and answering every question correctly,
-    /// while drawing nothing at all. Every test above passed against a control
-    /// nobody could see.
+    /// A theme is found by type, and a control that does not say to look for its
+    /// base type's is given no template — so it can go on holding its items,
+    /// raising SelectionChanged and answering every question correctly, while
+    /// drawing nothing at all. None of the tests above would catch that.
     /// <para>
     /// Checked as "it has a template and takes up room", which is what an
     /// untemplated control has and is neither of: its visual tree is itself alone
@@ -86,7 +84,7 @@ public class PickerTests : UiTest
         presets.Focus();
         Settle(window);
 
-        // 'k' is what took it to Kaleidoscope, one item down, before this existed.
+        // 'k' would otherwise jump the selection to Kaleidoscope, one item down.
         window.KeyTextInput("k");
         Settle(window);
 

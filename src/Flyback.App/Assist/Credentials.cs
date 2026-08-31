@@ -24,10 +24,10 @@ public enum CredentialSource
 /// <remarks>
 /// <para>
 /// A key somebody entered wins, because entering one is a deliberate act and an
-/// exported variable is the room somebody is standing in. The other way round —
-/// which this did until it was tried — means typing a key into the settings on a
-/// machine that exports one has no effect whatever, and cannot be made to have
-/// one from inside the application at all.
+/// exported variable is the room somebody is standing in. The other way round
+/// would mean typing a key into the settings on a machine that exports one has
+/// no effect whatever, and cannot be made to have one from inside the
+/// application at all.
 /// </para>
 /// <para>
 /// This session first, then the store: <see cref="Accept"/> writes both when it
@@ -38,9 +38,8 @@ public enum CredentialSource
 /// <para>
 /// Then the environment, which is never written back — someone who exports a key
 /// has said where it lives, and taking a copy would be deciding otherwise on
-/// their behalf. That was always the rule that mattered, and losing the top spot
-/// costs it nothing. <see cref="Forget"/> is the way back to it, which is what
-/// makes an entered key safe to prefer.
+/// their behalf. <see cref="Forget"/> is the way back to it, which is what makes
+/// an entered key safe to prefer.
 /// </para>
 /// <para>
 /// Nothing here ever writes a secret to disk itself; see ADR-0034.
