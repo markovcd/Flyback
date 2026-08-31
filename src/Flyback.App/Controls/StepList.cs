@@ -27,6 +27,7 @@ internal sealed class StepList
 {
     private const double RowHeight = 28;
     private const double InsertHeight = 6;
+    private const double InsertHeightHovered = 16;
 
     /// <summary>The height of an insert strip, so a test can pick one out of the tree.</summary>
     internal const double InsertHeightForTests = InsertHeight;
@@ -213,8 +214,17 @@ internal sealed class StepList
 
         ToolTip.SetTip(strip, "Add a note here");
 
-        strip.PointerEntered += (_, _) => line.Opacity = 0.85;
-        strip.PointerExited += (_, _) => line.Opacity = 0;
+        strip.PointerEntered += (_, _) =>
+        {
+            line.Opacity = 0.85;
+            strip.Height = InsertHeightHovered;
+        };
+
+        strip.PointerExited += (_, _) =>
+        {
+            line.Opacity = 0;
+            strip.Height = InsertHeight;
+        };
 
         strip.PointerPressed += (_, _) =>
         {
