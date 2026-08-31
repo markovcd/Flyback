@@ -5,9 +5,9 @@ namespace Flyback.Plugins.Effects;
 
 /// <summary>
 /// A whole acid techno track: one sequencer through a resonant filter with an
-/// envelope on its cutoff, a four-on-the-floor kick, hats and a clap, into a
-/// ping-pong delay — and a picture driven by the same three signals that drive
-/// the sound.
+/// envelope on its cutoff, a sub bass under it, a four-on-the-floor kick, hats
+/// and a clap, into a ping-pong delay — and a picture driven by the same three
+/// signals that drive the sound.
 /// </summary>
 /// <remarks>
 /// The largest preset in the box, and the one that needs all three module
@@ -17,10 +17,10 @@ namespace Flyback.Plugins.Effects;
 /// than a riff is the delay.
 /// <para>
 /// Everything is synthesised. There is no clip and no picture file anywhere in
-/// it, which is a constraint worth stating because two of the four instruments
-/// would ordinarily be samples: the hats and the clap are both made out of the
-/// hash every shader can compute, and the difference between them is which
-/// filter response they are read through and how long their envelope is.
+/// it, which is a constraint worth stating because two of the drums would
+/// ordinarily be samples: the hats and the clap are both made out of the hash
+/// every shader can compute, and the difference between them is which filter
+/// response they are read through and how long their envelope is.
 /// </para>
 /// <para>
 /// <b>The acid line.</b> A 303 is one oscillator, one lowpass with a great deal
@@ -41,6 +41,20 @@ namespace Flyback.Plugins.Effects;
 /// on the original machine and it costs one Remap here.
 /// </para>
 /// <para>
+/// <b>The bottom.</b> A 303 is a middle and nothing else: its lowest note is an
+/// A at fifty-five hertz and the filter takes most of what is under the cutoff
+/// away again, so between one kick and the next the bottom of the spectrum
+/// needs a voice of its own. A sine on the eighths plays the line's own roots
+/// an octave down, with the kick's envelope upside down on its level — a
+/// sidechain written as one Remap, which keeps two things in the same octave
+/// from summing into a mush that reads as neither. Both it and the kick end in
+/// a Drive, and that is not there to make
+/// either louder: the module normalises as it saturates and cannot. It is there
+/// because no laptop reproduces forty-two hertz, and every laptop reproduces the
+/// harmonics that saturating forty-two hertz puts above it, from which the ear
+/// puts the fundamental back.
+/// </para>
+/// <para>
 /// <b>Stereo from two delay times.</b> Left is a dotted eighth and right is an
 /// eighth, both computed from the tempo rather than typed — a Divide against the
 /// sixteenth-note rate, so changing the BPM moves the echoes with it and they
@@ -59,11 +73,12 @@ namespace Flyback.Plugins.Effects;
 /// the pattern comes round.
 /// </para>
 /// <para>
-/// <b>Why it does not loop.</b> Everything in it used to be sixteen steps long,
-/// so every part arrived back at its first step together and the bar was the
-/// whole piece. Now the four sequences are thirty-two, twelve, thirty-two and
-/// seven steps, and the last two of those share no factor with the bar: the hats
-/// arrive three quarters of a bar apart so the open hat walks through the beat,
+/// <b>Why it does not loop.</b> The parts that decide it run at thirty-two,
+/// twelve, thirty-two and seven steps — the bass is sixteen, which divides the
+/// bar and so adds no period of its own, and that is the point of it: a floor
+/// is the one thing that must not move. Of the four, the last two share no
+/// factor with the bar: the
+/// hats arrive three quarters of a bar apart so the open hat walks through the beat,
 /// and the seven-step track that sets how far the filter opens takes fourteen
 /// bars to line up with the line again. The pattern as a whole comes round after
 /// forty-two bars, which is about a minute.
@@ -170,9 +185,15 @@ internal static class AcidPreset
         var tempo = b.Add(NodeCatalog.TempoTypeId, 40, 2180, (0, 130f));
         var sixteenths = b.Add("math.mul", 260, 2180, (1, 4f));
 
-        b.Wire(tempo, 0, sixteenths, 0);
+        // Half of that, which is what the bass runs on. Taken off the sixteenths
+        // rather than off the tempo again, so the two rates are one number apart
+        // by construction and cannot be left disagreeing.
+        var eighths = b.Add("math.mul", 260, 2320, (1, 0.5f));
 
-        b.Group("Clock", clock, tempo, sixteenths);
+        b.Wire(tempo, 0, sixteenths, 0)
+         .Wire(sixteenths, 0, eighths, 0);
+
+        b.Group("Clock", clock, tempo, sixteenths, eighths);
 
         // --- the acid line -----------------------------------------------------
 
@@ -312,17 +333,35 @@ internal static class AcidPreset
         // saying nothing. Its 'freq' is the tempo itself.
         var beat = b.Add("osc.pulse", 500, 2740, (3, 0.02f));
 
+        // A quarter of a second of fall rather than a fifth, which is longer
+        // than a kick needs to be heard and nearer what it needs to be felt:
+        // what moves air here is the tail rather than the click at the front of
+        // it. Half a beat at this tempo, so the tail is well gone before the
+        // next one arrives and the four are four rather than a drone.
         var thump = b.Add(NodeCatalog.AdsrTypeId, 760, 2740,
-            (1, -3f), (2, -0.68f), (3, 0f), (4, -1.1f));
+            (1, -3f), (2, -0.6f), (3, 0f), (4, -1.1f));
 
         // The pitch envelope, an order of magnitude shorter than the level one:
         // what the ear hears at the top is the beater and after it the shell.
         var fall = b.Add(NodeCatalog.AdsrTypeId, 760, 3020,
             (1, -3.4f), (2, -1.45f), (3, 0f), (4, -1.9f));
 
-        var boom = b.Add("math.remap", 1000, 3020, (1, 0f), (2, 1f), (3, 48f), (4, 220f));
+        // Forty-two hertz at the bottom rather than forty-eight, which is a
+        // sixth of an octave and the difference between a kick with a note in it
+        // and one with weight in it. Much lower than this and it stops being
+        // reproduced at all; much higher and the whole sound is the beater.
+        var boom = b.Add("math.remap", 1000, 3020, (1, 0f), (2, 1f), (3, 42f), (4, 220f));
         var body = b.Add("osc.sine", 1240, 3020);
         var kick = b.Add("math.mul", 1480, 2820);
+
+        // Saturation, and it is worth saying what it is not for: the Drive is
+        // normalised as it goes, so it cannot make this louder. What it does is
+        // give a sine some harmonics, and those are the whole of what a small
+        // speaker has of a forty-two hertz note — it reproduces the eighty-four
+        // and the hundred and twenty-six, and the ear supplies the fundamental
+        // underneath them. On something with a cone it is a kick that is thicker
+        // rather than one that is different.
+        var punch = b.Add(DriveType, 1720, 2820, (1, 2f));
 
         b.Wire(tempo, 0, beat, 1)
          .Wire(beat, 0, thump, 0)
@@ -330,9 +369,92 @@ internal static class AcidPreset
          .Wire(fall, 0, boom, 0)
          .Wire(boom, 0, body, 1)
          .Wire(body, 0, kick, 0)
-         .Wire(thump, 0, kick, 1);
+         .Wire(thump, 0, kick, 1)
+         .Wire(kick, 0, punch, 0);
 
-        b.Group("Kick", beat, thump, fall, boom, body, kick);
+        b.Group("Kick", beat, thump, fall, boom, body, kick, punch);
+
+        // --- the bass ----------------------------------------------------------
+
+        // What the patch had no answer for. The acid line is a middle: its
+        // lowest note is an A at fifty-five hertz, the filter is usually sitting
+        // above that, and the kick is gone a quarter of a second into every beat
+        // — so for most of the bar there was nothing at all underneath. This is
+        // that, and it is deliberately not a second acid line. One voice moving
+        // is the sound of this music; two would be an argument.
+        //
+        // Sixteen eighths, which is two bars, which is exactly the length of the
+        // line above it. That is the one place in the patch where a part is
+        // meant to agree with another rather than walk against it: the hats and
+        // the mutate track are twelve and seven because a floor needs something
+        // to walk against, and a floor that walked would not be one.
+        //
+        // The notes are the line's own roots — A A, A C, G G, A A, and an answer
+        // that ends by reaching up to the E. They are written at the line's
+        // octave and dropped one on the Note module rather than typed out low,
+        // so what the list says is where the harmony is rather than a set of
+        // numbers a reader has to transpose to check.
+        var bassSeq = b.Add("seq.notes", 500, 5100, (2, 0.8f), (3, 0.03f));
+        StepsExtra.Set(bassSeq,
+        [
+            new Step(45f, 1f, 1f), new Step(45f, 1f, 0.7f),
+            new Step(45f, 1f, 0.85f), new Step(48f, 1f, 0.75f),
+            new Step(43f, 1f, 1f), new Step(43f, 1f, 0.7f),
+            new Step(45f, 1f, 0.9f), new Step(45f, 1f, 0.7f),
+
+            new Step(45f, 1f, 1f), new Step(45f, 1f, 0.7f),
+            new Step(48f, 1f, 0.9f), new Step(48f, 1f, 0.7f),
+            new Step(43f, 1f, 1f), new Step(43f, 1f, 0.75f),
+            new Step(45f, 1f, 0.9f), new Step(52f, 1f, 0.8f),
+        ]);
+
+        var bassPitch = b.Add("audio.note", 760, 5100, (1, -1f));
+
+        // A sine, because the job is the fundamental and nothing else. Anything
+        // with harmonics of its own down here would be in the same room as the
+        // line, and the line is the thing that is supposed to be heard.
+        var bassOsc = b.Add("osc.sine", 1000, 5100);
+
+        // The opposite envelope to the line's, which is worth putting next to
+        // it: there, the volume barely moves and everything happens to the
+        // filter; here nothing happens at all and the note simply holds for its
+        // eighth. Released over a twentieth of a second rather than cut, because
+        // at fifty-five hertz a cut lands mid-cycle and is heard as a click.
+        var bassEnv = b.Add(NodeCatalog.AdsrTypeId, 760, 5260,
+            (1, -2.4f), (2, -1f), (3, 0.9f), (4, -1.3f));
+
+        var bassVca = b.Add("math.mul", 1240, 5100);
+
+        // The kick's own level envelope, upside down, on the bass's level — a
+        // sidechain compressor, written as one Remap. Two things in the same
+        // octave played at once sum to something louder than either that reads
+        // as neither, and the fix is not to make the bass quieter but to have it
+        // step out of the way for the length of the beat and come straight back.
+        //
+        // Down to a fifth rather than to nothing, and the number is the whole
+        // craft of it: at zero there is a hole on every beat and the ear finds
+        // it, and the point of a sidechain is that nobody hears it happening.
+        var duck = b.Add("math.remap", 1000, 5400, (1, 0f), (2, 1f), (3, 1f), (4, 0.2f));
+        var ducked = b.Add("math.mul", 1480, 5100);
+
+        // And the same saturation the kick has, harder, for the same reason: the
+        // harmonics of a fifty-five hertz sine are what a small speaker actually
+        // reproduces of it, and without them this part is felt on one system and
+        // simply absent on every other.
+        var weight = b.Add(DriveType, 1720, 5100, (1, 3.2f));
+
+        b.Wire(eighths, 0, bassSeq, 1)
+         .Wire(bassSeq, 0, bassPitch, 0)
+         .Wire(bassPitch, 0, bassOsc, 1)
+         .Wire(bassSeq, 1, bassEnv, 0)
+         .Wire(bassOsc, 0, bassVca, 0)
+         .Wire(bassEnv, 0, bassVca, 1)
+         .Wire(thump, 0, duck, 0)
+         .Wire(bassVca, 0, ducked, 0)
+         .Wire(duck, 0, ducked, 1)
+         .Wire(ducked, 0, weight, 0);
+
+        b.Group("Bass", bassSeq, bassPitch, bassOsc, bassEnv, bassVca, duck, ducked, weight);
 
         // --- the hiss both drum sounds are made of ------------------------------
 
@@ -427,13 +549,24 @@ internal static class AcidPreset
 
         var clap = b.Add("math.mul", 1960, 3860);
 
+        // And a gain past unity on the way out, which is not a taste decision.
+        // A bandpass keeps the part of its input that fits between its skirts and
+        // throws the rest away, so a band of white noise carries a small fraction
+        // of the energy the same noise carries flat — measured against the hats,
+        // which are that noise with no filter at all, this one was about a
+        // seventh of them and was inaudible under the drums. The 'band' output is
+        // simply a quiet socket, and the level that makes it sit with the rest is
+        // above one for that reason and no other.
+        var loud = b.Add("math.mul", 2200, 3860, (1, 3.5f));
+
         b.Wire(sixteenths, 0, clapSeq, 1)
          .Wire(clapSeq, 1, clapEnv, 0)
          .Wire(hiss, 0, crack, 0)
          .Wire(crack, 1, clap, 0)
-         .Wire(clapEnv, 0, clap, 1);
+         .Wire(clapEnv, 0, clap, 1)
+         .Wire(clap, 0, loud, 0);
 
-        b.Group("Clap", clapSeq, crack, clapEnv, clap);
+        b.Group("Clap", clapSeq, crack, clapEnv, clap, loud);
 
         // --- the slow weather ----------------------------------------------------
 
@@ -542,8 +675,28 @@ internal static class AcidPreset
         // sounds lean, and in nothing else. There is no pan module in the
         // catalogue and this patch does not want one: width here is two signals
         // that are genuinely different, not one made quieter on a side.
-        var deskL = b.Add("math.mixer", 2700, 2400, (1, 0.62f), (3, 1f));
-        var deskR = b.Add("math.mixer", 2700, 2900, (1, 0.62f), (3, 1f));
+        //
+        // The kick and the bass summed before the desk rather than on it. Partly
+        // that is arithmetic — there are four channels on a Mixer and the patch
+        // already had four things to put on them — and partly it is the truer
+        // wiring: these two are one instrument built out of two, tied together
+        // by the duck, and the balance between them is a thing to set once here
+        // rather than twice on either side.
+        var lowEnd = b.Add("math.mixer", 2440, 2650, (1, 1f), (3, 0.6f));
+
+        // The line comes in at not much over a third rather than at two thirds,
+        // and that is the whole of what makes the clap audible. The two occupy
+        // the same band — a resonant lowpass sweeping to four kilohertz is
+        // sitting exactly where a clap lives — so the clap could not be brought
+        // out from under it by being made louder without becoming the loudest
+        // thing in the patch. What was actually wrong was that a saw through a
+        // resonant filter into two delay lines is a continuous sound, and a
+        // continuous sound at two thirds leaves nothing for anything struck to
+        // arrive into. Turning it down does not make the line quieter to listen
+        // to; it makes the gaps in the bar audible again, and the clap lives in
+        // those.
+        var deskL = b.Add("math.mixer", 2700, 2400, (1, 0.38f), (3, 1f));
+        var deskR = b.Add("math.mixer", 2700, 2900, (1, 0.38f), (3, 1f));
 
         // Past unity on purpose, with the Clamp after it as the thing that makes
         // that safe: a desk sums the way a desk sums, and four instruments at
@@ -556,15 +709,18 @@ internal static class AcidPreset
 
         var output = b.Add(NodeCatalog.OutputTypeId, 3900, 1600, (NodeCatalog.OutputGainPort, 0.6f));
 
-        b.Wire(echoL, 0, deskL, 0)
-         .Wire(kick, 0, deskL, 2)
+        b.Wire(punch, 0, lowEnd, 0)
+         .Wire(weight, 0, lowEnd, 2)
+
+         .Wire(echoL, 0, deskL, 0)
+         .Wire(lowEnd, 0, deskL, 2)
          .Wire(hats, 0, deskL, 4)
-         .Wire(clap, 0, deskL, 6)
+         .Wire(loud, 0, deskL, 6)
 
          .Wire(echoR, 0, deskR, 0)
-         .Wire(kick, 0, deskR, 2)
+         .Wire(lowEnd, 0, deskR, 2)
          .Wire(hats, 0, deskR, 4)
-         .Wire(clap, 0, deskR, 6)
+         .Wire(loud, 0, deskR, 6)
 
          .Wire(shimmer, 0, deskL, 5)
          .Wire(shimmerWide, 0, deskR, 5)
@@ -578,7 +734,7 @@ internal static class AcidPreset
          .Wire(limitL, 0, output, NodeCatalog.OutputLeftPort)
          .Wire(limitR, 0, output, NodeCatalog.OutputRightPort);
 
-        b.Group("Desk", deskL, deskR, hotL, hotR, limitL, limitR);
+        b.Group("Desk", lowEnd, deskL, deskR, hotL, hotR, limitL, limitR);
 
         // --- the picture: geometry ---------------------------------------------
 
