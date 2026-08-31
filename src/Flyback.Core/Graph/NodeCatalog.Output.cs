@@ -84,7 +84,7 @@ public partial class NodeCatalog
     /// </remarks>
     private static NodeDef Meter() =>
         new NodeDef(
-            MeterTypeId, "Meter", "Output",
+            MeterTypeId, "Meter", ModuleCategories.Measurement,
             [
                 Swept("in"),
                 Seconds("window", -1.3f),
@@ -124,6 +124,7 @@ public partial class NodeCatalog
             // rather than a buffer, so no chart is allocated for it and nothing
             // refills one. See NodeDef.ChartsSignal.
             TapsSignal = true,
+            Sinks = ModuleSinks.Video,
         };
 
     /// <summary>
@@ -151,7 +152,7 @@ public partial class NodeCatalog
     private static IEnumerable<NodeDef> Output()
     {
         yield return new NodeDef(
-            OutputTypeId, "Output", "Output",
+            OutputTypeId, "Output", ModuleCategories.Output,
             [
                 Col("color"),
                 Num("left", 0f, -1f, 1f),
@@ -170,14 +171,14 @@ public partial class NodeCatalog
             + "'scan' sweeps the image over time when you need a visual signal.");
 
         yield return new NodeDef(
-            "audio.frequency", "Frequency", "Output",
+            "audio.frequency", "Frequency", ModuleCategories.Pitch,
             [Num("hz", 220f, 20f, 4000f)], [Num("out")],
             (_, i) => [i[0]],
             "A knob in hertz rather than in the single digits the visual modules use. "
             + "Patch it into an oscillator's freq to work at audible pitches.");
 
         yield return new NodeDef(
-            "audio.note", "Note", "Output",
+            "audio.note", "Note", ModuleCategories.Pitch,
             [
                 Pitched("note", 57f),
                 Num("octave"),
@@ -379,7 +380,7 @@ public partial class NodeCatalog
     /// </para>
     /// </remarks>
     private static NodeDef Quantiser() => new(
-        QuantiserTypeId, "Quantiser", "Output",
+        QuantiserTypeId, "Quantiser", ModuleCategories.Pitch,
         [Pitched("in", 57f), Num("hold", 0f, 0f, 1f)],
         [Num("note")],
         EmitQuantiser,
@@ -573,7 +574,7 @@ public partial class NodeCatalog
     /// </remarks>
     private static NodeDef Probe() =>
         new NodeDef(
-            ProbeTypeId, "Probe", "Output",
+            ProbeTypeId, "Probe", ModuleCategories.Measurement,
             [
                 Swept("in"),
                 Seconds("window", 0.3f),
@@ -624,7 +625,10 @@ public partial class NodeCatalog
             + "on screen. What it cannot show is memory: drawn rather than heard, an oscillator "
             + "does not accumulate its phase and a delay line passes straight through, so a "
             + "chart of either is what the screen makes of it rather than what the speakers do. "
-            + "A Scope shows that instead — what was actually played, which is the past only.");
+            + "A Scope shows that instead — what was actually played, which is the past only.")
+        {
+            Sinks = ModuleSinks.Video,
+        };
 
     /// <summary>
     /// The Probe's opposite number: a chart of what the speakers have already
@@ -661,7 +665,7 @@ public partial class NodeCatalog
     /// </remarks>
     private static NodeDef Scope() =>
         new NodeDef(
-            ScopeTypeId, "Scope", "Output",
+            ScopeTypeId, "Scope", ModuleCategories.Measurement,
             [
                 // Swept, and never resolved: the whole point is that this
                 // module does not evaluate its input. What is charted came from
@@ -737,6 +741,7 @@ public partial class NodeCatalog
         {
             TapsSignal = true,
             ChartsSignal = true,
+            Sinks = ModuleSinks.Video,
         };
 
     /// <summary>
@@ -782,7 +787,7 @@ public partial class NodeCatalog
         const float swing = 0.5f;
 
         return new NodeDef(
-            ScanTypeId, "Scan", "Output",
+            ScanTypeId, "Scan", ModuleCategories.Measurement,
             [
                 Swept("in"),
                 Domain("clock"),

@@ -49,7 +49,21 @@ public sealed class ModuleCatalog
 
     public IReadOnlyList<ModuleProvider> Providers { get; }
 
-    public IEnumerable<string> Categories => All.Select(d => d.Category).Distinct();
+    /// <summary>
+    /// Which sections this catalogue has, in the order they should be shown.
+    /// </summary>
+    /// <remarks>
+    /// Ordered here rather than left in registration order, so that installing a
+    /// plugin cannot move the engine's own sections about — see
+    /// <see cref="ModuleCategories.Order"/>. A category the engine does not name
+    /// sorts after every one it does, and ties are broken by the name so that two
+    /// plugins each adding one come out the same way every time.
+    /// </remarks>
+    public IEnumerable<string> Categories => All
+        .Select(d => d.Category)
+        .Distinct()
+        .OrderBy(ModuleCategories.Order)
+        .ThenBy(name => name, StringComparer.Ordinal);
 
     public NodeDef? Get(string typeId) => index.GetValueOrDefault(typeId);
 

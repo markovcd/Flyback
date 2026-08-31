@@ -372,7 +372,12 @@ public sealed class ModulePalette : UserControl
             foreach (var entry in kept) modules.Children.Add(Kept(entry));
         }
 
-        foreach (var category in matches.Select(d => d.Category).Distinct())
+        // The catalogue's order rather than the order the matches happen to be in,
+        // so the sections sit where they always sit however the filter narrows
+        // them — see ModuleCatalog.Categories.
+        var sections = catalog.Categories.Where(c => matches.Any(d => d.Category == c));
+
+        foreach (var category in sections)
         {
             modules.Children.Add(Heading(category.ToUpperInvariant(), Colors.Accent(category)));
 

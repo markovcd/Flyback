@@ -76,19 +76,22 @@ public partial class NodeCatalog
         // difference, exactly as Frequency is the one that knows a pitch is in
         // hertz rather than in the single digits a picture is drawn from.
         yield return new NodeDef(
-            TempoTypeId, "Tempo", "Sequencer",
+            TempoTypeId, "Tempo", ModuleCategories.Timing,
             [Num("bpm", 120f, 20f, 300f)],
             [Num("out")],
             (em, node) => [em.Mul(node[0], 1f / Minute)],
             "Tempo in BPM, converted to beats per second. Patch it into a sequencer's rate for one step per beat.");
 
         yield return new NodeDef(
-            HoldTypeId, "Sample & Hold", "Sequencer",
+            HoldTypeId, "Sample & Hold", ModuleCategories.Timing,
             [Num("in"), Num("trigger", 0f, 0f, 1f)],
             [Num("out")],
             EmitHold,
             "Captures the value on 'in' when 'trigger' rises, and holds it until the next trigger. "
-            + "Useful for locking a changing signal to a note or gate.");
+            + "Useful for locking a changing signal to a note or gate.")
+        {
+            Sinks = ModuleSinks.Audio,
+        };
 
         yield return StepSequencer(
             "seq.notes", "Note Sequencer", DefaultRiff, PortDisplay.Note, (0f, 127f),
@@ -121,7 +124,7 @@ public partial class NodeCatalog
         PortDisplay display,
         (float Min, float Max) range,
         string description) => new(
-        id, name, "Sequencer",
+        id, name, ModuleCategories.Timing,
         [
             Domain("in"),
             Num("rate", 4f, 0f, 32f),

@@ -19,10 +19,10 @@ namespace Flyback.Plugins.Tests;
 /// </remarks>
 public class ColorTests
 {
-    private const string Palette = "flyback.color.palette";
-    private const string ToHsv = "flyback.color.hsv";
-    private const string Grade = "flyback.color.grade";
-    private const string Posterise = "flyback.color.posterise";
+    private const string Palette = "flyback.picture.palette";
+    private const string ToHsv = "flyback.picture.hsv";
+    private const string Grade = "flyback.picture.grade";
+    private const string Posterise = "flyback.picture.posterise";
 
     private const string Hsv = "color.hsv";
     private const string Rgb = "color.rgb";
@@ -343,8 +343,20 @@ public class ColorTests
 
     // --- the preset ------------------------------------------------------------
 
+    /// <summary>
+    /// The preset builds, compiles, and is one gesture: a single sweep opening
+    /// the palette and flattening the posterise together.
+    /// </summary>
+    /// <remarks>
+    /// That sweep used to reach a third place — a Pulse's width, so the tone
+    /// widened as the palette did. It has gone with the preset's sound. The ear
+    /// cannot read the field at all here, x and y being the pixel's own position
+    /// and the speakers having no pixel, so what the tone was made of was the one
+    /// knob and nothing else; sharing a knob with a picture is not the picture
+    /// being heard.
+    /// </remarks>
     [Fact]
-    public void The_preset_builds_and_compiles_for_both_sinks()
+    public void The_preset_builds_and_is_one_gesture()
     {
         var loaded = PluginHost.Load();
         var patch = loaded.Presets.Single(p => p.Name == "Spectrum").Build(loaded.Modules);
@@ -360,13 +372,11 @@ public class ColorTests
         video.Issues.ShouldBeEmpty();
         audio.Issues.ShouldBeEmpty();
 
-        // The one sweep drives the palette's spread, the posterise's levels and
-        // the pulse's width, which is what makes the picture and the sound the
-        // same gesture rather than two.
+        // The one sweep drives the palette's spread and the posterise's levels.
         var sweep = patch.Nodes.Single(n =>
             n.TypeId == "osc.sine" && patch.Connections.Count(w => w.SourceNode == n.Id) > 1);
 
-        patch.Connections.Count(w => w.SourceNode == sweep.Id).ShouldBe(3);
+        patch.Connections.Count(w => w.SourceNode == sweep.Id).ShouldBe(2);
     }
 
     // --- harness ---------------------------------------------------------------

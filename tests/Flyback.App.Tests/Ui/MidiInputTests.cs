@@ -71,11 +71,11 @@ public class MidiInputTests : UiTest
         All<PreviewHost>(window).Single().Program.LiveInputs;
 
     [AvaloniaFact]
-    public void The_module_is_in_the_catalogue_under_Source()
+    public void The_module_is_in_the_catalogue_under_Sources()
     {
         var def = NodeCatalog.BuiltIn.Require(NodeCatalog.MidiTypeId);
 
-        def.Category.ShouldBe("Source");
+        def.Category.ShouldBe(ModuleCategories.Sources);
         def.Inputs.ShouldBeEmpty();
         def.Outputs.Select(port => port.Name).ShouldBe(["pitch", "gate", "velocity", "trigger"]);
     }

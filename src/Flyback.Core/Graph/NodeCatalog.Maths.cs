@@ -30,13 +30,13 @@ public partial class NodeCatalog
         yield return Unary("math.log", "Log", OpCode.Log, "Natural log, and 0 for non-positive input.");
 
         yield return new NodeDef(
-            "math.clamp", "Clamp", "Maths",
+            "math.clamp", "Clamp", ModuleCategories.Maths,
             [Any("in"), Any("low", -1f), Any("high", 1f)], [Any("out")],
             (em, i) => [em.Ternary(OpCode.Clamp, i[0], i[1], i[2])],
             "Holds the signal inside a range.");
 
         yield return new NodeDef(
-            "math.mix", "Mix", "Maths",
+            "math.mix", "Mix", ModuleCategories.Maths,
             [Any("a"), Any("b", 1f), Any("t", 0.5f, 0f, 1f)], [Any("out")],
             (em, i) => [em.Ternary(OpCode.Mix, i[0], i[1], i[2])],
             "Blends from a to b as t goes 0 to 1.");
@@ -44,19 +44,19 @@ public partial class NodeCatalog
         yield return Mixer();
 
         yield return new NodeDef(
-            "math.smoothstep", "Smoothstep", "Maths",
+            "math.smoothstep", "Smoothstep", ModuleCategories.Maths,
             [Any("edge0"), Any("edge1", 1f), Any("in")], [Any("out")],
             (em, i) => [em.Ternary(OpCode.Smoothstep, i[0], i[1], i[2])],
             "A soft 0-to-1 ramp between the two edges. The anti-aliased threshold.");
 
         yield return new NodeDef(
-            "math.step", "Threshold", "Maths",
+            "math.step", "Threshold", ModuleCategories.Maths,
             [Any("edge"), Any("in")], [Any("out")],
             (em, i) => [em.Binary(OpCode.Step, i[0], i[1])],
             "0 below the edge, 1 above it. A hard threshold.");
 
         yield return new NodeDef(
-            "math.remap", "Remap", "Maths",
+            "math.remap", "Remap", ModuleCategories.Maths,
             [Any("in"), Num("in low", -1f), Num("in high", 1f), Num("out low"), Num("out high", 1f)],
             [Any("out")],
             (em, i) =>
@@ -68,12 +68,12 @@ public partial class NodeCatalog
     }
 
     private static NodeDef Unary(string id, string name, OpCode code, string description) => new(
-        id, name, "Maths", [Any("in")], [Any("out")],
+        id, name, ModuleCategories.Maths, [Any("in")], [Any("out")],
         (em, i) => [em.Unary(code, i[0])], description);
 
     private static NodeDef Binary(
         string id, string name, OpCode code, float defaultB, string description) => new(
-        id, name, "Maths", [Any("a"), Any("b", defaultB)], [Any("out")],
+        id, name, ModuleCategories.Maths, [Any("a"), Any("b", defaultB)], [Any("out")],
         (em, i) => [em.Binary(code, i[0], i[1])], description);
     
     /// <summary>
@@ -99,7 +99,7 @@ public partial class NodeCatalog
         }
 
         return new NodeDef(
-            "math.mixer", "Mixer", "Maths",
+            "math.mixer", "Mixer", ModuleCategories.Maths,
             ports, [Any("out")],
             (em, i) =>
             {

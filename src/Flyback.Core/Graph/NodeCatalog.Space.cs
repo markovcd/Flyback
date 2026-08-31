@@ -7,7 +7,7 @@ public partial class NodeCatalog
     private static IEnumerable<NodeDef> Space()
     {
         yield return new NodeDef(
-            "space.rotate", "Rotate", "Space",
+            "space.rotate", "Rotate", ModuleCategories.Geometry,
             [..Position(), Num("angle", 0f, -Tau, Tau)], [Num("x"), Num("y")],
             (em, i) =>
             {
@@ -22,25 +22,25 @@ public partial class NodeCatalog
             "Spins the coordinate system. Feed the angle from an oscillator to make it turn.");
 
         yield return new NodeDef(
-            "space.scale", "Scale", "Space",
+            "space.scale", "Scale", ModuleCategories.Geometry,
             [..Position(), Num("scale", 1f, 0f, 16f)], [Num("x"), Num("y")],
             (em, i) => [em.Mul(i[0], i[2]), em.Mul(i[1], i[2])],
             "Zooms the coordinate system. Larger scale packs more pattern in.");
 
         yield return new NodeDef(
-            "space.translate", "Translate", "Space",
+            "space.translate", "Translate", ModuleCategories.Geometry,
             [..Position(), Num("dx"), Num("dy")], [Num("x"), Num("y")],
             (em, i) => [em.Binary(OpCode.Sub, i[0], i[2]), em.Binary(OpCode.Sub, i[1], i[3])],
             "Slides the coordinate system, moving the pattern by (dx, dy).");
 
         yield return new NodeDef(
-            "space.polar", "To polar", "Space",
+            "space.polar", "To polar", ModuleCategories.Geometry,
             [..Position()], [Num("radius"), Num("angle")],
             (em, i) => [em.Binary(OpCode.Hypot, i[0], i[1]), em.Binary(OpCode.Atan2, i[1], i[0])],
             "Cartesian to polar. Patterns built on radius and angle go circular.");
 
         yield return new NodeDef(
-            "space.tile", "Tile", "Space",
+            "space.tile", "Tile", ModuleCategories.Geometry,
             [..Position(), Num("tiles", 3f, 1f, 16f)], [Num("x"), Num("y")],
             (em, i) =>
             {
@@ -52,13 +52,13 @@ public partial class NodeCatalog
             "Repeats the coordinate system into a grid of identical cells.");
 
         yield return new NodeDef(
-            "space.mirror", "Mirror", "Space",
+            "space.mirror", "Mirror", ModuleCategories.Geometry,
             [..Position()], [Num("x"), Num("y")],
             (em, i) => [em.Unary(OpCode.Abs, i[0]), em.Unary(OpCode.Abs, i[1])],
             "Folds each axis about zero, so one quadrant is reflected into all four.");
 
         yield return new NodeDef(
-            "space.kaleidoscope", "Kaleidoscope", "Space",
+            "space.kaleidoscope", "Kaleidoscope", ModuleCategories.Geometry,
             [..Position(), Num("segments", 6f, 1f, 24f)], [Num("x"), Num("y")],
             (em, i) =>
             {
@@ -77,7 +77,7 @@ public partial class NodeCatalog
             "Folds the plane into wedges around the centre.");
 
         yield return new NodeDef(
-            "space.warp", "Warp", "Space",
+            "space.warp", "Warp", ModuleCategories.Geometry,
             [..Position(), Num("by"), Num("amount", 0.5f)], [Num("x"), Num("y")],
             (em, i) =>
             {

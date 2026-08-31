@@ -19,7 +19,7 @@ dotnet run --project src/Flyback.App -c Release
 - Per-pixel signal synthesis driven by coordinates and time
 - Normalled sockets so common sources such as time and coordinates are present by default
 - Feedback and iterative image generation via feedback modules and previous-frame sampling
-- Sequencers, oscillators, shapes, probes, noise, filters, colour/math modules and presets
+- Sources, oscillators, patterns, forms, geometry, colour, maths, pitch, timing, shaping, time effects, feedback and measurement modules, with presets for each
 - Live preview, output settings, recording and video export in the app shell
 - MIDI input support through platform backends (Windows, macOS and Linux)
 - CLI tools for rendering, checking, inspecting and bundling patches
@@ -42,7 +42,7 @@ Flyback.exe          the app
 flyback-cli.exe      the command line tool
 Flyback.Core.dll     shared engine
 Flyback.Plugins.dll  shared plugin host
-plugins/             platform plugins
+plugins/             platform backends, and the Picture, Voice and Effects modules
 ```
 
 Supported publish targets include:

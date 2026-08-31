@@ -20,12 +20,12 @@ namespace Flyback.Plugins.Tests;
 /// </remarks>
 public class ShapesTests
 {
-    private const string CircleType = "flyback.shapes.circle";
-    private const string BoxType = "flyback.shapes.box";
-    private const string PolygonType = "flyback.shapes.polygon";
-    private const string StarType = "flyback.shapes.star";
-    private const string CombineType = "flyback.shapes.combine";
-    private const string FillType = "flyback.shapes.fill";
+    private const string CircleType = "flyback.picture.circle";
+    private const string BoxType = "flyback.picture.box";
+    private const string PolygonType = "flyback.picture.polygon";
+    private const string StarType = "flyback.picture.star";
+    private const string CombineType = "flyback.picture.combine";
+    private const string FillType = "flyback.picture.fill";
 
     private static readonly ModuleCatalog Catalog = PluginHost.Load().Modules;
 
@@ -42,7 +42,7 @@ public class ShapesTests
             Catalog.ProviderOf(typeId).ShouldBe(Catalog.ProviderOf(CircleType));
         }
 
-        Catalog.Require(StarType).Category.ShouldBe("Form");
+        Catalog.Require(StarType).Category.ShouldBe(ModuleCategories.Forms);
     }
 
     /// <summary>
@@ -538,31 +538,40 @@ public class ShapesTests
 
         foreach (var dialect in Enum.GetValues<GlslDialect>())
             GlslEmitter.Emit(video.Program, dialect).PatchFragment.ShouldNotBeNullOrEmpty();
-    }
 
+    }
     /// <summary>
-    /// One sweep is the seam and the pulse's width both, which is the whole
-    /// argument for the preset: what the eye sees as four forms flowing together
-    /// is what the ear hears as a thin buzz opening into a square. A patch where
-    /// the two had a sweep each would look and sound the same at any one moment
-    /// and would drift apart over a minute, which is the failure this pins.
+    /// One sweep drives the three seams and the hue, which is the whole argument
+    /// for the preset: the topology changing and the color changing are the same
+    /// number arriving in four places. A patch where they had a sweep each would
+    /// look the same at any one moment and would drift apart over a minute, which
+    /// is the failure this pins.
     /// </summary>
+    /// <remarks>
+    /// The same sweep used to reach a Pulse as well, so the seam widening was
+    /// also a duty cycle widening. That has gone with the preset's sound: the two
+    /// were related by having been handed the same number and by nothing else,
+    /// which is not what a patch carrying both sinks is for.
+    /// </remarks>
     [Fact]
-    public void The_showcase_preset_moves_both_sinks_from_one_sweep()
+    public void The_showcase_preset_moves_the_picture_from_one_sweep()
     {
         var loaded = PluginHost.Load();
         var patch = loaded.Presets.Single(p => p.Name == FormsPresetName).Build(loaded.Modules);
 
-        // The only oscillators are the two sweeps, and the voice the ear hears.
+        // The only oscillators left are the two sweeps: the rock and the melt.
         var sweeps = patch.Nodes.Where(n => n.TypeId == "osc.sine").ToList();
         sweeps.Count.ShouldBe(2);
+
+        patch.Nodes.ShouldNotContain(
+            n => n.TypeId == "osc.pulse",
+            "the preset is about forms and carries no voice");
 
         var melt = sweeps.Single(sweep => patch.Connections.Count(w => w.SourceNode == sweep.Id) > 1);
         var driven = patch.Connections.Where(w => w.SourceNode == melt.Id).ToList();
 
-        // Three seams, the hue, and the pulse.
+        // Three seams and the hue.
         driven.Count(w => Type(patch, w.TargetNode) == CombineType).ShouldBe(3);
-        driven.Count(w => Type(patch, w.TargetNode) == "osc.pulse").ShouldBe(1);
         driven.Count(w => Type(patch, w.TargetNode) == "color.hsv").ShouldBe(1);
     }
 

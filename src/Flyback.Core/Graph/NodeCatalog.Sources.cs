@@ -35,7 +35,7 @@ public partial class NodeCatalog
     private static IEnumerable<NodeDef> Sources()
     {
         yield return new NodeDef(
-            CoordTypeId, "Coordinates", "Source",
+            CoordTypeId, "Coordinates", ModuleCategories.Sources,
             [], [Num("x"), Num("y"), Num("radius"), Num("angle")],
             (em, _) =>
             {
@@ -59,14 +59,14 @@ public partial class NodeCatalog
         // went. Multiply is how you scale a signal here, as it is for every
         // other signal in the catalogue.
         yield return new NodeDef(
-            TimeTypeId, "Time", "Source",
+            TimeTypeId, "Time", ModuleCategories.Sources,
             [], [Num("t")],
             (em, _) => [em.Load(OpCode.LoadT)],
             "Elapsed seconds since the patch started. Use it for motion or time-varying signals. "
             + "Scale it with Multiply when you want a slower rhythm.");
 
         yield return new NodeDef(
-            SampleTypeId, "Sample", "Source",
+            SampleTypeId, "Sample", ModuleCategories.Sources,
             [Domain("in"), Num("level", 1f, 0f, 2f), Num("trigger", 0f, 0f, 1f)],
             [Num("out"), Num("length")],
             EmitSample,
@@ -75,10 +75,11 @@ public partial class NodeCatalog
             + "so moving or renaming it will break playback.")
         {
             Extras = [new SampleExtra()],
+            Sinks = ModuleSinks.Audio,
         };
 
         yield return new NodeDef(
-            PictureTypeId, "Image", "Source",
+            PictureTypeId, "Image", ModuleCategories.Sources,
             [..Position()],
             [Col("color")],
             EmitPicture,
@@ -86,10 +87,11 @@ public partial class NodeCatalog
             + "the result is black. Scale, translate, rotate, and warp control how it is mapped.")
         {
             Extras = [new PictureExtra()],
+            Sinks = ModuleSinks.Video,
         };
 
         yield return new NodeDef(
-            "value", "Value", "Source",
+            "value", "Value", ModuleCategories.Sources,
             [Num("value", 0.5f)], [Num("out")],
             (_, i) => [i[0]],
             "A knob. Handy when several modules should share one number.");

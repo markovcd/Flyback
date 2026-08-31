@@ -20,8 +20,8 @@ namespace Flyback.Plugins.Tests;
 /// </remarks>
 public class SpaceTests
 {
-    private const string DelayType = "flyback.space.delay";
-    private const string ReverbType = "flyback.space.reverb";
+    private const string DelayType = "flyback.effects.delay";
+    private const string ReverbType = "flyback.effects.reverb";
 
     private const int Rate = 1_000;
 

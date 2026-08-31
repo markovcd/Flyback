@@ -20,8 +20,8 @@ namespace Flyback.Plugins.Tests;
 /// </remarks>
 public class NoiseTests
 {
-    private const string Fractal = "flyback.noise.fractal";
-    private const string Cells = "flyback.noise.cells";
+    private const string Fractal = "flyback.picture.fractal";
+    private const string Cells = "flyback.picture.cells";
     private const string Noise = "pattern.noise";
 
     private const int Scale = 3;

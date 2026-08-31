@@ -23,7 +23,7 @@ public partial class NodeCatalog
     private static IEnumerable<NodeDef> Envelopes()
     {
         yield return new NodeDef(
-            AdsrTypeId, "ADSR", "Sequencer",
+            AdsrTypeId, "ADSR", ModuleCategories.Timing,
             [
                 Num("gate", 0f, 0f, 1f),
                 Seconds("attack", -2f),
@@ -33,7 +33,10 @@ public partial class NodeCatalog
             ],
             [Num("out")],
             EmitAdsr,
-            "ADSR envelope. Gate in, shaped level out. Attack, decay, sustain, and release define the note contour." );
+            "ADSR envelope. Gate in, shaped level out. Attack, decay, sustain, and release define the note contour.")
+        {
+            Sinks = ModuleSinks.Audio,
+        };
     }
 
     /// <summary>

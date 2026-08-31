@@ -327,4 +327,51 @@ public sealed record NodeDef(
     /// </para>
     /// </remarks>
     public bool IsCycleBreaker { get; init; }
+
+    /// <summary>
+    /// Which sink this module means something at.
+    /// </summary>
+    /// <remarks>
+    /// An init property with a default of <see cref="ModuleSinks.Both"/>, so a
+    /// plugin compiled against an earlier build neither has to say nor can be
+    /// wrong — the same bargain <see cref="Extras"/> and <see cref="TapsSignal"/>
+    /// make, and for the same reason.
+    /// </remarks>
+    public ModuleSinks Sinks { get; init; } = ModuleSinks.Both;
+}
+
+/// <summary>
+/// Which of the two programs evaluates a module as it is meant to be.
+/// </summary>
+/// <remarks>
+/// Every module is compiled for both sinks and always was — a patch is one graph
+/// ([0022](0022-audio-and-video-are-two-sinks-over-one-patch.md)) — so this
+/// changes nothing about what is emitted. What it names is something the
+/// catalogue already knew and only ever said in prose: a Filter is a wire on the
+/// video path because it has no memory to run in, a Meter reads nothing at all
+/// where no sound is running, and a Quantiser's hold cannot hold across an
+/// evaluation the screen does not have.
+/// <para>
+/// Written down so that the palette can badge it and the assistant's handbook
+/// can carry it — both of which used to have to infer it from a description, or
+/// not know at all. It is not what decides which sink a program reaches: that
+/// falls out of the walk back from the Output and always did.
+/// </para>
+/// </remarks>
+public enum ModuleSinks
+{
+    /// <summary>The same arithmetic at both, which is nearly everything.</summary>
+    Both,
+
+    /// <summary>
+    /// Wants a memory, so the screen gets something simpler: a Filter is a wire
+    /// there, an envelope hands over its gate, and a hold does not hold.
+    /// </summary>
+    Audio,
+
+    /// <summary>
+    /// Wants a pixel, a frame before this one, or a stretch of what the speakers
+    /// played — so the speakers' own program never reads it.
+    /// </summary>
+    Video,
 }

@@ -21,9 +21,9 @@ namespace Flyback.Plugins.Tests;
 /// </remarks>
 public class TimbreTests
 {
-    private const string FilterType = "flyback.timbre.filter";
-    private const string FoldType = "flyback.timbre.fold";
-    private const string DriveType = "flyback.timbre.drive";
+    private const string FilterType = "flyback.voice.filter";
+    private const string FoldType = "flyback.voice.fold";
+    private const string DriveType = "flyback.voice.drive";
 
     private const int Rate = GlobalConstants.SampleRate;
 

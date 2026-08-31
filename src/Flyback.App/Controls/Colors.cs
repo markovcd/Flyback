@@ -117,6 +117,39 @@ internal static class Colors
     public static Color Tint { get; } = Color.FromRgb(0xE0, 0x6A, 0xB8);
     public static Color Feedback { get; } = Color.FromRgb(0x3F, 0xC8, 0xC8);
 
+    /// <summary>
+    /// Shapes with edges. A periwinkle between the Source's blue and the
+    /// Geometry violet, because a form is a field like the one and is read
+    /// through the other.
+    /// </summary>
+    public static Color Form { get; } = Color.FromRgb(0x7A, 0x8C, 0xE8);
+
+    /// <summary>
+    /// The modules that know what a note is. Lime, next along from the Timing
+    /// yellow: a pitch and a rhythm are the two halves of the same subject and
+    /// should read as neighbours rather than as strangers.
+    /// </summary>
+    public static Color Note { get; } = Color.FromRgb(0xA8, 0xCE, 0x52);
+
+    /// <summary>
+    /// What is done to a waveform. Burnt orange, between the Pattern orange and
+    /// the Output red, because shaping is the last thing before the sink.
+    /// </summary>
+    public static Color Shaping { get; } = Color.FromRgb(0xD8, 0x7A, 0x48);
+
+    /// <summary>
+    /// The delay-line effects. A darker teal than Feedback's cyan and related to
+    /// it on purpose: both are a patch reading something that already happened.
+    /// </summary>
+    public static Color Echo { get; } = Color.FromRgb(0x3E, 0xA0, 0xB0);
+
+    /// <summary>
+    /// The charts and the meter. Slate, and deliberately the quietest accent
+    /// after Maths: a module that looks at the patch should not be louder than
+    /// the patch.
+    /// </summary>
+    public static Color Reading { get; } = Color.FromRgb(0x92, 0xA8, 0xC8);
+
     /// <summary>A category nothing here knows, which a plugin may well introduce.</summary>
     public static Color Unknown { get; } = Color.FromRgb(0x88, 0x88, 0x88);
 
@@ -127,18 +160,28 @@ internal static class Colors
     /// <remarks>
     /// Here rather than on <c>NodeGeometry</c>, which is about where the parts
     /// of a node sit and had no business also deciding what color they are.
+    /// <para>
+    /// Named against <see cref="ModuleCategories"/> rather than against loose
+    /// strings, so that a category renamed there is a compile error here rather
+    /// than a section that quietly turns grey.
+    /// </para>
     /// </remarks>
     public static Color Accent(string category) => category switch
     {
-        "Output" => Sink,
-        "Source" => Source,
-        "Oscillator" => Oscillator,
-        "Sequencer" => Sequencer,
-        "Maths" => Maths,
-        "Space" => Space,
-        "Pattern" => Pattern,
-        "Color" => Tint,
-        "Feedback" => Feedback,
+        ModuleCategories.Output => Sink,
+        ModuleCategories.Sources => Source,
+        ModuleCategories.Oscillators => Oscillator,
+        ModuleCategories.Timing => Sequencer,
+        ModuleCategories.Maths => Maths,
+        ModuleCategories.Geometry => Space,
+        ModuleCategories.Patterns => Pattern,
+        ModuleCategories.Color => Tint,
+        ModuleCategories.Feedback => Feedback,
+        ModuleCategories.Forms => Form,
+        ModuleCategories.Pitch => Note,
+        ModuleCategories.Shaping => Shaping,
+        ModuleCategories.TimeEffects => Echo,
+        ModuleCategories.Measurement => Reading,
         _ => Unknown,
     };
 

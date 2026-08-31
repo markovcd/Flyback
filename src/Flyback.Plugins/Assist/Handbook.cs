@@ -273,6 +273,11 @@ internal static class Handbook
     {
         text.Append(def.TypeId).Append(" | ").Append(def.Name).Append(" | ").Append(def.Category);
 
+        // Only where it is not both, because both is nearly everything and a line
+        // saying so on every module would bury the handful it matters for.
+        if (def.Sinks is not ModuleSinks.Both)
+            text.Append(" | ").Append(def.Sinks is ModuleSinks.Audio ? "audio only" : "video only");
+
         if (modules.ProviderOf(def.TypeId) is { } from && from.Id != NodeCatalog.BuiltInProvider.Id)
             text.Append(" | from the ").Append(from.Name).Append(" plugin");
 

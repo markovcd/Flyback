@@ -40,7 +40,7 @@ public class PickerTests : UiTest
 
     /// <summary>The toolbar's list of patches to start from.</summary>
     private static ComboBox Presets(MainWindow window) => All<ComboBox>(window)
-        .First(box => box.ItemsSource?.Cast<object>().Any(item => item as string == "Plasma") == true);
+        .First(box => box.ItemsSource?.Cast<object>().Any(item => Label(item) == "Plasma") == true);
 
     /// <summary>
     /// It still looks like a list.
@@ -222,5 +222,16 @@ public class PickerTests : UiTest
 
     /// <summary>The list holding a given entry, whatever panel it is in.</summary>
     private static ComboBox Named(MainWindow window, string entry) => All<ComboBox>(window)
-        .First(box => box.ItemsSource?.Cast<object>().Any(item => item as string == entry) == true);
+        .First(box => box.ItemsSource?.Cast<object>().Any(item => Label(item) == entry) == true);
+    /// <summary>
+    /// What a row in a list says, whichever kind of list it is. The preset picker
+    /// holds <see cref="PatchPreset"/> rather than strings now, so that each row
+    /// can carry its description under its name; every other list in the window
+    /// is still a list of words.
+    /// </summary>
+    private static string? Label(object? item) => item switch
+    {
+        PatchPreset preset => preset.Name,
+        _ => item as string,
+    };
 }

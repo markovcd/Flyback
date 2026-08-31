@@ -415,6 +415,48 @@ public class ModulePaletteTests : UiTest
         narrowed.ShouldBeGreaterThan(0);
     }
 
+    /// <summary>
+    /// The sections are the ones the engine names, in the order it names them.
+    /// </summary>
+    /// <remarks>
+    /// The list used to take its sections from whatever order the modules came
+    /// out of the catalogue in, so installing a plugin could move the engine's
+    /// own about — and two providers meaning different things by one word drew
+    /// them as a single section. Both are settled in
+    /// <see cref="ModuleCategories"/> now, and this is the assertion that the
+    /// list actually follows it.
+    /// </remarks>
+    [AvaloniaFact]
+    public void The_sections_are_the_declared_ones_in_the_declared_order()
+    {
+        var window = Open();
+
+        RightClick(window, Empty(window));
+
+        var palette = Palette(window).ShouldNotBeNull();
+
+        // The headings, which are the only upper-case text in the list: a module
+        // is a Button and a section is a TextBlock above it.
+        var headings = All<TextBlock>(palette)
+            .Select(t => t.Text ?? string.Empty)
+            .Where(text => text.Length > 0 && text == text.ToUpperInvariant())
+            .ToList();
+
+        headings.ShouldNotBeEmpty();
+
+        var wanted = ModuleCategories.All
+            .Select(c => c.ToUpperInvariant())
+            .Where(headings.Contains)
+            .ToList();
+
+        headings.Where(wanted.Contains).ShouldBe(wanted);
+
+        // And the two that used to collide are two sections now, not one.
+        headings.ShouldContain(ModuleCategories.Geometry.ToUpperInvariant());
+        headings.ShouldNotContain("SPACE");
+        headings.ShouldNotContain("SHAPE");
+    }
+
     private static void Press(Button button)
     {
         button.Focus();

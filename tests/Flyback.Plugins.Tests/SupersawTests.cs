@@ -14,7 +14,7 @@ namespace Flyback.Plugins.Tests;
 /// </summary>
 public class SupersawTests
 {
-    private const string Supersaw = "flyback.supersaw.osc";
+    private const string Supersaw = "flyback.voice.osc";
 
     private static readonly ModuleCatalog Catalog = PluginHost.Load().Modules;
 
@@ -27,15 +27,15 @@ public class SupersawTests
     public void The_plugin_loads_and_offers_the_module()
     {
         Catalog.Get(Supersaw).ShouldNotBeNull().Name.ShouldBe("Supersaw");
-        Catalog.ProviderOf(Supersaw)!.Id.ShouldBe("flyback.supersaw");
+        Catalog.ProviderOf(Supersaw)!.Id.ShouldBe("flyback.voice");
     }
 
     /// <summary>It should turn up beside the oscillators it belongs with.</summary>
     [Fact]
     public void It_joins_the_oscillator_category()
     {
-        Catalog.Get(Supersaw)!.Category.ShouldBe("Oscillator");
-        Catalog.Categories.Count(c => c == "Oscillator").ShouldBe(1);
+        Catalog.Get(Supersaw)!.Category.ShouldBe(ModuleCategories.Oscillators);
+        Catalog.Categories.Count(c => c == ModuleCategories.Oscillators).ShouldBe(1);
     }
 
     [Fact]

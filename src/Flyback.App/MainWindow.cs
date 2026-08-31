@@ -2,6 +2,7 @@ using System.Diagnostics;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
+using Avalonia.Controls.Templates;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Threading;
@@ -463,19 +464,55 @@ public sealed partial class MainWindow : Window
 
     private Control BuildToolbar()
     {
-        // Plugin presets sit after the engine's own, so the list the app opens
-        // on is the same wherever it is installed.
-        var available = plugins.Presets;
+        // Grouped by kind and only then by where they came from, so the list
+        // reads as three sections: the patches that teach one thing, the ones
+        // about the two sinks meeting, and the big ones. A stable sort, so within
+        // a kind the engine's own still come before any plugin's — the list the
+        // app opens on is the same wherever it is installed.
+        var available = plugins.Presets.OrderBy(p => p.Kind).ToList();
 
         // A Picker rather than a plain list, and this is the one where it matters
         // most: every change here throws the patch on the canvas away, so a
         // keystroke that moved the selection would be a keystroke that discarded
-        // somebody's work — fourteen times over if it were an arrow held down.
+        // somebody's work — twenty times over if it were an arrow held down.
         var presets = new Picker
         {
-            ItemsSource = available.Select(p => p.Name).ToList(),
+            ItemsSource = available,
             SelectedIndex = 0,
             Width = 160,
+
+            // Two lines per row in the dropdown: what it is called, and the one
+            // sentence saying what it is for. The descriptions are the part of
+            // each preset's documentation a person choosing between twenty names
+            // actually needs, and until now they reached nobody — they were in
+            // the source and nowhere else.
+            ItemTemplate = new FuncDataTemplate<PatchPreset>((preset, _) =>
+                preset is null
+                    ? null
+                    : new StackPanel
+                    {
+                        Spacing = 1,
+                        Children =
+                        {
+                            new TextBlock { Text = preset.Name, FontSize = 12 },
+                            new TextBlock
+                            {
+                                Text = preset.Description,
+                                FontSize = 10,
+                                Foreground = new SolidColorBrush(Colors.Muted),
+                                TextWrapping = TextWrapping.Wrap,
+                                MaxWidth = 260,
+                                IsVisible = preset.Description.Length > 0,
+                            },
+                        },
+                    }),
+
+            // And the name alone in the box itself, which is a separate template
+            // rather than the same one: a closed picker that grew to two lines
+            // would push the whole toolbar down to say something the dropdown
+            // already says, and the toolbar is a row of one-line controls.
+            SelectionBoxItemTemplate = new FuncDataTemplate<PatchPreset>((preset, _) =>
+                preset is null ? null : new TextBlock { Text = preset.Name, FontSize = 12 }),
         };
 
         // Which preset is on the canvas, so a refused change can put the box

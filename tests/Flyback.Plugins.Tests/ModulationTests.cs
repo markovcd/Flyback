@@ -19,9 +19,9 @@ namespace Flyback.Plugins.Tests;
 /// </remarks>
 public class ModulationTests
 {
-    private const string ChorusType = "flyback.mod.chorus";
-    private const string FlangerType = "flyback.mod.flanger";
-    private const string PhaserType = "flyback.mod.phaser";
+    private const string ChorusType = "flyback.effects.chorus";
+    private const string FlangerType = "flyback.effects.flanger";
+    private const string PhaserType = "flyback.effects.phaser";
 
     private const int Rate = GlobalConstants.SampleRate;
 
@@ -39,7 +39,7 @@ public class ModulationTests
         Catalog.Get(PhaserType).ShouldNotBeNull().Name.ShouldBe("Phaser");
 
         Catalog.ProviderOf(ChorusType).ShouldBe(Catalog.ProviderOf(PhaserType));
-        Catalog.Get(ChorusType)!.Category.ShouldBe("Modulation");
+        Catalog.Get(ChorusType)!.Category.ShouldBe(ModuleCategories.TimeEffects);
     }
 
     /// <summary>
@@ -302,10 +302,23 @@ public class ModulationTests
         foreach (var (x, seen) in Painted(PhaserType, 0, (4, 1f))) seen.ShouldBe(x, 1e-6f);
     }
 
-    // --- the preset ------------------------------------------------------------
 
+    // --- the preset ------------------------------------------------------------
+    /// <summary>
+    /// The preset builds, compiles, and reaches the speakers and nothing else.
+    /// </summary>
+    /// <remarks>
+    /// The video half is asserted as an absence now rather than as a cost. It
+    /// used to send each module's own LFO to a hue, a saturation and a Translate,
+    /// and this test measured what that cost the picture: dead code is eliminated
+    /// a module at a time rather than an op at a time, so a frame that wanted the
+    /// sweep got the delay lines and the cells beside it. Inert rather than
+    /// wasteful, but paid for — and paid for to draw the control signal rather
+    /// than the effect. With no picture in the patch the walk back from the
+    /// Output's colour reaches nothing at all, which is what the counts below say.
+    /// </remarks>
     [Fact]
-    public void The_preset_builds_and_compiles_for_both_sinks()
+    public void The_preset_builds_and_reaches_the_speakers_alone()
     {
         var loaded = PluginHost.Load();
         var patch = loaded.Presets.Single(p => p.Name == "Moving parts").Build(loaded.Modules);
@@ -325,55 +338,9 @@ public class ModulationTests
         audio.Program.DelayLengths.Count.ShouldBe(3);
         audio.Program.UnitCount.ShouldBe(7);
 
-        // And the same for the eye, which is what reaching for an LFO costs. Dead
-        // code is eliminated a module at a time, not an op at a time — the emit
-        // function runs whole or not at all — so a picture that wants the sweep
-        // gets the delay lines and the cells that produce nothing beside it. They
-        // are inert there rather than wasteful: with no state a line is a wire,
-        // and the ops are a handful against the sixty the picture already runs.
-        video.Program.DelayLengths.Count.ShouldBe(3);
-        video.Program.UnitCount.ShouldBe(7);
-    }
-
-    /// <summary>
-    /// The showcase, which is the one patch here that reaches across a plugin
-    /// boundary: three modules from this plugin and three from Timbre, in one
-    /// chain, with a tune underneath for them to happen to.
-    /// </summary>
-    [Fact]
-    public void The_whole_rack_preset_uses_every_module_both_plugins_added()
-    {
-        var loaded = PluginHost.Load();
-        var patch = loaded.Presets.Single(p => p.Name == "Whole rack").Build(loaded.Modules);
-
-        var types = patch.Nodes.Select(n => n.TypeId).ToList();
-
-        foreach (var typeId in new[] { ChorusType, FlangerType, PhaserType })
-            types.ShouldContain(typeId);
-
-        foreach (var typeId in new[] { "flyback.timbre.fold", "flyback.timbre.drive", "flyback.timbre.filter" })
-            types.ShouldContain(typeId);
-
-        patch.CompileForVideo(loaded.Modules).Issues.ShouldBeEmpty();
-        patch.CompileForAudio(loaded.Modules).Issues.ShouldBeEmpty();
-    }
-
-    /// <summary>
-    /// And what it does when the other plugin is not installed. A preset is built
-    /// when it is picked rather than when it is registered, so the failure lands
-    /// somewhere that can report it — and what it reports should name the plugin
-    /// that is missing rather than a module id nobody asked about.
-    /// </summary>
-    [Fact]
-    public void The_whole_rack_preset_says_which_plugin_it_is_missing()
-    {
-        var loaded = PluginHost.Load();
-        var preset = loaded.Presets.Single(p => p.Name == "Whole rack");
-
-        // The engine's own catalogue: every built-in module, and neither plugin.
-        var complaint = Should.Throw<InvalidOperationException>(() => preset.Build(NodeCatalog.BuiltIn));
-
-        complaint.Message.ShouldContain("flyback.timbre");
+        // And none at all for the eye, because nothing is wired to the colour.
+        video.Program.DelayLengths.ShouldBeEmpty();
+        video.Program.UnitCount.ShouldBe(0);
     }
 
     // --- harness ----------------------------------------------------------------

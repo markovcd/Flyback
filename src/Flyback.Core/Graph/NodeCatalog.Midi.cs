@@ -14,7 +14,7 @@ public partial class NodeCatalog
     private static IEnumerable<NodeDef> Midi()
     {
         yield return new NodeDef(
-            MidiTypeId, "MIDI In", "Source",
+            MidiTypeId, "MIDI In", ModuleCategories.Sources,
             [],
             [
                 new PortSpec("pitch", PortKind.Scalar, 60f, 0f, 127f, -1, PortDisplay.Note),

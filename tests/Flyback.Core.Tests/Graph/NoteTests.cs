@@ -13,6 +13,43 @@ namespace Flyback.Core.Tests.Graph;
 /// </summary>
 public class NoteTests
 {
+
+    /// <summary>
+    /// The chromatic ramp, built here rather than taken from a preset.
+    /// </summary>
+    /// <remarks>
+    /// It used to be the Chromatic preset, which has gone: it was the third
+    /// patch in the box about pitch snapping, and In key says the same thing
+    /// about a scale rather than about a semitone. What it was worth is these two
+    /// tests, which are about the module and not about the patch — a ramp snapped
+    /// to whole notes is the smallest thing that exercises both the snap and the
+    /// accumulated phase behind it (ADR-0030).
+    /// <para>
+    /// The audio half only. The preset drew the same ramp at every radius at
+    /// once, which was a good picture and is nothing either of these tests looked
+    /// at.
+    /// </para>
+    /// </remarks>
+    private static Patch Chromatic(ModuleCatalog modules)
+    {
+        var b = new PatchBuilder(modules);
+
+        // Half an octave either way, over four seconds: six semitones up and six
+        // down from the note on the knob, then it starts again.
+        var ramp = b.Add("osc.saw", 250, 100, (1, 0.25f), (3, 0.5f));
+
+        // A3 on the knob, and whatever arrives snapped to the nearest semitone.
+        var note = b.Add("audio.note", 660, 220);
+        var tone = b.Add("osc.sine", 880, 460);
+
+        var output = b.Add(NodeCatalog.OutputTypeId, 1470, 300, (NodeCatalog.OutputGainPort, 0.5f));
+
+        b.Wire(ramp, 0, note, 1)
+         .Wire(note, 0, tone, 1)
+         .Wire(tone, 0, output, NodeCatalog.OutputLeftPort);
+
+        return b.Patch;
+    }
     private const string TypeId = "audio.note";
 
     /// <summary>A3, the note the knob opens on.</summary>
@@ -169,16 +206,15 @@ public class NoteTests
     }
 
     /// <summary>
-    /// The Chromatic preset is the module's demonstration, and half of it is
-    /// audible. The snapshot test covers what it looks like, so this covers the
-    /// half a picture cannot show: that the tone really sits on notes, and
-    /// really moves between them in steps.
+    /// A ramp snapped to whole notes is the module's smallest demonstration, and
+    /// this covers the half a picture cannot show: that the tone really sits on
+    /// notes, and really moves between them in steps.
     /// </summary>
     [Fact]
-    public void The_chromatic_preset_plays_one_note_and_then_the_next()
+    public void A_chromatic_ramp_plays_one_note_and_then_the_next()
     {
 
-        var result = Presets.Chromatic(NodeCatalog.BuiltIn).CompileForAudio(NodeCatalog.BuiltIn);
+        var result = Chromatic(NodeCatalog.BuiltIn).CompileForAudio(NodeCatalog.BuiltIn);
         result.Issues.ShouldBeEmpty();
 
         var buffer = new float[GlobalConstants.SampleRate / 2 * 2];
@@ -223,10 +259,10 @@ public class NoteTests
     [Theory]
     [InlineData(0d)]
     [InlineData(20d)]
-    public void The_chromatic_preset_does_not_tear_its_waveform_at_a_note_change(double from)
+    public void A_chromatic_ramp_does_not_tear_its_waveform_at_a_note_change(double from)
     {
 
-        var program = Presets.Chromatic(NodeCatalog.BuiltIn).CompileForAudio(NodeCatalog.BuiltIn).Program;
+        var program = Chromatic(NodeCatalog.BuiltIn).CompileForAudio(NodeCatalog.BuiltIn).Program;
 
         var renderer = new AudioRenderer();
         renderer.SeekTo(from);

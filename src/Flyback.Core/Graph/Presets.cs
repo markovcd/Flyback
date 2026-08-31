@@ -1,33 +1,152 @@
 namespace Flyback.Core.Graph;
 
 /// <summary>
-/// A patch to start from, and the name it appears under. Built on demand rather
-/// than held ready, because a preset from a plugin can only be assembled once
-/// that plugin's modules are in the catalogue.
+/// What kind of thing a preset is, which is what the picker groups by.
 /// </summary>
-public sealed record PatchPreset(string Name, Func<ModuleCatalog, Patch> Build);
+/// <remarks>
+/// A patch that ships is teaching something, and the three ways of teaching are
+/// different enough that mixing them in one list made all of them harder to
+/// find. The distinction is also a rule about what may be in the patch, which is
+/// why it is worth writing down rather than leaving to a naming convention: an
+/// <see cref="Idea"/> reaches one sink and only one.
+/// </remarks>
+public enum PresetKind
+{
+    /// <summary>
+    /// One idea, at one sink. A patch about sound has no picture in it and a
+    /// patch about picture makes no sound — not as a style but because the other
+    /// half was always decoration, and decoration is the thing a reader has to
+    /// look past to find what the patch is for. Where the idea genuinely has no
+    /// picture, the screen stays black and that is the honest statement of it.
+    /// </summary>
+    Idea,
+
+    /// <summary>
+    /// A patch that is about the two sinks meeting, and so is correctly both.
+    /// The test is whether taking either half away would leave the point
+    /// standing: a Meter with nothing to draw and a Scan with nothing to hear
+    /// are not patches at all.
+    /// </summary>
+    Interplay,
+
+    /// <summary>
+    /// What one patch can be rather than what one module does. Exempt from the
+    /// one-idea rule by design, and there are few of them on purpose.
+    /// </summary>
+    Showcase,
+
+    /// <summary>The Output and nothing else, which is not teaching anything.</summary>
+    Blank,
+}
+
+/// <summary>
+/// A patch to start from, and how it is offered. Built on demand rather than
+/// held ready, because a preset from a plugin can only be assembled once that
+/// plugin's modules are in the catalogue.
+/// </summary>
+/// <remarks>
+/// <paramref name="Description"/> and <paramref name="Kind"/> are optional
+/// parameters rather than required ones, so a plugin compiled against an earlier
+/// build still finds the constructor it was compiled against — the same bargain
+/// the init properties on <see cref="NodeDef"/> make.
+/// </remarks>
+/// <param name="Description">
+/// One line saying what the patch is for, shown under its name. Every preset in
+/// the box has a good deal more than this written on it in the source; this is
+/// the sentence of it that a person choosing between sixteen names needs.
+/// </param>
+public sealed record PatchPreset(
+    string Name,
+    Func<ModuleCatalog, Patch> Build,
+    string Description = "",
+    PresetKind Kind = PresetKind.Idea);
 
 /// <summary>Patches that ship with the synth, so it never opens on a blank canvas.</summary>
 public static class Presets
 {
+    /// <summary>
+    /// Everything the engine ships, in the order the picker shows it: the ideas
+    /// first, then the patches about the two sinks meeting, then the three big
+    /// ones, and the blank canvas last.
+    /// </summary>
+    /// <remarks>
+    /// Grouped by <see cref="PatchPreset.Kind"/> rather than by subject, because
+    /// what somebody opening the list wants to know first is what kind of thing
+    /// they are about to be shown. Within a group they are in the order they are
+    /// worth meeting in.
+    /// <para>
+    /// The rule the <see cref="PresetKind.Idea"/> group keeps is that a patch
+    /// teaching one thing reaches one sink. It was not kept before, and what that
+    /// cost is visible in what has gone: a drum whose picture was a saw
+    /// impersonating an envelope, a reverb whose picture was an envelope standing
+    /// in for a room, and a fractal with an unrelated drone beside it. Each of
+    /// those had two halves and only one subject, and the half that was not the
+    /// subject was the half a reader had to see past.
+    /// </para>
+    /// </remarks>
     public static IReadOnlyList<PatchPreset> All =>
     [
-        new("Plasma", Plasma),
-        new("Kaleidoscope", Kaleidoscope),
-        new("Feedback tunnel", FeedbackTunnel),
-        new("Nebula", Nebula),
-        new("Drone", Drone),
-        new("Ring scan", RingScan),
-        new("Chromatic", Chromatic),
-        new("In key", InKey),
-        new("Sequence", Sequence),
-        new("Random melody", RandomMelody),
-        new("Four voices", FourVoices),
-        new("Kick", Kick),
-        new("Heard", Heard),
-        new("Played", Played),
-        new("Whole band", WholeBand),
-        new("Empty", Empty),
+        // --- one idea, one sink ------------------------------------------------
+
+        new("Plasma", Plasma,
+            "Two sine fields crossed and read as hue — the hello world of video synths."),
+        new("Kaleidoscope", Kaleidoscope,
+            "Rotating wedges filled with noise that boils over time."),
+        new("Grid", Grid,
+            "Tile, mirror and polar in a row, so what each one does to the plane is separable."),
+        new("Feedback tunnel", FeedbackTunnel,
+            "Each frame re-read slightly rotated, scaled and dimmed, with fresh rings on top."),
+        new("Picture in", PictureIn,
+            "A photograph put through the same geometry a generated field goes through."),
+        new("Clip", Clip,
+            "A WAV file played, scrubbed and retriggered."),
+        new("Loop", Loop,
+            "A Unit Delay closing a cycle, which is how an integrator and a comb are built."),
+        new("Two channels", TwoChannels,
+            "Stereo from one voice: left and right fed differently rather than panned."),
+
+        // --- the two sinks meeting ---------------------------------------------
+
+        new("Drone", Drone,
+            "One slow oscillator setting both the hue of the image and the tremolo on the tone.",
+            PresetKind.Interplay),
+        new("Sequence", Sequence,
+            "One sequencer heard and seen at once: the steps are the tune and the colour.",
+            PresetKind.Interplay),
+        new("Four voices", FourVoices,
+            "Four faders that are one signal each, opening a voice and a band together.",
+            PresetKind.Interplay),
+        new("Heard", Heard,
+            "A drum the picture listens to rather than being told about, through a Meter.",
+            PresetKind.Interplay),
+        new("Waveform", Waveform,
+            "A Scope charting what the speakers actually played, rather than what the screen computes.",
+            PresetKind.Interplay),
+        new("Ahead and behind", AheadAndBehind,
+            "A Probe and a Scope on one signal, which is the only way to see how they differ.",
+            PresetKind.Interplay),
+        new("In key", InKey,
+            "One noise field snapped to a pentatonic: heard as a melody, seen as the terraces it was cut into.",
+            PresetKind.Interplay),
+        new("Ring scan", RingScan,
+            "A loop swept round a field at audio rate, so the picture is the waveform.",
+            PresetKind.Interplay),
+
+        // --- what one patch can be ---------------------------------------------
+
+        new("Nebula", Nebula,
+            "Everything the video side can do, folded, warped and trailing its own frames.",
+            PresetKind.Showcase),
+        new("Played", Played,
+            "The one preset you have to play: a keyboard driving pitch, envelope and timbre.",
+            PresetKind.Showcase),
+        new("Whole band", WholeBand,
+            "Four instruments off four sequencers, and one picture off three of them.",
+            PresetKind.Showcase),
+
+        new("Empty", Empty,
+            "The Output, with everything still to plug into it.",
+            PresetKind.Blank),
     ];
 
     public static Patch Default() => Plasma(NodeCatalog.Current);
@@ -105,48 +224,29 @@ public static class Presets
     }
 
     /// <summary>
-    /// A kick drum at 120 beats a minute, which is two envelopes and an
-    /// oscillator: one shapes how loud it is and one shapes what pitch it is,
-    /// and the second of those is the whole difference between a drum and a
-    /// beep.
+    /// A drum with the picture listening to it rather than being told about the
+    /// beat.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// A kick is a sine whose pitch falls out from under it. The pitch envelope
-    /// is the short one — forty milliseconds, against three hundred for the
-    /// level — so the note starts at two hundred hertz and has dropped to
-    /// forty-five before it is half over. What the ear hears at the top is the
-    /// beater and what it hears after is the shell, and both are one oscillator.
+    /// The drum first, because it is two envelopes and an oscillator and the
+    /// second envelope is the whole difference between a drum and a beep. A kick
+    /// is a sine whose pitch falls out from under it: the pitch envelope is the
+    /// short one, so the note starts high and has dropped to the body of the
+    /// drum before it is half over. What the ear hears at the top is the beater
+    /// and what it hears after is the shell, and both are one oscillator. Here
+    /// the pitch is a fixed 70 Hz and only the level is shaped, because the drum
+    /// is not what this patch is about; Whole band builds the full two-envelope
+    /// version.
     /// </para>
     /// <para>
-    /// The trigger is a Pulse rather than a sequencer, because every beat here is
-    /// the same beat and a pattern of one repeated note is a list saying nothing.
-    /// Its 'freq' is where the tempo lands: 120 beats a minute is two beats a
-    /// second is two hertz, and the Tempo module is what lets that be typed as
-    /// 120 rather than worked out. How long its gate is held barely matters:
-    /// sustain is nothing, so the level has fallen to it long before the gate
-    /// lets go, and what decides the length of a kick is the envelope.
-    /// </para>
-    /// <para>
-    /// For the eye, the same level envelope lights a disc. The envelopes have no
-    /// memory on the video path so what the screen actually gets is the gate —
-    /// a flash a beat, in time with what the ear is hearing rather than shaped
-    /// like it. Which is the honest picture of a drum: the rhythm is the part of
-    /// it a still frame can carry.
-    /// </para>
-    /// </remarks>
-    /// <summary>
-    /// The same drum as <see cref="Kick"/>, with the picture listening to it
-    /// rather than being told about the beat.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// The Kick's own note says what this is here to answer: its envelopes have
-    /// no memory on the video path, so what the screen gets of a drum is the
-    /// gate — a flash a beat, in time with what the ear hears rather than shaped
-    /// like it. Every patch before this one that wanted the eye and the ear to
-    /// agree did it the same way, by sending one modulator to both, which is a
-    /// patch saying a thing twice rather than one half of it hearing the other.
+    /// What it is about is the wire from the voice into the Meter. Every patch
+    /// before this one that wanted the eye and the ear to agree did it by sending
+    /// one modulator to both, which is a patch saying a thing twice rather than
+    /// one half of it hearing the other. And a drum is exactly where that breaks
+    /// down: an envelope has no memory on the video path, so all it can hand the
+    /// screen is its gate — a flash a beat, in time with what the ear hears
+    /// rather than shaped like it.
     /// </para>
     /// <para>
     /// Here nothing is sent to both. The picture is driven by a Meter, and a
@@ -179,8 +279,8 @@ public static class Presets
         var b = new PatchBuilder(modules);
 
         // Two beats a second, and a gate short enough that the envelope decides
-        // how long the drum is rather than the trigger — the same arrangement
-        // the Kick uses and for the same reason.
+        // how long the drum is rather than the trigger — what decides the length
+        // of a kick is the envelope and never the gate.
         var beat = b.Add("osc.pulse", 80, 300, (1, 2f), (3, 0.08f));
 
         var level = b.Add(NodeCatalog.AdsrTypeId, 320, 300, (1, -2.6f), (2, -0.9f), (3, 0f), (4, -1f));
@@ -223,85 +323,6 @@ public static class Presets
          .Wire(heard, 0, color, 0)
          .Wire(lit, 0, color, 2)
          .Wire(color, 0, output, NodeCatalog.OutputColorPort);
-
-        return b.Patch;
-    }
-
-    public static Patch Kick(ModuleCatalog modules)
-    {
-        var b = new PatchBuilder(modules);
-
-        // 120 a minute, and the module that says so in those words.
-        var tempo = b.Add(NodeCatalog.TempoTypeId, 40, 200, (0, 120f));
-
-        // 'width' is how much of each beat the pulse is shut for, so a small one
-        // opens just after the beat and stays open until just before the next.
-        // Held far longer than the drum lasts, which is deliberate: what decides
-        // how long a kick is, is the envelope and never the gate.
-        var beat = b.Add("osc.pulse", 260, 200, (3, 0.02f));
-
-        // Ear. Level and pitch, in that order down the column, and the pitch one
-        // an order of magnitude shorter — see above.
-        var level = b.Add(NodeCatalog.AdsrTypeId, 520, 200,
-            (1, -2.7f), (2, -0.52f), (3, 0f), (4, -1.3f));
-
-        var sweep = b.Add(NodeCatalog.AdsrTypeId, 520, 480,
-            (1, -3f), (2, -1.35f), (3, 0f), (4, -2f));
-
-        // The envelope is nought to one and a pitch is in hertz, so it is
-        // remapped rather than multiplied: the bottom of the sweep is where the
-        // drum sits and the top is how far above it the beater is.
-        var pitch = b.Add("math.remap", 780, 480, (1, 0f), (2, 1f), (3, 45f), (4, 200f));
-
-        var body = b.Add("osc.sine", 1020, 480);
-        var struck = b.Add("math.mul", 1260, 300);
-
-        // Eye. A disc, brightest in the middle and gone by the edge of the frame.
-        var coord = b.Add("coord", 40, 760);
-        var disc = b.Add("math.remap", 300, 760, (1, 0f), (2, 0.9f), (3, 1f), (4, 0f));
-
-        // What lights it is a saw at the tempo and not the level envelope, which
-        // cannot help here: an envelope has no memory on the video path, so all
-        // it can hand over is its gate — and that gate is open for all but a
-        // fiftieth of each beat. A disc lit by it is not a drum being struck but
-        // a lamp that is on, with a ten-millisecond gap in it that a frame is too
-        // long to catch reliably. What you see then is a light blinking at
-        // whatever rate the two happen to beat against each other.
-        //
-        // A saw is the shape the envelope would be if it could run: it resets on
-        // the beat and falls away, and being a pure function of time it needs no
-        // memory to do it. Its 'phase' puts the reset where the Pulse's edge is,
-        // so the flash and the strike land together.
-        var fall = b.Add("osc.saw", 300, 980, (2, 0.98f));
-
-        // Bright on the beat, down to nothing two thirds of the way to the next
-        // — the same share of a beat the level envelope's decay takes, so what
-        // the eye is given is the length of the drum rather than of the gate.
-        var shape = b.Add("math.remap", 540, 980, (1, -1f), (2, 1f), (3, 1f), (4, -0.5f));
-        var visible = b.Add("math.clamp", 780, 980, (1, 0f), (2, 1f));
-
-        var flash = b.Add("math.mul", 1020, 860);
-        var skin = b.Add("color.hsv", 1260, 760, (0, 0.04f), (1, 0.85f));
-
-        var output = b.Add(NodeCatalog.OutputTypeId, 1500, 420, (NodeCatalog.OutputGainPort, 0.8f));
-
-        b.Wire(tempo, 0, beat, 1)
-         .Wire(beat, 0, level, 0)
-         .Wire(beat, 0, sweep, 0)
-         .Wire(sweep, 0, pitch, 0)
-         .Wire(pitch, 0, body, 1)
-         .Wire(body, 0, struck, 0)
-         .Wire(level, 0, struck, 1)
-         .Wire(struck, 0, output, NodeCatalog.OutputLeftPort)
-
-         .Wire(coord, 2, disc, 0)
-         .Wire(tempo, 0, fall, 1)
-         .Wire(fall, 0, shape, 0)
-         .Wire(shape, 0, visible, 0)
-         .Wire(disc, 0, flash, 0)
-         .Wire(visible, 0, flash, 1)
-         .Wire(flash, 0, skin, 2)
-         .Wire(skin, 0, output, NodeCatalog.OutputColorPort);
 
         return b.Patch;
     }
@@ -663,86 +684,6 @@ public static class Presets
     }
 
     /// <summary>
-    /// The Note module on both sinks at once: one ramp, snapped to whole notes,
-    /// heard as a chromatic run and seen as the steps it climbs through.
-    /// </summary>
-    /// <remarks>
-    /// The ramp is smooth and nothing downstream of the snap is. That is the
-    /// whole demonstration, and it is why the same signal drives both sinks: the
-    /// ear hears a run of separate notes rather than a slide, and the eye sees
-    /// flat rings of color rather than a gradient. Feed the ramp straight to a
-    /// Frequency knob instead and both become continuous.
-    /// <para>
-    /// The steps are instant and the tone is clean, which sounds like a
-    /// contradiction and is the point of ADR-0030: the sine accumulates its
-    /// phase, so a frequency that jumps three times a second changes how fast
-    /// the wave is travelling without moving where it currently is. Nothing in
-    /// the pitch is smoothed. There is nothing to smooth.
-    /// </para>
-    /// <para>
-    /// The picture reads the ramp at every radius at once, which is the trick
-    /// worth stealing: the audio path pins x and y to zero, so the same Note
-    /// module the speakers hear one note from is showing the eye the fourteen
-    /// either side of it.
-    /// </para>
-    /// </remarks>
-    public static Patch Chromatic(ModuleCatalog modules)
-    {
-        var b = new PatchBuilder(modules);
-
-        // Here for 'radius', which is the one Coordinates output nothing is
-        // normalled to: x and y arrive at a module that wants a position on
-        // their own, and a distance from the centre never does.
-        var coord = b.Add("coord", 40, 320);
-
-        // Half an octave either way, over four seconds: six semitones up and
-        // six down from the note on the knob, then it starts again. The reset is
-        // a jump of a whole octave and it costs nothing, for the same reason the
-        // semitones do.
-        var ramp = b.Add("osc.saw", 250, 100, (1, 0.25f), (3, 0.5f));
-
-        // Distance from the centre on the same scale, subtracted rather than
-        // added so the rings travel outward as the ramp climbs.
-        var spread = b.Add("math.mul", 250, 340, (1, 0.6f));
-        var sweep = b.Add("math.sub", 460, 200);
-
-        // A3 on the knob, and whatever arrives snapped to the nearest semitone.
-        var note = b.Add("audio.note", 660, 220);
-
-        // Ear.
-        var tone = b.Add("osc.sine", 880, 460);
-
-        // Eye: one hue per semitone, wrapped so an octave is a full turn of the
-        // wheel and the same note always comes out the same color.
-        var wheel = b.Add("math.mul", 880, 100, (1, 1f / 12f));
-        var hue = b.Add("math.fract", 1080, 100);
-
-        // Brightness is taken from the ramp itself rather than from the note, so
-        // the two are in one picture: a smooth glow with hard-edged color rings
-        // sitting in it, which is the before and after of the snap.
-        var glow = b.Add("math.remap", 1080, 300, (1, -1.8f), (2, 0.5f), (3, 0.08f), (4, 1f));
-
-        var color = b.Add("color.hsv", 1270, 140, (1, 0.85f));
-
-        var output = b.Add(NodeCatalog.OutputTypeId, 1470, 300, (NodeCatalog.OutputGainPort, 0.5f));
-
-        b.Wire(coord, 2, spread, 0)
-         .Wire(ramp, 0, sweep, 0)
-         .Wire(spread, 0, sweep, 1)
-         .Wire(sweep, 0, note, 1)
-         .Wire(note, 0, tone, 1)
-         .Wire(tone, 0, output, NodeCatalog.OutputLeftPort)
-         .Wire(note, 1, wheel, 0)
-         .Wire(wheel, 0, hue, 0)
-         .Wire(sweep, 0, glow, 0)
-         .Wire(hue, 0, color, 0)
-         .Wire(glow, 0, color, 2)
-         .Wire(color, 0, output, NodeCatalog.OutputColorPort);
-
-        return b.Patch;
-    }
-
-    /// <summary>
     /// A noise field played as a melody and drawn as the terraces it is being
     /// snapped to: one Quantiser, in a pentatonic, feeding both sinks.
     /// </summary>
@@ -906,60 +847,6 @@ public static class Presets
         return b.Patch;
     }
 
-    /// <summary>
-    /// A generative melody: smooth noise is sampled once per beat, held between
-    /// beats, and snapped to a minor pentatonic scale before it reaches the voice.
-    /// </summary>
-    public static Patch RandomMelody(ModuleCatalog modules)
-    {
-        var b = new PatchBuilder(modules);
-
-        var tempo = b.Add(NodeCatalog.TempoTypeId, 40, 700, (0, 132f));
-        var time = b.Add(NodeCatalog.TimeTypeId, 40, 460);
-        var drift = b.Add("math.mul", 250, 460, (1, 0.35f));
-        var noise = b.Add("pattern.noise", 500, 300, (3, 1.6f));
-        var range = b.Add("math.remap", 720, 300, (1, 0f), (2, 1f), (3, 45f), (4, 69f));
-        var beat = b.Add("osc.pulse", 500, 700, (3, 0.15f));
-        var held = b.Add(NodeCatalog.HoldTypeId, 940, 300);
-        var quantiser = b.Add(NodeCatalog.QuantiserTypeId, 1160, 300);
-        ScaleExtra.Set(quantiser, [0, 2, 3, 5, 7, 10]);
-
-        var note = b.Add("audio.note", 1380, 460);
-        var tone = b.Add("osc.saw", 1600, 460, (3, 0.35f));
-        var envelope = b.Add(NodeCatalog.AdsrTypeId, 1380, 700,
-            (1, -2.2f), (2, -0.8f), (3, 0.35f), (4, -1.2f));
-        var voice = b.Add("math.mul", 1820, 560);
-
-        var hue = b.Add("math.mul", 1380, 80, (1, 1f / 12f));
-        var wrapped = b.Add("math.fract", 1600, 80);
-        var brightness = b.Add("math.remap", 1380, 220,
-            (1, 0f), (2, 1f), (3, 0.15f), (4, 0.9f));
-        var color = b.Add("color.hsv", 1820, 160, (1, 0.75f));
-        var output = b.Add(NodeCatalog.OutputTypeId, 2100, 360,
-            (NodeCatalog.OutputGainPort, 0.5f));
-
-        b.Wire(time, 0, drift, 0)
-         .Wire(drift, 0, noise, 2)
-         .Wire(noise, 0, range, 0)
-         .Wire(range, 0, held, 0)
-         .Wire(beat, 0, held, 1)
-         .Wire(held, 0, quantiser, 0)
-         .Wire(quantiser, 0, note, 0)
-         .Wire(note, 0, tone, 1)
-         .Wire(tone, 0, voice, 0)
-         .Wire(beat, 0, envelope, 0)
-         .Wire(envelope, 0, voice, 1)
-         .Wire(voice, 0, output, NodeCatalog.OutputLeftPort)
-         .Wire(quantiser, 0, hue, 0)
-         .Wire(hue, 0, wrapped, 0)
-         .Wire(wrapped, 0, color, 0)
-         .Wire(noise, 0, brightness, 0)
-         .Wire(brightness, 0, color, 2)
-         .Wire(color, 0, output, NodeCatalog.OutputColorPort)
-         .Wire(tempo, 0, beat, 1);
-
-        return b.Patch;
-    }
 
     /// <summary>
     /// Everything the video side can do, in one patch: coordinates turned, folded
@@ -1716,6 +1603,477 @@ public static class Presets
          .Wire(trail, 0, combine, 0)
          .Wire(fresh, 0, combine, 1)
          .Wire(combine, 0, output, NodeCatalog.OutputColorPort);
+
+        return b.Patch;
+    }
+
+    /// <summary>
+    /// The three coordinate transforms nothing else in the box shows, in a row,
+    /// so that what each does to the plane can be seen by taking it out.
+    /// </summary>
+    /// <remarks>
+    /// Kaleidoscope and Nebula both fold the plane and both do it with the one
+    /// module that folds it dramatically, which left Tile, Mirror and To polar
+    /// with no example at all — three of the eight modules under Geometry, and
+    /// the three a patch reaches for most once it wants a layout rather than a
+    /// texture.
+    /// <para>
+    /// The order is the whole of it, and each step undoes some of the freedom of
+    /// the last. Tile throws away where in the picture you are and keeps only
+    /// where in a cell you are, so everything after it happens once per cell.
+    /// Mirror throws away the sign, so each cell is a quarter of itself reflected
+    /// twice. To polar throws away the axes, so what was a square grid inside a
+    /// cell comes out as rings and spokes. A Checker at the end is deliberately
+    /// the plainest field in the catalogue: anything with structure of its own
+    /// would be competing with the structure being demonstrated.
+    /// </para>
+    /// <para>
+    /// One slow sine slides the plane sideways underneath all of it. It is there
+    /// so the cells can be seen to be cells — a tiling that does not move is
+    /// indistinguishable from a picture that happens to repeat, and a tiling that
+    /// slides shows the seam running through it.
+    /// </para>
+    /// <para>
+    /// No sound, and there is none to be had: every module here is a fact about
+    /// where a pixel is, and the audio path stands at one point of the plane.
+    /// </para>
+    /// </remarks>
+    public static Patch Grid(ModuleCatalog modules)
+    {
+        var b = new PatchBuilder(modules);
+
+        // The drift. 'in' takes no wire — it is a domain, normalled to Time.
+        var slide = b.Add("osc.sine", 40, 460, (1, 0.06f));
+
+        // x and y take no wire either: they are normalled to Coordinates, so
+        // this reads the pixel's own position (ADR-0050).
+        var move = b.Add("space.translate", 260, 200);
+        var cells = b.Add("space.tile", 480, 160, (2, 3f));
+        var fold = b.Add("space.mirror", 700, 160);
+        var round = b.Add("space.polar", 920, 160);
+
+        var squares = b.Add("pattern.checker", 1140, 120, (2, 3f));
+
+        // The angle as hue, so a spoke is a color rather than only a shape. It
+        // arrives in radians and a hue is a turn, so it is remapped rather than
+        // multiplied.
+        var wheel = b.Add("math.remap", 1140, 340, (1, -3.15f), (2, 3.15f), (3, 0f), (4, 1f));
+
+        // The check is 0 or 1 and a picture that is half black reads as a fault,
+        // so the dark squares are dim rather than absent — the same floor the
+        // Sequence preset puts under its gate.
+        var glow = b.Add("math.remap", 1360, 120, (1, 0f), (2, 1f), (3, 0.14f), (4, 1f));
+
+        var color = b.Add("color.hsv", 1580, 200, (1, 0.7f));
+        var output = b.Add(NodeCatalog.OutputTypeId, 1800, 240);
+
+        b.Wire(slide, 0, move, 2)
+         .Wire(move, 0, cells, 0)
+         .Wire(move, 1, cells, 1)
+         .Wire(cells, 0, fold, 0)
+         .Wire(cells, 1, fold, 1)
+         .Wire(fold, 0, round, 0)
+         .Wire(fold, 1, round, 1)
+         .Wire(round, 0, squares, 0)
+         .Wire(round, 1, squares, 1)
+         .Wire(round, 1, wheel, 0)
+         .Wire(squares, 0, glow, 0)
+         .Wire(wheel, 0, color, 0)
+         .Wire(glow, 0, color, 2)
+         .Wire(color, 0, output, NodeCatalog.OutputColorPort);
+
+        return b.Patch;
+    }
+
+    /// <summary>
+    /// A tone, and a Scope drawing what the speakers actually played of it.
+    /// </summary>
+    /// <remarks>
+    /// The module had an ADR to its name
+    /// ([0053](0053-a-scope-records-what-the-speakers-played.md)) and no patch,
+    /// which is the wrong way round for the one module that answers "what does
+    /// this sound like" without anybody having to listen.
+    /// <para>
+    /// What makes it a chart of the sound rather than a chart of the patch is
+    /// that its 'in' is never evaluated by the picture. The socket is swept and
+    /// the compiler does not resolve it: what is drawn came out of the run that
+    /// made the sound, through a Tap, and the video program contributes nothing
+    /// to it but the table read. So the tone below is computed once, for the
+    /// speakers, and the screen is looking at the result.
+    /// </para>
+    /// <para>
+    /// A saw rather than a sine, because a sine looks like every other sine and
+    /// the point of a chart is to tell one waveform from another. The tremolo is
+    /// there for the same reason at a different scale: at this window the chart
+    /// holds a few hundred cycles, so the shape that is legible across the frame
+    /// is the envelope rather than the wave, and a level that moves is what makes
+    /// the frame show anything at all.
+    /// </para>
+    /// <para>
+    /// It draws nothing until sound is switched on, and that is the module rather
+    /// than the patch — there is no past to chart in a still frame. It is the
+    /// first thing to know about it and the reason the Probe exists beside it.
+    /// </para>
+    /// </remarks>
+    public static Patch Waveform(ModuleCatalog modules)
+    {
+        var b = new PatchBuilder(modules);
+
+        var pitch = b.Add("audio.frequency", 40, 340, (0, 160f));
+        var tone = b.Add("osc.saw", 280, 340);
+
+        // The tremolo, and the only thing in the patch that moves slowly enough
+        // to be seen across a frame of the chart.
+        var swell = b.Add("osc.sine", 280, 560, (1, 0.8f), (3, 0.45f), (4, 0.55f));
+        var voice = b.Add("math.mul", 520, 400);
+
+        // About twenty milliseconds, which holds a few cycles of the tremolo and
+        // a great many of the tone. The knob is in decades — see
+        // PortDisplay.Duration — so this is 10^-1.7.
+        var chart = b.Add(NodeCatalog.ScopeTypeId, 780, 400, (1, -1.7f));
+
+        var output = b.Add(NodeCatalog.OutputTypeId, 1040, 400, (NodeCatalog.OutputGainPort, 0.5f));
+
+        b.Wire(pitch, 0, tone, 1)
+         .Wire(tone, 0, voice, 0)
+         .Wire(swell, 0, voice, 1)
+         .Wire(voice, 0, output, NodeCatalog.OutputLeftPort)
+         .Wire(voice, 0, chart, 0)
+         .Wire(chart, 0, output, NodeCatalog.OutputColorPort);
+
+        return b.Patch;
+    }
+
+    /// <summary>
+    /// A Probe and a Scope reading the same wire, one above the other, which is
+    /// the only arrangement in which the difference between them is visible.
+    /// </summary>
+    /// <remarks>
+    /// Both draw a signal against time and they disagree, and both are right. A
+    /// Probe is a second compile root
+    /// ([0040](0040-a-probe-is-a-second-compile-root.md)): it recomputes the
+    /// signal at every column, which is why it can draw the future, and why it
+    /// draws an oscillator without the phase the speakers accumulate. A Scope
+    /// computes nothing at all — it reads back what was played
+    /// ([0053](0053-a-scope-records-what-the-speakers-played.md)), so it has only
+    /// the past and it has the memory.
+    /// <para>
+    /// The signal is chosen to make them disagree rather than to look well. Its
+    /// frequency is swept, and an accumulated phase turns a swept frequency into
+    /// a chirp that bends continuously, while a multiplied-out one turns it into
+    /// a wave that keeps being re-zeroed. So the Scope shows a chirp and the
+    /// Probe shows a fan, off one oscillator, at the same moment. Take the sweep
+    /// out — put a Frequency on the socket instead — and the two charts become
+    /// the same picture, which is the other half of the demonstration.
+    /// </para>
+    /// <para>
+    /// Split with a Threshold on y rather than blended, because two charts mixed
+    /// together are one unreadable chart. The Probe is the upper half because it
+    /// is the one that reaches forward, and reading down the frame is then
+    /// reading from what will happen to what did.
+    /// </para>
+    /// </remarks>
+    public static Patch AheadAndBehind(ModuleCatalog modules)
+    {
+        var b = new PatchBuilder(modules);
+
+        // Here for 'y', which is what the two charts are divided on. Nothing
+        // else in the patch needs a source.
+        var coord = b.Add("coord", 40, 700);
+
+        // The sweep, and the reason the two charts differ at all.
+        var sweep = b.Add("osc.sine", 40, 240, (1, 0.4f));
+        var hz = b.Add("math.remap", 280, 240, (1, -1f), (2, 1f), (3, 90f), (4, 320f));
+        var tone = b.Add("osc.saw", 520, 300);
+
+        var ahead = b.Add(NodeCatalog.ProbeTypeId, 780, 140, (1, -1.6f));
+        var behind = b.Add(NodeCatalog.ScopeTypeId, 780, 460, (1, -1.6f));
+
+        // 0 below the middle of the frame and 1 above it, which is what picks
+        // between the two charts. Blend takes b where t is 1, so the Probe is up.
+        var half = b.Add("math.step", 780, 700);
+        var split = b.Add("color.mix", 1040, 400);
+
+        var output = b.Add(NodeCatalog.OutputTypeId, 1300, 400, (NodeCatalog.OutputGainPort, 0.45f));
+
+        b.Wire(sweep, 0, hz, 0)
+         .Wire(hz, 0, tone, 1)
+         .Wire(tone, 0, output, NodeCatalog.OutputLeftPort)
+
+         .Wire(tone, 0, ahead, 0)
+         .Wire(tone, 0, behind, 0)
+         .Wire(coord, 1, half, 1)
+         .Wire(behind, 0, split, 0)
+         .Wire(ahead, 0, split, 1)
+         .Wire(half, 0, split, 2)
+         .Wire(split, 0, output, NodeCatalog.OutputColorPort);
+
+        return b.Patch;
+    }
+
+    /// <summary>
+    /// The sample player, wired the three ways it is worth wiring: played
+    /// forward on the clock, restarted by a trigger, and scrubbed by a signal.
+    /// </summary>
+    /// <remarks>
+    /// It ships with no file chosen, and the warning that says so is the patch's
+    /// first instruction — pick one in the panel and it plays. That is the same
+    /// state a freshly placed Sample is in, and a preset that shipped pointing at
+    /// a file would be a preset that broke the moment the file moved
+    /// ([0052](0052-a-patch-names-its-samples-rather-than-carrying-them.md)).
+    /// <para>
+    /// The trigger is the socket worth understanding and the one a description
+    /// cannot really carry. It runs no playhead of its own: it remembers where
+    /// 'in' had got to when the last edge came, and what is read is the
+    /// difference. So a clip driven by the clock plays at its own speed from the
+    /// moment it was fired, and retriggering falls out rather than being handled
+    /// — an edge arriving mid-clip moves the zero to now.
+    /// </para>
+    /// <para>
+    /// 'length' is left unwired, and the reason is worth more than a wire would
+    /// be. The obvious use of it is to set the rate of the Pulse that does the
+    /// triggering, so that a clip is restarted exactly once per pass however long
+    /// the file turns out to be — and that is a cycle. Length comes out of the
+    /// player, the Pulse goes back into it, and the walk back from the Output
+    /// arrives where it started. Every use of 'length' that feeds the same player
+    /// is the same cycle; it can only time something downstream of the clip, or
+    /// be read in the panel. Put a Unit Delay in the loop and it compiles, which
+    /// is what Unit Delay is for and is a different patch.
+    /// </para>
+    /// <para>
+    /// No picture. A clip is a table read, and a table is the one thing the
+    /// shader cannot draw — so a patch that showed the waveform would take the
+    /// preview back to the CPU to illustrate something the Scope already draws.
+    /// </para>
+    /// </remarks>
+    public static Patch Clip(ModuleCatalog modules)
+    {
+        var b = new PatchBuilder(modules);
+
+        // Every two seconds, and a gate narrow enough that what is heard is the
+        // clip rather than the trigger. Its 'in' takes no wire: it is a domain,
+        // normalled to Time (ADR-0050).
+        var again = b.Add("osc.pulse", 280, 560, (1, 0.5f), (3, 0.02f));
+
+        // 'in' takes no wire either, for the same reason — so the clip plays
+        // forward at its own speed from wherever the last edge left the zero.
+        var clip = b.Add(NodeCatalog.SampleTypeId, 640, 300, (1, 0.9f));
+
+        var output = b.Add(NodeCatalog.OutputTypeId, 940, 300, (NodeCatalog.OutputGainPort, 0.7f));
+
+        b.Wire(again, 0, clip, 2)
+         .Wire(clip, 0, output, NodeCatalog.OutputLeftPort);
+
+        return b.Patch;
+    }
+
+    /// <summary>
+    /// A photograph read as a field, and put through the same geometry a
+    /// generated one goes through.
+    /// </summary>
+    /// <remarks>
+    /// The module is a texture read at a place
+    /// ([0059](0059-a-picture-comes-in-as-a-texture.md)), and the whole of what
+    /// makes it interesting is that the place is a socket. Everything under
+    /// Geometry was written for fields that go on for ever, and every one of them
+    /// works here unchanged: a picture put through a Scale is zoomed, through a
+    /// Rotate is turned, and through a Warp is bent by whatever the warp is being
+    /// driven by — which is a thing no image editor offers, because no image
+    /// editor has a signal to drive it with.
+    /// <para>
+    /// The warp is driven by a Noise, so what bends the photograph is a field
+    /// rather than a shape. That is the arrangement worth stealing and it is
+    /// Nebula's, borrowed intact: geometry alone looks like geometry, and a
+    /// picture only stops looking like a picture being transformed once the
+    /// coordinates are displaced by something with no structure.
+    /// </para>
+    /// <para>
+    /// Ships with no file chosen and draws black until one is picked, which is
+    /// the module rather than the patch: outside a picture's own edges the answer
+    /// is black, and a picture that is not there is entirely outside its edges.
+    /// One rule rather than two.
+    /// </para>
+    /// <para>
+    /// No sound. A texture read is a table read, and the audio path stands at one
+    /// point of the plane — so what the speakers would get of this is one pixel,
+    /// held.
+    /// </para>
+    /// </remarks>
+    public static Patch PictureIn(ModuleCatalog modules)
+    {
+        var b = new PatchBuilder(modules);
+
+        var clock = b.Add("time", 40, 620);
+        var spin = b.Add("math.mul", 260, 500, (1, 0.05f));
+        var boil = b.Add("math.mul", 260, 740, (1, 0.15f));
+
+        // Breathing rather than fixed, so the frame is never quite the same twice
+        // and the edges of the picture come in and out of the view.
+        var breath = b.Add("osc.sine", 260, 260, (1, 0.05f));
+        var zoom = b.Add("math.remap", 480, 260, (1, -1f), (2, 1f), (3, 0.85f), (4, 1.4f));
+
+        // x and y take no wire anywhere in this chain: each is normalled to
+        // Coordinates, so the chain reads the pixel's own position and hands the
+        // moved position on.
+        var scale = b.Add("space.scale", 720, 180);
+        var turn = b.Add("space.rotate", 940, 180);
+
+        var field = b.Add("pattern.noise", 720, 620, (3, 1.8f));
+        var bend = b.Add("space.warp", 1160, 220, (3, 0.12f));
+
+        var photo = b.Add(NodeCatalog.PictureTypeId, 1400, 220);
+
+        // A little contrast on the way out, so a flat photograph still reads as
+        // one that is being done something to.
+        var graded = b.Add("color.gain", 1620, 220, (1, 1.15f), (2, -0.05f));
+
+        var output = b.Add(NodeCatalog.OutputTypeId, 1840, 260);
+
+        b.Wire(clock, 0, spin, 0)
+         .Wire(clock, 0, boil, 0)
+         .Wire(breath, 0, zoom, 0)
+         .Wire(zoom, 0, scale, 2)
+         .Wire(scale, 0, turn, 0)
+         .Wire(scale, 1, turn, 1)
+         .Wire(spin, 0, turn, 2)
+         .Wire(boil, 0, field, 2)
+         .Wire(turn, 0, bend, 0)
+         .Wire(turn, 1, bend, 1)
+         .Wire(field, 0, bend, 2)
+         .Wire(bend, 0, photo, 0)
+         .Wire(bend, 1, photo, 1)
+         .Wire(photo, 0, graded, 0)
+         .Wire(graded, 0, output, NodeCatalog.OutputColorPort);
+
+        return b.Patch;
+    }
+
+    /// <summary>
+    /// One Unit Delay closing a loop, which is a filter built by hand out of an
+    /// add and a multiply.
+    /// </summary>
+    /// <remarks>
+    /// The module the editor drops on a wire that would otherwise close a cycle,
+    /// and nothing explained what it was for. What it is for is this: a value
+    /// that has to be fed back into the thing that produced it, one evaluation
+    /// later, which is the shape of every filter, every integrator and every comb
+    /// that has ever been built.
+    /// <para>
+    /// The loop keeps most of what it had and adds a little of what arrives,
+    /// which is a lowpass: a square goes in and something with the corners taken
+    /// off comes out. Turn the feedback down and it stops filtering and becomes a
+    /// wire; turn it up past one and it is an oscillator that runs away, which
+    /// the rails at the sink will catch and which is worth hearing once.
+    /// </para>
+    /// <para>
+    /// The Unit Delay is not emitted the way other modules are. The compiler
+    /// recognises a cycle breaker, stops the walk there, and hands back what the
+    /// loop was carrying at the end of the previous evaluation — so the latency
+    /// that makes the loop mean something comes from the ordering rather than
+    /// from anything the module does. Its own input is resolved afterwards, once
+    /// every such read in the program has been emitted.
+    /// </para>
+    /// <para>
+    /// Audio only, and unusually literally so: a previous evaluation is exactly
+    /// what the video path does not have, so on the screen the whole loop is a
+    /// wire and the square comes out a square. That is not a limitation being
+    /// worked around; it is what a one-evaluation memory means where there is
+    /// only ever one evaluation.
+    /// </para>
+    /// </remarks>
+    public static Patch Loop(ModuleCatalog modules)
+    {
+        var b = new PatchBuilder(modules);
+
+        var pitch = b.Add("audio.frequency", 40, 260, (0, 110f));
+
+        // The thing being filtered. A square, because its corners are what a
+        // lowpass visibly and audibly takes off.
+        var source = b.Add("osc.square", 280, 260);
+
+        // Quiet going in, because the loop below has a great deal of gain in it:
+        // what comes out is roughly the input divided by one minus the feedback.
+        var quiet = b.Add("math.mul", 520, 260, (1, 0.06f));
+
+        var sum = b.Add("math.add", 760, 320);
+        var delay = b.Add(NodeCatalog.UnitDelayTypeId, 1000, 320);
+
+        // How much of the last evaluation is kept. Near one is a gentle filter,
+        // and the useful range is all in the last hundredth — which is why it is
+        // a knob of its own rather than a constant buried in the Multiply.
+        var keep = b.Add("math.mul", 760, 560, (1, 0.94f));
+
+        var output = b.Add(NodeCatalog.OutputTypeId, 1260, 320, (NodeCatalog.OutputGainPort, 0.5f));
+
+        b.Wire(pitch, 0, source, 1)
+         .Wire(source, 0, quiet, 0)
+         .Wire(quiet, 0, sum, 0)
+         .Wire(keep, 0, sum, 1)
+         .Wire(sum, 0, delay, 0)
+         .Wire(delay, 0, keep, 0)
+         .Wire(sum, 0, output, NodeCatalog.OutputLeftPort);
+
+        return b.Patch;
+    }
+
+    /// <summary>
+    /// Two channels that are two signals, rather than one signal made quieter on
+    /// one side.
+    /// </summary>
+    /// <remarks>
+    /// The Output's 'right' is normalled to its 'left'
+    /// ([0050](0050-normalled-sockets-carry-a-signal-with-no-wire.md)), so every
+    /// patch in the box is mono until something is wired there, and only the
+    /// largest one ever does. This is the small patch that does.
+    /// <para>
+    /// The width comes from detune and not from a pan knob, which is the useful
+    /// thing to know and is what Whole band does at scale. Two saws nine cents
+    /// apart drift in and out of phase with each other at a fraction of a hertz;
+    /// send one to each ear and the drift is heard as the sound moving about the
+    /// head rather than as two pitches. Wire both saws to both ears instead and
+    /// the same two oscillators collapse into one slightly wobbly tone in the
+    /// middle. The beating is still there either way, and having it happen in the
+    /// room instead of in the signal is the whole of the difference.
+    /// </para>
+    /// <para>
+    /// The detune is on the second Note's 'cents' rather than on a second
+    /// Frequency, because cents are the one control that can sit between two
+    /// semitones: the snap has already happened by then, so nine cents is nine
+    /// cents rather than a rounding error.
+    /// </para>
+    /// </remarks>
+    public static Patch TwoChannels(ModuleCatalog modules)
+    {
+        var b = new PatchBuilder(modules);
+
+        // A2. The second Note takes the first's snapped 'note' output rather than
+        // the knob again, so the two cannot drift apart by an edit.
+        var note = b.Add("audio.note", 40, 240, (0, 45f));
+        var twin = b.Add("audio.note", 280, 480, (2, 9f));
+
+        var left = b.Add("osc.saw", 520, 240, (3, 0.7f));
+        var right = b.Add("osc.saw", 520, 480, (3, 0.7f));
+
+        // One envelope for both, opened by one pulse: the two ears are the same
+        // note, and only the tuning of it differs.
+        var beat = b.Add("osc.pulse", 40, 720, (1, 1.5f), (3, 0.3f));
+        var shape = b.Add(NodeCatalog.AdsrTypeId, 280, 720, (1, -2f), (2, -0.9f), (3, 0.4f), (4, -0.8f));
+
+        var voiceL = b.Add("math.mul", 780, 240);
+        var voiceR = b.Add("math.mul", 780, 480);
+
+        var output = b.Add(NodeCatalog.OutputTypeId, 1040, 340, (NodeCatalog.OutputGainPort, 0.55f));
+
+        b.Wire(note, 1, twin, 0)
+         .Wire(note, 0, left, 1)
+         .Wire(twin, 0, right, 1)
+         .Wire(beat, 0, shape, 0)
+         .Wire(left, 0, voiceL, 0)
+         .Wire(shape, 0, voiceL, 1)
+         .Wire(right, 0, voiceR, 0)
+         .Wire(shape, 0, voiceR, 1)
+         .Wire(voiceL, 0, output, NodeCatalog.OutputLeftPort)
+         .Wire(voiceR, 0, output, NodeCatalog.OutputRightPort);
 
         return b.Patch;
     }

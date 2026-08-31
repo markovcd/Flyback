@@ -21,7 +21,7 @@ public partial class NodeCatalog
             "Two values, nothing between. Pure hard-edged bands.");
 
         yield return new NodeDef(
-            "osc.pulse", "Pulse", "Oscillator",
+            "osc.pulse", "Pulse", ModuleCategories.Oscillators,
             [
                 Domain("in"), Num("freq", 1f, 0f, 16f), Num("phase", 0f, 0f, 1f), Num("width", 0.5f, 0f, 1f),
                 Num("amp", 1f, 0f, 2f), Num("bias", 0f, -2f, 2f)
@@ -48,7 +48,7 @@ public partial class NodeCatalog
     /// </remarks>
     private static NodeDef Oscillator(
         string id, string name, Func<Emitter, Slot, Slot> waveform, string description) => new(
-        id, name, "Oscillator",
+        id, name, ModuleCategories.Oscillators,
         [
             Domain("in"),
             Num("freq", 1f, 0f, 16f),

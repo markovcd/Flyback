@@ -806,7 +806,12 @@ public sealed class PatchWorkbench
     {
         var def = modules.Require(typeId);
 
-        text.Append(def.TypeId).Append(" | ").Append(def.Name).Append(" | ").AppendLine(def.Category);
+        text.Append(def.TypeId).Append(" | ").Append(def.Name).Append(" | ").Append(def.Category);
+
+        if (def.Sinks is not ModuleSinks.Both)
+            text.Append(" | ").Append(def.Sinks is ModuleSinks.Audio ? "audio only" : "video only");
+
+        text.AppendLine();
 
         for (var i = 0; i < def.Inputs.Count; i++)
         {

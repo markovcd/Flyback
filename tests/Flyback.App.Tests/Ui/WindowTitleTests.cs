@@ -33,10 +33,10 @@ public class WindowTitleTests : UiTest
 
         return window;
     }
-
     /// <summary>The toolbar's list of patches to start from.</summary>
+
     private static ComboBox PresetList(MainWindow window) => All<ComboBox>(window)
-        .First(box => box.ItemsSource?.Cast<object>().Any(item => item as string == "Plasma") == true);
+        .First(box => box.ItemsSource?.OfType<PatchPreset>().Any(p => p.Name == "Plasma") == true);
 
     private static NodeEditor Editor(MainWindow window) => All<NodeEditor>(window).Single();
 
@@ -46,7 +46,7 @@ public class WindowTitleTests : UiTest
         var window = Open();
 
         // Whatever the list opens on, which is the patch that was built.
-        var opening = PresetList(window).SelectedItem as string;
+        var opening = (PresetList(window).SelectedItem as PatchPreset)?.Name;
 
         opening.ShouldBe(Presets.All[0].Name);
         window.Title.ShouldBe($"{opening} — {Program}");
@@ -61,7 +61,7 @@ public class WindowTitleTests : UiTest
         presets.SelectedIndex = 3;
         Settle(window);
 
-        var picked = presets.SelectedItem as string;
+        var picked = (presets.SelectedItem as PatchPreset)?.Name;
 
         picked.ShouldNotBe(Presets.All[0].Name, "a different patch is on the canvas");
         window.Title.ShouldBe($"{picked} — {Program}");
@@ -112,6 +112,6 @@ public class WindowTitleTests : UiTest
         Settle(window);
 
         window.Title.ShouldNotBe(first);
-        window.Title.ShouldBe($"{presets.SelectedItem as string} — {Program}");
+        window.Title.ShouldBe($"{(presets.SelectedItem as PatchPreset)?.Name} — {Program}");
     }
 }
