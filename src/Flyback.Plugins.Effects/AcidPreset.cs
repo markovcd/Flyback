@@ -172,6 +172,8 @@ internal static class AcidPreset
 
         b.Wire(tempo, 0, sixteenths, 0);
 
+        b.Group("Clock", clock, tempo, sixteenths);
+
         // --- the acid line -----------------------------------------------------
 
         // Two bars of sixteenths in A minor pentatonic, and the second is not the
@@ -280,6 +282,9 @@ internal static class AcidPreset
          .Wire(level, 0, vca, 1)
          .Wire(vca, 0, drive, 0);
 
+        b.Group("Acid Line", line, pitch, osc, level, shape, sweep, slower, mutate, reachTop,
+            depth, accent, knob, floor, cutoff, filter, vca, drive);
+
         // --- the echoes --------------------------------------------------------
 
         // Three sixteenths and two, both worked out from the tempo rather than
@@ -297,6 +302,8 @@ internal static class AcidPreset
          .Wire(leftTime, 0, echoL, 1)
          .Wire(drive, 0, echoR, 0)
          .Wire(rightTime, 0, echoR, 1);
+
+        b.Group("Echoes", leftTime, rightTime, echoL, echoR);
 
         // --- the kick ----------------------------------------------------------
 
@@ -325,6 +332,8 @@ internal static class AcidPreset
          .Wire(body, 0, kick, 0)
          .Wire(thump, 0, kick, 1);
 
+        b.Group("Kick", beat, thump, fall, boom, body, kick);
+
         // --- the hiss both drum sounds are made of ------------------------------
 
         // Nothing in the catalogue makes a noise a point in the plane can hear:
@@ -346,6 +355,8 @@ internal static class AcidPreset
          .Wire(hash, 0, scatter, 0)
          .Wire(scatter, 0, white, 0)
          .Wire(white, 0, hiss, 0);
+
+        b.Group("Hiss", grain, hash, scatter, white, hiss);
 
         // --- the hats ----------------------------------------------------------
 
@@ -384,6 +395,8 @@ internal static class AcidPreset
          .Wire(hiss, 0, hats, 0)
          .Wire(hatEnv, 0, hats, 1);
 
+        b.Group("Hats", hatSeq, open, hatEnv, hats);
+
         // --- the clap ----------------------------------------------------------
 
         // Two and four, and the same hiss read through a second Filter — its
@@ -420,6 +433,7 @@ internal static class AcidPreset
          .Wire(crack, 1, clap, 0)
          .Wire(clapEnv, 0, clap, 1);
 
+        b.Group("Clap", clapSeq, crack, clapEnv, clap);
 
         // --- the slow weather ----------------------------------------------------
 
@@ -476,6 +490,8 @@ internal static class AcidPreset
          .Wire(hang, 0, echoL, 2)
          .Wire(hang, 0, echoR, 2);
 
+        b.Group("Slow Weather", lane, farLane, driftA, driftB, moodA, moodB, ring, grit, hang);
+
         // --- the arrangement -----------------------------------------------------
 
         // One step a bar rather than one a sixteenth, which is the same module
@@ -517,6 +533,9 @@ internal static class AcidPreset
          .Wire(arrange, 0, smack, 0)
          .Wire(shimmer, 0, shimmerWide, 0)
          .Wire(smack, 0, smackWide, 0);
+
+        b.Group("Arrangement", bars, arrange, shimmer, smack, shimmerWide, smackWide);
+
         // --- the desk ----------------------------------------------------------
 
         // Left and right differ in which echo they carry and in how the two drum
@@ -558,6 +577,8 @@ internal static class AcidPreset
          .Wire(hotR, 0, limitR, 0)
          .Wire(limitL, 0, output, NodeCatalog.OutputLeftPort)
          .Wire(limitR, 0, output, NodeCatalog.OutputRightPort);
+
+        b.Group("Desk", deskL, deskR, hotL, hotR, limitL, limitR);
 
         // --- the picture: geometry ---------------------------------------------
 
@@ -639,6 +660,9 @@ internal static class AcidPreset
          .Wire(crawl, 0, bands, 3)
          .Wire(bands, 0, filament, 2);
 
+        b.Group("Picture: Geometry", spin, boil, crawl, pump, wedges, turn, zoom, fold, field,
+            reach, bend, count, bands, filament);
+
         // --- the picture: colour -------------------------------------------------
 
         // A Palette rather than an HSV hue, which is the difference between a
@@ -694,6 +718,9 @@ internal static class AcidPreset
          .Wire(inked, 0, flat, 0)
          .Wire(levels, 0, flat, 1);
 
+        b.Group("Picture: Colour", wash, slide, where, spread, palette, glow, lit, visible,
+            inked, levels, flat);
+
         // --- the picture: feedback ------------------------------------------------
 
         // The last frame, zoomed in a hair and turned by an amount the kick
@@ -720,6 +747,8 @@ internal static class AcidPreset
          .Wire(trail, 0, combine, 0)
          .Wire(flat, 0, combine, 1)
          .Wire(combine, 0, output, NodeCatalog.OutputColorPort);
+
+        b.Group("Picture: Feedback", inward, twist, swirl, past, trail, combine);
 
         return b.Patch;
     }

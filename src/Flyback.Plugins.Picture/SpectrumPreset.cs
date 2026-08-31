@@ -83,6 +83,9 @@ internal static class SpectrumPreset
          .Wire(graded, 0, banded, 0)
          .Wire(banded, 0, output, NodeCatalog.OutputColorPort);
 
+        b.Group("Field", coord, clock, slowly, across, down, field, along)
+         .Group("Palette Sweep", sweep, spread, palette, graded, levels, banded);
+
         return b.Patch;
     }
 }

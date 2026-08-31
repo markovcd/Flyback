@@ -89,6 +89,11 @@ internal static class ShapesPreset
          .Wire(pitch, 0, scan, 2)
          .Wire(scan, 0, output, NodeCatalog.OutputLeftPort);
 
+        b.Group("Sweeps", rock, grow)
+         .Group("Shape", turn, star, hole, cut, ink)
+         .Group("Eye", tint, lit)
+         .Group("Ear", pitch, scan);
+
         return b.Patch;
     }
 }

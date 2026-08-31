@@ -1183,6 +1183,8 @@ public static class Presets
         var eighths = b.Add("math.mul", 250, 1840, (1, 2f));
         var sixteenths = b.Add("math.mul", 250, 2000, (1, 4f));
 
+        b.Group("Clock", clock, tempo, eighths, sixteenths);
+
         // --- the sequences ---------------------------------------------------
 
         // Am, G, F, E over two bars of eighths, with the last chord held. The
@@ -1253,6 +1255,8 @@ public static class Presets
          .Wire(sixteenths, 0, kickSeq, 1)
          .Wire(sixteenths, 0, hatSeq, 1);
 
+        b.Group("Sequences", bassSeq, leadSeq, kickSeq, hatSeq);
+
         // --- bass ------------------------------------------------------------
 
         // A saw at the note and a sine an octave under it. The sub is a second
@@ -1290,6 +1294,9 @@ public static class Presets
          .Wire(bassEnv, 0, bassVca, 1)
          .Wire(bassVca, 0, bassHot, 0)
          .Wire(bassHot, 0, bassOut, 0);
+
+        b.Group("Bass", bassNote, subNote, bassSaw, bassSub, bassSum, bassEnv, bassVca,
+            bassHot, bassOut);
 
         // --- lead ------------------------------------------------------------
 
@@ -1350,6 +1357,9 @@ public static class Presets
          .Wire(stackR, 0, voiceR, 0)
          .Wire(leadEnv, 0, voiceR, 1);
 
+        b.Group("Lead", leadNote, vibrato, wide, leadA, leadB, fifth, fifthNote, fifthOsc,
+            swell, fifthLevel, stackL, stackR, leadEnv, voiceL, voiceR);
+
         // --- kick ------------------------------------------------------------
 
         // Two envelopes and a sine, which is the whole of a kick drum: one
@@ -1372,6 +1382,8 @@ public static class Presets
          .Wire(kickPitch, 0, kickBody, 1)
          .Wire(kickBody, 0, kickOut, 0)
          .Wire(kickLevel, 0, kickOut, 1);
+
+        b.Group("Kick", kickLevel, kickSweep, kickPitch, kickBody, kickOut);
 
         // --- hats ------------------------------------------------------------
 
@@ -1402,6 +1414,8 @@ public static class Presets
          .Wire(hiss, 0, hatOut, 0)
          .Wire(hatEnv, 0, hatOut, 1);
 
+        b.Group("Hats", grain, hash, scatter, white, hiss, hatOpen, hatEnv, hatOut);
+
         // --- the desk --------------------------------------------------------
 
         var deskL = b.Add("math.mixer", 2110, 1900, (1, 0.55f), (3, 0.72f), (5, 1f), (7, 0.55f));
@@ -1431,6 +1445,8 @@ public static class Presets
          .Wire(driveR, 0, limitR, 0)
          .Wire(limitL, 0, output, NodeCatalog.OutputLeftPort)
          .Wire(limitR, 0, output, NodeCatalog.OutputRightPort);
+
+        b.Group("Desk", deskL, deskR, driveL, driveR, limitL, limitR);
 
         // --- the picture: geometry -------------------------------------------
 
@@ -1514,6 +1530,9 @@ public static class Presets
          .Wire(drift, 0, bands, 3)
          .Wire(bands, 0, filament, 2);
 
+        b.Group("Picture: Geometry", spin, boil, drift, crawl, stride, angle, turn, pump,
+            zoom, segments, fold, field, breath, reach, bend, count, bands, filament);
+
         // --- the picture: color ----------------------------------------------
 
         // The lead moves the hue. The field and the slowest of the four clocks
@@ -1554,6 +1573,9 @@ public static class Presets
          .Wire(hue, 0, fresh, 0)
          .Wire(saturation, 0, fresh, 1)
          .Wire(visible, 0, fresh, 2);
+
+        b.Group("Picture: Color", stepped, wash, blend, slide, hue, saturation, glow, lit,
+            visible, fresh);
 
         // --- the picture: feedback -------------------------------------------
 
@@ -1603,6 +1625,9 @@ public static class Presets
          .Wire(trail, 0, combine, 0)
          .Wire(fresh, 0, combine, 1)
          .Wire(combine, 0, output, NodeCatalog.OutputColorPort);
+
+        b.Group("Picture: Feedback", inward, twist, inTurn, pastIn, warm,
+            outward, outTurn, pastOut, cool, ghost, trail, combine);
 
         return b.Patch;
     }

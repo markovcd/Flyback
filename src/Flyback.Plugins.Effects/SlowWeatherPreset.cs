@@ -141,6 +141,9 @@ internal static class SlowWeatherPreset
          .Wire(laneThree, 0, tide, 1)
          .Wire(hours, 0, tide, 2);
 
+        b.Group("Three Random Voltages", clock, laneOne, laneTwo, laneThree,
+            minutes, seconds, hours, wander, flutter, tide);
+
         // --- three quantisers ------------------------------------------------
 
         // D minor pentatonic over three octaves, split into three lists of
@@ -171,6 +174,8 @@ internal static class SlowWeatherPreset
         b.Wire(wander, 0, padSteps, 0)
          .Wire(flutter, 0, bellSteps, 0)
          .Wire(tide, 0, rootSteps, 0);
+
+        b.Group("Three Quantisers", padSteps, bellSteps, rootSteps);
 
         // --- pad ---------------------------------------------------------------
 
@@ -213,6 +218,9 @@ internal static class SlowWeatherPreset
          .Wire(padLevel, 0, padVoiced, 1)
          .Wire(padVoiced, 0, thicken, 0);
 
+        b.Group("Pad", padNote, detune, padTwin, padLower, padUpper, padPair,
+            padSwell, padBreath, padLevel, padVoiced, thicken);
+
         // --- bell --------------------------------------------------------------
 
         // The one voice allowed to disappear, so that the pad holds the patch up
@@ -242,6 +250,8 @@ internal static class SlowWeatherPreset
          .Wire(bellDriftL, 0, bellL, 1)
          .Wire(sweep, 0, bellR, 0)
          .Wire(bellDriftR, 0, bellR, 1);
+
+        b.Group("Bell", bellNote, bell, bellVoiced, sweep, bellDriftL, bellDriftR, bellL, bellR);
 
         // --- drone -------------------------------------------------------------
 
@@ -285,6 +295,9 @@ internal static class SlowWeatherPreset
          .Wire(tide, 0, opening, 0)
          .Wire(droneVoiced, 0, shaped, 0)
          .Wire(opening, 0, shaped, 1);
+
+        b.Group("Drone", rootNote, subNote, droneTone, droneSub, droneSum,
+            droneHold, droneBreath, droneLevel, droneVoiced, opening, shaped);
 
         // --- air ---------------------------------------------------------------
 
@@ -358,6 +371,9 @@ internal static class SlowWeatherPreset
          .Wire(airPresent, 0, airR, 0)
          .Wire(airDriftR, 0, airR, 1);
 
+        b.Group("Air", airOne, airTwo, glideOne, glideTwo, ring, wind, airOpen, soften,
+            presence, airPresent, airDriftL, airDriftR, airL, airR);
+
         // --- the desk, and the two rooms ---------------------------------------
 
         var deskL = b.Add("math.mixer", 2340, 1900, (1, 0.95f), (3, 0.6f), (5, 0.7f), (7, 0.16f));
@@ -425,6 +441,9 @@ internal static class SlowWeatherPreset
          .Wire(hallR, 0, safeR, 0)
          .Wire(safeL, 0, output, NodeCatalog.OutputLeftPort)
          .Wire(safeR, 0, output, NodeCatalog.OutputRightPort);
+
+        b.Group("Desk & Rooms", deskL, deskR, echoLeft, echoRight, repeatsL, repeatsR,
+            roomSize, roomWide, hallL, hallR, safeL, safeR);
 
         // --- the picture: geometry ---------------------------------------------
 
@@ -501,6 +520,9 @@ internal static class SlowWeatherPreset
          .Wire(swim, 0, veil, 3)
          .Wire(veil, 0, haze, 2);
 
+        b.Group("Picture: Geometry", creep, sway, angle, turn, breathe, zoom, wedges, fold,
+            boil, cloud, depth, bend, spacing, swim, veil, haze);
+
         // --- the picture: color -------------------------------------------------
 
         // Here for 'radius', which is the one Coordinates output nothing is
@@ -550,6 +572,9 @@ internal static class SlowWeatherPreset
          .Wire(wash, 0, fresh, 1)
          .Wire(visible, 0, fresh, 2);
 
+        b.Group("Picture: Color", coord, falloff, glow, lit, shaded, visible,
+            spread, season, blend, slide, hue, wash, fresh);
+
         // --- the picture: memory -------------------------------------------------
 
         // Blended rather than maximised, which is the opposite choice from every
@@ -583,6 +608,8 @@ internal static class SlowWeatherPreset
          .Wire(fresh, 0, combine, 1)
          .Wire(settle, 0, combine, 2)
          .Wire(combine, 0, output, NodeCatalog.OutputColorPort);
+
+        b.Group("Picture: Memory", adrift, aturn, previous, memory, settle, combine);
 
         return b.Patch;
     }

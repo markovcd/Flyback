@@ -58,6 +58,9 @@ internal static class TimbrePreset
          .Wire(cutoff, 0, filter, 1)
          .Wire(filter, 0, output, NodeCatalog.OutputLeftPort);
 
+        b.Group("The Two Hands", sweep, wobble, cutoff, drive)
+         .Group("The Tone", pitch, saw, fold, filter);
+
         return b.Patch;
     }
 }

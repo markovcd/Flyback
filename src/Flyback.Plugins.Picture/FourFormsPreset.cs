@@ -78,10 +78,18 @@ internal static class FourFormsPreset
              .Wire(move, 1, shape, 1);
         }
 
+        b.Group("Sweeps", rock, melt, turn);
+
+        string[] formNames = ["Circle", "Box", "Polygon", "Star"];
+
+        for (var i = 0; i < forms.Length; i++)
+            b.Group(formNames[i], forms[i].Move, forms[i].Shape);
+
         // Chained, because a Combine takes two: three of them for four forms, and
         // the field coming out of one is a distance like the ones going in, which
         // is the whole reason they chain at all.
         var merged = forms[0].Shape;
+        var combines = new List<NodeInstance>();
 
         for (var i = 1; i < forms.Length; i++)
         {
@@ -92,7 +100,10 @@ internal static class FourFormsPreset
              .Wire(melt, 0, combine, 2);
 
             merged = combine;
+            combines.Add(combine);
         }
+
+        b.Group("Merge", [.. combines]);
 
         var ink = b.Add(FillModule.TypeId, 1320, 320, (1, 0.006f), (2, 0.016f));
 
@@ -111,6 +122,8 @@ internal static class FourFormsPreset
          .Wire(tint, 0, lit, 0)
          .Wire(ink, 1, lit, 1)
          .Wire(lit, 0, output, NodeCatalog.OutputColorPort);
+
+        b.Group("Eye", ink, tint, lit);
 
         return b.Patch;
     }
