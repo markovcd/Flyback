@@ -1,0 +1,88 @@
+# Builds a release the same way the README's Docker instructions do, tags it,
+# and publishes the per-platform folders as a GitHub Release.
+#
+# Trigger from the Actions tab: Release -> Run workflow. Leave "version" blank
+# to bump the minor version of the latest vX.Y.Z tag (starting at 0.1.0 if
+# there is no tag yet), or type one (e.g. 1.4.0) to release that exact version.
+
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to release, e.g. 1.4.0. Leave blank to bump the minor version automatically."
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Determine version
+        id: version
+        run: |
+          set -euo pipefail
+
+          input="${{ inputs.version }}"
+
+          if [ -n "$input" ]; then
+            version="${input#v}"
+            if ! [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              echo "Version must be in the form X.Y.Z (got '$input')" >&2
+              exit 1
+            fi
+          else
+            latest=$(git tag --list 'v[0-9]*.[0-9]*.[0-9]*' --sort=-v:refname | head -n1 || true)
+            if [ -z "$latest" ]; then
+              version="0.1.0"
+            else
+              IFS=. read -r major minor _patch <<< "${latest#v}"
+              version="${major}.$((minor + 1)).0"
+            fi
+          fi
+
+          tag="v${version}"
+
+          if git rev-parse "$tag" >/dev/null 2>&1; then
+            echo "Tag $tag already exists" >&2
+            exit 1
+          fi
+
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
+      # Same command as "Docker builds" in the README, plus the version so the
+      # published binaries — assembly version, file version, and the About
+      # window — report the release number rather than the Dockerfile's 0.1.0
+      # default. Restores, builds, runs the whole test suite, and publishes
+      # one self-contained folder per platform for the project's default RID
+      # set.
+      - name: Build release artifacts
+        run: docker build --build-arg VERSION=${{ steps.version.outputs.version }} --output artifacts .
+
+      - name: Package artifacts
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          cd artifacts
+          for platform in */; do
+            platform="${platform%/}"
+            zip -r "../dist/flyback-${{ steps.version.outputs.version }}-${platform}.zip" "$platform"
+          done
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: ${{ steps.version.outputs.tag }}
+          target_commitish: ${{ github.sha }}
+          files: dist/*.zip
+          generate_release_notes: true

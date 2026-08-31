@@ -7,6 +7,48 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <InvariantGlobalization>true</InvariantGlobalization>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+
+    <!--
+      Whether a release passed the real version with -p:Version=X.Y.Z (see
+      Dockerfile and the release workflow) before the default below fills the
+      gap. A command-line property is global and reaches every PropertyGroup
+      from the start of evaluation, so this reads true exactly when one was
+      given — it is not testing the assignment below, which runs regardless.
+    -->
+    <_VersionSpecified Condition="'$(Version)' != ''">true</_VersionSpecified>
+
+    <!--
+      The version a plain build reports. Every version-bearing assembly
+      attribute (AssemblyVersion, AssemblyFileVersion,
+      AssemblyInformationalVersion) is derived from this single property,
+      which is what About.cs reads back.
+    -->
+    <Version Condition="'$(Version)' == ''">0.1.0</Version>
+
+    <!--
+      A release build's version already names a real release and stands on
+      its own. A dev build's does not — every plain build is "0.1.0" until
+      the next release, so the commit it was built from is what actually
+      tells two of them apart. ShortenSourceRevisionId below trims that
+      commit to seven characters before GenerateAssemblyInfo appends it.
+    -->
+    <IncludeSourceRevisionInInformationalVersion Condition="'$(_VersionSpecified)' != 'true'">true</IncludeSourceRevisionInInformationalVersion>
+    <IncludeSourceRevisionInInformationalVersion Condition="'$(_VersionSpecified)' == 'true'">false</IncludeSourceRevisionInInformationalVersion>
   </PropertyGroup>
+
+  <!--
+    $(SourceRevisionId) is the full 40-character commit hash the SDK reads
+    from .git; AddSourceRevisionToInformationalVersion appends it verbatim.
+    Hooked between the target that sets it and the one that appends it, so a
+    dev build's version reads "0.1.0+37fc87f" rather than the full hash.
+  -->
+  <Target Name="ShortenSourceRevisionId"
+          AfterTargets="InitializeSourceControlInformation"
+          BeforeTargets="AddSourceRevisionToInformationalVersion"
+          Condition="'$(SourceRevisionId)' != '' and $(SourceRevisionId.Length) &gt;= 7">
+    <PropertyGroup>
+      <SourceRevisionId>$(SourceRevisionId.Substring(0, 7))</SourceRevisionId>
+    </PropertyGroup>
+  </Target>
 
 </Project>

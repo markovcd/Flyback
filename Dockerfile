@@ -24,6 +24,13 @@ FROM ${SDK} AS build
 ARG RIDS="win-x64 osx-arm64 linux-x64"
 ARG CONFIGURATION=Release
 
+# What the built binaries report themselves as, in the About window and in
+# their own file properties — see Directory.Build.props for how Version
+# reaches AssemblyVersion, AssemblyFileVersion and AssemblyInformationalVersion.
+# Defaulted rather than required, so a plain `docker build --output artifacts .`
+# still works; the release workflow is what passes the real one.
+ARG VERSION=0.1.0
+
 # The one thing the SDK image does not already have. libSkiaSharp is what the
 # headless UI tests rasterise with, and it will not load at all without
 # fontconfig beside it — which reads as a DllNotFoundException in every UI test
@@ -92,11 +99,11 @@ RUN --mount=type=cache,target=/root/.nuget/packages \
         osx-*) out=/out/${rid}/publish ;; \
         *)     out=/out/${rid} ;; \
       esac; \
-      dotnet publish src/Flyback.App -c ${CONFIGURATION} -r ${rid} -o ${out}; \
+      dotnet publish src/Flyback.App -c ${CONFIGURATION} -r ${rid} -o ${out} -p:Version=${VERSION}; \
       case ${rid} in \
         osx-*) rm -rf ${out}; out=/out/${rid}/Flyback.app/Contents/MacOS ;; \
       esac; \
-      dotnet publish src/Flyback.Cli -c ${CONFIGURATION} -r ${rid} -o ${out}; \
+      dotnet publish src/Flyback.Cli -c ${CONFIGURATION} -r ${rid} -o ${out} -p:Version=${VERSION}; \
     done
 
 # Nothing but the artifacts, so that `--output` writes the publish folders and
