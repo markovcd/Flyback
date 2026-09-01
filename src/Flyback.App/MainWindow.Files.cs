@@ -5,6 +5,7 @@ using Flyback.App.Controls;
 using Flyback.Core;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
+using Flyback.Core.Language;
 using Flyback.Core.Render;
 
 namespace Flyback.App;
@@ -57,14 +58,20 @@ public sealed partial class MainWindow
         {
             Title = "Open patch",
             AllowMultiple = false,
-            FileTypeFilter = [PatchFileType, BundleFileType],
+            FileTypeFilter = OpenKinds(),
         });
 
         if (files.Count == 0) return;
 
-        if (Bundled(files[0]))
+        if (Bundled(files[0].Name))
         {
             await OpenBundleAsync(files[0]);
+            return;
+        }
+
+        if (Sourced(files[0].Name))
+        {
+            await OpenSourceAsync(files[0]);
             return;
         }
 
@@ -237,9 +244,116 @@ public sealed partial class MainWindow
         }
     }
 
-    /// <summary>Whether a file the picker handed back is a bundle rather than a patch.</summary>
-    private static bool Bundled(IStorageFile file) =>
-        file.Name.EndsWith(PatchBundle.Extension, StringComparison.OrdinalIgnoreCase);
+    /// <summary>Whether a name the picker handed back is a bundle rather than a patch.</summary>
+    internal static bool Bundled(string name) =>
+        name.EndsWith(PatchBundle.Extension, StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>Whether a name the picker handed back is the patch written as text.</summary>
+    internal static bool Sourced(string name) =>
+        name.EndsWith($".{PatchLanguage.FileExtension}", StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// What the save dialog offers, with whichever kind this document already is
+    /// in front — a bundle saved again should stay one without anybody having to
+    /// type the extension.
+    /// </summary>
+    internal static IReadOnlyList<FilePickerFileType> SaveKinds(bool bundled) => bundled
+        ? [BundleFileType, PatchFileType, SourceFileType]
+        : [PatchFileType, BundleFileType, SourceFileType];
+
+    /// <summary>Everything the open dialog will read.</summary>
+    internal static IReadOnlyList<FilePickerFileType> OpenKinds() =>
+        [PatchFileType, BundleFileType, SourceFileType];
+
+    /// <summary>
+    /// Writes the patch as text, in the language.
+    /// </summary>
+    /// <remarks>
+    /// A copy rather than a document, and the one save here that is. A bundle
+    /// and a patch hold everything the editor knows; this holds the instrument
+    /// and not the drawing of it — the groups are dropped and the layout is
+    /// worked out again on the way back in
+    /// ([0065](../../docs/adr/0065-a-text-language-that-parses-to-a-patch.md)).
+    /// So it does not take the name in the title bar and does not answer the
+    /// question about unsaved changes: what is open is still the document, and
+    /// this is a version of it for reading, sending and diffing.
+    /// <para>
+    /// What it does keep is the instrument exactly. The text builds back to the
+    /// same program, op for op, which is what makes it worth having beside a
+    /// format that keeps everything.
+    /// </para>
+    /// </remarks>
+    private async Task<bool> SaveSourceAsync(IStorageFile file)
+    {
+        try
+        {
+            await using (var stream = await file.OpenWriteAsync())
+            await using (var writer = new StreamWriter(stream))
+            {
+                await writer.WriteAsync(PatchPrinter.Print(editor.Patch));
+            }
+
+            // Said only where there is something to have lost. A patch with no
+            // groups in it loses nothing anybody would miss, and warning about
+            // it every time would teach people to stop reading.
+            var groups = editor.Patch.Groups?.Count ?? 0;
+
+            Report(groups == 0
+                ? $"Wrote {file.Name}. It is a copy: what is open is still {patchName ?? "the patch"}."
+                : $"Wrote {file.Name}, without its {groups} group(s) — text has no place to keep them. "
+                  + $"What is open is still {patchName ?? "the patch"}.");
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Report($"Could not write the text: {ex.Message}");
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Opens a patch written as text, which is a patch like any other once it
+    /// has been read.
+    /// </summary>
+    /// <remarks>
+    /// Refused whole where it does not read, with every complaint and the line
+    /// each is on — half a patch is worse than none, and the editor already has
+    /// one open that is worth more than a partial replacement for it.
+    /// </remarks>
+    private async Task OpenSourceAsync(IStorageFile file)
+    {
+        try
+        {
+            await using var stream = await file.OpenReadAsync();
+            using var reader = new StreamReader(stream);
+
+            var load = PatchLanguage.Build(await reader.ReadToEndAsync());
+
+            if (!load.Ok)
+            {
+                Report($"Not opened. {file.Name} does not read.", load.Report);
+                return;
+            }
+
+            soundFolder.Beside = Path.GetDirectoryName(file.TryGetLocalPath());
+            pictureFolder.Beside = soundFolder.Beside;
+
+            carried = null;
+            bundled = false;
+
+            patchName = Path.GetFileNameWithoutExtension(file.Name);
+
+            editor.Patch = load.Patch;
+            preview.Rewind();
+
+            Report($"Opened {file.Name}.");
+        }
+        catch (Exception ex)
+        {
+            Report($"Could not open the text: {ex.Message}");
+        }
+    }
 
     /// <summary>
     /// Opens a bundle by unpacking it into a folder beside itself and opening
@@ -317,15 +431,14 @@ public sealed partial class MainWindow
             // Whichever kind this document already is. A bundle saved again
             // should stay one without anybody having to type the extension.
             DefaultExtension = bundled ? PatchBundle.Extension[1..] : PatchIO.FileExtension,
-            FileTypeChoices = bundled
-                ? [BundleFileType, PatchFileType]
-                : [PatchFileType, BundleFileType],
+            FileTypeChoices = SaveKinds(bundled),
         });
 
         if (file is null) return false;
 
         // The name decides which, the way it does for an export.
-        if (Bundled(file)) return await SaveBundleAsync(file);
+        if (Bundled(file.Name)) return await SaveBundleAsync(file);
+        if (Sourced(file.Name)) return await SaveSourceAsync(file);
 
         try
         {
@@ -622,5 +735,19 @@ public sealed partial class MainWindow
     private static FilePickerFileType BundleFileType => new($"{GlobalConstants.ApplicationName} bundle")
     {
         Patterns = [$"*{PatchBundle.Extension}"],
+    };
+
+    /// <summary>
+    /// The patch written in the language — text, and readable as text.
+    /// </summary>
+    /// <remarks>
+    /// Last of the three in every list. A patch and a bundle are what a document
+    /// is saved as; this is what it is written out as to be read, sent or put
+    /// through a diff, and offering it first would put the lossy one where the
+    /// habit lands.
+    /// </remarks>
+    private static FilePickerFileType SourceFileType => new($"{GlobalConstants.ApplicationName} text")
+    {
+        Patterns = [$"*.{PatchLanguage.FileExtension}"],
     };
 }

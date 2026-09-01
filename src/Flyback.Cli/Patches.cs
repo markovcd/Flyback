@@ -2,6 +2,7 @@ using Flyback.Core;
 using Flyback.Core.Compile;
 using Flyback.Core.Render;
 using Flyback.Core.Graph;
+using Flyback.Core.Language;
 
 namespace Flyback.Cli;
 
@@ -81,6 +82,35 @@ internal static class Patches
     public static bool Bundled(FileInfo file) =>
         string.Equals(file.Extension, PatchBundle.Extension, StringComparison.OrdinalIgnoreCase);
 
+    /// <summary>Whether a path names the patch written as text rather than as a document.</summary>
+    public static bool Sourced(FileInfo file) =>
+        string.Equals(file.Extension, $".{PatchLanguage.FileExtension}", StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// The patch a source file describes, or null with every complaint already
+    /// written to <paramref name="error"/>.
+    /// </summary>
+    /// <remarks>
+    /// Refused whole where it does not read, which is the one place this differs
+    /// from a document: a patch short of a plugin is still handed back because
+    /// there is something there to look at, and a source file that does not
+    /// parse has produced nothing to look at. Each complaint carries the line
+    /// and column it is on, so a build server's log says where to go.
+    /// </remarks>
+    private static Patch? Built(FileInfo file, string text, TextWriter error)
+    {
+        var load = PatchLanguage.Build(text);
+
+        if (load.Ok) return load.Patch;
+
+        error.WriteLine($"{GlobalConstants.ApplicationName}: {file.Name}: this patch does not read.");
+
+        foreach (var issue in load.Issues)
+            error.WriteLine($"    {file.Name}:{issue.Line}:{issue.Column}: {issue.Message}");
+
+        return null;
+    }
+
     /// <summary>
     /// The patch in a file, or null with the reason already written to
     /// <paramref name="error"/>.
@@ -103,7 +133,11 @@ internal static class Patches
 
         try
         {
-            load = PatchIO.Read(File.ReadAllText(file.FullName));
+            var text = File.ReadAllText(file.FullName);
+
+            if (Sourced(file)) return Built(file, text, error);
+
+            load = PatchIO.Read(text);
         }
         catch (Exception ex)
         {

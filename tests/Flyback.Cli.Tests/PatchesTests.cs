@@ -46,6 +46,91 @@ public class PatchesTests
         Patches.Bundled(new FileInfo("song")).ShouldBeFalse();
     }
 
+    /// <summary>
+    /// The third kind, told apart the same way. Its extension is the patch's own
+    /// with one letter on the end, so a reader that got this wrong would hand
+    /// JSON to the parser or source to the deserialiser.
+    /// </summary>
+    [Fact]
+    public void The_text_is_told_from_a_patch_by_extension_whatever_its_case()
+    {
+        Patches.Sourced(new FileInfo("song.fbks")).ShouldBeTrue();
+        Patches.Sourced(new FileInfo("song.FBKS")).ShouldBeTrue();
+        Patches.Sourced(new FileInfo("song.fbk")).ShouldBeFalse();
+        Patches.Sourced(new FileInfo("song" + PatchBundle.Extension)).ShouldBeFalse();
+        Patches.Sourced(new FileInfo("song")).ShouldBeFalse();
+    }
+
+    /// <summary>
+    /// A patch written in the language opens like any other, so render, check,
+    /// info and pack all take one without knowing there is a third kind of file.
+    /// </summary>
+    [Fact]
+    public void A_patch_written_as_text_is_read_like_any_other()
+    {
+        using var scratch = new Scratch();
+
+        var file = scratch.File("plasma.fbks");
+
+        File.WriteAllText(file.FullName, """
+            x |> sine(freq: 1.5)
+              |> hsv(saturation: 0.85)
+              |> out.color
+            """);
+
+        var (patch, error) = Read(file);
+
+        error.ShouldBeEmpty();
+        patch.ShouldNotBeNull();
+        patch.Nodes.ShouldContain(n => n.TypeId == "osc.sine");
+        patch.Reaches().Picture.ShouldBeTrue();
+    }
+
+    /// <summary>
+    /// And its files are measured from beside it, which is what
+    /// <see cref="Patches.Open"/> adds to reading one.
+    /// </summary>
+    [Fact]
+    public void Text_opened_by_path_names_its_files_from_beside_itself()
+    {
+        using var scratch = new Scratch();
+
+        var file = scratch.File("clip.fbks");
+
+        File.WriteAllText(file.FullName, """sample("drums.wav") |> out.left""");
+
+        var (opened, error) = Open(file);
+
+        error.ShouldBeEmpty();
+        opened.ShouldNotBeNull();
+        opened.Value.Samples.ShouldBeOfType<SampleLibrary>().Beside.ShouldBe(file.DirectoryName);
+    }
+
+    /// <summary>
+    /// Refused whole, with every complaint and the line it is on. A source file
+    /// that does not parse has produced nothing to look at, which is the one
+    /// place this differs from a document short of a plugin.
+    /// </summary>
+    [Fact]
+    public void Text_that_does_not_read_is_refused_with_the_line_and_column()
+    {
+        using var scratch = new Scratch();
+
+        var file = scratch.File("broken.fbks");
+
+        File.WriteAllText(file.FullName, """
+            rings() |> out.color
+            nonesuch() |> out.color
+            """);
+
+        var (patch, error) = Read(file);
+
+        patch.ShouldBeNull();
+        error.ShouldContain("does not read");
+        error.ShouldContain("broken.fbks:2:");
+        error.ShouldContain("nonesuch");
+    }
+
     [Fact]
     public void A_path_naming_nothing_is_refused_by_name()
     {

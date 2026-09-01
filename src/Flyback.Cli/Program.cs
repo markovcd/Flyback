@@ -5,6 +5,7 @@ using System.Text;
 using Flyback.Core;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
+using Flyback.Core.Language;
 using Flyback.Core.Render;
 using Flyback.Plugins.Hosting;
 
@@ -43,7 +44,12 @@ internal static class Program
         // it compile against the wrong one.
         NodeCatalog.Install(PluginHost.Load().Modules);
 
-        var patch = new Argument<FileInfo>("patch") { Description = "The patch file to read." };
+        var patch = new Argument<FileInfo>("patch")
+        {
+            Description = "The patch to read: a document, a bundle, or one written as text. "
+                + $"The extension decides which — .{PatchIO.FileExtension}, "
+                + $"{PatchBundle.Extension} or .{PatchLanguage.FileExtension}.",
+        };
         var json = new Option<bool>("--json") { Description = "Write the answer as JSON instead of prose." };
 
         var root = new RootCommand($"{GlobalConstants.ApplicationName} — a patchable synthesiser, from the command line.")

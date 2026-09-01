@@ -23,6 +23,7 @@ dotnet run --project src/Flyback.App -c Release
 - Live preview, output settings, recording and video export in the app shell
 - MIDI input support through platform backends (Windows, macOS and Linux)
 - CLI tools for rendering, checking, inspecting and bundling patches
+- A text language a patch can be written in, saved as and read back from — the same instrument, as source
 - Plugin-based architecture for platform-specific audio/video backends and extensions
 - Patch bundles that package the patch with its referenced sample and image files
 - Agentic patch authoring through a model-backed assistant that can listen, propose changes and work inside the same patch graph
@@ -80,6 +81,7 @@ flyback-cli render drone.fbk -o drone.wav --seconds 30
 flyback-cli check nebula.fbk
 flyback-cli info nebula.fbk
 flyback-cli pack nebula.fbk -o nebula.fbkb
+flyback-cli render nebula.fbks -o nebula.png
 ```
 
 ### Commands
@@ -97,16 +99,19 @@ flyback-cli pack nebula.fbk -o nebula.fbkb
 
 ## Bundles
 
-Flyback uses two file types:
+Flyback uses three file types:
 
 - `.fbk`: a patch document
 - `.fbkb`: a patch bundle containing the patch plus all referenced files
+- `.fbks`: the patch written as text, in the language
 
 ```bash
 flyback-cli pack nebula.fbk -o nebula.fbkb
 ```
 
 A bundle is a zip archive with the patch and any sample/picture files it uses. It is readable by standard tools and does not require unpacking to render.
+
+The app saves and opens all three. A `.fbks` is a copy rather than a document: it keeps the instrument exactly — the text builds back to the same program, op for op — but not the groups or the canvas layout, so saving one leaves the open document as it was.
 
 ## How it works
 
@@ -131,7 +136,8 @@ tests/
 
 See the `docs/adr` folder for design notes and architecture decisions.
 
-[`docs/language.md`](docs/language.md) specifies a text language that parses to
-a patch — a second way to author one, proposed in
-[ADR-0065](docs/adr/0065-a-text-language-that-parses-to-a-patch.md) and not yet
-implemented.
+[`docs/language.md`](docs/language.md) is the reference for the text language — a
+second way to author a patch, decided in
+[ADR-0065](docs/adr/0065-a-text-language-that-parses-to-a-patch.md). The app
+saves and opens it, the CLI reads it wherever it reads a patch, and the
+assistant writes a whole patch in one call with it.
