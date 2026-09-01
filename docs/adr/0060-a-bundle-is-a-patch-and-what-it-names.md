@@ -22,7 +22,7 @@ missing is the other file.
 ## Decision
 
 **A bundle is a second file rather than a change to the first.** `.fbk` is the
-document, unchanged and still text; `.fbkp` is that document with everything it
+document, unchanged and still text; `.fbkb` is that document with everything it
 names travelling beside it. Nothing about the undo stack, the file format or the
 compiler moves — the reasons 0052 and 0059 gave are still true of the thing they
 were about.

@@ -79,7 +79,7 @@ flyback-cli render drone.fbk -o drone.avi --seconds 30 --fps 30
 flyback-cli render drone.fbk -o drone.wav --seconds 30
 flyback-cli check nebula.fbk
 flyback-cli info nebula.fbk
-flyback-cli pack nebula.fbk -o nebula.fbkp
+flyback-cli pack nebula.fbk -o nebula.fbkb
 ```
 
 ### Commands
@@ -100,10 +100,10 @@ flyback-cli pack nebula.fbk -o nebula.fbkp
 Flyback uses two file types:
 
 - `.fbk`: a patch document
-- `.fbkp`: a patch bundle containing the patch plus all referenced files
+- `.fbkb`: a patch bundle containing the patch plus all referenced files
 
 ```bash
-flyback-cli pack nebula.fbk -o nebula.fbkp
+flyback-cli pack nebula.fbk -o nebula.fbkb
 ```
 
 A bundle is a zip archive with the patch and any sample/picture files it uses. It is readable by standard tools and does not require unpacking to render.

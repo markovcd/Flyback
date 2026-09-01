@@ -33,7 +33,7 @@ public sealed record LanguageLoad(Patch Patch, IReadOnlyList<LanguageIssue> Issu
 public static class PatchLanguage
 {
     /// <summary>The extension a source file takes, beside .fbk for the patch it builds into.</summary>
-    public const string FileExtension = "fbs";
+    public const string FileExtension = "fbks";
 
     /// <summary>
     /// The patch <paramref name="source"/> describes, against

@@ -8,7 +8,7 @@ namespace Flyback.Cli;
 /// </summary>
 /// <remarks>
 /// The command that makes a patch portable. A <c>.fbk</c> is a document full of
-/// paths that mean something on the machine it was made on, and a <c>.fbkp</c> is
+/// paths that mean something on the machine it was made on, and a <c>.fbkb</c> is
 /// that document with the things it points at travelling beside it — so what goes
 /// in an email, a repository or a build is one file rather than a folder somebody
 /// has to keep together.

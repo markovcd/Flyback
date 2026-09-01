@@ -13,8 +13,8 @@ second engine behind it, no interpreter, and no runtime of its own.
 - **`print` is lossy.** A patch prints back as text for reading and diffing, not
   for byte-identity. What it loses is listed at the end.
 
-Source files are `.fbs`, beside the `.fbk` document they build into and the
-`.fbkp` bundle that packs one up.
+Source files are `.fbks`, beside the `.fbk` document they build into and the
+`.fbkb` bundle that packs one up.
 
 ---
 

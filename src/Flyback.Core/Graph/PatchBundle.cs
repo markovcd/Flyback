@@ -78,7 +78,7 @@ public readonly record struct LoadedBundle(Patch Patch, IReadOnlyDictionary<stri
 public static class PatchBundle
 {
     /// <summary>What a bundle is called. A patch is <c>.fbk</c>; this is that, packed.</summary>
-    public const string Extension = ".fbkp";
+    public const string Extension = ".fbkb";
 
     /// <summary>The patch, at the root of the archive.</summary>
     public const string PatchEntry = "patch.fbk";

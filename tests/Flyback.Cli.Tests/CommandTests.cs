@@ -286,7 +286,7 @@ public class CommandTests
         var file = made.File("shown.fbk");
         File.WriteAllText(file.FullName, PatchIO.ToJson(patch, NodeCatalog.BuiltIn));
 
-        var bundle = elsewhere.File("shown.fbkp");
+        var bundle = elsewhere.File("shown.fbkb");
 
         var (code, output, _) = Run((o, e) => PackCommand.Run(file, bundle, e, o));
 
@@ -351,7 +351,7 @@ public class CommandTests
         var file = scratch.File("shown.fbk");
         File.WriteAllText(file.FullName, PatchIO.ToJson(patch, NodeCatalog.BuiltIn));
 
-        var bundle = scratch.File("shown.fbkp");
+        var bundle = scratch.File("shown.fbkb");
         var (code, _, error) = Run((o, e) => PackCommand.Run(file, bundle, e, o));
 
         code.ShouldBe(Exit.Problems);

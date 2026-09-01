@@ -186,7 +186,7 @@ beside `PatchIO`; whether it is reached through a CLI verb, a text pane in the
 shell, or a tool the assistant can call is a separate decision, and each of the
 three is additive. This record settles the language and not its front door.
 
-**The file extension is `.fbs`**, beside `.fbk` for the document and `.fbkp` for
-the bundle ([0060](0060-a-bundle-is-a-patch-and-what-it-names.md)). A `.fbs` is
+**The file extension is `.fbks`**, beside `.fbk` for the document and `.fbkb` for
+the bundle ([0060](0060-a-bundle-is-a-patch-and-what-it-names.md)). A `.fbks` is
 a source: it names the modules it uses but carries none of the files they name,
 so packing one means building it first.

@@ -8,10 +8,14 @@
 *.json    text
 *.md      text
 *.fbk     text
+*.fbks    text
 
 *.png  binary
 *.ico  binary
 *.icns binary
+
+# A bundle is a zip archive, so it must not be normalised on the way in.
+*.fbkb binary
 
 # Verify snapshots: the comparer rejects any \r in a *.verified.* baseline, so
 # these must stay LF in the working tree even on Windows.
