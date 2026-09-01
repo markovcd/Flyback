@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>Flyback.Plugins.Gemini</RootNamespace>
+    <EnableDynamicLoading>true</EnableDynamicLoading>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Both are host-owned; shipping either would give its types a second identity. -->
+    <ProjectReference Include="..\Flyback.Plugins\Flyback.Plugins.csproj"
+                      Private="false"
+                      ExcludeAssets="runtime"
+                      GlobalPropertiesToRemove="OutDir" />
+    <ProjectReference Include="..\Flyback.Core\Flyback.Core.csproj"
+                      Private="false"
+                      ExcludeAssets="runtime"
+                      GlobalPropertiesToRemove="OutDir" />
+  </ItemGroup>
+
+  <!--
+    No package, the same call the chat-completions adapter made. This is a dozen
+    fields of JSON over one POST, and the SDK that wraps it would arrive with a
+    dependency graph an assembly loaded off disk at run time has to keep to
+    itself.
+  -->
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Flyback.Plugins.Gemini.Tests" />
+  </ItemGroup>
+
+</Project>

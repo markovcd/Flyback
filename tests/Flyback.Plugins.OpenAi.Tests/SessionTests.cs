@@ -532,11 +532,13 @@ public class SessionTests
 
     private static async Task<List<PatchEvent>> Drive(Canned canned, bool hearing = false)
     {
+        // Always the borrowed ear here. No model this format reaches both takes
+        // a sound and drives a conversation — the whole of ADR-0047.
         var workbench = new PatchWorkbench(
             NodeCatalog.BuiltIn,
             new Patch(),
             vision: false,
-            hearing);
+            hearing ? Listener.Another : Listener.None);
 
         using var session = new OpenAiSession(
             workbench,

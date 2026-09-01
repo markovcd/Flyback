@@ -29,7 +29,7 @@ public class PatchWorkbenchTests
     private static PatchWorkbench Bench(
         WorkbenchLimits? limits = null,
         bool vision = true,
-        bool hearing = true) =>
+        Listener hearing = Listener.Another) =>
         new(NodeCatalog.BuiltIn, new Patch(), vision, hearing, limits);
 
     private static Task<ToolOutcome> Call(PatchWorkbench bench, string tool, string arguments = "{}") =>
@@ -1224,8 +1224,59 @@ public class PatchWorkbenchTests
     public void Listening_is_offered_only_when_the_model_can_hear()
     {
         Bench().Tools.Select(t => t.Name).ShouldContain("listen");
-        Bench(hearing: false).Tools.Select(t => t.Name).ShouldNotContain("listen");
+        Bench(hearing: Listener.Itself).Tools.Select(t => t.Name).ShouldContain("listen");
+        Bench(hearing: Listener.None).Tools.Select(t => t.Name).ShouldNotContain("listen");
     }
+
+    /// <summary>
+    /// The tool says whose ear answers it, because the two answers are not the
+    /// same kind of thing. A borrowed one is somebody else's opinion, told
+    /// nothing so that it can disagree; the model's own is its impression of a
+    /// patch it built and hoped for. A model told the wrong one of those credits
+    /// its own ears to a listener that was never there.
+    /// </summary>
+    [Fact]
+    public void The_listen_tool_says_who_is_going_to_hear_it()
+    {
+        var borrowed = Listen(Bench(hearing: Listener.Another));
+        var own = Listen(Bench(hearing: Listener.Itself));
+
+        borrowed.Description.ShouldContain("a model that can hear");
+        own.Description.ShouldContain("plays it to you");
+
+        // And the note that goes with it: withholding it is the borrowed
+        // arrangement's one safeguard, and there is nobody to withhold it from
+        // when the model hears the clip itself.
+        borrowed.Schema.ShouldContain("deliberately not passed on");
+        own.Schema.ShouldContain("Nobody else reads it");
+    }
+
+    /// <summary>
+    /// And so does the briefing, which is the only place a model is told what it
+    /// can check.
+    /// </summary>
+    [Fact]
+    public void The_briefing_says_whose_ear_it_is()
+    {
+        Bench(hearing: Listener.None).Briefing.ShouldContain("You cannot hear");
+        Bench(hearing: Listener.Another).Briefing.ShouldContain("though it is not yours");
+        Bench(hearing: Listener.Itself).Briefing.ShouldContain("You can hear.");
+    }
+
+    /// <summary>
+    /// All three are still deterministic, which is what the prefix cache is
+    /// bought with — a briefing that varies between turns pays to write the
+    /// cache again on every one of them.
+    /// </summary>
+    [Fact]
+    public void Every_version_of_the_briefing_is_the_same_text_every_time()
+    {
+        foreach (var who in Enum.GetValues<Listener>())
+            Bench(hearing: who).Briefing.ShouldBe(Bench(hearing: who).Briefing);
+    }
+
+    private static PatchTool Listen(PatchWorkbench bench) =>
+        bench.Tools.Single(t => t.Name == "listen");
 
     /// <summary>
     /// Off by default where sight is on, because a sound reaches only the few
@@ -1384,7 +1435,7 @@ public class PatchWorkbenchTests
             NodeCatalog.BuiltIn,
             (await Heard()).Snapshot(),
             vision: false,
-            hearing: true,
+            hearing: Listener.Another,
             new WorkbenchLimits(LongestListen: 1d));
 
         var heard = await Call(bench, "listen", """{"seconds":30}""");

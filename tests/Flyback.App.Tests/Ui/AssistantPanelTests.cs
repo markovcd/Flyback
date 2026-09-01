@@ -84,6 +84,30 @@ public class AssistantPanelTests : UiTest
             throw new NotSupportedException("this one is only ever asked what it can do.");
     }
 
+    /// <summary>
+    /// One provider whose model both sees and hears, which is what the Gemini
+    /// adapter brought and nothing had before it.
+    /// </summary>
+    private sealed class Both : IPatchAssistant
+    {
+        public string Id => "both";
+
+        public string Name => "Sees and hears";
+
+        public int Priority => 0;
+
+        public AssistantSchema Schema { get; } = new(
+            "both",
+            [new AssistantModel("both", Hearing: true), new AssistantModel("deaf")],
+            "NONE",
+            "none needed");
+
+        public string? Unavailable(AssistantConfig config) => null;
+
+        public IPatchSession Start(PatchWorkbench workbench, AssistantConfig config) =>
+            throw new NotSupportedException("this one is only ever asked what it can do.");
+    }
+
     private static Button SendButton(Window window) =>
         All<Button>(window).Single(b => b.Content as string == Send);
 
@@ -236,6 +260,40 @@ public class AssistantPanelTests : UiTest
         var ear = All<ComboBox>(host).Single(c => c.Name == "ear");
 
         ear.IsVisible.ShouldBeFalse();
+    }
+
+    /// <summary>
+    /// A model that takes a sound itself is played the clip directly, so there
+    /// is no second model and no question to put. The box goes rather than
+    /// greying out — a disabled control asks somebody to work out why it is
+    /// there, and this one has stopped meaning anything at all.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_model_that_hears_for_itself_needs_no_ear_chosen()
+    {
+        var window = Showing(
+            With(new Both()),
+            new AssistantSettings { Provider = "both", Model = "both", Hearing = true });
+
+        var host = Settings(window);
+
+        All<ComboBox>(host).Single(c => c.Name == "ear").IsVisible.ShouldBeFalse();
+    }
+
+    /// <summary>
+    /// And it comes back for a model that cannot, which is what pins the box to
+    /// the model in the box rather than to the provider alone.
+    /// </summary>
+    [AvaloniaFact]
+    public void The_ear_returns_for_a_model_that_cannot_hear()
+    {
+        var window = Showing(
+            With(new Both()),
+            new AssistantSettings { Provider = "both", Model = "deaf", Hearing = true });
+
+        var host = Settings(window);
+
+        All<ComboBox>(host).Single(c => c.Name == "ear").IsVisible.ShouldBeTrue();
     }
 
     /// <summary>

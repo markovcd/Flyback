@@ -621,17 +621,27 @@ public sealed class AssistantPanel : UserControl
     /// is anything to listen with, and enabled while listening is on.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// Read off the list and the tick rather than off the checkbox's own
     /// enabled state, which is another thing that has to have been set first.
     /// This is called from anywhere either could have changed, and has to be
     /// right whichever order they were set in.
+    /// </para>
+    /// <para>
+    /// A model that takes a sound itself is played the clip directly, so there
+    /// is no second model and no question to put. The box goes rather than
+    /// greying out: a disabled control asks somebody to work out why it is
+    /// there, and this one has stopped meaning anything at all. What it held is
+    /// still in the settings and comes back the moment a model that cannot hear
+    /// is chosen.
+    /// </para>
     /// </remarks>
     private void ShowEarState()
     {
-        var any = earBox.ItemCount > 0;
+        var borrowed = earBox.ItemCount > 0 && Chosen()?.Hearing != true;
 
-        earBox.IsVisible = any;
-        earBox.IsEnabled = any && hearingBox.IsChecked == true;
+        earBox.IsVisible = borrowed;
+        earBox.IsEnabled = borrowed && hearingBox.IsChecked == true;
     }
 
     /// <summary>What is known about the model in the box, or null when it is a stranger.</summary>
@@ -650,10 +660,12 @@ public sealed class AssistantPanel : UserControl
     /// </summary>
     /// <remarks>
     /// <para>
-    /// Only sight is the model in the box's business. The sound never goes to
-    /// it — it goes to the ear, which is a different model chosen separately —
-    /// so hearing turns on whether the <em>provider</em> has one, not whether
-    /// this model does.
+    /// Sight is the model in the box's business, and sound is only sometimes.
+    /// Where the sound goes to a second model chosen separately, hearing turns
+    /// on whether the <em>provider</em> has an ear rather than whether this
+    /// model does. Where the model in the box takes a sound itself it is played
+    /// the clip directly, there is no second model, and the ear below goes —
+    /// see <see cref="ShowEarState"/>, which is why this calls it.
     /// </para>
     /// <para>
     /// The tick itself is left alone, which is deliberate. A disabled box that
@@ -679,6 +691,10 @@ public sealed class AssistantPanel : UserControl
             ? "Nothing is known about this one here, so the switch below is yours to set. An "
               + "endpoint that will not take a picture answers with a 400."
             : Handles(known);
+
+        // The ear is a question about this model as well as about the provider,
+        // so it is asked again whenever the name in the box changes.
+        ShowEarState();
     }
 
     /// <summary>
@@ -688,7 +704,12 @@ public sealed class AssistantPanel : UserControl
     /// </summary>
     private static string Handles(AssistantModel model) => (model.Vision, model.Hearing) switch
     {
-        (true, _) => $"{model.Id} takes pictures.",
+        // The one that needs saying, because it is what removes the ear below
+        // and somebody who had chosen one deserves to know where it went.
+        (true, true) => $"{model.Id} takes pictures and sound, so it listens for itself — there is "
+            + "no second model to choose.",
+
+        (true, false) => $"{model.Id} takes pictures.",
 
         // Worth saying rather than leaving somebody to wonder why they chose an
         // audio model and lost the ability to look at anything: this one belongs
@@ -803,14 +824,20 @@ public sealed class AssistantPanel : UserControl
         // Hearing without an ear is nothing to turn on rather than something
         // that fails later: the tool would be offered, called, and answered with
         // a sentence saying nobody heard it.
-        var ear = EarName();
+        //
+        // Null where the model takes a sound itself, and null is the whole of
+        // how that is said: EarModel names the model asked *instead*, so leaving
+        // one there would have the adapter borrow an ear it does not need and
+        // pay for a second request per listen. The tick still governs whether
+        // anybody listens at all.
+        var ear = known?.Hearing == true ? null : EarName();
 
         return new AssistantConfig(
             key,
             model,
             url,
             visionBox.IsChecked == true && known?.Vision != false,
-            hearingBox.IsChecked == true && ear is not null,
+            hearingBox.IsChecked == true && (ear is not null || known?.Hearing == true),
             ear,
             (AssistantEffort)Math.Max(0, effortBox.SelectedIndex));
     }

@@ -26,7 +26,7 @@ dotnet run --project src/Flyback.App -c Release
 - A text language a patch can be written in, saved as and read back from — the same instrument, as source
 - Plugin-based architecture for platform-specific audio/video backends and extensions
 - Patch bundles that package the patch with its referenced sample and image files
-- Agentic patch authoring through a model-backed assistant that can listen, propose changes and work inside the same patch graph
+- Agentic patch authoring through a model-backed assistant that can listen, propose changes and work inside the same patch graph — over any chat-completions endpoint, or over Gemini, whose models hear the patch themselves
 - Cross-platform publish targets for Windows, macOS and Linux
 
 ## Build and publish
@@ -131,7 +131,8 @@ tests/
   Flyback.Core.Specs      specification-style tests and examples
   Flyback.App.Tests       app and UI tests
   Flyback.Plugins.Tests   plugin and runtime behavior tests
-  Flyback.Plugins.OpenAi.Tests  OpenAI session tests
+  Flyback.Plugins.OpenAi.Tests  chat-completions session tests
+  Flyback.Plugins.Gemini.Tests  generateContent session tests
 ```
 
 See the `docs/adr` folder for design notes and architecture decisions.

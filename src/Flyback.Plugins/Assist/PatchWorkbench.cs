@@ -53,9 +53,12 @@ public sealed class PatchWorkbench
     /// <param name="startingPoint"></param>
     /// <param name="vision">Whether the model may be shown a frame, which offers <c>render</c>.</param>
     /// <param name="hearing">
-    /// Whether the model may be played the sound, which offers <c>listen</c>.
-    /// Off by default, unlike <paramref name="vision"/>: every model worth
-    /// pointing this at can see, and only a few can hear.
+    /// Whether the sound may be listened to, and by whom, which offers
+    /// <c>listen</c> and settles what it promises. Off by default, unlike
+    /// <paramref name="vision"/>: every model worth pointing this at can see,
+    /// and only a few can hear. Whose ear it is changes the tool's own
+    /// description as well as the briefing's paragraph — see
+    /// <see cref="Listener"/>.
     /// </param>
     /// <param name="limits"></param>
     /// <param name="samples">
@@ -68,7 +71,7 @@ public sealed class PatchWorkbench
         ModuleCatalog modules,
         Patch startingPoint,
         bool vision = true,
-        bool hearing = false,
+        Listener hearing = Listener.None,
         WorkbenchLimits? limits = null,
         ISampleLibrary? samples = null,
         IImageLibrary? pictures = null)
@@ -1204,7 +1207,7 @@ public sealed class PatchWorkbench
 
     // --- the vocabulary itself ----------------------------------------------
 
-    private IReadOnlyList<PatchTool> BuildTools(bool vision, bool hearing, bool lookups)
+    private IReadOnlyList<PatchTool> BuildTools(bool vision, Listener hearing, bool lookups)
     {
         List<PatchTool> tools =
         [
@@ -1467,14 +1470,18 @@ public sealed class PatchWorkbench
                 """));
         }
 
-        if (hearing)
+        if (hearing is not Listener.None)
         {
             tools.Add(new PatchTool(
                 "listen",
-                "Renders the patch's sound, measures it, and has a model that can hear describe it "
-                + "to you. Use it once the sound is wired, and again after adjusting what was "
-                + "described. It is the only way to find out whether a patch built for the speakers "
-                + "is anything at all, as opposed to merely legal.",
+                "Renders the patch's sound, measures it, and "
+                + (hearing is Listener.Itself
+                    ? "plays it to you — the clip arrives after this reply, the way a rendered "
+                      + "frame does. "
+                    : "has a model that can hear describe it to you. ")
+                + "Use it once the sound is wired, and again after adjusting what you found. It is "
+                + "the only way to find out whether a patch built for the speakers is anything at "
+                + "all, as opposed to merely legal.",
                 $$"""
                 {
                   "properties": {
@@ -1486,7 +1493,7 @@ public sealed class PatchWorkbench
                       "type": "number",
                       "description": "Where on the timeline to start, up to {{Number(limits.LatestTime)}}. Defaults to 0. Everything before it is still rendered, so delays arrive with the tail they would really have."
                     },
-                    "note": { "type": "string", "description": "What you are listening for, for your own record. It is deliberately not passed on: whoever listens is told nothing about the patch, so that what comes back could disagree with you." }
+                    "note": { "type": "string", "description": "What you are listening for, for your own record. {{Kept(hearing)}}" }
                   }
                 }
                 """));
@@ -1512,6 +1519,22 @@ public sealed class PatchWorkbench
 
         return tools;
     }
+
+    /// <summary>
+    /// What becomes of <c>listen</c>'s <c>note</c>, which depends on whether
+    /// there is anybody else to keep it from.
+    /// </summary>
+    /// <remarks>
+    /// Withholding it is the second-hand arrangement's one safeguard — a
+    /// listener told what to listen for will find it, and ADR-0047 records the
+    /// clip where it did. There is nobody to withhold it from when the model
+    /// plays itself the clip, and saying so would be this program claiming a
+    /// check it is not performing.
+    /// </remarks>
+    private static string Kept(Listener hearing) => hearing is Listener.Itself
+        ? "Nobody else reads it."
+        : "It is deliberately not passed on: whoever listens is told nothing about the patch, "
+          + "so that what comes back could disagree with you.";
 
     // --- small helpers ------------------------------------------------------
 

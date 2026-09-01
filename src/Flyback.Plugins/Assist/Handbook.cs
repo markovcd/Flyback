@@ -235,11 +235,20 @@ internal static class Handbook
     /// state without knowing how this run is configured.
     /// </summary>
     /// <remarks>
-    /// Both halves are worth their place. A model told nothing would assume it
+    /// <para>
+    /// All three are worth their place. A model told nothing would assume it
     /// can hear — every other tool it has answers when called — and would
     /// describe a sound it never heard. A model that <em>can</em> hear has to be
     /// told to, because the loop it already knows is build, render, look, and a
     /// patch with no picture in it offers nothing to look at.
+    /// </para>
+    /// <para>
+    /// And a model that hears the clip itself has to be told something different
+    /// again from one that is handed somebody else's account of it. The second
+    /// paragraph of each is the same warning aimed at opposite failures: a
+    /// borrowed ear agrees with whoever asked it, and one's own ear agrees with
+    /// whoever built the patch. Only the measurements answer to neither.
+    /// </para>
     /// </remarks>
     private const string Deaf = """
         You cannot hear the sound. If the patch makes noise, reason about it
@@ -247,7 +256,7 @@ internal static class Handbook
 
         """;
 
-    private const string Hearing = """
+    private const string Secondhand = """
         You have an ear, though it is not yours. `listen` renders a stretch of
         the sound, measures it, and plays it to a second model that can hear.
         What comes back is two different kinds of thing, and the difference
@@ -275,6 +284,39 @@ internal static class Handbook
         way you use `render` on one wired to `color`. Silence never reaches
         the ear at all — it comes back as a sentence saying so, and it usually
         means something on the way to the Output holds still.
+
+        """;
+
+    private const string FirstHand = """
+        You can hear. `listen` renders a stretch of the sound, measures it, and
+        plays you the clip — the sound arrives after the tool's reply, the way a
+        rendered frame does. What comes back is two different kinds of thing,
+        and the difference between them matters more than anything else about
+        this tool.
+
+        **The measurements are facts.** Peak, rms, crest and the level across
+        the clip are computed from the samples. Crest — peak above rms — is
+        the one to read first: near 3 dB is a steady tone, and 12 dB or more
+        means there are hits in it. The row of slice levels is the same
+        question over time: near-identical figures are something continuous,
+        and a rhythm moves.
+
+        **What you hear is your own impression of a patch you built**, which is
+        the one account here that already knows what it was hoping for. Say what
+        is there rather than what it was for. A patch that is nearly the thing
+        you intended sounds, from where you are sitting, like the thing you
+        intended.
+
+        **Where the two disagree, the measurements win.** Drums you can hear
+        over a crest of 6 dB are not drums, whatever they sounded like, because
+        a clip with hits in it cannot measure that way. Say so and go and look
+        at the patch. Nothing else in this loop can contradict you, so when the
+        numbers do, that is the finding.
+
+        Use `listen` on any patch wired to the Output's `left` or `right`, the
+        way you use `render` on one wired to `color`. Silence is never played —
+        it comes back as a sentence saying so, and it usually means something on
+        the way to the Output holds still.
 
         """;
 
@@ -388,16 +430,22 @@ internal static class Handbook
     /// </summary>
     /// <param name="prose"></param>
     /// <param name="hearing">
-    /// Whether this run has the <c>listen</c> tool. It changes one paragraph,
-    /// and it has to change it: the briefing is the only place the model is told
-    /// what it can check, and being wrong about that either wastes a tool it has
-    /// or invents a sound it does not.
+    /// Whether this run has the <c>listen</c> tool, and whose ear answers it. It
+    /// changes one paragraph, and it has to change it: the briefing is the only
+    /// place the model is told what it can check, and being wrong about that
+    /// either wastes a tool it has, invents a sound it does not, or credits its
+    /// own impression to a listener that was never there.
     /// </param>
     /// <param name="modules"></param>
-    public static string Render(ModuleCatalog modules, bool prose, bool hearing = false)
+    public static string Render(ModuleCatalog modules, bool prose, Listener hearing = Listener.None)
     {
         var text = new StringBuilder(Conventions)
-            .Append(hearing ? Hearing : Deaf)
+            .Append(hearing switch
+            {
+                Listener.Itself => FirstHand,
+                Listener.Another => Secondhand,
+                _ => Deaf,
+            })
             .Append(Working);
 
         // Catalogue order, not sorted: it is already deterministic (built-ins in

@@ -18,6 +18,7 @@
     <Project Path="src/Flyback.Plugins.Keyring/Flyback.Plugins.Keyring.csproj" />
     <Project Path="src/Flyback.Plugins.Voice/Flyback.Plugins.Voice.csproj" />
     <Project Path="src/Flyback.Plugins.OpenAi/Flyback.Plugins.OpenAi.csproj" />
+    <Project Path="src/Flyback.Plugins.Gemini/Flyback.Plugins.Gemini.csproj" />
     <Project Path="src/Flyback.Plugins.Effects/Flyback.Plugins.Effects.csproj" />
     <Project Path="src/Flyback.Plugins.WinIO/Flyback.Plugins.WinIO.csproj" />
   </Folder>
@@ -28,6 +29,7 @@
     <Project Path="tests/Flyback.Core.Specs/Flyback.Core.Specs.csproj" />
     <Project Path="tests/Flyback.Core.Tests/Flyback.Core.Tests.csproj" />
     <Project Path="tests/Flyback.Plugins.FakeAssistant/Flyback.Plugins.FakeAssistant.csproj" />
+    <Project Path="tests/Flyback.Plugins.Gemini.Tests/Flyback.Plugins.Gemini.Tests.csproj" />
     <Project Path="tests/Flyback.Plugins.OpenAi.Tests/Flyback.Plugins.OpenAi.Tests.csproj" />
     <Project Path="tests/Flyback.Plugins.Sample/Flyback.Plugins.Sample.csproj" />
     <Project Path="tests/Flyback.Plugins.Tests/Flyback.Plugins.Tests.csproj" />

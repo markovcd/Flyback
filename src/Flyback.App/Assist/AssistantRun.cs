@@ -52,9 +52,31 @@ public sealed class AssistantRun : IDisposable
         startingWires = startingPoint.Connections.Count;
 
         Workbench = new PatchWorkbench(
-            modules, startingPoint, config.Vision, config.Hearing, limits, samples, pictures);
+            modules, startingPoint, config.Vision, Hears(assistant, config), limits, samples, pictures);
         session = assistant.Start(Workbench, config);
     }
+
+    /// <summary>
+    /// Whose ear this run has, which the shell works out without knowing one
+    /// model name from another.
+    /// </summary>
+    /// <remarks>
+    /// The whole question is whether the model doing the building takes a sound,
+    /// and <see cref="AssistantSchema"/> is where a provider says so — the same
+    /// bool the settings form reads to decide which switches to offer. Nothing
+    /// here is told which providers those are, which is the boundary ADR-0025
+    /// drew and ADR-0047 kept when it put the capabilities in the schema.
+    /// <para>
+    /// A model nobody wrote down falls to the second-hand arrangement, and that
+    /// is the safe direction rather than a guess: being wrong that way costs a
+    /// description, and being wrong the other way sends a sound to a model that
+    /// refuses it and loses every turn from the first <c>listen</c> onwards.
+    /// </para>
+    /// </remarks>
+    private static Listener Hears(IPatchAssistant assistant, AssistantConfig config) =>
+        !config.Hearing ? Listener.None
+        : assistant.Schema.Known(config.Model)?.Hearing == true ? Listener.Itself
+        : Listener.Another;
 
     /// <summary>
     /// The patch as it was before any of this, still exactly as it was. Putting

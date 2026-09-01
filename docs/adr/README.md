@@ -96,3 +96,4 @@ context, decision, consequences.
 | [0033](0033-patches-authored-by-an-agent-behind-the-plugin-boundary.md) | Patches may be authored by an agent, behind the plugin boundary *(user-directed)* |
 | [0034](0034-settings-in-a-file-the-key-in-the-operating-system.md) | Settings in a file, the key in the operating system's store *(user-directed)* |
 | [0047](0047-the-agent-may-listen-where-the-model-can.md) | The agent gets an ear, which is a second model *(user-directed)* |
+| [0066](0066-a-second-wire-format-so-one-model-can-hear.md) | A second wire format, so one model can hear what it built *(user-directed)* |

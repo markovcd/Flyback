@@ -30,8 +30,15 @@ public enum AssistantEffort
 /// <param name="Id">What goes in the request.</param>
 /// <param name="Vision">Whether it accepts a picture. Nearly all of them do.</param>
 /// <param name="Hearing">
-/// Whether it accepts a sound. Nearly none of them do — see
+/// Whether it accepts a sound. Most do not — see
 /// <see cref="AssistantConfig.Hearing"/>.
+/// <para>
+/// True <em>and</em> <paramref name="Vision"/> true is the interesting case and
+/// the one everything downstream turns on: a model that takes both can drive the
+/// conversation and be played the clip itself, so the run has no second model,
+/// no <see cref="AssistantConfig.EarModel"/>, and a briefing that says "you can
+/// hear" rather than "you have an ear" — see <see cref="Listener"/>.
+/// </para>
 /// </param>
 public sealed record AssistantModel(string Id, bool Vision = true, bool Hearing = false);
 
@@ -120,17 +127,28 @@ public sealed record AssistantSchema(
 /// <param name="Vision">Whether the model may be shown a rendered frame.</param>
 /// <param name="Hearing">
 /// Whether the patch's sound may be listened to at all. Off by default, and the
-/// asymmetry with <paramref name="Vision"/> is the point: a picture goes to the
-/// model driving the conversation, and a sound cannot — see
-/// <paramref name="EarModel"/>.
+/// asymmetry with <paramref name="Vision"/> is the point: every model this
+/// reaches can be shown a picture, and only some can be played a sound. Who
+/// does the listening is <paramref name="EarModel"/>'s question.
 /// </param>
 /// <param name="EarModel">
-/// The model asked to listen, which is not the model doing the building. The
-/// ones that take a sound require every request to carry one, so a conversation
-/// driven by one is refused on its first turn — before anything exists to listen
-/// to — and they do not take a picture besides. So the sound goes to a second
-/// model on its own, and what comes back to the first is words. Null means
-/// nothing has been chosen and <paramref name="Hearing"/> has nothing to act on.
+/// The model asked to listen <em>instead of</em> the one doing the building, or
+/// null where no second model is wanted.
+/// <para>
+/// Null carries two quite different situations and the adapter can tell them
+/// apart from its own schema. Where the driving model takes a sound, null means
+/// there is nobody else to ask: the clip goes into the conversation, the way a
+/// rendered frame does, and one model both builds and hears. Where it does not,
+/// null means nothing has been chosen and <paramref name="Hearing"/> has nothing
+/// to act on.
+/// </para>
+/// <para>
+/// A second model is the older arrangement and still the common one — ADR-0047
+/// records why it is forced on the chat-completions format. The models there
+/// that take a sound require every request to carry one, so a conversation
+/// driven by one is refused on its first turn, before anything exists to listen
+/// to, and they do not take a picture besides.
+/// </para>
 /// </param>
 public sealed record AssistantConfig(
     string ApiKey,

@@ -75,6 +75,7 @@
     <PluginProject Include="..\Flyback.Plugins.Keychain\Flyback.Plugins.Keychain.csproj" FolderName="Keychain" Platform="osx" />
     <PluginProject Include="..\Flyback.Plugins.Keyring\Flyback.Plugins.Keyring.csproj" FolderName="Keyring" Platform="linux" />
     <PluginProject Include="..\Flyback.Plugins.OpenAi\Flyback.Plugins.OpenAi.csproj" FolderName="OpenAi" />
+    <PluginProject Include="..\Flyback.Plugins.Gemini\Flyback.Plugins.Gemini.csproj" FolderName="Gemini" />
     <PluginProject Include="..\Flyback.Plugins.Picture\Flyback.Plugins.Picture.csproj" FolderName="Picture" />
     <PluginProject Include="..\Flyback.Plugins.Voice\Flyback.Plugins.Voice.csproj" FolderName="Voice" />
     <PluginProject Include="..\Flyback.Plugins.Effects\Flyback.Plugins.Effects.csproj" FolderName="Effects" />
