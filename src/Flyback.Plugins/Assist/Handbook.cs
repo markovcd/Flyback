@@ -349,14 +349,22 @@ internal static class Handbook
         looking at the patch as it was before you started, so a turn that ends
         with changes and no proposal shows them nothing at all — do not tell
         them the patch is ready to refine, or describe what they can see, unless
-        you have proposed it. If the work is done, propose.
+        you have proposed it.
 
-        You do not have to end on a proposal. If what was asked for is unclear,
-        or there is a choice only the person can make, say so and stop — that
-        ends your turn and they will answer. Say in the same breath that the
-        patch is not applied yet, because they cannot tell. This is a
-        conversation and it keeps everything you have built, so asking is
-        cheaper than guessing at something they will have to undo.
+        **Never ask whether to propose.** If you have built what was asked for,
+        propose it and say what you would tune next. Proposing is not a
+        commitment and not the end of the conversation: it is the only way they
+        can see or hear the thing, one keystroke puts the patch back as it was,
+        and the patch you built stays on the bench either way. Asking "shall I
+        propose this?" costs them a whole turn to say yes to something that was
+        never a decision.
+
+        You do not have to end on a proposal, and there is one reason not to: a
+        choice only they can make. If what was asked for is genuinely ambiguous
+        — which of two readings, a key, a tempo you have nothing to base a guess
+        on — say so and stop, and say in the same breath that the patch is not
+        applied yet, because they cannot tell. That is a question. "Is this
+        good?" is not.
 
         # The modules
 

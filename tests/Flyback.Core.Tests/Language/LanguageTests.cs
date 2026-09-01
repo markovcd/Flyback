@@ -576,6 +576,26 @@ public class LanguageTests
     public void A_binding_after_a_pipe_still_needs_its_socket() =>
         Try("let a = sine()\nrings() |> a |> out.color").Report.ShouldContain("not a socket");
 
+    /// <summary>
+    /// Arithmetic on what a pipe just made. The pipe is the loosest operator
+    /// there is, because `t * 0.2 |> sine()` needs it to be — so this cannot
+    /// mean what it looks like, and the complaint is the fix rather than the
+    /// rule.
+    /// </summary>
+    [Fact]
+    public void Arithmetic_after_a_pipeline_is_told_where_the_brackets_go()
+    {
+        var report = Try("let s = notes() [ C2 ]\nsaw(freq: s |> note * 2) |> out.left").Report;
+
+        report.ShouldContain("cannot follow a pipeline");
+        report.ShouldContain("(a |> b) * 2");
+    }
+
+    [Fact]
+    public void The_bracketed_form_is_what_was_meant() =>
+        Build("let s = notes() [ C2 ]\nsaw(freq: (s |> note) * 2) |> out.left").Nodes
+            .ShouldContain(n => n.TypeId == "math.mul");
+
     /// <summary>A comma before the bracket is a habit, not a mistake worth a refusal.</summary>
     [Fact]
     public void A_trailing_comma_is_forgiven() =>

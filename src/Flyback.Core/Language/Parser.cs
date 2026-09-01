@@ -333,6 +333,8 @@ public sealed class Parser(IReadOnlyList<Token> tokens, List<LanguageIssue> issu
     {
         if (Sum() is not { } left) return null;
 
+        var piped = false;
+
         while (Current.Kind == TokenKind.Pipe)
         {
             var line = Current.Line;
@@ -343,6 +345,22 @@ public sealed class Parser(IReadOnlyList<Token> tokens, List<LanguageIssue> issu
             if (Stage() is not { } stage) return null;
 
             left = new PipeExpr(left, stage, line, column);
+            piped = true;
+        }
+
+        // Arithmetic on what a pipe just produced, which is a thing people write
+        // and this cannot read. The pipe is the loosest operator there is —
+        // `t * 0.2 |> sine()` needs it to be — so `s |> note * 2` would have to
+        // mean piping into `note * 2`, which is nothing. Said as the fix rather
+        // than as the rule, because the rule is not what anybody wanted to know.
+        if (piped && Current.Kind is TokenKind.Star or TokenKind.Slash or TokenKind.Percent
+            or TokenKind.Plus or TokenKind.Minus)
+        {
+            Complain(
+                $"'{Current.Text}' cannot follow a pipeline. Put the pipeline in brackets to do "
+                + $"arithmetic on what it made: (a |> b) {Current.Text} 2.");
+
+            return null;
         }
 
         return left;
