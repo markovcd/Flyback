@@ -106,11 +106,22 @@ public sealed class SynthRenderer
                 // Screen y grows downwards; patch y grows upwards.
                 var py = 1d - 2d * (y + 0.5d) / height;
 
+                // What the clock, the frame's shape and the keys settle, and then
+                // what this scanline settles, both left standing in the bank for
+                // the pixels below to read — see FramePlan for why that is the
+                // same picture and what it saves. The frame's share is redone per
+                // row rather than once for the whole picture, because each worker
+                // has a bank of its own and there is nowhere shared to leave it;
+                // at a few dozen ops against a row of a thousand pixels that is
+                // not a cost worth a handshake over.
+                patch.EvaluateStage(EvaluationStage.Frame, 0d, py, time, registers, feedback, aspect, live);
+                patch.EvaluateStage(EvaluationStage.Row, 0d, py, time, registers, feedback, aspect, live);
+
                 for (var x = 0; x < width; x++)
                 {
                     var px = (2d * (x + 0.5d) / width - 1d) * aspect;
 
-                    patch.Evaluate(px, py, time, registers, feedback, aspect: aspect, live: live);
+                    patch.EvaluateStage(EvaluationStage.Pixel, px, py, time, registers, feedback, aspect, live);
 
                     var r = Saturate(registers[outputBase + 0]);
                     var g = Saturate(registers[outputBase + 1]);

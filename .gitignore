@@ -37,6 +37,9 @@ packages/
 *.nettrace
 *.speedscope.json
 
+# Benchmark output
+BenchmarkDotNet.Artifacts/
+
 # OS
 .DS_Store
 [Tt]humbs.db

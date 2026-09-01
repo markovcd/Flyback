@@ -4,7 +4,9 @@
 [0027](0027-delay-lines-give-the-audio-path-a-memory.md), where the audio path
 gains stateful ops and the video path keeps the purity this relies on, and by
 [0035](0035-a-glsl-backend-for-the-video-path.md), where this stops being the
-only renderer
+only renderer, and by
+[0064](0064-a-pixel-runs-only-what-a-pixel-changes.md), which takes the other
+reading of the dispatch-bound finding below and shortens the list instead
 
 ## Context
 

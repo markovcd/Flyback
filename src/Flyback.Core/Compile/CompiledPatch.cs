@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace Flyback.Core.Compile;
 
@@ -96,7 +97,7 @@ public sealed class CompiledPatch(
     /// asked for none, and empty on the video path whatever it asked for — see
     /// OpCode.Table.
     /// </remarks>
-    public IReadOnlyList<LoadedSample> Tables { get; } = tables ?? [];
+    public IReadOnlyList<LoadedSample> Tables => tableArray;
 
     /// <summary>
     /// The pictures <see cref="OpCode.SamplePicture"/> reads, indexed by its K.
@@ -113,9 +114,38 @@ public sealed class CompiledPatch(
     /// names.
     /// </para>
     /// </remarks>
-    public IReadOnlyList<LoadedImage> Pictures { get; } = pictures ?? [];
+    public IReadOnlyList<LoadedImage> Pictures => pictureArray;
 
-    public int RegisterCount { get; } = registerCount;
+
+    /// <summary>
+    /// <see cref="Tables"/> and <see cref="Pictures"/> as what the interpreter
+    /// indexes, rather than as what a caller reads them through.
+    /// </summary>
+    /// <remarks>
+    /// An <see cref="IReadOnlyList{T}"/> indexer is an interface call, and both
+    /// of these are read inside the per-pixel loop — a patch with an Image in it
+    /// would pay for one on every pixel of every frame, to reach an array that
+    /// was already an array. The properties above still hand out the list, so
+    /// nothing outside this class notices.
+    /// </remarks>
+    private readonly LoadedSample[] tableArray = tables as LoadedSample[] ?? [.. tables ?? []];
+
+    private readonly LoadedImage[] pictureArray = pictures as LoadedImage[] ?? [.. pictures ?? []];
+
+    public int RegisterCount { get; } = Vouch(ops, registerCount);
+
+    /// <summary>
+    /// The same ops sorted by how often a frame has to run them, or null for a
+    /// program that cannot be sorted. See <see cref="FramePlan"/>.
+    /// </summary>
+    /// <remarks>
+    /// Worked out once here rather than by whoever is drawing, because it is a
+    /// property of the program and the program is what outlives a frame. A patch
+    /// is recompiled on every edit and drawn sixty times a second in between, so
+    /// the walk this costs is paid once against the half a million evaluations
+    /// it saves each of those frames.
+    /// </remarks>
+    public FramePlan? Plan { get; } = FramePlan.For(ops, registerCount);
 
     /// <summary>First of the <see cref="OutputWidth"/> registers holding the result.</summary>
     public int OutputBase { get; } = outputBase;
@@ -217,96 +247,190 @@ public sealed class CompiledPatch(
         in FeedbackFrame feedback,
         DelayState? delays = null,
         double aspect = 1d,
+        LiveValues? live = null) =>
+        Run(Ops, 0, Ops.Length, x, y, t, registers, feedback, delays, aspect, live);
+
+    /// <summary>
+    /// Runs only the ops of <paramref name="stage"/>, for a caller drawing a
+    /// frame that means to run each stage where it belongs.
+    /// </summary>
+    /// <remarks>
+    /// The three stages together do exactly what one <see cref="Evaluate"/>
+    /// does, provided they are run in order into the same register bank and the
+    /// arguments a stage does not vary with are held still across it — see
+    /// <see cref="FramePlan"/> for why that is safe and what it saves.
+    /// <para>
+    /// A program with no plan runs whole at <see cref="EvaluationStage.Pixel"/>
+    /// and does nothing at the other two, so a caller staging its loops gets the
+    /// right picture either way and pays only for what the program allowed.
+    /// </para>
+    /// </remarks>
+    public void EvaluateStage(
+        EvaluationStage stage,
+        double x,
+        double y,
+        double t,
+        Span<double> registers,
+        in FeedbackFrame feedback,
+        double aspect = 1d,
         LiveValues? live = null)
     {
-        var ops = Ops;
+        if (Plan is not { } plan)
+        {
+            if (stage is EvaluationStage.Pixel)
+                Run(Ops, 0, Ops.Length, x, y, t, registers, feedback, null, aspect, live);
+
+            return;
+        }
+
+        var (from, to) = plan.Range(stage);
+
+        Run(plan.Ops, from, to, x, y, t, registers, feedback, null, aspect, live);
+    }
+
+    /// <summary>
+    /// Walks <paramref name="ops"/> from <paramref name="from"/> to
+    /// <paramref name="to"/>.
+    /// </summary>
+    /// <remarks>
+    /// A range rather than the whole array, so the staged path can run a third
+    /// of the program without a second copy of the switch. Only a whole run may
+    /// pass <paramref name="delays"/>: which line or cell a stateful op uses is
+    /// counted from the start of the program, so a run that begins part way
+    /// through would count from the wrong place — and a staged run passes none,
+    /// which is also what lets its ops be reordered at all.
+    /// </remarks>
+    private void Run(
+        Op[] ops,
+        int from,
+        int to,
+        double x,
+        double y,
+        double t,
+        Span<double> registers,
+        in FeedbackFrame feedback,
+        DelayState? delays,
+        double aspect,
+        LiveValues? live)
+    {
+        if (registers.Length < RegisterCount)
+            throw new ArgumentException(
+                $"Register bank holds {registers.Length}, the program needs {RegisterCount}.",
+                nameof(registers));
+
+        // The one place the register file is touched without a bounds check, and
+        // what pays for it is the constructor: every index below was checked
+        // against RegisterCount once, when the program was made, and the guard
+        // above is the other half of that — together they say the bank is at
+        // least as long as the largest index any op names. Checking per access
+        // instead costs four compares on an Add, which at thirty ops a pixel and
+        // half a million pixels a frame is most of what this loop does.
+        ref var bank = ref MemoryMarshal.GetReference(registers);
 
         // Which line or cell an op uses is its position among the ops of its
         // kind, so each kind is counted on its own.
         var line = 0;
         var cell = 0;
 
-        for (var index = 0; index < ops.Length; index++)
+        for (var index = from; index < to; index++)
         {
             ref readonly var op = ref ops[index];
 
             switch (op.Code)
             {
-                case OpCode.Const: registers[op.Out] = op.K; break;
-                case OpCode.LoadX: registers[op.Out] = x; break;
-                case OpCode.LoadY: registers[op.Out] = y; break;
-                case OpCode.LoadT: registers[op.Out] = t; break;
-                case OpCode.LoadAspect: registers[op.Out] = aspect; break;
-                case OpCode.LoadLive: registers[op.Out] = live?.At((int)op.K) ?? 0d; break;
-                case OpCode.Copy: registers[op.Out] = registers[op.A]; break;
+                case OpCode.Const: Reg(ref bank, op.Out) = op.K; break;
+                case OpCode.LoadX: Reg(ref bank, op.Out) = x; break;
+                case OpCode.LoadY: Reg(ref bank, op.Out) = y; break;
+                case OpCode.LoadT: Reg(ref bank, op.Out) = t; break;
+                case OpCode.LoadAspect: Reg(ref bank, op.Out) = aspect; break;
+                case OpCode.LoadLive: Reg(ref bank, op.Out) = live?.At((int)op.K) ?? 0d; break;
+                case OpCode.Copy: Reg(ref bank, op.Out) = Reg(ref bank, op.A); break;
 
-                case OpCode.Neg: registers[op.Out] = -registers[op.A]; break;
-                case OpCode.Abs: registers[op.Out] = Math.Abs(registers[op.A]); break;
-                case OpCode.Sin: registers[op.Out] = Math.Sin(registers[op.A]); break;
-                case OpCode.Cos: registers[op.Out] = Math.Cos(registers[op.A]); break;
-                case OpCode.Tan: registers[op.Out] = Guard(Math.Tan(registers[op.A])); break;
-                case OpCode.Sqrt: registers[op.Out] = registers[op.A] <= 0d ? 0d : Math.Sqrt(registers[op.A]); break;
-                case OpCode.Floor: registers[op.Out] = Math.Floor(registers[op.A]); break;
-                case OpCode.Ceil: registers[op.Out] = Math.Ceiling(registers[op.A]); break;
-                case OpCode.Fract: registers[op.Out] = Fract(registers[op.A]); break;
-                case OpCode.Sign: registers[op.Out] = Math.Sign(registers[op.A]); break;
-                case OpCode.Exp: registers[op.Out] = Guard(Math.Exp(registers[op.A])); break;
-                case OpCode.Log: registers[op.Out] = registers[op.A] <= 0d ? 0d : Math.Log(registers[op.A]); break;
+                case OpCode.Neg: Reg(ref bank, op.Out) = -Reg(ref bank, op.A); break;
+                case OpCode.Abs: Reg(ref bank, op.Out) = Math.Abs(Reg(ref bank, op.A)); break;
+                case OpCode.Sin: Reg(ref bank, op.Out) = Math.Sin(Reg(ref bank, op.A)); break;
+                case OpCode.Cos: Reg(ref bank, op.Out) = Math.Cos(Reg(ref bank, op.A)); break;
+                case OpCode.Tan: Reg(ref bank, op.Out) = Guard(Math.Tan(Reg(ref bank, op.A))); break;
+                case OpCode.Sqrt:
+                {
+                    var a = Reg(ref bank, op.A);
+                    Reg(ref bank, op.Out) = a <= 0d ? 0d : Math.Sqrt(a);
+                    break;
+                }
 
-                case OpCode.Add: registers[op.Out] = registers[op.A] + registers[op.B]; break;
-                case OpCode.Sub: registers[op.Out] = registers[op.A] - registers[op.B]; break;
-                case OpCode.Mul: registers[op.Out] = registers[op.A] * registers[op.B]; break;
-                case OpCode.Div: registers[op.Out] = Divide(registers[op.A], registers[op.B]); break;
-                case OpCode.Mod: registers[op.Out] = Modulo(registers[op.A], registers[op.B]); break;
-                case OpCode.Pow: registers[op.Out] = Guard(Math.Pow(registers[op.A], registers[op.B])); break;
-                case OpCode.Min: registers[op.Out] = Math.Min(registers[op.A], registers[op.B]); break;
-                case OpCode.Max: registers[op.Out] = Math.Max(registers[op.A], registers[op.B]); break;
-                case OpCode.Atan2: registers[op.Out] = Math.Atan2(registers[op.A], registers[op.B]); break;
-                case OpCode.Step: registers[op.Out] = registers[op.B] < registers[op.A] ? 0d : 1d; break;
+                case OpCode.Floor: Reg(ref bank, op.Out) = Math.Floor(Reg(ref bank, op.A)); break;
+                case OpCode.Ceil: Reg(ref bank, op.Out) = Math.Ceiling(Reg(ref bank, op.A)); break;
+                case OpCode.Fract: Reg(ref bank, op.Out) = Fract(Reg(ref bank, op.A)); break;
+                case OpCode.Sign: Reg(ref bank, op.Out) = Math.Sign(Reg(ref bank, op.A)); break;
+                case OpCode.Exp: Reg(ref bank, op.Out) = Guard(Math.Exp(Reg(ref bank, op.A))); break;
+                case OpCode.Log:
+                {
+                    var a = Reg(ref bank, op.A);
+                    Reg(ref bank, op.Out) = a <= 0d ? 0d : Math.Log(a);
+                    break;
+                }
+
+                case OpCode.Add: Reg(ref bank, op.Out) = Reg(ref bank, op.A) + Reg(ref bank, op.B); break;
+                case OpCode.Sub: Reg(ref bank, op.Out) = Reg(ref bank, op.A) - Reg(ref bank, op.B); break;
+                case OpCode.Mul: Reg(ref bank, op.Out) = Reg(ref bank, op.A) * Reg(ref bank, op.B); break;
+                case OpCode.Div: Reg(ref bank, op.Out) = Divide(Reg(ref bank, op.A), Reg(ref bank, op.B)); break;
+                case OpCode.Mod: Reg(ref bank, op.Out) = Modulo(Reg(ref bank, op.A), Reg(ref bank, op.B)); break;
+                case OpCode.Pow: Reg(ref bank, op.Out) = Guard(Math.Pow(Reg(ref bank, op.A), Reg(ref bank, op.B))); break;
+                case OpCode.Min: Reg(ref bank, op.Out) = Math.Min(Reg(ref bank, op.A), Reg(ref bank, op.B)); break;
+                case OpCode.Max: Reg(ref bank, op.Out) = Math.Max(Reg(ref bank, op.A), Reg(ref bank, op.B)); break;
+                case OpCode.Atan2: Reg(ref bank, op.Out) = Math.Atan2(Reg(ref bank, op.A), Reg(ref bank, op.B)); break;
+                case OpCode.Step: Reg(ref bank, op.Out) = Reg(ref bank, op.B) < Reg(ref bank, op.A) ? 0d : 1d; break;
                 case OpCode.Hypot:
                 {
-                    double a = registers[op.A], b = registers[op.B];
-                    registers[op.Out] = Math.Sqrt(a * a + b * b);
+                    double a = Reg(ref bank, op.A), b = Reg(ref bank, op.B);
+                    Reg(ref bank, op.Out) = Math.Sqrt(a * a + b * b);
                     break;
                 }
 
                 case OpCode.Clamp:
-                    registers[op.Out] = Math.Clamp(registers[op.A], registers[op.B], Math.Max(registers[op.B], registers[op.C]));
+                {
+                    double a = Reg(ref bank, op.A), b = Reg(ref bank, op.B), c = Reg(ref bank, op.C);
+                    Reg(ref bank, op.Out) = Math.Clamp(a, b, Math.Max(b, c));
                     break;
+                }
 
                 case OpCode.Mix:
                 {
-                    double a = registers[op.A], b = registers[op.B], f = registers[op.C];
-                    registers[op.Out] = a + (b - a) * f;
+                    double a = Reg(ref bank, op.A), b = Reg(ref bank, op.B), f = Reg(ref bank, op.C);
+                    Reg(ref bank, op.Out) = a + (b - a) * f;
                     break;
                 }
 
                 case OpCode.Smoothstep:
-                    registers[op.Out] = Smoothstep(registers[op.A], registers[op.B], registers[op.C]);
+                    Reg(ref bank, op.Out) = Smoothstep(Reg(ref bank, op.A), Reg(ref bank, op.B), Reg(ref bank, op.C));
                     break;
 
                 case OpCode.Noise3:
-                    registers[op.Out] = Noise.Value3(registers[op.A], registers[op.B], registers[op.C]);
+                    Reg(ref bank, op.Out) = Noise.Value3(Reg(ref bank, op.A), Reg(ref bank, op.B), Reg(ref bank, op.C));
                     break;
 
                 case OpCode.HsvToRgb:
-                    HsvToRgb(registers[op.A], registers[op.B], registers[op.C], registers[op.Out..(op.Out + 3)]);
+                    HsvToRgb(
+                        Reg(ref bank, op.A),
+                        Reg(ref bank, op.B),
+                        Reg(ref bank, op.C),
+                        Triple(ref bank, op.Out));
                     break;
 
                 case OpCode.SampleFeedback:
-                    Sample(feedback, registers[op.A], registers[op.B], registers[op.Out..(op.Out + 3)]);
+                    Sample(feedback, Reg(ref bank, op.A), Reg(ref bank, op.B), Triple(ref bank, op.Out));
                     break;
 
                 case OpCode.SamplePicture:
                 {
                     var picture = (int)op.K;
-                    var rgb = registers[op.Out..(op.Out + 3)];
+                    var rgb = Triple(ref bank, op.Out);
 
                     // Black where the program carries no pictures, which is
                     // every audio program and any video one whose file was not
                     // there — the same answer a Table gives silence for.
-                    if (picture >= 0 && picture < Pictures.Count)
-                        Pictures[picture].At(registers[op.A], registers[op.B], rgb);
+                    if ((uint)picture < (uint)pictureArray.Length)
+                        pictureArray[picture].At(Reg(ref bank, op.A), Reg(ref bank, op.B), rgb);
                     else
                         rgb[0] = rgb[1] = rgb[2] = 0d;
 
@@ -314,7 +438,7 @@ public sealed class CompiledPatch(
                 }
 
                 case OpCode.Tap:
-                    delays?.Tap((int)op.K, registers[op.A]);
+                    delays?.Tap((int)op.K, Reg(ref bank, op.A));
                     break;
 
                 case OpCode.Table:
@@ -323,8 +447,8 @@ public sealed class CompiledPatch(
 
                     // Silence where the program carries no clips, which is every
                     // video program and any audio one whose file was not there.
-                    registers[op.Out] = clip >= 0 && clip < Tables.Count
-                        ? Tables[clip].At(registers[op.A])
+                    Reg(ref bank, op.Out) = (uint)clip < (uint)tableArray.Length
+                        ? tableArray[clip].At(Reg(ref bank, op.A))
                         : 0d;
                     break;
                 }
@@ -332,28 +456,28 @@ public sealed class CompiledPatch(
                 case OpCode.Delay:
                 {
                     var slot = line++;
-                    if (delays is null) { registers[op.Out] = registers[op.A]; break; }
+                    if (delays is null) { Reg(ref bank, op.Out) = Reg(ref bank, op.A); break; }
 
                     // Read before write, so the shortest possible delay is one
                     // evaluation. A zero-sample loop would be algebraic, and
                     // there would be nothing for it to mean.
-                    var heard = delays.Read(slot, registers[op.C], op.K);
-                    delays.Write(slot, registers[op.A] + Feedback(registers[op.B]) * heard);
-                    registers[op.Out] = heard;
+                    var heard = delays.Read(slot, Reg(ref bank, op.C), op.K);
+                    delays.Write(slot, Reg(ref bank, op.A) + Feedback(Reg(ref bank, op.B)) * heard);
+                    Reg(ref bank, op.Out) = heard;
                     break;
                 }
 
                 case OpCode.Allpass:
                 {
                     var slot = line++;
-                    if (delays is null) { registers[op.Out] = registers[op.A]; break; }
+                    if (delays is null) { Reg(ref bank, op.Out) = Reg(ref bank, op.A); break; }
 
-                    var heard = delays.Read(slot, registers[op.C], op.K);
-                    var gain = Feedback(registers[op.B]);
-                    var stored = registers[op.A] + gain * heard;
+                    var heard = delays.Read(slot, Reg(ref bank, op.C), op.K);
+                    var gain = Feedback(Reg(ref bank, op.B));
+                    var stored = Reg(ref bank, op.A) + gain * heard;
 
                     delays.Write(slot, stored);
-                    registers[op.Out] = heard - gain * stored;
+                    Reg(ref bank, op.Out) = heard - gain * stored;
                     break;
                 }
 
@@ -363,34 +487,92 @@ public sealed class CompiledPatch(
                 // reason: pixels are evaluated in parallel and in whatever order,
                 // and there is no "previous evaluation" for one to mean.
                 case OpCode.UnitRead:
-                    registers[op.Out] = delays?.ReadUnit((int)op.K) ?? 0d;
+                    Reg(ref bank, op.Out) = delays?.ReadUnit((int)op.K) ?? 0d;
                     break;
 
                 case OpCode.UnitWrite:
-                    delays?.WriteUnit((int)op.K, registers[op.A]);
+                    delays?.WriteUnit((int)op.K, Reg(ref bank, op.A));
                     break;
 
                 case OpCode.ClockWrite:
-                    delays?.WriteClock((int)op.K, registers[op.A]);
+                    delays?.WriteClock((int)op.K, Reg(ref bank, op.A));
                     break;
 
                 case OpCode.Phase:
                 {
                     var slot = cell++;
-                    double input = registers[op.A], frequency = registers[op.B];
+                    double input = Reg(ref bank, op.A), frequency = Reg(ref bank, op.B);
 
                     // Without state there is no previous evaluation to step from
                     // — a picture's pixels are one evaluation each, in whatever
                     // order the rows happen to run — so this is the multiply the
                     // accumulator replaces, and over a still frame the two agree.
-                    registers[op.Out] = delays is null
-                        ? input * frequency + registers[op.C]
-                        : delays.Advance(slot, input, frequency) + registers[op.C];
+                    Reg(ref bank, op.Out) = delays is null
+                        ? input * frequency + Reg(ref bank, op.C)
+                        : delays.Advance(slot, input, frequency) + Reg(ref bank, op.C);
                     break;
                 }
             }
         }
     }
+
+    /// <summary>
+    /// Checks, once, that no op names a register outside a bank of
+    /// <paramref name="registerCount"/>, and hands that count back so it can be
+    /// the property's initialiser.
+    /// </summary>
+    /// <remarks>
+    /// What makes the unchecked reads in <see cref="Evaluate"/> safe, and the
+    /// reason it is worth doing here: a program is walked once when it is made
+    /// and several million times after that, so the same check costs nothing
+    /// where it is and most of the inner loop where it was.
+    /// <para>
+    /// Only the fields an op actually reads — <see cref="OpShape"/> says which.
+    /// An op that takes no operand leaves A, B and C at -1, and that is not a
+    /// register out of range but the absence of one.
+    /// </para>
+    /// </remarks>
+    /// <exception cref="ArgumentException">
+    /// An op names a register the bank does not hold, which is a malformed
+    /// program rather than a bad input — caught here, where the message can name
+    /// the instruction, instead of as a memory fault a million evaluations later.
+    /// </exception>
+    private static int Vouch(Op[] ops, int registerCount)
+    {
+        ArgumentNullException.ThrowIfNull(ops);
+
+        for (var i = 0; i < ops.Length; i++)
+        {
+            var op = ops[i];
+            var inputs = OpShape.Inputs(op.Code);
+
+            if (inputs > 0 && !Holds(op.A, 1)) throw Malformed(i, op, op.A, 1);
+            if (inputs > 1 && !Holds(op.B, 1)) throw Malformed(i, op, op.B, 1);
+            if (inputs > 2 && !Holds(op.C, 1)) throw Malformed(i, op, op.C, 1);
+
+            var width = OpShape.Outputs(op.Code);
+            if (width > 0 && !Holds(op.Out, width)) throw Malformed(i, op, op.Out, width);
+        }
+
+        return registerCount;
+
+        bool Holds(int register, int width) => register >= 0 && register + width <= registerCount;
+
+        ArgumentException Malformed(int at, Op op, int register, int width) => new(
+            $"Op {at} ({op}) names registers {register}..{register + width - 1} "
+            + $"of a bank holding {registerCount}.",
+            nameof(ops));
+    }
+
+
+    /// <summary>Register <paramref name="index"/> of a bank the constructor has already vouched for.</summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static ref double Reg(ref double bank, int index) => ref Unsafe.Add(ref bank, index);
+
+    /// <summary>The three consecutive registers a color-width op writes.</summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static Span<double> Triple(ref double bank, int first) =>
+        MemoryMarshal.CreateSpan(ref Reg(ref bank, first), 3);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static double Guard(double v) => double.IsFinite(v) ? v : 0d;

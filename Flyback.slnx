@@ -24,6 +24,7 @@
   <Folder Name="/tests/">
     <Project Path="tests/Flyback.App.Tests/Flyback.App.Tests.csproj" />
     <Project Path="tests/Flyback.Cli.Tests/Flyback.Cli.Tests.csproj" />
+    <Project Path="tests/Flyback.Core.Benchmarks/Flyback.Core.Benchmarks.csproj" />
     <Project Path="tests/Flyback.Core.Specs/Flyback.Core.Specs.csproj" />
     <Project Path="tests/Flyback.Core.Tests/Flyback.Core.Tests.csproj" />
     <Project Path="tests/Flyback.Plugins.FakeAssistant/Flyback.Plugins.FakeAssistant.csproj" />
