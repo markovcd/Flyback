@@ -1,6 +1,7 @@
 # ADR-0065: A text language, which parses to a patch
 
-**Status:** Proposed (user-directed) · 2026-09-01 · takes up the option
+**Status:** Accepted (user-directed) · 2026-09-01 · implemented in
+`Flyback.Core/Language`; takes up the option
 [0004](0004-visual-patch-editor-as-the-authoring-model.md) declined and left
 open; constrained by [0019](0019-no-third-party-dependencies-in-the-engine.md)
 and [0020](0020-json-patch-files-keyed-by-string-type-ids.md)
@@ -106,7 +107,39 @@ cheap to move:
 - Literal arithmetic has to constant-fold, because In key sets a knob to `1/12`.
 
 Finding these on paper is the whole argument for specifying before implementing,
-and it is why this record exists before a parser does.
+and it is why this record was written before a parser was.
+
+**Building it found three more, and one of them was the pipe rule again.** The
+parser is about 1,400 lines in `Flyback.Core/Language`, and every preset is
+tested against the C# one it transliterates — the same instrument compiled to
+the same program, opcode for opcode and register for register. Standing every
+one of the twenty up against that is what turned these up:
+
+- **"Forward every output a source has" is wrong.** It reads well on geometry,
+  where a Space module hands its `(x, y)` to the next, and it is a disaster
+  everywhere else: `steps |> note()` put the sequencer's `gate` into Note's
+  `octave` and its `index` into the `cents`. The rule is now that a socket named
+  `in` takes one signal, a **position** — a leading `x` and `y`, which is what
+  [0050](0050-normalled-sockets-carry-a-signal-with-no-wire.md) already treats as
+  a pair — takes two, and everything else takes one.
+- **The range binds looser than the minus.** `-2..2` had been parsing as the
+  negation of `2..2`, which is the same class of mistake as the `edge0` one and
+  was caught the same way.
+- **A sharp and a comment are the same character.** `C#4` read as the name `C`
+  followed by a comment that swallowed the rest of the line. The note is now
+  matched before the identifier, which costs nothing because nothing else in the
+  language puts a `#` inside a word.
+
+The first of those is the one worth the record: it is a rule that was wrong in
+the *specification*, survived being written out by hand across twenty patches,
+and was caught only by compiling both and comparing. A reviewer would not have
+seen it, and neither did the author.
+
+**A rest is not a silenced note**, and the tests are where that became clear.
+`~` carries no pitch; `E5%0` carries its own and no volume. They sound identical
+and compile differently, and Whole band's lead is written with the second — so
+the notation has to be able to say both, and the reference now says which is
+which.
 
 **Two things the language deliberately does not hide.** A duration that is
 computed rather than set stays in decades, because the `ms` literal is sugar for

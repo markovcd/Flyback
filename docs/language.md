@@ -63,13 +63,14 @@ before it.
 
 This is the whole language in one paragraph.
 
-> A pipe carries a tuple of one or more signals. **If the module has an input
-> named exactly `in` and the call did not name it, the pipe's first signal goes
-> there.** Otherwise the tuple fills the leading inputs the call did not name,
-> in order.
+> Of the sockets the call did not name:
+>
+> 1. **an `in` takes the source's first output**, wherever in the list it sits;
+> 2. otherwise **a position — a leading `x` and `y` — takes the first two**;
+> 3. otherwise **the first free socket takes the first output**.
 
-The `in` clause is not a convenience — it is load-bearing. Three modules in the
-catalogue do not put their signal input first:
+**Rule 1 is load-bearing.** Three modules in the catalogue do not put their
+signal input first:
 
 | Module | Ports |
 |---|---|
@@ -77,12 +78,12 @@ catalogue do not put their signal input first:
 | `math.step` | `edge`, **`in`** |
 | `math.remap` | **`in`**, `in low`, `in high`, `out low`, `out high` |
 
-Without the rule, `bands |> smoothstep(0.15, 0.85)` would wire `bands` into
-`edge0`, read perfectly, and mean something else — which is the worst kind of
-mistake, and one that three shipped presets would have walked into.
+Without it, `bands |> smoothstep(0.15, 0.85)` would wire `bands` into `edge0`,
+read perfectly, and mean something else — the worst kind of mistake, and one
+that three shipped presets would have walked into.
 
-Where a module has an `in`, a pipe wider than one signal is an error. Everywhere
-else the tuple fills leading unnamed inputs, which is what makes geometry chain:
+**Rule 2 is what makes geometry chain**, and it is the only place more than one
+signal moves at once:
 
 ```
 rotate(angle: t * 0.15)          # outputs (x, y)
@@ -90,8 +91,21 @@ rotate(angle: t * 0.15)          # outputs (x, y)
   |> noise(z: t * 0.3, scale: 2.5)
 ```
 
-A pipe that does not fit is an error naming both shapes. No coercion happens
-here: widening a scalar to a colour is the compiler's job
+A position is what the engine itself calls one — the `x` and `y` that
+[0050](adr/0050-normalled-sockets-carry-a-signal-with-no-wire.md) normals to
+Coordinates together — so it is a fact about the catalogue rather than a list
+kept here. Names need not agree across the join: To polar hands back
+`(radius, angle)` and Checker takes `(x, y)`, and the Grid preset joins them,
+because what matches is that both are a position.
+
+**Rule 3 is the default, and it is one signal.** The alternative — forwarding
+every output a source happens to have — was tried and is wrong: `steps |>
+note()` would put a sequencer's `gate` into Note's `octave` and its `index` into
+the `cents`. That compiles, plays, and is not a tune. So a Note Sequencer's
+three outputs and a MIDI In's four go one at a time, and the others are taken by
+name.
+
+No coercion happens here: widening a scalar to a colour is the compiler's job
 ([0007](adr/0007-register-slots-with-scalar-broadcast.md)), not the parser's.
 
 ### Outputs other than the first
@@ -106,10 +120,9 @@ riff.gate   # the gate
 riff.index  # where in the pattern it has got to
 ```
 
-A `let` binds the node, not one of its outputs. So a binding **forwards every
-output when it is piped**, which is what lets a geometry binding carry its
-`(x, y)` pair on, while the same name in a scalar position is its first output
-alone.
+A `let` binds the node rather than one of its outputs, so a binding piped into a
+position carries its pair on — `plane |> checker(size: 3)` is both of To polar's
+outputs — and anywhere else is its first output alone.
 
 ### The pipe into an oscillator is its domain
 
@@ -185,8 +198,10 @@ a fresh one per mention. A patch that reads the clock in eight places has one
 Time in it, which is what the presets do by hand and what a normalled socket
 already does invisibly.
 
-**Precedence**, loosest first: `|>`, then `+ -`, then `* / %`, then unary `-`,
-then a call and a `.port` selector. So `t * 0.2 |> sine()` groups as
+**Precedence**, loosest first: `|>`, then `+ -`, then `* / %`, then `..`, then
+unary `-`, then a call and a `.port` selector. The range sits below the minus
+deliberately — `-2..2` is a range from minus two, and the other way round parses,
+compiles and means something else. So `t * 0.2 |> sine()` groups as
 `(t * 0.2) |> sine()`, which is what it looks like.
 
 ### Duration literals
@@ -283,6 +298,12 @@ step's value reads.
 
 Whatever gets through is clamped by `Step.Sane()`, so the parser can be
 permissive and let the engine's own tolerance do the work.
+
+**`~` and `%0` are not the same step.** A `~` is a rest: no note and no volume.
+`E5%0` is that note, silenced. They sound alike and compile differently — the
+second keeps the pitch in the program, which is what a phrase does when it holds
+a note through a gap rather than stopping. Whole band's lead uses the second,
+and writing `~` there is a patch that plays the same and is not the same patch.
 
 ---
 
@@ -439,14 +460,14 @@ pipeline   = expr { "|>" stage } ;
 stage      = call | selector ;
 
 expr       = term { ("+" | "-") term } ;
-term       = factor { ("*" | "/" | "%") factor } ;
+term       = ranged { ("*" | "/" | "%") ranged } ;
+ranged     = factor [ ".." factor ] ;
 factor     = [ "-" ] primary ;
 primary    = literal | selector | call | "(" pipeline ")" ;
 
 call       = name "(" [ arg { "," arg } ] ")" [ block ] ;
-arg        = [ ident ":" ] ( pipeline | range ) ;
-range      = expr ".." expr ;
-block      = "[" { step } "]" | "(" string ")" ;
+arg        = [ ident ":" ] pipeline ;
+block      = "[" { step } "]" ;
 
 selector   = ident [ "." ident ] ;
 name       = ident { "." ident } ;
@@ -864,8 +885,8 @@ group "Sequences" {
   ]
 
   let lead = notes(rate: sixteenths, gate_length: 0.62, shape: 0.045) [
-    A4 C5%0.8 E5%0.9 C5%0.6   F5 E5%0.85 ~ D5%0.9
-    B4%0.8 D5%0.7 G5 F5%0.85  E5%0.9 D5%0.6 C5%0.95 ~
+    A4 C5%0.8 E5%0.9 C5%0.6   F5 E5%0.85 E5%0 D5%0.9
+    B4%0.8 D5%0.7 G5 F5%0.85  E5%0.9 D5%0.6 C5%0.95 C5%0
     B4%0.85 A4 G4%0.7 A4%0.8
   ]
 
@@ -901,7 +922,7 @@ group "Lead" {
 group "Kick" {
   let sweep   = kick.gate |> adsr(attack: 0.5ms, decay: 40ms, sustain: 0, release: 16ms)
   let kickOut = sine(freq: sweep |> remap(0..1, 47..205))
-                  * (kick.gate |> adsr(attack: 1.3ms, decay: 240ms,
+                  * (kick.gate |> adsr(attack: 1.26ms, decay: 240ms,
                                        sustain: 0, release: 79ms))
 }
 
@@ -913,7 +934,7 @@ group "Hats" {
                            attack: 0.2ms,
                            decay:  hats |> remap(0..1, -2.5..-0.85),
                            sustain: 0,
-                           release: 16ms)
+                           release: 6.3ms)
 }
 
 group "Desk" {
@@ -1006,3 +1027,25 @@ Two limitations are recorded rather than fixed, because both are the language
 declining to hide something true about the engine: a computed duration is in
 decades and gets no `ms` sugar, and a pipe into an oscillator is its domain
 rather than its pitch.
+
+**Then building it found three more.** Every preset above is a test: the patch
+the language builds is compiled and compared with the C# one, opcode for opcode
+and register for register. Standing all twenty up against that turned up what
+reading them could not.
+
+- **The pipe rule was wrong a second time.** "A binding forwards every output"
+  reads well on geometry and is a disaster elsewhere — `steps |> note()` put the
+  sequencer's `gate` into Note's `octave` and its `index` into the `cents`. Only
+  a position takes two signals now; everything else takes one. Section 3 is the
+  rule as it ended up.
+- **`-2..2` was parsing as the negation of `2..2`**, because the minus bound
+  tighter than the range. The same class of mistake as the `edge0` one, and
+  invisible for the same reason: it parses.
+- **A sharp is the character a comment starts with**, so `C#4` read as the name
+  `C` followed by a comment that ate the rest of the line. The note is matched
+  before the name now.
+
+The first of those is worth dwelling on. It was wrong in the specification, it
+survived being written out by hand across twenty patches, and it was caught only
+by compiling both and comparing them. Reading does not find that kind of
+mistake, because the mistake reads correctly.
