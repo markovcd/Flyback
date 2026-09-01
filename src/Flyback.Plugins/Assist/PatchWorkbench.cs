@@ -1399,8 +1399,8 @@ public sealed class PatchWorkbench
             new("propose",
                 "Offers the patch to the person, with one line saying what it does. This ends your "
                 + "turn. Nothing you have built reaches their editor until you call this. The patch "
-                + "must compile cleanly first, and must have an output — a Video Output, an Audio "
-                + "Output, or both.",
+                + "must compile cleanly first, and something must reach the Output — its 'color', "
+                + "its 'left', or both.",
                 """
                 {
                   "properties": {

@@ -15,6 +15,7 @@ context, decision, consequences.
 | [0002](0002-split-engine-from-shell.md) | Split the engine from the UI shell |
 | [0003](0003-cpu-rendering-with-a-gpu-path-left-open.md) | Render on the CPU, leave a GPU backend possible *(user-directed)* |
 | [0004](0004-visual-patch-editor-as-the-authoring-model.md) | Author patches in a visual node editor *(user-directed)* |
+| [0065](0065-a-text-language-that-parses-to-a-patch.md) | A text language, which parses to a patch *(user-directed)* |
 
 ### The engine
 

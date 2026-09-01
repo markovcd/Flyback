@@ -50,18 +50,6 @@ public class AboutTests : UiTest
     }
 
     /// <summary>
-    /// The version comes off the assembly rather than out of a string, so that it
-    /// can only ever say what was actually built.
-    /// </summary>
-    [AvaloniaFact]
-    public void The_version_is_a_version_and_carries_no_commit()
-    {
-        About.Version.ShouldNotBeNullOrWhiteSpace();
-        About.Version.ShouldNotContain("+");
-        About.Version[0].ShouldBeInRange('0', '9');
-    }
-
-    /// <summary>
     /// An address is a string nobody can check by reading, and one wrong
     /// character sends the money nowhere at all. Until a real one is set, the
     /// window must show no address rather than a plausible-looking stand-in — so

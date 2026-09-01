@@ -118,22 +118,28 @@ internal static class Handbook
 
         ## Sinks
 
-        - A patch needs a **Video Output** to show anything and an **Audio
-          Output** to play anything. Either on its own is a whole patch: one
-          for the screen is silent, one for the speakers draws nothing, and
-          neither of those is a mistake. Nothing will nag you about the one
-          you left out.
-        - A patch with **neither** does nothing at all. That is the one case
-          the compiler remarks on, and it will not be proposed.
-        - A patch has **at most one of each**. There is one screen and one
-          pair of speakers, so a second of either is refused: compilation
-          starts at one sink and never reaches another, which would leave
-          you with a patch that compiles and half a patch that plays. To
-          send several things to the screen, mix them into the one Video
-          Output you have.
-        - The two are compiled separately from one graph, and each pays only for
-          the modules it actually reaches. A noise field feeding the screen
-          costs the speakers nothing.
+        - **There is one Output block, and every patch already has it.** You
+          cannot add one and you cannot remove one, so it is never something
+          to put in place first — it is there, and the work is wiring into it.
+        - **`color` is the picture. `left` and `right` are the sound.** The
+          same block also carries `gain`, `scan` and `scan rate`, which are
+          knobs on it like any other.
+        - **`right` is normalled to `left`**, so a voice patched into `left`
+          alone is heard from both speakers. Patch `right` only when the two
+          sides should differ.
+        - **A patch with nothing in `color` draws black, and that is not a
+          mistake.** Neither is one with nothing in `left`. A patch built for
+          the eye and a patch built for the ear are both whole patches, and
+          nothing will nag you about the half you did not want.
+        - **Nothing reaching it at all is the one case the compiler remarks
+          on**, and such a patch will not be proposed: with no wire into it
+          there is nothing to see or hear.
+        - To send several things to the screen, **mix them into the one
+          `color` you have** rather than looking for a second block.
+        - The picture and the sound are compiled separately from one graph,
+          each walking back from its own sockets, and each pays only for the
+          modules it actually reaches. A noise field feeding the screen costs
+          the speakers nothing.
 
         ## Feedback
 

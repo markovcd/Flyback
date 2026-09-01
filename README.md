@@ -130,3 +130,8 @@ tests/
 ```
 
 See the `docs/adr` folder for design notes and architecture decisions.
+
+[`docs/language.md`](docs/language.md) specifies a text language that parses to
+a patch — a second way to author one, proposed in
+[ADR-0065](docs/adr/0065-a-text-language-that-parses-to-a-patch.md) and not yet
+implemented.

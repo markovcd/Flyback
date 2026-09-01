@@ -199,17 +199,21 @@ public sealed class CompiledPatch(
         .DefaultIfEmpty(0)
         .Max();
 
-    /// <summary>A program whose output is all zeroes — the fallback when a sink is missing.</summary>
+    /// <summary>
+    /// A program whose output is all zeroes — what the compiler falls back to
+    /// for a graph with no Output at all, which means one assembled by hand
+    /// rather than through <see cref="Graph.Patch.EnsureOutput"/>.
+    /// </summary>
     public static CompiledPatch Constant(int width) => new(
         [.. Enumerable.Range(0, width).Select(i => new Op(OpCode.Const, i))],
         width,
         0,
         width);
 
-    /// <summary>Renders nothing, used when there is no Video Output node.</summary>
+    /// <summary>Renders nothing. What a preview holds before a patch has been compiled into it.</summary>
     public static CompiledPatch Black { get; } = Constant(3);
 
-    /// <summary>Plays nothing, used when there is no Audio Output node.</summary>
+    /// <summary>Plays nothing. What the audio engine starts on, before a patch reaches it.</summary>
     public static CompiledPatch Silent { get; } = Constant(2);
 
     public double[] AllocateRegisters() => new double[Math.Max(RegisterCount, OutputWidth)];
