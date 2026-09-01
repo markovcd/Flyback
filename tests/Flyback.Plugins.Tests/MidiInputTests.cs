@@ -26,7 +26,7 @@ public class MidiInputTests
         var catalog = Shipped();
 
         catalog.Problems.ShouldBeEmpty();
-        catalog.Plugins.Select(p => p.Info.Id).ShouldContain("winmm.midi");
+        catalog.Plugins.Select(p => p.Info.Id).ShouldContain("win.io");
         catalog.MidiInputs.Select(i => i.Id).ShouldContain("winmm");
     }
 
@@ -100,7 +100,7 @@ public class MidiInputTests
         var catalog = Shipped();
 
         catalog.Problems.ShouldBeEmpty();
-        catalog.Plugins.Select(p => p.Info.Id).ShouldContain("alsa.midi");
+        catalog.Plugins.Select(p => p.Info.Id).ShouldContain("linux.io");
         catalog.MidiInputs.Select(i => i.Id).ShouldContain("alsaseq");
     }
 
@@ -144,7 +144,7 @@ public class MidiInputTests
         var catalog = Shipped();
 
         catalog.Problems.ShouldBeEmpty();
-        catalog.Plugins.Select(p => p.Info.Id).ShouldContain("coremidi.midi");
+        catalog.Plugins.Select(p => p.Info.Id).ShouldContain("mac.io");
         catalog.MidiInputs.Select(i => i.Id).ShouldContain("coremidi");
     }
 

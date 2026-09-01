@@ -1,22 +1,6 @@
 using Flyback.Plugins.Midi;
 
-namespace Flyback.Plugins.CoreMidi;
-
-/// <summary>
-/// Entry point of the macOS MIDI plugin. Loading this assembly must not call
-/// into CoreMIDI — the framework is only reached when devices are listed or one
-/// is opened, so the plugin lists itself harmlessly on a machine that has no
-/// such framework at all.
-/// </summary>
-public sealed class CoreMidiPlugin : IFlybackPlugin
-{
-    public PluginInfo Info { get; } = new(
-        "coremidi.midi",
-        "CoreMIDI input",
-        "Plays a patch from a MIDI keyboard, through the framework every Mac already routes MIDI over.");
-
-    public void Register(IPluginRegistry registry) => registry.AddMidiInput(new CoreMidiInput());
-}
+namespace Flyback.Plugins.MacIO;
 
 /// <summary>
 /// One thing on the machine that could be played: the server's reference for it,

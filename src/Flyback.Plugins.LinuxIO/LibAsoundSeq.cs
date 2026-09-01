@@ -1,6 +1,6 @@
 using System.Runtime.InteropServices;
 
-namespace Flyback.Plugins.AlsaMidi;
+namespace Flyback.Plugins.LinuxIO;
 
 /// <summary>
 /// The slice of the ALSA sequencer this plugin needs, and nothing else.
@@ -34,11 +34,11 @@ namespace Flyback.Plugins.AlsaMidi;
 internal static unsafe partial class LibAsoundSeq
 {
     /// <summary>
-    /// The SONAME, not <c>libasound</c>. The unversioned symlink only exists
-    /// where the development package is installed, which on a machine that is
-    /// merely playing music it is not.
+    /// The same library the sound half of this plugin calls, and named there —
+    /// see <see cref="LibAsound.Library"/>. Two SONAMEs written out separately
+    /// are two that can come to disagree.
     /// </summary>
-    private const string Library = "libasound.so.2";
+    private const string Library = LibAsound.Library;
 
     /// <summary>
     /// <c>default</c> is the sequencer every ALSA program opens. Unlike the PCM
@@ -216,32 +216,6 @@ internal static unsafe partial class LibAsoundSeq
     [LibraryImport(Library, EntryPoint = "snd_midi_event_decode")]
     public static partial nint Decode(IntPtr decoder, byte* buffer, nint count, IntPtr message);
 
-    [LibraryImport(Library, EntryPoint = "snd_strerror")]
-    private static partial IntPtr ErrorString(int error);
-
-    public static string Describe(int error) =>
-        Marshal.PtrToStringUTF8(ErrorString(error)) ?? $"error {error}";
-
     /// <summary>What a <c>const char *</c> off an info block says, or nothing.</summary>
     public static string Text(IntPtr utf8) => Marshal.PtrToStringUTF8(utf8) ?? string.Empty;
-
-    /// <summary>
-    /// Whether libasound is on this machine at all. A question, not an open
-    /// device — but it has to be asked, because a container or a server install
-    /// often has no sound library, and without this the answer would arrive as a
-    /// <see cref="DllNotFoundException"/> from the first attempt to list what is
-    /// plugged in.
-    /// </summary>
-    public static bool IsInstalled
-    {
-        get
-        {
-            if (!NativeLibrary.TryLoad(Library, out var handle)) return false;
-
-            // Balances this load only; the one the entry points above use is the
-            // runtime's own and is unaffected.
-            NativeLibrary.Free(handle);
-            return true;
-        }
-    }
 }

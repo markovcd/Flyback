@@ -2,7 +2,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Flyback.Plugins.Midi;
 
-namespace Flyback.Plugins.WinMidi;
+namespace Flyback.Plugins.WinIO;
 
 /// <summary>
 /// One device, open and listening. The mirror of the WASAPI device: nothing

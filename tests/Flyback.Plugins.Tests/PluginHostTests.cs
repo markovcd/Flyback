@@ -13,13 +13,24 @@ namespace Flyback.Plugins.Tests;
 /// </summary>
 public class PluginHostTests
 {
-    /// <summary>The backends that ship in the box, one per operating system.</summary>
+    /// <summary>
+    /// The plugins that ship in the box, one per operating system. Each carries
+    /// that platform's sound backend and its MIDI one, so a plugin is named for
+    /// the platform rather than for either backend inside it.
+    /// </summary>
+    public static TheoryData<string> PlatformPlugins => ["linux.io", "mac.io", "win.io"];
+
+    /// <summary>
+    /// The sound backends those plugins offer. Named for the interface each
+    /// speaks rather than for the plugin carrying it: this is the id a log line
+    /// and a setting hold on to.
+    /// </summary>
     public static TheoryData<string> PlatformBackends => ["alsa", "coreaudio", "wasapi"];
 
     private static PluginCatalog Shipped() => PluginHost.Load();
 
     [Theory]
-    [MemberData(nameof(PlatformBackends))]
+    [MemberData(nameof(PlatformPlugins))]
     public void The_shipped_plugin_is_found(string id)
     {
         var catalog = Shipped();

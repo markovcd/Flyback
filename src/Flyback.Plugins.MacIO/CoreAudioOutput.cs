@@ -1,22 +1,6 @@
 using Flyback.Plugins.Audio;
 
-namespace Flyback.Plugins.CoreAudio;
-
-/// <summary>
-/// Entry point of the macOS sound plugin. Loading this assembly must not call
-/// into Audio Toolbox — the framework is only reached when a device is actually
-/// created, so the plugin lists itself harmlessly on a machine that has no such
-/// framework at all.
-/// </summary>
-public sealed class CoreAudioPlugin : IFlybackPlugin
-{
-    public PluginInfo Info { get; } = new(
-        "coreaudio",
-        "CoreAudio output",
-        "macOS sound output through the default output audio unit.");
-
-    public void Register(IPluginRegistry registry) => registry.AddAudioOutput(new CoreAudioOutput());
-}
+namespace Flyback.Plugins.MacIO;
 
 /// <summary>
 /// Offers the backend without opening anything. On Windows and Linux this is

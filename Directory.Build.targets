@@ -6,8 +6,8 @@
     wants a plugin present declares it:
 
       <ItemGroup>
-        <PluginProject Include="..\Flyback.Plugins.Wasapi\Flyback.Plugins.Wasapi.csproj"
-                       FolderName="Wasapi"
+        <PluginProject Include="..\Flyback.Plugins.WinIO\Flyback.Plugins.WinIO.csproj"
+                       FolderName="WinIO"
                        Platform="win" />
       </ItemGroup>
 
@@ -23,7 +23,7 @@
     Platform is optional and names the one platform the plugin is for — win, osx
     or linux, matching the leading part of a runtime identifier. A plugin that
     declares one is left out of output built for anywhere else, because shipping
-    a Windows sound backend and its packages inside a macOS application would be
+    a Windows sound and MIDI backend with its packages inside a macOS application would be
     dead weight that still has to be signed. A plugin without it goes everywhere.
   -->
 

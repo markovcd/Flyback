@@ -90,6 +90,7 @@ context, decision, consequences.
 | [0025](0025-platform-io-behind-loadable-plugins.md) | Platform I/O behind plugins loaded at run time |
 | [0026](0026-modules-from-plugins-with-provenance-in-the-file.md) | Modules may come from plugins, and the file records which *(user-directed)* |
 | [0028](0028-publish-one-platform-at-a-time.md) | Publish one platform at a time, with only that platform's plugins |
+| [0063](0063-one-plugin-per-platform-for-sound-and-midi.md) | One plugin per platform, carrying its sound and its MIDI *(user-directed)* |
 | [0033](0033-patches-authored-by-an-agent-behind-the-plugin-boundary.md) | Patches may be authored by an agent, behind the plugin boundary *(user-directed)* |
 | [0034](0034-settings-in-a-file-the-key-in-the-operating-system.md) | Settings in a file, the key in the operating system's store *(user-directed)* |
 | [0047](0047-the-agent-may-listen-where-the-model-can.md) | The agent gets an ear, which is a second model *(user-directed)* |

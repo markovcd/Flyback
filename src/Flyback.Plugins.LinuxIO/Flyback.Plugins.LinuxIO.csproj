@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <RootNamespace>Flyback.Plugins.AlsaMidi</RootNamespace>
+    <RootNamespace>Flyback.Plugins.LinuxIO</RootNamespace>
     <!--
       Emits the .deps.json the host's AssemblyDependencyResolver reads, which is
       also what marks the entry assembly among the files in the plugin folder.
@@ -10,7 +10,11 @@
       folder identifiable as a plugin.
     -->
     <EnableDynamicLoading>true</EnableDynamicLoading>
-    <!-- The sequencer's info blocks are stack buffers and an event is a bare pointer. -->
+    <!--
+      Both halves need it: the block is written to the device from a pinned
+      pointer, and the sequencer's info blocks are stack buffers with an event
+      arriving as a bare one.
+    -->
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 

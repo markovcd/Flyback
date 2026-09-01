@@ -1,7 +1,7 @@
 using Flyback.Core;
 using Flyback.Plugins.Midi;
 
-namespace Flyback.Plugins.AlsaMidi;
+namespace Flyback.Plugins.LinuxIO;
 
 /// <summary>
 /// One device, open and listening. The mirror of <c>WinMidiPort</c>: nothing
@@ -257,6 +257,6 @@ internal sealed unsafe class AlsaMidiPort : IMidiPort
     {
         if (status >= 0) return;
 
-        throw new InvalidOperationException($"could not {what}: {LibAsoundSeq.Describe(status)}.");
+        throw new InvalidOperationException($"could not {what}: {LibAsound.Describe(status)}.");
     }
 }

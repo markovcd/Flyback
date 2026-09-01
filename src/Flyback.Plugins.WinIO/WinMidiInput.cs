@@ -1,22 +1,6 @@
 using Flyback.Plugins.Midi;
 
-namespace Flyback.Plugins.WinMidi;
-
-/// <summary>
-/// Entry point of the Windows MIDI plugin. Loading this assembly must not call
-/// into winmm — the library is only reached when devices are listed or one is
-/// opened, so the plugin lists itself harmlessly on a machine that has no such
-/// library at all.
-/// </summary>
-public sealed class WinMidiPlugin : IFlybackPlugin
-{
-    public PluginInfo Info { get; } = new(
-        "winmm.midi",
-        "Windows MIDI input",
-        "Plays a patch from a MIDI keyboard, through the multimedia library Windows already has.");
-
-    public void Register(IPluginRegistry registry) => registry.AddMidiInput(new WinMidiInput());
-}
+namespace Flyback.Plugins.WinIO;
 
 /// <summary>
 /// Offers the backend without opening anything. On macOS and Linux this is the

@@ -1,6 +1,6 @@
 using System.Runtime.InteropServices;
 
-namespace Flyback.Plugins.Alsa;
+namespace Flyback.Plugins.LinuxIO;
 
 /// <summary>
 /// The slice of libasound this plugin needs. Hand-written for the same reason
@@ -13,9 +13,11 @@ internal static partial class LibAsound
     /// <summary>
     /// The SONAME, not <c>libasound</c>. The unversioned symlink only exists
     /// where the development package is installed, which on a machine that is
-    /// merely playing sound it is not.
+    /// merely playing sound it is not. Internal rather than private because the
+    /// sequencer half of this plugin imports from the same library, and one
+    /// SONAME written twice is one that can come to disagree with itself.
     /// </summary>
-    private const string Library = "libasound.so.2";
+    internal const string Library = "libasound.so.2";
 
     /// <summary>
     /// <c>default</c> is the device that follows the system: on a desktop it is
@@ -80,7 +82,9 @@ internal static partial class LibAsound
     /// Whether libasound is on this machine at all. A question, not an open
     /// device — but it has to be asked, because a container or a server install
     /// often has no sound library, and without this the answer would arrive as
-    /// a <see cref="DllNotFoundException"/> from the first attempt to play.
+    /// a <see cref="DllNotFoundException"/> from the first attempt to play, or
+    /// to list what is plugged in. Both halves of this plugin ask it: the
+    /// sequencer is the same library, so it is the same question.
     /// </summary>
     public static bool IsInstalled
     {

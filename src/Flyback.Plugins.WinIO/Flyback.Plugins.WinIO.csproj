@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <RootNamespace>Flyback.Plugins.Wasapi</RootNamespace>
+    <RootNamespace>Flyback.Plugins.WinIO</RootNamespace>
     <!--
       Emits the .deps.json that the host's AssemblyDependencyResolver reads, and
       copies package dependencies beside the plugin rather than assuming the
@@ -9,6 +9,12 @@
       and NAudio would not be found.
     -->
     <EnableDynamicLoading>true</EnableDynamicLoading>
+    <!--
+      The MIDI driver callback is a function pointer and a device name is a fixed
+      buffer. Sound needs none of it — NAudio does the marshalling — but a
+      property is set for the whole assembly, and both halves are in this one.
+    -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <ItemGroup>
@@ -40,6 +46,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Sound only. The MIDI half calls winmm, which Windows has always had. -->
     <PackageReference Include="NAudio" Version="2.3.0" />
   </ItemGroup>
 

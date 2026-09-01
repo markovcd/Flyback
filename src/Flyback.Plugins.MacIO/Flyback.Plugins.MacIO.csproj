@@ -1,16 +1,20 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <RootNamespace>Flyback.Plugins.CoreAudio</RootNamespace>
+    <RootNamespace>Flyback.Plugins.MacIO</RootNamespace>
     <!--
       Emits the .deps.json the host's AssemblyDependencyResolver reads, which is
       also what marks the entry assembly among the files in the plugin folder.
-      This plugin has no package dependencies at all — the framework it calls is
-      part of the operating system — but the dependency file is still what makes
-      the folder identifiable as a plugin rather than a pile of assemblies.
+      There are no package dependencies to resolve — the frameworks this calls
+      are part of macOS — but the dependency file is still what makes the folder
+      identifiable as a plugin.
     -->
     <EnableDynamicLoading>true</EnableDynamicLoading>
-    <!-- The render callback is a function pointer and the buffer is a raw one. -->
+    <!--
+      Both halves need it: the render callback is a function pointer and the
+      buffer is a raw one, and the MIDI read callback is a function pointer with
+      a bare packet list behind it.
+    -->
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 

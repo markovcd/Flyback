@@ -1,22 +1,6 @@
 using Flyback.Plugins.Midi;
 
-namespace Flyback.Plugins.AlsaMidi;
-
-/// <summary>
-/// Entry point of the Linux MIDI plugin. Loading this assembly must not call
-/// into libasound — the library is only reached when devices are listed or one
-/// is opened, so the plugin lists itself harmlessly on a machine that has no
-/// sound library at all.
-/// </summary>
-public sealed class AlsaMidiPlugin : IFlybackPlugin
-{
-    public PluginInfo Info { get; } = new(
-        "alsa.midi",
-        "ALSA MIDI input",
-        "Plays a patch from a MIDI keyboard, through the ALSA sequencer every Linux machine routes MIDI over.");
-
-    public void Register(IPluginRegistry registry) => registry.AddMidiInput(new AlsaMidiInput());
-}
+namespace Flyback.Plugins.LinuxIO;
 
 /// <summary>
 /// One thing on the machine that could be played: which client, which port, and
@@ -53,7 +37,7 @@ public sealed class AlsaMidiInput : IMidiInput
     /// a container or a headless server frequently has no libasound, and this is
     /// the last moment the answer can be "no" rather than an exception.
     /// </summary>
-    public bool IsSupported => OperatingSystem.IsLinux() && LibAsoundSeq.IsInstalled;
+    public bool IsSupported => OperatingSystem.IsLinux() && LibAsound.IsInstalled;
 
     /// <summary>
     /// What is plugged in right now, asked of the sequencer each time.
@@ -95,7 +79,7 @@ public sealed class AlsaMidiInput : IMidiInput
         if (!OperatingSystem.IsLinux())
             throw new PlatformNotSupportedException("ALSA MIDI input is only available on Linux.");
 
-        if (!LibAsoundSeq.IsInstalled)
+        if (!LibAsound.IsInstalled)
             throw new PlatformNotSupportedException("this machine has no libasound to hear a keyboard through.");
 
         // One walk, named once: the ids below have to be the ones this very list

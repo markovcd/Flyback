@@ -1,6 +1,6 @@
 using System.Runtime.InteropServices;
 
-namespace Flyback.Plugins.CoreAudio;
+namespace Flyback.Plugins.MacIO;
 
 /// <summary>
 /// The slice of Apple's Audio Toolbox this plugin needs, and nothing else.

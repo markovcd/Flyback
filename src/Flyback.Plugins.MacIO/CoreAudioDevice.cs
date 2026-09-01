@@ -4,7 +4,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using Flyback.Plugins.Audio;
 
-namespace Flyback.Plugins.CoreAudio;
+namespace Flyback.Plugins.MacIO;
 
 /// <summary>
 /// Output through the default output audio unit — the macOS counterpart of the

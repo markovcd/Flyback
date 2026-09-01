@@ -1,6 +1,6 @@
 using System.Runtime.InteropServices;
 
-namespace Flyback.Plugins.WinMidi;
+namespace Flyback.Plugins.WinIO;
 
 /// <summary>
 /// The slice of Windows' multimedia library this plugin needs, and nothing else.

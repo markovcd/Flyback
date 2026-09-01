@@ -364,13 +364,13 @@ public class ReportLineTests : UiTest
     {
         var (window, line) = Open();
 
-        line.Say("Sound could not start.", "plugins\\Wasapi, plugins\\OpenAi");
+        line.Say("Sound could not start.", "plugins\\WinIO, plugins\\OpenAi");
         line.Say("Something else happened.");
         Settle(window);
 
         Click(window, line);
 
-        Texts(window).ShouldContain("plugins\\Wasapi, plugins\\OpenAi");
+        Texts(window).ShouldContain("plugins\\WinIO, plugins\\OpenAi");
     }
 
     /// <summary>

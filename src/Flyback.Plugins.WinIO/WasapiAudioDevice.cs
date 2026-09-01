@@ -1,7 +1,7 @@
 using Flyback.Plugins.Audio;
 using NAudio.Wave;
 
-namespace Flyback.Plugins.Wasapi;
+namespace Flyback.Plugins.WinIO;
 
 /// <summary>
 /// WASAPI shared-mode output via NAudio. Nothing outside this assembly knows

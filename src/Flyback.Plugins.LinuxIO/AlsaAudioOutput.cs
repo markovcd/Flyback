@@ -1,21 +1,6 @@
 using Flyback.Plugins.Audio;
 
-namespace Flyback.Plugins.Alsa;
-
-/// <summary>
-/// Entry point of the Linux sound plugin. Loading this assembly must not call
-/// into libasound — the library is only reached when a device is created, or
-/// when the backend is asked whether it exists here at all.
-/// </summary>
-public sealed class AlsaPlugin : IFlybackPlugin
-{
-    public PluginInfo Info { get; } = new(
-        "alsa",
-        "ALSA output",
-        "Linux sound through libasound, which is what PipeWire and PulseAudio answer to as well.");
-
-    public void Register(IPluginRegistry registry) => registry.AddAudioOutput(new AlsaAudioOutput());
-}
+namespace Flyback.Plugins.LinuxIO;
 
 /// <summary>
 /// Offers the backend without opening anything. On Windows and macOS this is

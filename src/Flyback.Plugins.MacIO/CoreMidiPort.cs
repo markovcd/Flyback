@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 using Flyback.Core;
 using Flyback.Plugins.Midi;
 
-namespace Flyback.Plugins.CoreMidi;
+namespace Flyback.Plugins.MacIO;
 
 /// <summary>
 /// One device, open and listening. The mirror of <c>WinMidiPort</c>: nothing

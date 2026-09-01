@@ -55,24 +55,25 @@
   <!--
     Not a reference: the shell must not know what a WASAPI is. This only says
     that the plugin ships in the box, and Directory.Build.targets puts it under
-    plugins\Wasapi\ in the output. Deleting one of these lines removes sound on
-    that platform and nothing else.
+    plugins\WinIO\ in the output. Deleting one of these lines removes sound and
+    MIDI on that platform and nothing else.
 
-    Platform keeps each sound backend and each credential store out of the other
-    platforms' builds: they are the only projects here that are for one system
-    rather than all of them, and every one of them would otherwise be shipped
-    everywhere to answer "not supported" twice over.
+    Platform keeps each of these out of the other platforms' builds: they are the
+    only projects here that are for one system rather than all of them, and every
+    one of them would otherwise be shipped everywhere to answer "not supported"
+    twice over.
+
+    Sound and MIDI for a platform are one line because they are one plugin: both
+    backends inside it are supported on exactly the operating system the Platform
+    here already names.
   -->
   <ItemGroup>
-    <PluginProject Include="..\Flyback.Plugins.Wasapi\Flyback.Plugins.Wasapi.csproj" FolderName="Wasapi" Platform="win" />
-    <PluginProject Include="..\Flyback.Plugins.CoreAudio\Flyback.Plugins.CoreAudio.csproj" FolderName="CoreAudio" Platform="osx" />
-    <PluginProject Include="..\Flyback.Plugins.Alsa\Flyback.Plugins.Alsa.csproj" FolderName="Alsa" Platform="linux" />
+    <PluginProject Include="..\Flyback.Plugins.WinIO\Flyback.Plugins.WinIO.csproj" FolderName="WinIO" Platform="win" />
+    <PluginProject Include="..\Flyback.Plugins.MacIO\Flyback.Plugins.MacIO.csproj" FolderName="MacIO" Platform="osx" />
+    <PluginProject Include="..\Flyback.Plugins.LinuxIO\Flyback.Plugins.LinuxIO.csproj" FolderName="LinuxIO" Platform="linux" />
     <PluginProject Include="..\Flyback.Plugins.Dpapi\Flyback.Plugins.Dpapi.csproj" FolderName="Dpapi" Platform="win" />
     <PluginProject Include="..\Flyback.Plugins.Keychain\Flyback.Plugins.Keychain.csproj" FolderName="Keychain" Platform="osx" />
     <PluginProject Include="..\Flyback.Plugins.Keyring\Flyback.Plugins.Keyring.csproj" FolderName="Keyring" Platform="linux" />
-    <PluginProject Include="..\Flyback.Plugins.WinMidi\Flyback.Plugins.WinMidi.csproj" FolderName="WinMidi" Platform="win" />
-    <PluginProject Include="..\Flyback.Plugins.CoreMidi\Flyback.Plugins.CoreMidi.csproj" FolderName="CoreMidi" Platform="osx" />
-    <PluginProject Include="..\Flyback.Plugins.AlsaMidi\Flyback.Plugins.AlsaMidi.csproj" FolderName="AlsaMidi" Platform="linux" />
     <PluginProject Include="..\Flyback.Plugins.OpenAi\Flyback.Plugins.OpenAi.csproj" FolderName="OpenAi" />
     <PluginProject Include="..\Flyback.Plugins.Picture\Flyback.Plugins.Picture.csproj" FolderName="Picture" />
     <PluginProject Include="..\Flyback.Plugins.Voice\Flyback.Plugins.Voice.csproj" FolderName="Voice" />

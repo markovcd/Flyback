@@ -1,6 +1,6 @@
 using System.Runtime.InteropServices;
 
-namespace Flyback.Plugins.CoreMidi;
+namespace Flyback.Plugins.MacIO;
 
 /// <summary>
 /// Strings, in the only currency CoreMIDI accepts them in. Every name that

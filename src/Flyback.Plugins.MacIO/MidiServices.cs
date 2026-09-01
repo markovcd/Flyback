@@ -1,7 +1,7 @@
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-namespace Flyback.Plugins.CoreMidi;
+namespace Flyback.Plugins.MacIO;
 
 /// <summary>
 /// The slice of Apple's CoreMIDI this plugin needs, and nothing else.

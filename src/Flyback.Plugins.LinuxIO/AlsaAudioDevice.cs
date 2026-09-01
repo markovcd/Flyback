@@ -1,7 +1,7 @@
 using Flyback.Core;
 using Flyback.Plugins.Audio;
 
-namespace Flyback.Plugins.Alsa;
+namespace Flyback.Plugins.LinuxIO;
 
 /// <summary>
 /// Output through libasound's <c>default</c> device. The Linux counterpart of

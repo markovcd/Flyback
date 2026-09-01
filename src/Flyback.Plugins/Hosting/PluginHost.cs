@@ -18,9 +18,9 @@ namespace Flyback.Plugins.Hosting;
 /// <code>
 /// Flyback.exe
 /// plugins/
-///   Wasapi/
-///     Flyback.Plugins.Wasapi.dll
-///     Flyback.Plugins.Wasapi.deps.json
+///   WinIO/
+///     Flyback.Plugins.WinIO.dll
+///     Flyback.Plugins.WinIO.deps.json
 ///     NAudio.dll …
 /// </code>
 /// Nothing here throws. A plugin that is missing, broken, built against another

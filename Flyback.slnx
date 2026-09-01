@@ -10,19 +10,16 @@
     <Project Path="src/Flyback.Cli/Flyback.Cli.csproj" />
     <Project Path="src/Flyback.Core/Flyback.Core.csproj" />
     <Project Path="src/Flyback.Plugins/Flyback.Plugins.csproj" />
-    <Project Path="src/Flyback.Plugins.Alsa/Flyback.Plugins.Alsa.csproj" />
-    <Project Path="src/Flyback.Plugins.AlsaMidi/Flyback.Plugins.AlsaMidi.csproj" />
-    <Project Path="src/Flyback.Plugins.CoreAudio/Flyback.Plugins.CoreAudio.csproj" />
+    <Project Path="src/Flyback.Plugins.LinuxIO/Flyback.Plugins.LinuxIO.csproj" />
+    <Project Path="src/Flyback.Plugins.MacIO/Flyback.Plugins.MacIO.csproj" />
     <Project Path="src/Flyback.Plugins.Picture/Flyback.Plugins.Picture.csproj" />
-    <Project Path="src/Flyback.Plugins.CoreMidi/Flyback.Plugins.CoreMidi.csproj" />
     <Project Path="src/Flyback.Plugins.Dpapi/Flyback.Plugins.Dpapi.csproj" />
     <Project Path="src/Flyback.Plugins.Keychain/Flyback.Plugins.Keychain.csproj" />
     <Project Path="src/Flyback.Plugins.Keyring/Flyback.Plugins.Keyring.csproj" />
     <Project Path="src/Flyback.Plugins.Voice/Flyback.Plugins.Voice.csproj" />
     <Project Path="src/Flyback.Plugins.OpenAi/Flyback.Plugins.OpenAi.csproj" />
     <Project Path="src/Flyback.Plugins.Effects/Flyback.Plugins.Effects.csproj" />
-    <Project Path="src/Flyback.Plugins.Wasapi/Flyback.Plugins.Wasapi.csproj" />
-    <Project Path="src/Flyback.Plugins.WinMidi/Flyback.Plugins.WinMidi.csproj" />
+    <Project Path="src/Flyback.Plugins.WinIO/Flyback.Plugins.WinIO.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Flyback.App.Tests/Flyback.App.Tests.csproj" />
