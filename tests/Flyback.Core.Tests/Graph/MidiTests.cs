@@ -314,7 +314,7 @@ public class MidiTests
             [MidiExtra.DeviceField] = "usb:some-keyboard",
         });
 
-        var reopened = PatchIo.Read(PatchIo.ToJson(patch, NodeCatalog.BuiltIn), NodeCatalog.BuiltIn);
+        var reopened = PatchIO.Read(PatchIO.ToJson(patch, NodeCatalog.BuiltIn), NodeCatalog.BuiltIn);
 
         reopened.Patch.Nodes.Single(node => node.TypeId == NodeCatalog.MidiTypeId)
             .StateOf(MidiExtra.StateKey)?[MidiExtra.DeviceField]

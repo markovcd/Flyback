@@ -697,7 +697,7 @@ public sealed class NodeEditor : Control
         // reads as a broken one.
         if (fragment.Nodes.Count == 0) return "The Output cannot be copied.";
 
-        await clipboard.SetTextAsync(PatchIo.ToJson(fragment, NodeCatalog.Current));
+        await clipboard.SetTextAsync(PatchIO.ToJson(fragment, NodeCatalog.Current));
         return null;
     }
 
@@ -735,7 +735,7 @@ public sealed class NodeEditor : Control
 
         try
         {
-            loaded = PatchIo.Read(text, NodeCatalog.Current);
+            loaded = PatchIO.Read(text, NodeCatalog.Current);
         }
         catch (Exception)
         {

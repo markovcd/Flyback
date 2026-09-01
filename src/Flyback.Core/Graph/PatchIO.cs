@@ -9,14 +9,14 @@ namespace Flyback.Core.Graph;
 /// the editor refuses it, where a batch renderer might report and carry on.
 /// </summary>
 /// <param name="Version">
-/// The layout the file declared, or <see cref="PatchIo.FirstVersion"/> where it
+/// The layout the file declared, or <see cref="PatchIO.FirstVersion"/> where it
 /// declared none.
 /// </param>
 public sealed record PatchLoad(
     Patch Patch,
     IReadOnlyList<ModuleProvider> MissingProviders,
     IReadOnlyList<string> UnknownModules,
-    int Version = PatchIo.FirstVersion)
+    int Version = PatchIO.FirstVersion)
 {
     /// <summary>
     /// Whether the file was written by a build that knows a layout this one does
@@ -24,7 +24,7 @@ public sealed record PatchLoad(
     /// layout may mean anything, so nothing else read out of the file — not its
     /// modules, not its plugins — is worth reporting alongside it.
     /// </summary>
-    public bool TooNew => Version > PatchIo.FormatVersion;
+    public bool TooNew => Version > PatchIO.FormatVersion;
 
     public bool IsComplete => !TooNew && MissingProviders.Count == 0 && UnknownModules.Count == 0;
 
@@ -36,7 +36,7 @@ public sealed record PatchLoad(
             if (TooNew)
             {
                 return $"This patch was saved by a newer version of {GlobalConstants.ApplicationName} "
-                    + $"(file layout {Version}, this build reads {PatchIo.FormatVersion}).";
+                    + $"(file layout {Version}, this build reads {PatchIO.FormatVersion}).";
             }
 
             var parts = new List<string>();
@@ -86,7 +86,7 @@ public sealed record PatchLoad(
 }
 
 /// <summary>Reads and writes patches as JSON.</summary>
-public static class PatchIo
+public static class PatchIO
 {
     public const string FileExtension = "fbk";
 

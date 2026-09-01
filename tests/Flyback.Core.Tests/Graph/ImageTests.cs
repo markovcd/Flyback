@@ -74,7 +74,7 @@ public class ImageTests
         PictureExtra.Set(node, "pictures/moon.png");
         patch.Nodes.Add(node);
 
-        var back = PatchIo.Read(PatchIo.ToJson(patch)).Patch;
+        var back = PatchIO.Read(PatchIO.ToJson(patch)).Patch;
 
         PictureExtra.Of(back.Nodes.Single(n => n.TypeId == Image)).ShouldBe("pictures/moon.png");
     }

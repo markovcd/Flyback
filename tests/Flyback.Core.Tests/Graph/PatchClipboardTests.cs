@@ -104,11 +104,11 @@ public class PatchClipboardTests
     public void Copying_does_not_touch_the_patch_it_copies_from()
     {
         var patch = Chain(out var time, out var osc, out _, out _);
-        var before = PatchIo.ToJson(patch, NodeCatalog.BuiltIn);
+        var before = PatchIO.ToJson(patch, NodeCatalog.BuiltIn);
 
         PatchClipboard.Copy(patch, [time.Id, osc.Id]);
 
-        PatchIo.ToJson(patch, NodeCatalog.BuiltIn).ShouldBe(before);
+        PatchIO.ToJson(patch, NodeCatalog.BuiltIn).ShouldBe(before);
     }
 
     // --- what goes in -------------------------------------------------------
@@ -234,10 +234,10 @@ public class PatchClipboardTests
     {
         var patch = Chain(out var time, out var osc, out var gain, out _);
 
-        var text = PatchIo.ToJson(
+        var text = PatchIO.ToJson(
             PatchClipboard.Copy(patch, [time.Id, osc.Id, gain.Id]), NodeCatalog.BuiltIn);
 
-        var loaded = PatchIo.Read(text, NodeCatalog.BuiltIn);
+        var loaded = PatchIO.Read(text, NodeCatalog.BuiltIn);
         loaded.IsComplete.ShouldBeTrue();
 
         var fresh = new PatchBuilder(NodeCatalog.BuiltIn);
@@ -263,9 +263,9 @@ public class PatchClipboardTests
     {
         var patch = Chain(out var time, out _, out _, out _);
 
-        var text = PatchIo.ToJson(PatchClipboard.Copy(patch, [time.Id]), NodeCatalog.BuiltIn);
+        var text = PatchIO.ToJson(PatchClipboard.Copy(patch, [time.Id]), NodeCatalog.BuiltIn);
 
-        PatchIo.Read(text, NodeCatalog.BuiltIn).Patch.Version.ShouldBe(PatchIo.FormatVersion);
+        PatchIO.Read(text, NodeCatalog.BuiltIn).Patch.Version.ShouldBe(PatchIO.FormatVersion);
     }
 
     [Fact]
@@ -393,10 +393,10 @@ public class PatchClipboardTests
 
         patch.Group([time.Id, osc.Id]).ShouldNotBeNull().Rename("Voice");
 
-        var text = PatchIo.ToJson(
+        var text = PatchIO.ToJson(
             PatchClipboard.Copy(patch, [time.Id, osc.Id]), NodeCatalog.BuiltIn);
 
-        var loaded = PatchIo.Read(text, NodeCatalog.BuiltIn);
+        var loaded = PatchIO.Read(text, NodeCatalog.BuiltIn);
         loaded.IsComplete.ShouldBeTrue();
 
         var fresh = new PatchBuilder(NodeCatalog.BuiltIn);

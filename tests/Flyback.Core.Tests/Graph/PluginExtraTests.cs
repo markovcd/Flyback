@@ -148,7 +148,7 @@ public class PluginExtraTests
         chord.SetState("chord", new JsonObject { ["spread"] = 1.25f, ["wide"] = false });
         patch.Nodes.Add(chord);
 
-        var reloaded = PatchIo.Read(PatchIo.ToJson(patch, catalog), catalog).Patch;
+        var reloaded = PatchIO.Read(PatchIO.ToJson(patch, catalog), catalog).Patch;
         var back = reloaded.FirstOf("test.chord.spread").ShouldNotBeNull();
 
         back.StateOf("chord")!["spread"]!.GetValue<float>().ShouldBe(1.25f);

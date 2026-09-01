@@ -48,7 +48,7 @@ internal static class InfoCommand
                 new
                 {
                     patch = name,
-                    version = patch.Version ?? PatchIo.FirstVersion,
+                    version = patch.Version ?? PatchIO.FirstVersion,
                     modules = patch.Nodes.Count,
                     wires = patch.Connections.Count,
                     requires,

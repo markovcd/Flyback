@@ -51,9 +51,9 @@ public class PatchVersionTests
     [Fact]
     public void Every_file_written_carries_the_layout_it_was_written_in()
     {
-        var json = PatchIo.ToJson(Small(), NodeCatalog.BuiltIn);
+        var json = PatchIO.ToJson(Small(), NodeCatalog.BuiltIn);
 
-        json.ShouldContain($"\"Version\": {PatchIo.FormatVersion}");
+        json.ShouldContain($"\"Version\": {PatchIO.FormatVersion}");
     }
 
     /// <summary>
@@ -67,18 +67,18 @@ public class PatchVersionTests
         var patch = Small();
         patch.Version.ShouldBeNull("nothing has written it yet");
 
-        PatchIo.ToJson(patch, NodeCatalog.BuiltIn);
+        PatchIO.ToJson(patch, NodeCatalog.BuiltIn);
 
-        patch.Version.ShouldBe(PatchIo.FormatVersion);
+        patch.Version.ShouldBe(PatchIO.FormatVersion);
     }
 
     [Fact]
     public void A_file_reads_back_at_the_layout_it_was_written_in()
     {
-        var json = PatchIo.ToJson(Small(), NodeCatalog.BuiltIn);
-        var loaded = PatchIo.Read(json, NodeCatalog.BuiltIn);
+        var json = PatchIO.ToJson(Small(), NodeCatalog.BuiltIn);
+        var loaded = PatchIO.Read(json, NodeCatalog.BuiltIn);
 
-        loaded.Version.ShouldBe(PatchIo.FormatVersion);
+        loaded.Version.ShouldBe(PatchIO.FormatVersion);
         loaded.TooNew.ShouldBeFalse();
         loaded.IsComplete.ShouldBeTrue(loaded.Summary);
     }
@@ -94,13 +94,13 @@ public class PatchVersionTests
     public void A_file_saved_before_there_was_a_stamp_still_opens()
     {
         var original = Small();
-        var legacy = Stamped(PatchIo.ToJson(original, NodeCatalog.BuiltIn), null);
+        var legacy = Stamped(PatchIO.ToJson(original, NodeCatalog.BuiltIn), null);
 
         legacy.ShouldNotContain("Version");
 
-        var loaded = PatchIo.Read(legacy, NodeCatalog.BuiltIn);
+        var loaded = PatchIO.Read(legacy, NodeCatalog.BuiltIn);
 
-        loaded.Version.ShouldBe(PatchIo.FirstVersion);
+        loaded.Version.ShouldBe(PatchIO.FirstVersion);
         loaded.TooNew.ShouldBeFalse();
         loaded.IsComplete.ShouldBeTrue(loaded.Summary);
 
@@ -123,10 +123,10 @@ public class PatchVersionTests
     [Fact]
     public void A_stamp_that_is_not_a_number_is_reported_as_a_corrupt_file()
     {
-        var json = Stamped(PatchIo.ToJson(Small(), NodeCatalog.BuiltIn), null)
+        var json = Stamped(PatchIO.ToJson(Small(), NodeCatalog.BuiltIn), null)
             .Replace("{", """{"Version": "banana",""", StringComparison.Ordinal);
 
-        Should.Throw<JsonException>(() => PatchIo.Read(json, NodeCatalog.BuiltIn));
+        Should.Throw<JsonException>(() => PatchIO.Read(json, NodeCatalog.BuiltIn));
     }
 
     // --- files newer than this build ----------------------------------------
@@ -134,8 +134,8 @@ public class PatchVersionTests
     [Fact]
     public void A_file_from_a_newer_build_is_refused()
     {
-        var json = Stamped(PatchIo.ToJson(Small(), NodeCatalog.BuiltIn), PatchIo.FormatVersion + 1);
-        var loaded = PatchIo.Read(json, NodeCatalog.BuiltIn);
+        var json = Stamped(PatchIO.ToJson(Small(), NodeCatalog.BuiltIn), PatchIO.FormatVersion + 1);
+        var loaded = PatchIO.Read(json, NodeCatalog.BuiltIn);
 
         loaded.TooNew.ShouldBeTrue();
         loaded.IsComplete.ShouldBeFalse();
@@ -154,13 +154,13 @@ public class PatchVersionTests
     {
         var json = $$"""
             {
-              "Version": {{PatchIo.FormatVersion + 1}},
+              "Version": {{PatchIO.FormatVersion + 1}},
               "Nodes": "this is not what nodes look like",
               "SomethingNobodyHasInventedYet": [1, 2, 3]
             }
             """;
 
-        var loaded = Should.NotThrow(() => PatchIo.Read(json, NodeCatalog.BuiltIn));
+        var loaded = Should.NotThrow(() => PatchIO.Read(json, NodeCatalog.BuiltIn));
 
         loaded.TooNew.ShouldBeTrue();
         loaded.IsComplete.ShouldBeFalse();
@@ -178,10 +178,10 @@ public class PatchVersionTests
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
         builder.Add(NodeCatalog.OutputTypeId, 0, 0);
 
-        var json = Stamped(PatchIo.ToJson(builder.Patch, NodeCatalog.BuiltIn), PatchIo.FormatVersion + 1)
+        var json = Stamped(PatchIO.ToJson(builder.Patch, NodeCatalog.BuiltIn), PatchIO.FormatVersion + 1)
             .Replace("\"coord\"", "\"nobody.knows.this\"", StringComparison.Ordinal);
 
-        var loaded = PatchIo.Read(json, NodeCatalog.BuiltIn);
+        var loaded = PatchIO.Read(json, NodeCatalog.BuiltIn);
 
         loaded.MissingProviders.ShouldBeEmpty();
         loaded.UnknownModules.ShouldBeEmpty();
@@ -196,8 +196,8 @@ public class PatchVersionTests
     [Fact]
     public void A_refused_file_still_comes_back_with_a_patch_to_hold()
     {
-        var json = Stamped(PatchIo.ToJson(Small(), NodeCatalog.BuiltIn), PatchIo.FormatVersion + 9);
-        var loaded = PatchIo.Read(json, NodeCatalog.BuiltIn);
+        var json = Stamped(PatchIO.ToJson(Small(), NodeCatalog.BuiltIn), PatchIO.FormatVersion + 9);
+        var loaded = PatchIO.Read(json, NodeCatalog.BuiltIn);
 
         loaded.Patch.ShouldNotBeNull();
         loaded.Patch.Nodes.ShouldContain(n => n.TypeId == NodeCatalog.OutputTypeId);
@@ -212,7 +212,7 @@ public class PatchVersionTests
     [Fact]
     public void The_oldest_layout_is_one_and_the_current_one_is_no_older()
     {
-        PatchIo.FirstVersion.ShouldBe(1);
-        PatchIo.FormatVersion.ShouldBeGreaterThanOrEqualTo(PatchIo.FirstVersion);
+        PatchIO.FirstVersion.ShouldBe(1);
+        PatchIO.FormatVersion.ShouldBeGreaterThanOrEqualTo(PatchIO.FirstVersion);
     }
 }

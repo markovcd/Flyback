@@ -93,10 +93,10 @@ public class NodeBoundsTests
 
         // Straight into the JSON, the way a hand-edited file would arrive: the
         // object cannot be made to hold this, so the text has to be.
-        var json = PatchIo.ToJson(b.Patch, NodeCatalog.BuiltIn)
+        var json = PatchIO.ToJson(b.Patch, NodeCatalog.BuiltIn)
             .Replace("\"X\": 40", "\"X\": 1e12");
 
-        var read = PatchIo.Read(json, NodeCatalog.BuiltIn);
+        var read = PatchIO.Read(json, NodeCatalog.BuiltIn);
 
         read.IsComplete.ShouldBeTrue(read.Summary);
         read.Patch.Find(sine.Id).ShouldNotBeNull().X.ShouldBe(NodeInstance.Extent);

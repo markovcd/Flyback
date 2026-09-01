@@ -264,9 +264,9 @@ public sealed class Patch
     /// reader can act on.
     /// </summary>
     /// <remarks>
-    /// Null on a patch that has not been through <see cref="PatchIo.ToJson"/>,
+    /// Null on a patch that has not been through <see cref="PatchIO.ToJson"/>,
     /// and on every file written before the stamp existed — which is why reading
-    /// treats null as <see cref="PatchIo.FirstVersion"/> rather than as a fault.
+    /// treats null as <see cref="PatchIO.FirstVersion"/> rather than as a fault.
     /// A patch in memory has no version of its own; it has whatever the file it
     /// last passed through said, and this is where that is kept.
     /// </remarks>
@@ -294,7 +294,7 @@ public sealed class Patch
     /// reader that does not know about groups reads every module and every wire
     /// correctly and merely draws them all separately, which is the only reason
     /// this could be added to the format without moving
-    /// <see cref="PatchIo.FormatVersion"/>. See <see cref="NodeGroup"/>.
+    /// <see cref="PatchIO.FormatVersion"/>. See <see cref="NodeGroup"/>.
     /// </remarks>
     public List<NodeGroup>? Groups { get; set; }
 

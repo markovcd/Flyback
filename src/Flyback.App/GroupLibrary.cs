@@ -95,7 +95,7 @@ public sealed class GroupLibrary
         try
         {
             if (Directory.Exists(Folder))
-                foreach (var file in Directory.EnumerateFiles(Folder, $"*.{PatchIo.FileExtension}"))
+                foreach (var file in Directory.EnumerateFiles(Folder, $"*.{PatchIO.FileExtension}"))
                     if (Read(file) is { } entry)
                         found.Add(entry);
         }
@@ -160,11 +160,11 @@ public sealed class GroupLibrary
 
         var path = Named(group.Name)?.Path ?? FreshPath(group.Name);
 
-        File.WriteAllText(path, PatchIo.ToJson(fragment, catalog));
+        File.WriteAllText(path, PatchIO.ToJson(fragment, catalog));
         Reload();
 
         return kept.FirstOrDefault(entry => entry.Path == path)
-            ?? new SavedGroup(group.Name, path, PatchIo.Read(File.ReadAllText(path), catalog));
+            ?? new SavedGroup(group.Name, path, PatchIO.Read(File.ReadAllText(path), catalog));
     }
 
     /// <summary>Forgets one, which is deleting the file it was.</summary>
@@ -187,7 +187,7 @@ public sealed class GroupLibrary
     {
         try
         {
-            var load = PatchIo.Read(File.ReadAllText(file), catalog);
+            var load = PatchIO.Read(File.ReadAllText(file), catalog);
 
             // The name on the box inside, because that is the name somebody
             // typed and a file name has been through a sieve to get here. A
@@ -220,10 +220,10 @@ public sealed class GroupLibrary
 
         if (stem.Length == 0) stem = "group";
 
-        var path = Path.Combine(Folder, $"{stem}.{PatchIo.FileExtension}");
+        var path = Path.Combine(Folder, $"{stem}.{PatchIO.FileExtension}");
 
         for (var n = 2; File.Exists(path); n++)
-            path = Path.Combine(Folder, $"{stem} {n}.{PatchIo.FileExtension}");
+            path = Path.Combine(Folder, $"{stem} {n}.{PatchIO.FileExtension}");
 
         return path;
     }

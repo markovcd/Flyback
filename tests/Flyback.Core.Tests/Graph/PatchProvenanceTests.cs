@@ -32,7 +32,7 @@ public class PatchProvenanceTests
     [Fact]
     public void A_patch_of_built_in_modules_records_nothing()
     {
-        var json = PatchIo.ToJson(PatchUsing(NodeCatalog.BuiltIn.Require("output")), With());
+        var json = PatchIO.ToJson(PatchUsing(NodeCatalog.BuiltIn.Require("output")), With());
 
         json.ShouldNotContain("Requires");
     }
@@ -42,7 +42,7 @@ public class PatchProvenanceTests
     {
         var patch = PatchUsing(Doubler);
 
-        PatchIo.ToJson(patch, With());
+        PatchIO.ToJson(patch, With());
 
         patch.Requires.ShouldHaveSingleItem().ShouldBe(Extras);
     }
@@ -53,7 +53,7 @@ public class PatchProvenanceTests
         var patch = PatchUsing(Doubler);
         patch.Nodes.Add(NodeInstance.Create(Doubler, 100, 0));
 
-        PatchIo.ToJson(patch, With());
+        PatchIO.ToJson(patch, With());
 
         patch.Requires!.Count.ShouldBe(1);
     }
@@ -61,9 +61,9 @@ public class PatchProvenanceTests
     [Fact]
     public void It_opens_cleanly_where_the_plugin_is_installed()
     {
-        var json = PatchIo.ToJson(PatchUsing(Doubler), With());
+        var json = PatchIO.ToJson(PatchUsing(Doubler), With());
 
-        var loaded = PatchIo.Read(json, With());
+        var loaded = PatchIO.Read(json, With());
 
         loaded.IsComplete.ShouldBeTrue();
 
@@ -76,9 +76,9 @@ public class PatchProvenanceTests
     [Fact]
     public void It_names_the_missing_plugin_where_it_is_not()
     {
-        var json = PatchIo.ToJson(PatchUsing(Doubler), With());
+        var json = PatchIO.ToJson(PatchUsing(Doubler), With());
 
-        var loaded = PatchIo.Read(json, Without());
+        var loaded = PatchIO.Read(json, Without());
 
         loaded.IsComplete.ShouldBeFalse();
         loaded.MissingProviders.ShouldHaveSingleItem().ShouldBe(Extras);
@@ -103,7 +103,7 @@ public class PatchProvenanceTests
             }
             """;
 
-        var loaded = PatchIo.Read(json, Without());
+        var loaded = PatchIO.Read(json, Without());
 
         loaded.IsComplete.ShouldBeFalse();
         loaded.MissingProviders.ShouldBeEmpty();
@@ -120,6 +120,6 @@ public class PatchProvenanceTests
             }
             """;
 
-        PatchIo.Read(json, Without()).IsComplete.ShouldBeTrue();
+        PatchIO.Read(json, Without()).IsComplete.ShouldBeTrue();
     }
 }

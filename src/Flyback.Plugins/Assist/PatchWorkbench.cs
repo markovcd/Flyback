@@ -79,9 +79,9 @@ public sealed class PatchWorkbench
 
         // Kept as text so Reset cannot hand back something an earlier edit
         // reached into, and so the starting point is provably reloadable.
-        this.startingPoint = PatchIo.ToJson(startingPoint, modules);
+        this.startingPoint = PatchIO.ToJson(startingPoint, modules);
 
-        Adopt(PatchIo.Read(this.startingPoint, modules).Patch);
+        Adopt(PatchIO.Read(this.startingPoint, modules).Patch);
 
         var prose = Handbook.Render(modules, prose: true, hearing);
         var large = prose.Length > Handbook.ProseBudget;
@@ -125,7 +125,7 @@ public sealed class PatchWorkbench
     public Patch Snapshot()
     {
         Arrange();
-        return PatchIo.Read(PatchIo.ToJson(working, modules), modules).Patch;
+        return PatchIO.Read(PatchIO.ToJson(working, modules), modules).Patch;
     }
 
     // --- dispatch -----------------------------------------------------------
@@ -623,7 +623,7 @@ public sealed class PatchWorkbench
 
     private ToolOutcome Reset()
     {
-        Adopt(PatchIo.Read(startingPoint, modules).Patch);
+        Adopt(PatchIO.Read(startingPoint, modules).Patch);
         proposal = null;
         Edits++;
 

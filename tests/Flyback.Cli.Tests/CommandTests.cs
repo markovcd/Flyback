@@ -284,7 +284,7 @@ public class CommandTests
         patch.Connect(shown.Id, 0, patch.Output.Id, NodeCatalog.OutputColorPort);
 
         var file = made.File("shown.fbk");
-        File.WriteAllText(file.FullName, PatchIo.ToJson(patch, NodeCatalog.BuiltIn));
+        File.WriteAllText(file.FullName, PatchIO.ToJson(patch, NodeCatalog.BuiltIn));
 
         var bundle = elsewhere.File("shown.fbkp");
 
@@ -349,7 +349,7 @@ public class CommandTests
         patch.Connect(shown.Id, 0, patch.Output.Id, NodeCatalog.OutputColorPort);
 
         var file = scratch.File("shown.fbk");
-        File.WriteAllText(file.FullName, PatchIo.ToJson(patch, NodeCatalog.BuiltIn));
+        File.WriteAllText(file.FullName, PatchIO.ToJson(patch, NodeCatalog.BuiltIn));
 
         var bundle = scratch.File("shown.fbkp");
         var (code, _, error) = Run((o, e) => PackCommand.Run(file, bundle, e, o));

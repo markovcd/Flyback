@@ -195,8 +195,8 @@ public class GroupLibraryTests : IDisposable
         b.Add("time", 0, 0);
 
         File.WriteAllText(
-            Path.Combine(folder, $"Handmade.{PatchIo.FileExtension}"),
-            PatchIo.ToJson(b.Patch, NodeCatalog.BuiltIn));
+            Path.Combine(folder, $"Handmade.{PatchIO.FileExtension}"),
+            PatchIO.ToJson(b.Patch, NodeCatalog.BuiltIn));
 
         Library().All.ShouldHaveSingleItem().Name.ShouldBe("Handmade");
     }
@@ -211,7 +211,7 @@ public class GroupLibraryTests : IDisposable
         var patch = Chain(out var group);
         Library().Save(group, patch);
 
-        File.WriteAllText(Path.Combine(folder, $"broken.{PatchIo.FileExtension}"), "{ this is not");
+        File.WriteAllText(Path.Combine(folder, $"broken.{PatchIO.FileExtension}"), "{ this is not");
 
         Library().All.Select(entry => entry.Name).ShouldBe(["Voice"]);
     }

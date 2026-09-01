@@ -42,7 +42,7 @@ public class PatchIoTests
 
     private static Patch RoundTrip(Patch patch)
     {
-        var loaded = PatchIo.Read(PatchIo.ToJson(patch, NodeCatalog.BuiltIn), NodeCatalog.BuiltIn);
+        var loaded = PatchIO.Read(PatchIO.ToJson(patch, NodeCatalog.BuiltIn), NodeCatalog.BuiltIn);
 
         loaded.IsComplete.ShouldBeTrue(loaded.Summary);
         return loaded.Patch;
@@ -157,7 +157,7 @@ public class PatchIoTests
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
         builder.Add("osc.sine", 0, 0);
 
-        PatchIo.ToJson(builder.Patch, NodeCatalog.BuiltIn).ShouldNotContain("State");
+        PatchIO.ToJson(builder.Patch, NodeCatalog.BuiltIn).ShouldNotContain("State");
     }
 
     /// <summary>
@@ -171,7 +171,7 @@ public class PatchIoTests
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
         builder.Add(NodeCatalog.QuantiserTypeId, 0, 0);
 
-        var json = PatchIo.ToJson(builder.Patch, NodeCatalog.BuiltIn);
+        var json = PatchIO.ToJson(builder.Patch, NodeCatalog.BuiltIn);
 
         json.ShouldContain("\"State\"");
         json.ShouldContain($"\"{ScaleExtra.Name}\"");

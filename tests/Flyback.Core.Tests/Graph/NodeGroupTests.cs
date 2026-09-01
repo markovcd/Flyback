@@ -485,7 +485,7 @@ public class NodeGroupTests
         patch.Disconnect(a.Id, 1);
         group.Exposed.ShouldBe([new GroupSocket(a.Id, 1, IsOutput: false)]);
 
-        var read = PatchIo.Read(PatchIo.ToJson(patch, Catalog), Catalog).Patch;
+        var read = PatchIO.Read(PatchIO.ToJson(patch, Catalog), Catalog).Patch;
         var back = read.Groups.ShouldNotBeNull().Single();
 
         back.Id.ShouldBe(group.Id);
@@ -508,7 +508,7 @@ public class NodeGroupTests
         var patch = new Patch();
         patch.EnsureOutput(Catalog);
 
-        PatchIo.ToJson(patch, Catalog).ShouldNotContain("Groups");
+        PatchIO.ToJson(patch, Catalog).ShouldNotContain("Groups");
     }
 
     [Fact]

@@ -103,7 +103,7 @@ internal static class Patches
 
         try
         {
-            load = PatchIo.Read(File.ReadAllText(file.FullName));
+            load = PatchIO.Read(File.ReadAllText(file.FullName));
         }
         catch (Exception ex)
         {

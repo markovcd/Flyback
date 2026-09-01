@@ -79,7 +79,7 @@ public static class PatchClipboard
                 (copy.Groups ??= []).Add(group.Clone());
 
         // Not stamped with a version or a plugin list here: writing it out is
-        // what does that, and PatchIo is the one place that knows how. Which is
+        // what does that, and PatchIO is the one place that knows how. Which is
         // also what makes pasting into a build without the plugin a module came
         // from refused by name rather than quietly full of holes — the stamp
         // goes on at ToJson and is checked at Read.
@@ -101,7 +101,7 @@ public static class PatchClipboard
     /// </para>
     /// <para>
     /// Any Output in the fragment is dropped. One arrives whenever the text came
-    /// through <see cref="PatchIo.Read"/>, which adds one to anything short of
+    /// through <see cref="PatchIO.Read"/>, which adds one to anything short of
     /// it, and again whenever somebody pastes a whole saved patch — which is a
     /// thing worth being able to do, and it means everything but that patch's
     /// sink.

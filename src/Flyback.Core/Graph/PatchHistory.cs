@@ -150,8 +150,8 @@ public sealed class PatchHistory(ModuleCatalog? modules = null)
         // rewrite the step an undo had just arrived at.
         gesture = null;
 
-        return PatchIo.Read(current, modules).Patch;
+        return PatchIO.Read(current, modules).Patch;
     }
 
-    private string Snapshot(Patch patch) => PatchIo.ToJson(patch, modules);
+    private string Snapshot(Patch patch) => PatchIO.ToJson(patch, modules);
 }

@@ -88,7 +88,7 @@ public class CopyPasteTests : UiTest
         (await editor.CopySelectionAsync()).ShouldBeNull();
 
         var text = await Clipboard(window).TryGetTextAsync();
-        var loaded = PatchIo.Read(text.ShouldNotBeNull(), NodeCatalog.BuiltIn);
+        var loaded = PatchIO.Read(text.ShouldNotBeNull(), NodeCatalog.BuiltIn);
 
         loaded.IsComplete.ShouldBeTrue();
         loaded.Patch.Nodes.ShouldContain(n => n.TypeId == "osc.sine");
@@ -243,7 +243,7 @@ public class CopyPasteTests : UiTest
         var (editor, window) = Editing(patch);
 
         var drone = Presets.Drone(NodeCatalog.BuiltIn);
-        await Clipboard(window).SetTextAsync(PatchIo.ToJson(drone, NodeCatalog.BuiltIn));
+        await Clipboard(window).SetTextAsync(PatchIO.ToJson(drone, NodeCatalog.BuiltIn));
 
         (await editor.PasteAsync()).ShouldBeNull();
 

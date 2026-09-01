@@ -102,7 +102,7 @@ public static class PatchBundle
     /// </param>
     /// <param name="against">
     /// Which catalogue the type ids mean, for the copy this makes of the patch —
-    /// it is written and read back through <see cref="PatchIo"/>, so a module
+    /// it is written and read back through <see cref="PatchIO"/>, so a module
     /// from a plugin has to be nameable.
     /// </param>
     /// <param name="archive"></param>
@@ -122,7 +122,7 @@ public static class PatchBundle
         // must not change under somebody who only asked to save a copy of it.
         // Through the file format rather than by hand, which is what already
         // guarantees a deep copy of everything a node carries.
-        var packed = PatchIo.Read(PatchIo.ToJson(patch, catalog), catalog).Patch;
+        var packed = PatchIO.Read(PatchIO.ToJson(patch, catalog), catalog).Patch;
 
         var carried = new List<string>();
         var missing = new List<string>();
@@ -156,7 +156,7 @@ public static class PatchBundle
             extra.Rebase(node, path => renamed.GetValueOrDefault(path, path));
 
         using (var writing = new StreamWriter(zip.CreateEntry(PatchEntry).Open()))
-            writing.Write(PatchIo.ToJson(packed, catalog));
+            writing.Write(PatchIO.ToJson(packed, catalog));
 
         return new BundleReport(carried, missing);
     }
@@ -202,7 +202,7 @@ public static class PatchBundle
             files[entry.FullName] = bytes.ToArray();
         }
 
-        return new LoadedBundle(PatchIo.Read(json, against).Patch, files);
+        return new LoadedBundle(PatchIO.Read(json, against).Patch, files);
     }
 
     /// <summary>

@@ -72,7 +72,7 @@ public sealed partial class MainWindow
         {
             await using var stream = await files[0].OpenReadAsync();
             using var reader = new StreamReader(stream);
-            var loaded = PatchIo.Read(await reader.ReadToEndAsync());
+            var loaded = PatchIO.Read(await reader.ReadToEndAsync());
 
             // A patch short of a module would open with holes in it and compile
             // to something that is not what was saved. Better to refuse it and
@@ -316,7 +316,7 @@ public sealed partial class MainWindow
 
             // Whichever kind this document already is. A bundle saved again
             // should stay one without anybody having to type the extension.
-            DefaultExtension = bundled ? PatchBundle.Extension[1..] : PatchIo.FileExtension,
+            DefaultExtension = bundled ? PatchBundle.Extension[1..] : PatchIO.FileExtension,
             FileTypeChoices = bundled
                 ? [BundleFileType, PatchFileType]
                 : [PatchFileType, BundleFileType],
@@ -332,7 +332,7 @@ public sealed partial class MainWindow
             await using (var stream = await file.OpenWriteAsync())
             await using (var writer = new StreamWriter(stream))
             {
-                await writer.WriteAsync(PatchIo.ToJson(editor.Patch));
+                await writer.WriteAsync(PatchIO.ToJson(editor.Patch));
             }
 
             // A patch saved somewhere new measures its samples from there now,
@@ -610,7 +610,7 @@ public sealed partial class MainWindow
 
     private static FilePickerFileType PatchFileType => new($"{GlobalConstants.ApplicationName} patch")
     {
-        Patterns = [$"*.{PatchIo.FileExtension}"],
+        Patterns = [$"*.{PatchIO.FileExtension}"],
     };
 
     /// <summary>

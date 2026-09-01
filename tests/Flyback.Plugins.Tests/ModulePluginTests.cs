@@ -70,12 +70,12 @@ public class ModulePluginTests
         var patch = new Patch();
         patch.Nodes.Add(NodeInstance.Create(catalog.Require(Ripple), 0, 0));
 
-        var json = PatchIo.ToJson(patch, catalog);
+        var json = PatchIO.ToJson(patch, catalog);
 
         json.ShouldContain(Provider);
-        PatchIo.Read(json, catalog).IsComplete.ShouldBeTrue();
+        PatchIO.Read(json, catalog).IsComplete.ShouldBeTrue();
 
-        var elsewhere = PatchIo.Read(json, NodeCatalog.BuiltIn);
+        var elsewhere = PatchIO.Read(json, NodeCatalog.BuiltIn);
         elsewhere.IsComplete.ShouldBeFalse();
         elsewhere.MissingProviders.ShouldHaveSingleItem().Id.ShouldBe(Provider);
     }

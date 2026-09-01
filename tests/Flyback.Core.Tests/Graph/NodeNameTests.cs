@@ -109,7 +109,7 @@ public class NodeNameTests
 
         sine.Rename(Sine, "Wobble");
 
-        var read = PatchIo.Read(PatchIo.ToJson(b.Patch, NodeCatalog.BuiltIn), NodeCatalog.BuiltIn);
+        var read = PatchIO.Read(PatchIO.ToJson(b.Patch, NodeCatalog.BuiltIn), NodeCatalog.BuiltIn);
 
         read.IsComplete.ShouldBeTrue(read.Summary);
         read.Patch.Find(sine.Id).ShouldNotBeNull().Name.ShouldBe("Wobble");
@@ -127,7 +127,7 @@ public class NodeNameTests
         b.Add("osc.sine", 40, 20);
         b.Add(NodeCatalog.OutputTypeId, 400, 20);
 
-        using var document = JsonDocument.Parse(PatchIo.ToJson(b.Patch, NodeCatalog.BuiltIn));
+        using var document = JsonDocument.Parse(PatchIO.ToJson(b.Patch, NodeCatalog.BuiltIn));
 
         foreach (var node in document.RootElement.GetProperty(nameof(Patch.Nodes)).EnumerateArray())
             node.TryGetProperty(nameof(NodeInstance.Name), out _).ShouldBeFalse();
