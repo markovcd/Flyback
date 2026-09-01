@@ -535,7 +535,7 @@ public class PatchWorkbenchTests
         await Call(bench, "add_module", """{"type_id":"seq.notes","handle":"tune1"}""");
         await Call(bench, "set_steps", """{"handle":"tune1","notes":[{"value":60},{"value":67}]}""");
 
-        (await Call(bench, "describe_patch")).Text.ShouldContain("60 67");
+        (await Call(bench, "describe_patch")).Text.ShouldContain("[ C4 G4 ]");
     }
 
     [Fact]
@@ -658,8 +658,7 @@ public class PatchWorkbenchTests
 
         var told = (await Call(bench, "describe_patch")).Text;
 
-        told.ShouldContain("C E G");
-        told.ShouldContain("0, 4, 7");
+        told.ShouldContain("[ C E G ]");
     }
 
     [Fact]
@@ -757,11 +756,11 @@ public class PatchWorkbenchTests
         var bench = Bench();
         await Call(bench, "add_module", $$"""{"type_id":"{{NodeCatalog.SampleTypeId}}","handle":"clip1"}""");
 
-        (await Call(bench, "describe_patch")).Text.ShouldContain("No file chosen");
+        (await Call(bench, "describe_patch")).Text.ShouldNotContain("drums.wav");
 
         await Call(bench, "set_sample", """{"handle":"clip1","path":"drums.wav"}""");
 
-        (await Call(bench, "describe_patch")).Text.ShouldContain("File: drums.wav");
+        (await Call(bench, "describe_patch")).Text.ShouldContain("sample(\"drums.wav\")");
     }
 
     [Fact]
@@ -830,7 +829,8 @@ public class PatchWorkbenchTests
         await Call(bench, "add_module", """{"type_id":"osc.sine","handle":"tone1"}""");
         var told = await Call(bench, "describe_patch");
 
-        told.Text.ShouldContain("in <- Time (normalled, no wire)");
+        told.Text.ShouldContain("carrying a signal with no wire");
+        told.Text.ShouldContain("tone1.in <- Time");
     }
 
     /// <summary>
@@ -956,17 +956,114 @@ public class PatchWorkbenchTests
         bench.ProposalSummary.ShouldBe("a flat grey field");
     }
 
+    // --- writing a patch whole ------------------------------------------------
+
+    /// <summary>
+    /// The arithmetic this exists for. Placing a module is one call and so is
+    /// every wire, which puts the largest preset in the box past
+    /// <see cref="WorkbenchLimits.MaxToolCalls"/> before it is finished. Here it
+    /// is one call.
+    /// </summary>
+    [Fact]
+    public async Task A_whole_patch_can_be_written_in_one_call()
+    {
+        var bench = Bench();
+
+        var written = await Call(bench, "write_patch", JsonSerializer.Serialize(new
+        {
+            source = """
+                let slowly = t * 0.2
+
+                x |> sine(freq: 1.5)
+                  |> add(y |> sine(freq: 1.1, phase: slowly))
+                  |> remap(-2..2, 0..1)
+                  |> hsv(saturation: 0.85, value: 1)
+                  |> out.color
+                """,
+        }));
+
+        written.Ok.ShouldBeTrue(written.Text);
+
+        var patch = bench.Snapshot();
+
+        patch.Nodes.Count(n => n.TypeId == "osc.sine").ShouldBe(2);
+        patch.Reaches().Picture.ShouldBeTrue();
+    }
+
+    /// <summary>
+    /// Nothing partial is adopted, and the complaint carries a line and a column
+    /// so the next attempt can be aimed rather than guessed.
+    /// </summary>
+    [Fact]
+    public async Task A_patch_that_does_not_read_is_refused_whole()
+    {
+        var bench = await Lit(0.25f);
+
+        var written = await Call(bench, "write_patch", JsonSerializer.Serialize(new
+        {
+            source = "nonesuch() |> out.color",
+        }));
+
+        written.Ok.ShouldBeFalse();
+        written.Text.ShouldContain("nonesuch");
+
+        // The patch on the bench is the one that was there before.
+        bench.Snapshot().Nodes.ShouldContain(n => n.TypeId == "value");
+    }
+
+    [Fact]
+    public async Task A_patch_larger_than_the_limit_is_refused()
+    {
+        var bench = Bench(new WorkbenchLimits(MaxNodes: 3));
+
+        var written = await Call(bench, "write_patch", JsonSerializer.Serialize(new
+        {
+            source = "rings() |> hsv() |> gain(gain: 0.5) |> out.color",
+        }));
+
+        written.Ok.ShouldBeFalse();
+        written.Text.ShouldContain("may have 3");
+    }
+
+    /// <summary>
+    /// What comes back from describing a patch goes back in as it stands. The
+    /// two halves of the loop are the same language, which is the whole point of
+    /// having only one.
+    /// </summary>
+    [Fact]
+    public async Task What_is_described_can_be_written_back()
+    {
+        var first = await Heard();
+        var described = (await Call(first, "describe_patch")).Text;
+
+        // Everything before the counts, which are prose about the patch rather
+        // than part of it.
+        var source = described[..described.IndexOf(" modules, ", StringComparison.Ordinal)];
+        source = source[..source.LastIndexOf('\n')];
+
+        var second = Bench();
+        var written = await Call(second, "write_patch", JsonSerializer.Serialize(new { source }));
+
+        written.Ok.ShouldBeTrue(written.Text + Environment.NewLine + source);
+        second.Snapshot().Reaches().Sound.ShouldBeTrue();
+    }
+
     // --- looking ------------------------------------------------------------
 
+    /// <summary>
+    /// The patch comes back in the language, under the handles the editing tools
+    /// answer to — so what is read here can be pointed at by set_knobs, and
+    /// written back whole by write_patch, without translating between two
+    /// notations.
+    /// </summary>
     [Fact]
     public async Task Describing_the_patch_names_handles_wires_and_knobs()
     {
         var told = await Call(await Lit(0.25f), "describe_patch");
 
-        told.Text.ShouldContain("knob1 = value");
-        told.Text.ShouldContain("output1 = output");
-        told.Text.ShouldContain("color <- knob1.out");
+        told.Text.ShouldContain("let knob1 = value(");
         told.Text.ShouldContain("0.25");
+        told.Text.ShouldContain("knob1 |> out.color");
     }
 
     [Fact]

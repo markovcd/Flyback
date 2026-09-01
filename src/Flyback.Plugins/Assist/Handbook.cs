@@ -50,6 +50,67 @@ internal static class Handbook
           value of 0.5 is mid grey; 4 and 1 are the same white; -1 is black.
           There is no headroom to pull back down later.
 
+        ## The language
+
+        A patch is written as text, and `write_patch` takes the whole of one in
+        a single call. `describe_patch` gives it back in the same language,
+        under the same handles the editing tools answer to. **Build a patch by
+        writing it; change one that already exists with `set_knobs` and
+        `connect`** — writing a patch afresh gives every module a new identity
+        and loses where they sit on the canvas.
+
+        ```
+        let slowly = t * 0.2
+
+        x |> sine(freq: 1.5)
+          |> add(y |> sine(freq: 1.1, phase: slowly))
+          |> remap(-2..2, 0..1)
+          |> hsv(saturation: 0.85, value: 1)
+          |> out.color
+        ```
+
+        - **`|>` is a wire.** What is on the left goes into the module on the
+          right. A module is named by the last part of its type id, so
+          `space.kaleidoscope` is `kaleidoscope` — except `hsv`, `mix` and
+          `midi.in`, which have to be written in full.
+        - **Where the signal lands**: a socket called `in` takes it; failing
+          that a leading `x` and `y` take a position, two signals at once, which
+          is how Space and Pattern modules chain; failing that the first socket
+          the call did not name.
+        - **Sockets are named arguments**, with a space written as an
+          underscore: `remap(in_low: -1, out_high: 1)`, `gate_length`. A socket
+          you say nothing about keeps its default.
+        - **`let` names a signal** so it can be used twice. Reading it again is
+          a second wire out of the same module, not a second module.
+        - **`out` is the Output**, which every patch already has:
+          `|> out.color`, `|> out.left`, `out.gain = 0.6`.
+        - **Sugar**: `x`, `y`, `radius`, `angle` and `t` are Coordinates and
+          Time, one shared module each however often written. `+ - * / %` are
+          the maths modules. `A3` and `C#4` are notes, on sockets that read
+          notes. `20ms`, `1.5s` are times, on sockets that read times — and
+          those sockets hold a power of ten, so writing `20ms` is the only way
+          to say it without doing logarithms.
+        - **A tune or a scale is a block** after the call:
+          `notes(rate: 4) [ A3 C4 [E4 G4] ~ ]`, `quantiser() [ C D E G A ]`.
+          Inside one, `~` is a rest, `[a b]` splits a step in two, `@3` makes a
+          step three times as long, `!3` repeats it, `<a b>` alternates on each
+          pass and `a(3,8)` is three sounding steps spread over eight. `E5%0` is
+          that note silenced, which is not the same as a rest.
+        - **A file is a string**: `sample("kick.wav")`, `picture("photo.png")`.
+        - **A loop needs a Unit Delay and a wire that runs backwards**, which is
+          the one thing `|>` cannot say:
+
+        ```
+        let echo = unit()
+        let sum  = square(freq: frequency(110)) * 0.06 + echo * 0.94
+
+        echo.in <- sum
+        sum |> out.left
+        ```
+
+        Nothing is adopted unless all of it reads. A mistake comes back with the
+        line and column it is on.
+
         ## Putting a patch together
 
         - Every input is a knob with a value on it. Most inputs in a real patch

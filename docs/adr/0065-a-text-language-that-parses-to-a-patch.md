@@ -135,6 +135,24 @@ the *specification*, survived being written out by hand across twenty patches,
 and was caught only by compiling both and comparing. A reviewer would not have
 seen it, and neither did the author.
 
+**Printing is lossy in one way the reference now names outright: it drops
+groups.** Everything else survives — modules, wires, knobs, tunes, scales, file
+paths, the names somebody chose — and the guarantee that is tested is that a
+printed patch builds back to the same program, opcode for opcode, for all twenty
+presets. Groups are the exception because of ordering: a binding is written the
+moment something first needs it, and a group's members are not contiguous in
+that order, so a group would have to be opened and closed and opened again.
+
+**Two of the printer's bugs were about floats, and both were invisible.** A
+knob of a twelfth printed as `0.083333`, which is a different float and compiled
+to a second constant beside the first — a program one op longer that rendered
+identically. And .NET will not format a `float` to more than about seven
+significant digits whatever the format string asks for, so the fix was to widen
+to `double` before writing. A hundred milliseconds also printed as `1E+02ms`,
+which the lexer cannot read at all. None of these is the kind of thing a reader
+of the code would have found; all three came out of building every preset,
+printing it, building it again and diffing the programs.
+
 **A rest is not a silenced note**, and the tests are where that became clear.
 `~` carries no pitch; `E5%0` carries its own and no volume. They sound identical
 and compile differently, and Whole band's lead is written with the second — so
@@ -181,10 +199,26 @@ opens on the canvas already labelled, and one built on the canvas prints back
 carrying the names somebody chose — which is where the two surfaces stop being
 rivals and start being views.
 
-**Where it lives is not decided here.** The parser belongs in `Flyback.Core`
-beside `PatchIO`; whether it is reached through a CLI verb, a text pane in the
-shell, or a tool the assistant can call is a separate decision, and each of the
-three is additive. This record settles the language and not its front door.
+**The assistant is the first front door, and it is where the arithmetic was
+decisive.** Placing a module is one tool call and so is every wire, which makes
+Whole band 92 and 130 of them — 222 against a `MaxToolCalls` of 200. The largest
+patch in the box could not be built by an assistant at all, at any budget, and
+the average preset spent thirty-odd calls saying what the language says in one.
+`write_patch` takes a whole patch as text, and `describe_patch` now gives one
+back in the same language under the same handles, so the model reads and writes
+one notation rather than reading one and writing another.
+
+**The editing tools stay, and the reason is node identity.** `set_knobs` and
+`connect` are how an existing patch is changed, because writing one afresh
+regenerates every id — and an id is what joins a Meter's reading, a Scope's
+buffer and a played note to the program that reads them
+(`Meters.Key`, `TapSpec.Node`, `OpCode.LoadLive`). A rewrite would sever those
+silently, and would also throw away the arrangement somebody made on the canvas.
+So the language builds a patch and the tools adjust one, which is how a person
+uses the editor too.
+
+**A CLI verb and a text pane in the shell are still open**, and both are
+additive. This record settles the language, not every door onto it.
 
 **The file extension is `.fbks`**, beside `.fbk` for the document and `.fbkb` for
 the bundle ([0060](0060-a-bundle-is-a-patch-and-what-it-names.md)). A `.fbks` is

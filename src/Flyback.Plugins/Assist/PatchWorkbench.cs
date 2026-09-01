@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
+using Flyback.Core.Language;
 using Flyback.Core.Render;
 
 namespace Flyback.Plugins.Assist;
@@ -159,6 +160,7 @@ public sealed class PatchWorkbench
                 "disconnect" => Disconnect(arguments),
                 "remove_module" => RemoveModule(arguments),
                 "reset" => Reset(),
+                "write_patch" => WritePatch(arguments),
                 "propose" => Propose(arguments),
                 "render" => await RenderAsync(arguments, cancel).ConfigureAwait(false),
                 "listen" => await ListenAsync(arguments, cancel).ConfigureAwait(false),
@@ -630,6 +632,52 @@ public sealed class PatchWorkbench
         return Fine($"back to the patch as it was when this started. {DescribePatch()}");
     }
 
+    /// <summary>
+    /// Builds a whole patch from the text language, in place of the one being
+    /// worked on.
+    /// </summary>
+    /// <remarks>
+    /// The reason this exists is arithmetic. Placing a module is one call and so
+    /// is every wire, which makes the Whole band preset 92 and 130 of them — 222
+    /// against a <see cref="WorkbenchLimits.MaxToolCalls"/> of 200. The largest
+    /// patch in the box cannot be built here one wire at a time, at any budget,
+    /// and the average preset spends thirty-odd calls doing something the
+    /// language says in one.
+    /// <para>
+    /// It replaces rather than edits, and that is why the wiring tools stay.
+    /// A rewrite gives every node a fresh id, and an id is what joins a Meter's
+    /// reading, a Scope's buffer and a played note to the program that reads them
+    /// — see <see cref="Compile.Meters.Key"/> and <see cref="Compile.TapSpec"/>.
+    /// So this is for building a patch, and <c>set_knobs</c> and <c>connect</c>
+    /// are for changing one that already exists.
+    /// </para>
+    /// </remarks>
+    private ToolOutcome WritePatch(JsonElement arguments)
+    {
+        if (!Text(arguments, "source", out var source))
+            return ToolOutcome.Refused("'source' is required: the patch, written in the language.");
+
+        var load = PatchLanguage.Build(source, modules);
+
+        // Nothing partial is adopted. A patch with a mistake in it is a patch
+        // half of which was not what anybody wrote, and the complaints carry a
+        // line and a column apiece, which is enough to fix it and try again.
+        if (!load.Ok)
+            return ToolOutcome.Refused($"this patch does not read:{Environment.NewLine}{load.Report}");
+
+        if (load.Patch.Nodes.Count > limits.MaxNodes)
+        {
+            return ToolOutcome.Refused(
+                $"that is {load.Patch.Nodes.Count} modules and a patch may have {limits.MaxNodes}.");
+        }
+
+        Adopt(load.Patch);
+        proposal = null;
+        Edits++;
+
+        return Fine($"written. {DescribePatch()}");
+    }
+
     private ToolOutcome Propose(JsonElement arguments)
     {
         if (!Text(arguments, "summary", out var summary))
@@ -673,26 +721,19 @@ public sealed class PatchWorkbench
 
         var text = new StringBuilder();
 
-        foreach (var node in working.Nodes)
-        {
-            if (modules.Get(node.TypeId) is not { } def)
-            {
-                text.Append(Handle(node)).Append(" = ").Append(node.TypeId).AppendLine(" (unknown module)");
-                continue;
-            }
+        // The patch in the same language write_patch takes, and under the same
+        // handles the editing tools answer to — so what is read here can be
+        // pointed at by set_knobs and connect, and written back wholesale
+        // without translating between two notations.
+        text.AppendLine(PatchPrinter.Print(working, modules, handleOf));
 
-            text.Append(Handle(node)).Append(" = ").AppendLine(node.TypeId);
-            text.Append("  in ").AppendLine(Wiring(node, def));
+        // A module this build cannot place has no syntax, so it is said in
+        // prose rather than left out of the picture entirely.
+        foreach (var node in working.Nodes.Where(n => modules.Get(n.TypeId) is null))
+            text.Append(Handle(node)).Append(" = ").Append(node.TypeId).AppendLine(" (unknown module)");
 
-            if (def.Outputs.Count > 0)
-                text.Append("  out").AppendLine(FanOut(node, def));
-
-            // What it carries that is not a knob. None of it is wiring, so it
-            // shows up in neither of the two lines above — a sequencer would
-            // otherwise read as a module with nothing set on it at all.
-            foreach (var extra in def.Extras)
-                text.Append("  ").AppendLine(extra.Report(node));
-        }
+        if (Normalled() is { Length: > 0 } carried)
+            text.Append("carrying a signal with no wire: ").AppendLine(carried);
 
         text.Append(working.Nodes.Count).Append(" modules, ")
             .Append(working.Connections.Count).AppendLine(" wires.");
@@ -711,62 +752,35 @@ public sealed class PatchWorkbench
         return text.Append('.').ToString();
     }
 
-    private string Wiring(NodeInstance node, NodeDef def)
+    /// <summary>
+    /// The sockets that are carrying something with nothing patched into them,
+    /// named so that a reader knows what is driving them.
+    /// </summary>
+    /// <remarks>
+    /// The language has no syntax for this, and correctly: leaving a socket out
+    /// is how a patch says "let the normal drive it" (ADR-0050). But a reader
+    /// needs telling all the same — an assistant that could not see this would
+    /// go on wiring a clock into every oscillator it placed, which is the wire
+    /// the normal exists to save.
+    /// </remarks>
+    private string Normalled()
     {
-        if (def.Inputs.Count == 0) return " (none)";
+        var carried = new List<string>();
 
-        var parts = new List<string>();
-
-        for (var i = 0; i < def.Inputs.Count; i++)
+        foreach (var node in working.Nodes)
         {
-            var port = def.Inputs[i];
+            if (modules.Get(node.TypeId) is not { } def) continue;
 
-            if (working.IncomingTo(node.Id, i) is { } wire && working.Find(wire.SourceNode) is { } from)
+            for (var port = 0; port < def.Inputs.Count; port++)
             {
-                parts.Add($"{port.Name} <- {Handle(from)}.{Name(wire, sourceOf: true)}");
-            }
-            else if (port.NormalledFrom >= 0)
-            {
-                parts.Add($"{port.Name} = {port.Format(Knob(node, i, def))} (or {def.Inputs[port.NormalledFrom].Name})");
-            }
-            else if (modules.Normalled(port) is { } source)
-            {
-                // No knob is printed here, because none is read: a normalled
-                // socket compiles to the module it is normalled to and not to
-                // the value stored against it. Printing both would read as a
-                // knob that could be turned, which is the one thing this is not.
-                parts.Add($"{port.Name} <- {source} (normalled, no wire)");
-            }
-            else
-            {
-                parts.Add($"{port.Name} = {port.Format(Knob(node, i, def))}");
+                if (working.IncomingTo(node.Id, port) is not null) continue;
+                if (modules.Normalled(def.Inputs[port]) is not { } driver) continue;
+
+                carried.Add($"{Handle(node)}.{def.Inputs[port].Name.Replace(' ', '_')} <- {driver}");
             }
         }
 
-        return " " + string.Join(" | ", parts);
-    }
-
-    private string FanOut(NodeInstance node, NodeDef def)
-    {
-        var parts = new List<string>();
-
-        for (var i = 0; i < def.Outputs.Count; i++)
-        {
-            var index = i;
-
-            var goes = working.Connections
-                .Where(c => c.SourceNode == node.Id && c.SourcePort == index)
-                .Select(c => working.Find(c.TargetNode) is { } to && modules.Get(to.TypeId) is { } toDef
-                    ? $"{Handle(to)}.{PortName(toDef.Inputs, c.TargetPort)}"
-                    : "?")
-                .ToArray();
-
-            parts.Add(goes.Length == 0
-                ? $"{def.Outputs[i].Name} (unused)"
-                : $"{def.Outputs[i].Name} -> {string.Join(", ", goes)}");
-        }
-
-        return " " + string.Join(" | ", parts);
+        return string.Join(", ", carried);
     }
 
     private ToolOutcome DescribeModule(JsonElement arguments)
@@ -1395,6 +1409,25 @@ public sealed class PatchWorkbench
             new("reset",
                 "Throws away every edit and goes back to the patch as it was when this started.",
                 "{}"),
+
+            new("write_patch",
+                "Builds a whole patch at once, written in the Flyback language, replacing whatever "
+                + "is on the bench. Use this to build a patch: it says in one call what placing and "
+                + "wiring say in dozens, and a large patch cannot be built any other way. To change "
+                + "a patch that already exists, use set_knobs and connect instead — writing one "
+                + "afresh gives every module a new identity and loses where they sit on the canvas.",
+                """
+                {
+                  "type": "object",
+                  "properties": {
+                    "source": {
+                      "type": "string",
+                      "description": "The whole patch in the language. Nothing is adopted unless all of it reads."
+                    }
+                  },
+                  "required": ["source"]
+                }
+                """),
 
             new("propose",
                 "Offers the patch to the person, with one line saying what it does. This ends your "

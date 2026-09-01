@@ -424,18 +424,36 @@ each paying only for what it reaches
 |---|---|
 | modules, wires, knob values | node ids, which are regenerated |
 | what a module carries — notes, scales, file paths | canvas positions, re-laid by `PatchLayout.Arrange` |
-| `let` names, as the node's own label | whether a group is collapsed, and its exposed sockets |
-| group names and membership | — |
+| `let` names, as the node's own label | **groups**, entirely — name, membership and all |
 | plugin requirements, recomputed on write | — |
+
+**What it does guarantee** is that the text means the same instrument: print a
+patch, build it again, and the two compile to the same program, opcode for
+opcode and register for register. Every preset in the box is a test of exactly
+that. `PatchIO` is what keeps a patch *exactly*; this keeps what it does.
+
+**Groups are the one thing the printer drops that the parser can say.** A
+`group` block builds one, and printing does not put one back. The reason is
+ordering: the printer writes a binding at the moment something first needs it,
+and a group's members are not generally contiguous in that order — so a group
+would have to be opened and closed and opened again, which is not a group. It is
+worth fixing and it is not fixed.
 
 A `let` name becomes the node's rename label, so a patch built from text opens
 in the editor already labelled, and printing recovers the names somebody chose.
 Nodes inlined into a chain stay anonymous, which is right — they had no name to
 lose.
 
-The printer walks back from `out`, emits a `let` for any node reached more than
-once, and inlines everything else. Where a node has several driven inputs it
-takes the longest upstream chain as the pipe and nests the rest as arguments.
+The printer emits a `let` for any module that more than one wire leaves, that
+nothing leaves, whose output is read from a socket other than the first — no
+expression can stand for a Sequencer's `gate` — or that somebody named. It
+inlines everything else, choosing the pipe so that the rule which reads it back
+puts the signal where it came from.
+
+Numbers are written to whatever precision reads back as the same knob, and no
+further: a twelfth prints as `0.083333336` rather than `0.083333`, because the
+short spelling is a different float and would compile to a second constant
+beside the first.
 
 ---
 
