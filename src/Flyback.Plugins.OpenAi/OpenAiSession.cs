@@ -44,6 +44,29 @@ internal sealed class OpenAiSession : IPatchSession
     private const int MaxModelTurns = 40;
 
     /// <summary>
+    /// What the person is told when a turn changed the patch and ended without
+    /// offering it.
+    /// </summary>
+    /// <remarks>
+    /// The failure this exists for is a quiet one. Nothing an assistant does
+    /// reaches the editor until <c>propose</c>, so a turn that ends with edits
+    /// and no proposal leaves the person looking at the patch they started
+    /// with — and being told, as one was, that they were "set to further refine"
+    /// a patch that was not on their canvas. Neither end could see that the
+    /// other was looking at something different.
+    /// <para>
+    /// Said to them and not back to the model, which is the whole design of the
+    /// ending above: a model that has stopped has given its answer, and arguing
+    /// with it would cost a request on every question anybody asks. What was
+    /// missing was never another instruction — it was the one fact only this end
+    /// knows, which is that the canvas did not change.
+    /// </para>
+    /// </remarks>
+    private const string Unoffered =
+        "This turn changed the patch but did not offer it, so the canvas still shows what was "
+        + "there before. Ask for it to be applied if you want to see it.";
+
+    /// <summary>
     /// How many times one request may be sent before the turn is given up on.
     /// </summary>
     private const int MaxAttempts = 5;
@@ -104,6 +127,7 @@ internal sealed class OpenAiSession : IPatchSession
         workbench.Reopen();
 
         messages.Add(Wire.User(instruction));
+
 
         for (var turn = 0; turn < MaxModelTurns; turn++)
         {
@@ -190,14 +214,28 @@ internal sealed class OpenAiSession : IPatchSession
                 yield break;
             }
 
-            // It has stopped asking for things and has not proposed anything,
-            // which is an ordinary way for a turn to end rather than a failure.
-            // A question needs an answer, and a model that has said it needs one
-            // more instruction is not stuck — the conversation is multi-turn and
-            // whatever it said is already in the transcript, so the next thing
-            // to happen is the person typing. Anything said here instead would
-            // be this program arguing with an answer it was given.
-            if (reply.Calls.Count == 0) yield break;
+            if (reply.Calls.Count == 0)
+            {
+                // It has stopped asking for things and has not proposed anything,
+                // which is an ordinary way for a turn to end rather than a failure.
+                // A question needs an answer, and a model that has said it needs one
+                // more instruction is not stuck — the conversation is multi-turn and
+                // whatever it said is already in the transcript, so the next thing
+                // to happen is the person typing. Anything sent back here instead
+                // would be this program arguing with an answer it was given.
+                //
+                // But a turn that *changed* the patch and did not offer it is not
+                // only an ending, it is an ending nobody can see. Nothing reaches
+                // the editor until propose, so the person is looking at the patch
+                // they started with while being told — as one was — that they are
+                // "set to further refine" something that is not on their canvas.
+                // Said to them rather than back to the model: the model has given
+                // its answer, and what is missing is not another instruction but
+                // the one fact only this end knows.
+                if (workbench.Edits > 0) yield return new PatchEvent.Did(Unoffered);
+
+                yield break;
+            }
         }
 
         // Only a model that kept asking for things until the fuse ran out gets

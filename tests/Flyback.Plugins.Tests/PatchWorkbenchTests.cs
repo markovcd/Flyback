@@ -959,6 +959,45 @@ public class PatchWorkbenchTests
     // --- writing a patch whole ------------------------------------------------
 
     /// <summary>
+    /// Where <c>write_patch</c> sits in the list, which is not cosmetic. A model
+    /// reads these in order and anchors on the first thing that looks like it
+    /// edits — and with the placing tool second it did exactly that, building
+    /// patches a wire at a time and running out of turns.
+    /// </summary>
+    [Fact]
+    public void Writing_a_patch_is_offered_before_placing_one()
+    {
+        var names = Bench().Tools.Select(t => t.Name).ToList();
+
+        names.IndexOf("write_patch").ShouldBeLessThan(names.IndexOf("add_module"));
+        names[0].ShouldBe("describe_patch");
+        names[1].ShouldBe("write_patch");
+    }
+
+    /// <summary>
+    /// And the briefing says the same thing. The instruction that decides how a
+    /// model works is the one in "How to work", so naming the one-at-a-time
+    /// tools there as the way to build was worth more than everything else the
+    /// briefing says about the language.
+    /// </summary>
+    [Fact]
+    public void The_briefing_says_to_build_by_writing_the_whole_patch()
+    {
+        var briefing = Bench().Briefing;
+
+        briefing.ShouldContain("write_patch");
+        briefing.ShouldContain("in one call");
+
+        // The old instruction, which said to assemble a patch out of these.
+        briefing.ShouldNotContain("Build with\n        `add_module`");
+    }
+
+    /// <summary>The placing tool points at the one that builds, for a model that reads it first.</summary>
+    [Fact]
+    public void Placing_one_module_points_at_writing_the_patch() =>
+        Bench().Tools.Single(t => t.Name == "add_module").Description.ShouldContain("write_patch");
+
+    /// <summary>
     /// The arithmetic this exists for. Placing a module is one call and so is
     /// every wire, which puts the largest preset in the box past
     /// <see cref="WorkbenchLimits.MaxToolCalls"/> before it is finished. Here it
@@ -1046,6 +1085,50 @@ public class PatchWorkbenchTests
 
         written.Ok.ShouldBeTrue(written.Text + Environment.NewLine + source);
         second.Snapshot().Reaches().Sound.ShouldBeTrue();
+    }
+
+    /// <summary>
+    /// The Output answers to what the language calls it. describe_patch writes
+    /// <c>out.left</c>, so that is the name that comes back to these tools —
+    /// and refusing it cost a model three turns discovering that the block it
+    /// had just read as 'out' was handled 'output1'.
+    /// </summary>
+    [Fact]
+    public async Task The_output_answers_to_out_as_well_as_to_its_handle()
+    {
+        var bench = Bench();
+
+        await Call(bench, "add_module", """{"type_id":"osc.sine","handle":"tone1"}""");
+
+        var wired = await Call(bench, "connect", """{"from":"tone1","to":"out","to_port":"left"}""");
+
+        wired.Ok.ShouldBeTrue(wired.Text);
+        bench.Snapshot().Reaches().Sound.ShouldBeTrue();
+    }
+
+    [Fact]
+    public async Task A_knob_on_the_output_can_be_turned_through_out()
+    {
+        var bench = Bench();
+
+        var turned = await Call(bench, "set_knobs", """
+            {"handle":"out","knobs":[{"port":"gain","value":0.8}]}
+            """);
+
+        turned.Ok.ShouldBeTrue(turned.Text);
+        bench.Snapshot().Output.InputValues[NodeCatalog.OutputGainPort].ShouldBe(0.8f);
+    }
+
+    /// <summary>A name nobody has is still refused, and still says what the patch does have.</summary>
+    [Fact]
+    public async Task A_handle_that_is_not_there_is_still_refused()
+    {
+        var refused = await Call(Bench(), "set_knobs", """
+            {"handle":"nonesuch","knobs":[{"port":"gain","value":0.8}]}
+            """);
+
+        refused.Ok.ShouldBeFalse();
+        refused.Text.ShouldContain("nonesuch");
     }
 
     // --- looking ------------------------------------------------------------

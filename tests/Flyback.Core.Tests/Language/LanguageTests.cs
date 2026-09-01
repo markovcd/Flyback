@@ -555,6 +555,49 @@ public class LanguageTests
         patch.IncomingTo(checker.Id, 1).ShouldBe(new Connection(polar.Id, 1, checker.Id, 1));
     }
 
+    /// <summary>
+    /// A module after a pipe needs no brackets. It is the obvious way to write
+    /// it in a language made of pipes, and refusing it cost a whole run: the
+    /// complaint landed on one line, every binding after it went unread, and
+    /// what came back was three more complaints about names that had never been
+    /// made.
+    /// </summary>
+    [Fact]
+    public void A_module_after_a_pipe_needs_no_brackets()
+    {
+        var patch = Build("notes(rate: 2) [ A2 E3 ] |> note |> out.left");
+
+        patch.Nodes.ShouldContain(n => n.TypeId == "audio.note");
+        patch.Reaches().Sound.ShouldBeTrue();
+    }
+
+    /// <summary>But a binding still has to say which socket, since it has several.</summary>
+    [Fact]
+    public void A_binding_after_a_pipe_still_needs_its_socket() =>
+        Try("let a = sine()\nrings() |> a |> out.color").Report.ShouldContain("not a socket");
+
+    /// <summary>A comma before the bracket is a habit, not a mistake worth a refusal.</summary>
+    [Fact]
+    public void A_trailing_comma_is_forgiven() =>
+        Build("sine(freq: 2, amp: 0.5,) |> out.left").Nodes
+            .Single(n => n.TypeId == "osc.sine").InputValues[3].ShouldBe(0.5f);
+
+    /// <summary>
+    /// A complaint quotes the line it is about. One mistake stops a statement
+    /// being read, so every name it was going to make is missing too — and
+    /// without the line in front of them, neither a person nor a model can tell
+    /// which of four complaints is the cause and which three are its wake.
+    /// </summary>
+    [Fact]
+    public void A_complaint_shows_the_line_it_is_about()
+    {
+        var report = Try("rings() |> out.color\nnonesuch() |> out.color").Report;
+
+        report.ShouldContain("nonesuch() |> out.color");
+        report.ShouldContain("^");
+        report.ShouldContain("2:1:");
+    }
+
     // --- names -----------------------------------------------------------------
 
     [Fact]
@@ -610,6 +653,77 @@ public class LanguageTests
         adsr.InputValues[1].ShouldBe(-2f, 0.0001f);
         adsr.InputValues[2].ShouldBe(-1f, 0.0001f);
         adsr.InputValues[4].ShouldBe(0f, 0.0001f);
+    }
+
+    /// <summary>
+    /// The trap the literal exists to remove, closed at the one place it can be.
+    /// A Duration socket holds a power of ten, so "attack: 0.01" meaning ten
+    /// milliseconds is a whole second — and an envelope written that way is a
+    /// drone where a drum was wanted. Nothing about the number says which was
+    /// meant, so a bare one is refused and the complaint says both readings.
+    /// </summary>
+    [Fact]
+    public void A_bare_number_on_a_socket_that_holds_time_is_refused()
+    {
+        var report = Try("adsr(attack: 0.01, decay: 0.1) |> out.left").Report;
+
+        report.ShouldContain("power of ten");
+        report.ShouldContain("1.02 s");
+        report.ShouldContain("Write 10ms");
+    }
+
+    [Fact]
+    public void A_time_written_as_one_is_taken() =>
+        Build("adsr(attack: 10ms) |> out.left").Nodes
+            .Single(n => n.TypeId == NodeCatalog.AdsrTypeId).InputValues[1].ShouldBe(-2f, 0.0001f);
+
+    /// <summary>
+    /// The kick the assistant's briefing offers as a worked example. It is in
+    /// there because a model reached for a Sample and a filename that did not
+    /// exist, so this has to be a patch that actually builds — untested advice
+    /// in a briefing is worse than none.
+    /// </summary>
+    [Fact]
+    public void The_worked_kick_in_the_briefing_builds()
+    {
+        var patch = Build("""
+            let beat  = values(rate: 4) [ 1 ~ 1 ~ ]
+            let level = beat.gate |> adsr(attack: 1ms, decay: 240ms, sustain: 0, release: 80ms)
+            let drop  = beat.gate |> adsr(attack: 0.5ms, decay: 40ms, sustain: 0, release: 16ms)
+            let kick  = sine(freq: drop |> remap(0..1, 47..205)) * level
+
+            let line  = notes(rate: 4) [ A1 A1 E2 A1 ]
+            let bass  = saw(freq: line |> note, amp: 0.8)
+                          * (line.gate |> adsr(attack: 2ms, decay: 120ms, sustain: 0.3, release: 60ms))
+
+            mixer(kick, 1, bass, 0.7) |> out.left
+            """);
+
+        patch.Reaches().Sound.ShouldBeTrue();
+        patch.CompileForAudio(NodeCatalog.BuiltIn).Issues
+            .ShouldNotContain(i => i.Severity == IssueSeverity.Error);
+
+        // Every oscillator has a pitch reaching it. One left at its default sits
+        // at 1 Hz, below hearing, and compiles without a word — which is what the
+        // example is guarding against.
+        foreach (var osc in patch.Nodes.Where(n => n.TypeId.StartsWith("osc.", StringComparison.Ordinal)))
+            patch.IncomingTo(osc.Id, 1).ShouldNotBeNull($"{osc.TypeId} has no pitch");
+
+        // Every envelope opens on a sequencer's gate, which is the whole point
+        // of the example — on the note value it would never close, because a
+        // note number is far above what counts as open.
+        var sequencers = patch.Nodes
+            .Where(n => n.TypeId is "seq.values" or "seq.notes")
+            .Select(n => n.Id)
+            .ToHashSet();
+
+        foreach (var adsr in patch.Nodes.Where(n => n.TypeId == NodeCatalog.AdsrTypeId))
+        {
+            var gate = patch.IncomingTo(adsr.Id, 0).ShouldNotBeNull();
+
+            sequencers.ShouldContain(gate.SourceNode);
+            gate.SourcePort.ShouldBe(1, "the gate, not the note");
+        }
     }
 
     [Fact]

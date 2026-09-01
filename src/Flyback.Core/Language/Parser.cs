@@ -130,7 +130,7 @@ public sealed class Parser(IReadOnlyList<Token> tokens, List<LanguageIssue> issu
                 names.Add(Current.Text);
                 at++;
             }
-            while (Take(TokenKind.Comma));
+            while (Take(TokenKind.Comma) && Current.Kind != TokenKind.CloseParen);
 
             if (!Expect(TokenKind.CloseParen, "')' after the names")) return null;
             if (!Expect(TokenKind.Assign, "'=' after the names")) return null;
@@ -184,7 +184,7 @@ public sealed class Parser(IReadOnlyList<Token> tokens, List<LanguageIssue> issu
                 parameters.Add(Current.Text);
                 at++;
             }
-            while (Take(TokenKind.Comma));
+            while (Take(TokenKind.Comma) && Current.Kind != TokenKind.CloseParen);
 
             if (!Expect(TokenKind.CloseParen, "')' after the parameters")) return null;
         }
@@ -515,7 +515,7 @@ public sealed class Parser(IReadOnlyList<Token> tokens, List<LanguageIssue> issu
                 if (Argument() is not { } argument) return null;
                 arguments.Add(argument);
             }
-            while (Take(TokenKind.Comma));
+            while (Take(TokenKind.Comma) && Current.Kind != TokenKind.CloseParen);
 
             if (!Expect(TokenKind.CloseParen, "')' after the arguments")) return null;
         }

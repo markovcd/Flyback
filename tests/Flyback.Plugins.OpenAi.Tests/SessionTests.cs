@@ -44,6 +44,54 @@ public class SessionTests
         ("connect", """{"from":"tone1","to":"output1","to_port":"left"}"""),
     ];
 
+    /// <summary>
+    /// The quiet failure. Nothing reaches the editor until <c>propose</c>, so a
+    /// model that builds a patch and then signs off leaves the person looking at
+    /// the patch they already had — one did exactly this, and told them they
+    /// were "set to further refine" a patch that was not on their canvas.
+    /// </summary>
+    [Fact]
+    public async Task Building_and_stopping_without_offering_it_is_pointed_out()
+    {
+        var (events, sent) = await Run(
+            Asking(Building),
+            Prose("You're now set to further refine the patch as needed."));
+
+        events.OfType<PatchEvent.Proposed>().ShouldBeEmpty();
+        events.OfType<PatchEvent.Did>().ShouldContain(d => d.Summary.Contains("canvas still shows"));
+
+        // Told to the person, not sent back to the model. Nothing extra is asked
+        // of a model that has already given its answer.
+        sent.Count.ShouldBe(2);
+    }
+
+    /// <summary>
+    /// A turn that only asked a question says nothing of the sort. There is
+    /// nothing waiting to be offered, so the canvas is not out of date and
+    /// saying it were would be noise on every question anybody asks.
+    /// </summary>
+    [Fact]
+    public async Task A_question_with_nothing_built_is_left_alone()
+    {
+        var (events, sent) = await Run(Prose("Which key should it be in?"));
+
+        sent.Count.ShouldBe(1);
+        events.OfType<PatchEvent.Did>().ShouldBeEmpty();
+        events.OfType<PatchEvent.Said>().ShouldHaveSingleItem();
+    }
+
+    /// <summary>And a turn that did offer its work has nothing to warn about.</summary>
+    [Fact]
+    public async Task A_turn_that_proposed_says_nothing_about_the_canvas()
+    {
+        var (events, _) = await Run(
+            Asking(Building),
+            Asking(("propose", """{"summary":"a flat grey field"}""")));
+
+        events.OfType<PatchEvent.Proposed>().ShouldHaveSingleItem();
+        events.OfType<PatchEvent.Did>().ShouldNotContain(d => d.Summary.Contains("canvas still shows"));
+    }
+
     [Fact]
     public async Task A_patch_it_proposes_is_offered_to_the_person()
     {

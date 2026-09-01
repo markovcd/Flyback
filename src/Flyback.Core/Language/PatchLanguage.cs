@@ -13,10 +13,49 @@ namespace Flyback.Core.Language;
 /// </remarks>
 public sealed record LanguageLoad(Patch Patch, IReadOnlyList<LanguageIssue> Issues)
 {
+    /// <summary>What was read, kept so a complaint can show the line it is about.</summary>
+    public string Source { get; init; } = string.Empty;
+
     public bool Ok => Issues.Count == 0;
 
-    /// <summary>Every complaint on its own line, for a console or a panel.</summary>
-    public string Report => string.Join(Environment.NewLine, Issues);
+    /// <summary>
+    /// Every complaint, each above the line it is about with the column marked.
+    /// </summary>
+    /// <remarks>
+    /// The line is quoted rather than only numbered, and it earns the space. One
+    /// mistake stops a statement being read, so every name that statement was
+    /// going to make is then missing too — a single stray comma comes back as
+    /// four complaints, three of them about names that were never the problem.
+    /// Whoever is reading this, person or model, has to be able to see which one
+    /// is the cause, and a line number alone does not show that.
+    /// </remarks>
+    public string Report
+    {
+        get
+        {
+            if (Issues.Count == 0) return string.Empty;
+            if (Source.Length == 0) return string.Join(Environment.NewLine, Issues);
+
+            var lines = Source.ReplaceLineEndings("\n").Split('\n');
+            var text = new System.Text.StringBuilder();
+
+            foreach (var issue in Issues)
+            {
+                text.Append(issue.Line).Append(':').Append(issue.Column).Append(": ")
+                    .AppendLine(issue.Message);
+
+                if (issue.Line < 1 || issue.Line > lines.Length) continue;
+
+                var line = lines[issue.Line - 1];
+
+                text.Append("    ").AppendLine(line);
+                text.Append("    ").Append(new string(' ', Math.Clamp(issue.Column - 1, 0, line.Length)))
+                    .AppendLine("^");
+            }
+
+            return text.ToString().TrimEnd();
+        }
+    }
 }
 
 /// <summary>
@@ -54,6 +93,9 @@ public static class PatchLanguage
         var statements = new Parser(tokens, issues).Parse();
         var patch = new Binder(modules, issues).Build(statements);
 
-        return new LanguageLoad(patch, [.. issues.OrderBy(i => i.Line).ThenBy(i => i.Column)]);
+        return new LanguageLoad(patch, [.. issues.OrderBy(i => i.Line).ThenBy(i => i.Column)])
+        {
+            Source = source,
+        };
     }
 }

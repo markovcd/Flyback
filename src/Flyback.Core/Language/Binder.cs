@@ -380,6 +380,15 @@ public sealed class Binder
         // the screen: '|> out.color'.
         if (expr.Stage is NameExpr socket)
         {
+            // A module named after a pipe with no brackets is that module,
+            // placed and taking nothing but what is arriving. It is the obvious
+            // way to write it in a language made of pipes, and refusing it cost
+            // a whole run: the complaint landed on one line, every binding after
+            // it went unread, and the errors that followed were all about names
+            // that had never been made.
+            if (socket.Port is null && scope.Find(socket.Name) is null && Known(socket.Name))
+                return Call(new CallExpr(socket.Name, [], null, socket.Line, socket.Column), scope, value);
+
             if (socket.Port is null)
             {
                 return Refuse(socket.Line, socket.Column,
@@ -654,6 +663,21 @@ public sealed class Binder
             return;
         }
 
+        // A bare number on a socket that holds time is the trap the literal was
+        // added to remove, and allowing it left the trap open: the socket holds
+        // a power of ten, so an envelope written as "attack: 0.01" meaning ten
+        // milliseconds is a second, and what was meant to be a drum is a drone.
+        // Nothing about the value says which was meant, so the only place to
+        // catch it is here, and the complaint says both readings.
+        if (spec.Display == PortDisplay.Duration && figure.Style == NumberStyle.Plain)
+        {
+            Complain(line, column,
+                $"'{spec.Name}' is a length of time, and a bare number on one is a power of ten: "
+                + $"{Number(figure.Amount)} means {spec.Format((float)figure.Amount)}. "
+                + $"Write {Literal(figure.Amount)} if you meant {Number(figure.Amount)} seconds.");
+            return;
+        }
+
         if (!double.IsFinite(figure.Amount))
         {
             Complain(line, column, $"'{spec.Name}' cannot hold that.");
@@ -661,6 +685,26 @@ public sealed class Binder
         }
 
         node.InputValues[port] = (float)figure.Amount;
+    }
+
+    /// <summary>A number as it was written, for saying it back in a complaint.</summary>
+    private static string Number(double value) =>
+        value.ToString("0.######", System.Globalization.CultureInfo.InvariantCulture);
+
+    /// <summary>
+    /// <paramref name="seconds"/> written as the literal that would mean it, for
+    /// offering back to somebody who wrote a bare number meaning seconds.
+    /// </summary>
+    private static string Literal(double seconds)
+    {
+        var (scale, unit) = Math.Abs(seconds) switch
+        {
+            < 1e-3d => (1e6d, "us"),
+            < 1d => (1e3d, "ms"),
+            _ => (1d, "s"),
+        };
+
+        return Number(seconds * scale) + unit;
     }
 
     // --- what a module carries -----------------------------------------------
@@ -856,6 +900,13 @@ public sealed class Binder
     }
 
     // --- looking things up ----------------------------------------------------
+
+    /// <summary>
+    /// Whether a name is a module or a def, asked without complaining about it.
+    /// </summary>
+    private bool Known(string name) =>
+        defs.ContainsKey(name) || modules.Get(name) is not null
+        || byShortName.ContainsKey(name) || ambiguous.Contains(name);
 
     private NodeDef? Module(string name, int line, int column)
     {

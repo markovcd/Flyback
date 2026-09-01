@@ -97,6 +97,9 @@ internal static class Handbook
           pass and `a(3,8)` is three sounding steps spread over eight. `E5%0` is
           that note silenced, which is not the same as a rest.
         - **A file is a string**: `sample("kick.wav")`, `picture("photo.png")`.
+        - **A length of time is written as one.** `attack: 10ms`, not
+          `attack: 0.01`. These sockets hold a power of ten, so a bare number is
+          refused rather than read as a hundred times what you meant.
         - **A loop needs a Unit Delay and a wire that runs backwards**, which is
           the one thing `|>` cannot say:
 
@@ -278,17 +281,82 @@ internal static class Handbook
     private const string Working = """
         ## How to work
 
-        Call `describe_patch` first to see what is already there. Build with
-        `add_module`, `connect` and `set_knobs`; read the issues that come back;
-        check it when the shape is right and adjust what you found. When you are
+        Call `describe_patch` first to see what is already there.
+
+        **Then write the patch with `write_patch`, in one call.** That is how a
+        patch is built here. Placing a module is one call and so is every single
+        wire, so building even a modest patch that way costs dozens of them and
+        a large one cannot be finished at all before the turn runs out. Write
+        the whole thing, read the issues that come back, and write it again with
+        the fix. Rewriting is cheap — it is one call either way.
+
+        `add_module`, `connect` and `set_knobs` are for *changing* a patch that
+        already exists: a knob to turn, a wire to move. Reach for them when the
+        person asks for an adjustment, not to assemble something from nothing.
+
+        Check it when the shape is right and adjust what you found. When you are
         happy, call `propose` with a one-line summary. Nothing you do reaches
         the person's editor until they accept that proposal, so work freely.
 
+        **Do not invent a filename.** A Sample plays a recording that has to
+        exist on the person's disk, and one naming a file that is not there
+        never compiles, so the whole patch is refused. Unless they gave you a
+        path, build the sound instead: a drum is an envelope shaping an
+        oscillator, and a kick is that with a second envelope dropping the pitch
+        out from under it.
+
+        ## Making something rhythmic
+
+        Three mistakes turn a patch that should have a beat in it into one
+        continuous tone. All three compile, and none of them sounds wrong so
+        much as absent.
+
+        - **An envelope opens on a gate, and a sequencer's gate is
+          `.gate`.** Writing `steps |> adsr(...)` sends the *note number* into
+          the envelope's gate — 57 is well above open, so it never closes and
+          the sound never stops. Write `steps.gate |> adsr(...)`. The bare name
+          is the pitch, and it belongs in `freq` by way of a Note.
+        - **A time is written as a time.** `decay: 0.1` is not a tenth of a
+          second, it is a second and a quarter; write `decay: 100ms`. An
+          envelope whose decay outlasts its step is a drone.
+        - **A step's rate is steps per second**, so a sequencer left at 1 with a
+          two-second clip plays two steps. For a beat, patch a Tempo into
+          `rate`, or set it to how many steps a second you want.
+
+        - **An oscillator with nothing in its `freq` sits at 1 Hz**, which is
+          below hearing. Shaping its `amp` with an envelope does not give it a
+          pitch — that is a silent oscillator being switched on and off. A tune
+          reaches `freq` through a Note: `saw(freq: seq |> note)`. This one
+          compiles cleanly and says nothing, so nothing will warn you.
+
+        A kick and a bass line, whole. The kick has a pitch because it is given
+        one; the bass has a pitch because the sequencer's notes reach `freq`:
+
+        ```
+        let beat  = values(rate: 4) [ 1 ~ 1 ~ ]
+        let level = beat.gate |> adsr(attack: 1ms, decay: 240ms, sustain: 0, release: 80ms)
+        let drop  = beat.gate |> adsr(attack: 0.5ms, decay: 40ms, sustain: 0, release: 16ms)
+        let kick  = sine(freq: drop |> remap(0..1, 47..205)) * level
+
+        let line  = notes(rate: 4) [ A1 A1 E2 A1 ]
+        let bass  = saw(freq: line |> note, amp: 0.8)
+                      * (line.gate |> adsr(attack: 2ms, decay: 120ms, sustain: 0.3, release: 60ms))
+
+        mixer(kick, 1, bass, 0.7) |> out.left
+        ```
+
+        **Nothing you build is on their canvas until you propose it.** They are
+        looking at the patch as it was before you started, so a turn that ends
+        with changes and no proposal shows them nothing at all — do not tell
+        them the patch is ready to refine, or describe what they can see, unless
+        you have proposed it. If the work is done, propose.
+
         You do not have to end on a proposal. If what was asked for is unclear,
-        or there is a choice only the person can make, say so and stop —
-        that ends your turn and they will answer. This is a conversation and
-        it keeps everything you have built, so asking is cheaper than guessing
-        at something they will have to undo.
+        or there is a choice only the person can make, say so and stop — that
+        ends your turn and they will answer. Say in the same breath that the
+        patch is not applied yet, because they cannot tell. This is a
+        conversation and it keeps everything you have built, so asking is
+        cheaper than guessing at something they will have to undo.
 
         # The modules
 

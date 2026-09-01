@@ -1214,10 +1214,31 @@ public sealed class PatchWorkbench
                 + "this first.",
                 "{}"),
 
+            new("write_patch",
+                "Builds a whole patch at once, written in the Flyback language, replacing whatever "
+                + "is on the bench. Use this to build a patch: it says in one call what placing and "
+                + "wiring say in dozens, and a large patch cannot be built any other way. To change "
+                + "a patch that already exists, use set_knobs and connect instead — writing one "
+                + "afresh gives every module a new identity and loses where they sit on the canvas.",
+                """
+                {
+                  "type": "object",
+                  "properties": {
+                    "source": {
+                      "type": "string",
+                      "description": "The whole patch in the language. Nothing is adopted unless all of it reads."
+                    }
+                  },
+                  "required": ["source"]
+                }
+                """),
+
+
             new("add_module",
-                "Places a module. 'type_id' comes from the module list. 'handle' is optional — one "
-                + "is made up from the type id if you leave it out. 'knobs' sets inputs by name as "
-                + "you add it, which saves a second call.",
+                "Adds one module to a patch that already exists. To build a patch, use write_patch "
+                + "instead — this places one module and every wire to it is another call again. "
+                + "'type_id' comes from the module list. 'handle' is optional — one is made up from "
+                + "the type id if you leave it out. 'knobs' sets inputs by name as you add it.",
                 """
                 {
                   "properties": {
@@ -1410,25 +1431,6 @@ public sealed class PatchWorkbench
                 "Throws away every edit and goes back to the patch as it was when this started.",
                 "{}"),
 
-            new("write_patch",
-                "Builds a whole patch at once, written in the Flyback language, replacing whatever "
-                + "is on the bench. Use this to build a patch: it says in one call what placing and "
-                + "wiring say in dozens, and a large patch cannot be built any other way. To change "
-                + "a patch that already exists, use set_knobs and connect instead — writing one "
-                + "afresh gives every module a new identity and loses where they sit on the canvas.",
-                """
-                {
-                  "type": "object",
-                  "properties": {
-                    "source": {
-                      "type": "string",
-                      "description": "The whole patch in the language. Nothing is adopted unless all of it reads."
-                    }
-                  },
-                  "required": ["source"]
-                }
-                """),
-
             new("propose",
                 "Offers the patch to the person, with one line saying what it does. This ends your "
                 + "turn. Nothing you have built reaches their editor until you call this. The patch "
@@ -1567,7 +1569,18 @@ public sealed class PatchWorkbench
             return false;
         }
 
-        if (!byHandle.TryGetValue(handle, out var found))
+        // 'out' is what the Output is called in the language, and the language is
+        // what describe_patch answers in — so it is what comes back to these
+        // tools, whatever handle the Output happens to carry. Accepting it here
+        // is the difference between one call and three spent discovering that
+        // the block just read as 'out.left' answers to 'output1'.
+        if (!byHandle.TryGetValue(handle, out var found)
+            && string.Equals(handle, "out", StringComparison.Ordinal))
+        {
+            found = working.Output;
+        }
+
+        if (found is null)
         {
             refusal = byHandle.Count == 0
                 ? $"there is no module called '{handle}'; the patch is empty."

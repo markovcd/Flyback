@@ -477,7 +477,11 @@ public static class PatchPrinter
                 _ => (1d, "s"),
             };
 
-            for (var digits = 0; digits <= 7; digits++)
+            // Always with a unit on it, because a bare number on one of these
+            // sockets is no longer a number the language will read — it was the
+            // hundredfold mistake the literal exists to prevent. So the spelling
+            // has to be found rather than fallen back from.
+            for (var digits = 0; digits <= 17; digits++)
             {
                 // Never "G": a hundred milliseconds comes back from that as
                 // "1E+02", which is not a number this language has and would put
@@ -494,7 +498,7 @@ public static class PatchPrinter
                 if ((float)Math.Log10(back * unit) == decades) return written + name;
             }
 
-            return Number(decades);
+            return (seconds / unit).ToString("0.#################", CultureInfo.InvariantCulture) + name;
         }
 
         /// <summary>
