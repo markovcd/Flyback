@@ -23,7 +23,7 @@ namespace Flyback.App;
 /// <para>
 /// The two are not symmetrical and the design follows that rather than papering
 /// over it. Building text into a patch is exact. Printing a patch back out is
-/// not — it drops the groups entirely and lays the canvas out afresh (ADR-0065)
+/// not — it lays the canvas out afresh and opens every box (ADR-0065)
 /// — so a printing is never adopted behind somebody's back. It is offered,
 /// labelled, and becomes the document only when they apply it.
 /// </para>
@@ -169,17 +169,14 @@ public sealed partial class MainWindow
     /// What a printing has to say for itself: where it came from, what it left
     /// behind, and what applying it would do.
     /// </summary>
-    private string Reading()
-    {
-        var groups = editor.Patch.Groups?.Count ?? 0;
-
-        var lost = groups == 0
-            ? string.Empty
-            : $" Text has no place to keep groups, so its {groups} of them are not here.";
-
-        return $"Printed from the canvas.{lost} The patch on the canvas is still the document — "
-            + "applying this makes the text the document instead.";
-    }
+    /// <remarks>
+    /// The boxes come through now, so what is left to warn about is where the
+    /// modules sit — a printing is laid out afresh on the way back in, and a
+    /// canvas somebody arranged by hand does not survive being applied.
+    /// </remarks>
+    private static string Reading() =>
+        "Printed from the canvas. The patch on the canvas is still the document — applying this "
+        + "makes the text the document instead, and lays the modules out afresh.";
 
     /// <summary>
     /// Builds the text and puts the patch it describes on the canvas.

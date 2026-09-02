@@ -424,7 +424,8 @@ each paying only for what it reaches
 |---|---|
 | modules, wires, knob values | node ids, which are regenerated |
 | what a module carries — notes, scales, file paths | canvas positions, re-laid by `PatchLayout.Arrange` |
-| `let` names, as the node's own label | **groups**, entirely — name, membership and all |
+| `let` names, as the node's own label | whether a group is collapsed, and which of its sockets are exposed |
+| groups — name and membership | — |
 | plugin requirements, recomputed on write | — |
 
 **What it does guarantee** is that the text means the same instrument: print a
@@ -440,12 +441,25 @@ across several. Every one of those is a break the lexer joins straight back up
 — §2's continuation rules are what make it safe — so a folded printing builds
 to the patch the unfolded one did.
 
-**Groups are the one thing the printer drops that the parser can say.** A
-`group` block builds one, and printing does not put one back. The reason is
-ordering: the printer writes a binding at the moment something first needs it,
-and a group's members are not generally contiguous in that order — so a group
-would have to be opened and closed and opened again, which is not a group. It is
-worth fixing and it is not fixed.
+**Groups are written back, and the order is worked out for them.** A binding is
+written where something first needs it, and that order scatters a group's
+members — Whole band's clock is four modules that half the patch reaches for.
+So once the statements are written, the order is settled again with each group
+counted as one thing: a statement may be written as soon as everything it names
+has been, and a group is written when all of its members can be. Ties go to
+whichever statement came first, so the result stays as close to the reading
+order as the boxes allow.
+
+Two things follow from it. A module in a box always gets a `let`, however small
+it is, because one folded into the middle of a pipeline would be declared
+wherever that pipeline is rather than inside the block. And a clock or a
+coordinate pair inside a box is written as `time()` or `coord()` rather than as
+`t` or `x`, because a bare word is a reading and a module declared nowhere can
+be in nobody's group.
+
+Where two boxes reach into each other, no order stands them both together — and
+there a box gives way rather than the patch, since presentation is worth less
+than a text that reads back.
 
 A `let` name becomes the node's rename label, so a patch built from text opens
 in the editor already labelled, and printing recovers the names somebody chose.

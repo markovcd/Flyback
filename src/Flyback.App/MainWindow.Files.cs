@@ -285,8 +285,8 @@ public sealed partial class MainWindow
     /// </para>
     /// <para>
     /// Where the graph is the document this prints one instead, and printing is
-    /// lossy: the groups are dropped and the layout is worked out again on the
-    /// way back in
+    /// lossy: the layout is worked out again on the way back in, and a box comes
+    /// back open however it was left
     /// ([0065](../../docs/adr/0065-a-text-language-that-parses-to-a-patch.md)).
     /// So it is a copy — what is open stays open, and this is a version of it
     /// for reading, sending and diffing.
@@ -320,15 +320,8 @@ public sealed partial class MainWindow
                 return true;
             }
 
-            // Said only where there is something to have lost. A patch with no
-            // groups in it loses nothing anybody would miss, and warning about
-            // it every time would teach people to stop reading.
-            var groups = editor.Patch.Groups?.Count ?? 0;
-
-            Report(groups == 0
-                ? $"Wrote {file.Name}. It is a copy: what is open is still {patchName ?? "the patch"}."
-                : $"Wrote {file.Name}, without its {groups} group(s) — text has no place to keep them. "
-                  + $"What is open is still {patchName ?? "the patch"}.");
+            Report($"Wrote {file.Name}. It is a copy: what is open is still "
+                + $"{patchName ?? "the patch"}.");
 
             return true;
         }

@@ -349,18 +349,25 @@ public sealed class Patch
     /// empty selection, the sink on its own, or a single module, which
     /// <see cref="NodeGroup.Fewest"/> says is not a group.
     /// </returns>
-    public NodeGroup? Group(IEnumerable<Guid> members)
+    /// <param name="id">
+    /// What to call it, or null for a name nothing has had before — see
+    /// <see cref="NodeInstance.Create"/>, which the same reasoning governs. A
+    /// box built from source keeps its identity across a rebuild, so what was
+    /// collapsed stays collapsed and what was selected stays selected.
+    /// </param>
+    /// <param name="members"></param>
+    public NodeGroup? Group(IEnumerable<Guid> members, Guid? id = null)
     {
         var inside = members
             .Distinct()
-            .Where(id => Find(id) is { } node && !NodeCatalog.IsSink(node.TypeId))
+            .Where(member => Find(member) is { } node && !NodeCatalog.IsSink(node.TypeId))
             .ToList();
 
         if (inside.Count < NodeGroup.Fewest) return null;
 
-        foreach (var id in inside) Forget(id);
+        foreach (var member in inside) Forget(member);
 
-        var group = new NodeGroup { Id = Guid.NewGuid(), Members = inside, Collapsed = true };
+        var group = new NodeGroup { Id = id ?? Guid.NewGuid(), Members = inside, Collapsed = true };
 
         // The edge it is born with: whatever is wired across it right now, kept
         // so that unplugging one of those wires leaves the socket behind rather

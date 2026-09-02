@@ -18,6 +18,7 @@ context, decision, consequences.
 | [0065](0065-a-text-language-that-parses-to-a-patch.md) | A text language, which parses to a patch *(user-directed)* |
 | [0067](0067-a-module-keeps-its-name-and-its-memory-across-a-rebuild.md) | A module keeps its name, and its memory, across a rebuild *(user-directed)* |
 | [0068](0068-the-file-that-was-opened-decides-who-owns-the-patch.md) | The file that was opened decides who owns the patch *(user-directed)* |
+| [0069](0069-a-box-is-written-back-by-sorting-the-statements-again.md) | A box is written back by sorting the statements again *(user-directed)* |
 
 ### The engine
 

@@ -25,6 +25,21 @@ public static class PatchPrinter
     private sealed record Plan(Dictionary<Guid, string> Names, HashSet<Guid> Bound, Guid Coord, Guid Clock);
 
     /// <summary>
+    /// One statement, and what has to be known about it to put it in a box.
+    /// </summary>
+    /// <param name="Owner">
+    /// The module this declares, or <see cref="Guid.Empty"/> for a statement
+    /// that declares none — the Output's own lines and the wires that run
+    /// backwards.
+    /// </param>
+    /// <param name="Names">
+    /// Which bindings it reaches for. What a group block does is move its
+    /// members down beside each other, and this is what says whether anything
+    /// between them would be left reaching for a name that had moved past it.
+    /// </param>
+    private sealed record Line(string Text, Guid Owner, IReadOnlySet<Guid> Names);
+
+    /// <summary>
     /// The patch as source, against <paramref name="against"/> or the installed
     /// catalogue.
     /// </summary>
@@ -69,8 +84,13 @@ public static class PatchPrinter
         // One Coordinates and one Time become the bare words the language has
         // for them. A second of either is an ordinary module, since only one can
         // be what 'x' means.
-        var coord = patch.Nodes.FirstOrDefault(n => n.TypeId == NodeCatalog.CoordTypeId)?.Id ?? Guid.Empty;
-        var clock = patch.Nodes.FirstOrDefault(n => n.TypeId == NodeCatalog.TimeTypeId)?.Id ?? Guid.Empty;
+        //
+        // And so is one in a box. A bare word is a reading rather than a
+        // declaration, so a clock written as `t` is declared nowhere and can be
+        // in nobody's group — where somebody has drawn a box round it, being
+        // written out as the module it is costs a word and keeps the box.
+        var coord = Bare(patch, NodeCatalog.CoordTypeId);
+        var clock = Bare(patch, NodeCatalog.TimeTypeId);
 
         foreach (var node in patch.Nodes)
         {
@@ -84,7 +104,13 @@ public static class PatchPrinter
                 || def is { IsCycleBreaker: true }
                 || leaving.Count != 1
                 || leaving.Any(c => c.SourcePort != 0)
-                || Usable(node.Name);
+                || Usable(node.Name)
+
+                // A module in a box gets a name whatever its shape, because a
+                // group's members are the modules declared inside its block —
+                // and one folded into the middle of a pipeline is declared
+                // wherever that pipeline is, which is not in the block.
+                || Boxed(patch, node.Id);
 
             if (must) bound.Add(node.Id);
         }
@@ -99,6 +125,21 @@ public static class PatchPrinter
         }
 
         return new Plan(names, bound, coord, clock);
+    }
+
+    /// <summary>Whether a module is in a box on the canvas.</summary>
+    private static bool Boxed(Patch patch, Guid id) =>
+        patch.Groups?.Any(group => group.Members.Contains(id)) == true;
+
+    /// <summary>
+    /// The one module of its type that gets written as a bare word, or nothing
+    /// where that word would cost a box.
+    /// </summary>
+    private static Guid Bare(Patch patch, string typeId)
+    {
+        var only = patch.Nodes.FirstOrDefault(node => node.TypeId == typeId)?.Id ?? Guid.Empty;
+
+        return Boxed(patch, only) ? Guid.Empty : only;
     }
 
     /// <summary>
@@ -165,9 +206,20 @@ public static class PatchPrinter
     /// </summary>
     private sealed class Writer(Patch patch, ModuleCatalog modules, Plan plan)
     {
-        private readonly List<string> statements = [];
+        private readonly List<Line> statements = [];
         private readonly HashSet<Guid> done = [];
-        private readonly Dictionary<Guid, int> where = [];
+
+        /// <summary>
+        /// The bindings each statement being written has named so far, one entry
+        /// per statement still open.
+        /// </summary>
+        /// <remarks>
+        /// A stack because writing one statement writes the statements it needs:
+        /// a name reached for in the middle of a pipeline is written out before
+        /// the pipeline is, and what it named is its own rather than the
+        /// pipeline's. The entry on top is always the statement being written.
+        /// </remarks>
+        private readonly Stack<HashSet<Guid>> naming = new();
 
         public string Run()
         {
@@ -183,11 +235,12 @@ public static class PatchPrinter
 
                     if (patch.IncomingTo(sink.Id, port) is { } wire)
                     {
-                        statements.Add($"{From(wire)} |> out.{name}");
+                        Say(Guid.Empty, () => $"{From(wire)} |> out.{name}");
                         continue;
                     }
 
-                    if (Knob(sink, def, port) is { } value) statements.Add($"out.{name} = {value}");
+                    if (Knob(sink, def, port) is { } value)
+                        Say(Guid.Empty, () => $"out.{name} = {value}");
                 }
             }
 
@@ -215,18 +268,221 @@ public static class PatchPrinter
 
         /// <summary>
         /// The statements as they should be read: what a name needs before the
-        /// name is used, and the pipelines that end at the Output last.
+        /// name is used, the boxes drawn round what belongs in one, and the
+        /// pipelines that end at the Output last.
         /// </summary>
         private IEnumerable<string> Ordered()
         {
             // Bindings come out in the order they were settled, and the
             // Output's own lines were queued before any of them — so those are
             // moved to the end, where a reader expects the point of the patch.
-            var sinks = statements.Where(s => s.Contains("|> out.") || s.StartsWith("out.", StringComparison.Ordinal));
-            var rest = statements.Where(s => !s.Contains("|> out.") && !s.StartsWith("out.", StringComparison.Ordinal));
+            var sinks = statements.Where(Sunk).Select(line => line.Text);
+            var rest = Boxed([.. statements.Where(line => !Sunk(line))]);
 
             return [.. rest, string.Empty, .. sinks];
         }
+
+        private static bool Sunk(Line line) =>
+            line.Text.Contains("|> out.") || line.Text.StartsWith("out.", StringComparison.Ordinal);
+
+        /// <summary>
+        /// The bindings, with each group's members gathered into a block.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// The reason this was not here before, and the shape of the answer. A
+        /// binding is written where something first needs it, and a group's
+        /// members are not generally next to each other in that order — so a
+        /// block cannot simply be opened and closed around a run of them. What
+        /// can be done is to move the members <em>down</em> to where the last of
+        /// them stands. Every binding a member needs is already above it and
+        /// stays above it, so the only thing a move can break is a statement in
+        /// between that was reaching for one of them.
+        /// </para>
+        /// <para>
+        /// So that is the one question asked, and a group that fails it is
+        /// written out flat. A box is presentation and the instrument is not:
+        /// losing one is a patch that reads worse, and moving a binding past
+        /// something that needed it is a patch that does not read at all.
+        /// </para>
+        /// </remarks>
+        private IEnumerable<string> Boxed(IReadOnlyList<Line> lines)
+        {
+            var boxes = (patch.Groups ?? [])
+                .Where(group => Rows(lines, group).Count >= NodeGroup.Fewest)
+                .ToList();
+
+            // A group that cannot be made contiguous is written out flat and the
+            // rest tried again. It terminates because there is one fewer group
+            // every time round and no groups at all always sorts — and a box is
+            // presentation, where an order that does not read is a patch that
+            // does not build.
+            List<IReadOnlyList<int>>? order;
+
+            while ((order = Sorted(lines, boxes)) is null) boxes.Remove(Stuck(lines, boxes));
+
+            var written = new List<string>();
+
+            foreach (var unit in order)
+            {
+                if (Boxing(lines, boxes, unit[0]) is not { } box)
+                {
+                    written.AddRange(unit.Select(row => lines[row].Text));
+                    continue;
+                }
+
+                written.Add($"group \"{Titled(box)}\" {{");
+                written.AddRange(unit.Select(row => "  " + lines[row].Text));
+                written.Add("}");
+            }
+
+            return written;
+        }
+
+        /// <summary>
+        /// The statements in an order where every group's members stand
+        /// together, or null where no such order exists.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// This is the whole of what was hard about groups, and the reason the
+        /// printer went without them. A binding is written where something first
+        /// needs it, and that order scatters a group's members: Whole band's
+        /// clock is four modules and half the patch reaches for one of them, so
+        /// they end up spread through it. Moving them down beside each other
+        /// leaves whatever was between them reaching for a name that has gone
+        /// past.
+        /// </para>
+        /// <para>
+        /// So the order is worked out again with each group counted as one
+        /// thing. Every statement is a unit, a group is a unit of several, and a
+        /// unit may be written once everything it names has been — which is an
+        /// ordinary topological sort over units instead of over statements. Ties
+        /// go to whichever unit was written first, so the result is as close to
+        /// the emit order as the boxes allow.
+        /// </para>
+        /// <para>
+        /// It fails only where two groups reach into each other, which is a
+        /// shape no box on a canvas has any reason to be — but it is possible to
+        /// draw, so it is answered rather than assumed away.
+        /// </para>
+        /// </remarks>
+        private static List<IReadOnlyList<int>>? Sorted(IReadOnlyList<Line> lines, List<NodeGroup> boxes)
+        {
+            var units = Units(lines, boxes);
+            var home = new Dictionary<int, int>();
+
+            for (var unit = 0; unit < units.Count; unit++)
+                foreach (var row in units[unit])
+                    home[row] = unit;
+
+            // Where each binding was declared, so a name can be traced to the
+            // unit that has to come first.
+            var declared = new Dictionary<Guid, int>();
+
+            for (var row = 0; row < lines.Count; row++)
+                if (lines[row].Owner != Guid.Empty)
+                    declared[lines[row].Owner] = home[row];
+
+            var needs = units.Select(_ => new HashSet<int>()).ToList();
+            var feeds = units.Select(_ => new List<int>()).ToList();
+
+            for (var row = 0; row < lines.Count; row++)
+            {
+                foreach (var name in lines[row].Names)
+                {
+                    if (!declared.TryGetValue(name, out var from) || from == home[row]) continue;
+                    if (!needs[home[row]].Add(from)) continue;
+
+                    feeds[from].Add(home[row]);
+                }
+            }
+
+            var ready = new PriorityQueue<int, int>();
+
+            for (var unit = 0; unit < units.Count; unit++)
+                if (needs[unit].Count == 0)
+                    ready.Enqueue(unit, units[unit][0]);
+
+            var order = new List<IReadOnlyList<int>>();
+
+            while (ready.TryDequeue(out var unit, out _))
+            {
+                order.Add(units[unit]);
+
+                foreach (var next in feeds[unit])
+                    if (needs[next].Remove(unit) && needs[next].Count == 0)
+                        ready.Enqueue(next, units[next][0]);
+            }
+
+            return order.Count == units.Count ? order : null;
+        }
+
+        /// <summary>
+        /// Every statement as a unit to be ordered: a group as one, and anything
+        /// not in one on its own.
+        /// </summary>
+        private static List<IReadOnlyList<int>> Units(IReadOnlyList<Line> lines, List<NodeGroup> boxes)
+        {
+            var units = new List<IReadOnlyList<int>>();
+            var taken = new HashSet<int>();
+
+            foreach (var box in boxes)
+            {
+                var rows = Rows(lines, box);
+
+                units.Add(rows);
+                taken.UnionWith(rows);
+            }
+
+            for (var row = 0; row < lines.Count; row++)
+                if (!taken.Contains(row))
+                    units.Add([row]);
+
+            // In the order they were written, so the sort's tie-break has
+            // something meaningful to break on.
+            units.Sort((a, b) => a[0].CompareTo(b[0]));
+
+            return units;
+        }
+
+        /// <summary>
+        /// A group that is part of why no order exists, for the caller to give
+        /// up on and try again without.
+        /// </summary>
+        /// <remarks>
+        /// The widest, which is the one most likely to be enclosing another —
+        /// and where that guess is wrong the loop simply comes back for the next
+        /// one. Something has to be dropped and no box is more important than
+        /// another.
+        /// </remarks>
+        private static NodeGroup Stuck(IReadOnlyList<Line> lines, List<NodeGroup> boxes) =>
+            boxes.MaxBy(box => Rows(lines, box) is { Count: > 0 } rows ? rows[^1] - rows[0] : 0)!;
+
+        /// <summary>Which box a statement is written in, or null where it is in none.</summary>
+        private static NodeGroup? Boxing(IReadOnlyList<Line> lines, List<NodeGroup> boxes, int row) =>
+            lines[row].Owner == Guid.Empty
+                ? null
+                : boxes.FirstOrDefault(box => box.Members.Contains(lines[row].Owner));
+
+        /// <summary>Which statements declare this group's members, in the order they were written.</summary>
+        private static IReadOnlyList<int> Rows(IReadOnlyList<Line> lines, NodeGroup group)
+        {
+            var rows = new List<int>();
+
+            for (var row = 0; row < lines.Count; row++)
+                if (lines[row].Owner != Guid.Empty && group.Members.Contains(lines[row].Owner))
+                    rows.Add(row);
+
+            return rows;
+        }
+
+        /// <summary>
+        /// What to call a box. Quotes are the one thing a name cannot carry
+        /// through, since a quote is what ends one.
+        /// </summary>
+        private static string Titled(NodeGroup group) =>
+            string.IsNullOrWhiteSpace(group.Name) ? "Group" : group.Name.Replace("\"", string.Empty);
 
         /// <summary>Writes a module's binding if it has not been written yet.</summary>
         private void Ensure(Guid id)
@@ -239,19 +495,35 @@ public static class PatchPrinter
             // end. Nothing else in the language can close a loop.
             if (def.IsCycleBreaker)
             {
-                Place($"let {plan.Names[id]} = {Short(def)}()");
+                Say(id, () => $"let {plan.Names[id]} = {Short(def)}()");
                 return;
             }
 
-            var text = Call(node, def);
-
-            Place($"let {plan.Names[id]} = {text}");
+            Say(id, () => $"let {plan.Names[id]} = {Call(node, def)}");
         }
 
-        private void Place(string statement)
+        /// <summary>
+        /// Writes one statement, keeping the bindings it named.
+        /// </summary>
+        /// <remarks>
+        /// The writing happens inside rather than before, because a statement
+        /// writes the statements it needs as it goes — see
+        /// <see cref="naming"/>. Whatever those write is theirs and lands ahead
+        /// of this one, which is what puts the list in an order that reads.
+        /// </remarks>
+        private void Say(Guid owner, Func<string> write)
         {
-            statements.Add(statement);
-            where[Guid.Empty] = statements.Count;
+            naming.Push([]);
+
+            var text = write();
+
+            statements.Add(new Line(text, owner, naming.Pop()));
+        }
+
+        /// <summary>Records that the statement being written reached for a binding.</summary>
+        private void Note(Guid id)
+        {
+            if (naming.Count > 0) naming.Peek().Add(id);
         }
 
         /// <summary>The wires that run backwards, which is what a loop is made of.</summary>
@@ -262,8 +534,24 @@ public static class PatchPrinter
                 if (modules.Get(node.TypeId) is not { IsCycleBreaker: true } def) continue;
 
                 for (var port = 0; port < def.Inputs.Count; port++)
-                    if (patch.IncomingTo(node.Id, port) is { } wire)
-                        statements.Add($"{plan.Names[node.Id]}.{def.Inputs[port].Name.Replace(' ', '_')} <- {From(wire)}");
+                {
+                    if (patch.IncomingTo(node.Id, port) is not { } wire) continue;
+
+                    var socket = def.Inputs[port].Name.Replace(' ', '_');
+
+                    // Nobody's, though it names one: a back-wire is the second
+                    // half of a module already declared, and putting it in that
+                    // module's box would carry the whole loop in with it. It
+                    // still names that module, so it has to be ordered after it.
+                    Say(Guid.Empty, () =>
+                    {
+                        var carried = From(wire);
+
+                        Note(node.Id);
+
+                        return $"{plan.Names[node.Id]}.{socket} <- {carried}";
+                    });
+                }
             }
         }
 
@@ -339,6 +627,8 @@ public static class PatchPrinter
             if (plan.Bound.Contains(id))
             {
                 Ensure(id);
+                Note(id);
+
                 return plan.Names[id];
             }
 
@@ -369,6 +659,7 @@ public static class PatchPrinter
             if (plan.Bound.Contains(wire.SourceNode))
             {
                 Ensure(wire.SourceNode);
+                Note(wire.SourceNode);
 
                 var name = plan.Names[wire.SourceNode];
 

@@ -339,9 +339,20 @@ public sealed class Binder
 
         // Everything placed while the block was open, which is what "declared
         // inside it" means once a def has been expanded in there too.
-        var made = patch.Nodes.Where(n => !before.Contains(n.Id)).Select(n => n.Id).ToList();
+        //
+        // Except the clock and the coordinates. There is one of each in a patch
+        // and every line that says `t` or `x` is reading it rather than making
+        // it, so which block happens to mention one first is an accident — and
+        // one that would put the whole patch's clock in somebody's box.
+        var made = patch.Nodes
+            .Where(n => !before.Contains(n.Id) && n.Id != clock && n.Id != coordinates)
+            .Select(n => n.Id)
+            .ToList();
 
-        if (patch.Group(made) is { } group) group.Rename(statement.Name);
+        // Named after the block that drew it, so a box keeps its identity across
+        // a rebuild the way a module does (ADR-0067). Without it the canvas
+        // would forget which box was open on every evaluation.
+        if (patch.Group(made, Identity(where)) is { } group) group.Rename(statement.Name);
 
         // A group is a box on the canvas and nothing more, so the names it made
         // go on being visible after it — which is what lets one group wire into

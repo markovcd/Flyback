@@ -143,6 +143,11 @@ presets. Groups are the exception because of ordering: a binding is written the
 moment something first needs it, and a group's members are not contiguous in
 that order, so a group would have to be opened and closed and opened again.
 
+*Closed by [0069](0069-a-box-is-written-back-by-sorting-the-statements-again.md),
+which settles the order again with each group counted as one thing. The
+diagnosis above is exactly right and is why it took a second pass rather than a
+bracket.*
+
 **Two of the printer's bugs were about floats, and both were invisible.** A
 knob of a twelfth printed as `0.083333`, which is a different float and compiled
 to a second constant beside the first — a program one op longer that rendered
