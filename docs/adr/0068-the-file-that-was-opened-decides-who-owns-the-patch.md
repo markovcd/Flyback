@@ -135,6 +135,14 @@ and building here would replace the patch under the very control being dragged.
 What this keeps in step is the document, so the next apply builds what is
 already being heard.
 
+**Written when the gesture ends, not while it runs.** A slider dragged across
+its range is one thing somebody did and arrives as a hundred; the sound follows
+every frame of it, because that is the point of turning a knob while a patch
+plays, and the text gets the value it was left on. A hundred edits to one line
+would be a hundred things to undo and a line flickering under whoever is reading
+it. A value typed rather than dragged has no gesture to wait for and goes in
+straight away.
+
 Two things it cannot write, and both are said out loud rather than dropped
 quietly. A knob on a module the text never named has nothing to address, and
 anything that is not a knob — a tune, a scale, a file — has no statement form to

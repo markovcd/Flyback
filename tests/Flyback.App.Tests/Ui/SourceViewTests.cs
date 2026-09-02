@@ -519,6 +519,67 @@ public class SourceViewTests : UiTest
         text.Split("hum.freq").Length.ShouldBe(2, "one statement, whatever it was set to on the way");
     }
 
+    /// <summary>
+    /// A drag is one thing somebody did, and the text hears about it when they
+    /// let go. Every frame of it reaches the engine, because that is the point
+    /// of turning a knob while a patch is playing — but a hundred edits to one
+    /// line would be a hundred things to undo and a line flickering under the
+    /// reader.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_knob_reaches_the_text_when_the_mouse_is_let_go()
+    {
+        var window = Open();
+
+        Evaluate(window, Hum);
+
+        var editor = Editor(window);
+        var hum = editor.Patch.Nodes.Single(node => node.Name == "hum");
+
+        Hold(window);
+
+        foreach (var pitch in new[] { 240f, 280f, 330f })
+        {
+            hum.InputValues[1] = pitch;
+            editor.NotifyPatchChanged();
+            Settle(window);
+        }
+
+        // Heard all the way along, and the text has not moved.
+        Text(window).Text.ShouldNotContain("hum.freq");
+
+        Drop(window);
+
+        Text(window).Text.ShouldContain("hum.freq = 330");
+    }
+
+    /// <summary>Presses in the panel, as taking hold of a slider does.</summary>
+    private static void Hold(MainWindow window) =>
+        Inspector(window).RaiseEvent(new Avalonia.Input.PointerPressedEventArgs(
+            Inspector(window),
+            new Avalonia.Input.Pointer(0, Avalonia.Input.PointerType.Mouse, true),
+            Inspector(window),
+            default,
+            0,
+            new Avalonia.Input.PointerPointProperties(
+                Avalonia.Input.RawInputModifiers.LeftMouseButton,
+                Avalonia.Input.PointerUpdateKind.LeftButtonPressed),
+            Avalonia.Input.KeyModifiers.None));
+
+    /// <summary>And lets go, wherever the pointer has got to.</summary>
+    private static void Drop(MainWindow window) =>
+        window.RaiseEvent(new Avalonia.Input.PointerReleasedEventArgs(
+            window,
+            new Avalonia.Input.Pointer(0, Avalonia.Input.PointerType.Mouse, true),
+            window,
+            default,
+            0,
+            new Avalonia.Input.PointerPointProperties(
+                Avalonia.Input.RawInputModifiers.None,
+                Avalonia.Input.PointerUpdateKind.LeftButtonReleased),
+            Avalonia.Input.KeyModifiers.None,
+            Avalonia.Input.MouseButton.Left));
+
     /// <summary>And what it wrote builds back to the value that was turned to.</summary>
     [AvaloniaFact]
     public void What_it_wrote_is_what_the_text_builds()
