@@ -66,8 +66,55 @@ public sealed partial class MainWindow
     {
         source.IsVisible = false;
         source.EvaluateRequested += (_, _) => Evaluate();
+        source.Changed += (_, _) => RefreshEditState();
 
         codeButton.IsCheckedChanged += (_, _) => ShowCode(codeButton.IsChecked == true);
+    }
+
+    /// <summary>
+    /// Whether the three gestures every editor has — take it back, put it back,
+    /// tidy it up — are the text's rather than the canvas's.
+    /// </summary>
+    /// <remarks>
+    /// The view that is showing, rather than the one that owns the patch. All
+    /// three act on what somebody is looking at, and looking at the text is
+    /// what makes Ctrl+Z mean the last thing typed. Switching over hands them
+    /// back, and neither stack is disturbed by the other — a run of evaluations
+    /// is still there to be undone on the canvas after an afternoon of typing.
+    /// </remarks>
+    private bool Coding => showingCode;
+
+    /// <summary>Takes back the last thing done to whichever view is showing.</summary>
+    private void Undo()
+    {
+        if (Coding) source.Undo();
+        else editor.Undo();
+
+        RefreshEditState();
+    }
+
+    private void Redo()
+    {
+        if (Coding) source.Redo();
+        else editor.Redo();
+
+        RefreshEditState();
+    }
+
+    /// <summary>
+    /// Lays out what is showing: the modules across the canvas, or the lines
+    /// down the page.
+    /// </summary>
+    /// <remarks>
+    /// The same button and the same key for both, because they are the same
+    /// thing done to the two views of one patch — and the pass behind each is
+    /// the other's counterpart besides (<see cref="Core.Language.SourceLayout"/>
+    /// and <see cref="Core.Graph.PatchLayout"/>).
+    /// </remarks>
+    private void Tidy()
+    {
+        if (Coding) source.Tidy();
+        else editor.Tidy();
     }
 
     /// <summary>
@@ -93,6 +140,10 @@ public sealed partial class MainWindow
 
         if (shown) source.Focus();
         else editor.Focus();
+
+        // Undo, redo and tidy all follow the view, so all three have to be asked
+        // again about what they can do the moment it changes.
+        RefreshOwnership();
     }
 
     /// <summary>
@@ -254,11 +305,26 @@ public sealed partial class MainWindow
     {
         editor.Locked = sourceOwned;
         inspector.IsEnabled = !sourceOwned;
-        if (tidyButton is not null) tidyButton.IsEnabled = !sourceOwned;
+
+        // Laying out is off only where it would not last: a locked canvas is
+        // re-laid on the next evaluation, so tidying one is work thrown away.
+        // Showing the text, the same button folds the lines instead.
+        if (tidyButton is not null)
+        {
+            tidyButton.IsEnabled = Coding || !sourceOwned;
+
+            ToolTip.SetTip(tidyButton, Coding
+                ? "Fold the long lines so the patch reads down the page  (Ctrl+L)"
+                : sourceOwned
+                    ? "The text is the document, so the canvas is laid out from it on every "
+                      + "apply. Fold the text instead."
+                    : TidyTip);
+        }
 
         // What the empty panel says is a list of gestures, and half of them
         // have just been switched off or back on.
         BuildInspector();
+        RefreshEditState();
 
         source.Notice = sourceOwned ? null : Reading();
         source.Editable = true;

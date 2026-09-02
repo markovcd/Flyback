@@ -107,14 +107,24 @@ that the document and hands the patch back to the graph.
 question had to learn about it. Nothing typed reaches the patch until somebody
 asks, so the editor's history cannot know a document has moved on.
 
-**Undo and redo stay on for a source-owned patch**, deliberately. The history is
-a history of evaluations and taking one back is exactly what somebody wants
-after applying something that turned out worse. What it does mean is that the
-canvas can hold a patch the text no longer describes — the text is still there,
-and applying it again is one keystroke.
+**Undo, redo and laying out follow the view rather than the owner.** All three
+act on what somebody is looking at: on the canvas they are the modules' and on
+the text they are the lines'. So Ctrl+Z takes back the last thing typed while
+the text is up and the last evaluation while the canvas is, and Ctrl+L folds
+the long lines or lays the modules out — which are the same thing done to the
+two views of one patch, and are each other's counterpart in the engine besides
+(`SourceLayout` and `PatchLayout`).
 
-**Laying out is switched off while the text owns the patch**, because the
-binder re-lays the canvas on every evaluation and a tidy would not survive one.
+Neither stack is disturbed by the other, which is what makes switching over
+worth doing: a run of evaluations is still there to be undone on the canvas
+after an afternoon of typing. The one thing switched off is laying out a
+*locked* canvas, where the binder re-lays it on the next evaluation and a tidy
+would not survive one.
+
+**Loading a document empties the text's stack, and should.** Opening a `.fbks`
+or taking a printing of the canvas is a new document rather than an edit, so
+Ctrl+Z cannot reach back into the text of something else that was open earlier.
+Folding the lines is an edit and one press takes it back.
 
 **The inspector goes dim rather than away.** A knob turned there would be wiped
 by the next evaluation, and a value nobody can read is worse than one nobody can

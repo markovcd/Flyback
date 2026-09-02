@@ -286,6 +286,180 @@ public class SourceViewTests : UiTest
             .ShouldContain(said => said.StartsWith("2:") || said.StartsWith("1:"));
     }
 
+    // --- taking it back, and laying it out ----------------------------------
+
+    private static Button Tidy(MainWindow window) =>
+        All<Button>(window).Single(b => b.Name == "tidy");
+
+    private static Button Undo(MainWindow window) =>
+        All<Button>(window).Single(b => b.Name == "undo");
+
+    private static Button Redo(MainWindow window) =>
+        All<Button>(window).Single(b => b.Name == "redo");
+
+    private static void Press(Button button) =>
+        button.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+
+    /// <summary>
+    /// The layout button lays out what is showing. On the canvas that is the
+    /// modules; on the text it is the lines, which is the same thing done to the
+    /// other view of one patch.
+    /// </summary>
+    [AvaloniaFact]
+    public void Laying_out_folds_the_lines_while_the_text_is_showing()
+    {
+        var window = Open();
+        var text = ShowCode(window);
+
+        text.Text = "x |> sine(freq: 1.5) |> add(b: 0.25) |> remap(in_low: -2, in_high: 2) "
+            + "|> color.hsv(saturation: 0.85) |> gain(gain: 0.5) |> out.color";
+
+        Press(Tidy(window));
+        Settle(window);
+
+        text.Text.ShouldContain("\n  |> ");
+        text.Text.ReplaceLineEndings("\n").Split('\n')
+            .ShouldAllBe(line => line.Length <= Flyback.Core.Language.SourceLayout.Width);
+    }
+
+    /// <summary>
+    /// And the key does what the button does. Ctrl+L is the window's, reached
+    /// once the editor has decided it does not want the keystroke itself.
+    /// </summary>
+    [AvaloniaFact]
+    public void Control_l_folds_the_lines_too()
+    {
+        var window = Open();
+        var text = ShowCode(window);
+
+        text.Text = "x |> sine(freq: 1.5) |> add(b: 0.25) |> remap(in_low: -2, in_high: 2) "
+            + "|> color.hsv(saturation: 0.85) |> gain(gain: 0.5) |> out.color";
+
+        window.RaiseEvent(new Avalonia.Input.KeyEventArgs
+        {
+            RoutedEvent = Avalonia.Input.InputElement.KeyDownEvent,
+            Key = Avalonia.Input.Key.L,
+            KeyModifiers = Avalonia.Input.KeyModifiers.Control,
+        });
+
+        Settle(window);
+
+        text.Text.ShouldContain("\n  |> ");
+    }
+
+    /// <summary>And it is one thing done, so one press of undo puts it back.</summary>
+    [AvaloniaFact]
+    public void Folding_the_lines_is_one_thing_to_take_back()
+    {
+        var window = Open();
+        var text = ShowCode(window);
+
+        const string long_ = "x |> sine(freq: 1.5) |> add(b: 0.25) |> remap(in_low: -2, in_high: 2) "
+            + "|> color.hsv(saturation: 0.85) |> gain(gain: 0.5) |> out.color";
+
+        text.Text = long_;
+
+        Press(Tidy(window));
+        Settle(window);
+
+        Press(Undo(window));
+        Settle(window);
+
+        text.Text.ShouldBe(long_);
+    }
+
+    /// <summary>
+    /// Undo and redo follow the view too. Typing is taken back by the text's own
+    /// stack, and the canvas's run of evaluations is not disturbed by it.
+    /// </summary>
+    [AvaloniaFact]
+    public void Undo_takes_back_typing_while_the_text_is_showing()
+    {
+        var window = Open();
+        var text = ShowCode(window);
+
+        var printed = text.Text;
+
+        // Through the document, which is what typing is. Assigning Text loads a
+        // document instead, and loading one empties the stack on purpose.
+        text.Document.Insert(0, "# a note to myself\n");
+        Settle(window);
+
+        Press(Undo(window));
+        Settle(window);
+
+        text.Text.ShouldBe(printed);
+
+        Press(Redo(window));
+        Settle(window);
+
+        text.Text.ShouldStartWith("# a note to myself");
+    }
+
+    /// <summary>
+    /// And undo stops at the document it was given. A person who opened a source
+    /// file, or took a printing of the canvas, should not be able to press Ctrl+Z
+    /// back into the text of something else they had open earlier.
+    /// </summary>
+    [AvaloniaFact]
+    public void Undo_does_not_reach_back_past_the_document_that_was_opened()
+    {
+        var window = Open();
+
+        ShowCode(window);
+
+        Undo(window).IsEnabled.ShouldBeFalse("nothing has been typed into this printing yet");
+    }
+
+    /// <summary>
+    /// And an evaluation is still on the canvas's stack after all that typing,
+    /// which is what makes switching back to it worth doing.
+    /// </summary>
+    [AvaloniaFact]
+    public void The_canvas_keeps_its_own_history_through_an_afternoon_of_typing()
+    {
+        var window = Open();
+
+        Evaluate(window, Hum);
+
+        var applied = Editor(window).Patch.Nodes.Count;
+
+        ShowCode(window).Text = Hum + "\n# and some more typing";
+        Settle(window);
+
+        CodeButton(window).IsChecked = false;
+        Settle(window);
+
+        Editor(window).Patch.Nodes.Count.ShouldBe(applied);
+
+        Press(Undo(window));
+        Settle(window);
+
+        // Back to the preset the window opened on, which the evaluation replaced.
+        Editor(window).Patch.Nodes.Count.ShouldNotBe(applied);
+    }
+
+    /// <summary>
+    /// The button is off for the one case where it would do nothing that lasts:
+    /// a canvas built from text is laid out again on the next apply.
+    /// </summary>
+    [AvaloniaFact]
+    public void Laying_out_a_locked_canvas_is_not_offered()
+    {
+        var window = Open();
+
+        Tidy(window).IsEnabled.ShouldBeTrue();
+
+        Evaluate(window, Hum);
+
+        Tidy(window).IsEnabled.ShouldBeTrue("the text is showing, so it folds the lines");
+
+        CodeButton(window).IsChecked = false;
+        Settle(window);
+
+        Tidy(window).IsEnabled.ShouldBeFalse("the canvas is a view, and a layout would not survive");
+    }
+
     // --- the canvas as a view -----------------------------------------------
 
     /// <summary>

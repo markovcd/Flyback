@@ -260,9 +260,12 @@ public sealed partial class MainWindow
 
         switch (e.Key)
         {
+            // All three go to whichever view is showing. Reached only where the
+            // view did not want the keystroke itself: the code editor handles
+            // its own undo, and this is the end of the bubble.
             case Key.Z:
-                if (again) editor.Redo();
-                else editor.Undo();
+                if (again) Redo();
+                else Undo();
                 e.Handled = true;
                 break;
 
@@ -270,14 +273,15 @@ public sealed partial class MainWindow
             // where Ctrl+Shift+Z is, and somebody who reaches for one is not
             // going to enjoy discovering which this program wanted.
             case Key.Y:
-                editor.Redo();
+                Redo();
                 e.Handled = true;
                 break;
 
             // Lay out. Beside the two above because it is the same kind of
-            // thing: an edit to the patch that Ctrl+Z takes off again.
+            // thing: an edit that Ctrl+Z takes off again — the modules across
+            // the canvas, or the lines down the page.
             case Key.L:
-                editor.Tidy();
+                Tidy();
                 e.Handled = true;
                 break;
         }
@@ -376,8 +380,12 @@ public sealed partial class MainWindow
     /// </summary>
     private void RefreshEditState()
     {
-        undoButton.IsEnabled = editor.CanUndo;
-        redoButton.IsEnabled = editor.CanRedo;
+        // What can be taken back is the showing view's business, so the two
+        // buttons answer for the text while the text is up and for the canvas
+        // otherwise. Neither stack is emptied by the other: a run of
+        // evaluations is still there to be undone after an afternoon of typing.
+        undoButton.IsEnabled = Coding ? source.CanUndo : editor.CanUndo;
+        redoButton.IsEnabled = Coding ? source.CanRedo : editor.CanRedo;
 
         // The name first and the program second, which is the way round every
         // other window on the machine says it: what is on screen is the patch,

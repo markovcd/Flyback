@@ -130,6 +130,10 @@ internal sealed class SourceView : UserControl
         // ordinary way is never reached. Tunnelling gets there first.
         text.AddHandler(KeyDownEvent, Applied, RoutingStrategies.Tunnel);
 
+        // What the toolbar's undo and redo may do changes with every keystroke,
+        // and nothing else here would notice.
+        text.TextChanged += (_, _) => Changed?.Invoke(this, EventArgs.Empty);
+
         var apply = new Button
         {
             Content = "Apply  Ctrl+↵",
@@ -183,6 +187,45 @@ internal sealed class SourceView : UserControl
 
     /// <summary>Somebody has asked for this text to become the patch.</summary>
     public event EventHandler? EvaluateRequested;
+
+    /// <summary>The text has changed, so what can be taken back has too.</summary>
+    public event EventHandler? Changed;
+
+    public bool CanUndo => text.CanUndo;
+
+    public bool CanRedo => text.CanRedo;
+
+    public void Undo() => text.Undo();
+
+    public void Redo() => text.Redo();
+
+    /// <summary>
+    /// Folds the long lines, which is what laying the modules out is on the
+    /// other side of the switch.
+    /// </summary>
+    /// <remarks>
+    /// One step on the undo stack rather than however many the editor would
+    /// make of a whole-document replacement, and the caret is put back where it
+    /// was — tidying is a thing done to what somebody is reading, and losing
+    /// their place in it is the one way to make it not worth doing.
+    /// </remarks>
+    public void Tidy()
+    {
+        var folded = SourceLayout.Wrap(Source);
+
+        if (folded == Source) return;
+
+        var line = text.TextArea.Caret.Line;
+        var column = text.TextArea.Caret.Column;
+
+        text.Document.BeginUpdate();
+        text.Document.Text = folded;
+        text.Document.EndUpdate();
+
+        text.TextArea.Caret.Line = Math.Clamp(line, 1, text.Document.LineCount);
+        text.TextArea.Caret.Column = Math.Max(column, 1);
+        text.TextArea.Caret.BringCaretToView();
+    }
 
     /// <summary>The text as it stands, which is the document while this view owns it.</summary>
     public string Source

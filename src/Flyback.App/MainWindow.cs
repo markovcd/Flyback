@@ -210,10 +210,14 @@ public sealed partial class MainWindow : Window
     private readonly Button redoButton = Glyph("redo", "↷", "Put it back  (Ctrl+Shift+Z)");
 
     /// <summary>
-    /// Held so that laying out can be switched off where it would not last: a
-    /// patch built from text is re-laid on every evaluation.
+    /// Held because what laying out means, and whether it is worth doing at
+    /// all, depends on which view is showing — see <see cref="RefreshOwnership"/>.
     /// </summary>
     private Button? tidyButton;
+
+    /// <summary>What the layout button does to the canvas, which is what it says by default.</summary>
+    private const string TidyTip =
+        "Lay the modules out so the patch reads left to right  (Ctrl+L)";
 
     private AssistantPanel? assistant;
     private RowDefinition? assistantRow;
@@ -596,13 +600,13 @@ public sealed partial class MainWindow : Window
         var save = Drawn("save", Glyphs.Save(), "Save this patch…");
         save.Click += async (_, _) => await SavePatchAsync();
 
-        undoButton.Click += (_, _) => editor.Undo();
-        redoButton.Click += (_, _) => editor.Redo();
+        // All three go to whichever view is showing — see MainWindow.Source.
+        undoButton.Click += (_, _) => Undo();
+        redoButton.Click += (_, _) => Redo();
 
-        var tidy = tidyButton =
-            Drawn("tidy", Glyphs.Tidy(), "Lay the modules out so the patch reads left to right  (Ctrl+L)");
+        var tidy = tidyButton = Drawn("tidy", Glyphs.Tidy(), TidyTip);
 
-        tidy.Click += (_, _) => editor.Tidy();
+        tidy.Click += (_, _) => Tidy();
 
         WireSource();
         RefreshEditState();
