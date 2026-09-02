@@ -489,15 +489,17 @@ public class SourceViewTests : UiTest
         editor.NotifyPatchChanged();
         Settle(window);
 
-        Text(window).Text.ShouldContain("hum.freq = 330");
+        // In the call the text already has, rather than said again at the end.
+        Text(window).Text.ShouldContain("sine(freq: 330)");
+        Text(window).Text.ShouldNotContain("hum.freq");
     }
 
     /// <summary>
-    /// And the same knob turned again replaces the line rather than adding
-    /// another, so a drag leaves one statement and not a hundred.
+    /// And the same knob turned again changes the same number rather than
+    /// leaving a trail of them.
     /// </summary>
     [AvaloniaFact]
-    public void Turning_it_again_replaces_the_line_it_wrote()
+    public void Turning_it_again_changes_the_same_number()
     {
         var window = Open();
 
@@ -515,8 +517,8 @@ public class SourceViewTests : UiTest
 
         var text = Text(window).Text;
 
-        text.ShouldContain("hum.freq = 550");
-        text.Split("hum.freq").Length.ShouldBe(2, "one statement, whatever it was set to on the way");
+        text.ShouldContain("sine(freq: 550)");
+        text.Split("freq").Length.ShouldBe(2, "one number, whatever it was set to on the way");
     }
 
     /// <summary>
@@ -550,7 +552,9 @@ public class SourceViewTests : UiTest
 
         Drop(window);
 
-        Text(window).Text.ShouldContain("hum.freq = 330");
+        // In the call the text already has, rather than said again at the end.
+        Text(window).Text.ShouldContain("sine(freq: 330)");
+        Text(window).Text.ShouldNotContain("hum.freq");
     }
 
     /// <summary>Presses in the panel, as taking hold of a slider does.</summary>

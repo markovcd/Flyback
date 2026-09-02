@@ -270,6 +270,16 @@ internal sealed class SourceView : UserControl
 
         if (document is null) return;
 
+        // In the call that already takes it, wherever the text puts that —
+        // saying it a second time at the end would leave the file asserting two
+        // different values for one knob. Where the call cannot be edited safely,
+        // the statement below is the language's other way of saying it.
+        if (SourceEdit.Knob(document.Text, module, port, value) is { } change)
+        {
+            document.Replace(change.Offset, change.Length, change.Text);
+            return;
+        }
+
         var wanted = $"{module}.{port} = {value}";
         var head = $"{module}.{port} ";
 
