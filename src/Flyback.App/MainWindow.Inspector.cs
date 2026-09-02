@@ -76,7 +76,9 @@ public sealed partial class MainWindow
     private const string LockedHelp =
         "The text is the document, and this is a view of what it builds. "
         + "Press F2 to go back to it — every change to this patch is made there.\n\n"
-        + "Select a module to read its values here.\n\n"
+        + "Select a module — on the canvas, or by putting the caret in the line that "
+        + "declares it — to turn its knobs here. What you turn is written back into the "
+        + "text.\n\n"
         + "Drag the background to select, middle-drag to pan, wheel to zoom.\n"
         + "Ctrl+click adds to a selection, Ctrl+A takes everything.\n"
         + "Ctrl+C copies what is selected, Ctrl+F frames the patch.";

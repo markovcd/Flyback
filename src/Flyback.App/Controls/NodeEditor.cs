@@ -2566,7 +2566,13 @@ public sealed class NodeEditor : Control
     /// wants — adding a module selects it rather than joining it to whatever was
     /// selected before.
     /// </summary>
-    private void Select(Guid? id)
+    /// <remarks>
+    /// Public because the canvas is not the only thing that points at a module
+    /// now: a caret moved in the code view names one, and what the inspector is
+    /// about follows it — see ADR-0068. It draws as well as selects, which the
+    /// pointer handling does for itself and a caller from outside cannot.
+    /// </remarks>
+    public void Select(Guid? id)
     {
         if (focus == id && selection.Count == (id is null ? 0 : 1)) return;
 
@@ -2575,6 +2581,7 @@ public sealed class NodeEditor : Control
 
         focus = id;
         SelectionChanged?.Invoke(this, EventArgs.Empty);
+        InvalidateVisual();
     }
 
     /// <summary>

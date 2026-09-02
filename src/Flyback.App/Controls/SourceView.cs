@@ -68,6 +68,9 @@ internal sealed class SourceView : UserControl
     /// <summary>The lines a build complained about, drawn behind the text.</summary>
     private readonly Complaints marked = new();
 
+    /// <summary>The statement the caret was last in, so a move within one says nothing.</summary>
+    private string reading = string.Empty;
+
     /// <summary>
     /// What the shell has to say about who owns this text, shown above it.
     /// </summary>
@@ -134,6 +137,19 @@ internal sealed class SourceView : UserControl
         // and nothing else here would notice.
         text.TextChanged += (_, _) => Changed?.Invoke(this, EventArgs.Empty);
 
+        // Only when the statement under the caret changes. Moving along one line
+        // is still the same module, and telling the inspector otherwise would
+        // rebuild it on every arrow key.
+        text.TextArea.Caret.PositionChanged += (_, _) =>
+        {
+            var statement = Statement();
+
+            if (statement == reading) return;
+
+            reading = statement;
+            Reading?.Invoke(this, statement);
+        };
+
         var apply = new Button
         {
             Content = "Apply  Ctrl+↵",
@@ -190,6 +206,90 @@ internal sealed class SourceView : UserControl
 
     /// <summary>The text has changed, so what can be taken back has too.</summary>
     public event EventHandler? Changed;
+
+    /// <summary>The caret has moved to another statement.</summary>
+    /// <remarks>
+    /// Another <em>statement</em> rather than another character: what listens is
+    /// the inspector, and rebuilding it for every keystroke along one line would
+    /// be a panel that flickered while somebody typed.
+    /// </remarks>
+    public event EventHandler<string>? Reading;
+
+    /// <summary>
+    /// The statement the caret is in, as text — the line it is on, or the
+    /// nearest line above that begins one.
+    /// </summary>
+    /// <remarks>
+    /// A statement may be several lines: a pipeline broken before each stage
+    /// puts the caret on `|> gain(0.5)`, which names nothing. What names
+    /// something is the line the statement began on, so this walks up until it
+    /// finds one that is not a continuation.
+    /// </remarks>
+    public string Statement()
+    {
+        var document = text.Document;
+
+        if (document is null || document.LineCount == 0) return string.Empty;
+
+        for (var number = Math.Clamp(text.TextArea.Caret.Line, 1, document.LineCount); number >= 1; number--)
+        {
+            var line = document.GetText(document.GetLineByNumber(number)).TrimStart();
+
+            if (line.Length == 0) return string.Empty;
+            if (!Continues(line)) return line;
+        }
+
+        return string.Empty;
+    }
+
+    /// <summary>Whether a line is the middle of a statement rather than the start of one.</summary>
+    private static bool Continues(string line) =>
+        line.StartsWith("|>", StringComparison.Ordinal)
+        || line.StartsWith(')') || line.StartsWith(']')
+        || line.StartsWith('}');
+
+    /// <summary>
+    /// Sets one knob in the text, as the one statement the language has for
+    /// saying so.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Replacing the line that already sets it where there is one, and adding
+    /// one at the end where there is not. At the end because a knob may be set
+    /// anywhere after the module is declared, and the end is the one place that
+    /// is true of without reading the rest.
+    /// </para>
+    /// <para>
+    /// Through the document rather than by assigning the text, so it is an edit
+    /// that Ctrl+Z takes back and not a document that empties the stack.
+    /// </para>
+    /// </remarks>
+    public void Set(string module, string port, string value)
+    {
+        var document = text.Document;
+
+        if (document is null) return;
+
+        var wanted = $"{module}.{port} = {value}";
+        var head = $"{module}.{port} ";
+
+        for (var number = 1; number <= document.LineCount; number++)
+        {
+            var line = document.GetLineByNumber(number);
+            var said = document.GetText(line);
+
+            if (!said.TrimStart().StartsWith(head, StringComparison.Ordinal)) continue;
+            if (said == wanted) return;
+
+            document.Replace(line.Offset, line.Length, wanted);
+            return;
+        }
+
+        var end = document.TextLength;
+        var before = end > 0 && document.GetCharAt(end - 1) != '\n' ? "\n" : string.Empty;
+
+        document.Insert(end, before + wanted + "\n");
+    }
 
     public bool CanUndo => text.CanUndo;
 

@@ -303,6 +303,11 @@ public sealed partial class MainWindow : Window
         {
             Recompile();
 
+            // Before anything else looks at it: a knob turned in the inspector
+            // has to reach the text that owns the patch, or it is heard now and
+            // gone at the next apply — see MainWindow.Source.
+            WriteBack();
+
             // Patching an input takes its knob away and unpatching gives it
             // back, and neither is a selection change — so the panel is asked
             // here as well, and answers only when a wire actually moved.

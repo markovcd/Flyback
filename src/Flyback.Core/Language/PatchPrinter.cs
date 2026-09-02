@@ -127,6 +127,17 @@ public static class PatchPrinter
         return new Plan(names, bound, coord, clock);
     }
 
+    /// <summary>
+    /// One knob, written the way the language writes one.
+    /// </summary>
+    /// <remarks>
+    /// Here so that anything editing a source file writes a number the same way
+    /// a printing does — a note as its name, a duration as the time it means, an
+    /// integer without a point. A second spelling of the same value would be a
+    /// diff on every knob somebody touched.
+    /// </remarks>
+    public static string Knob(float value, PortDisplay display) => Writer.Value(value, display);
+
     /// <summary>Whether a module is in a box on the canvas.</summary>
     private static bool Boxed(Patch patch, Guid id) =>
         patch.Groups?.Any(group => group.Members.Contains(id)) == true;
@@ -739,7 +750,7 @@ public static class PatchPrinter
             return head;
         }
 
-        private static string Value(float value, PortDisplay display) => display switch
+        internal static string Value(float value, PortDisplay display) => display switch
         {
             PortDisplay.Note => Whole(value) ? Pitch.Name(value) : Number(value),
             PortDisplay.Duration => Seconds(value),

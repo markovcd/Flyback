@@ -126,11 +126,26 @@ or taking a printing of the canvas is a new document rather than an edit, so
 Ctrl+Z cannot reach back into the text of something else that was open earlier.
 Folding the lines is an edit and one press takes it back.
 
-**The inspector goes dim rather than away.** A knob turned there would be wiped
-by the next evaluation, and a value nobody can read is worse than one nobody can
-turn. Turning knobs from a locked canvas — writing the value back into its
-`name.port = 0.6` line, which the language already has a statement for — is the
-obvious next thing and is not here.
+**The inspector stays live on a locked canvas, and is the one thing on it that
+does.** A knob turned there is written into the text as `name.port = value`, the
+statement the language already has for saying it — replacing the line that sets
+it where there is one, adding one at the end where there is not. Nothing is
+rebuilt: the patch already has the value and the engine already has the patch,
+and building here would replace the patch under the very control being dragged.
+What this keeps in step is the document, so the next apply builds what is
+already being heard.
+
+Two things it cannot write, and both are said out loud rather than dropped
+quietly. A knob on a module the text never named has nothing to address, and
+anything that is not a knob — a tune, a scale, a file — has no statement form to
+be set by after the module is declared.
+
+**And the caret points the panel.** A statement names a module when it declares
+one or turns one of its knobs, and the binder gives a node the name it was bound
+to — so the canvas and the text call the same thing the same thing, and clicking
+about in the source is how somebody reads a patch's values. A statement that
+names no module selects none, because a pipeline ending at the Output is about
+the patch rather than about a module.
 
 **Nothing about `.fbk` changed.** Presets, bundles and every patch anybody has
 open behave exactly as before, which is the point of settling this by provenance

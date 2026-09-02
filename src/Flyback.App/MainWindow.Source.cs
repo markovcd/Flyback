@@ -51,6 +51,18 @@ public sealed partial class MainWindow
     /// <summary>The text as it was last opened or written, for the unsaved question.</summary>
     private string sourceOnDisk = string.Empty;
 
+    /// <summary>
+    /// Every knob as the text last built it, so a knob turned somewhere else can
+    /// be told from one the text already says.
+    /// </summary>
+    /// <remarks>
+    /// Kept rather than worked out by building the text again: this is asked on
+    /// every frame of a drag, and rebuilding a patch to answer it would be a
+    /// slider that stuttered. What it costs is a float per socket, which for the
+    /// largest patch in the box is a few hundred of them.
+    /// </remarks>
+    private readonly Dictionary<(Guid Node, int Port), float> written = [];
+
     /// <summary>Whether the text view is the one showing.</summary>
     private bool showingCode;
 
@@ -67,6 +79,7 @@ public sealed partial class MainWindow
         source.IsVisible = false;
         source.EvaluateRequested += (_, _) => Evaluate();
         source.Changed += (_, _) => RefreshEditState();
+        source.Reading += (_, statement) => Reading(statement);
 
         codeButton.IsCheckedChanged += (_, _) => ShowCode(codeButton.IsChecked == true);
     }
@@ -83,6 +96,48 @@ public sealed partial class MainWindow
     /// is still there to be undone on the canvas after an afternoon of typing.
     /// </remarks>
     private bool Coding => showingCode;
+
+    /// <summary>
+    /// Points the inspector at whatever the caret is standing in.
+    /// </summary>
+    /// <remarks>
+    /// A statement names a module when it declares one or turns one of its
+    /// knobs, and that name is on the module itself — the binder gives a node
+    /// the name it was bound to, so the canvas and the text call the same thing
+    /// the same thing. Anything else selects nothing, which is honest: a
+    /// pipeline that ends at the Output is about the patch rather than about a
+    /// module.
+    /// </remarks>
+    private void Reading(string statement)
+    {
+        if (!showingCode) return;
+
+        editor.Select(Named(statement) is { } name
+            ? editor.Patch.Nodes.FirstOrDefault(node => node.Name == name)?.Id
+            : null);
+    }
+
+    /// <summary>The module a statement is about, or null where it is about none.</summary>
+    private static string? Named(string statement)
+    {
+        var said = statement.AsSpan().TrimStart();
+
+        if (said.StartsWith("let ")) said = said[4..].TrimStart();
+
+        var end = 0;
+
+        while (end < said.Length && (char.IsAsciiLetterOrDigit(said[end]) || said[end] == '_')) end++;
+
+        if (end == 0) return null;
+
+        var name = said[..end].ToString();
+        var rest = said[end..].TrimStart();
+
+        // A name on its own is only a module's when something is being said
+        // about it: bound, or one of its knobs turned, or a wire run backwards
+        // into it. A bare name at the head of a pipeline is being read.
+        return rest.StartsWith('=') || rest.StartsWith('.') ? name : null;
+    }
 
     /// <summary>Takes back the last thing done to whichever view is showing.</summary>
     private void Undo()
@@ -231,6 +286,10 @@ public sealed partial class MainWindow
 
         RefreshOwnership();
 
+        // Every knob as the text now has it. Anything that differs from this
+        // afterwards was turned somewhere else and has to go back in.
+        Remember();
+
         var total = load.Patch.Nodes.Count;
 
         source.Show(load, $"Applied — {total} modules, {kept} of them carried over.");
@@ -253,6 +312,7 @@ public sealed partial class MainWindow
         source.Clear();
 
         RefreshOwnership();
+        Remember();
         ShowCode(true);
     }
 
@@ -271,6 +331,8 @@ public sealed partial class MainWindow
         sourceOnDisk = string.Empty;
         printed = null;
 
+        written.Clear();
+
         source.Source = string.Empty;
         source.Clear();
 
@@ -281,6 +343,81 @@ public sealed partial class MainWindow
 
     /// <summary>Marks the text as written, so closing stops asking about it.</summary>
     private void MarkSourceSaved() => sourceOnDisk = source.Source;
+
+    /// <summary>
+    /// Takes every knob as the text now has it, which is what a later change is
+    /// measured against.
+    /// </summary>
+    private void Remember()
+    {
+        written.Clear();
+
+        foreach (var node in editor.Patch.Nodes)
+            for (var port = 0; port < node.InputValues.Length; port++)
+                written[(node.Id, port)] = node.InputValues[port];
+    }
+
+    /// <summary>
+    /// Writes a knob turned in the inspector back into the text that owns the
+    /// patch.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This is what lets the panel be used at all while the text is the
+    /// document. Without it a knob turned there is heard immediately and gone at
+    /// the next apply, which is the worst of both — so the value goes into the
+    /// source as the one statement the language has for saying it, and the next
+    /// apply builds what is already being heard.
+    /// </para>
+    /// <para>
+    /// Nothing is rebuilt. The patch already has the new value and the engine
+    /// already has the patch; what this keeps in step is the document. Building
+    /// here would replace the patch under the very control being dragged.
+    /// </para>
+    /// <para>
+    /// A knob this cannot address — on a module the text never named, or one
+    /// whose value is not a knob at all, like a tune or a file — is said out
+    /// loud rather than dropped quietly. The person is about to lose it and
+    /// should hear so while they can still do something else.
+    /// </para>
+    /// </remarks>
+    private void WriteBack()
+    {
+        if (!sourceOwned || written.Count == 0) return;
+
+        var lost = 0;
+
+        foreach (var node in editor.Patch.Nodes)
+        {
+            if (NodeCatalog.Get(node.TypeId) is not { } def) continue;
+
+            for (var port = 0; port < node.InputValues.Length && port < def.Inputs.Count; port++)
+            {
+                var value = node.InputValues[port];
+
+                if (written.TryGetValue((node.Id, port), out var was) && Same(was, value)) continue;
+
+                written[(node.Id, port)] = value;
+
+                if (string.IsNullOrEmpty(node.Name))
+                {
+                    lost++;
+                    continue;
+                }
+
+                source.Set(
+                    node.Name,
+                    def.Inputs[port].Name.Replace(' ', '_'),
+                    PatchPrinter.Knob(value, def.Inputs[port].Display));
+            }
+        }
+
+        if (lost > 0)
+            Report($"{lost} of those cannot be written into the text — the module it is on has no "
+                + "name there, so the value goes at the next apply.");
+    }
+
+    private static bool Same(float a, float b) => Math.Abs(a - b) < 1e-7f;
 
     /// <summary>
     /// Puts every control that edits the patch in step with who owns it.
@@ -301,7 +438,13 @@ public sealed partial class MainWindow
     private void RefreshOwnership()
     {
         editor.Locked = sourceOwned;
-        inspector.IsEnabled = !sourceOwned;
+
+        // The inspector stays live even where the text owns the patch, because a
+        // knob turned there is written back into it — see WriteBack. It is the
+        // one thing on a locked canvas somebody can still change, and the reason
+        // is that turning a knob while a patch plays is the whole point of
+        // having it in front of you.
+        inspector.IsEnabled = true;
 
         // Laying out is off only where it would not last: a locked canvas is
         // re-laid on the next evaluation, so tidying one is work thrown away.
@@ -329,7 +472,7 @@ public sealed partial class MainWindow
         ToolTip.SetTip(
             inspector,
             sourceOwned
-                ? "The text is the document, so the knobs are read from it. Change them there."
+                ? "The text is the document, and a knob turned here is written into it."
                 : null);
     }
 }

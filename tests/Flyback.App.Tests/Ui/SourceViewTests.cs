@@ -251,8 +251,12 @@ public class SourceViewTests : UiTest
         Evaluate(window, Hum);
 
         Editor(window).Locked.ShouldBeTrue();
-        Inspector(window).IsEnabled.ShouldBeFalse();
         Notice(window).ShouldBeNull("the text is the document now, so there is nothing to warn about");
+
+        // The panel stays live: a knob turned there is written into the text
+        // rather than lost at the next apply, which is what makes it the one
+        // thing on a locked canvas somebody can still change.
+        Inspector(window).IsEnabled.ShouldBeTrue();
     }
 
     /// <summary>
@@ -458,6 +462,148 @@ public class SourceViewTests : UiTest
         Settle(window);
 
         Tidy(window).IsEnabled.ShouldBeFalse("the canvas is a view, and a layout would not survive");
+    }
+
+    // --- the panel, while the text owns the patch ---------------------------
+
+    /// <summary>
+    /// A knob turned in the inspector goes into the text that owns the patch.
+    /// Without it the value is heard now and gone at the next apply, which is
+    /// the worst of both — and is why the panel used to be switched off.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_knob_turned_in_the_panel_is_written_into_the_text()
+    {
+        var window = Open();
+
+        Evaluate(window, Hum);
+
+        var editor = Editor(window);
+        var hum = editor.Patch.Nodes.Single(node => node.Name == "hum");
+
+        // As the inspector does it: the value on the node, then telling the
+        // canvas something changed.
+        hum.InputValues[1] = 330f;
+        editor.NotifyPatchChanged();
+        Settle(window);
+
+        Text(window).Text.ShouldContain("hum.freq = 330");
+    }
+
+    /// <summary>
+    /// And the same knob turned again replaces the line rather than adding
+    /// another, so a drag leaves one statement and not a hundred.
+    /// </summary>
+    [AvaloniaFact]
+    public void Turning_it_again_replaces_the_line_it_wrote()
+    {
+        var window = Open();
+
+        Evaluate(window, Hum);
+
+        var editor = Editor(window);
+        var hum = editor.Patch.Nodes.Single(node => node.Name == "hum");
+
+        foreach (var pitch in new[] { 330f, 440f, 550f })
+        {
+            hum.InputValues[1] = pitch;
+            editor.NotifyPatchChanged();
+            Settle(window);
+        }
+
+        var text = Text(window).Text;
+
+        text.ShouldContain("hum.freq = 550");
+        text.Split("hum.freq").Length.ShouldBe(2, "one statement, whatever it was set to on the way");
+    }
+
+    /// <summary>And what it wrote builds back to the value that was turned to.</summary>
+    [AvaloniaFact]
+    public void What_it_wrote_is_what_the_text_builds()
+    {
+        var window = Open();
+
+        Evaluate(window, Hum);
+
+        var editor = Editor(window);
+
+        editor.Patch.Nodes.Single(node => node.Name == "hum").InputValues[1] = 330f;
+        editor.NotifyPatchChanged();
+        Settle(window);
+
+        // Applied again, the patch comes back with the knob where it was left.
+        Apply(window).RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        Settle(window);
+
+        Editor(window).Patch.Nodes.Single(node => node.Name == "hum").InputValues[1].ShouldBe(330f);
+    }
+
+    // --- the caret and the panel --------------------------------------------
+
+    /// <summary>
+    /// Clicking about in the text points the inspector at whatever the caret is
+    /// standing in, so reading a patch and reading its values are one gesture.
+    /// </summary>
+    [AvaloniaFact]
+    public void The_caret_points_the_panel_at_the_module_it_is_in()
+    {
+        var window = Open();
+
+        Evaluate(window, Hum);
+
+        var text = Text(window);
+
+        // Line 2 is `let hum = t |> sine(freq: 220)`.
+        text.TextArea.Caret.Line = 2;
+        text.TextArea.Caret.Column = 5;
+        Settle(window);
+
+        Editor(window).SelectedNode.ShouldNotBeNull().Name.ShouldBe("hum");
+    }
+
+    /// <summary>
+    /// A statement that names no module selects none. A pipeline ending at the
+    /// Output is about the patch rather than about a module, and pretending
+    /// otherwise would leave the panel showing whatever was last clicked.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_statement_about_no_module_selects_none()
+    {
+        var window = Open();
+
+        Evaluate(window, Hum);
+
+        var text = Text(window);
+
+        text.TextArea.Caret.Line = 2;
+        Settle(window);
+
+        Editor(window).SelectedNode.ShouldNotBeNull();
+
+        // Line 3 is `hum |> out.left`, which reads hum rather than declaring it.
+        text.TextArea.Caret.Line = 3;
+        Settle(window);
+
+        Editor(window).SelectedNode.ShouldBeNull();
+    }
+
+    /// <summary>
+    /// A statement broken across lines still names its module from anywhere in
+    /// it — the caret on a `|>` stage is in the statement that began above.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_caret_on_a_continuation_finds_the_statement_it_continues()
+    {
+        var window = Open();
+
+        Evaluate(window, "let hum = t\n  |> sine(freq: 220)\n\nhum |> out.left");
+
+        var text = Text(window);
+
+        text.TextArea.Caret.Line = 2;
+        Settle(window);
+
+        Editor(window).SelectedNode.ShouldNotBeNull().Name.ShouldBe("hum");
     }
 
     // --- the canvas as a view -----------------------------------------------
