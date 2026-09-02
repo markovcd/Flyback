@@ -432,6 +432,14 @@ patch, build it again, and the two compile to the same program, opcode for
 opcode and register for register. Every preset in the box is a test of exactly
 that. `PatchIO` is what keeps a patch *exactly*; this keeps what it does.
 
+**Where the lines break is worked out afterwards**, by a pass of its own, the
+way where the modules sit is. A statement is written as one line and then
+folded to fit a page: a pipeline breaks before each `|>`, a call with too many
+arguments breaks after each comma, and a tune longer than a line is filled
+across several. Every one of those is a break the lexer joins straight back up
+— §2's continuation rules are what make it safe — so a folded printing builds
+to the patch the unfolded one did.
+
 **Groups are the one thing the printer drops that the parser can say.** A
 `group` block builds one, and printing does not put one back. The reason is
 ordering: the printer writes a binding at the moment something first needs it,

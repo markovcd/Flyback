@@ -206,7 +206,11 @@ public static class PatchPrinter
 
             foreach (var statement in Ordered()) text.AppendLine(statement);
 
-            return text.ToString();
+            // Where the modules go is worked out after the graph is built and
+            // where the lines break is worked out after the text is written, by
+            // a pass that knows nothing about how either was made — see
+            // SourceLayout, and PatchLayout on the other side of it.
+            return SourceLayout.Wrap(text.ToString());
         }
 
         /// <summary>
