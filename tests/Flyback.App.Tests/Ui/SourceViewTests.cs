@@ -5,6 +5,7 @@ using Avalonia.Headless.XUnit;
 using Avalonia.Threading;
 using AvaloniaEdit;
 using Flyback.App.Controls;
+using Flyback.Core.Graph;
 using Shouldly;
 
 namespace Flyback.App.Tests.Ui;
@@ -585,6 +586,50 @@ public class SourceViewTests : UiTest
         Settle(window);
 
         Editor(window).SelectedNode.ShouldBeNull();
+    }
+
+    /// <summary>
+    /// The same on a printing, which is where it first went wrong. A module
+    /// nobody renamed has no name at all — a patch built on the canvas is
+    /// nineteen nodes called nothing — and the printer invents one from the tail
+    /// of its type id. Looking the text's name up on the nodes finds nothing, so
+    /// clicking about in a printing selected nothing at all.
+    /// </summary>
+    [AvaloniaFact]
+    public void The_caret_points_the_panel_in_a_printing_too()
+    {
+        var window = Open();
+
+        // A preset, so the canvas owns the patch and the text is a printing of
+        // it. Nebula prints with a binding on every line.
+        Choose(window, "Nebula");
+
+        var text = ShowCode(window);
+
+        text.Text.ShouldContain("let ");
+
+        // The first line is `let scale = scale(scale: 0.99)`, and the panel is
+        // pointed at it as the view opens rather than on the first arrow key.
+        Editor(window).SelectedNode.ShouldNotBeNull().TypeId.ShouldBe("space.scale");
+
+        text.TextArea.Caret.Line = 4;
+        Settle(window);
+
+        Editor(window).SelectedNode.ShouldNotBeNull().TypeId.ShouldBe("space.kaleidoscope");
+    }
+
+    /// <summary>Picks a preset from the toolbar, which is how a patch arrives as a graph.</summary>
+    private static void Choose(MainWindow window, string name)
+    {
+        var presets = All<ComboBox>(window)
+            .First(box => box.ItemsSource?.OfType<PatchPreset>().Any(p => p.Name == "Plasma") == true);
+
+        presets.SelectedIndex = presets.ItemsSource!.OfType<PatchPreset>()
+            .Select((preset, at) => (preset, at))
+            .First(pair => pair.preset.Name == name)
+            .at;
+
+        Settle(window);
     }
 
     /// <summary>
