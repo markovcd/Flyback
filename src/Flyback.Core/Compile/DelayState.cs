@@ -113,7 +113,136 @@ public sealed class DelayState
         }
     }
 
+    /// <summary>
+    /// Memory for one program, sized and labelled from the program itself.
+    /// </summary>
+    /// <param name="program">What is about to be run, which knows both how many cells it needs and whose they are.</param>
+    /// <param name="sampleRate">Evaluations per second — the oversampled rate on the audio path.</param>
+    public DelayState(CompiledPatch program, int sampleRate)
+        : this(
+            program.DelayLengths,
+            sampleRate,
+            program.PhaseCount,
+            program.UnitCount,
+            program.TraceCount)
+    {
+        Owners = program.Owners;
+
+        // Kept beside the other three rather than in StateOwners, because a
+        // trace is the one cell here the compiler numbers explicitly: the Taps
+        // are already in slot order and already carry the Scope they belong to.
+        traceOwners = [.. program.Taps.Select(tap => tap.Node)];
+    }
+
     public int SampleRate { get; }
+
+    /// <summary>
+    /// Whose cells these are, as the program that asked for them said — see
+    /// <see cref="Adopt"/>.
+    /// </summary>
+    public StateOwners Owners { get; } = StateOwners.None;
+
+    private readonly IReadOnlyList<Guid> traceOwners = [];
+
+    /// <summary>
+    /// Takes over whatever of <paramref name="previous"/> belongs to a module
+    /// this program still has.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// What this is for is an edit made while the sound is playing. Cells are
+    /// numbered by position, so before this existed a recompile could only ask
+    /// whether the whole shape had stayed the same — and one oscillator added
+    /// anywhere meant no, so every tone in the patch restarted and every delay
+    /// line was emptied. Matching by owner instead, the modules that were not
+    /// touched carry on and only what actually changed begins again.
+    /// </para>
+    /// <para>
+    /// A line whose length changed keeps its tail: the samples are copied newest
+    /// first into a ring that may be longer or shorter, so a delay time turned
+    /// while it is ringing goes on ringing. What cannot be carried over is a
+    /// change of rate, which resizes every line against a clock that no longer
+    /// means the same thing — and only happens when the sound device itself
+    /// changes, which is not something anybody does mid-phrase.
+    /// </para>
+    /// <para>
+    /// Read on the thread that recompiles while the callback may still be
+    /// filling <paramref name="previous"/>, and deliberately so. Nothing here
+    /// resizes anything and every cell is a single aligned write, so the worst
+    /// of that race is a handful of samples of a tail arriving out of order —
+    /// against the alternative, which is the silence this method exists to
+    /// remove.
+    /// </para>
+    /// </remarks>
+    public void Adopt(DelayState previous)
+    {
+        var phaseMap = StateOwners.Adopt(Owners.Phases, previous.Owners.Phases);
+
+        for (var i = 0; i < phaseMap.Length && i < phases.Length; i++)
+        {
+            var from = phaseMap[i];
+
+            if (from < 0 || from >= previous.phases.Length) continue;
+
+            phases[i] = previous.phases[from];
+            previousInputs[i] = previous.previousInputs[from];
+
+            // Carried too, and it matters: a cell that has not run yet takes no
+            // step at all, so a tone that kept its phase but lost this would
+            // stall for one evaluation on every edit.
+            running[i] = previous.running[from];
+        }
+
+        var unitMap = StateOwners.Adopt(Owners.Units, previous.Owners.Units);
+
+        for (var i = 0; i < unitMap.Length && i < units.Length; i++)
+        {
+            var from = unitMap[i];
+
+            if (from >= 0 && from < previous.units.Length) units[i] = previous.units[from];
+        }
+
+        if (previous.SampleRate != SampleRate) return;
+
+        var delayMap = StateOwners.Adopt(Owners.Delays, previous.Owners.Delays);
+
+        for (var i = 0; i < delayMap.Length && i < lines.Length; i++)
+        {
+            var from = delayMap[i];
+
+            if (from < 0 || from >= previous.lines.Length) continue;
+
+            Rewind(lines[i], previous.lines[from], previous.positions[from], newest: 0);
+            positions[i] = 0;
+        }
+
+        var traceMap = StateOwners.Adopt(traceOwners, previous.traceOwners);
+
+        for (var i = 0; i < traceMap.Length && i < traces.Length; i++)
+        {
+            var from = traceMap[i];
+
+            if (from < 0 || from >= previous.traces.Length) continue;
+
+            // A head is the next cell to be written rather than the newest one,
+            // so the stretch to copy ends one before it.
+            Rewind(traces[i], previous.traces[from], previous.traceHeads[from] - 1, newest: -1);
+            traceHeads[i] = 0;
+        }
+    }
+
+    /// <summary>
+    /// Copies a ring into another of any size, newest sample first, so what is
+    /// kept is the most recent past rather than the start of the buffer.
+    /// </summary>
+    /// <param name="newest">Where in <paramref name="into"/> the newest sample lands.</param>
+    private static void Rewind(float[] into, float[] from, int head, int newest)
+    {
+        var count = Math.Min(into.Length, from.Length);
+
+        for (var k = 0; k < count; k++)
+            into[Index(newest - k, into.Length)] = from[Index(head - k, from.Length)];
+    }
 
     public int Count => lines.Length;
 

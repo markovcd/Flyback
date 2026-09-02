@@ -33,6 +33,39 @@ public sealed class Binder
     private Guid coordinates;
     private Guid clock;
 
+    /// <summary>
+    /// Where in the source the modules being placed are coming from, as a path
+    /// of names — <c>let bass</c>, then <c>reverb~0</c> for the def it calls.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// A module's id is this path and its position under it, so building the
+    /// same text twice gives the same patch down to the guids — and editing one
+    /// line changes the ids of that line's modules and no others. Everything
+    /// downstream of a rebuild then has something to hold on to: which
+    /// accumulator kept playing (<see cref="Compile.StateOwners"/>), which node
+    /// the canvas already has a position for, which one was selected.
+    /// </para>
+    /// <para>
+    /// Names rather than numbers wherever a statement has one, which is what
+    /// keeps an edit local. Numbering statements instead would give every module
+    /// below an inserted line a new identity, and a patch that restarted from
+    /// the cursor down on every keystroke is the thing this exists to avoid.
+    /// </para>
+    /// </remarks>
+    private string where = string.Empty;
+
+    /// <summary>How many modules have been placed directly under <see cref="where"/>.</summary>
+    private int placedHere;
+
+    /// <summary>
+    /// How many things under <see cref="where"/> have had no name of their own —
+    /// a pipeline that does not end at a socket, a def stamped out twice in one
+    /// statement. Counted rather than named because there is nothing to name
+    /// them by, and within a single statement an edit is local anyway.
+    /// </summary>
+    private int unnamedHere;
+
     public Binder(ModuleCatalog modules, List<LanguageIssue> issues)
     {
         this.modules = modules;
@@ -50,7 +83,10 @@ public sealed class Binder
     /// <summary>The patch these statements describe, laid out and ready to compile.</summary>
     public Patch Build(IReadOnlyList<Statement> statements)
     {
-        patch.EnsureOutput(modules);
+        // Named rather than left to chance like the rest of it, because the
+        // Output is the one module every patch has and the one every rebuild
+        // must recognise as the same one.
+        patch.EnsureOutput(modules, Identity("out"));
 
         var scope = new Scope(null);
 
@@ -101,6 +137,53 @@ public sealed class Binder
 
     private void Run(Statement statement, Scope scope)
     {
+        // Named before entering, because the name is drawn from the segment this
+        // statement sits in — a statement with nothing to be called by takes the
+        // next number from its parent, not from itself.
+        var outer = Enter(Naming(statement));
+
+        Ran(statement, scope);
+
+        Leave(outer);
+    }
+
+    /// <summary>
+    /// What a statement is called, for the purposes of naming what it places.
+    /// </summary>
+    /// <remarks>
+    /// A <c>let</c> has a name and a terminated pipeline has a socket, and
+    /// between them that is nearly every statement anybody writes. What is left
+    /// takes a number, which is the one case where inserting a line above moves
+    /// something below it.
+    /// </remarks>
+    private string Naming(Statement statement) => statement switch
+    {
+        LetStatement let => "let " + let.Name,
+        LetTupleStatement tuple => "let " + string.Join(',', tuple.Names),
+        KnobStatement knob => Aimed(knob.Target),
+        BackWireStatement back => Aimed(back.Target) + " <-",
+        GroupStatement group => "group " + group.Name,
+        DefStatement def => "def " + def.Name,
+        PipelineStatement pipeline => Ending(pipeline.Value) ?? Anonymous(),
+        _ => Anonymous(),
+    };
+
+    private static string Aimed(NameExpr target) =>
+        target.Port is null ? target.Name : target.Name + "." + target.Port;
+
+    /// <summary>
+    /// The socket a pipeline ends at, which is what a statement with no name of
+    /// its own is known by — <c>out.color</c> and <c>out.left</c> are two
+    /// different statements and stay two different statements however the lines
+    /// around them are shuffled.
+    /// </summary>
+    private static string? Ending(Expr expr) =>
+        expr is PipeExpr { Stage: NameExpr socket } ? Aimed(socket) : null;
+
+    private string Anonymous() => "#" + unnamedHere++;
+
+    private void Ran(Statement statement, Scope scope)
+    {
         switch (statement)
         {
             case DefStatement def:
@@ -138,6 +221,48 @@ public sealed class Binder
                 break;
         }
     }
+
+    // --- naming what gets placed ---------------------------------------------
+
+    /// <summary>
+    /// Steps into <paramref name="segment"/>, handing back what to put back
+    /// afterwards.
+    /// </summary>
+    /// <remarks>
+    /// Saved and restored rather than merely set, because these nest: a def is
+    /// stamped out inside the statement that called it, and a group's body is a
+    /// run of statements inside the group.
+    /// </remarks>
+    private (string Where, int Placed, int Unnamed) Enter(string segment)
+    {
+        var outer = (where, placedHere, unnamedHere);
+
+        where = where.Length == 0 ? segment : where + "/" + segment;
+        placedHere = 0;
+        unnamedHere = 0;
+
+        return outer;
+    }
+
+    private void Leave((string Where, int Placed, int Unnamed) outer) =>
+        (where, placedHere, unnamedHere) = outer;
+
+    /// <summary>The name for the next module placed where the binder is standing.</summary>
+    private Guid Next() => Identity($"{where}#{placedHere++}");
+
+    /// <summary>
+    /// A guid from a name, the same one every time.
+    /// </summary>
+    /// <remarks>
+    /// A hash rather than a counter, because what has to be stable is the
+    /// mapping from a piece of source to an id — across runs, across machines,
+    /// and with statements added and removed around it. SHA-256 cut to sixteen
+    /// bytes: this is a name and not a secret, and what is wanted from it is
+    /// that two different names practically never collide.
+    /// </remarks>
+    private static Guid Identity(string name) =>
+        new(System.Security.Cryptography.SHA256.HashData(
+            System.Text.Encoding.UTF8.GetBytes(name)).AsSpan(0, 16));
 
     /// <summary>
     /// Gives a node the name it was bound to, which the editor shows on it.
@@ -362,7 +487,11 @@ public sealed class Binder
     {
         if (held != Guid.Empty) return held;
 
-        var node = NodeInstance.Create(modules.Require(typeId), 0d, 0d);
+        // Named for what it is rather than for where it was first mentioned:
+        // there is one clock and one pair of coordinates in a patch however many
+        // lines reach for them, and moving the first mention should not make it
+        // a different module.
+        var node = NodeInstance.Create(modules.Require(typeId), 0d, 0d, Identity("~" + typeId));
 
         patch.Nodes.Add(node);
         held = node.Id;
@@ -586,7 +715,7 @@ public sealed class Binder
 
     private Value Place(NodeDef def, IReadOnlyList<(int Port, Value Value)> inputs, int line, int column)
     {
-        var node = NodeInstance.Create(def, 0d, 0d);
+        var node = NodeInstance.Create(def, 0d, 0d, Next());
         patch.Nodes.Add(node);
 
         foreach (var (port, value) in inputs)
@@ -762,7 +891,7 @@ public sealed class Binder
 
         if (Module("math.mul", line, column) is not { } mul) return;
 
-        var scale = NodeInstance.Create(mul, 0d, 0d);
+        var scale = NodeInstance.Create(mul, 0d, 0d, Next());
         patch.Nodes.Add(scale);
 
         scale.InputValues[1] = 1f / by;
@@ -854,6 +983,10 @@ public sealed class Binder
                 $"'{macro.Name}' calls itself, and a def is stamped out rather than run.");
         }
 
+        // Set once the arguments are bound, because those belong to the caller's
+        // statement rather than to the def — see Stamping.
+        (string Where, int Placed, int Unnamed)? outer = null;
+
         try
         {
             var arguments = new List<Value>();
@@ -870,6 +1003,13 @@ public sealed class Binder
                 return Refuse(call.Line, call.Column,
                     $"'{macro.Name}' takes {macro.Parameters.Count} arguments and {arguments.Count} were given.");
             }
+
+            // Every call stamps out its own copy, so every call is its own
+            // segment: two calls in one statement place two sets of modules and
+            // the names have to tell them apart. Numbered, because a call site
+            // has nothing else to be known by — which is why moving one call
+            // above another in the same statement renames both.
+            outer = Enter(Stamping(macro.Name));
 
             // A fresh scope off the top, not off the caller's: a def sees its
             // parameters and the defs, and nothing of wherever it was called
@@ -896,8 +1036,13 @@ public sealed class Binder
         finally
         {
             expanding.Remove(macro.Name);
+
+            if (outer is { } saved) Leave(saved);
         }
     }
+
+    /// <summary>What to call one stamping of a def, told apart from the next by number.</summary>
+    private string Stamping(string name) => name + "~" + unnamedHere++;
 
     // --- looking things up ----------------------------------------------------
 

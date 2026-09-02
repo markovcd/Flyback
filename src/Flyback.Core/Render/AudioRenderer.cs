@@ -135,9 +135,9 @@ public sealed class AudioRenderer
     }
 
     /// <summary>
-    /// Memory for a program, reusing what is already there when the shape has not
-    /// changed — so turning a knob keeps the tail ringing and the oscillators in
-    /// phase, and only adding or removing a stateful op cuts either.
+    /// Memory for a program, carrying over whatever of <paramref name="existing"/>
+    /// belongs to a module this program still has — so an edit made while the
+    /// sound is playing costs only the modules it actually touched.
     /// </summary>
     /// <remarks>
     /// Handed back rather than stored, because which lines a program needs is a
@@ -146,6 +146,13 @@ public sealed class AudioRenderer
     /// new program's lines — see the state record in <c>AudioEngine</c>. Lines run
     /// at the oversampled rate, because that is how often the program is
     /// evaluated.
+    /// <para>
+    /// Matching is by owner rather than by slot, which is the whole of why an
+    /// added oscillator no longer restarts every other one — see
+    /// <see cref="StateOwners"/> and <see cref="DelayState.Adopt"/>. A program
+    /// that claims nothing, which is any assembled by hand, adopts nothing and
+    /// starts from silence as it always did.
+    /// </para>
     /// </remarks>
     public DelayState? DelayMemoryFor(CompiledPatch program, DelayState? existing = null)
     {
@@ -157,11 +164,26 @@ public sealed class AudioRenderer
 
         var rate = SampleRate * Oversample;
 
-        return existing?.Fits(
-            program.DelayLengths, rate, program.PhaseCount, program.UnitCount, program.TraceCount) == true
-            ? existing
-            : new DelayState(
-                program.DelayLengths, rate, program.PhaseCount, program.UnitCount, program.TraceCount);
+        // Nothing changed at all: the same object, so a knob turned on a patch
+        // full of delay lines costs no allocation and no copy.
+        if (existing is not null
+            && existing.Fits(
+                program.DelayLengths, rate, program.PhaseCount, program.UnitCount, program.TraceCount)
+            && existing.Owners.Match(program.Owners))
+        {
+            return existing;
+        }
+
+        var memory = new DelayState(program, rate);
+
+        // Something did change, so this is a different program — but only some
+        // of it is different. Every module the edit did not touch takes back its
+        // own accumulator and its own line, and only what is genuinely new
+        // begins from nothing. Without this, adding one oscillator restarts
+        // every tone in the patch.
+        if (existing is not null) memory.Adopt(existing);
+
+        return memory;
     }
 
     /// <summary>

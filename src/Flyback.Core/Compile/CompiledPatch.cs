@@ -38,9 +38,22 @@ public sealed class CompiledPatch(
     IReadOnlyList<LoadedSample>? tables = null,
     IReadOnlyList<TapSpec>? taps = null,
     IReadOnlyList<string>? liveInputs = null,
-    IReadOnlyList<LoadedImage>? pictures = null)
+    IReadOnlyList<LoadedImage>? pictures = null,
+    StateOwners? owners = null)
 {
     public Op[] Ops { get; } = ops;
+
+    /// <summary>
+    /// Which node owns each cell of memory this program keeps, so a swap can
+    /// hand a module back its own rather than whatever now sits in the same
+    /// slot — see <see cref="StateOwners"/>.
+    /// </summary>
+    /// <remarks>
+    /// Empty for a program assembled by hand, which is exactly what it should
+    /// be: nothing is claimed, so nothing is adopted, and such a program starts
+    /// from silence the way it always did.
+    /// </remarks>
+    public StateOwners Owners { get; } = owners ?? StateOwners.None;
 
     /// <summary>
     /// What this program is played with: the live inputs

@@ -246,7 +246,8 @@ public static class PatchCompiler
                 emitter.Tables,
                 taps,
                 emitter.LiveInputs,
-                emitter.Pictures),
+                emitter.Pictures,
+                emitter.Owners),
             issues);
 
         Slot[] Resolve(NodeInstance node)
@@ -268,8 +269,18 @@ public static class PatchCompiler
             // cell is deferred to the drain above.
             if (def.IsCycleBreaker)
             {
+                // Claimed outside any emit function, so the owner has to be said
+                // here: the cell carries this breaker's value round and belongs
+                // to it, not to whichever module was being resolved when the
+                // walk arrived.
+                var outer = emitter.Owner;
+
+                emitter.Owner = node.Id;
+
                 var slot = emitter.AllocateUnitSlot();
                 var outputs = new[] { emitter.UnitRead(slot) };
+
+                emitter.Owner = outer;
 
                 // Cached before the write is queued, so a breaker that two things
                 // read from is still one cell, read once and written once.
@@ -396,7 +407,22 @@ public static class PatchCompiler
                 node,
                 def);
 
+            // Every cell of memory this module claims is claimed from inside its
+            // own emit function, which has no idea which node it is being run
+            // for. Saying so here is what lets a recompile hand a module back
+            // its own phase rather than the one that happens to sit in the same
+            // slot — see StateOwners.
+            //
+            // Saved and put back rather than merely set, because a swept input
+            // resolves other modules from inside this call: the emission nests,
+            // and so must the owner.
+            var outerOwner = emitter.Owner;
+
+            emitter.Owner = node.Id;
+
             var outputsOfNode = def.Emit(emitter, context);
+
+            emitter.Owner = outerOwner;
 
             visiting.Remove(node.Id);
             return resolved[node.Id] = outputsOfNode;

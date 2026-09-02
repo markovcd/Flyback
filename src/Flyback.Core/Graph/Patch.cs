@@ -232,11 +232,24 @@ public sealed class NodeInstance
             : null,
     };
 
-    public static NodeInstance Create(NodeDef def, double x, double y)
+    /// <param name="id">
+    /// What to call it, or null for a name nothing has had before.
+    /// </param>
+    /// <remarks>
+    /// A caller that supplies one is saying this module is the same module as
+    /// something that existed before — which is what lets a patch rebuilt from
+    /// its source keep the memory, the positions and the selection of the patch
+    /// it replaces. Nobody else should: two nodes sharing an id is a patch that
+    /// cannot be wired.
+    /// </remarks>
+    /// <param name="def"></param>
+    /// <param name="x"></param>
+    /// <param name="y"></param>
+    public static NodeInstance Create(NodeDef def, double x, double y, Guid? id = null)
     {
         var node = new NodeInstance
         {
-            Id = Guid.NewGuid(),
+            Id = id ?? Guid.NewGuid(),
             TypeId = def.TypeId,
             X = x,
             Y = y,
@@ -562,12 +575,14 @@ public sealed class Patch
     /// re-addable is what lets the shell hang every audio and video setting off
     /// it — see ADR-0037.
     /// </remarks>
-    public NodeInstance EnsureOutput(ModuleCatalog? modules = null)
+    /// <param name="id">What to call one that has to be made — see <see cref="NodeInstance.Create"/>.</param>
+    /// <param name="modules"></param>
+    public NodeInstance EnsureOutput(ModuleCatalog? modules = null, Guid? id = null)
     {
         if (FirstOf(NodeCatalog.OutputTypeId) is { } existing) return existing;
 
         var catalog = modules ?? NodeCatalog.Current;
-        var node = NodeInstance.Create(catalog.Require(NodeCatalog.OutputTypeId), OutputX, OutputY);
+        var node = NodeInstance.Create(catalog.Require(NodeCatalog.OutputTypeId), OutputX, OutputY, id);
 
         Nodes.Add(node);
         return node;

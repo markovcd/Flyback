@@ -40,6 +40,35 @@ public sealed class Emitter
     private Slot? interval;
     private Slot? memory;
 
+    /// <summary>
+    /// Which node owns each cell of memory this program asks for, in the order
+    /// it asks — see <see cref="StateOwners"/> for what it buys.
+    /// </summary>
+    private readonly List<Guid> delayOwners = [];
+    private readonly List<Guid> phaseOwners = [];
+    private readonly List<Guid> unitOwners = [];
+
+    /// <summary>
+    /// Whose ops are being emitted, which the caller sets around each module's
+    /// emit function.
+    /// </summary>
+    /// <remarks>
+    /// Here rather than passed to each of the four helpers that claim a cell,
+    /// because a module claims one from inside its own emit function and has no
+    /// idea it is being compiled. The compiler is the only thing that knows, and
+    /// this is the narrowest way for it to say so.
+    /// <para>
+    /// Saved and restored rather than merely set: an input read over a domain is
+    /// resolved <em>during</em> the reading module's emit, so a sweep puts one
+    /// module's emission inside another's, and a field that was only ever
+    /// assigned would attribute the inner module's oscillators to the outer one.
+    /// </para>
+    /// </remarks>
+    public Guid Owner { get; set; }
+
+    /// <summary>Who owns what, as this program has it so far.</summary>
+    public StateOwners Owners => new([.. delayOwners], [.. phaseOwners], [.. unitOwners]);
+
     public int RegisterCount { get; private set; }
 
     /// <summary>
@@ -50,7 +79,18 @@ public sealed class Emitter
     public int UnitSlotCount { get; private set; }
 
     /// <summary>Claims a cell for one cycle in the patch to carry a value round.</summary>
-    public int AllocateUnitSlot() => UnitSlotCount++;
+    public int AllocateUnitSlot() => AllocateUnitSlot(Owner);
+
+    /// <summary>
+    /// The same, for a cell that belongs to somebody other than whoever is being
+    /// emitted — which is only ever the two the compiler shares.
+    /// </summary>
+    private int AllocateUnitSlot(Guid owner)
+    {
+        unitOwners.Add(owner);
+
+        return UnitSlotCount++;
+    }
 
     public Op[] ToProgram() => [.. ops];
 
@@ -160,7 +200,12 @@ public sealed class Emitter
         if (interval is { } existing) return existing;
 
         var now = Renderers(OpCode.LoadT);
-        var cell = AllocateUnitSlot();
+
+        // Nobody's, because it is everybody's. A cell attributed to whichever
+        // module happened to ask first would be dropped when that module was
+        // deleted, and the interval it measures would read as a jump on the
+        // evaluation after.
+        var cell = AllocateUnitSlot(StateOwners.Shared);
         var moved = Binary(OpCode.Sub, now, UnitRead(cell));
 
         // Written as a clock rather than as a signal, which is the difference
@@ -193,7 +238,7 @@ public sealed class Emitter
     {
         if (memory is { } existing) return existing;
 
-        var cell = AllocateUnitSlot();
+        var cell = AllocateUnitSlot(StateOwners.Shared);
         var live = UnitRead(cell);
 
         UnitWrite(cell, Constant(1f));
@@ -339,6 +384,7 @@ public sealed class Emitter
     public Slot DelayLine(OpCode code, Slot input, Slot gain, Slot time, float maximum)
     {
         var first = Allocate(1);
+        delayOwners.Add(Owner);
         Add(new Op(code, first, input.Component(0), gain.Component(0), time.Component(0), maximum));
         return Slot.Scalar(first);
     }
@@ -361,6 +407,7 @@ public sealed class Emitter
     public Slot Phase(Slot input, Slot frequency, Slot offset)
     {
         var first = Allocate(1);
+        phaseOwners.Add(Owner);
         Add(new Op(
             OpCode.Phase,
             first,

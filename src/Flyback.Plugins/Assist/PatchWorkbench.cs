@@ -647,12 +647,17 @@ public sealed class PatchWorkbench
     /// and the average preset spends thirty-odd calls doing something the
     /// language says in one.
     /// <para>
-    /// It replaces rather than edits, and that is why the wiring tools stay.
-    /// A rewrite gives every node a fresh id, and an id is what joins a Meter's
-    /// reading, a Scope's buffer and a played note to the program that reads them
-    /// — see <see cref="Compile.Meters.Key"/> and <see cref="Compile.TapSpec"/>.
-    /// So this is for building a patch, and <c>set_knobs</c> and <c>connect</c>
-    /// are for changing one that already exists.
+    /// It replaces rather than edits, and that is why the wiring tools stay. A
+    /// module written in the language is named after the piece of source that
+    /// made it (ADR-0067), so rewriting a patch with one line changed keeps the
+    /// identity of everything else — and an id is what joins a Meter's reading,
+    /// a Scope's buffer and a played note to the program that reads them, see
+    /// <see cref="Compile.Meters.Key"/> and <see cref="Compile.TapSpec"/>. What
+    /// it cannot keep is a patch that was not written in the language: a graph
+    /// built by hand has ids and positions this has never seen, and rewriting
+    /// over one replaces both. So this is for building a patch, and
+    /// <c>set_knobs</c> and <c>connect</c> are for changing one that already
+    /// exists.
     /// </para>
     /// </remarks>
     private ToolOutcome WritePatch(JsonElement arguments)
@@ -1222,7 +1227,8 @@ public sealed class PatchWorkbench
                 + "is on the bench. Use this to build a patch: it says in one call what placing and "
                 + "wiring say in dozens, and a large patch cannot be built any other way. To change "
                 + "a patch that already exists, use set_knobs and connect instead — writing one "
-                + "afresh gives every module a new identity and loses where they sit on the canvas.",
+                + "afresh replaces every module the person placed by hand, along with where they "
+                + "sat on the canvas.",
                 """
                 {
                   "type": "object",
