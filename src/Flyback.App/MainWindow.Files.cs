@@ -109,6 +109,9 @@ public sealed partial class MainWindow
 
             editor.Patch = loaded.Patch;
             preview.Rewind();
+
+            // A patch file is the document, so the graph owns it — ADR-0068.
+            DropSource();
         }
         catch (Exception ex)
         {
@@ -151,6 +154,10 @@ public sealed partial class MainWindow
             patchName = Path.GetFileNameWithoutExtension(file.Name);
             bundled = true;
             editor.MarkSaved();
+
+            // Saved as a bundle, so a bundle is the document now and the graph
+            // owns it — ADR-0068.
+            DropSource();
 
             Report(report.Whole
                 ? $"Saved {file.Name}, carrying {report.Carried.Count} file(s)."
@@ -269,28 +276,48 @@ public sealed partial class MainWindow
     /// Writes the patch as text, in the language.
     /// </summary>
     /// <remarks>
-    /// A copy rather than a document, and the one save here that is. A bundle
-    /// and a patch hold everything the editor knows; this holds the instrument
-    /// and not the drawing of it — the groups are dropped and the layout is
-    /// worked out again on the way back in
-    /// ([0065](../../docs/adr/0065-a-text-language-that-parses-to-a-patch.md)).
-    /// So it does not take the name in the title bar and does not answer the
-    /// question about unsaved changes: what is open is still the document, and
-    /// this is a version of it for reading, sending and diffing.
     /// <para>
-    /// What it does keep is the instrument exactly. The text builds back to the
-    /// same program, op for op, which is what makes it worth having beside a
-    /// format that keeps everything.
+    /// Two saves in one method, and which it is depends on who owns the patch
+    /// (ADR-0068). Where the text is the document this writes the text itself —
+    /// the comments, the names and the <c>def</c>s somebody wrote — and is a
+    /// save like any other: it takes the name in the title bar and answers the
+    /// question about unsaved changes.
+    /// </para>
+    /// <para>
+    /// Where the graph is the document this prints one instead, and printing is
+    /// lossy: the groups are dropped and the layout is worked out again on the
+    /// way back in
+    /// ([0065](../../docs/adr/0065-a-text-language-that-parses-to-a-patch.md)).
+    /// So it is a copy — what is open stays open, and this is a version of it
+    /// for reading, sending and diffing.
+    /// </para>
+    /// <para>
+    /// What a printing does keep is the instrument exactly. The text builds back
+    /// to the same program, op for op, which is what makes it worth having
+    /// beside a format that keeps everything.
     /// </para>
     /// </remarks>
     private async Task<bool> SaveSourceAsync(IStorageFile file)
     {
+        var written = sourceOwned ? source.Source : PatchPrinter.Print(editor.Patch);
+
         try
         {
             await using (var stream = await file.OpenWriteAsync())
             await using (var writer = new StreamWriter(stream))
             {
-                await writer.WriteAsync(PatchPrinter.Print(editor.Patch));
+                await writer.WriteAsync(written);
+            }
+
+            if (sourceOwned)
+            {
+                patchName = Path.GetFileNameWithoutExtension(file.Name);
+                editor.MarkSaved();
+                MarkSourceSaved();
+
+                Report($"Saved {file.Name}.");
+
+                return true;
             }
 
             // Said only where there is something to have lost. A patch with no
@@ -328,7 +355,8 @@ public sealed partial class MainWindow
             await using var stream = await file.OpenReadAsync();
             using var reader = new StreamReader(stream);
 
-            var load = PatchLanguage.Build(await reader.ReadToEndAsync());
+            var text = await reader.ReadToEndAsync();
+            var load = PatchLanguage.Build(text);
 
             if (!load.Ok)
             {
@@ -347,7 +375,12 @@ public sealed partial class MainWindow
             editor.Patch = load.Patch;
             preview.Rewind();
 
-            Report($"Opened {file.Name}.");
+            // The text is the document now, and the canvas is a view of it —
+            // ADR-0068. Said by opening on it, because somebody who opened a
+            // source file came to read or write source.
+            TakeSource(text);
+
+            Report($"Opened {file.Name}. The text is the document; the canvas shows what it builds.");
         }
         catch (Exception ex)
         {
@@ -406,6 +439,7 @@ public sealed partial class MainWindow
 
             editor.Patch = bundle.Patch;
             preview.Rewind();
+            DropSource();
 
             Report(bundle.Files.Count == 0
                 ? $"Opened {file.Name}."
@@ -462,6 +496,9 @@ public sealed partial class MainWindow
             // still a patch with everything to lose.
             patchName = Path.GetFileNameWithoutExtension(file.Name);
             editor.MarkSaved();
+
+            // Saved as a patch file, so that is the document now — ADR-0068.
+            DropSource();
 
             soundFolder.Beside = folder;
             pictureFolder.Beside = folder;

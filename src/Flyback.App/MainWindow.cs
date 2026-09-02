@@ -160,7 +160,17 @@ public sealed partial class MainWindow : Window
         ShowMode = FlyoutShowMode.Standard,
     };
 
-    private readonly StackPanel inspector = new() { Margin = new Thickness(12), Spacing = 8 };
+    /// <summary>
+    /// Named so a test can find it. It is the one panel here that is switched
+    /// off whole — see <see cref="RefreshOwnership"/> — and there is nothing
+    /// else about it to tell it apart by.
+    /// </summary>
+    private readonly StackPanel inspector = new()
+    {
+        Name = "inspector",
+        Margin = new Thickness(12),
+        Spacing = 8,
+    };
     private readonly TextBlock status = new()
     {
         VerticalAlignment = VerticalAlignment.Center,
@@ -198,6 +208,12 @@ public sealed partial class MainWindow : Window
 
     private readonly Button undoButton = Glyph("undo", "↶", "Take back the last edit  (Ctrl+Z)");
     private readonly Button redoButton = Glyph("redo", "↷", "Put it back  (Ctrl+Shift+Z)");
+
+    /// <summary>
+    /// Held so that laying out can be switched off where it would not last: a
+    /// patch built from text is re-laid on every evaluation.
+    /// </summary>
+    private Button? tidyButton;
 
     private AssistantPanel? assistant;
     private RowDefinition? assistantRow;
@@ -406,11 +422,17 @@ public sealed partial class MainWindow : Window
         assistantRow = canvas.RowDefinitions[2];
         assistantSplitter = new GridSplitter { Background = Brushes.Transparent, Height = 5 };
 
+        // The text sits in the canvas's own row rather than under it: they are
+        // two views of one patch and only ever one of them shows, so putting
+        // them side by side would halve the room for each and invite the
+        // question ADR-0068 exists to answer — which one is being edited.
         Grid.SetRow(editor, 0);
+        Grid.SetRow(source, 0);
         Grid.SetRow(assistantSplitter, 1);
         Grid.SetRow(assistant, 2);
 
         canvas.Children.Add(editor);
+        canvas.Children.Add(source);
         canvas.Children.Add(assistantSplitter);
         canvas.Children.Add(assistant);
 
@@ -551,6 +573,11 @@ public sealed partial class MainWindow : Window
 
                 editor.Patch = built;
                 preview.Rewind();
+
+                // A preset arrives as a graph and no text describes it, so the
+                // canvas owns it until somebody applies one — ADR-0068.
+                DropSource();
+
                 showing = wanted;
             }
             catch (Exception ex)
@@ -572,9 +599,12 @@ public sealed partial class MainWindow : Window
         undoButton.Click += (_, _) => editor.Undo();
         redoButton.Click += (_, _) => editor.Redo();
 
-        var tidy = Drawn("tidy", Glyphs.Tidy(), "Lay the modules out so the patch reads left to right  (Ctrl+L)");
+        var tidy = tidyButton =
+            Drawn("tidy", Glyphs.Tidy(), "Lay the modules out so the patch reads left to right  (Ctrl+L)");
+
         tidy.Click += (_, _) => editor.Tidy();
 
+        WireSource();
         RefreshEditState();
 
         // What is done to the patch, in the order it is done: pick one, open or
@@ -590,6 +620,8 @@ public sealed partial class MainWindow : Window
         patchwork.Children.Add(undoButton);
         patchwork.Children.Add(redoButton);
         patchwork.Children.Add(tidy);
+        patchwork.Children.Add(Separator());
+        patchwork.Children.Add(codeButton);
 
         assistantButton.IsEnabled = plugins.Assistants.Count > 0;
         ToolTip.SetTip(assistantButton, plugins.Assistants.Count > 0

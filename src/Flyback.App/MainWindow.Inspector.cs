@@ -33,6 +33,54 @@ namespace Flyback.App;
 /// </remarks>
 public sealed partial class MainWindow
 {
+    /// <summary>
+    /// What the panel says with nothing selected, which is where every gesture
+    /// the canvas has is written down.
+    /// </summary>
+    /// <remarks>
+    /// Adding a module is named first because the list opens where it is asked
+    /// for, and the Output sits behind the preview so the controls stay
+    /// discoverable.
+    /// </remarks>
+    private const string Help =
+        "Right-click the canvas — or press Space — to add a module. "
+        + "Type to narrow the list, arrows to move through it, Enter to add.\n\n"
+        + "Select a module to edit its values, and double-click its "
+        + "name here to call it something else.\n\n"
+        + "Select the Output for the preview size, the renderer, "
+        + "sound, and saving a frame or a clip.\n\n"
+        + "Drag from a socket to patch it into another, or onto bare "
+        + "canvas to add a module already plugged in.\n"
+        + "Drag a connected input to unplug it and take the wire "
+        + "somewhere else.\n"
+        + "Ctrl+drag an output with one wire on it to feed that "
+        + "wire from somewhere else instead.\n"
+        + "Drag the background to select, middle-drag to pan, "
+        + "wheel to zoom.\n"
+        + "Ctrl+click adds to a selection, Ctrl+A takes everything.\n"
+        + "Ctrl+C, Ctrl+X and Ctrl+V copy, cut and paste.\n"
+        + "Ctrl+G draws a selection as one box and Ctrl+Shift+G "
+        + "puts it back; double-click a box to open it.\n"
+        + "Delete removes what is selected, Ctrl+F frames the patch.";
+
+    /// <summary>
+    /// The same, for a canvas that is a view of somebody's source rather than
+    /// the patch itself — see ADR-0068.
+    /// </summary>
+    /// <remarks>
+    /// Everything that reads is still here and everything that writes is gone,
+    /// which is exactly the difference. Naming the gestures that are switched
+    /// off would be worse than saying nothing at all: somebody following them
+    /// would conclude the program was broken.
+    /// </remarks>
+    private const string LockedHelp =
+        "The text is the document, and this is a view of what it builds. "
+        + "Press F2 to go back to it — every change to this patch is made there.\n\n"
+        + "Select a module to read its values here.\n\n"
+        + "Drag the background to select, middle-drag to pan, wheel to zoom.\n"
+        + "Ctrl+click adds to a selection, Ctrl+A takes everything.\n"
+        + "Ctrl+C copies what is selected, Ctrl+F frames the patch.";
+
     private static readonly (string Label, PixelSize Size)[] Resolutions =
     [
         ("320 x 180", new PixelSize(320, 180)),
@@ -277,6 +325,11 @@ public sealed partial class MainWindow
 
         var selected = editor.SelectedNode is { } chosen && NodeCatalog.Get(chosen.TypeId) is not null;
 
+        // What an empty panel says depends on which canvas is under it. Naming
+        // gestures that are switched off would be worse than saying nothing: a
+        // person following them would conclude the program was broken rather
+        // than that the patch belongs to the text — see ADR-0068.
+
         // Louder with nothing in front of it, faint once there are values to
         // read. A watermark that competed with a column of sliders would be a
         // decoration in the way of the thing it decorates.
@@ -286,28 +339,7 @@ public sealed partial class MainWindow
         {
             inspector.Children.Add(new TextBlock
             {
-                // Adding a module is named first because the list opens where it
-                // is asked for, and the Output sits behind the preview so the
-                // controls stay discoverable.
-                Text = "Right-click the canvas — or press Space — to add a module. "
-                     + "Type to narrow the list, arrows to move through it, Enter to add.\n\n"
-                     + "Select a module to edit its values, and double-click its "
-                     + "name here to call it something else.\n\n"
-                     + "Select the Output for the preview size, the renderer, "
-                     + "sound, and saving a frame or a clip.\n\n"
-                     + "Drag from a socket to patch it into another, or onto bare "
-                     + "canvas to add a module already plugged in.\n"
-                     + "Drag a connected input to unplug it and take the wire "
-                     + "somewhere else.\n"
-                     + "Ctrl+drag an output with one wire on it to feed that "
-                     + "wire from somewhere else instead.\n"
-                     + "Drag the background to select, middle-drag to pan, "
-                     + "wheel to zoom.\n"
-                     + "Ctrl+click adds to a selection, Ctrl+A takes everything.\n"
-                     + "Ctrl+C, Ctrl+X and Ctrl+V copy, cut and paste.\n"
-                     + "Ctrl+G draws a selection as one box and Ctrl+Shift+G "
-                     + "puts it back; double-click a box to open it.\n"
-                     + "Delete removes what is selected, Ctrl+F frames the patch.",
+                Text = editor.Locked ? LockedHelp : Help,
                 TextWrapping = TextWrapping.Wrap,
                 Opacity = 0.5,
                 FontSize = 12,

@@ -17,6 +17,7 @@ context, decision, consequences.
 | [0004](0004-visual-patch-editor-as-the-authoring-model.md) | Author patches in a visual node editor *(user-directed)* |
 | [0065](0065-a-text-language-that-parses-to-a-patch.md) | A text language, which parses to a patch *(user-directed)* |
 | [0067](0067-a-module-keeps-its-name-and-its-memory-across-a-rebuild.md) | A module keeps its name, and its memory, across a rebuild *(user-directed)* |
+| [0068](0068-the-file-that-was-opened-decides-who-owns-the-patch.md) | The file that was opened decides who owns the patch *(user-directed)* |
 
 ### The engine
 

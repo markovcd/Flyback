@@ -377,6 +377,27 @@ public sealed class NodeEditor : Control
     }
 
     /// <summary>
+    /// Whether the patch belongs to somebody else, and this is a view of it.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// A canvas showing a patch built from source (ADR-0068). Everything that
+    /// looks stays: selecting, panning, zooming, framing, copying — a locked
+    /// canvas is still how somebody reads a patch and picks the module the
+    /// inspector should be about. What goes is everything that changes it, since
+    /// the next evaluation would overwrite it and the person would have watched
+    /// their work disappear.
+    /// </para>
+    /// <para>
+    /// Gated at the gestures rather than by refusing the methods behind them.
+    /// The methods are the shell's to call — a menu, the toolbar, the assistant
+    /// — and a public method that silently did nothing would be a worse thing to
+    /// hand a caller than a button that is visibly off.
+    /// </para>
+    /// </remarks>
+    public bool Locked { get; set; }
+
+    /// <summary>
     /// The module the inspector is about — the last one the pointer named, of
     /// however many are selected. Null when nothing is.
     /// </summary>
@@ -1770,8 +1791,10 @@ public sealed class NodeEditor : Control
         if (properties.IsRightButtonPressed)
         {
             // Not over a module: a right-click there is about that module rather
-            // than about adding another one beside it.
-            if (!HitPort(graph, out _, out _, out _) && HitNode(graph) is null)
+            // than about adding another one beside it. And nowhere at all on a
+            // locked canvas, where the list would offer to place something the
+            // next evaluation would take straight back off.
+            if (!Locked && !HitPort(graph, out _, out _, out _) && HitNode(graph) is null)
                 MenuRequested?.Invoke(this, graph);
 
             return;
@@ -1785,7 +1808,10 @@ public sealed class NodeEditor : Control
         // — so one modifier serves both without either having to know.
         var ctrl = (e.KeyModifiers & (KeyModifiers.Control | KeyModifiers.Meta)) != 0;
 
-        if (HitPort(graph, out var portNode, out var portIndex, out var isOutput))
+        // A socket on a locked canvas is not a handle. Falls through to the
+        // module under it, so a press on a port still selects the module — which
+        // is what somebody reading a patch was reaching for anyway.
+        if (!Locked && HitPort(graph, out var portNode, out var portIndex, out var isOutput))
         {
             StartWire(portNode, portIndex, isOutput, lifting: ctrl, graph);
             e.Pointer.Capture(this);
@@ -2103,6 +2129,12 @@ public sealed class NodeEditor : Control
                 InvalidateVisual();
                 return;
 
+            // Pressed to select it, which a locked canvas still does, and then
+            // held — which it does not. Caught here rather than at the press so
+            // that the selection a press makes is unaffected.
+            case Drag.Node when Locked:
+                return;
+
             case Drag.Node when dragOrigins.Count > 0:
                 var delta = Held((screen - dragOrigin) / zoom, dragOrigins);
 
@@ -2311,12 +2343,15 @@ public sealed class NodeEditor : Control
                     e.Handled = true;
                     return;
 
-                case Key.X:
+                // Cut and paste change the patch, so a locked canvas has
+                // neither. Copy above does not, and stays: reading a patch and
+                // taking a piece of it elsewhere is exactly what a view is for.
+                case Key.X when !Locked:
                     Clipboard(CutSelectionAsync);
                     e.Handled = true;
                     return;
 
-                case Key.V:
+                case Key.V when !Locked:
                     Clipboard(PasteAsync);
                     e.Handled = true;
                     return;
@@ -2329,7 +2364,7 @@ public sealed class NodeEditor : Control
                 // Group and ungroup, on the letter every editor with a canvas
                 // uses for it. Shift tells them apart rather than a second key,
                 // which is the same pairing undo and redo already use.
-                case Key.G:
+                case Key.G when !Locked:
                     if ((e.KeyModifiers & KeyModifiers.Shift) != 0) UngroupSelected();
                     else GroupSelected();
 
@@ -2355,7 +2390,7 @@ public sealed class NodeEditor : Control
 
         switch (e.Key)
         {
-            case Key.Delete or Key.Back:
+            case Key.Delete or Key.Back when !Locked:
                 DeleteSelected();
                 e.Handled = true;
                 break;
@@ -2364,7 +2399,7 @@ public sealed class NodeEditor : Control
             // was, so it lands under the hand the way the right-click does —
             // and in the middle of the view when the pointer has never been
             // over the canvas at all.
-            case Key.Space:
+            case Key.Space when !Locked:
                 MenuRequested?.Invoke(
                     this,
                     lastPointer ?? ToGraph(new Point(Bounds.Width / 2, Bounds.Height / 2)));

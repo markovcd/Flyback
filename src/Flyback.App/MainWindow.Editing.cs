@@ -87,7 +87,11 @@ public sealed partial class MainWindow
     /// </summary>
     private async Task<bool> MayReplaceThePatchAsync()
     {
-        if (!editor.IsModified) return true;
+        // Typing that has not been applied is the one thing the editor's history
+        // cannot know about: nothing typed reaches the patch until somebody
+        // asks for it, so a document whose text has moved on has something to
+        // lose even where its patch has not.
+        if (!editor.IsModified && !SourceIsUnapplied) return true;
 
         // The same question is already up. Whatever asked again is refused
         // rather than queued behind the first answer: it is the same patch and
@@ -224,6 +228,16 @@ public sealed partial class MainWindow
         if (e.Key == Key.Escape && previewIsFullScreen)
         {
             ShowFullScreenPreview(false);
+            e.Handled = true;
+            return;
+        }
+
+        // Before the instrument, because F2 is not a note and never will be:
+        // the keyboard-as-instrument maps letters, and a function key is free
+        // for the shell in a way no letter is any more.
+        if (e.Key == Key.F2)
+        {
+            ShowCode(!showingCode);
             e.Handled = true;
             return;
         }
