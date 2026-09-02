@@ -1,3 +1,4 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Headless;
@@ -608,14 +609,57 @@ public class SourceViewTests : UiTest
 
         text.Text.ShouldContain("let ");
 
-        // The first line is `let scale = scale(scale: 0.99)`, and the panel is
-        // pointed at it as the view opens rather than on the first arrow key.
-        Editor(window).SelectedNode.ShouldNotBeNull().TypeId.ShouldBe("space.scale");
+        // Pointed at the first statement as the view opens, rather than waiting
+        // for the first arrow key.
+        var first = Editor(window).SelectedNode.ShouldNotBeNull();
 
         text.TextArea.Caret.Line = 4;
         Settle(window);
 
-        Editor(window).SelectedNode.ShouldNotBeNull().TypeId.ShouldBe("space.kaleidoscope");
+        // A different statement, so a different module — which line holds which
+        // is the printer's business and not this test's.
+        Editor(window).SelectedNode.ShouldNotBeNull().Id.ShouldNotBe(first.Id);
+    }
+
+    /// <summary>
+    /// The one the window actually opens on, clicked the way a person clicks.
+    /// </summary>
+    /// <remarks>
+    /// Plasma prints as one chain of five stages and not a single binding,
+    /// because the printer folds a module used once into the pipeline that uses
+    /// it. There was nothing in the text to point at, so clicking anywhere in it
+    /// selected nothing — which is the whole of what "the panel does not update"
+    /// turned out to be. A reading names every module now.
+    /// <para>
+    /// Driven by real clicks rather than by setting the caret, because setting
+    /// it is what the tests that missed this did.
+    /// </para>
+    /// </remarks>
+    [AvaloniaFact]
+    public void Clicking_any_line_of_the_opening_patch_points_the_panel()
+    {
+        var window = Open();
+        var text = ShowCode(window);
+
+        var seen = new List<string>();
+
+        for (var line = 1; line <= 5; line++)
+        {
+            var height = text.TextArea.TextView.DefaultLineHeight;
+            var inside = new Avalonia.Point(80, (line - 0.5) * height);
+
+            if (text.TextArea.TextView.TranslatePoint(inside, window) is not { } at) continue;
+
+            window.MouseDown(at, Avalonia.Input.MouseButton.Left);
+            window.MouseUp(at, Avalonia.Input.MouseButton.Left);
+            Settle(window);
+
+            seen.Add(Editor(window).SelectedNode?.TypeId ?? "<none>");
+        }
+
+        seen.ShouldNotBeEmpty();
+        seen.ShouldNotContain("<none>", "every line of a reading names a module");
+        seen.Distinct().Count().ShouldBeGreaterThan(1, "and they are not all the same one");
     }
 
     /// <summary>Picks a preset from the toolbar, which is how a patch arrives as a graph.</summary>

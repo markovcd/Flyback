@@ -141,11 +141,22 @@ anything that is not a knob — a tune, a scale, a file — has no statement for
 be set by after the module is declared.
 
 **And the caret points the panel.** A statement names a module when it declares
-one or turns one of its knobs, and the binder gives a node the name it was bound
-to — so the canvas and the text call the same thing the same thing, and clicking
-about in the source is how somebody reads a patch's values. A statement that
-names no module selects none, because a pipeline ending at the Output is about
-the patch rather than about a module.
+one or turns one of its knobs, so clicking about in the source is how somebody
+reads and turns a patch's values. A statement that names no module selects none,
+because a pipeline ending at the Output is about the patch rather than about a
+module.
+
+What it takes to work at all is a map from the text's names to the patch's
+modules, and the names on the modules are not it: a module nobody renamed has no
+name, so a patch built on the canvas is nineteen nodes called nothing while the
+printing of it is full of `rotate2` and `noise`. The printer invents those, so
+the printer hands them back.
+
+**A reading names every module**, which the printer's own parameter is for — one
+folded into the middle of a pipeline has nothing to point at. Plasma prints as a
+chain of five stages and not a single binding, so without this the patch the
+window opens on has nothing in it to click. A printing is for pointing at; a
+`.fbks` written as a copy still folds, which is what that form is for.
 
 **Nothing about `.fbk` changed.** Presets, bundles and every patch anybody has
 open behave exactly as before, which is the point of settling this by provenance

@@ -239,7 +239,16 @@ public sealed partial class MainWindow
     {
         if (source.Source.Length != 0 && source.Source != printed) return;
 
-        var writing = PatchPrinter.Written(editor.Patch);
+        // Every module named, which is what the printer's own parameter is for:
+        // one folded into the middle of a pipeline has nothing to point at, and
+        // pointing at things is the whole of what this view is for. Plasma
+        // prints as one chain of five stages and not a single binding, so
+        // without this there is nothing in it to click.
+        //
+        // Empty rather than a map of names, because the printer's own naming is
+        // better than anything this could invent — supplying the dictionary at
+        // all is what asks for the bindings.
+        var writing = PatchPrinter.Written(editor.Patch, called: new Dictionary<Guid, string>());
 
         printed = writing.Source;
         source.Source = printed;
