@@ -1,9 +1,14 @@
+using System.Xml;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
+using AvaloniaEdit;
+using AvaloniaEdit.Highlighting;
+using AvaloniaEdit.Highlighting.Xshd;
+using AvaloniaEdit.Rendering;
 using Flyback.Core.Language;
 
 namespace Flyback.App.Controls;
@@ -20,12 +25,14 @@ namespace Flyback.App.Controls;
 /// language's one entry point in one place.
 /// </para>
 /// <para>
-/// A plain <see cref="TextBox"/> rather than an editor with a gutter and
-/// highlighting. Avalonia's box has no rich text in it, so a gutter means a
-/// second control scrolled in step with a scroll viewer reached for through the
-/// template — worth having and not worth having first. What it costs is answered
-/// where it hurts: a complaint carries a line and a column
-/// (<see cref="LanguageIssue"/>), and clicking one puts the caret there.
+/// An editor rather than a text box, and it is the one place in the shell that
+/// takes a package to do its job. A gutter to mark the line a complaint is
+/// about, and colour to tell a module from the socket it is being handed, are
+/// what a surface somebody types a patch into <em>while it plays</em> needs, and
+/// a <see cref="TextBox"/> has no rich text in it at all. Avalonia's own
+/// RichTextEditor is a word processor — no highlighting, no line numbers, and a
+/// Pro licence — so this is AvalonEdit, which the Avalonia organisation ports
+/// and publishes under the same licence this program carries.
 /// </para>
 /// </remarks>
 internal sealed class SourceView : UserControl
@@ -33,20 +40,33 @@ internal sealed class SourceView : UserControl
     private static readonly FontFamily Mono =
         new("Consolas, Menlo, DejaVu Sans Mono, monospace");
 
-    private readonly TextBox text = new()
+    /// <summary>
+    /// The language, coloured — see <c>Flyback.xshd</c> beside this file.
+    /// </summary>
+    /// <remarks>
+    /// Loaded once and shared, because a highlighting definition is immutable
+    /// and reading the same XML per editor would be work done for nothing. Null
+    /// if it will not load at all, which leaves plain text rather than taking
+    /// the window down over a colour scheme.
+    /// </remarks>
+    private static readonly IHighlightingDefinition? Language = LoadHighlighting();
+
+    private readonly TextEditor text = new()
     {
-        AcceptsReturn = true,
-        AcceptsTab = true,
+        Name = "source",
         FontFamily = Mono,
         FontSize = 13,
-        Name = "source",
-        TextWrapping = TextWrapping.NoWrap,
+        ShowLineNumbers = true,
+        WordWrap = false,
         Background = new SolidColorBrush(Colors.Canvas),
         Foreground = new SolidColorBrush(Colors.Label),
         BorderThickness = new Thickness(0),
-        Padding = new Thickness(12, 10),
-        VerticalContentAlignment = VerticalAlignment.Top,
+        Padding = new Thickness(6, 8),
+        SyntaxHighlighting = Language,
     };
+
+    /// <summary>The lines a build complained about, drawn behind the text.</summary>
+    private readonly Complaints marked = new();
 
     /// <summary>
     /// What the shell has to say about who owns this text, shown above it.
@@ -86,13 +106,26 @@ internal sealed class SourceView : UserControl
     {
         complaintsScroll.Content = complaints;
 
-        // Enter belongs to the text box, so the gesture that applies a patch has
-        // to be one the box does not want. Ctrl+Enter is what every live coding
-        // environment uses for exactly this, and it is free here for the same
-        // reason it is free there.
+        text.TextArea.TextView.BackgroundRenderers.Add(marked);
+        text.TextArea.TextView.LinkTextForegroundBrush = new SolidColorBrush(Colors.Feedback);
+
+        // The gutter and the line the caret is on, in the shell's own colours
+        // rather than the theme's: this sits where the canvas sits and should
+        // not read as a different program.
+        text.LineNumbersForeground = new SolidColorBrush(Colors.Inactive);
+        text.TextArea.TextView.CurrentLineBackground = new SolidColorBrush(Colors.Node);
+        text.TextArea.TextView.CurrentLineBorder = null;
+        text.Options.HighlightCurrentLine = true;
+        text.Options.ConvertTabsToSpaces = true;
+        text.Options.IndentationSize = 2;
+
+        // Enter belongs to the editor, so the gesture that applies a patch has
+        // to be one the editor does not want. Ctrl+Enter is what every live
+        // coding environment uses for exactly this, and it is free here for the
+        // same reason it is free there.
         //
         // Caught on the way down rather than on the way up, which is the whole
-        // of whether this works: a TextBox that takes newlines handles Enter in
+        // of whether this works: an editor that takes newlines handles Enter in
         // its own class handler and marks it dealt with, and a handler added the
         // ordinary way is never reached. Tunnelling gets there first.
         text.AddHandler(KeyDownEvent, Applied, RoutingStrategies.Tunnel);
@@ -179,11 +212,12 @@ internal sealed class SourceView : UserControl
         set => text.IsReadOnly = !value;
     }
 
-    public void Focus() => text.Focus();
+    public void Focus() => text.TextArea.Focus();
 
     /// <summary>
     /// Shows what a build made of this text: every complaint against the line it
-    /// is about, or a word about what was applied when there are none.
+    /// is about, in the gutter and in a list under it, or a word about what was
+    /// applied when there are none.
     /// </summary>
     /// <remarks>
     /// A failed build says so and changes nothing else. Whatever is playing goes
@@ -199,6 +233,9 @@ internal sealed class SourceView : UserControl
 
         complaintsScroll.IsVisible = load.Issues.Count > 0;
 
+        marked.Lines = [.. load.Issues.Select(issue => issue.Line)];
+        text.TextArea.TextView.InvalidateLayer(KnownLayer.Background);
+
         Say(load.Ok
             ? applied
             : $"{load.Issues.Count} thing(s) to fix. The patch that was playing is untouched.");
@@ -211,6 +248,10 @@ internal sealed class SourceView : UserControl
     {
         complaints.Children.Clear();
         complaintsScroll.IsVisible = false;
+
+        marked.Lines = [];
+        text.TextArea.TextView.InvalidateLayer(KnownLayer.Background);
+
         Say(null);
         footer.Foreground = new SolidColorBrush(Colors.Inactive);
     }
@@ -243,33 +284,85 @@ internal sealed class SourceView : UserControl
 
         ToolTip.SetTip(row, "Go to it.");
 
-        row.Click += (_, _) =>
-        {
-            text.CaretIndex = Offset(Source, issue.Line, issue.Column);
-            text.Focus();
-        };
+        row.Click += (_, _) => GoTo(issue);
 
         return row;
     }
 
     /// <summary>
-    /// Where a line and a column land in the text, counting from one as an
-    /// editor does and clamped to the end for a complaint about a line that is
-    /// no longer there.
+    /// Puts the caret where a complaint is about, clamped to a document that may
+    /// have been typed into since the build that produced it.
     /// </summary>
-    private static int Offset(string source, int line, int column)
+    private void GoTo(LanguageIssue issue)
     {
-        var at = 0;
+        var document = text.Document;
 
-        for (var n = 1; n < line; n++)
+        if (document is null || document.LineCount == 0) return;
+
+        var line = document.GetLineByNumber(Math.Clamp(issue.Line, 1, document.LineCount));
+        var column = Math.Clamp(issue.Column, 1, line.Length + 1);
+
+        text.TextArea.Caret.Line = line.LineNumber;
+        text.TextArea.Caret.Column = column;
+        text.TextArea.Caret.BringCaretToView();
+        text.TextArea.Focus();
+    }
+
+    /// <summary>The language's colours, or null where they would not load.</summary>
+    private static IHighlightingDefinition? LoadHighlighting()
+    {
+        try
         {
-            var next = source.IndexOf('\n', at);
+            using var stream = typeof(SourceView).Assembly
+                .GetManifestResourceStream("Flyback.App.Controls.Flyback.xshd");
 
-            if (next < 0) return source.Length;
+            if (stream is null) return null;
 
-            at = next + 1;
+            using var reader = XmlReader.Create(stream);
+
+            return HighlightingLoader.Load(reader, HighlightingManager.Instance);
         }
+        catch (Exception)
+        {
+            // Plain text rather than no window. Nothing here is load-bearing:
+            // the language reads the same either way.
+            return null;
+        }
+    }
 
-        return Math.Min(at + Math.Max(column - 1, 0), source.Length);
+    /// <summary>
+    /// Paints the lines a build complained about.
+    /// </summary>
+    /// <remarks>
+    /// A background rather than a squiggle under the exact column, and the
+    /// reason is that a complaint is usually about a line: one mistake stops a
+    /// statement being read, so what follows is a run of complaints about names
+    /// that statement was going to make. A whole line lit is the honest width of
+    /// that, and the column is still in the list underneath.
+    /// </remarks>
+    private sealed class Complaints : IBackgroundRenderer
+    {
+        private readonly IBrush wash = new SolidColorBrush(Colors.Sink, 0.16);
+
+        public IReadOnlyList<int> Lines { get; set; } = [];
+
+        public KnownLayer Layer => KnownLayer.Background;
+
+        public void Draw(TextView view, DrawingContext context)
+        {
+            if (Lines.Count == 0 || view.Document is null) return;
+
+            view.EnsureVisualLines();
+
+            foreach (var number in Lines)
+            {
+                if (number < 1 || number > view.Document.LineCount) continue;
+
+                var line = view.Document.GetLineByNumber(number);
+
+                foreach (var piece in BackgroundGeometryBuilder.GetRectsForSegment(view, line))
+                    context.FillRectangle(wash, new Rect(piece.X, piece.Y, view.Bounds.Width, piece.Height));
+            }
+        }
     }
 }

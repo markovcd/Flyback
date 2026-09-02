@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!--
+  The Flyback language, coloured. Written by hand rather than taken from a
+  grammar registry, because no registry has heard of this language and one of
+  these has to be written either way — see docs/language.md and ADR-0065.
+
+  The colours are the shell's own (Controls/Colors.cs) so the code view reads as
+  part of the program rather than as an editor bolted into it. What each one
+  means is the same thing it means on the canvas wherever there is a
+  correspondence: a socket name is the pale label a socket carries on a node,
+  and the Output is the sink's red.
+-->
+<SyntaxDefinition name="Flyback" xmlns="http://icsharpcode.net/sharpdevelop/syntaxdefinition/2008">
+
+  <Color name="Comment"  foreground="#6C7482" />
+  <Color name="Keyword"  foreground="#3FC8C8" fontWeight="bold" />
+  <Color name="Pipe"     foreground="#E06AB8" fontWeight="bold" />
+  <Color name="Sink"     foreground="#E05A5A" />
+  <Color name="Domain"   foreground="#4A9EDE" />
+  <Color name="Socket"   foreground="#A8CE52" />
+  <Color name="Module"   foreground="#B484E0" />
+  <Color name="Number"   foreground="#E0A84A" />
+  <Color name="Text"     foreground="#4FC387" />
+
+  <RuleSet ignoreCase="false">
+
+    <Span color="Comment" begin="#" />
+
+    <!-- The one string the language has, which names a file. -->
+    <Span color="Text" begin="&quot;" end="&quot;" />
+
+    <Keywords color="Keyword">
+      <Word>let</Word>
+      <Word>def</Word>
+      <Word>group</Word>
+    </Keywords>
+
+    <!--
+      The domains. They are not modules and are not spelled like them: x, y and
+      t are the three things a patch is read across, and colouring them as
+      sources is what makes a line that never moves visible at a glance.
+    -->
+    <Keywords color="Domain">
+      <Word>t</Word>
+      <Word>x</Word>
+      <Word>y</Word>
+      <Word>radius</Word>
+      <Word>angle</Word>
+    </Keywords>
+
+    <!-- The Output, which every patch has exactly one of. -->
+    <Rule color="Sink">\bout\s*\.\s*\w+</Rule>
+
+    <!-- A named argument, which is a socket on the module being called. -->
+    <Rule color="Socket">\b[A-Za-z_]\w*\s*(?=:)</Rule>
+
+    <!--
+      Anything being called, which is a module or a def and is deliberately not
+      told apart from one: both are a stage in a pipeline and both read as one.
+      Matched by the bracket after the name rather than against the catalogue,
+      because a plugin's modules are usable the moment it loads and a list here
+      would be one more thing that could go stale — the same reason the binder
+      reads the catalogue rather than a table (ADR-0065).
+    -->
+    <Rule color="Module">\b[A-Za-z_]\w*(?=\s*\()</Rule>
+
+    <!-- The pipe, the back-wire, and the range that fills two sockets at once. -->
+    <Rule color="Pipe">\|&gt;|&lt;-|\.\.</Rule>
+
+    <Rule color="Number">\b\d+(\.\d+)?\b</Rule>
+
+  </RuleSet>
+
+</SyntaxDefinition>

@@ -3,6 +3,7 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Threading;
+using AvaloniaEdit;
 using Flyback.App.Controls;
 using Shouldly;
 
@@ -42,8 +43,8 @@ public class SourceViewTests : UiTest
     private static ToggleButton CodeButton(MainWindow window) =>
         All<ToggleButton>(window).Single(b => b.Name == "code");
 
-    private static TextBox Text(MainWindow window) =>
-        All<TextBox>(window).Single(b => b.Name == "source");
+    private static TextEditor Text(MainWindow window) =>
+        All<TextEditor>(window).Single(b => b.Name == "source");
 
     private static Button Apply(MainWindow window) =>
         All<Button>(window).Single(b => b.Name == "apply");
@@ -52,7 +53,7 @@ public class SourceViewTests : UiTest
         All<StackPanel>(window).Single(p => p.Name == "inspector");
 
     /// <summary>Shows the text view and lets the layout catch up.</summary>
-    private static TextBox ShowCode(MainWindow window)
+    private static TextEditor ShowCode(MainWindow window)
     {
         CodeButton(window).IsChecked = true;
         Settle(window);
@@ -70,7 +71,7 @@ public class SourceViewTests : UiTest
     }
 
     /// <summary>Presses Enter at the text box, with whatever is being held.</summary>
-    private static void Press(TextBox text, Avalonia.Input.KeyModifiers held) =>
+    private static void Press(TextEditor text, Avalonia.Input.KeyModifiers held) =>
         text.RaiseEvent(new Avalonia.Input.KeyEventArgs
         {
             RoutedEvent = Avalonia.Input.InputElement.KeyDownEvent,
@@ -148,6 +149,44 @@ public class SourceViewTests : UiTest
         Settle(window);
 
         ShowCode(window).Text.ShouldBe(Hum);
+    }
+
+    /// <summary>
+    /// The editor is a code editor rather than a box with text in it: a gutter
+    /// to say which line a complaint is about, and the language coloured so a
+    /// module reads differently from the socket it is being handed. Neither can
+    /// be had from a TextBox, which is why this costs a package.
+    /// </summary>
+    [AvaloniaFact]
+    public void The_text_is_shown_as_code()
+    {
+        var window = Open();
+        var text = ShowCode(window);
+
+        text.ShowLineNumbers.ShouldBeTrue();
+
+        text.SyntaxHighlighting.ShouldNotBeNull("the language's own definition should have loaded")
+            .Name.ShouldBe("Flyback");
+    }
+
+    /// <summary>
+    /// And the definition covers what the language actually has. Written by hand
+    /// against docs/language.md, so this is what stops it drifting from the
+    /// eight statement forms it is colouring.
+    /// </summary>
+    [AvaloniaFact]
+    public void The_language_definition_names_the_words_the_language_has()
+    {
+        var window = Open();
+        var colours = ShowCode(window).SyntaxHighlighting.ShouldNotBeNull();
+
+        var named = colours.NamedHighlightingColors.Select(colour => colour.Name).ToList();
+
+        named.ShouldContain("Comment");
+        named.ShouldContain("Keyword");
+        named.ShouldContain("Pipe");
+        named.ShouldContain("Sink");
+        named.ShouldContain("Socket");
     }
 
     // --- applying it --------------------------------------------------------

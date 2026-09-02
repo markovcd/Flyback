@@ -128,8 +128,27 @@ rather than by format. This is a strict subset of making text primary: if that
 turns out to be where this should end up, what is here is widened rather than
 undone.
 
-**The text view is a TextBox.** No gutter, no highlighting: Avalonia's box has
-no rich text in it, so a gutter means a second control scrolled in step with a
-scroll viewer reached for through the template. Worth having, and not worth
-having first — the cost is answered where it hurts, which is that a complaint
-carries a line and a column and clicking it goes there.
+**The shell takes a package, which it had not done before.** A `TextBox` has no
+rich text in it at all, so a gutter would mean a second control scrolled in step
+with a scroll viewer reached for through the template, and highlighting would
+mean nothing. Avalonia's own `RichTextEditor` is the wrong shape — a word
+processor with RTF and DOCX serialisation, no syntax highlighting, no line
+numbers, and a Pro licence besides. So the editor is
+[AvaloniaEdit](https://github.com/AvaloniaUI/AvaloniaEdit), which the Avalonia
+organisation ports and publishes under the same licence this program carries,
+version-matched to the Avalonia already here.
+
+ADR-0019's rule is the *engine's* and `Flyback.Core` still answers to it; this
+is the shell, which already carries Avalonia, Skia and a font. What it buys: a
+gutter with line numbers, the complained-about lines washed in the Output's own
+red, the current line marked, and the language coloured.
+
+**The colours are written by hand, against `docs/language.md`.** No grammar
+registry has heard of this language, so TextMate would have meant a second
+package and a definition to write anyway. `Flyback.xshd` sits beside the control
+and uses the shell's own palette, so a socket name in the text is the pale green
+a socket carries on a node and the Output is the sink's red. A call is coloured
+by the bracket after it rather than by looking the name up, because a plugin's
+modules are usable the moment it loads and a list here would be one more thing
+that could go stale — the same reason the binder reads the catalogue rather than
+a table.
