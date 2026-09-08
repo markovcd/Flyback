@@ -1,7 +1,8 @@
 # ADR-0068: The file that was opened decides who owns the patch
 
 **Status:** Accepted · 2026-09-02 · *user-directed* · the code view;
-implemented in `Controls/SourceView.cs` and `MainWindow.Source.cs`; rests on
+implemented in `Controls/SourceView.cs`, `MainWindow.Source.cs` and
+`Language/SourceMap.cs`; rests on
 [0065](0065-a-text-language-that-parses-to-a-patch.md) and
 [0067](0067-a-module-keeps-its-name-and-its-memory-across-a-rebuild.md); does
 not disturb [0004](0004-visual-patch-editor-as-the-authoring-model.md)
@@ -95,6 +96,47 @@ gets its own list. Naming gestures that do not work would have somebody follow
 them and conclude the program was broken rather than that the patch belongs to
 the text.
 
+**The caret points the panel, by position and not by name.** A module is what
+the words under the caret are: the innermost call containing it, or — where the
+caret is on a binding's own name — the module that binding names, which is the
+last stage of its pipeline. So clicking about in the code selects on the canvas
+and fills the inspector, exactly as clicking a module does.
+
+By position because the text people write does not name everything in it. The
+printer folds a module used once into the pipeline that uses it, so
+`atan2(a: 1.5) |> out.left` is a whole patch in which no module is called
+anything. Pointing by name would mean giving every module a binding first —
+rewriting somebody's file, or making printings verbose, to answer a question
+about where the caret is. What the two ends record instead is where each module
+was written: `Binder` notes it as it builds, `PatchPrinter` as it writes, and
+`SourceMap` turns a line and a column into an offset and a span by reading the
+text again.
+
+**The inspector stays live on a locked canvas, and knobs are written back where
+the code already says them.** A knob turned there is heard at once — that is the
+point of turning one while a patch plays — and on the way up from the gesture the
+number in the file is changed in place: `atan2(a: 1.5524476)` becomes
+`atan2(a: 2)`. A knob sitting at its default is written nowhere, so it is added
+to the call that placed the module rather than said again lower down, which would
+leave the file asserting two values for one socket with the older one still
+written above. The Output is the exception and takes `out.left = 0.6`, because
+nothing places it.
+
+On the release rather than on every frame: a drag is one gesture and should be
+one edit, not a hundred things to undo and a line flickering under whoever is
+reading it. Nothing is rebuilt — the patch already has the value and the engine
+already has the patch, and building here would replace the patch under the very
+control being dragged.
+
+**What is not a knob stays the text's.** The buttons that group, ungroup and
+delete are not offered on a locked canvas, the title does not rename, and the
+editors for a tune, a scale or a file are shown and not turned. A knob has a
+number in the file to change; none of those has, and a control that quietly lost
+what it was given at the next apply would be worse than one that is visibly off.
+Where a knob cannot be written either — a module stamped out of a `def` more than
+once, or a value written as `1 / 12` — it is said in the status bar rather than
+dropped quietly.
+
 **Saving follows ownership too.** A source-owned document written as `.fbks`
 writes the text itself — comments, names and `def`s — and is a save like any
 other: it takes the name in the title bar and answers the unsaved question. A
@@ -126,11 +168,19 @@ or taking a printing of the canvas is a new document rather than an edit, so
 Ctrl+Z cannot reach back into the text of something else that was open earlier.
 Folding the lines is an edit and one press takes it back.
 
-**The inspector goes dim rather than away.** A knob turned there would be wiped
-by the next evaluation, and a value nobody can read is worse than one nobody can
-turn. Turning knobs from a locked canvas — writing the value back into its
-`name.port = 0.6` line, which the language already has a statement for — is the
-obvious next thing and is not here.
+**A printing is now something to click as well as something to read**, and it
+did not have to be renamed to become one. What the printer hands back beside the
+text is the modules whose calls stand in it, in the order it wrote them; the
+text is read back, and the calls a parser finds line up against that list. So
+nothing counts characters — folding the long lines may move whatever it likes —
+and a printing a knob has been written into is mapped again from the same list
+rather than printed afresh, which would replace what somebody is reading in order
+to say a thing the text already says.
+
+**A printing stops being mapped the moment somebody types into it.** It is then
+text about a patch that may no longer be there, and the honest answer is to point
+at nothing rather than at whatever used to be under the caret. The guard is that
+the number of calls still matches.
 
 **Nothing about `.fbk` changed.** Presets, bundles and every patch anybody has
 open behave exactly as before, which is the point of settling this by provenance

@@ -134,6 +134,11 @@ internal sealed class SourceView : UserControl
         // and nothing else here would notice.
         text.TextChanged += (_, _) => Changed?.Invoke(this, EventArgs.Empty);
 
+        // Every move, because what listens works in offsets and a statement is
+        // no longer the unit: four modules can share one line, and the caret
+        // stepping from one to the next is a different module each time.
+        text.TextArea.Caret.PositionChanged += (_, _) => Moved?.Invoke(this, Caret);
+
         var apply = new Button
         {
             Content = "Apply  Ctrl+↵",
@@ -190,6 +195,43 @@ internal sealed class SourceView : UserControl
 
     /// <summary>The text has changed, so what can be taken back has too.</summary>
     public event EventHandler? Changed;
+
+    /// <summary>The caret has moved, carrying where in the text it now is.</summary>
+    /// <remarks>
+    /// What listens is the inspector, by way of the map that says which module
+    /// the text at an offset is. An offset rather than a line, because a line is
+    /// not the unit: <c>mul(a: sine(), b: saw())</c> is three modules on one of
+    /// them and the caret picks between them by where it stands.
+    /// </remarks>
+    public event EventHandler<int>? Moved;
+
+    /// <summary>Where the caret is, as an offset into the text.</summary>
+    public int Caret => text.TextArea.Caret.Offset;
+
+    /// <summary>
+    /// Puts <paramref name="change"/> into the text, leaving everything else
+    /// exactly as it was.
+    /// </summary>
+    /// <remarks>
+    /// Through the document rather than by assigning the text: a document
+    /// replaced empties the undo stack, moves the caret to the top and scrolls
+    /// away from whatever somebody was reading. A span replaced is one thing to
+    /// take back and is not felt anywhere else on the page.
+    /// </remarks>
+    /// <returns>Whether the text now says something it did not say before.</returns>
+    public bool Apply(Change change)
+    {
+        if (text.Document is not { } document) return false;
+        if (change.Offset < 0 || change.Offset + change.Length > document.TextLength) return false;
+
+        // A knob put back where it already was is not an edit, and recording one
+        // would put a step on the undo stack that undoes nothing.
+        if (document.GetText(change.Offset, change.Length) == change.Text) return false;
+
+        document.Replace(change.Offset, change.Length, change.Text);
+
+        return true;
+    }
 
     public bool CanUndo => text.CanUndo;
 

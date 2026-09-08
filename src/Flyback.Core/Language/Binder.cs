@@ -30,6 +30,21 @@ public sealed class Binder
     private readonly Dictionary<string, DefStatement> defs = new(StringComparer.Ordinal);
     private readonly HashSet<string> expanding = new(StringComparer.Ordinal);
 
+    /// <summary>Every place the text names a module, in the order it names them.</summary>
+    private readonly List<(Site Where, Guid Node)> mentions = [];
+
+    /// <summary>The call that placed each module, which is where a knob is added.</summary>
+    private readonly Dictionary<Guid, Site> calls = [];
+
+    /// <summary>Where the file writes each knob it sets, for the ones it sets.</summary>
+    private readonly Dictionary<(Guid Node, int Port), Site?> knobs = [];
+
+    /// <summary>Modules a statement is about, rather than mentions inside one.</summary>
+    private readonly HashSet<Guid> bound = [];
+
+    /// <summary>What the text calls each module it has a word for.</summary>
+    private readonly Dictionary<Guid, string> named = [];
+
     private Guid coordinates;
     private Guid clock;
 
@@ -80,6 +95,17 @@ public sealed class Binder
         }
     }
 
+    /// <summary>
+    /// Where the text says each of the things it built, for a caret that has to
+    /// name a module and a knob that has to be written back.
+    /// </summary>
+    /// <remarks>
+    /// Only the binder can say this. The text is read into a patch and the patch
+    /// carries nothing about the file it came from, so what points from one to
+    /// the other is what was noted on the way through.
+    /// </remarks>
+    public SourceMap Map(string source) => new(source, mentions, calls, knobs, named, bound);
+
     /// <summary>The patch these statements describe, laid out and ready to compile.</summary>
     public Patch Build(IReadOnlyList<Statement> statements)
     {
@@ -87,6 +113,10 @@ public sealed class Binder
         // Output is the one module every patch has and the one every rebuild
         // must recognise as the same one.
         patch.EnsureOutput(modules, Identity("out"));
+
+        // The one module nothing places, so the one whose knobs can only ever be
+        // written as a statement of their own.
+        named[patch.Output.Id] = "out";
 
         var scope = new Scope(null);
 
@@ -105,7 +135,13 @@ public sealed class Binder
     private abstract record Value;
 
     /// <summary>A number, which becomes a knob rather than a module.</summary>
-    private sealed record Figure(double Amount, NumberStyle Style) : Value;
+    /// <param name="Where">
+    /// Where the file writes it, so that the knob can be changed in the place the
+    /// text already says it. Null for a number no single figure stands for —
+    /// <c>1/12</c> is one knob and two numbers, and there is nothing there to put
+    /// another in place of.
+    /// </param>
+    private sealed record Figure(double Amount, NumberStyle Style, Site? Where = null) : Value;
 
     /// <summary>A placed module, standing for every one of its outputs at once.</summary>
     private sealed record Placed(Guid Id, NodeDef Def) : Value;
@@ -192,10 +228,13 @@ public sealed class Binder
                 break;
 
             case LetStatement let:
-                if (Bind(let.Value, scope) is { } bound)
+                if (Bind(let.Value, scope) is { } value)
                 {
-                    Label(bound, let.Name);
-                    scope.Set(let.Name, bound);
+                    Label(value, let.Name);
+                    scope.Set(let.Name, value);
+                    Owns(value);
+
+                    if (value is Placed placed) named.TryAdd(placed.Id, let.Name);
                 }
 
                 break;
@@ -205,7 +244,7 @@ public sealed class Binder
                 break;
 
             case PipelineStatement pipeline:
-                Bind(pipeline.Value, scope);
+                Owns(Bind(pipeline.Value, scope));
                 break;
 
             case KnobStatement knob:
@@ -280,6 +319,35 @@ public sealed class Binder
         if (NodeCatalog.IsSink(node.TypeId)) return;
 
         node.Rename(placed.Def, name);
+    }
+
+    /// <summary>
+    /// Marks a module as the one its statement is about, so that a caret
+    /// anywhere in the statement points at it.
+    /// </summary>
+    /// <remarks>
+    /// The last stage of a pipeline, because that is the one the statement
+    /// names: <c>let hum = t |&gt; sine(...) |&gt; gain(...)</c> is a Gain called
+    /// hum, and the Sine before it is called nothing at all. What
+    /// <see cref="Bind"/> hands back is that last stage by construction.
+    /// </remarks>
+    private void Owns(Value? value)
+    {
+        if (value is Placed placed) bound.Add(placed.Id);
+        else if (value is Socket socket) bound.Add(socket.Id);
+    }
+
+    /// <summary>Notes that <paramref name="expr"/> is a word naming a module.</summary>
+    private void Mention(Expr expr, Value value)
+    {
+        var id = value switch
+        {
+            Placed placed => placed.Id,
+            Socket socket => socket.Id,
+            _ => Guid.Empty,
+        };
+
+        if (id != Guid.Empty) mentions.Add((new Site(expr.Line, expr.Column), id));
     }
 
     private void Destructure(LetTupleStatement statement, Scope scope)
@@ -358,7 +426,7 @@ public sealed class Binder
 
     private Value? Bind(Expr expr, Scope scope) => expr switch
     {
-        NumberExpr number => new Figure(number.Value, number.Style),
+        NumberExpr number => new Figure(number.Value, number.Style, new Site(number.Line, number.Column)),
         TextExpr text => new Named(text.Value),
         NegateExpr negate => Negate(negate, scope),
         BinaryExpr binary => Arithmetic(binary, scope),
@@ -379,7 +447,10 @@ public sealed class Binder
     {
         if (Bind(expr.Value, scope) is not { } value) return null;
 
-        if (value is Figure figure) return figure with { Amount = -figure.Amount };
+        // From the minus rather than from the digits, because the sign is part of
+        // the number as far as anything rewriting it is concerned.
+        if (value is Figure figure)
+            return figure with { Amount = -figure.Amount, Where = new Site(expr.Line, expr.Column) };
 
         return Module("math.neg", expr.Line, expr.Column) is { } def
             ? Place(def, [(0, value)], expr.Line, expr.Column)
@@ -449,6 +520,10 @@ public sealed class Binder
 
         if (scope.Find(expr.Name) is not { } value)
             return Refuse(expr.Line, expr.Column, $"nothing here is called '{expr.Name}'.");
+
+        // Reading a name is naming the module, so the word is somewhere to click
+        // even though nothing is placed here.
+        Mention(expr, value);
 
         if (expr.Port is null) return value;
 
@@ -639,9 +714,20 @@ public sealed class Binder
 
         var node = Place(def, [.. piping, .. wiring], expr.Line, expr.Column);
 
-        if (node is Placed made && patch.Find(made.Id) is { } instance)
-            foreach (var (owner, field, written) in fields)
-                Apply(instance, owner, field, written);
+        if (node is Placed made)
+        {
+            // Where this module stands in the file. The call rather than the
+            // binding, because a call is what a module is: four of them on one
+            // line are four modules to point at.
+            var site = new Site(expr.Line, expr.Column);
+
+            calls[made.Id] = site;
+            mentions.Add((site, made.Id));
+
+            if (patch.Find(made.Id) is { } instance)
+                foreach (var (owner, field, written) in fields)
+                    Apply(instance, owner, field, written);
+        }
 
         foreach (var (path, line, column) in paths) File(node, def, path, line, column);
         if (expr.Block is { } block) Carry(node, def, block, expr.Line, expr.Column);
@@ -814,6 +900,10 @@ public sealed class Binder
         }
 
         node.InputValues[port] = (float)figure.Amount;
+
+        // Only once a knob has actually been set, so that a refused number is
+        // not offered as a place to write another one into.
+        knobs[(node.Id, port)] = figure.Where;
     }
 
     /// <summary>A number as it was written, for saying it back in a complaint.</summary>
@@ -1162,7 +1252,14 @@ public sealed class Binder
 
         var port = Find(def.Inputs, target.Port);
 
-        if (port >= 0) return (node, def, port);
+        if (port >= 0)
+        {
+            // 'out.left' is the Output named, and the Output is a module with a
+            // panel of its own — so the words are somewhere to click as well.
+            mentions.Add((new Site(target.Line, target.Column), node.Id));
+
+            return (node, def, port);
+        }
 
         Complain(target.Line, target.Column,
             $"'{def.Name}' has no socket called '{target.Port}'. It has {List(def.Inputs)}.");

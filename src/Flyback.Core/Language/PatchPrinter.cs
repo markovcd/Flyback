@@ -4,6 +4,21 @@ using Flyback.Core.Graph;
 
 namespace Flyback.Core.Language;
 
+/// <summary>A patch as text, and where in that text each of its modules stands.</summary>
+/// <remarks>
+/// The map is what makes a printing something to click about rather than only
+/// something to read: it says which module the words under a caret are, and
+/// where a knob's number is written. Nothing has to be renamed for it, because
+/// what it holds is positions — a module folded into the middle of a pipeline is
+/// called nothing and is pointed at all the same.
+/// </remarks>
+/// <param name="Order">
+/// The modules whose calls stand in the text, from the first word to the last.
+/// Kept so that a printing a knob has been written into can be mapped again
+/// without printing it afresh — see <see cref="PatchPrinter.Locate"/>.
+/// </param>
+public sealed record Printing(string Source, SourceMap Map, IReadOnlyList<Guid> Order);
+
 /// <summary>
 /// A patch written back out as source. The lossy direction, deliberately.
 /// </summary>
@@ -24,6 +39,19 @@ public static class PatchPrinter
     /// <summary>What a node is worth to the reader, and how it is written.</summary>
     private sealed record Plan(Dictionary<Guid, string> Names, HashSet<Guid> Bound, Guid Coord, Guid Clock);
 
+    /// <summary>One piece of written text, and the modules whose calls it contains.</summary>
+    /// <remarks>
+    /// In the order they are written, which is what lets them be lined up
+    /// afterwards with the calls a reader — or a parser — finds in the finished
+    /// text. Only the order has to survive, so nothing here counts characters:
+    /// folding the long lines moves every offset and leaves the order alone.
+    /// </remarks>
+    private readonly record struct Part(string Text, IReadOnlyList<Guid> Calls)
+    {
+        /// <summary>Text that names no module — a bare word, or a blank line.</summary>
+        public static Part Of(string text) => new(text, []);
+    }
+
     /// <summary>
     /// The patch as source, against <paramref name="against"/> or the installed
     /// catalogue.
@@ -38,13 +66,242 @@ public static class PatchPrinter
     public static string Print(
         Patch patch,
         ModuleCatalog? against = null,
+        IReadOnlyDictionary<Guid, string>? called = null) =>
+        Written(patch, against, called).Source;
+
+    /// <summary>The same, with where in the text each module ended up.</summary>
+    public static Printing Written(
+        Patch patch,
+        ModuleCatalog? against = null,
         IReadOnlyDictionary<Guid, string>? called = null)
     {
         var modules = against ?? NodeCatalog.Current;
         var plan = Prepare(patch, modules, called);
         var state = new Writer(patch, modules, plan);
+        var (source, order) = state.Run();
 
-        return state.Run();
+        return new Printing(source, Located(source, patch, modules, plan, order), order);
+    }
+
+    /// <summary>
+    /// Where each module stands in a printing that has been written into since.
+    /// </summary>
+    /// <remarks>
+    /// A knob turned in the panel changes a number in the text, which moves
+    /// every offset after it and leaves the calls exactly where they were in the
+    /// order. So the same list lines up against the edited text and the map is
+    /// made again without printing the patch afresh — which would replace what
+    /// somebody is reading to say a thing the text already says.
+    /// <para>
+    /// The count is the guard. Text that has grown or lost a call is no longer
+    /// this printing, and what comes back points at nothing rather than at the
+    /// module that used to be there.
+    /// </para>
+    /// </remarks>
+    public static SourceMap Locate(
+        Patch patch,
+        string source,
+        IReadOnlyList<Guid> order,
+        ModuleCatalog? against = null)
+    {
+        var modules = against ?? NodeCatalog.Current;
+
+        return Located(source, patch, modules, Prepare(patch, modules, null), order);
+    }
+
+    /// <summary>
+    /// How a knob is written, so that a value put into a source file is spelled
+    /// the way a printing spells one.
+    /// </summary>
+    /// <remarks>
+    /// A note by its name and a length of time by the time it means, because
+    /// those are the sockets where the number is not what it means — writing the
+    /// raw figure would leave a diff on every value anybody touched.
+    /// </remarks>
+    public static string Knob(float value, PortDisplay display) => Writer.Value(value, display);
+
+    /// <summary>
+    /// Where each module ended up in the text that was just written.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The text is read back to find out. The writer knows the order it wrote
+    /// the calls in and the parser knows where the calls are, and a printing is
+    /// exactly as many calls as the writer emitted — so lining the two lists up
+    /// gives every module its place, including the ones written with no name at
+    /// all. Reading back also means the folding pass can move whatever it likes:
+    /// nothing here counted a character.
+    /// </para>
+    /// <para>
+    /// A printing that will not parse is a fault in the printer rather than in
+    /// anybody's file, and the honest answer to it is a map that points at
+    /// nothing rather than one that points at the wrong things.
+    /// </para>
+    /// </remarks>
+    private static SourceMap Located(
+        string source,
+        Patch patch,
+        ModuleCatalog modules,
+        Plan plan,
+        IReadOnlyList<Guid> order)
+    {
+        var issues = new List<LanguageIssue>();
+        var read = new Parser(Lexer.Statements(Lexer.Scan(source, issues)), issues).Parse();
+
+        if (issues.Count > 0) return SourceMap.Empty;
+
+        var written = new List<CallExpr>();
+        var mentioned = new List<NameExpr>();
+        var turns = new List<KnobStatement>();
+        var principals = new List<CallExpr>();
+
+        foreach (var statement in read) Gather(statement, written, mentioned, turns, principals);
+
+        written.Sort((a, b) => a.Line == b.Line ? a.Column - b.Column : a.Line - b.Line);
+
+        if (written.Count != order.Count) return SourceMap.Empty;
+
+        var mentions = new List<(Site Where, Guid Node)>();
+        var calls = new Dictionary<Guid, Site>();
+        var knobs = new Dictionary<(Guid Node, int Port), Site?>();
+        var placed = new Dictionary<CallExpr, Guid>();
+        var sink = patch.Nodes.FirstOrDefault(n => NodeCatalog.IsSink(n.TypeId));
+
+        for (var i = 0; i < written.Count; i++)
+        {
+            var call = written[i];
+            var node = order[i];
+            var site = new Site(call.Line, call.Column);
+
+            placed[call] = node;
+            calls[node] = site;
+            mentions.Add((site, node));
+
+            if (patch.Find(node) is not { } instance || modules.Get(instance.TypeId) is not { } def) continue;
+
+            foreach (var argument in call.Arguments)
+            {
+                if (argument.Name is null || Figure(argument.Value) is not { } where) continue;
+
+                var port = Socket(def.Inputs, argument.Name);
+
+                if (port >= 0) knobs[(node, port)] = where;
+            }
+        }
+
+        // A binding's name and a bare mention of it are both the module, so both
+        // are somewhere to click. The Output is named by the socket it is being
+        // wired into, which is the only way a patch ever mentions it.
+        var byName = plan.Names.ToDictionary(pair => pair.Value, pair => pair.Key, StringComparer.Ordinal);
+
+        foreach (var name in mentioned)
+        {
+            if (name.Name == "out" && sink is not null) mentions.Add((new Site(name.Line, name.Column), sink.Id));
+            else if (byName.TryGetValue(name.Name, out var node)) mentions.Add((new Site(name.Line, name.Column), node));
+        }
+
+        if (sink is not null && modules.Get(sink.TypeId) is { } shape)
+        {
+            foreach (var turn in turns.Where(t => t.Target.Name == "out" && t.Target.Port is not null))
+            {
+                var port = Socket(shape.Inputs, turn.Target.Port!);
+
+                if (port >= 0) knobs[(sink.Id, port)] = Figure(turn.Value);
+            }
+        }
+
+        var named = plan.Names.ToDictionary(pair => pair.Key, pair => pair.Value);
+
+        if (sink is not null) named[sink.Id] = "out";
+
+        return new SourceMap(
+            source,
+            mentions,
+            calls,
+            knobs,
+            named,
+            principals.Where(placed.ContainsKey).Select(call => placed[call]).ToHashSet());
+    }
+
+    /// <summary>Every call, name and knob one statement writes.</summary>
+    private static void Gather(
+        Statement statement,
+        List<CallExpr> calls,
+        List<NameExpr> names,
+        List<KnobStatement> turns,
+        List<CallExpr> principals)
+    {
+        switch (statement)
+        {
+            case LetStatement let:
+                Inside(let.Value, calls, names);
+                if (Principal(let.Value) is { } bound) principals.Add(bound);
+                break;
+
+            case PipelineStatement pipeline:
+                Inside(pipeline.Value, calls, names);
+                if (Principal(pipeline.Value) is { } ending) principals.Add(ending);
+                break;
+
+            case KnobStatement knob:
+                turns.Add(knob);
+                names.Add(knob.Target);
+                Inside(knob.Value, calls, names);
+                break;
+
+            case BackWireStatement back:
+                names.Add(back.Target);
+                Inside(back.Value, calls, names);
+                break;
+        }
+    }
+
+    private static void Inside(Expr expr, List<CallExpr> calls, List<NameExpr> names)
+    {
+        switch (expr)
+        {
+            case CallExpr call:
+                calls.Add(call);
+                foreach (var argument in call.Arguments) Inside(argument.Value, calls, names);
+                break;
+
+            case PipeExpr pipe:
+                Inside(pipe.Source, calls, names);
+                Inside(pipe.Stage, calls, names);
+                break;
+
+            case NameExpr name:
+                names.Add(name);
+                break;
+        }
+    }
+
+    /// <summary>
+    /// The call a statement is about, which is the last stage of its pipeline —
+    /// <c>let hum = t |&gt; sine(...) |&gt; gain(...)</c> is a Gain called hum.
+    /// </summary>
+    private static CallExpr? Principal(Expr expr) => expr switch
+    {
+        PipeExpr pipe => Principal(pipe.Stage) ?? Principal(pipe.Source),
+        CallExpr call => call,
+        _ => null,
+    };
+
+    /// <summary>Where a written value's number stands, or null where it is not one.</summary>
+    private static Site? Figure(Expr expr) => expr switch
+    {
+        NumberExpr number => new Site(number.Line, number.Column),
+        NegateExpr negate when negate.Value is NumberExpr => new Site(negate.Line, negate.Column),
+        _ => null,
+    };
+
+    private static int Socket(IReadOnlyList<PortSpec> ports, string written)
+    {
+        for (var i = 0; i < ports.Count; i++)
+            if (string.Equals(ports[i].Name.Replace(' ', '_'), written, StringComparison.OrdinalIgnoreCase))
+                return i;
+
+        return -1;
     }
 
     /// <summary>
@@ -165,11 +422,15 @@ public static class PatchPrinter
     /// </summary>
     private sealed class Writer(Patch patch, ModuleCatalog modules, Plan plan)
     {
-        private readonly List<string> statements = [];
+        private readonly List<Part> statements = [];
         private readonly HashSet<Guid> done = [];
         private readonly Dictionary<Guid, int> where = [];
 
-        public string Run()
+        /// <summary>
+        /// The text, and the modules whose calls stand in it from the first word
+        /// to the last.
+        /// </summary>
+        public (string Source, IReadOnlyList<Guid> Order) Run()
         {
             var sink = patch.Nodes.FirstOrDefault(n => NodeCatalog.IsSink(n.TypeId));
             var text = new StringBuilder();
@@ -183,11 +444,13 @@ public static class PatchPrinter
 
                     if (patch.IncomingTo(sink.Id, port) is { } wire)
                     {
-                        statements.Add($"{From(wire)} |> out.{name}");
+                        var from = From(wire);
+
+                        statements.Add(new Part($"{from.Text} |> out.{name}", from.Calls));
                         continue;
                     }
 
-                    if (Knob(sink, def, port) is { } value) statements.Add($"out.{name} = {value}");
+                    if (Knob(sink, def, port) is { } value) statements.Add(Part.Of($"out.{name} = {value}"));
                 }
             }
 
@@ -204,28 +467,33 @@ public static class PatchPrinter
 
             Cycles();
 
-            foreach (var statement in Ordered()) text.AppendLine(statement);
+            var ordered = Ordered();
+
+            foreach (var statement in ordered) text.AppendLine(statement.Text);
 
             // Where the modules go is worked out after the graph is built and
             // where the lines break is worked out after the text is written, by
             // a pass that knows nothing about how either was made — see
             // SourceLayout, and PatchLayout on the other side of it.
-            return SourceLayout.Wrap(text.ToString());
+            return (SourceLayout.Wrap(text.ToString()), [.. ordered.SelectMany(part => part.Calls)]);
         }
 
         /// <summary>
         /// The statements as they should be read: what a name needs before the
         /// name is used, and the pipelines that end at the Output last.
         /// </summary>
-        private IEnumerable<string> Ordered()
+        private List<Part> Ordered()
         {
             // Bindings come out in the order they were settled, and the
             // Output's own lines were queued before any of them — so those are
             // moved to the end, where a reader expects the point of the patch.
-            var sinks = statements.Where(s => s.Contains("|> out.") || s.StartsWith("out.", StringComparison.Ordinal));
-            var rest = statements.Where(s => !s.Contains("|> out.") && !s.StartsWith("out.", StringComparison.Ordinal));
+            var sinks = statements.Where(Sink);
+            var rest = statements.Where(part => !Sink(part));
 
-            return [.. rest, string.Empty, .. sinks];
+            return [.. rest, Part.Of(string.Empty), .. sinks];
+
+            static bool Sink(Part part) =>
+                part.Text.Contains("|> out.") || part.Text.StartsWith("out.", StringComparison.Ordinal);
         }
 
         /// <summary>Writes a module's binding if it has not been written yet.</summary>
@@ -239,16 +507,16 @@ public static class PatchPrinter
             // end. Nothing else in the language can close a loop.
             if (def.IsCycleBreaker)
             {
-                Place($"let {plan.Names[id]} = {Short(def)}()");
+                Place(new Part($"let {plan.Names[id]} = {Short(def)}()", [id]));
                 return;
             }
 
-            var text = Call(node, def);
+            var written = Call(node, def);
 
-            Place($"let {plan.Names[id]} = {text}");
+            Place(new Part($"let {plan.Names[id]} = {written.Text}", written.Calls));
         }
 
-        private void Place(string statement)
+        private void Place(Part statement)
         {
             statements.Add(statement);
             where[Guid.Empty] = statements.Count;
@@ -262,15 +530,27 @@ public static class PatchPrinter
                 if (modules.Get(node.TypeId) is not { IsCycleBreaker: true } def) continue;
 
                 for (var port = 0; port < def.Inputs.Count; port++)
-                    if (patch.IncomingTo(node.Id, port) is { } wire)
-                        statements.Add($"{plan.Names[node.Id]}.{def.Inputs[port].Name.Replace(' ', '_')} <- {From(wire)}");
+                {
+                    if (patch.IncomingTo(node.Id, port) is not { } wire) continue;
+
+                    var from = From(wire);
+                    var name = def.Inputs[port].Name.Replace(' ', '_');
+
+                    statements.Add(new Part($"{plan.Names[node.Id]}.{name} <- {from.Text}", from.Calls));
+                }
             }
         }
 
         /// <summary>What a module is written as, with its pipe chosen to read back the same way.</summary>
-        private string Call(NodeInstance node, NodeDef def)
+        /// <remarks>
+        /// The modules it names come back in the order the words do: whatever is
+        /// piped in is written first, then this one, then its arguments.
+        /// </remarks>
+        private Part Call(NodeInstance node, NodeDef def)
         {
             var used = new HashSet<int>();
+            var before = new List<Guid>();
+            var after = new List<Guid>();
             string? piped = null;
 
             // The pipe is chosen so that the rule which reads it puts the signal
@@ -280,7 +560,10 @@ public static class PatchPrinter
 
             if (signal >= 0 && patch.IncomingTo(node.Id, signal) is { } straight)
             {
-                piped = From(straight);
+                var part = From(straight);
+
+                piped = part.Text;
+                before.AddRange(part.Calls);
                 used.Add(signal);
             }
             else if (def.Inputs.Count >= 2
@@ -290,7 +573,10 @@ public static class PatchPrinter
                 && first.SourceNode == second.SourceNode
                 && first.SourceNode != plan.Coord)
             {
-                piped = Whole(first.SourceNode);
+                var part = Whole(first.SourceNode);
+
+                piped = part.Text;
+                before.AddRange(part.Calls);
                 used.Add(0);
                 used.Add(1);
             }
@@ -300,7 +586,10 @@ public static class PatchPrinter
                 // this puts a signal when there is no 'in' and no position. It is
                 // what turns a patch into the chain it was built as, rather than
                 // one expression nested inside another twenty deep.
-                piped = From(leading);
+                var part = From(leading);
+
+                piped = part.Text;
+                before.AddRange(part.Calls);
                 used.Add(0);
             }
 
@@ -319,7 +608,10 @@ public static class PatchPrinter
 
                 if (patch.IncomingTo(node.Id, port) is { } wire)
                 {
-                    arguments.Add($"{name}: {From(wire)}");
+                    var part = From(wire);
+
+                    arguments.Add($"{name}: {part.Text}");
+                    after.AddRange(part.Calls);
                     continue;
                 }
 
@@ -330,41 +622,43 @@ public static class PatchPrinter
 
             if (Carried(node, def) is { } block) text += $" {block}";
 
-            return piped is null ? text : $"{piped} |> {text}";
+            return new Part(
+                piped is null ? text : $"{piped} |> {text}",
+                [.. before, node.Id, .. after]);
         }
 
         /// <summary>A whole module, for a pipe that carries a position on.</summary>
-        private string Whole(Guid id)
+        private Part Whole(Guid id)
         {
             if (plan.Bound.Contains(id))
             {
                 Ensure(id);
-                return plan.Names[id];
+                return Part.Of(plan.Names[id]);
             }
 
             return patch.Find(id) is { } node && modules.Get(node.TypeId) is { } def
                 ? Call(node, def)
-                : "0";
+                : Part.Of("0");
         }
 
         /// <summary>What a wire's far end is written as.</summary>
-        private string From(Connection wire)
+        private Part From(Connection wire)
         {
             if (wire.SourceNode == plan.Coord)
             {
-                return wire.SourcePort switch
+                return Part.Of(wire.SourcePort switch
                 {
                     NodeCatalog.CoordXPort => "x",
                     NodeCatalog.CoordYPort => "y",
                     2 => "radius",
                     _ => "angle",
-                };
+                });
             }
 
-            if (wire.SourceNode == plan.Clock) return "t";
+            if (wire.SourceNode == plan.Clock) return Part.Of("t");
 
             if (patch.Find(wire.SourceNode) is not { } node || modules.Get(node.TypeId) is not { } def)
-                return "0";
+                return Part.Of("0");
 
             if (plan.Bound.Contains(wire.SourceNode))
             {
@@ -372,9 +666,9 @@ public static class PatchPrinter
 
                 var name = plan.Names[wire.SourceNode];
 
-                return wire.SourcePort == 0
+                return Part.Of(wire.SourcePort == 0
                     ? name
-                    : $"{name}.{def.Outputs[wire.SourcePort].Name.Replace(' ', '_')}";
+                    : $"{name}.{def.Outputs[wire.SourcePort].Name.Replace(' ', '_')}");
             }
 
             return Call(node, def);
@@ -448,7 +742,7 @@ public static class PatchPrinter
             return head;
         }
 
-        private static string Value(float value, PortDisplay display) => display switch
+        internal static string Value(float value, PortDisplay display) => display switch
         {
             PortDisplay.Note => Whole(value) ? Pitch.Name(value) : Number(value),
             PortDisplay.Duration => Seconds(value),

@@ -16,6 +16,16 @@ public sealed record LanguageLoad(Patch Patch, IReadOnlyList<LanguageIssue> Issu
     /// <summary>What was read, kept so a complaint can show the line it is about.</summary>
     public string Source { get; init; } = string.Empty;
 
+    /// <summary>
+    /// Where the text says each module it built, and each knob it set.
+    /// </summary>
+    /// <remarks>
+    /// What an editor needs and a batch job never asks for: the caret is in a
+    /// module when the text at it is, and a knob turned in a panel goes back
+    /// into the number the file already has for it.
+    /// </remarks>
+    public SourceMap Map { get; init; } = SourceMap.Empty;
+
     public bool Ok => Issues.Count == 0;
 
     /// <summary>
@@ -91,11 +101,13 @@ public static class PatchLanguage
 
         var tokens = Lexer.Statements(Lexer.Scan(source, issues));
         var statements = new Parser(tokens, issues).Parse();
-        var patch = new Binder(modules, issues).Build(statements);
+        var binder = new Binder(modules, issues);
+        var patch = binder.Build(statements);
 
         return new LanguageLoad(patch, [.. issues.OrderBy(i => i.Line).ThenBy(i => i.Column)])
         {
             Source = source,
+            Map = binder.Map(source),
         };
     }
 }

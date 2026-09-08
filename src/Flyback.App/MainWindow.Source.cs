@@ -1,5 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
+using Avalonia.Input;
+using Avalonia.Interactivity;
 using Flyback.App.Controls;
 using Flyback.Core.Graph;
 using Flyback.Core.Language;
@@ -46,7 +48,35 @@ public sealed partial class MainWindow
     /// text view twice does not write over what somebody typed into it the first
     /// time and did not apply.
     /// </summary>
+    /// <remarks>
+    /// Kept in step with a knob written back into a printing, which leaves the
+    /// text a printing still: what changed is the number the printing was always
+    /// going to say for a knob that has just moved.
+    /// </remarks>
     private string? printed;
+
+    /// <summary>
+    /// The modules a printing writes, in the order it writes them, which is how
+    /// the words in it are pointed back at the patch they came from.
+    /// </summary>
+    private IReadOnlyList<Guid> printedOrder = [];
+
+    /// <summary>Where the text says each module and each of its knobs.</summary>
+    private SourceMap map = SourceMap.Empty;
+
+    /// <summary>The text <see cref="map"/> was made from, which is when it is still true.</summary>
+    private string mapped = string.Empty;
+
+    /// <summary>
+    /// Knobs turned in the panel since the hand last came off one.
+    /// </summary>
+    /// <remarks>
+    /// A drag is one gesture and should be one edit: writing per frame would put
+    /// a hundred things on the undo stack and flicker the line under whoever is
+    /// reading it. Every frame still reaches the engine — that is the point of
+    /// turning a knob while a patch is playing — and only the document waits.
+    /// </remarks>
+    private readonly HashSet<(Guid Node, int Port)> turned = [];
 
     /// <summary>The text as it was last opened or written, for the unsaved question.</summary>
     private string sourceOnDisk = string.Empty;
@@ -67,8 +97,139 @@ public sealed partial class MainWindow
         source.IsVisible = false;
         source.EvaluateRequested += (_, _) => Evaluate();
         source.Changed += (_, _) => RefreshEditState();
+        source.Moved += (_, at) => PointAt(at);
 
         codeButton.IsCheckedChanged += (_, _) => ShowCode(codeButton.IsChecked == true);
+
+        // Caught on the way up and after whoever handled it, because a slider
+        // captures the pointer: letting go halfway across the window is still
+        // letting go of the slider, and the value written should be the one the
+        // control finished on.
+        inspector.AddHandler(
+            PointerReleasedEvent,
+            (_, _) => WriteBack(),
+            RoutingStrategies.Bubble,
+            handledEventsToo: true);
+
+        // A number typed rather than dragged has no gesture to wait for. It is
+        // finished when the box stops being the thing being typed into.
+        inspector.AddHandler(LostFocusEvent, (_, _) => WriteBack(), RoutingStrategies.Bubble);
+    }
+
+    /// <summary>
+    /// Where the text says each module it describes, worked out again whenever
+    /// the text has moved on.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Two sources for it and one shape. Text that owns the patch is built, and
+    /// the binder notes where everything came from on the way through. A
+    /// printing is not built — the patch is already on the canvas and building
+    /// the printing would make a second copy of it with different ids — so the
+    /// printer says where it put things instead.
+    /// </para>
+    /// <para>
+    /// A printing is only mapped while it is still the printing. Once somebody
+    /// types into one it is text about a patch that may no longer be there, and
+    /// the honest answer is to point at nothing rather than at whatever used to
+    /// be under the caret.
+    /// </para>
+    /// </remarks>
+    private SourceMap Map
+    {
+        get
+        {
+            if (mapped == source.Source) return map;
+
+            mapped = source.Source;
+
+            map = sourceOwned
+                ? PatchLanguage.Build(mapped).Map
+                : printed == mapped
+                    ? PatchPrinter.Locate(editor.Patch, mapped, printedOrder)
+                    : SourceMap.Empty;
+
+            return map;
+        }
+    }
+
+    /// <summary>
+    /// Points the inspector at the module the caret is standing in.
+    /// </summary>
+    /// <remarks>
+    /// The same panel the canvas points, because it is the same selection: what
+    /// a person is looking at in one view is what the other should be about. A
+    /// caret on a word that names no module selects none, which is honest — the
+    /// space between two statements is not a module.
+    /// </remarks>
+    private void PointAt(int at)
+    {
+        if (!showingCode) return;
+
+        editor.Select(Map.At(at));
+    }
+
+    /// <summary>Notes a knob the panel has just turned, for the next write-back.</summary>
+    private void Turned(Guid node, int port) => turned.Add((node, port));
+
+    /// <summary>
+    /// Writes the knobs turned since the last gesture into the text, each where
+    /// the text already says it.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This is what lets the panel be used at all while the text is the
+    /// document. Without it a knob turned there is heard at once and gone at the
+    /// next apply, which is the worst of both. Nothing is rebuilt: the patch
+    /// already has the value and the engine already has the patch, and building
+    /// here would replace the patch under the very control being dragged.
+    /// </para>
+    /// <para>
+    /// The map is asked again for each one, because the first edit moves
+    /// everything after it along.
+    /// </para>
+    /// </remarks>
+    private void WriteBack()
+    {
+        if (turned.Count == 0) return;
+
+        var pending = turned.ToArray();
+        var lost = 0;
+
+        turned.Clear();
+
+        foreach (var (id, port) in pending)
+        {
+            if (editor.Patch.Find(id) is not { } node
+                || NodeCatalog.Get(node.TypeId) is not { } def
+                || port >= def.Inputs.Count
+                || port >= node.InputValues.Length)
+            {
+                continue;
+            }
+
+            var spec = def.Inputs[port];
+            var value = PatchPrinter.Knob(node.InputValues[port], spec.Display);
+
+            if (Map.Knob(id, port, spec.Name.Replace(' ', '_'), value) is not { } change)
+            {
+                // Nothing was written and something should have been. Said out
+                // loud rather than dropped: the value is about to be lost and
+                // whoever turned it can still do something else about it.
+                if (Map.Where(id) is not null) lost++;
+                continue;
+            }
+
+            if (!source.Apply(change)) continue;
+
+            // Still a printing, and now a true one. Left as it was the text
+            // would count as typed into and stop being pointed at.
+            if (!sourceOwned) printed = source.Source;
+        }
+
+        if (lost > 0)
+            Report($"{lost} value(s) could not be written into the text — "
+                + "the code says them in a form this cannot change in place.");
     }
 
     /// <summary>
@@ -138,8 +299,19 @@ public sealed partial class MainWindow
 
         if (codeButton.IsChecked != shown) codeButton.IsChecked = shown;
 
-        if (shown) source.Focus();
-        else editor.Focus();
+        if (shown)
+        {
+            source.Focus();
+
+            // Where the caret already is, said once. The panel follows the caret
+            // as it moves, and a view that had just opened would otherwise show
+            // nothing at all until somebody pressed an arrow.
+            PointAt(source.Caret);
+        }
+        else
+        {
+            editor.Focus();
+        }
 
         // Undo, redo and tidy all follow the view, so all three have to be asked
         // again about what they can do the moment it changes.
@@ -159,10 +331,17 @@ public sealed partial class MainWindow
     {
         if (source.Source.Length != 0 && source.Source != printed) return;
 
-        printed = PatchPrinter.Print(editor.Patch);
+        var writing = PatchPrinter.Written(editor.Patch);
+
+        printed = writing.Source;
+        printedOrder = writing.Order;
+
         source.Source = printed;
         source.Clear();
         source.Notice = Reading();
+
+        mapped = printed;
+        map = writing.Map;
     }
 
     /// <summary>
@@ -230,7 +409,13 @@ public sealed partial class MainWindow
             sourceOwned = true;
             sourceOnDisk = string.Empty;
             printed = null;
+            printedOrder = [];
         }
+
+        // The map the build just made, rather than one made by building the
+        // same text a second time to answer the first caret move.
+        mapped = source.Source;
+        map = load.Map;
 
         RefreshOwnership();
 
@@ -251,10 +436,12 @@ public sealed partial class MainWindow
         sourceOwned = true;
         sourceOnDisk = text;
         printed = null;
+        printedOrder = [];
 
         source.Source = text;
         source.Clear();
 
+        Forget();
         RefreshOwnership();
         ShowCode(true);
     }
@@ -273,13 +460,31 @@ public sealed partial class MainWindow
         sourceOwned = false;
         sourceOnDisk = string.Empty;
         printed = null;
+        printedOrder = [];
 
         source.Source = string.Empty;
         source.Clear();
 
+        Forget();
         RefreshOwnership();
 
         if (showingCode) ShowCode(false);
+    }
+
+    /// <summary>
+    /// Drops what was known about the text, for a document arriving in place of
+    /// another.
+    /// </summary>
+    /// <remarks>
+    /// A map of the last patch would point the panel at modules this one has
+    /// never had, and a knob left waiting to be written would be written into
+    /// somebody else's file.
+    /// </remarks>
+    private void Forget()
+    {
+        map = SourceMap.Empty;
+        mapped = string.Empty;
+        turned.Clear();
     }
 
     /// <summary>Marks the text as written, so closing stops asking about it.</summary>
@@ -292,9 +497,12 @@ public sealed partial class MainWindow
     /// The canvas keeps everything that looks — selecting, panning, framing,
     /// copying — and loses everything that changes, so it is still how somebody
     /// reads a source-built patch and picks the module the inspector is about.
-    /// The inspector itself goes dim rather than away: a knob turned there would
-    /// be wiped by the next evaluation, and a value nobody can read is worse
-    /// than one nobody can turn.
+    /// The inspector stays live and is the one thing on a locked canvas that
+    /// does: a knob turned there is written back into the text, so the next
+    /// apply builds what is already being heard. What it loses is everything
+    /// that is not a knob — the buttons that add, group and delete, and the
+    /// editors for a tune or a file, none of which has a number in the file to
+    /// change.
     /// <para>
     /// Undo and redo are deliberately left alone. On a source-owned patch the
     /// history is a history of evaluations, and taking one back is exactly what
@@ -304,7 +512,6 @@ public sealed partial class MainWindow
     private void RefreshOwnership()
     {
         editor.Locked = sourceOwned;
-        inspector.IsEnabled = !sourceOwned;
 
         // Laying out is off only where it would not last: a locked canvas is
         // re-laid on the next evaluation, so tidying one is work thrown away.
@@ -332,7 +539,8 @@ public sealed partial class MainWindow
         ToolTip.SetTip(
             inspector,
             sourceOwned
-                ? "The text is the document, so the knobs are read from it. Change them there."
+                ? "The text is the document. A knob turned here is written back into it "
+                  + "where it already says it."
                 : null);
     }
 }

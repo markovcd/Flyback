@@ -251,8 +251,10 @@ public class SourceViewTests : UiTest
         Evaluate(window, Hum);
 
         Editor(window).Locked.ShouldBeTrue();
-        Inspector(window).IsEnabled.ShouldBeFalse();
         Notice(window).ShouldBeNull("the text is the document now, so there is nothing to warn about");
+
+        Inspector(window).IsEnabled
+            .ShouldBeTrue("a knob turned on a locked canvas is written back into the text");
     }
 
     /// <summary>
@@ -528,5 +530,195 @@ public class SourceViewTests : UiTest
 
         editor.SelectAll();
         editor.SelectedNodes.Count.ShouldBe(editor.Patch.Nodes.Count);
+    }
+
+    // --- the caret points the panel -----------------------------------------
+
+    /// <summary>Puts the caret where a word is, as a click in the text would.</summary>
+    private static void Click(MainWindow window, string word)
+    {
+        var text = Text(window);
+
+        text.CaretOffset = text.Text.IndexOf(word, StringComparison.Ordinal) + 1;
+        Settle(window);
+    }
+
+    /// <summary>
+    /// The caret is the code view's pointer, and the panel follows it exactly as
+    /// it follows a click on the canvas.
+    /// </summary>
+    [AvaloniaFact]
+    public void The_caret_points_the_panel()
+    {
+        var window = Open();
+
+        Evaluate(window, Hum);
+        Click(window, "sine");
+
+        Editor(window).SelectedNode.ShouldNotBeNull().TypeId.ShouldBe("osc.sine");
+    }
+
+    /// <summary>
+    /// A module written with no name of its own is still a module, and the whole
+    /// point of pointing by position rather than by name is that it can be
+    /// clicked without the text being rewritten to name it.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_module_with_no_name_is_pointed_at_too()
+    {
+        var window = Open();
+
+        Evaluate(window, "atan2(a: 1.5524476) |> out.left");
+        Click(window, "atan2");
+
+        Editor(window).SelectedNode.ShouldNotBeNull().TypeId.ShouldBe("math.atan2");
+    }
+
+    /// <summary>
+    /// A printing is what the code view shows for a patch built on the canvas,
+    /// and it has to be as clickable as text somebody wrote.
+    /// </summary>
+    [AvaloniaFact]
+    public void The_caret_points_the_panel_in_a_printing_too()
+    {
+        var window = Open();
+
+        ShowCode(window);
+
+        var text = Text(window);
+        var call = text.Text.IndexOf('(');
+
+        call.ShouldBeGreaterThan(0, "the preset prints as calls");
+
+        text.CaretOffset = call;
+        Settle(window);
+
+        Editor(window).SelectedNode.ShouldNotBeNull();
+    }
+
+    // --- and a knob turned in it reaches the text ---------------------------
+
+    /// <summary>Turns the first knob the panel is showing, and lets go of it.</summary>
+    private static void Turn(MainWindow window, double to)
+    {
+        var slider = All<Slider>(window).First();
+
+        slider.Value = to;
+        Settle(window);
+
+        slider.RaiseEvent(new Avalonia.Input.PointerReleasedEventArgs(
+            slider,
+            new Avalonia.Input.Pointer(0, Avalonia.Input.PointerType.Mouse, true),
+            slider,
+            default,
+            0,
+            default,
+            Avalonia.Input.KeyModifiers.None,
+            Avalonia.Input.MouseButton.Left)
+        {
+            RoutedEvent = Avalonia.Input.InputElement.PointerReleasedEvent,
+        });
+
+        Settle(window);
+    }
+
+    /// <summary>
+    /// The number is changed where the text already says it. Saying it a second
+    /// time further down would leave the file asserting two different values for
+    /// one socket, with the older one still written a few lines up.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_knob_turned_in_the_panel_is_written_where_the_code_says_it()
+    {
+        var window = Open();
+
+        Evaluate(window, "atan2(a: 1.5524476) |> out.left");
+        Click(window, "atan2");
+
+        Turn(window, 2d);
+
+        Text(window).Text.Trim().ShouldBe("atan2(a: 2) |> out.left");
+    }
+
+    /// <summary>
+    /// A drag is one gesture and one edit. Writing per frame would put a hundred
+    /// things on the undo stack and flicker the line under whoever is reading it.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_knob_still_being_dragged_has_not_reached_the_text_yet()
+    {
+        var window = Open();
+
+        Evaluate(window, "atan2(a: 1.5524476) |> out.left");
+        Click(window, "atan2");
+
+        var slider = All<Slider>(window).First();
+
+        slider.Value = 2d;
+        Settle(window);
+
+        Text(window).Text.ShouldContain("1.5524476");
+
+        // And the engine has it all the same, which is the point of turning a
+        // knob while a patch is playing.
+        Editor(window).SelectedNode.ShouldNotBeNull().InputValues[0].ShouldBe(2f);
+    }
+
+    /// <summary>
+    /// A printing keeps up with the knobs, in place. It is a reading of the
+    /// canvas, and one that stopped agreeing with it the moment anybody turned
+    /// something would be a reading of nothing.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_knob_turned_over_a_printing_keeps_the_printing_true()
+    {
+        var window = Open();
+        var text = ShowCode(window);
+
+        text.CaretOffset = text.Text.IndexOf('(');
+        Settle(window);
+
+        var chosen = Editor(window).SelectedNode.ShouldNotBeNull();
+        var before = text.Text;
+
+        Turn(window, 0.375d);
+
+        text.Text.ShouldNotBe(before, "the printing has to keep up with the knob");
+        text.Text.ShouldContain("0.375");
+
+        // Still the canvas's patch, and still pointed at: a printing written
+        // into by this is a printing still.
+        Editor(window).Locked.ShouldBeFalse();
+        Notice(window).ShouldNotBeNull();
+
+        text.CaretOffset = 0;
+        text.CaretOffset = text.Text.IndexOf('(');
+        Settle(window);
+
+        Editor(window).SelectedNode.ShouldNotBeNull().Id.ShouldBe(chosen.Id);
+    }
+
+    /// <summary>
+    /// A knob sitting at its default is written nowhere, so there is no number
+    /// to change and it is added to the call that placed the module.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_knob_the_code_does_not_mention_is_added_to_the_call()
+    {
+        var window = Open();
+
+        Evaluate(window, "atan2(a: 1.5) |> out.left");
+        Click(window, "atan2");
+
+        // The second row, which is the second socket — the one the text says
+        // nothing about.
+        var slider = All<Slider>(window).ElementAt(1);
+
+        slider.Value = 0.25d;
+        Settle(window);
+
+        Turn(window, 1.5d);
+
+        Text(window).Text.Trim().ShouldBe("atan2(a: 1.5, b: 0.25) |> out.left");
     }
 }

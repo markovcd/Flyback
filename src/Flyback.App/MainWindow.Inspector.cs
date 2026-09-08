@@ -75,8 +75,10 @@ public sealed partial class MainWindow
     /// </remarks>
     private const string LockedHelp =
         "The text is the document, and this is a view of what it builds. "
-        + "Press F2 to go back to it — every change to this patch is made there.\n\n"
-        + "Select a module to read its values here.\n\n"
+        + "Press F2 to go back to it — modules and wires are added and removed there.\n\n"
+        + "Select a module — on the canvas, or by putting the caret in the code where "
+        + "it is written — to turn its knobs here. Letting go of one writes the new "
+        + "value into the code, where the code already says it.\n\n"
         + "Drag the background to select, middle-drag to pan, wheel to zoom.\n"
         + "Ctrl+click adds to a selection, Ctrl+A takes everything.\n"
         + "Ctrl+C copies what is selected, Ctrl+F frames the patch.";
@@ -385,9 +387,18 @@ public sealed partial class MainWindow
         // control that suits it. This mapping lives here rather than on the extra
         // because it is the one part of a kind that needs Avalonia, which the
         // engine does not reference.
+        //
+        // Read-only where the text owns the patch. A knob has a number in the
+        // file to change, and a tune or a scale or a file does not — it is a
+        // block or a string written where the module is placed, and putting one
+        // back is not the small edit a knob is. So they are shown and not turned,
+        // which is what they were before the panel came back to life at all.
         foreach (var extra in def.Extras)
             if (EditorFor(extra, node, def) is { } control)
+            {
+                control.IsEnabled = !editor.Locked;
                 inspector.Children.Add(control);
+            }
 
         if (def.Inputs.Count == 0 && def.Extras.Count == 0)
             inspector.Children.Add(new TextBlock
@@ -407,6 +418,12 @@ public sealed partial class MainWindow
             inspector.Children.Add(outputSettings);
             return;
         }
+
+        // What the graph is made of belongs to whoever owns it. A knob turned on
+        // a locked canvas is written back into the text (ADR-0068); a module
+        // deleted from one could not be, so the button is not offered rather
+        // than offered and undone by the next apply.
+        if (editor.Locked) return;
 
         // Grouping sits above deleting rather than beside it, so the destructive
         // button keeps the place it has always had: a panel that grows a control
@@ -504,6 +521,11 @@ public sealed partial class MainWindow
                 FontSize = 12,
             });
 
+        // A box on a locked canvas is drawn from the text's group statements, so
+        // everything that would change one is left off for the same reason
+        // deleting a module is — see BuildInspector.
+        if (editor.Locked) return;
+
         Act(group.Collapsed ? "Open group" : "Close group", editor.ToggleSelectedGroup, 14);
 
         // Keeping one is not an edit to the patch, so it sits with the two that
@@ -578,7 +600,7 @@ public sealed partial class MainWindow
                 Foreground = new SolidColorBrush(Colors.PortColor(spec.Kind)),
             };
 
-            if (!editor.Patch.Wired(group, socket))
+            if (!editor.Patch.Wired(group, socket) && !editor.Locked)
             {
                 var remove = new Button
                 {
@@ -768,6 +790,15 @@ public sealed partial class MainWindow
             TextTrimming = TextTrimming.CharacterEllipsis,
             Background = Brushes.Transparent,
         };
+
+        // A name on a source-built module is the name the `let` gave it, so
+        // renaming here would be renaming the wrong copy — the text would put
+        // the old one back on the next apply.
+        if (editor.Locked)
+        {
+            ToolTip.SetTip(title, "The text names this module. Rename it there.");
+            return title;
+        }
 
         ToolTip.SetTip(title, node.Name is null
             ? "Double-click to give this module a name of its own."
@@ -1476,6 +1507,10 @@ public sealed partial class MainWindow
         return ValueRow(spec.Name, spec, value, $"{node.Id} input {index}", next =>
         {
             if (index < node.InputValues.Length) node.InputValues[index] = next;
+
+            // Noted rather than written. A drag is a knob turned a hundred times
+            // and the text should be edited once, when the hand comes off it.
+            Turned(node.Id, index);
         });
     }
 
