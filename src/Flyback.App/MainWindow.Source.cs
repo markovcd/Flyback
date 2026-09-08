@@ -1,7 +1,5 @@
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
-using Avalonia.Input;
-using Avalonia.Interactivity;
 using Flyback.App.Controls;
 using Flyback.Core.Graph;
 using Flyback.Core.Language;
@@ -79,18 +77,6 @@ public sealed partial class MainWindow
     /// </remarks>
     private readonly Dictionary<string, Guid> named = new(StringComparer.Ordinal);
 
-    /// <summary>
-    /// Whether something in the inspector is being held down.
-    /// </summary>
-    /// <remarks>
-    /// A slider dragged across its range is one thing somebody did, and it
-    /// arrives here as a hundred. The sound follows every frame of it, which is
-    /// the point of dragging a knob while a patch plays — but the text is a
-    /// document, and a hundred edits to one line is a hundred things to undo and
-    /// a line that flickers under the reader.
-    /// </remarks>
-    private bool turning;
-
     /// <summary>Whether the text view is the one showing.</summary>
     private bool showingCode;
 
@@ -110,27 +96,6 @@ public sealed partial class MainWindow
         source.Reading += (_, statement) => Reading(statement);
 
         codeButton.IsCheckedChanged += (_, _) => ShowCode(codeButton.IsChecked == true);
-
-        // A gesture in the panel, from the press that starts it to the release
-        // that ends it wherever that lands — a slider captures the pointer, so
-        // letting go halfway across the window is still letting go of the
-        // slider. Caught on the way back up and after whoever handled it, so
-        // the value written is the one the control finished on.
-        inspector.AddHandler(
-            InputElement.PointerPressedEvent,
-            (_, _) => turning = true,
-            RoutingStrategies.Tunnel);
-
-        AddHandler(InputElement.PointerReleasedEvent, Dropped, RoutingStrategies.Bubble, true);
-    }
-
-    /// <summary>The end of a gesture in the panel, which is when the text hears about it.</summary>
-    private void Dropped(object? sender, PointerReleasedEventArgs e)
-    {
-        if (!turning) return;
-
-        turning = false;
-        WriteBack();
     }
 
     /// <summary>
@@ -468,10 +433,6 @@ public sealed partial class MainWindow
     private void WriteBack()
     {
         if (!sourceOwned || written.Count == 0) return;
-
-        // Still being dragged. The engine has every frame of it and the text
-        // gets the one it is left on — see `turning`.
-        if (turning) return;
 
         var lost = 0;
 
