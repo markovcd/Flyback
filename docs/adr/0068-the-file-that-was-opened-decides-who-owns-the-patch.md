@@ -226,3 +226,40 @@ by the bracket after it rather than by looking the name up, because a plugin's
 modules are usable the moment it loads and a list here would be one more thing
 that could go stale — the same reason the binder reads the catalogue rather than
 a table.
+
+## Amendments
+
+**2026-09-08 — the canvas can be given the patch back.** Applying was the only
+door in the wall. It is described above as the deliberate way a patch is taken
+into text, and it is; what was missing is that there was no gesture at all for
+the other direction. Once a text had been applied, the canvas stayed a view of
+it until some *other* document arrived — so somebody who applied a printing to
+try something, and then wanted to drag one wire, had to save the patch as a
+`.fbk` to be allowed to. A one-way gesture is a trap however well it is
+labelled, and the way out of an adoption should not be a file operation.
+
+So **Edit on the canvas** sits beside Apply, under the text, and is shown only
+while the text is the document — over a printing the canvas has the patch
+already and the button would do nothing. What it does is exactly what a `.fbk`
+arriving does: the graph owns the patch, the canvas unlocks, and the buffer is
+emptied. It goes through the same `DropSource` as opening a patch file rather
+than through a path of its own, because it is the same change and a second way
+of making it would be a second way of getting it wrong.
+
+**Nothing is built and nothing is rewound.** The patch on the canvas is already
+what the text made, so handing it over is a change of owner and not of program:
+what is playing goes on playing, which is the same promise applying makes.
+
+**The text is asked about first, and the patch is not.** The buffer is emptied
+by the handover and written nowhere on the way, so typing that is not on disk
+yet gets the same three answers a close gets — Save…, Discard changes, Cancel —
+under its own heading, since what is at risk is the text rather than the patch.
+Text already written out as `.fbks` is on disk and is not asked about. The patch
+is deliberately left out of the question: it is not going anywhere, and it stays
+as unsaved as it was a moment before, so the question the file asks is still
+there to be asked when a file asks it.
+
+**The next look prints afresh.** An emptied buffer is what
+`PrintForReading` waits for, so the text view opened again shows a printing of
+the patch under the notice that says so — the state somebody would have been in
+had they opened the patch as a `.fbk` all along, which is the point.

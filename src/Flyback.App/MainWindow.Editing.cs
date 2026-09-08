@@ -93,16 +93,49 @@ public sealed partial class MainWindow
         // lose even where its patch has not.
         if (!editor.IsModified && !SourceIsUnapplied) return true;
 
-        // The same question is already up. Whatever asked again is refused
-        // rather than queued behind the first answer: it is the same patch and
-        // the same three buttons, and one set of them is already on the screen.
+        return await AnsweredAsync(
+            "Unsaved changes",
+            "This patch has changes that have not been saved. Closing it now would lose them.");
+    }
+
+    /// <summary>
+    /// Whether text about to stop being the document may go. Asks only about
+    /// typing that is nowhere else: text already written out as <c>.fbks</c> is
+    /// on disk, and the buffer being emptied costs nothing.
+    /// </summary>
+    /// <remarks>
+    /// The patch is deliberately not asked about, because it is not going
+    /// anywhere. Handing it back to the canvas changes who owns it and not what
+    /// it is, and it stays as unsaved as it was a moment before — so the
+    /// question the file asks is still there to be asked when a file asks it.
+    /// </remarks>
+    private async Task<bool> MayLoseTheTextAsync()
+    {
+        if (!SourceIsUnapplied) return true;
+
+        return await AnsweredAsync(
+            "Unsaved text",
+            "This text has not been saved. Handing the patch back to the canvas empties it, "
+            + "and its comments, its names and its defs go with it — the patch itself is "
+            + "untouched.");
+    }
+
+    /// <summary>
+    /// Puts the three answers up and does what the answer says, for whoever is
+    /// about to lose something.
+    /// </summary>
+    private async Task<bool> AnsweredAsync(string about, string question)
+    {
+        // A question is already up. Whatever asked is refused rather than queued
+        // behind the first answer: it is the same document and the same three
+        // buttons, and one set of them is already on the screen.
         if (questionIsUp) return false;
 
         questionIsUp = true;
 
         try
         {
-            return await AskAboutUnsavedAsync() switch
+            return await AskAboutUnsavedAsync(about, question) switch
             {
                 // A cancelled save picker is a cancelled close: somebody who asked
                 // to save and then thought better of where has not agreed to lose
@@ -130,7 +163,7 @@ public sealed partial class MainWindow
     /// nobody gave is the harmless one by the language's own rule rather than by
     /// a line of code remembering to make it so.
     /// </remarks>
-    private async Task<Unsaved> AskAboutUnsavedAsync()
+    private async Task<Unsaved> AskAboutUnsavedAsync(string about, string question)
     {
         var buttons = new StackPanel
         {
@@ -152,15 +185,14 @@ public sealed partial class MainWindow
             {
                 new TextBlock
                 {
-                    Text = "This patch has changes that have not been saved. "
-                        + "Closing it now would lose them.",
+                    Text = question,
                     TextWrapping = TextWrapping.Wrap,
                 },
                 buttons,
             },
         };
 
-        return await this.ShowDialog<Unsaved>("Unsaved changes", asking);
+        return await this.ShowDialog<Unsaved>(about, asking);
 
         static Button Answering(string text, Unsaved with, bool wide = false)
         {

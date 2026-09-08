@@ -102,6 +102,25 @@ internal sealed class SourceView : UserControl
         Foreground = new SolidColorBrush(Colors.Inactive),
     };
 
+    /// <summary>
+    /// The counterpart of Apply: the gesture that gives the patch back to the
+    /// canvas.
+    /// </summary>
+    /// <remarks>
+    /// Beside Apply, because it is the other end of the same decision. Shown
+    /// only while the text is the document — over a printing there is nothing to
+    /// hand back, since the canvas has the patch already.
+    /// </remarks>
+    private readonly Button hand = new()
+    {
+        Content = "Edit on the canvas",
+        Name = "hand",
+        FontSize = 11,
+        Padding = new Thickness(10, 4),
+        Margin = new Thickness(0, 5),
+        IsVisible = false,
+    };
+
     public SourceView()
     {
         complaintsScroll.Content = complaints;
@@ -154,11 +173,19 @@ internal sealed class SourceView : UserControl
 
         apply.Click += (_, _) => EvaluateRequested?.Invoke(this, EventArgs.Empty);
 
-        var bottom = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto") };
+        ToolTip.SetTip(hand, "Give the patch back to the canvas, so its modules can be dragged, "
+            + "wired and grouped again. The text stops being the document, so save it first if "
+            + "what is written here is worth keeping.");
+
+        hand.Click += (_, _) => HandBackRequested?.Invoke(this, EventArgs.Empty);
+
+        var bottom = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto") };
 
         Grid.SetColumn(footer, 0);
-        Grid.SetColumn(apply, 1);
+        Grid.SetColumn(hand, 1);
+        Grid.SetColumn(apply, 2);
         bottom.Children.Add(footer);
+        bottom.Children.Add(hand);
         bottom.Children.Add(apply);
 
         var rows = new Grid
@@ -192,6 +219,15 @@ internal sealed class SourceView : UserControl
 
     /// <summary>Somebody has asked for this text to become the patch.</summary>
     public event EventHandler? EvaluateRequested;
+
+    /// <summary>Somebody has asked for the canvas to have the patch back.</summary>
+    /// <remarks>
+    /// Asked rather than done, for the reason applying is asked rather than
+    /// done: what it settles is which of two views is the document, and that is
+    /// the shell's to answer — and to ask about first, since the text is about
+    /// to stop being anywhere.
+    /// </remarks>
+    public event EventHandler? HandBackRequested;
 
     /// <summary>The text has changed, so what can be taken back has too.</summary>
     public event EventHandler? Changed;
@@ -288,6 +324,16 @@ internal sealed class SourceView : UserControl
             notice.Text = value;
             notice.IsVisible = !string.IsNullOrWhiteSpace(value);
         }
+    }
+
+    /// <summary>
+    /// Whether this text is the document, which is the one state in which
+    /// handing the patch back to the canvas means anything.
+    /// </summary>
+    public bool Owns
+    {
+        get => hand.IsVisible;
+        set => hand.IsVisible = value;
     }
 
     /// <summary>Whether the text may be typed into.</summary>

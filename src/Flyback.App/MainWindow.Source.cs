@@ -124,6 +124,7 @@ public sealed partial class MainWindow
         source.EvaluateRequested += (_, _) => Evaluate();
         source.Changed += (_, _) => RefreshEditState();
         source.Moved += (_, at) => PointAt(at);
+        source.HandBackRequested += async (_, _) => await HandBackAsync();
 
         codeButton.IsCheckedChanged += (_, _) => ShowCode(codeButton.IsChecked == true);
 
@@ -540,6 +541,43 @@ public sealed partial class MainWindow
     }
 
     /// <summary>
+    /// Gives the patch back to the canvas, which is what applying does in
+    /// reverse.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Applying is how a patch is taken into text and this is how it comes back
+    /// out, because a gesture that can only be made in one direction is a trap
+    /// however well it is labelled. Without it the canvas is a view until some
+    /// other document happens to arrive, and somebody who applied a printing to
+    /// try something and then wanted to drag one wire would have to save the
+    /// patch as a <c>.fbk</c> to be allowed to — the way out of an adoption
+    /// should not be a file operation.
+    /// </para>
+    /// <para>
+    /// Nothing is built and nothing is rewound. The patch on the canvas is
+    /// already what the text made, and what changes hands is who owns it — the
+    /// same change a <c>.fbk</c> arriving would make, through the same door, so
+    /// the canvas that comes back is the one that comes back from opening a
+    /// patch file.
+    /// </para>
+    /// </remarks>
+    private async Task HandBackAsync()
+    {
+        if (!sourceOwned) return;
+
+        // The buffer is emptied by the handover and is written nowhere on the
+        // way, so typing that is not on disk yet is asked about here exactly as
+        // it is asked about when a document is closed over.
+        if (!await MayLoseTheTextAsync()) return;
+
+        DropSource();
+
+        Report("The canvas is the document from here on. The text view prints it afresh on "
+            + "the next look, and applying that printing takes it back into text.");
+    }
+
+    /// <summary>
     /// Takes text that has just been opened as the document.
     /// </summary>
     private void TakeSource(string text)
@@ -646,6 +684,11 @@ public sealed partial class MainWindow
 
         source.Notice = sourceOwned ? null : Reading();
         source.Editable = true;
+
+        // Offered only where it would change something. Over a printing the
+        // canvas is the document already, and a button saying so would be a
+        // button that does nothing.
+        source.Owns = sourceOwned;
 
         ToolTip.SetTip(
             inspector,

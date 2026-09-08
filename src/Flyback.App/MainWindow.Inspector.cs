@@ -75,7 +75,9 @@ public sealed partial class MainWindow
     /// </remarks>
     private const string LockedHelp =
         "The text is the document, and this is a view of what it builds. "
-        + "Press F2 to go back to it — modules and wires are added and removed there.\n\n"
+        + "Press F2 to go back to it — modules and wires are added and removed there, "
+        + "and \"Edit on the canvas\" under the text hands the patch back so they can be "
+        + "drawn here instead.\n\n"
         + "Select a module — on the canvas, or by putting the caret in the code where "
         + "it is written — to edit it here. Its knobs, its tune, its file: letting go "
         + "writes the new value into the code, where the code already says it.\n\n"
