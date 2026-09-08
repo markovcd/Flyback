@@ -1,4 +1,5 @@
 using Avalonia.Controls;
+using Avalonia.Controls.Presenters;
 using Avalonia.Data;
 using Avalonia.Layout;
 using Avalonia.Media;
@@ -70,9 +71,16 @@ internal static class Glyphs
             VerticalAlignment = VerticalAlignment.Center,
         };
 
+        // The ancestor's ContentPresenter, not the Button itself: a disabled
+        // button dims by setting Foreground on the presenter its template
+        // draws through, and leaves the Button's own property untouched.
+        // Binding to the Button would read a color that never changes.
         path[!Avalonia.Controls.Shapes.Shape.StrokeProperty] = new Binding("Foreground")
         {
-            RelativeSource = new RelativeSource(RelativeSourceMode.FindAncestor) { AncestorType = typeof(Button) },
+            RelativeSource = new RelativeSource(RelativeSourceMode.FindAncestor)
+            {
+                AncestorType = typeof(ContentPresenter),
+            },
         };
 
         return path;

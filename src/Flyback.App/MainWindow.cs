@@ -652,6 +652,11 @@ public sealed partial class MainWindow : Window
 
         var tidy = tidyButton = Drawn("tidy", Glyphs.Tidy(), TidyTip);
 
+        // A locked canvas says why in its tip, and that is wasted unless a
+        // disabled button is still allowed to show it — see the same call on
+        // exportButton and recordButton.
+        ToolTip.SetShowOnDisabled(tidy, true);
+
         tidy.Click += (_, _) => Tidy();
 
         WireSource();
