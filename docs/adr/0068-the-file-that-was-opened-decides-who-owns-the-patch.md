@@ -127,21 +127,13 @@ Ctrl+Z cannot reach back into the text of something else that was open earlier.
 Folding the lines is an edit and one press takes it back.
 
 **The inspector stays live on a locked canvas, and is the one thing on it that
-does.** A knob turned there is written into the text — in the call that already
-takes it, changing the one number that moved. Nothing is rebuilt: the patch
-already has the value and the engine already has the patch, and building here
-would replace the patch under the very control being dragged. What this keeps in
-step is the document, so the next apply builds what is already being heard.
-
-**In place, because saying it twice is worse than not saying it.** The language
-has a statement for setting a knob — `name.port = value` — and appending one is
-the easy way to do this. It is also a file that asserts two different values for
-one knob, with the older of them still written in the call. So `SourceEdit`
-changes the number where it stands, adds the argument to the call where the knob
-was at its default, and hands back nothing where the call is not shaped for it —
-an argument filling its socket by position cannot be given a named one for the
-same socket without saying it twice again. Only then does the statement form get
-used, which is the one case where a second place to say it is the only place.
+does.** A knob turned there is written into the text as `name.port = value`, the
+statement the language already has for saying it — replacing the line that sets
+it where there is one, adding one at the end where there is not. Nothing is
+rebuilt: the patch already has the value and the engine already has the patch,
+and building here would replace the patch under the very control being dragged.
+What this keeps in step is the document, so the next apply builds what is
+already being heard.
 
 **Written when the gesture ends, not while it runs.** A slider dragged across
 its range is one thing somebody did and arrives as a hundred; the sound follows
