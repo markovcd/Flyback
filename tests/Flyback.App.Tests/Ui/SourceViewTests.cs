@@ -699,6 +699,42 @@ public class SourceViewTests : UiTest
     }
 
     /// <summary>
+    /// Writing a knob back moves the caret, because the text under it just got
+    /// shorter or longer. That is the text moving and not the caret, and the
+    /// selection must not follow it.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_knob_written_back_under_the_caret_leaves_the_panel_alone()
+    {
+        var window = Open();
+        var text = ShowCode(window);
+
+        // After the value that is about to change, so replacing it shifts the
+        // caret and the view reports a move nobody made.
+        text.CaretOffset = text.Text.IndexOf(')');
+        Settle(window);
+
+        var chosen = Editor(window).SelectedNode.ShouldNotBeNull();
+
+        Turn(window, 0.375d);
+
+        Editor(window).SelectedNode
+            .ShouldNotBeNull("the panel emptied itself while the knob was being let go of")
+            .Id.ShouldBe(chosen.Id);
+
+        // And the caret still points the panel afterwards, rather than the map
+        // being left empty for the rest of the session.
+        var second = text.Text.IndexOf('(', text.Text.IndexOf(')'));
+
+        second.ShouldBeGreaterThan(0, "the preset prints as more than one call");
+
+        text.CaretOffset = second;
+        Settle(window);
+
+        Editor(window).SelectedNode.ShouldNotBeNull("the caret stopped pointing the panel");
+    }
+
+    /// <summary>
     /// A knob sitting at its default is written nowhere, so there is no number
     /// to change and it is added to the call that placed the module.
     /// </summary>

@@ -64,8 +64,27 @@ public sealed partial class MainWindow
     /// <summary>Where the text says each module and each of its knobs.</summary>
     private SourceMap map = SourceMap.Empty;
 
-    /// <summary>The text <see cref="map"/> was made from, which is when it is still true.</summary>
-    private string mapped = string.Empty;
+    /// <summary>
+    /// The text <see cref="map"/> was made from, or null for no map at all.
+    /// </summary>
+    /// <remarks>
+    /// Null rather than empty, because an empty document is a text like any
+    /// other and a map of one is a perfectly good answer. What this has to say
+    /// is that there is no answer yet.
+    /// </remarks>
+    private string? mapped;
+
+    /// <summary>
+    /// Whether the text is being written to from the panel rather than typed
+    /// into.
+    /// </summary>
+    /// <remarks>
+    /// Replacing a knob's number moves everything after it along, the caret
+    /// included, and the editor reports that as a caret move — which it is not.
+    /// Nobody moved it and the selection must not follow it, or letting go of a
+    /// slider would empty the panel that slider is in.
+    /// </remarks>
+    private bool writingBack;
 
     /// <summary>
     /// Knobs turned in the panel since the hand last came off one.
@@ -141,13 +160,15 @@ public sealed partial class MainWindow
         {
             if (mapped == source.Source) return map;
 
-            mapped = source.Source;
+            var text = source.Source;
 
             map = sourceOwned
-                ? PatchLanguage.Build(mapped).Map
-                : printed == mapped
-                    ? PatchPrinter.Locate(editor.Patch, mapped, printedOrder)
+                ? PatchLanguage.Build(text).Map
+                : printed == text
+                    ? PatchPrinter.Locate(editor.Patch, text, printedOrder)
                     : SourceMap.Empty;
+
+            mapped = text;
 
             return map;
         }
@@ -164,7 +185,7 @@ public sealed partial class MainWindow
     /// </remarks>
     private void PointAt(int at)
     {
-        if (!showingCode) return;
+        if (!showingCode || writingBack) return;
 
         editor.Select(Map.At(at));
     }
@@ -191,45 +212,59 @@ public sealed partial class MainWindow
     /// </remarks>
     private void WriteBack()
     {
-        if (turned.Count == 0) return;
+        if (turned.Count == 0 || writingBack) return;
 
         var pending = turned.ToArray();
         var lost = 0;
 
         turned.Clear();
+        writingBack = true;
 
-        foreach (var (id, port) in pending)
+        try
         {
-            if (editor.Patch.Find(id) is not { } node
-                || NodeCatalog.Get(node.TypeId) is not { } def
-                || port >= def.Inputs.Count
-                || port >= node.InputValues.Length)
-            {
-                continue;
-            }
-
-            var spec = def.Inputs[port];
-            var value = PatchPrinter.Knob(node.InputValues[port], spec.Display);
-
-            if (Map.Knob(id, port, spec.Name.Replace(' ', '_'), value) is not { } change)
-            {
-                // Nothing was written and something should have been. Said out
-                // loud rather than dropped: the value is about to be lost and
-                // whoever turned it can still do something else about it.
-                if (Map.Where(id) is not null) lost++;
-                continue;
-            }
-
-            if (!source.Apply(change)) continue;
-
-            // Still a printing, and now a true one. Left as it was the text
-            // would count as typed into and stop being pointed at.
-            if (!sourceOwned) printed = source.Source;
+            foreach (var (id, port) in pending) Write(id, port, ref lost);
+        }
+        finally
+        {
+            writingBack = false;
         }
 
         if (lost > 0)
             Report($"{lost} value(s) could not be written into the text — "
                 + "the code says them in a form this cannot change in place.");
+    }
+
+    /// <summary>Puts one knob into the text, or counts it as one that could not go.</summary>
+    private void Write(Guid id, int port, ref int lost)
+    {
+        if (editor.Patch.Find(id) is not { } node
+            || NodeCatalog.Get(node.TypeId) is not { } def
+            || port >= def.Inputs.Count
+            || port >= node.InputValues.Length)
+        {
+            return;
+        }
+
+        var spec = def.Inputs[port];
+        var value = PatchPrinter.Knob(node.InputValues[port], spec.Display);
+
+        if (Map.Knob(id, port, spec.Name.Replace(' ', '_'), value) is not { } change)
+        {
+            // Nothing was written and something should have been. Said out loud
+            // rather than dropped: the value is about to be lost and whoever
+            // turned it can still do something else about it.
+            if (Map.Where(id) is not null) lost++;
+            return;
+        }
+
+        if (!source.Apply(change)) return;
+
+        // Still a printing, and now a true one — said before anything can ask
+        // for the map again, since what makes this text a printing is the two
+        // of them agreeing.
+        if (!sourceOwned) printed = source.Source;
+
+        mapped = null;
     }
 
     /// <summary>
@@ -333,15 +368,17 @@ public sealed partial class MainWindow
 
         var writing = PatchPrinter.Written(editor.Patch);
 
+        // Everything about the new text before the text itself, because putting
+        // it in the view is a change the view reports at once — and what it
+        // reports to is the caret handling, which asks for the map.
         printed = writing.Source;
         printedOrder = writing.Order;
+        mapped = writing.Source;
+        map = writing.Map;
 
         source.Source = printed;
         source.Clear();
         source.Notice = Reading();
-
-        mapped = printed;
-        map = writing.Map;
     }
 
     /// <summary>
@@ -483,7 +520,7 @@ public sealed partial class MainWindow
     private void Forget()
     {
         map = SourceMap.Empty;
-        mapped = string.Empty;
+        mapped = null;
         turned.Clear();
     }
 
