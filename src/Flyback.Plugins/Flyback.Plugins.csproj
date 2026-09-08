@@ -16,6 +16,7 @@
          was in that half. -->
     <InternalsVisibleTo Include="Flyback.Plugins.Tests" />
     <InternalsVisibleTo Include="Flyback.App.Tests" />
+    <InternalsVisibleTo Include="Flyback.Cli.Tests" />
   </ItemGroup>
 
 </Project>

@@ -1,6 +1,6 @@
 using Flyback.Plugins.Secrets;
 
-namespace Flyback.App.Assist;
+namespace Flyback.Plugins.Assist;
 
 /// <summary>Where a key came from. Shown to the person, because the three differ in what they promise.</summary>
 public enum CredentialSource

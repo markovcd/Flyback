@@ -130,6 +130,43 @@ public sealed record AssistantSchema(
     public IEnumerable<AssistantModel> Ears => SuggestedModels.Where(m => m.Hearing);
 
     /// <summary>
+    /// This schema as a survey of the endpoint leaves it, or unchanged where
+    /// nobody has run one.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// A survey replaces the suggestions rather than joining them, because the
+    /// two are not the same kind of claim: a suggestion is what somebody
+    /// believed when they wrote the line, and a survey is what the endpoint said
+    /// when it was asked. Where they disagree about whether a model exists at
+    /// all, the endpoint is the one that has to be right — a suggestion that
+    /// survived would be a name in the box that answers 404.
+    /// </para>
+    /// <para>
+    /// The default moves with them for that reason. A written-down default the
+    /// survey did not find is the exact state a survey exists to get out of, and
+    /// leaving it in place would hand a fresh window the one model known not to
+    /// work.
+    /// </para>
+    /// </remarks>
+    public AssistantSchema Surveyed(AssistantValues values)
+    {
+        var found = Survey.Read(values.Text(Survey.Key, string.Empty));
+
+        if (found.Count == 0) return this;
+
+        var models = found.Select(m => m.Suggestion).ToList();
+
+        var kept = models.Any(m => string.Equals(m.Id, DefaultModel, StringComparison.OrdinalIgnoreCase));
+
+        return this with
+        {
+            SuggestedModels = models,
+            DefaultModel = kept ? DefaultModel : models[0].Id,
+        };
+    }
+
+    /// <summary>
     /// The form as it stands, given what is set on it so far.
     /// </summary>
     /// <remarks>

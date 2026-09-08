@@ -42,7 +42,9 @@ internal static class Program
         // Before anything reads a patch: a file may name modules that only a
         // plugin defines, and a catalogue settled after the fact would have let
         // it compile against the wrong one.
-        NodeCatalog.Install(PluginHost.Load().Modules);
+        var plugins = PluginHost.Load();
+
+        NodeCatalog.Install(plugins.Modules);
 
         var patch = new Argument<FileInfo>("patch")
         {
@@ -58,6 +60,7 @@ internal static class Program
             Check(patch, json),
             Info(patch, json),
             Pack(patch),
+            Probe(plugins, json),
         };
 
         var parsed = root.Parse(args);
@@ -68,6 +71,69 @@ internal static class Program
         // held wrong rather than a patch being wrong, and the two should not
         // come back as the same number.
         return parsed.Errors.Count > 0 ? Exit.Failed : code;
+    }
+
+    /// <summary>
+    /// The one command here that is not about a patch, which is why it takes no
+    /// <c>patch</c> argument and why it needs the catalogue rather than the
+    /// engine: what it asks and what it writes both belong to a plugin.
+    /// </summary>
+    private static Command Probe(PluginCatalog plugins, Option<bool> json)
+    {
+        var provider = new Option<string>("--provider")
+        {
+            Description = "Which assistant to ask, by id, or `all` for every one with a key. "
+                + "Defaults to whichever the settings are on.",
+        };
+
+        var model = new Option<string[]>("--model")
+        {
+            Description = "Ask about these models by name, whether or not the endpoint lists them.",
+            AllowMultipleArgumentsPerToken = true,
+        };
+
+        var all = new Option<bool>("--all")
+        {
+            Description = "Ask about everything listed, not only what could build a patch.",
+        };
+
+        var bounds = new Option<bool>("--bounds")
+        {
+            Description = "Also measure what each model will think for. Slow, and billed as thinking.",
+        };
+
+        var dry = new Option<bool>("--dry-run")
+        {
+            Description = "Print what was found and leave the settings as they are.",
+        };
+
+        var keys = new Option<bool>("--keys")
+        {
+            Description = "Say where each provider's key would come from, and ask nothing of anybody.",
+        };
+
+        var command = new Command(
+            "probe",
+            "Ask an assistant's endpoint which models it has and what each one accepts.")
+        {
+            provider, model, all, bounds, dry, keys, json,
+        };
+
+        command.SetAction((result, cancellation) => ProbeCommand.Run(
+            plugins,
+            new ProbeOptions(
+                result.GetValue(provider),
+                result.GetValue(model) ?? [],
+                result.GetValue(all),
+                result.GetValue(bounds),
+                result.GetValue(dry),
+                result.GetValue(json),
+                result.GetValue(keys)),
+            Console.Out,
+            Console.Error,
+            cancellation));
+
+        return command;
     }
 
     private static Command Render(Argument<FileInfo> patch)

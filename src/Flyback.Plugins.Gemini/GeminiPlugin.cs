@@ -23,21 +23,7 @@ public sealed class GeminiPlugin : IFlybackPlugin
     public void Register(IPluginRegistry registry) => registry.AddPatchAssistant(new GeminiAssistant());
 }
 
-/// <summary>
-/// What one model will think for, in tokens.
-/// </summary>
-/// <remarks>
-/// Kept here rather than on <see cref="AssistantModel"/> because it is this
-/// provider's arithmetic and nothing in the shell can do anything with it. The
-/// bounds are per-model and a budget outside them is a 400 rather than a clamp,
-/// which is exactly why the other adapter sends no effort at all: it cannot know
-/// what endpoint it is pointed at. This one can.
-/// </remarks>
-/// <param name="Least">The smallest budget this model accepts. Zero where it may be switched off.</param>
-/// <param name="Most">The largest it accepts.</param>
-internal sealed record Thought(int Least, int Most);
-
-public sealed class GeminiAssistant : IPatchAssistant
+public sealed partial class GeminiAssistant : IPatchAssistant
 {
     public string Id => "gemini";
 
@@ -55,8 +41,7 @@ public sealed class GeminiAssistant : IPatchAssistant
     public int Priority => 40;
 
     /// <summary>
-    /// Every model here both sees and hears, which is the point of the adapter
-    /// and not a coincidence of the list.
+    /// Where somebody starts before anybody has asked the endpoint anything.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -66,40 +51,31 @@ public sealed class GeminiAssistant : IPatchAssistant
     /// better builder for a hard patch and is one line away in the box.
     /// </para>
     /// <para>
-    /// This list is the part that goes stale, exactly as ADR-0047 said it would:
-    /// a model released next month is a stranger here until somebody adds a
-    /// line. The failure stays in the safe direction — a stranger is offered
-    /// everything and refused nothing — with one exception worth knowing about,
-    /// which is that a stranger gets no thinking budget, because there is no
-    /// telling what range it would accept.
+    /// A written-down list is the part that goes stale, exactly as ADR-0047 said
+    /// it would, and the answer is <see cref="IModelSurvey"/>: a survey replaces
+    /// every line of this with what the endpoint said when it was asked — see
+    /// <see cref="AssistantSchema.Surveyed"/>. Until one has been run these four
+    /// are the whole of what is known here, and any of them may already be a
+    /// model that answers 404.
+    /// </para>
+    /// <para>
+    /// Which is why the list is short rather than exhaustive. It has one job,
+    /// which is to get somebody as far as a first request; what they choose from
+    /// after that should have been measured rather than believed.
     /// </para>
     /// </remarks>
     public AssistantSchema Schema { get; } = new(
-        "gemini-2.5-flash",
+        "gemini-3.6-flash",
         [
-            new AssistantModel("gemini-2.5-pro", Hearing: true),
-            new AssistantModel("gemini-2.5-flash", Hearing: true),
-            new AssistantModel("gemini-2.5-flash-lite", Hearing: true),
+            new AssistantModel("gemini-3.1-pro-preview", Hearing: true),
+            new AssistantModel("gemini-3.8-flash", Hearing: true),
+            new AssistantModel("gemini-3.6-flash", Hearing: true),
+            new AssistantModel("gemini-3.5-flash-lite", Hearing: true),
         ],
         "GEMINI_API_KEY",
         "A key from Google AI Studio. The endpoint is fixed — this format is "
         + "spoken in one place, unlike chat completions.",
         "https://generativelanguage.googleapis.com/v1beta");
-
-    /// <summary>
-    /// What each model will think for.
-    /// </summary>
-    /// <remarks>
-    /// Pro cannot be told not to think at all and its floor is 128; the two
-    /// Flashes accept zero. Anything not named here is left alone entirely — see
-    /// <see cref="Thinking"/>.
-    /// </remarks>
-    private static readonly Dictionary<string, Thought> Budgets = new(StringComparer.OrdinalIgnoreCase)
-    {
-        ["gemini-2.5-pro"] = new(128, 32768),
-        ["gemini-2.5-flash"] = new(0, 24576),
-        ["gemini-2.5-flash-lite"] = new(512, 24576),
-    };
 
     /// <summary>What this one's key comes from. The host holds it; see ADR-0034.</summary>
     public AssistantCredential Credential => Schema.Credential;
@@ -111,9 +87,16 @@ public sealed class GeminiAssistant : IPatchAssistant
     /// one place and somebody looking for the field deserves to be told that
     /// rather than to wonder where it went.
     /// </summary>
-    public IReadOnlyList<AssistantField> Form(AssistantValues values) => Schema.Form(values);
+    /// <remarks>
+    /// The model box offers what a survey found, where one has been run. Every
+    /// question that reads a model goes through the same substitution, and they
+    /// have to: a box offering surveyed models while <see cref="Senses"/>
+    /// answered from the written-down ones would be a form that lies about the
+    /// thing it is showing.
+    /// </remarks>
+    public IReadOnlyList<AssistantField> Form(AssistantValues values) => Schema.Surveyed(values).Form(values);
 
-    public AssistantSenses Senses(AssistantValues values) => Schema.Senses(values);
+    public AssistantSenses Senses(AssistantValues values) => Schema.Surveyed(values).Senses(values);
 
     /// <summary>
     /// Answered from the configuration alone — no request, no client, nothing
@@ -125,7 +108,7 @@ public sealed class GeminiAssistant : IPatchAssistant
         if (string.IsNullOrWhiteSpace(config.ApiKey))
             return "No key yet — set GEMINI_API_KEY, or put one in Settings.";
 
-        var chosen = Schema.Read(config.Values);
+        var chosen = Schema.Surveyed(config.Values).Read(config.Values);
 
         if (string.IsNullOrWhiteSpace(chosen.Model))
             return "No model chosen. Put one in Settings.";
@@ -143,15 +126,16 @@ public sealed class GeminiAssistant : IPatchAssistant
 
     public IPatchSession Start(PatchWorkbench workbench, AssistantConfig config)
     {
-        var chosen = Schema.Read(config.Values);
+        var schema = Schema.Surveyed(config.Values);
+        var chosen = schema.Read(config.Values);
 
         return new GeminiSession(
             workbench,
             chosen,
             config.ApiKey,
             Schema.DefaultBaseUrl!,
-            Thinking(chosen),
-            ownEars: Schema.Known(chosen.Model)?.Hearing == true);
+            Thinking(config.Values, chosen),
+            ownEars: schema.Known(chosen.Model)?.Hearing == true);
     }
 
     /// <summary>
@@ -162,26 +146,31 @@ public sealed class GeminiAssistant : IPatchAssistant
     /// <para>
     /// Medium is dynamic — the model is told to decide for itself, which is what
     /// -1 means and what it would have done unasked. Low and High are the ends
-    /// of what the chosen model accepts, which is why the numbers live in a
-    /// table rather than in this method: they differ per model and a budget out
-    /// of range is refused rather than clamped.
+    /// of what the chosen model accepts, and those are per-model numbers that a
+    /// budget out of range answers with a 400 rather than a clamp.
     /// </para>
     /// <para>
-    /// A model nobody wrote down gets no <c>thinkingConfig</c> at all. This is
-    /// the one place a stranger loses something, and it is the right way round:
-    /// the alternative is guessing a number at a model whose floor might be
-    /// above it and losing every request rather than one setting.
+    /// So they are measured rather than written down, and a model nobody has
+    /// measured gets no <c>thinkingConfig</c> at all — which is the ordinary
+    /// state until somebody runs a survey with
+    /// <see cref="SurveyOptions.Bounds"/>, and it is the right way round: the
+    /// alternative is guessing a number at a model whose floor might be above it
+    /// and losing every request rather than one setting.
     /// </para>
     /// </remarks>
-    private JsonObject? Thinking(AssistantChoices chosen)
+    private static JsonObject? Thinking(AssistantValues values, AssistantChoices chosen)
     {
-        if (Schema.Known(chosen.Model) is not { } known) return null;
-        if (!Budgets.TryGetValue(known.Id, out var budget)) return null;
+        // Qualified because this class also has a Survey, and the method would
+        // otherwise win the name over the type that stores what it found.
+        var measured = Assist.Survey.Read(values.Text(Assist.Survey.Key, string.Empty))
+            .FirstOrDefault(m => string.Equals(m.Id, chosen.Model, StringComparison.OrdinalIgnoreCase));
+
+        if (measured?.Least is not { } least || measured.Most is not { } most) return null;
 
         var tokens = chosen.Effort switch
         {
-            AssistantEffort.Low => budget.Least,
-            AssistantEffort.High => budget.Most,
+            AssistantEffort.Low => least,
+            AssistantEffort.High => most,
             _ => -1,
         };
 

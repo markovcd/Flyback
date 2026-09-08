@@ -1,3 +1,4 @@
+using Flyback.Plugins.Assist;
 using Flyback.App.Assist;
 using Flyback.Plugins.Secrets;
 using Shouldly;

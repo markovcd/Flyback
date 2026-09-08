@@ -22,7 +22,7 @@ public sealed class OpenAiPlugin : IFlybackPlugin
     public void Register(IPluginRegistry registry) => registry.AddPatchAssistant(new OpenAiAssistant());
 }
 
-public sealed class OpenAiAssistant : IPatchAssistant
+public sealed partial class OpenAiAssistant : IPatchAssistant
 {
     public string Id => "openai";
 
@@ -52,6 +52,14 @@ public sealed class OpenAiAssistant : IPatchAssistant
     /// picture sent to either is a 400, and until it was written down the shell
     /// had no way to know that and offered to send one.
     /// </para>
+    /// <para>
+    /// All of which is a guess about a service nobody named, and this is the
+    /// adapter where that matters most: the endpoint is a field, so eight ids
+    /// chosen in advance may have nothing to do with what is actually there.
+    /// <see cref="IModelSurvey"/> replaces the lot with what the endpoint said —
+    /// see <see cref="AssistantSchema.Surveyed"/> — and these eight are what
+    /// somebody starts from until it has been run.
+    /// </para>
     /// </remarks>
     public AssistantSchema Schema { get; } = new(
         "gpt-4o",
@@ -80,9 +88,9 @@ public sealed class OpenAiAssistant : IPatchAssistant
     /// peculiar about this provider's form, which is exactly why the declaration
     /// of it is shared.
     /// </summary>
-    public IReadOnlyList<AssistantField> Form(AssistantValues values) => Schema.Form(values);
+    public IReadOnlyList<AssistantField> Form(AssistantValues values) => Schema.Surveyed(values).Form(values);
 
-    public AssistantSenses Senses(AssistantValues values) => Schema.Senses(values);
+    public AssistantSenses Senses(AssistantValues values) => Schema.Surveyed(values).Senses(values);
 
     /// <summary>
     /// Answered from the configuration alone — no request, no client, nothing
@@ -94,7 +102,7 @@ public sealed class OpenAiAssistant : IPatchAssistant
         if (string.IsNullOrWhiteSpace(config.ApiKey))
             return "No key yet — set OPENAI_API_KEY, or put one in Settings.";
 
-        var chosen = Schema.Read(config.Values);
+        var chosen = Schema.Surveyed(config.Values).Read(config.Values);
 
         if (string.IsNullOrWhiteSpace(chosen.Model))
             return "No model chosen. Put one in Settings.";
@@ -111,5 +119,9 @@ public sealed class OpenAiAssistant : IPatchAssistant
     }
 
     public IPatchSession Start(PatchWorkbench workbench, AssistantConfig config) =>
-        new OpenAiSession(workbench, Schema.Read(config.Values), config.ApiKey, Schema.DefaultBaseUrl!);
+        new OpenAiSession(
+            workbench,
+            Schema.Surveyed(config.Values).Read(config.Values),
+            config.ApiKey,
+            Schema.DefaultBaseUrl!);
 }

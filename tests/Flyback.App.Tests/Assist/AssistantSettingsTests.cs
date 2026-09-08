@@ -36,6 +36,95 @@ public class AssistantSettingsTests : IDisposable
         ["effort"] = "High",
     });
 
+    /// <summary>
+    /// A provider may keep something that is itself JSON — a survey of an
+    /// endpoint is a list of models under one key — and writing that as a quoted
+    /// string escapes every quote inside it, which turns the part of the file
+    /// somebody most wants to read into the part they cannot.
+    /// </summary>
+    [Fact]
+    public void A_value_that_is_itself_json_is_written_as_json()
+    {
+        var models = "[{\"Id\":\"gemini-3.6-flash\",\"Hearing\":true}]";
+        var settings = new AssistantSettings();
+
+        settings.Remember("gemini", new AssistantValues(new Dictionary<string, string>
+        {
+            ["model"] = "gemini-3.6-flash",
+            ["models"] = models,
+        }));
+
+        settings.Save(path);
+
+        var written = File.ReadAllText(path);
+
+        written.ShouldNotContain("\\u0022");
+        written.ShouldNotContain("\\\"");
+        written.ShouldContain("\"models\": [{\"Id\":\"gemini-3.6-flash\",\"Hearing\":true}]");
+
+        // The ordinary value beside it is still a string, because that is what
+        // it is. Only a list or an object goes in unquoted.
+        written.ShouldContain("\"model\": \"gemini-3.6-flash\"");
+    }
+
+    /// <summary>
+    /// The boundary keeps its strings whatever the file looks like: a provider
+    /// hands over text and is handed back the same text, or the survey it wrote
+    /// would come back as something it could not parse.
+    /// </summary>
+    [Fact]
+    public void A_value_that_is_itself_json_comes_back_as_the_same_text()
+    {
+        var models = "[{\"Id\":\"gemini-3.6-flash\",\"Hearing\":true}]";
+        var settings = new AssistantSettings();
+
+        settings.Remember("gemini", new AssistantValues(new Dictionary<string, string> { ["models"] = models }));
+        settings.Save(path);
+
+        AssistantSettings.Load(path).Of("gemini").Text("models").ShouldBe(models);
+    }
+
+    /// <summary>
+    /// Written by a version that quoted it, read by one that does not have to.
+    /// </summary>
+    [Fact]
+    public void A_value_quoted_by_an_older_file_still_reads()
+    {
+        var folder = Path.GetDirectoryName(path)!;
+
+        Directory.CreateDirectory(folder);
+        File.WriteAllText(
+            path,
+            """
+            {
+              "Provider": "gemini",
+              "Choices": { "gemini": { "models": "[{\"Id\":\"gemini-3.6-flash\"}]" } }
+            }
+            """);
+
+        AssistantSettings.Load(path).Of("gemini").Text("models").ShouldBe("[{\"Id\":\"gemini-3.6-flash\"}]");
+    }
+
+    /// <summary>
+    /// A word that merely begins with a bracket is a word, and a number is a
+    /// string that would not survive the trip back.
+    /// </summary>
+    [Theory]
+    [InlineData("[unfinished")]
+    [InlineData("{")]
+    [InlineData("007")]
+    [InlineData("true")]
+    [InlineData("")]
+    public void Anything_that_is_not_a_list_or_an_object_stays_a_string(string held)
+    {
+        var settings = new AssistantSettings();
+
+        settings.Remember("gemini", new AssistantValues(new Dictionary<string, string> { ["odd"] = held }));
+        settings.Save(path);
+
+        AssistantSettings.Load(path).Of("gemini").All["odd"].ShouldBe(held);
+    }
+
     [Fact]
     public void Choices_survive_being_written_and_read()
     {
