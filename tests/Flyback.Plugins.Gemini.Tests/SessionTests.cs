@@ -435,11 +435,11 @@ public class SessionTests
 
         return new GeminiSession(
             workbench,
-            new AssistantConfig(
-                "no-key-needed",
+            new AssistantChoices(
                 Driver,
                 Hearing: hearing is not Listener.None,
                 EarModel: ear),
+            "no-key-needed",
             "https://nowhere.invalid/v1beta",
             thinking: null,
             ownEars,

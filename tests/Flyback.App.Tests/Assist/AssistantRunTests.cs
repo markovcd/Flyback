@@ -18,7 +18,7 @@ public class AssistantRunTests
 {
     private static AssistantRun RunOf(ScriptedAssistant assistant, Patch? start = null, int maxTurns = 12) =>
         new(assistant,
-            new AssistantConfig(string.Empty, "scripted"),
+            AssistantConfig.Unset,
             NodeCatalog.BuiltIn,
             start ?? new Patch(),
             maxTurns);
@@ -324,6 +324,12 @@ public class AssistantRunTests
 
         public AssistantSchema Schema { get; } =
             new("scripted", [new AssistantModel("scripted")], "NONE", "none needed");
+
+        public AssistantCredential Credential => Schema.Credential;
+
+        public IReadOnlyList<AssistantField> Form(AssistantValues values) => Schema.Form(values);
+
+        public AssistantSenses Senses(AssistantValues values) => Schema.Senses(values);
 
         public string? Unavailable(AssistantConfig config) => null;
 

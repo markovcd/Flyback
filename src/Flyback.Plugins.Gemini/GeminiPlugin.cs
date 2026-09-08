@@ -101,6 +101,20 @@ public sealed class GeminiAssistant : IPatchAssistant
         ["gemini-2.5-flash-lite"] = new(512, 24576),
     };
 
+    /// <summary>What this one's key comes from. The host holds it; see ADR-0034.</summary>
+    public AssistantCredential Credential => Schema.Credential;
+
+    /// <summary>
+    /// The ordinary five questions, declared by the schema rather than written
+    /// out here — see <see cref="AssistantSchema.Form"/>. The endpoint among
+    /// them arrives fixed rather than absent, because this format is spoken in
+    /// one place and somebody looking for the field deserves to be told that
+    /// rather than to wonder where it went.
+    /// </summary>
+    public IReadOnlyList<AssistantField> Form(AssistantValues values) => Schema.Form(values);
+
+    public AssistantSenses Senses(AssistantValues values) => Schema.Senses(values);
+
     /// <summary>
     /// Answered from the configuration alone — no request, no client, nothing
     /// that costs anything. The endpoint is only found out to be wrong when
@@ -111,10 +125,12 @@ public sealed class GeminiAssistant : IPatchAssistant
         if (string.IsNullOrWhiteSpace(config.ApiKey))
             return "No key yet — set GEMINI_API_KEY, or put one in Settings.";
 
-        if (string.IsNullOrWhiteSpace(config.Model))
+        var chosen = Schema.Read(config.Values);
+
+        if (string.IsNullOrWhiteSpace(chosen.Model))
             return "No model chosen. Put one in Settings.";
 
-        var endpoint = config.BaseUrl ?? Schema.DefaultBaseUrl;
+        var endpoint = chosen.BaseUrl ?? Schema.DefaultBaseUrl;
 
         if (string.IsNullOrWhiteSpace(endpoint))
             return "No endpoint. Put one in Settings.";
@@ -125,13 +141,18 @@ public sealed class GeminiAssistant : IPatchAssistant
                 : $"'{endpoint}' is not an http or https address.";
     }
 
-    public IPatchSession Start(PatchWorkbench workbench, AssistantConfig config) =>
-        new GeminiSession(
+    public IPatchSession Start(PatchWorkbench workbench, AssistantConfig config)
+    {
+        var chosen = Schema.Read(config.Values);
+
+        return new GeminiSession(
             workbench,
-            config,
+            chosen,
+            config.ApiKey,
             Schema.DefaultBaseUrl!,
-            Thinking(config),
-            ownEars: Schema.Known(config.Model)?.Hearing == true);
+            Thinking(chosen),
+            ownEars: Schema.Known(chosen.Model)?.Hearing == true);
+    }
 
     /// <summary>
     /// The three words of effort as this provider spells them, or null where
@@ -152,12 +173,12 @@ public sealed class GeminiAssistant : IPatchAssistant
     /// above it and losing every request rather than one setting.
     /// </para>
     /// </remarks>
-    private JsonObject? Thinking(AssistantConfig config)
+    private JsonObject? Thinking(AssistantChoices chosen)
     {
-        if (Schema.Known(config.Model) is not { } known) return null;
+        if (Schema.Known(chosen.Model) is not { } known) return null;
         if (!Budgets.TryGetValue(known.Id, out var budget)) return null;
 
-        var tokens = config.Effort switch
+        var tokens = chosen.Effort switch
         {
             AssistantEffort.Low => budget.Least,
             AssistantEffort.High => budget.Most,

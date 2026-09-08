@@ -62,7 +62,7 @@ internal sealed class GeminiSession : IPatchSession
     private static readonly TimeSpan LongestWait = TimeSpan.FromSeconds(20);
 
     private readonly PatchWorkbench workbench;
-    private readonly AssistantConfig config;
+    private readonly AssistantChoices chosen;
     private readonly HttpClient http;
     private readonly string address;
     private readonly JsonObject? thinking;
@@ -70,13 +70,14 @@ internal sealed class GeminiSession : IPatchSession
     private readonly JsonArray contents = [];
 
     /// <param name="workbench">The patch being built, and the only thing here that may touch it.</param>
-    /// <param name="config">Model, key and effort, as the panel has them.</param>
+    /// <param name="chosen">Model, endpoint and ear, as the provider read them off the form.</param>
+    /// <param name="apiKey">The key, which the host holds and this never writes down.</param>
     /// <param name="fallbackBaseUrl">Where to send requests when the configuration names nowhere.</param>
     /// <param name="thinking">The effort setting as this endpoint spells it, or null to say nothing.</param>
     /// <param name="ownEars">
     /// Whether the model doing the building takes a sound, which decides where a
     /// clip goes and is read off the schema by whoever built this. It is not
-    /// inferred from <see cref="AssistantConfig.EarModel"/> being null, because
+    /// inferred from <see cref="AssistantChoices.EarModel"/> being null, because
     /// null there also means nobody was chosen — and playing a clip to a model
     /// that refuses one loses every turn from the first <c>listen</c> onward.
     /// </param>
@@ -88,18 +89,19 @@ internal sealed class GeminiSession : IPatchSession
     /// </param>
     public GeminiSession(
         PatchWorkbench workbench,
-        AssistantConfig config,
+        AssistantChoices chosen,
+        string apiKey,
         string fallbackBaseUrl,
         JsonObject? thinking = null,
         bool ownEars = false,
         HttpMessageHandler? transport = null)
     {
         this.workbench = workbench;
-        this.config = config;
+        this.chosen = chosen;
         this.thinking = thinking;
         this.ownEars = ownEars;
 
-        address = (config.BaseUrl ?? fallbackBaseUrl).TrimEnd('/');
+        address = (chosen.BaseUrl ?? fallbackBaseUrl).TrimEnd('/');
 
         // A handler that was handed in belongs to whoever handed it in.
         http = transport is null ? new HttpClient() : new HttpClient(transport, disposeHandler: false);
@@ -112,7 +114,7 @@ internal sealed class GeminiSession : IPatchSession
         // A header rather than the key= parameter the quickstarts use. A secret
         // in a query string is a secret in every log and proxy between here and
         // there, and this endpoint accepts both.
-        http.DefaultRequestHeaders.Add("x-goog-api-key", config.ApiKey);
+        http.DefaultRequestHeaders.Add("x-goog-api-key", apiKey);
     }
 
     public async IAsyncEnumerable<PatchEvent> Ask(
@@ -300,7 +302,7 @@ internal sealed class GeminiSession : IPatchSession
     /// </remarks>
     private async Task<string> Described(byte[] wav, CancellationToken cancel)
     {
-        var ear = config.EarModel;
+        var ear = chosen.EarModel;
 
         if (string.IsNullOrWhiteSpace(ear))
             return "No model is set to listen with, so nobody has heard this.";
@@ -357,7 +359,7 @@ internal sealed class GeminiSession : IPatchSession
             .Request((JsonArray)contents.DeepClone(), workbench.Briefing, workbench.Tools, thinking)
             .ToJsonString();
 
-        return Wire.Parse(await Post(config.Model, body, cancel).ConfigureAwait(false));
+        return Wire.Parse(await Post(chosen.Model, body, cancel).ConfigureAwait(false));
     }
 
     /// <summary>

@@ -61,51 +61,92 @@ public class AssistantPanelTests : UiTest
     }
 
     /// <summary>
-    /// One provider that can see and one model that can hear, which is the shape
-    /// every real provider here has: nothing does both.
+    /// The settings, as a provider that has already been configured leaves them.
     /// </summary>
-    private sealed class Hearing : IPatchAssistant
+    /// <remarks>
+    /// The answers go in under the provider's own names, because that is the
+    /// only shape the file has now — the App does not know a model from an
+    /// endpoint, so it keeps a bag of strings per provider and hands it back
+    /// (ADR-0069).
+    /// </remarks>
+    private static AssistantSettings Configured(string provider, params (string Key, string Value)[] answers)
     {
-        public string Id => "hearing";
+        var settings = new AssistantSettings { Provider = provider };
 
-        public string Name => "Can hear";
+        settings.Remember(
+            provider,
+            new AssistantValues(answers.ToDictionary(answer => answer.Key, answer => answer.Value)));
+
+        return settings;
+    }
+
+    /// <summary>
+    /// A provider of the ordinary shape, which declares the form its schema
+    /// declares. What differs between the ones below is the models, which is
+    /// what the form is drawn from.
+    /// </summary>
+    private abstract class Provider(AssistantSchema schema) : IPatchAssistant
+    {
+        public abstract string Id { get; }
+
+        public abstract string Name { get; }
 
         public int Priority => 0;
 
-        public AssistantSchema Schema { get; } = new(
-            "sees",
-            [new AssistantModel("sees"), new AssistantModel("hears", Vision: false, Hearing: true)],
-            "NONE",
-            "none needed");
+        public AssistantSchema Schema { get; } = schema;
 
-        public string? Unavailable(AssistantConfig config) => null;
+        public AssistantCredential Credential => Schema.Credential;
+
+        public IReadOnlyList<AssistantField> Form(AssistantValues values) => Schema.Form(values);
+
+        public AssistantSenses Senses(AssistantValues values) => Schema.Senses(values);
+
+        public virtual string? Unavailable(AssistantConfig config) => null;
 
         public IPatchSession Start(PatchWorkbench workbench, AssistantConfig config) =>
             throw new NotSupportedException("this one is only ever asked what it can do.");
     }
 
     /// <summary>
+    /// One provider that can see and one model that can hear, which is the shape
+    /// every real provider here has: nothing does both.
+    /// </summary>
+    private sealed class Hearing() : Provider(new AssistantSchema(
+        "sees",
+        [new AssistantModel("sees"), new AssistantModel("hears", Vision: false, Hearing: true)],
+        "NONE",
+        "none needed"))
+    {
+        public override string Id => "hearing";
+
+        public override string Name => "Can hear";
+    }
+
+    /// <summary>
     /// One provider whose model both sees and hears, which is what the Gemini
     /// adapter brought and nothing had before it.
     /// </summary>
-    private sealed class Both : IPatchAssistant
+    private sealed class Both() : Provider(new AssistantSchema(
+        "both",
+        [new AssistantModel("both", Hearing: true), new AssistantModel("deaf")],
+        "NONE",
+        "none needed"))
     {
-        public string Id => "both";
+        public override string Id => "both";
 
-        public string Name => "Sees and hears";
+        public override string Name => "Sees and hears";
+    }
 
-        public int Priority => 0;
+    /// <summary>One with nothing that takes a sound, which most endpoints are.</summary>
+    private sealed class Deaf() : Provider(new AssistantSchema(
+        "quiet",
+        [new AssistantModel("quiet")],
+        "NONE",
+        "none needed"))
+    {
+        public override string Id => "deaf";
 
-        public AssistantSchema Schema { get; } = new(
-            "both",
-            [new AssistantModel("both", Hearing: true), new AssistantModel("deaf")],
-            "NONE",
-            "none needed");
-
-        public string? Unavailable(AssistantConfig config) => null;
-
-        public IPatchSession Start(PatchWorkbench workbench, AssistantConfig config) =>
-            throw new NotSupportedException("this one is only ever asked what it can do.");
+        public override string Name => "Sees only";
     }
 
     private static Button SendButton(Window window) =>
@@ -163,15 +204,10 @@ public class AssistantPanelTests : UiTest
     [AvaloniaFact]
     public void The_effort_box_offers_exactly_the_levels_there_are()
     {
-        var window = Showing();
-        var panel = All<AssistantPanel>(window).Single();
+        var host = Settings(Showing(With(new Deaf())));
 
-        var host = new Window { Content = panel.SettingsSection() };
-        host.Show();
-        Settle(host);
-
-        var box = All<ComboBox>(host).Single(c => c.Name == "effort");
-        var offered = ((IEnumerable<string>)box.ItemsSource!).ToArray();
+        var box = All<ComboBox>(host).Single(c => c.Name == AssistantSchema.EffortKey);
+        var offered = ((IEnumerable<AssistantOption>)box.ItemsSource!).Select(o => o.Name).ToArray();
 
         offered.ShouldBe(["Low", "Medium", "High"]);
     }
@@ -185,14 +221,9 @@ public class AssistantPanelTests : UiTest
     [AvaloniaFact]
     public void The_model_box_takes_a_name_that_is_not_on_its_list()
     {
-        var window = Showing();
-        var panel = All<AssistantPanel>(window).Single();
+        var host = Settings(Showing(With(new Deaf())));
 
-        var host = new Window { Content = panel.SettingsSection() };
-        host.Show();
-        Settle(host);
-
-        var box = All<ComboBox>(host).Single(c => c.Name == "model");
+        var box = All<ComboBox>(host).Single(c => c.Name == AssistantSchema.ModelKey);
 
         box.IsEditable.ShouldBeTrue();
 
@@ -203,30 +234,77 @@ public class AssistantPanelTests : UiTest
     }
 
     /// <summary>
+    /// The settings open showing who is actually being talked to.
+    /// </summary>
+    /// <remarks>
+    /// The choice is restored while the panel is built and the window is not
+    /// built until somebody opens one, so the list has to exist before the row
+    /// in it can be picked — a box with no rows cannot be told which to show,
+    /// and the failure is a blank provider over a form belonging to one.
+    /// </remarks>
+    [AvaloniaFact]
+    public void The_settings_open_on_the_provider_that_is_in_force()
+    {
+        var host = Settings(Showing(
+            new PluginCatalog([], [], NodeCatalog.BuiltIn, [], [], [new Keyless(), new Both()]),
+            Configured("both")));
+
+        All<ComboBox>(host).Single(c => c.Name == "provider").SelectedIndex.ShouldBe(1);
+    }
+
+    /// <summary>
+    /// The App draws what it is told and nothing else: a provider that declares
+    /// no settings gets no rows, and one that declares five gets five.
+    /// </summary>
+    /// <remarks>
+    /// The one test that is about the route rather than about any field on it.
+    /// Nothing in the panel names a model, an endpoint or an ear any more — see
+    /// ADR-0069 — so what is worth pinning is that the form is the declaration
+    /// and not a layout somebody wrote out here.
+    /// </remarks>
+    [AvaloniaFact]
+    public void The_form_is_what_the_provider_declared_and_nothing_else()
+    {
+        var declared = new Deaf().Form(AssistantValues.None).Select(field => field.Key).ToArray();
+
+        var host = Settings(Showing(With(new Deaf())));
+
+        var drawn = All<Control>(host)
+            .Where(c => c.Name is { } name && declared.Contains(name))
+            .Select(c => c.Name!)
+            .ToArray();
+
+        drawn.ShouldBe(declared, ignoreOrder: true);
+
+        // And with nothing installed there is nothing to draw at all — only the
+        // two the host owns, which are the provider list and the key.
+        All<Control>(Settings(Showing()))
+            .Select(c => c.Name)
+            .ShouldNotContain(name => name != null && declared.Contains(name));
+    }
+
+    /// <summary>
     /// A setting that was on when the window closed is on, and usable, when it
     /// opens again.
     /// </summary>
     /// <remarks>
     /// The bug this was written for: the ear sat greyed out under a ticked box
     /// saying listening was on, and came right the instant the tick was touched.
-    /// Two causes, either of which would do it on its own — the ear's state was
-    /// worked out before the tick had been restored, and the handler that keeps
-    /// the two in step was subscribed while building the settings window, which
-    /// is not built until somebody opens one, long after the restoring is done.
+    /// The form is asked for afresh with everything already on it, so there is
+    /// no longer an order for the two to be restored in — which is what makes
+    /// this a test of the route as much as of the ear.
     /// </remarks>
     [AvaloniaFact]
     public void An_ear_is_ready_to_change_the_moment_the_settings_are_opened()
     {
-        var window = Showing(
+        var host = Settings(Showing(
             With(new Hearing()),
-            new AssistantSettings { Provider = "hearing", Hearing = true, EarModel = "hears" });
+            Configured("hearing", (AssistantSchema.HearingKey, "1"), (AssistantSchema.EarKey, "hears"))));
 
-        var host = Settings(window);
-        var ear = All<ComboBox>(host).Single(c => c.Name == "ear");
+        var ear = All<ComboBox>(host).Single(c => c.Name == AssistantSchema.EarKey);
 
-        ear.IsVisible.ShouldBeTrue();
         ear.IsEnabled.ShouldBeTrue("listening is on, so the model doing it is a live choice");
-        ear.SelectedItem.ShouldBe("hears");
+        ((AssistantOption)ear.SelectedItem!).Id.ShouldBe("hears");
     }
 
     /// <summary>
@@ -236,15 +314,11 @@ public class AssistantPanelTests : UiTest
     [AvaloniaFact]
     public void An_ear_nobody_asked_for_is_shown_but_not_a_choice_yet()
     {
-        var window = Showing(
-            With(new Hearing()),
-            new AssistantSettings { Provider = "hearing", Hearing = false });
+        var host = Settings(Showing(With(new Hearing()), Configured("hearing")));
 
-        var host = Settings(window);
-        var ear = All<ComboBox>(host).Single(c => c.Name == "ear");
+        var ear = All<ComboBox>(host).Single(c => c.Name == AssistantSchema.EarKey);
 
-        ear.IsVisible.ShouldBeTrue("the provider has one, so it is worth showing what it would be");
-        ear.IsEnabled.ShouldBeFalse();
+        ear.IsEnabled.ShouldBeFalse("nobody is listening, so there is nobody to choose");
     }
 
     /// <summary>
@@ -254,65 +328,85 @@ public class AssistantPanelTests : UiTest
     [AvaloniaFact]
     public void A_provider_that_cannot_hear_at_all_offers_no_ear()
     {
-        var window = Showing(PluginCatalog.Empty, new AssistantSettings { Hearing = true });
+        var host = Settings(Showing(
+            With(new Deaf()),
+            Configured("deaf", (AssistantSchema.HearingKey, "1"))));
 
-        var host = Settings(window);
-        var ear = All<ComboBox>(host).Single(c => c.Name == "ear");
+        All<ComboBox>(host).ShouldNotContain(c => c.Name == AssistantSchema.EarKey);
 
-        ear.IsVisible.ShouldBeFalse();
+        All<CheckBox>(host)
+            .Single(c => c.Name == AssistantSchema.HearingKey)
+            .IsEnabled.ShouldBeFalse("there is nothing to turn on");
     }
 
     /// <summary>
     /// A model that takes a sound itself is played the clip directly, so there
-    /// is no second model and no question to put. The box goes rather than
+    /// is no second model and no question to put. The row goes rather than
     /// greying out — a disabled control asks somebody to work out why it is
     /// there, and this one has stopped meaning anything at all.
     /// </summary>
     [AvaloniaFact]
     public void A_model_that_hears_for_itself_needs_no_ear_chosen()
     {
-        var window = Showing(
+        var host = Settings(Showing(
             With(new Both()),
-            new AssistantSettings { Provider = "both", Model = "both", Hearing = true });
+            Configured("both", (AssistantSchema.ModelKey, "both"), (AssistantSchema.HearingKey, "1"))));
 
-        var host = Settings(window);
-
-        All<ComboBox>(host).Single(c => c.Name == "ear").IsVisible.ShouldBeFalse();
+        All<ComboBox>(host).ShouldNotContain(c => c.Name == AssistantSchema.EarKey);
     }
 
     /// <summary>
-    /// And it comes back for a model that cannot, which is what pins the box to
+    /// And it comes back for a model that cannot, which is what pins the row to
     /// the model in the box rather than to the provider alone.
     /// </summary>
     [AvaloniaFact]
     public void The_ear_returns_for_a_model_that_cannot_hear()
     {
-        var window = Showing(
+        var host = Settings(Showing(
             With(new Both()),
-            new AssistantSettings { Provider = "both", Model = "deaf", Hearing = true });
+            Configured("both", (AssistantSchema.ModelKey, "deaf"), (AssistantSchema.HearingKey, "1"))));
 
-        var host = Settings(window);
-
-        All<ComboBox>(host).Single(c => c.Name == "ear").IsVisible.ShouldBeTrue();
+        All<ComboBox>(host).ShouldContain(c => c.Name == AssistantSchema.EarKey);
     }
 
     /// <summary>
-    /// Not knowing what a model accepts is not the same as knowing it refuses.
-    /// With no provider installed nothing is known about anything, and the two
-    /// switches stay the person's to set rather than being taken away.
+    /// A model going from one that hears to one that does not takes the ear with
+    /// it, without the window being reopened.
+    /// </summary>
+    /// <remarks>
+    /// The declaration is asked for again after every change, which is the whole
+    /// of how a form answers itself. Nothing in the panel worked this out — the
+    /// provider left the ear out of the list it sent back.
+    /// </remarks>
+    [AvaloniaFact]
+    public void Choosing_a_model_that_hears_takes_the_ear_away_where_it_stands()
+    {
+        var host = Settings(Showing(
+            With(new Both()),
+            Configured("both", (AssistantSchema.ModelKey, "deaf"), (AssistantSchema.HearingKey, "1"))));
+
+        All<ComboBox>(host).ShouldContain(c => c.Name == AssistantSchema.EarKey);
+
+        All<ComboBox>(host).Single(c => c.Name == AssistantSchema.ModelKey).Text = "both";
+        Settle(host);
+
+        All<ComboBox>(host).ShouldNotContain(c => c.Name == AssistantSchema.EarKey);
+    }
+
+    /// <summary>
+    /// Not knowing what a model accepts is not the same as knowing it refuses. A
+    /// name nobody wrote down leaves both switches the person's to set rather
+    /// than taking one away on a guess.
     /// </summary>
     [AvaloniaFact]
     public void A_model_nobody_knows_anything_about_leaves_both_switches_alone()
     {
-        var window = Showing();
-        var panel = All<AssistantPanel>(window).Single();
-
-        var host = new Window { Content = panel.SettingsSection() };
-        host.Show();
-        Settle(host);
+        var host = Settings(Showing(
+            With(new Hearing()),
+            Configured("hearing", (AssistantSchema.ModelKey, "something-nobody-wrote-down"))));
 
         var switches = All<CheckBox>(host)
-            .Where(c => c.Content is string content && content.Contains("Let it"))
+            .Where(c => c.Name is AssistantSchema.VisionKey or AssistantSchema.HearingKey)
             .ToArray();
 
         switches.Length.ShouldBe(2, "one for the picture and one for the sound");
@@ -449,21 +543,18 @@ public class AssistantPanelTests : UiTest
     }
 
     /// <summary>One that is never ready, which is what a provider is until a key turns up.</summary>
-    private sealed class Keyless : IPatchAssistant
+    private sealed class Keyless() : Provider(new AssistantSchema(
+        "only",
+        [new AssistantModel("only")],
+        "NONE",
+        "none needed"))
     {
         internal const string Excuse = "No key yet — put one in Settings.";
 
-        public string Id => "keyless";
+        public override string Id => "keyless";
 
-        public string Name => "Wants a key";
+        public override string Name => "Wants a key";
 
-        public int Priority => 0;
-
-        public AssistantSchema Schema { get; } = new("only", [new AssistantModel("only")], "NONE", "none needed");
-
-        public string? Unavailable(AssistantConfig config) => Excuse;
-
-        public IPatchSession Start(PatchWorkbench workbench, AssistantConfig config) =>
-            throw new NotSupportedException("this one is only ever asked what it can do.");
+        public override string? Unavailable(AssistantConfig config) => Excuse;
     }
 }

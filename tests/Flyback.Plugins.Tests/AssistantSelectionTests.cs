@@ -61,7 +61,7 @@ public class AssistantSelectionTests
         catalog.Assistant("gone").ShouldBeNull();
     }
 
-    private static AssistantConfig Nothing => new(string.Empty, "some-model");
+    private static AssistantConfig Nothing => AssistantConfig.Unset;
 
     private sealed record FakeAssistant(string Id, int Priority = 0, string? Excuse = null) : IPatchAssistant
     {
@@ -69,6 +69,12 @@ public class AssistantSelectionTests
 
         public AssistantSchema Schema { get; } =
             new("some-model", [new AssistantModel("some-model")], "SOME_KEY", "somewhere");
+
+        public AssistantCredential Credential => Schema.Credential;
+
+        public IReadOnlyList<AssistantField> Form(AssistantValues values) => Schema.Form(values);
+
+        public AssistantSenses Senses(AssistantValues values) => Schema.Senses(values);
 
         public string? Unavailable(AssistantConfig config) => Excuse;
 

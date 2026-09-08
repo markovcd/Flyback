@@ -34,14 +34,14 @@ public sealed class OpenAiAssistant : IPatchAssistant
     /// <para>
     /// The default is a model that can see, because looking is what most of this
     /// is. The two audio models are listed rather than defaulted to for the
-    /// reason <see cref="AssistantConfig.Hearing"/> is off by default: they are
+    /// reason <see cref="AssistantChoices.Hearing"/> is off by default: they are
     /// the only ones here that take a sound, and they are not the ones to reach
     /// for otherwise.
     /// </para>
     /// <para>
     /// The three audio models take a sound and <em>not</em> a picture, which is
     /// why they are recorded with sight off and why they are an ear rather than
-    /// a driver — see <see cref="AssistantConfig.EarModel"/>. Chosen as the
+    /// a driver — see <see cref="AssistantChoices.EarModel"/>. Chosen as the
     /// model in the box they still work, and the form takes sight away rather
     /// than sending them something they will refuse.
     /// </para>
@@ -71,6 +71,19 @@ public sealed class OpenAiAssistant : IPatchAssistant
         "https://api.openai.com/v1",
         BaseUrlEditable: true);
 
+    /// <summary>What this one's key comes from. The host holds it; see ADR-0034.</summary>
+    public AssistantCredential Credential => Schema.Credential;
+
+    /// <summary>
+    /// The ordinary five questions, declared by the schema rather than written
+    /// out here — see <see cref="AssistantSchema.Form"/>. There is nothing
+    /// peculiar about this provider's form, which is exactly why the declaration
+    /// of it is shared.
+    /// </summary>
+    public IReadOnlyList<AssistantField> Form(AssistantValues values) => Schema.Form(values);
+
+    public AssistantSenses Senses(AssistantValues values) => Schema.Senses(values);
+
     /// <summary>
     /// Answered from the configuration alone — no request, no client, nothing
     /// that costs anything. The endpoint is only found out to be wrong when
@@ -81,10 +94,12 @@ public sealed class OpenAiAssistant : IPatchAssistant
         if (string.IsNullOrWhiteSpace(config.ApiKey))
             return "No key yet — set OPENAI_API_KEY, or put one in Settings.";
 
-        if (string.IsNullOrWhiteSpace(config.Model))
+        var chosen = Schema.Read(config.Values);
+
+        if (string.IsNullOrWhiteSpace(chosen.Model))
             return "No model chosen. Put one in Settings.";
 
-        var endpoint = config.BaseUrl ?? Schema.DefaultBaseUrl;
+        var endpoint = chosen.BaseUrl ?? Schema.DefaultBaseUrl;
 
         if (string.IsNullOrWhiteSpace(endpoint))
             return "No endpoint. Put one in Settings.";
@@ -96,5 +111,5 @@ public sealed class OpenAiAssistant : IPatchAssistant
     }
 
     public IPatchSession Start(PatchWorkbench workbench, AssistantConfig config) =>
-        new OpenAiSession(workbench, config, Schema.DefaultBaseUrl!);
+        new OpenAiSession(workbench, Schema.Read(config.Values), config.ApiKey, Schema.DefaultBaseUrl!);
 }

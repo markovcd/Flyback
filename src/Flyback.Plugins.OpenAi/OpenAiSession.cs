@@ -79,7 +79,7 @@ internal sealed class OpenAiSession : IPatchSession
     private static readonly TimeSpan LongestWait = TimeSpan.FromSeconds(20);
 
     private readonly PatchWorkbench workbench;
-    private readonly AssistantConfig config;
+    private readonly AssistantChoices chosen;
     private readonly HttpClient http;
     private readonly Uri endpoint;
     private readonly JsonArray messages = [];
@@ -92,17 +92,19 @@ internal sealed class OpenAiSession : IPatchSession
     /// wrongly.
     /// </param>
     /// <param name="workbench">The patch being built, and the only thing here that may touch it.</param>
-    /// <param name="config">Model, key and effort, as the panel has them.</param>
+    /// <param name="chosen">Model, endpoint and ear, as the provider read them off the form.</param>
+    /// <param name="apiKey">The key, which the host holds and this never writes down.</param>
     public OpenAiSession(
         PatchWorkbench workbench,
-        AssistantConfig config,
+        AssistantChoices chosen,
+        string apiKey,
         string fallbackBaseUrl,
         HttpMessageHandler? transport = null)
     {
         this.workbench = workbench;
-        this.config = config;
+        this.chosen = chosen;
 
-        var address = (config.BaseUrl ?? fallbackBaseUrl).TrimEnd('/');
+        var address = (chosen.BaseUrl ?? fallbackBaseUrl).TrimEnd('/');
         endpoint = new Uri(address + "/chat/completions");
 
         // A handler that was handed in belongs to whoever handed it in.
@@ -113,7 +115,7 @@ internal sealed class OpenAiSession : IPatchSession
         // connection that has died without saying so.
         http.Timeout = TimeSpan.FromMinutes(10);
 
-        http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", config.ApiKey);
+        http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
 
         messages.Add(Wire.System(workbench.Briefing));
     }
@@ -296,7 +298,7 @@ internal sealed class OpenAiSession : IPatchSession
     /// </remarks>
     private async Task<string> Described(byte[] wav, CancellationToken cancel)
     {
-        var ear = config.EarModel;
+        var ear = chosen.EarModel;
 
         if (string.IsNullOrWhiteSpace(ear))
             return "No model is set to listen with, so nobody has heard this.";
@@ -347,7 +349,7 @@ internal sealed class OpenAiSession : IPatchSession
         // The conversation is copied into the request rather than handed to it:
         // a JSON node belongs to one parent, and this one has to survive being
         // sent again on the next exchange.
-        var body = Wire.Request(config.Model, (JsonArray)messages.DeepClone(), workbench.Tools)
+        var body = Wire.Request(chosen.Model, (JsonArray)messages.DeepClone(), workbench.Tools)
             .ToJsonString();
 
         return Wire.Parse(await Post(body, cancel).ConfigureAwait(false));

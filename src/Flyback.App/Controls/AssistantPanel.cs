@@ -169,7 +169,13 @@ public sealed class AssistantPanel : UserControl
         IsEnabled = false,
     };
 
-    private readonly TextBox keyBox = new() { PasswordChar = '•', FontSize = 12, Width = 260 };
+    private readonly TextBox keyBox = new()
+    {
+        PasswordChar = '•',
+        FontSize = 12,
+        Width = 260,
+        HorizontalAlignment = HorizontalAlignment.Left,
+    };
 
     /// <summary>
     /// What is under the key field, since the field itself cannot say it.
@@ -186,51 +192,29 @@ public sealed class AssistantPanel : UserControl
         Foreground = Dim,
         Width = 260,
         TextWrapping = TextWrapping.Wrap,
+
+        // As the declared rows above it: a fixed width in a wider column is
+        // centred unless it says otherwise, and a key block indented past the
+        // form it sits under reads as a mistake.
+        HorizontalAlignment = HorizontalAlignment.Left,
     };
 
     private readonly Button forget = new() { Content = "Forget key", Width = 100 };
-    /// <summary>
-    /// The models the provider suggests, and anything else that can be typed
-    /// over them. Editable rather than a plain list because the endpoint is a
-    /// field — a suggestion is what a provider knows about, not what it allows.
-    /// </summary>
-    private readonly ComboBox modelBox = new()
-    {
-        FontSize = 12,
-        Width = 260,
-        Name = "model",
-        IsEditable = true,
-    };
-
-    /// <summary>What the chosen model will and will not accept being handed.</summary>
-    private readonly TextBlock modelNote = new()
-    {
-        FontSize = 11,
-        Foreground = Dim,
-        Width = 260,
-        TextWrapping = TextWrapping.Wrap,
-    };
-    private readonly TextBox baseUrlBox = new() { FontSize = 12, Width = 260 };
     private readonly CheckBox rememberBox = new() { Content = "Keep this key", FontSize = 12 };
-    private readonly CheckBox visionBox = new() { Content = "Let it look at the picture", FontSize = 12 };
-    private readonly CheckBox hearingBox = new() { Content = "Let it listen to the sound", FontSize = 12 };
 
     /// <summary>
-    /// Which model is played the sound, which is never the one doing the
-    /// building — see <see cref="AssistantConfig.EarModel"/>. A plain list
-    /// rather than an editable one: this is a capability rather than a
-    /// preference, and a name typed here that cannot hear fails one tool call
-    /// at a time, in the middle of a run.
+    /// Everything the chosen provider says it has, drawn from its own
+    /// declaration.
     /// </summary>
-    private readonly ComboBox earBox = new() { FontSize = 12, Width = 260, Name = "ear" };
+    /// <remarks>
+    /// This panel does not know what is on it. Which model, which endpoint,
+    /// whether there is an ear at all — those are the provider's questions and
+    /// the provider's answers (ADR-0069); what arrives back here is a bag of
+    /// strings to hand to it and to write down.
+    /// </remarks>
+    private readonly AssistantForm form = new();
+
     private readonly ComboBox providerBox = new() { FontSize = 12, Width = 260, Name = "provider" };
-    private readonly ComboBox effortBox = new()
-    {
-        FontSize = 12,
-        Width = 260,
-        Name = "effort",
-        ItemsSource = Enum.GetNames<AssistantEffort>(),
-    };
 
     private IPatchAssistant? assistant;
     private AssistantRun? run;
@@ -314,14 +298,21 @@ public sealed class AssistantPanel : UserControl
 
         Content = Build();
 
-        // Subscribed here rather than where the settings window is put together.
-        // That window is built the first time somebody opens one, which is long
-        // after the saved choices are restored below — so a handler living there
-        // would not run for the tick this restores, and the ear would sit greyed
-        // out beside a box that says listening is on.
-        hearingBox.IsCheckedChanged += (_, _) => ShowEarState();
+        // Filled in here rather than where the settings window is put together.
+        // That window is built the first time somebody opens one, and what is
+        // set on the form is what says whether a message can be sent at all —
+        // which the footer has to answer from the moment the panel exists.
+        rememberBox.IsChecked = settings.RememberKey;
 
-        ReadSettingsIntoControls();
+        // The list before what is chosen in it, and both before the handler that
+        // watches it: a box with no rows in it cannot be told which row to show,
+        // and a selection made now is a restoration rather than a choice.
+        providerBox.ItemsSource = plugins.Assistants.Select(a => a.Name).ToList();
+
+        ShowProviderForm();
+
+        form.Changed += (_, _) => Refresh();
+
         Refresh();
     }
 
@@ -448,29 +439,31 @@ public sealed class AssistantPanel : UserControl
         return section;
     }
 
+    /// <summary>
+    /// The window's contents: who is being talked to, what that one has to be
+    /// told, and the key — in that order, because the middle of it changes
+    /// entirely with the first.
+    /// </summary>
+    /// <remarks>
+    /// The provider and the key are the two the host owns. Which provider is a
+    /// question about what is installed here, and a credential is the host's by
+    /// ADR-0034 and has no field it could be declared as. Everything between
+    /// them is the provider's own form.
+    /// </remarks>
     private Control BuildSettings()
     {
-        providerBox.ItemsSource = plugins.Assistants.Select(a => a.Name).ToList();
         providerBox.SelectionChanged += (_, _) =>
         {
             if (providerBox.SelectedIndex < 0 || providerBox.SelectedIndex >= plugins.Assistants.Count) return;
 
             assistant = plugins.Assistants[providerBox.SelectedIndex];
             settings.Provider = assistant.Id;
-            OfferModels(assistant);
-            OfferEars(assistant);
-            modelBox.Text = assistant.Schema.DefaultModel;
-            baseUrlBox.Text = assistant.Schema.DefaultBaseUrl ?? string.Empty;
-            Refresh();
-        };
 
-        // Typing is what actually decides the model — a name may be picked from
-        // the list, typed over it, or arrive from the settings file — so what
-        // the form says about the model follows the text rather than the
-        // selection.
-        modelBox.PropertyChanged += (_, e) =>
-        {
-            if (e.Property == ComboBox.TextProperty) ShowModelState();
+            // What the last provider was set to is kept rather than carried
+            // over. A setting means whatever the provider that declared it says
+            // it means, and the two need not agree about anything but the name.
+            ShowProviderForm();
+            Refresh();
         };
 
         // Its own padding, because it is the whole of a window now rather than a
@@ -479,20 +472,11 @@ public sealed class AssistantPanel : UserControl
 
         fields.Children.Add(Caption("Provider"));
         fields.Children.Add(providerBox);
-        fields.Children.Add(Caption("Model"));
-        fields.Children.Add(modelBox);
-        fields.Children.Add(modelNote);
-        fields.Children.Add(Caption("Endpoint"));
-        fields.Children.Add(baseUrlBox);
+        fields.Children.Add(form);
         fields.Children.Add(Caption("API key"));
         fields.Children.Add(keyBox);
         fields.Children.Add(keyNote);
         fields.Children.Add(rememberBox);
-        fields.Children.Add(visionBox);
-        fields.Children.Add(hearingBox);
-        fields.Children.Add(earBox);
-        fields.Children.Add(Caption("Effort"));
-        fields.Children.Add(effortBox);
 
         var save = new Button { Content = "Save", Width = 84 };
         save.Click += (_, _) =>
@@ -592,192 +576,39 @@ public sealed class AssistantPanel : UserControl
         ?? plugins.PreferredAssistant;
 
     /// <summary>
-    /// Fills the model list from whichever provider is chosen. Names only: what
-    /// each one accepts is said in a sentence under the box rather than crammed
-    /// into a row somebody is choosing from.
+    /// Puts the chosen provider's form up, holding what that provider was last
+    /// set to.
     /// </summary>
-    private void OfferModels(IPatchAssistant from) =>
-        modelBox.ItemsSource = from.Schema.SuggestedModels.Select(m => m.Id).ToList();
-
-    /// <summary>
-    /// Fills the list of models that can listen, and says whether there is any
-    /// point in it. A provider with no ear at all disables the tick itself —
-    /// there is nothing to turn on.
-    /// </summary>
-    private void OfferEars(IPatchAssistant from)
+    /// <remarks>
+    /// The provider box is set from here too, so the two cannot disagree about
+    /// who is being configured. Nothing else is: what the fields are is asked
+    /// for on the way in and again after every answer, so there is no order to
+    /// get right and no control that has to be restored before another one is
+    /// read.
+    /// </remarks>
+    private void ShowProviderForm()
     {
-        var ears = from.Schema.Ears.Select(m => m.Id).ToList();
-
-        earBox.ItemsSource = ears;
-        earBox.SelectedIndex = ears.Count == 0
+        providerBox.SelectedIndex = assistant is null
             ? -1
-            : Math.Max(0, ears.IndexOf(settings.EarModel));
-
-        hearingBox.IsEnabled = ears.Count > 0;
-
-        ToolTip.SetTip(
-            hearingBox,
-            ears.Count > 0 ? null : $"{from.Name} has no model that takes a sound.");
-
-        ShowEarState();
-    }
-
-    /// <summary>
-    /// The ear is only a question while the answer is wanted: shown where there
-    /// is anything to listen with, and enabled while listening is on.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// Read off the list and the tick rather than off the checkbox's own
-    /// enabled state, which is another thing that has to have been set first.
-    /// This is called from anywhere either could have changed, and has to be
-    /// right whichever order they were set in.
-    /// </para>
-    /// <para>
-    /// A model that takes a sound itself is played the clip directly, so there
-    /// is no second model and no question to put. The box goes rather than
-    /// greying out: a disabled control asks somebody to work out why it is
-    /// there, and this one has stopped meaning anything at all. What it held is
-    /// still in the settings and comes back the moment a model that cannot hear
-    /// is chosen.
-    /// </para>
-    /// </remarks>
-    private void ShowEarState()
-    {
-        var borrowed = earBox.ItemCount > 0 && Chosen()?.Hearing != true;
-
-        earBox.IsVisible = borrowed;
-        earBox.IsEnabled = borrowed && hearingBox.IsChecked == true;
-    }
-
-    /// <summary>What is known about the model in the box, or null when it is a stranger.</summary>
-    private AssistantModel? Chosen() => assistant?.Schema.Known(ModelName());
-
-    private string ModelName() => string.IsNullOrWhiteSpace(modelBox.Text)
-        ? assistant?.Schema.DefaultModel ?? string.Empty
-        : modelBox.Text;
-
-    /// <summary>Which model listens, or null when this provider has none.</summary>
-    private string? EarName() => earBox.SelectedItem as string;
-
-    /// <summary>
-    /// Puts what the model accepts in front of the person choosing it, and takes
-    /// away the two switches it would refuse.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// Sight is the model in the box's business, and sound is only sometimes.
-    /// Where the sound goes to a second model chosen separately, hearing turns
-    /// on whether the <em>provider</em> has an ear rather than whether this
-    /// model does. Where the model in the box takes a sound itself it is played
-    /// the clip directly, there is no second model, and the ear below goes —
-    /// see <see cref="ShowEarState"/>, which is why this calls it.
-    /// </para>
-    /// <para>
-    /// The tick itself is left alone, which is deliberate. A disabled box that
-    /// keeps its state is a preference parked; one that clears itself is a
-    /// preference destroyed by passing through a model on the way to another.
-    /// <see cref="Configured"/> is what makes it safe — it sends no picture to a
-    /// model recorded as refusing one, whatever the box still shows.
-    /// </para>
-    /// <para>
-    /// A model nobody here has heard of is left alone rather than disabled. Not
-    /// knowing is not the same as knowing it cannot, and the whole point of an
-    /// editable endpoint is that it reaches things this was never told about.
-    /// </para>
-    /// </remarks>
-    private void ShowModelState()
-    {
-        var known = Chosen();
-
-        visionBox.IsEnabled = known?.Vision != false;
-        ToolTip.SetTip(visionBox, visionBox.IsEnabled ? null : $"{known!.Id} does not take pictures.");
-
-        modelNote.Text = known is null
-            ? "Nothing is known about this one here, so the switch below is yours to set. An "
-              + "endpoint that will not take a picture answers with a 400."
-            : Handles(known);
-
-        // The ear is a question about this model as well as about the provider,
-        // so it is asked again whenever the name in the box changes.
-        ShowEarState();
-    }
-
-    /// <summary>
-    /// One line naming what the model doing the building accepts. It names the
-    /// model it matched rather than what was typed, so a dated snapshot says
-    /// which family it was read as — see <see cref="AssistantSchema.Known"/>.
-    /// </summary>
-    private static string Handles(AssistantModel model) => (model.Vision, model.Hearing) switch
-    {
-        // The one that needs saying, because it is what removes the ear below
-        // and somebody who had chosen one deserves to know where it went.
-        (true, true) => $"{model.Id} takes pictures and sound, so it listens for itself — there is "
-            + "no second model to choose.",
-
-        (true, false) => $"{model.Id} takes pictures.",
-
-        // Worth saying rather than leaving somebody to wonder why they chose an
-        // audio model and lost the ability to look at anything: this one belongs
-        // in the ear below, where the sound actually goes.
-        (false, true) => $"{model.Id} is a listener — it takes sound and not pictures, which is what "
-            + "the ear below is for. Driving with it works, but it builds blind.",
-
-        _ => $"{model.Id} takes no pictures, so it builds from the compiler alone.",
-    };
-
-    /// <summary>
-    /// Puts the saved choices in the controls.
-    /// </summary>
-    /// <remarks>
-    /// The switches go first, and the order is load-bearing rather than tidy:
-    /// what the model note says and whether the ear may be chosen are both read
-    /// off them, so anything filled in above a tick that has not been restored
-    /// yet is showing the state of a session nobody had. That is one half of a
-    /// box that opened greyed out and came right the moment its tick was
-    /// touched; the other half is that the tick's handler is subscribed where
-    /// this can reach it rather than in the settings window, which is not built
-    /// until somebody opens one.
-    /// </remarks>
-    private void ReadSettingsIntoControls()
-    {
-        visionBox.IsChecked = settings.Vision;
-        hearingBox.IsChecked = settings.Hearing;
-        rememberBox.IsChecked = settings.RememberKey;
-        effortBox.SelectedIndex = (int)settings.Effort;
-
-        if (assistant is not null)
-        {
-            providerBox.SelectedIndex = plugins.Assistants
+            : plugins.Assistants
                 .Select((a, i) => (a, i))
                 .Where(pair => pair.a.Id == assistant.Id)
                 .Select(pair => pair.i)
                 .DefaultIfEmpty(-1)
                 .First();
 
-            OfferModels(assistant);
-            OfferEars(assistant);
-            modelBox.Text = settings.Model.Length > 0 ? settings.Model : assistant.Schema.DefaultModel;
-            baseUrlBox.Text = settings.BaseUrl ?? assistant.Schema.DefaultBaseUrl ?? string.Empty;
-            baseUrlBox.IsEnabled = assistant.Schema.BaseUrlEditable;
-        }
-
-        ShowModelState();
-        ShowEarState();
+        form.Show(assistant is null ? null : assistant.Form, settings.Of(assistant?.Id ?? string.Empty));
     }
 
     private void SaveSettings()
     {
-        settings.Model = modelBox.Text ?? string.Empty;
-        settings.BaseUrl = string.IsNullOrWhiteSpace(baseUrlBox.Text) ? null : baseUrlBox.Text;
-        settings.Vision = visionBox.IsChecked == true;
-        settings.Hearing = hearingBox.IsChecked == true;
-        settings.EarModel = EarName() ?? string.Empty;
         settings.RememberKey = rememberBox.IsChecked == true;
-        settings.Effort = (AssistantEffort)Math.Max(0, effortBox.SelectedIndex);
 
         if (assistant is not null)
         {
+            settings.Provider = assistant.Id;
+            settings.Remember(assistant.Id, form.Values);
+
             var keep = settings.RememberKey && credentials.CanKeep;
 
             if (!string.IsNullOrWhiteSpace(keyBox.Text))
@@ -813,39 +644,23 @@ public sealed class AssistantPanel : UserControl
         Refresh();
     }
 
+    /// <summary>
+    /// The provider, its form as it stands, and the key — which is all a
+    /// configuration is now.
+    /// </summary>
+    /// <remarks>
+    /// Nothing is interpreted on the way past. What a set of answers means —
+    /// which of them are held to what the chosen model can actually do, and
+    /// which are simply passed on — is the provider's to work out, and it is
+    /// worked out again on the other side of this call.
+    /// </remarks>
     private AssistantConfig? Configured()
     {
         if (assistant is null) return null;
 
-        var key = credentials.Of(assistant.Id, assistant.Schema.EnvironmentVariable) ?? string.Empty;
-        var model = ModelName();
-        var url = string.IsNullOrWhiteSpace(baseUrlBox.Text) ? assistant.Schema.DefaultBaseUrl : baseUrlBox.Text;
+        var key = credentials.Of(assistant.Id, assistant.Credential.EnvironmentVariable) ?? string.Empty;
 
-        // What the model is recorded as refusing is not sent, whatever the box
-        // still shows. The tick is a preference and this is a fact about the
-        // model, so the fact wins for this run and the preference survives to
-        // mean something again at the next model — see ShowModelState.
-        var known = assistant.Schema.Known(model);
-
-        // Hearing without an ear is nothing to turn on rather than something
-        // that fails later: the tool would be offered, called, and answered with
-        // a sentence saying nobody heard it.
-        //
-        // Null where the model takes a sound itself, and null is the whole of
-        // how that is said: EarModel names the model asked *instead*, so leaving
-        // one there would have the adapter borrow an ear it does not need and
-        // pay for a second request per listen. The tick still governs whether
-        // anybody listens at all.
-        var ear = known?.Hearing == true ? null : EarName();
-
-        return new AssistantConfig(
-            key,
-            model,
-            url,
-            visionBox.IsChecked == true && known?.Vision != false,
-            hearingBox.IsChecked == true && (ear is not null || known?.Hearing == true),
-            ear,
-            (AssistantEffort)Math.Max(0, effortBox.SelectedIndex));
+        return new AssistantConfig(key, form.Values);
     }
 
     /// <summary>
@@ -879,9 +694,9 @@ public sealed class AssistantPanel : UserControl
         // Written every time rather than only when it changes, because the amber
         // branch above writes over it: an excuse left standing after a key has
         // been entered is the panel saying there is no key while holding one.
-        var source = credentials.SourceOf(assistant!.Id, assistant.Schema.EnvironmentVariable) switch
+        var source = credentials.SourceOf(assistant!.Id, assistant.Credential.EnvironmentVariable) switch
         {
-            CredentialSource.Environment => $"key from {assistant.Schema.EnvironmentVariable}",
+            CredentialSource.Environment => $"key from {assistant.Credential.EnvironmentVariable}",
             CredentialSource.Kept => $"key kept by {credentials.Store?.Name}",
             CredentialSource.Session => credentials.CanKeep
                 ? "key held for this session only"
@@ -989,7 +804,7 @@ public sealed class AssistantPanel : UserControl
             return;
         }
 
-        var variable = assistant.Schema.EnvironmentVariable;
+        var variable = assistant.Credential.EnvironmentVariable;
         var source = credentials.SourceOf(assistant.Id, variable);
 
         keyBox.PlaceholderText = source switch
@@ -1021,7 +836,7 @@ public sealed class AssistantPanel : UserControl
                 $"In force, from {variable}. {GlobalConstants.ApplicationName} never wrote it and never will. A key entered here "
                 + "takes precedence over it, and forgetting that one comes back to this.",
 
-            _ => assistant.Schema.CredentialHelp,
+            _ => assistant.Credential.Help,
         };
 
         // Nothing to forget, or nothing this could reach if it tried: an
@@ -1039,7 +854,7 @@ public sealed class AssistantPanel : UserControl
     {
         if (assistant is null) return;
 
-        var source = credentials.SourceOf(assistant.Id, assistant.Schema.EnvironmentVariable);
+        var source = credentials.SourceOf(assistant.Id, assistant.Credential.EnvironmentVariable);
 
         report(
             source switch

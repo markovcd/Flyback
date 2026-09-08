@@ -122,7 +122,8 @@ public class SessionTests
 
         using var session = new OpenAiSession(
             workbench,
-            new AssistantConfig("no-key-needed", "some-model"),
+            new AssistantChoices("some-model"),
+            "no-key-needed",
             "https://nowhere.invalid/v1",
             canned);
 
@@ -159,7 +160,8 @@ public class SessionTests
 
         using var session = new OpenAiSession(
             workbench,
-            new AssistantConfig("no-key-needed", "some-model"),
+            new AssistantChoices("some-model"),
+            "no-key-needed",
             "https://nowhere.invalid/v1",
             canned);
 
@@ -542,11 +544,11 @@ public class SessionTests
 
         using var session = new OpenAiSession(
             workbench,
-            new AssistantConfig(
-                "no-key-needed",
+            new AssistantChoices(
                 "some-model",
                 Hearing: hearing,
                 EarModel: hearing ? Ears : null),
+            "no-key-needed",
             "https://nowhere.invalid/v1",
             canned);
 

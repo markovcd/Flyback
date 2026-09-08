@@ -99,3 +99,4 @@ context, decision, consequences.
 | [0034](0034-settings-in-a-file-the-key-in-the-operating-system.md) | Settings in a file, the key in the operating system's store *(user-directed)* |
 | [0047](0047-the-agent-may-listen-where-the-model-can.md) | The agent gets an ear, which is a second model *(user-directed)* |
 | [0066](0066-a-second-wire-format-so-one-model-can-hear.md) | A second wire format, so one model can hear what it built *(user-directed)* |
+| [0069](0069-an-assistant-declares-its-own-settings.md) | An assistant declares its own settings *(user-directed)* |

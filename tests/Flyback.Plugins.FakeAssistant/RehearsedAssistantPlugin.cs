@@ -41,6 +41,17 @@ public sealed class RehearsedAssistant : IPatchAssistant
         "FLYBACK_REHEARSED_KEY",
         "No key is needed; this one has already decided what it is going to do.");
 
+    public AssistantCredential Credential => Schema.Credential;
+
+    /// <summary>
+    /// The ordinary form, declared by the schema. Nothing here reads any of it —
+    /// this one has made up its mind — but a worked example that skipped the
+    /// settings would be a worked example of half the contract.
+    /// </summary>
+    public IReadOnlyList<AssistantField> Form(AssistantValues values) => Schema.Form(values);
+
+    public AssistantSenses Senses(AssistantValues values) => Schema.Senses(values);
+
     /// <summary>Always ready. It has nowhere to connect to and nothing to pay.</summary>
     public string? Unavailable(AssistantConfig config) => null;
 
