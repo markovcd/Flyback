@@ -63,20 +63,6 @@ public sealed partial class MainWindow
     /// </remarks>
     private readonly Dictionary<(Guid Node, int Port), float> written = [];
 
-    /// <summary>
-    /// What the text calls each module, which is not what the modules call
-    /// themselves.
-    /// </summary>
-    /// <remarks>
-    /// A module nobody renamed has no name at all — a patch built on the canvas
-    /// is nineteen nodes called nothing — and the printer invents one from the
-    /// tail of the type id. So the text says `rotate2` where the node says
-    /// null, and pointing from one to the other takes the map whoever wrote the
-    /// text kept: the printer's own for a printing, and the names the binder
-    /// gave for text that was built.
-    /// </remarks>
-    private readonly Dictionary<string, Guid> named = new(StringComparer.Ordinal);
-
     /// <summary>Whether the text view is the one showing.</summary>
     private bool showingCode;
 
@@ -126,8 +112,8 @@ public sealed partial class MainWindow
     {
         if (!showingCode) return;
 
-        editor.Select(Named(statement) is { } name && named.TryGetValue(name, out var id)
-            ? id
+        editor.Select(Named(statement) is { } name
+            ? editor.Patch.Nodes.FirstOrDefault(node => node.Name == name)?.Id
             : null);
     }
 
@@ -207,19 +193,8 @@ public sealed partial class MainWindow
 
         if (codeButton.IsChecked != shown) codeButton.IsChecked = shown;
 
-        if (shown)
-        {
-            source.Focus();
-
-            // Where the caret already is, said once. The panel follows the caret
-            // as it moves, and a view that had just opened would otherwise show
-            // nothing at all until somebody pressed an arrow.
-            Reading(source.Statement());
-        }
-        else
-        {
-            editor.Focus();
-        }
+        if (shown) source.Focus();
+        else editor.Focus();
 
         // Undo, redo and tidy all follow the view, so all three have to be asked
         // again about what they can do the moment it changes.
@@ -239,17 +214,10 @@ public sealed partial class MainWindow
     {
         if (source.Source.Length != 0 && source.Source != printed) return;
 
-        var writing = PatchPrinter.Written(editor.Patch);
-
-        printed = writing.Source;
+        printed = PatchPrinter.Print(editor.Patch);
         source.Source = printed;
         source.Clear();
         source.Notice = Reading();
-
-        // The printer's own names, because the modules have none — see `named`.
-        named.Clear();
-
-        foreach (var (id, name) in writing.Names) named[name] = id;
     }
 
     /// <summary>
@@ -364,7 +332,6 @@ public sealed partial class MainWindow
         printed = null;
 
         written.Clear();
-        named.Clear();
 
         source.Source = string.Empty;
         source.Clear();
@@ -384,17 +351,10 @@ public sealed partial class MainWindow
     private void Remember()
     {
         written.Clear();
-        named.Clear();
 
         foreach (var node in editor.Patch.Nodes)
-        {
             for (var port = 0; port < node.InputValues.Length; port++)
                 written[(node.Id, port)] = node.InputValues[port];
-
-            // What a `let` bound it to. The binder puts that on the node, so a
-            // patch built from text is the one case where the two agree.
-            if (!string.IsNullOrEmpty(node.Name)) named[node.Name] = node.Id;
-        }
     }
 
     /// <summary>

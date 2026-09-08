@@ -19,16 +19,6 @@ namespace Flyback.Core.Language;
 /// That is the property worth having and the one the tests hold it to.
 /// </para>
 /// </remarks>
-/// <summary>
-/// A patch as text, and what the text calls each of its modules.
-/// </summary>
-/// <param name="Names">
-/// Only the modules that got a binding. One folded into the middle of a
-/// pipeline has no name in the text and nothing to point at, which is the same
-/// reason it cannot be in a group.
-/// </param>
-public sealed record Printing(string Source, IReadOnlyDictionary<Guid, string> Names);
-
 public static class PatchPrinter
 {
     /// <summary>What a node is worth to the reader, and how it is written.</summary>
@@ -63,29 +53,13 @@ public static class PatchPrinter
     public static string Print(
         Patch patch,
         ModuleCatalog? against = null,
-        IReadOnlyDictionary<Guid, string>? called = null) =>
-        Written(patch, against, called).Source;
-
-    /// <summary>
-    /// The same, with what it decided to call each module.
-    /// </summary>
-    /// <remarks>
-    /// The names are invented here and exist nowhere else: a module nobody
-    /// renamed is written by the tail of its type id, so a patch built on the
-    /// canvas has a text full of names its own nodes have never heard of.
-    /// Anything that has to point from the text back at the patch — a caret
-    /// naming the module the inspector should be about — needs this rather than
-    /// the names on the nodes, which are usually null.
-    /// </remarks>
-    public static Printing Written(
-        Patch patch,
-        ModuleCatalog? against = null,
         IReadOnlyDictionary<Guid, string>? called = null)
     {
         var modules = against ?? NodeCatalog.Current;
         var plan = Prepare(patch, modules, called);
+        var state = new Writer(patch, modules, plan);
 
-        return new Printing(new Writer(patch, modules, plan).Run(), plan.Names);
+        return state.Run();
     }
 
     /// <summary>
