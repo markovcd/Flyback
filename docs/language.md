@@ -259,6 +259,36 @@ let clip  = sample("kick.wav")
 let photo = picture("sunset.png")
 ```
 
+A block goes **after** the brackets and there is at most one, so it needs no
+name. A file goes **inside** them and has no name either — a call carries at
+most one string without one, and that string is the file. Both are positional
+because there is only ever one of each to say.
+
+### A plugin's own fields
+
+Anything else a module carries is a field a plugin declares
+([0055](adr/0055-a-plugins-extra-declares-its-editor.md)), and those are named
+arguments like any knob:
+
+```
+let land = fractal(octaves: "6")
+let keys = midi.in(device: "Launchkey 49", voice: 2)
+```
+
+Three shapes and three spellings. A **number** is written on whatever scale the
+field reads on, so a note-scaled one is its note and a time-scaled one is its
+time — exactly as a knob is. A **switch** is `1` or `0`. A **choice** is a
+string, because what is stored is an id and an id is not a number.
+
+A field is addressed by its **key**, which is what a saved patch files it under,
+and its label is accepted too because that is the word the inspector shows. Only
+the key is ever written back: a label is free to be reworded and a `.fbks`
+written today has to go on meaning the same thing after it is.
+
+A socket is looked for first, so a module whose field and socket share a name
+gives the socket. That is a module worth renaming rather than a rule worth
+inventing.
+
 ### Step notation
 
 The step block borrows **TidalCycles' mini-notation**, because it is the best
@@ -424,8 +454,13 @@ each paying only for what it reaches
 |---|---|
 | modules, wires, knob values | node ids, which are regenerated |
 | what a module carries — notes, scales, file paths | canvas positions, re-laid by `PatchLayout.Arrange` |
-| `let` names, as the node's own label | **groups**, entirely — name, membership and all |
+| a plugin's declared fields, as named arguments | **groups**, entirely — name, membership and all |
+| `let` names, as the node's own label | comments, formatting, and every `def`, expanded |
 | plugin requirements, recomputed on write | — |
+
+A knob or a field still holding what a fresh module holds is written nowhere. A
+printing is for reading, and every module restating its whole shape would bury
+what somebody actually changed.
 
 **What it does guarantee** is that the text means the same instrument: print a
 patch, build it again, and the two compile to the same program, opcode for

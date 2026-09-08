@@ -121,6 +121,79 @@ public static class PatchPrinter
     public static string Knob(float value, PortDisplay display) => Writer.Value(value, display);
 
     /// <summary>
+    /// The tune or the scale a module carries, written as the block that says
+    /// it — or null where the module carries neither.
+    /// </summary>
+    /// <remarks>
+    /// Null also for a block with nothing in it, because a printing is for
+    /// reading and an empty sequencer restating its emptiness is noise. A caller
+    /// putting one back into a file somebody has open wants <c>[ ]</c> instead,
+    /// since there it has to say what changed rather than only what is there.
+    /// </remarks>
+    public static string? Carried(NodeInstance node, NodeDef def) => Writer.Carried(node, def);
+
+    /// <summary>
+    /// The file a module names rather than carries (ADR-0052), or null where it
+    /// names none.
+    /// </summary>
+    /// <remarks>
+    /// The path as it stands, quotes not included and empty where nothing has
+    /// been chosen. Whether it can be written is the writer's question: there is
+    /// no escape for a quote, so a path carrying one has no spelling here.
+    /// </remarks>
+    public static string? Held(NodeInstance node, NodeDef def) =>
+        def.Extra<SampleExtra>() is not null ? SampleExtra.Of(node) ?? string.Empty
+            : def.Extra<PictureExtra>() is not null ? PictureExtra.Of(node) ?? string.Empty
+            : null;
+
+    /// <summary>
+    /// What a plugin's field is written as, or null where this build has no
+    /// spelling for it.
+    /// </summary>
+    /// <remarks>
+    /// A number on whatever scale the field reads on, so a note-scaled field is
+    /// its note; a switch as one or nought, which is what the binder reads a
+    /// number on one as; and a choice as the one string the language has, since
+    /// what is stored is an id and an id is not a number. A shape this build has
+    /// never heard of is left alone rather than written wrongly.
+    /// </remarks>
+    public static string? Field(NodeInstance node, NodeExtra extra, ExtraField field)
+    {
+        var stored = node.StateOf(extra.Key)?[field.Key];
+
+        return field switch
+        {
+            ExtraField.Number number => Writer.Value(number.Value(stored), number.Spec.Display),
+            ExtraField.Toggle toggle => toggle.Value(stored) ? "1" : "0",
+            ExtraField.Choice choice => Quotable(choice.Value(stored)),
+            _ => null,
+        };
+    }
+
+    /// <summary>Whether a field still holds what a fresh instance of the module would.</summary>
+    private static bool Fresh(NodeInstance node, NodeExtra extra, ExtraField field)
+    {
+        var stored = node.StateOf(extra.Key)?[field.Key];
+
+        return field switch
+        {
+            ExtraField.Number number => Math.Abs(number.Value(stored) - number.Spec.Default) < 1e-7f,
+            ExtraField.Toggle toggle => toggle.Value(stored) == toggle.On,
+            ExtraField.Choice choice => choice.Value(stored) == choice.Fallback,
+            _ => true,
+        };
+    }
+
+    /// <summary>
+    /// A string as the language writes one, or null where it cannot be written.
+    /// </summary>
+    /// <remarks>
+    /// A quote would end the string and there is no escape for one, so a value
+    /// carrying one is refused rather than written unreadably.
+    /// </remarks>
+    private static string? Quotable(string value) => value.Contains('"') ? null : $"\"{value}\"";
+
+    /// <summary>
     /// Where each module ended up in the text that was just written.
     /// </summary>
     /// <remarks>
@@ -163,7 +236,7 @@ public static class PatchPrinter
 
         var mentions = new List<(Site Where, Guid Node)>();
         var calls = new Dictionary<Guid, Site>();
-        var knobs = new Dictionary<(Guid Node, int Port), Site?>();
+        var values = new Dictionary<(Guid Node, string Name), Site?>();
         var placed = new Dictionary<CallExpr, Guid>();
         var sink = patch.Nodes.FirstOrDefault(n => NodeCatalog.IsSink(n.TypeId));
 
@@ -181,11 +254,14 @@ public static class PatchPrinter
 
             foreach (var argument in call.Arguments)
             {
-                if (argument.Name is null || Figure(argument.Value) is not { } where) continue;
+                if (argument.Name is null) continue;
 
-                var port = Socket(def.Inputs, argument.Name);
+                // Under the name a caller will ask by, which is the socket's own
+                // spelling or the field's key — not whichever of key and label
+                // the text happened to use.
+                if (Canonical(def, argument.Name) is not { } name) continue;
 
-                if (port >= 0) knobs[(node, port)] = where;
+                values[(node, name)] = Wrote(argument.Value);
             }
         }
 
@@ -203,11 +279,8 @@ public static class PatchPrinter
         if (sink is not null && modules.Get(sink.TypeId) is { } shape)
         {
             foreach (var turn in turns.Where(t => t.Target.Name == "out" && t.Target.Port is not null))
-            {
-                var port = Socket(shape.Inputs, turn.Target.Port!);
-
-                if (port >= 0) knobs[(sink.Id, port)] = Figure(turn.Value);
-            }
+                if (Canonical(shape, turn.Target.Port!) is { } name)
+                    values[(sink.Id, name)] = Wrote(turn.Value);
         }
 
         var named = plan.Names.ToDictionary(pair => pair.Key, pair => pair.Value);
@@ -218,7 +291,7 @@ public static class PatchPrinter
             source,
             mentions,
             calls,
-            knobs,
+            values,
             named,
             principals.Where(placed.ContainsKey).Select(call => placed[call]).ToHashSet());
     }
@@ -287,21 +360,37 @@ public static class PatchPrinter
         _ => null,
     };
 
-    /// <summary>Where a written value's number stands, or null where it is not one.</summary>
-    private static Site? Figure(Expr expr) => expr switch
+    /// <summary>
+    /// Where a written value stands, or null where it is not one this can put
+    /// another in place of.
+    /// </summary>
+    private static Site? Wrote(Expr expr) => expr switch
     {
         NumberExpr number => new Site(number.Line, number.Column),
         NegateExpr negate when negate.Value is NumberExpr => new Site(negate.Line, negate.Column),
+        TextExpr text => new Site(text.Line, text.Column),
         _ => null,
     };
 
-    private static int Socket(IReadOnlyList<PortSpec> ports, string written)
+    /// <summary>
+    /// What a name written in a call is properly called: the socket's own
+    /// spelling, or the field's key. Null where the module has neither.
+    /// </summary>
+    private static string? Canonical(NodeDef def, string written)
     {
-        for (var i = 0; i < ports.Count; i++)
-            if (string.Equals(ports[i].Name.Replace(' ', '_'), written, StringComparison.OrdinalIgnoreCase))
-                return i;
+        foreach (var port in def.Inputs)
+            if (string.Equals(port.Name.Replace(' ', '_'), written, StringComparison.OrdinalIgnoreCase))
+                return port.Name.Replace(' ', '_');
 
-        return -1;
+        foreach (var extra in def.Extras)
+            foreach (var field in extra.Fields)
+                if (string.Equals(field.Key, written, StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(field.Label, written, StringComparison.OrdinalIgnoreCase))
+                {
+                    return field.Key;
+                }
+
+        return null;
     }
 
     /// <summary>
@@ -618,6 +707,15 @@ public static class PatchPrinter
                 if (Knob(node, def, port) is { } value) arguments.Add($"{name}: {value}");
             }
 
+            // A plugin's own fields, which are named arguments like any knob and
+            // are addressed by key rather than by label — a label is free to be
+            // reworded and a key is in every saved patch (ADR-0055). Last,
+            // because a socket is what a reader is looking for.
+            foreach (var extra in def.Extras)
+                foreach (var field in extra.Fields)
+                    if (!Fresh(node, extra, field) && Field(node, extra, field) is { } written)
+                        arguments.Add($"{field.Key}: {written}");
+
             var text = $"{Short(def)}({string.Join(", ", arguments)})";
 
             if (Carried(node, def) is { } block) text += $" {block}";
@@ -705,7 +803,7 @@ public static class PatchPrinter
             return string.IsNullOrEmpty(path) || path.Contains('"') ? null : path;
         }
 
-        private string? Carried(NodeInstance node, NodeDef def)
+        internal static string? Carried(NodeInstance node, NodeDef def)
         {
             if (def.Extra<StepsExtra>() is { } steps)
             {

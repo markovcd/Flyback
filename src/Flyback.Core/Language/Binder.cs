@@ -36,8 +36,11 @@ public sealed class Binder
     /// <summary>The call that placed each module, which is where a knob is added.</summary>
     private readonly Dictionary<Guid, Site> calls = [];
 
-    /// <summary>Where the file writes each knob it sets, for the ones it sets.</summary>
-    private readonly Dictionary<(Guid Node, int Port), Site?> knobs = [];
+    /// <summary>
+    /// Where the file writes each named value it sets — a socket's knob, or one
+    /// of a plugin's declared fields.
+    /// </summary>
+    private readonly Dictionary<(Guid Node, string Name), Site?> written = [];
 
     /// <summary>Modules a statement is about, rather than mentions inside one.</summary>
     private readonly HashSet<Guid> bound = [];
@@ -104,7 +107,7 @@ public sealed class Binder
     /// carries nothing about the file it came from, so what points from one to
     /// the other is what was noted on the way through.
     /// </remarks>
-    public SourceMap Map(string source) => new(source, mentions, calls, knobs, named, bound);
+    public SourceMap Map(string source) => new(source, mentions, calls, written, named, bound);
 
     /// <summary>The patch these statements describe, laid out and ready to compile.</summary>
     public Patch Build(IReadOnlyList<Statement> statements)
@@ -641,7 +644,7 @@ public sealed class Binder
         var taken = new HashSet<int>();
         var wiring = new List<(int Port, Value Value)>();
         var paths = new List<(string Path, int Line, int Column)>();
-        var fields = new List<(NodeExtra Owner, ExtraField Field, JsonNode Value)>();
+        var fields = new List<(NodeExtra Owner, ExtraField Field, JsonNode Value, Site Where)>();
 
         // Named arguments first, because what they claim decides where
         // everything else can go.
@@ -655,8 +658,12 @@ public sealed class Binder
             {
                 if (Field(def, argument.Name) is var (owner, field))
                 {
-                    if (Setting(field, argument, scope) is { } written)
-                        fields.Add((owner, field, written));
+                    if (Setting(field, argument, scope) is { } setting)
+                    {
+                        var where = new Site(argument.Value.Line, argument.Value.Column);
+
+                        fields.Add((owner, field, setting, where));
+                    }
 
                     continue;
                 }
@@ -725,8 +732,15 @@ public sealed class Binder
             mentions.Add((site, made.Id));
 
             if (patch.Find(made.Id) is { } instance)
-                foreach (var (owner, field, written) in fields)
-                    Apply(instance, owner, field, written);
+                foreach (var (owner, field, setting, where) in fields)
+                {
+                    Apply(instance, owner, field, setting);
+
+                    // By the key rather than by whichever of key and label the
+                    // file happened to use, since a label is free to be reworded
+                    // and a caller asking for the field will have the key.
+                    written[(made.Id, field.Key)] = where;
+                }
         }
 
         foreach (var (path, line, column) in paths) File(node, def, path, line, column);
@@ -902,8 +916,9 @@ public sealed class Binder
         node.InputValues[port] = (float)figure.Amount;
 
         // Only once a knob has actually been set, so that a refused number is
-        // not offered as a place to write another one into.
-        knobs[(node.Id, port)] = figure.Where;
+        // not offered as a place to write another one into. By the socket's own
+        // spelling, because that is what a caller asking for it will have.
+        written[(node.Id, spec.Name.Replace(' ', '_'))] = figure.Where;
     }
 
     /// <summary>A number as it was written, for saying it back in a complaint.</summary>

@@ -97,6 +97,13 @@ public sealed partial class MainWindow
     /// </remarks>
     private readonly HashSet<(Guid Node, int Port)> turned = [];
 
+    /// <summary>
+    /// What a module carries that is not a knob, changed since the same moment —
+    /// a plugin's field by its key, and the tune, scale or file a module carries
+    /// as the one thing it has no key for.
+    /// </summary>
+    private readonly HashSet<(Guid Node, string? Key)> restated = [];
+
     /// <summary>The text as it was last opened or written, for the unsaved question.</summary>
     private string sourceOnDisk = string.Empty;
 
@@ -194,6 +201,25 @@ public sealed partial class MainWindow
     private void Turned(Guid node, int port) => turned.Add((node, port));
 
     /// <summary>
+    /// Notes something a module carries that the panel has just changed.
+    /// </summary>
+    /// <param name="key">
+    /// A plugin field's key, or null for the one thing a module carries that has
+    /// no key — its tune, its scale or the file it names.
+    /// </param>
+    private void Restated(Guid node, string? key = null) => restated.Add((node, key));
+
+    /// <summary>
+    /// What a module carries has been edited: heard now, and written into the
+    /// text when the hand comes off it.
+    /// </summary>
+    private void Edited(NodeInstance node, string? because = null)
+    {
+        Restated(node.Id);
+        editor.NotifyPatchChanged(because);
+    }
+
+    /// <summary>
     /// Writes the knobs turned since the last gesture into the text, each where
     /// the text already says it.
     /// </summary>
@@ -212,17 +238,20 @@ public sealed partial class MainWindow
     /// </remarks>
     private void WriteBack()
     {
-        if (turned.Count == 0 || writingBack) return;
+        if ((turned.Count == 0 && restated.Count == 0) || writingBack) return;
 
-        var pending = turned.ToArray();
+        var knobs = turned.ToArray();
+        var kept = restated.ToArray();
         var lost = 0;
 
         turned.Clear();
+        restated.Clear();
         writingBack = true;
 
         try
         {
-            foreach (var (id, port) in pending) Write(id, port, ref lost);
+            foreach (var (id, port) in knobs) Write(id, port, ref lost);
+            foreach (var (id, key) in kept) Carry(id, key, ref lost);
         }
         finally
         {
@@ -248,16 +277,61 @@ public sealed partial class MainWindow
         var spec = def.Inputs[port];
         var value = PatchPrinter.Knob(node.InputValues[port], spec.Display);
 
-        if (Map.Knob(id, port, spec.Name.Replace(' ', '_'), value) is not { } change)
+        Put(Map.Knob(id, spec.Name.Replace(' ', '_'), value), id, ref lost);
+    }
+
+    /// <summary>
+    /// Puts something a module carries that is not a knob back into the text.
+    /// </summary>
+    /// <remarks>
+    /// Each kind where the language already says it: a plugin's field as a named
+    /// argument, exactly as a knob is; a tune or a scale as the block after the
+    /// call; and a file as the one string a call carries. Only what changed, so
+    /// touching one field does not restate every other one the module has.
+    /// </remarks>
+    private void Carry(Guid id, string? key, ref int lost)
+    {
+        if (editor.Patch.Find(id) is not { } node || NodeCatalog.Get(node.TypeId) is not { } def) return;
+
+        if (key is not null)
         {
-            // Nothing was written and something should have been. Said out loud
-            // rather than dropped: the value is about to be lost and whoever
-            // turned it can still do something else about it.
+            foreach (var extra in def.Extras)
+                foreach (var field in extra.Fields)
+                    if (field.Key == key && PatchPrinter.Field(node, extra, field) is { } value)
+                        Put(Map.Knob(id, field.Key, value), id, ref lost);
+
+            return;
+        }
+
+        // A block that says nothing rather than no block at all: a tune emptied
+        // in the panel has to empty in the text too, and a call with nothing
+        // after it is a call that leaves whatever is there alone.
+        if (def.Extra<StepsExtra>() is not null || def.Extra<ScaleExtra>() is not null)
+        {
+            Put(Map.Carried(id, PatchPrinter.Carried(node, def) ?? "[ ]"), id, ref lost);
+            return;
+        }
+
+        if (PatchPrinter.Held(node, def) is { Length: > 0 } path) Put(Map.File(id, path), id, ref lost);
+    }
+
+    /// <summary>
+    /// Makes one edit, or counts it as one the text had nowhere to take.
+    /// </summary>
+    /// <remarks>
+    /// Nothing written where something should have been is said out loud rather
+    /// than dropped quietly: the value is about to be lost and whoever changed it
+    /// can still do something else about it.
+    /// </remarks>
+    private void Put(Change? change, Guid id, ref int lost)
+    {
+        if (change is not { } edit)
+        {
             if (Map.Where(id) is not null) lost++;
             return;
         }
 
-        if (!source.Apply(change)) return;
+        if (!source.Apply(edit)) return;
 
         // Still a printing, and now a true one — said before anything can ask
         // for the map again, since what makes this text a printing is the two
@@ -535,11 +609,11 @@ public sealed partial class MainWindow
     /// copying — and loses everything that changes, so it is still how somebody
     /// reads a source-built patch and picks the module the inspector is about.
     /// The inspector stays live and is the one thing on a locked canvas that
-    /// does: a knob turned there is written back into the text, so the next
-    /// apply builds what is already being heard. What it loses is everything
-    /// that is not a knob — the buttons that add, group and delete, and the
-    /// editors for a tune or a file, none of which has a number in the file to
-    /// change.
+    /// does: everything a module carries — its knobs, its tune, its file, a
+    /// plugin's own fields — is written back into the text, so the next apply
+    /// builds what is already being heard. What it loses is what the graph is
+    /// made of: the buttons that add, group and delete, and the title that
+    /// renames, none of which the file would let stand.
     /// <para>
     /// Undo and redo are deliberately left alone. On a source-owned patch the
     /// history is a history of evaluations, and taking one back is exactly what

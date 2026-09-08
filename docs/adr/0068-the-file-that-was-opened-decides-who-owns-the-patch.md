@@ -128,14 +128,28 @@ reading it. Nothing is rebuilt — the patch already has the value and the engin
 already has the patch, and building here would replace the patch under the very
 control being dragged.
 
-**What is not a knob stays the text's.** The buttons that group, ungroup and
-delete are not offered on a locked canvas, the title does not rename, and the
-editors for a tune, a scale or a file are shown and not turned. A knob has a
-number in the file to change; none of those has, and a control that quietly lost
-what it was given at the next apply would be worse than one that is visibly off.
-Where a knob cannot be written either — a module stamped out of a `def` more than
-once, or a value written as `1 / 12` — it is said in the status bar rather than
-dropped quietly.
+**Everything a module carries goes back the same way, not only its knobs.** A
+tune and a scale are written into the block after the call, a file into the one
+string a call carries without a name, and a plugin's declared field into a named
+argument beside the knobs — each where the language already says it, and each
+added where the text does not say it yet. An emptied tune is written as `[ ]`
+rather than by taking the block away, for the reason a knob dragged back to its
+default is written rather than deleted: what the panel says and what the file
+says have to be the same thing, and silence is not a value.
+
+This is what closed the last hole in the language. A plugin's field could be
+read from a `.fbks` and was never written to one, so printing a patch dropped
+it — and a Fractal's octave count is not decoration, it decides how many octaves
+the program builds. A patch that could not be written as text without becoming a
+different instrument is a patch the text view could only ever half-show.
+
+**What is still the text's is what the graph is made of.** The buttons that
+group, ungroup and delete are not offered on a locked canvas, and the title does
+not rename. Those change which modules exist and what they are called, and the
+next apply builds that from the file — so a button offering them would be
+offering something the file takes straight back. Where a value cannot be written
+either — a module stamped out of a `def` more than once, or one written as
+`1 / 12` — it is said in the status bar rather than dropped quietly.
 
 **Saving follows ownership too.** A source-owned document written as `.fbks`
 writes the text itself — comments, names and `def`s — and is a save like any

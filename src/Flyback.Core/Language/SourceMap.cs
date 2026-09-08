@@ -43,7 +43,7 @@ public sealed class SourceMap
         string.Empty,
         [],
         new Dictionary<Guid, Site>(),
-        new Dictionary<(Guid, int), Site?>(),
+        new Dictionary<(Guid, string), Site?>(),
         new Dictionary<Guid, string>(),
         new HashSet<Guid>());
 
@@ -61,11 +61,15 @@ public sealed class SourceMap
     private readonly Dictionary<Guid, Site> calls;
 
     /// <summary>
-    /// Where each knob's number stands. Null for one the text does say and this
-    /// cannot rewrite — <c>1/12</c> is a knob worked out from two numbers, and
-    /// there is no single figure in the file to put another in place of.
+    /// Where the value of each named thing stands — a socket's knob, or one of a
+    /// plugin's declared fields, which the language spells the same way.
     /// </summary>
-    private readonly Dictionary<(Guid Node, int Port), Site?> knobs;
+    /// <remarks>
+    /// Null for one the text does say and this cannot rewrite: <c>1/12</c> is a
+    /// knob worked out from two numbers, and there is no single figure in the
+    /// file to put another in place of.
+    /// </remarks>
+    private readonly Dictionary<(Guid Node, string Name), Site?> written;
 
     /// <summary>What the text calls each module it has a word for.</summary>
     private readonly Dictionary<Guid, string> named;
@@ -87,14 +91,20 @@ public sealed class SourceMap
         string source,
         IReadOnlyList<(Site Where, Guid Node)> mentions,
         IReadOnlyDictionary<Guid, Site> calls,
-        IReadOnlyDictionary<(Guid Node, int Port), Site?> knobs,
+        IReadOnlyDictionary<(Guid Node, string Name), Site?> written,
         IReadOnlyDictionary<Guid, string> named,
         IReadOnlySet<Guid> bound)
     {
         this.source = source;
         this.calls = new Dictionary<Guid, Site>(calls);
-        this.knobs = new Dictionary<(Guid, int), Site?>(knobs);
         this.named = new Dictionary<Guid, string>(named);
+
+        // Keyed on the word rather than on a socket's position, because a
+        // plugin's field has no position — and folded, because the language
+        // reads a socket's name without minding its case.
+        this.written = [];
+
+        foreach (var (key, site) in written) this.written[Folded(key.Node, key.Name)] = site;
 
         starts = Starts(source);
         tokens = source.Length == 0 ? [] : Lexer.Scan(source, []);
@@ -176,30 +186,29 @@ public sealed class SourceMap
     /// the file asserting two different values for one socket with the older one
     /// still written a few lines up.
     /// </remarks>
-    /// <param name="node">The module the knob is on.</param>
-    /// <param name="port">The socket's index, which is how a knob is keyed.</param>
-    /// <param name="name">The socket, as the language spells it.</param>
-    /// <param name="value">The number, already written the way the language writes one.</param>
-    public Change? Knob(Guid node, int port, string name, string value)
+    /// <param name="node">The module the value is on.</param>
+    /// <param name="name">
+    /// The socket or the field's key, as the language spells it. One namespace,
+    /// because the language has one: a call's named arguments are its sockets
+    /// and its fields together, and the binder looks for a socket first.
+    /// </param>
+    /// <param name="value">Already written the way the language writes one.</param>
+    public Change? Knob(Guid node, string name, string value)
     {
         if (shared.Contains(node)) return null;
 
-        if (knobs.TryGetValue((node, port), out var written))
+        if (written.TryGetValue(Folded(node, name), out var said))
         {
-            // Null is for a knob this cannot write, and only for that — a value
-            // the text already says comes back as the edit that would say it, so
+            // Null is for a value this cannot write, and only for that — one the
+            // text already says comes back as the edit that would say it, so
             // that a caller can tell "nothing to do" from "nowhere to put it".
-            return written is { } site && Figure(site) is { } span
+            return said is { } site && Value(site) is { } span
                 ? new Change(span.From, span.Length, value)
                 : null;
         }
 
         if (calls.TryGetValue(node, out var call) && Parentheses(call) is { } brackets)
-        {
-            var inside = source.AsSpan(brackets.Open + 1, brackets.Close - brackets.Open - 1).Trim().Length > 0;
-
-            return new Change(brackets.Close, 0, (inside ? ", " : string.Empty) + name + ": " + value);
-        }
+            return Argument(brackets, name + ": " + value, first: false);
 
         // The Output is the module no call ever places — every patch already has
         // one, so the language names it rather than writing it. Its knobs are
@@ -210,6 +219,47 @@ public sealed class SourceMap
         var end = source.TrimEnd('\n', '\r').Length;
 
         return new Change(end, source.Length - end, $"\n{word}.{name} = {value}\n");
+    }
+
+    /// <summary>
+    /// The edit that makes the text carry <paramref name="block"/> — a tune or a
+    /// scale — for a module, or null where the text has nowhere to put one.
+    /// </summary>
+    /// <remarks>
+    /// A block goes after the call rather than inside it, and there is at most
+    /// one, so it needs no name and this needs nothing recorded about it: the
+    /// token after the brackets either is one or is not.
+    /// </remarks>
+    /// <param name="block">Including its own brackets, and <c>[ ]</c> for nothing.</param>
+    public Change? Carried(Guid node, string block)
+    {
+        if (shared.Contains(node)) return null;
+        if (!calls.TryGetValue(node, out var call) || Parentheses(call) is not { } brackets) return null;
+
+        return Block(brackets.Close) is { } span
+            ? new Change(span.From, span.To - span.From, block)
+            : new Change(brackets.Close + 1, 0, " " + block);
+    }
+
+    /// <summary>
+    /// The edit that makes the text name <paramref name="path"/> as a module's
+    /// file, or null where it has nowhere to put one.
+    /// </summary>
+    /// <remarks>
+    /// First among the arguments, which is where a printing puts it and where it
+    /// reads: it is not a socket, so it goes in without a name and the binder
+    /// takes the one string a call has as the file it names (ADR-0052).
+    /// </remarks>
+    public Change? File(Guid node, string path)
+    {
+        if (shared.Contains(node) || path.Contains('"')) return null;
+        if (!calls.TryGetValue(node, out var call) || Parentheses(call) is not { } brackets) return null;
+
+        var quoted = $"\"{path}\"";
+
+        return Text(brackets) is { } span
+            ? new Change(span.From, span.Length, quoted)
+            : Argument(brackets, quoted, first: true);
     }
 
     /// <summary>The offset a line and a column name, clamped to the text.</summary>
@@ -298,17 +348,20 @@ public sealed class SourceMap
         return null;
     }
 
-    /// <summary>The number written at <paramref name="site"/>, with its sign.</summary>
+    /// <summary>The value written at <paramref name="site"/>, with its sign or its quotes.</summary>
     /// <remarks>
-    /// The minus is part of it. Putting 0.5 where the digits of <c>-0.5</c> are
-    /// would leave the file still saying <c>-0.5</c>, which is the one wrong
-    /// answer this could give.
+    /// The minus is part of a number. Putting 0.5 where the digits of
+    /// <c>-0.5</c> are would leave the file still saying <c>-0.5</c>, which is
+    /// the one wrong answer this could give. The quotes are part of a string for
+    /// the same reason, and because what replaces one carries its own.
     /// </remarks>
-    private (int From, int Length)? Figure(Site site)
+    private (int From, int Length)? Value(Site site)
     {
         var from = Offset(site);
 
         if (!beginning.TryGetValue(from, out var i)) return null;
+
+        if (tokens[i].Kind == TokenKind.Text) return (from, tokens[i].Text.Length + 2);
 
         while (i < tokens.Count && tokens[i].Kind == TokenKind.Minus) i++;
 
@@ -316,6 +369,69 @@ public sealed class SourceMap
 
         return (from, Offset(tokens[i]) + tokens[i].Text.Length - from);
     }
+
+    /// <summary>The block standing after a call's brackets, where there is one.</summary>
+    private (int From, int To)? Block(int close)
+    {
+        if (!beginning.TryGetValue(close, out var i) || i + 1 >= tokens.Count) return null;
+        if (tokens[i + 1].Kind != TokenKind.Block) return null;
+
+        var from = Offset(tokens[i + 1]);
+
+        return (from, Closed(from));
+    }
+
+    /// <summary>
+    /// The one string a call carries without a name, which is the file it names.
+    /// </summary>
+    /// <remarks>
+    /// Without a name, because a plugin's choice of device is a string too and
+    /// is an argument like any other. What has no name in front of it is the
+    /// file, and there is at most one.
+    /// </remarks>
+    private (int From, int Length)? Text((int Open, int Close) brackets)
+    {
+        if (!beginning.TryGetValue(brackets.Open, out var i)) return null;
+
+        var depth = 0;
+
+        for (; i < tokens.Count; i++)
+        {
+            if (tokens[i].Kind == TokenKind.OpenParen) depth++;
+            else if (tokens[i].Kind == TokenKind.CloseParen && --depth == 0) return null;
+            else if (depth == 1
+                && tokens[i].Kind == TokenKind.Text
+                && !(i >= 2 && tokens[i - 1].Kind == TokenKind.Colon))
+            {
+                return (Offset(tokens[i]), tokens[i].Text.Length + 2);
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Puts one more argument into a call, at whichever end it belongs.
+    /// </summary>
+    /// <remarks>
+    /// Adding a named argument for a socket the call does not fill leaves every
+    /// positional one where it was: what a bare argument lands on is the next
+    /// socket still free, and naming one that was already free does not change
+    /// the order of the rest.
+    /// </remarks>
+    private Change Argument((int Open, int Close) brackets, string written, bool first)
+    {
+        var inside = source.AsSpan(brackets.Open + 1, brackets.Close - brackets.Open - 1).Trim().Length > 0;
+
+        if (!inside) return new Change(brackets.Close, 0, written);
+
+        return first
+            ? new Change(brackets.Open + 1, 0, written + ", ")
+            : new Change(brackets.Close, 0, ", " + written);
+    }
+
+    /// <summary>One key for a module and a word, however the word was spelled.</summary>
+    private static (Guid, string) Folded(Guid node, string name) => (node, name.ToLowerInvariant());
 
     /// <summary>Where the block opening at <paramref name="open"/> ends.</summary>
     private int Closed(int open)

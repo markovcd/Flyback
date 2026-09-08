@@ -606,10 +606,16 @@ public class SourceViewTests : UiTest
         slider.Value = to;
         Settle(window);
 
-        slider.RaiseEvent(new Avalonia.Input.PointerReleasedEventArgs(
-            slider,
+        Release(slider);
+        Settle(window);
+    }
+
+    /// <summary>Lets go of the pointer over a control, which is what ends a gesture.</summary>
+    private static void Release(Control over) =>
+        over.RaiseEvent(new Avalonia.Input.PointerReleasedEventArgs(
+            over,
             new Avalonia.Input.Pointer(0, Avalonia.Input.PointerType.Mouse, true),
-            slider,
+            over,
             default,
             0,
             default,
@@ -618,9 +624,6 @@ public class SourceViewTests : UiTest
         {
             RoutedEvent = Avalonia.Input.InputElement.PointerReleasedEvent,
         });
-
-        Settle(window);
-    }
 
     /// <summary>
     /// The number is changed where the text already says it. Saying it a second
@@ -732,6 +735,35 @@ public class SourceViewTests : UiTest
         Settle(window);
 
         Editor(window).SelectedNode.ShouldNotBeNull("the caret stopped pointing the panel");
+    }
+
+    /// <summary>
+    /// A tune is not a knob and reaches the text the same way all the same. It
+    /// goes back into the block the text already carries, which is the only
+    /// place the language reads one.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_tune_edited_in_the_panel_is_written_where_the_block_stands()
+    {
+        var window = Open();
+
+        Evaluate(window, "let riff = notes() [ A3 C4 ]\nriff |> out.left");
+        Click(window, "notes");
+
+        // The box holding the first step, found by what it holds: A3 is 57 and
+        // no knob on a sequencer rests there.
+        var step = All<NumericUpDown>(window).First(box => box.Value == 57m);
+
+        step.Value = 60m;
+        Settle(window);
+
+        // The block waits for the hand to come off it, the same as a knob does.
+        Text(window).Text.ShouldContain("[ A3 C4 ]");
+
+        Release(All<Slider>(window).First());
+        Settle(window);
+
+        Text(window).Text.Trim().ShouldBe("let riff = notes() [ C4 C4 ]\nriff |> out.left");
     }
 
     /// <summary>

@@ -36,17 +36,6 @@ public class SourceMapTests
             ? load.Patch.Find(id)
             : null;
 
-    /// <summary>The socket a name stands for, since a knob is keyed by its index.</summary>
-    private static int Port(NodeInstance node, string name)
-    {
-        var inputs = NodeCatalog.BuiltIn.Require(node.TypeId).Inputs;
-
-        for (var i = 0; i < inputs.Count; i++)
-            if (string.Equals(inputs[i].Name, name, StringComparison.OrdinalIgnoreCase)) return i;
-
-        throw new ArgumentException($"'{node.TypeId}' has no socket called '{name}'.", nameof(name));
-    }
-
     [Fact]
     public void A_call_with_no_name_is_still_something_to_point_at()
     {
@@ -65,7 +54,7 @@ public class SourceMapTests
         var load = Built(source);
         var node = Under(load, source, "atan2")!;
 
-        var change = load.Map.Knob(node.Id, 0, "a", "2");
+        var change = load.Map.Knob(node.Id, "a", "2");
 
         change.ShouldNotBeNull();
         Applied(source, change.Value).ShouldBe("atan2(a: 2) |> out.left");
@@ -83,7 +72,7 @@ public class SourceMapTests
         var load = Built(source);
         var node = Under(load, source, "atan2")!;
 
-        Applied(source, load.Map.Knob(node.Id, 1, "b", "0.25")!.Value)
+        Applied(source, load.Map.Knob(node.Id, "b", "0.25")!.Value)
             .ShouldBe("atan2(a: 1.5, b: 0.25) |> out.left");
     }
 
@@ -95,7 +84,7 @@ public class SourceMapTests
         var load = Built(source);
         var node = Under(load, source, "atan2")!;
 
-        Applied(source, load.Map.Knob(node.Id, 0, "a", "2")!.Value).ShouldBe("atan2(a: 2) |> out.left");
+        Applied(source, load.Map.Knob(node.Id, "a", "2")!.Value).ShouldBe("atan2(a: 2) |> out.left");
     }
 
     /// <summary>
@@ -110,7 +99,7 @@ public class SourceMapTests
         var load = Built(source);
         var node = Under(load, source, "atan2")!;
 
-        Applied(source, load.Map.Knob(node.Id, 0, "a", "0.5")!.Value).ShouldBe("atan2(a: 0.5) |> out.left");
+        Applied(source, load.Map.Knob(node.Id, "a", "0.5")!.Value).ShouldBe("atan2(a: 0.5) |> out.left");
     }
 
     /// <summary>
@@ -126,7 +115,7 @@ public class SourceMapTests
         var load = Built(source);
         var node = Under(load, source, "atan2")!;
 
-        load.Map.Knob(node.Id, 0, "a", "2").ShouldBeNull();
+        load.Map.Knob(node.Id, "a", "2").ShouldBeNull();
     }
 
     /// <summary>
@@ -141,7 +130,7 @@ public class SourceMapTests
         var load = Built(source);
         var node = load.Patch.Nodes.Single(n => n.Name == "hum");
 
-        Applied(source, load.Map.Knob(node.Id, Port(node, "freq"), "freq", "440")!.Value)
+        Applied(source, load.Map.Knob(node.Id, "freq", "440")!.Value)
             .ShouldBe("let hum = sine()\nhum.freq = 440\nhum |> out.left");
     }
 
@@ -225,7 +214,7 @@ public class SourceMapTests
                 // Spelled the way a printing spells one, since a note and a
                 // length of time are not the number the socket holds.
                 var value = PatchPrinter.Knob(0.125f, def.Inputs[port].Display);
-                var change = printing.Map.Knob(node.Id, port, socket, value);
+                var change = printing.Map.Knob(node.Id, socket, value);
 
                 change.ShouldNotBeNull($"{name}: '{socket}' on {node.TypeId} has nowhere to be written");
 

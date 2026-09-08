@@ -116,3 +116,11 @@ raise `FormatVersion`.
 plugin's state is filed under in the store and in the folded context, so it is in
 every saved patch that holds the module and cannot be changed without changing
 that file.
+
+**And so is `ExtraField.Key`, for the same reason twice over.** The language
+writes a field as a named argument — `fractal(octaves: "6")` — and reads one
+back by key or by label, but writes only the key: a label is what the inspector
+puts beside a control and is free to be reworded, and a `.fbks` written today
+has to go on meaning the same thing after it is. Three shapes, three spellings:
+a number on whatever scale the field reads on, a switch as one or nought, and a
+choice as the one string the language has, because an id is not a number.
