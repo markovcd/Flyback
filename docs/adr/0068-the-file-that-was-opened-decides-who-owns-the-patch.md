@@ -263,3 +263,25 @@ there to be asked when a file asks it.
 `PrintForReading` waits for, so the text view opened again shows a printing of
 the patch under the notice that says so — the state somebody would have been in
 had they opened the patch as a `.fbk` all along, which is the point.
+
+**2026-09-08 (later) — the view is where somebody is, and a document arriving
+does not move them.** Handing the patch back is a change of owner, and so is
+picking a preset, opening a `.fbk` or saving as one: all four go through the
+same `DropSource`, which is right. What was wrong is that it also put the canvas
+back on the screen, so a preset picked from the text view answered a question
+nobody had asked — where to look — and every patch tried from there landed on
+the canvas.
+
+So the handover leaves the view alone and prints into whichever one is showing.
+A preset picked while the text is up is read as text, in the view it was picked
+from, and what changes is that the text is now a printing and says so above
+itself. Printed straight away rather than on the next look, because this *is*
+the look: an emptied buffer left in front of somebody is a text view claiming
+the new patch is nothing at all.
+
+Two documents still move the view, and both for the same reason — the view they
+would leave somebody in is not one they can work in. A `.fbks` arrives as text
+and locks the canvas, so it opens the text view. **Edit on the canvas** shows
+the canvas, because wanting to draw there is the whole of what pressing it
+means; it asks for the view itself rather than getting one as a side effect of
+the handover, which is what the other three callers wanted all along.

@@ -571,6 +571,11 @@ public sealed partial class MainWindow
         // it is asked about when a document is closed over.
         if (!await MayLoseTheTextAsync()) return;
 
+        // To the canvas, which is the one thing this gesture is asked for: the
+        // button is under the text and pressing it means somebody wants to draw.
+        // Before the handover rather than after, since a handover prints into
+        // whichever view is showing and this one is on its way out.
+        ShowCode(false);
         DropSource();
 
         Report("The canvas is the document from here on. The text view prints it afresh on "
@@ -599,10 +604,21 @@ public sealed partial class MainWindow
     /// Hands the patch back to the graph, for a document that arrived as one.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// The buffer is emptied rather than left holding the last document's text,
     /// which would otherwise be printed over on the next look anyway — and until
     /// then would be a piece of some other patch sitting under a notice claiming
     /// to describe this one.
+    /// </para>
+    /// <para>
+    /// The view is not moved. Which of the two is showing is where somebody is
+    /// looking, and a document arriving answers a different question — who owns
+    /// the patch. So a preset picked while the text is up is read as text, in
+    /// the view it was picked from, and what changes is that the text is now a
+    /// printing and says so. The one document that does move the view is a
+    /// <c>.fbks</c>, which arrives as text and locks the canvas besides
+    /// (<see cref="TakeSource"/>).
+    /// </para>
     /// </remarks>
     private void DropSource()
     {
@@ -617,7 +633,10 @@ public sealed partial class MainWindow
         Forget();
         RefreshOwnership();
 
-        if (showingCode) ShowCode(false);
+        // Straight away rather than on the next look, because this is the look:
+        // an emptied buffer left in front of somebody is a text view saying the
+        // new patch is nothing at all.
+        if (showingCode) PrintForReading();
     }
 
     /// <summary>

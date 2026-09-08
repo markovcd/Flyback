@@ -310,6 +310,54 @@ public class SourceViewTests : UiTest
         Notice(window).ShouldNotBeNull().ShouldContain("still the document");
     }
 
+    private static ComboBox Presets(MainWindow window) =>
+        All<ComboBox>(window).Single(box => box.Name == "presets");
+
+    /// <summary>
+    /// A document arriving does not move somebody out of the view they are in.
+    /// Which of the two is showing is where they are looking; who owns the patch
+    /// is the other question, and answering it is no reason to answer this one
+    /// as well.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_preset_picked_while_the_text_is_up_is_read_as_text()
+    {
+        var window = Open();
+
+        var before = ShowCode(window).Text;
+
+        Presets(window).SelectedIndex = 1;
+        Settle(window);
+
+        Text(window).IsVisible.ShouldBeTrue("the text is the view the preset was picked from");
+        Editor(window).IsVisible.ShouldBeFalse();
+
+        // And what it shows is the patch that has just arrived, printed to be
+        // read rather than left as the empty buffer the handover made.
+        Text(window).Text.ShouldNotBeNullOrWhiteSpace();
+        Text(window).Text.ShouldNotBe(before);
+        Notice(window).ShouldNotBeNull().ShouldContain("still the document");
+    }
+
+    /// <summary>
+    /// Handing the patch back is the one gesture that does move the view, since
+    /// wanting to draw on the canvas is the whole of what it means.
+    /// </summary>
+    [AvaloniaFact]
+    public void Handing_it_back_is_what_moves_the_view()
+    {
+        var window = Open();
+
+        Evaluate(window, Hum);
+
+        Text(window).IsVisible.ShouldBeTrue();
+
+        HandBack(window);
+
+        Editor(window).IsVisible.ShouldBeTrue();
+        CodeButton(window).IsChecked.ShouldBe(false, "the toggle says which view is showing");
+    }
+
     /// <summary>
     /// Offered only where it would change something: over a printing the canvas
     /// has the patch already, and a button saying so would do nothing.

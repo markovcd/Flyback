@@ -503,6 +503,7 @@ public sealed partial class MainWindow : Window
         // somebody's work — twenty times over if it were an arrow held down.
         var presets = new Picker
         {
+            Name = "presets",
             ItemsSource = available,
             SelectedIndex = 0,
             Width = 160,
