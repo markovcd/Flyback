@@ -411,4 +411,59 @@ public class AssistantPanelTests : UiTest
         send.IsEnabled.ShouldBeFalse("and there is no assistant installed to send it to");
         ToolTip.GetTip(send).ShouldNotBeNull("which the button says when hovered");
     }
+
+    /// <summary>
+    /// The footer says what is true now, not what was true the last time it had
+    /// bad news.
+    /// </summary>
+    /// <remarks>
+    /// The bug this was written for: the amber branch wrote the excuse and the
+    /// branch under it wrote only the colour, so a panel that had once had no
+    /// key went on saying "No key yet" in grey over every key that arrived
+    /// afterwards — which reads as the key having been thrown away.
+    /// </remarks>
+    [AvaloniaFact]
+    public void The_footer_stops_saying_what_was_wrong_once_it_is_right()
+    {
+        var window = Showing(
+            new PluginCatalog([], [], NodeCatalog.BuiltIn, [], [], [new Keyless(), new Both()]),
+            new AssistantSettings { Provider = "keyless" });
+
+        var footer = All<TextBlock>(window).Single(t => t.Name == "footer");
+
+        footer.Text.ShouldBe(Keyless.Excuse, "there is no key, and the footer is where that is said");
+
+        var host = Settings(window);
+
+        All<ComboBox>(host).Single(c => c.Name == "provider").SelectedIndex = 1;
+        Settle(host);
+        Settle(window);
+
+        var said = footer.Text ?? string.Empty;
+
+        said.ShouldNotBe(Keyless.Excuse);
+
+        // Who an instruction would now go to, which is the standing disclosure
+        // the excuse was written over.
+        said.ShouldContain(new Both().Name);
+    }
+
+    /// <summary>One that is never ready, which is what a provider is until a key turns up.</summary>
+    private sealed class Keyless : IPatchAssistant
+    {
+        internal const string Excuse = "No key yet — put one in Settings.";
+
+        public string Id => "keyless";
+
+        public string Name => "Wants a key";
+
+        public int Priority => 0;
+
+        public AssistantSchema Schema { get; } = new("only", [new AssistantModel("only")], "NONE", "none needed");
+
+        public string? Unavailable(AssistantConfig config) => Excuse;
+
+        public IPatchSession Start(PatchWorkbench workbench, AssistantConfig config) =>
+            throw new NotSupportedException("this one is only ever asked what it can do.");
+    }
 }

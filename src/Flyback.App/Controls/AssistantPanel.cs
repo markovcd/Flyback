@@ -93,7 +93,13 @@ public sealed class AssistantPanel : UserControl
         Stretch = Stretch.Uniform,
         IsVisible = false,
     };
-    private readonly TextBlock footer = new() { FontSize = 11, Foreground = Dim, TextWrapping = TextWrapping.Wrap };
+    private readonly TextBlock footer = new()
+    {
+        FontSize = 11,
+        Foreground = Dim,
+        TextWrapping = TextWrapping.Wrap,
+        Name = "footer",
+    };
 
     /// <summary>
     /// Proof that something is still happening.
@@ -217,7 +223,7 @@ public sealed class AssistantPanel : UserControl
     /// at a time, in the middle of a run.
     /// </summary>
     private readonly ComboBox earBox = new() { FontSize = 12, Width = 260, Name = "ear" };
-    private readonly ComboBox providerBox = new() { FontSize = 12, Width = 260 };
+    private readonly ComboBox providerBox = new() { FontSize = 12, Width = 260, Name = "provider" };
     private readonly ComboBox effortBox = new()
     {
         FontSize = 12,
@@ -869,8 +875,24 @@ public sealed class AssistantPanel : UserControl
             footer.Foreground = Amber;
             return;
         }
-        
+
+        // Written every time rather than only when it changes, because the amber
+        // branch above writes over it: an excuse left standing after a key has
+        // been entered is the panel saying there is no key while holding one.
+        var source = credentials.SourceOf(assistant!.Id, assistant.Schema.EnvironmentVariable) switch
+        {
+            CredentialSource.Environment => $"key from {assistant.Schema.EnvironmentVariable}",
+            CredentialSource.Kept => $"key kept by {credentials.Store?.Name}",
+            CredentialSource.Session => credentials.CanKeep
+                ? "key held for this session only"
+                : "key held for this session only — nothing installed can keep one",
+            _ => "no key",
+        };
+
         footer.Foreground = Dim;
+        footer.Text =
+            "Sends your instruction, the module list and the patch — including rendered frames of it — "
+            + $"to {assistant.Name}. {source}.";
     }
 
     /// <summary>
