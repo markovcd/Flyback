@@ -6,6 +6,7 @@ using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
 using AvaloniaEdit;
+using AvaloniaEdit.Document;
 using AvaloniaEdit.Highlighting;
 using AvaloniaEdit.Highlighting.Xshd;
 using AvaloniaEdit.Rendering;
@@ -242,7 +243,16 @@ internal sealed class SourceView : UserControl
     public event EventHandler<int>? Moved;
 
     /// <summary>Where the caret is, as an offset into the text.</summary>
-    public int Caret => text.TextArea.Caret.Offset;
+    /// <remarks>
+    /// Settable so that text replaced wholesale can put somebody back where
+    /// they were reading. Moving it is a move like any other, so the panel
+    /// follows it exactly as it follows an arrow key.
+    /// </remarks>
+    public int Caret
+    {
+        get => text.TextArea.Caret.Offset;
+        set => text.TextArea.Caret.Offset = value;
+    }
 
     /// <summary>
     /// Puts <paramref name="change"/> into the text, leaving everything else
@@ -276,6 +286,65 @@ internal sealed class SourceView : UserControl
     public void Undo() => text.Undo();
 
     public void Redo() => text.Redo();
+
+    /// <summary>
+    /// Something that is not a text edit, put on this stack so that taking back
+    /// what is showing takes it back too.
+    /// </summary>
+    /// <param name="undone">Called to put it back as it was.</param>
+    /// <param name="redone">Called to do it again.</param>
+    private sealed class Deed(Action undone, Action redone) : IUndoableOperation
+    {
+        public void Undo() => undone();
+
+        public void Redo() => redone();
+    }
+
+    /// <summary>
+    /// Puts something that is not a text edit on the undo stack, to be taken
+    /// back in its turn.
+    /// </summary>
+    /// <remarks>
+    /// The stack the editor already keeps rather than a second one beside it,
+    /// because what has to be right is the order. Typing, applying and turning a
+    /// knob are one run of things somebody did, and two stacks would have to be
+    /// put back in that order by guessing when each step happened — where one
+    /// stack knows, having been there.
+    /// </remarks>
+    public void Remember(Action undone, Action redone) =>
+        text.Document?.UndoStack.Push(new Deed(undone, redone));
+
+    /// <summary>
+    /// Makes everything done before this is disposed one thing to take back,
+    /// however many edits and deeds it turns out to be.
+    /// </summary>
+    public IDisposable Together() => new Group(text.Document?.UndoStack);
+
+    /// <summary>
+    /// Says that nothing written here so far is a thing to take back.
+    /// </summary>
+    /// <remarks>
+    /// For text that is a reading rather than a document: what the caller has
+    /// just written into it, it wrote to keep the reading true, and nobody made
+    /// an edit that Ctrl+Z should answer for. Left on the stack it would be
+    /// answered for — and taking it back would leave the reading saying one
+    /// thing and the patch it reads another.
+    /// </remarks>
+    public void ForgetSteps() => text.Document?.UndoStack.ClearAll();
+
+    /// <summary>One undo group, opened and closed with a <c>using</c>.</summary>
+    private sealed class Group : IDisposable
+    {
+        private readonly UndoStack? stack;
+
+        public Group(UndoStack? stack)
+        {
+            this.stack = stack;
+            stack?.StartUndoGroup();
+        }
+
+        public void Dispose() => stack?.EndUndoGroup();
+    }
 
     /// <summary>
     /// Folds the long lines, which is what laying the modules out is on the

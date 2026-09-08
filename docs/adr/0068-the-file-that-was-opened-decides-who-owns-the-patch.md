@@ -163,19 +163,68 @@ that the document and hands the patch back to the graph.
 question had to learn about it. Nothing typed reaches the patch until somebody
 asks, so the editor's history cannot know a document has moved on.
 
-**Undo, redo and laying out follow the view rather than the owner.** All three
-act on what somebody is looking at: on the canvas they are the modules' and on
-the text they are the lines'. So Ctrl+Z takes back the last thing typed while
-the text is up and the last evaluation while the canvas is, and Ctrl+L folds
-the long lines or lays the modules out — which are the same thing done to the
-two views of one patch, and are each other's counterpart in the engine besides
-(`SourceLayout` and `PatchLayout`).
+**Laying out follows the view.** Ctrl+L folds the long lines or lays the modules
+out — the same thing done to the two views of one patch, and each other's
+counterpart in the engine besides (`SourceLayout` and `PatchLayout`). The one
+place it is switched off is a *locked* canvas, where the binder re-lays it on
+the next evaluation and a tidy would not survive one.
 
-Neither stack is disturbed by the other, which is what makes switching over
-worth doing: a run of evaluations is still there to be undone on the canvas
-after an afternoon of typing. The one thing switched off is laying out a
-*locked* canvas, where the binder re-lays it on the next evaluation and a tidy
-would not survive one.
+**Undo and redo follow the owner, and only then the view.** They began as the
+view's, which was wrong in the way that only shows up once somebody works in the
+text for a while: typing went on one stack and evaluations on another, neither
+knew when the other had happened, and Ctrl+Z after an apply took back a line
+typed some minutes earlier while leaving the patch it had already been built
+into exactly where it was.
+
+So where the text is the document, its stack *is* the document's history, from
+either view. Typing, applying and turning a knob are one run of things somebody
+did and come back in that order, because the last two go on that same stack
+rather than on a second one that would afterwards have to be interleaved with it
+by guessing. The canvas is a view of that document, so Ctrl+Z there means what
+it means at the text.
+
+Where the graph is the document the two are independent again and undo follows
+the view: the modules' steps on the canvas, and whatever has been typed into a
+printing at the text. Either way the gesture falls through when the stack it
+lands on has nothing left — a printing is loaded rather than typed, so applying
+one would otherwise be the single thing nobody could take back.
+
+**What goes on the text's stack for a patch step is a count, not a copy.** The
+canvas is already keeping the snapshots and keeping them twice is how two
+records of one edit come to disagree, so what is pushed is how many of its steps
+to walk back. An undo at the text is an undo at the canvas: one history, reached
+through whichever view somebody is working in. The count is exact because the
+canvas says when it actually made a step — an edit that changed nothing makes
+none, and a hundred frames of a knob being dragged make one.
+
+**A knob turned in the panel is one thing done, however little of it is text.**
+The number is written into the code on the release and the value reached the
+patch on the way there, and both come back in one press: they are grouped, so
+taking back the text without taking back what it does — the file reading
+`1.5524476` over a patch still playing `2` — is not a state the program can be
+left in.
+
+**Applying is a handover as well as an edit, so taking it back is both.** An
+evaluation puts a patch on the canvas *and* makes the text the document, and
+undoing only the first half leaves a canvas nobody wrote any text for locked
+behind text claiming to describe it — with a handover made by hand as the only
+way out, which is not what Ctrl+Z was pressed for. So who owned the patch is
+noted beside the step the evaluation records, an undo across that step gives the
+canvas the patch back, and a redo takes it into text again.
+
+The view goes with it, because the handover is the half of that edit somebody
+can see. Taking an adoption back puts the canvas up — that is where the modules
+they wanted back are, and it is what the same handover made by hand already does
+— and putting it back shows the text that is the document again. Pressing undo
+on the canvas moves nothing, since that is where it lands.
+
+The note is opaque to the history, which knows only that it rides with the step.
+A snapshot says what a patch was and nothing about where it came from, and the
+canvas records a step for every gesture it has rather than knowing what else
+each one changes. A handover made by hand records nothing, because nothing about
+the patch changes to make it — so the steps behind it are re-marked to whoever
+holds the patch now, and undoing a drag does not take back a handover no edit
+was made for.
 
 **Loading a document empties the text's stack, and should.** Opening a `.fbks`
 or taking a printing of the canvas is a new document rather than an edit, so
@@ -191,7 +240,28 @@ and a printing a knob has been written into is mapped again from the same list
 rather than printed afresh, which would replace what somebody is reading in order
 to say a thing the text already says.
 
-**A printing stops being mapped the moment somebody types into it.** It is then
+**What a write-back puts in a printing is not an edit to take back.** It is the
+reading keeping up, and nobody made it — so it comes off that stack, and Ctrl+Z
+over a printing falls through to the canvas, where the only history of a
+graph-owned patch is. Left on the stack it would answer the press by putting the
+old number back over a patch still playing the new one, and by leaving the text
+no longer the printing it claims to be: a text that is not the printing maps to
+nothing, so the caret would stop pointing the panel. The same words in a
+*source-owned* document are an edit and stay one — there the text is what the
+patch is built from, and taking a number back there is taking the patch back
+with it.
+
+**A printing keeps up with an undo as it keeps up with a knob.**
+ An undo is the
+one thing that moves a graph-owned patch while the text is showing, the canvas
+not being on screen to be dragged, and a reading that went on saying the old
+number over a patch that had gone back to the old one would be a reading of
+nothing. So the printing is made afresh whenever the patch comes back out of the
+canvas's history — and only over a buffer that is still the printing, since
+typing is never printed over.
+
+**A printing stops being mapped the moment somebody types into it.**
+ It is then
 text about a patch that may no longer be there, and the honest answer is to point
 at nothing rather than at whatever used to be under the caret. The guard is that
 the number of calls still matches.

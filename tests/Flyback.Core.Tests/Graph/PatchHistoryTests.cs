@@ -392,6 +392,73 @@ public class PatchHistoryTests
         history.IsModified.ShouldBeTrue();
     }
 
+    /// <summary>
+    /// And it says whether it made one, for a caller keeping a history of its
+    /// own beside this and needing to know what to keep in step with.
+    /// </summary>
+    [Fact]
+    public void Recording_says_whether_it_made_a_step()
+    {
+        var patch = Wired(out var source, out _);
+        var history = Opened(patch);
+
+        history.Record(patch).ShouldBeFalse("nothing about the patch changed");
+
+        source.InputValues[0] = 0.5f;
+        history.Record(patch).ShouldBeTrue();
+
+        source.InputValues[0] = 0.6f;
+        history.Record(patch, "knob").ShouldBeTrue("this gesture has not been named before");
+
+        source.InputValues[0] = 0.7f;
+        history.Record(patch, "knob").ShouldBeFalse("still the gesture that made the last step");
+    }
+
+    /// <summary>
+    /// A mark rides with the step it was recorded against, so a caller whose own
+    /// state changed with an edit gets that state back when the edit is undone.
+    /// </summary>
+    [Fact]
+    public void A_mark_comes_back_with_the_step_it_was_made_against()
+    {
+        var patch = Wired(out var source, out _);
+        var history = new PatchHistory(Catalog);
+
+        history.Opened(patch, "graph");
+
+        source.InputValues[0] = 0.5f;
+        history.Record(patch, mark: "text");
+
+        history.Mark.ShouldBe("text");
+
+        history.Undo().ShouldNotBeNull();
+        history.Mark.ShouldBe("graph");
+
+        history.Redo().ShouldNotBeNull();
+        history.Mark.ShouldBe("text");
+    }
+
+    /// <summary>
+    /// And something that changed with no edit to change it is true of every
+    /// step there is, rather than of the ones taken since.
+    /// </summary>
+    [Fact]
+    public void Remarking_says_the_same_thing_beside_every_step()
+    {
+        var patch = Wired(out var source, out _);
+        var history = new PatchHistory(Catalog);
+
+        history.Opened(patch, "graph");
+
+        source.InputValues[0] = 0.5f;
+        history.Record(patch, mark: "text");
+
+        history.Remark("graph");
+
+        history.Undo().ShouldNotBeNull();
+        history.Mark.ShouldBe("graph");
+    }
+
     [Fact]
     public void Opening_something_else_is_a_patch_with_nothing_to_lose()
     {

@@ -364,7 +364,7 @@ public sealed class NodeEditor : Control
 
             // A different document rather than an edit to this one, so what
             // came before it is not something to undo into.
-            history.Opened(patch);
+            history.Opened(patch, Mark);
 
             selection.Clear();
             focus = null;
@@ -416,6 +416,30 @@ public sealed class NodeEditor : Control
     public bool CanRedo => history.CanRedo;
 
     /// <summary>
+    /// What the owner of this canvas keeps beside the patch, noted with every
+    /// step so that an undo hands back the state that step was taken in.
+    /// </summary>
+    /// <remarks>
+    /// Opaque here on purpose: the canvas records a step for every gesture it
+    /// has, and would otherwise have to know about each thing outside it that
+    /// an edit can change as well. Set it before making the edit that changes
+    /// it, so the step the edit records is the one belonging to the new state —
+    /// and see <see cref="Remark"/> for the changes no edit is made for.
+    /// </remarks>
+    public object? Mark { get; set; }
+
+    /// <summary>
+    /// A step has just been added to the history.
+    /// </summary>
+    /// <remarks>
+    /// Not raised for an undo or a redo, and not for an edit that made no step
+    /// — one that changed nothing, or one frame of a gesture folded into the
+    /// step before it. So a caller keeping a history of its own beside this one
+    /// hears once per thing somebody did, which is what it has to match.
+    /// </remarks>
+    public event EventHandler? Recorded;
+
+    /// <summary>
     /// Whether the patch differs from the one that was opened, or from the last
     /// one written out. Undoing back to where it started clears it again, since
     /// what is being compared is the document rather than whether anybody typed.
@@ -450,10 +474,13 @@ public sealed class NodeEditor : Control
         // knows how large what it placed is.
         HoldInside();
 
-        history.Record(patch, coalesce);
+        var stepped = history.Record(patch, coalesce, Mark);
+
         InvalidateVisual();
         PatchChanged?.Invoke(this, EventArgs.Empty);
         HistoryChanged?.Invoke(this, EventArgs.Empty);
+
+        if (stepped) Recorded?.Invoke(this, EventArgs.Empty);
     }
 
     /// <summary>Puts the patch back as it was before the last edit.</summary>
@@ -462,6 +489,16 @@ public sealed class NodeEditor : Control
 
     /// <summary>Puts back the edit the last undo took away.</summary>
     public bool Redo() => Restore(history.Redo());
+
+    /// <summary>
+    /// Says the same thing beside every step there is, for a <see cref="Mark"/>
+    /// that has changed with no edit made to change it.
+    /// </summary>
+    public void Remark(object? mark)
+    {
+        Mark = mark;
+        history.Remark(mark);
+    }
 
     /// <summary>
     /// Shows a patch that came out of the history. Not the <see cref="Patch"/>
@@ -475,6 +512,11 @@ public sealed class NodeEditor : Control
         if (restored is null) return false;
 
         Show(restored);
+
+        // Whatever the owner had beside the patch when this step was taken is
+        // what it has again, read back off the canvas the moment this returns.
+        Mark = history.Mark;
+
         Announce();
 
         return true;
@@ -494,9 +536,13 @@ public sealed class NodeEditor : Control
     public void ApplyEdit(Patch edited)
     {
         Show(edited);
-        history.Record(patch);
+
+        var stepped = history.Record(patch, mark: Mark);
+
         FrameAll();
         Announce();
+
+        if (stepped) Recorded?.Invoke(this, EventArgs.Empty);
     }
 
     /// <summary>
@@ -2205,10 +2251,10 @@ public sealed class NodeEditor : Control
                 dragOrigins.TryGetValue(node.Id, out var from)
                 && (node.X != from.X || node.Y != from.Y));
 
-            if (moved)
+            if (moved && history.Record(patch, mark: Mark))
             {
-                history.Record(patch);
                 HistoryChanged?.Invoke(this, EventArgs.Empty);
+                Recorded?.Invoke(this, EventArgs.Empty);
             }
 
             // A press on one module of a group that turned out not to be a drag

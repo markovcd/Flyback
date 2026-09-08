@@ -635,6 +635,314 @@ public class SourceViewTests : UiTest
     }
 
     /// <summary>
+    /// And an evaluation is a handover as much as an edit, so taking it back
+    /// takes the handover back with it.
+    /// </summary>
+    /// <remarks>
+    /// Applying is how a patch is taken into text. Undo it and what is on the
+    /// canvas is a patch no text describes — laid out where it stood before the
+    /// build re-placed everything — so leaving the text as the document would
+    /// lock that canvas behind a printing of something else, with a handover
+    /// made by hand as the only way out. That is not what Ctrl+Z was pressed
+    /// for: it was pressed to be back where the modules were, which is why the
+    /// view goes back too.
+    /// </remarks>
+    [AvaloniaFact]
+    public void Undoing_an_evaluation_gives_the_patch_back_to_the_canvas()
+    {
+        var window = Open();
+
+        Evaluate(window, Hum);
+
+        Editor(window).Locked.ShouldBeTrue("applying is how the text becomes the document");
+
+        // Pressed at the text view, which is where applying leaves somebody.
+        // Nothing was typed to make this printing, so the text has nothing of
+        // its own to take back and the gesture is the patch's.
+        Press(Undo(window));
+        Settle(window);
+
+        Editor(window).Locked.ShouldBeFalse("the evaluation that took it into text went back too");
+        Editor(window).IsVisible.ShouldBeTrue("and the view went back with it");
+        Notice(window).ShouldNotBeNull().ShouldContain("still the document");
+
+        Press(Redo(window));
+        Settle(window);
+
+        Editor(window).Locked.ShouldBeTrue("and putting the evaluation back takes it into text");
+        Editor(window).IsVisible.ShouldBeFalse("which is something done at the text view");
+    }
+
+    /// <summary>
+    /// And the canvas reaches it too, for somebody who switched over to look at
+    /// what the evaluation did to their modules before deciding against it.
+    /// </summary>
+    [AvaloniaFact]
+    public void Undoing_an_evaluation_from_the_canvas_gives_it_back_as_well()
+    {
+        var window = Open();
+
+        Evaluate(window, Hum);
+
+        CodeButton(window).IsChecked = false;
+        Settle(window);
+
+        Press(Undo(window));
+        Settle(window);
+
+        Editor(window).Locked.ShouldBeFalse();
+        Editor(window).IsVisible.ShouldBeTrue("which is where they already were");
+    }
+
+    /// <summary>
+    /// Typing is still the text's own, and still comes back first. The gesture
+    /// falls through only where the view it is at has nothing left to take back.
+    /// </summary>
+    [AvaloniaFact]
+    public void Typing_comes_back_before_the_handover_does()
+    {
+        var window = Open();
+
+        Evaluate(window, Hum);
+
+        var text = Text(window);
+
+        text.Document.Insert(0, "# a note to myself\n");
+        Settle(window);
+
+        Press(Undo(window));
+        Settle(window);
+
+        text.Text.ShouldBe(Hum);
+        Editor(window).Locked.ShouldBeTrue("the typing was what there was to take back");
+
+        Press(Undo(window));
+        Settle(window);
+
+        Editor(window).Locked.ShouldBeFalse("and now there is nothing but the handover");
+    }
+
+    /// <summary>
+    /// A handover made by hand is not something an undo takes back. No edit was
+    /// recorded to make it — nothing moved and no wire was drawn — so the steps
+    /// behind it belong to the canvas that now holds the patch.
+    /// </summary>
+    [AvaloniaFact]
+    public void Handing_it_back_is_not_undone_by_taking_an_edit_back()
+    {
+        var window = Open();
+
+        Evaluate(window, Hum);
+        HandBack(window);
+
+        var editor = Editor(window);
+
+        editor.Patch.Nodes[0].X += 40;
+        editor.NotifyPatchChanged();
+        Settle(window);
+
+        Press(Undo(window));
+        Settle(window);
+
+        editor.Locked.ShouldBeFalse("the canvas was given the patch back and still has it");
+    }
+
+    /// <summary>
+    /// A printing keeps up with an undo as it keeps up with a knob.
+    /// </summary>
+    /// <remarks>
+    /// The knob is turned on the canvas before the text view has ever been
+    /// opened, so nothing writes it into a printing on the way — the printing is
+    /// made afterwards, from the patch as it then stands. Taking the turn back
+    /// moves that patch out from under the reading, and a reading that went on
+    /// saying the old number would be a reading of nothing.
+    /// </remarks>
+    [AvaloniaFact]
+    public void A_printing_keeps_up_with_an_undo_on_the_canvas()
+    {
+        var window = Open();
+        var editor = Editor(window);
+
+        var reading = Flyback.Core.Language.PatchPrinter.Print(editor.Patch);
+
+        // An edit on the canvas, before the text view has ever been opened, so
+        // nothing writes it into a printing on the way.
+        editor.Patch.Remove(editor.Patch.Nodes
+            .First(node => node.TypeId != Flyback.Core.Graph.NodeCatalog.OutputTypeId).Id);
+
+        editor.NotifyPatchChanged();
+        Settle(window);
+
+        var text = ShowCode(window);
+
+        text.Text.ShouldNotBe(reading, "the printing is made from the patch as it now stands");
+
+        Press(Undo(window));
+        Settle(window);
+
+        text.Text.ShouldBe(reading, "and it goes back with the patch");
+    }
+
+    /// <summary>
+    /// A knob turned over a printing is taken back on the canvas, where the only
+    /// history of that patch is — and the reading is made afresh from it.
+    /// </summary>
+    /// <remarks>
+    /// What the write-back put in the text is not an edit anybody made; it is
+    /// the reading keeping up. Answering Ctrl+Z with it would put the old number
+    /// back over a patch still playing the new one, and leave the text no longer
+    /// the printing it says it is — which is what stops the caret pointing the
+    /// panel, since a text that is not the printing maps to nothing.
+    /// </remarks>
+    [AvaloniaFact]
+    public void Taking_back_a_knob_turned_over_a_printing_takes_back_the_knob()
+    {
+        var window = Open();
+        var text = ShowCode(window);
+
+        text.CaretOffset = text.Text.IndexOf('(');
+        Settle(window);
+
+        var chosen = Editor(window).SelectedNode.ShouldNotBeNull();
+        var was = chosen.InputValues[0];
+        var reading = text.Text;
+
+        Turn(window, 0.375d);
+
+        text.Text.ShouldContain("0.375");
+
+        Press(Undo(window));
+        Settle(window);
+
+        text.Text.ShouldBe(reading, "the reading is made afresh from the patch that came back");
+        Editor(window).Patch.Find(chosen.Id).ShouldNotBeNull().InputValues[0].ShouldBe(was);
+
+        // And it is the printing again, so the caret still points the panel.
+        text.CaretOffset = text.Text.IndexOf('(');
+        Settle(window);
+
+        Editor(window).SelectedNode.ShouldNotBeNull().Id.ShouldBe(chosen.Id);
+    }
+
+    /// <summary>
+    /// An undo that crosses no handover is not one, and says nothing about one.
+    /// </summary>
+    /// <remarks>
+    /// An edit made on the canvas and taken back while a printing of that canvas
+    /// happens to be showing changes nothing about who owns the patch — nobody
+    /// switched anything. Announcing that the canvas is the document again would
+    /// be telling somebody about a switch they never made, and throwing the
+    /// printing away with it would drop them back on the canvas they were
+    /// looking away from.
+    /// </remarks>
+    [AvaloniaFact]
+    public void Taking_back_a_canvas_edit_under_a_printing_is_not_a_handover()
+    {
+        var window = Open();
+        var editor = Editor(window);
+
+        // On the canvas, which is where the window opens and where it still is.
+        editor.Patch.Nodes[0].X += 40;
+        editor.NotifyPatchChanged();
+        Settle(window);
+
+        var text = ShowCode(window);
+
+        Press(Undo(window));
+        Settle(window);
+
+        editor.Locked.ShouldBeFalse("the canvas had the patch all along");
+        editor.IsVisible.ShouldBeFalse("and nobody asked to be taken off the text");
+        Notice(window).ShouldNotBeNull().ShouldContain("still the document");
+
+        // Still the printing it was, so the caret still points the panel at the
+        // module under it — which a handover would have thrown away.
+        text.CaretOffset = text.Text.IndexOf('(');
+        Settle(window);
+
+        editor.SelectedNode.ShouldNotBeNull();
+    }
+
+    /// <summary>The one knob the patches used here have.</summary>
+    private static float Knob(MainWindow window) =>
+        Editor(window).Patch.Nodes.Single(node => node.TypeId == "math.atan2").InputValues[0];
+
+    /// <summary>
+    /// Applying is a thing done to the document, so it goes on the document's
+    /// stack beside the typing that led to it — and being the last thing done,
+    /// it is the first thing back.
+    /// </summary>
+    /// <remarks>
+    /// The two used to be kept apart, the typing at the text and the evaluations
+    /// on the canvas, and neither knew when the other had happened. So Ctrl+Z
+    /// after an apply took back a line somebody had typed some minutes earlier
+    /// and left the patch it had already been built into exactly where it was.
+    /// </remarks>
+    [AvaloniaFact]
+    public void An_apply_comes_back_before_the_typing_that_led_to_it()
+    {
+        var window = Open();
+
+        Evaluate(window, "atan2(a: 0.25) |> out.left");
+
+        var text = Text(window);
+
+        Knob(window).ShouldBe(0.25f);
+
+        // Typed rather than loaded, which is what keeps it on the text's stack.
+        text.Document.Replace(text.Text.IndexOf("0.25", StringComparison.Ordinal), 4, "0.75");
+        Settle(window);
+
+        Press(Apply(window));
+        Settle(window);
+
+        Knob(window).ShouldBe(0.75f);
+
+        Press(Undo(window));
+        Settle(window);
+
+        Knob(window).ShouldBe(0.25f, "the evaluation was the last thing done");
+        // And the typing is still there, to come back after it.
+        text.Text.ShouldContain("0.75");
+
+        Press(Undo(window));
+        Settle(window);
+
+        text.Text.Trim().ShouldBe("atan2(a: 0.25) |> out.left");
+    }
+
+    /// <summary>
+    /// And a knob turned in the panel is one thing done as well, however little
+    /// of it is text: the number in the code and the value behind it come back
+    /// in one press.
+    /// </summary>
+    /// <remarks>
+    /// Taking back only the text would leave the two saying different things
+    /// about one patch — the file reading 1.5524476 over a patch that is still
+    /// playing 2 — until the next apply, which would then quietly undo the knob
+    /// as a side effect of building something else.
+    /// </remarks>
+    [AvaloniaFact]
+    public void Undoing_a_knob_turned_in_the_panel_takes_the_value_back_too()
+    {
+        var window = Open();
+
+        Evaluate(window, "atan2(a: 1.5524476) |> out.left");
+        Click(window, "atan2");
+
+        Turn(window, 2d);
+
+        Text(window).Text.Trim().ShouldBe("atan2(a: 2) |> out.left");
+        Knob(window).ShouldBe(2f);
+
+        Press(Undo(window));
+        Settle(window);
+
+        Text(window).Text.Trim().ShouldBe("atan2(a: 1.5524476) |> out.left");
+        Knob(window).ShouldBe(1.5524476f, "the number and what it does come back together");
+    }
+
+    /// <summary>
     /// The button is off for the one case where it would do nothing that lasts:
     /// a canvas built from text is laid out again on the next apply.
     /// </summary>

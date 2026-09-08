@@ -111,6 +111,54 @@ public sealed partial class MainWindow
     private bool showingCode;
 
     /// <summary>
+    /// Who owned the patch, and what the text was to it, at one point in the
+    /// canvas's history.
+    /// </summary>
+    /// <remarks>
+    /// Applying text is an edit and a handover at once — it puts a patch on the
+    /// canvas and it makes the text the document — so taking the edit back has
+    /// to take the handover back with it. Otherwise undoing an evaluation
+    /// leaves a canvas nobody wrote any text for locked behind text claiming to
+    /// describe it, and the only way out is a handover made by hand.
+    /// <para>
+    /// Kept beside the step rather than worked out afterwards, because a
+    /// snapshot says what a patch was and nothing about where it came from.
+    /// </para>
+    /// </remarks>
+    private sealed record Ownership(
+        bool Owned,
+        string OnDisk,
+        string? Printed,
+        IReadOnlyList<Guid> Order);
+
+    /// <summary>Who owns the patch as things now stand.</summary>
+    private Ownership Owning() => new(sourceOwned, sourceOnDisk, printed, printedOrder);
+
+    /// <summary>
+    /// Steps the canvas has recorded that the text's stack has not been told
+    /// about yet.
+    /// </summary>
+    /// <remarks>
+    /// Counted rather than put on that stack as they happen, because a knob is
+    /// turned before its number is written into the text and the two are one
+    /// thing somebody did. The count waits for the write-back and goes on the
+    /// stack inside it, so one press takes back the number and the sound
+    /// together.
+    /// </remarks>
+    private int unstacked;
+
+    /// <summary>
+    /// Whether a step of the text's stack is being walked right now.
+    /// </summary>
+    /// <remarks>
+    /// Nothing may be put on that stack while it is being read off. Walking a
+    /// step rebuilds the panel, and a control losing the focus to that is a
+    /// write-back as far as everything downstream can tell — one that would try
+    /// to record itself in the middle of the undo it was caused by.
+    /// </remarks>
+    private bool stepping;
+
+    /// <summary>
     /// Whether there is typing here that has not been made into a patch — which
     /// is the one thing that can be lost without the editor's history knowing
     /// about it, since nothing typed reaches the patch until it is applied.
@@ -121,6 +169,19 @@ public sealed partial class MainWindow
     private void WireSource()
     {
         source.IsVisible = false;
+
+        // The canvas opens on a preset, which is a patch the graph owns. Said
+        // before the first one reaches it, so the earliest step in its history
+        // knows whose the patch was.
+        editor.Mark = Owning();
+
+        // While the text is the document its stack is the history, so a step the
+        // canvas records is one that stack has to be able to take back.
+        editor.Recorded += (_, _) =>
+        {
+            if (sourceOwned) unstacked++;
+        };
+
         source.EvaluateRequested += (_, _) => Evaluate();
         source.Changed += (_, _) => RefreshEditState();
         source.Moved += (_, at) => PointAt(at);
@@ -239,7 +300,7 @@ public sealed partial class MainWindow
     /// </remarks>
     private void WriteBack()
     {
-        if ((turned.Count == 0 && restated.Count == 0) || writingBack) return;
+        if ((turned.Count == 0 && restated.Count == 0) || writingBack || stepping) return;
 
         var knobs = turned.ToArray();
         var kept = restated.ToArray();
@@ -249,15 +310,34 @@ public sealed partial class MainWindow
         restated.Clear();
         writingBack = true;
 
-        try
+        // The numbers written here and the turning of the knobs behind them are
+        // one thing somebody did, and come back in one press. Without this the
+        // text would go back and the sound would not, which is the two of them
+        // saying different things about one patch.
+        using (source.Together())
         {
-            foreach (var (id, port) in knobs) Write(id, port, ref lost);
-            foreach (var (id, key) in kept) Carry(id, key, ref lost);
+            try
+            {
+                foreach (var (id, port) in knobs) Write(id, port, ref lost);
+                foreach (var (id, key) in kept) Carry(id, key, ref lost);
+            }
+            finally
+            {
+                writingBack = false;
+            }
+
+            RememberPatchSteps();
         }
-        finally
-        {
-            writingBack = false;
-        }
+
+        // A printing is a reading and not a document, so what has just been
+        // written into it is not an edit anybody made: the canvas's history is
+        // the only one there is, and an undo falls through to it and makes the
+        // reading afresh. Left on this stack instead, one press would put the
+        // old number back over a patch still playing the new one — and leave
+        // the text no longer the printing it says it is, which is what stops
+        // the caret pointing the panel. Said after the group is closed, since
+        // emptying a stack closes what is open on it.
+        if (!sourceOwned) source.ForgetSteps();
 
         if (lost > 0)
             Report($"{lost} value(s) could not be written into the text — "
@@ -355,21 +435,173 @@ public sealed partial class MainWindow
     /// </remarks>
     private bool Coding => showingCode;
 
-    /// <summary>Takes back the last thing done to whichever view is showing.</summary>
+    /// <summary>
+    /// Takes back the last thing done to whichever view is showing — or, where
+    /// that view has nothing left to take back, the last thing done to the
+    /// patch.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Where the text is the document, its stack is the document's history from
+    /// either view. Typing, applying and turning a knob are one run of things
+    /// somebody did, in the order they did them, so the last two go on that
+    /// stack beside the typing rather than on a second one that would afterwards
+    /// have to be interleaved with it by guessing. The canvas is a view of that
+    /// document, so Ctrl+Z there means what it means at the text.
+    /// </para>
+    /// <para>
+    /// Where the graph is the document the two are independent again and undo
+    /// follows the view: the modules' steps on the canvas, and whatever has been
+    /// typed into a printing at the text. Either way the gesture falls through
+    /// when the stack it lands on has nothing left — otherwise applying a
+    /// printing, which is loaded rather than typed and so leaves an empty stack
+    /// behind it, would be the one thing nobody could take back.
+    /// </para>
+    /// </remarks>
     private void Undo()
     {
-        if (Coding) source.Undo();
-        else editor.Undo();
+        if (Documenting && source.CanUndo) source.Undo();
+        else if (editor.Undo()) Stepped();
 
         RefreshEditState();
     }
 
     private void Redo()
     {
-        if (Coding) source.Redo();
-        else editor.Redo();
+        if (Documenting && source.CanRedo) source.Redo();
+        else if (editor.Redo()) Stepped();
 
         RefreshEditState();
+    }
+
+    /// <summary>
+    /// The patch has just come back out of the canvas's history: two things to
+    /// put in step with it, where either is out of step at all.
+    /// </summary>
+    private void Stepped()
+    {
+        Handed();
+        Reprint();
+    }
+
+    /// <summary>
+    /// Makes the printing say what the canvas now says, for a patch that has
+    /// moved under it.
+    /// </summary>
+    /// <remarks>
+    /// A printing is a reading of the canvas, and one that stopped agreeing with
+    /// it the moment anything moved would be a reading of nothing — the same
+    /// reason a knob turned in the panel is written into it in place. An undo is
+    /// the one thing that moves a graph-owned patch while the text is up, since
+    /// the canvas itself is not on screen to be dragged.
+    /// <para>
+    /// Only over a buffer that is still the printing. Typing is never printed
+    /// over: somebody who wrote something here keeps it, and what they have is
+    /// text about a patch that has moved on, which is what the map already stops
+    /// answering for.
+    /// </para>
+    /// </remarks>
+    private void Reprint()
+    {
+        if (sourceOwned || source.Source != printed) return;
+
+        var at = source.Caret;
+
+        PrintForReading();
+
+        // As near to where they were reading as the new text has room for.
+        source.Caret = Math.Min(at, source.Source.Length);
+    }
+
+    /// <summary>
+    /// Whether the text's stack is the one these gestures land on first — see
+    /// <see cref="Undo"/>.
+    /// </summary>
+    private bool Documenting => sourceOwned || Coding;
+
+    /// <summary>
+    /// Puts the patch steps taken since the last of these on the text's stack,
+    /// as one thing to take back.
+    /// </summary>
+    /// <remarks>
+    /// A count rather than the steps themselves, because the canvas is already
+    /// keeping them and keeping them twice is how two records of one edit come
+    /// to disagree. What goes on the text's stack is how many of them to walk
+    /// back, so an undo there is an undo here: one history, reached through
+    /// whichever view somebody is working in.
+    /// </remarks>
+    private void RememberPatchSteps()
+    {
+        if (unstacked == 0 || stepping) return;
+
+        var steps = unstacked;
+        unstacked = 0;
+
+        source.Remember(() => StepPatch(steps, back: true), () => StepPatch(steps, back: false));
+    }
+
+    /// <summary>Walks the canvas's history, and who owns the patch, with it.</summary>
+    private void StepPatch(int steps, bool back)
+    {
+        stepping = true;
+
+        try
+        {
+            for (var step = 0; step < steps; step++)
+                if (back ? editor.Undo() : editor.Redo())
+                    Handed();
+        }
+        finally
+        {
+            stepping = false;
+        }
+
+        RefreshEditState();
+    }
+
+    /// <summary>
+    /// Puts back who owned the patch at the step the canvas has just arrived at.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The only edit that changes hands is an evaluation, so this does nothing
+    /// at all across the run of drags and wires either side of one. Where it
+    /// does something it moves the view with it, because the handover is the
+    /// half of that edit somebody can see: taking an adoption back puts the
+    /// canvas up, which is where the modules they wanted back are, and putting
+    /// it back shows the text that is the document again.
+    /// </para>
+    /// <para>
+    /// Who owns the patch is the whole of the question, and the rest of the
+    /// note is only what to put back once the answer has changed. A step
+    /// recorded before anybody opened the text view remembers there being no
+    /// printing, because at the time there was none — and taking that step back
+    /// is not a handover, so nothing about the printing somebody is reading now
+    /// is any of its business.
+    /// </para>
+    /// </remarks>
+    private void Handed()
+    {
+        if (editor.Mark is not Ownership was || was.Owned == sourceOwned) return;
+
+        sourceOwned = was.Owned;
+        sourceOnDisk = was.OnDisk;
+        printed = was.Printed;
+        printedOrder = was.Order;
+
+        // The text has not moved but what it is has, and a map is read one way
+        // for a document and another for a printing.
+        Forget();
+
+        // Which also refreshes what a view can do, so the one that is already
+        // showing needs nothing further.
+        if (showingCode != sourceOwned) ShowCode(sourceOwned);
+        else RefreshOwnership();
+
+        Report(sourceOwned
+            ? "Put back — the text is the document again."
+            : "Taken back — the canvas is the document again, so its modules can be "
+              + "dragged, wired and grouped.");
     }
 
     /// <summary>
@@ -451,7 +683,11 @@ public sealed partial class MainWindow
         mapped = writing.Source;
         map = writing.Map;
 
-        source.Source = printed;
+        // Only where it would say something else. Replacing the document empties
+        // the undo stack and moves the caret to the top, which is a great deal
+        // to spend on writing the same text a second time.
+        if (source.Source != printed) source.Source = printed;
+
         source.Clear();
         source.Notice = Reading();
     }
@@ -510,8 +746,6 @@ public sealed partial class MainWindow
         var was = editor.Patch;
         var kept = load.Patch.Nodes.Count(node => was.Find(node.Id) is not null);
 
-        editor.ApplyEdit(load.Patch);
-
         // Applying a printing is how somebody takes a patch into text. Said
         // rather than done quietly, because it changes what saving will write.
         var taken = !sourceOwned;
@@ -523,6 +757,18 @@ public sealed partial class MainWindow
             printed = null;
             printedOrder = [];
         }
+
+        // Who owns the patch is settled before the edit is recorded, so the
+        // step that edit makes is one the text owns — and taking the step back
+        // hands the patch to the canvas along with it.
+        editor.Mark = Owning();
+
+        editor.ApplyEdit(load.Patch);
+
+        // And on the text's stack, where the typing that led to it already is:
+        // applying is the last thing somebody did, so it is the first thing that
+        // comes back.
+        RememberPatchSteps();
 
         // The map the build just made, rather than one made by building the
         // same text a second time to answer the first caret move.
@@ -643,6 +889,12 @@ public sealed partial class MainWindow
         source.Clear();
 
         Forget();
+
+        // The steps behind this belong to the document that has just arrived,
+        // not to the one it replaced — and no edit was made to bring it, so
+        // there is no step for an undo to find the change on.
+        editor.Remark(Owning());
+
         RefreshOwnership();
         ShowCode(true);
     }
@@ -678,6 +930,7 @@ public sealed partial class MainWindow
         source.Clear();
 
         Forget();
+        editor.Remark(Owning());
         RefreshOwnership();
 
         // Straight away rather than on the next look, because this is the look:
@@ -700,6 +953,7 @@ public sealed partial class MainWindow
         map = SourceMap.Empty;
         mapped = null;
         turned.Clear();
+        unstacked = 0;
     }
 
     /// <summary>Marks the text as written, so closing stops asking about it.</summary>
@@ -727,6 +981,10 @@ public sealed partial class MainWindow
     private void RefreshOwnership()
     {
         editor.Locked = sourceOwned;
+
+        // And what the canvas notes beside every step it records from here on,
+        // so that an undo across an evaluation hands the patch back.
+        editor.Mark = Owning();
 
         // Laying out is off only where it would not last: a locked canvas is
         // re-laid on the next evaluation, so tidying one is work thrown away.

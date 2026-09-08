@@ -38,12 +38,13 @@ public sealed class PatchHistory(ModuleCatalog? modules = null)
     /// </summary>
     public const int Depth = 200;
 
-    private readonly List<string> past = [];
-    private readonly List<string> future = [];
+    private readonly List<(string Snapshot, object? Mark)> past = [];
+    private readonly List<(string Snapshot, object? Mark)> future = [];
 
     private string current = string.Empty;
     private string saved = string.Empty;
     private string? gesture;
+    private object? mark;
 
     /// <summary>
     /// Whether the patch differs from the one last opened or written out.
@@ -61,6 +62,12 @@ public sealed class PatchHistory(ModuleCatalog? modules = null)
     public bool CanRedo => future.Count > 0;
 
     /// <summary>
+    /// What was noted beside the state the history now stands at — see the
+    /// <c>mark</c> argument to <see cref="Record"/>.
+    /// </summary>
+    public object? Mark => mark;
+
+    /// <summary>
     /// Begin from this document, with nothing behind it.
     /// </summary>
     /// <remarks>
@@ -69,11 +76,12 @@ public sealed class PatchHistory(ModuleCatalog? modules = null)
     /// back into whatever somebody had open before they opened a file would not
     /// be undo; it would be losing the file they just opened.
     /// </remarks>
-    public void Opened(Patch patch)
+    public void Opened(Patch patch, object? mark = null)
     {
         past.Clear();
         future.Clear();
         gesture = null;
+        this.mark = mark;
         current = Snapshot(patch);
         saved = current;
     }
@@ -101,7 +109,19 @@ public sealed class PatchHistory(ModuleCatalog? modules = null)
     /// undoing a drag returns to before it started rather than to halfway
     /// through it. Null for anything discrete, which is most of it.
     /// </param>
-    public void Record(Patch patch, string? coalesce = null)
+    /// <param name="mark">
+    /// Anything the caller keeps beside the patch that this edit also changed,
+    /// so that stepping back through the edit steps back through that too. Held
+    /// opaquely and compared for nothing: what it means is the caller's, and an
+    /// undo hands back whatever was passed with the step it arrives at.
+    /// </param>
+    /// <returns>
+    /// Whether this made a step — false for an edit that changed nothing, for a
+    /// frame of a gesture folded into the step before it, and for the first
+    /// patch a caller records without opening one. A caller keeping a history of
+    /// its own beside this one is told what to keep in step with.
+    /// </returns>
+    public bool Record(Patch patch, string? coalesce = null, object? mark = null)
     {
         var now = Snapshot(patch);
 
@@ -111,23 +131,55 @@ public sealed class PatchHistory(ModuleCatalog? modules = null)
         if (current.Length == 0)
         {
             current = now;
-            return;
+            this.mark = mark;
+            return false;
         }
 
-        if (now == current) return;
+        // An edit that changed nothing is not a step, and the mark still stands
+        // for where the history is: a caller whose own state moved without the
+        // patch moving has said so, and there is nothing to step back through.
+        if (now == current)
+        {
+            this.mark = mark;
+            return false;
+        }
 
         // Still inside the gesture that made the last step. That step's
         // starting point is the one worth keeping, so this edit moves where it
         // ends rather than adding one of its own.
-        if (coalesce is null || coalesce != gesture)
+        var stepped = coalesce is null || coalesce != gesture;
+
+        if (stepped)
         {
-            past.Add(current);
+            past.Add((current, this.mark));
             if (past.Count > Depth) past.RemoveAt(0);
         }
 
         current = now;
+        this.mark = mark;
         gesture = coalesce;
         future.Clear();
+
+        return stepped;
+    }
+
+    /// <summary>
+    /// Says the same thing beside every step there is, for something the caller
+    /// keeps beside the patch that has changed with no edit to change it.
+    /// </summary>
+    /// <remarks>
+    /// Without this a mark would outlive what it was true of. The patch can
+    /// change hands with nothing to record — no module moved and no wire drawn
+    /// — and the steps behind that belong to whoever holds it now: undoing one
+    /// is taking back an edit, and it must not also take back a handover that
+    /// no edit was made to perform.
+    /// </remarks>
+    public void Remark(object? mark)
+    {
+        for (var i = 0; i < past.Count; i++) past[i] = (past[i].Snapshot, mark);
+        for (var i = 0; i < future.Count; i++) future[i] = (future[i].Snapshot, mark);
+
+        this.mark = mark;
     }
 
     /// <summary>The patch as it stood before the last edit, or null where there is none.</summary>
@@ -136,12 +188,14 @@ public sealed class PatchHistory(ModuleCatalog? modules = null)
     /// <summary>The patch as it stood before the last undo, or null where there is none.</summary>
     public Patch? Redo() => Step(future, past);
 
-    private Patch? Step(List<string> from, List<string> to)
+    private Patch? Step(
+        List<(string Snapshot, object? Mark)> from,
+        List<(string Snapshot, object? Mark)> to)
     {
         if (from.Count == 0) return null;
 
-        to.Add(current);
-        current = from[^1];
+        to.Add((current, mark));
+        (current, mark) = from[^1];
         from.RemoveAt(from.Count - 1);
 
         // Whatever gesture was in progress is over. The next edit starts a step
