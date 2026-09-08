@@ -130,6 +130,10 @@ public sealed partial class MainWindow
         preview.Program = result.Program;
         audio.Update(editor.Patch, Sounds);
 
+        // A chart rooted at a Probe is a picture like any other, so the preview
+        // stays up for one whatever the Output's own 'color' says.
+        ShowPreview(probe is not null || editor.Patch.Reaches().Picture);
+
         // Both programs are new, so both of their blocks are, and whatever is
         // being held has to be written into them before the next frame or the
         // next buffer. Turning a knob while playing a note recompiles the patch,

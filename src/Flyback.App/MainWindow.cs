@@ -128,6 +128,16 @@ public sealed partial class MainWindow : Window
     private Control? statusBar;
 
     /// <summary>
+    /// The preview's own row and the splitter below it, put away when the patch
+    /// has nothing wired into the Output's 'color' — see <see cref="ShowPreview"/>.
+    /// </summary>
+    private RowDefinition? previewRow;
+    private GridSplitter? previewSplitter;
+
+    /// <summary>The preview row's height while it was last shown, kept across a hide.</summary>
+    private GridLength previewShare = new(1, GridUnitType.Star);
+
+    /// <summary>
     /// Behind the inspector, and brighter when there is nothing selected for it
     /// to sit behind. Never hit-testable, so it cannot swallow a click meant for
     /// a slider underneath.
@@ -486,6 +496,36 @@ public sealed partial class MainWindow : Window
 
         assistantRow.MinHeight = shown ? 140d : 0d;
         assistantRow.Height = shown ? assistantShare : new GridLength(0);
+    }
+
+    /// <summary>
+    /// Puts the preview away when the patch has nothing wired into the Output's
+    /// 'color', so the inspector takes the row rather than sitting under a box
+    /// that could only ever show black.
+    /// </summary>
+    /// <remarks>
+    /// The same shape as <see cref="ShowAssistant"/> and for the same reason: a
+    /// star row holds its weight whether or not anything in it is visible, and
+    /// the share is kept rather than recomputed so a preview dragged to a size
+    /// somebody liked comes back that size once there is a picture again.
+    /// <para>
+    /// Left alone while the preview has the window — <see cref="ShowFullScreenPreview"/>
+    /// is already driving these same rows for that, and the two would otherwise
+    /// fight over what a height of zero means.
+    /// </para>
+    /// </remarks>
+    private void ShowPreview(bool shown)
+    {
+        if (previewIsFullScreen) return;
+        if (previewBox is null || previewRow is null || previewSplitter is null) return;
+
+        if (!shown && previewBox.IsVisible) previewShare = previewRow.Height;
+
+        previewBox.IsVisible = shown;
+        previewSplitter.IsVisible = shown;
+
+        previewRow.MinHeight = shown ? 140d : 0d;
+        previewRow.Height = shown ? previewShare : new GridLength(0);
     }
 
     private Control BuildToolbar()

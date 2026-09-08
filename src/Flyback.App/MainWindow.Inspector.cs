@@ -220,7 +220,9 @@ public sealed partial class MainWindow
 
         Grid.SetRow(previewBox, 0);
 
-        var splitter = new GridSplitter { Background = Brushes.Transparent, Height = 5 };
+        previewRow = grid.RowDefinitions[0];
+
+        var splitter = previewSplitter = new GridSplitter { Background = Brushes.Transparent, Height = 5 };
         Grid.SetRow(splitter, 1);
 
         // The mark sits behind the inspector rather than beside it, and never
