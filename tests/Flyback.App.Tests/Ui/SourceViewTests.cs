@@ -314,13 +314,13 @@ public class SourceViewTests : UiTest
         All<ComboBox>(window).Single(box => box.Name == "presets");
 
     /// <summary>
-    /// A document arriving does not move somebody out of the view they are in.
-    /// Which of the two is showing is where they are looking; who owns the patch
-    /// is the other question, and answering it is no reason to answer this one
-    /// as well.
+    /// A preset picked from the text view is read into text. Which view somebody
+    /// picks one from says which of the two they mean to work in, and leaving
+    /// them in the text over a canvas they can still drag modules around on is
+    /// the question this design exists to settle, put back on the screen.
     /// </summary>
     [AvaloniaFact]
-    public void A_preset_picked_while_the_text_is_up_is_read_as_text()
+    public void A_preset_picked_while_the_text_is_up_is_read_into_text()
     {
         var window = Open();
 
@@ -332,10 +332,52 @@ public class SourceViewTests : UiTest
         Text(window).IsVisible.ShouldBeTrue("the text is the view the preset was picked from");
         Editor(window).IsVisible.ShouldBeFalse();
 
-        // And what it shows is the patch that has just arrived, printed to be
-        // read rather than left as the empty buffer the handover made.
+        // What it shows is the patch that has just arrived, and that text is now
+        // the document rather than a printing offered for reading.
         Text(window).Text.ShouldNotBeNullOrWhiteSpace();
         Text(window).Text.ShouldNotBe(before);
+
+        Editor(window).Locked.ShouldBeTrue("the text is the document, so the canvas is a view");
+        Notice(window).ShouldBeNull("a printing that has been taken is not still offered");
+    }
+
+    /// <summary>
+    /// And it arrives with nothing to lose, exactly as one picked on the canvas
+    /// does. The reading is made by this program out of a patch nobody has
+    /// touched, so a title claiming unsaved work would be claiming somebody
+    /// else's.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_preset_read_into_text_has_nothing_to_lose_yet()
+    {
+        var window = Open();
+
+        ShowCode(window);
+
+        Presets(window).SelectedIndex = 1;
+        Settle(window);
+
+        Editor(window).IsModified.ShouldBeFalse();
+        window.Title.ShouldNotBeNull().ShouldNotContain("•");
+    }
+
+    /// <summary>
+    /// A preset picked from the canvas is still the graph's, which is the case
+    /// ADR-0068 settled and this does not disturb.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_preset_picked_from_the_canvas_is_still_the_graphs()
+    {
+        var window = Open();
+
+        Presets(window).SelectedIndex = 1;
+        Settle(window);
+
+        Editor(window).Locked.ShouldBeFalse();
+        Notice(window).ShouldBeNull("nothing has printed it — the text view has not been opened");
+
+        ShowCode(window);
+
         Notice(window).ShouldNotBeNull().ShouldContain("still the document");
     }
 

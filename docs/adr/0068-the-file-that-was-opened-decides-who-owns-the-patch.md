@@ -285,3 +285,32 @@ and locks the canvas, so it opens the text view. **Edit on the canvas** shows
 the canvas, because wanting to draw there is the whole of what pressing it
 means; it asks for the view itself rather than getting one as a side effect of
 the handover, which is what the other three callers wanted all along.
+
+**2026-09-08 (later still) — a preset picked from the text view is read into
+text.** The view no longer moving left the other half of the answer wrong. A
+preset picked while the text was up arrived as a printing over a canvas that
+still owned it, so somebody working in text was looking at a reading and could
+still drag and delete modules behind it — the question this record exists to
+settle, put back on the screen.
+
+So the printing is made and applied at once: the two steps somebody would
+otherwise take by hand, done for them, because picking a preset *from the text
+view* has already said which of the two they mean to work in. It goes through
+`Evaluate` rather than by setting a flag, since the text can only be the
+document if the patch on the canvas is the one the text builds — ids and all —
+and a printing adopted without being built would point the caret and the panel
+at modules that are not there.
+
+**Only a preset, and what decides that is what printing loses.** A preset holds
+no groups — none of the built-in ones and none a plugin offers — so its printing
+is the same instrument written another way, and adopting it costs a layout that
+the next apply would redo anyway. A `.fbk` or a bundle is somebody's own patch
+and its groups are their work, so those stay the graph's and their printing
+stays offered rather than taken. That is the rule above narrowed rather than
+dropped: a printing is still never adopted where adopting it would lose
+something.
+
+**It arrives with nothing to lose.** Nothing has been typed and nothing drawn,
+so the patch and the text are both marked as they stand — the same state a
+preset picked on the canvas leaves. A title claiming unsaved work a moment after
+a preset was picked would be claiming somebody else's.

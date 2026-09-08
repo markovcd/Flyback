@@ -541,6 +541,53 @@ public sealed partial class MainWindow
     }
 
     /// <summary>
+    /// Makes the printing of a patch that has just arrived the document, for one
+    /// that arrived while the text was showing.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The two steps somebody would otherwise take by hand — look at the
+    /// printing, press Apply — done for them, because picking a preset from the
+    /// text view has already said which of the two views they mean to work in.
+    /// Leaving them in the text over a canvas they can still drag modules
+    /// around on is the one answer nobody wants: it is the question ADR-0068
+    /// exists to settle, put back on the screen.
+    /// </para>
+    /// <para>
+    /// Only for a preset, and the reason is what printing loses. A preset holds
+    /// no groups, so its printing is the same instrument written another way and
+    /// adopting it costs a layout that the next apply would redo anyway. A
+    /// <c>.fbk</c> is somebody's own patch and its groups are their work, so it
+    /// stays the graph's and its printing stays offered rather than taken.
+    /// </para>
+    /// </remarks>
+    private void ReadIntoText()
+    {
+        Evaluate();
+
+        // A printing that will not read is this program's fault rather than
+        // anybody's: Evaluate has said what is wrong with it and left the patch
+        // where it was, which is on a canvas that still owns it.
+        if (!sourceOwned) return;
+
+        // Nothing has been typed and nothing has been drawn, so there is nothing
+        // to lose yet — the same state that picking a preset on the canvas
+        // leaves, and the title should not claim otherwise.
+        editor.MarkSaved();
+        MarkSourceSaved();
+        RefreshEditState();
+
+        // And no word under the text about what the build made of it. What
+        // Evaluate leaves there answers "how much of what was playing survived",
+        // which is a question about an edit somebody made — and nobody made this
+        // one, so the answer would be a nought against a patch a moment old.
+        source.Clear();
+
+        Report($"Read into text — {editor.Patch.Nodes.Count} modules. The text is the "
+            + "document, so the canvas is a view of it until you hand it back.");
+    }
+
+    /// <summary>
     /// Gives the patch back to the canvas, which is what applying does in
     /// reverse.
     /// </summary>

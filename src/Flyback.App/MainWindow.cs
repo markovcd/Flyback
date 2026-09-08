@@ -580,8 +580,13 @@ public sealed partial class MainWindow : Window
                 preview.Rewind();
 
                 // A preset arrives as a graph and no text describes it, so the
-                // canvas owns it until somebody applies one — ADR-0068.
+                // canvas owns it — ADR-0068.
                 DropSource();
+
+                // Unless it was picked from the text view, where it is read into
+                // text there and then: which view somebody picks a preset from
+                // says which of the two they mean to work in.
+                if (showingCode) ReadIntoText();
 
                 showing = wanted;
             }
