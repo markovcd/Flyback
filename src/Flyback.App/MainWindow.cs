@@ -736,12 +736,15 @@ public sealed partial class MainWindow : Window
         program.Children.Add(settings);
         program.Children.Add(about);
 
-        var bar = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto") };
-
-        Grid.SetColumn(patchwork, 0);
-        Grid.SetColumn(program, 2);
+        // One row, left to right, rather than the program group docked to the
+        // far edge — everything reached from the toolbar sits together at the
+        // near side instead of one end chasing the window's width. Unmargined
+        // itself: patchwork and program each carry their own margin already,
+        // from Row(), and stacking a second one here would double the gaps.
+        var bar = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
 
         bar.Children.Add(patchwork);
+        bar.Children.Add(Separator());
         bar.Children.Add(program);
 
         return new Border
