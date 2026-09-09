@@ -1533,4 +1533,40 @@ public class SourceViewTests : UiTest
 
         Text(window).Text.Trim().ShouldBe("atan2(a: 1.5, b: 0.25) |> out.left");
     }
+
+    /// <summary>
+    /// Enter is the other way a number typed into the panel is finished, and the
+    /// text has to hear about it there.
+    /// </summary>
+    /// <remarks>
+    /// It is the one finish that raises neither of the events the write-back
+    /// watched: nothing lets go of a pointer and the box keeps the focus, so the
+    /// value was heard and the code view went on saying the old one until some
+    /// later click happened to raise one of those two for a reason of its own.
+    /// Reaching for the code view is what most people do next, and the click
+    /// that puts the caret there is exactly what took the focus off the box —
+    /// so the text came right at the moment somebody went to see whether it had.
+    /// </remarks>
+    [AvaloniaFact]
+    public void A_number_finished_with_Enter_reaches_the_text_without_leaving_the_box()
+    {
+        var window = Open();
+
+        Evaluate(window, "let riff = notes() [ A3 C4 ]\nriff |> out.left");
+        Click(window, "notes");
+
+        var step = All<NumericUpDown>(window).First(box => box.Value == 57m);
+
+        step.Text = "60";
+        step.RaiseEvent(new Avalonia.Input.KeyEventArgs
+        {
+            RoutedEvent = Avalonia.Input.InputElement.KeyDownEvent,
+            Key = Avalonia.Input.Key.Enter,
+        });
+        Settle(window);
+
+        step.Value.ShouldBe(60m, "Enter is what finishes a number typed into the box");
+
+        Text(window).Text.Trim().ShouldBe("let riff = notes() [ C4 C4 ]\nriff |> out.left");
+    }
 }

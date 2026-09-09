@@ -213,6 +213,21 @@ public sealed partial class MainWindow
         // A number typed rather than dragged has no gesture to wait for. It is
         // finished when the box stops being the thing being typed into.
         inspector.AddHandler(LostFocusEvent, (_, _) => HandCameOff(), RoutingStrategies.Bubble);
+
+        // And Enter finishes one without the box giving up the focus, so it is
+        // the other end of the same gesture rather than a shortcut for it. The
+        // box handles the key to take the number, which is why this is caught
+        // after whoever handled it — and why it is caught here rather than at
+        // the box, since by the time the press reaches this the value has been
+        // taken and there is something to write.
+        inspector.AddHandler(
+            KeyDownEvent,
+            (_, e) =>
+            {
+                if (e.Key == Key.Enter) HandCameOff();
+            },
+            RoutingStrategies.Bubble,
+            handledEventsToo: true);
     }
 
     /// <summary>
