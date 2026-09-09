@@ -1399,6 +1399,13 @@ public sealed partial class MainWindow
             ToolTip.SetTip(name, picked);
 
             Edited(node);
+
+            // Every other control in the panel is written into the text by the
+            // hand coming off it, and the hand came off this button before the
+            // dialog opened: the file arrives after that release, with nothing
+            // left to flush it. Said here, because the gesture is over the
+            // moment the picker answers.
+            HandCameOff();
         };
 
         Grid.SetColumn(caption, 0);
