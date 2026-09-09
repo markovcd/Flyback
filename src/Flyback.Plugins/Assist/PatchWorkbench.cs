@@ -35,7 +35,7 @@ namespace Flyback.Plugins.Assist;
 /// rather than against whatever happens to be installed.
 /// </para>
 /// </remarks>
-public sealed class PatchWorkbench
+public sealed partial class PatchWorkbench
 {
     private readonly ModuleCatalog modules;
     private readonly ISampleLibrary? samples;
@@ -46,6 +46,9 @@ public sealed class PatchWorkbench
     private readonly string startingPoint;
     private readonly Dictionary<string, NodeInstance> byHandle = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<Guid, string> handleOf = [];
+
+    /// <summary>What each tool name runs, whether or not it is offered.</summary>
+    private readonly Dictionary<string, ToolBody> bodies;
 
     private Patch working = new();
     private string? proposal;
@@ -91,7 +94,11 @@ public sealed class PatchWorkbench
         var large = prose.Length > Handbook.ProseBudget;
 
         Briefing = large ? Handbook.Render(modules, prose: false, hearing) : prose;
-        Tools = BuildTools(vision, hearing, lookups: large);
+
+        var vocabulary = BuildTools(vision, hearing, lookups: large);
+
+        Tools = [.. vocabulary.Where(tool => tool.Offered).Select(tool => tool.Spec)];
+        bodies = vocabulary.ToDictionary(tool => tool.Spec.Name, tool => tool.Run, StringComparer.Ordinal);
     }
 
     /// <summary>The conventions and the catalogue, as a model should be told them.</summary>
@@ -147,30 +154,12 @@ public sealed class PatchWorkbench
 
         ToolCalls++;
 
+        if (!bodies.TryGetValue(tool, out var run))
+            return ToolOutcome.Refused($"there is no tool called '{tool}'.");
+
         try
         {
-            return tool switch
-            {
-                "describe_patch" => Fine(DescribePatch()),
-                "add_module" => AddModule(arguments),
-                "set_knobs" => SetKnobs(arguments),
-                Vocabulary.SetSteps => SetSteps(arguments),
-                Vocabulary.SetScale => SetScale(arguments),
-                Vocabulary.SetSample => SetSample(arguments),
-                Vocabulary.SetPicture => SetPicture(arguments),
-                Vocabulary.SetExtra => SetExtra(arguments),
-                "connect" => Connect(arguments),
-                "disconnect" => Disconnect(arguments),
-                "remove_module" => RemoveModule(arguments),
-                "reset" => Reset(),
-                "write_patch" => WritePatch(arguments),
-                "propose" => Propose(arguments),
-                "render" => await RenderAsync(arguments, cancel).ConfigureAwait(false),
-                "listen" => await ListenAsync(arguments, cancel).ConfigureAwait(false),
-                "describe_module" => DescribeModule(arguments),
-                "find_modules" => FindModules(arguments),
-                _ => ToolOutcome.Refused($"there is no tool called '{tool}'."),
-            };
+            return await run(arguments, cancel).ConfigureAwait(false);
         }
         catch (OperationCanceledException)
         {
@@ -855,346 +844,6 @@ public sealed class PatchWorkbench
         if (def.Description.Length > 0) text.AppendLine(def.Description);
     }
 
-    // --- rendering ----------------------------------------------------------
-
-    /// <summary>
-    /// Draws the patch and hands back a strip of frames.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// The work happens on a pool thread rather than wherever the caller
-    /// happened to be. An assistant's loop is consumed with <c>await foreach</c>
-    /// on the dispatcher, so a render performed inline would land on the UI
-    /// thread — which ADR-0018 forbids and which deadlocks besides, because the
-    /// renderer's <c>Parallel.For</c> meets a dispatcher that is pumping a
-    /// re-entrant paint. Doing it here rather than in each adapter makes that
-    /// impossible for a plugin to get wrong.
-    /// </para>
-    /// <para>
-    /// Frames are stepped from zero rather than jumped to, because the renderer
-    /// owns the history that <c>feedback</c> reads and a patch shown without its
-    /// warm-up is a patch shown black. Several frames rather than one because a
-    /// still cannot show motion, which is most of what this instrument is.
-    /// </para>
-    /// </remarks>
-    private Task<ToolOutcome> RenderAsync(JsonElement arguments, CancellationToken cancel)
-    {
-        var requested = Times(arguments);
-
-        // Asked for directly, because the compiler does not remark on a color
-        // socket left empty while the sound is wired — a patch built for the ear
-        // is a deliberate thing, not a complaint waiting to happen. It is still
-        // nothing to look at: what would come back is a black rectangle, and an
-        // assistant shown black goes and "fixes" a patch that was working.
-        if (working.IncomingTo(working.Output.Id, NodeCatalog.OutputColorPort) is null)
-        {
-            return Task.FromResult(ToolOutcome.Refused(
-                "nothing is wired into the Output's 'color', so this patch draws nothing and "
-                + "there is nothing to look at. Patch something in if it is meant to be seen."));
-        }
-
-        var patch = working.CompileForVideo(modules, samples, pictures);
-
-        if (patch.HasIssues)
-        {
-            var why = patch.HasErrors
-                ? "this patch does not compile, so there is nothing to look at: "
-                : "there may be nothing to look at: ";
-
-            return Task.FromResult(ToolOutcome.Refused(
-                why + string.Join(" | ", patch.Issues.Select(i => i.Message))));
-        }
-
-        return Task.Run(
-            () =>
-            {
-                var (width, height) = (limits.FrameWidth, limits.FrameHeight);
-                var frameStride = width * 4;
-                var sheetStride = frameStride * requested.Length;
-
-                var frame = new byte[frameStride * height];
-                var sheet = new byte[sheetStride * height];
-
-                var capture = requested.Select(t => (int)Math.Round(t / limits.WarmUpStep)).ToArray();
-                var renderer = new SynthRenderer();
-
-                for (var step = 0; step <= capture[^1]; step++)
-                {
-                    cancel.ThrowIfCancellationRequested();
-
-                    renderer.Render(patch.Program, step * limits.WarmUpStep, width, height, frame, frameStride);
-
-                    for (var i = 0; i < capture.Length; i++)
-                    {
-                        if (capture[i] != step) continue;
-
-                        for (var y = 0; y < height; y++)
-                        {
-                            Array.Copy(
-                                frame,
-                                y * frameStride,
-                                sheet,
-                                y * sheetStride + i * frameStride,
-                                frameStride);
-                        }
-                    }
-                }
-
-                var png = new MemoryStream();
-                PngWriter.WriteBgra(png, sheet, width * requested.Length, height, sheetStride);
-
-                var when = string.Join(", ", requested.Select(t => Number(t) + "s"));
-
-                return ToolOutcome.Looked(
-                    png.ToArray(),
-                    $"{requested.Length} frames left to right at {when}, {width} by {height} each. "
-                    + "The renderer was warmed from zero at thirty frames a second, so anything "
-                    + "reading the previous frame shows the history it would really have.");
-            },
-            cancel);
-    }
-
-    private double[] Times(JsonElement arguments)
-    {
-        // Not from zero by default. A patch that reads the previous frame is
-        // legitimately black on its first one, and an assistant shown a black
-        // panel tends to go and "fix" a patch that was working.
-        double[] fallback = [0.5d, 1.5d, 3.5d];
-
-        if (!arguments.TryGetProperty("times", out var times) || times.ValueKind != JsonValueKind.Array)
-            return fallback;
-
-        var asked = times.EnumerateArray()
-            .Where(t => t.ValueKind == JsonValueKind.Number)
-            .Select(t => Math.Clamp(t.GetDouble(), 0d, limits.LatestTime))
-            .Take(limits.MaxFrames)
-            .Order()
-            .ToArray();
-
-        return asked.Length == 0 ? fallback : asked;
-    }
-
-    // --- listening ----------------------------------------------------------
-
-    /// <summary>
-    /// Renders a stretch of the patch's sound and hands it back as a WAV.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// On a pool thread for the same reason <see cref="RenderAsync"/> is, though
-    /// the cost is nothing like the same: the audio program is evaluated about
-    /// 100k times a second against the video program's 31M, so a couple of
-    /// seconds of sound is cheaper than a single frame. What it is not cheap in
-    /// is the request body it becomes, which is why
-    /// <see cref="WorkbenchLimits.LongestListen"/> is short and
-    /// <see cref="WorkbenchLimits.ListenRate"/> is half what the speakers use.
-    /// </para>
-    /// <para>
-    /// Warmed from zero rather than sought to, exactly as a render is. The audio
-    /// path is the one with delay lines and <c>feedback.unit</c> behind it
-    /// (ADR-0027), so a patch started halfway along would be handed empty
-    /// memory and would sound like something nobody would ever hear.
-    /// </para>
-    /// <para>
-    /// Silence comes back as words rather than as a WAV. It is the failure this
-    /// instrument produces most — an oscillator whose <c>in</c> nothing drives
-    /// is legal, compiles without a word and does not move — and a model played
-    /// two seconds of nothing tends to conclude the tool is broken. Saying so,
-    /// and saying where to look, costs a sentence instead of a payload.
-    /// </para>
-    /// </remarks>
-    private Task<ToolOutcome> ListenAsync(JsonElement arguments, CancellationToken cancel)
-    {
-        // Asked of the graph rather than of the compiler, which is content with
-        // an unwired sink: silence is a legal program, and what would come back
-        // is a WAV full of zeroes rather than a complaint.
-        if (!working.Reaches().Sound)
-        {
-            return Task.FromResult(ToolOutcome.Refused(
-                "nothing is wired into the Output's 'left' or 'right', so this patch makes no "
-                + "sound and there is nothing to hear. Patch something in if it is meant to be heard."));
-        }
-
-        var patch = working.CompileForAudio(modules, samples);
-
-        if (patch.HasIssues)
-        {
-            var why = patch.HasErrors
-                ? "this patch does not compile, so there is nothing to hear: "
-                : "there may be nothing to hear: ";
-
-            return Task.FromResult(ToolOutcome.Refused(
-                why + string.Join(" | ", patch.Issues.Select(i => i.Message))));
-        }
-
-        var (from, seconds) = Window(arguments);
-
-        return Task.Run(
-            () =>
-            {
-                var renderer = new AudioRenderer(limits.ListenRate);
-                var scan = AudioScan.For(
-                    working,
-                    SynthRenderer.AspectOf(limits.FrameWidth, limits.FrameHeight),
-                    modules);
-
-                // Thrown away, but not skipped: this is the warm-up, and what it
-                // leaves behind in the delay lines is the whole point of it.
-                if (from > 0)
-                {
-                    var skipped = new float[Samples(from)];
-                    renderer.Render(patch.Program, skipped, scan);
-                }
-
-                cancel.ThrowIfCancellationRequested();
-
-                var samples = new float[Samples(seconds)];
-                renderer.Render(patch.Program, samples, scan);
-
-                var (peak, rms) = Levels(samples);
-
-                if (peak < SilenceFloor)
-                {
-                    return ToolOutcome.Fine(
-                        $"{Number(seconds)}s from {Number(from)}s is silence — nothing above "
-                        + "-66 dBFS came out, so there is no point playing it to you. The "
-                        + "compiler has already said whatever it can see, so look at what it "
-                        + "cannot: 'gain' on the Output sitting at zero, or an 'in' that is wired "
-                        + "but never moves — a knob, or anything else holding one value, drives a "
-                        + "phase exactly as far as nothing does. Only a signal that changes with "
-                        + "'t' makes an oscillator oscillate. A constant reaching 'left' is "
-                        + "silent too: it is pure DC, and the DC blocker removes it.");
-                }
-
-                var wav = new MemoryStream();
-                WavWriter.Write(wav, samples, renderer.SampleRate, NodeCatalog.AudioChannels);
-
-                var caption = new StringBuilder(
-                    $"{Number(seconds)}s of sound from {Number(from)}s, in stereo at "
-                    + $"{limits.ListenRate / 1000} kHz. It was rendered from zero, so anything with "
-                    + "a delay in it has the tail it would really have.");
-
-                caption.Append("\n\n").Append(Measured(samples, peak, rms));
-
-                // Worth saying, because it changes what the sound even is: a
-                // scanning patch is being swept across its own picture, so what
-                // is heard is the image and editing the picture edits the sound.
-                if (scan.Scan)
-                    caption.Append($" The Output is scanning at {Number(scan.Rate)} sweeps a second, "
-                        + "so this is the picture being heard rather than a patch running on time.");
-
-                return ToolOutcome.Played(wav.ToArray(), caption.ToString());
-            },
-            cancel);
-    }
-
-    /// <summary>Below this a buffer is called silence: -66 dBFS, and nothing a speaker would utter.</summary>
-    private const float SilenceFloor = 0.0005f;
-
-    /// <summary>How many slices the level is reported over. Enough to see a beat in a second or two.</summary>
-    private const int Slices = 16;
-
-    /// <summary>
-    /// What the samples say about themselves, as against what a listener says
-    /// about them.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// This exists because a listener was believed once too often. A model asked
-    /// to describe a patch built from three steady tones reported a thumping
-    /// kickdrum and a crisp hihat — the words it had been given rather than the
-    /// sound it was played — and nothing in the reply contradicted it, though
-    /// the levels sitting beside the prose already did.
-    /// </para>
-    /// <para>
-    /// Crest is the measurement that catches exactly that. It is the distance
-    /// between the loudest sample and the average one, so it says whether
-    /// anything in the clip is a *hit*: a steady tone has almost none and
-    /// percussion has a great deal, and no description can talk its way out of
-    /// the number. The slices are the same question over time — a rhythm shows
-    /// as a level that moves, and a drone as a row of near-identical figures.
-    /// </para>
-    /// <para>
-    /// Reported as numbers with the yardstick beside them rather than as a
-    /// verdict. What counts as percussive enough is the reader's to judge; what
-    /// is not the reader's to judge is what the samples measure.
-    /// </para>
-    /// </remarks>
-    private static string Measured(ReadOnlySpan<float> samples, float peak, float rms)
-    {
-        var text = new StringBuilder("Measured from the samples, not heard: peak ")
-            .Append(Decibels(peak))
-            .Append(", rms ")
-            .Append(Decibels(rms))
-            .Append(", crest ")
-            .Append(Gap(peak, rms))
-            .Append(". Crest is peak above rms: a steady tone sits near 3 dB, a mix with drum "
-                + "hits in it 12 dB or more. Level in ")
-            .Append(Slices)
-            .Append(" slices across the clip, in dBFS:");
-
-        var frames = samples.Length / NodeCatalog.AudioChannels;
-        var slice = Math.Max(1, frames / Slices);
-
-        for (var i = 0; i < Slices; i++)
-        {
-            var start = i * slice * NodeCatalog.AudioChannels;
-            if (start >= samples.Length) break;
-
-            var length = Math.Min(slice * NodeCatalog.AudioChannels, samples.Length - start);
-
-            text.Append(' ').Append(Decibels(Levels(samples.Slice(start, length)).Rms).Replace(" dBFS", ""));
-        }
-
-        text.Append(". A row of near-identical figures is something continuous; a rhythm moves.");
-
-        return text.ToString();
-    }
-
-    /// <summary>The distance between two levels, which is a ratio rather than a level.</summary>
-    private static string Gap(float above, float below) =>
-        above <= 0f || below <= 0f
-            ? "n/a"
-            : (20 * Math.Log10(above / below)).ToString("0.0", CultureInfo.InvariantCulture) + " dB";
-
-    private int Samples(double seconds) =>
-        (int)Math.Round(limits.ListenRate * seconds) * NodeCatalog.AudioChannels;
-
-    /// <summary>Which stretch of the timeline to render, clamped to what one call may spend.</summary>
-    private (double From, double Seconds) Window(JsonElement arguments)
-    {
-        var from = arguments.TryGetProperty("from", out var start) && start.ValueKind == JsonValueKind.Number
-            ? Math.Clamp(start.GetDouble(), 0d, limits.LatestTime)
-            : 0d;
-
-        var seconds = arguments.TryGetProperty("seconds", out var length)
-            && length.ValueKind == JsonValueKind.Number
-                ? Math.Clamp(length.GetDouble(), 0.25d, limits.LongestListen)
-                : Math.Min(2d, limits.LongestListen);
-
-        return (from, seconds);
-    }
-
-    /// <summary>Peak and rms of an interleaved buffer, over both channels at once.</summary>
-    private static (float Peak, float Rms) Levels(ReadOnlySpan<float> samples)
-    {
-        var peak = 0f;
-        var sum = 0d;
-
-        foreach (var sample in samples)
-        {
-            var size = Math.Abs(sample);
-            if (size > peak) peak = size;
-            sum += (double)sample * sample;
-        }
-
-        return (peak, samples.Length == 0 ? 0f : (float)Math.Sqrt(sum / samples.Length));
-    }
-
-    private static string Decibels(float level) => level <= 0f
-        ? "-inf dBFS"
-        : (20 * Math.Log10(level)).ToString("0.0", CultureInfo.InvariantCulture) + " dBFS";
-
     // --- layout -------------------------------------------------------------
 
     /// <summary>
@@ -1212,17 +861,65 @@ public sealed class PatchWorkbench
 
     // --- the vocabulary itself ----------------------------------------------
 
-    private IReadOnlyList<PatchTool> BuildTools(bool vision, Listener hearing, bool lookups)
+    /// <summary>
+    /// What a tool does when it is called. Asynchronous for every tool because two of
+    /// them are, and a dispatcher that had to know which is which would be back to
+    /// knowing what each tool is.
+    /// </summary>
+    private delegate Task<ToolOutcome> ToolBody(JsonElement arguments, CancellationToken cancel);
+
+    /// <summary>
+    /// One tool, whole: what a provider is told about it, what it does, and whether it
+    /// is offered at all.
+    /// </summary>
+    /// <remarks>
+    /// The handler sits beside the schema because the two are one decision — the schema
+    /// says what the arguments are and the handler is what reads them, so a change to
+    /// either is a change to both. This is the arrangement ADR-0008 settled on for
+    /// modules: behaviour as a field, so that adding one is an entry rather than an
+    /// errand.
+    /// <para>
+    /// <paramref name="Offered"/> is a flag rather than a fence around the entry, so a
+    /// tool withheld from the model is still described in the one place. It decides
+    /// <see cref="Tools"/>, which is what a provider is shown. Dispatch knows every
+    /// tool regardless: what a model may be offered and what this class can be asked to
+    /// run are two questions, and only the first depends on the model.
+    /// </para>
+    /// </remarks>
+    private sealed record Tool(PatchTool Spec, ToolBody Run, bool Offered);
+
+    /// <summary>A tool that answers out of the graph it already has, which is most of them.</summary>
+    private static Tool Does(
+        string name,
+        Func<JsonElement, ToolOutcome> run,
+        string description,
+        string schema,
+        bool offered = true) =>
+        new(
+            new PatchTool(name, description, schema),
+            (arguments, _) => Task.FromResult(run(arguments)),
+            offered);
+
+    /// <summary>A tool that has to render something before it can answer.</summary>
+    private static Tool Does(
+        string name,
+        ToolBody run,
+        string description,
+        string schema,
+        bool offered = true) =>
+        new(new PatchTool(name, description, schema), run, offered);
+
+    private IReadOnlyList<Tool> BuildTools(bool vision, Listener hearing, bool lookups)
     {
-        List<PatchTool> tools =
+        List<Tool> tools =
         [
-            new("describe_patch",
+            Does("describe_patch", _ => Fine(DescribePatch()),
                 "Every module in the working patch with its handle, what each input is set to or "
                 + "wired from, where each output goes, and what the compiler currently says. Call "
                 + "this first.",
                 "{}"),
 
-            new("write_patch",
+            Does("write_patch", WritePatch,
                 "Builds a whole patch at once, written in the Flyback language, replacing whatever "
                 + "is on the bench. Use this to build a patch: it says in one call what placing and "
                 + "wiring say in dozens, and a large patch cannot be built any other way. To change "
@@ -1242,8 +939,7 @@ public sealed class PatchWorkbench
                 }
                 """),
 
-
-            new("add_module",
+            Does("add_module", AddModule,
                 "Adds one module to a patch that already exists. To build a patch, use write_patch "
                 + "instead — this places one module and every wire to it is another call again. "
                 + "'type_id' comes from the module list. 'handle' is optional — one is made up from "
@@ -1270,7 +966,7 @@ public sealed class PatchWorkbench
                 }
                 """),
 
-            new("set_knobs",
+            Does("set_knobs", SetKnobs,
                 "Sets one or more inputs on a module that is already placed. An input with a wire "
                 + "into it keeps its knob value but ignores it until the wire is removed.",
                 """
@@ -1293,7 +989,7 @@ public sealed class PatchWorkbench
                 }
                 """),
 
-            new(Vocabulary.SetSteps,
+            Does(Vocabulary.SetSteps, SetSteps,
                 "Replaces the whole tune on a sequencer. Its notes are a list on the module rather "
                 + "than knobs, so this is the only way to write one — send every note in order, "
                 + "because this replaces what was there. 'value' is a note number on a Note "
@@ -1322,7 +1018,7 @@ public sealed class PatchWorkbench
                 }
                 """),
 
-            new(Vocabulary.SetScale,
+            Does(Vocabulary.SetScale, SetScale,
                 "Replaces the whole scale on a Quantiser. Its notes are a list on the module "
                 + "rather than knobs, so this is the only way to set one — send every note you "
                 + "want, because this replaces what was there. They are pitch classes, 0 to 11, "
@@ -1344,7 +1040,7 @@ public sealed class PatchWorkbench
                 }
                 """),
 
-            new(Vocabulary.SetSample,
+            Does(Vocabulary.SetSample, SetSample,
                 "Points a Sample module at a sound file. The path is neither a knob nor a wire, "
                 + "so this is the only way to set one — and it is the one thing in a patch that "
                 + "refers to something outside it, so the file has to exist where you say it "
@@ -1362,7 +1058,7 @@ public sealed class PatchWorkbench
                 }
                 """),
 
-            new(Vocabulary.SetPicture,
+            Does(Vocabulary.SetPicture, SetPicture,
                 "Points an Image module at a picture file. The path is neither a knob nor a wire, "
                 + "so this is the only way to set one, and like a sample it refers to something "
                 + "outside the patch — the file has to exist where you say it does. A PNG: 8 or 16 "
@@ -1380,7 +1076,7 @@ public sealed class PatchWorkbench
                 }
                 """),
 
-            new(Vocabulary.SetExtra,
+            Does(Vocabulary.SetExtra, SetExtra,
                 "Sets one named value on a module that carries something a plugin defined — the "
                 + "rows a module listing writes under a name of their own, like 'notes' or "
                 + "'chord', rather than as 'in N'. Take the extra's name and the field's from "
@@ -1402,7 +1098,7 @@ public sealed class PatchWorkbench
                 }
                 """),
 
-            new("connect",
+            Does("connect", Connect,
                 "Wires an output to an input. 'from_port' may be left out when the source has only "
                 + "one output, which most modules do. An input takes one wire, so this replaces "
                 + "whatever was there and tells you what it replaced.",
@@ -1418,7 +1114,7 @@ public sealed class PatchWorkbench
                 }
                 """),
 
-            new("disconnect",
+            Does("disconnect", Disconnect,
                 "Removes the wire feeding an input, which puts that input back on its own knob.",
                 """
                 {
@@ -1430,17 +1126,17 @@ public sealed class PatchWorkbench
                 }
                 """),
 
-            new("remove_module",
+            Does("remove_module", RemoveModule,
                 "Deletes a module and every wire attached to it.",
                 """
                 { "properties": { "handle": { "type": "string" } }, "required": ["handle"] }
                 """),
 
-            new("reset",
+            Does("reset", _ => Reset(),
                 "Throws away every edit and goes back to the patch as it was when this started.",
                 "{}"),
 
-            new("propose",
+            Does("propose", Propose,
                 "Offers the patch to the person, with one line saying what it does. This ends your "
                 + "turn. Nothing you have built reaches their editor until you call this. The patch "
                 + "must compile cleanly first, and something must reach the Output — its 'color', "
@@ -1453,12 +1149,8 @@ public sealed class PatchWorkbench
                   "required": ["summary"]
                 }
                 """),
-        ];
 
-        if (vision)
-        {
-            tools.Add(new PatchTool(
-                "render",
+            Does("render", RenderAsync,
                 "Draws the patch and shows you the result: several frames side by side, so you can "
                 + "see movement as well as color. Use it once the shape is right, and again after "
                 + "adjusting what you saw.",
@@ -1473,13 +1165,10 @@ public sealed class PatchWorkbench
                     "note": { "type": "string", "description": "What you are looking for, for your own record." }
                   }
                 }
-                """));
-        }
+                """,
+                offered: vision),
 
-        if (hearing is not Listener.None)
-        {
-            tools.Add(new PatchTool(
-                "listen",
+            Does("listen", ListenAsync,
                 "Renders the patch's sound, measures it, and "
                 + (hearing is Listener.Itself
                     ? "plays it to you — the clip arrives after this reply, the way a rendered "
@@ -1502,26 +1191,24 @@ public sealed class PatchWorkbench
                     "note": { "type": "string", "description": "What you are listening for, for your own record. {{Kept(hearing)}}" }
                   }
                 }
-                """));
-        }
+                """,
+                offered: hearing is not Listener.None),
 
-        if (lookups)
-        {
-            tools.Add(new PatchTool(
-                "describe_module",
+            Does("describe_module", DescribeModule,
                 "Everything about one module: its ports, their defaults and ranges, and what it is "
                 + "for.",
                 """
                 { "properties": { "type_id": { "type": "string" } }, "required": ["type_id"] }
-                """));
+                """,
+                offered: lookups),
 
-            tools.Add(new PatchTool(
-                "find_modules",
+            Does("find_modules", FindModules,
                 "Searches the module list by type id, name, category or description.",
                 """
                 { "properties": { "query": { "type": "string" } }, "required": ["query"] }
-                """));
-        }
+                """,
+                offered: lookups),
+        ];
 
         return tools;
     }
