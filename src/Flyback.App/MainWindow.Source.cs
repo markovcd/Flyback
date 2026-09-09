@@ -607,13 +607,23 @@ public sealed partial class MainWindow
         Canvas,
     }
 
+    /// <remarks>
+    /// Occupancy alone — not the owner or the view above, which agree with it
+    /// everywhere but one press: the one right after an undo or redo that
+    /// crossed the ownership boundary, which is answered by
+    /// <see cref="Handed"/> changing both out from under it. Asking them
+    /// instead of the stack there would land the press on the wrong one and
+    /// strand the Deed that has the matching step, unconsumed, for the next
+    /// press to find the stack empty.
+    /// </remarks>
     private Landing? UndoLandsOn =>
-        Documenting && source.CanUndo ? Landing.Text
+        source.CanUndo ? Landing.Text
         : editor.CanUndo ? Landing.Canvas
         : null;
 
+    /// <remarks>See <see cref="UndoLandsOn"/>.</remarks>
     private Landing? RedoLandsOn =>
-        Documenting && source.CanRedo ? Landing.Text
+        source.CanRedo ? Landing.Text
         : editor.CanRedo ? Landing.Canvas
         : null;
 
@@ -711,12 +721,6 @@ public sealed partial class MainWindow
         // As near to where they were reading as the new text has room for.
         source.Caret = Math.Min(at, source.Source.Length);
     }
-
-    /// <summary>
-    /// Whether the text's stack is the one these gestures land on first — see
-    /// <see cref="Undo"/>.
-    /// </summary>
-    private bool Documenting => sourceOwned || Coding;
 
     /// <summary>
     /// Whether a hand is in the middle of something, so that taking an edit back

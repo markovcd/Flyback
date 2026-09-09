@@ -797,6 +797,44 @@ public class SourceViewTests : UiTest
     }
 
     /// <summary>
+    /// Redo does not repeat once it has put the evaluation back. There is one
+    /// step to take back and one to put again, and a second press of the same
+    /// button has nothing left to do.
+    /// </summary>
+    /// <remarks>
+    /// A press that crosses the ownership boundary is answered by whichever of
+    /// the two stacks the gesture lands on, and the other is left alone — so a
+    /// rule that read the owner or the view to decide that, rather than which
+    /// stack still has the step, could answer this redo from the canvas and
+    /// leave the matching <c>Deed</c> stranded, unconsumed, on the text's. The
+    /// stray would then look like a second redo on offer, and pressing it would
+    /// ask the canvas's stack for a step it no longer had — silently doing
+    /// nothing, having already been done by the first press.
+    /// </remarks>
+    [AvaloniaFact]
+    public void Redo_does_not_repeat_after_putting_an_evaluation_back()
+    {
+        var window = Open();
+
+        Evaluate(window, Hum);
+
+        Press(Undo(window));
+        Settle(window);
+
+        Press(Redo(window));
+        Settle(window);
+
+        Editor(window).Locked.ShouldBeTrue("the evaluation came back with the first press");
+        Redo(window).IsEnabled.ShouldBeFalse("there is nothing left to put again");
+
+        Press(Redo(window));
+        Settle(window);
+
+        Editor(window).Locked.ShouldBeTrue("a second press had nothing to do and did nothing");
+        Undo(window).IsEnabled.ShouldBeTrue("the evaluation is still one press back, not two");
+    }
+
+    /// <summary>
     /// And the canvas reaches it too, for somebody who switched over to look at
     /// what the evaluation did to their modules before deciding against it.
     /// </summary>
