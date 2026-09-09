@@ -128,6 +128,21 @@ public sealed partial class MainWindow : Window
     private Control? statusBar;
 
     /// <summary>
+    /// The toolbar's preset list, kept so a file opened from elsewhere — see
+    /// <see cref="ClearPresetSelection"/> — can take the selection off it. Null
+    /// only before <see cref="BuildLayout"/> has run.
+    /// </summary>
+    private Picker? presetsPicker;
+
+    /// <summary>
+    /// Which row of <see cref="presetsPicker"/> is on the canvas, or -1 for a
+    /// document that did not come from that list. What a refused change puts the
+    /// box back to, and what a later pick is compared against so re-choosing the
+    /// same preset is a no-op rather than a rebuild.
+    /// </summary>
+    private int presetShowing;
+
+    /// <summary>
     /// The preview's own row and the splitter below it, put away when the patch
     /// has nothing wired into the Output's 'color' — see <see cref="ShowPreview"/>.
     /// </summary>
@@ -601,6 +616,8 @@ public sealed partial class MainWindow : Window
         presets.IsHitTestVisible = false;
         presets.IsTabStop = false;
 
+        presetsPicker = presets;
+
         // The toolbar button proper: the same square, glyph-only shape as
         // open, save and tidy, standing in front of the Picker above. Its
         // press opens that Picker's own dropdown rather than one built to
@@ -619,14 +636,13 @@ public sealed partial class MainWindow : Window
         // Which preset is on the canvas, so a refused change can put the box
         // back where it was. Setting the index raises this same handler, hence
         // the flag around it.
-        var showing = 0;
         var restoring = false;
 
         presets.SelectionChanged += async (_, _) =>
         {
             if (restoring) return;
             if (presets.SelectedIndex < 0 || presets.SelectedIndex >= available.Count) return;
-            if (presets.SelectedIndex == showing) return;
+            if (presets.SelectedIndex == presetShowing) return;
 
             var wanted = presets.SelectedIndex;
 
@@ -665,7 +681,7 @@ public sealed partial class MainWindow : Window
                 // says which of the two they mean to work in.
                 if (showingCode) ReadIntoText();
 
-                showing = wanted;
+                presetShowing = wanted;
             }
             catch (Exception ex)
             {
@@ -758,9 +774,27 @@ public sealed partial class MainWindow : Window
         void PutTheBoxBack()
         {
             restoring = true;
-            presets.SelectedIndex = showing;
+            presets.SelectedIndex = presetShowing;
             restoring = false;
         }
+    }
+
+    /// <summary>
+    /// Takes the selection off the preset list, for a document that arrived by
+    /// some other route — a patch, a bundle, or a source file opened from disk.
+    /// </summary>
+    /// <remarks>
+    /// A preset that stayed highlighted after a patch, bundle or source file was
+    /// opened over it would claim the canvas still held that preset when it no
+    /// longer does. Setting the index to -1 is enough on its own: the picker's
+    /// own SelectionChanged handler already returns on a negative index before
+    /// it asks what "wanted" means, so nothing there mistakes this for a pick.
+    /// </remarks>
+    internal void ClearPresetSelection()
+    {
+        presetShowing = -1;
+
+        if (presetsPicker is not null) presetsPicker.SelectedIndex = -1;
     }
 
     /// <summary>

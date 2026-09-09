@@ -161,6 +161,9 @@ public sealed partial class MainWindow
                 Path.GetFileNameWithoutExtension(files[0].Name),
                 Path.GetDirectoryName(files[0].TryGetLocalPath()));
 
+            // Whatever preset the list still showed is not this patch.
+            ClearPresetSelection();
+
             editor.Patch = loaded.Patch;
             preview.Rewind();
 
@@ -419,6 +422,9 @@ public sealed partial class MainWindow
                 Path.GetFileNameWithoutExtension(file.Name),
                 Path.GetDirectoryName(file.TryGetLocalPath()));
 
+            // Whatever preset the list still showed is not this patch.
+            ClearPresetSelection();
+
             editor.Patch = load.Patch;
             preview.Rewind();
 
@@ -487,6 +493,8 @@ public sealed partial class MainWindow
                 Path.GetDirectoryName(file.TryGetLocalPath()),
                 new BundleFiles(bundle.Files, soundFolder, pictureFolder));
 
+            // Whatever preset the list still showed is not this patch.
+            ClearPresetSelection();
 
             editor.Patch = bundle.Patch;
             preview.Rewind();

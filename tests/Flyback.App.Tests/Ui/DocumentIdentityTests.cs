@@ -73,4 +73,30 @@ public class DocumentIdentityTests : UiTest
 
         window.IsBundle.ShouldBeFalse("a preset came out of no file at all");
     }
+
+    /// <summary>
+    /// A file opened from disk is not any row of the preset list, so nothing
+    /// there should still look picked once one is open.
+    /// </summary>
+    /// <remarks>
+    /// The window opens on the list's first row, and a bundle carries no picker
+    /// selection of its own to put in its place — so without this, opening one
+    /// left that first preset looking chosen for a patch it had nothing to do
+    /// with. Driven through <see cref="MainWindow.ClearPresetSelection"/> rather
+    /// than a real Open dialog, which the headless platform does not put up —
+    /// see the remark on <see cref="MainWindow.Became"/>.
+    /// </remarks>
+    [AvaloniaFact]
+    public void Opening_a_file_takes_the_selection_off_the_preset_list()
+    {
+        var window = Open();
+
+        PresetList(window).SelectedIndex.ShouldBeGreaterThanOrEqualTo(0, "the window opens on a preset");
+
+        OpenABundle(window);
+        window.ClearPresetSelection();
+        Dispatcher.UIThread.RunJobs();
+
+        PresetList(window).SelectedIndex.ShouldBe(-1);
+    }
 }
