@@ -202,6 +202,13 @@ public sealed class AssistantPanel : UserControl
     private readonly CheckBox rememberBox = new() { Content = "Keep this key", FontSize = Text.Body };
 
     /// <summary>
+    /// Whether to keep a file of what gets sent and said. Off by default, since
+    /// that is a second copy of everything a turn already sends somewhere else —
+    /// see <see cref="AssistantSettings.LogConversations"/>.
+    /// </summary>
+    private readonly CheckBox logBox = new() { Content = "Log conversations to disk", FontSize = Text.Body };
+
+    /// <summary>
     /// Everything the chosen provider says it has, drawn from its own
     /// declaration.
     /// </summary>
@@ -217,6 +224,13 @@ public sealed class AssistantPanel : UserControl
 
     private IPatchAssistant? assistant;
     private AssistantRun? run;
+
+    /// <summary>
+    /// Where <see cref="run"/>'s turns go when <see cref="AssistantSettings.LogConversations"/>
+    /// asked for that. Starts closed, which writes nothing, so nothing here has
+    /// to check the setting before every line.
+    /// </summary>
+    private ConversationLog log = ConversationLog.Start(false, string.Empty);
 
     /// <summary>
     /// What the conversation in <see cref="run"/> was started with. A session is
@@ -309,6 +323,7 @@ public sealed class AssistantPanel : UserControl
         // set on the form is what says whether a message can be sent at all —
         // which the footer has to answer from the moment the panel exists.
         rememberBox.IsChecked = settings.RememberKey;
+        logBox.IsChecked = settings.LogConversations;
 
         // The list before what is chosen in it, and both before the handler that
         // watches it: a box with no rows in it cannot be told which row to show,
@@ -486,6 +501,7 @@ public sealed class AssistantPanel : UserControl
         fields.Children.Add(keyBox);
         fields.Children.Add(keyNote);
         fields.Children.Add(rememberBox);
+        fields.Children.Add(logBox);
 
         var save = new Button { Content = "Save", Width = 84 };
         save.Click += (_, _) =>
@@ -525,9 +541,10 @@ public sealed class AssistantPanel : UserControl
     /// picking a provider sets <see cref="AssistantSettings.Provider"/>
     /// immediately, so the form under it can change with it. Everything else
     /// either is not written until <see cref="SaveSettings"/> runs
-    /// (<see cref="AssistantSettings.Choices"/>, <see cref="AssistantSettings.RememberKey"/>)
-    /// or was never kept at all — a key typed into <see cref="keyBox"/> only
-    /// has to be blanked, per <see cref="Credentials"/> and ADR-0034.
+    /// (<see cref="AssistantSettings.Choices"/>, <see cref="AssistantSettings.RememberKey"/>,
+    /// <see cref="AssistantSettings.LogConversations"/>) or was never kept at
+    /// all — a key typed into <see cref="keyBox"/> only has to be blanked, per
+    /// <see cref="Credentials"/> and ADR-0034.
     /// <para>
     /// Internal rather than private because the UI tests need it: the window
     /// this runs in is the shell's to close, so what is worth exercising from
@@ -541,6 +558,7 @@ public sealed class AssistantPanel : UserControl
 
         keyBox.Text = string.Empty;
         rememberBox.IsChecked = settings.RememberKey;
+        logBox.IsChecked = settings.LogConversations;
 
         ShowProviderForm();
         Refresh();
@@ -613,6 +631,7 @@ public sealed class AssistantPanel : UserControl
     private void SaveSettings()
     {
         settings.RememberKey = rememberBox.IsChecked == true;
+        settings.LogConversations = logBox.IsChecked == true;
 
         if (assistant is not null)
         {
@@ -714,10 +733,12 @@ public sealed class AssistantPanel : UserControl
             _ => "no key",
         };
 
+        var logged = settings.LogConversations ? $" Logged to {ConversationLog.Folder}." : string.Empty;
+
         footer.Foreground = Text.Muted;
         footer.Text =
             "Sends your instruction, the module list and the patch — including rendered frames of it — "
-            + $"to {assistant.Name}. {source}.";
+            + $"to {assistant.Name}. {source}.{logged}";
     }
 
     /// <summary>
@@ -943,6 +964,9 @@ public sealed class AssistantPanel : UserControl
         runConfig = config;
         runAssistant = with;
 
+        log.Dispose();
+        log = ConversationLog.Start(settings.LogConversations, with.Id);
+
         // Said rather than silently done, and only where there was something to
         // lose: the transcript emptying is otherwise the only sign that the
         // thing being talked to has just been replaced.
@@ -969,6 +993,7 @@ public sealed class AssistantPanel : UserControl
         var conversation = Conversation(assistant, config);
 
         Asked(wanted);
+        log.Write("you", wanted);
 
         instruction.Text = string.Empty;
 
@@ -1009,15 +1034,18 @@ public sealed class AssistantPanel : UserControl
         {
             case PatchEvent.Said said:
                 Append(said.Text);
+                log.Write("said", said.Text);
                 break;
 
             case PatchEvent.Did did:
                 Add(did.Summary, Text.Muted, Text.Small);
+                log.Write("did", did.Summary);
                 break;
 
             case PatchEvent.Saw saw:
                 Add(saw.Caption, Text.Muted, Text.Small);
                 Picture(saw.Png);
+                log.Write("saw", saw.Caption);
                 break;
 
             // The caption and nothing else. The WAV went to the model rather
@@ -1027,6 +1055,7 @@ public sealed class AssistantPanel : UserControl
             // which is what somebody watching this needs to know.
             case PatchEvent.Heard heard:
                 Add(heard.Caption, Text.Muted, Text.Small);
+                log.Write("heard", heard.Caption);
                 break;
 
             case PatchEvent.Cost cost:
@@ -1034,14 +1063,17 @@ public sealed class AssistantPanel : UserControl
                     $"{cost.Input} in ({cost.CacheRead} cached), {cost.Output} out.",
                     Text.Muted,
                     11);
+                log.Write("cost", $"{cost.Input} in ({cost.CacheRead} cached), {cost.Output} out.");
                 break;
 
             case PatchEvent.Proposed proposed:
                 Add($"Proposed: {proposed.Summary}", Brushes.White, Text.Body);
+                log.Write("proposed", proposed.Summary);
                 break;
 
             case PatchEvent.Failed failed:
                 Add(failed.Message, Amber, Text.Small);
+                log.Write("failed", failed.Message);
                 break;
         }
 

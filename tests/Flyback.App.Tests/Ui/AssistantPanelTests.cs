@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
+using Avalonia.Interactivity;
 using Flyback.App.Assist;
 using Flyback.App.Controls;
 using Flyback.Core.Graph;
@@ -458,6 +459,53 @@ public class AssistantPanelTests : UiTest
         panel.DiscardSettings();
 
         key.Text.ShouldBeNullOrEmpty();
+    }
+
+    /// <summary>
+    /// Ticking the box and closing some way other than Save leaves the setting
+    /// as it was — the same rule <see cref="Discarding_settings_puts_back_the_provider_that_was_in_force"/>
+    /// pins for the provider, here for the box that answers no test until it is
+    /// looked for on its own.
+    /// </summary>
+    [AvaloniaFact]
+    public void Discarding_settings_puts_back_whether_logging_was_on()
+    {
+        var window = Showing(With(new Deaf()), new AssistantSettings { LogConversations = false });
+        var panel = All<AssistantPanel>(window).Single();
+
+        var host = Settings(window);
+        var logging = All<CheckBox>(host).Single(c => c.Content as string == "Log conversations to disk");
+
+        logging.IsChecked = true;
+        Settle(host);
+
+        panel.DiscardSettings();
+
+        logging.IsChecked.ShouldBe(false, "never saved, so still off");
+    }
+
+    /// <summary>
+    /// Saving with the box ticked is what makes the setting stick — the other
+    /// half of the discard test above.
+    /// </summary>
+    [AvaloniaFact]
+    public void Saving_settings_keeps_whether_logging_was_turned_on()
+    {
+        var saved = new AssistantSettings();
+        var window = Showing(With(new Deaf()), saved);
+
+        var host = Settings(window);
+        var logging = All<CheckBox>(host).Single(c => c.Content as string == "Log conversations to disk");
+
+        logging.IsChecked = true;
+        Settle(host);
+
+        All<Button>(host)
+            .Single(b => b.Content as string == "Save")
+            .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Settle(host);
+
+        saved.LogConversations.ShouldBeTrue();
     }
 
     /// <summary>

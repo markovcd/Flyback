@@ -128,7 +128,7 @@ public class AssistantSettingsTests : IDisposable
     [Fact]
     public void Choices_survive_being_written_and_read()
     {
-        var settings = new AssistantSettings { Provider = "anthropic", RememberKey = true };
+        var settings = new AssistantSettings { Provider = "anthropic", RememberKey = true, LogConversations = true };
 
         settings.Remember("anthropic", Answers);
         settings.Save(path);
@@ -137,6 +137,7 @@ public class AssistantSettingsTests : IDisposable
 
         read.Provider.ShouldBe("anthropic");
         read.RememberKey.ShouldBeTrue();
+        read.LogConversations.ShouldBeTrue();
         read.Of("anthropic").ShouldBe(Answers);
     }
 
@@ -168,6 +169,7 @@ public class AssistantSettingsTests : IDisposable
 
         settings.Provider.ShouldBeEmpty();
         settings.RememberKey.ShouldBeFalse();
+        settings.LogConversations.ShouldBeFalse();
 
         // Nothing set for anybody, which is what leaves every provider on
         // whatever its own form declares.

@@ -63,6 +63,18 @@ public sealed class AssistantSettings
     public bool RememberKey { get; set; }
 
     /// <summary>
+    /// Whether every turn is written out to a file under
+    /// <see cref="ConversationLog.Folder"/>, one file per conversation. Off
+    /// until somebody turns it on.
+    /// </summary>
+    /// <remarks>
+    /// A choice about this machine rather than about any provider, for the same
+    /// reason <see cref="RememberKey"/> is: the file is written here regardless
+    /// of who was asked.
+    /// </remarks>
+    public bool LogConversations { get; set; }
+
+    /// <summary>
     /// What each provider was last set to, filed under its id.
     /// </summary>
     /// <remarks>
