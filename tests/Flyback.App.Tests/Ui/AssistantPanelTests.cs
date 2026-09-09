@@ -414,54 +414,50 @@ public class AssistantPanelTests : UiTest
     }
 
     /// <summary>
-    /// Saving is the end of the errand, so the window it was done in goes with
-    /// it — and only that one. The panel lives in a window of its own, and the
-    /// day something shows the settings there, closing it would close the
-    /// program.
+    /// Saving writes the provider that was picked while the window was open.
+    /// Discarding puts back whichever one was in force before it opened —
+    /// which is the point of the test, since picking a provider writes it to
+    /// <see cref="AssistantSettings"/> straight away, for the form under it to
+    /// follow.
     /// </summary>
-    /// <remarks>
-    /// The dismissal is exercised rather than the Save button that calls it,
-    /// because pressing Save writes the settings file this machine actually
-    /// uses. What is worth a test here is finding the right window, which is
-    /// the half that has somewhere to go wrong.
-    /// </remarks>
     [AvaloniaFact]
-    public void Saving_closes_the_window_the_settings_were_shown_in()
+    public void Discarding_settings_puts_back_the_provider_that_was_in_force()
     {
-        var window = Showing();
+        var window = Showing(
+            new PluginCatalog([], [], NodeCatalog.BuiltIn, [], [], [new Deaf(), new Both()]),
+            Configured("deaf"));
         var panel = All<AssistantPanel>(window).Single();
 
-        var dialog = new Window
-        {
-            SizeToContent = SizeToContent.WidthAndHeight,
-            Content = panel.SettingsSection(),
-        };
+        var host = Settings(window);
+        var provider = All<ComboBox>(host).Single(c => c.Name == "provider");
 
-        dialog.Show();
-        Settle(dialog);
+        provider.SelectedIndex = 1;
+        Settle(host);
 
-        var closed = false;
-        dialog.Closed += (_, _) => closed = true;
+        panel.DiscardSettings();
 
-        panel.DismissSettings();
-
-        closed.ShouldBeTrue();
-        window.IsVisible.ShouldBeTrue("the window the panel itself lives in stays where it is");
+        provider.SelectedIndex.ShouldBe(0, "back to the one that was in force, not the one picked");
     }
 
-    /// <summary>Asked for when nothing is showing them, which is not an error.</summary>
+    /// <summary>
+    /// A key typed but never saved is not this program's to keep, so it has to
+    /// be gone even from the box it was typed into — never mind the store.
+    /// </summary>
     [AvaloniaFact]
-    public void Dismissing_settings_nobody_is_showing_does_nothing()
+    public void Discarding_settings_blanks_a_key_typed_but_not_saved()
     {
-        var window = Showing();
+        var window = Showing(With(new Deaf()));
         var panel = All<AssistantPanel>(window).Single();
 
-        Should.NotThrow(() => panel.DismissSettings());
+        var host = Settings(window);
+        var key = All<TextBox>(host).Single(t => t.PasswordChar != default);
 
-        panel.SettingsSection();
-        Should.NotThrow(() => panel.DismissSettings());
+        key.Text = "sk-typed-but-not-saved";
+        Settle(host);
 
-        window.IsVisible.ShouldBeTrue();
+        panel.DiscardSettings();
+
+        key.Text.ShouldBeNullOrEmpty();
     }
 
     /// <summary>

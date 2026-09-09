@@ -239,6 +239,13 @@ public sealed class AssistantPanel : UserControl
     private Control? section;
 
     /// <summary>
+    /// Which provider was in force the moment the settings were opened, so a
+    /// window closed without Save can be put back to it — see
+    /// <see cref="DiscardSettings"/>.
+    /// </summary>
+    private string? openedProvider;
+
+    /// <summary>
     /// Whether a turn is in flight, as this panel knows it.
     /// </summary>
     /// <remarks>
@@ -418,15 +425,18 @@ public sealed class AssistantPanel : UserControl
     /// environment from another window, or dropped into the store by something
     /// else — and this is the one screen that claims to say which.
     /// <para>
-    /// Lending the same controls out is also what keeps a half-typed endpoint or
-    /// a changed provider on the form between one opening of the window and the
-    /// next, which a set built fresh each time would lose.
+    /// What provider was in force is noted on the way out, so a window closed
+    /// without Save can be put back to it — see <see cref="DiscardSettings"/>.
+    /// A half-typed endpoint or a switched provider is otherwise live on the
+    /// form for as long as this one opening lasts, which is what lending the
+    /// same controls out rather than building fresh ones is for.
     /// </para>
     /// </remarks>
     public Control SettingsSection()
     {
         Refresh();
 
+        openedProvider = assistant?.Id;
         section ??= BuildSettings();
 
         // Taken back from whoever last borrowed it, rather than left to them to
@@ -485,7 +495,7 @@ public sealed class AssistantPanel : UserControl
             // Saving is the end of the errand, so the window goes with it.
             // Forgetting a key is not: somebody who has just taken one out is as
             // likely as not about to put another in.
-            DismissSettings();
+            Dialog.Close(save, true);
         };
 
         forget.Click += (_, _) =>
@@ -506,30 +516,34 @@ public sealed class AssistantPanel : UserControl
     }
 
     /// <summary>
-    /// Closes the window the settings are being shown in.
+    /// Puts back whatever was in force when the settings were opened, for a
+    /// window closed some way other than Save — the cross on it, or Escape.
     /// </summary>
     /// <remarks>
-    /// Found rather than held, because this section belongs to whichever window
-    /// borrowed it — see <see cref="SettingsSection"/> — and the panel has no
-    /// business keeping a reference to one it does not own.
+    /// Only the provider needs restoring by hand: it is the one thing here
+    /// written to <see cref="AssistantSettings"/> before Save is ever pressed —
+    /// picking a provider sets <see cref="AssistantSettings.Provider"/>
+    /// immediately, so the form under it can change with it. Everything else
+    /// either is not written until <see cref="SaveSettings"/> runs
+    /// (<see cref="AssistantSettings.Choices"/>, <see cref="AssistantSettings.RememberKey"/>)
+    /// or was never kept at all — a key typed into <see cref="keyBox"/> only
+    /// has to be blanked, per <see cref="Credentials"/> and ADR-0034.
     /// <para>
-    /// The panel's own window is left alone on purpose. Nothing shows the
-    /// settings there today, and the day something does, closing it would close
-    /// the program.
-    /// </para>
-    /// <para>
-    /// Internal rather than private because the UI tests need it: clicking Save
-    /// writes the real settings file, so the half worth exercising is this one,
-    /// which is also the half with somewhere to go wrong.
+    /// Internal rather than private because the UI tests need it: the window
+    /// this runs in is the shell's to close, so what is worth exercising from
+    /// here is what got left behind on the panel, not the closing itself.
     /// </para>
     /// </remarks>
-    internal void DismissSettings()
+    internal void DiscardSettings()
     {
-        if (section is null) return;
-        if (TopLevel.GetTopLevel(section) is not Window host) return;
-        if (ReferenceEquals(host, TopLevel.GetTopLevel(this))) return;
+        settings.Provider = openedProvider ?? string.Empty;
+        assistant = Choose();
 
-        host.Close();
+        keyBox.Text = string.Empty;
+        rememberBox.IsChecked = settings.RememberKey;
+
+        ShowProviderForm();
+        Refresh();
     }
 
     /// <summary>

@@ -773,7 +773,13 @@ public sealed partial class MainWindow : Window
         // The panel's own controls, lent to the window rather than built for it,
         // so that what a key or a provider was last set to is still on them the
         // next time this is opened.
-        await this.ShowDialog("Settings", panel.SettingsSection());
+        var saved = await this.ShowDialog<bool>("Settings", panel.SettingsSection());
+
+        // The cross and Escape both answer false — see Dialog.ShowDialog — which
+        // is every way out of this window that is not Save. Whatever was typed
+        // or picked since it opened belongs to this window and not to the panel,
+        // and only Save is allowed to make it the panel's.
+        if (!saved) panel.DiscardSettings();
     }
 
     /// <summary>
