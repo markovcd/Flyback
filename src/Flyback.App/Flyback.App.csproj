@@ -138,6 +138,30 @@
     <Compile Update="MainWindow.Recording.cs">
       <DependentUpon>MainWindow.cs</DependentUpon>
     </Compile>
+    <Compile Update="MainWindow.Source.cs">
+      <DependentUpon>MainWindow.cs</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Controls\NodeEditor.Clipboard.cs">
+      <DependentUpon>NodeEditor.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Controls\NodeEditor.Editing.cs">
+      <DependentUpon>NodeEditor.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Controls\NodeEditor.Groups.cs">
+      <DependentUpon>NodeEditor.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Controls\NodeEditor.HitTesting.cs">
+      <DependentUpon>NodeEditor.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Controls\NodeEditor.Interaction.cs">
+      <DependentUpon>NodeEditor.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Controls\NodeEditor.Painting.cs">
+      <DependentUpon>NodeEditor.cs</DependentUpon>
+    </Compile>
   </ItemGroup>
 
   <!-- Turns the macOS publish output into something the Finder will launch. -->

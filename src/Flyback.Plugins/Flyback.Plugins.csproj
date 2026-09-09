@@ -19,4 +19,10 @@
     <InternalsVisibleTo Include="Flyback.Cli.Tests" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Update="Assist\PatchWorkbench.Senses.cs">
+      <DependentUpon>PatchWorkbench.cs</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
 </Project>
