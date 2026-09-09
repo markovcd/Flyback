@@ -425,11 +425,10 @@ public sealed partial class MainWindow
     /// </summary>
     private void RefreshEditState()
     {
-        // The same answer the gesture itself gives: the text's stack where that
-        // is the document's history, the canvas's otherwise, and either falling
-        // through to the other when it has nothing left.
-        undoButton.IsEnabled = Documenting ? source.CanUndo || editor.CanUndo : editor.CanUndo;
-        redoButton.IsEnabled = Documenting ? source.CanRedo || editor.CanRedo : editor.CanRedo;
+        // Literally the answer the gesture gives, rather than a second statement of
+        // the same rule — see UndoLandsOn.
+        undoButton.IsEnabled = UndoLandsOn is not null;
+        redoButton.IsEnabled = RedoLandsOn is not null;
 
         // The name first and the program second, which is the way round every
         // other window on the machine says it: what is on screen is the patch,

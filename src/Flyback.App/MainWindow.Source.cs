@@ -554,15 +554,48 @@ public sealed partial class MainWindow
     /// behind it, would be the one thing nobody could take back.
     /// </para>
     /// </remarks>
+    /// <summary>
+    /// Which stack a press of undo or redo lands on, and nothing where it lands on
+    /// neither.
+    /// </summary>
+    /// <remarks>
+    /// The rule is here once because two things ask it and they have to agree: the
+    /// gesture, which acts on the answer, and the toolbar, which greys the button
+    /// when there is none. A button offering a press that does nothing and a press
+    /// doing something the button said it could not are the same bug, and stating
+    /// the rule twice is what makes both of them possible.
+    /// </remarks>
+    private enum Landing
+    {
+        Text,
+        Canvas,
+    }
+
+    private Landing? UndoLandsOn =>
+        Documenting && source.CanUndo ? Landing.Text
+        : editor.CanUndo ? Landing.Canvas
+        : null;
+
+    private Landing? RedoLandsOn =>
+        Documenting && source.CanRedo ? Landing.Text
+        : editor.CanRedo ? Landing.Canvas
+        : null;
+
     private void Undo()
     {
         if (Gesturing) return;
 
-        if (Documenting && source.CanUndo) source.Undo();
-        else if (editor.Undo())
+        switch (UndoLandsOn)
         {
-            Owed(-1);
-            Stepped();
+            case Landing.Text:
+                source.Undo();
+                break;
+
+            case Landing.Canvas:
+                editor.Undo();
+                Owed(-1);
+                Stepped();
+                break;
         }
 
         RefreshEditState();
@@ -572,11 +605,17 @@ public sealed partial class MainWindow
     {
         if (Gesturing) return;
 
-        if (Documenting && source.CanRedo) source.Redo();
-        else if (editor.Redo())
+        switch (RedoLandsOn)
         {
-            Owed(1);
-            Stepped();
+            case Landing.Text:
+                source.Redo();
+                break;
+
+            case Landing.Canvas:
+                editor.Redo();
+                Owed(1);
+                Stepped();
+                break;
         }
 
         RefreshEditState();
