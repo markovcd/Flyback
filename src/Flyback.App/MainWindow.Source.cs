@@ -210,22 +210,31 @@ public sealed partial class MainWindow
             RoutingStrategies.Bubble,
             handledEventsToo: true);
 
-        // A number typed rather than dragged has no gesture to wait for. It is
-        // finished when the box stops being the thing being typed into.
+        // A number typed rather than dragged has no gesture to wait for, and the
+        // focus going is the surest end of one: whatever the keys below did or
+        // did not catch, nothing typed survives the box being left.
         inspector.AddHandler(LostFocusEvent, (_, _) => HandCameOff(), RoutingStrategies.Bubble);
 
-        // And Enter finishes one without the box giving up the focus, so it is
-        // the other end of the same gesture rather than a shortcut for it. The
-        // box handles the key to take the number, which is why this is caught
-        // after whoever handled it — and why it is caught here rather than at
-        // the box, since by the time the press reaches this the value has been
-        // taken and there is something to write.
+        // And a key let go of, because a number box takes what is typed as it is
+        // typed. The value is heard on every keystroke, so the text that is meant
+        // to be saying the same thing has to keep up with it keystroke by
+        // keystroke — waiting for the focus to go would leave the code view
+        // showing a number the patch had already stopped playing, and showing it
+        // for as long as somebody went on working in the panel.
+        //
+        // On the way up rather than the way down, because the character is taken
+        // between the two: caught on the press, this would write the number as it
+        // stood before the key that changed it. And any key rather than Enter
+        // alone, because Enter is one of several ways a box moves and none of the
+        // others lets go of a pointer or gives up the focus either — an arrow
+        // steps the value, a backspace clears it.
+        //
+        // A key held down repeats its press without releasing, so an arrow leaned
+        // on writes once at the end of the run, which is what a dragged slider
+        // does too.
         inspector.AddHandler(
-            KeyDownEvent,
-            (_, e) =>
-            {
-                if (e.Key == Key.Enter) HandCameOff();
-            },
+            KeyUpEvent,
+            (_, _) => HandCameOff(),
             RoutingStrategies.Bubble,
             handledEventsToo: true);
     }

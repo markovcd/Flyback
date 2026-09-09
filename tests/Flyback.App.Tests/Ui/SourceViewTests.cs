@@ -1534,39 +1534,66 @@ public class SourceViewTests : UiTest
         Text(window).Text.Trim().ShouldBe("atan2(a: 1.5, b: 0.25) |> out.left");
     }
 
+    /// <summary>Types digits into whatever has the focus, the way a keyboard does.</summary>
+    /// <remarks>
+    /// Three events per character and not one: a box takes the character on the
+    /// text input between the press and the release, so a test that raised only
+    /// one of the three would be checking an order the keyboard does not have.
+    /// </remarks>
+    private static void TypeDigits(MainWindow window, string what)
+    {
+        foreach (var c in what)
+        {
+            var key = Enum.Parse<Avalonia.Input.PhysicalKey>($"Digit{c}");
+
+            window.KeyPressQwerty(key, Avalonia.Input.RawInputModifiers.None);
+            window.KeyTextInput(c.ToString());
+            window.KeyReleaseQwerty(key, Avalonia.Input.RawInputModifiers.None);
+
+            Settle(window);
+        }
+    }
+
     /// <summary>
-    /// Enter is the other way a number typed into the panel is finished, and the
-    /// text has to hear about it there.
+    /// A number box takes what is typed as it is typed, so the text keeps up
+    /// with it keystroke by keystroke rather than waiting for the box to be let
+    /// go of.
     /// </summary>
     /// <remarks>
-    /// It is the one finish that raises neither of the events the write-back
-    /// watched: nothing lets go of a pointer and the box keeps the focus, so the
-    /// value was heard and the code view went on saying the old one until some
-    /// later click happened to raise one of those two for a reason of its own.
-    /// Reaching for the code view is what most people do next, and the click
-    /// that puts the caret there is exactly what took the focus off the box —
-    /// so the text came right at the moment somebody went to see whether it had.
+    /// Nothing here lets go of a pointer or moves the focus, which were the two
+    /// things the write-back waited for. The value was heard on every keystroke
+    /// all the same, so what somebody typing a note got was a code view still
+    /// showing the number the patch had already stopped playing — until a click
+    /// somewhere else raised one of those two events for a reason of its own.
     /// </remarks>
     [AvaloniaFact]
-    public void A_number_finished_with_Enter_reaches_the_text_without_leaving_the_box()
+    public void A_number_typed_in_the_panel_reaches_the_text_without_leaving_the_box()
     {
         var window = Open();
 
         Evaluate(window, "let riff = notes() [ A3 C4 ]\nriff |> out.left");
         Click(window, "notes");
 
-        var step = All<NumericUpDown>(window).First(box => box.Value == 57m);
+        // The box holding the first step, found by what it holds: A3 is 57 and
+        // no knob on a sequencer rests there.
+        var box = All<TextBox>(All<NumericUpDown>(window).First(n => n.Value == 57m)).First();
 
-        step.Text = "60";
-        step.RaiseEvent(new Avalonia.Input.KeyEventArgs
-        {
-            RoutedEvent = Avalonia.Input.InputElement.KeyDownEvent,
-            Key = Avalonia.Input.Key.Enter,
-        });
+        box.Focus();
+        box.SelectAll();
         Settle(window);
 
-        step.Value.ShouldBe(60m, "Enter is what finishes a number typed into the box");
+        TypeDigits(window, "6");
+
+        // Half a number typed is still what the patch is playing, and the text
+        // says what is playing.
+        Text(window).Text.ShouldNotContain("A3");
+
+        TypeDigits(window, "0");
 
         Text(window).Text.Trim().ShouldBe("let riff = notes() [ C4 C4 ]\nriff |> out.left");
+
+        // And none of that was the box being left: it is still the thing being
+        // typed into, which is the whole point of the test.
+        window.FocusManager?.GetFocusedElement().ShouldBe(box);
     }
 }
