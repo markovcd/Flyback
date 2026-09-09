@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
+using Avalonia.Interactivity;
 using Avalonia.Threading;
 using Flyback.App.Controls;
 using Flyback.Core.Graph;
@@ -42,37 +43,51 @@ public class PickerTests : UiTest
     private static ComboBox Presets(MainWindow window) => All<ComboBox>(window)
         .First(box => box.ItemsSource?.Cast<object>().Any(item => Label(item) == "Plasma") == true);
 
+    /// <summary>The toolbar button standing in front of the Picker above.</summary>
+    private static Button PresetsButton(MainWindow window) =>
+        All<Button>(window).Single(b => b.Name == "presets-glyph");
+
     /// <summary>
-    /// It still looks like a list.
+    /// The Picker is still a real, templated list — not shown itself, but not
+    /// broken either.
     /// </summary>
     /// <remarks>
     /// A theme is found by type, and a control that does not say to look for its
     /// base type's is given no template — so it can go on holding its items,
     /// raising SelectionChanged and answering every question correctly, while
-    /// drawing nothing at all. None of the tests above would catch that.
+    /// drawing nothing at all. Checked as "it has a template", which is what an
+    /// untemplated control does not: its visual tree is itself alone.
     /// <para>
-    /// Checked as "it has a template and takes up room", which is what an
-    /// untemplated control has and is neither of: its visual tree is itself alone
-    /// and it measures to nothing.
+    /// What a person actually sees is the glyph button stacked in front of it,
+    /// and that one needs no test of its own here — it is built the same way as
+    /// open, save and tidy, and sized the same for the same reason they are.
     /// </para>
     /// </remarks>
     [AvaloniaFact]
-    public void A_list_is_drawn_like_a_list()
+    public void The_hidden_list_behind_the_button_is_still_a_real_list()
     {
         var window = Open();
         var presets = Presets(window);
 
-        // Against the plain one beside it rather than against a number: what
-        // matters is that a Picker is as visible as the ComboBox it stands in
-        // for, and the theme decides how tall that is.
-        var plain = new ComboBox { ItemsSource = new[] { "one", "two" }, SelectedIndex = 0 };
-
-        Show(plain);
-
         presets.ShouldBeOfType<Picker>();
         Tree(presets).Count().ShouldBeGreaterThan(1, "an untemplated control is its own whole tree");
-        presets.Bounds.Height.ShouldBe(plain.Bounds.Height, 1d);
-        presets.Bounds.Width.ShouldBeGreaterThan(0);
+    }
+
+    /// <summary>
+    /// Pressing the toolbar button opens the very dropdown a wide picker used
+    /// to open by itself — the button only stands in front of it now.
+    /// </summary>
+    [AvaloniaFact]
+    public void Pressing_the_preset_button_opens_the_list()
+    {
+        var window = Open();
+        var presets = Presets(window);
+        var button = PresetsButton(window);
+
+        button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Settle(window);
+
+        presets.IsDropDownOpen.ShouldBeTrue();
     }
 
     [AvaloniaFact]

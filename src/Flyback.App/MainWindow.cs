@@ -554,7 +554,19 @@ public sealed partial class MainWindow : Window
             Name = "presets",
             ItemsSource = available,
             SelectedIndex = 0,
-            Width = 160,
+
+            // Sized to match the glyph button stacked in front of it below —
+            // not shown itself, so what it is sized for is only where its
+            // dropdown opens from.
+            Width = 34,
+            Height = 30,
+
+            // Never drawn — see presetsButton below — so there is no box for
+            // this to be shown in, only a dropdown for it to open. Kept anyway,
+            // rather than left null, in case a future theme skips the box
+            // template for a null one and paints the dropdown from nothing.
+            SelectionBoxItemTemplate = new FuncDataTemplate<PatchPreset>((preset, _) =>
+                preset is null ? null : new TextBlock { Text = preset.Name, FontSize = Text.Body }),
 
             // Two lines per row in the dropdown: what it is called, and the one
             // sentence saying what it is for. The descriptions are the part of
@@ -580,14 +592,29 @@ public sealed partial class MainWindow : Window
                             },
                         },
                     }),
-
-            // And the name alone in the box itself, which is a separate template
-            // rather than the same one: a closed picker that grew to two lines
-            // would push the whole toolbar down to say something the dropdown
-            // already says, and the toolbar is a row of one-line controls.
-            SelectionBoxItemTemplate = new FuncDataTemplate<PatchPreset>((preset, _) =>
-                preset is null ? null : new TextBlock { Text = preset.Name, FontSize = Text.Body }),
         };
+
+        // Invisible and unclickable in its own right: the glyph button stacked
+        // on top of it is the toolbar button, and this is only where that
+        // button's press actually lands — see presetsButton.
+        presets.Opacity = 0;
+        presets.IsHitTestVisible = false;
+        presets.IsTabStop = false;
+
+        // The toolbar button proper: the same square, glyph-only shape as
+        // open, save and tidy, standing in front of the Picker above. Its
+        // press opens that Picker's own dropdown rather than one built to
+        // look like it, so the list a person picks from is unchanged down to
+        // the pixel.
+        var presetsButton = Drawn("presets-glyph", Glyphs.Presets(), "Start from a built-in preset patch…");
+        presetsButton.Click += (_, _) => presets.IsDropDownOpen = true;
+
+        // Stacked in one cell rather than laid side by side, so the dropdown
+        // that the invisible Picker owns opens from exactly where the glyph
+        // button sits instead of from an empty sliver beside it.
+        var presetsSlot = new Grid();
+        presetsSlot.Children.Add(presets);
+        presetsSlot.Children.Add(presetsButton);
 
         // Which preset is on the canvas, so a refused change can put the box
         // back where it was. Setting the index raises this same handler, hence
@@ -677,8 +704,7 @@ public sealed partial class MainWindow : Window
         // with the files, because it is an edit and is taken back like one.
         var patchwork = Row();
 
-        patchwork.Children.Add(Label("Patch"));
-        patchwork.Children.Add(presets);
+        patchwork.Children.Add(presetsSlot);
         patchwork.Children.Add(open);
         patchwork.Children.Add(save);
         patchwork.Children.Add(Separator());

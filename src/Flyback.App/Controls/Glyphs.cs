@@ -52,6 +52,13 @@ internal static class Glyphs
         + "M8,8 L10,8");
 
     /// <summary>
+    /// Three rows of a list, the shortest at the bottom — what a preset is:
+    /// one to point at, out of several.
+    /// </summary>
+    public static Control Presets() => Stroked(
+        "M2,4 L14,4 M2,8 L14,8 M2,12 L10,12");
+
+    /// <summary>
     /// Outlined rather than filled, to sit at the weight of the glyphs beside
     /// it, and colored from whatever holds it so that hovering, pressing and
     /// grey-out all reach it without being handled here.
