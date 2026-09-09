@@ -472,7 +472,29 @@ public sealed class ModulePalette : UserControl
     /// </remarks>
     private Control Kept(SavedGroup entry)
     {
-        if (removing is { } asked && asked.Path == entry.Path) return Confirm(entry);
+        if (removing is { } asked && asked.Path == entry.Path)
+            return Question.Row(
+                $"Remove “{entry.Name}”?",
+                new Thickness(8, 0, 0, 1),
+                $"Remove “{entry.Name}”.",
+                "Keep it.",
+                remove =>
+                {
+                    // A file that will not go stays on the list, which is the truth
+                    // about it and better than a row that vanishes and comes back the
+                    // next time the folder is read.
+                    try
+                    {
+                        if (remove) groups.Remove(entry);
+                    }
+                    catch (Exception)
+                    {
+                        // Nothing to say it with out here — see the remarks above. The
+                        // row still being there is what says it.
+                    }
+
+                    Asking(null);
+                });
 
         var row = new DockPanel { Margin = new Thickness(0, 0, 0, 1) };
 
@@ -533,69 +555,6 @@ public sealed class ModulePalette : UserControl
     /// row, which is "no, put it back".
     /// </para>
     /// </remarks>
-    private Control Confirm(SavedGroup entry)
-    {
-        var row = new DockPanel { Margin = new Thickness(0, 0, 0, 1) };
-
-        var answers = new StackPanel
-        {
-            Orientation = Orientation.Horizontal,
-            Spacing = 1,
-            VerticalAlignment = VerticalAlignment.Center,
-        };
-
-        answers.Children.Add(Answer("✔", $"Remove “{entry.Name}”.", 1, () =>
-        {
-            // A file that will not go stays on the list, which is the truth
-            // about it and better than a row that vanishes and comes back the
-            // next time the folder is read.
-            try
-            {
-                groups.Remove(entry);
-            }
-            catch (Exception)
-            {
-                // Nothing to say it with out here — see the remarks above. The
-                // row still being there is what says it.
-            }
-
-            Asking(null);
-        }));
-
-        answers.Children.Add(Answer("✕", "Keep it.", 0.55, () => Asking(null)));
-
-        DockPanel.SetDock(answers, Dock.Right);
-        row.Children.Add(answers);
-
-        row.Children.Add(new TextBlock
-        {
-            Text = $"Remove “{entry.Name}”?",
-            FontSize = Text.Body,
-            TextTrimming = TextTrimming.CharacterEllipsis,
-            VerticalAlignment = VerticalAlignment.Center,
-            Margin = new Thickness(8, 0, 4, 0),
-        });
-
-        return row;
-
-        Button Answer(string glyph, string tip, double strength, Action taken)
-        {
-            var button = new Button
-            {
-                Content = glyph,
-                FontSize = Text.Caption,
-                Padding = new Thickness(5, 0, 5, 0),
-                Background = Brushes.Transparent,
-                Opacity = strength,
-                VerticalAlignment = VerticalAlignment.Center,
-            };
-
-            ToolTip.SetTip(button, tip);
-            button.Click += (_, _) => taken();
-
-            return button;
-        }
-    }
 
     private static TextBlock Heading(string text, Color color) => new()
     {

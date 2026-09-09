@@ -1,6 +1,6 @@
 # ADR-0039: One window class, across a file per region
 
-**Status:** Accepted · 2026-08-18
+**Status:** Accepted · 2026-08-18 · amended 2026-09-09, where a region grows past the size this promised and the fix is a shared row rather than another file
 
 ## Context
 
@@ -88,3 +88,31 @@ changes nothing that 0016 or [0017](0017-draw-the-node-editor-in-one-control.md)
 settled. If a region ever does become independent — an inspector that reads a
 selection and raises events rather than reaching into the preview — it should
 become a class, and this record is not a reason to leave it as a partial file.
+
+## Amendment, 2026-09-09: what the region files did not bound
+
+The consequence recorded above — the largest file under five hundred lines, and
+none of the six exceeding it — has not held. There are ten files now, and
+`MainWindow.Inspector.cs` is larger than the whole class was when this was
+written.
+
+The split is not what failed. What grew is one region, and it grew because the
+inspector is where every kind of thing a module can carry has to be given a
+control: a knob, a toggle, a choice, a file, a sequencer's steps, a quantiser's
+scale, whatever a plugin declares next. Each arrived as a builder of its own, and
+each built the same row around a different middle — the same caption in the same
+seventy-eight-pixel gutter, written out six times, and the same test for whether
+a knob's number needs a column saying what it means, written out twice with the
+same five-line comment above it.
+
+So the gutter, the caption and that test are named once and the six builders take
+them, and the confirm row the inspector and the module list had each written for
+themselves is one widget both call. The file is barely shorter for it; a helper
+with the reasoning written above it costs about what the duplication did. Length
+was never the thing worth fixing — six copies of a measurement is, because five
+of them are free to drift and nothing would have said so.
+
+The lesson for the rule is that a file per region bounds how much is *in front of*
+a reader, and nothing else. It does not bound duplication inside a region, and a
+region that is a panel of forms will always tend to grow one row builder per kind
+of thing there is. The answer there is a shared row, not a further file.

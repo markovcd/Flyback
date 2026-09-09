@@ -364,7 +364,7 @@ public sealed partial class MainWindow
             {
                 Text = adrift ? Adrifting : editor.Locked ? LockedHelp : Help,
                 TextWrapping = TextWrapping.Wrap,
-                Opacity = 0.5,
+                Foreground = Text.Muted,
                 FontSize = Text.Body,
             });
             return;
@@ -394,7 +394,7 @@ public sealed partial class MainWindow
             {
                 Text = def.Description,
                 TextWrapping = TextWrapping.Wrap,
-                Opacity = 0.6,
+                Foreground = Text.Muted,
                 FontSize = Text.Body,
                 Margin = new Thickness(0, 4, 0, 6),
             });
@@ -416,7 +416,7 @@ public sealed partial class MainWindow
             inspector.Children.Add(new TextBlock
             {
                 Text = "This module has nothing to set — it only produces.",
-                Opacity = 0.5,
+                Foreground = Text.Muted,
                 FontSize = Text.Body,
             });
 
@@ -506,7 +506,7 @@ public sealed partial class MainWindow
         {
             Text = group.Name is null ? "Group" : $"Group · {group.Counted}",
             FontSize = Text.Small,
-            Opacity = 0.6,
+            Foreground = Text.Muted,
         });
 
         inspector.Children.Add(new TextBlock
@@ -514,7 +514,7 @@ public sealed partial class MainWindow
             Text = "Several modules drawn as one. Nothing about the patch changes — the modules "
                  + "are where they were and so are the wires between them.",
             TextWrapping = TextWrapping.Wrap,
-            Opacity = 0.6,
+            Foreground = Text.Muted,
             FontSize = Text.Body,
             Margin = new Thickness(0, 4, 0, 6),
         });
@@ -529,7 +529,7 @@ public sealed partial class MainWindow
             {
                 Text = "Nothing has been wired across its edge, so the box has no sockets yet.",
                 TextWrapping = TextWrapping.Wrap,
-                Opacity = 0.5,
+                Foreground = Text.Muted,
                 FontSize = Text.Body,
             });
 
@@ -686,7 +686,7 @@ public sealed partial class MainWindow
             return;
         }
 
-        inspector.Children[at] = Ask(
+        inspector.Children[at] = Question.Row(
             $"Replace “{group.Name}”?",
             keep.Margin,
             $"Replace the kept “{group.Name}” with this group.",
@@ -712,53 +712,6 @@ public sealed partial class MainWindow
     /// question — small, immediate, and about the thing directly under it. Two
     /// words on two buttons would be a dialog with the frame left off.
     /// </remarks>
-    private static Control Ask(
-        string question, Thickness margin, string yesTip, string noTip, Action<bool> answered)
-    {
-        var row = new DockPanel { Margin = margin };
-
-        var answers = new StackPanel
-        {
-            Orientation = Orientation.Horizontal,
-            Spacing = 1,
-            VerticalAlignment = VerticalAlignment.Center,
-        };
-
-        answers.Children.Add(Answer("✔", yesTip, 1, () => answered(true)));
-        answers.Children.Add(Answer("✕", noTip, 0.55, () => answered(false)));
-
-        DockPanel.SetDock(answers, Dock.Right);
-        row.Children.Add(answers);
-
-        row.Children.Add(new TextBlock
-        {
-            Text = question,
-            FontSize = Text.Body,
-            TextTrimming = TextTrimming.CharacterEllipsis,
-            VerticalAlignment = VerticalAlignment.Center,
-            Margin = new Thickness(0, 0, 6, 0),
-        });
-
-        return row;
-
-        static Button Answer(string glyph, string tip, double strength, Action taken)
-        {
-            var button = new Button
-            {
-                Content = glyph,
-                FontSize = Text.Small,
-                Padding = new Thickness(6, 2),
-                Background = Brushes.Transparent,
-                Opacity = strength,
-                VerticalAlignment = VerticalAlignment.Center,
-            };
-
-            ToolTip.SetTip(button, tip);
-            button.Click += (_, _) => taken();
-
-            return button;
-        }
-    }
 
     private Control BuildGroupTitle(NodeGroup group)
     {
@@ -995,21 +948,56 @@ public sealed partial class MainWindow
         Text = text.ToUpperInvariant(),
         FontSize = Text.Caption,
         FontWeight = FontWeight.SemiBold,
-        Opacity = 0.6,
+        Foreground = Text.Muted,
         Margin = new Thickness(0, 10, 0, 2),
     };
 
     /// <summary>A labelled row on the same 78-pixel gutter the knob rows use.</summary>
+    /// <summary>
+    /// How wide the column every row puts its name in is.
+    /// </summary>
+    /// <remarks>
+    /// One number rather than seven, and it has to be one: it is stated twice for
+    /// every row — once as the grid column and once as the caption's own width, so
+    /// that a name too long to fit is trimmed at the gutter rather than pushing the
+    /// control beside it along.
+    /// </remarks>
+    private const double Gutter = 78;
+
+    /// <summary>A row's name, in the gutter every row shares.</summary>
+    private static TextBlock Caption(string text) => new()
+    {
+        Text = text,
+        Width = Gutter,
+        FontSize = Text.Body,
+        VerticalAlignment = VerticalAlignment.Center,
+        TextTrimming = TextTrimming.CharacterEllipsis,
+    };
+
+    /// <summary>The gutter, and whatever columns the caller needs beside it.</summary>
+    private static Grid Row(string beside) =>
+        new() { ColumnDefinitions = new ColumnDefinitions($"{Gutter},{beside}") };
+
+    /// <summary>
+    /// A knob whose number is not what it means, and so wants a column for what it
+    /// does mean.
+    /// </summary>
+    /// <remarks>
+    /// "57" is not what anyone means by the note they are picking and "-3" is not
+    /// what they mean by a millisecond. A count needs no such column — the number is
+    /// already what it stands for — but it lands on whole numbers for the same
+    /// reason a note does.
+    /// </remarks>
+    private static bool Named(PortSpec spec) => spec.Display != PortDisplay.Number;
+
+    /// <summary>A knob's row: the slider, its number, and the reading if it has one.</summary>
+    private static Grid KnobRow(PortSpec spec) => Row(Named(spec) ? "*,84,40" : "*,84");
+
     private static Control Field(string name, Control control)
     {
-        var row = new Grid { ColumnDefinitions = new ColumnDefinitions("78,*") };
+        var row = Row("*");
 
-        var label = new TextBlock
-        {
-            Text = name,
-            FontSize = Text.Body,
-            VerticalAlignment = VerticalAlignment.Center,
-        };
+        var label = Caption(name);
 
         Grid.SetColumn(label, 0);
         Grid.SetColumn(control, 1);
@@ -1059,7 +1047,7 @@ public sealed partial class MainWindow
                  + "carrying the signal you would have plugged in. Patch the socket to read "
                  + "something else instead — unplug it again and this comes back.",
             TextWrapping = TextWrapping.Wrap,
-            Opacity = 0.6,
+            Foreground = Text.Muted,
             FontSize = Text.Body,
             Margin = new Thickness(0, 0, 0, 6),
         };
@@ -1128,7 +1116,7 @@ public sealed partial class MainWindow
         {
             Text = extra.Key,
             FontSize = Text.Micro,
-            Opacity = 0.4,
+            Foreground = Text.Muted,
             Margin = new Thickness(0, 0, 0, 4),
         });
 
@@ -1194,16 +1182,9 @@ public sealed partial class MainWindow
         Action<string> store,
         Func<IReadOnlyList<ChoiceOption>>? fresh = null)
     {
-        var row = new Grid { ColumnDefinitions = new ColumnDefinitions("78,*") };
+        var row = Row("*");
 
-        var caption = new TextBlock
-        {
-            Text = choice.Label,
-            Width = 78,
-            FontSize = Text.Body,
-            VerticalAlignment = VerticalAlignment.Center,
-            TextTrimming = TextTrimming.CharacterEllipsis,
-        };
+        var caption = Caption(choice.Label);
 
         // What is stored is always in the list, whether or not it is here.
         List<ChoiceOption> Offer(IReadOnlyList<ChoiceOption> from)
@@ -1292,16 +1273,9 @@ public sealed partial class MainWindow
     /// <summary>A label and a switch, laid out on the same grid a knob's row uses.</summary>
     private Control ToggleRow(string label, bool value, Action<bool> store)
     {
-        var row = new Grid { ColumnDefinitions = new ColumnDefinitions("78,*") };
+        var row = Row("*");
 
-        var caption = new TextBlock
-        {
-            Text = label,
-            Width = 78,
-            FontSize = Text.Body,
-            VerticalAlignment = VerticalAlignment.Center,
-            TextTrimming = TextTrimming.CharacterEllipsis,
-        };
+        var caption = Caption(label);
 
         var box = new CheckBox { IsChecked = value, VerticalAlignment = VerticalAlignment.Center };
 
@@ -1386,19 +1360,10 @@ public sealed partial class MainWindow
     {
         var chosen = held ?? string.Empty;
 
-        var row = new Grid
-        {
-            ColumnDefinitions = new ColumnDefinitions("78,*,Auto"),
-            Margin = new Thickness(0, 8, 0, 0),
-        };
+        var row = Row("*,Auto");
+        row.Margin = new Thickness(0, 8, 0, 0);
 
-        var caption = new TextBlock
-        {
-            Text = label,
-            Width = 78,
-            FontSize = Text.Body,
-            VerticalAlignment = VerticalAlignment.Center,
-        };
+        var caption = Caption(label);
 
         var name = new TextBlock
         {
@@ -1465,23 +1430,10 @@ public sealed partial class MainWindow
     {
         var connected = editor.Patch.IncomingTo(node.Id, index) is not null;
 
-        var label = new TextBlock
-        {
-            Text = spec.Name,
-            Width = 78,
-            FontSize = Text.Body,
-            VerticalAlignment = VerticalAlignment.Center,
-            TextTrimming = TextTrimming.CharacterEllipsis,
-        };
+        var label = Caption(spec.Name);
+        var named = Named(spec);
 
-        // A knob whose number is not what it means gets a column for what it
-        // does mean, since "57" is not what anyone means by the note they are
-        // picking and "-3" is not what they mean by a millisecond. A count needs
-        // no such column — the number is already what it stands for — but it
-        // lands on whole numbers for the same reason a note does.
-        var named = spec.Display != PortDisplay.Number;
-
-        var row = new Grid { ColumnDefinitions = new ColumnDefinitions(named ? "78,*,84,40" : "78,*,84") };
+        var row = KnobRow(spec);
         Grid.SetColumn(label, 0);
         row.Children.Add(label);
 
@@ -1491,7 +1443,7 @@ public sealed partial class MainWindow
             {
                 Text = "◀ patched",
                 FontSize = Text.Body,
-                Opacity = 0.55,
+                Foreground = Text.Muted,
                 VerticalAlignment = VerticalAlignment.Center,
             };
             Grid.SetColumn(wired, 1);
@@ -1512,7 +1464,7 @@ public sealed partial class MainWindow
             {
                 Text = $"◀ {normalled}, without a wire",
                 FontSize = Text.Body,
-                Opacity = 0.55,
+                Foreground = Text.Muted,
                 VerticalAlignment = VerticalAlignment.Center,
             };
             Grid.SetColumn(implied, 1);
@@ -1561,24 +1513,12 @@ public sealed partial class MainWindow
         string because,
         Action<float> store)
     {
-        // A knob whose number is not what it means gets a column for what it
-        // does mean, since "57" is not what anyone means by the note they are
-        // picking and "-3" is not what they mean by a millisecond. A count needs
-        // no such column — the number is already what it stands for — but it
-        // lands on whole numbers for the same reason a note does.
-        var named = spec.Display != PortDisplay.Number;
+        var named = Named(spec);
         var whole = spec.Stepped;
 
-        var row = new Grid { ColumnDefinitions = new ColumnDefinitions(named ? "78,*,84,40" : "78,*,84") };
+        var row = KnobRow(spec);
 
-        var caption = new TextBlock
-        {
-            Text = label,
-            Width = 78,
-            FontSize = Text.Body,
-            VerticalAlignment = VerticalAlignment.Center,
-            TextTrimming = TextTrimming.CharacterEllipsis,
-        };
+        var caption = Caption(label);
 
         Grid.SetColumn(caption, 0);
         row.Children.Add(caption);
