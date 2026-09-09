@@ -163,6 +163,39 @@ public class PatchHistoryTests
         history.CanUndo.ShouldBeFalse("the whole drag was the one step");
     }
 
+    /// <summary>
+    /// And a gesture that has ended does not go on collecting the ones after it.
+    /// </summary>
+    /// <remarks>
+    /// A name says which gesture an edit belongs to and cannot say when one is
+    /// over: a caller that files its edits under the slider they came from files
+    /// every drag of that slider under the same name. Without somebody saying
+    /// the hand came off, the second drag folds into the first however long ago
+    /// it was, and one press takes back both.
+    /// </remarks>
+    [Fact]
+    public void A_gesture_that_has_ended_does_not_collect_the_next_one()
+    {
+        var patch = Wired(out var source, out _);
+        var history = Opened(patch);
+
+        source.InputValues[0] = 0.5f;
+        history.Record(patch, "the slider");
+
+        history.GestureEnded();
+
+        source.InputValues[0] = 0.75f;
+        history.Record(patch, "the slider").ShouldBeTrue("the drag before this one is over");
+
+        history.Undo().ShouldNotBeNull()
+            .Find(source.Id).ShouldNotBeNull()
+            .InputValues[0].ShouldBe(0.5f, "the second drag is what came back");
+
+        history.Undo().ShouldNotBeNull()
+            .Find(source.Id).ShouldNotBeNull()
+            .InputValues[0].ShouldBe(0.25f);
+    }
+
     [Fact]
     public void Two_gestures_are_two_steps_however_close_together()
     {

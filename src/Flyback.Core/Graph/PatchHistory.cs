@@ -108,6 +108,13 @@ public sealed class PatchHistory(ModuleCatalog? modules = null)
     /// one thing somebody did. Consecutive edits sharing a name are one step, so
     /// undoing a drag returns to before it started rather than to halfway
     /// through it. Null for anything discrete, which is most of it.
+    /// <para>
+    /// A name says which gesture an edit belongs to and cannot say when one is
+    /// over — <see cref="GestureEnded"/> does that. Until it is said, a name
+    /// that comes round again is the same gesture still going on, so a caller
+    /// naming its gestures after the control they came from has to say it or
+    /// every drag of that control will be the one step.
+    /// </para>
     /// </param>
     /// <param name="mark">
     /// Anything the caller keeps beside the patch that this edit also changed,
@@ -181,6 +188,20 @@ public sealed class PatchHistory(ModuleCatalog? modules = null)
 
         this.mark = mark;
     }
+
+    /// <summary>
+    /// The gesture named in the last <see cref="Record"/> is over, so the next
+    /// edit starts a step of its own however it is named.
+    /// </summary>
+    /// <remarks>
+    /// Said by whoever can see the hand come off the control, because nothing
+    /// here can. A name alone cannot tell one drag from the next: the caller
+    /// that files its edits under the slider they came from files every drag of
+    /// that slider under the same name, and without this the second one folds
+    /// into the first however long ago it was — two things somebody did, and one
+    /// press to take both back.
+    /// </remarks>
+    public void GestureEnded() => gesture = null;
 
     /// <summary>The patch as it stood before the last edit, or null where there is none.</summary>
     public Patch? Undo() => Step(past, future);

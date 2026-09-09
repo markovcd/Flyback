@@ -195,13 +195,30 @@ public sealed partial class MainWindow
         // control finished on.
         inspector.AddHandler(
             PointerReleasedEvent,
-            (_, _) => WriteBack(),
+            (_, _) => HandCameOff(),
             RoutingStrategies.Bubble,
             handledEventsToo: true);
 
         // A number typed rather than dragged has no gesture to wait for. It is
         // finished when the box stops being the thing being typed into.
-        inspector.AddHandler(LostFocusEvent, (_, _) => WriteBack(), RoutingStrategies.Bubble);
+        inspector.AddHandler(LostFocusEvent, (_, _) => HandCameOff(), RoutingStrategies.Bubble);
+    }
+
+    /// <summary>
+    /// The hand has come off whatever it was holding in the panel: the gesture
+    /// is over, and what it changed goes into the text.
+    /// </summary>
+    /// <remarks>
+    /// Both halves matter whether or not the text view has ever been opened. The
+    /// canvas files an edit made here under the control it came from, and every
+    /// drag of one slider is that same name — so this is the only thing that can
+    /// tell the history one drag from the next, and without it two of them an
+    /// afternoon apart come back in a single press.
+    /// </remarks>
+    private void HandCameOff()
+    {
+        editor.GestureEnded();
+        WriteBack();
     }
 
     /// <summary>
@@ -461,7 +478,11 @@ public sealed partial class MainWindow
     private void Undo()
     {
         if (Documenting && source.CanUndo) source.Undo();
-        else if (editor.Undo()) Stepped();
+        else if (editor.Undo())
+        {
+            Owed(-1);
+            Stepped();
+        }
 
         RefreshEditState();
     }
@@ -469,9 +490,29 @@ public sealed partial class MainWindow
     private void Redo()
     {
         if (Documenting && source.CanRedo) source.Redo();
-        else if (editor.Redo()) Stepped();
+        else if (editor.Redo())
+        {
+            Owed(1);
+            Stepped();
+        }
 
         RefreshEditState();
+    }
+
+    /// <summary>
+    /// Counts a canvas step that this gesture took back or put again without the
+    /// text's stack being involved.
+    /// </summary>
+    /// <remarks>
+    /// A step reached this way is one that stack had not been told about, or the
+    /// gesture would have landed there instead of falling through to the canvas.
+    /// Left counted, the next write-back would put it on that stack as well —
+    /// and one press there would then take back two edits, the second of them
+    /// one somebody had already taken back by hand.
+    /// </remarks>
+    private void Owed(int steps)
+    {
+        if (sourceOwned) unstacked = Math.Max(0, unstacked + steps);
     }
 
     /// <summary>
@@ -817,9 +858,15 @@ public sealed partial class MainWindow
         if (!sourceOwned) return;
 
         // Nothing has been typed and nothing has been drawn, so there is nothing
-        // to lose yet — the same state that picking a preset on the canvas
-        // leaves, and the title should not claim otherwise.
-        editor.MarkSaved();
+        // to lose yet and nothing to take back — the same state that picking a
+        // preset on the canvas leaves. The evaluation above is how the patch
+        // arrived rather than an edit anybody made to it, so both stacks forget
+        // it: left on the canvas's, one press would undo the arrival and hand
+        // back the patch that was open before the preset was picked, and left
+        // on the text's it would be a lit button that walks a step no longer
+        // there.
+        editor.MarkOpened();
+        source.ForgetSteps();
         MarkSourceSaved();
         RefreshEditState();
 

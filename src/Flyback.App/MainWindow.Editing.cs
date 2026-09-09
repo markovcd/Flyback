@@ -87,16 +87,29 @@ public sealed partial class MainWindow
     /// </summary>
     private async Task<bool> MayReplaceThePatchAsync()
     {
-        // Typing that has not been applied is the one thing the editor's history
-        // cannot know about: nothing typed reaches the patch until somebody
-        // asks for it, so a document whose text has moved on has something to
-        // lose even where its patch has not.
-        if (!editor.IsModified && !SourceIsUnapplied) return true;
+        if (!SomethingToLose) return true;
 
         return await AnsweredAsync(
             "Unsaved changes",
             "This patch has changes that have not been saved. Closing it now would lose them.");
     }
+
+    /// <summary>
+    /// Whether this document has anything in it that closing would lose.
+    /// </summary>
+    /// <remarks>
+    /// Two halves, because there are two places work can be. Typing that has not
+    /// been applied is the one the editor's history cannot know about: nothing
+    /// typed reaches the patch until somebody asks for it, so a document whose
+    /// text has moved on has something to lose even where its patch has not.
+    /// <para>
+    /// Asked by the question, by the close that puts it up and by the dot in the
+    /// title, so that the three cannot come to disagree — a title saying there is
+    /// nothing to lose over a dialog insisting there is would leave nobody sure
+    /// which to believe.
+    /// </para>
+    /// </remarks>
+    private bool SomethingToLose => editor.IsModified || SourceIsUnapplied;
 
     /// <summary>
     /// Whether text about to stop being the document may go. Asks only about
@@ -223,7 +236,7 @@ public sealed partial class MainWindow
             return;
         }
 
-        if (!editor.IsModified) return;
+        if (!SomethingToLose) return;
 
         e.Cancel = true;
 
@@ -425,6 +438,6 @@ public sealed partial class MainWindow
 
         // A dot rather than the word, because the title bar is read at a glance
         // and the question it answers is only whether there is anything to lose.
-        Title = editor.IsModified ? named + " •" : named;
+        Title = SomethingToLose ? named + " •" : named;
     }
 }

@@ -215,4 +215,63 @@ public class InspectorWiringTests : UiTest
         All<Slider>(window).ShouldContain(knob);
         sine.InputValues[1].ShouldBe((float)(was + 0.25), 0.001f);
     }
+
+    /// <summary>Lets go of the pointer over a control, which is what ends a gesture.</summary>
+    private static void Release(Control over) =>
+        over.RaiseEvent(new PointerReleasedEventArgs(
+            over,
+            new Pointer(0, PointerType.Mouse, true),
+            over,
+            default,
+            0,
+            default,
+            KeyModifiers.None,
+            MouseButton.Left)
+        {
+            RoutedEvent = InputElement.PointerReleasedEvent,
+        });
+
+    /// <summary>
+    /// Two drags of one knob are two things somebody did, so one press takes
+    /// back one of them.
+    /// </summary>
+    /// <remarks>
+    /// The frames of a single drag fold into one step, and the panel names the
+    /// gesture they fold under after the control they came from — so every drag
+    /// of this slider carries the same name. What tells them apart is the hand
+    /// coming off between the two: without it the second drag joins the first
+    /// and a single press takes back both, losing an edit somebody never asked
+    /// to lose.
+    /// </remarks>
+    [AvaloniaFact]
+    public void Two_drags_of_one_knob_come_back_one_at_a_time()
+    {
+        var (patch, sine, _) = Board();
+        var window = Open(patch);
+
+        Select(window, sine);
+
+        var knob = All<Slider>(window).First();
+        var was = (float)knob.Value;
+
+        knob.Value = was + 0.25;
+        Settle(window);
+        Release(knob);
+        Settle(window);
+
+        knob.Value = was + 0.5;
+        Settle(window);
+        Release(knob);
+        Settle(window);
+
+        Editor(window).Undo().ShouldBeTrue();
+
+        Editor(window).Patch.Find(sine.Id).ShouldNotBeNull()
+            .InputValues[1].ShouldBe(was + 0.25f, 0.001f, "the second drag is what came back");
+
+        Editor(window).Undo().ShouldBeTrue("and the first is still there to take back");
+
+        Editor(window).Patch.Find(sine.Id).ShouldNotBeNull()
+            .InputValues[1].ShouldBe(was, 0.001f);
+    }
 }

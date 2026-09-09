@@ -1,4 +1,5 @@
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Headless.XUnit;
 using Avalonia.Threading;
 using Flyback.App.Controls;
@@ -114,4 +115,45 @@ public class WindowTitleTests : UiTest
         window.Title.ShouldNotBe(first);
         window.Title.ShouldBe($"{(presets.SelectedItem as PatchPreset)?.Name} — {Program}");
     }
+
+    /// <summary>
+    /// Typing that is nowhere but the buffer marks the title too.
+    /// </summary>
+    /// <remarks>
+    /// The patch has not moved — nothing typed reaches it until somebody applies
+    /// it — so the canvas's history has nothing to report, and the dot asked only
+    /// that question used to say a document with an afternoon of writing in it
+    /// had nothing to lose. It is the same question the unsaved dialog asks when
+    /// that window is closed, and the two must not disagree.
+    /// </remarks>
+    [AvaloniaFact]
+    public void Typing_that_is_nowhere_else_marks_the_title()
+    {
+        var window = Open();
+
+        // Picked from the text view, which reads it into text and leaves the
+        // text the document with nothing in it to lose.
+        Coding(window).IsChecked = true;
+        Settle(window);
+
+        PresetList(window).SelectedIndex = 1;
+        Settle(window);
+
+        var named = window.Title.ShouldNotBeNull();
+
+        named.ShouldNotEndWith("•");
+
+        // Through the document, which is what typing is — assigning the text
+        // loads one instead, and a document that was loaded is not typing.
+        Writing(window).Document.Insert(0, "# a note to myself\n");
+        Settle(window);
+
+        window.Title.ShouldBe(named + " •");
+    }
+
+    private static ToggleButton Coding(MainWindow window) =>
+        All<ToggleButton>(window).Single(b => b.Name == "code");
+
+    private static AvaloniaEdit.TextEditor Writing(MainWindow window) =>
+        All<AvaloniaEdit.TextEditor>(window).Single(b => b.Name == "source");
 }

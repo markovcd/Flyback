@@ -1134,13 +1134,11 @@ public sealed partial class MainWindow
         ExtraField.Toggle toggle => ToggleRow(
             field.Label,
             toggle.Value(node.StateOf(extra.Key)?[field.Key]),
-            $"{node.Id} {extra.Key} {field.Key}",
             next => Store(node, extra, field, JsonValue.Create(next))),
 
         ExtraField.Choice choice => ChoiceRow(
             choice,
             choice.Value(node.StateOf(extra.Key)?[field.Key]),
-            $"{node.Id} {extra.Key} {field.Key}",
             next => Store(node, extra, field, JsonValue.Create(next)),
 
             // What the same field would say if asked again. An extra is free to
@@ -1176,7 +1174,6 @@ public sealed partial class MainWindow
     private Control ChoiceRow(
         ExtraField.Choice choice,
         string value,
-        string because,
         Action<string> store,
         Func<IReadOnlyList<ChoiceOption>>? fresh = null)
     {
@@ -1218,8 +1215,12 @@ public sealed partial class MainWindow
         {
             if (list.SelectedItem is not ChoiceOption picked || picked.Id == value) return;
 
+            // Discrete, so it names no gesture: picking again is picking again
+            // rather than one pick going on. Named, two of them would fold into
+            // one step — and a pick that came back to where it started would
+            // leave a step that puts nothing back.
             store(picked.Id);
-            editor.NotifyPatchChanged(because);
+            editor.NotifyPatchChanged();
         };
 
         if (fresh is not null)
@@ -1272,7 +1273,7 @@ public sealed partial class MainWindow
     }
 
     /// <summary>A label and a switch, laid out on the same grid a knob's row uses.</summary>
-    private Control ToggleRow(string label, bool value, string because, Action<bool> store)
+    private Control ToggleRow(string label, bool value, Action<bool> store)
     {
         var row = new Grid { ColumnDefinitions = new ColumnDefinitions("78,*") };
 
@@ -1289,8 +1290,11 @@ public sealed partial class MainWindow
 
         box.IsCheckedChanged += (_, _) =>
         {
+            // Discrete, for the reason a picker is: on and off again are two
+            // things done rather than one held down, and folding them would
+            // leave a step whose patch is the one already showing.
             store(box.IsChecked == true);
-            editor.NotifyPatchChanged(because);
+            editor.NotifyPatchChanged();
         };
 
         Grid.SetColumn(caption, 0);

@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
@@ -71,6 +72,46 @@ public class UnsavedDialogTests : UiTest
 
         button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();
+    }
+
+    /// <summary>
+    /// Typing that was never applied is asked about too.
+    /// </summary>
+    /// <remarks>
+    /// It is the one thing the canvas's history cannot know about: nothing typed
+    /// reaches the patch until somebody asks for it, so a window holding an
+    /// afternoon of writing over a patch nobody touched used to close without a
+    /// word. Picking a preset in the same state has always asked, which is what
+    /// made the silence on the way out a bug rather than a policy.
+    /// </remarks>
+    [AvaloniaFact]
+    public void Closing_over_typing_that_was_never_applied_asks_as_well()
+    {
+        var window = new MainWindow();
+
+        window.Show();
+        Settle(window);
+
+        // Read into text, which is what picking a preset from the text view
+        // does: the text is the document from here, with nothing in it to lose.
+        All<ToggleButton>(window).Single(b => b.Name == "code").IsChecked = true;
+        Settle(window);
+
+        All<ComboBox>(window).First(box => box.Name == "presets").SelectedIndex = 1;
+        Settle(window);
+
+        All<NodeEditor>(window).Single().IsModified
+            .ShouldBeFalse("the patch itself is untouched, which is the whole point");
+
+        // Through the document, which is what typing is.
+        All<AvaloniaEdit.TextEditor>(window).Single(b => b.Name == "source")
+            .Document.Insert(0, "# a note to myself\n");
+
+        Settle(window);
+
+        window.Close();
+
+        Words(Asking(window)).ShouldContain("Unsaved changes");
     }
 
     [AvaloniaFact]

@@ -381,6 +381,14 @@ public sealed partial class MainWindow : Window
             patch =>
             {
                 editor.ApplyEdit(patch);
+
+                // And on the text's stack, where the document's history is while
+                // the text owns the patch. Nothing here waits for a write-back
+                // the way a knob does — what the assistant hands over is whole
+                // when it lands — and a step left off that stack is one a later,
+                // unrelated gesture would take back along with its own.
+                RememberPatchSteps();
+
                 preview.Rewind();
             },
             // Wrapped rather than handed over as it stands, because the third

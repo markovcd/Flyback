@@ -457,6 +457,37 @@ public sealed class NodeEditor : Control
         HistoryChanged?.Invoke(this, EventArgs.Empty);
     }
 
+    /// <summary>
+    /// The patch as it stands is a document that has just arrived, so there is
+    /// nothing behind it and nothing in it left to lose — which is what the
+    /// <see cref="Patch"/> setter says of a patch it is handed.
+    /// </summary>
+    /// <remarks>
+    /// For the caller that put the document here itself, through an edit,
+    /// because it had to build the patch before it could know what it was.
+    /// Going through the setter again would show the same patch a second time
+    /// and ask everything downstream to make it afresh; what is actually wrong
+    /// is the history alone, holding a step for an arrival rather than for
+    /// something somebody did.
+    /// </remarks>
+    public void MarkOpened()
+    {
+        history.Opened(patch, Mark);
+        HistoryChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>
+    /// The hand has come off whatever it was holding, so the next edit starts a
+    /// step of its own rather than folding into the one before it.
+    /// </summary>
+    /// <remarks>
+    /// For the gestures this canvas does not make itself. Its own — a wire being
+    /// re-patched — number themselves and need nothing said, but an edit filed
+    /// under a control in the panel is named after that control, and every drag
+    /// of one slider is the same name. Somebody outside can see the hand let go;
+    /// the history cannot.
+    /// </remarks>
+    public void GestureEnded() => history.GestureEnded();
 
     /// <summary>
     /// Call after editing a node from outside the canvas, e.g. the inspector.

@@ -362,6 +362,39 @@ public class SourceViewTests : UiTest
     }
 
     /// <summary>
+    /// And with nothing to take back either. The evaluation that read it in is
+    /// how the preset arrived, not something somebody did to it, so undo has to
+    /// stop here — one that walked past it would take the arrival back and put
+    /// the canvas up holding the patch from before the preset was picked, which
+    /// is not a step anybody asked for.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_preset_read_into_text_has_nothing_to_take_back()
+    {
+        var window = Open();
+
+        ShowCode(window);
+
+        Presets(window).SelectedIndex = 1;
+        Settle(window);
+
+        Undo(window).IsEnabled.ShouldBeFalse("nothing has been done to this patch yet");
+
+        var read = Text(window).Text;
+        var modules = Editor(window).Patch.Nodes.Count;
+
+        // Pressed anyway, since the two stacks are what answer for the gesture
+        // and a button that only looks off would still be answered by them.
+        Press(Undo(window));
+        Settle(window);
+
+        Text(window).IsVisible.ShouldBeTrue("undo has nowhere to go, so the view does not move");
+        Text(window).Text.ShouldBe(read);
+        Editor(window).Patch.Nodes.Count.ShouldBe(modules);
+        Editor(window).Locked.ShouldBeTrue("the text is still the document");
+    }
+
+    /// <summary>
     /// A preset picked from the canvas is still the graph's, which is the case
     /// ADR-0068 settled and this does not disturb.
     /// </summary>
@@ -589,6 +622,95 @@ public class SourceViewTests : UiTest
         Settle(window);
 
         text.Text.ShouldStartWith("# a note to myself");
+    }
+
+    /// <summary>Types a run of characters, one keystroke at a time.</summary>
+    /// <remarks>
+    /// Through the keyboard rather than into the document, because grouping a
+    /// run of typing is something done to keystrokes: text put straight into the
+    /// document is not typing and is one edit already.
+    /// </remarks>
+    private static void Type(MainWindow window, string said)
+    {
+        foreach (var letter in said)
+        {
+            window.KeyTextInput(letter.ToString());
+            Dispatcher.UIThread.RunJobs();
+        }
+
+        Settle(window);
+    }
+
+    /// <summary>
+    /// A run of typing comes back a word at a time, the way it does in every
+    /// other editor.
+    /// </summary>
+    /// <remarks>
+    /// The stack underneath takes an operation per change to the document, and a
+    /// change is a keystroke — so a sentence used to come back one letter at a
+    /// time, which is nobody's idea of Ctrl+Z. The run is grouped as it is typed
+    /// and the space that ends a word belongs to the word, so what a press
+    /// leaves is the line as it stood before that word rather than the word with
+    /// its space still after it.
+    /// </remarks>
+    [AvaloniaFact]
+    public void A_run_of_typing_comes_back_a_word_at_a_time()
+    {
+        var window = Open();
+        var text = ShowCode(window);
+
+        var printing = text.Text;
+
+        text.TextArea.Focus();
+        text.CaretOffset = 0;
+        Settle(window);
+
+        Type(window, "hello world");
+
+        text.Text.ShouldStartWith("hello world");
+
+        Press(Undo(window));
+        Settle(window);
+
+        text.Text.ShouldStartWith("hello ", customMessage: "the last word is what one press takes back");
+        text.Text.ShouldNotStartWith("hello w");
+
+        Press(Undo(window));
+        Settle(window);
+
+        text.Text.ShouldBe(printing, "and the first word after it");
+    }
+
+    /// <summary>
+    /// A word typed after something that is not typing is a step of its own.
+    /// </summary>
+    /// <remarks>
+    /// The run is a run of keystrokes and nothing else. Anything else that moves
+    /// the text — a value written back from the panel, a document loaded, an
+    /// undo — ends it, or a word would fold into an edit nobody typed and one
+    /// press would take back both.
+    /// </remarks>
+    [AvaloniaFact]
+    public void Typing_does_not_join_what_was_not_typed()
+    {
+        var window = Open();
+        var text = ShowCode(window);
+
+        text.TextArea.Focus();
+        text.CaretOffset = 0;
+        Settle(window);
+
+        // Not typing: put in as one edit, the way the panel writes a knob back.
+        text.Document.Insert(0, "# ");
+        Settle(window);
+
+        Type(window, "note");
+
+        Press(Undo(window));
+        Settle(window);
+
+        text.Text.ShouldStartWith("# ", customMessage: "the word came back on its own");
+        text.Text.ShouldNotStartWith("# n");
     }
 
     /// <summary>

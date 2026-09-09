@@ -122,6 +122,16 @@ internal sealed class SourceView : UserControl
         IsVisible = false,
     };
 
+    /// <summary>
+    /// Whether a character is being typed at this instant — whether, that is,
+    /// the change and the caret move about to happen are that character's rather
+    /// than somebody else's.
+    /// </summary>
+    private bool typing;
+
+    /// <summary>Whether the next character typed joins the step the last one made.</summary>
+    private bool joining;
+
     public SourceView()
     {
         complaintsScroll.Content = complaints;
@@ -150,14 +160,41 @@ internal sealed class SourceView : UserControl
         // ordinary way is never reached. Tunnelling gets there first.
         text.AddHandler(KeyDownEvent, Applied, RoutingStrategies.Tunnel);
 
+        // A run of typing is one thing to take back, the way it is in every
+        // other editor. The stack takes an operation per change and a change is
+        // a keystroke, so without this a sentence comes back a letter at a time.
+        //
+        // Caught either side of the keystroke — on the way down to open the step
+        // and on the way back up to close it — because the editor makes the
+        // change in between. A group left open across two keystrokes would be
+        // one no undo could be pressed inside, and this way none ever is.
+        text.TextArea.AddHandler(TextInputEvent, Typing, RoutingStrategies.Tunnel);
+        text.AddHandler(TextInputEvent, Typed, RoutingStrategies.Bubble, handledEventsToo: true);
+
         // What the toolbar's undo and redo may do changes with every keystroke,
-        // and nothing else here would notice.
-        text.TextChanged += (_, _) => Changed?.Invoke(this, EventArgs.Empty);
+        // and nothing else here would notice. And anything that moved the text
+        // other than a keystroke ends the run — a deletion, an undo, a value
+        // written back, a document loaded — said by watching rather than by
+        // listing them, so a way of changing the text nobody thought of here
+        // ends the run rather than quietly joining it.
+        text.TextChanged += (_, _) =>
+        {
+            if (!typing) joining = false;
+
+            Changed?.Invoke(this, EventArgs.Empty);
+        };
 
         // Every move, because what listens works in offsets and a statement is
         // no longer the unit: four modules can share one line, and the caret
-        // stepping from one to the next is a different module each time.
-        text.TextArea.Caret.PositionChanged += (_, _) => Moved?.Invoke(this, Caret);
+        // stepping from one to the next is a different module each time. A move
+        // that is not a keystroke's ends the run of typing besides: somebody who
+        // clicked somewhere else is writing somewhere else.
+        text.TextArea.Caret.PositionChanged += (_, _) =>
+        {
+            if (!typing) joining = false;
+
+            Moved?.Invoke(this, Caret);
+        };
 
         var apply = new Button
         {
@@ -207,6 +244,41 @@ internal sealed class SourceView : UserControl
 
         Content = rows;
         Say(null);
+    }
+
+    /// <summary>
+    /// A character is on its way in: it joins the step the character before it
+    /// made, or begins one of its own.
+    /// </summary>
+    /// <remarks>
+    /// A word is the unit, and the space that ends one belongs to it — taking a
+    /// run back should leave the line as it was before the word rather than
+    /// leave the word's trailing space behind — so whitespace joins the run and
+    /// then ends it.
+    /// </remarks>
+    private void Typing(object? sender, TextInputEventArgs e)
+    {
+        if (text.Document is not { } document) return;
+
+        typing = true;
+
+        if (joining) document.UndoStack.StartContinuedUndoGroup();
+        else document.UndoStack.StartUndoGroup();
+
+        joining = !string.IsNullOrWhiteSpace(e.Text);
+    }
+
+    /// <summary>The character is in, so the step it belongs to is closed again.</summary>
+    /// <remarks>
+    /// <see cref="typing"/> says whether there is a group to close: an input that
+    /// arrived before there was a document to put it in opened none.
+    /// </remarks>
+    private void Typed(object? sender, TextInputEventArgs e)
+    {
+        if (!typing) return;
+
+        typing = false;
+        text.Document?.UndoStack.EndUndoGroup();
     }
 
     private void Applied(object? sender, KeyEventArgs e)
@@ -311,8 +383,15 @@ internal sealed class SourceView : UserControl
     /// put back in that order by guessing when each step happened — where one
     /// stack knows, having been there.
     /// </remarks>
-    public void Remember(Action undone, Action redone) =>
+    public void Remember(Action undone, Action redone)
+    {
+        // And typing does not join it. What goes on the stack here is not a
+        // character somebody typed, and the next one that is starts a step of
+        // its own rather than folding a knob into a word.
+        joining = false;
+
         text.Document?.UndoStack.Push(new Deed(undone, redone));
+    }
 
     /// <summary>
     /// Makes everything done before this is disposed one thing to take back,
