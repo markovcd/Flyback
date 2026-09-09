@@ -65,6 +65,17 @@ public sealed partial class MainWindow
     private SourceMap map = SourceMap.Empty;
 
     /// <summary>
+    /// The patch the text builds as it now stands, or null where the text is a
+    /// printing and builds nothing.
+    /// </summary>
+    /// <remarks>
+    /// Kept beside the map because the map's names are this patch's, and the
+    /// patch on the canvas is a different one whenever the text has moved on
+    /// from what was last applied — see <see cref="Adrift"/>.
+    /// </remarks>
+    private Patch? means;
+
+    /// <summary>
     /// The text <see cref="map"/> was made from, or null for no map at all.
     /// </summary>
     /// <remarks>
@@ -248,11 +259,25 @@ public sealed partial class MainWindow
 
             var text = source.Source;
 
-            map = sourceOwned
-                ? PatchLanguage.Build(text).Map
-                : printed == text
+            if (sourceOwned)
+            {
+                // The patch this text describes, which is not always the patch
+                // on the canvas — see Adrift.
+                var load = PatchLanguage.Build(text);
+
+                map = load.Map;
+                means = load.Patch;
+            }
+            else
+            {
+                map = printed == text
                     ? PatchPrinter.Locate(editor.Patch, text, printedOrder)
                     : SourceMap.Empty;
+
+                // A printing is made from the patch on the canvas, so the two
+                // cannot disagree and there is nothing to hold beside it.
+                means = null;
+            }
 
             mapped = text;
 
@@ -261,20 +286,74 @@ public sealed partial class MainWindow
     }
 
     /// <summary>
+    /// Whether the caret is standing on a module the patch on the canvas has
+    /// moved on from, so that the panel has nothing honest to show for it.
+    /// </summary>
+    /// <remarks>
+    /// Read by the panel, which says so where it would otherwise sit empty and
+    /// leave somebody clicking at a word that answers nothing.
+    /// </remarks>
+    private bool adrift;
+
+    /// <summary>
     /// Points the inspector at the module the caret is standing in.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// The same panel the canvas points, because it is the same selection: what
     /// a person is looking at in one view is what the other should be about. A
     /// caret on a word that names no module selects none, which is honest — the
     /// space between two statements is not a module.
+    /// </para>
+    /// <para>
+    /// And a word the patch has moved on from selects none either, which is the
+    /// same honesty with something to say for itself — see <see cref="Adrift"/>.
+    /// </para>
     /// </remarks>
     private void PointAt(int at)
     {
         if (!showingCode || writingBack) return;
 
-        editor.Select(Map.At(at));
+        var named = Map.At(at);
+        var lost = named is { } id && Adrift(id);
+
+        // Before the selection, because changing it is what rebuilds the panel
+        // and the panel reads this on the way past.
+        var moved = lost != adrift;
+
+        adrift = lost;
+
+        editor.Select(lost ? null : named);
+
+        // And where the selection did not change — a caret moving between two
+        // words the patch has both moved on from — the panel is asked again
+        // anyway, since what it has to say has changed even though what is
+        // selected has not.
+        if (moved && editor.SelectedNode is null) BuildInspector();
     }
+
+    /// <summary>
+    /// Whether the module the text means by <paramref name="id"/> is not the one
+    /// the canvas has under that name.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The binder names a module after where it stands, so a module typed in
+    /// ahead of another renames that other one. Between an edit and the apply
+    /// that answers for it — and for one press after an undo takes that apply
+    /// back, which leaves the text ahead of the patch on purpose — the names in
+    /// the text are not the names on the canvas. A name that is simply not there
+    /// pointed the panel at nothing; a name that is there and means something
+    /// else pointed it at the wrong module, which is worse for being quiet.
+    /// </para>
+    /// <para>
+    /// The type is what is compared, which catches everything but a module
+    /// swapped for another of its own kind — and that one costs nothing, since
+    /// what the panel would show is the same row of knobs either way.
+    /// </para>
+    /// </remarks>
+    private bool Adrift(Guid id) =>
+        means is { } text && text.Find(id)?.TypeId != editor.Patch.Find(id)?.TypeId;
 
     /// <summary>Notes a knob the panel has just turned, for the next write-back.</summary>
     private void Turned(Guid node, int port) => turned.Add((node, port));
@@ -816,7 +895,17 @@ public sealed partial class MainWindow
         mapped = source.Source;
         map = load.Map;
 
+        // The patch those names are of, which is now also the patch on the
+        // canvas: applying is what puts the two back in step.
+        means = load.Patch;
+
         RefreshOwnership();
+
+        // And the panel is pointed afresh, because what it could not show a
+        // moment ago it can show now. Without this it would go on saying the
+        // text had moved on from the patch until somebody moved the caret to
+        // ask again — over a patch this text had just been built into.
+        PointAt(source.Caret);
 
         var total = load.Patch.Nodes.Count;
 
@@ -999,6 +1088,7 @@ public sealed partial class MainWindow
     {
         map = SourceMap.Empty;
         mapped = null;
+        means = null;
         turned.Clear();
         unstacked = 0;
     }

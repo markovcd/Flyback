@@ -985,6 +985,127 @@ public class SourceViewTests : UiTest
         editor.SelectedNode.ShouldNotBeNull();
     }
 
+    /// <summary>Everything the panel is saying, for the states where it says something.</summary>
+    private static string Panel(MainWindow window) =>
+        string.Join(" ", All<TextBlock>(Inspector(window)).Select(block => block.Text));
+
+    /// <summary>
+    /// The panel says why it has nothing, for a caret on a module the patch has
+    /// moved on from.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The code names a module by where it stands, so a module typed in ahead of
+    /// another gives that other one a new name. Between the edit and the apply
+    /// that answers for it — and for one press after an undo takes that apply
+    /// back, since the apply comes back before the typing that led to it — the
+    /// names in the text are not the names on the canvas.
+    /// </para>
+    /// <para>
+    /// A panel that went quiet there could not be told apart from a caret in the
+    /// wrong place, which is a bug report about the panel rather than a sentence
+    /// about the patch.
+    /// </para>
+    /// </remarks>
+    [AvaloniaFact]
+    public void A_caret_on_a_module_the_patch_has_moved_on_from_says_so()
+    {
+        var window = Open();
+        var text = ShowCode(window);
+
+        Evaluate(window, "atan2(a: 0.25) |> out.left");
+
+        Click(window, "atan2");
+        Editor(window).SelectedNode.ShouldNotBeNull("the caret points the panel to begin with");
+
+        // Typed in ahead of it, which is what gives the atan2 a new name.
+        text.Document.Insert(0, "t |> sine(freq: 2) |> ");
+        Settle(window);
+
+        Press(Apply(window));
+        Settle(window);
+
+        Click(window, "atan2");
+        Editor(window).SelectedNode.ShouldNotBeNull("applied, so the two agree again");
+
+        Press(Undo(window));
+        Settle(window);
+
+        Click(window, "atan2");
+
+        Editor(window).SelectedNode.ShouldBeNull("the patch that came back has no such module");
+        Panel(window).ShouldContain("moved on from the patch");
+
+        // And the way out is said as well as the reason.
+        Panel(window).ShouldContain("Apply");
+    }
+
+    /// <summary>
+    /// And a word whose name the patch does know, but for a different module, is
+    /// refused too.
+    /// </summary>
+    /// <remarks>
+    /// The worse half of the same thing. A name that has moved from one module
+    /// to another is still a name the patch has, so the panel filled with
+    /// somebody else's knobs and said nothing about it — the caret on the module
+    /// that was typed in pointed at the one it renamed.
+    /// </remarks>
+    [AvaloniaFact]
+    public void A_name_that_now_means_another_module_is_refused_as_well()
+    {
+        var window = Open();
+        var text = ShowCode(window);
+
+        Evaluate(window, "atan2(a: 0.25) |> out.left");
+
+        text.Document.Insert(0, "t |> sine(freq: 2) |> ");
+        Settle(window);
+
+        Press(Apply(window));
+        Settle(window);
+
+        Press(Undo(window));
+        Settle(window);
+
+        // The sine stands where the atan2 stood, so it carries the name the
+        // patch still has for the atan2.
+        Click(window, "sine");
+
+        Editor(window).SelectedNode.ShouldBeNull("that name means another module now");
+        Panel(window).ShouldContain("moved on from the patch");
+    }
+
+    /// <summary>
+    /// An edit that renames nothing leaves the panel following as it was.
+    /// </summary>
+    /// <remarks>
+    /// Which is most editing. A number changed where the text already says it
+    /// moves no module, so every name in the text is still the name on the
+    /// canvas and there is nothing to warn about — a panel that stopped for this
+    /// would stop for everything.
+    /// </remarks>
+    [AvaloniaFact]
+    public void An_edit_that_renames_nothing_leaves_the_panel_following()
+    {
+        var window = Open();
+        var text = ShowCode(window);
+
+        Evaluate(window, "atan2(a: 0.25) |> out.left");
+
+        text.Document.Replace(text.Text.IndexOf("0.25", StringComparison.Ordinal), 4, "0.75");
+        Settle(window);
+
+        Press(Apply(window));
+        Settle(window);
+
+        Press(Undo(window));
+        Settle(window);
+
+        Click(window, "atan2");
+
+        Editor(window).SelectedNode.ShouldNotBeNull("nothing was renamed, so the name still means it");
+    }
+
     /// <summary>The one knob the patches used here have.</summary>
     private static float Knob(MainWindow window) =>
         Editor(window).Patch.Nodes.Single(node => node.TypeId == "math.atan2").InputValues[0];

@@ -85,6 +85,23 @@ public sealed partial class MainWindow
         + "Ctrl+click adds to a selection, Ctrl+A takes everything.\n"
         + "Ctrl+C copies what is selected, Ctrl+F frames the patch.";
 
+    /// <summary>
+    /// What the panel says for a caret standing on a module the patch has moved
+    /// on from — see <see cref="Adrift"/>.
+    /// </summary>
+    /// <remarks>
+    /// Said rather than left blank. The panel following the caret is how
+    /// somebody works in the text view, and one that quietly stops has no way of
+    /// being told apart from a caret in the wrong place — which is a bug report
+    /// about the panel rather than a sentence about the patch.
+    /// </remarks>
+    private const string Adrifting =
+        "The text has moved on from the patch that is playing, so this module is not "
+        + "there to edit yet — the code names a module by where it stands, and something "
+        + "typed in ahead of this one gives it a new name.\n\n"
+        + "Apply the text to catch the patch up, or take the edit back. Modules the "
+        + "edit did not move are still here to select.";
+
     private static readonly (string Label, PixelSize Size)[] Resolutions =
     [
         ("320 x 180", new PixelSize(320, 180)),
@@ -345,7 +362,7 @@ public sealed partial class MainWindow
         {
             inspector.Children.Add(new TextBlock
             {
-                Text = editor.Locked ? LockedHelp : Help,
+                Text = adrift ? Adrifting : editor.Locked ? LockedHelp : Help,
                 TextWrapping = TextWrapping.Wrap,
                 Opacity = 0.5,
                 FontSize = 12,
