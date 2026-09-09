@@ -158,8 +158,8 @@ internal sealed class StepList
             {
                 Text = "No notes yet — the sequencer holds still until it has one.",
                 TextWrapping = TextWrapping.Wrap,
-                FontSize = 11,
-                Opacity = 0.5,
+                FontSize = Text.Small,
+                Foreground = Text.Muted,
                 Margin = new Thickness(2, 4, 2, 0),
             });
     }
@@ -263,7 +263,7 @@ internal sealed class StepList
             // with nothing to fall back to, any bare Linux one, that glyph draws
             // nothing at all. This one is visible everywhere the program runs.
             Text = "≡",
-            FontSize = 13,
+            FontSize = Text.Emphasis,
             Foreground = Faint,
             VerticalAlignment = VerticalAlignment.Center,
             Cursor = new Cursor(StandardCursorType.SizeAll),
@@ -301,7 +301,7 @@ internal sealed class StepList
         var remove = new Button
         {
             Content = "✕",
-            FontSize = 10,
+            FontSize = Text.Caption,
             Padding = new Thickness(0),
             Width = 18,
             Height = 18,
@@ -326,8 +326,8 @@ internal sealed class StepList
         row.Children.Add(Column(new TextBlock
         {
             Text = (index + 1).ToString(),
-            FontSize = 10.5,
-            Opacity = 0.4,
+            FontSize = Text.Caption,
+            Foreground = Text.Muted,
             VerticalAlignment = VerticalAlignment.Center,
         }, column++));
 
@@ -337,7 +337,7 @@ internal sealed class StepList
             row.Children.Add(Column(new TextBlock
             {
                 Text = spec.AsPort.Format(step.Value),
-                FontSize = 11.5,
+                FontSize = Text.Body,
                 Opacity = 0.75,
                 Margin = new Thickness(5, 0, 0, 0),
                 VerticalAlignment = VerticalAlignment.Center,
@@ -366,7 +366,7 @@ internal sealed class StepList
             Maximum = (decimal)max,
             Increment = increment,
             FormatString = format,
-            FontSize = 11.5,
+            FontSize = Text.Body,
             Margin = new Thickness(0, 0, 5, 0),
             ShowButtonSpinner = false,
             VerticalAlignment = VerticalAlignment.Center,
@@ -469,8 +469,8 @@ internal sealed class StepList
     private static TextBlock Label(string text) => new()
     {
         Text = text,
-        FontSize = 9.5,
-        Opacity = 0.4,
+        FontSize = Text.Micro,
+        Foreground = Text.Muted,
         VerticalAlignment = VerticalAlignment.Bottom,
     };
 }

@@ -512,7 +512,7 @@ public class AssistantPanelTests : UiTest
     /// </summary>
     /// <remarks>
     /// The bug this was written for: the amber branch wrote the excuse and the
-    /// branch under it wrote only the colour, so a panel that had once had no
+    /// branch under it wrote only the color, so a panel that had once had no
     /// key went on saying "No key yet" in grey over every key that arrived
     /// afterwards — which reads as the key having been thrown away.
     /// </remarks>

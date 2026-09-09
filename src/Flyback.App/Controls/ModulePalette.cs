@@ -66,7 +66,7 @@ public sealed class ModulePalette : UserControl
     {
         PlaceholderText = "Filter modules",
         Margin = new Thickness(0, 0, 0, 2),
-        FontSize = 12,
+        FontSize = Text.Body,
     };
 
     /// <summary>
@@ -76,7 +76,7 @@ public sealed class ModulePalette : UserControl
     /// </summary>
     private readonly Button sources = new()
     {
-        FontSize = 11.5,
+        FontSize = Text.Body,
         Padding = new Thickness(6, 2),
         HorizontalAlignment = HorizontalAlignment.Stretch,
         HorizontalContentAlignment = HorizontalAlignment.Left,
@@ -207,7 +207,7 @@ public sealed class ModulePalette : UserControl
         foreach (var provider in catalog.Providers)
         {
             var id = provider.Id;
-            var tick = new CheckBox { Content = provider.Name, IsChecked = true, FontSize = 12 };
+            var tick = new CheckBox { Content = provider.Name, IsChecked = true, FontSize = Text.Body };
 
             tick.IsCheckedChanged += (_, _) =>
             {
@@ -389,7 +389,7 @@ public sealed class ModulePalette : UserControl
                     HorizontalAlignment = HorizontalAlignment.Stretch,
                     HorizontalContentAlignment = HorizontalAlignment.Left,
                     Padding = new Thickness(8, 4),
-                    FontSize = 12,
+                    FontSize = Text.Body,
                 };
 
                 // Naming the plugin only where it is not the engine keeps the
@@ -479,7 +479,7 @@ public sealed class ModulePalette : UserControl
         var forget = new Button
         {
             Content = "✕",
-            FontSize = 10,
+            FontSize = Text.Caption,
             Padding = new Thickness(5, 0, 5, 0),
             Background = Brushes.Transparent,
             Opacity = 0.55,
@@ -499,7 +499,7 @@ public sealed class ModulePalette : UserControl
             HorizontalAlignment = HorizontalAlignment.Stretch,
             HorizontalContentAlignment = HorizontalAlignment.Left,
             Padding = new Thickness(8, 4),
-            FontSize = 12,
+            FontSize = Text.Body,
             Opacity = entry.IsComplete ? 1 : 0.55,
         };
 
@@ -570,7 +570,7 @@ public sealed class ModulePalette : UserControl
         row.Children.Add(new TextBlock
         {
             Text = $"Remove “{entry.Name}”?",
-            FontSize = 11.5,
+            FontSize = Text.Body,
             TextTrimming = TextTrimming.CharacterEllipsis,
             VerticalAlignment = VerticalAlignment.Center,
             Margin = new Thickness(8, 0, 4, 0),
@@ -583,7 +583,7 @@ public sealed class ModulePalette : UserControl
             var button = new Button
             {
                 Content = glyph,
-                FontSize = 10,
+                FontSize = Text.Caption,
                 Padding = new Thickness(5, 0, 5, 0),
                 Background = Brushes.Transparent,
                 Opacity = strength,
@@ -600,7 +600,7 @@ public sealed class ModulePalette : UserControl
     private static TextBlock Heading(string text, Color color) => new()
     {
         Text = text,
-        FontSize = 10.5,
+        FontSize = Text.Caption,
         FontWeight = FontWeight.SemiBold,
         Foreground = new SolidColorBrush(color),
         Margin = new Thickness(2, 12, 2, 4),
@@ -639,8 +639,8 @@ public sealed class ModulePalette : UserControl
     {
         Text = text,
         TextWrapping = TextWrapping.Wrap,
-        FontSize = 11,
-        Opacity = 0.55,
+        FontSize = Text.Small,
+        Foreground = Text.Muted,
         Margin = new Thickness(2, 8, 2, 0),
     };
 }

@@ -1,6 +1,6 @@
 # ADR-0016: Build the UI in C#, without XAML
 
-**Status:** Accepted · 2026-08-11
+**Status:** Accepted · 2026-08-11 · amended 2026-09-09, where the theme file grows a second half for type
 
 ## Context
 
@@ -54,3 +54,33 @@ is why the structure is kept to one `Build*` method per region.
 For a larger app with genuinely declarative screens this would be the wrong call.
 For a four-region tool where the interesting surfaces are custom-drawn, the
 markup would mostly have been scaffolding around controls built in code anyway.
+
+## Amendment, 2026-09-09: what a style sheet was also holding
+
+Declining markup declined the style sheet along with it, and that cost is
+separate from the verbosity noted above. XAML's `Style` and `ResourceDictionary`
+are not only a shorter way to set a property — they are the place a property
+belongs to nothing in particular. Without one, a value shared by twelve controls
+has no home, so each control keeps its own copy and the copies drift.
+
+`Colors.cs` was written for exactly this and says so: the part of a theme XAML
+would have given for free, without the binding layer. What it did not cover was
+everything else a style holds, and the drift went there instead. Type was set at
+eleven distinct sizes across ninety-two sites — 10 beside 10.5, 11.5 beside 12 —
+and the same small quiet line existed in five files at four sizes, dimmed three
+different ways: a muted foreground in one, `Opacity` at 0.4, 0.55 and 0.6 in the
+others. None of that was chosen. It is what a value with nowhere to live does
+over a year.
+
+`Text.cs` is the second half of the theme file, on the same terms as the first:
+eight named sizes and the one brush quiet text is dimmed to, as values rather
+than as styles, with no lookup and no resource lifetime. Opacity stops being a
+way to say "quiet", because it composites against whatever is behind it and so
+means a different grey on the toolbar than on a panel — which is what the four
+figures were reaching for.
+
+The rule this leaves is that a theme file per shared property is the answer here,
+not a style system: `Colors` for color, `Text` for size and the muted brush, and
+another if a third kind of value ever turns out to be shared by everything. What
+0016 should have said is that declining markup means deciding where shared values
+live, and that deciding it once per kind is cheap while deciding it never is not.

@@ -108,7 +108,7 @@ public static class Presets
             "One slow oscillator setting both the hue of the image and the tremolo on the tone.",
             PresetKind.Interplay),
         new("Sequence", Sequence,
-            "One sequencer heard and seen at once: the steps are the tune and the colour.",
+            "One sequencer heard and seen at once: the steps are the tune and the color.",
             PresetKind.Interplay),
         new("Four voices", FourVoices,
             "Four faders that are one signal each, opening a voice and a band together.",

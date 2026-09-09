@@ -65,7 +65,7 @@ namespace Flyback.Plugins.Effects;
 /// <para>
 /// <b>The picture.</b> Three signals cross to it and each one is doing something
 /// the others cannot. The slow filter sweep drives the palette's 'spread', so the
-/// image opens from tints of one colour to a full spectrum exactly as the sound
+/// image opens from tints of one color to a full spectrum exactly as the sound
 /// opens from a hum to a scream — the same wire, not two arrangements that happen
 /// to agree. The kick's pulse drives the zoom, the brightness and the twist on
 /// the feedback, so the frame moves on the beat. And the sequencer's step index
@@ -770,7 +770,7 @@ internal static class AcidPreset
         var bend = b.Add("space.warp");
 
         // The line's gate widens the rings, so a sixteenth arrives as a band
-        // rather than only as a change of colour.
+        // rather than only as a change of color.
         var count = b.Add("math.remap", (1, 0f), (2, 1f), (3, 2.2f), (4, 5.5f));
         var bands = b.Add("pattern.rings");
 
@@ -813,10 +813,10 @@ internal static class AcidPreset
         b.Group("Picture: Geometry", spin, boil, crawl, pump, wedges, turn, zoom, fold, field,
             reach, bend, count, bands, filament);
 
-        // --- the picture: colour -------------------------------------------------
+        // --- the picture: color -------------------------------------------------
 
         // A Palette rather than an HSV hue, which is the difference between a
-        // handful of colours that go together and every colour there is. Where
+        // handful of colors that go together and every color there is. Where
         // in it to look is the field plus the slowest of the three clocks,
         // wrapped rather than clamped because a palette is a loop.
         var wash = b.Add("math.mul", (1, 0.7f));
@@ -825,7 +825,7 @@ internal static class AcidPreset
 
         // And how wide the palette is comes off the filter sweep. This is the
         // correspondence the whole patch is arranged around: at the bottom of
-        // the sweep the sound is a hum and the picture is tints of one colour,
+        // the sweep the sound is a hum and the picture is tints of one color,
         // and at the top the filter is screaming and the screen is a full
         // spectrum. One wire, two sinks, and neither is illustrating the other.
         var spread = b.Add("math.remap", (1, -1f), (2, 1f), (3, 0.06f), (4, 0.42f));
@@ -843,7 +843,7 @@ internal static class AcidPreset
         // Bands rather than a gradient, because techno is a hard-edged music and
         // a smooth gradient is the wrong picture of it. The count comes off the
         // arrangement rather than off the sweep, so the sections are visible as
-        // well as audible: the calm bars are four or five flat colours and the
+        // well as audible: the calm bars are four or five flat colors and the
         // full ones resolve into something detailed enough to be busy.
         var levels = b.Add("math.remap", (1, 0f), (2, 1f), (3, 5f), (4, 26f));
         var flat = b.Add(PosteriseType);
@@ -868,7 +868,7 @@ internal static class AcidPreset
          .Wire(inked, 0, flat, 0)
          .Wire(levels, 0, flat, 1);
 
-        b.Group("Picture: Colour", wash, slide, where, spread, palette, glow, lit, visible,
+        b.Group("Picture: Color", wash, slide, where, spread, palette, glow, lit, visible,
             inked, levels, flat);
 
         // --- the picture: feedback ------------------------------------------------

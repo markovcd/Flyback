@@ -61,8 +61,8 @@ internal sealed class ScaleKeys
 
     private readonly TextBlock summary = new()
     {
-        FontSize = 11,
-        Opacity = 0.55,
+        FontSize = Text.Small,
+        Foreground = Text.Muted,
         TextWrapping = TextWrapping.Wrap,
         Margin = new Thickness(0, 6, 0, 0),
     };
@@ -79,8 +79,8 @@ internal sealed class ScaleKeys
         panel.Children.Add(new TextBlock
         {
             Text = "scale",
-            FontSize = 9.5,
-            Opacity = 0.4,
+            FontSize = Text.Micro,
+            Foreground = Text.Muted,
             Margin = new Thickness(0, 0, 0, 4),
         });
 
@@ -157,11 +157,11 @@ internal sealed class ScaleKeys
         {
             Width = width,
             Height = height,
-            FontSize = 9.5,
+            FontSize = Text.Micro,
             Content = new TextBlock
             {
                 Text = Pitch.ClassName(pitchClass),
-                FontSize = 9.5,
+                FontSize = Text.Micro,
                 VerticalAlignment = VerticalAlignment.Bottom,
                 HorizontalAlignment = HorizontalAlignment.Center,
                 Margin = new Thickness(0, 0, 0, 4),
@@ -199,7 +199,7 @@ internal sealed class ScaleKeys
 
         Button Shortcut(string label, string tip, int[] scale)
         {
-            var button = new Button { Content = label, FontSize = 11 };
+            var button = new Button { Content = label, FontSize = Text.Small };
 
             ToolTip.SetTip(button, tip);
 

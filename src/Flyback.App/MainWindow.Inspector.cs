@@ -365,7 +365,7 @@ public sealed partial class MainWindow
                 Text = adrift ? Adrifting : editor.Locked ? LockedHelp : Help,
                 TextWrapping = TextWrapping.Wrap,
                 Opacity = 0.5,
-                FontSize = 12,
+                FontSize = Text.Body,
             });
             return;
         }
@@ -385,7 +385,7 @@ public sealed partial class MainWindow
         inspector.Children.Add(new TextBlock
         {
             Text = def.Category,
-            FontSize = 11,
+            FontSize = Text.Small,
             Foreground = new SolidColorBrush(Colors.Accent(def.Category)),
         });
 
@@ -395,7 +395,7 @@ public sealed partial class MainWindow
                 Text = def.Description,
                 TextWrapping = TextWrapping.Wrap,
                 Opacity = 0.6,
-                FontSize = 12,
+                FontSize = Text.Body,
                 Margin = new Thickness(0, 4, 0, 6),
             });
 
@@ -417,7 +417,7 @@ public sealed partial class MainWindow
             {
                 Text = "This module has nothing to set — it only produces.",
                 Opacity = 0.5,
-                FontSize = 12,
+                FontSize = Text.Body,
             });
 
         // Everything about seeing and hearing the patch hangs off the one module
@@ -505,7 +505,7 @@ public sealed partial class MainWindow
         inspector.Children.Add(new TextBlock
         {
             Text = group.Name is null ? "Group" : $"Group · {group.Counted}",
-            FontSize = 11,
+            FontSize = Text.Small,
             Opacity = 0.6,
         });
 
@@ -515,7 +515,7 @@ public sealed partial class MainWindow
                  + "are where they were and so are the wires between them.",
             TextWrapping = TextWrapping.Wrap,
             Opacity = 0.6,
-            FontSize = 12,
+            FontSize = Text.Body,
             Margin = new Thickness(0, 4, 0, 6),
         });
 
@@ -530,7 +530,7 @@ public sealed partial class MainWindow
                 Text = "Nothing has been wired across its edge, so the box has no sockets yet.",
                 TextWrapping = TextWrapping.Wrap,
                 Opacity = 0.5,
-                FontSize = 12,
+                FontSize = Text.Body,
             });
 
         // A box on a locked canvas is drawn from the text's group statements, so
@@ -583,7 +583,7 @@ public sealed partial class MainWindow
             inspector.Children.Add(new TextBlock
             {
                 Text = heading,
-                FontSize = 11,
+                FontSize = Text.Small,
                 FontWeight = FontWeight.SemiBold,
                 Opacity = 0.7,
                 Margin = new Thickness(0, 10, 0, 2),
@@ -605,7 +605,7 @@ public sealed partial class MainWindow
             var text = new TextBlock
             {
                 Text = label,
-                FontSize = 12,
+                FontSize = Text.Body,
                 Opacity = 0.85,
                 TextTrimming = TextTrimming.CharacterEllipsis,
                 VerticalAlignment = VerticalAlignment.Center,
@@ -617,7 +617,7 @@ public sealed partial class MainWindow
                 var remove = new Button
                 {
                     Content = "✕",
-                    FontSize = 10,
+                    FontSize = Text.Caption,
                     Padding = new Thickness(5, 0, 5, 0),
                     Background = Brushes.Transparent,
                     Opacity = 0.55,
@@ -733,7 +733,7 @@ public sealed partial class MainWindow
         row.Children.Add(new TextBlock
         {
             Text = question,
-            FontSize = 12,
+            FontSize = Text.Body,
             TextTrimming = TextTrimming.CharacterEllipsis,
             VerticalAlignment = VerticalAlignment.Center,
             Margin = new Thickness(0, 0, 6, 0),
@@ -746,7 +746,7 @@ public sealed partial class MainWindow
             var button = new Button
             {
                 Content = glyph,
-                FontSize = 11,
+                FontSize = Text.Small,
                 Padding = new Thickness(6, 2),
                 Background = Brushes.Transparent,
                 Opacity = strength,
@@ -765,7 +765,7 @@ public sealed partial class MainWindow
         var title = new TextBlock
         {
             Text = group.Title(),
-            FontSize = 17,
+            FontSize = Text.Title,
             FontWeight = FontWeight.SemiBold,
             TextTrimming = TextTrimming.CharacterEllipsis,
             Background = Brushes.Transparent,
@@ -797,7 +797,7 @@ public sealed partial class MainWindow
         var title = new TextBlock
         {
             Text = node.Title(def),
-            FontSize = 17,
+            FontSize = Text.Title,
             FontWeight = FontWeight.SemiBold,
             TextTrimming = TextTrimming.CharacterEllipsis,
             Background = Brushes.Transparent,
@@ -888,7 +888,7 @@ public sealed partial class MainWindow
             Text = held ?? string.Empty,
             PlaceholderText = fallback,
             MaxLength = limit,
-            FontSize = 17,
+            FontSize = Text.Title,
             FontWeight = FontWeight.SemiBold,
         };
 
@@ -993,7 +993,7 @@ public sealed partial class MainWindow
     private static TextBlock Heading(string text) => new()
     {
         Text = text.ToUpperInvariant(),
-        FontSize = 10.5,
+        FontSize = Text.Caption,
         FontWeight = FontWeight.SemiBold,
         Opacity = 0.6,
         Margin = new Thickness(0, 10, 0, 2),
@@ -1007,7 +1007,7 @@ public sealed partial class MainWindow
         var label = new TextBlock
         {
             Text = name,
-            FontSize = 12,
+            FontSize = Text.Body,
             VerticalAlignment = VerticalAlignment.Center,
         };
 
@@ -1060,7 +1060,7 @@ public sealed partial class MainWindow
                  + "something else instead — unplug it again and this comes back.",
             TextWrapping = TextWrapping.Wrap,
             Opacity = 0.6,
-            FontSize = 12,
+            FontSize = Text.Body,
             Margin = new Thickness(0, 0, 0, 6),
         };
 
@@ -1127,7 +1127,7 @@ public sealed partial class MainWindow
         panel.Children.Add(new TextBlock
         {
             Text = extra.Key,
-            FontSize = 9.5,
+            FontSize = Text.Micro,
             Opacity = 0.4,
             Margin = new Thickness(0, 0, 0, 4),
         });
@@ -1200,7 +1200,7 @@ public sealed partial class MainWindow
         {
             Text = choice.Label,
             Width = 78,
-            FontSize = 12,
+            FontSize = Text.Body,
             VerticalAlignment = VerticalAlignment.Center,
             TextTrimming = TextTrimming.CharacterEllipsis,
         };
@@ -1223,7 +1223,7 @@ public sealed partial class MainWindow
             ItemsSource = options,
             DisplayMemberBinding = new Avalonia.Data.Binding(nameof(ChoiceOption.Name)),
             SelectedIndex = options.FindIndex(option => option.Id == value),
-            FontSize = 12,
+            FontSize = Text.Body,
             HorizontalAlignment = HorizontalAlignment.Stretch,
             VerticalAlignment = VerticalAlignment.Center,
         };
@@ -1298,7 +1298,7 @@ public sealed partial class MainWindow
         {
             Text = label,
             Width = 78,
-            FontSize = 12,
+            FontSize = Text.Body,
             VerticalAlignment = VerticalAlignment.Center,
             TextTrimming = TextTrimming.CharacterEllipsis,
         };
@@ -1396,14 +1396,14 @@ public sealed partial class MainWindow
         {
             Text = label,
             Width = 78,
-            FontSize = 12,
+            FontSize = Text.Body,
             VerticalAlignment = VerticalAlignment.Center,
         };
 
         var name = new TextBlock
         {
             Text = chosen.Length == 0 ? "none chosen" : Path.GetFileName(chosen),
-            FontSize = 12,
+            FontSize = Text.Body,
             Opacity = chosen.Length == 0 ? 0.45 : 0.75,
             VerticalAlignment = VerticalAlignment.Center,
             TextTrimming = TextTrimming.CharacterEllipsis,
@@ -1412,7 +1412,7 @@ public sealed partial class MainWindow
 
         if (chosen.Length > 0) ToolTip.SetTip(name, chosen);
 
-        var choose = new Button { Content = "Choose…", FontSize = 11 };
+        var choose = new Button { Content = "Choose…", FontSize = Text.Small };
 
         choose.Click += async (_, _) =>
         {
@@ -1469,7 +1469,7 @@ public sealed partial class MainWindow
         {
             Text = spec.Name,
             Width = 78,
-            FontSize = 12,
+            FontSize = Text.Body,
             VerticalAlignment = VerticalAlignment.Center,
             TextTrimming = TextTrimming.CharacterEllipsis,
         };
@@ -1490,7 +1490,7 @@ public sealed partial class MainWindow
             var wired = new TextBlock
             {
                 Text = "◀ patched",
-                FontSize = 12,
+                FontSize = Text.Body,
                 Opacity = 0.55,
                 VerticalAlignment = VerticalAlignment.Center,
             };
@@ -1511,7 +1511,7 @@ public sealed partial class MainWindow
             var implied = new TextBlock
             {
                 Text = $"◀ {normalled}, without a wire",
-                FontSize = 12,
+                FontSize = Text.Body,
                 Opacity = 0.55,
                 VerticalAlignment = VerticalAlignment.Center,
             };
@@ -1575,7 +1575,7 @@ public sealed partial class MainWindow
         {
             Text = label,
             Width = 78,
-            FontSize = 12,
+            FontSize = Text.Body,
             VerticalAlignment = VerticalAlignment.Center,
             TextTrimming = TextTrimming.CharacterEllipsis,
         };
@@ -1605,7 +1605,7 @@ public sealed partial class MainWindow
             Value = (decimal)value,
             Increment = whole ? 1m : 0.05m,
             FormatString = whole ? "0.##" : "0.###",
-            FontSize = 12,
+            FontSize = Text.Body,
             VerticalAlignment = VerticalAlignment.Center,
             ShowButtonSpinner = false,
         };
@@ -1613,7 +1613,7 @@ public sealed partial class MainWindow
         var name = new TextBlock
         {
             Text = spec.Format(value),
-            FontSize = 12,
+            FontSize = Text.Body,
             Opacity = 0.75,
             Margin = new Thickness(6, 0, 0, 0),
             VerticalAlignment = VerticalAlignment.Center,

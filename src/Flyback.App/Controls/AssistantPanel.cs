@@ -34,7 +34,6 @@ namespace Flyback.App.Controls;
 /// </remarks>
 public sealed class AssistantPanel : UserControl
 {
-    private static readonly IBrush Dim = new SolidColorBrush(Colors.Muted);
     private static readonly IBrush Amber = new SolidColorBrush(Colors.Attention);
 
     /// <summary>The middle of <see cref="LogoMark"/>'s sweep, borrowed for the one thing here that is alive.</summary>
@@ -67,7 +66,7 @@ public sealed class AssistantPanel : UserControl
         AcceptsReturn = true,
         TextWrapping = TextWrapping.Wrap,
         PlaceholderText = "Describe the patch you want. Enter to ask, Ctrl+Enter for a new line.",
-        FontSize = 12,
+        FontSize = Text.Body,
         MinHeight = 68,
 
         // A strip along the bottom for the send button to sit in. Reserved as
@@ -95,8 +94,8 @@ public sealed class AssistantPanel : UserControl
     };
     private readonly TextBlock footer = new()
     {
-        FontSize = 11,
-        Foreground = Dim,
+        FontSize = Text.Small,
+        Foreground = Text.Muted,
         TextWrapping = TextWrapping.Wrap,
         Name = "footer",
     };
@@ -122,7 +121,7 @@ public sealed class AssistantPanel : UserControl
 
     private readonly TextBlock progress = new()
     {
-        FontSize = 11,
+        FontSize = Text.Small,
         Foreground = Live,
         VerticalAlignment = VerticalAlignment.Center,
     };
@@ -160,7 +159,7 @@ public sealed class AssistantPanel : UserControl
         Width = 30,
         Height = 26,
         Padding = new Thickness(0),
-        FontSize = 15,
+        FontSize = Text.Heading,
         HorizontalAlignment = HorizontalAlignment.Right,
         VerticalAlignment = VerticalAlignment.Bottom,
         HorizontalContentAlignment = HorizontalAlignment.Center,
@@ -172,7 +171,7 @@ public sealed class AssistantPanel : UserControl
     private readonly TextBox keyBox = new()
     {
         PasswordChar = '•',
-        FontSize = 12,
+        FontSize = Text.Body,
         Width = 260,
         HorizontalAlignment = HorizontalAlignment.Left,
     };
@@ -188,8 +187,8 @@ public sealed class AssistantPanel : UserControl
     /// </remarks>
     private readonly TextBlock keyNote = new()
     {
-        FontSize = 11,
-        Foreground = Dim,
+        FontSize = Text.Small,
+        Foreground = Text.Muted,
         Width = 260,
         TextWrapping = TextWrapping.Wrap,
 
@@ -200,7 +199,7 @@ public sealed class AssistantPanel : UserControl
     };
 
     private readonly Button forget = new() { Content = "Forget key", Width = 100 };
-    private readonly CheckBox rememberBox = new() { Content = "Keep this key", FontSize = 12 };
+    private readonly CheckBox rememberBox = new() { Content = "Keep this key", FontSize = Text.Body };
 
     /// <summary>
     /// Everything the chosen provider says it has, drawn from its own
@@ -214,7 +213,7 @@ public sealed class AssistantPanel : UserControl
     /// </remarks>
     private readonly AssistantForm form = new();
 
-    private readonly ComboBox providerBox = new() { FontSize = 12, Width = 260, Name = "provider" };
+    private readonly ComboBox providerBox = new() { FontSize = Text.Body, Width = 260, Name = "provider" };
 
     private IPatchAssistant? assistant;
     private AssistantRun? run;
@@ -470,10 +469,10 @@ public sealed class AssistantPanel : UserControl
         // flyout hanging off the button that opened it.
         var fields = new StackPanel { Spacing = 8, Margin = new Thickness(18), Width = 280 };
 
-        fields.Children.Add(Caption("Provider"));
+        fields.Children.Add(Text.Quiet("Provider"));
         fields.Children.Add(providerBox);
         fields.Children.Add(form);
-        fields.Children.Add(Caption("API key"));
+        fields.Children.Add(Text.Quiet("API key"));
         fields.Children.Add(keyBox);
         fields.Children.Add(keyNote);
         fields.Children.Add(rememberBox);
@@ -532,9 +531,6 @@ public sealed class AssistantPanel : UserControl
 
         host.Close();
     }
-
-    private static TextBlock Caption(string text) =>
-        new() { Text = text, FontSize = 11, Foreground = Dim };
 
     /// <summary>
     /// Enter asks; Ctrl+Enter — and Shift+Enter, which every other message box
@@ -704,7 +700,7 @@ public sealed class AssistantPanel : UserControl
             _ => "no key",
         };
 
-        footer.Foreground = Dim;
+        footer.Foreground = Text.Muted;
         footer.Text =
             "Sends your instruction, the module list and the patch — including rendered frames of it — "
             + $"to {assistant.Name}. {source}.";
@@ -939,7 +935,7 @@ public sealed class AssistantPanel : UserControl
         if (saidPanel.Children.Count > 0)
         {
             saidPanel.Children.Clear();
-            if (because is { Length: > 0 }) Add(because, Dim, 11);
+            if (because is { Length: > 0 }) Add(because, Text.Muted, Text.Small);
         }
 
         lastFrame.Source = null;
@@ -983,7 +979,7 @@ public sealed class AssistantPanel : UserControl
             // AssistantRun already turns a provider's failure into an event, so
             // anything arriving here is the shell's own fault rather than a
             // plugin's — but the window still survives it.
-            Add($"Something went wrong: {ex.Message}", Amber, 11);
+            Add($"Something went wrong: {ex.Message}", Amber, Text.Small);
             report($"The assistant stopped: {ex.Message}", null);
         }
         finally
@@ -1002,11 +998,11 @@ public sealed class AssistantPanel : UserControl
                 break;
 
             case PatchEvent.Did did:
-                Add(did.Summary, Dim, 11);
+                Add(did.Summary, Text.Muted, Text.Small);
                 break;
 
             case PatchEvent.Saw saw:
-                Add(saw.Caption, Dim, 11);
+                Add(saw.Caption, Text.Muted, Text.Small);
                 Picture(saw.Png);
                 break;
 
@@ -1016,22 +1012,22 @@ public sealed class AssistantPanel : UserControl
             // at once — the transcript says a sound was rendered and heard,
             // which is what somebody watching this needs to know.
             case PatchEvent.Heard heard:
-                Add(heard.Caption, Dim, 11);
+                Add(heard.Caption, Text.Muted, Text.Small);
                 break;
 
             case PatchEvent.Cost cost:
                 Add(
                     $"{cost.Input} in ({cost.CacheRead} cached), {cost.Output} out.",
-                    Dim,
+                    Text.Muted,
                     11);
                 break;
 
             case PatchEvent.Proposed proposed:
-                Add($"Proposed: {proposed.Summary}", Brushes.White, 12);
+                Add($"Proposed: {proposed.Summary}", Brushes.White, Text.Body);
                 break;
 
             case PatchEvent.Failed failed:
-                Add(failed.Message, Amber, 11);
+                Add(failed.Message, Amber, Text.Small);
                 break;
         }
 
@@ -1087,7 +1083,7 @@ public sealed class AssistantPanel : UserControl
             Text = text,
             TextWrapping = TextWrapping.Wrap,
             Foreground = Brushes.White,
-            FontSize = 12,
+            FontSize = Text.Body,
             FontWeight = FontWeight.SemiBold,
             Margin = new Thickness(0, saidPanel.Children.Count > 0 ? 14 : 0, 0, 2),
         });
@@ -1107,7 +1103,7 @@ public sealed class AssistantPanel : UserControl
             Text = text,
             TextWrapping = TextWrapping.Wrap,
             Foreground = Brushes.White,
-            FontSize = 12,
+            FontSize = Text.Body,
         };
 
         saidPanel.Children.Add(saying);
@@ -1149,7 +1145,7 @@ public sealed class AssistantPanel : UserControl
 
         Add(overwrote
             ? "Applied — this replaced the edits you made while it ran. Ctrl+Z puts them back."
-            : "Applied. Ctrl+Z puts the patch back as it was.", Dim, 11);
+            : "Applied. Ctrl+Z puts the patch back as it was.", Text.Muted, 11);
 
         report(string.Empty, null);
     }

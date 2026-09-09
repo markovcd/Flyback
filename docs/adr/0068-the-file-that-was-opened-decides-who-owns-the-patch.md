@@ -285,13 +285,13 @@ version-matched to the Avalonia already here.
 ADR-0019's rule is the *engine's* and `Flyback.Core` still answers to it; this
 is the shell, which already carries Avalonia, Skia and a font. What it buys: a
 gutter with line numbers, the complained-about lines washed in the Output's own
-red, the current line marked, and the language coloured.
+red, the current line marked, and the language colored.
 
-**The colours are written by hand, against `docs/language.md`.** No grammar
+**The colors are written by hand, against `docs/language.md`.** No grammar
 registry has heard of this language, so TextMate would have meant a second
 package and a definition to write anyway. `Flyback.xshd` sits beside the control
 and uses the shell's own palette, so a socket name in the text is the pale green
-a socket carries on a node and the Output is the sink's red. A call is coloured
+a socket carries on a node and the Output is the sink's red. A call is colored
 by the bracket after it rather than by looking the name up, because a plugin's
 modules are usable the moment it loads and a list here would be one more thing
 that could go stale — the same reason the binder reads the catalogue rather than

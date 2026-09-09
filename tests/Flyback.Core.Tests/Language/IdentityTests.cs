@@ -108,7 +108,7 @@ public class IdentityTests
     /// <remarks>
     /// Worth having rather than merely tolerable. Changing a sine to a saw is
     /// changing the waveform of something that is already sounding, and what a
-    /// player wants from that is the same note in a different colour — which is
+    /// player wants from that is the same note in a different color — which is
     /// exactly what carrying the accumulator over gives. Restarting the phase
     /// would be a click in the middle of a held note.
     /// </remarks>

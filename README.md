@@ -19,7 +19,7 @@ dotnet run --project src/Flyback.App -c Release
 - Per-pixel signal synthesis driven by coordinates and time
 - Normalled sockets so common sources such as time and coordinates are present by default
 - Feedback and iterative image generation via feedback modules and previous-frame sampling
-- Sources, oscillators, patterns, forms, geometry, colour, maths, pitch, timing, shaping, time effects, feedback and measurement modules, with presets for each
+- Sources, oscillators, patterns, forms, geometry, color, maths, pitch, timing, shaping, time effects, feedback and measurement modules, with presets for each
 - Live preview, output settings, recording and video export in the app shell
 - MIDI input support through platform backends (Windows, macOS and Linux)
 - CLI tools for rendering, checking, inspecting and bundling patches

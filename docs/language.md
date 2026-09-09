@@ -105,7 +105,7 @@ the `cents`. That compiles, plays, and is not a tune. So a Note Sequencer's
 three outputs and a MIDI In's four go one at a time, and the others are taken by
 name.
 
-No coercion happens here: widening a scalar to a colour is the compiler's job
+No coercion happens here: widening a scalar to a color is the compiler's job
 ([0007](adr/0007-register-slots-with-scalar-broadcast.md)), not the parser's.
 
 ### Outputs other than the first
@@ -235,7 +235,7 @@ added nor removed ([0037](adr/0037-one-output-block-that-every-patch-has.md)).
 So `out` is a keyword rather than something a patch declares:
 
 ```
-someColour |> out.color
+someColor |> out.color
 someSignal |> out.left
 out.gain = 0.6
 out.scan_rate = 60
@@ -705,7 +705,7 @@ twice.
 ### Sequence — [:167](../src/Flyback.Core/Graph/Presets.cs)
 
 ```
-# One sequencer heard and seen at once: the steps are the tune and the colour.
+# One sequencer heard and seen at once: the steps are the tune and the color.
 
 let steps = notes(rate: 3, gate_length: 0.66) [ A3 C4 D4 E4 G4 E4 D4 C4 ]
 
@@ -781,7 +781,7 @@ out.gain = 0.6
 ```
 
 Both of the Meter's readings: `peak` is the hit and lights the rings, `level` —
-which is what the bare name means — takes the hue, so the colour lags the flash
+which is what the bare name means — takes the hue, so the color lags the flash
 by as much as a room does.
 
 ### Waveform — [:1740](../src/Flyback.Core/Graph/Presets.cs)

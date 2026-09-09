@@ -297,7 +297,7 @@ internal sealed class ReportLine : UserControl
             entries.Children.Add(new TextBlock
             {
                 Text = "Nothing has been reported yet.",
-                FontSize = 12,
+                FontSize = Text.Body,
                 Foreground = new SolidColorBrush(Colors.Inactive),
             });
 
@@ -334,7 +334,7 @@ internal sealed class ReportLine : UserControl
         row.Children.Add(new TextBlock
         {
             Text = entry.At.ToString("HH:mm:ss"),
-            FontSize = 11.5,
+            FontSize = Text.Body,
             Foreground = new SolidColorBrush(Colors.Inactive),
             Margin = new Thickness(0, 1, 10, 0),
             VerticalAlignment = VerticalAlignment.Top,
@@ -347,7 +347,7 @@ internal sealed class ReportLine : UserControl
         {
             Text = entry.Message,
             TextWrapping = TextWrapping.Wrap,
-            FontSize = 12.5,
+            FontSize = Text.Body,
             Foreground = new SolidColorBrush(current ? Colors.Attention : Colors.Muted),
         });
 
@@ -357,7 +357,7 @@ internal sealed class ReportLine : UserControl
             {
                 Text = detail,
                 TextWrapping = TextWrapping.Wrap,
-                FontSize = 11.5,
+                FontSize = Text.Body,
                 Foreground = new SolidColorBrush(Colors.Inactive),
             });
         }

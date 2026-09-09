@@ -200,15 +200,15 @@ public sealed partial class MainWindow : Window
     private readonly TextBlock backend = new()
     {
         VerticalAlignment = VerticalAlignment.Center,
-        FontSize = 12,
-        Opacity = 0.55,
+        FontSize = Text.Body,
+        Foreground = Text.Muted,
     };
 
     private readonly TextBlock helper = new()
     {
         VerticalAlignment = VerticalAlignment.Center,
-        FontSize = 12,
-        Opacity = 0.55,
+        FontSize = Text.Body,
+        Foreground = Text.Muted,
     };
 
     private readonly ToggleButton audioButton = new() { Content = "Audio off", Width = 92 };
@@ -568,11 +568,11 @@ public sealed partial class MainWindow : Window
                         Spacing = 1,
                         Children =
                         {
-                            new TextBlock { Text = preset.Name, FontSize = 12 },
+                            new TextBlock { Text = preset.Name, FontSize = Text.Body },
                             new TextBlock
                             {
                                 Text = preset.Description,
-                                FontSize = 10,
+                                FontSize = Text.Caption,
                                 Foreground = new SolidColorBrush(Colors.Muted),
                                 TextWrapping = TextWrapping.Wrap,
                                 MaxWidth = 260,
@@ -586,7 +586,7 @@ public sealed partial class MainWindow : Window
             // would push the whole toolbar down to say something the dropdown
             // already says, and the toolbar is a row of one-line controls.
             SelectionBoxItemTemplate = new FuncDataTemplate<PatchPreset>((preset, _) =>
-                preset is null ? null : new TextBlock { Text = preset.Name, FontSize = 12 }),
+                preset is null ? null : new TextBlock { Text = preset.Name, FontSize = Text.Body }),
         };
 
         // Which preset is on the canvas, so a refused change can put the box
@@ -862,7 +862,7 @@ public sealed partial class MainWindow : Window
         button.Width = 34;
         button.Height = 30;
         button.Padding = new Thickness(0);
-        button.FontSize = 15;
+        button.FontSize = Text.Heading;
         button.HorizontalContentAlignment = HorizontalAlignment.Center;
         button.VerticalContentAlignment = VerticalAlignment.Center;
 
@@ -874,8 +874,8 @@ public sealed partial class MainWindow : Window
     private static TextBlock Label(string text) => new()
     {
         Text = text,
-        Opacity = 0.6,
-        FontSize = 12,
+        Foreground = Text.Muted,
+        FontSize = Text.Body,
         VerticalAlignment = VerticalAlignment.Center,
     };
 

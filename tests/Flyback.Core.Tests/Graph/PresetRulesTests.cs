@@ -35,7 +35,7 @@ public class PresetRulesTests
     /// Read off the compiled programs rather than off the wires, because that is
     /// where the question is actually settled: each sink is a walk back from the
     /// Output's own sockets, so a module nothing downstream of that walk reaches
-    /// emits no ops at all. A patch with a colour chain in it that nothing joins
+    /// emits no ops at all. A patch with a color chain in it that nothing joins
     /// to the Output is silent on this test and correctly so — it draws nothing.
     /// <para>
     /// The exemptions are named on the preset rather than here:

@@ -78,7 +78,7 @@ internal static class About
         titles.Children.Add(new TextBlock
         {
             Text = GlobalConstants.ApplicationName,
-            FontSize = 22,
+            FontSize = Text.Display,
             FontWeight = FontWeight.SemiBold,
         });
 
@@ -134,7 +134,7 @@ internal static class About
             Text = BitcoinAddress,
             IsReadOnly = true,
             FontFamily = new FontFamily("Consolas, Menlo, DejaVu Sans Mono, monospace"),
-            FontSize = 12,
+            FontSize = Text.Body,
             TextWrapping = TextWrapping.Wrap,
         };
 
@@ -157,17 +157,17 @@ internal static class About
     private static TextBlock Quiet(string text) => new()
     {
         Text = text,
-        FontSize = 12,
-        Foreground = new SolidColorBrush(Colors.Muted),
+        FontSize = Text.Body,
+        Foreground = Text.Muted,
         TextWrapping = TextWrapping.Wrap,
     };
 
     private static TextBlock Caption(string text) => new()
     {
         Text = text.ToUpperInvariant(),
-        FontSize = 10.5,
+        FontSize = Text.Caption,
         FontWeight = FontWeight.SemiBold,
-        Opacity = 0.6,
+        Foreground = Text.Muted,
     };
 
     private static Control Rule() => new Border

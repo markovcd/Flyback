@@ -34,7 +34,6 @@ namespace Flyback.App.Controls;
 /// </remarks>
 public sealed class AssistantForm : UserControl
 {
-    private static readonly IBrush Dim = new SolidColorBrush(Colors.Muted);
 
     private readonly StackPanel rows = new() { Spacing = 10 };
     private readonly Dictionary<string, Row> built = new(StringComparer.Ordinal);
@@ -151,13 +150,10 @@ public sealed class AssistantForm : UserControl
         _ => null,
     };
 
-    private static TextBlock Caption(string text) =>
-        new() { Text = text, FontSize = 11, Foreground = Dim };
-
     private static TextBlock Note() => new()
     {
-        FontSize = 11,
-        Foreground = Dim,
+        FontSize = Text.Small,
+        Foreground = Text.Muted,
         Width = 260,
         TextWrapping = TextWrapping.Wrap,
         IsVisible = false,
@@ -184,7 +180,7 @@ public sealed class AssistantForm : UserControl
 
         private bool laid;
 
-        protected Row(string? label) => caption = label is null ? null : Caption(label);
+        protected Row(string? label) => caption = label is null ? null : Text.Quiet(label);
 
         public StackPanel View { get; } = new() { Spacing = 3 };
 
@@ -229,7 +225,7 @@ public sealed class AssistantForm : UserControl
         {
             box = new TextBox
             {
-                FontSize = 12,
+                FontSize = Text.Body,
                 Width = 260,
                 HorizontalAlignment = HorizontalAlignment.Left,
                 Name = field.Key,
@@ -274,7 +270,7 @@ public sealed class AssistantForm : UserControl
 
             box = new ComboBox
             {
-                FontSize = 12,
+                FontSize = Text.Body,
                 Width = 260,
                 HorizontalAlignment = HorizontalAlignment.Left,
                 Name = field.Key,
@@ -356,7 +352,7 @@ public sealed class AssistantForm : UserControl
             box = new CheckBox
             {
                 Content = field.Label,
-                FontSize = 12,
+                FontSize = Text.Body,
                 Name = field.Key,
                 HorizontalAlignment = HorizontalAlignment.Left,
             };

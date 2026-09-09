@@ -206,7 +206,7 @@ internal sealed class ModalOverlay : Border
         var heading = new TextBlock
         {
             Text = title,
-            FontSize = 13,
+            FontSize = Text.Emphasis,
             FontWeight = FontWeight.SemiBold,
             VerticalAlignment = VerticalAlignment.Center,
         };
@@ -220,7 +220,7 @@ internal sealed class ModalOverlay : Border
             Width = 28,
             Height = 24,
             Padding = new Thickness(0),
-            FontSize = 12,
+            FontSize = Text.Body,
             Background = Brushes.Transparent,
             BorderThickness = new Thickness(0),
             HorizontalContentAlignment = HorizontalAlignment.Center,

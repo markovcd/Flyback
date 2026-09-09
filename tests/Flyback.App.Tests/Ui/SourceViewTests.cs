@@ -153,7 +153,7 @@ public class SourceViewTests : UiTest
 
     /// <summary>
     /// The editor is a code editor rather than a box with text in it: a gutter
-    /// to say which line a complaint is about, and the language coloured so a
+    /// to say which line a complaint is about, and the language colored so a
     /// module reads differently from the socket it is being handed. Neither can
     /// be had from a TextBox, which is why this costs a package.
     /// </summary>
@@ -172,15 +172,15 @@ public class SourceViewTests : UiTest
     /// <summary>
     /// And the definition covers what the language actually has. Written by hand
     /// against docs/language.md, so this is what stops it drifting from the
-    /// eight statement forms it is colouring.
+    /// eight statement forms it is coloring.
     /// </summary>
     [AvaloniaFact]
     public void The_language_definition_names_the_words_the_language_has()
     {
         var window = Open();
-        var colours = ShowCode(window).SyntaxHighlighting.ShouldNotBeNull();
+        var colors = ShowCode(window).SyntaxHighlighting.ShouldNotBeNull();
 
-        var named = colours.NamedHighlightingColors.Select(colour => colour.Name).ToList();
+        var named = colors.NamedHighlightingColors.Select(color => color.Name).ToList();
 
         named.ShouldContain("Comment");
         named.ShouldContain("Keyword");

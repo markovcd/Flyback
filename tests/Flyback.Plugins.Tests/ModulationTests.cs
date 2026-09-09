@@ -309,7 +309,7 @@ public class ModulationTests
     /// </summary>
     /// <remarks>
     /// Dead code is eliminated a module at a time rather than an op at a time,
-    /// so with nothing wired to the Output's colour the walk back from it
+    /// so with nothing wired to the Output's color the walk back from it
     /// reaches nothing at all — the video program is empty, not merely inert.
     /// </remarks>
     [Fact]
@@ -333,7 +333,7 @@ public class ModulationTests
         audio.Program.DelayLengths.Count.ShouldBe(3);
         audio.Program.UnitCount.ShouldBe(7);
 
-        // And none at all for the eye, because nothing is wired to the colour.
+        // And none at all for the eye, because nothing is wired to the color.
         video.Program.DelayLengths.ShouldBeEmpty();
         video.Program.UnitCount.ShouldBe(0);
     }

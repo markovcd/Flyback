@@ -28,7 +28,7 @@ namespace Flyback.App.Controls;
 /// <para>
 /// An editor rather than a text box, and it is the one place in the shell that
 /// takes a package to do its job. A gutter to mark the line a complaint is
-/// about, and colour to tell a module from the socket it is being handed, are
+/// about, and color to tell a module from the socket it is being handed, are
 /// what a surface somebody types a patch into <em>while it plays</em> needs, and
 /// a <see cref="TextBox"/> has no rich text in it at all. Avalonia's own
 /// RichTextEditor is a word processor — no highlighting, no line numbers, and a
@@ -42,13 +42,13 @@ internal sealed class SourceView : UserControl
         new("Consolas, Menlo, DejaVu Sans Mono, monospace");
 
     /// <summary>
-    /// The language, coloured — see <c>Flyback.xshd</c> beside this file.
+    /// The language, colored — see <c>Flyback.xshd</c> beside this file.
     /// </summary>
     /// <remarks>
     /// Loaded once and shared, because a highlighting definition is immutable
     /// and reading the same XML per editor would be work done for nothing. Null
     /// if it will not load at all, which leaves plain text rather than taking
-    /// the window down over a colour scheme.
+    /// the window down over a color scheme.
     /// </remarks>
     private static readonly IHighlightingDefinition? Language = LoadHighlighting();
 
@@ -56,7 +56,7 @@ internal sealed class SourceView : UserControl
     {
         Name = "source",
         FontFamily = Mono,
-        FontSize = 13,
+        FontSize = Text.Emphasis,
         ShowLineNumbers = true,
         WordWrap = false,
         Background = new SolidColorBrush(Colors.Canvas),
@@ -80,7 +80,7 @@ internal sealed class SourceView : UserControl
     /// </remarks>
     private readonly TextBlock notice = new()
     {
-        FontSize = 11,
+        FontSize = Text.Small,
         Margin = new Thickness(12, 6),
         TextWrapping = TextWrapping.Wrap,
         Foreground = new SolidColorBrush(Colors.Attention),
@@ -98,7 +98,7 @@ internal sealed class SourceView : UserControl
 
     private readonly TextBlock footer = new()
     {
-        FontSize = 11,
+        FontSize = Text.Small,
         Margin = new Thickness(12, 5),
         Foreground = new SolidColorBrush(Colors.Inactive),
     };
@@ -116,7 +116,7 @@ internal sealed class SourceView : UserControl
     {
         Content = "Edit on the canvas",
         Name = "hand",
-        FontSize = 11,
+        FontSize = Text.Small,
         Padding = new Thickness(10, 4),
         Margin = new Thickness(0, 5),
         IsVisible = false,
@@ -139,7 +139,7 @@ internal sealed class SourceView : UserControl
         text.TextArea.TextView.BackgroundRenderers.Add(marked);
         text.TextArea.TextView.LinkTextForegroundBrush = new SolidColorBrush(Colors.Feedback);
 
-        // The gutter and the line the caret is on, in the shell's own colours
+        // The gutter and the line the caret is on, in the shell's own colors
         // rather than the theme's: this sits where the canvas sits and should
         // not read as a different program.
         text.LineNumbersForeground = new SolidColorBrush(Colors.Inactive);
@@ -200,7 +200,7 @@ internal sealed class SourceView : UserControl
         {
             Content = "Apply  Ctrl+↵",
             Name = "apply",
-            FontSize = 11,
+            FontSize = Text.Small,
             Padding = new Thickness(10, 4),
             Margin = new Thickness(12, 5),
             HorizontalAlignment = HorizontalAlignment.Right,
@@ -553,7 +553,7 @@ internal sealed class SourceView : UserControl
             HorizontalContentAlignment = HorizontalAlignment.Left,
             Content = new TextBlock
             {
-                FontSize = 11.5,
+                FontSize = Text.Body,
                 FontFamily = Mono,
                 TextWrapping = TextWrapping.Wrap,
                 Foreground = new SolidColorBrush(Colors.Attention),
@@ -587,7 +587,7 @@ internal sealed class SourceView : UserControl
         text.TextArea.Focus();
     }
 
-    /// <summary>The language's colours, or null where they would not load.</summary>
+    /// <summary>The language's colors, or null where they would not load.</summary>
     private static IHighlightingDefinition? LoadHighlighting()
     {
         try

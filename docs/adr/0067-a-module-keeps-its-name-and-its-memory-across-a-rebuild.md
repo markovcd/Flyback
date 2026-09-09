@@ -112,7 +112,7 @@ touched. Both continuity tests fail without the change.
 `let hum = t |> sine(...)` changed to `saw` is the same name in the same
 statement, so the saw inherits the sine's accumulator. That is what a player
 wants from changing a waveform on a note that is already sounding — the same
-note in a different colour, rather than a click.
+note in a different color, rather than a click.
 
 **A name is a place in the source, so an edit is local to a line but not free
 within one.** Inserting a stage mid-pipeline renames what comes after it in that
