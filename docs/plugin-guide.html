@@ -717,16 +717,21 @@ em.UnitWrite(cell, smoothed);           <span class="c">// what it holds next ti
 {
     <span class="k">var</span> b = <span class="k">new</span> PatchBuilder(modules);
 
-    <span class="k">var</span> coord = b.Add(<span class="s">"coord"</span>, 40, 120);
-    <span class="k">var</span> rings = b.Add(<span class="s">"yours.rings"</span>, 260, 120, (2, 2.5f));   <span class="c">// (port, knob)</span>
-    <span class="k">var</span> output = b.Add(NodeCatalog.OutputTypeId, 520, 200);
+    <span class="k">var</span> coord = b.Add(<span class="s">"coord"</span>);
+    <span class="k">var</span> rings = b.Add(<span class="s">"yours.rings"</span>, (2, 2.5f));   <span class="c">// (port, knob)</span>
+    <span class="k">var</span> output = b.Add(NodeCatalog.OutputTypeId);
 
     b.Wire(coord, 0, rings, 0)
      .Wire(coord, 1, rings, 1)
      .Wire(rings, 0, output, NodeCatalog.OutputColourPort);
 
-    <span class="k">return</span> b.Patch;
+    <span class="k">return</span> b.Build();
 }</code></pre>
+
+    <p>Nothing in that says where a module sits, and nothing should: a preset states what the patch is and
+    what is wired to what, and <code>b.Build()</code> puts the coordinates on with the same layout the Tidy
+    button and the text language use, so the patch reaches the canvas already reading left to right. Taking
+    <code>b.Patch</code> instead hands over a pile at the origin — the trade is recorded in ADR-0070.</p>
 
     <p>Presets from plugins appear after the engine's own, so what the app opens on never depends on what is
     installed. Because a patch is keyed by type id, one that uses your modules records what it needs, and

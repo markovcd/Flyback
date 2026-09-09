@@ -37,36 +37,35 @@ internal static class ShapesPreset
         var b = new PatchBuilder(modules);
 
         // The two sweeps. Both slow, and neither is heard directly.
-        var rock = b.Add("osc.sine", 100, 520, (1, 0.07f), (3, 0.9f));
-        var grow = b.Add("osc.sine", 100, 780, (1, 0.11f), (3, 0.22f), (4, 0.45f));
+        var rock = b.Add("osc.sine", (1, 0.07f), (3, 0.9f));
+        var grow = b.Add("osc.sine", (1, 0.11f), (3, 0.22f), (4, 0.45f));
 
         // Here because the star is read at a turned position rather than at the
         // pixel's own: 'x' and 'y' are normalled to Coordinates, so overriding
         // them takes a wire (ADR-0050).
-        var turn = b.Add("space.rotate", 340, 320);
+        var turn = b.Add("space.rotate");
 
-        var star = b.Add(StarModule.TypeId, 580, 240, (2, 0.55f));
-        var hole = b.Add(CircleModule.TypeId, 580, 520, (2, 0.18f));
+        var star = b.Add(StarModule.TypeId, (2, 0.55f));
+        var hole = b.Add(CircleModule.TypeId, (2, 0.18f));
 
         // Softly, so the hole's rim meets the star's edges in a fillet rather
         // than in a corner — which is the whole difference between this and the
         // Maximum that was always in the catalogue.
-        var cut = b.Add(CombineModule.TypeId, 840, 340, (2, 0.04f));
+        var cut = b.Add(CombineModule.TypeId, (2, 0.04f));
 
-        var ink = b.Add(FillModule.TypeId, 1080, 220, (1, 0.008f), (2, 0.02f));
+        var ink = b.Add(FillModule.TypeId, (1, 0.008f), (2, 0.02f));
 
         // Eye: the fill lit in a color the sweep chooses, with its own outline
         // laid over the top — white, because it is added to a color rather than
         // being one.
-        var tint = b.Add("color.hsv", 1320, 180, (1, 0.8f));
-        var lit = b.Add("math.add", 1560, 260);
+        var tint = b.Add("color.hsv", (1, 0.8f));
+        var lit = b.Add("math.add");
 
         // Ear: the field itself, read round a loop that crosses the points.
-        var pitch = b.Add("audio.frequency", 840, 760, (0, 110f));
-        var scan = b.Add(NodeCatalog.ScanTypeId, 1080, 640, (3, 0.42f), (6, 0.5f));
+        var pitch = b.Add("audio.frequency", (0, 110f));
+        var scan = b.Add(NodeCatalog.ScanTypeId, (3, 0.42f), (6, 0.5f));
 
-        var output = b.Add(
-            NodeCatalog.OutputTypeId, 1820, 400, (NodeCatalog.OutputGainPort, 0.5f));
+        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputGainPort, 0.5f));
 
         b.Wire(rock, 0, turn, 2)
          .Wire(turn, 0, star, 0)
@@ -94,6 +93,6 @@ internal static class ShapesPreset
          .Group("Eye", tint, lit)
          .Group("Ear", pitch, scan);
 
-        return b.Patch;
+        return b.Build();
     }
 }

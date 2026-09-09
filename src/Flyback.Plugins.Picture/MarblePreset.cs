@@ -45,26 +45,25 @@ internal static class MarblePreset
 
         // Both fields boil on it, and the picture and the sound take their pace
         // from the same one.
-        var clock = b.Add("time", 60, 520);
+        var clock = b.Add("time");
 
         var drift = FractalModule.WithOctaves(
-            b.Add(FractalModule.TypeId, 300, 300, (3, 0.9f), (4, 0.5f)), 3);
+            b.Add(FractalModule.TypeId, (3, 0.9f), (4, 0.5f)), 3);
 
         // The warp: the plane is pushed by how the first field reads at each
         // point, so the second one is read somewhere other than where it is
         // being drawn.
-        var bend = b.Add("space.warp", 560, 300, (3, 0.7f));
+        var bend = b.Add("space.warp", (3, 0.7f));
 
         var veins = FractalModule.WithOctaves(
-            b.Add(FractalModule.TypeId, 820, 300, (3, 2.5f), (4, 0.55f)), 5);
+            b.Add(FractalModule.TypeId, (3, 2.5f), (4, 0.55f)), 5);
 
         // Backwards, so the creases are the dark veins and the body of the field
         // is the light stone. Not all the way to black: marble has no holes in it.
-        var stone = b.Add("math.remap", 1080, 220, (1, 0f), (2, 0.55f), (3, 1f), (4, 0.1f));
-        var tint = b.Add("color.hsv", 1320, 220, (1, 0.25f));
+        var stone = b.Add("math.remap", (1, 0f), (2, 0.55f), (3, 1f), (4, 0.1f));
+        var tint = b.Add("color.hsv", (1, 0.25f));
 
-        var output = b.Add(
-            NodeCatalog.OutputTypeId, 1800, 400, (NodeCatalog.OutputGainPort, 0.5f));
+        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputGainPort, 0.5f));
 
         b.Wire(clock, 0, drift, 2)
          .Wire(clock, 0, veins, 2)
@@ -78,6 +77,6 @@ internal static class MarblePreset
          .Wire(stone, 0, tint, 2)
          .Wire(tint, 0, output, NodeCatalog.OutputColorPort);
 
-        return b.Patch;
+        return b.Build();
     }
 }

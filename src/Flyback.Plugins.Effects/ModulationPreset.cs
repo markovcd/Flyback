@@ -30,15 +30,14 @@ internal static class ModulationPreset
 
         // No clock: the saw's 'in' is normalled to Time (ADR-0050), so the whole
         // patch is the effects and the one thing they are applied to.
-        var pitch = b.Add("audio.frequency", 250, 720, (0, 165f));
-        var saw = b.Add("osc.saw", 470, 680, (3, 0.9f));
+        var pitch = b.Add("audio.frequency", (0, 165f));
+        var saw = b.Add("osc.saw", (3, 0.9f));
 
-        var flanger = b.Add(FlangerModule.TypeId, 700, 680, (1, 0.18f), (2, 0.8f), (3, 0.45f), (4, 0.35f));
-        var phaser = b.Add(PhaserModule.TypeId, 940, 700, (1, 0.4f), (2, 0.75f), (3, 0.5f), (4, 0.5f));
-        var chorus = b.Add(ChorusModule.TypeId, 1180, 720, (1, 0.6f), (2, 0.6f), (3, 0.5f));
+        var flanger = b.Add(FlangerModule.TypeId, (1, 0.18f), (2, 0.8f), (3, 0.45f), (4, 0.35f));
+        var phaser = b.Add(PhaserModule.TypeId, (1, 0.4f), (2, 0.75f), (3, 0.5f), (4, 0.5f));
+        var chorus = b.Add(ChorusModule.TypeId, (1, 0.6f), (2, 0.6f), (3, 0.5f));
 
-        var output = b.Add(
-            NodeCatalog.OutputTypeId, 1420, 700, (NodeCatalog.OutputGainPort, 0.6f));
+        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputGainPort, 0.6f));
 
         b.Wire(pitch, 0, saw, 1)
          .Wire(saw, 0, flanger, 0)
@@ -47,6 +46,6 @@ internal static class ModulationPreset
          .Wire(chorus, 0, output, NodeCatalog.OutputLeftPort)
          .Wire(chorus, 1, output, NodeCatalog.OutputRightPort);
 
-        return b.Patch;
+        return b.Build();
     }
 }

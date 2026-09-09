@@ -173,12 +173,12 @@ public static class Presets
         // rate, gate length, shape — the notes themselves are a list on the
         // node rather than knobs on it (ADR-0038). 'in' takes no wire: it runs
         // on the clock every domain socket is normalled to.
-        var steps = b.Add("seq.notes", 240, 180, (1, 3f), (2, 0.66f));
+        var steps = b.Add("seq.notes", (1, 3f), (2, 0.66f));
 
         // Ear: the step is a note number, so it goes in where a note goes.
-        var note = b.Add("audio.note", 640, 180);
-        var tone = b.Add("osc.sine", 840, 180);
-        var voiced = b.Add("math.mul", 1040, 200);
+        var note = b.Add("audio.note");
+        var tone = b.Add("osc.sine");
+        var voiced = b.Add("math.mul");
 
         // Eye: rings whose count is the position in the pattern, so the picture
         // reorganises itself on the beat rather than drifting through it.
@@ -186,20 +186,20 @@ public static class Presets
         // Remapped rather than multiplied, so the first step of the pattern is a
         // ring count of one and a half rather than of nothing: index starts at
         // zero, and zero rings is a flat field with no pattern in it at all.
-        var depth = b.Add("math.remap", 400, 760, (1, 0f), (2, 1f), (3, 1.5f), (4, 9f));
-        var rings = b.Add("pattern.rings", 640, 620);
-        var glow = b.Add("math.remap", 840, 620, (1, -1f), (2, 1f), (3, 0.05f), (4, 1f));
+        var depth = b.Add("math.remap", (1, 0f), (2, 1f), (3, 1.5f), (4, 9f));
+        var rings = b.Add("pattern.rings");
+        var glow = b.Add("math.remap", (1, -1f), (2, 1f), (3, 0.05f), (4, 1f));
 
         // The gate dims the picture exactly where it silences the tone, so the
         // rhythm is visible as well as audible — but only down to four tenths.
         // Multiplying by the gate itself is the obvious wiring and the wrong
         // one: the screen would be black for the third of every step that the
         // note is not sounding, which reads as a fault rather than as a pulse.
-        var pulse = b.Add("math.remap", 1040, 860, (1, 0f), (2, 1f), (3, 0.4f), (4, 1f));
-        var lit = b.Add("math.mul", 1040, 700);
-        var color = b.Add("color.hsv", 1240, 620, (1, 0.8f));
+        var pulse = b.Add("math.remap", (1, 0f), (2, 1f), (3, 0.4f), (4, 1f));
+        var lit = b.Add("math.mul");
+        var color = b.Add("color.hsv", (1, 0.8f));
 
-        var output = b.Add(NodeCatalog.OutputTypeId, 1440, 420, (NodeCatalog.OutputGainPort, 0.5f));
+        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputGainPort, 0.5f));
 
         b.Wire(steps, 0, note, 0)
          .Wire(note, 0, tone, 1)
@@ -217,7 +217,7 @@ public static class Presets
          .Wire(lit, 0, color, 2)
          .Wire(color, 0, output, NodeCatalog.OutputColorPort);
 
-        return b.Patch;
+        return b.Build();
     }
 
     /// <summary>
@@ -278,33 +278,32 @@ public static class Presets
         // Two beats a second, and a gate short enough that the envelope decides
         // how long the drum is rather than the trigger — what decides the length
         // of a kick is the envelope and never the gate.
-        var beat = b.Add("osc.pulse", 80, 300, (1, 2f), (3, 0.08f));
+        var beat = b.Add("osc.pulse", (1, 2f), (3, 0.08f));
 
-        var level = b.Add(NodeCatalog.AdsrTypeId, 320, 300, (1, -2.6f), (2, -0.9f), (3, 0f), (4, -1f));
+        var level = b.Add(NodeCatalog.AdsrTypeId, (1, -2.6f), (2, -0.9f), (3, 0f), (4, -1f));
 
-        var pitch = b.Add("audio.frequency", 80, 560, (0, 70f));
-        var tone = b.Add("osc.sine", 320, 560);
-        var voiced = b.Add("math.mul", 580, 420);
+        var pitch = b.Add("audio.frequency", (0, 70f));
+        var tone = b.Add("osc.sine");
+        var voiced = b.Add("math.mul");
 
         // The one wire that is new in the machine: a signal on its way to the
         // speakers, read by something that hands the picture a number for it.
         // 'in' is swept, so nothing upstream of here is lowered into the frame —
         // the drum is not computed per pixel to be looked at.
-        var heard = b.Add(NodeCatalog.MeterTypeId, 840, 420, (1, -1.5f));
+        var heard = b.Add(NodeCatalog.MeterTypeId, (1, -1.5f));
 
-        var rings = b.Add("pattern.rings", 840, 120, (2, 5f));
-        var glow = b.Add("math.remap", 1080, 120, (1, -1f), (2, 1f), (3, 0.1f), (4, 1f));
+        var rings = b.Add("pattern.rings", (2, 5f));
+        var glow = b.Add("math.remap", (1, -1f), (2, 1f), (3, 0.1f), (4, 1f));
 
         // A floor under the reading, for the reason the Sequence preset puts one
         // under its gate: a picture that is black whenever nothing is sounding
         // reads as a fault rather than as a pulse — and with the sound switched
         // off altogether it would be a preset that draws nothing at all.
-        var swell = b.Add("math.add", 1080, 420, (1, 0.18f));
-        var lit = b.Add("math.mul", 1320, 200);
-        var color = b.Add("color.hsv", 1560, 240, (1, 0.75f));
+        var swell = b.Add("math.add", (1, 0.18f));
+        var lit = b.Add("math.mul");
+        var color = b.Add("color.hsv", (1, 0.75f));
 
-        var output = b.Add(
-            NodeCatalog.OutputTypeId, 1800, 420, (NodeCatalog.OutputGainPort, 0.6f));
+        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputGainPort, 0.6f));
 
         b.Wire(beat, 0, level, 0)
          .Wire(pitch, 0, tone, 1)
@@ -321,7 +320,7 @@ public static class Presets
          .Wire(lit, 0, color, 2)
          .Wire(color, 0, output, NodeCatalog.OutputColorPort);
 
-        return b.Patch;
+        return b.Build();
     }
 
     /// <summary>
@@ -377,7 +376,7 @@ public static class Presets
 
         // No knobs on it at all. Which keyboard it listens to is the one thing it
         // carries, and a fresh one carries the computer's own.
-        var keys = b.Add(NodeCatalog.MidiTypeId, 40, 420);
+        var keys = b.Add(NodeCatalog.MidiTypeId);
         keys.SetState(MidiExtra.StateKey, new System.Text.Json.Nodes.JsonObject
         {
             [MidiExtra.IndexField] = 1f,
@@ -385,33 +384,32 @@ public static class Presets
 
         // Ear. The note number goes in where a note number goes, and comes out
         // as hertz.
-        var note = b.Add("audio.note", 360, 120);
+        var note = b.Add("audio.note");
 
         // A pulse rather than a saw, because its width is somewhere for the
         // held value to go. 'in' takes no wire: it runs on the clock every
         // domain socket is normalled to (ADR-0050).
-        var tone = b.Add("osc.pulse", 1120, 120);
+        var tone = b.Add("osc.pulse");
 
         // A pluck: quick on, most of the way down in a fifth of a second, and
         // held at half while the key is. The times are decades of seconds — see
         // PortDisplay.Duration — so -2.4 is about four milliseconds.
-        var env = b.Add(NodeCatalog.AdsrTypeId, 360, 420,
-            (1, -2.4f), (2, -0.7f), (3, 0.5f), (4, -1f));
+        var env = b.Add(NodeCatalog.AdsrTypeId, (1, -2.4f), (2, -0.7f), (3, 0.5f), (4, -1f));
 
-        var voiced = b.Add("math.mul", 1400, 220);
+        var voiced = b.Add("math.mul");
 
         // The timbre, which is the whole of what 'trigger' is here for. A clock
         // into 'z' is what makes the field wander rather than sit still; x and y
         // are nothing at the speakers, so what the ear's copy of this walks is a
         // line through the noise rather than a picture of it.
-        var clock = b.Add("time", 360, 700);
-        var drift = b.Add("math.mul", 560, 700, (1, 3f));
-        var wander = b.Add("pattern.noise", 760, 700);
-        var caught = b.Add(NodeCatalog.HoldTypeId, 960, 700);
+        var clock = b.Add("time");
+        var drift = b.Add("math.mul", (1, 3f));
+        var wander = b.Add("pattern.noise");
+        var caught = b.Add(NodeCatalog.HoldTypeId);
 
         // Never all the way to either end: a duty cycle of nought or one is
         // silence, and a note that happened to catch one would simply not sound.
-        var width = b.Add("math.remap", 1160, 700, (1, 0f), (2, 1f), (3, 0.12f), (4, 0.88f));
+        var width = b.Add("math.remap", (1, 0f), (2, 1f), (3, 0.12f), (4, 0.88f));
 
         // Eye. Two readings of the same note number — what color it is, and how
         // finely the rings are drawn — over the two octaves either side of
@@ -425,23 +423,23 @@ public static class Presets
         // reads as nought — the same answer a program with no block at all gives
         // — and nought is not a note anybody will strike, so the picture rests at
         // the bottom of the range it draws rather than wherever nought lands.
-        var range = b.Add("math.clamp", 360, 1080, (1, 36f), (2, 84f));
+        var range = b.Add("math.clamp", (1, 36f), (2, 84f));
 
-        var hue = b.Add("math.remap", 620, 1000, (1, 36f), (2, 84f), (3, 0.55f), (4, 0f));
-        var fineness = b.Add("math.remap", 620, 1160, (1, 36f), (2, 84f), (3, 2f), (4, 11f));
+        var hue = b.Add("math.remap", (1, 36f), (2, 84f), (3, 0.55f), (4, 0f));
+        var fineness = b.Add("math.remap", (1, 36f), (2, 84f), (3, 2f), (4, 11f));
 
-        var rings = b.Add("pattern.rings", 900, 1080);
-        var glow = b.Add("math.remap", 1160, 1080, (1, -1f), (2, 1f), (3, 0.1f), (4, 1f));
+        var rings = b.Add("pattern.rings");
+        var glow = b.Add("math.remap", (1, -1f), (2, 1f), (3, 0.1f), (4, 1f));
 
         // What the envelope hands the screen is its gate, since an envelope has
         // no memory to run a shape in on the video path. Held rather than struck,
         // that is the right picture of a keyboard: the light is on while the key
         // is down. Dimmed to a quarter rather than to nothing between notes.
-        var lift = b.Add("math.remap", 1160, 1300, (1, 0f), (2, 1f), (3, 0.25f), (4, 1f));
-        var lit = b.Add("math.mul", 1400, 1080);
-        var skin = b.Add("color.hsv", 1660, 1000, (1, 0.8f));
+        var lift = b.Add("math.remap", (1, 0f), (2, 1f), (3, 0.25f), (4, 1f));
+        var lit = b.Add("math.mul");
+        var skin = b.Add("color.hsv", (1, 0.8f));
 
-        var output = b.Add(NodeCatalog.OutputTypeId, 1920, 560, (NodeCatalog.OutputGainPort, 0.6f));
+        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputGainPort, 0.6f));
 
         b.Wire(keys, 0, note, 0)
          .Wire(note, 0, tone, 1)
@@ -469,15 +467,15 @@ public static class Presets
          .Wire(lit, 0, skin, 2)
          .Wire(skin, 0, output, NodeCatalog.OutputColorPort);
 
-        return b.Patch;
+        return b.Build();
     }
 
     /// <summary>Just the Output, with everything still to plug into it.</summary>
     public static Patch Empty(ModuleCatalog modules)
     {
         var b = new PatchBuilder(modules);
-        b.Add(NodeCatalog.OutputTypeId, 640, 260);
-        return b.Patch;
+        b.Add(NodeCatalog.OutputTypeId);
+        return b.Build();
     }
 
     /// <summary>Two sine fields crossed and read as hue — the "hello world" of video synths.</summary>
@@ -485,21 +483,21 @@ public static class Presets
     {
         var b = new PatchBuilder(modules);
 
-        var coord = b.Add("coord", 40, 200);
-        var time = b.Add("time", 40, 400);
+        var coord = b.Add("coord");
+        var time = b.Add("time");
 
         // A fifth of a radian a second into the phase below. Time is seconds and
         // nothing else, so a patch that wants less than that says so here.
-        var slowly = b.Add("math.mul", 150, 400, (1, 0.2f));
+        var slowly = b.Add("math.mul", (1, 0.2f));
 
         // Sine along x, and a second along y whose phase drifts with time.
-        var horizontal = b.Add("osc.sine", 260, 120, (1, 1.5f));
-        var vertical = b.Add("osc.sine", 260, 300, (1, 1.1f));
+        var horizontal = b.Add("osc.sine", (1, 1.5f));
+        var vertical = b.Add("osc.sine", (1, 1.1f));
 
-        var sum = b.Add("math.add", 500, 200);
-        var hue = b.Add("math.remap", 660, 200, (1, -2f), (2, 2f), (3, 0f), (4, 1f));
-        var color = b.Add("color.hsv", 860, 200, (1, 0.85f), (2, 1f));
-        var output = b.Add(NodeCatalog.OutputTypeId, 1060, 220);
+        var sum = b.Add("math.add");
+        var hue = b.Add("math.remap", (1, -2f), (2, 2f), (3, 0f), (4, 1f));
+        var color = b.Add("color.hsv", (1, 0.85f), (2, 1f));
+        var output = b.Add(NodeCatalog.OutputTypeId);
 
         b.Wire(coord, 0, horizontal, 0)
          .Wire(coord, 1, vertical, 0)
@@ -511,7 +509,7 @@ public static class Presets
          .Wire(hue, 0, color, 0)
          .Wire(color, 0, output, 0);
 
-        return b.Patch;
+        return b.Build();
     }
 
     /// <summary>Rotating wedges filled with noise that boils over time.</summary>
@@ -526,15 +524,15 @@ public static class Presets
         // It is here at all only because both speeds are scaled. The Rotate's
         // own x and y need no such module: they are normalled to Coordinates
         // and are already reading the pixel's position (ADR-0050).
-        var clock = b.Add("time", 40, 260);
-        var spin = b.Add("math.mul", 150, 60, (1, 0.15f));
-        var drift = b.Add("math.mul", 150, 460, (1, 0.3f));
+        var clock = b.Add("time");
+        var spin = b.Add("math.mul", (1, 0.15f));
+        var drift = b.Add("math.mul", (1, 0.3f));
 
-        var rotate = b.Add("space.rotate", 260, 160);
-        var fold = b.Add("space.kaleidoscope", 470, 200, (2, 6f));
-        var noise = b.Add("pattern.noise", 680, 240, (3, 2.5f));
-        var color = b.Add("color.hsv", 890, 240, (1, 0.9f), (2, 1f));
-        var output = b.Add(NodeCatalog.OutputTypeId, 1090, 260);
+        var rotate = b.Add("space.rotate");
+        var fold = b.Add("space.kaleidoscope", (2, 6f));
+        var noise = b.Add("pattern.noise", (3, 2.5f));
+        var color = b.Add("color.hsv", (1, 0.9f), (2, 1f));
+        var output = b.Add(NodeCatalog.OutputTypeId);
 
         b.Wire(clock, 0, spin, 0)
          .Wire(clock, 0, drift, 0)
@@ -547,7 +545,7 @@ public static class Presets
          .Wire(noise, 0, color, 0)
          .Wire(color, 0, output, 0);
 
-        return b.Patch;
+        return b.Build();
     }
 
     /// <summary>
@@ -563,23 +561,23 @@ public static class Presets
         // and the Rings' own x and y are normalled and take no wire (ADR-0050).
         // What is left is the one socket in the patch that has to be told to
         // move, which is what a Time module is now for.
-        var time = b.Add("time", 40, 380);
+        var time = b.Add("time");
 
         // The shared control signal, remapped to 0..1 by amp and bias.
-        var slow = b.Add("osc.sine", 260, 340, (1, 0.15f), (3, 0.5f), (4, 0.5f));
+        var slow = b.Add("osc.sine", (1, 0.15f), (3, 0.5f), (4, 0.5f));
 
         // Ear.
-        var pitch = b.Add("audio.frequency", 260, 560, (0, 110f));
-        var tone = b.Add("osc.sine", 470, 560, (1, 110f));
-        var tremolo = b.Add("math.mul", 700, 580);
+        var pitch = b.Add("audio.frequency", (0, 110f));
+        var tone = b.Add("osc.sine", (1, 110f));
+        var tremolo = b.Add("math.mul");
 
         // Eye.
-        var rings = b.Add("pattern.rings", 260, 80, (2, 3f));
-        var tint = b.Add("color.hsv", 700, 140, (1, 0.85f));
+        var rings = b.Add("pattern.rings", (2, 3f));
+        var tint = b.Add("color.hsv", (1, 0.85f));
 
         // Both halves land on the one block, which is what makes the shared
         // oscillator legible: two wires into the same module, from the same sine.
-        var output = b.Add(NodeCatalog.OutputTypeId, 920, 340, (NodeCatalog.OutputGainPort, 0.6f));
+        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputGainPort, 0.6f));
 
         b.Wire(pitch, 0, tone, 1)
          .Wire(tone, 0, tremolo, 0)
@@ -590,7 +588,7 @@ public static class Presets
          .Wire(rings, 0, tint, 2)
          .Wire(tint, 0, output, NodeCatalog.OutputColorPort);
 
-        return b.Patch;
+        return b.Build();
     }
 
     /// <summary>
@@ -638,28 +636,28 @@ public static class Presets
         // The field, and the only thing in the patch that makes the waveform.
         // 'freq' is the modulation index rather than a pitch: more rings under
         // the loop is more harmonics, at the same note.
-        var rings = b.Add("pattern.rings", 300, 120, (2, 4f));
+        var rings = b.Add("pattern.rings", (2, 4f));
 
         // Where the loop is cut through the field, walked outward and back twice
         // a second. Kept clear of zero at the bottom of the sweep, because a loop
         // concentric with the rings reads a constant and is silent.
-        var sweep = b.Add("osc.sine", 300, 600, (1, 0.2f));
-        var where = b.Add("math.remap", 540, 640, (1, -1f), (2, 1f), (3, 0.2f), (4, 0.75f));
+        var sweep = b.Add("osc.sine", (1, 0.2f));
+        var where = b.Add("math.remap", (1, -1f), (2, 1f), (3, 0.2f), (4, 0.75f));
 
-        var pitch = b.Add("audio.frequency", 300, 780, (0, 110f));
+        var pitch = b.Add("audio.frequency", (0, 110f));
 
         // 'clock' is the sweep's own time base and takes no wire — it is a
         // domain, so it is normalled to Time; 'rate' is the pitch; 'radius' and
         // 'x' choose which loop through the field is read.
-        var scan = b.Add(NodeCatalog.ScanTypeId, 800, 420, (3, 0.35f), (6, 1f));
+        var scan = b.Add(NodeCatalog.ScanTypeId, (3, 0.35f), (6, 1f));
 
         // Eye: the field under the trace, dim enough that the loop reads on top
         // of it rather than competing with it.
-        var glow = b.Add("math.remap", 540, 120, (1, -1f), (2, 1f), (3, 0.05f), (4, 0.55f));
-        var tint = b.Add("color.hsv", 800, 120, (1, 0.7f));
-        var lit = b.Add("math.add", 1080, 220);
+        var glow = b.Add("math.remap", (1, -1f), (2, 1f), (3, 0.05f), (4, 0.55f));
+        var tint = b.Add("color.hsv", (1, 0.7f));
+        var lit = b.Add("math.add");
 
-        var output = b.Add(NodeCatalog.OutputTypeId, 1320, 300, (NodeCatalog.OutputGainPort, 0.45f));
+        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputGainPort, 0.45f));
 
         // Ear: the field itself into the sweep, and out the other side as a
         // sample. Nothing between the picture and the speakers but the loop.
@@ -677,7 +675,7 @@ public static class Presets
          .Wire(scan, 1, lit, 1)
          .Wire(lit, 0, output, NodeCatalog.OutputColorPort);
 
-        return b.Patch;
+        return b.Build();
     }
 
     /// <summary>
@@ -735,23 +733,23 @@ public static class Presets
         // One tempo for the whole patch, because the two things it sets have to
         // be the same number: how often a note is plucked, and how often the
         // melody is allowed to move. 180 a minute is three a second.
-        var tempo = b.Add(NodeCatalog.TempoTypeId, 40, 700, (0, 180f));
+        var tempo = b.Add(NodeCatalog.TempoTypeId, (0, 180f));
 
         // For the field's 'z', which is the one socket in the patch that has to
         // be told to move: 'z' is depth through the noise rather than a position
         // in it, so nothing is normalled to it (ADR-0050).
-        var time = b.Add("time", 40, 460);
+        var time = b.Add("time");
 
-        var wander = b.Add("math.mul", 250, 460, (1, 0.3f));
+        var wander = b.Add("math.mul", (1, 0.3f));
 
         // The one module both sinks read, and the reason they hear and see the
         // same thing. Its x and y need no wire: on the screen they are the
         // pixel's own, and at the speakers there is no pixel and they are zero.
-        var field = b.Add("pattern.noise", 880, 300, (3, 2.2f));
+        var field = b.Add("pattern.noise", (3, 2.2f));
 
         // Two octaves from A2, which is low enough to sound like a bass line at
         // the bottom and high enough to sing at the top.
-        var range = b.Add("math.remap", 1090, 300, (1, 0f), (2, 1f), (3, 45f), (4, 69f));
+        var range = b.Add("math.remap", (1, 0f), (2, 1f), (3, 45f), (4, 69f));
 
         // A minor pentatonic — A C D E G, the same five notes as C major
         // pentatonic. The scale is a set on the module rather than sockets on it
@@ -770,22 +768,22 @@ public static class Presets
         // The gate that opens the envelope goes into 'hold' as well, so the
         // interval the note is frozen for is the interval it is sounding for, by
         // construction rather than by arithmetic.
-        var key = b.Add(NodeCatalog.QuantiserTypeId, 1300, 300);
+        var key = b.Add(NodeCatalog.QuantiserTypeId);
         ScaleExtra.Set(key, [0, 2, 4, 7, 9]);
 
         // Ear: the snapped note as a pitch, plucked three times a second.
-        var note = b.Add("audio.note", 1520, 480);
-        var tone = b.Add("osc.sine", 1740, 480);
+        var note = b.Add("audio.note");
+        var tone = b.Add("osc.sine");
 
         // 'width' is how much of each beat the trigger is shut for, so a small
         // one opens just after the beat and holds until just before the next.
-        var beat = b.Add("osc.pulse", 1300, 700, (3, 0.12f));
+        var beat = b.Add("osc.pulse", (3, 0.12f));
 
         // Percussive: nothing sustained, so a note has decayed to silence well
         // inside its own beat, and the pitch the Hold catches on the next one
         // lands on a note starting rather than on one still ringing.
-        var pluck = b.Add(NodeCatalog.AdsrTypeId, 1520, 700, (1, -2.4f), (2, -0.85f), (3, 0f), (4, -1.5f));
-        var struck = b.Add("math.mul", 1960, 560);
+        var pluck = b.Add(NodeCatalog.AdsrTypeId, (1, -2.4f), (2, -0.85f), (3, 0f), (4, -1.5f));
+        var struck = b.Add("math.mul");
 
         // Eye: the snapped note as a hue, one turn of the wheel to the octave —
         // so a note is the same color wherever on screen it turns up, and the
@@ -797,23 +795,23 @@ public static class Presets
         // the terraces come out as a gradient with faint creases in it. Per
         // octave, the five notes of the scale are a sixth of the wheel apart at
         // the closest, which is the difference between a band and a crease.
-        var wheel = b.Add("math.mul", 1520, 40, (1, 1f / 12f));
-        var octave = b.Add("math.fract", 1520, 120);
+        var wheel = b.Add("math.mul", (1, 1f / 12f));
+        var octave = b.Add("math.fract");
 
         // Warm at the bottom of the octave and cool at the top, over rather less
         // than the whole wheel: a full turn puts red beside green beside purple,
         // which reads as a test card rather than as a field with steps in it.
         // Half a turn keeps neighbouring notes related and still tells them
         // apart, and the seam where an octave rolls over is a real edge.
-        var height = b.Add("math.remap", 1520, 200, (1, 0f), (2, 1f), (3, 0.02f), (4, 0.6f));
+        var height = b.Add("math.remap", (1, 0f), (2, 1f), (3, 0.02f), (4, 0.6f));
 
         // And the field itself as brightness, unsnapped. This is the whole
         // demonstration: the gradient is what arrived and the bands are what the
         // Quantiser made of it, and both are on screen at once.
-        var glow = b.Add("math.remap", 1520, 320, (1, 0f), (2, 1f), (3, 0.22f), (4, 0.95f));
-        var map = b.Add("color.hsv", 1740, 160, (1, 0.6f));
+        var glow = b.Add("math.remap", (1, 0f), (2, 1f), (3, 0.22f), (4, 0.95f));
+        var map = b.Add("color.hsv", (1, 0.6f));
 
-        var output = b.Add(NodeCatalog.OutputTypeId, 2180, 320, (NodeCatalog.OutputGainPort, 0.55f));
+        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputGainPort, 0.55f));
 
         b.Wire(time, 0, wander, 0)
          .Wire(wander, 0, field, 2)
@@ -841,7 +839,7 @@ public static class Presets
          .Wire(glow, 0, map, 2)
          .Wire(map, 0, output, NodeCatalog.OutputColorPort);
 
-        return b.Patch;
+        return b.Build();
     }
 
 
@@ -882,44 +880,44 @@ public static class Presets
         // Nineteen modules and this is the only source in the patch. Both
         // geometry chains start from a Rotate or a Scale whose x and y are
         // normalled to Coordinates, so neither needs anything in front of it.
-        var clock = b.Add("time", 40, 400);
-        var spin = b.Add("math.mul", 150, 80, (1, 0.05f));
-        var boil = b.Add("math.mul", 150, 560, (1, 0.12f));
-        var pulse = b.Add("math.mul", 150, 720, (1, 0.2f));
+        var clock = b.Add("time");
+        var spin = b.Add("math.mul", (1, 0.05f));
+        var boil = b.Add("math.mul", (1, 0.12f));
+        var pulse = b.Add("math.mul", (1, 0.2f));
 
-        var turn = b.Add("space.rotate", 250, 220);
-        var fold = b.Add("space.kaleidoscope", 450, 220, (2, 8f));
+        var turn = b.Add("space.rotate");
+        var fold = b.Add("space.kaleidoscope", (2, 8f));
 
         // Read from the folded plane, not the flat one, so the field is itself
         // symmetric — warping by anything asymmetric here would quietly undo the
         // fold and leave the picture looking like ordinary noise.
-        var field = b.Add("pattern.noise", 660, 560, (3, 1.4f));
+        var field = b.Add("pattern.noise", (3, 1.4f));
 
-        var bend = b.Add("space.warp", 880, 240, (3, 0.5f));
-        var bands = b.Add("pattern.rings", 1080, 260, (2, 2.5f));
+        var bend = b.Add("space.warp", (3, 0.5f));
+        var bands = b.Add("pattern.rings", (2, 2.5f));
 
         // Rings are a sine, so most of the frame is dark and only the crests
         // survive as filaments.
-        var filament = b.Add("math.smoothstep", 1080, 320, (0, 0.15f), (1, 0.85f));
+        var filament = b.Add("math.smoothstep", (0, 0.15f), (1, 0.85f));
 
         // Hue drifts with the field and with time, wrapped back into 0..1.
-        var drift = b.Add("math.add", 890, 620);
-        var hue = b.Add("math.fract", 1080, 620);
+        var drift = b.Add("math.add");
+        var hue = b.Add("math.fract");
 
-        var fresh = b.Add("color.hsv", 1270, 400, (1, 0.85f));
+        var fresh = b.Add("color.hsv", (1, 0.85f));
 
         // The previous frame, zoomed out a hair and turned, so what is already on
         // screen spirals outward while new filaments arrive underneath it.
-        var widen = b.Add("space.scale", 250, 900, (2, 0.99f));
-        var swirl = b.Add("space.rotate", 450, 900, (2, 0.015f));
-        var previous = b.Add("feedback", 660, 900);
-        var trail = b.Add("color.gain", 870, 900, (1, 0.92f), (2, 0f));
+        var widen = b.Add("space.scale", (2, 0.99f));
+        var swirl = b.Add("space.rotate", (2, 0.015f));
+        var previous = b.Add("feedback");
+        var trail = b.Add("color.gain", (1, 0.92f), (2, 0f));
 
         // Max rather than a blend: a trail that is brighter than the new frame
         // keeps its brightness, which is what makes the streaks read as trails
         // rather than as a smeared copy.
-        var combine = b.Add("math.max", 1470, 620);
-        var output = b.Add(NodeCatalog.OutputTypeId, 1660, 640);
+        var combine = b.Add("math.max");
+        var output = b.Add(NodeCatalog.OutputTypeId);
 
         b.Wire(clock, 0, spin, 0)
          .Wire(clock, 0, boil, 0)
@@ -951,7 +949,7 @@ public static class Presets
          .Wire(fresh, 0, combine, 1)
          .Wire(combine, 0, output, NodeCatalog.OutputColorPort);
 
-        return b.Patch;
+        return b.Build();
     }
 
     /// <summary>
@@ -962,22 +960,22 @@ public static class Presets
     {
         var b = new PatchBuilder(modules);
 
-        var clock = b.Add("time", 40, 300);
-        var spin = b.Add("math.mul", 150, 60, (1, 0.08f));
-        var pulse = b.Add("math.mul", 150, 560, (1, 0.25f));
+        var clock = b.Add("time");
+        var spin = b.Add("math.mul", (1, 0.08f));
+        var pulse = b.Add("math.mul", (1, 0.25f));
 
-        var rotate = b.Add("space.rotate", 250, 140);
-        var scale = b.Add("space.scale", 440, 160, (2, 1.05f));
-        var previous = b.Add("feedback", 620, 180);
-        var dim = b.Add("color.gain", 790, 180, (1, 0.95f), (2, 0f));
+        var rotate = b.Add("space.rotate");
+        var scale = b.Add("space.scale", (2, 1.05f));
+        var previous = b.Add("feedback");
+        var dim = b.Add("color.gain", (1, 0.95f), (2, 0f));
 
         // Fresh material: bright rings that travel outward.
-        var rings = b.Add("pattern.rings", 250, 460, (2, 1.5f));
-        var spark = b.Add("math.smoothstep", 450, 500, (0, 0.8f), (1, 1f));
-        var tint = b.Add("color.hsv", 640, 520, (1, 1f));
+        var rings = b.Add("pattern.rings", (2, 1.5f));
+        var spark = b.Add("math.smoothstep", (0, 0.8f), (1, 1f));
+        var tint = b.Add("color.hsv", (1, 1f));
 
-        var combine = b.Add("math.max", 950, 300);
-        var output = b.Add(NodeCatalog.OutputTypeId, 1130, 320);
+        var combine = b.Add("math.max");
+        var output = b.Add(NodeCatalog.OutputTypeId);
 
         b.Wire(clock, 0, spin, 0)
          .Wire(clock, 0, pulse, 0)
@@ -995,7 +993,7 @@ public static class Presets
          .Wire(tint, 0, combine, 1)
          .Wire(combine, 0, output, 0);
 
-        return b.Patch;
+        return b.Build();
     }
 
     /// <summary>
@@ -1034,13 +1032,13 @@ public static class Presets
         // standing field rather than a travelling tone. Nothing else in the
         // patch needs a source: every oscillator's 'in' is normalled to Time,
         // and the four that are heard take it as it comes.
-        var coord = b.Add("coord", 40, 480);
+        var coord = b.Add("coord");
 
-        var chord = b.Add("math.mixer", 1380, 60);
-        var picture = b.Add("math.mixer", 1380, 320);
+        var chord = b.Add("math.mixer");
+        var picture = b.Add("math.mixer");
 
-        var tame = b.Add("color.gain", 1620, 400, (1, 0.6f));
-        var output = b.Add(NodeCatalog.OutputTypeId, 1840, 180, (NodeCatalog.OutputGainPort, 0.25f));
+        var tame = b.Add("color.gain", (1, 0.6f));
+        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputGainPort, 0.25f));
 
         b.Wire(chord, 0, output, NodeCatalog.OutputLeftPort)
          .Wire(picture, 0, tame, 0)
@@ -1065,22 +1063,21 @@ public static class Presets
         for (var v = 0; v < voices.Length; v++)
         {
             var (note, bands, hue, rate, phase) = voices[v];
-            var row = 60 + v * 180;
 
             // The fader. Amp and bias put a sine's -1..1 into the 0..1 a level
             // is edited within, so it opens and closes rather than going through
             // zero and coming back the other way up.
-            var level = b.Add("osc.sine", 280, row, (1, rate), (2, phase), (3, 0.5f), (4, 0.5f));
+            var level = b.Add("osc.sine", (1, rate), (2, phase), (3, 0.5f), (4, 0.5f));
 
             // Ear: the note, and a sine at it.
-            var pitch = b.Add("audio.note", 500, row, (0, note));
-            var tone = b.Add("osc.sine", 700, row);
+            var pitch = b.Add("audio.note", (0, note));
+            var tone = b.Add("osc.sine");
 
             // Eye: the same oscillator run over the radius instead of over the
             // clock, so it stands still as bands out from the centre rather than
             // travelling as a tone.
-            var band = b.Add("osc.sine", 940, row, (1, bands), (3, 0.5f), (4, 0.5f));
-            var tint = b.Add("color.hsv", 1160, row, (0, hue));
+            var band = b.Add("osc.sine", (1, bands), (3, 0.5f), (4, 0.5f));
+            var tint = b.Add("color.hsv", (0, hue));
 
             // Channel v of both mixers: the input, then the level beside it.
             var channel = v * 2;
@@ -1095,7 +1092,7 @@ public static class Presets
              .Wire(level, 0, picture, channel + 1);
         }
 
-        return b.Patch;
+        return b.Build();
     }
 
     /// <summary>
@@ -1174,11 +1171,11 @@ public static class Presets
 
         // Here for the things that have to be told to move and are not an 'in':
         // the Noise's z, three drift rates, and the hash the hats are made of.
-        var clock = b.Add("time", 40, 1560);
+        var clock = b.Add("time");
 
-        var tempo = b.Add(NodeCatalog.TempoTypeId, 40, 1840, (0, 112f));
-        var eighths = b.Add("math.mul", 250, 1840, (1, 2f));
-        var sixteenths = b.Add("math.mul", 250, 2000, (1, 4f));
+        var tempo = b.Add(NodeCatalog.TempoTypeId, (0, 112f));
+        var eighths = b.Add("math.mul", (1, 2f));
+        var sixteenths = b.Add("math.mul", (1, 4f));
 
         b.Group("Clock", clock, tempo, eighths, sixteenths);
 
@@ -1187,7 +1184,7 @@ public static class Presets
         // Am, G, F, E over two bars of eighths, with the last chord held. The
         // lengths are uneven and that is the groove: the dotted eighth into a
         // sixteenth at the top of each bar is what stops it walking.
-        var bassSeq = b.Add("seq.notes", 480, 1620, (2, 0.55f), (3, 0.02f));
+        var bassSeq = b.Add("seq.notes", (2, 0.55f), (3, 0.02f));
         StepsExtra.Set(bassSeq,
         [
             new Step(33f, 1.5f), new Step(33f, 0.5f, 0.55f),
@@ -1202,7 +1199,7 @@ public static class Presets
         // are a volume rather than a note, which is what a volume being a level
         // and not a switch is for: the pitch stays where it was, so the notes
         // either side of a rest are one phrase rather than three.
-        var leadSeq = b.Add("seq.notes", 480, 2000, (2, 0.62f), (3, 0.045f));
+        var leadSeq = b.Add("seq.notes", (2, 0.62f), (3, 0.045f));
         StepsExtra.Set(leadSeq,
         [
             new Step(69f), new Step(72f, 1f, 0.8f), new Step(76f, 1f, 0.9f), new Step(72f, 1f, 0.6f),
@@ -1217,7 +1214,7 @@ public static class Presets
         // rather than a metronome. A step's own value is nothing to do with the sound
         // here — the Note Sequencer's would be a pitch and this one's is spare,
         // so it rests at zero and the volumes carry the whole pattern.
-        var kickSeq = b.Add("seq.values", 480, 2380, (2, 0.32f), (3, 0.01f));
+        var kickSeq = b.Add("seq.values", (2, 0.32f), (3, 0.01f));
         StepsExtra.Set(kickSeq,
         [
             new Step(0f), new Step(0f, 1f, 0f), new Step(0f, 1f, 0f), new Step(0f, 1f, 0f),
@@ -1232,7 +1229,7 @@ public static class Presets
         // a seventh of a second and a low one is a tick — closed hats all the
         // way through with two open ones in the bar, out of a list of numbers
         // rather than out of two instruments.
-        var hatSeq = b.Add("seq.values", 480, 2760, (2, 0.4f), (3, 0.01f));
+        var hatSeq = b.Add("seq.values", (2, 0.4f), (3, 0.01f));
         StepsExtra.Set(hatSeq,
         [
             new Step(0.15f, 1f, 0.9f), new Step(0.1f, 1f, 0.35f),
@@ -1260,25 +1257,24 @@ public static class Presets
         // Note rather than an oscillator at half the frequency, because a pitch
         // here is a note number and an octave is a socket on the module that
         // knows what one of those is.
-        var bassNote = b.Add("audio.note", 730, 1560);
-        var subNote = b.Add("audio.note", 730, 1780, (1, -1f));
+        var bassNote = b.Add("audio.note");
+        var subNote = b.Add("audio.note", (1, -1f));
 
-        var bassSaw = b.Add("osc.saw", 960, 1500, (3, 0.8f));
-        var bassSub = b.Add("osc.sine", 960, 1720, (3, 0.6f));
-        var bassSum = b.Add("math.add", 1190, 1560);
+        var bassSaw = b.Add("osc.saw", (3, 0.8f));
+        var bassSub = b.Add("osc.sine", (3, 0.6f));
+        var bassSum = b.Add("math.add");
 
-        var bassEnv = b.Add(NodeCatalog.AdsrTypeId, 960, 1920,
-            (1, -3f), (2, -1.1f), (3, 0.35f), (4, -1.2f));
+        var bassEnv = b.Add(NodeCatalog.AdsrTypeId, (1, -3f), (2, -1.1f), (3, 0.35f), (4, -1.2f));
 
-        var bassVca = b.Add("math.mul", 1420, 1560);
+        var bassVca = b.Add("math.mul");
 
         // Overdriven and then clipped, which is the cheapest waveshaper there
         // is: everything under the wall passes and everything over it flattens,
         // and a flattened saw is a saw with more harmonics in it. Only the bass
         // is treated this way — the same two modules across the lead would take
         // its envelope off it and leave a drone.
-        var bassHot = b.Add("math.mul", 1650, 1560, (1, 2.4f));
-        var bassOut = b.Add("math.clamp", 1880, 1560, (1, -1f), (2, 1f));
+        var bassHot = b.Add("math.mul", (1, 2.4f));
+        var bassOut = b.Add("math.clamp", (1, -1f), (2, 1f));
 
         b.Wire(bassSeq, 0, bassNote, 0)
          .Wire(bassSeq, 0, subNote, 0)
@@ -1297,39 +1293,39 @@ public static class Presets
 
         // --- lead ------------------------------------------------------------
 
-        var leadNote = b.Add("audio.note", 730, 2000);
+        var leadNote = b.Add("audio.note");
 
         // The twin, taken off the first Note's 'note' output rather than off the
         // sequencer again: it is the same snapped number, and the detune is put
         // on after the snap because cents are the one control that can sit
         // between two semitones. Nine of them, swung by a slow sine, so the pair
         // beat against each other at a rate that keeps changing.
-        var vibrato = b.Add("osc.sine", 730, 2200, (1, 5.4f), (3, 9f));
-        var wide = b.Add("audio.note", 960, 2180);
+        var vibrato = b.Add("osc.sine", (1, 5.4f), (3, 9f));
+        var wide = b.Add("audio.note");
 
-        var leadA = b.Add("osc.saw", 1190, 1980, (3, 0.7f));
-        var leadB = b.Add("osc.saw", 1190, 2160, (3, 0.7f));
+        var leadA = b.Add("osc.saw", (3, 0.7f));
+        var leadB = b.Add("osc.saw", (3, 0.7f));
 
         // A fifth over the tune, on a triangle so it fills rather than competes,
         // and faded in and out by a sine slow enough that it is never quite the
         // same phrase twice. Adding seven before the Note is the interval: the
         // sequencer hands out note numbers, and seven of those is a fifth.
-        var fifth = b.Add("math.add", 730, 2560, (1, 7f));
-        var fifthNote = b.Add("audio.note", 960, 2560);
-        var fifthOsc = b.Add("osc.triangle", 1190, 2560, (3, 0.5f));
-        var swell = b.Add("osc.sine", 960, 2780, (1, 0.043f), (3, 0.5f), (4, 0.5f));
-        var fifthLevel = b.Add("math.mul", 1420, 2560);
+        var fifth = b.Add("math.add", (1, 7f));
+        var fifthNote = b.Add("audio.note");
+        var fifthOsc = b.Add("osc.triangle", (3, 0.5f));
+        var swell = b.Add("osc.sine", (1, 0.043f), (3, 0.5f), (4, 0.5f));
+        var fifthLevel = b.Add("math.mul");
 
         // Left and right differ in which saw they carry and in nothing else,
         // which is where the width comes from.
-        var stackL = b.Add("math.add", 1420, 1980);
-        var stackR = b.Add("math.add", 1420, 2180);
+        var stackL = b.Add("math.add");
+        var stackR = b.Add("math.add");
 
-        var leadEnv = b.Add(NodeCatalog.AdsrTypeId, 1190, 2340,
+        var leadEnv = b.Add(NodeCatalog.AdsrTypeId,
             (1, -2.7f), (2, -1.15f), (3, 0.28f), (4, -1.4f));
 
-        var voiceL = b.Add("math.mul", 1650, 1980);
-        var voiceR = b.Add("math.mul", 1650, 2180);
+        var voiceL = b.Add("math.mul");
+        var voiceR = b.Add("math.mul");
 
         b.Wire(leadSeq, 0, leadNote, 0)
          .Wire(leadNote, 1, wide, 0)
@@ -1363,15 +1359,13 @@ public static class Presets
         // shapes how loud it is and the shorter one shapes what pitch it is. See
         // <see cref="Kick"/> for why the second of those is the difference
         // between a drum and a beep.
-        var kickLevel = b.Add(NodeCatalog.AdsrTypeId, 730, 2380,
-            (1, -2.9f), (2, -0.62f), (3, 0f), (4, -1.1f));
+        var kickLevel = b.Add(NodeCatalog.AdsrTypeId, (1, -2.9f), (2, -0.62f), (3, 0f), (4, -1.1f));
 
-        var kickSweep = b.Add(NodeCatalog.AdsrTypeId, 730, 2960,
-            (1, -3.3f), (2, -1.4f), (3, 0f), (4, -1.8f));
+        var kickSweep = b.Add(NodeCatalog.AdsrTypeId, (1, -3.3f), (2, -1.4f), (3, 0f), (4, -1.8f));
 
-        var kickPitch = b.Add("math.remap", 960, 2960, (1, 0f), (2, 1f), (3, 47f), (4, 205f));
-        var kickBody = b.Add("osc.sine", 1190, 2960);
-        var kickOut = b.Add("math.mul", 1420, 2900);
+        var kickPitch = b.Add("math.remap", (1, 0f), (2, 1f), (3, 47f), (4, 205f));
+        var kickBody = b.Add("osc.sine");
+        var kickOut = b.Add("math.mul");
 
         b.Wire(kickSeq, 1, kickLevel, 0)
          .Wire(kickSeq, 1, kickSweep, 0)
@@ -1387,18 +1381,18 @@ public static class Presets
         // The hiss. Nothing in the catalogue makes a noise a point in the plane
         // can hear — see the remarks — so it is built: a large multiple of the
         // clock, a sine of it, a larger multiple of that, and the fraction.
-        var grain = b.Add("math.mul", 730, 3180, (1, 3571f));
-        var hash = b.Add("math.sin", 960, 3180);
-        var scatter = b.Add("math.mul", 1190, 3180, (1, 4371.3f));
-        var white = b.Add("math.fract", 1420, 3180);
-        var hiss = b.Add("math.remap", 1650, 3180, (1, 0f), (2, 1f), (3, -1f), (4, 1f));
+        var grain = b.Add("math.mul", (1, 3571f));
+        var hash = b.Add("math.sin");
+        var scatter = b.Add("math.mul", (1, 4371.3f));
+        var white = b.Add("math.fract");
+        var hiss = b.Add("math.remap", (1, 0f), (2, 1f), (3, -1f), (4, 1f));
 
         // The step, as a decay time. That knob is in decades, so this is three
         // milliseconds at the bottom of the sequence and a seventh of a second
         // at the top of it.
-        var hatOpen = b.Add("math.remap", 730, 2760, (1, 0f), (2, 1f), (3, -2.5f), (4, -0.85f));
-        var hatEnv = b.Add(NodeCatalog.AdsrTypeId, 960, 2760, (1, -3.7f), (3, 0f), (4, -2.2f));
-        var hatOut = b.Add("math.mul", 1880, 3060);
+        var hatOpen = b.Add("math.remap", (1, 0f), (2, 1f), (3, -2.5f), (4, -0.85f));
+        var hatEnv = b.Add(NodeCatalog.AdsrTypeId, (1, -3.7f), (3, 0f), (4, -2.2f));
+        var hatOut = b.Add("math.mul");
 
         b.Wire(clock, 0, grain, 0)
          .Wire(grain, 0, hash, 0)
@@ -1415,16 +1409,16 @@ public static class Presets
 
         // --- the desk --------------------------------------------------------
 
-        var deskL = b.Add("math.mixer", 2110, 1900, (1, 0.55f), (3, 0.72f), (5, 1f), (7, 0.55f));
-        var deskR = b.Add("math.mixer", 2110, 2400, (1, 0.55f), (3, 0.72f), (5, 1f), (7, 0.8f));
+        var deskL = b.Add("math.mixer", (1, 0.55f), (3, 0.72f), (5, 1f), (7, 0.55f));
+        var deskR = b.Add("math.mixer", (1, 0.55f), (3, 0.72f), (5, 1f), (7, 0.8f));
 
-        var driveL = b.Add("math.mul", 2340, 1900, (1, 1.2f));
-        var driveR = b.Add("math.mul", 2340, 2400, (1, 1.2f));
+        var driveL = b.Add("math.mul", (1, 1.2f));
+        var driveR = b.Add("math.mul", (1, 1.2f));
 
-        var limitL = b.Add("math.clamp", 2570, 1900, (1, -1f), (2, 1f));
-        var limitR = b.Add("math.clamp", 2570, 2400, (1, -1f), (2, 1f));
+        var limitL = b.Add("math.clamp", (1, -1f), (2, 1f));
+        var limitR = b.Add("math.clamp", (1, -1f), (2, 1f));
 
-        var output = b.Add(NodeCatalog.OutputTypeId, 3240, 1180, (NodeCatalog.OutputGainPort, 0.62f));
+        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputGainPort, 0.62f));
 
         b.Wire(bassOut, 0, deskL, 0)
          .Wire(voiceL, 0, deskL, 2)
@@ -1450,45 +1444,45 @@ public static class Presets
         // One clock read at four speeds. They are Multiplies rather than four
         // Times for the reason Nebula gives: seconds are seconds, and what
         // differs between these is only how much of them each part wants.
-        var spin = b.Add("math.mul", 250, 120, (1, 0.055f));
-        var boil = b.Add("math.mul", 250, 460, (1, 0.18f));
-        var drift = b.Add("math.mul", 250, 620, (1, 0.4f));
-        var crawl = b.Add("math.mul", 250, 780, (1, 0.02f));
+        var spin = b.Add("math.mul", (1, 0.055f));
+        var boil = b.Add("math.mul", (1, 0.18f));
+        var drift = b.Add("math.mul", (1, 0.4f));
+        var crawl = b.Add("math.mul", (1, 0.02f));
 
         // The bass moves the frame: where it has got to in the pattern is added
         // to the rotation, and is how many wedges the fold has. It changes chord
         // about once a bar, which is slow enough that the picture rebuilding
         // itself reads as an arrangement rather than as a fault.
-        var stride = b.Add("math.remap", 250, 280, (1, 0f), (2, 1f), (3, -0.4f), (4, 0.4f));
-        var angle = b.Add("math.add", 480, 180);
-        var turn = b.Add("space.rotate", 710, 140);
+        var stride = b.Add("math.remap", (1, 0f), (2, 1f), (3, -0.4f), (4, 0.4f));
+        var angle = b.Add("math.add");
+        var turn = b.Add("space.rotate");
 
         // The kick moves the light. Its gate is read directly rather than
         // through an envelope — see the remarks — and it is doing three things
         // at once: the zoom, the brightness, and the twist on the feedback.
-        var pump = b.Add("math.remap", 480, 380, (1, 0f), (2, 1f), (3, 0.96f), (4, 1.3f));
-        var zoom = b.Add("space.scale", 940, 160);
+        var pump = b.Add("math.remap", (1, 0f), (2, 1f), (3, 0.96f), (4, 1.3f));
+        var zoom = b.Add("space.scale");
 
-        var segments = b.Add("math.remap", 710, 400, (1, 0f), (2, 1f), (3, 3f), (4, 10f));
-        var fold = b.Add("space.kaleidoscope", 1170, 180);
+        var segments = b.Add("math.remap", (1, 0f), (2, 1f), (3, 3f), (4, 10f));
+        var fold = b.Add("space.kaleidoscope");
 
         // Geometry alone looks like geometry, so the plane is bent by a field
         // read from inside the fold — symmetric, so it repeats with the wedges
         // instead of quietly undoing them. Nebula's trick, and in Nebula's
         // order: fold first, warp inside it.
-        var field = b.Add("pattern.noise", 1400, 400, (3, 2.1f));
-        var breath = b.Add("osc.sine", 1170, 620, (1, 0.071f), (3, 0.5f), (4, 0.5f));
-        var reach = b.Add("math.remap", 1400, 620, (1, 0f), (2, 1f), (3, 0.2f), (4, 0.7f));
-        var bend = b.Add("space.warp", 1630, 200);
+        var field = b.Add("pattern.noise", (3, 2.1f));
+        var breath = b.Add("osc.sine", (1, 0.071f), (3, 0.5f), (4, 0.5f));
+        var reach = b.Add("math.remap", (1, 0f), (2, 1f), (3, 0.2f), (4, 0.7f));
+        var bend = b.Add("space.warp");
 
         // The lead's gate widens the rings, so a sixteenth arrives as a band
         // rather than as a change of color alone.
-        var count = b.Add("math.remap", 1400, 780, (1, 0f), (2, 1f), (3, 2.6f), (4, 5.5f));
-        var bands = b.Add("pattern.rings", 1860, 220);
+        var count = b.Add("math.remap", (1, 0f), (2, 1f), (3, 2.6f), (4, 5.5f));
+        var bands = b.Add("pattern.rings");
 
         // Rings are a sine, so most of the frame is dark and only the crests
         // survive as filaments.
-        var filament = b.Add("math.smoothstep", 2090, 260, (0, 0.2f), (1, 0.95f));
+        var filament = b.Add("math.smoothstep", (0, 0.2f), (1, 0.95f));
 
         b.Wire(clock, 0, spin, 0)
          .Wire(clock, 0, boil, 0)
@@ -1536,21 +1530,21 @@ public static class Presets
         // are added under it so that the same step of the tune is never quite
         // the same color twice, and the whole is wrapped rather than clamped,
         // because a hue is a wheel.
-        var stepped = b.Add("math.mul", 1400, 940, (1, 0.8f));
-        var wash = b.Add("math.mul", 1630, 940, (1, 0.9f));
-        var blend = b.Add("math.add", 1860, 940);
-        var slide = b.Add("math.add", 2090, 940);
-        var hue = b.Add("math.fract", 2320, 940);
+        var stepped = b.Add("math.mul", (1, 0.8f));
+        var wash = b.Add("math.mul", (1, 0.9f));
+        var blend = b.Add("math.add");
+        var slide = b.Add("math.add");
+        var hue = b.Add("math.fract");
 
         // The bass's gate takes the color out of the image between its notes,
         // which is the same rhythm the ear is getting from it.
-        var saturation = b.Add("math.remap", 2320, 780, (1, 0f), (2, 1f), (3, 0.55f), (4, 0.95f));
+        var saturation = b.Add("math.remap", (1, 0f), (2, 1f), (3, 0.55f), (4, 0.95f));
 
-        var glow = b.Add("math.remap", 1860, 560, (1, 0f), (2, 1f), (3, 0.75f), (4, 1.7f));
-        var lit = b.Add("math.mul", 2320, 340);
-        var visible = b.Add("math.clamp", 2550, 340, (1, 0f), (2, 1f));
+        var glow = b.Add("math.remap", (1, 0f), (2, 1f), (3, 0.75f), (4, 1.7f));
+        var lit = b.Add("math.mul");
+        var visible = b.Add("math.clamp", (1, 0f), (2, 1f));
 
-        var fresh = b.Add("color.hsv", 2780, 620);
+        var fresh = b.Add("color.hsv");
 
         b.Wire(leadSeq, 2, stepped, 0)
          .Wire(field, 0, wash, 0)
@@ -1581,24 +1575,24 @@ public static class Presets
         // and the green and blue from the second. What that makes is a chromatic
         // tunnel — the fringes drift apart as the trail ages, the way a lens
         // splits light, and there is no lens anywhere in it.
-        var inward = b.Add("space.scale", 1170, 1080, (2, 1.035f));
-        var twist = b.Add("math.remap", 1170, 1240, (1, 0f), (2, 1f), (3, 0.012f), (4, 0.05f));
-        var inTurn = b.Add("space.rotate", 1400, 1080);
-        var pastIn = b.Add("feedback", 1630, 1080);
-        var warm = b.Add("color.split", 1860, 1080);
+        var inward = b.Add("space.scale", (2, 1.035f));
+        var twist = b.Add("math.remap", (1, 0f), (2, 1f), (3, 0.012f), (4, 0.05f));
+        var inTurn = b.Add("space.rotate");
+        var pastIn = b.Add("feedback");
+        var warm = b.Add("color.split");
 
-        var outward = b.Add("space.scale", 1170, 1380, (2, 0.972f));
-        var outTurn = b.Add("space.rotate", 1400, 1380, (2, -0.016f));
-        var pastOut = b.Add("feedback", 1630, 1380);
-        var cool = b.Add("color.split", 1860, 1380);
+        var outward = b.Add("space.scale", (2, 0.972f));
+        var outTurn = b.Add("space.rotate", (2, -0.016f));
+        var pastOut = b.Add("feedback");
+        var cool = b.Add("color.split");
 
-        var ghost = b.Add("color.rgb", 2320, 1180);
-        var trail = b.Add("color.gain", 2550, 1180, (1, 0.85f), (2, 0f));
+        var ghost = b.Add("color.rgb");
+        var trail = b.Add("color.gain", (1, 0.85f), (2, 0f));
 
         // Max rather than a blend, for FeedbackTunnel's reason: a trail brighter
         // than the new frame keeps its brightness, which is what makes a streak
         // read as a streak rather than as a smeared copy.
-        var combine = b.Add("math.max", 3010, 900);
+        var combine = b.Add("math.max");
 
         b.Wire(kickSeq, 1, twist, 0)
          .Wire(inward, 0, inTurn, 0)
@@ -1626,7 +1620,7 @@ public static class Presets
         b.Group("Picture: Feedback", inward, twist, inTurn, pastIn, warm,
             outward, outTurn, pastOut, cool, ghost, trail, combine);
 
-        return b.Patch;
+        return b.Build();
     }
 
     /// <summary>
@@ -1665,29 +1659,29 @@ public static class Presets
         var b = new PatchBuilder(modules);
 
         // The drift. 'in' takes no wire — it is a domain, normalled to Time.
-        var slide = b.Add("osc.sine", 40, 460, (1, 0.06f));
+        var slide = b.Add("osc.sine", (1, 0.06f));
 
         // x and y take no wire either: they are normalled to Coordinates, so
         // this reads the pixel's own position (ADR-0050).
-        var move = b.Add("space.translate", 260, 200);
-        var cells = b.Add("space.tile", 480, 160, (2, 3f));
-        var fold = b.Add("space.mirror", 700, 160);
-        var round = b.Add("space.polar", 920, 160);
+        var move = b.Add("space.translate");
+        var cells = b.Add("space.tile", (2, 3f));
+        var fold = b.Add("space.mirror");
+        var round = b.Add("space.polar");
 
-        var squares = b.Add("pattern.checker", 1140, 120, (2, 3f));
+        var squares = b.Add("pattern.checker", (2, 3f));
 
         // The angle as hue, so a spoke is a color rather than only a shape. It
         // arrives in radians and a hue is a turn, so it is remapped rather than
         // multiplied.
-        var wheel = b.Add("math.remap", 1140, 340, (1, -3.15f), (2, 3.15f), (3, 0f), (4, 1f));
+        var wheel = b.Add("math.remap", (1, -3.15f), (2, 3.15f), (3, 0f), (4, 1f));
 
         // The check is 0 or 1 and a picture that is half black reads as a fault,
         // so the dark squares are dim rather than absent — the same floor the
         // Sequence preset puts under its gate.
-        var glow = b.Add("math.remap", 1360, 120, (1, 0f), (2, 1f), (3, 0.14f), (4, 1f));
+        var glow = b.Add("math.remap", (1, 0f), (2, 1f), (3, 0.14f), (4, 1f));
 
-        var color = b.Add("color.hsv", 1580, 200, (1, 0.7f));
-        var output = b.Add(NodeCatalog.OutputTypeId, 1800, 240);
+        var color = b.Add("color.hsv", (1, 0.7f));
+        var output = b.Add(NodeCatalog.OutputTypeId);
 
         b.Wire(slide, 0, move, 2)
          .Wire(move, 0, cells, 0)
@@ -1704,7 +1698,7 @@ public static class Presets
          .Wire(glow, 0, color, 2)
          .Wire(color, 0, output, NodeCatalog.OutputColorPort);
 
-        return b.Patch;
+        return b.Build();
     }
 
     /// <summary>
@@ -1741,20 +1735,20 @@ public static class Presets
     {
         var b = new PatchBuilder(modules);
 
-        var pitch = b.Add("audio.frequency", 40, 340, (0, 160f));
-        var tone = b.Add("osc.saw", 280, 340);
+        var pitch = b.Add("audio.frequency", (0, 160f));
+        var tone = b.Add("osc.saw");
 
         // The tremolo, and the only thing in the patch that moves slowly enough
         // to be seen across a frame of the chart.
-        var swell = b.Add("osc.sine", 280, 560, (1, 0.8f), (3, 0.45f), (4, 0.55f));
-        var voice = b.Add("math.mul", 520, 400);
+        var swell = b.Add("osc.sine", (1, 0.8f), (3, 0.45f), (4, 0.55f));
+        var voice = b.Add("math.mul");
 
         // About twenty milliseconds, which holds a few cycles of the tremolo and
         // a great many of the tone. The knob is in decades — see
         // PortDisplay.Duration — so this is 10^-1.7.
-        var chart = b.Add(NodeCatalog.ScopeTypeId, 780, 400, (1, -1.7f));
+        var chart = b.Add(NodeCatalog.ScopeTypeId, (1, -1.7f));
 
-        var output = b.Add(NodeCatalog.OutputTypeId, 1040, 400, (NodeCatalog.OutputGainPort, 0.5f));
+        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputGainPort, 0.5f));
 
         b.Wire(pitch, 0, tone, 1)
          .Wire(tone, 0, voice, 0)
@@ -1763,7 +1757,7 @@ public static class Presets
          .Wire(voice, 0, chart, 0)
          .Wire(chart, 0, output, NodeCatalog.OutputColorPort);
 
-        return b.Patch;
+        return b.Build();
     }
 
     /// <summary>
@@ -1801,22 +1795,22 @@ public static class Presets
 
         // Here for 'y', which is what the two charts are divided on. Nothing
         // else in the patch needs a source.
-        var coord = b.Add("coord", 40, 700);
+        var coord = b.Add("coord");
 
         // The sweep, and the reason the two charts differ at all.
-        var sweep = b.Add("osc.sine", 40, 240, (1, 0.4f));
-        var hz = b.Add("math.remap", 280, 240, (1, -1f), (2, 1f), (3, 90f), (4, 320f));
-        var tone = b.Add("osc.saw", 520, 300);
+        var sweep = b.Add("osc.sine", (1, 0.4f));
+        var hz = b.Add("math.remap", (1, -1f), (2, 1f), (3, 90f), (4, 320f));
+        var tone = b.Add("osc.saw");
 
-        var ahead = b.Add(NodeCatalog.ProbeTypeId, 780, 140, (1, -1.6f));
-        var behind = b.Add(NodeCatalog.ScopeTypeId, 780, 460, (1, -1.6f));
+        var ahead = b.Add(NodeCatalog.ProbeTypeId, (1, -1.6f));
+        var behind = b.Add(NodeCatalog.ScopeTypeId, (1, -1.6f));
 
         // 0 below the middle of the frame and 1 above it, which is what picks
         // between the two charts. Blend takes b where t is 1, so the Probe is up.
-        var half = b.Add("math.step", 780, 700);
-        var split = b.Add("color.mix", 1040, 400);
+        var half = b.Add("math.step");
+        var split = b.Add("color.mix");
 
-        var output = b.Add(NodeCatalog.OutputTypeId, 1300, 400, (NodeCatalog.OutputGainPort, 0.45f));
+        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputGainPort, 0.45f));
 
         b.Wire(sweep, 0, hz, 0)
          .Wire(hz, 0, tone, 1)
@@ -1830,7 +1824,7 @@ public static class Presets
          .Wire(half, 0, split, 2)
          .Wire(split, 0, output, NodeCatalog.OutputColorPort);
 
-        return b.Patch;
+        return b.Build();
     }
 
     /// <summary>
@@ -1875,18 +1869,18 @@ public static class Presets
         // Every two seconds, and a gate narrow enough that what is heard is the
         // clip rather than the trigger. Its 'in' takes no wire: it is a domain,
         // normalled to Time (ADR-0050).
-        var again = b.Add("osc.pulse", 280, 560, (1, 0.5f), (3, 0.02f));
+        var again = b.Add("osc.pulse", (1, 0.5f), (3, 0.02f));
 
         // 'in' takes no wire either, for the same reason — so the clip plays
         // forward at its own speed from wherever the last edge left the zero.
-        var clip = b.Add(NodeCatalog.SampleTypeId, 640, 300, (1, 0.9f));
+        var clip = b.Add(NodeCatalog.SampleTypeId, (1, 0.9f));
 
-        var output = b.Add(NodeCatalog.OutputTypeId, 940, 300, (NodeCatalog.OutputGainPort, 0.7f));
+        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputGainPort, 0.7f));
 
         b.Wire(again, 0, clip, 2)
          .Wire(clip, 0, output, NodeCatalog.OutputLeftPort);
 
-        return b.Patch;
+        return b.Build();
     }
 
     /// <summary>
@@ -1925,31 +1919,31 @@ public static class Presets
     {
         var b = new PatchBuilder(modules);
 
-        var clock = b.Add("time", 40, 620);
-        var spin = b.Add("math.mul", 260, 500, (1, 0.05f));
-        var boil = b.Add("math.mul", 260, 740, (1, 0.15f));
+        var clock = b.Add("time");
+        var spin = b.Add("math.mul", (1, 0.05f));
+        var boil = b.Add("math.mul", (1, 0.15f));
 
         // Breathing rather than fixed, so the frame is never quite the same twice
         // and the edges of the picture come in and out of the view.
-        var breath = b.Add("osc.sine", 260, 260, (1, 0.05f));
-        var zoom = b.Add("math.remap", 480, 260, (1, -1f), (2, 1f), (3, 0.85f), (4, 1.4f));
+        var breath = b.Add("osc.sine", (1, 0.05f));
+        var zoom = b.Add("math.remap", (1, -1f), (2, 1f), (3, 0.85f), (4, 1.4f));
 
         // x and y take no wire anywhere in this chain: each is normalled to
         // Coordinates, so the chain reads the pixel's own position and hands the
         // moved position on.
-        var scale = b.Add("space.scale", 720, 180);
-        var turn = b.Add("space.rotate", 940, 180);
+        var scale = b.Add("space.scale");
+        var turn = b.Add("space.rotate");
 
-        var field = b.Add("pattern.noise", 720, 620, (3, 1.8f));
-        var bend = b.Add("space.warp", 1160, 220, (3, 0.12f));
+        var field = b.Add("pattern.noise", (3, 1.8f));
+        var bend = b.Add("space.warp", (3, 0.12f));
 
-        var photo = b.Add(NodeCatalog.PictureTypeId, 1400, 220);
+        var photo = b.Add(NodeCatalog.PictureTypeId);
 
         // A little contrast on the way out, so a flat photograph still reads as
         // one that is being done something to.
-        var graded = b.Add("color.gain", 1620, 220, (1, 1.15f), (2, -0.05f));
+        var graded = b.Add("color.gain", (1, 1.15f), (2, -0.05f));
 
-        var output = b.Add(NodeCatalog.OutputTypeId, 1840, 260);
+        var output = b.Add(NodeCatalog.OutputTypeId);
 
         b.Wire(clock, 0, spin, 0)
          .Wire(clock, 0, boil, 0)
@@ -1967,7 +1961,7 @@ public static class Presets
          .Wire(photo, 0, graded, 0)
          .Wire(graded, 0, output, NodeCatalog.OutputColorPort);
 
-        return b.Patch;
+        return b.Build();
     }
 
     /// <summary>
@@ -2007,25 +2001,25 @@ public static class Presets
     {
         var b = new PatchBuilder(modules);
 
-        var pitch = b.Add("audio.frequency", 40, 260, (0, 110f));
+        var pitch = b.Add("audio.frequency", (0, 110f));
 
         // The thing being filtered. A square, because its corners are what a
         // lowpass visibly and audibly takes off.
-        var source = b.Add("osc.square", 280, 260);
+        var source = b.Add("osc.square");
 
         // Quiet going in, because the loop below has a great deal of gain in it:
         // what comes out is roughly the input divided by one minus the feedback.
-        var quiet = b.Add("math.mul", 520, 260, (1, 0.06f));
+        var quiet = b.Add("math.mul", (1, 0.06f));
 
-        var sum = b.Add("math.add", 760, 320);
-        var delay = b.Add(NodeCatalog.UnitDelayTypeId, 1000, 320);
+        var sum = b.Add("math.add");
+        var delay = b.Add(NodeCatalog.UnitDelayTypeId);
 
         // How much of the last evaluation is kept. Near one is a gentle filter,
         // and the useful range is all in the last hundredth — which is why it is
         // a knob of its own rather than a constant buried in the Multiply.
-        var keep = b.Add("math.mul", 760, 560, (1, 0.94f));
+        var keep = b.Add("math.mul", (1, 0.94f));
 
-        var output = b.Add(NodeCatalog.OutputTypeId, 1260, 320, (NodeCatalog.OutputGainPort, 0.5f));
+        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputGainPort, 0.5f));
 
         b.Wire(pitch, 0, source, 1)
          .Wire(source, 0, quiet, 0)
@@ -2035,7 +2029,7 @@ public static class Presets
          .Wire(delay, 0, keep, 0)
          .Wire(sum, 0, output, NodeCatalog.OutputLeftPort);
 
-        return b.Patch;
+        return b.Build();
     }
 
     /// <summary>
@@ -2070,21 +2064,21 @@ public static class Presets
 
         // A2. The second Note takes the first's snapped 'note' output rather than
         // the knob again, so the two cannot drift apart by an edit.
-        var note = b.Add("audio.note", 40, 240, (0, 45f));
-        var twin = b.Add("audio.note", 280, 480, (2, 9f));
+        var note = b.Add("audio.note", (0, 45f));
+        var twin = b.Add("audio.note", (2, 9f));
 
-        var left = b.Add("osc.saw", 520, 240, (3, 0.7f));
-        var right = b.Add("osc.saw", 520, 480, (3, 0.7f));
+        var left = b.Add("osc.saw", (3, 0.7f));
+        var right = b.Add("osc.saw", (3, 0.7f));
 
         // One envelope for both, opened by one pulse: the two ears are the same
         // note, and only the tuning of it differs.
-        var beat = b.Add("osc.pulse", 40, 720, (1, 1.5f), (3, 0.3f));
-        var shape = b.Add(NodeCatalog.AdsrTypeId, 280, 720, (1, -2f), (2, -0.9f), (3, 0.4f), (4, -0.8f));
+        var beat = b.Add("osc.pulse", (1, 1.5f), (3, 0.3f));
+        var shape = b.Add(NodeCatalog.AdsrTypeId, (1, -2f), (2, -0.9f), (3, 0.4f), (4, -0.8f));
 
-        var voiceL = b.Add("math.mul", 780, 240);
-        var voiceR = b.Add("math.mul", 780, 480);
+        var voiceL = b.Add("math.mul");
+        var voiceR = b.Add("math.mul");
 
-        var output = b.Add(NodeCatalog.OutputTypeId, 1040, 340, (NodeCatalog.OutputGainPort, 0.55f));
+        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputGainPort, 0.55f));
 
         b.Wire(note, 1, twin, 0)
          .Wire(note, 0, left, 1)
@@ -2097,6 +2091,6 @@ public static class Presets
          .Wire(voiceL, 0, output, NodeCatalog.OutputLeftPort)
          .Wire(voiceR, 0, output, NodeCatalog.OutputRightPort);
 
-        return b.Patch;
+        return b.Build();
     }
 }

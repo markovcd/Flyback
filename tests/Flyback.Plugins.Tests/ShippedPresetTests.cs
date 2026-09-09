@@ -69,6 +69,29 @@ public class ShippedPresetTests
     }
 
     /// <summary>
+    /// And every preset in the picker arrives placed, plugins' own included: a
+    /// preset declares no coordinates (ADR-0070), so one that returned the
+    /// builder's patch rather than the placed one would hand the canvas a pile
+    /// of modules at the origin.
+    /// </summary>
+    /// <remarks>
+    /// Two modules at the same spot is the whole of the check here. The full
+    /// non-overlap property is a property of the layout and is tested as one in
+    /// <c>PatchLayoutTests</c>; what this catches is a preset that never went
+    /// through it.
+    /// </remarks>
+    [Theory]
+    [MemberData(nameof(Every))]
+    public void Every_preset_arrives_laid_out(string name)
+    {
+        var loaded = PluginHost.Load();
+        var patch = loaded.Presets.Single(p => p.Name == name).Build(loaded.Modules);
+
+        patch.Nodes.Select(n => (n.X, n.Y)).ToHashSet().Count.ShouldBe(
+            patch.Nodes.Count, $"'{name}' hands over modules stacked on one another");
+    }
+
+    /// <summary>
     /// The one-idea-one-sink rule, applied to the presets a plugin registers.
     /// </summary>
     /// <remarks>

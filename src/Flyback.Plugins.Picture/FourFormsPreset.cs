@@ -40,21 +40,21 @@ internal static class FourFormsPreset
         var b = new PatchBuilder(modules);
 
         // The two sweeps, and neither is heard or seen directly.
-        var rock = b.Add("osc.sine", 80, 200, (1, 0.05f), (3, 1.2f));
-        var melt = b.Add("osc.sine", 80, 900, (1, 0.09f), (3, 0.24f), (4, 0.26f));
+        var rock = b.Add("osc.sine", (1, 0.05f), (3, 1.2f));
+        var melt = b.Add("osc.sine", (1, 0.09f), (3, 0.24f), (4, 0.26f));
 
         // Here for the same reason the Supersaw preset has a Coordinates: 'x' and
         // 'y' are normalled to the pixel's own position, so reading a form
         // somewhere else takes a wire (ADR-0050). One Rotate ahead of the four
         // turns the whole arrangement rather than each shape in place.
-        var turn = b.Add("space.rotate", 320, 420);
+        var turn = b.Add("space.rotate");
 
         var forms = new[]
         {
-            Place(b, 0, -Ring, Ring, CircleModule.TypeId, (2, 0.28f)),
-            Place(b, 1, Ring, Ring, BoxModule.TypeId, (2, 0.28f), (3, 0.26f), (4, 0.06f)),
-            Place(b, 2, Ring, -Ring, PolygonModule.TypeId, (2, 0.3f), (3, 6f)),
-            Place(b, 3, -Ring, -Ring, StarModule.TypeId, (2, 0.34f), (3, 5f), (4, 0.45f)),
+            Place(b, -Ring, Ring, CircleModule.TypeId, (2, 0.28f)),
+            Place(b, Ring, Ring, BoxModule.TypeId, (2, 0.28f), (3, 0.26f), (4, 0.06f)),
+            Place(b, Ring, -Ring, PolygonModule.TypeId, (2, 0.3f), (3, 6f)),
+            Place(b, -Ring, -Ring, StarModule.TypeId, (2, 0.34f), (3, 5f), (4, 0.45f)),
         };
 
         b.Wire(rock, 0, turn, 2);
@@ -82,7 +82,7 @@ internal static class FourFormsPreset
 
         for (var i = 1; i < forms.Length; i++)
         {
-            var combine = b.Add(CombineModule.TypeId, 1060, 120 + i * 200f);
+            var combine = b.Add(CombineModule.TypeId);
 
             b.Wire(merged, 0, combine, 0)
              .Wire(forms[i].Shape, 0, combine, 1)
@@ -94,16 +94,15 @@ internal static class FourFormsPreset
 
         b.Group("Merge", [.. combines]);
 
-        var ink = b.Add(FillModule.TypeId, 1320, 320, (1, 0.006f), (2, 0.016f));
+        var ink = b.Add(FillModule.TypeId, (1, 0.006f), (2, 0.016f));
 
         // Eye: the fill lit in a color the same sweep chooses, with its own
         // outline over the top — white, because it is added to a color rather
         // than being one.
-        var tint = b.Add("color.hsv", 1560, 260, (1, 0.75f));
-        var lit = b.Add("math.add", 1780, 340);
+        var tint = b.Add("color.hsv", (1, 0.75f));
+        var lit = b.Add("math.add");
 
-        var output = b.Add(
-            NodeCatalog.OutputTypeId, 2020, 520, (NodeCatalog.OutputGainPort, 0.4f));
+        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputGainPort, 0.4f));
 
         b.Wire(merged, 0, ink, 0)
          .Wire(melt, 0, tint, 0)
@@ -114,16 +113,12 @@ internal static class FourFormsPreset
 
         b.Group("Eye", ink, tint, lit);
 
-        return b.Patch;
+        return b.Build();
     }
 
     /// <summary>One form and the Translate that puts it where it belongs.</summary>
     private static (NodeInstance Move, NodeInstance Shape) Place(
-        PatchBuilder b, int row, float dx, float dy, string typeId,
-        params (int Port, float Value)[] knobs)
-    {
-        var y = 80 + row * 200f;
-
-        return (b.Add("space.translate", 560, y, (2, dx), (3, dy)), b.Add(typeId, 800, y, knobs));
-    }
+        PatchBuilder b, float dx, float dy, string typeId,
+        params (int Port, float Value)[] knobs) =>
+        (b.Add("space.translate", (2, dx), (3, dy)), b.Add(typeId, knobs));
 }

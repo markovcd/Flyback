@@ -591,7 +591,9 @@ public class NodeEditorTests : UiTest
         editor.Patch = Presets.Plasma(NodeCatalog.BuiltIn);
         Settle(window);
 
-        editor.CanUndo.ShouldBeFalse();
+        editor.CanUndo.ShouldBeFalse(
+            "and the layout a preset arrives already placed by is not an edit either — ADR-0070");
+
         editor.CanRedo.ShouldBeFalse();
     }
 
@@ -855,6 +857,12 @@ public class NodeEditorTests : UiTest
     public void Laying_out_is_a_single_undo()
     {
         var patch = Presets.Drone(NodeCatalog.BuiltIn);
+
+        // Dragged out of place first, because a preset arrives laid out
+        // (ADR-0070) and there would otherwise be nothing for the button to do.
+        patch.Nodes[0].X += 240;
+        patch.Nodes[0].Y += 160;
+
         var (editor, _) = Editing(patch);
 
         var before = patch.Nodes.ToDictionary(n => n.Id, n => (n.X, n.Y));

@@ -30,19 +30,19 @@ internal static class SupersawPreset
 
         // 0..1 over about sixteen seconds, from amp and bias at a half. Its 'in'
         // takes no wire: it is a domain, normalled to Time (ADR-0050).
-        var sweep = b.Add("osc.sine", 250, 380, (1, 0.06f), (3, 0.5f), (4, 0.5f));
+        var sweep = b.Add("osc.sine", (1, 0.06f), (3, 0.5f), (4, 0.5f));
 
         // 110 Hz, both outputs to their own channel so it is actually wide.
-        var pitch = b.Add("audio.frequency", 250, 700, (0, 110f));
-        var voice = b.Add(SupersawModule.TypeId, 480, 600, (3, 0.9f));
+        var pitch = b.Add("audio.frequency", (0, 110f));
+        var voice = b.Add(SupersawModule.TypeId, (3, 0.9f));
 
-        var output = b.Add(NodeCatalog.OutputTypeId, 1030, 600, (NodeCatalog.OutputGainPort, 0.5f));
+        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputGainPort, 0.5f));
 
         b.Wire(pitch, 0, voice, 1)
          .Wire(sweep, 0, voice, 2)
          .Wire(voice, 0, output, NodeCatalog.OutputLeftPort)
          .Wire(voice, 1, output, NodeCatalog.OutputRightPort);
 
-        return b.Patch;
+        return b.Build();
     }
 }

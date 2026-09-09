@@ -44,12 +44,14 @@ public sealed class NodeInstance
     /// </summary>
     /// <remarks>
     /// Ten thousand units across, which is about thirty modules wide at the
-    /// spacing the layout uses and some six times the span of the largest preset
-    /// in the box. Room to work in rather than room to get lost in: a module
-    /// flung far enough away is a module that cannot be got back, because
-    /// framing the patch clamps its zoom — past a certain distance pressing F
-    /// shows an empty grid with the patch somewhere off it, and the only way
-    /// back would be to close the file without saving.
+    /// spacing the layout uses and a little under twice the span of the largest
+    /// preset in the box — 'Whole band', which is 92 modules and reaches 5060
+    /// units across once the layout has placed it (ADR-0070). Room to work in
+    /// rather than room to get lost in: a module flung far enough away is a
+    /// module that cannot be got back, because framing the patch clamps its
+    /// zoom — past a certain distance pressing F shows an empty grid with the
+    /// patch somewhere off it, and the only way back would be to close the file
+    /// without saving.
     /// <para>
     /// Held on the coordinate rather than on the gesture, so it is true of a
     /// module however it was placed — dragged, pasted, laid out, read from a file

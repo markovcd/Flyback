@@ -36,6 +36,22 @@ public class PatchLayoutTests
         return (node.X, node.Y, node.X + Size.Width, node.Y + Size.Height(def));
     }
 
+    private static void NothingOverlaps(Patch patch)
+    {
+        var placed = patch.Nodes;
+
+        for (var a = 0; a < placed.Count; a++)
+        for (var b = a + 1; b < placed.Count; b++)
+        {
+            var (one, two) = (Box(placed[a]), Box(placed[b]));
+
+            var apart = one.Right <= two.Left || two.Right <= one.Left
+                || one.Bottom <= two.Top || two.Bottom <= one.Top;
+
+            apart.ShouldBeTrue($"{placed[a].TypeId} and {placed[b].TypeId} overlap");
+        }
+    }
+
     /// <summary>
     /// Every wire leaves a node to the left of the one it arrives at, with clear
     /// space in between. A wire that ran backwards would have to double round
@@ -65,21 +81,7 @@ public class PatchLayoutTests
 
     [Theory]
     [MemberData(nameof(EveryPreset))]
-    public void No_two_modules_overlap(string name)
-    {
-        var placed = Arranged(Preset(name)).Nodes;
-
-        for (var a = 0; a < placed.Count; a++)
-        for (var b = a + 1; b < placed.Count; b++)
-        {
-            var (one, two) = (Box(placed[a]), Box(placed[b]));
-
-            var apart = one.Right <= two.Left || two.Right <= one.Left
-                || one.Bottom <= two.Top || two.Bottom <= one.Top;
-
-            apart.ShouldBeTrue($"{placed[a].TypeId} and {placed[b].TypeId} overlap");
-        }
-    }
+    public void No_two_modules_overlap(string name) => NothingOverlaps(Arranged(Preset(name)));
 
     /// <summary>
     /// The Output is the end of the patch and reads as the end. It is pinned
@@ -129,6 +131,16 @@ public class PatchLayoutTests
         foreach (var node in patch.Nodes)
             (node.X, node.Y).ShouldBe(settled[node.Id], $"{node.TypeId} moved on the second pass");
     }
+
+    /// <summary>
+    /// A preset arrives placed, without anybody laying it out first. It declares
+    /// no coordinates of its own (ADR-0070), so a preset that had not been
+    /// through the layout would hand the canvas a pile at the origin — which is
+    /// every module overlapping every other one.
+    /// </summary>
+    [Theory]
+    [MemberData(nameof(EveryPreset))]
+    public void A_preset_arrives_laid_out(string name) => NothingOverlaps(Preset(name));
 
     /// <summary>
     /// A module wired to nothing goes before the first column rather than among

@@ -33,16 +33,16 @@ internal static class SpacePreset
         // A saw falling from 1 to 0 twice a second, used as a pluck envelope:
         // sharp attack, and the tail is what the delay and reverb are fed. Its
         // 'in' takes no wire — it is a domain, normalled to Time (ADR-0050).
-        var pluck = b.Add("osc.saw", 250, 520, (1, 2f), (3, -0.5f), (4, 0.5f));
+        var pluck = b.Add("osc.saw", (1, 2f), (3, -0.5f), (4, 0.5f));
 
-        var pitch = b.Add("audio.frequency", 250, 740, (0, 330f));
-        var tone = b.Add("osc.sine", 470, 700);
-        var struck = b.Add("math.mul", 660, 660);
+        var pitch = b.Add("audio.frequency", (0, 330f));
+        var tone = b.Add("osc.sine");
+        var struck = b.Add("math.mul");
 
-        var echo = b.Add("flyback.effects.delay", 840, 620, (1, 0.33f), (2, 0.5f), (3, 0.45f));
-        var room = b.Add("flyback.effects.reverb", 1030, 660, (1, 0.7f), (2, 0.75f), (3, 0.35f));
+        var echo = b.Add("flyback.effects.delay", (1, 0.33f), (2, 0.5f), (3, 0.45f));
+        var room = b.Add("flyback.effects.reverb", (1, 0.7f), (2, 0.75f), (3, 0.35f));
 
-        var output = b.Add(NodeCatalog.OutputTypeId, 1230, 620, (NodeCatalog.OutputGainPort, 0.5f));
+        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputGainPort, 0.5f));
 
         b.Wire(pitch, 0, tone, 1)
          .Wire(tone, 0, struck, 0)
@@ -52,6 +52,6 @@ internal static class SpacePreset
          .Wire(room, 0, output, NodeCatalog.OutputLeftPort)
          .Wire(room, 1, output, NodeCatalog.OutputRightPort);
 
-        return b.Patch;
+        return b.Build();
     }
 }

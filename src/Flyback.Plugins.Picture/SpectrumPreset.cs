@@ -37,32 +37,31 @@ internal static class SpectrumPreset
     {
         var b = new PatchBuilder(modules);
 
-        var coord = b.Add("coord", 60, 200);
-        var clock = b.Add("time", 60, 420);
+        var coord = b.Add("coord");
+        var clock = b.Add("time");
 
         // Plasma's own arrangement, unchanged: a sine along x, a second along y
         // whose phase drifts, and the two summed.
-        var slowly = b.Add("math.mul", 220, 420, (1, 0.2f));
-        var across = b.Add("osc.sine", 380, 120, (1, 1.5f));
-        var down = b.Add("osc.sine", 380, 300, (1, 1.1f));
-        var field = b.Add("math.add", 600, 200);
-        var along = b.Add("math.remap", 780, 200, (1, -2f), (2, 2f), (3, 0f), (4, 1f));
+        var slowly = b.Add("math.mul", (1, 0.2f));
+        var across = b.Add("osc.sine", (1, 1.5f));
+        var down = b.Add("osc.sine", (1, 1.1f));
+        var field = b.Add("math.add");
+        var along = b.Add("math.remap", (1, -2f), (2, 2f), (3, 0f), (4, 1f));
 
         // The one sweep. Slow enough that a whole pass takes half a minute, since
         // what it is showing is a family of palettes rather than a movement.
-        var sweep = b.Add("osc.sine", 60, 700, (1, 0.035f), (3, 0.5f), (4, 0.5f));
-        var spread = b.Add("math.remap", 320, 700, (1, 0f), (2, 1f), (3, 0.02f), (4, 0.34f));
+        var sweep = b.Add("osc.sine", (1, 0.035f), (3, 0.5f), (4, 0.5f));
+        var spread = b.Add("math.remap", (1, 0f), (2, 1f), (3, 0.02f), (4, 0.34f));
 
-        var palette = b.Add(PaletteModule.TypeId, 1000, 200);
-        var graded = b.Add(GradeModule.TypeId, 1220, 200, (1, 1.15f), (2, 1.25f), (3, 1.1f));
+        var palette = b.Add(PaletteModule.TypeId);
+        var graded = b.Add(GradeModule.TypeId, (1, 1.15f), (2, 1.25f), (3, 1.1f));
 
         // Swept the other way from the palette, so the picture is at its flattest
         // where the colors are at their calmest.
-        var levels = b.Add("math.remap", 320, 900, (1, 0f), (2, 1f), (3, 3f), (4, 24f));
-        var banded = b.Add(PosteriseModule.TypeId, 1440, 200);
+        var levels = b.Add("math.remap", (1, 0f), (2, 1f), (3, 3f), (4, 24f));
+        var banded = b.Add(PosteriseModule.TypeId);
 
-        var output = b.Add(
-            NodeCatalog.OutputTypeId, 1700, 400, (NodeCatalog.OutputGainPort, 0.45f));
+        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputGainPort, 0.45f));
 
         b.Wire(coord, 0, across, 0)
          .Wire(coord, 1, down, 0)
@@ -84,6 +83,6 @@ internal static class SpectrumPreset
         b.Group("Field", coord, clock, slowly, across, down, field, along)
          .Group("Palette Sweep", sweep, spread, palette, graded, levels, banded);
 
-        return b.Patch;
+        return b.Build();
     }
 }

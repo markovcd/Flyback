@@ -31,20 +31,19 @@ internal static class TimbrePreset
         // No clock: every oscillator here runs on the Time its 'in' is normalled
         // to, so the patch is nothing but the two hands and what they are on
         // (ADR-0050).
-        var sweep = b.Add("osc.sine", 250, 860, (1, 0.12f));
-        var wobble = b.Add("osc.sine", 250, 1080, (1, 0.07f));
+        var sweep = b.Add("osc.sine", (1, 0.12f));
+        var wobble = b.Add("osc.sine", (1, 0.07f));
 
-        var cutoff = b.Add("math.remap", 470, 860, (3, 180f), (4, 5000f));
-        var drive = b.Add("math.remap", 470, 1080, (3, 1f), (4, 4f));
+        var cutoff = b.Add("math.remap", (3, 180f), (4, 5000f));
+        var drive = b.Add("math.remap", (3, 1f), (4, 4f));
 
         // 110 Hz, folded into a spectrum, then filtered back down out of it.
-        var pitch = b.Add("audio.frequency", 250, 640, (0, 110f));
-        var saw = b.Add("osc.saw", 470, 600, (3, 0.9f));
-        var fold = b.Add(FoldModule.TypeId, 700, 600);
-        var filter = b.Add(FilterModule.TypeId, 930, 640, (2, 0.75f));
+        var pitch = b.Add("audio.frequency", (0, 110f));
+        var saw = b.Add("osc.saw", (3, 0.9f));
+        var fold = b.Add(FoldModule.TypeId);
+        var filter = b.Add(FilterModule.TypeId, (2, 0.75f));
 
-        var output = b.Add(
-            NodeCatalog.OutputTypeId, 1250, 640, (NodeCatalog.OutputGainPort, 0.45f));
+        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputGainPort, 0.45f));
 
         b.Wire(sweep, 0, cutoff, 0)
          .Wire(wobble, 0, drive, 0)
@@ -59,6 +58,6 @@ internal static class TimbrePreset
         b.Group("The Two Hands", sweep, wobble, cutoff, drive)
          .Group("The Tone", pitch, saw, fold, filter);
 
-        return b.Patch;
+        return b.Build();
     }
 }

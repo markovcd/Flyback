@@ -104,26 +104,26 @@ internal static class SlowWeatherPreset
 
         // --- three random voltages -------------------------------------------
 
-        var clock = b.Add("time", 40, 1500);
+        var clock = b.Add("time");
 
         // Where in the field each voltage is read. A knob and two wires, and it
         // is the whole of what turns Noise from a texture into a source — see
         // the remarks. Three different constants are three different lanes: the
         // field is hashed per lattice cell, so lanes one apart share nothing.
-        var laneOne = b.Add("value", 40, 1180, (0, 0f));
-        var laneTwo = b.Add("value", 40, 1780, (0, 1f));
-        var laneThree = b.Add("value", 40, 2060, (0, 2f));
+        var laneOne = b.Add("value", (0, 0f));
+        var laneTwo = b.Add("value", (0, 1f));
+        var laneThree = b.Add("value", (0, 2f));
 
         // How fast each lane is walked, in cells a second. The slowest takes
         // nearly two minutes to reach the next value it has not seen, which is
         // what makes the bass move like weather rather than like a bass line.
-        var minutes = b.Add("math.mul", 250, 1300, (1, 0.043f));
-        var seconds = b.Add("math.mul", 250, 1700, (1, 0.091f));
-        var hours = b.Add("math.mul", 250, 2060, (1, 0.0097f));
+        var minutes = b.Add("math.mul", (1, 0.043f));
+        var seconds = b.Add("math.mul", (1, 0.091f));
+        var hours = b.Add("math.mul", (1, 0.0097f));
 
-        var wander = b.Add("pattern.noise", 480, 1180, (3, 1f));
-        var flutter = b.Add("pattern.noise", 480, 1620, (3, 1f));
-        var tide = b.Add("pattern.noise", 480, 2060, (3, 1f));
+        var wander = b.Add("pattern.noise", (3, 1f));
+        var flutter = b.Add("pattern.noise", (3, 1f));
+        var tide = b.Add("pattern.noise", (3, 1f));
 
         b.Wire(clock, 0, minutes, 0)
          .Wire(clock, 0, seconds, 0)
@@ -151,21 +151,21 @@ internal static class SlowWeatherPreset
         // the root. 'rate' is how much of the list one full swing of the voltage
         // covers, so setting it to the length of the list is what makes the
         // whole scale reachable and nothing beyond it.
-        var padSteps = b.Add("seq.notes", 730, 1180, (1, 8f), (2, 1f), (3, 0.5f));
+        var padSteps = b.Add("seq.notes", (1, 8f), (2, 1f), (3, 0.5f));
         StepsExtra.Set(padSteps,
         [
             new Step(57f), new Step(60f), new Step(62f), new Step(65f),
             new Step(67f), new Step(69f), new Step(72f), new Step(74f),
         ]);
 
-        var bellSteps = b.Add("seq.notes", 730, 1620, (1, 7f), (2, 1f), (3, 0.5f));
+        var bellSteps = b.Add("seq.notes", (1, 7f), (2, 1f), (3, 0.5f));
         StepsExtra.Set(bellSteps,
         [
             new Step(60f), new Step(62f), new Step(65f), new Step(67f),
             new Step(69f), new Step(72f), new Step(74f),
         ]);
 
-        var rootSteps = b.Add("seq.notes", 730, 2060, (1, 5f), (2, 1f), (3, 0.5f));
+        var rootSteps = b.Add("seq.notes", (1, 5f), (2, 1f), (3, 0.5f));
         StepsExtra.Set(rootSteps,
         [
             new Step(38f), new Step(43f), new Step(45f), new Step(41f), new Step(36f),
@@ -184,23 +184,23 @@ internal static class SlowWeatherPreset
         // down instead of sitting at one rate. The Chorus after them is what
         // makes the pair stereo: 'out' and 'wide' are swept in opposite
         // directions, which is a wider and cheaper answer than panning.
-        var padNote = b.Add("audio.note", 960, 1180);
-        var detune = b.Add("osc.sine", 960, 1400, (1, 0.0233f), (3, 7f));
-        var padTwin = b.Add("audio.note", 1190, 1400);
+        var padNote = b.Add("audio.note");
+        var detune = b.Add("osc.sine", (1, 0.0233f), (3, 7f));
+        var padTwin = b.Add("audio.note");
 
-        var padLower = b.Add("osc.sine", 1420, 1120, (3, 0.6f));
-        var padUpper = b.Add("osc.sine", 1420, 1320, (3, 0.6f));
-        var padPair = b.Add("math.add", 1650, 1220);
+        var padLower = b.Add("osc.sine", (3, 0.6f));
+        var padUpper = b.Add("osc.sine", (3, 0.6f));
+        var padPair = b.Add("math.add");
 
         // The swell, on a floor. A gate at 'gate length' one and 'shape' at its
         // longest is a hump rather than a switch, and the Remap under it is what
         // stops the hump reaching nothing — see the remarks.
-        var padSwell = b.Add("math.remap", 960, 900, (1, 0f), (2, 1f), (3, 0.45f), (4, 1f));
-        var padBreath = b.Add("osc.sine", 960, 700, (1, 0.0173f), (3, 0.2f), (4, 0.8f));
-        var padLevel = b.Add("math.mul", 1190, 820);
-        var padVoiced = b.Add("math.mul", 1880, 1220);
+        var padSwell = b.Add("math.remap", (1, 0f), (2, 1f), (3, 0.45f), (4, 1f));
+        var padBreath = b.Add("osc.sine", (1, 0.0173f), (3, 0.2f), (4, 0.8f));
+        var padLevel = b.Add("math.mul");
+        var padVoiced = b.Add("math.mul");
 
-        var thicken = b.Add(Chorus, 2110, 1180, (1, 0.19f), (2, 0.75f), (3, 0.6f));
+        var thicken = b.Add(Chorus, (1, 0.19f), (2, 0.75f), (3, 0.6f));
 
         b.Wire(padSteps, 0, padNote, 0)
          .Wire(padNote, 1, padTwin, 0)
@@ -230,16 +230,16 @@ internal static class SlowWeatherPreset
         // shape. Panned afterwards by two sines at unrelated rates rather than by
         // one and its opposite, which is what makes it wander across the field
         // instead of swinging across it.
-        var bellNote = b.Add("audio.note", 960, 1620);
-        var bell = b.Add("osc.sine", 1190, 1620, (3, 0.6f));
-        var bellVoiced = b.Add("math.mul", 1420, 1620);
+        var bellNote = b.Add("audio.note");
+        var bell = b.Add("osc.sine", (3, 0.6f));
+        var bellVoiced = b.Add("math.mul");
 
-        var sweep = b.Add(Phaser, 1650, 1580, (1, 0.023f), (2, 0.85f), (3, 0.55f), (4, 0.7f));
+        var sweep = b.Add(Phaser, (1, 0.023f), (2, 0.85f), (3, 0.55f), (4, 0.7f));
 
-        var bellDriftL = b.Add("osc.sine", 1650, 1840, (1, 0.0311f), (3, 0.4f), (4, 0.55f));
-        var bellDriftR = b.Add("osc.sine", 1650, 1980, (1, 0.0419f), (2, 0.5f), (3, 0.4f), (4, 0.55f));
-        var bellL = b.Add("math.mul", 1880, 1600);
-        var bellR = b.Add("math.mul", 1880, 1780);
+        var bellDriftL = b.Add("osc.sine", (1, 0.0311f), (3, 0.4f), (4, 0.55f));
+        var bellDriftR = b.Add("osc.sine", (1, 0.0419f), (2, 0.5f), (3, 0.4f), (4, 0.55f));
+        var bellL = b.Add("math.mul");
+        var bellR = b.Add("math.mul");
 
         b.Wire(bellSteps, 0, bellNote, 0)
          .Wire(bellNote, 0, bell, 1)
@@ -255,20 +255,20 @@ internal static class SlowWeatherPreset
 
         // --- drone -------------------------------------------------------------
 
-        var rootNote = b.Add("audio.note", 960, 2260);
-        var subNote = b.Add("audio.note", 960, 2460, (1, -1f));
+        var rootNote = b.Add("audio.note");
+        var subNote = b.Add("audio.note", (1, -1f));
 
-        var droneTone = b.Add("osc.triangle", 1190, 2260, (3, 0.45f));
-        var droneSub = b.Add("osc.sine", 1190, 2460, (3, 0.7f));
-        var droneSum = b.Add("math.add", 1420, 2340);
+        var droneTone = b.Add("osc.triangle", (3, 0.45f));
+        var droneSub = b.Add("osc.sine", (3, 0.7f));
+        var droneSum = b.Add("math.add");
 
         // Nearly always on. The floor is high and the breath on top of it is
         // shallow, because a root that comes and goes is a part rather than a
         // ground, and this is the ground.
-        var droneHold = b.Add("math.remap", 960, 2660, (1, 0f), (2, 1f), (3, 0.55f), (4, 1f));
-        var droneBreath = b.Add("osc.sine", 960, 2820, (1, 0.0133f), (3, 0.25f), (4, 0.75f));
-        var droneLevel = b.Add("math.mul", 1190, 2700);
-        var droneVoiced = b.Add("math.mul", 1650, 2340);
+        var droneHold = b.Add("math.remap", (1, 0f), (2, 1f), (3, 0.55f), (4, 1f));
+        var droneBreath = b.Add("osc.sine", (1, 0.0133f), (3, 0.25f), (4, 0.75f));
+        var droneLevel = b.Add("math.mul");
+        var droneVoiced = b.Add("math.mul");
 
         // The one filter in the patch, and it is on the one voice with harmonics
         // worth taking off. Its cutoff is the slowest voltage, so the bottom of
@@ -276,8 +276,8 @@ internal static class SlowWeatherPreset
         // else in the patch shares. 'low' rather than 'band' or 'high': what a
         // drone wants is less, and the other two responses are what the module
         // hands out for free.
-        var opening = b.Add("math.remap", 1420, 2560, (1, 0f), (2, 1f), (3, 130f), (4, 900f));
-        var shaped = b.Add(Filter, 1880, 2300, (2, 0.35f));
+        var opening = b.Add("math.remap", (1, 0f), (2, 1f), (3, 130f), (4, 900f));
+        var shaped = b.Add(Filter, (2, 0.35f));
 
         b.Wire(rootSteps, 0, rootNote, 0)
          .Wire(rootSteps, 0, subNote, 0)
@@ -319,21 +319,21 @@ internal static class SlowWeatherPreset
         // for a comb of notches to have something to bite. Its feedback is
         // negative, which puts the peaks where the notches were: at this depth
         // and this rate that is wind rather than a jet.
-        var airOne = b.Add("math.remap", 960, 3020, (1, 0f), (2, 1f), (3, 210f), (4, 610f));
-        var airTwo = b.Add("math.remap", 960, 3180, (1, 0f), (2, 1f), (3, 155f), (4, 440f));
-        var glideOne = b.Add("osc.sine", 1190, 3020);
-        var glideTwo = b.Add("osc.sine", 1190, 3180);
-        var ring = b.Add("math.mul", 1420, 3100);
+        var airOne = b.Add("math.remap", (1, 0f), (2, 1f), (3, 210f), (4, 610f));
+        var airTwo = b.Add("math.remap", (1, 0f), (2, 1f), (3, 155f), (4, 440f));
+        var glideOne = b.Add("osc.sine");
+        var glideTwo = b.Add("osc.sine");
+        var ring = b.Add("math.mul");
 
-        var wind = b.Add(Flanger, 1650, 3060, (1, 0.037f), (2, 0.55f), (3, -0.3f), (4, 0.35f));
+        var wind = b.Add(Flanger, (1, 0.037f), (2, 0.55f), (3, -0.3f), (4, 0.35f));
 
         // And a lid on it, because a flanger's comb puts peaks back wherever it
         // likes and the whole point of the register above is that nothing in
         // this voice is allowed to get shrill. Its cutoff rides a voltage like
         // everything else, so the lid is not a fixed one — but it is always
         // there, which is the difference between an effect and a safeguard.
-        var airOpen = b.Add("math.remap", 1420, 3320, (1, 0f), (2, 1f), (3, 300f), (4, 800f));
-        var soften = b.Add(Filter, 1880, 3020, (2, 0.1f));
+        var airOpen = b.Add("math.remap", (1, 0f), (2, 1f), (3, 300f), (4, 800f));
+        var soften = b.Add(Filter, (2, 0.1f));
 
         // And the thing that finally made this voice behave: it is allowed to
         // not be there. Every other voice is gated by a quantiser, and this one
@@ -345,13 +345,13 @@ internal static class SlowWeatherPreset
         // stops it being the thing the ear finds. A Smoothstep off the slowest
         // voltage takes it away entirely for whole minutes at a time, which is
         // what makes it an event rather than a fixture.
-        var presence = b.Add("math.smoothstep", 2110, 3320, (0, 0.32f), (1, 0.72f));
-        var airPresent = b.Add("math.mul", 2340, 3060);
+        var presence = b.Add("math.smoothstep", (0, 0.32f), (1, 0.72f));
+        var airPresent = b.Add("math.mul");
 
-        var airDriftL = b.Add("osc.sine", 2340, 3320, (1, 0.0533f), (3, 0.45f), (4, 0.5f));
-        var airDriftR = b.Add("osc.sine", 2340, 3460, (1, 0.0631f), (2, 0.5f), (3, 0.45f), (4, 0.5f));
-        var airL = b.Add("math.mul", 2570, 3060);
-        var airR = b.Add("math.mul", 2570, 3240);
+        var airDriftL = b.Add("osc.sine", (1, 0.0533f), (3, 0.45f), (4, 0.5f));
+        var airDriftR = b.Add("osc.sine", (1, 0.0631f), (2, 0.5f), (3, 0.45f), (4, 0.5f));
+        var airL = b.Add("math.mul");
+        var airR = b.Add("math.mul");
 
         b.Wire(flutter, 0, airOne, 0)
          .Wire(wander, 0, airTwo, 0)
@@ -376,8 +376,8 @@ internal static class SlowWeatherPreset
 
         // --- the desk, and the two rooms ---------------------------------------
 
-        var deskL = b.Add("math.mixer", 2340, 1900, (1, 0.95f), (3, 0.6f), (5, 0.7f), (7, 0.16f));
-        var deskR = b.Add("math.mixer", 2340, 2500, (1, 0.95f), (3, 0.6f), (5, 0.7f), (7, 0.16f));
+        var deskL = b.Add("math.mixer", (1, 0.95f), (3, 0.6f), (5, 0.7f), (7, 0.16f));
+        var deskR = b.Add("math.mixer", (1, 0.95f), (3, 0.6f), (5, 0.7f), (7, 0.16f));
 
         // Two Delays rather than one, at times far enough apart not to be heard
         // as one echo, and each one's time on a different voltage — so the two
@@ -385,32 +385,32 @@ internal static class SlowWeatherPreset
         // line interpolates rather than steps, so what that does to the repeats
         // is tape wow: the pitch of an echo is never quite the pitch it was
         // played at.
-        var echoLeft = b.Add("math.remap", 2340, 1420, (1, 0f), (2, 1f), (3, 0.54f), (4, 0.68f));
-        var echoRight = b.Add("math.remap", 2340, 3660, (1, 0f), (2, 1f), (3, 0.79f), (4, 0.93f));
+        var echoLeft = b.Add("math.remap", (1, 0f), (2, 1f), (3, 0.54f), (4, 0.68f));
+        var echoRight = b.Add("math.remap", (1, 0f), (2, 1f), (3, 0.79f), (4, 0.93f));
 
-        var repeatsL = b.Add("flyback.effects.delay", 2570, 1900, (2, 0.62f), (3, 0.4f));
-        var repeatsR = b.Add("flyback.effects.delay", 2570, 2500, (2, 0.6f), (3, 0.4f));
+        var repeatsL = b.Add("flyback.effects.delay", (2, 0.62f), (3, 0.4f));
+        var repeatsR = b.Add("flyback.effects.delay", (2, 0.6f), (3, 0.4f));
 
         // The room, and it changes size. Two of them because one would put both
         // sides in the same place, and the sizes are offset so the tails are not
         // the same tail — a reverb is a bank of delays, and two banks a little
         // apart is what a room sounds like from a seat in it rather than from a
         // point in the middle.
-        var roomSize = b.Add("math.remap", 2340, 1620, (1, 0f), (2, 1f), (3, 0.72f), (4, 0.98f));
-        var roomWide = b.Add("math.remap", 2340, 3860, (1, 0f), (2, 1f), (3, 0.66f), (4, 0.92f));
+        var roomSize = b.Add("math.remap", (1, 0f), (2, 1f), (3, 0.72f), (4, 0.98f));
+        var roomWide = b.Add("math.remap", (1, 0f), (2, 1f), (3, 0.66f), (4, 0.92f));
 
-        var hallL = b.Add("flyback.effects.reverb", 2800, 1900, (2, 0.86f), (3, 0.42f));
-        var hallR = b.Add("flyback.effects.reverb", 2800, 2500, (2, 0.86f), (3, 0.42f));
+        var hallL = b.Add("flyback.effects.reverb", (2, 0.86f), (3, 0.42f));
+        var hallR = b.Add("flyback.effects.reverb", (2, 0.86f), (3, 0.42f));
 
         // No drive in front of these, unlike every other patch with a limiter in
         // it. Ambient has no transients to catch and nothing to gain by being
         // pushed into a wall; the Clamps are here because a Mixer sums, a reverb
         // adds a tail to what it sums, and four voices that each breathe on
         // their own will occasionally breathe in at once.
-        var safeL = b.Add("math.clamp", 3030, 1900, (1, -1f), (2, 1f));
-        var safeR = b.Add("math.clamp", 3030, 2500, (1, -1f), (2, 1f));
+        var safeL = b.Add("math.clamp", (1, -1f), (2, 1f));
+        var safeR = b.Add("math.clamp", (1, -1f), (2, 1f));
 
-        var output = b.Add(NodeCatalog.OutputTypeId, 3720, 1300, (NodeCatalog.OutputGainPort, 0.85f));
+        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputGainPort, 0.85f));
 
         b.Wire(thicken, 0, deskL, 0)
          .Wire(bellL, 0, deskL, 2)
@@ -451,38 +451,38 @@ internal static class SlowWeatherPreset
         // rotation, which has nowhere to arrive. Everything else here is one of
         // the three voltages, so nothing in the frame is on its way anywhere in
         // particular.
-        var creep = b.Add("math.mul", 250, 120, (1, 0.011f));
-        var sway = b.Add("math.remap", 250, 280, (1, 0f), (2, 1f), (3, -0.6f), (4, 0.6f));
-        var angle = b.Add("math.add", 480, 180);
-        var turn = b.Add("space.rotate", 710, 140);
+        var creep = b.Add("math.mul", (1, 0.011f));
+        var sway = b.Add("math.remap", (1, 0f), (2, 1f), (3, -0.6f), (4, 0.6f));
+        var angle = b.Add("math.add");
+        var turn = b.Add("space.rotate");
 
-        var breathe = b.Add("math.remap", 480, 380, (1, 0f), (2, 1f), (3, 0.75f), (4, 1.45f));
-        var zoom = b.Add("space.scale", 940, 160);
+        var breathe = b.Add("math.remap", (1, 0f), (2, 1f), (3, 0.75f), (4, 1.45f));
+        var zoom = b.Add("space.scale");
 
         // How many wedges, off the slowest voltage — so the symmetry of the
         // whole picture changes every couple of minutes, and changes to
         // somewhere it has not necessarily been.
-        var wedges = b.Add("math.remap", 710, 400, (1, 0f), (2, 1f), (3, 2f), (4, 9f));
-        var fold = b.Add("space.kaleidoscope", 1170, 180);
+        var wedges = b.Add("math.remap", (1, 0f), (2, 1f), (3, 2f), (4, 9f));
+        var fold = b.Add("space.kaleidoscope");
 
         // The cloud is Noise read the ordinary way — per pixel, off the folded
         // plane, boiling on its own clock. The same module as the three
         // voltages, and the difference between a source and a texture is
         // entirely in what its x and y are patched to.
-        var boil = b.Add("math.mul", 250, 460, (1, 0.035f));
-        var cloud = b.Add("pattern.noise", 1400, 400, (3, 1.6f));
+        var boil = b.Add("math.mul", (1, 0.035f));
+        var cloud = b.Add("pattern.noise", (3, 1.6f));
 
-        var depth = b.Add("math.remap", 1400, 620, (1, 0f), (2, 1f), (3, 0.25f), (4, 0.85f));
-        var bend = b.Add("space.warp", 1630, 200);
+        var depth = b.Add("math.remap", (1, 0f), (2, 1f), (3, 0.25f), (4, 0.85f));
+        var bend = b.Add("space.warp");
 
-        var spacing = b.Add("math.remap", 1400, 780, (1, 0f), (2, 1f), (3, 1.4f), (4, 3.6f));
-        var swim = b.Add("math.mul", 250, 620, (1, 0.09f));
-        var veil = b.Add("pattern.rings", 1860, 220);
+        var spacing = b.Add("math.remap", (1, 0f), (2, 1f), (3, 1.4f), (4, 3.6f));
+        var swim = b.Add("math.mul", (1, 0.09f));
+        var veil = b.Add("pattern.rings");
 
         // Wide edges, unlike every other preset that does this. A hard threshold
         // makes filaments and a soft one makes weather, and the difference is
         // where the two numbers are put.
-        var haze = b.Add("math.smoothstep", 2090, 260, (0, -0.55f), (1, 0.9f));
+        var haze = b.Add("math.smoothstep", (0, -0.55f), (1, 0.9f));
 
         b.Wire(clock, 0, creep, 0)
          .Wire(clock, 0, boil, 0)
@@ -528,26 +528,26 @@ internal static class SlowWeatherPreset
         // Here for 'radius', which is the one Coordinates output nothing is
         // normalled to, and the only thing in the patch that knows where the
         // edge of the frame is.
-        var coord = b.Add("coord", 40, 700);
-        var falloff = b.Add("math.remap", 250, 700, (1, 0f), (2, 2.2f), (3, 1f), (4, 0.3f));
+        var coord = b.Add("coord");
+        var falloff = b.Add("math.remap", (1, 0f), (2, 2.2f), (3, 1f), (4, 0.3f));
 
-        var glow = b.Add("math.remap", 1860, 560, (1, 0f), (2, 1f), (3, 0.7f), (4, 1.35f));
-        var lit = b.Add("math.mul", 2320, 300);
-        var shaded = b.Add("math.mul", 2550, 300);
-        var visible = b.Add("math.clamp", 2780, 300, (1, 0f), (2, 1f));
+        var glow = b.Add("math.remap", (1, 0f), (2, 1f), (3, 0.7f), (4, 1.35f));
+        var lit = b.Add("math.mul");
+        var shaded = b.Add("math.mul");
+        var visible = b.Add("math.clamp", (1, 0f), (2, 1f));
 
         // Hue off the cloud and the slowest voltage together, so the palette
         // moves across the frame and drifts as a whole at the same time, and the
         // creep under both means it never settles even where the two do.
-        var spread = b.Add("math.mul", 1630, 940, (1, 0.55f));
-        var season = b.Add("math.mul", 1630, 1100, (1, 0.4f));
-        var blend = b.Add("math.add", 1860, 940);
-        var slide = b.Add("math.add", 2090, 940);
-        var hue = b.Add("math.fract", 2320, 940);
+        var spread = b.Add("math.mul", (1, 0.55f));
+        var season = b.Add("math.mul", (1, 0.4f));
+        var blend = b.Add("math.add");
+        var slide = b.Add("math.add");
+        var hue = b.Add("math.fract");
 
-        var wash = b.Add("math.remap", 2320, 780, (1, 0f), (2, 1f), (3, 0.3f), (4, 0.75f));
+        var wash = b.Add("math.remap", (1, 0f), (2, 1f), (3, 0.3f), (4, 0.75f));
 
-        var fresh = b.Add("color.hsv", 2550, 620);
+        var fresh = b.Add("color.hsv");
 
         b.Wire(coord, 2, falloff, 0)
 
@@ -589,13 +589,13 @@ internal static class SlowWeatherPreset
         // this plugin's Delay, for the reason the plugin exists to explain: a
         // delay line has no per-pixel past, and a picture with a memory needs the
         // one module that does.
-        var adrift = b.Add("space.scale", 1170, 1240, (2, 1.008f));
-        var aturn = b.Add("space.rotate", 1400, 1240, (2, 0.0035f));
-        var previous = b.Add("feedback", 1630, 1240);
-        var memory = b.Add("color.gain", 1860, 1240, (1, 0.985f), (2, 0f));
+        var adrift = b.Add("space.scale", (2, 1.008f));
+        var aturn = b.Add("space.rotate", (2, 0.0035f));
+        var previous = b.Add("feedback");
+        var memory = b.Add("color.gain", (1, 0.985f), (2, 0f));
 
-        var settle = b.Add("math.remap", 1860, 1440, (1, 0f), (2, 1f), (3, 0.05f), (4, 0.2f));
-        var combine = b.Add("color.mix", 2780, 900);
+        var settle = b.Add("math.remap", (1, 0f), (2, 1f), (3, 0.05f), (4, 0.2f));
+        var combine = b.Add("color.mix");
 
         b.Wire(adrift, 0, aturn, 0)
          .Wire(adrift, 1, aturn, 1)
@@ -611,6 +611,6 @@ internal static class SlowWeatherPreset
 
         b.Group("Picture: Memory", adrift, aturn, previous, memory, settle, combine);
 
-        return b.Patch;
+        return b.Build();
     }
 }
