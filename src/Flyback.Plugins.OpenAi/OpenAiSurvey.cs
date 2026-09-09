@@ -137,8 +137,8 @@ internal sealed class OpenAiProbe(string apiKey, string baseUrl, HttpMessageHand
 
         if (text.Verdict is Verdict.Took)
         {
-            var sees = await Ask(model, Turn(pictures: [Dot()]), cancel).ConfigureAwait(false);
-            var hears = await Ask(model, Turn(sounds: [Tone()]), cancel).ConfigureAwait(false);
+            var sees = await Ask(model, Turn(pictures: [Probe.Picture()]), cancel).ConfigureAwait(false);
+            var hears = await Ask(model, Turn(sounds: [Probe.Sound()]), cancel).ConfigureAwait(false);
 
             // An indeterminate answer keeps the cautious value. A limit read as
             // "takes a sound" would send one to a model that refuses it and lose
@@ -153,7 +153,7 @@ internal sealed class OpenAiProbe(string apiKey, string baseUrl, HttpMessageHand
 
         if (text.Verdict is not Verdict.Refused || !MeansAudio(text.Detail)) return null;
 
-        var only = await Ask(model, Turn(sounds: [Tone()]), cancel).ConfigureAwait(false);
+        var only = await Ask(model, Turn(sounds: [Probe.Sound()]), cancel).ConfigureAwait(false);
 
         // Sight is not asked about: a model that refuses a turn without a sound
         // is one of the audio models, and none of them takes a picture.
@@ -232,8 +232,8 @@ internal sealed class OpenAiProbe(string apiKey, string baseUrl, HttpMessageHand
             // else — a limit, an outage, a proxy — is an answer about the
             // moment, and recording it as a capability would outlive the moment.
             return response.StatusCode is HttpStatusCode.BadRequest or HttpStatusCode.NotFound
-                ? new Answer(Verdict.Refused, Detail(said))
-                : new Answer(Verdict.Unclear, Detail(said));
+                ? new Answer(Verdict.Refused, Probe.Detail(said))
+                : new Answer(Verdict.Unclear, Probe.Detail(said));
         }
         catch (HttpRequestException)
         {
@@ -258,9 +258,8 @@ internal sealed class OpenAiProbe(string apiKey, string baseUrl, HttpMessageHand
 
     private static HttpClient Client(string key, HttpMessageHandler? transport)
     {
-        var client = transport is null ? new HttpClient() : new HttpClient(transport, disposeHandler: false);
+        var client = Probe.Client(transport);
 
-        client.Timeout = TimeSpan.FromMinutes(5);
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
 
         return client;
@@ -274,55 +273,7 @@ internal sealed class OpenAiProbe(string apiKey, string baseUrl, HttpMessageHand
         (false, false) => "text only",
     };
 
-    private static string Detail(string body)
-    {
-        try
-        {
-            return JsonNode.Parse(body)?["error"]?["message"]?.GetValue<string>() ?? body;
-        }
-        catch (System.Text.Json.JsonException)
-        {
-            return body;
-        }
-    }
 
-    /// <summary>A 1×1 PNG. The smallest thing that is legally a picture.</summary>
-    private static byte[] Dot() => Convert.FromBase64String(
-        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==");
-
-    /// <summary>
-    /// A tenth of a second of 440Hz rather than silence, so that a model which
-    /// listens to what it was handed has something to find there.
-    /// </summary>
-    private static byte[] Tone()
-    {
-        const int Rate = 8000;
-        const int Samples = Rate / 10;
-
-        using var buffer = new MemoryStream();
-        using var writer = new BinaryWriter(buffer, Encoding.ASCII, leaveOpen: true);
-
-        writer.Write("RIFF"u8.ToArray());
-        writer.Write(36 + (Samples * 2));
-        writer.Write("WAVE"u8.ToArray());
-        writer.Write("fmt "u8.ToArray());
-        writer.Write(16);
-        writer.Write((short)1);
-        writer.Write((short)1);
-        writer.Write(Rate);
-        writer.Write(Rate * 2);
-        writer.Write((short)2);
-        writer.Write((short)16);
-        writer.Write("data"u8.ToArray());
-        writer.Write(Samples * 2);
-
-        for (var i = 0; i < Samples; i++)
-            writer.Write((short)(Math.Sin(2 * Math.PI * 440 * i / Rate) * 8000));
-
-        writer.Flush();
-
-        return buffer.ToArray();
-    }
 
     /// <param name="Detail">What the endpoint said, which is load-bearing for one refusal.</param>
     private sealed record Answer(Verdict Verdict, string Detail);

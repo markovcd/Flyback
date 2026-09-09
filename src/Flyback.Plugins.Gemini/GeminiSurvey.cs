@@ -98,8 +98,8 @@ internal sealed class GeminiProbe(string apiKey, string address, HttpMessageHand
                 continue;
             }
 
-            var sees = await Ask(model, Turn(Inline("image/png", Dot())), cancel).ConfigureAwait(false);
-            var hears = await Ask(model, Turn(Inline("audio/wav", Tone())), cancel).ConfigureAwait(false);
+            var sees = await Ask(model, Turn(Inline("image/png", Probe.Picture())), cancel).ConfigureAwait(false);
+            var hears = await Ask(model, Turn(Inline("audio/wav", Probe.Sound())), cancel).ConfigureAwait(false);
 
             var report = new ModelReport(model)
             {
@@ -141,7 +141,7 @@ internal sealed class GeminiProbe(string apiKey, string address, HttpMessageHand
             var body = await response.Content.ReadAsStringAsync(cancel).ConfigureAwait(false);
 
             if (!response.IsSuccessStatusCode)
-                throw new HttpRequestException($"models.list: {(int)response.StatusCode} {Detail(body)}");
+                throw new HttpRequestException($"models.list: {(int)response.StatusCode} {Probe.Detail(body)}");
 
             var parsed = JsonNode.Parse(body)?.AsObject();
 
@@ -290,9 +290,8 @@ internal sealed class GeminiProbe(string apiKey, string address, HttpMessageHand
 
     private static HttpClient Client(string key, HttpMessageHandler? transport)
     {
-        var client = transport is null ? new HttpClient() : new HttpClient(transport, disposeHandler: false);
+        var client = Probe.Client(transport);
 
-        client.Timeout = TimeSpan.FromMinutes(5);
         client.DefaultRequestHeaders.Add("x-goog-api-key", key);
 
         return client;
@@ -310,55 +309,7 @@ internal sealed class GeminiProbe(string apiKey, string address, HttpMessageHand
         return senses.Count == 0 ? "answers, and takes nothing else" : string.Join(", ", senses);
     }
 
-    private static string Detail(string body)
-    {
-        try
-        {
-            return JsonNode.Parse(body)?["error"]?["message"]?.GetValue<string>() ?? body;
-        }
-        catch (System.Text.Json.JsonException)
-        {
-            return body;
-        }
-    }
 
-    /// <summary>A 1×1 PNG. The smallest thing that is legally a picture.</summary>
-    private static byte[] Dot() => Convert.FromBase64String(
-        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==");
-
-    /// <summary>
-    /// A tenth of a second of 440Hz rather than silence, so that a model which
-    /// listens to what it was handed has something to find there.
-    /// </summary>
-    private static byte[] Tone()
-    {
-        const int Rate = 8000;
-        const int Samples = Rate / 10;
-
-        using var buffer = new MemoryStream();
-        using var writer = new BinaryWriter(buffer, Encoding.ASCII, leaveOpen: true);
-
-        writer.Write("RIFF"u8.ToArray());
-        writer.Write(36 + (Samples * 2));
-        writer.Write("WAVE"u8.ToArray());
-        writer.Write("fmt "u8.ToArray());
-        writer.Write(16);
-        writer.Write((short)1);
-        writer.Write((short)1);
-        writer.Write(Rate);
-        writer.Write(Rate * 2);
-        writer.Write((short)2);
-        writer.Write((short)16);
-        writer.Write("data"u8.ToArray());
-        writer.Write(Samples * 2);
-
-        for (var i = 0; i < Samples; i++)
-            writer.Write((short)(Math.Sin(2 * Math.PI * 440 * i / Rate) * 8000));
-
-        writer.Flush();
-
-        return buffer.ToArray();
-    }
 
     /// <summary>
     /// What one question came back as. Three rather than two because a limit and
