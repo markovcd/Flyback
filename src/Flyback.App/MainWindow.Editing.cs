@@ -398,8 +398,19 @@ public sealed partial class MainWindow
     /// box does not mark an ordinary key press handled — what it acts on is the
     /// text input that follows — so without this, naming a patch would play a
     /// tune, and every letter of the name would be a note nobody could stop.
+    /// <para>
+    /// The code editor is the same trouble in a different control: AvalonEdit is
+    /// not a <see cref="TextBox"/>, so the focus check above never sees it, and a
+    /// letter typed into the text would otherwise sound. Asked only where the text
+    /// is the document rather than whenever it happens to be on screen — a
+    /// printing shown while the canvas still owns the patch (ADR-0068) is a
+    /// reading, not a place anybody is composing, and the keys under their hand
+    /// should go on playing.
+    /// </para>
     /// </remarks>
-    private bool Typing => FocusManager.GetFocusedElement() is TextBox;
+    private bool Typing =>
+        FocusManager.GetFocusedElement() is TextBox
+        || (showingCode && sourceOwned);
 
     /// <summary>
     /// One key, as either a note or the pair that moves the two rows. Null-ish by

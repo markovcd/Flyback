@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
@@ -409,6 +410,73 @@ public class MidiInputTests : UiTest
         Settle(window);
 
         Held(preview, MidiSignal.Gate).ShouldBe(0d);
+    }
+
+    private static ToggleButton CodeButton(MainWindow window) =>
+        All<ToggleButton>(window).Single(b => b.Name == "code");
+
+    private static Button ApplyButton(MainWindow window) =>
+        All<Button>(window).Single(b => b.Name == "apply");
+
+    /// <summary>
+    /// Shows the text view over a canvas-owned patch. It opens on a printing of
+    /// what is already wired, so what applies from here is the same instrument
+    /// the caller built.
+    /// </summary>
+    private static void ShowCode(MainWindow window)
+    {
+        CodeButton(window).IsChecked = true;
+        Settle(window);
+    }
+
+    /// <summary>Applies the printing on screen, which is how the text becomes the document.</summary>
+    private static void ApplyCode(MainWindow window)
+    {
+        ApplyButton(window).RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        Settle(window);
+    }
+
+    /// <summary>
+    /// Letters are notes on the canvas and words in the code, and the code view
+    /// is what decides between them. Applying the printing makes the text the
+    /// document (ADR-0068), and from there a Z is spelling rather than a pitch —
+    /// AvalonEdit is not a <see cref="TextBox"/>, so nothing but the mode itself
+    /// can tell the two apart.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_letter_plays_nothing_once_the_code_is_the_document()
+    {
+        var (patch, _) = Board();
+        var window = Open(patch);
+        var preview = All<PreviewHost>(window).Single();
+
+        ShowCode(window);
+        ApplyCode(window);
+
+        window.KeyPressQwerty(PhysicalKey.Z, RawInputModifiers.None);
+        Settle(window);
+
+        Held(preview, MidiSignal.Gate).ShouldBe(0d);
+    }
+
+    /// <summary>
+    /// A printing is a reading rather than a document — the canvas still owns
+    /// the patch until somebody applies it — so glancing at the code this way
+    /// leaves the keys under the hand meaning what they always meant.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_letter_still_plays_while_the_code_view_only_shows_a_printing()
+    {
+        var (patch, _) = Board();
+        var window = Open(patch);
+        var preview = All<PreviewHost>(window).Single();
+
+        ShowCode(window);
+
+        window.KeyPressQwerty(PhysicalKey.Z, RawInputModifiers.None);
+        Settle(window);
+
+        Held(preview, MidiSignal.Gate).ShouldBe(1d);
     }
 
     private static double Held(PreviewHost preview, string signal)
