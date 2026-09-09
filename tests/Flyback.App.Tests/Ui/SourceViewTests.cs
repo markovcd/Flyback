@@ -1,3 +1,4 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Headless;
@@ -1595,5 +1596,42 @@ public class SourceViewTests : UiTest
         // And none of that was the box being left: it is still the thing being
         // typed into, which is the whole point of the test.
         window.FocusManager?.GetFocusedElement().ShouldBe(box);
+    }
+
+    /// <summary>
+    /// A notch of the wheel over a number box moves it, and the text keeps up
+    /// with that as it keeps up with a keystroke.
+    /// </summary>
+    /// <remarks>
+    /// The third way into a box and the third that lets go of nothing: the
+    /// button is never pressed, so there is no release to wait for, and the box
+    /// keeps the focus it was given. What made this worth a test of its own is
+    /// that it is the one of the three that does not touch the keyboard at all.
+    /// </remarks>
+    [AvaloniaFact]
+    public void A_number_wheeled_in_the_panel_reaches_the_text_without_leaving_the_box()
+    {
+        var window = Open();
+
+        Evaluate(window, "let riff = notes() [ A3 C4 ]\nriff |> out.left");
+        Click(window, "notes");
+
+        var step = All<NumericUpDown>(window).First(n => n.Value == 57m);
+        var box = All<TextBox>(step).First();
+
+        // A box only spins under the wheel while it has the focus, which is what
+        // a pointer over it has already given it by the time anybody scrolls.
+        box.Focus();
+        Settle(window);
+
+        var at = box.TranslatePoint(new Point(box.Bounds.Width / 2, box.Bounds.Height / 2), window)
+            ?? throw new InvalidOperationException("the box is not in this window");
+
+        window.MouseWheel(at, new Vector(0, 1));
+        Settle(window);
+
+        step.Value.ShouldBe(58m, "a notch of the wheel is what moves a number box");
+
+        Text(window).Text.Trim().ShouldBe("let riff = notes() [ A#3 C4 ]\nriff |> out.left");
     }
 }

@@ -237,6 +237,18 @@ public sealed partial class MainWindow
             (_, _) => HandCameOff(),
             RoutingStrategies.Bubble,
             handledEventsToo: true);
+
+        // And a notch of the wheel, which is the third way a number box moves
+        // and the last one that touches neither the pointer's button nor the
+        // focus. A notch is not a drag: there is nothing being held and nothing
+        // to let go of, so each one is finished the moment it lands, the way
+        // each keystroke is. Caught after the box has handled it and taken the
+        // value, for the reason every one of these is.
+        inspector.AddHandler(
+            PointerWheelChangedEvent,
+            (_, _) => HandCameOff(),
+            RoutingStrategies.Bubble,
+            handledEventsToo: true);
     }
 
     /// <summary>
