@@ -1,6 +1,6 @@
 # ADR-0017: Draw the node editor in one custom control
 
-**Status:** Accepted · 2026-08-11
+**Status:** Accepted · 2026-08-11 · amended 2026-09-09, where the one control becomes one class across a file per region
 
 ## Context
 
@@ -44,9 +44,28 @@ Zoom is `zoom * Math.Pow(1.12, e.Delta.Y)` plus a pan correction that pins the
 point under the cursor. Text scales because it is drawn inside the transform.
 There are no per-node controls to invalidate, so a zoom is one `InvalidateVisual`.
 
-The whole editor is 477 lines including painting, hit-testing, five interaction
-modes and keyboard handling — smaller than the templates, converters and
-attached-property plumbing the composed version would need.
+The whole editor was 477 lines when this was written, including painting,
+hit-testing, five interaction modes and keyboard handling — smaller than the
+templates, converters and attached-property plumbing the composed version would
+need.
+
+It is now about 2 700 across seven files. Groups, boxes, copy and paste, the
+history, framing and a module list opened by gesture all arrived after this was
+written, and each of them touches painting and hit-testing because that is what
+this record decided they should do. The decision holds: those seven files are one
+`partial class` and one `Render`, socket positions still come from
+`NodeGeometry` alone, and nothing here became a control. What changed is which
+file each part of it is written in, on the reasoning
+[0039](0039-one-window-class-across-a-file-per-region.md) set out for the shell —
+the region banners this file had carried for most of its life were the right
+seams, and a banner is not a boundary. The files are named for the regions they
+were: editing and the history, the clipboard, painting, groups, interaction, and
+hit-testing.
+
+The line count is worth keeping honest rather than quietly dropping, because it
+was the evidence for the decision and it no longer reads as evidence for
+anything. What it measures now is how much the editor does, not what drawing it
+in one control costs; a bit over half of it is prose.
 
 It made re-patching cheap to implement well: dragging a connected input picks the
 existing wire up by its far end, which is one branch in `StartWire` because wires
