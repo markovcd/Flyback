@@ -556,6 +556,8 @@ public sealed partial class MainWindow
     /// </remarks>
     private void Undo()
     {
+        if (Gesturing) return;
+
         if (Documenting && source.CanUndo) source.Undo();
         else if (editor.Undo())
         {
@@ -568,6 +570,8 @@ public sealed partial class MainWindow
 
     private void Redo()
     {
+        if (Gesturing) return;
+
         if (Documenting && source.CanRedo) source.Redo();
         else if (editor.Redo())
         {
@@ -638,6 +642,22 @@ public sealed partial class MainWindow
     /// <see cref="Undo"/>.
     /// </summary>
     private bool Documenting => sourceOwned || Coding;
+
+    /// <summary>
+    /// Whether a hand is in the middle of something, so that taking an edit back
+    /// would be taking it out from under that hand.
+    /// </summary>
+    /// <remarks>
+    /// The pointer is captured for the length of a drag and the keyboard is not,
+    /// so Ctrl+Z arrives in the middle of one perfectly well. The canvas drops
+    /// the drag whenever it is shown a different patch, so what somebody
+    /// dragging a module got for the press was that module
+    /// jumping out from under the pointer to wherever the step it landed on had
+    /// put it, with the drag over and no sign of why. Ignored rather than
+    /// answered: letting go finishes the gesture and leaves the press to be made
+    /// again, against a patch nobody is holding on to.
+    /// </remarks>
+    private bool Gesturing => editor.Gesturing;
 
     /// <summary>
     /// Puts the patch steps taken since the last of these on the text's stack,

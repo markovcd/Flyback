@@ -416,6 +416,17 @@ public sealed class NodeEditor : Control
     public bool CanRedo => history.CanRedo;
 
     /// <summary>
+    /// Whether a gesture is under way on the canvas: a module being moved, a
+    /// wire being drawn, the view being panned or a marquee drawn out.
+    /// </summary>
+    /// <remarks>
+    /// For the shell, which takes the keyboard while the pointer is held and has
+    /// to know that the hand is in the middle of something. The canvas itself
+    /// asks its own state rather than this.
+    /// </remarks>
+    public bool Gesturing => drag != Drag.None;
+
+    /// <summary>
     /// What the owner of this canvas keeps beside the patch, noted with every
     /// step so that an undo hands back the state that step was taken in.
     /// </summary>
