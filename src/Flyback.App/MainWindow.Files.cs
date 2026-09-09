@@ -114,6 +114,10 @@ public sealed partial class MainWindow
         patchName = name;
         bundled = asBundle;
 
+        // Whatever preset the list still showed, the patch just took on a file
+        // of its own — the preset is where it started, not what it is now.
+        ClearPresetSelection();
+
         editor.MarkSaved();
     }
 
