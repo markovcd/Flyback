@@ -347,7 +347,7 @@ public sealed partial class MainWindow : Window
 
         // The preset the box opens on, which is the patch about to be built —
         // said here so the title agrees with the toolbar from the first frame.
-        patchName = plugins.Presets.Count > 0 ? plugins.Presets[0].Name : null;
+        Became(plugins.Presets.Count > 0 ? plugins.Presets[0].Name : null, beside: null);
 
         editor.Patch = Presets.Default();
 
@@ -618,11 +618,13 @@ public sealed partial class MainWindow : Window
                 // using modules it failed to add finally shows up.
                 var built = preset.Build(plugins.Modules);
 
-                // Named before it is shown, because showing it is what redraws
-                // the title — and named at all because a preset is one of the
-                // three ways a patch arrives and the only one with no file to
-                // be named after.
-                patchName = preset.Name;
+                // Named before it is shown, because showing it is what redraws the
+                // title — and named at all because a preset is one of the three ways a
+                // patch arrives and the only one with no file to be named after. It has
+                // no folder either, and disowns whatever the last document was carrying:
+                // a preset naming a sound means the one beside the program, not the one
+                // inside a bundle somebody happened to open first.
+                Became(preset.Name, beside: null);
 
                 editor.Patch = built;
                 preview.Rewind();

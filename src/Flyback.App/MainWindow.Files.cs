@@ -52,6 +52,71 @@ public sealed partial class MainWindow
         "Nothing is wired into the Output, so there is nothing to write. "
         + "Patch something into its 'color' or its 'left'.";
 
+    /// <summary>
+    /// A different document from here on: what it is called, where the files it
+    /// names are measured from, and the bundle it arrived in if it arrived in one.
+    /// </summary>
+    /// <remarks>
+    /// Five routes reach a new patch — a patch file, a source file, a bundle, a
+    /// preset, and the one the window opens with — and every one of them has to say
+    /// all of this rather than the part it happens to care about. A route that named
+    /// the document without disowning the last one left the window answering for a
+    /// file that is no longer open: what a patch names is looked up in
+    /// <see cref="carried"/> before anywhere else, so a preset picked while a bundle
+    /// was open went on reading that bundle's sounds and pictures.
+    /// <para>
+    /// Call it before handing the patch to the canvas. Setting the patch is what
+    /// redraws the title, so a name arriving afterwards is a title bar one edit out
+    /// of date.
+    /// </para>
+    /// </remarks>
+    /// <param name="name">What the title bar says, and null for a document with no name.</param>
+    /// <param name="beside">
+    /// The folder a relative sample or picture path is measured from. Null where
+    /// there is no folder to measure from, which is what a preset has.
+    /// </param>
+    /// <param name="files">What a bundle brought with it, and null for everything else.</param>
+    internal void Became(string? name, string? beside, BundleFiles? files = null)
+    {
+        patchName = name;
+
+        carried = files;
+        bundled = files is not null;
+
+        soundFolder.Beside = beside;
+        pictureFolder.Beside = beside;
+    }
+
+    /// <summary>
+    /// Whether the document is a bundle, which is what the next save offers first.
+    /// </summary>
+    /// <remarks>
+    /// Readable from the tests, as <see cref="Became"/> is callable from them: every
+    /// route that opens a document is behind a file picker the headless platform does
+    /// not put up, so saying what a document is, is the only way to test what follows
+    /// from it.
+    /// </remarks>
+    internal bool IsBundle => bundled;
+
+    /// <summary>
+    /// What was open has just been written, and the file it was written to is the
+    /// document now.
+    /// </summary>
+    /// <remarks>
+    /// Not the same statement as <see cref="Became"/>, and deliberately smaller. A
+    /// save changes what the patch is called and which kind of file it is, and
+    /// nothing else: the patch is the one already showing, and what it carries is
+    /// still the only copy of those files until something writes them out.
+    /// </remarks>
+    /// <param name="asBundle">Which kind of file it went to, which is what the next save offers.</param>
+    private void SavedAs(string name, bool asBundle)
+    {
+        patchName = name;
+        bundled = asBundle;
+
+        editor.MarkSaved();
+    }
+
     private async Task OpenPatchAsync()
     {
         var files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
@@ -90,22 +155,11 @@ public sealed partial class MainWindow
                 return;
             }
 
-            // Where a relative sample path is measured from, before the patch
-            // that names one is compiled for the first time.
-            soundFolder.Beside = Path.GetDirectoryName(files[0].TryGetLocalPath());
-            pictureFolder.Beside = soundFolder.Beside;
-
-            // Whatever bundle was open is not open any more. A loose patch is
-            // backed by a folder, and leaving the last one's files in front of
-            // that folder would answer for paths this document knows nothing
-            // about.
-            carried = null;
-            bundled = false;
-
-            // Before the patch and not after: setting it is what tells the
-            // window to draw the title again, and a name arriving a line later
-            // would be a title bar one edit out of date.
-            patchName = Path.GetFileNameWithoutExtension(files[0].Name);
+            // Everything that says which document this is, before the patch it is
+            // about — see Became.
+            Became(
+                Path.GetFileNameWithoutExtension(files[0].Name),
+                Path.GetDirectoryName(files[0].TryGetLocalPath()));
 
             editor.Patch = loaded.Patch;
             preview.Rewind();
@@ -151,9 +205,7 @@ public sealed partial class MainWindow
 
             await using (var stream = await file.OpenWriteAsync()) await packed.CopyToAsync(stream);
 
-            patchName = Path.GetFileNameWithoutExtension(file.Name);
-            bundled = true;
-            editor.MarkSaved();
+            SavedAs(Path.GetFileNameWithoutExtension(file.Name), asBundle: true);
 
             // Saved as a bundle, so a bundle is the document now and the graph
             // owns it — ADR-0068.
@@ -311,8 +363,7 @@ public sealed partial class MainWindow
 
             if (sourceOwned)
             {
-                patchName = Path.GetFileNameWithoutExtension(file.Name);
-                editor.MarkSaved();
+                SavedAs(Path.GetFileNameWithoutExtension(file.Name), asBundle: false);
                 MarkSourceSaved();
 
                 Report($"Saved {file.Name}.");
@@ -364,13 +415,9 @@ public sealed partial class MainWindow
                 return;
             }
 
-            soundFolder.Beside = Path.GetDirectoryName(file.TryGetLocalPath());
-            pictureFolder.Beside = soundFolder.Beside;
-
-            carried = null;
-            bundled = false;
-
-            patchName = Path.GetFileNameWithoutExtension(file.Name);
+            Became(
+                Path.GetFileNameWithoutExtension(file.Name),
+                Path.GetDirectoryName(file.TryGetLocalPath()));
 
             editor.Patch = load.Patch;
             preview.Rewind();
@@ -432,10 +479,14 @@ public sealed partial class MainWindow
                 bundle = PatchBundle.Read(whole, plugins.Modules);
             }
 
-            carried = new BundleFiles(bundle.Files, soundFolder, pictureFolder);
-            bundled = true;
+            // A bundle answers for its own files first and falls through to the folder
+            // it was opened from, which is why that folder is this one's rather than
+            // whatever the last document left behind.
+            Became(
+                Path.GetFileNameWithoutExtension(file.Name),
+                Path.GetDirectoryName(file.TryGetLocalPath()),
+                new BundleFiles(bundle.Files, soundFolder, pictureFolder));
 
-            patchName = Path.GetFileNameWithoutExtension(file.Name);
 
             editor.Patch = bundle.Patch;
             preview.Rewind();
@@ -494,8 +545,7 @@ public sealed partial class MainWindow
 
             // Only once it is actually on disk. A patch that failed to write is
             // still a patch with everything to lose.
-            patchName = Path.GetFileNameWithoutExtension(file.Name);
-            editor.MarkSaved();
+            SavedAs(Path.GetFileNameWithoutExtension(file.Name), asBundle: false);
 
             // Saved as a patch file, so that is the document now — ADR-0068.
             DropSource();
