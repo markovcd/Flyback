@@ -576,10 +576,16 @@ public static class PatchPrinter
             // Bindings come out in the order they were settled, and the
             // Output's own lines were queued before any of them — so those are
             // moved to the end, where a reader expects the point of the patch.
-            var sinks = statements.Where(Sink);
-            var rest = statements.Where(part => !Sink(part));
+            var sinks = statements.Where(Sink).ToList();
+            var rest = statements.Where(part => !Sink(part)).ToList();
 
-            return [.. rest, Part.Of(string.Empty), .. sinks];
+            // The blank line between them goes in only where there is something
+            // on both sides of it. A patch whose Output is fed by one expression
+            // has no bindings at all, and would otherwise be printed starting on
+            // an empty line.
+            return rest.Count == 0 || sinks.Count == 0
+                ? [.. rest, .. sinks]
+                : [.. rest, Part.Of(string.Empty), .. sinks];
 
             static bool Sink(Part part) =>
                 part.Text.Contains("|> out.") || part.Text.StartsWith("out.", StringComparison.Ordinal);
