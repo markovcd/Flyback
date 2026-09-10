@@ -51,6 +51,41 @@ public sealed partial class NodeEditor
     /// <summary>Whether this module is inside a box, and so is not drawn itself.</summary>
     private bool Shut(Guid nodeId) => patch.CollapsedGroupOf(nodeId) is not null;
 
+    /// <summary>
+    /// Every rectangle the canvas has something in: a box for each group that is
+    /// shut, a ring for each that is open, and the modules that are not behind a
+    /// box.
+    /// </summary>
+    /// <remarks>
+    /// What framing and pasting ask, rather than the list of modules. A module
+    /// behind a shut box is not on the canvas — nothing paints it, nothing can
+    /// point at it, and <see cref="PatchLayout"/> parks it behind the box rather
+    /// than making room for it — so framing to one zooms out to fit a picture
+    /// nobody can see, and stepping a paste clear of one steps it clear of
+    /// nothing.
+    /// </remarks>
+    private IEnumerable<Rect> OnCanvas()
+    {
+        foreach (var (_, _, bounds) in Boxes()) yield return bounds;
+
+        if (patch.Groups is not null)
+            foreach (var group in patch.Groups)
+                if (OpenGroup(group) is var (outline, handle))
+                    yield return outline.Union(handle);
+
+        foreach (var node in patch.Nodes)
+        {
+            if (Shut(node.Id)) continue;
+
+            // A module whose plugin is missing has no height to ask for. Counted
+            // at nothing rather than skipped, so its corner is still somewhere
+            // the canvas is occupied.
+            var height = NodeCatalog.Get(node.TypeId) is { } def ? NodeGeometry.Height(def) : 0;
+
+            yield return new Rect(node.X, node.Y, NodeGeometry.Width, height);
+        }
+    }
+
     /// <summary>Whether both ends of a wire are inside the same box.</summary>
     private bool Hidden(Connection wire) =>
         patch.CollapsedGroupOf(wire.SourceNode) is { } group
@@ -307,14 +342,16 @@ public sealed partial class NodeEditor
 
         if (x == double.MaxValue) return null;
 
-        var outline = new Rect(x, y, right - x, bottom - y).Inflate(OpenGroupPadding);
-        var handle = new Rect(outline.X, outline.Y - OpenGroupHandle, outline.Width, OpenGroupHandle);
+        var outline = new Rect(x, y, right - x, bottom - y).Inflate(NodeGeometry.GroupPadding);
+
+        var handle = new Rect(
+            outline.X,
+            outline.Y - NodeGeometry.GroupHandleHeight,
+            outline.Width,
+            NodeGeometry.GroupHandleHeight);
 
         return (outline, handle);
     }
-
-    private const double OpenGroupPadding = 24;
-    private const double OpenGroupHandle = 20;
 
     /// <summary>
     /// The ring, the ground inside it and the title above it, for every group

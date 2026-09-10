@@ -86,6 +86,18 @@ internal static class NodeGeometry
     public static Point GroupInputPort(Rect bounds, GroupSockets sockets, int index) =>
         new(bounds.X, bounds.Y + HeaderHeight + (sockets.Outputs.Count + index + 0.5) * RowHeight);
 
+    // --- an open group -------------------------------------------------------
+    //
+    // Nothing of the module's shape here: an open group draws no header and no
+    // sockets, only a ring round the modules standing in it and a strip above
+    // that to take hold of.
+
+    /// <summary>The ring drawn round a group that is open, on all four sides.</summary>
+    public const double GroupPadding = 24;
+
+    /// <summary>The strip above that ring, which the group's name is written on.</summary>
+    public const double GroupHandleHeight = 20;
+
     /// <summary>
     /// These same numbers, in the shape the layout wants them — plus how much
     /// room to leave between the nodes, which is the only part of this the
@@ -102,5 +114,12 @@ internal static class NodeGeometry
     /// </para>
     /// </remarks>
     public static PatchLayout.Metrics Metrics => new(
-        Width, HeaderHeight, RowHeight, FooterPadding, ColumnGap: 108, RowGap: 40);
+        Width,
+        HeaderHeight,
+        RowHeight,
+        FooterPadding,
+        ColumnGap: 108,
+        RowGap: 40,
+        GroupPadding,
+        GroupHandleHeight);
 }

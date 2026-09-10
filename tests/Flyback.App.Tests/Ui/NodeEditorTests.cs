@@ -839,6 +839,8 @@ public class NodeEditorTests : UiTest
         metrics.HeaderHeight.ShouldBe(NodeGeometry.HeaderHeight);
         metrics.RowHeight.ShouldBe(NodeGeometry.RowHeight);
         metrics.FooterPadding.ShouldBe(NodeGeometry.FooterPadding);
+        metrics.GroupPadding.ShouldBe(NodeGeometry.GroupPadding);
+        metrics.GroupHandleHeight.ShouldBe(NodeGeometry.GroupHandleHeight);
 
         // And the derived measurements agree, which is what actually gets used.
         var node = NodeInstance.Create(Sink, 0, 0);
@@ -847,6 +849,25 @@ public class NodeEditorTests : UiTest
 
         for (var port = 0; port < Sink.Inputs.Count; port++)
             metrics.InputPort(Sink, port).ShouldBe(NodeGeometry.InputPort(node, Sink, port).Y);
+
+        // Including a shut group's, which the layout reserves the room for and
+        // the editor draws — a box laid out to a size it is not drawn at is the
+        // same overlap as a module laid out to one.
+        var sockets = new GroupSockets(
+            [new GroupSocket(node.Id, 0, IsOutput: false), new GroupSocket(node.Id, 1, IsOutput: false)],
+            [new GroupSocket(node.Id, 0, IsOutput: true)]);
+
+        var bounds = new Rect(0, 0, NodeGeometry.Width, NodeGeometry.GroupHeight(sockets));
+
+        metrics.GroupHeight(sockets).ShouldBe(NodeGeometry.GroupHeight(sockets));
+
+        for (var row = 0; row < sockets.Outputs.Count; row++)
+            metrics.GroupPort(sockets, row, isOutput: true)
+                .ShouldBe(NodeGeometry.GroupOutputPort(bounds, row).Y);
+
+        for (var row = 0; row < sockets.Inputs.Count; row++)
+            metrics.GroupPort(sockets, row, isOutput: false)
+                .ShouldBe(NodeGeometry.GroupInputPort(bounds, sockets, row).Y);
     }
 
     /// <summary>

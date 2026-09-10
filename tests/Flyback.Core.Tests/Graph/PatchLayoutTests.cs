@@ -30,25 +30,70 @@ public class PatchLayoutTests
         return patch;
     }
 
-    private static (double Left, double Top, double Right, double Bottom) Box(NodeInstance node)
+    /// <summary>One rectangle of the drawing, named so that a failure says which.</summary>
+    private readonly record struct Drawn(string What, double Left, double Top, double Right, double Bottom);
+
+    private static Drawn Box(NodeInstance node)
     {
         var def = NodeCatalog.BuiltIn.Require(node.TypeId);
-        return (node.X, node.Y, node.X + Size.Width, node.Y + Size.Height(def));
+        return new Drawn(node.TypeId, node.X, node.Y, node.X + Size.Width, node.Y + Size.Height(def));
+    }
+
+    /// <summary>
+    /// The box a shut group is drawn as: at the corner of the modules it stands
+    /// for, one module wide, and a row tall for every socket on its edge.
+    /// </summary>
+    private static Drawn Box(Patch patch, NodeGroup group)
+    {
+        var left = group.Members.Min(id => patch.Find(id)!.X);
+        var top = group.Members.Min(id => patch.Find(id)!.Y);
+
+        return new Drawn(
+            group.Title(),
+            left,
+            top,
+            left + Size.Width,
+            top + Size.GroupHeight(patch.SocketsOf(group)));
+    }
+
+    /// <summary>Where a module is drawn, which is the box in front of it where there is one.</summary>
+    private static Drawn Where(Patch patch, NodeInstance node) =>
+        patch.CollapsedGroupOf(node.Id) is { } group ? Box(patch, group) : Box(node);
+
+    /// <summary>
+    /// Everything the canvas has on it, which is what every property here is
+    /// about. A module behind a shut box is not one of them: nothing paints it
+    /// and nothing points at it, so the layout parks it behind the box rather
+    /// than keeping a column open for a picture nobody is looking at.
+    /// </summary>
+    private static List<Drawn> Drawing(Patch patch)
+    {
+        var drawn = new List<Drawn>();
+
+        foreach (var group in patch.Groups ?? [])
+            if (group.Collapsed)
+                drawn.Add(Box(patch, group));
+
+        foreach (var node in patch.Nodes)
+            if (patch.CollapsedGroupOf(node.Id) is null)
+                drawn.Add(Box(node));
+
+        return drawn;
     }
 
     private static void NothingOverlaps(Patch patch)
     {
-        var placed = patch.Nodes;
+        var drawn = Drawing(patch);
 
-        for (var a = 0; a < placed.Count; a++)
-        for (var b = a + 1; b < placed.Count; b++)
+        for (var a = 0; a < drawn.Count; a++)
+        for (var b = a + 1; b < drawn.Count; b++)
         {
-            var (one, two) = (Box(placed[a]), Box(placed[b]));
+            var (one, two) = (drawn[a], drawn[b]);
 
             var apart = one.Right <= two.Left || two.Right <= one.Left
                 || one.Bottom <= two.Top || two.Bottom <= one.Top;
 
-            apart.ShouldBeTrue($"{placed[a].TypeId} and {placed[b].TypeId} overlap");
+            apart.ShouldBeTrue($"{one.What} and {two.What} overlap");
         }
     }
 
@@ -74,8 +119,16 @@ public class PatchLayoutTests
             // read as going back.
             if (NodeCatalog.BuiltIn.Require(from.TypeId).IsCycleBreaker) continue;
 
-            Box(from).Right.ShouldBeLessThanOrEqualTo(
-                to.X, $"{from.TypeId} feeds {to.TypeId} and should sit to its left");
+            // Or unless one box stands in front of both ends, in which case
+            // there is no wire on the canvas to run either way.
+            if (patch.CollapsedGroupOf(from.Id) is { } box
+                && ReferenceEquals(box, patch.CollapsedGroupOf(to.Id)))
+                continue;
+
+            var (start, end) = (Where(patch, from), Where(patch, to));
+
+            start.Right.ShouldBeLessThanOrEqualTo(
+                end.Left, $"{start.What} feeds {end.What} and should sit to its left");
         }
     }
 
@@ -95,8 +148,8 @@ public class PatchLayoutTests
         var patch = Arranged(Preset(name));
         var sink = patch.FirstOf(NodeCatalog.OutputTypeId).ShouldNotBeNull();
 
-        foreach (var node in patch.Nodes)
-            node.X.ShouldBeLessThanOrEqualTo(sink.X);
+        foreach (var drawn in Drawing(patch))
+            drawn.Left.ShouldBeLessThanOrEqualTo(sink.X, $"{drawn.What} is drawn past the Output");
     }
 
     /// <summary>
@@ -245,6 +298,100 @@ public class PatchLayoutTests
 
         unknown.X.ShouldBe(1234);
         unknown.Y.ShouldBe(2678);
+    }
+
+    /// <summary>
+    /// A group is one thing on the canvas, so it is one thing in the layout: the
+    /// box goes in a column of its own, after what feeds it and before what
+    /// reads it. Placed a module at a time instead, its modules go down whichever
+    /// columns their own wires ask for and the box is drawn at the corner of
+    /// whichever of them landed furthest up and left — which is a box sitting on
+    /// a module that is not in it.
+    /// </summary>
+    [Fact]
+    public void A_shut_group_is_placed_as_the_one_box_it_is_drawn_as()
+    {
+        var patch = Straggling(out var group, out var stranger, shut: true);
+        var box = Box(patch, group);
+
+        // Past the module that feeds it, since that is a column of its own and
+        // the box is a column of its own after it.
+        box.Left.ShouldBeGreaterThanOrEqualTo(Box(stranger).Right);
+
+        NothingOverlaps(patch);
+    }
+
+    /// <summary>
+    /// The ring round a group that is open holds its own modules and nothing
+    /// else. It is drawn from wherever they sit, so modules scattered down the
+    /// patch are a ring drawn down the patch — with whatever was in the way
+    /// inside it, looking for all the world like part of the group.
+    /// </summary>
+    [Fact]
+    public void An_open_group_is_drawn_round_its_own_modules_and_no_others()
+    {
+        var patch = Straggling(out var group, out _, shut: false);
+
+        var members = group.Members.Select(id => patch.Find(id)!).ToArray();
+        var pad = Size.GroupPadding;
+
+        var ring = new Drawn(
+            group.Title(),
+            members.Min(n => n.X) - pad,
+            members.Min(n => n.Y) - pad,
+            members.Max(n => n.X + Size.Width) + pad,
+            members.Max(n => n.Y + Size.Height(NodeCatalog.BuiltIn.Require(n.TypeId))) + pad);
+
+        foreach (var node in patch.Nodes.Where(n => !group.Members.Contains(n.Id)))
+        {
+            var box = Box(node);
+
+            var apart = box.Right <= ring.Left || ring.Right <= box.Left
+                || box.Bottom <= ring.Top || ring.Bottom <= box.Top;
+
+            apart.ShouldBeTrue($"{node.TypeId} is drawn inside a group it is not in");
+        }
+    }
+
+    /// <summary>
+    /// A group whose two modules are one step and three steps along the chain,
+    /// with a module belonging to nobody in the step between them.
+    /// </summary>
+    /// <remarks>
+    /// The arrangement that catches a group placed a module at a time: its two
+    /// modules go into two columns with a stranger's column in the middle, so
+    /// whatever is drawn round them reaches across all three. It is what a large
+    /// patch does by itself — the "Whole band" preset lays out with three pairs
+    /// of boxes on top of each other unless a group is placed whole.
+    /// </remarks>
+    private static Patch Straggling(out NodeGroup group, out NodeInstance stranger, bool shut)
+    {
+        var b = new PatchBuilder(NodeCatalog.BuiltIn);
+
+        var time = b.Add("time", 0, 0);
+        var head = b.Add("osc.sine", 0, 0, (1, 220f));
+        var tail = b.Add("math.add", 0, 0);
+
+        var apart = b.Add("osc.sine", 0, 0, (1, 330f));
+        stranger = b.Add("math.mul", 0, 0);
+
+        var sink = b.Add(NodeCatalog.OutputTypeId, 0, 0);
+
+        b.Wire(time, 0, head, 0)
+         .Wire(time, 0, apart, 0)
+         .Wire(apart, 0, stranger, 0)
+         .Wire(head, 0, tail, 0)
+         .Wire(stranger, 0, tail, 1)
+         .Wire(tail, 0, sink, NodeCatalog.OutputLeftPort);
+
+        b.Group("Ends", head, tail);
+
+        group = b.Patch.Groups.ShouldNotBeNull().ShouldHaveSingleItem();
+        group.Collapsed = shut;
+
+        PatchLayout.Arrange(b.Patch, NodeCatalog.BuiltIn);
+
+        return b.Patch;
     }
 
     [Fact]

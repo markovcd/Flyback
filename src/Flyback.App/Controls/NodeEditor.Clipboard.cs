@@ -167,7 +167,7 @@ public sealed partial class NodeEditor
         const int tries = 40;
 
         var group = BoxAround(arriving);
-        var taken = patch.Nodes.Select(node => BoxAround([node])).ToArray();
+        var taken = OnCanvas().ToArray();
 
         var centre = ToGraph(new Point(Bounds.Width / 2, Bounds.Height / 2));
         var dx = centre.X - group.Center.X;
@@ -253,12 +253,8 @@ public sealed partial class NodeEditor
 
         double left = double.MaxValue, top = double.MaxValue, right = double.MinValue, bottom = double.MinValue;
 
-        foreach (var node in patch.Nodes)
+        foreach (var bounds in OnCanvas())
         {
-            var def = NodeCatalog.Get(node.TypeId);
-            if (def is null) continue;
-
-            var bounds = NodeGeometry.Bounds(node, def);
             left = Math.Min(left, bounds.Left);
             top = Math.Min(top, bounds.Top);
             right = Math.Max(right, bounds.Right);

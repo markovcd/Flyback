@@ -75,10 +75,19 @@ public class ShippedPresetTests
     /// of modules at the origin.
     /// </summary>
     /// <remarks>
-    /// Two modules at the same spot is the whole of the check here. The full
+    /// Two things at the same spot is the whole of the check here. The full
     /// non-overlap property is a property of the layout and is tested as one in
     /// <c>PatchLayoutTests</c>; what this catches is a preset that never went
     /// through it.
+    /// <para>
+    /// A thing rather than a module, because a preset may group its modules and
+    /// a group that is shut is one box drawn in place of several. What is behind
+    /// a box is parked there and may be parked anywhere — the layout keeps no
+    /// room for a picture nobody is looking at — so it is the box that is
+    /// counted, at the corner it is drawn from. A preset that never went through
+    /// the layout still fails: every box corner and every loose module is the
+    /// origin.
+    /// </para>
     /// </remarks>
     [Theory]
     [MemberData(nameof(Every))]
@@ -87,8 +96,18 @@ public class ShippedPresetTests
         var loaded = PluginHost.Load();
         var patch = loaded.Presets.Single(p => p.Name == name).Build(loaded.Modules);
 
-        patch.Nodes.Select(n => (n.X, n.Y)).ToHashSet().Count.ShouldBe(
-            patch.Nodes.Count, $"'{name}' hands over modules stacked on one another");
+        var drawn = patch.Nodes
+            .Where(n => patch.CollapsedGroupOf(n.Id) is null)
+            .Select(n => (n.X, n.Y))
+            .Concat((patch.Groups ?? [])
+                .Where(box => box.Collapsed)
+                .Select(box => (
+                    X: box.Members.Min(id => patch.Find(id)!.X),
+                    Y: box.Members.Min(id => patch.Find(id)!.Y))))
+            .ToList();
+
+        drawn.ToHashSet().Count.ShouldBe(
+            drawn.Count, $"'{name}' hands over modules stacked on one another");
     }
 
     /// <summary>
