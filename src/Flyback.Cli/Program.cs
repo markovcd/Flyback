@@ -1,4 +1,5 @@
 using System.CommandLine;
+using System.CommandLine.Completions;
 using System.CommandLine.Parsing;
 using System.Globalization;
 using System.Text;
@@ -60,9 +61,15 @@ internal static class Program
             Check(patch, json),
             Info(patch, json),
             Print(patch),
-            Pack(patch),
+            Pack(patch, json),
             Probe(plugins, json),
         };
+
+        // What dotnet-suggest asks for completions with, and the only reason the
+        // shell can finish a command this program has.
+        var suggest = new SuggestDirective();
+
+        root.Add(suggest);
 
         var parsed = root.Parse(args);
         var code = parsed.Invoke();
@@ -70,8 +77,9 @@ internal static class Program
         // Invoked either way, because that is what prints the complaint and the
         // help beneath it. But an argument nobody could parse is the shell being
         // held wrong rather than a patch being wrong, and the two should not
-        // come back as the same number.
-        return parsed.Errors.Count > 0 ? Exit.Failed : code;
+        // come back as the same number. Half-typed input is neither: it is what
+        // a completion is asked about.
+        return parsed.Errors.Count > 0 && parsed.GetResult(suggest) is null ? Exit.Failed : code;
     }
 
     /// <summary>
@@ -279,7 +287,7 @@ internal static class Program
     /// patch and this writes a file, so it takes an output path rather than a
     /// <c>--json</c>.
     /// </summary>
-    private static Command Pack(Argument<FileInfo> patch)
+    private static Command Pack(Argument<FileInfo> patch, Option<bool> json)
     {
         var output = new Option<FileInfo>("--out", "-o")
         {
@@ -291,42 +299,30 @@ internal static class Program
             "pack",
             "Put a patch and every file it names into one bundle.")
         {
-            patch, output,
+            patch, output, json,
         };
 
         command.SetAction(result => PackCommand.Run(
             result.GetRequiredValue(patch),
             result.GetRequiredValue(output),
             Console.Error,
-            Console.Out));
+            Console.Out,
+            result.GetValue(json)));
 
         return command;
     }
 
-    private static Command Check(Argument<FileInfo> patch, Option<bool> json) =>
-        Run(new Command("check", "Compile a patch and report what is wrong with it."),
-            patch,
-            json,
-            CheckCommand.Run);
-
-    private static Command Info(Argument<FileInfo> patch, Option<bool> json) =>
-        Run(new Command("info", "Say what a patch is made of and what each half of it costs."),
-            patch,
-            json,
-            InfoCommand.Run);
-
-    /// <summary>
-    /// The two commands that read a patch and write about it, which differ only
-    /// in what they write.
-    /// </summary>
-    private static Command Run(
-        Command command,
-        Argument<FileInfo> patch,
-        Option<bool> json,
-        Func<Patch, string, bool, TextWriter, TextWriter, ISampleLibrary?, IImageLibrary?, int> run)
+    private static Command Check(Argument<FileInfo> patch, Option<bool> json)
     {
-        command.Arguments.Add(patch);
-        command.Options.Add(json);
+        var strict = new Option<bool>("--strict")
+        {
+            Description = "Fail on warnings as well as on errors.",
+        };
+
+        var command = new Command("check", "Compile a patch and report what is wrong with it.")
+        {
+            patch, json, strict,
+        };
 
         command.SetAction(result =>
         {
@@ -334,7 +330,34 @@ internal static class Program
 
             return Patches.Open(file, Console.Error) is not { } opened
                 ? Exit.Failed
-                : run(
+                : CheckCommand.Run(
+                    opened.Patch,
+                    file.Name,
+                    result.GetValue(json),
+                    Console.Out,
+                    Console.Error,
+                    opened.Samples,
+                    opened.Pictures,
+                    result.GetValue(strict));
+        });
+
+        return command;
+    }
+
+    private static Command Info(Argument<FileInfo> patch, Option<bool> json)
+    {
+        var command = new Command("info", "Say what a patch is made of and what each half of it costs.")
+        {
+            patch, json,
+        };
+
+        command.SetAction(result =>
+        {
+            var file = result.GetRequiredValue(patch);
+
+            return Patches.Open(file, Console.Error) is not { } opened
+                ? Exit.Failed
+                : InfoCommand.Run(
                     opened.Patch,
                     file.Name,
                     result.GetValue(json),

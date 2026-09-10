@@ -30,7 +30,8 @@ internal static class CheckCommand
         TextWriter output,
         TextWriter error,
         ISampleLibrary? samples = null,
-        IImageLibrary? pictures = null)
+        IImageLibrary? pictures = null,
+        bool strict = false)
     {
         var video = patch.CompileForVideo(samples: samples, pictures: pictures);
         var audio = patch.CompileForAudio(samples: samples);
@@ -60,9 +61,10 @@ internal static class CheckCommand
             Write(name, complaints, errors, output);
         }
 
-        // Warnings are things worth saying about a patch somebody meant. Only an
-        // error is a patch that does not mean what it says.
-        return errors > 0 ? Exit.Problems : Exit.Ok;
+        // Warnings are things worth saying about a patch somebody meant, so only
+        // an error is a patch that does not mean what it says — unless a build has
+        // decided otherwise, which is what --strict is.
+        return errors > 0 || (strict && complaints.Length > 0) ? Exit.Problems : Exit.Ok;
     }
 
     private static void Write(string name, Complaint[] complaints, int errors, TextWriter output)

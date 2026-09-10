@@ -70,6 +70,30 @@ public class CommandTests
         empty.Out.ShouldContain("warning");
     }
 
+    /// <summary>
+    /// What a build asks for when a warning is not something it means to carry.
+    /// The same patch and the same report either way — only the number the shell
+    /// gets changes.
+    /// </summary>
+    [Fact]
+    public void Strict_fails_on_a_warning_and_plain_does_not()
+    {
+        var plain = Run((o, e) => CheckCommand.Run(Preset("Empty"), "empty.fbk", false, o, e));
+        var strict = Run((o, e) => CheckCommand.Run(Preset("Empty"), "empty.fbk", false, o, e, strict: true));
+
+        plain.Code.ShouldBe(Exit.Ok);
+        strict.Code.ShouldBe(Exit.Problems);
+        strict.Out.ShouldBe(plain.Out);
+    }
+
+    /// <summary>An error is an error whether or not anybody asked for strictness.</summary>
+    [Fact]
+    public void Strict_changes_nothing_about_a_patch_that_already_fails()
+    {
+        Run((o, e) => CheckCommand.Run(Broken(), "broken.fbk", false, o, e, strict: true))
+            .Code.ShouldBe(Exit.Problems);
+    }
+
     [Fact]
     public void An_issue_names_the_module_rather_than_its_id()
     {
@@ -445,6 +469,41 @@ public class CommandTests
 
         bundle.Refresh();
         bundle.Exists.ShouldBeTrue();
+    }
+
+    /// <summary>
+    /// The two output modes agree about what was carried and what was not, the
+    /// way check's two do about how bad a patch is.
+    /// </summary>
+    [Fact]
+    public void The_json_and_the_prose_agree_about_what_a_bundle_holds()
+    {
+        using var scratch = new Scratch();
+
+        var picture = scratch.File("moon.png");
+        WritePicture(picture);
+
+        var patch = Preset("Plasma");
+        var shown = NodeInstance.Create(NodeCatalog.BuiltIn.Require(NodeCatalog.PictureTypeId), 0, 0);
+
+        PictureExtra.Set(shown, "moon.png");
+        patch.Nodes.Add(shown);
+        patch.Connect(shown.Id, 0, patch.Output.Id, NodeCatalog.OutputColorPort);
+
+        var file = scratch.File("shown.fbk");
+        File.WriteAllText(file.FullName, PatchIO.ToJson(patch, NodeCatalog.BuiltIn));
+
+        var prose = Run((o, e) => PackCommand.Run(file, scratch.File("prose.fbkb"), e, o));
+        var json = Run((o, e) => PackCommand.Run(file, scratch.File("json.fbkb"), e, o, json: true));
+
+        json.Code.ShouldBe(prose.Code);
+
+        using var document = JsonDocument.Parse(json.Out);
+
+        document.RootElement.GetProperty("whole").GetBoolean().ShouldBeTrue();
+        document.RootElement.GetProperty("carried").EnumerateArray()
+            .Select(carried => carried.GetString())
+            .ShouldContain(carried => carried!.Contains("moon.png"));
     }
 
     /// <summary>A small red PNG, written the way the program writes every other one.</summary>

@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Flyback.Core;
 using Flyback.Core.Graph;
 
@@ -21,7 +22,12 @@ namespace Flyback.Cli;
 /// </remarks>
 internal static class PackCommand
 {
-    public static int Run(FileInfo file, FileInfo output, TextWriter error, TextWriter writer)
+    public static int Run(
+        FileInfo file,
+        FileInfo output,
+        TextWriter error,
+        TextWriter writer,
+        bool json = false)
     {
         if (Patches.Read(file, error) is not { } patch) return Exit.Failed;
 
@@ -41,6 +47,21 @@ internal static class PackCommand
         {
             error.WriteLine($"{GlobalConstants.ApplicationName}: {output.Name}: {ex.Message}");
             return Exit.Failed;
+        }
+
+        if (json)
+        {
+            writer.WriteLine(JsonSerializer.Serialize(
+                new
+                {
+                    bundle = output.Name,
+                    whole = report.Whole,
+                    carried = report.Carried,
+                    missing = report.Missing,
+                },
+                Writing.Json));
+
+            return report.Whole ? Exit.Ok : Exit.Problems;
         }
 
         writer.WriteLine($"{output.Name}");

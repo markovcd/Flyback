@@ -79,6 +79,7 @@ flyback-cli render nebula.fbk -o nebula.png --size 1920x1080 --at 2.5
 flyback-cli render drone.fbk -o drone.avi --seconds 30 --fps 30
 flyback-cli render drone.fbk -o drone.wav --seconds 30
 flyback-cli check nebula.fbk
+flyback-cli check nebula.fbk --strict
 flyback-cli info nebula.fbk
 flyback-cli pack nebula.fbk -o nebula.fbkb
 flyback-cli print nebula.fbk -o nebula.fbks
@@ -103,11 +104,26 @@ flyback-cli probe --provider all
 - `1`: patch errors
 - `2`: the job could not run
 
+`--strict` makes a warning fail as well. `check`, `info` and `pack` each take
+`--json`, which writes the same answer as a document instead of as prose.
+
 `probe` is the one command that is not about a patch. It asks a provider's endpoint what it
 offers and records the answer in the settings file both programs read, so the app's model box
 fills itself in without being told. It takes minutes and the provider bills for it, which is
 why it is a command rather than a button; `--keys` says where each key would come from and
 asks nothing of anybody, and `--dry-run` prints what was found and leaves the settings alone.
+
+### Completion
+
+The CLI answers the `[suggest]` directive, which is the protocol `dotnet-suggest`
+speaks:
+
+```bash
+flyback-cli "[suggest:13]" "flyback-cli pr"   # print, probe
+```
+
+So installing that tool and adding its shim to your shell gives completion of
+commands, options and file arguments.
 
 ## Bundles
 
