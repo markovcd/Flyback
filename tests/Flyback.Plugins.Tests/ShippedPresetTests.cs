@@ -111,6 +111,82 @@ public class ShippedPresetTests
     }
 
     /// <summary>
+    /// And every preset lays out clear of itself once its groups have been taken
+    /// off, which is a thing a person does to a patch they have been handed and
+    /// want to see the whole of.
+    /// </summary>
+    /// <remarks>
+    /// The plugins' presets are the big ones — Slow weather is a hundred and five
+    /// modules in ten groups — and the size is the point. Ten boxes take three
+    /// columns; the hundred modules behind them take seventeen, which is wider
+    /// than half the canvas. A layout drawn from the origin rightwards had only
+    /// that half to put them in, so the far end arrived folded onto the boundary
+    /// by <see cref="NodeInstance.X"/> and stacked there. Nothing in
+    /// <c>PatchLayoutTests</c> is large enough to reach it.
+    /// </remarks>
+    [Theory]
+    [MemberData(nameof(Every))]
+    public void Every_preset_lays_out_clear_of_itself_with_its_groups_taken_off(string name)
+    {
+        var loaded = PluginHost.Load();
+        var patch = loaded.Presets.Single(p => p.Name == name).Build(loaded.Modules);
+
+        patch.Groups = null;
+
+        PatchLayout.Arrange(patch, loaded.Modules)
+            .ShouldBeTrue($"'{name}' should fit the canvas with its groups off");
+
+        NothingOverlaps(patch, loaded.Modules, name);
+    }
+
+    /// <summary>
+    /// Opening every group at once is the same again, and the one case that may
+    /// honestly not fit: an open group is drawn as a ring round its modules, so
+    /// several of them in a row take the room all of their modules take and a
+    /// large patch can want more canvas than there is.
+    /// </summary>
+    /// <remarks>
+    /// So the claim is the one that is always true rather than the one that is
+    /// nearly true — a drawing that fits is a drawing with nothing on top of
+    /// anything. What must not happen is fitting and overlapping anyway, and
+    /// what a patch too big for the canvas gets is a sentence saying so, which
+    /// is <c>NodeEditor.Tidy</c>'s to say.
+    /// </remarks>
+    [Theory]
+    [MemberData(nameof(Every))]
+    public void A_preset_with_every_group_open_either_fits_the_canvas_or_says_it_does_not(string name)
+    {
+        var loaded = PluginHost.Load();
+        var patch = loaded.Presets.Single(p => p.Name == name).Build(loaded.Modules);
+
+        foreach (var group in patch.Groups ?? []) group.Collapsed = false;
+
+        if (PatchLayout.Arrange(patch, loaded.Modules)) NothingOverlaps(patch, loaded.Modules, name);
+    }
+
+    /// <summary>Nothing drawn sits on anything else drawn.</summary>
+    private static void NothingOverlaps(Patch patch, ModuleCatalog modules, string name)
+    {
+        var size = PatchLayout.Metrics.Default;
+
+        var drawn = patch.Nodes
+            .Where(n => patch.CollapsedGroupOf(n.Id) is null)
+            .Select(n => (n.TypeId, n.X, n.Y, Height: size.Height(modules.Require(n.TypeId))))
+            .ToArray();
+
+        for (var a = 0; a < drawn.Length; a++)
+        for (var b = a + 1; b < drawn.Length; b++)
+        {
+            var (one, two) = (drawn[a], drawn[b]);
+
+            var apart = one.X + size.Width <= two.X || two.X + size.Width <= one.X
+                || one.Y + one.Height <= two.Y || two.Y + two.Height <= one.Y;
+
+            apart.ShouldBeTrue($"'{name}' draws {one.TypeId} on top of {two.TypeId}");
+        }
+    }
+
+    /// <summary>
     /// The one-idea-one-sink rule, applied to the presets a plugin registers.
     /// </summary>
     /// <remarks>

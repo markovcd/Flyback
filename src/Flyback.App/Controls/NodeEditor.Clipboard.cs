@@ -218,15 +218,28 @@ public sealed partial class NodeEditor
     /// Only coordinates change — no wire is added, removed or rerouted — so the
     /// patch compiles to exactly the same program before and after, and the
     /// picture and the sound are untouched. See ADR-0044.
+    /// <para>
+    /// A drawing too big for the canvas is said rather than shown, because what
+    /// it looks like is a layout that has gone wrong: every coordinate is held
+    /// inside the canvas, so the far edges arrive folded onto the boundary and
+    /// stacked. Shutting a group is the way out of it and it is the same gesture
+    /// that caused it, so the message names it.
+    /// </para>
     /// </remarks>
     public void Tidy()
     {
         if (patch.Nodes.Count == 0) return;
 
-        PatchLayout.Arrange(patch, NodeCatalog.Current, NodeGeometry.Metrics);
+        var fitted = PatchLayout.Arrange(patch, NodeCatalog.Current, NodeGeometry.Metrics);
 
         NotifyPatchChanged();
         FrameAll();
+
+        if (!fitted)
+            Reported?.Invoke(
+                this,
+                "This patch is wider than the canvas with its groups open, so some modules "
+                + "are held at the edge. Shut a group or two and lay it out again.");
     }
 
     /// <summary>

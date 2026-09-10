@@ -86,9 +86,6 @@ public static class PatchLayout
     /// <summary>How many times the ordering is swept up and back down the columns.</summary>
     private const int Sweeps = 4;
 
-    /// <summary>Where the leftmost column starts, so nothing lands on the canvas edge.</summary>
-    private const double Margin = 40d;
-
     /// <summary>
     /// One thing the layout moves, and the only thing it knows how to move: a
     /// module in no group, or a group with everything in it at once.
@@ -156,7 +153,16 @@ public static class PatchLayout
     /// <param name="patch">The patch to place. Modified in place.</param>
     /// <param name="modules">Which catalogue the type ids mean, defaulting to the installed one.</param>
     /// <param name="metrics">How big the nodes are, defaulting to the editor's own.</param>
-    public static void Arrange(Patch patch, ModuleCatalog? modules = null, Metrics? metrics = null)
+    /// <returns>
+    /// Whether the drawing fits the canvas. False is not a failure to place —
+    /// what came out is still a correct drawing, and it is the canvas that is
+    /// too small to hold it. Since <see cref="NodeInstance.X"/> holds every
+    /// coordinate inside <see cref="NodeInstance.Extent"/>, what actually reaches the
+    /// patch in that case is the drawing with its far edges folded onto the
+    /// boundary, which is modules on top of one another. A caller with a person
+    /// in front of it should say so rather than let it look like a bad layout.
+    /// </returns>
+    public static bool Arrange(Patch patch, ModuleCatalog? modules = null, Metrics? metrics = null)
     {
         var catalog = modules ?? NodeCatalog.Current;
         var size = metrics ?? Metrics.Default;
@@ -182,7 +188,7 @@ public static class PatchLayout
             else foreach (var id in group.Members) defs.Remove(id);
         }
 
-        if (defs.Count == 0) return;
+        if (defs.Count == 0) return true;
 
         var nodes = patch.Nodes.Where(n => defs.ContainsKey(n.Id)).ToDictionary(n => n.Id);
 
@@ -221,7 +227,41 @@ public static class PatchLayout
 
         Lay(blocks, Links(patch, defs, blocks, of), sink, size);
 
-        foreach (var block in blocks) block.Put();
+        return Settle(blocks);
+    }
+
+    /// <summary>
+    /// Puts the finished drawing in the middle of the canvas, and says whether
+    /// it fits on one.
+    /// </summary>
+    /// <remarks>
+    /// The placement works from a corner, because a column is easier to reason
+    /// about running one way than two. Where that corner goes is a separate
+    /// question, and the middle is the only answer that uses the whole canvas:
+    /// starting at the origin and running right and down spends one quarter of
+    /// the room a patch is allowed and holds the other three empty, so a patch
+    /// twice as wide as it needs to be would be folded onto the boundary by
+    /// <see cref="NodeInstance.X"/> with plenty of canvas to spare on the other
+    /// side. A hundred modules with their groups open is exactly that wide.
+    /// </remarks>
+    private static bool Settle(List<Block> blocks)
+    {
+        var left = blocks.Min(block => block.X);
+        var top = blocks.Min(block => block.Y);
+        var right = blocks.Max(block => block.X + block.Width);
+        var bottom = blocks.Max(block => block.Y + block.Height);
+
+        var across = (left + right) / 2;
+        var down = (top + bottom) / 2;
+
+        foreach (var block in blocks)
+        {
+            block.X -= across;
+            block.Y -= down;
+            block.Put();
+        }
+
+        return right - left <= NodeInstance.Extent * 2 && bottom - top <= NodeInstance.Extent * 2;
     }
 
     /// <summary>
@@ -572,7 +612,7 @@ public static class PatchLayout
         ILookup<int, Link> into,
         Metrics size)
     {
-        var x = Margin;
+        var x = 0d;
 
         foreach (var column in columns)
         {

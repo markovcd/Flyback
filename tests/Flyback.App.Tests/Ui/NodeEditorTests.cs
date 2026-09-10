@@ -899,6 +899,59 @@ public class NodeEditorTests : UiTest
     }
 
     /// <summary>
+    /// A patch too wide for the canvas is said rather than shown.
+    /// </summary>
+    /// <remarks>
+    /// Every coordinate is held inside the canvas, so a drawing that does not fit
+    /// on one does not hang off the edge — it arrives with the far end folded
+    /// onto the boundary and stacked there, which reads as a layout that has gone
+    /// wrong rather than as a patch that is too big. Reachable by opening the
+    /// groups of a large patch, which is why the sentence names shutting one.
+    /// </remarks>
+    [AvaloniaFact]
+    public void Laying_out_a_patch_wider_than_the_canvas_says_so()
+    {
+        var builder = new PatchBuilder(NodeCatalog.BuiltIn);
+
+        var sink = builder.Add(NodeCatalog.OutputTypeId, 0, 0);
+        var last = builder.Add("time", 0, 0);
+
+        // A node and the gap after it is 304 across and the canvas is 10000, so
+        // a chain of forty is half as wide again as there is room for.
+        for (var i = 0; i < 40; i++)
+        {
+            var next = builder.Add("math.mul", 0, 0);
+            builder.Wire(last, 0, next, 0);
+            last = next;
+        }
+
+        builder.Wire(last, 0, sink, NodeCatalog.OutputLeftPort);
+
+        var (editor, _) = Editing(builder.Patch);
+
+        var said = string.Empty;
+        editor.Reported += (_, message) => said = message;
+
+        editor.Tidy();
+
+        said.ShouldContain("wider than the canvas");
+    }
+
+    /// <summary>And one that fits says nothing, since a patch that laid out is a patch that laid out.</summary>
+    [AvaloniaFact]
+    public void Laying_out_a_patch_that_fits_says_nothing()
+    {
+        var (editor, _) = Editing(Presets.Drone(NodeCatalog.BuiltIn));
+
+        var said = string.Empty;
+        editor.Reported += (_, message) => said = message;
+
+        editor.Tidy();
+
+        said.ShouldBeEmpty();
+    }
+
+    /// <summary>
     /// And it is only an edit to the positions: the patch still compiles to the
     /// same program, so the picture and the sound are exactly what they were.
     /// </summary>

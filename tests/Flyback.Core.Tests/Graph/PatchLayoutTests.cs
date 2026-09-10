@@ -137,6 +137,75 @@ public class PatchLayoutTests
     public void No_two_modules_overlap(string name) => NothingOverlaps(Arranged(Preset(name)));
 
     /// <summary>
+    /// And still none of them overlap once every group has been taken off, which
+    /// is a thing a person does to a patch they have been handed and want to see
+    /// the whole of.
+    /// </summary>
+    /// <remarks>
+    /// Worth its own case rather than trusted to the one above, because it is a
+    /// different drawing and a much larger one: ten boxes become a hundred
+    /// modules, and a hundred modules is wide enough to reach the end of the
+    /// canvas — where <see cref="NodeInstance.X"/> holds them, one on top of
+    /// another. See <see cref="A_drawing_that_fits_the_canvas_is_put_on_it"/>.
+    /// </remarks>
+    [Theory]
+    [MemberData(nameof(EveryPreset))]
+    public void No_two_modules_overlap_once_the_groups_are_off(string name)
+    {
+        var patch = Preset(name);
+        patch.Groups = null;
+
+        NothingOverlaps(Arranged(patch));
+    }
+
+    /// <summary>
+    /// Opening every group is the same again, and the harder half of it: an open
+    /// group is drawn as a ring round its modules, so it takes the room they take
+    /// rather than the room a box takes.
+    /// </summary>
+    [Theory]
+    [MemberData(nameof(EveryPreset))]
+    public void No_two_modules_overlap_once_the_groups_are_open(string name)
+    {
+        var patch = Preset(name);
+
+        foreach (var group in patch.Groups ?? []) group.Collapsed = false;
+
+        NothingOverlaps(Arranged(patch));
+    }
+
+    /// <summary>
+    /// A drawing no bigger than the canvas is put on the canvas, which is not
+    /// the same as being drawn from a corner of it.
+    /// </summary>
+    /// <remarks>
+    /// Every coordinate is held inside <see cref="NodeInstance.Extent"/>, so a
+    /// drawing that runs past the edge does not run past the edge — it arrives
+    /// folded onto it, with everything that should have been beyond stacked on
+    /// the boundary. Laying out from the origin rightwards spends a quarter of
+    /// the room a patch is allowed and holds the other three empty, which turned
+    /// a patch half the canvas's width into a pile. Placed in the middle it has
+    /// all of it.
+    /// </remarks>
+    [Theory]
+    [MemberData(nameof(EveryPreset))]
+    public void A_drawing_that_fits_the_canvas_is_put_on_it(string name)
+    {
+        var patch = Preset(name);
+        patch.Groups = null;
+
+        PatchLayout.Arrange(patch, NodeCatalog.BuiltIn).ShouldBeTrue($"'{name}' should fit");
+
+        foreach (var drawn in Drawing(patch))
+        {
+            drawn.Left.ShouldBeGreaterThan(-NodeInstance.Extent);
+            drawn.Right.ShouldBeLessThan(NodeInstance.Extent);
+            drawn.Top.ShouldBeGreaterThan(-NodeInstance.Extent);
+            drawn.Bottom.ShouldBeLessThan(NodeInstance.Extent);
+        }
+    }
+
+    /// <summary>
     /// The Output is the end of the patch and reads as the end. It is pinned
     /// there rather than left to the arithmetic, which would put a Probe hanging
     /// off a long chain further right than the sink it is watching.
