@@ -580,7 +580,7 @@ public sealed partial class NodeEditor
         var screen = e.GetPosition(this);
         var anchor = ToGraph(screen);
 
-        zoom = Math.Clamp(zoom * Math.Pow(1.12, e.Delta.Y), 0.2, 3.0);
+        zoom = Math.Clamp(zoom * Math.Pow(1.12, e.Delta.Y), MinZoom, 3.0);
 
         // Keep whatever was under the cursor pinned there — as far as the edge
         // of the canvas allows, since zooming out in a corner walks the view

@@ -187,15 +187,15 @@ public class PanBoundsTests : UiTest
     /// nowhere to pan to, so the canvas sits in the middle of it and stays there.
     /// </summary>
     /// <remarks>
-    /// Reachable rather than defensive: the zoom stops at a fifth, which puts
-    /// five windows' worth of graph units across the view, so anything past
-    /// about three thousand pixels wide is already there. Panning at all in that
-    /// state must not drag the canvas off centre.
+    /// Reachable rather than defensive: the zoom stops at about an eighth, which
+    /// puts nearly eight windows' worth of graph units across the view, so
+    /// anything past about two thousand pixels wide is already there. Panning at
+    /// all in that state must not drag the canvas off centre.
     /// </remarks>
     [AvaloniaFact]
     public void A_window_wider_than_the_canvas_holds_it_in_the_middle()
     {
-        const double veryWide = 3400;
+        const double veryWide = 2600;
 
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
         builder.Add(NodeCatalog.OutputTypeId, 0, 0);
@@ -246,6 +246,42 @@ public class PanBoundsTests : UiTest
 
         View(editor).Right.ShouldBeGreaterThan(
             NodeInstance.Across, "some of the ground past the edge should be reachable");
+    }
+
+    /// <summary>
+    /// A patch reaching both side edges can be framed whole, which is what the
+    /// zoom floor is set by: a module dragged out there has to be findable, and
+    /// framing is how it is found.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_patch_reaching_both_edges_can_be_framed()
+    {
+        const double veryWide = 2600;
+
+        var builder = new PatchBuilder(NodeCatalog.BuiltIn);
+
+        builder.Add("value", -NodeInstance.Across, 0);
+        builder.Add(NodeCatalog.OutputTypeId, NodeInstance.Across, 0);
+
+        var editor = new NodeEditor { Width = veryWide, Height = Tall };
+        var window = Show(editor, veryWide);
+
+        editor.Patch = builder.Patch;
+        Settle(window);
+
+        editor.FrameAll();
+        Settle(window);
+
+        var inverse = editor.GraphToScreen.Invert();
+
+        var view = new Rect(
+            inverse.Transform(new Point(0, 0)),
+            inverse.Transform(new Point(veryWide, Tall)));
+
+        // The right-hand module is pulled in by its own width on the way in, so
+        // the far edge of the canvas is the far edge of the patch.
+        view.Left.ShouldBeLessThanOrEqualTo(-NodeInstance.Across);
+        view.Right.ShouldBeGreaterThanOrEqualTo(NodeInstance.Across);
     }
 
     /// <summary>

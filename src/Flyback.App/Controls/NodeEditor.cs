@@ -188,6 +188,16 @@ public sealed partial class NodeEditor : Control
     /// </remarks>
     internal const double ViewMargin = 160;
 
+    /// <summary>
+    /// How far out the view may zoom, whether by the wheel or by framing.
+    /// </summary>
+    /// <remarks>
+    /// Set by the width of the canvas: at this much, the whole of it fits a
+    /// window about two thousand pixels wide. Any less and a module dragged to
+    /// the far edge could not be framed, which is the one way to lose one.
+    /// </remarks>
+    internal const double MinZoom = 0.13;
+
     /// <summary>How far from the origin the view may see, to either side.</summary>
     internal const double ViewReachAcross = NodeInstance.Across + ViewMargin;
 

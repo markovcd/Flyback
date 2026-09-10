@@ -278,7 +278,7 @@ public sealed partial class NodeEditor
         var scaleX = Bounds.Width / (right - left + margin * 2);
         var scaleY = Bounds.Height / (bottom - top + margin * 2);
 
-        zoom = Math.Clamp(Math.Min(scaleX, scaleY), 0.2, 1.4);
+        zoom = Math.Clamp(Math.Min(scaleX, scaleY), MinZoom, 1.4);
 
         // Centred on what it is framing, and then held inside the canvas — so a
         // patch built hard against an edge is pushed off centre rather than
