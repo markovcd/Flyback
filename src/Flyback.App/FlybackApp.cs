@@ -9,20 +9,15 @@ namespace Flyback.App;
 public sealed class FlybackApp : Application
 {
     /// <summary>
-    /// The code editor's own styles, which come out of its package rather than
-    /// from anything here.
+    /// The code editor's own styles, which come out of its package rather than from
+    /// anything here.
     /// </summary>
     /// <remarks>
-    /// Written down here rather than in two places, because the test
-    /// application needs the same ones: without them the editor is an unstyled
-    /// shell and a test would be looking at a control nobody has. Loaded in C#
-    /// rather than declared in markup, which is ADR-0016's rule holding even
-    /// where what is being included is somebody else's XAML.
-    /// <para>
-    /// A new one each time rather than one shared. A style belongs to exactly
-    /// one collection — a second owner is an exception, not a second reference —
-    /// and the headless test session builds a fresh application per test.
-    /// </para>
+    /// Here rather than in two places, because the test application needs the same
+    /// ones — without them the editor is an unstyled shell. Loaded in C# rather than
+    /// declared in markup, which is ADR-0016's rule holding even for somebody else's
+    /// XAML. A new one each time rather than one shared: a style belongs to exactly
+    /// one collection, and the headless session builds a fresh application per test.
     /// </remarks>
     public static IStyle EditorStyles() =>
         new StyleInclude(new Uri("avares://Flyback.App/"))

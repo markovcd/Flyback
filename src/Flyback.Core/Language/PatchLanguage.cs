@@ -32,12 +32,10 @@ public sealed record LanguageLoad(Patch Patch, IReadOnlyList<LanguageIssue> Issu
     /// Every complaint, each above the line it is about with the column marked.
     /// </summary>
     /// <remarks>
-    /// The line is quoted rather than only numbered, and it earns the space. One
-    /// mistake stops a statement being read, so every name that statement was
-    /// going to make is then missing too — a single stray comma comes back as
-    /// four complaints, three of them about names that were never the problem.
-    /// Whoever is reading this, person or model, has to be able to see which one
-    /// is the cause, and a line number alone does not show that.
+    /// The line is quoted rather than only numbered, and it earns the space: one
+    /// mistake stops a statement being read, so a single stray comma comes back as four
+    /// complaints, three about names that were never the problem. Whoever is reading
+    /// has to see which one is the cause.
     /// </remarks>
     public string Report
     {
@@ -69,15 +67,12 @@ public sealed record LanguageLoad(Patch Patch, IReadOnlyList<LanguageIssue> Issu
 }
 
 /// <summary>
-/// The text language, which parses to a patch and to nothing else — see
-/// [0065](../../../docs/adr/0065-a-text-language-that-parses-to-a-patch.md) and
-/// the reference beside it.
+/// The text language, which parses to a patch and to nothing else (ADR-0065).
 /// </summary>
 /// <remarks>
-/// There is no interpreter here and no second engine. What comes out is the
-/// same <see cref="Patch"/> the editor builds and <see cref="PatchIO"/> writes,
-/// so everything downstream — the compiler, both sinks, the GLSL backend, the
-/// bundler — is reached without knowing this exists.
+/// There is no interpreter here and no second engine: what comes out is the same
+/// <see cref="Patch"/> the editor builds and <see cref="PatchIO"/> writes, so
+/// everything downstream is reached without knowing this exists.
 /// </remarks>
 public static class PatchLanguage
 {
@@ -86,14 +81,10 @@ public static class PatchLanguage
 
     /// <summary>
     /// The patch <paramref name="source"/> describes, against
-    /// <paramref name="against"/> or the installed catalogue.
+    /// <paramref name="against"/> or the installed catalogue. Never throws: every way
+    /// a source file can be wrong is a <see cref="LanguageIssue"/> with a line and a
+    /// column, because the thing reading it is usually an editor.
     /// </summary>
-    /// <remarks>
-    /// Never throws. Every way a source file can be wrong is a
-    /// <see cref="LanguageIssue"/> with a line and a column on it, because the
-    /// thing reading this is usually an editor and a stack trace is no use to
-    /// one.
-    /// </remarks>
     public static LanguageLoad Build(string source, ModuleCatalog? against = null)
     {
         var modules = against ?? NodeCatalog.Current;

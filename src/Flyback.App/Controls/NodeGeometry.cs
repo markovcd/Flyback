@@ -49,16 +49,11 @@ internal static class NodeGeometry
     /// Where the box sits: the top left of the modules it stands for.
     /// </summary>
     /// <remarks>
-    /// Derived rather than stored, which is what keeps collapsing and expanding
-    /// exactly reversible — there is no second position to drift out of step
-    /// with the first. Dragging a collapsed group moves its modules, so the box
-    /// remembers where it was put by their remembering it.
-    /// <para>
-    /// The corner rather than the middle of their bounding box, because a
-    /// coordinate names a corner everywhere else here and a box that grew
-    /// downward from its centre as sockets appeared would be the one thing on
-    /// the canvas that moved when it was not dragged.
-    /// </para>
+    /// Derived rather than stored, which keeps collapsing and expanding exactly
+    /// reversible — there is no second position to drift out of step. The corner
+    /// rather than the middle of their bounding box, because a coordinate names a
+    /// corner everywhere else here, and a box that grew downward as sockets appeared
+    /// would move when it was not dragged.
     /// </remarks>
     public static Rect GroupBounds(Patch patch, NodeGroup group, GroupSockets sockets)
     {
@@ -99,19 +94,14 @@ internal static class NodeGeometry
     public const double GroupHandleHeight = 20;
 
     /// <summary>
-    /// These same numbers, in the shape the layout wants them — plus how much
-    /// room to leave between the nodes, which is the only part of this the
-    /// editor decides rather than draws.
+    /// These same numbers, in the shape the layout wants them — plus how much room to
+    /// leave between the nodes, which is the only part the editor decides rather than
+    /// draws.
     /// </summary>
     /// <remarks>
-    /// The layout lives in the engine because the assistant's workbench wants it
-    /// too and has no canvas to ask. So the sizes travel to it rather than the
-    /// other way round, and this is the one place they are handed over.
-    /// <para>
-    /// Wide enough between columns for the wires to be followed, and about a
-    /// row's worth between nodes: closer and two modules read as one block, and
-    /// further and a patch of any size stops fitting on a screen.
-    /// </para>
+    /// The layout lives in the engine because the assistant's workbench wants it and
+    /// has no canvas to ask, so the sizes travel to it. Wide enough between columns
+    /// for the wires to be followed, and about a row's worth between nodes.
     /// </remarks>
     public static PatchLayout.Metrics Metrics => new(
         Width,

@@ -6,12 +6,10 @@ namespace Flyback.App;
 /// The preview taking the whole window, and giving it back.
 /// </summary>
 /// <remarks>
-/// Nothing is reparented. The preview stays exactly where it is in the tree and
-/// the shell around it is put away instead — which matters more than it looks
-/// like it should: the GPU surface is an <c>OpenGlControlBase</c>, and moving one
-/// between parents tears its context down and builds it again. A picture that
-/// blinked, or a backend that fell back to the processor, every time somebody
-/// wanted a closer look would be a poor trade for a simpler method.
+/// Nothing is reparented: the preview stays where it is and the shell around it is put
+/// away instead. The GPU surface is an <c>OpenGlControlBase</c>, and moving one
+/// between parents tears its context down and builds it again — a picture that blinked
+/// every time somebody wanted a closer look.
 /// </remarks>
 public sealed partial class MainWindow
 {
@@ -38,15 +36,10 @@ public sealed partial class MainWindow
     /// A track of no width at all, for the columns and rows the preview is not in.
     /// </summary>
     /// <remarks>
-    /// Hiding a child is not enough on its own: a grid track holds the width it
-    /// was given whether or not anything visible is standing in it, so the palette
-    /// would leave its 220 pixels behind and the canvas its share of the rest.
-    /// <para>
-    /// Zeroed rather than removed, because Grid indexes its definitions directly.
-    /// A child left pointing at column four of a grid that now has one throws out
-    /// of <c>MeasureOverride</c> — a crash on a double-click rather than a layout
-    /// that merely looks wrong.
-    /// </para>
+    /// Hiding a child is not enough: a grid track holds the width it was given whether
+    /// or not anything visible stands in it. Zeroed rather than removed, because Grid
+    /// indexes its definitions directly — a child left pointing at column four of a
+    /// grid that now has one throws out of <c>MeasureOverride</c>.
     /// </remarks>
     private static GridLength None => new(0, GridUnitType.Pixel);
 

@@ -106,15 +106,11 @@ public sealed partial class NodeEditor
     }
 
     /// <summary>
-    /// The rectangle between two corners, whichever way round they are.
+    /// The rectangle between two corners, whichever way round they are. Built by hand
+    /// rather than from <c>new Rect(a, b)</c>, which takes the first point as the top
+    /// left: started from any other corner that gives a negative width, and a
+    /// rectangle like that draws nothing and intersects nothing.
     /// </summary>
-    /// <remarks>
-    /// Built by hand rather than from <c>new Rect(a, b)</c>, which takes the
-    /// first point as the top left and subtracts. Started from any corner but
-    /// the top left that gives a negative width or height — a rectangle which
-    /// draws nothing and intersects nothing, so the band would appear to do
-    /// nothing at all.
-    /// </remarks>
     private static Rect Band(Point a, Point b) => new(
         Math.Min(a.X, b.X),
         Math.Min(a.Y, b.Y),
@@ -162,15 +158,13 @@ public sealed partial class NodeEditor
 
     /// <param name="context">Where the canvas is drawing.</param>
     /// <param name="lifted">
-    /// The modules being dragged, empty while none are. A set rather than one
-    /// id because a drag may carry a whole selection, and a wire between two of
-    /// its members is as much in play as one leaving it.
+    /// The modules being dragged, empty while none are. A set rather than one id
+    /// because a drag may carry a whole selection.
     /// </param>
     /// <param name="theirs">
-    /// Which half of the wires this pass draws: those modules' own, or all the
-    /// rest. One loop serves both, so a wire cannot be drawn twice or missed
-    /// entirely — the two passes partition the same set rather than each
-    /// deciding for themselves what belongs in it.
+    /// Which half of the wires this pass draws: those modules' own, or all the rest.
+    /// One loop serves both, so the two passes partition the same set rather than each
+    /// deciding what belongs in it.
     /// </param>
     private void DrawConnections(DrawingContext context, IReadOnlySet<Guid> lifted, bool theirs)
     {
@@ -214,12 +208,10 @@ public sealed partial class NodeEditor
     /// Where the wire being dragged is anchored, and null when none is.
     /// </summary>
     /// <remarks>
-    /// What <see cref="DrawPendingWire"/> draws from, rather than a second
-    /// reading of the same question: the anchor is a port that may be behind a
-    /// box, so it has to come through the anchors like every other wire, and one
-    /// of the two going back to <see cref="NodeGeometry"/> directly is exactly
-    /// the bug this had. One of them can be tested and the other cannot, so they
-    /// are the same one.
+    /// What <see cref="DrawPendingWire"/> draws from rather than a second reading of
+    /// the same question: the anchor is a port that may be behind a box, so it has to
+    /// come through the anchors like every other wire — one of the two going back to
+    /// <see cref="NodeGeometry"/> directly is exactly the bug this had.
     /// </remarks>
     public Point? PendingWireFrom
     {

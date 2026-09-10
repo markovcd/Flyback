@@ -8,21 +8,15 @@ using Flyback.Core.Render;
 namespace Flyback.App;
 
 /// <summary>
-/// Recording a performance, as opposed to rendering a patch. The export writes
-/// what the patch would do; this writes what it did.
+/// Recording a performance, as opposed to rendering a patch. The export writes what
+/// the patch would do; this writes what it did.
 /// </summary>
 /// <remarks>
-/// The difference is the whole point. An export freezes the patch and evaluates
-/// it frame by frame on the processor, so a knob turned while it runs changes the
-/// next export and not that one. A take reads the frames the GPU has already
-/// drawn and the samples the speakers have already had, which means the knobs —
-/// and therefore the performance — are in the file.
-/// <para>
-/// That also means it can only record what is on screen: the picture comes off
-/// the card, so the GPU renderer has to be the one running. Sound is recorded
-/// wherever it is playing, so a WAV needs the audio on and an AVI made with the
-/// audio off is simply a silent one.
-/// </para>
+/// An export freezes the patch and evaluates it frame by frame on the processor, so a
+/// knob turned while it runs changes the next export. A take reads the frames the GPU
+/// has already drawn and the samples the speakers have already had, which puts the
+/// performance in the file — and means it can only record what is on screen, with the
+/// GPU renderer running. Sound is recorded wherever it is playing.
 /// </remarks>
 public sealed partial class MainWindow
 {

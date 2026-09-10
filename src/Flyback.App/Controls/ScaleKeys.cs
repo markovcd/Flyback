@@ -13,17 +13,11 @@ namespace Flyback.App.Controls;
 /// switches laid out the way a keyboard lays them out, sharps above naturals.
 /// </summary>
 /// <remarks>
-/// A keyboard rather than a list, which is the opposite call to
-/// <see cref="StepList"/>'s and made for the opposite reason. A tune is ordered
-/// and may say the same note twice, so it is a list you add to and reorder. A
-/// scale is a set of twelve things that are either in or out, and the shape
-/// everyone already reads a set of twelve pitches off is an octave of keys —
-/// C major is a picture before it is a list of numbers.
-/// <para>
-/// The layout is the real one and not a row of twelve, because that is the whole
-/// of what makes it readable at a glance: the gaps where E–F and B–C meet are
-/// how an eye finds which key is which without reading the labels.
-/// </para>
+/// A keyboard rather than a list, the opposite call to <see cref="StepList"/>'s: a
+/// tune is ordered and may say the same note twice, where a scale is a set of twelve
+/// things that are either in or out — and C major is a picture before it is a list of
+/// numbers. The layout is the real one, because the gaps at E–F and B–C are how an
+/// eye finds which key is which.
 /// </remarks>
 internal sealed class ScaleKeys
 {

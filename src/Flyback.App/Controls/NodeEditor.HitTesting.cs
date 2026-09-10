@@ -36,15 +36,13 @@ public sealed partial class NodeEditor
     }
 
     /// <summary>
-    /// Which port is under the pointer, whether it is drawn on a module or on the
-    /// box standing in front of one.
+    /// Which port is under the pointer, whether it is drawn on a module or on the box
+    /// standing in front of one.
     /// </summary>
     /// <remarks>
-    /// A box's socket answers with the module and port it stands for, so
-    /// everything downstream of this — starting a wire, lifting one, dropping one
-    /// — goes on working on the graph without ever learning that groups exist.
-    /// That is the whole dividend of a socket being a pointer rather than a port
-    /// of its own.
+    /// A box's socket answers with the module and port it stands for, so everything
+    /// downstream goes on working on the graph without learning that groups exist —
+    /// the dividend of a socket being a pointer rather than a port of its own.
     /// </remarks>
     private bool HitPort(Point graph, out Guid nodeId, out int portIndex, out bool isOutput)
     {
@@ -111,20 +109,11 @@ public sealed partial class NodeEditor
     /// Selects every module on the canvas.
     /// </summary>
     /// <remarks>
-    /// <para>
-    /// Every module that is <em>drawn</em>, which is not quite the same thing: a
-    /// module whose plugin is missing has no size, so the canvas neither paints
-    /// it nor lets a click reach it. Putting one into a selection would be the
-    /// one way to drag or delete something invisible, and "all" ought to mean
-    /// what can be seen.
-    /// </para>
-    /// <para>
-    /// The Output is included, because it is on the canvas and this is not a
-    /// gesture that does anything to it. What follows already knows: copy leaves
-    /// it out (ADR-0045) and delete refuses it, so selecting everything and
-    /// pressing either does the sensible thing without this having to guess
-    /// which was coming.
-    /// </para>
+    /// Every module that is drawn, which is not quite the same thing: one whose plugin
+    /// is missing has no size, and putting it into a selection would be the one way to
+    /// drag or delete something invisible. The Output is included, because copy leaves
+    /// it out (ADR-0045) and delete refuses it, so selecting everything and pressing
+    /// either does the sensible thing.
     /// </remarks>
     public void SelectAll()
     {
@@ -147,16 +136,13 @@ public sealed partial class NodeEditor
     }
 
     /// <summary>
-    /// Makes the selection exactly this one module, or nothing at all. What an
-    /// ordinary click does, and what every caller outside the pointer handling
-    /// wants — adding a module selects it rather than joining it to whatever was
-    /// selected before.
+    /// Makes the selection exactly this one module, or nothing at all — what an
+    /// ordinary click does, and what every caller outside the pointer handling wants.
     /// </summary>
     /// <remarks>
-    /// Public because the canvas is no longer the only thing that points at a
-    /// module: a caret moved in the code view names one, and what the inspector
-    /// is about follows it (ADR-0068). It draws as well as selects, which the
-    /// pointer handling does for itself and a caller from outside cannot.
+    /// Public because the canvas is no longer the only thing that points at a module:
+    /// a caret in the code view names one too (ADR-0068). It draws as well as selects,
+    /// which a caller from outside cannot.
     /// </remarks>
     public void Select(Guid? id)
     {
@@ -171,15 +157,11 @@ public sealed partial class NodeEditor
     }
 
     /// <summary>
-    /// Adds a module to the selection, or takes it out again if it was already
-    /// in — what Ctrl (or Command) held down turns a click into.
+    /// Adds a module to the selection, or takes it out again if it was already in —
+    /// what Ctrl held down turns a click into. Taking the focused one out moves the
+    /// focus rather than dropping it, to whatever is last in the patch's own order,
+    /// which is the module drawn on top.
     /// </summary>
-    /// <remarks>
-    /// Taking the focused one out moves the focus rather than dropping it, so
-    /// the inspector keeps showing something for as long as anything is
-    /// selected. Whatever is last in the patch's own order is picked, which is
-    /// the module drawn on top.
-    /// </remarks>
     private void Toggle(Guid id)
     {
         if (!selection.Add(id))

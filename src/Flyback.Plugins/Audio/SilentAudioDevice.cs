@@ -4,15 +4,13 @@ using Flyback.Core.Render;
 namespace Flyback.Plugins.Audio;
 
 /// <summary>
-/// The device used when no backend is available. It accepts the callback and
-/// never calls it, so the rest of the program needs no null checks and no
-/// second code path.
+/// The device used when no backend is available. It accepts the callback and never
+/// calls it, so the rest of the program needs no null checks.
 /// </summary>
 /// <remarks>
-/// Deliberately not a clock. It reports <see cref="IsRunning"/> honestly but
-/// produces no samples, so a caller that drives the picture from the audio
-/// cursor would freeze — the shell disables sound outright when this is what
-/// it got, rather than pretending.
+/// Deliberately not a clock: it reports <see cref="IsRunning"/> honestly and produces
+/// no samples, so a caller driving the picture from the audio cursor would freeze —
+/// the shell disables sound outright when this is what it got.
 /// </remarks>
 public sealed class SilentAudioDevice(int sampleRate = GlobalConstants.SampleRate) : IAudioDevice
 {

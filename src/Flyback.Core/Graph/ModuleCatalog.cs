@@ -16,15 +16,14 @@ public sealed record ModuleAddition(ModuleCatalog Catalog, IReadOnlyList<string>
 
 /// <summary>
 /// The set of modules that exist. Immutable: adding a provider produces a new
-/// catalogue rather than mutating this one, so what a patch was compiled
-/// against cannot change underneath it.
+/// catalogue rather than mutating this one, so what a patch was compiled against
+/// cannot change underneath it.
 /// </summary>
 /// <remarks>
-/// A plugin's module type ids must begin with its provider id and a dot. That
-/// single rule does three jobs: it makes shadowing a built-in impossible, it
-/// makes collisions between two plugins impossible, and it means the provider
-/// of a module can be read off a saved file without having the plugin that
-/// defines it.
+/// A plugin's module type ids must begin with its provider id and a dot, which does
+/// three jobs: shadowing a built-in is impossible, collisions between two plugins are
+/// impossible, and the provider of a module can be read off a saved file without
+/// having the plugin.
 /// </remarks>
 public sealed class ModuleCatalog
 {
@@ -53,11 +52,10 @@ public sealed class ModuleCatalog
     /// Which sections this catalogue has, in the order they should be shown.
     /// </summary>
     /// <remarks>
-    /// Ordered here rather than left in registration order, so that installing a
-    /// plugin cannot move the engine's own sections about — see
-    /// <see cref="ModuleCategories.Order"/>. A category the engine does not name
-    /// sorts after every one it does, and ties are broken by the name so that two
-    /// plugins each adding one come out the same way every time.
+    /// Ordered here rather than left in registration order, so installing a plugin
+    /// cannot move the engine's own sections about — see
+    /// <see cref="ModuleCategories.Order"/>. A category the engine does not name sorts
+    /// last, with ties broken by the name.
     /// </remarks>
     public IEnumerable<string> Categories => All
         .Select(d => d.Category)
@@ -74,20 +72,14 @@ public sealed class ModuleCatalog
     public ModuleProvider? ProviderOf(string typeId) => owners.GetValueOrDefault(typeId);
 
     /// <summary>
-    /// What is driving a socket nothing is patched into, named as it should be
-    /// written out, or null where the socket is on its own knob.
+    /// What is driving a socket nothing is patched into, named as it should be written
+    /// out, or null where the socket is on its own knob.
     /// </summary>
     /// <remarks>
-    /// One place, because the node on the canvas, the row in the inspector and
-    /// the line an assistant reads have to agree about what an unpatched socket
-    /// is reading — the same reason <see cref="PortSpec.Format"/> is one place.
-    /// <para>
-    /// Asked of a catalogue rather than of the running one, because whether a
-    /// normal holds depends on which catalogue the patch is being compiled
-    /// against: a socket normalled to a plugin's module is on its knob wherever
-    /// that plugin is not loaded, and saying otherwise would be the one reading
-    /// nothing here could correct.
-    /// </para>
+    /// One place, because the node on the canvas, the row in the inspector and the
+    /// line an assistant reads have to agree. Asked of a catalogue rather than the
+    /// running one, because a socket normalled to a plugin's module is on its knob
+    /// wherever that plugin is not loaded.
     /// </remarks>
     public string? Normalled(PortSpec spec)
     {

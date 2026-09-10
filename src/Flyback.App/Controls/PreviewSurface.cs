@@ -11,14 +11,14 @@ using Flyback.Core.Render;
 namespace Flyback.App.Controls;
 
 /// <summary>
-/// The screen of the synth: renders the compiled patch on a background thread
-/// and blits the result, letterboxed, into whatever space the layout gives it.
+/// The screen of the synth: renders the compiled patch on a background thread and
+/// blits the result, letterboxed, into whatever space the layout gives it.
 /// </summary>
 /// <remarks>
-/// Frames are deliberately never rendered on the UI thread. The renderer uses
-/// <c>Parallel.For</c>, and blocking the Avalonia dispatcher on it deadlocks:
-/// the dispatcher pumps messages while waiting, a paint re-enters, and the
-/// compositor batch that paint waits on can never be committed.
+/// Frames are never rendered on the UI thread: the renderer uses
+/// <c>Parallel.For</c>, and blocking the Avalonia dispatcher on it deadlocks — the
+/// dispatcher pumps messages while waiting, a paint re-enters, and the compositor
+/// batch that paint waits on can never be committed.
 /// </remarks>
 public sealed class PreviewSurface : Control, IPreviewSurface
 {

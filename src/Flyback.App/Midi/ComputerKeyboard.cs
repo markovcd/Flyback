@@ -7,17 +7,13 @@ namespace Flyback.App.Midi;
 /// The keys under your hands, read as two octaves of a piano.
 /// </summary>
 /// <remarks>
-/// The tracker layout, which is the one arrangement of a typewriter that
-/// everybody who has played one already knows: the bottom row is the white notes
-/// and the row above holds the black ones over the gaps, and the two rows above
-/// that are the same shape an octave up. So Z is C, S is C sharp, X is D, and Q
-/// is the C above them all.
+/// The tracker layout, which everybody who has played one already knows: the bottom
+/// row is the white notes with the black ones over the gaps above, and the two rows
+/// above that are the same shape an octave up.
 /// <para>
-/// Keyed by <see cref="Key"/> rather than by the character typed, and that is
-/// deliberate: a layout is a physical thing, and it should stay a piano on a
-/// keyboard whose letters are somewhere else. What it costs is that the letters
-/// printed on some keyboards will not match the notes — which is the same trade
-/// every game that uses WASD makes, and the right way round for an instrument.
+/// Keyed by <see cref="Key"/> rather than the character typed, so it stays a piano on
+/// a keyboard whose letters are somewhere else. What it costs is that the printed
+/// letters will not match the notes — the same trade every game using WASD makes.
 /// </para>
 /// </remarks>
 internal sealed class ComputerKeyboard

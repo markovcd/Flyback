@@ -4,33 +4,29 @@ using Flyback.Core.Graph;
 namespace Flyback.Core.Language;
 
 /// <summary>
-/// What a step block expands to: a flat list of <see cref="Step"/>, and nothing
-/// else.
+/// What a step block expands to: a flat list of <see cref="Step"/>, and nothing else.
 /// </summary>
 /// <param name="Steps">The tune, already flattened.</param>
 /// <param name="RateDivisor">
-/// What the sequencer's rate must be divided by for the pattern to take the
-/// same time it would have. Only <c>&lt;a b&gt;</c> moves it: alternation is
-/// unrolled into a longer list, so the list has to be read more slowly to sound
-/// the same.
+/// What the sequencer's rate must be divided by for the pattern to take the same time
+/// it would have. Only <c>&lt;a b&gt;</c> moves it: alternation is unrolled into a
+/// longer list, which has to be read more slowly to sound the same.
 /// </param>
 public readonly record struct StepBlock(IReadOnlyList<Step> Steps, int RateDivisor);
 
 /// <summary>
-/// The step notation, borrowed from TidalCycles and expanded here into the list
-/// a sequencer already carries.
+/// The step notation, borrowed from TidalCycles and expanded here into the list a
+/// sequencer already carries.
 /// </summary>
 /// <remarks>
-/// Every form is rewriting and none of it reaches the engine: no module is
-/// added, no opcode invented, and <c>EmitSequence</c> is handed exactly the kind
-/// of list a hand-built preset hands it. That is the whole case for having it —
-/// a notation that cost the compiler something would be a much harder argument.
+/// Every form is rewriting and none of it reaches the engine: no module is added, no
+/// opcode invented, and <c>EmitSequence</c> is handed exactly the kind of list a
+/// hand-built preset hands it.
 /// <para>
-/// Two of the forms change how the sequencer compiles rather than only what it
-/// plays. <c>@n</c> and <c>[a b]</c> make the steps uneven, which takes the
-/// module off the cheap path <c>EmitSequence</c> takes when every step is the
-/// same length; <c>!n</c>, <c>&lt;a b&gt;</c> and the Euclidean form all leave
-/// the lengths alone. The reference says so, and this is where it is true.
+/// Two forms change how the sequencer compiles rather than only what it plays:
+/// <c>@n</c> and <c>[a b]</c> make the steps uneven, which takes the module off the
+/// cheap path, where <c>!n</c>, <c>&lt;a b&gt;</c> and the Euclidean form leave the
+/// lengths alone.
 /// </para>
 /// </remarks>
 public static class StepNotation

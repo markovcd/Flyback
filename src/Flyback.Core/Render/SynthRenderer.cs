@@ -11,16 +11,15 @@ namespace Flyback.Core.Render;
 public sealed class SynthRenderer
 {
     /// <summary>
-    /// One core is deliberately left alone. A frame at 960x540 costs more than a
-    /// frame interval, so this loop runs essentially back to back — and taking
-    /// every core with it leaves the audio callback nowhere to be scheduled. It
-    /// needs a twentieth of a core to keep up and gets none, which is heard as
-    /// the sound choking while the picture is busy.
+    /// One core is deliberately left alone. A frame at 960x540 costs more than a frame
+    /// interval, so this loop runs back to back — and taking every core with it leaves
+    /// the audio callback nowhere to be scheduled, which is heard as the sound choking
+    /// while the picture is busy.
     /// </summary>
     /// <remarks>
-    /// Reserving one costs a twelfth of the frame rate on a twelve-core machine
-    /// and buys back every dropout. On a single-core machine there is nothing to
-    /// reserve and this is 1, which is what the loop would have done anyway.
+    /// Reserving one costs a twelfth of the frame rate on a twelve-core machine and
+    /// buys back every dropout. On a single-core machine this is 1, which is what the
+    /// loop would have done anyway.
     /// </remarks>
     private static readonly ParallelOptions Spare = new()
     {
@@ -41,10 +40,9 @@ public sealed class SynthRenderer
     /// <summary>Renders one frame into a BGRA8888 buffer.</summary>
     /// <param name="stride"></param>
     /// <param name="live">
-    /// What is being played into the patch as this frame is drawn, or null when
-    /// nothing is. One reading for the whole frame, which is what a frame is: a
-    /// key pressed while the rows are still going down belongs to the next
-    /// picture rather than to half of this one.
+    /// What is being played into the patch as this frame is drawn, or null when nothing
+    /// is. One reading for the whole frame: a key pressed while the rows are still
+    /// going down belongs to the next picture.
     /// </param>
     /// <param name="patch"></param>
     /// <param name="time"></param>

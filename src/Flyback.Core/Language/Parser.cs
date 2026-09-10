@@ -4,15 +4,11 @@ namespace Flyback.Core.Language;
 /// Tokens to a syntax tree, by recursive descent.
 /// </summary>
 /// <remarks>
-/// Nothing here knows what a module is. The parser's whole job is shape — that
-/// a call has arguments and a pipeline has stages — and every question about
-/// whether a name exists, how many sockets it has or which one a pipe lands on
-/// belongs to <see cref="Binder"/>. Keeping the two apart is what lets the
-/// catalogue be the language without the grammar depending on it.
-/// <para>
-/// Recovery is by statement: a line that cannot be read is reported and skipped
-/// to the next break, so a file with three mistakes says three things.
-/// </para>
+/// Nothing here knows what a module is: the parser's job is shape, and every question
+/// about whether a name exists or which socket a pipe lands on belongs to
+/// <see cref="Binder"/> — which is what lets the catalogue be the language without the
+/// grammar depending on it. Recovery is by statement, so a file with three mistakes
+/// says three things.
 /// </remarks>
 public sealed class Parser(IReadOnlyList<Token> tokens, List<LanguageIssue> issues)
 {

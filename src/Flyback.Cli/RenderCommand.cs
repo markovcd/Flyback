@@ -17,19 +17,15 @@ internal sealed record RenderOptions(
     int Quality = JpegWriter.DefaultQuality);
 
 /// <summary>
-/// Writes a patch to a file: a PNG of one moment, a WAV of the sound, or an AVI
-/// of both.
+/// Writes a patch to a file: a PNG of one moment, a WAV of the sound, or an AVI of
+/// both. Which of the three comes from the extension, because that is what the person
+/// naming the file has already decided.
 /// </summary>
 /// <remarks>
-/// The one thing the shell could do that nothing else could, done without the
-/// shell. Which of the three it is comes from the extension, because that is
-/// what the person naming the file has already decided.
-/// <para>
-/// Always the interpreter, never the shader backend. That is not a limitation
-/// worked around — a GPU render needs a context and a window, and the two
-/// backends are allowed to differ in their last bits (ADR-0035), so the one that
-/// can be run here is also the one whose output is the same bytes every time.
-/// </para>
+/// Always the interpreter, never the shader backend: a GPU render needs a context and
+/// a window, and the two backends are allowed to differ in their last bits
+/// (ADR-0035), so the one that can be run here is also the one whose output is the
+/// same bytes every time.
 /// </remarks>
 internal static class RenderCommand
 {

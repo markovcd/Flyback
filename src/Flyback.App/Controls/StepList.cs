@@ -13,15 +13,12 @@ namespace Flyback.App.Controls;
 /// The tune a sequencer plays, as a list you can add to, take from and reorder.
 /// </summary>
 /// <remarks>
-/// Composed from ordinary controls rather than drawn, which is the opposite call
-/// to <see cref="NodeEditor"/>'s. That control draws itself because it zooms and
-/// because a wire has to end exactly where a socket was painted
-/// ([0017](0017-draw-the-node-editor-in-one-control.md)); neither is true of a
-/// list in a panel, and drawing one by hand would mean hand-rolling text entry
-/// and giving up the keyboard — the costs that record accepted for the canvas
-/// and has no reason to accept here. The one exception is the volume, which is
-/// a <see cref="LevelBar"/>: thirty-two sliders with thumbs on them read as
-/// thirty-two controls rather than as a pattern.
+/// Composed from ordinary controls rather than drawn, which is the opposite call to
+/// <see cref="NodeEditor"/>'s: that control draws itself because it zooms and because
+/// a wire has to end where a socket was painted (ADR-0017), and neither is true of a
+/// list in a panel. The one exception is the volume, which is a
+/// <see cref="LevelBar"/> — thirty-two sliders with thumbs read as thirty-two
+/// controls rather than as a pattern.
 /// </remarks>
 internal sealed class StepList
 {

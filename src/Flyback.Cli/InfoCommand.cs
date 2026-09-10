@@ -12,15 +12,13 @@ namespace Flyback.Cli;
 internal sealed record Cost(int Ops, int Registers, int Delays, int Phases, int Cells);
 
 /// <summary>
-/// What a patch is made of and what each half of it costs, without opening a
-/// window to find out.
+/// What a patch is made of and what each half of it costs, without opening a window
+/// to find out.
 /// </summary>
 /// <remarks>
-/// Everything here is already computed by the compiler on the way to a program;
-/// none of it is measured or guessed. The two costs are separate for the reason
-/// the two programs are: a module only the speakers reach is not in the
-/// picture's op list at all, and the gap between the two numbers is the whole of
-/// what that buys.
+/// Everything here is already computed by the compiler on the way to a program; none
+/// of it is measured or guessed. The two costs are separate because a module only the
+/// speakers reach is not in the picture's op list at all.
 /// </remarks>
 internal static class InfoCommand
 {

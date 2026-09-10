@@ -6,18 +6,11 @@ namespace Flyback.Core.Render;
 /// The pictures a patch names, read once and kept.
 /// </summary>
 /// <remarks>
-/// <see cref="SampleLibrary"/> for the other kind of file, and the same cache
-/// for the same reasons: every edit recompiles the whole patch (ADR-0021), so a
-/// compiler that opened a file would open it on every knob turn, and a patch
-/// naming one that is not there is recompiled just as often as one naming a file
-/// that is.
-/// <para>
-/// Two classes rather than one holding both. What they share is the caching, and
-/// the caching is eleven lines; what they do not share is everything about what
-/// a file is — the reader, the fault, the sentence a person is shown. Folding
-/// them together would have meant a type parameter on all of it to save those
-/// eleven lines.
-/// </para>
+/// <see cref="SampleLibrary"/> for the other kind of file, and the same cache for the
+/// same reason: every edit recompiles the whole patch (ADR-0021). Two classes rather
+/// than one, because what they share is eleven lines of caching and what they do not
+/// share is everything about what a file is — the reader, the fault, the sentence a
+/// person is shown.
 /// </remarks>
 public sealed class ImageLibrary : IImageLibrary
 {

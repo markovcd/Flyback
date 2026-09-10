@@ -5,20 +5,13 @@ using Flyback.Core.Graph;
 namespace Flyback.App;
 
 /// <summary>
-/// The module list, and the one gesture that opens it: a right-click on empty
-/// canvas.
+/// The module list, and the one gesture that opens it: a right-click on empty canvas.
 /// </summary>
 /// <remarks>
-/// <para>
-/// The list itself is <see cref="ModulePalette"/> and knows nothing about how it
-/// is shown. All that is here is where it appears and what happens to what is
-/// picked from it — see ADR-0046.
-/// </para>
-/// <para>
-/// One palette, built once and kept. It holds which plugins are ticked, and that
-/// is a setting rather than something to be re-answered every time the list is
-/// opened.
-/// </para>
+/// The list itself is <see cref="ModulePalette"/> and knows nothing about how it is
+/// shown; all that is here is where it appears and what happens to what is picked
+/// (ADR-0046). One palette, built once and kept, because which plugins are ticked is
+/// a setting rather than something to re-answer every time.
 /// </remarks>
 public sealed partial class MainWindow
 {

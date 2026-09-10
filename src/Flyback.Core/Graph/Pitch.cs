@@ -3,14 +3,13 @@ using System.Globalization;
 namespace Flyback.Core.Graph;
 
 /// <summary>
-/// The note numbering the synth uses, in one place. Notes are MIDI numbers:
-/// whole steps are semitones, 69 is A4 at 440 Hz, and 60 is middle C.
+/// The note numbering the synth uses, in one place. Notes are MIDI numbers: whole
+/// steps are semitones, 69 is A4 at 440 Hz, and 60 is middle C.
 /// </summary>
 /// <remarks>
-/// The Note module compiles this same arithmetic into register ops, because an
-/// emit function cannot call back into C# — what runs per sample is the op list,
-/// not this. These are here for everything outside the inner loop: naming a knob
-/// value in the editor, and giving the tests something independent to check the
+/// The Note module compiles this same arithmetic into register ops, because an emit
+/// function cannot call back into C#. These are for everything outside the inner loop:
+/// naming a knob value, and giving the tests something independent to check the
 /// emitted ops against.
 /// </remarks>
 public static class Pitch
@@ -45,21 +44,16 @@ public static class Pitch
         Names[(pitchClass % Classes + Classes) % Classes];
 
     /// <summary>
-    /// A scale held to what one can be: inside the octave, each note named at
-    /// most once, and in ascending order.
+    /// A scale held to what one can be: inside the octave, each note named at most
+    /// once, and in ascending order.
     /// </summary>
     /// <remarks>
-    /// A scale is a set and is written as a list, which is the same trade a
-    /// saved patch makes everywhere else — a file is text somebody may have
-    /// edited, so the shape it can hold is wider than the shape that means
-    /// anything. Order is imposed rather than kept because a set has none, and
-    /// two scales with the same notes in them should be the same scale: it is
-    /// what makes the twelve toggles in the panel the whole of the state.
-    /// <para>
-    /// Also what settles a tie. A value exactly halfway between two of the
-    /// scale's notes takes the one named later, and after this that is always
-    /// the higher pitch class.
-    /// </para>
+    /// A scale is a set and is written as a list, so the shape a file can hold is wider
+    /// than the shape that means anything. Order is imposed because a set has none and
+    /// two scales with the same notes should be the same scale — which is what makes
+    /// the twelve toggles the whole of the state. It also settles a tie: a value
+    /// exactly halfway takes the note named later, which after this is the higher
+    /// pitch class.
     /// </remarks>
     public static List<int> Scale(IEnumerable<int>? classes) =>
         classes is null ? [] : [.. classes.Where(c => c is >= 0 and < Classes).Distinct().Order()];

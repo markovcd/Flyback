@@ -8,16 +8,13 @@ namespace Flyback.Cli;
 /// Packs a patch and everything it names into one file.
 /// </summary>
 /// <remarks>
-/// The command that makes a patch portable. A <c>.fbk</c> is a document full of
-/// paths that mean something on the machine it was made on, and a <c>.fbkb</c> is
-/// that document with the things it points at travelling beside it — so what goes
-/// in an email, a repository or a build is one file rather than a folder somebody
-/// has to keep together.
+/// The command that makes a patch portable: a <c>.fbk</c> is full of paths that mean
+/// something on the machine it was made on, and a <c>.fbkb</c> is that document with
+/// the things it points at travelling beside it.
 /// <para>
-/// There is no unpack command, and that is the format doing its job rather than
-/// an omission: a bundle is an ordinary zip, so anything on any machine already
-/// opens one. What comes out is a patch and a <c>files</c> folder beside it,
-/// which is a working patch because the paths inside it are relative.
+/// There is no unpack command, which is the format doing its job: a bundle is an
+/// ordinary zip, and what comes out is a patch and a <c>files</c> folder beside it —
+/// a working patch, because the paths inside are relative.
 /// </para>
 /// </remarks>
 internal static class PackCommand

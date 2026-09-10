@@ -6,14 +6,13 @@ namespace Flyback.App.Controls;
 
 /// <summary>
 /// The Flyback mark, drawn rather than loaded. Avalonia cannot rasterise an SVG
-/// without a package for it, and this one is two ramps, a retrace and a beam —
-/// less work than the dependency would be.
+/// without a package for it, and this one is two ramps, a retrace and a beam.
 /// </summary>
 /// <remarks>
-/// Every number here comes from <c>docs/logo.svg</c> and is meant to stay equal
-/// to it: the coordinates are that file's 256-unit box, scaled to whatever size
-/// this control is given. The badge and the glow are left out, because a
-/// watermark wants the shape and not the icon.
+/// Every number comes from <c>docs/logo.svg</c> and is meant to stay equal to it: the
+/// coordinates are that file's 256-unit box, scaled to whatever size this control is
+/// given. The badge and the glow are left out, because a watermark wants the shape
+/// and not the icon.
 /// </remarks>
 public sealed class LogoMark : Control
 {

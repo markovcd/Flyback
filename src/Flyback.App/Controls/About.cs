@@ -9,14 +9,14 @@ using Flyback.Core;
 namespace Flyback.App.Controls;
 
 /// <summary>
-/// What the program is, who wrote it, what it may be done with, and where to
-/// send something if it was worth anything to you.
+/// What the program is, who wrote it, what it may be done with, and where to send
+/// something if it was worth anything to you.
 /// </summary>
 /// <remarks>
-/// The facts live here rather than in the window that shows them, because there
-/// is exactly one right answer to each and no reason for a second copy to drift
-/// from it. The licence text is not reproduced — a name and a copyright line are
-/// what a person reads, and the file beside the source is what a lawyer does.
+/// The facts live here rather than in the window that shows them, because there is
+/// one right answer to each. The licence text is not reproduced — a name and a
+/// copyright line are what a person reads, and the file beside the source is what a
+/// lawyer does.
 /// </remarks>
 internal static class About
 {
@@ -44,17 +44,14 @@ internal static class About
     public const string BitcoinAddress = "";
 
     /// <summary>
-    /// The build's version — a release's own, or a dev build's plus the commit
-    /// it was built from.
+    /// The build's version — a release's own, or a dev build's plus the commit it was
+    /// built from.
     /// </summary>
     /// <remarks>
-    /// Read from the assembly rather than written down, so it can only ever say
-    /// what was actually built. Set by the <c>Version</c> MSBuild property —
-    /// <c>0.1.0</c> by default, or whatever a release passes with
-    /// <c>-p:Version=X.Y.Z</c> (see Directory.Build.props, the Dockerfile and
-    /// the release workflow). Directory.Build.props also decides whether the
-    /// commit is appended at all: only the default carries one, since a real
-    /// release's version already names something real on its own.
+    /// Read from the assembly rather than written down, so it can only say what was
+    /// actually built. Set by the <c>Version</c> MSBuild property, which also decides
+    /// whether the commit is appended: only the default carries one, since a release's
+    /// version already names something real.
     /// </remarks>
     public static string Version =>
         typeof(About).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion

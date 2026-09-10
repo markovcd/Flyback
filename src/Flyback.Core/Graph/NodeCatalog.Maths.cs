@@ -77,15 +77,14 @@ public partial class NodeCatalog
         (em, i) => [em.Binary(code, i[0], i[1])], description);
     
     /// <summary>
-    /// Four inputs, a level on each, summed into one — the desk, rather than
-    /// four Multiplies wired into a chain of Adds.
+    /// Four inputs, a level on each, summed into one — the desk, rather than four
+    /// Multiplies wired into a chain of Adds.
     /// </summary>
     /// <remarks>
-    /// Every socket is an <see cref="PortKind.Any"/>, so this is one module for
-    /// both halves of the machine: four tones sum to a chord and four fields sum
-    /// to an image, by the same ops. A level is a socket like any other besides,
-    /// which is what makes a fader something an oscillator can sweep rather than
-    /// only something a hand can set.
+    /// Every socket is an <see cref="PortKind.Any"/>, so this is one module for both
+    /// halves of the machine: four tones sum to a chord and four fields to an image. A
+    /// level is a socket like any other, which is what makes a fader something an
+    /// oscillator can sweep.
     /// </remarks>
     private static NodeDef Mixer()
     {

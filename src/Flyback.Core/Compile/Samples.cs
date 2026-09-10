@@ -9,20 +9,14 @@ public sealed record LoadedSample(float[] Samples, int SampleRate)
     public float Seconds => SampleRate <= 0 ? 0f : Samples.Length / (float)SampleRate;
 
     /// <summary>
-    /// The value at a moment, in seconds from the start, with silence either
-    /// side of the clip.
+    /// The value at a moment, in seconds from the start, with silence either side of
+    /// the clip.
     /// </summary>
     /// <remarks>
-    /// Linearly interpolated, exactly as a delay line's read is and for the same
-    /// reason: what drives the position is a signal, so it lands between samples
-    /// far more often than on one, and a nearest-sample read would put a
-    /// staircase into everything played at a rate the file was not recorded at.
-    /// <para>
-    /// Silence outside rather than a clamp or a wrap. A clip that held its last
-    /// sample for ever would be a click followed by DC; one that wrapped would
-    /// loop whether or not anybody asked it to, and looping is something a patch
-    /// says with a wire. Running off the end is how a one-shot ends.
-    /// </para>
+    /// Linearly interpolated, as a delay line's read is: what drives the position is a
+    /// signal, so it lands between samples far more often than on one. Silence outside
+    /// rather than a clamp or a wrap — a clip that held its last sample would be a
+    /// click followed by DC, and looping is something a patch says with a wire.
     /// </remarks>
     public double At(double seconds)
     {
@@ -42,20 +36,14 @@ public sealed record LoadedSample(float[] Samples, int SampleRate)
 }
 
 /// <summary>
-/// Where a patch's samples come from. The compiler asks; something outside it
-/// answers, and owns the reading and the caching.
+/// Where a patch's samples come from. The compiler asks; something outside it answers,
+/// and owns the reading and the caching.
 /// </summary>
 /// <remarks>
-/// An interface because the compiler must not do file I/O. Every edit recompiles
-/// the whole patch (ADR-0021), so a compile that opened a file would open it
-/// sixty times a second — and the engine has no business knowing what a
-/// directory is besides. What arrives here is already-loaded audio, keyed by the
-/// text a patch stores.
-/// <para>
-/// Answering null is not an error to this: it is what the compiler turns into a
-/// complaint naming the module and the file, in the same list as everything else
-/// it has to say about a patch.
-/// </para>
+/// An interface because the compiler must not do file I/O: every edit recompiles the
+/// whole patch (ADR-0021), so a compile that opened a file would open it sixty times a
+/// second. Answering null is not an error but what the compiler turns into a complaint
+/// naming the module and the file.
 /// </remarks>
 public interface ISampleLibrary
 {

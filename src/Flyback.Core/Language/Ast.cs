@@ -1,14 +1,11 @@
 namespace Flyback.Core.Language;
 
 /// <summary>
-/// Something wrong with a source file, said where it is.
+/// Something wrong with a source file, said where it is. A value rather than an
+/// exception, for the reason every other boundary in the engine reports that way: a
+/// file with four mistakes should say all four, and a parser that throws can only say
+/// the first.
 /// </summary>
-/// <remarks>
-/// A value rather than an exception, for the reason every other boundary in the
-/// engine reports that way — see <see cref="Graph.PatchLoad"/>. A file with four
-/// mistakes in it should say all four, and a parser that throws can only ever
-/// say the first.
-/// </remarks>
 /// <param name="Line">Counting from one, as an editor does.</param>
 /// <param name="Column">Counting from one, as an editor does.</param>
 public sealed record LanguageIssue(int Line, int Column, string Message)

@@ -4,20 +4,14 @@ using Flyback.Core.Render;
 namespace Flyback.Plugins.Assist;
 
 /// <summary>
-/// What a survey hands a model to find out what it will take, and how the
-/// answer is read when it will not.
+/// What a survey hands a model to find out what it will take, and how the answer is
+/// read when it will not.
 /// </summary>
 /// <remarks>
-/// None of this knows which provider is asking. Whether a model accepts a
-/// picture is settled by sending it one and seeing what comes back
-/// (<see cref="IModelSurvey"/>), so every adapter needs a picture and a sound to
-/// send, and they may as well be the same picture and the same sound — what is
-/// being measured is the endpoint, not the fixture.
-/// <para>
-/// Both are as small as they can legally be. A survey sends them once per model
-/// down a list, so a fixture that was merely convenient rather than minimal
-/// would be paid for on every row.
-/// </para>
+/// None of this knows which provider is asking: whether a model accepts a picture is
+/// settled by sending it one and seeing what comes back, so every adapter needs a
+/// picture and a sound and they may as well be the same ones. Both are as small as
+/// they can legally be, because a survey sends them once per model down a list.
 /// </remarks>
 public static class Probe
 {
@@ -34,16 +28,10 @@ public static class Probe
     /// A tenth of a second of 440 Hz, as a WAV.
     /// </summary>
     /// <remarks>
-    /// A tone rather than silence, so that a model which actually listens to
-    /// what it was handed has something to find there — a silent clip and a clip
-    /// that was never decoded produce the same answer, which is the one answer a
-    /// survey cannot use.
-    /// <para>
-    /// Written through <see cref="WavWriter"/>, which is the engine's and is
-    /// what every other WAV in this program goes through. A header written by
-    /// hand here would be a second RIFF encoder maintained for the sake of forty
-    /// bytes.
-    /// </para>
+    /// A tone rather than silence, so a model that actually listens has something to
+    /// find: a silent clip and a clip that was never decoded produce the same answer,
+    /// which is the one answer a survey cannot use. Written through
+    /// <see cref="WavWriter"/>, so this is not a second RIFF encoder.
     /// </remarks>
     public static byte[] Sound()
     {
@@ -71,12 +59,10 @@ public static class Probe
     /// What an endpoint said went wrong, out of whatever it answered with.
     /// </summary>
     /// <remarks>
-    /// Both providers put it in the same place, and both are equally free not to
-    /// — a proxy, a gateway or an outage answers with HTML as readily as with
-    /// the shape its documentation promises. So the body itself is the fallback
-    /// rather than a sentence apologising for it: a survey that cannot say why a
-    /// model refused is worth less than one that quotes something unhelpful, and
-    /// the unhelpful thing is usually the whole explanation.
+    /// Both providers put it in the same place and both are equally free not to — a
+    /// gateway or an outage answers with HTML as readily. So the body itself is the
+    /// fallback rather than a sentence apologising for it, since the unhelpful thing
+    /// is usually the whole explanation.
     /// </remarks>
     public static string Detail(string body)
     {
@@ -94,16 +80,14 @@ public static class Probe
     /// The client a survey asks over, less whatever says who is asking.
     /// </summary>
     /// <param name="transport">
-    /// A handler to send over instead of the network, which is how the surveys
-    /// are tested. Not disposed with the client, because the caller that made it
-    /// is using it for more than one.
+    /// A handler to send over instead of the network, which is how the surveys are
+    /// tested. Not disposed with the client, because the caller is using it for more
+    /// than one.
     /// </param>
     /// <remarks>
-    /// The timeout is the whole reason this is shared. Five minutes is far
-    /// longer than any single request should take and is not about one request:
-    /// a survey walks a list of models asking each of them several questions,
-    /// and the default hundred seconds cuts that off in the middle and reports a
-    /// working endpoint as broken. Authentication is left to the caller, that
+    /// The timeout is why this is shared: a survey walks a list of models asking each
+    /// several questions, and the default hundred seconds cuts that off in the middle
+    /// and reports a working endpoint as broken. Authentication is left to the caller,
     /// being the one part no two providers spell the same way.
     /// </remarks>
     public static HttpClient Client(HttpMessageHandler? transport)

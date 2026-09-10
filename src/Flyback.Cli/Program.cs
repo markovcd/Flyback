@@ -13,15 +13,12 @@ using Flyback.Plugins.Hosting;
 namespace Flyback.Cli;
 
 /// <summary>
-/// The second shell over the engine. Everything here is argument parsing and
-/// where to write the answer; the work is Core's, exactly as it is for the
-/// window.
+/// The second shell over the engine. Everything here is argument parsing and where to
+/// write the answer; the work is Core's, exactly as it is for the window.
 /// </summary>
 /// <remarks>
-/// A separate program rather than a mode of the shell, and the reason is what it
-/// does not carry: no Avalonia, so no X libraries, no fonts and no display on
-/// the machine that runs it. A patch renders on a build server the same way it
-/// renders on a desk.
+/// A separate program rather than a mode of the shell, for what it does not carry: no
+/// Avalonia, so no X libraries, no fonts and no display on the machine that runs it.
 /// </remarks>
 internal static class Program
 {

@@ -3,21 +3,16 @@ using System.Buffers.Binary;
 namespace Flyback.Core.Render;
 
 /// <summary>
-/// A WAV whose length is not known when it starts. The header goes down
-/// claiming nothing and is patched once the take has ended.
+/// A WAV whose length is not known when it starts. The header goes down claiming
+/// nothing and is patched once the take has ended.
 /// </summary>
 /// <remarks>
-/// The streaming counterpart to <see cref="WavWriter"/>, and it exists for the
-/// reason <see cref="AviWriter"/> gives for the same trick: a recording has no
-/// length until somebody stops it, so the two sizes RIFF keeps at the front
-/// cannot be written at the front. That means this needs a stream it can seek
-/// back through, and that <see cref="Dispose"/> is not a formality — a file
-/// whose header still claims nothing is one every player treats as empty.
-/// <para>
-/// Both writers lay the header down through <see cref="WavWriter.WriteHeader"/>
-/// and convert through <see cref="WavWriter.ToPcm16"/>, so an exported file and
-/// a recorded one differ in nothing but how they learned their length.
-/// </para>
+/// The streaming counterpart to <see cref="WavWriter"/>: a recording has no length
+/// until somebody stops it, so the two sizes RIFF keeps at the front cannot be written
+/// at the front. That needs a seekable stream, and makes <see cref="Dispose"/> not a
+/// formality — a file whose header still claims nothing is one every player treats as
+/// empty. Both writers lay the header down through the same call, so an exported file
+/// and a recorded one differ in nothing but how they learned their length.
 /// </remarks>
 public sealed class WavStreamWriter : IDisposable
 {

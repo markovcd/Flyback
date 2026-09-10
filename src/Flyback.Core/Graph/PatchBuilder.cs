@@ -64,13 +64,12 @@ public sealed class PatchBuilder(ModuleCatalog? modules = null)
 
     /// <summary>
     /// The patch, placed and ready to be shown: the same layered layout the text
-    /// language and the Tidy button use (ADR-0044), run once as the patch is
-    /// handed over.
+    /// language and the Tidy button use (ADR-0044), run once as the patch is handed
+    /// over.
     /// </summary>
     /// <remarks>
-    /// Here rather than at the picker, so that every route to a preset — the
-    /// app, the command line, a test, a benchmark — gets the same placed patch,
-    /// and so that it is placed before any history opens on it. The layout is
+    /// Here rather than at the picker, so every route to a preset gets the same placed
+    /// patch and it is placed before any history opens on it. The layout is
     /// idempotent, so a caller that arranges again gets the same answer.
     /// </remarks>
     public Patch Build()

@@ -26,12 +26,11 @@ internal static class Startup
     /// What the scan found, on the terminal.
     /// </summary>
     /// <remarks>
-    /// The window says as much in a tooltip, which is no use to somebody who
-    /// started the program from a shell to find out why their plugin is not in
-    /// the list — and a plugin that failed to load failed here, before there was
-    /// a window to hang a tooltip on. Where it looked is said whatever the
-    /// answer was, because an empty folder and the wrong folder read identically
-    /// from a list of nothing.
+    /// The window says as much in a tooltip, which is no use to somebody who started
+    /// the program from a shell to find out why their plugin is missing — and a plugin
+    /// that failed to load failed before there was a window. Where it looked is said
+    /// whatever the answer was, because an empty folder and the wrong folder read
+    /// identically from a list of nothing.
     /// </remarks>
     private static void Announce(PluginCatalog catalog)
     {

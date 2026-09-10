@@ -7,15 +7,14 @@ using Flyback.Plugins.Hosting;
 namespace Flyback.App;
 
 /// <summary>
-/// The join between the window and the instrument: opening a sound device,
-/// turning an edited patch back into two programs, and saying what came of
-/// either. Everything the status bar carries originates here.
+/// The join between the window and the instrument: opening a sound device, turning an
+/// edited patch back into two programs, and saying what came of either. Everything
+/// the status bar carries originates here.
 /// </summary>
 /// <remarks>
-/// A patch is recompiled whole on every edit rather than incrementally, which is
-/// what keeps this to one handler and no invalidation to get wrong. The device
-/// comes from a plugin, so nothing in this file knows what a backend is called
-/// or which platform it is for.
+/// A patch is recompiled whole on every edit, which keeps this to one handler and no
+/// invalidation to get wrong. The device comes from a plugin, so nothing here knows
+/// what a backend is called.
 /// </remarks>
 public sealed partial class MainWindow
 {
@@ -86,16 +85,14 @@ public sealed partial class MainWindow
     }
 
     /// <summary>
-    /// The chart the picture is rooted at: the selected module, when that is a
-    /// Probe or a Scope and not something else.
+    /// The chart the picture is rooted at: the selected module, when that is a Probe
+    /// or a Scope.
     /// </summary>
     /// <remarks>
-    /// Selection rather than a mode, because a chart is something you look at
-    /// rather than something a patch is left in: clicking the module shows it
-    /// and clicking away puts the picture back, and nothing about the patch or
-    /// the file changes either way. It leaves the sound alone as well — the
-    /// speakers root at the Output whatever the screen is doing, so a patch can
-    /// be heard while a chart of one corner of it is being read.
+    /// Selection rather than a mode, because a chart is something you look at rather
+    /// than something a patch is left in — clicking away puts the picture back, and
+    /// nothing about the patch changes. The speakers root at the Output whatever the
+    /// screen is doing.
     /// </remarks>
     private NodeInstance? Probed =>
         editor.SelectedNode is { } selected && NodeCatalog.IsChart(selected.TypeId) ? selected : null;
@@ -171,19 +168,15 @@ public sealed partial class MainWindow
     }
 
     /// <summary>
-    /// The one place anything is said to the user. <paramref name="detail"/> is
-    /// for what will not fit on a status bar — a list of missing plugins, say.
+    /// The one place anything is said to the user. <paramref name="detail"/> is for
+    /// what will not fit on a status bar — a list of missing plugins, say.
     /// </summary>
     /// <param name="detail"></param>
     /// <param name="progress">
-    /// That this is the last message again with a new number in it, so the log
-    /// behind the line keeps one entry for the run rather than one per update.
+    /// That this is the last message again with a new number in it, so the log keeps
+    /// one entry for the run rather than one per update.
     /// </param>
     /// <param name="message"></param>
-    /// <remarks>
-    /// The line itself, and what becomes of what it used to say, are
-    /// <see cref="ReportLine"/>'s business — this stays the one door into it.
-    /// </remarks>
     private void Report(string message, string? detail = null, bool progress = false) =>
         report.Say(message, detail, progress);
 

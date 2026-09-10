@@ -6,20 +6,11 @@ namespace Flyback.Plugins.Assist;
 /// One conversation, written out to a file when somebody asked for that.
 /// </summary>
 /// <remarks>
-/// <para>
-/// Off by default, because what goes through here is the same instruction and
-/// the same summaries a turn already sends to whichever provider is configured
-/// — nothing new leaves the machine — but a standing file of it is a different
-/// kind of exposure than a transcript that closes with the window and is gone,
-/// and that is somebody's choice to make, not this program's. See
-/// <see cref="AssistantSettings.LogConversations"/>.
-/// </para>
-/// <para>
-/// One file per conversation rather than one growing file, named for when it
-/// started and who it was with, so a bad run can be found and read without
-/// scrolling past every other one. Turned off, this writes nothing and opens
-/// nothing — there is no file to forget to clean up.
-/// </para>
+/// Off by default: nothing new leaves the machine, but a standing file of it is a
+/// different kind of exposure from a transcript that closes with the window, and that
+/// is somebody's choice to make. One file per conversation rather than one growing
+/// file, named for when it started and who it was with. Turned off, this writes
+/// nothing and opens nothing.
 /// </remarks>
 public sealed class ConversationLog : IDisposable
 {
@@ -30,14 +21,10 @@ public sealed class ConversationLog : IDisposable
     public static string Folder => Path.Combine(GlobalConstants.DataFolder, "conversations");
 
     /// <summary>
-    /// A log for one conversation, or one that writes nothing at all when
-    /// logging was not asked for or the file could not be opened.
+    /// A log for one conversation, or one that writes nothing at all when logging was
+    /// not asked for or the file could not be opened. Never throws: a conversation is
+    /// not worth failing to hold over a log of it.
     /// </summary>
-    /// <remarks>
-    /// Never throws. A conversation is not worth failing to hold over a log of
-    /// it — the same reasoning <see cref="AssistantSettings.Load"/> already
-    /// applies to the settings file this flag lives in.
-    /// </remarks>
     /// <param name="folder">Somewhere other than the usual place, for the tests.</param>
     public static ConversationLog Start(bool enabled, string provider, string? folder = null)
     {

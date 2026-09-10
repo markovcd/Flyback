@@ -98,15 +98,14 @@ public sealed class PluginCatalog
         .FirstOrDefault();
 
     /// <summary>
-    /// The assistant to offer: highest priority, ties broken on id so the choice
-    /// is the same on every run. Null when none is installed.
+    /// The assistant to offer: highest priority, ties broken on id so the choice is the
+    /// same on every run. Null when none is installed.
     /// </summary>
     /// <remarks>
     /// Deliberately not filtered by whether it can actually run, unlike
-    /// <see cref="PreferredAudioOutput"/>. That depends on a configuration this
-    /// catalogue has never seen, and an assistant with no key yet is still the
-    /// one to put in front of somebody — so the panel can say what is missing
-    /// instead of saying nothing at all.
+    /// <see cref="PreferredAudioOutput"/>: that depends on a configuration this
+    /// catalogue has never seen, and an assistant with no key yet is still the one to
+    /// put in front of somebody.
     /// </remarks>
     public IPatchAssistant? PreferredAssistant => Assistants
         .OrderByDescending(a => a.Priority)
@@ -143,16 +142,14 @@ public sealed class PluginCatalog
     }
 
     /// <summary>
-    /// How to hear what is plugged in here: supported, highest priority, ties
-    /// broken on id. Null where nothing installed can listen — in which case the
-    /// only instrument is the computer's own keyboard, which needs no backend
-    /// and is always there.
+    /// How to hear what is plugged in here: supported, highest priority, ties broken on
+    /// id. Null where nothing installed can listen, in which case the only instrument
+    /// is the computer's own keyboard.
     /// </summary>
     /// <remarks>
-    /// One rather than all of them, the way a sound backend is chosen. Two
-    /// backends on one machine would be two ways to the same socket, and a
-    /// picker offering every keyboard twice under two names is worse than a
-    /// picker offering it once under the better one.
+    /// One rather than all, the way a sound backend is chosen: two backends on one
+    /// machine would be two ways to the same socket, and a picker offering every
+    /// keyboard twice is worse than one offering it once.
     /// </remarks>
     public IMidiInput? PreferredMidiInput => MidiInputs
         .Where(Supported)

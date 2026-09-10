@@ -11,18 +11,11 @@ namespace Flyback.App.Assist;
 /// proposed, and what to do when it will not stop.
 /// </summary>
 /// <remarks>
-/// <para>
-/// No Avalonia type appears here, on purpose. This is the same seam
-/// <see cref="Audio.AudioEngine"/> is — the part of the shell that can be driven
-/// by a test with a fake on the far side, leaving the window with nothing but
-/// controls and a loop that paints events.
-/// </para>
-/// <para>
-/// The patch that was open is never touched. The workbench takes a copy, so
-/// accepting a proposal is one assignment and rejecting one costs nothing —
-/// which is the whole of why an application with no undo can afford this
-/// feature.
-/// </para>
+/// No Avalonia type appears here, on purpose — the same seam
+/// <see cref="Audio.AudioEngine"/> is, which leaves the window with nothing but
+/// controls and a loop that paints events. The patch that was open is never
+/// touched: the workbench takes a copy, so accepting a proposal is one assignment
+/// and rejecting one costs nothing.
 /// </remarks>
 public sealed class AssistantRun : IDisposable
 {
@@ -95,15 +88,13 @@ public sealed class AssistantRun : IDisposable
         || current.Connections.Count != startingWires;
 
     /// <summary>
-    /// Takes the patch just applied as the new starting point, so that what this
-    /// run itself put in the editor does not read as somebody editing behind it.
+    /// Takes the patch just applied as the new starting point, so what this run put
+    /// in the editor does not read as somebody editing behind it.
     /// </summary>
     /// <remarks>
-    /// Called after a proposal has been applied, and it is what lets a
-    /// conversation carry on afterwards. Without it the next message would find
-    /// the editor holding something other than <see cref="Before"/>, conclude
-    /// the person had changed the patch underneath, and start again — throwing
-    /// away the history and the workbench that produced what they just accepted.
+    /// What lets a conversation carry on after a proposal is applied: without it the
+    /// next message would conclude the person had changed the patch underneath and
+    /// start again, throwing away the history that produced what they accepted.
     /// </remarks>
     public void Rebase(Patch applied)
     {

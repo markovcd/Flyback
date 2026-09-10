@@ -4,16 +4,14 @@ using Flyback.Core.Compile;
 namespace Flyback.App.Controls;
 
 /// <summary>
-/// What the shell needs of a preview, whichever renderer is behind it. There are
-/// two — the interpreter on the CPU and a shader on the GPU — and which one is
-/// running is a property of the machine rather than of the patch, so the window
+/// What the shell needs of a preview, whichever renderer is behind it. Which of the
+/// two is running is a property of the machine rather than of the patch, so the window
 /// is deliberately not told.
 /// </summary>
 /// <remarks>
-/// This is exactly the surface <see cref="PreviewSurface"/> already had. Frame
-/// export is not on it: that is a static call on the CPU renderer and stays one,
-/// because it runs headless on a thread with no graphics context and its output
-/// is what the snapshot tests approve.
+/// Frame export is not on it: that is a static call on the CPU renderer and stays one,
+/// because it runs headless on a thread with no graphics context and its output is
+/// what the snapshot tests approve.
 /// </remarks>
 public interface IPreviewSurface
 {
@@ -48,11 +46,9 @@ public interface IPreviewSurface
     /// Something outside the timeline changed and the picture is now out of date.
     /// </summary>
     /// <remarks>
-    /// A key going down is the only thing that does this. Every other reason to
-    /// redraw is either the clock moving or a property on this interface being
-    /// set, and both are seen from inside; a note held while the clock is stopped
-    /// is a change with no time behind it, and without this the picture would
-    /// wait for the next edit to show it.
+    /// A key going down is the only thing that does this: every other reason to redraw
+    /// is the clock moving or a property here being set, both seen from inside. A note
+    /// held while the clock is stopped is a change with no time behind it.
     /// </remarks>
     void Refresh();
 

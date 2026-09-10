@@ -25,15 +25,14 @@ internal static class Exit
 }
 
 /// <summary>
-/// A patch off disk and the files it names, however they were named: a folder
-/// beside the patch, or a bundle holding both.
+/// A patch off disk and the files it names, however they were named: a folder beside
+/// the patch, or a bundle holding both.
 /// </summary>
 /// <remarks>
-/// The one place either kind is opened, so nothing downstream of it knows there
-/// are two. A bundle is read into memory and never unpacked — which is the whole
-/// case for reading one this way: a build server holding a single file can render
-/// a patch whose photographs and recordings it has never seen, and writes nothing
-/// but the frame it was asked for.
+/// The one place either kind is opened, so nothing downstream knows there are two. A
+/// bundle is read into memory and never unpacked, which is the case for reading one
+/// this way: a build server holding a single file can render a patch whose
+/// photographs it has never seen, and writes nothing but the frame.
 /// </remarks>
 internal readonly record struct Opened(
     Patch Patch,
@@ -87,15 +86,14 @@ internal static class Patches
         string.Equals(file.Extension, $".{PatchLanguage.FileExtension}", StringComparison.OrdinalIgnoreCase);
 
     /// <summary>
-    /// The patch a source file describes, or null with every complaint already
-    /// written to <paramref name="error"/>.
+    /// The patch a source file describes, or null with every complaint already written
+    /// to <paramref name="error"/>.
     /// </summary>
     /// <remarks>
-    /// Refused whole where it does not read, which is the one place this differs
-    /// from a document: a patch short of a plugin is still handed back because
-    /// there is something there to look at, and a source file that does not
-    /// parse has produced nothing to look at. Each complaint carries the line
-    /// and column it is on, so a build server's log says where to go.
+    /// Refused whole where it does not read, which is where this differs from a
+    /// document: a patch short of a plugin still has something to look at, and a
+    /// source file that does not parse has produced nothing. Each complaint carries
+    /// the line and column it is on.
     /// </remarks>
     private static Patch? Built(FileInfo file, string text, TextWriter error)
     {
@@ -113,14 +111,10 @@ internal static class Patches
 
     /// <summary>
     /// The patch in a file, or null with the reason already written to
-    /// <paramref name="error"/>.
+    /// <paramref name="error"/>. Every complaint the reader can make is one
+    /// <see cref="PatchLoad"/> already words, and none is rephrased here: the shell
+    /// should say what the program says.
     /// </summary>
-    /// <remarks>
-    /// Every complaint the reader can make is one <see cref="PatchLoad"/>
-    /// already words — a format from a newer build, a plugin that is not
-    /// installed, a module that could not be built. None of them is rephrased
-    /// here: the shell should say what the program says.
-    /// </remarks>
     public static Patch? Read(FileInfo file, TextWriter error)
     {
         if (!file.Exists)

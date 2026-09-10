@@ -4,20 +4,11 @@ namespace Flyback.Plugins.Secrets;
 /// Somewhere the operating system will hold a secret for us.
 /// </summary>
 /// <remarks>
-/// <para>
-/// Deliberately not "somewhere Flyback encrypts a secret". A key encrypted with
-/// a key we also ship is obfuscated, not protected — anything that can start the
-/// application can undo it. So this delegates to whatever the platform already
-/// has, which is unlocked by the login the person has already done: DPAPI on
-/// Windows, the Keychain on macOS, the Secret Service on Linux. There is no
-/// cryptography anywhere in Flyback, which is the point.
-/// </para>
-/// <para>
-/// Platform I/O, and therefore a plugin — the case ADR-0025 drew the boundary
-/// for, and the same shape as the sound backends: one small plugin per system,
-/// filtered by the <c>Platform</c> attribute so a macOS build carries no Windows
-/// credential code at all.
-/// </para>
+/// Deliberately not "somewhere Flyback encrypts a secret": a key encrypted with a key
+/// we also ship is obfuscated rather than protected. So this delegates to whatever the
+/// platform already has, unlocked by the login the person has already done — DPAPI,
+/// the Keychain, the Secret Service. There is no cryptography anywhere in Flyback,
+/// which is the point. Platform I/O, and therefore a plugin (ADR-0025).
 /// </remarks>
 public interface ISecretStore
 {

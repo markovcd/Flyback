@@ -4,15 +4,13 @@ using System.Text.Json.Serialization;
 namespace Flyback.Plugins.Assist;
 
 /// <summary>
-/// One model as an endpoint answered for it, rather than as somebody wrote it
-/// down.
+/// One model as an endpoint answered for it, rather than as somebody wrote it down.
 /// </summary>
 /// <remarks>
-/// The same facts <see cref="AssistantModel"/> carries, plus the two a
-/// suggestion cannot hold because they are arithmetic rather than a claim: what
-/// the model will think for. A list of these is what a provider knows about an
-/// endpoint after asking it, and what <see cref="Survey"/> keeps in the
-/// settings so it need not be asked again.
+/// The same facts <see cref="AssistantModel"/> carries, plus the two a suggestion
+/// cannot hold because they are arithmetic rather than a claim: what the model will
+/// think for. A list of these is what <see cref="Survey"/> keeps in the settings so
+/// the endpoint need not be asked again.
 /// </remarks>
 /// <param name="Id">What goes in the request.</param>
 public sealed record ModelReport(string Id)
@@ -43,16 +41,14 @@ public sealed record ModelReport(string Id)
 /// What to ask, for a survey that costs a request per question.
 /// </summary>
 /// <param name="Only">
-/// The models to probe, or empty for whichever the provider thinks are
-/// candidates. A model named here is probed whether or not the endpoint listed
-/// it, because a listing and an endpoint disagree often enough to be worth
-/// checking by hand.
+/// The models to probe, or empty for whichever the provider thinks are candidates. A
+/// model named here is probed whether or not the endpoint listed it, because the two
+/// disagree often enough to be worth checking.
 /// </param>
 /// <param name="All">Probe everything listed rather than the provider's own shortlist.</param>
 /// <param name="Bounds">
-/// Measure what each model will think for. Off by default because finding out
-/// costs a request per step and makes the model think for real near the top of
-/// its range — which is billed like any other thinking.
+/// Measure what each model will think for. Off by default: finding out costs a request
+/// per step and makes the model think for real near the top of its range.
 /// </param>
 public sealed record SurveyOptions(
     IReadOnlyList<string>? Only = null,
@@ -63,20 +59,11 @@ public sealed record SurveyOptions(
 /// A provider that can be asked what its endpoint actually accepts.
 /// </summary>
 /// <remarks>
-/// <para>
-/// Separate from <see cref="IPatchAssistant"/> rather than a member of it,
-/// because whether a provider can answer this at all is a fact about the
-/// provider: an endpoint that lists nothing, or that has no way to be asked what
-/// it takes, cannot, and an interface it had to implement and refuse would be
-/// worse than one it does not implement. A caller asks
-/// <c>assistant is IModelSurvey</c> and says so plainly when the answer is no.
-/// </para>
-/// <para>
-/// Every question is a real request against a real key, which is why this is the
-/// one thing on this boundary that takes a <see cref="CancellationToken"/> and
-/// reports as it goes: a survey of thirty models is thirty round trips and
-/// somebody watching deserves to see which one it is on.
-/// </para>
+/// Separate from <see cref="IPatchAssistant"/> because whether a provider can answer
+/// at all is a fact about the provider, and an interface it had to implement and
+/// refuse would be worse than one it does not implement. Every question is a real
+/// request against a real key, which is why this is the one thing on the boundary that
+/// takes a <see cref="CancellationToken"/> and reports as it goes.
 /// </remarks>
 public interface IModelSurvey
 {
@@ -100,18 +87,10 @@ public interface IModelSurvey
 /// What a survey found, on its way into and out of a provider's settings.
 /// </summary>
 /// <remarks>
-/// <para>
-/// One string under one key, because that is the only shape the settings file
-/// has (ADR-0069): the shell keeps a bag of strings per provider and knows what
-/// none of them mean. A list of models is not a string, so it is written as one
-/// here and read back here, and the shell carries it the same way it carries an
-/// endpoint or a tick.
-/// </para>
-/// <para>
-/// The file is hand-editable and hand-edited, so <see cref="Read"/> never throws
-/// and never half-succeeds: anything it cannot make sense of is nothing at all,
-/// which falls back to whatever the provider had written down.
-/// </para>
+/// One string under one key, because that is the only shape the settings file has
+/// (ADR-0069): a list of models is not a string, so it is written as one here and read
+/// back here. The file is hand-edited, so <see cref="Read"/> never throws and never
+/// half-succeeds — anything it cannot make sense of is nothing at all.
 /// </remarks>
 public static class Survey
 {

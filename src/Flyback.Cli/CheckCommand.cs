@@ -15,10 +15,9 @@ internal sealed record Complaint(string Severity, string? Module, string Message
 /// Compiles a patch for both sinks and says what is wrong with it.
 /// </summary>
 /// <remarks>
-/// This is the command that makes a patch a thing continuous integration can
-/// have an opinion about, which is why the exit code carries the answer and the
-/// text is only for people. Both sinks are compiled because each walks back from
-/// its own socket and neither sees what the other reaches — a patch built for
+/// The command that makes a patch a thing continuous integration can have an opinion
+/// about, which is why the exit code carries the answer and the text is only for
+/// people. Both sinks, because each walks back from its own socket: a patch built for
 /// the ear can be broken in ways the picture's compilation never visits.
 /// </remarks>
 internal static class CheckCommand

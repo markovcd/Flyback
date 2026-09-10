@@ -22,11 +22,9 @@ internal static class Vocabulary
     /// </summary>
     /// <remarks>
     /// Anything not named here is <see cref="SetExtra"/>, which is right by
-    /// construction rather than by luck: the four below are the kinds the engine
-    /// ships and the only ones with a tool written for them, and every other kind
-    /// is one a plugin declared through <see cref="NodeExtra.Fields"/> — which is
-    /// exactly what <c>set_extra</c> exists to write
-    /// ([0055](0055-a-plugins-extra-declares-its-editor.md)).
+    /// construction: the four below are the kinds the engine ships and the only ones
+    /// with a tool of their own, and every other kind is one a plugin declared through
+    /// <see cref="NodeExtra.Fields"/> (ADR-0055).
     /// </remarks>
     public static string ToolFor(string key) => key switch
     {

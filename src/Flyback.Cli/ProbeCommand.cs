@@ -11,10 +11,9 @@ namespace Flyback.Cli;
 /// <param name="Only">Models to ask about by name, or empty for the provider's own shortlist.</param>
 /// <param name="Dry">Print what was found and write none of it down.</param>
 /// <param name="Keys">
-/// Say where each provider's key would come from and ask nothing. The one thing
-/// here that costs nothing at all, which is the point of it: whether a key is
-/// found is the question everything else depends on, and finding out should not
-/// require spending anything.
+/// Say where each provider's key would come from and ask nothing. The one thing here
+/// that costs nothing, which is the point: whether a key is found is the question
+/// everything else depends on.
 /// </param>
 internal sealed record ProbeOptions(
     string? Provider,
@@ -29,19 +28,11 @@ internal sealed record ProbeOptions(
 /// Asks a provider what its endpoint actually offers, and keeps the answer.
 /// </summary>
 /// <remarks>
-/// <para>
 /// Here rather than in the window because it is the shape of a command: it takes
-/// minutes, it costs money, it wants a transcript, and its whole output is a
-/// line in a settings file that both programs read. The window reads what this
-/// wrote and its model box fills itself in — see
-/// <see cref="AssistantSchema.Surveyed"/> — which is the point of writing it
-/// down rather than printing it.
-/// </para>
-/// <para>
-/// Every reason this cannot run is a sentence rather than a stack trace, because
-/// all of them are things somebody can act on: a provider that is not installed,
-/// one that cannot be asked, or a key that is not there.
-/// </para>
+/// minutes, it costs money, and its whole output is a line in a settings file both
+/// programs read — the window's model box fills itself in from what this wrote, see
+/// <see cref="AssistantSchema.Surveyed"/>. Every reason it cannot run is a sentence
+/// rather than a stack trace, because all of them are things somebody can act on.
 /// </remarks>
 internal static class ProbeCommand
 {
@@ -110,11 +101,9 @@ internal static class ProbeCommand
     /// Every provider that can be asked and has a key, one after another.
     /// </summary>
     /// <remarks>
-    /// One that cannot be asked, or has no key, is a line rather than the end of
-    /// the run: the point of asking for all of them is to get whatever is
-    /// obtainable in one pass, and a provider nobody has configured is the
-    /// ordinary state rather than a fault. Each is written down as it finishes,
-    /// so a later refusal cannot cost an earlier answer.
+    /// One that cannot be asked is a line rather than the end of the run: the point of
+    /// asking for all of them is to get whatever is obtainable in one pass. Each is
+    /// written down as it finishes, so a later refusal cannot cost an earlier answer.
     /// </remarks>
     private static async Task<int> Each(
         PluginCatalog plugins,
@@ -263,15 +252,13 @@ internal static class ProbeCommand
     }
 
     /// <summary>
-    /// Where every installed provider's key would come from, asking nothing of
-    /// anybody.
+    /// Where every installed provider's key would come from, asking nothing of anybody.
     /// </summary>
     /// <remarks>
-    /// Worth a flag of its own because the alternative way to find out is to run
-    /// a survey, and a survey costs money. It also answers the question behind
-    /// the question: whether anything installed here can hold a key at all,
-    /// which is what separates "you have no key" from "this program could never
-    /// see the one you have".
+    /// Worth a flag of its own because the alternative is to run a survey, and a survey
+    /// costs money. It also answers whether anything installed here can hold a key at
+    /// all, which separates "you have no key" from "this program could never see the
+    /// one you have".
     /// </remarks>
     private static int Keys(PluginCatalog plugins, Credentials credentials, TextWriter output)
     {

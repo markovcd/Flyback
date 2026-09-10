@@ -17,16 +17,14 @@ internal sealed class PluginLoadContext(string entryAssemblyPath)
     : AssemblyLoadContext(Path.GetFileNameWithoutExtension(entryAssemblyPath))
 {
     /// <summary>
-    /// Assemblies the host owns. These must resolve to the host's copy or the
-    /// same type would have two identities and every cast across the boundary
-    /// would fail — the classic plugin bug.
+    /// Assemblies the host owns. These must resolve to the host's copy or the same type
+    /// would have two identities and every cast across the boundary would fail.
     /// </summary>
     /// <remarks>
-    /// The same two are held out of the single-file bundle when the shell is
-    /// published, so that a plugin can be compiled against the copies a given
-    /// build shipped — see <c>Flyback.App.csproj</c>. That is a convenience and
-    /// this is a correctness rule; they name the same pair because being the
-    /// boundary is what makes both true.
+    /// The same two are held out of the single-file bundle when the shell is published,
+    /// so a plugin can be compiled against the copies a given build shipped. That is a
+    /// convenience and this is a correctness rule; they name the same pair because
+    /// being the boundary is what makes both true.
     /// </remarks>
     private static readonly string[] HostOwned =
     [
