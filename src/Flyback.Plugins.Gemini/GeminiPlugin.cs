@@ -4,15 +4,11 @@ using Flyback.Plugins.Assist;
 namespace Flyback.Plugins.Gemini;
 
 /// <summary>
-/// Offers an assistant that speaks Google's generateContent format.
+/// Offers an assistant that speaks Google's generateContent format. A second
+/// adapter rather than a second base url, which is the whole reason it is worth
+/// having: what it buys is in <see cref="Wire.Answers"/> — a sound is an ordinary
+/// part of a turn here, so the model building the patch can be played the patch.
 /// </summary>
-/// <remarks>
-/// A second adapter rather than a second base url, which is the whole reason it
-/// is worth having: everything that speaks chat completions is already reachable
-/// through the endpoint field on the other one, and this speaks something else.
-/// What it buys is in <see cref="Wire.Answers"/> — a sound is an ordinary part
-/// of a turn here, so the model building the patch can be played the patch.
-/// </remarks>
 public sealed class GeminiPlugin : IFlybackPlugin
 {
     public PluginInfo Info { get; } = new(
@@ -44,24 +40,15 @@ public sealed partial class GeminiAssistant : IPatchAssistant
     /// Where somebody starts before anybody has asked the endpoint anything.
     /// </summary>
     /// <remarks>
+    /// Flash rather than Pro: it sees, it hears, it thinks, and it is the one
+    /// somebody can point at a key from a free tier, which is what makes "bring your
+    /// own key" a real offer. Pro is one line away in the box.
     /// <para>
-    /// Flash is the default rather than Pro. It sees, it hears, it thinks, and
-    /// it is the one somebody can point at a key from a free tier — which is
-    /// what makes "bring your own key" a real offer rather than a bill. Pro is a
-    /// better builder for a hard patch and is one line away in the box.
-    /// </para>
-    /// <para>
-    /// A written-down list is the part that goes stale, exactly as ADR-0047 said
-    /// it would, and the answer is <see cref="IModelSurvey"/>: a survey replaces
-    /// every line of this with what the endpoint said when it was asked — see
-    /// <see cref="AssistantSchema.Surveyed"/>. Until one has been run these four
-    /// are the whole of what is known here, and any of them may already be a
-    /// model that answers 404.
-    /// </para>
-    /// <para>
-    /// Which is why the list is short rather than exhaustive. It has one job,
-    /// which is to get somebody as far as a first request; what they choose from
-    /// after that should have been measured rather than believed.
+    /// A written-down list is the part that goes stale, and the answer is
+    /// <see cref="IModelSurvey"/> — see <see cref="AssistantSchema.Surveyed"/>.
+    /// Until one has been run these four are the whole of what is known here, and
+    /// any of them may already answer 404, which is why the list is short rather
+    /// than exhaustive.
     /// </para>
     /// </remarks>
     public AssistantSchema Schema { get; } = new(
@@ -81,18 +68,15 @@ public sealed partial class GeminiAssistant : IPatchAssistant
     public AssistantCredential Credential => Schema.Credential;
 
     /// <summary>
-    /// The ordinary five questions, declared by the schema rather than written
-    /// out here — see <see cref="AssistantSchema.Form"/>. The endpoint among
-    /// them arrives fixed rather than absent, because this format is spoken in
-    /// one place and somebody looking for the field deserves to be told that
-    /// rather than to wonder where it went.
+    /// The ordinary five questions, declared by the schema rather than written out
+    /// here — see <see cref="AssistantSchema.Form"/>. The endpoint arrives fixed
+    /// rather than absent, because this format is spoken in one place.
     /// </summary>
     /// <remarks>
-    /// The model box offers what a survey found, where one has been run. Every
-    /// question that reads a model goes through the same substitution, and they
-    /// have to: a box offering surveyed models while <see cref="Senses"/>
-    /// answered from the written-down ones would be a form that lies about the
-    /// thing it is showing.
+    /// The model box offers what a survey found, where one has been run, and every
+    /// question that reads a model goes through the same substitution: a box
+    /// offering surveyed models while <see cref="Senses"/> answered from the
+    /// written-down ones would be a form that lies.
     /// </remarks>
     public IReadOnlyList<AssistantField> Form(AssistantValues values) => Schema.Surveyed(values).Form(values);
 
@@ -139,24 +123,15 @@ public sealed partial class GeminiAssistant : IPatchAssistant
     }
 
     /// <summary>
-    /// The three words of effort as this provider spells them, or null where
-    /// nothing can safely be said.
+    /// The three words of effort as this provider spells them, or null where nothing
+    /// can safely be said.
     /// </summary>
     /// <remarks>
-    /// <para>
-    /// Medium is dynamic — the model is told to decide for itself, which is what
-    /// -1 means and what it would have done unasked. Low and High are the ends
-    /// of what the chosen model accepts, and those are per-model numbers that a
-    /// budget out of range answers with a 400 rather than a clamp.
-    /// </para>
-    /// <para>
-    /// So they are measured rather than written down, and a model nobody has
-    /// measured gets no <c>thinkingConfig</c> at all — which is the ordinary
-    /// state until somebody runs a survey with
-    /// <see cref="SurveyOptions.Bounds"/>, and it is the right way round: the
-    /// alternative is guessing a number at a model whose floor might be above it
-    /// and losing every request rather than one setting.
-    /// </para>
+    /// Medium is dynamic — the model decides for itself, which is what -1 means. Low
+    /// and High are the ends of what the chosen model accepts, and those are
+    /// per-model numbers that a budget out of range answers with a 400 rather than a
+    /// clamp. So they are measured rather than written down, and a model nobody has
+    /// measured gets no <c>thinkingConfig</c> at all.
     /// </remarks>
     private static JsonObject? Thinking(AssistantValues values, AssistantChoices chosen)
     {

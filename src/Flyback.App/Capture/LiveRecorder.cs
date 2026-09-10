@@ -31,29 +31,20 @@ internal readonly record struct RecordingStatus(
     string? Stopped);
 
 /// <summary>
-/// A take: the frames the GPU drew and the samples the speakers got, going into
-/// a file as they happen.
+/// A take: the frames the GPU drew and the samples the speakers got, going into a
+/// file as they happen.
 /// </summary>
 /// <remarks>
-/// <para>
 /// Nothing here runs on a thread that can afford it. <see cref="Accept"/> is the
-/// render thread and does one copy; <see cref="WriteAudio"/> is the sound
-/// callback and does one copy into a ring. Everything expensive — the color
-/// conversion, the JPEG, the file — is on this class's own thread, which is
-/// allowed to fall behind because <see cref="CapturePacer"/> makes falling
-/// behind mean a repeated frame rather than a broken file.
-/// </para>
+/// render thread and does one copy; <see cref="WriteAudio"/> is the sound callback
+/// and does one copy into a ring. Everything expensive is on this class's own
+/// thread, which may fall behind because <see cref="CapturePacer"/> makes that
+/// mean a repeated frame rather than a broken file.
 /// <para>
-/// The sound is the clock whenever there is any, because it is the one stream
-/// that cannot be dropped or repeated: a sample count is an exact measure of how
-/// long the take has run, and pacing the picture against it is what keeps the two
-/// together over an hour. Only a silent video falls back to a stopwatch.
-/// </para>
-/// <para>
-/// Nothing is written until the first frame is in hand. A file that opens with
-/// the sound already running and the picture arriving a moment later is out of
-/// step for its whole length, and the fix is simply to agree on where the take
-/// starts.
+/// The sound is the clock whenever there is any, being the one stream that cannot
+/// be dropped or repeated; only a silent video falls back to a stopwatch. Nothing
+/// is written until the first frame is in hand, since a file that opens with the
+/// sound already running is out of step for its whole length.
 /// </para>
 /// </remarks>
 internal sealed class LiveRecorder : IFrameSink, IAudioSink, IDisposable

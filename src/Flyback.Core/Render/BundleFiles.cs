@@ -4,47 +4,32 @@ using Flyback.Core.Graph;
 namespace Flyback.Core.Render;
 
 /// <summary>
-/// The files out of a bundle, read where they lie rather than unpacked: a
-/// library for a patch whose sounds and pictures are bytes in memory.
+/// The files out of a bundle, read where they lie rather than unpacked: a library
+/// for a patch whose sounds and pictures are bytes in memory.
 /// </summary>
 /// <remarks>
-/// <para>
-/// <see cref="SampleLibrary"/> and <see cref="ImageLibrary"/> answer for a
-/// folder; this answers for an archive. It is what lets a bundle be drawn
-/// without being unpacked — the command line rendering one on a machine that has
-/// none of its files loose, which is the case
-/// [0052](0052-a-patch-names-its-samples-rather-than-carrying-them.md) gave up
-/// and this gets back.
-/// </para>
-/// <para>
-/// One class for both kinds where the folder has two, and that is the difference
-/// between them rather than an inconsistency: those two share only their
-/// caching, and this shares its whole contents — one dictionary of bytes, looked
-/// up by the same key, differing only in which reader is handed the stream. What
-/// would have been duplicated here is the dictionary itself.
-/// </para>
-/// <para>
-/// Decoded on the first ask and kept, exactly as the folder libraries do and for
-/// the same reason: every edit recompiles the whole patch (ADR-0021), and a
-/// picture decoded per knob turn is a picture decoded sixty times a second.
-/// </para>
+/// <see cref="SampleLibrary"/> and <see cref="ImageLibrary"/> answer for a folder;
+/// this answers for an archive, which is what lets the command line draw a bundle
+/// on a machine that has none of its files loose. One class for both kinds where
+/// the folder has two, because those share only their caching and this shares its
+/// whole contents — one dictionary of bytes, differing in which reader is handed
+/// the stream. Decoded on the first ask and kept, since every edit recompiles the
+/// whole patch (ADR-0021).
 /// </remarks>
 /// <param name="files">
-/// The archive's entries, keyed by the path the patch names them by — which is
-/// the path the packer wrote into it.
+/// The archive's entries, keyed by the path the patch names them by — which is the
+/// path the packer wrote into it.
 /// </param>
 /// <param name="behindSounds">
-/// Where a sound this does not hold is looked for instead, and null where there
-/// is nowhere.
+/// Where a sound this does not hold is looked for instead, and null where there is
+/// nowhere.
 /// </param>
 /// <param name="behindPictures">The same, for a picture.</param>
 /// <remarks>
-/// The two behinds are what make a bundle editable rather than only readable. An
-/// archive holds what the patch named when it was packed, and somebody working
-/// on it may point a module at something on their own machine a moment later —
-/// that file is where they said it is, and asking the folder for it is the whole
-/// of what has to happen. The command line passes neither, because nothing there
-/// is going to add a file to a patch it is rendering.
+/// The two behinds are what make a bundle editable rather than only readable:
+/// somebody working on one may point a module at something on their own machine,
+/// and asking the folder for it is the whole of what has to happen. The command
+/// line passes neither.
 /// </remarks>
 public sealed class BundleFiles(
     IReadOnlyDictionary<string, byte[]> files,

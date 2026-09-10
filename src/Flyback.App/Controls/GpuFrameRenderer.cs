@@ -7,22 +7,16 @@ using static Avalonia.OpenGL.GlConsts;
 namespace Flyback.App.Controls;
 
 /// <summary>
-/// Everything this project asks of OpenGL, in one place. It owns the two shader
-/// programs, the pair of textures the feedback history ping-pongs between, and
-/// the single vertex array a triangle needs — and nothing above it touches a GL
-/// call.
+/// Everything this project asks of OpenGL, in one place: the two shader programs,
+/// the pair of textures the feedback history ping-pongs between, and the single
+/// vertex array a triangle needs.
 /// </summary>
 /// <remarks>
-/// <para>
-/// Every method here must be called with the context current, which in practice
-/// means from inside <see cref="Avalonia.OpenGL.Controls.OpenGlControlBase"/>'s
-/// init, render and deinit callbacks and from nowhere else.
-/// </para>
-/// <para>
-/// The methods return an error string rather than throwing. A shader that will
-/// not compile is not exceptional — it is a machine this backend cannot run on,
-/// and the answer to it is to say so once and hand the frame back to the CPU.
-/// </para>
+/// Every method here must be called with the context current, which means from
+/// inside <see cref="Avalonia.OpenGL.Controls.OpenGlControlBase"/>'s callbacks and
+/// nowhere else. They return an error string rather than throwing: a shader that
+/// will not compile is a machine this backend cannot run on, and the answer is to
+/// say so once and hand the frame back to the CPU.
 /// </remarks>
 internal sealed class GpuFrameRenderer(GlslDialect dialect)
 {
@@ -110,12 +104,9 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
     /// the asking.
     /// </summary>
     /// <remarks>
-    /// Timed around the offscreen pass alone, and deliberately not around the
-    /// blit. The blit feeds the compositor, and a patch that samples its own last
-    /// frame makes this frame wait on the previous one having been presented — so
-    /// a fence after the blit reads one refresh interval whatever the shader cost,
-    /// and would report a fast patch as a slow one. The number this reports means
-    /// the same thing SynthRenderer's does: what it took to work out the picture.
+    /// Timed around the offscreen pass alone and not the blit: the blit feeds the
+    /// compositor, so a fence after it reads one refresh interval whatever the
+    /// shader cost and would report a fast patch as a slow one.
     /// </remarks>
     public double PatchMilliseconds { get; private set; }
 
@@ -233,19 +224,12 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
     /// before. One texture each, in the order the program names them.
     /// </summary>
     /// <remarks>
-    /// Keyed on the pictures themselves rather than on the shader text, because
-    /// the two do not change together: choosing a different photograph of the
-    /// same shape produces the same program and needs a different texture, and
-    /// turning a knob produces a different program and needs the same one. The
-    /// library upstream hands back the very same <see cref="LoadedImage"/> for a
-    /// path it has already read (ADR-0021 recompiles on every edit), so the
-    /// comparison is by reference and a knob drag uploads nothing.
-    /// <para>
-    /// Eight-bit textures with linear filtering, which is what the file held and
-    /// what <see cref="LoadedImage.At"/> does by hand on the other backend. Not
-    /// the half-float the feedback history needs: that is about a loop
-    /// accumulating its own error, and a photograph is read once.
-    /// </para>
+    /// Keyed on the pictures rather than the shader text, because the two do not
+    /// change together: a different photograph of the same shape is the same
+    /// program, and a knob turn is a different program with the same picture. The
+    /// library hands back the same <see cref="LoadedImage"/> for a path it has read,
+    /// so the comparison is by reference and a knob drag uploads nothing.
+    /// Eight-bit textures with linear filtering, which is what the file held.
     /// </remarks>
     private void Upload(GlInterface gl, IReadOnlyList<LoadedImage> wanted)
     {

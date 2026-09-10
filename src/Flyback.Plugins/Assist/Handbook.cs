@@ -231,24 +231,15 @@ internal static class Handbook
         """;
 
     /// <summary>
-    /// What to say about the sound, which is the one thing the briefing cannot
-    /// state without knowing how this run is configured.
+    /// What to say about the sound, which is the one thing the briefing cannot state
+    /// without knowing how this run is configured.
     /// </summary>
     /// <remarks>
-    /// <para>
-    /// All three are worth their place. A model told nothing would assume it
-    /// can hear — every other tool it has answers when called — and would
-    /// describe a sound it never heard. A model that <em>can</em> hear has to be
-    /// told to, because the loop it already knows is build, render, look, and a
-    /// patch with no picture in it offers nothing to look at.
-    /// </para>
-    /// <para>
-    /// And a model that hears the clip itself has to be told something different
-    /// again from one that is handed somebody else's account of it. The second
-    /// paragraph of each is the same warning aimed at opposite failures: a
-    /// borrowed ear agrees with whoever asked it, and one's own ear agrees with
-    /// whoever built the patch. Only the measurements answer to neither.
-    /// </para>
+    /// A model told nothing would assume it can hear and describe a sound it never
+    /// heard; one that can hear has to be told to, because the loop it knows is
+    /// build, render, look. And a model that hears the clip itself needs a different
+    /// warning from one handed somebody else's account: a borrowed ear agrees with
+    /// whoever asked it, and one's own ear agrees with whoever built the patch.
     /// </remarks>
     private const string Deaf = """
         You cannot hear the sound. If the patch makes noise, reason about it
@@ -430,11 +421,10 @@ internal static class Handbook
     /// </summary>
     /// <param name="prose"></param>
     /// <param name="hearing">
-    /// Whether this run has the <c>listen</c> tool, and whose ear answers it. It
-    /// changes one paragraph, and it has to change it: the briefing is the only
-    /// place the model is told what it can check, and being wrong about that
-    /// either wastes a tool it has, invents a sound it does not, or credits its
-    /// own impression to a listener that was never there.
+    /// Whether this run has the <c>listen</c> tool, and whose ear answers it. The
+    /// briefing is the only place the model is told what it can check, and being
+    /// wrong about that either wastes a tool it has or credits its own impression to
+    /// a listener that was never there.
     /// </param>
     /// <param name="modules"></param>
     public static string Render(ModuleCatalog modules, bool prose, Listener hearing = Listener.None)

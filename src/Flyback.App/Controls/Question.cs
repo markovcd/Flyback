@@ -9,23 +9,12 @@ namespace Flyback.App.Controls;
 /// Something asked in place, with a tick and a cross docked to the right of it.
 /// </summary>
 /// <remarks>
-/// A row rather than a dialog, because what is being asked about is on the
-/// screen and a dialog would cover it. The question replaces the thing it is
-/// about — the row a module was on, the entry being removed — so the answer is
-/// given where the thing stands rather than in front of it, and nothing has to
-/// be remembered across a modal.
-/// <para>
-/// The cross is dimmer than the tick, which is the one piece of styling here
-/// that means something: the two are not equal weights. Saying no is the
-/// default the row already had before it asked, so it is offered rather than
-/// urged.
-/// </para>
-/// <para>
-/// Shared because the inspector and the module list ask in exactly the same
-/// shape, and had said so in two places at slightly different sizes. What a
-/// caller still chooses is the wording, the tips and where the row sits; how a
-/// question looks is not a thing two places should be free to disagree about.
-/// </para>
+/// A row rather than a dialog, because what is being asked about is on the screen
+/// and a dialog would cover it: the question replaces the thing it is about, so
+/// nothing has to be remembered across a modal. The cross is dimmer than the tick,
+/// which is the one piece of styling here that means something — saying no is the
+/// default the row already had, so it is offered rather than urged. Shared because
+/// the inspector and the module list ask in exactly the same shape.
 /// </remarks>
 internal static class Question
 {

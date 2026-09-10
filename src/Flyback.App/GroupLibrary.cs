@@ -9,13 +9,12 @@ namespace Flyback.App;
 /// <remarks>
 /// The whole of what was read, trouble included: a fragment naming a module this
 /// build has not got is still listed, because the entry is a real thing somebody
-/// saved and hiding it would leave them wondering where it went. What it cannot
-/// do is arrive quietly full of holes — see <see cref="IsComplete"/>, which is
-/// the same check a paste makes and answered with the same sentence.
+/// saved. What it cannot do is arrive quietly full of holes — see
+/// <see cref="IsComplete"/>, the same check a paste makes.
 /// </remarks>
 /// <param name="Name">
 /// What the palette calls it: the name on the group inside, falling back to the
-/// file's own name for a patch that was dropped into the folder by hand.
+/// file's own name for a patch dropped into the folder by hand.
 /// </param>
 /// <param name="Path">The file it came from, which is also how it is removed.</param>
 public sealed record SavedGroup(string Name, string Path, PatchLoad Load)
@@ -36,21 +35,15 @@ public sealed record SavedGroup(string Name, string Path, PatchLoad Load)
 /// The groups somebody kept, as patch files in a folder of their own.
 /// </summary>
 /// <remarks>
+/// A file per group and each one an ordinary patch (ADR-0045), so there is no
+/// library format to invent and no index to keep in step — which also means a
+/// <c>.fbk</c> dropped into the folder is on the palette next time it opens, and a
+/// kept group can be mailed to somebody.
 /// <para>
-/// A file per group and each one an ordinary patch
-/// ([0045](0045-what-is-copied-is-a-patch-file.md)), so there is no library
-/// format to invent, no index to keep in step with what is on the disk, and no
-/// question about what a saved group <em>is</em>: it is the thing the clipboard
-/// already carries, written where it can be found again. Which also means a
-/// <c>.fbk</c> dropped into the folder by hand is on the palette next time it is
-/// opened, and a group saved here can be mailed to somebody.
-/// </para>
-/// <para>
-/// Nothing here is load-bearing. A folder that will not read is an empty
-/// palette section and not a failure to start, on the same terms
-/// <see cref="Assist.AssistantSettings"/> keeps. Writing is the exception and
-/// throws, because silently failing to keep what somebody just asked to keep is
-/// worse than a line in the status bar.
+/// Nothing here is load-bearing: a folder that will not read is an empty palette
+/// section rather than a failure to start. Writing is the exception and throws,
+/// because silently failing to keep what somebody just asked to keep is worse than
+/// a line in the status bar.
 /// </para>
 /// </remarks>
 public sealed class GroupLibrary
@@ -121,23 +114,15 @@ public sealed class GroupLibrary
         string.IsNullOrWhiteSpace(name) ? null : kept.FirstOrDefault(entry => Same(entry.Name, name));
 
     /// <summary>
-    /// Keeps <paramref name="group"/> and everything in it, replacing whatever
-    /// was kept under the same name.
+    /// Keeps <paramref name="group"/> and everything in it, replacing whatever was
+    /// kept under the same name.
     /// </summary>
     /// <remarks>
-    /// <para>
-    /// Replacing rather than making a second entry, because that is what saving
-    /// something under a name it already has means everywhere else — and two
-    /// rows reading "Voice" would be a list that cannot be used to tell them
-    /// apart.
-    /// </para>
-    /// <para>
-    /// Kept shut, whatever it was when it was kept. A box is the whole of what a
-    /// kept group is for — one thing to drop into a patch — and an open one
-    /// arrives as a heap of modules with a dashed line round them, which is the
-    /// same modules and none of the point. Opening one after it lands is a
-    /// double-click; finding the box it was meant to be is not.
-    /// </para>
+    /// Replacing, because that is what saving under a name it already has means
+    /// everywhere else, and two rows reading "Voice" would be a list that cannot
+    /// tell them apart. Kept shut whatever it was: a box is the whole of what a kept
+    /// group is for, and an open one arrives as a heap of modules with a dashed line
+    /// round them.
     /// </remarks>
     /// <param name="group">The box to keep. Its name is what the palette will call it.</param>
     /// <param name="patch">Where its modules are now. Not modified.</param>
@@ -205,15 +190,11 @@ public sealed class GroupLibrary
     }
 
     /// <summary>
-    /// A file for a name nothing is kept under yet.
+    /// A file for a name nothing is kept under yet. The name is a title and a file
+    /// name is not, so what goes on the disk is whatever survives the sieve, plus a
+    /// number where that collides. The name shown is read back out of the patch, so
+    /// a group called "In/Out" is listed as "In/Out" however its file was spelled.
     /// </summary>
-    /// <remarks>
-    /// The name is a title and a file name is not, so what goes on the disk is
-    /// whatever survives the sieve — and where that collides with a file already
-    /// there, a number. The name shown never comes from here: it is read back out
-    /// of the patch, so a group called "In/Out" is listed as "In/Out" however its
-    /// file had to be spelled.
-    /// </remarks>
     private string FreshPath(string name)
     {
         var stem = new string([.. name.Where(c => !Path.GetInvalidFileNameChars().Contains(c))]).Trim();

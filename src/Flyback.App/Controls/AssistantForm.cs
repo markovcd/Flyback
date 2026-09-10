@@ -10,26 +10,16 @@ namespace Flyback.App.Controls;
 /// A provider's settings, drawn from what the provider says it has.
 /// </summary>
 /// <remarks>
+/// Knowledge of the vocabulary rather than of any provider: nothing here could
+/// tell you which one it is drawing, and no model name or endpoint appears in it
+/// (ADR-0069).
 /// <para>
-/// The whole of the App's knowledge of an assistant's configuration is here, and
-/// it is knowledge of the vocabulary rather than of any provider: nothing in
-/// this class could tell you which one it is drawing, and no model name, no
-/// endpoint and no capability appears in it. That is ADR-0069, and it is the
-/// same route ADR-0055 took for a plugin's carried state.
-/// </para>
-/// <para>
-/// The declaration is asked for again after every change, because half of a form
-/// depends on the rest of it — a model decides whether looking is offered at
-/// all, a tick decides whether choosing an ear is live. What comes back is
-/// reconciled onto the controls already here rather than replacing them: a
-/// control that is rebuilt is a control that loses the caret somebody was typing
-/// at, and a field that goes and comes back should come back holding what it
-/// held.
-/// </para>
-/// <para>
-/// A shape this build has never heard of is skipped rather than drawn wrongly,
-/// so a provider written against a later vocabulary loses a row here rather than
-/// the form.
+/// The declaration is asked for again after every change, because half a form
+/// depends on the rest of it. What comes back is reconciled onto the controls
+/// already here rather than replacing them: a control that is rebuilt loses the
+/// caret somebody was typing at. A shape this build has never heard of is skipped,
+/// so a provider written against a later vocabulary loses a row rather than the
+/// form.
 /// </para>
 /// </remarks>
 public sealed class AssistantForm : UserControl
@@ -247,15 +237,12 @@ public sealed class AssistantForm : UserControl
     }
 
     /// <summary>
-    /// A list to choose from, which may also be typed into.
+    /// A list to choose from, which may also be typed into. What is stored is always
+    /// in the list whether or not the provider offered it — a model released after
+    /// this build, or one at an endpoint somebody pointed this at by hand — because
+    /// a setting that rewrote itself on being looked at is worse than an unfamiliar
+    /// name in a box.
     /// </summary>
-    /// <remarks>
-    /// What is stored is always in the list whether or not the provider offered
-    /// it — a model released after this build, or one at an endpoint somebody
-    /// pointed this at by hand. It is shown rather than corrected, because a
-    /// setting that quietly rewrote itself on being looked at would be worse
-    /// than an unfamiliar name in a box.
-    /// </remarks>
     private sealed class PickRow : Row
     {
         private readonly ComboBox box;

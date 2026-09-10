@@ -5,19 +5,13 @@ namespace Flyback.Core.Compile;
 /// actually touches: how many inputs it reads, and how wide a result it writes.
 /// </summary>
 /// <remarks>
-/// The interpreter reads registers without a bounds check, so something has to
-/// have established that every index an op names is one the register bank holds
-/// — and that is <see cref="CompiledPatch"/>'s constructor, walking the program
-/// once with this. It can only ask about the fields an op reads: <c>A</c> is -1
-/// on a <see cref="OpCode.Const"/> and reading it would fail a check that the
-/// interpreter never performs, so a table of arities is what separates "names a
-/// register out of range" from "names no register at all".
-/// <para>
-/// A table rather than a property on the op, because the answer belongs to the
-/// code and not to the instance — every Add reads two, and storing that on each
-/// of them would be the same byte written a thousand times and a thousand
-/// chances to write it wrong.
-/// </para>
+/// The interpreter reads registers without a bounds check, so
+/// <see cref="CompiledPatch"/>'s constructor walks the program once with this. It
+/// can only ask about the fields an op reads — <c>A</c> is -1 on a
+/// <see cref="OpCode.Const"/> — so a table of arities is what separates "names a
+/// register out of range" from "names no register at all". A table rather than a
+/// property on the op, because every Add reads two and storing that on each of
+/// them would be a thousand chances to write it wrong.
 /// </remarks>
 internal static class OpShape
 {

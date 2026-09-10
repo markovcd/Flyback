@@ -9,14 +9,9 @@ namespace Flyback.App.Midi;
 /// struck since the program started.
 /// </summary>
 /// <remarks>
-/// One indexed voice. Polyphony is supplied by <see cref="MidiHub"/>, which owns
-/// a fixed set of these and assigns each new note to the first free voice.
-/// <para>
-/// Written on the thread the keys arrive on and read on the thread that plays,
-/// which is what <see cref="LiveValues"/> is built for: single floats, no lock,
-/// and at worst one evaluation seeing a new note's pitch beside an old note's
-/// gate.
-/// </para>
+/// One indexed voice; polyphony is <see cref="MidiHub"/>'s, which owns a fixed set
+/// of these. Written on the thread the keys arrive on and read on the thread that
+/// plays, which is what <see cref="LiveValues"/> is built for.
 /// </remarks>
 internal sealed class MidiVoice
 {
@@ -33,19 +28,13 @@ internal sealed class MidiVoice
     /// What a voice reads before anything has been played, which is nothing.
     /// </summary>
     /// <remarks>
-    /// Nought rather than a note in the middle somewhere, so that a keyboard
-    /// nobody has touched and a program nobody is playing at all read the same —
-    /// see <see cref="LiveValues"/>, where an input with no block behind it is
-    /// nought. Resting at middle C was tried first and is the more comfortable
-    /// number, and it makes the picture on screen differ from the picture the
-    /// same patch exports: two answers to "nobody is playing" is one too many,
-    /// and the one that costs nothing to say is nought.
-    /// <para>
-    /// Nothing is protected by a friendlier resting pitch anyway. A patch reading
-    /// this without a gate is silent at note nought and inaudible near it, and
-    /// the first key pressed moves the pitch without a click, because an
-    /// oscillator carries its phase across a change of frequency (ADR-0030).
-    /// </para>
+    /// Nought rather than a note in the middle somewhere, so a keyboard nobody has
+    /// touched and a program nobody is playing read the same — see
+    /// <see cref="LiveValues"/>. Middle C was tried first and makes the picture on
+    /// screen differ from the picture the same patch exports. Nothing is protected
+    /// by a friendlier resting pitch anyway: a patch reading this without a gate is
+    /// silent at note nought, and the first key moves the pitch without a click
+    /// (ADR-0030).
     /// </remarks>
     public float Pitch { get; private set; }
 

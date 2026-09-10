@@ -43,35 +43,22 @@ public partial class NodeCatalog
     /// The envelope, as four straight lines and a latch.
     /// </summary>
     /// <remarks>
-    /// Stateful, and holding that state in two of the one-evaluation cells
-    /// <see cref="Emitter.AllocateUnitSlot"/> hands out rather than in an opcode
-    /// of its own — the same way the Unit Delay carries a cycle round, and the
-    /// same way ADR-0041 has a plugin hold a filter's integrators. Nothing in the
-    /// engine had to change for it.
-    /// <para>
-    /// One cell is the level. The other is the whole of what makes this an
-    /// envelope rather than a slew limiter: whether the peak has been reached
-    /// since the gate opened. Without it, "am I still attacking?" would have to
-    /// be read off the level — and the level passes back down through every
-    /// value it rose through, so the answer would flip back to attacking the
-    /// moment the decay started and the two stages would chatter against each
-    /// other. Latched instead, and cleared by the gate closing, which is also
-    /// what makes a note retrigger from wherever its release had got to.
-    /// </para>
+    /// Stateful, in two of the one-evaluation cells
+    /// <see cref="Emitter.AllocateUnitSlot"/> hands out rather than an opcode of its
+    /// own (ADR-0041). One cell is the level; the other is whether the peak has been
+    /// reached since the gate opened, which is what makes this an envelope rather
+    /// than a slew limiter — read off the level instead, the answer would flip back
+    /// to attacking the moment the decay started and the two stages would chatter.
     /// <para>
     /// Straight lines rather than the exponentials an analogue envelope makes,
-    /// because a knob that says a tenth of a second should take a tenth of a
-    /// second: an exponential approach never quite arrives, and every stage would
-    /// need a threshold to decide it had.
+    /// because a knob that says a tenth of a second should take one: an exponential
+    /// approach never quite arrives.
     /// </para>
     /// <para>
-    /// One evaluation of every program answers <see cref="Emitter.HasMemory"/>
-    /// with no, because the cell behind it is read before it has been written —
-    /// so the first evaluation hands out the gate rather than the envelope,
-    /// exactly as the filter hands out its dry input there. It is one sample at
-    /// the very start of a program and only where the gate is already open at
-    /// it, which is not a case a patch can be left sitting in; the alternative
-    /// is a second cell spent on a state the module is never in again.
+    /// The first evaluation of every program answers
+    /// <see cref="Emitter.HasMemory"/> with no, so it hands out the gate rather than
+    /// the envelope — one sample at the very start, against a second cell spent on a
+    /// state the module is never in again.
     /// </para>
     /// </remarks>
     private static Slot[] EmitAdsr(Emitter em, EmitContext node)
@@ -131,16 +118,13 @@ public partial class NodeCatalog
         em.UnitWrite(levelCell, next);
         em.UnitWrite(peakCell, peaked);
 
-        // What it means where there is nothing to remember. A picture is one
-        // evaluation with nothing before it, so there is no time for a shape to
-        // happen in, and the envelope becomes a wire — the gate itself, the way
-        // a Delay with nothing to remember passes its input straight through.
+        // What it means where there is nothing to remember: a picture is one
+        // evaluation with nothing before it, so the envelope becomes a wire — the
+        // gate itself.
         //
-        // The sustain looks like the better answer and is not: it is the level a
-        // held gate settles at, but every percussive sound sets it to nothing, so
-        // a drum would draw a black screen and read as a patch that does not
-        // work. An envelope that is open whenever its gate is at least shows the
-        // rhythm, which is the part of it a picture can carry.
+        // The sustain looks like the better answer and is not: every percussive
+        // sound sets it to nothing, so a drum would draw a black screen. An
+        // envelope that is open whenever its gate is at least shows the rhythm.
         return [em.Ternary(OpCode.Mix, em.Ternary(OpCode.Clamp, node[0], zero, one), next, live)];
 
         // Ten to the knob, held above a length that can actually be divided by.

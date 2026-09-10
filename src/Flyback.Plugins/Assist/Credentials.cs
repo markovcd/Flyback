@@ -22,27 +22,15 @@ public enum CredentialSource
 /// Where an assistant's key comes from, in order of preference.
 /// </summary>
 /// <remarks>
-/// <para>
 /// A key somebody entered wins, because entering one is a deliberate act and an
-/// exported variable is the room somebody is standing in. The other way round
-/// would mean typing a key into the settings on a machine that exports one has
-/// no effect whatever, and cannot be made to have one from inside the
-/// application at all.
-/// </para>
+/// exported variable is the room they are standing in — the other way round, typing
+/// a key on a machine that exports one could have no effect at all.
 /// <para>
-/// This session first, then the store: <see cref="Accept"/> writes both when it
-/// is asked to keep, so they agree whenever they can, and where they cannot it
-/// is because somebody just typed a key and declined to keep it. That one is the
-/// newer, and answering with the old one would be the same bug in miniature.
-/// </para>
-/// <para>
-/// Then the environment, which is never written back — someone who exports a key
-/// has said where it lives, and taking a copy would be deciding otherwise on
-/// their behalf. <see cref="Forget"/> is the way back to it, which is what makes
-/// an entered key safe to prefer.
-/// </para>
-/// <para>
-/// Nothing here ever writes a secret to disk itself; see ADR-0034.
+/// This session first, then the store: <see cref="Accept"/> writes both when asked
+/// to keep, and where they disagree it is because somebody just typed a key and
+/// declined to keep it. Then the environment, which is never written back —
+/// <see cref="Forget"/> is the way back to it. Nothing here writes a secret to disk
+/// itself (ADR-0034).
 /// </para>
 /// </remarks>
 public sealed class Credentials(ISecretStore? store)
@@ -122,15 +110,11 @@ public sealed class Credentials(ISecretStore? store)
     }
 
     /// <summary>
-    /// Puts the key already in hand into the store, for somebody who typed one
-    /// and then decided to keep it.
+    /// Puts the key already in hand into the store, for somebody who typed one and
+    /// then decided to keep it. The field empties itself once a key has been taken,
+    /// so without this the only way to change one's mind is to type the whole secret
+    /// again.
     /// </summary>
-    /// <remarks>
-    /// The field empties itself once a key has been taken, so without this the
-    /// only way to change one's mind about keeping is to type the whole secret
-    /// again — a secret this is already holding, and which the person may well
-    /// have pasted from somewhere they have since closed.
-    /// </remarks>
     public void KeepWhatIsHeld(string account)
     {
         if (Store is null || session.GetValueOrDefault(account) is not { } secret) return;

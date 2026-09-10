@@ -6,29 +6,18 @@ using Flyback.Core;
 namespace Flyback.Plugins.Assist;
 
 /// <summary>
-/// What the assistant panel was last set to. The first thing this application
-/// has ever written about itself.
+/// What the assistant panel was last set to. The first thing this application has
+/// ever written about itself.
 /// </summary>
 /// <remarks>
-/// <para>
 /// <b>There is no key in here, and there never will be.</b> Which provider, and
-/// whatever that provider asked to be remembered — those are choices, and a
-/// choice is worth remembering in a file. A credential is not: it goes to the
-/// operating system's own store or nowhere at all. See ADR-0034 and
-/// <see cref="Credentials"/>.
-/// </para>
+/// whatever that provider asked to be remembered, are choices; a credential is not,
+/// and goes to the operating system's own store or nowhere (ADR-0034).
 /// <para>
-/// What a provider's choices <em>are</em> is not written down here, because
-/// nothing in the App knows — a provider declares its own settings and this
-/// keeps the answers under the names it gave them (ADR-0069). So the file grew
-/// one level: a bag of strings per provider, which is also what stops two
-/// providers with a setting of the same name from overwriting each other, and
-/// what lets somebody keep a configured endpoint on one while trying another.
-/// </para>
-/// <para>
-/// Nothing here is load-bearing. A file that is missing, unreadable or written
-/// by a different version means the defaults, because losing a preference is not
-/// worth failing to start over.
+/// What a provider's choices are is not written down here, because nothing in the
+/// App knows (ADR-0069) — so the file is a bag of strings per provider, which also
+/// stops two providers with a setting of the same name from overwriting each
+/// other. Nothing here is load-bearing: an unreadable file means the defaults.
 /// </para>
 /// </remarks>
 public sealed class AssistantSettings
@@ -64,31 +53,22 @@ public sealed class AssistantSettings
 
     /// <summary>
     /// Whether every turn is written out to a file under
-    /// <see cref="ConversationLog.Folder"/>, one file per conversation. Off
-    /// until somebody turns it on.
+    /// <see cref="ConversationLog.Folder"/>, one file per conversation. Off until
+    /// somebody turns it on — a choice about this machine rather than about any
+    /// provider, since the file is written regardless of who was asked.
     /// </summary>
-    /// <remarks>
-    /// A choice about this machine rather than about any provider, for the same
-    /// reason <see cref="RememberKey"/> is: the file is written here regardless
-    /// of who was asked.
-    /// </remarks>
     public bool LogConversations { get; set; }
 
     /// <summary>
     /// What each provider was last set to, filed under its id.
     /// </summary>
     /// <remarks>
-    /// Plain strings, in the shape a provider's own <see cref="AssistantField"/>
-    /// list gave them, so the file stays readable and hand-editable and this
-    /// class stays ignorant of what any of it means. A settable property with a
-    /// public setter because that is what the serialiser needs; everything in
-    /// the program goes through <see cref="Of"/> and <see cref="Remember"/>.
-    /// <para>
-    /// Strings in here, and not necessarily strings in the file — see
-    /// <see cref="ChoiceConverter"/>. A provider that keeps something structured
-    /// keeps it as text on this side of the boundary and gets it back as the
-    /// same text, while the file holds it as what it is.
-    /// </para>
+    /// Plain strings, in the shape a provider's own <see cref="AssistantField"/> list
+    /// gave them, so the file stays hand-editable and this class stays ignorant of
+    /// what any of it means. Public setter because that is what the serialiser
+    /// needs; everything else goes through <see cref="Of"/> and
+    /// <see cref="Remember"/>. Strings here and not necessarily strings in the file —
+    /// see <see cref="ChoiceConverter"/>.
     /// </remarks>
     public Dictionary<string, Dictionary<string, string>> Choices { get; set; } = new(StringComparer.Ordinal);
 
@@ -145,24 +125,15 @@ public sealed class AssistantSettings
 /// One provider's answers, written in the file as what they actually are.
 /// </summary>
 /// <remarks>
+/// The settings shape is a bag of strings per provider (ADR-0069), but a provider
+/// may keep something structured — a survey of an endpoint is a list of models —
+/// and writing that as a quoted string puts a second layer of escaping over every
+/// quote in it. So the boundary keeps its strings and the file keeps its shape.
 /// <para>
-/// The settings shape is a bag of strings per provider and that is not
-/// negotiable: it is what lets the shell carry answers it cannot interpret
-/// (ADR-0069). But a provider may keep something that is itself structured — a
-/// survey of an endpoint is a list of models — and writing that as a quoted
-/// string puts a second layer of escaping over every quote in it, which turns
-/// the part of the file somebody most wants to read into the part they cannot.
-/// </para>
-/// <para>
-/// So the boundary keeps its strings and the file keeps its shape. A value that
-/// parses as an array or an object is written inline and read back as exactly
-/// the text that was written, which the provider parses as it always did.
-/// </para>
-/// <para>
-/// Arrays and objects only, deliberately. A value of <c>1</c> or <c>true</c>
-/// would be just as writable and would come back as a different string than it
-/// went in as — <c>"007"</c> is the one that gives the game away — and a setting
-/// that changes under a save is worse than one that is quoted.
+/// Arrays and objects only: <c>1</c> or <c>true</c> would be just as writable and
+/// would come back as a different string than it went in as — <c>"007"</c> gives
+/// the game away — and a setting that changes under a save is worse than a quoted
+/// one.
 /// </para>
 /// </remarks>
 internal sealed class ChoiceConverter : JsonConverter<Dictionary<string, string>>

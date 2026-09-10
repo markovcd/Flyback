@@ -1,22 +1,16 @@
 namespace Flyback.App.Capture;
 
 /// <summary>
-/// The one place a recording touches the sound callback: a fixed ring the
-/// callback writes into and the encoder thread drains.
+/// The one place a recording touches the sound callback: a fixed ring the callback
+/// writes into and the encoder thread drains.
 /// </summary>
 /// <remarks>
-/// Single producer, single consumer, and no lock on either side. The audio
-/// thread may not block and may not allocate, which rules out a queue and rules
-/// out growing — so the buffer is sized once, when recording arms, and the two
-/// cursors only ever move forward. Each side writes exactly one of them, which
-/// is what makes plain volatile reads enough.
-/// <para>
-/// An overrun drops whole buffers rather than partial ones. A partial write
-/// would shift every later sample by a channel and turn a glitch into a swapped
-/// stereo image for the rest of the take. It is counted rather than hidden,
-/// because a recording that quietly lost a second of sound is worse than one
-/// that says it did.
-/// </para>
+/// Single producer, single consumer, no lock on either side. The audio thread may
+/// not block and may not allocate, so the buffer is sized once when recording arms
+/// and the two cursors only move forward — each side writes exactly one of them,
+/// which is what makes plain volatile reads enough. An overrun drops whole buffers
+/// rather than partial ones, since a partial write would shift every later sample
+/// by a channel; it is counted rather than hidden.
 /// </remarks>
 internal sealed class AudioRing
 {

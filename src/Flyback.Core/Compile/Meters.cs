@@ -5,28 +5,19 @@ namespace Flyback.Core.Compile;
 /// know about it: one number per Meter, per frame.
 /// </summary>
 /// <remarks>
-/// <see cref="Traces"/>'s sibling and its opposite. That one carries a stretch of
-/// the past across as a buffer, which the screen reads with
-/// <see cref="OpCode.Table"/> — and a table is the one thing the shader cannot
-/// draw, so a patch charting sound draws on the processor. This carries the same
-/// stretch across as its loudness, which is a single number, and a single number
-/// is something the picture already knows how to be told: it is played in the
-/// way a key is, through <see cref="LiveValues"/> and out the other side as
-/// <see cref="OpCode.LoadLive"/> — a uniform on the shader, and free.
+/// <see cref="Traces"/>'s opposite. That carries a stretch of the past across as a
+/// buffer, read with <see cref="OpCode.Table"/>, which the shader cannot draw;
+/// this carries the same stretch across as its loudness, which is played in the
+/// way a key is — through <see cref="LiveValues"/> and out as
+/// <see cref="OpCode.LoadLive"/>, a uniform on the shader and free.
 /// <para>
-/// So the picture does not work out how loud the sound is. Nothing in the
-/// program does, and nothing in the program could: a frame is one evaluation per
-/// pixel with no past to reduce, and the past belongs to the other sink
-/// entirely. What happens instead is that something outside both programs
-/// listens to the ring the speakers are filling and <em>plays</em> the answer
-/// into the picture, which is exactly what a keyboard does and needed no new
-/// opcode to say.
+/// So the picture does not work out how loud the sound is, and could not: a frame
+/// is one evaluation per pixel with no past to reduce. Something outside both
+/// programs listens to the ring the speakers are filling and plays the answer in.
 /// </para>
 /// <para>
-/// Once a frame, on whichever thread the frame is drawn from. That is the whole
-/// resolution of it: a picture cannot show a level it was told about between two
-/// of its own frames, so measuring more often would be measuring for nobody. What
-/// a short window buys instead is a level that moves the instant the sound does.
+/// Once a frame, on whichever thread the frame is drawn from: a picture cannot
+/// show a level it was told about between two of its own frames.
 /// </para>
 /// </remarks>
 public static class Meters
@@ -61,20 +52,15 @@ public static class Meters
     /// The speakers' program, whose taps say which ring belongs to which node.
     /// </param>
     /// <param name="memory">
-    /// The rings themselves, and null where there are none — no Meter in the
-    /// patch, or sound that has never been switched on. Everything reads nought
-    /// there, which is <see cref="Silence"/> and is deliberately not what
-    /// <see cref="Traces.Refresh"/> does with the same absence: a chart with the
-    /// beam stopped is a picture of the last sweep and reads as one, and a level
-    /// frozen at whatever it was when the sound stopped is a lit picture with
-    /// nothing playing, which reads as a fault.
+    /// The rings themselves, and null where there are none. Everything reads nought
+    /// there, which is deliberately not what <see cref="Traces.Refresh"/> does with
+    /// the same absence: a chart holding its last sweep reads as a stopped beam,
+    /// where a frozen level is a lit picture with nothing playing.
     /// </param>
     /// <param name="blocks">
     /// Every block that might be listening — the screen's, and the speakers' own
-    /// where something in the sound is driven by the level of the sound. Written
-    /// by name, so a block that does not read a key is not touched by it, and the
-    /// two are allowed to disagree about which meters exist while a recompile is
-    /// in flight.
+    /// where the sound is driven by its own level. Written by name, so the two are
+    /// allowed to disagree about which meters exist while a recompile is in flight.
     /// </param>
     public static void Refresh(CompiledPatch heard, DelayState? memory, params LiveValues[] blocks)
     {

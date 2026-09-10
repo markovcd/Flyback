@@ -31,39 +31,26 @@ public partial class NodeCatalog
     }
 
     /// <summary>
-    /// Four live inputs read straight out, and one of them differenced into an
-    /// edge.
+    /// Four live inputs read straight out, and one of them differenced into an edge.
     /// </summary>
     /// <remarks>
-    /// Nearly the whole module is <see cref="Emitter.Live"/>: the instrument is
-    /// filled in from outside while the program runs, and reading it is one op
-    /// per signal. What is not free is 'trigger', and the reason is the same wall
-    /// the Sample's own trigger met from the other side.
+    /// Nearly the whole module is <see cref="Emitter.Live"/>. What is not free is
+    /// 'trigger': nothing outside a program can hand it a pulse, since whoever fills
+    /// the block in knows neither how long an evaluation is nor when one happens —
+    /// the ear takes 192,000 a second and the eye sixty, off the same block. So what
+    /// arrives is a count of notes struck, and each path differences it against a
+    /// cell to find its own edge at its own rate.
     /// <para>
-    /// Nothing outside a program can hand it a pulse. A pulse means "high for
-    /// exactly one evaluation", and whoever is filling the block in knows neither
-    /// how long an evaluation is nor when one happens — the ear takes 192,000 a
-    /// second and the eye sixty, off the same block. So what arrives is a count of
-    /// notes struck, which only ever goes up, and the pulse is made here by
-    /// differencing it against a cell: each path finds its own edge, at its own
-    /// rate, on the evaluation the count moved.
-    /// </para>
-    /// <para>
-    /// The count is kept in a clock cell rather than a signal one. A signal cell
-    /// is clamped to the rails, which is right for a value a wire can reach and
-    /// wrong for a tally: the sixteenth note of a session would pin it, every
-    /// evaluation after would look like a fresh strike, and the trigger would
-    /// stick high for good. The same reasoning as
-    /// <see cref="OpCode.ClockWrite"/>, which the Sample reached for to hold a
-    /// playhead.
+    /// The count is kept in a clock cell rather than a signal one, which is clamped
+    /// to the rails: the sixteenth note of a session would pin a tally, and the
+    /// trigger would stick high for good. Same reasoning as
+    /// <see cref="OpCode.ClockWrite"/>.
     /// </para>
     /// <para>
     /// Both the edge and the gap it cuts in the gate are multiplied by
-    /// <see cref="Emitter.HasMemory"/>, so the picture is given a chosen answer
-    /// rather than an emergent one — ADR-0041's rule. It is load-bearing here
-    /// rather than tidy: with no memory the cell reads nought at every pixel, so
-    /// the count itself would look like a change, and one note into a session the
-    /// trigger would be stuck high and the gate held shut across the whole screen.
+    /// <see cref="Emitter.HasMemory"/> (ADR-0041), which is load-bearing: with no
+    /// memory the cell reads nought at every pixel, so the count itself would look
+    /// like a change and the gate would be held shut across the whole screen.
     /// </para>
     /// </remarks>
     private static Slot[] EmitMidi(Emitter em, EmitContext node)
@@ -109,16 +96,10 @@ public partial class NodeCatalog
 /// </summary>
 /// <remarks>
 /// The first extra in the engine that declares its editor rather than having one
-/// written for it ([0055](0055-a-plugins-extra-declares-its-editor.md)). The
-/// other three needed a control of their own — a step list, twelve toggles, a
-/// file dialog — and this one needs a list of names, which is exactly what the
-/// declarative route already draws.
-/// <para>
-/// <see cref="Fields"/> is computed on every read rather than held, because what
-/// it lists is what is plugged in right now. That is the one thing the two fixed
-/// kinds never had to do: a number's range does not change while the panel is
-/// open, and a device list does.
-/// </para>
+/// written for it (ADR-0055): the other three needed a control of their own, and
+/// this one needs a list of names. <see cref="Fields"/> is computed on every read
+/// rather than held, because what it lists is what is plugged in right now — the
+/// one thing the fixed kinds never had to do.
 /// </remarks>
 public sealed record MidiExtra : NodeExtra
 {
@@ -142,15 +123,12 @@ public sealed record MidiExtra : NodeExtra
     ];
 
     /// <summary>
-    /// The ordinary fold, and a word about a device that is not here.
+    /// The ordinary fold, and a word about a device that is not here. Reported
+    /// rather than repaired, which is <see cref="SampleExtra"/>'s bargain with a
+    /// missing file: a patch written on a machine with a keyboard still means that
+    /// keyboard, and quietly moving it to the computer's keys would be a different
+    /// patch wearing the same name.
     /// </summary>
-    /// <remarks>
-    /// Reported rather than repaired, which is <see cref="SampleExtra"/>'s bargain
-    /// with a missing file. A patch written on a machine with a keyboard on it
-    /// still means that keyboard when it is opened on a machine without one, and
-    /// quietly moving it to the computer's keys would be a different patch wearing
-    /// the same name. So the choice stands and the silence is explained.
-    /// </remarks>
     public override EmitContext Fold(EmitContext ctx, NodeInstance node, ExtraEnv env)
     {
         var chosen = Fields[0] is ExtraField.Choice field

@@ -5,16 +5,11 @@ namespace Flyback.App.Capture;
 /// encoder takes whatever is there when it next looks.
 /// </summary>
 /// <remarks>
-/// A queue would be the wrong shape. The preview draws as fast as it can and the
-/// file wants thirty frames a second, so most of what is drawn is surplus by the
-/// time anyone asks for it — and the frame that should go in the file is always
-/// the most recent one, never the oldest waiting. Keeping one means the surplus
-/// is discarded where it is cheapest, before it is encoded.
-/// <para>
-/// Three buffers and an atomic swap: one the producer is filling, one published,
-/// one the consumer is reading. Nothing is copied to hand a frame over and
-/// neither side ever waits for the other.
-/// </para>
+/// A queue would be the wrong shape: the preview draws as fast as it can and the
+/// file wants thirty frames a second, so the frame that should go in is always the
+/// most recent rather than the oldest waiting. Three buffers and an atomic swap —
+/// one being filled, one published, one being read — so nothing is copied to hand
+/// a frame over and neither side waits.
 /// </remarks>
 internal sealed class FrameMailbox
 {

@@ -4,21 +4,20 @@ using System.Text;
 namespace Flyback.Core.Render;
 
 /// <summary>
-/// Writes a RIFF AVI holding a Motion JPEG video stream and, optionally, a
-/// 16-bit PCM audio stream interleaved with it.
+/// Writes a RIFF AVI holding a Motion JPEG video stream and, optionally, a 16-bit
+/// PCM audio stream interleaved with it.
 /// </summary>
 /// <remarks>
-/// AVI rather than MP4 for the same reason <see cref="WavWriter"/> is a WAV: it
-/// is a container simple enough to write correctly by hand, and Motion JPEG is
-/// the only compression that fits inside one without an inter-frame codec. MP4
-/// with H.264 would be a smaller file and is not a thing anyone writes in four
-/// hundred lines.
-///
-/// The cost is a header that has to be revisited. How many frames there turned
-/// out to be, how large the largest chunk was and where every chunk landed are
-/// all written at the front and none of them are known until the end, so this
-/// needs a stream it can seek back through. That also means <see cref="Dispose"/>
-/// is not a formality: a file whose header was never patched is not a video.
+/// AVI rather than MP4 for the reason <see cref="WavWriter"/> is a WAV: a
+/// container simple enough to write correctly by hand, and Motion JPEG is the only
+/// compression that fits inside one without an inter-frame codec.
+/// <para>
+/// The cost is a header that has to be revisited — the frame count, the largest
+/// chunk and every chunk's position are written at the front and none is known
+/// until the end — so this needs a seekable stream, and
+/// <see cref="Dispose"/> is not a formality: a file whose header was never patched
+/// is not a video.
+/// </para>
 /// </remarks>
 public sealed class AviWriter : IDisposable
 {

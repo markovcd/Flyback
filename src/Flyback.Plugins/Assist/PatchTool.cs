@@ -17,22 +17,17 @@ public sealed record PatchTool(string Name, string Description, string Schema);
 /// What a tool call produced.
 /// </summary>
 /// <remarks>
-/// A refusal is a value, not an exception, and that is load-bearing rather than
-/// a matter of taste: providers reject the whole next request when a tool call
-/// has no matching result, so a tool that threw would end the conversation
-/// instead of the call. The model is meant to read <see cref="Text"/>, learn
-/// what it did wrong, and try again — which it cannot do if it never gets a
-/// turn. The same reasoning already governs <see cref="Hosting.PluginProblem"/>
-/// and <see cref="Core.Graph.ModuleAddition"/>.
+/// A refusal is a value, not an exception, and that is load-bearing: providers
+/// reject the whole next request when a tool call has no matching result, so a tool
+/// that threw would end the conversation instead of the call. The model is meant to
+/// read <see cref="Text"/>, learn what it did wrong and try again.
 /// </remarks>
 /// <param name="Png">A picture the model should be shown, or null.</param>
 /// <param name="Wav">
-/// A sound the model should be played, as a RIFF/WAVE file, or null. Kept
-/// beside <paramref name="Png"/> rather than folded into one "media" field
-/// because the two are not interchangeable anywhere they are used: a provider
-/// that takes a picture may well not take a sound, the panel shows one and
-/// lists the other, and a caller that handled "some bytes" without knowing
-/// which it had would be a caller that could send a WAV as a PNG.
+/// A sound the model should be played, as a RIFF/WAVE file, or null. Kept beside
+/// <paramref name="Png"/> rather than folded into one "media" field because the two
+/// are not interchangeable anywhere they are used — a provider that takes a picture
+/// may well not take a sound.
 /// </param>
 public sealed record ToolOutcome(bool Ok, string Text, byte[]? Png = null, byte[]? Wav = null)
 {

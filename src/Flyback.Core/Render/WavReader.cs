@@ -5,15 +5,11 @@ using Flyback.Core.Compile;
 namespace Flyback.Core.Render;
 
 /// <summary>
-/// Why a file could not be read as audio, or <see cref="None"/> where it could.
+/// Why a file could not be read as audio, or <see cref="None"/> where it could. A
+/// value rather than an exception, for the callers' sake: a malformed sample is
+/// something the compiler says about a patch, in the same sentence it says
+/// everything else.
 /// </summary>
-/// <remarks>
-/// A value rather than an exception, for <see cref="WavReader"/>'s callers
-/// rather than for its own sake: a missing or malformed sample is something the
-/// compiler says about a patch, in the same sentence it says everything else,
-/// and a throw would have to be caught and turned back into one of these
-/// somewhere less able to say which module it was about.
-/// </remarks>
 public enum WavFault
 {
     None,
@@ -33,28 +29,16 @@ public enum WavFault
 
 /// <summary>
 /// Minimal RIFF/WAVE decoder, the counterpart to <see cref="WavWriter"/> and
-/// written here for the same reason: reading a sample must work on a build
-/// server with nothing installed, so it cannot depend on an audio library.
+/// written here for the same reason: reading a sample must work on a build server
+/// with nothing installed.
 /// </summary>
 /// <remarks>
-/// <para>
-/// Mixed down to mono on the way in, because the op that reads one is scalar
-/// like every other signal in the machine. A stereo file becomes the average of
-/// its channels, which is what a mono sum is; anything that wants the two apart
-/// wants two modules, and a second socket on this one would be a stereo path
-/// the rest of the instrument does not have.
-/// </para>
-/// <para>
-/// PCM only — 8, 16, 24 and 32 bit integer, and 32 and 64 bit float, which is
-/// everything a recorder or an editor writes. Compressed WAVE payloads are
-/// refused by name rather than decoded: they are a codec each, and a sample
-/// nobody can read is better said out loud than guessed at.
-/// </para>
-/// <para>
-/// Chunks are walked rather than assumed, because a file from an editor
-/// routinely carries LIST, cue and fact chunks between the header and the audio.
-/// <see cref="WavWriter"/>'s own output is the simple case and not the only one.
-/// </para>
+/// Mixed down to mono on the way in, because the op that reads one is scalar like
+/// every other signal; anything wanting the two channels apart wants two modules.
+/// PCM only — 8, 16, 24 and 32 bit integer, and 32 and 64 bit float — with
+/// compressed payloads refused by name rather than guessed at. Chunks are walked
+/// rather than assumed, because a file from an editor routinely carries LIST, cue
+/// and fact chunks before the audio.
 /// </remarks>
 public static class WavReader
 {

@@ -4,29 +4,20 @@ using Avalonia.Input;
 namespace Flyback.App.Controls;
 
 /// <summary>
-/// A list you point at. It is a <see cref="ComboBox"/> in every way but one: no
-/// keystroke changes what it says.
+/// A list you point at. A <see cref="ComboBox"/> in every way but one: no keystroke
+/// changes what it says.
 /// </summary>
 /// <remarks>
-/// A ComboBox answers the keyboard twice over. An arrow moves the selection with
-/// the dropdown shut, and a letter jumps to the first item beginning with it —
-/// and both of those *commit*, raising SelectionChanged for every step on the
-/// way. That is the ordinary behaviour of a list of harmless options, and it is
-/// the wrong behaviour for every list in this window.
+/// A ComboBox answers the keyboard twice over — an arrow moves the selection with
+/// the dropdown shut, a letter jumps to the first matching item — and both commit,
+/// raising SelectionChanged for every step. Picking a preset throws away the patch
+/// on the canvas, so arrowing through fourteen throws it away fourteen times; and
+/// a bare letter belongs to the instrument, so a picker that took one would answer
+/// a note by changing the patch under it.
 /// <para>
-/// Two things make it wrong here. What these lists do is not harmless: picking a
-/// preset throws away the patch on the canvas, and arrowing through fourteen of
-/// them throws it away fourteen times. And a bare letter belongs to the
-/// instrument now — a patch holding a MIDI In is played on the letters, so a
-/// picker that took one would answer a note by changing the patch under it.
-/// </para>
-/// <para>
-/// Ignored rather than marked handled, which is the whole of the difference
-/// between this and swallowing the key. The event goes on to the window exactly
-/// as though the picker were not focused, so the letters still play and the
-/// shortcuts still work; what is given up is only the picker's own reading of
-/// them. Tab is untouched for the same reason — moving the focus is the
-/// TopLevel's business and was never this control's.
+/// Ignored rather than marked handled, so the event goes on to the window exactly
+/// as though the picker were not focused: the letters still play and the shortcuts
+/// still work. Tab is untouched, being the TopLevel's business.
 /// </para>
 /// </remarks>
 internal sealed class Picker : ComboBox
@@ -35,12 +26,10 @@ internal sealed class Picker : ComboBox
     /// Borrows the ComboBox's own look, because a control gets none of its own.
     /// </summary>
     /// <remarks>
-    /// A theme is found by type, and the type looked for is this one unless it
-    /// says otherwise — so without this line a Picker matches no
-    /// <c>ControlTheme</c> at all, is given no template, and draws nothing.
-    /// Everything still works: it holds its items, it raises SelectionChanged,
-    /// and every test that asked it a question got the right answer. It is simply
-    /// invisible, which is the one thing a test that never looks cannot see.
+    /// A theme is found by type, and the type looked for is this one unless it says
+    /// otherwise — so without this line a Picker matches no <c>ControlTheme</c>, is
+    /// given no template, and draws nothing while still answering every question a
+    /// test asks it.
     /// </remarks>
     protected override Type StyleKeyOverride => typeof(ComboBox);
 

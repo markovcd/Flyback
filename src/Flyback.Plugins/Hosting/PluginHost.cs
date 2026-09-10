@@ -8,24 +8,14 @@ using Flyback.Plugins.Secrets;
 namespace Flyback.Plugins.Hosting;
 
 /// <summary>
-/// Finds and loads plugins. One scan, at startup — there is no reload, because
-/// an assembly the audio thread is calling into cannot be unloaded safely and
-/// pretending otherwise would be worse than restarting.
+/// Finds and loads plugins. One scan, at startup — there is no reload, because an
+/// assembly the audio thread is calling into cannot be unloaded safely.
 /// </summary>
 /// <remarks>
-/// The layout is one folder per plugin under <c>plugins/</c>, each holding the
-/// plugin assembly, its <c>.deps.json</c>, and its private dependencies:
-/// <code>
-/// Flyback.exe
-/// plugins/
-///   WinIO/
-///     Flyback.Plugins.WinIO.dll
-///     Flyback.Plugins.WinIO.deps.json
-///     NAudio.dll …
-/// </code>
-/// Nothing here throws. A plugin that is missing, broken, built against another
-/// runtime or simply hostile is a line in <see cref="PluginCatalog.Problems"/>,
-/// not a program that will not start.
+/// One folder per plugin under <c>plugins/</c>, each holding the plugin assembly,
+/// its <c>.deps.json</c> and its private dependencies. Nothing here throws: a
+/// plugin that is missing, broken, built against another runtime or simply hostile
+/// is a line in <see cref="PluginCatalog.Problems"/>.
 /// </remarks>
 public static class PluginHost
 {
@@ -85,15 +75,13 @@ public static class PluginHost
 
     /// <summary>
     /// A <c>.deps.json</c> beside an assembly is what <c>EnableDynamicLoading</c>
-    /// produces, so it identifies the plugin among its own dependencies without
-    /// a manifest to keep in step. A folder without one is scanned whole, which
-    /// covers a plugin that is a single file.
+    /// produces, so it identifies the plugin among its own dependencies without a
+    /// manifest to keep in step. A folder without one is scanned whole.
     /// </summary>
     /// <remarks>
     /// A copy of a host-owned assembly is skipped rather than treated as a
-    /// candidate. It is an easy thing to ship by accident, and its dependency
-    /// file would otherwise be picked as the folder's — leaving the real
-    /// plugin's own dependencies unresolvable.
+    /// candidate: it is easy to ship by accident, and its dependency file would
+    /// otherwise be picked as the folder's.
     /// </remarks>
     private static List<string> EntryAssemblies(string folder)
     {

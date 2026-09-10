@@ -27,28 +27,20 @@ public enum EvaluationStage
 /// where it belongs instead of running all of them half a million times.
 /// </summary>
 /// <remarks>
-/// The whole of the saving is that a patch says far more about a frame than
-/// about a pixel. Sixty per cent of a busy preset's ops never see a coordinate
-/// — a scale factor, an envelope, a sequencer stepping on the clock — and the
-/// interpreter was re-deriving every one of them for each of half a million
-/// pixels. Of the largest preset in the catalogue, 598 ops, eleven per cent
-/// depend on where you are; the rest is a frame's worth of arithmetic done once.
+/// A patch says far more about a frame than about a pixel: of the largest preset
+/// in the catalogue, 598 ops, eleven per cent depend on where you are and the rest
+/// is a frame's worth of arithmetic done once.
 /// <para>
-/// A reordering rather than three programs: the ops are the program's own, moved
-/// into stage order and no further. A stage is the greatest of its inputs'
-/// stages, so an op never precedes something it reads however the list is cut,
-/// and the three runs together evaluate exactly what one run of the original
-/// did.
+/// A reordering rather than three programs. A stage is the greatest of its
+/// inputs' stages, so an op never precedes something it reads and the three runs
+/// together evaluate exactly what one run of the original did.
 /// </para>
 /// <para>
 /// Only for a caller drawing a picture, and <see cref="CompiledPatch.Plan"/> is
-/// null wherever that is not what is happening. Reordering is safe because the
-/// video path passes no <see cref="DelayState"/>: with none, every op in the
-/// instruction set is a pure function of its inputs — a delay hands its input
-/// through, an accumulator is its multiply, a cell reads zero and a tap does
-/// nothing — so which of them ran first stops being a question. On the audio
-/// path, where the state exists, it very much is one, and that path keeps
-/// walking the program in the order it was written.
+/// null elsewhere. Reordering is safe because the video path passes no
+/// <see cref="DelayState"/>: with none, every op is a pure function of its inputs
+/// — a delay hands its input through, a cell reads zero — so which ran first stops
+/// being a question. On the audio path it very much is one.
 /// </para>
 /// </remarks>
 public sealed class FramePlan
@@ -78,17 +70,14 @@ public sealed class FramePlan
     };
 
     /// <summary>
-    /// Sorts <paramref name="ops"/> into stages, or answers null where the
-    /// program is not one this can be done to.
+    /// Sorts <paramref name="ops"/> into stages, or answers null where the program
+    /// is not one this can be done to.
     /// </summary>
     /// <remarks>
-    /// The refusal is about single assignment. Working out a stage means reading
-    /// back the stage of the register an op's input came from, and that only
-    /// means anything while a register is written once — which is what the
-    /// compiler's allocator does and what nothing here can check cheaply after
-    /// the fact, so it is checked directly. A program that writes a register
-    /// twice gets no plan and is walked whole, which is what every caller did
-    /// before this existed.
+    /// The refusal is about single assignment: a stage is read back off the register
+    /// an op's input came from, which only means anything while a register is
+    /// written once. A program that writes one twice gets no plan and is walked
+    /// whole.
     /// </remarks>
     public static FramePlan? For(Op[] ops, int registerCount)
     {

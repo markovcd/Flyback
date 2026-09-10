@@ -4,24 +4,14 @@ namespace Flyback.Core.Graph;
 /// The sections the palette has, and the order they appear in.
 /// </summary>
 /// <remarks>
-/// A curated set rather than whatever strings happen to be in the catalogue.
-/// Two things went wrong while a category was only a word a module wrote down.
-/// Two providers meant different things by one of them — the engine's Rotate and
-/// a plugin's Reverb both said "Space", and the palette drew them as one section
-/// — and two meant nearly the same thing by different ones, because "Shape" was
-/// taken by the waveshapers and the shapes had to be called something else.
-/// Neither is a mistake a reader of either file could have caught: the word is
-/// right where it stands, and only wrong beside a word in another assembly.
+/// A curated set rather than whatever strings happen to be in the catalogue. Two
+/// providers meant different things by one word — the engine's Rotate and a
+/// plugin's Reverb both said "Space" — and two meant nearly the same thing by
+/// different ones, neither of which a reader of either file could have caught.
 /// <para>
-/// So the names live here, together, where picking one is a choice between the
-/// ones that already exist. <see cref="All"/> is also the display order, which
-/// keeps a plugin's installation from moving any section around.
-/// </para>
-/// <para>
-/// A plugin may still name a category of its own — nothing refuses an unknown
-/// string, and a plugin that adds a genuinely new kind of module should not have
-/// to wait for the engine to admit it. Those sort after the ones named here. What
-/// the engine's own modules may say is checked by a test.
+/// So the names live here, where picking one is a choice between the ones that
+/// exist, and <see cref="All"/> is also the display order. A plugin may still name
+/// a category of its own; those sort after the ones named here.
 /// </para>
 /// </remarks>
 public static class ModuleCategories
@@ -81,15 +71,10 @@ public static class ModuleCategories
     public const string Output = "Output";
 
     /// <summary>
-    /// Every category the engine names, in the order the palette shows them.
+    /// Every category the engine names, in the order the palette shows them:
+    /// roughly the order a patch is built in. The sink is last because it is where
+    /// the patch ends, and because it is the one section nobody goes looking in.
     /// </summary>
-    /// <remarks>
-    /// Roughly the order a patch is built in — where a signal comes from, what
-    /// makes one, what bends it, what colors it, what times it, what shapes it,
-    /// and what it ends at. The sink is last because it is where the patch ends,
-    /// and because it is the one section nobody goes looking in: a patch already
-    /// has its Output and cannot be given a second.
-    /// </remarks>
     public static IReadOnlyList<string> All { get; } =
     [
         Sources,

@@ -11,38 +11,24 @@ namespace Flyback.App.Controls;
 /// recording. Nothing else in the program reads a pixel off the card.
 /// </summary>
 /// <remarks>
-/// <para>
 /// <see cref="GlInterface"/> carries no <c>glReadPixels</c> — Avalonia binds what
-/// Avalonia draws with, and it never reads back — so the three entry points this
-/// needs are fetched through <see cref="GlInterface.GetProcAddress"/>. That is
-/// the same door Avalonia's own bindings come through, including the GL 1.0 ones
-/// it uses every frame, so a context that can draw can be read.
+/// it draws with, and it never reads back — so the three entry points this needs
+/// come through <see cref="GlInterface.GetProcAddress"/>, the same door Avalonia's
+/// own bindings use.
+/// <para>
+/// Two pixel buffers, alternating: the read is issued into one while the other,
+/// last frame's, is mapped and copied. The frame handed on is one behind the
+/// screen, which is the whole price of not stopping the pipeline. Where buffers
+/// cannot be mapped the read goes straight into memory and stalls, which is better
+/// than no recording.
 /// </para>
 /// <para>
-/// Two pixel buffers, alternating. The read is issued into one and the other —
-/// last frame's, long since arrived — is mapped and copied. The frame handed on
-/// is therefore one behind the screen, which no one can see and which is the
-/// whole price of not stopping the pipeline to wait for the card.
-/// </para>
-/// <para>
-/// Where buffers cannot be mapped the read is done straight into memory instead.
-/// That does stall, but a stalled recording is better than none, and the caller
-/// already fences the patch pass with <c>glFinish</c> every frame regardless.
-/// </para>
-/// <para>
-/// <b>The frame is resolved to eight bits before it is read.</b> The history pair
-/// is half-float wherever that is renderable, and reading a float surface as
-/// bytes is not a combination <c>glReadPixels</c> is required to accept — ES
-/// answers <c>GL_INVALID_OPERATION</c>, writes nothing, and leaves a buffer of
-/// zeroes that looks exactly like a patch which drew black. Blitting into an
-/// <c>RGBA8</c> target first makes the pair legal whatever the history is, has
-/// the card do the conversion, and keeps the transfer at four bytes a pixel
-/// rather than sixteen.
-/// </para>
-/// <para>
-/// Every read is followed by <c>glGetError</c>. Silence is the failure mode that
-/// matters here: a readback that quietly does nothing produces a file full of
-/// black frames and no reason for them.
+/// <b>The frame is resolved to eight bits before it is read.</b> Reading a float
+/// surface as bytes is not a combination <c>glReadPixels</c> must accept — ES
+/// answers <c>GL_INVALID_OPERATION</c> and leaves a buffer of zeroes that looks
+/// like a patch which drew black — so it is blitted into an <c>RGBA8</c> target
+/// first, which also keeps the transfer at four bytes a pixel. Every read is
+/// followed by <c>glGetError</c>, because silence is the failure mode that matters.
 /// </para>
 /// </remarks>
 internal sealed class GpuReadback

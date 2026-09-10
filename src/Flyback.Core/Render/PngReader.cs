@@ -20,35 +20,21 @@ public enum PngFault
 /// Minimal PNG decoder, and <see cref="PngWriter"/> read backwards.
 /// </summary>
 /// <remarks>
+/// Written by hand because the core carries no imaging dependency (ADR-0019) and
+/// the one thing that must work headlessly is a picture going in and out of a
+/// file. The two being a pair means a frame can be taken back into a patch exactly
+/// as it left. The compression is <see cref="DeflateStream"/>'s, so this is
+/// chunk-walking, un-filtering and unpacking.
 /// <para>
-/// Written by hand for the reason the writer was: the core carries no imaging
-/// dependency (ADR-0019), and the one thing that must work headlessly is a
-/// picture going in and out of a file. That the two are a pair is worth more
-/// than it sounds — what this program exports is a PNG, so what it can read is
-/// what it can write, and a frame can be taken back into a patch exactly as it
-/// left.
+/// Every color type at 8 and 16 bits, which is everything a non-interlaced PNG can
+/// be. Interlaced ones and bit depths under eight are refused by name rather than
+/// read wrongly: a file that comes back scrambled is worse than one that says it
+/// cannot be read.
 /// </para>
 /// <para>
-/// The compression is not hand-written and did not need to be:
-/// <see cref="DeflateStream"/> is in the framework, which is where the writer
-/// already gets its deflate. So this is chunk-walking, un-filtering and
-/// unpacking, and the hard half of the format was never ours to do.
-/// </para>
-/// <para>
-/// What it reads is every color type at 8 and 16 bits — grey, truecolor,
-/// palette, and either of the first two with alpha — which is everything a
-/// non-interlaced PNG can be. Interlaced ones are refused by name rather than
-/// read wrongly: Adam7 is seven passes with their own filtering, it is rare
-/// enough that nothing here has ever produced one, and a file that says it is
-/// interlaced and comes back scrambled is worse than one that says it cannot be
-/// read. Bit depths under eight are refused for the same reason and are rarer
-/// still.
-/// </para>
-/// <para>
-/// Alpha is multiplied in rather than kept. Three channels is what an op carries
-/// and what a color is here, and a transparent corner reading as a black one is
-/// the same answer <see cref="LoadedImage.At"/> gives for a place outside the
-/// picture — so a patch sees one rule rather than two.
+/// Alpha is multiplied in rather than kept: three channels is what a color is
+/// here, and a transparent corner reading as a black one is the same answer
+/// <see cref="LoadedImage.At"/> gives for a place outside the picture.
 /// </para>
 /// </remarks>
 public static class PngReader

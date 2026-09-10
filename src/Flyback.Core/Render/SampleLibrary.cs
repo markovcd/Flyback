@@ -6,25 +6,13 @@ namespace Flyback.Core.Render;
 /// The sound files a patch names, read once and kept.
 /// </summary>
 /// <remarks>
-/// <para>
-/// A cache rather than a loader, and that is the whole point of its existing:
-/// every edit recompiles the whole patch (ADR-0021), so a compiler that opened
-/// a file would open it on every knob turn. What the compiler asks for here is
-/// nearly always already in hand, and the one time it is not costs a read.
-/// </para>
-/// <para>
-/// Failures are remembered too. A patch naming a file that is not there is
-/// recompiled just as often as one naming a file that is, and going back to the
-/// disk sixty times a second to be told the same thing is the more expensive of
-/// the two cases rather than the cheaper one. <see cref="Forget"/> is how a file
-/// that has since appeared gets another chance.
-/// </para>
-/// <para>
-/// Not thread-safe, and it does not need to be: it is read on the thread that
-/// compiles, and compilation happens in one place. What comes out of it —
-/// <see cref="LoadedSample"/> — is immutable and is read on the audio thread
-/// like any other part of a compiled program.
-/// </para>
+/// A cache rather than a loader, which is the point of its existing: every edit
+/// recompiles the whole patch (ADR-0021), so a compiler that opened a file would
+/// open it on every knob turn. Failures are remembered too — going back to the
+/// disk sixty times a second to be told the same thing is the more expensive case
+/// — and <see cref="Forget"/> is how a file that has since appeared gets another
+/// chance. Not thread-safe, and it need not be: it is read on the thread that
+/// compiles, and what comes out of it is immutable.
 /// </remarks>
 public sealed class SampleLibrary : ISampleLibrary
 {
@@ -36,15 +24,10 @@ public sealed class SampleLibrary : ISampleLibrary
     /// from, or null while it has not been saved anywhere.
     /// </summary>
     /// <remarks>
-    /// It is what lets a patch and its samples move together: a file beside the
-    /// patch, or in a folder under it, is named relatively and finds itself
-    /// again wherever the pair is copied to. An absolute path is left alone, so
-    /// a sample from a library elsewhere on the machine still works and still
-    /// breaks if that machine is not the one the patch is opened on.
-    /// <para>
-    /// Setting it clears what is known, because the same relative path means a
-    /// different file once this changes.
-    /// </para>
+    /// What lets a patch and its samples move together: a file beside the patch is
+    /// named relatively and finds itself again wherever the pair is copied to, where
+    /// an absolute path is left alone. Setting it clears what is known, because the
+    /// same relative path means a different file once this changes.
     /// </remarks>
     public string? Beside
     {

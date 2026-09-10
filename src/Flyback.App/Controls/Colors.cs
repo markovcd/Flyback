@@ -7,20 +7,11 @@ namespace Flyback.App.Controls;
 /// Every color the shell uses, in one place — the theme file.
 /// </summary>
 /// <remarks>
-/// Colors rather than brushes, deliberately. A brush is a resource with a
-/// lifetime and the controls that need one already cache their own; a color is
-/// a value, and half the uses here are not fills at all — a pen, a gradient
-/// stop, the same hue at four fifths opacity. Keeping the palette to values
-/// means there is exactly one definition of each and no question about who owns
-/// what.
-/// <para>
-/// Named Colors rather than Theme because every Avalonia StyledElement
-/// already has a Theme property, and a static class of that name would be
-/// shadowed inside every control that wanted it. This is the part of a theme
-/// that XAML would have given for free, without the
-/// binding layer that comes with it — see ADR-0016 for why the markup itself is
-/// still declined.
-/// </para>
+/// Colors rather than brushes: a brush is a resource with a lifetime and the
+/// controls that need one cache their own, where half the uses here are not fills
+/// at all — a pen, a gradient stop, the same hue at four fifths opacity. Named
+/// Colors rather than Theme because every Avalonia StyledElement already has a
+/// Theme property, which would shadow a static class of that name.
 /// </remarks>
 internal static class Colors
 {
@@ -44,16 +35,12 @@ internal static class Colors
     public static Color Toolbar { get; } = Color.FromRgb(0x22, 0x25, 0x2A);
 
     /// <summary>
-    /// Over the whole window while a dialog is up, and the only thing that says
-    /// the rest of the program is not listening.
+    /// Over the whole window while a dialog is up, and the only thing that says the
+    /// rest of the program is not listening. The one color here with an alpha,
+    /// because a solid one would be a second window and the point of dimming is
+    /// that the patch is still there behind the question. Dark rather than merely
+    /// translucent: over a dark window a pale scrim reads as a fault in the display.
     /// </summary>
-    /// <remarks>
-    /// The one color here with an alpha, because that is what it is for: a
-    /// solid one would be a second window, and the point of dimming the shell
-    /// rather than covering it is that the patch you are being asked about is
-    /// still there behind the question. Dark rather than merely translucent —
-    /// laid over a dark window, a pale scrim reads as a fault in the display.
-    /// </remarks>
     public static Color Scrim { get; } = Color.FromArgb(0xAA, 0x0A, 0x0B, 0x0D);
 
     /// <summary>The canvas grid, and the brighter line every tenth of it.</summary>
@@ -152,18 +139,11 @@ internal static class Colors
     public static Color Unknown { get; } = Color.FromRgb(0x88, 0x88, 0x88);
 
     /// <summary>
-    /// What color a module's category is drawn in — its header on the canvas
-    /// and its heading in the palette.
+    /// What color a module's category is drawn in — its header on the canvas and its
+    /// heading in the palette. Named against <see cref="ModuleCategories"/> rather
+    /// than loose strings, so a category renamed there is a compile error here
+    /// rather than a section that quietly turns grey.
     /// </summary>
-    /// <remarks>
-    /// Here rather than on <c>NodeGeometry</c>, which is about where the parts
-    /// of a node sit and had no business also deciding what color they are.
-    /// <para>
-    /// Named against <see cref="ModuleCategories"/> rather than against loose
-    /// strings, so that a category renamed there is a compile error here rather
-    /// than a section that quietly turns grey.
-    /// </para>
-    /// </remarks>
     public static Color Accent(string category) => category switch
     {
         ModuleCategories.Output => Sink,

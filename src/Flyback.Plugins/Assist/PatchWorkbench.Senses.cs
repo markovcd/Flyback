@@ -9,16 +9,13 @@ namespace Flyback.Plugins.Assist;
 
 /// <summary>
 /// The two tools that answer by running the patch rather than by reading it:
-/// <c>render</c> draws frames, and <c>listen</c> renders the sound and measures
-/// it.
+/// <c>render</c> draws frames, and <c>listen</c> renders the sound and measures it.
 /// </summary>
 /// <remarks>
-/// Kept apart from the rest because nothing here is about the graph. Every other
-/// tool answers out of the working patch and the catalogue; these two compile
-/// it, run a renderer and turn what came back into something a model can be
-/// shown or told. That is also what makes them the only asynchronous tools, and
-/// the only two that are withheld from a model which cannot see or hear — see
-/// <see cref="Listener"/>.
+/// Kept apart because nothing here is about the graph: these two compile the patch,
+/// run a renderer and turn what came back into something a model can be shown or
+/// told. That is also what makes them the only asynchronous tools, and the only two
+/// withheld from a model which cannot see or hear — see <see cref="Listener"/>.
 /// </remarks>
 public sealed partial class PatchWorkbench
 {
@@ -28,20 +25,15 @@ public sealed partial class PatchWorkbench
     /// Draws the patch and hands back a strip of frames.
     /// </summary>
     /// <remarks>
+    /// On a pool thread rather than wherever the caller happened to be: an
+    /// assistant's loop is consumed with <c>await foreach</c> on the dispatcher, so
+    /// a render performed inline would land on the UI thread — which ADR-0018
+    /// forbids and which deadlocks besides. Doing it here makes that impossible for
+    /// a plugin to get wrong.
     /// <para>
-    /// The work happens on a pool thread rather than wherever the caller
-    /// happened to be. An assistant's loop is consumed with <c>await foreach</c>
-    /// on the dispatcher, so a render performed inline would land on the UI
-    /// thread — which ADR-0018 forbids and which deadlocks besides, because the
-    /// renderer's <c>Parallel.For</c> meets a dispatcher that is pumping a
-    /// re-entrant paint. Doing it here rather than in each adapter makes that
-    /// impossible for a plugin to get wrong.
-    /// </para>
-    /// <para>
-    /// Frames are stepped from zero rather than jumped to, because the renderer
-    /// owns the history that <c>feedback</c> reads and a patch shown without its
-    /// warm-up is a patch shown black. Several frames rather than one because a
-    /// still cannot show motion, which is most of what this instrument is.
+    /// Frames are stepped from zero rather than jumped to, because the renderer owns
+    /// the history <c>feedback</c> reads. Several frames rather than one, because a
+    /// still cannot show motion.
     /// </para>
     /// </remarks>
     private Task<ToolOutcome> RenderAsync(JsonElement arguments, CancellationToken cancel)
@@ -147,27 +139,18 @@ public sealed partial class PatchWorkbench
     /// Renders a stretch of the patch's sound and hands it back as a WAV.
     /// </summary>
     /// <remarks>
-    /// <para>
-    /// On a pool thread for the same reason <see cref="RenderAsync"/> is, though
-    /// the cost is nothing like the same: the audio program is evaluated about
-    /// 100k times a second against the video program's 31M, so a couple of
-    /// seconds of sound is cheaper than a single frame. What it is not cheap in
-    /// is the request body it becomes, which is why
+    /// On a pool thread for the same reason <see cref="RenderAsync"/> is, though a
+    /// couple of seconds of sound is cheaper than a single frame. What it is not
+    /// cheap in is the request body it becomes, which is why
     /// <see cref="WorkbenchLimits.LongestListen"/> is short and
     /// <see cref="WorkbenchLimits.ListenRate"/> is half what the speakers use.
-    /// </para>
     /// <para>
-    /// Warmed from zero rather than sought to, exactly as a render is. The audio
-    /// path is the one with delay lines and <c>feedback.unit</c> behind it
-    /// (ADR-0027), so a patch started halfway along would be handed empty
-    /// memory and would sound like something nobody would ever hear.
-    /// </para>
-    /// <para>
-    /// Silence comes back as words rather than as a WAV. It is the failure this
-    /// instrument produces most — an oscillator whose <c>in</c> nothing drives
-    /// is legal, compiles without a word and does not move — and a model played
-    /// two seconds of nothing tends to conclude the tool is broken. Saying so,
-    /// and saying where to look, costs a sentence instead of a payload.
+    /// Warmed from zero rather than sought to: the audio path is the one with delay
+    /// lines behind it (ADR-0027), so a patch started halfway along would be handed
+    /// empty memory. Silence comes back as words rather than as a WAV — an
+    /// oscillator whose <c>in</c> nothing drives is legal, compiles without a word
+    /// and does not move, and a model played two seconds of nothing concludes the
+    /// tool is broken.
     /// </para>
     /// </remarks>
     private Task<ToolOutcome> ListenAsync(JsonElement arguments, CancellationToken cancel)
@@ -262,30 +245,16 @@ public sealed partial class PatchWorkbench
     private const int Slices = 16;
 
     /// <summary>
-    /// What the samples say about themselves, as against what a listener says
-    /// about them.
+    /// What the samples say about themselves, as against what a listener says about
+    /// them.
     /// </summary>
     /// <remarks>
-    /// <para>
-    /// This exists because a listener was believed once too often. A model asked
-    /// to describe a patch built from three steady tones reported a thumping
-    /// kickdrum and a crisp hihat — the words it had been given rather than the
-    /// sound it was played — and nothing in the reply contradicted it, though
-    /// the levels sitting beside the prose already did.
-    /// </para>
-    /// <para>
-    /// Crest is the measurement that catches exactly that. It is the distance
-    /// between the loudest sample and the average one, so it says whether
-    /// anything in the clip is a *hit*: a steady tone has almost none and
-    /// percussion has a great deal, and no description can talk its way out of
-    /// the number. The slices are the same question over time — a rhythm shows
-    /// as a level that moves, and a drone as a row of near-identical figures.
-    /// </para>
-    /// <para>
-    /// Reported as numbers with the yardstick beside them rather than as a
-    /// verdict. What counts as percussive enough is the reader's to judge; what
-    /// is not the reader's to judge is what the samples measure.
-    /// </para>
+    /// A model asked to describe a patch built from three steady tones once reported
+    /// a kickdrum and a hihat — the words it had been given rather than the sound it
+    /// was played. Crest catches exactly that, being the distance between the
+    /// loudest sample and the average one: a steady tone has almost none and
+    /// percussion has a great deal. The slices are the same question over time.
+    /// Reported as numbers with the yardstick beside them rather than as a verdict.
     /// </remarks>
     private static string Measured(ReadOnlySpan<float> samples, float peak, float rms)
     {
