@@ -618,7 +618,7 @@ public partial class NodeCatalog
             + "middle column is now, the left is the past and the right is the future, and one "
             + "grid square is an eighth of 'window' across and a quarter of 'scale' up. "
             + "'window' is marked in decades so that one knob covers a single cycle of an "
-            + "audible tone as well as a minute of an LFO — it reads as the time it is. Select "
+            + "audible tone as well as half a minute of an LFO — it reads as the time it is. Select "
             + "anything else and the picture comes back. It is an ordinary module besides — its "
             + "'out' is the chart as a color, so it can be patched into the Output to keep it "
             + "on screen. What it cannot show is memory: drawn rather than heard, an oscillator "
