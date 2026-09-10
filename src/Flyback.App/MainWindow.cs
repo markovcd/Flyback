@@ -86,22 +86,15 @@ public sealed partial class MainWindow : Window
     private readonly ImageLibrary pictureFolder = new();
 
     /// <summary>
-    /// The files a bundle carries, while one is open, and null while the
-    /// document is a loose patch backed by a folder.
+    /// The files a bundle carries, while one is open, and null while the document
+    /// is a loose patch backed by a folder.
     /// </summary>
     /// <remarks>
-    /// <para>
-    /// Held rather than unpacked, which is the whole of what makes a bundle a
-    /// document here instead of an archive somebody has to spill onto their disk
-    /// before working on it: nothing is written anywhere until they save.
-    /// </para>
-    /// <para>
-    /// It costs one copy of the compressed bytes for as long as the bundle is
-    /// open, and costs the undo history nothing at all — the history is snapshots
-    /// of the patch, the patch is paths, and payloads sit beside the document
-    /// exactly as the two caches above already do. That distinction is the whole
-    /// of what ADR-0052 was about, and it is untouched.
-    /// </para>
+    /// Held rather than unpacked, which is what makes a bundle a document here
+    /// rather than an archive to spill onto a disk first: nothing is written
+    /// anywhere until they save. It costs one copy of the compressed bytes and
+    /// costs the undo history nothing — the history is snapshots of the patch, and
+    /// the patch is paths (ADR-0052).
     /// </remarks>
     private BundleFiles? carried;
 
@@ -262,13 +255,10 @@ public sealed partial class MainWindow : Window
 
     /// <summary>
     /// Everything that plays the patch from outside it. The mirror of
-    /// <see cref="audio"/>, which takes what the patch makes to a device.
+    /// <see cref="audio"/>, which takes what the patch makes to a device. Assigned
+    /// in the constructor because it is handed the MIDI backend the plugins
+    /// offered, which is declared below it.
     /// </summary>
-    /// <remarks>
-    /// Assigned in the constructor rather than beside the declaration, because it
-    /// is handed the MIDI backend the plugins offered and a field initializer
-    /// would be depending on <see cref="plugins"/> being declared above it.
-    /// </remarks>
     private readonly MidiHub midi;
 
     /// <summary>
@@ -342,14 +332,11 @@ public sealed partial class MainWindow : Window
         editor.HistoryChanged += (_, _) => RefreshEditState();
         editor.Reported += (_, message) => Report(message);
 
-        // The other copy of everything said. A status bar is written over by the
-        // next compile and the log behind it is five deep, so a run watched from
-        // a terminal — which is the run anybody debugging is having — would
-        // otherwise keep no account of itself at all. Trace rather than the
-        // console directly: Program.Main is where it is decided whether there is
-        // a terminal worth writing to, Avalonia's own diagnostics already go
-        // there, and a second destination is a second listener rather than a
-        // second call here.
+        // The other copy of everything said: a status bar is written over by the
+        // next compile and the log behind it is five deep, so a run watched from a
+        // terminal would keep no account of itself. Trace rather than the console
+        // directly — Program.Main decides whether there is a terminal worth writing
+        // to, and a second destination is a second listener.
         report.Said += (_, message) =>
             Trace.WriteLine($"{DateTime.Now:HH:mm:ss}  {message}");
 
@@ -366,15 +353,13 @@ public sealed partial class MainWindow : Window
 
         editor.Patch = Presets.Default();
 
-        // Sound on, if there is anything to make it with. This is the half of
-        // the instrument that a silent launch hides completely: the picture
-        // announces itself, and a patch whose audio side is doing nothing looks
-        // exactly like one whose audio side is working. Turned on here rather
-        // than in the toolbar because the toolbar is built before the preset is
-        // loaded, and the engine would be started on an empty patch.
+        // Sound on, if there is anything to make it with. A patch whose audio side
+        // is doing nothing looks exactly like one whose audio side is working, so a
+        // silent launch hides half the instrument. Here rather than in the toolbar,
+        // which is built before the preset is loaded.
         //
-        // A device that will not open is not fatal — SetAudioEnabled reports it
-        // and puts the button back — so this cannot stop the window appearing.
+        // A device that will not open is not fatal — SetAudioEnabled reports it and
+        // puts the button back.
         audioButton.IsChecked = audioButton.IsEnabled;
 
         var ticker = new DispatcherTimer(DispatcherPriority.Background) { Interval = TimeSpan.FromMilliseconds(250) };
@@ -437,15 +422,13 @@ public sealed partial class MainWindow : Window
             ],
         };
 
-        // Rows rather than a dock, so the edge between the patch and the
-        // assistant can be dragged. Both flexible rows are star-sized for the
-        // reason the columns are: a GridSplitter redistributes star weights, and
-        // a fixed-pixel track beside a star one just gets squeezed.
+        // Rows rather than a dock, so the edge between the patch and the assistant
+        // can be dragged. Both flexible rows are star-sized, because a GridSplitter
+        // redistributes star weights and a fixed-pixel track beside a star one just
+        // gets squeezed.
         //
         // In the canvas column rather than across the window, because what the
-        // assistant is talking about is the patch — the palette and the
-        // inspector are no part of the conversation, and pushing them up out of
-        // reach to make room for it costs more than the width it buys.
+        // assistant is talking about is the patch.
         var canvas = new Grid
         {
             RowDefinitions =
@@ -498,15 +481,14 @@ public sealed partial class MainWindow : Window
     }
 
     /// <summary>
-    /// Opens or closes the assistant, and gives its share of the window back
-    /// when it closes.
+    /// Opens or closes the assistant, and gives its share of the window back when
+    /// it closes.
     /// </summary>
     /// <remarks>
     /// A star row keeps its weight whether or not anything in it is visible, so
-    /// hiding the panel alone would leave a third of the window empty. The share
-    /// is kept rather than recomputed, so a panel dragged to a size somebody
-    /// liked comes back that size — and the row's minimum has to go with it,
-    /// since a minimum outranks a height of zero and would hold the gap open.
+    /// hiding the panel alone would leave a third of the window empty. The share is
+    /// kept rather than recomputed, and the row's minimum has to go with it, since
+    /// a minimum outranks a height of zero.
     /// </remarks>
     private void ShowAssistant(bool shown)
     {
@@ -523,19 +505,14 @@ public sealed partial class MainWindow : Window
 
     /// <summary>
     /// Puts the preview away when the patch has nothing wired into the Output's
-    /// 'color', so the inspector takes the row rather than sitting under a box
-    /// that could only ever show black.
+    /// 'color', so the inspector takes the row rather than sitting under a box that
+    /// could only show black.
     /// </summary>
     /// <remarks>
-    /// The same shape as <see cref="ShowAssistant"/> and for the same reason: a
-    /// star row holds its weight whether or not anything in it is visible, and
-    /// the share is kept rather than recomputed so a preview dragged to a size
-    /// somebody liked comes back that size once there is a picture again.
-    /// <para>
-    /// Left alone while the preview has the window — <see cref="ShowFullScreenPreview"/>
-    /// is already driving these same rows for that, and the two would otherwise
-    /// fight over what a height of zero means.
-    /// </para>
+    /// The same shape as <see cref="ShowAssistant"/> and for the same reason. Left
+    /// alone while the preview has the window, since
+    /// <see cref="ShowFullScreenPreview"/> is already driving these rows and the
+    /// two would fight over what a height of zero means.
     /// </remarks>
     private void ShowPreview(bool shown)
     {
@@ -780,15 +757,13 @@ public sealed partial class MainWindow : Window
     }
 
     /// <summary>
-    /// Takes the selection off the preset list, for a document that arrived by
-    /// some other route — a patch, a bundle, or a source file opened from disk.
+    /// Takes the selection off the preset list, for a document that arrived by some
+    /// other route — a patch, a bundle, or a source file.
     /// </summary>
     /// <remarks>
-    /// A preset that stayed highlighted after a patch, bundle or source file was
-    /// opened over it would claim the canvas still held that preset when it no
-    /// longer does. Setting the index to -1 is enough on its own: the picker's
-    /// own SelectionChanged handler already returns on a negative index before
-    /// it asks what "wanted" means, so nothing there mistakes this for a pick.
+    /// A preset left highlighted would claim the canvas still held it. Setting the
+    /// index to -1 is enough: the picker's own handler returns on a negative index
+    /// before it asks what "wanted" means.
     /// </remarks>
     internal void ClearPresetSelection()
     {
@@ -832,17 +807,11 @@ public sealed partial class MainWindow : Window
     /// through, and whatever there is to say about it.
     /// </summary>
     /// <remarks>
-    /// A grid rather than a row of controls, because a row hands every child all
-    /// the width it asks for and lets the last of them fall off the end — and
-    /// the report is the one thing here that a person actually has to read. The
-    /// two prose columns share what the two fixed ones leave, and each says so
-    /// with an ellipsis when its share is not enough.
-    /// <para>
-    /// Not evenly. The counts on the left are a fixed sentence of a known
-    /// length, and the split is the one that fits all of it in a window of the
-    /// size this one opens at — a share rather than that length, so a longer
-    /// word in it never pushes the report off the end again.
-    /// </para>
+    /// A grid rather than a row of controls, because a row hands every child the
+    /// width it asks for and lets the last fall off the end — and the report is the
+    /// one thing here that has to be read. The two prose columns share what the
+    /// fixed ones leave, and each ellipsises its own. Not evenly: the split is the
+    /// one that fits the counts in a window of the size this opens at.
     /// </remarks>
     private Control BuildStatusBar()
     {
@@ -906,13 +875,9 @@ public sealed partial class MainWindow : Window
     /// A toolbar button that is a symbol rather than a word.
     /// </summary>
     /// <remarks>
-    /// The tip is not decoration here: with the labels gone it is the only place
-    /// the button says what it does, so every one of these has one and it is a
-    /// sentence rather than a repeat of the icon's name.
-    /// <para>
-    /// Named as well, so a test can find the button without reading it — a
-    /// glyph is a poor thing to write an assertion against.
-    /// </para>
+    /// With the labels gone the tip is the only place the button says what it does,
+    /// so every one has one and it is a sentence rather than a repeat of the icon's
+    /// name. Named as well, so a test can find the button without reading a glyph.
     /// </remarks>
     private static Button Glyph(string name, string glyph, string tip) =>
         Marked(new Button(), name, glyph, tip);

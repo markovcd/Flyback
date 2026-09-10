@@ -13,21 +13,14 @@ namespace Flyback.App;
 /// document.
 /// </summary>
 /// <remarks>
+/// What owns the patch is the file that was opened rather than the view that
+/// happens to be showing (ADR-0068). Open a <c>.fbks</c> and the text is the
+/// document, so the canvas shows what it builds and is not editable; open a
+/// <c>.fbk</c> and the graph is, so the text view shows a printing.
 /// <para>
-/// One patch and two views of it, so something has to own it — and what owns it
-/// is the file that was opened rather than the view that happens to be showing
-/// (ADR-0068). Open a <c>.fbks</c> and the text is the document: the canvas
-/// shows what it builds and is not editable, because the next evaluation would
-/// take any edit straight back off. Open a <c>.fbk</c> and the graph is the
-/// document: the text view still opens, but what it shows is a printing, which
-/// is a reading rather than a round trip.
-/// </para>
-/// <para>
-/// The two are not symmetrical and the design follows that rather than papering
-/// over it. Building text into a patch is exact. Printing a patch back out is
-/// not — it drops the groups entirely and lays the canvas out afresh (ADR-0065)
-/// — so a printing is never adopted behind somebody's back. It is offered,
-/// labelled, and becomes the document only when they apply it.
+/// The two are not symmetrical: building text into a patch is exact, printing a
+/// patch back out drops the groups and lays the canvas out afresh (ADR-0065). So
+/// a printing is offered and labelled, never adopted behind somebody's back.
 /// </para>
 /// </remarks>
 public sealed partial class MainWindow
@@ -44,15 +37,11 @@ public sealed partial class MainWindow
     private bool sourceOwned;
 
     /// <summary>
-    /// The last printing this made of a graph-owned patch, so that opening the
-    /// text view twice does not write over what somebody typed into it the first
-    /// time and did not apply.
+    /// The last printing this made of a graph-owned patch, so opening the text
+    /// view twice does not write over what somebody typed the first time and did
+    /// not apply. Kept in step with a knob written back into a printing, which
+    /// leaves the text a printing still.
     /// </summary>
-    /// <remarks>
-    /// Kept in step with a knob written back into a printing, which leaves the
-    /// text a printing still: what changed is the number the printing was always
-    /// going to say for a knob that has just moved.
-    /// </remarks>
     private string? printed;
 
     /// <summary>
@@ -66,34 +55,25 @@ public sealed partial class MainWindow
 
     /// <summary>
     /// The patch the text builds as it now stands, or null where the text is a
-    /// printing and builds nothing.
+    /// printing and builds nothing. Kept beside the map because the map's names
+    /// are this patch's — see <see cref="Adrift"/>.
     /// </summary>
-    /// <remarks>
-    /// Kept beside the map because the map's names are this patch's, and the
-    /// patch on the canvas is a different one whenever the text has moved on
-    /// from what was last applied — see <see cref="Adrift"/>.
-    /// </remarks>
     private Patch? means;
 
     /// <summary>
-    /// The text <see cref="map"/> was made from, or null for no map at all.
+    /// The text <see cref="map"/> was made from, or null for no map at all. Null
+    /// rather than empty, because an empty document has a perfectly good map and
+    /// what this says is that there is no answer yet.
     /// </summary>
-    /// <remarks>
-    /// Null rather than empty, because an empty document is a text like any
-    /// other and a map of one is a perfectly good answer. What this has to say
-    /// is that there is no answer yet.
-    /// </remarks>
     private string? mapped;
 
     /// <summary>
-    /// Whether the text is being written to from the panel rather than typed
-    /// into.
+    /// Whether the text is being written to from the panel rather than typed into.
     /// </summary>
     /// <remarks>
-    /// Replacing a knob's number moves everything after it along, the caret
-    /// included, and the editor reports that as a caret move — which it is not.
-    /// Nobody moved it and the selection must not follow it, or letting go of a
-    /// slider would empty the panel that slider is in.
+    /// Replacing a knob's number moves the caret along and the editor reports that
+    /// as a caret move, which it is not. The selection must not follow it, or
+    /// letting go of a slider would empty the panel that slider is in.
     /// </remarks>
     private bool writingBack;
 
@@ -101,10 +81,9 @@ public sealed partial class MainWindow
     /// Knobs turned in the panel since the hand last came off one.
     /// </summary>
     /// <remarks>
-    /// A drag is one gesture and should be one edit: writing per frame would put
-    /// a hundred things on the undo stack and flicker the line under whoever is
-    /// reading it. Every frame still reaches the engine — that is the point of
-    /// turning a knob while a patch is playing — and only the document waits.
+    /// A drag is one gesture and should be one edit: writing per frame would put a
+    /// hundred things on the undo stack. Every frame still reaches the engine, and
+    /// only the document waits.
     /// </remarks>
     private readonly HashSet<(Guid Node, int Port)> turned = [];
 
@@ -126,15 +105,11 @@ public sealed partial class MainWindow
     /// canvas's history.
     /// </summary>
     /// <remarks>
-    /// Applying text is an edit and a handover at once — it puts a patch on the
-    /// canvas and it makes the text the document — so taking the edit back has
-    /// to take the handover back with it. Otherwise undoing an evaluation
-    /// leaves a canvas nobody wrote any text for locked behind text claiming to
-    /// describe it, and the only way out is a handover made by hand.
-    /// <para>
-    /// Kept beside the step rather than worked out afterwards, because a
-    /// snapshot says what a patch was and nothing about where it came from.
-    /// </para>
+    /// Applying text is an edit and a handover at once, so taking the edit back has
+    /// to take the handover with it — otherwise undoing an evaluation leaves a
+    /// canvas locked behind text claiming to describe it. Kept beside the step,
+    /// because a snapshot says what a patch was and nothing about where it came
+    /// from.
     /// </remarks>
     private sealed record Ownership(
         bool Owned,
@@ -146,15 +121,13 @@ public sealed partial class MainWindow
     private Ownership Owning() => new(sourceOwned, sourceOnDisk, printed, printedOrder);
 
     /// <summary>
-    /// Steps the canvas has recorded that the text's stack has not been told
-    /// about yet.
+    /// Steps the canvas has recorded that the text's stack has not been told about
+    /// yet.
     /// </summary>
     /// <remarks>
     /// Counted rather than put on that stack as they happen, because a knob is
-    /// turned before its number is written into the text and the two are one
-    /// thing somebody did. The count waits for the write-back and goes on the
-    /// stack inside it, so one press takes back the number and the sound
-    /// together.
+    /// turned before its number is written into the text and the two are one thing
+    /// somebody did. One press then takes back the number and the sound together.
     /// </remarks>
     private int unstacked;
 
@@ -162,10 +135,9 @@ public sealed partial class MainWindow
     /// Whether a step of the text's stack is being walked right now.
     /// </summary>
     /// <remarks>
-    /// Nothing may be put on that stack while it is being read off. Walking a
-    /// step rebuilds the panel, and a control losing the focus to that is a
-    /// write-back as far as everything downstream can tell — one that would try
-    /// to record itself in the middle of the undo it was caused by.
+    /// Nothing may be put on that stack while it is being read off: walking a step
+    /// rebuilds the panel, and a control losing the focus to that looks like a
+    /// write-back trying to record itself inside the undo that caused it.
     /// </remarks>
     private bool stepping;
 
@@ -216,22 +188,14 @@ public sealed partial class MainWindow
         inspector.AddHandler(LostFocusEvent, (_, _) => HandCameOff(), RoutingStrategies.Bubble);
 
         // And a key let go of, because a number box takes what is typed as it is
-        // typed. The value is heard on every keystroke, so the text that is meant
-        // to be saying the same thing has to keep up with it keystroke by
-        // keystroke — waiting for the focus to go would leave the code view
-        // showing a number the patch had already stopped playing, and showing it
-        // for as long as somebody went on working in the panel.
+        // typed: the value is heard on every keystroke, so the text has to keep up
+        // keystroke by keystroke rather than waiting for the focus to go.
         //
-        // On the way up rather than the way down, because the character is taken
-        // between the two: caught on the press, this would write the number as it
-        // stood before the key that changed it. And any key rather than Enter
-        // alone, because Enter is one of several ways a box moves and none of the
-        // others lets go of a pointer or gives up the focus either — an arrow
-        // steps the value, a backspace clears it.
-        //
-        // A key held down repeats its press without releasing, so an arrow leaned
-        // on writes once at the end of the run, which is what a dragged slider
-        // does too.
+        // On the way up rather than down, because the character is taken between
+        // the two. Any key rather than Enter alone, since an arrow steps the value
+        // and a backspace clears it, and neither gives up the focus. A key held
+        // down repeats its press without releasing, so an arrow leaned on writes
+        // once at the end of the run.
         inspector.AddHandler(
             KeyUpEvent,
             (_, _) => HandCameOff(),
@@ -252,15 +216,13 @@ public sealed partial class MainWindow
     }
 
     /// <summary>
-    /// The hand has come off whatever it was holding in the panel: the gesture
-    /// is over, and what it changed goes into the text.
+    /// The hand has come off whatever it was holding in the panel: the gesture is
+    /// over, and what it changed goes into the text.
     /// </summary>
     /// <remarks>
-    /// Both halves matter whether or not the text view has ever been opened. The
-    /// canvas files an edit made here under the control it came from, and every
-    /// drag of one slider is that same name — so this is the only thing that can
-    /// tell the history one drag from the next, and without it two of them an
-    /// afternoon apart come back in a single press.
+    /// The canvas files an edit under the control it came from and every drag of
+    /// one slider is that same name, so this is the only thing that can tell the
+    /// history one drag from the next.
     /// </remarks>
     private void HandCameOff()
     {
@@ -269,23 +231,15 @@ public sealed partial class MainWindow
     }
 
     /// <summary>
-    /// Where the text says each module it describes, worked out again whenever
-    /// the text has moved on.
+    /// Where the text says each module it describes, worked out again whenever the
+    /// text has moved on.
     /// </summary>
     /// <remarks>
-    /// <para>
-    /// Two sources for it and one shape. Text that owns the patch is built, and
-    /// the binder notes where everything came from on the way through. A
-    /// printing is not built — the patch is already on the canvas and building
-    /// the printing would make a second copy of it with different ids — so the
-    /// printer says where it put things instead.
-    /// </para>
-    /// <para>
-    /// A printing is only mapped while it is still the printing. Once somebody
-    /// types into one it is text about a patch that may no longer be there, and
-    /// the honest answer is to point at nothing rather than at whatever used to
-    /// be under the caret.
-    /// </para>
+    /// Two sources and one shape: text that owns the patch is built, and the
+    /// binder notes where everything came from; a printing is not built — that
+    /// would make a second copy with different ids — so the printer says where it
+    /// put things. A printing is only mapped while it is still the printing, since
+    /// once somebody types into one it is text about a patch that may not be there.
     /// </remarks>
     private SourceMap Map
     {
@@ -322,29 +276,20 @@ public sealed partial class MainWindow
     }
 
     /// <summary>
-    /// Whether the caret is standing on a module the patch on the canvas has
-    /// moved on from, so that the panel has nothing honest to show for it.
+    /// Whether the caret is standing on a module the patch on the canvas has moved
+    /// on from, so the panel has nothing honest to show for it. Read by the panel,
+    /// which says so rather than sitting empty.
     /// </summary>
-    /// <remarks>
-    /// Read by the panel, which says so where it would otherwise sit empty and
-    /// leave somebody clicking at a word that answers nothing.
-    /// </remarks>
     private bool adrift;
 
     /// <summary>
     /// Points the inspector at the module the caret is standing in.
     /// </summary>
     /// <remarks>
-    /// <para>
-    /// The same panel the canvas points, because it is the same selection: what
-    /// a person is looking at in one view is what the other should be about. A
-    /// caret on a word that names no module selects none, which is honest — the
-    /// space between two statements is not a module.
-    /// </para>
-    /// <para>
-    /// And a word the patch has moved on from selects none either, which is the
-    /// same honesty with something to say for itself — see <see cref="Adrift"/>.
-    /// </para>
+    /// The same panel the canvas points, because it is the same selection. A caret
+    /// on a word that names no module selects none — the space between two
+    /// statements is not a module — and so does a word the patch has moved on
+    /// from, see <see cref="Adrift"/>.
     /// </remarks>
     private void PointAt(int at)
     {
@@ -373,20 +318,12 @@ public sealed partial class MainWindow
     /// the canvas has under that name.
     /// </summary>
     /// <remarks>
-    /// <para>
-    /// The binder names a module after where it stands, so a module typed in
-    /// ahead of another renames that other one. Between an edit and the apply
-    /// that answers for it — and for one press after an undo takes that apply
-    /// back, which leaves the text ahead of the patch on purpose — the names in
-    /// the text are not the names on the canvas. A name that is simply not there
-    /// pointed the panel at nothing; a name that is there and means something
-    /// else pointed it at the wrong module, which is worse for being quiet.
-    /// </para>
-    /// <para>
-    /// The type is what is compared, which catches everything but a module
-    /// swapped for another of its own kind — and that one costs nothing, since
-    /// what the panel would show is the same row of knobs either way.
-    /// </para>
+    /// The binder names a module after where it stands, so a module typed in ahead
+    /// of another renames that other one, and between an edit and the apply that
+    /// answers for it the names in the text are not the names on the canvas. A
+    /// name that is there and means something else would point the panel at the
+    /// wrong module, quietly. The type is what is compared, which misses only a
+    /// module swapped for another of its kind — where the knobs are the same row.
     /// </remarks>
     private bool Adrift(Guid id) =>
         means is { } text && text.Find(id)?.TypeId != editor.Patch.Find(id)?.TypeId;
@@ -414,21 +351,15 @@ public sealed partial class MainWindow
     }
 
     /// <summary>
-    /// Writes the knobs turned since the last gesture into the text, each where
-    /// the text already says it.
+    /// Writes the knobs turned since the last gesture into the text, each where the
+    /// text already says it.
     /// </summary>
     /// <remarks>
-    /// <para>
-    /// This is what lets the panel be used at all while the text is the
-    /// document. Without it a knob turned there is heard at once and gone at the
-    /// next apply, which is the worst of both. Nothing is rebuilt: the patch
-    /// already has the value and the engine already has the patch, and building
-    /// here would replace the patch under the very control being dragged.
-    /// </para>
-    /// <para>
-    /// The map is asked again for each one, because the first edit moves
-    /// everything after it along.
-    /// </para>
+    /// What lets the panel be used at all while the text is the document: without
+    /// it a knob turned there is heard at once and gone at the next apply. Nothing
+    /// is rebuilt — the patch already has the value — since building here would
+    /// replace the patch under the control being dragged. The map is asked again
+    /// for each one, because the first edit moves everything after it along.
     /// </remarks>
     private void WriteBack()
     {
@@ -461,14 +392,11 @@ public sealed partial class MainWindow
             RememberPatchSteps();
         }
 
-        // A printing is a reading and not a document, so what has just been
-        // written into it is not an edit anybody made: the canvas's history is
-        // the only one there is, and an undo falls through to it and makes the
-        // reading afresh. Left on this stack instead, one press would put the
-        // old number back over a patch still playing the new one — and leave
-        // the text no longer the printing it says it is, which is what stops
-        // the caret pointing the panel. Said after the group is closed, since
-        // emptying a stack closes what is open on it.
+        // A printing is a reading and not a document, so what has just been written
+        // into it is not an edit anybody made: an undo falls through to the canvas
+        // and makes the reading afresh. Left on this stack, one press would put the
+        // old number back over a patch still playing the new one. Said after the
+        // group is closed, since emptying a stack closes what is open on it.
         if (!sourceOwned) source.ForgetSteps();
 
         if (lost > 0)
@@ -494,14 +422,11 @@ public sealed partial class MainWindow
     }
 
     /// <summary>
-    /// Puts something a module carries that is not a knob back into the text.
+    /// Puts something a module carries that is not a knob back into the text: a
+    /// plugin's field as a named argument, a tune or a scale as the block after the
+    /// call, a file as the one string a call carries. Only what changed, so
+    /// touching one field does not restate the others.
     /// </summary>
-    /// <remarks>
-    /// Each kind where the language already says it: a plugin's field as a named
-    /// argument, exactly as a knob is; a tune or a scale as the block after the
-    /// call; and a file as the one string a call carries. Only what changed, so
-    /// touching one field does not restate every other one the module has.
-    /// </remarks>
     private void Carry(Guid id, string? key, ref int lost)
     {
         if (editor.Patch.Find(id) is not { } node || NodeCatalog.Get(node.TypeId) is not { } def) return;
@@ -529,13 +454,10 @@ public sealed partial class MainWindow
     }
 
     /// <summary>
-    /// Makes one edit, or counts it as one the text had nowhere to take.
+    /// Makes one edit, or counts it as one the text had nowhere to take. Nothing
+    /// written where something should have been is said out loud: the value is
+    /// about to be lost, and whoever changed it can still do something about it.
     /// </summary>
-    /// <remarks>
-    /// Nothing written where something should have been is said out loud rather
-    /// than dropped quietly: the value is about to be lost and whoever changed it
-    /// can still do something else about it.
-    /// </remarks>
     private void Put(Change? change, Guid id, ref int lost)
     {
         if (change is not { } edit)
@@ -559,47 +481,34 @@ public sealed partial class MainWindow
     /// tidy it up — are the text's rather than the canvas's.
     /// </summary>
     /// <remarks>
-    /// The view that is showing, rather than the one that owns the patch. All
-    /// three act on what somebody is looking at, and looking at the text is
-    /// what makes Ctrl+Z mean the last thing typed. Switching over hands them
-    /// back, and neither stack is disturbed by the other — a run of evaluations
-    /// is still there to be undone on the canvas after an afternoon of typing.
+    /// The view that is showing rather than the one that owns the patch: all three
+    /// act on what somebody is looking at. Neither stack is disturbed by the
+    /// other, so a run of evaluations is still there to be undone on the canvas
+    /// after an afternoon of typing.
     /// </remarks>
     private bool Coding => showingCode;
 
     /// <summary>
-    /// Takes back the last thing done to whichever view is showing — or, where
-    /// that view has nothing left to take back, the last thing done to the
-    /// patch.
+    /// Takes back the last thing done to whichever view is showing — or, where that
+    /// view has nothing left, the last thing done to the patch.
     /// </summary>
     /// <remarks>
-    /// <para>
     /// Where the text is the document, its stack is the document's history from
-    /// either view. Typing, applying and turning a knob are one run of things
-    /// somebody did, in the order they did them, so the last two go on that
-    /// stack beside the typing rather than on a second one that would afterwards
-    /// have to be interleaved with it by guessing. The canvas is a view of that
-    /// document, so Ctrl+Z there means what it means at the text.
-    /// </para>
-    /// <para>
-    /// Where the graph is the document the two are independent again and undo
-    /// follows the view: the modules' steps on the canvas, and whatever has been
-    /// typed into a printing at the text. Either way the gesture falls through
-    /// when the stack it lands on has nothing left — otherwise applying a
-    /// printing, which is loaded rather than typed and so leaves an empty stack
-    /// behind it, would be the one thing nobody could take back.
-    /// </para>
+    /// either view: typing, applying and turning a knob are one run of things
+    /// somebody did, so the last two go on that stack rather than on a second one
+    /// to be interleaved later by guessing. Where the graph is the document the two
+    /// are independent and undo follows the view. Either way the gesture falls
+    /// through when its stack is empty, or applying a printing — loaded rather than
+    /// typed — would be the one thing nobody could take back.
     /// </remarks>
     /// <summary>
     /// Which stack a press of undo or redo lands on, and nothing where it lands on
     /// neither.
     /// </summary>
     /// <remarks>
-    /// The rule is here once because two things ask it and they have to agree: the
-    /// gesture, which acts on the answer, and the toolbar, which greys the button
-    /// when there is none. A button offering a press that does nothing and a press
-    /// doing something the button said it could not are the same bug, and stating
-    /// the rule twice is what makes both of them possible.
+    /// Here once because two things ask it and they have to agree: the gesture,
+    /// which acts on the answer, and the toolbar, which greys the button when there
+    /// is none.
     /// </remarks>
     private enum Landing
     {
@@ -609,12 +518,9 @@ public sealed partial class MainWindow
 
     /// <remarks>
     /// Occupancy alone — not the owner or the view above, which agree with it
-    /// everywhere but one press: the one right after an undo or redo that
-    /// crossed the ownership boundary, which is answered by
-    /// <see cref="Handed"/> changing both out from under it. Asking them
-    /// instead of the stack there would land the press on the wrong one and
-    /// strand the Deed that has the matching step, unconsumed, for the next
-    /// press to find the stack empty.
+    /// everywhere but the press right after an undo that crossed the ownership
+    /// boundary, where <see cref="Handed"/> changes both out from under it. Asking
+    /// them there would land the press on the wrong stack.
     /// </remarks>
     private Landing? UndoLandsOn =>
         source.CanUndo ? Landing.Text
@@ -672,11 +578,9 @@ public sealed partial class MainWindow
     /// text's stack being involved.
     /// </summary>
     /// <remarks>
-    /// A step reached this way is one that stack had not been told about, or the
-    /// gesture would have landed there instead of falling through to the canvas.
-    /// Left counted, the next write-back would put it on that stack as well —
-    /// and one press there would then take back two edits, the second of them
-    /// one somebody had already taken back by hand.
+    /// Left counted, the next write-back would put it on that stack as well, and
+    /// one press there would take back two edits — the second of them one somebody
+    /// had already taken back by hand.
     /// </remarks>
     private void Owed(int steps)
     {
@@ -694,21 +598,15 @@ public sealed partial class MainWindow
     }
 
     /// <summary>
-    /// Makes the printing say what the canvas now says, for a patch that has
-    /// moved under it.
+    /// Makes the printing say what the canvas now says, for a patch that has moved
+    /// under it.
     /// </summary>
     /// <remarks>
-    /// A printing is a reading of the canvas, and one that stopped agreeing with
-    /// it the moment anything moved would be a reading of nothing — the same
-    /// reason a knob turned in the panel is written into it in place. An undo is
-    /// the one thing that moves a graph-owned patch while the text is up, since
-    /// the canvas itself is not on screen to be dragged.
-    /// <para>
-    /// Only over a buffer that is still the printing. Typing is never printed
-    /// over: somebody who wrote something here keeps it, and what they have is
-    /// text about a patch that has moved on, which is what the map already stops
-    /// answering for.
-    /// </para>
+    /// A printing that stopped agreeing with the canvas would be a reading of
+    /// nothing; an undo is the one thing that moves a graph-owned patch while the
+    /// text is up. Only over a buffer that is still the printing — somebody who
+    /// wrote something here keeps it, and what they have is text about a patch that
+    /// has moved on.
     /// </remarks>
     private void Reprint()
     {
@@ -723,31 +621,26 @@ public sealed partial class MainWindow
     }
 
     /// <summary>
-    /// Whether a hand is in the middle of something, so that taking an edit back
-    /// would be taking it out from under that hand.
+    /// Whether a hand is in the middle of something, so taking an edit back would
+    /// be taking it out from under that hand.
     /// </summary>
     /// <remarks>
-    /// The pointer is captured for the length of a drag and the keyboard is not,
-    /// so Ctrl+Z arrives in the middle of one perfectly well. The canvas drops
-    /// the drag whenever it is shown a different patch, so what somebody
-    /// dragging a module got for the press was that module
-    /// jumping out from under the pointer to wherever the step it landed on had
-    /// put it, with the drag over and no sign of why. Ignored rather than
-    /// answered: letting go finishes the gesture and leaves the press to be made
-    /// again, against a patch nobody is holding on to.
+    /// The pointer is captured for a drag and the keyboard is not, so Ctrl+Z
+    /// arrives mid-drag perfectly well — and the canvas drops the drag whenever it
+    /// is shown a different patch, which jumps the module out from under the
+    /// pointer with no sign of why. Ignored rather than answered: letting go
+    /// leaves the press to be made again.
     /// </remarks>
     private bool Gesturing => editor.Gesturing;
 
     /// <summary>
-    /// Puts the patch steps taken since the last of these on the text's stack,
-    /// as one thing to take back.
+    /// Puts the patch steps taken since the last of these on the text's stack, as
+    /// one thing to take back.
     /// </summary>
     /// <remarks>
     /// A count rather than the steps themselves, because the canvas is already
-    /// keeping them and keeping them twice is how two records of one edit come
-    /// to disagree. What goes on the text's stack is how many of them to walk
-    /// back, so an undo there is an undo here: one history, reached through
-    /// whichever view somebody is working in.
+    /// keeping them and keeping them twice is how two records of one edit come to
+    /// disagree. One history, reached through whichever view somebody is in.
     /// </remarks>
     private void RememberPatchSteps()
     {
@@ -782,22 +675,11 @@ public sealed partial class MainWindow
     /// Puts back who owned the patch at the step the canvas has just arrived at.
     /// </summary>
     /// <remarks>
-    /// <para>
     /// The only edit that changes hands is an evaluation, so this does nothing
-    /// at all across the run of drags and wires either side of one. Where it
-    /// does something it moves the view with it, because the handover is the
-    /// half of that edit somebody can see: taking an adoption back puts the
-    /// canvas up, which is where the modules they wanted back are, and putting
-    /// it back shows the text that is the document again.
-    /// </para>
-    /// <para>
-    /// Who owns the patch is the whole of the question, and the rest of the
-    /// note is only what to put back once the answer has changed. A step
+    /// across the run of drags either side of one. Where it does something it moves
+    /// the view with it, because the handover is the half somebody can see. A step
     /// recorded before anybody opened the text view remembers there being no
-    /// printing, because at the time there was none — and taking that step back
-    /// is not a handover, so nothing about the printing somebody is reading now
-    /// is any of its business.
-    /// </para>
+    /// printing, and taking it back is not a handover.
     /// </remarks>
     private void Handed()
     {
@@ -824,15 +706,11 @@ public sealed partial class MainWindow
     }
 
     /// <summary>
-    /// Lays out what is showing: the modules across the canvas, or the lines
-    /// down the page.
+    /// Lays out what is showing: the modules across the canvas, or the lines down
+    /// the page. The same button and key for both, and the pass behind each is the
+    /// other's counterpart (<see cref="Core.Language.SourceLayout"/> and
+    /// <see cref="Core.Graph.PatchLayout"/>).
     /// </summary>
-    /// <remarks>
-    /// The same button and the same key for both, because they are the same
-    /// thing done to the two views of one patch — and the pass behind each is
-    /// the other's counterpart besides (<see cref="Core.Language.SourceLayout"/>
-    /// and <see cref="Core.Graph.PatchLayout"/>).
-    /// </remarks>
     private void Tidy()
     {
         if (Coding) source.Tidy();
@@ -843,11 +721,9 @@ public sealed partial class MainWindow
     /// Puts the text view over the canvas, or takes it off.
     /// </summary>
     /// <remarks>
-    /// Two children of one row rather than a third panel stacked under the
-    /// assistant: they are two views of one patch, and showing both would ask
-    /// the question this design exists to answer — which of them is being
-    /// edited. Visibility rather than reparenting, for the reason the fullscreen
-    /// preview does not reparent either.
+    /// Two children of one row rather than a third panel: they are two views of one
+    /// patch, and showing both would ask the question this design exists to answer.
+    /// Visibility rather than reparenting, as with the fullscreen preview.
     /// </remarks>
     private void ShowCode(bool shown)
     {
@@ -880,14 +756,10 @@ public sealed partial class MainWindow
     }
 
     /// <summary>
-    /// Writes the patch on the canvas out as text, for somebody to read.
+    /// Writes the patch on the canvas out as text, for somebody to read. Only over
+    /// a buffer nobody has touched: somebody who typed here and went to look
+    /// something up on the canvas must not come back to a printing over their work.
     /// </summary>
-    /// <remarks>
-    /// Only over a buffer nobody has touched. Somebody who typed here, switched
-    /// to the canvas to look something up and came back would otherwise find
-    /// their work replaced by a printing of a patch they had not changed, which
-    /// is the worst thing this feature could do.
-    /// </remarks>
     private void PrintForReading()
     {
         if (source.Source.Length != 0 && source.Source != printed) return;
@@ -931,19 +803,10 @@ public sealed partial class MainWindow
     /// Builds the text and puts the patch it describes on the canvas.
     /// </summary>
     /// <remarks>
-    /// <para>
     /// An edit rather than a new document, so one press of Ctrl+Z takes the
-    /// evaluation back and the canvas history becomes a history of evaluations.
-    /// Nothing is rewound: the point of applying a patch while it plays is that
-    /// it goes on playing, and everything the edit did not touch keeps its
-    /// accumulator and its delay line (ADR-0067).
-    /// </para>
-    /// <para>
-    /// A text that does not read changes nothing at all. The language builds a
-    /// patch or refuses to, so there is no half-applied state to be left in —
-    /// which is what makes an evaluation safe to try rather than something to
-    /// be sure about first.
-    /// </para>
+    /// evaluation back. Nothing is rewound: everything the edit did not touch keeps
+    /// its accumulator and its delay line (ADR-0067). A text that does not read
+    /// changes nothing at all, so there is no half-applied state to be left in.
     /// </remarks>
     private void Evaluate()
     {
@@ -1020,21 +883,11 @@ public sealed partial class MainWindow
     /// that arrived while the text was showing.
     /// </summary>
     /// <remarks>
-    /// <para>
-    /// The two steps somebody would otherwise take by hand — look at the
-    /// printing, press Apply — done for them, because picking a preset from the
-    /// text view has already said which of the two views they mean to work in.
-    /// Leaving them in the text over a canvas they can still drag modules
-    /// around on is the one answer nobody wants: it is the question ADR-0068
-    /// exists to settle, put back on the screen.
-    /// </para>
-    /// <para>
-    /// Only for a preset, and the reason is what printing loses. A preset holds
-    /// no groups, so its printing is the same instrument written another way and
-    /// adopting it costs a layout that the next apply would redo anyway. A
-    /// <c>.fbk</c> is somebody's own patch and its groups are their work, so it
-    /// stays the graph's and its printing stays offered rather than taken.
-    /// </para>
+    /// The two steps somebody would otherwise take by hand, because picking a
+    /// preset from the text view has already said which view they mean to work in.
+    /// Only for a preset: it holds no groups, so its printing is the same
+    /// instrument written another way, where a <c>.fbk</c> is somebody's own patch
+    /// and its groups are their work.
     /// </remarks>
     private void ReadIntoText()
     {
@@ -1045,14 +898,11 @@ public sealed partial class MainWindow
         // where it was, which is on a canvas that still owns it.
         if (!sourceOwned) return;
 
-        // Nothing has been typed and nothing has been drawn, so there is nothing
-        // to lose yet and nothing to take back — the same state that picking a
-        // preset on the canvas leaves. The evaluation above is how the patch
-        // arrived rather than an edit anybody made to it, so both stacks forget
-        // it: left on the canvas's, one press would undo the arrival and hand
-        // back the patch that was open before the preset was picked, and left
-        // on the text's it would be a lit button that walks a step no longer
-        // there.
+        // Nothing has been typed and nothing drawn, so there is nothing to lose and
+        // nothing to take back. The evaluation above is how the patch arrived
+        // rather than an edit anybody made, so both stacks forget it: left on the
+        // canvas's, one press would hand back the patch that was open before the
+        // preset was picked.
         editor.MarkOpened();
         source.ForgetSteps();
         MarkSourceSaved();
@@ -1069,26 +919,15 @@ public sealed partial class MainWindow
     }
 
     /// <summary>
-    /// Gives the patch back to the canvas, which is what applying does in
-    /// reverse.
+    /// Gives the patch back to the canvas, which is what applying does in reverse.
     /// </summary>
     /// <remarks>
-    /// <para>
-    /// Applying is how a patch is taken into text and this is how it comes back
-    /// out, because a gesture that can only be made in one direction is a trap
-    /// however well it is labelled. Without it the canvas is a view until some
-    /// other document happens to arrive, and somebody who applied a printing to
-    /// try something and then wanted to drag one wire would have to save the
-    /// patch as a <c>.fbk</c> to be allowed to — the way out of an adoption
-    /// should not be a file operation.
-    /// </para>
-    /// <para>
-    /// Nothing is built and nothing is rewound. The patch on the canvas is
-    /// already what the text made, and what changes hands is who owns it — the
-    /// same change a <c>.fbk</c> arriving would make, through the same door, so
-    /// the canvas that comes back is the one that comes back from opening a
-    /// patch file.
-    /// </para>
+    /// A gesture that can only be made in one direction is a trap however well it
+    /// is labelled: without this, somebody who applied a printing to try something
+    /// and then wanted to drag one wire would have to save the patch as a
+    /// <c>.fbk</c> to be allowed to. Nothing is built and nothing rewound — the
+    /// canvas already holds what the text made, and what changes hands is who owns
+    /// it, through the same door a <c>.fbk</c> arriving uses.
     /// </remarks>
     private async Task HandBackAsync()
     {
@@ -1138,21 +977,12 @@ public sealed partial class MainWindow
     /// Hands the patch back to the graph, for a document that arrived as one.
     /// </summary>
     /// <remarks>
-    /// <para>
     /// The buffer is emptied rather than left holding the last document's text,
-    /// which would otherwise be printed over on the next look anyway — and until
-    /// then would be a piece of some other patch sitting under a notice claiming
-    /// to describe this one.
-    /// </para>
-    /// <para>
-    /// The view is not moved. Which of the two is showing is where somebody is
-    /// looking, and a document arriving answers a different question — who owns
-    /// the patch. So a preset picked while the text is up is read as text, in
-    /// the view it was picked from, and what changes is that the text is now a
-    /// printing and says so. The one document that does move the view is a
-    /// <c>.fbks</c>, which arrives as text and locks the canvas besides
-    /// (<see cref="TakeSource"/>).
-    /// </para>
+    /// which would be a piece of some other patch under a notice claiming to
+    /// describe this one. The view is not moved: which of the two is showing is
+    /// where somebody is looking, and a document arriving answers who owns the
+    /// patch. The one document that does move the view is a <c>.fbks</c>, which
+    /// arrives as text and locks the canvas besides (<see cref="TakeSource"/>).
     /// </remarks>
     private void DropSource()
     {
@@ -1176,13 +1006,10 @@ public sealed partial class MainWindow
 
     /// <summary>
     /// Drops what was known about the text, for a document arriving in place of
-    /// another.
-    /// </summary>
-    /// <remarks>
-    /// A map of the last patch would point the panel at modules this one has
+    /// another. A map of the last patch would point the panel at modules this one
     /// never had, and a knob left waiting to be written would be written into
     /// somebody else's file.
-    /// </remarks>
+    /// </summary>
     private void Forget()
     {
         map = SourceMap.Empty;
@@ -1200,19 +1027,11 @@ public sealed partial class MainWindow
     /// </summary>
     /// <remarks>
     /// The canvas keeps everything that looks — selecting, panning, framing,
-    /// copying — and loses everything that changes, so it is still how somebody
-    /// reads a source-built patch and picks the module the inspector is about.
-    /// The inspector stays live and is the one thing on a locked canvas that
-    /// does: everything a module carries — its knobs, its tune, its file, a
-    /// plugin's own fields — is written back into the text, so the next apply
-    /// builds what is already being heard. What it loses is what the graph is
-    /// made of: the buttons that add, group and delete, and the title that
-    /// renames, none of which the file would let stand.
-    /// <para>
-    /// Undo and redo are deliberately left alone. On a source-owned patch the
-    /// history is a history of evaluations, and taking one back is exactly what
-    /// somebody wants after applying something that turned out worse.
-    /// </para>
+    /// copying — and loses everything that changes. The inspector stays live and is
+    /// the one thing on a locked canvas that does, because everything a module
+    /// carries is written back into the text; what it loses is what the graph is
+    /// made of. Undo and redo are left alone: on a source-owned patch the history
+    /// is a history of evaluations.
     /// </remarks>
     private void RefreshOwnership()
     {

@@ -86,15 +86,11 @@ public sealed partial class NodeEditor : Control
     /// The dashed ring round a group that is open — see OpenGroup.
     /// </summary>
     /// <remarks>
-    /// In the separator color rather than the outline one, at half strength. A
-    /// box's border is drawn <em>on</em> a module, where a grey darker than the
-    /// canvas reads as an edge; this is drawn on the canvas itself, which is
-    /// lighter than that grey — so the ring meant to say "these belong together"
-    /// was saying it at six values in two hundred and fifty-five. Half strength
-    /// because the full one goes the other way and reads as a thing in the
-    /// patch: this is furniture, and furniture that shouts is furniture in the
-    /// way. Dashed for the same reason, an open group being a region rather
-    /// than a thing.
+    /// In the separator color at half strength rather than the outline one: a
+    /// box's border is drawn on a module, where a grey darker than the canvas
+    /// reads as an edge, and this is drawn on the canvas itself. Half strength and
+    /// dashed because an open group is furniture marking a region, and furniture
+    /// that shouts is furniture in the way.
     /// </remarks>
     private static readonly IPen OpenGroupPen = new Pen(
         new SolidColorBrush(Colors.Separator, 0.5),
@@ -105,12 +101,11 @@ public sealed partial class NodeEditor : Control
     /// The same ring while everything inside it is selected.
     /// </summary>
     /// <remarks>
-    /// A shut box turns its border the selected color and an open one had
-    /// nothing that did, so the one picture saying which modules a gesture is
-    /// about went missing exactly when the group was opened up to work on. Held
-    /// well under <see cref="SelectionPen"/>, which is what a module wears: the
-    /// modules inside are already ringed one by one, and this is only the line
-    /// round the lot of them.
+    /// A shut box turns its border the selected color, so without this the one
+    /// picture saying which modules a gesture is about goes missing exactly when
+    /// the group is opened to work on. Held well under
+    /// <see cref="SelectionPen"/>: the modules inside are already ringed one by
+    /// one, and this is the line round the lot of them.
     /// </remarks>
     private static readonly IPen OpenGroupPenSelected = new Pen(
         new SolidColorBrush(Colors.Attention, 0.55),
@@ -154,48 +149,35 @@ public sealed partial class NodeEditor : Control
     /// While the middle button is dragging the view.
     /// </summary>
     /// <remarks>
-    /// A hand rather than the four-way arrow a module gets, because what is
-    /// moving is not in the patch: the sheet is going under the pointer and
-    /// nothing on it has changed. The same distinction the two gestures already
-    /// make — a module drag edits the patch and a pan does not — said in the one
-    /// place a person is looking while doing either.
-    /// <para>
-    /// The pointing hand and not a grabbing one, because there is no grabbing
-    /// one to have: Windows ships sixteen cursors and no hand but this, and
-    /// <c>grab</c> is a picture browsers carry themselves rather than anything
-    /// the system knows about. <c>DragMove</c> is not the way round it — on
-    /// Windows that is the OLE drag icon, an arrow wearing a small box, and it
-    /// falls back to an <em>up arrow</em> when ole32 declines to give it up.
-    /// The four-way arrow is the other candidate and is what a module drag
-    /// already wears, which is the one thing this is here to say it is not.
-    /// </para>
+    /// A hand rather than the four-way arrow a module gets, because what is moving
+    /// is not in the patch: the sheet goes under the pointer and nothing on it has
+    /// changed. The pointing hand and not a grabbing one because there is no
+    /// grabbing one to have — Windows ships no hand but this, and
+    /// <c>DragMove</c> is the OLE drag icon, which falls back to an up arrow when
+    /// ole32 declines it.
     /// </remarks>
     private static readonly Cursor PanCursor = new(StandardCursorType.Hand);
 
     private readonly PatchHistory history = new();
 
     /// <summary>
-    /// How far past the canvas the view may be scrolled, in graph units: a strip
-    /// of the ground beyond, so the edge reads as an edge with something on the
-    /// far side of it rather than as the window's own frame.
+    /// How far past the canvas the view may be scrolled, in graph units: a strip of
+    /// the ground beyond, so the edge reads as an edge with something on the far
+    /// side rather than as the window's own frame.
     /// </summary>
     /// <remarks>
-    /// Nothing is ever out there to be looked at — a module is held wholly
-    /// inside the canvas, body and all — so this is as much room as the line
-    /// needs to be seen and no more. Scaled by the zoom like everything else in
-    /// graph units, which puts it between a thin band and a comfortable one
-    /// across the range the wheel allows.
+    /// Nothing is ever out there to be looked at — a module is held wholly inside
+    /// the canvas — so this is as much room as the line needs and no more. Scaled
+    /// by the zoom like everything else in graph units.
     /// </remarks>
     internal const double ViewMargin = 160;
 
     /// <summary>
-    /// How far out the view may zoom, whether by the wheel or by framing.
+    /// How far out the view may zoom, whether by the wheel or by framing. Set by
+    /// the width of the canvas: at this much the whole of it fits a window about
+    /// two thousand pixels wide, and any less and a module dragged to the far edge
+    /// could not be framed.
     /// </summary>
-    /// <remarks>
-    /// Set by the width of the canvas: at this much, the whole of it fits a
-    /// window about two thousand pixels wide. Any less and a module dragged to
-    /// the far edge could not be framed, which is the one way to lose one.
-    /// </remarks>
     internal const double MinZoom = 0.13;
 
     /// <summary>How far from the origin the view may see, to either side.</summary>
@@ -205,13 +187,10 @@ public sealed partial class NodeEditor : Control
     internal const double ViewReachDown = NodeInstance.Down + ViewMargin;
 
     /// <summary>
-    /// The canvas itself, in graph units: the ground a module may stand on.
+    /// The canvas itself, in graph units: the ground a module may stand on. Drawn
+    /// rather than merely enforced, because a bound with nothing to show is a wall
+    /// in the dark.
     /// </summary>
-    /// <remarks>
-    /// Drawn rather than merely enforced: a bound with nothing to show is a wall
-    /// in the dark, and a drag that stops there would have nothing to blame but
-    /// the program.
-    /// </remarks>
     internal static readonly Rect CanvasBounds = new(
         -NodeInstance.Across,
         -NodeInstance.Down,
@@ -250,17 +229,15 @@ public sealed partial class NodeEditor : Control
     private readonly Dictionary<Guid, Point> dragOrigins = [];
 
     /// <summary>
-    /// A module pressed while it was already part of a larger selection, which
-    /// is a click that cannot be resolved until the button comes back up.
-    /// Pressing it must not narrow the selection, or a set could never be
-    /// dragged by one of its own members; releasing it without having dragged
-    /// must, or there would be no way to pick one module out of a set.
+    /// A module pressed while it was already part of a larger selection, which is a
+    /// click that cannot be resolved until the button comes back up. Pressing must
+    /// not narrow the selection, or a set could never be dragged by one of its
+    /// members; releasing without a drag must, or one module could never be picked
+    /// out of a set.
     /// </summary>
     /// <remarks>
     /// "Narrow" rather than "collapse", which since <see cref="NodeGroup"/> means
-    /// the other thing: drawing several modules as one box. Nothing here has
-    /// anything to do with that — this is about how many modules a click leaves
-    /// selected.
+    /// drawing several modules as one box.
     /// </remarks>
     private Guid? pendingNarrow;
 
@@ -333,16 +310,14 @@ public sealed partial class NodeEditor : Control
     public event EventHandler<string>? Reported;
 
     /// <summary>
-    /// Raised by a right-click on empty canvas, carrying the point in graph
-    /// space that was clicked. What the shell puts there is the module palette,
-    /// and what is picked from it belongs at this point rather than wherever the
-    /// view happens to be centred.
+    /// Raised by a right-click on empty canvas, carrying the point in graph space
+    /// that was clicked — what is picked from the palette belongs there rather than
+    /// wherever the view is centred.
     /// </summary>
     /// <remarks>
-    /// A click and not a drag: the right button still pans, so this waits for
-    /// the button to come up and asks whether the pointer went anywhere. And not
-    /// over a module, because a right-click there is about that module rather
-    /// than about adding another beside it.
+    /// A click and not a drag, since the right button still pans: this waits for
+    /// the button to come up and asks whether the pointer went anywhere. Not over a
+    /// module, because a right-click there is about that module.
     /// </remarks>
     public event EventHandler<Point>? MenuRequested;
 
@@ -391,19 +366,13 @@ public sealed partial class NodeEditor : Control
     /// Whether the patch belongs to somebody else, and this is a view of it.
     /// </summary>
     /// <remarks>
+    /// A canvas showing a patch built from source (ADR-0068). Everything that looks
+    /// stays — selecting, panning, zooming, framing, copying — and everything that
+    /// changes it goes, since the next evaluation would overwrite it.
     /// <para>
-    /// A canvas showing a patch built from source (ADR-0068). Everything that
-    /// looks stays: selecting, panning, zooming, framing, copying — a locked
-    /// canvas is still how somebody reads a patch and picks the module the
-    /// inspector should be about. What goes is everything that changes it, since
-    /// the next evaluation would overwrite it and the person would have watched
-    /// their work disappear.
-    /// </para>
-    /// <para>
-    /// Gated at the gestures rather than by refusing the methods behind them.
-    /// The methods are the shell's to call — a menu, the toolbar, the assistant
-    /// — and a public method that silently did nothing would be a worse thing to
-    /// hand a caller than a button that is visibly off.
+    /// Gated at the gestures rather than by refusing the methods behind them: those
+    /// are the shell's to call, and a public method that silently did nothing is
+    /// worse to hand a caller than a button that is visibly off.
     /// </para>
     /// </remarks>
     public bool Locked { get; set; }
@@ -427,38 +396,29 @@ public sealed partial class NodeEditor : Control
     public bool CanRedo => history.CanRedo;
 
     /// <summary>
-    /// Whether a gesture is under way on the canvas: a module being moved, a
-    /// wire being drawn, the view being panned or a marquee drawn out.
+    /// Whether a gesture is under way on the canvas: a module being moved, a wire
+    /// drawn, the view panned or a marquee drawn out. For the shell, which takes
+    /// the keyboard while the pointer is held; the canvas asks its own state.
     /// </summary>
-    /// <remarks>
-    /// For the shell, which takes the keyboard while the pointer is held and has
-    /// to know that the hand is in the middle of something. The canvas itself
-    /// asks its own state rather than this.
-    /// </remarks>
     public bool Gesturing => drag != Drag.None;
 
     /// <summary>
-    /// What the owner of this canvas keeps beside the patch, noted with every
-    /// step so that an undo hands back the state that step was taken in.
+    /// What the owner of this canvas keeps beside the patch, noted with every step
+    /// so an undo hands back the state that step was taken in.
     /// </summary>
     /// <remarks>
-    /// Opaque here on purpose: the canvas records a step for every gesture it
-    /// has, and would otherwise have to know about each thing outside it that
-    /// an edit can change as well. Set it before making the edit that changes
-    /// it, so the step the edit records is the one belonging to the new state —
-    /// and see <see cref="Remark"/> for the changes no edit is made for.
+    /// Opaque on purpose: the canvas records a step for every gesture it has, and
+    /// would otherwise have to know about each thing outside it an edit can change.
+    /// Set it before making the edit — and see <see cref="Remark"/> for the changes
+    /// no edit is made for.
     /// </remarks>
     public object? Mark { get; set; }
 
     /// <summary>
-    /// A step has just been added to the history.
+    /// A step has just been added to the history. Not raised for an undo or redo,
+    /// nor for an edit that made no step, so a caller keeping a history of its own
+    /// hears once per thing somebody did.
     /// </summary>
-    /// <remarks>
-    /// Not raised for an undo or a redo, and not for an edit that made no step
-    /// — one that changed nothing, or one frame of a gesture folded into the
-    /// step before it. So a caller keeping a history of its own beside this one
-    /// hears once per thing somebody did, which is what it has to match.
-    /// </remarks>
     public event EventHandler? Recorded;
 
     /// <summary>

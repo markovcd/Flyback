@@ -20,17 +20,11 @@ namespace Flyback.App.Controls;
 /// Where you describe a patch and watch one get built.
 /// </summary>
 /// <remarks>
-/// <para>
 /// A control rather than a method on the window, for the reason
-/// <see cref="NodeEditor"/> and <see cref="PreviewSurface"/> are: it has state
-/// and behaviour of its own, and the window is long enough already.
-/// </para>
-/// <para>
-/// It owns no patch. It is handed one when somebody asks a question and hands
-/// one back when they accept a proposal — everything in between happens on
-/// <see cref="AssistantRun"/>'s copy, so a run that is abandoned, cancelled or
-/// simply bad costs nothing at all.
-/// </para>
+/// <see cref="NodeEditor"/> is. It owns no patch: it is handed one when somebody
+/// asks a question and hands one back when they accept a proposal, so a run that
+/// is abandoned or bad costs nothing — everything between happens on
+/// <see cref="AssistantRun"/>'s copy.
 /// </remarks>
 public sealed class AssistantPanel : UserControl
 {
@@ -104,12 +98,10 @@ public sealed class AssistantPanel : UserControl
     /// Proof that something is still happening.
     /// </summary>
     /// <remarks>
-    /// A turn is minutes, not seconds, and most of it is spent waiting on a
-    /// provider with nothing to show: the transcript only fills in when an edit
-    /// lands, and a rate limit is waited out in silence by design. Without this
-    /// the panel is indistinguishable from one that has died — which is what
-    /// makes a beacon that moves the point of it, rather than a label that could
-    /// as easily be stale.
+    /// A turn is minutes and most of it is spent waiting on a provider with
+    /// nothing to show, so without this the panel cannot be told from one that has
+    /// died. A beacon that moves says it in a way a label could not, since a label
+    /// can as easily be stale.
     /// </remarks>
     private readonly Ellipse beacon = new()
     {
@@ -142,16 +134,14 @@ public sealed class AssistantPanel : UserControl
     private const string StopGlyph = "■";
 
     /// <summary>
-    /// Send and stop, which are one button because they are never both offered:
-    /// a turn is either wanted or under way. Putting them together also puts the
-    /// way to interrupt a run exactly where the hand that started it last was.
+    /// Send and stop, which are one button because they are never both offered: a
+    /// turn is either wanted or under way, and the way to interrupt a run belongs
+    /// where the hand that started it last was.
     /// </summary>
     /// <remarks>
-    /// Small, square and in the instruction box's own bottom-right corner rather
-    /// than out in the column with Apply and Settings. This is part of writing
-    /// the message rather than something done to a proposal afterwards — and it
-    /// is the first thing here to say that a message can be sent at all, which
-    /// until now was a keystroke mentioned in a placeholder and nowhere else.
+    /// In the instruction box's own corner rather than out with Apply and
+    /// Settings, because this is part of writing the message — and it is the first
+    /// thing here to say that a message can be sent at all.
     /// </remarks>
     private readonly Button send = new()
     {
@@ -177,14 +167,11 @@ public sealed class AssistantPanel : UserControl
     };
 
     /// <summary>
-    /// What is under the key field, since the field itself cannot say it.
+    /// What is under the key field, since the field itself cannot say it. A key
+    /// that is set is never read back into the box (ADR-0034), and blank is also
+    /// what "no key" looks like — so without this the one screen somebody opens to
+    /// check cannot answer the question.
     /// </summary>
-    /// <remarks>
-    /// A key that is set is never read back into the box — ADR-0034, and the
-    /// reason the box is blank however many keys are in force. Blank is exactly
-    /// what "no key" looks like too, though, so without this the one screen
-    /// somebody opens to check cannot answer the question they opened it to ask.
-    /// </remarks>
     private readonly TextBlock keyNote = new()
     {
         FontSize = Text.Small,
@@ -209,15 +196,11 @@ public sealed class AssistantPanel : UserControl
     private readonly CheckBox logBox = new() { Content = "Log conversations to disk", FontSize = Text.Body };
 
     /// <summary>
-    /// Everything the chosen provider says it has, drawn from its own
-    /// declaration.
+    /// Everything the chosen provider says it has, drawn from its own declaration.
+    /// This panel does not know what is on it: which model, which endpoint,
+    /// whether there is an ear at all are the provider's questions (ADR-0069), and
+    /// what arrives here is a bag of strings to hand back.
     /// </summary>
-    /// <remarks>
-    /// This panel does not know what is on it. Which model, which endpoint,
-    /// whether there is an ear at all — those are the provider's questions and
-    /// the provider's answers (ADR-0069); what arrives back here is a bag of
-    /// strings to hand to it and to write down.
-    /// </remarks>
     private readonly AssistantForm form = new();
 
     private readonly ComboBox providerBox = new() { FontSize = Text.Body, Width = 260, Name = "provider" };
@@ -263,13 +246,10 @@ public sealed class AssistantPanel : UserControl
     /// Whether a turn is in flight, as this panel knows it.
     /// </summary>
     /// <remarks>
-    /// Not <see cref="AssistantRun.Running"/>, which is the run's own answer and
-    /// arrives too late to be one: <c>Ask</c> is an async iterator, so its body
-    /// does not run — and the flag inside it is not set — until the first
-    /// <c>MoveNextAsync</c>, which happens after this panel has already refreshed
-    /// its buttons. Asking the run left Stop dead for the whole of every turn.
-    /// This is set the moment somebody presses Enter, which is the moment it
-    /// becomes true from out here.
+    /// Not <see cref="AssistantRun.Running"/>, which arrives too late to be one:
+    /// <c>Ask</c> is an async iterator, so its body does not run until the first
+    /// <c>MoveNextAsync</c> — after this panel has refreshed its buttons. This is
+    /// set the moment somebody presses Enter.
     /// </remarks>
     private bool asking;
 
@@ -286,10 +266,9 @@ public sealed class AssistantPanel : UserControl
 
     /// <param name="report"></param>
     /// <param name="saved">
-    /// The choices to open on, defaulting to the ones on this machine. Named
-    /// only so a test can put a set in front of the panel without writing the
-    /// file somebody is actually using — what these controls make of a given set
-    /// of choices is most of what this class does.
+    /// The choices to open on, defaulting to the ones on this machine. Named only
+    /// so a test can put a set in front of the panel without writing the file
+    /// somebody is using.
     /// </param>
     /// <param name="plugins"></param>
     /// <param name="current"></param>
@@ -431,21 +410,14 @@ public sealed class AssistantPanel : UserControl
 
     /// <summary>
     /// This panel's part of the settings window. Kept and lent out rather than
-    /// built afresh, because these are fields with handlers already on them and
-    /// a second set would answer for a first that nothing can see.
+    /// built afresh, because these are fields with handlers already on them.
     /// </summary>
     /// <remarks>
-    /// The credential state is read again every time it is asked for. A key can
-    /// arrive or leave without this panel touching anything — exported into the
-    /// environment from another window, or dropped into the store by something
-    /// else — and this is the one screen that claims to say which.
-    /// <para>
-    /// What provider was in force is noted on the way out, so a window closed
-    /// without Save can be put back to it — see <see cref="DiscardSettings"/>.
-    /// A half-typed endpoint or a switched provider is otherwise live on the
-    /// form for as long as this one opening lasts, which is what lending the
-    /// same controls out rather than building fresh ones is for.
-    /// </para>
+    /// The credential state is read again every time it is asked for: a key can
+    /// arrive or leave without this panel touching anything, and this is the one
+    /// screen that claims to say which. What provider was in force is noted on the
+    /// way out, so a window closed without Save can be put back to it — see
+    /// <see cref="DiscardSettings"/>.
     /// </remarks>
     public Control SettingsSection()
     {
@@ -465,15 +437,10 @@ public sealed class AssistantPanel : UserControl
 
     /// <summary>
     /// The window's contents: who is being talked to, what that one has to be
-    /// told, and the key — in that order, because the middle of it changes
-    /// entirely with the first.
+    /// told, and the key — in that order, because the middle changes entirely with
+    /// the first. The provider and the key are the two the host owns; everything
+    /// between them is the provider's own form.
     /// </summary>
-    /// <remarks>
-    /// The provider and the key are the two the host owns. Which provider is a
-    /// question about what is installed here, and a credential is the host's by
-    /// ADR-0034 and has no field it could be declared as. Everything between
-    /// them is the provider's own form.
-    /// </remarks>
     private Control BuildSettings()
     {
         providerBox.SelectionChanged += (_, _) =>
@@ -532,24 +499,16 @@ public sealed class AssistantPanel : UserControl
     }
 
     /// <summary>
-    /// Puts back whatever was in force when the settings were opened, for a
-    /// window closed some way other than Save — the cross on it, or Escape.
+    /// Puts back whatever was in force when the settings were opened, for a window
+    /// closed some way other than Save.
     /// </summary>
     /// <remarks>
-    /// Only the provider needs restoring by hand: it is the one thing here
-    /// written to <see cref="AssistantSettings"/> before Save is ever pressed —
-    /// picking a provider sets <see cref="AssistantSettings.Provider"/>
-    /// immediately, so the form under it can change with it. Everything else
-    /// either is not written until <see cref="SaveSettings"/> runs
-    /// (<see cref="AssistantSettings.Choices"/>, <see cref="AssistantSettings.RememberKey"/>,
-    /// <see cref="AssistantSettings.LogConversations"/>) or was never kept at
-    /// all — a key typed into <see cref="keyBox"/> only has to be blanked, per
-    /// <see cref="Credentials"/> and ADR-0034.
-    /// <para>
-    /// Internal rather than private because the UI tests need it: the window
-    /// this runs in is the shell's to close, so what is worth exercising from
-    /// here is what got left behind on the panel, not the closing itself.
-    /// </para>
+    /// Only the provider needs restoring by hand: picking one sets
+    /// <see cref="AssistantSettings.Provider"/> immediately, so the form under it
+    /// can change with it. Everything else is not written until
+    /// <see cref="SaveSettings"/> runs, or was never kept at all — a key typed into
+    /// <see cref="keyBox"/> only has to be blanked (ADR-0034). Internal rather than
+    /// private because the UI tests need it.
     /// </remarks>
     internal void DiscardSettings()
     {
@@ -566,14 +525,10 @@ public sealed class AssistantPanel : UserControl
 
     /// <summary>
     /// Enter asks; Ctrl+Enter — and Shift+Enter, which every other message box
-    /// in the world accepts — breaks the line.
+    /// accepts — breaks the line. The break is put in by hand, because whether a
+    /// <see cref="TextBox"/> types a newline for a gesture with a modifier held is
+    /// Avalonia's own business.
     /// </summary>
-    /// <remarks>
-    /// The line break is put in by hand rather than left to the box. Whether a
-    /// <see cref="TextBox"/> types a newline for a gesture with a modifier held
-    /// is an implementation detail of Avalonia's, and the alternative to knowing
-    /// is a message that silently refuses to grow a second line.
-    /// </remarks>
     private void Typed(object? sender, KeyEventArgs e)
     {
         if (e.Key != Key.Enter) return;
@@ -604,16 +559,11 @@ public sealed class AssistantPanel : UserControl
         ?? plugins.PreferredAssistant;
 
     /// <summary>
-    /// Puts the chosen provider's form up, holding what that provider was last
-    /// set to.
+    /// Puts the chosen provider's form up, holding what that provider was last set
+    /// to. The provider box is set from here too, so the two cannot disagree about
+    /// who is being configured; nothing else is, since the fields are asked for
+    /// again after every answer.
     /// </summary>
-    /// <remarks>
-    /// The provider box is set from here too, so the two cannot disagree about
-    /// who is being configured. Nothing else is: what the fields are is asked
-    /// for on the way in and again after every answer, so there is no order to
-    /// get right and no control that has to be restored before another one is
-    /// read.
-    /// </remarks>
     private void ShowProviderForm()
     {
         providerBox.SelectedIndex = assistant is null
@@ -675,14 +625,9 @@ public sealed class AssistantPanel : UserControl
 
     /// <summary>
     /// The provider, its form as it stands, and the key — which is all a
-    /// configuration is now.
+    /// configuration is. Nothing is interpreted on the way past: what a set of
+    /// answers means is the provider's to work out, on the other side of this call.
     /// </summary>
-    /// <remarks>
-    /// Nothing is interpreted on the way past. What a set of answers means —
-    /// which of them are held to what the chosen model can actually do, and
-    /// which are simply passed on — is the provider's to work out, and it is
-    /// worked out again on the other side of this call.
-    /// </remarks>
     private AssistantConfig? Configured()
     {
         if (assistant is null) return null;
@@ -727,13 +672,10 @@ public sealed class AssistantPanel : UserControl
 
     /// <summary>
     /// The one button, in whichever of its two jobs applies. Reads and does not
-    /// ask, because it runs on every keystroke.
+    /// ask, because it runs on every keystroke. Dead until there is something to
+    /// send, which says what the panel knew and never showed: an empty box or a
+    /// missing key is why Enter appeared to do nothing.
     /// </summary>
-    /// <remarks>
-    /// Dead until there is something to send, which is the button saying what
-    /// the panel already knew and never showed: an empty box or a missing key is
-    /// why pressing Enter appeared to do nothing at all.
-    /// </remarks>
     private void ShowSendState()
     {
         send.Content = asking ? StopGlyph : SendGlyph;

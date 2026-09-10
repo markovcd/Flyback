@@ -15,21 +15,14 @@ namespace Flyback.App;
 
 /// <summary>
 /// The panel on the right: the selected module's knobs, and — for the Output,
-/// which every patch has and which nothing else stands in for — the settings of
-/// the instrument itself.
+/// which every patch has — the settings of the instrument itself.
 /// </summary>
 /// <remarks>
 /// Rebuilt from nothing every time the selection changes, because what it shows
-/// is entirely the selected module's port list. That is the region ADR-0016
-/// leans on hardest: under XAML it would be an ItemsControl, a template per port
-/// kind, a selector and a view model per row, where here it is a method that
-/// returns controls.
-/// <para>
-/// The Output's own controls are the exception and are wired once from the
-/// constructor. They are the state of the instrument rather than of a selection,
-/// so they have to work before anything is selected and keep their values across
-/// every rebuild of the panel showing them.
-/// </para>
+/// is entirely the selected module's port list. The Output's own controls are the
+/// exception and are wired once from the constructor: they are the state of the
+/// instrument rather than of a selection, so they work before anything is
+/// selected and keep their values across every rebuild.
 /// </remarks>
 public sealed partial class MainWindow
 {
@@ -66,15 +59,11 @@ public sealed partial class MainWindow
         + "Delete removes what is selected, Ctrl+F frames the patch.";
 
     /// <summary>
-    /// The same, for a canvas that is a view of somebody's source rather than
-    /// the patch itself — see ADR-0068.
+    /// The same, for a canvas that is a view of somebody's source rather than the
+    /// patch itself — see ADR-0068. Everything that reads is here and everything
+    /// that writes is gone; naming the gestures that are switched off would leave
+    /// somebody concluding the program was broken.
     /// </summary>
-    /// <remarks>
-    /// Everything that reads is still here and everything that writes is gone,
-    /// which is exactly the difference. Naming the gestures that are switched
-    /// off would be worse than saying nothing at all: somebody following them
-    /// would conclude the program was broken.
-    /// </remarks>
     private const string LockedHelp =
         "The text is the document, and this is a view of what it builds. "
         + "Press F2 to go back to it — modules and wires are added and removed there, "
@@ -88,15 +77,10 @@ public sealed partial class MainWindow
         + "Ctrl+C copies what is selected, Ctrl+F frames the patch.";
 
     /// <summary>
-    /// What the panel says for a caret standing on a module the patch has moved
-    /// on from — see <see cref="Adrift"/>.
+    /// What the panel says for a caret standing on a module the patch has moved on
+    /// from — see <see cref="Adrift"/>. Said rather than left blank: a panel that
+    /// quietly stops cannot be told apart from a caret in the wrong place.
     /// </summary>
-    /// <remarks>
-    /// Said rather than left blank. The panel following the caret is how
-    /// somebody works in the text view, and one that quietly stops has no way of
-    /// being told apart from a caret in the wrong place — which is a bug report
-    /// about the panel rather than a sentence about the patch.
-    /// </remarks>
     private const string Adrifting =
         "The text has moved on from the patch that is playing, so this module is not "
         + "there to edit yet — the code names a module by where it stands, and something "
@@ -272,15 +256,14 @@ public sealed partial class MainWindow
     }
 
     /// <summary>
-    /// What the panel's rows <em>are</em>, as against what is in them: which
-    /// module is being shown, and which of its inputs have a wire on them.
+    /// What the panel's rows are, as against what is in them: which module is being
+    /// shown, and which of its inputs have a wire on them.
     /// </summary>
     /// <remarks>
-    /// A row is a knob or the word "patched" and never both, so a wire landing
-    /// on the module already selected changes the panel as much as selecting a
-    /// different one does. Nothing else the canvas reports does — a knob turned
-    /// is a value and not a row — which is what keeps a slider mid-drag from
-    /// being torn down under the hand holding it.
+    /// A row is a knob or the word "patched" and never both, so a wire landing on
+    /// the selected module changes the panel as much as selecting another does.
+    /// Nothing else the canvas reports does, which is what keeps a slider mid-drag
+    /// from being torn down under the hand holding it.
     /// </remarks>
     private string inspectorShape = string.Empty;
 
@@ -453,16 +436,12 @@ public sealed partial class MainWindow
         if (editor.Locked) return;
 
         // Grouping sits above deleting rather than beside it, so the destructive
-        // button keeps the place it has always had: a panel that grows a control
-        // should not move the one a hand already knows where to find.
+        // button keeps the place a hand already knows.
         //
-        // Its label counts the same way delete's does, off the same rule — see
-        // NodeEditor.Groupable — and it is offered on the same terms Ctrl+G is,
-        // which is NodeGroup.Fewest and up. A button reading "Group 1 module"
-        // would be offering something the graph refuses.
-        //
-        // Ungrouping is not here, because a selection that is exactly a group
-        // never reaches this far — it gets a panel of its own above.
+        // Its label counts the way delete's does — see NodeEditor.Groupable — and
+        // it is offered on the same terms Ctrl+G is: a button reading "Group 1
+        // module" would offer something the graph refuses. Ungrouping is not here,
+        // because a selection that is exactly a group gets a panel of its own.
         if (editor.Groupable >= NodeGroup.Fewest)
             Act($"Group {editor.Groupable} modules", editor.GroupSelected, 14);
 
@@ -501,29 +480,23 @@ public sealed partial class MainWindow
     }
 
     /// <summary>
-    /// The name at the top of the panel, which a double-click turns into a box
-    /// to type another one into.
+    /// The name at the top of the panel, which a double-click turns into a box to
+    /// type another one into.
     /// </summary>
     /// <remarks>
-    /// A module is a thing on a canvas before it is a type, and a patch with
-    /// four Mixers in it is one you have to follow a wire to read. The name is
-    /// only ever a label — nothing is found by it, and two modules called the
-    /// same thing is no more a problem than two called nothing.
-    /// <para>
-    /// Transparent rather than unpainted, because a <see cref="TextBlock"/> with
-    /// no background of any kind is not there as far as the pointer is
-    /// concerned, and the double-click would land on the panel behind it.
-    /// </para>
+    /// A module is a thing on a canvas before it is a type, and a patch with four
+    /// Mixers in it is one you have to follow a wire to read. The name is only ever
+    /// a label: nothing is found by it. Transparent rather than unpainted, because
+    /// a <see cref="TextBlock"/> with no background is not there as far as the
+    /// pointer is concerned.
     /// </remarks>
     /// <summary>
     /// What a group shows: its name, its edge, and what can be done to it.
     /// </summary>
     /// <remarks>
-    /// The edge rather than the contents, and that is the whole point of the
-    /// panel. A box is a promise that several modules can be thought about as one
-    /// thing, and the only way to keep it is to say what that one thing takes and
-    /// gives — a list of the knobs inside would be the box admitting it was never
-    /// really one module at all. Open it to reach those.
+    /// The edge rather than the contents, which is the whole point of the panel: a
+    /// box is a promise that several modules can be thought about as one thing, and
+    /// a list of the knobs inside would be the box admitting it never was.
     /// </remarks>
     private void BuildGroupInspector(NodeGroup group)
     {
@@ -679,25 +652,15 @@ public sealed partial class MainWindow
     }
 
     /// <summary>
-    /// Keeps a group in the module list, asking first where doing so would
-    /// replace one already kept under that name.
+    /// Keeps a group in the module list, asking first where doing so would replace
+    /// one already kept under that name.
     /// </summary>
     /// <remarks>
-    /// <para>
-    /// Replacing is what saving under a name already taken means, and it is also
-    /// somebody's group going for good — a file deleted, with nothing on this
-    /// side of it to undo. The two are not in tension: it still replaces, it
-    /// just does not do it because a hand was in the neighbourhood of a button.
-    /// A name typed a second time by accident is the ordinary way to lose one,
-    /// and the panel offers no clue that this is what the press would do.
-    /// </para>
-    /// <para>
-    /// Asked in the place the button was standing, the way the module list asks
-    /// about the row that is going: no sheet over the window, nothing to move
-    /// the panel under the hand, and the question at the height the answer will
-    /// be given. A dialog would be right if this could lose work — it cannot,
-    /// and what it can lose is one entry in a list of them.
-    /// </para>
+    /// Replacing is somebody's group going for good, with nothing on this side of
+    /// it to undo, and a name typed a second time by accident is the ordinary way
+    /// to lose one. Asked in the place the button was standing, the way the module
+    /// list asks about a row that is going: a dialog would be right if this could
+    /// lose work, and what it can lose is one entry in a list.
     /// </remarks>
     private void KeepGroup(NodeGroup group, Button keep)
     {
@@ -731,14 +694,9 @@ public sealed partial class MainWindow
 
     /// <summary>
     /// A question and its two answers on one row: the tick acts, the cross backs
-    /// out.
+    /// out. The same shape and glyphs the module list uses to ask about a row it is
+    /// told to forget — small, immediate, and about the thing under it.
     /// </summary>
-    /// <remarks>
-    /// The same shape and the same two glyphs the module list uses to ask about
-    /// a row it is being told to forget, because it is the same kind of
-    /// question — small, immediate, and about the thing directly under it. Two
-    /// words on two buttons would be a dialog with the frame left off.
-    /// </remarks>
 
     private Control BuildGroupTitle(NodeGroup group)
     {
@@ -806,16 +764,15 @@ public sealed partial class MainWindow
     }
 
     /// <summary>
-    /// Swaps the name for a box to type one into. Enter keeps what was typed and
-    /// so does clicking away; Escape abandons it; and an empty box is how the
-    /// module goes back to being called whatever its definition calls it.
+    /// Swaps the name for a box to type one into. Enter keeps what was typed and so
+    /// does clicking away; Escape abandons it; an empty box puts the module back to
+    /// its definition's name.
     /// </summary>
     /// <remarks>
-    /// The one place here that swaps a control in rather than rebuilding the
-    /// panel around a flag. The box has to take the keyboard the moment it
-    /// appears, which means being in the tree already, and it puts itself back
-    /// from inside its own <c>LostFocus</c> — where tearing down the panel that
-    /// is raising the event is more than this row needs to do.
+    /// The one place here that swaps a control in rather than rebuilding the panel:
+    /// the box has to take the keyboard the moment it appears, which means being in
+    /// the tree already, and it puts itself back from inside its own
+    /// <c>LostFocus</c>.
     /// </remarks>
     private void BeginRename(NodeInstance node, NodeDef def, Control title) =>
         BeginRename(
@@ -828,16 +785,14 @@ public sealed partial class MainWindow
             () => BuildTitle(node, def));
 
     /// <summary>
-    /// Turns a title into a box to type another name into, and puts the title
-    /// back when the box closes.
+    /// Turns a title into a box to type another name into, and puts the title back
+    /// when the box closes.
     /// </summary>
     /// <remarks>
-    /// Written against what a name <em>is</em> rather than against what carries
-    /// one, because two things carry one now: a module and a group. Everything
-    /// that made this worth getting right — Enter keeping, Escape discarding,
-    /// losing the focus keeping, and only the edits that changed something
-    /// reaching the history — is the same for both, and a second copy of it would
-    /// be a second place for one of those to stop being true.
+    /// Written against what a name is rather than against what carries one, because
+    /// two things carry one: a module and a group. Enter keeping, Escape
+    /// discarding, losing the focus keeping, and only real edits reaching the
+    /// history are the same for both.
     /// </remarks>
     /// <param name="title"></param>
     /// <param name="held">The name it has, which is null on one nobody has named.</param>
@@ -920,10 +875,8 @@ public sealed partial class MainWindow
     /// rendered at and by, and the four ways of getting either of them out.
     /// </summary>
     /// <remarks>
-    /// Built once and kept, not rebuilt per selection like the knob rows above
-    /// it. These controls hold live state, and a control may have one parent at
-    /// a time — putting <see cref="resolution"/> into a freshly made row on
-    /// every selection would leave it owned by the row before.
+    /// Built once and kept, not rebuilt per selection: these controls hold live
+    /// state, and a control may have one parent at a time.
     /// </remarks>
     private void BuildOutputSettings()
     {
@@ -934,15 +887,13 @@ public sealed partial class MainWindow
         outputSettings.Children.Add(Heading("Sound"));
         outputSettings.Children.Add(audioButton);
 
-        // Under Sound rather than under a heading of its own, though it moves
-        // both halves: a rewind that took the picture back and left the sound
-        // where it was would pull the two apart, and they are one instrument on
-        // one timeline.
+        // Under Sound rather than a heading of its own, though it moves both
+        // halves: a rewind that took the picture back and left the sound where it
+        // was would pull apart one instrument on one timeline.
         //
-        // The width is the audio button's. Everything standalone on this panel
-        // sits at its left edge and is only as wide as it needs to be, so one
-        // control stretched to the far side reads as a misalignment rather than
-        // as emphasis — and these two being the same width says they are a pair.
+        // The width is the audio button's, because everything standalone here sits
+        // at its left edge and is only as wide as it needs to be — the two being
+        // the same width says they are a pair.
         var rewind = new Button { Content = "Rewind", Width = 92 };
 
         rewind.Click += (_, _) =>
@@ -981,14 +932,11 @@ public sealed partial class MainWindow
 
     /// <summary>A labelled row on the same 78-pixel gutter the knob rows use.</summary>
     /// <summary>
-    /// How wide the column every row puts its name in is.
+    /// How wide the column every row puts its name in is. One number rather than
+    /// seven, because it is stated twice per row — as the grid column and as the
+    /// caption's own width, so a name too long to fit is trimmed at the gutter
+    /// rather than pushing the control along.
     /// </summary>
-    /// <remarks>
-    /// One number rather than seven, and it has to be one: it is stated twice for
-    /// every row — once as the grid column and once as the caption's own width, so
-    /// that a name too long to fit is trimmed at the gutter rather than pushing the
-    /// control beside it along.
-    /// </remarks>
     private const double Gutter = 78;
 
     /// <summary>A row's name, in the gutter every row shares.</summary>
@@ -1007,14 +955,10 @@ public sealed partial class MainWindow
 
     /// <summary>
     /// A knob whose number is not what it means, and so wants a column for what it
-    /// does mean.
+    /// does mean: "57" is not what anyone means by the note they are picking. A
+    /// count needs no such column, but lands on whole numbers for the same reason a
+    /// note does.
     /// </summary>
-    /// <remarks>
-    /// "57" is not what anyone means by the note they are picking and "-3" is not
-    /// what they mean by a millisecond. A count needs no such column — the number is
-    /// already what it stands for — but it lands on whole numbers for the same
-    /// reason a note does.
-    /// </remarks>
     private static bool Named(PortSpec spec) => spec.Display != PortDisplay.Number;
 
     /// <summary>Whether any socket or field on this module has a reading to show.</summary>
@@ -1029,13 +973,10 @@ public sealed partial class MainWindow
 
     /// <summary>A knob's row: the slider, the reading if it has one, and its number.</summary>
     /// <remarks>
-    /// <paramref name="reading"/> reserves the column for the whole panel, not
-    /// just this row, so that a slider is the same width down the entire
-    /// module — a plain count does not get a wider bar just because its
-    /// neighbor spells out milliseconds, and no row reserves the column at
-    /// all when nothing on the module has a reading to put there. 60 is wide
-    /// enough for the widest reading a socket ever shows: a duration just
-    /// under a second, formatted in milliseconds as "999.9 ms".
+    /// <paramref name="reading"/> reserves the column for the whole panel rather
+    /// than this row, so every slider on a module is the same width and no row
+    /// reserves it when nothing on the module has a reading. 60 fits the widest
+    /// there is: a duration just under a second, as "999.9 ms".
     /// </remarks>
     private static Grid KnobRow(bool reading) => Row(reading ? "*,60,84" : "*,84");
 
@@ -1056,20 +997,14 @@ public sealed partial class MainWindow
 
     /// <summary>
     /// What is driving this module's unpatched sockets, and why nothing on the
-    /// canvas shows it. Null where every socket is either patched or on a knob,
-    /// which is most of the catalogue.
+    /// canvas shows it. Null where every socket is either patched or on a knob.
     /// </summary>
     /// <remarks>
-    /// Said here rather than only in the row, because the row can say which
-    /// module and not why there is no wire from it. The absence is the part that
-    /// needs explaining: everything else in this editor is visible in the patch,
-    /// and a signal arriving from nowhere is the one thing that is not.
-    /// <para>
-    /// Sockets that have since been patched drop out of the list, which is what
-    /// makes this a description of the module as it stands rather than of the
-    /// module as catalogued. <see cref="InspectorShape"/> already counts a wire
-    /// arriving as a reason to rebuild, so it keeps up on its own.
-    /// </para>
+    /// The absence is the part that needs explaining: everything else in this
+    /// editor is visible in the patch, and a signal arriving from nowhere is not.
+    /// Sockets that have since been patched drop out of the list, and
+    /// <see cref="InspectorShape"/> already counts a wire arriving as a reason to
+    /// rebuild.
     /// </remarks>
     private Control? BuildNormalledNote(NodeInstance node, NodeDef def)
     {
@@ -1112,14 +1047,10 @@ public sealed partial class MainWindow
     /// Which control edits one of the things a module carries that is not a knob.
     /// </summary>
     /// <remarks>
-    /// The one place the App knows the kinds apart, and the reason it is a lookup
-    /// here rather than a method on <see cref="NodeExtra"/>: the rest of what a
-    /// kind does lives in the engine, and the engine does not reference Avalonia.
-    /// <para>
-    /// A kind with nothing here shows nothing rather than throwing, so a plugin
-    /// that carries state this build has never heard of costs it a row on the
-    /// panel and not the panel.
-    /// </para>
+    /// The one place the App knows the kinds apart, and a lookup here rather than a
+    /// method on <see cref="NodeExtra"/> because the engine does not reference
+    /// Avalonia. A kind with nothing here costs a row on the panel and not the
+    /// panel.
     /// </remarks>
     private Control? EditorFor(NodeExtra extra, NodeInstance node, NodeDef def, bool reading) => extra switch
     {
@@ -1146,11 +1077,9 @@ public sealed partial class MainWindow
     /// A plugin's extra, drawn from its <see cref="NodeExtra.Fields"/>.
     /// </summary>
     /// <remarks>
-    /// The whole of the App's knowledge of a plugin's state is here, and it is
-    /// knowledge of the vocabulary rather than of any plugin: nothing in this
-    /// method could tell you which plugin it is drawing. A field shape this build
-    /// has never heard of is skipped rather than drawn wrongly, so a patch made
-    /// by a newer build stays editable in the parts this one understands.
+    /// Knowledge of the vocabulary rather than of any plugin: nothing here could
+    /// tell you which one it is drawing. A field shape this build has never heard
+    /// of is skipped rather than drawn wrongly.
     /// </remarks>
     private Control? BuildDeclaredRows(NodeInstance node, NodeExtra extra, bool reading)
     {
@@ -1208,20 +1137,12 @@ public sealed partial class MainWindow
     /// A label and a list to pick from, on the same grid a knob's row uses.
     /// </summary>
     /// <remarks>
-    /// What is stored may not be in the list — a device that is switched off, a
-    /// patch written on another machine — and that is shown rather than
-    /// corrected: an entry for it is added at the end, named the way
-    /// <see cref="ExtraField.Choice.Name"/> writes one that is not here, so the
-    /// picker shows what the patch actually means. Picking anything else drops
-    /// it, which is the only way it goes.
-    /// <para>
-    /// <paramref name="fresh"/> is asked again as the list is opened, which is
-    /// the one moment it matters: a MIDI keyboard plugged in while this panel was
-    /// already on screen would otherwise not be there to pick, and clicking on
-    /// another module and back is not an obvious thing to be asked to do. Only
-    /// the opening — a list that changed under a pointer already inside it would
-    /// move the row somebody was reaching for.
-    /// </para>
+    /// What is stored may not be in the list — a device switched off, a patch
+    /// written on another machine — and that is shown rather than corrected: an
+    /// entry for it is added at the end, so the picker shows what the patch means.
+    /// <paramref name="fresh"/> is asked again as the list opens, which is the one
+    /// moment it matters; a list that changed under a pointer already inside it
+    /// would move the row somebody was reaching for.
     /// </remarks>
     private Control ChoiceRow(
         ExtraField.Choice choice,
@@ -1294,16 +1215,13 @@ public sealed partial class MainWindow
 
     /// <summary>
     /// Writes one field of a plugin's extra back, making the stored object first
-    /// where the module arrived without one — a patch written before the plugin
-    /// declared this field, or edited by hand into a shape that has no room for
-    /// it.
+    /// where the module arrived without one.
     /// </summary>
     /// <remarks>
-    /// Through the field's own tidying, so a declared range is what is stored and
-    /// not merely what the slider offered. This is where an extra's range differs
+    /// Through the field's own tidying, which is where an extra's range differs
     /// from a knob's: a socket's <see cref="PortSpec.Min"/> is the editor's
     /// suggestion and a saved value outside it widens the slider, where a field's
-    /// range is what the value means and is held to on every path into it.
+    /// range is what the value means.
     /// </remarks>
     private void Store(NodeInstance node, NodeExtra extra, ExtraField field, JsonNode value)
     {
@@ -1348,16 +1266,10 @@ public sealed partial class MainWindow
     /// another.
     /// </summary>
     /// <remarks>
-    /// The name alone rather than the whole path, because a path is far wider
-    /// than the panel and the last part of it is the part anybody recognises.
-    /// The full one is on the tooltip, which is where it is wanted — a file that
-    /// has gone is found again by knowing where it was supposed to be.
-    /// <para>
-    /// Nothing here says whether the file could be read. That is the compiler's
-    /// to say and it says it in the status bar with everything else, naming the
-    /// module: a second, quieter version of the same complaint on the panel
-    /// would be one more thing to keep true.
-    /// </para>
+    /// The name alone rather than the whole path, with the full one on the tooltip
+    /// — a file that has gone is found again by knowing where it was supposed to
+    /// be. Nothing here says whether it could be read: that is the compiler's to
+    /// say, in the status bar, naming the module.
     /// </remarks>
     private Control BuildSampleRow(NodeInstance node) => BuildFileRow(
         node,
@@ -1388,15 +1300,11 @@ public sealed partial class MainWindow
         });
 
     /// <summary>
-    /// A file this instance carries: what it is called, what it currently is,
-    /// and a button that goes and finds another.
+    /// A file this instance carries: what it is called, what it currently is, and a
+    /// button that goes and finds another. One row for both kinds, which differ in
+    /// the picker's title, the label, the filter and what to do with what comes
+    /// back.
     /// </summary>
-    /// <remarks>
-    /// One row for both kinds, because the two differ in four strings and
-    /// nothing else — the picker's title, the label, the filter, and what to do
-    /// with what comes back. Written twice it would have been sixty lines said
-    /// again, and the second copy is where the tooltip stops being set.
-    /// </remarks>
     private Control BuildFileRow(
         NodeInstance node,
         string label,
@@ -1541,29 +1449,27 @@ public sealed partial class MainWindow
     }
 
     /// <summary>
-    /// A label, a slider, a number box, and — where the number is not what it
-    /// means — what it does mean written beside them.
+    /// A label, a slider, a number box, and — where the number is not what it means
+    /// — what it does mean written beside them.
     /// </summary>
     /// <remarks>
-    /// Shared by a socket's knob and by a plugin's declared number field, which
-    /// is the point: a plugin gets snapping, formatting and the widened range for
-    /// nothing, and its row reads exactly like the knob two rows above it because
-    /// it is the same control. The caller says where the value lives; nothing
-    /// here knows whether that is an input array or a stored object.
+    /// Shared by a socket's knob and by a plugin's declared number field, so a
+    /// plugin gets snapping, formatting and the widened range for nothing. The
+    /// caller says where the value lives; nothing here knows whether that is an
+    /// input array or a stored object.
     /// </remarks>
     /// <param name="label">What to write in the left column.</param>
     /// <param name="spec">The range, the display and whether it snaps.</param>
     /// <param name="value">What it starts at.</param>
     /// <param name="because">
-    /// What to file the edit under, so that dragging is one undo step rather than
-    /// one per frame.
+    /// What to file the edit under, so dragging is one undo step rather than one
+    /// per frame.
     /// </param>
     /// <param name="store">Where the new value goes.</param>
     /// <param name="reading">
-    /// Whether the panel this row sits on reserves a column for a reading at
-    /// all — see <see cref="ShowsReading"/>. A row whose own socket has
-    /// nothing to say there still gets the column when a neighbor needs it,
-    /// so every bar on the panel stays the same width.
+    /// Whether the panel reserves a column for a reading at all — see
+    /// <see cref="ShowsReading"/>. A row whose socket has nothing to say there
+    /// still gets the column when a neighbor needs it.
     /// </param>
     private Control ValueRow(
         string label,
