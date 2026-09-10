@@ -7,7 +7,7 @@ using Xunit;
 namespace Flyback.Cli.Tests;
 
 /// <summary>
-/// The three commands, called the way the argument parser calls them.
+/// The commands, called the way the argument parser calls them.
 /// </summary>
 /// <remarks>
 /// What is worth testing here is the part that is this program's own: which
@@ -257,6 +257,92 @@ public class CommandTests
         }
 
         File.ReadAllBytes(first.FullName).ShouldBe(File.ReadAllBytes(second.FullName));
+    }
+
+    // --- print ---------------------------------------------------------------
+
+    /// <summary>
+    /// The claim the language rests on, made about one patch rather than about
+    /// the presets — which is the whole of what the verb adds to a build.
+    /// </summary>
+    [Fact]
+    public void A_printing_reads_back_as_the_same_instrument()
+    {
+        var (code, output, _) = Run((o, e) => PrintCommand.Run(
+            Preset("Whole band"), new FileInfo("band.fbk"), null, check: true, o, e));
+
+        code.ShouldBe(Exit.Ok);
+        output.ShouldContain("the same instrument");
+    }
+
+    /// <summary>
+    /// A module with no definition has no socket names to write a call from, so
+    /// the printer leaves it out — and a printing quietly short of a module is
+    /// the one thing this must not hand back as though it were whole. Said, and
+    /// written anyway, exactly as pack writes a bundle short of a file.
+    /// </summary>
+    [Fact]
+    public void A_module_nothing_defines_is_reported_and_the_printing_says_so()
+    {
+        var (code, output, error) = Run((o, e) => PrintCommand.Run(
+            Broken(), new FileInfo("broken.fbk"), null, check: false, o, e));
+
+        code.ShouldBe(Exit.Problems);
+        error.ShouldContain("osc.nonesuch");
+        output.ShouldContain("out.color");
+    }
+
+    /// <summary>Standard output where no file was named, so a printing can be piped.</summary>
+    [Fact]
+    public void With_no_file_named_the_patch_goes_to_standard_output()
+    {
+        var (code, output, error) = Run((o, e) => PrintCommand.Run(
+            Preset("Plasma"), new FileInfo("plasma.fbk"), null, check: false, o, e));
+
+        code.ShouldBe(Exit.Ok);
+        error.ShouldBeEmpty();
+        output.ShouldContain("out.color");
+    }
+
+    /// <summary>
+    /// And nothing else in it. A printing that is piped somewhere must be a
+    /// patch and not a patch with a sentence about itself on top.
+    /// </summary>
+    [Fact]
+    public void What_is_written_to_a_file_is_what_would_have_been_piped()
+    {
+        using var directory = new Scratch();
+        var file = directory.File("plasma.fbks");
+
+        var piped = Run((o, e) => PrintCommand.Run(
+            Preset("Plasma"), new FileInfo("plasma.fbk"), null, check: false, o, e));
+
+        var written = Run((o, e) => PrintCommand.Run(
+            Preset("Plasma"), new FileInfo("plasma.fbk"), file, check: false, o, e));
+
+        written.Code.ShouldBe(Exit.Ok);
+        written.Out.ShouldBeEmpty();
+        File.ReadAllText(file.FullName).ShouldBe(piped.Out);
+    }
+
+    /// <summary>
+    /// Comments and groups do not survive a printing, so the one path this must
+    /// not write to is the one it was read from.
+    /// </summary>
+    [Fact]
+    public void The_file_being_read_is_not_written_over()
+    {
+        using var directory = new Scratch();
+        var file = directory.File("plasma.fbks");
+
+        File.WriteAllText(file.FullName, "# mine\nx |> out.color\n");
+
+        var (code, _, error) = Run((o, e) => PrintCommand.Run(
+            Preset("Plasma"), file, file, check: false, o, e));
+
+        code.ShouldBe(Exit.Failed);
+        error.ShouldContain("the file being read");
+        File.ReadAllText(file.FullName).ShouldContain("# mine");
     }
 
     // --- pack ----------------------------------------------------------------

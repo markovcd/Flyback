@@ -81,6 +81,8 @@ flyback-cli render drone.fbk -o drone.wav --seconds 30
 flyback-cli check nebula.fbk
 flyback-cli info nebula.fbk
 flyback-cli pack nebula.fbk -o nebula.fbkb
+flyback-cli print nebula.fbk -o nebula.fbks
+flyback-cli print nebula.fbk --check
 flyback-cli render nebula.fbks -o nebula.png
 ```
 
@@ -90,6 +92,7 @@ flyback-cli render nebula.fbks -o nebula.png
 - `check`: compiles the patch and reports issues
 - `info`: shows module and wire counts and compile cost
 - `pack`: packs a patch together with the files it references
+- `print`: writes the patch out as text in the language, and can check that the text builds back to the same program
 
 `check` exits with:
 
@@ -140,5 +143,5 @@ See the `docs/adr` folder for design notes and architecture decisions.
 [`docs/language.md`](docs/language.md) is the reference for the text language — a
 second way to author a patch, decided in
 [ADR-0065](docs/adr/0065-a-text-language-that-parses-to-a-patch.md). The app
-saves and opens it, the CLI reads it wherever it reads a patch, and the
+saves and opens it, the CLI reads it wherever it reads a patch and writes one with `print`, and the
 assistant writes a whole patch in one call with it.

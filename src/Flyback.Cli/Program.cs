@@ -59,6 +59,7 @@ internal static class Program
             Render(patch),
             Check(patch, json),
             Info(patch, json),
+            Print(patch),
             Pack(patch),
             Probe(plugins, json),
         };
@@ -206,6 +207,67 @@ internal static class Program
             return Task.FromResult(
                 RenderCommand.Run(
                     loaded, options, Console.Error, Progress(), cancellation, samples, pictures));
+        });
+
+        return command;
+    }
+
+    /// <summary>
+    /// Prints a patch as text. Not built on <see cref="Run"/> either, and for
+    /// the opposite reason to <see cref="Pack"/>: what it writes is the patch
+    /// rather than a report about one, so there is nothing for a <c>--json</c>
+    /// to be an alternative to.
+    /// </summary>
+    private static Command Print(Argument<FileInfo> patch)
+    {
+        var output = new Option<FileInfo>("--out", "-o")
+        {
+            Description = $"Where to write it, .{PatchLanguage.FileExtension} by convention. "
+                + "Left out, it goes to standard output.",
+        };
+
+        var check = new Option<bool>("--check")
+        {
+            Description = "Write nothing, and say whether the printing builds back to the same program.",
+        };
+
+        var command = new Command("print", "Write a patch out as text, in the language.")
+        {
+            patch, output, check,
+        };
+
+        command.SetAction(result =>
+        {
+            var checking = result.GetValue(check);
+            var into = result.GetValue(output);
+
+            // Said rather than ignored, because the two asked for together are
+            // somebody expecting a file at the end of it.
+            if (checking && into is not null)
+            {
+                Console.Error.WriteLine(
+                    $"{GlobalConstants.ApplicationName}: --check writes nothing, so there is nothing for --out to take.");
+
+                return Exit.Failed;
+            }
+
+            var file = result.GetRequiredValue(patch);
+
+            // Opened rather than read, so that --check compiles a bundle against
+            // the files it carries: a program that loaded a table is a different
+            // program from one that could not find it, and comparing the second
+            // against itself would prove nothing about the first.
+            return Patches.Open(file, Console.Error) is not { } opened
+                ? Exit.Failed
+                : PrintCommand.Run(
+                    opened.Patch,
+                    file,
+                    into,
+                    checking,
+                    Console.Out,
+                    Console.Error,
+                    opened.Samples,
+                    opened.Pictures);
         });
 
         return command;
