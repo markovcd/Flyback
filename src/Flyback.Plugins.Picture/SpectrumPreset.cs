@@ -3,30 +3,19 @@ using Flyback.Core.Graph;
 namespace Flyback.Plugins.Picture;
 
 /// <summary>
-/// The Plasma preset's own field, colored out of a palette instead of off the
-/// hue wheel — and then graded, posterised, and read back apart again.
+/// The Plasma preset's own field, colored out of a palette instead of off the hue
+/// wheel — and then graded, posterised, and read back apart again.
 /// </summary>
 /// <remarks>
-/// Deliberately the same two sines the engine's first preset is built on, so
-/// that what is being demonstrated is the color and nothing else. Plasma sends
-/// that field into HSV's hue and comes out a rainbow, because that is the only
-/// thing the catalogue could do with a number that wanted to be a color. Here
-/// the same number goes into a Palette, and a slow sweep walks 'spread' from
-/// nothing to a third — from tints of one color, through the sunsets and teals
-/// in between, to the rainbow Plasma is stuck at. The whole plugin is in that
-/// one knob moving.
+/// Deliberately the same two sines the engine's first preset is built on, so what
+/// is demonstrated is the color and nothing else. A slow sweep walks 'spread' from
+/// nothing to a third — from tints of one color, through the sunsets and teals, to
+/// the rainbow Plasma is stuck at. After it a Grade and a Posterise, both on the
+/// finished color rather than the signal behind it, which is the point of their
+/// being color modules.
 /// <para>
-/// After it: a Grade leaning on the contrast, and a Posterise whose level count
-/// is swept, so the picture resolves from flat bands into a gradient and back.
-/// Both are on the finished color rather than on the signal behind it, which is
-/// the point of their being color modules — a patch can be colored first and
-/// corrected afterwards, the way a picture is.
-/// </para>
-/// <para>
-/// There is no sound in it. The ear cannot read the field at all, because x and
-/// y are the pixel's own position and the speakers have no pixel — so any tone
-/// here could only share a knob with the picture, not share the picture. A tone
-/// that shares a knob with a picture is not the picture being heard.
+/// There is no sound in it: x and y are the pixel's own position and the speakers
+/// have no pixel, so any tone here could only share a knob with the picture.
 /// </para>
 /// </remarks>
 internal static class SpectrumPreset

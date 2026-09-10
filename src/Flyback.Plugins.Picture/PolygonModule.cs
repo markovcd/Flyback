@@ -8,40 +8,28 @@ namespace Flyback.Plugins.Picture;
 /// </summary>
 /// <remarks>
 /// A convex polygon is the intersection of as many half-planes as it has edges,
-/// and the distance to it is the distance to the nearest of those planes. Written
-/// that way it would be one Max per side and a different program for every count.
-/// It is written the other way about instead: the plane is found by folding the
-/// bearing rather than by trying them all, so the module is the same fifteen ops
-/// whether it is drawing a triangle or a sixteen-sided one, and the count can be
-/// a signal.
+/// which written out would be one Max per side and a different program for every
+/// count. Written the other way about — the plane found by folding the bearing —
+/// the module is the same fifteen ops whether it draws a triangle or a
+/// sixteen-sided one, and the count can be a signal.
 /// <para>
 /// The fold is a <c>fract</c> rather than a <c>mod</c>: both wrap, and only the
 /// first has one meaning for a negative input on both backends. What comes out is
-/// the bearing to the nearest edge's midpoint, and <c>cos</c> of it projects the
-/// point onto that edge's normal — which is the distance to the plane, and the
-/// distance to the polygon.
+/// the bearing to the nearest edge's midpoint, and <c>cos</c> of it is the
+/// distance to that edge's plane.
 /// </para>
 /// <para>
-/// The bearing is taken from straight up and the wedges are hung either side of
-/// it, so there is always a corner at the top — a triangle points up, and so does
-/// everything else. It is one number in the fold and it is worth spending: the
-/// alternative puts a flat at the top of odd counts and a corner at the top of
-/// even ones, which reads as a bug in the module rather than as a property of
-/// polygons. <see cref="StarModule"/> is folded the same way for the same reason,
-/// so a star and a polygon of the same count point the same way.
+/// The bearing is taken from straight up and the wedges hung either side, so there
+/// is always a corner at the top; the alternative puts a flat at the top of odd
+/// counts and a corner at the top of even ones. <see cref="StarModule"/> is folded
+/// the same way, so a star and a polygon of the same count point the same way.
 /// </para>
 /// <para>
-/// Exact inside, and outside everywhere the nearest thing is an edge. Beyond a
-/// corner it reads the distance to one of the two edge planes rather than to the
-/// corner itself, which is a little less than the truth — invisible in a fill, and
-/// worth knowing about before dilating one of these by a large amount.
-/// </para>
-/// <para>
-/// 'sides' is floored. A polygon of five and a half sides has a seam in it where
-/// the fold does not close, and unlike the Kaleidoscope — which folds the plane
-/// and does not care whether the wedge comes back to where it started — this is a
-/// module whose whole job is to be a closed form. So the knob steps, and a signal
-/// patched into it steps too.
+/// Exact inside, and outside everywhere the nearest thing is an edge; beyond a
+/// corner it reads a little less than the truth, which is invisible in a fill and
+/// worth knowing before dilating one by a large amount. 'sides' is floored,
+/// because a polygon of five and a half sides has a seam where the fold does not
+/// close.
 /// </para>
 /// </remarks>
 internal static class PolygonModule

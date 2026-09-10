@@ -8,75 +8,6 @@ namespace Flyback.Plugins.Effects;
 /// notes, open the voices and move the picture; nothing anywhere is counting
 /// beats, so there is no bar for any of it to come round on.
 /// </summary>
-/// <remarks>
-/// It is the one preset here that reaches across a plugin boundary, which is
-/// allowed and is not free: the three sweeps are this plugin's own and the
-/// Filter is in <c>Flyback.Plugins.Voice</c>. A preset is handed the catalogue
-/// when it is picked rather than when it is registered, so this is where a
-/// missing plugin shows up, and the check below is only so that it says which
-/// one rather than naming a module id nobody asked about.
-/// <para>
-/// The module that makes the generative half work is Noise, used as a source
-/// rather than as a texture. Its x and y are held still by a Value, so what is
-/// left moving is z — and a line through a noise field, walked slowly, is
-/// exactly the smooth random voltage a modular patch would take off a
-/// sample-and-hold with a lag on it. Three of them are read here at three
-/// speeds, from three lanes far enough apart in the field to be unrelated.
-/// </para>
-/// <para>
-/// Holding x and y still is not a detail. Left alone they are normalled to
-/// Coordinates, and a control voltage that varies per pixel is not one: the
-/// speakers would be at the middle of the picture hearing one note while the
-/// screen showed a field of every other note at once. That is a fine thing to do
-/// on purpose — the Chromatic preset does it — and it is the wrong thing here,
-/// where both sinks have to agree about what is playing.
-/// </para>
-/// <para>
-/// The sequencers are quantisers rather than sequencers. A step sequencer's 'in'
-/// is a domain like an oscillator's, so it plays whatever is patched into it:
-/// give it a clock and it plays a tune, and give it a random voltage and it
-/// walks its list at the voltage's own pace, forwards and backwards, holding
-/// wherever the voltage holds. What is on the list stops being a rhythm and
-/// becomes a scale — the notes it is allowed to play — and 'rate' stops being a
-/// tempo and becomes how much of the list one full swing of the voltage covers.
-/// Three of them, on three lists of coprime length driven by three unrelated
-/// voltages, is a chord that reshuffles itself and never lands the same way
-/// twice.
-/// </para>
-/// <para>
-/// The gates come free with that. Each voice's 'gate length' is one and its
-/// 'shape' is as long as it can be, so what would be a note's attack and release
-/// under a clock becomes a swell lasting as long as the voltage takes to cross
-/// the step — tens of seconds, and never the same twice either. Each swell sits
-/// on a floor, because a gate that reaches nothing is a hole rather than a
-/// breath; only the bell is allowed to go away entirely.
-/// </para>
-/// <para>
-/// Every effect in the chain is modulated by the same three voltages rather than
-/// by a rate of its own, which is the whole reason to build it this way: the
-/// filter opens on the slowest of them, the delay times drift on two different
-/// ones so the two sides pull apart and come back, and the room changes size on
-/// the slowest. Nothing about the treatment is fixed either.
-/// </para>
-/// <para>
-/// One thing deliberately not done: none of the three moving effects has its
-/// 'lfo' patched into the picture, tempting as that is. A module is resolved
-/// whole, so reaching for an output at the end of a chain compiles everything
-/// upstream of all of its inputs — and at the end of these chains that is the
-/// entire voice. The Whole rack preset says the same thing at more length, and
-/// pays for it in the same currency: the picture here costs 232 ops and would
-/// cost several times that.
-/// </para>
-/// <para>
-/// Nothing repeats. The noise is hashed off an integer lattice with no period
-/// until the lattice runs out, which at the slowest of the three speeds is some
-/// thousands of years; the level and pan oscillators are the only strictly
-/// periodic things in the patch, and their rates share no factor above a
-/// ten-thousandth, so even those do not come round together inside three hours.
-/// The picture inherits all of it and adds a feedback loop whose blend is itself
-/// one of the voltages, so how long the screen remembers drifts as well.
-/// </para>
-/// </remarks>
 internal static class SlowWeatherPreset
 {
     public const string Name = "Slow weather";
@@ -223,13 +154,11 @@ internal static class SlowWeatherPreset
 
         // --- bell --------------------------------------------------------------
 
-        // The one voice allowed to disappear, so that the pad holds the patch up
-        // and this is what happens in it. Through a Phaser slow enough to take
-        // most of a minute a turn, which is what a bell wants: the notches move
-        // while the note rings, so no two strikes of the same note have the same
-        // shape. Panned afterwards by two sines at unrelated rates rather than by
-        // one and its opposite, which is what makes it wander across the field
-        // instead of swinging across it.
+        // The one voice allowed to disappear, so the pad holds the patch up and
+        // this is what happens in it. Through a Phaser slow enough to take most of
+        // a minute a turn, so no two strikes of the same note have the same shape.
+        // Panned by two sines at unrelated rates, which makes it wander across the
+        // field rather than swing across it.
         var bellNote = b.Add("audio.note");
         var bell = b.Add("osc.sine", (3, 0.6f));
         var bellVoiced = b.Add("math.mul");
@@ -270,12 +199,10 @@ internal static class SlowWeatherPreset
         var droneLevel = b.Add("math.mul");
         var droneVoiced = b.Add("math.mul");
 
-        // The one filter in the patch, and it is on the one voice with harmonics
-        // worth taking off. Its cutoff is the slowest voltage, so the bottom of
-        // the mix opens and closes over minutes and never at a rate anything
-        // else in the patch shares. 'low' rather than 'band' or 'high': what a
-        // drone wants is less, and the other two responses are what the module
-        // hands out for free.
+        // The one filter in the patch, on the one voice with harmonics worth
+        // taking off. Its cutoff is the slowest voltage, so the bottom of the mix
+        // opens and closes over minutes. 'low' rather than 'band' or 'high':
+        // what a drone wants is less.
         var opening = b.Add("math.remap", (1, 0f), (2, 1f), (3, 130f), (4, 900f));
         var shaped = b.Add(Filter, (2, 0.35f));
 
@@ -301,24 +228,19 @@ internal static class SlowWeatherPreset
 
         // --- air ---------------------------------------------------------------
 
-        // The one voice that is not quantised at all: two sines sliding freely
-        // over the voltages that quantise everything else, multiplied together.
-        // A product of two sines is their sum and their difference and nothing
-        // else, so what comes out is a pair of tones moving in opposite
-        // directions from a pair moving in the same one — which is why this
-        // sounds like a room rather than like two oscillators.
+        // The one voice that is not quantised: two sines sliding freely over the
+        // voltages that quantise everything else, multiplied. A product of two
+        // sines is their sum and their difference and nothing else, which is why
+        // this sounds like a room rather than two oscillators.
         //
-        // Both are kept low, and that is a correction rather than a taste. The
-        // sum is the one thing here nothing else in the patch controls: it is
-        // inharmonic, it is never gated off, and it slides, so put the pair an
-        // octave higher and what the ear picks out of an otherwise still mix is
-        // one thin whistle wandering about in the range it is most sensitive to.
-        // Held down here the sum lands under a kilohertz and reads as air.
+        // Both are kept low, which is a correction rather than a taste: the sum is
+        // inharmonic, never gated off and sliding, so an octave higher it is one
+        // thin whistle in the range the ear is most sensitive to. Held down, it
+        // lands under a kilohertz and reads as air.
         //
-        // Then a Flanger, on the one signal in the patch with enough going on
-        // for a comb of notches to have something to bite. Its feedback is
-        // negative, which puts the peaks where the notches were: at this depth
-        // and this rate that is wind rather than a jet.
+        // Then a Flanger, on the one signal with enough going on for a comb of
+        // notches to bite. Its feedback is negative, which puts the peaks where
+        // the notches were: at this depth that is wind rather than a jet.
         var airOne = b.Add("math.remap", (1, 0f), (2, 1f), (3, 210f), (4, 610f));
         var airTwo = b.Add("math.remap", (1, 0f), (2, 1f), (3, 155f), (4, 440f));
         var glideOne = b.Add("osc.sine");
@@ -335,16 +257,12 @@ internal static class SlowWeatherPreset
         var airOpen = b.Add("math.remap", (1, 0f), (2, 1f), (3, 300f), (4, 800f));
         var soften = b.Add(Filter, (2, 0.1f));
 
-        // And the thing that finally made this voice behave: it is allowed to
-        // not be there. Every other voice is gated by a quantiser, and this one
-        // had nothing but two pan sines that never quite reach zero — so a
-        // flanger's comb, which is eight tones within a decibel of each other,
-        // sat in the mix permanently. Against a pad and a drone that live below
-        // three hundred hertz, a permanent cluster at seven hundred is not heard
-        // as air; it is heard as a whistle, and no amount of turning it down
-        // stops it being the thing the ear finds. A Smoothstep off the slowest
-        // voltage takes it away entirely for whole minutes at a time, which is
-        // what makes it an event rather than a fixture.
+        // And the thing that finally made this voice behave: it is allowed to not
+        // be there. Every other voice is gated by a quantiser, and a flanger's comb
+        // is eight tones within a decibel of each other — a permanent cluster at
+        // seven hundred hertz over a pad that lives below three hundred is heard as
+        // a whistle however far it is turned down. A Smoothstep off the slowest
+        // voltage takes it away for whole minutes, which makes it an event.
         var presence = b.Add("math.smoothstep", (0, 0.32f), (1, 0.72f));
         var airPresent = b.Add("math.mul");
 
@@ -379,12 +297,10 @@ internal static class SlowWeatherPreset
         var deskL = b.Add("math.mixer", (1, 0.95f), (3, 0.6f), (5, 0.7f), (7, 0.16f));
         var deskR = b.Add("math.mixer", (1, 0.95f), (3, 0.6f), (5, 0.7f), (7, 0.16f));
 
-        // Two Delays rather than one, at times far enough apart not to be heard
-        // as one echo, and each one's time on a different voltage — so the two
-        // sides pull apart and come back together over minutes. A swept delay
-        // line interpolates rather than steps, so what that does to the repeats
-        // is tape wow: the pitch of an echo is never quite the pitch it was
-        // played at.
+        // Two Delays rather than one, at times far enough apart not to be heard as
+        // one echo and each on a different voltage, so the two sides pull apart
+        // over minutes. A swept delay line interpolates rather than steps, so what
+        // that does to the repeats is tape wow.
         var echoLeft = b.Add("math.remap", (1, 0f), (2, 1f), (3, 0.54f), (4, 0.68f));
         var echoRight = b.Add("math.remap", (1, 0f), (2, 1f), (3, 0.79f), (4, 0.93f));
 
@@ -577,18 +493,14 @@ internal static class SlowWeatherPreset
 
         // --- the picture: memory -------------------------------------------------
 
-        // Blended rather than maximised, which is the opposite choice from every
-        // other feedback patch and is what a still picture needs: Maximum keeps
-        // whatever was brightest and reads as a streak, and a Blend lets the
-        // frame forget, so what is on screen is an average of the last several
-        // seconds rather than a smear of everything since it started.
+        // Blended rather than maximised, which is what a still picture needs:
+        // Maximum keeps whatever was brightest and reads as a streak, where a Blend
+        // lets the frame forget.
         //
-        // How much it forgets is the fastest of the three voltages, so the
-        // picture is sharp for a while and long-exposed for a while and there is
-        // no telling when it changes over. It is the Feedback module rather than
-        // this plugin's Delay, for the reason the plugin exists to explain: a
-        // delay line has no per-pixel past, and a picture with a memory needs the
-        // one module that does.
+        // How much it forgets is the fastest of the three voltages, so the picture
+        // is sharp for a while and long-exposed for a while. The Feedback module
+        // rather than this plugin's Delay, for the reason the plugin exists to
+        // explain: a delay line has no per-pixel past.
         var adrift = b.Add("space.scale", (2, 1.008f));
         var aturn = b.Add("space.rotate", (2, 0.0035f));
         var previous = b.Add("feedback");

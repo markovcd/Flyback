@@ -4,38 +4,27 @@ using Flyback.Core.Graph;
 namespace Flyback.Plugins.Picture;
 
 /// <summary>
-/// One number in, a color out, chosen from a palette rather than from the
-/// color wheel.
+/// One number in, a color out, chosen from a palette rather than from the color
+/// wheel.
 /// </summary>
 /// <remarks>
-/// The catalogue could already turn a signal into a color, and only one way:
-/// into HSV's hue, which walks the whole wheel at full saturation. That is why
-/// so much of what this machine draws comes out looking the same — rainbow is
-/// not a palette, it is the absence of one, and every gradient through it passes
-/// through every color there is on the way to the one that was wanted.
+/// The catalogue could already turn a signal into a color one way — into HSV's
+/// hue, which walks the whole wheel at full saturation — and that is why so much
+/// of what this machine draws looks the same: rainbow is the absence of a palette.
 /// <para>
-/// What this does instead is Iñigo Quílez's cosine palette:
-/// <c>brightness + contrast · cos(2π(cycles · t + offset))</c>, evaluated three
-/// times with the three channels' offsets a fixed step apart. It is four
-/// multiplies and a cosine per channel, and it is the whole reason a picture can
-/// look composed rather than assembled: because the three channels are the same
-/// wave at different phases, the colors it passes through are neighbours, and
-/// anything neighbouring looks deliberate.
+/// This is Iñigo Quílez's cosine palette:
+/// <c>brightness + contrast · cos(2π(cycles · t + offset))</c>, three times with
+/// the channels' offsets a fixed step apart. Because the three are the same wave
+/// at different phases, the colors it passes through are neighbours, and anything
+/// neighbouring looks deliberate.
 /// </para>
 /// <para>
-/// 'spread' is the step between those phases and is the one knob that changes the
-/// <em>family</em> rather than the position in it. A third is the rainbow, since
-/// three channels a third of a cycle apart is exactly what a hue sweep is. Below
-/// that the three channels move nearly together and the palette runs through
-/// tints of one color — the sunsets, the teals, the golds. At nothing it is
-/// grey, and every value of it is a defensible palette, which is the useful
-/// property: a knob that cannot be turned to something ugly.
-/// </para>
-/// <para>
-/// Nothing is clamped. At the default the palette is exactly 0 to 1 in every
-/// channel, and turning 'contrast' past 'brightness' pushes it outside — which
-/// the screen clips and a Multiply downstream does not, so it is left to say
-/// what it means.
+/// 'spread' is the step between those phases and changes the family rather than
+/// the position in it: a third is the rainbow, below that the channels move nearly
+/// together and the palette runs through tints of one color, and at nothing it is
+/// grey. Nothing is clamped — turning 'contrast' past 'brightness' pushes the
+/// palette outside 0 to 1, which the screen clips and a Multiply downstream does
+/// not.
 /// </para>
 /// </remarks>
 internal static class PaletteModule

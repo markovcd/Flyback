@@ -4,36 +4,27 @@ using Flyback.Core.Graph;
 namespace Flyback.Plugins.Effects;
 
 /// <summary>
-/// A room. Eight feedback combs in parallel give the echo density, each one
-/// losing its highs a little faster than its lows on every trip round; two
-/// chains of four allpasses smear what comes out of them until the individual
-/// repeats stop being audible as repeats. Schroeder's arrangement with Moorer's
-/// correction to it, which is the cheapest thing that sounds like a room rather
-/// than a pipe.
+/// A room. Eight feedback combs in parallel give the echo density, each losing
+/// its highs a little faster than its lows on every trip round; two chains of
+/// four allpasses smear what comes out until the repeats stop being audible as
+/// repeats. Schroeder's arrangement with Moorer's correction.
 /// </summary>
 /// <remarks>
-/// A comb with a plain gain in its loop returns every repeat as bright as the
-/// one before, so the tail keeps a fixed timbre while it fades — which is the
-/// metallic ring that gives a cheap reverb away, and is nothing any real space
-/// does. Air and soft surfaces take the top off a reflection every time it
-/// happens, so a room's tail darkens as it dies. A one-pole lowpass inside each
-/// loop is the whole of that, cornered at <see cref="Absorption"/>.
+/// A comb with a plain gain returns every repeat as bright as the one before,
+/// which is the metallic ring that gives a cheap reverb away — no real space does
+/// it, because air and soft surfaces take the top off every reflection. A
+/// one-pole lowpass inside each loop is the whole of that, cornered at
+/// <see cref="Absorption"/>.
 /// <para>
-/// The rest is density. Eight combs rather than four doubles the number of echo
-/// streams the tail is built from, and four allpasses rather than two smears
-/// each of them further; between them they are what fills the gaps between early
-/// repeats that a listener would otherwise hear as separate events. The comb
-/// delays also wander by a fraction of a percent under slow sines that are
-/// mutually prime, which stops a sustained note from settling into the standing
-/// pattern the fixed lengths would otherwise hold it in.
+/// The rest is density: eight combs and four allpasses fill the gaps between
+/// early repeats that would otherwise be heard as separate events. The comb
+/// delays wander by a fraction of a percent under mutually prime sines, which
+/// stops a sustained note settling into a standing pattern.
 /// </para>
 /// <para>
 /// <c>out</c> and <c>wide</c> share one comb bank and part company at the
-/// allpasses, whose lengths differ between the two chains. That is where the
-/// cost was drawn: two full banks would decorrelate the tail's envelope as well
-/// as its smear, and would also double the seventeen delay lines this already
-/// reads every sample. Patch both for stereo, or take <c>out</c> alone and have
-/// the mono version for nothing.
+/// allpasses. Two full banks would decorrelate the tail's envelope as well as its
+/// smear, and would double the seventeen delay lines this reads every sample.
 /// </para>
 /// </remarks>
 internal static class ReverbModule
@@ -60,9 +51,8 @@ internal static class ReverbModule
 
     /// <summary>
     /// The same chain for the other channel, every length moved by half a
-    /// millisecond. Small enough that both chains smear the same way, different
-    /// enough that they do not smear into the same pattern — which is what the
-    /// ear reads as width.
+    /// millisecond: small enough that both chains smear the same way, different
+    /// enough that they do not smear into the same pattern.
     /// </summary>
     private static readonly float[] Widened = [0.0131f, 0.0105f, 0.0082f, 0.0056f];
 
@@ -91,15 +81,10 @@ internal static class ReverbModule
     private const float FurthestWall = 0.05f;
 
     /// <summary>
-    /// Where the tail loses its highs, in hertz — the corner of the lowpass
-    /// inside every comb's loop.
+    /// Where the tail loses its highs, in hertz — the corner of the lowpass inside
+    /// every comb's loop. A constant and not a socket: it is a property of the
+    /// surfaces a room is made of rather than a gesture anyone performs.
     /// </summary>
-    /// <remarks>
-    /// A constant and not a socket. What it stands for is a property of the
-    /// surfaces a room is made of rather than a gesture anyone performs, and a
-    /// reverb with four knobs that each do something is worth more than one with
-    /// five where the fifth is set once and never touched again.
-    /// </remarks>
     private const float Absorption = 4_000f;
 
     /// <summary>Where the bank stops listening, in hertz. Below hearing and above nothing.</summary>
@@ -110,17 +95,11 @@ internal static class ReverbModule
     /// rather than derived: about four decibels.
     /// </summary>
     /// <remarks>
-    /// The comb's energy gain is exact for an ideal comb, and none of these is
-    /// one. Every line is read at a fractional number of samples and interpolated
-    /// between the two either side, which is a gentle lowpass — inside a loop,
-    /// applied again on every pass; the allpasses are four more of the same, and
-    /// stop being exactly allpass for it; the highpass at the door takes its
-    /// corner off the bottom; and the hand-drawn loop is one evaluation longer
-    /// than the line it is drawn round. Each is small and none is worth modelling
-    /// to recover a number that can simply be measured, which is what this is:
-    /// band-limited noise in, tail out, at the rate and the settings the module
-    /// is actually used at. <c>The_tail_comes_back_at_about_the_level_that_went_in</c>
-    /// is what keeps it honest.
+    /// None of these combs is ideal — every line is read at a fractional sample
+    /// and interpolated, which is a gentle lowpass applied on every pass; the
+    /// allpasses stop being exactly allpass for it; the highpass takes its corner
+    /// off the bottom. Each is small and none is worth modelling to recover a
+    /// number that can be measured.
     /// </remarks>
     private const float Makeup = 1.7f;
 
@@ -195,11 +174,9 @@ internal static class ReverbModule
             var length = Combs[i];
 
             // The loop is drawn by hand rather than left to the delay op's own
-            // feedback, and the filter is the only reason why: what goes back
-            // round has to be damped on the way, and the op writes its line
-            // before anything downstream of it could do that. So the line is
-            // taken at no feedback — a plain delay — and the return trip is a
-            // one-evaluation cell, which is the cycle ADR-0041 describes.
+            // feedback, because what goes back round has to be damped on the way
+            // and the op writes its line first. So the line is taken at no
+            // feedback and the return trip is a one-evaluation cell (ADR-0041).
             var carried = em.AllocateUnitSlot();
             var stored = em.AllocateUnitSlot();
 
@@ -230,13 +207,11 @@ internal static class ReverbModule
         var gain = em.Constant(AllpassGain);
 
         // What the module means where there is nothing to remember. Every delay
-        // line is a wire on the video path and every cell reads zero, so the bank
-        // would hand the picture back some multiple of itself — and which
-        // multiple would depend on the decay, which is to say the picture's
-        // brightness would follow a knob about how long a sound takes to die.
-        // Deciding it here instead makes a Reverb exactly what a Delay already is
-        // on the screen: a wire, and a patch drawn for the speakers still shows
-        // the picture it showed before one was put in it (ADR-0041).
+        // line is a wire on the video path, so the bank would hand the picture back
+        // some multiple of itself — and which multiple would depend on the decay,
+        // making the picture's brightness follow a knob about how long a sound
+        // takes to die. Deciding it here makes a Reverb what a Delay already is on
+        // the screen: a wire (ADR-0041).
         var live = em.HasMemory();
         var mix = inputs[3];
 
@@ -259,21 +234,13 @@ internal static class ReverbModule
     /// that went in.
     /// </summary>
     /// <remarks>
-    /// This is the number that decides whether the reverb is audible at all. A
-    /// comb's gain at DC is one over one minus its feedback — but that is the top
-    /// of its tallest peak, not what it does to a signal. A tail is broadband,
-    /// and what a comb does to broadband is set by its energy: the repeats are a
-    /// geometric train, so the power gain is one over one minus the feedback
-    /// squared and the amplitude gain is the root of it. Between the two lies six
-    /// decibels at the shortest decay and twenty at the longest, all of it taken
-    /// off the wet path and none off the dry — which is why the level has to come
-    /// from the energy figure rather than the DC one.
-    /// <para>
-    /// Eight combs and not one, and their delays are mutually prime precisely so
-    /// that what comes out of them does not line up. Uncorrelated signals add as
-    /// power rather than as amplitude, so the bank is the root of eight of one of
-    /// them rather than eight.
-    /// </para>
+    /// A comb's gain at DC is one over one minus its feedback, but that is the top
+    /// of its tallest peak. A tail is broadband, and what a comb does to broadband
+    /// is set by its energy: the amplitude gain is the root of one over one minus
+    /// the feedback squared. Between the two lies six decibels at the shortest
+    /// decay and twenty at the longest. The eight combs' delays are mutually prime
+    /// so what comes out does not line up, and uncorrelated signals add as power,
+    /// so the bank is the root of eight of one of them rather than eight.
     /// </remarks>
     private static Slot Level(Emitter em, Slot feedback, Slot one) =>
         em.Mul(
@@ -284,19 +251,12 @@ internal static class ReverbModule
     /// A one-pole highpass on the way into the bank, cornered below hearing.
     /// </summary>
     /// <remarks>
-    /// A room has no mode at DC and neither should this, but the reason to spend
-    /// four ops saying so is what the combs would otherwise do with one. DC is
-    /// the single frequency they amplify most — fifty times over at the longest
-    /// decay — and the broadband scaling above does nothing to hold it down,
-    /// since a measure tuned to a tail's energy says nothing about any one
-    /// frequency's own gain.
-    /// <para>
-    /// A microphone would rarely hand a reverb any DC to worry about. This is not
-    /// a microphone: a pluck envelope, an offset Remap and a slow LFO are all
-    /// ordinary things to patch in here and all of them are mostly DC. Blocking
-    /// it at the door is what lets the tail be loud and the bank be safe at once,
-    /// rather than trading one against the other.
-    /// </para>
+    /// DC is the single frequency the combs amplify most — fifty times over at the
+    /// longest decay — and the broadband scaling above does nothing to hold it
+    /// down. A microphone would rarely hand a reverb any DC; a pluck envelope, an
+    /// offset Remap and a slow LFO are all ordinary things to patch in here and all
+    /// are mostly DC. Blocking it at the door is what lets the tail be loud and the
+    /// bank be safe at once.
     /// </remarks>
     private static Slot Blocked(Emitter em, Slot signal, Slot step)
     {

@@ -11,36 +11,21 @@ namespace Flyback.Plugins.OpenAi;
 /// One conversation over the chat-completions format.
 /// </summary>
 /// <remarks>
-/// <para>
-/// The loop is written out rather than taken from a helper. A tool runner would
+/// The loop is written out rather than taken from a helper: a tool runner would
 /// invert control, and this needs to sit between the model asking for something
-/// and the workbench doing it — to hand each edit to the window as it happens,
-/// and to notice the moment a patch has been proposed.
-/// </para>
-/// <para>
-/// Not streamed. A turn here is short — the model asks for a tool, the workbench
-/// answers — so progress reaches the panel as edits rather than as words, and
-/// the endpoints this is meant to reach vary more in how they stream than in
-/// anything else they do.
-/// </para>
-/// <para>
-/// Effort is not sent. The parameter that carries it is model-specific and a
-/// wrong guess is a 400 from the endpoint rather than a shrug, which is a poor
-/// trade for a setting the person can express by choosing a different model.
-/// </para>
+/// and the workbench doing it. Not streamed, since a turn is short and the
+/// endpoints this is meant to reach vary more in how they stream than in anything
+/// else. Effort is not sent, because the parameter that carries it is
+/// model-specific and a wrong guess is a 400.
 /// </remarks>
 internal sealed class OpenAiSession : IPatchSession
 {
     /// <summary>
-    /// How many times the model may be asked in one turn. The workbench caps
-    /// tool calls too; this bounds the exchange around them, including the
-    /// requests that carry a picture back and cost nothing in tool calls.
+    /// How many times the model may be asked in one turn. The workbench caps tool
+    /// calls too; this bounds the exchange around them, including the requests that
+    /// carry a picture back. Reached only by a model that never stops asking for
+    /// things.
     /// </summary>
-    /// <remarks>
-    /// Reached only by a model that never stops asking for things. One that
-    /// stops — with a patch, with a question, or with nothing at all — ends its
-    /// own turn, and none of those is this program's business to argue with.
-    /// </remarks>
     private const int MaxModelTurns = 40;
 
     /// <summary>
@@ -48,19 +33,11 @@ internal sealed class OpenAiSession : IPatchSession
     /// offering it.
     /// </summary>
     /// <remarks>
-    /// The failure this exists for is a quiet one. Nothing an assistant does
-    /// reaches the editor until <c>propose</c>, so a turn that ends with edits
-    /// and no proposal leaves the person looking at the patch they started
-    /// with — and being told, as one was, that they were "set to further refine"
-    /// a patch that was not on their canvas. Neither end could see that the
-    /// other was looking at something different.
-    /// <para>
-    /// Said to them and not back to the model, which is the whole design of the
-    /// ending above: a model that has stopped has given its answer, and arguing
-    /// with it would cost a request on every question anybody asks. What was
-    /// missing was never another instruction — it was the one fact only this end
-    /// knows, which is that the canvas did not change.
-    /// </para>
+    /// The failure this exists for is a quiet one: nothing reaches the editor until
+    /// <c>propose</c>, so the person is told they were "set to further refine" a
+    /// patch that was not on their canvas. Said to them and not back to the model,
+    /// which would cost a request on every question — what was missing is the one
+    /// fact only this end knows.
     /// </remarks>
     private const string Unoffered =
         "This turn changed the patch but did not offer it, so the canvas still shows what was "
@@ -86,14 +63,11 @@ internal sealed class OpenAiSession : IPatchSession
 
     /// <param name="fallbackBaseUrl">Where to send requests when the configuration names nowhere.</param>
     /// <param name="transport">
-    /// Where the requests actually go, defaulting to the network. Named only so
-    /// the loop can be driven by canned replies: how a turn ends is this class's
-    /// whole job, and it should not take an endpoint to find out that it ends
-    /// wrongly.
+    /// Where the requests actually go, defaulting to the network. Named only so the
+    /// loop can be driven by canned replies.
     /// </param>
     /// <param name="workbench">The patch being built, and the only thing here that may touch it.</param>
     /// <param name="chosen">Model, endpoint and ear, as the provider read them off the form.</param>
-    /// <param name="apiKey">The key, which the host holds and this never writes down.</param>
     public OpenAiSession(
         PatchWorkbench workbench,
         AssistantChoices chosen,

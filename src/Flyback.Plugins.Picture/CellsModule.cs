@@ -4,50 +4,30 @@ using Flyback.Core.Graph;
 namespace Flyback.Plugins.Picture;
 
 /// <summary>
-/// Scattered points, and how far you are from the nearest of them: cells,
-/// cracks, scales, stone.
+/// Scattered points, and how far you are from the nearest of them: cells, cracks,
+/// scales, stone.
 /// </summary>
 /// <remarks>
-/// The other half of the subject, and nothing like the first. Value noise is
-/// smooth everywhere and can only ever look like weather; this is built out of
-/// distance to a set of points, so it has edges in it — and edges are what a
-/// picture needs to look like anything grown, cracked or paved.
+/// Worley's construction: the plane is cut into a grid, one point is scattered in
+/// each square, and every pixel measures the nine squares around it — a point next
+/// door can be nearer than your own, and there is no way to look at fewer in a
+/// program with no branches.
 /// <para>
-/// The construction is Worley's. The plane is cut into a grid, one point is
-/// scattered inside each square, and every pixel measures the nine squares around
-/// it — nine because a point in the square next door can be nearer than the point
-/// in your own, and the diagonal ones can too. There is no way to look at fewer
-/// and be right, and no way to skip one in a program that has no branches, so
-/// nine is what it costs.
+/// Each square costs two Noise, which is nearly all of the price. What is wanted
+/// is a hash, and the machine has no hash op: the usual
+/// <c>fract(sin(x) * 43758.5)</c> turns rounding error into randomness and gives
+/// a different answer at every precision, so the interpreter and the shader would
+/// draw different cells. Noise is the only agreed randomness there is — sampled
+/// far apart, so squares next door land in unrelated parts of the field. That
+/// makes this the dearest module in the catalogue: eighteen noise lookups a pixel
+/// against a Fractal's eight, which on the interpreter is seconds rather than
+/// milliseconds for a still.
 /// </para>
 /// <para>
-/// And what it costs each square is two Noise, which is where nearly all of the
-/// price is. What is wanted per square is a hash — one number, no smoothing, no
-/// neighbours — and the machine has no hash op. The one a shader would normally
-/// use is <c>fract(sin(x) * 43758.5)</c>, which is a way of turning rounding
-/// error into randomness and gives a different answer at every precision: the
-/// interpreter and the shader would draw different cells, which is a great deal
-/// worse than drawing them slowly. Noise is the only agreed randomness in the
-/// machine, so Noise is what this uses — sampled far apart, at multiples of the
-/// square's own numbers, so that squares next door land in unrelated parts of the
-/// field.
-/// </para>
-/// <para>
-/// So it is the dearest module in the catalogue by a wide margin: eighteen noise
-/// lookups a pixel against a Fractal's eight at its most. On the shader that is
-/// nothing much; on the interpreter — the preview with the GPU switched off, and
-/// every command-line render — expect a still to take seconds rather than
-/// milliseconds. That is what a Voronoi is, said out loud, rather than a surprise
-/// somebody finds later.
-/// </para>
-/// <para>
-/// Three readings off the one pass. 'distance' is how far the nearest point is
-/// and shades each cell from its middle outward; 'edge' is how much further the
-/// second nearest is, which goes to nothing exactly on the line between two cells
-/// and is therefore the crack; and 'cell' is a number belonging to the square
-/// that won, the same everywhere inside it, which is what makes flat mosaics and
-/// what a Threshold turns into a scatter of shapes. Nothing else can produce that
-/// last one: it is the only value here that is constant across a region and
+/// Three readings off the one pass. 'distance' shades each cell from its middle
+/// outward; 'edge' is how much further the second nearest is, and so goes to
+/// nothing on the line between two cells; 'cell' is a number belonging to the
+/// square that won, which is the only value here constant across a region and
 /// discontinuous at its border.
 /// </para>
 /// </remarks>
@@ -64,11 +44,9 @@ internal static class CellsModule
 
     /// <summary>
     /// What a square's coordinates are multiplied by before the noise is read at
-    /// them. Bigger than one, so neighbouring squares land in different cells of
-    /// the noise field rather than in the same one — which would make their
-    /// points drift together and put a grain in the pattern. Not so big that a
-    /// square far from the middle of the picture loses its fractional part to
-    /// float on the shader.
+    /// them. Bigger than one, so neighbouring squares land in different cells of the
+    /// noise field rather than drifting together into a grain; not so big that a
+    /// square far from the middle loses its fractional part to float on the shader.
     /// </summary>
     private const float Apart = 13.7f;
 

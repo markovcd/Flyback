@@ -10,22 +10,15 @@ namespace Flyback.Plugins.Gemini;
 /// One conversation over generateContent.
 /// </summary>
 /// <remarks>
+/// The loop is written out rather than taken from a helper, because it has to sit
+/// between the model asking for something and the workbench doing it: each edit
+/// reaches the window as it happens, and a proposal is noticed the moment it is
+/// made. Not streamed, since a turn is short and progress reaches the panel as
+/// edits rather than words.
 /// <para>
-/// The loop is written out rather than taken from a helper, for the reason the
-/// other adapter's is: it has to sit between the model asking for something and
-/// the workbench doing it — to hand each edit to the window as it happens, and
-/// to notice the moment a patch has been proposed.
-/// </para>
-/// <para>
-/// Not streamed. A turn here is short — the model asks for a tool, the workbench
-/// answers — so progress reaches the panel as edits rather than as words.
-/// </para>
-/// <para>
-/// Effort <em>is</em> sent, unlike the other adapter, and the difference is not
-/// a change of mind. That one cannot know what endpoint it is pointed at, so a
-/// thinking parameter is a guess that costs a 400. This one is pointed at one
-/// place and the plugin knows what each model's budget may be — see
-/// <see cref="GeminiAssistant"/>.
+/// Effort is sent, unlike the other adapter: that one cannot know what endpoint it
+/// is pointed at, where this one is pointed at a fixed place and knows what each
+/// model's budget may be — see <see cref="GeminiAssistant"/>.
 /// </para>
 /// </remarks>
 internal sealed class GeminiSession : IPatchSession
@@ -41,11 +34,10 @@ internal sealed class GeminiSession : IPatchSession
     /// offering it.
     /// </summary>
     /// <remarks>
-    /// Nothing an assistant does reaches the editor until <c>propose</c>, so a
-    /// turn that ends with edits and no proposal leaves the person looking at
-    /// the patch they started with while being told it was improved. Said to
-    /// them and not back to the model: a model that has stopped has given its
-    /// answer, and what was missing is the one fact only this end knows.
+    /// Nothing reaches the editor until <c>propose</c>, so such a turn leaves the
+    /// person looking at the patch they started with while being told it was
+    /// improved. Said to them and not back to the model, which has already given
+    /// its answer.
     /// </remarks>
     private const string Unoffered =
         "This turn changed the patch but did not offer it, so the canvas still shows what was "
@@ -76,16 +68,13 @@ internal sealed class GeminiSession : IPatchSession
     /// <param name="thinking">The effort setting as this endpoint spells it, or null to say nothing.</param>
     /// <param name="ownEars">
     /// Whether the model doing the building takes a sound, which decides where a
-    /// clip goes and is read off the schema by whoever built this. It is not
-    /// inferred from <see cref="AssistantChoices.EarModel"/> being null, because
-    /// null there also means nobody was chosen — and playing a clip to a model
-    /// that refuses one loses every turn from the first <c>listen</c> onward.
+    /// clip goes. Not inferred from <see cref="AssistantChoices.EarModel"/> being
+    /// null, because null there also means nobody was chosen — and playing a clip
+    /// to a model that refuses one loses every turn from the first <c>listen</c>.
     /// </param>
     /// <param name="transport">
-    /// Where the requests actually go, defaulting to the network. Named only so
-    /// the loop can be driven by canned replies: how a turn ends is this class's
-    /// whole job, and it should not take an endpoint to find out that it ends
-    /// wrongly.
+    /// Where the requests actually go, defaulting to the network. Named only so the
+    /// loop can be driven by canned replies.
     /// </param>
     public GeminiSession(
         PatchWorkbench workbench,
@@ -219,14 +208,11 @@ internal sealed class GeminiSession : IPatchSession
             if (reply.Calls.Count == 0)
             {
                 // It has stopped asking for things and has not proposed anything,
-                // which is an ordinary way for a turn to end rather than a
-                // failure. A question needs an answer, and whatever it said is
-                // already in the transcript, so the next thing to happen is the
-                // person typing.
-                //
-                // A turn that changed the patch and did not offer it is an
-                // ending nobody can see, which is the one case worth saying
-                // something about.
+                // which is an ordinary way for a turn to end: whatever it said is
+                // in the transcript, and the next thing to happen is the person
+                // typing. A turn that changed the patch and did not offer it is an
+                // ending nobody can see, which is the case worth saying something
+                // about.
                 if (workbench.Edits > 0) yield return new PatchEvent.Did(Unoffered);
 
                 yield break;
@@ -240,15 +226,10 @@ internal sealed class GeminiSession : IPatchSession
     }
 
     /// <summary>
-    /// What to say over the media riding back with the tool answers, or null
-    /// when there is none.
+    /// What to say over the media riding back with the tool answers, or null when
+    /// there is none. One sentence for both, because a turn that rendered and
+    /// listened produced one set of observations about one patch.
     /// </summary>
-    /// <remarks>
-    /// One sentence for both, because a turn that rendered and listened produced
-    /// one set of observations about one patch — the reasoning the other
-    /// adapter's <c>UserWithMedia</c> already gives for keeping them in a single
-    /// message.
-    /// </remarks>
     private static string? Caption(int pictures, int sounds) => (pictures, sounds) switch
     {
         (0, 0) => null,
@@ -286,19 +267,11 @@ internal sealed class GeminiSession : IPatchSession
     /// What one model heard, as words for a model that cannot.
     /// </summary>
     /// <remarks>
-    /// <para>
-    /// Reached only by a model nobody here has written down. Every model in the
-    /// schema takes a sound, so this is the path for a name typed into the box
-    /// that this was never told about — and since the endpoint is fixed, such a
-    /// name is almost always a model newer than this list rather than a
-    /// different service. Left in because the alternative is a run that quietly
-    /// has no ear the moment somebody types ahead of the table.
-    /// </para>
-    /// <para>
-    /// A failure here is a sentence in the tool result rather than the end of the
-    /// turn. The sound was rendered and the levels are already known; being
-    /// unable to describe it is still useful information.
-    /// </para>
+    /// Reached only by a model nobody here has written down — every model in the
+    /// schema takes a sound, so this is the path for a name typed ahead of the
+    /// table, which at a fixed endpoint is almost always a newer model. A failure
+    /// is a sentence in the tool result rather than the end of the turn: the sound
+    /// was rendered and the levels are known.
     /// </remarks>
     private async Task<string> Described(byte[] wav, CancellationToken cancel)
     {
@@ -333,15 +306,10 @@ internal sealed class GeminiSession : IPatchSession
     }
 
     /// <summary>
-    /// Hands one call to the workbench.
+    /// Hands one call to the workbench. The arguments arrive as JSON rather than a
+    /// string of JSON, which is the one place this format is kinder than the other:
+    /// there is no parse to fail. A call with no arguments is an empty object.
     /// </summary>
-    /// <remarks>
-    /// The arguments arrive as JSON rather than as a string of JSON, which is
-    /// the one place this format is kinder than the other — there is no parse to
-    /// fail here, so there is no refusal to write for one that did. A call with
-    /// no arguments at all is an empty object, which is what the tools that take
-    /// nothing send.
-    /// </remarks>
     private async Task<ToolOutcome> Answer(Call call, CancellationToken cancel)
     {
         var arguments = JsonSerializer.Deserialize<JsonElement>(
@@ -363,13 +331,11 @@ internal sealed class GeminiSession : IPatchSession
     }
 
     /// <summary>
-    /// One request, retried where the endpoint asked to be.
+    /// One request, retried where the endpoint asked to be. The model is in the path
+    /// rather than the body, so it is an argument to this rather than a field of
+    /// what it sends — which is what lets the ear be a different model over the same
+    /// client.
     /// </summary>
-    /// <remarks>
-    /// The model is in the path here rather than in the body, so it is an
-    /// argument to this rather than a field of what it sends — which is also
-    /// what lets the ear be a different model over the same client.
-    /// </remarks>
     private async Task<JsonNode?> Post(string model, string body, CancellationToken cancel)
     {
         var endpoint = new Uri($"{address}/models/{Uri.EscapeDataString(model)}:generateContent");

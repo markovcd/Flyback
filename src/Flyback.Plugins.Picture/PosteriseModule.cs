@@ -8,25 +8,16 @@ namespace Flyback.Plugins.Picture;
 /// gradient into flat bands.
 /// </summary>
 /// <remarks>
-/// Three ops, and here because they are three ops nobody finds. Rounding a signal
-/// to steps is a Multiply, a Floor and a Divide, and every one of those is in the
-/// catalogue already — but a patch reaching for them has to know that a Floor is
-/// what a poster is made of, and has to get the ends right, which is the part
-/// that is easy to do wrong: the obvious arithmetic never reaches white, because
-/// the top step begins at one and there is nothing above it to reach.
+/// Three ops, and here because they are three ops nobody finds: a patch reaching
+/// for a Multiply, a Floor and a Divide has to know a Floor is what a poster is
+/// made of, and has to get the ends right — the obvious arithmetic never reaches
+/// white, because the top step begins at one.
 /// <para>
-/// So the levels are placed on the ends rather than between them. Four levels
-/// means nought, a third, two thirds and one — the darkest is black and the
-/// brightest is white, and a gradient posterised and then posterised again is
-/// unchanged. Two levels is the useful extreme: every channel is off or on, which
-/// is the eight-color picture a very old machine would have drawn.
-/// </para>
-/// <para>
-/// Untyped in the same sense the maths modules are — it is written against a
-/// color and the ops do not care, so each channel is stepped on its own and the
-/// bands of the three cross each other. That crossing is what makes a posterised
-/// picture look like a poster rather than like a contour map: three sets of bands
-/// at different places give far more than three colors.
+/// So the levels are placed on the ends: four means nought, a third, two thirds
+/// and one, and a gradient posterised twice is unchanged. Untyped like the maths
+/// modules, so each channel is stepped on its own and the bands of the three cross
+/// — which is what makes a posterised picture look like a poster rather than a
+/// contour map.
 /// </para>
 /// </remarks>
 internal static class PosteriseModule

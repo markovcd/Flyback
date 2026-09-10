@@ -10,24 +10,15 @@ namespace Flyback.Cli;
 /// would write is still the same instrument.
 /// </summary>
 /// <remarks>
+/// The door onto the language that ADR-0065 left open: every other way in reads
+/// text, so until there is a verb for it nothing outside the window can hand one
+/// back. That matters most for the format the language is a second reading of — a
+/// <c>.fbk</c> is JSON keyed by Guids, and a diff of one says which ids moved.
 /// <para>
-/// The door onto the language that
-/// [0065](../../docs/adr/0065-a-text-language-that-parses-to-a-patch.md) left
-/// open. Every other way in reads text — the CLI takes a <c>.fbks</c> wherever
-/// it takes a patch, and the assistant writes one — and until there is a verb
-/// for it, nothing outside the window can hand one back. Which matters most for
-/// the format the language is a second reading of: a <c>.fbk</c> is a JSON
-/// document keyed by Guids, and a diff of one says which ids moved rather than
-/// what somebody changed about the sound.
-/// </para>
-/// <para>
-/// A printing is lossy in both the directions the window already knows about —
-/// the groups go, the canvas is arranged again on the way back in — and lossy in
-/// one more that only matters to a file somebody typed: comments live in the
-/// lexer and never reach a patch, so printing a <c>.fbks</c> writes back
-/// everything it said and nothing it explained. Which is why what comes out is a
-/// copy of a patch rather than a tidying of one, and why the file it was read
-/// from is the one path this refuses to write to.
+/// A printing is lossy in the two directions the window knows about and in one
+/// more: comments live in the lexer and never reach a patch, so printing a
+/// <c>.fbks</c> writes back everything it said and nothing it explained. Which is
+/// why the file it was read from is the one path this refuses to write to.
 /// </para>
 /// </remarks>
 internal static class PrintCommand
@@ -56,16 +47,13 @@ internal static class PrintCommand
     }
 
     /// <summary>
-    /// Says which of a patch's modules the catalogue cannot define, and whether
-    /// there were any.
+    /// Says which of a patch's modules the catalogue cannot define, and whether there
+    /// were any.
     /// </summary>
     /// <remarks>
-    /// A module with no definition has no socket names to write a call from, so
-    /// the printer leaves it out and what comes back is a smaller patch. That is
-    /// the printer being unable rather than unwilling — but it is silent, and
-    /// this program is the one most likely to meet it: run out of a build rather
-    /// than a publish there are no plugins beside it, and every patch that names
-    /// one then prints without the half a plugin owns.
+    /// A module with no definition has no socket names to write a call from, so the
+    /// printer leaves it out silently — and this program is the one most likely to
+    /// meet it, since a build rather than a publish has no plugins beside it.
     /// </remarks>
     private static bool Absent(Patch patch, string name, TextWriter error)
     {
@@ -130,15 +118,11 @@ internal static class PrintCommand
     }
 
     /// <summary>
-    /// Prints, reads the printing back, and compiles both — the claim the
-    /// language rests on, made about one patch rather than about the presets.
+    /// Prints, reads the printing back, and compiles both — the claim the language
+    /// rests on, made about one patch rather than about the presets. Both sinks,
+    /// because each walks back from its own socket: a printing that drops something
+    /// only the speakers hear has an identical picture.
     /// </summary>
-    /// <remarks>
-    /// Both sinks, for the reason <c>check</c> compiles both: each walks back
-    /// from its own socket and neither sees what the other reaches, so a
-    /// printing that drops something only the speakers hear is a printing whose
-    /// picture is identical.
-    /// </remarks>
     private static int Checked(
         Patch patch,
         string name,
@@ -190,15 +174,11 @@ internal static class PrintCommand
     }
 
     /// <summary>
-    /// Where one sink's two programs first stop agreeing, or null where they
-    /// never do.
+    /// Where one sink's two programs first stop agreeing, or null where they never
+    /// do. The first one and not all of them: one op that moved shifts every
+    /// register after it, so the last thousand differences say nothing the first did
+    /// not.
     /// </summary>
-    /// <remarks>
-    /// The first one and not all of them. One op that moved shifts every
-    /// register after it, so a program off by a single instruction differs in
-    /// every line of itself and the last thousand of those say nothing the first
-    /// did not.
-    /// </remarks>
     private static string? Difference(string sink, CompiledPatch was, CompiledPatch now)
     {
         var shared = Math.Min(was.Ops.Length, now.Ops.Length);
@@ -218,10 +198,8 @@ internal static class PrintCommand
     /// <summary>Whether two instructions are the same one, field for field.</summary>
     /// <remarks>
     /// <see cref="float.Equals(float)"/> rather than <c>==</c> for the constant,
-    /// which makes two NaNs agree and a negative zero differ from a positive
-    /// one. That is the comparison the printer is already held to by
-    /// <c>PrinterTests</c>, and the two must not be able to disagree about what
-    /// they proved.
+    /// which makes two NaNs agree and a negative zero differ from a positive one —
+    /// the comparison <c>PrinterTests</c> already holds the printer to.
     /// </remarks>
     private static bool Same(Op a, Op b) =>
         a.Code == b.Code

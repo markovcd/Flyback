@@ -7,28 +7,18 @@ namespace Flyback.Plugins.Picture;
 /// A star of any number of points, sharp or blunt.
 /// </summary>
 /// <remarks>
-/// The one shape here that is not obvious, and the construction is Iñigo
-/// Quílez's. The angle is folded into a single wedge the way
-/// <see cref="PolygonModule"/> folds it, and then folded again about the wedge's
+/// Iñigo Quílez's construction. The angle is folded into a single wedge the way
+/// <see cref="PolygonModule"/> folds it and then folded again about the wedge's
 /// own axis — that second fold is the <c>abs</c>, and it is what makes a star out
-/// of a polygon, since the two sides of a point are mirror images. What is left is
-/// one point of the star with its tip on the y axis, and the distance to it is the
-/// distance to a single line segment: project onto the edge, hold the projection
-/// inside the segment's own length, and measure what is left over. The sign comes
-/// from which side of the wedge's axis the nearest point landed on.
+/// of a polygon. What is left is one point with its tip on the y axis, and the
+/// distance to it is the distance to a line segment. Exact, unlike the polygon
+/// beside it, which is the difference between measuring to a plane and to a
+/// segment with ends on it.
 /// <para>
-/// Exact, unlike the polygon beside it, and that is the difference between
-/// measuring to a plane and measuring to a segment with ends on it.
-/// </para>
-/// <para>
-/// 'sharpness' is a knob over the shape's real parameter rather than the
-/// parameter itself. What the construction wants is a second count — how many
-/// points the <em>edges</em> would make if they were extended, which is somewhere
-/// between two and the number of points there are. Two is the polygon with its
-/// corners on the tips and the number of points is a needle, and neither of those
-/// is a number anybody would think to turn a knob to. So the socket runs 0 to 1
-/// across that span and the module works the count out, which also keeps it
-/// meaningful when 'points' is a signal that moves under it.
+/// 'sharpness' is a knob over the shape's real parameter: the construction wants a
+/// second count, where two is a polygon with its corners on the tips and the
+/// number of points is a needle. The socket runs 0 to 1 across that span, which
+/// also keeps it meaningful when 'points' is a signal.
 /// </para>
 /// </remarks>
 internal static class StarModule

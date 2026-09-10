@@ -7,25 +7,15 @@ namespace Flyback.Plugins.Picture;
 /// The distance to a rectangle, with corners that can be rounded off.
 /// </summary>
 /// <remarks>
-/// The standard construction, and worth reading once because every other
-/// straight-edged form is a variation on it. Fold the plane into one quadrant
-/// with two absolutes, and take the corner of the box as the origin: what is
-/// left is a point relative to that corner, positive on an axis where it has
-/// gone past the edge. Outside, the distance is the length of the part that went
-/// past — with each axis held at zero where it did not, which is what makes an
-/// edge an edge rather than a corner. Inside, both are negative and the answer is
-/// the larger of the two, being the nearest wall.
+/// The standard construction: fold the plane into one quadrant with two absolutes
+/// and take the box's corner as the origin. Outside, the distance is the length of
+/// the part that went past, each axis held at zero where it did not; inside, both
+/// are negative and the answer is the larger, being the nearest wall. The two
+/// cases are added rather than chosen between, because only one is ever non-zero.
 /// <para>
-/// The two cases are added rather than chosen between, because exactly one of
-/// them is ever non-zero: outside, the inside term clamps to zero, and inside,
-/// the outside term is a length of nothing.
-/// </para>
-/// <para>
-/// Rounding is one subtraction. A distance field grown outward by r is the same
-/// field minus r, and a rectangle grown outward by r is a rectangle with corners
-/// of radius r — so the box is built r smaller and then grown back. The radius is
-/// held to the shorter half-side, past which there would be no straight edge left
-/// to round.
+/// Rounding is one subtraction: a field grown outward by r is the same field minus
+/// r, so the box is built r smaller and grown back. The radius is held to the
+/// shorter half-side, past which no straight edge is left to round.
 /// </para>
 /// </remarks>
 internal static class BoxModule

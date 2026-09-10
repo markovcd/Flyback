@@ -7,10 +7,9 @@ namespace Flyback.Plugins.Gemini;
 
 /// <summary>One tool call the model asked for.</summary>
 /// <remarks>
-/// No id, unlike the chat-completions spelling. A <c>functionCall</c> carries a
+/// No id, unlike the chat-completions spelling: a <c>functionCall</c> carries a
 /// name and nothing to match a reply to, so a turn that asked for the same tool
-/// twice is answered by order: the <c>functionResponse</c> parts go back in the
-/// order the calls arrived, which is the whole of the association.
+/// twice is answered by order.
 /// </remarks>
 /// <param name="Arguments">Already a JSON object here, where the other format sends a string of one.</param>
 internal sealed record Call(string Name, JsonNode? Arguments);
@@ -28,41 +27,33 @@ internal sealed record Reply(
 /// The generateContent wire format, and nothing else.
 /// </summary>
 /// <remarks>
-/// <para>
-/// Pure functions over JSON for the reason the other adapter's are: this is the
-/// part that fails at run time with a 400, so it is the part worth testing
-/// without a network. Everything that decides <em>what</em> to say lives in
-/// <see cref="GeminiSession"/>.
-/// </para>
+/// Pure functions over JSON, because this is the part that fails at run time with
+/// a 400 and so the part worth testing without a network. Everything that decides
+/// what to say lives in <see cref="GeminiSession"/>.
 /// <para>
 /// Almost nothing here is shaped like chat completions, which is why it is a
-/// second adapter rather than another base url. Turns are <c>contents</c> of
-/// <c>parts</c>; the roles are <c>user</c> and <c>model</c>; the briefing is a
-/// <c>systemInstruction</c> beside the conversation rather than the first turn
-/// of it; the model is named in the path rather than the body; a tool call is a
-/// part rather than a field on the message; and a tool result is a part of a
-/// user turn rather than a message of its own. About the only thing the two
-/// formats agree on is that an error carries <c>error.message</c>.
+/// second adapter rather than another base url: turns are <c>contents</c> of
+/// <c>parts</c>, the briefing is a <c>systemInstruction</c> beside the
+/// conversation, the model is named in the path, and a tool call and its result
+/// are both parts rather than messages.
 /// </para>
 /// </remarks>
 internal static class Wire
 {
     /// <param name="contents">The conversation so far, which does not include the briefing.</param>
     /// <param name="briefing">
-    /// The handbook, as its own field. Not a turn — a system turn does not exist
-    /// in this format, and putting it in as a user one would make the first
-    /// thing the model reads look like something somebody asked for.
+    /// The handbook, as its own field. Not a turn — a system turn does not exist in
+    /// this format, and a user one would make the first thing the model reads look
+    /// like something somebody asked for.
     /// </param>
     /// <param name="tools">
-    /// What the model may call. An empty list leaves the field out altogether
-    /// rather than sending an empty array — the ear is asked a question with no
-    /// tools at all, and an empty declaration list beside a mode of AUTO is a
-    /// contradiction worth a 400.
+    /// What the model may call. An empty list leaves the field out rather than
+    /// sending an empty array: the ear is asked a question with no tools, and an
+    /// empty declaration list beside a mode of AUTO is worth a 400.
     /// </param>
     /// <param name="thinking">
-    /// How hard to think, or null to leave it to the model. Null is absence
-    /// rather than a neutral value written out: every model has its own range
-    /// and a budget outside it is refused.
+    /// How hard to think, or null to leave it to the model. Null is absence rather
+    /// than a neutral value: every model has its own range.
     /// </param>
     public static JsonObject Request(
         JsonArray contents,
@@ -112,26 +103,16 @@ internal static class Wire
     }
 
     /// <summary>
-    /// A tool's schema as this endpoint will take it, or null where there is
-    /// nothing to declare.
+    /// A tool's schema as this endpoint will take it, or null where there is nothing
+    /// to declare.
     /// </summary>
     /// <remarks>
-    /// The schemas are written once, in the workbench, in ordinary JSON Schema.
-    /// What is accepted here is a subset of OpenAPI instead, and two differences
-    /// actually bite.
-    /// <para>
-    /// An object with no properties is refused, so a tool that takes no
-    /// arguments must declare no parameters at all rather than an empty object.
-    /// <c>describe_patch</c> and <c>reset</c> are both that tool.
-    /// </para>
-    /// <para>
-    /// Every property must say what type it is. One that deliberately does not —
-    /// <c>set_extra</c>'s <c>value</c>, which takes a number, a boolean or a
-    /// choice's id depending on the field it is aimed at — becomes an
-    /// <c>anyOf</c> over the three, which is the same statement in the spelling
-    /// this accepts. Left alone it is the kind of thing that fails as a 400
-    /// naming a field nobody reading the workbench would think to blame.
-    /// </para>
+    /// The schemas are written once, in the workbench, in ordinary JSON Schema; what
+    /// is accepted here is a subset of OpenAPI, and two differences bite. An object
+    /// with no properties is refused, so a tool that takes no arguments declares no
+    /// parameters at all. And every property must say what type it is, so
+    /// <c>set_extra</c>'s deliberately untyped <c>value</c> becomes an
+    /// <c>anyOf</c> over the three it can be.
     /// </remarks>
     public static JsonNode? Parameters(string schema)
     {
@@ -156,14 +137,10 @@ internal static class Wire
     }
 
     /// <summary>
-    /// Gives a type to anything that has none, all the way down.
+    /// Gives a type to anything that has none, all the way down. Recursive because
+    /// the schemas are authored in the workbench, which does not know which endpoint
+    /// is reading them, and a nested object would fail the same way.
     /// </summary>
-    /// <remarks>
-    /// Recursive because the schemas are authored somewhere else and a nested
-    /// object arriving without a type would fail the same way. The workbench is
-    /// where tools are described, and it does not know which endpoint is reading
-    /// them.
-    /// </remarks>
     private static void Typed(JsonObject properties)
     {
         foreach (var (_, value) in properties)
@@ -195,21 +172,12 @@ internal static class Wire
     /// those answers produced that is not words.
     /// </summary>
     /// <remarks>
-    /// <para>
-    /// One turn rather than several, and its parts are deliberately of mixed
-    /// kinds. Every call is answered in the order it was made, because a
-    /// <c>functionResponse</c> carries a name and no id and order is all there
-    /// is to tell two calls of the same tool apart. Then the pictures and the
-    /// sounds, which are what those answers actually were.
-    /// </para>
-    /// <para>
-    /// This is where the second adapter earns its place. A sound is an ordinary
-    /// part here — the same slot a picture goes in, in the same turn, to the
-    /// same model — so the clip reaches the model building the patch instead of
-    /// a second one hired to describe it. ADR-0047 tried this exact shape
-    /// against chat completions and was refused; nothing about it was wrong
-    /// except the endpoint.
-    /// </para>
+    /// One turn of mixed parts: every call is answered in the order it was made,
+    /// because a <c>functionResponse</c> carries a name and no id, and then the
+    /// pictures and sounds those answers were. This is where the second adapter
+    /// earns its place — a sound is an ordinary part here, in the same turn to the
+    /// same model, so the clip reaches the model building the patch. ADR-0047 tried
+    /// this shape against chat completions and was refused.
     /// </remarks>
     /// <param name="caption">What the media is, or null when there is none.</param>
     public static JsonObject Answers(
@@ -305,14 +273,10 @@ internal static class Wire
     }
 
     /// <summary>
-    /// Whether a status is worth sending the same request for a second time.
+    /// Whether a status is worth sending the same request for a second time. Much
+    /// the same set the other adapter retries; 503 earns its place here because it
+    /// routinely means the model is overloaded, which is a queue rather than a fault.
     /// </summary>
-    /// <remarks>
-    /// Much the same set the other adapter retries, for the same reasons. 503 is
-    /// the one that earns its place here rather than there: it routinely means
-    /// the model is overloaded, which is a queue rather than a fault and clears
-    /// in seconds.
-    /// </remarks>
     public static bool Retryable(int status) =>
         status is 408 or 429 or 500 or 502 or 503 or 504;
 
@@ -320,11 +284,10 @@ internal static class Wire
     /// How long the endpoint asked to be left alone, or null when it did not say.
     /// </summary>
     /// <remarks>
-    /// The body, not the headers, which is the difference worth writing down. A
-    /// 429 here carries a <c>RetryInfo</c> among <c>error.details</c> holding a
-    /// duration like <c>24s</c>, and there is usually no <c>Retry-After</c>
-    /// beside it. The header is still read first where one turns up, because a
-    /// gateway in front of this may add one and the nearer answer wins.
+    /// The body, not the headers: a 429 here carries a <c>RetryInfo</c> among
+    /// <c>error.details</c> and usually no <c>Retry-After</c> beside it. The header
+    /// is still read first, because a gateway in front of this may add one and the
+    /// nearer answer wins.
     /// </remarks>
     public static TimeSpan? RetryAfter(HttpResponseMessage response, string body)
     {

@@ -2,12 +2,10 @@ namespace Flyback.Plugins.Midi;
 
 /// <summary>What a device just did. Notes and nothing else, which is what a voice can use.</summary>
 /// <remarks>
-/// A MIDI cable carries a great deal more than this — controllers, wheels, clock,
-/// aftertouch, whole system-exclusive conversations. None of it is here, because
-/// nothing above this reads any of it: the module a patch holds has four outputs
-/// and every one is about a note. A backend that decodes more would be decoding
-/// it for nobody, and a signal added later is a case added here rather than a
-/// shape changed.
+/// A MIDI cable carries a great deal more — controllers, wheels, clock,
+/// aftertouch — and none of it is here, because nothing above this reads any of
+/// it: the module a patch holds has four outputs and every one is about a note. A
+/// signal added later is a case added here rather than a shape changed.
 /// </remarks>
 public enum MidiAction
 {

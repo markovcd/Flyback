@@ -7,25 +7,17 @@ namespace Flyback.Plugins.Picture;
 /// closing — so they are four shapes and then one, and then four again.
 /// </summary>
 /// <remarks>
-/// The plugin's showcase, and it is built round the one gesture none of the
-/// modules can make alone. A Minimum has been in the catalogue since the first
-/// week and would put these four in one picture perfectly well; what it cannot do
-/// is the crease. Where two forms meet under a Minimum there is a corner, and
-/// four shapes sharing corners look like four shapes overlapping. The Combine's
-/// seam fills that corner in, and swept from nothing to half a unit — a quarter
-/// of the picture — it walks the whole way from four separate things to one and
-/// back again, which is a topology changing on a knob and is worth watching for
-/// its own sake. What is left in the middle at the top of the sweep is a hole,
-/// because four forms on a ring that reach each other still do not reach the
-/// centre. That is the arrangement rather than an accident of it: the ring is set
-/// so the four close on their neighbours and not on the middle.
+/// Built round the one gesture none of the modules can make alone. A Minimum would
+/// put these four in one picture perfectly well; what it cannot do is fill the
+/// crease where two forms meet, and four shapes sharing corners look like four
+/// shapes overlapping. Swept from nothing to a quarter of the picture, the seam
+/// walks the whole way from four separate things to one — a topology changing on a
+/// knob. The hole left in the middle is the arrangement rather than an accident:
+/// the ring is set so the four close on their neighbours and not on the centre.
 /// <para>
-/// The forms sit on a ring rather than in a row because a row would need the
-/// whole width of the frame and would leave the picture the shape of the window.
-/// A ring is centred, so it reads the same on a square preview and a wide one.
-/// It rocks rather than spins: turned through a whole revolution the four would
-/// swap places, and the eye reads that as the composition jumping rather than as
-/// the composition turning.
+/// A ring rather than a row because a row would need the whole width of the frame.
+/// It rocks rather than spins: through a whole revolution the four would swap
+/// places, which reads as the composition jumping.
 /// </para>
 /// </remarks>
 internal static class FourFormsPreset

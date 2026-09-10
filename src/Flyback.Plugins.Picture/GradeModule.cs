@@ -4,35 +4,25 @@ using Flyback.Core.Graph;
 namespace Flyback.Plugins.Picture;
 
 /// <summary>
-/// The three adjustments every picture wants after it is drawn: how colorful,
-/// how contrasty, how dark in the middle.
+/// The three adjustments every picture wants after it is drawn: how colorful, how
+/// contrasty, how dark in the middle.
 /// </summary>
 /// <remarks>
-/// The catalogue's Gain is a multiply and an add, which is brightness and a kind
-/// of contrast, and it is the only thing here that could be done to a finished
-/// picture. What it cannot do is anything that treats the three channels as a
-/// color rather than as three signals: taking the color out of one is not a
-/// multiply, and neither is deepening its shadows without moving its highlights.
+/// The catalogue's Gain is a multiply and an add, and what it cannot do is
+/// anything that treats the three channels as a color: taking the color out of one
+/// is not a multiply, and neither is deepening its shadows without moving its
+/// highlights.
 /// <para>
-/// Saturation is a mix between the picture and its own brightness — not the
-/// average of the channels but the weighted one the eye uses, since green is most
-/// of what brightness means and blue is almost none of it. Past one it keeps
-/// going the same way, which oversaturates rather than clipping, and at nought it
-/// is a proper greyscale rather than a washed-out one.
+/// Saturation is a mix between the picture and its own brightness — the weighted
+/// one the eye uses, since green is most of what brightness means. Contrast leans
+/// about the middle grey rather than about black, which is the whole difference
+/// between contrast and gain. Gamma is the exponent, so above one deepens
+/// everything below the middle and leaves white alone.
 /// </para>
 /// <para>
-/// Contrast is about the middle grey rather than about black, which is the whole
-/// difference between contrast and gain: multiplying a picture makes it brighter
-/// <em>and</em> harder, and this leans on it without moving where the middle is.
-/// Gamma is the exponent, so above one deepens everything below the middle and
-/// leaves white alone — the knob to reach for when a picture is nearly right and
-/// too pale.
-/// </para>
-/// <para>
-/// All three are neutral at one, and in that state this module is exactly a wire.
-/// The order is fixed and is the order a grading desk uses: color, then
-/// contrast, then gamma. Three of these in a row is the same as one with the
-/// numbers multiplied out, which is why there is only one.
+/// All three are neutral at one, and in that state this is exactly a wire. The
+/// order is a grading desk's: color, then contrast, then gamma. Three of these in
+/// a row is one with the numbers multiplied out, which is why there is only one.
 /// </para>
 /// </remarks>
 internal static class GradeModule

@@ -7,21 +7,6 @@ namespace Flyback.Plugins.Effects;
 /// both modules are usually wanted in: repeats first, then the room they happen
 /// in.
 /// </summary>
-/// <remarks>
-/// Nothing is drawn, and the black screen is the statement rather than an
-/// omission. Both modules carry a delay line, a delay line is a memory
-/// ([0027](0027-delay-lines-give-the-audio-path-a-memory.md)), and the video path
-/// has none — so on the screen this whole patch is a wire and there is nothing of
-/// it to show. A picture of the input is not a picture of the effect, and
-/// lighting a pattern off the pluck envelope would be exactly that.
-/// <para>
-/// Both of the room's outputs are used, which is the one thing this preset exists
-/// to show that a knob cannot: the same tail smeared two ways is what puts the
-/// repeats around the listener rather than in front of them. Wire only 'left' and
-/// the Output's normalled 'right' hands the same signal to both ears, and the
-/// room collapses to a point.
-/// </para>
-/// </remarks>
 internal static class SpacePreset
 {
     public const string Name = "Echo chamber";

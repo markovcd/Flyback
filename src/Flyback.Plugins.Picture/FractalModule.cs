@@ -8,41 +8,24 @@ namespace Flyback.Plugins.Picture;
 /// Noise at several sizes at once, which is what makes it look like something.
 /// </summary>
 /// <remarks>
-/// One octave of value noise is a field of smooth blobs all the same size, and
-/// nothing in the world looks like that. What everything does look like is a
-/// large shape with a smaller one on it and a smaller one on that: a cloud, a
-/// coastline, marble, rust, a mountain. Adding octaves — each twice the
-/// frequency and a fraction of the height of the one before — is the whole of
-/// how that is made, and it is the oldest trick in the subject.
+/// One octave of value noise is a field of blobs all the same size, and nothing
+/// looks like that; everything looks like a large shape with a smaller one on it.
+/// Adding octaves — each twice the frequency and a fraction of the height of the
+/// one before — is the whole of how that is made.
 /// <para>
-/// Two readings of the same sum, off one pass, because they are the two halves
-/// of the subject and the difference between them is what a patch is choosing
-/// between. 'smooth' adds the octaves as they come and is cloud; 'folded' adds
-/// their distance from the middle and is smoke, flame and beaten metal, because
-/// folding a smooth field at its midline puts a crease everywhere the noise
-/// crossed it and every octave adds more of them. Subtracting 'folded' from one
-/// turns those creases into ridges, which is a mountain — one Subtract, so it is
-/// not a third output.
+/// Two readings of the same sum: 'smooth' adds the octaves as they come and is
+/// cloud, where 'folded' adds their distance from the middle and is smoke, flame
+/// and beaten metal, because folding at the midline puts a crease everywhere the
+/// noise crossed it. Subtracting 'folded' from one turns those creases into
+/// ridges, which is one Subtract rather than a third output.
 /// </para>
 /// <para>
-/// The octave count is not a socket, and that is the one thing about this module
-/// worth reading twice. Every other number here is a value the program computes
-/// with; this one decides how long the program <em>is</em> — eight octaves is
-/// eight times the noise of one, and noise is far and away the dearest op in the
-/// machine. A socket could not say it: the shape of the program would have to
-/// cover eight however few were asked for, and every patch would pay for the
-/// most anybody might want. So it is carried on the node, the way a Quantiser
-/// carries its scale and for exactly the same reason
-/// ([0051](0051-a-quantisers-scale-is-a-set-on-the-node.md)), and declared
-/// rather than drawn ([0055](0055-a-plugins-extra-declares-its-editor.md)) so
-/// that no plugin ships a control.
-/// </para>
-/// <para>
-/// 'z' is scaled with x and y rather than left alone, which is where this parts
-/// company with the Noise it is built from. Driven by Time it is what makes the
-/// field boil, and scaling it means the fine detail churns faster than the broad
-/// shape — which is what a cloud does, and what a single-octave field cannot do
-/// however it is driven.
+/// The octave count is not a socket, because it decides how long the program is
+/// rather than what it computes: a socket would have to cover eight however few
+/// were asked for, and every patch would pay for the most anybody might want. So
+/// it is carried on the node (ADR-0051) and declared rather than drawn
+/// (ADR-0055). 'z' is scaled with x and y, so fine detail churns faster than the
+/// broad shape — which is what a cloud does.
 /// </para>
 /// </remarks>
 internal static class FractalModule

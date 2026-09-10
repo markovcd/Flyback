@@ -7,25 +7,20 @@ namespace Flyback.Plugins.Picture;
 /// waveform.
 /// </summary>
 /// <remarks>
-/// The plugin's own demonstration, and it is built round the one thing a shape
-/// can do here that it cannot do in a drawing program: be heard. The Scan sweeps
-/// a circle through the field and hands what it passes over to the speakers, so
-/// the star's five points are five bumps in every cycle of the waveform — a
-/// timbre that is the shape rather than a sound chosen to go with it.
+/// Built round the one thing a shape can do here that it cannot in a drawing
+/// program: be heard. The Scan sweeps a circle through the field, so the star's
+/// five points are five bumps in every cycle — a timbre that is the shape rather
+/// than a sound chosen to go with it.
 /// <para>
-/// Which is why the field goes to the Scan rather than the fill does. A fill is
-/// 1 and 0 with a hair of gradient between, and a loop crossing one hears a
-/// square wave whatever it crossed; the distance underneath it slopes all the way
-/// from the tip of a point to the middle of the hole, so the waveform has the
-/// star's proportions in it.
+/// The field goes to the Scan rather than the fill, because a fill is 1 and 0 and
+/// a loop crossing one hears a square wave whatever it crossed; the distance
+/// underneath slopes from the tip of a point to the middle of the hole.
 /// </para>
 /// <para>
-/// One sweep drives the sharpness, and it is the sweep worth watching: the points
-/// grow and shrink, and the tone brightens and dulls exactly with them, because
-/// sharper points are steeper sides are more harmonics. It takes the hue as well,
-/// so the color says which way the shape is going. The other sweep only rocks the
-/// star, and rocks rather than spins because a five-fold shape turned through a
-/// whole revolution passes its own reflection and jumps.
+/// One sweep drives the sharpness and the hue together — sharper points are
+/// steeper sides are more harmonics. The other rocks the star rather than spinning
+/// it, because a five-fold shape turned through a revolution passes its own
+/// reflection and jumps.
 /// </para>
 /// </remarks>
 internal static class ShapesPreset

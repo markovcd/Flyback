@@ -9,99 +9,6 @@ namespace Flyback.Plugins.Effects;
 /// and a clap, into a ping-pong delay — and a picture driven by the same three
 /// signals that drive the sound.
 /// </summary>
-/// <remarks>
-/// The largest preset in the box, and the one that needs all three module
-/// plugins at once: the Filter and the Drive are Voice's, the Fractal and the
-/// palette are Picture's, and the two delay lines are this plugin's own. It is
-/// here rather than in either of the others because what makes it a track rather
-/// than a riff is the delay.
-/// <para>
-/// Everything is synthesised. There is no clip and no picture file anywhere in
-/// it, which is a constraint worth stating because two of the drums would
-/// ordinarily be samples: the hats and the clap are both made out of the hash
-/// every shader can compute, and the difference between them is which filter
-/// response they are read through and how long their envelope is.
-/// </para>
-/// <para>
-/// <b>The acid line.</b> A 303 is one oscillator, one lowpass with a great deal
-/// of resonance, and an envelope on the cutoff rather than on the volume — and
-/// the last of those is the whole instrument. The amplitude envelope here is
-/// almost flat; what moves is the corner frequency, dropping from wherever the
-/// envelope threw it back down to where the knob is, once per note. Take the
-/// wire out of the Filter's 'cutoff' and the same notes come out sounding like a
-/// cheap organ, which is the fastest way to hear what the module is for.
-/// </para>
-/// <para>
-/// The cutoff is three things added together, and they are three different kinds
-/// of control. The slow sine is the hand on the knob, moving over half a minute
-/// and never repeating with the bar. The envelope is the per-note movement. And
-/// the accent is the sequencer's own gate: a step's volume comes out on 'gate'
-/// as a level rather than as a switch, so a loud step opens the filter further
-/// than a quiet one before the envelope even starts. That is what an accent is
-/// on the original machine and it costs one Remap here.
-/// </para>
-/// <para>
-/// <b>The bottom.</b> A 303 is a middle and nothing else: its lowest note is an
-/// A at fifty-five hertz and the filter takes most of what is under the cutoff
-/// away again, so between one kick and the next the bottom of the spectrum
-/// needs a voice of its own. A sine on the eighths plays the line's own roots
-/// an octave down, with the kick's envelope upside down on its level — a
-/// sidechain written as one Remap, which keeps two things in the same octave
-/// from summing into a mush that reads as neither. Both it and the kick end in
-/// a Drive, and that is not there to make
-/// either louder: the module normalises as it saturates and cannot. It is there
-/// because no laptop reproduces forty-two hertz, and every laptop reproduces the
-/// harmonics that saturating forty-two hertz puts above it, from which the ear
-/// puts the fundamental back.
-/// </para>
-/// <para>
-/// <b>Stereo from two delay times.</b> Left is a dotted eighth and right is an
-/// eighth, both computed from the tempo rather than typed — a Divide against the
-/// sixteenth-note rate, so changing the BPM moves the echoes with it and they
-/// stay in time. The two are close enough to read as one space and far enough
-/// apart that the repeats walk across the head, which is the whole of the width;
-/// there is no pan knob anywhere in the patch.
-/// </para>
-/// <para>
-/// <b>The picture.</b> Three signals cross to it and each one is doing something
-/// the others cannot. The slow filter sweep drives the palette's 'spread', so the
-/// image opens from tints of one color to a full spectrum exactly as the sound
-/// opens from a hum to a scream — the same wire, not two arrangements that happen
-/// to agree. The kick's pulse drives the zoom, the brightness and the twist on
-/// the feedback, so the frame moves on the beat. And the sequencer's step index
-/// sets how many wedges the kaleidoscope has, so the picture rebuilds itself as
-/// the pattern comes round.
-/// </para>
-/// <para>
-/// <b>Why it does not loop.</b> The parts that decide it run at thirty-two,
-/// twelve, thirty-two and seven steps — the bass is sixteen, which divides the
-/// bar and so adds no period of its own, and that is the point of it: a floor
-/// is the one thing that must not move. Of the four, the last two share no
-/// factor with the bar: the
-/// hats arrive three quarters of a bar apart so the open hat walks through the beat,
-/// and the seven-step track that sets how far the filter opens takes fourteen
-/// bars to line up with the line again. The pattern as a whole comes round after
-/// forty-two bars, which is about a minute.
-/// </para>
-/// <para>
-/// Under that, two smooth random voltages read out of a Noise field change the
-/// resonance, the drive, the length of the echoes and how loud the hats are —
-/// none of which is a note, and all of which is what a hand on a mixer would be
-/// doing. They are aperiodic against each other and against the bar, so the
-/// piece is never in the same state twice even once the sequences repeat. The
-/// hat level being one of them is the arrangement: a level is a socket on the
-/// Mixer like any other, so a part fading in and out over a minute costs one
-/// wire rather than an automation lane.
-/// </para>
-/// <para>
-/// What deliberately does not cross is the filter envelope. An envelope has no
-/// memory on the video path and hands over its gate, so a picture driven by one
-/// flickers at the note rate rather than showing the shape; the sweep is a pure
-/// function of time and is the same signal at both sinks, which is why it is the
-/// one chosen to carry the correspondence. See <c>Kick</c>'s old note in the
-/// engine's presets for the same problem answered the other way.
-/// </para>
-/// </remarks>
 internal static class AcidPreset
 {
     public const string Name = "Acid";
@@ -123,14 +30,6 @@ internal static class AcidPreset
     /// <summary>
     /// The modules this borrows, named by id rather than by type.
     /// </summary>
-    /// <remarks>
-    /// A plugin is loaded into its own context and does not reference another,
-    /// so a preset reaching across a boundary names what it wants the way a
-    /// saved patch does — see <c>SlowWeatherPreset</c>, which does the same for
-    /// the one module it borrows. It is also why the guards above are worth
-    /// having: a string that does not resolve is a module that is not there, and
-    /// the complaint should name the plugin rather than the id.
-    /// </remarks>
     private const string FilterType = "flyback.voice.filter";
 
     private const string DriveType = "flyback.voice.drive";
@@ -147,10 +46,9 @@ internal static class AcidPreset
     private const string OctaveField = "octaves";
 
     /// <summary>
-    /// How many octaves the field builds. The count is a choice on the node
-    /// rather than a socket, so it is written as state — the same shape the
-    /// module's own helper writes, said here because this assembly cannot call
-    /// it.
+    /// How many octaves the field builds. A choice on the node rather than a
+    /// socket, so it is written as state — the shape the module's own helper
+    /// writes, said here because this assembly cannot call it.
     /// </summary>
     private static NodeInstance Octaves(NodeInstance node, int count)
     {
@@ -198,10 +96,8 @@ internal static class AcidPreset
         // --- the acid line -----------------------------------------------------
 
         // Two bars of sixteenths in A minor pentatonic, and the second is not the
-        // first: it sits higher, jumps further and rests in different places. The
-        // volumes are the accents — 0.95 is a step that opens the filter, 0.6 one
-        // that does not, and nothing at all is a rest that leaves the pitch where
-        // it was, so the notes either side of it are one phrase rather than two.
+        // first. The volumes are the accents — 0.95 opens the filter, 0.6 does
+        // not, and a rest leaves the pitch where it was.
         var line = b.Add("seq.notes", (2, 0.5f), (3, 0.02f));
         StepsExtra.Set(line,
         [
@@ -244,17 +140,12 @@ internal static class AcidPreset
         // in the same relation twice and the line keeps arriving somewhere new.
         var slower = b.Add("osc.sine", (1, 0.017f));
 
-        // Seven steps against the line's thirty-two, and this is the other half
-        // of why the patch does not repeat. What it carries is not a note but how
-        // far the filter envelope is allowed to open, so every seven sixteenths
-        // the same phrase is played through a different filter. Seven and
-        // thirty-two share no factor, so the pairing takes two hundred and
-        // twenty-four sixteenths — fourteen bars — to come round.
+        // Seven steps against the line's thirty-two, carrying how far the filter
+        // envelope may open: the two share no factor, so the pairing takes
+        // fourteen bars to come round.
         //
-        // It is wired into the Remap's 'out high' rather than multiplied onto the
-        // result, because that socket is what the envelope's full travel means:
-        // a step of nothing is a note with no sweep in it at all, and a step of
-        // one throws the cutoff to the top of its range.
+        // Wired into the Remap's 'out high' rather than multiplied onto the
+        // result, because that socket is what the envelope's full travel means.
         var mutate = b.Add("seq.values", (2, 0.9f), (3, 0.2f));
         StepsExtra.Set(mutate,
         [
@@ -331,11 +222,9 @@ internal static class AcidPreset
         // saying nothing. Its 'freq' is the tempo itself.
         var beat = b.Add("osc.pulse", (3, 0.02f));
 
-        // A quarter of a second of fall rather than a fifth, which is longer
-        // than a kick needs to be heard and nearer what it needs to be felt:
-        // what moves air here is the tail rather than the click at the front of
-        // it. Half a beat at this tempo, so the tail is well gone before the
-        // next one arrives and the four are four rather than a drone.
+        // A quarter of a second of fall, which is nearer what a kick needs to be
+        // felt than to be heard: what moves air is the tail. Half a beat at this
+        // tempo, so the four are four rather than a drone.
         var thump = b.Add(NodeCatalog.AdsrTypeId, (1, -3f), (2, -0.6f), (3, 0f), (4, -1.1f));
 
         // The pitch envelope, an order of magnitude shorter than the level one:
@@ -350,13 +239,9 @@ internal static class AcidPreset
         var body = b.Add("osc.sine");
         var kick = b.Add("math.mul");
 
-        // Saturation, and it is worth saying what it is not for: the Drive is
-        // normalised as it goes, so it cannot make this louder. What it does is
-        // give a sine some harmonics, and those are the whole of what a small
-        // speaker has of a forty-two hertz note — it reproduces the eighty-four
-        // and the hundred and twenty-six, and the ear supplies the fundamental
-        // underneath them. On something with a cone it is a kick that is thicker
-        // rather than one that is different.
+        // Saturation, which cannot make this louder — the Drive normalises as it
+        // goes. What it does is give a sine harmonics, and those are the whole of
+        // what a small speaker has of a forty-two hertz note.
         var punch = b.Add(DriveType, (1, 2f));
 
         b.Wire(tempo, 0, beat, 1)
@@ -372,24 +257,16 @@ internal static class AcidPreset
 
         // --- the bass ----------------------------------------------------------
 
-        // What the patch had no answer for. The acid line is a middle: its
-        // lowest note is an A at fifty-five hertz, the filter is usually sitting
-        // above that, and the kick is gone a quarter of a second into every beat
-        // — so for most of the bar there was nothing at all underneath. This is
-        // that, and it is deliberately not a second acid line. One voice moving
-        // is the sound of this music; two would be an argument.
+        // The floor the patch had none of: the acid line's lowest note is an A at
+        // fifty-five hertz and the kick is gone a quarter of a second into every
+        // beat. Deliberately not a second acid line — one voice moving is the
+        // sound of this music.
         //
-        // Sixteen eighths, which is two bars, which is exactly the length of the
-        // line above it. That is the one place in the patch where a part is
-        // meant to agree with another rather than walk against it: the hats and
-        // the mutate track are twelve and seven because a floor needs something
-        // to walk against, and a floor that walked would not be one.
-        //
-        // The notes are the line's own roots — A A, A C, G G, A A, and an answer
-        // that ends by reaching up to the E. They are written at the line's
-        // octave and dropped one on the Note module rather than typed out low,
-        // so what the list says is where the harmony is rather than a set of
-        // numbers a reader has to transpose to check.
+        // Sixteen eighths, exactly the length of the line above it: the hats and
+        // the mutate track walk against the bar, and a floor that walked would
+        // not be one. The notes are the line's own roots, written at its octave
+        // and dropped one on the Note module so the list says where the harmony
+        // is.
         var bassSeq = b.Add("seq.notes", (2, 0.8f), (3, 0.03f));
         StepsExtra.Set(bassSeq,
         [
@@ -411,24 +288,21 @@ internal static class AcidPreset
         // line, and the line is the thing that is supposed to be heard.
         var bassOsc = b.Add("osc.sine");
 
-        // The opposite envelope to the line's, which is worth putting next to
-        // it: there, the volume barely moves and everything happens to the
-        // filter; here nothing happens at all and the note simply holds for its
-        // eighth. Released over a twentieth of a second rather than cut, because
-        // at fifty-five hertz a cut lands mid-cycle and is heard as a click.
+        // The opposite envelope to the line's: there the filter does everything
+        // and the volume barely moves, here the note simply holds for its eighth.
+        // Released over a twentieth of a second rather than cut, because at
+        // fifty-five hertz a cut lands mid-cycle and clicks.
         var bassEnv = b.Add(NodeCatalog.AdsrTypeId, (1, -2.4f), (2, -1f), (3, 0.9f), (4, -1.3f));
 
         var bassVca = b.Add("math.mul");
 
         // The kick's own level envelope, upside down, on the bass's level — a
-        // sidechain compressor, written as one Remap. Two things in the same
-        // octave played at once sum to something louder than either that reads
-        // as neither, and the fix is not to make the bass quieter but to have it
-        // step out of the way for the length of the beat and come straight back.
+        // sidechain compressor written as one Remap, so the bass steps out of the
+        // way for the beat and comes straight back.
         //
-        // Down to a fifth rather than to nothing, and the number is the whole
-        // craft of it: at zero there is a hole on every beat and the ear finds
-        // it, and the point of a sidechain is that nobody hears it happening.
+        // Down to a fifth rather than to nothing: at zero there is a hole on every
+        // beat and the ear finds it, and the point of a sidechain is that nobody
+        // hears it happening.
         var duck = b.Add("math.remap", (1, 0f), (2, 1f), (3, 1f), (4, 0.2f));
         var ducked = b.Add("math.mul");
 
@@ -454,13 +328,11 @@ internal static class AcidPreset
         // --- the hiss both drum sounds are made of ------------------------------
 
         // Nothing in the catalogue makes a noise a point in the plane can hear:
-        // Noise and Fractal are fields in x and y, and the audio path stands at
-        // one point of it, so either of them read there is a held tone. What
-        // makes the hiss instead is the hash every shader writes — a large
-        // multiple of the clock, a sine of it, a larger multiple of that, and
-        // the fraction, which lands somewhere else entirely from one sample to
-        // the next. Built once here and read by the hats and the clap, because
-        // two drums made of the same air is what a drum machine is.
+        // Noise and Fractal are fields in x and y, and the audio path stands at one
+        // point of it. What makes the hiss is the hash every shader writes — a
+        // large multiple of the clock, a sine, a larger multiple, the fraction.
+        // Built once and read by the hats and the clap, because two drums made of
+        // the same air is what a drum machine is.
         var grain = b.Add("math.mul", (1, 3571f));
         var hash = b.Add("math.sin");
         var scatter = b.Add("math.mul", (1, 4371.3f));
@@ -477,17 +349,13 @@ internal static class AcidPreset
 
         // --- the hats ----------------------------------------------------------
 
-        // The step's own value is a decay time rather than a pitch, which is the
-        // one gesture that needs a Sequencer rather than a Note Sequencer: a high
-        // step rings and a low one ticks, so the open hats and the closed ones
-        // are one instrument and one list.
+        // The step's own value is a decay time rather than a pitch, which needs a
+        // Sequencer rather than a Note Sequencer: a high step rings and a low one
+        // ticks, so open and closed hats are one instrument and one list.
         //
-        // Twelve steps rather than sixteen, which is the whole reason this patch
-        // does not sound like a loop. Twelve sixteenths is three quarters of a
-        // bar, so the pattern arrives a beat earlier each time round and does not
-        // land the same way against the kick until three bars have gone by. The
-        // open hat moves through the bar rather than sitting on the same
-        // sixteenth for ever.
+        // Twelve steps rather than sixteen is why this does not sound like a loop:
+        // three quarters of a bar, so the pattern arrives a beat earlier each time
+        // and takes three bars to land the same way against the kick.
         var hatSeq = b.Add("seq.values", (2, 0.3f), (3, 0.01f));
         StepsExtra.Set(hatSeq,
         [
@@ -516,14 +384,12 @@ internal static class AcidPreset
 
         // --- the clap ----------------------------------------------------------
 
-        // Two and four, and the same hiss read through a second Filter — its
-        // 'band' this time, which is the output the acid line has no use for.
-        // A band of noise around 1.4 kHz with a long-ish tail is a clap; the
-        // same noise flat is a hat. One module apart.
+        // Two and four, and the same hiss through a second Filter — its 'band'
+        // this time, which the acid line has no use for. A band of noise around
+        // 1.4 kHz with a longish tail is a clap; the same noise flat is a hat.
         //
         // Two bars, so the answering ghosts differ between them: the backbeat is
-        // the thing a listener sets their watch by and never moves, and
-        // everything around it does.
+        // what a listener sets their watch by, and everything around it moves.
         var clapSeq = b.Add("seq.values", (2, 0.35f), (3, 0.01f));
         StepsExtra.Set(clapSeq,
         [
@@ -543,14 +409,10 @@ internal static class AcidPreset
 
         var clap = b.Add("math.mul");
 
-        // And a gain past unity on the way out, which is not a taste decision.
-        // A bandpass keeps the part of its input that fits between its skirts and
-        // throws the rest away, so a band of white noise carries a small fraction
-        // of the energy the same noise carries flat — measured against the hats,
-        // which are that noise with no filter at all, this one was about a
-        // seventh of them and was inaudible under the drums. The 'band' output is
-        // simply a quiet socket, and the level that makes it sit with the rest is
-        // above one for that reason and no other.
+        // And a gain past unity on the way out, which is not a taste decision: a
+        // bandpass keeps only what fits between its skirts, so this noise carries
+        // about a seventh of what the hats do and was inaudible under the drums.
+        // The 'band' output is simply a quiet socket.
         var loud = b.Add("math.mul", (1, 3.5f));
 
         b.Wire(sixteenths, 0, clapSeq, 1)
@@ -564,18 +426,14 @@ internal static class AcidPreset
 
         // --- the slow weather ----------------------------------------------------
 
-        // Two smooth random voltages, which are what keeps the patch changing
-        // once the sequencers have been heard. A Noise field walked slowly along
-        // z alone is exactly the lagged sample-and-hold a modular patch would
-        // reach for: it wanders rather than stepping, it never repeats, and it
-        // costs one module each.
+        // Two smooth random voltages, which keep the patch changing once the
+        // sequencers have been heard: a Noise field walked slowly along z alone is
+        // the lagged sample-and-hold a modular patch would reach for.
         //
-        // Their x and y are pinned by a Value rather than left to the normal,
-        // which matters more than it looks. Unpinned they would read the pixel's
-        // own position, so the screen would get a field where the speakers get a
-        // number, and the two sinks would disagree about what the weather is
-        // doing. Held still, both get the same wander. Two far-apart lanes are
-        // two unrelated voltages out of one kind of module.
+        // Their x and y are pinned by a Value rather than left to the normal.
+        // Unpinned they would read the pixel's own position, so the screen would
+        // get a field where the speakers get a number, and the two sinks would
+        // disagree about what the weather is doing.
         var lane = b.Add("value", (0, 0.29f));
         var farLane = b.Add("value", (0, 2.31f));
 
@@ -585,19 +443,15 @@ internal static class AcidPreset
         var moodA = b.Add("pattern.noise", (3, 1f));
         var moodB = b.Add("pattern.noise", (3, 1f));
 
-        // What A does: the filter's resonance and the drive that follows it,
-        // together, because dirt and ring are one thing to the ear and a patch
-        // that moved them apart would sound like two faults rather than one
-        // hand. Never down to nothing — a 303 with no resonance is not quiet,
-        // it is a different instrument.
+        // What A does: the filter's resonance and the drive after it together,
+        // because dirt and ring are one thing to the ear. Never down to nothing —
+        // a 303 with no resonance is not quiet, it is a different instrument.
         var ring = b.Add("math.remap", (1, -1f), (2, 1f), (3, 0.55f), (4, 0.95f));
         var grit = b.Add("math.remap", (1, 0f), (2, 1f), (3, 2.2f), (4, 6.5f));
 
         // And what B does: how long the echoes hang about, and how loud the hats
-        // are. The second of those is the arrangement — a level is a socket on
-        // the Mixer like any other, so a slow voltage on it is a part fading in
-        // and out over a minute or two without anybody writing an automation
-        // lane.
+        // are. The second is the arrangement — a level is a socket like any other,
+        // so a slow voltage on it is a part fading in and out over a minute.
         var hang = b.Add("math.remap", (1, 0f), (2, 1f), (3, 0.24f), (4, 0.6f));
 
         b.Wire(clock, 0, driftA, 0)
@@ -622,15 +476,12 @@ internal static class AcidPreset
         // --- the arrangement -----------------------------------------------------
 
         // One step a bar rather than one a sixteenth, which is the same module
-        // doing a different job: at this rate a Sequencer is not playing a part,
-        // it is deciding how much of the kit is in. Sixteen steps is sixteen
-        // bars, about half a minute, and the shape of the list is the shape of
-        // the track — two bars of almost nothing, a build, four bars with
-        // everything in, a drop back to the floor, and a longer climb.
+        // deciding how much of the kit is in rather than playing a part. Sixteen
+        // bars is about half a minute, and the shape of the list is the shape of
+        // the track.
         //
-        // The kick is deliberately not on it. Something has to be the thing the
-        // room is counting, and a four-on-the-floor that came and went would take
-        // the ground out from under the other two rather than arranging them.
+        // The kick is deliberately not on it: something has to be the thing the
+        // room is counting.
         var bars = b.Add("math.mul", (1, 0.25f));
 
         var arrange = b.Add("seq.values", (2, 0.95f), (3, 0.3f));
@@ -665,30 +516,21 @@ internal static class AcidPreset
 
         // --- the desk ----------------------------------------------------------
 
-        // Left and right differ in which echo they carry and in how the two drum
-        // sounds lean, and in nothing else. There is no pan module in the
-        // catalogue and this patch does not want one: width here is two signals
-        // that are genuinely different, not one made quieter on a side.
+        // Left and right differ in which echo they carry and how the drums lean,
+        // and in nothing else. There is no pan module and this patch wants none:
+        // width here is two signals that are genuinely different.
         //
-        // The kick and the bass summed before the desk rather than on it. Partly
-        // that is arithmetic — there are four channels on a Mixer and the patch
-        // already had four things to put on them — and partly it is the truer
-        // wiring: these two are one instrument built out of two, tied together
-        // by the duck, and the balance between them is a thing to set once here
-        // rather than twice on either side.
+        // The kick and the bass are summed before the desk, partly for the four
+        // channels a Mixer has and partly because they are one instrument tied
+        // together by the duck — a balance to set once rather than twice.
         var lowEnd = b.Add("math.mixer", (1, 1f), (3, 0.6f));
 
-        // The line comes in at not much over a third rather than at two thirds,
-        // and that is the whole of what makes the clap audible. The two occupy
-        // the same band — a resonant lowpass sweeping to four kilohertz is
-        // sitting exactly where a clap lives — so the clap could not be brought
-        // out from under it by being made louder without becoming the loudest
-        // thing in the patch. What was actually wrong was that a saw through a
-        // resonant filter into two delay lines is a continuous sound, and a
-        // continuous sound at two thirds leaves nothing for anything struck to
-        // arrive into. Turning it down does not make the line quieter to listen
-        // to; it makes the gaps in the bar audible again, and the clap lives in
-        // those.
+        // The line comes in at a third rather than two thirds, which is what makes
+        // the clap audible. The two occupy the same band, so the clap could not be
+        // brought out from under it without becoming the loudest thing in the
+        // patch. A saw through a resonant filter into two delay lines is a
+        // continuous sound, and turning it down makes the gaps in the bar audible
+        // again — which is where the clap lives.
         var deskL = b.Add("math.mixer", (1, 0.38f), (3, 1f));
         var deskR = b.Add("math.mixer", (1, 0.38f), (3, 1f));
 
@@ -823,11 +665,9 @@ internal static class AcidPreset
         var slide = b.Add("math.add");
         var where = b.Add("math.fract");
 
-        // And how wide the palette is comes off the filter sweep. This is the
-        // correspondence the whole patch is arranged around: at the bottom of
-        // the sweep the sound is a hum and the picture is tints of one color,
-        // and at the top the filter is screaming and the screen is a full
-        // spectrum. One wire, two sinks, and neither is illustrating the other.
+        // And how wide the palette is comes off the filter sweep, which is the
+        // correspondence the whole patch is arranged around: a hum is tints of one
+        // color, and a filter screaming is a full spectrum.
         var spread = b.Add("math.remap", (1, -1f), (2, 1f), (3, 0.06f), (4, 0.42f));
 
         var palette = b.Add(PaletteType, (1, 2f), (3, 0.5f), (4, 0.55f));
@@ -840,11 +680,9 @@ internal static class AcidPreset
 
         var inked = b.Add("color.gain", (2, 0f));
 
-        // Bands rather than a gradient, because techno is a hard-edged music and
-        // a smooth gradient is the wrong picture of it. The count comes off the
-        // arrangement rather than off the sweep, so the sections are visible as
-        // well as audible: the calm bars are four or five flat colors and the
-        // full ones resolve into something detailed enough to be busy.
+        // Bands rather than a gradient, because techno is a hard-edged music. The
+        // count comes off the arrangement rather than the sweep, so the sections
+        // are visible as well as audible.
         var levels = b.Add("math.remap", (1, 0f), (2, 1f), (3, 5f), (4, 26f));
         var flat = b.Add(PosteriseType);
 

@@ -4,38 +4,26 @@ using Flyback.Core.Graph;
 namespace Flyback.Plugins.Picture;
 
 /// <summary>
-/// Two shapes made into one: joined, overlapped or cut away, with the seam
-/// between them as soft as it is asked to be.
+/// Two shapes made into one: joined, overlapped or cut away, with the seam between
+/// them as soft as it is asked to be.
 /// </summary>
 /// <remarks>
-/// The hard versions of all three are already in the catalogue and always were —
-/// union is Minimum, intersection is Maximum, and cutting b out of a is the
-/// maximum of a and the negative of b. That is worth saying plainly, because it
-/// is the argument for the distance convention rather than a fact about this
-/// module: a shape that is a number can be combined with the arithmetic that was
-/// already there.
+/// The hard versions are already in the catalogue — union is Minimum, intersection
+/// is Maximum, difference is the maximum of a and the negative of b — which is the
+/// argument for the distance convention rather than a fact about this module.
 /// <para>
-/// What this adds is the seam. A minimum has a crease in it wherever the two
-/// arguments cross, so two blobs meeting under one look like two blobs
-/// overlapping rather than one blob with a waist. The polynomial smooth minimum
-/// replaces the crossing with a short quadratic blend of width 'smoothness', and
-/// the result is a field that still measures roughly what it did before — near
-/// enough to fill, outline and combine again.
+/// What this adds is the seam. A minimum has a crease wherever its arguments
+/// cross, so two blobs meeting under one look like two blobs overlapping; the
+/// polynomial smooth minimum replaces the crossing with a short quadratic blend,
+/// and what comes out still measures roughly what it did. All three are one blend
+/// read three ways, so intersection costs two ops on top of union; difference has
+/// to be worked out again, blending a against a shape turned inside out.
 /// </para>
 /// <para>
-/// All three at once, and cheaply, because they are one blend read three ways:
-/// the smooth maximum is the smooth minimum with the mix run backwards and the
-/// dip added rather than subtracted, so intersection costs two ops on top of
-/// union rather than another nine. Difference is the one that has to be worked
-/// out again — it blends a against a shape turned inside out, which is a
-/// different crossing in a different place.
-/// </para>
-/// <para>
-/// At a smoothness of nothing the blend collapses onto the crossing and all three
-/// are exactly the hard versions. The knob is held a hair above zero rather than
-/// at it, because the blend is a division by its own width and a Divide by
-/// nothing is nothing here — which would put the blend at its midpoint
-/// everywhere and average the two shapes instead of choosing between them.
+/// At a smoothness of nothing all three are exactly the hard versions. The knob is
+/// held a hair above zero, because the blend divides by its own width and a Divide
+/// by nothing is nothing here — which would average the two shapes rather than
+/// choose between them.
 /// </para>
 /// </remarks>
 internal static class CombineModule

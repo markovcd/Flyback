@@ -6,33 +6,20 @@ namespace Flyback.Plugins.Picture;
 /// A fractal bent by a fractal, which is stone.
 /// </summary>
 /// <remarks>
-/// The third famous thing in this subject after the two modules themselves, and
-/// the reason the plugin ships no module for it: warping the coordinates of one
-/// noise field by another is a Fractal into the Warp the catalogue has always
-/// had, into a second Fractal. Three wires. What it buys is the thing that makes
-/// marble look like marble rather than like weather — the veins stop running
-/// where the noise happens to and start running where they were pushed, so the
-/// field acquires flow.
+/// The reason the plugin ships no module for it: warping one noise field by
+/// another is a Fractal into the Warp the catalogue has always had, into a second
+/// Fractal. What it buys is flow — the veins stop running where the noise happens
+/// to and start running where they were pushed. The folded output is what the
+/// picture is drawn from, because a crease is a vein, remapped backwards so the
+/// creases are the dark.
 /// <para>
-/// The folded output is what the picture is drawn from, because a crease is a
-/// vein: folding each octave about its middle puts a sharp line everywhere the
-/// noise crossed the middle, and stone is made of those. Remapped backwards, so
-/// the creases are the dark and the body is the light.
-/// </para>
-/// <para>
-/// There is no sound in it. A patch that carries both a picture and a sound
-/// only earns having both if a listener could tell which picture the sound
-/// belonged to — reading these fields into an audio sink without sharing any
-/// real structure with what is drawn would not pass that test.
-/// </para>
-/// <para>
-/// Three octaves on the warp and five on the veins, set on the nodes rather than
-/// left at the default. It is worth saying why: the warp is being read as a
+/// Three octaves on the warp and five on the veins: the warp is read as a
 /// direction, and a direction made of fine detail pushes neighbouring pixels
-/// opposite ways and tears the field. The veins are being looked at, and detail
-/// is the whole of what is being looked at. Two knobs that would have been one
-/// number if the count were a socket, and would have cost the patch eight noise
-/// lookups instead of five.
+/// opposite ways and tears the field, where the veins are what is being looked at.
+/// </para>
+/// <para>
+/// There is no sound in it. A patch earns both sinks only if a listener could tell
+/// which picture the sound belonged to.
 /// </para>
 /// </remarks>
 internal static class MarblePreset

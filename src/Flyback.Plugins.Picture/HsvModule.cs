@@ -8,29 +8,20 @@ namespace Flyback.Plugins.Picture;
 /// backwards.
 /// </summary>
 /// <remarks>
-/// The catalogue could build a color out of a hue and could never read one back
-/// out, which is an asymmetry rather than an omission: every other conversion in
-/// the machine goes both ways, and Split is RGB's own inverse. What the missing
-/// half costs is anything that depends on the color a patch already has —
-/// rotating a hue, keying on one, holding a saturation while everything else
-/// moves, or feeding a Feedback loop's own color back into where it goes next.
-/// All of those are this module and then the one that already existed.
+/// The catalogue could build a color out of a hue and never read one back, which
+/// costs anything depending on the color a patch already has: rotating a hue,
+/// keying on one, or feeding a Feedback loop's own color back in.
 /// <para>
-/// It is written without a branch, because the register machine has none. Which
-/// of the three channels is the largest decides which of three expressions the
-/// hue comes from, and that choice is made by multiplying each expression by
-/// whether it won: <see cref="OpCode.Step"/> against the maximum gives a one for
-/// the channel that reached it, and the ties are broken by taking red first, then
-/// green — which is the same order the textbook conditional would have taken them
-/// in.
+/// Written without a branch, because the register machine has none. Which channel
+/// is largest decides which of three expressions the hue comes from, and that
+/// choice is a multiply by whether it won: <see cref="OpCode.Step"/> against the
+/// maximum gives a one for the channel that reached it, ties going to red then
+/// green.
 /// </para>
 /// <para>
-/// The two divisions are by the chroma and by the value, and both are nought for
-/// a grey. Neither is guarded here because <see cref="OpCode.Div"/> is guarded
-/// everywhere: a division by nothing is nothing, so a grey comes back with no
-/// saturation and a hue of nought, which is what a grey means. That is the
-/// engine's own arithmetic doing the work a special case would otherwise do
-/// ([0013](0013-guard-arithmetic-instead-of-propagating-nan.md)).
+/// The two divisions are by the chroma and the value, both nought for a grey.
+/// Neither is guarded here because <see cref="OpCode.Div"/> is guarded everywhere
+/// (ADR-0013), so a grey comes back with no saturation and a hue of nought.
 /// </para>
 /// </remarks>
 internal static class HsvModule

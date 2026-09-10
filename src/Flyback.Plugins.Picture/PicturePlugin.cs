@@ -7,30 +7,21 @@ namespace Flyback.Plugins.Picture;
 /// colors chosen rather than swept, and the two famous noises.
 /// </summary>
 /// <remarks>
-/// One plugin covering what reads as three distinct subjects — Shapes, Color
-/// and Noise — on a line the code already kept and never named.
-/// Every module here is pure arithmetic over ops the engine already has. None
-/// reaches for a table, a cell or a delay line, so all of them cost the same at
-/// either sink and all of them survive to the shader. That last is the gate that
-/// matters for a video plugin and nothing else here does: a program the shader
-/// cannot draw takes the preview back to the CPU for as long as the patch is
-/// loaded, and the one thing it cannot draw is a table read.
+/// Every module here is pure arithmetic over ops the engine already has — none
+/// reaches for a table, a cell or a delay line — so all cost the same at either
+/// sink and all survive to the shader. That last is the gate that matters for a
+/// video plugin: a program the shader cannot draw takes the preview back to the
+/// CPU for as long as the patch is loaded.
 /// <para>
-/// The three gaps they were written to fill still stand, and they are worth
-/// keeping distinct because they are three different kinds of missing. There was
-/// no thing to draw — Coordinates, the oscillators, Noise, Checker and Rings are
-/// all infinite fields, and the eight modules under Geometry bend the plane they
-/// go on for ever across, so a patch could make a texture of any kind and could
-/// not make a circle. There was no way to choose a color well: every picture the
-/// machine made went through HSV's hue and came out a rainbow. And there was no
-/// noise but the one, when the two that everybody reaches for are the fractal
+/// The three gaps are three different kinds of missing. There was nothing to draw
+/// — every field in the catalogue is infinite, so a patch could make a texture of
+/// any kind and not a circle. There was no way to choose a color well. And there
+/// was no noise but the one, when the two everybody reaches for are the fractal
 /// sum and the cell field.
 /// </para>
 /// <para>
-/// Three categories rather than one, because they are three subjects and a
-/// section called "Picture" holding twelve modules would be a worse palette than
-/// three holding six, four and two. That one assembly supplies all three is a
-/// fact about installing, not about finding.
+/// Three categories rather than one, because a section called "Picture" holding
+/// twelve modules is a worse palette than three holding six, four and two.
 /// </para>
 /// </remarks>
 public sealed class PicturePlugin : IFlybackPlugin

@@ -11,28 +11,21 @@ namespace Flyback.Plugins.Assist;
 
 /// <summary>
 /// A patch an assistant may edit, and the vocabulary it edits it in. Everything
-/// here is provider-neutral: naming a module, wiring a port, reading the
-/// compiler's complaints and looking at a frame are knowledge of the graph, not
-/// of any particular model's API.
+/// here is provider-neutral: naming a module, wiring a port and reading the
+/// compiler's complaints are knowledge of the graph, not of any model's API.
 /// </summary>
 /// <remarks>
+/// The working patch is the workbench's own copy, which is what makes accepting a
+/// proposal a single assignment and rejecting one free.
 /// <para>
-/// The working patch is the workbench's own copy. Whatever was open in the
-/// editor is never touched, which is what makes accepting a proposal a single
-/// assignment and rejecting one free.
+/// Nodes are named by short handles rather than by <see cref="Guid"/>, and ports
+/// by name rather than by index: a model asked to invent twenty consistent guids,
+/// or to count a Sequencer's twenty-one inputs, will get it wrong.
 /// </para>
 /// <para>
-/// Nodes are named by short handles rather than by <see cref="Guid"/>, and
-/// ports by name rather than by index. Both are storage detail: a model asked
-/// to invent twenty consistent guids, or to count a Sequencer's twenty-one
-/// inputs to find the right index, will get it wrong — and a patch is small
-/// enough that handles never run out of room.
-/// </para>
-/// <para>
-/// The catalogue arrives explicitly and <see cref="NodeCatalog.Current"/> is
-/// never read, the rule ADR-0026 set for the compiler and for file I/O. It is
-/// also what lets the tests run against <see cref="NodeCatalog.BuiltIn"/>
-/// rather than against whatever happens to be installed.
+/// The catalogue arrives explicitly and <see cref="NodeCatalog.Current"/> is never
+/// read (ADR-0026), which is also what lets the tests run against
+/// <see cref="NodeCatalog.BuiltIn"/>.
 /// </para>
 /// </remarks>
 public sealed partial class PatchWorkbench
@@ -58,15 +51,14 @@ public sealed partial class PatchWorkbench
     /// <param name="hearing">
     /// Whether the sound may be listened to, and by whom, which offers
     /// <c>listen</c> and settles what it promises. Off by default, unlike
-    /// <paramref name="vision"/>: every model worth pointing this at can see,
-    /// and only a few can hear. Whose ear it is changes the tool's own
-    /// description as well as the briefing's paragraph — see
-    /// <see cref="Listener"/>.
+    /// <paramref name="vision"/>: every model worth pointing this at can see, and
+    /// only a few can hear. Whose ear it is changes the tool's own description —
+    /// see <see cref="Listener"/>.
     /// </param>
     /// <param name="limits"></param>
     /// <param name="samples">
-    /// Where a Sample module's file is looked up, and null where nothing can
-    /// look one up — which makes every player silent and every path a complaint.
+    /// Where a Sample module's file is looked up, and null where nothing can look
+    /// one up — which makes every player silent and every path a complaint.
     /// </param>
     /// <param name="modules"></param>
     /// <param name="pictures"></param>
@@ -112,12 +104,10 @@ public sealed partial class PatchWorkbench
     /// Takes the proposal back down, leaving everything built so far in place.
     /// </summary>
     /// <remarks>
-    /// What a conversation does after a proposal is carry on from it — "now make
-    /// it slower" is the second thing anybody says — so the working patch stays
-    /// exactly as it was and only the offer is withdrawn. An adapter calls this
-    /// as a turn begins. One that did not would find a proposal already standing
-    /// before the model had said anything, and would hand the same patch over
-    /// again as this turn's answer.
+    /// A conversation carries on from a proposal — "now make it slower" is the
+    /// second thing anybody says — so only the offer is withdrawn. An adapter calls
+    /// this as a turn begins; one that did not would hand the same patch over again
+    /// as this turn's answer.
     /// </remarks>
     public void Reopen() => proposal = null;
 
@@ -336,14 +326,13 @@ public sealed partial class PatchWorkbench
     }
 
     /// <summary>
-    /// Points a player at a sound file. A path is neither a knob nor a wire, so
-    /// this is the only way to set one.
+    /// Points a player at a sound file. A path is neither a knob nor a wire, so this
+    /// is the only way to set one.
     /// </summary>
     /// <remarks>
-    /// The answer carries what the compiler makes of it rather than taking the
-    /// path on trust. A file that is not there is the one mistake this tool can
-    /// make, and an assistant that will not find out until something else
-    /// complains would go on building around a player that is silent.
+    /// The answer carries what the compiler makes of it rather than taking the path
+    /// on trust: a file that is not there is the one mistake this tool can make, and
+    /// an assistant would otherwise go on building around a silent player.
     /// </remarks>
     private ToolOutcome SetSample(JsonElement arguments)
     {
@@ -395,17 +384,11 @@ public sealed partial class PatchWorkbench
     /// Sets one field of an extra a plugin defined.
     /// </summary>
     /// <remarks>
-    /// One tool for every kind a plugin will ever add, which is the whole return
-    /// on declaring a schema rather than shipping a control
-    /// ([0055](0055-a-plugins-extra-declares-its-editor.md)): the three built-in
-    /// kinds each needed a tool written for them, and no plugin's will.
-    /// <para>
-    /// A field at a time rather than the whole object, which is the opposite call
-    /// to <c>set_steps</c>'s and made for the opposite reason. A tune is a list
-    /// whose order is the point, so half of one applied is a tune nobody asked
-    /// for; these are named values that do not depend on each other, and setting
-    /// one is exactly as safe as setting a knob.
-    /// </para>
+    /// One tool for every kind a plugin will ever add, which is the return on
+    /// declaring a schema rather than shipping a control (ADR-0055). A field at a
+    /// time rather than the whole object, unlike <c>set_steps</c>: a tune is a list
+    /// whose order is the point, where these are named values that do not depend on
+    /// each other.
     /// </remarks>
     private ToolOutcome SetExtra(JsonElement arguments)
     {
@@ -625,28 +608,20 @@ public sealed partial class PatchWorkbench
     }
 
     /// <summary>
-    /// Builds a whole patch from the text language, in place of the one being
-    /// worked on.
+    /// Builds a whole patch from the text language, in place of the one being worked
+    /// on.
     /// </summary>
     /// <remarks>
-    /// The reason this exists is arithmetic. Placing a module is one call and so
-    /// is every wire, which makes the Whole band preset 92 and 130 of them — 222
-    /// against a <see cref="WorkbenchLimits.MaxToolCalls"/> of 200. The largest
-    /// patch in the box cannot be built here one wire at a time, at any budget,
-    /// and the average preset spends thirty-odd calls doing something the
-    /// language says in one.
+    /// The reason this exists is arithmetic: placing a module is one call and so is
+    /// every wire, which makes the Whole band preset 222 of them against a
+    /// <see cref="WorkbenchLimits.MaxToolCalls"/> of 200.
     /// <para>
-    /// It replaces rather than edits, and that is why the wiring tools stay. A
-    /// module written in the language is named after the piece of source that
-    /// made it (ADR-0067), so rewriting a patch with one line changed keeps the
-    /// identity of everything else — and an id is what joins a Meter's reading,
-    /// a Scope's buffer and a played note to the program that reads them, see
-    /// <see cref="Compile.Meters.Key"/> and <see cref="Compile.TapSpec"/>. What
-    /// it cannot keep is a patch that was not written in the language: a graph
-    /// built by hand has ids and positions this has never seen, and rewriting
-    /// over one replaces both. So this is for building a patch, and
-    /// <c>set_knobs</c> and <c>connect</c> are for changing one that already
-    /// exists.
+    /// It replaces rather than edits, which is why the wiring tools stay. A module
+    /// written in the language is named after the piece of source that made it
+    /// (ADR-0067), so rewriting a patch with one line changed keeps the identity of
+    /// everything else — and an id is what joins a Meter's reading and a Scope's
+    /// buffer to the program that reads them. What it cannot keep is a patch that
+    /// was not written in the language, whose ids and positions this has never seen.
     /// </para>
     /// </remarks>
     private ToolOutcome WritePatch(JsonElement arguments)
@@ -750,15 +725,13 @@ public sealed partial class PatchWorkbench
     }
 
     /// <summary>
-    /// The sockets that are carrying something with nothing patched into them,
-    /// named so that a reader knows what is driving them.
+    /// The sockets that are carrying something with nothing patched into them, named
+    /// so that a reader knows what is driving them.
     /// </summary>
     /// <remarks>
-    /// The language has no syntax for this, and correctly: leaving a socket out
-    /// is how a patch says "let the normal drive it" (ADR-0050). But a reader
-    /// needs telling all the same — an assistant that could not see this would
-    /// go on wiring a clock into every oscillator it placed, which is the wire
-    /// the normal exists to save.
+    /// The language has no syntax for this, and correctly — leaving a socket out is
+    /// how a patch says "let the normal drive it" (ADR-0050) — but an assistant that
+    /// could not see it would go on wiring a clock into every oscillator it placed.
     /// </remarks>
     private string Normalled()
     {
@@ -847,15 +820,13 @@ public sealed partial class PatchWorkbench
     // --- layout -------------------------------------------------------------
 
     /// <summary>
-    /// Places the nodes so the patch reads left to right, sinks on the right.
-    /// The assistant never thinks about coordinates; without this every node
-    /// would arrive stacked at the origin.
+    /// Places the nodes so the patch reads left to right, sinks on the right. The
+    /// assistant never thinks about coordinates; without this every node would
+    /// arrive stacked at the origin.
     /// </summary>
     /// <remarks>
-    /// The same routine the editor's own tidy button runs, which is the point of
-    /// it being shared: a patch that arrives from here is laid out exactly as one
-    /// the user has just tidied, so there is nothing to clean up after — see
-    /// ADR-0044.
+    /// The same routine the editor's tidy button runs, so a patch that arrives from
+    /// here is laid out exactly as one the user has just tidied (ADR-0044).
     /// </remarks>
     private void Arrange() => PatchLayout.Arrange(working, modules);
 
@@ -869,22 +840,16 @@ public sealed partial class PatchWorkbench
     private delegate Task<ToolOutcome> ToolBody(JsonElement arguments, CancellationToken cancel);
 
     /// <summary>
-    /// One tool, whole: what a provider is told about it, what it does, and whether it
-    /// is offered at all.
+    /// One tool, whole: what a provider is told about it, what it does, and whether
+    /// it is offered at all.
     /// </summary>
     /// <remarks>
-    /// The handler sits beside the schema because the two are one decision — the schema
-    /// says what the arguments are and the handler is what reads them, so a change to
-    /// either is a change to both. This is the arrangement ADR-0008 settled on for
-    /// modules: behaviour as a field, so that adding one is an entry rather than an
-    /// errand.
-    /// <para>
-    /// <paramref name="Offered"/> is a flag rather than a fence around the entry, so a
-    /// tool withheld from the model is still described in the one place. It decides
-    /// <see cref="Tools"/>, which is what a provider is shown. Dispatch knows every
-    /// tool regardless: what a model may be offered and what this class can be asked to
-    /// run are two questions, and only the first depends on the model.
-    /// </para>
+    /// The handler sits beside the schema because the two are one decision — the
+    /// schema says what the arguments are and the handler reads them (ADR-0008).
+    /// <paramref name="Offered"/> is a flag rather than a fence around the entry, so
+    /// a tool withheld from the model is still described in one place: dispatch
+    /// knows every tool regardless, and only what a model may be offered depends on
+    /// the model.
     /// </remarks>
     private sealed record Tool(PatchTool Spec, ToolBody Run, bool Offered);
 
@@ -1214,15 +1179,14 @@ public sealed partial class PatchWorkbench
     }
 
     /// <summary>
-    /// What becomes of <c>listen</c>'s <c>note</c>, which depends on whether
-    /// there is anybody else to keep it from.
+    /// What becomes of <c>listen</c>'s <c>note</c>, which depends on whether there
+    /// is anybody else to keep it from.
     /// </summary>
     /// <remarks>
-    /// Withholding it is the second-hand arrangement's one safeguard — a
-    /// listener told what to listen for will find it, and ADR-0047 records the
-    /// clip where it did. There is nobody to withhold it from when the model
-    /// plays itself the clip, and saying so would be this program claiming a
-    /// check it is not performing.
+    /// Withholding it is the second-hand arrangement's one safeguard — a listener
+    /// told what to listen for will find it, and ADR-0047 records the clip where it
+    /// did. There is nobody to withhold it from when the model plays itself the
+    /// clip.
     /// </remarks>
     private static string Kept(Listener hearing) => hearing is Listener.Itself
         ? "Nobody else reads it."

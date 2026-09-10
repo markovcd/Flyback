@@ -17,58 +17,40 @@ public enum AssistantEffort
 /// One model a provider suggests, and what it will accept being handed.
 /// </summary>
 /// <remarks>
-/// A suggestion, not a whitelist. Anything may be typed, because
+/// A suggestion, not a whitelist: anything may be typed, because
 /// <see cref="AssistantSchema.BaseUrlEditable"/> means the endpoint may be one
-/// nobody here has heard of.
-/// <para>
-/// Nothing outside a plugin reads this. The shell must not know one model name
-/// from another — the boundary ADR-0025 drew, ADR-0033 kept and ADR-0069
-/// finished — so what a model can do reaches a person as a field on a form and
-/// a sentence under it, both written here.
-/// </para>
+/// nobody here has heard of. Nothing outside a plugin reads this — the shell must
+/// not know one model name from another (ADR-0069).
 /// </remarks>
 /// <param name="Id">What goes in the request.</param>
 /// <param name="Vision">Whether it accepts a picture. Nearly all of them do.</param>
 /// <param name="Hearing">
 /// Whether it accepts a sound. Most do not — see
-/// <see cref="AssistantChoices.Hearing"/>.
-/// <para>
-/// True <em>and</em> <paramref name="Vision"/> true is the interesting case and
-/// the one everything downstream turns on: a model that takes both can drive the
-/// conversation and be played the clip itself, so the run has no second model,
-/// no <see cref="AssistantChoices.EarModel"/>, and a briefing that says "you can
-/// hear" rather than "you have an ear" — see <see cref="Listener"/>.
-/// </para>
+/// <see cref="AssistantChoices.Hearing"/>. True and <paramref name="Vision"/>
+/// true is the case everything downstream turns on: such a model drives the
+/// conversation and is played the clip itself, so the run has no second model and
+/// no <see cref="AssistantChoices.EarModel"/>.
 /// </param>
 public sealed record AssistantModel(string Id, bool Vision = true, bool Hearing = false);
 
 /// <summary>
-/// The settings a provider of the ordinary shape has, and the form that puts
-/// them in front of somebody.
+/// The settings a provider of the ordinary shape has, and the form that puts them
+/// in front of somebody.
 /// </summary>
 /// <remarks>
-/// <para>
-/// A helper on the plugin's side of the boundary rather than something the host
-/// reads. Both adapters here have the same five questions — which model, which
-/// endpoint, may it look, may it listen, and how hard should it think — so the
-/// declaration of them is written once and delegated to, and a provider whose
-/// settings are some other shape declares its own
-/// <see cref="AssistantField"/> list instead and never touches this.
-/// </para>
-/// <para>
-/// It is also the one place that knows the two directions of a setting: what the
+/// A helper on the plugin's side of the boundary. Both adapters here ask the same
+/// five questions, so the declaration is written once and delegated to; a provider
+/// of some other shape declares its own <see cref="AssistantField"/> list instead.
+/// It is also the one place that knows both directions of a setting — what the
 /// form offers (<see cref="Form"/>) and what a configured run means
-/// (<see cref="Read"/>). They have to agree — a switch shown for a model that
-/// refuses pictures would be a switch that lies — so they are written together
-/// and read off the same list of models.
-/// </para>
+/// (<see cref="Read"/>) — which have to agree, since a switch shown for a model
+/// that refuses pictures would be a switch that lies.
 /// </remarks>
 /// <param name="DefaultModel">What a provider nobody has configured starts on.</param>
 /// <param name="SuggestedModels">What the model box offers, and what is known about each.</param>
 /// <param name="EnvironmentVariable">
-/// The variable this provider is conventionally given its key in. The shell
-/// reads it, not the plugin: a credential is the host's to hold, and a plugin
-/// that went looking for one would be a plugin that could keep it.
+/// The variable this provider is conventionally given its key in. The shell reads
+/// it, not the plugin: a plugin that went looking for a credential could keep one.
 /// </param>
 /// <param name="CredentialHelp">One line saying where a key comes from, shown under the field.</param>
 /// <param name="DefaultBaseUrl">Null when the endpoint is not the caller's business.</param>
@@ -85,13 +67,10 @@ public sealed record AssistantSchema(
     bool BaseUrlEditable = false)
 {
     /// <summary>
-    /// What each setting is filed under.
+    /// What each setting is filed under. Public because a plugin that borrows this
+    /// form reads its own values back by the same names, and stable because they
+    /// are in the settings file of everybody who has configured one.
     /// </summary>
-    /// <remarks>
-    /// Public because a plugin that borrows this form has to read its own values
-    /// back by the same names, and stable because they are in the settings file
-    /// of everybody who has ever configured one of these.
-    /// </remarks>
     public const string ModelKey = "model";
 
     public const string EndpointKey = "endpoint";
@@ -108,15 +87,11 @@ public sealed record AssistantSchema(
     public AssistantCredential Credential => new(EnvironmentVariable, CredentialHelp);
 
     /// <summary>
-    /// What is known about the model somebody has typed, or null when it is not
-    /// one of these.
+    /// What is known about the model somebody has typed, or null when it is not one
+    /// of these. Null is not "cannot" but "nobody here knows", which is the
+    /// ordinary state of a model at an endpoint somebody pointed at by hand — so it
+    /// leaves every switch where it was.
     /// </summary>
-    /// <remarks>
-    /// Null is not "cannot": it is "nobody here knows", which is the ordinary
-    /// state of a model at an endpoint this was pointed at by hand — and it
-    /// leaves every switch on the form where it was, rather than taking one
-    /// away on a guess.
-    /// </remarks>
     public AssistantModel? Known(string? model) =>
         string.IsNullOrWhiteSpace(model)
             ? null
@@ -130,24 +105,15 @@ public sealed record AssistantSchema(
     public IEnumerable<AssistantModel> Ears => SuggestedModels.Where(m => m.Hearing);
 
     /// <summary>
-    /// This schema as a survey of the endpoint leaves it, or unchanged where
-    /// nobody has run one.
+    /// This schema as a survey of the endpoint leaves it, or unchanged where nobody
+    /// has run one.
     /// </summary>
     /// <remarks>
-    /// <para>
-    /// A survey replaces the suggestions rather than joining them, because the
-    /// two are not the same kind of claim: a suggestion is what somebody
-    /// believed when they wrote the line, and a survey is what the endpoint said
-    /// when it was asked. Where they disagree about whether a model exists at
-    /// all, the endpoint is the one that has to be right — a suggestion that
-    /// survived would be a name in the box that answers 404.
-    /// </para>
-    /// <para>
-    /// The default moves with them for that reason. A written-down default the
-    /// survey did not find is the exact state a survey exists to get out of, and
-    /// leaving it in place would hand a fresh window the one model known not to
-    /// work.
-    /// </para>
+    /// A survey replaces the suggestions rather than joining them: a suggestion is
+    /// what somebody believed when they wrote the line, and a survey is what the
+    /// endpoint said when asked. The default moves with them, since a written-down
+    /// default the survey did not find would hand a fresh window the one model known
+    /// not to work.
     /// </remarks>
     public AssistantSchema Surveyed(AssistantValues values)
     {
@@ -171,10 +137,8 @@ public sealed record AssistantSchema(
     /// </summary>
     /// <remarks>
     /// Computed rather than held, because half of what is on it depends on the
-    /// rest: the model decides whether looking is even offered and whether there
-    /// is a second model to choose, and the tick decides whether choosing one is
-    /// live. The App asks again after every change, so each of those answers
-    /// arrives as a fresh list rather than as something it had to work out.
+    /// rest: the model decides whether looking is offered and whether there is a
+    /// second model to choose. The App asks again after every change.
     /// </remarks>
     public IReadOnlyList<AssistantField> Form(AssistantValues values)
     {
@@ -247,17 +211,11 @@ public sealed record AssistantSchema(
     /// says.
     /// </summary>
     /// <remarks>
-    /// Two settings are held to what the chosen model can do rather than to what
-    /// the switch shows. Sight because a picture sent to a model recorded as
-    /// refusing one is a 400 rather than a worse answer, and hearing because
-    /// listening with nobody to listen is a tool offered, called, and answered
-    /// with a sentence saying nobody heard it.
-    /// <para>
-    /// <see cref="EarModel"/> is null where the model takes a sound itself, and
-    /// null is the whole of how that is said: an ear names the model asked
-    /// <em>instead</em>, so leaving one there would have the adapter pay for a
-    /// second request per listen that it does not need.
-    /// </para>
+    /// Two settings are held to what the chosen model can do rather than to what the
+    /// switch shows: a picture sent to a model recorded as refusing one is a 400,
+    /// and listening with nobody to listen is a tool answered with a sentence saying
+    /// nobody heard it. <see cref="EarModel"/> is null where the model takes a sound
+    /// itself, since an ear names the model asked instead.
     /// </remarks>
     public AssistantChoices Read(AssistantValues values)
     {
@@ -280,13 +238,11 @@ public sealed record AssistantSchema(
 
     /// <summary>What a run configured this way may be handed.</summary>
     /// <remarks>
-    /// Whose ear it is falls out of the same two facts the form was built from:
-    /// listening has to be on, and the model doing the building either takes a
-    /// sound or does not. A model nobody wrote down falls to the second-hand
-    /// arrangement, which is the safe direction rather than a guess — being
-    /// wrong that way costs a description, and being wrong the other way sends a
-    /// sound to a model that refuses it and loses every turn from the first
-    /// <c>listen</c> onwards.
+    /// Whose ear it is falls out of the two facts the form was built from: listening
+    /// has to be on, and the model either takes a sound or does not. A model nobody
+    /// wrote down falls to the second-hand arrangement, which is the safe direction:
+    /// being wrong that way costs a description, and being wrong the other way loses
+    /// every turn from the first <c>listen</c> onwards.
     /// </remarks>
     public AssistantSenses Senses(AssistantValues values)
     {
@@ -329,18 +285,11 @@ public sealed record AssistantSchema(
     /// date or a version after it.
     /// </summary>
     /// <remarks>
-    /// The suffix has to begin with a digit, and that is the whole of the rule.
-    /// A bare prefix match is not good enough and the reason is a real one:
-    /// <c>gpt-4o-transcribe</c> begins with <c>gpt-4o</c> and is not a
-    /// <c>gpt-4o</c> — it is a different model with different capabilities, and
-    /// reading it as one would answer a question nobody here can answer, in the
-    /// direction that takes a switch away. <c>gpt-4o-2024-11-20</c> is the other
-    /// case, and a date is what tells them apart: a word after the name is
-    /// another model, a number after it is the same one pinned to a day.
-    /// <para>
-    /// Where two could match, the longer wins — so a list holding both
-    /// <c>gpt-4o</c> and <c>gpt-4o-mini</c> reads a dated mini as a mini.
-    /// </para>
+    /// The suffix has to begin with a digit, and that is the whole rule.
+    /// <c>gpt-4o-transcribe</c> begins with <c>gpt-4o</c> and is a different model
+    /// with different capabilities, where <c>gpt-4o-2024-11-20</c> is the same one
+    /// pinned to a day. Where two could match the longer wins, so a dated mini reads
+    /// as a mini.
     /// </remarks>
     private static bool IsOne(string typed, string id)
     {
@@ -354,37 +303,28 @@ public sealed record AssistantSchema(
 }
 
 /// <summary>
-/// A filled-in form of the ordinary shape, read back as the things it decides.
+/// A filled-in form of the ordinary shape, read back as the things it decides —
+/// what <see cref="AssistantSchema.Read"/> makes of a set of values. Nothing
+/// outside a plugin sees one.
 /// </summary>
-/// <remarks>
-/// What <see cref="AssistantSchema.Read"/> makes of a set of values, and what an
-/// adapter of that shape works from. Nothing outside a plugin sees one: to the
-/// App a provider's settings are strings it was told to draw.
-/// </remarks>
 /// <param name="Vision">Whether the model may be shown a rendered frame.</param>
 /// <param name="Hearing">
 /// Whether the patch's sound may be listened to at all. Off by default, and the
-/// asymmetry with <paramref name="Vision"/> is the point: every model this
-/// reaches can be shown a picture, and only some can be played a sound. Who
-/// does the listening is <paramref name="EarModel"/>'s question.
+/// asymmetry with <paramref name="Vision"/> is the point: every model this reaches
+/// can be shown a picture, and only some can be played a sound.
 /// </param>
 /// <param name="EarModel">
-/// The model asked to listen <em>instead of</em> the one doing the building, or
-/// null where no second model is wanted.
+/// The model asked to listen instead of the one doing the building, or null where
+/// no second model is wanted.
 /// <para>
-/// Null carries two quite different situations and the adapter can tell them
-/// apart from its own schema. Where the driving model takes a sound, null means
-/// there is nobody else to ask: the clip goes into the conversation, the way a
-/// rendered frame does, and one model both builds and hears. Where it does not,
-/// null means nothing has been chosen and <paramref name="Hearing"/> has nothing
-/// to act on.
+/// Null carries two situations the adapter tells apart from its own schema. Where
+/// the driving model takes a sound, there is nobody else to ask and the clip goes
+/// into the conversation; where it does not, nothing has been chosen and
+/// <paramref name="Hearing"/> has nothing to act on.
 /// </para>
 /// <para>
 /// A second model is the older arrangement and still the common one — ADR-0047
-/// records why it is forced on the chat-completions format. The models there
-/// that take a sound require every request to carry one, so a conversation
-/// driven by one is refused on its first turn, before anything exists to listen
-/// to, and they do not take a picture besides.
+/// records why the chat-completions format forces it.
 /// </para>
 /// </param>
 public sealed record AssistantChoices(
@@ -399,11 +339,10 @@ public sealed record AssistantChoices(
 /// One configured provider, ready to be asked something.
 /// </summary>
 /// <remarks>
-/// The two halves of a configuration, and they are kept apart because they are
-/// owned by different sides. <see cref="Values"/> is what the provider asked for
-/// and what it reads back; <see cref="ApiKey"/> is the host's, and it lives no
-/// longer than the run — never in the settings file, never logged, never
-/// repeated back in a message. See ADR-0034.
+/// The two halves are kept apart because they are owned by different sides:
+/// <see cref="Values"/> is what the provider asked for and reads back, and
+/// <see cref="ApiKey"/> is the host's and lives no longer than the run — never in
+/// the settings file, never logged (ADR-0034).
 /// </remarks>
 /// <param name="Values">Every setting this provider declared, as it stands.</param>
 public sealed record AssistantConfig(string ApiKey, AssistantValues Values)
@@ -413,14 +352,12 @@ public sealed record AssistantConfig(string ApiKey, AssistantValues Values)
 }
 
 /// <summary>
-/// Something that can be asked for a patch, before any conversation exists.
-/// </summary>
-/// <remarks>
-/// Kept apart from <see cref="IPatchSession"/> for the reason
+/// Something that can be asked for a patch, before any conversation exists. Kept
+/// apart from <see cref="IPatchSession"/> for the reason
 /// <see cref="Audio.IAudioOutput"/> is kept apart from
-/// <see cref="Audio.IAudioDevice"/>: the shell lists what is installed, and says
-/// so in the status bar, without opening a connection or spending anything.
-/// </remarks>
+/// <see cref="Audio.IAudioDevice"/>: the shell lists what is installed without
+/// opening a connection.
+/// </summary>
 public interface IPatchAssistant
 {
     /// <summary>Stable identifier, e.g. <c>anthropic</c>. What a setting names.</summary>
@@ -440,14 +377,10 @@ public interface IPatchAssistant
     /// <paramref name="values"/> on it.
     /// </summary>
     /// <remarks>
-    /// Asked again after every change, so a field may appear, disappear, grey
-    /// out or change what it says about itself in answer to another. The App
-    /// draws what comes back and knows nothing about any of it — which is what
-    /// lets a provider have settings nobody here imagined, and what keeps model
-    /// names out of the shell entirely.
-    /// <para>
-    /// A credential is not among them, and there is no shape one could go in.
-    /// </para>
+    /// Asked again after every change, so a field may appear, grey out or change
+    /// what it says in answer to another. The App draws what comes back and knows
+    /// nothing about any of it. A credential is not among them, and there is no
+    /// shape one could go in.
     /// </remarks>
     IReadOnlyList<AssistantField> Form(AssistantValues values);
 
@@ -461,10 +394,9 @@ public interface IPatchAssistant
     /// Why this configuration cannot run, or null when it can.
     /// </summary>
     /// <remarks>
-    /// A sentence rather than <see cref="Audio.IAudioOutput.IsSupported"/>'s
-    /// bool, because the answer here is usually one the person can act on — a
-    /// key that is not set is not the same kind of no as an operating system
-    /// that is not this one. Must answer without a network call and without
+    /// A sentence rather than a bool, because the answer is usually one the person
+    /// can act on: a key that is not set is not the same kind of no as an operating
+    /// system that is not this one. Must answer without a network call and without
     /// throwing; a throw is taken as a no.
     /// </remarks>
     string? Unavailable(AssistantConfig config);
@@ -477,13 +409,10 @@ public interface IPatchAssistant
 }
 
 /// <summary>
-/// A conversation in progress.
+/// A conversation in progress. Multi-turn on purpose: the second instruction —
+/// "more blue, and slower" — is the common one, and it should keep both the
+/// history and whatever prompt cache the provider built for the first.
 /// </summary>
-/// <remarks>
-/// Multi-turn on purpose. The second instruction — "more blue, and slower" — is
-/// the common one, and it should keep both the history and whatever prompt cache
-/// the provider built for the first.
-/// </remarks>
 public interface IPatchSession : IDisposable
 {
     /// <summary>

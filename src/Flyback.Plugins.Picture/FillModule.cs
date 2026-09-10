@@ -4,34 +4,22 @@ using Flyback.Core.Graph;
 namespace Flyback.Plugins.Picture;
 
 /// <summary>
-/// Ink: a distance turned into something to look at, filled and outlined at
-/// once.
+/// Ink: a distance turned into something to look at, filled and outlined at once.
 /// </summary>
 /// <remarks>
-/// The other half of the convention <see cref="Field"/> sets out. Everything
-/// upstream of here is a measurement, and this is the one module that decides
-/// what a measurement looks like — which is why there is one of it rather than a
-/// fill knob on every shape: a Combine of four forms is one Fill, and putting the
-/// decision on each of the four would have meant taking it four times and getting
-/// it slightly different each time.
+/// The other half of the convention <see cref="Field"/> sets out. One module
+/// rather than a fill knob on every shape, because a Combine of four forms is one
+/// Fill and the decision would otherwise be taken four times.
 /// <para>
-/// Both outputs at once, for the reason the Filter hands out three responses at
-/// once: they are two readings of one number and a patch usually wants both — a
-/// solid form with its own edge picked out is two wires from here and would
-/// otherwise be two Fills fed from the same distance, differing only in a knob.
-/// The outline is the fill of <c>|d| - width/2</c>, which is the shape's edge
-/// treated as a shape in its own right: the set of points a certain distance from
-/// the boundary, on either side of it.
+/// Both outputs at once, being two readings of one number that a patch usually
+/// wants both of. The outline is the fill of <c>|d| - width/2</c>, which is the
+/// shape's edge treated as a shape in its own right.
 /// </para>
 /// <para>
-/// 'softness' is in the same units as everything else here rather than in pixels,
-/// and it has to be: nothing in the program knows how large the frame is, and the
-/// same patch is drawn at preview size, at export size and into a movie. A
-/// softness of a hundredth is about three pixels tall on a 540-line preview and
-/// six on a 1080-line render — the edge stays the same fraction of the picture
-/// rather than the same number of pixels, which is what makes a still and a
-/// preview of it the same image. At zero the edge is a hard step, and will
-/// stair-step exactly as any hard threshold does.
+/// 'softness' is in the same units as everything else rather than in pixels, and
+/// has to be: nothing in the program knows how large the frame is. The edge stays
+/// the same fraction of the picture rather than the same number of pixels, which
+/// is what makes a still and a preview of it the same image.
 /// </para>
 /// </remarks>
 internal static class FillModule

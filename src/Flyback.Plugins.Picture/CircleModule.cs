@@ -4,15 +4,11 @@ using Flyback.Core.Graph;
 namespace Flyback.Plugins.Picture;
 
 /// <summary>
-/// The distance to a circle: how far this point is from the rim, negative
-/// inside it.
+/// The distance to a circle: how far this point is from the rim, negative inside
+/// it. Two ops, and here anyway — everything else in the plugin is a harder
+/// version of this one line, and a catalogue whose simplest form has to be
+/// assembled by hand is one where nobody finds the rest.
 /// </summary>
-/// <remarks>
-/// Two ops, and it is here anyway. Everything else in the plugin is a harder
-/// version of this one line, so it is what the convention is easiest to read
-/// off — and a catalogue in which the simplest possible form has to be assembled
-/// by hand out of a Length and a Subtract is one where nobody finds the rest.
-/// </remarks>
 internal static class CircleModule
 {
     public const string TypeId = "flyback.picture.circle";
