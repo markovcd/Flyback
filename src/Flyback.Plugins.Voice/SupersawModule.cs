@@ -4,21 +4,15 @@ using Flyback.Core.Graph;
 namespace Flyback.Plugins.Voice;
 
 /// <summary>
-/// Seven saws around one pitch, spread apart and summed — the sound a JP-8000
-/// made famous, and the same thing seen as a slow moiré when it drives a
-/// picture instead of a speaker.
+/// Seven saws around one pitch, spread apart and summed — the sound a JP-8000 made
+/// famous, and a slow moiré when it drives a picture instead of a speaker.
 /// </summary>
 /// <remarks>
-/// The voice count is fixed at seven because an emit function cannot see knob
-/// values: it runs once at compile time and writes straight-line ops, so a
-/// variable voice count would have to be a variable number of instructions.
-/// Seven is what the original had, and it is what the classic sound is.
-/// <para>
-/// That unrolling is also why this is affordable — roughly seventy ops, no
-/// branches and no state, evaluated the same way one Saw is. There is no
-/// band-limiting here beyond the oversampling ADR-0023 already applies to the
-/// audio path; seven naive saws alias seven times as interestingly as one.
-/// </para>
+/// The voice count is fixed at seven because an emit function cannot see knob values:
+/// it runs once at compile time, so a variable voice count would be a variable number
+/// of instructions. That unrolling is also why it is affordable — seventy ops, no
+/// branches, no state. There is no band-limiting beyond the oversampling ADR-0023
+/// applies to the audio path.
 /// </remarks>
 internal static class SupersawModule
 {

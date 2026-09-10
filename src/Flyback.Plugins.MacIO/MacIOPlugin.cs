@@ -4,22 +4,14 @@ using Flyback.Plugins.Midi;
 namespace Flyback.Plugins.MacIO;
 
 /// <summary>
-/// Entry point of the macOS input and output plugin: sound out through the
-/// default output audio unit, notes in through CoreMIDI.
+/// Entry point of the macOS input and output plugin: sound out through the default
+/// output audio unit, notes in through CoreMIDI.
 /// </summary>
 /// <remarks>
-/// <para>
-/// Sound and MIDI travel together because their condition is the same one: both
-/// frameworks are part of the operating system <c>Platform="osx"</c> already
-/// names, so one folder, one load context and one dependency file carry the
-/// pair.
-/// </para>
-/// <para>
-/// Loading this assembly must not call into Audio Toolbox or CoreMIDI. The one
-/// is only reached when a device is actually created and the other when devices
-/// are listed or one is opened, so the plugin lists itself harmlessly on a
-/// machine that has no such framework at all.
-/// </para>
+/// The two travel together because their condition is the same one, so one folder, one
+/// load context and one dependency file carry the pair. Loading this assembly must not
+/// call into either framework, so the plugin lists itself harmlessly on a machine that
+/// has neither.
 /// </remarks>
 public sealed class MacIOPlugin : IFlybackPlugin
 {

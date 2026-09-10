@@ -11,19 +11,16 @@ namespace Flyback.Plugins.Effects;
 internal static class Sweep
 {
     /// <summary>
-    /// The oscillator is inside the module rather than on a socket, which is the
-    /// one place this plugin departs from how the rest of the synth is wired. A
-    /// patched-in LFO would be more in keeping and would be wrong: the effect is
-    /// its own movement, and a chorus whose sweep has to be built by hand out of
-    /// a Sine and a Remap is three modules pretending to be one.
+    /// The oscillator is inside the module rather than on a socket, which is the one
+    /// place this plugin departs from how the rest of the synth is wired: the effect
+    /// is its own movement, and a chorus whose sweep has to be built by hand is three
+    /// modules pretending to be one.
     /// </summary>
     /// <remarks>
-    /// It costs nothing to be honest about it: the sine is handed back on an
-    /// output as well, so a patch can see the movement it is hearing, and drive
-    /// something else with it besides. That output is the one part of these
-    /// modules that works on the picture — a phase accumulator falls back to the
-    /// multiply it replaced where there is no state (ADR-0030), so the sweep is
-    /// the same sweep at both sinks even though the effect is not.
+    /// The sine is handed back on an output as well, so a patch can see the movement
+    /// it is hearing. That output is the one part of these modules that works on the
+    /// picture, a phase accumulator falling back to the multiply it replaced where
+    /// there is no state (ADR-0030).
     /// </remarks>
     public static Slot Of(Emitter em, Slot rate) =>
         em.Unary(OpCode.Sin, em.Mul(em.Phase(em.Load(OpCode.LoadT), rate, em.Constant(0f)), MathF.Tau));

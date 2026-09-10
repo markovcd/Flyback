@@ -5,25 +5,15 @@ using Flyback.Core;
 namespace Flyback.Plugins.Keyring;
 
 /// <summary>
-/// The part that actually talks to the keyring. Kept in its own file so that
-/// loading the plugin does not go anywhere near a process, which is the rule the
-/// Windows store's <c>Vault</c> follows for its package.
+/// The part that actually talks to the keyring. Kept in its own file so that loading
+/// the plugin does not go anywhere near a process.
 /// </summary>
 /// <remarks>
-/// <para>
-/// <c>secret-tool</c> rather than libsecret, which is the call ADR-0034 made
-/// when it wrote this plugin down as forty lines of shelling out. The library is
-/// not the ALSA case: libsecret is GLib all the way down — a main loop, a type
-/// system, a schema object and reference counting on every one of them, for
-/// three operations. The tool is the front the library itself ships for exactly
-/// this, and it is what carries the D-Bus conversation with GNOME Keyring or
-/// KWallet on the other end.
-/// </para>
-/// <para>
-/// The secret never becomes an argument: <c>store</c> reads it from standard
-/// input, which is what that mode is for. Only the account name is on the
-/// command line, and it is a provider id.
-/// </para>
+/// <c>secret-tool</c> rather than libsecret, which is the call ADR-0034 made: libsecret
+/// is GLib all the way down — a main loop, a type system, a schema object and
+/// reference counting on every one — for three operations. The secret never becomes an
+/// argument: <c>store</c> reads it from standard input, and only the account name is
+/// on the command line.
 /// </remarks>
 internal static class SecretTool
 {
@@ -50,17 +40,14 @@ internal static class SecretTool
     private const int PatienceMilliseconds = 30_000;
 
     /// <summary>
-    /// Whether this machine has somewhere to put a secret: the tool, and a
-    /// session bus for it to talk over. Both are questions about the filesystem
-    /// and the environment — nothing is started and no keyring is opened, which
-    /// is what <see cref="Flyback.Plugins.Secrets.ISecretStore.IsSupported"/>
-    /// asks for.
+    /// Whether this machine has somewhere to put a secret: the tool, and a session bus
+    /// for it to talk over. Both are questions about the filesystem and the
+    /// environment — nothing is started and no keyring is opened.
     /// </summary>
     /// <remarks>
-    /// The bus is worth asking about separately. A headless server or a build
-    /// container frequently has <c>secret-tool</c> installed as somebody else's
-    /// dependency and no session for it to reach, and without this the answer
-    /// would arrive as a key that appeared to have been saved and was not.
+    /// The bus is worth asking about separately: a headless server frequently has
+    /// <c>secret-tool</c> installed as somebody else's dependency and no session for it
+    /// to reach, which would arrive as a key that appeared to have been saved.
     /// </remarks>
     public static bool IsUsable => Executable is not null && HasSessionBus;
 

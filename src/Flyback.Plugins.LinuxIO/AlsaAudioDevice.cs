@@ -4,22 +4,15 @@ using Flyback.Plugins.Audio;
 namespace Flyback.Plugins.LinuxIO;
 
 /// <summary>
-/// Output through libasound's <c>default</c> device. The Linux counterpart of
-/// the WASAPI and CoreAudio devices, and the odd one of the three.
+/// Output through libasound's <c>default</c> device. The Linux counterpart of the
+/// WASAPI and CoreAudio devices, and the odd one of the three.
 /// </summary>
 /// <remarks>
-/// <para>
-/// ALSA has no callback: <c>snd_pcm_writei</c> blocks until the card has room.
-/// So this device owns a thread, and that thread is the audio thread — it fills
-/// a block from the same callback the other two are handed, and writes it. The
-/// contract above is unchanged, which is the point: <see cref="AudioCallback"/>
-/// says nothing about who calls it.
-/// </para>
-/// <para>
-/// Every call on the handle is made from one thread, which is what alsa-lib
-/// asks for. Stopping therefore asks the writer to finish and waits for it,
-/// rather than reaching into a device another thread is inside.
-/// </para>
+/// ALSA has no callback: <c>snd_pcm_writei</c> blocks until the card has room, so this
+/// device owns a thread and that thread is the audio thread. The contract above is
+/// unchanged, since <see cref="AudioCallback"/> says nothing about who calls it. Every
+/// call on the handle is made from that one thread, which is what alsa-lib asks for,
+/// so stopping waits for the writer to finish.
 /// </remarks>
 public sealed class AlsaAudioDevice(AudioFormat format) : IAudioDevice
 {

@@ -3,22 +3,15 @@ using Flyback.Core.Graph;
 namespace Flyback.Plugins.Voice;
 
 /// <summary>
-/// A patch to start from, wired the way the module is meant to be driven. It is
-/// half the point of shipping the module: <c>freq</c> is in cycles per unit of
-/// <c>in</c> like every other oscillator here, so the pitch comes from a
-/// Frequency module — reach for the knob instead and you get a one-hertz saw,
-/// which is a click rather than a note.
+/// A patch to start from, wired the way the module is meant to be driven: <c>freq</c>
+/// is in cycles per unit of <c>in</c>, so the pitch comes from a Frequency module —
+/// reach for the knob instead and you get a one-hertz saw.
 /// </summary>
 /// <remarks>
-/// One slow sweep on the detune, which is the only knob worth watching: at
-/// nothing it is one saw, and opening it walks through the whole of what the
-/// module is for. Both outputs go to their own channel, so the width is real
-/// rather than a copy of one signal sent to two ears.
-/// <para>
-/// Nothing is drawn: seven voices beating against each other is a thing for
-/// the ear, and a still frame of it is only a stripe pattern that happens to
-/// share a knob.
-/// </para>
+/// One slow sweep on the detune, which is the only knob worth watching: at nothing it
+/// is one saw. Both outputs go to their own channel, so the width is real rather than
+/// one signal sent to two ears. Nothing is drawn — seven voices beating against each
+/// other is a thing for the ear.
 /// </remarks>
 internal static class SupersawPreset
 {

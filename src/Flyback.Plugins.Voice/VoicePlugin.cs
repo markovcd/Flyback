@@ -3,21 +3,14 @@ using Flyback.Core.Graph;
 namespace Flyback.Plugins.Voice;
 
 /// <summary>
-/// What makes a tone and what is done to it before it leaves the instrument:
-/// the stacked oscillator, and the three ways of changing a waveform's shape.
+/// What makes a tone and what is done to it before it leaves the instrument: the
+/// stacked oscillator, and the three ways of changing a waveform's shape.
 /// </summary>
 /// <remarks>
-/// Everything here has a single boundary: it is part of one voice, in the
-/// order a voice is built. Make the harmonics, then take them away.
-/// <para>
-/// The Filter is the one module here that is not pure. It carries its
-/// integrators in the one-evaluation cells
-/// ([0041](0041-a-plugin-can-hold-state-without-a-new-opcode.md)) rather than in
-/// an opcode of its own, and a cell is something only the speakers' program has —
-/// so it is declared audio-only and is a wire on the screen. Fold and Drive are
-/// arithmetic and are honest at both sinks, which is why the preset shows the
-/// folding and does not pretend to show the filtering.
-/// </para>
+/// Everything here is part of one voice, in the order a voice is built. The Filter is
+/// the one module that is not pure: it carries its integrators in one-evaluation cells
+/// (ADR-0041), which only the speakers' program has, so it is declared audio-only and
+/// is a wire on the screen.
 /// </remarks>
 public sealed class VoicePlugin : IFlybackPlugin
 {

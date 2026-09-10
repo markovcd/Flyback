@@ -4,21 +4,14 @@ namespace Flyback.Plugins.Effects;
 
 /// <summary>
 /// All three sweeps in the order a pedalboard would have them — flanger, phaser,
-/// chorus — with the chorus last because its two outputs are what make the
-/// result stereo, and nothing after it could stay that way.
+/// chorus — with the chorus last because its two outputs are what make the result
+/// stereo.
 /// </summary>
 /// <remarks>
-/// One saw goes in and nothing but movement happens to it. The three run at
-/// three different rates and share no common factor worth the name, so the
-/// combination never quite repeats and the ear is never given a period to lock
-/// onto — which is most of why a rack of three sounds unlike any one of them
-/// turned up.
-/// <para>
-/// Nothing is drawn. Each module hands its own LFO back out for a patch that
-/// wants them, but this one is about what they are driving: what a flanger
-/// does is comb its input, and the comb is exactly the part that has a delay
-/// line in it and so is a wire on the screen.
-/// </para>
+/// One saw goes in and nothing but movement happens to it. The three run at rates that
+/// share no common factor worth the name, so the combination never quite repeats.
+/// Nothing is drawn: what a flanger does is comb its input, and the comb is the part
+/// with a delay line in it, which is a wire on the screen.
 /// </remarks>
 internal static class ModulationPreset
 {

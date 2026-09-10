@@ -3,21 +3,17 @@ using Flyback.Core.Graph;
 namespace Flyback.Plugins.Voice;
 
 /// <summary>
-/// A saw folded and then filtered, which is the order both modules are usually
-/// wanted in: make the harmonics first, take them away second.
+/// A saw folded and then filtered, which is the order both modules are usually wanted
+/// in: make the harmonics first, take them away second.
 /// </summary>
 /// <remarks>
-/// Two hands on the instrument and nothing else in the patch, both far below
-/// audio rate: one opens the filter, the other drives the fold. Everything that
-/// moves is moved by one of those two, so what is heard can be traced to a knob
-/// without following a wire.
+/// Two hands on the instrument and nothing else, both far below audio rate, so what
+/// is heard can be traced to a knob without following a wire.
 /// <para>
-/// Nothing is drawn. The patch is named for the filter, and the filter is the
-/// half that cannot be shown: it holds its integrators in the one-evaluation
-/// cells ([0041](0041-a-plugin-can-hold-state-without-a-new-opcode.md)), the
-/// video path has none, and it is a wire there. Fold alone is honest to show —
-/// it is pure — but showing only it would stand in for the whole patch while
-/// naming the wrong half, so this preset shows neither.
+/// Nothing is drawn. The patch is named for the filter, and the filter is the half
+/// that cannot be shown: it holds its integrators in one-evaluation cells (ADR-0041),
+/// which the video path has none of. Showing Fold alone would stand in for the whole
+/// patch while naming the wrong half.
 /// </para>
 /// </remarks>
 internal static class TimbrePreset

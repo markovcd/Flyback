@@ -5,15 +5,14 @@ using Xunit;
 namespace Flyback.Plugins.OpenAi.Tests;
 
 /// <summary>
-/// What this adapter knows about the models it names, and what it makes of a
-/// filled-in form.
+/// What this adapter knows about the models it names, and what it makes of a filled-in
+/// form.
 /// </summary>
 /// <remarks>
-/// A direct reference rather than a plugin loaded off disk, because none of this
-/// is visible from out there any more: an assistant declares a form and answers
-/// about what a run may be handed (ADR-0069), and the list of models behind both
-/// is the plugin's own business. The tests that cross the boundary ask the
-/// questions the host actually asks.
+/// A direct reference rather than a plugin loaded off disk, because none of this is
+/// visible from out there: an assistant declares a form and answers about what a run
+/// may be handed (ADR-0069), and the list of models behind both is the plugin's own
+/// business.
 /// </remarks>
 public class SchemaTests
 {
@@ -101,15 +100,13 @@ public class SchemaTests
     }
 
     /// <summary>
-    /// Null is "nobody here knows", not "it cannot" — the endpoint is a field,
-    /// so most of what this reaches was never written down here.
+    /// Null is "nobody here knows", not "it cannot" — the endpoint is a field, so most
+    /// of what this reaches was never written down here.
     /// </summary>
     /// <remarks>
-    /// The middle three are the ones this rule exists for. Every one of them
-    /// begins with the name of a model that <em>is</em> written down, and not
-    /// one of them is that model: a bare prefix match would answer for all
-    /// three, and would answer wrongly in the direction that takes a switch away
-    /// from somebody who knows better than this list does.
+    /// The middle three are what the rule exists for: each begins with the name of a
+    /// model that is written down and is not that model, so a bare prefix match would
+    /// answer for all three — wrongly, in the direction that takes a switch away.
     /// </remarks>
     [Theory]
     [InlineData("mistral-large")]

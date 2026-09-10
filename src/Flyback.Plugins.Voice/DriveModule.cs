@@ -5,22 +5,14 @@ namespace Flyback.Plugins.Voice;
 
 /// <summary>
 /// Saturation: the gentler half of adding harmonics. Where <see cref="FoldModule"/>
-/// turns a signal round at full scale, this leans it over and lets it approach —
-/// so what comes out is the same waveform with its peaks rounded off rather than
-/// a different waveform altogether.
+/// turns a signal round at full scale, this leans it over and lets it approach, so
+/// what comes out is the same waveform with its peaks rounded off.
 /// </summary>
 /// <remarks>
-/// The curve is <c>x / (1 + |x|)</c>: slope one at the origin, an asymptote at
-/// full scale, and no transcendental function in it. A <c>tanh</c> would be the
-/// textbook answer and sounds all but identical after the drive is normalised.
-/// <para>
-/// It is peak-normalised as it saturates, the way the Supersaw is as it
-/// spreads: the curve is divided by what it does to a full-scale input, so
-/// turning drive up makes the signal dirtier and never louder. What it does make
-/// is *denser* — the quiet parts come up as the loud ones stop moving, which is
-/// what saturation is and why a compressor and a distortion are the same
-/// arithmetic at different settings.
-/// </para>
+/// The curve is <c>x / (1 + |x|)</c>: slope one at the origin, an asymptote at full
+/// scale, and no transcendental function in it. Peak-normalised as it saturates, so
+/// turning drive up makes the signal dirtier and never louder — what it does make is
+/// denser, the quiet parts coming up as the loud ones stop moving.
 /// </remarks>
 internal static class DriveModule
 {

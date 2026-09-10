@@ -4,17 +4,14 @@ using Flyback.Core.Graph;
 namespace Flyback.Plugins.Effects;
 
 /// <summary>
-/// The same delay as a chorus, an order of magnitude shorter and fed back on
-/// itself. Down at a few milliseconds a copy no longer thickens a sound — it
-/// cancels parts of it, at every frequency whose period the delay is half of.
-/// Sweeping the delay drags that whole comb of notches up and down the spectrum,
-/// which is the jet-engine sound and is what the module is for.
+/// The same delay as a chorus, an order of magnitude shorter and fed back on itself.
+/// At a few milliseconds a copy no longer thickens a sound — it cancels parts of it,
+/// and sweeping the delay drags that comb of notches up and down the spectrum.
 /// </summary>
 /// <remarks>
-/// Feedback is what sharpens the notches from dips into slots, and it is signed
-/// here rather than positive. Negative feedback inverts the comb — the notches
-/// land where the peaks were — and the two sound different enough that offering
-/// only one of them would be leaving half the module out.
+/// Feedback sharpens the notches from dips into slots, and is signed here rather than
+/// positive: negative feedback inverts the comb, and the two sound different enough
+/// that offering one would be leaving half the module out.
 /// </remarks>
 internal static class FlangerModule
 {

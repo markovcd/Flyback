@@ -5,22 +5,15 @@ namespace Flyback.Plugins.Voice;
 
 /// <summary>
 /// A wavefolder: the thing that puts harmonics in, and the opposite half of what
-/// <see cref="FilterModule"/> does. Where a filter can only subtract from what an
-/// oscillator already produces, this manufactures new partials out of a signal
-/// that had none — a sine through it comes out with a spectrum.
+/// <see cref="FilterModule"/> does — a filter can only subtract from what an
+/// oscillator produces, where this manufactures new partials out of a sine.
 /// </summary>
 /// <remarks>
-/// It is a triangle wave read at the signal rather than at a phase. Below full
-/// scale the triangle's own rising edge is a straight line of slope one, so the
-/// module is exactly a wire there; past it the signal walks onto the next edge
-/// and comes back down, and it is that reflection which is heard as harmonics
-/// and seen as a band.
-/// <para>
-/// Pure, and the only module in this plugin that is: no state, no rate, no
-/// fallback. It does the same arithmetic at both sinks, which is the point of it
-/// — the folds the ear hears as a brighter tone are the bands the eye sees in a
-/// gradient, from one knob.
-/// </para>
+/// A triangle wave read at the signal rather than at a phase: below full scale the
+/// triangle's rising edge is a straight line of slope one, so the module is a wire
+/// there, and past it the signal walks onto the next edge and comes back down. Pure,
+/// and the only module in this plugin that is — the folds the ear hears as a brighter
+/// tone are the bands the eye sees in a gradient, from one knob.
 /// </remarks>
 internal static class FoldModule
 {

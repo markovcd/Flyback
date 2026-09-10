@@ -3,15 +3,11 @@ using Flyback.Plugins.Midi;
 namespace Flyback.Plugins.MacIO;
 
 /// <summary>
-/// One thing on the machine that could be played: the server's reference for it,
-/// and what to call it.
+/// One thing on the machine that could be played: the server's reference for it, and
+/// what to call it. The reference is what a patch must not store — it is a number the
+/// MIDI server made up and is a different number tomorrow — so the name is what
+/// survives.
 /// </summary>
-/// <remarks>
-/// The reference is exactly what a patch must not store — it is a number the
-/// MIDI server made up when it noticed the device, and it is a different number
-/// tomorrow. The name is what survives, which is what
-/// <see cref="MidiPorts.Named"/> turns into an id.
-/// </remarks>
 internal readonly record struct MidiSource(uint Endpoint, string Name);
 
 /// <summary>
@@ -43,19 +39,11 @@ public sealed class CoreMidiInput : IMidiInput
     /// What is plugged in right now, asked of the MIDI server each time.
     /// </summary>
     /// <remarks>
-    /// <para>
-    /// Total, whatever the machine is doing. A device half-noticed, one pulled
-    /// out between two calls, a server that has not started — none of it is a
-    /// reason for a picker not to draw, and there is always the computer's own
-    /// keyboard behind this list.
-    /// </para>
-    /// <para>
-    /// What it lists is everything that plays notes rather than only hardware,
-    /// which is the same bargain the ALSA sequencer makes: another program's
-    /// virtual source and the IAC bus macOS ships for exactly this purpose
-    /// appear here beside the keyboard, because to the server they are the same
-    /// kind of thing.
-    /// </para>
+    /// Total, whatever the machine is doing: a device half-noticed or a server that has
+    /// not started is no reason for a picker not to draw. What it lists is everything
+    /// that plays notes rather than only hardware, the same bargain the ALSA sequencer
+    /// makes — another program's virtual source and the IAC bus appear beside the
+    /// keyboard.
     /// </remarks>
     public IReadOnlyList<MidiPortInfo> Ports
     {

@@ -11,11 +11,10 @@ namespace Flyback.Plugins.OpenAi.Tests;
 /// How a turn ends, driven by canned replies rather than by an endpoint.
 /// </summary>
 /// <remarks>
-/// A turn ends in one of three ways and all three are ordinary: with a patch
-/// proposed, with the model having stopped talking, or with the person having
-/// cancelled it. The workbench is a copy, so the two that reach no proposal have
-/// changed nothing anyone can see — which is why they are ends rather than
-/// failures, and why nothing here answers one by asking again.
+/// A turn ends with a patch proposed, with the model having stopped talking, or with
+/// the person having cancelled — all three ordinary. The workbench is a copy, so the
+/// two that reach no proposal have changed nothing anyone can see, which is why
+/// nothing here answers one by asking again.
 /// </remarks>
 public class SessionTests
 {
@@ -332,16 +331,13 @@ public class SessionTests
     }
 
     /// <summary>
-    /// A sound goes to a second model on its own, and never into the
-    /// conversation.
+    /// A sound goes to a second model on its own, and never into the conversation.
     /// </summary>
     /// <remarks>
-    /// Both halves are the point. The models that take a sound require every
-    /// request to carry one, so a conversation driven by one is refused on its
-    /// first turn — before anything has been rendered to listen to — and they do
-    /// not take a picture besides. Asked on its own, the ear answers one
-    /// question about one sound, and the WAV is sent once rather than left in a
-    /// history that is resent every turn.
+    /// Both halves are the point: the models that take a sound require every request to
+    /// carry one, so a conversation driven by one is refused on its first turn, and
+    /// they do not take a picture besides. Asked on its own, the ear answers one
+    /// question about one sound and the WAV is sent once.
     /// </remarks>
     [Fact]
     public async Task A_sound_goes_to_the_ear_alone_and_never_into_the_conversation()
@@ -410,15 +406,14 @@ public class SessionTests
     }
 
     /// <summary>
-    /// The ear is told nothing about the patch — not what it is, not what the
-    /// model was hoping to hear.
+    /// The ear is told nothing about the patch — not what it is, not what the model was
+    /// hoping to hear.
     /// </summary>
     /// <remarks>
-    /// A model told what it is listening for can echo that expectation back
-    /// regardless of the clip — asked to listen for a kickdrum, a hihat and a
-    /// melody, it will duly report one even over three steady tones with no
-    /// hit anywhere. A description that could not have come back wrong is not
-    /// evidence, so the expectation stays on this side of the request.
+    /// A model told what it is listening for echoes that expectation back regardless of
+    /// the clip: asked to listen for a kickdrum and a hihat, it duly reports one over
+    /// three steady tones. A description that could not have come back wrong is not
+    /// evidence.
     /// </remarks>
     [Fact]
     public async Task The_ear_is_never_told_what_it_is_supposed_to_hear()

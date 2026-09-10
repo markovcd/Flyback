@@ -7,24 +7,20 @@ using Flyback.Plugins.Audio;
 namespace Flyback.Plugins.MacIO;
 
 /// <summary>
-/// Output through the default output audio unit — the macOS counterpart of the
-/// WASAPI device, and the same shape: nothing outside this assembly knows Audio
-/// Toolbox exists, and nothing outside it is macOS-only.
+/// Output through the default output audio unit — the macOS counterpart of the WASAPI
+/// device, and the same shape: nothing outside this assembly knows Audio Toolbox
+/// exists.
 /// </summary>
 /// <remarks>
+/// The default output unit follows the user's choice of output while the program is
+/// running and converts the sample rate when the hardware is not at ours, which makes
+/// <see cref="SampleRate"/> the rate the callback is rendered at rather than one we
+/// discovered.
 /// <para>
-/// The default output unit is chosen over talking to a device directly because
-/// it is the one that follows the user's choice of output while the program is
-/// running, and converts the sample rate when the hardware is not at ours. That
-/// makes <see cref="SampleRate"/> the rate we asked for rather than a rate we
-/// discovered, which is the honest answer here: it is the rate the callback is
-/// rendered at.
-/// </para>
-/// <para>
-/// The render callback is a static function pointer with the device handed to
-/// it as context, so no delegate has to be kept alive by hand and no marshalling
-/// stub sits on the audio thread. That thread belongs to CoreAudio and has a
-/// deadline: the callback allocates nothing, locks nothing, and cannot throw.
+/// The render callback is a static function pointer with the device handed to it as
+/// context, so no delegate has to be kept alive and no marshalling stub sits on the
+/// audio thread — which belongs to CoreAudio and has a deadline: the callback
+/// allocates nothing, locks nothing, and cannot throw.
 /// </para>
 /// </remarks>
 public sealed unsafe class CoreAudioDevice(AudioFormat format) : IAudioDevice

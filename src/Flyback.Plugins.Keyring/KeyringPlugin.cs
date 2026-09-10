@@ -6,12 +6,10 @@ namespace Flyback.Plugins.Keyring;
 /// Hands secrets to the desktop keyring to look after.
 /// </summary>
 /// <remarks>
-/// The Linux half of what ADR-0034 described and only built for Windows: the
-/// same contract, the same shape, and the same rule that loading the assembly
-/// must not touch the operating system. Nothing here runs a program until a
-/// secret is actually kept or recalled — or until somebody asks whether this
-/// machine has a keyring at all, which is a question about a file rather than a
-/// conversation with a keyring.
+/// The Linux half of what ADR-0034 described: the same contract, and the same rule
+/// that loading the assembly must not touch the operating system. Nothing here runs a
+/// program until a secret is kept or recalled, or until somebody asks whether this
+/// machine has a keyring — which is a question about a file.
 /// </remarks>
 public sealed class KeyringPlugin : IFlybackPlugin
 {
@@ -24,15 +22,11 @@ public sealed class KeyringPlugin : IFlybackPlugin
 }
 
 /// <summary>
-/// A secret store backed by the Secret Service — the D-Bus interface GNOME
-/// Keyring and KWallet both implement, reached through <c>secret-tool</c>.
+/// A secret store backed by the Secret Service — the D-Bus interface GNOME Keyring and
+/// KWallet both implement, reached through <c>secret-tool</c>. Nothing here invents any
+/// cryptography, which is the point of delegating: the keyring decides how a secret is
+/// held, and unlocks with the login the person has already done.
 /// </summary>
-/// <remarks>
-/// Nothing here invents any cryptography, which is the whole point of
-/// delegating rather than encrypting something with a key we would also have to
-/// ship. What goes in is what comes out; the keyring decides everything about
-/// how it is held, and unlocks with the login the person has already done.
-/// </remarks>
 public sealed class KeyringSecretStore : ISecretStore
 {
     public string Id => "secret-service";

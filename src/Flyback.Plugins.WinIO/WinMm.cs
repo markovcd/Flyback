@@ -4,16 +4,13 @@ namespace Flyback.Plugins.WinIO;
 
 /// <summary>
 /// The slice of Windows' multimedia library this plugin needs, and nothing else.
-/// Hand-written for the same reason the ALSA and CoreAudio bindings are: eight
-/// entry points and one struct do not justify a binding package, and
-/// <see cref="Flyback.Plugins"/> having no dependencies is worth keeping true one
-/// level down as well.
+/// Hand-written for the same reason the ALSA and CoreAudio bindings are: eight entry
+/// points and one struct do not justify a binding package.
 /// </summary>
 /// <remarks>
-/// Every entry point is resolved lazily by the runtime, on first call. Nothing in
-/// this file runs while the plugin is merely being listed, which is what lets the
-/// assembly load on a machine that has no winmm at all and answer "not supported"
-/// rather than failing to load.
+/// Every entry point is resolved lazily on first call, so nothing here runs while the
+/// plugin is merely being listed — which lets the assembly load on a machine that has
+/// no winmm.
 /// </remarks>
 internal static unsafe partial class WinMm
 {
@@ -92,15 +89,11 @@ internal static unsafe partial class WinMm
     private static partial uint ErrorText(uint error, char* text, uint length);
 
     /// <summary>
-    /// Every input device the machine has, in the order winmm numbers them —
-    /// which is also the order the ids handed out from it are in, and therefore
-    /// what turns an id back into the number this file needs.
+    /// Every input device the machine has, in the order winmm numbers them — which is
+    /// also what turns an id back into the number this file needs. A device whose
+    /// capabilities cannot be read is left out: it would not open either, and a picker
+    /// offering it would be offering a failure.
     /// </summary>
-    /// <remarks>
-    /// A device whose capabilities cannot be read is left out rather than named
-    /// as something. It would not open either, and a picker offering it would be
-    /// offering a failure.
-    /// </remarks>
     public static IReadOnlyList<string> DeviceNames()
     {
         var names = new List<string>();

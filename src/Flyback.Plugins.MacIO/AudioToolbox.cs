@@ -3,16 +3,14 @@ using System.Runtime.InteropServices;
 namespace Flyback.Plugins.MacIO;
 
 /// <summary>
-/// The slice of Apple's Audio Toolbox this plugin needs, and nothing else.
-/// Hand-written rather than taken from a binding package, because the whole
-/// surface is eight entry points and three structs — a dependency here would
-/// cost more than it saved.
+/// The slice of Apple's Audio Toolbox this plugin needs, and nothing else. Hand-written
+/// rather than taken from a binding package, because the whole surface is eight entry
+/// points and three structs.
 /// </summary>
 /// <remarks>
-/// Every entry point is resolved lazily by the runtime, on first call. Nothing
-/// in this file runs while the plugin is merely being listed, which is what
-/// lets the assembly load on Windows and answer "not supported" rather than
-/// failing to load at all.
+/// Every entry point is resolved lazily on first call, so nothing here runs while the
+/// plugin is merely being listed — which lets the assembly load on Windows and answer
+/// "not supported".
 /// </remarks>
 internal static partial class AudioToolbox
 {

@@ -5,25 +5,15 @@ using Flyback.Plugins.Midi;
 namespace Flyback.Plugins.WinIO;
 
 /// <summary>
-/// One device, open and listening. The mirror of the WASAPI device: nothing
-/// outside this assembly knows winmm exists, and nothing outside it is
-/// Windows-only.
+/// One device, open and listening. The mirror of the WASAPI device: nothing outside
+/// this assembly knows winmm exists.
 /// </summary>
 /// <remarks>
-/// <para>
-/// The driver calls us rather than the other way round, and it calls on a thread
-/// of its own. That thread is documented as a restricted one — the rule is that
-/// almost nothing may be called from inside it — so what happens there is kept to
-/// arithmetic on five bytes and one delegate call, with no allocation, no lock
-/// and no way out for an exception. Everything the note then touches is the
-/// hub's problem, and the hub is written knowing which thread it is on.
-/// </para>
-/// <para>
-/// The callback is a static function pointer with the port handed to it as
-/// context, so no delegate has to be kept alive by hand and no marshalling stub
-/// sits between the driver and the note — the same arrangement
-/// <c>CoreAudioDevice</c> uses for its render callback, and for the same reasons.
-/// </para>
+/// The driver calls us on a thread of its own, documented as restricted — almost
+/// nothing may be called from inside it — so what happens there is arithmetic on five
+/// bytes and one delegate call, with no allocation, no lock and no way out for an
+/// exception. The callback is a static function pointer with the port as context, the
+/// same arrangement <c>CoreAudioDevice</c> uses.
 /// </remarks>
 internal sealed unsafe class WinMidiPort : IMidiPort
 {
@@ -126,14 +116,13 @@ internal sealed unsafe class WinMidiPort : IMidiPort
     }
 
     /// <summary>
-    /// One short message, unpacked. Windows delivers all three bytes in a single
-    /// word — status lowest, then the two data bytes — and the unpacking is the
-    /// whole of what is Windows-specific about it.
+    /// One short message, unpacked. Windows delivers all three bytes in a single word —
+    /// status lowest, then the two data bytes — and that is the whole of what is
+    /// Windows-specific about it.
     /// </summary>
     /// <remarks>
-    /// What the bytes then mean is <see cref="MidiMessages.Of"/>, in the contract
-    /// rather than here, because it is the same on every platform and the two
-    /// backends still to be written will read them the same way.
+    /// What the bytes mean is <see cref="MidiMessages.Of"/>, in the contract rather
+    /// than here, because it is the same on every platform.
     /// </remarks>
     private void Decode(uint packed)
     {

@@ -3,15 +3,13 @@ using Flyback.Plugins.Midi;
 namespace Flyback.Plugins.LinuxIO;
 
 /// <summary>
-/// One thing on the machine that could be played: which client, which port, and
-/// what to call it.
+/// One thing on the machine that could be played: which client, which port, and what
+/// to call it.
 /// </summary>
 /// <remarks>
-/// The pair of numbers is the sequencer's address and is exactly what a patch
-/// must not store — client numbers are handed out in the order things were
-/// plugged in, so the keyboard that was 24 this morning is 28 after a reboot.
-/// The name is what survives, which is what <see cref="MidiPorts.Named"/> turns
-/// into an id.
+/// The pair of numbers is the sequencer's address and is exactly what a patch must not
+/// store — client numbers are handed out in the order things were plugged in. The name
+/// is what survives, which is what <see cref="MidiPorts.Named"/> turns into an id.
 /// </remarks>
 internal readonly record struct SequencerPort(int Client, int Port, string Name);
 
@@ -97,24 +95,14 @@ public sealed class AlsaMidiInput : IMidiInput
 
     /// <summary>
     /// Every port on the machine that will play us something, in the order the
-    /// sequencer keeps them — which is by client and then by port number, and is
-    /// therefore the same order twice running unless something was plugged in
-    /// between.
+    /// sequencer keeps them — by client and then by port number.
     /// </summary>
     /// <remarks>
-    /// <para>
-    /// Opening the sequencer to ask is not opening a device. A sequencer client
-    /// is a row in the kernel's routing table: it takes no card, blocks nobody,
-    /// and is closed again before this returns. Nothing is subscribed to, which
-    /// is the call that would actually claim a keyboard.
-    /// </para>
-    /// <para>
-    /// The two info blocks are stack buffers of a size libasound is asked for,
-    /// which is what its own <c>_alloca</c> macros do. They are opaque either
-    /// way — every field goes through an accessor — so the size is the only fact
-    /// about them this file has, and it comes from the library rather than from
-    /// a header copied into a comment.
-    /// </para>
+    /// Opening the sequencer to ask is not opening a device: a sequencer client is a
+    /// row in the kernel's routing table, and nothing is subscribed to, which is the
+    /// call that would claim a keyboard. The two info blocks are stack buffers of a
+    /// size libasound is asked for, so the only fact about them here comes from the
+    /// library rather than a header copied into a comment.
     /// </remarks>
     private static unsafe IReadOnlyList<SequencerPort> Sources()
     {
@@ -169,16 +157,14 @@ public sealed class AlsaMidiInput : IMidiInput
     }
 
     /// <summary>
-    /// What a person should see for one port, out of the two names the sequencer
-    /// has for it.
+    /// What a person should see for one port, out of the two names the sequencer has
+    /// for it.
     /// </summary>
     /// <remarks>
-    /// A device is a client with ports under it — "Launchkey Mini MK3" holding
-    /// "Launchkey Mini MK3 MIDI 1" — and the kernel usually puts the card's name
-    /// into the port's already. So the two are joined only when the port's name
-    /// does not begin with the client's, which keeps the common case from
-    /// reading as a stutter and keeps a port called plain "MIDI 1" from being
-    /// unidentifiable.
+    /// A device is a client with ports under it, and the kernel usually puts the card's
+    /// name into the port's already — so the two are joined only when the port's name
+    /// does not begin with the client's, which keeps the common case from reading as a
+    /// stutter and a port called plain "MIDI 1" from being unidentifiable.
     /// </remarks>
     private static string Display(string client, string port)
     {

@@ -10,11 +10,10 @@ namespace Flyback.Plugins.OpenAi.Tests;
 /// What a survey makes of an endpoint that could be anybody's.
 /// </summary>
 /// <remarks>
-/// Most of this is the same shape as the Gemini adapter's, and the interesting
-/// part is where it is not. The catalogue here carries no capabilities, so the
-/// filter is doing real work; and the models this adapter listens with refuse a
-/// turn that has no sound in it, so the question "is this a model here" cannot
-/// be a single question.
+/// Most of this is the same shape as the Gemini adapter's, and the interesting part is
+/// where it is not: the catalogue here carries no capabilities, so the filter is doing
+/// real work, and the models this adapter listens with refuse a turn with no sound in
+/// it.
 /// </remarks>
 public class SurveyTests
 {

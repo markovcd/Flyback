@@ -4,22 +4,15 @@ using Flyback.Core.Graph;
 namespace Flyback.Plugins.Effects;
 
 /// <summary>
-/// One voice heard as several. A delay short enough that the ear takes it for
-/// the same sound rather than an echo, swept slowly so its pitch is never quite
-/// steady, and mixed back against the dry — which is what a room full of players
-/// does to a note none of them can hold perfectly still.
+/// One voice heard as several. A delay short enough that the ear takes it for the same
+/// sound rather than an echo, swept slowly so its pitch is never quite steady, and
+/// mixed back against the dry.
 /// </summary>
 /// <remarks>
-/// Two lines rather than one, swept in opposite directions and handed out
-/// separately. That is the whole of what makes a chorus wide: the two channels
-/// are detuned away from each other rather than together, so the image opens
-/// out instead of wobbling in place. Patch both, or take <c>out</c> alone and
-/// have the mono version for nothing.
-/// <para>
-/// The Supersaw is the same idea reached from the other end — voices detuned
-/// against each other, one of them the original — and the difference is where
-/// the copies come from. That one makes them; this one remembers them.
-/// </para>
+/// Two lines rather than one, swept in opposite directions and handed out separately,
+/// which is what makes a chorus wide: the two channels are detuned away from each
+/// other rather than together. The Supersaw is the same idea from the other end — that
+/// one makes the copies, this one remembers them.
 /// </remarks>
 internal static class ChorusModule
 {

@@ -6,15 +6,11 @@ using Flyback.Plugins.Assist;
 namespace Flyback.Plugins.Gemini;
 
 /// <summary>
-/// The half of this provider that finds out what it is talking to.
+/// The half of this provider that finds out what it is talking to. Worth having
+/// because <c>models.list</c> answers neither question that matters: it says nothing
+/// about which inputs a model takes, and a model it lists can still answer
+/// <c>generateContent</c> with a 404 saying it is closed to new keys.
 /// </summary>
-/// <remarks>
-/// Worth having here rather than as a list somebody maintains because
-/// <c>models.list</c> answers neither question that matters: it says nothing
-/// about which inputs a model takes, and it is not an availability check —
-/// a model it lists can still answer <c>generateContent</c> with a 404 saying
-/// it is closed to new keys. Both are settled by asking.
-/// </remarks>
 public sealed partial class GeminiAssistant : IModelSurvey
 {
     public async Task<IReadOnlyList<ModelReport>> Survey(
@@ -35,11 +31,9 @@ public sealed partial class GeminiAssistant : IModelSurvey
 /// One survey of one endpoint, from the catalogue down to what each model took.
 /// </summary>
 /// <remarks>
-/// Separate from <see cref="GeminiSession"/> despite speaking the same format,
-/// because none of what a session carries applies: no briefing, no tools, no
-/// history, no retry budget spent on behalf of somebody waiting for a patch. A
-/// probe asks the smallest legal question it can and cares only whether the
-/// answer was a refusal.
+/// Separate from <see cref="GeminiSession"/> despite speaking the same format, because
+/// none of what a session carries applies: no briefing, no tools, no history, no retry
+/// budget spent on behalf of somebody waiting for a patch.
 /// </remarks>
 /// <param name="apiKey">The key. Sent as a header rather than in the query, which keeps it out of logs.</param>
 /// <param name="address">The endpoint, without a trailing slash.</param>
@@ -167,11 +161,10 @@ internal sealed class GeminiProbe(string apiKey, string address, HttpMessageHand
     /// The smallest and largest budget a model will take, by halving.
     /// </summary>
     /// <remarks>
-    /// Costs a request per step and makes the model think for real near the top
-    /// of its range, which is billed like any other thinking — hence
-    /// <see cref="SurveyOptions.Bounds"/> rather than always. The range is
-    /// assumed contiguous, which is the same assumption sending one budget
-    /// already makes.
+    /// Costs a request per step and makes the model think for real near the top of its
+    /// range, which is billed like any other thinking — hence
+    /// <see cref="SurveyOptions.Bounds"/> rather than always. The range is assumed
+    /// contiguous, which is what sending one budget already assumes.
     /// </remarks>
     private async Task<(int? Least, int? Most)> Bounds(string model, IProgress<string>? said, CancellationToken cancel)
     {

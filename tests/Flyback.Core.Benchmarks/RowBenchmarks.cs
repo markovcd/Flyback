@@ -5,16 +5,14 @@ using Flyback.Core.Graph;
 namespace Flyback.Core.Benchmarks;
 
 /// <summary>
-/// One scanline of the renderer's inner loop, single-threaded: the interpreter
-/// plus the clamping, the frame history and the BGRA write that surround it.
+/// One scanline of the renderer's inner loop, single-threaded: the interpreter plus
+/// the clamping, the frame history and the BGRA write around it.
 /// </summary>
 /// <remarks>
-/// Single-threaded and in one process on purpose. The frame benchmark runs
-/// nineteen workers and its absolute numbers move by a sixth between runs of the
-/// same binary as the machine's clocks drift, so the only comparison worth
-/// making there is one BenchmarkDotNet can put a ratio on — which means both
-/// arms in the same run. This is that, at the cost of leaving out the parallel
-/// loop, which neither arm changes.
+/// Single-threaded and in one process on purpose: the frame benchmark's absolute
+/// numbers move by a sixth between runs of the same binary as the machine's clocks
+/// drift, so the only comparison worth making is one BenchmarkDotNet can put a ratio
+/// on — both arms in the same run.
 /// </remarks>
 [MemoryDiagnoser]
 public class RowBenchmarks

@@ -35,18 +35,11 @@ public sealed partial class OpenAiAssistant : IModelSurvey
 /// One survey of one chat-completions endpoint, whoever is running it.
 /// </summary>
 /// <remarks>
-/// <para>
-/// Shaped like the one in the Gemini adapter and deliberately not shared with
-/// it, because the two differ in the part that matters. There the catalogue says
-/// which models can hold a conversation; here it says nothing at all beyond a
-/// list of ids, and the gate that decides whether a model is present has to be
-/// conditional — see <see cref="Run"/>.
-/// </para>
-/// <para>
-/// Nothing here measures a thinking budget. This adapter sends no effort at all
-/// because it cannot know what endpoint it is pointed at, and the spelling this
-/// format uses is a word rather than a number, so there is no range to find.
-/// </para>
+/// Shaped like the Gemini adapter's and deliberately not shared with it: there the
+/// catalogue says which models can hold a conversation, and here it says nothing beyond
+/// a list of ids, so the gate that decides whether a model is present has to be
+/// conditional — see <see cref="Run"/>. Nothing here measures a thinking budget, since
+/// this adapter sends no effort at all.
 /// </remarks>
 /// <param name="apiKey">The key. A local runtime will take any value.</param>
 /// <param name="baseUrl">The endpoint, which may be anybody's.</param>
