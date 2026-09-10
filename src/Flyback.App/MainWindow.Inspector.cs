@@ -401,15 +401,21 @@ public sealed partial class MainWindow
 
         if (BuildNormalledNote(node, def) is { } normalled) inspector.Children.Add(normalled);
 
+        // Checked once for the whole panel rather than row by row, so that a
+        // bar is the same width down the entire module: a module where nothing
+        // has a reading gives every slider the column back, and a module where
+        // even one socket does reserves it for all of them, named or not.
+        var reading = ShowsReading(def);
+
         for (var i = 0; i < def.Inputs.Count; i++)
-            inspector.Children.Add(BuildInputRow(node, def.Inputs[i], i));
+            inspector.Children.Add(BuildInputRow(node, def.Inputs[i], i, reading));
 
         // Whatever the module carries that is not a knob, each kind edited by the
         // control that suits it. This mapping lives here rather than on the extra
         // because it is the one part of a kind that needs Avalonia, which the
         // engine does not reference.
         foreach (var extra in def.Extras)
-            if (EditorFor(extra, node, def) is { } control)
+            if (EditorFor(extra, node, def, reading) is { } control)
                 inspector.Children.Add(control);
 
         if (def.Inputs.Count == 0 && def.Extras.Count == 0)
@@ -990,8 +996,27 @@ public sealed partial class MainWindow
     /// </remarks>
     private static bool Named(PortSpec spec) => spec.Display != PortDisplay.Number;
 
-    /// <summary>A knob's row: the slider, its number, and the reading if it has one.</summary>
-    private static Grid KnobRow(PortSpec spec) => Row(Named(spec) ? "*,84,40" : "*,84");
+    /// <summary>Whether any socket or field on this module has a reading to show.</summary>
+    /// <remarks>
+    /// Checked once for a module rather than once per row, because the answer
+    /// governs a column every row on the panel shares — see <see cref="KnobRow"/>.
+    /// </remarks>
+    private static bool ShowsReading(NodeDef def) =>
+        def.Inputs.Any(Named) ||
+        def.Extras.Any(extra => extra.Fields
+            .Any(field => field is ExtraField.Number number && Named(number.Spec)));
+
+    /// <summary>A knob's row: the slider, the reading if it has one, and its number.</summary>
+    /// <remarks>
+    /// <paramref name="reading"/> reserves the column for the whole panel, not
+    /// just this row, so that a slider is the same width down the entire
+    /// module — a plain count does not get a wider bar just because its
+    /// neighbor spells out milliseconds, and no row reserves the column at
+    /// all when nothing on the module has a reading to put there. 60 is wide
+    /// enough for the widest reading a socket ever shows: a duration just
+    /// under a second, formatted in milliseconds as "999.9 ms".
+    /// </remarks>
+    private static Grid KnobRow(bool reading) => Row(reading ? "*,60,84" : "*,84");
 
     private static Control Field(string name, Control control)
     {
@@ -1075,7 +1100,7 @@ public sealed partial class MainWindow
     /// panel and not the panel.
     /// </para>
     /// </remarks>
-    private Control? EditorFor(NodeExtra extra, NodeInstance node, NodeDef def) => extra switch
+    private Control? EditorFor(NodeExtra extra, NodeInstance node, NodeDef def, bool reading) => extra switch
     {
         // A sequencer's tune is a list rather than a row of knobs (ADR-0038),
         // so it is edited as one — added to, taken from and reordered.
@@ -1093,7 +1118,7 @@ public sealed partial class MainWindow
         // Anything else is a plugin's own kind, which ships no control and is
         // drawn from what it declares instead — see ADR-0055. A kind that
         // declares nothing simply gets no rows.
-        _ => BuildDeclaredRows(node, extra),
+        _ => BuildDeclaredRows(node, extra, reading),
     };
 
     /// <summary>
@@ -1106,7 +1131,7 @@ public sealed partial class MainWindow
     /// has never heard of is skipped rather than drawn wrongly, so a patch made
     /// by a newer build stays editable in the parts this one understands.
     /// </remarks>
-    private Control? BuildDeclaredRows(NodeInstance node, NodeExtra extra)
+    private Control? BuildDeclaredRows(NodeInstance node, NodeExtra extra, bool reading)
     {
         if (extra.Fields.Count == 0) return null;
 
@@ -1121,20 +1146,21 @@ public sealed partial class MainWindow
         });
 
         foreach (var field in extra.Fields)
-            if (BuildFieldRow(node, extra, field) is { } control)
+            if (BuildFieldRow(node, extra, field, reading) is { } control)
                 panel.Children.Add(control);
 
         return panel;
     }
 
-    private Control? BuildFieldRow(NodeInstance node, NodeExtra extra, ExtraField field) => field switch
+    private Control? BuildFieldRow(NodeInstance node, NodeExtra extra, ExtraField field, bool reading) => field switch
     {
         ExtraField.Number number => ValueRow(
             field.Label,
             number.Spec,
             number.Value(node.StateOf(extra.Key)?[field.Key]),
             $"{node.Id} {extra.Key} {field.Key}",
-            next => Store(node, extra, field, JsonValue.Create(next))),
+            next => Store(node, extra, field, JsonValue.Create(next)),
+            reading),
 
         ExtraField.Toggle toggle => ToggleRow(
             field.Label,
@@ -1433,14 +1459,13 @@ public sealed partial class MainWindow
         MimeTypes = ["image/png"],
     };
 
-    private Control BuildInputRow(NodeInstance node, PortSpec spec, int index)
+    private Control BuildInputRow(NodeInstance node, PortSpec spec, int index, bool reading)
     {
         var connected = editor.Patch.IncomingTo(node.Id, index) is not null;
 
         var label = Caption(spec.Name);
-        var named = Named(spec);
 
-        var row = KnobRow(spec);
+        var row = KnobRow(reading);
         Grid.SetColumn(label, 0);
         row.Children.Add(label);
 
@@ -1454,7 +1479,7 @@ public sealed partial class MainWindow
                 VerticalAlignment = VerticalAlignment.Center,
             };
             Grid.SetColumn(wired, 1);
-            Grid.SetColumnSpan(wired, named ? 3 : 2);
+            Grid.SetColumnSpan(wired, reading ? 3 : 2);
             row.Children.Add(wired);
             return row;
         }
@@ -1475,7 +1500,7 @@ public sealed partial class MainWindow
                 VerticalAlignment = VerticalAlignment.Center,
             };
             Grid.SetColumn(implied, 1);
-            Grid.SetColumnSpan(implied, named ? 3 : 2);
+            Grid.SetColumnSpan(implied, reading ? 3 : 2);
             row.Children.Add(implied);
             return row;
         }
@@ -1491,7 +1516,7 @@ public sealed partial class MainWindow
             // Noted rather than written. A drag is a knob turned a hundred times
             // and the text should be edited once, when the hand comes off it.
             Turned(node.Id, index);
-        });
+        }, reading);
     }
 
     /// <summary>
@@ -1513,17 +1538,24 @@ public sealed partial class MainWindow
     /// one per frame.
     /// </param>
     /// <param name="store">Where the new value goes.</param>
+    /// <param name="reading">
+    /// Whether the panel this row sits on reserves a column for a reading at
+    /// all — see <see cref="ShowsReading"/>. A row whose own socket has
+    /// nothing to say there still gets the column when a neighbor needs it,
+    /// so every bar on the panel stays the same width.
+    /// </param>
     private Control ValueRow(
         string label,
         PortSpec spec,
         float value,
         string because,
-        Action<float> store)
+        Action<float> store,
+        bool reading)
     {
         var named = Named(spec);
         var whole = spec.Stepped;
 
-        var row = KnobRow(spec);
+        var row = KnobRow(reading);
 
         var caption = Caption(label);
 
@@ -1562,7 +1594,8 @@ public sealed partial class MainWindow
             Text = spec.Format(value),
             FontSize = Text.Body,
             Opacity = 0.75,
-            Margin = new Thickness(6, 0, 0, 0),
+            Margin = new Thickness(6, 0, 6, 0),
+            HorizontalAlignment = HorizontalAlignment.Right,
             VerticalAlignment = VerticalAlignment.Center,
         };
 
@@ -1580,13 +1613,13 @@ public sealed partial class MainWindow
         };
 
         Grid.SetColumn(slider, 1);
-        Grid.SetColumn(numeric, 2);
+        Grid.SetColumn(numeric, reading ? 3 : 2);
         row.Children.Add(slider);
         row.Children.Add(numeric);
 
         if (named)
         {
-            Grid.SetColumn(name, 3);
+            Grid.SetColumn(name, 2);
             row.Children.Add(name);
         }
 
