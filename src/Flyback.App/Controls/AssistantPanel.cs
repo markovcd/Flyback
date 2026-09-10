@@ -693,9 +693,9 @@ public sealed class AssistantPanel : UserControl
     }
 
     /// <summary>
-    /// Reworks what the buttons and the footer say. The footer is the standing
-    /// disclosure: it names what leaves the machine and where the key came from,
-    /// and it is never hidden behind a dialog nobody reads twice.
+    /// Reworks what the buttons and the footer say. The footer speaks only when
+    /// there is an excuse to give — no plugin, no key, or whatever else is
+    /// blocking a send — and stays out of the way otherwise.
     /// </summary>
     private void Refresh()
     {
@@ -713,32 +713,16 @@ public sealed class AssistantPanel : UserControl
         ToolTip.SetTip(instruction, excuse);
         ShowKeyState();
 
+        // The standing disclosure of what gets sent and where the key came from
+        // lives in the status bar; the footer here only ever speaks up for
+        // something actionable, so it disappears once there is nothing to excuse.
+        footer.IsVisible = excuse is not null;
+
         if (excuse is not null)
         {
             footer.Text = excuse;
             footer.Foreground = Amber;
-            return;
         }
-
-        // Written every time rather than only when it changes, because the amber
-        // branch above writes over it: an excuse left standing after a key has
-        // been entered is the panel saying there is no key while holding one.
-        var source = credentials.SourceOf(assistant!.Id, assistant.Credential.EnvironmentVariable) switch
-        {
-            CredentialSource.Environment => $"key from {assistant.Credential.EnvironmentVariable}",
-            CredentialSource.Kept => $"key kept by {credentials.Store?.Name}",
-            CredentialSource.Session => credentials.CanKeep
-                ? "key held for this session only"
-                : "key held for this session only — nothing installed can keep one",
-            _ => "no key",
-        };
-
-        var logged = settings.LogConversations ? $" Logged to {ConversationLog.Folder}." : string.Empty;
-
-        footer.Foreground = Text.Muted;
-        footer.Text =
-            "Sends your instruction, the module list and the patch — including rendered frames of it — "
-            + $"to {assistant.Name}. {source}.{logged}";
     }
 
     /// <summary>

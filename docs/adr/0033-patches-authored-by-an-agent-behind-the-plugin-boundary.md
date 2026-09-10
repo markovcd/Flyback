@@ -135,6 +135,15 @@ are told.
 standing footer, in the status bar, and in the plugin summary. Nothing is sent
 without a click on Ask; nothing applied without a click on Apply.
 
+**Amended.** The footer's muted sentence — what gets sent, and where the key
+came from — sat under the box on every turn whether or not there was anything
+to act on, which made it read as clutter rather than disclosure once a key was
+set. The footer now speaks only for something actionable: no plugin installed,
+no key, or whatever else is blocking a send. The status bar and the plugin
+summary still carry the standing word on what leaves the machine, so the
+disclosure this ADR asked for is not gone, only no longer repeated a third time
+under the instruction box.
+
 **A warmed render costs about a hundred frames.** At 320×180 that is tens of
 milliseconds and it happens at most once per model turn — but it is real work on
 a pool thread, and putting the `Task.Run` inside the workbench rather than in
