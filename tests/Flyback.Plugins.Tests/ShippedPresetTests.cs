@@ -116,13 +116,10 @@ public class ShippedPresetTests
     /// want to see the whole of.
     /// </summary>
     /// <remarks>
-    /// The plugins' presets are the big ones — Slow weather is a hundred and five
-    /// modules in ten groups — and the size is the point. Ten boxes take three
-    /// columns; the hundred modules behind them take seventeen, which is wider
-    /// than half the canvas. A layout drawn from the origin rightwards had only
-    /// that half to put them in, so the far end arrived folded onto the boundary
-    /// by <see cref="NodeInstance.X"/> and stacked there. Nothing in
-    /// <c>PatchLayoutTests</c> is large enough to reach it.
+    /// The plugins' presets are the big ones and the size is the point: Slow
+    /// weather is ten boxes across three columns, and the hundred and five
+    /// modules behind them take seventeen. Nothing in <c>PatchLayoutTests</c> is
+    /// large enough to reach the end of the canvas.
     /// </remarks>
     [Theory]
     [MemberData(nameof(Every))]

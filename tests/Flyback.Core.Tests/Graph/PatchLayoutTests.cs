@@ -175,17 +175,13 @@ public class PatchLayoutTests
     }
 
     /// <summary>
-    /// A drawing no bigger than the canvas is put on the canvas, which is not
-    /// the same as being drawn from a corner of it.
+    /// A drawing no bigger than the canvas is put on the canvas.
     /// </summary>
     /// <remarks>
-    /// Every coordinate is held inside <see cref="NodeInstance.Extent"/>, so a
-    /// drawing that runs past the edge does not run past the edge — it arrives
-    /// folded onto it, with everything that should have been beyond stacked on
-    /// the boundary. Laying out from the origin rightwards spends a quarter of
-    /// the room a patch is allowed and holds the other three empty, which turned
-    /// a patch half the canvas's width into a pile. Placed in the middle it has
-    /// all of it.
+    /// Coordinates are held inside the canvas, so a drawing that runs past the
+    /// edge arrives folded onto it with everything beyond stacked on the
+    /// boundary. Using the whole canvas rather than the quarter below and right
+    /// of the origin is what keeps a large patch off it.
     /// </remarks>
     [Theory]
     [MemberData(nameof(EveryPreset))]
@@ -198,10 +194,10 @@ public class PatchLayoutTests
 
         foreach (var drawn in Drawing(patch))
         {
-            drawn.Left.ShouldBeGreaterThan(-NodeInstance.Extent);
-            drawn.Right.ShouldBeLessThan(NodeInstance.Extent);
-            drawn.Top.ShouldBeGreaterThan(-NodeInstance.Extent);
-            drawn.Bottom.ShouldBeLessThan(NodeInstance.Extent);
+            drawn.Left.ShouldBeGreaterThan(-NodeInstance.Across);
+            drawn.Right.ShouldBeLessThan(NodeInstance.Across);
+            drawn.Top.ShouldBeGreaterThan(-NodeInstance.Down);
+            drawn.Bottom.ShouldBeLessThan(NodeInstance.Down);
         }
     }
 

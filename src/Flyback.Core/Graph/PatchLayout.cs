@@ -154,13 +154,11 @@ public static class PatchLayout
     /// <param name="modules">Which catalogue the type ids mean, defaulting to the installed one.</param>
     /// <param name="metrics">How big the nodes are, defaulting to the editor's own.</param>
     /// <returns>
-    /// Whether the drawing fits the canvas. False is not a failure to place —
-    /// what came out is still a correct drawing, and it is the canvas that is
-    /// too small to hold it. Since <see cref="NodeInstance.X"/> holds every
-    /// coordinate inside <see cref="NodeInstance.Extent"/>, what actually reaches the
-    /// patch in that case is the drawing with its far edges folded onto the
-    /// boundary, which is modules on top of one another. A caller with a person
-    /// in front of it should say so rather than let it look like a bad layout.
+    /// Whether the drawing fits the canvas. What came out is a correct drawing
+    /// either way, but <see cref="NodeInstance.X"/> holds every coordinate
+    /// inside the canvas, so a drawing that does not fit reaches the patch with
+    /// its far edges folded onto the boundary and stacked. Worth saying to
+    /// anyone who can see it.
     /// </returns>
     public static bool Arrange(Patch patch, ModuleCatalog? modules = null, Metrics? metrics = null)
     {
@@ -235,14 +233,10 @@ public static class PatchLayout
     /// it fits on one.
     /// </summary>
     /// <remarks>
-    /// The placement works from a corner, because a column is easier to reason
-    /// about running one way than two. Where that corner goes is a separate
-    /// question, and the middle is the only answer that uses the whole canvas:
-    /// starting at the origin and running right and down spends one quarter of
-    /// the room a patch is allowed and holds the other three empty, so a patch
-    /// twice as wide as it needs to be would be folded onto the boundary by
-    /// <see cref="NodeInstance.X"/> with plenty of canvas to spare on the other
-    /// side. A hundred modules with their groups open is exactly that wide.
+    /// The placement runs from a corner because a column is easier to reason
+    /// about running one way than two. The middle is where that corner goes,
+    /// since it is the only choice that uses the whole canvas rather than the
+    /// quarter of it below and right of the origin.
     /// </remarks>
     private static bool Settle(List<Block> blocks)
     {
@@ -261,7 +255,7 @@ public static class PatchLayout
             block.Put();
         }
 
-        return right - left <= NodeInstance.Extent * 2 && bottom - top <= NodeInstance.Extent * 2;
+        return right - left <= NodeInstance.Across * 2 && bottom - top <= NodeInstance.Down * 2;
     }
 
     /// <summary>

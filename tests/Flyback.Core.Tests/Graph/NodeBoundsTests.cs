@@ -4,7 +4,7 @@ using Shouldly;
 namespace Flyback.Core.Tests.Graph;
 
 /// <summary>
-/// The canvas is a finite square and a module cannot be put outside it.
+/// The canvas is a finite rectangle and a module cannot be put outside it.
 /// </summary>
 /// <remarks>
 /// Held on the coordinate itself rather than on any of the gestures that set
@@ -36,10 +36,10 @@ public class NodeBoundsTests
     [InlineData(-1, -1)]
     public void A_module_past_an_edge_lands_on_it(double dx, double dy)
     {
-        var node = At(dx * (NodeInstance.Extent + 5000), dy * (NodeInstance.Extent + 5000));
+        var node = At(dx * (NodeInstance.Across + 5000), dy * (NodeInstance.Down + 5000));
 
-        node.X.ShouldBe(dx * NodeInstance.Extent);
-        node.Y.ShouldBe(dy * NodeInstance.Extent);
+        node.X.ShouldBe(dx * NodeInstance.Across);
+        node.Y.ShouldBe(dy * NodeInstance.Down);
     }
 
     [Fact]
@@ -50,8 +50,8 @@ public class NodeBoundsTests
         node.X = double.MaxValue;
         node.Y = double.MinValue;
 
-        node.X.ShouldBe(NodeInstance.Extent);
-        node.Y.ShouldBe(-NodeInstance.Extent);
+        node.X.ShouldBe(NodeInstance.Across);
+        node.Y.ShouldBe(-NodeInstance.Down);
     }
 
     /// <summary>
@@ -63,8 +63,8 @@ public class NodeBoundsTests
     {
         var node = At(double.PositiveInfinity, double.NegativeInfinity);
 
-        node.X.ShouldBe(NodeInstance.Extent);
-        node.Y.ShouldBe(-NodeInstance.Extent);
+        node.X.ShouldBe(NodeInstance.Across);
+        node.Y.ShouldBe(-NodeInstance.Down);
     }
 
     /// <summary>
@@ -99,7 +99,7 @@ public class NodeBoundsTests
         var read = PatchIO.Read(json, NodeCatalog.BuiltIn);
 
         read.IsComplete.ShouldBeTrue(read.Summary);
-        read.Patch.Find(sine.Id).ShouldNotBeNull().X.ShouldBe(NodeInstance.Extent);
+        read.Patch.Find(sine.Id).ShouldNotBeNull().X.ShouldBe(NodeInstance.Across);
     }
 
     [Fact]
@@ -109,8 +109,8 @@ public class NodeBoundsTests
         var sine = b.Add("osc.sine", 40, 20);
 
         var fragment = PatchClipboard.Copy(b.Patch, [sine.Id]);
-        var pasted = PatchClipboard.Paste(new Patch(), fragment, NodeInstance.Extent * 3);
+        var pasted = PatchClipboard.Paste(new Patch(), fragment, NodeInstance.Across * 3);
 
-        pasted.ShouldHaveSingleItem().X.ShouldBe(NodeInstance.Extent);
+        pasted.ShouldHaveSingleItem().X.ShouldBe(NodeInstance.Across);
     }
 }

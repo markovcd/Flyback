@@ -283,7 +283,7 @@ public sealed partial class NodeEditor
     /// Puts every module wholly inside the canvas.
     /// </summary>
     /// <remarks>
-    /// The coordinate holds itself to <see cref="NodeInstance.Extent"/> on its
+    /// The coordinate holds itself inside the canvas (<see cref="NodeInstance.Across"/>) on its
     /// own, and that is the backstop against a module being lost altogether. It
     /// cannot do this part: what it holds is a corner, and how far the body
     /// reaches past that corner depends on how many sockets the module has —

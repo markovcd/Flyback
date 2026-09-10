@@ -39,7 +39,7 @@ public class DragBoundsTests : UiTest
     /// The furthest a module's corner may go: the edge of the canvas, less the
     /// module itself, since what has to fit inside is the whole of it.
     /// </summary>
-    private static readonly double Wall = NodeInstance.Extent - NodeGeometry.Width;
+    private static readonly double Wall = NodeInstance.Across - NodeGeometry.Width;
 
     private static (NodeEditor Editor, Window Window) Editing(Patch patch)
     {
@@ -131,8 +131,8 @@ public class DragBoundsTests : UiTest
         var def = NodeCatalog.BuiltIn.Require(near.TypeId);
         var body = NodeGeometry.Bounds(near, def);
 
-        body.Right.ShouldBeLessThanOrEqualTo(NodeInstance.Extent + 0.001);
-        body.Bottom.ShouldBeLessThanOrEqualTo(NodeInstance.Extent + 0.001);
+        body.Right.ShouldBeLessThanOrEqualTo(NodeInstance.Across + 0.001);
+        body.Bottom.ShouldBeLessThanOrEqualTo(NodeInstance.Down + 0.001);
     }
 
     /// <summary>
@@ -147,7 +147,7 @@ public class DragBoundsTests : UiTest
 
         // The corner on the edge, which is as far out as a coordinate can be:
         // the body is then a whole module past it.
-        var hanging = builder.Add("value", NodeInstance.Extent, NodeInstance.Extent);
+        var hanging = builder.Add("value", NodeInstance.Across, NodeInstance.Down);
         builder.Add(NodeCatalog.OutputTypeId, 0, 0);
 
         Editing(builder.Patch);
@@ -155,8 +155,8 @@ public class DragBoundsTests : UiTest
         var def = NodeCatalog.BuiltIn.Require(hanging.TypeId);
         var body = NodeGeometry.Bounds(hanging, def);
 
-        body.Right.ShouldBeLessThanOrEqualTo(NodeInstance.Extent + 0.001);
-        body.Bottom.ShouldBeLessThanOrEqualTo(NodeInstance.Extent + 0.001);
+        body.Right.ShouldBeLessThanOrEqualTo(NodeInstance.Across + 0.001);
+        body.Bottom.ShouldBeLessThanOrEqualTo(NodeInstance.Down + 0.001);
     }
 
     /// <summary>

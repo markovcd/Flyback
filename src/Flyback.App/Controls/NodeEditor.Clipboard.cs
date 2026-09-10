@@ -219,11 +219,9 @@ public sealed partial class NodeEditor
     /// patch compiles to exactly the same program before and after, and the
     /// picture and the sound are untouched. See ADR-0044.
     /// <para>
-    /// A drawing too big for the canvas is said rather than shown, because what
-    /// it looks like is a layout that has gone wrong: every coordinate is held
-    /// inside the canvas, so the far edges arrive folded onto the boundary and
-    /// stacked. Shutting a group is the way out of it and it is the same gesture
-    /// that caused it, so the message names it.
+    /// A drawing too big for the canvas is said rather than shown: coordinates
+    /// are held inside the canvas, so it arrives with its far edges folded onto
+    /// the boundary and stacked, which looks like a layout that has gone wrong.
     /// </para>
     /// </remarks>
     public void Tidy()
@@ -320,8 +318,8 @@ public sealed partial class NodeEditor
     /// <para>
     /// What it holds is the view rather than its centre, so the far side of the
     /// canvas comes to the far side of the window and stops. The reach is a
-    /// little wider than <see cref="NodeInstance.Extent"/>, because that holds a
-    /// module's corner and its body hangs below and to the right of it — a view
+    /// little wider than <see cref="NodeInstance.Across"/> and <see cref="NodeInstance.Down"/>,
+    /// because those hold a module's corner and its body hangs below and to the right of it — a view
     /// stopped on the coordinate itself would cut the last module in half and
     /// refuse to show the rest.
     /// </para>
@@ -336,11 +334,13 @@ public sealed partial class NodeEditor
     /// </remarks>
     private void PanTo(Point to)
     {
-        pan = new Point(Held(to.X, Bounds.Width), Held(to.Y, Bounds.Height));
+        pan = new Point(
+            Held(to.X, Bounds.Width, ViewReachAcross),
+            Held(to.Y, Bounds.Height, ViewReachDown));
 
-        double Held(double offset, double viewport)
+        double Held(double offset, double viewport, double reach)
         {
-            var edge = ViewReach * zoom;
+            var edge = reach * zoom;
 
             return viewport > edge * 2
                 ? viewport / 2

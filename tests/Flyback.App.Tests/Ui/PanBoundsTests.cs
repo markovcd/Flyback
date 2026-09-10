@@ -25,7 +25,8 @@ public class PanBoundsTests : UiTest
     private const double Wide = 1200;
     private const double Tall = 800;
 
-    private const double Reach = NodeEditor.ViewReach;
+    private const double ReachAcross = NodeEditor.ViewReachAcross;
+    private const double ReachDown = NodeEditor.ViewReachDown;
 
     private static (NodeEditor Editor, Window Window) Editing()
     {
@@ -87,7 +88,7 @@ public class PanBoundsTests : UiTest
         // Dragging the view leftwards walks it towards the right-hand edge.
         PanBy(window, new Vector(-200_000, 0));
 
-        View(editor).Right.ShouldBe(Reach, 0.001);
+        View(editor).Right.ShouldBe(ReachAcross, 0.001);
     }
 
     [AvaloniaFact]
@@ -97,7 +98,7 @@ public class PanBoundsTests : UiTest
 
         PanBy(window, new Vector(200_000, 0));
 
-        View(editor).Left.ShouldBe(-Reach, 0.001);
+        View(editor).Left.ShouldBe(-ReachAcross, 0.001);
     }
 
     [AvaloniaFact]
@@ -107,7 +108,7 @@ public class PanBoundsTests : UiTest
 
         PanBy(window, new Vector(0, -200_000));
 
-        View(editor).Bottom.ShouldBe(Reach, 0.001);
+        View(editor).Bottom.ShouldBe(ReachDown, 0.001);
     }
 
     [AvaloniaFact]
@@ -117,7 +118,7 @@ public class PanBoundsTests : UiTest
 
         PanBy(window, new Vector(0, 200_000));
 
-        View(editor).Top.ShouldBe(-Reach, 0.001);
+        View(editor).Top.ShouldBe(-ReachDown, 0.001);
     }
 
     /// <summary>
@@ -161,10 +162,10 @@ public class PanBoundsTests : UiTest
 
         var view = View(editor);
 
-        view.Right.ShouldBeLessThanOrEqualTo(Reach + 0.001);
-        view.Bottom.ShouldBeLessThanOrEqualTo(Reach + 0.001);
-        view.Left.ShouldBeGreaterThanOrEqualTo(-Reach - 0.001);
-        view.Top.ShouldBeGreaterThanOrEqualTo(-Reach - 0.001);
+        view.Right.ShouldBeLessThanOrEqualTo(ReachAcross + 0.001);
+        view.Bottom.ShouldBeLessThanOrEqualTo(ReachDown + 0.001);
+        view.Left.ShouldBeGreaterThanOrEqualTo(-ReachAcross - 0.001);
+        view.Top.ShouldBeGreaterThanOrEqualTo(-ReachDown - 0.001);
     }
 
     [AvaloniaFact]
@@ -188,13 +189,13 @@ public class PanBoundsTests : UiTest
     /// <remarks>
     /// Reachable rather than defensive: the zoom stops at a fifth, which puts
     /// five windows' worth of graph units across the view, so anything past
-    /// about two thousand pixels wide is already there. Panning at all in that
+    /// about three thousand pixels wide is already there. Panning at all in that
     /// state must not drag the canvas off centre.
     /// </remarks>
     [AvaloniaFact]
     public void A_window_wider_than_the_canvas_holds_it_in_the_middle()
     {
-        const double veryWide = 2600;
+        const double veryWide = 3400;
 
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
         builder.Add(NodeCatalog.OutputTypeId, 0, 0);
@@ -214,7 +215,7 @@ public class PanBoundsTests : UiTest
             editor.GraphToScreen.Invert().Transform(new Point(veryWide, Tall)));
 
         view.Width.ShouldBeGreaterThan(
-            NodeInstance.Extent * 2, "the window should be seeing past both edges at once");
+            NodeInstance.Across * 2, "the window should be seeing past both edges at once");
 
         window.MouseDown(at, MouseButton.Middle);
         window.MouseMove(at + new Point(900, 0));
@@ -236,14 +237,15 @@ public class PanBoundsTests : UiTest
     [AvaloniaFact]
     public void The_view_reaches_a_little_past_the_canvas()
     {
-        NodeEditor.ViewReach.ShouldBeGreaterThan(NodeInstance.Extent);
+        NodeEditor.ViewReachAcross.ShouldBeGreaterThan(NodeInstance.Across);
+        NodeEditor.ViewReachDown.ShouldBeGreaterThan(NodeInstance.Down);
 
         var (editor, window) = Editing();
 
         PanBy(window, new Vector(-200_000, 0));
 
         View(editor).Right.ShouldBeGreaterThan(
-            NodeInstance.Extent, "some of the ground past the edge should be reachable");
+            NodeInstance.Across, "some of the ground past the edge should be reachable");
     }
 
     /// <summary>

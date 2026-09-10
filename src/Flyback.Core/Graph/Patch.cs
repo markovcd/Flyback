@@ -39,44 +39,47 @@ public sealed class NodeInstance
     public const int NameLimit = 26;
 
     /// <summary>
-    /// How far from the origin a module may sit, on each axis, in graph units.
-    /// The canvas is that square and nothing may be put outside it.
+    /// How far from the origin a module may sit to either side, in graph units.
     /// </summary>
     /// <remarks>
-    /// Ten thousand units across, which is about thirty modules wide at the
-    /// spacing the layout uses and a little under twice the span of the largest
-    /// preset in the box — 'Whole band', which is 92 modules and reaches 5060
-    /// units across once the layout has placed it (ADR-0070). Room to work in
-    /// rather than room to get lost in: a module flung far enough away is a
-    /// module that cannot be got back, because framing the patch clamps its
-    /// zoom — past a certain distance pressing F shows an empty grid with the
-    /// patch somewhere off it, and the only way back would be to close the file
-    /// without saving.
+    /// Fifteen thousand across, which holds the widest drawing in the box —
+    /// 'Acid' with its groups open, at 11708 — and no more. Room to work in
+    /// rather than room to get lost in: framing clamps its zoom, so a module
+    /// flung far enough away cannot be got back.
     /// <para>
     /// Held on the coordinate rather than on the gesture, so it is true of a
-    /// module however it was placed — dragged, pasted, laid out, read from a file
-    /// somebody edited by hand, or positioned by an assistant that has never seen
-    /// the canvas.
+    /// module however it was placed — dragged, pasted, laid out, or read from a
+    /// hand-edited file.
     /// </para>
     /// </remarks>
-    public const double Extent = 5_000d;
+    public const double Across = 7_500d;
+
+    /// <summary>
+    /// The same going down: ten thousand.
+    /// </summary>
+    /// <remarks>
+    /// Smaller than <see cref="Across"/> because a signal chain runs left to
+    /// right and the layout draws it that way, so patches grow across far faster
+    /// than they grow down — the tallest in the box is 5443.
+    /// </remarks>
+    public const double Down = 5_000d;
 
     public required Guid Id { get; init; }
 
     public required string TypeId { get; init; }
 
-    /// <summary>Where it sits. Always inside the canvas — see <see cref="Extent"/>.</summary>
+    /// <summary>Where it sits. Always inside the canvas — see <see cref="Across"/>.</summary>
     public double X
     {
         get;
-        set => field = Inside(value);
+        set => field = Inside(value, Across);
     }
 
     /// <inheritdoc cref="X"/>
     public double Y
     {
         get;
-        set => field = Inside(value);
+        set => field = Inside(value, Down);
     }
 
     /// <summary>
@@ -164,8 +167,8 @@ public sealed class NodeInstance
     /// the corners of a patch. Infinity is genuinely far away in a direction and
     /// lands on the edge like any other overshoot.
     /// </remarks>
-    private static double Inside(double value) =>
-        double.IsNaN(value) ? 0d : Math.Clamp(value, -Extent, Extent);
+    private static double Inside(double value, double edge) =>
+        double.IsNaN(value) ? 0d : Math.Clamp(value, -edge, edge);
 
     /// <summary>
     /// What to call this one: the name it was given, or its definition's where

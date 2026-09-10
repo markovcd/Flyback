@@ -902,11 +902,9 @@ public class NodeEditorTests : UiTest
     /// A patch too wide for the canvas is said rather than shown.
     /// </summary>
     /// <remarks>
-    /// Every coordinate is held inside the canvas, so a drawing that does not fit
-    /// on one does not hang off the edge — it arrives with the far end folded
-    /// onto the boundary and stacked there, which reads as a layout that has gone
-    /// wrong rather than as a patch that is too big. Reachable by opening the
-    /// groups of a large patch, which is why the sentence names shutting one.
+    /// Coordinates are held inside the canvas, so a drawing that does not fit
+    /// arrives with its far end folded onto the boundary and stacked, which reads
+    /// as a broken layout rather than an oversized patch.
     /// </remarks>
     [AvaloniaFact]
     public void Laying_out_a_patch_wider_than_the_canvas_says_so()
@@ -916,9 +914,9 @@ public class NodeEditorTests : UiTest
         var sink = builder.Add(NodeCatalog.OutputTypeId, 0, 0);
         var last = builder.Add("time", 0, 0);
 
-        // A node and the gap after it is 304 across and the canvas is 10000, so
-        // a chain of forty is half as wide again as there is room for.
-        for (var i = 0; i < 40; i++)
+        // A node and the gap after it is 304 across and the canvas is 15000, so
+        // a chain of sixty is a quarter wider than there is room for.
+        for (var i = 0; i < 60; i++)
         {
             var next = builder.Add("math.mul", 0, 0);
             builder.Wire(last, 0, next, 0);

@@ -28,7 +28,7 @@ public class CanvasEdgeTests : UiTest
     private const double Wide = 900;
     private const double Tall = 700;
 
-    private const double Edge = NodeInstance.Extent;
+    private const double Edge = NodeInstance.Across;
 
     /// <summary>
     /// An empty patch put down beside the right-hand edge, and the view walked

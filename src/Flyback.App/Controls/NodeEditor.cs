@@ -188,11 +188,14 @@ public sealed partial class NodeEditor : Control
     /// </remarks>
     internal const double ViewMargin = 160;
 
-    /// <summary>How far from the origin the view may see, on each axis.</summary>
-    internal const double ViewReach = NodeInstance.Extent + ViewMargin;
+    /// <summary>How far from the origin the view may see, to either side.</summary>
+    internal const double ViewReachAcross = NodeInstance.Across + ViewMargin;
+
+    /// <summary>The same going down, since the canvas is wider than it is tall.</summary>
+    internal const double ViewReachDown = NodeInstance.Down + ViewMargin;
 
     /// <summary>
-    /// The canvas itself, in graph units: the square a module may stand on.
+    /// The canvas itself, in graph units: the ground a module may stand on.
     /// </summary>
     /// <remarks>
     /// Drawn rather than merely enforced: a bound with nothing to show is a wall
@@ -200,10 +203,10 @@ public sealed partial class NodeEditor : Control
     /// the program.
     /// </remarks>
     internal static readonly Rect CanvasBounds = new(
-        -NodeInstance.Extent,
-        -NodeInstance.Extent,
-        NodeInstance.Extent * 2,
-        NodeInstance.Extent * 2);
+        -NodeInstance.Across,
+        -NodeInstance.Down,
+        NodeInstance.Across * 2,
+        NodeInstance.Down * 2);
 
     private Patch patch = new();
     private double zoom = 1;
