@@ -84,6 +84,8 @@ flyback-cli pack nebula.fbk -o nebula.fbkb
 flyback-cli print nebula.fbk -o nebula.fbks
 flyback-cli print nebula.fbk --check
 flyback-cli render nebula.fbks -o nebula.png
+flyback-cli probe --keys
+flyback-cli probe --provider all
 ```
 
 ### Commands
@@ -93,12 +95,19 @@ flyback-cli render nebula.fbks -o nebula.png
 - `info`: shows module and wire counts and compile cost
 - `pack`: packs a patch together with the files it references
 - `print`: writes the patch out as text in the language, and can check that the text builds back to the same program
+- `probe`: asks an assistant which models it has and what each one accepts
 
 `check` exits with:
 
 - `0`: no errors
 - `1`: patch errors
 - `2`: the job could not run
+
+`probe` is the one command that is not about a patch. It asks a provider's endpoint what it
+offers and records the answer in the settings file both programs read, so the app's model box
+fills itself in without being told. It takes minutes and the provider bills for it, which is
+why it is a command rather than a button; `--keys` says where each key would come from and
+asks nothing of anybody, and `--dry-run` prints what was found and leaves the settings alone.
 
 ## Bundles
 
