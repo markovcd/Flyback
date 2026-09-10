@@ -558,7 +558,10 @@ public class AssistantPanelTests : UiTest
     /// The bug this was written for: the amber branch wrote the excuse and the
     /// branch under it wrote only the color, so a panel that had once had no
     /// key went on saying "No key yet" in grey over every key that arrived
-    /// afterwards — which reads as the key having been thrown away.
+    /// afterwards — which reads as the key having been thrown away. The footer
+    /// no longer has a grey branch to fall into; a key arriving now hides it
+    /// outright, so the equivalent bug would be the excuse text surviving,
+    /// visible or not, once there is nothing left to excuse.
     /// </remarks>
     [AvaloniaFact]
     public void The_footer_stops_saying_what_was_wrong_once_it_is_right()
@@ -569,7 +572,8 @@ public class AssistantPanelTests : UiTest
 
         var footer = All<TextBlock>(window).Single(t => t.Name == "footer");
 
-        footer.Text.ShouldBe(Keyless.Excuse, "there is no key, and the footer is where that is said");
+        footer.IsVisible.ShouldBeTrue("there is no key, and the footer is where that is said");
+        footer.Text.ShouldBe(Keyless.Excuse);
 
         var host = Settings(window);
 
@@ -577,13 +581,9 @@ public class AssistantPanelTests : UiTest
         Settle(host);
         Settle(window);
 
-        var said = footer.Text ?? string.Empty;
-
-        said.ShouldNotBe(Keyless.Excuse);
-
-        // Who an instruction would now go to, which is the standing disclosure
-        // the excuse was written over.
-        said.ShouldContain(new Both().Name);
+        // Nothing left to excuse, so the footer drops out rather than standing
+        // in grey over stale amber text.
+        footer.IsVisible.ShouldBeFalse();
     }
 
     /// <summary>One that is never ready, which is what a provider is until a key turns up.</summary>
