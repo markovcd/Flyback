@@ -3,35 +3,23 @@ namespace Flyback.Core.Graph;
 /// <summary>
 /// What kind of thing a preset is, which is what the picker groups by.
 /// </summary>
-/// <remarks>
-/// A patch that ships is teaching something, and the three ways of teaching are
-/// different enough that mixing them in one list made all of them harder to
-/// find. The distinction is also a rule about what may be in the patch, which is
-/// why it is worth writing down rather than leaving to a naming convention: an
-/// <see cref="Idea"/> reaches one sink and only one.
-/// </remarks>
 public enum PresetKind
 {
     /// <summary>
-    /// One idea, at one sink. A patch about sound has no picture in it and a
-    /// patch about picture makes no sound — not as a style but because the other
-    /// half was always decoration, and decoration is the thing a reader has to
-    /// look past to find what the patch is for. Where the idea genuinely has no
-    /// picture, the screen stays black and that is the honest statement of it.
+    /// One idea, at one sink: a patch about sound has no picture in it, and one
+    /// about picture makes no sound.
     /// </summary>
     Idea,
 
     /// <summary>
-    /// A patch that is about the two sinks meeting, and so is correctly both.
-    /// The test is whether taking either half away would leave the point
-    /// standing: a Meter with nothing to draw and a Scan with nothing to hear
-    /// are not patches at all.
+    /// A patch about the two sinks meeting, where taking either half away would
+    /// leave no point standing.
     /// </summary>
     Interplay,
 
     /// <summary>
     /// What one patch can be rather than what one module does. Exempt from the
-    /// one-idea rule by design, and there are few of them on purpose.
+    /// one-idea rule.
     /// </summary>
     Showcase,
 
@@ -40,21 +28,10 @@ public enum PresetKind
 }
 
 /// <summary>
-/// A patch to start from, and how it is offered. Built on demand rather than
-/// held ready, because a preset from a plugin can only be assembled once that
-/// plugin's modules are in the catalogue.
+/// A patch to start from, and how it is offered. Built on demand, because a
+/// preset from a plugin needs that plugin's modules in the catalogue.
 /// </summary>
-/// <remarks>
-/// <paramref name="Description"/> and <paramref name="Kind"/> are optional
-/// parameters rather than required ones, so a plugin compiled against an earlier
-/// build still finds the constructor it was compiled against — the same bargain
-/// the init properties on <see cref="NodeDef"/> make.
-/// </remarks>
-/// <param name="Description">
-/// One line saying what the patch is for, shown under its name. Every preset in
-/// the box has a good deal more than this written on it in the source; this is
-/// the sentence of it that a person choosing between sixteen names needs.
-/// </param>
+/// <param name="Description">One line saying what the patch is for, shown under its name.</param>
 public sealed record PatchPreset(
     string Name,
     Func<ModuleCatalog, Patch> Build,
@@ -65,22 +42,9 @@ public sealed record PatchPreset(
 public static class Presets
 {
     /// <summary>
-    /// Everything the engine ships, in the order the picker shows it: the ideas
-    /// first, then the patches about the two sinks meeting, then the three big
-    /// ones, and the blank canvas last.
+    /// Everything the engine ships, in the order the picker shows it: ideas,
+    /// then interplay, then the big ones, then the blank canvas.
     /// </summary>
-    /// <remarks>
-    /// Grouped by <see cref="PatchPreset.Kind"/> rather than by subject, because
-    /// what somebody opening the list wants to know first is what kind of thing
-    /// they are about to be shown. Within a group they are in the order they are
-    /// worth meeting in.
-    /// <para>
-    /// The rule the <see cref="PresetKind.Idea"/> group keeps is that a patch
-    /// teaching one thing reaches one sink: the half that is not the subject is
-    /// decoration, and decoration is the half a reader has to see past to find
-    /// the point.
-    /// </para>
-    /// </remarks>
     public static IReadOnlyList<PatchPreset> All =>
     [
         // --- one idea, one sink ------------------------------------------------
@@ -153,26 +117,13 @@ public static class Presets
     /// sequence has got to is the color, and the gate that makes a rest silent
     /// is the same one that takes the light out of it.
     /// </summary>
-    /// <remarks>
-    /// Nothing here is duplicated between the two sinks. Every difference
-    /// between what the ear gets and what the eye gets is a different output of
-    /// the one module — which is the point of it having three.
-    /// <para>
-    /// There is no clock in it and no Coordinates either. The sequencer's and
-    /// the oscillator's <c>in</c> are normalled to Time and the Rings' <c>x</c>
-    /// and <c>y</c> to Coordinates (ADR-0050), so both are already driven and
-    /// the whole patch is the part somebody chose.
-    /// </para>
-    /// </remarks>
     public static Patch Sequence(ModuleCatalog modules)
     {
         var b = new PatchBuilder(modules);
 
-        // Three notes a second, and the gate closed for the last third of each
-        // so that two of the same note in a row are two notes. Ports are in,
-        // rate, gate length, shape — the notes themselves are a list on the
-        // node rather than knobs on it (ADR-0038). 'in' takes no wire: it runs
-        // on the clock every domain socket is normalled to.
+        // Three notes a second, with the gate closed for the last third so that
+        // two of the same note in a row are two notes. The notes themselves are
+        // a list on the node rather than knobs on it (ADR-0038).
         var steps = b.Add("seq.notes", (1, 3f), (2, 0.66f));
 
         // Ear: the step is a note number, so it goes in where a note goes.
@@ -180,21 +131,16 @@ public static class Presets
         var tone = b.Add("osc.sine");
         var voiced = b.Add("math.mul");
 
-        // Eye: rings whose count is the position in the pattern, so the picture
-        // reorganises itself on the beat rather than drifting through it.
-        //
-        // Remapped rather than multiplied, so the first step of the pattern is a
-        // ring count of one and a half rather than of nothing: index starts at
-        // zero, and zero rings is a flat field with no pattern in it at all.
+        // Eye: rings whose count is the position in the pattern. Remapped rather
+        // than multiplied, since index starts at zero and zero rings is a flat
+        // field with no pattern in it.
         var depth = b.Add("math.remap", (1, 0f), (2, 1f), (3, 1.5f), (4, 9f));
         var rings = b.Add("pattern.rings");
         var glow = b.Add("math.remap", (1, -1f), (2, 1f), (3, 0.05f), (4, 1f));
 
-        // The gate dims the picture exactly where it silences the tone, so the
-        // rhythm is visible as well as audible — but only down to four tenths.
-        // Multiplying by the gate itself is the obvious wiring and the wrong
-        // one: the screen would be black for the third of every step that the
-        // note is not sounding, which reads as a fault rather than as a pulse.
+        // The gate dims the picture where it silences the tone, but only to four
+        // tenths: multiplying by the gate itself blacks the screen for a third of
+        // every step, which reads as a fault rather than as a pulse.
         var pulse = b.Add("math.remap", (1, 0f), (2, 1f), (3, 0.4f), (4, 1f));
         var lit = b.Add("math.mul");
         var color = b.Add("color.hsv", (1, 0.8f));
@@ -224,53 +170,6 @@ public static class Presets
     /// A drum with the picture listening to it rather than being told about the
     /// beat.
     /// </summary>
-    /// <remarks>
-    /// <para>
-    /// The drum first, because it is two envelopes and an oscillator and the
-    /// second envelope is the whole difference between a drum and a beep. A kick
-    /// is a sine whose pitch falls out from under it: the pitch envelope is the
-    /// short one, so the note starts high and has dropped to the body of the
-    /// drum before it is half over. What the ear hears at the top is the beater
-    /// and what it hears after is the shell, and both are one oscillator. Here
-    /// the pitch is a fixed 70 Hz and only the level is shaped, because the drum
-    /// is not what this patch is about; Whole band builds the full two-envelope
-    /// version.
-    /// </para>
-    /// <para>
-    /// What it is about is the wire from the voice into the Meter. Every patch
-    /// before this one that wanted the eye and the ear to agree did it by sending
-    /// one modulator to both, which is a patch saying a thing twice rather than
-    /// one half of it hearing the other. And a drum is exactly where that breaks
-    /// down: an envelope has no memory on the video path, so all it can hand the
-    /// screen is its gate — a flash a beat, in time with what the ear hears
-    /// rather than shaped like it.
-    /// </para>
-    /// <para>
-    /// Here nothing is sent to both. The picture is driven by a Meter, and a
-    /// Meter is not computed by the picture at all: it is a reading of what the
-    /// speakers actually played, handed to the frame the way a note somebody is
-    /// holding down is handed to it. So what lights the rings is the envelope
-    /// itself — the fall of it as well as the start — and the color leans with
-    /// the loudness rather than snapping with the trigger.
-    /// </para>
-    /// <para>
-    /// Turn the sound off and the picture stops moving — it does not go out,
-    /// because a floor under the reading keeps the field dimly lit, but nothing
-    /// in it changes. That is the honest statement of what the module is and the
-    /// one thing to know before building on it: there is no level without a
-    /// speaker. Both readings are used, because the difference between them is
-    /// most of the point: 'peak' is the hit and lights the rings, 'level' is the
-    /// loudness of the window and takes the hue, so the color lags the flash by
-    /// exactly as much as a room does.
-    /// </para>
-    /// <para>
-    /// The window is a thirtieth of a second, which is about a frame. Shorter
-    /// than that and the picture is sampling a slice of each frame and reads as
-    /// a flicker; much longer and a drum this short is diluted into the silence
-    /// around it. It is the only smoothing there is, which is why it is the knob
-    /// to reach for first.
-    /// </para>
-    /// </remarks>
     public static Patch Heard(ModuleCatalog modules)
     {
         var b = new PatchBuilder(modules);
@@ -286,19 +185,15 @@ public static class Presets
         var tone = b.Add("osc.sine");
         var voiced = b.Add("math.mul");
 
-        // The one wire that is new in the machine: a signal on its way to the
-        // speakers, read by something that hands the picture a number for it.
-        // 'in' is swept, so nothing upstream of here is lowered into the frame —
-        // the drum is not computed per pixel to be looked at.
+        // The wire this patch is about: a signal on its way to the speakers,
+        // read by something that hands the picture a number for it.
         var heard = b.Add(NodeCatalog.MeterTypeId, (1, -1.5f));
 
         var rings = b.Add("pattern.rings", (2, 5f));
         var glow = b.Add("math.remap", (1, -1f), (2, 1f), (3, 0.1f), (4, 1f));
 
-        // A floor under the reading, for the reason the Sequence preset puts one
-        // under its gate: a picture that is black whenever nothing is sounding
-        // reads as a fault rather than as a pulse — and with the sound switched
-        // off altogether it would be a preset that draws nothing at all.
+        // A floor under the reading, so a silent moment is a dim picture rather
+        // than a black one.
         var swell = b.Add("math.add", (1, 0.18f));
         var lit = b.Add("math.mul");
         var color = b.Add("color.hsv", (1, 0.75f));
@@ -328,48 +223,6 @@ public static class Presets
     /// In drives the pitch, the envelope and the timbre, and with no key down it
     /// is silent and the picture is dim.
     /// </summary>
-    /// <remarks>
-    /// <para>
-    /// All three of the module's useful outputs are here, and each is wired the
-    /// way only it can be. 'pitch' is a note number, so it goes where a note goes
-    /// — into a Note for the ear, and through a Clamp into a pair of Remaps for
-    /// the eye, where it picks both the hue and how tight the rings are. 'gate'
-    /// opens the envelope.
-    /// 'trigger' is the one that needs the least obvious wiring and earns its
-    /// place: it is a single evaluation high at each note struck, which is
-    /// exactly what a Sample &amp; Hold's own trigger wants.
-    /// </para>
-    /// <para>
-    /// What the hold catches is a Noise wandering on the clock, and what it does
-    /// with it is set the Pulse's duty cycle — so every note struck has a timbre
-    /// of its own, settled the instant it starts and steady for as long as it is
-    /// held. Sampling a moving signal is the whole point of the module; doing it
-    /// on a note rather than on a beat is what a keyboard adds to it. Without the
-    /// hold, the same Noise straight into 'width' would smear the tone about
-    /// while a note was sounding, which is a different and much less musical
-    /// instrument.
-    /// </para>
-    /// <para>
-    /// Velocity is deliberately not wired. A typist strikes every key the same,
-    /// so a patch that shipped with it wired would be a patch with a knob that
-    /// does nothing until hardware arrives — worse than one with an obvious
-    /// place to add a wire.
-    /// </para>
-    /// <para>
-    /// The trigger reaches the ear and not the eye, and that is not an oversight.
-    /// A picture is one evaluation with nothing before it, so there is no
-    /// previous count for the module to have differenced — see ADR-0056 — and a
-    /// trigger on the screen is nought at every pixel by decision rather than by
-    /// accident. The Sample &amp; Hold is in the same position and stops holding
-    /// there for the same reason. So the eye is given the two outputs that mean
-    /// something without a past: which note, and whether one is down.
-    /// </para>
-    /// <para>
-    /// The screen dims rather than going black between notes, exactly as
-    /// <see cref="Sequence"/>'s does and for the same reason: a patch that is
-    /// black until you touch it reads as one that is broken.
-    /// </para>
-    /// </remarks>
     public static Patch Played(ModuleCatalog modules)
     {
         var b = new PatchBuilder(modules);
@@ -398,10 +251,8 @@ public static class Presets
 
         var voiced = b.Add("math.mul");
 
-        // The timbre, which is the whole of what 'trigger' is here for. A clock
-        // into 'z' is what makes the field wander rather than sit still; x and y
-        // are nothing at the speakers, so what the ear's copy of this walks is a
-        // line through the noise rather than a picture of it.
+        // The timbre, which is what 'trigger' is here for. A clock into 'z'
+        // makes the field wander; x and y are nothing at the speakers.
         var clock = b.Add("time");
         var drift = b.Add("math.mul", (1, 3f));
         var wander = b.Add("pattern.noise");
@@ -411,18 +262,11 @@ public static class Presets
         // silence, and a note that happened to catch one would simply not sound.
         var width = b.Add("math.remap", (1, 0f), (2, 1f), (3, 0.12f), (4, 0.88f));
 
-        // Eye. Two readings of the same note number — what color it is, and how
-        // finely the rings are drawn — over the two octaves either side of
-        // middle C, which is wider than the two rows of a typewriter reach and
-        // leaves room for a keyboard that reaches further.
-        //
-        // Held into that range before either reading, which does two things at
-        // once. An eighty-eight-key keyboard runs past both ends of it, and past
-        // the ends the hue would wrap round to a color the other end is already
-        // using. And it settles what an unplayed patch looks like: nobody playing
-        // reads as nought — the same answer a program with no block at all gives
-        // — and nought is not a note anybody will strike, so the picture rests at
-        // the bottom of the range it draws rather than wherever nought lands.
+        // Eye. Two readings of the note number — its color, and how finely the
+        // rings are drawn — over the two octaves either side of middle C. Held
+        // into that range first, so a wider keyboard cannot wrap the hue round
+        // to a color the other end is using, and so an unplayed patch rests at
+        // the bottom of the range rather than wherever nought lands.
         var range = b.Add("math.clamp", (1, 36f), (2, 84f));
 
         var hue = b.Add("math.remap", (1, 36f), (2, 84f), (3, 0.55f), (4, 0f));
@@ -432,9 +276,7 @@ public static class Presets
         var glow = b.Add("math.remap", (1, -1f), (2, 1f), (3, 0.1f), (4, 1f));
 
         // What the envelope hands the screen is its gate, since an envelope has
-        // no memory to run a shape in on the video path. Held rather than struck,
-        // that is the right picture of a keyboard: the light is on while the key
-        // is down. Dimmed to a quarter rather than to nothing between notes.
+        // no memory on the video path. Dimmed to a quarter between notes.
         var lift = b.Add("math.remap", (1, 0f), (2, 1f), (3, 0.25f), (4, 1f));
         var lit = b.Add("math.mul");
         var skin = b.Add("color.hsv", (1, 0.8f));
@@ -517,13 +359,9 @@ public static class Presets
     {
         var b = new PatchBuilder(modules);
 
-        // One clock and two speeds off it, rather than two clocks. An output
-        // fans out to as many inputs as you like, so what a patch needs more
-        // than one of is the scaling, not the time.
-        //
-        // It is here at all only because both speeds are scaled. The Rotate's
-        // own x and y need no such module: they are normalled to Coordinates
-        // and are already reading the pixel's position (ADR-0050).
+        // One clock and two speeds off it, rather than two clocks. Here only
+        // because both speeds are scaled: the Rotate's own x and y are normalled
+        // to Coordinates (ADR-0050).
         var clock = b.Add("time");
         var spin = b.Add("math.mul", (1, 0.15f));
         var drift = b.Add("math.mul", (1, 0.3f));
@@ -557,10 +395,8 @@ public static class Presets
     {
         var b = new PatchBuilder(modules);
 
-        // Here for the Rings' 'offset' and nothing else — the two oscillators
-        // and the Rings' own x and y are normalled and take no wire (ADR-0050).
-        // What is left is the one socket in the patch that has to be told to
-        // move, which is what a Time module is now for.
+        // For the Rings' 'offset', the one socket in the patch that has to be
+        // told to move — everything else is normalled (ADR-0050).
         var time = b.Add("time");
 
         // The shared control signal, remapped to 0..1 by amp and bias.
@@ -597,38 +433,6 @@ public static class Presets
     /// is not made by an oscillator anywhere — it is the image, read along a
     /// line.
     /// </summary>
-    /// <remarks>
-    /// <para>
-    /// The rings are centred on the origin and the loop is not, which is the
-    /// whole of why this makes a sound. Distance from the origin is what Rings
-    /// is a function of, so a loop centred there sits on one ring for the entire
-    /// turn and reads a constant; pushed off centre it crosses several, and the
-    /// crossing is the waveform. Slide the Scan's 'x' back to nothing and the
-    /// patch goes silent with the picture unchanged, which is the fastest way to
-    /// see what the module is actually doing.
-    /// </para>
-    /// <para>
-    /// What it is doing is FM. The value along the loop is the sine of a
-    /// distance that varies smoothly round the turn, and a sine of a periodic
-    /// function is a phase-modulated one — so the Rings' own 'freq' is the
-    /// modulation index and winding it up blooms the harmonics rather than
-    /// changing the pitch. The pitch is the Scan's 'rate' and nothing else.
-    /// </para>
-    /// <para>
-    /// The slow sine walks the loop's centre outward and back, which is a
-    /// wavetable sweep: the table is the field, and where the loop is cut
-    /// through it is the position in the table. That is the knob this patch is
-    /// really for. The Scan's 'view' is laid over the rings so the loop can be
-    /// seen where it runs, with the value it is reading swinging the trace off
-    /// it — the X-Y display to a Probe's chart.
-    /// </para>
-    /// <para>
-    /// The rings are lowered twice here, once for the eye and once inside the
-    /// sweep (ADR-0040): the two are the same module read at different places,
-    /// and two readings cannot share a register. It costs ops rather than
-    /// correctness, and it is the price of seeing the thing being scanned.
-    /// </para>
-    /// </remarks>
     public static Patch RingScan(ModuleCatalog modules)
     {
         var b = new PatchBuilder(modules);
@@ -682,50 +486,6 @@ public static class Presets
     /// A noise field played as a melody and drawn as the terraces it is being
     /// snapped to: one Quantiser, in a pentatonic, feeding both sinks.
     /// </summary>
-    /// <remarks>
-    /// <para>
-    /// The Noise is one module read two ways, which is what makes the picture
-    /// honest rather than illustrative. On the audio path x and y are nothing —
-    /// there is no pixel — so what the ear gets is a walk along <c>z</c> alone: a
-    /// value stepping once a beat, and a melody once the scale has pulled it
-    /// onto notes. On the video path the same module reads the pixel's own
-    /// position at that same <c>z</c>, so what the eye gets is the walk laid out
-    /// across the screen. The note you hear is the color at the middle of the
-    /// picture.
-    /// </para>
-    /// <para>
-    /// The two sinks part company at the Sample & Hold, which is the other
-    /// module here that is read two ways. The ear needs the field to stop moving
-    /// between one note and the next; the eye needs it not to, or the picture
-    /// would snap on the beat instead of drifting. A Hold is exactly that
-    /// difference — it holds where there is a before to hold from and is a wire
-    /// where there is not, so the speakers get a melody in steps and the screen
-    /// goes on drifting, out of one module and one wire.
-    /// </para>
-    /// <para>
-    /// A pentatonic because it is the scale with no wrong note in it: a signal
-    /// with no idea what key it is in lands somewhere musical whatever it does,
-    /// which is the whole argument for quantising in the first place. The five
-    /// notes are also what makes the terraces uneven — the gaps between them are
-    /// two and three semitones rather than one, so the bands are visibly
-    /// different widths and the widths <em>are</em> the scale.
-    /// </para>
-    /// <para>
-    /// Hue is quantised and brightness is not, which is the before and after of
-    /// the snap in one picture: hard-edged bands of color sitting inside the
-    /// smooth field they were cut from. Chromatic does the same trick a semitone
-    /// at a time; this one does it a scale at a time, and the difference between
-    /// the two pictures is the difference between the two modules.
-    /// </para>
-    /// <para>
-    /// The pitch steps and the tone does not click, for ADR-0030's reason — the
-    /// oscillator carries its phase, so a frequency that jumps bends the waveform
-    /// rather than breaking it. Nothing here smooths anything, and the one place
-    /// that turned out to be a liability is why there is a Hold in it at all:
-    /// not clicking is exactly what makes a pitch change mid-note sound like a
-    /// slide instead of like a mistake.
-    /// </para>
-    /// </remarks>
     public static Patch InKey(ModuleCatalog modules)
     {
         var b = new PatchBuilder(modules);
@@ -751,23 +511,13 @@ public static class Presets
         // the bottom and high enough to sing at the top.
         var range = b.Add("math.remap", (1, 0f), (2, 1f), (3, 45f), (4, 69f));
 
-        // A minor pentatonic — A C D E G, the same five notes as C major
-        // pentatonic. The scale is a set on the module rather than sockets on it
-        // (ADR-0051), so nothing is wired here and the notes are on the node.
+        // A minor pentatonic — A C D E G. The scale is a set on the module
+        // rather than sockets on it (ADR-0051).
         //
-        // Its 'hold' is the whole difference between a melody and a glide, and
-        // it took hearing it to find. A note's pitch has to be settled before the
-        // note starts and stay settled until it has finished — and a field that
-        // moves freely crosses into the next note of the scale at whatever moment
-        // it happens to, which is as often as not in the middle of one. The pitch
-        // steps cleanly when it does (ADR-0030 is what stops that clicking), and
-        // a clean step in the middle of a sounding note is not heard as a new
-        // note at all: with no onset to mark it, the ear takes it for the note it
-        // was already listening to, sliding.
-        //
-        // The gate that opens the envelope goes into 'hold' as well, so the
-        // interval the note is frozen for is the interval it is sounding for, by
-        // construction rather than by arithmetic.
+        // 'hold' is the difference between a melody and a glide: a pitch that
+        // changes mid-note has no onset to mark it, so the ear takes it for the
+        // note it was already on, sliding. The envelope's gate goes into 'hold'
+        // as well, so a note is frozen for exactly as long as it sounds.
         var key = b.Add(NodeCatalog.QuantiserTypeId);
         ScaleExtra.Set(key, [0, 2, 4, 7, 9]);
 
@@ -785,24 +535,17 @@ public static class Presets
         var pluck = b.Add(NodeCatalog.AdsrTypeId, (1, -2.4f), (2, -0.85f), (3, 0f), (4, -1.5f));
         var struck = b.Add("math.mul");
 
-        // Eye: the snapped note as a hue, one turn of the wheel to the octave —
-        // so a note is the same color wherever on screen it turns up, and the
-        // one at the middle is the one being played.
-        //
-        // Wrapped rather than run across the whole range, which was the first
-        // thing tried and does not work: two and a half octaves spread over one
-        // sweep of hue puts adjacent notes a twentieth of the wheel apart, and
-        // the terraces come out as a gradient with faint creases in it. Per
-        // octave, the five notes of the scale are a sixth of the wheel apart at
-        // the closest, which is the difference between a band and a crease.
+        // Eye: the snapped note as a hue, one turn of the wheel to the octave,
+        // so a note is the same color wherever it turns up. Wrapped rather than
+        // spread across the whole range — over two and a half octaves adjacent
+        // notes would be a twentieth of the wheel apart, and the terraces would
+        // read as a gradient with creases in it.
         var wheel = b.Add("math.mul", (1, 1f / 12f));
         var octave = b.Add("math.fract");
 
-        // Warm at the bottom of the octave and cool at the top, over rather less
-        // than the whole wheel: a full turn puts red beside green beside purple,
-        // which reads as a test card rather than as a field with steps in it.
-        // Half a turn keeps neighbouring notes related and still tells them
-        // apart, and the seam where an octave rolls over is a real edge.
+        // Warm at the bottom of the octave and cool at the top, over half the
+        // wheel rather than all of it: a full turn puts red beside green beside
+        // purple, which reads as a test card.
         var height = b.Add("math.remap", (1, 0f), (2, 1f), (3, 0.02f), (4, 0.6f));
 
         // And the field itself as brightness, unsnapped. This is the whole
@@ -848,38 +591,13 @@ public static class Presets
     /// into wedges, bent by a noise field read from inside the fold, taken as
     /// travelling rings, and laid over a trail of its own previous frames.
     /// </summary>
-    /// <remarks>
-    /// The step that matters is the Warp. Rotate, Kaleidoscope and Rings are all
-    /// geometry, and geometry alone looks like geometry however much of it you
-    /// stack up — the picture only stops looking constructed once the coordinates
-    /// themselves are displaced by something with no structure.
-    /// <para>
-    /// The order of those two is the whole trick, and it is not the obvious one.
-    /// Warping before folding looks marvellous and is not a kaleidoscope at all:
-    /// the displacement varies per pixel, so the fold has nothing symmetric left
-    /// to work with and the eight-fold structure vanishes. Folding first and
-    /// warping inside the wedge — by a field that is itself read from the folded
-    /// plane, so it repeats with it — keeps the symmetry and bends it at once.
-    /// </para>
-    /// <para>
-    /// Feeding that same field into the hue is what ties shape to color, so it
-    /// reads as one moving thing rather than a pattern with a palette applied to
-    /// it. And it is the most expensive preset here by some way, which is also
-    /// the point of having it: it is what the renderer looks like under load.
-    /// </para>
-    /// </remarks>
     public static Patch Nebula(ModuleCatalog modules)
     {
         var b = new PatchBuilder(modules);
 
-        // One clock read at three speeds, so nothing in the picture ever quite
-        // lines up with anything else and it does not visibly loop. The three
-        // are Multiplies rather than three Times: seconds are seconds, and what
-        // differs between these is only how much of them each part wants.
-        //
-        // Nineteen modules and this is the only source in the patch. Both
-        // geometry chains start from a Rotate or a Scale whose x and y are
-        // normalled to Coordinates, so neither needs anything in front of it.
+        // One clock read at three speeds, so nothing in the picture quite lines
+        // up with anything else and it does not visibly loop. The only source in
+        // the patch: both geometry chains start from normalled coordinates.
         var clock = b.Add("time");
         var spin = b.Add("math.mul", (1, 0.05f));
         var boil = b.Add("math.mul", (1, 0.12f));
@@ -1002,36 +720,12 @@ public static class Presets
     /// the screen, so what fades up in the sound is the same thing that fades up
     /// in the picture.
     /// </summary>
-    /// <remarks>
-    /// The patch is laid out as four channel strips, one voice a row, because
-    /// that is what it is. Each row is a note and a sine at it for the ear, the
-    /// same oscillator read across the screen instead of across time for the
-    /// eye, and one slow sine setting both of their levels — which is the whole
-    /// point of a level being a socket rather than only a knob.
-    /// <para>
-    /// Two Mixers rather than one, because the two sinks carry different things
-    /// — and the same module twice, because its sockets are untyped: the chord
-    /// sums four scalars and the picture sums four colors, by the same four
-    /// multiplies and three adds.
-    /// </para>
-    /// <para>
-    /// Both sinks pull the sum back down, and not by the same amount. A mixer
-    /// sums rather than averages, so four voices at full are four times over —
-    /// the Output's gain is a quarter, which is exactly that, and puts the worst
-    /// case at full scale rather than past it. The picture's Gain is a good deal
-    /// more generous, because the two sinks fail differently: light that runs
-    /// over clips to white and reads as brightness, and sound that runs over
-    /// clips to distortion and reads as a fault.
-    /// </para>
-    /// </remarks>
     public static Patch FourVoices(ModuleCatalog modules)
     {
         var b = new PatchBuilder(modules);
 
-        // For 'radius', which is what makes the eye's half of each voice a
-        // standing field rather than a travelling tone. Nothing else in the
-        // patch needs a source: every oscillator's 'in' is normalled to Time,
-        // and the four that are heard take it as it comes.
+        // For 'radius', which makes the eye's half of each voice a standing
+        // field rather than a travelling tone. Everything else is normalled.
         var coord = b.Add("coord");
 
         var chord = b.Add("math.mixer");
@@ -1044,14 +738,10 @@ public static class Presets
          .Wire(picture, 0, tame, 0)
          .Wire(tame, 0, output, NodeCatalog.OutputColorPort);
 
-        // An A major triad spread over two octaves, one voice a note: the root,
-        // the fifth, the octave and the third above it. The band count climbs
-        // with the voice, so how many rings are on screen is which note is
-        // sounding — and the hues sit far enough apart that two voices at once
-        // read as a third color rather than as a brighter one of the first.
-        //
-        // The fader rates share no common factor worth the name, so the four
-        // never come up together twice and the patch does not visibly loop.
+        // An A major triad spread over two octaves, one voice a note. The band
+        // count climbs with the voice, so how many rings are on screen is which
+        // note is sounding. The fader rates share no common factor worth the
+        // name, so the four never come up together twice.
         (float Note, float Bands, float Hue, float Rate, float Phase)[] voices =
         [
             (45f, 1f, 0.00f, 0.06f, 0.00f),
@@ -1101,68 +791,6 @@ public static class Presets
     /// hi-hat, mixed to a stereo pair — and the same steps that play them are
     /// what turns, folds, colors and lights the image.
     /// </summary>
-    /// <remarks>
-    /// The largest patch in the box, and it is here to show what one patch can
-    /// be rather than to teach a single idea the way the others do. Every module
-    /// in it is one the palette already holds, and nothing it does with them is
-    /// something the smaller presets have not each done once.
-    /// <para>
-    /// One Tempo drives all four sequencers and nothing anywhere is timed off
-    /// anything else. The bass runs in eighths and the lead, the kick and the
-    /// hats in sixteenths — two Multiplies off the one knob, which is the whole
-    /// of the tempo structure. The bass is twelve notes of uneven length adding
-    /// to two bars and the lead is twenty even ones adding to five beats, so the
-    /// two come back into line every ten bars rather than every one, and the
-    /// tune stops sounding like a loop long before the picture stops looking
-    /// like one.
-    /// </para>
-    /// <para>
-    /// Which sequencer drives which part of the image is the decision worth
-    /// reading. The bass moves the geometry: it changes chord about once a bar,
-    /// so the rotation and the number of kaleidoscope wedges change with it, at
-    /// a rate the eye can follow. The lead moves the color: it steps four times
-    /// a beat, which is far too fast to rebuild a shape with and exactly right
-    /// for hue. The kick moves the light — the zoom pump, the brightness and the
-    /// twist on the feedback are all its gate. The hats are heard and not seen,
-    /// which is the one instrument that is: a sixteenth-note shimmer would read
-    /// as a flicker rather than as a rhythm.
-    /// </para>
-    /// <para>
-    /// The kick's gate is read on the video path rather than an envelope of it,
-    /// because an envelope has no memory drawn and hands over its gate anyway.
-    /// That works here where it did not in <see cref="Kick"/> only because this
-    /// gate comes from a sequencer rather than from a Pulse: it is open for
-    /// about a third of a sixteenth, which at thirty frames a second is a frame
-    /// or two of flash against four of dark rather than the other way about.
-    /// </para>
-    /// <para>
-    /// The hi-hat has no noise module behind it because there is no noise module
-    /// that would do: Noise is a field in x and y, and the audio path stands at
-    /// one point of the plane, so a hat made of it would be a held tone. What
-    /// makes the hiss instead is the hash every shader writes — the fraction of
-    /// a sine of a large multiple of the clock, which lands somewhere else
-    /// entirely from one sample to the next. It is a constant per frame on the
-    /// video path, where it is never read, and it is the only place in the
-    /// preset where a number is chosen for being large rather than for meaning
-    /// something.
-    /// </para>
-    /// <para>
-    /// Stereo comes from the detune and not from a pan knob. The lead is two
-    /// saws a few cents apart, and the two Mixers differ in which of them they
-    /// take — left gets the one at pitch, right gets the one the vibrato is
-    /// bending — so the width is the beating between them rather than one signal
-    /// made quieter on one side. The hats lean right by the same trick, and the
-    /// kick and the bass sit dead centre, which is where a kick and a bass
-    /// belong.
-    /// </para>
-    /// <para>
-    /// Both sinks are clipped rather than trusted. Four instruments through a
-    /// Mixer sum the way a desk sums, so the master Multiply is deliberately
-    /// past unity and the Clamp after it is what makes that safe; the picture is
-    /// clamped before the HSV for the same reason, because a value past one is
-    /// not brighter, it is only wrong.
-    /// </para>
-    /// </remarks>
     public static Patch WholeBand(ModuleCatalog modules)
     {
         var b = new PatchBuilder(modules);
@@ -1195,10 +823,9 @@ public static class Presets
             new Step(29f, 2f, 0.85f), new Step(28f, 4f),
         ]);
 
-        // Twenty sixteenths — five beats, against the bass's eight. The rests
-        // are a volume rather than a note, which is what a volume being a level
-        // and not a switch is for: the pitch stays where it was, so the notes
-        // either side of a rest are one phrase rather than three.
+        // Twenty sixteenths — five beats, against the bass's eight. A rest is a
+        // volume rather than a note, so the pitch stays where it was and the
+        // notes either side of it are one phrase.
         var leadSeq = b.Add("seq.notes", (2, 0.62f), (3, 0.045f));
         StepsExtra.Set(leadSeq,
         [
@@ -1209,11 +836,9 @@ public static class Presets
             new Step(71f, 1f, 0.85f), new Step(69f), new Step(67f, 1f, 0.7f), new Step(69f, 1f, 0.8f),
         ]);
 
-        // The drum pattern, as volumes: the four beats, a ghost off the second
-        // and another at the end of the bar, which is what makes it a groove
-        // rather than a metronome. A step's own value is nothing to do with the sound
-        // here — the Note Sequencer's would be a pitch and this one's is spare,
-        // so it rests at zero and the volumes carry the whole pattern.
+        // The drum pattern, as volumes: four beats, a ghost off the second and
+        // another at the end of the bar. The step's own value is spare here, so
+        // the volumes carry the whole pattern.
         var kickSeq = b.Add("seq.values", (2, 0.32f), (3, 0.01f));
         StepsExtra.Set(kickSeq,
         [
@@ -1223,12 +848,9 @@ public static class Presets
             new Step(0f, 1f, 0.85f), new Step(0f, 1f, 0f), new Step(0f, 1f, 0.55f), new Step(0f, 1f, 0f),
         ]);
 
-        // Here the value is used, and it is the one gesture that needs a
-        // Sequencer rather than a Note Sequencer: it opens the hat. The step
-        // goes to the decay knob of the hat's envelope, so a high step rings for
-        // a seventh of a second and a low one is a tick — closed hats all the
-        // way through with two open ones in the bar, out of a list of numbers
-        // rather than out of two instruments.
+        // Here the value is used, which is what needs a Sequencer rather than a
+        // Note Sequencer: it goes to the decay knob of the hat's envelope, so a
+        // high step rings and a low one is a tick.
         var hatSeq = b.Add("seq.values", (2, 0.4f), (3, 0.01f));
         StepsExtra.Set(hatSeq,
         [
@@ -1254,9 +876,8 @@ public static class Presets
         // --- bass ------------------------------------------------------------
 
         // A saw at the note and a sine an octave under it. The sub is a second
-        // Note rather than an oscillator at half the frequency, because a pitch
-        // here is a note number and an octave is a socket on the module that
-        // knows what one of those is.
+        // Note rather than an oscillator at half the frequency, because an
+        // octave is a socket on the module that knows what a note number is.
         var bassNote = b.Add("audio.note");
         var subNote = b.Add("audio.note", (1, -1f));
 
@@ -1268,11 +889,9 @@ public static class Presets
 
         var bassVca = b.Add("math.mul");
 
-        // Overdriven and then clipped, which is the cheapest waveshaper there
-        // is: everything under the wall passes and everything over it flattens,
-        // and a flattened saw is a saw with more harmonics in it. Only the bass
-        // is treated this way — the same two modules across the lead would take
-        // its envelope off it and leave a drone.
+        // Overdriven then clipped, which is the cheapest waveshaper there is: a
+        // flattened saw is a saw with more harmonics in it. Only the bass, since
+        // the same pair across the lead would take its envelope off it.
         var bassHot = b.Add("math.mul", (1, 2.4f));
         var bassOut = b.Add("math.clamp", (1, -1f), (2, 1f));
 
@@ -1295,21 +914,17 @@ public static class Presets
 
         var leadNote = b.Add("audio.note");
 
-        // The twin, taken off the first Note's 'note' output rather than off the
-        // sequencer again: it is the same snapped number, and the detune is put
-        // on after the snap because cents are the one control that can sit
-        // between two semitones. Nine of them, swung by a slow sine, so the pair
-        // beat against each other at a rate that keeps changing.
+        // The twin, off the first Note's 'note' output: the detune goes on after
+        // the snap because cents are the one control that can sit between two
+        // semitones. Swung by a slow sine, so the beating rate keeps changing.
         var vibrato = b.Add("osc.sine", (1, 5.4f), (3, 9f));
         var wide = b.Add("audio.note");
 
         var leadA = b.Add("osc.saw", (3, 0.7f));
         var leadB = b.Add("osc.saw", (3, 0.7f));
 
-        // A fifth over the tune, on a triangle so it fills rather than competes,
-        // and faded in and out by a sine slow enough that it is never quite the
-        // same phrase twice. Adding seven before the Note is the interval: the
-        // sequencer hands out note numbers, and seven of those is a fifth.
+        // A fifth over the tune, on a triangle so it fills rather than competes.
+        // Adding seven before the Note is the interval.
         var fifth = b.Add("math.add", (1, 7f));
         var fifthNote = b.Add("audio.note");
         var fifthOsc = b.Add("osc.triangle", (3, 0.5f));
@@ -1356,9 +971,7 @@ public static class Presets
         // --- kick ------------------------------------------------------------
 
         // Two envelopes and a sine, which is the whole of a kick drum: one
-        // shapes how loud it is and the shorter one shapes what pitch it is. See
-        // <see cref="Kick"/> for why the second of those is the difference
-        // between a drum and a beep.
+        // shapes how loud it is, the shorter one what pitch it is.
         var kickLevel = b.Add(NodeCatalog.AdsrTypeId, (1, -2.9f), (2, -0.62f), (3, 0f), (4, -1.1f));
 
         var kickSweep = b.Add(NodeCatalog.AdsrTypeId, (1, -3.3f), (2, -1.4f), (3, 0f), (4, -1.8f));
@@ -1450,9 +1063,8 @@ public static class Presets
         var crawl = b.Add("math.mul", (1, 0.02f));
 
         // The bass moves the frame: where it has got to in the pattern is added
-        // to the rotation, and is how many wedges the fold has. It changes chord
-        // about once a bar, which is slow enough that the picture rebuilding
-        // itself reads as an arrangement rather than as a fault.
+        // to the rotation and is how many wedges the fold has. It changes about
+        // once a bar, which reads as an arrangement rather than as a fault.
         var stride = b.Add("math.remap", (1, 0f), (2, 1f), (3, -0.4f), (4, 0.4f));
         var angle = b.Add("math.add");
         var turn = b.Add("space.rotate");
@@ -1468,8 +1080,7 @@ public static class Presets
 
         // Geometry alone looks like geometry, so the plane is bent by a field
         // read from inside the fold — symmetric, so it repeats with the wedges
-        // instead of quietly undoing them. Nebula's trick, and in Nebula's
-        // order: fold first, warp inside it.
+        // rather than quietly undoing them.
         var field = b.Add("pattern.noise", (3, 2.1f));
         var breath = b.Add("osc.sine", (1, 0.071f), (3, 0.5f), (4, 0.5f));
         var reach = b.Add("math.remap", (1, 0f), (2, 1f), (3, 0.2f), (4, 0.7f));
@@ -1526,10 +1137,9 @@ public static class Presets
 
         // --- the picture: color ----------------------------------------------
 
-        // The lead moves the hue. The field and the slowest of the four clocks
-        // are added under it so that the same step of the tune is never quite
-        // the same color twice, and the whole is wrapped rather than clamped,
-        // because a hue is a wheel.
+        // The lead moves the hue, with the field and the slowest clock added
+        // under it so a step is never quite the same color twice. Wrapped rather
+        // than clamped, because a hue is a wheel.
         var stepped = b.Add("math.mul", (1, 0.8f));
         var wash = b.Add("math.mul", (1, 0.9f));
         var blend = b.Add("math.add");
@@ -1570,11 +1180,9 @@ public static class Presets
 
         // --- the picture: feedback -------------------------------------------
 
-        // Two readings of the last frame rather than one, turning opposite ways:
-        // one zoomed in a little and one out, with the red taken from the first
-        // and the green and blue from the second. What that makes is a chromatic
-        // tunnel — the fringes drift apart as the trail ages, the way a lens
-        // splits light, and there is no lens anywhere in it.
+        // Two readings of the last frame turning opposite ways, red from one and
+        // green and blue from the other. That makes a chromatic tunnel, with no
+        // lens anywhere in it.
         var inward = b.Add("space.scale", (2, 1.035f));
         var twist = b.Add("math.remap", (1, 0f), (2, 1f), (3, 0.012f), (4, 0.05f));
         var inTurn = b.Add("space.rotate");
@@ -1627,33 +1235,6 @@ public static class Presets
     /// The three coordinate transforms nothing else in the box shows, in a row,
     /// so that what each does to the plane can be seen by taking it out.
     /// </summary>
-    /// <remarks>
-    /// Kaleidoscope and Nebula both fold the plane and both do it with the one
-    /// module that folds it dramatically, which left Tile, Mirror and To polar
-    /// with no example at all — three of the eight modules under Geometry, and
-    /// the three a patch reaches for most once it wants a layout rather than a
-    /// texture.
-    /// <para>
-    /// The order is the whole of it, and each step undoes some of the freedom of
-    /// the last. Tile throws away where in the picture you are and keeps only
-    /// where in a cell you are, so everything after it happens once per cell.
-    /// Mirror throws away the sign, so each cell is a quarter of itself reflected
-    /// twice. To polar throws away the axes, so what was a square grid inside a
-    /// cell comes out as rings and spokes. A Checker at the end is deliberately
-    /// the plainest field in the catalogue: anything with structure of its own
-    /// would be competing with the structure being demonstrated.
-    /// </para>
-    /// <para>
-    /// One slow sine slides the plane sideways underneath all of it. It is there
-    /// so the cells can be seen to be cells — a tiling that does not move is
-    /// indistinguishable from a picture that happens to repeat, and a tiling that
-    /// slides shows the seam running through it.
-    /// </para>
-    /// <para>
-    /// No sound, and there is none to be had: every module here is a fact about
-    /// where a pixel is, and the audio path stands at one point of the plane.
-    /// </para>
-    /// </remarks>
     public static Patch Grid(ModuleCatalog modules)
     {
         var b = new PatchBuilder(modules);
@@ -1704,33 +1285,6 @@ public static class Presets
     /// <summary>
     /// A tone, and a Scope drawing what the speakers actually played of it.
     /// </summary>
-    /// <remarks>
-    /// The module had an ADR to its name
-    /// ([0053](0053-a-scope-records-what-the-speakers-played.md)) and no patch,
-    /// which is the wrong way round for the one module that answers "what does
-    /// this sound like" without anybody having to listen.
-    /// <para>
-    /// What makes it a chart of the sound rather than a chart of the patch is
-    /// that its 'in' is never evaluated by the picture. The socket is swept and
-    /// the compiler does not resolve it: what is drawn came out of the run that
-    /// made the sound, through a Tap, and the video program contributes nothing
-    /// to it but the table read. So the tone below is computed once, for the
-    /// speakers, and the screen is looking at the result.
-    /// </para>
-    /// <para>
-    /// A saw rather than a sine, because a sine looks like every other sine and
-    /// the point of a chart is to tell one waveform from another. The tremolo is
-    /// there for the same reason at a different scale: at this window the chart
-    /// holds a few hundred cycles, so the shape that is legible across the frame
-    /// is the envelope rather than the wave, and a level that moves is what makes
-    /// the frame show anything at all.
-    /// </para>
-    /// <para>
-    /// It draws nothing until sound is switched on, and that is the module rather
-    /// than the patch — there is no past to chart in a still frame. It is the
-    /// first thing to know about it and the reason the Probe exists beside it.
-    /// </para>
-    /// </remarks>
     public static Patch Waveform(ModuleCatalog modules)
     {
         var b = new PatchBuilder(modules);
@@ -1764,31 +1318,6 @@ public static class Presets
     /// A Probe and a Scope reading the same wire, one above the other, which is
     /// the only arrangement in which the difference between them is visible.
     /// </summary>
-    /// <remarks>
-    /// Both draw a signal against time and they disagree, and both are right. A
-    /// Probe is a second compile root
-    /// ([0040](0040-a-probe-is-a-second-compile-root.md)): it recomputes the
-    /// signal at every column, which is why it can draw the future, and why it
-    /// draws an oscillator without the phase the speakers accumulate. A Scope
-    /// computes nothing at all — it reads back what was played
-    /// ([0053](0053-a-scope-records-what-the-speakers-played.md)), so it has only
-    /// the past and it has the memory.
-    /// <para>
-    /// The signal is chosen to make them disagree rather than to look well. Its
-    /// frequency is swept, and an accumulated phase turns a swept frequency into
-    /// a chirp that bends continuously, while a multiplied-out one turns it into
-    /// a wave that keeps being re-zeroed. So the Scope shows a chirp and the
-    /// Probe shows a fan, off one oscillator, at the same moment. Take the sweep
-    /// out — put a Frequency on the socket instead — and the two charts become
-    /// the same picture, which is the other half of the demonstration.
-    /// </para>
-    /// <para>
-    /// Split with a Threshold on y rather than blended, because two charts mixed
-    /// together are one unreadable chart. The Probe is the upper half because it
-    /// is the one that reaches forward, and reading down the frame is then
-    /// reading from what will happen to what did.
-    /// </para>
-    /// </remarks>
     public static Patch AheadAndBehind(ModuleCatalog modules)
     {
         var b = new PatchBuilder(modules);
@@ -1831,37 +1360,6 @@ public static class Presets
     /// The sample player, wired the three ways it is worth wiring: played
     /// forward on the clock, restarted by a trigger, and scrubbed by a signal.
     /// </summary>
-    /// <remarks>
-    /// It ships with no file chosen, and the warning that says so is the patch's
-    /// first instruction — pick one in the panel and it plays. That is the same
-    /// state a freshly placed Sample is in, and a preset that shipped pointing at
-    /// a file would be a preset that broke the moment the file moved
-    /// ([0052](0052-a-patch-names-its-samples-rather-than-carrying-them.md)).
-    /// <para>
-    /// The trigger is the socket worth understanding and the one a description
-    /// cannot really carry. It runs no playhead of its own: it remembers where
-    /// 'in' had got to when the last edge came, and what is read is the
-    /// difference. So a clip driven by the clock plays at its own speed from the
-    /// moment it was fired, and retriggering falls out rather than being handled
-    /// — an edge arriving mid-clip moves the zero to now.
-    /// </para>
-    /// <para>
-    /// 'length' is left unwired, and the reason is worth more than a wire would
-    /// be. The obvious use of it is to set the rate of the Pulse that does the
-    /// triggering, so that a clip is restarted exactly once per pass however long
-    /// the file turns out to be — and that is a cycle. Length comes out of the
-    /// player, the Pulse goes back into it, and the walk back from the Output
-    /// arrives where it started. Every use of 'length' that feeds the same player
-    /// is the same cycle; it can only time something downstream of the clip, or
-    /// be read in the panel. Put a Unit Delay in the loop and it compiles, which
-    /// is what Unit Delay is for and is a different patch.
-    /// </para>
-    /// <para>
-    /// No picture. A clip is a table read, and a table is the one thing the
-    /// shader cannot draw — so a patch that showed the waveform would take the
-    /// preview back to the CPU to illustrate something the Scope already draws.
-    /// </para>
-    /// </remarks>
     public static Patch Clip(ModuleCatalog modules)
     {
         var b = new PatchBuilder(modules);
@@ -1887,34 +1385,6 @@ public static class Presets
     /// A photograph read as a field, and put through the same geometry a
     /// generated one goes through.
     /// </summary>
-    /// <remarks>
-    /// The module is a texture read at a place
-    /// ([0059](0059-a-picture-comes-in-as-a-texture.md)), and the whole of what
-    /// makes it interesting is that the place is a socket. Everything under
-    /// Geometry was written for fields that go on for ever, and every one of them
-    /// works here unchanged: a picture put through a Scale is zoomed, through a
-    /// Rotate is turned, and through a Warp is bent by whatever the warp is being
-    /// driven by — which is a thing no image editor offers, because no image
-    /// editor has a signal to drive it with.
-    /// <para>
-    /// The warp is driven by a Noise, so what bends the photograph is a field
-    /// rather than a shape. That is the arrangement worth stealing and it is
-    /// Nebula's, borrowed intact: geometry alone looks like geometry, and a
-    /// picture only stops looking like a picture being transformed once the
-    /// coordinates are displaced by something with no structure.
-    /// </para>
-    /// <para>
-    /// Ships with no file chosen and draws black until one is picked, which is
-    /// the module rather than the patch: outside a picture's own edges the answer
-    /// is black, and a picture that is not there is entirely outside its edges.
-    /// One rule rather than two.
-    /// </para>
-    /// <para>
-    /// No sound. A texture read is a table read, and the audio path stands at one
-    /// point of the plane — so what the speakers would get of this is one pixel,
-    /// held.
-    /// </para>
-    /// </remarks>
     public static Patch PictureIn(ModuleCatalog modules)
     {
         var b = new PatchBuilder(modules);
@@ -1968,35 +1438,6 @@ public static class Presets
     /// One Unit Delay closing a loop, which is a filter built by hand out of an
     /// add and a multiply.
     /// </summary>
-    /// <remarks>
-    /// The module the editor drops on a wire that would otherwise close a cycle,
-    /// and nothing explained what it was for. What it is for is this: a value
-    /// that has to be fed back into the thing that produced it, one evaluation
-    /// later, which is the shape of every filter, every integrator and every comb
-    /// that has ever been built.
-    /// <para>
-    /// The loop keeps most of what it had and adds a little of what arrives,
-    /// which is a lowpass: a square goes in and something with the corners taken
-    /// off comes out. Turn the feedback down and it stops filtering and becomes a
-    /// wire; turn it up past one and it is an oscillator that runs away, which
-    /// the rails at the sink will catch and which is worth hearing once.
-    /// </para>
-    /// <para>
-    /// The Unit Delay is not emitted the way other modules are. The compiler
-    /// recognises a cycle breaker, stops the walk there, and hands back what the
-    /// loop was carrying at the end of the previous evaluation — so the latency
-    /// that makes the loop mean something comes from the ordering rather than
-    /// from anything the module does. Its own input is resolved afterwards, once
-    /// every such read in the program has been emitted.
-    /// </para>
-    /// <para>
-    /// Audio only, and unusually literally so: a previous evaluation is exactly
-    /// what the video path does not have, so on the screen the whole loop is a
-    /// wire and the square comes out a square. That is not a limitation being
-    /// worked around; it is what a one-evaluation memory means where there is
-    /// only ever one evaluation.
-    /// </para>
-    /// </remarks>
     public static Patch Loop(ModuleCatalog modules)
     {
         var b = new PatchBuilder(modules);
@@ -2036,28 +1477,6 @@ public static class Presets
     /// Two channels that are two signals, rather than one signal made quieter on
     /// one side.
     /// </summary>
-    /// <remarks>
-    /// The Output's 'right' is normalled to its 'left'
-    /// ([0050](0050-normalled-sockets-carry-a-signal-with-no-wire.md)), so every
-    /// patch in the box is mono until something is wired there, and only the
-    /// largest one ever does. This is the small patch that does.
-    /// <para>
-    /// The width comes from detune and not from a pan knob, which is the useful
-    /// thing to know and is what Whole band does at scale. Two saws nine cents
-    /// apart drift in and out of phase with each other at a fraction of a hertz;
-    /// send one to each ear and the drift is heard as the sound moving about the
-    /// head rather than as two pitches. Wire both saws to both ears instead and
-    /// the same two oscillators collapse into one slightly wobbly tone in the
-    /// middle. The beating is still there either way, and having it happen in the
-    /// room instead of in the signal is the whole of the difference.
-    /// </para>
-    /// <para>
-    /// The detune is on the second Note's 'cents' rather than on a second
-    /// Frequency, because cents are the one control that can sit between two
-    /// semitones: the snap has already happened by then, so nine cents is nine
-    /// cents rather than a rounding error.
-    /// </para>
-    /// </remarks>
     public static Patch TwoChannels(ModuleCatalog modules)
     {
         var b = new PatchBuilder(modules);

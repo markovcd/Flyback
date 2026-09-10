@@ -5,12 +5,10 @@ using Flyback.Core.Compile;
 namespace Flyback.Core.Graph;
 
 /// <summary>
-/// The notes a module carries, and how one of them is read and edited.
+/// The notes a module carries, and how one of them is read and edited. One
+/// record rather than three members on the definition, because the display and
+/// range only make sense with a sequence of notes.
 /// </summary>
-/// <remarks>
-/// One record rather than three members on the definition, because the display
-/// and range only make sense with a sequence of notes.
-/// </remarks>
 /// <param name="Default">The tune a freshly placed instance carries.</param>
 /// <param name="Display">How a step's value reads: by name on the Note Sequencer.</param>
 /// <param name="Range">The span a step's value is edited within.</param>
@@ -21,8 +19,7 @@ public sealed record StepSpec(
 {
     /// <summary>
     /// A step's value described as though it were a socket, so the editor formats
-    /// and snaps it with the same code every knob already uses — a note in a list
-    /// reads "A3" for the same reason a note on a knob does.
+    /// and snaps it with the same code every knob uses.
     /// </summary>
     public PortSpec AsPort => new(
         "value", PortKind.Scalar, 0f, Range.Min, Range.Max, -1, Display);
@@ -34,20 +31,17 @@ public sealed record StepSpec(
 /// </summary>
 /// <param name="Title">
 /// What the node is called, resolved already — see <see cref="NodeInstance.Title"/>.
-/// Passed rather than looked up so that an extra never needs the definition it
-/// is hanging off.
+/// Passed rather than looked up, so an extra never needs the definition it hangs
+/// off.
 /// </param>
 /// <param name="Samples">
 /// Where a path is turned into audio, and null where nothing in this program can
-/// open a file. Null is not a fault: a headless compile has no library, and an
-/// extra that wanted one says so in the ordinary way.
+/// open a file — a headless compile has no library.
 /// </param>
 /// <param name="Report">Where a complaint about this node goes.</param>
 /// <param name="Pictures">
-/// Where a path is turned into a picture, and null where nothing in this program
-/// can open one. Null the same way <paramref name="Samples"/> is null and for
-/// the same reasons — and additionally on every audio program, since a picture
-/// is a thing to look at and the speakers have nothing to do with one.
+/// Where a path is turned into a picture, null the same way
+/// <paramref name="Samples"/> is and additionally on every audio program.
 /// </param>
 public readonly record struct ExtraEnv(
     string Title,
@@ -60,70 +54,52 @@ public readonly record struct ExtraEnv(
 /// quantiser's scale, a player's file.
 /// </summary>
 /// <remarks>
-/// A part of a definition rather than a subtype of one
-/// ([0054](0054-what-a-module-carries-is-a-part-not-a-subtype.md)). Three of
-/// these are independent axes, so a module may want any combination of them, and
-/// a hierarchy would have to name every combination. It also keeps
-/// <see cref="NodeDef"/>'s constructor out of the plugin ABI: adding a fourth
-/// kind adds a file and no member, so a plugin compiled against an earlier build
-/// still finds the constructor it was compiled against.
+/// A part of a definition rather than a subtype of one (ADR-0054): the kinds are
+/// independent axes, and a hierarchy would have to name every combination. It
+/// also keeps <see cref="NodeDef"/>'s constructor out of the plugin ABI, since a
+/// fourth kind adds a file and no member.
 /// <para>
-/// A plugin may write its own, and it stores the way the engine's own kinds do:
-/// under <see cref="Key"/> in <see cref="NodeInstance.State"/>
-/// ([0061](0061-what-a-module-carries-is-kept-in-one-store.md)). The engine's
-/// four each own the shape they keep there and hand it back typed — see
-/// <see cref="StepsExtra.Of"/> — where a plugin's is described by
-/// <see cref="Fields"/> and folded onto <see cref="EmitContext.Extras"/>. What
-/// is uniform is the storage, not the shape: a tune and a path are neither of
-/// them anything <see cref="ExtraField"/> can describe.
+/// A plugin may write its own, stored the way the engine's kinds are: under
+/// <see cref="Key"/> in <see cref="NodeInstance.State"/> (ADR-0061). The
+/// engine's four hand their shape back typed — see <see cref="StepsExtra.Of"/> —
+/// where a plugin's is described by <see cref="Fields"/> and folded onto
+/// <see cref="EmitContext.Extras"/>: what is uniform is the storage, not the
+/// shape.
 /// </para>
 /// <para>
-/// What is not here is the editor: it needs Avalonia, which the engine does not
-/// reference. The engine's three are drawn by controls the App holds, and a
-/// plugin's is drawn from what <see cref="Fields"/> declares
-/// ([0055](0055-a-plugins-extra-declares-its-editor.md)) — so no plugin ships
-/// UI, and the same declaration is what lets an assistant read and write the
-/// state without a tool written for it.
+/// The editor is not here, because it needs Avalonia. A plugin's is drawn from
+/// what <see cref="Fields"/> declares (ADR-0055), so no plugin ships UI and the
+/// same declaration is what lets an assistant read and write the state.
 /// </para>
 /// </remarks>
 public abstract record NodeExtra
 {
     /// <summary>
-    /// A short, stable word for this kind. What a plugin's state is filed under
+    /// A short, stable word for this kind: what a plugin's state is filed under
     /// in <see cref="NodeInstance.State"/> and <see cref="EmitContext.Extras"/>,
-    /// and what a saved patch names it by — so changing one is a change to the
-    /// file format of every patch that holds the module.
+    /// and what a saved patch names it by — so changing one changes the file
+    /// format of every patch that holds the module. It also keeps "which extra is
+    /// this" answerable without a type test.
     /// </summary>
-    /// <remarks>
-    /// The one address a kind's state has: everything an instance carries that
-    /// is not a knob is filed under one of these. It is also what a listing
-    /// calls them, and it keeps "which extra is this" answerable without a type
-    /// test.
-    /// </remarks>
     public abstract string Key { get; }
 
     /// <summary>
-    /// The values this kind carries, described so that the App can draw them and
-    /// an assistant can set them. Empty for the engine's own three, which are
-    /// drawn by controls written for them.
+    /// The values this kind carries, described so the App can draw them and an
+    /// assistant can set them. Empty for the engine's own three, which are drawn
+    /// by controls written for them.
     /// </summary>
     /// <remarks>
     /// Declaring these is the whole of what a plugin has to do: everything below
     /// has a default written in terms of them, so a plugin's extra overrides
-    /// <see cref="Key"/> and this and nothing else. A kind that declares none and
-    /// overrides nothing carries nothing, which is a legal and useless module —
-    /// so the emptiness is not defended against here.
+    /// <see cref="Key"/> and this and nothing else.
     /// </remarks>
     public virtual IReadOnlyList<ExtraField> Fields => [];
 
     /// <summary>What a freshly placed instance carries.</summary>
     /// <remarks>
-    /// Seeding is here and copying is not, and for a better reason than it used
-    /// to be: copying is one deep clone of <see cref="NodeInstance.State"/> and
-    /// so is not a thing a kind has to answer at all. It could not be asked of
-    /// one anyway — a copy has to work on a module this build has no definition
-    /// for, and there is no kind to ask about a fragment naming a plugin that is
-    /// not loaded.
+    /// Seeding is here and copying is not: a copy is one deep clone of
+    /// <see cref="NodeInstance.State"/>, and it has to work on a module this
+    /// build has no definition for, so there would be no kind to ask.
     /// </remarks>
     public virtual void Seed(NodeInstance node)
     {
@@ -141,21 +117,15 @@ public abstract record NodeExtra
         Fields.Count == 0 ? ctx : ctx.With(Key, new ExtraState(Fields, node.StateOf(Key)));
 
     /// <summary>
-    /// The files this instance names, and none for the great majority of kinds,
-    /// which name nothing outside the patch.
+    /// The files this instance names, and none for the kinds that name nothing
+    /// outside the patch — what a bundle is packed from, see
+    /// <see cref="PatchBundle"/>.
     /// </summary>
     /// <remarks>
-    /// What a bundle is packed from — see <see cref="PatchBundle"/>. Asked of the
-    /// kind rather than read off the node, so that nothing doing the packing has
-    /// to know that a Sample holds a WAV and an Image holds a PNG: a kind that
-    /// names a file says so here and is carried, and a kind added later is
-    /// carried without the packer being touched.
-    /// <para>
-    /// A path as the patch stores it, which may be relative and may point at
-    /// nothing. Whether it can be read is not this method's question — the thing
-    /// asking has to open it either way, and what it does about a file that is
-    /// not there is its own decision.
-    /// </para>
+    /// Asked of the kind rather than read off the node, so nothing doing the
+    /// packing has to know that a Sample holds a WAV and an Image a PNG. A path
+    /// as the patch stores it, which may be relative and may point at nothing:
+    /// whether it can be read is the caller's question.
     /// </remarks>
     public virtual IEnumerable<string> Files(NodeInstance node) => [];
 
@@ -164,19 +134,18 @@ public abstract record NodeExtra
     /// what packing one into a bundle and unpacking it again are.
     /// </summary>
     /// <remarks>
-    /// The other half of <see cref="Files"/>, and separate from it because the
-    /// two happen at different moments: a bundle is written by asking every node
-    /// what it names, deciding what to call each one inside the archive, and only
-    /// then telling the nodes. <paramref name="renamed"/> answers for a path it
-    /// knows and hands back what it was given for one it does not, so a kind may
-    /// pass every path it holds through without checking.
+    /// Separate from <see cref="Files"/> because the two happen at different
+    /// moments: a bundle asks every node what it names, decides what to call each
+    /// inside the archive, and only then tells the nodes.
+    /// <paramref name="renamed"/> hands back what it was given for a path it does
+    /// not know, so a kind may pass every path through without checking.
     /// </remarks>
     public virtual void Rebase(NodeInstance node, Func<string, string> renamed) { }
 
     /// <summary>
-    /// What this instance is carrying, as prose. What an assistant reading a
+    /// What this instance is carrying, as prose — what an assistant reading a
     /// patch sees, and the one place it would otherwise miss: this is neither a
-    /// socket nor a wire, so a listing of either shows nothing of it.
+    /// socket nor a wire.
     /// </summary>
     public virtual string Report(NodeInstance node)
     {
@@ -189,16 +158,13 @@ public abstract record NodeExtra
     }
 
     /// <summary>
-    /// That the module carries this at all — for the listing of what a module
-    /// is, as opposed to what one instance holds.
+    /// That the module carries this at all — for the listing of what a module is,
+    /// as opposed to what one instance holds.
     /// </summary>
     /// <remarks>
-    /// What it carries and not how to write it. Which tool writes a kind is the
-    /// assistant's vocabulary, declared and dispatched in a project that
-    /// references this one, so a name for it here would be a name this assembly
-    /// cannot reference, rename with, or check — see <c>Assist.Vocabulary</c>,
-    /// which appends that half. An override that names a tool anyway still
-    /// works; it will simply say so twice.
+    /// What it carries and not how to write it: which tool writes a kind is the
+    /// assistant's vocabulary, declared in a project that references this one —
+    /// see <c>Assist.Vocabulary</c>, which appends that half.
     /// </remarks>
     public virtual string Announce()
     {
@@ -209,7 +175,7 @@ public abstract record NodeExtra
 
     /// <summary>
     /// This kind's state as it is stored: every declared field, held to what it
-    /// can mean. Passing null builds the state a fresh instance carries, because
+    /// can mean. Passing null builds the state a fresh instance carries, since
     /// "no value yet" and "a value that means nothing" are the same question.
     /// </summary>
     public JsonObject Stored(JsonNode? from)
@@ -222,15 +188,13 @@ public abstract record NodeExtra
     }
 
     /// <summary>
-    /// What a kind that keeps a shape of its own reads back out of the store,
-    /// or <paramref name="fallback"/> where the file says nothing it can use.
+    /// What a kind that keeps a shape of its own reads back out of the store, or
+    /// <paramref name="fallback"/> where the file says nothing it can use.
     /// </summary>
     /// <remarks>
-    /// The tolerance is the point. State is an opaque tree that anybody may have
-    /// typed into, so a scale written as a string or a note missing its value
-    /// has to come back as "no scale" rather than as an exception out of the
-    /// middle of loading a patch — which is what the same file did when these
-    /// were typed fields the deserialiser had to satisfy.
+    /// The tolerance is the point: state is an opaque tree anybody may have typed
+    /// into, so a scale written as a string has to come back as "no scale" rather
+    /// than as an exception out of the middle of loading a patch.
     /// </remarks>
     private protected static T Read<T>(JsonNode? stored, T fallback)
     {
@@ -253,16 +217,10 @@ public abstract record NodeExtra
 
 /// <summary>
 /// One instance's worth of a declared extra, parsed and ready for an emit
-/// function — what a plugin reads back out of
-/// <see cref="EmitContext.Extras"/>.
+/// function — what a plugin reads back out of <see cref="EmitContext.Extras"/>.
+/// Typed at the point of use: a plugin knows its own schema, and the tolerance
+/// for a file that means nothing has already been applied.
 /// </summary>
-/// <remarks>
-/// Typed at the point of use, which is the whole reason this exists rather than
-/// the emit function being handed the JSON. A plugin knows its own schema, so
-/// asking for a field by name and getting a <c>float</c> is the natural reading,
-/// and the tolerance for a file that means nothing has already been applied by
-/// the time anything here is called.
-/// </remarks>
 public sealed class ExtraState(IReadOnlyList<ExtraField> fields, JsonNode? stored)
 {
     /// <summary>What a number field holds, or its default where nothing sensible does.</summary>
@@ -288,9 +246,8 @@ public sealed record StepsExtra(StepSpec Spec) : NodeExtra
 {
     /// <summary>
     /// Where a tune is filed in <see cref="NodeInstance.State"/>. A constant as
-    /// well as the <see cref="Key"/> override, so that <see cref="Of"/> and
-    /// <see cref="Set"/> can be asked of a node without a definition to hand —
-    /// which is what a preset builder and the inspector both have.
+    /// well as the <see cref="Key"/> override, so <see cref="Of"/> and
+    /// <see cref="Set"/> can be asked of a node with no definition to hand.
     /// </summary>
     public const string Name = "notes";
 
@@ -340,10 +297,9 @@ public sealed record ScaleExtra(IReadOnlyList<int> Default) : NodeExtra
     public override string Key => Name;
 
     /// <summary>
-    /// The pitch classes this instance snaps to, and none where it snaps to
-    /// none. As stored rather than tidied — <see cref="Fold"/> is where a scale
-    /// is held to being one, because the keyboard has to be able to show what
-    /// was actually switched on.
+    /// The pitch classes this instance snaps to, as stored rather than tidied —
+    /// <see cref="Fold"/> is where a scale is held to being one, because the
+    /// keyboard has to show what was actually switched on.
     /// </summary>
     public static List<int> Of(NodeInstance node) => Read<List<int>>(node.StateOf(Name), []);
 
@@ -358,9 +314,8 @@ public sealed record ScaleExtra(IReadOnlyList<int> Default) : NodeExtra
 
     /// <remarks>
     /// The tidying here is load-bearing rather than defensive: a scale naming a
-    /// note twice would lower to two identical candidates, and one naming a
-    /// thirteenth to a candidate outside the octave. Both compile, and neither
-    /// is a scale.
+    /// note twice lowers to two identical candidates, and one naming a thirteenth
+    /// to a candidate outside the octave. Both compile, and neither is a scale.
     /// </remarks>
     public override EmitContext Fold(EmitContext ctx, NodeInstance node, ExtraEnv env) =>
         ctx with
@@ -395,9 +350,8 @@ public sealed record SampleExtra : NodeExtra
 
     /// <summary>
     /// The path this instance names, and the empty string where it names none —
-    /// which is also what a module that reads no file at all answers, since
-    /// asking a Sine for its sample is a question about the wrong module rather
-    /// than a state a Sine can be in.
+    /// which is also what a module that reads no file answers, since asking a
+    /// Sine for its sample is a question about the wrong module.
     /// </summary>
     public static string Of(NodeInstance node) => Read(node.StateOf(Name), string.Empty);
 
@@ -411,9 +365,9 @@ public sealed record SampleExtra : NodeExtra
     public override void Seed(NodeInstance node) => Set(node, string.Empty);
 
     /// <remarks>
-    /// The one extra that can fail, and the complaints are its own rather than
-    /// the compiler's: what a missing file costs is a fact about this module,
-    /// and nothing in the walk needs to know it.
+    /// The one extra that can fail, and the complaints are its own: what a missing
+    /// file costs is a fact about this module, and nothing in the walk needs to
+    /// know it.
     /// </remarks>
     public override EmitContext Fold(EmitContext ctx, NodeInstance node, ExtraEnv env)
     {
@@ -470,13 +424,10 @@ public sealed record SampleExtra : NodeExtra
 
 /// <summary>The picture a module shows.</summary>
 /// <remarks>
-/// <see cref="SampleExtra"/> for the other kind of file, and written as a
-/// separate kind rather than as a parameter on that one for the reason
-/// [0054](0054-what-a-module-carries-is-a-part-not-a-subtype.md) made kinds
-/// parts: what they share is the shape of the field, and what they do not share
-/// is the library, the fault, the sentence and — the one that decides it — which
-/// program is allowed to read one at all. A clip is read by the speakers and a
-/// picture by the screen, so the two are never even asked the same question.
+/// <see cref="SampleExtra"/> for the other kind of file, and a separate kind
+/// rather than a parameter on that one (ADR-0054): they share the shape of the
+/// field and share neither the library, the fault, the sentence, nor — the one
+/// that decides it — which program may read one at all.
 /// </remarks>
 public sealed record PictureExtra : NodeExtra
 {

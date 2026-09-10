@@ -22,13 +22,9 @@ public readonly struct FeedbackFrame(float[]? pixels, int width, int height)
 /// dispatch and no allocation in the inner loop.
 /// </summary>
 /// <remarks>
-/// Registers are <see cref="double"/>. Nothing a sink produces needs the extra
-/// mantissa — a pixel is eight bits and a sample is sixteen — but the *domain*
-/// does: on the audio path the machine runs at 192 kHz against a clock that
-/// keeps counting, and past about a minute a <see cref="float"/> cannot hold
-/// two consecutive sample times apart. See ADR-0032. The width costs nothing
-/// measurable, because this loop is bound by its own dispatch rather than by
-/// the arithmetic in it.
+/// Registers are <see cref="double"/> for the domain rather than the result: at
+/// 192 kHz against a clock that keeps counting, a <see cref="float"/> cannot
+/// hold two consecutive sample times apart past about a minute. See ADR-0032.
 /// </remarks>
 public sealed class CompiledPatch(
     Op[] ops,
@@ -44,42 +40,27 @@ public sealed class CompiledPatch(
     public Op[] Ops { get; } = ops;
 
     /// <summary>
-    /// Which node owns each cell of memory this program keeps, so a swap can
-    /// hand a module back its own rather than whatever now sits in the same
-    /// slot — see <see cref="StateOwners"/>.
+    /// Which node owns each cell of memory this program keeps, so a swap can hand
+    /// a module back its own rather than whatever sits in the same slot — see
+    /// <see cref="StateOwners"/>. Empty for a program assembled by hand, which
+    /// then starts from silence.
     /// </summary>
-    /// <remarks>
-    /// Empty for a program assembled by hand, which is exactly what it should
-    /// be: nothing is claimed, so nothing is adopted, and such a program starts
-    /// from silence the way it always did.
-    /// </remarks>
     public StateOwners Owners { get; } = owners ?? StateOwners.None;
 
     /// <summary>
     /// What this program is played with: the live inputs
     /// <see cref="OpCode.LoadLive"/> reads, in the order its K numbers them.
+    /// Names rather than values — whoever runs the program builds a
+    /// <see cref="LiveValues"/> from this list and fills it in as the keys move.
     /// </summary>
-    /// <remarks>
-    /// Names rather than values, and that is the whole of the join: a program
-    /// says which signals of which instrument it wants, and whoever is running it
-    /// builds a <see cref="LiveValues"/> from this list and fills that in as the
-    /// keys move. Empty for the great majority of patches, which are played by
-    /// nothing but their own clock.
-    /// </remarks>
     public IReadOnlyList<string> LiveInputs { get; } = liveInputs ?? [];
 
     /// <summary>
     /// How many live inputs the ops actually read, which is what a backend has to
-    /// make room for.
+    /// make room for. Counted from the highest K rather than from
+    /// <see cref="LiveInputs"/>, so a program assembled by hand cannot produce a
+    /// shader that reads past the end of the array it declared.
     /// </summary>
-    /// <remarks>
-    /// Counted from the highest K rather than from <see cref="LiveInputs"/>, the
-    /// way <see cref="TraceCount"/> and <see cref="UnitCount"/> are counted from
-    /// theirs. The two agree for every program the compiler builds, and the
-    /// difference is what keeps a program assembled by hand — a test, or a tool
-    /// writing ops directly — from producing a shader that reads past the end of
-    /// an array it declared.
-    /// </remarks>
     public int LiveCount { get; } = Math.Max(
         liveInputs?.Count ?? 0,
         ops.Where(o => o.Code is OpCode.LoadLive)
@@ -92,55 +73,40 @@ public sealed class CompiledPatch(
     /// <see cref="OpCode.Tap"/> numbers them.
     /// </summary>
     /// <remarks>
-    /// Both programs of a patch carry this and they mean opposite halves of it.
-    /// The speakers' program has one tap op per entry and no buffer; the
-    /// screen's program has one table read per entry and no tap. What pairs them
-    /// is the node id, because the two are compiled separately and throw away
-    /// different dead code — see <see cref="Traces.Refresh"/>.
+    /// Both programs of a patch carry this and mean opposite halves: the
+    /// speakers' has one tap per entry and no buffer, the screen's one table read
+    /// per entry and no tap. The node id pairs them, since the two are compiled
+    /// separately and throw away different dead code — see
+    /// <see cref="Traces.Refresh"/>.
     /// </remarks>
     public IReadOnlyList<TapSpec> Taps { get; } = taps ?? [];
 
     /// <summary>
-    /// The clips <see cref="OpCode.Table"/> reads, indexed by its K.
+    /// The clips <see cref="OpCode.Table"/> reads, indexed by its K. Carried by
+    /// the program rather than handed to it per evaluation, unlike a delay line:
+    /// a clip is the same for every evaluation and every renderer. Empty on the
+    /// video path whatever the patch asked for — see OpCode.Table.
     /// </summary>
-    /// <remarks>
-    /// Carried by the program rather than handed to it per evaluation, unlike a
-    /// delay line: a clip is the same for every evaluation and for every
-    /// renderer, and there is nothing to allocate fresh. Empty where the patch
-    /// asked for none, and empty on the video path whatever it asked for — see
-    /// OpCode.Table.
-    /// </remarks>
     public IReadOnlyList<LoadedSample> Tables => tableArray;
 
     /// <summary>
     /// The pictures <see cref="OpCode.SamplePicture"/> reads, indexed by its K.
     /// </summary>
     /// <remarks>
-    /// Carried the way <see cref="Tables"/> is, and unlike it on the one point
-    /// that matters: this list is filled on the <em>video</em> path, since a
-    /// picture is a thing to look at. What the speakers make of an Image is one
-    /// evaluation of a still, which is a color that never moves, so the audio
-    /// program carries none of these and reads black.
-    /// <para>
-    /// It is also what the shader is handed before a frame: one texture per
-    /// entry, in this order, which is how a uniform finds the picture its op
-    /// names.
-    /// </para>
+    /// Carried the way <see cref="Tables"/> is, but filled on the video path: what
+    /// the speakers make of an Image is a color that never moves, so the audio
+    /// program carries none and reads black. It is also what the shader is handed
+    /// before a frame — one texture per entry, in this order.
     /// </remarks>
     public IReadOnlyList<LoadedImage> Pictures => pictureArray;
 
 
     /// <summary>
     /// <see cref="Tables"/> and <see cref="Pictures"/> as what the interpreter
-    /// indexes, rather than as what a caller reads them through.
+    /// indexes. An <see cref="IReadOnlyList{T}"/> indexer is an interface call,
+    /// and both are read inside the per-pixel loop to reach an array that was
+    /// already an array.
     /// </summary>
-    /// <remarks>
-    /// An <see cref="IReadOnlyList{T}"/> indexer is an interface call, and both
-    /// of these are read inside the per-pixel loop — a patch with an Image in it
-    /// would pay for one on every pixel of every frame, to reach an array that
-    /// was already an array. The properties above still hand out the list, so
-    /// nothing outside this class notices.
-    /// </remarks>
     private readonly LoadedSample[] tableArray = tables as LoadedSample[] ?? [.. tables ?? []];
 
     private readonly LoadedImage[] pictureArray = pictures as LoadedImage[] ?? [.. pictures ?? []];
@@ -149,15 +115,10 @@ public sealed class CompiledPatch(
 
     /// <summary>
     /// The same ops sorted by how often a frame has to run them, or null for a
-    /// program that cannot be sorted. See <see cref="FramePlan"/>.
+    /// program that cannot be sorted. See <see cref="FramePlan"/>. Worked out
+    /// here because it is a property of the program, which outlives a frame: the
+    /// walk is paid once per edit against every frame drawn in between.
     /// </summary>
-    /// <remarks>
-    /// Worked out once here rather than by whoever is drawing, because it is a
-    /// property of the program and the program is what outlives a frame. A patch
-    /// is recompiled on every edit and drawn sixty times a second in between, so
-    /// the walk this costs is paid once against the half a million evaluations
-    /// it saves each of those frames.
-    /// </remarks>
     public FramePlan? Plan { get; } = FramePlan.For(ops, registerCount);
 
     /// <summary>First of the <see cref="OutputWidth"/> registers holding the result.</summary>
@@ -176,13 +137,10 @@ public sealed class CompiledPatch(
 
     /// <summary>
     /// How many traces this program keeps — one per Scope whose input it
-    /// evaluates, which is the speakers' program and no other.
+    /// evaluates, which is the speakers' program and no other. Counted from the
+    /// highest slot, because a scope wired to nothing emits none and would
+    /// otherwise shift every scope after it.
     /// </summary>
-    /// <remarks>
-    /// Counted from the highest slot rather than from how many taps there are,
-    /// because a scope wired to nothing emits none and would otherwise shift
-    /// every scope after it.
-    /// </remarks>
     public int TraceCount { get; } = ops
         .Where(o => o.Code is OpCode.Tap)
         .Select(o => (int)o.K + 1)
@@ -199,13 +157,9 @@ public sealed class CompiledPatch(
 
     /// <summary>
     /// How many one-evaluation cells the program needs — one per cycle in the
-    /// patch it came from.
+    /// patch it came from. Taken from the highest slot any op names, since a read
+    /// and its write share a cell and counting ops would count each cell twice.
     /// </summary>
-    /// <remarks>
-    /// Taken from the highest slot any op names rather than from how many ops name
-    /// one, because a read and its write are two ops sharing a cell and counting
-    /// them would count each cell twice.
-    /// </remarks>
     public int UnitCount { get; } = ops
         .Where(o => o.Code is OpCode.UnitRead or OpCode.UnitWrite or OpCode.ClockWrite)
         .Select(o => (int)o.K + 1)
@@ -213,9 +167,9 @@ public sealed class CompiledPatch(
         .Max();
 
     /// <summary>
-    /// A program whose output is all zeroes — what the compiler falls back to
-    /// for a graph with no Output at all, which means one assembled by hand
-    /// rather than through <see cref="Graph.Patch.EnsureOutput"/>.
+    /// A program whose output is all zeroes — what the compiler falls back to for
+    /// a graph with no Output, meaning one assembled by hand rather than through
+    /// <see cref="Graph.Patch.EnsureOutput"/>.
     /// </summary>
     public static CompiledPatch Constant(int width) => new(
         [.. Enumerable.Range(0, width).Select(i => new Op(OpCode.Const, i))],
@@ -232,29 +186,25 @@ public sealed class CompiledPatch(
     public double[] AllocateRegisters() => new double[Math.Max(RegisterCount, OutputWidth)];
 
     /// <summary>Runs the program for one pixel. <paramref name="registers"/> is reused across pixels.</summary>
-    /// <param name="feedback">The frame before this one, for <see cref="OpCode.SampleFeedback"/> to read. Empty on the first frame and off the audio path, where a sample has no previous picture.</param>
+    /// <param name="feedback">The frame before this one, for <see cref="OpCode.SampleFeedback"/> to read. Empty on the first frame and off the audio path.</param>
     /// <param name="delays">
-    /// Memory for the stateful ops, or null when there is none. Null is not a
-    /// failure: it is what the video path passes, because rows render in
-    /// parallel and a shared delay line has no meaning per pixel. Without it a
-    /// delay hands its input straight through, so a patch built for the speakers
-    /// still shows a picture.
+    /// Memory for the stateful ops, or null when there is none — which is what
+    /// the video path passes, since rows render in parallel and a shared delay
+    /// line has no meaning per pixel. Without it a delay hands its input straight
+    /// through, so a patch built for the speakers still shows a picture.
     /// </param>
     /// <param name="x">Horizontal position, widened by the aspect ratio. Pinned to zero on the audio path.</param>
     /// <param name="y">Vertical position, -1 at the bottom to 1 at the top. Pinned to zero on the audio path.</param>
     /// <param name="t">Seconds since the patch started, which is the only one of the three that moves for the ear.</param>
-    /// <param name="registers">Scratch for the whole program, sized by <see cref="RegisterCount"/> and reused across pixels rather than allocated per one.</param>
+    /// <param name="registers">Scratch for the whole program, sized by <see cref="RegisterCount"/> and reused across pixels.</param>
     /// <param name="aspect">
     /// How far <paramref name="x"/> reaches at the edge of the frame, for
-    /// <see cref="OpCode.LoadAspect"/>. Defaults to a square picture, which is
-    /// what a caller that is not drawing one has.
+    /// <see cref="OpCode.LoadAspect"/>. Defaults to a square picture.
     /// </param>
     /// <param name="live">
     /// What is being played into the program from outside it, or null when
-    /// nothing is. Null is the ordinary case rather than a failure — an offline
-    /// render, a test and a headless compile all have nobody at the keys — and
-    /// there every live input reads zero, which is what an instrument nobody is
-    /// touching does.
+    /// nothing is — an offline render, a test and a headless compile all have
+    /// nobody at the keys, and there every live input reads zero.
     /// </param>
     public void Evaluate(
         double x,
@@ -272,15 +222,11 @@ public sealed class CompiledPatch(
     /// frame that means to run each stage where it belongs.
     /// </summary>
     /// <remarks>
-    /// The three stages together do exactly what one <see cref="Evaluate"/>
-    /// does, provided they are run in order into the same register bank and the
-    /// arguments a stage does not vary with are held still across it — see
-    /// <see cref="FramePlan"/> for why that is safe and what it saves.
-    /// <para>
-    /// A program with no plan runs whole at <see cref="EvaluationStage.Pixel"/>
-    /// and does nothing at the other two, so a caller staging its loops gets the
-    /// right picture either way and pays only for what the program allowed.
-    /// </para>
+    /// The three stages together do exactly what one <see cref="Evaluate"/> does,
+    /// provided they run in order into the same register bank and the arguments a
+    /// stage does not vary with are held still — see <see cref="FramePlan"/>. A
+    /// program with no plan runs whole at <see cref="EvaluationStage.Pixel"/>, so
+    /// a caller staging its loops gets the right picture either way.
     /// </remarks>
     public void EvaluateStage(
         EvaluationStage stage,
@@ -307,15 +253,13 @@ public sealed class CompiledPatch(
 
     /// <summary>
     /// Walks <paramref name="ops"/> from <paramref name="from"/> to
-    /// <paramref name="to"/>.
+    /// <paramref name="to"/>, so the staged path can run a third of the program
+    /// without a second copy of the switch.
     /// </summary>
     /// <remarks>
-    /// A range rather than the whole array, so the staged path can run a third
-    /// of the program without a second copy of the switch. Only a whole run may
-    /// pass <paramref name="delays"/>: which line or cell a stateful op uses is
-    /// counted from the start of the program, so a run that begins part way
-    /// through would count from the wrong place — and a staged run passes none,
-    /// which is also what lets its ops be reordered at all.
+    /// Only a whole run may pass <paramref name="delays"/>: which line or cell a
+    /// stateful op uses is counted from the start of the program. A staged run
+    /// passes none, which is also what lets its ops be reordered at all.
     /// </remarks>
     private void Run(
         Op[] ops,
@@ -335,13 +279,11 @@ public sealed class CompiledPatch(
                 $"Register bank holds {registers.Length}, the program needs {RegisterCount}.",
                 nameof(registers));
 
-        // The one place the register file is touched without a bounds check, and
-        // what pays for it is the constructor: every index below was checked
-        // against RegisterCount once, when the program was made, and the guard
-        // above is the other half of that — together they say the bank is at
-        // least as long as the largest index any op names. Checking per access
-        // instead costs four compares on an Add, which at thirty ops a pixel and
-        // half a million pixels a frame is most of what this loop does.
+        // The one place the register file is touched without a bounds check. Every
+        // index below was checked against RegisterCount when the program was made,
+        // and the guard above is the other half of that. Checking per access costs
+        // four compares on an Add, which at thirty ops a pixel is most of what
+        // this loop does.
         ref var bank = ref MemoryMarshal.GetReference(registers);
 
         // Which line or cell an op uses is its position among the ops of its
@@ -500,9 +442,8 @@ public sealed class CompiledPatch(
 
                 // The two halves of a cycle. Without state a read is zero and a
                 // write goes nowhere, so a loop drawn on the video path is simply
-                // open — the same fallback the delay lines take, for the same
-                // reason: pixels are evaluated in parallel and in whatever order,
-                // and there is no "previous evaluation" for one to mean.
+                // open: pixels are evaluated in parallel, and there is no
+                // "previous evaluation" for one to mean.
                 case OpCode.UnitRead:
                     Reg(ref bank, op.Out) = delays?.ReadUnit((int)op.K) ?? 0d;
                     break;
@@ -539,20 +480,15 @@ public sealed class CompiledPatch(
     /// the property's initialiser.
     /// </summary>
     /// <remarks>
-    /// What makes the unchecked reads in <see cref="Evaluate"/> safe, and the
-    /// reason it is worth doing here: a program is walked once when it is made
-    /// and several million times after that, so the same check costs nothing
-    /// where it is and most of the inner loop where it was.
-    /// <para>
-    /// Only the fields an op actually reads — <see cref="OpShape"/> says which.
-    /// An op that takes no operand leaves A, B and C at -1, and that is not a
-    /// register out of range but the absence of one.
-    /// </para>
+    /// What makes the unchecked reads in <see cref="Evaluate"/> safe. Only the
+    /// fields an op actually reads — <see cref="OpShape"/> says which — since an
+    /// op that takes no operand leaves A, B and C at -1, which is the absence of
+    /// a register rather than one out of range.
     /// </remarks>
     /// <exception cref="ArgumentException">
     /// An op names a register the bank does not hold, which is a malformed
     /// program rather than a bad input — caught here, where the message can name
-    /// the instruction, instead of as a memory fault a million evaluations later.
+    /// the instruction.
     /// </exception>
     private static int Vouch(Op[] ops, int registerCount)
     {
@@ -596,8 +532,8 @@ public sealed class CompiledPatch(
 
     /// <summary>
     /// Feedback held below one. At exactly one a delay line never decays and at
-    /// more than one it doubles every pass, and unlike every other op in here
-    /// that damage persists after the knob is turned back down.
+    /// more than one it doubles every pass, and that damage persists after the
+    /// knob is turned back down.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static double Feedback(double v) => double.IsFinite(v) ? Math.Clamp(v, -0.99d, 0.99d) : 0d;
@@ -605,9 +541,7 @@ public sealed class CompiledPatch(
     /// <summary>
     /// The largest double below 1. For a tiny negative input, <c>v - floor(v)</c>
     /// is mathematically just under 1 but cancels to exactly 1.0 at any finite
-    /// precision. Fract is documented as half-open, and Saw and Tile both read
-    /// it that way, so the result is pinned just below the boundary instead of
-    /// being allowed to reach it.
+    /// precision, and Fract is half-open — Saw and Tile both read it that way.
     /// </summary>
     private const double JustBelowOne = 0.99999999999999989d;
 
@@ -619,9 +553,9 @@ public sealed class CompiledPatch(
     }
 
     // Exact equality is the point in the three guards below: they trap the one
-    // divisor that makes the result undefined. A tolerance would not be safer,
-    // it would be wrong — Divide(1, 1e-20f) is a legitimate 1e20, and an epsilon
-    // would silently flatten it to zero. Guard already handles the overflow.
+    // divisor that makes the result undefined. A tolerance would be wrong —
+    // Divide(1, 1e-20f) is a legitimate 1e20, and an epsilon would flatten it to
+    // zero. Guard already handles the overflow.
     // ReSharper disable CompareOfFloatsByEqualityOperator
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -7,14 +7,10 @@ namespace Flyback.Core.Graph;
 /// One note in a sequence: what it plays, how long it lasts and how loud it is.
 /// </summary>
 /// <param name="Value">A note number on a Note Sequencer, an ordinary signal on a Sequencer.</param>
-/// <param name="Length">
-/// In steps, so 1 is a single step and 2 is a note held twice as long. Never
-/// zero — a note of no duration has nowhere to sound and would divide by
-/// nothing when the gate asks how far through it we are.
-/// </param>
+/// <param name="Length">In steps, and never zero — a note of no duration has nowhere to sound.</param>
 /// <param name="Volume">
-/// 0 to 1, and a level rather than a switch: a rest and a quiet note are the
-/// same control, which is what makes it a velocity for free.
+/// 0 to 1, and a level rather than a switch, so a rest and a quiet note are the
+/// same control.
 /// </param>
 public readonly record struct Step(float Value, float Length = 1f, float Volume = 1f)
 {
@@ -32,36 +28,24 @@ public readonly record struct Step(float Value, float Length = 1f, float Volume 
 public sealed class NodeInstance
 {
     /// <summary>
-    /// The longest a module may be renamed to. Not a limit anybody working will
-    /// meet — it is there so that a name pasted from somewhere else cannot make
-    /// a patch file enormous or a header undrawable.
+    /// The longest a module may be renamed to, so that a name pasted from
+    /// somewhere else cannot make a patch file enormous or a header undrawable.
     /// </summary>
     public const int NameLimit = 26;
 
     /// <summary>
     /// How far from the origin a module may sit to either side, in graph units.
+    /// Fifteen thousand holds the widest drawing in the box with no room to get
+    /// lost in: framing clamps its zoom, so a module flung further cannot be got
+    /// back. Held on the coordinate, so it is true however the module was placed.
     /// </summary>
-    /// <remarks>
-    /// Fifteen thousand across, which holds the widest drawing in the box —
-    /// 'Acid' with its groups open, at 11708 — and no more. Room to work in
-    /// rather than room to get lost in: framing clamps its zoom, so a module
-    /// flung far enough away cannot be got back.
-    /// <para>
-    /// Held on the coordinate rather than on the gesture, so it is true of a
-    /// module however it was placed — dragged, pasted, laid out, or read from a
-    /// hand-edited file.
-    /// </para>
-    /// </remarks>
     public const double Across = 7_500d;
 
     /// <summary>
-    /// The same going down: ten thousand.
+    /// The same going down: ten thousand. Smaller than <see cref="Across"/>
+    /// because a signal chain runs left to right, so patches grow across faster
+    /// than they grow down.
     /// </summary>
-    /// <remarks>
-    /// Smaller than <see cref="Across"/> because a signal chain runs left to
-    /// right and the layout draws it that way, so patches grow across far faster
-    /// than they grow down — the tallest in the box is 5443.
-    /// </remarks>
     public const double Down = 5_000d;
 
     public required Guid Id { get; init; }
@@ -83,20 +67,10 @@ public sealed class NodeInstance
     }
 
     /// <summary>
-    /// What this one has been renamed to, and null where it has not been — which
-    /// is nearly always, so it is null rather than a copy of the definition's
-    /// name and an unrenamed module writes no name into the file at all.
+    /// What this one has been renamed to, and null where it has not been, so an
+    /// unrenamed module writes no name into the file. A label and nothing more:
+    /// nothing is ever found by name. Set through <see cref="Rename"/>.
     /// </summary>
-    /// <remarks>
-    /// A label and nothing more: the compiler roots at the sink and reaches
-    /// modules through wires, so nothing is ever found by name and two modules
-    /// called the same thing is no more a problem than two called nothing.
-    /// <para>
-    /// Set through <see cref="Rename"/>, which is what makes "null means the
-    /// definition's name" true of every module rather than of the ones that
-    /// happened to go through the inspector.
-    /// </para>
-    /// </remarks>
     public string? Name { get; set; }
 
     /// <summary>
@@ -107,28 +81,14 @@ public sealed class NodeInstance
 
     /// <summary>
     /// Everything this instance carries that is not a knob — a sequencer's
-    /// notes, a quantiser's scale, a player's file, a plugin's own invention —
-    /// each under its <see cref="NodeExtra.Key"/>, and null for the great
-    /// majority of modules, which carry nothing.
+    /// notes, a quantiser's scale, a player's file — each under its
+    /// <see cref="NodeExtra.Key"/>, and null for the modules that carry nothing.
     /// </summary>
     /// <remarks>
-    /// One store rather than a field per kind
-    /// ([0061](0061-what-a-module-carries-is-kept-in-one-store.md)). It holds all
-    /// extra state in one dictionary so a plugin can add its own data without the
-    /// engine needing to know its shape.
-    /// <para>
-    /// <see cref="JsonNode"/> rather than a typed value, because the engine does
-    /// not know what shape a plugin's kind is and must round-trip it without
-    /// understanding it. It also keeps the file ordinary: an extra writes under
-    /// its own name, which reads and edits like the rest of the patch.
-    /// </para>
-    /// <para>
-    /// Getting a shape back out of it is the kind's, not this class's:
-    /// <see cref="StepsExtra.Of"/> and its three siblings hand back a
-    /// <c>List&lt;Step&gt;</c>, a scale or a path, and
-    /// <see cref="NodeExtra.Fold"/> puts it on the <see cref="EmitContext"/>
-    /// typed, so nothing on the compile path reads JSON.
-    /// </para>
+    /// One store rather than a field per kind (ADR-0061), holding
+    /// <see cref="JsonNode"/> because the engine must round-trip a plugin's
+    /// shape without understanding it. <see cref="StepsExtra.Of"/> and its
+    /// siblings are what read a typed shape back out.
     /// </remarks>
     public Dictionary<string, JsonNode>? State { get; set; }
 
@@ -141,8 +101,8 @@ public sealed class NodeInstance
 
     /// <summary>
     /// Stores an extra's state under its key, making the dictionary on first use
-    /// and taking it away again when the last entry goes — so a module that
-    /// carries nothing writes no empty object into the file.
+    /// and taking it away with the last entry, so a module that carries nothing
+    /// writes no empty object into the file.
     /// </summary>
     public void SetState(string key, JsonNode? value)
     {
@@ -158,23 +118,17 @@ public sealed class NodeInstance
     }
 
     /// <summary>
-    /// One coordinate held inside the canvas.
+    /// One coordinate held inside the canvas. Not a number at all becomes the
+    /// origin rather than the near edge: NaN is a coordinate that was never
+    /// computed, and it would poison every comparison looking for the corners.
     /// </summary>
-    /// <remarks>
-    /// Not a number at all becomes the origin rather than the near edge: NaN is
-    /// not far away in some direction, it is a coordinate that was never
-    /// computed, and it would otherwise poison every comparison that looks for
-    /// the corners of a patch. Infinity is genuinely far away in a direction and
-    /// lands on the edge like any other overshoot.
-    /// </remarks>
     private static double Inside(double value, double edge) =>
         double.IsNaN(value) ? 0d : Math.Clamp(value, -edge, edge);
 
     /// <summary>
-    /// What to call this one: the name it was given, or its definition's where
-    /// it was given none. The one way anything should ask, so that a renamed
-    /// module reads the same on the canvas, in the panel and in a complaint the
-    /// compiler makes about it.
+    /// What to call this one: the name it was given, or its definition's. The
+    /// one way anything should ask, so a renamed module reads the same on the
+    /// canvas, in the panel and in a compiler complaint.
     /// </summary>
     public string Title(NodeDef def) => Name ?? def.Name;
 
@@ -183,11 +137,9 @@ public sealed class NodeInstance
     /// </summary>
     /// <param name="def">The definition, which is what "no name" means.</param>
     /// <param name="to">
-    /// The new name. Blank puts it back — an empty box is how the panel asks for
-    /// the default, and there is no other way to mean it. So is the definition's
-    /// own name typed out: it is not a rename, and storing it would leave a file
-    /// claiming a name that would change under it the day the module is renamed
-    /// in the catalogue.
+    /// The new name. Blank puts it back, and so does the definition's own name:
+    /// storing that would leave a file claiming a name that changes under it the
+    /// day the module is renamed in the catalogue.
     /// </param>
     public void Rename(NodeDef def, string? to)
     {
@@ -203,19 +155,10 @@ public sealed class NodeInstance
     /// on the canvas.
     /// </summary>
     /// <remarks>
-    /// Deep, so that what a clipboard holds is a picture of the patch as it was
-    /// rather than a view onto one that goes on being edited: the knobs and the
-    /// store are the whole of a module's settings, and sharing either would let
-    /// an edit made afterwards change what a paste produces.
-    /// <para>
-    /// Two lines rather than one per kind of carried state, which is what
-    /// putting all of it in <see cref="State"/> bought
-    /// ([0061](0061-what-a-module-carries-is-kept-in-one-store.md)). Still not
-    /// routed through <see cref="NodeDef.Extras"/> like seeding is, and now it
-    /// need not be: a copy must not need a definition — a fragment naming a
-    /// module this build has no plugin for still has to keep its notes — and a
-    /// clone of the store keeps them without knowing what any of them are.
-    /// </para>
+    /// Deep, so a clipboard holds the patch as it was rather than a view onto
+    /// one still being edited. A copy must not need a definition — a fragment
+    /// naming a module this build has no plugin for still has to keep its notes
+    /// — and cloning <see cref="State"/> keeps them without knowing what they are.
     /// </remarks>
     /// <param name="id">The copy's identity, or null to keep this one's.</param>
     /// <param name="dx">How far to move it across.</param>
@@ -238,15 +181,12 @@ public sealed class NodeInstance
     };
 
     /// <param name="id">
-    /// What to call it, or null for a name nothing has had before.
+    /// What to call it, or null for a name nothing has had before. Supplying one
+    /// says this is the same module as something that existed before, which is
+    /// what lets a patch rebuilt from its source keep the memory, the positions
+    /// and the selection of the one it replaces. Two nodes sharing an id is a
+    /// patch that cannot be wired.
     /// </param>
-    /// <remarks>
-    /// A caller that supplies one is saying this module is the same module as
-    /// something that existed before — which is what lets a patch rebuilt from
-    /// its source keep the memory, the positions and the selection of the patch
-    /// it replaces. Nobody else should: two nodes sharing an id is a patch that
-    /// cannot be wired.
-    /// </remarks>
     /// <param name="def"></param>
     /// <param name="x"></param>
     /// <param name="y"></param>
@@ -278,23 +218,17 @@ public sealed class Patch
 {
     /// <summary>
     /// Which layout of the file this came from, stamped as it is written and
-    /// declared first so it is the first thing in the text and the first thing a
-    /// reader can act on.
+    /// declared first. Null on a patch that has not been through
+    /// <see cref="PatchIO.ToJson"/> and on every file written before the stamp
+    /// existed, which is why reading treats null as
+    /// <see cref="PatchIO.FirstVersion"/> rather than as a fault.
     /// </summary>
-    /// <remarks>
-    /// Null on a patch that has not been through <see cref="PatchIO.ToJson"/>,
-    /// and on every file written before the stamp existed — which is why reading
-    /// treats null as <see cref="PatchIO.FirstVersion"/> rather than as a fault.
-    /// A patch in memory has no version of its own; it has whatever the file it
-    /// last passed through said, and this is where that is kept.
-    /// </remarks>
     public int? Version { get; set; }
 
     /// <summary>
     /// The plugins this patch cannot be opened without, stamped as it is
-    /// written. Null rather than empty when it uses nothing but the modules that
-    /// ship in the engine, so an ordinary patch file looks exactly as it always
-    /// did and one saved by an older build still loads.
+    /// written. Null rather than empty where it uses only the engine's own
+    /// modules, so an ordinary file looks as it always did.
     /// </summary>
     public List<ModuleProvider>? Requires { get; set; }
 
@@ -303,16 +237,13 @@ public sealed class Patch
     public List<Connection> Connections { get; set; } = [];
 
     /// <summary>
-    /// Which modules are drawn together as one box, and null on a patch where
-    /// none are — which is nearly all of them, so an ordinary file looks exactly
-    /// as it always did and one saved by an older build still loads.
+    /// Which modules are drawn together as one box, and null where none are.
     /// </summary>
     /// <remarks>
-    /// The one field here that says nothing about what the patch computes. A
-    /// reader that does not know about groups reads every module and every wire
-    /// correctly and merely draws them all separately, which is the only reason
-    /// this could be added to the format without moving
-    /// <see cref="PatchIO.FormatVersion"/>. See <see cref="NodeGroup"/>.
+    /// The one field here that says nothing about what the patch computes: a
+    /// reader that does not know about groups draws every module separately and
+    /// is otherwise correct, which is why this could be added without moving
+    /// <see cref="PatchIO.FormatVersion"/>.
     /// </remarks>
     public List<NodeGroup>? Groups { get; set; }
 
@@ -331,9 +262,8 @@ public sealed class Patch
     }
 
     /// <summary>
-    /// The group holding <paramref name="nodeId"/> if it is collapsed, and null
-    /// where it is not or where the module is in none — which is the question
-    /// every drawing and hit-testing decision actually asks.
+    /// The group holding <paramref name="nodeId"/> if it is collapsed, which is
+    /// the question every drawing and hit-testing decision asks.
     /// </summary>
     public NodeGroup? CollapsedGroupOf(Guid nodeId) =>
         GroupOf(nodeId) is { Collapsed: true } group ? group : null;
@@ -341,18 +271,13 @@ public sealed class Patch
     /// <summary>
     /// Draws <paramref name="members"/> together, and hands back the group. The
     /// sink is left out rather than refused, the way copying leaves it out
-    /// ([0045](0045-what-is-copied-is-a-patch-file.md)): selecting everything and
-    /// grouping it should group everything that can be, not nothing.
+    /// (ADR-0045). A module already in a group leaves it, since two boxes both
+    /// claiming to draw one module is a picture with no meaning.
     /// </summary>
-    /// <remarks>
-    /// A module already in a group leaves it, because two boxes that both claim
-    /// to draw one module is a picture with no meaning. The group it left is
-    /// dropped when it is worn down past <see cref="NodeGroup.Fewest"/>.
-    /// </remarks>
     /// <returns>
     /// The new group, or null where what was asked for would not be one — an
-    /// empty selection, the sink on its own, or a single module, which
-    /// <see cref="NodeGroup.Fewest"/> says is not a group.
+    /// empty selection, the sink on its own, or fewer than
+    /// <see cref="NodeGroup.Fewest"/> modules.
     /// </returns>
     public NodeGroup? Group(IEnumerable<Guid> members)
     {
@@ -392,16 +317,10 @@ public sealed class Patch
     }
 
     /// <summary>
-    /// Takes a module out of whatever group holds it, dropping any group that
-    /// leaves with too few to be one.
+    /// Takes a module out of whatever group holds it, dropping any group left
+    /// with fewer than <see cref="NodeGroup.Fewest"/> — so the rule against a box
+    /// round one module holds after an edit and not only when one is made.
     /// </summary>
-    /// <remarks>
-    /// Past <see cref="NodeGroup.Fewest"/> rather than at empty, so that the rule
-    /// against a box round one module holds after an edit and not only at the
-    /// moment one is made. Deleting the second-to-last module of a group takes
-    /// the group with it, and the one left over goes back to being an ordinary
-    /// module on the canvas.
-    /// </remarks>
     private void Forget(Guid nodeId)
     {
         if (Groups is null) return;
@@ -427,20 +346,11 @@ public sealed class Patch
     /// boundary — see <see cref="GroupSockets"/> for what is and is not one.
     /// </summary>
     /// <remarks>
-    /// Two things put a socket on the edge and either is enough: a wire crossing
-    /// there right now, and <see cref="NodeGroup.Exposed"/> saying one belongs
-    /// there. The first is why a box drawn round a wired-up chain arrives with an
-    /// edge already on it; the second is why taking a wire off does not take the
-    /// socket with it. Kept as a union rather than trusting the stored list
-    /// alone, so a hand-edited file with a wire and no entry for it is drawn
-    /// correctly rather than drawn with a wire going nowhere.
-    /// <para>
-    /// Ordered down the canvas and then across it, so the sockets on the box come
-    /// in the order the modules behind them were already sitting in. That order
-    /// is free to change on the next edit because nothing writes it down: a
-    /// socket is a <see cref="GroupSocket"/>, which names a module and a port,
-    /// and the position of a row is only ever where it is drawn this frame.
-    /// </para>
+    /// A wire crossing now and <see cref="NodeGroup.Exposed"/> each put a socket
+    /// there: the first is why a box round a wired chain arrives with an edge on
+    /// it, the second why taking a wire off leaves the socket. Ordered down the
+    /// canvas and then across it, and free to change on the next edit, since a
+    /// row's position is never written down.
     /// </remarks>
     public GroupSockets SocketsOf(NodeGroup group)
     {
@@ -492,9 +402,8 @@ public sealed class Patch
     }
 
     /// <summary>
-    /// Whether a wire is on this socket right now — which is what decides
-    /// whether it can be taken off the edge, since one that is wired comes
-    /// straight back.
+    /// Whether a wire is on this socket right now, which decides whether it can
+    /// be taken off the edge — one that is wired comes straight back.
     /// </summary>
     public bool Wired(NodeGroup group, GroupSocket socket)
     {
@@ -542,13 +451,10 @@ public sealed class Patch
 
     /// <summary>
     /// The Output. Every patch has exactly one — <see cref="EnsureOutput"/> puts
-    /// it there and <see cref="Remove"/> will not take it away.
+    /// it there and <see cref="Remove"/> will not take it away. Ignored by the
+    /// serialiser, which would otherwise write a second copy of a node already
+    /// in <see cref="Nodes"/>.
     /// </summary>
-    /// <remarks>
-    /// Ignored by the serialiser, which would otherwise write it as a second
-    /// copy of a node already in <see cref="Nodes"/> — and would throw on the
-    /// way past a patch that has not been given one yet.
-    /// </remarks>
     [JsonIgnore]
     public NodeInstance Output =>
         FirstOf(NodeCatalog.OutputTypeId)
@@ -559,27 +465,19 @@ public sealed class Patch
     /// but the Output, of which a patch has exactly one, always.
     /// </summary>
     /// <remarks>
-    /// A second Output is not a second screen. Compilation roots at the one it
-    /// finds and walks backwards from it
-    /// ([0011](0011-compile-backwards-from-output.md)), so a second is never
-    /// reached: whatever is wired into it looks connected, renders nothing, and
-    /// there is no complaint to read, because the patch compiled.
+    /// Compilation roots at the Output it finds and walks backwards (ADR-0011),
+    /// so a second is never reached: whatever is wired into it looks connected,
+    /// renders nothing, and raises no complaint, because the patch compiled.
     /// </remarks>
     public bool CanAdd(string typeId) => !NodeCatalog.IsSink(typeId);
 
     /// <summary>
     /// Puts the Output in place if it is not already there, and hands it back.
     /// Called on every patch that enters the program — built, loaded or
-    /// assembled by a plugin — so that nothing downstream has to cope with a
-    /// patch that has no sink.
+    /// assembled by a plugin — so nothing downstream has to cope with a patch
+    /// that has no sink. Making it unremovable is what lets the shell hang every
+    /// audio and video setting off it (ADR-0037).
     /// </summary>
-    /// <remarks>
-    /// A patch is not a document that may or may not have somewhere to go: it is
-    /// an instrument, and an instrument with no output is not a state worth
-    /// being able to represent. Making it unremovable rather than merely
-    /// re-addable is what lets the shell hang every audio and video setting off
-    /// it — see ADR-0037.
-    /// </remarks>
     /// <param name="id">What to call one that has to be made — see <see cref="NodeInstance.Create"/>.</param>
     /// <param name="modules"></param>
     public NodeInstance EnsureOutput(ModuleCatalog? modules = null, Guid? id = null)
@@ -606,15 +504,10 @@ public sealed class Patch
 
     /// <summary>
     /// The one wire leaving an output, or null where none does or several do.
+    /// Not quite the mirror of <see cref="IncomingTo"/>: an input takes at most
+    /// one wire, an output fans out, so this answers only where there is exactly
+    /// one — lifting one of four would be picking for the user.
     /// </summary>
-    /// <remarks>
-    /// The counterpart of <see cref="IncomingTo"/>, and not quite its mirror:
-    /// an input takes at most one wire by construction, and an output may fan
-    /// out to as many as it likes. So "the wire from here" is a question with an
-    /// answer only when there happens to be exactly one, and this says so rather
-    /// than handing back the first of several — the editor lifts a wire off an
-    /// output by it, and lifting one of four would be picking for the user.
-    /// </remarks>
     public Connection? SoleOutgoingFrom(Guid node, int port)
     {
         Connection? only = null;
@@ -636,10 +529,8 @@ public sealed class Patch
     /// </summary>
     /// <remarks>
     /// Both compile whatever the answer — an unwired sink is a flat color and
-    /// silence, which are legal programs. What this is for is the question
-    /// before that: whether writing a file of either would be writing anything
-    /// at all. A patch with no Output has neither, and says so rather than
-    /// throwing, because the callers are the ones deciding what to offer.
+    /// silence. This is the question before that: whether writing a file of
+    /// either would be writing anything at all.
     /// </remarks>
     public (bool Picture, bool Sound) Reaches()
     {
@@ -656,16 +547,10 @@ public sealed class Patch
     /// <paramref name="target"/>'s input would close a loop the compiler refuses.
     /// </summary>
     /// <remarks>
-    /// Signal runs from a source to a target, so the new wire completes a loop
-    /// exactly when the target can already reach the source by following wires
-    /// forward. A loop with a cycle breaker anywhere on it is not one the compiler
-    /// minds — the break is already in it — so the walk stops at every breaker it
-    /// meets, and a wire leaving one is answered without walking at all: every
-    /// loop such a wire could complete runs through the breaker it came from.
-    /// <para>
-    /// Kept here rather than in the editor because it is a fact about the graph,
-    /// and the editor is not the only thing that assembles one.
-    /// </para>
+    /// The new wire completes a loop exactly when the target can already reach
+    /// the source going forward. The walk stops at every cycle breaker, and a
+    /// wire leaving one is answered without walking: every loop it could complete
+    /// runs through that breaker.
     /// </remarks>
     public bool WouldCycle(Guid source, Guid target, ModuleCatalog? modules = null)
     {
@@ -709,11 +594,10 @@ public sealed class Patch
         Connections.RemoveAll(c => c.TargetNode == targetNode && c.TargetPort == targetPort);
         Connections.Add(new Connection(sourceNode, sourcePort, targetNode, targetPort));
 
-        // A wire drawn across a box's edge puts a socket there for good. Done
-        // here rather than where the wire was drawn, so that it is true of one
-        // made by the canvas, by an assistant, or by a preset — and not done in
-        // Disconnect, which is the whole point: taking the wire off leaves the
-        // socket. See NodeGroup.Exposed.
+        // A wire drawn across a box's edge puts a socket there for good. Here
+        // rather than at the canvas, so it holds for a wire made by an assistant
+        // or a preset too — and deliberately not in Disconnect: taking the wire
+        // off leaves the socket. See NodeGroup.Exposed.
         Cross(sourceNode, sourcePort, targetNode, targetPort);
     }
 
@@ -740,8 +624,7 @@ public sealed class Patch
 
     /// <summary>
     /// Takes a module out, along with every wire touching it. The Output is
-    /// refused: it is the one module a patch cannot be without, so there is no
-    /// state in which removing it would be an edit rather than a mistake.
+    /// refused: a patch cannot be without it.
     /// </summary>
     /// <returns>Whether anything was removed.</returns>
     public bool Remove(Guid nodeId)

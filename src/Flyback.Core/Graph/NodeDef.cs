@@ -7,33 +7,22 @@ namespace Flyback.Core.Graph;
 /// carries that is not a knob.
 /// </summary>
 /// <remarks>
-/// Indexes straight through to <see cref="Inputs"/>, so a module that wants
-/// nothing but its sockets reads exactly as it always did — <c>i[0]</c> is input
-/// zero. Only the sequencers look further, and only at <see cref="Steps"/>.
-/// <para>
-/// What is on it falls in three groups, and they are laid out below in that
-/// order because reading them as one is a mistake worth preventing. The sockets
-/// come first and every module has them. Then what the compiler knows about this
-/// node and the module cannot — its identity, and the buffer a Scope charts;
-/// these are supplied where the context is built, and are not carried state
-/// however much <see cref="Trace"/> looks like it. Last, what the instance
-/// actually carries, every one of them put here by a
+/// Indexes straight through to <see cref="Inputs"/>, so <c>i[0]</c> is input
+/// zero. What is on it falls in three groups, laid out below in that order: the
+/// sockets every module has; what the compiler knows and the module cannot — its
+/// identity, and the buffer a Scope charts, both supplied where the context is
+/// built rather than carried; and what the instance carries, each put there by a
 /// <see cref="NodeExtra.Fold"/>.
-/// </para>
 /// <para>
-/// Everything but <see cref="Inputs"/> is an init property with a default that
-/// means "none", so a context may be built for a module that wants none of it
-/// and an emit function may read any of it without asking first. That is also
-/// what keeps this type's constructor out of the plugin ABI
-/// ([0051](0051-a-quantisers-scale-is-a-set-on-the-node.md)): a group gaining a
-/// member is a property added, which a plugin compiled against an earlier build
-/// does not notice.
+/// Everything but <see cref="Inputs"/> is an init property defaulting to "none",
+/// so an emit function may read any of it without asking, and a group gaining a
+/// member is a property added — which keeps this constructor out of the plugin
+/// ABI (ADR-0051).
 /// </para>
 /// </remarks>
 /// <param name="Inputs">
-/// One slot per declared input, already resolved — either the upstream node's
-/// result or a constant from the port default — and already coerced to the width
-/// the port declared. A <see cref="PortSpec.Swept"/> input is the exception: it
+/// One slot per declared input, already resolved and coerced to the width the
+/// port declared. A <see cref="PortSpec.Swept"/> input is the exception: it
 /// holds its knob until <see cref="Resolve"/> is called for it.
 /// </param>
 public readonly record struct EmitContext(Slot[] Inputs)
@@ -41,20 +30,16 @@ public readonly record struct EmitContext(Slot[] Inputs)
     public Slot this[int port] => Inputs[port];
 
     /// <summary>
-    /// Lowers whatever a <see cref="PortSpec.Swept"/> input is fed by, now
-    /// rather than before the module was entered.
+    /// Lowers whatever a <see cref="PortSpec.Swept"/> input is fed by, now rather
+    /// than before the module was entered.
     /// </summary>
     /// <remarks>
-    /// The whole point of the delay is what may have happened in between: a
-    /// Probe pushes a domain of its own onto the emitter first, so everything
-    /// upstream of the socket is lowered reading that instead of the pixel's own
-    /// x, y and t. Nothing resolved here is shared with anything resolved
-    /// outside the call, because a module read at one moment and the same module
-    /// read at another are two different values.
-    /// <para>
-    /// Falls back to the port's knob when there is no resolver, so a module that
-    /// calls this is still safe to emit outside a compilation.
-    /// </para>
+    /// The delay is for what may have happened in between: a Probe pushes a
+    /// domain of its own first, so everything upstream is lowered reading that
+    /// instead of the pixel's x, y and t, and nothing resolved here is shared
+    /// with anything resolved outside the call. Falls back to the port's knob
+    /// when there is no resolver, so a module that calls this is safe to emit
+    /// outside a compilation.
     /// </remarks>
     public Slot Resolve(int port) => Resolver is null ? Inputs[port] : Resolver(port);
 
@@ -64,63 +49,44 @@ public readonly record struct EmitContext(Slot[] Inputs)
     // --- what the compiler knows and the module cannot ---------------------------
 
     /// <summary>
-    /// Which instance is being lowered, for the one kind of module that has to
-    /// be addressable from outside the program.
+    /// Which instance is being lowered, for the one kind of module that has to be
+    /// addressable from outside the program.
     /// </summary>
     /// <remarks>
-    /// Identity rather than state, which is why it sits here rather than below
-    /// with <see cref="Sample"/> and the rest: those are things an instance
-    /// <em>carries</em> and this is only which instance it is. A module needs it
-    /// when its value is not computed by the program at all but played into it —
-    /// see <see cref="OpCode.LoadLive"/> — because the name it listens on has to
-    /// mean the same thing in the screen's program, in the speakers', and to
-    /// whatever outside is filling it in. A node id is the only thing all three
-    /// can agree on: the two programs are compiled separately and share no
-    /// numbering, exactly as <see cref="TapSpec.Node"/> found.
-    /// <para>
-    /// Empty where a module is lowered without an instance behind it — the hidden
-    /// one a normalled socket reads. Such a module has no node to be addressed
-    /// as, and a meter normalled to a socket would be measuring nothing anyway.
-    /// </para>
+    /// Identity rather than state, which is why it is not down with
+    /// <see cref="Sample"/>. A module needs it when its value is played into the
+    /// program rather than computed — see <see cref="OpCode.LoadLive"/> — because
+    /// the name it listens on must mean the same in both programs and to whatever
+    /// fills it in, and a node id is the only thing all three agree on. Empty
+    /// where a module is lowered without an instance behind it, which is the
+    /// hidden one a normalled socket reads.
     /// </remarks>
     public Guid Node { get; init; }
 
     /// <summary>
     /// The buffer this instance charts — the stretch of the past something
-    /// outside the program keeps refilling — and null where the program being
-    /// compiled is the one doing the playing rather than the drawing.
+    /// outside the program keeps refilling — and null on the program that plays
+    /// rather than draws.
     /// </summary>
     /// <remarks>
-    /// A <see cref="LoadedSample"/> like <see cref="Sample"/>, and read the same
-    /// way, which is the point: a chart of what was played is a table read, and
-    /// the module drawing it needs to know nothing about rings, threads or sound
-    /// cards. What differs is who fills it — a clip arrives loaded and never
-    /// changes, and this one changes every frame.
-    /// <para>
-    /// And who <em>puts</em> it here, which is why it sits in this group and not
-    /// the next one. Nothing an instance carries says anything about a Scope: a
-    /// buffer is not in the patch file, is not seeded, and cannot be. The
-    /// compiler supplies it where the context is built, the way it supplies
-    /// <see cref="Node"/> — so there is no <c>TraceExtra</c> to look for, and
-    /// looking for one is the reading this grouping is here to prevent.
-    /// </para>
-    /// <para>
-    /// Null on the speakers' program is not a fallback but the ordinary case:
-    /// there the Scope is not drawn at all, and what it contributes is a
+    /// A <see cref="LoadedSample"/> like <see cref="Sample"/> and read the same
+    /// way, so the module drawing it knows nothing about rings, threads or sound
+    /// cards; what differs is that a clip never changes and this changes every
+    /// frame. Supplied by the compiler where the context is built, the way
+    /// <see cref="Node"/> is — there is no <c>TraceExtra</c> to look for, because
+    /// a buffer is not in the patch file and cannot be seeded. Null on the
+    /// speakers' program is the ordinary case: there a Scope contributes a
     /// <see cref="OpCode.Tap"/> the compiler emits without entering the module.
-    /// </para>
     /// </remarks>
     public LoadedSample? Trace { get; init; }
 
     // --- what the instance carries, each put here by a Fold ----------------------
 
     /// <summary>
-    /// The instance's notes, empty for every module that has none.
+    /// The instance's notes, empty for every module that has none. Values rather
+    /// than slots: a sequencer folds its lengths into running sums at compile
+    /// time, which a register could not do.
     /// </summary>
-    /// <remarks>
-    /// Values rather than slots: a sequencer folds its lengths into running sums
-    /// at compile time, which a register could not do.
-    /// </remarks>
     public IReadOnlyList<Step> Steps
     {
         get => field ?? [];
@@ -133,16 +99,10 @@ public readonly record struct EmitContext(Slot[] Inputs)
     /// </summary>
     /// <remarks>
     /// Values rather than slots for the reason <see cref="Steps"/> is, and a
-    /// stronger one. A quantiser emits one candidate per note in its scale and
-    /// nothing at all for the notes left out, so what is here decides how many
-    /// ops the module lowers to rather than only what they compute. A register
-    /// could not do that: the shape of the program would have to cover all
-    /// twelve however few were switched on.
-    /// <para>
-    /// The getter answers with an empty list rather than null so that an emit
-    /// function may read it without asking, including on a context that was
-    /// never given one — which is every module but the Quantiser.
-    /// </para>
+    /// stronger one: a quantiser emits one candidate per note switched on, so
+    /// what is here decides how many ops the module lowers to rather than only
+    /// what they compute. Empty rather than null, so an emit function may read it
+    /// without asking.
     /// </remarks>
     public IReadOnlyList<int> Scale
     {
@@ -151,20 +111,16 @@ public readonly record struct EmitContext(Slot[] Inputs)
     }
 
     /// <summary>
-    /// The clip this instance plays, already loaded, and null where there is
-    /// none to play.
+    /// The clip this instance plays, already loaded, and null where there is none
+    /// to play.
     /// </summary>
     /// <remarks>
-    /// Null covers three things a module treats the same way, which is why it is
-    /// worth their sharing one: no file has been chosen, the file has gone, and
-    /// the program being compiled is the screen's. A player with no clip is
-    /// silence, and that is the right answer to all three.
-    /// <para>
-    /// Loaded rather than a path, because an emit function cannot read a file and
-    /// must not want to. What is here has been through
-    /// <see cref="ISampleLibrary"/> already, and the complaint about a file that
-    /// was not there has already been made.
-    /// </para>
+    /// Null covers three things a module treats alike: no file chosen, the file
+    /// gone, and the program being compiled is the screen's — a player with no
+    /// clip is silence, which is the right answer to all three. Loaded rather
+    /// than a path, because an emit function cannot read a file: this has been
+    /// through <see cref="ISampleLibrary"/>, and the complaint about a missing
+    /// one has already been made.
     /// </remarks>
     public LoadedSample? Sample { get; init; }
 
@@ -173,31 +129,23 @@ public readonly record struct EmitContext(Slot[] Inputs)
     /// none to show.
     /// </summary>
     /// <remarks>
-    /// Null covers the same three things <see cref="Sample"/>'s does — no file
-    /// chosen, a file that has gone, and a program that cannot show one — and
-    /// the third is the interesting one: it is every audio program, because the
-    /// compiler hands the speakers' walk no picture library at all. So a module
-    /// reading this needs no way to ask which sink it is being lowered for; the
-    /// answer is in whether it was given anything.
+    /// Null covers the same three things <see cref="Sample"/>'s does, and the
+    /// third is every audio program, since the compiler hands the speakers' walk
+    /// no picture library. So a module needs no way to ask which sink it is being
+    /// lowered for: the answer is whether it was given anything.
     /// </remarks>
     public LoadedImage? Picture { get; init; }
 
     /// <summary>
     /// What a plugin's own kinds of extra folded onto this context, keyed by
     /// <see cref="NodeExtra.Key"/>. Empty for every module in the engine's own
-    /// catalogue, all of which read the typed properties above instead.
+    /// catalogue, which read the typed properties above.
     /// </summary>
     /// <remarks>
-    /// <c>object</c> because the engine does not know the shape and does not need
-    /// to: what goes in here is put there by a plugin's own
-    /// <see cref="NodeExtra.Fold"/> and read by that same plugin's emit function,
-    /// and the pair agree about the type without anything between them having an
-    /// opinion. Read it with <see cref="Extra{T}"/> rather than by hand.
-    /// <para>
-    /// Already parsed, so an emit function never sees the JSON: turning a stored
-    /// tree into something usable — and tolerating one that means nothing —
-    /// happened in <c>Fold</c>, before the module was entered.
-    /// </para>
+    /// <c>object</c> because the engine does not know the shape: what goes in is
+    /// put there by a plugin's <see cref="NodeExtra.Fold"/> and read by that same
+    /// plugin's emit function, already parsed, so an emit function never sees the
+    /// JSON. Read it with <see cref="Extra{T}"/> rather than by hand.
     /// </remarks>
     public IReadOnlyDictionary<string, object> Extras
     {
@@ -207,14 +155,10 @@ public readonly record struct EmitContext(Slot[] Inputs)
 
     /// <summary>
     /// What the extra called <paramref name="key"/> folded on, or null where it
-    /// folded nothing or folded something else.
+    /// folded nothing or folded something else. Null rather than a throw, so a
+    /// module compiled against a catalogue that has moved under it lowers to
+    /// something rather than taking the compilation down.
     /// </summary>
-    /// <remarks>
-    /// Null rather than a throw on the wrong type, for the reason every other
-    /// read here is forgiving: a module compiled with a stale patch, or against a
-    /// catalogue that has moved under it, should lower to something rather than
-    /// take the compilation down.
-    /// </remarks>
     public T? Extra<T>(string key) where T : class =>
         Extras.TryGetValue(key, out var value) ? value as T : null;
 
@@ -249,43 +193,34 @@ public sealed record NodeDef(
     /// <summary>
     /// Everything an instance of this module carries that is not a knob: a
     /// sequencer's notes, a quantiser's scale, a player's file. Empty for the
-    /// great majority of modules, which are their sockets and nothing else.
+    /// modules that are their sockets and nothing else.
     /// </summary>
     /// <remarks>
-    /// A list of parts rather than a member per kind, and rather than a subtype
-    /// per kind ([0054](0054-what-a-module-carries-is-a-part-not-a-subtype.md)).
-    /// What each kind does with a fresh instance, a copied one and a compiled
-    /// one lives on the part — see <see cref="NodeExtra"/> — so adding a fourth
-    /// kind adds a file rather than an edit to every place that used to name the
-    /// three.
-    /// <para>
-    /// An init property rather than a constructor parameter, so a plugin
-    /// compiled against an earlier build still finds the constructor it was
-    /// compiled against.
-    /// </para>
+    /// A list of parts rather than a member or a subtype per kind (ADR-0054):
+    /// what each kind does with a fresh, copied or compiled instance lives on the
+    /// part, so a fourth kind adds a file. An init property, so a plugin compiled
+    /// against an earlier build still finds the constructor it was compiled
+    /// against.
     /// </remarks>
     public IReadOnlyList<NodeExtra> Extras { get; init; } = [];
 
     /// <summary>
     /// The extra of a given kind this module carries, or null where it carries
-    /// none. The one way to ask, so that "has notes" is a question about the
-    /// module rather than an observation that some default happens not to be
-    /// null.
+    /// none — so "has notes" is a question about the module rather than an
+    /// observation that some default happens not to be null.
     /// </summary>
     public T? Extra<T>() where T : NodeExtra => Extras.OfType<T>().FirstOrDefault();
 
     /// <summary>
-    /// Whether an instance of this module watches what the speakers played —
-    /// whether, in other words, its first input is a root of the audio program
-    /// as well as a socket.
+    /// Whether an instance of this module watches what the speakers played — in
+    /// other words, whether its first input is a root of the audio program as
+    /// well as a socket.
     /// </summary>
     /// <remarks>
-    /// The one flag that changes what the compiler <em>walks</em> rather than
-    /// what it hands a module. Everything else here is data a module reads; this
-    /// says that a node nothing downstream depends on must be visited anyway,
-    /// because the whole of its use is a side effect — see
-    /// <see cref="OpCode.Tap"/>. Declared rather than assumed of the one module
-    /// that wants it, so that a plugin can want it too.
+    /// The one flag that changes what the compiler walks rather than what it
+    /// hands a module: a node nothing depends on must be visited anyway, because
+    /// the whole of its use is a side effect — see <see cref="OpCode.Tap"/>.
+    /// Declared rather than assumed, so a plugin can want it too.
     /// </remarks>
     public bool TapsSignal { get; init; }
 
@@ -294,49 +229,33 @@ public sealed record NodeDef(
     /// itself — whether this module is a chart rather than a measurement.
     /// </summary>
     /// <remarks>
-    /// The second half of <see cref="TapsSignal"/>, and separate from it because
-    /// the two things a module can do with what the speakers played are not the
-    /// same size. A chart wants the whole window, which is a buffer per instance,
-    /// refilled every frame and read as a table — and a table is the one thing
-    /// the shader cannot draw, so a patch charting one draws on the CPU. A
-    /// measurement wants a number, which is filled in from outside like a note
-    /// on a keyboard and costs the picture nothing at all.
-    /// <para>
-    /// So a module says which it is, and a module that only measures pays for
-    /// neither the buffer nor the refill. Both still tap: the ring the speakers
-    /// write is the same ring either way.
-    /// </para>
+    /// The second half of <see cref="TapsSignal"/>, separate because the two are
+    /// not the same size. A chart wants the whole window: a buffer per instance,
+    /// refilled every frame and read as a table, which the shader cannot draw, so
+    /// a patch charting one draws on the CPU. A measurement wants a number filled
+    /// in from outside, and costs the picture nothing. Both still tap.
     /// </remarks>
     public bool ChartsSignal { get; init; }
 
     /// <summary>
-    /// Whether a wire may run backwards into this module — whether, in other
-    /// words, a patch may hold a cycle that passes through it.
+    /// Whether a wire may run backwards into this module — whether a patch may
+    /// hold a cycle that passes through it.
     /// </summary>
     /// <remarks>
-    /// A module that says yes is not compiled the way every other module is. The
-    /// walk stops when it reaches one and hands back what the cycle was carrying
-    /// at the end of the previous evaluation, and the module's own input is
-    /// resolved afterwards, once every such read in the program has been emitted.
-    /// So <see cref="Emit"/> is never called on it — see
-    /// <c>PatchCompiler</c> — and the latency that makes the loop mean something
-    /// comes from that ordering rather than from anything the module does.
-    /// <para>
-    /// One input and one output, both scalar. Nothing enforces that, but a breaker
-    /// with a different shape has sockets the compiler will not look at.
-    /// </para>
+    /// The walk stops when it reaches one and hands back what the cycle carried
+    /// at the end of the previous evaluation; the module's own input is resolved
+    /// afterwards, once every such read has been emitted. So <see cref="Emit"/>
+    /// is never called on it, and the latency that makes the loop mean something
+    /// comes from that ordering. One input and one output, both scalar — nothing
+    /// enforces it, but other sockets are sockets the compiler will not look at.
     /// </remarks>
     public bool IsCycleBreaker { get; init; }
 
     /// <summary>
-    /// Which sink this module means something at.
+    /// Which sink this module means something at. An init property defaulting to
+    /// <see cref="ModuleSinks.Both"/>, so a plugin compiled against an earlier
+    /// build neither has to say nor can be wrong.
     /// </summary>
-    /// <remarks>
-    /// An init property with a default of <see cref="ModuleSinks.Both"/>, so a
-    /// plugin compiled against an earlier build neither has to say nor can be
-    /// wrong — the same bargain <see cref="Extras"/> and <see cref="TapsSignal"/>
-    /// make, and for the same reason.
-    /// </remarks>
     public ModuleSinks Sinks { get; init; } = ModuleSinks.Both;
 }
 
@@ -344,19 +263,13 @@ public sealed record NodeDef(
 /// Which of the two programs evaluates a module as it is meant to be.
 /// </summary>
 /// <remarks>
-/// Every module is compiled for both sinks and always was — a patch is one graph
-/// ([0022](0022-audio-and-video-are-two-sinks-over-one-patch.md)) — so this
-/// changes nothing about what is emitted. What it names is something the
-/// catalogue already knew and only ever said in prose: a Filter is a wire on the
-/// video path because it has no memory to run in, a Meter reads nothing at all
-/// where no sound is running, and a Quantiser's hold cannot hold across an
-/// evaluation the screen does not have.
-/// <para>
-/// Written down so that the palette can badge it and the assistant's handbook
-/// can carry it, rather than infer it from a description. It is not what
-/// decides which sink a program reaches: that falls out of the walk back from
-/// the Output.
-/// </para>
+/// Every module is compiled for both sinks — a patch is one graph (ADR-0022) —
+/// so this changes nothing about what is emitted. It names what the catalogue
+/// only ever said in prose: a Filter is a wire on the video path because it has
+/// no memory to run in, a Meter reads nothing where no sound is running, and a
+/// Quantiser's hold cannot hold across an evaluation the screen does not have.
+/// Written down so the palette can badge it and the handbook can carry it. It is
+/// not what decides which sink a program reaches: that falls out of the walk.
 /// </remarks>
 public enum ModuleSinks
 {

@@ -12,17 +12,14 @@ public partial class NodeCatalog
     
     /// <summary>
     /// The chart module. Named here because the shell roots the picture at one
-    /// when it is the selected module, which is the only thing about a probe
-    /// that is not ordinary — see <see cref="Compile.PatchCompiler"/>.
+    /// when it is selected — see <see cref="Compile.PatchCompiler"/>.
     /// </summary>
     public const string ProbeTypeId = "probe";
 
     /// <summary>
-    /// The chart of what was played. Named here for the same reason the Probe
-    /// is — the shell roots the picture at one when it is selected — and for one
-    /// more: the compiler has to know which nodes' inputs are extra roots of the
-    /// audio program, though it asks that through
-    /// <see cref="NodeDef.TapsSignal"/> rather than by name.
+    /// The chart of what was played. Named here because the shell roots the
+    /// picture at one when it is selected; the compiler finds the extra audio
+    /// roots through <see cref="NodeDef.TapsSignal"/> rather than by name.
     /// </summary>
     public const string ScopeTypeId = "scope";
 
@@ -31,8 +28,7 @@ public partial class NodeCatalog
 
     /// <summary>
     /// The level meter. Named here because what it reads is filled in from
-    /// outside the program, and the thing doing the filling has to find it — see
-    /// <see cref="Compile.Meters"/>.
+    /// outside the program — see <see cref="Compile.Meters"/>.
     /// </summary>
     public const string MeterTypeId = "meter";
 
@@ -40,46 +36,13 @@ public partial class NodeCatalog
     /// How loud the speakers are, as a number the picture can use.
     /// </summary>
     /// <remarks>
-    /// <para>
-    /// This is the one place the eye actually listens to the ear, rather than
-    /// sharing a modulator with it. A Scope charts what was played, but
-    /// everything else the eye knows about the ear otherwise comes from sharing
-    /// a sweep between two places — a patch saying two things at once rather
-    /// than one half of it listening to the other.
-    /// </para>
-    /// <para>
-    /// It taps its input the way a Scope does — the socket is a root of the
-    /// speakers' program whether or not anything downstream reads this module,
-    /// and is <see cref="PortSpec.Swept"/> so that the screen never lowers the
-    /// signal chain behind it. That second part is the whole cost model: a
-    /// picture driven by a bass line does not compute a bass line per pixel, it
-    /// reads one number.
-    /// </para>
-    /// <para>
-    /// And it reads it as a live input, which is the part worth noticing. There
-    /// is no opcode here and no arithmetic: the module is two
-    /// <see cref="OpCode.LoadLive"/>s and a divide, so what the picture does with
-    /// the sound's loudness is exactly what it does with a note somebody is
-    /// holding down — it is told. <see cref="Meters"/> does the telling, once a
-    /// frame, from the same ring the Scope charts. The consequence that matters is
-    /// that this survives to the shader, where a Scope cannot: a uniform is a
-    /// uniform, and a table is a table.
-    /// </para>
-    /// <para>
-    /// 'window' is how much of the past is being weighed, and it is the only
-    /// smoothing there is. Short is a level that jumps on every hit; long is one
-    /// that leans. It is read off the knob at compile time rather than out of a
-    /// register, for the reason the Scope's is: what fills the answer in runs once
-    /// a frame, outside the program, and cannot act on a value that arrives per
-    /// sample.
-    /// </para>
-    /// <para>
-    /// Both readings at once, off one pass over the window, because they answer
-    /// different questions and a patch that wants the difference between them
-    /// should not need two of these. 'scale' is an ordinary socket by contrast —
-    /// it is applied to the number after it arrives, so it may be swept, and it is
-    /// how a quiet signal is brought up to something a hue can use.
-    /// </para>
+    /// No opcode and no arithmetic: two <see cref="OpCode.LoadLive"/>s and a
+    /// divide, filled in once a frame by <see cref="Meters"/> from the ring the
+    /// Scope charts — so this survives to the shader, where a Scope cannot. The
+    /// input is tapped and <see cref="PortSpec.Swept"/>, so a picture driven by a
+    /// bass line reads one number rather than computing the line per pixel.
+    /// 'window' is read off the knob at compile time, since what fills the answer
+    /// in runs outside the program; 'scale' is applied after and may be swept.
     /// </remarks>
     private static NodeDef Meter() =>
         new NodeDef(
@@ -128,23 +91,22 @@ public partial class NodeCatalog
 
     /// <summary>
     /// The Probe read backwards: a loop swept across the picture at audio rate,
-    /// so that what a chart draws of a signal, this hears of a field. Named here
-    /// only for the tests and the preset that build one — the shell treats it as
-    /// the ordinary module it is.
+    /// so what a chart draws of a signal, this hears of a field. Named here only
+    /// for the tests and the preset that build one.
     /// </summary>
     public const string ScanTypeId = "scan";
 
     /// <summary>
     /// The scale quantiser. Named here because it is the one module whose
-    /// instance carries a scale, and the editor and the assistant both have to
-    /// ask whether a given node is it — see <see cref="ScaleExtra"/>.
+    /// instance carries a scale, and the editor and the assistant both ask
+    /// whether a node is it — see <see cref="ScaleExtra"/>.
     /// </summary>
     public const string QuantiserTypeId = "audio.quantiser";
     
     /// <summary>
-    /// Whether a module is the sink. A patch always has one and never has two,
-    /// so this is what keeps it out of the palette and out of the delete key —
-    /// see <see cref="Patch.CanAdd"/> and <see cref="Patch.Remove"/>.
+    /// Whether a module is the sink, which is what keeps it out of the palette
+    /// and out of the delete key — see <see cref="Patch.CanAdd"/> and
+    /// <see cref="Patch.Remove"/>.
     /// </summary>
     public static bool IsSink(string typeId) => typeId == OutputTypeId;
     
@@ -192,12 +154,10 @@ public partial class NodeCatalog
                 var wanted = em.Add(i[0], em.Mul(i[1], Pitch.Semitones));
 
                 // Halfway between two notes is where the snap belongs, and a
-                // floor of the note plus a half is that. Instant, with
-                // nothing smoothing it: a quantiser that eased into its notes
-                // would not be one. The click this once cost never came from
-                // here — an accumulated phase (ADR-0030) takes a frequency
-                // this steps and moves the waveform's slope rather than its
-                // value, and a slope has no click in it.
+                // floor of the note plus a half is that. Instant, with nothing
+                // smoothing it: an accumulated phase (ADR-0030) moves the
+                // waveform's slope rather than its value, and a slope has no
+                // click in it.
                 var note = em.Unary(OpCode.Floor, em.Add(wanted, 0.5f));
 
                 // Detune is applied after the snap, which is the whole point
@@ -221,49 +181,37 @@ public partial class NodeCatalog
     }
 
     /// <summary>
-    /// One grid square, in screen units. Eight of them across the middle of the
-    /// picture, which is what makes the grid the axis: however wide the preview
-    /// is, a square is an eighth of the window and a quarter of the scale.
+    /// One grid square, in screen units. Eight across the middle of the picture,
+    /// so a square is an eighth of the window and a quarter of the scale however
+    /// wide the preview is.
     /// </summary>
     private const float Division = 0.25f;
 
     /// <summary>
     /// A chart, given where the signal sits: the trace, the fill under it, the
     /// grid it is read against, and the bar along whichever edge it has run off.
+    /// Shared by the Probe and the Scope, which arrive at
+    /// <paramref name="height"/> by opposite routes and are the same picture from
+    /// there on, so the two can be laid side by side and compared.
     /// </summary>
-    /// <remarks>
-    /// Shared by the two modules that draw one, which arrive at
-    /// <paramref name="height"/> by opposite routes — a Probe computes the
-    /// signal at this column, a Scope looks up what was played at it — and are
-    /// the same picture from there on. Worth one function rather than two
-    /// copies, because what a reader wants of them is that a chart of the past
-    /// and a chart of the future can be laid side by side and compared, and two
-    /// copies is exactly how that stops being true.
-    /// </remarks>
     /// <param name="y"></param>
     /// <param name="height">
     /// Where the trace goes, in screen units — the value already divided by
     /// whatever the top of the chart is worth.
     /// </param>
     /// <param name="now">
-    /// Where to rule the bright vertical line that marks the moment, or null for
-    /// a chart whose moment is the edge of the frame and so needs none — a line
-    /// there would be half off the picture and a pixel wide, which is not a
-    /// marker but the look of one.
+    /// Where to rule the line marking the moment, or null for a chart whose
+    /// moment is the edge of the frame, where a rule would be half off it.
     /// </param>
     /// <param name="glow">
-    /// How brightly to draw the signal, per column, or null for evenly. What a
-    /// chart of the past uses to say which end of it is now: a phosphor fading
-    /// behind the beam, which is the one cue that works when the moment is the
-    /// edge rather than a column. The grid is not dimmed with it — a graticule
-    /// that faded would be unreadable exactly where the oldest values are.
+    /// How brightly to draw the signal, per column, or null for evenly — a
+    /// phosphor fading behind the beam, which is how a chart of the past says
+    /// which end is now. The grid is not dimmed with it.
     /// </param>
     /// <param name="across">
     /// How wide a grid square is, or null for the fixed <see cref="Division"/>.
-    /// A Scope rules a fixed eight of them across the frame however wide it is,
-    /// so its squares are a value rather than a constant — which is the whole
-    /// difference between a graticule that says how long the window is and one
-    /// that says how many screen units a column happens to be.
+    /// A Scope rules eight across the frame however wide it is, so its squares
+    /// are a value rather than a constant.
     /// </param>
     /// <param name="em"></param>
     /// <param name="x"></param>
@@ -303,13 +251,10 @@ public partial class NodeCatalog
 
         var signal = em.Add(em.Mul(fill, 0.22f), trace);
 
-        // Where the moment is, said one way or the other. A Probe recomputes
-        // the signal either side of it, so its now is a column in the middle and
-        // a rule down it is exactly right. A Scope's now is the edge of the
-        // frame, where a rule would be half off the picture — so it says the
-        // same thing by brightness instead, and passes no rule at all rather
-        // than borrowing the Probe's, which down the centre of a scope would
-        // look like it meant something and would mean half a window ago.
+        // Where the moment is, said one way or the other. A Probe's now is a
+        // column in the middle and takes a rule down it; a Scope's is the edge
+        // of the frame, so it says the same thing by brightness and passes no
+        // rule at all.
         if (glow is { } brightness) signal = em.Mul(signal, brightness);
 
         var grid = em.Add(Lattice(x, across ?? em.Constant(Division)), Lattice(y, em.Constant(Division)));
@@ -344,16 +289,10 @@ public partial class NodeCatalog
     }
 
     /// <summary>
-    /// The notes a freshly placed Quantiser snaps to: a major scale, which is
-    /// the one every ear recognises and the one that makes the module audibly
-    /// do something the moment it is placed.
+    /// The notes a freshly placed Quantiser snaps to: a major scale, so the
+    /// module audibly does something the moment it is placed. Chromatic would
+    /// snap to the nearest semitone, which the Note module already does.
     /// </summary>
-    /// <remarks>
-    /// Chromatic would be the neutral choice and is the wrong one: every note
-    /// switched on is a scale that snaps to the nearest semitone, which the Note
-    /// module already does — a module that arrives doing nothing is a module
-    /// nobody finds out the point of.
-    /// </remarks>
     private static readonly int[] Major = [0, 2, 4, 5, 7, 9, 11];
 
     /// <summary>
@@ -361,22 +300,11 @@ public partial class NodeCatalog
     /// out of the ones the scale has switched on.
     /// </summary>
     /// <remarks>
-    /// <para>
-    /// The scale is a list on the node rather than twelve sockets, for the
-    /// reason ADR-0038 gives about a tune. Twelve switches would be twelve
-    /// inputs on a module nobody could read, and unlike a knob none of them is
-    /// a thing a patch could drive: what a scale holds is which notes exist,
-    /// and that is a decision about the piece rather than a signal in it.
-    /// </para>
-    /// <para>
-    /// What it lowers to depends on which notes are on, which is the whole
-    /// reason the scale is a compile-time value — see
-    /// <see cref="EmitContext.Scale"/>. Each note switched on contributes one
-    /// candidate and the notes switched off contribute nothing, so a five-note
-    /// scale is a little over half the ops of a nine-note one and the two ends
-    /// of the range are special cases worth taking: all twelve is the nearest
-    /// semitone and none at all is a wire.
-    /// </para>
+    /// The scale is a list on the node rather than twelve sockets (ADR-0038):
+    /// which notes exist is a decision about the piece, not a signal in it. It
+    /// is a compile-time value — see <see cref="EmitContext.Scale"/> — so each
+    /// note switched on costs one candidate, and the ends of the range are worth
+    /// taking: all twelve is the nearest semitone, none at all is a wire.
     /// </remarks>
     private static NodeDef Quantiser() => new(
         QuantiserTypeId, "Quantiser", ModuleCategories.Pitch,
@@ -406,24 +334,11 @@ public partial class NodeCatalog
     /// </summary>
     /// <remarks>
     /// The nearest note of pitch class <c>p</c> to a signal <c>n</c> is
-    /// <c>12·round((n − p)/12) + p</c> — the octave that puts <c>p</c> closest,
-    /// which is a rounding rather than a search. Every scale note gives one, and
-    /// the answer is whichever of them the signal is least far from. So there is
-    /// no loop and no branch: a fixed candidate per switch that is on, and a
-    /// running minimum over them, which is the same unrolling the Supersaw uses
-    /// for its seven voices.
-    /// <para>
-    /// The division by twelve is done once, before the candidates, and the
-    /// subtraction of the pitch class folds into the same constant the rounding
-    /// adds — so a candidate costs a floor and three arithmetic ops rather than
-    /// the six the formula reads as.
-    /// </para>
-    /// <para>
-    /// Ties go to the note the scale names later, which after
-    /// <see cref="Pitch.Scale"/> is always the higher pitch class. Reaching one
-    /// takes a signal landing exactly halfway between two notes of the scale, so
-    /// what settles it matters less than its being settled the same way twice.
-    /// </para>
+    /// <c>12·round((n − p)/12) + p</c>, so there is no loop and no branch: a
+    /// fixed candidate per switch that is on, and a running minimum over them.
+    /// The divide by twelve is hoisted and the pitch class folds into the
+    /// rounding's constant, leaving a floor and three ops per candidate. Ties go
+    /// to the note the scale names later, which is the higher pitch class.
     /// </remarks>
     private static Slot[] EmitQuantiser(Emitter em, EmitContext node)
     {
@@ -481,31 +396,16 @@ public partial class NodeCatalog
     /// The note, frozen for as long as 'hold' is up.
     /// </summary>
     /// <remarks>
+    /// A level rather than an edge, because a socket resting on its knob hands
+    /// the emit function a register like any other: "nothing is patched" is not a
+    /// question this can ask, and a level answers it by not needing to — nought
+    /// is down, so an unwired module snaps continuously. It also states the
+    /// guarantee the right way round: the note cannot move while a note sounds,
+    /// and wiring the envelope's gate makes the two intervals the same one. The
+    /// cost is that a short trigger holds only while it is up.
     /// <para>
-    /// A level rather than an edge, and that is the decision worth recording.
-    /// Every quantiser in a rack has a socket like this and most of them take a
-    /// trigger — but a trigger has to be told apart from no trigger at all, and
-    /// nothing here can: a socket resting on its knob hands the emit function a
-    /// register like any other, so "nothing is patched" is not a question this
-    /// can ask. A level answers it by not needing to. Nought is down, an
-    /// unpatched socket is nought, and a module nobody has wired anything into
-    /// snaps continuously.
-    /// </para>
-    /// <para>
-    /// It also states the guarantee the right way round. An edge says when the
-    /// note may change; a level says when it may not, and what anybody actually
-    /// wants is that it cannot move while a note is sounding. Wire the gate that
-    /// opens the envelope and the two are the same interval by construction.
-    /// </para>
-    /// <para>
-    /// The cost is that a short trigger holds only for as long as it is up. That
-    /// is the wrong shape for this socket, and there is nothing in the catalogue
-    /// that makes one: every gate here — a Pulse's, a sequencer's, anything that
-    /// drives an ADSR — is open for the length of a note.
-    /// </para>
-    /// <para>
-    /// Two cells, and the same scaling the Sample &amp; Hold uses for the same
-    /// reason: a cell is clamped to ±16 and a note number runs to 127. See
+    /// Two cells, and the same scaling the Sample &amp; Hold uses: a cell is
+    /// clamped to ±16 and a note number runs to 127. See
     /// <see cref="HoldHeadroom"/>.
     /// </para>
     /// </remarks>
@@ -545,31 +445,14 @@ public partial class NodeCatalog
     /// drawn as a chart rather than used as one.
     /// </summary>
     /// <remarks>
-    /// <para>
-    /// Nothing is measured here and nothing is read back. A chart of a signal is
-    /// itself a function of (x, y, t) — the value at this column, against the
-    /// height of this row — so the probe is an ordinary module emitting ordinary
-    /// ops, and both backends draw it without knowing what it is.
-    /// </para>
-    /// <para>
-    /// What makes it different from every other module is the domain its input
-    /// is read over. Time runs across the picture instead of the clock, which is
-    /// why <c>in</c> is <see cref="PortSpec.Swept"/>: the compiler leaves it
-    /// alone until the sweep has been pushed, and everything upstream of it is
-    /// then lowered reading that time rather than the frame's. x and y are
-    /// pinned to nothing while it does, so what is charted is the signal at the
-    /// middle of the picture — a module that draws with Coordinates has a value
-    /// per pixel, and there is no one line that is all of them.
-    /// </para>
-    /// <para>
-    /// The middle column is now; the left is the past and the right is the
-    /// future, which a machine that is a pure function of t can show as readily
-    /// as its history. The one thing it cannot show is memory: the video path
-    /// evaluates pixels in parallel and passes no state, so an accumulated phase
-    /// is the multiply it replaces and a delay line is a wire — see
-    /// <see cref="OpCode.Phase"/>. What the probe draws of those is what the
-    /// screen already makes of them, not what the speakers hear.
-    /// </para>
+    /// An ordinary module emitting ordinary ops — a chart of a signal is itself a
+    /// function of (x, y, t) — so both backends draw it without knowing what it
+    /// is. What is different is the domain: <c>in</c> is
+    /// <see cref="PortSpec.Swept"/>, so everything upstream is lowered reading
+    /// the column's time rather than the frame's, with x and y pinned to nothing.
+    /// The middle column is now and the right is the future. Memory is the one
+    /// thing it cannot show: on the video path an accumulated phase is a multiply
+    /// and a delay line is a wire — see <see cref="OpCode.Phase"/>.
     /// </remarks>
     private static NodeDef Probe() =>
         new NodeDef(
@@ -587,11 +470,9 @@ public partial class NodeCatalog
                 var x = em.Load(OpCode.LoadX);
                 var y = em.Load(OpCode.LoadY);
 
-                // The timebase is in decades, so that one knob reaches from a
-                // fraction of an audio cycle to half a minute — see
-                // PortDisplay.Duration. Two ops, and a signal patched into it
-                // sweeps the chart exponentially, which is the only way a sweep
-                // across that range is any use.
+                // The timebase is in decades, so one knob reaches from a fraction
+                // of an audio cycle to half a minute — see PortDisplay.Duration.
+                // A signal patched into it sweeps the chart exponentially.
                 var window = em.Binary(OpCode.Pow, em.Constant(10f), node[1]);
 
                 // Time across the picture: the middle column is the moment the
@@ -634,43 +515,23 @@ public partial class NodeCatalog
     /// played, rather than of what the screen computes the signal to be.
     /// </summary>
     /// <remarks>
-    /// <para>
-    /// A separate module rather than a mode on the Probe, because the two
-    /// genuinely disagree and both are right. A Probe is a second compile root
-    /// (ADR-0040): it recomputes the signal at every column, which is why it can
-    /// draw the future, and why it draws an oscillator without its accumulated
-    /// phase and a delay line as a wire — the video path has no memory to show
-    /// and does not pretend to. A Scope shows the one thing that has memory,
-    /// because it does not compute anything: the speakers' program hands it one
-    /// evaluation at a time, in order, and it keeps the last few thousand.
-    /// </para>
-    /// <para>
-    /// Which means it is a chart with three cliffs, all of them the same cliff.
-    /// It shows nothing until sound is switched on. It shows nothing the
-    /// speakers do not reach — a signal wired only to the picture is not
-    /// played, so there is nothing of it to have kept. And it shows only the
-    /// past, because that is all anything that has already happened can be. Put
-    /// a Probe and a Scope on the same node and the two charts will differ
-    /// wherever the patch has memory in it; that difference is the useful thing
-    /// about having both.
-    /// </para>
-    /// <para>
-    /// Mechanically it is the only module in the catalogue whose input is a root
-    /// of a program — see <see cref="NodeDef.TapsSignal"/> and
-    /// <see cref="OpCode.Tap"/> — and the only one whose table changes while the
-    /// program is running. Everything else about it is an ordinary chart, drawn
-    /// by the same <see cref="Charted"/> the Probe uses.
-    /// </para>
+    /// A separate module rather than a mode, because the two disagree and both
+    /// are right: a Probe recomputes the signal per column (ADR-0040) and can
+    /// draw the future but has no memory to show, while this computes nothing and
+    /// keeps the last few thousand evaluations the speakers made. So it is blank
+    /// until sound is on, blank for a signal the speakers never reach, and only
+    /// ever the past. Mechanically it is the one module whose input is a root of
+    /// a program — see <see cref="NodeDef.TapsSignal"/> and
+    /// <see cref="OpCode.Tap"/> — and the one whose table changes as it runs.
     /// </remarks>
     private static NodeDef Scope() =>
         new NodeDef(
             ScopeTypeId, "Scope", ModuleCategories.Measurement,
             [
-                // Swept, and never resolved: the whole point is that this
-                // module does not evaluate its input. What is charted came from
-                // the run that made the sound, and lowering the signal here as
-                // well would put the whole chain into the picture's program to
-                // compute a value nothing would look at.
+                // Swept and never resolved: this module does not evaluate its
+                // input. Lowering the signal here as well would put the whole
+                // chain into the picture's program to compute a value nothing
+                // would look at.
                 Swept("in"),
                 Seconds("window", -1.7f),
                 Num("scale", 1f, 0.01f, 16f),
@@ -682,19 +543,15 @@ public partial class NodeCatalog
                 var y = em.Load(OpCode.LoadY);
 
                 // How far x reaches, which is where the newest evaluation goes.
-                // A Probe can leave the frame out of it because its signal is
-                // defined at every column, so whatever the picture's shape it
-                // has something to draw there; this one has a definite extent,
-                // and an extent that did not reach the edges would be a chart
-                // with the past cut off it and dead margins either side.
+                // This chart has a definite extent, and one that did not reach
+                // the edges would have the past cut off it and dead margins
+                // either side.
                 var edge = em.Load(OpCode.LoadAspect);
 
                 // The buffer holds exactly the window, whatever the window is —
-                // something outside the program keeps it that way, see
-                // Traces.Buffer — so all this has to say is how far across the
+                // see Traces.Buffer — so all this says is how far across the
                 // frame the column is. Which is why 'window' appears nowhere in
-                // these ops: turning it changes what is put in the buffer, not
-                // what is done with it.
+                // these ops.
                 var age = em.Binary(OpCode.Div, em.Add(x, edge), em.Mul(edge, 2f));
 
                 var played = node.Trace is { } trace
@@ -703,17 +560,14 @@ public partial class NodeCatalog
 
                 var height = em.Binary(OpCode.Div, played, node[2]);
 
-                // Eight divisions across whatever the frame turns out to be, so
-                // the graticule keeps saying what it says however the window is
-                // shaped: a square is an eighth of 'window' across and a quarter
-                // of 'scale' up. They are wider than they are tall on a wide
-                // preview, which is what a scope's graticule does too.
+                // Eight divisions across whatever the frame turns out to be, so a
+                // square is an eighth of 'window' across and a quarter of 'scale'
+                // up however the window is shaped.
                 //
                 // No rule for the moment, because the moment is the right-hand
                 // edge and a line there would be half off the picture. The
-                // phosphor says it instead — full brightness at the beam, fading
-                // back into the past, which is what a scope with a slow tube
-                // looks like and reads instantly as which end is now.
+                // phosphor says it instead: full brightness at the beam, fading
+                // back into the past.
                 return
                 [
                     Charted(
@@ -748,34 +602,21 @@ public partial class NodeCatalog
     /// over: a field read as a waveform rather than a waveform drawn as a field.
     /// </summary>
     /// <remarks>
+    /// The Probe upside down. A Probe pushes a <em>time</em> that varies across
+    /// the picture; this pushes an <em>(x, y)</em> that varies along a loop, so
+    /// everything upstream of <c>in</c> is lowered reading a position on it — see
+    /// <see cref="PortSpec.Swept"/> — and hands back one scalar per evaluation.
     /// <para>
-    /// The Probe the other way about, and the same mechanism upside down. A
-    /// Probe pushes a <em>time</em> that varies across the picture and lowers
-    /// its input under it; this pushes an <em>(x, y)</em> that varies along a
-    /// loop. Everything upstream of <c>in</c> is therefore lowered reading a
-    /// position on that loop instead of the pixel's own — see
-    /// <see cref="PortSpec.Swept"/> — and what comes back is one ordinary
-    /// scalar per evaluation, which is what a sample is.
+    /// A circle rather than a raster because a raster's <c>fract</c> jumps once a
+    /// line, and that sawtooth edge is there whatever the picture holds. A closed
+    /// loop contributes no discontinuity, which leaves wavetable synthesis with
+    /// the field as the table.
     /// </para>
     /// <para>
-    /// The loop is a circle and not a raster because of what the two do to the
-    /// sound. A raster's <c>fract</c> jumps once a line, and a step in the
-    /// waveform every cycle is a sawtooth edge that is there whatever the
-    /// picture holds — which is why a scanned image mostly sounds like the scan.
-    /// A circle closes on itself, so the sweep contributes no discontinuity at
-    /// all and the whole of the waveform is the picture. What that leaves is
-    /// wavetable synthesis with the field as the table: <c>radius</c>, <c>x</c>
-    /// and <c>y</c> choose which loop through it is read, and moving them is the
-    /// table sweep.
-    /// </para>
-    /// <para>
-    /// Where on the loop one evaluation sits is the one thing the two sinks
-    /// cannot agree on: the ear is at a moment and the eye is at a pixel. So the
-    /// bearing is chosen on <see cref="Emitter.HasMemory"/> — the speakers take
-    /// the accumulated phase, the screen takes the pixel's own angle from the
-    /// centre, and every pixel then lands on the point of the loop it is looking
-    /// at. One lowering serves both (ADR-0043), and the picture that falls out
-    /// is the X-Y display an oscilloscope shows in the mode the Probe is not.
+    /// Where on the loop an evaluation sits is the one thing the sinks cannot
+    /// agree on, so the bearing is chosen on <see cref="Emitter.HasMemory"/>: the
+    /// speakers take the accumulated phase, the screen takes the pixel's own
+    /// angle from the centre. One lowering serves both (ADR-0043).
     /// </para>
     /// </remarks>
     private static NodeDef Scan()
@@ -886,8 +727,8 @@ public partial class NodeCatalog
     
     /// <summary>
     /// An input the module reads over a domain of its own rather than over the
-    /// pixel's — see <see cref="PortSpec.Swept"/>. Untyped like the maths
-    /// modules', so a color may be looked at as readily as a scalar.
+    /// pixel's — see <see cref="PortSpec.Swept"/>. Untyped, so a color may be
+    /// looked at as readily as a scalar.
     /// </summary>
     private static PortSpec Swept(string name) =>
         new(name, PortKind.Any, Swept: true);
@@ -898,9 +739,8 @@ public partial class NodeCatalog
  
     /// <summary>
     /// A length of time, held in decades of seconds and written out as the time
-    /// it is — see <see cref="PortDisplay.Duration"/>. The range is a hundred
-    /// microseconds to half a minute, which is one audio cycle at the bottom and
-    /// a slow LFO at the top.
+    /// it is — see <see cref="PortDisplay.Duration"/>. A hundred microseconds to
+    /// half a minute: one audio cycle at the bottom, a slow LFO at the top.
     /// </summary>
     private static PortSpec Seconds(string name, float value) =>
         new(name, PortKind.Scalar, value, -4f, 1.5f, -1, PortDisplay.Duration);
