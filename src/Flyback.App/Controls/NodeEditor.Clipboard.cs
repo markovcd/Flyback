@@ -9,11 +9,9 @@ namespace Flyback.App.Controls;
 /// Copy, cut and paste, and where a pasted selection is put down.
 /// </summary>
 /// <remarks>
-/// What travels is a patch file rather than a private format (ADR-0045), so a
-/// selection copied here can be pasted into a text editor and back. This is also
-/// the one place the canvas reaches outside itself and can fail in a way
-/// somebody has to be told about, which is what <see cref="Reported"/> is for: a
-/// control that draws has nowhere to put a sentence.
+/// What travels is a patch file rather than a private format (ADR-0045). This is
+/// also the one place the canvas reaches outside itself and can fail in a way
+/// somebody has to be told about, which is what <see cref="Reported"/> is for.
 /// </remarks>
 public sealed partial class NodeEditor
 {
@@ -21,15 +19,13 @@ public sealed partial class NodeEditor
 
     /// <summary>
     /// Puts the selected modules on the system clipboard, as the JSON a patch is
-    /// saved as. Nothing happens where the selection holds nothing that can be
-    /// copied — the Output alone, or an empty canvas — rather than the clipboard
-    /// being emptied by a gesture that found nothing.
+    /// saved as. Nothing happens where the selection holds nothing copiable, rather
+    /// than the clipboard being emptied by a gesture that found nothing.
     /// </summary>
     /// <remarks>
-    /// The system clipboard rather than a buffer of this program's own, because
-    /// a copy that cannot leave the window is not really one: what this writes is
-    /// a patch file, so it pastes into another Flyback, and into a text editor as
-    /// something readable. See ADR-0045.
+    /// The system clipboard rather than a buffer of this program's own, because a
+    /// copy that cannot leave the window is not really one: what this writes pastes
+    /// into another Flyback and into a text editor. See ADR-0045.
     /// </remarks>
     /// <returns>What to say about it, or null where there is nothing to say.</returns>
     public async Task<string?> CopySelectionAsync()
@@ -61,14 +57,13 @@ public sealed partial class NodeEditor
     }
 
     /// <summary>
-    /// Reads a patch off the clipboard and merges it in, centred on the view,
-    /// with what arrived left selected so it can be dragged straight into place.
+    /// Reads a patch off the clipboard and merges it in, centred on the view, with
+    /// what arrived left selected so it can be dragged into place.
     /// </summary>
     /// <remarks>
-    /// One edit, so one Ctrl+Z takes the whole paste back. The text is read the
-    /// way a file is — a fragment naming a module this build has not got is
-    /// refused with the sentence <see cref="PatchLoad.Summary"/> already words,
-    /// rather than pasted with holes in it.
+    /// One edit, so one Ctrl+Z takes the whole paste back. The text is read the way
+    /// a file is: a fragment naming a module this build has not got is refused with
+    /// the sentence <see cref="PatchLoad.Summary"/> already words.
     /// </remarks>
     /// <returns>What to say about it, or null where there is nothing to say.</returns>
     public async Task<string?> PasteAsync()
@@ -99,21 +94,15 @@ public sealed partial class NodeEditor
     }
 
     /// <summary>
-    /// Merges a fragment into the patch and leaves what arrived selected, so it
-    /// can be dragged straight into place.
+    /// Merges a fragment into the patch and leaves what arrived selected, so it can
+    /// be dragged straight into place.
     /// </summary>
     /// <remarks>
-    /// The graph half of this is <see cref="PatchClipboard.Paste"/> and knows
-    /// nothing about a canvas; what is here is the two things that need one —
-    /// where it lands and what is selected afterwards. One edit either way, so
-    /// one Ctrl+Z takes the whole of it back.
-    /// <para>
-    /// Where it lands is the whole difference between the two ways in. A paste
-    /// has no point of its own and goes to the middle of the view, stepped clear
-    /// of what is already there; something picked out of the module list was
-    /// picked <em>somewhere</em>, and lands there exactly as a module does — see
-    /// <see cref="AddNode"/>.
-    /// </para>
+    /// The graph half is <see cref="PatchClipboard.Paste"/> and knows nothing about
+    /// a canvas; here are the two things that need one — where it lands and what is
+    /// selected afterwards. A paste has no point of its own and goes to the middle
+    /// of the view, stepped clear of what is there; something picked out of the
+    /// module list was picked somewhere, and lands there.
     /// </remarks>
     /// <param name="fragment">What to add. Not modified, so the same one may be added again.</param>
     /// <param name="at">Where its middle should land, or null for the middle of the view.</param>
@@ -141,25 +130,15 @@ public sealed partial class NodeEditor
         return added;
     }
     /// <summary>
-    /// How far to shift what is arriving so that it lands in the middle of what
-    /// is on screen, clear of anything already there.
+    /// How far to shift what is arriving so it lands in the middle of what is on
+    /// screen, clear of anything already there.
     /// </summary>
     /// <remarks>
-    /// <para>
-    /// The middle of the view rather than where the modules were copied from,
-    /// which is the same choice <see cref="AddNode"/> makes and for the same
-    /// reason: a paste has to arrive somewhere it can be seen, and where it came
-    /// from may be a screen away.
-    /// </para>
-    /// <para>
-    /// Then stepped down and right until it is not sitting on anything. Landing
-    /// on top of what is already there reads as nothing having happened, and it
-    /// is the ordinary case rather than the rare one — the middle of the view is
-    /// where the patch is. The step is capped because a dense enough patch has
-    /// no clear middle at all, and walking off the edge looking for one would be
-    /// worse than overlapping: what arrives is selected, and dragging it
-    /// somewhere better is one gesture.
-    /// </para>
+    /// The middle of the view rather than where the modules were copied from, which
+    /// may be a screen away. Then stepped down and right until it is not sitting on
+    /// anything, since landing on top of what is there reads as nothing having
+    /// happened. The step is capped: a dense patch has no clear middle, and what
+    /// arrives is selected, so dragging it somewhere better is one gesture.
     /// </remarks>
     private (double X, double Y) WhereToPaste(IReadOnlyList<NodeInstance> arriving)
     {
@@ -211,18 +190,13 @@ public sealed partial class NodeEditor
 
     /// <summary>
     /// Lays the patch out so it reads left to right with its wires clear of one
-    /// another, and frames the result. One edit, so one Ctrl+Z puts every node
-    /// back where it was.
+    /// another, and frames the result. One edit, so one Ctrl+Z puts every node back.
     /// </summary>
     /// <remarks>
-    /// Only coordinates change — no wire is added, removed or rerouted — so the
-    /// patch compiles to exactly the same program before and after, and the
-    /// picture and the sound are untouched. See ADR-0044.
-    /// <para>
-    /// A drawing too big for the canvas is said rather than shown: coordinates
-    /// are held inside the canvas, so it arrives with its far edges folded onto
-    /// the boundary and stacked, which looks like a layout that has gone wrong.
-    /// </para>
+    /// Only coordinates change, so the patch compiles to exactly the same program
+    /// before and after (ADR-0044). A drawing too big for the canvas is said rather
+    /// than shown: coordinates are held inside it, so it would arrive with its far
+    /// edges folded onto the boundary.
     /// </remarks>
     public void Tidy()
     {
@@ -312,24 +286,15 @@ public sealed partial class NodeEditor
     /// Moves the view, held so that it never leaves the canvas.
     /// </summary>
     /// <remarks>
-    /// Every pan goes through here, the one a zoom performs included: zooming
-    /// out in a corner walks the view outwards as surely as dragging it does,
-    /// and a guard on the drag alone is one the wheel steps straight past.
+    /// Every pan goes through here, the one a zoom performs included: zooming out in
+    /// a corner walks the view outwards as surely as dragging does. What it holds is
+    /// the view rather than its centre, and the reach is a little wider than
+    /// <see cref="NodeInstance.Across"/> and <see cref="NodeInstance.Down"/>,
+    /// because those hold a corner and the body hangs below and right of it.
     /// <para>
-    /// What it holds is the view rather than its centre, so the far side of the
-    /// canvas comes to the far side of the window and stops. The reach is a
-    /// little wider than <see cref="NodeInstance.Across"/> and <see cref="NodeInstance.Down"/>,
-    /// because those hold a module's corner and its body hangs below and to the right of it — a view
-    /// stopped on the coordinate itself would cut the last module in half and
-    /// refuse to show the rest.
-    /// </para>
-    /// <para>
-    /// A view wider than the canvas cannot be held inside it, so it is centred
-    /// on it instead — and that is a real case rather than a defensive one. The
-    /// zoom stops at a fifth, which puts five windows' worth of units across the
-    /// view, so any window past about two thousand pixels can see the whole
-    /// canvas at once with room to spare. There is then nowhere to pan to, and
-    /// the canvas sits in the middle of the window where it belongs.
+    /// A view wider than the canvas is centred on it instead, which is a real case:
+    /// past about two thousand pixels the whole canvas fits at the zoom's floor, and
+    /// there is then nowhere to pan to.
     /// </para>
     /// </remarks>
     private void PanTo(Point to)

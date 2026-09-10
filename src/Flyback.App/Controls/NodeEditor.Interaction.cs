@@ -6,14 +6,10 @@ using Flyback.Core.Graph;
 namespace Flyback.App.Controls;
 
 /// <summary>
-/// The hand and the keyboard: what a press, a drag, a release, a wheel turn and
-/// a key press do.
+/// The hand and the keyboard: what a press, a drag, a release, a wheel turn and a
+/// key press do. Five gestures over one <c>Drag</c> state, and the fields behind
+/// it are only ever read while their own gesture is the one under way.
 /// </summary>
-/// <remarks>
-/// Five gestures over one <c>Drag</c> state, and the fields behind it are only
-/// ever read while their own gesture is the one under way — each is cleared by
-/// the press that starts it rather than trusted to have been left empty.
-/// </remarks>
 public sealed partial class NodeEditor
 {
     // --- interaction ---------------------------------------------------------
@@ -167,26 +163,23 @@ public sealed partial class NodeEditor
     }
 
     /// <summary>
-    /// What a press on a module does to the selection, and the start of a drag
-    /// of whatever that leaves selected.
+    /// What a press on a module does to the selection, and the start of a drag of
+    /// whatever that leaves selected.
     /// </summary>
     /// <remarks>
-    /// The awkward case is a plain press on a module already in a larger
-    /// selection, and it cannot be answered here: collapsing to it would make a
-    /// group impossible to drag by one of its own members, and not collapsing
-    /// would make one impossible to pick apart. So it is deferred to the release
-    /// — see <see cref="pendingNarrow"/> — which is the same answer every
-    /// editor that has this problem arrives at.
+    /// The awkward case is a plain press on a module already in a larger selection,
+    /// and it cannot be answered here: collapsing to it would make a group
+    /// impossible to drag by one of its members, and not collapsing would make one
+    /// impossible to pick apart. So it is deferred to the release — see
+    /// <see cref="pendingNarrow"/>.
     /// </remarks>
     /// <summary>
     /// Ends whatever gesture was under way, and forgets what it was holding.
     /// </summary>
     /// <remarks>
-    /// Each field behind <c>drag</c> belongs to one gesture and is cleared by the
-    /// press that starts that gesture, so what is forgotten here is already out of
-    /// reach — every one of them is read only while its own gesture is the one under
-    /// way. It is written down all the same, so that ending a gesture is one thing
-    /// with one name rather than a list each caller is trusted to have remembered.
+    /// What is forgotten here is already out of reach, each field being cleared by
+    /// the press that starts its gesture. Written down all the same, so ending a
+    /// gesture is one thing with one name.
     /// </remarks>
     private void EndGesture()
     {
@@ -232,18 +225,10 @@ public sealed partial class NodeEditor
     /// </summary>
     /// <remarks>
     /// The whole gesture is cut back to what the nearest module to an edge can
-    /// take, rather than each module being clamped where it lands. Clamping
-    /// them one at a time would hold the group together right up until it met
-    /// the edge and then flatten it against it — the ones already there stopped
-    /// while the rest kept coming — and letting go would leave a selection
-    /// nothing puts back. Cut as one vector, the group slides up to the wall
-    /// whole and stays in the shape it was picked up in.
-    /// <para>
-    /// Each axis is narrowed by every module in turn. All of the ranges hold
-    /// zero, because a module is inside the canvas before it is dragged, so
-    /// there is always some part of the gesture left to allow — standing still
-    /// at worst.
-    /// </para>
+    /// take, rather than each module being clamped where it lands: clamping one at
+    /// a time would flatten the group against the edge, the ones already there
+    /// stopped while the rest kept coming. Each axis is narrowed by every module in
+    /// turn, and all the ranges hold zero — standing still at worst.
     /// </remarks>
     private Vector Held(Vector delta, Dictionary<Guid, Point> origins)
     {
@@ -264,15 +249,11 @@ public sealed partial class NodeEditor
     }
 
     /// <summary>
-    /// Where a module's corner may be put, so that the whole of the module is on
-    /// the canvas: the canvas less the room the module itself takes up.
+    /// Where a module's corner may be put, so the whole of it is on the canvas: the
+    /// canvas less the room the module takes up. A coordinate names the top left
+    /// and the body hangs below and right of it, so holding the coordinate inside
+    /// leaves the body outside.
     /// </summary>
-    /// <remarks>
-    /// A coordinate names the top left of a module and the body hangs below and
-    /// to the right of it, so holding the coordinate inside the canvas leaves the
-    /// body outside — a module dragged to the edge stood entirely on the far side
-    /// of the line, which is what the line is drawn to say cannot happen.
-    /// </remarks>
     private static Rect Room(NodeDef def) => new(
         CanvasBounds.X,
         CanvasBounds.Y,
@@ -283,18 +264,12 @@ public sealed partial class NodeEditor
     /// Puts every module wholly inside the canvas.
     /// </summary>
     /// <remarks>
-    /// The coordinate holds itself inside the canvas (<see cref="NodeInstance.Across"/>) on its
-    /// own, and that is the backstop against a module being lost altogether. It
-    /// cannot do this part: what it holds is a corner, and how far the body
-    /// reaches past that corner depends on how many sockets the module has —
-    /// which is the view's arithmetic and not the engine's. So a paste, a layout
-    /// or a file may still leave a module standing half off the canvas, and this
-    /// is where it is known enough to be put right.
-    /// <para>
-    /// A module the catalogue does not have is left exactly where it is, the same
-    /// as the layout leaves it: nothing here can measure one, and a guessed size
-    /// would move it for no reason anybody could see.
-    /// </para>
+    /// The coordinate holds itself inside on its own
+    /// (<see cref="NodeInstance.Across"/>), but what it holds is a corner, and how
+    /// far the body reaches past it is the view's arithmetic. So a paste, a layout
+    /// or a file may leave a module standing half off, and this is where it is
+    /// known enough to be put right. A module the catalogue does not have is left
+    /// where it is, since nothing here can measure one.
     /// </remarks>
     private void HoldInside()
     {
@@ -310,32 +285,23 @@ public sealed partial class NodeEditor
     }
 
     /// <summary>
-    /// Grabbing a connected socket picks the existing wire up by the end that
-    /// was not grabbed, so re-patching works the way it does on a real rig: the
-    /// far end stays plugged in and the end in your hand goes somewhere else.
+    /// Grabbing a connected socket picks the existing wire up by the end that was
+    /// not grabbed, so re-patching works the way it does on a real rig.
     /// </summary>
     /// <remarks>
-    /// Which end that leaves free is the whole of the difference between the two
-    /// gestures. Grabbing an input takes the plug out of it, so what is being
-    /// chosen is a new input for a signal that keeps its source. Grabbing an
-    /// output takes the plug out of <em>that</em>, so what is being chosen is a
-    /// new source for a socket that keeps being fed — the question "where should
-    /// this come from instead", which nothing here could ask before.
+    /// Which end that leaves free is the whole difference between the two gestures:
+    /// grabbing an input chooses a new input for a signal that keeps its source,
+    /// and grabbing an output chooses a new source for a socket that keeps being
+    /// fed.
     /// </remarks>
     /// <param name="isOutput"></param>
     /// <param name="lifting">
-    /// Whether Ctrl was held, which only matters on an output. An input is
-    /// unplugged by being dragged and needs no modifier: it holds one wire, so
-    /// grabbing it can only mean that one. An output holds any number, and
-    /// dragging from one has always meant "start another" — which is the common
-    /// thing to want and cannot be given up. So reaching for the wire that is
-    /// already there asks for the modifier, and asks for it only where the answer
-    /// is not a guess: exactly one wire leaves the socket.
-    /// <para>
-    /// With none, or with several, this falls back to starting a new wire —
-    /// silently, because a modifier that does nothing is better than a gesture
-    /// that picks one of four wires for you.
-    /// </para>
+    /// Whether Ctrl was held, which only matters on an output. An input holds one
+    /// wire, so grabbing it can only mean that one; an output holds any number, and
+    /// dragging from one has always meant "start another". So reaching for the wire
+    /// already there asks for the modifier, and only where exactly one wire leaves
+    /// the socket — with none or several this falls back to starting a new wire
+    /// rather than picking one of four for you.
     /// </param>
     /// <param name="nodeId"></param>
     /// <param name="portIndex"></param>
@@ -441,11 +407,8 @@ public sealed partial class NodeEditor
     /// </summary>
     /// <remarks>
     /// A box, and the strip above an open group, answer here exactly as a module
-    /// does — because they are taken hold of exactly as one is: pressing either
-    /// selects what is inside and the drag that follows is the ordinary module
-    /// drag, moving the modules with the box drawn from where they are. A cursor
-    /// that went on saying "nothing here" over the one part of a group meant to
-    /// be grabbed was the picture disagreeing with the gesture.
+    /// does, because they are taken hold of exactly as one is: pressing either
+    /// selects what is inside and the drag that follows is the ordinary module drag.
     /// </remarks>
     private Cursor CursorOver(Point graph)
     {
@@ -542,9 +505,9 @@ public sealed partial class NodeEditor
     /// </summary>
     /// <returns>
     /// Whether it went in. Answering false leaves the caller to draw the wire as
-    /// asked and lets the compiler complain about it, which is what a build
-    /// without the module wants — a refusal that can be read beats a gesture that
-    /// quietly does nothing.
+    /// asked and lets the compiler complain, which is what a build without the
+    /// module wants: a refusal that can be read beats a gesture that quietly does
+    /// nothing.
     /// </returns>
     private bool InsertUnitDelay(Guid sourceNode, int sourcePort, Guid targetNode, int targetPort)
     {

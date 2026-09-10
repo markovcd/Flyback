@@ -21,23 +21,15 @@ public enum PreviewBackend
 /// dealings with it. The window asks for a preview; this decides what one is.
 /// </summary>
 /// <remarks>
+/// It starts optimistic: if the GPU turns out not to be usable the CPU renderer
+/// takes over and the reason is said once, with no way back within a session —
+/// whatever it was will not have fixed itself by the next frame, and a preview
+/// that flickers between backends is worse than either.
 /// <para>
-/// It starts optimistic. If the GPU turns out not to be usable — no context, a
-/// shader that will not build, a context that keeps being lost — the CPU
-/// renderer takes over and the reason is said once. There is no way back from
-/// that within a session: whatever it was will not have fixed itself by the next
-/// frame, and a preview that flickers between backends is worse than either.
-/// </para>
-/// <para>
-/// A person may still switch to the CPU by hand, and back again while the GPU is
-/// still on offer. That is the escape hatch for the one thing the shader backend
-/// is genuinely worse at — see ADR-0035 on what float32 does to an oscillator
-/// after an hour.
-/// </para>
-/// <para>
-/// Everything the shell sets on a preview is carried across a swap, so switching
-/// renderers hands the new one the state the old one had. The picture is the only
-/// thing that does not survive, and a frame later there is a new one.
+/// A person may still switch by hand while the GPU is on offer, which is the
+/// escape hatch for the one thing the shader is worse at (ADR-0035). Everything
+/// the shell sets is carried across a swap; the picture is the only thing that
+/// does not survive, and a frame later there is a new one.
 /// </para>
 /// </remarks>
 public sealed class PreviewHost : Decorator, IPreviewSurface
@@ -111,15 +103,14 @@ public sealed class PreviewHost : Decorator, IPreviewSurface
     public void Refresh() => active.Refresh();
 
     /// <summary>
-    /// Which renderer was asked for, as against <see cref="Backend"/>, which is
-    /// the one running. The two differ while a patch is being drawn on the
-    /// processor because the shader cannot draw it.
+    /// Which renderer was asked for, as against <see cref="Backend"/>, which is the
+    /// one running. The two differ while a patch is drawn on the processor because
+    /// the shader cannot draw it.
     /// </summary>
     /// <remarks>
-    /// Kept apart so the button in the toolbar can go on showing the choice
-    /// while the status bar shows the fact. Collapsing them would either lie
-    /// about what is drawing the picture or quietly turn the GPU off for good on
-    /// the strength of one patch.
+    /// Kept apart so the toolbar can show the choice while the status bar shows the
+    /// fact: collapsing them would either lie about what is drawing the picture or
+    /// turn the GPU off for good on the strength of one patch.
     /// </remarks>
     public PreviewBackend Wanted { get; private set; } = PreviewBackend.Gpu;
 
@@ -127,22 +118,13 @@ public sealed class PreviewHost : Decorator, IPreviewSurface
     /// Puts the right renderer in place for a program about to be shown.
     /// </summary>
     /// <remarks>
-    /// A shader has no clip to read — the tables travel with the interpreter's
-    /// program and there is no texture for one — so a program that plays a
-    /// sample is drawn on the processor whatever was asked for, and goes back to
-    /// the shader when the sample stops reaching the screen.
-    /// <para>
-    /// Nothing else in the catalogue asks for this. Dead code is eliminated per
-    /// sink (ADR-0022), so a Sample wired only to the speakers puts no table in
-    /// the video program at all and the picture is drawn the way it always was.
-    /// What does ask is a Probe pointed at one, which is the whole reason the
-    /// eye is given clips to read.
-    /// </para>
-    /// <para>
-    /// Not <see cref="OnGpuFailed"/>, which is for a GPU that has turned out not
-    /// to work and withdraws the offer for the rest of the session. This is a
-    /// property of one program and is reconsidered on the next.
-    /// </para>
+    /// A shader has no clip to read, so a program that plays a sample is drawn on
+    /// the processor whatever was asked for, and goes back to the shader when the
+    /// sample stops reaching the screen. Only a Probe pointed at one asks for this:
+    /// dead code is eliminated per sink (ADR-0022), so a Sample wired to the
+    /// speakers alone puts no table in the video program. Not
+    /// <see cref="OnGpuFailed"/>, which withdraws the offer for the session — this
+    /// is a property of one program.
     /// </remarks>
     private void Reconsider(CompiledPatch program)
     {
@@ -185,11 +167,9 @@ public sealed class PreviewHost : Decorator, IPreviewSurface
     /// happens to the backend. Returns why it cannot, or null having started.
     /// </summary>
     /// <remarks>
-    /// Only the GPU path can do this, and deliberately so: reading frames back
-    /// off the card is the whole reason a recording can keep up with a
-    /// performance, and the interpreter that stands in for it cannot draw fast
-    /// enough to be worth recording. Saying no is better than recording a
-    /// slideshow.
+    /// Only the GPU path can do this: reading frames back off the card is the whole
+    /// reason a recording can keep up with a performance, and saying no is better
+    /// than recording a slideshow.
     /// </remarks>
     internal string? BeginCapture(IFrameSink sink)
     {
@@ -229,11 +209,9 @@ public sealed class PreviewHost : Decorator, IPreviewSurface
     /// Puts a renderer in place, whatever was there before.
     /// </summary>
     /// <remarks>
-    /// Separate from <see cref="Use"/> because that one is allowed to decline —
-    /// the same backend twice, or a GPU that has already refused — and the
-    /// constructor is not: something has to be in <see cref="active"/> before
-    /// anything can read it, and saying so here is what lets every reader after
-    /// treat it as a surface rather than as a maybe.
+    /// Separate from <see cref="Use"/> because that one is allowed to decline and
+    /// the constructor is not: something has to be in <see cref="active"/> before
+    /// anything can read it.
     /// </remarks>
     /// <param name="backend">Which renderer to build and hand the timeline to.</param>
     [MemberNotNull(nameof(active))]
@@ -273,9 +251,9 @@ public sealed class PreviewHost : Decorator, IPreviewSurface
     /// outgoing one was showing.
     /// </summary>
     /// <remarks>
-    /// The outgoing renderer is dropped rather than kept warm. Both would
-    /// otherwise keep ticking, and a preview that is not on screen is a patch
-    /// being evaluated for nobody — which on the CPU path is most of a machine.
+    /// The outgoing renderer is dropped rather than kept warm: both would otherwise
+    /// keep ticking, and a preview that is not on screen is a patch evaluated for
+    /// nobody.
     /// </remarks>
     /// <param name="surface">The renderer taking over, already built.</param>
     [MemberNotNull(nameof(active))]

@@ -7,31 +7,26 @@ using Flyback.Plugins.Audio;
 namespace Flyback.App.Audio;
 
 /// <summary>
-/// Joins the compiled audio program to a sound device, and is the clock the
-/// video preview follows while sound is playing. The device arrives from a
-/// plugin, so this class is the last thing that is the same on every platform.
+/// Joins the compiled audio program to a sound device, and is the clock the video
+/// preview follows while sound is playing. The device arrives from a plugin, so
+/// this class is the last thing that is the same on every platform.
 /// </summary>
 /// <remarks>
-/// The callback never locks. Everything it needs is reachable through a single
-/// immutable <see cref="State"/> reference swapped with <see cref="Volatile"/>,
-/// so a recompile mid-buffer is a clean switch rather than a torn read — the
-/// same discipline ADR-0018 established for the video path.
+/// The callback never locks: everything it needs is reachable through a single
+/// immutable <see cref="State"/> reference swapped with <see cref="Volatile"/>, so
+/// a recompile mid-buffer is a clean switch rather than a torn read.
 /// </remarks>
 public sealed class AudioEngine(IAudioDevice device) : IDisposable
 {
     /// <summary>
     /// A program and everything that goes with it. The memory belongs here rather
     /// than to the renderer because it is a property of one program: swapped
-    /// separately, a callback still rendering the previous program would index
-    /// into the new program's lines and phases, and if either count differed at
-    /// all — a Delay or an oscillator added or removed — that is a fault on the
-    /// audio thread.
+    /// separately, a callback still rendering the previous program would index into
+    /// the new program's lines and phases.
     /// </summary>
     /// <param name="Live">
-    /// What the patch is being played with. Here for the same reason the memory
-    /// is: it is sized from one program's live inputs, so a callback still
-    /// rendering the previous program must be reading that program's block and
-    /// not the new one's.
+    /// What the patch is being played with. Here for the same reason the memory is:
+    /// it is sized from one program's live inputs.
     /// </param>
     private sealed record State(
         CompiledPatch Program,
@@ -103,9 +98,8 @@ public sealed class AudioEngine(IAudioDevice device) : IDisposable
     /// the program that is actually being heard.
     /// </summary>
     /// <remarks>
-    /// Read after every <see cref="Update"/>, because each one makes a new one:
-    /// a recompile may have added a module listening to something, and a block
-    /// sized for the program before it has nowhere to put that. What was held
+    /// Read after every <see cref="Update"/>, because each one makes a new one: a
+    /// recompile may have added a module listening to something. What was held
     /// across the edit is written in again by whoever is following — see
     /// <c>MidiHub.Follow</c>.
     /// </remarks>
@@ -117,18 +111,11 @@ public sealed class AudioEngine(IAudioDevice device) : IDisposable
     /// <paramref name="watching"/>.
     /// </summary>
     /// <remarks>
-    /// The one place the two programs of a patch meet while both are running,
-    /// and it belongs here because the rings belong to the state this swaps: a
-    /// caller holding the audio program and its memory separately could be
-    /// handed a mismatched pair by a recompile between the two reads. One
-    /// <see cref="Volatile"/> read, exactly as the callback takes.
-    /// <para>
-    /// Both blocks are written, not just the screen's, because a level may be
-    /// wired back into the sound as readily as into the picture — and the block
-    /// the speakers read is this one, which the caller has no business holding.
-    /// It is the same dual write <c>MidiHub.Follow</c> makes for a keyboard, for
-    /// the same reason: one value, two programs, named rather than numbered.
-    /// </para>
+    /// The one place the two programs meet while both are running, and it belongs
+    /// here because the rings belong to the state this swaps — a caller holding the
+    /// program and its memory separately could be handed a mismatched pair. Both
+    /// blocks are written, not just the screen's, because a level may be wired back
+    /// into the sound as readily as into the picture.
     /// </remarks>
     public void Listen(CompiledPatch drawn, LiveValues watching)
     {
@@ -140,14 +127,10 @@ public sealed class AudioEngine(IAudioDevice device) : IDisposable
 
     /// <summary>
     /// Every Meter back to nothing, for when the sound is switched off while the
-    /// picture goes on being drawn.
+    /// picture goes on being drawn. The one place this differs from a Scope, which
+    /// holds its last sweep: a level that stayed where it was would be a picture lit
+    /// by a sound that is not playing.
     /// </summary>
-    /// <remarks>
-    /// Said rather than left, and it is the one place this differs from a Scope,
-    /// which holds its last sweep the way a scope with the beam stopped does. A
-    /// level that stayed where it was would be a picture lit by a sound that is
-    /// not playing, and nothing about it would say so.
-    /// </remarks>
     public void Deafen(LiveValues watching)
     {
         var state = Volatile.Read(ref activeState);

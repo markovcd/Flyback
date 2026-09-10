@@ -13,35 +13,22 @@ namespace Flyback.App.Controls;
 /// The status bar's one line of prose, and the log of everything it has said.
 /// </summary>
 /// <remarks>
+/// The things this program has to say are routinely wider than the window leaves
+/// it: cut off at the edge a sentence stops mid-word with nothing to say there was
+/// more, where an ellipsis is both the truth and the invitation to click.
 /// <para>
-/// A line on a status bar is only as wide as the window leaves it, and the
-/// things this program has to say — where plugins are looked for, the four
-/// problems one compile found at once — are routinely longer than that. Cut off
-/// at the edge it reads as a sentence that stops mid-word, with nothing to say
-/// there was more of it; trimmed to an ellipsis it reads as a sentence there is
-/// more of, which is both the truth and the invitation to click.
-/// </para>
-/// <para>
-/// The log behind it is here rather than beside it, because this line is the one
-/// place in the program where something is said and then taken away again: the
-/// next compile clears it whether or not anybody was looking. Keeping what was
-/// said, and when, is what turns a line you may have missed into one you can go
-/// back to — and it is the same list either way, so the control that shows the
-/// newest is the one that holds the rest.
+/// The log is here rather than beside it, because this line is the one place where
+/// something is said and then taken away again — the next compile clears it
+/// whether or not anybody was looking.
 /// </para>
 /// </remarks>
 internal sealed class ReportLine : UserControl
 {
     /// <summary>
-    /// How many past messages are kept.
+    /// How many past messages are kept. Few, deliberately: this is here to catch the
+    /// line you were reading when the next one replaced it, not to be a record of
+    /// the session.
     /// </summary>
-    /// <remarks>
-    /// Few, and deliberately. This is here to catch the line you were reading
-    /// when the next one replaced it, not to be a record of the session: what
-    /// happened five messages ago has been overtaken by five things since, and a
-    /// list long enough to scroll would only be a worse way of asking the same
-    /// short question.
-    /// </remarks>
     private const int Remembered = 5;
 
     private const double PopupWidth = 440;
@@ -129,16 +116,14 @@ internal sealed class ReportLine : UserControl
     }
 
     /// <summary>
-    /// What the flyout presenter around the log needs told, for whoever is
-    /// putting one of these on a window to add to its styles.
+    /// What the flyout presenter around the log needs told, for whoever is putting
+    /// one of these on a window to add to its styles.
     /// </summary>
     /// <remarks>
-    /// The presenter brings its own padding and its own scrolling, and between
-    /// them they put a horizontal scrollbar under the list: the padding made the
-    /// content wider than the box it was measured against, by exactly the
-    /// padding. The popup is a fixed width that pads itself, so the presenter's
-    /// share of both is nothing — and the list caps its own height, so there is
-    /// never anything for the presenter to scroll in either direction.
+    /// The presenter's own padding made the content wider than the box it was
+    /// measured against, putting a horizontal scrollbar under the list. The popup is
+    /// a fixed width that pads itself and the list caps its own height, so the
+    /// presenter's share of both is nothing.
     /// </remarks>
     public static Style Trim()
     {
@@ -158,17 +143,11 @@ internal sealed class ReportLine : UserControl
     /// message is worth having — the terminal, today.
     /// </summary>
     /// <remarks>
-    /// An event rather than a write from in here, because a control's business
-    /// is the showing of a thing and not the filing of it: what the other copies
-    /// are and where they go is a decision for whoever put this on a window, and
-    /// a second one is one more line there.
-    /// <para>
-    /// Once per thing said, not once per time it is repeated — a compile says
-    /// its whole list again after every edit, and the same filtering that keeps
-    /// the popup readable is what this fires from. Progress is left out
-    /// altogether: a line that says 4%, then 5%, then 6% is one event a second
-    /// for a fact nobody is reading afterwards.
-    /// </para>
+    /// An event rather than a write from in here, because a control's business is
+    /// the showing of a thing and not the filing of it. Once per thing said, not
+    /// once per repeat: a compile says its whole list again after every edit.
+    /// Progress is left out altogether, being one event a second for a fact nobody
+    /// reads afterwards.
     /// </remarks>
     public event EventHandler<string>? Said;
 
@@ -180,28 +159,25 @@ internal sealed class ReportLine : UserControl
     /// </summary>
     /// <param name="message"></param>
     /// <param name="detail">
-    /// What will not fit on a status bar — a list of missing plugins, say. It is
-    /// kept with the message rather than only hung off a tooltip, so it is still
-    /// there once the line has moved on.
+    /// What will not fit on a status bar — a list of missing plugins, say. Kept with
+    /// the message rather than hung off a tooltip, so it is still there once the
+    /// line has moved on.
     /// </param>
     /// <param name="progress">
     /// That this is the previous sentence with a new number in it. Such a line
-    /// replaces its predecessor in the log instead of being added beside it, so
-    /// an export leaves one entry rather than two hundred.
+    /// replaces its predecessor in the log, so an export leaves one entry rather
+    /// than two hundred.
     /// </param>
     public void Say(string message, string? detail = null, bool progress = false) =>
         Say([message], detail, progress);
 
     /// <summary>
-    /// The same, for everything there is to say at once — a compile that found
-    /// four problems has four things to say, not one sentence with three
-    /// bullets in it.
+    /// The same, for everything there is to say at once — a compile that found four
+    /// problems has four things to say, not one sentence with three bullets in it.
     /// </summary>
     /// <remarks>
-    /// They share the line, because there is only one, and it joins them. They
-    /// do not share a row in the log: each is its own problem, arrives and is
-    /// fixed on its own, and reads as one thing to deal with rather than as part
-    /// of a paragraph.
+    /// They share the line, because there is only one. They do not share a row in
+    /// the log: each is its own problem and is fixed on its own.
     /// </remarks>
     public void Say(IReadOnlyList<string> messages, string? detail = null, bool progress = false)
     {

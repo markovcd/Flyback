@@ -22,13 +22,12 @@ public sealed partial class MainWindow
 
     /// <summary>
     /// Greys the export out while there is nothing to write, which is the same
-    /// question the dialog would have asked a moment later — better answered on
-    /// the button than by a file picker with nothing in its list.
+    /// question the dialog would have asked a moment later.
     /// </summary>
     /// <remarks>
     /// An export already running keeps it enabled whatever the patch says: the
-    /// button is <c>Stop</c> by then, and editing the patch mid-render must not
-    /// take away the only way to abandon it.
+    /// button is <c>Stop</c> by then, and editing mid-render must not take away the
+    /// only way to abandon it.
     /// </remarks>
     private void MarkExportable()
     {
@@ -57,23 +56,16 @@ public sealed partial class MainWindow
     /// names are measured from, and the bundle it arrived in if it arrived in one.
     /// </summary>
     /// <remarks>
-    /// Five routes reach a new patch — a patch file, a source file, a bundle, a
-    /// preset, and the one the window opens with — and every one of them has to say
-    /// all of this rather than the part it happens to care about. A route that named
-    /// the document without disowning the last one left the window answering for a
-    /// file that is no longer open: what a patch names is looked up in
-    /// <see cref="carried"/> before anywhere else, so a preset picked while a bundle
-    /// was open went on reading that bundle's sounds and pictures.
-    /// <para>
-    /// Call it before handing the patch to the canvas. Setting the patch is what
-    /// redraws the title, so a name arriving afterwards is a title bar one edit out
-    /// of date.
-    /// </para>
+    /// Five routes reach a new patch and every one has to say all of this rather
+    /// than the part it cares about: what a patch names is looked up in
+    /// <see cref="carried"/> first, so a preset picked while a bundle was open went
+    /// on reading that bundle's sounds. Call it before handing the patch to the
+    /// canvas, since setting the patch is what redraws the title.
     /// </remarks>
     /// <param name="name">What the title bar says, and null for a document with no name.</param>
     /// <param name="beside">
     /// The folder a relative sample or picture path is measured from. Null where
-    /// there is no folder to measure from, which is what a preset has.
+    /// there is none, which is what a preset has.
     /// </param>
     /// <param name="files">What a bundle brought with it, and null for everything else.</param>
     internal void Became(string? name, string? beside, BundleFiles? files = null)
@@ -89,13 +81,10 @@ public sealed partial class MainWindow
 
     /// <summary>
     /// Whether the document is a bundle, which is what the next save offers first.
+    /// Readable from the tests, as <see cref="Became"/> is callable from them:
+    /// every route that opens a document is behind a file picker the headless
+    /// platform does not put up.
     /// </summary>
-    /// <remarks>
-    /// Readable from the tests, as <see cref="Became"/> is callable from them: every
-    /// route that opens a document is behind a file picker the headless platform does
-    /// not put up, so saying what a document is, is the only way to test what follows
-    /// from it.
-    /// </remarks>
     internal bool IsBundle => bundled;
 
     /// <summary>
@@ -103,10 +92,9 @@ public sealed partial class MainWindow
     /// document now.
     /// </summary>
     /// <remarks>
-    /// Not the same statement as <see cref="Became"/>, and deliberately smaller. A
-    /// save changes what the patch is called and which kind of file it is, and
-    /// nothing else: the patch is the one already showing, and what it carries is
-    /// still the only copy of those files until something writes them out.
+    /// Deliberately smaller than <see cref="Became"/>: a save changes what the
+    /// patch is called and which kind of file it is and nothing else — what it
+    /// carries is still the only copy of those files.
     /// </remarks>
     /// <param name="asBundle">Which kind of file it went to, which is what the next save offers.</param>
     private void SavedAs(string name, bool asBundle)
@@ -181,20 +169,14 @@ public sealed partial class MainWindow
     }
 
     /// <summary>
-    /// Writes the patch and everything it names into one file, which is a save
-    /// like any other.
+    /// Writes the patch and everything it names into one file, which is a save like
+    /// any other.
     /// </summary>
     /// <remarks>
-    /// A bundle is a document rather than a copy of one: writing it marks the
-    /// patch saved, takes the name in the title bar, and is what the question
-    /// about unsaved changes accepts as an answer. The two kinds of file differ
-    /// in what is in them and in nothing else.
-    /// <para>
-    /// A bundle already open is written out of what it is carrying rather than
-    /// out of the disk, so saving one that was never unpacked writes the same
-    /// bytes back — a photograph is not re-encoded on its way through, which
-    /// would quietly make a sixteen-bit file an eight-bit one.
-    /// </para>
+    /// A bundle is a document rather than a copy of one: it marks the patch saved
+    /// and takes the name in the title bar. A bundle already open is written out of
+    /// what it is carrying rather than off the disk, so a photograph is not
+    /// re-encoded on its way through.
     /// </remarks>
     private async Task<bool> SaveBundleAsync(IStorageFile file)
     {
@@ -233,25 +215,15 @@ public sealed partial class MainWindow
     }
 
     /// <summary>
-    /// Writes what an open bundle is carrying into <paramref name="folder"/>,
-    /// under the names the patch already calls them by, and stops being a bundle.
+    /// Writes what an open bundle is carrying into <paramref name="folder"/>, under
+    /// the names the patch already calls them by, and stops being a bundle.
     /// </summary>
     /// <remarks>
-    /// What saving a bundle as a loose patch has to do, and the exact inverse of
-    /// packing: the paths in the patch are the archive's own names, they are
-    /// relative, and a relative path is measured from beside the patch — so
-    /// writing them there is all it takes for the saved document to work.
-    /// <para>
-    /// Only what the patch still names. A bundle may be carrying a picture whose
-    /// module has since been deleted, and spilling that onto somebody's disk
-    /// would be leaving litter behind a save they did not ask about.
-    /// </para>
-    /// <para>
-    /// Nothing is overwritten. A file already there is one somebody put there,
-    /// and the copy in the bundle is not automatically the better of the two —
-    /// so the patch goes on naming what is on the disk, which is what it would
-    /// have read anyway.
-    /// </para>
+    /// The exact inverse of packing: the paths in the patch are the archive's own
+    /// names and are relative, so writing them beside the patch is all it takes.
+    /// Only what the patch still names, since spilling a deleted module's picture
+    /// onto somebody's disk is litter. Nothing is overwritten — a file already
+    /// there is one somebody put there.
     /// </remarks>
     /// <returns>How many files were written.</returns>
     private int Scatter(string folder)
@@ -284,14 +256,10 @@ public sealed partial class MainWindow
     }
 
     /// <summary>
-    /// The bytes of a file the patch names: out of the bundle that is open where
-    /// it holds one, and off the disk where it does not.
+    /// The bytes of a file the patch names: out of the bundle that is open where it
+    /// holds one, and off the disk where it does not. The same order the libraries
+    /// look in, so a bundle cannot come out holding a file nothing was reading.
     /// </summary>
-    /// <remarks>
-    /// The same order the libraries look in, so what is packed is what the
-    /// picture was actually drawn from — a bundle cannot come out holding a file
-    /// nothing was reading.
-    /// </remarks>
     private byte[]? Bytes(string path)
     {
         if (carried is { } held && held.Bytes.TryGetValue(path, out var bytes)) return bytes;
@@ -335,26 +303,12 @@ public sealed partial class MainWindow
     /// Writes the patch as text, in the language.
     /// </summary>
     /// <remarks>
-    /// <para>
     /// Two saves in one method, and which it is depends on who owns the patch
-    /// (ADR-0068). Where the text is the document this writes the text itself —
-    /// the comments, the names and the <c>def</c>s somebody wrote — and is a
-    /// save like any other: it takes the name in the title bar and answers the
-    /// question about unsaved changes.
-    /// </para>
-    /// <para>
-    /// Where the graph is the document this prints one instead, and printing is
-    /// lossy: the groups are dropped and the layout is worked out again on the
-    /// way back in
-    /// ([0065](../../docs/adr/0065-a-text-language-that-parses-to-a-patch.md)).
-    /// So it is a copy — what is open stays open, and this is a version of it
-    /// for reading, sending and diffing.
-    /// </para>
-    /// <para>
-    /// What a printing does keep is the instrument exactly. The text builds back
-    /// to the same program, op for op, which is what makes it worth having
-    /// beside a format that keeps everything.
-    /// </para>
+    /// (ADR-0068). Where the text is the document this writes the text itself and
+    /// is a save like any other. Where the graph is, it prints one instead — which
+    /// is lossy, dropping the groups and laying the canvas out again (ADR-0065) —
+    /// so it is a copy for reading, sending and diffing. What a printing does keep
+    /// is the instrument exactly: the text builds back to the same program.
     /// </remarks>
     private async Task<bool> SaveSourceAsync(IStorageFile file)
     {
@@ -398,14 +352,10 @@ public sealed partial class MainWindow
     }
 
     /// <summary>
-    /// Opens a patch written as text, which is a patch like any other once it
-    /// has been read.
+    /// Opens a patch written as text, which is a patch like any other once it has
+    /// been read. Refused whole where it does not read, with every complaint and
+    /// the line each is on: half a patch is worse than none.
     /// </summary>
-    /// <remarks>
-    /// Refused whole where it does not read, with every complaint and the line
-    /// each is on — half a patch is worse than none, and the editor already has
-    /// one open that is worth more than a partial replacement for it.
-    /// </remarks>
     private async Task OpenSourceAsync(IStorageFile file)
     {
         try
@@ -446,29 +396,16 @@ public sealed partial class MainWindow
     }
 
     /// <summary>
-    /// Opens a bundle by unpacking it into a folder beside itself and opening
-    /// what comes out.
+    /// Opens a bundle by unpacking it into a folder beside itself and opening what
+    /// comes out.
     /// </summary>
     /// <remarks>
     /// Unpacked rather than read where it lies, which the command line does
-    /// instead — and the two are right for opposite reasons. The command line
-    /// draws a bundle and writes nothing; this is where somebody is going to
-    /// change the patch, so the files it names have to be files they can find,
-    /// replace and save beside. Reading it into memory would mean a document
-    /// whose pictures vanish the first time it is saved anywhere.
-    /// <para>
-    /// Nothing is written anywhere, which is the whole of what makes a bundle a
-    /// document here rather than an archive to be spilled onto the disk first.
-    /// The files are held as they came — see <see cref="carried"/> — and the
-    /// folder libraries stay behind them, so a module pointed at something on
-    /// this machine a moment later means the thing on this machine.
-    /// </para>
-    /// <para>
-    /// Where a loose patch is opened from is left alone on purpose. A bundle has
-    /// no folder to measure a relative path from, and the paths inside one are
-    /// the archive's own names, so nothing about this document is measured from
-    /// anywhere.
-    /// </para>
+    /// instead: that draws a bundle and writes nothing, where this is somebody
+    /// about to change the patch, so the files it names have to be files they can
+    /// find and save beside. Nothing is written until they save — the files are
+    /// held as they came, see <see cref="carried"/>. Where a loose patch is opened
+    /// from is left alone, because a bundle has no folder to measure from.
     /// </remarks>
     private async Task OpenBundleAsync(IStorageFile file)
     {
@@ -594,16 +531,10 @@ public sealed partial class MainWindow
     /// should offer them.
     /// </summary>
     /// <remarks>
-    /// Video first when there is one, because an AVI carries the sound too and
-    /// is therefore the whole of what the patch does. A PNG follows it wherever
-    /// there is a picture: it is the same picture, stopped — one frame at the
-    /// moment on screen, and the one kind here that ignores the length entirely.
-    /// <para>
-    /// A patch that draws nothing is offered neither, and one that makes no
-    /// sound is offered no WAV, so the dialog can never produce a file that is
-    /// only a black rectangle or only silence. Empty means there is nothing to
-    /// write at all.
-    /// </para>
+    /// Video first when there is one, because an AVI carries the sound too; a PNG
+    /// follows wherever there is a picture, being the same picture stopped. A patch
+    /// that draws nothing is offered neither and one that makes no sound is offered
+    /// no WAV, so the dialog can never produce a black rectangle or silence.
     /// </remarks>
     internal static IReadOnlyList<FilePickerFileType> ExportKinds(Patch patch)
     {
@@ -620,21 +551,13 @@ public sealed partial class MainWindow
 
     /// <summary>
     /// The kinds a recording could be written to. The same question
-    /// <see cref="ExportKinds"/> answers, asked about a take rather than a
-    /// render.
+    /// <see cref="ExportKinds"/> answers, asked about a take rather than a render.
     /// </summary>
     /// <remarks>
-    /// No PNG, because a still is not a recording — there is nothing about one
-    /// moment that needs the performance to be running. Otherwise the rule is the
-    /// export's rule: a patch that draws nothing is offered no video and one that
-    /// makes no sound is offered no WAV, so a take can never come out as a black
-    /// rectangle or as silence.
-    /// <para>
-    /// A patch that draws but makes no sound is still offered an AVI, and that
-    /// AVI simply has no audio stream. It is a recording of everything the patch
-    /// does, which is the test — a silent one is only wrong when there was sound
-    /// to be had.
-    /// </para>
+    /// No PNG, because a still is not a recording. A patch that draws but makes no
+    /// sound is still offered an AVI, which simply has no audio stream: it is a
+    /// recording of everything the patch does, and a silent one is only wrong when
+    /// there was sound to be had.
     /// </remarks>
     internal static IReadOnlyList<FilePickerFileType> RecordKinds(Patch patch)
     {
@@ -651,15 +574,12 @@ public sealed partial class MainWindow
 
     /// <summary>
     /// Writes the patch to a file. One button and one dialog for both kinds,
-    /// because which kind you want is the same decision as what to call it —
-    /// and the dialog offers only the kinds this patch actually has, so a silent
-    /// patch is never offered a WAV of silence.
+    /// because which kind you want is the same decision as what to call it — and
+    /// only the kinds this patch has are offered.
     /// </summary>
     /// <remarks>
-    /// Unlike every other export here a video takes long enough to watch, so it
-    /// reports as it goes and can be stopped: rendering a minute of an expensive
-    /// patch is minutes of work, and a program that merely appears to have hung
-    /// during it is not acceptable.
+    /// Unlike every other export a video takes long enough to watch, so it reports
+    /// as it goes and can be stopped.
     /// </remarks>
     private async Task ExportAsync()
     {
@@ -706,20 +626,14 @@ public sealed partial class MainWindow
     }
 
     /// <summary>
-    /// One frame, at the moment the preview is showing, at export size rather
-    /// than at preview size.
+    /// One frame, at the moment the preview is showing, at export size rather than
+    /// at preview size.
     /// </summary>
     /// <remarks>
     /// The only export that finishes before the button could become Stop, so it
-    /// neither starts a run nor reports a length: what is written is what was on
-    /// screen when it was asked for, and the seconds on the panel mean nothing
-    /// to it.
-    /// <para>
-    /// Rendered afresh rather than lifted off the preview, which is why it is
-    /// full size whatever Size says — and why feedback, which is a frame's
-    /// memory of the one before, comes out of a still as a single pass with
-    /// nothing behind it.
-    /// </para>
+    /// neither starts a run nor reports a length. Rendered afresh rather than
+    /// lifted off the preview, which is why feedback comes out of a still as a
+    /// single pass with nothing behind it.
     /// </remarks>
     private async Task ExportFrameAsync(string path)
     {
@@ -837,14 +751,10 @@ public sealed partial class MainWindow
     };
 
     /// <summary>
-    /// The patch written in the language — text, and readable as text.
+    /// The patch written in the language — text, and readable as text. Last of the
+    /// three in every list: a patch and a bundle are what a document is saved as,
+    /// and offering the lossy one first would put it where the habit lands.
     /// </summary>
-    /// <remarks>
-    /// Last of the three in every list. A patch and a bundle are what a document
-    /// is saved as; this is what it is written out as to be read, sent or put
-    /// through a diff, and offering it first would put the lossy one where the
-    /// habit lands.
-    /// </remarks>
     private static FilePickerFileType SourceFileType => new($"{GlobalConstants.ApplicationName} text")
     {
         Patterns = [$"*.{PatchLanguage.FileExtension}"],

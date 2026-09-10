@@ -16,9 +16,8 @@ namespace Flyback.App;
 /// </summary>
 /// <remarks>
 /// The canvas owns the history and answers whether there is anything to lose;
-/// what is here is the asking. One method fronts every way a patch can be
-/// closed — quitting, opening a file, picking a preset, taking one from the
-/// assistant — so none of those callers has to know whether anything was edited.
+/// what is here is the asking. One method fronts every way a patch can be closed,
+/// so none of those callers has to know whether anything was edited.
 /// </remarks>
 public sealed partial class MainWindow
 {
@@ -26,21 +25,14 @@ public sealed partial class MainWindow
     private const string BaseTitle = GlobalConstants.ApplicationName;
 
     /// <summary>
-    /// What the patch on the canvas is called, or null for one with no name of
-    /// its own yet.
+    /// What the patch on the canvas is called, or null for one with no name of its
+    /// own yet.
     /// </summary>
     /// <remarks>
-    /// The file it was opened from or last written to, without the extension, or
-    /// the preset it was built from — the three ways a patch arrives, and every
-    /// one of them arrives with something to call it. Kept rather than worked
-    /// out, because after a Save As there is no other record of which of the two
-    /// files on the disk is the one on screen.
-    /// <para>
-    /// Written down without the extension, because a preset has none and the
-    /// title bar should not read as though one kind of patch were more real than
-    /// the other. It is also what the save dialog offers back, and a picker adds
-    /// the extension itself.
-    /// </para>
+    /// The file it was opened from or last written to, or the preset it was built
+    /// from. Kept rather than worked out, because after a Save As there is no other
+    /// record of which file on the disk is the one on screen. Without the
+    /// extension, because a preset has none — and a picker adds one itself.
     /// </remarks>
     private string? patchName;
 
@@ -98,29 +90,21 @@ public sealed partial class MainWindow
     /// Whether this document has anything in it that closing would lose.
     /// </summary>
     /// <remarks>
-    /// Two halves, because there are two places work can be. Typing that has not
-    /// been applied is the one the editor's history cannot know about: nothing
-    /// typed reaches the patch until somebody asks for it, so a document whose
-    /// text has moved on has something to lose even where its patch has not.
-    /// <para>
-    /// Asked by the question, by the close that puts it up and by the dot in the
-    /// title, so that the three cannot come to disagree — a title saying there is
-    /// nothing to lose over a dialog insisting there is would leave nobody sure
-    /// which to believe.
-    /// </para>
+    /// Two halves, because there are two places work can be: typing that has not
+    /// been applied is the one the editor's history cannot know about. Asked by the
+    /// question, by the close that puts it up and by the dot in the title, so the
+    /// three cannot come to disagree.
     /// </remarks>
     private bool SomethingToLose => editor.IsModified || SourceIsUnapplied;
 
     /// <summary>
-    /// Whether text about to stop being the document may go. Asks only about
-    /// typing that is nowhere else: text already written out as <c>.fbks</c> is
-    /// on disk, and the buffer being emptied costs nothing.
+    /// Whether text about to stop being the document may go. Asks only about typing
+    /// that is nowhere else: text already written out as <c>.fbks</c> is on disk.
     /// </summary>
     /// <remarks>
-    /// The patch is deliberately not asked about, because it is not going
-    /// anywhere. Handing it back to the canvas changes who owns it and not what
-    /// it is, and it stays as unsaved as it was a moment before — so the
-    /// question the file asks is still there to be asked when a file asks it.
+    /// The patch is deliberately not asked about, because it is not going anywhere:
+    /// handing it back to the canvas changes who owns it and not what it is, so the
+    /// question a file asks is still there to be asked.
     /// </remarks>
     private async Task<bool> MayLoseTheTextAsync()
     {
@@ -165,16 +149,15 @@ public sealed partial class MainWindow
     }
 
     /// <summary>
-    /// The three answers, as a window rather than as a system message box —
-    /// there is no such thing here, and one built by hand is the same three
-    /// buttons in the same palette as the rest of the shell.
+    /// The three answers, as a window rather than as a system message box — there
+    /// is no such thing here, and one built by hand is the same three buttons in
+    /// the same palette as the rest of the shell.
     /// </summary>
     /// <remarks>
-    /// Closing it by its own frame is Cancel, which is the answer that loses
-    /// nothing. That is why Cancel is the enum's default as well: a dialog closed
-    /// without setting a result comes back as <c>default</c>, so the answer
-    /// nobody gave is the harmless one by the language's own rule rather than by
-    /// a line of code remembering to make it so.
+    /// Closing it by its own frame is Cancel, which is why Cancel is the enum's
+    /// default too: a dialog closed without setting a result comes back as
+    /// <c>default</c>, so the answer nobody gave is harmless by the language's own
+    /// rule.
     /// </remarks>
     private async Task<Unsaved> AskAboutUnsavedAsync(string about, string question)
     {
@@ -248,18 +231,15 @@ public sealed partial class MainWindow
 
     /// <summary>
 
-    /// Undo and redo, from wherever the focus happens to be. Handled on the
-    /// window rather than on the canvas because an edit is as likely to have
-    /// been made in the inspector as on it, and a shortcut that worked only
-    /// while the canvas had the focus would be one somebody learns not to
-    /// trust. Anything that already dealt with the key keeps it — a text box
-    /// undoing its own typing is doing the same job at its own scale.
+    /// Undo and redo, from wherever the focus happens to be. Handled on the window
+    /// rather than on the canvas because an edit is as likely to have been made in
+    /// the inspector, and anything that already dealt with the key keeps it — a
+    /// text box undoing its own typing is doing the same job at its own scale.
     /// </summary>
     /// <remarks>
-    /// Command as well as Control, so the shortcut is the one the machine uses:
-    /// Ctrl+Z on Windows and Linux, Cmd+Z on a Mac. Both are accepted
-    /// everywhere rather than asked which platform this is, since neither is a
-    /// gesture anything else here claims.
+    /// Command as well as Control, so the shortcut is the one the machine uses.
+    /// Both are accepted everywhere rather than asked which platform this is, since
+    /// neither is a gesture anything else here claims.
     /// </remarks>
     protected override void OnKeyDown(KeyEventArgs e)
     {
@@ -337,17 +317,11 @@ public sealed partial class MainWindow
     /// </summary>
     /// <remarks>
     /// None of the guards that stand in front of pressing a key stand here, and
-    /// that asymmetry is the point: a key going down can start something and so
-    /// has to be sure it was meant, and a key coming up can only ever stop one.
-    /// Every guard is a way for a release to be missed, and a missed release is
-    /// a note that sounds for the rest of the session.
-    /// <para>
-    /// So a modifier taken hold of while a key is down, a module deleted, a
-    /// device picked, or a text box clicked into mid-note all end the note rather
-    /// than stranding it. Releasing one that was never played does nothing, which
-    /// is what makes ignoring the guards safe. Nothing is marked handled, because
-    /// nothing else in the shell listens for a key coming up.
-    /// </para>
+    /// that asymmetry is the point: a key going down can start something, and one
+    /// coming up can only ever stop one. Every guard is a way for a release to be
+    /// missed, and a missed release is a note that sounds for the rest of the
+    /// session. Releasing one that was never played does nothing, which is what
+    /// makes ignoring the guards safe.
     /// </remarks>
     protected override void OnKeyUp(KeyEventArgs e)
     {
@@ -361,26 +335,21 @@ public sealed partial class MainWindow
     /// into a command.
     /// </summary>
     /// <remarks>
-    /// Shift is deliberately not one of them. It is part of typing a letter
-    /// rather than a way of asking for something else — no gesture in the shell
-    /// is Shift and a letter on its own — so a capital Z is still a Z and still
-    /// plays. Ctrl, Cmd and Alt all mean the keystroke was aimed somewhere else.
+    /// Shift is deliberately not one of them: it is part of typing a letter, and no
+    /// gesture in the shell is Shift and a letter, so a capital Z still plays.
     /// </remarks>
     private static bool Bare(KeyModifiers modifiers) =>
         (modifiers & (KeyModifiers.Control | KeyModifiers.Meta | KeyModifiers.Alt)) == 0;
 
     /// <summary>
-    /// Whether the computer's keyboard is an instrument right now — whether, in
-    /// other words, either of the running programs is reading it.
+    /// Whether the computer's keyboard is an instrument right now — whether either
+    /// of the running programs is reading it.
     /// </summary>
     /// <remarks>
-    /// Asked of the compiled programs rather than of the patch, and that is what
-    /// makes it exact rather than nearly right. A MIDI In sitting on the canvas
-    /// wired to nothing is not read by either program, so it should not be taking
-    /// keystrokes away from the editor; one wired only to the speakers is read by
-    /// the audio program and not the picture's, and it should. Dead-code
-    /// elimination has already answered both questions (ADR-0022), and asking the
-    /// patch would be a second, worse answer to them.
+    /// Asked of the compiled programs rather than of the patch, which is what makes
+    /// it exact: a MIDI In wired to nothing is read by neither and should not take
+    /// keystrokes from the editor, and one wired only to the speakers should. Dead
+    /// -code elimination has already answered both (ADR-0022).
     /// </remarks>
     private bool Playing =>
         !Typing
@@ -394,19 +363,12 @@ public sealed partial class MainWindow
     /// the instrument.
     /// </summary>
     /// <remarks>
-    /// The whole reason the notes are on bare letters and can still be. A text
-    /// box does not mark an ordinary key press handled — what it acts on is the
-    /// text input that follows — so without this, naming a patch would play a
-    /// tune, and every letter of the name would be a note nobody could stop.
-    /// <para>
-    /// The code editor is the same trouble in a different control: AvalonEdit is
-    /// not a <see cref="TextBox"/>, so the focus check above never sees it, and a
-    /// letter typed into the text would otherwise sound. Asked only where the text
-    /// is the document rather than whenever it happens to be on screen — a
-    /// printing shown while the canvas still owns the patch (ADR-0068) is a
-    /// reading, not a place anybody is composing, and the keys under their hand
-    /// should go on playing.
-    /// </para>
+    /// The whole reason the notes can be on bare letters: a text box does not mark
+    /// an ordinary key press handled, so without this, naming a patch would play a
+    /// tune. AvalonEdit is not a <see cref="TextBox"/> and the focus check never
+    /// sees it, so it is asked about separately — and only where the text is the
+    /// document, since a printing (ADR-0068) is a reading rather than a place
+    /// anybody is composing.
     /// </remarks>
     private bool Typing =>
         FocusManager.GetFocusedElement() is TextBox

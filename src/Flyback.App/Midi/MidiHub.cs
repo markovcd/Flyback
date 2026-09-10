@@ -10,32 +10,23 @@ namespace Flyback.App.Midi;
 /// </summary>
 /// <remarks>
 /// The mirror of <c>AudioEngine</c>: that takes what the patch produces to a
-/// device, and this takes what a device produces to the patch. Both are the shell
-/// rather than the engine, for the reason ADR-0025 gives — the engine has no
-/// platform in it and this is where the platform is.
+/// device, this takes what a device produces to the patch. Both are the shell
+/// rather than the engine (ADR-0025).
 /// <para>
-/// Values are pushed rather than pulled. A renderer could ask what is held before
-/// each buffer and each frame, but there is nothing to ask *for*: a key moves a
-/// few times a second at most, and between two presses every question has the
-/// same answer. So a press writes into the blocks of whatever programs are
-/// running, and both renderers then read plain floats with nobody to call.
+/// Values are pushed rather than pulled, because there is nothing to ask for: a
+/// key moves a few times a second, and between two presses every question has the
+/// same answer. A press writes into the blocks of whatever programs are running,
+/// and both renderers read plain floats with nobody to call. The computer's
+/// keyboard and hardware arriving through <see cref="IMidiInput"/> become entries
+/// in the same dictionary, so nothing below this line knows which is which.
 /// </para>
 /// <para>
-/// Two kinds of instrument, and the difference between them is only where the
-/// notes come from. The computer's keyboard needs no driver and is always there;
-/// hardware arrives through <see cref="IMidiInput"/>, one plugin per platform,
-/// and becomes more entries in <see cref="Sources"/> and more voices in the same
-/// dictionary. Nothing below this line knows which is which — a program names its
-/// instrument by a string and does not care what is behind it.
-/// </para>
-/// <para>
-/// <b>Three threads and one rule.</b> Keys arrive on the UI thread, notes arrive
-/// on a thread the MIDI driver owns, and both are read by the thread that plays.
-/// Everything this class holds is guarded by <see cref="gate"/>; the reading
-/// thread takes no lock at all, because <see cref="LiveValues"/> is single floats
-/// and is built for exactly that. The rule that keeps it from deadlocking is that
-/// a device is never opened or closed with the lock held — closing one waits for
-/// the driver's thread, and that thread may be waiting for this lock.
+/// <b>Three threads and one rule.</b> Keys arrive on the UI thread, notes on a
+/// thread the driver owns, and both are read by the thread that plays. Everything
+/// here is guarded by <see cref="gate"/> and the reading thread takes no lock,
+/// because <see cref="LiveValues"/> is single floats. The rule is that a device
+/// is never opened or closed with the lock held: closing one waits for the
+/// driver's thread, which may be waiting for this lock.
 /// </para>
 /// </remarks>
 internal sealed class MidiHub(IMidiInput? hardware = null) : IDisposable
@@ -70,18 +61,15 @@ internal sealed class MidiHub(IMidiInput? hardware = null) : IDisposable
     private LiveValues[] following = [];
 
     /// <summary>
-    /// Something moved. The picture is redrawn on a timer that skips a frame
-    /// when nothing has changed, and a key going down while the clock is stopped
-    /// is exactly that: a change with no time behind it.
+    /// Something moved. The picture is redrawn on a timer that skips a frame when
+    /// nothing has changed, and a key going down while the clock is stopped is
+    /// exactly that: a change with no time behind it.
     /// </summary>
     /// <remarks>
     /// Raised on whichever thread played the note, which for hardware is the
-    /// driver's. That is safe because of what is on the other end and only
-    /// because of it: both preview surfaces answer <c>Refresh</c> by setting a
-    /// flag their own timer reads, and neither touches the visual tree. A handler
-    /// added here that did would need marshalling of its own — and would be
-    /// paying for it on every note, which is why this does not do it for
-    /// everybody in advance.
+    /// driver's. Safe only because both preview surfaces answer <c>Refresh</c> by
+    /// setting a flag their own timer reads; a handler that touched the visual
+    /// tree would need marshalling of its own.
     /// </remarks>
     public event Action? Played;
 
@@ -94,14 +82,10 @@ internal sealed class MidiHub(IMidiInput? hardware = null) : IDisposable
 
     /// <summary>
     /// What there is to play with: the computer's own keys, and then whatever is
-    /// plugged in.
+    /// plugged in. Asked afresh every time, because devices come and go while the
+    /// program runs. The keyboard is first and always there, which is what makes
+    /// this list never empty.
     /// </summary>
-    /// <remarks>
-    /// Asked afresh every time rather than listed once, because devices are
-    /// plugged in and pulled out while the program runs. The keyboard is first
-    /// and is always there, which is what makes this list never empty and the
-    /// picker never a dead end.
-    /// </remarks>
     public IReadOnlyList<MidiSource> Sources =>
         [new MidiSource(MidiSources.Keyboard, "Computer keyboard"), .. Ports().Select(p => new MidiSource(p.Id, p.Name))];
 
@@ -113,12 +97,9 @@ internal sealed class MidiHub(IMidiInput? hardware = null) : IDisposable
     /// what is already held, and opens or closes devices to match what they read.
     /// </summary>
     /// <remarks>
-    /// Filling immediately is the whole reason this is not just an assignment. An
-    /// edit recompiles the patch, and a note held across one must still be held
-    /// after it — otherwise every knob turned while playing would cut the note
-    /// off. The blocks are new arrays each time and start at nought, so what is
-    /// held has to be written into them at once rather than waiting for the next
-    /// press.
+    /// Filling immediately is why this is not just an assignment: an edit
+    /// recompiles the patch, the blocks are new arrays starting at nought, and a
+    /// note held across one must still be held after it.
     /// </remarks>
     public void Follow(params LiveValues[] blocks)
     {
@@ -159,14 +140,11 @@ internal sealed class MidiHub(IMidiInput? hardware = null) : IDisposable
     }
 
     /// <summary>
-    /// Moves the computer keyboard's two rows up or down an octave, and says
-    /// where they ended up — null when the key was not one of the two that do it.
+    /// Moves the computer keyboard's two rows up or down an octave, and says where
+    /// they ended up — null when the key was not one of the two that do it.
+    /// Everything already down is let go first: a note released after the shift
+    /// would be a different note, so it would never be found and would hang.
     /// </summary>
-    /// <remarks>
-    /// Everything already down is let go first. Two rows of keys are not a
-    /// keyboard, and a note released after the shift would be a different note
-    /// from the one pressed — so it would never be found and would hang.
-    /// </remarks>
     public string? Shift(Avalonia.Input.Key key)
     {
         var moved = key switch
@@ -190,15 +168,14 @@ internal sealed class MidiHub(IMidiInput? hardware = null) : IDisposable
     }
 
     /// <summary>
-    /// Everything let go. The window calls this when it stops being the window
-    /// you are typing into: a key released over another program is a key this
-    /// never hears about, and the note would hang for ever.
+    /// Everything let go. The window calls this when it stops being the window you
+    /// are typing into: a key released over another program is one this never hears
+    /// about.
     /// </summary>
     /// <remarks>
-    /// The computer's keys only. A MIDI keyboard is not the window's to lose —
-    /// its notes go on arriving while another program has the focus, and letting
-    /// them go because somebody alt-tabbed would cut a held chord off for no
-    /// reason the person could see.
+    /// The computer's keys only. A MIDI keyboard's notes go on arriving while
+    /// another program has the focus, and letting them go because somebody
+    /// alt-tabbed would cut a held chord off for no visible reason.
     /// </remarks>
     public void AllOff()
     {
@@ -233,11 +210,9 @@ internal sealed class MidiHub(IMidiInput? hardware = null) : IDisposable
 
     /// <summary>What is plugged in, and nothing at all where nothing can be asked.</summary>
     /// <remarks>
-    /// Total, whatever a backend does. Enumerating hardware is reading something
+    /// Total, whatever a backend does: enumerating hardware is reading something
     /// that may be busy, half-installed or gone since the last call, and none of
-    /// that is a reason for a picker not to draw — the same bargain
-    /// <see cref="MidiSources.All"/> makes one layer up, kept here as well so the
-    /// list this hands out is already safe.
+    /// that is a reason for a picker not to draw.
     /// </remarks>
     private IReadOnlyList<MidiPortInfo> Ports()
     {
@@ -259,11 +234,9 @@ internal sealed class MidiHub(IMidiInput? hardware = null) : IDisposable
     /// </summary>
     /// <remarks>
     /// A device is hardware somebody else may want, so it is held only while
-    /// something is listening to it. A MIDI In sitting on the canvas wired to
-    /// nothing has been eliminated from both programs (ADR-0022) and reads
-    /// nothing, so it does not take the keyboard away from whatever else is
-    /// using it — the same question <c>MainWindow.Playing</c> asks about the
-    /// computer's own keys, asked of the compiled programs for the same reason.
+    /// something is listening. A MIDI In wired to nothing has been eliminated from
+    /// both programs (ADR-0022) and reads nothing, so it does not take the keyboard
+    /// away from whatever else is using it.
     /// </remarks>
     private void Listen(LiveValues[] blocks)
     {
@@ -327,14 +300,10 @@ internal sealed class MidiHub(IMidiInput? hardware = null) : IDisposable
     }
 
     /// <summary>
-    /// Closes one device, and lets go of whatever it was holding down.
+    /// Closes one device, and lets go of whatever it was holding down. The silence
+    /// is the point: a device closed mid-chord sends no note-offs, so the notes it
+    /// was holding would stay held for the rest of the session.
     /// </summary>
-    /// <remarks>
-    /// The silence is the point. A device closed mid-chord sends no note-offs —
-    /// there is nobody left to send them to — so the notes it was holding would
-    /// stay held for the rest of the session, which is the one failure this whole
-    /// class exists to avoid.
-    /// </remarks>
     private void Shut(IMidiPort port)
     {
         try

@@ -18,22 +18,16 @@ namespace Flyback.App.Controls;
 /// The patch as text, and the one gesture that turns it into the patch.
 /// </summary>
 /// <remarks>
+/// It shows and it asks; it does not build. Whether a source reads is the
+/// shell's business — this raises <see cref="EvaluateRequested"/> and is handed a
+/// <see cref="LanguageLoad"/> to show — which is what lets it be tested without a
+/// compiler.
 /// <para>
-/// It shows and it asks; it does not build. Whether a source reads, and what
-/// becomes of it if it does, is the shell's business — this raises
-/// <see cref="EvaluateRequested"/> and is handed back a <see cref="LanguageLoad"/>
-/// to show. That is what lets it be tested without a compiler and what keeps the
-/// language's one entry point in one place.
-/// </para>
-/// <para>
-/// An editor rather than a text box, and it is the one place in the shell that
-/// takes a package to do its job. A gutter to mark the line a complaint is
-/// about, and color to tell a module from the socket it is being handed, are
-/// what a surface somebody types a patch into <em>while it plays</em> needs, and
-/// a <see cref="TextBox"/> has no rich text in it at all. Avalonia's own
-/// RichTextEditor is a word processor — no highlighting, no line numbers, and a
-/// Pro licence — so this is AvalonEdit, which the Avalonia organisation ports
-/// and publishes under the same licence this program carries.
+/// The one place in the shell that takes a package: a gutter for the line a
+/// complaint is about and color to tell a module from a socket are what a surface
+/// somebody types a patch into while it plays needs, and a
+/// <see cref="TextBox"/> has no rich text at all. Avalonia's own RichTextEditor
+/// is a word processor with a Pro licence, so this is AvalonEdit.
 /// </para>
 /// </remarks>
 internal sealed class SourceView : UserControl
@@ -42,14 +36,11 @@ internal sealed class SourceView : UserControl
         new("Consolas, Menlo, DejaVu Sans Mono, monospace");
 
     /// <summary>
-    /// The language, colored — see <c>Flyback.xshd</c> beside this file.
+    /// The language, colored — see <c>Flyback.xshd</c> beside this file. Loaded
+    /// once and shared, since a highlighting definition is immutable. Null if it
+    /// will not load, which leaves plain text rather than taking the window down
+    /// over a color scheme.
     /// </summary>
-    /// <remarks>
-    /// Loaded once and shared, because a highlighting definition is immutable
-    /// and reading the same XML per editor would be work done for nothing. Null
-    /// if it will not load at all, which leaves plain text rather than taking
-    /// the window down over a color scheme.
-    /// </remarks>
     private static readonly IHighlightingDefinition? Language = LoadHighlighting();
 
     private readonly TextEditor text = new()
@@ -70,14 +61,11 @@ internal sealed class SourceView : UserControl
     private readonly Complaints marked = new();
 
     /// <summary>
-    /// What the shell has to say about who owns this text, shown above it.
+    /// What the shell has to say about who owns this text, shown above it — the
+    /// one place a person is told that what they are looking at is a reading
+    /// rather than the patch (ADR-0068). Above the text rather than in the status
+    /// bar, because it is a fact about this text.
     /// </summary>
-    /// <remarks>
-    /// The one place a person is told that what they are looking at is a reading
-    /// of a patch rather than the patch itself — see ADR-0068. Above the text
-    /// rather than in the status bar, because it is a fact about this text and
-    /// not about the last thing that happened.
-    /// </remarks>
     private readonly TextBlock notice = new()
     {
         FontSize = Text.Small,
@@ -105,13 +93,9 @@ internal sealed class SourceView : UserControl
 
     /// <summary>
     /// The counterpart of Apply: the gesture that gives the patch back to the
-    /// canvas.
+    /// canvas. Shown only while the text is the document — over a printing there
+    /// is nothing to hand back.
     /// </summary>
-    /// <remarks>
-    /// Beside Apply, because it is the other end of the same decision. Shown
-    /// only while the text is the document — over a printing there is nothing to
-    /// hand back, since the canvas has the patch already.
-    /// </remarks>
     private readonly Button hand = new()
     {
         Content = "Edit on the canvas",
@@ -149,25 +133,22 @@ internal sealed class SourceView : UserControl
         text.Options.ConvertTabsToSpaces = true;
         text.Options.IndentationSize = 2;
 
-        // Enter belongs to the editor, so the gesture that applies a patch has
-        // to be one the editor does not want. Ctrl+Enter is what every live
-        // coding environment uses for exactly this, and it is free here for the
-        // same reason it is free there.
+        // Enter belongs to the editor, so the gesture that applies a patch has to
+        // be one the editor does not want; Ctrl+Enter is what every live coding
+        // environment uses for this.
         //
-        // Caught on the way down rather than on the way up, which is the whole
-        // of whether this works: an editor that takes newlines handles Enter in
-        // its own class handler and marks it dealt with, and a handler added the
-        // ordinary way is never reached. Tunnelling gets there first.
+        // Caught on the way down rather than up, which is the whole of whether it
+        // works: an editor that takes newlines marks Enter dealt with in its own
+        // class handler, and a handler added the ordinary way is never reached.
         text.AddHandler(KeyDownEvent, Applied, RoutingStrategies.Tunnel);
 
-        // A run of typing is one thing to take back, the way it is in every
-        // other editor. The stack takes an operation per change and a change is
-        // a keystroke, so without this a sentence comes back a letter at a time.
+        // A run of typing is one thing to take back. The stack takes an operation
+        // per change and a change is a keystroke, so without this a sentence comes
+        // back a letter at a time.
         //
-        // Caught either side of the keystroke — on the way down to open the step
-        // and on the way back up to close it — because the editor makes the
-        // change in between. A group left open across two keystrokes would be
-        // one no undo could be pressed inside, and this way none ever is.
+        // Caught either side of the keystroke, because the editor makes the change
+        // in between: a group left open across two keystrokes would be one no undo
+        // could be pressed inside.
         text.TextArea.AddHandler(TextInputEvent, Typing, RoutingStrategies.Tunnel);
         text.AddHandler(TextInputEvent, Typed, RoutingStrategies.Bubble, handledEventsToo: true);
 
@@ -248,14 +229,9 @@ internal sealed class SourceView : UserControl
 
     /// <summary>
     /// A character is on its way in: it joins the step the character before it
-    /// made, or begins one of its own.
+    /// made, or begins one of its own. A word is the unit and the space that ends
+    /// one belongs to it, so whitespace joins the run and then ends it.
     /// </summary>
-    /// <remarks>
-    /// A word is the unit, and the space that ends one belongs to it — taking a
-    /// run back should leave the line as it was before the word rather than
-    /// leave the word's trailing space behind — so whitespace joins the run and
-    /// then ends it.
-    /// </remarks>
     private void Typing(object? sender, TextInputEventArgs e)
     {
         if (text.Document is not { } document) return;
@@ -331,10 +307,9 @@ internal sealed class SourceView : UserControl
     /// exactly as it was.
     /// </summary>
     /// <remarks>
-    /// Through the document rather than by assigning the text: a document
-    /// replaced empties the undo stack, moves the caret to the top and scrolls
-    /// away from whatever somebody was reading. A span replaced is one thing to
-    /// take back and is not felt anywhere else on the page.
+    /// Through the document rather than by assigning the text: a document replaced
+    /// empties the undo stack, moves the caret to the top and scrolls away from
+    /// whatever somebody was reading.
     /// </remarks>
     /// <returns>Whether the text now says something it did not say before.</returns>
     public bool Apply(Change change)
@@ -373,15 +348,14 @@ internal sealed class SourceView : UserControl
     }
 
     /// <summary>
-    /// Puts something that is not a text edit on the undo stack, to be taken
-    /// back in its turn.
+    /// Puts something that is not a text edit on the undo stack, to be taken back
+    /// in its turn.
     /// </summary>
     /// <remarks>
     /// The stack the editor already keeps rather than a second one beside it,
-    /// because what has to be right is the order. Typing, applying and turning a
+    /// because what has to be right is the order: typing, applying and turning a
     /// knob are one run of things somebody did, and two stacks would have to be
-    /// put back in that order by guessing when each step happened — where one
-    /// stack knows, having been there.
+    /// interleaved by guessing.
     /// </remarks>
     public void Remember(Action undone, Action redone)
     {
@@ -403,11 +377,9 @@ internal sealed class SourceView : UserControl
     /// Says that nothing written here so far is a thing to take back.
     /// </summary>
     /// <remarks>
-    /// For text that is a reading rather than a document: what the caller has
-    /// just written into it, it wrote to keep the reading true, and nobody made
-    /// an edit that Ctrl+Z should answer for. Left on the stack it would be
-    /// answered for — and taking it back would leave the reading saying one
-    /// thing and the patch it reads another.
+    /// For text that is a reading rather than a document: what the caller wrote, it
+    /// wrote to keep the reading true. Left on the stack, taking it back would
+    /// leave the reading saying one thing and the patch another.
     /// </remarks>
     public void ForgetSteps() => text.Document?.UndoStack.ClearAll();
 
@@ -426,15 +398,11 @@ internal sealed class SourceView : UserControl
     }
 
     /// <summary>
-    /// Folds the long lines, which is what laying the modules out is on the
-    /// other side of the switch.
+    /// Folds the long lines, which is what laying the modules out is on the other
+    /// side of the switch. One step on the undo stack rather than however many a
+    /// whole-document replacement would make, and the caret is put back where it
+    /// was.
     /// </summary>
-    /// <remarks>
-    /// One step on the undo stack rather than however many the editor would
-    /// make of a whole-document replacement, and the caret is put back where it
-    /// was — tidying is a thing done to what somebody is reading, and losing
-    /// their place in it is the one way to make it not worth doing.
-    /// </remarks>
     public void Tidy()
     {
         var folded = SourceLayout.Wrap(Source);
@@ -494,15 +462,14 @@ internal sealed class SourceView : UserControl
     public void Focus() => text.TextArea.Focus();
 
     /// <summary>
-    /// Shows what a build made of this text: every complaint against the line it
-    /// is about, in the gutter and in a list under it, or a word about what was
+    /// Shows what a build made of this text: every complaint against the line it is
+    /// about, in the gutter and in a list under it, or a word about what was
     /// applied when there are none.
     /// </summary>
     /// <remarks>
-    /// A failed build says so and changes nothing else. Whatever is playing goes
-    /// on playing, which is the whole of why an evaluation is safe to try —
-    /// there is no state here to be left half-built, because the language builds
-    /// a patch or refuses to.
+    /// A failed build changes nothing else and whatever is playing goes on playing:
+    /// the language builds a patch or refuses to, so there is no half-built state
+    /// to be left in.
     /// </remarks>
     public void Show(LanguageLoad load, string? applied = null)
     {
@@ -613,11 +580,10 @@ internal sealed class SourceView : UserControl
     /// Paints the lines a build complained about.
     /// </summary>
     /// <remarks>
-    /// A background rather than a squiggle under the exact column, and the
-    /// reason is that a complaint is usually about a line: one mistake stops a
-    /// statement being read, so what follows is a run of complaints about names
-    /// that statement was going to make. A whole line lit is the honest width of
-    /// that, and the column is still in the list underneath.
+    /// A background rather than a squiggle under the exact column, because a
+    /// complaint is usually about a line: one mistake stops a statement being read,
+    /// and what follows is a run of complaints about names it was going to make.
+    /// The column is still in the list underneath.
     /// </remarks>
     private sealed class Complaints : IBackgroundRenderer
     {

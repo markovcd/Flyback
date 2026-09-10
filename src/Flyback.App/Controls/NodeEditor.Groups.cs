@@ -24,14 +24,13 @@ public sealed partial class NodeEditor
     // between. See NodeGroup.
 
     /// <summary>
-    /// Every group that is currently a box, with the sockets it shows and the
-    /// room it takes up.
+    /// Every group that is currently a box, with the sockets it shows and the room
+    /// it takes up.
     /// </summary>
     /// <remarks>
-    /// Worked out afresh each time rather than kept: the sockets come off the
-    /// wires and their order comes off where the modules sit, so a cache would
-    /// have to be dropped on every wire drawn, every module moved and every undo
-    /// — three chances to forget, to save arithmetic over a few dozen wires.
+    /// Worked out afresh each time rather than kept: the sockets come off the wires
+    /// and their order off where the modules sit, so a cache would have to be
+    /// dropped on every wire drawn, every module moved and every undo.
     /// </remarks>
     private IEnumerable<(NodeGroup Group, GroupSockets Sockets, Rect Bounds)> Boxes()
     {
@@ -53,16 +52,13 @@ public sealed partial class NodeEditor
 
     /// <summary>
     /// Every rectangle the canvas has something in: a box for each group that is
-    /// shut, a ring for each that is open, and the modules that are not behind a
-    /// box.
+    /// shut, a ring for each that is open, and the modules not behind a box.
     /// </summary>
     /// <remarks>
     /// What framing and pasting ask, rather than the list of modules. A module
-    /// behind a shut box is not on the canvas — nothing paints it, nothing can
-    /// point at it, and <see cref="PatchLayout"/> parks it behind the box rather
-    /// than making room for it — so framing to one zooms out to fit a picture
-    /// nobody can see, and stepping a paste clear of one steps it clear of
-    /// nothing.
+    /// behind a shut box is not on the canvas at all — nothing paints it and
+    /// <see cref="PatchLayout"/> parks it behind the box — so framing to one zooms
+    /// out to fit a picture nobody can see.
     /// </remarks>
     private IEnumerable<Rect> OnCanvas()
     {
@@ -96,11 +92,10 @@ public sealed partial class NodeEditor
     /// where one is and the module itself where none is.
     /// </summary>
     /// <remarks>
-    /// The one seam the whole feature hangs on. Painting, hit-testing and wire
-    /// dragging all ask this rather than <see cref="NodeGeometry"/> directly, so
-    /// none of them has to know that a box can exist — a socket on a box names a
-    /// module and a port, so what comes back is still an answer about the module,
-    /// only somewhere else on the screen.
+    /// The one seam the whole feature hangs on: painting, hit-testing and wire
+    /// dragging ask this rather than <see cref="NodeGeometry"/>, so none of them
+    /// has to know a box can exist. A socket on a box names a module and a port, so
+    /// what comes back is still an answer about the module.
     /// </remarks>
     private Point OutputAnchor(NodeInstance node, int port)
     {
@@ -154,20 +149,14 @@ public sealed partial class NodeEditor
     }
 
     /// <summary>
-    /// How many of the selected modules a group would actually take, which is
-    /// every one of them but the sink.
+    /// How many of the selected modules a group would actually take, which is every
+    /// one of them but the sink.
     /// </summary>
     /// <remarks>
-    /// The same count the delete button shows and for the same reason: a gesture
-    /// that says it will take six and takes five is lying about what it does.
-    /// Selecting everything and grouping it is the case that makes the
-    /// difference, because Ctrl+A takes the Output too.
-    /// <para>
-    /// A module already in another group is counted, because it is taken: it
-    /// leaves the group it was in, since two boxes both claiming to draw one
-    /// module is a picture that means nothing. This has to agree with
-    /// <see cref="Patch.Group"/> exactly or the label is the lie above.
-    /// </para>
+    /// The same count the delete button shows: a gesture that says it will take six
+    /// and takes five is lying about what it does. A module already in another
+    /// group is counted, because it is taken — it leaves the group it was in. This
+    /// has to agree with <see cref="Patch.Group"/> exactly.
     /// </remarks>
     public int Groupable => SelectedNodes.Count(n => !NodeCatalog.IsSink(n.TypeId));
 
@@ -366,11 +355,10 @@ public sealed partial class NodeEditor
     /// shuts it again.
     /// </summary>
     /// <remarks>
-    /// An open group has no box, so without this there would be nothing on the
-    /// canvas to say one was there and no way back to the box but the inspector.
-    /// The strip is where a double-click lands, which is the same gesture that
-    /// opened it — a thing that opens by being double-clicked should shut the
-    /// same way.
+    /// An open group has no box, so without this there would be nothing to say one
+    /// was there and no way back but the inspector. The strip is where a
+    /// double-click lands: a thing that opens by being double-clicked should shut
+    /// the same way.
     /// </remarks>
     private (Rect Outline, Rect Handle)? OpenGroup(NodeGroup group)
     {
@@ -406,22 +394,15 @@ public sealed partial class NodeEditor
     }
 
     /// <summary>
-    /// The ring, the ground inside it and the title above it, for every group
-    /// that is open.
+    /// The ring, the ground inside it and the title above it, for every group that
+    /// is open.
     /// </summary>
     /// <remarks>
-    /// A wash as well as a line, because a line alone out here is nearly
-    /// nothing: this is drawn under the wires and the modules, on ground a
-    /// person is reading past rather than at. Both are held faint. What an open
-    /// group has to do is say where it is while somebody works inside it, and a
-    /// region that draws the eye harder than the modules standing in it is a
-    /// region in the way of the work.
-    /// <para>
-    /// The strip is left bare, and the title on it stays the muted grey the rest
-    /// of the canvas furniture is written in. Filling it made a header, and a
-    /// header is what a group wears when it is <em>shut</em> — a second one up
-    /// here reads as a box that is somehow both.
-    /// </para>
+    /// A wash as well as a line, because a line alone out here is nearly nothing —
+    /// this is drawn under the wires and the modules. Both are held faint: a region
+    /// that draws the eye harder than the modules standing in it is a region in the
+    /// way of the work. The strip is left bare, because filling it makes a header,
+    /// and a header is what a group wears when it is shut.
     /// </remarks>
     private void DrawOpenGroups(DrawingContext context)
     {
@@ -476,14 +457,10 @@ public sealed partial class NodeEditor
     }
 
     /// <summary>
-    /// One socket of a box, named for the port inside that it stands for.
+    /// One socket of a box, named for the port inside that it stands for:
+    /// "filter.cutoff" rather than a name of its own, so renaming a module inside
+    /// relabels the box for nothing.
     /// </summary>
-    /// <remarks>
-    /// "filter.cutoff" rather than a name of its own, and that is deliberate: the
-    /// socket is a way of pointing at an inner port and reads as one. It also
-    /// means renaming a module inside relabels the box for nothing, which is the
-    /// whole of how a group gets a readable edge.
-    /// </remarks>
     private void DrawBoxSocket(DrawingContext context, GroupSocket socket, Point centre, Rect bounds)
     {
         if (Named(socket) is not var (label, spec)) return;
@@ -500,15 +477,10 @@ public sealed partial class NodeEditor
     }
 
     /// <summary>
-    /// What a socket is called and what it is, or null where it names a module or
-    /// a port that is not there.
+    /// What a socket is called and what it is, or null where it names a module or a
+    /// port that is not there. "filter.cutoff" rather than a name of its own: the
+    /// socket is a way of pointing at an inner port and reads as one.
     /// </summary>
-    /// <remarks>
-    /// "filter.cutoff" rather than a name of its own, and that is deliberate: the
-    /// socket is a way of pointing at an inner port and reads as one. It also
-    /// means renaming a module inside relabels the box for nothing, which is the
-    /// whole of how a group gets a readable edge.
-    /// </remarks>
     public (string Label, PortSpec Spec)? Named(GroupSocket socket)
     {
         if (patch.Find(socket.Node) is not { } node) return null;

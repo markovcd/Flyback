@@ -4,15 +4,15 @@ using Flyback.Core.Graph;
 namespace Flyback.App.Controls;
 
 /// <summary>
-/// What an edit is and how one is taken back: the history, the two ways a patch
-/// is put on the canvas without being opened as a document, and the commands
-/// that add and remove modules.
+/// What an edit is and how one is taken back: the history, the two ways a patch is
+/// put on the canvas without being opened as a document, and the commands that add
+/// and remove modules.
 /// </summary>
 /// <remarks>
-/// The history itself is the engine's and holds JSON snapshots; what is here is
-/// the canvas's side of it — which gestures earn a step, what is announced when
-/// one comes back, and the gate every arriving patch passes so that a step can
-/// never be undone into a module standing half off the canvas.
+/// The history itself is the engine's and holds JSON snapshots; here is the
+/// canvas's side of it — which gestures earn a step, and the gate every arriving
+/// patch passes so a step can never be undone into a module standing half off the
+/// canvas.
 /// </remarks>
 public sealed partial class NodeEditor
 {
@@ -29,16 +29,13 @@ public sealed partial class NodeEditor
 
     /// <summary>
     /// The patch as it stands is a document that has just arrived, so there is
-    /// nothing behind it and nothing in it left to lose — which is what the
-    /// <see cref="Patch"/> setter says of a patch it is handed.
+    /// nothing behind it and nothing left to lose.
     /// </summary>
     /// <remarks>
-    /// For the caller that put the document here itself, through an edit,
-    /// because it had to build the patch before it could know what it was.
-    /// Going through the setter again would show the same patch a second time
-    /// and ask everything downstream to make it afresh; what is actually wrong
-    /// is the history alone, holding a step for an arrival rather than for
-    /// something somebody did.
+    /// For the caller that put the document here through an edit, because it had to
+    /// build the patch before it could know what it was. Going through the setter
+    /// again would show the same patch twice; what is wrong is the history alone,
+    /// holding a step for an arrival.
     /// </remarks>
     public void MarkOpened()
     {
@@ -47,15 +44,14 @@ public sealed partial class NodeEditor
     }
 
     /// <summary>
-    /// The hand has come off whatever it was holding, so the next edit starts a
-    /// step of its own rather than folding into the one before it.
+    /// The hand has come off whatever it was holding, so the next edit starts a step
+    /// of its own rather than folding into the one before.
     /// </summary>
     /// <remarks>
-    /// For the gestures this canvas does not make itself. Its own — a wire being
-    /// re-patched — number themselves and need nothing said, but an edit filed
-    /// under a control in the panel is named after that control, and every drag
-    /// of one slider is the same name. Somebody outside can see the hand let go;
-    /// the history cannot.
+    /// For the gestures this canvas does not make itself: an edit filed under a
+    /// control in the panel is named after that control, and every drag of one
+    /// slider is the same name. Somebody outside can see the hand let go; the
+    /// history cannot.
     /// </remarks>
     public void GestureEnded() => history.GestureEnded();
 
@@ -125,14 +121,12 @@ public sealed partial class NodeEditor
 
     /// <summary>
     /// Shows a patch built from the one that was open rather than opened in its
-    /// place — the assistant's work, which is a large edit and not a new
-    /// document. Recorded like any other edit, so one press of undo puts back
-    /// what was there before it, and one of redo brings it round again.
+    /// place — the assistant's work, which is a large edit and not a new document.
+    /// Recorded like any other edit.
     /// </summary>
     /// <remarks>
-    /// Framed, which an undo is not. Nothing about where an assistant lays its
-    /// modules out has to resemble the current canvas, so the patch does not end
-    /// up pointing at an empty section of the grid.
+    /// Framed, which an undo is not: nothing about where an assistant lays its
+    /// modules out has to resemble the current canvas.
     /// </remarks>
     public void ApplyEdit(Patch edited)
     {
@@ -178,17 +172,15 @@ public sealed partial class NodeEditor
     }
 
     /// <summary>
-    /// Drops a new module on the canvas and hands it back, or returns null
-    /// having added nothing where the patch may not hold another of that module
-    /// — the Output, of which there is always exactly one. Rather than do
-    /// nothing at all, that case selects the one already there: whoever asked
+    /// Drops a new module on the canvas and hands it back, or returns null having
+    /// added nothing where the patch may not hold another — the Output, of which
+    /// there is always one. That case selects the one already there: whoever asked
     /// for it wanted it, and this is where it is.
     /// </summary>
     /// <param name="typeId">Which module to add.</param>
     /// <param name="at">
-    /// Where to centre it, in graph space. The middle of the view when nothing
-    /// says otherwise — which is what a module added from anywhere but the
-    /// canvas gets, since nowhere else has a place in mind.
+    /// Where to centre it, in graph space. The middle of the view when nothing says
+    /// otherwise, which is what a module added from anywhere but the canvas gets.
     /// </param>
     public NodeInstance? AddNode(string typeId, Point? at = null)
     {
@@ -213,15 +205,14 @@ public sealed partial class NodeEditor
 
     /// <summary>
     /// Adds a module where a wire was dropped and plugs the wire into it, as one
-    /// edit — the module and the wire arrived in one gesture and come back the
-    /// same way.
+    /// edit — the module and the wire arrived in one gesture and come back the same
+    /// way.
     /// </summary>
     /// <remarks>
     /// Which socket it lands on is <see cref="Fitting"/>'s decision. Nothing is
-    /// refused for being the wrong kind, because nothing is: the compiler
-    /// broadcasts a scalar to three channels and takes luma from a color, so
-    /// every socket accepts every wire and the question is only which one was
-    /// meant.
+    /// refused for being the wrong kind, because nothing is: the compiler broadcasts
+    /// a scalar and takes luma from a color, so the question is only which socket
+    /// was meant.
     /// </remarks>
     public NodeInstance? AddNodeWired(string typeId, WireDrop drop)
     {
@@ -254,24 +245,12 @@ public sealed partial class NodeEditor
     /// module has none of that kind at all.
     /// </summary>
     /// <remarks>
-    /// <para>
-    /// The port a module is <em>about</em> comes first:
-    /// <see cref="PortSpec.Domain"/> is the axis it is read across and
-    /// <see cref="PortSpec.Swept"/> is what it reads under a domain of its own,
-    /// and both are the socket the module exists to have something in. The
-    /// compiler already says as much — it warns about a Domain port left on its
-    /// knob, and about no other.
-    /// </para>
-    /// <para>
-    /// Then an exact match of kind, which is what tells a Scan's <c>view</c>
-    /// from its <c>out</c> when a color was wanted, and puts a scalar into a
-    /// Blend's <c>t</c> rather than broadcasting it to grey down <c>a</c>.
-    /// </para>
-    /// <para>
-    /// Then the first socket, which is where this would land anyway: the
-    /// catalogue is written with the principal one first, and the two rules
-    /// above agree with it almost everywhere. They are here for the almost.
-    /// </para>
+    /// The port a module is about comes first: <see cref="PortSpec.Domain"/> and
+    /// <see cref="PortSpec.Swept"/> are the socket the module exists to have
+    /// something in, which is what the compiler already warns about. Then an exact
+    /// match of kind, which tells a Scan's <c>view</c> from its <c>out</c>. Then the
+    /// first socket, which is where this would land anyway — the catalogue is
+    /// written with the principal one first.
     /// </remarks>
     private static int? Fitting(IReadOnlyList<PortSpec> sockets, PortKind kind)
     {
@@ -305,16 +284,14 @@ public sealed partial class NodeEditor
     }
 
     /// <summary>
-    /// Removes every selected module except the Output, which the graph refuses.
-    /// A refused module is left selected rather than cleared: pressing Delete on
-    /// the Output should do nothing at all, and losing the selection would take
-    /// its settings panel away with it.
+    /// Removes every selected module except the Output, which the graph refuses. A
+    /// refused module is left selected, since losing the selection would take its
+    /// settings panel away.
     /// </summary>
     /// <remarks>
-    /// One edit however many modules go, because one gesture asked for all of
-    /// them — the same reason laying out is one edit (ADR-0044). Deleting five
-    /// and undoing them one at a time would be five presses for something
-    /// nobody did five times.
+    /// One edit however many modules go, because one gesture asked for all of them
+    /// (ADR-0044): deleting five and undoing them one at a time would be five
+    /// presses for something nobody did five times.
     /// </remarks>
     public void DeleteSelected()
     {

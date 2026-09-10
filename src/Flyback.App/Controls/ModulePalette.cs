@@ -14,15 +14,10 @@ namespace Flyback.App.Controls;
 /// The list of modules that can be added, with a filter and a tick per plugin.
 /// </summary>
 /// <remarks>
-/// <para>
-/// A loop over the catalogue rather than markup, so a module added by the
-/// engine or a plugin appears here without shell changes.
-/// </para>
-/// <para>
-/// A control of its own rather than a region of the window, because it is shown
-/// where it is asked for: right-clicking the canvas opens it at the pointer and
-/// what is picked lands there.
-/// </para>
+/// A loop over the catalogue rather than markup, so a module added by the engine
+/// or a plugin appears here without shell changes. A control of its own because
+/// it is shown where it is asked for: right-clicking the canvas opens it at the
+/// pointer, and what is picked lands there.
 /// </remarks>
 public sealed class ModulePalette : UserControl
 {
@@ -48,15 +43,13 @@ public sealed class ModulePalette : UserControl
     private readonly Action<SavedGroup> adding;
 
     /// <summary>
-    /// Which kept group has been asked about, and so is showing a confirm in
-    /// place of its row.
+    /// Which kept group has been asked about, and so is showing a confirm in place
+    /// of its row.
     /// </summary>
     /// <remarks>
-    /// A row that turns into its own question rather than a dialog over the
-    /// window: the list is a popup already, and a popup that puts a second thing
-    /// over the window to ask about one line of itself is two layers deep for a
-    /// yes. Held here rather than on the row, because the list is rebuilt on
-    /// every keystroke and a row does not outlive one.
+    /// A row that turns into its own question rather than a dialog over the window,
+    /// which would be two layers deep for a yes. Held here rather than on the row,
+    /// because the list is rebuilt on every keystroke.
     /// </remarks>
     private SavedGroup? removing;
 
@@ -173,24 +166,16 @@ public sealed class ModulePalette : UserControl
             e.Handled = true;
         };
 
-        // Escape from anywhere in the list, and not only from the filter box:
-        // the ✕ that asks whether to remove a kept group takes the focus when it
-        // is clicked, so the key that means "never mind" arrives at a button
-        // rather than at the box above it.
+        // Escape from anywhere in the list, not only from the filter box: the ✕
+        // that asks whether to remove a kept group takes the focus when it is
+        // clicked, so the key that means "never mind" arrives at a button.
         //
-        // Every row that turned into a question goes back to being a row. A
-        // question nobody answered must not still be on the list the next time
-        // it is opened, and Escape is how a question is not answered.
+        // Every row that turned into a question goes back to being a row, since a
+        // question nobody answered must not still be there next time.
         //
-        // Deliberately not handled here, and deliberately not a step of its own.
-        // Escape goes on to mean exactly what it always meant — empty the box,
-        // or, with the box already empty, let the popup close on it. A key that
-        // needed pressing twice to leave, because a row somewhere was
-        // mid-question, would have stopped being the way out.
-        //
-        // handledEventsToo, because the filter box marks Escape handled when it
-        // empties itself, and a question left standing behind a cleared filter
-        // is the very thing this is here to prevent.
+        // Not handled here and not a step of its own: Escape goes on meaning what
+        // it always meant — empty the box, or let the popup close. handledEventsToo,
+        // because the filter box marks Escape handled when it empties itself.
         AddHandler(
             KeyDownEvent,
             (_, e) =>
@@ -258,21 +243,15 @@ public sealed class ModulePalette : UserControl
     }
 
     /// <summary>
-    /// Takes the padding and the border off the flyout presenter that holds one
-    /// of these, and stops it painting a background of its own.
+    /// Takes the padding and the border off the flyout presenter that holds one of
+    /// these, and stops it painting a background of its own.
     /// </summary>
     /// <remarks>
-    /// A presenter is dressed for a menu of a few words: sixteen pixels of
-    /// padding all round, a border and a corner radius. Around a list that is
-    /// already a panel with its own margins that reads as a wide empty frame,
-    /// and its opaque background would sit behind the translucency rather than
-    /// under it. So the presenter gives up all three and the list keeps them.
-    /// <para>
-    /// A style rather than properties on the flyout, because a presenter is made
-    /// by the flyout when it opens and there is nothing to set them on until
-    /// then. Added to the window's own styles, so it reaches the popup wherever
-    /// that ends up in the tree.
-    /// </para>
+    /// A presenter is dressed for a menu of a few words, which round a list that is
+    /// already a panel with its own margins reads as a wide empty frame — and its
+    /// opaque background would sit behind the translucency rather than under it. A
+    /// style rather than properties on the flyout, because the presenter does not
+    /// exist until the flyout opens.
     /// </remarks>
     public static Style Trim()
     {
@@ -315,17 +294,14 @@ public sealed class ModulePalette : UserControl
     }
 
     /// <summary>
-    /// Puts the list into — or out of — asking whether to remove a kept group,
-    /// and hands the keyboard back to the filter box.
+    /// Puts the list into — or out of — asking whether to remove a kept group, and
+    /// hands the keyboard back to the filter box.
     /// </summary>
     /// <remarks>
-    /// The focus is the part that is easy to miss. Everything the keyboard does
-    /// here is handled on the filter box because the filter box is what holds
-    /// the focus the whole time the list is open, and a row's ✕ takes it away by
-    /// being clicked — then the rebuild below deletes the very button holding
-    /// it, leaving the focus nowhere at all. A list with the focus nowhere
-    /// answers no keys: not the arrows, not Enter, and not Escape, which is the
-    /// way out.
+    /// The focus is the part that is easy to miss: everything the keyboard does
+    /// here is handled on the filter box, a row's ✕ takes the focus by being
+    /// clicked, and the rebuild then deletes the button holding it. A list with the
+    /// focus nowhere answers no keys, Escape included.
     /// </remarks>
     private void Asking(SavedGroup? entry)
     {
@@ -460,15 +436,10 @@ public sealed class ModulePalette : UserControl
     /// forget it.
     /// </summary>
     /// <remarks>
-    /// The ✕ is the one the group inspector puts on a socket that can come off
-    /// the edge, in the same place at the same weight, because it is the same
-    /// offer — the row it is on can go. Asked rather than done, since a kept
-    /// group is a file and there is no undo out here to take one back with.
-    /// <para>
-    /// An entry this build cannot make is still listed, and dimmed. It is a real
-    /// thing somebody kept; what happens when it is picked is a sentence naming
-    /// the plugin it wants, which is what opening such a patch would say.
-    /// </para>
+    /// The same ✕ the group inspector puts on a socket that can come off the edge,
+    /// because it is the same offer. Asked rather than done, since a kept group is
+    /// a file and there is no undo out here. An entry this build cannot make is
+    /// still listed and dimmed: picking it says which plugin it wants.
     /// </remarks>
     private Control Kept(SavedGroup entry)
     {
@@ -542,18 +513,11 @@ public sealed class ModulePalette : UserControl
     /// the one line the row was taking anyway.
     /// </summary>
     /// <remarks>
-    /// In the list rather than over the window. This is a popup already, and a
-    /// dialog put over the whole shell to ask about one line of it would be two
-    /// layers deep for a yes — as well as taking the popup down on the way,
-    /// since a flyout closes when something else takes the focus.
-    /// <para>
-    /// One line and not two, so the list does not jump under the hand that has
-    /// just reached for a row: the question stands exactly where the row was, at
-    /// the height it was, and the answers are where the ✕ that asked it is. Which
-    /// is also why they are a ✔ and a ✕ rather than two words — the ✕ is the one
-    /// already under the pointer, and it now means what it always meant on this
-    /// row, which is "no, put it back".
-    /// </para>
+    /// In the list rather than over the window, which would be two layers deep for
+    /// a yes and would take the popup down on the way, since a flyout closes when
+    /// something else takes the focus. One line and not two, so the list does not
+    /// jump under the hand: the answers are where the ✕ that asked is, and it now
+    /// means what it always meant on this row — no, put it back.
     /// </remarks>
 
     private static TextBlock Heading(string text, Color color) => new()

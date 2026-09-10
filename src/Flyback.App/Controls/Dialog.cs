@@ -13,21 +13,14 @@ namespace Flyback.App.Controls;
 /// </summary>
 /// <remarks>
 /// Built here rather than asked of the platform, because Avalonia has no message
-/// box and one made by hand is the same palette, the same theme and the same
-/// font as everything else in the program — which a native one is not, on any of
-/// the three platforms this ships to.
+/// box and one made by hand is the same palette, theme and font as the rest of the
+/// program — which a native one is not, on any of the three platforms.
 /// <para>
-/// A panel and not a window. A second window is a second thing in the task
-/// switcher, a second thing to place on a screen, and on three platforms three
-/// different frames around the same three buttons — for a question that is about
-/// this window and belongs on it. What makes it modal instead is what a modal
-/// window is actually for: the shell behind is dimmed, cannot be clicked, and
-/// does not hear the keyboard. See <see cref="ModalOverlay"/>.
-/// </para>
-/// <para>
-/// Deliberately plain: a title, a way out, and whatever it was given. What a
-/// dialog asks and what its answers are belong to whatever put it up, and the
-/// three here have nothing in common but their frame.
+/// A panel and not a window: a second window is a second thing in the task
+/// switcher and three different frames around the same three buttons, for a
+/// question that belongs on this one. What makes it modal is what a modal window
+/// is actually for — the shell behind is dimmed, cannot be clicked, and does not
+/// hear the keyboard. See <see cref="ModalOverlay"/>.
 /// </para>
 /// </remarks>
 internal static class Dialog
@@ -43,10 +36,9 @@ internal static class Dialog
         /// frame provides: the cross on it, and Escape.
         /// </summary>
         /// <remarks>
-        /// Dismissing it comes back as <c>default</c>: the answer nobody gave
-        /// should be the one that loses nothing, and an enum whose first member
-        /// is Cancel gets that from the language rather than from a line of code
-        /// remembering.
+        /// Dismissing it comes back as <c>default</c>: the answer nobody gave should
+        /// be the one that loses nothing, and an enum whose first member is Cancel
+        /// gets that from the language.
         /// </remarks>
         public async Task<TResult> ShowDialog<TResult>(string title, Control content)
         {
@@ -94,13 +86,12 @@ internal static class Dialog
 /// The dimmed sheet a dialog sits on, and everything that makes it modal.
 /// </summary>
 /// <remarks>
-/// Three things stand between the question and the shell, and all three are
-/// needed. The sheet is painted rather than merely present, which is what makes
-/// it take a click instead of letting one through to the patch underneath. It
-/// takes the focus, or the canvas would still have it and Delete would still
-/// delete. And it swallows every key that reaches it unhandled, because the
-/// window is listening for Ctrl+Z above whatever has the focus and would
-/// otherwise undo an edit while being asked whether to save it.
+/// Three things stand between the question and the shell. The sheet is painted
+/// rather than merely present, which is what makes it take a click. It takes the
+/// focus, or the canvas would still have it and Delete would still delete. And it
+/// swallows every key that reaches it unhandled, because the window listens for
+/// Ctrl+Z above whatever has the focus and would otherwise undo an edit while
+/// asking whether to save it.
 /// </remarks>
 internal sealed class ModalOverlay : Border
 {
@@ -147,12 +138,10 @@ internal sealed class ModalOverlay : Border
     /// Takes the size of the layer it is put in, and keeps taking it.
     /// </summary>
     /// <remarks>
-    /// Stretching is not available here: the overlay layer is a
-    /// <see cref="Canvas"/>, and a canvas gives every child the size the child
-    /// asked for and puts it at a point. A sheet that came out the size of the
-    /// dialog on it would leave the rest of the window clickable, which is the
-    /// whole thing this is for — and it has to be re-taken rather than read
-    /// once, because a window can be resized while a dialog is up.
+    /// Stretching is not available: the overlay layer is a <see cref="Canvas"/>,
+    /// which gives every child the size it asked for. A sheet the size of the dialog
+    /// on it would leave the rest of the window clickable, and it has to be re-taken
+    /// because a window can be resized while a dialog is up.
     /// </remarks>
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
