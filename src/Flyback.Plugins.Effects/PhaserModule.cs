@@ -5,22 +5,19 @@ namespace Flyback.Plugins.Effects;
 
 /// <summary>
 /// Notches instead of a comb. A flanger cancels at every multiple of one
-/// frequency because a delay does the same thing to all of them; a phaser
-/// cancels at a handful of places that are not related to each other at all,
-/// because what it delays is phase rather than time.
+/// frequency because a delay does the same thing to all of them; a phaser cancels
+/// at a handful of places unrelated to each other, because what it delays is
+/// phase rather than time.
 /// </summary>
 /// <remarks>
-/// Four allpass stages, each one leaving every frequency at the same level and
-/// turning the phase of the high ones further than the low. Added back to the
-/// dry signal, the places where the two have ended up half a cycle apart cancel:
-/// two notches for four stages, and sweeping the stages moves both.
+/// Four allpass stages, each leaving every frequency at the same level and turning
+/// the phase of the high ones further than the low; added back to the dry signal,
+/// the places where the two are half a cycle apart cancel.
 /// <para>
-/// This is the module that would have needed an opcode before ADR-0041. Every
-/// stage is one one-evaluation cell, and the arrangement is the same TPT that
-/// the Timbre plugin's Filter uses, read as an allpass instead of a lowpass —
-/// twice the lowpass minus the input, which is what a lowpass and its own
-/// complement come to. The Delay and Allpass opcodes are no use here: those
-/// carry a buffer, and what this needs is one sample of phase per stage.
+/// The module that would have needed an opcode before ADR-0041. Every stage is one
+/// one-evaluation cell, in the same TPT arrangement the Timbre plugin's Filter
+/// uses, read as an allpass instead of a lowpass. The Delay and Allpass opcodes
+/// are no use: those carry a buffer, and this needs one sample of phase per stage.
 /// </para>
 /// </remarks>
 internal static class PhaserModule

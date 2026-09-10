@@ -4,25 +4,20 @@ using Flyback.Core.Graph;
 namespace Flyback.Plugins.Voice;
 
 /// <summary>
-/// A resonant filter: the thing that takes harmonics away, and the one gesture
-/// every subtractive synth is built around. Two integrators in the topology
-/// Zavalishin calls TPT — the same pair read at three points, which is why all
-/// three responses come out at once rather than one at a time behind a switch.
+/// A resonant filter: the thing that takes harmonics away, and the gesture every
+/// subtractive synth is built around. Two integrators in the topology Zavalishin
+/// calls TPT — the same pair read at three points, which is why all three
+/// responses come out at once.
 /// </summary>
 /// <remarks>
-/// It is stateful, so like <c>Delay</c> and <c>Reverb</c> it does its job for the
-/// speakers and something simpler for the screen. What makes it different from
-/// those two is that nothing here needed a new opcode: the integrators are a pair
-/// of one-evaluation cells, which <see cref="Emitter.AllocateUnitSlot"/> already
-/// hands out for the cycles a patch draws by hand. A module that wants a memory
-/// of exactly one sample can take one without asking the engine for anything.
-/// <para>
-/// Two things follow from that, and neither turns out to be the filter's own: it
-/// has to work out what rate it is running at, and it has to say what it means on
-/// a path that has no rate at all. <see cref="Emitter.Interval"/> and
-/// <see cref="Emitter.HasMemory"/> answer both, once per program rather than once
-/// per module. See ADR-0041 and ADR-0042.
-/// </para>
+/// Stateful, so like <c>Delay</c> and <c>Reverb</c> it does its job for the
+/// speakers and something simpler for the screen. What is different is that
+/// nothing here needed a new opcode: the integrators are a pair of
+/// one-evaluation cells, which <see cref="Emitter.AllocateUnitSlot"/> already
+/// hands out. Two things follow and neither is the filter's own — working out what
+/// rate it runs at, and what it means on a path with no rate at all — which
+/// <see cref="Emitter.Interval"/> and <see cref="Emitter.HasMemory"/> answer once
+/// per program. See ADR-0041 and ADR-0042.
 /// </remarks>
 internal static class FilterModule
 {

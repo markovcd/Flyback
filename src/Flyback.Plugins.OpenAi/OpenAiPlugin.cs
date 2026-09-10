@@ -31,34 +31,17 @@ public sealed partial class OpenAiAssistant : IPatchAssistant
     public int Priority => 50;
 
     /// <remarks>
-    /// <para>
     /// The default is a model that can see, because looking is what most of this
-    /// is. The two audio models are listed rather than defaulted to for the
-    /// reason <see cref="AssistantChoices.Hearing"/> is off by default: they are
-    /// the only ones here that take a sound, and they are not the ones to reach
-    /// for otherwise.
-    /// </para>
-    /// <para>
-    /// The three audio models take a sound and <em>not</em> a picture, which is
-    /// why they are recorded with sight off and why they are an ear rather than
-    /// a driver — see <see cref="AssistantChoices.EarModel"/>. Chosen as the
-    /// model in the box they still work, and the form takes sight away rather
-    /// than sending them something they will refuse.
-    /// </para>
-    /// <para>
-    /// The last two are named as a local runtime names them, and both are the
-    /// text-only weights — the multimodal ones are separate models under
-    /// separate names. Saying so is the point of recording this at all: a
-    /// picture sent to either is a 400, and until it was written down the shell
-    /// had no way to know that and offered to send one.
-    /// </para>
+    /// is. The three audio models take a sound and not a picture, which is why they
+    /// are recorded with sight off and are an ear rather than a driver — see
+    /// <see cref="AssistantChoices.EarModel"/>. The last two are the text-only
+    /// weights of a local runtime, said so because a picture sent to either is a
+    /// 400.
     /// <para>
     /// All of which is a guess about a service nobody named, and this is the
-    /// adapter where that matters most: the endpoint is a field, so eight ids
-    /// chosen in advance may have nothing to do with what is actually there.
+    /// adapter where that matters most, the endpoint being a field.
     /// <see cref="IModelSurvey"/> replaces the lot with what the endpoint said —
-    /// see <see cref="AssistantSchema.Surveyed"/> — and these eight are what
-    /// somebody starts from until it has been run.
+    /// see <see cref="AssistantSchema.Surveyed"/>.
     /// </para>
     /// </remarks>
     public AssistantSchema Schema { get; } = new(

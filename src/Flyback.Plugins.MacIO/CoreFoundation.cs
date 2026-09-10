@@ -3,26 +3,17 @@ using System.Runtime.InteropServices;
 namespace Flyback.Plugins.MacIO;
 
 /// <summary>
-/// Strings, in the only currency CoreMIDI accepts them in. Every name that
-/// crosses into the framework — what this program is called, what its port is
-/// called — and every name that comes back out of it is a
-/// <c>CFStringRef</c>, so three entry points of Core Foundation are the price of
-/// asking a keyboard what it is called.
+/// Strings, in the only currency CoreMIDI accepts them in: every name that crosses
+/// into the framework and every one that comes back is a <c>CFStringRef</c>, so
+/// three entry points of Core Foundation are the price of asking a keyboard what
+/// it is called.
 /// </summary>
 /// <remarks>
-/// <para>
-/// Its own file rather than sitting among the MIDI calls, because it is a
-/// different framework with a different rule attached: Core Foundation objects
-/// are counted, and every one made here or handed back by a <c>Get</c> with
-/// <c>Copy</c> semantics has to be released by whoever took it. Keeping that in
-/// one place is what makes it possible to see that it is obeyed.
-/// </para>
-/// <para>
-/// Every entry point is resolved lazily by the runtime, on first call. Nothing
-/// in this file runs while the plugin is merely being listed, which is what lets
-/// the assembly load on Windows and answer "not supported" rather than failing
-/// to load at all.
-/// </para>
+/// Its own file because it is a different framework with a different rule
+/// attached: Core Foundation objects are counted, and every one made here or
+/// handed back with <c>Copy</c> semantics has to be released by whoever took it.
+/// Every entry point is resolved lazily, so the assembly still loads on Windows
+/// and answers "not supported".
 /// </remarks>
 internal static unsafe partial class CoreFoundation
 {

@@ -7,40 +7,23 @@ namespace Flyback.Plugins.MacIO;
 
 /// <summary>
 /// One device, open and listening. The mirror of <c>WinMidiPort</c>: nothing
-/// outside this assembly knows CoreMIDI exists, and nothing outside it is
-/// macOS-only.
+/// outside this assembly knows CoreMIDI exists.
 /// </summary>
 /// <remarks>
-/// <para>
-/// The server calls us rather than the other way round, and it calls on a thread
-/// of its own — a high-priority one it made for the purpose, which is why this
-/// backend owns no thread the way the ALSA one has to. What happens on that
-/// thread is kept to arithmetic on a few bytes and one delegate call, with no
-/// allocation, no lock and no way out for an exception. Everything the note then
-/// touches is the hub's problem, and the hub is written knowing which thread it
-/// is on.
-/// </para>
+/// The server calls us, on a high-priority thread it made for the purpose, which
+/// is why this backend owns no thread the way the ALSA one has to. What happens
+/// there is arithmetic on a few bytes and one delegate call, with no allocation,
+/// no lock and no way out for an exception.
 /// <para>
 /// The callback is a static function pointer with the port handed to it as
-/// context, so no delegate has to be kept alive by hand and no marshalling stub
-/// sits between the server and the note — the same arrangement
-/// <c>CoreAudioDevice</c> uses for its render callback, and <c>WinMidiPort</c>
-/// for its driver's.
+/// context, so no delegate has to be kept alive by hand — the same arrangement
+/// <c>CoreAudioDevice</c> uses. A client of its own per open device, which is what
+/// makes closing a device a matter of closing everything it owns.
 /// </para>
 /// <para>
-/// A client of its own per open device, rather than one shared between them.
-/// CoreMIDI would allow either, and one per device is what makes closing a
-/// device a matter of closing everything it owns — which is the shape every
-/// other backend here has, and the reason none of them needs to know what else
-/// is open.
-/// </para>
-/// <para>
-/// A device pulled out of the machine goes quiet rather than reporting itself
-/// gone: the server drops the connection and says nothing here, so
-/// <see cref="IsOpen"/> stays true until somebody closes this. Finding out would
-/// mean a notification callback and a run loop to deliver it on, and nothing
-/// above this line asks — the hub opens and closes devices off what the compiled
-/// programs read and never enquires after one it has not closed itself.
+/// A device pulled out goes quiet rather than reporting itself gone: finding out
+/// would mean a notification callback and a run loop to deliver it on, and nothing
+/// above this line asks.
 /// </para>
 /// </remarks>
 internal sealed unsafe class CoreMidiPort : IMidiPort

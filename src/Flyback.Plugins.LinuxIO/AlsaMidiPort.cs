@@ -5,46 +5,27 @@ namespace Flyback.Plugins.LinuxIO;
 
 /// <summary>
 /// One device, open and listening. The mirror of <c>WinMidiPort</c>: nothing
-/// outside this assembly knows the ALSA sequencer exists, and nothing outside it
-/// is Linux-only.
+/// outside this assembly knows the ALSA sequencer exists.
 /// </summary>
 /// <remarks>
+/// The odd one of the backends. winmm and CoreMIDI call us on a thread the driver
+/// owns; the sequencer is a file that has events in it, so this owns a thread —
+/// which changes nothing in the contract, since <see cref="MidiCallback"/> only
+/// ever said it is not the window's thread.
 /// <para>
-/// The odd one of the backends, in the same way the ALSA sound device is. winmm
-/// and CoreMIDI call *us*, on a thread the driver owns. The sequencer does not:
-/// it is a file that has events in it, and somebody has to read. So this owns a
-/// thread, and the contract above does not change by a word —
-/// <see cref="MidiCallback"/> never said who calls it, only that it is not the
-/// thread the window runs on.
+/// <b>The reader polls rather than blocks.</b> A device is opened and handed back
+/// whenever the patch is rewired, and a thread parked inside a read on a handle we
+/// are about to close is a crash, while one waiting for a note that may not come
+/// for an hour never sees that it was asked to stop. So the sequencer is opened
+/// non-blocking and the reader wakes every millisecond — a fortieth of the block
+/// the sound backend already asks for.
 /// </para>
 /// <para>
-/// <b>Why the reader polls rather than blocks.</b> A blocking
-/// <c>snd_seq_event_input</c> is the obvious loop and it cannot be closed. A
-/// device is opened and handed back whenever the patch is rewired
-/// ([ADR-0056]), and a thread parked inside a read on the handle we are about to
-/// close is a crash, while a thread parked waiting for a note that may not come
-/// for an hour never sees that it was asked to stop. There is no third answer
-/// short of a wake-up mechanism of our own. So the sequencer is opened
-/// non-blocking and the reader wakes every millisecond, which makes closing a
-/// port the matter of setting a flag that it is everywhere else. A millisecond
-/// is a fortieth of the block the sound backend already asks for and a third of
-/// the time three bytes take on a MIDI cable; it is not where the latency of
-/// this program is.
-/// </para>
-/// <para>
-/// Every call on the handle after the constructor is made from that one thread,
-/// which is what alsa-lib asks for. Closing therefore asks the reader to finish
-/// and waits for it, rather than reaching into a sequencer another thread is
-/// inside.
-/// </para>
-/// <para>
-/// A device pulled out of the machine goes quiet rather than reporting itself
-/// gone: the sequencer drops the subscription and says nothing, so
-/// <see cref="IsOpen"/> stays true until somebody closes this. Finding out would
-/// mean subscribing to the sequencer's announcement port and watching the
-/// traffic on it, and nothing above this line asks — the hub opens and closes
-/// devices off what the compiled programs read and never enquires after one it
-/// has not closed itself.
+/// Every call on the handle after the constructor is made from that thread, which
+/// is what alsa-lib asks for, so closing waits for the reader to finish. A device
+/// pulled out goes quiet rather than reporting itself gone: nothing above this
+/// line asks, since the hub opens and closes devices off what the compiled
+/// programs read.
 /// </para>
 /// </remarks>
 internal sealed unsafe class AlsaMidiPort : IMidiPort
@@ -216,17 +197,15 @@ internal sealed unsafe class AlsaMidiPort : IMidiPort
     }
 
     /// <summary>
-    /// One event, unpacked. The sequencer hands over a decoded struct rather
-    /// than the bytes a cable carried, so libasound's own converter is asked to
-    /// put them back — which is both shorter than reading the struct and the
-    /// only version of it that cannot be wrong about where a union began.
+    /// One event, unpacked. The sequencer hands over a decoded struct rather than
+    /// the bytes a cable carried, so libasound's own converter puts them back —
+    /// shorter than reading the struct, and the only version that cannot be wrong
+    /// about where a union began.
     /// </summary>
     /// <remarks>
-    /// What the bytes then mean is <see cref="MidiMessages.Of"/>, in the contract
-    /// rather than here, because it is the same on every platform and the
-    /// Windows backend already reads them that way. Everything that is not a
-    /// note — the sequencer's own announcements, clock, the wheels — comes back
-    /// either as a negative count here or as null there.
+    /// What the bytes mean is <see cref="MidiMessages.Of"/>, in the contract rather
+    /// than here, because it is the same on every platform. Everything that is not
+    /// a note comes back as a negative count here or as null there.
     /// </remarks>
     private void Decode(IntPtr message)
     {

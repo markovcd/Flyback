@@ -124,27 +124,18 @@ internal static class Wire
     /// Whatever the tools produced that is not words, as one user turn.
     /// </summary>
     /// <remarks>
+    /// One message rather than one per medium, because a turn that rendered and
+    /// listened produced one set of observations about one patch.
     /// <para>
-    /// One message rather than one per medium, because a turn that both rendered
-    /// and listened produced one set of observations about one patch, and
-    /// splitting them would put a bare "here is the sound" between the picture
-    /// and the words about it.
+    /// The two parts are spelled differently and neither spelling is negotiable: a
+    /// picture is an <c>image_url</c> carrying a data URL, and a sound is an
+    /// <c>input_audio</c> carrying bare base64 and a separate <c>format</c>,
+    /// accepted only by the audio models. Sending one to a model that does not take
+    /// it is a 400 naming the parameter.
     /// </para>
     /// <para>
-    /// The two parts are spelled quite differently and neither spelling is
-    /// negotiable. A picture is an <c>image_url</c> carrying a data URL, which is
-    /// the one part of this format every vision endpoint agrees on. A sound is an
-    /// <c>input_audio</c> carrying bare base64 and a separate <c>format</c> — no
-    /// data URL, no media type — and it is accepted only by the audio models.
-    /// Sending one to a model that does not take it is a 400 naming the
-    /// parameter, which is why the tool that produces one is offered only when
-    /// somebody has said the model can hear.
-    /// </para>
-    /// <para>
-    /// Nothing asks for audio <em>back</em>. That would want a <c>modalities</c>
-    /// on the request and an <c>audio</c> beside it, and would answer in speech —
-    /// this conversation is a tool loop, and the reply it needs is a function
-    /// call.
+    /// Nothing asks for audio back: that would answer in speech, and the reply this
+    /// loop needs is a function call.
     /// </para>
     /// </remarks>
     public static JsonObject UserWithMedia(
@@ -231,13 +222,11 @@ internal static class Wire
     /// Whether a status is worth sending the same request for a second time.
     /// </summary>
     /// <remarks>
-    /// 429 is the one that matters. A rate limit on a conversation that resends
-    /// a large stable briefing every turn is an ordinary event rather than a
-    /// fault, and the endpoint usually says how long it wants — losing a whole
-    /// turn of work over a wait of under a second would be absurd. The 5xx are
-    /// here because a gateway that is briefly unwell says the same thing twice
-    /// as often as it means it. Everything else in 4xx is a request that will
-    /// still be wrong in a second's time.
+    /// 429 is the one that matters: a rate limit on a conversation that resends a
+    /// large stable briefing every turn is an ordinary event, and the endpoint
+    /// usually says how long it wants. The 5xx are here because a gateway that is
+    /// briefly unwell says so twice as often as it means it; everything else in 4xx
+    /// will still be wrong in a second.
     /// </remarks>
     public static bool Retryable(int status) =>
         status is 408 or 429 or 500 or 502 or 503 or 504 or 529;
@@ -246,13 +235,11 @@ internal static class Wire
     /// How long the endpoint asked to be left alone, or null when it did not say.
     /// </summary>
     /// <remarks>
-    /// Three places, because the endpoints this reaches disagree about which one
-    /// to use. <c>Retry-After</c> is the standard and carries whole seconds or a
-    /// date. <c>retry-after-ms</c> is what OpenAI and Azure actually send on a
-    /// 429, and it is the precise one — the wait is routinely under the second
-    /// that the standard header would have to round to. The reset headers are
-    /// the fallback, and the longer of the two wins: they say when each bucket
-    /// refills and there is no telling from here which of them was hit.
+    /// Three places, because the endpoints this reaches disagree about which to
+    /// use. <c>Retry-After</c> is the standard; <c>retry-after-ms</c> is what
+    /// OpenAI and Azure actually send on a 429 and is the precise one, the wait
+    /// being routinely under the second the standard header rounds to. The reset
+    /// headers are the fallback, and the longer of the two wins.
     /// </remarks>
     public static TimeSpan? RetryAfter(HttpResponseMessage response)
     {

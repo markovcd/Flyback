@@ -193,21 +193,15 @@ internal sealed class OpenAiSession : IPatchSession
             if (reply.Calls.Count == 0)
             {
                 // It has stopped asking for things and has not proposed anything,
-                // which is an ordinary way for a turn to end rather than a failure.
-                // A question needs an answer, and a model that has said it needs one
-                // more instruction is not stuck — the conversation is multi-turn and
-                // whatever it said is already in the transcript, so the next thing
-                // to happen is the person typing. Anything sent back here instead
-                // would be this program arguing with an answer it was given.
+                // which is an ordinary way for a turn to end: the conversation is
+                // multi-turn and whatever it said is in the transcript, so the next
+                // thing to happen is the person typing.
                 //
-                // But a turn that *changed* the patch and did not offer it is not
-                // only an ending, it is an ending nobody can see. Nothing reaches
-                // the editor until propose, so the person is looking at the patch
-                // they started with while being told — as one was — that they are
-                // "set to further refine" something that is not on their canvas.
-                // Said to them rather than back to the model: the model has given
-                // its answer, and what is missing is not another instruction but
-                // the one fact only this end knows.
+                // A turn that changed the patch and did not offer it is an ending
+                // nobody can see — the person is looking at the patch they started
+                // with while being told they are "set to further refine" something
+                // that is not on their canvas. Said to them rather than back to the
+                // model, which has given its answer.
                 if (workbench.Edits > 0) yield return new PatchEvent.Did(Unoffered);
 
                 yield break;
@@ -250,25 +244,12 @@ internal sealed class OpenAiSession : IPatchSession
     /// What one model heard, as words for the model that cannot.
     /// </summary>
     /// <remarks>
-    /// <para>
-    /// A separate request rather than a turn of the conversation, and that is
-    /// forced rather than chosen. The models that take a sound require every
-    /// request to carry one, and they do not take a picture, so this keeps the
-    /// patch's ears and eyes separate.
-    /// </para>
-    /// <para>
-    /// The WAV is sent once and is never part of the conversation, which keeps
-    /// the transcript smaller and the transcript history honest.
-    /// </para>
-    /// <para>
-    /// A failure here is a sentence in the tool result rather than the end of the
-    /// turn. The sound was rendered and the levels are already known; being unable
-    /// to describe it is still useful information.
-    /// </para>
-    /// <para>
-    /// The ear is told nothing about the patch. It only hears the clip, which is a
-    /// better description of what is actually there.
-    /// </para>
+    /// A separate request rather than a turn of the conversation, and forced rather
+    /// than chosen: the models that take a sound require every request to carry one
+    /// and do not take a picture. The WAV is sent once and is never part of the
+    /// conversation, and the ear is told nothing about the patch — it only hears the
+    /// clip. A failure is a sentence in the tool result rather than the end of the
+    /// turn, since the levels are already known.
     /// </remarks>
     private async Task<string> Described(byte[] wav, CancellationToken cancel)
     {

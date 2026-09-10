@@ -5,28 +5,19 @@ using Flyback.Core;
 namespace Flyback.Plugins.Keychain;
 
 /// <summary>
-/// The part that actually talks to macOS. Kept in its own file so that loading
-/// the plugin does not go anywhere near a process, which is the rule the
-/// Windows store's <c>Vault</c> follows for its package.
+/// The part that actually talks to macOS. Kept in its own file so that loading the
+/// plugin does not go anywhere near a process.
 /// </summary>
 /// <remarks>
+/// <c>/usr/bin/security</c> rather than the Security framework, which is the call
+/// ADR-0034 made: the framework would mean CoreFoundation dictionaries, constants
+/// read by symbol and a lifetime rule per object — a great deal of unfamiliar
+/// interop for three operations, in the one place where a bug is a disclosure.
 /// <para>
-/// <c>/usr/bin/security</c> rather than the Security framework, which is the
-/// call ADR-0034 made when it wrote this plugin down as forty lines of shelling
-/// out. The framework would mean CoreFoundation dictionaries, constants read out
-/// of the framework by symbol, and a lifetime rule per object — a great deal of
-/// unfamiliar interop for three operations, in the one place where a bug is a
-/// disclosure rather than a glitch. The tool is part of the operating system and
-/// is what every other program in this position drives.
-/// </para>
-/// <para>
-/// It settles the keychain's access control by itself, too. The item is created
-/// by <c>security</c> and read back by <c>security</c>, so the keychain sees one
-/// program both times and never raises the "wants to access" panel that a
-/// re-signed application would. The cost is that any program run by this user
-/// can ask <c>security</c> for the same item — which is the threat model the
-/// Windows store already has, where anything running as the account can undo
-/// what the account protected.
+/// It settles the keychain's access control too: the item is created and read back
+/// by the same program, so the "wants to access" panel never appears. The cost is
+/// that any program run by this user can ask <c>security</c> for the same item,
+/// which is the threat model the Windows store already has.
 /// </para>
 /// </remarks>
 internal static class LoginKeychain
@@ -62,15 +53,11 @@ internal static class LoginKeychain
     /// which a second key for the same provider fails as a duplicate.
     /// </summary>
     /// <remarks>
-    /// The secret is an argument, which is the one thing about this that is not
-    /// ideal: for as long as the call takes, another program run by this same
-    /// user could read it out of the process list. macOS does not show one
-    /// user's arguments to another, and a program running as this user can ask
-    /// <c>security</c> for the key outright anyway — so it widens nothing that
-    /// was not already open. The alternative is worse rather than better:
-    /// <c>security</c> asked for a password it was not given reads it from the
-    /// terminal, and would hang the window whenever Flyback was started from
-    /// one.
+    /// The secret is an argument, which is the one thing here that is not ideal;
+    /// macOS does not show one user's arguments to another, and a program running
+    /// as this user can ask <c>security</c> for the key outright anyway. The
+    /// alternative is worse: <c>security</c> asked for a password it was not given
+    /// reads it from the terminal, and would hang the window.
     /// </remarks>
     public static void Keep(string account, string secret)
     {

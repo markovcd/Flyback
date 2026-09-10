@@ -4,31 +4,21 @@ namespace Flyback.Plugins.LinuxIO;
 
 /// <summary>
 /// The slice of the ALSA sequencer this plugin needs, and nothing else.
-/// Hand-written for the same reason the sound bindings are: a list of entry
-/// points does not justify a binding package, and <see cref="Flyback.Plugins"/>
-/// having no dependencies is worth keeping true one level down as well.
+/// Hand-written for the same reason the sound bindings are: a list of entry points
+/// does not justify a binding package.
 /// </summary>
 /// <remarks>
+/// Longer than <c>LibAsound</c> and <c>WinMm</c> together, and none of it
+/// avoidable: the sequencer has no "how many devices are there" call, so what is
+/// plugged in is found by walking every client and every port, and each field of
+/// the two info blocks is read through an accessor because those structs are
+/// opaque by design.
 /// <para>
-/// Longer than <c>LibAsound</c> and <c>WinMm</c> together, and none of it is
-/// avoidable. The sequencer has no "how many devices are there" call: what is
-/// plugged in is found by walking every client on the machine and every port on
-/// every client, and each field of the two info blocks is read through an
-/// accessor because those structs are opaque by design — which is the ABI
-/// promise that makes calling them from here safe in the first place.
-/// </para>
-/// <para>
-/// The one struct that is not opaque, <c>snd_seq_event_t</c>, is never read. It
-/// arrives as a pointer and goes straight back into <see cref="Decode"/> —
-/// libasound's own event-to-bytes converter — so the three bytes this plugin
-/// cares about come out without anything here knowing where the union
-/// boundaries fell.
-/// </para>
-/// <para>
-/// Every entry point is resolved lazily by the runtime, on first call. Nothing
-/// in this file runs while the plugin is merely being listed, which is what lets
-/// the assembly load on a machine with no sound library at all and answer "not
-/// supported" rather than failing to load.
+/// The one struct that is not opaque, <c>snd_seq_event_t</c>, is never read: it
+/// goes straight back into <see cref="Decode"/>, libasound's own event-to-bytes
+/// converter. Every entry point is resolved lazily on first call, which is what
+/// lets the assembly load on a machine with no sound library and answer "not
+/// supported".
 /// </para>
 /// </remarks>
 internal static unsafe partial class LibAsoundSeq
