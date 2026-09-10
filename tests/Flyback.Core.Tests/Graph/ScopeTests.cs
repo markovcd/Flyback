@@ -362,4 +362,29 @@ public class ScopeTests
 
         drawn.Taps[0].Trace.Samples.ShouldAllBe(v => Math.Abs(v - 0.5f) < 1e-4f);
     }
+
+    /// <summary>
+    /// And a window turned right up asks for the time it says, which is the end
+    /// of the range that had nothing pinning it.
+    /// </summary>
+    /// <remarks>
+    /// The bottom of the travel was tested and the top was not, and what lived
+    /// up there was a ceiling of its own: the compiled window was clamped to two
+    /// seconds, so every setting past that charted two seconds while the knob
+    /// read up to thirty-one. Both ends are pinned now, and to the port's own
+    /// range rather than to a number written here — a range that grows again
+    /// should either carry the ring with it or fail this.
+    /// </remarks>
+    [Fact]
+    public void A_window_turned_to_the_top_of_its_range_asks_for_all_of_it()
+    {
+        var window = NodeCatalog.BuiltIn.Require(Scope).Inputs[Window];
+
+        var (patch, scope, _) = Watching(Value, (0, 0.5f), (Window, window.Max));
+
+        var drawn = patch.CompileForProbe(scope.Id, NodeCatalog.BuiltIn).Program;
+
+        drawn.Taps[0].Window.ShouldBe(MathF.Pow(10f, window.Max), 0.01f);
+        drawn.Taps[0].Window.ShouldBeLessThanOrEqualTo(DelayState.MaxWindowSeconds);
+    }
 }

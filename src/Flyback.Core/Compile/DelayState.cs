@@ -253,15 +253,27 @@ public sealed class DelayState
     public int TraceCount => traces.Length;
 
     /// <summary>
-    /// How much of the past a Scope or Meter keeps, in evaluations — thirty-two
-    /// seconds at the oversampled audio rate, which is the window knob's own
-    /// ceiling (<see cref="Graph.PortDisplay.Duration"/> tops out at 10^1.5, about
-    /// 31.62 s) rounded up. It used to be two seconds, on the assumption that no
-    /// window offered more; the knob's range grew past that without this
-    /// following, so asking near the top of it quietly showed less than the
-    /// window claimed rather than the window asked for.
+    /// The longest stretch of the past a chart may ask for, in seconds — the
+    /// window knob's own ceiling (<see cref="Graph.PortDisplay.Duration"/> tops
+    /// out at 10^1.5, about 31.62 s) rounded up to something round.
     /// </summary>
-    public const int TraceSamples = GlobalConstants.SampleRate * 4 * 32;
+    /// <remarks>
+    /// The one place that number lives. It bounds both what a Scope's window is
+    /// allowed to compile to — see <c>PatchCompiler.WindowOf</c> — and how much
+    /// ring there is to answer it with, below. It was two seconds in both places
+    /// and written out twice, so when the knob's range grew past two seconds
+    /// neither followed and nothing said so: a Scope turned up past two seconds
+    /// charted two seconds, stretched across the full width and labelled as
+    /// whatever had been asked for. Raising one of the two alone does nothing,
+    /// which is exactly why they are now one constant rather than two.
+    /// </remarks>
+    public const float MaxWindowSeconds = 32f;
+
+    /// <summary>
+    /// How much of the past a Scope or Meter keeps, in evaluations — see
+    /// <see cref="MaxWindowSeconds"/>, at the oversampled audio rate.
+    /// </summary>
+    public const int TraceSamples = (int)(GlobalConstants.SampleRate * 4 * MaxWindowSeconds);
 
     /// <summary>Puts one evaluation into trace <paramref name="slot"/>.</summary>
     /// <remarks>

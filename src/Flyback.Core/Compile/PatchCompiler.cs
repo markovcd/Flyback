@@ -607,7 +607,13 @@ public static class PatchCompiler
             var decades = DefaultFor(node, port, def.Inputs[port]);
             if (!float.IsFinite(decades)) break;
 
-            return Math.Clamp(MathF.Pow(10f, decades), 0.0001f, 2f);
+            // Bounded by what there is ring to answer with, and by nothing else:
+            // the knob's own top is inside this, so a window turned all the way
+            // up compiles to the time it says rather than to a ceiling of its
+            // own. See DelayState.MaxWindowSeconds, which is also what sizes the
+            // ring — the two used to be separate literals that agreed until the
+            // knob outgrew them both.
+            return Math.Clamp(MathF.Pow(10f, decades), 0.0001f, DelayState.MaxWindowSeconds);
         }
 
         return 0.02f;
