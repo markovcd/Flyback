@@ -637,6 +637,16 @@ public sealed partial class NodeEditor
                     e.Handled = true;
                     return;
 
+                // A double-click opens the one box it lands on; this opens every
+                // group the selection reaches. Shift shuts them, the pairing
+                // group and ungroup use above.
+                case Key.E when !Locked:
+                    if ((e.KeyModifiers & KeyModifiers.Shift) != 0) CloseSelectedGroups();
+                    else OpenSelectedGroups();
+
+                    e.Handled = true;
+                    return;
+
                 // Under Control with the rest of them, rather than on a bare
                 // letter of its own. Every bare letter belongs to the instrument
                 // now — see MainWindow's key handling — and a gesture that

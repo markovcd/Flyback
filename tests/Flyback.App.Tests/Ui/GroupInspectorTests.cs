@@ -57,7 +57,7 @@ public class GroupInspectorTests : UiTest
 
     private static NodeEditor Editor(MainWindow window) => All<NodeEditor>(window).Single();
 
-    private static void SelectBox(MainWindow window, Patch patch, NodeGroup group)
+    private static void SelectBox(MainWindow window, Patch patch, NodeGroup group, bool adding = false)
     {
         var editor = Editor(window);
         var bounds = NodeGeometry.GroupBounds(patch, group, patch.SocketsOf(group));
@@ -66,8 +66,10 @@ public class GroupInspectorTests : UiTest
         var at = editor.TranslatePoint(editor.GraphToScreen.Transform(header), window)
             ?? throw new InvalidOperationException("the editor is not in this window");
 
-        window.MouseDown(at, MouseButton.Left);
-        window.MouseUp(at, MouseButton.Left);
+        var held = adding ? RawInputModifiers.Control : RawInputModifiers.None;
+
+        window.MouseDown(at, MouseButton.Left, held);
+        window.MouseUp(at, MouseButton.Left, held);
         Settle(window);
     }
 
@@ -209,6 +211,64 @@ public class GroupInspectorTests : UiTest
         Settle(window);
 
         group.Name.ShouldBeNull();
+    }
+
+    /// <summary>
+    /// The panel for a selection that reaches into groups without being one of
+    /// them, which the group panel cannot answer.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_selection_over_two_boxes_offers_opening_both()
+    {
+        var window = Both(out var top, out var low);
+
+        Buttons(window).ShouldContain("Open 2 groups");
+
+        Press(window, "Open 2 groups");
+
+        top.Collapsed.ShouldBeFalse();
+        low.Collapsed.ShouldBeFalse();
+
+        // Opening is not a selection change, so the panel has to be rebuilt on it.
+        Buttons(window).ShouldContain("Close 2 groups");
+    }
+
+    /// <summary>Two pairs, each drawn as a box, with both boxes selected.</summary>
+    private static MainWindow Both(out NodeGroup top, out NodeGroup low)
+    {
+        var b = new PatchBuilder(NodeCatalog.BuiltIn);
+
+        var clock = b.Add("time", 40, 40);
+        var osc = b.Add("osc.sine", 300, 40);
+        var second = b.Add("time", 40, 320);
+        var other = b.Add("osc.sine", 300, 320);
+        var screen = b.Add(NodeCatalog.OutputTypeId, 700, 180);
+
+        b.Wire(clock, 0, osc, 0)
+         .Wire(osc, 0, screen, NodeCatalog.OutputLeftPort)
+         .Wire(second, 0, other, 0)
+         .Wire(other, 0, screen, NodeCatalog.OutputRightPort);
+
+        var window = new MainWindow();
+
+        window.Show();
+        window.UpdateLayout();
+        Dispatcher.UIThread.RunJobs();
+
+        var editor = Editor(window);
+        editor.Patch = b.Patch;
+        Settle(window);
+
+        top = editor.Patch.Group([clock.Id, osc.Id])!;
+        low = editor.Patch.Group([second.Id, other.Id])!;
+
+        editor.NotifyPatchChanged();
+        Settle(window);
+
+        SelectBox(window, editor.Patch, top);
+        SelectBox(window, editor.Patch, low, adding: true);
+
+        return window;
     }
 
     private static void Press(MainWindow window, string caption)

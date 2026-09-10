@@ -81,6 +81,48 @@ public class GroupTests : UiTest
         Settle(window);
     }
 
+    /// <summary>Two pairs, far enough apart that neither box reaches the other.</summary>
+    private static Patch Pairs(
+        out NodeInstance topLeft,
+        out NodeInstance topRight,
+        out NodeInstance lowLeft,
+        out NodeInstance lowRight)
+    {
+        var builder = new PatchBuilder(NodeCatalog.BuiltIn);
+
+        topLeft = builder.Add("time", 0, 0);
+        topRight = builder.Add("osc.sine", 300, 0);
+        lowLeft = builder.Add("time", 0, 300);
+        lowRight = builder.Add("osc.sine", 300, 300);
+
+        var sink = builder.Add(NodeCatalog.OutputTypeId, 700, 150);
+
+        builder.Wire(topLeft, 0, topRight, 0)
+               .Wire(topRight, 0, sink, NodeCatalog.OutputLeftPort)
+               .Wire(lowLeft, 0, lowRight, 0)
+               .Wire(lowRight, 0, sink, NodeCatalog.OutputRightPort);
+
+        return builder.Patch;
+    }
+
+    /// <summary>Draws each pair as a box. Ctrl+G making one is pinned above.</summary>
+    private static (NodeGroup Top, NodeGroup Low) TwoBoxes(
+        NodeEditor editor,
+        Window window,
+        NodeInstance topLeft,
+        NodeInstance topRight,
+        NodeInstance lowLeft,
+        NodeInstance lowRight)
+    {
+        var top = editor.Patch.Group([topLeft.Id, topRight.Id]).ShouldNotBeNull();
+        var low = editor.Patch.Group([lowLeft.Id, lowRight.Id]).ShouldNotBeNull();
+
+        editor.NotifyPatchChanged();
+        Settle(window);
+
+        return (top, low);
+    }
+
     /// <summary>Selects the two middle modules and presses Ctrl+G.</summary>
     private static NodeGroup GroupTheMiddle(
         NodeEditor editor, Window window, NodeInstance first, NodeInstance second)
@@ -257,6 +299,92 @@ public class GroupTests : UiTest
         // And the module it covered answers a click again.
         Click(editor, window, Body(second));
         editor.SelectedNodes.ShouldBe([second]);
+    }
+
+    /// <summary>
+    /// A double-click opens the one box it lands on, so several are opened by
+    /// selecting them and pressing the key.
+    /// </summary>
+    [AvaloniaFact]
+    public void Ctrl_e_opens_every_box_the_selection_reaches()
+    {
+        var patch = Pairs(out var topLeft, out var topRight, out var lowLeft, out var lowRight);
+        var (editor, window) = Editing(patch);
+
+        var (top, low) = TwoBoxes(editor, window, topLeft, topRight, lowLeft, lowRight);
+
+        var said = string.Empty;
+        editor.Reported += (_, message) => said = message;
+
+        Click(editor, window, BoxHeader(patch, top));
+        Click(editor, window, BoxHeader(patch, low), RawInputModifiers.Control);
+
+        window.KeyPressQwerty(PhysicalKey.E, RawInputModifiers.Control);
+        Settle(window);
+
+        top.Collapsed.ShouldBeFalse();
+        low.Collapsed.ShouldBeFalse();
+        said.ShouldBe("Opened 2 groups.");
+
+        // What came out stays selected, so the next gesture has both groups.
+        editor.SelectedNodes.Select(n => n.Id)
+            .ShouldBe([topLeft.Id, topRight.Id, lowLeft.Id, lowRight.Id], ignoreOrder: true);
+    }
+
+    [AvaloniaFact]
+    public void Ctrl_shift_e_shuts_them_again()
+    {
+        var patch = Pairs(out var topLeft, out var topRight, out var lowLeft, out var lowRight);
+        var (editor, window) = Editing(patch);
+
+        var (top, low) = TwoBoxes(editor, window, topLeft, topRight, lowLeft, lowRight);
+
+        Click(editor, window, BoxHeader(patch, top));
+        Click(editor, window, BoxHeader(patch, low), RawInputModifiers.Control);
+
+        window.KeyPressQwerty(PhysicalKey.E, RawInputModifiers.Control);
+        Settle(window);
+
+        window.KeyPressQwerty(PhysicalKey.E, RawInputModifiers.Control | RawInputModifiers.Shift);
+        Settle(window);
+
+        top.Collapsed.ShouldBeTrue();
+        low.Collapsed.ShouldBeTrue();
+
+        // Behind boxes again, so a press where one sits does not reach it.
+        Click(editor, window, Body(topRight));
+        editor.SelectedNodes.ShouldNotContain(topRight);
+    }
+
+    /// <summary>
+    /// Why this is two gestures and not a toggle: over one of each, a toggle has
+    /// no answer that leaves both agreeing.
+    /// </summary>
+    [AvaloniaFact]
+    public void Ctrl_e_on_a_mixed_selection_opens_the_box_and_leaves_the_open_one_open()
+    {
+        var patch = Pairs(out var topLeft, out var topRight, out var lowLeft, out var lowRight);
+        var (editor, window) = Editing(patch);
+
+        var (top, low) = TwoBoxes(editor, window, topLeft, topRight, lowLeft, lowRight);
+
+        var said = string.Empty;
+        editor.Reported += (_, message) => said = message;
+
+        editor.ToggleBox(low);
+        Settle(window);
+
+        Click(editor, window, BoxHeader(patch, top));
+        Click(editor, window, Body(lowLeft), RawInputModifiers.Control);
+
+        window.KeyPressQwerty(PhysicalKey.E, RawInputModifiers.Control);
+        Settle(window);
+
+        top.Collapsed.ShouldBeFalse();
+        low.Collapsed.ShouldBeFalse();
+
+        // One moved, and the count leaves out the group already open.
+        said.ShouldBe("Opened one group.");
     }
 
     /// <summary>

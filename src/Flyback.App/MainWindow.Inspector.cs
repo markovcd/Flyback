@@ -61,6 +61,8 @@ public sealed partial class MainWindow
         + "Ctrl+C, Ctrl+X and Ctrl+V copy, cut and paste.\n"
         + "Ctrl+G draws a selection as one box and Ctrl+Shift+G "
         + "puts it back; double-click a box to open it.\n"
+        + "Ctrl+E opens every box the selection touches at once, "
+        + "Ctrl+Shift+E shuts them again.\n"
         + "Delete removes what is selected, Ctrl+F frames the patch.";
 
     /// <summary>
@@ -333,7 +335,14 @@ public sealed partial class MainWindow
         for (var i = 0; i < patched.Length; i++)
             patched[i] = editor.Patch.IncomingTo(node.Id, i) is null ? '.' : 'w';
 
-        return $"{node.Id:N}{new string(patched)}";
+        // Which groups the selection touches and which way round each is drawn,
+        // because that is what the open and close buttons are offered on.
+        var groups = new StringBuilder();
+
+        foreach (var touched in editor.SelectedGroups)
+            groups.Append($"{touched.Id:N}{(touched.Collapsed ? 'c' : 'o')}");
+
+        return $"{node.Id:N}{new string(patched)}{groups}";
     }
 
     /// <summary>
@@ -456,6 +465,18 @@ public sealed partial class MainWindow
         // never reaches this far — it gets a panel of its own above.
         if (editor.Groupable >= NodeGroup.Fewest)
             Act($"Group {editor.Groupable} modules", editor.GroupSelected, 14);
+
+        // For a selection that reaches into groups without being one: the group
+        // panel above answers only a selection that is exactly one, and a
+        // double-click only the box it lands on.
+        var shut = editor.SelectedGroups.Count(g => g.Collapsed);
+        var open = editor.SelectedGroups.Count(g => !g.Collapsed);
+
+        if (shut > 0)
+            Act(shut > 1 ? $"Open {shut} groups" : "Open group", editor.OpenSelectedGroups, 8);
+
+        if (open > 0)
+            Act(open > 1 ? $"Close {open} groups" : "Close group", editor.CloseSelectedGroups, 8);
 
         // Delete takes the whole selection, the same as the key does, so the
         // label counts it. Sinks are left out of the count because the graph

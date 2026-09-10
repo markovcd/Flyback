@@ -223,17 +223,22 @@ public sealed partial class NodeEditor
     }
 
     /// <summary>
+    /// Every group the selection reaches into, shut or open. One member is
+    /// enough, where <see cref="SelectedGroup"/> wants the selection to be a
+    /// group exactly.
+    /// </summary>
+    public IEnumerable<NodeGroup> SelectedGroups =>
+        patch.Groups?.Where(g => g.Members.Any(selection.Contains)) ?? [];
+
+    /// <summary>
     /// Stops drawing whatever groups the selection is inside, leaving every
     /// module and every wire exactly where they were.
     /// </summary>
     public void UngroupSelected()
     {
-        if (patch.Groups is null || selection.Count == 0) return;
+        if (selection.Count == 0) return;
 
-        var going = patch.Groups
-            .Where(g => g.Members.Any(selection.Contains))
-            .Select(g => g.Id)
-            .ToArray();
+        var going = SelectedGroups.Select(g => g.Id).ToArray();
 
         if (going.Length == 0) return;
 
@@ -266,6 +271,53 @@ public sealed partial class NodeEditor
     public void ToggleSelectedGroup()
     {
         if (SelectedGroup is { } group) ToggleBox(group);
+    }
+
+    /// <summary>Opens every box the selection reaches into.</summary>
+    public void OpenSelectedGroups() => SetBoxes(collapsed: false);
+
+    /// <summary>Shuts every group the selection reaches into that is open.</summary>
+    public void CloseSelectedGroups() => SetBoxes(collapsed: true);
+
+    /// <summary>
+    /// Draws every group the selection reaches into the same way round, and says
+    /// how many moved.
+    /// </summary>
+    /// <remarks>
+    /// Two gestures rather than one toggle: a selection over one shut group and
+    /// one open one has no state to flip to that leaves both agreeing.
+    /// </remarks>
+    private void SetBoxes(bool collapsed)
+    {
+        if (selection.Count == 0) return;
+
+        var moved = SelectedGroups.Where(g => g.Collapsed != collapsed).ToArray();
+
+        if (moved.Length == 0) return;
+
+        foreach (var group in moved) group.Collapsed = collapsed;
+
+        // Opening takes in what came out, so the panel is about modules on the
+        // canvas. Shutting adds nothing: a box is drawn from the modules it
+        // stands for, which are selected already.
+        if (!collapsed)
+        {
+            foreach (var group in moved)
+                foreach (var id in group.Members)
+                    selection.Add(id);
+
+            // The module drawn on top, the same rule the rubber band uses.
+            focus = patch.Nodes.LastOrDefault(node => selection.Contains(node.Id))?.Id;
+
+            SelectionChanged?.Invoke(this, EventArgs.Empty);
+        }
+
+        NotifyPatchChanged();
+
+        var what = collapsed ? "Shut" : "Opened";
+
+        Reported?.Invoke(
+            this, moved.Length == 1 ? $"{what} one group." : $"{what} {moved.Length} groups.");
     }
 
     /// <summary>
