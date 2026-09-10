@@ -103,8 +103,9 @@ public static class Traces
                 // The chart's window, in evaluations of the program that wrote
                 // the ring. At least one, so a window turned to nothing is a
                 // flat line rather than a division by nought, and no more than
-                // the ring holds, so asking for a minute shows the two seconds
-                // there are.
+                // the ring holds — which is now sized to the knob's own ceiling,
+                // so this clamp is headroom rather than a second, smaller cap
+                // nobody sees.
                 var span = Math.Clamp(
                     (int)Math.Round(shown.Window * memory.SampleRate),
                     1,

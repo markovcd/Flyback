@@ -1,3 +1,4 @@
+using Flyback.Core;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Core.Render;
@@ -234,16 +235,20 @@ public class ScopeTests
     [Fact]
     public void A_sweep_far_slower_than_the_signal_charts_its_amplitude()
     {
-        // The far corner of the instrument: the longest window the ring holds
+        // The far corner of the instrument: the longest window the knob offers
         // against a tone near the top of its range, which is the only
-        // combination where a column covers more than one whole cycle.
-        var (patch, scope, source) = Watching(Sine, (Window, 0.3f));
+        // combination where a column covers more than one whole cycle. The ring
+        // has to actually hold this much — it is sized to the knob's own
+        // ceiling for exactly this reason.
+        var max = NodeCatalog.BuiltIn.Require(Scope).Inputs[Window].Max;
+        var (patch, scope, source) = Watching(Sine, (Window, max));
         patch.Find(source.Id).ShouldNotBeNull().InputValues[1] = 2000f;
 
         var heard = patch.CompileForAudio(NodeCatalog.BuiltIn).Program;
         var drawn = patch.CompileForProbe(scope.Id, NodeCatalog.BuiltIn).Program;
 
-        Traces.Refresh(drawn, heard, Played(heard, frames: 100_000));
+        var frames = (int)(MathF.Pow(10f, max) * GlobalConstants.SampleRate) + 1_000;
+        Traces.Refresh(drawn, heard, Played(heard, frames));
 
         var chart = drawn.Taps[0].Trace.Samples;
 

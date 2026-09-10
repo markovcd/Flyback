@@ -4,7 +4,8 @@
 elimination [0022](0022-one-output-per-sink-and-compile-per-sink.md) established,
 for one module · answers the limit
 [0040](0040-a-probe-is-a-second-compile-root.md) recorded about what a chart can
-show
+show · amended 2026-09-10, where the ring's fixed length stopped covering the
+knob it was fixed against
 
 ## Context
 
@@ -150,3 +151,29 @@ way past.
 third thing of that kind ever turns up, the class has stopped being "what a
 program remembers" and become "what a run carries", and it should be renamed
 rather than have the definition quietly widened again.
+
+## Amendment, 2026-09-10: the ring stopped matching the knob
+
+"Two seconds" was picked because it was "longer than any window a chart
+offers" — true when this was written, and false by the time `window`'s range
+grew to 10^1.5 seconds (about 31.62 s) for the Probe's sake. Nothing tied the
+two together, so the range moved and the ring did not: a Scope or Meter asked
+for anything past two seconds got two seconds anyway, stretched across the
+full width and labelled as if it were the window that was actually asked for.
+A Probe and a Scope on the same patch, both set to the same window, then drew
+visibly different amounts of history for a signal with no memory in it at all
+— not the disagreement this record calls out as the useful kind, just a buffer
+too small for the control in front of it.
+
+The fix is the same shape as the original decision: the ring stays a fixed
+length, sized once, rather than reallocated as the knob turns — the reason for
+that has not changed. What changes is what it is fixed *to*: thirty-two
+seconds, rounding the knob's actual ceiling up to a round number, instead of a
+number that had no relationship to the control at all.
+
+**Two megabytes per Scope** becomes about twenty-three (`SampleRate * 4 * 32`
+floats, against the oversampled rate). Sixteen times the memory for a
+sixteen-times-longer past, which is the same rate the original number was
+figured at — nobody thought two seconds was cheap and it turns out
+thirty-one-and-a-bit is not free either. It remains allocated only when the
+patch has a Scope or Meter in it, and not otherwise.

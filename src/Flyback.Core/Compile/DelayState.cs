@@ -253,10 +253,15 @@ public sealed class DelayState
     public int TraceCount => traces.Length;
 
     /// <summary>
-    /// How much of the past a Scope keeps, in evaluations — two seconds at the
-    /// oversampled audio rate, which is longer than any window a chart offers.
+    /// How much of the past a Scope or Meter keeps, in evaluations — thirty-two
+    /// seconds at the oversampled audio rate, which is the window knob's own
+    /// ceiling (<see cref="Graph.PortDisplay.Duration"/> tops out at 10^1.5, about
+    /// 31.62 s) rounded up. It used to be two seconds, on the assumption that no
+    /// window offered more; the knob's range grew past that without this
+    /// following, so asking near the top of it quietly showed less than the
+    /// window claimed rather than the window asked for.
     /// </summary>
-    public const int TraceSamples = GlobalConstants.SampleRate * 4 * 2;
+    public const int TraceSamples = GlobalConstants.SampleRate * 4 * 32;
 
     /// <summary>Puts one evaluation into trace <paramref name="slot"/>.</summary>
     /// <remarks>
