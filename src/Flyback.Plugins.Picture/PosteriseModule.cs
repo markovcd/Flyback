@@ -37,7 +37,7 @@ internal static class PosteriseModule
         TypeId, "Posterise", ModuleCategories.Color,
         [
             new PortSpec("color", PortKind.Color),
-            new PortSpec("levels", PortKind.Scalar, 4f, 2f, 32f),
+            new PortSpec("levels", PortKind.Scalar, 4f, 2f, 32f, Display: PortDisplay.Integer),
         ],
         [new PortSpec("color", PortKind.Color)],
         Emit,

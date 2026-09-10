@@ -40,7 +40,7 @@ internal static class StarModule
         [
             ..Field.Position(),
             Field.Size("radius", 0.5f),
-            new PortSpec("points", PortKind.Scalar, 5f, 2f, 16f),
+            new PortSpec("points", PortKind.Scalar, 5f, 2f, 16f, Display: PortDisplay.Integer),
             new PortSpec("sharpness", PortKind.Scalar, 0.45f, 0f, 1f),
         ],
         [Field.Distance("distance")],

@@ -53,7 +53,7 @@ internal static class PolygonModule
         [
             ..Field.Position(),
             Field.Size("radius", 0.5f),
-            new PortSpec("sides", PortKind.Scalar, 5f, 3f, 16f),
+            new PortSpec("sides", PortKind.Scalar, 5f, 3f, 16f, Display: PortDisplay.Integer),
         ],
         [Field.Distance("distance")],
         Emit,
