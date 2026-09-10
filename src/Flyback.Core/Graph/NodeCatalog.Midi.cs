@@ -138,7 +138,7 @@ public sealed record MidiExtra : NodeExtra
             "listens to",
             [.. MidiSources.All.Select(source => new ChoiceOption(source.Id, source.Name))],
             MidiSources.Keyboard),
-        new ExtraField.Number(IndexField, "voice", new PortSpec("voice", PortKind.Scalar, 0f, 0f, 8f, 0, PortDisplay.Integer)),
+        new ExtraField.Number(IndexField, "voice", new PortSpec("voice", PortKind.Scalar, 0f, 0f, 8f, -1, PortDisplay.Integer)),
     ];
 
     /// <summary>
