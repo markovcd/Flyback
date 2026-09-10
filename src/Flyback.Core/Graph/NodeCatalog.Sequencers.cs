@@ -28,7 +28,29 @@ public partial class NodeCatalog
     /// at any tempo, which is a hard attack rather than a discontinuity.
     /// </summary>
     private const float ShortestGateEdge = 0.002f;
-    
+
+    /// <summary>
+    /// The widest they may be made, as a fraction of a step, and the top of the
+    /// knob that sets them.
+    /// </summary>
+    /// <remarks>
+    /// Half a step, because the gate reaches its full height only between the
+    /// two ramps — from <c>shape</c> to <c>gate length - shape</c> — and that
+    /// stretch is empty once <c>shape</c> passes half the gate's length. Gate
+    /// length is itself held to one, so half a step is the widest edge that can
+    /// open the gate at all, and it does so only with the gate wide open: the
+    /// note becomes one smooth hump over the whole step, which is what the pad
+    /// in Slow weather is built on.
+    /// <para>
+    /// Read by the port and by the clamp both, so the knob and the wire stop at
+    /// the same place. They did not: the knob has always stopped here and the
+    /// clamp let a signal through to a whole step, where the two ramps overlap
+    /// so far that the gate never rises past a quarter and the part fades out
+    /// rather than playing.
+    /// </para>
+    /// </remarks>
+    private const float WidestGateEdge = 0.5f;
+
     public const string TempoTypeId = "seq.tempo";
 
     /// <summary>
@@ -129,7 +151,7 @@ public partial class NodeCatalog
             Domain("in"),
             Num("rate", 4f, 0f, 32f),
             Num("gate length", 0.5f, 0f, 1f),
-            Num("shape", 0.02f, 0f, 0.5f),
+            Num("shape", 0.02f, 0f, WidestGateEdge),
         ],
         [Num("out"), Num("gate"), Num("index")],
         EmitSequence,
@@ -328,7 +350,8 @@ public partial class NodeCatalog
         // Ramping also hides the other edge in here: because the envelope is
         // zero at each boundary, a note whose volume differs from the last
         // one's fades in at its own level instead of jumping to it.
-        var shape = em.Ternary(OpCode.Clamp, node[3], em.Constant(ShortestGateEdge), em.Constant(1f));
+        var shape = em.Ternary(
+            OpCode.Clamp, node[3], em.Constant(ShortestGateEdge), em.Constant(WidestGateEdge));
         var length = em.Ternary(OpCode.Clamp, node[2], em.Constant(0f), em.Constant(1f));
 
         var opening = em.Ternary(OpCode.Smoothstep, em.Constant(0f), shape, within);

@@ -251,7 +251,7 @@ void main()
     float r132 = r127 + r130;
     float r133 = r128 + r131;
     float r134 = uK[27];
-    float r135 = clamp(r14, r134, max(r134, r21));
+    float r135 = clamp(r14, r134, max(r134, r82));
     float r136 = clamp(r13, r22, max(r22, r21));
     float r137 = sm(r22, r135, r19);
     float r138 = r136 - r135;
@@ -437,7 +437,7 @@ void main()
     float r320 = r318 * r221;
     float r321 = r316 + r319;
     float r322 = r317 + r320;
-    float r323 = clamp(r185, r134, max(r134, r21));
+    float r323 = clamp(r185, r134, max(r134, r82));
     float r324 = clamp(r184, r22, max(r22, r21));
     float r325 = sm(r22, r323, r190);
     float r326 = r324 - r323;
@@ -613,7 +613,7 @@ void main()
     float r496 = r483 + r493;
     float r497 = r337 - r494;
     float r498 = dv(r497, r495);
-    float r499 = clamp(r335, r134, max(r134, r21));
+    float r499 = clamp(r335, r134, max(r134, r82));
     float r500 = clamp(r125, r22, max(r22, r21));
     float r501 = sm(r22, r499, r498);
     float r502 = r500 - r499;
