@@ -101,15 +101,11 @@ public partial class NodeCatalog
     /// A picture read at a place, and black where there is no picture to read.
     /// </summary>
     /// <remarks>
-    /// Three lines, because everything that makes this module hard happens
-    /// elsewhere: the file is read by a library outside the compiler, placed by
+    /// Three lines, because everything hard about this module happens elsewhere:
+    /// the file is read outside the compiler, placed by
     /// <see cref="LoadedImage.At"/>, and lowered to a texture by the shader
-    /// backend. What is left here is the one decision the module itself makes,
-    /// which is what to do when it has nothing — black, for the reason the
-    /// player answers silence, and the same black that lies outside a picture's
-    /// own edges. So a patch showing a file that has gone draws what a patch
-    /// showing a file that is entirely off the side of the frame draws, and
-    /// there is one rule rather than two.
+    /// backend. Black is the same black that lies outside a picture's own edges,
+    /// so a file that has gone and a file entirely off the frame draw alike.
     /// </remarks>
     private static Slot[] EmitPicture(Emitter em, EmitContext node) =>
         node.Picture is { } picture
@@ -121,45 +117,23 @@ public partial class NodeCatalog
     /// arrives at as the start of the clip.
     /// </summary>
     /// <remarks>
+    /// The trigger runs no playhead of its own: it remembers where 'in' had got to
+    /// at the last edge, and what is read is the difference — so retriggering
+    /// falls out rather than being handled. An edge and not a level, the opposite
+    /// of the Quantiser's 'hold' and right for the opposite reason: "start again"
+    /// is an instant, so a trigger of any width works.
     /// <para>
-    /// The trigger does not run a playhead of its own. It remembers where 'in'
-    /// had got to when the last edge came, and what is read is the difference —
-    /// so a clip driven by the clock plays at its own speed from the moment it
-    /// was fired, and one driven by anything else is re-zeroed against that
-    /// instead. Retriggering falls out rather than being handled: an edge
-    /// arriving mid-clip moves the zero to now, and the position is nought
-    /// again on the very evaluation it lands.
+    /// The socket rests low, which is what lets it be optional: a knob at nought
+    /// never rises, so the position is <c>in</c> itself. Resting it high would
+    /// take the zero from wherever <c>in</c> was on the first evaluation, which is
+    /// not nought for a clip being played backwards. The cost is that a player
+    /// with a trigger wired in still plays once as the patch begins; a gate on the
+    /// output from the same trigger is the patch-level fix.
     /// </para>
     /// <para>
-    /// An edge and not a level, which is the opposite of the Quantiser's 'hold'
-    /// and right for the opposite reason. "Hold this note" is an interval and
-    /// says when the note may not move; "start again" is an instant. So a
-    /// trigger of any width works, down to a single evaluation.
-    /// </para>
-    /// <para>
-    /// The socket rests low, and that is what lets it be optional: a knob at
-    /// nought never rises, so the zero stays where the cell began and the
-    /// position is <c>in</c> itself, exactly as if there were no trigger at
-    /// all. Resting it high would instead take the zero from wherever <c>in</c>
-    /// happened to be on the first evaluation — nought for a clock, a saw or a
-    /// sine, but <em>not</em> nought for a clip being played backwards. A
-    /// default that quietly broke reverse is not a default.
-    /// </para>
-    /// <para>
-    /// The cost of resting low is that a player with a trigger wired in still
-    /// plays once as the patch begins, before any edge has arrived: until then
-    /// it is a player with no trigger, and that is what one of those does.
-    /// Telling the two apart would mean knowing whether the socket is patched,
-    /// which nothing here can ask — the same wall the Quantiser's 'hold' met and
-    /// answered by being a level. An edge cannot answer it that way, so this
-    /// carries the wrinkle instead. A gate on the output from the same trigger
-    /// is the patch-level fix, and a drum wants one anyway.
-    /// </para>
-    /// <para>
-    /// Two cells. Where the clip is being read from is written as a clock rather
-    /// than as a signal — see <see cref="Emitter.ClockWrite"/> — because it is a
-    /// reading of a domain and the rails a signal is held to would stop it
-    /// sixteen seconds into a session. The other is the trigger as it was, which
+    /// Two cells: where the clip is being read from, written as a clock rather
+    /// than a signal — see <see cref="Emitter.ClockWrite"/>, since a signal's
+    /// rails would stop it sixteen seconds in — and the trigger as it was, which
     /// is what makes an edge an edge.
     /// </para>
     /// </remarks>
@@ -182,18 +156,12 @@ public partial class NodeCatalog
         var rise = em.Mul(up, em.Sub(one, em.UnitRead(edgeCell)));
 
         // Where the clip is being read from: moved to here on an edge, held
-        // between them, and nought where no edge has ever come. Taken on the
-        // evaluation the edge lands rather than the one after, so a trigger and
-        // the sound it starts are the same moment.
+        // between them, and nought where no edge has come. Taken on the evaluation
+        // the edge lands, so a trigger and the sound it starts are one moment.
         //
-        // And nought again wherever there is no memory, which is the screen —
-        // see Emitter.HasMemory. A trigger is a thing that happened before now,
-        // so on a path with no before it cannot mean anything, and the honest
-        // answer there is the module without one: the clip read at 'in'. Left
-        // out, the cell behind the edge reads nought at every pixel, every
-        // evaluation with the trigger up looks like a rising edge, and the chart
-        // fills with the first sample of the clip — which is neither what the
-        // speakers do nor what a memoryless reading of the patch is.
+        // And nought again wherever there is no memory, which is the screen — see
+        // Emitter.HasMemory. Left out, every evaluation with the trigger up looks
+        // like a rising edge and the chart fills with the clip's first sample.
         var start = em.Mul(
             em.Ternary(OpCode.Mix, em.UnitRead(startCell), position, rise),
             em.HasMemory());

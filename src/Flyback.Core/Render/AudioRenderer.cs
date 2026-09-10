@@ -24,21 +24,16 @@ public readonly record struct AudioScan(bool Scan, float Rate, float Aspect)
     /// What the Output of <paramref name="patch"/> asks for, read off its knobs.
     /// </summary>
     /// <remarks>
-    /// Every caller that renders a patch offline needs this and none of them
-    /// should work it out again — it is two socket indices and a threshold, and
-    /// three places disagreeing about which is which is exactly the silent kind
-    /// of wrong.
-    /// <para>
-    /// The knobs rather than the signals: a value patched into 'scan' arrives per
-    /// sample, and this is a property of the whole render. Sweeping the sweep is
-    /// the one thing the sockets cannot do, here as on screen.
-    /// </para>
+    /// Every caller that renders a patch offline needs this and none should work
+    /// it out again: three places disagreeing about which socket is which is the
+    /// silent kind of wrong. The knobs rather than the signals, because this is a
+    /// property of the whole render — sweeping the sweep is the one thing the
+    /// sockets cannot do.
     /// </remarks>
     /// <param name="patch"></param>
     /// <param name="aspect">
-    /// The frame the sweep should cover, which belongs to whoever is rendering
-    /// rather than to the patch: an export at one size and a preview at another
-    /// hear the same picture across a different width.
+    /// The frame the sweep should cover, which belongs to whoever is rendering:
+    /// an export and a preview hear the same picture across a different width.
     /// </param>
     /// <param name="modules"></param>
     public static AudioScan For(Patch patch, float aspect, ModuleCatalog? modules = null)
@@ -67,11 +62,10 @@ public readonly record struct AudioScan(bool Scan, float Rate, float Aspect)
 /// oversampled internal rate.
 /// </summary>
 /// <remarks>
-/// Deliberately single-threaded, unlike <see cref="SynthRenderer"/>. Stereo at
+/// Deliberately single-threaded, unlike <see cref="SynthRenderer"/>: stereo at
 /// 48 kHz with 4x oversampling is ~192k evaluations a second against video's
-/// ~31M, so there is nothing to gain by splitting it up — and this runs on an
-/// audio callback, where blocking on a parallel loop is exactly what must not
-/// happen. The asymmetry between the two renderers is intentional.
+/// ~31M, and this runs on an audio callback, where blocking on a parallel loop is
+/// what must not happen.
 /// </remarks>
 public sealed class AudioRenderer
 {
@@ -137,22 +131,15 @@ public sealed class AudioRenderer
     /// <summary>
     /// Memory for a program, carrying over whatever of <paramref name="existing"/>
     /// belongs to a module this program still has — so an edit made while the
-    /// sound is playing costs only the modules it actually touched.
+    /// sound is playing costs only the modules it touched.
     /// </summary>
     /// <remarks>
     /// Handed back rather than stored, because which lines a program needs is a
-    /// property of *that* program. A caller swapping programs under a live
-    /// callback has to swap both together or the old program will index into the
-    /// new program's lines — see the state record in <c>AudioEngine</c>. Lines run
-    /// at the oversampled rate, because that is how often the program is
-    /// evaluated.
-    /// <para>
-    /// Matching is by owner rather than by slot, which is the whole of why an
-    /// added oscillator no longer restarts every other one — see
-    /// <see cref="StateOwners"/> and <see cref="DelayState.Adopt"/>. A program
-    /// that claims nothing, which is any assembled by hand, adopts nothing and
-    /// starts from silence as it always did.
-    /// </para>
+    /// property of that program: a caller swapping programs under a live callback
+    /// has to swap both together or the old program will index into the new
+    /// program's lines. Lines run at the oversampled rate. Matching is by owner
+    /// rather than by slot — see <see cref="StateOwners"/> and
+    /// <see cref="DelayState.Adopt"/>.
     /// </remarks>
     public DelayState? DelayMemoryFor(CompiledPatch program, DelayState? existing = null)
     {
@@ -191,34 +178,29 @@ public sealed class AudioRenderer
     /// something that needs any.
     /// </summary>
     /// <remarks>
-    /// Only ever the offline case. A caller that swaps programs passes its own
-    /// (see the parameter on <see cref="Render"/>) and this stays null, which is
-    /// exactly right: what this hands out is what <em>it</em> has been filling,
-    /// and a caller holding its own does not need to be told about it.
-    /// <para>
-    /// Here so that an export can read the rings back — a Meter offline is
-    /// measured from the same tap a Meter on screen is, and there is nobody else
-    /// offline to hold them. See <see cref="MovieRenderer"/>.
-    /// </para>
+    /// Only ever the offline case: a caller that swaps programs passes its own and
+    /// this stays null. It is here so an export can read the rings back — a Meter
+    /// offline is measured from the same tap a Meter on screen is, and there is
+    /// nobody else offline to hold them. See <see cref="MovieRenderer"/>.
     /// </remarks>
     public DelayState? Memory => delays;
 
     /// <summary>
-    /// Fills an interleaved stereo buffer. Allocation-free once constructed, so
-    /// it is safe to call from an audio callback.
+    /// Fills an interleaved stereo buffer. Allocation-free once constructed, so it
+    /// is safe to call from an audio callback.
     /// </summary>
     /// <param name="scan">Whether to sweep the image instead of running on time alone, and how fast.</param>
     /// <param name="memory">
     /// The program's delay lines. Pass them explicitly from anywhere that swaps
-    /// programs while this is running, so the pair is always consistent; leave it
-    /// null offline and this keeps its own, allocating them on the spot.
+    /// programs while this is running; leave it null offline and this keeps its
+    /// own.
     /// </param>
     /// <param name="program">The sound's own compiled program, rooted at the Output's left and right.</param>
     /// <param name="live">
     /// What is being played into the program while this buffer is filled. Read
     /// once here rather than per sample, so every sample of one buffer hears the
-    /// same moment — a key that moved halfway through is heard at the start of
-    /// the next one, which is a few milliseconds late and never half a note.
+    /// same moment — a key that moved halfway through is a few milliseconds late
+    /// and never half a note.
     /// </param>
     /// <param name="interleavedStereo">Where the samples go, left and right alternating. Its length decides how many frames this call renders.</param>
     public void Render(
@@ -251,20 +233,16 @@ public sealed class AudioRenderer
                 var t = Time + k * innerStep;
                 var (x, y) = Position(t, scan);
 
-                // Video feedback has no meaning here: there is no previous frame
-                // on the audio timeline, so SampleFeedback reads silence. Delay
-                // lines are the other way round — this is the only path that has
-                // them, because it is the only one that runs in order.
+                // Video feedback has no meaning here: there is no previous frame on
+                // the audio timeline, so SampleFeedback reads silence. Delay lines
+                // are the other way round — this is the only path that runs in
+                // order.
                 //
-                // t goes in at full width. Narrowing it here is what ADR-0032
-                // removed: two consecutive sample times an hour into a session
-                // are the same float, and an oscillator measuring how far its
-                // input moved would be handed a staircase to run on.
-                // The frame goes in even here. Nothing the speakers reach is
-                // drawn into one, but a scanned patch sweeps x across exactly
-                // this width — so a module asking how far x reaches is told the
-                // same thing on both paths rather than a different picture per
-                // sink.
+                // t goes in at full width (ADR-0032): two consecutive sample times
+                // an hour in are the same float, and an oscillator measuring how
+                // far its input moved would be handed a staircase. The frame goes
+                // in even here, because a scanned patch sweeps x across exactly
+                // this width.
                 program.Evaluate(x, y, t, registers, default, lines, scan.Aspect, live);
 
                 delayLines[0][historyPosition] = (float)registers[left];

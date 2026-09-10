@@ -5,28 +5,21 @@ namespace Flyback.Core.Graph;
 /// between them can be seen.
 /// </summary>
 /// <remarks>
-/// <para>
-/// A layered drawing, in the four stages the technique is usually written in:
-/// cut the edges that run backwards, put every node in a column by how far along
-/// the chain it is, order each column so that the fewest wires cross, then place
-/// the nodes down the column so that a wire meets its two sockets as level as it
-/// can. See ADR-0044 for why this rather than a relaxation.
-/// </para>
+/// A layered drawing in the usual four stages: cut the edges that run backwards,
+/// put every node in a column by how far along the chain it is, order each
+/// column so the fewest wires cross, then place the nodes down the column so a
+/// wire meets its two sockets as level as it can. See ADR-0044.
 /// <para>
 /// What those stages place is a block rather than a module, and a group is one
-/// block whatever is inside it. A group has to be, or it is not a thing on the
-/// canvas at all: its modules are wired to the patch one at a time, so placing
-/// them one at a time spreads them down whichever columns their own wires ask
-/// for, and the box drawn round them then reaches across half the patch or
-/// shrinks onto a module that is not in it. A group is laid out among itself
-/// first, so that it has a tidy inside and a size, and is moved whole thereafter.
+/// block whatever is inside it: placing its modules one at a time would spread
+/// them down whichever columns their own wires ask for, and the box drawn round
+/// them would reach across half the patch. A group is laid out among itself
+/// first, so it has a tidy inside and a size, and is moved whole thereafter.
 /// </para>
 /// <para>
-/// It lives here rather than in the editor because two callers want it and only
-/// one of them has a canvas: the button on the toolbar, and the assistant's
-/// workbench, which places nodes for a model that never thinks about
-/// coordinates. What the editor supplies is <see cref="Metrics"/> — the only
-/// thing here that is really the view's business.
+/// Here rather than in the editor because two callers want it and only one has a
+/// canvas: the toolbar button, and the assistant's workbench. What the editor
+/// supplies is <see cref="Metrics"/>.
 /// </para>
 /// </remarks>
 public static class PatchLayout
@@ -88,13 +81,9 @@ public static class PatchLayout
 
     /// <summary>
     /// One thing the layout moves, and the only thing it knows how to move: a
-    /// module in no group, or a group with everything in it at once.
+    /// module in no group, or a group with everything in it at once. Rigid — the
+    /// stages below decide where a block goes and never what is inside one.
     /// </summary>
-    /// <remarks>
-    /// Rigid, which is what earns it the name. The stages below decide where a
-    /// block goes and never what is inside one, so every socket sits a fixed
-    /// distance below the block's top edge from the moment it is built.
-    /// </remarks>
     private sealed class Block
     {
         /// <summary>The modules moved together, and where each sits inside.</summary>
@@ -110,10 +99,9 @@ public static class PatchLayout
         /// </summary>
         /// <remarks>
         /// A question the block answers rather than a rule the placement applies,
-        /// which is the whole of how the placement avoids learning what a group
-        /// is. A collapsed group is the one that answers differently: its wires
-        /// meet rows on the box, and the modules those rows stand for are behind
-        /// it rather than at them.
+        /// which is how the placement avoids learning what a group is. A collapsed
+        /// group answers differently: its wires meet rows on the box, and the
+        /// modules those rows stand for are behind it.
         /// </remarks>
         public required Func<Guid, int, bool, double> Meets { get; init; }
 
@@ -145,20 +133,18 @@ public static class PatchLayout
     private readonly record struct Link(int From, int To, double Leaves, double Arrives);
 
     /// <summary>
-    /// Moves every node of <paramref name="patch"/>. Nothing else about the
-    /// patch is touched — no wire is added, removed or rerouted — so this is
-    /// always safe to run and always exactly undoable by putting the old
-    /// coordinates back.
+    /// Moves every node of <paramref name="patch"/>. No wire is added, removed or
+    /// rerouted, so this is always safe to run and exactly undoable by putting the
+    /// old coordinates back.
     /// </summary>
     /// <param name="patch">The patch to place. Modified in place.</param>
     /// <param name="modules">Which catalogue the type ids mean, defaulting to the installed one.</param>
     /// <param name="metrics">How big the nodes are, defaulting to the editor's own.</param>
     /// <returns>
-    /// Whether the drawing fits the canvas. What came out is a correct drawing
-    /// either way, but <see cref="NodeInstance.X"/> holds every coordinate
-    /// inside the canvas, so a drawing that does not fit reaches the patch with
-    /// its far edges folded onto the boundary and stacked. Worth saying to
-    /// anyone who can see it.
+    /// Whether the drawing fits the canvas. What came out is correct either way,
+    /// but <see cref="NodeInstance.X"/> holds every coordinate inside the canvas,
+    /// so a drawing that does not fit arrives with its far edges folded onto the
+    /// boundary and stacked.
     /// </returns>
     public static bool Arrange(Patch patch, ModuleCatalog? modules = null, Metrics? metrics = null)
     {
@@ -229,15 +215,11 @@ public static class PatchLayout
     }
 
     /// <summary>
-    /// Puts the finished drawing in the middle of the canvas, and says whether
-    /// it fits on one.
+    /// Puts the finished drawing in the middle of the canvas, and says whether it
+    /// fits on one. The placement runs from a corner because a column is easier
+    /// to reason about running one way; the middle is where that corner goes,
+    /// since it is the only choice that uses the whole canvas.
     /// </summary>
-    /// <remarks>
-    /// The placement runs from a corner because a column is easier to reason
-    /// about running one way than two. The middle is where that corner goes,
-    /// since it is the only choice that uses the whole canvas rather than the
-    /// quarter of it below and right of the origin.
-    /// </remarks>
     private static bool Settle(List<Block> blocks)
     {
         var left = blocks.Min(block => block.X);
@@ -260,14 +242,11 @@ public static class PatchLayout
 
     /// <summary>
     /// Lays a group out among itself, using only the wires that stay inside it.
+    /// Run first, because the block that stands for a group is measured from
+    /// where its modules end up — and a preset declares no coordinates at all
+    /// (ADR-0070), so a group that skipped this would arrive as a pile at the
+    /// origin.
     /// </summary>
-    /// <remarks>
-    /// Run before anything else, because the block that stands for a group is
-    /// measured from where its modules end up. A preset declares no coordinates
-    /// at all ([0070](0070-a-preset-declares-no-coordinates.md)), so a group
-    /// that skipped this would arrive as a pile at the origin and be drawn as a
-    /// box one module wide.
-    /// </remarks>
     private static void Inside(
         Patch patch,
         Dictionary<Guid, NodeInstance> nodes,
@@ -294,21 +273,14 @@ public static class PatchLayout
     /// The wires between blocks, with the ones that run backwards dropped.
     /// </summary>
     /// <remarks>
-    /// A patch may hold a cycle, and only through a cycle breaker
-    /// (<see cref="NodeDef.IsCycleBreaker"/>) — which is what
-    /// <see cref="Patch.WouldCycle"/> enforces and what makes the back edges
-    /// free to find here. Every other layered drawing has to guess at a set of
-    /// edges to reverse; this one is told. Cutting the wires that leave a
-    /// breaker leaves a graph that is acyclic by construction, and it cuts them
-    /// where the meaning already is: what leaves a Unit Delay is the previous
-    /// evaluation, so it is not part of this one's chain. Asked of the module
-    /// rather than of the block, so that a breaker inside a group also cuts what
-    /// leaves the group.
-    /// <para>
-    /// A wire with both ends on one block is dropped as well, for a plainer
-    /// reason: it is a wire inside a group, and it was accounted for when the
-    /// group was laid out among itself.
-    /// </para>
+    /// A patch may hold a cycle only through a cycle breaker
+    /// (<see cref="NodeDef.IsCycleBreaker"/>), so unlike every other layered
+    /// drawing this one is told which edges to reverse rather than guessing. It
+    /// cuts them where the meaning already is: what leaves a Unit Delay is the
+    /// previous evaluation. Asked of the module rather than the block, so a
+    /// breaker inside a group also cuts what leaves the group. A wire with both
+    /// ends on one block is dropped too — it was accounted for when the group was
+    /// laid out among itself.
     /// </remarks>
     private static List<Link> Links(
         Patch patch,
@@ -352,18 +324,12 @@ public static class PatchLayout
     /// A group, sized as it is drawn rather than as it is made of.
     /// </summary>
     /// <remarks>
-    /// A group that is open is drawn as a ring round its modules with a strip
-    /// above it, so that is the room it takes, and its wires meet the modules
-    /// themselves moved along by wherever they sit inside the ring.
-    /// <para>
-    /// A group that is shut is drawn as one box, so one box is the room it takes
-    /// and its wires meet rows on the box. The modules behind it are put at the
-    /// corner the box is drawn from and left to overhang it: nothing paints
-    /// them, nothing points at them and nothing frames them, so reserving the
-    /// canvas they would need is reserving canvas for a picture nobody is
-    /// looking at — which is the whole of what shutting a group is for. What it
+    /// Open, it is a ring round its modules with a strip above, and its wires meet
+    /// the modules themselves. Shut, it is one box, its wires meet rows on the
+    /// box, and the modules behind it are put at the box's corner and left to
+    /// overhang: nothing paints, points at or frames them, so reserving canvas for
+    /// them would be reserving it for a picture nobody is looking at. What that
     /// costs is that opening one is a good moment to press the button again.
-    /// </para>
     /// </remarks>
     private static Block Boxed(
         Patch patch,
@@ -452,21 +418,12 @@ public static class PatchLayout
     /// Which column each block belongs in, as a list of columns left to right.
     /// </summary>
     /// <remarks>
-    /// <para>
     /// The column is the longest path forward from anything with nothing feeding
-    /// it, so a block sits one place to the right of the furthest-along thing it
-    /// reads. Longest rather than shortest because a wire must never run
-    /// backwards: with the shortest path a block fed by both a source and a long
-    /// chain would sit beside the source, and the chain would have to reach back
-    /// to find it.
-    /// </para>
-    /// <para>
-    /// Two kinds of block are placed by hand afterwards. The Output is pinned to
-    /// the last column whatever its path length says, because it is the end of
-    /// the patch and reads as the end wherever the arithmetic puts it. And a
-    /// block with no wires at all goes in a column of its own before the first,
-    /// rather than among the sources it is not one of.
-    /// </para>
+    /// it. Longest rather than shortest because a wire must never run backwards:
+    /// with the shortest path a block fed by both a source and a long chain would
+    /// sit beside the source. Two are placed by hand afterwards — the Output is
+    /// pinned to the last column because it is the end of the patch, and a block
+    /// with no wires goes in a column of its own before the first.
     /// </remarks>
     private static List<List<int>> Columns(
         int count,
@@ -528,10 +485,8 @@ public static class PatchLayout
     /// </summary>
     /// <remarks>
     /// The starting order is where the blocks already are, so a patch that is
-    /// nearly right is tidied rather than rearranged and a node the user dragged
-    /// to the top stays near the top. It is still one answer per input — the
-    /// same patch in the same positions lays out the same way every time, which
-    /// is the property a relaxation cannot offer.
+    /// nearly right is tidied rather than rearranged. Still one answer per input,
+    /// which is the property a relaxation cannot offer.
     /// </remarks>
     private static void Order(
         List<List<int>> columns,
@@ -645,17 +600,14 @@ public static class PatchLayout
             x += column.Max(block => blocks[block].Width) + size.ColumnGap;
         }
 
-        // Where this block would sit for its wires to arrive level. Averaged
-        // over the wires it has, because a block with three inputs cannot line
-        // up with all three and the middle is the least wrong place.
+        // Where this block would sit for its wires to arrive level, averaged over
+        // the wires it has: a block with three inputs cannot line up with all
+        // three, and the middle is the least wrong place.
         //
-        // A block with no wire coming in has nothing to line up with and simply
-        // stacks. That is never half a column: a block is in column two or
-        // beyond exactly because something feeds it, so the ones without are the
-        // sources and the unwired, and those are whole columns of their own. The
-        // stack is deliberately tighter than a module is tall — opening out
-        // below puts the real distance in, and this only has to say which order
-        // they go in.
+        // A block with no wire coming in stacks instead, and never half a column:
+        // anything in column two or beyond has something feeding it, so the ones
+        // without are whole columns of sources. The stack is tighter than a module
+        // is tall, because opening out below puts the real distance in.
         double Wanted(int block, int i)
         {
             var level = 0d;

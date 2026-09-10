@@ -20,9 +20,8 @@ public sealed record PatchLoad(
 {
     /// <summary>
     /// Whether the file was written by a build that knows a layout this one does
-    /// not. The one problem here that cannot be described any further: a newer
-    /// layout may mean anything, so nothing else read out of the file — not its
-    /// modules, not its plugins — is worth reporting alongside it.
+    /// not. A newer layout may mean anything, so nothing else read out of the file
+    /// is worth reporting alongside it.
     /// </summary>
     public bool TooNew => Version > PatchIO.FormatVersion;
 
@@ -94,18 +93,12 @@ public static class PatchIO
     /// The layout this build writes, and the highest it can read.
     /// </summary>
     /// <remarks>
-    /// Raised only when the <em>shape</em> of the file changes in a way an older
-    /// reader would get wrong: a field renamed, a number that starts counting
-    /// from somewhere else, a list that starts meaning something new. Adding a
-    /// module is not such a change and must not raise it — a file naming a module
-    /// this build has never heard of is already answered, by name and in detail,
-    /// through <see cref="PatchLoad.UnknownModules"/>. Raising it for that would
-    /// refuse whole patches over one block they might not even miss.
-    /// <para>
-    /// Every raise owes a step in <c>Upgrade</c>, because a file that was legal
-    /// once stays legal: the version says which reading is right, not whether the
-    /// file is still welcome.
-    /// </para>
+    /// Raised only when the shape of the file changes in a way an older reader
+    /// would get wrong: a field renamed, a number counting from somewhere else, a
+    /// list meaning something new. Adding a module is not such a change — that is
+    /// answered by <see cref="PatchLoad.UnknownModules"/>, and raising the version
+    /// for it would refuse whole patches over one block. Every raise owes a step
+    /// in <c>Upgrade</c>: a file that was legal once stays legal.
     /// </remarks>
     public const int FormatVersion = 1;
 
@@ -123,10 +116,9 @@ public static class PatchIO
     };
 
     /// <summary>
-    /// Writes the patch, stamping the layout and which plugins it depends on
-    /// first. Both stamps are put on the patch rather than only into the text, so
-    /// the object and the file it was written to agree about what it is and what
-    /// it requires.
+    /// Writes the patch, stamping the layout and which plugins it depends on. Both
+    /// stamps go on the patch rather than only into the text, so the object and
+    /// the file agree about what it is and what it requires.
     /// </summary>
     public static string ToJson(Patch patch, ModuleCatalog? against = null)
     {
@@ -137,23 +129,19 @@ public static class PatchIO
     }
 
     /// <summary>
-    /// Reads a patch and checks it against the catalogue. Both halves of the
-    /// check matter: the stamp names plugins that are missing entirely, and the
-    /// module ids catch a file that was hand-edited or saved before its plugin
-    /// was renamed — a patch can be short of a module without being short of a
-    /// plugin it ever recorded.
+    /// Reads a patch and checks it against the catalogue. Both halves matter: the
+    /// stamp names plugins that are missing entirely, and the module ids catch a
+    /// file hand-edited or saved before its plugin was renamed.
     /// </summary>
     public static PatchLoad Read(string json, ModuleCatalog? against = null)
     {
         var catalog = against ?? NodeCatalog.Current;
         var version = VersionOf(json);
 
-        // Read out of the raw text and answered before anything else, because a
-        // layout this build does not know is the one problem that makes the rest
-        // of the file unreadable rather than merely incomplete. Deserialising
-        // first would be guessing at a shape nobody has described yet, and would
-        // throw on the shapes it guessed wrong — an exception where there is a
-        // perfectly good sentence to say instead.
+        // Read out of the raw text and answered first, because a layout this build
+        // does not know is the one problem that makes the rest of the file
+        // unreadable rather than incomplete. Deserialising first would throw where
+        // there is a perfectly good sentence to say instead.
         if (version > FormatVersion)
         {
             var empty = new Patch();
@@ -189,16 +177,13 @@ public static class PatchIO
 
     /// <summary>
     /// The layout a file declares, taken from the raw text rather than from a
-    /// deserialised patch — the whole point being to learn this about files that
-    /// cannot be deserialised into one.
+    /// deserialised patch — the point being to learn this about files that cannot
+    /// be deserialised into one.
     /// </summary>
     /// <remarks>
     /// Anything unreadable as a version is <see cref="FirstVersion"/>. For a file
-    /// with no stamp that is the truth. For one whose stamp is nonsense it is
-    /// merely the answer that keeps this quiet: the file is malformed and the
-    /// deserialiser below will say so in the ordinary way, which is a better
-    /// complaint than either guessing a layout or reporting a file from the
-    /// future that nobody wrote.
+    /// with no stamp that is the truth; for one whose stamp is nonsense it keeps
+    /// this quiet and lets the deserialiser complain in the ordinary way.
     /// </remarks>
     private static int VersionOf(string json)
     {
@@ -219,15 +204,10 @@ public static class PatchIO
     /// Brings a patch read from an older layout up to what this build expects.
     /// </summary>
     /// <remarks>
-    /// Empty, because version 1 is the only layout there has ever been. It is
-    /// called anyway, and written out rather than left to be invented later, so
-    /// that the first change to the format has one obvious place to go and cannot
-    /// be done by quietly reinterpreting a field instead.
-    /// <para>
-    /// Steps belong here in order and each must stand alone — a file at version 1
-    /// opened by a build at version 4 runs 1→2, 2→3 and 3→4 in turn, so no step
-    /// may assume anything but the layout immediately before it.
-    /// </para>
+    /// Empty, because version 1 is the only layout there has ever been. Called
+    /// anyway, so the first change to the format has one obvious place to go.
+    /// Steps belong here in order and each must stand alone: a file at version 1
+    /// opened by a build at version 4 runs 1→2, 2→3 and 3→4 in turn.
     /// </remarks>
     /// <param name="patch"></param>
     /// <param name="from">The layout the file was written in, never above <see cref="FormatVersion"/>.</param>

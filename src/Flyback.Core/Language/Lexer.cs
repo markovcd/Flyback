@@ -48,14 +48,14 @@ public enum TokenKind
 /// One token, and where it came from so that a complaint can point at it.
 /// </summary>
 /// <param name="Value">
-/// What a <see cref="TokenKind.Number"/> is worth. A note and a duration are
-/// numbers by the time they reach here — the scale a socket reads them on is
-/// decided in the lexer, because that is where the spelling still exists.
+/// What a <see cref="TokenKind.Number"/> is worth. The scale a socket reads a
+/// note or a duration on is decided in the lexer, because that is where the
+/// spelling still exists.
 /// </param>
 /// <param name="Scaled">
-/// Whether this number was written as a note or a duration rather than as a
-/// bare figure. The binder checks it against the port's
-/// <see cref="Graph.PortDisplay"/>, so that <c>20ms</c> on a plain socket is a
+/// Whether this number was written as a note or a duration rather than a bare
+/// figure. The binder checks it against the port's
+/// <see cref="Graph.PortDisplay"/>, so <c>20ms</c> on a plain socket is a
 /// complaint rather than a silent -1.699.
 /// </param>
 public readonly record struct Token(
@@ -79,25 +79,18 @@ public enum NumberStyle
 }
 
 /// <summary>
-/// Source text to tokens. Hand-written, because
-/// [0019](../../../docs/adr/0019-no-third-party-dependencies-in-the-engine.md)
-/// leaves the engine no parser library to reach for.
+/// Source text to tokens. Hand-written, because ADR-0019 leaves the engine no
+/// parser library to reach for.
 /// </summary>
 /// <remarks>
-/// Two things here are not the ordinary shape of a lexer, and both are there so
-/// that the parser can stay simple.
+/// A bracketed block is captured as one token holding its raw text: what is
+/// inside one is a different language — <c>~</c>, <c>@</c>, <c>!</c>, <c>%</c>
+/// and <c>&lt;&gt;</c> all mean something there they do not mean outside — so
+/// keeping it whole means neither half knows about the other.
 /// <para>
-/// A bracketed block is captured as one token holding its raw text. Brackets
-/// start a step block and nothing else, and what is inside one is a different
-/// language — <c>~</c>, <c>@</c>, <c>!</c>, <c>%</c> and <c>&lt;&gt;</c> all
-/// mean something there that they do not mean outside. Keeping it whole means
-/// neither half has to know about the other.
-/// </para>
-/// <para>
-/// Newlines survive lexing and are thinned afterwards, in <see cref="Statements"/>.
-/// A statement ends at a line break, but a pipeline may be written across
-/// several, and which is which is a question about the tokens either side — far
-/// easier to answer over a finished list than one character at a time.
+/// Newlines survive lexing and are thinned in <see cref="Statements"/>: a
+/// statement ends at a line break but a pipeline may be written across several,
+/// and that is a question about the tokens either side.
 /// </para>
 /// </remarks>
 public static class Lexer
@@ -382,15 +375,10 @@ public static class Lexer
     /// </summary>
     /// <remarks>
     /// Deliberately narrow: a capital A to G, an optional sharp or flat, then an
-    /// octave. Anything else is a name, so only a binding called something like
-    /// <c>A3</c> could be shadowed by this — and the octave is what makes that
-    /// unlikely enough to accept, since it is the part no ordinary name has.
-    /// <para>
-    /// Both spellings are read although only sharps are written back
-    /// (<see cref="Graph.Pitch.ClassName"/>): reading is where somebody else's
-    /// spelling arrives, and refusing <c>Bb2</c> would be refusing the name of a
-    /// note over which of its two names it was given.
-    /// </para>
+    /// octave — the octave being the part no ordinary name has. Both spellings
+    /// are read although only sharps are written back
+    /// (<see cref="Graph.Pitch.ClassName"/>), since refusing <c>Bb2</c> would be
+    /// refusing a note over which of its two names it was given.
     /// </remarks>
     public static double? Note(string word)
     {

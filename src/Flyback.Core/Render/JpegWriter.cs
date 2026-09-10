@@ -6,16 +6,12 @@ namespace Flyback.Core.Render;
 /// restart markers.
 /// </summary>
 /// <remarks>
-/// The third encoder written by hand here, for the reason the other two exist
-/// (<see cref="PngWriter"/>, <see cref="WavWriter"/>): offline export has to
-/// work headlessly, and the engine takes no dependencies. This one earns its
-/// length by what it saves. A minute of 960x540 is 2.7 GB as raw pixels and
-/// about 90 MB once every frame is a JPEG, and the difference between those two
-/// numbers is the difference between a video export existing and not.
-///
-/// An instance rather than a static class, unlike its two siblings, because a
-/// movie is thousands of calls rather than one: the color planes are the
-/// largest thing here and reusing them across frames costs nothing.
+/// Written by hand for the reason <see cref="PngWriter"/> and
+/// <see cref="WavWriter"/> are: offline export has to work headlessly, and the
+/// engine takes no dependencies. A minute of 960x540 is 2.7 GB as raw pixels and
+/// about 90 MB as JPEGs, which is the difference between a video export existing
+/// and not. An instance rather than a static class, because a movie is thousands
+/// of calls and the color planes are worth reusing.
 /// </remarks>
 public sealed class JpegWriter
 {
@@ -222,10 +218,9 @@ public sealed class JpegWriter
 
             // Clamped to what the Annex K tables can spell. The transform is
             // orthonormal, so a coefficient reaches 1024 — eleven bits — exactly
-            // when the block is the basis function itself at full contrast, and
-            // the standard AC table stops at ten. Nothing a camera produces gets
-            // near it and a synthesised checkerboard at quality 100 does, which
-            // is precisely the sort of picture this program makes.
+            // when the block is the basis function at full contrast, and the
+            // standard AC table stops at ten. A synthesised checkerboard at
+            // quality 100 gets there, which is the sort of picture this makes.
             coefficients[i] = Math.Clamp((int)Math.Round(frequencies[zigzag] / quant[zigzag]), -1023, 1023);
         }
 

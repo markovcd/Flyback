@@ -4,19 +4,15 @@ namespace Flyback.Core.Graph;
 /// Several modules drawn as one box, and nothing whatever besides.
 /// </summary>
 /// <remarks>
-/// A group is a fact about the canvas and not about the patch. The modules stay
-/// where they were, the wires between them stay exactly as they were drawn, and
-/// the compiler is never told any of this happened — which is the whole of why
-/// it costs so little. Collapsing hides some boxes and draws one in their place;
-/// expanding stops doing that.
+/// A group is a fact about the canvas and not about the patch: the modules stay
+/// where they were, the wires stay as they were drawn, and the compiler is never
+/// told, which is why it costs so little.
 /// <para>
-/// What it deliberately is not is a definition. There is one of these per set of
-/// modules rather than one per shape, so two groups made the same way are two
-/// groups and editing one does nothing to the other. A group that could be
-/// instanced would need ports that outlive an edit, and a
-/// <see cref="Connection"/> names a port by index — so the day the inside was
-/// rearranged, every patch holding an instance would quietly rewire itself.
-/// Nothing here writes a port index down, which is exactly what makes it safe.
+/// It is deliberately not a definition. There is one per set of modules rather
+/// than one per shape, because an instanced group would need ports that outlive
+/// an edit and a <see cref="Connection"/> names a port by index — so rearranging
+/// the inside would quietly rewire every patch holding one. Nothing here writes a
+/// port index down.
 /// </para>
 /// </remarks>
 public sealed class NodeGroup
@@ -25,17 +21,12 @@ public sealed class NodeGroup
     public const int NameLimit = NodeInstance.NameLimit;
 
     /// <summary>
-    /// The fewest modules a group may hold.
+    /// The fewest modules a group may hold. A box round one is the module again
+    /// with a second name: every socket it could show is one that module already
+    /// has, in the same order. Held here rather than on the gesture, so it is true
+    /// of a group however it arrived — see <see cref="Patch.Group"/> and
+    /// <see cref="Patch.Remove"/>.
     /// </summary>
-    /// <remarks>
-    /// A box round one module is a box that says nothing. Every socket it could
-    /// show is a socket that module already has, drawn in the same order, so it
-    /// is the module again with a second name and one more thing to open. Held
-    /// here rather than on the gesture that makes one, so it is true of a group
-    /// however it arrived — see <see cref="Patch.Group"/>, and see
-    /// <see cref="Patch.Remove"/>, which drops a group that deleting has worn
-    /// down to one rather than leaving the picture this forbids.
-    /// </remarks>
     public const int Fewest = 2;
 
     public required Guid Id { get; init; }
@@ -90,14 +81,10 @@ public sealed class NodeGroup
     public string Counted => Members.Count == 1 ? "1 module" : $"{Members.Count} modules";
 
     /// <summary>
-    /// Calls it something else, or takes the name off again.
+    /// Calls it something else, or takes the name off again. The counterpart of
+    /// <see cref="NodeInstance.Rename"/> and the same rules: trimmed, held to a
+    /// length a header can draw, and emptied back to null rather than kept blank.
     /// </summary>
-    /// <remarks>
-    /// The counterpart of <see cref="NodeInstance.Rename"/> and the same rules:
-    /// trimmed, held to a length a header can draw, and emptied back to null
-    /// rather than kept as a blank — so a group nobody has named writes no name
-    /// into the file and goes back to counting itself.
-    /// </remarks>
     public void Rename(string? to)
     {
         var trimmed = to?.Trim();
@@ -118,19 +105,14 @@ public sealed class NodeGroup
 }
 
 /// <summary>
-/// One port of one module inside a group, drawn on the edge of the box.
+/// One port of one module inside a group, drawn on the edge of the box. The
+/// module and the port rather than a number of its own: nothing renumbers, and a
+/// wire drawn to one is a wire drawn to the module it names.
 /// </summary>
-/// <remarks>
-/// The module and the port rather than a number of its own, and that is the
-/// point: a socket on the box is only ever a way of pointing at a socket on a
-/// module. Nothing renumbers, and a wire drawn to one is a wire drawn to the
-/// module it names.
-/// </remarks>
 /// <param name="IsOutput">
-/// Which side it is, which is a fact about the port and not about the box. Part
-/// of what a socket <em>is</em> rather than something worked out later, because
-/// a module's inputs and outputs are numbered separately — port 0 is very often
-/// both, and the two are different sockets.
+/// Which side it is, which is a fact about the port and not the box. Part of what
+/// a socket is, because a module's inputs and outputs are numbered separately —
+/// port 0 is very often both.
 /// </param>
 public readonly record struct GroupSocket(Guid Node, int Port, bool IsOutput);
 
@@ -139,19 +121,11 @@ public readonly record struct GroupSocket(Guid Node, int Port, bool IsOutput);
 /// and every port from which one leaves.
 /// </summary>
 /// <remarks>
-/// Derived rather than declared, and derived from the wires alone. An input
-/// resting on a knob is not here, and neither is one normalled to Time
-/// ([0050](0050-normalled-sockets-carry-a-signal-with-no-wire.md)) — no wire
-/// crosses at either, so there is nothing for the box to show and nothing a
-/// person could do with it if it did.
-/// <para>
-/// The two sides are not symmetric, for the reason
-/// <see cref="Patch.SoleOutgoingFrom"/> gives: an input takes at most one wire
-/// by construction, so a crossing-in wire is one socket and never shares; an
-/// output may fan out to as many as it likes, so several wires leaving one inner
-/// output are one socket with several wires on it — which is what fan-out
-/// already looks like on an ordinary module.
-/// </para>
+/// Derived from the wires alone, so an input resting on a knob is not here and
+/// neither is one normalled to Time (ADR-0050). The two sides are not symmetric:
+/// an input takes at most one wire, so a crossing-in wire is one socket that
+/// never shares, where several wires leaving one inner output are one socket with
+/// several wires on it.
 /// </remarks>
 public readonly record struct GroupSockets(
     IReadOnlyList<GroupSocket> Inputs,

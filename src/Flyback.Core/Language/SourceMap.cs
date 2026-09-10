@@ -15,26 +15,14 @@ public readonly record struct Change(int Offset, int Length, string Text);
 /// its knobs.
 /// </summary>
 /// <remarks>
-/// <para>
-/// The link between a caret and a module, and between a knob and the number the
-/// text already has for it. Both are answered by position rather than by name,
-/// which is what lets them work on the text people write rather than on a
-/// dialect of it: the module in <c>atan2(a: 1.5) |&gt; out.left</c> is called
-/// nothing at all, and a scheme that needed a name would have to invent one and
-/// write it into somebody's file.
-/// </para>
-/// <para>
-/// The positions come from whoever made the text — <see cref="Binder"/> for a
-/// file that was built, <see cref="PatchPrinter"/> for one that was written out
-/// — because only they know which module ended up where. What is done here is
-/// the half neither of them has: turning a line and a column into an offset and
-/// a length, which takes the text again.
-/// </para>
-/// <para>
-/// Conservative wherever the text is not shaped for it, and it hands back
-/// nothing rather than guessing. Being wrong here means editing somebody else's
-/// line.
-/// </para>
+/// Both are answered by position rather than by name, which is what lets them
+/// work on the text people write: the module in
+/// <c>atan2(a: 1.5) |&gt; out.left</c> is called nothing at all, and a scheme
+/// needing a name would have to write one into somebody's file. The positions
+/// come from whoever made the text — <see cref="Binder"/> or
+/// <see cref="PatchPrinter"/> — and what is done here is turning a line and a
+/// column into an offset and a length. Conservative wherever the text is not
+/// shaped for it, since being wrong here means editing somebody else's line.
 /// </remarks>
 public sealed class SourceMap
 {

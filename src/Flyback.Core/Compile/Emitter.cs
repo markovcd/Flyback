@@ -33,9 +33,8 @@ public sealed class Emitter
 
     /// <summary>
     /// The two cells every stateful module wants and none of them owns — see
-    /// <see cref="Interval"/> and <see cref="HasMemory"/>. Held here rather than
-    /// asked for twice, so a patch with four filters in it costs two cells and
-    /// not eight.
+    /// <see cref="Interval"/> and <see cref="HasMemory"/>. Held here, so a patch
+    /// with four filters in it costs two cells and not eight.
     /// </summary>
     private Slot? interval;
     private Slot? memory;
@@ -53,16 +52,11 @@ public sealed class Emitter
     /// emit function.
     /// </summary>
     /// <remarks>
-    /// Here rather than passed to each of the four helpers that claim a cell,
-    /// because a module claims one from inside its own emit function and has no
-    /// idea it is being compiled. The compiler is the only thing that knows, and
-    /// this is the narrowest way for it to say so.
-    /// <para>
-    /// Saved and restored rather than merely set: an input read over a domain is
-    /// resolved <em>during</em> the reading module's emit, so a sweep puts one
-    /// module's emission inside another's, and a field that was only ever
-    /// assigned would attribute the inner module's oscillators to the outer one.
-    /// </para>
+    /// Here rather than passed to the helpers that claim a cell, because a module
+    /// claims one from inside its own emit function and has no idea it is being
+    /// compiled. Saved and restored rather than set: a swept input resolves other
+    /// modules during this one's emit, so a field only ever assigned would
+    /// attribute the inner module's oscillators to the outer one.
     /// </remarks>
     public Guid Owner { get; set; }
 
@@ -72,9 +66,9 @@ public sealed class Emitter
     public int RegisterCount { get; private set; }
 
     /// <summary>
-    /// How many one-evaluation cells have been handed out. Unlike a register these
-    /// are not SSA — a cell is read and then written, which is the point of it —
-    /// so they are counted separately and by hand.
+    /// How many one-evaluation cells have been handed out. Unlike a register
+    /// these are not SSA — a cell is read and then written — so they are counted
+    /// separately and by hand.
     /// </summary>
     public int UnitSlotCount { get; private set; }
 
@@ -117,20 +111,15 @@ public sealed class Emitter
     /// <summary>
     /// Reads what follows over a domain the patch supplies rather than the one
     /// the renderer does: every Coordinates and every Time resolved before the
-    /// matching <see cref="PopDomain"/> is handed these three registers instead
-    /// of the pixel's own.
+    /// matching <see cref="PopDomain"/> is handed these three registers.
     /// </summary>
     /// <remarks>
-    /// This is how a Probe charts a signal. What it draws is the signal at a
-    /// moment that varies along the picture, and in a program with one (x, y, t)
-    /// per evaluation the only way to say that is to substitute the three where
-    /// the subtree reads them. Nothing downstream can tell: what comes back are
-    /// ordinary registers, so both backends run the result without knowing a
-    /// domain was ever swapped.
-    /// <para>
-    /// A stack rather than three fields, because a Probe is an ordinary module
-    /// and one may be read from inside another one's sweep.
-    /// </para>
+    /// This is how a Probe charts a signal. In a program with one (x, y, t) per
+    /// evaluation, substituting the three where the subtree reads them is the only
+    /// way to say "the signal at a moment that varies along the picture", and what
+    /// comes back are ordinary registers, so neither backend can tell. A stack
+    /// rather than three fields, because a Probe may be read from inside another
+    /// one's sweep.
     /// </remarks>
     public void PushDomain(Slot x, Slot y, Slot t) => domains.Push((x, y, t));
 
@@ -172,28 +161,18 @@ public sealed class Emitter
 
     /// <summary>
     /// How far the renderer's clock moved since the previous evaluation, in
-    /// seconds — which is the sample rate, said the other way round.
+    /// seconds — the sample rate, said the other way round.
     /// </summary>
     /// <remarks>
     /// Nothing tells a module what rate it runs at, and this is how one finds
     /// out: a cell holds the clock as it was, and the difference is the interval.
-    /// It is <see cref="Phase"/>'s trick written out — an oscillator advances by
-    /// how far its domain moved (ADR-0030), and this measures how far time did —
-    /// and it is what lets a filter turn a cutoff in hertz into a coefficient
-    /// without the engine handing it anything.
-    /// <para>
-    /// Emitted once and shared by everything that asks, because what it measures
-    /// is a property of the evaluation rather than of the module asking: two
-    /// filters in one patch are stepping at the same rate by definition. A
-    /// pushed domain does not change it for the same reason — a Probe sweeping
-    /// time across the picture is drawing, and the clock it is drawn against is
-    /// still the renderer's.
-    /// </para>
-    /// <para>
-    /// Zero on the first evaluation, since there is no previous one to have
-    /// moved from, and meaningless where the program has no state at all — see
-    /// <see cref="HasMemory"/>, which is how a module says what it means there.
-    /// </para>
+    /// It is what lets a filter turn a cutoff in hertz into a coefficient without
+    /// the engine handing it anything. Emitted once and shared, because it is a
+    /// property of the evaluation rather than of the module asking — a pushed
+    /// domain does not change it either, since a Probe sweeping time is drawing
+    /// against the renderer's clock. Zero on the first evaluation, and
+    /// meaningless where the program has no state — see
+    /// <see cref="HasMemory"/>.
     /// </remarks>
     public Slot Interval()
     {
@@ -221,18 +200,12 @@ public sealed class Emitter
     /// One where the program has a memory behind it, zero where it has none.
     /// </summary>
     /// <remarks>
-    /// A cell written one and read back as one from the second evaluation
-    /// onwards — and read as zero for ever on the video path, where the renderer
-    /// passes no state and a write goes nowhere. It is the only way for a module
-    /// to ask the question at all: an emit function runs once, at compile time,
-    /// long before anything knows which sink is about to run the program.
-    /// <para>
-    /// What it is for is choosing what a stateful module means where there is
-    /// nothing to remember. Mixing on it gives a picture a decided answer —
-    /// ADR-0041 — instead of whatever the arithmetic happens to fall out at.
-    /// Shared like <see cref="Interval"/>, and for the same reason: the question
-    /// has one answer per program.
-    /// </para>
+    /// A cell written one and read back as one from the second evaluation on, and
+    /// read as zero for ever on the video path, where a write goes nowhere. It is
+    /// the only way a module can ask at all: an emit function runs at compile
+    /// time, long before anything knows which sink will run the program. Mixing
+    /// on it gives a picture a decided answer (ADR-0041) rather than whatever the
+    /// arithmetic falls out at. Shared like <see cref="Interval"/>.
     /// </remarks>
     public Slot HasMemory()
     {
@@ -273,16 +246,15 @@ public sealed class Emitter
     }
 
     /// <summary>
-    /// An op that owns a delay line. Scalar only, whatever arrives: a color
-    /// would need three buffers, and there is nothing a delayed picture would
-    /// mean that <see cref="OpCode.SampleFeedback"/> does not already do better.
+    /// An op that owns a delay line. Scalar only, whatever arrives: a color would
+    /// need three buffers, and <see cref="OpCode.SampleFeedback"/> already does
+    /// what a delayed picture would mean.
     /// </summary>
     /// <param name="position"></param>
     /// <param name="clip"></param>
     /// <summary>
     /// Reads a loaded clip at a position in seconds. Two modules given the same
-    /// clip share one table, the way two of them given the same number share one
-    /// literal.
+    /// clip share one table, the way two given the same number share one literal.
     /// </summary>
     public Slot Table(Slot position, LoadedSample clip)
     {
@@ -305,9 +277,8 @@ public sealed class Emitter
 
     /// <summary>
     /// Reads a loaded picture at a place. Two modules given the same picture
-    /// share one texture, the way two given the same clip share one table — which
-    /// matters more here, because the sharing is what stops a patch showing one
-    /// file four times from uploading it four times.
+    /// share one texture, which is what stops a patch showing one file four times
+    /// from uploading it four times.
     /// </summary>
     public Slot Picture(Slot x, Slot y, LoadedImage image)
     {
@@ -330,23 +301,14 @@ public sealed class Emitter
 
     /// <summary>
     /// Reads whatever is being played into <paramref name="key"/> right now — a
-    /// value that comes from outside the patch and may differ on the very next
-    /// evaluation.
+    /// value from outside the patch, which may differ on the next evaluation.
     /// </summary>
     /// <remarks>
-    /// Two modules asking for the same key share one register, the way two given
-    /// the same clip share one table and two given the same number share one
-    /// literal. That is not merely a saving: two MIDI modules reading one
-    /// keyboard have to agree about what it is doing, and sharing the register is
-    /// how they cannot fail to.
-    /// <para>
-    /// Read once, where the walk first asks, and every later ask hands back that
-    /// same register — so a key read by two modules reads the same in both,
-    /// whatever order the walk reached them in. That is the promise
-    /// <see cref="Load"/> makes about the clock, and it matters here for a
-    /// sharper reason: one evaluation is one moment, and a key that was down for
-    /// half of it was not down twice.
-    /// </para>
+    /// Two modules asking for the same key share one register, which is not
+    /// merely a saving: two MIDI modules reading one keyboard have to agree about
+    /// what it is doing, and sharing the register is how they cannot fail to. One
+    /// evaluation is one moment, and a key that was down for half of it was not
+    /// down twice.
     /// </remarks>
     public Slot Live(string key)
     {
@@ -374,8 +336,8 @@ public sealed class Emitter
     /// look at it, and returns nothing because there is nothing to return.
     /// </summary>
     /// <param name="scope">
-    /// Which trace, counted the same way in both of a patch's programs so that
-    /// the one writing and the one drawing agree about which is which.
+    /// Which trace, counted the same way in both of a patch's programs so the one
+    /// writing and the one drawing agree about which is which.
     /// </param>
     /// <param name="value"></param>
     public void Tap(int scope, Slot value) =>
@@ -390,19 +352,18 @@ public sealed class Emitter
     }
 
     /// <summary>
-    /// A phase accumulator, carrying its running total from one evaluation to
-    /// the next. Scalar only, like the delay lines and for the same reason: a
-    /// color has no phase, and nothing would read one.
+    /// A phase accumulator, carrying its running total from one evaluation to the
+    /// next. Scalar only, like the delay lines: a color has no phase.
     /// </summary>
     /// <param name="input">
     /// The domain the oscillator runs over — Time, usually, but anything at all.
-    /// Only how far it moves is used, which is what lets a patch keep driving an
+    /// Only how far it moves is used, which is what lets a patch drive an
     /// oscillator with a signal rather than a clock.
     /// </param>
     /// <param name="frequency">Cycles per unit of <paramref name="input"/>.</param>
     /// <param name="offset">
     /// Added after the accumulation rather than into it, so a phase input stays
-    /// the direct offset it reads as and modulating it is still modulation.
+    /// the direct offset it reads as.
     /// </param>
     public Slot Phase(Slot input, Slot frequency, Slot offset)
     {
@@ -432,8 +393,8 @@ public sealed class Emitter
 
     /// <summary>
     /// Hands a value to cycle <paramref name="slot"/> for the next evaluation.
-    /// Returns nothing, because there is no register to return: what this writes
-    /// cannot be read again until the program runs anew.
+    /// Returns nothing, because what this writes cannot be read again until the
+    /// program runs anew.
     /// </summary>
     public void UnitWrite(int slot, Slot value) =>
         Add(new Op(OpCode.UnitWrite, -1, value.Component(0), k: slot));
@@ -443,18 +404,12 @@ public sealed class Emitter
     /// see <see cref="OpCode.ClockWrite"/> for why the two are different ops.
     /// </summary>
     /// <remarks>
-    /// The difference is the bound. A signal is clamped to the rails on its way
-    /// into a cell, because a cycle drawn as wires has no coefficient to tame it
-    /// and pinning a runaway is the only way to catch one. A domain reading is
-    /// not a signal and that bound would be nonsense on it: the clock passes
-    /// sixteen after sixteen seconds, and a cell that stopped there would take a
-    /// module with it.
-    /// <para>
-    /// Public because a module may legitimately want to remember where a domain
-    /// had got to — a Sample keeps the position its last trigger arrived at, and
-    /// that is a clock reading in everything but name. Reach for
-    /// <see cref="UnitWrite"/> for anything that is a signal.
-    /// </para>
+    /// The difference is the bound: a signal is clamped to the rails on its way
+    /// into a cell, and that would be nonsense on a domain reading, since the
+    /// clock passes sixteen after sixteen seconds and a cell that stopped there
+    /// would take a module with it. Public because a module may legitimately
+    /// remember where a domain had got to — a Sample keeps the position its last
+    /// trigger arrived at. Reach for <see cref="UnitWrite"/> for a signal.
     /// </remarks>
     public void ClockWrite(int slot, Slot value) =>
         Add(new Op(OpCode.ClockWrite, -1, value.Component(0), k: slot));

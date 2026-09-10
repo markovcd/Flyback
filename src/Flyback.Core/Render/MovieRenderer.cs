@@ -23,20 +23,14 @@ public readonly record struct MovieSettings(
 
 /// <summary>
 /// Renders both sinks of a patch to one file: the video program frame by frame
-/// as Motion JPEG, the audio program sample by sample as PCM, interleaved into
-/// an AVI.
+/// as Motion JPEG, the audio program sample by sample as PCM, interleaved into an
+/// AVI.
 /// </summary>
 /// <remarks>
-/// Offline, and deliberately nothing like the preview. The preview drops frames
-/// to keep a clock; this cannot, so time is taken from the frame number rather
-/// than from a stopwatch and a slow patch simply takes longer to write than it
-/// does to watch.
-///
-/// One <see cref="SynthRenderer"/> for the whole run, which is what makes
-/// Feedback mean anything here — each frame reads the one before it, exactly as
-/// on screen, and exporting frame by frame through <c>SaveFrame</c> could never
-/// have shown that. The audio side keeps its own cursor for the same reason: an
-/// oscillator's phase and a delay line's tail run the length of the clip.
+/// Offline, so time is taken from the frame number rather than a stopwatch and a
+/// slow patch takes longer to write than to watch. One
+/// <see cref="SynthRenderer"/> for the whole run, which is what makes Feedback
+/// mean anything here; the audio side keeps its own cursor for the same reason.
 /// </remarks>
 public static class MovieRenderer
 {

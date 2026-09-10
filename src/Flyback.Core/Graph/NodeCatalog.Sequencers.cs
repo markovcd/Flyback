@@ -30,24 +30,16 @@ public partial class NodeCatalog
     private const float ShortestGateEdge = 0.002f;
 
     /// <summary>
-    /// The widest they may be made, as a fraction of a step, and the top of the
-    /// knob that sets them.
+    /// The widest the gate's edges may be made, as a fraction of a step, and the
+    /// top of the knob that sets them.
     /// </summary>
     /// <remarks>
-    /// Half a step, because the gate reaches its full height only between the
-    /// two ramps — from <c>shape</c> to <c>gate length - shape</c> — and that
-    /// stretch is empty once <c>shape</c> passes half the gate's length. Gate
-    /// length is itself held to one, so half a step is the widest edge that can
-    /// open the gate at all, and it does so only with the gate wide open: the
-    /// note becomes one smooth hump over the whole step, which is what the pad
-    /// in Slow weather is built on.
-    /// <para>
-    /// Read by the port and by the clamp both, so the knob and the wire stop at
-    /// the same place. They did not: the knob has always stopped here and the
-    /// clamp let a signal through to a whole step, where the two ramps overlap
-    /// so far that the gate never rises past a quarter and the part fades out
-    /// rather than playing.
-    /// </para>
+    /// Half a step, because the gate reaches full height only between the two
+    /// ramps — from <c>shape</c> to <c>gate length - shape</c> — and that stretch
+    /// is empty once <c>shape</c> passes half the gate's length. With the gate
+    /// wide open the note becomes one smooth hump over the whole step, which is
+    /// what the pad in Slow weather is built on. Read by the port and by the clamp
+    /// both, so the knob and the wire stop at the same place.
     /// </remarks>
     private const float WidestGateEdge = 0.5f;
 
@@ -64,28 +56,17 @@ public partial class NodeCatalog
     private const float Minute = 60f;
 
     /// <summary>
-    /// What a held value is divided by on its way into a cell and multiplied by
-    /// on the way out.
+    /// What a held value is divided by on its way into a cell and multiplied by on
+    /// the way out.
     /// </summary>
     /// <remarks>
-    /// A cell is clamped to ±16 — see <see cref="DelayState.WriteUnit"/> — and
-    /// that bound is not negotiable from here: it is the only place a cycle
-    /// drawn as wires can be caught running away, since nothing in a loop of
-    /// wires is obliged to have a coefficient under one in it.
-    /// <para>
-    /// It is a sensible bound for a signal and a useless one for the two things
-    /// anybody most wants to hold. A note number runs to 127 and a frequency to
-    /// thousands, and either would come back pinned at sixteen — a wrong note,
-    /// silently, with the patch looking perfectly correct. So this module keeps
-    /// what it holds on a scale of its own. Two multiplies, a power of two so
-    /// they are exact, and the bound moves to ±4096.
-    /// </para>
-    /// <para>
-    /// The clamp still catches a Hold wired into its own input. It now catches
-    /// it four thousand times further out, which is still finite, still pinned
-    /// at the rails rather than turned to NaN, and still clamped again at the
-    /// sink like everything else.
-    /// </para>
+    /// A cell is clamped to ±16 — see <see cref="DelayState.WriteUnit"/> — which
+    /// is the only place a cycle drawn as wires can be caught running away, and so
+    /// not negotiable from here. It is a useless bound for the two things anybody
+    /// most wants to hold: a note number runs to 127 and a frequency to thousands,
+    /// and either would come back pinned at sixteen — a wrong note, silently. Two
+    /// multiplies, a power of two so they are exact, move the bound to ±4096,
+    /// where a Hold wired into its own input is still caught.
     /// </remarks>
     private const float HoldHeadroom = 256f;
 

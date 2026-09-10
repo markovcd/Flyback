@@ -10,10 +10,9 @@ namespace Flyback.Core.Graph;
 /// The files that went in, as the patch named them before it was rewritten.
 /// </param>
 /// <param name="Missing">
-/// The files that could not be read, again as the patch named them. Not an
-/// error: a patch naming a file that has gone still opens, still compiles and
-/// still draws — to silence or to black where that file would have been — so a
-/// bundle of it does too, and the caller says so rather than this refusing.
+/// The files that could not be read, again as the patch named them. Not an error:
+/// a patch naming a file that has gone still opens and still draws, so a bundle
+/// of it does too.
 /// </param>
 public readonly record struct BundleReport(
     IReadOnlyList<string> Carried,
@@ -34,45 +33,22 @@ public readonly record struct LoadedBundle(Patch Patch, IReadOnlyDictionary<stri
 /// A patch and everything it names, in one file.
 /// </summary>
 /// <remarks>
+/// A patch names its sounds and pictures rather than carrying them (ADR-0052,
+/// ADR-0059), which leaves a <c>.fbk</c> full of paths that mean nothing on
+/// somebody else's machine. A bundle is the other file: the document as it always
+/// was, with the things it points at travelling beside it.
 /// <para>
-/// [0052](0052-a-patch-names-its-samples-rather-than-carrying-them.md) made a
-/// patch name its sounds rather than carry them, and
-/// [0059](0059-a-picture-comes-in-as-a-texture.md) did the same for its
-/// pictures. Both records say plainly what that gives up: a <c>.fbk</c> is no
-/// longer everything it needs, and a patch sent to somebody arrives as a
-/// document full of paths that mean nothing on their machine. Neither record
-/// was wrong — the reasons are about the undo stack and the file being text —
-/// and neither is undone here. A bundle is the *other* file: the document as it
-/// always was, with the things it points at travelling beside it.
+/// A zip, and deliberately nothing cleverer: the format is in the framework
+/// (ADR-0019), every operating system opens one, and the zip's own directory is
+/// the manifest. Inside is <c>patch.fbk</c> at the root and the files under
+/// <c>files/</c>, with every path in the patch rewritten to name the copy in the
+/// archive — which works because a relative path is measured from wherever the
+/// patch is.
 /// </para>
 /// <para>
-/// It is a zip, and deliberately nothing cleverer. The format is in the
-/// framework, so this adds no dependency
-/// ([0019](0019-no-third-party-dependencies-in-the-engine.md)); it is a format
-/// every operating system can already open, so a bundle that this program some
-/// day cannot read is still a folder somebody can get their work out of; and the
-/// zip's own directory is the manifest, so there is nothing to keep in step.
-/// </para>
-/// <para>
-/// Inside: <c>patch.fbk</c> at the root and the files under <c>files/</c>, named
-/// by their own names. The patch inside is not quite the patch outside — every
-/// path it holds is rewritten to name the copy in the archive — which is the
-/// whole trick, because a relative path is already measured from wherever the
-/// patch is (see <c>SampleLibrary.Beside</c>). So a bundle unpacked into a
-/// folder is a working patch with no further arrangement, and a bundle read
-/// without unpacking is one whose paths are the keys of what was read beside it.
-/// </para>
-/// <para>
-/// Nothing here opens a file. What to pack is asked for by path and answered by
-/// the caller, and what comes out is handed back as bytes for the caller to put
-/// somewhere — the same division <see cref="Compile.ISampleLibrary"/> makes, and
-/// for the same reason: this is the document's business and not the disk's.
-/// </para>
-/// <para>
-/// What is carried is asked of the modules rather than known here. A kind of
-/// carried state that names a file says so through
-/// <see cref="NodeExtra.Files"/>, so this mentions neither WAV nor PNG and a
-/// third kind of file is carried without it being touched.
+/// Nothing here opens a file: what to pack is asked for by path and answered by
+/// the caller. What is carried is asked of the modules through
+/// <see cref="NodeExtra.Files"/>, so this mentions neither WAV nor PNG.
 /// </para>
 /// </remarks>
 public static class PatchBundle
@@ -166,15 +142,12 @@ public static class PatchBundle
     /// by the names it names them.
     /// </summary>
     /// <remarks>
-    /// Nothing is written anywhere. A caller that wants a folder writes one out
-    /// of what comes back; a caller that only wants to draw the patch — the
-    /// command line, rendering on a machine with none of the files loose on it —
-    /// serves them from memory and never touches the disk.
+    /// Nothing is written anywhere. A caller that only wants to draw the patch
+    /// serves the files from memory and never touches the disk.
     /// </remarks>
     /// <exception cref="InvalidDataException">
     /// The archive is not one, or holds no patch. Thrown rather than answered,
-    /// because unlike a missing sound file there is nothing here to go on with:
-    /// what was asked for was a patch and there is not one.
+    /// because unlike a missing sound file there is nothing to go on with.
     /// </exception>
     public static LoadedBundle Read(Stream archive, ModuleCatalog? against = null)
     {
@@ -206,14 +179,10 @@ public static class PatchBundle
     }
 
     /// <summary>
-    /// Every file a patch names, once each and in the order it names them.
+    /// Every file a patch names, once each and in the order it names them. What
+    /// <see cref="Write"/> is about to ask for, offered on its own because a patch
+    /// backed by a bundle and saved loose has to put exactly these on the disk.
     /// </summary>
-    /// <remarks>
-    /// What <see cref="Write"/> is about to ask for, offered on its own because
-    /// the question is worth asking without packing anything: a patch backed by
-    /// a bundle that is being saved as a loose patch has to put those files on
-    /// the disk, and what to put there is exactly this list.
-    /// </remarks>
     public static IReadOnlyList<string> Files(Patch patch, ModuleCatalog? against = null)
     {
         ArgumentNullException.ThrowIfNull(patch);
@@ -235,10 +204,8 @@ public static class PatchBundle
     /// </summary>
     /// <remarks>
     /// A module this build does not have is passed over rather than complained
-    /// about. Its paths are still in the patch and are still written back out
-    /// unchanged, so a bundle made on a machine missing a plugin carries
-    /// everything but that plugin's files — which is worse than carrying them and
-    /// a great deal better than losing what the patch said.
+    /// about: its paths are still written back out unchanged, so a bundle made
+    /// without a plugin carries everything but that plugin's files.
     /// </remarks>
     private static IEnumerable<(NodeInstance Node, NodeExtra Extra)> Carriers(
         Patch patch, ModuleCatalog catalog)
@@ -252,20 +219,14 @@ public static class PatchBundle
     }
 
     /// <summary>
-    /// What to call a file inside the archive: its own name, and its own name
-    /// with a number after it where that is taken already.
+    /// What to call a file inside the archive: its own name, and its own name with
+    /// a number after it where that is taken already.
     /// </summary>
     /// <remarks>
-    /// Two folders may each hold a <c>drums.wav</c>, and inside a bundle there is
-    /// only one folder. Numbered rather than made unique by hashing the path,
-    /// because a bundle is a zip somebody may open in anything and a file called
-    /// <c>drums (2).wav</c> is one they can still recognise.
-    /// <para>
-    /// The name is taken apart by the same rules a path is, and then anything
-    /// left that a zip entry may not hold is dropped — so a path from another
-    /// operating system, or one with a separator the local one does not use,
-    /// still lands somewhere sensible instead of escaping the folder.
-    /// </para>
+    /// Numbered rather than hashed, because a bundle is a zip somebody may open in
+    /// anything and <c>drums (2).wav</c> is a name they still recognise. Anything
+    /// a zip entry may not hold is then dropped, so a path from another operating
+    /// system still lands somewhere sensible instead of escaping the folder.
     /// </remarks>
     private static string Unique(string path, HashSet<string> taken)
     {

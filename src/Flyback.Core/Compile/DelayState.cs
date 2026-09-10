@@ -6,26 +6,20 @@ namespace Flyback.Core.Compile;
 /// phases behind <see cref="OpCode.Phase"/>.
 /// </summary>
 /// <remarks>
-/// It belongs to the renderer rather than to the <see cref="CompiledPatch"/>,
-/// for the same reason ADR-0018 keeps a program immutable: a recompile swaps the
-/// program under the audio thread, and two programs may briefly both exist. State
-/// that lived on the program would be duplicated or lost at that moment; state
-/// that lives on the renderer simply carries on.
-/// <para>
+/// It belongs to the renderer rather than to the <see cref="CompiledPatch"/>: a
+/// recompile swaps the program under the audio thread, and two programs may
+/// briefly both exist, so state on the program would be duplicated or lost.
 /// Which buffer or cell an op uses is its position among the ops of its kind,
-/// counted as the program runs. Every op executes exactly once per evaluation and
-/// always in the same order, so the count is exact without storing an index on
-/// the op.
-/// </para>
+/// counted as the program runs — every op executes once per evaluation and
+/// always in the same order.
 /// </remarks>
 public sealed class DelayState
 {
     /// <summary>
-    /// The lines stay <see cref="float"/> while the registers around them are
-    /// <see cref="double"/>: they hold a signal on its way to a speaker, and
-    /// twenty-four bits of mantissa is already four more than a sample gets. The
-    /// accumulators below are the opposite case — what they hold is a position on
-    /// a clock, which is exactly where a float runs out (ADR-0032).
+    /// The lines stay <see cref="float"/> while the registers are
+    /// <see cref="double"/>: they hold a signal on its way to a speaker. The
+    /// accumulators below hold a position on a clock, which is where a float runs
+    /// out (ADR-0032).
     /// </summary>
     private readonly float[][] lines;
     private readonly int[] positions;
@@ -38,10 +32,8 @@ public sealed class DelayState
     /// <summary>
     /// One cell per <see cref="OpCode.UnitRead"/>/<see cref="OpCode.UnitWrite"/>
     /// pair: what a cycle in the patch carries from one evaluation to the next.
-    /// <see cref="double"/> like the accumulators rather than <see cref="float"/>
-    /// like the lines, because what sits here is a register on its way back round
-    /// a loop rather than a sample on its way to a speaker — it may be a phase, a
-    /// modulation index or a coordinate, and none of those is sixteen bits.
+    /// <see cref="double"/> rather than <see cref="float"/>, because what sits
+    /// here may be a phase, a modulation index or a coordinate.
     /// </summary>
     private readonly double[] units;
 
@@ -50,35 +42,27 @@ public sealed class DelayState
     /// played, kept so the eye can be shown it.
     /// </summary>
     /// <remarks>
-    /// The only state here that nothing in the program ever reads back. A delay
-    /// line, an accumulator and a cell are all written so the next evaluation
-    /// can read them; a trace is written for something outside the program
-    /// entirely — see <see cref="OpCode.Tap"/>. It lives here anyway because
-    /// this is the object the audio path already carries, and because it is
-    /// per-run rather than per-program in exactly the way everything else here
-    /// is.
-    /// <para>
-    /// <see cref="float"/> like the delay lines and for the same reason: what
-    /// goes in is a signal on its way to a speaker, and a chart of one needs
-    /// fewer bits than that rather than more.
-    /// </para>
+    /// The only state here nothing in the program reads back — a trace is written
+    /// for something outside it, see <see cref="OpCode.Tap"/> — and it lives here
+    /// because this is what the audio path already carries.
+    /// <see cref="float"/> like the delay lines: a chart of a signal needs fewer
+    /// bits than the signal.
     /// </remarks>
     private readonly float[][] traces;
     private readonly int[] traceHeads;
 
     /// <param name="lengthsInSeconds">Longest delay each line must hold, in program order.</param>
     /// <param name="sampleRate">
-    /// Evaluations per second — the *oversampled* rate on the audio path, since
-    /// that is how often the program actually runs.
+    /// Evaluations per second — the oversampled rate on the audio path, since
+    /// that is how often the program runs.
     /// </param>
     /// <param name="phaseCount">
-    /// How many accumulators the program needs. They keep no buffer and so need
-    /// no rate: an accumulator measures how far its input moved, and the step it
-    /// takes is whatever that was.
+    /// How many accumulators the program needs. They keep no buffer and need no
+    /// rate: an accumulator measures how far its input moved.
     /// </param>
     /// <param name="unitCount">
     /// How many one-evaluation cells the program needs — one per cycle in the
-    /// patch. A cell, like an accumulator, is a single number and needs no rate.
+    /// patch, and a single number like an accumulator.
     /// </param>
     /// <param name="traceCount"></param>
     public DelayState(
@@ -149,29 +133,18 @@ public sealed class DelayState
     /// this program still has.
     /// </summary>
     /// <remarks>
+    /// For an edit made while the sound is playing: matching by owner rather than
+    /// by position, the modules that were not touched carry on and only what
+    /// changed begins again. A line whose length changed keeps its tail — the
+    /// samples are copied newest first into a ring of either size — so a delay
+    /// time turned while it is ringing goes on ringing. A change of rate cannot
+    /// be carried over, since it resizes every line against a clock that no
+    /// longer means the same thing.
     /// <para>
-    /// What this is for is an edit made while the sound is playing. Cells are
-    /// numbered by position, so before this existed a recompile could only ask
-    /// whether the whole shape had stayed the same — and one oscillator added
-    /// anywhere meant no, so every tone in the patch restarted and every delay
-    /// line was emptied. Matching by owner instead, the modules that were not
-    /// touched carry on and only what actually changed begins again.
-    /// </para>
-    /// <para>
-    /// A line whose length changed keeps its tail: the samples are copied newest
-    /// first into a ring that may be longer or shorter, so a delay time turned
-    /// while it is ringing goes on ringing. What cannot be carried over is a
-    /// change of rate, which resizes every line against a clock that no longer
-    /// means the same thing — and only happens when the sound device itself
-    /// changes, which is not something anybody does mid-phrase.
-    /// </para>
-    /// <para>
-    /// Read on the thread that recompiles while the callback may still be
-    /// filling <paramref name="previous"/>, and deliberately so. Nothing here
-    /// resizes anything and every cell is a single aligned write, so the worst
-    /// of that race is a handful of samples of a tail arriving out of order —
-    /// against the alternative, which is the silence this method exists to
-    /// remove.
+    /// Read on the thread that recompiles while the callback may still be filling
+    /// <paramref name="previous"/>: nothing here resizes anything and every cell
+    /// is a single aligned write, so the worst of that race is a few samples of a
+    /// tail arriving out of order.
     /// </para>
     /// </remarks>
     public void Adopt(DelayState previous)
@@ -255,17 +228,13 @@ public sealed class DelayState
     /// <summary>
     /// The longest stretch of the past a chart may ask for, in seconds — the
     /// window knob's own ceiling (<see cref="Graph.PortDisplay.Duration"/> tops
-    /// out at 10^1.5, about 31.62 s) rounded up to something round.
+    /// out at 10^1.5, about 31.62 s) rounded up.
     /// </summary>
     /// <remarks>
-    /// The one place that number lives. It bounds both what a Scope's window is
-    /// allowed to compile to — see <c>PatchCompiler.WindowOf</c> — and how much
-    /// ring there is to answer it with, below. It was two seconds in both places
-    /// and written out twice, so when the knob's range grew past two seconds
-    /// neither followed and nothing said so: a Scope turned up past two seconds
-    /// charted two seconds, stretched across the full width and labelled as
-    /// whatever had been asked for. Raising one of the two alone does nothing,
-    /// which is exactly why they are now one constant rather than two.
+    /// The one place that number lives: it bounds both what a Scope's window may
+    /// compile to — see <c>PatchCompiler.WindowOf</c> — and how much ring there is
+    /// to answer it with. Raising one alone does nothing, which is why they are
+    /// one constant.
     /// </remarks>
     public const float MaxWindowSeconds = 32f;
 
@@ -277,11 +246,10 @@ public sealed class DelayState
 
     /// <summary>Puts one evaluation into trace <paramref name="slot"/>.</summary>
     /// <remarks>
-    /// Called from the sound callback, so it allocates nothing and takes no
-    /// lock. What reads it is <see cref="CopyTrace"/>, on the thread that draws
-    /// — which may therefore read across a write. A chart with a seam in it for
-    /// one frame is a better answer than a lock on the audio thread, and it is
-    /// the same trade <c>AudioRing</c> already makes for a recording.
+    /// Called from the sound callback, so it allocates nothing and takes no lock.
+    /// <see cref="CopyTrace"/> reads it on the drawing thread and may therefore
+    /// read across a write: a chart with a seam in it for one frame is a better
+    /// answer than a lock on the audio thread.
     /// </remarks>
     public void Tap(int slot, double value)
     {
@@ -295,28 +263,17 @@ public sealed class DelayState
 
     /// <summary>
     /// Lays the newest <paramref name="span"/> evaluations of a trace out across
-    /// <paramref name="into"/>, oldest first, so what the caller holds is a
-    /// stretch of the past in the order it happened and at whatever width it
-    /// means to draw.
+    /// <paramref name="into"/>, oldest first, at whatever width the caller means
+    /// to draw.
     /// </summary>
     /// <remarks>
     /// Each cell is the furthest from nought of the evaluations that fall in it,
-    /// keeping its sign. A window is always more evaluations than there are
-    /// columns — a fiftieth of a second is four thousand of them, two seconds is
-    /// four hundred thousand — so something has to be chosen, and which is
-    /// chosen decides what a long timebase looks like.
-    /// <para>
-    /// Taking one per cell aliases: a tone whose period happens to divide the
-    /// step charts as a slow wobble or a straight line, which is the one failure
-    /// a scope must not have. Averaging is worse still at the far end — a
-    /// waveform is symmetric about nought, so a bucket holding whole cycles of
-    /// it averages to nothing and two seconds of a loud tone draws as silence.
-    /// The peak has neither problem: a bucket of many cycles gives its
-    /// amplitude, adjacent buckets take opposite sides of the wave, and with the
-    /// fill under the trace that is the solid band a real scope shows at a sweep
-    /// far slower than the signal. A bucket of one evaluation is that evaluation,
-    /// so nothing is done to a chart that did not need decimating.
-    /// </para>
+    /// keeping its sign — a window is always more evaluations than there are
+    /// columns, so something has to be chosen. Taking one per cell aliases: a tone
+    /// whose period divides the step charts as a wobble or a straight line.
+    /// Averaging is worse at the far end, since a waveform is symmetric about
+    /// nought and a bucket of whole cycles averages to silence. The peak has
+    /// neither problem, and a bucket of one evaluation is that evaluation.
     /// <para>
     /// May be read across a write, and is meant to be: see <see cref="Tap"/>.
     /// </para>
@@ -363,24 +320,14 @@ public sealed class DelayState
     /// nought, and the root mean square of all of them.
     /// </summary>
     /// <remarks>
-    /// The same ring <see cref="CopyTrace"/> draws, reduced to two numbers
-    /// instead of laid out across a chart — and both are wanted at once because
-    /// they are read off one pass and answer different questions. The peak is
-    /// what hits: a single loud sample moves it and nothing makes it fall but
-    /// time. The root mean square is what a level meter shows, being the power in
-    /// the window rather than its extreme, and it is the one that reads as
-    /// loudness. Neither is smoothed here — the window is the smoothing, and it
-    /// is a knob.
+    /// Both at once, off one pass, because they answer different questions: the
+    /// peak is what hits, and the root mean square is the power in the window,
+    /// which is what reads as loudness. Neither is smoothed — the window is the
+    /// smoothing, and it is a knob. Squares are summed in a <see cref="double"/>,
+    /// since a float accumulator stops noticing new samples about a hundred
+    /// thousand in, which would read as a meter that goes deaf.
     /// <para>
-    /// Squares are summed in a <see cref="double"/> because the span is hundreds
-    /// of thousands of samples at the oversampled rate, and a float accumulator
-    /// stops noticing new ones about a hundred thousand in — which would read as
-    /// a meter that goes deaf the longer its window.
-    /// </para>
-    /// <para>
-    /// May be read across a write, and is meant to be: see <see cref="Tap"/>. A
-    /// meter that catches one sample of the next buffer is out by that sample,
-    /// which is not a quantity anything downstream of it can express.
+    /// May be read across a write, and is meant to be: see <see cref="Tap"/>.
     /// </para>
     /// </remarks>
     public (float Peak, float Level) Measure(int slot, int span)
@@ -411,9 +358,8 @@ public sealed class DelayState
 
     /// <summary>
     /// Whether this state still fits a program. Op order decides which buffer is
-    /// which, so a recompile that changes the delays at all gets fresh buffers —
-    /// and the tail that was ringing is lost, which is the honest outcome: the
-    /// old tail belonged to a patch that no longer exists.
+    /// which, so a recompile that changes the delays gets fresh buffers, and the
+    /// tail that was ringing belonged to a patch that no longer exists.
     /// </summary>
     public bool Fits(
         IReadOnlyList<float> lengthsInSeconds,
@@ -465,13 +411,11 @@ public sealed class DelayState
 
     /// <summary>Puts a value in cell <paramref name="slot"/> for the next evaluation to read.</summary>
     /// <remarks>
-    /// Bounded exactly as <see cref="Write"/> is, and for a sharper version of the
-    /// same reason. A delay line's feedback is clamped below one before it ever
-    /// reaches the buffer; a cycle drawn as wires has no such coefficient anywhere
-    /// in it, so a loop with a gain above one is not merely possible but easy, and
-    /// this is the only place it can be caught. Clamping rather than refusing
-    /// keeps the runaway audible as a value pinned at the rails — which is what a
-    /// real rack does too — instead of turning the patch into silent NaN.
+    /// Bounded as <see cref="Write"/> is, and more sharply needed: a cycle drawn
+    /// as wires has no feedback coefficient anywhere in it, so a loop with a gain
+    /// above one is easy to draw and this is the only place to catch it. Clamping
+    /// rather than refusing keeps the runaway audible at the rails instead of
+    /// turning the patch into silent NaN.
     /// </remarks>
     public void WriteUnit(int slot, double value) =>
         units[slot] = double.IsFinite(value) ? Math.Clamp(value, -16d, 16d) : 0d;
@@ -481,13 +425,11 @@ public sealed class DelayState
     /// bounded to what a number can be and to nothing else.
     /// </summary>
     /// <remarks>
-    /// The clamp above is for a value a wire can reach, where a loop with a gain
-    /// above one is easy to draw and pinning it at the rails is the only way to
-    /// keep it audible rather than NaN. A clock is neither: nothing in a patch
-    /// can write one and nothing can make it run away. What it does do is pass
-    /// sixteen, after sixteen seconds — and clamped, it stops there for good,
-    /// leaving every module that measures its own rate off it to see an interval
-    /// that grows for the rest of the session. See <see cref="OpCode.ClockWrite"/>.
+    /// Nothing in a patch can write a clock or make it run away, but it does pass
+    /// sixteen after sixteen seconds — and clamped it would stop there for good,
+    /// leaving every module that measures its own rate off it seeing an interval
+    /// that grows for the rest of the session. See
+    /// <see cref="OpCode.ClockWrite"/>.
     /// </remarks>
     public void WriteClock(int slot, double value) =>
         units[slot] = double.IsFinite(value) ? value : 0d;
@@ -495,15 +437,14 @@ public sealed class DelayState
     /// <summary>
     /// Advances accumulator <paramref name="cell"/> by however far
     /// <paramref name="input"/> has moved since the last evaluation, counted in
-    /// cycles of <paramref name="frequency"/>, and returns the phase that
-    /// results. Wrapped into [0, 1), which every waveform is periodic over and
-    /// which is also what keeps the running total from losing its low bits.
+    /// cycles of <paramref name="frequency"/>, and returns the phase. Wrapped into
+    /// [0, 1), which every waveform is periodic over and which keeps the running
+    /// total from losing its low bits.
     /// </summary>
     /// <remarks>
-    /// The first evaluation takes no step at all: there is no previous input to
-    /// measure against, and starting from a guess would be a click of exactly
-    /// the kind this exists to remove. So a cell begins at phase zero and the
-    /// patch is heard from the start of a cycle.
+    /// The first evaluation takes no step: there is no previous input to measure
+    /// against, and starting from a guess would be a click of exactly the kind
+    /// this exists to remove.
     /// </remarks>
     public double Advance(int cell, double input, double frequency)
     {
@@ -563,9 +504,9 @@ public sealed class DelayState
 
     /// <summary>
     /// Wraps an index that may have gone either side of the buffer. Feedback is
-    /// clamped below one, but a delay line is still the one place in the program
-    /// where a value can accumulate, so the write is bounded as well — ADR-0013's
-    /// rule, applied to something that persists.
+    /// clamped below one, but a delay line is still the one place a value can
+    /// accumulate, so the write is bounded as well — ADR-0013's rule, applied to
+    /// something that persists.
     /// </summary>
     private static int Index(int index, int length)
     {

@@ -7,24 +7,14 @@ namespace Flyback.Core.Graph;
 /// One editable value of a plugin's extra, described rather than drawn.
 /// </summary>
 /// <remarks>
-/// The whole of the declarative route
-/// ([0055](0055-a-plugins-extra-declares-its-editor.md)): a plugin says what it
-/// carries, and the App draws it. No plugin ships a control, so Avalonia never
-/// becomes an assembly the host has to own, and a plugin binary is not pinned to
-/// the version of it a given build shipped.
+/// The whole of the declarative route (ADR-0055): a plugin says what it carries
+/// and the App draws it, so no plugin ships a control and no plugin binary is
+/// pinned to the Avalonia a given build shipped.
 /// <para>
-/// The vocabulary is deliberately short. Every shape here is public API that
-/// cannot be taken back, so a fourth word waits for a module that is actually
-/// blocked rather than for an imagined one. The first two shipped together; the
-/// third — <see cref="Choice"/> — arrived when the MIDI Input needed to say
-/// *which* keyboard, which is neither a number nor a switch. A path and a list of
-/// records are still imagined, and are still not here.
-/// </para>
-/// <para>
-/// What this cannot express is a control of its own: a keyboard, a waveform, a
-/// list you reorder. That is the price of the route, and the engine's own three
-/// kinds are the proof it is a real one — all three needed a bespoke control and
-/// none of them goes through here.
+/// The vocabulary is deliberately short — every shape here is public API that
+/// cannot be taken back — and what it cannot express is a control of its own: a
+/// keyboard, a waveform, a list you reorder. The engine's own three kinds each
+/// needed one, and none of them goes through here.
 /// </para>
 /// </remarks>
 /// <param name="Key">
@@ -35,15 +25,13 @@ namespace Flyback.Core.Graph;
 public abstract record ExtraField(string Key, string Label)
 {
     /// <summary>
-    /// The stored value held to what this field can actually mean, and the
-    /// field's own default where it means nothing at all.
+    /// The stored value held to what this field can mean, and the field's own
+    /// default where it means nothing at all.
     /// </summary>
     /// <remarks>
-    /// Every read goes through here rather than trusting the file, for the reason
-    /// <see cref="Step.Sane"/> exists: a patch is text somebody may have edited,
-    /// so the shape it can hold is wider than the shape that means anything. It
-    /// is also what a fresh instance is seeded with, since "no value yet" is the
-    /// same question as "a value that means nothing".
+    /// Every read goes through here rather than trusting the file: a patch is text
+    /// somebody may have edited. It is also what a fresh instance is seeded with,
+    /// since "no value yet" is the same question as "a value that means nothing".
     /// </remarks>
     public abstract JsonNode Sane(JsonNode? stored);
 
@@ -55,11 +43,9 @@ public abstract record ExtraField(string Key, string Label)
     /// rests between whole numbers.
     /// </summary>
     /// <remarks>
-    /// A <see cref="PortSpec"/> rather than a range of its own, and that is the
-    /// reuse this shape is built on: the App already draws one of those, and
-    /// <see cref="PortDisplay"/> already writes 57 as "A3" and -3 as "1 ms". A
-    /// plugin's field gets all of it for nothing, and reads the same as a knob
-    /// two rows above it because it is drawn by the same code.
+    /// A <see cref="PortSpec"/> rather than a range of its own, so the App draws
+    /// it and <see cref="PortDisplay"/> writes 57 as "A3" — a plugin's field reads
+    /// the same as a knob two rows above because it is the same code.
     /// </remarks>
     public sealed record Number(string Key, string Label, PortSpec Spec) : ExtraField(Key, Label)
     {
@@ -80,31 +66,23 @@ public abstract record ExtraField(string Key, string Label)
     }
 
     /// <summary>
-    /// One of a list of named things — an instrument to listen to, a port to
-    /// open, a mode to run in.
+    /// One of a list of named things — an instrument to listen to, a port to open,
+    /// a mode to run in.
     /// </summary>
     /// <remarks>
-    /// The third word of the vocabulary, and the one the two above said should
-    /// wait for a plugin that was actually blocked rather than an imagined one.
-    /// The MIDI Input is that module: what it carries is *which* keyboard, which
-    /// is neither a number nor a switch, and no arrangement of the other two says
-    /// it.
-    /// <para>
-    /// What makes it different from them is that the options are not fixed. A
-    /// number's range is a fact about the field; a list of instruments is a fact
-    /// about the room, and it changes while the program is running. So
-    /// <see cref="Options"/> is read each time the panel is drawn — see
-    /// <see cref="NodeExtra.Fields"/>, which a kind may compute rather than hold.
-    /// </para>
+    /// What makes it different from a number or a switch is that the options are
+    /// not fixed: a list of instruments is a fact about the room and changes while
+    /// the program runs, so <see cref="Options"/> is read each time the panel is
+    /// drawn — see <see cref="NodeExtra.Fields"/>, which a kind may compute rather
+    /// than hold.
     /// </remarks>
     /// <param name="Options">
-    /// What there is to choose from, as it stands right now. May be empty, which
-    /// is a real answer: nothing is plugged in.
+    /// What there is to choose from right now. May be empty, which is a real
+    /// answer: nothing is plugged in.
     /// </param>
     /// <param name="Fallback">
-    /// What a fresh instance carries, and what a stored value that is not a
-    /// string falls back to. Not required to be in <see cref="Options"/> — the
-    /// one the field means may be unplugged at the moment it is asked.
+    /// What a fresh instance carries, and what a stored value that is not a string
+    /// falls back to. Not required to be in <see cref="Options"/>.
     /// </param>
     public sealed record Choice(
         string Key,
@@ -120,15 +98,11 @@ public abstract record ExtraField(string Key, string Label)
         /// What is chosen, which is whatever was stored.
         /// </summary>
         /// <remarks>
-        /// Deliberately not held to <see cref="Options"/>, and this is the one
-        /// place a field's tidying stops short of what it can mean. An id that is
-        /// not in the list is not a broken value: it is a device that is switched
-        /// off, and a patch saved with it should still name it when it comes
-        /// back. Falling back to the default would quietly rewrite the patch to
-        /// mean something else the first time it was opened on a machine where
-        /// the thing was unplugged — which is the same mistake a Sample would
-        /// make if a missing file cleared the path. See <see cref="SampleExtra"/>,
-        /// which reports rather than forgets.
+        /// Deliberately not held to <see cref="Options"/>: an id that is not in the
+        /// list is a device switched off rather than a broken value, and falling
+        /// back to the default would quietly rewrite the patch the first time it
+        /// was opened on a machine where the thing was unplugged. See
+        /// <see cref="SampleExtra"/>, which reports rather than forgets.
         /// </remarks>
         public string Value(JsonNode? stored) =>
             stored?.GetValueKind() == JsonValueKind.String
@@ -172,13 +146,9 @@ public abstract record ExtraField(string Key, string Label)
 
 /// <summary>
 /// One entry of a <see cref="ExtraField.Choice"/>: the id a patch stores, and the
-/// name a person reads.
+/// name a person reads. Kept apart so a saved patch goes on meaning the same
+/// thing when a device is renamed or moved to another port.
 /// </summary>
-/// <remarks>
-/// The two are kept apart on purpose. A saved patch must go on meaning the same
-/// thing when a device is renamed, moved to another port or read on another
-/// machine, so the id is what is written down and the name is only ever shown.
-/// </remarks>
 /// <param name="Id">Stable, and what ends up in the file.</param>
 /// <param name="Name">What the picker shows.</param>
 public readonly record struct ChoiceOption(string Id, string Name);

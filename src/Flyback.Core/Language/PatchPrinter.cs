@@ -6,16 +6,15 @@ namespace Flyback.Core.Language;
 
 /// <summary>A patch as text, and where in that text each of its modules stands.</summary>
 /// <remarks>
-/// The map is what makes a printing something to click about rather than only
-/// something to read: it says which module the words under a caret are, and
-/// where a knob's number is written. Nothing has to be renamed for it, because
-/// what it holds is positions — a module folded into the middle of a pipeline is
-/// called nothing and is pointed at all the same.
+/// The map is what makes a printing something to click about: it says which
+/// module the words under a caret are. What it holds is positions, so a module
+/// folded into the middle of a pipeline is called nothing and is pointed at all
+/// the same.
 /// </remarks>
 /// <param name="Order">
-/// The modules whose calls stand in the text, from the first word to the last.
-/// Kept so that a printing a knob has been written into can be mapped again
-/// without printing it afresh — see <see cref="PatchPrinter.Locate"/>.
+/// The modules whose calls stand in the text, from the first word to the last,
+/// so a printing a knob has been written into can be mapped again without
+/// printing it afresh — see <see cref="PatchPrinter.Locate"/>.
 /// </param>
 public sealed record Printing(string Source, SourceMap Map, IReadOnlyList<Guid> Order);
 
@@ -23,16 +22,12 @@ public sealed record Printing(string Source, SourceMap Map, IReadOnlyList<Guid> 
 /// A patch written back out as source. The lossy direction, deliberately.
 /// </summary>
 /// <remarks>
-/// What this is for is reading: a patch somebody sent, a diff between two of
-/// them, a model being shown what it is working on. It is not for round-tripping
-/// a file — node ids are regenerated, canvas positions are re-laid by
-/// <see cref="PatchLayout"/>, and a group's collapsed state does not survive.
-/// <see cref="PatchIO"/> is what keeps a patch exactly.
-/// <para>
-/// What it does guarantee is that the text means the same instrument: printing a
-/// patch and building it again produces the same program, opcode for opcode.
-/// That is the property worth having and the one the tests hold it to.
-/// </para>
+/// For reading: a patch somebody sent, a diff, a model being shown what it is
+/// working on. Not for round-tripping a file — ids are regenerated, positions
+/// are re-laid by <see cref="PatchLayout"/>, and a group's collapsed state does
+/// not survive; <see cref="PatchIO"/> is what keeps a patch exactly. What it
+/// does guarantee is that the text means the same instrument: printing a patch
+/// and building it again gives the same program, opcode for opcode.
 /// </remarks>
 public static class PatchPrinter
 {
@@ -41,10 +36,9 @@ public static class PatchPrinter
 
     /// <summary>One piece of written text, and the modules whose calls it contains.</summary>
     /// <remarks>
-    /// In the order they are written, which is what lets them be lined up
-    /// afterwards with the calls a reader — or a parser — finds in the finished
-    /// text. Only the order has to survive, so nothing here counts characters:
-    /// folding the long lines moves every offset and leaves the order alone.
+    /// In the order they are written, so they can be lined up afterwards with the
+    /// calls a parser finds. Only the order has to survive, which is why nothing
+    /// here counts characters: folding the long lines moves every offset.
     /// </remarks>
     private readonly record struct Part(string Text, IReadOnlyList<Guid> Calls)
     {
@@ -57,11 +51,10 @@ public static class PatchPrinter
     /// catalogue.
     /// </summary>
     /// <param name="called">
-    /// What to call each module, where the caller has names of its own it needs
-    /// the text to agree with. Supplying this also gives every module a binding
-    /// rather than inlining what is only used once — the point of passing names
-    /// in is that everything can be pointed at afterwards, and a module folded
-    /// into the middle of a pipeline has nothing to point at.
+    /// What to call each module, where the caller has names the text must agree
+    /// with. Supplying this also gives every module a binding rather than
+    /// inlining what is used once, since a module folded into a pipeline has
+    /// nothing to point at.
     /// </param>
     public static string Print(
         Patch patch,
@@ -87,16 +80,11 @@ public static class PatchPrinter
     /// Where each module stands in a printing that has been written into since.
     /// </summary>
     /// <remarks>
-    /// A knob turned in the panel changes a number in the text, which moves
-    /// every offset after it and leaves the calls exactly where they were in the
-    /// order. So the same list lines up against the edited text and the map is
-    /// made again without printing the patch afresh — which would replace what
-    /// somebody is reading to say a thing the text already says.
-    /// <para>
-    /// The count is the guard. Text that has grown or lost a call is no longer
-    /// this printing, and what comes back points at nothing rather than at the
-    /// module that used to be there.
-    /// </para>
+    /// A knob turned in the panel moves every offset after it and leaves the
+    /// calls where they were in the order, so the same list lines up against the
+    /// edited text and the map is made again without replacing what somebody is
+    /// reading. The count is the guard: text that has grown or lost a call is no
+    /// longer this printing, and what comes back points at nothing.
     /// </remarks>
     public static SourceMap Locate(
         Patch patch,
@@ -110,25 +98,21 @@ public static class PatchPrinter
     }
 
     /// <summary>
-    /// How a knob is written, so that a value put into a source file is spelled
-    /// the way a printing spells one.
+    /// How a knob is written, so a value put into a source file is spelled the
+    /// way a printing spells one — a note by its name and a length of time by the
+    /// time it means, since writing the raw figure would leave a diff on every
+    /// value anybody touched.
     /// </summary>
-    /// <remarks>
-    /// A note by its name and a length of time by the time it means, because
-    /// those are the sockets where the number is not what it means — writing the
-    /// raw figure would leave a diff on every value anybody touched.
-    /// </remarks>
     public static string Knob(float value, PortDisplay display) => Writer.Value(value, display);
 
     /// <summary>
-    /// The tune or the scale a module carries, written as the block that says
-    /// it — or null where the module carries neither.
+    /// The tune or the scale a module carries, written as the block that says it
+    /// — or null where the module carries neither.
     /// </summary>
     /// <remarks>
-    /// Null also for a block with nothing in it, because a printing is for
-    /// reading and an empty sequencer restating its emptiness is noise. A caller
+    /// Null also for an empty block, because a printing is for reading. A caller
     /// putting one back into a file somebody has open wants <c>[ ]</c> instead,
-    /// since there it has to say what changed rather than only what is there.
+    /// since there it has to say what changed.
     /// </remarks>
     public static string? Carried(NodeInstance node, NodeDef def) => Writer.Carried(node, def);
 
@@ -137,9 +121,9 @@ public static class PatchPrinter
     /// names none.
     /// </summary>
     /// <remarks>
-    /// The path as it stands, quotes not included and empty where nothing has
-    /// been chosen. Whether it can be written is the writer's question: there is
-    /// no escape for a quote, so a path carrying one has no spelling here.
+    /// The path as it stands, quotes not included. Whether it can be written is
+    /// the writer's question: there is no escape for a quote, so a path carrying
+    /// one has no spelling here.
     /// </remarks>
     public static string? Held(NodeInstance node, NodeDef def) =>
         def.Extra<SampleExtra>() is not null ? SampleExtra.Of(node) ?? string.Empty
@@ -151,11 +135,10 @@ public static class PatchPrinter
     /// spelling for it.
     /// </summary>
     /// <remarks>
-    /// A number on whatever scale the field reads on, so a note-scaled field is
-    /// its note; a switch as one or nought, which is what the binder reads a
-    /// number on one as; and a choice as the one string the language has, since
-    /// what is stored is an id and an id is not a number. A shape this build has
-    /// never heard of is left alone rather than written wrongly.
+    /// A number on whatever scale the field reads on, a switch as one or nought,
+    /// and a choice as the one string the language has, since what is stored is
+    /// an id. A shape this build has never heard of is left alone rather than
+    /// written wrongly.
     /// </remarks>
     public static string? Field(NodeInstance node, NodeExtra extra, ExtraField field)
     {
@@ -197,19 +180,12 @@ public static class PatchPrinter
     /// Where each module ended up in the text that was just written.
     /// </summary>
     /// <remarks>
-    /// <para>
-    /// The text is read back to find out. The writer knows the order it wrote
-    /// the calls in and the parser knows where the calls are, and a printing is
-    /// exactly as many calls as the writer emitted — so lining the two lists up
-    /// gives every module its place, including the ones written with no name at
-    /// all. Reading back also means the folding pass can move whatever it likes:
-    /// nothing here counted a character.
-    /// </para>
-    /// <para>
-    /// A printing that will not parse is a fault in the printer rather than in
-    /// anybody's file, and the honest answer to it is a map that points at
-    /// nothing rather than one that points at the wrong things.
-    /// </para>
+    /// The text is read back to find out: the writer knows the order it wrote the
+    /// calls in, the parser knows where they are, and a printing is exactly as
+    /// many calls as the writer emitted — so lining the two up places every
+    /// module, including those written with no name. It also means the folding
+    /// pass can move whatever it likes. A printing that will not parse is a fault
+    /// in the printer, and the honest answer is a map pointing at nothing.
     /// </remarks>
     private static SourceMap Located(
         string source,
@@ -394,15 +370,11 @@ public static class PatchPrinter
     }
 
     /// <summary>
-    /// Decides which modules get a name of their own before anything is written.
-    /// </summary>
-    /// <remarks>
-    /// A module is named when inlining it would not say the same thing: when
-    /// more than one wire leaves it, when nothing does, when what leaves is an
+    /// Decides which modules get a name of their own before anything is written:
+    /// where more than one wire leaves, where none does, where what leaves is an
     /// output other than the first — no expression can stand for a Sequencer's
-    /// gate — or when somebody named it on the canvas, in which case the name is
-    /// worth keeping whatever the shape.
-    /// </remarks>
+    /// gate — or where somebody named it on the canvas.
+    /// </summary>
     private static Plan Prepare(
         Patch patch,
         ModuleCatalog modules,
@@ -452,10 +424,9 @@ public static class PatchPrinter
     /// is written by, else what the palette calls it.
     /// </summary>
     /// <remarks>
-    /// The third is for the handful whose short name is a word the language
-    /// wants back — <c>midi.in</c> shortens to <c>in</c>, and a binding called
-    /// that reads as a socket everywhere it appears. Its label is "MIDI In",
-    /// which makes a perfectly good <c>midi_in</c>.
+    /// The third is for the handful whose short name is a word the language wants
+    /// back — <c>midi.in</c> shortens to <c>in</c>, and a binding called that
+    /// reads as a socket. Its label makes a perfectly good <c>midi_in</c>.
     /// </remarks>
     private static string Wanted(NodeInstance node, ModuleCatalog modules)
     {

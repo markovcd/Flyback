@@ -1,33 +1,23 @@
 namespace Flyback.Core.Graph;
 
 /// <summary>
-/// What the patch looked like before each edit, so that an edit can be taken
-/// back and put again.
+/// What the patch looked like before each edit, so an edit can be taken back and
+/// put again.
 /// </summary>
 /// <remarks>
-/// Snapshots rather than commands. A step here is the whole document as JSON
-/// and undoing is loading one, where the alternative is an inverse for every
-/// edit the program can make — each one a chance for the two to disagree, and
-/// each new edit a chance to forget writing it. A patch is small enough that
-/// the trade is not close: the largest preset in the box is twenty-six modules
-/// and a few kilobytes, and the serialiser is the one files already use, so
-/// anything that survives being saved survives being undone and nothing needs
-/// a second opinion about what an edit was.
+/// Snapshots rather than commands: a step is the whole document as JSON and
+/// undoing is loading one, where the alternative is an inverse per edit for the
+/// two to disagree about. A patch is small enough that the trade is not close,
+/// and the serialiser is the one files already use.
 /// <para>
-/// Taking a snapshot stamps the patch's requirements exactly as saving one
-/// does, because it is the same call: a snapshot and a file are the same text.
-/// </para>
-/// <para>
-/// Nothing here knows what any edit did. A step is a comparison against the
-/// last one, so an edit that changed nothing is not a step at all and a caller
-/// that records too eagerly pays only for the compare — which is what lets the
-/// canvas record from one place rather than at each of the things it can do.
+/// Nothing here knows what any edit did. A step is a comparison against the last
+/// one, so an edit that changed nothing is not a step and a caller that records
+/// too eagerly pays only for the compare.
 /// </para>
 /// </remarks>
 /// <param name="modules">
-/// Which catalogue a restored patch's type ids mean, defaulting to the
-/// installed one. Named explicitly, a history can be exercised against a
-/// catalogue that is not the running program's.
+/// Which catalogue a restored patch's type ids mean, defaulting to the installed
+/// one.
 /// </param>
 public sealed class PatchHistory(ModuleCatalog? modules = null)
 {
@@ -47,14 +37,10 @@ public sealed class PatchHistory(ModuleCatalog? modules = null)
     private object? mark;
 
     /// <summary>
-    /// Whether the patch differs from the one last opened or written out.
+    /// Whether the patch differs from the one last opened or written out. A
+    /// comparison of two snapshots rather than a flag set by editing, which is
+    /// what makes undoing back to where you started stop counting as a change.
     /// </summary>
-    /// <remarks>
-    /// A comparison of the two snapshots rather than a flag set by editing,
-    /// which is what makes undoing back to where you started stop counting as a
-    /// change: it is the same document again, and the whole document is what a
-    /// step here already is.
-    /// </remarks>
     public bool IsModified => current != saved;
 
     public bool CanUndo => past.Count > 0;
@@ -68,14 +54,11 @@ public sealed class PatchHistory(ModuleCatalog? modules = null)
     public object? Mark => mark;
 
     /// <summary>
-    /// Begin from this document, with nothing behind it.
+    /// Begin from this document, with nothing behind it. A patch that was opened,
+    /// built from a preset or handed over by the assistant is a new document:
+    /// undoing back into whatever was open before would be losing the file
+    /// somebody just opened.
     /// </summary>
-    /// <remarks>
-    /// A patch that was opened, built from a preset or handed over by the
-    /// assistant is a new document rather than an edit to the last one. Undoing
-    /// back into whatever somebody had open before they opened a file would not
-    /// be undo; it would be losing the file they just opened.
-    /// </remarks>
     public void Opened(Patch patch, object? mark = null)
     {
         past.Clear();
@@ -98,35 +81,29 @@ public sealed class PatchHistory(ModuleCatalog? modules = null)
     }
 
     /// <summary>
-    /// Take note of an edit that has already happened. The patch is read as it
-    /// now stands, and what is kept is how it stood before.
+    /// Take note of an edit that has already happened. The patch is read as it now
+    /// stands, and what is kept is how it stood before.
     /// </summary>
-    /// <param name="patch">The document as it now stands, read rather than kept: what is stored is a snapshot of the text, so the caller may go on editing this.</param>
+    /// <param name="patch">The document as it now stands, read rather than kept, so the caller may go on editing this.</param>
     /// <param name="coalesce">
     /// Names the gesture an edit came from, when it is one a hand holds down: a
-    /// slider being dragged makes an edit a frame, and a hundred of those are
-    /// one thing somebody did. Consecutive edits sharing a name are one step, so
-    /// undoing a drag returns to before it started rather than to halfway
-    /// through it. Null for anything discrete, which is most of it.
+    /// slider being dragged makes an edit a frame, and consecutive edits sharing a
+    /// name are one step. Null for anything discrete.
     /// <para>
-    /// A name says which gesture an edit belongs to and cannot say when one is
-    /// over — <see cref="GestureEnded"/> does that. Until it is said, a name
-    /// that comes round again is the same gesture still going on, so a caller
-    /// naming its gestures after the control they came from has to say it or
-    /// every drag of that control will be the one step.
+    /// A name cannot say when a gesture is over — <see cref="GestureEnded"/> does
+    /// that — so a caller naming its gestures after the control they came from has
+    /// to say it, or every drag of that control is one step.
     /// </para>
     /// </param>
     /// <param name="mark">
-    /// Anything the caller keeps beside the patch that this edit also changed,
-    /// so that stepping back through the edit steps back through that too. Held
-    /// opaquely and compared for nothing: what it means is the caller's, and an
-    /// undo hands back whatever was passed with the step it arrives at.
+    /// Anything the caller keeps beside the patch that this edit also changed, so
+    /// stepping back through the edit steps back through that too. Held opaquely:
+    /// an undo hands back whatever was passed with the step it arrives at.
     /// </param>
     /// <returns>
     /// Whether this made a step — false for an edit that changed nothing, for a
-    /// frame of a gesture folded into the step before it, and for the first
-    /// patch a caller records without opening one. A caller keeping a history of
-    /// its own beside this one is told what to keep in step with.
+    /// frame of a gesture folded into the step before it, and for the first patch
+    /// a caller records without opening one.
     /// </returns>
     public bool Record(Patch patch, string? coalesce = null, object? mark = null)
     {
@@ -175,11 +152,9 @@ public sealed class PatchHistory(ModuleCatalog? modules = null)
     /// keeps beside the patch that has changed with no edit to change it.
     /// </summary>
     /// <remarks>
-    /// Without this a mark would outlive what it was true of. The patch can
-    /// change hands with nothing to record — no module moved and no wire drawn
-    /// — and the steps behind that belong to whoever holds it now: undoing one
-    /// is taking back an edit, and it must not also take back a handover that
-    /// no edit was made to perform.
+    /// Without this a mark would outlive what it was true of: the patch can change
+    /// hands with nothing to record, and undoing an edit must not also take back a
+    /// handover that no edit performed.
     /// </remarks>
     public void Remark(object? mark)
     {
@@ -194,12 +169,10 @@ public sealed class PatchHistory(ModuleCatalog? modules = null)
     /// edit starts a step of its own however it is named.
     /// </summary>
     /// <remarks>
-    /// Said by whoever can see the hand come off the control, because nothing
-    /// here can. A name alone cannot tell one drag from the next: the caller
-    /// that files its edits under the slider they came from files every drag of
-    /// that slider under the same name, and without this the second one folds
-    /// into the first however long ago it was — two things somebody did, and one
-    /// press to take both back.
+    /// Said by whoever can see the hand come off the control, because nothing here
+    /// can: a caller that files its edits under the slider they came from files
+    /// every drag of it under one name, and without this the second folds into the
+    /// first however long ago it was.
     /// </remarks>
     public void GestureEnded() => gesture = null;
 

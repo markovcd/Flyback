@@ -3,60 +3,38 @@ using System.Text;
 namespace Flyback.Core.Language;
 
 /// <summary>
-/// Breaks long statements across lines, so that a patch written out as text
-/// reads as text rather than as one line per pipeline.
+/// Breaks long statements across lines, so a patch written out as text reads as
+/// text rather than as one line per pipeline.
 /// </summary>
 /// <remarks>
+/// Every break it makes is one <see cref="Lexer.Statements"/> joins back up — a
+/// line ending in a comma or an open bracket cannot be a whole statement, and one
+/// beginning with a pipe or a close bracket carries on the line above — so a
+/// printing put through this builds to the same program.
 /// <para>
-/// The counterpart of <see cref="Graph.PatchLayout"/>, and deliberately the same
-/// shape: positions are not in the language and are worked out afterwards by a
-/// pass of their own, so line breaks are not in the patch and are worked out
-/// afterwards by this one. Neither changes what it is laying out. A printing put
-/// through this builds to the same program it did before, because every break it
-/// makes is one the lexer already joins back up.
-/// </para>
-/// <para>
-/// Two kinds of long line, and they need different breaks. A pipeline is long
-/// because it has stages, and breaks before each <c>|&gt;</c> — which is how
-/// every example in the handbook is written. A call is long because it has
-/// arguments, and breaks after each comma. The second is only reached where the
-/// first was not enough: Whole band prints one <c>mixer</c> of five hundred
-/// characters, and no amount of breaking the pipeline around it would help.
-/// </para>
-/// <para>
-/// What makes this safe is the lexer, not this class. A line ending in a comma
-/// or an open bracket cannot be a whole statement, and a line beginning with a
-/// pipe or a close bracket is carrying on the one above — so both breaks below
-/// are joined straight back up by <see cref="Lexer.Statements"/>.
+/// A pipeline is long because it has stages and breaks before each <c>|&gt;</c>;
+/// a call is long because it has arguments and breaks after each comma. The
+/// second is reached only where the first was not enough.
 /// </para>
 /// </remarks>
 public static class SourceLayout
 {
     /// <summary>
-    /// How wide a line may be before it is worth breaking.
+    /// How wide a line may be before it is worth breaking: wide enough for the
+    /// ordinary two-stage pipeline, narrow enough to sit beside the preview. A
+    /// number rather than a measurement of the panel, or a patch's diff would
+    /// move when somebody dragged a splitter.
     /// </summary>
-    /// <remarks>
-    /// Wide enough that the ordinary two-stage pipeline stays on one line, and
-    /// narrow enough to sit in the code view beside the preview without
-    /// scrolling sideways. A number rather than a measurement of the panel,
-    /// because the same text goes into a file, a diff and a model's context, and
-    /// a patch that reflowed when somebody dragged a splitter would be a patch
-    /// whose diff moved with the window.
-    /// </remarks>
     public const int Width = 88;
 
     /// <summary>How far a continuation is indented past the line it continues.</summary>
     private const int Step = 2;
 
     /// <summary>
-    /// How many brackets deep this will break arguments before giving up and
-    /// leaving a line long.
+    /// How many brackets deep this will break arguments before leaving a line
+    /// long. Three: past that the indent costs more in width than it says about
+    /// the shape.
     /// </summary>
-    /// <remarks>
-    /// Three, because past that the indent says less about the shape than the
-    /// nesting costs in width — and a line still too long at three levels is
-    /// one somebody should look at rather than one this should keep folding.
-    /// </remarks>
     private const int Deepest = 3;
 
     /// <summary>The same source, with its long statements broken across lines.</summary>
@@ -66,15 +44,12 @@ public static class SourceLayout
     {
         if (source.Length == 0) return source;
 
-        // Line by line, because a printing puts one statement on each and a
-        // statement already broken is several lines that each fit. What this
+        // Line by line, because a printing puts one statement on each. What this
         // must not do is join anything back up: somebody's own line breaks are
-        // theirs, and the only thing being decided here is where a line that is
-        // too long may be split.
+        // theirs.
         //
-        // Joined rather than appended to, so that a source ending in a newline
-        // ends in exactly one: the split leaves an empty last line and the join
-        // puts its break back.
+        // Joined rather than appended to, so a source ending in a newline ends in
+        // exactly one.
         var folded = source
             .ReplaceLineEndings("\n")
             .Split('\n')
@@ -162,17 +137,10 @@ public static class SourceLayout
     /// something, except one the line already begins with.
     /// </summary>
     /// <remarks>
-    /// <para>
-    /// Depth is counted over brackets of both kinds and text is skipped whole,
-    /// because a pipe inside a call is that call's business and a pipe inside a
-    /// file name is not a pipe at all.
-    /// </para>
-    /// <para>
-    /// The leading one is skipped and that is load-bearing rather than tidy. A
-    /// stage broken out of a pipeline begins with the pipe that broke it, and a
-    /// pass that offered to break there again would hand itself the same stage
-    /// one indent wider, for ever.
-    /// </para>
+    /// Depth counts brackets of both kinds and text is skipped whole, since a pipe
+    /// inside a file name is not a pipe. Skipping the leading one is load-bearing:
+    /// a stage broken out of a pipeline begins with the pipe that broke it, and
+    /// breaking there again would recur for ever.
     /// </remarks>
     private static IReadOnlyList<int> Staged(string line)
     {
@@ -219,21 +187,14 @@ public static class SourceLayout
 
     /// <summary>
     /// A tune, filled across as many lines as it takes — or null where the line
-    /// carries no block, or one with nothing in it to spread out.
+    /// carries no block, or one with nothing in it.
     /// </summary>
     /// <remarks>
-    /// The one break here that is not the lexer joining statements back up. A
-    /// block is a single token, scanned to its closing bracket however many
-    /// lines it spans, and the steps inside it are separated by whitespace of
-    /// any kind — so a tune may be laid out over several lines and still be the
-    /// one tune it was. <see cref="Lexer"/> counts the newlines it swallows,
-    /// which is what keeps a complaint after a long tune pointing at the right
-    /// line.
-    /// <para>
-    /// Filled rather than one step per line: a tune is read as a run, and twenty
-    /// lines of one note each would say less about its shape than four lines of
-    /// five.
-    /// </para>
+    /// The one break here that is not the lexer joining statements up: a block is
+    /// a single token scanned to its closing bracket, and its steps are separated
+    /// by whitespace of any kind. <see cref="Lexer"/> counts the newlines it
+    /// swallows, which keeps a complaint after a long tune on the right line.
+    /// Filled rather than one step per line, because a tune is read as a run.
     /// </remarks>
     private static IReadOnlyList<string>? Steps(string line, int width)
     {
@@ -289,14 +250,10 @@ public static class SourceLayout
 
     /// <summary>
     /// Walks a stretch of a line, handing each character its bracket depth and
-    /// skipping over anything quoted.
+    /// skipping over anything quoted. The depth is the one before the character,
+    /// so an opening bracket is seen at the depth it opens from. Both kinds count:
+    /// a step block holds commas that are the block's own.
     /// </summary>
-    /// <remarks>
-    /// The depth handed out is the depth <em>before</em> the character, so an
-    /// opening bracket is seen at the depth it opens from and a closing one at
-    /// the depth it closes. Both kinds of bracket count: a step block holds
-    /// commas that are the block's own.
-    /// </remarks>
     private static void Walk(string line, int from, int to, Action<int, int> visit)
     {
         var depth = 0;

@@ -9,15 +9,10 @@ namespace Flyback.Core.Language;
 /// </summary>
 /// <remarks>
 /// The catalogue is the language: short names, socket names, arities and which
-/// literals a socket will take are all read out of <see cref="ModuleCatalog"/>
-/// as the tree is walked, so a plugin's modules are usable the moment it loads
-/// and there is no table anywhere that can go stale.
-/// <para>
-/// Nothing here is compiled and nothing is evaluated. A <c>def</c> is expanded,
-/// a number between two numbers is folded, and everything else becomes a node
-/// and a wire — which is why the language needs no runtime of its own and why a
-/// patch built from text is indistinguishable from one built by hand.
-/// </para>
+/// literals a socket takes are read out of <see cref="ModuleCatalog"/> as the
+/// tree is walked, so a plugin's modules are usable the moment it loads.
+/// Nothing is compiled or evaluated — a <c>def</c> is expanded, a number between
+/// two numbers is folded, and everything else becomes a node and a wire.
 /// </remarks>
 public sealed class Binder
 {
@@ -52,24 +47,16 @@ public sealed class Binder
     private Guid clock;
 
     /// <summary>
-    /// Where in the source the modules being placed are coming from, as a path
-    /// of names — <c>let bass</c>, then <c>reverb~0</c> for the def it calls.
+    /// Where in the source the modules being placed are coming from, as a path of
+    /// names — <c>let bass</c>, then <c>reverb~0</c> for the def it calls.
     /// </summary>
     /// <remarks>
-    /// <para>
-    /// A module's id is this path and its position under it, so building the
-    /// same text twice gives the same patch down to the guids — and editing one
-    /// line changes the ids of that line's modules and no others. Everything
-    /// downstream of a rebuild then has something to hold on to: which
-    /// accumulator kept playing (<see cref="Compile.StateOwners"/>), which node
-    /// the canvas already has a position for, which one was selected.
-    /// </para>
-    /// <para>
-    /// Names rather than numbers wherever a statement has one, which is what
-    /// keeps an edit local. Numbering statements instead would give every module
-    /// below an inserted line a new identity, and a patch that restarted from
-    /// the cursor down on every keystroke is the thing this exists to avoid.
-    /// </para>
+    /// A module's id is this path and its position under it, so building the same
+    /// text twice gives the same patch down to the guids and editing one line
+    /// changes that line's modules only — which is what lets a rebuild keep the
+    /// accumulator that was playing, the canvas position and the selection. Names
+    /// rather than numbers wherever a statement has one: numbering would give
+    /// every module below an inserted line a new identity.
     /// </remarks>
     private string where = string.Empty;
 
@@ -79,8 +66,7 @@ public sealed class Binder
     /// <summary>
     /// How many things under <see cref="where"/> have had no name of their own —
     /// a pipeline that does not end at a socket, a def stamped out twice in one
-    /// statement. Counted rather than named because there is nothing to name
-    /// them by, and within a single statement an edit is local anyway.
+    /// statement. Counted because there is nothing to name them by.
     /// </summary>
     private int unnamedHere;
 
@@ -100,13 +86,9 @@ public sealed class Binder
 
     /// <summary>
     /// Where the text says each of the things it built, for a caret that has to
-    /// name a module and a knob that has to be written back.
+    /// name a module and a knob that has to be written back. Only the binder can
+    /// say this: a patch carries nothing about the file it came from.
     /// </summary>
-    /// <remarks>
-    /// Only the binder can say this. The text is read into a patch and the patch
-    /// carries nothing about the file it came from, so what points from one to
-    /// the other is what was noted on the way through.
-    /// </remarks>
     public SourceMap Map(string source) => new(source, mentions, calls, written, named, bound);
 
     /// <summary>The patch these statements describe, laid out and ready to compile.</summary>
@@ -139,10 +121,9 @@ public sealed class Binder
 
     /// <summary>A number, which becomes a knob rather than a module.</summary>
     /// <param name="Where">
-    /// Where the file writes it, so that the knob can be changed in the place the
-    /// text already says it. Null for a number no single figure stands for —
-    /// <c>1/12</c> is one knob and two numbers, and there is nothing there to put
-    /// another in place of.
+    /// Where the file writes it, so the knob can be changed where the text
+    /// already says it. Null for a number no single figure stands for —
+    /// <c>1/12</c> is one knob and two numbers.
     /// </param>
     private sealed record Figure(double Amount, NumberStyle Style, Site? Where = null) : Value;
 
@@ -187,14 +168,11 @@ public sealed class Binder
     }
 
     /// <summary>
-    /// What a statement is called, for the purposes of naming what it places.
-    /// </summary>
-    /// <remarks>
-    /// A <c>let</c> has a name and a terminated pipeline has a socket, and
-    /// between them that is nearly every statement anybody writes. What is left
+    /// What a statement is called, for the purposes of naming what it places. A
+    /// <c>let</c> has a name and a terminated pipeline has a socket; what is left
     /// takes a number, which is the one case where inserting a line above moves
     /// something below it.
-    /// </remarks>
+    /// </summary>
     private string Naming(Statement statement) => statement switch
     {
         LetStatement let => "let " + let.Name,
@@ -212,9 +190,8 @@ public sealed class Binder
 
     /// <summary>
     /// The socket a pipeline ends at, which is what a statement with no name of
-    /// its own is known by — <c>out.color</c> and <c>out.left</c> are two
-    /// different statements and stay two different statements however the lines
-    /// around them are shuffled.
+    /// its own is known by — <c>out.color</c> and <c>out.left</c> stay two
+    /// different statements however the lines around them are shuffled.
     /// </summary>
     private static string? Ending(Expr expr) =>
         expr is PipeExpr { Stage: NameExpr socket } ? Aimed(socket) : null;
@@ -268,13 +245,9 @@ public sealed class Binder
 
     /// <summary>
     /// Steps into <paramref name="segment"/>, handing back what to put back
-    /// afterwards.
+    /// afterwards. Saved and restored rather than set, because these nest: a def
+    /// is stamped out inside the statement that called it.
     /// </summary>
-    /// <remarks>
-    /// Saved and restored rather than merely set, because these nest: a def is
-    /// stamped out inside the statement that called it, and a group's body is a
-    /// run of statements inside the group.
-    /// </remarks>
     private (string Where, int Placed, int Unnamed) Enter(string segment)
     {
         var outer = (where, placedHere, unnamedHere);
@@ -296,25 +269,21 @@ public sealed class Binder
     /// A guid from a name, the same one every time.
     /// </summary>
     /// <remarks>
-    /// A hash rather than a counter, because what has to be stable is the
-    /// mapping from a piece of source to an id — across runs, across machines,
-    /// and with statements added and removed around it. SHA-256 cut to sixteen
-    /// bytes: this is a name and not a secret, and what is wanted from it is
-    /// that two different names practically never collide.
+    /// A hash rather than a counter, because what has to be stable is the mapping
+    /// from a piece of source to an id — across runs, across machines, and with
+    /// statements added around it. SHA-256 cut to sixteen bytes: this is a name
+    /// and not a secret.
     /// </remarks>
     private static Guid Identity(string name) =>
         new(System.Security.Cryptography.SHA256.HashData(
             System.Text.Encoding.UTF8.GetBytes(name)).AsSpan(0, 16));
 
     /// <summary>
-    /// Gives a node the name it was bound to, which the editor shows on it.
+    /// Gives a node the name it was bound to, which the editor shows on it. Only
+    /// a module placed by this very binding takes it: the name on the canvas
+    /// should say where the module was made rather than where it was last
+    /// mentioned.
     /// </summary>
-    /// <remarks>
-    /// Only a module placed by this very binding takes the name — reading an
-    /// existing one under a second name leaves the first alone, because the name
-    /// on the canvas should say where the module was made rather than where it
-    /// was last mentioned.
-    /// </remarks>
     private void Label(Value value, string name)
     {
         if (value is not Placed placed) return;
@@ -325,14 +294,12 @@ public sealed class Binder
     }
 
     /// <summary>
-    /// Marks a module as the one its statement is about, so that a caret
-    /// anywhere in the statement points at it.
+    /// Marks a module as the one its statement is about, so a caret anywhere in
+    /// the statement points at it.
     /// </summary>
     /// <remarks>
-    /// The last stage of a pipeline, because that is the one the statement
-    /// names: <c>let hum = t |&gt; sine(...) |&gt; gain(...)</c> is a Gain called
-    /// hum, and the Sine before it is called nothing at all. What
-    /// <see cref="Bind"/> hands back is that last stage by construction.
+    /// The last stage of a pipeline, because that is the one the statement names:
+    /// <c>let hum = t |&gt; sine(...) |&gt; gain(...)</c> is a Gain called hum.
     /// </remarks>
     private void Owns(Value? value)
     {
@@ -587,12 +554,10 @@ public sealed class Binder
         // the screen: '|> out.color'.
         if (expr.Stage is NameExpr socket)
         {
-            // A module named after a pipe with no brackets is that module,
-            // placed and taking nothing but what is arriving. It is the obvious
-            // way to write it in a language made of pipes, and refusing it cost
-            // a whole run: the complaint landed on one line, every binding after
-            // it went unread, and the errors that followed were all about names
-            // that had never been made.
+            // A module named after a pipe with no brackets is that module, placed
+            // and taking nothing but what is arriving — the obvious way to write
+            // it in a language made of pipes. Refusing it cost a whole run, since
+            // every binding after the complaint went unread.
             if (socket.Port is null && scope.Find(socket.Name) is null && Known(socket.Name))
                 return Call(new CallExpr(socket.Name, [], null, socket.Line, socket.Column), scope, value);
 
@@ -753,12 +718,10 @@ public sealed class Binder
     /// Where a pipe lands, which is the whole of the language's shape.
     /// </summary>
     /// <remarks>
-    /// A socket named exactly <c>in</c> wins when the call did not name it. That
-    /// is not a convenience: <c>math.smoothstep</c> is
-    /// <c>[edge0, edge1, in]</c> and <c>math.step</c> is <c>[edge, in]</c>, so
-    /// "the first socket left" would wire the signal into an edge, read
-    /// perfectly, and mean something else. Three shipped presets do exactly this
-    /// and would all have been wrong.
+    /// A socket named exactly <c>in</c> wins when the call did not name one, and
+    /// that is not a convenience: <c>math.smoothstep</c> is
+    /// <c>[edge0, edge1, in]</c>, so "the first socket left" would wire the
+    /// signal into an edge, read perfectly, and mean something else.
     /// </remarks>
     private bool Land(NodeDef def, Value piped, HashSet<int> taken, CallExpr expr, List<(int, Value)> into)
     {
@@ -785,16 +748,15 @@ public sealed class Binder
             return false;
         }
 
-        // A position takes two, and it is the only thing that does. 'x' and 'y'
-        // next to each other are what the engine itself calls a position — the
-        // pair ADR-0050 normals to Coordinates together — so a Space or a
-        // Pattern chains off another without either end saying so, and nothing
-        // else in the catalogue quietly swallows more than one signal.
+        // A position takes two, and it is the only thing that does: 'x' and 'y'
+        // next to each other are what the engine calls a position — the pair
+        // ADR-0050 normals to Coordinates together — so a Space chains off
+        // another without either end saying so.
         //
-        // The alternative was to forward every output a source has, and the
-        // Sequence preset is what rules it out: 'steps |> note()' would have put
-        // the sequencer's gate into Note's octave and its index into the cents,
-        // which reads perfectly and is not a tune.
+        // Forwarding every output a source has was the alternative, and
+        // 'steps |> note()' rules it out: the sequencer's gate would land in
+        // Note's octave and its index in the cents, which reads perfectly and is
+        // not a tune.
         var position = free.Count >= 2
             && Same(def.Inputs[free[0]].Name, "x")
             && Same(def.Inputs[free[1]].Name, "y")
@@ -893,11 +855,9 @@ public sealed class Binder
         }
 
         // A bare number on a socket that holds time is the trap the literal was
-        // added to remove, and allowing it left the trap open: the socket holds
-        // a power of ten, so an envelope written as "attack: 0.01" meaning ten
-        // milliseconds is a second, and what was meant to be a drum is a drone.
-        // Nothing about the value says which was meant, so the only place to
-        // catch it is here, and the complaint says both readings.
+        // added to remove: the socket holds a power of ten, so "attack: 0.01"
+        // meaning ten milliseconds is a second, and the drum is a drone. Nothing
+        // about the value says which was meant, so the complaint says both.
         if (spec.Display == PortDisplay.Duration && figure.Style == NumberStyle.Plain)
         {
             Complain(line, column,

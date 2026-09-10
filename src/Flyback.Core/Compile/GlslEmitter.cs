@@ -3,10 +3,9 @@ using System.Text;
 namespace Flyback.Core.Compile;
 
 /// <summary>
-/// Which GLSL the context speaks. The two differ only in their opening lines —
-/// everything below the header is one shared body — but a shader written for one
-/// will not compile on the other, and which one you get is decided by the
-/// windowing platform rather than by anything this project chooses.
+/// Which GLSL the context speaks. The two differ only in their opening lines, but
+/// a shader written for one will not compile on the other, and which one you get
+/// is decided by the windowing platform.
 /// </summary>
 public enum GlslDialect
 {
@@ -20,24 +19,21 @@ public enum GlslDialect
 /// <summary>The four shaders a frame needs, plus what the caller must upload to them.</summary>
 /// <param name="ConstantCount">
 /// Length of the <c>uK</c> array. Every <see cref="OpCode.Const"/> is a uniform
-/// rather than a literal — see <see cref="GlslEmitter"/> for why that matters
-/// more than it looks like it should.
+/// rather than a literal — see <see cref="GlslEmitter"/>.
 /// </param>
 /// <param name="UsesFeedback">
 /// Whether the fragment shader reads <c>uPrevious</c>. A patch without a Feedback
 /// module needs no texture bound and no previous frame kept.
 /// </param>
 /// <param name="LiveCount">
-/// Length of the <c>uLive</c> array — how many live inputs the patch is played
-/// with. Uploaded per frame rather than per program, unlike <c>uK</c>: what a
-/// knob holds changes when somebody edits the patch, and what a key holds changes
-/// while they are looking at it.
+/// Length of the <c>uLive</c> array. Uploaded per frame rather than per program,
+/// unlike <c>uK</c>: a knob changes when somebody edits the patch, a key while
+/// they are looking at it.
 /// </param>
 /// <param name="PictureCount">
-/// How many textures the fragment shader wants bound, and how many
-/// <c>uPicture</c> samplers it declares. They are the patch's own
-/// <see cref="CompiledPatch.Pictures"/>, in that order, so the uploader reads
-/// the pixels off the program rather than out of here.
+/// How many textures the fragment shader wants bound. They are the patch's own
+/// <see cref="CompiledPatch.Pictures"/>, in that order, so the uploader reads the
+/// pixels off the program rather than out of here.
 /// </param>
 public sealed record ShaderSource(
     string PatchVertex,
@@ -51,43 +47,34 @@ public sealed record ShaderSource(
     int PictureCount = 0);
 
 /// <summary>
-/// Lowers a compiled patch to a fragment shader. This is the second backend
-/// ADR-0003 left room for: it consumes the same <see cref="Op"/> array the
-/// interpreter walks, and emits one line of GLSL per op instead of executing it.
-/// Everything upstream — the graph walk, dead-code elimination, coercion,
-/// constant sharing — has already happened by the time a program arrives here.
+/// Lowers a compiled patch to a fragment shader — the second backend ADR-0003
+/// left room for. It consumes the same <see cref="Op"/> array the interpreter
+/// walks and emits one line of GLSL per op, so the graph walk, dead-code
+/// elimination, coercion and constant sharing have all already happened.
 /// </summary>
 /// <remarks>
-/// <para>
 /// Registers become individual <c>float rN</c> declarations rather than an
-/// indexed array. ADR-0007 already guarantees every register is written exactly
-/// once and always before it is read, so the program is in SSA form and this is
-/// simply legal; an array would additionally force dynamically-indexable
-/// storage, which some drivers put in scratch memory rather than registers.
-/// </para>
+/// indexed array: ADR-0007 already guarantees SSA, and an array would force
+/// dynamically-indexable storage, which some drivers put in scratch memory.
 /// <para>
 /// <see cref="CompiledPatch.Evaluate"/> is the specification. Where GLSL has a
 /// builtin of the same name that does not agree with it — <c>fract</c>,
-/// <c>mod</c>, <c>mix</c>, <c>pow</c>, <c>smoothstep</c>, <c>atan</c> — the
-/// builtin is deliberately not used, and a helper transcribing the interpreter's
-/// behaviour is emitted instead. Those disagreements are at edges rather than in
-/// the middle, so the wrong choice would look right until a patch found one.
+/// <c>mod</c>, <c>mix</c>, <c>pow</c>, <c>smoothstep</c>, <c>atan</c> — a helper
+/// transcribing the interpreter is emitted instead, because those disagreements
+/// are at edges and the wrong choice would look right until a patch found one.
 /// </para>
 /// <para>
-/// This class produces text and nothing else: no GL, no platform, no state. It
-/// lives in Core so that what the GPU is asked to run is covered by Core's tests
-/// (ADR-0019 is untouched — a string builder is not a dependency).
+/// Text and nothing else: no GL, no platform, no state. It lives in Core so what
+/// the GPU runs is covered by Core's tests.
 /// </para>
 /// </remarks>
 public static class GlslEmitter
 {
     /// <summary>
-    /// The values behind <c>uK</c>, in the order the shader indexes them.
+    /// The values behind <c>uK</c>, in the order the shader indexes them. This
+    /// ordering is a contract between the emitted text and whoever uploads to it,
+    /// so both ends of it are written here.
     /// </summary>
-    /// <remarks>
-    /// This ordering is a contract between the emitted text and whoever uploads
-    /// to it, so both ends of it are written here rather than in the renderer.
-    /// </remarks>
     public static float[] Constants(CompiledPatch patch) =>
         [.. patch.Ops.Where(op => op.Code == OpCode.Const).Select(op => op.K)];
 
@@ -140,17 +127,14 @@ public static class GlslEmitter
     /// <summary>
     /// The unit square as a four-vertex strip, with no vertex buffer and no
     /// attributes — the corners come from <c>gl_VertexID</c>. The interpolated
-    /// <c>vUv</c> lands on <c>(index + 0.5) / size</c>, which is exactly the
-    /// half-pixel offset SynthRenderer applies by hand and ADR-0014 requires — so
-    /// the coordinate convention comes out of the rasteriser for free rather than
-    /// being a second place it could be got wrong.
+    /// <c>vUv</c> lands on <c>(index + 0.5) / size</c>, which is the half-pixel
+    /// offset ADR-0014 requires, so the convention comes out of the rasteriser
+    /// rather than being a second place to get it wrong.
     /// </summary>
     /// <remarks>
-    /// Not the usual oversized triangle. That trick relies on everything past the
-    /// edges being clipped away by the viewport, and the blit below deliberately
-    /// draws smaller than its viewport — so the overshoot would be *visible*, as a
-    /// smear of the top row across the letterbox and a wedge of untouched black
-    /// where the hypotenuse cut the corner. A strip has no overshoot to leak.
+    /// Not the usual oversized triangle: that relies on the viewport clipping the
+    /// overshoot, and the blit below draws smaller than its viewport, so the
+    /// overshoot would be visible.
     /// </remarks>
     private const string Corners =
         """
@@ -173,13 +157,12 @@ public static class GlslEmitter
     /// <summary>
     /// Draws the finished frame into whatever the compositor handed us, scaled to
     /// the largest rectangle of the picture's aspect that fits — the GPU-side
-    /// equivalent of PreviewSurface.Letterbox, which centres for free because the
-    /// scale is applied about the origin in clip space.
+    /// PreviewSurface.Letterbox, centred for free because the scale is applied
+    /// about the origin in clip space.
     /// </summary>
     /// <remarks>
-    /// No flip. The offscreen texture is stored bottom row first because that is
-    /// what rendering into it does, and the target is a framebuffer with the same
-    /// convention, so the two agree and <c>vUv</c> passes straight through.
+    /// No flip: the offscreen texture is stored bottom row first because that is
+    /// what rendering into it does, and the target has the same convention.
     /// </remarks>
     private const string BlitVertexBody =
         $$"""
@@ -315,11 +298,9 @@ public static class GlslEmitter
 
     /// <summary>
     /// The previous frame, read the way CompiledPatch.Sample reads it. The scales
-    /// carry the whole of that mapping — patch coordinates to texel centres, and
-    /// the y flip between a picture indexed downwards and a texture stored
-    /// upwards — so the shader needs no width or height of its own. Bilinear
-    /// filtering does the interpolation Sample does by hand, and clamping to the
-    /// edge does what its clamp to width - 1.001 does.
+    /// carry the whole mapping — patch coordinates to texel centres, and the y
+    /// flip between a picture indexed downwards and a texture stored upwards — so
+    /// the shader needs no width or height of its own.
     /// </summary>
     /// <remarks>
     /// The substitutions for a non-finite coordinate are the values that land on
@@ -346,11 +327,9 @@ public static class GlslEmitter
     /// rather than off the list of pictures beside them.
     /// </summary>
     /// <remarks>
-    /// The two agree for anything the compiler produced — an op is emitted and a
-    /// picture added in the same breath. Counting the ops is what makes the text
-    /// answerable on its own all the same: a program assembled by hand, which is
-    /// what every test of a single opcode is, would otherwise call a function
-    /// that had not been declared and produce a shader nothing could compile.
+    /// The two agree for anything the compiler produced. Counting the ops is what
+    /// makes the text answerable on its own: a program assembled by hand would
+    /// otherwise call a function that had not been declared.
     /// </remarks>
     private static int Textures(CompiledPatch patch)
     {
@@ -369,18 +348,12 @@ public static class GlslEmitter
     /// what happens off the edges.
     /// </summary>
     /// <remarks>
-    /// The aspect is a uniform rather than a constant folded into the text,
-    /// because it belongs to the file rather than to the patch: the same program
-    /// draws whatever picture is bound to it, and a shader recompiled because
-    /// somebody chose a photograph of a different shape would be a shader
-    /// recompiled for nothing.
-    /// <para>
-    /// Black outside is written out rather than left to the sampler's wrapping.
-    /// Clamping to the edge is what the texture is set up to do — it is what a
-    /// linear filter needs at the last row — so the picture's own extent is
-    /// tested here, which is also the one arrangement that agrees with the
-    /// processor at every one of the four edges.
-    /// </para>
+    /// The aspect is a uniform rather than a folded constant, because it belongs
+    /// to the file rather than the patch: the same program draws whatever picture
+    /// is bound to it. Black outside is written out rather than left to the
+    /// sampler's wrapping, since clamping to the edge is what a linear filter
+    /// needs at the last row — and testing the extent here is the one arrangement
+    /// that agrees with the processor at all four edges.
     /// </remarks>
     private static string PictureHelper(int index) =>
         $$"""
@@ -484,17 +457,14 @@ public static class GlslEmitter
 
         foreach (var op in patch.Ops)
         {
-            // The ops with no result, and so the ops with no line. There is no
-            // state on this path for any of them to write to, and a declaration
-            // of r-1 would not compile. What they fed is left as dead code for
-            // the driver to drop, which is the same deal the other half of a sink
-            // gets.
+            // The ops with no result, and so the ops with no line: there is no
+            // state on this path for any of them to write to, and a declaration of
+            // r-1 would not compile. What they fed is left as dead code for the
+            // driver to drop.
             //
-            // A tap never reaches here at all — only the speakers' program has
-            // one — but it is in the list because "writes nothing" is the thing
-            // these three have in common, and an op that fell through to the
-            // switch would take the backend down rather than draw a wrong
-            // picture.
+            // A tap never reaches here — only the speakers' program has one — but
+            // it is in the list because an op that fell through to the switch
+            // would take the backend down rather than draw a wrong picture.
             if (op.Code is OpCode.UnitWrite or OpCode.ClockWrite or OpCode.Tap) continue;
 
             string a = Read(op.A), b = Read(op.B), c = Read(op.C);
