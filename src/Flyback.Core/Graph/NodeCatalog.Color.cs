@@ -8,9 +8,17 @@ public partial class NodeCatalog
     {
         yield return new NodeDef(
             "color.rgb", "RGB", ModuleCategories.Color,
-            [Num("r", 0f, 0f, 1f), Num("g", 0f, 0f, 1f), Num("b", 0f, 0f, 1f)], [Col("color")],
+            // White, so a fresh one is a color rather than the absence of one.
+            // HSV arrives at full brightness with a hue already picked; this
+            // arrives at full brightness with no channel picked, which is white
+            // — and pulling any knob down from there tints it, which is the
+            // module demonstrating itself. Black would have been the tidier
+            // number and is the one default that draws nothing at all.
+            [Num("r", 1f, 0f, 1f), Num("g", 1f, 0f, 1f), Num("b", 1f, 0f, 1f)], [Col("color")],
             (em, i) => [em.Combine(i[0], i[1], i[2])],
-            "Builds a color from three separate signals.");
+            "Builds a color from three separate signals. It starts white — every channel full — "
+            + "so turning one down tints it and patching a signal into one drives that channel "
+            + "against the other two.");
 
         yield return new NodeDef(
             "color.hsv", "HSV", ModuleCategories.Color,
