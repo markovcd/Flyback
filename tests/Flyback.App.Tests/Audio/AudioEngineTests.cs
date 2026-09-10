@@ -10,17 +10,14 @@ using Xunit;
 namespace Flyback.App.Tests.Audio;
 
 /// <summary>
-/// The seam between a compiled program and a sound device. What is worth
-/// pinning here is not the arithmetic — the engine does none — but what happens
-/// to the state around a program when the patch is edited while it plays.
+/// The seam between a compiled program and a sound device. What is worth pinning
+/// is not the arithmetic — the engine does none — but what happens to the state
+/// around a program when the patch is edited while it plays.
 /// </summary>
 /// <remarks>
-/// Every stateful op is identified by its position among the stateful ops
-/// (ADR-0027, ADR-0030), so a program's memory only fits that program. The
-/// engine is what decides whether an edit keeps the memory or starts again, and
-/// getting that wrong is inaudible in every test that renders one buffer: it is
-/// a click on each edit, which is exactly the failure ADR-0023 says is easy to
-/// ship and hard to diagnose.
+/// Every stateful op is identified by its position among the stateful ops, so a
+/// program's memory only fits that program. Getting the decision wrong is
+/// inaudible in any test that renders one buffer: it is a click on each edit.
 /// </remarks>
 public class AudioEngineTests
 {
@@ -223,15 +220,14 @@ public class AudioEngineTests
     }
 
     /// <summary>
-    /// A Scope's chart comes out of the run that made the sound, so the engine
-    /// is where the two paths meet: it holds the one reference that pairs a
-    /// program with the memory it filled.
+    /// A Scope's chart comes out of the run that made the sound, so the engine is
+    /// where the two paths meet: it holds the one reference that pairs a program
+    /// with the memory it filled.
     /// </summary>
     /// <remarks>
-    /// Worth a test here rather than only in the compiler's, because the whole
-    /// hazard is the pairing. A caller reading the program and the memory
-    /// separately could be handed a mismatched pair by a recompile in between,
-    /// and what that produces is not an exception but a chart of the wrong node.
+    /// Here rather than only in the compiler's tests, because the hazard is the
+    /// pairing: a caller reading the two separately could be handed a mismatched
+    /// pair by a recompile, and what that produces is a chart of the wrong node.
     /// </remarks>
     [Fact]
     public void A_scope_is_charted_from_what_the_engine_actually_played()
@@ -266,16 +262,12 @@ public class AudioEngineTests
     }
 
     /// <summary>
-    /// The other half of what the engine hands the picture, and the newer one: a
-    /// Meter's reading, played into the block the frame reads rather than copied
-    /// into a buffer the frame charts.
+    /// The other half of what the engine hands the picture: a Meter's reading,
+    /// played into the block the frame reads rather than copied into a buffer.
+    /// Through the real device loop, because what is pinned is the engine's part —
+    /// one read of the state, both blocks written, nothing published before
+    /// anything was played.
     /// </summary>
-    /// <remarks>
-    /// Through the real device loop rather than through <c>Meters</c> directly,
-    /// because the thing being pinned is the engine's part of it: one read of the
-    /// state, both blocks written, and nothing published before anything was
-    /// played.
-    /// </remarks>
     [Fact]
     public void A_meter_is_played_into_the_picture_from_what_the_engine_heard()
     {

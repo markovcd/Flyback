@@ -7,16 +7,14 @@ using Xunit;
 namespace Flyback.Plugins.Tests;
 
 /// <summary>
-/// The six Form modules, loaded off disk and read the way the renderer reads
-/// them: one evaluation per point, with no state behind any of it.
+/// The six Form modules, loaded off disk and read the way the renderer reads them:
+/// one evaluation per point, with no state behind any of it.
 /// </summary>
 /// <remarks>
-/// Nothing here goes through an oscillator or a clock, unlike the other plugin
-/// tests in this folder, because nothing in this plugin has a memory to fill. A
-/// shape is a function of x and y, so a test of one is a table of positions and
-/// the numbers that come back — which is also why several of these measure the
-/// <em>slope</em> rather than a value. A field that is out by a constant still
-/// fills correctly and outlines wrongly, and the slope is what catches it.
+/// Nothing here goes through an oscillator or a clock, because nothing in this plugin
+/// has a memory to fill: a shape is a function of x and y. Several of these measure
+/// the slope rather than a value — a field that is out by a constant still fills
+/// correctly and outlines wrongly, and the slope is what catches it.
 /// </remarks>
 public class ShapesTests
 {
@@ -205,18 +203,14 @@ public class ShapesTests
     }
 
     /// <summary>
-    /// What "exact" means, and the difference between this and the polygon beside
-    /// it: a true distance field changes by one unit per unit moved.
+    /// What "exact" means, and the difference between this and the polygon beside it:
+    /// a true distance field changes by one unit per unit moved.
     /// </summary>
     /// <remarks>
-    /// Everywhere but the creases, which is why the sample points are placed
-    /// rather than scattered. A distance field has a fold in it wherever the
-    /// nearest part of the shape swaps over — down the middle of every point and
-    /// every valley, which for this star is every wedge boundary — and a slope
-    /// measured across one of those reads low however exact the field is, because
-    /// the two sides are running away from different things. So the reading is
-    /// taken halfway between two creases, where there is one nearest thing and
-    /// the answer means something.
+    /// Everywhere but the creases, which is why the sample points are placed rather
+    /// than scattered: a field folds wherever the nearest part of the shape swaps
+    /// over, and a slope measured across one reads low however exact the field is. So
+    /// the reading is taken halfway between two creases.
     /// </remarks>
     [Fact]
     public void A_stars_field_is_a_true_distance_all_the_way_round_it()
@@ -340,14 +334,12 @@ public class ShapesTests
     // --- the combine -----------------------------------------------------------
 
     /// <summary>
-    /// At no smoothness the three outputs are exactly the arithmetic the
-    /// catalogue always had, which is the claim the distance convention rests on:
-    /// a shape that is a number combines with Minimum and Maximum.
+    /// At no smoothness the three outputs are exactly the arithmetic the catalogue
+    /// always had, which is the claim the distance convention rests on.
     /// <para>
-    /// Near enough rather than exactly, and the tolerance is the module's own
-    /// floor under the seam: where the two distances are equal the blend is at
-    /// its midpoint and dips by a quarter of that floor. It is a ten-thousandth
-    /// of the picture at the very worst, which is a fiftieth of a pixel.
+    /// Near enough rather than exactly: the tolerance is the module's own floor under
+    /// the seam, which dips by a quarter of that floor where the two distances are
+    /// equal — a fiftieth of a pixel at worst.
     /// </para>
     /// </summary>
     [Theory]

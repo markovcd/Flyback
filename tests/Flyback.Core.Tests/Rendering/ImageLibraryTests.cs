@@ -4,16 +4,14 @@ using Shouldly;
 namespace Flyback.Core.Tests.Rendering;
 
 /// <summary>
-/// <see cref="ImageLibrary"/> — the folder a patch's pictures are actually read
-/// from, as opposed to the stub the module tests hand the compiler.
+/// <see cref="ImageLibrary"/> — the folder a patch's pictures are actually read from,
+/// as opposed to the stub the module tests hand the compiler.
 /// </summary>
 /// <remarks>
-/// What this class is for is not decoding, which is <see cref="PngReader"/>'s,
-/// but holding: every edit recompiles the whole patch, so a library that opened a
-/// file would open it on every knob turn — and a patch naming a file that is not
-/// there is recompiled just as often as one naming a file that is. So the tests
-/// that matter are the ones that show a second look never reaches the disk, and
-/// that the ways of emptying the cache empty exactly as much as they say.
+/// What this class is for is not decoding, which is <see cref="PngReader"/>'s, but
+/// holding: every edit recompiles the whole patch, so a library that opened a file
+/// would open it on every knob turn. The tests that matter show a second look never
+/// reaches the disk, and that emptying the cache empties exactly as much as it says.
 /// </remarks>
 public class ImageLibraryTests : IDisposable
 {

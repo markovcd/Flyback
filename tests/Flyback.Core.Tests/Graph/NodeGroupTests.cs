@@ -4,19 +4,15 @@ using Shouldly;
 namespace Flyback.Core.Tests.Graph;
 
 /// <summary>
-/// Groups: several modules drawn as one box, and the edge that a wire crossing
-/// it puts there.
+/// Groups: several modules drawn as one box, and the edge that a wire crossing it
+/// puts there.
 /// </summary>
 /// <remarks>
-/// All of this lives in the engine rather than in the canvas that draws it,
-/// because none of it is drawing. Which ports a box shows is a question about
-/// wires, and the answer has to be the same for a patch read off disk, one built
-/// by an assistant, and one somebody is looking at.
-/// <para>
-/// What is <em>not</em> tested here is any effect on what a patch computes,
-/// because there is none. See <see cref="NodeGroup"/>: the modules stay, the
-/// wires stay, and the compiler is never told.
-/// </para>
+/// All of it lives in the engine rather than the canvas, because none of it is
+/// drawing: which ports a box shows is a question about wires, and the answer has
+/// to be the same for a patch read off disk, one built by an assistant and one
+/// somebody is looking at. What is not tested is any effect on what a patch
+/// computes, because there is none.
 /// </remarks>
 public class NodeGroupTests
 {

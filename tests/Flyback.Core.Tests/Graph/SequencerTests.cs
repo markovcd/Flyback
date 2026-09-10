@@ -6,20 +6,15 @@ using Shouldly;
 namespace Flyback.Core.Tests.Graph;
 
 /// <summary>
-/// The step sequencers. Which note is playing is a function of where the input
-/// has got to rather than of what played before, so unlike a delay or an
-/// accumulated phase these need no state — and the same run answers for both
-/// sinks, because there is only one program.
+/// The step sequencers. Which note is playing is a function of where the input has
+/// got to rather than of what played before, so unlike a delay these need no state —
+/// and one run answers for both sinks.
 /// </summary>
 /// <remarks>
-/// The domain arrives through x rather than through Time, so one compiled
-/// program can be swept over a whole pattern without recompiling, and the
-/// module's three outputs can be read from a single run.
-/// <para>
-/// The notes are a list on the instance rather than knobs on the module
-/// (ADR-0038), so they are handed to the emit directly instead of being set as
-/// ports.
-/// </para>
+/// The domain arrives through x rather than Time, so one compiled program can be
+/// swept over a whole pattern and the module's three outputs read from a single run.
+/// The notes are a list on the instance rather than knobs (ADR-0038), so they are
+/// handed to the emit directly.
 /// </remarks>
 public class SequencerTests
 {

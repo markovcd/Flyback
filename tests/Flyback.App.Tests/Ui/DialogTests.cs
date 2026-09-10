@@ -12,16 +12,14 @@ using Xunit;
 namespace Flyback.App.Tests.Ui;
 
 /// <summary>
-/// The two dialogs that ask nothing — Settings and About — opened from the
-/// toolbar and dismissed again.
+/// The two dialogs that ask nothing — Settings and About — opened from the toolbar
+/// and dismissed again.
 /// </summary>
 /// <remarks>
-/// Opening each of them twice is the point. Neither has a button of its own, so
-/// the only way out is the frame the overlay draws; and the settings panel is
-/// lent to the dialog rather than built for it, so what it was last shown in has
-/// to give it back. A control has one parent, and the failure when it is not
-/// returned is a throw on the second opening — a bug nobody meets until the
-/// second time they look at a setting.
+/// Opening each twice is the point: the settings panel is lent to the dialog rather
+/// than built for it, and a control has one parent, so the failure when it is not
+/// returned is a throw on the second opening — a bug nobody meets until the second
+/// time they look at a setting.
 /// </remarks>
 public class DialogTests : UiTest
 {

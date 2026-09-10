@@ -12,11 +12,10 @@ namespace Flyback.App.Tests.Ui;
 /// octave, not a list and not twelve sockets.
 /// </summary>
 /// <remarks>
-/// The layout is the part worth testing rather than the part worth taking on
-/// trust. A scale of twelve toggles is only readable if the keys are where an
-/// eye expects them — sharps above and between the naturals, and a gap where
-/// E meets F and B meets C — and every structural assertion about "twelve
-/// buttons that toggle" would pass just as well on a row of twelve.
+/// The layout is the part worth testing: twelve toggles are only readable where an
+/// eye expects them — sharps above and between the naturals, gaps at E–F and B–C —
+/// and every assertion about "twelve buttons that toggle" would pass on a row of
+/// twelve.
 /// </remarks>
 public class ScaleKeysTests : UiTest
 {

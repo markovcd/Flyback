@@ -6,14 +6,12 @@ namespace Flyback.Core.Tests.Graph;
 
 /// <summary>
 /// A patch file is the only thing here that outlives the process, so a
-/// serialisation regression is the one class of bug that costs somebody work
-/// they cannot redo. These render a patch to JSON and read it back, and check
-/// the document is the same on the other side.
+/// serialisation regression is the one class of bug that costs somebody work they
+/// cannot redo. These render a patch to JSON and read it back.
 /// </summary>
 /// <remarks>
-/// <see cref="PatchProvenanceTests"/> covers the header that names the plugins
-/// a file needs. This covers the body: the modules, where they sit, what their
-/// knobs are set to, and the wires between them.
+/// <see cref="PatchProvenanceTests"/> covers the header that names the plugins a
+/// file needs; this covers the body.
 /// </remarks>
 public class PatchIoTests
 {

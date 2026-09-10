@@ -18,12 +18,10 @@ namespace Flyback.App.Tests.Ui;
 /// ADR-0037 emptied the toolbar into it.
 /// </summary>
 /// <remarks>
-/// These exist because of how that panel is built. The controls in it are the
-/// state of the instrument rather than of a selection, so they are made once and
-/// moved into the inspector each time the Output is selected — and a control may
-/// have one parent at a time. Selecting away and back is the sequence that
-/// throws if the inspector ever stops detaching them first, and it is a runtime
-/// exception rather than anything a compiler would catch.
+/// The controls in it are the state of the instrument rather than of a selection, so
+/// they are made once and moved into the inspector each time the Output is selected
+/// — and a control may have one parent. Selecting away and back is the sequence that
+/// throws if the inspector ever stops detaching them first.
 /// </remarks>
 public class OutputSettingsTests : UiTest
 {

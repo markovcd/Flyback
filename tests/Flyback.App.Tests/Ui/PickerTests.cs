@@ -15,16 +15,11 @@ namespace Flyback.App.Tests.Ui;
 /// The lists in the window are pointed at, not typed at.
 /// </summary>
 /// <remarks>
-/// A ComboBox answers the keyboard twice over and commits on every step: an arrow
-/// moves the selection with the dropdown shut, and a letter jumps to the first
-/// item beginning with it. On the preset list that is a patch thrown away per
-/// keystroke, and on any of them it collides with the letters being an instrument
-/// — so a Picker reads neither.
-/// <para>
-/// Both routes are covered separately because they are separate: the arrow
-/// arrives as a key press and the letter as text input, and a fix for one is no
-/// fix at all for the other. That is how this was found.
-/// </para>
+/// A ComboBox answers the keyboard twice over and commits on every step, which on
+/// the preset list is a patch thrown away per keystroke and on any of them collides
+/// with the letters being an instrument. Both routes are covered separately because
+/// they are separate — the arrow arrives as a key press and the letter as text input
+/// — which is how this was found.
 /// </remarks>
 public class PickerTests : UiTest
 {
@@ -48,20 +43,14 @@ public class PickerTests : UiTest
         All<Button>(window).Single(b => b.Name == "presets-glyph");
 
     /// <summary>
-    /// The Picker is still a real, templated list — not shown itself, but not
-    /// broken either.
+    /// The Picker is still a real, templated list — not shown itself, but not broken
+    /// either.
     /// </summary>
     /// <remarks>
-    /// A theme is found by type, and a control that does not say to look for its
-    /// base type's is given no template — so it can go on holding its items,
-    /// raising SelectionChanged and answering every question correctly, while
-    /// drawing nothing at all. Checked as "it has a template", which is what an
-    /// untemplated control does not: its visual tree is itself alone.
-    /// <para>
-    /// What a person actually sees is the glyph button stacked in front of it,
-    /// and that one needs no test of its own here — it is built the same way as
-    /// open, save and tidy, and sized the same for the same reason they are.
-    /// </para>
+    /// A control that does not say to look for its base type's theme is given no
+    /// template, so it can hold its items and answer every question correctly while
+    /// drawing nothing. Checked as "it has a template", which is what an untemplated
+    /// control does not: its visual tree is itself alone.
     /// </remarks>
     [AvaloniaFact]
     public void The_hidden_list_behind_the_button_is_still_a_real_list()
@@ -179,17 +168,14 @@ public class PickerTests : UiTest
     }
 
     /// <summary>
-    /// The preview size and the instrument a MIDI In listens to are the same kind
-    /// of list and have the same trouble. Neither throws a patch away, so neither
-    /// is as bad as the preset list — but the size list is all digits, and the
+    /// The preview size and the instrument a MIDI In listens to have the same
+    /// trouble. Neither throws a patch away, but the size list is all digits, and the
     /// digits are notes as surely as the letters are.
     /// </summary>
     /// <remarks>
-    /// Both are reached by selecting the module whose panel holds them, because
-    /// neither is in the tree until then. Asked of the type rather than by
-    /// pressing keys at them: what a Picker does with a keystroke is the two
-    /// tests above, and repeating them per list would be testing the same class
-    /// three times.
+    /// Both are reached by selecting the module whose panel holds them, since neither
+    /// is in the tree until then. Asked of the type rather than by pressing keys:
+    /// what a Picker does with a keystroke is the two tests above.
     /// </remarks>
     [AvaloniaFact]
     public void The_other_lists_in_the_window_are_pickers_as_well()

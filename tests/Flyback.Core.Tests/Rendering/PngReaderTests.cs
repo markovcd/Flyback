@@ -8,15 +8,14 @@ using Shouldly;
 namespace Flyback.Core.Tests.Rendering;
 
 /// <summary>
-/// The PNG decoder, and the one test that matters most: what this program writes
-/// is what it can read.
+/// The PNG decoder, and the one test that matters most: what this program writes is
+/// what it can read.
 /// </summary>
 /// <remarks>
 /// Most of these build a file byte by byte rather than shipping one, because a
-/// checked-in PNG is a fixture nobody can read and half of what is being pinned
-/// here is what happens to a file that is <em>wrong</em> — truncated, interlaced,
-/// a depth the reader refuses. A builder makes those as easily as it makes the
-/// good case.
+/// checked-in PNG is a fixture nobody can read and half of what is pinned here is
+/// what happens to a file that is wrong — truncated, interlaced, a depth the reader
+/// refuses.
 /// </remarks>
 public class PngReaderTests
 {

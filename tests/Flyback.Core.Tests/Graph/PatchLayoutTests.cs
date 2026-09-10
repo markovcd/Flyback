@@ -137,16 +137,13 @@ public class PatchLayoutTests
     public void No_two_modules_overlap(string name) => NothingOverlaps(Arranged(Preset(name)));
 
     /// <summary>
-    /// And still none of them overlap once every group has been taken off, which
-    /// is a thing a person does to a patch they have been handed and want to see
-    /// the whole of.
+    /// And still none of them overlap once every group has been taken off, which is
+    /// what a person does to a patch they have been handed.
     /// </summary>
     /// <remarks>
-    /// Worth its own case rather than trusted to the one above, because it is a
-    /// different drawing and a much larger one: ten boxes become a hundred
-    /// modules, and a hundred modules is wide enough to reach the end of the
-    /// canvas — where <see cref="NodeInstance.X"/> holds them, one on top of
-    /// another. See <see cref="A_drawing_that_fits_the_canvas_is_put_on_it"/>.
+    /// Its own case because it is a much larger drawing: ten boxes become a hundred
+    /// modules, which is wide enough to reach the end of the canvas — where
+    /// <see cref="NodeInstance.X"/> holds them, one on top of another.
     /// </remarks>
     [Theory]
     [MemberData(nameof(EveryPreset))]
@@ -419,15 +416,13 @@ public class PatchLayoutTests
     }
 
     /// <summary>
-    /// A group whose two modules are one step and three steps along the chain,
-    /// with a module belonging to nobody in the step between them.
+    /// A group whose two modules are one step and three steps along the chain, with a
+    /// module belonging to nobody in the step between them.
     /// </summary>
     /// <remarks>
     /// The arrangement that catches a group placed a module at a time: its two
-    /// modules go into two columns with a stranger's column in the middle, so
-    /// whatever is drawn round them reaches across all three. It is what a large
-    /// patch does by itself — the "Whole band" preset lays out with three pairs
-    /// of boxes on top of each other unless a group is placed whole.
+    /// modules go into two columns with a stranger's in the middle, so whatever is
+    /// drawn round them reaches across all three.
     /// </remarks>
     private static Patch Straggling(out NodeGroup group, out NodeInstance stranger, bool shut)
     {

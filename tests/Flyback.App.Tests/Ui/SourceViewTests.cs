@@ -15,16 +15,11 @@ namespace Flyback.App.Tests.Ui;
 /// document.
 /// </summary>
 /// <remarks>
-/// The rule ADR-0068 settles on is that the file decides, not the view: a patch
-/// opened as a graph is a graph, and the text view of it is a printing — a
-/// reading rather than a round trip, because printing drops the groups and lays
-/// the canvas out afresh. Applying a printing is how somebody deliberately takes
-/// a patch into text, and from then on the text is the document and the canvas
-/// is a view of it.
-/// <para>
-/// The window opens on a preset, which is a graph nobody wrote any text for. So
-/// everything here starts from the canvas owning the patch.
-/// </para>
+/// ADR-0068 settles it on the file rather than the view: a patch opened as a graph
+/// is a graph, and the text view of it is a printing. Applying one is how somebody
+/// deliberately takes a patch into text, and from then on the canvas is a view of
+/// it. The window opens on a preset, so everything here starts from the canvas
+/// owning the patch.
 /// </remarks>
 public class SourceViewTests : UiTest
 {
@@ -643,16 +638,14 @@ public class SourceViewTests : UiTest
     }
 
     /// <summary>
-    /// A run of typing comes back a word at a time, the way it does in every
-    /// other editor.
+    /// A run of typing comes back a word at a time, the way it does in every other
+    /// editor.
     /// </summary>
     /// <remarks>
-    /// The stack underneath takes an operation per change to the document, and a
-    /// change is a keystroke — so a sentence used to come back one letter at a
-    /// time, which is nobody's idea of Ctrl+Z. The run is grouped as it is typed
-    /// and the space that ends a word belongs to the word, so what a press
-    /// leaves is the line as it stood before that word rather than the word with
-    /// its space still after it.
+    /// The stack underneath takes an operation per change and a change is a
+    /// keystroke, so a sentence used to come back one letter at a time. The space
+    /// that ends a word belongs to the word, so a press leaves the line as it stood
+    /// before that word.
     /// </remarks>
     [AvaloniaFact]
     public void A_run_of_typing_comes_back_a_word_at_a_time()
@@ -758,16 +751,13 @@ public class SourceViewTests : UiTest
     }
 
     /// <summary>
-    /// And an evaluation is a handover as much as an edit, so taking it back
-    /// takes the handover back with it.
+    /// And an evaluation is a handover as much as an edit, so taking it back takes
+    /// the handover back with it.
     /// </summary>
     /// <remarks>
-    /// Applying is how a patch is taken into text. Undo it and what is on the
-    /// canvas is a patch no text describes — laid out where it stood before the
-    /// build re-placed everything — so leaving the text as the document would
-    /// lock that canvas behind a printing of something else, with a handover
-    /// made by hand as the only way out. That is not what Ctrl+Z was pressed
-    /// for: it was pressed to be back where the modules were, which is why the
+    /// Undo an apply and what is on the canvas is a patch no text describes, so
+    /// leaving the text as the document would lock it behind a printing of something
+    /// else. Ctrl+Z was pressed to be back where the modules were, which is why the
     /// view goes back too.
     /// </remarks>
     [AvaloniaFact]
@@ -797,19 +787,14 @@ public class SourceViewTests : UiTest
     }
 
     /// <summary>
-    /// Redo does not repeat once it has put the evaluation back. There is one
-    /// step to take back and one to put again, and a second press of the same
-    /// button has nothing left to do.
+    /// Redo does not repeat once it has put the evaluation back: there is one step to
+    /// take back and one to put again.
     /// </summary>
     /// <remarks>
-    /// A press that crosses the ownership boundary is answered by whichever of
-    /// the two stacks the gesture lands on, and the other is left alone — so a
-    /// rule that read the owner or the view to decide that, rather than which
-    /// stack still has the step, could answer this redo from the canvas and
-    /// leave the matching <c>Deed</c> stranded, unconsumed, on the text's. The
-    /// stray would then look like a second redo on offer, and pressing it would
-    /// ask the canvas's stack for a step it no longer had — silently doing
-    /// nothing, having already been done by the first press.
+    /// A press that crosses the ownership boundary is answered by whichever stack the
+    /// gesture lands on, so a rule that read the owner or the view instead could
+    /// answer this redo from the canvas and leave the matching <c>Deed</c> stranded
+    /// on the text's — which would look like a second redo on offer and do nothing.
     /// </remarks>
     [AvaloniaFact]
     public void Redo_does_not_repeat_after_putting_an_evaluation_back()
@@ -949,11 +934,10 @@ public class SourceViewTests : UiTest
     /// history of that patch is — and the reading is made afresh from it.
     /// </summary>
     /// <remarks>
-    /// What the write-back put in the text is not an edit anybody made; it is
-    /// the reading keeping up. Answering Ctrl+Z with it would put the old number
-    /// back over a patch still playing the new one, and leave the text no longer
-    /// the printing it says it is — which is what stops the caret pointing the
-    /// panel, since a text that is not the printing maps to nothing.
+    /// What the write-back put in the text is the reading keeping up rather than an
+    /// edit anybody made: answering Ctrl+Z with it would put the old number back over
+    /// a patch still playing the new one, and leave the text no longer the printing
+    /// it says it is.
     /// </remarks>
     [AvaloniaFact]
     public void Taking_back_a_knob_turned_over_a_printing_takes_back_the_knob()
@@ -989,12 +973,10 @@ public class SourceViewTests : UiTest
     /// An undo that crosses no handover is not one, and says nothing about one.
     /// </summary>
     /// <remarks>
-    /// An edit made on the canvas and taken back while a printing of that canvas
-    /// happens to be showing changes nothing about who owns the patch — nobody
-    /// switched anything. Announcing that the canvas is the document again would
-    /// be telling somebody about a switch they never made, and throwing the
-    /// printing away with it would drop them back on the canvas they were
-    /// looking away from.
+    /// An edit taken back while a printing happens to be showing changes nothing
+    /// about who owns the patch. Announcing otherwise would be telling somebody about
+    /// a switch they never made, and throwing the printing away would drop them back
+    /// on the canvas they were looking away from.
     /// </remarks>
     [AvaloniaFact]
     public void Taking_back_a_canvas_edit_under_a_printing_is_not_a_handover()
@@ -1029,22 +1011,14 @@ public class SourceViewTests : UiTest
         string.Join(" ", All<TextBlock>(Inspector(window)).Select(block => block.Text));
 
     /// <summary>
-    /// The panel says why it has nothing, for a caret on a module the patch has
-    /// moved on from.
+    /// The panel says why it has nothing, for a caret on a module the patch has moved
+    /// on from.
     /// </summary>
     /// <remarks>
-    /// <para>
     /// The code names a module by where it stands, so a module typed in ahead of
-    /// another gives that other one a new name. Between the edit and the apply
-    /// that answers for it — and for one press after an undo takes that apply
-    /// back, since the apply comes back before the typing that led to it — the
-    /// names in the text are not the names on the canvas.
-    /// </para>
-    /// <para>
-    /// A panel that went quiet there could not be told apart from a caret in the
-    /// wrong place, which is a bug report about the panel rather than a sentence
-    /// about the patch.
-    /// </para>
+    /// another renames that other one, and between the edit and the apply the names
+    /// in the text are not the names on the canvas. A panel that went quiet there
+    /// could not be told apart from a caret in the wrong place.
     /// </remarks>
     [AvaloniaFact]
     public void A_caret_on_a_module_the_patch_has_moved_on_from_says_so()
@@ -1150,15 +1124,13 @@ public class SourceViewTests : UiTest
         Editor(window).Patch.Nodes.Single(node => node.TypeId == "math.atan2").InputValues[0];
 
     /// <summary>
-    /// Applying is a thing done to the document, so it goes on the document's
-    /// stack beside the typing that led to it — and being the last thing done,
-    /// it is the first thing back.
+    /// Applying is a thing done to the document, so it goes on the document's stack
+    /// beside the typing that led to it — and being the last thing done, it is the
+    /// first thing back.
     /// </summary>
     /// <remarks>
-    /// The two used to be kept apart, the typing at the text and the evaluations
-    /// on the canvas, and neither knew when the other had happened. So Ctrl+Z
-    /// after an apply took back a line somebody had typed some minutes earlier
-    /// and left the patch it had already been built into exactly where it was.
+    /// Kept apart, Ctrl+Z after an apply took back a line typed some minutes earlier
+    /// and left the patch it had already been built into where it was.
     /// </remarks>
     [AvaloniaFact]
     public void An_apply_comes_back_before_the_typing_that_led_to_it()
@@ -1194,15 +1166,13 @@ public class SourceViewTests : UiTest
     }
 
     /// <summary>
-    /// And a knob turned in the panel is one thing done as well, however little
-    /// of it is text: the number in the code and the value behind it come back
-    /// in one press.
+    /// And a knob turned in the panel is one thing done as well, however little of it
+    /// is text: the number in the code and the value behind it come back in one press.
     /// </summary>
     /// <remarks>
-    /// Taking back only the text would leave the two saying different things
-    /// about one patch — the file reading 1.5524476 over a patch that is still
-    /// playing 2 — until the next apply, which would then quietly undo the knob
-    /// as a side effect of building something else.
+    /// Taking back only the text would leave the file reading 1.5524476 over a patch
+    /// still playing 2, until the next apply quietly undid the knob as a side effect
+    /// of building something else.
     /// </remarks>
     [AvaloniaFact]
     public void Undoing_a_knob_turned_in_the_panel_takes_the_value_back_too()
@@ -1595,15 +1565,12 @@ public class SourceViewTests : UiTest
 
     /// <summary>
     /// A number box takes what is typed as it is typed, so the text keeps up
-    /// with it keystroke by keystroke rather than waiting for the box to be let
-    /// go of.
+    /// keystroke by keystroke rather than waiting for the box to be let go of.
     /// </summary>
     /// <remarks>
-    /// Nothing here lets go of a pointer or moves the focus, which were the two
-    /// things the write-back waited for. The value was heard on every keystroke
-    /// all the same, so what somebody typing a note got was a code view still
-    /// showing the number the patch had already stopped playing — until a click
-    /// somewhere else raised one of those two events for a reason of its own.
+    /// Nothing here lets go of a pointer or moves the focus, which were the two things
+    /// the write-back waited for — so somebody typing a note saw a code view showing
+    /// the number the patch had already stopped playing.
     /// </remarks>
     [AvaloniaFact]
     public void A_number_typed_in_the_panel_reaches_the_text_without_leaving_the_box()

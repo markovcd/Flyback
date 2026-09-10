@@ -75,16 +75,14 @@ public class DocumentIdentityTests : UiTest
     }
 
     /// <summary>
-    /// A file opened from disk is not any row of the preset list, so nothing
-    /// there should still look picked once one is open.
+    /// A file opened from disk is not any row of the preset list, so nothing there
+    /// should still look picked once one is open.
     /// </summary>
     /// <remarks>
-    /// The window opens on the list's first row, and a bundle carries no picker
-    /// selection of its own to put in its place — so without this, opening one
-    /// left that first preset looking chosen for a patch it had nothing to do
-    /// with. Driven through <see cref="MainWindow.ClearPresetSelection"/> rather
-    /// than a real Open dialog, which the headless platform does not put up —
-    /// see the remark on <see cref="MainWindow.Became"/>.
+    /// The window opens on the list's first row and a bundle carries no selection of
+    /// its own, so without this, opening one left that preset looking chosen. Driven
+    /// through <see cref="MainWindow.ClearPresetSelection"/> rather than a real Open
+    /// dialog, which the headless platform does not put up.
     /// </remarks>
     [AvaloniaFact]
     public void Opening_a_file_takes_the_selection_off_the_preset_list()

@@ -8,15 +8,13 @@ using Xunit;
 namespace Flyback.Plugins.Tests;
 
 /// <summary>
-/// The two noises: the same field summed at several sizes, and the distance to
-/// a set of scattered points.
+/// The two noises: the same field summed at several sizes, and the distance to a set
+/// of scattered points.
 /// </summary>
 /// <remarks>
-/// Both are pure functions of a position, so most of this is a table of places
-/// and the numbers that come back. What is not is the Fractal's octave count,
-/// which is carried on the node rather than wired into it — so it is the one
-/// thing here that changes the length of the program rather than its answer, and
-/// several of these count ops rather than reading them.
+/// Both are pure functions of a position, so most of this is a table of places and
+/// what comes back. What is not is the Fractal's octave count, which changes the
+/// length of the program rather than its answer — so several of these count ops.
 /// </remarks>
 public class NoiseTests
 {

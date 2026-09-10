@@ -10,25 +10,15 @@ using Shouldly;
 namespace Flyback.App.Tests.Ui;
 
 /// <summary>
-/// A module cannot be dragged off the canvas. It stops at the edge, and a
-/// selection dragged into one stops there in the shape it was picked up in.
+/// A module cannot be dragged off the canvas. It stops at the edge, and a selection
+/// dragged into one stops there in the shape it was picked up in.
 /// </summary>
 /// <remarks>
-/// The coordinate clamps itself, so a module can never be lost altogether
-/// whatever the drag did — see <c>NodeBoundsTests</c>. Two things here are what
-/// that clamp cannot do on its own.
-/// <para>
-/// It stops the corner rather than the module: what a coordinate names is the
-/// top left, and a module whose corner is on the edge stands entirely on the far
-/// side of the line. So the drag measures the body, which only the view can.
-/// </para>
-/// <para>
-/// And it stops each module separately: the gesture is cut back to what the one
-/// nearest an edge can take, so the rest of the selection is cut back by the
-/// same amount. Clamp them one at a time and a group holds together until it
-/// meets the edge and then flattens against it, which is a selection nothing
-/// puts back.
-/// </para>
+/// The coordinate clamps itself, so a module can never be lost altogether — see
+/// <c>NodeBoundsTests</c> — and two things here are what that clamp cannot do. It
+/// stops the corner rather than the module, so the drag measures the body, which
+/// only the view can. And it stops each module separately: clamped one at a time, a
+/// group holds together until it meets the edge and then flattens against it.
 /// </remarks>
 public class DragBoundsTests : UiTest
 {

@@ -9,12 +9,10 @@ namespace Flyback.Core.Tests.Graph;
 /// The four-channel mixer. Four inputs, a level on each and one output.
 /// </summary>
 /// <remarks>
-/// Its sockets are untyped, so the interesting property is not the arithmetic
-/// but that there is only one of it: the same module runs at both sinks, mixing
-/// pictures where a color arrives and tones where a scalar does. Both are run
-/// here through a whole patch rather than through the emit alone, because the
-/// coercion that makes that work happens at the port and at the sink rather
-/// than inside the module.
+/// Its sockets are untyped, so the interesting property is that there is only one
+/// of it: the same module mixes pictures where a color arrives and tones where a
+/// scalar does. Run through a whole patch rather than the emit alone, because the
+/// coercion happens at the port and at the sink.
 /// </remarks>
 public class MixerTests
 {
@@ -187,16 +185,13 @@ public class MixerTests
     }
 
     /// <summary>
-    /// The preset that ships the module, at the sink where summing can actually
-    /// hurt. Four voices through a mixer is four times a voice at worst, and the
-    /// Output's gain is set to the quarter that answers it — so the chord lands
-    /// at full scale in the worst case rather than past it, and nobody has to
-    /// hear what past it sounds like.
+    /// The preset that ships the module, at the sink where summing can hurt: four
+    /// voices through a mixer is four times a voice at worst, and the Output's gain
+    /// is the quarter that answers it.
     /// </summary>
     /// <remarks>
-    /// Twelve seconds because the faders are the slow part: the quickest is a
-    /// sixth of a hertz, so anything shorter than several of its cycles never
-    /// sees the four of them near the top together.
+    /// Twelve seconds because the faders are the slow part — the quickest is a sixth
+    /// of a hertz, so anything shorter never sees the four near the top together.
     /// </remarks>
     [Fact]
     public void The_preset_that_demonstrates_it_stays_inside_what_the_speakers_carry()

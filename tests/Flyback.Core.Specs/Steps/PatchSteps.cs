@@ -180,17 +180,15 @@ public sealed class PatchSteps(PatchContext context)
     }
 
     /// <summary>
-    /// Renders the same patch at two densities and compares every pixel of the
-    /// coarser one against the point in the finer one that samples the same
-    /// coordinate.
+    /// Renders the same patch at two densities and compares every pixel of the coarser
+    /// one against the point in the finer one that samples the same coordinate.
     /// </summary>
     /// <remarks>
-    /// The two grids only line up if the finer is an <em>odd</em> multiple of
-    /// the coarser: pixel centres sit at <c>(i + 0.5) / size</c>, so pixel
-    /// <c>i</c> of the coarse grid and pixel <c>k * i + (k - 1) / 2</c> of the
-    /// fine one are the same point exactly when <c>k</c> is odd. That makes
-    /// this an equality between two samplings of one function rather than an
-    /// approximation, and it pins the half-pixel offset at the same time.
+    /// The two grids line up only if the finer is an odd multiple of the coarser:
+    /// centres sit at <c>(i + 0.5) / size</c>, so pixel <c>i</c> and pixel
+    /// <c>k * i + (k - 1) / 2</c> are the same point exactly when <c>k</c> is odd.
+    /// That makes this an equality rather than an approximation, and pins the
+    /// half-pixel offset at the same time.
     /// </remarks>
     [Then("the frame at {int} by {int} matches the frame at {int} by {int}")]
     public void ThenTheFramesMatch(int fineWidth, int fineHeight, int coarseWidth, int coarseHeight)

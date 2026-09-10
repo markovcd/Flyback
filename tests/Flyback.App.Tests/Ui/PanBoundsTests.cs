@@ -10,15 +10,13 @@ using Shouldly;
 namespace Flyback.App.Tests.Ui;
 
 /// <summary>
-/// The view cannot be scrolled off the canvas either. It stops with the edge of
-/// the canvas at the edge of the window, whether it was dragged there or zoomed
-/// out into a corner.
+/// The view cannot be scrolled off the canvas either. It stops with the edge of the
+/// canvas at the edge of the window, whether it was dragged there or zoomed out into
+/// a corner.
 /// </summary>
 /// <remarks>
-/// The other half of holding a module inside the canvas: a bound on where things
-/// may be put is worth little beside a view that can wander somewhere none of
-/// them are, since what is then on screen is empty grid in every direction with
-/// no clue which way the patch went.
+/// The other half of holding a module inside the canvas: a bound on where things may
+/// be put is worth little beside a view that can wander somewhere none of them are.
 /// </remarks>
 public class PanBoundsTests : UiTest
 {

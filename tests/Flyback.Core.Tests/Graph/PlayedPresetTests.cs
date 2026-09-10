@@ -5,18 +5,15 @@ using Shouldly;
 namespace Flyback.Core.Tests.Graph;
 
 /// <summary>
-/// The preset that does nothing until somebody plays it, which is the one thing
-/// no other preset test can check by rendering: every image and every buffer
-/// approved elsewhere is a patch running on its own clock, and this one has no
-/// clock of its own to run on.
+/// The preset that does nothing until somebody plays it, which no other preset test
+/// can check by rendering: every image approved elsewhere is a patch running on its
+/// own clock, and this one has none.
 /// </summary>
 /// <remarks>
-/// What is worth pinning is the shape of the wiring rather than the sound. That
-/// the pulse widens when a note is struck is the Sample &amp; Hold's business and
-/// is covered where that module is; that the trigger is one evaluation wide is
-/// the MIDI In's and is covered there. Here it is that the three signals reach
-/// the ear at all, that velocity does not, and that a key down is the difference
-/// between silence and a note.
+/// What is pinned is the shape of the wiring rather than the sound — that the three
+/// signals reach the ear at all, that velocity does not, and that a key down is the
+/// difference between silence and a note. The modules' own behaviour is covered
+/// where those modules are.
 /// </remarks>
 public class PlayedPresetTests
 {
@@ -92,17 +89,14 @@ public class PlayedPresetTests
     }
 
     /// <summary>
-    /// And nothing is wired to velocity, on purpose: a typist strikes every key
-    /// the same, so a wire from it would be one that does nothing until hardware
-    /// arrives.
+    /// And nothing is wired to velocity, on purpose: a typist strikes every key the
+    /// same, so a wire from it would do nothing until hardware arrives.
     /// </summary>
     /// <remarks>
-    /// Asked of the wires rather than of the program, because the program is not
-    /// where the answer is. An emit function runs once and emits every output it
-    /// has, whether or not anything downstream reads them — the same reason a
-    /// Supersaw emits both of its channels into a patch using one — so the
-    /// signal is named in <c>LiveInputs</c> either way and costs one register
-    /// nothing reads. What the preset decides is which sockets carry a wire.
+    /// Asked of the wires rather than the program, because an emit function emits
+    /// every output it has whether or not anything reads them — so the signal is
+    /// named in <c>LiveInputs</c> either way. What the preset decides is which
+    /// sockets carry a wire.
     /// </remarks>
     [Fact]
     public void Nothing_is_wired_to_velocity()

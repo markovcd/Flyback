@@ -8,19 +8,13 @@ namespace Flyback.Core.Tests.Compile;
 /// previous evaluation, which is the sample rate said the other way round.
 /// </summary>
 /// <remarks>
-/// It is measured rather than told: a cell holds the clock as it was and the
-/// difference is the interval. That puts the clock itself into a cell, and a
-/// cell is bounded to the rails because a patch can draw a wire into one and a
-/// loop with a gain above one is easy to draw. A clock is not a signal and no
-/// wire reaches it, but it passes those rails simply by the patch being left
-/// playing — after sixteen seconds — and clamped there it sticks, handing every
-/// module that measures its own rate an interval that grows for the rest of the
-/// session. Which is a filter that opens, a phaser that stops sweeping and an
-/// envelope that finishes in one sample.
-/// <para>
-/// So the clock is written by <see cref="OpCode.ClockWrite"/> and not by
-/// <see cref="OpCode.UnitWrite"/>. These are what says the two are different.
-/// </para>
+/// Measured rather than told: a cell holds the clock as it was and the difference
+/// is the interval. A signal cell is bounded to the rails, and a clock passes those
+/// rails simply by the patch being left playing — after sixteen seconds — where
+/// clamped it sticks and hands every module that measures its own rate an interval
+/// that grows: a filter that opens, a phaser that stops sweeping, an envelope that
+/// finishes in one sample. So the clock is written by
+/// <see cref="OpCode.ClockWrite"/>, and these are what says the two are different.
 /// </remarks>
 public class IntervalTests
 {

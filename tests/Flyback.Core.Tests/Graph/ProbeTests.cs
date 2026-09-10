@@ -5,16 +5,14 @@ using Shouldly;
 namespace Flyback.Core.Tests.Graph;
 
 /// <summary>
-/// The Probe: one socket, and a picture of the value arriving at it rather than
-/// a picture made from it.
+/// The Probe: one socket, and a picture of the value arriving at it rather than a
+/// picture made from it.
 /// </summary>
 /// <remarks>
-/// Two things about it are unlike every other module, and everything here is
-/// about one or the other. It is a root — a program compiled for a probe never
-/// reaches the Output, so the patch's own picture costs nothing while the chart
-/// is up. And its input is read over a domain of its own, so the same module
-/// resolved inside the sweep and outside it is two values rather than one shared
-/// register.
+/// Two things about it are unlike every other module. It is a root, so a program
+/// compiled for a probe never reaches the Output and the patch's own picture costs
+/// nothing while the chart is up. And its input is read over a domain of its own, so
+/// the same module resolved inside the sweep and outside it is two values.
 /// </remarks>
 public class ProbeTests
 {
@@ -116,16 +114,15 @@ public class ProbeTests
     }
 
     /// <summary>
-    /// Time runs across the picture. Charting Time itself is the cleanest way to
-    /// say so: the trace is a straight line whose height at each column is the
-    /// moment that column stands for, so where the ink is says exactly which
-    /// substitution the sweep made.
+    /// Time runs across the picture, and charting Time itself is the cleanest way to
+    /// say so: the trace is a straight line whose height at each column is the moment
+    /// that column stands for.
     /// </summary>
     /// <param name="x">Which column of the chart to read.</param>
     /// <param name="decades">
     /// The timebase, in powers of ten of seconds: a two-second window and a
-    /// millisecond one, which is the span the knob has to cover for a probe to
-    /// be any use at an audible pitch as well as at an LFO's.
+    /// millisecond one, which is the span a probe has to cover to be any use at an
+    /// audible pitch as well as at an LFO's.
     /// </param>
     [Theory]
     [InlineData(0d, 0.3f)]

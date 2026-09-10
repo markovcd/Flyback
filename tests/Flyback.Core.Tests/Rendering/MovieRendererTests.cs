@@ -222,18 +222,15 @@ public class MovieRendererTests
     }
 
     /// <summary>
-    /// A Meter works in an export, which is the one place the picture and the
-    /// sound are made by the same loop rather than by two threads. So the frames
-    /// of a patch lit by its own sound differ from each other, and the first one
-    /// is not the black a picture told nothing would be.
+    /// A Meter works in an export, which is the one place the picture and the sound
+    /// are made by the same loop. So the frames of a patch lit by its own sound
+    /// differ from each other, and the first is not black.
     /// </summary>
     /// <remarks>
     /// An export holds the whole clip, so a frame can be lit by the sound it is
-    /// played with — its audio is rendered ahead of the frame itself. The
-    /// preview cannot do that: a level there is only ever what was played up to
-    /// now, because now is all there is. The rest of the loop is unaffected, as
-    /// the tests above pin: the samples are still counted from the frame
-    /// number, and are still written after the picture.
+    /// played with; the preview cannot, because now is all there is. The rest of the
+    /// loop is unaffected: the samples are still counted from the frame number and
+    /// still written after the picture.
     /// </remarks>
     [Fact]
     public void A_picture_lit_by_its_own_sound_is_lit_in_an_export()

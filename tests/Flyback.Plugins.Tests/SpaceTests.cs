@@ -8,15 +8,14 @@ using Xunit;
 namespace Flyback.Plugins.Tests;
 
 /// <summary>
-/// The Delay and Reverb modules, loaded off disk and driven sample by sample
-/// with real delay state behind them.
+/// The Delay and Reverb modules, loaded off disk and driven sample by sample with
+/// real delay state behind them.
 /// </summary>
 /// <remarks>
-/// The signal goes in through the Coordinates module's x, because
-/// <see cref="CompiledPatch.Evaluate"/> takes x per evaluation — which makes it
-/// the one way to feed a module an arbitrary waveform without building an
-/// oscillator to produce it. Everything runs at 1 kHz so a delay in seconds is a
-/// whole number of samples.
+/// The signal goes in through Coordinates' x, because
+/// <see cref="CompiledPatch.Evaluate"/> takes x per evaluation — the one way to feed
+/// a module an arbitrary waveform. Everything runs at 1 kHz, so a delay in seconds is
+/// a whole number of samples.
 /// </remarks>
 public class SpaceTests
 {
@@ -138,16 +137,13 @@ public class SpaceTests
     }
 
     /// <summary>
-    /// The tail comes back at about the level that went in, whatever the decay —
-    /// which is what makes 'mix' a crossfade between two comparable things rather
-    /// than a fade from the signal down into a whisper.
+    /// The tail comes back at about the level that went in, whatever the decay — which
+    /// is what makes 'mix' a crossfade between two comparable things.
     /// </summary>
     /// <remarks>
-    /// Scaled off the comb's broadband gain and not its gain at DC, which is the
-    /// tallest point of its response and six to twenty decibels above what it
-    /// does to an actual tail. Getting that wrong is inaudible from inside the
-    /// module — everything still decays, everything is still stable — and is only
-    /// visible against the dry signal, so this is the test that has to hold it.
+    /// Scaled off the comb's broadband gain and not its gain at DC, which is six to
+    /// twenty decibels above what it does to an actual tail. Getting that wrong is
+    /// inaudible from inside the module and only visible against the dry signal.
     /// </remarks>
     [Fact]
     public void The_tail_comes_back_at_about_the_level_that_went_in()
@@ -207,17 +203,14 @@ public class SpaceTests
     }
 
     /// <summary>
-    /// What separates the room from the pipe: every trip round a comb loses a
-    /// little more of the top, so the tail darkens as it dies instead of keeping
-    /// one timbre all the way down. A comb with a plain gain in its loop would
-    /// hold the same brightness from the first repeat to the last, which is the
-    /// metallic ring a cheap reverb is recognised by.
+    /// What separates the room from the pipe: every trip round a comb loses a little
+    /// more of the top, so the tail darkens as it dies rather than keeping one timbre
+    /// — the metallic ring a cheap reverb is recognised by.
     /// </summary>
     /// <remarks>
-    /// The one test here that cannot run at 1 kHz. The corner is fixed in hertz
-    /// and sits at four thousand of them, which at this harness's rate is past
-    /// Nyquist and therefore no filtering at all — so this one is heard at a rate
-    /// the speakers would recognise instead.
+    /// The one test here that cannot run at 1 kHz: the corner is fixed at four
+    /// thousand hertz, which at this harness's rate is past Nyquist and therefore no
+    /// filtering at all.
     /// </remarks>
     [Fact]
     public void The_tail_darkens_as_it_dies()

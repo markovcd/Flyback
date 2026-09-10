@@ -11,16 +11,14 @@ using Shouldly;
 namespace Flyback.App.Tests.Ui;
 
 /// <summary>
-/// A wire arriving at the module the inspector is showing takes that input's
-/// knob away, and unplugging it gives the knob back — both without the module
-/// having to be selected again.
+/// A wire arriving at the module the inspector is showing takes that input's knob
+/// away, and unplugging it gives the knob back — both without the module having to
+/// be selected again.
 /// </summary>
 /// <remarks>
-/// Patching is not a selection change, and the panel is rebuilt from nothing
-/// each time the selection moves — so it compares which rows it has rather than
-/// what is in them, keeping a freshly-wired socket from showing a stale knob.
-/// The same check is also what keeps a slider being dragged from being torn
-/// down under the hand holding it — the last test here is that half.
+/// Patching is not a selection change, so the panel compares which rows it has
+/// rather than what is in them. The same check keeps a slider being dragged from
+/// being torn down under the hand holding it, which is the last test here.
 /// </remarks>
 public class InspectorWiringTests : UiTest
 {
@@ -45,15 +43,10 @@ public class InspectorWiringTests : UiTest
     /// Output the oscillator already feeds.
     /// </summary>
     /// <param name="wired">
-    /// Whether the clock is already on the oscillator's 'freq'. The panel is
-    /// then correct the moment it is built, which is what the unplugging test
-    /// needs: starting from a panel that is already stale would let it pass
-    /// against the very bug it is here for.
-    /// <para>
-    /// 'freq' rather than 'in' because what is being watched is a knob coming
-    /// and going, and 'in' has none to come or go — it is normalled to Time.
-    /// Nothing here cares what the patch sounds like.
-    /// </para>
+    /// Whether the clock is already on the oscillator's 'freq', so the panel is
+    /// correct the moment it is built — starting from a stale panel would let the
+    /// unplugging test pass against the very bug it is here for. 'freq' rather than
+    /// 'in' because 'in' has no knob to come or go, being normalled to Time.
     /// </param>
     private static (Patch Patch, NodeInstance Sine, NodeInstance Clock) Board(bool wired = false)
     {
@@ -232,16 +225,13 @@ public class InspectorWiringTests : UiTest
         });
 
     /// <summary>
-    /// Two drags of one knob are two things somebody did, so one press takes
-    /// back one of them.
+    /// Two drags of one knob are two things somebody did, so one press takes back one
+    /// of them.
     /// </summary>
     /// <remarks>
-    /// The frames of a single drag fold into one step, and the panel names the
-    /// gesture they fold under after the control they came from — so every drag
-    /// of this slider carries the same name. What tells them apart is the hand
-    /// coming off between the two: without it the second drag joins the first
-    /// and a single press takes back both, losing an edit somebody never asked
-    /// to lose.
+    /// The frames of a drag fold into one step under a name taken from the control,
+    /// so every drag of this slider carries the same one. What tells them apart is
+    /// the hand coming off between the two.
     /// </remarks>
     [AvaloniaFact]
     public void Two_drags_of_one_knob_come_back_one_at_a_time()

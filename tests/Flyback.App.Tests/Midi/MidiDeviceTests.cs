@@ -9,16 +9,13 @@ using Xunit;
 namespace Flyback.App.Tests.Midi;
 
 /// <summary>
-/// The hub with hardware behind it: which devices are offered, which are
-/// actually opened, and what a note off one does to the programs that are
-/// running.
+/// The hub with hardware behind it: which devices are offered, which are actually
+/// opened, and what a note off one does to the programs that are running.
 /// </summary>
 /// <remarks>
-/// Against a stand-in backend rather than a device, because a build machine has
-/// no keyboard plugged into it and the questions worth asking here are not about
-/// a driver anyway. What a real one costs is one <see cref="IMidiInput"/> away,
-/// and the winmm plugin's own tests cover the part that is: three bytes off a
-/// wire, and what a device is called.
+/// Against a stand-in backend, because a build machine has no keyboard and the
+/// questions here are not about a driver. The winmm plugin's own tests cover the
+/// part that is: three bytes off a wire, and what a device is called.
 /// </remarks>
 public class MidiDeviceTests
 {

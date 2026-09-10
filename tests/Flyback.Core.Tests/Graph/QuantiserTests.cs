@@ -5,21 +5,14 @@ using Shouldly;
 namespace Flyback.Core.Tests.Graph;
 
 /// <summary>
-/// The Quantiser: the nearest note of a scale to whatever arrives, where the
-/// scale is a set of pitch classes carried on the node rather than wired into
-/// it.
+/// The Quantiser: the nearest note of a scale to whatever arrives, where the scale
+/// is a set of pitch classes carried on the node rather than wired into it.
 /// </summary>
 /// <remarks>
-/// Like <see cref="NoteTests"/>, these check arithmetic that has a right answer
-/// outside the program — the nearest C to a given number is the nearest C
-/// whether or not anything renders it — so they are worked out here and compared
-/// against what the ops produce.
-/// <para>
-/// What is peculiar to this module is that the scale decides the shape of the
-/// program and not only its result: a note switched off contributes no ops at
-/// all, and the two ends of the range are special cases. So the op counts are
-/// checked as well as the values.
-/// </para>
+/// Like <see cref="NoteTests"/>, these check arithmetic with a right answer outside
+/// the program. What is peculiar to this module is that the scale decides the shape
+/// of the program and not only its result — a note switched off contributes no ops
+/// — so the op counts are checked as well as the values.
 /// </remarks>
 public class QuantiserTests
 {
@@ -359,16 +352,13 @@ public class QuantiserTests
     }
 
     /// <summary>
-    /// The preset's own audio program, with one of its modules sent to the
-    /// speakers so the number it produces can be read instead of inferred from a
-    /// waveform.
+    /// The preset's own audio program, with one of its modules sent to the speakers
+    /// so the number it produces can be read instead of inferred from a waveform.
     /// </summary>
     /// <remarks>
-    /// The audio program and not a probe, which is rooted at the screen. Half of
-    /// what this preset does about pitch is a Sample &amp; Hold, and a Hold on
-    /// the video path is a wire — so a probe would show the melody the picture
-    /// draws rather than the one the speakers play, and those are deliberately
-    /// not the same.
+    /// The audio program and not a probe, which is rooted at the screen: half of what
+    /// this preset does about pitch is a Sample &amp; Hold, and a Hold on the video
+    /// path is a wire, so a probe would show the melody the picture draws.
     /// </remarks>
     private static CompiledPatch Audible(string typeId)
     {
@@ -422,21 +412,15 @@ public class QuantiserTests
     }
 
     /// <summary>
-    /// The defect this preset was heard to have, and the one nothing looking at
-    /// the patch would find: every note in it was cleanly snapped and it still
-    /// glided, because the pitch was free to change while a note was sounding.
+    /// The defect this preset was heard to have and nothing looking at the patch
+    /// would find: every note in it was cleanly snapped and it still glided, because
+    /// the pitch was free to change while a note was sounding.
     /// </summary>
     /// <remarks>
-    /// A clean step in the middle of a held note is heard as a slide to the next
-    /// one — ADR-0030 is what stops that clicking, and what is left when it does
-    /// not click is a glide. So the test is not that the pitch steps, which it
-    /// always did, but <em>when</em>: every change has to land where nothing is
-    /// sounding.
-    /// <para>
-    /// The envelope is stepped in order rather than sampled, because it has
-    /// memory. Reading it at scattered moments would answer with whatever the
-    /// last evaluation left behind.
-    /// </para>
+    /// A clean step in the middle of a held note is heard as a slide to the next one,
+    /// so the test is not that the pitch steps but when: every change has to land
+    /// where nothing is sounding. The envelope is stepped in order rather than
+    /// sampled, because it has memory.
     /// </remarks>
     [Fact]
     public void The_preset_only_changes_pitch_while_nothing_is_sounding()

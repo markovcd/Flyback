@@ -6,16 +6,15 @@ using Shouldly;
 namespace Flyback.Core.Tests.Graph;
 
 /// <summary>
-/// A kind of carried state that the engine does not know about: declared by a
-/// plugin, stored under its own key, and drawn from what it declares rather than
-/// from a control it ships (ADR-0055).
+/// A kind of carried state the engine does not know about: declared by a plugin,
+/// stored under its own key, and drawn from what it declares rather than from a
+/// control it ships (ADR-0055).
 /// </summary>
 /// <remarks>
-/// The whole point of these is that nothing in the engine names the kind below.
-/// It seeds, compiles, saves, reloads and copies through the same loops the
-/// built-in three go through, and every one of those is checked here — because
-/// the failure mode of an open extension point is not a crash but a silence, and
-/// a silence passes any test that only asks whether something threw.
+/// The point is that nothing in the engine names the kind below: it seeds, compiles,
+/// saves, reloads and copies through the same loops the built-in three go through.
+/// The failure mode of an open extension point is a silence, and a silence passes
+/// any test that only asks whether something threw.
 /// </remarks>
 public class PluginExtraTests
 {

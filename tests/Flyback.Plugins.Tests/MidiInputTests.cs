@@ -6,15 +6,13 @@ using Xunit;
 namespace Flyback.Plugins.Tests;
 
 /// <summary>
-/// The half of hearing a keyboard that needs no keyboard: what three bytes off a
-/// wire mean, and what a device is called once a patch has to remember it.
+/// The half of hearing a keyboard that needs no keyboard: what three bytes off a wire
+/// mean, and what a device is called once a patch has to remember it.
 /// </summary>
 /// <remarks>
-/// Both of these live in the contract rather than in a backend, which is what
-/// makes them testable at all — the alternative is a device plugged into the
-/// machine running the tests, which no build server has. What is left untested
-/// is the part that genuinely needs hardware: opening a port and being called
-/// back on the driver's thread.
+/// Both live in the contract rather than in a backend, which is what makes them
+/// testable at all. What is left untested is the part that needs hardware: opening a
+/// port and being called back on the driver's thread.
 /// </remarks>
 public class MidiInputTests
 {

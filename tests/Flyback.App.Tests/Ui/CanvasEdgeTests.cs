@@ -153,15 +153,14 @@ public class CanvasEdgeTests : UiTest
     }
 
     /// <summary>
-    /// Away from the edges nothing changes: the canvas fills the view, and none
-    /// of the ground past it is anywhere in the frame.
+    /// Away from the edges nothing changes: the canvas fills the view, and none of
+    /// the ground past it is anywhere in the frame.
     /// </summary>
     /// <remarks>
-    /// Read along two strips near the top and the bottom rather than down whole
-    /// columns, to keep the sink out of it. A module's outline is within a few
-    /// parts of the ground past the canvas — they are the two darkest things in
-    /// the palette — so a column through one would answer this question with a
-    /// node border.
+    /// Read along two strips near the top and bottom rather than down whole columns,
+    /// to keep the sink out of it: a module's outline is within a few parts of the
+    /// ground past the canvas, so a column through one would answer with a node
+    /// border.
     /// </remarks>
     [AvaloniaFact]
     public void In_the_middle_the_canvas_fills_the_view()

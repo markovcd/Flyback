@@ -8,20 +8,15 @@ using Shouldly;
 namespace Flyback.App.Tests.Ui;
 
 /// <summary>
-/// Which renderer draws the picture, and the one case where the choice is not
-/// the person's: a program that reads a sound file cannot be drawn by a shader.
+/// Which renderer draws the picture, and the one case where the choice is not the
+/// person's: a program that reads a sound file cannot be drawn by a shader.
 /// </summary>
 /// <remarks>
-/// The tables travel with the interpreter's program and there is no texture for
-/// one, so the shader would draw silence where the interpreter draws a waveform.
-/// Two backends showing different pictures is the thing ADR-0035 does not allow
-/// — it lets them differ in their last bits — so the shader is stood down for as
-/// long as such a patch is up, rather than the eye being refused the clip.
-/// <para>
-/// A headless test never has a working GPU, so what is checked here is the
-/// intent rather than the pixels: which backend the host has been asked for
-/// against which it settles on. That is the whole of the decision.
-/// </para>
+/// The tables travel with the interpreter's program and there is no texture for one,
+/// so the shader would draw silence where the interpreter draws a waveform — and two
+/// backends showing different pictures is what ADR-0035 does not allow. A headless
+/// test never has a working GPU, so what is checked is which backend the host was
+/// asked for against which it settles on.
 /// </remarks>
 public class PreviewBackendTests : UiTest
 {

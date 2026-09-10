@@ -9,12 +9,10 @@ namespace Flyback.Core.Tests.Compile;
 /// each op, so a pixel pays only for what a pixel changes.
 /// </summary>
 /// <remarks>
-/// The whole of the claim is that running the three stages is the same as
-/// running the program, and "the same" here means the same bits rather than the
-/// same to a tolerance. A picture is compared against a previous frame of itself
-/// in every feedback patch there is, so a plan that was merely close would drift
-/// — and there is no reason for it to be close rather than exact, because the
-/// ops are the program's own and only their order has moved.
+/// The claim is that running the three stages is the same as running the program,
+/// and "the same" means the same bits: a picture is compared against a previous
+/// frame of itself in every feedback patch, so a plan that was merely close would
+/// drift. The ops are the program's own and only their order has moved.
 /// </remarks>
 public class FramePlanTests
 {

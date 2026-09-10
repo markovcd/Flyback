@@ -6,16 +6,14 @@ using Shouldly;
 namespace Flyback.Core.Tests.Language;
 
 /// <summary>
-/// What a module carries that is not a knob, said in the language and written
-/// back out of it.
+/// What a module carries that is not a knob, said in the language and written back
+/// out of it.
 /// </summary>
 /// <remarks>
-/// Four kinds, and the language has to say all four or a patch cannot be
-/// written as text without losing part of itself. The engine's own three — a
-/// tune, a scale and a file — have had a spelling since the language shipped. A
-/// plugin's declared fields are the fourth, and they are named arguments like
-/// any knob (ADR-0055), addressed by key rather than by label because a label is
-/// free to be reworded.
+/// Four kinds, and the language has to say all four or a patch cannot be written as
+/// text without losing part of itself. A plugin's declared fields are the fourth,
+/// and they are named arguments like any knob (ADR-0055), addressed by key rather
+/// than by label because a label is free to be reworded.
 /// </remarks>
 public class CarriedTests
 {

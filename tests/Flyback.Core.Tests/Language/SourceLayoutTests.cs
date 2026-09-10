@@ -9,12 +9,11 @@ namespace Flyback.Core.Tests.Language;
 /// where the modules sit is worked out after the graph is built.
 /// </summary>
 /// <remarks>
-/// The printer wrote one line per statement, and a statement is a whole
-/// pipeline: Plasma came out at 154 characters and Whole band at 540. What is
-/// checked here is that breaking them changes only where the newlines are —
-/// <see cref="PrinterTests"/> already holds every preset to building back
-/// opcode for opcode, and it is that pair of facts together that makes this
-/// safe to run over anything.
+/// The printer wrote one line per statement, and a statement is a whole pipeline —
+/// Plasma came out at 154 characters and Whole band at 540. What is checked is that
+/// breaking them changes only where the newlines are;
+/// <see cref="PrinterTests"/> already holds every preset to building back opcode for
+/// opcode.
 /// </remarks>
 public class SourceLayoutTests
 {

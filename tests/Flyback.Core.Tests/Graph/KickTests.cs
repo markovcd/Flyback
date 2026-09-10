@@ -6,17 +6,15 @@ using Shouldly;
 namespace Flyback.Core.Tests.Graph;
 
 /// <summary>
-/// A kick drum, rendered and listened to: struck twice a second, with the
-/// pitch falling out from under each strike and the level decaying to silence
-/// before the next one.
+/// A kick drum, rendered and listened to: struck twice a second, with the pitch
+/// falling out from under each strike and the level decaying to silence before the
+/// next one.
 /// </summary>
 /// <remarks>
-/// This is the one place the modules are checked against each other rather
-/// than on their own, and a drum is the case worth doing that for — every part
-/// of it is a time, and a time that is wrong sounds wrong rather than looking
-/// wrong. What is asserted here is the sound and not the wiring: the tempo as an
-/// interval between strikes, the sweep as a pitch that falls, the envelope as a
-/// level that reaches nothing and stays there.
+/// The one place the modules are checked against each other rather than on their
+/// own, and a drum is the case worth doing that for — every part of it is a time,
+/// and a time that is wrong sounds wrong rather than looking wrong. What is
+/// asserted is the sound and not the wiring.
 /// </remarks>
 public class KickTests
 {
@@ -201,15 +199,15 @@ public class KickTests
     }
 
     /// <summary>
-    /// It is still a drum a long way into a session. The envelope measures how
-    /// far the clock moved to know how far to travel, and a clock that stopped
-    /// being readable past sixteen seconds would make every strike finish
-    /// inside one sample — a kick that is a click nobody can hear.
+    /// It is still a drum a long way into a session. The envelope measures how far
+    /// the clock moved to know how far to travel, and a clock that stopped being
+    /// readable past sixteen seconds would make every strike finish inside one
+    /// sample.
     /// </summary>
     /// <remarks>
-    /// Rendered through the real <see cref="AudioRenderer"/> rather than by
-    /// stepping the program here, because the interval is a property of how the
-    /// renderer walks its clock and that is the thing under test.
+    /// Rendered through the real <see cref="AudioRenderer"/> rather than by stepping
+    /// the program here, because the interval is a property of how the renderer
+    /// walks its clock.
     /// </remarks>
     [Fact]
     public void It_is_still_a_drum_once_the_clock_has_passed_sixteen()

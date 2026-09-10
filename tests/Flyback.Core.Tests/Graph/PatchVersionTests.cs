@@ -6,15 +6,10 @@ namespace Flyback.Core.Tests.Graph;
 
 /// <summary>
 /// The layout stamp on a patch file. It earns its place in two directions: a file
-/// written before there was a stamp has to keep opening, and a file written after
-/// this build's understanding runs out has to be refused with a sentence rather
-/// than an exception.
+/// written before there was a stamp has to keep opening, and one written after this
+/// build's understanding runs out has to be refused with a sentence rather than an
+/// exception.
 /// </summary>
-/// <remarks>
-/// <see cref="PatchIoTests"/> covers the body of a file and
-/// <see cref="PatchProvenanceTests"/> the plugins it names. This covers the one
-/// number that says how to read either of them.
-/// </remarks>
 public class PatchVersionTests
 {
     private static Patch Small()
@@ -110,15 +105,13 @@ public class PatchVersionTests
     }
 
     /// <summary>
-    /// A stamp that is not a number is a corrupt file, and is reported as one —
-    /// the same way a corrupt anything else in the file is, rather than being
-    /// forgiven because of which field it happens to be in.
+    /// A stamp that is not a number is a corrupt file and is reported as one, rather
+    /// than forgiven because of which field it is in.
     /// </summary>
     /// <remarks>
-    /// What is pinned here is which complaint comes out. Reading the stamp must
-    /// not mistake nonsense for a layout from the future, and must not throw an
-    /// error of its own on the way past: the file is malformed, so the ordinary
-    /// malformed-file path is the one that should get to speak.
+    /// What is pinned is which complaint comes out: reading the stamp must not
+    /// mistake nonsense for a layout from the future, and must not throw on the way
+    /// past — the ordinary malformed-file path should get to speak.
     /// </remarks>
     [Fact]
     public void A_stamp_that_is_not_a_number_is_reported_as_a_corrupt_file()

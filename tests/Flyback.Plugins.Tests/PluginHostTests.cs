@@ -69,16 +69,14 @@ public class PluginHostTests
     }
 
     /// <summary>
-    /// All three plugins load everywhere; only their devices are tied to one
-    /// system. That split is the whole point of separating
-    /// <see cref="IAudioOutput"/> from <see cref="IAudioDevice"/>, so it is
-    /// worth pinning.
+    /// All three plugins load everywhere; only their devices are tied to one system.
+    /// That split is the whole point of separating <see cref="IAudioOutput"/> from
+    /// <see cref="IAudioDevice"/>.
     /// </summary>
     /// <remarks>
-    /// ALSA is asserted in one direction only. Off Linux the answer is a flat
-    /// no; on Linux it also depends on whether libasound is installed, and a
-    /// test that decided that for itself would be asserting its own copy of the
-    /// implementation.
+    /// ALSA is asserted in one direction only: off Linux the answer is a flat no, and
+    /// on Linux it also depends on whether libasound is installed — which a test that
+    /// decided for itself would be asserting its own copy of.
     /// </remarks>
     [Fact]
     public void Support_is_answered_without_opening_a_device()

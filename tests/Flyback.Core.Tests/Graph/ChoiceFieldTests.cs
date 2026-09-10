@@ -9,11 +9,9 @@ namespace Flyback.Core.Tests.Graph;
 /// list is whatever the machine happens to have on it at the time.
 /// </summary>
 /// <remarks>
-/// The one field whose tidying deliberately stops short of what it could do. A
-/// stored id that is not in the list is not a broken value but a device that is
-/// switched off, and the patch has to come back naming it — so what these pin is
-/// mostly the refusal to correct: opening a patch on a machine without the
-/// interface it was made on must not quietly rewrite it to mean something else.
+/// The one field whose tidying deliberately stops short: a stored id that is not in
+/// the list is a device switched off rather than a broken value, so what these pin
+/// is mostly the refusal to correct.
 /// </remarks>
 public class ChoiceFieldTests
 {

@@ -4,17 +4,14 @@ using Shouldly;
 namespace Flyback.Core.Tests.Compile;
 
 /// <summary>
-/// <see cref="LiveValues"/> — the block of numbers a program is being played
-/// with, written by whoever is holding the keys down and read by the ops that
-/// name them.
+/// <see cref="LiveValues"/> — the block of numbers a program is being played with,
+/// written by whoever is holding the keys down and read by the ops that name them.
 /// </summary>
 /// <remarks>
-/// Nearly everything here is about the two ends disagreeing, because they are
-/// meant to: the block and the program are swapped separately, and a keyboard
-/// writes into it without knowing which patch is loaded. A block of the wrong
-/// size, a key no module reads and a value that is not a number are all ordinary
-/// traffic rather than faults — and none of them may throw, because the thread
-/// they would throw on is the one feeding the speakers.
+/// Nearly everything here is about the two ends disagreeing, because they are meant
+/// to: a block of the wrong size, a key no module reads and a value that is not a
+/// number are ordinary traffic rather than faults — and none may throw, because the
+/// thread they would throw on is the one feeding the speakers.
 /// </remarks>
 public class LiveValuesTests
 {

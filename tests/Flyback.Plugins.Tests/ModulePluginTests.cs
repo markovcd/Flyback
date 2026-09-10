@@ -80,18 +80,14 @@ public class ModulePluginTests
         elsewhere.MissingProviders.ShouldHaveSingleItem().Id.ShouldBe(Provider);
     }
     /// <summary>
-    /// Every section the engine names has something in it once the shipped
-    /// plugins are loaded, so the list does not accumulate words for modules that
-    /// were moved or removed.
+    /// Every section the engine names has something in it once the shipped plugins are
+    /// loaded, so the list does not accumulate words for modules that were removed.
     /// </summary>
     /// <remarks>
-    /// Asked here rather than in the engine's own tests because three of the
-    /// sections are held entirely by plugins — Forms by Picture, Shaping by
-    /// Voice, Time effects by Effects — and that is the arrangement rather than
-    /// an accident of it. The names are declared centrally precisely so a plugin
-    /// files into a section the engine already knows instead of inventing a word
-    /// beside one that exists; a section the engine names and does not fill is
-    /// what that looks like from the engine's side.
+    /// Asked here because three of the sections are held entirely by plugins — Forms
+    /// by Picture, Shaping by Voice, Time effects by Effects — which is the
+    /// arrangement rather than an accident: the names are declared centrally so a
+    /// plugin files into a section the engine already knows.
     /// </remarks>
     [Fact]
     public void Every_section_the_engine_names_is_filled_by_something_shipped()
@@ -105,15 +101,13 @@ public class ModulePluginTests
     }
 
     /// <summary>
-    /// And nothing that ships in the box files itself under a word the engine
-    /// does not know.
+    /// And nothing that ships in the box files itself under a word the engine does not
+    /// know.
     /// </summary>
     /// <remarks>
-    /// A plugin from elsewhere may — see the engine's own tests, where a section
-    /// nothing knows sorts last rather than being refused, and see the Sample
-    /// fixture beside this one, which files its modules under a section of its
-    /// own precisely to prove that works. What ships should not, because every
-    /// one of these had a section to go in.
+    /// A plugin from elsewhere may — the Sample fixture beside this one does exactly
+    /// that to prove it works — but what ships should not, because every one of these
+    /// had a section to go in.
     /// </remarks>
     [Fact]
     public void Nothing_shipped_invents_a_section_of_its_own()

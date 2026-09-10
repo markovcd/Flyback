@@ -11,20 +11,15 @@ using Shouldly;
 namespace Flyback.App.Tests.Ui;
 
 /// <summary>
-/// Re-sourcing a wire: Ctrl+drag an output carrying one wire and the wire comes
-/// off <em>that</em> socket, staying in the input at its far end, to be dropped
-/// on a different output.
+/// Re-sourcing a wire: Ctrl+drag an output carrying one wire and the wire comes off
+/// that socket, staying in the input at its far end, to be dropped on a different
+/// output.
 /// </summary>
 /// <remarks>
-/// The mirror of dragging a connected input, which takes the plug out of the
-/// input and keeps the source. This takes the plug out of the output and keeps
-/// the target, so what is being chosen is where a signal comes from rather than
-/// where it goes — the question nothing here could ask before.
-/// <para>
-/// It needs a modifier where an input does not, because an input holds one wire
-/// and an output holds any number: dragging from an output already means "start
-/// another", which is the common thing to want and cannot be given up.
-/// </para>
+/// The mirror of dragging a connected input, which keeps the source; this keeps the
+/// target, so what is being chosen is where a signal comes from. It needs a modifier
+/// where an input does not, because dragging from an output already means "start
+/// another".
 /// </remarks>
 public class WireLiftTests : UiTest
 {

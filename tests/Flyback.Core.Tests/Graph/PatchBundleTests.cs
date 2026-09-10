@@ -11,13 +11,11 @@ namespace Flyback.Core.Tests.Graph;
 /// The bundle: a patch and everything it names, in one file.
 /// </summary>
 /// <remarks>
-/// What is worth pinning is mostly what a bundle is <em>for</em> — that the patch
-/// inside points at the copies beside it rather than at wherever they came from,
-/// that the document being packed is not changed by packing it, and that a
+/// What is pinned is mostly what a bundle is for — that the patch inside points at
+/// the copies beside it, that packing does not change the document, and that a
 /// bundle read back draws what the original drew on a machine holding none of the
-/// files. The zip is the framework's and is not tested here; what is tested is
-/// the layout inside it, because that is a promise to every other program that
-/// might open one.
+/// files. The zip is the framework's; the layout inside it is a promise to every
+/// other program that might open one.
 /// </remarks>
 public class PatchBundleTests
 {

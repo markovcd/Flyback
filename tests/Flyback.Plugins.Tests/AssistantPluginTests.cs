@@ -171,15 +171,14 @@ public class AssistantPluginTests
     }
 
     /// <summary>
-    /// The guard for ADR-0034, on the route ADR-0069 opened. A provider declares
-    /// its own settings now and the App writes the answers to a file in plain
-    /// text, so a field named like a credential is a credential on disk.
+    /// The guard for ADR-0034, on the route ADR-0069 opened: a provider declares its
+    /// own settings and the App writes the answers to a file in plain text, so a
+    /// field named like a credential is a credential on disk.
     /// </summary>
     /// <remarks>
-    /// Every assistant that is actually installed, asked what it wants: the
-    /// pressure to "just declare an apiKey field" will be real and will look
-    /// harmless, and this is what says no. The key has a box of its own that the
-    /// host owns and no plugin can reach.
+    /// Every assistant that is actually installed, asked what it wants. The pressure
+    /// to "just declare an apiKey field" will look harmless, and this is what says
+    /// no.
     /// </remarks>
     [Fact]
     public void Nothing_a_provider_asks_for_could_hold_a_secret()

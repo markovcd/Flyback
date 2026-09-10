@@ -7,12 +7,9 @@ namespace Flyback.Core.Tests.Graph;
 /// The canvas is a finite rectangle and a module cannot be put outside it.
 /// </summary>
 /// <remarks>
-/// Held on the coordinate itself rather than on any of the gestures that set
-/// one, so it is true of a module however it got where it is. That is the whole
-/// argument for putting it here: a guard on the drag would be a guard on the
-/// mouse, and a patch file somebody edited by hand, a paste from a much larger
-/// document and an assistant that has never seen a canvas can all place a module
-/// without the mouse being involved.
+/// Held on the coordinate rather than on any gesture, so it is true however the
+/// module got there: a guard on the drag would be a guard on the mouse, and a
+/// hand-edited file, a paste and an assistant all place modules without one.
 /// </remarks>
 public class NodeBoundsTests
 {

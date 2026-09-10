@@ -8,14 +8,13 @@ namespace Flyback.Core.Tests.Properties;
 /// <summary>
 /// Cycles. A patch may hold one as long as a Unit Delay sits somewhere in it, and
 /// what the module buys is exactly one evaluation of latency — these pin that, the
-/// error the compiler still owes a loop with nothing in it, and the two ways the
-/// pair of ops can be got wrong.
+/// error a loop with nothing in it is still owed, and the two ways the pair of ops
+/// can be got wrong.
 /// </summary>
 /// <remarks>
-/// The graph tests feed their signal through the Coordinates module's x, the way
-/// the delay and accumulator tests do: <see cref="CompiledPatch.Evaluate"/> takes
-/// x per evaluation, which makes it the one way to hand a program an arbitrary
-/// waveform without building an oscillator to produce it.
+/// The signal is fed through Coordinates' x, the way the delay and accumulator tests
+/// do: <see cref="CompiledPatch.Evaluate"/> takes x per evaluation, which is the one
+/// way to hand a program an arbitrary waveform.
 /// </remarks>
 public class CycleInvariants
 {

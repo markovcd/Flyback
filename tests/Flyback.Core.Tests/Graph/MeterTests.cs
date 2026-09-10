@@ -9,13 +9,11 @@ namespace Flyback.Core.Tests.Graph;
 /// The Meter: how loud the speakers are, as a number the picture can use.
 /// </summary>
 /// <remarks>
-/// It taps its input the way a Scope does, and everything after that is the
-/// opposite of one. A Scope carries a stretch of the past across as a buffer and
-/// reads it with a table; this carries the same stretch across as two numbers and
-/// is <em>told</em> them, through the same live inputs a keyboard is played on. So
-/// most of what is worth pinning here is what the picture's program does
-/// <em>not</em> contain: no table, no chart buffer, and none of the signal chain
-/// the meter is listening to.
+/// It taps its input the way a Scope does and is the opposite of one after that: a
+/// Scope carries the past across as a buffer read with a table, where this carries
+/// it as two numbers it is told, through the same live inputs a keyboard is played
+/// on. So most of what is pinned here is what the picture's program does not
+/// contain: no table, no chart buffer, and none of the signal chain.
 /// </remarks>
 public class MeterTests
 {

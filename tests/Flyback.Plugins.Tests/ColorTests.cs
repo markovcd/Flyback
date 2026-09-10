@@ -7,15 +7,13 @@ using Xunit;
 namespace Flyback.Plugins.Tests;
 
 /// <summary>
-/// The four color modules: one to choose a color, one to read one back, and
-/// two to change one after the fact.
+/// The four color modules: one to choose a color, one to read one back, and two to
+/// change one after the fact.
 /// </summary>
 /// <remarks>
-/// Every one of these is a pure function of the numbers going into it, so most
-/// of what is here is a table of colors and the numbers that come back. The one
-/// exception is the way To HSV is checked: it is the inverse of a module that
-/// already existed, and the honest test of an inverse is the round trip, so that
-/// is what it gets.
+/// Every one is a pure function of the numbers going in, so most of this is a table
+/// of colors and what comes back. The exception is To HSV, which is the inverse of a
+/// module that already existed — and the honest test of an inverse is the round trip.
 /// </remarks>
 public class ColorTests
 {

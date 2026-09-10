@@ -37,15 +37,13 @@ public class AudioRendererTests
     }
 
     /// <summary>
-    /// Time is seconds, so the freq knob is the pitch and nothing upstream
-    /// quietly disagrees with it.
+    /// Time is seconds, so the freq knob is the pitch and nothing upstream quietly
+    /// disagrees with it.
     /// </summary>
     /// <remarks>
-    /// Written for ADR-0048: a rate knob sitting between Time and an oscillator,
-    /// scaling `t` before anything downstream sees it, would turn a 440 Hz
-    /// oscillator into an 88 Hz one while its own knob went on saying 440, with
-    /// nothing about the patch showing where the fifth went — the kind of wrong
-    /// that is only audible.
+    /// Written for ADR-0048: a rate knob scaling `t` before anything downstream sees
+    /// it would turn a 440 Hz oscillator into an 88 Hz one while its own knob went on
+    /// saying 440 — the kind of wrong that is only audible.
     /// </remarks>
     [Fact]
     public void Nothing_between_time_and_an_oscillator_can_change_its_pitch()
@@ -129,21 +127,16 @@ public class AudioRendererTests
 
     /// <summary>
     /// ADR-0032. A tone must be the same tone however long the synth has been
-    /// running, and this is the one defect in here that only appears with age:
-    /// a <c>float</c> t cannot hold two consecutive sample times apart once the
-    /// clock passes about a minute, and an oscillator measuring how far its
-    /// input moved is then handed a staircase instead of a ramp. What comes out
-    /// is a high ringing whose pitch falls as the session goes on — inaudible
-    /// for the first minute and unmissable after twenty.
+    /// running, and this is the one defect here that only appears with age: a
+    /// <c>float</c> t cannot hold two consecutive sample times apart once the clock
+    /// passes about a minute, and an oscillator is then handed a staircase instead of
+    /// a ramp.
     /// </summary>
     /// <remarks>
-    /// Measured as ADR-0030's ratio, the largest sample-to-sample step against
-    /// the median one: a tear is a step far larger than the wave's own travel.
-    /// A clean 220 Hz sine reads 1.40 wherever it is sampled from, to two
-    /// decimal places. Narrowing t back to a float reads 1.74 at five minutes,
-    /// 5.3 at a thousand seconds and 66 at an hour — so the five-minute case is
-    /// here to catch the defect while it is still only a measurement, and the
-    /// hour is what it had become by the time anyone heard it.
+    /// Measured as ADR-0030's ratio, the largest sample-to-sample step against the
+    /// median one. A clean 220 Hz sine reads 1.40 wherever it is sampled from;
+    /// narrowing t back to a float reads 1.74 at five minutes and 66 at an hour — so
+    /// the five-minute case catches it while it is still only a measurement.
     /// </remarks>
     [Theory]
     [InlineData(0)]

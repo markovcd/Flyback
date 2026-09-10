@@ -199,14 +199,12 @@ public class AssistantSettingsTests : IDisposable
 
     /// <summary>
     /// The guard for ADR-0034. This file holds choices; a credential goes to the
-    /// operating system's own store or nowhere. If somebody later adds a string
-    /// property here that looks like a secret, this is what says no.
+    /// operating system's own store or nowhere, and this is what says no to a
+    /// string property here that looks like a secret.
     /// </summary>
     /// <remarks>
-    /// Half of the guard since ADR-0069, and the smaller half: what a provider
-    /// declares is written here too, under names this class never sees. The
-    /// other half asks every installed provider what it wants and refuses a
-    /// field named like a credential.
+    /// The smaller half of the guard since ADR-0069: the other asks every installed
+    /// provider what it wants and refuses a field named like a credential.
     /// </remarks>
     [Fact]
     public void Nothing_that_could_hold_a_secret_is_written_here()

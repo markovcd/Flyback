@@ -224,13 +224,10 @@ public class AssistantRunTests
     /// Why the panel keeps a flag of its own rather than asking this one.
     /// </summary>
     /// <remarks>
-    /// <see cref="AssistantRun.Ask"/> is an async iterator, so none of its body
-    /// runs until the sequence is first moved on — and <see cref="AssistantRun.Running"/>
-    /// is set in that body. Between calling <c>Ask</c> and consuming it the run
-    /// is working by any account that matters and says it is not, which had the
-    /// shell leaving Ask live and Stop dead for the whole of every turn. Pinned
-    /// here because it is a property of the iterator rather than of the shell,
-    /// and it would go unnoticed until somebody trusted it again.
+    /// <see cref="AssistantRun.Ask"/> is an async iterator, so
+    /// <see cref="AssistantRun.Running"/> is not set until the sequence is first
+    /// moved on — which had the shell leaving Ask live and Stop dead for the whole
+    /// of every turn. Pinned here because it is a property of the iterator.
     /// </remarks>
     [Fact]
     public async Task A_run_does_not_call_itself_running_until_its_sequence_is_moved_on()

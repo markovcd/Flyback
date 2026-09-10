@@ -10,15 +10,13 @@ using Shouldly;
 namespace Flyback.App.Tests.Ui;
 
 /// <summary>
-/// Selecting more than one module at a time, which is what a copy has to be
-/// built on: nothing can be copied out of a selection that holds one thing.
+/// Selecting more than one module at a time, which is what a copy has to be built
+/// on: nothing can be copied out of a selection that holds one thing.
 /// </summary>
 /// <remarks>
-/// The interesting case throughout is a plain press on a module already part of
-/// a larger selection. It cannot be answered when the button goes down —
-/// collapsing there would make a group impossible to drag by one of its own
-/// members, and not collapsing would make one impossible to pick apart — so it
-/// is answered on the way up, and half of what is below is about that.
+/// The interesting case throughout is a plain press on a module already part of a
+/// larger selection, which cannot be answered when the button goes down — so it is
+/// answered on the way up, and half of what is below is about that.
 /// </remarks>
 public class MultiSelectTests : UiTest
 {

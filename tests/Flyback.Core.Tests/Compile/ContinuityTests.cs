@@ -10,17 +10,11 @@ namespace Flyback.Core.Tests.Compile;
 /// </summary>
 /// <remarks>
 /// A cell of memory is found by its position among the ops of its kind, and a
-/// position is not an identity: add one oscillator anywhere and every
-/// accumulator after it belongs to a different module than it did. Before
-/// <see cref="StateOwners"/> the renderer had only the counts to compare, so any
-/// change of shape threw the lot away — every tone in the patch restarting
-/// together, every delay line emptied.
-/// <para>
-/// On a knob turn that is invisible. On a patch being edited while it plays it
-/// is the difference between an instrument and a toy, so these are written from
-/// the sound rather than from the internals: what is asserted is that the left
-/// channel does not notice work done on the right.
-/// </para>
+/// position is not an identity: add one oscillator anywhere and every accumulator
+/// after it belongs to a different module. Before <see cref="StateOwners"/> any
+/// change of shape threw the lot away — every tone restarting, every delay line
+/// emptied. These are written from the sound rather than the internals: what is
+/// asserted is that the left channel does not notice work done on the right.
 /// </remarks>
 public class ContinuityTests
 {
@@ -72,20 +66,14 @@ public class ContinuityTests
     // --- what it sounds like ------------------------------------------------
 
     /// <summary>
-    /// The one that matters. A tone is playing on the left; a second oscillator
-    /// is added to the right while it plays; the left channel comes out exactly
-    /// as it would have if nothing had been touched.
+    /// The one that matters. A tone is playing on the left; a second oscillator is
+    /// added to the right while it plays; the left channel comes out exactly as it
+    /// would have if nothing had been touched.
     /// </summary>
     /// <remarks>
-    /// Compared against the same patch left alone rather than against a
-    /// tolerance, because that is the claim: the edit is inaudible on the
-    /// channel it did not reach. Both renderers have played the identical first
-    /// buffer, so their decimation and DC state agree going into the second and
-    /// any difference in it is the swap's doing.
-    /// <para>
-    /// Before this, adding the oscillator took the phase count from one to two,
-    /// which said "different shape" and restarted the tone on the left as well.
-    /// </para>
+    /// Compared against the same patch left alone rather than against a tolerance,
+    /// because that is the claim. Both renderers have played the identical first
+    /// buffer, so any difference in the second is the swap's doing.
     /// </remarks>
     [Fact]
     public void Adding_a_module_does_not_disturb_a_tone_that_is_already_playing()

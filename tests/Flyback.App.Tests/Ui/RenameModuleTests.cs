@@ -16,11 +16,9 @@ namespace Flyback.App.Tests.Ui;
 /// canvas, which draws its headers from the same name.
 /// </summary>
 /// <remarks>
-/// The canvas is checked through the patch rather than through the pixels: the
-/// header is drawn straight from <see cref="NodeInstance.Title"/>, so what is
-/// worth holding is that the name reached the module and that the canvas was
-/// asked to draw again. The alternative is reading text back out of a rendered
-/// frame, which would be a test of the font.
+/// The canvas is checked through the patch rather than the pixels: the header is
+/// drawn straight from <see cref="NodeInstance.Title"/>, and reading text back out
+/// of a rendered frame would be a test of the font.
 /// </remarks>
 public class RenameModuleTests : UiTest
 {

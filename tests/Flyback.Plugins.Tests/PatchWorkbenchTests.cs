@@ -855,17 +855,14 @@ public class PatchWorkbenchTests
     }
 
     /// <summary>
-    /// The bug this exists for. Compiling backwards from the screen means the
-    /// video pass stops at the first line when there is no screen, so every
-    /// edit on a patch built for the speakers came back "No issues." — however
-    /// broken it was. An assistant cannot hear the patch, so that string was the
-    /// only thing standing between it and shipping silence, and it was lying.
+    /// The bug this exists for. Compiling backwards from the screen means the video
+    /// pass stops at the first line when there is no screen, so every edit on a patch
+    /// built for the speakers came back "No issues." — however broken it was, and an
+    /// assistant cannot hear the patch.
     /// </summary>
     /// <remarks>
-    /// A cycle is the fault used here because it is one only the speakers reach:
-    /// nothing is wired into 'color', so the video pass stops at the first line
-    /// and never sees it. What is on trial is the second compilation happening
-    /// at all, not what it happens to find.
+    /// A cycle is the fault used here because it is one only the speakers reach. What
+    /// is on trial is the second compilation happening at all, not what it finds.
     /// </remarks>
     [Fact]
     public async Task A_fault_only_the_speakers_reach_is_still_reported_on_every_edit()

@@ -16,11 +16,10 @@ namespace Flyback.App.Tests.Ui;
 /// arrives already plugged in.
 /// </summary>
 /// <remarks>
-/// Which socket it lands on is the whole of what is interesting here. Nothing is
-/// refused for being the wrong kind, because nothing is — the compiler
-/// broadcasts a scalar to three channels and takes luma from a color, so every
-/// socket accepts every wire. The question is only which one was meant, and the
-/// answer is the port the module is <em>about</em> before the port that matches.
+/// Which socket it lands on is the whole of what is interesting. Nothing is refused
+/// for being the wrong kind, because nothing is — the compiler broadcasts a scalar
+/// and takes luma from a color — so the question is only which one was meant, and
+/// the answer is the port the module is about before the port that matches.
 /// </remarks>
 public class WireDropTests : UiTest
 {

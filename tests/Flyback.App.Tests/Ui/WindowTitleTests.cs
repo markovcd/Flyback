@@ -14,11 +14,10 @@ namespace Flyback.App.Tests.Ui;
 /// anything in it to lose.
 /// </summary>
 /// <remarks>
-/// A patch arrives one of three ways — a file opened, a file written, a preset
-/// picked — and every one of them arrives with something to call it. What is
-/// checked here is the preset, because the other two are behind a file picker
-/// the headless platform does not put up; the name is written down in one place
-/// for all three, and the save dialog offers it back as the file name.
+/// A patch arrives one of three ways and each brings something to call it. The
+/// preset is what is checked, because the other two are behind a file picker the
+/// headless platform does not put up, and the name is written down in one place for
+/// all three.
 /// </remarks>
 public class WindowTitleTests : UiTest
 {

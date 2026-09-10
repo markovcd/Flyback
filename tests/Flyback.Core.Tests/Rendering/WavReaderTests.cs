@@ -7,15 +7,14 @@ using Shouldly;
 namespace Flyback.Core.Tests.Rendering;
 
 /// <summary>
-/// Reading a WAV back. The half of the format this repository did not have, and
-/// the one that has to survive files it did not write.
+/// Reading a WAV back. The half of the format this repository did not have, and the
+/// one that has to survive files it did not write.
 /// </summary>
 /// <remarks>
-/// The round trip against <see cref="WavWriter"/> is the easy half and the least
-/// interesting: both were written here, so agreeing proves only that they agree.
-/// What matters is the rest — a file from an editor carries chunks between the
-/// header and the audio, comes in depths this repository never writes, and is
-/// sometimes truncated.
+/// The round trip against <see cref="WavWriter"/> proves only that the two agree.
+/// What matters is the rest: a file from an editor carries chunks between the header
+/// and the audio, comes in depths this repository never writes, and is sometimes
+/// truncated.
 /// </remarks>
 public class WavReaderTests
 {

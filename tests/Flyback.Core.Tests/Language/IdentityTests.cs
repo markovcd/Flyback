@@ -11,17 +11,10 @@ namespace Flyback.Core.Tests.Language;
 /// building the same text twice gives the same patch down to the guids.
 /// </summary>
 /// <remarks>
-/// Before this, every build minted fresh ids and the patch it produced was a
-/// stranger to the one it replaced — nothing could say which module had stayed
-/// the same, so a rebuild lost every canvas position, every selection, and every
-/// accumulator that was mid-cycle. The workbench's own tool description already
-/// named the cost: writing a patch afresh "gives every module a new identity and
-/// loses where they sit on the canvas".
-/// <para>
-/// Names rather than positions is what makes an edit local: a line added at the
-/// top must not rename what is at the bottom, or a patch being typed into would
-/// restart from the cursor down on every keystroke.
-/// </para>
+/// Before this, every build minted fresh ids and the patch it produced was a stranger
+/// to the one it replaced: a rebuild lost every canvas position, every selection and
+/// every accumulator that was mid-cycle. Names rather than positions is what makes
+/// an edit local — a line added at the top must not rename what is at the bottom.
 /// </remarks>
 public class IdentityTests
 {
@@ -102,15 +95,13 @@ public class IdentityTests
     }
 
     /// <summary>
-    /// A name is a place in the source rather than a kind of module, so swapping
-    /// one module for another in the same place keeps the place.
+    /// A name is a place in the source rather than a kind of module, so swapping one
+    /// module for another in the same place keeps the place.
     /// </summary>
     /// <remarks>
-    /// Worth having rather than merely tolerable. Changing a sine to a saw is
-    /// changing the waveform of something that is already sounding, and what a
-    /// player wants from that is the same note in a different color — which is
-    /// exactly what carrying the accumulator over gives. Restarting the phase
-    /// would be a click in the middle of a held note.
+    /// Worth having rather than merely tolerable: changing a sine to a saw is changing
+    /// the waveform of something already sounding, and what a player wants is the same
+    /// note in a different color. Restarting the phase would be a click.
     /// </remarks>
     [Fact]
     public void Swapping_one_module_for_another_keeps_the_place_it_stood_in()

@@ -6,16 +6,15 @@ using Shouldly;
 namespace Flyback.Core.Tests.Graph;
 
 /// <summary>
-/// The Scan: a loop swept round the picture, and the value it passes over heard
-/// as a waveform.
+/// The Scan: a loop swept round the picture, and the value it passes over heard as a
+/// waveform.
 /// </summary>
 /// <remarks>
-/// The Probe read backwards, and everything here is about one of the two halves
-/// of that. Its input is lowered under a domain of its own, like a Probe's — but
-/// the domain substituted is a position rather than a moment, so what the sweep
-/// produces is one sample per evaluation instead of one column per pixel. And
-/// the two sinks disagree about where on the loop an evaluation sits, which is
-/// settled on the memory flag rather than by lowering the subtree twice.
+/// The Probe read backwards, and everything here is about one of the two halves. Its
+/// input is lowered under a domain of its own, but the domain substituted is a
+/// position rather than a moment. And the two sinks disagree about where on the loop
+/// an evaluation sits, which is settled on the memory flag rather than by lowering
+/// the subtree twice.
 /// </remarks>
 public class ScanTests
 {
@@ -37,16 +36,14 @@ public class ScanTests
     private const int View = 1;
 
     /// <summary>
-    /// A patch that scans <paramref name="watched"/> and sends the result
-    /// wherever the caller asks — the speakers to hear the loop, the screen to
-    /// see it.
+    /// A patch that scans <paramref name="watched"/> and sends the result wherever
+    /// the caller asks — the speakers to hear the loop, the screen to see it.
     /// </summary>
     /// <param name="sinkPort"></param>
     /// <param name="overCoordinates">
     /// Whether the source is a field, and so wants Coordinates in its first two
-    /// sockets. Left off it is read at one point and there is nothing to scan —
-    /// which is a mistake worth being able to make on purpose, and not one to
-    /// make by accident in every test here.
+    /// sockets. Left off it is read at one point and there is nothing to scan, which
+    /// is a mistake worth being able to make on purpose.
     /// </param>
     /// <param name="watched"></param>
     /// <param name="sourcePort"></param>

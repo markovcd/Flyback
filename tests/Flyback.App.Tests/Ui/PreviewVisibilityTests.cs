@@ -10,14 +10,13 @@ using Shouldly;
 namespace Flyback.App.Tests.Ui;
 
 /// <summary>
-/// The preview put away when a patch has nothing wired into the Output's
-/// 'color', so the inspector takes the row rather than sitting under a box that
-/// could only ever show black.
+/// The preview put away when a patch has nothing wired into the Output's 'color',
+/// so the inspector takes the row rather than sitting under a box that could only
+/// show black.
 /// </summary>
 /// <remarks>
-/// A patch built only for the ear is as deliberate as one built only for the
-/// eye — some of the shipped presets are exactly that — so this is about the
-/// row the preview stands in giving its share back, the same way
+/// A patch built only for the ear is as deliberate as one built only for the eye, so
+/// this is about the row the preview stands in giving its share back — the way
 /// <c>ShowAssistant</c> already does for the assistant.
 /// </remarks>
 public class PreviewVisibilityTests : UiTest

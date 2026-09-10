@@ -8,16 +8,13 @@ using Xunit;
 namespace Flyback.Plugins.Tests;
 
 /// <summary>
-/// The Filter, Fold and Drive modules, loaded off disk and driven sample by
-/// sample with real state behind them.
+/// The Filter, Fold and Drive modules, loaded off disk and driven sample by sample
+/// with real state behind them.
 /// </summary>
 /// <remarks>
-/// Signals go in through the Coordinates module's x, the way <see cref="SpaceTests"/>
-/// does it and for the same reason: <see cref="CompiledPatch.Evaluate"/> takes x
-/// per evaluation, which makes it the one way to feed a module an arbitrary
-/// waveform without building an oscillator to produce it. The clock is passed as
-/// t, which matters more here than it does there — the filter reads its own
-/// sample rate off how far t moves.
+/// Signals go in through Coordinates' x, the way <see cref="SpaceTests"/> does it.
+/// The clock is passed as t, which matters more here: the filter reads its own sample
+/// rate off how far t moves.
 /// </remarks>
 public class TimbreTests
 {
@@ -91,17 +88,13 @@ public class TimbreTests
     }
 
     /// <summary>
-    /// The cutoff is in hertz and means it. The tangent prewarps the
-    /// coefficient, so the corner lands on the frequency asked for rather than
-    /// near it, and the response there is one over the damping — a half, at no
-    /// resonance. A decade below is unity and a decade above is the two-pole
-    /// slope, a hundredth.
+    /// The cutoff is in hertz and means it. The tangent prewarps the coefficient, so
+    /// the corner lands on the frequency asked for and the response there is one over
+    /// the damping — a half, at no resonance.
     /// <para>
-    /// That last one is a little under a hundredth here, and the tolerance says
-    /// so rather than pretending otherwise. Prewarping puts the corner exactly
-    /// where it was asked for; it does not straighten the rest of the curve, and
-    /// what a sampled filter does near a fifth of its own rate is bend away from
-    /// the analogue prototype it was derived from.
+    /// A decade above is a little under the two-pole hundredth, and the tolerance says
+    /// so: prewarping puts the corner where it was asked for and does not straighten
+    /// the rest of the curve.
     /// </para>
     /// </summary>
     [Theory]

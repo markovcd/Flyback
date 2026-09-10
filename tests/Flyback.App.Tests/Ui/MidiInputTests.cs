@@ -13,15 +13,14 @@ using Xunit;
 namespace Flyback.App.Tests.Ui;
 
 /// <summary>
-/// The MIDI In as it is actually used: picked in the panel, played from the
-/// letters, and — the part with the most to go wrong — not played from the
-/// letters when they are meant for something else.
+/// The MIDI In as it is actually used: picked in the panel, played from the letters,
+/// and — the part with the most to go wrong — not played from the letters when they
+/// are meant for something else.
 /// </summary>
 /// <remarks>
-/// The engine's tests cover what the module compiles to and the hub's cover note
-/// priority. What only a window can answer is whether a keystroke reaches the
-/// instrument or the editor, because that question is about focus and about which
-/// program is running, and neither exists below this layer.
+/// What only a window can answer is whether a keystroke reaches the instrument or
+/// the editor, because that is about focus and about which program is running, and
+/// neither exists below this layer.
 /// </remarks>
 public class MidiInputTests : UiTest
 {
@@ -237,17 +236,14 @@ public class MidiInputTests : UiTest
     }
 
     /// <summary>
-    /// The shortcuts that land on letters the layout also plays. Z, Y and L are
-    /// undo, redo and lay out; C, X, V and A are the clipboard and select-all;
-    /// and every one of them is a note. A note is a bare keystroke and nothing
-    /// else, so holding Ctrl is what tells the two apart.
+    /// The shortcuts that land on letters the layout also plays: Z, Y and L are undo,
+    /// redo and lay out, C, X, V and A are the clipboard and select-all, and every
+    /// one of them is a note. Holding Ctrl is what tells the two apart.
     /// </summary>
     /// <remarks>
-    /// Checked by playing nothing rather than by watching the shortcut work: what
-    /// each of them does is somebody else's test, and what is new here is that
-    /// they still get the chance to. The gate is the whole of the evidence — if
-    /// the keystroke had been taken as a note it would be open, and the shortcut
-    /// would have been marked handled before anything else saw it.
+    /// Checked by playing nothing rather than by watching the shortcut work: the gate
+    /// is the whole of the evidence, since a keystroke taken as a note would leave it
+    /// open and the shortcut marked handled.
     /// </remarks>
     [AvaloniaTheory]
     [InlineData(PhysicalKey.Z)]

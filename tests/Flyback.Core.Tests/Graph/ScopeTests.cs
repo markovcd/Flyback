@@ -7,17 +7,15 @@ using Shouldly;
 namespace Flyback.Core.Tests.Graph;
 
 /// <summary>
-/// The Scope: a chart of what the speakers actually played, as against the
-/// Probe's chart of what the screen computes the signal to be.
+/// The Scope: a chart of what the speakers actually played, as against the Probe's
+/// chart of what the screen computes the signal to be.
 /// </summary>
 /// <remarks>
-/// Three things about it are unlike every other module, and everything here is
-/// about one of them. Its input is a root of the audio program even though
-/// nothing downstream reads it, which is dead-code elimination deliberately
-/// given up. Its input is never evaluated by the picture at all, so the chart
-/// costs the eye only the table read. And what it draws comes back out of the
-/// run that made the sound rather than out of the program drawing it, which is
-/// the only path in the instrument that goes that way round.
+/// Three things about it are unlike every other module. Its input is a root of the
+/// audio program though nothing downstream reads it, which is dead-code elimination
+/// deliberately given up. Its input is never evaluated by the picture, so the chart
+/// costs the eye only the table read. And what it draws comes back out of the run
+/// that made the sound.
 /// </remarks>
 public class ScopeTests
 {
@@ -364,16 +362,13 @@ public class ScopeTests
     }
 
     /// <summary>
-    /// And a window turned right up asks for the time it says, which is the end
-    /// of the range that had nothing pinning it.
+    /// And a window turned right up asks for the time it says, which is the end of
+    /// the range that had nothing pinning it.
     /// </summary>
     /// <remarks>
-    /// The bottom of the travel was tested and the top was not, and what lived
-    /// up there was a ceiling of its own: the compiled window was clamped to two
-    /// seconds, so every setting past that charted two seconds while the knob
-    /// read up to thirty-one. Both ends are pinned now, and to the port's own
-    /// range rather than to a number written here — a range that grows again
-    /// should either carry the ring with it or fail this.
+    /// The compiled window was clamped to two seconds, so every setting past that
+    /// charted two seconds while the knob read up to thirty-one. Both ends are pinned
+    /// now, and to the port's own range rather than a number written here.
     /// </remarks>
     [Fact]
     public void A_window_turned_to_the_top_of_its_range_asks_for_all_of_it()

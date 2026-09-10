@@ -6,15 +6,14 @@ using Shouldly;
 namespace Flyback.Core.Tests.Graph;
 
 /// <summary>
-/// The Sample module: a recording played by reading it at a position, and the
-/// one thing in a patch that is a reference to something outside the file.
+/// The Sample module: a recording played by reading it at a position, and the one
+/// thing in a patch that is a reference to something outside the file.
 /// </summary>
 /// <remarks>
-/// Two halves worth keeping apart. What it plays is ordinary arithmetic and is
-/// checked against the clip. What happens when the file is not there is the
-/// whole cost of a patch naming its audio rather than carrying it, and is
-/// checked hardest — a sample that has gone must be said out loud, by name, on
-/// both sinks, and must still compile to something that renders.
+/// What it plays is ordinary arithmetic and is checked against the clip. What
+/// happens when the file is not there is the whole cost of a patch naming its audio
+/// rather than carrying it, and is checked hardest: it must be said out loud, by
+/// name, on both sinks, and must still compile to something that renders.
 /// </remarks>
 public class SampleTests : IDisposable
 {
@@ -382,16 +381,10 @@ public class SampleTests : IDisposable
     /// The eye is given the clip as well as the ear, and the Probe is why.
     /// </summary>
     /// <remarks>
-    /// A Probe is a video program (ADR-0040), so the screen has to be able to
-    /// read a clip too — otherwise pointing one at a sample would chart a flat
-    /// line, and the one tool for seeing what a signal does could not see the
-    /// one signal that comes from outside the patch.
-    /// <para>
-    /// The backends are kept in step in the shell, by drawing a program that
-    /// reads a clip on the processor. What is checked here is the half that
-    /// makes that necessary and worthwhile: the interpreter reads the recording
-    /// wherever it is asked to.
-    /// </para>
+    /// A Probe is a video program (ADR-0040), so the screen has to read a clip too —
+    /// otherwise pointing one at a sample would chart a flat line. The backends are
+    /// kept in step in the shell; what is checked here is that the interpreter reads
+    /// the recording wherever it is asked to.
     /// </remarks>
     [Fact]
     public void The_screen_reads_the_clip_too_so_a_probe_can_chart_it()
@@ -414,17 +407,14 @@ public class SampleTests : IDisposable
     }
 
     /// <summary>
-    /// A trigger means nothing where there is no memory, and the screen has
-    /// none — so what the eye gets is the module without one: the clip read at
-    /// 'in'.
+    /// A trigger means nothing where there is no memory, and the screen has none — so
+    /// what the eye gets is the module without one: the clip read at 'in'.
     /// </summary>
     /// <remarks>
-    /// Reading the trigger cell at every pixel instead would read nought
-    /// everywhere, since there is no memory on the screen — so every pixel would
-    /// look like a rising edge, restarting the clip at that pixel's own position
-    /// and reading it at its first sample, which on a drum is silence. That is
-    /// neither what the speakers do nor a memoryless reading of the patch, but a
-    /// third thing that happens to look exactly like the module not working.
+    /// Reading the trigger cell instead would read nought at every pixel, so every
+    /// pixel would look like a rising edge and read the clip at its first sample,
+    /// which on a drum is silence — a third thing that happens to look exactly like
+    /// the module not working.
     /// </remarks>
     [Fact]
     public void A_trigger_is_ignored_on_the_screen_rather_than_flattening_the_clip()

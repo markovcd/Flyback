@@ -9,14 +9,10 @@ namespace Flyback.Core.Tests.Graph;
 /// The rules the shipped patches keep, as tests rather than as a convention.
 /// </summary>
 /// <remarks>
-/// A preset is written to teach something, and the failure mode is always the
-/// same shape: the patch grows a second half at the other sink that is not
-/// what it is teaching, and a reader has to see past it to find the point.
-/// <para>
-/// Checked against the engine's own catalogue, which is also the promise a
-/// shipped preset makes: it must never need a plugin to be installed. A plugin's
-/// own presets are checked in that plugin's tests, where its modules exist.
-/// </para>
+/// A preset is written to teach something, and the failure mode is always the same
+/// shape: a second half at the other sink that is not what it is teaching. Checked
+/// against the engine's own catalogue, which is also the promise a shipped preset
+/// makes — it must never need a plugin installed.
 /// </remarks>
 public class PresetRulesTests
 {
@@ -28,21 +24,15 @@ public class PresetRulesTests
     private static PatchPreset Preset(string name) => Presets.All.Single(p => p.Name == name);
 
     /// <summary>
-    /// A patch teaching one idea reaches one sink. If it is about sound it draws
-    /// nothing, and if it is about the picture it makes no sound.
+    /// A patch teaching one idea reaches one sink: about sound it draws nothing,
+    /// about the picture it makes no sound.
     /// </summary>
     /// <remarks>
-    /// Read off the compiled programs rather than off the wires, because that is
-    /// where the question is actually settled: each sink is a walk back from the
-    /// Output's own sockets, so a module nothing downstream of that walk reaches
-    /// emits no ops at all. A patch with a color chain in it that nothing joins
-    /// to the Output is silent on this test and correctly so — it draws nothing.
-    /// <para>
-    /// The exemptions are named on the preset rather than here:
-    /// <see cref="PresetKind.Interplay"/> is a patch about the two sinks meeting
-    /// and must reach both, and <see cref="PresetKind.Showcase"/> is not teaching
-    /// one thing at all.
-    /// </para>
+    /// Read off the compiled programs rather than the wires, because that is where
+    /// the question is settled — a module nothing downstream of the walk reaches
+    /// emits no ops. The exemptions are named on the preset:
+    /// <see cref="PresetKind.Interplay"/> must reach both, and
+    /// <see cref="PresetKind.Showcase"/> is not teaching one thing at all.
     /// </remarks>
     [Theory]
     [MemberData(nameof(Ideas))]
@@ -126,12 +116,11 @@ public class PresetRulesTests
     /// Whether anything in the patch drives a given sink.
     /// </summary>
     /// <remarks>
-    /// Asked of the wires rather than of the compiled program: a sink always
-    /// emits something. The speakers' program multiplies by the gain and clamps
-    /// to the rails whether or not anything is patched in, so an op count says
-    /// every patch makes a sound. What actually settles it is whether the
-    /// Output's own socket for that sink has a wire in it — which is also where
-    /// the compiler's walk starts, so the two agree by construction.
+    /// Asked of the wires rather than the compiled program, because a sink always
+    /// emits something: the speakers' program multiplies by the gain and clamps
+    /// whether or not anything is patched in. What settles it is whether the
+    /// Output's own socket has a wire in it, which is where the compiler's walk
+    /// starts.
     /// </remarks>
     private static bool Driven(Patch patch, params int[] ports) =>
         patch.Connections.Any(wire =>

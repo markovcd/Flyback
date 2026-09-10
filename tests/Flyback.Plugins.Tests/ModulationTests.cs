@@ -151,15 +151,13 @@ public class ModulationTests
 
     /// <summary>
     /// The comb: a delay of d reinforces whatever has a period of d and cancels
-    /// whatever has a period of twice it. Held still by turning the depth off, so
-    /// the delay stays at its centre of 2.7 ms — a 370 Hz tone comes back in step
-    /// and a 185 Hz one comes back half a cycle out.
+    /// whatever has a period of twice it. Held still by turning the depth off, so a
+    /// 370 Hz tone comes back in step and a 185 Hz one half a cycle out.
     /// </summary>
     /// <remarks>
-    /// At an even mix, and not at a full one. A comb is the sum of two signals,
-    /// so a flanger turned fully wet has nothing left to cancel against and is
-    /// simply a delayed tone at full level — which is the first thing this test
-    /// caught.
+    /// At an even mix and not a full one: a comb is the sum of two signals, so a
+    /// flanger turned fully wet has nothing to cancel against and is a delayed tone
+    /// at full level — the first thing this test caught.
     /// </remarks>
     [Fact]
     public void A_flanger_cancels_and_reinforces_at_the_delay_it_is_set_to()

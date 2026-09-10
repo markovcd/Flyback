@@ -4,15 +4,14 @@ using Shouldly;
 namespace Flyback.Core.Tests.Properties;
 
 /// <summary>
-/// <see cref="OpCode.Phase"/> exists for one reason: a frequency that changes
-/// must not move the waveform, only bend it. These pin that, and the two things
-/// it must not cost — the picture, and what the 'in' socket means.
+/// <see cref="OpCode.Phase"/> exists for one reason: a frequency that changes must
+/// not move the waveform, only bend it. These pin that, and the two things it must
+/// not cost — the picture, and what the 'in' socket means.
 /// </summary>
 /// <remarks>
-/// Everything here runs at 1 kHz, and the domain arrives through x the way the
-/// delay tests feed their signal, so a "sample" is a millisecond and a frequency
-/// in hertz is cycles per thousand steps. Frequency arrives through y, so it can
-/// be stepped mid-run without recompiling anything.
+/// Everything runs at 1 kHz with the domain arriving through x, so a "sample" is a
+/// millisecond. Frequency arrives through y, so it can be stepped mid-run without
+/// recompiling.
 /// </remarks>
 public class PhaseAccumulatorInvariants
 {
@@ -20,13 +19,12 @@ public class PhaseAccumulatorInvariants
     private const float Step = 1f / Rate;
 
     /// <summary>
-    /// Runs a single accumulator over a domain and a frequency, one evaluation
-    /// per entry, and hands back the phase that came out of each.
+    /// Runs a single accumulator over a domain and a frequency, one evaluation per
+    /// entry, and hands back the phase that came out of each.
     /// </summary>
     /// <param name="offset">Added after the accumulation, so it stays the direct phase offset it reads as.</param>
     /// <param name="state">
-    /// Null builds one to fit, which is what a program with no delay lines and
-    /// one oscillator gets. Passing one in is how a test spans two runs.
+    /// Null builds one to fit. Passing one in is how a test spans two runs.
     /// </param>
     /// <param name="domain">Where the oscillator is read across — Time, usually, but the point is that anything may be.</param>
     /// <param name="frequency">Cycles per unit of the domain, as it stands at each step.</param>

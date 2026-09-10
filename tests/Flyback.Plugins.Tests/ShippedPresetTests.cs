@@ -7,21 +7,15 @@ using Xunit;
 namespace Flyback.Plugins.Tests;
 
 /// <summary>
-/// Every patch that ships, built and compiled from the catalogue the app
-/// actually runs with.
+/// Every patch that ships, built and compiled from the catalogue the app actually
+/// runs with.
 /// </summary>
 /// <remarks>
-/// The engine's own presets are covered in <c>PresetRulesTests</c>, against the
-/// built-in catalogue. These are the ones a plugin registers, so building every
-/// one here is what catches a preset naming a module id the catalogue does not
-/// hold — a failure no snapshot, compile test or module test would otherwise
-/// notice until somebody picked it in the app.
-/// <para>
-/// The concrete case: Slow weather guards on a provider id because it reaches
-/// across a boundary for its Filter, and a provider that had been renamed left
-/// the guard looking for a plugin nobody ships — so the preset threw the moment
-/// it was chosen.
-/// </para>
+/// The engine's own presets are covered in <c>PresetRulesTests</c>; these are the
+/// ones a plugin registers, so building every one here catches a preset naming a
+/// module id the catalogue does not hold — a failure nothing else would notice until
+/// somebody picked it. Slow weather is the concrete case: it guards on a provider id
+/// for its Filter, and a rename left the guard looking for a plugin nobody ships.
 /// </remarks>
 public class ShippedPresetTests
 {
@@ -69,25 +63,15 @@ public class ShippedPresetTests
     }
 
     /// <summary>
-    /// And every preset in the picker arrives placed, plugins' own included: a
-    /// preset declares no coordinates (ADR-0070), so one that returned the
-    /// builder's patch rather than the placed one would hand the canvas a pile
-    /// of modules at the origin.
+    /// And every preset in the picker arrives placed, plugins' own included: a preset
+    /// declares no coordinates (ADR-0070), so one that returned the builder's patch
+    /// would hand the canvas a pile of modules at the origin.
     /// </summary>
     /// <remarks>
-    /// Two things at the same spot is the whole of the check here. The full
-    /// non-overlap property is a property of the layout and is tested as one in
-    /// <c>PatchLayoutTests</c>; what this catches is a preset that never went
-    /// through it.
-    /// <para>
-    /// A thing rather than a module, because a preset may group its modules and
-    /// a group that is shut is one box drawn in place of several. What is behind
-    /// a box is parked there and may be parked anywhere — the layout keeps no
-    /// room for a picture nobody is looking at — so it is the box that is
-    /// counted, at the corner it is drawn from. A preset that never went through
-    /// the layout still fails: every box corner and every loose module is the
-    /// origin.
-    /// </para>
+    /// Two things at the same spot is the whole of the check: the full non-overlap
+    /// property is the layout's and is tested in <c>PatchLayoutTests</c>. A thing
+    /// rather than a module, because what is behind a shut box is parked at its
+    /// corner and may be anywhere — so it is the box that is counted.
     /// </remarks>
     [Theory]
     [MemberData(nameof(Every))]
@@ -111,15 +95,14 @@ public class ShippedPresetTests
     }
 
     /// <summary>
-    /// And every preset lays out clear of itself once its groups have been taken
-    /// off, which is a thing a person does to a patch they have been handed and
-    /// want to see the whole of.
+    /// And every preset lays out clear of itself once its groups have been taken off,
+    /// which is what a person does to a patch they have been handed.
     /// </summary>
     /// <remarks>
-    /// The plugins' presets are the big ones and the size is the point: Slow
-    /// weather is ten boxes across three columns, and the hundred and five
-    /// modules behind them take seventeen. Nothing in <c>PatchLayoutTests</c> is
-    /// large enough to reach the end of the canvas.
+    /// The plugins' presets are the big ones and the size is the point: Slow weather
+    /// is ten boxes across three columns, and the hundred and five modules behind them
+    /// take seventeen — nothing in <c>PatchLayoutTests</c> reaches the end of the
+    /// canvas.
     /// </remarks>
     [Theory]
     [MemberData(nameof(Every))]
@@ -138,16 +121,13 @@ public class ShippedPresetTests
 
     /// <summary>
     /// Opening every group at once is the same again, and the one case that may
-    /// honestly not fit: an open group is drawn as a ring round its modules, so
-    /// several of them in a row take the room all of their modules take and a
-    /// large patch can want more canvas than there is.
+    /// honestly not fit: an open group is a ring round its modules, so several in a
+    /// row can want more canvas than there is.
     /// </summary>
     /// <remarks>
-    /// So the claim is the one that is always true rather than the one that is
-    /// nearly true — a drawing that fits is a drawing with nothing on top of
-    /// anything. What must not happen is fitting and overlapping anyway, and
-    /// what a patch too big for the canvas gets is a sentence saying so, which
-    /// is <c>NodeEditor.Tidy</c>'s to say.
+    /// So the claim is the one that is always true: a drawing that fits is a drawing
+    /// with nothing on top of anything. What a patch too big for the canvas gets is a
+    /// sentence saying so, which is <c>NodeEditor.Tidy</c>'s to say.
     /// </remarks>
     [Theory]
     [MemberData(nameof(Every))]

@@ -39,21 +39,15 @@ public class LanguageTests
     private static void Same(string presetName, string source) => Compare(presetName, source, slack: 0f);
 
     /// <summary>
-    /// The same instrument to within a rounded knob, which is what a preset
-    /// authored in decades and a transliteration written in milliseconds can be.
+    /// The same instrument to within a rounded knob, which is what a preset authored
+    /// in decades and a transliteration written in milliseconds can be.
     /// </summary>
     /// <remarks>
-    /// A <see cref="PortDisplay.Duration"/> socket holds a power of ten, and the
-    /// two presets that reach here were written straight onto that scale:
-    /// Waveform's window is -1.7 and Two channels' decay is -0.9. Said as a time
-    /// those are 19.95ms and 125.9ms, and nobody writes either — so the
-    /// reference says 20ms and 126ms, which is a hundredth of a decade away and
-    /// neither audible nor visible.
-    /// <para>
-    /// Only the constants are loosened. Every opcode, register and operand still
-    /// has to match exactly, so this cannot hide a wire in the wrong place — the
-    /// mistake the whole suite is for.
-    /// </para>
+    /// A <see cref="PortDisplay.Duration"/> socket holds a power of ten, and the two
+    /// presets that reach here were written straight onto that scale — -1.7 is
+    /// 19.95ms, which nobody writes, so the reference says 20ms. Only the constants
+    /// are loosened: every opcode, register and operand still has to match exactly,
+    /// so this cannot hide a wire in the wrong place.
     /// </remarks>
     private static void Alike(string presetName, string source) => Compare(presetName, source, slack: 0.01f);
 

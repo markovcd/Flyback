@@ -6,15 +6,13 @@ using Xunit;
 namespace Flyback.Cli.Tests;
 
 /// <summary>
-/// <see cref="Patches"/> — the one place a patch is opened, whether the path
-/// named a loose file with its recordings beside it or a bundle carrying them.
+/// <see cref="Patches"/> — the one place a patch is opened, whether the path named a
+/// loose file with its recordings beside it or a bundle carrying them.
 /// </summary>
 /// <remarks>
-/// Nothing downstream of this knows there are two kinds of file, so what has to
-/// hold is that both arrive at the same shape of answer and that neither can
-/// reach a caller as an exception. Every way of failing is one sentence naming
-/// the file, because the audience is somebody who typed a path and a script that
-/// has to branch on an exit code.
+/// Nothing downstream knows there are two kinds of file, so what has to hold is that
+/// both arrive at the same shape of answer and neither reaches a caller as an
+/// exception: every way of failing is one sentence naming the file.
 /// </remarks>
 public class PatchesTests
 {

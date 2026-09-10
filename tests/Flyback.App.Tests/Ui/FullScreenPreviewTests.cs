@@ -160,20 +160,13 @@ public class FullScreenPreviewTests : UiTest
     }
 
     /// <summary>
-    /// The columns the shell is spread across give up their width, and get it
-    /// back.
+    /// The columns the shell is spread across give up their width, and get it back.
     /// </summary>
     /// <remarks>
-    /// Asked of the tracks rather than of the controls standing in them. A hidden
-    /// control is never arranged, so its <c>Bounds</c> keep whatever they last
-    /// were and would answer this question with a stale yes; a column's
-    /// <c>ActualWidth</c> is what the grid actually decided this time round.
-    /// <para>
-    /// And measured rather than compared by identity: handing a grid back the
-    /// same definition objects it had is not the same as those objects still
-    /// deciding anything, and the difference between the two is the whole of
-    /// whether the shell reappears.
-    /// </para>
+    /// Asked of the tracks rather than the controls standing in them: a hidden
+    /// control is never arranged, so its <c>Bounds</c> would answer with a stale yes.
+    /// And measured rather than compared by identity — handing a grid back the same
+    /// definition objects is not the same as those objects still deciding anything.
     /// </remarks>
     [AvaloniaFact]
     public void The_layout_that_comes_back_is_the_one_that_went_away()

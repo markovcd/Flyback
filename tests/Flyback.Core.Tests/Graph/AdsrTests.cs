@@ -6,15 +6,14 @@ namespace Flyback.Core.Tests.Graph;
 
 /// <summary>
 /// The ADSR. Unlike the sequencers beside it this one has a memory, so what it
-/// hands out is a function of every evaluation before it rather than of where
-/// its input has got to — which means these run it, a step at a time, and read
-/// the shape off the run.
+/// hands out is a function of every evaluation before it — which means these run
+/// it a step at a time and read the shape off the run.
 /// </summary>
 /// <remarks>
-/// The gate is fed from x rather than from a knob so that one compiled program
-/// can be opened and closed without recompiling, and the state is a
-/// <see cref="DelayState"/> handed to every evaluation — the same one the audio
-/// path passes and the video path does not.
+/// The gate is fed from x rather than a knob so one compiled program can be opened
+/// and closed without recompiling, and the state is a <see cref="DelayState"/>
+/// handed to every evaluation — the one the audio path passes and the video path
+/// does not.
 /// </remarks>
 public class TempoTests
 {

@@ -12,16 +12,14 @@ using Shouldly;
 namespace Flyback.App.Tests.Ui;
 
 /// <summary>
-/// The one button on the instruction box, which sends a message and stops the
-/// run it started.
+/// The one button on the instruction box, which sends a message and stops the run
+/// it started.
 /// </summary>
 /// <remarks>
 /// Mostly with no plugins, which is the state every machine is in until one is
-/// installed. Where a provider is needed, one is handed in: the catalogue's
-/// constructor is internal and this assembly is now named on it, because the
-/// half of this panel that reacts to what a provider can do is the half that
-/// went wrong, and it cannot be looked at in front of no provider. Driving an
-/// actual run is still the plugin tests' job.
+/// installed. Where a provider is needed one is handed in — the half of this panel
+/// that reacts to what a provider can do cannot be looked at in front of none.
+/// Driving an actual run is the plugin tests' job.
 /// </remarks>
 public class AssistantPanelTests : UiTest
 {
@@ -191,16 +189,14 @@ public class AssistantPanelTests : UiTest
     }
 
     /// <summary>
-    /// The rows come from the enum, so the box cannot offer a level that does
-    /// not exist. What it can still do is offer the wrong ones: the setting is
-    /// stored as the index of the row somebody picked, so the levels are named
-    /// here, in order, rather than compared against the enum they came from.
+    /// The rows come from the enum, so the box cannot offer a level that does not
+    /// exist. What it can still do is offer the wrong ones: the setting is stored as
+    /// the index of the row somebody picked, so the levels are named here in order.
     /// </summary>
     /// <remarks>
-    /// Order is load-bearing and membership is not enough to pin. Nothing refers
-    /// to these members by name anywhere else, so dropping one as unused — or
-    /// swapping two — shifts every value below it and relabels what was already
-    /// saved, without anything failing to compile.
+    /// Order is load-bearing and membership is not enough to pin: nothing refers to
+    /// these members by name elsewhere, so dropping or swapping one relabels what
+    /// was already saved without anything failing to compile.
     /// </remarks>
     [AvaloniaFact]
     public void The_effort_box_offers_exactly_the_levels_there_are()
@@ -285,15 +281,14 @@ public class AssistantPanelTests : UiTest
     }
 
     /// <summary>
-    /// A setting that was on when the window closed is on, and usable, when it
-    /// opens again.
+    /// A setting that was on when the window closed is on, and usable, when it opens
+    /// again.
     /// </summary>
     /// <remarks>
-    /// The bug this was written for: the ear sat greyed out under a ticked box
-    /// saying listening was on, and came right the instant the tick was touched.
-    /// The form is asked for afresh with everything already on it, so there is
-    /// no longer an order for the two to be restored in — which is what makes
-    /// this a test of the route as much as of the ear.
+    /// The bug this was written for: the ear sat greyed out under a ticked box, and
+    /// came right the instant the tick was touched. The form is now asked for afresh
+    /// with everything already on it, so there is no order for the two to be
+    /// restored in.
     /// </remarks>
     [AvaloniaFact]
     public void An_ear_is_ready_to_change_the_moment_the_settings_are_opened()
@@ -551,17 +546,15 @@ public class AssistantPanelTests : UiTest
     }
 
     /// <summary>
-    /// The footer says what is true now, not what was true the last time it had
-    /// bad news.
+    /// The footer says what is true now, not what was true the last time it had bad
+    /// news.
     /// </summary>
     /// <remarks>
-    /// The bug this was written for: the amber branch wrote the excuse and the
-    /// branch under it wrote only the color, so a panel that had once had no
-    /// key went on saying "No key yet" in grey over every key that arrived
-    /// afterwards — which reads as the key having been thrown away. The footer
-    /// no longer has a grey branch to fall into; a key arriving now hides it
-    /// outright, so the equivalent bug would be the excuse text surviving,
-    /// visible or not, once there is nothing left to excuse.
+    /// The bug this was written for: the amber branch wrote the excuse and the one
+    /// under it wrote only the color, so a panel that had once had no key went on
+    /// saying "No key yet" over every key that arrived afterwards. A key arriving
+    /// now hides the footer outright, so the equivalent bug would be the excuse text
+    /// surviving once there is nothing left to excuse.
     /// </remarks>
     [AvaloniaFact]
     public void The_footer_stops_saying_what_was_wrong_once_it_is_right()

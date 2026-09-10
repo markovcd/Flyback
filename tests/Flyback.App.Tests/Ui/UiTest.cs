@@ -18,15 +18,10 @@ namespace Flyback.App.Tests.Ui;
 /// scaffolding one needs.
 /// </summary>
 /// <remarks>
-/// Headless is a real Avalonia: it measures, arranges, applies templates,
-/// routes input and — with Skia underneath — rasterises. What it does not do is
-/// open a window, which is the only part of the shell a test has no opinion
-/// about.
-/// <para>
-/// The Fluent theme is not decoration. Every templated control the inspector
-/// uses — a NumericUpDown, a Button — is an empty shell without it, and a test
-/// that skipped it would be checking a layout nobody sees.
-/// </para>
+/// Headless is a real Avalonia: it measures, arranges, applies templates, routes
+/// input and — with Skia underneath — rasterises. What it does not do is open a
+/// window. The Fluent theme is not decoration: every templated control the
+/// inspector uses is an empty shell without it.
 /// </remarks>
 public class UiTest
 {

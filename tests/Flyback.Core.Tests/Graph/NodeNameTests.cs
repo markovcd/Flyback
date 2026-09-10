@@ -9,12 +9,10 @@ namespace Flyback.Core.Tests.Graph;
 /// definition calls it.
 /// </summary>
 /// <remarks>
-/// The name is a label and nothing else: nothing is ever found by it, so there
-/// is no uniqueness to keep and no rule about what may be typed. What there is
-/// instead is one meaning of "no name" — null, never an empty string and never a
-/// copy of the definition's own name — because that is what makes a module
-/// follow its definition when the catalogue renames it, and what keeps the name
-/// out of the file of every patch that never used the feature.
+/// The name is a label: nothing is found by it, so there is no uniqueness to keep.
+/// What there is instead is one meaning of "no name" — null, never an empty string
+/// and never a copy of the definition's — which is what makes a module follow its
+/// definition when the catalogue renames it.
 /// </remarks>
 public class NodeNameTests
 {

@@ -5,19 +5,15 @@ using Shouldly;
 namespace Flyback.Core.Tests.Graph;
 
 /// <summary>
-/// Sockets that are already carrying a signal with nothing patched into them:
-/// an oscillator's <c>in</c> from Time, a pattern's <c>x</c> and <c>y</c> from
+/// Sockets that are already carrying a signal with nothing patched into them: an
+/// oscillator's <c>in</c> from Time, a pattern's <c>x</c> and <c>y</c> from
 /// Coordinates.
 /// </summary>
 /// <remarks>
-/// The rack's normalled jack, and the same rules as the one the Output's
-/// <c>right</c> already had — a wire overrides it, and unplugging brings it
-/// back. What is new is where the signal comes from: a module that is not in the
-/// patch, held once for the whole program and drawn nowhere.
-/// <para>
-/// Everything here runs against a catalogue passed by hand rather than the
-/// installed one, so a plugin on this machine cannot change what it means.
-/// </para>
+/// The rack's normalled jack, with the same rules the Output's <c>right</c> already
+/// had. What is new is where the signal comes from: a module that is not in the
+/// patch, held once for the whole program. Everything here runs against a catalogue
+/// passed by hand, so a plugin on this machine cannot change what it means.
 /// </remarks>
 public class NormalledTests
 {

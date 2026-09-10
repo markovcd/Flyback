@@ -6,23 +6,16 @@ using Xunit;
 namespace Flyback.Plugins.Tests;
 
 /// <summary>
-/// That what a module listing tells a model to call is a tool the workbench
-/// actually offers.
+/// That what a module listing tells a model to call is a tool the workbench actually
+/// offers.
 /// </summary>
 /// <remarks>
-/// The one thing nothing checked. A tool name is written out in four
-/// places — declared, dispatched, explained in the handbook's preamble, and
-/// named again inside the engine's <see cref="NodeExtra.Announce"/>, which is in
-/// an assembly that cannot see any of the other three. Renaming a tool would
-/// have left every module telling a model to call the old name, with the build
-/// clean and every test green; and the drift had already happened in the
-/// quieter direction, the preamble having gained lines for two of the four kinds
-/// and never the others.
-/// <para>
-/// So this is not a test of <see cref="Vocabulary"/>'s arithmetic — that is a
-/// switch, and a switch that is wrong is wrong obviously. It is a test that the
-/// two lists have not come apart, which is the failure that is otherwise silent.
-/// </para>
+/// A tool name is written out in four places — declared, dispatched, explained in the
+/// handbook's preamble, and named again inside the engine's
+/// <see cref="NodeExtra.Announce"/>, which cannot see any of the other three. So a
+/// rename would leave every module telling a model to call the old name with the
+/// build clean. This is a test that the two lists have not come apart, which is the
+/// failure that is otherwise silent.
 /// </remarks>
 public class VocabularyTests
 {
@@ -76,12 +69,10 @@ public class VocabularyTests
     /// And a kind sent to <c>set_extra</c> has to be one it can actually write.
     /// </summary>
     /// <remarks>
-    /// The sharp edge of the fallback, and the reason it is worth a test of its
-    /// own. That tool writes <see cref="NodeExtra.Fields"/> and refuses a kind
-    /// that declares none, so a new engine kind — no fields, because the engine's
-    /// four have none, and no tool, because nobody wrote one — would be announced
-    /// as settable with <c>set_extra</c> and refused by it. The listing would be
-    /// telling a model to make a call that cannot succeed.
+    /// The sharp edge of the fallback: that tool writes
+    /// <see cref="NodeExtra.Fields"/> and refuses a kind that declares none, so a new
+    /// engine kind would be announced as settable with <c>set_extra</c> and refused
+    /// by it.
     /// </remarks>
     [Fact]
     public void A_kind_sent_to_set_extra_is_one_set_extra_can_write()
