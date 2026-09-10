@@ -369,6 +369,72 @@ public class CommandTests
         File.ReadAllText(file.FullName).ShouldContain("# mine");
     }
 
+    // --- modules -------------------------------------------------------------
+
+    /// <summary>
+    /// The question a patch short of a plugin raises and nothing else answers.
+    /// Every module comes out under whoever defines it, engine or plugin.
+    /// </summary>
+    [Fact]
+    public void Every_module_is_listed_under_the_provider_that_defines_it()
+    {
+        var thing = new NodeDef("test.thing", "Thing", ModuleCategories.Sources, [], [], (_, _) => []);
+        var catalog = NodeCatalog.BuiltIn.With(new ModuleProvider("test", "Test"), [thing]).Catalog;
+
+        var (code, output, _) = Run((o, _) => ModulesCommand.Run(catalog, true, o));
+
+        code.ShouldBe(Exit.Ok);
+
+        using var document = JsonDocument.Parse(output);
+        var modules = document.RootElement.GetProperty("modules").EnumerateArray().ToArray();
+
+        Provider("test.thing").ShouldBe("test");
+        Provider(NodeCatalog.OutputTypeId).ShouldBe(NodeCatalog.BuiltInProvider.Id);
+
+        document.RootElement.GetProperty("providers").EnumerateArray()
+            .Select(provider => provider.GetProperty("id").GetString())
+            .ShouldContain("test");
+
+        string? Provider(string typeId) => modules
+            .Single(module => module.GetProperty("typeId").GetString() == typeId)
+            .GetProperty("provider")
+            .GetString();
+    }
+
+    /// <summary>A socket's name is what somebody is looking for, so the document carries it.</summary>
+    [Fact]
+    public void A_module_brings_its_socket_names_with_it()
+    {
+        var (_, output, _) = Run((o, _) => ModulesCommand.Run(NodeCatalog.BuiltIn, true, o));
+
+        using var document = JsonDocument.Parse(output);
+
+        document.RootElement.GetProperty("modules").EnumerateArray()
+            .Single(module => module.GetProperty("typeId").GetString() == NodeCatalog.OutputTypeId)
+            .GetProperty("inputs")
+            .EnumerateArray()
+            .Select(port => port.GetString())
+            .ShouldContain("color");
+    }
+
+    /// <summary>Whatever the document lists, the prose lists — it is one catalogue.</summary>
+    [Fact]
+    public void The_prose_and_the_json_say_the_same_modules()
+    {
+        var prose = Run((o, _) => ModulesCommand.Run(NodeCatalog.BuiltIn, false, o));
+        var json = Run((o, _) => ModulesCommand.Run(NodeCatalog.BuiltIn, true, o));
+
+        using var document = JsonDocument.Parse(json.Out);
+
+        var listed = document.RootElement.GetProperty("modules").EnumerateArray()
+            .Select(module => module.GetProperty("typeId").GetString()!)
+            .ToArray();
+
+        listed.Length.ShouldBe(NodeCatalog.BuiltIn.All.Count);
+
+        foreach (var typeId in listed) prose.Out.ShouldContain(typeId);
+    }
+
     // --- pack ----------------------------------------------------------------
 
     /// <summary>

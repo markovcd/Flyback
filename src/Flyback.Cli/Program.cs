@@ -62,6 +62,7 @@ internal static class Program
             Info(patch, json),
             Print(patch),
             Pack(patch, json),
+            Modules(json),
             Probe(plugins, json),
         };
 
@@ -82,10 +83,24 @@ internal static class Program
         return parsed.Errors.Count > 0 && parsed.GetResult(suggest) is null ? Exit.Failed : code;
     }
 
+    /// <summary>Lists the installed catalogue, which is what a plugin adds to.</summary>
+    private static Command Modules(Option<bool> json)
+    {
+        var command = new Command("modules", "Say what modules this build has.")
+        {
+            json,
+        };
+
+        command.SetAction(result => ModulesCommand.Run(
+            NodeCatalog.Current, result.GetValue(json), Console.Out));
+
+        return command;
+    }
+
     /// <summary>
-    /// The one command here that is not about a patch, which is why it takes no
-    /// <c>patch</c> argument and why it needs the catalogue rather than the
-    /// engine: what it asks and what it writes both belong to a plugin.
+    /// A command about an assistant rather than about a patch, which is why it
+    /// needs the plugin catalogue rather than the engine: what it asks and what
+    /// it writes both belong to a plugin.
     /// </summary>
     private static Command Probe(PluginCatalog plugins, Option<bool> json)
     {

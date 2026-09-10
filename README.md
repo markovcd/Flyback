@@ -81,6 +81,7 @@ flyback-cli render drone.fbk -o drone.wav --seconds 30
 flyback-cli check nebula.fbk
 flyback-cli check nebula.fbk --strict
 flyback-cli info nebula.fbk
+flyback-cli modules
 flyback-cli pack nebula.fbk -o nebula.fbkb
 flyback-cli print nebula.fbk -o nebula.fbks
 flyback-cli print nebula.fbk --check
@@ -96,6 +97,7 @@ flyback-cli probe --provider all
 - `info`: shows module and wire counts and compile cost
 - `pack`: packs a patch together with the files it references
 - `print`: writes the patch out as text in the language, and can check that the text builds back to the same program
+- `modules`: lists the modules this build has, and which plugin defines each
 - `probe`: asks an assistant which models it has and what each one accepts
 
 `check` exits with:
@@ -104,10 +106,15 @@ flyback-cli probe --provider all
 - `1`: patch errors
 - `2`: the job could not run
 
-`--strict` makes a warning fail as well. `check`, `info` and `pack` each take
-`--json`, which writes the same answer as a document instead of as prose.
+`--strict` makes a warning fail as well. `check`, `info`, `pack`, `modules` and
+`probe` each take `--json`, which writes the same answer as a document instead of
+as prose.
 
-`probe` is the one command that is not about a patch. It asks a provider's endpoint what it
+`info` says what a patch requires and `modules` says what is installed to meet
+it, which is the pair to reach for when a patch reports that it did not load
+completely.
+
+`probe` is the one command that reaches off the machine. It asks a provider's endpoint what it
 offers and records the answer in the settings file both programs read, so the app's model box
 fills itself in without being told. It takes minutes and the provider bills for it, which is
 why it is a command rather than a button; `--keys` says where each key would come from and
