@@ -84,8 +84,15 @@ deliberate.
 
 **Sharing a patch now sometimes means sharing a plugin.** That cost is real and
 it is the one 0025 declined to take. It is bounded by being visible: the file
-says what it needs, the status bar says what is installed, and a patch built only
-from the modules that ship in the engine never acquires the dependency at all.
+says what it needs, the About window says what is installed, and a patch built
+only from the modules that ship in the engine never acquires the dependency at
+all.
+
+**Amended.** What is installed used to be a label's tooltip on the status bar;
+it is a section of the About window now — see
+[0033](0033-patches-authored-by-an-agent-behind-the-plugin-boundary.md)'s second
+amendment. Reading it costs the same click either way; what changed is that the
+status bar no longer carries a tooltip nobody could see was there to hover.
 
 **Presence is checked; versions are not.** A plugin that is installed but has
 changed — a module renamed, ports reordered — is not detected, because a

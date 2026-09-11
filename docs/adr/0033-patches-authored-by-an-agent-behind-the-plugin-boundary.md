@@ -144,6 +144,14 @@ summary still carry the standing word on what leaves the machine, so the
 disclosure this ADR asked for is not gone, only no longer repeated a third time
 under the instruction box.
 
+**Amended again.** The status bar's own copy of that word — a label sitting
+beside a full plugin listing that only ever needed a click, not a standing
+line — moved into the About window with the rest of what is installed. The
+disclosure is no longer *standing*: it is a click away rather than always on
+the sill. What it bought in return is one bar that says one thing instead of
+three, and one place — About — that answers both "what is installed" and
+"where does this go" together. The plugin summary keeps saying it there.
+
 **A warmed render costs about a hundred frames.** At 320×180 that is tens of
 milliseconds and it happens at most once per model turn — but it is real work on
 a pool thread, and putting the `Task.Run` inside the workbench rather than in

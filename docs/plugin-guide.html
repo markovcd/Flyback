@@ -445,7 +445,7 @@
 
     <p>Nothing stops an assembly holding more than one plugin class, and each is instantiated. Two plugins
     claiming the same <code>Info.Id</code> is refused: the first wins and the second becomes a note in the
-    status bar.</p>
+    About window.</p>
   </section>
 
   <svg class="saw" preserveAspectRatio="none" viewBox="0 0 720 9" aria-hidden="true"><rect width="720" height="9" fill="url(#sawtooth)"/></svg>
@@ -803,9 +803,9 @@ em.UnitWrite(cell, smoothed);           <span class="c">// what it holds next ti
   <section id="refuse">
     <h2><span class="num">10</span>How things fail</h2>
 
-    <p>A broken, missing or hostile plugin is a note in the status bar, never a program that fails to start.
+    <p>A broken, missing or hostile plugin is a note in the About window, never a program that fails to start.
     Failures are values rather than exceptions, and they are scoped as narrowly as they can be: one bad
-    module costs that module, not the plugin and not the program. Hover the status bar for what loaded, what
+    module costs that module, not the plugin and not the program. Open About for what loaded, what
     did not, and why.</p>
 
     <div class="scroll">

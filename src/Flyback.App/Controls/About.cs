@@ -59,7 +59,11 @@ internal static class About
         ?? "unknown";
 
     /// <summary>The contents of the About window.</summary>
-    public static Control View()
+    /// <param name="pluginReport">
+    /// What loaded and what did not, and where it was looked for — built by the
+    /// host, since nothing in this file knows what a plugin is.
+    /// </param>
+    public static Control View(string pluginReport)
     {
         var heading = new Grid { ColumnDefinitions = new ColumnDefinitions("64,*") };
 
@@ -97,6 +101,9 @@ internal static class About
         page.Children.Add(Rule());
         page.Children.Add(Caption("Support"));
         page.Children.Add(Donation());
+        page.Children.Add(Rule());
+        page.Children.Add(Caption("Plugins"));
+        page.Children.Add(new TextBlock { Text = pluginReport, FontSize = Text.Body, TextWrapping = TextWrapping.Wrap });
 
         return page;
     }

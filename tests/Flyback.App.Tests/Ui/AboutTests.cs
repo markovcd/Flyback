@@ -14,9 +14,11 @@ namespace Flyback.App.Tests.Ui;
 /// </summary>
 public class AboutTests : UiTest
 {
-    private static Window Showing()
+    private const string SamplePluginReport = "Loaded:\n    Test Plugin  (test.plugin)";
+
+    private static Window Showing(string pluginReport = SamplePluginReport)
     {
-        var window = new Window { SizeToContent = SizeToContent.WidthAndHeight, Content = About.View() };
+        var window = new Window { SizeToContent = SizeToContent.WidthAndHeight, Content = About.View(pluginReport) };
 
         window.Show();
         Settle(window);
@@ -68,5 +70,17 @@ public class AboutTests : UiTest
 
         All<TextBox>(window).ShouldBeEmpty("nothing that could be mistaken for an address");
         Words(window).ShouldContain(t => t.Contains("no donation address"));
+    }
+
+    /// <summary>
+    /// What loaded and what did not is built by the host, not this file, so
+    /// what is checked is that whatever is handed in reaches the window.
+    /// </summary>
+    [AvaloniaFact]
+    public void It_shows_the_plugin_report_the_host_built()
+    {
+        var window = Showing();
+
+        Words(window).ShouldContain(SamplePluginReport);
     }
 }

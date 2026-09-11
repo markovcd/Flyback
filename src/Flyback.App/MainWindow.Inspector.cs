@@ -153,7 +153,7 @@ public sealed partial class MainWindow
         audioButton.IsEnabled = sound.Output is not null;
         ToolTip.SetTip(audioButton, sound.Output is { } output
             ? $"Play the patch through {output.Name}. Needs something wired into 'left'."
-            : "No sound backend is installed. See the status bar for where plugins are looked for.");
+            : "No sound backend is installed. See About for where plugins are looked for.");
         audioButton.IsCheckedChanged += (_, _) => SetAudioEnabled(audioButton.IsChecked == true);
 
         ToolTip.SetTip(length, "How many seconds an export writes.");

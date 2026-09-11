@@ -205,20 +205,6 @@ public sealed partial class MainWindow : Window
     /// </summary>
     private readonly ReportLine report = new();
 
-    private readonly TextBlock backend = new()
-    {
-        VerticalAlignment = VerticalAlignment.Center,
-        FontSize = Text.Body,
-        Foreground = Text.Muted,
-    };
-
-    private readonly TextBlock helper = new()
-    {
-        VerticalAlignment = VerticalAlignment.Center,
-        FontSize = Text.Body,
-        Foreground = Text.Muted,
-    };
-
     private readonly ToggleButton audioButton = new() { Content = "Audio off", Width = 92 };
     private readonly ToggleButton gpuButton = new() { Content = "GPU", Width = 60 };
     private readonly ToggleButton assistantButton =
@@ -711,7 +697,7 @@ public sealed partial class MainWindow : Window
         ToolTip.SetTip(assistantButton, plugins.Assistants.Count > 0
             ? "Describe a patch and have one built. Nothing is sent until you ask, and what "
               + "comes back is an edit Ctrl+Z takes off again."
-            : "No assistant plugin is installed. See the status bar for where plugins are looked for.");
+            : "No assistant plugin is installed. See About for where plugins are looked for.");
         assistantButton.IsCheckedChanged += (_, _) => ShowAssistant(assistantButton.IsChecked == true);
 
         var settings = Glyph("settings", "⚙", "Which assistant to use, and the key it needs.");
@@ -800,24 +786,23 @@ public sealed partial class MainWindow : Window
     /// into, so there is nothing to carry from one opening to the next.
     /// </summary>
     private async Task ShowAboutAsync() =>
-        await this.ShowDialog("About", About.View());
+        await this.ShowDialog("About", About.View(PluginSummary()));
 
     /// <summary>
-    /// The bar along the bottom: what the patch costs, what it is being played
-    /// through, and whatever there is to say about it.
+    /// The bar along the bottom: what the patch costs, and whatever there is to
+    /// say about it.
     /// </summary>
     /// <remarks>
     /// A grid rather than a row of controls, because a row hands every child the
     /// width it asks for and lets the last fall off the end — and the report is the
-    /// one thing here that has to be read. The two prose columns share what the
-    /// fixed ones leave, and each ellipsises its own. Not evenly: the split is the
-    /// one that fits the counts in a window of the size this opens at.
+    /// one thing here that has to be read. Which sound backend is open and which
+    /// assistant is chosen are said in the About window, not here.
     /// </remarks>
     private Control BuildStatusBar()
     {
         var bar = new Grid
         {
-            ColumnDefinitions = new ColumnDefinitions("1.4*,Auto,Auto,*"),
+            ColumnDefinitions = new ColumnDefinitions("1.4*,*"),
             Margin = new Thickness(12, 5),
         };
 
@@ -826,29 +811,15 @@ public sealed partial class MainWindow : Window
         // the palette's is, and for the same reason.
         Styles.Add(ReportLine.Trim());
 
-        backend.Text = sound.Output is { } output ? $"sound: {output.Name}" : "sound: none";
-        ToolTip.SetTip(backend, PluginSummary());
-
-        // Always visible, so the capability's existence is never a surprise to
-        // somebody who did not go looking for it.
-        helper.Text = assistant?.Summary ?? "assistant: none";
-        ToolTip.SetTip(helper, PluginSummary());
-
         // The gap a StackPanel gives for free, added by hand here since this is
         // a grid. On the children rather than the grid, so the first column
         // starts at the margin and the last one keeps every pixel it is given.
-        backend.Margin = new Thickness(16, 0, 0, 0);
-        helper.Margin = new Thickness(16, 0, 0, 0);
         report.Margin = new Thickness(16, 0, 0, 0);
 
         Grid.SetColumn(status, 0);
-        Grid.SetColumn(backend, 1);
-        Grid.SetColumn(helper, 2);
-        Grid.SetColumn(report, 3);
+        Grid.SetColumn(report, 1);
 
         bar.Children.Add(status);
-        bar.Children.Add(backend);
-        bar.Children.Add(helper);
         bar.Children.Add(report);
 
         return new Border

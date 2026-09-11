@@ -316,7 +316,7 @@ public sealed class AssistantPanel : UserControl
         Refresh();
     }
 
-    /// <summary>What the status bar should say about this. Never names a key.</summary>
+    /// <summary>What the About window should say about this. Never names a key.</summary>
     public string Summary => assistant is null ? "assistant: none" : $"assistant: {assistant.Name}";
 
     // --- building -----------------------------------------------------------

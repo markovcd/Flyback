@@ -71,6 +71,12 @@ public sealed partial class MainWindow
         if (plugins.Assistants.Count > 0)
         {
             lines.Add(string.Empty);
+
+            // Which third party a patch and its pictures would go to —
+            // ADR-0033's disclosure, said here so it does not depend on the
+            // assistant panel being open.
+            lines.Add(assistant?.Summary ?? "assistant: none");
+
             lines.Add(plugins.PreferredSecretStore is { } store
                 ? $"Keys are kept by: {store.Name}"
                 : "No secret store is installed, so a key lasts only as long as the window.");
