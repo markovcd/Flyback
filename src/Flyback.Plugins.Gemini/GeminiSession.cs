@@ -371,5 +371,37 @@ internal sealed class GeminiSession : IPatchSession
     /// </summary>
     private static TimeSpan Backoff(int attempt) => TimeSpan.FromSeconds(Math.Pow(2, attempt - 1));
 
+    /// <summary>The turns so far, without the pictures and clips — see <see cref="Wire.Kept"/>.</summary>
+    public string? Save() => Wire.Kept(contents).ToJsonString();
+
+    /// <summary>
+    /// Takes up the turns <see cref="Save"/> wrote, before anything has been asked
+    /// here. False for anything that is not a list of turns, which leaves this
+    /// session as empty as it was.
+    /// </summary>
+    internal bool Take(string saved)
+    {
+        JsonArray turns;
+
+        try
+        {
+            if (JsonNode.Parse(saved) is not JsonArray parsed) return false;
+
+            turns = parsed;
+        }
+        catch (JsonException)
+        {
+            return false;
+        }
+
+        // Every turn says whose it is. One that does not is a 400 on the first
+        // request, which is a worse way to find out than not carrying it on.
+        if (turns.Any(turn => turn?["role"]?.GetValueKind() != JsonValueKind.String)) return false;
+
+        foreach (var turn in turns) contents.Add(turn!.DeepClone());
+
+        return true;
+    }
+
     public void Dispose() => http.Dispose();
 }

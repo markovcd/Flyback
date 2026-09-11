@@ -83,19 +83,23 @@ public sealed partial class MainWindow
 
         return await AnsweredAsync(
             "Unsaved changes",
-            "This patch has changes that have not been saved. Closing it now would lose them.");
+            editor.IsModified || SourceIsUnapplied
+                ? "This patch has changes that have not been saved. Closing it now would lose them."
+                : "The conversation about this patch has not been saved. Closing it now would lose it.");
     }
 
     /// <summary>
     /// Whether this document has anything in it that closing would lose.
     /// </summary>
     /// <remarks>
-    /// Two halves, because there are two places work can be: typing that has not
-    /// been applied is the one the editor's history cannot know about. Asked by the
-    /// question, by the close that puts it up and by the dot in the title, so the
-    /// three cannot come to disagree.
+    /// Three parts, because there are three places work can be: typing that has not
+    /// been applied is the one the editor's history cannot know about, and a
+    /// conversation is saved with the patch it is about (ADR-0072) without being
+    /// any part of the patch. Asked by the question, by the close that puts it up
+    /// and by the dot in the title, so the three cannot come to disagree.
     /// </remarks>
-    private bool SomethingToLose => editor.IsModified || SourceIsUnapplied;
+    private bool SomethingToLose =>
+        editor.IsModified || SourceIsUnapplied || assistant?.ConversationUnsaved == true;
 
     /// <summary>
     /// Whether text about to stop being the document may go. Asks only about typing

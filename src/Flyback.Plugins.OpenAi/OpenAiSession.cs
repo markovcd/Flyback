@@ -94,6 +94,39 @@ internal sealed class OpenAiSession : IPatchSession
         messages.Add(Wire.System(workbench.Briefing));
     }
 
+    /// <summary>The messages so far, without the briefing or the pictures — see <see cref="Wire.Kept"/>.</summary>
+    public string? Save() => Wire.Kept(messages).ToJsonString();
+
+    /// <summary>
+    /// Takes up the messages <see cref="Save"/> wrote, after this run's own
+    /// briefing and before anything has been asked here. False for anything that
+    /// is not a list of messages, which leaves this session as empty as it was.
+    /// </summary>
+    internal bool Take(string saved)
+    {
+        JsonArray kept;
+
+        try
+        {
+            if (JsonNode.Parse(saved) is not JsonArray parsed) return false;
+
+            kept = parsed;
+        }
+        catch (JsonException)
+        {
+            return false;
+        }
+
+        // Every message says whose it is, and none of them is a second briefing.
+        // Either would be a 400 on the first request, which is a worse way to
+        // find out than not carrying it on.
+        if (kept.Any(message => Wire.Role(message) is null or "system")) return false;
+
+        foreach (var message in kept) messages.Add(message!.DeepClone());
+
+        return true;
+    }
+
     public async IAsyncEnumerable<PatchEvent> Ask(
         string instruction,
         [EnumeratorCancellation] CancellationToken cancel)

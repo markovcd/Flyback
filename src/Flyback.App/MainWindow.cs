@@ -391,6 +391,10 @@ public sealed partial class MainWindow : Window
             IsVisible = false,
         };
 
+        // A conversation is saved with the patch, so one with a turn nobody has
+        // saved is something the title and the close have to know about.
+        assistant.ConversationChanged += (_, _) => RefreshEditState();
+
         toolbar = BuildToolbar();
         statusBar = BuildStatusBar();
         DockPanel.SetDock(toolbar, Dock.Top);
@@ -638,6 +642,10 @@ public sealed partial class MainWindow : Window
 
                 editor.Patch = built;
                 preview.Rewind();
+
+                // A preset has no file to have saved a conversation with, so it
+                // arrives with none — ADR-0072.
+                assistant?.Open(null);
 
                 // A preset arrives as a graph and no text describes it, so the
                 // canvas owns it — ADR-0068.

@@ -498,6 +498,73 @@ public class SessionTests
         }
     }
 
+    // --- putting it away ----------------------------------------------------
+
+    /// <summary>
+    /// A conversation saved and taken up by another session is the same
+    /// conversation — told this run's briefing rather than the one it began with,
+    /// since the handbook is rebuilt for every run.
+    /// </summary>
+    [Fact]
+    public async Task A_saved_conversation_is_carried_on_after_this_runs_own_briefing()
+    {
+        var first = new Canned(new Answer(Prose("Which key should it be in?")));
+        string saved;
+
+        using (var session = Session(first))
+        {
+            await Drain(session, "make a bass line");
+            saved = session.Save()!;
+        }
+
+        JsonNode.Parse(saved)!.AsArray().Select(Wire.Role).ShouldNotContain("system");
+
+        var second = new Canned(new Answer(Prose("D minor it is.")));
+        using var carried = Session(second);
+
+        carried.Take(saved).ShouldBeTrue();
+        await Drain(carried, "D minor");
+
+        second.Sent[0]["messages"]!.AsArray().Select(Wire.Role)
+            .ShouldBe(["system", "user", "assistant", "user"]);
+    }
+
+    [Fact]
+    public void A_saved_conversation_leaves_the_briefing_and_the_pictures_out()
+    {
+        var messages = new JsonArray
+        {
+            Wire.System("the handbook"),
+            Wire.User("a grey field"),
+            Wire.UserWithPictures("Here is what that looked like.", [new byte[] { 1, 2, 3 }]),
+        };
+
+        var kept = Wire.Kept(messages).ToJsonString();
+
+        kept.ShouldNotContain("the handbook");
+        kept.ShouldNotContain("image_url");
+        kept.ShouldContain("render again");
+    }
+
+    [Theory]
+    [InlineData("not a conversation")]
+    [InlineData("""{"role":"user"}""")]
+    [InlineData("""[{"content":"no role"}]""")]
+    [InlineData("""[{"role":"system","content":"a second briefing"}]""")]
+    public void Something_that_is_not_a_conversation_is_not_taken_up(string saved)
+    {
+        using var session = Session(new Canned(new Answer(Prose("hello"))));
+
+        session.Take(saved).ShouldBeFalse();
+    }
+
+    private static OpenAiSession Session(Canned canned) => new(
+        new PatchWorkbench(NodeCatalog.BuiltIn, new Patch(), vision: false, Listener.None),
+        new AssistantChoices("some-model"),
+        "no-key-needed",
+        "https://nowhere.invalid/v1",
+        canned);
+
     // --- driving it ---------------------------------------------------------
 
     private static async Task<(List<PatchEvent> Events, List<JsonNode> Sent)> Run(params string[] replies)

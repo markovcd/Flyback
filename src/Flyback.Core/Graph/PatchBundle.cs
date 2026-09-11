@@ -22,12 +22,19 @@ public readonly record struct BundleReport(
     public bool Whole => Missing.Count == 0;
 }
 
-/// <summary>A bundle read back: the patch, and the files it names, by name.</summary>
+/// <summary>A bundle read back: the patch, the files it names, and the conversation saved with it.</summary>
 /// <param name="Files">
 /// Keyed by the path the patch stores, which is the path this wrote into it when
 /// it was packed — so a library serving these needs no rules about folders.
 /// </param>
-public readonly record struct LoadedBundle(Patch Patch, IReadOnlyDictionary<string, byte[]> Files);
+/// <param name="Conversation">
+/// The text of <see cref="PatchBundle.ConversationEntry"/>, or null for a bundle
+/// saved with none.
+/// </param>
+public readonly record struct LoadedBundle(
+    Patch Patch,
+    IReadOnlyDictionary<string, byte[]> Files,
+    string? Conversation = null);
 
 /// <summary>
 /// A patch and everything it names, in one file.
@@ -67,10 +74,20 @@ public static class PatchBundle
     public const string FilesFolder = "files/";
 
     /// <summary>
+    /// The conversation an assistant had about this patch, at the root beside it,
+    /// where one was saved with it (ADR-0072). Carried as text and never read
+    /// here: what is in it is the shell's.
+    /// </summary>
+    public const string ConversationEntry = "conversation.json";
+
+    /// <summary>
     /// Writes <paramref name="patch"/> and everything it names into
     /// <paramref name="archive"/>.
     /// </summary>
     /// <param name="patch"></param>
+    /// <param name="conversation">
+    /// What goes in as <see cref="ConversationEntry"/>, or null to write none.
+    /// </param>
     /// <param name="open">
     /// Hands back the bytes of a file the patch names, or null where there are
     /// none to be had. Called once per distinct path, so a patch showing one
@@ -86,7 +103,8 @@ public static class PatchBundle
         Stream archive,
         Patch patch,
         Func<string, byte[]?> open,
-        ModuleCatalog? against = null)
+        ModuleCatalog? against = null,
+        string? conversation = null)
     {
         ArgumentNullException.ThrowIfNull(archive);
         ArgumentNullException.ThrowIfNull(patch);
@@ -134,6 +152,13 @@ public static class PatchBundle
         using (var writing = new StreamWriter(zip.CreateEntry(PatchEntry).Open()))
             writing.Write(PatchIO.ToJson(packed, catalog));
 
+        if (conversation is not null)
+        {
+            using var writing = new StreamWriter(zip.CreateEntry(ConversationEntry).Open());
+
+            writing.Write(conversation);
+        }
+
         return new BundleReport(carried, missing);
     }
 
@@ -175,7 +200,16 @@ public static class PatchBundle
             files[entry.FullName] = bytes.ToArray();
         }
 
-        return new LoadedBundle(PatchIO.Read(json, against).Patch, files);
+        string? conversation = null;
+
+        if (zip.GetEntry(ConversationEntry) is { } kept)
+        {
+            using var reading = new StreamReader(kept.Open());
+
+            conversation = reading.ReadToEnd();
+        }
+
+        return new LoadedBundle(PatchIO.Read(json, against).Patch, files, conversation);
     }
 
     /// <summary>

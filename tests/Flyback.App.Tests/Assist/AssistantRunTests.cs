@@ -287,15 +287,146 @@ public class AssistantRunTests
         run.EditedUnderneath(new Patch()).ShouldBeTrue();
     }
 
+    // --- carried on from a saved one ------------------------------------------
+
+    /// <summary>
+    /// What was built, how far the conversation got and what the provider said it
+    /// was, all back — over the patch that has just been opened, which is what an
+    /// edit underneath is noticed against from here on.
+    /// </summary>
+    [Fact]
+    public async Task A_conversation_saved_and_carried_on_keeps_what_it_built_and_how_far_it_got()
+    {
+        var assistant = ScriptedAssistant.Editing();
+        SavedConversation saved;
+
+        using (var first = RunOf(assistant))
+        {
+            await Drain(first, "add a knob");
+            saved = first.Save([new TranscriptLine(Voice.You, "add a knob")]);
+        }
+
+        saved.History.ShouldBe(ScriptedAssistant.Remembered);
+        saved.Transcript.ShouldHaveSingleItem().Text.ShouldBe("add a knob");
+
+        var opened = new Patch();
+
+        using var carried = new AssistantRun(
+            assistant, AssistantConfig.Unset, NodeCatalog.BuiltIn, opened, resuming: saved);
+
+        carried.PickedUp.ShouldBeTrue();
+        assistant.Given.ShouldBe(ScriptedAssistant.Remembered);
+        carried.Turns.ShouldBe(1);
+        carried.Workbench.Snapshot().Nodes.Count.ShouldBe(2, "the knob it built, and the Output");
+        carried.Before.ShouldBeSameAs(opened);
+        carried.EditedUnderneath(opened).ShouldBeFalse();
+    }
+
+    /// <summary>
+    /// A provider that cannot take the conversation back costs the model its memory
+    /// and nothing else: the patch it was building is still on the bench.
+    /// </summary>
+    [Fact]
+    public async Task A_provider_that_cannot_carry_it_on_starts_again_over_what_was_built()
+    {
+        SavedConversation saved;
+
+        using (var first = RunOf(ScriptedAssistant.Editing()))
+        {
+            await Drain(first);
+            saved = first.Save([]);
+        }
+
+        using var carried = new AssistantRun(
+            new ScriptedAssistant { Forgets = true },
+            AssistantConfig.Unset,
+            NodeCatalog.BuiltIn,
+            new Patch(),
+            resuming: saved);
+
+        carried.PickedUp.ShouldBeFalse();
+        carried.Workbench.Snapshot().Nodes.Count.ShouldBe(2);
+    }
+
+    [Fact]
+    public async Task A_conversation_carried_on_still_runs_out_of_turns()
+    {
+        SavedConversation saved;
+
+        using (var first = RunOf(new ScriptedAssistant(new PatchEvent.Said("hello")), maxTurns: 2))
+        {
+            await Drain(first);
+            saved = first.Save([]);
+        }
+
+        using var carried = new AssistantRun(
+            new ScriptedAssistant(new PatchEvent.Said("hello")),
+            AssistantConfig.Unset,
+            NodeCatalog.BuiltIn,
+            new Patch(),
+            maxTurns: 2,
+            resuming: saved);
+
+        await Drain(carried);
+
+        carried.Exhausted.ShouldBeTrue();
+    }
+
+    /// <summary>
+    /// A saved workbench that will not read as a patch is a conversation that starts
+    /// again over the patch on the canvas, rather than one that cannot start at all.
+    /// </summary>
+    [Fact]
+    public void A_saved_workbench_that_will_not_read_starts_again_over_the_patch_on_the_canvas()
+    {
+        var saved = new SavedConversation(
+            "scripted",
+            string.Empty,
+            3,
+            new WorkbenchState("not a patch", "not a patch either", new Dictionary<string, Guid>(), 0, 0),
+            ScriptedAssistant.Remembered,
+            []);
+
+        var opened = new Patch();
+
+        using var carried = new AssistantRun(
+            new ScriptedAssistant(), AssistantConfig.Unset, NodeCatalog.BuiltIn, opened, resuming: saved);
+
+        carried.PickedUp.ShouldBeFalse();
+        carried.Turns.ShouldBe(0);
+        carried.Before.ShouldBeSameAs(opened);
+    }
+
     // --- the fake -----------------------------------------------------------
 
     private sealed class ScriptedAssistant(params PatchEvent[] script) : IPatchAssistant, IPatchSession
     {
+        /// <summary>What every one of these says the conversation was, when asked to save it.</summary>
+        public const string Remembered = "what was said";
+
         private PatchWorkbench? bench;
         private string? throwsAfterStarting;
         private bool refusesToStart;
         private bool edits;
         private Queue<PatchEvent[]>? turns;
+
+        /// <summary>Whether this one cannot take a saved conversation back.</summary>
+        public bool Forgets { get; init; }
+
+        /// <summary>What <see cref="Resume"/> was handed, or null where it never was.</summary>
+        public string? Given { get; private set; }
+
+        public IPatchSession? Resume(PatchWorkbench workbench, AssistantConfig config, string saved)
+        {
+            if (Forgets) return null;
+
+            bench = workbench;
+            Given = saved;
+
+            return this;
+        }
+
+        public string? Save() => Remembered;
 
         public static ScriptedAssistant Throwing(string message) =>
             new() { throwsAfterStarting = message };

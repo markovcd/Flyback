@@ -251,6 +251,39 @@ public sealed class AssistantPanel : UserControl
 
     private IPatchAssistant? runAssistant;
 
+    /// <summary>The transcript as shown, line by line, which is what is saved with the patch.</summary>
+    private readonly List<TranscriptLine> lines = [];
+
+    /// <summary>
+    /// A conversation that arrived with the patch and has not been asked anything
+    /// yet. Carried on by the first message that may carry it on — see
+    /// <see cref="Restarting"/> — and dropped by one that may not.
+    /// </summary>
+    private SavedConversation? waiting;
+
+    /// <summary>
+    /// The patch <see cref="waiting"/> arrived with, as it arrived, so an edit made
+    /// before the first message is noticed the way one made under a run is.
+    /// </summary>
+    private (Patch Patch, int Nodes, int Wires)? waitingOn;
+
+    /// <summary>
+    /// The conversation as it stood when its last turn ended, which is what saving
+    /// the patch writes. Taken then rather than when the patch is saved, because a
+    /// save can land in the middle of a turn and a session is not something to read
+    /// while it runs.
+    /// </summary>
+    private SavedConversation? settled;
+
+    /// <summary>Whether a turn has ended since the patch was last opened or saved.</summary>
+    private bool unsaved;
+
+    /// <summary>
+    /// The conversation changed in a way the title should say: a turn ended, or it
+    /// was saved, or a document arrived with one or without one.
+    /// </summary>
+    public event EventHandler? ConversationChanged;
+
     /// <summary>
     /// The paragraph the assistant is in the middle of, or null when it is not
     /// in the middle of one. Held rather than found, because what "the last
@@ -353,6 +386,102 @@ public sealed class AssistantPanel : UserControl
 
     /// <summary>What the About window should say about this. Never names a key.</summary>
     public string Summary => assistant is null ? "assistant: none" : $"assistant: {assistant.Name}";
+
+    // --- the conversation and the patch it is about ---------------------------
+
+    /// <summary>
+    /// A different document is on the canvas, with the conversation saved with it
+    /// or with none (ADR-0072).
+    /// </summary>
+    /// <remarks>
+    /// The conversation that was going ends here rather than at the next message:
+    /// it was about the last document, and is saved with that one or not at all.
+    /// One that arrived is shown at once and carried on by the next message, which
+    /// is the moment there is a key and a configuration to carry it on with. Call
+    /// this once the patch is on the canvas, since that patch is what an edit made
+    /// before the first message is noticed against.
+    /// </remarks>
+    /// <param name="saved">What was saved with the document, as <see cref="SavedConversation.ToJson"/> wrote it.</param>
+    public void Open(string? saved)
+    {
+        // A turn still running goes with the document it was about. Disposing
+        // the run stops it, and AskAsync drops whatever it still had on its way.
+        run?.Dispose();
+        run = null;
+        runConfig = null;
+        runAssistant = null;
+
+        log.Dispose();
+        log = ConversationLog.Start(false, string.Empty);
+
+        saidPanel.Children.Clear();
+        lines.Clear();
+        saying = null;
+
+        lastFrame.Source = null;
+        lastFrame.IsVisible = false;
+
+        waiting = SavedConversation.Read(saved);
+        waitingOn = waiting is null ? null : Anchor(current());
+        settled = waiting;
+        unsaved = false;
+
+        if (waiting is not null)
+        {
+            foreach (var line in waiting.Transcript) Put(line.Voice, line.Text);
+
+            Put(Voice.Note, "Saved with this patch. The next message carries this conversation on.", keep: false);
+        }
+
+        ConversationChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>
+    /// The conversation to save with the patch on the canvas, or null where there
+    /// is none, or where it is no longer about that patch.
+    /// </summary>
+    /// <remarks>
+    /// "No longer about it" is the rule a message already follows: a patch edited
+    /// underneath a conversation starts a new one (see <see cref="Restarting"/>), so
+    /// saving the old one with it would only bring back, next time, a conversation
+    /// that could not honestly go on.
+    /// </remarks>
+    public string? ConversationToSave() => Belongs() ? settled!.ToJson() : null;
+
+    /// <summary>The conversation has just gone to disk with the patch.</summary>
+    public void ConversationSaved()
+    {
+        unsaved = false;
+        ConversationChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>
+    /// Whether there is a turn in the conversation that saving the patch would keep
+    /// and closing it would lose.
+    /// </summary>
+    public bool ConversationUnsaved => unsaved && Belongs();
+
+    private bool Belongs()
+    {
+        if (settled is null) return false;
+
+        var now = current();
+
+        return run is not null ? !run.EditedUnderneath(now) : !Moved(waitingOn, now);
+    }
+
+    private static (Patch Patch, int Nodes, int Wires) Anchor(Patch patch) =>
+        (patch, patch.Nodes.Count, patch.Connections.Count);
+
+    /// <summary>
+    /// The test <see cref="AssistantRun.EditedUnderneath"/> makes, for a
+    /// conversation that has not been carried on yet and so has no run to ask.
+    /// </summary>
+    private static bool Moved((Patch Patch, int Nodes, int Wires)? on, Patch now) =>
+        on is not { } was
+        || !ReferenceEquals(was.Patch, now)
+        || was.Nodes != now.Nodes.Count
+        || was.Wires != now.Connections.Count;
 
     // --- building -----------------------------------------------------------
 
@@ -903,13 +1032,36 @@ public sealed class AssistantPanel : UserControl
     /// </remarks>
     private string? Restarting(AssistantConfig config)
     {
-        if (run is null) return string.Empty;
+        if (run is null) return waiting is null ? string.Empty : Unresumable(waiting, config);
         if (run.Exhausted) return "That conversation had its turns. Starting another.";
         if (!ReferenceEquals(runAssistant, assistant) || runConfig != config)
             return "The settings changed, so this is a new conversation.";
 
         return run.EditedUnderneath(current())
             ? "The patch changed underneath, so this is a new conversation about the one on screen."
+            : null;
+    }
+
+    /// <summary>
+    /// Why a conversation saved with the patch cannot be carried on, or null when it
+    /// can: the three reasons <see cref="Restarting"/> gives, asked of what was saved
+    /// rather than of a run.
+    /// </summary>
+    /// <remarks>
+    /// The settings are compared by fingerprint, because that is all that was
+    /// saved — see <see cref="SavedConversation"/>.
+    /// </remarks>
+    private string? Unresumable(SavedConversation saved, AssistantConfig config)
+    {
+        if (saved.Turns >= AssistantRun.TurnLimit) return "That conversation had its turns. Starting another.";
+
+        if (assistant is null
+            || !string.Equals(saved.Provider, assistant.Id, StringComparison.Ordinal)
+            || saved.Settings != SavedConversation.SettingsOf(config.Values))
+            return "That conversation was had with other settings, so this is a new one.";
+
+        return Moved(waitingOn, current())
+            ? "The patch changed since it was opened, so this is a new conversation about the one on screen."
             : null;
     }
 
@@ -931,14 +1083,37 @@ public sealed class AssistantPanel : UserControl
 
         if (because is null && run is { } going) return going;
 
+        // No run and no reason not to is a conversation saved with the patch,
+        // which this message carries on.
+        var resuming = because is null ? waiting : null;
+
+        waiting = null;
+        waitingOn = null;
+
         run?.Dispose();
         run = new AssistantRun(
-            with, config, plugins.Modules, current(), samples: samples, pictures: pictures);
+            with, config, plugins.Modules, current(), samples: samples, pictures: pictures, resuming: resuming);
         runConfig = config;
         runAssistant = with;
 
         log.Dispose();
         log = ConversationLog.Start(settings.LogConversations, with.Id);
+
+        if (resuming is not null)
+        {
+            // Nothing is cleared: the transcript on screen is this conversation's.
+            if (!run.PickedUp)
+            {
+                Put(Voice.Note,
+                    $"{with.Name} could not pick up what was said before, so it starts again from the patch it had built.");
+            }
+
+            return run;
+        }
+
+        // A conversation of its own, so what was saved with the patch is no
+        // longer what saving it again should write.
+        settled = null;
 
         // Said rather than silently done, and only where there was something to
         // lose: the transcript emptying is otherwise the only sign that the
@@ -946,7 +1121,9 @@ public sealed class AssistantPanel : UserControl
         if (saidPanel.Children.Count > 0)
         {
             saidPanel.Children.Clear();
-            if (because is { Length: > 0 }) Add(because, Text.Muted, Text.Small);
+            lines.Clear();
+
+            if (because is { Length: > 0 }) Put(Voice.Note, because);
         }
 
         lastFrame.Source = null;
@@ -965,7 +1142,7 @@ public sealed class AssistantPanel : UserControl
 
         var conversation = Conversation(assistant, config);
 
-        Asked(wanted);
+        Put(Voice.You, wanted);
         log.Write("you", wanted);
 
         instruction.Text = string.Empty;
@@ -977,6 +1154,10 @@ public sealed class AssistantPanel : UserControl
         {
             await foreach (var happened in conversation.Ask(wanted))
             {
+                // A document arrived while this ran and took the conversation
+                // with it (Open). What is still on its way is about that one.
+                if (!ReferenceEquals(conversation, run)) break;
+
                 Show(happened);
 
                 // The tallies move as the workbench is driven, and an edit that
@@ -984,14 +1165,18 @@ public sealed class AssistantPanel : UserControl
                 Beat();
             }
 
-            Deliver();
+            if (ReferenceEquals(conversation, run))
+            {
+                Deliver();
+                Settle();
+            }
         }
         catch (Exception ex)
         {
             // AssistantRun already turns a provider's failure into an event, so
             // anything arriving here is the shell's own fault rather than a
             // plugin's — but the window still survives it.
-            Add($"Something went wrong: {ex.Message}", Amber, Text.Small);
+            Put(Voice.Failed, $"Something went wrong: {ex.Message}");
             report($"The assistant stopped: {ex.Message}", null);
         }
         finally
@@ -1006,17 +1191,17 @@ public sealed class AssistantPanel : UserControl
         switch (happened)
         {
             case PatchEvent.Said said:
-                Append(said.Text);
+                Put(Voice.Said, said.Text);
                 log.Write("said", said.Text);
                 break;
 
             case PatchEvent.Did did:
-                Add(did.Summary, Text.Muted, Text.Small);
+                Put(Voice.Note, did.Summary);
                 log.Write("did", did.Summary);
                 break;
 
             case PatchEvent.Saw saw:
-                Add(saw.Caption, Text.Muted, Text.Small);
+                Put(Voice.Note, saw.Caption);
                 Picture(saw.Png);
                 log.Write("saw", saw.Caption);
                 break;
@@ -1027,30 +1212,81 @@ public sealed class AssistantPanel : UserControl
             // at once — the transcript says a sound was rendered and heard,
             // which is what somebody watching this needs to know.
             case PatchEvent.Heard heard:
-                Add(heard.Caption, Text.Muted, Text.Small);
+                Put(Voice.Note, heard.Caption);
                 log.Write("heard", heard.Caption);
                 break;
 
             case PatchEvent.Cost cost:
-                Add(
-                    $"{cost.Input} in ({cost.CacheRead} cached), {cost.Output} out.",
-                    Text.Muted,
-                    11);
-                log.Write("cost", $"{cost.Input} in ({cost.CacheRead} cached), {cost.Output} out.");
+            {
+                var spent = $"{cost.Input} in ({cost.CacheRead} cached), {cost.Output} out.";
+
+                Put(Voice.Aside, spent);
+                log.Write("cost", spent);
                 break;
+            }
 
             case PatchEvent.Proposed proposed:
-                Add($"Proposed: {proposed.Summary}", Brushes.White, Text.Body);
+                Put(Voice.Proposed, $"Proposed: {proposed.Summary}");
                 log.Write("proposed", proposed.Summary);
                 break;
 
             case PatchEvent.Failed failed:
-                Add(failed.Message, Amber, Text.Small);
+                Put(Voice.Failed, failed.Message);
                 log.Write("failed", failed.Message);
                 break;
         }
 
         transcript.ScrollToEnd();
+    }
+
+    /// <summary>
+    /// One line of the transcript, drawn as its voice is drawn and kept, so that it
+    /// is saved with the patch — unless it is only about this showing of it.
+    /// </summary>
+    private void Put(Voice voice, string text, bool keep = true)
+    {
+        if (keep) lines.Add(new TranscriptLine(voice, text));
+
+        switch (voice)
+        {
+            case Voice.You:
+                Asked(text);
+                break;
+
+            case Voice.Said:
+                Append(text);
+                break;
+
+            case Voice.Aside:
+                Add(text, Text.Muted, 11);
+                break;
+
+            case Voice.Proposed:
+                Add(text, Brushes.White, Text.Body);
+                break;
+
+            case Voice.Failed:
+                Add(text, Amber, Text.Small);
+                break;
+
+            default:
+                Add(text, Text.Muted, Text.Small);
+                break;
+        }
+    }
+
+    /// <summary>
+    /// Takes the conversation as it stands now a turn has ended, as what saving the
+    /// patch writes, and says there is something new to lose.
+    /// </summary>
+    private void Settle()
+    {
+        if (run is null) return;
+
+        settled = run.Save(lines);
+        unsaved = true;
+
+        ConversationChanged?.Invoke(this, EventArgs.Empty);
     }
 
     private void Picture(byte[] png)
@@ -1162,9 +1398,9 @@ public sealed class AssistantPanel : UserControl
         // starting one about a patch it does not remember building.
         run.Rebase(proposed);
 
-        Add(overwrote
+        Put(Voice.Aside, overwrote
             ? "Applied — this replaced the edits you made while it ran. Ctrl+Z puts them back."
-            : "Applied. Ctrl+Z puts the patch back as it was.", Text.Muted, 11);
+            : "Applied. Ctrl+Z puts the patch back as it was.");
 
         report(string.Empty, null);
     }

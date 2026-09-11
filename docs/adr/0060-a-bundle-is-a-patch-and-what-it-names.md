@@ -114,3 +114,15 @@ lose more.
 not a workspace and not a place to keep settings. It holds a patch and the files
 that patch names, and every further thing somebody might want in one is a reason
 to look at this record again rather than a hole in it.
+
+## Amendments
+
+**2026-09-11 — a bundle carries the conversation about its patch.**
+[0072](0072-a-conversation-is-saved-with-the-patch-it-is-about.md) puts
+`conversation.json` at the root beside `patch.fbk`. That is the further thing the
+paragraph above asked to be a reason to look again, and the looking came out this
+way: a conversation is now part of the document — saved with it and lost with it —
+and a bundle is the whole of the document wherever it is taken, so a bundle without
+it would be the one kind of file that could not carry on the conversation that
+built it. It is still not a workspace. Nothing about the window, the view or the
+settings goes in, and the conversation holds no key and no endpoint.

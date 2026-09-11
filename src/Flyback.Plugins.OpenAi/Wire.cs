@@ -108,6 +108,57 @@ internal static class Wire
     };
 
     /// <summary>
+    /// The conversation as it is worth keeping: every message but the briefing,
+    /// with every picture and clip replaced by a sentence saying one was there.
+    /// </summary>
+    /// <remarks>
+    /// The briefing is left out because it is the handbook, which is rebuilt for
+    /// every run — a conversation carried on is told the current one, not whatever
+    /// this build said. The media is nearly all of the size and none of it is
+    /// needed to carry on, since the model can render or listen again.
+    /// </remarks>
+    public static JsonArray Kept(JsonArray messages)
+    {
+        var kept = new JsonArray();
+
+        foreach (var message in messages)
+        {
+            if (Role(message) is "system") continue;
+
+            var copy = message!.DeepClone();
+
+            if (copy["content"] is JsonArray parts)
+            {
+                for (var i = 0; i < parts.Count; i++)
+                {
+                    var type = parts[i]?["type"]?.GetValueKind() == JsonValueKind.String
+                        ? parts[i]!["type"]!.GetValue<string>()
+                        : null;
+
+                    if (type is "image_url") parts[i] = Said(PictureNotKept);
+                    else if (type is "input_audio") parts[i] = Said(ClipNotKept);
+                }
+            }
+
+            kept.Add(copy);
+        }
+
+        return kept;
+
+        static JsonObject Said(string text) => new() { ["type"] = "text", ["text"] = text };
+    }
+
+    /// <summary>Whose a message is, or null for one that does not say.</summary>
+    public static string? Role(JsonNode? message) =>
+        message?["role"]?.GetValueKind() == JsonValueKind.String ? message["role"]!.GetValue<string>() : null;
+
+    private const string ClipNotKept =
+        "(A clip was played here. It was not kept when the conversation was saved — listen again to hear the patch.)";
+
+    private const string PictureNotKept =
+        "(A picture was shown here. It was not kept when the conversation was saved — render again to see the patch.)";
+
+    /// <summary>
     /// A picture, as a user turn.
     /// </summary>
     /// <remarks>

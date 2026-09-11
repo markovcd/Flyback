@@ -38,6 +38,36 @@ public class PatchBundleTests
     }
 
     /// <summary>
+    /// A conversation saved with the patch rides at the root beside it, as text the
+    /// bundle carries and never reads — and it is not one of the files the patch
+    /// names.
+    /// </summary>
+    [Fact]
+    public void A_conversation_rides_beside_the_patch()
+    {
+        using var archive = new MemoryStream();
+
+        PatchBundle.Write(archive, new Patch(), _ => null, NodeCatalog.BuiltIn, """{"said":"hello"}""");
+
+        var read = PatchBundle.Read(new MemoryStream(archive.ToArray()), NodeCatalog.BuiltIn);
+
+        read.Conversation.ShouldBe("""{"said":"hello"}""");
+        read.Files.ShouldBeEmpty();
+
+        Entries(archive.ToArray())
+            .ShouldBe([PatchBundle.PatchEntry, PatchBundle.ConversationEntry], ignoreOrder: true);
+    }
+
+    [Fact]
+    public void A_bundle_saved_with_no_conversation_has_none()
+    {
+        Packed(Both(), out var archive);
+
+        Entries(archive).ShouldNotContain(PatchBundle.ConversationEntry);
+        PatchBundle.Read(new MemoryStream(archive), NodeCatalog.BuiltIn).Conversation.ShouldBeNull();
+    }
+
+    /// <summary>
     /// The whole trick. A relative path is measured from wherever the patch is,
     /// so a patch whose paths name the copies beside it works the moment it is
     /// unpacked, with nothing else arranged.

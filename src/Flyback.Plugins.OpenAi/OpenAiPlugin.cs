@@ -101,8 +101,20 @@ public sealed partial class OpenAiAssistant : IPatchAssistant
                 : $"'{endpoint}' is not an http or https address.";
     }
 
-    public IPatchSession Start(PatchWorkbench workbench, AssistantConfig config) =>
-        new OpenAiSession(
+    public IPatchSession Start(PatchWorkbench workbench, AssistantConfig config) => Session(workbench, config);
+
+    public IPatchSession? Resume(PatchWorkbench workbench, AssistantConfig config, string saved)
+    {
+        var session = Session(workbench, config);
+
+        if (session.Take(saved)) return session;
+
+        session.Dispose();
+        return null;
+    }
+
+    private OpenAiSession Session(PatchWorkbench workbench, AssistantConfig config) =>
+        new(
             workbench,
             Schema.Surveyed(config.Values).Read(config.Values),
             config.ApiKey,

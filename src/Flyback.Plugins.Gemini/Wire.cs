@@ -216,6 +216,45 @@ internal static class Wire
         },
     };
 
+    /// <summary>
+    /// The conversation as it is worth keeping: all of it, with every picture and
+    /// clip replaced by a sentence saying one was there.
+    /// </summary>
+    /// <remarks>
+    /// The media is nearly all of the size — a few seconds of sound is a quarter
+    /// of a megabyte before base64 — and none of it is needed to carry on, since
+    /// the model can render or listen again. Everything else is kept exactly,
+    /// thought signatures included: a function call handed back without the
+    /// signature it arrived with is refused.
+    /// </remarks>
+    public static JsonArray Kept(JsonArray contents)
+    {
+        var kept = (JsonArray)contents.DeepClone();
+
+        foreach (var turn in kept)
+        {
+            if (turn?["parts"] is not JsonArray parts) continue;
+
+            for (var i = 0; i < parts.Count; i++)
+            {
+                if (parts[i]?["inlineData"] is not JsonObject media) continue;
+
+                var sound = media["mimeType"]?.GetValueKind() == JsonValueKind.String
+                    && media["mimeType"]!.GetValue<string>().StartsWith("audio/", StringComparison.Ordinal);
+
+                parts[i] = new JsonObject { ["text"] = sound ? ClipNotKept : PictureNotKept };
+            }
+        }
+
+        return kept;
+    }
+
+    private const string ClipNotKept =
+        "(A clip was played here. It was not kept when the conversation was saved — listen again to hear the patch.)";
+
+    private const string PictureNotKept =
+        "(A picture was shown here. It was not kept when the conversation was saved — render again to see the patch.)";
+
     private static JsonObject Inline(string type, byte[] bytes) => new()
     {
         ["inlineData"] = new JsonObject

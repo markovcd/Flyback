@@ -129,6 +129,34 @@ public sealed partial class PatchWorkbench
         return PatchIO.Read(PatchIO.ToJson(working, modules), modules).Patch;
     }
 
+    /// <summary>What <see cref="Restore"/> needs to put this workbench back as it stands.</summary>
+    public WorkbenchState Save() => new(
+        startingPoint,
+        PatchIO.ToJson(working, modules),
+        byHandle.ToDictionary(pair => pair.Key, pair => pair.Value.Id, StringComparer.OrdinalIgnoreCase),
+        Edits,
+        ToolCalls);
+
+    /// <summary>
+    /// Puts back the patch being built, the names its modules answer to and what
+    /// the run has spent, from a workbench that was <see cref="Save"/>d.
+    /// </summary>
+    /// <remarks>
+    /// Not the starting point: that is what this workbench was built over, so
+    /// whoever carries a conversation on builds it over
+    /// <see cref="WorkbenchState.Start"/>. A handle naming a module that is not
+    /// there is dropped and a module with no handle is given one, so every module
+    /// can still be named whatever the state says.
+    /// </remarks>
+    public void Restore(WorkbenchState state)
+    {
+        Adopt(PatchIO.Read(state.Working, modules).Patch, state.Handles);
+
+        proposal = null;
+        Edits = state.Edits;
+        ToolCalls = state.ToolCalls;
+    }
+
     // --- dispatch -----------------------------------------------------------
 
     /// <summary>
@@ -1195,7 +1223,12 @@ public sealed partial class PatchWorkbench
 
     // --- small helpers ------------------------------------------------------
 
-    private void Adopt(Patch patch)
+    /// <param name="patch"></param>
+    /// <param name="named">
+    /// Handles to keep, by the module each names — see <see cref="Restore"/>. Every
+    /// module left without one is named from its type id, as it always is.
+    /// </param>
+    private void Adopt(Patch patch, IReadOnlyDictionary<string, Guid>? named = null)
     {
         working = patch;
 
@@ -1207,8 +1240,18 @@ public sealed partial class PatchWorkbench
         byHandle.Clear();
         handleOf.Clear();
 
+        foreach (var (handle, id) in named ?? new Dictionary<string, Guid>())
+        {
+            if (patch.Find(id) is not { } node || handleOf.ContainsKey(id) || byHandle.ContainsKey(handle)) continue;
+
+            byHandle[handle] = node;
+            handleOf[id] = handle;
+        }
+
         foreach (var node in patch.Nodes)
         {
+            if (handleOf.ContainsKey(node.Id)) continue;
+
             var handle = Available(node.TypeId);
             byHandle[handle] = node;
             handleOf[node.Id] = handle;

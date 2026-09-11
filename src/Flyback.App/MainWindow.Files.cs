@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Platform.Storage;
+using Flyback.App.Assist;
 using Flyback.App.Controls;
 using Flyback.Core;
 using Flyback.Core.Compile;
@@ -109,6 +110,42 @@ public sealed partial class MainWindow
         editor.MarkSaved();
     }
 
+    /// <summary>
+    /// The conversations kept for patch files — a bundle keeps its own inside it
+    /// (ADR-0072).
+    /// </summary>
+    private readonly ConversationStore conversations = new();
+
+    /// <summary>
+    /// The conversation kept for a patch file that has just been read as
+    /// <paramref name="text"/>, or null — including for a file with no path on this
+    /// machine, which has nothing to be found by.
+    /// </summary>
+    private string? ConversationFor(IStorageFile file, string text) =>
+        file.TryGetLocalPath() is { } path ? conversations.Find(path, text) : null;
+
+    /// <summary>
+    /// Puts the conversation about this patch beside the file it has just been
+    /// written to as <paramref name="written"/>, or forgets whatever was kept for
+    /// that file before.
+    /// </summary>
+    /// <remarks>
+    /// The conversation counts as saved whatever happens here. The patch is on disk,
+    /// and saving it again would meet the same refusal — so what is said instead is
+    /// that the conversation did not go with it.
+    /// </remarks>
+    private void KeepConversation(IStorageFile file, string written)
+    {
+        var conversation = assistant?.ConversationToSave();
+        var path = file.TryGetLocalPath();
+
+        var kept = path is null ? conversation is null : conversations.Keep(path, written, conversation);
+
+        assistant?.ConversationSaved();
+
+        if (!kept) Report($"Saved {file.Name}, but the conversation about it could not be kept with it.");
+    }
+
     private async Task OpenPatchAsync()
     {
         var files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
@@ -136,7 +173,8 @@ public sealed partial class MainWindow
         {
             await using var stream = await files[0].OpenReadAsync();
             using var reader = new StreamReader(stream);
-            var loaded = PatchIO.Read(await reader.ReadToEndAsync());
+            var text = await reader.ReadToEndAsync();
+            var loaded = PatchIO.Read(text);
 
             // A patch short of a module would open with holes in it and compile
             // to something that is not what was saved. Better to refuse it and
@@ -158,6 +196,10 @@ public sealed partial class MainWindow
 
             editor.Patch = loaded.Patch;
             preview.Rewind();
+
+            // Whatever was said about this patch was kept beside it, if anything
+            // was and the file is still what it was saved as — ADR-0072.
+            assistant?.Open(ConversationFor(files[0], text));
 
             // A patch file is the document, so the graph owns it — ADR-0068.
             DropSource();
@@ -188,13 +230,17 @@ public sealed partial class MainWindow
             // directory, and what a picker hands back cannot always be seeked.
             using var packed = new MemoryStream();
 
-            report = PatchBundle.Write(packed, editor.Patch, Bytes, plugins.Modules);
+            // The conversation goes inside, since a bundle is the whole of the
+            // document wherever it is taken — ADR-0072.
+            report = PatchBundle.Write(
+                packed, editor.Patch, Bytes, plugins.Modules, assistant?.ConversationToSave());
 
             packed.Position = 0;
 
             await using (var stream = await file.OpenWriteAsync()) await packed.CopyToAsync(stream);
 
             SavedAs(Path.GetFileNameWithoutExtension(file.Name), asBundle: true);
+            assistant?.ConversationSaved();
 
             // Saved as a bundle, so a bundle is the document now and the graph
             // owns it — ADR-0068.
@@ -327,6 +373,11 @@ public sealed partial class MainWindow
                 SavedAs(Path.GetFileNameWithoutExtension(file.Name), asBundle: false);
                 MarkSourceSaved();
 
+                // The text is the document, so the conversation is kept beside
+                // it as it would be beside a patch file. A printing is a copy,
+                // and a copy takes nothing with it — ADR-0072.
+                KeepConversation(file, written);
+
                 Report($"Saved {file.Name}.");
 
                 return true;
@@ -387,6 +438,9 @@ public sealed partial class MainWindow
             // source file came to read or write source.
             TakeSource(text);
 
+            // Kept beside the file, as for a patch file — ADR-0072.
+            assistant?.Open(ConversationFor(file, text));
+
             Report($"Opened {file.Name}. The text is the document; the canvas shows what it builds.");
         }
         catch (Exception ex)
@@ -441,6 +495,9 @@ public sealed partial class MainWindow
             preview.Rewind();
             DropSource();
 
+            // A bundle carries its conversation inside it — ADR-0072.
+            assistant?.Open(bundle.Conversation);
+
             Report(bundle.Files.Count == 0
                 ? $"Opened {file.Name}."
                 : $"Opened {file.Name}, carrying {bundle.Files.Count} file(s).");
@@ -476,10 +533,12 @@ public sealed partial class MainWindow
 
         try
         {
+            var written = PatchIO.ToJson(editor.Patch);
+
             await using (var stream = await file.OpenWriteAsync())
             await using (var writer = new StreamWriter(stream))
             {
-                await writer.WriteAsync(PatchIO.ToJson(editor.Patch));
+                await writer.WriteAsync(written);
             }
 
             // A patch saved somewhere new measures its samples from there now,
@@ -495,6 +554,9 @@ public sealed partial class MainWindow
             // Only once it is actually on disk. A patch that failed to write is
             // still a patch with everything to lose.
             SavedAs(Path.GetFileNameWithoutExtension(file.Name), asBundle: false);
+
+            // And what was said about it, beside it — ADR-0072.
+            KeepConversation(file, written);
 
             // Saved as a patch file, so that is the document now — ADR-0068.
             DropSource();

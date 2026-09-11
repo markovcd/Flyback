@@ -65,6 +65,92 @@ public class AssistantPanelTests : UiTest, IDisposable
     private static PluginCatalog With(IPatchAssistant assistant) =>
         new([], [], NodeCatalog.BuiltIn, [], [], [assistant]);
 
+    // --- a conversation saved with the patch ----------------------------------
+
+    /// <summary>
+    /// A panel over one patch that stays the same object, as the canvas's does
+    /// until somebody changes it — which is what a conversation saved with the
+    /// patch is checked against.
+    /// </summary>
+    private (Window Window, AssistantPanel Panel) Over(Patch patch)
+    {
+        var panel = new AssistantPanel(PluginCatalog.Empty, () => patch, _ => { }, (_, _) => { }, null, settingsPath);
+        var window = Show(panel, 760);
+
+        Settle(window);
+
+        return (window, panel);
+    }
+
+    private static string Saved(params TranscriptLine[] transcript) => new SavedConversation(
+        "gemini",
+        SavedConversation.SettingsOf(AssistantValues.None),
+        1,
+        new WorkbenchState("""{"nodes":[]}""", """{"nodes":[]}""", new Dictionary<string, Guid>(), 1, 2),
+        null,
+        transcript).ToJson();
+
+    private static List<string?> Shown(Window window) =>
+        [.. All<SelectableTextBlock>(window).Select(block => block.Text)];
+
+    [AvaloniaFact]
+    public void A_conversation_saved_with_a_patch_is_shown_when_the_patch_opens()
+    {
+        var (window, panel) = Over(new Patch());
+
+        panel.Open(Saved(
+            new TranscriptLine(Voice.You, "make a hard techno patch"),
+            new TranscriptLine(Voice.Said, "Here is a kick at 150 bpm.")));
+        Settle(window);
+
+        Shown(window).ShouldContain("make a hard techno patch");
+        Shown(window).ShouldContain("Here is a kick at 150 bpm.");
+        panel.ConversationUnsaved.ShouldBeFalse("nothing has been said since it was opened");
+    }
+
+    /// <summary>
+    /// Saved again with the patch for as long as it is still about that patch. An
+    /// edit before the first message ends it, as an edit under a run does.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_conversation_opened_with_a_patch_goes_with_it_until_the_patch_changes()
+    {
+        var patch = new Patch();
+        var (_, panel) = Over(patch);
+
+        panel.Open(Saved(new TranscriptLine(Voice.You, "hello")));
+        panel.ConversationToSave().ShouldNotBeNull();
+
+        patch.Nodes.Add(NodeInstance.Create(NodeCatalog.BuiltIn.Require("value"), 0, 0));
+
+        panel.ConversationToSave().ShouldBeNull();
+    }
+
+    [AvaloniaFact]
+    public void A_document_with_no_conversation_empties_the_panel()
+    {
+        var (window, panel) = Over(new Patch());
+
+        panel.Open(Saved(new TranscriptLine(Voice.You, "hello")));
+        panel.Open(null);
+        Settle(window);
+
+        Shown(window).ShouldNotContain("hello");
+        panel.ConversationToSave().ShouldBeNull();
+    }
+
+    [AvaloniaFact]
+    public void Something_that_is_not_a_conversation_opens_as_none()
+    {
+        var (window, panel) = Over(new Patch());
+
+        panel.Open("not a conversation");
+        Settle(window);
+
+        panel.ConversationToSave().ShouldBeNull();
+        Shown(window).ShouldBeEmpty();
+    }
+
     /// <summary>The settings, in a window of their own, as opening them makes one.</summary>
     private static Window Settings(Window panel)
     {

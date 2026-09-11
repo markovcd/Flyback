@@ -406,6 +406,20 @@ public interface IPatchAssistant
     /// host; the assistant only drives it.
     /// </summary>
     IPatchSession Start(PatchWorkbench workbench, AssistantConfig config);
+
+    /// <summary>
+    /// Carries on a conversation that <see cref="IPatchSession.Save"/> wrote down,
+    /// over a workbench the host has already put back as it stood — or null where
+    /// this provider cannot.
+    /// </summary>
+    /// <remarks>
+    /// Null costs the model its memory and nothing else: the host starts an
+    /// ordinary session over the same workbench, so the patch it was building is
+    /// still there. Defaulted, so a provider that has never heard of a saved
+    /// conversation still loads. What <paramref name="saved"/> holds is this
+    /// provider's own and nobody else reads it (ADR-0072).
+    /// </remarks>
+    IPatchSession? Resume(PatchWorkbench workbench, AssistantConfig config, string saved) => null;
 }
 
 /// <summary>
@@ -426,4 +440,17 @@ public interface IPatchSession : IDisposable
     /// workbench is a copy.
     /// </remarks>
     IAsyncEnumerable<PatchEvent> Ask(string instruction, CancellationToken cancel);
+
+    /// <summary>
+    /// The conversation so far, in whatever shape <see cref="IPatchAssistant.Resume"/>
+    /// needs to be handed it back, or null where it cannot be kept.
+    /// </summary>
+    /// <remarks>
+    /// Asked between turns, never during one. It goes into the file the person
+    /// saves, and a bundle is what they send to other people, so it must never
+    /// hold the key or anything that needs one. Pictures and clips are better
+    /// left out: they are nearly all of the size, and the model can render or
+    /// listen again.
+    /// </remarks>
+    string? Save() => null;
 }

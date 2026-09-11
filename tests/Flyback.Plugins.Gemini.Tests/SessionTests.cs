@@ -369,6 +369,86 @@ public class SessionTests
             .Message.ShouldContain("Unknown name");
     }
 
+    // --- putting it away ----------------------------------------------------
+
+    /// <summary>
+    /// A conversation saved and taken up by another session is the same
+    /// conversation: the next request carries every turn before it.
+    /// </summary>
+    [Fact]
+    public async Task A_saved_conversation_is_carried_on_by_another_session()
+    {
+        var first = new Canned(new Answer(Prose("Which key should it be in?")));
+        string saved;
+
+        using (var session = Session(first))
+        {
+            await Drain(session, "make a bass line");
+            saved = session.Save()!;
+        }
+
+        var second = new Canned(new Answer(Prose("D minor it is.")));
+        using var carried = Session(second);
+
+        carried.Take(saved).ShouldBeTrue();
+        await Drain(carried, "D minor");
+
+        var turns = second.Sent[0]["contents"]!.AsArray();
+
+        turns.Count.ShouldBe(3);
+        turns[0]!["parts"]![0]!["text"]!.GetValue<string>().ShouldBe("make a bass line");
+        turns[1]!["role"]!.GetValue<string>().ShouldBe("model");
+        turns[2]!["parts"]![0]!["text"]!.GetValue<string>().ShouldBe("D minor");
+    }
+
+    /// <summary>
+    /// The clip is most of a saved conversation's size and none of what it needs,
+    /// so it is left out and said to have been there. The answer to the call stays:
+    /// a call handed back without one is refused.
+    /// </summary>
+    [Fact]
+    public async Task A_saved_conversation_leaves_the_clips_out()
+    {
+        var canned = new Canned(
+            new Answer(Asking(Sounding)),
+            new Answer(Asking(("listen", """{"seconds":0.5}"""))),
+            new Answer(Prose("A steady tone.")));
+
+        using var session = Session(canned, Listener.Itself, ownEars: true);
+
+        await Drain(session, "a tone");
+
+        var saved = session.Save()!;
+
+        saved.ShouldNotContain("inlineData");
+        saved.ShouldContain("listen again");
+        saved.ShouldContain("functionResponse");
+    }
+
+    [Theory]
+    [InlineData("not a conversation")]
+    [InlineData("""{"role":"user"}""")]
+    [InlineData("""[{"parts":[]}]""")]
+    public void Something_that_is_not_a_conversation_is_not_taken_up(string saved)
+    {
+        using var session = Session(new Canned(new Answer(Prose("hello"))));
+
+        session.Take(saved).ShouldBeFalse();
+    }
+
+    [Fact]
+    public void The_assistant_carries_on_what_a_session_saved_and_nothing_else()
+    {
+        var assistant = new GeminiAssistant();
+        var bench = new PatchWorkbench(NodeCatalog.BuiltIn, new Patch());
+        var config = new AssistantConfig("no-key-needed", AssistantValues.None);
+
+        using var carried = assistant.Resume(bench, config, "[]");
+
+        carried.ShouldNotBeNull();
+        assistant.Resume(bench, config, "not a conversation").ShouldBeNull();
+    }
+
     // --- driving it ---------------------------------------------------------
 
     /// <summary>

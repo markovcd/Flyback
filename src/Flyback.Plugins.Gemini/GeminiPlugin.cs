@@ -108,7 +108,19 @@ public sealed partial class GeminiAssistant : IPatchAssistant
                 : $"'{endpoint}' is not an http or https address.";
     }
 
-    public IPatchSession Start(PatchWorkbench workbench, AssistantConfig config)
+    public IPatchSession Start(PatchWorkbench workbench, AssistantConfig config) => Session(workbench, config);
+
+    public IPatchSession? Resume(PatchWorkbench workbench, AssistantConfig config, string saved)
+    {
+        var session = Session(workbench, config);
+
+        if (session.Take(saved)) return session;
+
+        session.Dispose();
+        return null;
+    }
+
+    private GeminiSession Session(PatchWorkbench workbench, AssistantConfig config)
     {
         var schema = Schema.Surveyed(config.Values);
         var chosen = schema.Read(config.Values);

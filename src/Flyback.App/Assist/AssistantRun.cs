@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using System.Text.Json;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Plugins.Assist;
@@ -19,8 +20,16 @@ namespace Flyback.App.Assist;
 /// </remarks>
 public sealed class AssistantRun : IDisposable
 {
+    /// <summary>How many turns a conversation may have before another has to be started.</summary>
+    public const int TurnLimit = 12;
+
     private readonly IPatchSession session;
     private readonly int maxTurns;
+
+    /// <summary>Who this is with and what they were set to, which a saved conversation is checked against.</summary>
+    private readonly string provider;
+
+    private readonly AssistantValues values;
 
     private int startingNodes;
     private int startingWires;
@@ -28,18 +37,35 @@ public sealed class AssistantRun : IDisposable
     private CancellationTokenSource? working;
     private bool spent;
 
+    /// <param name="assistant"></param>
+    /// <param name="config"></param>
+    /// <param name="modules"></param>
+    /// <param name="startingPoint">
+    /// The patch on the canvas, which is what the conversation is about and what
+    /// an edit underneath is noticed against — for a conversation carried on as
+    /// much as for a new one.
+    /// </param>
+    /// <param name="maxTurns"></param>
+    /// <param name="limits"></param>
+    /// <param name="samples"></param>
+    /// <param name="pictures"></param>
+    /// <param name="resuming">A conversation saved with that patch, to carry on rather than start afresh.</param>
     public AssistantRun(
         IPatchAssistant assistant,
         AssistantConfig config,
         ModuleCatalog modules,
         Patch startingPoint,
-        int maxTurns = 12,
+        int maxTurns = TurnLimit,
         WorkbenchLimits? limits = null,
         ISampleLibrary? samples = null,
-        IImageLibrary? pictures = null)
+        IImageLibrary? pictures = null,
+        SavedConversation? resuming = null)
     {
         Before = startingPoint;
         this.maxTurns = maxTurns;
+
+        provider = assistant.Id;
+        values = config.Values;
 
         startingNodes = startingPoint.Nodes.Count;
         startingWires = startingPoint.Connections.Count;
@@ -51,9 +77,59 @@ public sealed class AssistantRun : IDisposable
         // played the sound.
         var senses = assistant.Senses(config.Values);
 
-        Workbench = new PatchWorkbench(
+        var restored = resuming is null ? null : Restored(resuming, modules, senses, limits, samples, pictures);
+
+        Workbench = restored ?? new PatchWorkbench(
             modules, startingPoint, senses.Vision, senses.Hearing, limits, samples, pictures);
-        session = assistant.Start(Workbench, config);
+
+        if (restored is null)
+        {
+            session = assistant.Start(Workbench, config);
+            return;
+        }
+
+        Turns = resuming!.Turns;
+
+        session = PickUp(assistant, config, resuming.History) ?? assistant.Start(Workbench, config);
+    }
+
+    /// <summary>
+    /// A workbench put back as a saved conversation left it, or null where what was
+    /// saved will not read as a patch.
+    /// </summary>
+    /// <remarks>
+    /// Built over the patch the conversation began on, which is what <c>reset</c>
+    /// goes back to — not over the one it is being carried on from. Null leaves a
+    /// conversation that starts again over the patch on the canvas, which is better
+    /// than one that cannot start at all.
+    /// </remarks>
+    private static PatchWorkbench? Restored(
+        SavedConversation saved,
+        ModuleCatalog modules,
+        AssistantSenses senses,
+        WorkbenchLimits? limits,
+        ISampleLibrary? samples,
+        IImageLibrary? pictures)
+    {
+        try
+        {
+            var bench = new PatchWorkbench(
+                modules,
+                PatchIO.Read(saved.Bench.Start, modules).Patch,
+                senses.Vision,
+                senses.Hearing,
+                limits,
+                samples,
+                pictures);
+
+            bench.Restore(saved.Bench);
+
+            return bench;
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
     }
 
     /// <summary>
@@ -101,6 +177,62 @@ public sealed class AssistantRun : IDisposable
         Before = applied;
         startingNodes = applied.Nodes.Count;
         startingWires = applied.Connections.Count;
+    }
+
+    /// <summary>
+    /// Whether the provider took back what was said, for a conversation carried on
+    /// from a saved one. False where it could not — which starts again from the
+    /// patch it had built — and for every conversation that was not carried on.
+    /// </summary>
+    public bool PickedUp { get; private set; }
+
+    /// <summary>
+    /// The conversation as it stands, for saving with the patch. Asked between
+    /// turns, because the provider's account is read out of a session that must
+    /// not be running.
+    /// </summary>
+    public SavedConversation Save(IReadOnlyList<TranscriptLine> transcript)
+    {
+        string? history;
+
+        try
+        {
+            history = session.Save();
+        }
+        catch
+        {
+            // A plugin that throws here costs the model its memory next time,
+            // not the save.
+            history = null;
+        }
+
+        return new SavedConversation(
+            provider,
+            SavedConversation.SettingsOf(values),
+            Turns,
+            Workbench.Save(),
+            history,
+            [.. transcript]);
+    }
+
+    private IPatchSession? PickUp(IPatchAssistant assistant, AssistantConfig config, string? history)
+    {
+        if (history is null) return null;
+
+        try
+        {
+            var picked = assistant.Resume(Workbench, config, history);
+
+            PickedUp = picked is not null;
+
+            return picked;
+        }
+        catch
+        {
+            // As Guarded: a plugin runs with full trust, and one that throws on
+            // the way back in has only failed to remember.
+            return null;
+        }
     }
 
     /// <summary>Asks for the current turn to stop. It ends at the next thing the assistant does.</summary>
