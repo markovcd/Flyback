@@ -67,6 +67,7 @@ internal sealed class ReportLine : UserControl
     private readonly TextBlock line = new()
     {
         VerticalAlignment = VerticalAlignment.Center,
+        FontSize = Text.Body,
 
         // The whole point of this control. A status bar hands out whatever width
         // is left over, and the only honest thing a long line can do with too
@@ -90,8 +91,11 @@ internal sealed class ReportLine : UserControl
     private readonly Flyout flyout = new()
     {
         // Above, because this line lives along the bottom edge of the window and
-        // a popup placed under it would have nowhere to go.
-        Placement = PlacementMode.Top,
+        // a popup placed under it would have nowhere to go. Left-aligned to this
+        // control rather than centered, so widening or narrowing whatever shares
+        // the bar with it does not shift the popup — only this line's own left
+        // edge, which is the window's own margin, decides where it sits.
+        Placement = PlacementMode.TopEdgeAlignedLeft,
     };
 
     public ReportLine()

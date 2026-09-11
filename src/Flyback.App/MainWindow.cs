@@ -192,11 +192,15 @@ public sealed partial class MainWindow : Window
     private readonly TextBlock status = new()
     {
         VerticalAlignment = VerticalAlignment.Center,
+        FontSize = Text.Body,
 
         // Every line on this bar shares one row of a narrow window, so this one
         // gives way the same way the report beside it does rather than being
         // sheared off at whatever character the edge fell on.
         TextTrimming = TextTrimming.CharacterEllipsis,
+
+        // On the right of the bar, against the edge the report is not on.
+        TextAlignment = TextAlignment.Right,
     };
 
     /// <summary>
@@ -794,15 +798,17 @@ public sealed partial class MainWindow : Window
     /// </summary>
     /// <remarks>
     /// A grid rather than a row of controls, because a row hands every child the
-    /// width it asks for and lets the last fall off the end — and the report is the
-    /// one thing here that has to be read. Which sound backend is open and which
-    /// assistant is chosen are said in the About window, not here.
+    /// width it asks for and lets the last fall off the end — and the report is
+    /// the one thing here that is worth trimming last. The count on the right is
+    /// sized to its own text rather than a share of the bar, so the report only
+    /// gives up width the count is actually using. Which sound backend is open
+    /// and which assistant is chosen are said in the About window, not here.
     /// </remarks>
     private Control BuildStatusBar()
     {
         var bar = new Grid
         {
-            ColumnDefinitions = new ColumnDefinitions("1.4*,*"),
+            ColumnDefinitions = new ColumnDefinitions("*,Auto"),
             Margin = new Thickness(12, 5),
         };
 
@@ -814,13 +820,13 @@ public sealed partial class MainWindow : Window
         // The gap a StackPanel gives for free, added by hand here since this is
         // a grid. On the children rather than the grid, so the first column
         // starts at the margin and the last one keeps every pixel it is given.
-        report.Margin = new Thickness(16, 0, 0, 0);
+        status.Margin = new Thickness(8, 0, 0, 0);
 
-        Grid.SetColumn(status, 0);
-        Grid.SetColumn(report, 1);
+        Grid.SetColumn(report, 0);
+        Grid.SetColumn(status, 1);
 
-        bar.Children.Add(status);
         bar.Children.Add(report);
+        bar.Children.Add(status);
 
         return new Border
         {
