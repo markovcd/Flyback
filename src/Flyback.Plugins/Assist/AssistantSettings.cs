@@ -37,7 +37,7 @@ public sealed class AssistantSettings
         Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
     };
 
-    /// <summary>Which assistant, by <see cref="IPatchAssistant.Id"/>. Empty means whichever is preferred.</summary>
+    /// <summary>Which assistant, by <see cref="IPatchAssistant.Id"/>. Empty means none.</summary>
     public string Provider { get; set; } = string.Empty;
 
     /// <summary>

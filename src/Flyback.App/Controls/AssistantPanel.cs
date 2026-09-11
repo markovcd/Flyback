@@ -53,6 +53,17 @@ public sealed class AssistantPanel : UserControl
     private readonly Action<string, string?> report;
 
     private readonly AssistantSettings settings;
+
+    /// <summary>
+    /// Where <see cref="settings"/> is written back to. Kept alongside <c>saved</c>
+    /// rather than folded into it, because a test that hands in an in-memory
+    /// <see cref="AssistantSettings"/> still runs through the real
+    /// <see cref="AssistantPanel.SaveSettings"/> when it presses the real Save
+    /// button — the object avoids the file, but the write does not unless this
+    /// does too.
+    /// </summary>
+    private readonly string? settingsPath;
+
     private readonly Credentials credentials;
 
     private readonly TextBox instruction = new()
@@ -189,6 +200,13 @@ public sealed class AssistantPanel : UserControl
     private readonly CheckBox rememberBox = new() { Content = "Keep this key", FontSize = Text.Body };
 
     /// <summary>
+    /// The key label, box, note, "keep" box and "forget" button, together —
+    /// every row here only means something in relation to a provider, so with
+    /// none picked there is nothing for any of them to say.
+    /// </summary>
+    private readonly StackPanel keySection = new() { Spacing = 8 };
+
+    /// <summary>
     /// Whether to keep a file of what gets sent and said. Off by default, since
     /// that is a second copy of everything a turn already sends somewhere else —
     /// see <see cref="AssistantSettings.LogConversations"/>.
@@ -204,6 +222,14 @@ public sealed class AssistantPanel : UserControl
     private readonly AssistantForm form = new();
 
     private readonly ComboBox providerBox = new() { FontSize = Text.Body, Width = 260, Name = "provider" };
+
+    /// <summary>
+    /// The row that means no provider at all. First in the box and first among
+    /// equals: picking it is a choice in its own right, not what is left when
+    /// nothing else is, so it sits beside the real ones rather than replacing an
+    /// empty selection.
+    /// </summary>
+    private const string NoProvider = "None";
 
     private IPatchAssistant? assistant;
     private AssistantRun? run;
@@ -270,6 +296,13 @@ public sealed class AssistantPanel : UserControl
     /// so a test can put a set in front of the panel without writing the file
     /// somebody is using.
     /// </param>
+    /// <param name="settingsPath">
+    /// Where Save writes those choices back to, defaulting to the real file. The
+    /// other half of what <paramref name="saved"/> is for: a test that presses
+    /// the actual Save button still calls the actual <see cref="AssistantSettings.Save"/>,
+    /// and without this it would call it with no path and land on whichever
+    /// machine is running the test suite.
+    /// </param>
     /// <param name="plugins"></param>
     /// <param name="current"></param>
     /// <param name="apply"></param>
@@ -281,10 +314,12 @@ public sealed class AssistantPanel : UserControl
         Action<Patch> apply,
         Action<string, string?> report,
         AssistantSettings? saved = null,
+        string? settingsPath = null,
         ISampleLibrary? samples = null,
         IImageLibrary? pictures = null)
     {
-        settings = saved ?? AssistantSettings.Load();
+        this.settingsPath = settingsPath;
+        settings = saved ?? AssistantSettings.Load(settingsPath);
         this.samples = samples;
         this.pictures = pictures;
         this.plugins = plugins;
@@ -307,7 +342,7 @@ public sealed class AssistantPanel : UserControl
         // The list before what is chosen in it, and both before the handler that
         // watches it: a box with no rows in it cannot be told which row to show,
         // and a selection made now is a restoration rather than a choice.
-        providerBox.ItemsSource = plugins.Assistants.Select(a => a.Name).ToList();
+        providerBox.ItemsSource = new[] { NoProvider }.Concat(plugins.Assistants.Select(a => a.Name)).ToList();
 
         ShowProviderForm();
 
@@ -445,10 +480,13 @@ public sealed class AssistantPanel : UserControl
     {
         providerBox.SelectionChanged += (_, _) =>
         {
-            if (providerBox.SelectedIndex < 0 || providerBox.SelectedIndex >= plugins.Assistants.Count) return;
+            // Row 0 is always "None"; a real provider is one row below its own
+            // place in plugins.Assistants because of it.
+            var row = providerBox.SelectedIndex;
+            if (row < 0 || row > plugins.Assistants.Count) return;
 
-            assistant = plugins.Assistants[providerBox.SelectedIndex];
-            settings.Provider = assistant.Id;
+            assistant = row == 0 ? null : plugins.Assistants[row - 1];
+            settings.Provider = assistant?.Id ?? string.Empty;
 
             // What the last provider was set to is kept rather than carried
             // over. A setting means whatever the provider that declared it says
@@ -461,13 +499,16 @@ public sealed class AssistantPanel : UserControl
         // flyout hanging off the button that opened it.
         var fields = new StackPanel { Spacing = 8, Margin = new Thickness(18), Width = 280 };
 
+        keySection.Children.Add(Text.Quiet("API key"));
+        keySection.Children.Add(keyBox);
+        keySection.Children.Add(keyNote);
+        keySection.Children.Add(rememberBox);
+        keySection.Children.Add(forget);
+
         fields.Children.Add(Text.Quiet("Provider"));
         fields.Children.Add(providerBox);
         fields.Children.Add(form);
-        fields.Children.Add(Text.Quiet("API key"));
-        fields.Children.Add(keyBox);
-        fields.Children.Add(keyNote);
-        fields.Children.Add(rememberBox);
+        fields.Children.Add(keySection);
         fields.Children.Add(logBox);
 
         var save = new Button { Content = "Save", Width = 84 };
@@ -490,10 +531,7 @@ public sealed class AssistantPanel : UserControl
             Refresh();
         };
 
-        var row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
-        row.Children.Add(save);
-        row.Children.Add(forget);
-        fields.Children.Add(row);
+        fields.Children.Add(save);
 
         return fields;
     }
@@ -554,9 +592,14 @@ public sealed class AssistantPanel : UserControl
 
     // --- settings -----------------------------------------------------------
 
-    private IPatchAssistant? Choose() =>
-        (settings.Provider.Length > 0 ? plugins.Assistant(settings.Provider) : null)
-        ?? plugins.PreferredAssistant;
+    /// <summary>
+    /// The provider a saved id names, or none — never a different one picked on
+    /// its behalf. A provider that no longer loads is not the same as a provider
+    /// nobody has chosen yet, but silently switching to whatever else happens to
+    /// be installed would answer both the same way, which is worse than falling
+    /// back to the one choice that always means what it says.
+    /// </summary>
+    private IPatchAssistant? Choose() => settings.Provider.Length > 0 ? plugins.Assistant(settings.Provider) : null;
 
     /// <summary>
     /// Puts the chosen provider's form up, holding what that provider was last set
@@ -567,12 +610,12 @@ public sealed class AssistantPanel : UserControl
     private void ShowProviderForm()
     {
         providerBox.SelectedIndex = assistant is null
-            ? -1
+            ? 0
             : plugins.Assistants
                 .Select((a, i) => (a, i))
                 .Where(pair => pair.a.Id == assistant.Id)
-                .Select(pair => pair.i)
-                .DefaultIfEmpty(-1)
+                .Select(pair => pair.i + 1)
+                .DefaultIfEmpty(0)
                 .First();
 
         form.Show(assistant is null ? null : assistant.Form, settings.Of(assistant?.Id ?? string.Empty));
@@ -613,7 +656,7 @@ public sealed class AssistantPanel : UserControl
 
         try
         {
-            settings.Save();
+            settings.Save(settingsPath);
         }
         catch (Exception ex)
         {
@@ -645,9 +688,11 @@ public sealed class AssistantPanel : UserControl
     private void Refresh()
     {
         var config = Configured();
-        var excuse = assistant is null
-            ? "No assistant plugin is installed. See the status bar for where plugins are looked for."
-            : config is null ? null : Excuse(assistant, config);
+        var excuse = assistant is not null
+            ? (config is null ? null : Excuse(assistant, config))
+            : plugins.Assistants.Count == 0
+                ? "No assistant plugin is installed. See the status bar for where plugins are looked for."
+                : "No assistant is selected. Pick one in Settings.";
 
         blocked = excuse;
         ShowSendState();
@@ -754,6 +799,8 @@ public sealed class AssistantPanel : UserControl
     /// </remarks>
     private void ShowKeyState()
     {
+        keySection.IsVisible = assistant is not null;
+
         if (assistant is null)
         {
             keyNote.Text = string.Empty;

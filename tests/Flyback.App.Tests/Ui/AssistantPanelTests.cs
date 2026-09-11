@@ -21,19 +21,36 @@ namespace Flyback.App.Tests.Ui;
 /// that reacts to what a provider can do cannot be looked at in front of none.
 /// Driving an actual run is the plugin tests' job.
 /// </remarks>
-public class AssistantPanelTests : UiTest
+public class AssistantPanelTests : UiTest, IDisposable
 {
     /// <summary>What the button shows when pressing it would ask.</summary>
     private const string Send = "⏎";
 
-    private static Window Showing(PluginCatalog? plugins = null, AssistantSettings? saved = null)
+    /// <summary>
+    /// Where a panel under test writes settings to, so pressing the real Save
+    /// button in a test cannot land on the machine's own <c>assistant.json</c>.
+    /// </summary>
+    private readonly string settingsPath = Path.Combine(
+        Path.GetTempPath(),
+        "flyback-panel-settings-" + Guid.NewGuid().ToString("N"),
+        "assistant.json");
+
+    public void Dispose()
+    {
+        var folder = Path.GetDirectoryName(settingsPath);
+
+        if (folder is not null && Directory.Exists(folder)) Directory.Delete(folder, recursive: true);
+    }
+
+    private Window Showing(PluginCatalog? plugins = null, AssistantSettings? saved = null)
     {
         var panel = new AssistantPanel(
             plugins ?? PluginCatalog.Empty,
             () => Presets.Plasma(NodeCatalog.BuiltIn),
             _ => { },
             (_, _) => { },
-            saved);
+            saved,
+            settingsPath);
 
         var window = Show(panel, 760);
         Settle(window);
@@ -201,7 +218,7 @@ public class AssistantPanelTests : UiTest
     [AvaloniaFact]
     public void The_effort_box_offers_exactly_the_levels_there_are()
     {
-        var host = Settings(Showing(With(new Deaf())));
+        var host = Settings(Showing(With(new Deaf()), Configured("deaf")));
 
         var box = All<ComboBox>(host).Single(c => c.Name == AssistantSchema.EffortKey);
         var offered = ((IEnumerable<AssistantOption>)box.ItemsSource!).Select(o => o.Name).ToArray();
@@ -218,7 +235,7 @@ public class AssistantPanelTests : UiTest
     [AvaloniaFact]
     public void The_model_box_takes_a_name_that_is_not_on_its_list()
     {
-        var host = Settings(Showing(With(new Deaf())));
+        var host = Settings(Showing(With(new Deaf()), Configured("deaf")));
 
         var box = All<ComboBox>(host).Single(c => c.Name == AssistantSchema.ModelKey);
 
@@ -246,7 +263,122 @@ public class AssistantPanelTests : UiTest
             new PluginCatalog([], [], NodeCatalog.BuiltIn, [], [], [new Keyless(), new Both()]),
             Configured("both")));
 
-        All<ComboBox>(host).Single(c => c.Name == "provider").SelectedIndex.ShouldBe(1);
+        // Row 0 is "None", so a real provider sits one row below its own place
+        // in the catalogue — "both" is the second provider offered.
+        All<ComboBox>(host).Single(c => c.Name == "provider").SelectedIndex.ShouldBe(2);
+    }
+
+    /// <summary>
+    /// "None" is offered whether or not anything is installed, so leaving a
+    /// provider is a choice made the same way picking one is — not something
+    /// that only happens by there being nothing else on the list.
+    /// </summary>
+    [AvaloniaFact]
+    public void None_is_offered_even_when_a_provider_is_installed()
+    {
+        var host = Settings(Showing(With(new Deaf()), Configured("deaf")));
+        var provider = All<ComboBox>(host).Single(c => c.Name == "provider");
+
+        ((IEnumerable<string>)provider.ItemsSource!).First().ShouldBe("None");
+        provider.SelectedIndex.ShouldBe(1, "the provider already configured, not None");
+    }
+
+    /// <summary>
+    /// Picking None while a provider is installed is not the same as there
+    /// being nothing to pick — the footer has to say which is true, since
+    /// "put a key in Settings" is not the right advice for someone who has not
+    /// chosen anybody to give a key to.
+    /// </summary>
+    [AvaloniaFact]
+    public void Picking_none_leaves_the_footer_naming_the_actual_reason()
+    {
+        var window = Showing(With(new Deaf()), Configured("deaf"));
+
+        Instruction(window).Text = "a slow drifting field of blue";
+        Settle(window);
+
+        var host = Settings(window);
+
+        All<ComboBox>(host).Single(c => c.Name == "provider").SelectedIndex = 0;
+        Settle(host);
+        Settle(window);
+
+        SendButton(window).IsEnabled.ShouldBeFalse("nobody is chosen to send it to");
+
+        var footer = All<TextBlock>(window).Single(t => t.Name == "footer");
+        footer.Text.ShouldBe("No assistant is selected. Pick one in Settings.");
+    }
+
+    /// <summary>
+    /// The key, "keep this key" and "forget key" rows are all about a provider
+    /// that has something to hold a key for. With None picked there is nobody
+    /// to hold one, so the whole row of them hides rather than sitting there
+    /// asking to be filled in for nobody.
+    /// </summary>
+    [AvaloniaFact]
+    public void The_key_controls_hide_once_none_is_picked()
+    {
+        var host = Settings(Showing(With(new Deaf()), Configured("deaf")));
+
+        var key = All<TextBox>(host).Single(t => t.PasswordChar != default);
+        var keep = All<CheckBox>(host).Single(c => c.Content as string == "Keep this key");
+        var forgetButton = All<Button>(host).Single(b => b.Content as string == "Forget key");
+
+        key.IsEffectivelyVisible.ShouldBeTrue("deaf is picked, so there is a key to ask about");
+
+        All<ComboBox>(host).Single(c => c.Name == "provider").SelectedIndex = 0;
+        Settle(host);
+
+        key.IsEffectivelyVisible.ShouldBeFalse("None takes no key");
+        keep.IsEffectivelyVisible.ShouldBeFalse("nor is there one to keep");
+        forgetButton.IsEffectivelyVisible.ShouldBeFalse("nor one to forget");
+
+        // Logging is a choice about this machine, not about whoever is picked
+        // (ADR-0034), so it stays put whether or not anybody is.
+        All<CheckBox>(host).Single(c => c.Content as string == "Log conversations to disk")
+            .IsEffectivelyVisible.ShouldBeTrue();
+    }
+
+    /// <summary>
+    /// Saving with None picked is what makes leaving stick — the same rule
+    /// <see cref="Saving_settings_keeps_whether_logging_was_turned_on"/> pins
+    /// for a checkbox, here for the provider itself.
+    /// </summary>
+    [AvaloniaFact]
+    public void Saving_none_clears_the_provider_setting()
+    {
+        var saved = Configured("deaf");
+        var host = Settings(Showing(With(new Deaf()), saved));
+
+        All<ComboBox>(host).Single(c => c.Name == "provider").SelectedIndex = 0;
+        Settle(host);
+
+        All<Button>(host)
+            .Single(b => b.Content as string == "Save")
+            .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Settle(host);
+
+        saved.Provider.ShouldBeEmpty();
+    }
+
+    /// <summary>
+    /// A saved id nothing here answers to is not the same as never having
+    /// chosen at all, but the two must not be told apart by which other
+    /// provider happens to be installed: falling back to whichever one that is
+    /// would send a message to somebody the person never picked.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_provider_no_longer_installed_falls_back_to_none_not_to_another_one()
+    {
+        var window = Showing(With(new Both()), new AssistantSettings { Provider = "gone" });
+
+        Instruction(window).Text = "a slow drifting field of blue";
+        Settle(window);
+
+        SendButton(window).IsEnabled.ShouldBeFalse("nothing was chosen, so nothing is guessed at");
+
+        var footer = All<TextBlock>(window).Single(t => t.Name == "footer");
+        footer.Text.ShouldBe("No assistant is selected. Pick one in Settings.");
     }
 
     /// <summary>
@@ -264,7 +396,7 @@ public class AssistantPanelTests : UiTest
     {
         var declared = new Deaf().Form(AssistantValues.None).Select(field => field.Key).ToArray();
 
-        var host = Settings(Showing(With(new Deaf())));
+        var host = Settings(Showing(With(new Deaf()), Configured("deaf")));
 
         var drawn = All<Control>(host)
             .Where(c => c.Name is { } name && declared.Contains(name))
@@ -427,12 +559,13 @@ public class AssistantPanelTests : UiTest
         var host = Settings(window);
         var provider = All<ComboBox>(host).Single(c => c.Name == "provider");
 
-        provider.SelectedIndex = 1;
+        // Row 0 is "None", row 1 is "deaf" (already in force) and row 2 is "both".
+        provider.SelectedIndex = 2;
         Settle(host);
 
         panel.DiscardSettings();
 
-        provider.SelectedIndex.ShouldBe(0, "back to the one that was in force, not the one picked");
+        provider.SelectedIndex.ShouldBe(1, "back to the one that was in force, not the one picked");
     }
 
     /// <summary>
@@ -570,7 +703,8 @@ public class AssistantPanelTests : UiTest
 
         var host = Settings(window);
 
-        All<ComboBox>(host).Single(c => c.Name == "provider").SelectedIndex = 1;
+        // Row 0 is "None", row 1 is "keyless" (already in force) and row 2 is "both".
+        All<ComboBox>(host).Single(c => c.Name == "provider").SelectedIndex = 2;
         Settle(host);
         Settle(window);
 
