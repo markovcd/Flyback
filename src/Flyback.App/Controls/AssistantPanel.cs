@@ -169,6 +169,29 @@ public sealed class AssistantPanel : UserControl
         IsEnabled = false,
     };
 
+    /// <summary>
+    /// Sets the conversation aside for an empty one about the same patch.
+    /// </summary>
+    /// <remarks>
+    /// In the strip the send button sits in, at the other end of it: the two are
+    /// what is done to a conversation, and this is the rarer, so it is the quieter.
+    /// Dead while a turn runs — stopping one is the other button's job — and when
+    /// there is nothing to set aside.
+    /// </remarks>
+    private readonly Button fresh = new()
+    {
+        Content = "New conversation",
+        FontSize = Text.Small,
+        Foreground = Text.Muted,
+        Background = Brushes.Transparent,
+        Padding = new Thickness(6, 2),
+        HorizontalAlignment = HorizontalAlignment.Left,
+        VerticalAlignment = VerticalAlignment.Bottom,
+        Margin = new Thickness(4, 0, 0, 8),
+        IsEnabled = false,
+        Name = "fresh",
+    };
+
     private readonly TextBox keyBox = new()
     {
         PasswordChar = '•',
@@ -404,8 +427,48 @@ public sealed class AssistantPanel : UserControl
     /// <param name="saved">What was saved with the document, as <see cref="SavedConversation.ToJson"/> wrote it.</param>
     public void Open(string? saved)
     {
-        // A turn still running goes with the document it was about. Disposing
-        // the run stops it, and AskAsync drops whatever it still had on its way.
+        SetAside();
+
+        waiting = SavedConversation.Read(saved);
+        waitingOn = waiting is null ? null : Anchor(current());
+        settled = waiting;
+
+        if (waiting is not null)
+        {
+            foreach (var line in waiting.Transcript) Put(line.Voice, line.Text);
+
+            Put(Voice.Note, "Saved with this patch. The next message carries this conversation on.", keep: false);
+        }
+
+        ConversationChanged?.Invoke(this, EventArgs.Empty);
+        ShowSendState();
+    }
+
+    /// <summary>
+    /// Sets the conversation on screen aside for an empty one about the same patch
+    /// — see <see cref="fresh"/>.
+    /// </summary>
+    /// <remarks>
+    /// Nothing on disk changes. A conversation saved with the patch stays there
+    /// until the patch is saved again, which then writes whatever conversation
+    /// there is by then, or none. Not while a turn runs: that is stopped first.
+    /// </remarks>
+    public void StartOver()
+    {
+        if (asking) return;
+
+        SetAside();
+
+        ConversationChanged?.Invoke(this, EventArgs.Empty);
+        ShowSendState();
+    }
+
+    /// <summary>Ends whatever conversation there is, of either kind, and empties the panel of it.</summary>
+    private void SetAside()
+    {
+        // A turn still running goes with the conversation it was part of.
+        // Disposing the run stops it, and AskAsync drops whatever it still had
+        // on its way.
         run?.Dispose();
         run = null;
         runConfig = null;
@@ -421,19 +484,10 @@ public sealed class AssistantPanel : UserControl
         lastFrame.Source = null;
         lastFrame.IsVisible = false;
 
-        waiting = SavedConversation.Read(saved);
-        waitingOn = waiting is null ? null : Anchor(current());
-        settled = waiting;
+        waiting = null;
+        waitingOn = null;
+        settled = null;
         unsaved = false;
-
-        if (waiting is not null)
-        {
-            foreach (var line in waiting.Transcript) Put(line.Voice, line.Text);
-
-            Put(Voice.Note, "Saved with this patch. The next message carries this conversation on.", keep: false);
-        }
-
-        ConversationChanged?.Invoke(this, EventArgs.Empty);
     }
 
     /// <summary>
@@ -530,7 +584,10 @@ public sealed class AssistantPanel : UserControl
         // beside it, so the two are one thing to lay out.
         var writing = new Panel();
         writing.Children.Add(instruction);
+        writing.Children.Add(fresh);
         writing.Children.Add(send);
+
+        fresh.Click += (_, _) => StartOver();
 
         DockPanel.SetDock(writing, Dock.Bottom);
         DockPanel.SetDock(footer, Dock.Bottom);
@@ -856,6 +913,11 @@ public sealed class AssistantPanel : UserControl
 
         send.IsEnabled = asking
             || (blocked is null && !string.IsNullOrWhiteSpace(instruction.Text));
+
+        fresh.IsEnabled = !asking && (lines.Count > 0 || run is not null || waiting is not null);
+
+        ToolTip.SetTip(fresh, "Start a new conversation about this patch. The one set aside stays saved "
+            + "with the patch until the patch is saved again.");
 
         ToolTip.SetTip(send, asking
             ? "Stop — it ends at the next thing the assistant does"

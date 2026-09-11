@@ -104,3 +104,16 @@ carried-on conversation is a new run of the same conversation.
 the conversation being part of the document: the alternative was a conversation
 that quietly vanished whenever somebody chatted about a saved patch and closed it
 without changing anything.
+
+## Amendments
+
+**2026-09-11 (later) — a conversation can be set aside.** With a conversation
+coming back every time its patch opens, the only ways to be rid of one were to
+change a setting or to use up its turns. **New conversation** sits at the left of
+the strip the send button is in, and empties the panel for a conversation about
+the same patch. The patch is untouched, and so is the disk: the conversation set
+aside stays with the patch file until the patch is saved again, which then writes
+the new one, or none. Setting one aside is not unsaved work — nothing new has been
+said — so it puts no dot in the title, and a patch closed straight afterwards opens
+next time with the old conversation still there. The button is dead while a turn
+runs, because stopping one is the other button's job.

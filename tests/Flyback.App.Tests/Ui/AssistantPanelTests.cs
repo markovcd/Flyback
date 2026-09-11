@@ -151,6 +151,38 @@ public class AssistantPanelTests : UiTest, IDisposable
         Shown(window).ShouldBeEmpty();
     }
 
+    private static Button Fresh(Window window) => All<Button>(window).Single(b => b.Name == "fresh");
+
+    [AvaloniaFact]
+    public void There_is_no_new_conversation_to_start_with_none_to_set_aside()
+    {
+        var (window, _) = Over(new Patch());
+
+        Fresh(window).IsEnabled.ShouldBeFalse();
+    }
+
+    /// <summary>
+    /// Set aside, and no longer what saving the patch writes: the new one is, and
+    /// so far there is none. Nothing new has been said, so there is nothing to lose.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_new_conversation_sets_the_one_on_screen_aside()
+    {
+        var (window, panel) = Over(new Patch());
+
+        panel.Open(Saved(new TranscriptLine(Voice.You, "make a hard techno patch")));
+        Settle(window);
+
+        Fresh(window).IsEnabled.ShouldBeTrue();
+        Fresh(window).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Settle(window);
+
+        Shown(window).ShouldNotContain("make a hard techno patch");
+        panel.ConversationToSave().ShouldBeNull();
+        panel.ConversationUnsaved.ShouldBeFalse();
+        Fresh(window).IsEnabled.ShouldBeFalse();
+    }
+
     /// <summary>The settings, in a window of their own, as opening them makes one.</summary>
     private static Window Settings(Window panel)
     {
