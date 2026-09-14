@@ -129,6 +129,7 @@ public static partial class NodeCatalog
             .Concat(Sources())
             .Concat(Midi())
             .Concat(Oscillators())
+            .Concat(Strings())
             .Concat(Sequencers())
             .Concat(Envelopes())
             .Concat(Maths())

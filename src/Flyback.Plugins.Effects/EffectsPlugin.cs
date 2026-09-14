@@ -40,6 +40,11 @@ public sealed class EffectsPlugin : IFlybackPlugin
                 "Flanger, phaser and chorus in the order a pedalboard would have them.",
                 PresetKind.Idea),
             new PatchPreset(
+                PlayedPreset.Name,
+                PlayedPreset.Build,
+                "The one preset you have to play: each key plucks a string, with a touch of reverb.",
+                PresetKind.Idea),
+            new PatchPreset(
                 AcidPreset.Name,
                 AcidPreset.Build,
                 "A whole acid techno track: a 303 line through a resonant filter into two "

@@ -316,29 +316,6 @@ public class LanguageTests
         out.gain = 0.55
         """);
 
-    [Fact]
-    public void Played() => Alike("Played", """
-        let keys = midi.in(index: 1)
-
-        let width = noise(z: t * 3)
-                      |> hold(trigger: keys.trigger)
-                      |> remap(0..1, 0.12..0.88)
-
-        let env = keys.gate |> adsr(attack: 4ms, decay: 200ms, sustain: 0.5, release: 100ms)
-
-        pulse(freq: note(keys), width: width) * env |> out.left
-
-        let held = keys |> clamp(36, 84)
-
-        rings(freq: held |> remap(36..84, 2..11))
-          |> remap(-1..1, 0.1..1)
-          |> mul(env |> remap(0..1, 0.25..1))
-          |> hsv(hue: held |> remap(36..84, 0.55..0), saturation: 0.8)
-          |> out.color
-
-        out.gain = 0.6
-        """);
-
     /// <summary>
     /// The showcase, and the one that proves the language scales: about a
     /// hundred modules, ten groups, four sequencers, and every group reading

@@ -98,9 +98,6 @@ public static class Presets
         new("Nebula", Nebula,
             "Everything the video side can do, folded, warped and trailing its own frames.",
             PresetKind.Showcase),
-        new("Played", Played,
-            "The one preset you have to play: a keyboard driving pitch, envelope and timbre.",
-            PresetKind.Showcase),
         new("Whole band", WholeBand,
             "Four instruments off four sequencers, and one picture off three of them.",
             PresetKind.Showcase),
@@ -214,100 +211,6 @@ public static class Presets
          .Wire(heard, 0, color, 0)
          .Wire(lit, 0, color, 2)
          .Wire(color, 0, output, NodeCatalog.OutputColorPort);
-
-        return b.Build();
-    }
-
-    /// <summary>
-    /// The one preset you have to play. Nothing in it moves on its own: a MIDI
-    /// In drives the pitch, the envelope and the timbre, and with no key down it
-    /// is silent and the picture is dim.
-    /// </summary>
-    public static Patch Played(ModuleCatalog modules)
-    {
-        var b = new PatchBuilder(modules);
-
-        // No knobs on it at all. Which keyboard it listens to is the one thing it
-        // carries, and a fresh one carries the computer's own.
-        var keys = b.Add(NodeCatalog.MidiTypeId);
-        keys.SetState(MidiExtra.StateKey, new System.Text.Json.Nodes.JsonObject
-        {
-            [MidiExtra.IndexField] = 1f,
-        });
-
-        // Ear. The note number goes in where a note number goes, and comes out
-        // as hertz.
-        var note = b.Add("audio.note");
-
-        // A pulse rather than a saw, because its width is somewhere for the
-        // held value to go. 'in' takes no wire: it runs on the clock every
-        // domain socket is normalled to (ADR-0050).
-        var tone = b.Add("osc.pulse");
-
-        // A pluck: quick on, most of the way down in a fifth of a second, and
-        // held at half while the key is. The times are decades of seconds — see
-        // PortDisplay.Duration — so -2.4 is about four milliseconds.
-        var env = b.Add(NodeCatalog.AdsrTypeId, (1, -2.4f), (2, -0.7f), (3, 0.5f), (4, -1f));
-
-        var voiced = b.Add("math.mul");
-
-        // The timbre, which is what 'trigger' is here for. A clock into 'z'
-        // makes the field wander; x and y are nothing at the speakers.
-        var clock = b.Add("time");
-        var drift = b.Add("math.mul", (1, 3f));
-        var wander = b.Add("pattern.noise");
-        var caught = b.Add(NodeCatalog.HoldTypeId);
-
-        // Never all the way to either end: a duty cycle of nought or one is
-        // silence, and a note that happened to catch one would simply not sound.
-        var width = b.Add("math.remap", (1, 0f), (2, 1f), (3, 0.12f), (4, 0.88f));
-
-        // Eye. Two readings of the note number — its color, and how finely the
-        // rings are drawn — over the two octaves either side of middle C. Held
-        // into that range first, so a wider keyboard cannot wrap the hue round
-        // to a color the other end is using, and so an unplayed patch rests at
-        // the bottom of the range rather than wherever nought lands.
-        var range = b.Add("math.clamp", (1, 36f), (2, 84f));
-
-        var hue = b.Add("math.remap", (1, 36f), (2, 84f), (3, 0.55f), (4, 0f));
-        var fineness = b.Add("math.remap", (1, 36f), (2, 84f), (3, 2f), (4, 11f));
-
-        var rings = b.Add("pattern.rings");
-        var glow = b.Add("math.remap", (1, -1f), (2, 1f), (3, 0.1f), (4, 1f));
-
-        // What the envelope hands the screen is its gate, since an envelope has
-        // no memory on the video path. Dimmed to a quarter between notes.
-        var lift = b.Add("math.remap", (1, 0f), (2, 1f), (3, 0.25f), (4, 1f));
-        var lit = b.Add("math.mul");
-        var skin = b.Add("color.hsv", (1, 0.8f));
-
-        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputGainPort, 0.6f));
-
-        b.Wire(keys, 0, note, 0)
-         .Wire(note, 0, tone, 1)
-         .Wire(keys, 1, env, 0)
-         .Wire(tone, 0, voiced, 0)
-         .Wire(env, 0, voiced, 1)
-         .Wire(voiced, 0, output, NodeCatalog.OutputLeftPort)
-
-         .Wire(clock, 0, drift, 0)
-         .Wire(drift, 0, wander, 2)
-         .Wire(wander, 0, caught, 0)
-         .Wire(keys, 3, caught, 1)
-         .Wire(caught, 0, width, 0)
-         .Wire(width, 0, tone, 3)
-
-         .Wire(keys, 0, range, 0)
-         .Wire(range, 0, hue, 0)
-         .Wire(range, 0, fineness, 0)
-         .Wire(fineness, 0, rings, 2)
-         .Wire(rings, 0, glow, 0)
-         .Wire(env, 0, lift, 0)
-         .Wire(glow, 0, lit, 0)
-         .Wire(lift, 0, lit, 1)
-         .Wire(hue, 0, skin, 0)
-         .Wire(lit, 0, skin, 2)
-         .Wire(skin, 0, output, NodeCatalog.OutputColorPort);
 
         return b.Build();
     }

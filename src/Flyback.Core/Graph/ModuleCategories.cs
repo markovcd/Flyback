@@ -19,7 +19,7 @@ public static class ModuleCategories
     /// <summary>Where a signal comes from before anything is done to it.</summary>
     public const string Sources = "Sources";
 
-    /// <summary>The fixed-shape waveforms, the one stacked oscillator, and noise.</summary>
+    /// <summary>The fixed-shape waveforms, the one stacked oscillator, noise, and the plucked string.</summary>
     public const string Oscillators = "Oscillators";
 
     /// <summary>Fields over the plane: noise, checks, rings and the fractals.</summary>

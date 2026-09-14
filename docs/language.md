@@ -862,38 +862,6 @@ Divide. **Arithmetic between literals is constant-folded at parse time;
 arithmetic involving a signal emits a module.** That is what keeps `t * 0.2` a
 Multiply and `1 / 12` a number.
 
-### Played — [:374](../src/Flyback.Core/Graph/Presets.cs)
-
-```
-# Nothing moves on its own: a MIDI In drives the pitch, the envelope and the timbre.
-
-let keys = midi.in(index: 1)
-
-let width = noise(z: t * 3)
-              |> hold(trigger: keys.trigger)
-              |> remap(0..1, 0.12..0.88)
-
-let env = keys.gate |> adsr(attack: 4ms, decay: 200ms, sustain: 0.5, release: 100ms)
-
-pulse(freq: note(keys), width: width) * env |> out.left
-
-let held = keys |> clamp(36, 84)
-
-rings(freq: held |> remap(36..84, 2..11))
-  |> remap(-1..1, 0.1..1)
-  |> mul(env |> remap(0..1, 0.25..1))
-  |> hsv(hue: held |> remap(36..84, 0.55..0), saturation: 0.8)
-  |> out.color
-
-out.gain = 0.6
-```
-
-`midi.in` is written in full, since its short name would be `in`. `index: 1` is
-an **extra field**, not a port — a plugin's declared fields
-([0055](adr/0055-a-plugins-extra-declares-its-editor.md)) are named arguments
-like any knob, addressed by their key rather than their label, for the reason
-modules are addressed by type id. Ports are resolved first, then fields.
-
 ### Nebula — [:873](../src/Flyback.Core/Graph/Presets.cs)
 
 ```
