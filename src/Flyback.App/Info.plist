@@ -44,5 +44,58 @@
   <!-- The oldest macOS the .NET 10 runtime supports. -->
   <key>LSMinimumSystemVersion</key>
   <string>13.0</string>
+
+  <!--
+    What lets Finder open one of the three kinds of file this program reads by
+    double-click, by "Open With", or by a drag onto the Dock icon — none of
+    which pass a file on the command line the way Windows and Linux do.
+    FlybackApp.OnFrameworkInitializationCompleted is the other half: what
+    Finder sends over is an activation, not an argument.
+  -->
+  <key>CFBundleDocumentTypes</key>
+  <array>
+    <dict>
+      <key>CFBundleTypeName</key>
+      <string>Flyback patch</string>
+      <key>CFBundleTypeExtensions</key>
+      <array>
+        <string>fbk</string>
+      </array>
+      <key>CFBundleTypeIconFile</key>
+      <string>flyback.icns</string>
+      <key>CFBundleTypeRole</key>
+      <string>Editor</string>
+      <key>LSHandlerRank</key>
+      <string>Owner</string>
+    </dict>
+    <dict>
+      <key>CFBundleTypeName</key>
+      <string>Flyback bundle</string>
+      <key>CFBundleTypeExtensions</key>
+      <array>
+        <string>fbkb</string>
+      </array>
+      <key>CFBundleTypeIconFile</key>
+      <string>flyback.icns</string>
+      <key>CFBundleTypeRole</key>
+      <string>Editor</string>
+      <key>LSHandlerRank</key>
+      <string>Owner</string>
+    </dict>
+    <dict>
+      <key>CFBundleTypeName</key>
+      <string>Flyback text</string>
+      <key>CFBundleTypeExtensions</key>
+      <array>
+        <string>fbks</string>
+      </array>
+      <key>CFBundleTypeIconFile</key>
+      <string>flyback.icns</string>
+      <key>CFBundleTypeRole</key>
+      <string>Editor</string>
+      <key>LSHandlerRank</key>
+      <string>Owner</string>
+    </dict>
+  </array>
 </dict>
 </plist>

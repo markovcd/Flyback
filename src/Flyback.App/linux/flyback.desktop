@@ -1,0 +1,26 @@
+# What lets a file manager offer "Open With Flyback", or run the program with
+# a file already named, the way double-clicking a document does on Windows and
+# macOS. Nothing installs this automatically — there is no packaging step for
+# Linux the way MacBundle.targets is one for macOS — so it has to be copied
+# into place by hand, or by whoever builds a package from this publish output:
+#
+#   install -Dm644 flyback.desktop ~/.local/share/applications/flyback.desktop
+#   install -Dm644 io.github.markovcd.flyback.xml \
+#     ~/.local/share/mime/packages/io.github.markovcd.flyback.xml
+#   update-desktop-database ~/.local/share/applications
+#   update-mime-database ~/.local/share/mime
+#
+# Exec assumes Flyback is on the PATH, which an install has to arrange too —
+# by a symlink into a bin directory, or by writing the full path in here
+# instead. %f hands over one local file, matching the picker and the drop
+# handler: one window opens one patch.
+[Desktop Entry]
+Type=Application
+Name=Flyback
+GenericName=Patchable synthesiser
+Comment=Visual patch editor that generates a picture and a sound from one graph
+Exec=Flyback %f
+Icon=flyback
+Terminal=false
+Categories=AudioVideo;Audio;Video;
+MimeType=application/x-flyback-patch;application/x-flyback-bundle;application/x-flyback-source;

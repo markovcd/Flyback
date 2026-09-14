@@ -162,10 +162,10 @@ public sealed partial class MainWindow
     }
 
     /// <summary>
-    /// Opens a file handed back by any of the three routes that produce one — a
-    /// picker, a drop from the file explorer, or a path named on the command
-    /// line — so the extension decides which kind it is exactly as it does for
-    /// the picker.
+    /// Opens a file handed back by any of the routes that produce one — a
+    /// picker, a drop from the file explorer, a path named on the command
+    /// line, or a file macOS hands the program through an activation — so the
+    /// extension decides which kind it is exactly as it does for the picker.
     /// </summary>
     private async Task OpenFileAsync(IStorageFile file)
     {
@@ -272,8 +272,20 @@ public sealed partial class MainWindow
 
             e.Handled = true;
 
-            if (await MayReplaceThePatchAsync()) await OpenFileAsync(file);
+            await OpenActivatedFileAsync(file);
         });
+    }
+
+    /// <summary>
+    /// Opens a file handed to the program from outside a picker or a drop —
+    /// which on macOS is how "open this file" arrives at all: Finder delivers
+    /// it as an activation rather than as a command-line argument, whether
+    /// that launches the program or lands on its Dock icon while it is
+    /// already running. See <see cref="FlybackApp.OnFrameworkInitializationCompleted"/>.
+    /// </summary>
+    internal async Task OpenActivatedFileAsync(IStorageFile file)
+    {
+        if (await MayReplaceThePatchAsync()) await OpenFileAsync(file);
     }
 
     /// <summary>

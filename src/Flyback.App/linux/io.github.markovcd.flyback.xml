@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  The three kinds of file flyback.desktop's MimeType list names. None of
+  these extensions are known to a stock desktop without this: a file manager
+  can only offer "Open With Flyback", or hand a double-click to it, for a
+  type it can already recognise. See flyback.desktop for where this installs
+  to and what it is short for.
+-->
+<mime-info xmlns="http://www.freedesktop.org/standards/shared-mime-info">
+  <mime-type type="application/x-flyback-patch">
+    <comment>Flyback patch</comment>
+    <glob pattern="*.fbk"/>
+  </mime-type>
+  <mime-type type="application/x-flyback-bundle">
+    <comment>Flyback bundle</comment>
+    <glob pattern="*.fbkb"/>
+  </mime-type>
+  <mime-type type="application/x-flyback-source">
+    <comment>Flyback text</comment>
+    <glob pattern="*.fbks"/>
+  </mime-type>
+</mime-info>

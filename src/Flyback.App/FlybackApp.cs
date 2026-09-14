@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml.Styling;
+using Avalonia.Platform.Storage;
 using Avalonia.Styling;
 using Avalonia.Themes.Fluent;
 
@@ -35,7 +36,28 @@ public sealed class FlybackApp : Application
     public override void OnFrameworkInitializationCompleted()
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
-            desktop.MainWindow = new MainWindow(openPath: Startup.OpenPath);
+        {
+            var window = new MainWindow(openPath: Startup.OpenPath);
+            desktop.MainWindow = window;
+
+            // Windows and Linux hand a file to open in through argv, which
+            // Startup.OpenPath already carries — see Program.Main. macOS never
+            // does: Finder delivers "open this file" as an activation instead,
+            // whether it is what launches the program or a file dropped on its
+            // Dock icon while it is already running, and there is no other way
+            // to hear about either.
+            if (desktop is IActivatableLifetime activatable)
+            {
+                activatable.Activated += (_, e) =>
+                {
+                    if (e is FileActivatedEventArgs { Files: [var first, ..] }
+                        && first is IStorageFile file)
+                    {
+                        _ = window.OpenActivatedFileAsync(file);
+                    }
+                };
+            }
+        }
 
         base.OnFrameworkInitializationCompleted();
     }
