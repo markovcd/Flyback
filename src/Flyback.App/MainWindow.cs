@@ -262,7 +262,11 @@ public sealed partial class MainWindow : Window
     /// Where the kept groups live. Null is the usual place; a path is for the
     /// tests, which must not write into the folder a person's own groups are in.
     /// </param>
-    public MainWindow(string? groupFolder = null)
+    /// <param name="openPath">
+    /// A file to open once there is a window for it, or null for the usual
+    /// start on the default preset — see <see cref="Startup.OpenPath"/>.
+    /// </param>
+    public MainWindow(string? groupFolder = null, string? openPath = null)
     {
         this.groupFolder = groupFolder;
 
@@ -335,6 +339,10 @@ public sealed partial class MainWindow : Window
         // anybody has selected the Output to look at them.
         WireOutputControls();
 
+        // Live from construction rather than from Loaded: a drop arriving
+        // before the window has finished laying out is still a drop.
+        WireFileDrop();
+
         Content = BuildLayout();
 
         // The preset the box opens on, which is the patch about to be built —
@@ -355,6 +363,15 @@ public sealed partial class MainWindow : Window
         var ticker = new DispatcherTimer(DispatcherPriority.Background) { Interval = TimeSpan.FromMilliseconds(250) };
         ticker.Tick += (_, _) => UpdateStatus();
         ticker.Start();
+
+        // Opened rather than called straight away: the platform window behind
+        // this one — and the storage provider that comes with it — is not
+        // guaranteed to exist until then, and this is the one caller of
+        // OpenPathAsync that cannot wait for a click to find that out.
+        if (openPath is { } path) Opened += async (_, _) =>
+        {
+            if (await MayReplaceThePatchAsync()) await OpenPathAsync(path);
+        };
     }
 
     private Control BuildLayout()

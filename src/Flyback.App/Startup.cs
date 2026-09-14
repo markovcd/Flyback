@@ -14,8 +14,19 @@ internal static class Startup
 {
     public static PluginCatalog Plugins { get; private set; } = PluginCatalog.Empty;
 
-    public static void Load()
+    /// <summary>
+    /// The file the program was started with — dragged onto its icon, or handed
+    /// to it as the first argument on a command line — or null for an ordinary
+    /// launch. Read here rather than by the window itself, since a plugin
+    /// problem is announced before there is one to open it into and the two
+    /// belong beside each other as the first things this program does.
+    /// </summary>
+    public static string? OpenPath { get; private set; }
+
+    public static void Load(string? openPath = null)
     {
+        OpenPath = openPath;
+
         Plugins = PluginHost.Load();
         NodeCatalog.Install(Plugins.Modules);
 

@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Platform.Storage;
 using Flyback.App.Assist;
 using Flyback.App.Controls;
@@ -157,21 +158,32 @@ public sealed partial class MainWindow
 
         if (files.Count == 0) return;
 
-        if (Bundled(files[0].Name))
+        await OpenFileAsync(files[0]);
+    }
+
+    /// <summary>
+    /// Opens a file handed back by any of the three routes that produce one — a
+    /// picker, a drop from the file explorer, or a path named on the command
+    /// line — so the extension decides which kind it is exactly as it does for
+    /// the picker.
+    /// </summary>
+    private async Task OpenFileAsync(IStorageFile file)
+    {
+        if (Bundled(file.Name))
         {
-            await OpenBundleAsync(files[0]);
+            await OpenBundleAsync(file);
             return;
         }
 
-        if (Sourced(files[0].Name))
+        if (Sourced(file.Name))
         {
-            await OpenSourceAsync(files[0]);
+            await OpenSourceAsync(file);
             return;
         }
 
         try
         {
-            await using var stream = await files[0].OpenReadAsync();
+            await using var stream = await file.OpenReadAsync();
             using var reader = new StreamReader(stream);
             var text = await reader.ReadToEndAsync();
             var loaded = PatchIO.Read(text);
@@ -188,8 +200,8 @@ public sealed partial class MainWindow
             // Everything that says which document this is, before the patch it is
             // about — see Became.
             Became(
-                Path.GetFileNameWithoutExtension(files[0].Name),
-                Path.GetDirectoryName(files[0].TryGetLocalPath()));
+                Path.GetFileNameWithoutExtension(file.Name),
+                Path.GetDirectoryName(file.TryGetLocalPath()));
 
             // Whatever preset the list still showed is not this patch.
             ClearPresetSelection();
@@ -199,7 +211,7 @@ public sealed partial class MainWindow
 
             // Whatever was said about this patch was kept beside it, if anything
             // was and the file is still what it was saved as — ADR-0072.
-            assistant?.Open(ConversationFor(files[0], text));
+            assistant?.Open(ConversationFor(file, text));
 
             // A patch file is the document, so the graph owns it — ADR-0068.
             DropSource();
@@ -208,6 +220,60 @@ public sealed partial class MainWindow
         {
             Report($"Could not open patch: {ex.Message}");
         }
+    }
+
+    /// <summary>
+    /// Opens a file already sitting on disk rather than one a picker handed
+    /// back — named on the command line when the program started, or resolved
+    /// from a plain path some other way. A drop from the file explorer skips
+    /// this: it hands back an <see cref="IStorageFile"/> of its own, which is
+    /// what <see cref="OpenFileAsync"/> already takes.
+    /// </summary>
+    private async Task OpenPathAsync(string path)
+    {
+        IStorageFile? file;
+
+        try
+        {
+            file = await StorageProvider.TryGetFileFromPathAsync(path);
+        }
+        catch (Exception ex)
+        {
+            Report($"Could not open {Path.GetFileName(path)}: {ex.Message}");
+            return;
+        }
+
+        if (file is null)
+        {
+            Report($"Could not open {Path.GetFileName(path)}.");
+            return;
+        }
+
+        await OpenFileAsync(file);
+    }
+
+    /// <summary>
+    /// Lets a patch, a bundle or a text file be opened by dropping it in from
+    /// the file explorer — the same three kinds <see cref="OpenPatchAsync"/>
+    /// offers through a picker, arriving without one.
+    /// </summary>
+    private void WireFileDrop()
+    {
+        DragDrop.SetAllowDrop(this, true);
+
+        AddHandler(DragDrop.DragOverEvent, (_, e) =>
+            e.DragEffects = e.DataTransfer.Contains(DataFormat.File) ? DragDropEffects.Copy : DragDropEffects.None);
+
+        AddHandler(DragDrop.DropEvent, async (_, e) =>
+        {
+            // Only the first: one window holds one patch, and a picker never
+            // offers more than that either — see AllowMultiple above.
+            if (e.DataTransfer.TryGetFiles()?.OfType<IStorageFile>().FirstOrDefault() is not { } file) return;
+
+            e.Handled = true;
+
+            if (await MayReplaceThePatchAsync()) await OpenFileAsync(file);
+        });
     }
 
     /// <summary>
