@@ -21,7 +21,7 @@ namespace Flyback.Plugins.Picture;
 /// </para>
 /// <para>
 /// Three categories rather than one, because a section called "Picture" holding
-/// twelve modules is a worse palette than three holding six, four and two.
+/// fourteen modules is a worse palette than three holding seven, five and two.
 /// </para>
 /// </remarks>
 public sealed class PicturePlugin : IFlybackPlugin
@@ -31,7 +31,8 @@ public sealed class PicturePlugin : IFlybackPlugin
     public PluginInfo Info { get; } = new(
         "flyback.picture",
         "Picture",
-        "Shapes to fill and combine, palettes and grading, and the two fractal noises.");
+        "Shapes and lines to fill and combine, palettes, grading and layers, and the two "
+        + "fractal noises.");
 
     public void Register(IPluginRegistry registry)
     {
@@ -42,12 +43,14 @@ public sealed class PicturePlugin : IFlybackPlugin
                 BoxModule.Definition,
                 PolygonModule.Definition,
                 StarModule.Definition,
+                LineModule.Definition,
                 CombineModule.Definition,
                 FillModule.Definition,
                 PaletteModule.Definition,
                 HsvModule.Definition,
                 GradeModule.Definition,
                 PosteriseModule.Definition,
+                LayerModule.Definition,
                 FractalModule.Definition,
                 CellsModule.Definition,
             ]);

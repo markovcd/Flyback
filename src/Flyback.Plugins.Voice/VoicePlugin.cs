@@ -4,13 +4,12 @@ namespace Flyback.Plugins.Voice;
 
 /// <summary>
 /// What makes a tone and what is done to it before it leaves the instrument: the
-/// stacked oscillator, and the three ways of changing a waveform's shape.
+/// stacked oscillator and noise, the three ways of changing a waveform's shape, and
+/// the slew, the struck envelope and the rhythm that play it.
 /// </summary>
 /// <remarks>
-/// Everything here is part of one voice, in the order a voice is built. The Filter is
-/// the one module that is not pure: it carries its integrators in one-evaluation cells
-/// (ADR-0041), which only the speakers' program has, so it is declared audio-only and
-/// is a wire on the screen.
+/// The Filter, Slew and Decay are not pure: they carry state in one-evaluation cells
+/// (ADR-0041), which only the speakers' program has, so they are declared audio-only.
 /// </remarks>
 public sealed class VoicePlugin : IFlybackPlugin
 {
@@ -19,7 +18,8 @@ public sealed class VoicePlugin : IFlybackPlugin
     public PluginInfo Info { get; } = new(
         "flyback.voice",
         "Voice",
-        "A seven-oscillator supersaw, and the fold, drive and filter that shape it.");
+        "A seven-oscillator supersaw and noise, the fold, drive and filter that shape them, "
+        + "a slew for glide, and a struck envelope with a Euclidean rhythm to play it.");
 
     public void Register(IPluginRegistry registry)
     {
@@ -30,6 +30,10 @@ public sealed class VoicePlugin : IFlybackPlugin
                 FoldModule.Definition,
                 DriveModule.Definition,
                 FilterModule.Definition,
+                RandomModule.Definition,
+                SlewModule.Definition,
+                DecayModule.Definition,
+                EuclidModule.Definition,
             ]);
 
         registry.AddPresets(
@@ -44,6 +48,12 @@ public sealed class VoicePlugin : IFlybackPlugin
                 TimbrePreset.Build,
                 "A saw folded and then filtered: make the harmonics first, take them away second.",
                 PresetKind.Idea),
+            new PatchPreset(
+                EuclidKitPreset.Name,
+                EuclidKitPreset.Build,
+                "Four Euclidean rhythms playing a noise kit and a gliding bass, drawn as a clock "
+                + "hand, a ring the kick pushes and a flash on the snare.",
+                PresetKind.Interplay),
         ]);
     }
 }

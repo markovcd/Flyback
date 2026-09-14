@@ -19,7 +19,7 @@ public static class ModuleCategories
     /// <summary>Where a signal comes from before anything is done to it.</summary>
     public const string Sources = "Sources";
 
-    /// <summary>The fixed-shape waveforms, and the one stacked oscillator.</summary>
+    /// <summary>The fixed-shape waveforms, the one stacked oscillator, and noise.</summary>
     public const string Oscillators = "Oscillators";
 
     /// <summary>Fields over the plane: noise, checks, rings and the fractals.</summary>
@@ -44,8 +44,8 @@ public static class ModuleCategories
     public const string Pitch = "Pitch";
 
     /// <summary>
-    /// What decides when something happens: tempo, the two step sequencers, the
-    /// envelope and the hold.
+    /// What decides when something happens: tempo, the sequencers and the Euclidean
+    /// rhythm, the envelopes, the hold and the slew.
     /// </summary>
     public const string Timing = "Timing";
 
