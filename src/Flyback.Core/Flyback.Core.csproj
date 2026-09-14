@@ -39,6 +39,9 @@
     <Compile Update="Graph\NodeCatalog.Midi.cs">
       <DependentUpon>NodeCatalog.cs</DependentUpon>
     </Compile>
+    <Compile Update="Graph\NodeCatalog.Strings.cs">
+      <DependentUpon>NodeCatalog.cs</DependentUpon>
+    </Compile>
   </ItemGroup>
 
 </Project>
