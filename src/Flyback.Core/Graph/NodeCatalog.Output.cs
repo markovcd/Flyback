@@ -23,8 +23,14 @@ public partial class NodeCatalog
     /// </summary>
     public const string ScopeTypeId = "scope";
 
-    /// <summary>Whether a module is one of the two the shell will show in place of the picture.</summary>
-    public static bool IsChart(string typeId) => typeId is ProbeTypeId or ScopeTypeId;
+    /// <summary>
+    /// The chart of what frequencies were played. Named here because the shell
+    /// roots the picture at one when it is selected, as it does a Scope.
+    /// </summary>
+    public const string AnalyzerTypeId = "analyzer";
+
+    /// <summary>Whether a module is one the shell will show in place of the picture.</summary>
+    public static bool IsChart(string typeId) => typeId is ProbeTypeId or ScopeTypeId or AnalyzerTypeId;
 
     /// <summary>
     /// The level meter. Named here because what it reads is filled in from
@@ -176,6 +182,7 @@ public partial class NodeCatalog
         yield return Quantiser();
         yield return Probe();
         yield return Scope();
+        yield return Analyzer();
         yield return Meter();
         yield return Scan();
     }
@@ -213,6 +220,11 @@ public partial class NodeCatalog
     /// A Scope rules eight across the frame however wide it is, so its squares
     /// are a value rather than a constant.
     /// </param>
+    /// <param name="ground">
+    /// Where the fill under the trace runs down to, or null for the middle of the
+    /// chart. A waveform swings either side of nought; a spectrum stands up from
+    /// the bottom edge.
+    /// </param>
     /// <param name="em"></param>
     /// <param name="x"></param>
     private static Slot Charted(
@@ -222,10 +234,12 @@ public partial class NodeCatalog
         Slot height,
         Slot? now = null,
         Slot? across = null,
-        Slot? glow = null)
+        Slot? glow = null,
+        Slot? ground = null)
     {
         var one = em.Constant(1f);
         var zero = em.Constant(0f);
+        var floor = ground ?? zero;
 
         var trace = em.Sub(one, em.Ternary(
             OpCode.Smoothstep,
@@ -233,13 +247,13 @@ public partial class NodeCatalog
             em.Constant(0.02f),
             em.Unary(OpCode.Abs, em.Sub(y, height))));
 
-        // Filled from the line down to zero, which is what keeps the chart
+        // Filled from the line down to the ground, which is what keeps the chart
         // readable when the signal moves faster than the pixels can follow: a
         // trace alone breaks into dots there, and the fill becomes the envelope
         // a scope shows at the same sweep.
         var fill = em.Mul(
-            em.Binary(OpCode.Step, em.Binary(OpCode.Min, height, zero), y),
-            em.Binary(OpCode.Step, y, em.Binary(OpCode.Max, height, zero)));
+            em.Binary(OpCode.Step, em.Binary(OpCode.Min, height, floor), y),
+            em.Binary(OpCode.Step, y, em.Binary(OpCode.Max, height, floor)));
 
         // A bar along whichever edge the signal has gone off, because a value
         // past the top of the chart is otherwise indistinguishable from no
@@ -596,6 +610,111 @@ public partial class NodeCatalog
             ChartsSignal = true,
             Sinks = ModuleSinks.Video,
         };
+
+    /// <summary>
+    /// The Scope's chart turned sideways into frequency: how loud each part of the
+    /// spectrum was over the last stretch the speakers played.
+    /// </summary>
+    /// <remarks>
+    /// A Scope in every respect but what fills its buffer. The input is tapped and
+    /// never lowered into the picture, and the buffer is refilled once a frame —
+    /// with <see cref="Spectra.Chart"/> rather than a resampling, which is the
+    /// whole of <see cref="NodeDef.ChartsSpectrum"/>. So it inherits all three of
+    /// the Scope's cliffs, and the table read that keeps it off the shader.
+    /// <para>
+    /// The buffer holds linear amplitude and the decibels are taken here, so
+    /// 'range' and 'scale' are sockets and a chart can be swept without the refill
+    /// knowing. 'window' is read at compile time, as a Scope's is.
+    /// </para>
+    /// </remarks>
+    private static NodeDef Analyzer()
+    {
+        // Eight rows down however far 'range' reaches, and the grid's columns on
+        // the decades — 100 Hz, 1 kHz and 10 kHz — rather than evenly from the
+        // edge, since a decade is what a log axis is read in.
+        var decades = Math.Log10(Spectra.Highest / Spectra.Lowest);
+        var firstDecade = (float)(Math.Log10(100d / Spectra.Lowest) / decades);
+
+        // Twenty over the natural log of ten, which turns a natural log of an
+        // amplitude into decibels.
+        var decibels = (float)(20d / Math.Log(10d));
+
+        return new NodeDef(
+            AnalyzerTypeId, "Analyzer", ModuleCategories.Measurement,
+            [
+                // Swept and never resolved, for the Scope's reason.
+                Swept("in"),
+                Seconds("window", -1f),
+                Num("range", 96f, 12f, 144f),
+                Num("scale", 1f, 0.01f, 16f),
+            ],
+            [Col("out")],
+            (em, node) =>
+            {
+                var x = em.Load(OpCode.LoadX);
+                var y = em.Load(OpCode.LoadY);
+                var edge = em.Load(OpCode.LoadAspect);
+
+                // How far across the frame the column is, which is how far along
+                // the frequency axis — the buffer is already laid out in log
+                // frequency, so this is the Scope's arithmetic and no more.
+                var along = em.Binary(OpCode.Div, em.Add(x, edge), em.Mul(edge, 2f));
+
+                // Stretched so the right-hand edge lands on the last point rather
+                // than past it, where the table read would be silence.
+                var amplitude = node.Trace is { Samples.Length: > 1 } trace
+                    ? em.Table(em.Mul(along, (trace.Samples.Length - 1f) / trace.SampleRate), trace)
+                    : em.Constant(0f);
+
+                var relative = em.Binary(OpCode.Div, amplitude, em.Binary(OpCode.Max, node[3], em.Constant(0.01f)));
+
+                // Floored far below the deepest 'range' reaches, so silence is the
+                // bottom of the chart rather than the log's guard value of nought,
+                // which would be the top.
+                var level = em.Mul(
+                    em.Unary(OpCode.Log, em.Binary(OpCode.Max, relative, em.Constant(1e-8f))),
+                    decibels);
+
+                // Nought decibels at the top edge and minus 'range' at the bottom.
+                // Held just above the bottom, so a quiet band is a line along it
+                // rather than the bar that says a value has run off the chart.
+                var range = em.Binary(OpCode.Max, node[2], em.Constant(1f));
+                var height = em.Binary(
+                    OpCode.Max,
+                    em.Add(em.Mul(em.Binary(OpCode.Div, level, range), 2f), 1f),
+                    em.Constant(-0.999f));
+
+                var ruled = em.Add(x, em.Mul(edge, 1f - 2f * firstDecade));
+
+                return
+                [
+                    Charted(
+                        em, ruled, y, height,
+                        across: em.Mul(edge, 2f / (float)decades),
+                        ground: em.Constant(-1f)),
+                ];
+            },
+            "A spectrum of what the speakers actually played. Patch the signal you want to "
+            + "look at into its 'in' and select it, and the screen shows how loud each "
+            + "frequency was over the last 'window' seconds: 20 Hz at the left-hand edge, "
+            + "20 kHz at the right, on a log scale with a grid line at 100 Hz, 1 kHz and "
+            + "10 kHz. Up is louder. The top edge is a full-scale sine divided by 'scale', and "
+            + "the bottom edge is 'range' decibels below that, so a grid square is an eighth "
+            + "of 'range' up — 12 dB at the default. A bar along the top means something is "
+            + "louder than the top of the chart. 'window' is how much of the past is averaged: "
+            + "a short one follows every note and flickers, a long one settles into the "
+            + "character of the whole sound. Resolution is fixed at about 12 Hz, so the "
+            + "lowest octave is coarse. Like a Scope it is a record rather than a computation: "
+            + "it shows nothing while sound is off, and nothing the Output's 'left' and "
+            + "'right' do not reach. Its 'out' is the chart as a color, so it can be patched "
+            + "into the Output to keep it on screen alongside the picture.")
+        {
+            TapsSignal = true,
+            ChartsSignal = true,
+            ChartsSpectrum = true,
+            Sinks = ModuleSinks.Video,
+        };
+    }
 
     /// <summary>
     /// One loop swept round the picture at audio rate, and the value it passes

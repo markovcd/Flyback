@@ -238,6 +238,20 @@ public sealed record NodeDef(
     public bool ChartsSignal { get; init; }
 
     /// <summary>
+    /// Whether what the chart holds is the frequency content of that stretch
+    /// rather than the stretch itself — whether this module is an analyzer
+    /// rather than a scope.
+    /// </summary>
+    /// <remarks>
+    /// Means nothing without <see cref="ChartsSignal"/>: it changes what fills the
+    /// buffer, not whether there is one. The buffer then runs from
+    /// <see cref="Compile.Spectra.Lowest"/> to <see cref="Compile.Spectra.Highest"/>
+    /// on a log axis and holds linear amplitude — see
+    /// <see cref="Compile.Spectra"/>.
+    /// </remarks>
+    public bool ChartsSpectrum { get; init; }
+
+    /// <summary>
     /// Whether a wire may run backwards into this module — whether a patch may
     /// hold a cycle that passes through it.
     /// </summary>

@@ -62,7 +62,7 @@ public static class ModuleCategories
     public const string Feedback = "Feedback";
 
     /// <summary>
-    /// What looks at a signal rather than making one: the two charts, the meter
+    /// What looks at a signal rather than making one: the three charts, the meter
     /// and the scan.
     /// </summary>
     public const string Measurement = "Measurement";

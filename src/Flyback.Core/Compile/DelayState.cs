@@ -315,6 +315,36 @@ public sealed class DelayState
     }
 
     /// <summary>
+    /// Copies a stretch of trace <paramref name="slot"/> into
+    /// <paramref name="into"/> as it was played, oldest first and one evaluation a
+    /// cell: the <c>into.Length</c> evaluations that ended <paramref name="age"/>
+    /// evaluations before the newest.
+    /// </summary>
+    /// <remarks>
+    /// Unbucketed, unlike <see cref="CopyTrace"/>, for a reader that needs the
+    /// samples themselves — a spectrum is taken of the waveform, and the peak of a
+    /// bucket is not one. A stretch reaching further back than the ring holds wraps
+    /// round into the newer past rather than failing.
+    /// <para>
+    /// May be read across a write, and is meant to be: see <see cref="Tap"/>.
+    /// </para>
+    /// </remarks>
+    public void ReadTrace(int slot, Span<float> into, int age = 0)
+    {
+        if ((uint)slot >= (uint)traces.Length)
+        {
+            into.Clear();
+            return;
+        }
+
+        var ring = traces[slot];
+        var start = traceHeads[slot] - Math.Max(age, 0) - into.Length;
+
+        for (var i = 0; i < into.Length; i++)
+            into[i] = ring[Index(start + i, ring.Length)];
+    }
+
+    /// <summary>
     /// How loud trace <paramref name="slot"/> has been over its newest
     /// <paramref name="span"/> evaluations: the furthest any of them got from
     /// nought, and the root mean square of all of them.

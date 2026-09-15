@@ -47,6 +47,7 @@ context, decision, consequences.
 | [0059](0059-a-picture-comes-in-as-a-texture.md) | A picture comes in as a texture *(user-directed)* |
 | [0053](0053-a-scope-records-what-the-speakers-played.md) | A Scope records what the speakers played *(user-directed)* |
 | [0058](0058-the-picture-is-told-how-loud-the-sound-is.md) | The picture is told how loud the sound is *(user-directed)* |
+| [0073](0073-an-analyzer-is-a-scope-filled-with-a-spectrum.md) | An Analyzer is a Scope filled with a spectrum *(user-directed)* |
 | [0054](0054-what-a-module-carries-is-a-part-not-a-subtype.md) | What a module carries is a part, not a subtype *(user-directed)* |
 | [0055](0055-a-plugins-extra-declares-its-editor.md) | A plugin's extra declares its editor *(user-directed)* |
 | [0061](0061-what-a-module-carries-is-kept-in-one-store.md) | What a module carries is kept in one store *(user-directed)* |

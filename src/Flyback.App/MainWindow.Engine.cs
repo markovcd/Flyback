@@ -91,8 +91,8 @@ public sealed partial class MainWindow
     }
 
     /// <summary>
-    /// The chart the picture is rooted at: the selected module, when that is a Probe
-    /// or a Scope.
+    /// The chart the picture is rooted at: the selected module, when that is a Probe,
+    /// a Scope or an Analyzer.
     /// </summary>
     /// <remarks>
     /// Selection rather than a mode, because a chart is something you look at rather
@@ -158,10 +158,16 @@ public sealed partial class MainWindow
         // a patch that has stopped working.
         if (probe is not null)
         {
-            said = said.Prepend(probe.TypeId == NodeCatalog.ScopeTypeId
-                ? "Showing the Scope — it charts what the speakers played, so switch sound on "
-                  + "to see anything. Select another module for the picture."
-                : "Showing the Probe — select another module for the picture.");
+            said = said.Prepend(probe.TypeId switch
+            {
+                NodeCatalog.ScopeTypeId =>
+                    "Showing the Scope — it charts what the speakers played, so switch sound on "
+                    + "to see anything. Select another module for the picture.",
+                NodeCatalog.AnalyzerTypeId =>
+                    "Showing the Analyzer — it charts the spectrum of what the speakers played, so "
+                    + "switch sound on to see anything. Select another module for the picture.",
+                _ => "Showing the Probe — select another module for the picture.",
+            });
         }
 
         // Each of them, rather than one sentence with bullets between: they are

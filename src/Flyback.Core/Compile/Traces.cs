@@ -19,7 +19,11 @@ namespace Flyback.Core.Compile;
 /// program as an ordinary <see cref="OpCode.Table"/>. Empty in the speakers'
 /// program, which writes the ring rather than the buffer.
 /// </param>
-public sealed record TapSpec(Guid Node, float Window, LoadedSample Trace);
+/// <param name="Spectrum">
+/// Whether the buffer is filled with the window's frequency content rather than
+/// the window itself — see <see cref="Graph.NodeDef.ChartsSpectrum"/>.
+/// </param>
+public sealed record TapSpec(Guid Node, float Window, LoadedSample Trace, bool Spectrum = false);
 
 /// <summary>
 /// The join between what the speakers played and what a Scope draws of it.
@@ -62,8 +66,8 @@ public static class Traces
     public static LoadedSample Silence { get; } = new([], Points);
 
     /// <summary>
-    /// Refills every Scope the screen is drawing from what the speakers have
-    /// played since the last time this ran.
+    /// Refills every Scope and Analyzer the screen is drawing from what the
+    /// speakers have played since the last time this ran.
     /// </summary>
     /// <param name="drawn">The screen's program, whose taps carry the buffers.</param>
     /// <param name="heard">The speakers' program, whose taps say which ring is whose.</param>
@@ -95,7 +99,8 @@ public static class Traces
                     1,
                     DelayState.TraceSamples);
 
-                memory.CopyTrace(slot, shown.Trace.Samples, span);
+                if (shown.Spectrum) Spectra.Chart(memory, slot, shown.Trace.Samples, span);
+                else memory.CopyTrace(slot, shown.Trace.Samples, span);
             }
         }
     }

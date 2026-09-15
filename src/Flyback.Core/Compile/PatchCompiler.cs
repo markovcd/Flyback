@@ -451,7 +451,7 @@ public static class PatchCompiler
             if (!def.ChartsSignal || plays || def.Inputs.Count == 0) return null;
 
             var buffer = Traces.Buffer();
-            taps.Add(new TapSpec(node.Id, WindowOf(node, def), buffer));
+            taps.Add(new TapSpec(node.Id, WindowOf(node, def), buffer, def.ChartsSpectrum));
 
             return buffer;
         }
