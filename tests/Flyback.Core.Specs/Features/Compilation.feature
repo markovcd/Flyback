@@ -119,7 +119,9 @@ Feature: Compiling a patch
     Then compilation reports an issue containing "Unknown module"
     And the rendered image is entirely black
 
-  Scenario: A cycle is reported instead of hanging
+  # The wire that closes the loop carries the evaluation before, so a cycle is a
+  # patch rather than a complaint — see ADR-0075.
+  Scenario: A cycle compiles rather than being reported
     Given a patch containing:
       | name   | module       |
       | first  | math.add     |
@@ -129,7 +131,7 @@ Feature: Compiling a patch
     And "second" output "out" is wired to "first" input "a"
     And "second" output "out" is wired to "screen" input "color"
     When the patch is compiled
-    Then compilation reports an issue containing "feeds back into itself"
+    Then compilation reports no issues
 
   Scenario: A well-formed patch compiles cleanly
     Given a patch containing:

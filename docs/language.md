@@ -400,19 +400,16 @@ A pipeline cannot express a loop, so the back-wire does:
 ```
 # An integrator: each evaluation adds a little of the source to what it held.
 
-let source = square(freq: frequency(110)) * 0.06
-let echo   = unit()
-let sum    = source + (echo * 0.94)
+let sum = square(freq: frequency(110)) * 0.06 |> add()
 
-echo.in <- sum
+sum.b <- sum * 0.94
 sum |> out.left
 ```
 
-`feedback.unit` is the only module a wire may run backwards into
-([0012](adr/0012-feedback-as-a-module-not-a-cycle.md)), and the compiler already
-refuses every other cycle. The parser has no cycle theory of its own — it emits
-the wires and lets the existing complaints be made in the words they are already
-made in.
+Any wire may run backwards, and the one that closes a loop is the one that does
+([0075](adr/0075-a-cycle-carries-its-own-delay.md)). The parser has no cycle
+theory of its own — it emits the wires, and which of them carries the evaluation
+before is settled once, for the canvas and the compiler alike.
 
 A cycle means one evaluation of delay at either sink: the sample before to the
 ear, and to the eye the frame before, taken from the pixel being drawn and no
@@ -656,12 +653,12 @@ out.gain = 0.7
 ### Loop — [:2006](../src/Flyback.Core/Graph/Presets.cs)
 
 ```
-# A Unit Delay closing a cycle, which is how an integrator and a comb are built.
+# A wire running backwards into what feeds it, which is how a filter and a comb
+# are built.
 
-let echo = unit()
-let sum  = square(freq: frequency(110)) * 0.06 + echo * 0.94
+let sum = square(freq: frequency(110)) * 0.06 |> add()
 
-echo.in <- sum
+sum.b <- sum * 0.94
 sum |> out.left
 
 out.gain = 0.5

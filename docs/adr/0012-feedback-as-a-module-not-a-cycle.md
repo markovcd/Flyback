@@ -1,8 +1,16 @@
 # ADR-0012: Feedback is an explicit module, not a graph cycle
 
-**Status:** Accepted · 2026-08-11 · amended by
+**Status:** Superseded in part · 2026-08-11 · amended by
 [0035](0035-a-glsl-backend-for-the-video-path.md), where the history becomes a
-pair of textures and loses some of the precision this record asks for
+pair of textures and loses some of the precision this record asks for · its
+ruling that a cycle in the graph is an error is superseded by
+[0075](0075-a-cycle-carries-its-own-delay.md), where the wire that closes a loop
+carries the evaluation before and is drawn dashed to say so
+
+What still holds is the Feedback module itself and everything below about it: a
+cycle carries a value round at one pixel, and reading the previous frame
+*somewhere else* — which is what makes a tunnel — is this module and nothing
+else.
 
 ## Context
 

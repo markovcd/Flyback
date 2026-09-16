@@ -168,6 +168,11 @@ public sealed partial class NodeEditor
     /// </param>
     private void DrawConnections(DrawingContext context, IReadOnlySet<Guid> lifted, bool theirs)
     {
+        // What a loop is made of, and the one thing about a wire the canvas
+        // cannot read off its two ends — see Cycles.Backwards, which the compiler
+        // asks the same question of.
+        var backwards = Cycles.Backwards(patch);
+
         foreach (var connection in patch.Connections)
         {
             var mine = lifted.Contains(connection.SourceNode)
@@ -194,11 +199,16 @@ public sealed partial class NodeEditor
             var to = InputAnchor(target, targetDef, connection.TargetPort);
             var color = Colors.PortColor(sourceDef.Outputs[connection.SourcePort].Kind);
 
+            // Dashed where the wire runs backwards, which is the whole of how a
+            // loop shows itself: what this one carries is the evaluation before,
+            // and a solid wire would say it carried this one.
+            var dashes = backwards.Contains(connection) ? DashStyle.Dash : null;
+
             // Heavier and at full strength, which is the same signal the pending
             // wire gives: this one is in play.
             var pen = theirs
-                ? new Pen(new SolidColorBrush(color), LiftedWireThickness)
-                : new Pen(new SolidColorBrush(color, RestingWireOpacity), WireThickness);
+                ? new Pen(new SolidColorBrush(color), LiftedWireThickness, dashes)
+                : new Pen(new SolidColorBrush(color, RestingWireOpacity), WireThickness, dashes);
 
             DrawWire(context, from, to, pen);
         }

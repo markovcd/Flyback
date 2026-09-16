@@ -390,16 +390,21 @@ public static class PatchPrinter
         var coord = patch.Nodes.FirstOrDefault(n => n.TypeId == NodeCatalog.CoordTypeId)?.Id ?? Guid.Empty;
         var clock = patch.Nodes.FirstOrDefault(n => n.TypeId == NodeCatalog.TimeTypeId)?.Id ?? Guid.Empty;
 
+        // Where a wire runs backwards into a module, that module is written as a
+        // name and the wire as a back-wire onto it — the one statement in the
+        // language that runs right to left, and the only way a loop can be said
+        // at all. Which means the module needs a name to be said with.
+        var looped = Cycles.Backwards(patch).Select(wire => wire.TargetNode).ToHashSet();
+
         foreach (var node in patch.Nodes)
         {
             if (node.Id == coord || node.Id == clock) continue;
             if (NodeCatalog.IsSink(node.TypeId)) continue;
 
             var leaving = patch.Connections.Where(c => c.SourceNode == node.Id).ToList();
-            var def = modules.Get(node.TypeId);
 
             var must = called is not null
-                || def is { IsCycleBreaker: true }
+                || looped.Contains(node.Id)
                 || leaving.Count != 1
                 || leaving.Any(c => c.SourcePort != 0)
                 || Usable(node.Name);
@@ -487,6 +492,22 @@ public static class PatchPrinter
         private readonly Dictionary<Guid, int> where = [];
 
         /// <summary>
+        /// The wires that run backwards, which are the only ones this does not
+        /// follow: written where they are reached, a loop would be walked round
+        /// and round for ever. Each is said once at the end instead, as the
+        /// back-wire it is — see <see cref="Cycles"/>.
+        /// </summary>
+        private readonly IReadOnlySet<Connection> backwards = Graph.Cycles.Backwards(patch);
+
+        /// <summary>
+        /// What feeds a socket, unless what feeds it runs backwards — in which
+        /// case nothing does, as far as the expression being written is
+        /// concerned.
+        /// </summary>
+        private Connection? Forward(Guid node, int port) =>
+            patch.IncomingTo(node, port) is { } wire && !backwards.Contains(wire) ? wire : null;
+
+        /// <summary>
         /// The text, and the modules whose calls stand in it from the first word
         /// to the last.
         /// </summary>
@@ -568,15 +589,6 @@ public static class PatchPrinter
             if (!plan.Bound.Contains(id) || !done.Add(id)) return;
             if (patch.Find(id) is not { } node || modules.Get(node.TypeId) is not { } def) return;
 
-            // A cycle breaker is written before what feeds it, because what
-            // feeds it runs backwards and is written as its own statement at the
-            // end. Nothing else in the language can close a loop.
-            if (def.IsCycleBreaker)
-            {
-                Place(new Part($"let {plan.Names[id]} = {Short(def)}()", [id]));
-                return;
-            }
-
             var written = Call(node, def);
 
             Place(new Part($"let {plan.Names[id]} = {written.Text}", written.Calls));
@@ -588,22 +600,25 @@ public static class PatchPrinter
             where[Guid.Empty] = statements.Count;
         }
 
-        /// <summary>The wires that run backwards, which is what a loop is made of.</summary>
+        /// <summary>
+        /// The wires that run backwards, which is what a loop is made of. Written
+        /// last, after every module either end of one has a name to be said with.
+        /// </summary>
         private void Cycles()
         {
-            foreach (var node in patch.Nodes)
+            foreach (var wire in patch.Connections)
             {
-                if (modules.Get(node.TypeId) is not { IsCycleBreaker: true } def) continue;
+                if (!backwards.Contains(wire)) continue;
+                if (patch.Find(wire.TargetNode) is not { } node) continue;
+                if (modules.Get(node.TypeId) is not { } def) continue;
+                if (wire.TargetPort < 0 || wire.TargetPort >= def.Inputs.Count) continue;
 
-                for (var port = 0; port < def.Inputs.Count; port++)
-                {
-                    if (patch.IncomingTo(node.Id, port) is not { } wire) continue;
+                Ensure(wire.TargetNode);
 
-                    var from = From(wire);
-                    var name = def.Inputs[port].Name.Replace(' ', '_');
+                var from = From(wire);
+                var name = def.Inputs[wire.TargetPort].Name.Replace(' ', '_');
 
-                    statements.Add(new Part($"{plan.Names[node.Id]}.{name} <- {from.Text}", from.Calls));
-                }
+                statements.Add(new Part($"{plan.Names[wire.TargetNode]}.{name} <- {from.Text}", from.Calls));
             }
         }
 
@@ -624,7 +639,7 @@ public static class PatchPrinter
             // off one module's leading pair.
             var signal = Port(def.Inputs, "in");
 
-            if (signal >= 0 && patch.IncomingTo(node.Id, signal) is { } straight)
+            if (signal >= 0 && Forward(node.Id, signal) is { } straight)
             {
                 var part = From(straight);
 
@@ -634,8 +649,8 @@ public static class PatchPrinter
             }
             else if (def.Inputs.Count >= 2
                 && Named(def.Inputs[0], "x") && Named(def.Inputs[1], "y")
-                && patch.IncomingTo(node.Id, 0) is { SourcePort: 0 } first
-                && patch.IncomingTo(node.Id, 1) is { SourcePort: 1 } second
+                && Forward(node.Id, 0) is { SourcePort: 0 } first
+                && Forward(node.Id, 1) is { SourcePort: 1 } second
                 && first.SourceNode == second.SourceNode
                 && first.SourceNode != plan.Coord)
             {
@@ -646,7 +661,7 @@ public static class PatchPrinter
                 used.Add(0);
                 used.Add(1);
             }
-            else if (signal < 0 && patch.IncomingTo(node.Id, 0) is { } leading)
+            else if (signal < 0 && Forward(node.Id, 0) is { } leading)
             {
                 // Otherwise the first socket, which is where the rule that reads
                 // this puts a signal when there is no 'in' and no position. It is
@@ -672,7 +687,11 @@ public static class PatchPrinter
 
                 var name = def.Inputs[port].Name.Replace(' ', '_');
 
-                if (patch.IncomingTo(node.Id, port) is { } wire)
+                // Forward rather than incoming: a socket fed by a wire that runs
+                // backwards is written as nothing here and said at the end as the
+                // back-wire it is. Written here, it would be the module quoting
+                // itself.
+                if (Forward(node.Id, port) is { } wire)
                 {
                     var part = From(wire);
 

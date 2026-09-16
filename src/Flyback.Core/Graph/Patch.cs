@@ -543,47 +543,6 @@ public sealed class Patch
     }
 
     /// <summary>
-    /// Whether wiring <paramref name="source"/>'s output into
-    /// <paramref name="target"/>'s input would close a loop the compiler refuses.
-    /// </summary>
-    /// <remarks>
-    /// The new wire completes a loop exactly when the target can already reach
-    /// the source going forward. The walk stops at every cycle breaker, and a
-    /// wire leaving one is answered without walking: every loop it could complete
-    /// runs through that breaker.
-    /// </remarks>
-    public bool WouldCycle(Guid source, Guid target, ModuleCatalog? modules = null)
-    {
-        var catalog = modules ?? NodeCatalog.Current;
-
-        // Connect refuses a wire from a node to itself, so this agrees with it
-        // rather than reporting a loop nothing can draw.
-        if (source == target) return false;
-        if (IsBreaker(source)) return false;
-
-        var seen = new HashSet<Guid>();
-        var walk = new Stack<Guid>();
-        walk.Push(target);
-
-        while (walk.Count > 0)
-        {
-            var at = walk.Pop();
-
-            if (at == source) return true;
-            if (!seen.Add(at) || IsBreaker(at)) continue;
-
-            foreach (var wire in Connections)
-                if (wire.SourceNode == at)
-                    walk.Push(wire.TargetNode);
-        }
-
-        return false;
-
-        bool IsBreaker(Guid id) =>
-            Find(id) is { } node && catalog.Get(node.TypeId) is { IsCycleBreaker: true };
-    }
-
-    /// <summary>
     /// Wires two sockets together, replacing whatever already fed the target
     /// input. Outputs may fan out to any number of inputs.
     /// </summary>

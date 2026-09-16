@@ -164,7 +164,14 @@ public static class PatchCompiler
         var normals = new Dictionary<string, Slot[]>();
 
         var visiting = new HashSet<Guid>();
-        var loops = new Queue<(NodeInstance Node, NodeDef Def, int Slot)>();
+
+        // The wires that run backwards, and the plane each carries its value
+        // round in. One per output rather than one per wire, so an output feeding
+        // two loops is one delayed value read twice rather than two planes
+        // holding the same number.
+        var backwards = Cycles.Backwards(patch);
+        var carried = new Dictionary<(Guid Node, int Port), int>();
+        var loops = new Queue<(Connection Wire, int Slot)>();
 
         // Only this program's share of the sink's results; everything upstream of
         // the other half is never resolved. A probe is not a sink, so it
@@ -202,11 +209,28 @@ public static class PatchCompiler
         //
         // Drained as a queue, because a breaker's own input may reach a breaker
         // the walk never touched, whose write has to land after every read too.
+        var fills = new List<(int Slot, Slot Value)>();
+
         while (loops.Count > 0)
         {
-            var (node, def, slot) = loops.Dequeue();
-            emitter.PlaneWrite(slot, ResolveInput(node, def, 0));
+            var (wire, slot) = loops.Dequeue();
+
+            // Resolved here rather than where the read was, which is the whole of
+            // the trick: by now the walk has left the loop, so following the wire
+            // backwards cannot arrive at itself. It may well arrive at another
+            // loop, which is why this is a queue.
+            fills.Add((
+                slot,
+                patch.Find(wire.SourceNode) is { } from
+                    ? Pick(Resolve(from), wire.SourcePort)
+                    : emitter.Constant(0f)));
         }
+
+        // Every write after every read, including the reads the resolving above
+        // went on emitting. Written in one pass at the end rather than as each
+        // value is worked out, so that a second loop reading the first loop's
+        // plane still reads what the previous evaluation left there.
+        foreach (var (slot, carries) in fills) emitter.PlaneWrite(slot, carries);
 
         var value = emitter.PackChannels(result, width);
 
@@ -234,44 +258,15 @@ public static class PatchCompiler
                 return resolved[node.Id] = [emitter.Constant(0f)];
             }
 
-            // A cycle breaker is the one module this walk does not enter, which is
-            // the whole of how a patch may hold a loop. What it hands back is the
-            // plane as the previous evaluation left it — the sample before to the
-            // ear, the frame before to the eye; the write is deferred to the drain
-            // above.
-            if (def.IsCycleBreaker)
-            {
-                // Claimed outside any emit function, so the owner has to be said
-                // here: the plane carries this breaker's value round and belongs
-                // to it, not to whichever module was being resolved when the
-                // walk arrived.
-                var outer = emitter.Owner;
-
-                emitter.Owner = node.Id;
-
-                var slot = emitter.AllocatePlaneSlot();
-                var outputs = new[] { emitter.PlaneRead(slot) };
-
-                emitter.Owner = outer;
-
-                // Cached before the write is queued, so a breaker that two things
-                // read from is still one cell, read once and written once.
-                resolved[node.Id] = outputs;
-
-                // Nothing to carry round when there is no socket to carry it from,
-                // which only a module declared by hand could manage. Reads zero
-                // for ever rather than reaching for an input that is not there.
-                if (def.Inputs.Count > 0) loops.Enqueue((node, def, slot));
-
-                return outputs;
-            }
-
             if (!visiting.Add(node.Id))
             {
+                // Unreachable through a patch: every loop has a wire running
+                // backwards and that wire is read rather than followed. A program
+                // whose wires disagree with Cycles.Backwards would arrive here,
+                // and a message beats a stack overflow.
                 issues.Add(new CompileIssue(node.Id,
-                    $"'{node.Title(def)}' feeds back into itself. Put a Unit Delay somewhere in the loop "
-                    + "to carry the previous evaluation round, or a Feedback module to read the "
-                    + "previous frame."));
+                    $"'{node.Title(def)}' feeds back into itself through a wire that carries this "
+                    + "evaluation rather than the one before."));
                 return [.. def.Outputs.Select(_ => emitter.Constant(0f))];
             }
 
@@ -310,7 +305,14 @@ public static class PatchCompiler
                 var incoming = patch.IncomingTo(node.Id, port);
                 Slot slotValue;
 
-                if (incoming is not null && patch.Find(incoming.SourceNode) is { } source)
+                if (incoming is not null && backwards.Contains(incoming))
+                {
+                    // The wire that closes a loop, which is read rather than
+                    // followed: what it carries is the evaluation before, and
+                    // following it would be this walk arriving at itself.
+                    slotValue = Delayed(incoming);
+                }
+                else if (incoming is not null && patch.Find(incoming.SourceNode) is { } source)
                 {
                     slotValue = Pick(Resolve(source), incoming.SourcePort);
                 }
@@ -502,7 +504,9 @@ public static class PatchCompiler
             var incoming = patch.IncomingTo(node.Id, port);
             Slot slotValue;
 
-            if (incoming is not null && patch.Find(incoming.SourceNode) is { } source)
+            if (incoming is not null && backwards.Contains(incoming))
+                slotValue = Delayed(incoming);
+            else if (incoming is not null && patch.Find(incoming.SourceNode) is { } source)
                 slotValue = Pick(Resolve(source), incoming.SourcePort);
             else if (spec.NormalledTo is { } bus && Hidden(bus) is { } carried)
                 slotValue = carried;
@@ -510,6 +514,34 @@ public static class PatchCompiler
                 slotValue = emitter.Constant(DefaultFor(node, port, spec));
 
             return spec.Kind == PortKind.Any ? slotValue : emitter.Coerce(slotValue, spec.Width);
+        }
+
+        // What a wire running backwards hands over: the plane its output left
+        // behind last evaluation, rather than the value it is about to have. The
+        // write is queued for the drain, which is what puts an evaluation between
+        // the two — see ADR-0075.
+        Slot Delayed(Connection wire)
+        {
+            var output = (wire.SourceNode, wire.SourcePort);
+
+            if (carried.TryGetValue(output, out var already)) return emitter.PlaneRead(already);
+
+            // Said here because nothing is claiming it from inside an emit
+            // function: the plane belongs to the wire, and a wire is named by its
+            // two ends — see Cycles.Owner, and ADR-0067 for why a name is needed
+            // at all.
+            var outer = emitter.Owner;
+
+            emitter.Owner = Cycles.Owner(wire);
+
+            var slot = emitter.AllocatePlaneSlot();
+
+            emitter.Owner = outer;
+
+            carried[output] = slot;
+            loops.Enqueue((wire, slot));
+
+            return emitter.PlaneRead(slot);
         }
 
         // Which of a node's results a wire carries, and silence for a socket that

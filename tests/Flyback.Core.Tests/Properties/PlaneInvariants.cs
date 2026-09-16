@@ -30,13 +30,16 @@ public class PlaneInvariants
     {
         var b = new PatchBuilder();
 
-        var unit = b.Add(NodeCatalog.UnitDelayTypeId, 200, 0);
-        var add = b.Add("math.add", 400, 0, (1, step));
+        var add = b.Add("math.add", 200, 0, (1, step));
+        var carry = b.Add("math.mul", 400, 0, (1, 1f));
         var sink = b.Add(NodeCatalog.OutputTypeId, 600, 0);
 
-        b.Wire(unit, 0, add, 0)
-         .Wire(add, 0, unit, 0)
-         .Wire(unit, 0, sink, 0);
+        // Round through a second module, because a wire from a socket to its own
+        // module is not one the canvas will draw. What closes the ring is the
+        // wire back into the add, and that one carries the frame before.
+        b.Wire(add, 0, carry, 0)
+         .Wire(carry, 0, add, 0)
+         .Wire(add, 0, sink, 0);
 
         return b.Patch.CompileForVideo().Program;
     }
@@ -70,10 +73,12 @@ public class PlaneInvariants
     {
         var seen = Frames(Accumulator(), 4);
 
-        seen[0].ShouldBe(0f);
-        seen[1].ShouldBe(0.25f, 0.01f);
-        seen[2].ShouldBe(0.5f, 0.01f);
-        seen[3].ShouldBe(0.75f, 0.01f);
+        // The first frame finds nothing behind it and shows one step; each frame
+        // after adds a step to what it read, which is what it wrote last time.
+        seen[0].ShouldBe(0.25f, 0.01f);
+        seen[1].ShouldBe(0.5f, 0.01f);
+        seen[2].ShouldBe(0.75f, 0.01f);
+        seen[3].ShouldBe(1f, 0.01f);
     }
 
     /// <summary>
@@ -89,15 +94,15 @@ public class PlaneInvariants
 
         var coord = b.Add("coord", 0, 0);
         var scaled = b.Add("math.mul", 200, 0, (1, 0.1f));
-        var unit = b.Add(NodeCatalog.UnitDelayTypeId, 400, 0);
-        var add = b.Add("math.add", 600, 0);
+        var add = b.Add("math.add", 400, 0);
+        var carry = b.Add("math.mul", 600, 0, (1, 1f));
         var sink = b.Add(NodeCatalog.OutputTypeId, 800, 0);
 
         b.Wire(coord, 0, scaled, 0)
-         .Wire(unit, 0, add, 0)
          .Wire(scaled, 0, add, 1)
-         .Wire(add, 0, unit, 0)
-         .Wire(unit, 0, sink, 0);
+         .Wire(add, 0, carry, 0)
+         .Wire(carry, 0, add, 0)
+         .Wire(add, 0, sink, 0);
 
         var program = b.Patch.CompileForVideo().Program;
 
@@ -110,11 +115,11 @@ public class PlaneInvariants
 
         float At(int x) => pixels[4 * stride + x * 4 + 2] / 255f;
 
-        // Two frames of x/10 have gone in, so the right-hand columns hold twice a
-        // tenth of their own x and the left-hand ones hold a negative the screen
-        // clamps to black.
-        At(7).ShouldBe(0.2f * 0.875f, 0.01f);
-        At(5).ShouldBe(0.2f * 0.375f, 0.01f);
+        // Three frames of x/10 have gone in, so each column holds three tenths of
+        // its own x — and the left-hand ones hold a negative the screen clamps to
+        // black.
+        At(7).ShouldBe(0.3f * 0.875f, 0.01f);
+        At(5).ShouldBe(0.3f * 0.375f, 0.01f);
         At(0).ShouldBe(0f);
     }
 
@@ -131,15 +136,21 @@ public class PlaneInvariants
         var stride = Width * 4;
         var pixels = new byte[stride * Height];
 
-        for (var frame = 0; frame < 4; frame++)
+        renderer.Render(program, 0d, Width, Height, pixels, stride);
+
+        var first = pixels[4 * stride + 4 * 4 + 2];
+
+        for (var frame = 1; frame < 4; frame++)
             renderer.Render(program, frame / 60d, Width, Height, pixels, stride);
 
-        pixels[4 * stride + 4 * 4 + 2].ShouldBeGreaterThan((byte)0);
+        pixels[4 * stride + 4 * 4 + 2].ShouldBeGreaterThan(first);
 
+        // Back to what the very first frame drew, which is a loop starting from
+        // nothing rather than from where it had got to.
         renderer.Reset();
         renderer.Render(program, 0d, Width, Height, pixels, stride);
 
-        pixels[4 * stride + 4 * 4 + 2].ShouldBe((byte)0);
+        pixels[4 * stride + 4 * 4 + 2].ShouldBe(first);
     }
 
     // --- what it costs -------------------------------------------------------

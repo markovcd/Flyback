@@ -252,20 +252,6 @@ public sealed record NodeDef(
     public bool ChartsSpectrum { get; init; }
 
     /// <summary>
-    /// Whether a wire may run backwards into this module — whether a patch may
-    /// hold a cycle that passes through it.
-    /// </summary>
-    /// <remarks>
-    /// The walk stops when it reaches one and hands back what the cycle carried
-    /// at the end of the previous evaluation; the module's own input is resolved
-    /// afterwards, once every such read has been emitted. So <see cref="Emit"/>
-    /// is never called on it, and the latency that makes the loop mean something
-    /// comes from that ordering. One input and one output, both scalar — nothing
-    /// enforces it, but other sockets are sockets the compiler will not look at.
-    /// </remarks>
-    public bool IsCycleBreaker { get; init; }
-
-    /// <summary>
     /// Which sink this module means something at. An init property defaulting to
     /// <see cref="ModuleSinks.Both"/>, so a plugin compiled against an earlier
     /// build neither has to say nor can be wrong.

@@ -62,7 +62,7 @@ public static class Presets
         new("Clip", Clip,
             "A WAV file played, scrubbed and retriggered."),
         new("Loop", Loop,
-            "A Unit Delay closing a cycle, which is how an integrator and a comb are built."),
+            "A wire running backwards into what feeds it, which is how a filter and a comb are built."),
         new("Two channels", TwoChannels,
             "Stereo from one voice: left and right fed differently rather than panned."),
 
@@ -1338,8 +1338,8 @@ public static class Presets
     }
 
     /// <summary>
-    /// One Unit Delay closing a loop, which is a filter built by hand out of an
-    /// add and a multiply.
+    /// One wire running backwards, which is a filter built by hand out of an add
+    /// and a multiply.
     /// </summary>
     public static Patch Loop(ModuleCatalog modules)
     {
@@ -1356,7 +1356,6 @@ public static class Presets
         var quiet = b.Add("math.mul", (1, 0.06f));
 
         var sum = b.Add("math.add");
-        var delay = b.Add(NodeCatalog.UnitDelayTypeId);
 
         // How much of the last evaluation is kept. Near one is a gentle filter,
         // and the useful range is all in the last hundredth — which is why it is
@@ -1365,12 +1364,15 @@ public static class Presets
 
         var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputGainPort, 0.5f));
 
+        // What the kept share is added back into is the wire that closes the loop,
+        // so that is the one which runs backwards and carries the evaluation
+        // before — the whole of what makes this a filter rather than a ring of
+        // wires with nothing in it. The canvas draws that one dashed.
         b.Wire(pitch, 0, source, 1)
          .Wire(source, 0, quiet, 0)
          .Wire(quiet, 0, sum, 0)
          .Wire(keep, 0, sum, 1)
-         .Wire(sum, 0, delay, 0)
-         .Wire(delay, 0, keep, 0)
+         .Wire(sum, 0, keep, 0)
          .Wire(sum, 0, output, NodeCatalog.OutputLeftPort);
 
         return b.Build();

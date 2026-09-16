@@ -114,10 +114,9 @@ public class PatchLayoutTests
             var from = patch.Find(wire.SourceNode).ShouldNotBeNull();
             var to = patch.Find(wire.TargetNode).ShouldNotBeNull();
 
-            // Unless it is the wire that closes a loop, which by construction
-            // can only leave a cycle breaker and is the one wire meant to be
-            // read as going back.
-            if (NodeCatalog.BuiltIn.Require(from.TypeId).IsCycleBreaker) continue;
+            // Unless it is the wire that closes a loop, which is the one wire
+            // meant to be read as going back — and is drawn dashed to say so.
+            if (Cycles.Backwards(patch).Contains(wire)) continue;
 
             // Or unless one box stands in front of both ends, in which case
             // there is no wire on the canvas to run either way.
@@ -287,20 +286,20 @@ public class PatchLayoutTests
         var time = b.Add("time", 0, 0);
         var osc = b.Add("osc.sine", 0, 0, (1, 220f));
         var mix = b.Add("math.add", 0, 0);
-        var delay = b.Add(NodeCatalog.UnitDelayTypeId, 0, 0);
+        var half = b.Add("math.mul", 0, 0, (1, 0.5f));
         var output = b.Add(NodeCatalog.OutputTypeId, 0, 0);
 
         b.Wire(time, 0, osc, 0)
          .Wire(osc, 0, mix, 0)
-         .Wire(mix, 0, delay, 0)
-         .Wire(delay, 0, mix, 1)
+         .Wire(mix, 0, half, 0)
+         .Wire(half, 0, mix, 1)
          .Wire(mix, 0, output, NodeCatalog.OutputLeftPort);
 
         PatchLayout.Arrange(b.Patch, NodeCatalog.BuiltIn);
 
         // The forward half of the loop still reads forwards; the wire back is
         // the only one allowed not to.
-        b.Patch.Find(mix.Id)!.X.ShouldBeLessThan(b.Patch.Find(delay.Id)!.X);
+        b.Patch.Find(mix.Id)!.X.ShouldBeLessThan(b.Patch.Find(half.Id)!.X);
         b.Patch.Nodes.Select(n => n.X).Distinct().Count().ShouldBeGreaterThan(1);
     }
 

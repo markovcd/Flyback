@@ -6,10 +6,9 @@ using Shouldly;
 namespace Flyback.Core.Tests.Properties;
 
 /// <summary>
-/// Cycles. A patch may hold one as long as a Unit Delay sits somewhere in it, and
-/// what the module buys is exactly one evaluation of latency — these pin that, the
-/// error a loop with nothing in it is still owed, and the two ways the pair of ops
-/// can be got wrong.
+/// Cycles. A patch may hold one, and what the wire that closes it carries is the
+/// evaluation before — exactly one, wherever the loop is cut. These pin that, and
+/// the two ways the pair of ops behind it can be got wrong.
 /// </summary>
 /// <remarks>
 /// The signal is fed through Coordinates' x, the way the delay and accumulator tests
@@ -146,21 +145,19 @@ public class CycleInvariants
         var sine = b.Add("osc.sine", 200, 0);
         var depth = b.Add("value", 200, 200, (0, index));
         var gain = b.Add("math.mul", 400, 100);
-        var unit = b.Add("feedback.unit", 600, 100);
         var sink = b.Add(NodeCatalog.OutputTypeId, 800, 0, (NodeCatalog.OutputGainPort, 1f));
 
         b.Wire(time, 0, sine, 0)
          .Wire(sine, 0, gain, 0)
          .Wire(depth, 0, gain, 1)
-         .Wire(gain, 0, unit, 0)
-         .Wire(unit, 0, sine, 2)
+         .Wire(gain, 0, sine, 2)
          .Wire(sine, 0, sink, NodeCatalog.OutputLeftPort);
 
         return b.Patch;
     }
 
     [Fact]
-    public void A_cycle_through_a_unit_delay_compiles()
+    public void A_cycle_compiles_and_takes_one_plane()
     {
         var result = FeedbackFm().CompileForAudio();
 
@@ -169,119 +166,105 @@ public class CycleInvariants
     }
 
     /// <summary>
-    /// The refusal has to survive, or the check has simply been removed. A loop of
-    /// plain maths has nothing in it that remembers and no evaluation to be
-    /// resolved across.
+    /// A loop of plain maths is a loop like any other now: nothing in it has to
+    /// remember, because the wire that closes it does. What it carries is the
+    /// evaluation before, so a ring that doubles what it holds climbs a step at a
+    /// time rather than being refused.
     /// </summary>
     [Fact]
-    public void A_cycle_with_nothing_in_it_that_remembers_is_still_refused()
+    public void A_cycle_of_plain_maths_carries_the_evaluation_before()
     {
         var b = new PatchBuilder();
 
+        var coord = b.Add("coord", 0, 0);
         var add = b.Add("math.add", 200, 0);
-        var twice = b.Add("math.mul", 400, 0, (1, 2f));
-        var sink = b.Add(NodeCatalog.OutputTypeId, 600, 0);
+        var half = b.Add("math.mul", 400, 0, (1, 0.5f));
+        var sink = b.Add(NodeCatalog.OutputTypeId, 600, 0, (NodeCatalog.OutputGainPort, 1f));
 
-        b.Wire(add, 0, twice, 0)
-         .Wire(twice, 0, add, 0)
+        b.Wire(coord, 0, add, 0)
+         .Wire(add, 0, half, 0)
+         .Wire(half, 0, add, 1)
          .Wire(add, 0, sink, NodeCatalog.OutputLeftPort);
 
         var result = b.Patch.CompileForAudio();
 
-        result.HasErrors.ShouldBeTrue();
-        result.Issues.ShouldContain(i => i.Message.Contains("feeds back into itself"));
+        result.HasErrors.ShouldBeFalse(string.Join("; ", result.Issues.Select(i => i.Message)));
+        result.Program.PlaneCount.ShouldBe(1);
 
-        // And the message has to name the way out, not just the problem.
-        result.Issues.ShouldContain(i => i.Message.Contains("Unit Delay"));
+        // x + half of what came out last time, which from silence is the input
+        // plus a decaying tail of everything before it.
+        var heard = Run(result.Program, [1f, 0f, 0f, 0f]);
+
+        heard[0].ShouldBe(1f, 1e-6f);
+        heard[1].ShouldBe(0.5f, 1e-6f);
+        heard[2].ShouldBe(0.25f, 1e-6f);
+        heard[3].ShouldBe(0.125f, 1e-6f);
     }
 
     /// <summary>
-    /// A cycle upstream of a breaker's own input is still a cycle. The drain
-    /// resolves that side after the main walk, so it needs the same guard.
+    /// A loop whose value feeds a second loop. The drain resolves one after the
+    /// walk has finished and may meet another there, so the queue has to keep
+    /// going until nothing is left — and every read still has to land before
+    /// every write.
     /// </summary>
     [Fact]
-    public void A_cycle_behind_a_unit_delays_input_is_refused_too()
+    public void A_loop_behind_another_loop_compiles_too()
     {
         var b = new PatchBuilder();
 
-        var add = b.Add("math.add", 0, 0);
-        var twice = b.Add("math.mul", 200, 0, (1, 2f));
-        var unit = b.Add("feedback.unit", 400, 0);
-        var sink = b.Add(NodeCatalog.OutputTypeId, 600, 0);
+        var first = b.Add("math.add", 0, 0);
+        var half = b.Add("math.mul", 200, 0, (1, 0.5f));
+        var second = b.Add("math.add", 400, 0);
+        var third = b.Add("math.mul", 600, 0, (1, 0.25f));
+        var sink = b.Add(NodeCatalog.OutputTypeId, 800, 0);
 
-        b.Wire(add, 0, twice, 0)
-         .Wire(twice, 0, add, 0)
-         .Wire(twice, 0, unit, 0)
-         .Wire(unit, 0, sink, NodeCatalog.OutputLeftPort);
+        b.Wire(first, 0, half, 0)
+         .Wire(half, 0, first, 1)
+         .Wire(half, 0, second, 0)
+         .Wire(second, 0, third, 0)
+         .Wire(third, 0, second, 1)
+         .Wire(second, 0, sink, NodeCatalog.OutputLeftPort);
 
-        b.Patch.CompileForAudio().HasErrors.ShouldBeTrue();
+        var result = b.Patch.CompileForAudio();
+
+        result.HasErrors.ShouldBeFalse(string.Join("; ", result.Issues.Select(i => i.Message)));
+        result.Program.PlaneCount.ShouldBe(2);
+
+        var ops = result.Program.Ops;
+        var lastRead = ops.Index().Where(o => o.Item.Code == OpCode.PlaneRead).Max(o => o.Index);
+        var firstWrite = ops.Index().Where(o => o.Item.Code == OpCode.PlaneWrite).Min(o => o.Index);
+
+        firstWrite.ShouldBeGreaterThan(lastRead);
     }
 
     // --- how the pieces are counted and shared -----------------------------
 
     /// <summary>
-    /// Two breakers in one loop are two cells, and each costs its own evaluation.
-    /// Chaining them is the only way to ask for more latency than one.
+    /// An output that closes two loops is one plane, read twice and written once
+    /// — otherwise the same delayed value would be kept in two places and cost
+    /// two planes to say one number.
     /// </summary>
     [Fact]
-    public void Two_unit_delays_in_a_row_cost_two_evaluations()
+    public void One_output_closing_two_loops_is_one_plane()
     {
         var b = new PatchBuilder();
 
-        var coord = b.Add("coord", 0, 0);
-        var first = b.Add("feedback.unit", 200, 0);
-        var second = b.Add("feedback.unit", 400, 0);
+        var sum = b.Add("math.add", 200, 0);
+        var half = b.Add("math.mul", 400, 0, (1, 0.5f));
         var sink = b.Add(NodeCatalog.OutputTypeId, 600, 0, (NodeCatalog.OutputGainPort, 1f));
 
-        b.Wire(coord, 0, first, 0)
-         .Wire(first, 0, second, 0)
-         .Wire(second, 0, sink, NodeCatalog.OutputLeftPort);
-
-        var program = b.Patch.CompileForAudio().Program;
-        program.PlaneCount.ShouldBe(2);
-
-        var signal = Ramp(6);
-        var heard = Run(program, signal);
-
-        heard[0].ShouldBe(0f);
-        heard[1].ShouldBe(0f);
-
-        for (var i = 2; i < signal.Length; i++)
-            heard[i].ShouldBe(signal[i - 2], 1e-6f);
-    }
-
-    /// <summary>
-    /// One module is one cell however many things read from it — otherwise a
-    /// breaker whose output fanned out would be written twice and read as two
-    /// different signals.
-    /// </summary>
-    [Fact]
-    public void A_unit_delay_read_twice_is_still_one_cell()
-    {
-        var b = new PatchBuilder();
-
-        var coord = b.Add("coord", 0, 0);
-        var unit = b.Add("feedback.unit", 200, 0);
-        var sum = b.Add("math.add", 400, 0);
-        var sink = b.Add(NodeCatalog.OutputTypeId, 600, 0, (NodeCatalog.OutputGainPort, 1f));
-
-        b.Wire(coord, 0, unit, 0)
-         .Wire(unit, 0, sum, 0)
-         .Wire(unit, 0, sum, 1)
+        // Both of the Add's sockets are fed by what it produced last time, which
+        // is two wires running backwards out of one output.
+        b.Wire(sum, 0, half, 0)
+         .Wire(half, 0, sum, 0)
+         .Wire(half, 0, sum, 1)
          .Wire(sum, 0, sink, NodeCatalog.OutputLeftPort);
 
         var program = b.Patch.CompileForAudio().Program;
 
         program.PlaneCount.ShouldBe(1);
-        program.Ops.Count(o => o.Code == OpCode.PlaneRead).ShouldBe(1);
+        program.Ops.Count(o => o.Code == OpCode.PlaneRead).ShouldBe(2);
         program.Ops.Count(o => o.Code == OpCode.PlaneWrite).ShouldBe(1);
-
-        // Both sides of the Add see the same previous value, so it doubles it.
-        var signal = Ramp(4);
-        var heard = Run(program, signal);
-
-        for (var i = 1; i < signal.Length; i++)
-            heard[i].ShouldBe(signal[i - 1] * 2f, 1e-6f);
     }
 
     /// <summary>Cells are not lines and not accumulators, and are counted apart from both.</summary>
@@ -345,30 +328,6 @@ public class CycleInvariants
 
         output.ShouldAllBe(v => float.IsFinite(v));
         output[^1].ShouldBe(16f);
-    }
-
-    /// <summary>
-    /// A breaker with nothing patched in is a cell nothing ever writes but its own
-    /// knob, which is a constant one evaluation late rather than an error.
-    /// </summary>
-    [Fact]
-    public void A_unit_delay_with_nothing_patched_in_carries_its_knob()
-    {
-        var b = new PatchBuilder();
-
-        var unit = b.Add("feedback.unit", 200, 0, (0, 0.25f));
-        var sink = b.Add(NodeCatalog.OutputTypeId, 400, 0, (NodeCatalog.OutputGainPort, 1f));
-
-        b.Wire(unit, 0, sink, NodeCatalog.OutputLeftPort);
-
-        var result = b.Patch.CompileForAudio();
-        result.HasErrors.ShouldBeFalse();
-
-        var heard = Run(result.Program, new float[3]);
-
-        heard[0].ShouldBe(0f);
-        heard[1].ShouldBe(0.25f, 1e-6f);
-        heard[2].ShouldBe(0.25f, 1e-6f);
     }
 
     /// <summary>

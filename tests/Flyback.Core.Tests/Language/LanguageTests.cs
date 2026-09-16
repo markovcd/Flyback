@@ -141,10 +141,9 @@ public class LanguageTests
 
     [Fact]
     public void Loop() => Same("Loop", """
-        let echo = unit()
-        let sum  = square(freq: frequency(110)) * 0.06 + echo * 0.94
+        let sum = square(freq: frequency(110)) * 0.06 |> add()
 
-        echo.in <- sum
+        sum.b <- sum * 0.94
         sum |> out.left
 
         out.gain = 0.5

@@ -302,8 +302,30 @@ public class PatchWorkbenchTests
         wired.Text.ShouldContain("feedback");
     }
 
+    /// <summary>
+    /// A fault is answered by whatever the assistant does next, rather than
+    /// waiting for it to ask — the call that finished the patch is where it is
+    /// said.
+    /// </summary>
     [Fact]
-    public async Task A_cycle_is_reported_by_the_next_thing_the_assistant_does()
+    public async Task A_fault_is_reported_by_the_next_thing_the_assistant_does()
+    {
+        var bench = Bench();
+
+        await Call(bench, "add_module", $$"""{"type_id":"{{NodeCatalog.SampleTypeId}}","handle":"clip1"}""");
+        await Call(bench, "set_sample", """{"handle":"clip1","path":"gone.wav"}""");
+
+        var wired = await Call(bench, "connect", """{"from":"clip1","from_port":"out","to":"output1","to_port":"color"}""");
+
+        wired.Text.ShouldContain("gone.wav");
+    }
+
+    /// <summary>
+    /// A cycle is not a fault: the wire that closes it carries the evaluation
+    /// before, so the assistant may draw one and is told nothing is wrong.
+    /// </summary>
+    [Fact]
+    public async Task A_cycle_the_assistant_draws_is_not_complained_about()
     {
         var bench = Bench();
 
@@ -314,7 +336,8 @@ public class PatchWorkbenchTests
         await Call(bench, "connect", """{"from":"add1","to":"add2","to_port":"a"}""");
         var closed = await Call(bench, "connect", """{"from":"add2","to":"add1","to_port":"a"}""");
 
-        closed.Text.ShouldContain("feeds back into itself");
+        closed.Ok.ShouldBeTrue(closed.Text);
+        closed.Text.ShouldNotContain("feeds back into itself");
     }
 
     [Fact]
@@ -426,18 +449,17 @@ public class PatchWorkbenchTests
     {
         var bench = Bench();
 
-        // A cycle the screen can reach. The tools allow one to be built — the
-        // compiler is what refuses it — so this is how a genuine fault gets in.
-        await Call(bench, "add_module", """{"type_id":"osc.sine","handle":"sine1"}""");
-        await Call(bench, "add_module", """{"type_id":"osc.sine","handle":"sine2"}""");
-        await Call(bench, "connect", """{"from":"sine1","to":"sine2","to_port":"in"}""");
-        await Call(bench, "connect", """{"from":"sine2","to":"sine1","to_port":"in"}""");
-        await Call(bench, "connect", """{"from":"sine1","to":"output1","to_port":"color"}""");
+        // A clip naming a file that is not there. The tools allow one to be set —
+        // the compiler is what refuses it — so this is how a genuine fault gets
+        // in.
+        await Call(bench, "add_module", $$"""{"type_id":"{{NodeCatalog.SampleTypeId}}","handle":"clip1"}""");
+        await Call(bench, "set_sample", """{"handle":"clip1","path":"gone.wav"}""");
+        await Call(bench, "connect", """{"from":"clip1","from_port":"out","to":"output1","to_port":"color"}""");
 
         var offered = await Call(bench, "propose", """{"summary":"a tone"}""");
 
         offered.Ok.ShouldBeFalse();
-        offered.Text.ShouldContain("feeds back into itself");
+        offered.Text.ShouldContain("gone.wav");
         bench.HasProposal.ShouldBeFalse();
     }
 
@@ -468,14 +490,14 @@ public class PatchWorkbenchTests
     {
         var bench = await Heard();
 
-        await Call(bench, "add_module", """{"type_id":"osc.saw","handle":"saw1"}""");
-        await Call(bench, "connect", """{"from":"saw1","to":"tone1","to_port":"in"}""");
-        await Call(bench, "connect", """{"from":"tone1","to":"saw1","to_port":"in"}""");
+        await Call(bench, "add_module", $$"""{"type_id":"{{NodeCatalog.SampleTypeId}}","handle":"clip1"}""");
+        await Call(bench, "set_sample", """{"handle":"clip1","path":"gone.wav"}""");
+        await Call(bench, "connect", """{"from":"clip1","from_port":"out","to":"output1","to_port":"right"}""");
 
         var offered = await Call(bench, "propose", """{"summary":"a 440 hz tone"}""");
 
         offered.Ok.ShouldBeFalse();
-        offered.Text.ShouldContain("feeds back into itself");
+        offered.Text.ShouldContain("gone.wav");
         bench.HasProposal.ShouldBeFalse();
     }
 
@@ -929,22 +951,21 @@ public class PatchWorkbenchTests
     /// assistant cannot hear the patch.
     /// </summary>
     /// <remarks>
-    /// A cycle is the fault used here because it is one only the speakers reach. What
-    /// is on trial is the second compilation happening at all, not what it finds.
+    /// A clip naming a file that is not there is the fault used here, because a
+    /// Sample is a module only the speakers reach. What is on trial is the second
+    /// compilation happening at all, not what it finds.
     /// </remarks>
     [Fact]
     public async Task A_fault_only_the_speakers_reach_is_still_reported_on_every_edit()
     {
         var bench = Bench();
 
-        await Call(bench, "add_module", """{"type_id":"math.add","handle":"sum1"}""");
-        await Call(bench, "add_module", """{"type_id":"math.add","handle":"sum2"}""");
-        await Call(bench, "connect", """{"from":"sum1","to":"sum2","to_port":"a"}""");
-        await Call(bench, "connect", """{"from":"sum2","to":"sum1","to_port":"a"}""");
-        var wired = await Call(bench, "connect", """{"from":"sum2","to":"output1","to_port":"left"}""");
+        await Call(bench, "add_module", $$"""{"type_id":"{{NodeCatalog.SampleTypeId}}","handle":"clip1"}""");
+        await Call(bench, "set_sample", """{"handle":"clip1","path":"gone.wav"}""");
+        var wired = await Call(bench, "connect", """{"from":"clip1","from_port":"out","to":"output1","to_port":"left"}""");
 
         wired.Text.ShouldContain("Issues:");
-        wired.Text.ShouldContain("feeds back into itself");
+        wired.Text.ShouldContain("gone.wav");
     }
 
     /// <summary>
@@ -956,18 +977,16 @@ public class PatchWorkbenchTests
     {
         var bench = Bench();
 
-        await Call(bench, "add_module", """{"type_id":"math.add","handle":"sum1"}""");
-        await Call(bench, "add_module", """{"type_id":"math.add","handle":"sum2"}""");
-        await Call(bench, "connect", """{"from":"sum1","to":"sum2","to_port":"a"}""");
-        await Call(bench, "connect", """{"from":"sum2","to":"sum1","to_port":"a"}""");
-        await Call(bench, "connect", """{"from":"sum2","to":"output1","to_port":"color"}""");
-        var wired = await Call(bench, "connect", """{"from":"sum2","to":"output1","to_port":"left"}""");
+        await Call(bench, "add_module", $$"""{"type_id":"{{NodeCatalog.SampleTypeId}}","handle":"clip1"}""");
+        await Call(bench, "set_sample", """{"handle":"clip1","path":"gone.wav"}""");
+        await Call(bench, "connect", """{"from":"clip1","from_port":"out","to":"output1","to_port":"color"}""");
+        var wired = await Call(bench, "connect", """{"from":"clip1","from_port":"out","to":"output1","to_port":"left"}""");
 
         var said = wired.Text;
-        var first = said.IndexOf("feeds back into itself", StringComparison.Ordinal);
+        var first = said.IndexOf("gone.wav", StringComparison.Ordinal);
 
         first.ShouldBeGreaterThan(-1);
-        said.IndexOf("feeds back into itself", first + 1, StringComparison.Ordinal).ShouldBe(-1);
+        said.IndexOf("gone.wav", first + 1, StringComparison.Ordinal).ShouldBe(-1);
     }
 
     [Fact]
@@ -1440,18 +1459,16 @@ public class PatchWorkbenchTests
     {
         var bench = Bench();
 
-        await Call(bench, "add_module", """{"type_id":"math.add","handle":"sum1"}""");
-        await Call(bench, "add_module", """{"type_id":"math.add","handle":"sum2"}""");
-        await Call(bench, "connect", """{"from":"sum1","to":"sum2","to_port":"a"}""");
-        await Call(bench, "connect", """{"from":"sum2","to":"sum1","to_port":"a"}""");
-        var wired = await Call(bench, "connect", """{"from":"sum2","to":"output1","to_port":"left"}""");
+        await Call(bench, "add_module", $$"""{"type_id":"{{NodeCatalog.SampleTypeId}}","handle":"clip1"}""");
+        await Call(bench, "set_sample", """{"handle":"clip1","path":"gone.wav"}""");
+        var wired = await Call(bench, "connect", """{"from":"clip1","from_port":"out","to":"output1","to_port":"left"}""");
         wired.Ok.ShouldBeTrue(wired.Text);
 
         var heard = await Call(bench, "listen", """{"seconds":0.5}""");
 
         heard.Ok.ShouldBeFalse();
         heard.Wav.ShouldBeNull();
-        heard.Text.ShouldContain("feeds back into itself");
+        heard.Text.ShouldContain("gone.wav");
     }
 
     /// <summary>

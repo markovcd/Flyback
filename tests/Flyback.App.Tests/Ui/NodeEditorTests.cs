@@ -717,12 +717,12 @@ public class NodeEditorTests : UiTest
     }
 
     /// <summary>
-    /// Drawing a wire that runs backwards is the whole gesture: the Unit Delay the
-    /// loop needs is put on it, so a cycle can be patched the way a rack lets you
-    /// patch one, without the compiler having to guess what a cycle means.
+    /// Drawing a wire that runs backwards is the whole gesture, and nothing is put
+    /// on it: the wire itself carries the evaluation before, so a cycle is patched
+    /// the way a rack lets you patch one and the patch is legal as drawn.
     /// </summary>
     [AvaloniaFact]
-    public void A_wire_that_closes_a_loop_gets_a_unit_delay_put_on_it()
+    public void A_wire_that_closes_a_loop_is_drawn_as_it_was_asked_for()
     {
         var patch = Loop(out var osc, out var gain, out _);
         var (editor, window) = Editing(patch);
@@ -734,27 +734,27 @@ public class NodeEditorTests : UiTest
             NodeGeometry.OutputPort(gain, 0),
             NodeGeometry.InputPort(osc, sine, 2));
 
-        var unit = patch.Nodes.SingleOrDefault(n => n.TypeId == NodeCatalog.UnitDelayTypeId);
-        unit.ShouldNotBeNull("a Unit Delay should have been placed on the wire");
-
-        // The loop runs through it rather than around it.
-        patch.IncomingTo(unit.Id, 0).ShouldNotBeNull().SourceNode.ShouldBe(gain.Id);
-
         var closing = patch.IncomingTo(osc.Id, 2);
-        closing.ShouldNotBeNull("the oscillator's phase should be fed");
-        closing.SourceNode.ShouldBe(unit.Id, "and fed through the delay, not straight from the gain");
 
-        // Which is the point of all of it: the patch is legal now.
+        closing.ShouldNotBeNull("the oscillator's phase should be fed");
+        closing.SourceNode.ShouldBe(gain.Id, "straight from the gain, with nothing in between");
+
+        patch.Nodes.Count.ShouldBe(3, "nothing should have been added to the canvas");
+
+        // And it is the wire the whole loop rests on: what it carries is the
+        // previous evaluation, which is what the canvas dashes it to say.
+        Cycles.Backwards(patch).ShouldHaveSingleItem().ShouldBe(closing);
+
+        // Which is the point of all of it: the patch is legal as drawn.
         patch.CompileForAudio(NodeCatalog.BuiltIn).HasErrors.ShouldBeFalse();
     }
 
     /// <summary>
-    /// One gesture, so one press of undo — the module and the two wires it sits
-    /// between arrived together and have to leave together, or taking back a
-    /// mis-drag would leave a stray delay on the canvas.
+    /// One gesture, so one press of undo — and with nothing placed alongside the
+    /// wire, taking it back leaves the canvas as it was.
     /// </summary>
     [AvaloniaFact]
-    public void Taking_back_that_wire_takes_the_unit_delay_with_it()
+    public void Taking_back_that_wire_leaves_the_patch_as_it_was()
     {
         var patch = Loop(out var osc, out var gain, out _);
         var (editor, window) = Editing(patch);
@@ -767,16 +767,16 @@ public class NodeEditorTests : UiTest
 
         editor.Undo().ShouldBeTrue();
 
-        editor.Patch.Nodes.ShouldNotContain(n => n.TypeId == NodeCatalog.UnitDelayTypeId);
-        editor.Patch.IncomingTo(osc.Id, 2).ShouldBeNull("and the wire is gone with it");
+        editor.Patch.IncomingTo(osc.Id, 2).ShouldBeNull("the wire is gone");
+        Cycles.Backwards(editor.Patch).ShouldBeEmpty("and with it the loop");
     }
 
     /// <summary>
-    /// A wire that runs forwards is left alone. Nothing about this should put a
-    /// delay on an ordinary connection.
+    /// A wire that runs forwards closes nothing, and is drawn solid because what
+    /// it carries is this evaluation.
     /// </summary>
     [AvaloniaFact]
-    public void An_ordinary_wire_gets_nothing_put_on_it()
+    public void An_ordinary_wire_runs_forwards()
     {
         var patch = Loop(out _, out var gain, out var sink);
         var (editor, window) = Editing(patch);
@@ -785,19 +785,20 @@ public class NodeEditorTests : UiTest
             NodeGeometry.OutputPort(gain, 0),
             NodeGeometry.InputPort(sink, Sink, NodeCatalog.OutputRightPort));
 
-        patch.Nodes.ShouldNotContain(n => n.TypeId == NodeCatalog.UnitDelayTypeId);
         patch.IncomingTo(sink.Id, NodeCatalog.OutputRightPort)
             .ShouldNotBeNull()
             .SourceNode.ShouldBe(gain.Id, "the wire should be exactly what was drawn");
+
+        Cycles.Backwards(patch).ShouldBeEmpty();
     }
 
     /// <summary>
-    /// A loop that already has a delay on it gets no second one. Otherwise every
-    /// re-patch of an existing cycle would stack another evaluation of latency
-    /// onto it.
+    /// Re-drawing the wire that closes a loop leaves it one loop with one
+    /// evaluation of delay. Nothing accumulates, because there is nothing to
+    /// accumulate.
     /// </summary>
     [AvaloniaFact]
-    public void A_loop_that_is_already_broken_gets_no_second_delay()
+    public void Drawing_the_closing_wire_again_changes_nothing()
     {
         var patch = Loop(out var osc, out var gain, out _);
         var (editor, window) = Editing(patch);
@@ -806,19 +807,14 @@ public class NodeEditorTests : UiTest
         var phase = NodeGeometry.InputPort(osc, sine, 2);
 
         Drag(editor, window, NodeGeometry.OutputPort(gain, 0), phase);
-        patch.Nodes.Count(n => n.TypeId == NodeCatalog.UnitDelayTypeId).ShouldBe(1);
-
-        // Unplug the closing wire and draw it again. The delay is still on the
-        // loop, so the second drag is an ordinary re-patch.
-        var unit = patch.Nodes.Single(n => n.TypeId == NodeCatalog.UnitDelayTypeId);
 
         patch.Disconnect(osc.Id, 2);
         editor.NotifyPatchChanged();
 
-        Drag(editor, window, NodeGeometry.OutputPort(unit, 0), phase);
+        Drag(editor, window, NodeGeometry.OutputPort(gain, 0), phase);
 
-        patch.Nodes.Count(n => n.TypeId == NodeCatalog.UnitDelayTypeId)
-            .ShouldBe(1, "the loop was already broken, so nothing more was needed");
+        patch.Nodes.Count.ShouldBe(3);
+        Cycles.Backwards(patch).Count.ShouldBe(1, "still one loop, still one evaluation of delay");
     }
 
     // --- laying out ---------------------------------------------------------

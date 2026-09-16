@@ -150,13 +150,13 @@ public class GlslEmitterTests
     {
         var b = new PatchBuilder();
 
-        var unit = b.Add(NodeCatalog.UnitDelayTypeId, 200, 0);
-        var add = b.Add("math.add", 400, 0, (1, 0.25f));
+        var add = b.Add("math.add", 200, 0, (1, 0.25f));
+        var carry = b.Add("math.mul", 400, 0, (1, 1f));
         var sink = b.Add(NodeCatalog.OutputTypeId, 600, 0);
 
-        b.Wire(unit, 0, add, 0)
-         .Wire(add, 0, unit, 0)
-         .Wire(unit, 0, sink, 0);
+        b.Wire(add, 0, carry, 0)
+         .Wire(carry, 0, add, 0)
+         .Wire(add, 0, sink, 0);
 
         var program = b.Patch.CompileForVideo(NodeCatalog.BuiltIn).Program;
 

@@ -171,8 +171,7 @@ public class PrinterTests
     {
         var source = PatchPrinter.Print(Preset("Loop"), NodeCatalog.BuiltIn);
 
-        source.ShouldContain("= unit()");
-        source.ShouldContain(".in <- ");
+        source.ShouldContain(" <- ");
     }
 
     /// <summary>

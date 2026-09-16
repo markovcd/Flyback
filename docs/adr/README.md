@@ -30,7 +30,7 @@ context, decision, consequences.
 | [0009](0009-editable-defaults-on-every-input.md) | Every input port carries an editable default |
 | [0010](0010-any-typed-ports-for-polymorphic-maths.md) | `Any`-typed ports make maths modules polymorphic |
 | [0011](0011-compile-backwards-from-output.md) | Compile backwards from the Output node |
-| [0012](0012-feedback-as-a-module-not-a-cycle.md) | Feedback is an explicit module, not a graph cycle |
+| [0012](0012-feedback-as-a-module-not-a-cycle.md) | Feedback is an explicit module, not a graph cycle *(cycles superseded by [0075](0075-a-cycle-carries-its-own-delay.md))* |
 | [0013](0013-guard-arithmetic-instead-of-propagating-nan.md) | Guard arithmetic instead of propagating NaN |
 | [0014](0014-coordinate-and-value-conventions.md) | Coordinate and value conventions |
 | [0021](0021-recompile-the-whole-patch-on-every-edit.md) | Recompile the whole patch on every edit |
@@ -55,6 +55,7 @@ context, decision, consequences.
 | [0057](0057-a-shape-is-a-distance-and-one-module-inks-it.md) | A shape is a distance, and one module inks it *(user-directed)* |
 | [0064](0064-a-pixel-runs-only-what-a-pixel-changes.md) | A pixel runs only what a pixel changes |
 | [0074](0074-a-cell-is-a-plane-on-the-video-path.md) | A cell is a plane on the video path *(user-directed)* |
+| [0075](0075-a-cycle-carries-its-own-delay.md) | A cycle carries its own delay *(user-directed)* |
 
 ### The shell
 

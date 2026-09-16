@@ -273,14 +273,13 @@ public static class PatchLayout
     /// The wires between blocks, with the ones that run backwards dropped.
     /// </summary>
     /// <remarks>
-    /// A patch may hold a cycle only through a cycle breaker
-    /// (<see cref="NodeDef.IsCycleBreaker"/>), so unlike every other layered
-    /// drawing this one is told which edges to reverse rather than guessing. It
-    /// cuts them where the meaning already is: what leaves a Unit Delay is the
-    /// previous evaluation. Asked of the module rather than the block, so a
-    /// breaker inside a group also cuts what leaves the group. A wire with both
-    /// ends on one block is dropped too — it was accounted for when the group was
-    /// laid out among itself.
+    /// The wires that run backwards are the ones a layered drawing would have to
+    /// guess at, and this one is told: <see cref="Cycles.Backwards"/> has already
+    /// picked them, and they are where the meaning is cut too — what a backward
+    /// wire carries is the previous evaluation. Asked of the wire rather than the
+    /// block, so a loop inside a group also cuts what leaves the group. A wire
+    /// with both ends on one block is dropped too — it was accounted for when the
+    /// group was laid out among itself.
     /// </remarks>
     private static List<Link> Links(
         Patch patch,
@@ -289,13 +288,14 @@ public static class PatchLayout
         Dictionary<Guid, int> of)
     {
         var links = new List<Link>();
+        var backwards = Cycles.Backwards(patch);
 
         foreach (var wire in patch.Connections)
         {
             if (!of.TryGetValue(wire.SourceNode, out var from)) continue;
             if (!of.TryGetValue(wire.TargetNode, out var to)) continue;
             if (from == to) continue;
-            if (defs[wire.SourceNode].IsCycleBreaker) continue;
+            if (backwards.Contains(wire)) continue;
 
             links.Add(new Link(
                 from,
