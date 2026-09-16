@@ -313,6 +313,15 @@ public sealed partial class MainWindow
                 Tidy();
                 e.Handled = true;
                 break;
+
+            // Not an edit — nothing here is on either undo stack — but routed
+            // through the same dispatch as the rest of the toolbar's
+            // shortcuts, and guarded the same way a click on a disabled
+            // button already is: see ToggleRecordAsync.
+            case Key.R:
+                _ = ToggleRecordAsync();
+                e.Handled = true;
+                break;
         }
     }
 

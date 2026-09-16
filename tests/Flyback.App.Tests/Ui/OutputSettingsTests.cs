@@ -15,7 +15,8 @@ namespace Flyback.App.Tests.Ui;
 
 /// <summary>
 /// The Output's panel, which is where every audio and video setting lives since
-/// ADR-0037 emptied the toolbar into it.
+/// ADR-0037 emptied the toolbar into it — save for Record, which ADR-0080 put
+/// back.
 /// </summary>
 /// <remarks>
 /// The controls in it are the state of the instrument rather than of a selection, so
@@ -75,9 +76,13 @@ public class OutputSettingsTests : UiTest
     private static IEnumerable<string?> Buttons(MainWindow window) =>
         All<Button>(window).Select(b => b.Content as string);
 
-    /// <summary>The panel is present exactly when its record button is in the tree.</summary>
+    /// <summary>
+    /// The panel is present exactly when Rewind is in the tree — the one
+    /// standalone control left there since Record moved to the toolbar
+    /// (ADR-0080).
+    /// </summary>
     private static bool ShowingSettings(MainWindow window) =>
-        All<Button>(window).Any(b => b.Content as string == "Record…");
+        All<Button>(window).Any(b => b.Content as string == "Rewind");
 
     private static ComboBox Size(MainWindow window) =>
         All<ComboBox>(window).Single(c => c.ItemsSource is IEnumerable<string> items && items.Any(i => i.Contains(" x ")));
@@ -177,6 +182,7 @@ public class OutputSettingsTests : UiTest
     [InlineData("settings")]
     [InlineData("about")]
     [InlineData("tidy")]
+    [InlineData("record")]
     public void Every_toolbar_icon_says_what_it_is(string name)
     {
         var window = Open();
@@ -214,7 +220,6 @@ public class OutputSettingsTests : UiTest
 
         ShowingSettings(window).ShouldBeTrue();
 
-        Buttons(window).ShouldContain("Record…");
         Buttons(window).ShouldContain("Rewind");
     }
 
@@ -360,8 +365,41 @@ public class OutputSettingsTests : UiTest
 
     // --- the record button ---------------------------------------------------
 
-    private static Button Record(MainWindow window) =>
-        All<Button>(window).Single(b => b.Content as string is "Record…" or "Stop");
+    /// <summary>
+    /// Named rather than found by content: it lives on the toolbar now and a
+    /// glyph, unlike the label it replaced, has nothing a test can read.
+    /// </summary>
+    private static Button Record(MainWindow window) => Named<Button>(window, "record");
+
+    /// <summary>
+    /// On the toolbar, so it is reachable with nothing selected — unlike the
+    /// Output panel row it replaced (ADR-0080).
+    /// </summary>
+    [AvaloniaFact]
+    public void The_record_button_is_on_the_toolbar_whatever_is_selected()
+    {
+        var window = Open();
+
+        Record(window).ShouldNotBeNull();
+
+        Select(window, Editor(window).Patch.Output);
+
+        Record(window).ShouldNotBeNull();
+    }
+
+    /// <summary>
+    /// Filled rather than outlined, unlike the other drawn icons — a record
+    /// light is a dot, not a stroke, and reads at this size only solid.
+    /// </summary>
+    [AvaloniaFact]
+    public void The_record_glyph_is_filled_rather_than_stroked()
+    {
+        var window = Open();
+        var icon = Record(window).Content.ShouldBeOfType<Avalonia.Controls.Shapes.Path>();
+
+        icon.Data.ShouldNotBeNull();
+        icon.Fill.ShouldNotBeNull("the fill follows the button's own foreground");
+    }
 
     /// <summary>The preset it opens on draws something, so there is a take to record.</summary>
     [AvaloniaFact]

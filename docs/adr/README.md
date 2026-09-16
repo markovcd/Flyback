@@ -73,7 +73,8 @@ context, decision, consequences.
 | [0046](0046-the-module-list-is-a-gesture-not-a-panel.md) | The module list is a gesture, not a panel *(user-directed)* |
 | [0070](0070-a-preset-declares-no-coordinates.md) | A preset declares no coordinates *(user-directed)* |
 | [0071](0071-two-undo-stacks-and-which-one-a-press-lands-on.md) | Two undo stacks, and which one a press lands on |
-| [0078](0078-export-leaves-the-shell-for-the-cli-that-already-writes-it.md) | Export leaves the shell for the CLI that already writes it *(user-directed)* |
+| [0078](0078-export-leaves-the-shell-for-the-cli-that-already-writes-it.md) | Export leaves the shell for the CLI that already writes it *(user-directed; its Output-panel `Record…` row moved to the toolbar by [0080](0080-record-moves-to-the-toolbar-with-a-glyph-and-ctrl-r.md))* |
+| [0080](0080-record-moves-to-the-toolbar-with-a-glyph-and-ctrl-r.md) | Record moves to the toolbar, with a glyph and Ctrl+R *(user-directed)* |
 
 ### Sound
 

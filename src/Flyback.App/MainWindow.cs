@@ -20,12 +20,15 @@ namespace Flyback.App;
 public sealed partial class MainWindow : Window
 {
     /// <summary>
-    /// Writes a performance, knobs and all, to a file. Fixed width: its label
-    /// becomes the one that stops a take, and a button that resizes mid-record
-    /// drags the panel about. A deterministic render of a frozen patch is
-    /// `flyback-cli render`'s job now — ADR-0078.
+    /// Writes a performance, knobs and all, to a file. On the toolbar rather
+    /// than the Output's panel — ADR-0080 — so the one control every session
+    /// reaches for is never a click away behind a selection. The same button
+    /// stops a take; its glyph swaps between the dot and the square rather
+    /// than its label, since a toolbar button here carries no text at all. A
+    /// deterministic render of a frozen patch is `flyback-cli render`'s job
+    /// now — ADR-0078.
     /// </summary>
-    private readonly Button recordButton = new() { Content = "Record…", Width = 118 };
+    private readonly Button recordButton = new();
 
     private readonly ComboBox resolution = new Picker
     {
@@ -692,6 +695,11 @@ public sealed partial class MainWindow : Window
 
         tidy.Click += (_, _) => Tidy();
 
+        // The glyph and the tip are set here, alongside every other toolbar
+        // button; what the tip actually says is decided per patch by
+        // MarkRecordable, which runs before this is ever shown.
+        Marked(recordButton, "record", Glyphs.Record(), RecordTip);
+
         WireSource();
         RefreshEditState();
 
@@ -709,6 +717,12 @@ public sealed partial class MainWindow : Window
         patchwork.Children.Add(tidy);
         patchwork.Children.Add(Separator());
         patchwork.Children.Add(codeButton);
+
+        // On its own, between what is done to the patch and what is done to
+        // the program: recording is neither — it is a fact about the
+        // performance, not an edit Ctrl+Z takes back.
+        var transport = Row();
+        transport.Children.Add(recordButton);
 
         assistantButton.IsEnabled = plugins.Assistants.Count > 0;
         ToolTip.SetTip(assistantButton, plugins.Assistants.Count > 0
@@ -740,6 +754,8 @@ public sealed partial class MainWindow : Window
         var bar = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
 
         bar.Children.Add(patchwork);
+        bar.Children.Add(Separator());
+        bar.Children.Add(transport);
         bar.Children.Add(Separator());
         bar.Children.Add(program);
 

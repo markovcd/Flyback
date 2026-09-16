@@ -1,3 +1,4 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Presenters;
 using Avalonia.Data;
@@ -53,6 +54,12 @@ internal static class Glyphs
     public static Control Presets() => Stroked(
         "M2,4 L14,4 M2,8 L14,8 M2,12 L10,12");
 
+    /// <summary>A plain dot, filled — the record light on every deck and camera.</summary>
+    public static Control Record() => Filled(new EllipseGeometry(new Rect(3, 3, 10, 10)));
+
+    /// <summary>A plain square, filled — what the dot becomes once a take is running.</summary>
+    public static Control Stop() => Filled(new RectangleGeometry(new Rect(3.5, 3.5, 9, 9)));
+
     /// <summary>
     /// Outlined rather than filled, to sit at the weight of the glyphs beside
     /// it, and colored from whatever holds it so that hovering, pressing and
@@ -73,18 +80,40 @@ internal static class Glyphs
             VerticalAlignment = VerticalAlignment.Center,
         };
 
-        // The ancestor's ContentPresenter, not the Button itself: a disabled
-        // button dims by setting Foreground on the presenter its template
-        // draws through, and leaves the Button's own property untouched.
-        // Binding to the Button would read a color that never changes.
-        path[!Avalonia.Controls.Shapes.Shape.StrokeProperty] = new Binding("Foreground")
-        {
-            RelativeSource = new RelativeSource(RelativeSourceMode.FindAncestor)
-            {
-                AncestorType = typeof(ContentPresenter),
-            },
-        };
+        path[!Avalonia.Controls.Shapes.Shape.StrokeProperty] = ForegroundBinding();
 
         return path;
     }
+
+    /// <summary>The two record glyphs, which read better solid than outlined at this size.</summary>
+    private static Control Filled(Geometry geometry)
+    {
+        var path = new Avalonia.Controls.Shapes.Path
+        {
+            Data = geometry,
+            Width = Box,
+            Height = Box,
+            Stretch = Stretch.None,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+
+        path[!Avalonia.Controls.Shapes.Shape.FillProperty] = ForegroundBinding();
+
+        return path;
+    }
+
+    /// <summary>
+    /// The ancestor's ContentPresenter, not the Button itself: a disabled
+    /// button dims by setting Foreground on the presenter its template draws
+    /// through, and leaves the Button's own property untouched. Binding to
+    /// the Button would read a color that never changes.
+    /// </summary>
+    private static Binding ForegroundBinding() => new("Foreground")
+    {
+        RelativeSource = new RelativeSource(RelativeSourceMode.FindAncestor)
+        {
+            AncestorType = typeof(ContentPresenter),
+        },
+    };
 }

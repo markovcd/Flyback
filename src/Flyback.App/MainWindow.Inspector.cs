@@ -42,8 +42,9 @@ public sealed partial class MainWindow
         + "Type to narrow the list, arrows to move through it, Enter to add.\n\n"
         + "Select a module to edit its values, and double-click its "
         + "name here to call it something else.\n\n"
-        + "Select the Output for the preview size, the renderer, "
-        + "sound, and saving a frame or a clip.\n\n"
+        + "Select the Output for the preview size, the renderer, and sound.\n\n"
+        + "Record, on the toolbar, writes what the patch is doing to a file — "
+        + "knobs and all, as it happens. Ctrl+R starts and stops it.\n\n"
         + "Drag from a socket to patch it into another, or onto bare "
         + "canvas to add a module already plugged in.\n"
         + "Drag a connected input to unplug it and take the wire "
@@ -181,18 +182,7 @@ public sealed partial class MainWindow
         // not say why is the most annoying thing a panel can contain.
         ToolTip.SetShowOnDisabled(recordButton, true);
 
-        recordButton.Click += async (_, _) =>
-        {
-            // The same button ends it. A take has no length, so stopping it is
-            // the only way it ever finishes.
-            if (recorder is not null)
-            {
-                Stop();
-                return;
-            }
-
-            await RecordAsync();
-        };
+        recordButton.Click += async (_, _) => await ToggleRecordAsync();
 
         BuildOutputSettings();
     }
@@ -875,7 +865,9 @@ public sealed partial class MainWindow
 
     /// <summary>
     /// The screen-and-speakers half of the Output's panel: what the picture is
-    /// rendered at and by, and the four ways of getting either of them out.
+    /// rendered at and by, and the one way of putting the timeline back to
+    /// zero. Recording a take is a toolbar button now, not a row here —
+    /// ADR-0080.
     /// </summary>
     /// <remarks>
     /// Built once and kept, not rebuilt per selection: these controls hold live
@@ -909,9 +901,6 @@ public sealed partial class MainWindow
         ToolTip.SetTip(rewind, "Take the patch back to zero seconds, in the picture and in the sound.");
 
         outputSettings.Children.Add(rewind);
-
-        outputSettings.Children.Add(Heading("Record"));
-        outputSettings.Children.Add(recordButton);
     }
 
     private static TextBlock Heading(string text) => new()
