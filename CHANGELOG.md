@@ -1,5 +1,47 @@
 # Changelog
 
+## 0.3.0 — 2026-09-16
+
+38 commits since 0.2.0.
+
+### Feedback loops
+- Loops now draw as well as sound. A loop carries each pixel's value from the previous frame, on both the CPU renderer and the GPU shader.
+- Removed the Unit Delay module. The wire that closes a loop is the delay, and the canvas draws it dashed.
+- A module can be wired to itself, and the wire is drawn beneath the module.
+- The wire a loop is cut at no longer changes when a module is dragged. Wires whose input sits left of their output are drawn as a U-turn.
+
+### Modules
+- Added Random (white and pink noise, stepped or drifting values), Slew, Decay and Euclid to Voice.
+- Added String, a Karplus-Strong plucked-string voice.
+- Added Layer (eight blend modes through a mask) and Line (distance to a segment) to Picture.
+- Added Analyzer, which charts the spectrum of the audio output on a log frequency axis.
+- Added the Euclid kit preset. Played is rebuilt as four plucked strings into a reverb and moves to the Effects plugin.
+
+### Assistant
+- Conversations are saved with their patch: inside a bundle, or alongside a `.fbk`/`.fbks` in the user's data folder.
+- Added a New conversation button that starts over on the same patch.
+- None can be picked as a provider, and a saved provider that fails to load falls back to None.
+
+### Opening files
+- Open a patch by dropping it on the window or passing it on the command line.
+- macOS opens `.fbk`, `.fbkb` and `.fbks` from Finder. Linux gets a `.desktop` file and MIME package for "Open With".
+
+### Command line
+- Added `print`, which writes any patch as text, with `--check` to confirm the printing compiles to the same program.
+- Added `modules`, which lists the installed modules by provider, with `--json`.
+- `check --strict` fails on warnings, `pack` supports `--json`, and the CLI supports shell completion.
+
+### Canvas and interface
+- The layout places a group as a single block, and a tidied patch is centered on the canvas.
+- The canvas is 15000×10000, and zoom goes out to an eighth.
+- Ctrl+E opens every group in the selection, and Ctrl+Shift+E closes them.
+- Plugin information moves from the status bar into About. The status bar shows the report on the left and wires and time on the right.
+- A printing of a patch with no bindings starts on its first statement rather than a blank line.
+
+### Internals
+- Code comments across the engine, shell, plugins and tests were trimmed to the non-obvious parts.
+- Added ADRs for per-pixel loop state, saved conversations and the Analyzer.
+
 ## 0.2.0 — 2026-09-10
 
 76 commits since 0.1.0.
