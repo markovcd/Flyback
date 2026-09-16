@@ -304,6 +304,35 @@ public class AudioEngineTests
         watching.At(watching.Keys.ToList().IndexOf(level)).ShouldBe(0d);
     }
 
+    /// <summary>
+    /// A rewind is the patch starting again, so what it plays after one is what a
+    /// fresh engine plays. In key because its envelope measures the interval from
+    /// a clock it remembers: left holding the old time, the first step after the
+    /// rewind is minus several seconds and the envelope leaps to the rails.
+    /// </summary>
+    [Fact]
+    public void A_rewind_plays_the_patch_as_it_first_began()
+    {
+        var patch = Presets.InKey(NodeCatalog.BuiltIn);
+
+        using var fresh = new LoopbackDevice();
+        using var first = new AudioEngine(fresh);
+        first.Update(patch);
+        first.Start();
+        var opening = fresh.Pump(4_096);
+
+        using var device = new LoopbackDevice();
+        using var engine = new AudioEngine(device);
+        engine.Update(patch);
+        engine.Start();
+
+        for (var i = 0; i < 200; i++) device.Pump();
+
+        engine.Rewind();
+
+        device.Pump(4_096).ShouldBe(opening);
+    }
+
     /// <summary>The device is the engine's to hold, and closing one closes the other.</summary>
     [Fact]
     public void Disposing_the_engine_closes_the_device()

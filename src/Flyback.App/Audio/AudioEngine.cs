@@ -39,6 +39,9 @@ public sealed class AudioEngine(IAudioDevice device) : IDisposable
     private State activeState = new(CompiledPatch.Silent, null, LiveValues.None);
     private IAudioSink? capture;
 
+    // One while a rewind is waiting for the callback to carry it out.
+    private int rewindPending;
+
     public bool IsRunning => device.IsRunning;
 
     /// <summary>The rate the device actually opened at, which a recording has to match.</summary>
@@ -65,8 +68,35 @@ public sealed class AudioEngine(IAudioDevice device) : IDisposable
 
     public void Stop() => device.Stop();
 
-    /// <summary>Rewinds the cursor and clears the decimation and DC filter state.</summary>
-    public void Rewind() => renderer.Reset();
+    /// <summary>
+    /// Takes the sound back to nought: the cursor, the decimation and DC filter
+    /// state, and the memory of the program that is playing.
+    /// </summary>
+    /// <remarks>
+    /// The memory has to go with the cursor. It holds the clock as it last read,
+    /// which is how a stateful module measures the interval, and a clock that says
+    /// minutes against a cursor at nought is an interval of minus minutes — an
+    /// envelope takes that as one enormous step and jumps to the rails, and decays
+    /// from there at its own rate.
+    /// <para>
+    /// Asked for here and done by the callback, because the callback is the one
+    /// thread that may touch either while the device runs. A stopped device has no
+    /// callback to do it, so it is done at once as well; doing it again when the
+    /// device starts clears what is already clear.
+    /// </para>
+    /// </remarks>
+    public void Rewind()
+    {
+        Volatile.Write(ref rewindPending, 1);
+
+        if (!device.IsRunning) Restart(Volatile.Read(ref activeState));
+    }
+
+    private void Restart(State state)
+    {
+        renderer.Reset();
+        state.Memory?.Clear();
+    }
 
     /// <summary>What turns each program swapped in here into IL, or null for a program that is only ever interpreted.</summary>
     public IlCompiler? Compiler { get; init; }
@@ -150,6 +180,9 @@ public sealed class AudioEngine(IAudioDevice device) : IDisposable
     private void Fill(Span<float> buffer)
     {
         var state = Volatile.Read(ref activeState);
+
+        if (Interlocked.Exchange(ref rewindPending, 0) == 1) Restart(state);
+
         renderer.Render(state.Program, buffer, state.Memory, state.Live);
 
         // After the render and before anything else, so what is recorded is what
