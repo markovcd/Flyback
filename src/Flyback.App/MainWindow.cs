@@ -49,11 +49,11 @@ public sealed partial class MainWindow : Window
     };
 
     /// <summary>
-    /// The Output section of the settings window: size, renderer and processor.
+    /// The Graphics section of the settings window: size, renderer and CPU code.
     /// Assembled once and lent to the window each time it opens, because these
     /// controls are the live state of the instrument (ADR-0082).
     /// </summary>
-    private readonly StackPanel outputSection = new() { Spacing = 8, Width = 280 };
+    private readonly StackPanel graphicsSection = new() { Spacing = 8, Width = 280 };
 
     /// <summary>The Recording section: how a take's frames are timed and compressed.</summary>
     private readonly StackPanel recordingSection = new() { Spacing = 8, Width = 280 };
@@ -87,8 +87,8 @@ public sealed partial class MainWindow : Window
     };
 
     /// <summary>
-    /// What <see cref="outputSection"/> was last saved as, and so what closing the
-    /// settings window without Save puts it back to.
+    /// What the Graphics, Recording and Sound sections were last saved as, and so
+    /// what closing the settings window without Save puts them back to.
     /// </summary>
     private OutputSettings outputSettings = new();
 
@@ -231,8 +231,8 @@ public sealed partial class MainWindow : Window
     /// </summary>
     private readonly ReportLine report = new();
 
-    private readonly ToggleButton gpuButton = new() { Content = "GPU", Width = 60 };
-    private readonly ToggleButton compiledButton = new() { Content = "Compiled", Width = 92 };
+    private readonly ToggleButton gpuButton = new() { Name = "render", Content = "GPU", Width = 60 };
+    private readonly ToggleButton compiledButton = new() { Name = "cpuCode", Content = "Compiled", Width = 92 };
     private readonly ToggleButton assistantButton =
         Toggle("assistant", "✦", "Describe a patch and have one built.");
 
@@ -303,7 +303,7 @@ public sealed partial class MainWindow : Window
     /// start on the default preset — see <see cref="Startup.OpenPath"/>.
     /// </param>
     /// <param name="outputSettingsPath">
-    /// Where the Output, Recording and Sound settings are read from and saved to.
+    /// Where the Graphics, Recording and Sound settings are read from and saved to.
     /// Null reads nothing and keeps nothing — unlike <paramref name="groupFolder"/>
     /// — so that the many tests that build a window with no arguments start on the defaults
     /// rather than on whatever the machine running them last saved. The program
@@ -872,7 +872,7 @@ public sealed partial class MainWindow : Window
         // built for it, so what they were last set to is still on them the next
         // time this is opened. The window around them is built fresh, so each
         // section the window owns has to be taken back from the last one first.
-        foreach (var section in new[] { outputSection, recordingSection, soundSection })
+        foreach (var section in new[] { graphicsSection, recordingSection, soundSection })
             if (section.Parent is ContentControl lender) lender.Content = null;
 
         var save = new Button { Content = "Save", Width = 84 };
@@ -894,14 +894,26 @@ public sealed partial class MainWindow : Window
         };
 
         tabs.Items.Add(SectionTab("Agent settings", panel.SettingsSection()));
-        tabs.Items.Add(SectionTab("Output settings", outputSection));
+        tabs.Items.Add(SectionTab("Graphics settings", graphicsSection));
         tabs.Items.Add(SectionTab("Recording settings", recordingSection));
         tabs.Items.Add(SectionTab("Sound settings", soundSection));
 
         var content = new StackPanel { Spacing = 12, Margin = new Thickness(18, 4, 18, 18) };
 
+        // Cancel answers exactly what the cross and Escape answer, so all three
+        // take the one way out below rather than each undoing things itself.
+        var cancel = new Button { Content = "Cancel", Width = 84 };
+
+        var buttons = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            Spacing = 8,
+            HorizontalAlignment = HorizontalAlignment.Right,
+            Children = { save, cancel },
+        };
+
         content.Children.Add(tabs);
-        content.Children.Add(save);
+        content.Children.Add(buttons);
 
         save.Click += (_, _) =>
         {
@@ -912,10 +924,12 @@ public sealed partial class MainWindow : Window
             Dialog.Close(save, true);
         };
 
+        cancel.Click += (_, _) => Dialog.Close(cancel, false);
+
         var saved = await this.ShowDialog<bool>("Settings", content);
 
-        // The cross and Escape both answer false — see Dialog.ShowDialog — which
-        // is every way out of this window that is not Save. Whatever was typed
+        // Cancel, the cross and Escape all answer false — see Dialog.ShowDialog —
+        // which is every way out of this window that is not Save. Whatever was typed
         // or picked since it opened belongs to this window, and only Save is
         // allowed to keep it.
         if (saved) return;

@@ -111,15 +111,15 @@ public sealed partial class MainWindow
     private static readonly int[] Latencies = [10, 20, 30, 50, 100, 200];
 
     private const string GpuTip =
-        "Render the picture with a shader instead of the processor. Turn it off to " +
+        "Draw the picture with a shader on the GPU, or on the CPU. Switch to the CPU to " +
         "compare the two, or if a long session starts to look stepped.";
 
     private const string CompiledTip =
-        "Run the sound, and a picture drawn by the processor, as machine code rather than " +
-        "interpreting it. The two sound and look the same; turn it off to compare what they cost.";
+        "Run the sound, and a picture the CPU draws, as machine code rather than " +
+        "interpreting it. The two sound and look the same; switch to interpreted to compare what they cost.";
 
     /// <summary>
-    /// Sets up the controls in the settings window's Output section. Called
+    /// Sets up the controls in the settings window's Graphics section. Called
     /// once, from the constructor, rather than when that window opens: what was
     /// last saved has to be in force before anybody has looked at them.
     /// </summary>
@@ -136,6 +136,11 @@ public sealed partial class MainWindow
         // long session drifting — see ADR-0035 on float32 and the phase
         // accumulator. It disables itself if the GPU turns out to be unusable.
         gpuButton.IsChecked = true;
+
+        // Named for what it would draw with, both ways, like the switch below
+        // it: an unticked "GPU" would leave the CPU unnamed.
+        gpuButton.IsCheckedChanged += (_, _) =>
+            gpuButton.Content = gpuButton.IsChecked == true ? "GPU" : "CPU";
 
         // On by default, like the GPU and for the same reason: it is the faster of
         // the two, and a program is interpreted anyway until its IL is ready, so
@@ -177,7 +182,7 @@ public sealed partial class MainWindow
 
         recordButton.Click += async (_, _) => await ToggleRecordAsync();
 
-        BuildOutputSection();
+        BuildGraphicsSection();
         BuildRecordingSection();
         BuildSoundSection();
 
@@ -188,7 +193,7 @@ public sealed partial class MainWindow
     }
 
     /// <summary>
-    /// Puts the Output section's controls to <paramref name="settings"/>, and
+    /// Puts the Graphics section's controls to <paramref name="settings"/>, and
     /// nothing else — what the preview and the compiler are doing is
     /// <see cref="UseOutputSettings"/>'s business.
     /// </summary>
@@ -216,7 +221,7 @@ public sealed partial class MainWindow
 
     /// <summary>
     /// Hands <paramref name="settings"/> to the preview and the compiler. The only
-    /// way anything in the Output section reaches either.
+    /// way anything in the Graphics section reaches either.
     /// </summary>
     /// <param name="say">Whether a change of processor is worth a line in the status bar.</param>
     private void UseOutputSettings(OutputSettings settings, bool say)
@@ -244,7 +249,7 @@ public sealed partial class MainWindow
     }
 
     /// <summary>
-    /// Takes what the Output section's controls hold as the settings, puts them
+    /// Takes what the Graphics section's controls hold as the settings, puts them
     /// in force, and writes them out when there is somewhere to. A failure to
     /// write is said, not thrown: they are in force for this run regardless.
     /// </summary>
@@ -959,21 +964,35 @@ public sealed partial class MainWindow
     }
 
     /// <summary>
-    /// The settings window's Output section: what the picture is rendered at and
-    /// by, and whether the processor runs the patch as machine code.
+    /// The settings window's Graphics section: what the picture is rendered at and
+    /// by, and whether the CPU runs the patch as machine code.
     /// </summary>
     /// <remarks>
     /// Built once and kept, not rebuilt per opening: these controls hold live
     /// state, and a control may have one parent at a time.
     /// </remarks>
-    private void BuildOutputSection()
+    private void BuildGraphicsSection()
     {
-        outputSection.Children.Add(Field("Size", resolution));
-        outputSection.Children.Add(Field("Render", gpuButton));
+        graphicsSection.Children.Add(Field("Size", resolution));
+        graphicsSection.Children.Add(Field("Render", gpuButton));
 
-        // Beside the GPU switch it is compared against, though it speeds the
-        // sound up too — the tip says so.
-        outputSection.Children.Add(Field("Processor", compiledButton));
+        // "CPU code" rather than "Processor", which beside a renderer that can
+        // be the CPU would read as the same setting twice. Beside the render
+        // switch it is compared against, though it speeds the sound up too.
+        graphicsSection.Children.Add(Field("CPU code", compiledButton));
+
+        // Said under the switch, because with the GPU drawing it changes nothing
+        // on screen and would otherwise look broken. Not greyed out then: it
+        // still decides how the sound runs.
+        graphicsSection.Children.Add(new TextBlock
+        {
+            Name = "cpuCodeNote",
+            Text = "Runs the sound, and the picture only while the CPU draws it.",
+            FontSize = Text.Small,
+            Foreground = Text.Muted,
+            TextWrapping = TextWrapping.Wrap,
+            Margin = new Thickness(Gutter, -4, 0, 0),
+        });
     }
 
     /// <summary>The settings window's Recording section: what a take is written as.</summary>

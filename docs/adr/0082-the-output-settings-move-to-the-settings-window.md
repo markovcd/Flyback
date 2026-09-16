@@ -46,7 +46,7 @@ dimmed sheet before it was kept. That made Save only half of what it looked
 like — the preview had already moved — and closing without saving had to undo
 changes rather than simply drop them. Now the controls are a draft: Save hands
 their values to the preview and the compiler and writes them out, and any other
-way out just puts the controls back. The processor switch's label still follows
+way out just puts the controls back. The CPU code switch's label still follows
 the switch as it is flicked, because it says what Save would do.
 
 **They are kept in `output.json`, beside `assistant.json`** in the per-user data
@@ -58,6 +58,23 @@ defaults.
 
 **The Output's panel carries its knobs and nothing else.** Selecting the Output
 still shows no delete button, because it cannot be deleted.
+
+**Amended: the section is called Graphics settings.** "Output" named the module
+the rows came from, which is where they no longer are, and read as though it
+covered the recording and sound sections beside it too. The class and its file
+keep the name `OutputSettings` and `output.json`, since that file holds all
+three sections and renaming it would lose what somebody had already saved.
+
+**Amended: the two switches say what they switch between.** All four
+combinations of Render and the processor switch are meaningful, but two of them
+did not look it. With the GPU drawing, the processor switch reaches only the
+sound, so flipping it changed nothing on screen; and the render switch said
+"GPU" either way, so off named nothing at all. Render now reads GPU or CPU as
+the processor switch already read Compiled or Interpreted. That switch is
+called *CPU code* rather than *Processor* — beside a renderer that can be the
+CPU, "Processor" read as the same setting twice — and a line under it says it
+runs the sound, and the picture only while the CPU draws it. It is not greyed
+out while the GPU draws, because it still decides how the sound runs.
 
 **Amended: two more sections, and a fourth setting on the agent's.** Four
 values were fixed in code that are choices about this machine rather than

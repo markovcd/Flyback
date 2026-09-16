@@ -4,7 +4,7 @@ using Xunit;
 namespace Flyback.App.Tests;
 
 /// <summary>
-/// The file the settings window's Output section is kept in.
+/// The file the settings window's Graphics, Recording and Sound sections are kept in.
 /// </summary>
 /// <remarks>
 /// Nothing here opens a window. What is worth pinning is that the file cannot

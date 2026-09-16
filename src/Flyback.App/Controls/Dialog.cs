@@ -257,6 +257,16 @@ internal sealed class ModalOverlay : Border
             BorderThickness = new Thickness(1),
             CornerRadius = new CornerRadius(6),
 
+            // Lifted off the sheet rather than printed on it, so the edge of the
+            // question reads at a glance against a dimmed patch that is busy.
+            BoxShadow = new BoxShadows(new BoxShadow
+            {
+                OffsetY = 10,
+                Blur = 32,
+                Spread = 2,
+                Color = Colors.DialogShadow,
+            }),
+
             // Centred and no bigger than it has to be.
             HorizontalAlignment = HorizontalAlignment.Center,
             VerticalAlignment = VerticalAlignment.Center,

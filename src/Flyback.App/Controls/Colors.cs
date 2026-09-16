@@ -43,6 +43,12 @@ internal static class Colors
     /// </summary>
     public static Color Scrim { get; } = Color.FromArgb(0xAA, 0x0A, 0x0B, 0x0D);
 
+    /// <summary>
+    /// The shadow a dialog casts on the scrim. Nearly black and nearly opaque,
+    /// because the scrim is already dark: anything lighter would not show on it.
+    /// </summary>
+    public static Color DialogShadow { get; } = Color.FromArgb(0xE6, 0x00, 0x00, 0x00);
+
     /// <summary>The canvas grid, and the brighter line every tenth of it.</summary>
     public static Color Grid { get; } = Color.FromRgb(0x24, 0x27, 0x2C);
 

@@ -72,6 +72,19 @@ public class DialogTests : UiTest
         All<ModalOverlay>(window).ShouldBeEmpty("the cross should have taken it down");
     }
 
+    /// <summary>Every dialog casts a shadow on the sheet behind it, so its edge reads against a busy patch.</summary>
+    [AvaloniaTheory]
+    [InlineData("settings")]
+    [InlineData("about")]
+    public void It_casts_a_shadow(string named)
+    {
+        var window = Open();
+        var frame = All<Border>(Show(window, named)).Single(b => b.Name == "dialog");
+
+        frame.BoxShadow.Count.ShouldBe(1);
+        frame.BoxShadow[0].Blur.ShouldBeGreaterThan(0);
+    }
+
     /// <summary>
     /// And again. The settings panel is the shell's, not the dialog's — it holds
     /// what was last typed into it — so the dialog it was shown in has to let go

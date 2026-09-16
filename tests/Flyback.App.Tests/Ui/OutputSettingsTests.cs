@@ -15,7 +15,7 @@ using Xunit;
 namespace Flyback.App.Tests.Ui;
 
 /// <summary>
-/// The Output settings — size, renderer, processor — which live in the settings
+/// The Graphics settings — size, renderer, processor — which live in the settings
 /// window and are kept between launches (ADR-0082), and the toolbar that opens it.
 /// </summary>
 /// <remarks>
@@ -103,9 +103,9 @@ public class OutputSettingsTests : UiTest, IDisposable
 
     /// <summary>
     /// Presses the settings button, waits for the window it puts up, and turns to
-    /// <paramref name="tab"/> — the Output tab unless told otherwise.
+    /// <paramref name="tab"/> — the Graphics tab unless told otherwise.
     /// </summary>
-    private static ModalOverlay OpenSettings(MainWindow window, int tab = OutputTab)
+    private static ModalOverlay OpenSettings(MainWindow window, int tab = GraphicsTab)
     {
         Named<Button>(window, "settings").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
 
@@ -127,13 +127,20 @@ public class OutputSettingsTests : UiTest, IDisposable
 
     private static TabControl Tabs(Visual within) => All<TabControl>(within).Single(t => t.Name == "settingsTabs");
 
-    private const int OutputTab = 1, RecordingTab = 2, SoundTab = 3;
+    private const int GraphicsTab = 1, RecordingTab = 2, SoundTab = 3;
 
     /// <summary>Answers the settings window by its Save, or by its cross.</summary>
-    private static void CloseSettings(MainWindow window, ModalOverlay dialog, bool save)
+    private static void CloseSettings(MainWindow window, ModalOverlay dialog, bool save) =>
+        CloseSettings(window, dialog, save ? "Save" : Cross);
+
+    /// <summary>What <see cref="CloseSettings(MainWindow, ModalOverlay, string)"/> takes to mean the frame's cross.</summary>
+    private const string Cross = "dismiss";
+
+    /// <summary>Answers the settings window by the button labelled <paramref name="by"/>, or by its cross.</summary>
+    private static void CloseSettings(MainWindow window, ModalOverlay dialog, string by)
     {
         All<Button>(dialog)
-            .Single(b => save ? b.Content as string == "Save" : b.Name == "dismiss")
+            .Single(b => by == Cross ? b.Name == Cross : b.Content as string == by)
             .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
 
         for (var attempt = 0; attempt < 20 && All<ModalOverlay>(window).Any(); attempt++)
@@ -173,15 +180,15 @@ public class OutputSettingsTests : UiTest, IDisposable
         var tabs = Tabs(dialog);
 
         tabs.Items.Cast<TabItem>().Select(t => (t.Header as TextBlock)?.Text)
-            .ShouldBe(["Agent settings", "Output settings", "Recording settings", "Sound settings"]);
+            .ShouldBe(["Agent settings", "Graphics settings", "Recording settings", "Sound settings"]);
         tabs.SelectedIndex.ShouldBe(0);
         tabs.TabStripPlacement.ShouldBe(Dock.Left, "the sections are a list down the left");
-        ShowingSettings(dialog).ShouldBeFalse("the Output tab is not the one showing");
+        ShowingSettings(dialog).ShouldBeFalse("the Graphics tab is not the one showing");
 
         var frame = All<Border>(dialog).Single(b => b.Name == "dialog");
         var size = frame.Bounds.Size;
 
-        tabs.SelectedIndex = OutputTab;
+        tabs.SelectedIndex = GraphicsTab;
         Settle(window);
 
         ShowingSettings(dialog).ShouldBeTrue();
@@ -309,9 +316,33 @@ public class OutputSettingsTests : UiTest, IDisposable
         Quality(again).Value.ShouldBe(85);
     }
 
-    /// <summary>The cross is every way out that is not Save, and changes nothing.</summary>
+    /// <summary>Save and Cancel sit side by side, in that order, against the right-hand edge.</summary>
     [AvaloniaFact]
-    public void Closing_without_saving_puts_the_settings_back()
+    public void Save_and_cancel_sit_together_on_the_right()
+    {
+        var window = Open();
+        var dialog = OpenSettings(window);
+
+        var save = All<Button>(dialog).Single(b => b.Content as string == "Save");
+        var cancel = All<Button>(dialog).Single(b => b.Content as string == "Cancel");
+
+        var row = save.Parent.ShouldBeOfType<StackPanel>();
+
+        cancel.Parent.ShouldBeSameAs(row);
+        row.Children.IndexOf(save).ShouldBeLessThan(row.Children.IndexOf(cancel));
+        row.HorizontalAlignment.ShouldBe(Avalonia.Layout.HorizontalAlignment.Right);
+
+        var tabs = Tabs(dialog);
+        var rightEdge = cancel.TranslatePoint(new Point(cancel.Bounds.Width, 0), tabs)!.Value.X;
+
+        rightEdge.ShouldBe(tabs.Bounds.Width, 1, "the buttons end where the tabs above them end");
+    }
+
+    /// <summary>Cancel and the cross are every way out that is not Save, and change nothing.</summary>
+    [AvaloniaTheory]
+    [InlineData(Cross)]
+    [InlineData("Cancel")]
+    public void Closing_without_saving_puts_the_settings_back(string by)
     {
         var window = Open(settingsPath);
         var preview = All<PreviewHost>(window).Single();
@@ -325,7 +356,7 @@ public class OutputSettingsTests : UiTest, IDisposable
 
         preview.Resolution.ShouldBe(before, "nothing is in force until Save");
 
-        CloseSettings(window, dialog, save: false);
+        CloseSettings(window, dialog, by);
 
         preview.Resolution.ShouldBe(before);
         File.Exists(settingsPath).ShouldBeFalse();
@@ -456,10 +487,45 @@ public class OutputSettingsTests : UiTest, IDisposable
         preview.Resolution.Width.ShouldBe(320);
     }
 
-    // --- the processor switch ----------------------------------------------
+    // --- the render and CPU code switches --------------------------------------
 
     private static ToggleButton Processor(Visual within) =>
-        All<ToggleButton>(within).Single(b => b.Content as string is "Compiled" or "Interpreted");
+        All<ToggleButton>(within).Single(b => b.Name == "cpuCode");
+
+    /// <summary>
+    /// Named for what it would draw with either way, like the CPU code switch
+    /// beside it, rather than an unticked "GPU" that leaves the CPU unnamed.
+    /// </summary>
+    [AvaloniaFact]
+    public void The_render_switch_names_the_gpu_or_the_cpu()
+    {
+        var window = Open();
+        var render = All<ToggleButton>(OpenSettings(window)).Single(b => b.Name == "render");
+
+        render.IsChecked = true;
+        render.Content.ShouldBe("GPU");
+
+        render.IsChecked = false;
+        render.Content.ShouldBe("CPU");
+    }
+
+    /// <summary>
+    /// Not "Processor", which beside a renderer that can be the CPU reads as the
+    /// same setting twice, and with a line saying what it reaches — with the GPU
+    /// drawing, flipping it changes nothing on screen.
+    /// </summary>
+    [AvaloniaFact]
+    public void The_cpu_code_row_says_what_it_reaches()
+    {
+        var window = Open();
+        var dialog = OpenSettings(window);
+        var texts = All<TextBlock>(dialog).Select(t => t.Text).ToList();
+
+        texts.ShouldContain("CPU code");
+        texts.ShouldNotContain("Processor");
+
+        All<TextBlock>(dialog).Single(t => t.Name == "cpuCodeNote").Text.ShouldNotBeNull().ShouldContain("sound");
+    }
 
     /// <summary>
     /// On by default, like the GPU beside it: a program is interpreted until its
@@ -515,7 +581,7 @@ public class OutputSettingsTests : UiTest, IDisposable
         var wanted = preview.Wanted;
 
         var dialog = OpenSettings(window);
-        var gpu = All<ToggleButton>(dialog).Single(b => b.Content as string == "GPU");
+        var gpu = All<ToggleButton>(dialog).Single(b => b.Name == "render");
 
         if (!gpu.IsEnabled) return;
 

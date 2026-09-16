@@ -7,7 +7,7 @@ namespace Flyback.App;
 
 /// <summary>
 /// What comes out of the program and how: the picture, a recorded take, and the
-/// speakers — the Output, Recording and Sound sections of the settings window.
+/// speakers — the Graphics, Recording and Sound sections of the settings window.
 /// </summary>
 /// <remarks>
 /// Properties of the machine rather than of the instrument, which is why none of it
