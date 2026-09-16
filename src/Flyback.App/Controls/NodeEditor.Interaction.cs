@@ -360,6 +360,36 @@ public sealed partial class NodeEditor
 
         lastPointer = graph;
 
+        // The middle button's own state, sampled here rather than trusted to a
+        // Pressed/Released pair: a second button going down while the first is
+        // already captured for a wire, a node or a marquee does not reliably
+        // raise one of its own, and a pan that only worked when nothing else
+        // was under way would not be a pan that works while dragging a wire.
+        var middleDown = e.GetCurrentPoint(this).Properties.IsMiddleButtonPressed;
+
+        if (middleDown && drag != Drag.Pan)
+        {
+            panSuspended = drag;
+            drag = Drag.Pan;
+            panOrigin = screen;
+            Cursor = PanCursor;
+        }
+        else if (!middleDown && drag == Drag.Pan && panSuspended != Drag.None)
+        {
+            drag = panSuspended;
+            panSuspended = Drag.None;
+            dragOrigin = screen;
+
+            if (drag == Drag.Node)
+            {
+                dragOrigins.Clear();
+                foreach (var moving in SelectedNodes)
+                    dragOrigins[moving.Id] = new Point(moving.X, moving.Y);
+            }
+
+            Cursor = drag == Drag.Wire ? PortCursor : CursorOver(graph);
+        }
+
         switch (drag)
         {
             case Drag.Pan:
@@ -433,30 +463,43 @@ public sealed partial class NodeEditor
     {
         base.OnPointerReleased(e);
 
-        // The middle button coming back up ends the pan and hands the
-        // gesture it put on hold back its pointer, rebased to here — a wire
-        // picks up the pointer where the pan left it, and a module drag is
-        // re-baselined the same way <see cref="PressNode"/> baselines it to
-        // begin with, so neither jumps by however far the pan travelled.
-        if (drag == Drag.Pan
-            && e.InitialPressMouseButton == MouseButton.Middle
-            && panSuspended != Drag.None)
+        // The middle button's own release is answered here and nowhere else,
+        // whatever drag happens to be by the time it arrives — OnPointerMoved
+        // may already have handed a suspended gesture back its pointer on a
+        // move that crossed this release, and the wire (or drag, or marquee)
+        // it interrupted must not be finished off by a button that was never
+        // the one holding it.
+        if (e.InitialPressMouseButton == MouseButton.Middle)
         {
-            drag = panSuspended;
-            panSuspended = Drag.None;
-
-            var screen = e.GetPosition(this);
-            dragOrigin = screen;
-
-            if (drag == Drag.Node)
+            if (panSuspended != Drag.None)
             {
-                dragOrigins.Clear();
-                foreach (var moving in SelectedNodes)
-                    dragOrigins[moving.Id] = new Point(moving.X, moving.Y);
+                drag = panSuspended;
+                panSuspended = Drag.None;
+
+                var screen = e.GetPosition(this);
+                dragOrigin = screen;
+
+                if (drag == Drag.Node)
+                {
+                    dragOrigins.Clear();
+                    foreach (var moving in SelectedNodes)
+                        dragOrigins[moving.Id] = new Point(moving.X, moving.Y);
+                }
+
+                Cursor = drag == Drag.Wire ? PortCursor : CursorOver(ToGraph(screen));
+                InvalidateVisual();
+                return;
             }
 
-            Cursor = drag == Drag.Wire ? PortCursor : CursorOver(ToGraph(screen));
-            InvalidateVisual();
+            // A plain pan, nothing under it: ends like any other gesture.
+            if (drag == Drag.Pan)
+            {
+                EndGesture();
+                Cursor = CursorOver(ToGraph(e.GetPosition(this)));
+                e.Pointer.Capture(null);
+                InvalidateVisual();
+            }
+
             return;
         }
 

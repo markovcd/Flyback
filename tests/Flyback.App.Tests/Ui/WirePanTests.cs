@@ -37,6 +37,16 @@ public class WirePanTests : UiTest
 
     private static Point OnScreen(NodeEditor editor, Point graph) => editor.GraphToScreen.Transform(graph);
 
+    /// <summary>
+    /// The left button held throughout, exactly as a real mouse reports it on
+    /// every move while a finger stays down — headless <c>MouseMove</c> has no
+    /// button of its own and reports none at all unless told.
+    /// </summary>
+    private const RawInputModifiers LeftHeld = RawInputModifiers.LeftMouseButton;
+
+    private const RawInputModifiers LeftAndMiddleHeld =
+        RawInputModifiers.LeftMouseButton | RawInputModifiers.MiddleMouseButton;
+
     [AvaloniaFact]
     public void A_wire_survives_a_pan_taken_in_the_middle_of_the_drag()
     {
@@ -44,7 +54,7 @@ public class WirePanTests : UiTest
 
         var from = NodeGeometry.OutputPort(source, 0);
         window.MouseDown(OnScreen(editor, from), MouseButton.Left);
-        window.MouseMove(OnScreen(editor, from) + new Point(30, 20));
+        window.MouseMove(OnScreen(editor, from) + new Point(30, 20), LeftHeld);
         Settle(window);
 
         // A pan taken mid-drag does not drop the wire: it is put on hold and
@@ -52,15 +62,15 @@ public class WirePanTests : UiTest
         var panFrom = new Point(Wide / 2, Tall / 2);
         var panTo = panFrom - new Point(140, 0);
 
-        window.MouseDown(panFrom, MouseButton.Middle);
-        window.MouseMove(panTo);
+        window.MouseDown(panFrom, MouseButton.Middle, LeftHeld);
+        window.MouseMove(panTo, LeftAndMiddleHeld);
         Settle(window);
-        window.MouseUp(panTo, MouseButton.Middle);
+        window.MouseUp(panTo, MouseButton.Middle, LeftHeld);
         Settle(window);
 
         // Dropped where the target now sits on screen, after the pan.
         var to = NodeGeometry.InputPort(fed, NodeCatalog.BuiltIn.Require(fed.TypeId), 0);
-        window.MouseMove(OnScreen(editor, to));
+        window.MouseMove(OnScreen(editor, to), LeftHeld);
         window.MouseUp(OnScreen(editor, to), MouseButton.Left);
         Settle(window);
 
@@ -74,7 +84,7 @@ public class WirePanTests : UiTest
 
         var from = NodeGeometry.OutputPort(source, 0);
         window.MouseDown(OnScreen(editor, from), MouseButton.Left);
-        window.MouseMove(OnScreen(editor, from) + new Point(30, 20));
+        window.MouseMove(OnScreen(editor, from) + new Point(30, 20), LeftHeld);
         Settle(window);
 
         var before = editor.GraphToScreen.Invert().Transform(new Point(0, 0));
@@ -82,14 +92,14 @@ public class WirePanTests : UiTest
         var panFrom = new Point(Wide / 2, Tall / 2);
         var panTo = panFrom - new Point(140, 0);
 
-        window.MouseDown(panFrom, MouseButton.Middle);
-        window.MouseMove(panTo);
+        window.MouseDown(panFrom, MouseButton.Middle, LeftHeld);
+        window.MouseMove(panTo, LeftAndMiddleHeld);
         Settle(window);
 
         var after = editor.GraphToScreen.Invert().Transform(new Point(0, 0));
         Math.Abs(after.X - before.X).ShouldBeGreaterThan(50, "the view should have panned");
 
-        window.MouseUp(panTo, MouseButton.Middle);
+        window.MouseUp(panTo, MouseButton.Middle, LeftHeld);
         window.MouseUp(OnScreen(editor, from) + new Point(30, 20), MouseButton.Left);
         Settle(window);
     }
