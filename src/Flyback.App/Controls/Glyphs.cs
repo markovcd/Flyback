@@ -60,6 +60,10 @@ internal static class Glyphs
     /// <summary>A plain square, filled — what the dot becomes once a take is running.</summary>
     public static Control Stop() => Filled(new RectangleGeometry(new Rect(3.5, 3.5, 9, 9)));
 
+    /// <summary>A bar and a triangle pointing at it — skip to the start, on every deck.</summary>
+    public static Control Rewind() =>
+        Filled(Geometry.Parse("M3,3 L4.5,3 L4.5,13 L3,13 Z M13,3 L13,13 L5,8 Z"));
+
     /// <summary>
     /// Outlined rather than filled, to sit at the weight of the glyphs beside
     /// it, and colored from whatever holds it so that hovering, pressing and
@@ -85,7 +89,7 @@ internal static class Glyphs
         return path;
     }
 
-    /// <summary>The two record glyphs, which read better solid than outlined at this size.</summary>
+    /// <summary>The transport glyphs, which read better solid than outlined at this size.</summary>
     private static Control Filled(Geometry geometry)
     {
         var path = new Avalonia.Controls.Shapes.Path

@@ -865,9 +865,8 @@ public sealed partial class MainWindow
 
     /// <summary>
     /// The screen-and-speakers half of the Output's panel: what the picture is
-    /// rendered at and by, and the one way of putting the timeline back to
-    /// zero. Recording a take is a toolbar button now, not a row here —
-    /// ADR-0080.
+    /// rendered at and by. Recording a take and rewinding the timeline are
+    /// both toolbar buttons now, not rows here — ADR-0080, then ADR-0081.
     /// </summary>
     /// <remarks>
     /// Built once and kept, not rebuilt per selection: these controls hold live
@@ -882,25 +881,6 @@ public sealed partial class MainWindow
         // With the picture's settings because it sits beside the GPU switch it is
         // compared against, though it speeds the sound up too — the tip says so.
         outputSettings.Children.Add(Field("Processor", compiledButton));
-
-        outputSettings.Children.Add(Heading("Sound"));
-
-        // Under Sound rather than a heading of its own, though it moves both
-        // halves: a rewind that took the picture back and left the sound where it
-        // was would pull apart one instrument on one timeline. Volume is what
-        // switches the speakers on and off now (ADR-0079), so this is the only
-        // standalone control Sound has left.
-        var rewind = new Button { Content = "Rewind", Width = 92 };
-
-        rewind.Click += (_, _) =>
-        {
-            audio.Rewind();
-            preview.Rewind();
-        };
-
-        ToolTip.SetTip(rewind, "Take the patch back to zero seconds, in the picture and in the sound.");
-
-        outputSettings.Children.Add(rewind);
     }
 
     private static TextBlock Heading(string text) => new()

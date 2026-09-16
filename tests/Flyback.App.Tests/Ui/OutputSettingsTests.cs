@@ -15,8 +15,8 @@ namespace Flyback.App.Tests.Ui;
 
 /// <summary>
 /// The Output's panel, which is where every audio and video setting lives since
-/// ADR-0037 emptied the toolbar into it — save for Record, which ADR-0080 put
-/// back.
+/// ADR-0037 emptied the toolbar into it — save for Record and Rewind, which
+/// ADR-0080 and ADR-0081 put back.
 /// </summary>
 /// <remarks>
 /// The controls in it are the state of the instrument rather than of a selection, so
@@ -77,12 +77,12 @@ public class OutputSettingsTests : UiTest
         All<Button>(window).Select(b => b.Content as string);
 
     /// <summary>
-    /// The panel is present exactly when Rewind is in the tree — the one
-    /// standalone control left there since Record moved to the toolbar
-    /// (ADR-0080).
+    /// The panel is present exactly when the resolution picker is in the tree —
+    /// the one control left there since Record and Rewind both moved to the
+    /// toolbar (ADR-0080, ADR-0081).
     /// </summary>
     private static bool ShowingSettings(MainWindow window) =>
-        All<Button>(window).Any(b => b.Content as string == "Rewind");
+        All<ComboBox>(window).Any(c => c.ItemsSource is IEnumerable<string> items && items.Any(i => i.Contains(" x ")));
 
     private static ComboBox Size(MainWindow window) =>
         All<ComboBox>(window).Single(c => c.ItemsSource is IEnumerable<string> items && items.Any(i => i.Contains(" x ")));
@@ -94,8 +94,6 @@ public class OutputSettingsTests : UiTest
 
         // Nothing is selected on open, so none of it should be anywhere.
         ShowingSettings(window).ShouldBeFalse();
-
-        Buttons(window).ShouldNotContain("Rewind", "the timeline belongs to the Output now");
     }
 
     /// <summary>
@@ -183,6 +181,7 @@ public class OutputSettingsTests : UiTest
     [InlineData("about")]
     [InlineData("tidy")]
     [InlineData("record")]
+    [InlineData("rewind")]
     public void Every_toolbar_icon_says_what_it_is(string name)
     {
         var window = Open();
@@ -195,22 +194,6 @@ public class OutputSettingsTests : UiTest
         tip.Length.ShouldBeGreaterThan(8);
     }
 
-    /// <summary>
-    /// Rewind moves the picture and the sound together, so it lives with the
-    /// rest of the instrument rather than on the toolbar.
-    /// </summary>
-    [AvaloniaFact]
-    public void Rewind_is_on_the_output_panel()
-    {
-        var window = Open();
-
-        Buttons(window).ShouldNotContain("Rewind");
-
-        Select(window, Editor(window).Patch.Output);
-
-        Buttons(window).ShouldContain("Rewind");
-    }
-
     [AvaloniaFact]
     public void Selecting_the_output_shows_its_settings()
     {
@@ -219,8 +202,6 @@ public class OutputSettingsTests : UiTest
         Select(window, Editor(window).Patch.Output);
 
         ShowingSettings(window).ShouldBeTrue();
-
-        Buttons(window).ShouldContain("Rewind");
     }
 
     [AvaloniaFact]
@@ -396,6 +377,44 @@ public class OutputSettingsTests : UiTest
     {
         var window = Open();
         var icon = Record(window).Content.ShouldBeOfType<Avalonia.Controls.Shapes.Path>();
+
+        icon.Data.ShouldNotBeNull();
+        icon.Fill.ShouldNotBeNull("the fill follows the button's own foreground");
+    }
+
+    // --- the rewind button -----------------------------------------------
+
+    /// <summary>
+    /// Named rather than found by content, same as record: it lives on the
+    /// toolbar now and a glyph has nothing a test can read.
+    /// </summary>
+    private static Button Rewind(MainWindow window) => Named<Button>(window, "rewind");
+
+    /// <summary>
+    /// On the toolbar, so it is reachable with nothing selected — unlike the
+    /// Output panel row it replaced (ADR-0081).
+    /// </summary>
+    [AvaloniaFact]
+    public void The_rewind_button_is_on_the_toolbar_whatever_is_selected()
+    {
+        var window = Open();
+
+        Rewind(window).ShouldNotBeNull();
+
+        Select(window, Editor(window).Patch.Output);
+
+        Rewind(window).ShouldNotBeNull();
+    }
+
+    /// <summary>
+    /// Filled rather than outlined, like record beside it — a bar and a
+    /// triangle read at this size only solid.
+    /// </summary>
+    [AvaloniaFact]
+    public void The_rewind_glyph_is_filled_rather_than_stroked()
+    {
+        var window = Open();
+        var icon = Rewind(window).Content.ShouldBeOfType<Avalonia.Controls.Shapes.Path>();
 
         icon.Data.ShouldNotBeNull();
         icon.Fill.ShouldNotBeNull("the fill follows the button's own foreground");

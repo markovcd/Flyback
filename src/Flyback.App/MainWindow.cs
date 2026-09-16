@@ -30,6 +30,17 @@ public sealed partial class MainWindow : Window
     /// </summary>
     private readonly Button recordButton = new();
 
+    /// <summary>
+    /// Takes the patch back to zero seconds, in the picture and in the sound.
+    /// Beside recordButton rather than on the Output's panel — ADR-0081, the
+    /// same move ADR-0080 made for Record.
+    /// </summary>
+    private readonly Button rewindButton = new();
+
+    /// <summary>What the rewind button does — the same sentence its Output-panel tip used to carry.</summary>
+    private const string RewindTip =
+        "Take the patch back to zero seconds, in the picture and in the sound.";
+
     private readonly ComboBox resolution = new Picker
     {
         ItemsSource = Resolutions.Select(r => r.Label).ToList(),
@@ -700,6 +711,13 @@ public sealed partial class MainWindow : Window
         // MarkRecordable, which runs before this is ever shown.
         Marked(recordButton, "record", Glyphs.Record(), RecordTip);
 
+        Marked(rewindButton, "rewind", Glyphs.Rewind(), RewindTip);
+        rewindButton.Click += (_, _) =>
+        {
+            audio.Rewind();
+            preview.Rewind();
+        };
+
         WireSource();
         RefreshEditState();
 
@@ -719,9 +737,10 @@ public sealed partial class MainWindow : Window
         patchwork.Children.Add(codeButton);
 
         // On its own, between what is done to the patch and what is done to
-        // the program: recording is neither — it is a fact about the
-        // performance, not an edit Ctrl+Z takes back.
+        // the program: recording and rewinding are neither — both are facts
+        // about the performance, not an edit Ctrl+Z takes back.
         var transport = Row();
+        transport.Children.Add(rewindButton);
         transport.Children.Add(recordButton);
 
         assistantButton.IsEnabled = plugins.Assistants.Count > 0;
