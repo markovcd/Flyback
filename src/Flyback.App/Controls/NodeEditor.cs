@@ -237,6 +237,14 @@ public sealed partial class NodeEditor : Control
     private Point dragOrigin;
 
     /// <summary>
+    /// What the middle button put on hold to pan, and where the pan itself
+    /// started. <see cref="Drag.None"/> when the pan has nothing under it,
+    /// which is the ordinary case and needs nothing restored when it ends.
+    /// </summary>
+    private Drag panSuspended = Drag.None;
+    private Point panOrigin;
+
+    /// <summary>
     /// Where each module of the selection was when the drag began. Recorded for
     /// all of them rather than tracked as one offset, so that a drag ending
     /// exactly where it started can be told from one that moved — which is what

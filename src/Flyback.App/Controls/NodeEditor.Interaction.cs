@@ -27,9 +27,16 @@ public sealed partial class NodeEditor
         // Panning is the middle button and nothing else: the right one opens
         // the module list instead — ADR-0046 — because a button cannot both
         // open something on a click and stay silent for one.
+        //
+        // It pans mid-gesture too, rather than stealing the gesture under way:
+        // a wire (or a drag, or a marquee) is put on hold and picks back up
+        // where it left off once the button comes back up, in
+        // OnPointerReleased below.
         if (properties.IsMiddleButtonPressed)
         {
+            if (drag != Drag.Pan) panSuspended = drag;
             drag = Drag.Pan;
+            panOrigin = screen;
             Cursor = PanCursor;
             e.Pointer.Capture(this);
             return;
@@ -184,6 +191,7 @@ public sealed partial class NodeEditor
     private void EndGesture()
     {
         drag = Drag.None;
+        panSuspended = Drag.None;
 
         pendingNarrow = null;
         dragOrigins.Clear();
@@ -355,13 +363,13 @@ public sealed partial class NodeEditor
         switch (drag)
         {
             case Drag.Pan:
-                PanTo(pan + (screen - dragOrigin));
+                PanTo(pan + (screen - panOrigin));
 
                 // Taken from where the pointer is rather than from where the
                 // view ended up, so that a drag pushing at an edge does not
                 // build up a debt of movement to be paid back before the view
                 // will come away from it again.
-                dragOrigin = screen;
+                panOrigin = screen;
                 InvalidateVisual();
                 return;
 
@@ -424,6 +432,33 @@ public sealed partial class NodeEditor
     protected override void OnPointerReleased(PointerReleasedEventArgs e)
     {
         base.OnPointerReleased(e);
+
+        // The middle button coming back up ends the pan and hands the
+        // gesture it put on hold back its pointer, rebased to here — a wire
+        // picks up the pointer where the pan left it, and a module drag is
+        // re-baselined the same way <see cref="PressNode"/> baselines it to
+        // begin with, so neither jumps by however far the pan travelled.
+        if (drag == Drag.Pan
+            && e.InitialPressMouseButton == MouseButton.Middle
+            && panSuspended != Drag.None)
+        {
+            drag = panSuspended;
+            panSuspended = Drag.None;
+
+            var screen = e.GetPosition(this);
+            dragOrigin = screen;
+
+            if (drag == Drag.Node)
+            {
+                dragOrigins.Clear();
+                foreach (var moving in SelectedNodes)
+                    dragOrigins[moving.Id] = new Point(moving.X, moving.Y);
+            }
+
+            Cursor = drag == Drag.Wire ? PortCursor : CursorOver(ToGraph(screen));
+            InvalidateVisual();
+            return;
+        }
 
         if (drag == Drag.Wire)
             CompleteWire(ToGraph(e.GetPosition(this)));
