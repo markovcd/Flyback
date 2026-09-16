@@ -76,6 +76,18 @@ CPU, "Processor" read as the same setting twice — and a line under it says it
 runs the sound, and the picture only while the CPU draws it. It is not greyed
 out while the GPU draws, because it still decides how the sound runs.
 
+**Amended again: CPU code is not a setting at all.** Moving it here made it
+saved, which [0076](0076-the-processor-runs-a-program-as-il-once-it-is-built.md)
+had said it must not be: compiled and interpreted give the same bits, so the
+switch is for comparing what they cost or ruling the compiled code out of a
+fault, and a run left interpreted by a comparison somebody forgot about would be
+twice as slow on every launch with nothing to say why. It left the window and
+the file. A run started with `--interpreted` keeps the CPU's programs on the
+interpreter throughout and says so once on the status bar. The interpreter
+itself is untouched — every edit still plays on it the moment it is made, while
+its machine code is built — so only the choice went, not the thing chosen
+between.
+
 **Amended: two more sections, and a fourth setting on the agent's.** Four
 values were fixed in code that are choices about this machine rather than
 about any patch, and the window was already the place for those:

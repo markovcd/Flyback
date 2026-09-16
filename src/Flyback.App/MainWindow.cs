@@ -49,7 +49,7 @@ public sealed partial class MainWindow : Window
     };
 
     /// <summary>
-    /// The Graphics section of the settings window: size, renderer and CPU code.
+    /// The Graphics section of the settings window: size, preview rate and renderer.
     /// Assembled once and lent to the window each time it opens, because these
     /// controls are the live state of the instrument (ADR-0082).
     /// </summary>
@@ -239,7 +239,6 @@ public sealed partial class MainWindow : Window
     private readonly ReportLine report = new();
 
     private readonly ToggleButton gpuButton = new() { Name = "render", Content = "GPU", Width = 60 };
-    private readonly ToggleButton compiledButton = new() { Name = "cpuCode", Content = "Compiled", Width = 92 };
     private readonly ToggleButton assistantButton =
         Toggle("assistant", "✦", "Describe a patch and have one built.");
 
@@ -316,10 +315,21 @@ public sealed partial class MainWindow : Window
     /// rather than on whatever the machine running them last saved. The program
     /// itself passes <see cref="OutputSettings.File"/>.
     /// </param>
-    public MainWindow(string? groupFolder = null, string? openPath = null, string? outputSettingsPath = null)
+    /// <param name="interpreted">
+    /// Keep the CPU's programs on the interpreter for the whole run — see
+    /// <see cref="Startup.Interpreted"/>.
+    /// </param>
+    public MainWindow(
+        string? groupFolder = null,
+        string? openPath = null,
+        string? outputSettingsPath = null,
+        bool interpreted = false)
     {
         this.groupFolder = groupFolder;
         this.outputSettingsPath = outputSettingsPath;
+
+        // Before anything is compiled, so no build is started only to be taken off.
+        compiler.Enabled = !interpreted;
 
         if (outputSettingsPath is not null) outputSettings = OutputSettings.Load(outputSettingsPath);
 
@@ -416,6 +426,11 @@ public sealed partial class MainWindow : Window
         if (sound.Output is null)
             Report("No sound backend is installed, so Volume will do nothing. "
                 + "See About for where plugins are looked for.");
+
+        // Said once, because nothing on screen shows it but the status bar's
+        // "interpreted", and a run that is slower for a reason should say which.
+        if (interpreted)
+            Report($"Running interpreted ({Startup.InterpretedFlag}): the CPU's programs are not compiled this run.");
 
         var ticker = new DispatcherTimer(DispatcherPriority.Background) { Interval = TimeSpan.FromMilliseconds(250) };
         ticker.Tick += (_, _) => UpdateStatus();

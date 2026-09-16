@@ -31,7 +31,9 @@ internal static class Program
         // program's icon, or opened with it, arrives as the whole of args and
         // nothing else does — so anything that looks like a switch is left for
         // Avalonia's own lifetime to make of what it likes.
-        Startup.Load(args.FirstOrDefault(a => !a.StartsWith('-')));
+        Startup.Load(
+            args.FirstOrDefault(a => !a.StartsWith('-')),
+            interpreted: args.Contains(Startup.InterpretedFlag, StringComparer.OrdinalIgnoreCase));
 
         BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
     }

@@ -3,10 +3,11 @@
 **Status:** Accepted · 2026-09-16 · *user-directed* · implemented in
 `Compile/IlEmitter.cs`, `Compile/IlOps.cs`, `Compile/IlProgram.cs`,
 `Compile/IlCompiler.cs`, `Render/SynthRenderer.cs`, `Render/AudioRenderer.cs` and
-the Output panel's **Processor** switch · takes up the option
+the `--interpreted` launch flag · takes up the option
 [0005](0005-compile-to-a-flat-register-machine.md) declined, amends
 [0006](0006-scalar-interpreter-parallel-over-rows.md) and
-[0021](0021-recompile-the-whole-patch-on-every-edit.md)
+[0021](0021-recompile-the-whole-patch-on-every-edit.md) · its **Processor** switch
+became a launch flag by [0082](0082-the-output-settings-move-to-the-settings-window.md)
 
 ## Context
 
@@ -185,3 +186,11 @@ device while somebody is typing: that was reasoned about, not recorded.
 
 **The switch is not saved.** Like the GPU switch, it is how two backends are
 compared rather than a preference, and it starts on every time.
+
+**Amended: the switch is a launch flag.** It moved to the settings window and
+was saved there for a while, which is exactly the preference this record said it
+was not; [0082](0082-the-output-settings-move-to-the-settings-window.md) took it
+out again. `--interpreted` on the command line starts a run that never builds IL
+for the CPU's programs and says so on the status bar — the same comparison, and
+the same way to rule the compiled code out of a fault, with nothing left behind
+for the next launch.

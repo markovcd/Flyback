@@ -37,7 +37,10 @@ public sealed class FlybackApp : Application
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            var window = new MainWindow(openPath: Startup.OpenPath, outputSettingsPath: OutputSettings.File);
+            var window = new MainWindow(
+                openPath: Startup.OpenPath,
+                outputSettingsPath: OutputSettings.File,
+                interpreted: Startup.Interpreted);
             desktop.MainWindow = window;
 
             // Windows and Linux hand a file to open in through argv, which

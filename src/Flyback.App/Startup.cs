@@ -23,9 +23,21 @@ internal static class Startup
     /// </summary>
     public static string? OpenPath { get; private set; }
 
-    public static void Load(string? openPath = null)
+    /// <summary>What <see cref="Interpreted"/> is asked for with on the command line.</summary>
+    public const string InterpretedFlag = "--interpreted";
+
+    /// <summary>
+    /// Whether this run keeps the CPU's programs on the interpreter rather than
+    /// building machine code under them (ADR-0076). A flag rather than a setting:
+    /// the two give the same bits, so it is for comparing what they cost or
+    /// ruling the compiled code out of a fault, never a preference to be kept.
+    /// </summary>
+    public static bool Interpreted { get; private set; }
+
+    public static void Load(string? openPath = null, bool interpreted = false)
     {
         OpenPath = openPath;
+        Interpreted = interpreted;
 
         Plugins = PluginHost.Load();
         NodeCatalog.Install(Plugins.Modules);

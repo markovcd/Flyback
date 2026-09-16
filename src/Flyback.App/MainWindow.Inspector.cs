@@ -132,10 +132,6 @@ public sealed partial class MainWindow
         "Draw the picture with a shader on the GPU, or on the CPU. Switch to the CPU to " +
         "compare the two, or if a long session starts to look stepped.";
 
-    private const string CompiledTip =
-        "Run the sound, and a picture the CPU draws, as machine code rather than " +
-        "interpreting it. The two sound and look the same; switch to interpreted to compare what they cost.";
-
     /// <summary>
     /// Sets up the controls in the settings window's Graphics section. Called
     /// once, from the constructor, rather than when that window opens: what was
@@ -144,7 +140,7 @@ public sealed partial class MainWindow
     /// <remarks>
     /// The controls themselves act on nothing. Picking a size or flicking a
     /// switch is a draft until Save, which is the only thing that hands the
-    /// section's values to the preview and the compiler — see
+    /// section's values to the preview and the sound — see
     /// <see cref="UseOutputSettings"/>.
     /// </remarks>
     private void WireOutputControls()
@@ -155,20 +151,10 @@ public sealed partial class MainWindow
         // accumulator. It disables itself if the GPU turns out to be unusable.
         gpuButton.IsChecked = true;
 
-        // Named for what it would draw with, both ways, like the switch below
-        // it: an unticked "GPU" would leave the CPU unnamed.
+        // Named for what it would draw with, both ways: an unticked "GPU" would
+        // leave the CPU unnamed.
         gpuButton.IsCheckedChanged += (_, _) =>
             gpuButton.Content = gpuButton.IsChecked == true ? "GPU" : "CPU";
-
-        // On by default, like the GPU and for the same reason: it is the faster of
-        // the two, and a program is interpreted anyway until its IL is ready, so
-        // nothing waits for it. Off is how the two get compared — they give the
-        // same numbers, so what differs is only what the status bar says it cost.
-        // Its label follows the switch at once, since it says what Save would do.
-        compiledButton.IsChecked = true;
-        ToolTip.SetTip(compiledButton, CompiledTip);
-        compiledButton.IsCheckedChanged += (_, _) =>
-            compiledButton.Content = compiledButton.IsChecked == true ? "Compiled" : "Interpreted";
 
         compiler.Failed += message => Dispatcher.UIThread.Post(() => Report(message));
 
@@ -207,7 +193,7 @@ public sealed partial class MainWindow
         // Quietly, because nobody asked for anything yet: a saved answer is
         // what the program starts in, not a change to report.
         ShowOutputSettings(outputSettings);
-        UseOutputSettings(outputSettings, say: false);
+        UseOutputSettings(outputSettings);
     }
 
     /// <summary>
@@ -223,8 +209,6 @@ public sealed partial class MainWindow
         // the BackendChanged handler above already set.
         if (gpuButton.IsEnabled) gpuButton.IsChecked = settings.Gpu;
 
-        compiledButton.IsChecked = settings.Compiled;
-
         frameRate.SelectedIndex = Nearest(FrameRates, settings.FrameRate);
         previewFrameRate.SelectedIndex = Nearest(PreviewFrameRates, settings.PreviewFrameRate);
         jpegQuality.Value = settings.JpegQuality;
@@ -239,11 +223,10 @@ public sealed partial class MainWindow
         Enumerable.Range(0, rows.Count).MinBy(row => Math.Abs(rows[row] - value));
 
     /// <summary>
-    /// Hands <paramref name="settings"/> to the preview and the compiler. The only
-    /// way anything in the Graphics section reaches either.
+    /// Hands <paramref name="settings"/> to the preview and the sound. The only way
+    /// anything in the Graphics section reaches either.
     /// </summary>
-    /// <param name="say">Whether a change of processor is worth a line in the status bar.</param>
-    private void UseOutputSettings(OutputSettings settings, bool say)
+    private void UseOutputSettings(OutputSettings settings)
     {
         var size = Resolutions[SizeRow(settings)].Size;
 
@@ -255,15 +238,6 @@ public sealed partial class MainWindow
         // step with the preview rather than fixed, now that the size list is not
         // all one shape.
         audio.Aspect = SynthRenderer.AspectOf(size.Width, size.Height);
-
-        if (compiler.Enabled == settings.Compiled) return;
-
-        compiler.Enabled = settings.Compiled;
-
-        if (say)
-            Report(settings.Compiled
-                ? "The processor runs the patch as compiled code, once each edit has been compiled."
-                : "The processor interprets the patch.");
     }
 
     /// <summary>The row of the size list a saved size is, or the default for one the list no longer offers.</summary>
@@ -292,7 +266,6 @@ public sealed partial class MainWindow
             // A switch greyed out by a GPU that failed says nothing about what
             // was wanted, so the last answer is kept for a launch that has one.
             Gpu = gpuButton.IsEnabled ? gpuButton.IsChecked == true : outputSettings.Gpu,
-            Compiled = compiledButton.IsChecked == true,
             FrameRate = FrameRates[Math.Max(frameRate.SelectedIndex, 0)],
             PreviewFrameRate = PreviewFrameRates[Math.Max(previewFrameRate.SelectedIndex, 0)],
 
@@ -307,7 +280,7 @@ public sealed partial class MainWindow
         if (outputSettings.LatencyMilliseconds != before.LatencyMilliseconds)
             Report("The new latency takes effect the next time Flyback starts.");
 
-        UseOutputSettings(outputSettings, say: true);
+        UseOutputSettings(outputSettings);
 
         if (outputSettingsPath is null) return;
 
@@ -992,8 +965,8 @@ public sealed partial class MainWindow
     }
 
     /// <summary>
-    /// The settings window's Graphics section: what the picture is rendered at and
-    /// by, and whether the CPU runs the patch as machine code.
+    /// The settings window's Graphics section: what the picture is rendered at,
+    /// how often, and by what.
     /// </summary>
     /// <remarks>
     /// Built once and kept, not rebuilt per opening: these controls hold live
@@ -1009,24 +982,6 @@ public sealed partial class MainWindow
         graphicsSection.Children.Add(Field("Size", resolution));
         graphicsSection.Children.Add(Field("Preview rate", previewFrameRate));
         graphicsSection.Children.Add(Field("Render", gpuButton));
-
-        // "CPU code" rather than "Processor", which beside a renderer that can
-        // be the CPU would read as the same setting twice. Beside the render
-        // switch it is compared against, though it speeds the sound up too.
-        graphicsSection.Children.Add(Field("CPU code", compiledButton));
-
-        // Said under the switch, because with the GPU drawing it changes nothing
-        // on screen and would otherwise look broken. Not greyed out then: it
-        // still decides how the sound runs.
-        graphicsSection.Children.Add(new TextBlock
-        {
-            Name = "cpuCodeNote",
-            Text = "Runs the sound, and the picture only while the CPU draws it.",
-            FontSize = Text.Small,
-            Foreground = Text.Muted,
-            TextWrapping = TextWrapping.Wrap,
-            Margin = new Thickness(Gutter, -4, 0, 0),
-        });
     }
 
     /// <summary>The settings window's Recording section: what a take is written as.</summary>

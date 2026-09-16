@@ -33,20 +33,18 @@ public class OutputSettingsFileTests : IDisposable
         settings.Width.ShouldBe(960);
         settings.Height.ShouldBe(540);
         settings.Gpu.ShouldBeTrue();
-        settings.Compiled.ShouldBeTrue();
     }
 
     [Fact]
     public void What_is_saved_comes_back()
     {
-        new OutputSettings { Width = 320, Height = 180, Gpu = false, Compiled = false }.Save(File);
+        new OutputSettings { Width = 320, Height = 180, Gpu = false }.Save(File);
 
         var settings = OutputSettings.Load(File);
 
         settings.Width.ShouldBe(320);
         settings.Height.ShouldBe(180);
         settings.Gpu.ShouldBeFalse();
-        settings.Compiled.ShouldBeFalse();
     }
 
     [Fact]

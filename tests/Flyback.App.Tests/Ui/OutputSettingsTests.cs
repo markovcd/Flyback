@@ -15,7 +15,7 @@ using Xunit;
 namespace Flyback.App.Tests.Ui;
 
 /// <summary>
-/// The Graphics settings — size, renderer, processor — which live in the settings
+/// The Graphics settings — size, preview rate, renderer — which live in the settings
 /// window and are kept between launches (ADR-0082), and the toolbar that opens it.
 /// </summary>
 /// <remarks>
@@ -230,7 +230,6 @@ public class OutputSettingsTests : UiTest, IDisposable
         var dialog = OpenSettings(window);
 
         Size(dialog).SelectedIndex = 1;
-        Processor(dialog).IsChecked = false;
         CloseSettings(window, dialog, save: true);
 
         File.Exists(settingsPath).ShouldBeTrue();
@@ -242,7 +241,6 @@ public class OutputSettingsTests : UiTest, IDisposable
         var again = OpenSettings(next);
 
         Size(again).SelectedIndex.ShouldBe(1);
-        Processor(again).IsChecked.ShouldBe(false);
     }
 
     // --- the recording and sound sections ------------------------------------
@@ -351,7 +349,6 @@ public class OutputSettingsTests : UiTest, IDisposable
         var dialog = OpenSettings(window);
 
         Size(dialog).SelectedIndex = 0;
-        Processor(dialog).IsChecked = false;
         Dispatcher.UIThread.RunJobs();
 
         preview.Resolution.ShouldBe(before, "nothing is in force until Save");
@@ -363,7 +360,7 @@ public class OutputSettingsTests : UiTest, IDisposable
 
         var again = OpenSettings(window);
 
-        Processor(again).IsChecked.ShouldBe(true);
+        Size(again).SelectedIndex.ShouldBe(3, "the size it opened on, not the one picked");
     }
 
     /// <summary>
@@ -542,14 +539,11 @@ public class OutputSettingsTests : UiTest, IDisposable
         (PreviewFrameRate(again).SelectedItem as string).ShouldBe("30 fps");
     }
 
-    // --- the render and CPU code switches --------------------------------------
-
-    private static ToggleButton Processor(Visual within) =>
-        All<ToggleButton>(within).Single(b => b.Name == "cpuCode");
+    // --- the render switch and the interpreter -----------------------------------
 
     /// <summary>
-    /// Named for what it would draw with either way, like the CPU code switch
-    /// beside it, rather than an unticked "GPU" that leaves the CPU unnamed.
+    /// Named for what it would draw with either way, rather than an unticked
+    /// "GPU" that leaves the CPU unnamed.
     /// </summary>
     [AvaloniaFact]
     public void The_render_switch_names_the_gpu_or_the_cpu()
@@ -565,63 +559,38 @@ public class OutputSettingsTests : UiTest, IDisposable
     }
 
     /// <summary>
-    /// Not "Processor", which beside a renderer that can be the CPU reads as the
-    /// same setting twice, and with a line saying what it reaches — with the GPU
-    /// drawing, flipping it changes nothing on screen.
+    /// Compiled and interpreted give the same bits, so which one runs is not a
+    /// setting — only a flag a run is started with (ADR-0076).
     /// </summary>
     [AvaloniaFact]
-    public void The_cpu_code_row_says_what_it_reaches()
+    public void Whether_the_cpu_compiles_is_not_a_setting()
     {
         var window = Open();
         var dialog = OpenSettings(window);
-        var texts = All<TextBlock>(dialog).Select(t => t.Text).ToList();
 
-        texts.ShouldContain("CPU code");
-        texts.ShouldNotContain("Processor");
-
-        All<TextBlock>(dialog).Single(t => t.Name == "cpuCodeNote").Text.ShouldNotBeNull().ShouldContain("sound");
+        All<ToggleButton>(dialog).ShouldNotContain(b => b.Content as string == "Compiled" || b.Content as string == "Interpreted");
+        All<TextBlock>(dialog).Select(t => t.Text).ShouldNotContain("CPU code");
     }
 
     /// <summary>
-    /// On by default, like the GPU beside it: a program is interpreted until its
-    /// IL is ready anyway, so being on never makes anything wait.
+    /// Started interpreted, a run never puts IL under a picture the CPU draws, and
+    /// says so once rather than leaving the status bar's word to be noticed.
     /// </summary>
     [AvaloniaFact]
-    public void The_processor_starts_compiled_and_says_so()
+    public void A_run_started_interpreted_stays_interpreted_and_says_so()
     {
-        var window = Open();
-        var toggle = Processor(OpenSettings(window));
+        var window = new MainWindow(interpreted: true);
 
-        toggle.IsChecked.ShouldBe(true);
-        toggle.Content.ShouldBe("Compiled");
-        (ToolTip.GetTip(toggle) as string).ShouldNotBeNull().ShouldContain("sound");
-    }
+        window.Show();
+        Settle(window);
 
-    /// <summary>
-    /// Off, once saved, puts the interpreter back under the picture at once —
-    /// not at the next edit — because it is how the two are compared. The label
-    /// follows the switch before that, since it says what Save would do.
-    /// </summary>
-    [AvaloniaFact]
-    public void Saving_interpreted_takes_the_il_off_the_picture()
-    {
-        var window = Open();
-        var dialog = OpenSettings(window);
-        var toggle = Processor(dialog);
+        var preview = All<PreviewHost>(window).Single();
 
-        toggle.IsChecked = false;
-        Dispatcher.UIThread.RunJobs();
+        preview.Use(PreviewBackend.Cpu);
+        Settle(window);
 
-        toggle.Content.ShouldBe("Interpreted");
-
-        CloseSettings(window, dialog, save: true);
-
-        All<PreviewHost>(window).Single().Program.Il.ShouldBeNull();
-
-        var again = OpenSettings(window);
-
-        Processor(again).IsChecked.ShouldBe(false);
-        Processor(again).Content.ShouldBe("Interpreted");
+        preview.Program.Il.ShouldBeNull();
+        All<ReportLine>(window).Single().History.ShouldContain(line => line.Contains("interpreted"));
     }
 
     /// <summary>

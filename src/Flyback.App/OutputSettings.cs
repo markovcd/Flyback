@@ -36,9 +36,6 @@ public sealed class OutputSettings
     /// <summary>Whether the picture is drawn by a shader. Asked for, not promised: a machine with no usable GPU draws on the processor whatever this says.</summary>
     public bool Gpu { get; set; } = true;
 
-    /// <summary>Whether the processor runs the sound, and a picture it draws, as IL rather than interpreting it (ADR-0076).</summary>
-    public bool Compiled { get; set; } = true;
-
     /// <summary>Frames a second in a recorded take — the Recording section.</summary>
     public double FrameRate { get; set; } = MovieRenderer.DefaultFrameRate;
 
