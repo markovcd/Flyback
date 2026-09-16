@@ -153,6 +153,10 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
     /// </summary>
     public string? SetPatch(GlInterface gl, CompiledPatch patch)
     {
+        // Asked first, because what follows would otherwise throw on an op with no
+        // lowering. The caller reads a refusal as "draw this one on the processor".
+        if (GlslEmitter.Unsupported(patch) is { } refusal) return refusal;
+
         var shaders = GlslEmitter.Emit(patch, dialect);
 
         // The values behind the constants change with every knob; where they sit

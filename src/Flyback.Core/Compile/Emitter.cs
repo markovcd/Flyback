@@ -46,6 +46,7 @@ public sealed class Emitter
     private readonly List<Guid> delayOwners = [];
     private readonly List<Guid> phaseOwners = [];
     private readonly List<Guid> unitOwners = [];
+    private readonly List<Guid> planeOwners = [];
 
     /// <summary>
     /// Whose ops are being emitted, which the caller sets around each module's
@@ -61,7 +62,11 @@ public sealed class Emitter
     public Guid Owner { get; set; }
 
     /// <summary>Who owns what, as this program has it so far.</summary>
-    public StateOwners Owners => new([.. delayOwners], [.. phaseOwners], [.. unitOwners]);
+    public StateOwners Owners => new(
+        [.. delayOwners],
+        [.. phaseOwners],
+        [.. unitOwners],
+        [.. planeOwners]);
 
     public int RegisterCount { get; private set; }
 
@@ -84,6 +89,30 @@ public sealed class Emitter
         unitOwners.Add(owner);
 
         return UnitSlotCount++;
+    }
+
+    /// <summary>
+    /// How many planes the program needs — a cell per pixel each, so this is the
+    /// one count a renderer pays for in megabytes rather than in words.
+    /// </summary>
+    public int PlaneSlotCount { get; private set; }
+
+    /// <summary>
+    /// Claims a plane: a cell the screen can keep as well as the speakers, which
+    /// is a number per pixel where <see cref="AllocateUnitSlot"/> is one number.
+    /// </summary>
+    /// <remarks>
+    /// Asked for rather than given, because most cells do not want one. A filter
+    /// keeping its integrators in cells answers for a picture the way
+    /// <see cref="HasMemory"/> lets it — a lowpass at DC, which is what a single
+    /// evaluation with nothing before it is — and were its cells planes it would
+    /// quietly become a filter over frames instead, in every patch that has one.
+    /// </remarks>
+    public int AllocatePlaneSlot()
+    {
+        planeOwners.Add(Owner);
+
+        return PlaneSlotCount++;
     }
 
     public Op[] ToProgram() => [.. ops];
@@ -398,6 +427,22 @@ public sealed class Emitter
     /// </summary>
     public void UnitWrite(int slot, Slot value) =>
         Add(new Op(OpCode.UnitWrite, -1, value.Component(0), k: slot));
+
+    /// <summary>
+    /// Reads what plane <paramref name="slot"/> was carrying at this pixel when
+    /// it was last evaluated — <see cref="UnitRead"/> for a cycle the screen can
+    /// see as well as hear.
+    /// </summary>
+    public Slot PlaneRead(int slot)
+    {
+        var first = Allocate(1);
+        Add(new Op(OpCode.PlaneRead, first, k: slot));
+        return Slot.Scalar(first);
+    }
+
+    /// <summary>Hands a value to plane <paramref name="slot"/> at this pixel, for the next evaluation of it.</summary>
+    public void PlaneWrite(int slot, Slot value) =>
+        Add(new Op(OpCode.PlaneWrite, -1, value.Component(0), k: slot));
 
     /// <summary>
     /// The same, for a cell holding a reading of a domain rather than a signal —

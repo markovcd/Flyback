@@ -30,10 +30,10 @@ public partial class NodeCatalog
             // program. A wire is what it would be if that ever stopped being
             // true, which is the most harmless thing to be wrong about.
             (_, i) => [i[0]],
-            "A one-sample delay for loops. Put it in a cycle to make downstream values read the previous evaluation.")
+            "A delay of one evaluation for loops — a sample to the ear, a frame to the eye. "
+            + "Put it in a cycle to make downstream values read what the previous evaluation left.")
         {
             IsCycleBreaker = true,
-            Sinks = ModuleSinks.Audio,
         };
     }
 }

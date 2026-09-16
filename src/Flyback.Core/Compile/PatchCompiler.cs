@@ -198,14 +198,14 @@ public static class PatchCompiler
 
         // Now close whatever loops that walk found. Every read is emitted before
         // the first write, and that ordering is the whole of a cycle's latency: a
-        // value handed to a cell cannot be seen until the next evaluation.
+        // value handed to a plane cannot be seen until the next evaluation.
         //
         // Drained as a queue, because a breaker's own input may reach a breaker
         // the walk never touched, whose write has to land after every read too.
         while (loops.Count > 0)
         {
             var (node, def, slot) = loops.Dequeue();
-            emitter.UnitWrite(slot, ResolveInput(node, def, 0));
+            emitter.PlaneWrite(slot, ResolveInput(node, def, 0));
         }
 
         var value = emitter.PackChannels(result, width);
@@ -236,20 +236,21 @@ public static class PatchCompiler
 
             // A cycle breaker is the one module this walk does not enter, which is
             // the whole of how a patch may hold a loop. What it hands back is the
-            // cell as the previous evaluation left it; the write is deferred to
-            // the drain above.
+            // plane as the previous evaluation left it — the sample before to the
+            // ear, the frame before to the eye; the write is deferred to the drain
+            // above.
             if (def.IsCycleBreaker)
             {
                 // Claimed outside any emit function, so the owner has to be said
-                // here: the cell carries this breaker's value round and belongs
+                // here: the plane carries this breaker's value round and belongs
                 // to it, not to whichever module was being resolved when the
                 // walk arrived.
                 var outer = emitter.Owner;
 
                 emitter.Owner = node.Id;
 
-                var slot = emitter.AllocateUnitSlot();
-                var outputs = new[] { emitter.UnitRead(slot) };
+                var slot = emitter.AllocatePlaneSlot();
+                var outputs = new[] { emitter.PlaneRead(slot) };
 
                 emitter.Owner = outer;
 

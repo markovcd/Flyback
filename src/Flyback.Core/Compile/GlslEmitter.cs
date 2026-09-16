@@ -78,6 +78,33 @@ public static class GlslEmitter
     public static float[] Constants(CompiledPatch patch) =>
         [.. patch.Ops.Where(op => op.Code == OpCode.Const).Select(op => op.K)];
 
+    /// <summary>
+    /// Why <paramref name="patch"/> cannot be drawn as a shader, or null when it
+    /// can — which every patch could until a loop could be seen.
+    /// </summary>
+    /// <remarks>
+    /// Asked before <see cref="Emit"/> rather than answered by it, because the
+    /// caller's move is to draw the frame on the processor instead: there is a
+    /// picture either way, and the only thing lost is the speed.
+    /// <para>
+    /// A plane is a value per pixel carried between frames, which here means a
+    /// render target per four planes and a pair of them to ping-pong, since a
+    /// shader cannot read the texture it is writing. Until this backend has them,
+    /// saying so is the honest answer — lowering a plane to zero would draw a
+    /// different picture from the one the interpreter draws, which is the one
+    /// thing the two backends may never do.
+    /// </para>
+    /// </remarks>
+    public static string? Unsupported(CompiledPatch patch)
+    {
+        ArgumentNullException.ThrowIfNull(patch);
+
+        return patch.PlaneCount == 0
+            ? null
+            : "A loop in the patch carries a value per pixel from frame to frame, "
+            + "which this shader backend has nowhere to keep.";
+    }
+
     public static ShaderSource Emit(CompiledPatch patch, GlslDialect dialect)
     {
         ArgumentNullException.ThrowIfNull(patch);
@@ -465,6 +492,10 @@ public static class GlslEmitter
             // A tap never reaches here — only the speakers' program has one — but
             // it is in the list because an op that fell through to the switch
             // would take the backend down rather than draw a wrong picture.
+            //
+            // A plane write is deliberately not in it. Skipping one would lower a
+            // loop to an open wire and draw something the interpreter does not:
+            // a program with planes is refused whole, above.
             if (op.Code is OpCode.UnitWrite or OpCode.ClockWrite or OpCode.Tap) continue;
 
             string a = Read(op.A), b = Read(op.B), c = Read(op.C);
@@ -545,9 +576,12 @@ public static class GlslEmitter
                 OpCode.Allpass => a,
                 OpCode.Phase => $"{a} * {b} + {c}",
 
-                // A cycle with no cell behind it reads as nothing, which leaves the
-                // loop open rather than closed — again what the interpreter does
-                // when it is handed no state.
+                // A cell with nothing behind it reads as nothing, which leaves
+                // whatever asked for it open rather than closed — again what the
+                // interpreter does when it is handed no state. A cycle is not
+                // this: it takes a plane, which has no lowering here at all, and
+                // a program holding one is refused before it reaches this switch
+                // — see Unsupported.
                 OpCode.UnitRead => "0.0",
 
                 OpCode.HsvToRgb => $"hsv({a}, {b}, {c})",

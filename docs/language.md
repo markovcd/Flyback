@@ -414,8 +414,11 @@ refuses every other cycle. The parser has no cycle theory of its own — it emit
 the wires and lets the existing complaints be made in the words they are already
 made in.
 
-For the picture, the previous *frame* is the `feedback` module, which is not a
-cycle at all and needs no back-wire.
+A cycle means one evaluation of delay at either sink: the sample before to the
+ear, and to the eye the frame before, taken from the pixel being drawn and no
+other ([0074](adr/0074-a-cell-is-a-plane-on-the-video-path.md)). To read
+*elsewhere* in the previous frame — the camera-pointed-at-its-own-monitor tunnel
+— use the `feedback` module, which is not a cycle at all and needs no back-wire.
 
 ---
 

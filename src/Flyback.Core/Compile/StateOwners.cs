@@ -18,10 +18,12 @@ namespace Flyback.Core.Compile;
 /// <param name="Delays">Owner of each ring buffer, in program order.</param>
 /// <param name="Phases">Owner of each accumulator, in program order.</param>
 /// <param name="Units">Owner of each one-evaluation cell, by slot number.</param>
+/// <param name="Planes">Owner of each plane, by slot number.</param>
 public sealed record StateOwners(
     IReadOnlyList<Guid> Delays,
     IReadOnlyList<Guid> Phases,
-    IReadOnlyList<Guid> Units)
+    IReadOnlyList<Guid> Units,
+    IReadOnlyList<Guid> Planes)
 {
     /// <summary>
     /// What a program assembled by hand knows about itself, which is nothing.
@@ -31,7 +33,7 @@ public sealed record StateOwners(
     /// nobody claims is never adopted — see <see cref="Adopt"/> — which is the
     /// safe direction: a test that writes ops directly gets what it always got.
     /// </remarks>
-    public static StateOwners None { get; } = new([], [], []);
+    public static StateOwners None { get; } = new([], [], [], []);
 
     /// <summary>
     /// Nobody. A cell the compiler shares between modules rather than giving to one,
@@ -88,5 +90,6 @@ public sealed record StateOwners(
     public bool Match(StateOwners other) =>
         Delays.SequenceEqual(other.Delays)
         && Phases.SequenceEqual(other.Phases)
-        && Units.SequenceEqual(other.Units);
+        && Units.SequenceEqual(other.Units)
+        && Planes.SequenceEqual(other.Planes);
 }

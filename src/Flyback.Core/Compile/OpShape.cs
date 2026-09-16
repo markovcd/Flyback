@@ -24,7 +24,8 @@ internal static class OpShape
             or OpCode.LoadT
             or OpCode.LoadAspect
             or OpCode.LoadLive
-            or OpCode.UnitRead => 0,
+            or OpCode.UnitRead
+            or OpCode.PlaneRead => 0,
 
         OpCode.Copy
             or OpCode.Neg
@@ -42,6 +43,7 @@ internal static class OpShape
             or OpCode.Table
             or OpCode.Tap
             or OpCode.UnitWrite
+            or OpCode.PlaneWrite
             or OpCode.ClockWrite => 1,
 
         OpCode.Add
@@ -67,7 +69,7 @@ internal static class OpShape
     /// </summary>
     public static int Outputs(OpCode code) => code switch
     {
-        OpCode.Tap or OpCode.UnitWrite or OpCode.ClockWrite => 0,
+        OpCode.Tap or OpCode.UnitWrite or OpCode.PlaneWrite or OpCode.ClockWrite => 0,
         OpCode.HsvToRgb or OpCode.SampleFeedback or OpCode.SamplePicture => 3,
         _ => 1,
     };

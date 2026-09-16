@@ -146,7 +146,8 @@ public sealed class AudioRenderer
         if (program.DelayLengths.Count == 0
             && program.PhaseCount == 0
             && program.UnitCount == 0
-            && program.TraceCount == 0)
+            && program.TraceCount == 0
+            && program.PlaneCount == 0)
             return null;
 
         var rate = SampleRate * Oversample;
@@ -155,7 +156,12 @@ public sealed class AudioRenderer
         // full of delay lines costs no allocation and no copy.
         if (existing is not null
             && existing.Fits(
-                program.DelayLengths, rate, program.PhaseCount, program.UnitCount, program.TraceCount)
+                program.DelayLengths,
+                rate,
+                program.PhaseCount,
+                program.UnitCount,
+                program.TraceCount,
+                program.PlaneCount)
             && existing.Owners.Match(program.Owners))
         {
             return existing;

@@ -1,9 +1,12 @@
 # ADR-0074: A cell is a plane on the video path
 
-**Status:** Proposed · 2026-09-16 · *user-directed* · nothing implements this
-yet · extends [0012](0012-feedback-as-a-module-not-a-cycle.md) from a color to a
-value and [0041](0041-a-plugin-can-hold-state-without-a-new-opcode.md) from one
-sink to two · bounded by
+**Status:** Accepted · 2026-09-16 · *user-directed* · implemented in
+`Compile/PlaneState.cs`, `Compile/CompiledPatch.cs` and `Render/SynthRenderer.cs`,
+except on the GPU, where a program with planes is refused and the frame is drawn
+on the processor · extends
+[0012](0012-feedback-as-a-module-not-a-cycle.md) from a color to a value and
+[0041](0041-a-plugin-can-hold-state-without-a-new-opcode.md) from one sink to
+two · bounded by
 [0006](0006-scalar-interpreter-parallel-over-rows.md),
 [0035](0035-a-glsl-backend-for-the-video-path.md) and
 [0064](0064-a-pixel-runs-only-what-a-pixel-changes.md)
@@ -106,8 +109,15 @@ a target, and the draw buffers left over from the picture hold something like tw
 dozen. Precision is [0035](0035-a-glsl-backend-for-the-video-path.md)'s, and its
 eight-bit fallback is where this stops being tenable — a color quantized to eight
 bits posterises, while an accumulator quantized to eight bits is noise within a
-few frames. Where the fallback is taken, a patch with planes says so and runs on
-the processor.
+few frames.
+
+**Until those targets exist, the shader refuses the program rather than lowering
+it.** `GlslEmitter.Unsupported` answers before a shader is built and the surface
+falls back to the processor, which draws the patch correctly and more slowly.
+The alternative — lowering a plane read to zero, as `UnitRead` is lowered — would
+leave the loop open and put a different picture on the GPU from the one the
+interpreter draws, and the two backends agreeing is what
+[0035](0035-a-glsl-backend-for-the-video-path.md) rests on.
 
 **The Unit Delay drops `ModuleSinks.Audio`.** One evaluation is a sample to the
 ear and a frame to the eye, which is the relation the two sinks already have and
@@ -154,6 +164,11 @@ will decay differently at thirty. [0048](0048-time-is-seconds-and-nothing-else.m
 is why that is stated rather than hidden: what a module should do about it is
 measure the interval, which is already there, and what a patch should do about it
 is know.
+
+**A patch with a loop draws on the processor for as long as the shader has no
+targets.** The preview says so and falls back, which is the one visible cost of
+shipping the half of this that the interpreter can do — and the half that decides
+whether the idea is worth the targets.
 
 **What this does not do.** Feedback within a frame is still beyond the renderer,
 which is what [0012](0012-feedback-as-a-module-not-a-cycle.md) closed on: a plane

@@ -167,6 +167,24 @@ public sealed class CompiledPatch(
         .Max();
 
     /// <summary>
+    /// How many planes the program needs — one per cycle in the patch it came
+    /// from. Counted from the highest slot for the reason
+    /// <see cref="UnitCount"/> is.
+    /// </summary>
+    /// <remarks>
+    /// The one count that decides megabytes rather than words: the screen keeps a
+    /// number per pixel for each of these, where the speakers keep one — see
+    /// <see cref="PlaneState"/> and <see cref="OpCode.PlaneRead"/>. Zero for a
+    /// patch with no loop in it, which is most of them, and that patch allocates
+    /// nothing at all.
+    /// </remarks>
+    public int PlaneCount { get; } = ops
+        .Where(o => o.Code is OpCode.PlaneRead or OpCode.PlaneWrite)
+        .Select(o => (int)o.K + 1)
+        .DefaultIfEmpty(0)
+        .Max();
+
+    /// <summary>
     /// A program whose output is all zeroes — what the compiler falls back to for
     /// a graph with no Output, meaning one assembled by hand rather than through
     /// <see cref="Graph.Patch.EnsureOutput"/>.
@@ -206,6 +224,13 @@ public sealed class CompiledPatch(
     /// nothing is — an offline render, a test and a headless compile all have
     /// nobody at the keys, and there every live input reads zero.
     /// </param>
+    /// <param name="planes">
+    /// This pixel's own cells, one per plane the program keeps, or empty where
+    /// there are none — which is what a caller with no picture to keep them for
+    /// passes, and there a loop reads zero and stays open. The speakers keep
+    /// theirs in <paramref name="delays"/> instead, since one evaluation follows
+    /// another there and a pixel's neighbours do not.
+    /// </param>
     public void Evaluate(
         double x,
         double y,
@@ -214,8 +239,9 @@ public sealed class CompiledPatch(
         in FeedbackFrame feedback,
         DelayState? delays = null,
         double aspect = 1d,
-        LiveValues? live = null) =>
-        Run(Ops, 0, Ops.Length, x, y, t, registers, feedback, delays, aspect, live);
+        LiveValues? live = null,
+        Span<float> planes = default) =>
+        Run(Ops, 0, Ops.Length, x, y, t, registers, feedback, delays, aspect, live, planes);
 
     /// <summary>
     /// Runs only the ops of <paramref name="stage"/>, for a caller drawing a
@@ -236,19 +262,20 @@ public sealed class CompiledPatch(
         Span<double> registers,
         in FeedbackFrame feedback,
         double aspect = 1d,
-        LiveValues? live = null)
+        LiveValues? live = null,
+        Span<float> planes = default)
     {
         if (Plan is not { } plan)
         {
             if (stage is EvaluationStage.Pixel)
-                Run(Ops, 0, Ops.Length, x, y, t, registers, feedback, null, aspect, live);
+                Run(Ops, 0, Ops.Length, x, y, t, registers, feedback, null, aspect, live, planes);
 
             return;
         }
 
         var (from, to) = plan.Range(stage);
 
-        Run(plan.Ops, from, to, x, y, t, registers, feedback, null, aspect, live);
+        Run(plan.Ops, from, to, x, y, t, registers, feedback, null, aspect, live, planes);
     }
 
     /// <summary>
@@ -260,6 +287,12 @@ public sealed class CompiledPatch(
     /// Only a whole run may pass <paramref name="delays"/>: which line or cell a
     /// stateful op uses is counted from the start of the program. A staged run
     /// passes none, which is also what lets its ops be reordered at all.
+    /// <para>
+    /// <paramref name="planes"/> is the exception, and can be passed to either,
+    /// because a plane is named by its op rather than counted: a staged run
+    /// carries every plane op in the stage a pixel pays for — see
+    /// <see cref="FramePlan"/>.
+    /// </para>
     /// </remarks>
     private void Run(
         Op[] ops,
@@ -272,7 +305,8 @@ public sealed class CompiledPatch(
         in FeedbackFrame feedback,
         DelayState? delays,
         double aspect,
-        LiveValues? live)
+        LiveValues? live,
+        Span<float> planes)
     {
         if (registers.Length < RegisterCount)
             throw new ArgumentException(
@@ -456,6 +490,32 @@ public sealed class CompiledPatch(
                     delays?.WriteClock((int)op.K, Reg(ref bank, op.A));
                     break;
 
+                // The same pair, for a cycle both sinks can carry. The ear's
+                // previous evaluation is the sample before and lives in the state
+                // beside the delay lines; the eye's is this pixel in the frame
+                // before, and is the one number of the plane that belongs to it.
+                // Handed neither, a loop reads zero and stays open.
+                case OpCode.PlaneRead:
+                {
+                    var slot = (int)op.K;
+
+                    Reg(ref bank, op.Out) = delays is not null
+                        ? delays.ReadPlane(slot)
+                        : (uint)slot < (uint)planes.Length ? planes[slot] : 0d;
+                    break;
+                }
+
+                case OpCode.PlaneWrite:
+                {
+                    var slot = (int)op.K;
+                    var value = Reg(ref bank, op.A);
+
+                    if (delays is not null) delays.WritePlane(slot, value);
+                    else if ((uint)slot < (uint)planes.Length) planes[slot] = Bounded(value);
+
+                    break;
+                }
+
                 case OpCode.Phase:
                 {
                     var slot = cell++;
@@ -537,6 +597,20 @@ public sealed class CompiledPatch(
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static double Feedback(double v) => double.IsFinite(v) ? Math.Clamp(v, -0.99d, 0.99d) : 0d;
+
+    /// <summary>
+    /// What may be put in a plane, which is <see cref="DelayState.WritePlane"/>'s
+    /// bound written again for the other sink's float.
+    /// </summary>
+    /// <remarks>
+    /// A cycle drawn as wires carries no gain of its own, so a loop above unity
+    /// is easy to draw and this is where it stops. Clamping rather than refusing
+    /// leaves a runaway loop pinned at the rails — a white pixel — instead of
+    /// turning it into a NaN that spreads.
+    /// </remarks>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static float Bounded(double v) =>
+        double.IsFinite(v) ? (float)Math.Clamp(v, -16d, 16d) : 0f;
 
     /// <summary>
     /// The largest double below 1. For a tiny negative input, <c>v - floor(v)</c>

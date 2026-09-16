@@ -42,6 +42,13 @@ public enum EvaluationStage
 /// — a delay hands its input through, a cell reads zero — so which ran first stops
 /// being a question. On the audio path it very much is one.
 /// </para>
+/// <para>
+/// A plane is the one thing the video path does carry
+/// (<see cref="OpCode.PlaneRead"/>), and the order that matters for it is kept:
+/// both halves are pinned to <see cref="EvaluationStage.Pixel"/> and the sort is
+/// stable, so a read still stands where it was emitted — ahead of every write —
+/// which is the frame of latency a cycle has.
+/// </para>
 /// </remarks>
 public sealed class FramePlan
 {
@@ -93,9 +100,13 @@ public sealed class FramePlan
         {
             var op = ops[i];
 
+            // A plane is a value per pixel, so neither half of one can be lifted
+            // out of the pixel's share however little it depends on a coordinate:
+            // hoisted, a read would answer for whichever pixel ran last and a
+            // write would put one pixel's value in every pixel's plane.
             var stage = op.Code switch
             {
-                OpCode.LoadX => EvaluationStage.Pixel,
+                OpCode.LoadX or OpCode.PlaneRead or OpCode.PlaneWrite => EvaluationStage.Pixel,
                 OpCode.LoadY => EvaluationStage.Row,
                 _ => EvaluationStage.Frame,
             };

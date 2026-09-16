@@ -485,8 +485,8 @@ public sealed partial class NodeEditor
         // A wire that runs backwards has the delay its loop needs put on it, so
         // that drawing the cycle is the whole gesture. Placed as a module rather
         // than implied by the compiler: what carries a loop round is worth being
-        // able to see, move and take back, and it is the one thing on the canvas
-        // that can say the loop is heard rather than seen.
+        // able to see, move and take back, and where the delay sits is a choice
+        // about the sound rather than one for a walk order to make.
         if (patch.WouldCycle(sourceNode, targetNode)
             && InsertUnitDelay(sourceNode, sourcePort, targetNode, targetPort))
         {

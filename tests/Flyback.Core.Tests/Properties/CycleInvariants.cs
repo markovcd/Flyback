@@ -33,9 +33,7 @@ public class CycleInvariants
     /// <param name="stateless"></param>
     private static float[] Run(CompiledPatch program, float[] x, bool stateless = false)
     {
-        var memory = stateless
-            ? null
-            : new DelayState(program.DelayLengths, Rate, program.PhaseCount, program.UnitCount);
+        var memory = stateless ? null : new DelayState(program, Rate);
 
         var registers = program.AllocateRegisters();
         var output = new float[x.Length];
@@ -110,22 +108,22 @@ public class CycleInvariants
 
         var reads = ops
             .Index()
-            .Where(o => o.Item.Code == OpCode.UnitRead)
+            .Where(o => o.Item.Code == OpCode.PlaneRead)
             .ToDictionary(o => (int)o.Item.K, o => o.Index);
 
         var writes = ops
             .Index()
-            .Where(o => o.Item.Code == OpCode.UnitWrite)
+            .Where(o => o.Item.Code == OpCode.PlaneWrite)
             .ToDictionary(o => (int)o.Item.K, o => o.Index);
 
         reads.ShouldNotBeEmpty();
         writes.Keys.ShouldBe(reads.Keys, ignoreOrder: true);
 
         // Not merely each read before its own write: before *every* write, which
-        // is what keeps two cells in one loop from collapsing into one.
+        // is what keeps two planes in one loop from collapsing into one.
         var lastRead = reads.Values.Max();
         foreach (var (slot, at) in writes)
-            at.ShouldBeGreaterThan(lastRead, $"the write for cell {slot} runs too early");
+            at.ShouldBeGreaterThan(lastRead, $"the write for plane {slot} runs too early");
     }
 
     // --- what the compiler accepts and refuses ------------------------------
@@ -167,7 +165,7 @@ public class CycleInvariants
         var result = FeedbackFm().CompileForAudio();
 
         result.HasErrors.ShouldBeFalse(string.Join("; ", result.Issues.Select(i => i.Message)));
-        result.Program.UnitCount.ShouldBe(1);
+        result.Program.PlaneCount.ShouldBe(1);
     }
 
     /// <summary>
@@ -240,7 +238,7 @@ public class CycleInvariants
          .Wire(second, 0, sink, NodeCatalog.OutputLeftPort);
 
         var program = b.Patch.CompileForAudio().Program;
-        program.UnitCount.ShouldBe(2);
+        program.PlaneCount.ShouldBe(2);
 
         var signal = Ramp(6);
         var heard = Run(program, signal);
@@ -274,9 +272,9 @@ public class CycleInvariants
 
         var program = b.Patch.CompileForAudio().Program;
 
-        program.UnitCount.ShouldBe(1);
-        program.Ops.Count(o => o.Code == OpCode.UnitRead).ShouldBe(1);
-        program.Ops.Count(o => o.Code == OpCode.UnitWrite).ShouldBe(1);
+        program.PlaneCount.ShouldBe(1);
+        program.Ops.Count(o => o.Code == OpCode.PlaneRead).ShouldBe(1);
+        program.Ops.Count(o => o.Code == OpCode.PlaneWrite).ShouldBe(1);
 
         // Both sides of the Add see the same previous value, so it doubles it.
         var signal = Ramp(4);
@@ -383,8 +381,8 @@ public class CycleInvariants
     {
         var video = FeedbackFm().CompileForVideo();
 
-        video.Program.UnitCount.ShouldBe(0);
-        video.Program.Ops.ShouldNotContain(o => o.Code == OpCode.UnitRead || o.Code == OpCode.UnitWrite);
+        video.Program.PlaneCount.ShouldBe(0);
+        video.Program.Ops.ShouldNotContain(o => o.Code == OpCode.PlaneRead || o.Code == OpCode.PlaneWrite);
     }
 
     /// <summary>

@@ -216,10 +216,12 @@ internal static class Handbook
           `space.rotate` or `space.scale` for the camera-pointed-at-its-own-monitor
           tunnel. This is the one to reach for on the screen.
         - To close a loop the way a modular rack does, put a `feedback.unit`
-          anywhere in it. It is one evaluation of delay, it is the only module a
-          wire may run backwards into, and it makes the cycle legal — an
-          oscillator into its own phase, a filter into its own input. Audio only:
-          a picture is drawn all at once and has no previous evaluation to read.
+          anywhere in it. It is one evaluation of delay — a sample to the ear and
+          a frame to the eye — it is the only module a wire may run backwards
+          into, and it makes the cycle legal: an oscillator into its own phase, a
+          filter into its own input, a pixel that builds on what it held last
+          frame. What it carries round on the screen is each pixel's own value,
+          where `feedback` reads anywhere in the frame before.
 
         ## What you can check
 

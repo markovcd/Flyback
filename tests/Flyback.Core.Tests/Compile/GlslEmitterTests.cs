@@ -27,6 +27,15 @@ public class GlslEmitterTests
         code is OpCode.UnitWrite or OpCode.ClockWrite or OpCode.Tap;
 
     /// <summary>
+    /// The ops this backend has no answer for at all: a plane is a value per pixel
+    /// kept between frames, which wants a render target and a pair of them to
+    /// ping-pong. Refused whole rather than lowered to nothing, since a loop
+    /// quietly left open draws a different picture from the one the interpreter
+    /// draws.
+    /// </summary>
+    private static bool KeptPerPixel(OpCode code) => code is OpCode.PlaneRead or OpCode.PlaneWrite;
+
+    /// <summary>
     /// The test that matters: it fails the day an opcode is added and the shader
     /// is not told about it, which is otherwise a black region on screen that
     /// nobody traces back to this file.
@@ -35,6 +44,16 @@ public class GlslEmitterTests
     [MemberData(nameof(AllOpCodes))]
     public void Every_opcode_lowers_to_a_line(OpCode code)
     {
+        if (KeptPerPixel(code))
+        {
+            // Said before the shader is built, so the caller can draw the frame on
+            // the processor instead — and still fatal underneath, so no later
+            // backend can lower half a plane by accident.
+            GlslEmitter.Unsupported(OneOp(code)).ShouldNotBeNull();
+            Should.Throw<NotSupportedException>(() => GlslEmitter.Emit(OneOp(code), GlslDialect.GlslEs300));
+            return;
+        }
+
         var source = GlslEmitter.Emit(OneOp(code), GlslDialect.GlslEs300);
 
         if (WritesNothing(code))

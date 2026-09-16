@@ -38,6 +38,20 @@ public sealed class DelayState
     private readonly double[] units;
 
     /// <summary>
+    /// One cell per <see cref="OpCode.PlaneRead"/>/<see cref="OpCode.PlaneWrite"/>
+    /// pair: what a cycle carries round for the ear, where the eye keeps a number
+    /// per pixel — see <see cref="PlaneState"/>.
+    /// </summary>
+    /// <remarks>
+    /// One cell rather than a plane because the speakers are one evaluation at a
+    /// time: there is a single "previous" here, and it is the sample before.
+    /// <see cref="double"/> for the reason <see cref="units"/> is — a loop may
+    /// carry a clock or a phase round, and ADR-0032 is about exactly that — while
+    /// a plane is float, where the cost is measured per pixel.
+    /// </remarks>
+    private readonly double[] planes;
+
+    /// <summary>
     /// One ring per Scope in the patch: the last stretch of what the speakers
     /// played, kept so the eye can be shown it.
     /// </summary>
@@ -61,16 +75,21 @@ public sealed class DelayState
     /// rate: an accumulator measures how far its input moved.
     /// </param>
     /// <param name="unitCount">
-    /// How many one-evaluation cells the program needs — one per cycle in the
-    /// patch, and a single number like an accumulator.
+    /// How many one-evaluation cells the program needs, and a single number like
+    /// an accumulator.
     /// </param>
     /// <param name="traceCount"></param>
+    /// <param name="planeCount">
+    /// How many planes the program needs — one per cycle in the patch, and one
+    /// cell each here for the reason <see cref="planes"/> gives.
+    /// </param>
     public DelayState(
         IReadOnlyList<float> lengthsInSeconds,
         int sampleRate,
         int phaseCount = 0,
         int unitCount = 0,
-        int traceCount = 0)
+        int traceCount = 0,
+        int planeCount = 0)
     {
         SampleRate = sampleRate;
         lengths = [.. lengthsInSeconds];
@@ -82,6 +101,7 @@ public sealed class DelayState
         running = new bool[phaseCount];
 
         units = new double[unitCount];
+        planes = new double[planeCount];
 
         traces = new float[traceCount][];
         traceHeads = new int[traceCount];
@@ -108,7 +128,8 @@ public sealed class DelayState
             sampleRate,
             program.PhaseCount,
             program.UnitCount,
-            program.TraceCount)
+            program.TraceCount,
+            program.PlaneCount)
     {
         Owners = program.Owners;
 
@@ -175,6 +196,15 @@ public sealed class DelayState
             if (from >= 0 && from < previous.units.Length) units[i] = previous.units[from];
         }
 
+        var planeMap = StateOwners.Adopt(Owners.Planes, previous.Owners.Planes);
+
+        for (var i = 0; i < planeMap.Length && i < planes.Length; i++)
+        {
+            var from = planeMap[i];
+
+            if (from >= 0 && from < previous.planes.Length) planes[i] = previous.planes[from];
+        }
+
         if (previous.SampleRate != SampleRate) return;
 
         var delayMap = StateOwners.Adopt(Owners.Delays, previous.Owners.Delays);
@@ -222,6 +252,8 @@ public sealed class DelayState
     public int PhaseCount => phases.Length;
 
     public int UnitCount => units.Length;
+
+    public int PlaneCount => planes.Length;
 
     public int TraceCount => traces.Length;
 
@@ -396,11 +428,12 @@ public sealed class DelayState
         int sampleRate,
         int phaseCount = 0,
         int unitCount = 0,
-        int traceCount = 0)
+        int traceCount = 0,
+        int planeCount = 0)
     {
         if (sampleRate != SampleRate || lengthsInSeconds.Count != lengths.Length) return false;
         if (phaseCount != phases.Length || unitCount != units.Length) return false;
-        if (traceCount != traces.Length) return false;
+        if (traceCount != traces.Length || planeCount != planes.Length) return false;
 
         for (var i = 0; i < lengths.Length; i++)
             if (lengths[i] != lengthsInSeconds[i])
@@ -421,6 +454,7 @@ public sealed class DelayState
         Array.Clear(previousInputs);
         Array.Clear(running);
         Array.Clear(units);
+        Array.Clear(planes);
 
         // The traces too: a rewind puts the patch back at nought, and a chart
         // still showing what was played before it would be a picture of a
@@ -449,6 +483,13 @@ public sealed class DelayState
     /// </remarks>
     public void WriteUnit(int slot, double value) =>
         units[slot] = double.IsFinite(value) ? Math.Clamp(value, -16d, 16d) : 0d;
+
+    /// <summary>What plane <paramref name="slot"/> was left holding, the ear's one cell of it.</summary>
+    public double ReadPlane(int slot) => planes[slot];
+
+    /// <summary>Puts a value in plane <paramref name="slot"/>, bounded as <see cref="WriteUnit"/> is.</summary>
+    public void WritePlane(int slot, double value) =>
+        planes[slot] = double.IsFinite(value) ? Math.Clamp(value, -16d, 16d) : 0d;
 
     /// <summary>
     /// The same, for a cell holding the renderer's clock rather than a signal —

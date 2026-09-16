@@ -31,11 +31,27 @@ public sealed class SynthRenderer
     private int bufferWidth;
     private int bufferHeight;
 
+    /// <summary>
+    /// What each pixel carries from the frame before for each cycle in the patch,
+    /// and empty for the usual patch that draws none — see
+    /// <see cref="PlaneState"/>. Kept here rather than in the program, for the
+    /// reason <see cref="DelayState"/> is: a recompile swaps the program while
+    /// this is what the picture was drawn from.
+    /// </summary>
+    private readonly PlaneState planes = new();
+
     /// <summary>Coordinates run -1..1 vertically and -aspect..aspect horizontally.</summary>
     public static float AspectOf(int width, int height) => height == 0 ? 1f : (float)width / height;
 
-    /// <summary>Clears the feedback history, so the next frame starts from black.</summary>
-    public void Reset() => Array.Clear(previousFrame);
+    /// <summary>
+    /// Clears the feedback history and every plane, so the next frame starts from
+    /// black and whatever the patch was carrying round starts from nothing.
+    /// </summary>
+    public void Reset()
+    {
+        Array.Clear(previousFrame);
+        planes.Clear();
+    }
 
     /// <summary>Renders one frame into a BGRA8888 buffer.</summary>
     /// <param name="stride"></param>
@@ -85,6 +101,11 @@ public sealed class SynthRenderer
 
         EnsureBuffers(width, height);
 
+        // Before the rows start, because it is what they write into: a patch that
+        // grew a loop since the last frame gets planes here, and one that lost
+        // the loop gives them back.
+        planes.Fit(patch, width, height);
+
         var feedback = new FeedbackFrame(previousFrame, width, height);
         var current = currentFrame;
         var aspect = AspectOf(width, height);
@@ -119,7 +140,13 @@ public sealed class SynthRenderer
                 {
                     var px = (2d * (x + 0.5d) / width - 1d) * aspect;
 
-                    patch.EvaluateStage(EvaluationStage.Pixel, px, py, time, registers, feedback, aspect, live);
+                    // This pixel's own cells and no others, which is what makes a
+                    // plane safe to write from a row running beside every other
+                    // row — see PlaneState.
+                    var carried = planes.Count == 0 ? default : planes.At(y * width + x);
+
+                    patch.EvaluateStage(
+                        EvaluationStage.Pixel, px, py, time, registers, feedback, aspect, live, carried);
 
                     var r = Saturate(registers[outputBase + 0]);
                     var g = Saturate(registers[outputBase + 1]);

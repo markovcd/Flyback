@@ -158,6 +158,37 @@ public enum OpCode : byte
     UnitWrite,
 
     /// <summary>
+    /// out = what plane K held at this pixel when the previous evaluation of it
+    /// finished, and zero before there has been one.
+    /// </summary>
+    /// <remarks>
+    /// <see cref="UnitRead"/> for a cell that both sinks can keep. A cell is one
+    /// number, which is all the speakers need and nothing the screen can use: a
+    /// picture is half a million evaluations of the program, each of them a
+    /// different pixel, and one cell between them would be whatever pixel ran
+    /// last. A plane is one number per pixel, so a pixel reads what it left.
+    /// <para>
+    /// Strictly its own pixel, which is what makes it affordable. Nothing else
+    /// can see the value, so the renderer overwrites it in place and rows stay
+    /// independent — where <see cref="SampleFeedback"/> reads at any coordinate
+    /// and therefore costs a second copy of the frame. Reading elsewhere is what
+    /// that op is for.
+    /// </para>
+    /// <para>
+    /// One evaluation apart means a sample to the ear and a frame to the eye,
+    /// the relation the two sinks already have. K is a slot number, as
+    /// <see cref="UnitRead"/>'s is and for the same reason.
+    /// </para>
+    /// </remarks>
+    PlaneRead,
+
+    /// <summary>
+    /// plane K at this pixel = a, writing no register — <see cref="UnitWrite"/>
+    /// for a plane, bounded the same way.
+    /// </summary>
+    PlaneWrite,
+
+    /// <summary>
     /// slot K = a, unbounded. <see cref="UnitWrite"/> for a cell holding the
     /// renderer's clock rather than a signal from the patch.
     /// </summary>
