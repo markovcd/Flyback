@@ -3,6 +3,7 @@ using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Plugins.Assist;
 using Flyback.Plugins.Hosting;
+using Flyback.Plugins.Settings;
 using Shouldly;
 using Xunit;
 
@@ -52,7 +53,7 @@ public class AssistantPluginTests
 
         assistant.Name.ShouldNotBeNullOrWhiteSpace();
         assistant.Credential.EnvironmentVariable.ShouldNotBeNullOrWhiteSpace();
-        assistant.Form(AssistantValues.None).ShouldNotBeEmpty();
+        assistant.Form(SettingValues.None).ShouldNotBeEmpty();
         assistant.Unavailable(AssistantConfig.Unset).ShouldBeNull();
     }
 
@@ -62,17 +63,17 @@ public class AssistantPluginTests
     /// </summary>
     /// <remarks>
     /// The identity check above in miniature, and the one that would fail
-    /// silently: a plugin's <see cref="AssistantField"/> resolving to a second
+    /// silently: a plugin's <see cref="SettingField"/> resolving to a second
     /// copy of the type would leave every pattern match here falling through to
     /// a row that never gets drawn.
     /// </remarks>
     [Fact]
     public void A_declared_form_crosses_the_boundary_as_the_shapes_it_was_written_as()
     {
-        var form = Rehearsed.Form(AssistantValues.None);
+        var form = Rehearsed.Form(SettingValues.None);
 
-        form.ShouldContain(field => field is AssistantField.Pick);
-        form.ShouldContain(field => field is AssistantField.Switch);
+        form.ShouldContain(field => field is SettingField.Pick);
+        form.ShouldContain(field => field is SettingField.Switch);
         form.Select(field => field.Key).Distinct().Count().ShouldBe(form.Count);
     }
 
@@ -117,8 +118,8 @@ public class AssistantPluginTests
         // makes one adapter reach a dozen providers and a local runtime. Asked
         // of the declared form, because that is all anybody out here can see of
         // it.
-        var endpoint = assistant.Form(AssistantValues.None)
-            .OfType<AssistantField.Text>()
+        var endpoint = assistant.Form(SettingValues.None)
+            .OfType<SettingField.Text>()
             .ShouldHaveSingleItem();
 
         endpoint.Enabled.ShouldBeTrue();
@@ -167,7 +168,7 @@ public class AssistantPluginTests
 
         if (baseUrl is not null) values[AssistantSchema.EndpointKey] = baseUrl;
 
-        return new AssistantConfig(key, new AssistantValues(values));
+        return new AssistantConfig(key, new SettingValues(values));
     }
 
     /// <summary>
@@ -186,7 +187,7 @@ public class AssistantPluginTests
         string[] suspicious = ["key", "secret", "token", "password", "credential"];
 
         foreach (var assistant in Loaded.Assistants)
-        foreach (var field in assistant.Form(AssistantValues.None))
+        foreach (var field in assistant.Form(SettingValues.None))
         foreach (var word in suspicious)
         {
             field.Key.Contains(word, StringComparison.OrdinalIgnoreCase).ShouldBeFalse(

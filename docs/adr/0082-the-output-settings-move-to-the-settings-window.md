@@ -102,7 +102,9 @@ about any patch, and the window was already the place for those:
   saved latency is heard from the next launch, and the tab says so. Reopening
   the device in place would mean rebuilding the engine under a running audio
   thread and the preview clock that follows it, for a setting somebody changes
-  once.
+  once. *(Reversed by [0085](0085-a-sound-backend-declares-its-own-settings.md),
+  which found the engine did not need rebuilding: only the device is replaced,
+  so the latency and the device both take effect on Save.)*
 - *Turns per conversation*, on the agent's tab, kept in `assistant.json` with
   the rest of that section. Unlike the latency it reaches the conversation
   already going: a limit raised because a conversation ran out is raised for

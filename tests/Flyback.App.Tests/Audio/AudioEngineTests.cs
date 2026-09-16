@@ -353,4 +353,66 @@ public class AudioEngineTests
 
         device.IsRunning.ShouldBeFalse();
     }
+
+    /// <summary>
+    /// Picking another output on Save moves the sound rather than restarting it: the
+    /// new device plays exactly what the old one would have played next (ADR-0085).
+    /// </summary>
+    [Fact]
+    public void A_new_device_carries_on_from_where_the_old_one_stopped()
+    {
+        var patch = Tone(440);
+
+        using var only = new LoopbackDevice();
+        using var unbroken = new AudioEngine(only);
+        unbroken.Update(patch);
+        unbroken.Start();
+
+        for (var i = 0; i < 10; i++) only.Pump();
+
+        var expected = only.Pump();
+
+        var speakers = new LoopbackDevice();
+        using var headphones = new LoopbackDevice();
+        using var engine = new AudioEngine(speakers);
+        engine.Update(patch);
+        engine.Start();
+
+        for (var i = 0; i < 10; i++) speakers.Pump();
+
+        engine.Stop();
+        engine.Use(headphones).ShouldBeTrue();
+        engine.Start();
+
+        headphones.Pump().ShouldBe(expected);
+    }
+
+    [Fact]
+    public void A_device_is_not_changed_under_a_running_callback()
+    {
+        using var device = new LoopbackDevice();
+        using var engine = new AudioEngine(device);
+        using var other = new LoopbackDevice();
+
+        engine.Start();
+
+        Should.Throw<InvalidOperationException>(() => engine.Use(other));
+    }
+
+    /// <summary>
+    /// The renderer is built for one rate, so a device at another is refused and the
+    /// one already there is kept — not disposed from under the caller.
+    /// </summary>
+    [Fact]
+    public void A_device_at_another_rate_is_refused()
+    {
+        using var device = new LoopbackDevice();
+        using var engine = new AudioEngine(device);
+        using var slower = new SilentAudioDevice(GlobalConstants.SampleRate / 2);
+
+        engine.Use(slower).ShouldBeFalse();
+
+        engine.Start();
+        device.IsRunning.ShouldBeTrue();
+    }
 }

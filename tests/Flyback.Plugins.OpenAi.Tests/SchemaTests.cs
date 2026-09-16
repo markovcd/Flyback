@@ -1,4 +1,5 @@
 using Flyback.Plugins.Assist;
+using Flyback.Plugins.Settings;
 using Shouldly;
 using Xunit;
 
@@ -18,11 +19,11 @@ public class SchemaTests
 {
     private static AssistantSchema Schema => new OpenAiAssistant().Schema;
 
-    private static AssistantValues Set(string model, bool hearing = false) =>
+    private static SettingValues Set(string model, bool hearing = false) =>
         new(new Dictionary<string, string>
         {
             [AssistantSchema.ModelKey] = model,
-            [AssistantSchema.HearingKey] = AssistantField.Switch.Spell(hearing),
+            [AssistantSchema.HearingKey] = SettingField.Switch.Spell(hearing),
         });
 
     /// <summary>
@@ -130,7 +131,7 @@ public class SchemaTests
     public void A_model_that_takes_no_picture_leaves_nothing_to_decide_about_looking()
     {
         var looking = Schema.Form(Set("gpt-4o-audio-preview"))
-            .OfType<AssistantField.Switch>()
+            .OfType<SettingField.Switch>()
             .First(field => field.Key == AssistantSchema.VisionKey);
 
         looking.Enabled.ShouldBeFalse();
@@ -150,7 +151,7 @@ public class SchemaTests
         var ear = Schema.Form(Set("gpt-4o", hearing))
             .Single(field => field.Key == AssistantSchema.EarKey);
 
-        ear.ShouldBeOfType<AssistantField.Pick>();
+        ear.ShouldBeOfType<SettingField.Pick>();
         ear.Enabled.ShouldBe(live);
     }
 

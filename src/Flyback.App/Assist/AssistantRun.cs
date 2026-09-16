@@ -3,6 +3,7 @@ using System.Text.Json;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Plugins.Assist;
+using Flyback.Plugins.Settings;
 
 namespace Flyback.App.Assist;
 
@@ -35,7 +36,7 @@ public sealed class AssistantRun : IDisposable
     /// <summary>Who this is with and what they were set to, which a saved conversation is checked against.</summary>
     private readonly string provider;
 
-    private readonly AssistantValues values;
+    private readonly SettingValues values;
 
     private int startingNodes;
     private int startingWires;

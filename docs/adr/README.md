@@ -78,7 +78,7 @@ context, decision, consequences.
 | [0078](0078-export-leaves-the-shell-for-the-cli-that-already-writes-it.md) | Export leaves the shell for the CLI that already writes it *(user-directed; its Output-panel `Record…` row moved to the toolbar by [0080](0080-record-moves-to-the-toolbar-with-a-glyph-and-ctrl-r.md))* |
 | [0080](0080-record-moves-to-the-toolbar-with-a-glyph-and-ctrl-r.md) | Record moves to the toolbar, with a glyph and Ctrl+R *(user-directed; its Output-panel `Rewind` row moved to the toolbar by [0081](0081-rewind-moves-to-the-toolbar-beside-record.md))* |
 | [0081](0081-rewind-moves-to-the-toolbar-beside-record.md) | Rewind moves to the toolbar, beside Record *(user-directed)* |
-| [0082](0082-the-output-settings-move-to-the-settings-window.md) | The Output settings move to the settings window, and are kept *(user-directed)* |
+| [0082](0082-the-output-settings-move-to-the-settings-window.md) | The Output settings move to the settings window, and are kept *(user-directed; its next-launch latency made immediate by [0085](0085-a-sound-backend-declares-its-own-settings.md))* |
 
 ### Sound
 
@@ -113,5 +113,6 @@ context, decision, consequences.
 | [0034](0034-settings-in-a-file-the-key-in-the-operating-system.md) | Settings in a file, the key in the operating system's store *(user-directed)* |
 | [0047](0047-the-agent-may-listen-where-the-model-can.md) | The agent gets an ear, which is a second model *(user-directed)* |
 | [0066](0066-a-second-wire-format-so-one-model-can-hear.md) | A second wire format, so one model can hear what it built *(user-directed)* |
-| [0069](0069-an-assistant-declares-its-own-settings.md) | An assistant declares its own settings *(user-directed)* |
+| [0069](0069-an-assistant-declares-its-own-settings.md) | An assistant declares its own settings *(user-directed; its field vocabulary shared with every plugin by [0085](0085-a-sound-backend-declares-its-own-settings.md))* |
+| [0085](0085-a-sound-backend-declares-its-own-settings.md) | A sound backend declares its own settings *(user-directed)* |
 | [0072](0072-a-conversation-is-saved-with-the-patch-it-is-about.md) | A conversation is saved with the patch it is about *(user-directed)* |

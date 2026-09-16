@@ -1,4 +1,5 @@
 using Flyback.Plugins.Audio;
+using Flyback.Plugins.Settings;
 
 namespace Flyback.Plugins.LinuxIO;
 
@@ -26,5 +27,5 @@ public sealed class AlsaAudioOutput : IAudioOutput
     /// </summary>
     public bool IsSupported => OperatingSystem.IsLinux() && LibAsound.IsInstalled;
 
-    public IAudioDevice Create(AudioFormat format) => new AlsaAudioDevice(format);
+    public IAudioDevice Create(AudioFormat format, SettingValues settings) => new AlsaAudioDevice(format);
 }

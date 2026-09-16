@@ -2,27 +2,28 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
-using Flyback.Plugins.Assist;
+using Flyback.Plugins.Settings;
 
 namespace Flyback.App.Controls;
 
 /// <summary>
-/// A provider's settings, drawn from what the provider says it has.
+/// A plugin's settings, drawn from what the plugin says it has — an assistant's
+/// (ADR-0069) or a sound backend's (ADR-0085).
 /// </summary>
 /// <remarks>
-/// Knowledge of the vocabulary rather than of any provider: nothing here could
-/// tell you which one it is drawing, and no model name or endpoint appears in it
+/// Knowledge of the vocabulary rather than of any plugin: nothing here could
+/// tell you which one it is drawing, and no model, endpoint or device appears in it
 /// (ADR-0069).
 /// <para>
 /// The declaration is asked for again after every change, because half a form
 /// depends on the rest of it. What comes back is reconciled onto the controls
 /// already here rather than replacing them: a control that is rebuilt loses the
 /// caret somebody was typing at. A shape this build has never heard of is skipped,
-/// so a provider written against a later vocabulary loses a row rather than the
+/// so a plugin written against a later vocabulary loses a row rather than the
 /// form.
 /// </para>
 /// </remarks>
-public sealed class AssistantForm : UserControl
+public sealed class SettingsForm : UserControl
 {
 
     private readonly StackPanel rows = new() { Spacing = 10 };
@@ -34,37 +35,37 @@ public sealed class AssistantForm : UserControl
     /// </summary>
     private string[] showing = [];
 
-    private Func<AssistantValues, IReadOnlyList<AssistantField>>? declare;
+    private Func<SettingValues, IReadOnlyList<SettingField>>? declare;
 
     /// <summary>
     /// Whether the controls are being written to rather than typed in. A change
     /// made from here is the declaration arriving, not somebody answering it,
-    /// and taking it for an answer would have the form ask the provider about
+    /// and taking it for an answer would have the form ask the plugin about
     /// its own reply for as long as the stack held.
     /// </summary>
     private bool quiet;
 
-    public AssistantForm() => Content = rows;
+    public SettingsForm() => Content = rows;
 
     /// <summary>Raised when somebody changes something. Not when the form is filled in.</summary>
     public event EventHandler? Changed;
 
     /// <summary>Everything on the form as it stands, in the shape the file keeps.</summary>
-    public AssistantValues Values { get; private set; } = AssistantValues.None;
+    public SettingValues Values { get; private set; } = SettingValues.None;
 
     /// <summary>
-    /// Puts a provider's form up, with what is already set on it.
+    /// Puts a plugin's form up, with what is already set on it.
     /// </summary>
     /// <param name="declaring">
-    /// What the provider says it has, asked afresh on every change. Null for no
-    /// provider at all, which draws nothing — there is nothing to configure
+    /// What the plugin says it has, asked afresh on every change. Null for no
+    /// plugin at all, which draws nothing — there is nothing to configure
     /// until something is installed.
     /// </param>
-    /// <param name="values">What that provider was last set to.</param>
-    public void Show(Func<AssistantValues, IReadOnlyList<AssistantField>>? declaring, AssistantValues values)
+    /// <param name="values">What that plugin was last set to.</param>
+    public void Show(Func<SettingValues, IReadOnlyList<SettingField>>? declaring, SettingValues values)
     {
-        // A different provider's fields are different fields, whatever they are
-        // called: two providers may both have a "model" and mean quite different
+        // A different plugin's fields are different fields, whatever they are
+        // called: two plugins may both have a "model" and mean quite different
         // lists by it.
         built.Clear();
         rows.Children.Clear();
@@ -77,7 +78,7 @@ public sealed class AssistantForm : UserControl
     }
 
     /// <summary>
-    /// Asks the provider what the form should be now, and makes it so.
+    /// Asks the plugin what the form should be now, and makes it so.
     /// </summary>
     /// <remarks>
     /// The children are left alone unless the declared keys have actually
@@ -121,7 +122,7 @@ public sealed class AssistantForm : UserControl
             rows.Children.Add(built[key].View);
     }
 
-    /// <summary>Takes somebody's answer, and asks the provider what that makes of the rest.</summary>
+    /// <summary>Takes somebody's answer, and asks the plugin what that makes of the rest.</summary>
     private void Answered(string key, string value)
     {
         if (quiet) return;
@@ -132,11 +133,11 @@ public sealed class AssistantForm : UserControl
         Changed?.Invoke(this, EventArgs.Empty);
     }
 
-    private Row? Build(AssistantField field) => field switch
+    private Row? Build(SettingField field) => field switch
     {
-        AssistantField.Text text => new TextRow(text, Answered),
-        AssistantField.Pick pick => new PickRow(pick, Answered),
-        AssistantField.Switch toggle => new SwitchRow(toggle, Answered),
+        SettingField.Text text => new TextRow(text, Answered),
+        SettingField.Pick pick => new PickRow(pick, Answered),
+        SettingField.Switch toggle => new SwitchRow(toggle, Answered),
         _ => null,
     };
 
@@ -160,7 +161,7 @@ public sealed class AssistantForm : UserControl
     /// <remarks>
     /// Kept across declarations, which is what lets a field disappear and come
     /// back with the caret and the selection it had. The label is applied every
-    /// time along with everything else: a provider is free to reword one, and
+    /// time along with everything else: a plugin is free to reword one, and
     /// nothing here should have to know whether it did.
     /// </remarks>
     private abstract class Row
@@ -174,7 +175,7 @@ public sealed class AssistantForm : UserControl
 
         public StackPanel View { get; } = new() { Spacing = 3 };
 
-        public void Apply(AssistantField field, AssistantValues values)
+        public void Apply(SettingField field, SettingValues values)
         {
             // Laid out on the first application rather than in the constructor,
             // because the control belongs to the subclass and does not exist
@@ -203,14 +204,14 @@ public sealed class AssistantForm : UserControl
         protected abstract Control Control { get; }
 
         /// <summary>Puts <paramref name="value"/> in the control, without it counting as an answer.</summary>
-        protected abstract void Fill(AssistantField field, string value);
+        protected abstract void Fill(SettingField field, string value);
     }
 
     private sealed class TextRow : Row
     {
         private readonly TextBox box;
 
-        public TextRow(AssistantField.Text field, Action<string, string> answered)
+        public TextRow(SettingField.Text field, Action<string, string> answered)
             : base(field.Label)
         {
             box = new TextBox
@@ -230,7 +231,7 @@ public sealed class AssistantForm : UserControl
 
         protected override Control Control => box;
 
-        protected override void Fill(AssistantField field, string value)
+        protected override void Fill(SettingField field, string value)
         {
             if (box.Text != value) box.Text = value;
         }
@@ -238,7 +239,7 @@ public sealed class AssistantForm : UserControl
 
     /// <summary>
     /// A list to choose from, which may also be typed into. What is stored is always
-    /// in the list whether or not the provider offered it — a model released after
+    /// in the list whether or not the plugin offered it — a model released after
     /// this build, or one at an endpoint somebody pointed this at by hand — because
     /// a setting that rewrote itself on being looked at is worse than an unfamiliar
     /// name in a box.
@@ -248,9 +249,9 @@ public sealed class AssistantForm : UserControl
         private readonly ComboBox box;
         private readonly bool editable;
 
-        private List<AssistantOption> offered = [];
+        private List<SettingOption> offered = [];
 
-        public PickRow(AssistantField.Pick field, Action<string, string> answered)
+        public PickRow(SettingField.Pick field, Action<string, string> answered)
             : base(field.Label)
         {
             editable = field.Editable;
@@ -286,14 +287,14 @@ public sealed class AssistantForm : UserControl
 
         protected override Control Control => box;
 
-        protected override void Fill(AssistantField field, string value)
+        protected override void Fill(SettingField field, string value)
         {
-            if (field is not AssistantField.Pick pick) return;
+            if (field is not SettingField.Pick pick) return;
 
             var options = pick.Options.ToList();
 
             if (options.All(option => option.Id != value) && !string.IsNullOrEmpty(value))
-                options.Add(new AssistantOption(value, pick.Name(value)));
+                options.Add(new SettingOption(value, pick.Name(value)));
 
             // Replacing the items clears the selection on the way past, so it is
             // done only where they have actually changed — otherwise a list
@@ -310,7 +311,7 @@ public sealed class AssistantForm : UserControl
 
                 box.DisplayMemberBinding = editable
                     ? null
-                    : new Avalonia.Data.Binding(nameof(AssistantOption.Name));
+                    : new Avalonia.Data.Binding(nameof(SettingOption.Name));
             }
 
             if (editable)
@@ -333,7 +334,7 @@ public sealed class AssistantForm : UserControl
     {
         private readonly CheckBox box;
 
-        public SwitchRow(AssistantField.Switch field, Action<string, string> answered)
+        public SwitchRow(SettingField.Switch field, Action<string, string> answered)
             : base(null)
         {
             box = new CheckBox
@@ -345,14 +346,14 @@ public sealed class AssistantForm : UserControl
             };
 
             box.IsCheckedChanged += (_, _) =>
-                answered(field.Key, AssistantField.Switch.Spell(box.IsChecked == true));
+                answered(field.Key, SettingField.Switch.Spell(box.IsChecked == true));
         }
 
         protected override Control Control => box;
 
-        protected override void Fill(AssistantField field, string value)
+        protected override void Fill(SettingField field, string value)
         {
-            if (field is not AssistantField.Switch toggle) return;
+            if (field is not SettingField.Switch toggle) return;
 
             box.Content = toggle.Label;
 

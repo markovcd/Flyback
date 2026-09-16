@@ -12,6 +12,7 @@ using Flyback.App.Controls;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Core.Render;
+using Flyback.Plugins.Settings;
 using Colors = Flyback.App.Controls.Colors;
 
 namespace Flyback.App;
@@ -213,6 +214,9 @@ public sealed partial class MainWindow
         previewFrameRate.SelectedIndex = Nearest(PreviewFrameRates, settings.PreviewFrameRate);
         jpegQuality.Value = settings.JpegQuality;
         latency.SelectedIndex = Nearest(Latencies.Select(ms => (double)ms).ToArray(), settings.LatencyMilliseconds);
+
+        if (plugins.PreferredAudioOutput is { } output)
+            soundForm.Show(output.Form, settings.SoundOf(output.Id));
     }
 
     /// <summary>
@@ -275,12 +279,26 @@ public sealed partial class MainWindow
                 : outputSettings.JpegQuality,
 
             LatencyMilliseconds = Latencies[Math.Max(latency.SelectedIndex, 0)],
+
+            // Every backend's, not only the one showing, so a backend that is not
+            // installed this launch keeps what it was set to.
+            // A copy, because the backend's answers are about to be written into it
+            // and what it held before is still to be compared against.
+            Sound = new(before.Sound, StringComparer.Ordinal),
         };
 
-        if (outputSettings.LatencyMilliseconds != before.LatencyMilliseconds)
-            Report("The new latency takes effect the next time Flyback starts.");
+        var soundChanged = false;
+
+        if (plugins.PreferredAudioOutput is { } output)
+        {
+            outputSettings.RememberSound(output.Id, soundForm.Values);
+            soundChanged = !SameAnswers(output.Form(soundForm.Values), before.SoundOf(output.Id), soundForm.Values);
+        }
 
         UseOutputSettings(outputSettings);
+
+        if (outputSettings.LatencyMilliseconds != before.LatencyMilliseconds || soundChanged)
+            ReopenAudio();
 
         if (outputSettingsPath is null) return;
 
@@ -293,6 +311,15 @@ public sealed partial class MainWindow
             Report($"Could not save the output settings: {ex.Message}", outputSettingsPath);
         }
     }
+
+    /// <summary>
+    /// Whether two sets of answers mean the same on every field declared, read the
+    /// way the backend reads them — so a device picked and then picked back is not a
+    /// change, though the bag now holds a key it did not.
+    /// </summary>
+    private static bool SameAnswers(IReadOnlyList<SettingField> fields, SettingValues a, SettingValues b) =>
+        fields.All(field =>
+            field.Sane(a.All.GetValueOrDefault(field.Key)) == field.Sane(b.All.GetValueOrDefault(field.Key)));
 
     private Grid BuildRightPanel()
     {
@@ -996,24 +1023,21 @@ public sealed partial class MainWindow
         recordingSection.Children.Add(Field("Quality", jpegQuality));
     }
 
-    /// <summary>The settings window's Sound section.</summary>
+    /// <summary>
+    /// The settings window's Sound section: what the sound backend declares, and the
+    /// latency, which every backend is asked for.
+    /// </summary>
     private void BuildSoundSection()
     {
         ToolTip.SetTip(latency,
             "How far behind the patch the speakers may run. Lower answers a key sooner; "
             + "raise it if the sound crackles.");
 
-        soundSection.Children.Add(Field("Latency", latency));
+        // First, because which device plays is the question people come to this
+        // tab with. Nothing here knows what the backend will ask (ADR-0085).
+        if (plugins.PreferredAudioOutput is not null) soundSection.Children.Add(soundForm);
 
-        // Said on the tab rather than left to be found out: the device is opened
-        // once a launch, so a saved latency is not heard until the next one.
-        soundSection.Children.Add(new TextBlock
-        {
-            Text = "Takes effect the next time Flyback starts.",
-            FontSize = Text.Small,
-            Foreground = Text.Muted,
-            TextWrapping = TextWrapping.Wrap,
-        });
+        soundSection.Children.Add(Field("Latency", latency));
     }
 
     /// <summary>A labelled row on the same 78-pixel gutter the knob rows use.</summary>

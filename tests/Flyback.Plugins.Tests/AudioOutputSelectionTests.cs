@@ -1,5 +1,6 @@
 using Flyback.Plugins.Audio;
 using Flyback.Plugins.Hosting;
+using Flyback.Plugins.Settings;
 using Shouldly;
 using Xunit;
 
@@ -78,7 +79,7 @@ public class AudioOutputSelectionTests
 
         public bool IsSupported => Supported;
 
-        public IAudioDevice Create(AudioFormat format) => new SilentAudioDevice(format.SampleRate);
+        public IAudioDevice Create(AudioFormat format, SettingValues settings) => new SilentAudioDevice(format.SampleRate);
     }
 
     private sealed class ThrowingOutput : IAudioOutput
@@ -91,6 +92,6 @@ public class AudioOutputSelectionTests
 
         public bool IsSupported => throw new InvalidOperationException("no");
 
-        public IAudioDevice Create(AudioFormat format) => throw new InvalidOperationException("no");
+        public IAudioDevice Create(AudioFormat format, SettingValues settings) => throw new InvalidOperationException("no");
     }
 }

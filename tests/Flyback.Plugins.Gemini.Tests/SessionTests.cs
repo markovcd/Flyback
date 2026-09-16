@@ -2,6 +2,7 @@ using System.Net;
 using System.Text.Json.Nodes;
 using Flyback.Core.Graph;
 using Flyback.Plugins.Assist;
+using Flyback.Plugins.Settings;
 using Shouldly;
 using Xunit;
 
@@ -441,7 +442,7 @@ public class SessionTests
     {
         var assistant = new GeminiAssistant();
         var bench = new PatchWorkbench(NodeCatalog.BuiltIn, new Patch());
-        var config = new AssistantConfig("no-key-needed", AssistantValues.None);
+        var config = new AssistantConfig("no-key-needed", SettingValues.None);
 
         using var carried = assistant.Resume(bench, config, "[]");
 

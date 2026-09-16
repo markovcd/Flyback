@@ -2,6 +2,7 @@ using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Flyback.Core;
+using Flyback.Plugins.Settings;
 
 namespace Flyback.Plugins.Assist;
 
@@ -76,7 +77,7 @@ public sealed class AssistantSettings
     /// What each provider was last set to, filed under its id.
     /// </summary>
     /// <remarks>
-    /// Plain strings, in the shape a provider's own <see cref="AssistantField"/> list
+    /// Plain strings, in the shape a provider's own <see cref="SettingField"/> list
     /// gave them, so the file stays hand-editable and this class stays ignorant of
     /// what any of it means. Public setter because that is what the serialiser
     /// needs; everything else goes through <see cref="Of"/> and
@@ -88,8 +89,8 @@ public sealed class AssistantSettings
     public static string File => Path.Combine(GlobalConstants.DataFolder, "assistant.json");
 
     /// <summary>What is set for one provider, and nothing at all for one nobody has configured.</summary>
-    public AssistantValues Of(string provider) =>
-        Choices.TryGetValue(provider, out var held) ? new AssistantValues(held) : AssistantValues.None;
+    public SettingValues Of(string provider) =>
+        Choices.TryGetValue(provider, out var held) ? new SettingValues(held) : SettingValues.None;
 
     /// <summary>
     /// Takes one provider's answers, leaving every other provider's alone.
@@ -99,7 +100,7 @@ public sealed class AssistantSettings
     /// afternoon does not cost the endpoint and model somebody spent time on for
     /// the first.
     /// </remarks>
-    public void Remember(string provider, AssistantValues values) =>
+    public void Remember(string provider, SettingValues values) =>
         Choices[provider] = new Dictionary<string, string>(values.All, StringComparer.Ordinal);
 
     /// <summary>Never throws. A settings file is not worth a failure to start.</summary>

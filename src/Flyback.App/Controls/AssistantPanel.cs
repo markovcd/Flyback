@@ -13,6 +13,7 @@ using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Plugins.Assist;
 using Flyback.Plugins.Hosting;
+using Flyback.Plugins.Settings;
 
 namespace Flyback.App.Controls;
 
@@ -258,7 +259,7 @@ public sealed class AssistantPanel : UserControl
     /// whether there is an ear at all are the provider's questions (ADR-0069), and
     /// what arrives here is a bag of strings to hand back.
     /// </summary>
-    private readonly AssistantForm form = new();
+    private readonly SettingsForm form = new();
 
     private readonly ComboBox providerBox = new() { FontSize = Text.Body, Width = 260, Name = "provider" };
 
@@ -857,12 +858,15 @@ public sealed class AssistantPanel : UserControl
                 keyBox.Text = string.Empty;
                 SayWhereTheKeyWent();
             }
-            else if (keep && credentials.HasEntered(assistant.Id))
+            else if (keep && credentials.SourceOf(assistant.Id, assistant.Credential.EnvironmentVariable) == CredentialSource.Session)
             {
                 // Ticking the box after the fact, with nothing typed. The key is
                 // already in hand and the field is empty because this emptied
                 // it, so asking for the secret again would be this program's
-                // fault presented as the person's problem.
+                // fault presented as the person's problem. Session rather than
+                // HasEntered: a key already Kept from an earlier save has
+                // nothing left to do here, and saying so again on every later
+                // Save would announce a change that did not happen.
                 credentials.KeepWhatIsHeld(assistant.Id);
                 SayWhereTheKeyWent();
             }

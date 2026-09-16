@@ -1,4 +1,5 @@
 using Flyback.Plugins.Assist;
+using Flyback.Plugins.Settings;
 using Shouldly;
 using Xunit;
 
@@ -70,7 +71,7 @@ public class ModelSurveyTests
     {
         var schema = Written();
 
-        schema.Surveyed(AssistantValues.None).ShouldBeSameAs(schema);
+        schema.Surveyed(SettingValues.None).ShouldBeSameAs(schema);
     }
 
     [Fact]
@@ -114,7 +115,7 @@ public class ModelSurveyTests
     {
         var schema = Written();
 
-        schema.Surveyed(AssistantValues.None.With(Survey.Key, "{ oh dear")).ShouldBeSameAs(schema);
+        schema.Surveyed(SettingValues.None.With(Survey.Key, "{ oh dear")).ShouldBeSameAs(schema);
     }
 
     private static AssistantSchema Written() => new(
@@ -123,6 +124,6 @@ public class ModelSurveyTests
         "SOME_API_KEY",
         "A key from somewhere.");
 
-    private static AssistantValues Stored(params ModelReport[] found) =>
-        AssistantValues.None.With(Survey.Key, Survey.Write(found));
+    private static SettingValues Stored(params ModelReport[] found) =>
+        SettingValues.None.With(Survey.Key, Survey.Write(found));
 }

@@ -1,4 +1,5 @@
 using Flyback.Plugins.Audio;
+using Flyback.Plugins.Settings;
 
 namespace Flyback.Plugins.MacIO;
 
@@ -23,5 +24,5 @@ public sealed class CoreAudioOutput : IAudioOutput
 
     public bool IsSupported => OperatingSystem.IsMacOS();
 
-    public IAudioDevice Create(AudioFormat format) => new CoreAudioDevice(format);
+    public IAudioDevice Create(AudioFormat format, SettingValues settings) => new CoreAudioDevice(format);
 }

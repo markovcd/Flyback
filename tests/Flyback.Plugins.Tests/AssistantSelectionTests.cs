@@ -1,5 +1,6 @@
 using Flyback.Plugins.Assist;
 using Flyback.Plugins.Hosting;
+using Flyback.Plugins.Settings;
 using Shouldly;
 using Xunit;
 
@@ -72,9 +73,9 @@ public class AssistantSelectionTests
 
         public AssistantCredential Credential => Schema.Credential;
 
-        public IReadOnlyList<AssistantField> Form(AssistantValues values) => Schema.Form(values);
+        public IReadOnlyList<SettingField> Form(SettingValues values) => Schema.Form(values);
 
-        public AssistantSenses Senses(AssistantValues values) => Schema.Senses(values);
+        public AssistantSenses Senses(SettingValues values) => Schema.Senses(values);
 
         public string? Unavailable(AssistantConfig config) => Excuse;
 

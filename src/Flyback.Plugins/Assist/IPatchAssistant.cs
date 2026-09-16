@@ -1,3 +1,5 @@
+using Flyback.Plugins.Settings;
+
 namespace Flyback.Plugins.Assist;
 
 /// <summary>How hard an assistant should think before answering.</summary>
@@ -40,7 +42,7 @@ public sealed record AssistantModel(string Id, bool Vision = true, bool Hearing 
 /// <remarks>
 /// A helper on the plugin's side of the boundary. Both adapters here ask the same
 /// five questions, so the declaration is written once and delegated to; a provider
-/// of some other shape declares its own <see cref="AssistantField"/> list instead.
+/// of some other shape declares its own <see cref="SettingField"/> list instead.
 /// It is also the one place that knows both directions of a setting — what the
 /// form offers (<see cref="Form"/>) and what a configured run means
 /// (<see cref="Read"/>) — which have to agree, since a switch shown for a model
@@ -115,7 +117,7 @@ public sealed record AssistantSchema(
     /// default the survey did not find would hand a fresh window the one model known
     /// not to work.
     /// </remarks>
-    public AssistantSchema Surveyed(AssistantValues values)
+    public AssistantSchema Surveyed(SettingValues values)
     {
         var found = Survey.Read(values.Text(Survey.Key, string.Empty));
 
@@ -140,18 +142,18 @@ public sealed record AssistantSchema(
     /// rest: the model decides whether looking is offered and whether there is a
     /// second model to choose. The App asks again after every change.
     /// </remarks>
-    public IReadOnlyList<AssistantField> Form(AssistantValues values)
+    public IReadOnlyList<SettingField> Form(SettingValues values)
     {
         var model = values.Text(ModelKey, DefaultModel);
         var known = Known(model);
-        var ears = Ears.Select(m => new AssistantOption(m.Id, m.Id)).ToList();
+        var ears = Ears.Select(m => new SettingOption(m.Id, m.Id)).ToList();
 
-        var fields = new List<AssistantField>
+        var fields = new List<SettingField>
         {
-            new AssistantField.Pick(
+            new SettingField.Pick(
                 ModelKey,
                 "Model",
-                SuggestedModels.Select(m => new AssistantOption(m.Id, m.Id)).ToList(),
+                SuggestedModels.Select(m => new SettingOption(m.Id, m.Id)).ToList(),
                 DefaultModel,
                 Editable: true)
             {
@@ -161,7 +163,7 @@ public sealed record AssistantSchema(
                     : Handles(known),
             },
 
-            new AssistantField.Text(EndpointKey, "Endpoint", DefaultBaseUrl ?? string.Empty)
+            new SettingField.Text(EndpointKey, "Endpoint", DefaultBaseUrl ?? string.Empty)
             {
                 Enabled = BaseUrlEditable,
                 Because = BaseUrlEditable ? null : "This format is spoken in one place.",
@@ -173,13 +175,13 @@ public sealed record AssistantSchema(
             // passing through a model on the way to another. Read is what makes
             // it safe — it sends no picture to a model recorded as refusing one,
             // whatever the box still shows.
-            new AssistantField.Switch(VisionKey, "Let it look at the picture", On: true)
+            new SettingField.Switch(VisionKey, "Let it look at the picture", On: true)
             {
                 Enabled = known?.Vision != false,
                 Because = known is null ? null : $"{known.Id} does not take pictures.",
             },
 
-            new AssistantField.Switch(HearingKey, "Let it listen to the sound")
+            new SettingField.Switch(HearingKey, "Let it listen to the sound")
             {
                 Enabled = ears.Count > 0,
                 Because = ears.Count > 0 ? null : "This provider has no model that takes a sound.",
@@ -191,16 +193,16 @@ public sealed record AssistantSchema(
         // than greying out; what it held is still in the settings and comes back
         // the moment a model that cannot hear is chosen.
         if (ears.Count > 0 && known?.Hearing != true)
-            fields.Add(new AssistantField.Pick(EarKey, "Ear", ears, ears[0].Id)
+            fields.Add(new SettingField.Pick(EarKey, "Ear", ears, ears[0].Id)
             {
                 Enabled = values.Flag(HearingKey),
                 Because = "Nobody is listening, so there is nobody to choose.",
             });
 
-        fields.Add(new AssistantField.Pick(
+        fields.Add(new SettingField.Pick(
             EffortKey,
             "Effort",
-            Enum.GetValues<AssistantEffort>().Select(e => new AssistantOption(e.ToString(), e.ToString())).ToList(),
+            Enum.GetValues<AssistantEffort>().Select(e => new SettingOption(e.ToString(), e.ToString())).ToList(),
             nameof(AssistantEffort.Medium)));
 
         return fields;
@@ -217,7 +219,7 @@ public sealed record AssistantSchema(
     /// nobody heard it. <see cref="EarModel"/> is null where the model takes a sound
     /// itself, since an ear names the model asked instead.
     /// </remarks>
-    public AssistantChoices Read(AssistantValues values)
+    public AssistantChoices Read(SettingValues values)
     {
         var model = values.Text(ModelKey, DefaultModel);
         var known = Known(model);
@@ -244,7 +246,7 @@ public sealed record AssistantSchema(
     /// being wrong that way costs a description, and being wrong the other way loses
     /// every turn from the first <c>listen</c> onwards.
     /// </remarks>
-    public AssistantSenses Senses(AssistantValues values)
+    public AssistantSenses Senses(SettingValues values)
     {
         var chosen = Read(values);
 
@@ -345,10 +347,10 @@ public sealed record AssistantChoices(
 /// the settings file, never logged (ADR-0034).
 /// </remarks>
 /// <param name="Values">Every setting this provider declared, as it stands.</param>
-public sealed record AssistantConfig(string ApiKey, AssistantValues Values)
+public sealed record AssistantConfig(string ApiKey, SettingValues Values)
 {
     /// <summary>Nothing configured, which is what a provider is asked about before anybody has.</summary>
-    public static AssistantConfig Unset { get; } = new(string.Empty, AssistantValues.None);
+    public static AssistantConfig Unset { get; } = new(string.Empty, SettingValues.None);
 }
 
 /// <summary>
@@ -382,13 +384,13 @@ public interface IPatchAssistant
     /// nothing about any of it. A credential is not among them, and there is no
     /// shape one could go in.
     /// </remarks>
-    IReadOnlyList<AssistantField> Form(AssistantValues values);
+    IReadOnlyList<SettingField> Form(SettingValues values);
 
     /// <summary>
     /// What a run configured this way may be handed, which the host asks because
     /// the host builds the workbench.
     /// </summary>
-    AssistantSenses Senses(AssistantValues values);
+    AssistantSenses Senses(SettingValues values);
 
     /// <summary>
     /// Why this configuration cannot run, or null when it can.

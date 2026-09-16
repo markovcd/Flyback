@@ -1,6 +1,7 @@
 using Flyback.Core.Graph;
 using Flyback.Plugins.Assist;
 using Flyback.Plugins.Hosting;
+using Flyback.Plugins.Settings;
 using Shouldly;
 using Xunit;
 
@@ -248,9 +249,9 @@ public class ProbeCommandTests : IDisposable
 
         public AssistantCredential Credential => new(variable, "A key from somewhere.");
 
-        public IReadOnlyList<AssistantField> Form(AssistantValues values) => [];
+        public IReadOnlyList<SettingField> Form(SettingValues values) => [];
 
-        public AssistantSenses Senses(AssistantValues values) => new(false, Listener.None);
+        public AssistantSenses Senses(SettingValues values) => new(false, Listener.None);
 
         public string? Unavailable(AssistantConfig config) => null;
 
@@ -284,9 +285,9 @@ public class ProbeCommandTests : IDisposable
 
         public AssistantCredential Credential => new("MUTE_KEY", "A key from somewhere.");
 
-        public IReadOnlyList<AssistantField> Form(AssistantValues values) => [];
+        public IReadOnlyList<SettingField> Form(SettingValues values) => [];
 
-        public AssistantSenses Senses(AssistantValues values) => new(false, Listener.None);
+        public AssistantSenses Senses(SettingValues values) => new(false, Listener.None);
 
         public string? Unavailable(AssistantConfig config) => null;
 

@@ -1,6 +1,7 @@
 using System.Runtime.Loader;
 using Flyback.Plugins.Audio;
 using Flyback.Plugins.Hosting;
+using Flyback.Plugins.Settings;
 using Shouldly;
 using Xunit;
 
@@ -112,6 +113,53 @@ public class PluginHostTests
         }
 
         chosen.ShouldBe(OperatingSystem.IsWindows() ? "wasapi" : OperatingSystem.IsMacOS() ? "coreaudio" : null);
+    }
+
+    /// <summary>
+    /// WASAPI asks one thing, which device plays, and starts on whatever Windows is
+    /// playing through. Off Windows it asks nothing, and never reaches for NAudio to
+    /// find that out.
+    /// </summary>
+    [Fact]
+    public void Wasapi_asks_which_device_plays()
+    {
+        var form = Shipped().AudioOutputs.Single(o => o.Id == "wasapi").Form(SettingValues.None);
+
+        if (!OperatingSystem.IsWindows())
+        {
+            form.ShouldBeEmpty();
+            return;
+        }
+
+        var device = form.ShouldHaveSingleItem().ShouldBeOfType<SettingField.Pick>();
+
+        device.Key.ShouldBe("device");
+        device.Sane(null).ShouldBe("default");
+        device.Options[0].Id.ShouldBe("default");
+        device.Note.ShouldBeNull();
+    }
+
+    /// <summary>
+    /// A device picked and then unplugged stays picked, so plugging it back in is
+    /// all it takes — and the form says what plays meanwhile rather than showing an
+    /// id nobody could read.
+    /// </summary>
+    [Fact]
+    public void A_device_that_has_gone_stays_chosen_and_says_so()
+    {
+        if (!OperatingSystem.IsWindows()) return;
+
+        var output = Shipped().AudioOutputs.Single(o => o.Id == "wasapi");
+        var gone = SettingValues.None.With("device", "{0.0.0.00000000}.{not-plugged-in}");
+
+        var device = output.Form(gone).ShouldHaveSingleItem().ShouldBeOfType<SettingField.Pick>();
+
+        device.Sane(gone.Text("device")).ShouldBe("{0.0.0.00000000}.{not-plugged-in}");
+        device.Name("{0.0.0.00000000}.{not-plugged-in}").ShouldNotContain("{");
+        device.Note.ShouldNotBeNull();
+
+        // Creating opens nothing, so a device that is not there cannot fail it.
+        using var created = output.Create(AudioFormat.Default, gone);
     }
 
     [Fact]

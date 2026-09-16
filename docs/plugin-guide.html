@@ -758,12 +758,27 @@ em.UnitWrite(cell, smoothed);           <span class="c">// what it holds next ti
     <span class="k">public int</span> Priority =&gt; 150;      <span class="c">// the shipped ALSA backend is 100, and loses</span>
     <span class="k">public bool</span> IsSupported =&gt; OperatingSystem.IsLinux() &amp;&amp; JackIsRunning();
 
-    <span class="k">public</span> IAudioDevice Create(AudioFormat format) =&gt; <span class="k">new</span> JackDevice(format);
+    <span class="c">// Optional: what the Sound settings tab shows for this backend.</span>
+    <span class="k">public</span> IReadOnlyList&lt;SettingField&gt; Form(SettingValues values) =&gt;
+    [
+        <span class="k">new</span> SettingField.Pick(<span class="s">"port"</span>, <span class="s">"Port"</span>, JackPorts(), <span class="s">"system"</span>),
+    ];
+
+    <span class="k">public</span> IAudioDevice Create(AudioFormat format, SettingValues settings) =&gt;
+        <span class="k">new</span> JackDevice(format, settings.Text(<span class="s">"port"</span>, <span class="s">"system"</span>));
 }</code></pre>
 
     <p><code>IsSupported</code> must answer without opening anything and without throwing — that is what lets
     a plugin for another operating system stay loadable everywhere. Higher <code>Priority</code> wins; ties
     break on <code>Id</code>.</p>
+
+    <p><code>Form</code> is how a backend gets settings without the application knowing what they are. It
+    declares fields in the same vocabulary an assistant uses — <code>Text</code>, <code>Pick</code> and
+    <code>Switch</code> — and the settings window draws them on the Sound tab, keeps the answers in
+    <code>output.json</code> under your backend's id, and hands them to <code>Create</code> at launch and
+    again on every Save that changes them, so the new device plays at once. Open nothing until
+    <code>Start</code>, which is what lets Save swap devices in place. Leave <code>Form</code> out and the tab
+    shows only latency. The shipped WASAPI backend uses it to pick the output device.</p>
 
     <p><code>IAudioDevice.Start</code> is handed a callback that fills an interleaved stereo buffer on the
     audio thread. It <strong>must not block, allocate or throw</strong>. If you cannot honour the requested

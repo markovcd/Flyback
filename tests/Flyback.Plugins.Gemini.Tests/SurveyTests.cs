@@ -1,6 +1,7 @@
 using System.Net;
 using System.Text.Json.Nodes;
 using Flyback.Plugins.Assist;
+using Flyback.Plugins.Settings;
 using Shouldly;
 using Xunit;
 
@@ -128,10 +129,10 @@ public class SurveyTests
     public void The_model_box_offers_what_the_survey_wrote()
     {
         var found = Assist.Survey.Write([new ModelReport("gemini-9-flash") { Hearing = true }]);
-        var values = AssistantValues.None.With(Assist.Survey.Key, found);
+        var values = SettingValues.None.With(Assist.Survey.Key, found);
 
         var box = new GeminiAssistant().Form(values)
-            .OfType<AssistantField.Pick>()
+            .OfType<SettingField.Pick>()
             .First(f => f.Key == AssistantSchema.ModelKey);
 
         box.Options.Select(o => o.Id).ShouldBe(["gemini-9-flash"]);

@@ -1,6 +1,7 @@
 using System.Text.Json.Nodes;
 using Flyback.App.Assist;
 using Flyback.Plugins.Assist;
+using Flyback.Plugins.Settings;
 using Shouldly;
 using Xunit;
 
@@ -33,7 +34,7 @@ public class SavedConversationTests
             new TranscriptLine(Voice.Aside, "Applied. Ctrl+Z puts the patch back as it was."),
         ]);
 
-    private static AssistantValues Values(params (string Key, string Value)[] pairs) =>
+    private static SettingValues Values(params (string Key, string Value)[] pairs) =>
         new(pairs.ToDictionary(pair => pair.Key, pair => pair.Value));
 
     [Fact]

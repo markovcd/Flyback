@@ -1,4 +1,5 @@
 using Flyback.Plugins.Assist;
+using Flyback.Plugins.Settings;
 
 namespace Flyback.Plugins.OpenAi;
 
@@ -71,9 +72,9 @@ public sealed partial class OpenAiAssistant : IPatchAssistant
     /// peculiar about this provider's form, which is exactly why the declaration
     /// of it is shared.
     /// </summary>
-    public IReadOnlyList<AssistantField> Form(AssistantValues values) => Schema.Surveyed(values).Form(values);
+    public IReadOnlyList<SettingField> Form(SettingValues values) => Schema.Surveyed(values).Form(values);
 
-    public AssistantSenses Senses(AssistantValues values) => Schema.Surveyed(values).Senses(values);
+    public AssistantSenses Senses(SettingValues values) => Schema.Surveyed(values).Senses(values);
 
     /// <summary>
     /// Answered from the configuration alone — no request, no client, nothing

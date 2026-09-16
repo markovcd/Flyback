@@ -7,7 +7,8 @@ applies it to configuration; finishes what
 [0033](0033-patches-authored-by-an-agent-behind-the-plugin-boundary.md) drew and
 [0047](0047-the-agent-may-listen-where-the-model-can.md) tested; leaves
 [0034](0034-settings-in-a-file-the-key-in-the-operating-system.md) exactly where
-it stood on the key
+it stood on the key · its field vocabulary renamed for every plugin by
+[0085](0085-a-sound-backend-declares-its-own-settings.md)
 
 ## Context
 

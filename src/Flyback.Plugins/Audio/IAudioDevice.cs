@@ -1,5 +1,6 @@
 using Flyback.Core;
 using Flyback.Core.Render;
+using Flyback.Plugins.Settings;
 
 namespace Flyback.Plugins.Audio;
 
@@ -63,5 +64,23 @@ public interface IAudioOutput
     /// </summary>
     bool IsSupported { get; }
 
-    IAudioDevice Create(AudioFormat format);
+    /// <summary>
+    /// What this backend lets somebody set — which device plays, say — declared
+    /// rather than drawn, and asked for again after every change (ADR-0085).
+    /// </summary>
+    /// <remarks>
+    /// Empty for a backend with nothing to ask, which is the default. Only asked of
+    /// a backend that <see cref="IsSupported"/>, and like it must not open a device
+    /// or throw: listing what is plugged in is fine, playing through it is not.
+    /// </remarks>
+    /// <param name="values">What the form holds now, as the settings file keeps it.</param>
+    IReadOnlyList<SettingField> Form(SettingValues values) => [];
+
+    /// <param name="format">What the host needs the device to play.</param>
+    /// <param name="settings">
+    /// What <see cref="Form"/> was last answered with, read back through the
+    /// fields' own <see cref="SettingField.Sane"/> by the backend itself — the host
+    /// stores these and never looks inside.
+    /// </param>
+    IAudioDevice Create(AudioFormat format, SettingValues settings);
 }

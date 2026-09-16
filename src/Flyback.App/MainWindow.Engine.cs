@@ -27,21 +27,59 @@ public sealed partial class MainWindow
     /// plugin, or one whose device refuses to open, gets silence and a disabled
     /// button — never a program that will not start.
     /// </summary>
-    private static AudioSetup OpenAudio(PluginCatalog plugins, int latencyMilliseconds)
+    private static AudioSetup OpenAudio(PluginCatalog plugins, OutputSettings settings)
     {
         if (plugins.PreferredAudioOutput is not { } output)
             return new AudioSetup(new SilentAudioDevice(), null, null);
 
         try
         {
-            var format = AudioFormat.Default with { LatencyMilliseconds = latencyMilliseconds };
+            var format = AudioFormat.Default with { LatencyMilliseconds = settings.LatencyMilliseconds };
 
-            return new AudioSetup(output.Create(format), output, null);
+            return new AudioSetup(output.Create(format, settings.SoundOf(output.Id)), output, null);
         }
         catch (Exception ex)
         {
             return new AudioSetup(new SilentAudioDevice(), null, $"{output.Name} — {ex.Message}");
         }
+    }
+
+    /// <summary>
+    /// Puts the Sound settings just saved in force: a device made from them takes
+    /// the old one's place, and the sound carries on through it where it was.
+    /// </summary>
+    /// <remarks>
+    /// Only the device is new. The engine, its program and the clock the preview
+    /// follows all stay, which is why this can happen on Save rather than at the next
+    /// launch (ADR-0085). A backend's <see cref="IAudioOutput.Create"/> opens nothing,
+    /// so a device that is busy or gone says so when it is started — through
+    /// <see cref="SetAudioEnabled"/>, the same as at launch.
+    /// </remarks>
+    private void ReopenAudio()
+    {
+        var next = OpenAudio(plugins, outputSettings);
+
+        if (next.Failure is { } failure)
+        {
+            next.Device.Dispose();
+            Report($"Could not open sound: {failure}", PluginSummary());
+            return;
+        }
+
+        if (audio.IsRunning) SetAudioEnabled(false);
+
+        if (!audio.Use(next.Device))
+        {
+            next.Device.Dispose();
+            Report("That device plays at another rate, so it is used from the next time Flyback starts.");
+            SyncAudioToVolume();
+            return;
+        }
+
+        sound = next;
+        audioBlocked = false;
+
+        SyncAudioToVolume();
     }
 
     /// <summary>

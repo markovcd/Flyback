@@ -1,6 +1,7 @@
 using System.Reflection;
 using Flyback.App.Assist;
 using Flyback.Plugins.Assist;
+using Flyback.Plugins.Settings;
 using Shouldly;
 using Xunit;
 
@@ -28,7 +29,7 @@ public class AssistantSettingsTests : IDisposable
     /// What a provider was set to, in the provider's own words. Nothing here
     /// knows what any of it means — see ADR-0069.
     /// </summary>
-    private static AssistantValues Answers => new(new Dictionary<string, string>
+    private static SettingValues Answers => new(new Dictionary<string, string>
     {
         ["model"] = "claude-opus-5",
         ["endpoint"] = "https://example.invalid/v1",
@@ -48,7 +49,7 @@ public class AssistantSettingsTests : IDisposable
         var models = "[{\"Id\":\"gemini-3.6-flash\",\"Hearing\":true}]";
         var settings = new AssistantSettings();
 
-        settings.Remember("gemini", new AssistantValues(new Dictionary<string, string>
+        settings.Remember("gemini", new SettingValues(new Dictionary<string, string>
         {
             ["model"] = "gemini-3.6-flash",
             ["models"] = models,
@@ -78,7 +79,7 @@ public class AssistantSettingsTests : IDisposable
         var models = "[{\"Id\":\"gemini-3.6-flash\",\"Hearing\":true}]";
         var settings = new AssistantSettings();
 
-        settings.Remember("gemini", new AssistantValues(new Dictionary<string, string> { ["models"] = models }));
+        settings.Remember("gemini", new SettingValues(new Dictionary<string, string> { ["models"] = models }));
         settings.Save(path);
 
         AssistantSettings.Load(path).Of("gemini").Text("models").ShouldBe(models);
@@ -119,7 +120,7 @@ public class AssistantSettingsTests : IDisposable
     {
         var settings = new AssistantSettings();
 
-        settings.Remember("gemini", new AssistantValues(new Dictionary<string, string> { ["odd"] = held }));
+        settings.Remember("gemini", new SettingValues(new Dictionary<string, string> { ["odd"] = held }));
         settings.Save(path);
 
         AssistantSettings.Load(path).Of("gemini").All["odd"].ShouldBe(held);
@@ -152,7 +153,7 @@ public class AssistantSettingsTests : IDisposable
         var settings = new AssistantSettings();
 
         settings.Remember("anthropic", Answers);
-        settings.Remember("openai", new AssistantValues(new Dictionary<string, string> { ["model"] = "gpt-4o" }));
+        settings.Remember("openai", new SettingValues(new Dictionary<string, string> { ["model"] = "gpt-4o" }));
         settings.Save(path);
 
         var read = AssistantSettings.Load(path);
@@ -173,7 +174,7 @@ public class AssistantSettingsTests : IDisposable
 
         // Nothing set for anybody, which is what leaves every provider on
         // whatever its own form declares.
-        settings.Of("anything").ShouldBe(AssistantValues.None);
+        settings.Of("anything").ShouldBe(SettingValues.None);
     }
 
     /// <summary>
@@ -194,7 +195,7 @@ public class AssistantSettingsTests : IDisposable
         Directory.CreateDirectory(Path.GetDirectoryName(path)!);
         File.WriteAllText(path, written);
 
-        AssistantSettings.Load(path).Of("openai").ShouldBe(AssistantValues.None);
+        AssistantSettings.Load(path).Of("openai").ShouldBe(SettingValues.None);
     }
 
     /// <summary>

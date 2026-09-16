@@ -1,27 +1,28 @@
-namespace Flyback.Plugins.Assist;
+namespace Flyback.Plugins.Settings;
 
 /// <summary>
-/// One entry of an <see cref="AssistantField.Pick"/>: the id that is stored, and
+/// One entry of an <see cref="SettingField.Pick"/>: the id that is stored, and
 /// the name a person reads. Kept apart for the reason a patch keeps them apart —
 /// what is written down has to go on meaning the same thing after somebody
 /// rewords the label.
 /// </summary>
 /// <param name="Id">Stable, and what ends up in the settings file.</param>
 /// <param name="Name">What the picker shows.</param>
-public readonly record struct AssistantOption(string Id, string Name);
+public readonly record struct SettingOption(string Id, string Name);
 
 /// <summary>
-/// One setting a provider has, described rather than drawn.
+/// One setting a plugin has, described rather than drawn.
 /// </summary>
 /// <remarks>
 /// The declarative route ADR-0055 took for a plugin's carried state, taken again
-/// for a provider's settings: the plugin says what it has and the App draws it, so
-/// no plugin ships a control.
+/// for its settings: the plugin says what it has and the App draws it, so no
+/// plugin ships a control. An assistant declares its form this way (ADR-0069),
+/// and so does a sound backend (ADR-0085).
 /// <para>
 /// <b>A credential is never a field</b> (ADR-0034): a plugin that declared
 /// somewhere to type one would be a plugin whose settings file held it in plain
-/// text. What a provider says about its key is
-/// <see cref="AssistantCredential"/>.
+/// text. What an assistant says about its key is
+/// <see cref="Assist.AssistantCredential"/>.
 /// </para>
 /// <para>
 /// A value is a string whatever the shape — a switch is one or nought, a choice is
@@ -32,16 +33,16 @@ public readonly record struct AssistantOption(string Id, string Name);
 /// </remarks>
 /// <param name="Key">
 /// What this value is filed under. Stable: it is in the settings file of everybody
-/// who has ever configured this provider.
+/// who has ever configured this plugin.
 /// </param>
 /// <param name="Label">What the form writes beside it.</param>
-public abstract record AssistantField(string Key, string Label)
+public abstract record SettingField(string Key, string Label)
 {
     /// <summary>One line under the control, or null where the label says it all.</summary>
     /// <remarks>
-    /// Where a provider explains itself. The App has nothing to say about a
-    /// model it is forbidden to know one name of, so a sentence about what the
-    /// chosen one accepts can only come from here.
+    /// Where a plugin explains itself. The App has nothing to say about a model
+    /// or a device it is forbidden to know one name of, so a sentence about the
+    /// chosen one can only come from here.
     /// </remarks>
     public string? Note { get; init; }
 
@@ -66,7 +67,7 @@ public abstract record AssistantField(string Key, string Label)
     /// </summary>
     /// <remarks>
     /// Every read goes through here rather than trusting the file: settings are text
-    /// somebody may have edited. It is also what an unconfigured provider starts on,
+    /// somebody may have edited. It is also what an unconfigured plugin starts on,
     /// since "nothing set yet" is the same question.
     /// </remarks>
     public abstract string Sane(string? stored);
@@ -78,7 +79,7 @@ public abstract record AssistantField(string Key, string Label)
         string Key,
         string Label,
         string Fallback = "",
-        string Placeholder = "") : AssistantField(Key, Label)
+        string Placeholder = "") : SettingField(Key, Label)
     {
         public override string Sane(string? stored) =>
             string.IsNullOrWhiteSpace(stored) ? Fallback : stored;
@@ -94,16 +95,16 @@ public abstract record AssistantField(string Key, string Label)
     /// <param name="Fallback">What is chosen until somebody chooses.</param>
     /// <param name="Editable">
     /// Whether anything at all may be typed over the list. True where the
-    /// options are a provider's suggestions rather than its permissions — a
+    /// options are a plugin's suggestions rather than its permissions — a
     /// model name at an endpoint nobody here has heard of is the ordinary case,
     /// and a plain drop-down would make it unreachable.
     /// </param>
     public sealed record Pick(
         string Key,
         string Label,
-        IReadOnlyList<AssistantOption> Options,
+        IReadOnlyList<SettingOption> Options,
         string Fallback = "",
-        bool Editable = false) : AssistantField(Key, Label)
+        bool Editable = false) : SettingField(Key, Label)
     {
         /// <summary>
         /// Whatever was stored, which is deliberately not held to
@@ -130,7 +131,7 @@ public abstract record AssistantField(string Key, string Label)
 
     /// <summary>Something that is either on or off.</summary>
     /// <param name="On">What it holds until somebody sets it.</param>
-    public sealed record Switch(string Key, string Label, bool On = false) : AssistantField(Key, Label)
+    public sealed record Switch(string Key, string Label, bool On = false) : SettingField(Key, Label)
     {
         /// <summary>How a switch is spelled in the file, and the only two things it can say.</summary>
         private const string Yes = "1";
@@ -159,53 +160,37 @@ public abstract record AssistantField(string Key, string Label)
 }
 
 /// <summary>
-/// What a provider says about the key it needs, which the host holds and the
-/// plugin never sees a place to store.
-/// </summary>
-/// <remarks>
-/// Apart from <see cref="AssistantField"/> because it is the one part of a
-/// provider's configuration that must not become one (ADR-0034): the host reads
-/// the variable and draws the box, and the key reaches a plugin only as
-/// <see cref="AssistantConfig.ApiKey"/>, for the length of a run.
-/// </remarks>
-/// <param name="EnvironmentVariable">
-/// The variable this provider is conventionally given its key in. The shell reads
-/// it, not the plugin.
-/// </param>
-/// <param name="Help">One line saying where a key comes from, shown under the field.</param>
-public sealed record AssistantCredential(string EnvironmentVariable, string Help);
-
-/// <summary>
 /// What everything on a form is set to, as the file holds it.
 /// </summary>
 /// <remarks>
 /// A bag of strings rather than a record with properties, because the App cannot
-/// name a single one of these: which settings exist is the provider's to say. Value
-/// equality, and it is load-bearing — the panel compares the configuration a
-/// conversation was started with against the one in front of somebody now, and a
-/// reference comparison would start a new conversation on every keystroke.
+/// name a single one of these: which settings exist is the plugin's to say. Value
+/// equality, and it is load-bearing — the assistant panel compares the
+/// configuration a conversation was started with against the one in front of
+/// somebody now, and a reference comparison would start a new conversation on
+/// every keystroke.
 /// </remarks>
-public sealed class AssistantValues : IEquatable<AssistantValues>
+public sealed class SettingValues : IEquatable<SettingValues>
 {
     private readonly Dictionary<string, string> held;
 
-    public AssistantValues(IEnumerable<KeyValuePair<string, string>>? from = null) =>
+    public SettingValues(IEnumerable<KeyValuePair<string, string>>? from = null) =>
         held = from is null
             ? new Dictionary<string, string>(StringComparer.Ordinal)
             : new Dictionary<string, string>(from, StringComparer.Ordinal);
 
-    /// <summary>Nothing set, which is what a provider nobody has configured starts on.</summary>
-    public static AssistantValues None { get; } = new();
+    /// <summary>Nothing set, which is what a plugin nobody has configured starts on.</summary>
+    public static SettingValues None { get; } = new();
 
     /// <summary>Everything set, for whoever has to write it down.</summary>
     public IReadOnlyDictionary<string, string> All => held;
 
     /// <summary>This one set to <paramref name="value"/>, leaving the rest alone.</summary>
-    public AssistantValues With(string key, string value)
+    public SettingValues With(string key, string value)
     {
         var next = new Dictionary<string, string>(held, StringComparer.Ordinal) { [key] = value };
 
-        return new AssistantValues(next);
+        return new SettingValues(next);
     }
 
     /// <summary>What is stored, or <paramref name="fallback"/> where nothing meaningful is.</summary>
@@ -213,14 +198,14 @@ public sealed class AssistantValues : IEquatable<AssistantValues>
         held.TryGetValue(key, out var stored) && !string.IsNullOrWhiteSpace(stored) ? stored : fallback;
 
     public bool Flag(string key, bool fallback = false) =>
-        AssistantField.Switch.Read(held.GetValueOrDefault(key), fallback);
+        SettingField.Switch.Read(held.GetValueOrDefault(key), fallback);
 
     /// <summary>A stored value read back as one of an enum's names, however it was cased.</summary>
     public TWord Word<TWord>(string key, TWord fallback)
         where TWord : struct, Enum =>
         Enum.TryParse<TWord>(held.GetValueOrDefault(key), ignoreCase: true, out var word) ? word : fallback;
 
-    public bool Equals(AssistantValues? other)
+    public bool Equals(SettingValues? other)
     {
         if (other is null) return false;
         if (ReferenceEquals(this, other)) return true;
@@ -233,7 +218,7 @@ public sealed class AssistantValues : IEquatable<AssistantValues>
         return true;
     }
 
-    public override bool Equals(object? obj) => Equals(obj as AssistantValues);
+    public override bool Equals(object? obj) => Equals(obj as SettingValues);
 
     public override int GetHashCode()
     {
@@ -248,15 +233,3 @@ public sealed class AssistantValues : IEquatable<AssistantValues>
     }
 }
 
-/// <summary>
-/// What a run configured this way may be handed, which the host has to know
-/// because the host builds the workbench.
-/// </summary>
-/// <remarks>
-/// The one thing the App still asks a provider about its settings, and it asks in
-/// terms of what happens rather than what was chosen: whether a frame may be shown,
-/// and who is played the sound. Which model that is stays the provider's business.
-/// </remarks>
-/// <param name="Vision">Whether the model may be shown a rendered frame.</param>
-/// <param name="Hearing">Who listens, and <see cref="Listener.None"/> for nobody.</param>
-public readonly record struct AssistantSenses(bool Vision = true, Listener Hearing = Listener.None);

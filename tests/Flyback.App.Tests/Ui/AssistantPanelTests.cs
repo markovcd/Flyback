@@ -7,6 +7,7 @@ using Flyback.App.Controls;
 using Flyback.Core.Graph;
 using Flyback.Plugins.Assist;
 using Flyback.Plugins.Hosting;
+using Flyback.Plugins.Settings;
 using Shouldly;
 
 namespace Flyback.App.Tests.Ui;
@@ -84,7 +85,7 @@ public class AssistantPanelTests : UiTest, IDisposable
 
     private static string Saved(params TranscriptLine[] transcript) => new SavedConversation(
         "gemini",
-        SavedConversation.SettingsOf(AssistantValues.None),
+        SavedConversation.SettingsOf(SettingValues.None),
         1,
         new WorkbenchState("""{"nodes":[]}""", """{"nodes":[]}""", new Dictionary<string, Guid>(), 1, 2),
         null,
@@ -209,7 +210,7 @@ public class AssistantPanelTests : UiTest, IDisposable
 
         settings.Remember(
             provider,
-            new AssistantValues(answers.ToDictionary(answer => answer.Key, answer => answer.Value)));
+            new SettingValues(answers.ToDictionary(answer => answer.Key, answer => answer.Value)));
 
         return settings;
     }
@@ -231,9 +232,9 @@ public class AssistantPanelTests : UiTest, IDisposable
 
         public AssistantCredential Credential => Schema.Credential;
 
-        public IReadOnlyList<AssistantField> Form(AssistantValues values) => Schema.Form(values);
+        public IReadOnlyList<SettingField> Form(SettingValues values) => Schema.Form(values);
 
-        public AssistantSenses Senses(AssistantValues values) => Schema.Senses(values);
+        public AssistantSenses Senses(SettingValues values) => Schema.Senses(values);
 
         public virtual string? Unavailable(AssistantConfig config) => null;
 
@@ -339,7 +340,7 @@ public class AssistantPanelTests : UiTest, IDisposable
         var host = Settings(Showing(With(new Deaf()), Configured("deaf")));
 
         var box = All<ComboBox>(host).Single(c => c.Name == AssistantSchema.EffortKey);
-        var offered = ((IEnumerable<AssistantOption>)box.ItemsSource!).Select(o => o.Name).ToArray();
+        var offered = ((IEnumerable<SettingOption>)box.ItemsSource!).Select(o => o.Name).ToArray();
 
         offered.ShouldBe(["Low", "Medium", "High"]);
     }
@@ -511,7 +512,7 @@ public class AssistantPanelTests : UiTest, IDisposable
     [AvaloniaFact]
     public void The_form_is_what_the_provider_declared_and_nothing_else()
     {
-        var declared = new Deaf().Form(AssistantValues.None).Select(field => field.Key).ToArray();
+        var declared = new Deaf().Form(SettingValues.None).Select(field => field.Key).ToArray();
 
         var host = Settings(Showing(With(new Deaf()), Configured("deaf")));
 
@@ -549,7 +550,7 @@ public class AssistantPanelTests : UiTest, IDisposable
         var ear = All<ComboBox>(host).Single(c => c.Name == AssistantSchema.EarKey);
 
         ear.IsEnabled.ShouldBeTrue("listening is on, so the model doing it is a live choice");
-        ((AssistantOption)ear.SelectedItem!).Id.ShouldBe("hears");
+        ((SettingOption)ear.SelectedItem!).Id.ShouldBe("hears");
     }
 
     /// <summary>

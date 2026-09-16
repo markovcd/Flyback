@@ -2,6 +2,7 @@ using System.Text.Json;
 using Flyback.Core;
 using Flyback.Core.Render;
 using Flyback.Plugins.Audio;
+using Flyback.Plugins.Settings;
 
 namespace Flyback.App;
 
@@ -57,6 +58,27 @@ public sealed class OutputSettings
     /// </summary>
     public int LatencyMilliseconds { get; set; } = AudioFormat.Default.LatencyMilliseconds;
 
+    /// <summary>
+    /// What each sound backend's own form was last set to, filed under the backend's
+    /// id — the rest of the Sound section, which the backend declares (ADR-0085).
+    /// </summary>
+    /// <remarks>
+    /// Plain strings that nothing here reads, for the reason the assistant's are
+    /// (ADR-0069): which device plays is a question only the backend knows how to ask.
+    /// Kept per backend so a second one installed for an afternoon does not cost the
+    /// device picked on the first. Public setter for the serialiser; everything else
+    /// goes through <see cref="SoundOf"/> and <see cref="RememberSound"/>.
+    /// </remarks>
+    public Dictionary<string, Dictionary<string, string>> Sound { get; set; } = new(StringComparer.Ordinal);
+
+    /// <summary>What is set for one backend, and nothing for one nobody has configured.</summary>
+    public SettingValues SoundOf(string backend) =>
+        Sound.TryGetValue(backend, out var held) ? new SettingValues(held) : SettingValues.None;
+
+    /// <summary>Takes one backend's answers, leaving every other backend's alone.</summary>
+    public void RememberSound(string backend, SettingValues values) =>
+        Sound[backend] = new Dictionary<string, string>(values.All, StringComparer.Ordinal);
+
     public const int LowestQuality = 1, HighestQuality = 100;
 
     public const double SlowestFrameRate = 1, FastestFrameRate = 120;
@@ -88,6 +110,9 @@ public sealed class OutputSettings
 
             settings.JpegQuality = Math.Clamp(settings.JpegQuality, LowestQuality, HighestQuality);
             settings.LatencyMilliseconds = Math.Clamp(settings.LatencyMilliseconds, ShortestLatency, LongestLatency);
+
+            // A "sound": null typed by hand is nothing chosen, not a fault.
+            settings.Sound ??= new(StringComparer.Ordinal);
 
             return settings;
         }

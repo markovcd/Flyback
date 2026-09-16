@@ -4,6 +4,7 @@ using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Flyback.Plugins.Assist;
+using Flyback.Plugins.Settings;
 
 namespace Flyback.App.Assist;
 
@@ -73,7 +74,7 @@ public sealed record SavedConversation(
     };
 
     /// <summary>A fingerprint of a provider's settings, the same however they were built up.</summary>
-    public static string SettingsOf(AssistantValues values)
+    public static string SettingsOf(SettingValues values)
     {
         var pairs = new JsonArray();
 

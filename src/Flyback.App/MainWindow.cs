@@ -58,7 +58,10 @@ public sealed partial class MainWindow : Window
     /// <summary>The Recording section: how a take's frames are timed and compressed.</summary>
     private readonly StackPanel recordingSection = new() { Spacing = 8, Width = 280 };
 
-    /// <summary>The Sound section: how far behind the patch the speakers may run.</summary>
+    /// <summary>
+    /// The Sound section: whatever the sound backend declares, then how far behind
+    /// the patch the speakers may run.
+    /// </summary>
     private readonly StackPanel soundSection = new() { Spacing = 8, Width = 280 };
 
     private readonly ComboBox frameRate = new Picker
@@ -92,6 +95,13 @@ public sealed partial class MainWindow : Window
         ItemsSource = Latencies.Select(ms => $"{ms} ms").ToList(),
         HorizontalAlignment = HorizontalAlignment.Stretch,
     };
+
+    /// <summary>
+    /// The sound backend's own settings — which device plays, for one — drawn from
+    /// what it declares (ADR-0085). Empty where no backend is installed or it has
+    /// nothing to ask.
+    /// </summary>
+    private readonly SettingsForm soundForm = new() { Name = "soundForm" };
 
     /// <summary>
     /// What the Graphics, Recording and Sound sections were last saved as, and so
@@ -268,13 +278,13 @@ public sealed partial class MainWindow : Window
     /// </summary>
     private readonly PluginCatalog plugins = Startup.Plugins;
 
-    private readonly AudioSetup sound;
+    private AudioSetup sound;
     private readonly AudioEngine audio;
 
     /// <summary>
     /// Set once a device has refused to start, so a Volume left above nought does
-    /// not retry it on every edit. Nothing clears it short of relaunching, which
-    /// is what a permanently disabled toggle used to mean — see ADR-0079.
+    /// not retry it on every edit. Only a different device clears it — saved in the
+    /// Sound settings, or found at the next launch — see ADR-0079 and ADR-0085.
     /// </summary>
     private bool audioBlocked;
 
@@ -333,7 +343,7 @@ public sealed partial class MainWindow : Window
 
         if (outputSettingsPath is not null) outputSettings = OutputSettings.Load(outputSettingsPath);
 
-        sound = OpenAudio(plugins, outputSettings.LatencyMilliseconds);
+        sound = OpenAudio(plugins, outputSettings);
         audio = new AudioEngine(sound.Device) { Compiler = compiler };
 
         // Nothing is opened by this. The backend is asked what is plugged in

@@ -1,6 +1,7 @@
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Flyback.Plugins.Assist;
+using Flyback.Plugins.Settings;
 
 namespace Flyback.Plugins.FakeAssistant;
 
@@ -48,9 +49,9 @@ public sealed class RehearsedAssistant : IPatchAssistant
     /// this one has made up its mind — but a worked example that skipped the
     /// settings would be a worked example of half the contract.
     /// </summary>
-    public IReadOnlyList<AssistantField> Form(AssistantValues values) => Schema.Form(values);
+    public IReadOnlyList<SettingField> Form(SettingValues values) => Schema.Form(values);
 
-    public AssistantSenses Senses(AssistantValues values) => Schema.Senses(values);
+    public AssistantSenses Senses(SettingValues values) => Schema.Senses(values);
 
     /// <summary>Always ready. It has nowhere to connect to and nothing to pay.</summary>
     public string? Unavailable(AssistantConfig config) => null;

@@ -34,16 +34,19 @@ public sealed class AudioEngine(IAudioDevice device) : IDisposable
         LiveValues Live);
 
     private readonly AudioRenderer renderer = new(device.SampleRate);
+
+    /// <summary>What plays, which <see cref="Use"/> may replace while nothing is playing.</summary>
+    private IAudioDevice current = device;
     private State activeState = new(CompiledPatch.Silent, null, LiveValues.None);
     private IAudioSink? capture;
 
     // One while a rewind is waiting for the callback to carry it out.
     private int rewindPending;
 
-    public bool IsRunning => device.IsRunning;
+    public bool IsRunning => current.IsRunning;
 
     /// <summary>The rate the device actually opened at, which a recording has to match.</summary>
-    public int SampleRate => device.SampleRate;
+    public int SampleRate => current.SampleRate;
 
     /// <summary>
     /// Where a recording listens, while one is running. A reference, swapped the
@@ -73,10 +76,34 @@ public sealed class AudioEngine(IAudioDevice device) : IDisposable
 
     public void Start()
     {
-        if (!device.IsRunning) device.Start(Fill);
+        if (!current.IsRunning) current.Start(Fill);
     }
 
-    public void Stop() => device.Stop();
+    public void Stop() => current.Stop();
+
+    /// <summary>
+    /// Plays through <paramref name="next"/> from here on, and lets the old device go.
+    /// Everything else — the program, its memory, the cursor — carries on as it was,
+    /// so the sound picks up where it left off on another device (ADR-0085).
+    /// </summary>
+    /// <remarks>
+    /// Only while stopped: a device's callback runs on a thread of its own, and a
+    /// stopped device is the one moment nothing is inside <see cref="Fill"/>. Only at
+    /// the same rate, because the renderer's decimation and every delay line were
+    /// sized for the rate it was built at; a device that differs is refused and left
+    /// for the caller to dispose.
+    /// </remarks>
+    /// <returns>Whether <paramref name="next"/> was taken.</returns>
+    public bool Use(IAudioDevice next)
+    {
+        if (current.IsRunning) throw new InvalidOperationException("Stop the sound before changing its device.");
+        if (next.SampleRate != current.SampleRate) return false;
+
+        current.Dispose();
+        current = next;
+
+        return true;
+    }
 
     /// <summary>
     /// Takes the sound back to nought: the cursor, the decimation and DC filter
@@ -99,7 +126,7 @@ public sealed class AudioEngine(IAudioDevice device) : IDisposable
     {
         Volatile.Write(ref rewindPending, 1);
 
-        if (!device.IsRunning) Restart(Volatile.Read(ref activeState));
+        if (!current.IsRunning) Restart(Volatile.Read(ref activeState));
     }
 
     private void Restart(State state)
@@ -201,5 +228,5 @@ public sealed class AudioEngine(IAudioDevice device) : IDisposable
         Volatile.Read(ref capture)?.WriteAudio(buffer);
     }
 
-    public void Dispose() => device.Dispose();
+    public void Dispose() => current.Dispose();
 }

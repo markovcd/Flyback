@@ -1,5 +1,6 @@
 using System.Text.Json.Nodes;
 using Flyback.Plugins.Assist;
+using Flyback.Plugins.Settings;
 
 namespace Flyback.Plugins.Gemini;
 
@@ -78,9 +79,9 @@ public sealed partial class GeminiAssistant : IPatchAssistant
     /// offering surveyed models while <see cref="Senses"/> answered from the
     /// written-down ones would be a form that lies.
     /// </remarks>
-    public IReadOnlyList<AssistantField> Form(AssistantValues values) => Schema.Surveyed(values).Form(values);
+    public IReadOnlyList<SettingField> Form(SettingValues values) => Schema.Surveyed(values).Form(values);
 
-    public AssistantSenses Senses(AssistantValues values) => Schema.Surveyed(values).Senses(values);
+    public AssistantSenses Senses(SettingValues values) => Schema.Surveyed(values).Senses(values);
 
     /// <summary>
     /// Answered from the configuration alone — no request, no client, nothing
@@ -145,7 +146,7 @@ public sealed partial class GeminiAssistant : IPatchAssistant
     /// clamp. So they are measured rather than written down, and a model nobody has
     /// measured gets no <c>thinkingConfig</c> at all.
     /// </remarks>
-    private static JsonObject? Thinking(AssistantValues values, AssistantChoices chosen)
+    private static JsonObject? Thinking(SettingValues values, AssistantChoices chosen)
     {
         // Qualified because this class also has a Survey, and the method would
         // otherwise win the name over the type that stores what it found.
