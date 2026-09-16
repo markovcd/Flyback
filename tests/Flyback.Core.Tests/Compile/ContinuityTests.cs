@@ -49,13 +49,13 @@ public class ContinuityTests
         var memory = renderer.DelayMemoryFor(before);
 
         var first = new float[Frames * 2];
-        renderer.Render(before, first, AudioScan.TimeDriven, memory);
+        renderer.Render(before, first, memory);
 
         var after = edit();
         var carried = renderer.DelayMemoryFor(after, memory);
 
         var second = new float[Frames * 2];
-        renderer.Render(after, second, AudioScan.TimeDriven, carried);
+        renderer.Render(after, second, carried);
 
         return (first, second);
     }
@@ -130,7 +130,7 @@ public class ContinuityTests
         var before = Audio(builder);
         var memory = renderer.DelayMemoryFor(before);
 
-        renderer.Render(before, new float[Frames * 2], AudioScan.TimeDriven, memory);
+        renderer.Render(before, new float[Frames * 2], memory);
 
         var added = builder.Add("osc.sine", 0, 0, (1, 300f));
 

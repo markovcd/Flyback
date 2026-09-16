@@ -656,7 +656,7 @@ public sealed partial class MainWindow
 
     /// <summary>
     /// The frame an export is written at, as a ratio. Only the sound needs it —
-    /// a scanned patch sweeps a width, and it should be the width being written.
+    /// a patch reading Coordinates' aspect should be told the width being written.
     /// </summary>
     private static float ExportAspect => (float)ExportSize.Width / ExportSize.Height;
 
@@ -813,7 +813,6 @@ public sealed partial class MainWindow
 
         var videoPatch = patch.CompileForVideo(samples: Sounds, pictures: Pictures).Program;
         var soundPatch = patch.Reaches().Sound ? patch.CompileForAudio(samples: Sounds).Program : null;
-        var scan = AudioScan.For(patch, ExportAspect);
 
         using var stopping = new CancellationTokenSource();
         export = stopping;
@@ -827,7 +826,7 @@ public sealed partial class MainWindow
         try
         {
             var written = await Task.Run(
-                () => MovieRenderer.Render(path, videoPatch, soundPatch, scan, settings, progress, stopping.Token),
+                () => MovieRenderer.Render(path, videoPatch, soundPatch, settings, progress, stopping.Token),
                 stopping.Token);
 
             var duration = written / settings.FramesPerSecond;
@@ -866,10 +865,10 @@ public sealed partial class MainWindow
         ISampleLibrary? samples)
     {
         var program = patch.CompileForAudio(samples: samples).Program;
-        var renderer = new AudioRenderer();
+        var renderer = new AudioRenderer { Aspect = ExportAspect };
         var frames = (int)Math.Round(renderer.SampleRate * seconds);
         var buffer = new float[frames * NodeCatalog.AudioChannels];
-        renderer.Render(program, buffer, AudioScan.For(patch, ExportAspect));
+        renderer.Render(program, buffer);
 
         WavWriter.Write(path, buffer, renderer.SampleRate, NodeCatalog.AudioChannels);
     }

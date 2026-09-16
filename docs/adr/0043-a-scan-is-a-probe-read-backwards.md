@@ -3,7 +3,9 @@
 **Status:** Accepted · 2026-08-19 · *user-directed* · extends
 [0040](0040-a-probe-is-a-second-compile-root.md) with the other direction, and
 uses [0041](0041-a-plugin-can-hold-state-without-a-new-opcode.md)'s flag to serve
-both sinks from one lowering
+both sinks from one lowering · its ruling that the Output's `scan` knob stays is
+superseded by [0077](0077-the-picture-is-heard-only-through-a-scan.md), where the
+knob is removed and a Scan at `radius` 0 traces the raster
 
 ## Context
 

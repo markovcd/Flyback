@@ -74,7 +74,7 @@ public class ScopeTests
         var renderer = new AudioRenderer();
         var memory = renderer.DelayMemoryFor(heard);
 
-        renderer.Render(heard, new float[frames * 2], AudioScan.TimeDriven, memory);
+        renderer.Render(heard, new float[frames * 2], memory);
 
         return memory;
     }

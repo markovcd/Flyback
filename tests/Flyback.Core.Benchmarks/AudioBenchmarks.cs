@@ -40,8 +40,8 @@ public class AudioBenchmarks
     }
 
     [Benchmark(Baseline = true)]
-    public void Callback() => renderer.Render(patch, buffer, AudioScan.TimeDriven);
+    public void Callback() => renderer.Render(patch, buffer);
 
     [Benchmark]
-    public void CallbackCompiled() => compiledRenderer.Render(compiled, buffer, AudioScan.TimeDriven);
+    public void CallbackCompiled() => compiledRenderer.Render(compiled, buffer);
 }

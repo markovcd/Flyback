@@ -1,5 +1,6 @@
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
+using Flyback.Core.Language;
 using Flyback.Core.Render;
 using Shouldly;
 
@@ -81,7 +82,7 @@ public class ScanTests
     private static float[] Heard(Patch patch, int frames = GlobalConstants.SampleRate)
     {
         var buffer = new float[frames * 2];
-        new AudioRenderer().Render(patch.CompileForAudio().Program, buffer, AudioScan.TimeDriven);
+        new AudioRenderer().Render(patch.CompileForAudio().Program, buffer);
 
         var left = new float[frames];
         for (var frame = 0; frame < frames; frame++) left[frame] = buffer[frame * 2];
@@ -280,7 +281,7 @@ public class ScanTests
         var program = patch.CompileForVideo().Program;
 
         // Three, and each is accounted for: the Rings' own radius, the
-        // Coordinates feeding it — which emits all four of its outputs whether
+        // Coordinates feeding it — which emits all five of its outputs whether
         // or not a wire takes them — and the Scan's display measuring the pixel
         // off the centre. A subtree lowered once for the ear and again for the
         // eye would put a fourth here.
@@ -299,5 +300,38 @@ public class ScanTests
         var samples = Heard(Presets.RingScan(NodeCatalog.BuiltIn));
 
         Settled(samples).Max(MathF.Abs).ShouldBeGreaterThan(0.1f);
+    }
+
+    /// <summary>
+    /// The raster the Output's scan used to run outside the program, run inside it
+    /// by a Scan shrunk to a point: 'x' a sawtooth across the whole width, 'y' a
+    /// slow one down the height. What is heard is the field read at exactly those
+    /// places, sample for sample.
+    /// </summary>
+    [Fact]
+    public void A_scan_shrunk_to_a_point_follows_x_and_y_across_the_whole_frame()
+    {
+        const string raster = """
+            let across = (fract(t * 220) * 2 - 1) * aspect
+            let down   = 1 - fract(t * 0.5) * 2
+            """;
+
+        var scanned = Played(raster + "\nscan(rings(freq: 3), radius: 0, x: across, y: down) |> out.left");
+        var direct = Played(raster + "\nrings(x: across, y: down, freq: 3) |> out.left");
+
+        Settled(scanned).Max(MathF.Abs).ShouldBeGreaterThan(0.1f);
+
+        for (var i = 0; i < direct.Length; i++) scanned[i].ShouldBe(direct[i], 1e-5f);
+
+        static float[] Played(string source)
+        {
+            var load = PatchLanguage.Build(source + "\nout.gain = 1", NodeCatalog.BuiltIn);
+            load.Issues.ShouldBeEmpty(load.Report);
+
+            var buffer = new float[GlobalConstants.SampleRate / 4 * 2];
+            new AudioRenderer { Aspect = 16f / 9f }.Render(load.Patch.CompileForAudio().Program, buffer);
+
+            return buffer;
+        }
     }
 }

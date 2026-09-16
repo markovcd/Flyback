@@ -477,7 +477,7 @@ public static class PatchPrinter
         if (name.Any(c => !char.IsAsciiLetterOrDigit(c) && c != '_')) return false;
         if (Lexer.Note(name) is not null) return false;
 
-        return name is not ("let" or "def" or "group" or "out" or "in" or "x" or "y" or "t" or "radius" or "angle");
+        return name is not ("let" or "def" or "group" or "out" or "in" or "x" or "y" or "t" or "radius" or "angle" or "aspect");
     }
 
     /// <summary>
@@ -745,7 +745,8 @@ public static class PatchPrinter
                     NodeCatalog.CoordXPort => "x",
                     NodeCatalog.CoordYPort => "y",
                     2 => "radius",
-                    _ => "angle",
+                    3 => "angle",
+                    _ => "aspect",
                 });
             }
 

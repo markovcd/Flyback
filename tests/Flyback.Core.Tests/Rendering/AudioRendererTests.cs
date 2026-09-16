@@ -32,7 +32,7 @@ public class AudioRendererTests
     private static float[] Render(CompiledPatch program, int frames, int oversample = 4)
     {
         var buffer = new float[frames * 2];
-        new AudioRenderer(oversample: oversample).Render(program, buffer, AudioScan.TimeDriven);
+        new AudioRenderer(oversample: oversample).Render(program, buffer);
         return buffer;
     }
 
@@ -115,12 +115,12 @@ public class AudioRendererTests
         var program = Tone("osc.sine", 440f);
 
         var whole = new float[2_048 * 2];
-        new AudioRenderer().Render(program, whole, AudioScan.TimeDriven);
+        new AudioRenderer().Render(program, whole);
 
         var split = new float[2_048 * 2];
         var renderer = new AudioRenderer();
-        renderer.Render(program, split.AsSpan(0, 1_024 * 2), AudioScan.TimeDriven);
-        renderer.Render(program, split.AsSpan(1_024 * 2), AudioScan.TimeDriven);
+        renderer.Render(program, split.AsSpan(0, 1_024 * 2));
+        renderer.Render(program, split.AsSpan(1_024 * 2));
 
         split.ShouldBe(whole);
     }
@@ -151,10 +151,10 @@ public class AudioRendererTests
         renderer.SeekTo(startSeconds);
 
         // Let the DC blocker settle and the decimation window fill first.
-        renderer.Render(program, new float[2_048 * 2], AudioScan.TimeDriven, memory);
+        renderer.Render(program, new float[2_048 * 2], memory);
 
         var buffer = new float[4_096 * 2];
-        renderer.Render(program, buffer, AudioScan.TimeDriven, memory);
+        renderer.Render(program, buffer, memory);
 
         var steps = new float[buffer.Length / 2 - 1];
         for (var i = 0; i < steps.Length; i++)
@@ -242,8 +242,8 @@ public class AudioRendererTests
         var withOwn = new float[4_000];
         var withBorrowed = new float[4_000];
 
-        mine.Render(program, withOwn, AudioScan.TimeDriven);
-        theirs.Render(program, withBorrowed, AudioScan.TimeDriven, theirs.DelayMemoryFor(program));
+        mine.Render(program, withOwn);
+        theirs.Render(program, withBorrowed, theirs.DelayMemoryFor(program));
 
         withBorrowed.ShouldBe(withOwn);
     }
@@ -290,26 +290,52 @@ public class AudioRendererTests
         Render(result.Program, 1_000).ShouldAllBe(v => v == 0f);
     }
 
+    /// <summary>
+    /// The ear is at no pixel, so a horizontal ramp read without a Scan is the
+    /// ramp at its middle — a constant, and so nothing once the DC is gone.
+    /// </summary>
     [Fact]
-    public void Scanning_reads_the_image_rather_than_the_clock()
+    public void The_speakers_read_the_picture_at_its_origin()
     {
-        // Coordinates -> Output makes a horizontal ramp; scanning it must produce
-        // signal, while the same patch driven by time alone sits at x = 0.
         var builder = new PatchBuilder();
         var coords = builder.Add("coord", 0, 0);
         var sink = builder.Add(NodeCatalog.OutputTypeId, 0, 0, (NodeCatalog.OutputGainPort, 1f));
-        builder.Wire(coords, 0, sink, NodeCatalog.OutputLeftPort);
+        builder.Wire(coords, NodeCatalog.CoordXPort, sink, NodeCatalog.OutputLeftPort);
+
+        var heard = new float[4_000 * 2];
+        new AudioRenderer { Aspect = 16f / 9f }.Render(Compile(builder.Patch), heard);
+
+        Peak(heard).ShouldBeLessThan(0.01f);
+    }
+
+    /// <summary>
+    /// Coordinates' aspect is whatever frame the renderer was told the sound
+    /// belongs to. A sine scaled by it is louder by exactly that much.
+    /// </summary>
+    [Fact]
+    public void Aspect_is_the_frame_the_renderer_was_told()
+    {
+        var builder = new PatchBuilder();
+        var time = builder.Add("time", 0, 0);
+        var coords = builder.Add("coord", 0, 0);
+        var osc = builder.Add("osc.sine", 0, 0, (1, 220f));
+        var scaled = builder.Add("math.mul", 0, 0);
+        var sink = builder.Add(NodeCatalog.OutputTypeId, 0, 0, (NodeCatalog.OutputGainPort, 0.5f));
+
+        builder.Wire(time, 0, osc, 0)
+            .Wire(osc, 0, scaled, 0)
+            .Wire(coords, NodeCatalog.CoordAspectPort, scaled, 1)
+            .Wire(scaled, 0, sink, NodeCatalog.OutputLeftPort);
 
         var program = Compile(builder.Patch);
 
-        var still = new float[4_000 * 2];
-        new AudioRenderer().Render(program, still, AudioScan.TimeDriven);
+        var square = new float[4_000 * 2];
+        new AudioRenderer().Render(program, square);
 
-        var scanned = new float[4_000 * 2];
-        new AudioRenderer().Render(program, scanned, new AudioScan(true, 220f, 16f / 9f));
+        var wide = new float[4_000 * 2];
+        new AudioRenderer { Aspect = 16f / 9f }.Render(program, wide);
 
-        Peak(still).ShouldBeLessThan(0.01f);
-        Peak(scanned).ShouldBeGreaterThan(0.3f);
+        (Peak(wide) / Peak(square)).ShouldBe(16f / 9f, 0.02f);
     }
 
     [Fact]

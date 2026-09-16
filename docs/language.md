@@ -170,10 +170,9 @@ One more is legal but ugly: `midi.in` shortens to `in`, which reads badly beside
 the port of that name. Write `midi.in` in full.
 
 **Port names** map the same way, with spaces becoming underscores and matching
-case-insensitively: `in low` becomes `in_low`, `gate length` becomes
-`gate_length`, `scan rate` becomes `scan_rate`. Arguments may be positional or
-named; positional arguments fill unnamed inputs left to right, after the pipe
-has taken its own.
+case-insensitively: `in low` becomes `in_low` and `gate length` becomes
+`gate_length`. Arguments may be positional or named; positional arguments fill
+unnamed inputs left to right, after the pipe has taken its own.
 
 ---
 
@@ -184,7 +183,7 @@ not.
 
 | Written | Means |
 |---|---|
-| `x`, `y`, `radius`, `angle` | the four outputs of `coord` |
+| `x`, `y`, `radius`, `angle`, `aspect` | the five outputs of `coord` |
 | `t` | the output of `time` |
 | `a + b`, `a - b`, `a * b`, `a / b`, `a % b` | `math.add`, `sub`, `mul`, `div`, `mod` |
 | `-a` | `math.neg` |
@@ -193,7 +192,7 @@ not.
 | `-2..2` | two positional arguments: a low and a high |
 | `out` | the one `output` node, which every patch has |
 
-`x`, `y`, `radius`, `angle` and `t` each name **one shared node per patch**, not
+`x`, `y`, `radius`, `angle`, `aspect` and `t` each name **one shared node per patch**, not
 a fresh one per mention. A patch that reads the clock in eight places has one
 Time in it, which is what the presets do by hand and what a normalled socket
 already does invisibly.
@@ -238,11 +237,23 @@ So `out` is a keyword rather than something a patch declares:
 someColor |> out.color
 someSignal |> out.left
 out.gain = 0.6
-out.scan_rate = 60
 ```
 
 `out.right` is normalled to `out.left`, so a mono patch is stereo without saying
 so. A patch that never mentions `out` is legal, and renders black.
+
+The Output does nothing to make the picture heard. A Scan does that, for the
+branch it reads
+([0077](adr/0077-the-picture-is-heard-only-through-a-scan.md)). At `radius: 0`
+it reads a single point, so `x` and `y` can trace any path, including a TV-style
+raster that crosses the whole frame line by line:
+
+```
+let across = (fract(t * 60) * 2 - 1) * aspect
+let down   = 1 - fract(t * 0.5) * 2
+
+scan(someField, radius: 0, x: across, y: down) |> out.left
+```
 
 ---
 

@@ -615,7 +615,7 @@ public class LanguageTests
 
     [Fact]
     public void A_socket_with_a_space_in_its_name_is_written_with_an_underscore() =>
-        Build("out.scan_rate = 90").Output.InputValues[NodeCatalog.OutputScanRatePort].ShouldBe(90f);
+        Build("remap(t, in_low: 2) |> out.left").Nodes.Single(n => n.TypeId == "math.remap").InputValues[1].ShouldBe(2f);
 
     // --- sugar ------------------------------------------------------------------
 

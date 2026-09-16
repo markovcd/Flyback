@@ -133,7 +133,7 @@ public class IdentityTests
 
     /// <summary>
     /// The Output is the one module every patch has, and every rebuild has to
-    /// recognise it as the same one — it carries the gain and the scan settings,
+    /// recognise it as the same one — it carries the gain,
     /// and a patch that lost it would be a patch whose canvas moved on every
     /// evaluation.
     /// </summary>
@@ -232,7 +232,7 @@ public class IdentityTests
         var first = Build(before).CompileForAudio().Program;
         var memory = renderer.DelayMemoryFor(first);
 
-        renderer.Render(first, new float[960], AudioScan.TimeDriven, memory);
+        renderer.Render(first, new float[960], memory);
 
         var second = Build(after).CompileForAudio().Program;
         var carried = renderer.DelayMemoryFor(second, memory).ShouldNotBeNull();

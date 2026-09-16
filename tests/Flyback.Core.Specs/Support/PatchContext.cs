@@ -91,7 +91,7 @@ public sealed class PatchContext
     public float[] RenderAudio(int frames = 2_000)
     {
         var buffer = new float[frames * 2];
-        new AudioRenderer().Render(Program, buffer, AudioScan.TimeDriven);
+        new AudioRenderer().Render(Program, buffer);
         return buffer;
     }
 

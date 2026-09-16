@@ -182,24 +182,23 @@ public sealed partial class PatchWorkbench
         return Task.Run(
             () =>
             {
-                var renderer = new AudioRenderer(limits.ListenRate);
-                var scan = AudioScan.For(
-                    working,
-                    SynthRenderer.AspectOf(limits.FrameWidth, limits.FrameHeight),
-                    modules);
+                var renderer = new AudioRenderer(limits.ListenRate)
+                {
+                    Aspect = SynthRenderer.AspectOf(limits.FrameWidth, limits.FrameHeight),
+                };
 
                 // Thrown away, but not skipped: this is the warm-up, and what it
                 // leaves behind in the delay lines is the whole point of it.
                 if (from > 0)
                 {
                     var skipped = new float[Samples(from)];
-                    renderer.Render(patch.Program, skipped, scan);
+                    renderer.Render(patch.Program, skipped);
                 }
 
                 cancel.ThrowIfCancellationRequested();
 
                 var samples = new float[Samples(seconds)];
-                renderer.Render(patch.Program, samples, scan);
+                renderer.Render(patch.Program, samples);
 
                 var (peak, rms) = Levels(samples);
 
@@ -225,13 +224,6 @@ public sealed partial class PatchWorkbench
                     + "a delay in it has the tail it would really have.");
 
                 caption.Append("\n\n").Append(Measured(samples, peak, rms));
-
-                // Worth saying, because it changes what the sound even is: a
-                // scanning patch is being swept across its own picture, so what
-                // is heard is the image and editing the picture edits the sound.
-                if (scan.Scan)
-                    caption.Append($" The Output is scanning at {Number(scan.Rate)} sweeps a second, "
-                        + "so this is the picture being heard rather than a patch running on time.");
 
                 return ToolOutcome.Played(wav.ToArray(), caption.ToString());
             },

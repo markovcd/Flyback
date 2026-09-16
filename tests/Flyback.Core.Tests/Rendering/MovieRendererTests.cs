@@ -19,23 +19,22 @@ public class MovieRendererTests
     private static readonly MovieSettings Small = new(64, 48, 0.5d, 10d);
 
     /// <summary>The Drone preset, which is the one with both a picture and a sound.</summary>
-    private static (CompiledPatch Video, CompiledPatch Audio, AudioScan Scan) Drone()
+    private static (CompiledPatch Video, CompiledPatch Audio) Drone()
     {
         var patch = Presets.Drone(NodeCatalog.Current);
 
-        return (patch.CompileForVideo().Program, patch.CompileForAudio().Program, AudioScan.TimeDriven);
+        return (patch.CompileForVideo().Program, patch.CompileForAudio().Program);
     }
 
     private static byte[] Export(MovieSettings settings, bool sound = true)
     {
-        var (video, audio, scan) = Drone();
+        var (video, audio) = Drone();
         var file = new MemoryStream();
 
         MovieRenderer.Render(
             file,
             video,
             sound ? audio : null,
-            scan,
             settings,
             cancellation: TestContext.Current.CancellationToken);
 
@@ -128,7 +127,7 @@ public class MovieRendererTests
     public void Stopping_early_leaves_a_shorter_video_rather_than_a_broken_one()
     {
         using var stop = new CancellationTokenSource();
-        var (video, audio, scan) = Drone();
+        var (video, audio) = Drone();
         var file = new MemoryStream();
 
         var settings = Small with { Seconds = 10d, FramesPerSecond = 10d };
@@ -138,7 +137,6 @@ public class MovieRendererTests
             file,
             video,
             audio,
-            scan,
             settings,
             new StopAfter(1, stop),
             stop.Token);
@@ -259,7 +257,6 @@ public class MovieRendererTests
             file,
             b.Patch.CompileForVideo(NodeCatalog.BuiltIn).Program,
             b.Patch.CompileForAudio(NodeCatalog.BuiltIn).Program,
-            AudioScan.TimeDriven,
             new MovieSettings(32, 24, 1d, 20d),
             cancellation: TestContext.Current.CancellationToken);
 

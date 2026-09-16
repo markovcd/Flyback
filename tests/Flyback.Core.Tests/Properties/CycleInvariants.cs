@@ -406,7 +406,7 @@ public class CycleInvariants
 
         var frames = GlobalConstants.SampleRate;
         var buffer = new float[frames * 2];
-        renderer.Render(program, buffer, AudioScan.TimeDriven);
+        renderer.Render(program, buffer);
 
         return [.. Enumerable.Range(0, frames).Select(i => buffer[i * 2])];
     }

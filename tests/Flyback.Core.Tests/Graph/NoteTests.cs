@@ -184,8 +184,7 @@ public class NoteTests
         var buffer = new float[GlobalConstants.SampleRate * 2];
         new AudioRenderer().Render(
             builder.Patch.CompileForAudio(NodeCatalog.BuiltIn).Program,
-            buffer,
-            AudioScan.TimeDriven);
+            buffer);
 
         var crossings = 0;
         for (var frame = 20; frame < GlobalConstants.SampleRate - 1; frame++)
@@ -211,7 +210,7 @@ public class NoteTests
         result.Issues.ShouldBeEmpty();
 
         var buffer = new float[GlobalConstants.SampleRate / 2 * 2];
-        new AudioRenderer().Render(result.Program, buffer, AudioScan.TimeDriven);
+        new AudioRenderer().Render(result.Program, buffer);
 
         // The ramp starts at the bottom of its travel and climbs three semitones
         // a second from D#3, so the first note lasts a sixth of a second — half a
@@ -259,7 +258,7 @@ public class NoteTests
         renderer.SeekTo(from);
 
         var buffer = new float[GlobalConstants.SampleRate * 2];
-        renderer.Render(program, buffer, AudioScan.TimeDriven);
+        renderer.Render(program, buffer);
 
         // Three note changes land inside this second, at a sixth, a half and
         // five sixths. The first samples are skipped for the DC blocker, and for

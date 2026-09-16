@@ -31,12 +31,13 @@ public partial class NodeCatalog
 
     public const int CoordXPort = 0;
     public const int CoordYPort = 1;
+    public const int CoordAspectPort = 4;
 
     private static IEnumerable<NodeDef> Sources()
     {
         yield return new NodeDef(
             CoordTypeId, "Coordinates", ModuleCategories.Sources,
-            [], [Num("x"), Num("y"), Num("radius"), Num("angle")],
+            [], [Num("x"), Num("y"), Num("radius"), Num("angle"), Num("aspect")],
             (em, _) =>
             {
                 var x = em.Load(OpCode.LoadX);
@@ -47,10 +48,13 @@ public partial class NodeCatalog
                     y,
                     em.Binary(OpCode.Hypot, x, y),
                     em.Binary(OpCode.Atan2, y, x),
+                    em.Load(OpCode.LoadAspect),
                 ];
             },
             "Screen position. x and y are normalized; x is widened by the aspect ratio. "
-            + "Use radius or angle when a module needs polar coordinates.");
+            + "Use radius or angle when a module needs polar coordinates. 'aspect' is how far "
+            + "x reaches either side, the same everywhere on the frame — multiply a -1..1 "
+            + "signal by it to cross the whole width.");
 
         // No rate knob, and that is the decision rather than an omission — see
         // ADR-0048. It was a second, hidden speed control: a Time at 0.2 feeding

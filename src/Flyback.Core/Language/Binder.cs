@@ -477,7 +477,7 @@ public sealed class Binder
 
     private Value? Read(NameExpr expr, Scope scope)
     {
-        // The four coordinates and the clock are one shared node each, however
+        // The coordinates and the clock are one shared node each, however
         // often they are written — a patch that reads the clock in eight places
         // has one Time in it, which is what every preset does by hand.
         if (expr.Port is null && Source(expr.Name) is { } source) return source;
@@ -520,6 +520,7 @@ public sealed class Binder
             "y" => NodeCatalog.CoordYPort,
             "radius" => 2,
             "angle" => 3,
+            "aspect" => NodeCatalog.CoordAspectPort,
             _ => -1,
         };
 

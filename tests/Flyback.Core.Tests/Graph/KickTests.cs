@@ -221,7 +221,7 @@ public class KickTests
 
         for (var block = 0; block < 300; block++)   // thirty seconds
         {
-            renderer.Render(audio.Program, buffer.AsSpan(), AudioScan.TimeDriven);
+            renderer.Render(audio.Program, buffer.AsSpan());
 
             var peak = 0f;
             for (var i = 0; i < buffer.Length; i += 2) peak = MathF.Max(peak, MathF.Abs(buffer[i]));

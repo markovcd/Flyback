@@ -182,41 +182,32 @@ public class AudioEngineTests
     }
 
     /// <summary>
-    /// Scan mode is not compiled in — it is read off the sink's knobs by name
-    /// every time the patch is updated, so that lookup is load-bearing and
-    /// silent when it misses. A patch driven by the coordinates hears nothing at
-    /// all until scanning turns them into a sweep.
+    /// The speakers have no frame, so the engine says which one they are the sound
+    /// of: the 16:9 an exported sound is told, so a patch reading Coordinates'
+    /// aspect is the same played as written.
     /// </summary>
     [Fact]
-    public void Scanning_is_read_off_the_sinks_knobs()
+    public void The_engine_plays_a_patch_as_the_sound_of_a_wide_frame()
     {
-        var still = Play(scan: 0f);
-        var swept = Play(scan: 1f);
+        using var device = new LoopbackDevice();
+        using var engine = new AudioEngine(device);
+        var builder = new PatchBuilder(NodeCatalog.BuiltIn);
 
-        // ReSharper disable once CompareOfFloatsByEqualityOperator
-        still.ShouldAllBe(v => v == 0f);
-        swept.Any(v => MathF.Abs(v) > 0.01f).ShouldBeTrue("scanning should make the picture audible");
+        var time = builder.Add("time", 0, 0);
+        var coords = builder.Add("coord", 0, 0);
+        var osc = builder.Add("osc.sine", 0, 0, (1, 220f));
+        var scaled = builder.Add("math.mul", 0, 0);
+        var speaker = builder.Add(NodeCatalog.OutputTypeId, 0, 0, (NodeCatalog.OutputGainPort, 0.5f));
 
-        static float[] Play(float scan)
-        {
-            using var device = new LoopbackDevice();
-            using var engine = new AudioEngine(device);
-            var builder = new PatchBuilder(NodeCatalog.BuiltIn);
+        builder.Wire(time, 0, osc, 0)
+            .Wire(osc, 0, scaled, 0)
+            .Wire(coords, NodeCatalog.CoordAspectPort, scaled, 1)
+            .Wire(scaled, 0, speaker, NodeCatalog.OutputLeftPort);
 
-            var coords = builder.Add("coord", 0, 0);
-            var speaker = builder.Add(
-                NodeCatalog.OutputTypeId, 0, 0,
-                (NodeCatalog.OutputGainPort, 1f),
-                (NodeCatalog.OutputScanPort, scan),
-                (NodeCatalog.OutputScanRatePort, 60f));
+        engine.Update(builder.Patch);
+        engine.Start();
 
-            builder.Wire(coords, 0, speaker, NodeCatalog.OutputLeftPort);
-
-            engine.Update(builder.Patch);
-            engine.Start();
-
-            return device.Pump(4_096);
-        }
+        device.Pump(4_096).Max(MathF.Abs).ShouldBe(0.5f * 16f / 9f, 0.02f);
     }
 
     /// <summary>

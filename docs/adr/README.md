@@ -38,7 +38,7 @@ context, decision, consequences.
 | [0032](0032-the-registers-are-double-precision.md) | The registers are double precision |
 | [0035](0035-a-glsl-backend-for-the-video-path.md) | A GLSL backend for the video path |
 | [0040](0040-a-probe-is-a-second-compile-root.md) | A probe is a second compile root, not a second machine *(user-directed)* |
-| [0043](0043-a-scan-is-a-probe-read-backwards.md) | A Scan is a Probe read backwards *(user-directed)* |
+| [0043](0043-a-scan-is-a-probe-read-backwards.md) | A Scan is a Probe read backwards *(user-directed; its Output knob superseded by [0077](0077-the-picture-is-heard-only-through-a-scan.md))* |
 | [0056](0056-a-patch-can-be-played-and-what-plays-it-is-one-opcode.md) | A patch can be played, and what plays it is one opcode *(user-directed)* |
 | [0048](0048-time-is-seconds-and-nothing-else.md) | Time is seconds, and nothing else *(user-directed)* |
 | [0050](0050-normalled-sockets-carry-a-signal-with-no-wire.md) | Normalled sockets carry a signal with no wire *(user-directed)* |
@@ -57,6 +57,7 @@ context, decision, consequences.
 | [0074](0074-a-cell-is-a-plane-on-the-video-path.md) | A cell is a plane on the video path *(user-directed)* |
 | [0075](0075-a-cycle-carries-its-own-delay.md) | A cycle carries its own delay *(user-directed)* |
 | [0076](0076-the-processor-runs-a-program-as-il-once-it-is-built.md) | The processor runs a program as IL once it is built *(user-directed)* |
+| [0077](0077-the-picture-is-heard-only-through-a-scan.md) | The picture is heard only through a Scan *(user-directed)* |
 
 ### The shell
 

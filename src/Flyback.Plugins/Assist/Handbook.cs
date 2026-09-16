@@ -42,7 +42,8 @@ internal static class Handbook
         - `y` runs -1 at the bottom to 1 at the top.
         - `x` is the same scale widened by the aspect ratio, so it runs about
           -1.78 to 1.78 on a 16:9 frame. That is what keeps circles circular:
-          `Length(x, y)` is a true radius.
+          `Length(x, y)` is a true radius. Coordinates' `aspect` is that 1.78,
+          for reaching the edge of whatever frame is being drawn.
         - `t` is seconds since the patch started. It reaches a patch through
           the **Time** module, or through a socket normalled to it — see
           below.
@@ -84,7 +85,7 @@ internal static class Handbook
           a second wire out of the same module, not a second module.
         - **`out` is the Output**, which every patch already has:
           `|> out.color`, `|> out.left`, `out.gain = 0.6`.
-        - **Sugar**: `x`, `y`, `radius`, `angle` and `t` are Coordinates and
+        - **Sugar**: `x`, `y`, `radius`, `angle`, `aspect` and `t` are Coordinates and
           Time, one shared module each however often written. `+ - * / %` are
           the maths modules. `A3` and `C#4` are notes, on sockets that read
           notes. `20ms`, `1.5s` are times, on sockets that read times — and
@@ -185,8 +186,8 @@ internal static class Handbook
           cannot add one and you cannot remove one, so it is never something
           to put in place first — it is there, and the work is wiring into it.
         - **`color` is the picture. `left` and `right` are the sound.** The
-          same block also carries `gain`, `scan` and `scan rate`, which are
-          knobs on it like any other.
+          same block also carries `gain`, a knob on it like any other. The
+          picture is heard by reading it through a **Scan** into `left`.
         - **`right` is normalled to `left`**, so a voice patched into `left`
           alone is heard from both speakers. Patch `right` only when the two
           sides should differ.

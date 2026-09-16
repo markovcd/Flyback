@@ -3,7 +3,9 @@
 **Status:** Accepted · 2026-08-17 · *user-directed* · amends
 [0022](0022-audio-and-video-are-two-sinks-over-one-patch.md), supersedes its
 one-of-each rule; changes the file format written by
-[0020](0020-json-patch-files-keyed-by-string-type-ids.md)
+[0020](0020-json-patch-files-keyed-by-string-type-ids.md) · amended by
+[0077](0077-the-picture-is-heard-only-through-a-scan.md), which removes `scan` and
+`scan rate` from the block
 
 ## Context
 

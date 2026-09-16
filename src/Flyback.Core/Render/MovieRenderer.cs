@@ -40,19 +40,18 @@ public static class MovieRenderer
     /// </summary>
     public const double DefaultFrameRate = 30d;
 
-    /// <inheritdoc cref="Render(Stream, CompiledPatch, CompiledPatch, AudioScan, MovieSettings, IProgress{double}, CancellationToken)"/>
+    /// <inheritdoc cref="Render(Stream, CompiledPatch, CompiledPatch, MovieSettings, IProgress{double}, CancellationToken)"/>
     public static int Render(
         string path,
         CompiledPatch video,
         CompiledPatch? audio,
-        AudioScan scan,
         MovieSettings settings,
         IProgress<double>? progress = null,
         CancellationToken cancellation = default)
     {
         using var file = File.Create(path);
 
-        return Render(file, video, audio, scan, settings, progress, cancellation);
+        return Render(file, video, audio, settings, progress, cancellation);
     }
 
     /// <param name="video">The picture's compiled program, rooted at the Output's color.</param>
@@ -68,14 +67,12 @@ public static class MovieRenderer
     /// export leaves a shorter video rather than a broken one.
     /// </param>
     /// <param name="output">Where the file is written.</param>
-    /// <param name="scan">Passed to the audio renderer unchanged — see <see cref="AudioScan"/>.</param>
     /// <param name="settings">Size, length, rate and quality: everything about the file that is not a program.</param>
     /// <returns>Frames written — fewer than <see cref="MovieSettings.FrameCount"/> if stopped.</returns>
     public static int Render(
         Stream output,
         CompiledPatch video,
         CompiledPatch? audio,
-        AudioScan scan,
         MovieSettings settings,
         IProgress<double>? progress = null,
         CancellationToken cancellation = default)
@@ -97,7 +94,11 @@ public static class MovieRenderer
         var jpeg = new JpegWriter(settings.Quality);
         var encoded = new MemoryStream(width * height / 4);
 
-        var speaker = audio is null ? null : new AudioRenderer();
+        // The sound of this frame, so a Scan crossing the width crosses the one
+        // being written.
+        var speaker = audio is null
+            ? null
+            : new AudioRenderer { Aspect = SynthRenderer.AspectOf(width, height) };
         var samples = Array.Empty<float>();
         var written = 0L;
 
@@ -136,7 +137,7 @@ public static class MovieRenderer
                     sounded = count * NodeCatalog.AudioChannels;
                     if (samples.Length < sounded) samples = new float[sounded];
 
-                    speaker.Render(audio, samples.AsSpan(0, sounded), scan);
+                    speaker.Render(audio, samples.AsSpan(0, sounded));
                     written = due;
                 }
 

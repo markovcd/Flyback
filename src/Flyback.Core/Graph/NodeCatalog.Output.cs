@@ -125,8 +125,6 @@ public partial class NodeCatalog
                 Num("left", 0f, -1f, 1f),
                 Normalled("right", OutputLeftPort, -1f, 1f),
                 Num("gain", 0.5f, 0f, 1f),
-                Num("scan", 0f, 0f, 1f),
-                Num("scan rate", 60f, 1f, 2000f),
             ],
             [],
 
@@ -135,7 +133,7 @@ public partial class NodeCatalog
             // takes is the only difference between the two compilations.
             (em, i) => [i[0], em.Mul(i[1], i[3]), em.Mul(i[2], i[3])],
             "Video and audio outputs in one node. 'color' drives the screen; 'left' and 'right' drive the speakers. "
-            + "'scan' sweeps the image over time when you need a visual signal.");
+            + "To hear the picture, read it through a Scan and patch that into 'left'.");
 
         yield return new NodeDef(
             "audio.frequency", "Frequency", ModuleCategories.Pitch,
@@ -837,7 +835,10 @@ public partial class NodeCatalog
             + "value swinging the trace off it, which is the X-Y display to the Probe's chart. "
             + "A loop that follows the picture's own contours reads a constant and is silent — "
             + "a circle centred on Rings is the way to hear nothing, and moving it off centre "
-            + "is the way to hear everything.");
+            + "is the way to hear everything. At 'radius' 0 the loop is a point, and 'x' and "
+            + "'y' are the path: a sawtooth into 'x' scaled by Coordinates' 'aspect' crosses "
+            + "the whole width, and a slow one into 'y' walks it down the picture a line at a "
+            + "time — the raster, retrace and all, when that edge is what you want.");
     }
     
     /// <summary>An input that carries an earlier one through when left unpatched.</summary>

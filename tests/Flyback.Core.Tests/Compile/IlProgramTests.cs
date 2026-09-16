@@ -194,8 +194,8 @@ public class IlProgramTests
         var expected = new float[4_096];
         var actual = new float[4_096];
 
-        new AudioRenderer().Render(interpreted, expected, AudioScan.TimeDriven);
-        new AudioRenderer().Render(compiled, actual, AudioScan.TimeDriven);
+        new AudioRenderer().Render(interpreted, expected);
+        new AudioRenderer().Render(compiled, actual);
 
         actual.ShouldBe(expected);
     }

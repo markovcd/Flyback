@@ -78,6 +78,23 @@ public class PrinterTests
         second.ShouldBe(first);
     }
 
+    /// <summary>
+    /// Coordinates' fifth output is a word like its other four. Printed as one of
+    /// them instead, it would read back as a different wire and a different sound.
+    /// </summary>
+    [Fact]
+    public void Aspect_prints_as_the_word_it_was_written_as()
+    {
+        var load = PatchLanguage.Build("sine(freq: 220) * aspect |> out.left", NodeCatalog.BuiltIn);
+        load.Issues.ShouldBeEmpty(load.Report);
+
+        var again = Reread(load.Patch, out var source);
+
+        source.ShouldContain("aspect");
+        Fingerprint(again.CompileForAudio(NodeCatalog.BuiltIn).Program)
+            .ShouldBe(Fingerprint(load.Patch.CompileForAudio(NodeCatalog.BuiltIn).Program), source);
+    }
+
     // --- what it writes -------------------------------------------------------
 
     [Fact]

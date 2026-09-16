@@ -200,7 +200,7 @@ public class MixerTests
         var program = patch.CompileForAudio(NodeCatalog.BuiltIn).Program;
 
         var buffer = new float[GlobalConstants.SampleRate * 12 * NodeCatalog.AudioChannels];
-        new AudioRenderer().Render(program, buffer, AudioScan.TimeDriven);
+        new AudioRenderer().Render(program, buffer);
 
         var peak = buffer.Max(Math.Abs);
 

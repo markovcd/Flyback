@@ -455,7 +455,7 @@ public class SequencerTests
         var program = SequencePreset().CompileForAudio(NodeCatalog.BuiltIn).Program;
         var buffer = new float[8_192 * 2];
 
-        new AudioRenderer().Render(program, buffer, AudioScan.TimeDriven);
+        new AudioRenderer().Render(program, buffer);
 
         buffer.Any(v => MathF.Abs(v) > 0.01f).ShouldBeTrue("the preset should make a sound");
     }
@@ -473,7 +473,7 @@ public class SequencerTests
         var program = SequencePreset().CompileForAudio(NodeCatalog.BuiltIn).Program;
         var buffer = new float[GlobalConstants.SampleRate * 2];
 
-        new AudioRenderer().Render(program, buffer, AudioScan.TimeDriven);
+        new AudioRenderer().Render(program, buffer);
 
         NoClicks(buffer, GlobalConstants.SampleRate);
     }
@@ -503,7 +503,7 @@ public class SequencerTests
         var program = patch.CompileForAudio(NodeCatalog.BuiltIn).Program;
         var buffer = new float[GlobalConstants.SampleRate * 2];
 
-        new AudioRenderer().Render(program, buffer, AudioScan.TimeDriven);
+        new AudioRenderer().Render(program, buffer);
 
         NoClicks(buffer, GlobalConstants.SampleRate);
     }

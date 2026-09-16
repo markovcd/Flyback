@@ -1,61 +1,7 @@
 using System.Runtime.CompilerServices;
 using Flyback.Core.Compile;
-using Flyback.Core.Graph;
 
 namespace Flyback.Core.Render;
-
-/// <summary>
-/// How the audio program's x and y inputs are driven.
-/// </summary>
-/// <param name="Scan">
-/// False pins x and y to zero, so audio is a pure function of time the way a
-/// modular synth is. True sweeps the image instead, and you hear the picture.
-/// </param>
-/// <param name="Rate">Horizontal sweeps per second when scanning — this is the pitch.</param>
-/// <param name="Aspect">Frame aspect, so the sweep covers the same x range the renderer does.</param>
-public readonly record struct AudioScan(bool Scan, float Rate, float Aspect)
-{
-    /// <summary>The vertical position drifts at a fixed rate so that pitch and timbre stay independent.</summary>
-    public const float VerticalDriftHz = 0.5f;
-
-    public static AudioScan TimeDriven => new(false, 0f, 1f);
-
-    /// <summary>
-    /// What the Output of <paramref name="patch"/> asks for, read off its knobs.
-    /// </summary>
-    /// <remarks>
-    /// Every caller that renders a patch offline needs this and none should work
-    /// it out again: three places disagreeing about which socket is which is the
-    /// silent kind of wrong. The knobs rather than the signals, because this is a
-    /// property of the whole render — sweeping the sweep is the one thing the
-    /// sockets cannot do.
-    /// </remarks>
-    /// <param name="patch"></param>
-    /// <param name="aspect">
-    /// The frame the sweep should cover, which belongs to whoever is rendering:
-    /// an export and a preview hear the same picture across a different width.
-    /// </param>
-    /// <param name="modules"></param>
-    public static AudioScan For(Patch patch, float aspect, ModuleCatalog? modules = null)
-    {
-        var sink = patch.FirstOf(NodeCatalog.OutputTypeId);
-        var def = (modules ?? NodeCatalog.Current).Get(NodeCatalog.OutputTypeId);
-
-        if (sink is null || def is null) return TimeDriven;
-
-        return new AudioScan(
-            Knob(NodeCatalog.OutputScanPort) >= 0.5f,
-            MathF.Max(Knob(NodeCatalog.OutputScanRatePort), 1f),
-            aspect);
-
-        // The instance's value, the definition's default for a file saved before
-        // the socket existed, and zero for a definition that has since lost it.
-        float Knob(int port) =>
-            port < sink.InputValues.Length ? sink.InputValues[port]
-            : port < def.Inputs.Count ? def.Inputs[port].Default
-            : 0f;
-    }
-}
 
 /// <summary>
 /// Evaluates a compiled audio program one sample at a time and decimates from an
@@ -96,6 +42,14 @@ public sealed class AudioRenderer
     }
 
     public int SampleRate { get; }
+
+    /// <summary>
+    /// The width over the height of the frame this is the sound of, which is what
+    /// Coordinates' <c>aspect</c> reads here. The speakers have no frame of their
+    /// own, so whoever renders says which picture they belong to — an export and a
+    /// preview hear the same patch across a different width.
+    /// </summary>
+    public float Aspect { get; init; } = 1f;
 
     /// <summary>Internal rate multiplier. 1 disables both oversampling and the decimation filter.</summary>
     public int Oversample { get; }
@@ -195,7 +149,6 @@ public sealed class AudioRenderer
     /// Fills an interleaved stereo buffer. Allocation-free once constructed, so it
     /// is safe to call from an audio callback.
     /// </summary>
-    /// <param name="scan">Whether to sweep the image instead of running on time alone, and how fast.</param>
     /// <param name="memory">
     /// The program's delay lines. Pass them explicitly from anywhere that swaps
     /// programs while this is running; leave it null offline and this keeps its
@@ -212,7 +165,6 @@ public sealed class AudioRenderer
     public void Render(
         CompiledPatch program,
         Span<float> interleavedStereo,
-        in AudioScan scan,
         DelayState? memory = null,
         LiveValues? live = null)
     {
@@ -241,7 +193,6 @@ public sealed class AudioRenderer
             for (var k = 0; k < Oversample; k++)
             {
                 var t = Time + k * innerStep;
-                var (x, y) = Position(t, scan);
 
                 // Video feedback has no meaning here: there is no previous frame on
                 // the audio timeline, so SampleFeedback reads silence. Delay lines
@@ -250,11 +201,11 @@ public sealed class AudioRenderer
                 //
                 // t goes in at full width (ADR-0032): two consecutive sample times
                 // an hour in are the same float, and an oscillator measuring how
-                // far its input moved would be handed a staircase. The frame goes
-                // in even here, because a scanned patch sweeps x across exactly
-                // this width.
-                if (il is null) program.Evaluate(x, y, t, registers, default, lines, scan.Aspect, live);
-                else il.Evaluate(x, y, t, registers, default, lines, scan.Aspect, live);
+                // far its input moved would be handed a staircase. The ear is at no
+                // pixel, so x and y are the origin — a Scan is what moves them, for
+                // the branch it reads.
+                if (il is null) program.Evaluate(0d, 0d, t, registers, default, lines, Aspect, live);
+                else il.Evaluate(0d, 0d, t, registers, default, lines, Aspect, live);
 
                 delayLines[0][historyPosition] = (float)registers[left];
                 delayLines[1][historyPosition] = (float)registers[right];
@@ -273,23 +224,6 @@ public sealed class AudioRenderer
     /// caller is by definition not swapping programs concurrently.
     /// </summary>
     private DelayState? Own(CompiledPatch program) => delays = DelayMemoryFor(program, delays);
-
-    /// <summary>
-    /// Where the patch is "looking" at time <paramref name="t"/>. The horizontal
-    /// sweep sets the pitch; the vertical position drifts at a fixed rate so
-    /// changing pitch does not also change how fast the timbre evolves.
-    /// </summary>
-    private static (double X, double Y) Position(double t, in AudioScan scan)
-    {
-        if (!scan.Scan) return (0d, 0d);
-
-        var horizontal = Fract(t * scan.Rate);
-        var vertical = Fract(t * AudioScan.VerticalDriftHz);
-
-        return (
-            (horizontal * 2.0 - 1.0) * scan.Aspect,
-            1.0 - vertical * 2.0);
-    }
 
     /// <summary>Decimate, remove DC, then clamp to what a speaker can be asked for.</summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -324,9 +258,6 @@ public sealed class AudioRenderer
 
         return sum;
     }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static double Fract(double v) => v - Math.Floor(v);
 
     /// <summary>
     /// Blackman-windowed sinc. Oversampling reduces aliasing rather than removing

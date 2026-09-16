@@ -89,7 +89,7 @@ public class PatchFuzzTests
             var program = patch.CompileForAudio().Program;
 
             var buffer = new float[256 * 2];
-            new AudioRenderer().Render(program, buffer, new AudioScan(true, 220f, 16f / 9f));
+            new AudioRenderer { Aspect = 16f / 9f }.Render(program, buffer);
 
             foreach (var sample in buffer)
             {

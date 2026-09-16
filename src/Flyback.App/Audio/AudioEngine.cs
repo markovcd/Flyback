@@ -30,12 +30,13 @@ public sealed class AudioEngine(IAudioDevice device) : IDisposable
     /// </param>
     private sealed record State(
         CompiledPatch Program,
-        AudioScan Scan,
         DelayState? Memory,
         LiveValues Live);
 
-    private readonly AudioRenderer renderer = new(device.SampleRate);
-    private State activeState = new(CompiledPatch.Silent, AudioScan.TimeDriven, null, LiveValues.None);
+    // The shape a sound export is told it has, so a patch reading Coordinates'
+    // aspect sounds the same played as written.
+    private readonly AudioRenderer renderer = new(device.SampleRate) { Aspect = SynthRenderer.AspectOf(16, 9) };
+    private State activeState = new(CompiledPatch.Silent, null, LiveValues.None);
     private IAudioSink? capture;
 
     public bool IsRunning => device.IsRunning;
@@ -98,7 +99,7 @@ public sealed class AudioEngine(IAudioDevice device) : IDisposable
         // resized under it.
         var live = new LiveValues(program.LiveInputs);
 
-        Volatile.Write(ref activeState, new State(program, ScanFor(patch), memory, live));
+        Volatile.Write(ref activeState, new State(program, memory, live));
     }
 
     /// <summary>
@@ -146,37 +147,10 @@ public sealed class AudioEngine(IAudioDevice device) : IDisposable
         Meters.Silence(state.Program, watching, state.Live);
     }
 
-    /// <summary>
-    /// Scan mode is a property of how the program is driven, not of the program
-    /// itself — x and y are inputs the caller supplies. So it is read off the
-    /// node's knobs rather than compiled in.
-    /// </summary>
-    private static AudioScan ScanFor(Patch patch)
-    {
-        var sink = patch.FirstOf(NodeCatalog.OutputTypeId);
-        var def = NodeCatalog.Get(NodeCatalog.OutputTypeId);
-
-        if (sink is null || def is null) return AudioScan.TimeDriven;
-
-        var scan = Knob(sink, def, "scan");
-        var rate = Knob(sink, def, "scan rate");
-
-        return new AudioScan(scan >= 0.5f, MathF.Max(rate, 1f), SynthRenderer.AspectOf(16, 9));
-    }
-
-    private static float Knob(NodeInstance node, NodeDef def, string port)
-    {
-        for (var i = 0; i < def.Inputs.Count; i++)
-            if (def.Inputs[i].Name == port)
-                return i < node.InputValues.Length ? node.InputValues[i] : def.Inputs[i].Default;
-
-        return 0f;
-    }
-
     private void Fill(Span<float> buffer)
     {
         var state = Volatile.Read(ref activeState);
-        renderer.Render(state.Program, buffer, state.Scan, state.Memory, state.Live);
+        renderer.Render(state.Program, buffer, state.Memory, state.Live);
 
         // After the render and before anything else, so what is recorded is what
         // was heard — the same samples, not a second evaluation that would drift

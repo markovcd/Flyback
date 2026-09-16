@@ -81,7 +81,7 @@ internal static class RenderCommand
                     break;
 
                 case ".wav":
-                    Sound(patch, audio!.Program, options);
+                    Sound(audio!.Program, options);
                     break;
 
                 default:
@@ -107,13 +107,15 @@ internal static class RenderCommand
         PngWriter.WriteBgra(options.Out.FullName, pixels, options.Width, options.Height, stride);
     }
 
-    private static void Sound(Patch patch, CompiledPatch program, RenderOptions options)
+    private static void Sound(CompiledPatch program, RenderOptions options)
     {
-        var renderer = new AudioRenderer();
+        // Nothing is drawn, but a patch reading Coordinates' aspect is still told
+        // the frame it would have been drawn at.
+        var renderer = new AudioRenderer { Aspect = SynthRenderer.AspectOf(options.Width, options.Height) };
         var frames = (int)Math.Round(renderer.SampleRate * options.Seconds);
         var samples = new float[frames * NodeCatalog.AudioChannels];
 
-        renderer.Render(program, samples, Scan(patch, options));
+        renderer.Render(program, samples);
 
         WavWriter.Write(options.Out.FullName, samples, renderer.SampleRate, NodeCatalog.AudioChannels);
     }
@@ -136,7 +138,6 @@ internal static class RenderCommand
             options.Out.FullName,
             video,
             patch.Reaches().Sound ? audio : null,
-            Scan(patch, options),
             settings,
             progress,
             cancellation);
@@ -151,11 +152,4 @@ internal static class RenderCommand
 
         return Exit.Failed;
     }
-
-    /// <summary>
-    /// How the sound is driven, over the frame this render is of — a scanned
-    /// patch sweeps the width being written rather than some other width.
-    /// </summary>
-    private static AudioScan Scan(Patch patch, RenderOptions options) =>
-        AudioScan.For(patch, SynthRenderer.AspectOf(options.Width, options.Height));
 }

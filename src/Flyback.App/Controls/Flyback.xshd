@@ -47,6 +47,7 @@
       <Word>y</Word>
       <Word>radius</Word>
       <Word>angle</Word>
+      <Word>aspect</Word>
     </Keywords>
 
     <!-- The Output, which every patch has exactly one of. -->
