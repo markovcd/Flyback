@@ -123,19 +123,6 @@ public sealed class PreviewSurface : Control, IPreviewSurface
         dirty = true;
     }
 
-    /// <summary>Renders a one-off frame at an arbitrary size and writes it as a PNG.</summary>
-    public static Task SaveFrameAsync(CompiledPatch program, double time, string path, PixelSize size) =>
-        Task.Run(() =>
-        {
-            var stride = size.Width * 4;
-            var buffer = new byte[stride * size.Height];
-
-            // A fresh renderer so exporting never disturbs the live feedback buffer.
-            new SynthRenderer().Render(program, time, size.Width, size.Height, buffer, stride);
-
-            PngWriter.WriteBgra(path, buffer, size.Width, size.Height, stride);
-        });
-
     protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
     {
         timer.Stop();

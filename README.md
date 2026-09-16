@@ -20,7 +20,7 @@ dotnet run --project src/Flyback.App -c Release
 - Normalled sockets so common sources such as time and coordinates are present by default
 - Feedback and iterative image generation via feedback modules and previous-frame sampling
 - Sources, oscillators, patterns, forms, geometry, color, maths, pitch, timing, shaping, time effects, feedback and measurement modules, with presets for each
-- Live preview, output settings, recording and video export in the app shell
+- Live preview, output settings and live recording in the app shell; deterministic export through the CLI
 - MIDI input support through platform backends (Windows, macOS and Linux)
 - CLI tools for rendering, checking, inspecting and bundling patches
 - A text language a patch can be written in, saved as and read back from — the same instrument, as source

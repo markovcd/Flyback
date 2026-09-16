@@ -7,7 +7,9 @@
 supersedes [0043](0043-a-scan-is-a-probe-read-backwards.md)'s ruling that the
 Output's `scan` knob stays · amends
 [0037](0037-one-output-block-that-every-patch-has.md), whose Output loses `scan`
-and `scan rate`
+and `scan rate` · its aspect table's "Shell's sound export" row is retired by
+[0078](0078-export-leaves-the-shell-for-the-cli-that-already-writes-it.md),
+which removes that export; the CLI row keeps the same answer
 
 ## Context
 

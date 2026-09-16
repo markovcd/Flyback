@@ -179,7 +179,7 @@ public sealed partial class MainWindow
         // because there is only one line to say them on.
         Report(said.ToList());
 
-        MarkExportable();
+        MarkRecordable();
     }
 
     /// <summary>

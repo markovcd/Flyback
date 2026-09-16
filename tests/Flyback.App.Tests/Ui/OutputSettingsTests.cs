@@ -75,20 +75,12 @@ public class OutputSettingsTests : UiTest
     private static IEnumerable<string?> Buttons(MainWindow window) =>
         All<Button>(window).Select(b => b.Content as string);
 
-    /// <summary>The panel is present exactly when its export button is in the tree.</summary>
+    /// <summary>The panel is present exactly when its record button is in the tree.</summary>
     private static bool ShowingSettings(MainWindow window) =>
-        All<Button>(window).Any(b => b.Content as string == "Export…");
+        All<Button>(window).Any(b => b.Content as string == "Record…");
 
     private static ComboBox Size(MainWindow window) =>
         All<ComboBox>(window).Single(c => c.ItemsSource is IEnumerable<string> items && items.Any(i => i.Contains(" x ")));
-
-    /// <summary>
-    /// The export length, told apart from the Output's own knob rows by the
-    /// range it was declared with — with the Output selected there are seven
-    /// number boxes on the panel and only one of them is this.
-    /// </summary>
-    private static NumericUpDown Length(MainWindow window) =>
-        All<NumericUpDown>(window).Single(n => n.Maximum == 600m);
 
     [AvaloniaFact]
     public void The_toolbar_no_longer_carries_the_settings()
@@ -99,22 +91,6 @@ public class OutputSettingsTests : UiTest
         ShowingSettings(window).ShouldBeFalse();
 
         Buttons(window).ShouldNotContain("Rewind", "the timeline belongs to the Output now");
-    }
-
-    /// <summary>
-    /// Everything that writes a file is the one button: a PNG is one of the
-    /// kinds it offers, and the distinction was never anything a person would
-    /// have said out loud — both write what the patch is doing to a file.
-    /// </summary>
-    [AvaloniaFact]
-    public void There_is_one_button_for_writing_a_file()
-    {
-        var window = Open();
-
-        Select(window, Editor(window).Patch.Output);
-
-        Buttons(window).ShouldContain("Export…");
-        Buttons(window).ShouldNotContain("Save frame…");
     }
 
     /// <summary>
@@ -238,7 +214,7 @@ public class OutputSettingsTests : UiTest
 
         ShowingSettings(window).ShouldBeTrue();
 
-        Buttons(window).ShouldContain("Export…");
+        Buttons(window).ShouldContain("Record…");
         Buttons(window).ShouldContain("Rewind");
     }
 
@@ -292,13 +268,11 @@ public class OutputSettingsTests : UiTest
         Select(window, patch.Output);
 
         Size(window).SelectedIndex = 1;
-        Length(window).Value = 25m;
 
         Select(window, other);
         Select(window, patch.Output);
 
         Size(window).SelectedIndex.ShouldBe(1, "the preview size should have survived");
-        Length(window).Value.ShouldBe(25m, "and so should the export length");
     }
 
     /// <summary>
@@ -384,28 +358,28 @@ public class OutputSettingsTests : UiTest
         Processor(window).IsChecked.ShouldBe(false);
     }
 
-    // --- the export button --------------------------------------------------
+    // --- the record button ---------------------------------------------------
 
-    private static Button Export(MainWindow window) =>
-        All<Button>(window).Single(b => b.Content as string is "Export…" or "Stop");
+    private static Button Record(MainWindow window) =>
+        All<Button>(window).Single(b => b.Content as string is "Record…" or "Stop");
 
-    /// <summary>The preset it opens on draws something, so there is a file to write.</summary>
+    /// <summary>The preset it opens on draws something, so there is a take to record.</summary>
     [AvaloniaFact]
-    public void The_export_is_offered_when_the_patch_reaches_something()
+    public void The_record_button_is_offered_when_the_patch_reaches_something()
     {
         var window = Open();
         Select(window, Editor(window).Patch.Output);
 
-        Export(window).IsEnabled.ShouldBeTrue();
+        Record(window).IsEnabled.ShouldBeTrue();
     }
 
     /// <summary>
-    /// Nothing wired into either half of the Output means nothing to write, and
+    /// Nothing wired into either half of the Output means nothing to record, and
     /// the button says so by being greyed rather than by opening a dialog with
     /// an empty list of file types.
     /// </summary>
     [AvaloniaFact]
-    public void The_export_is_greyed_out_when_the_patch_reaches_nothing()
+    public void The_record_button_is_greyed_out_when_the_patch_reaches_nothing()
     {
         var window = Open();
         var editor = Editor(window);
@@ -413,7 +387,7 @@ public class OutputSettingsTests : UiTest
         editor.Patch = Presets.Empty(NodeCatalog.BuiltIn);
         Select(window, editor.Patch.Output);
 
-        Export(window).IsEnabled.ShouldBeFalse();
+        Record(window).IsEnabled.ShouldBeFalse();
     }
 
     /// <summary>
@@ -421,14 +395,14 @@ public class OutputSettingsTests : UiTest
     /// patch rather than being decided once when the panel was built.
     /// </summary>
     [AvaloniaFact]
-    public void Wiring_something_up_brings_the_export_back()
+    public void Wiring_something_up_brings_the_record_button_back()
     {
         var window = Open();
         var editor = Editor(window);
 
         editor.Patch = Presets.Empty(NodeCatalog.BuiltIn);
         Select(window, editor.Patch.Output);
-        Export(window).IsEnabled.ShouldBeFalse();
+        Record(window).IsEnabled.ShouldBeFalse();
 
         var knob = editor.AddNode("value");
         knob.ShouldNotBeNull();
@@ -437,12 +411,12 @@ public class OutputSettingsTests : UiTest
 
         Select(window, editor.Patch.Output);
 
-        Export(window).IsEnabled.ShouldBeTrue();
+        Record(window).IsEnabled.ShouldBeTrue();
     }
 
     /// <summary>A greyed control that will not say why is worse than no control.</summary>
     [AvaloniaFact]
-    public void The_greyed_export_says_why()
+    public void The_greyed_record_button_says_why()
     {
         var window = Open();
         var editor = Editor(window);
@@ -450,10 +424,10 @@ public class OutputSettingsTests : UiTest
         editor.Patch = Presets.Empty(NodeCatalog.BuiltIn);
         Select(window, editor.Patch.Output);
 
-        var button = Export(window);
+        var button = Record(window);
 
         ToolTip.GetShowOnDisabled(button).ShouldBeTrue("or the reason is never read");
-        (ToolTip.GetTip(button) as string).ShouldNotBeNull().ShouldContain("nothing to write");
+        (ToolTip.GetTip(button) as string).ShouldNotBeNull().ShouldContain("nothing to record");
     }
 
     /// <summary>A sequencer gets its own list, and the Output does not.</summary>

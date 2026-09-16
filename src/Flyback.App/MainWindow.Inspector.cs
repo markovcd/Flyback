@@ -186,26 +186,8 @@ public sealed partial class MainWindow
             : "No sound backend is installed. See About for where plugins are looked for.");
         audioButton.IsCheckedChanged += (_, _) => SetAudioEnabled(audioButton.IsChecked == true);
 
-        ToolTip.SetTip(length, "How many seconds an export writes.");
-
         // Shown while it is greyed out too, because a disabled control that will
         // not say why is the most annoying thing a panel can contain.
-        ToolTip.SetShowOnDisabled(exportButton, true);
-
-        exportButton.Click += async (_, _) =>
-        {
-            // The same button stops it. An export is the one thing here that
-            // runs long enough to be worth abandoning, and it is already the
-            // control your eye is on.
-            if (export is not null)
-            {
-                export.Cancel();
-                return;
-            }
-
-            await ExportAsync();
-        };
-
         ToolTip.SetShowOnDisabled(recordButton, true);
 
         recordButton.Click += async (_, _) =>
@@ -940,18 +922,7 @@ public sealed partial class MainWindow
 
         outputSettings.Children.Add(rewind);
 
-        outputSettings.Children.Add(Heading("Export"));
-
-        // The seconds box with its unit beside it, so the number is not a bare
-        // one on a panel where every other number is in patch units.
-        outputSettings.Children.Add(Field("Length", new StackPanel
-        {
-            Orientation = Orientation.Horizontal,
-            Spacing = 6,
-            Children = { length, Label("seconds") },
-        }));
-
-        outputSettings.Children.Add(exportButton);
+        outputSettings.Children.Add(Heading("Record"));
         outputSettings.Children.Add(recordButton);
     }
 

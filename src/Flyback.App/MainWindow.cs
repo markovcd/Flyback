@@ -20,37 +20,10 @@ namespace Flyback.App;
 public sealed partial class MainWindow : Window
 {
     /// <summary>
-    /// How long an export runs. The only thing about an export that cannot be
-    /// defaulted sensibly — a patch is an endless function of time, so where to
-    /// stop is a decision rather than a setting — which is why it is a control
-    /// on the toolbar rather than a constant in here, and why both exports read
-    /// the same one.
-    /// </summary>
-    private readonly NumericUpDown length = new()
-    {
-        Value = 10m,
-        Minimum = 1m,
-        Maximum = 600m,
-        Increment = 5m,
-        FormatString = "0",
-        Width = 112,
-    };
-
-    /// <summary>
-    /// One button for both kinds of file, because which kind you get is a
-    /// property of the name you give it rather than of which control you
-    /// pressed — and because a patch that makes no sound has nothing to put
-    /// behind a second one. Fixed width: its label becomes the one that stops an
-    /// export, and a button that resizes mid-render drags the panel about.
-    /// </summary>
-    private readonly Button exportButton = new() { Content = "Export…", Width = 118 };
-
-    /// <summary>
-    /// Beside the export and deliberately not folded into it. They answer
-    /// different questions — one writes what the patch would do, the other what
-    /// it did — and a take has no length to set, so there is nothing for them to
-    /// share but the file dialog. Same fixed width, for the same reason: its
-    /// label becomes the one that stops a take.
+    /// Writes a performance, knobs and all, to a file. Fixed width: its label
+    /// becomes the one that stops a take, and a button that resizes mid-record
+    /// drags the panel about. A deterministic render of a frozen patch is
+    /// `flyback-cli render`'s job now — ADR-0078.
     /// </summary>
     private readonly Button recordButton = new() { Content = "Record…", Width = 118 };
 
@@ -69,9 +42,6 @@ public sealed partial class MainWindow : Window
         Spacing = 8,
         Margin = new Thickness(0, 16, 0, 0),
     };
-
-    /// <summary>Live while an export is running, and the only thing that says one is.</summary>
-    private CancellationTokenSource? export;
 
     private readonly NodeEditor editor = new();
 
@@ -712,7 +682,7 @@ public sealed partial class MainWindow : Window
 
         // A locked canvas says why in its tip, and that is wasted unless a
         // disabled button is still allowed to show it — see the same call on
-        // exportButton and recordButton.
+        // recordButton.
         ToolTip.SetShowOnDisabled(tidy, true);
 
         tidy.Click += (_, _) => Tidy();
@@ -921,14 +891,6 @@ public sealed partial class MainWindow : Window
 
         return button;
     }
-
-    private static TextBlock Label(string text) => new()
-    {
-        Text = text,
-        Foreground = Text.Muted,
-        FontSize = Text.Body,
-        VerticalAlignment = VerticalAlignment.Center,
-    };
 
     private static Control Separator() => new Border
     {
