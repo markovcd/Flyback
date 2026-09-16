@@ -46,18 +46,34 @@ dashed.** There is no module. A cycle is legal, and what makes it legal is
 something you can see on the canvas.
 
 **One walk decides which wire that is, and everything asks it.** `Cycles.Backwards`
-is a depth-first walk in the order the patch is written down — nodes as they are
-listed, wires as they were drawn — and a wire into a node the walk is still
-inside is the one that runs backwards. The compiler reads a plane there, the
-canvas dashes it, the layout leaves it out of the layers, and the printer writes
-it as the back-wire the language already had. Four readings of a patch, one
-answer.
+walks backwards from the Output along the wires feeding each module, taking a
+module's inputs in socket order — the direction and order the compiler resolves
+in — and a wire out of a module the walk is still inside is the cut. So a loop is
+cut where it leaves the module nearest the Output. The compiler reads a plane
+there, the canvas dashes it, the layout leaves it out of the layers, and the
+printer writes it as the back-wire the language already had. Four readings of a
+patch, one answer.
 
-**Order is what makes it stable.** A file lists its nodes and wires in a fixed
-order and reads back in the same one, so a patch opened twice cuts its loop in
-the same place. Rerouting a wire may move the cut, which is the honest cost of
-not having a module to pin it to: nothing about a ring of wires distinguishes one
-of them until something looks.
+**Nothing about editing may move the cut.** The walk does not start from the
+order modules are listed in, because that order is not a fact about the patch:
+the canvas moves a module to the end of the list to draw it in front, and a walk
+that followed the list moved a loop's delay to another wire whenever a box was
+picked up — a different module reading a stale value, a plane with a different
+owner starting again from nothing. What the Output cannot reach is walked
+afterwards by module id, where nothing is listening and the only requirement is
+that the answer holds still. Rewiring a loop can still move its cut, which is the
+honest cost of not having a module to pin it to.
+
+**How a wire is drawn follows where its ends are, not what it carries.** A wire
+whose input lies right of its output is the usual curve; one whose input lies to
+its left leaves rightwards, bends round, runs back, and bends into the input —
+through the gap between the two modules where one sits clear above the other, and
+under both where they overlap on the vertical. The bends are U-turns sized by how
+far they turn rather than by how far the wire travels, and meet the run on a
+shared tangent, so the wire is as soft as any other. The cut is told apart by its
+dashes and nothing else, so a loop laid out left to right reads as a chain, and an
+ordinary wire whose modules have been swapped round is routed the same way a
+return is.
 
 **The plane belongs to the wire.** `Cycles.Owner` hashes the two ends into a
 name, the way [0067](0067-a-module-keeps-its-name-and-its-memory-across-a-rebuild.md)
@@ -71,10 +87,9 @@ keeping the same number in two places.
 
 **A module may be wired to itself.** That is a loop of one, and there was never
 anything wrong with it beyond its being the shortest cycle — `Patch.Connect`
-refused it from the first commit, when every cycle was an error. The canvas
-slings such a wire under the module rather than straight across it, because
-resting wires are drawn beneath the modules and a loop of one drawn flat would
-be hidden by the box it belongs to.
+refused it from the first commit, when every cycle was an error. Its input is
+left of its output, so it is drawn round underneath the module by the same rule
+as any leftward wire.
 
 **Every read still lands before every write.** The compiler resolves the whole
 program, then drains the loops — and the writes are emitted in one pass after

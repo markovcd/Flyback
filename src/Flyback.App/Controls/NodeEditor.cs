@@ -142,12 +142,20 @@ public sealed partial class NodeEditor : Control
     private const double LiftedWireThickness = 3.4;
 
     /// <summary>
-    /// How far below a module the wire from its own output to its own input is
-    /// slung. Far enough that the curve clears the box rather than hiding behind
-    /// it, and no further: a loop of one is about that module and should read as
-    /// belonging to it.
+    /// How far below the lower of two modules a wire travelling leftwards runs
+    /// back, where there is no gap between them to run through. Also the least
+    /// gap that counts as one. Far enough to clear a box rather than hide behind
+    /// it — resting wires are drawn under the modules — and no further.
     /// </summary>
-    private const double SelfWireDrop = 30;
+    private const double ReturnWireDrop = 30;
+
+    /// <summary>
+    /// The furthest a leftward wire's bends reach out sideways from their sockets.
+    /// Sized by the turn rather than by the span, and capped here, which is what
+    /// keeps a module wired to itself from being drawn as an ellipse wider than
+    /// the module. See <c>Bend</c>.
+    /// </summary>
+    private const double ReturnWireReach = 60;
 
     private static readonly Cursor ArrowCursor = new(StandardCursorType.Arrow);
     private static readonly Cursor PortCursor = new(StandardCursorType.Cross);

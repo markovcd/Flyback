@@ -741,9 +741,10 @@ public class NodeEditorTests : UiTest
 
         patch.Nodes.Count.ShouldBe(3, "nothing should have been added to the canvas");
 
-        // And it is the wire the whole loop rests on: what it carries is the
-        // previous evaluation, which is what the canvas dashes it to say.
-        Cycles.Backwards(patch).ShouldHaveSingleItem().ShouldBe(closing);
+        // One wire of the ring carries the previous evaluation, and it is the one
+        // leaving the oscillator — the module the Output reads — rather than
+        // whichever happened to be drawn last.
+        Cycles.Backwards(patch).ShouldHaveSingleItem().SourceNode.ShouldBe(osc.Id);
 
         // Which is the point of all of it: the patch is legal as drawn.
         patch.CompileForAudio(NodeCatalog.BuiltIn).HasErrors.ShouldBeFalse();

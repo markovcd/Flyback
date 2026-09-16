@@ -11,11 +11,19 @@ namespace Flyback.Core.Graph;
 /// out of what it lays in layers, and the language writes them as the back-wires
 /// they are.
 /// <para>
-/// A depth-first walk in the order the patch is written down — nodes as they are
-/// listed, wires as they were drawn — so the same file always gives the same
-/// answer, and a patch loaded, saved and loaded again cuts its loops in the same
-/// places. Which wire of a loop it lands on is therefore a fact about the order
-/// the loop was drawn in, and rerouting one is what moves it.
+/// The walk runs backwards from the Output along the wires feeding each module,
+/// taking a module's inputs in socket order — the same direction and the same
+/// order the compiler resolves in. So the wire that is cut is the one that
+/// reaches furthest back: in a chain fed round from its end, the return itself.
+/// </para>
+/// <para>
+/// Rooted there rather than at "every node in turn", because the order modules
+/// are listed in is not a fact about the patch — the canvas moves a module to the
+/// end of the list to draw it in front, so every drag would otherwise be free to
+/// move the cut, which changes what a loop is carrying and therefore what the
+/// patch sounds like. What the Output cannot reach is walked afterwards in a
+/// stable order of its own, since there is nothing there to prefer and nothing
+/// listening either.
 /// </para>
 /// </remarks>
 public static class Cycles
@@ -29,20 +37,25 @@ public static class Cycles
         ArgumentNullException.ThrowIfNull(patch);
 
         var backwards = new HashSet<Connection>();
-        var leaving = new Dictionary<Guid, List<Connection>>();
+        var into = new Dictionary<Guid, List<Connection>>();
 
         foreach (var wire in patch.Connections)
         {
-            if (!leaving.TryGetValue(wire.SourceNode, out var list))
-                leaving[wire.SourceNode] = list = [];
+            if (!into.TryGetValue(wire.TargetNode, out var list))
+                into[wire.TargetNode] = list = [];
 
             list.Add(wire);
         }
 
+        // By socket, which is a fact about the module, rather than by when the
+        // wire happened to be drawn.
+        foreach (var list in into.Values)
+            list.Sort((first, second) => first.TargetPort.CompareTo(second.TargetPort));
+
         var finished = new HashSet<Guid>();
         var open = new HashSet<Guid>();
 
-        foreach (var node in patch.Nodes)
+        foreach (var node in Roots(patch))
             Walk(node.Id);
 
         return backwards;
@@ -62,7 +75,7 @@ public static class Cycles
             while (stack.Count > 0)
             {
                 var (node, next) = stack.Pop();
-                var wires = leaving.TryGetValue(node, out var list) ? list : [];
+                var wires = into.TryGetValue(node, out var list) ? list : [];
 
                 if (next >= wires.Count)
                 {
@@ -74,22 +87,40 @@ public static class Cycles
 
                 var wire = wires[next];
 
-                // A wire into something the walk is still inside is the one that
-                // closes the loop. Everything else has either been finished
+                // A wire out of something the walk is still inside is the one
+                // that closes the loop. Everything else has either been finished
                 // already or is about to be.
-                if (open.Contains(wire.TargetNode))
+                if (open.Contains(wire.SourceNode))
                 {
                     backwards.Add(wire);
                     continue;
                 }
 
-                if (!finished.Add(wire.TargetNode)) continue;
+                if (!finished.Add(wire.SourceNode)) continue;
 
-                open.Add(wire.TargetNode);
-                stack.Push((wire.TargetNode, 0));
+                open.Add(wire.SourceNode);
+                stack.Push((wire.SourceNode, 0));
             }
         }
     }
+
+    /// <summary>
+    /// Where the walk starts: the Output, and then whatever it could not reach.
+    /// </summary>
+    /// <remarks>
+    /// The sink first because that is what a patch is for, and everything a loop
+    /// can be heard or seen through hangs off it. The rest by id — an order
+    /// nothing about editing can disturb — because a ring nothing reads has no
+    /// wire worth preferring, and the only thing that matters there is that the
+    /// answer does not wander while somebody is still drawing.
+    /// </remarks>
+    private static IEnumerable<NodeInstance> Roots(Patch patch) =>
+        patch.Nodes
+            .Where(node => NodeCatalog.IsSink(node.TypeId))
+            .OrderBy(node => node.Id)
+            .Concat(patch.Nodes
+                .Where(node => !NodeCatalog.IsSink(node.TypeId))
+                .OrderBy(node => node.Id));
 
     /// <summary>
     /// Whose the plane on <paramref name="wire"/> is, so that a loop keeps what

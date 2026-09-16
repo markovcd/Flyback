@@ -297,9 +297,12 @@ public class PatchLayoutTests
 
         PatchLayout.Arrange(b.Patch, NodeCatalog.BuiltIn);
 
-        // The forward half of the loop still reads forwards; the wire back is
-        // the only one allowed not to.
-        b.Patch.Find(mix.Id)!.X.ShouldBeLessThan(b.Patch.Find(half.Id)!.X);
+        // The loop is cut where it leaves the module nearest the Output, so the
+        // wire that still reads forwards is the one into the mix — and the half
+        // sits to its left, where what feeds a module goes.
+        Cycles.Backwards(b.Patch).ShouldHaveSingleItem().SourceNode.ShouldBe(mix.Id);
+
+        b.Patch.Find(half.Id)!.X.ShouldBeLessThan(b.Patch.Find(mix.Id)!.X);
         b.Patch.Nodes.Select(n => n.X).Distinct().Count().ShouldBeGreaterThan(1);
     }
 

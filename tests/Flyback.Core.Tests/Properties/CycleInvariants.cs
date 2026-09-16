@@ -274,15 +274,17 @@ public class CycleInvariants
     {
         var b = new PatchBuilder();
 
-        var sum = b.Add("math.add", 200, 0);
-        var half = b.Add("math.mul", 400, 0, (1, 0.5f));
+        var sum = b.Add("math.add", 400, 0);
+        var half = b.Add("math.mul", 200, 0, (1, 0.5f));
+        var quarter = b.Add("math.mul", 200, 200, (1, 0.25f));
         var sink = b.Add(NodeCatalog.OutputTypeId, 600, 0, (NodeCatalog.OutputGainPort, 1f));
 
-        // Both of the Add's sockets are fed by what it produced last time, which
-        // is two wires running backwards out of one output.
-        b.Wire(sum, 0, half, 0)
-         .Wire(half, 0, sum, 0)
-         .Wire(half, 0, sum, 1)
+        // Two rings off one module, each closed by a wire out of the same socket:
+        // what the Add produced last time, taken twice and scaled differently.
+        b.Wire(half, 0, sum, 0)
+         .Wire(quarter, 0, sum, 1)
+         .Wire(sum, 0, half, 0)
+         .Wire(sum, 0, quarter, 0)
          .Wire(sum, 0, sink, NodeCatalog.OutputLeftPort);
 
         var program = b.Patch.CompileForAudio().Program;
