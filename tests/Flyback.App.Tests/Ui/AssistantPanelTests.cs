@@ -466,14 +466,13 @@ public class AssistantPanelTests : UiTest, IDisposable
     public void Saving_none_clears_the_provider_setting()
     {
         var saved = Configured("deaf");
-        var host = Settings(Showing(With(new Deaf()), saved));
+        var window = Showing(With(new Deaf()), saved);
+        var host = Settings(window);
 
         All<ComboBox>(host).Single(c => c.Name == "provider").SelectedIndex = 0;
         Settle(host);
 
-        All<Button>(host)
-            .Single(b => b.Content as string == "Save")
-            .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        All<AssistantPanel>(window).Single().SaveSettings();
         Settle(host);
 
         saved.Provider.ShouldBeEmpty();
@@ -746,9 +745,7 @@ public class AssistantPanelTests : UiTest, IDisposable
         logging.IsChecked = true;
         Settle(host);
 
-        All<Button>(host)
-            .Single(b => b.Content as string == "Save")
-            .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        All<AssistantPanel>(window).Single().SaveSettings();
         Settle(host);
 
         saved.LogConversations.ShouldBeTrue();

@@ -4,6 +4,7 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
+using Avalonia.Interactivity;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Flyback.App.Controls;
@@ -14,26 +15,40 @@ using Xunit;
 namespace Flyback.App.Tests.Ui;
 
 /// <summary>
-/// The Output's panel, which is where every audio and video setting lives since
-/// ADR-0037 emptied the toolbar into it — save for Record and Rewind, which
-/// ADR-0080 and ADR-0081 put back.
+/// The Output settings — size, renderer, processor — which live in the settings
+/// window and are kept between launches (ADR-0082), and the toolbar that opens it.
 /// </summary>
 /// <remarks>
-/// The controls in it are the state of the instrument rather than of a selection, so
-/// they are made once and moved into the inspector each time the Output is selected
-/// — and a control may have one parent. Selecting away and back is the sequence that
-/// throws if the inspector ever stops detaching them first.
+/// The controls are the state of the instrument rather than of a dialog, so they are
+/// made once and lent to the window each time it opens — and a control may have one
+/// parent. Opening it twice is the sequence that throws if the window ever stops
+/// being taken apart first.
 /// </remarks>
-public class OutputSettingsTests : UiTest
+public class OutputSettingsTests : UiTest, IDisposable
 {
+    /// <summary>Where a window under test keeps its settings, so none land in the machine's own.</summary>
+    private readonly string settingsPath = Path.Combine(
+        Path.GetTempPath(),
+        "flyback-output-settings-" + Guid.NewGuid().ToString("N"),
+        "output.json");
+
+    public void Dispose()
+    {
+        var folder = Path.GetDirectoryName(settingsPath);
+
+        if (folder is not null && Directory.Exists(folder)) Directory.Delete(folder, recursive: true);
+
+        GC.SuppressFinalize(this);
+    }
+
     /// <summary>
     /// The real window, on the preset it opens with. Nothing is stubbed: with no
     /// plugins loaded the catalogue is empty and the audio device is silent,
     /// which is the same path a machine with no sound backend takes.
     /// </summary>
-    private static MainWindow Open()
+    private static MainWindow Open(string? settingsPath = null)
     {
-        var window = new MainWindow();
+        var window = new MainWindow(outputSettingsPath: settingsPath);
 
         window.Show();
         window.UpdateLayout();
@@ -77,23 +92,166 @@ public class OutputSettingsTests : UiTest
         All<Button>(window).Select(b => b.Content as string);
 
     /// <summary>
-    /// The panel is present exactly when the resolution picker is in the tree —
-    /// the one control left there since Record and Rewind both moved to the
-    /// toolbar (ADR-0080, ADR-0081).
+    /// The settings are on screen exactly when the size picker is in the tree,
+    /// which is only ever inside the settings window.
     /// </summary>
-    private static bool ShowingSettings(MainWindow window) =>
-        All<ComboBox>(window).Any(c => c.ItemsSource is IEnumerable<string> items && items.Any(i => i.Contains(" x ")));
+    private static bool ShowingSettings(Visual within) =>
+        All<ComboBox>(within).Any(c => c.ItemsSource is IEnumerable<string> items && items.Any(i => i.Contains(" x ")));
 
-    private static ComboBox Size(MainWindow window) =>
-        All<ComboBox>(window).Single(c => c.ItemsSource is IEnumerable<string> items && items.Any(i => i.Contains(" x ")));
+    private static ComboBox Size(Visual within) =>
+        All<ComboBox>(within).Single(c => c.ItemsSource is IEnumerable<string> items && items.Any(i => i.Contains(" x ")));
+
+    /// <summary>
+    /// Presses the settings button, waits for the window it puts up, and turns to
+    /// the Output tab unless told to stay on the one it opens on.
+    /// </summary>
+    private static ModalOverlay OpenSettings(MainWindow window, bool toOutput = true)
+    {
+        Named<Button>(window, "settings").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+
+        for (var attempt = 0; attempt < 20 && !All<ModalOverlay>(window).Any(); attempt++)
+            Dispatcher.UIThread.RunJobs();
+
+        Settle(window);
+
+        var dialog = All<ModalOverlay>(window).Single();
+
+        if (toOutput)
+        {
+            Tabs(dialog).SelectedIndex = 1;
+            Settle(window);
+        }
+
+        return dialog;
+    }
+
+    private static TabControl Tabs(Visual within) => All<TabControl>(within).Single(t => t.Name == "settingsTabs");
+
+    /// <summary>Answers the settings window by its Save, or by its cross.</summary>
+    private static void CloseSettings(MainWindow window, ModalOverlay dialog, bool save)
+    {
+        All<Button>(dialog)
+            .Single(b => save ? b.Content as string == "Save" : b.Name == "dismiss")
+            .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+
+        for (var attempt = 0; attempt < 20 && All<ModalOverlay>(window).Any(); attempt++)
+            Dispatcher.UIThread.RunJobs();
+
+        Settle(window);
+    }
 
     [AvaloniaFact]
-    public void The_toolbar_no_longer_carries_the_settings()
+    public void Nothing_selected_shows_no_settings()
     {
         var window = Open();
 
-        // Nothing is selected on open, so none of it should be anywhere.
         ShowingSettings(window).ShouldBeFalse();
+    }
+
+    /// <summary>They moved to the settings window, and the Output's panel keeps only its knobs.</summary>
+    [AvaloniaFact]
+    public void Selecting_the_output_shows_no_settings()
+    {
+        var window = Open();
+
+        Select(window, Editor(window).Patch.Output);
+
+        ShowingSettings(window).ShouldBeFalse();
+    }
+
+    /// <summary>
+    /// A tab each, opening on the agent's, and one Save under both — switching
+    /// tabs is not saving, and Save keeps the tab that is not showing as well.
+    /// </summary>
+    [AvaloniaFact]
+    public void The_settings_window_has_an_agent_tab_and_an_output_tab()
+    {
+        var window = Open();
+        var dialog = OpenSettings(window, toOutput: false);
+        var tabs = Tabs(dialog);
+
+        tabs.Items.Cast<TabItem>().Select(t => (t.Header as TextBlock)?.Text)
+            .ShouldBe(["Agent settings", "Output settings"]);
+        tabs.SelectedIndex.ShouldBe(0);
+        tabs.TabStripPlacement.ShouldBe(Dock.Left, "the sections are a list down the left");
+        ShowingSettings(dialog).ShouldBeFalse("the Output tab is not the one showing");
+
+        var frame = All<Border>(dialog).Single(b => b.Name == "dialog");
+        var size = frame.Bounds.Size;
+
+        tabs.SelectedIndex = 1;
+        Settle(window);
+
+        ShowingSettings(dialog).ShouldBeTrue();
+        frame.Bounds.Size.ShouldBe(size, "the window keeps its size whichever section is showing");
+        All<Button>(dialog).Count(b => b.Content as string == "Save").ShouldBe(1, "one Save for both sections");
+    }
+
+    /// <summary>
+    /// The one this suite is really for. The controls are lent to a window built
+    /// fresh each time, and have to be taken back from the last one first.
+    /// </summary>
+    [AvaloniaFact]
+    public void The_settings_window_opens_again_and_again()
+    {
+        var window = Open();
+
+        for (var round = 0; round < 3; round++)
+        {
+            var dialog = OpenSettings(window);
+            ShowingSettings(dialog).ShouldBeTrue($"round {round + 1}: the settings should be there");
+
+            CloseSettings(window, dialog, save: round % 2 == 0);
+            ShowingSettings(window).ShouldBeFalse($"round {round + 1}: and gone with the window");
+        }
+    }
+
+    [AvaloniaFact]
+    public void Saving_keeps_the_settings_for_the_next_launch()
+    {
+        var window = Open(settingsPath);
+        var dialog = OpenSettings(window);
+
+        Size(dialog).SelectedIndex = 1;
+        Processor(dialog).IsChecked = false;
+        CloseSettings(window, dialog, save: true);
+
+        File.Exists(settingsPath).ShouldBeTrue();
+
+        var next = Open(settingsPath);
+
+        All<PreviewHost>(next).Single().Resolution.Width.ShouldBe(480);
+
+        var again = OpenSettings(next);
+
+        Size(again).SelectedIndex.ShouldBe(1);
+        Processor(again).IsChecked.ShouldBe(false);
+    }
+
+    /// <summary>The cross is every way out that is not Save, and changes nothing.</summary>
+    [AvaloniaFact]
+    public void Closing_without_saving_puts_the_settings_back()
+    {
+        var window = Open(settingsPath);
+        var preview = All<PreviewHost>(window).Single();
+        var before = preview.Resolution;
+
+        var dialog = OpenSettings(window);
+
+        Size(dialog).SelectedIndex = 0;
+        Processor(dialog).IsChecked = false;
+        Dispatcher.UIThread.RunJobs();
+
+        preview.Resolution.ShouldBe(before, "nothing is in force until Save");
+
+        CloseSettings(window, dialog, save: false);
+
+        preview.Resolution.ShouldBe(before);
+        File.Exists(settingsPath).ShouldBeFalse();
+
+        var again = OpenSettings(window);
+
+        Processor(again).IsChecked.ShouldBe(true);
     }
 
     /// <summary>
@@ -194,99 +352,33 @@ public class OutputSettingsTests : UiTest
         tip.Length.ShouldBeGreaterThan(8);
     }
 
-    [AvaloniaFact]
-    public void Selecting_the_output_shows_its_settings()
-    {
-        var window = Open();
-
-        Select(window, Editor(window).Patch.Output);
-
-        ShowingSettings(window).ShouldBeTrue();
-    }
-
-    [AvaloniaFact]
-    public void Selecting_another_module_puts_them_away()
-    {
-        var window = Open();
-        var patch = Editor(window).Patch;
-
-        Select(window, patch.Output);
-        ShowingSettings(window).ShouldBeTrue();
-
-        Select(window, patch.Nodes.First(n => n.TypeId != NodeCatalog.OutputTypeId));
-
-        ShowingSettings(window).ShouldBeFalse();
-    }
-
     /// <summary>
-    /// The one this suite is really for. A panel moved out of the inspector and
-    /// back has to be detached on the way out, or re-adding it throws — and the
-    /// only way to find out is to do it.
+    /// A size picked is a draft: the preview keeps the one it has until Save,
+    /// and takes the new one then.
     /// </summary>
     [AvaloniaFact]
-    public void Selecting_the_output_again_brings_them_back()
+    public void Changing_the_size_reaches_the_preview_only_on_save()
     {
         var window = Open();
-        var patch = Editor(window).Patch;
-        var other = patch.Nodes.First(n => n.TypeId != NodeCatalog.OutputTypeId);
-
-        for (var round = 0; round < 3; round++)
-        {
-            Select(window, patch.Output);
-            ShowingSettings(window).ShouldBeTrue($"round {round + 1}: the settings should be back");
-
-            Select(window, other);
-            ShowingSettings(window).ShouldBeFalse($"round {round + 1}: and away again");
-        }
-    }
-
-    /// <summary>
-    /// They are the instrument's state, not the selection's, so a round trip
-    /// through another module must not reset them to what they were on launch.
-    /// </summary>
-    [AvaloniaFact]
-    public void The_settings_keep_their_values_across_a_round_trip()
-    {
-        var window = Open();
-        var patch = Editor(window).Patch;
-        var other = patch.Nodes.First(n => n.TypeId != NodeCatalog.OutputTypeId);
-
-        Select(window, patch.Output);
-
-        Size(window).SelectedIndex = 1;
-
-        Select(window, other);
-        Select(window, patch.Output);
-
-        Size(window).SelectedIndex.ShouldBe(1, "the preview size should have survived");
-    }
-
-    /// <summary>
-    /// Changing the size has to reach the preview, not just the box showing it —
-    /// the control is wired once at startup and the panel is rebuilt many times.
-    /// </summary>
-    [AvaloniaFact]
-    public void Changing_the_size_reaches_the_preview()
-    {
-        var window = Open();
-        var patch = Editor(window).Patch;
-
-        Select(window, patch.Output);
-
         var preview = All<PreviewHost>(window).Single();
         var before = preview.Resolution;
 
-        Size(window).SelectedIndex = 0;
+        var dialog = OpenSettings(window);
+
+        Size(dialog).SelectedIndex = 0;
         Dispatcher.UIThread.RunJobs();
 
-        preview.Resolution.ShouldNotBe(before);
+        preview.Resolution.ShouldBe(before);
+
+        CloseSettings(window, dialog, save: true);
+
         preview.Resolution.Width.ShouldBe(320);
     }
 
     // --- the processor switch ----------------------------------------------
 
-    private static ToggleButton Processor(MainWindow window) =>
-        All<ToggleButton>(window).Single(b => b.Content as string is "Compiled" or "Interpreted");
+    private static ToggleButton Processor(Visual within) =>
+        All<ToggleButton>(within).Single(b => b.Content as string is "Compiled" or "Interpreted");
 
     /// <summary>
     /// On by default, like the GPU beside it: a program is interpreted until its
@@ -296,9 +388,7 @@ public class OutputSettingsTests : UiTest
     public void The_processor_starts_compiled_and_says_so()
     {
         var window = Open();
-        Select(window, Editor(window).Patch.Output);
-
-        var toggle = Processor(window);
+        var toggle = Processor(OpenSettings(window));
 
         toggle.IsChecked.ShouldBe(true);
         toggle.Content.ShouldBe("Compiled");
@@ -306,42 +396,56 @@ public class OutputSettingsTests : UiTest
     }
 
     /// <summary>
-    /// Off puts the interpreter back under the picture at once — not at the next
-    /// edit — because it is how the two are compared.
+    /// Off, once saved, puts the interpreter back under the picture at once —
+    /// not at the next edit — because it is how the two are compared. The label
+    /// follows the switch before that, since it says what Save would do.
     /// </summary>
     [AvaloniaFact]
-    public void Switching_to_interpreted_takes_the_il_off_the_picture()
+    public void Saving_interpreted_takes_the_il_off_the_picture()
     {
         var window = Open();
-        Select(window, Editor(window).Patch.Output);
+        var dialog = OpenSettings(window);
+        var toggle = Processor(dialog);
 
-        var toggle = Processor(window);
         toggle.IsChecked = false;
         Dispatcher.UIThread.RunJobs();
 
         toggle.Content.ShouldBe("Interpreted");
+
+        CloseSettings(window, dialog, save: true);
+
         All<PreviewHost>(window).Single().Program.Il.ShouldBeNull();
 
-        toggle.IsChecked = true;
-        Dispatcher.UIThread.RunJobs();
+        var again = OpenSettings(window);
 
-        toggle.Content.ShouldBe("Compiled");
+        Processor(again).IsChecked.ShouldBe(false);
+        Processor(again).Content.ShouldBe("Interpreted");
     }
 
+    /// <summary>
+    /// The one control whose draft could reach the picture on its own, so pinned
+    /// by itself: turning the GPU off without saving leaves the shader asked for.
+    /// </summary>
     [AvaloniaFact]
-    public void The_processor_switch_keeps_its_value_across_a_round_trip()
+    public void The_gpu_switch_changes_nothing_until_save()
     {
         var window = Open();
-        var patch = Editor(window).Patch;
-        var other = patch.Nodes.First(n => n.TypeId != NodeCatalog.OutputTypeId);
+        var preview = All<PreviewHost>(window).Single();
+        var wanted = preview.Wanted;
 
-        Select(window, patch.Output);
-        Processor(window).IsChecked = false;
+        var dialog = OpenSettings(window);
+        var gpu = All<ToggleButton>(dialog).Single(b => b.Content as string == "GPU");
 
-        Select(window, other);
-        Select(window, patch.Output);
+        if (!gpu.IsEnabled) return;
 
-        Processor(window).IsChecked.ShouldBe(false);
+        gpu.IsChecked = false;
+        Dispatcher.UIThread.RunJobs();
+
+        preview.Wanted.ShouldBe(wanted);
+
+        CloseSettings(window, dialog, save: false);
+
+        preview.Wanted.ShouldBe(wanted);
     }
 
     // --- the record button ---------------------------------------------------

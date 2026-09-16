@@ -47,15 +47,22 @@ public sealed partial class MainWindow : Window
         SelectedIndex = DefaultResolution,
         HorizontalAlignment = HorizontalAlignment.Stretch,
     };
+
     /// <summary>
-    /// The Output's own panel, assembled once and shown whenever that block is
-    /// selected. Its contents outlive the inspector being rebuilt.
+    /// The Output section of the settings window: size, renderer and processor.
+    /// Assembled once and lent to the window each time it opens, because these
+    /// controls are the live state of the instrument (ADR-0082).
     /// </summary>
-    private readonly StackPanel outputSettings = new()
-    {
-        Spacing = 8,
-        Margin = new Thickness(0, 16, 0, 0),
-    };
+    private readonly StackPanel outputSection = new() { Spacing = 8, Width = 280 };
+
+    /// <summary>
+    /// What <see cref="outputSection"/> was last saved as, and so what closing the
+    /// settings window without Save puts it back to.
+    /// </summary>
+    private OutputSettings outputSettings = new();
+
+    /// <summary>Where <see cref="outputSettings"/> is kept, or null to keep it nowhere.</summary>
+    private readonly string? outputSettingsPath;
 
     private readonly NodeEditor editor = new();
 
@@ -264,9 +271,19 @@ public sealed partial class MainWindow : Window
     /// A file to open once there is a window for it, or null for the usual
     /// start on the default preset — see <see cref="Startup.OpenPath"/>.
     /// </param>
-    public MainWindow(string? groupFolder = null, string? openPath = null)
+    /// <param name="outputSettingsPath">
+    /// Where the Output settings are read from and saved to. Null reads nothing
+    /// and keeps nothing — unlike <paramref name="groupFolder"/> — so that the
+    /// many tests that build a window with no arguments start on the defaults
+    /// rather than on whatever the machine running them last saved. The program
+    /// itself passes <see cref="OutputSettings.File"/>.
+    /// </param>
+    public MainWindow(string? groupFolder = null, string? openPath = null, string? outputSettingsPath = null)
     {
         this.groupFolder = groupFolder;
+        this.outputSettingsPath = outputSettingsPath;
+
+        if (outputSettingsPath is not null) outputSettings = OutputSettings.Load(outputSettingsPath);
 
         sound = OpenAudio(plugins);
         audio = new AudioEngine(sound.Device) { Compiler = compiler };
@@ -750,7 +767,7 @@ public sealed partial class MainWindow : Window
             : "No assistant plugin is installed. See About for where plugins are looked for.");
         assistantButton.IsCheckedChanged += (_, _) => ShowAssistant(assistantButton.IsChecked == true);
 
-        var settings = Glyph("settings", "⚙", "Which assistant to use, and the key it needs.");
+        var settings = Glyph("settings", "⚙", "Open the settings.");
         settings.Click += async (_, _) => await ShowSettingsAsync();
 
         var about = Glyph("about", "ⓘ", "What this is, who wrote it, and what it may be done with.");
@@ -813,24 +830,95 @@ public sealed partial class MainWindow : Window
     /// <summary>
     /// The settings window. One button on the toolbar rather than one per thing
     /// that has settings, so what it holds can grow without the bar doing the
-    /// same — today that is the assistant's provider and key, which is all there
-    /// is in this program that a person has to tell it rather than show it.
+    /// same. Two sections, one tab each: the assistant's provider and key, and
+    /// what the picture is drawn at and by (ADR-0082).
     /// </summary>
     private async Task ShowSettingsAsync()
     {
         if (assistant is not { } panel) return;
 
-        // The panel's own controls, lent to the window rather than built for it,
-        // so that what a key or a provider was last set to is still on them the
-        // next time this is opened.
-        var saved = await this.ShowDialog<bool>("Settings", panel.SettingsSection());
+        // Both sections are controls lent to the window rather than built for
+        // it, so what they were last set to is still on them the next time this
+        // is opened. The window around them is built fresh, so the Output
+        // section has to be taken back from the last one first.
+        if (outputSection.Parent is ContentControl lender) lender.Content = null;
+
+        var save = new Button { Content = "Save", Width = 84 };
+
+        // Tabs rather than one long column, so moving between sections is a
+        // click rather than a scroll, listed down the left so a section added
+        // later is one more row rather than a strip running out of width. A
+        // fixed size, so the window does not jump as the sections are flicked
+        // through; a section taller than that scrolls inside its own tab. Save
+        // sits under both, because it saves both — not only the tab showing.
+        var tabs = new TabControl
+        {
+            Name = "settingsTabs",
+            TabStripPlacement = Dock.Left,
+            Width = SettingsWidth,
+            Height = SettingsHeight,
+            Padding = new Thickness(20, 0, 0, 0),
+        };
+
+        tabs.Items.Add(SectionTab("Agent settings", panel.SettingsSection()));
+        tabs.Items.Add(SectionTab("Output settings", outputSection));
+
+        var content = new StackPanel { Spacing = 12, Margin = new Thickness(18, 4, 18, 18) };
+
+        content.Children.Add(tabs);
+        content.Children.Add(save);
+
+        save.Click += (_, _) =>
+        {
+            panel.SaveSettings();
+            SaveOutputSettings();
+
+            // Saving is the end of the errand, so the window goes with it.
+            Dialog.Close(save, true);
+        };
+
+        var saved = await this.ShowDialog<bool>("Settings", content);
 
         // The cross and Escape both answer false — see Dialog.ShowDialog — which
         // is every way out of this window that is not Save. Whatever was typed
-        // or picked since it opened belongs to this window and not to the panel,
-        // and only Save is allowed to make it the panel's.
-        if (!saved) panel.DiscardSettings();
+        // or picked since it opened belongs to this window, and only Save is
+        // allowed to keep it.
+        if (saved) return;
+
+        panel.DiscardSettings();
+        ShowOutputSettings(outputSettings);
     }
+
+    /// <summary>
+    /// One section of the settings window as a tab. The header is a text block
+    /// sized like the rest of the window, because the theme's own tab header is
+    /// set at page-title size.
+    /// </summary>
+    /// <remarks>
+    /// The section scrolls in its own viewer, since the tabs are a fixed height
+    /// and an assistant's form is as long as its provider declares it to be.
+    /// </remarks>
+    private static TabItem SectionTab(string name, Control section) => new()
+    {
+        Header = new TextBlock { Text = name, FontSize = Text.Emphasis, FontWeight = FontWeight.SemiBold },
+        Content = new ScrollViewer
+        {
+            HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
+            Content = section,
+        },
+        Padding = new Thickness(12, 6),
+        MinHeight = 0,
+    };
+
+    /// <summary>
+    /// The settings tabs' size, list and section together: wide enough for the
+    /// list beside a 280-pixel section with room for its scroll bar, and tall
+    /// enough for an assistant's usual form to fit without one.
+    /// </summary>
+    private const double SettingsWidth = 480;
+
+    /// <inheritdoc cref="SettingsWidth"/>
+    private const double SettingsHeight = 420;
 
     /// <summary>
     /// The About window. Its contents are built fresh each time rather than kept

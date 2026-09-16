@@ -7,7 +7,8 @@ one-of-each rule; changes the file format written by
 [0077](0077-the-picture-is-heard-only-through-a-scan.md), which removes `scan` and
 `scan rate` from the block · its `gain` socket is renamed `volume` by
 [0079](0079-the-gain-knob-becomes-volume-and-nought-is-off.md), which also
-removes the shell's separate audio toggle
+removes the shell's separate audio toggle · its picture settings moved to the
+settings window by [0082](0082-the-output-settings-move-to-the-settings-window.md)
 
 ## Context
 

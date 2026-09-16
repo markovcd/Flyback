@@ -42,7 +42,7 @@ public sealed partial class MainWindow
         + "Type to narrow the list, arrows to move through it, Enter to add.\n\n"
         + "Select a module to edit its values, and double-click its "
         + "name here to call it something else.\n\n"
-        + "Select the Output for the preview size, the renderer, and sound.\n\n"
+        + "The preview size and the renderer are in Settings, on the toolbar.\n\n"
         + "Record, on the toolbar, writes what the patch is doing to a file — "
         + "knobs and all, as it happens. Ctrl+R starts and stops it.\n\n"
         + "Drag from a socket to patch it into another, or onto bare "
@@ -113,46 +113,33 @@ public sealed partial class MainWindow
         "interpreting it. The two sound and look the same; turn it off to compare what they cost.";
 
     /// <summary>
-    /// Sets up the controls that live on the Output's panel. Called once, from
-    /// the constructor, rather than while building that panel: these are the
-    /// state of the instrument and not of a selection, so they have to work
-    /// before anything has been selected and keep their values after the panel
-    /// showing them has been torn down and rebuilt.
+    /// Sets up the controls in the settings window's Output section. Called
+    /// once, from the constructor, rather than when that window opens: what was
+    /// last saved has to be in force before anybody has looked at them.
     /// </summary>
+    /// <remarks>
+    /// The controls themselves act on nothing. Picking a size or flicking a
+    /// switch is a draft until Save, which is the only thing that hands the
+    /// section's values to the preview and the compiler — see
+    /// <see cref="UseOutputSettings"/>.
+    /// </remarks>
     private void WireOutputControls()
     {
-        resolution.SelectionChanged += (_, _) =>
-        {
-            if (resolution.SelectedIndex >= 0)
-                preview.Resolution = Resolutions[resolution.SelectedIndex].Size;
-        };
-        preview.Resolution = Resolutions[DefaultResolution].Size;
-
         // On by default, because it is the one that keeps up with a large patch.
         // Turning it off is how two backends get compared, and the answer to a
         // long session drifting — see ADR-0035 on float32 and the phase
         // accumulator. It disables itself if the GPU turns out to be unusable.
         gpuButton.IsChecked = true;
-        gpuButton.IsCheckedChanged += (_, _) =>
-            preview.Use(gpuButton.IsChecked == true ? PreviewBackend.Gpu : PreviewBackend.Cpu);
 
         // On by default, like the GPU and for the same reason: it is the faster of
         // the two, and a program is interpreted anyway until its IL is ready, so
         // nothing waits for it. Off is how the two get compared — they give the
         // same numbers, so what differs is only what the status bar says it cost.
+        // Its label follows the switch at once, since it says what Save would do.
         compiledButton.IsChecked = true;
         ToolTip.SetTip(compiledButton, CompiledTip);
         compiledButton.IsCheckedChanged += (_, _) =>
-        {
-            var on = compiledButton.IsChecked == true;
-
-            compiledButton.Content = on ? "Compiled" : "Interpreted";
-            compiler.Enabled = on;
-
-            Report(on
-                ? "The processor runs the patch as compiled code, once each edit has been compiled."
-                : "The processor interprets the patch.");
-        };
+            compiledButton.Content = compiledButton.IsChecked == true ? "Compiled" : "Interpreted";
 
         compiler.Failed += message => Dispatcher.UIThread.Post(() => Report(message));
 
@@ -165,8 +152,8 @@ public sealed partial class MainWindow
             // The choice rather than what is running: a patch the shader cannot
             // draw puts the picture on the processor without anybody having
             // asked, and a button that unticked itself would then be read as the
-            // setting having changed — and would change it, through this very
-            // handler, the next time anything touched it.
+            // setting having changed — and would be saved as changed the next
+            // time anybody pressed Save.
             gpuButton.IsChecked = preview.Wanted == PreviewBackend.Gpu;
             gpuButton.IsEnabled = preview.GpuAvailable;
             ToolTip.SetTip(gpuButton, preview.GpuAvailable ? GpuTip : message);
@@ -184,7 +171,90 @@ public sealed partial class MainWindow
 
         recordButton.Click += async (_, _) => await ToggleRecordAsync();
 
-        BuildOutputSettings();
+        BuildOutputSection();
+
+        // Quietly, because nobody asked for anything yet: a saved answer is
+        // what the program starts in, not a change to report.
+        ShowOutputSettings(outputSettings);
+        UseOutputSettings(outputSettings, say: false);
+    }
+
+    /// <summary>
+    /// Puts the Output section's controls to <paramref name="settings"/>, and
+    /// nothing else — what the preview and the compiler are doing is
+    /// <see cref="UseOutputSettings"/>'s business.
+    /// </summary>
+    private void ShowOutputSettings(OutputSettings settings)
+    {
+        resolution.SelectedIndex = SizeRow(settings);
+
+        // A switch greyed out by a GPU that failed shows what is running, which
+        // the BackendChanged handler above already set.
+        if (gpuButton.IsEnabled) gpuButton.IsChecked = settings.Gpu;
+
+        compiledButton.IsChecked = settings.Compiled;
+    }
+
+    /// <summary>
+    /// Hands <paramref name="settings"/> to the preview and the compiler. The only
+    /// way anything in the Output section reaches either.
+    /// </summary>
+    /// <param name="say">Whether a change of processor is worth a line in the status bar.</param>
+    private void UseOutputSettings(OutputSettings settings, bool say)
+    {
+        preview.Resolution = Resolutions[SizeRow(settings)].Size;
+        preview.Use(settings.Gpu ? PreviewBackend.Gpu : PreviewBackend.Cpu);
+
+        if (compiler.Enabled == settings.Compiled) return;
+
+        compiler.Enabled = settings.Compiled;
+
+        if (say)
+            Report(settings.Compiled
+                ? "The processor runs the patch as compiled code, once each edit has been compiled."
+                : "The processor interprets the patch.");
+    }
+
+    /// <summary>The row of the size list a saved size is, or the default for one the list no longer offers.</summary>
+    private static int SizeRow(OutputSettings settings)
+    {
+        var row = Array.FindIndex(Resolutions,
+            r => r.Size.Width == settings.Width && r.Size.Height == settings.Height);
+
+        return row < 0 ? DefaultResolution : row;
+    }
+
+    /// <summary>
+    /// Takes what the Output section's controls hold as the settings, puts them
+    /// in force, and writes them out when there is somewhere to. A failure to
+    /// write is said, not thrown: they are in force for this run regardless.
+    /// </summary>
+    private void SaveOutputSettings()
+    {
+        var size = Resolutions[Math.Max(resolution.SelectedIndex, 0)].Size;
+
+        outputSettings = new OutputSettings
+        {
+            Width = size.Width,
+            Height = size.Height,
+            // A switch greyed out by a GPU that failed says nothing about what
+            // was wanted, so the last answer is kept for a launch that has one.
+            Gpu = gpuButton.IsEnabled ? gpuButton.IsChecked == true : outputSettings.Gpu,
+            Compiled = compiledButton.IsChecked == true,
+        };
+
+        UseOutputSettings(outputSettings, say: true);
+
+        if (outputSettingsPath is null) return;
+
+        try
+        {
+            outputSettings.Save(outputSettingsPath);
+        }
+        catch (Exception ex)
+        {
+            Report($"Could not save the output settings: {ex.Message}", outputSettingsPath);
+        }
     }
 
     private Grid BuildRightPanel()
@@ -411,16 +481,10 @@ public sealed partial class MainWindow
                 FontSize = Text.Body,
             });
 
-        // Everything about seeing and hearing the patch hangs off the one module
-        // that does both, instead of being spread along a toolbar. Nothing here
-        // is saved with the patch — a preview size is a property of the machine
-        // you are working on, not of the instrument — but this is where you go
-        // looking for it, because this is the block it acts on.
-        if (NodeCatalog.IsSink(node.TypeId))
-        {
-            inspector.Children.Add(outputSettings);
-            return;
-        }
+        // The Output cannot be deleted, so it gets no button for it. What the
+        // picture is drawn at and by is a property of the machine rather than of
+        // this block, and is in the settings window — ADR-0082.
+        if (NodeCatalog.IsSink(node.TypeId)) return;
 
         // What the graph is made of belongs to whoever owns it. A knob turned on
         // a locked canvas is written back into the text (ADR-0068); a module
@@ -864,33 +928,22 @@ public sealed partial class MainWindow
     }
 
     /// <summary>
-    /// The screen-and-speakers half of the Output's panel: what the picture is
-    /// rendered at and by. Recording a take and rewinding the timeline are
-    /// both toolbar buttons now, not rows here — ADR-0080, then ADR-0081.
+    /// The settings window's Output section: what the picture is rendered at and
+    /// by, and whether the processor runs the patch as machine code.
     /// </summary>
     /// <remarks>
-    /// Built once and kept, not rebuilt per selection: these controls hold live
+    /// Built once and kept, not rebuilt per opening: these controls hold live
     /// state, and a control may have one parent at a time.
     /// </remarks>
-    private void BuildOutputSettings()
+    private void BuildOutputSection()
     {
-        outputSettings.Children.Add(Heading("Picture"));
-        outputSettings.Children.Add(Field("Size", resolution));
-        outputSettings.Children.Add(Field("Render", gpuButton));
+        outputSection.Children.Add(Field("Size", resolution));
+        outputSection.Children.Add(Field("Render", gpuButton));
 
-        // With the picture's settings because it sits beside the GPU switch it is
-        // compared against, though it speeds the sound up too — the tip says so.
-        outputSettings.Children.Add(Field("Processor", compiledButton));
+        // Beside the GPU switch it is compared against, though it speeds the
+        // sound up too — the tip says so.
+        outputSection.Children.Add(Field("Processor", compiledButton));
     }
-
-    private static TextBlock Heading(string text) => new()
-    {
-        Text = text.ToUpperInvariant(),
-        FontSize = Text.Caption,
-        FontWeight = FontWeight.SemiBold,
-        Foreground = Text.Muted,
-        Margin = new Thickness(0, 10, 0, 2),
-    };
 
     /// <summary>A labelled row on the same 78-pixel gutter the knob rows use.</summary>
     /// <summary>

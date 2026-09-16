@@ -58,8 +58,7 @@ public sealed class AssistantPanel : UserControl
     /// Where <see cref="settings"/> is written back to. Kept alongside <c>saved</c>
     /// rather than folded into it, because a test that hands in an in-memory
     /// <see cref="AssistantSettings"/> still runs through the real
-    /// <see cref="AssistantPanel.SaveSettings"/> when it presses the real Save
-    /// button — the object avoids the file, but the write does not unless this
+    /// <see cref="AssistantPanel.SaveSettings"/> — the object avoids the file, but the write does not unless this
     /// does too.
     /// </summary>
     private readonly string? settingsPath;
@@ -651,7 +650,11 @@ public sealed class AssistantPanel : UserControl
         // return. A control has one parent and a closed window still holds the
         // one it was showing, so without this the settings would open exactly
         // once a session and throw on the second try.
-        if (section.Parent is ContentControl lender) lender.Content = null;
+        switch (section.Parent)
+        {
+            case ContentControl lender: lender.Content = null; break;
+            case Panel lender: lender.Children.Remove(section); break;
+        }
 
         return section;
     }
@@ -681,9 +684,9 @@ public sealed class AssistantPanel : UserControl
             Refresh();
         };
 
-        // Its own padding, because it is the whole of a window now rather than a
-        // flyout hanging off the button that opened it.
-        var fields = new StackPanel { Spacing = 8, Margin = new Thickness(18), Width = 280 };
+        // No padding of its own: it is one section of the settings window, which
+        // pads the whole of it.
+        var fields = new StackPanel { Spacing = 8, Width = 280 };
 
         keySection.Children.Add(Text.Quiet("API key"));
         keySection.Children.Add(keyBox);
@@ -697,17 +700,8 @@ public sealed class AssistantPanel : UserControl
         fields.Children.Add(keySection);
         fields.Children.Add(logBox);
 
-        var save = new Button { Content = "Save", Width = 84 };
-        save.Click += (_, _) =>
-        {
-            SaveSettings();
-
-            // Saving is the end of the errand, so the window goes with it.
-            // Forgetting a key is not: somebody who has just taken one out is as
-            // likely as not about to put another in.
-            Dialog.Close(save, true);
-        };
-
+        // Forgetting a key does not close the window the way Save does: somebody
+        // who has just taken one out is as likely as not about to put another in.
         forget.Click += (_, _) =>
         {
             if (assistant is null) return;
@@ -716,8 +710,6 @@ public sealed class AssistantPanel : UserControl
             keyBox.Text = string.Empty;
             Refresh();
         };
-
-        fields.Children.Add(save);
 
         return fields;
     }
@@ -807,7 +799,12 @@ public sealed class AssistantPanel : UserControl
         form.Show(assistant is null ? null : assistant.Form, settings.Of(assistant?.Id ?? string.Empty));
     }
 
-    private void SaveSettings()
+    /// <summary>
+    /// Makes what is on the section the panel's, and writes it out. Internal
+    /// because the settings window's one Save button is the window's, not this
+    /// panel's — see ADR-0082.
+    /// </summary>
+    internal void SaveSettings()
     {
         settings.RememberKey = rememberBox.IsChecked == true;
         settings.LogConversations = logBox.IsChecked == true;

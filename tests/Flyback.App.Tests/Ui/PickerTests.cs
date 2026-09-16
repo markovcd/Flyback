@@ -173,9 +173,10 @@ public class PickerTests : UiTest
     /// digits are notes as surely as the letters are.
     /// </summary>
     /// <remarks>
-    /// Both are reached by selecting the module whose panel holds them, since neither
-    /// is in the tree until then. Asked of the type rather than by pressing keys:
-    /// what a Picker does with a keystroke is the two tests above.
+    /// The size is reached by opening the settings window, and the MIDI In's list
+    /// by selecting that module, since neither is in the tree until then. Asked of
+    /// the type rather than by pressing keys: what a Picker does with a keystroke
+    /// is the two tests above.
     /// </remarks>
     [AvaloniaFact]
     public void The_other_lists_in_the_window_are_pickers_as_well()
@@ -190,10 +191,19 @@ public class PickerTests : UiTest
         All<NodeEditor>(window).Single().Patch = b.Patch;
         Settle(window);
 
-        // The Output's panel, which is where the preview size lives.
-        Select(window, output);
+        // The settings window, which is where the preview size lives.
+        All<Button>(window).Single(button => button.Name == "settings")
+            .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Settle(window);
+
+        All<TabControl>(window).Single(tabs => tabs.Name == "settingsTabs").SelectedIndex = 1;
+        Settle(window);
 
         Named(window, "960 x 540").ShouldBeOfType<Picker>();
+
+        All<Button>(window).Single(button => button.Name == "dismiss")
+            .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Settle(window);
 
         // And the MIDI In's, which is where the instrument is picked.
         Select(window, midi);
