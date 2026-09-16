@@ -308,6 +308,11 @@ public sealed partial class MainWindow : Window
         // it — alt-tabbing away mid-chord should not leave a drone behind.
         Deactivated += (_, _) => midi.AllOff();
 
+        // The other half of Attention.Request: a blink some window managers
+        // would otherwise leave lit after the window it was about is the one
+        // in front.
+        Activated += (_, _) => Attention.Clear(this);
+
         Title = BaseTitle;
         Width = 1280;
         Height = 800;

@@ -153,6 +153,11 @@ internal sealed class ModalOverlay : Border
         layer.PropertyChanged += Resized;
 
         Cover();
+
+        // Every dialog passes through here, which makes this the one place
+        // that needs to know a question was just put up rather than the place
+        // that asked it — see Attention.
+        if (this.FindAncestorOfType<Window>() is { } window) Attention.Request(window);
     }
 
     protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
