@@ -7,6 +7,7 @@ using Flyback.App.Controls;
 using Flyback.Core.Graph;
 using Flyback.Plugins.Assist;
 using Flyback.Plugins.Hosting;
+using Flyback.Plugins.Secrets;
 using Flyback.Plugins.Settings;
 using Shouldly;
 
@@ -43,13 +44,13 @@ public class AssistantPanelTests : UiTest, IDisposable
         if (folder is not null && Directory.Exists(folder)) Directory.Delete(folder, recursive: true);
     }
 
-    private Window Showing(PluginCatalog? plugins = null, AssistantSettings? saved = null)
+    private Window Showing(PluginCatalog? plugins = null, AssistantSettings? saved = null, Action<string, string?>? report = null)
     {
         var panel = new AssistantPanel(
             plugins ?? PluginCatalog.Empty,
             () => Presets.Plasma(NodeCatalog.BuiltIn),
             _ => { },
-            (_, _) => { },
+            report ?? ((_, _) => { }),
             saved,
             settingsPath);
 
@@ -792,6 +793,64 @@ public class AssistantPanelTests : UiTest, IDisposable
 
         turns.Value.ShouldBe(20);
         saved.TurnLimit.ShouldBe(20);
+    }
+
+    /// <summary>
+    /// "Key saved" is news about something that just happened, not a standing
+    /// description of the key's state — a second Save with nothing typed and
+    /// the box still ticked has nothing new to report.
+    /// </summary>
+    [AvaloniaFact]
+    public void Saving_again_with_nothing_changed_does_not_repeat_the_key_saved_message()
+    {
+        var store = new FakeStore();
+        var plugins = new PluginCatalog([], [], NodeCatalog.BuiltIn, [], [], [new Deaf()], [store]);
+        var messages = new List<string>();
+
+        var window = Showing(plugins, new AssistantSettings(), (message, _) => messages.Add(message));
+        var panel = All<AssistantPanel>(window).Single();
+
+        var host = Settings(window);
+
+        All<ComboBox>(host).Single(c => c.Name == "provider").SelectedIndex = 1;
+        Settle(host);
+
+        var key = All<TextBox>(host).Single(t => t.PasswordChar != default);
+        var keep = All<CheckBox>(host).Single(c => c.Content as string == "Keep this key");
+
+        key.Text = "sk-typed";
+        keep.IsChecked = true;
+        Settle(host);
+
+        panel.SaveSettings();
+        Settle(host);
+
+        messages.ShouldHaveSingleItem();
+        messages[0].ShouldContain("Key saved");
+
+        panel.SaveSettings();
+        Settle(host);
+
+        messages.ShouldHaveSingleItem("nothing about the key changed on the second save");
+    }
+
+    private sealed class FakeStore : ISecretStore
+    {
+        private readonly Dictionary<string, string> held = new(StringComparer.Ordinal);
+
+        public string Id => "fake";
+
+        public string Name => "Fake store";
+
+        public int Priority => 0;
+
+        public bool IsSupported => true;
+
+        public void Keep(string account, string secret) => held[account] = secret;
+
+        public string? Recall(string account) => held.GetValueOrDefault(account);
+
+        public void Forget(string account) => held.Remove(account);
     }
 
     /// <summary>
