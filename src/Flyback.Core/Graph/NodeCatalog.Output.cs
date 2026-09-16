@@ -122,7 +122,7 @@ public partial class NodeCatalog
             OutputTypeId, "Output", ModuleCategories.Output,
             [
                 Col("color"),
-                Num("left", 0f, -1f, 1f),
+                Num("left", 0f, -1f, 1f) with { PatchOnly = true },
                 Normalled("right", OutputLeftPort, -1f, 1f),
                 Num("volume", 0.5f, 0f, 1f),
             ],

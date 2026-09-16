@@ -1,6 +1,8 @@
 # ADR-0009: Every input port carries an editable default
 
-**Status:** Accepted · 2026-08-11
+**Status:** Accepted · 2026-08-11 · amended by
+[0084](0084-a-socket-with-nothing-to-dial-gets-no-knob.md), which takes the
+knob back off a color port and off the Output's `left`
 
 ## Context
 

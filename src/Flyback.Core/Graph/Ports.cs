@@ -107,6 +107,16 @@ public readonly record struct PortNormal(string TypeId, int Port = 0);
 /// <paramref name="Domain"/>: read under a domain the module supplies rather than
 /// across one the port names.
 /// </param>
+/// <param name="PatchOnly">
+/// True when <paramref name="Default"/> is a filler rather than a setting — a
+/// value nobody dials, kept only so the compiler has something to read when
+/// nothing is wired in. The editor draws no knob for one: a row that moved
+/// nothing would be worse than a row that is not there, so it names what the
+/// socket does instead — see <c>MainWindow.BuildInputRow</c>. Every
+/// <see cref="PortKind.Color"/> input qualifies on its kind alone, per
+/// <c>docs/adr/0009-editable-defaults-on-every-input.md</c>: a single float
+/// cannot hold a color, so an unwired one is a broadcast grey nothing chose.
+/// </param>
 public readonly record struct PortSpec(
     string Name,
     PortKind Kind = PortKind.Scalar,
@@ -117,9 +127,16 @@ public readonly record struct PortSpec(
     PortDisplay Display = PortDisplay.Number,
     PortNormal? NormalledTo = null,
     bool Domain = false,
-    bool Swept = false)
+    bool Swept = false,
+    bool PatchOnly = false)
 {
     public int Width => Kind == PortKind.Color ? 3 : 1;
+
+    /// <summary>
+    /// Whether the socket has nothing worth a knob: declared <see cref="PatchOnly"/>,
+    /// or a color, which is <see cref="PatchOnly"/> for free — see its doc for why.
+    /// </summary>
+    public bool NeedsAWire => PatchOnly || Kind == PortKind.Color;
 
     /// <summary>
     /// The value as it should be shown for this socket. One place, because the

@@ -104,6 +104,14 @@ public class InspectorWiringTests : UiTest
     private static int Normalled(MainWindow window) =>
         All<TextBlock>(window).Count(t => t.Text?.Contains("◀ Time, without a wire") == true);
 
+    /// <summary>How many rows name a specific socket as what drives another without a wire.</summary>
+    private static int NormalledFrom(MainWindow window, string socket) =>
+        All<TextBlock>(window).Count(t => t.Text == $"◀ {socket}, without a wire");
+
+    /// <summary>How many rows say the socket has nothing worth a knob, and no wire either.</summary>
+    private static int NotPatched(MainWindow window) =>
+        All<TextBlock>(window).Count(t => t.Text == "◀ not patched");
+
     private static Point Input(NodeInstance node, int index) =>
         NodeGeometry.InputPort(node, NodeCatalog.BuiltIn.Require(node.TypeId), index);
 
@@ -181,6 +189,57 @@ public class InspectorWiringTests : UiTest
 
         Editor(window).Patch.IncomingTo(sine.Id, 0).ShouldBeNull();
         Normalled(window).ShouldBe(1);
+    }
+
+    /// <summary>
+    /// The Output's 'color' and 'left' have no fallback to name — an unwired
+    /// color is a broadcast grey nobody chose, and 'left' fed a constant is a
+    /// speaker humming rather than a setting — so they say plainly that
+    /// nothing is patched instead of offering a slider that would mislead.
+    /// 'right' falls back to 'left' and says so, the same as any other
+    /// normalled socket. 'volume' is the one real dial, so it is the only
+    /// knob the panel offers.
+    /// </summary>
+    [AvaloniaFact]
+    public void The_output_offers_a_knob_for_volume_only()
+    {
+        var window = Open(Presets.Empty(NodeCatalog.BuiltIn));
+
+        Select(window, Editor(window).Patch.Output);
+
+        Knobs(window).ShouldBe(1, "volume is the only socket worth dialing");
+        NotPatched(window).ShouldBe(2, "color and left have nothing to fall back to");
+        NormalledFrom(window, "left").ShouldBe(1, "right falls back to left");
+    }
+
+    /// <summary>
+    /// Wiring 'left' takes away its "not patched" row exactly as wiring any
+    /// other socket takes away its knob, and unplugging brings it back.
+    /// </summary>
+    [AvaloniaFact]
+    public void Wiring_the_outputs_left_takes_away_its_not_patched_row()
+    {
+        var window = Open(Presets.Empty(NodeCatalog.BuiltIn));
+        var editor = Editor(window);
+        var output = editor.Patch.Output;
+
+        var tone = editor.AddNode("osc.sine", new Point(600, 300));
+        tone.ShouldNotBeNull();
+
+        Select(window, output);
+        NotPatched(window).ShouldBe(2);
+
+        editor.Patch.Connect(tone.Id, 0, output.Id, NodeCatalog.OutputLeftPort);
+        editor.NotifyPatchChanged();
+
+        NotPatched(window).ShouldBe(1, "left is now patched");
+        Wired(window).ShouldBe(1);
+
+        editor.Patch.Disconnect(output.Id, NodeCatalog.OutputLeftPort);
+        editor.NotifyPatchChanged();
+
+        NotPatched(window).ShouldBe(2, "unplugging brings the row back");
+        Wired(window).ShouldBe(0);
     }
 
     /// <summary>

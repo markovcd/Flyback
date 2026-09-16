@@ -527,7 +527,7 @@ public sealed partial class MainWindow
         var reading = ShowsReading(def);
 
         for (var i = 0; i < def.Inputs.Count; i++)
-            inspector.Children.Add(BuildInputRow(node, def.Inputs[i], i, reading));
+            inspector.Children.Add(BuildInputRow(def, node, def.Inputs[i], i, reading));
 
         // Whatever the module carries that is not a knob, each kind edited by the
         // control that suits it. This mapping lives here rather than on the extra
@@ -1519,7 +1519,7 @@ public sealed partial class MainWindow
         MimeTypes = ["image/png"],
     };
 
-    private Control BuildInputRow(NodeInstance node, PortSpec spec, int index, bool reading)
+    private Control BuildInputRow(NodeDef def, NodeInstance node, PortSpec spec, int index, bool reading)
     {
         var connected = editor.Patch.IncomingTo(node.Id, index) is not null;
 
@@ -1562,6 +1562,44 @@ public sealed partial class MainWindow
             Grid.SetColumn(implied, 1);
             Grid.SetColumnSpan(implied, reading ? 3 : 2);
             row.Children.Add(implied);
+            return row;
+        }
+
+        // The other kind of normalled jack: an earlier socket on the same
+        // module rather than a hidden one off it. Output's 'right' falls back
+        // to 'left' this way, and the row names it exactly as it would a
+        // module normalled off the canvas.
+        if (spec.NormalledFrom is >= 0 and var from && from < def.Inputs.Count)
+        {
+            var implied = new TextBlock
+            {
+                Text = $"◀ {def.Inputs[from].Name}, without a wire",
+                FontSize = Text.Body,
+                Foreground = Text.Muted,
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+            Grid.SetColumn(implied, 1);
+            Grid.SetColumnSpan(implied, reading ? 3 : 2);
+            row.Children.Add(implied);
+            return row;
+        }
+
+        // A socket with nothing worth a knob — see PortSpec.NeedsAWire. The
+        // stored default still answers the compiler when nothing is patched,
+        // it is just not a number anybody chose by dragging, so the row says
+        // that plainly instead of offering a slider that would mislead.
+        if (spec.NeedsAWire)
+        {
+            var unpatched = new TextBlock
+            {
+                Text = "◀ not patched",
+                FontSize = Text.Body,
+                Foreground = Text.Muted,
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+            Grid.SetColumn(unpatched, 1);
+            Grid.SetColumnSpan(unpatched, reading ? 3 : 2);
+            row.Children.Add(unpatched);
             return row;
         }
 
