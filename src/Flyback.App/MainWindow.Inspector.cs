@@ -99,6 +99,8 @@ public sealed partial class MainWindow
         ("960 x 540", new PixelSize(960, 540)),
         ("1280 x 720", new PixelSize(1280, 720)),
         ("1920 x 1080", new PixelSize(1920, 1080)),
+        ("2560 x 1440", new PixelSize(2560, 1440)),
+        ("3840 x 2160", new PixelSize(3840, 2160)),
     ];
 
     /// <summary>960 x 540: enough to judge a patch by, cheap enough to keep up.</summary>
