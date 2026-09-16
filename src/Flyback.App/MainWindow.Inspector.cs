@@ -11,6 +11,7 @@ using Avalonia.Threading;
 using Flyback.App.Controls;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
+using Flyback.Core.Render;
 using Colors = Flyback.App.Controls.Colors;
 
 namespace Flyback.App;
@@ -101,6 +102,13 @@ public sealed partial class MainWindow
         ("1920 x 1080", new PixelSize(1920, 1080)),
         ("2560 x 1440", new PixelSize(2560, 1440)),
         ("3840 x 2160", new PixelSize(3840, 2160)),
+
+        // Not 16:9 — the picture and the live sound's aspect both follow
+        // whichever of these is picked, ADR-0083.
+        ("1024 x 768", new PixelSize(1024, 768)),   // 4:3
+        ("1080 x 1080", new PixelSize(1080, 1080)), // 1:1, square
+        ("1080 x 1920", new PixelSize(1080, 1920)), // 9:16, portrait
+        ("2560 x 1080", new PixelSize(2560, 1080)), // 21:9, ultrawide
     ];
 
     /// <summary>960 x 540: enough to judge a patch by, cheap enough to keep up.</summary>
@@ -237,9 +245,16 @@ public sealed partial class MainWindow
     /// <param name="say">Whether a change of processor is worth a line in the status bar.</param>
     private void UseOutputSettings(OutputSettings settings, bool say)
     {
-        preview.Resolution = Resolutions[SizeRow(settings)].Size;
+        var size = Resolutions[SizeRow(settings)].Size;
+
+        preview.Resolution = size;
         preview.Use(settings.Gpu ? PreviewBackend.Gpu : PreviewBackend.Cpu);
         preview.FrameRate = settings.PreviewFrameRate;
+
+        // What a live Scan reaches with Coordinates' aspect (ADR-0077) — kept in
+        // step with the preview rather than fixed, now that the size list is not
+        // all one shape.
+        audio.Aspect = SynthRenderer.AspectOf(size.Width, size.Height);
 
         if (compiler.Enabled == settings.Compiled) return;
 

@@ -182,12 +182,14 @@ public class AudioEngineTests
     }
 
     /// <summary>
-    /// The speakers have no frame, so the engine says which one they are the sound
-    /// of: the 16:9 an exported sound is told, so a patch reading Coordinates'
-    /// aspect is the same played as written.
+    /// The speakers have no frame, so the engine is told which one they are the
+    /// sound of — <see cref="AudioEngine.Aspect"/> — and a patch reading
+    /// Coordinates' aspect hears exactly that number (ADR-0083). The engine
+    /// itself picks nothing: a fresh one hears <see cref="AudioRenderer"/>'s own
+    /// default of a square frame until something sets it.
     /// </summary>
     [Fact]
-    public void The_engine_plays_a_patch_as_the_sound_of_a_wide_frame()
+    public void The_engine_plays_a_patch_as_the_sound_of_whatever_frame_it_is_told()
     {
         using var device = new LoopbackDevice();
         using var engine = new AudioEngine(device);
@@ -207,7 +209,11 @@ public class AudioEngineTests
         engine.Update(builder.Patch);
         engine.Start();
 
-        device.Pump(4_096).Max(MathF.Abs).ShouldBe(0.5f * 16f / 9f, 0.02f);
+        device.Pump(4_096).Max(MathF.Abs).ShouldBe(0.5f, 0.02f, "a fresh engine has not been told any shape but square");
+
+        engine.Aspect = 16f / 9f;
+
+        device.Pump(4_096).Max(MathF.Abs).ShouldBe(0.5f * 16f / 9f, 0.02f, "and hears whatever shape it is given next");
     }
 
     /// <summary>

@@ -9,7 +9,9 @@ Output's `scan` knob stays · amends
 [0037](0037-one-output-block-that-every-patch-has.md), whose Output loses `scan`
 and `scan rate` · its aspect table's "Shell's sound export" row is retired by
 [0078](0078-export-leaves-the-shell-for-the-cli-that-already-writes-it.md),
-which removes that export; the CLI row keeps the same answer
+which removes that export; the CLI row keeps the same answer · its Live engine
+row is amended by [0083](0083-the-live-engines-aspect-follows-the-preview.md),
+which stops fixing that shape at 16:9
 
 ## Context
 
@@ -68,7 +70,7 @@ Coordinates like they do, and the printer writes that wire back as the word.
 | Movie export | the frame being written (`MovieSettings`) |
 | CLI | the shape given by `--size`, including for a `.wav` render |
 | Shell's sound export | `ExportSize`, 16:9 |
-| Live engine | 16:9, the sound export's shape, so a patch sounds the same played as written |
+| Live engine | the preview's shape, kept in step as it is changed — [0083](0083-the-live-engines-aspect-follows-the-preview.md) |
 | Assistant's listen | the frame limits it draws at |
 
 **The raster is a patch, not a mode on the Scan.** The circle stays the
@@ -109,12 +111,14 @@ Nothing else in them changed.
 Coordinates, so a `let aspect = …` can be written but never read back by that
 name. The printer does not use it as a name.
 
-**A patch reading `aspect` hears the renderer's frame, not the window's.** The
-live engine plays 16:9 whatever shape the preview is. A movie export hears the
-frame it writes, which is the preview's resolution. Before this, the shell's
-movie export passed `ExportSize`'s 16:9 while writing at the preview's size.
-Reading the frame from `MovieSettings` makes the sound and the picture of one
-file agree.
+**A patch reading `aspect` hears the renderer's frame, not the window's.** A
+movie export hears the frame it writes, which is the preview's resolution.
+Before this, the shell's movie export passed `ExportSize`'s 16:9 while writing
+at the preview's size. Reading the frame from `MovieSettings` makes the sound
+and the picture of one file agree. The live engine originally played a fixed
+16:9 regardless of the preview's own shape — amended by
+[0083](0083-the-live-engines-aspect-follows-the-preview.md) once the preview
+could be a shape other than that.
 
 **Hearing the picture now always takes a module.** That is more wiring than
 turning a knob, and it is also the only form that can be mixed, modulated, and

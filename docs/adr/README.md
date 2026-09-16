@@ -57,7 +57,8 @@ context, decision, consequences.
 | [0074](0074-a-cell-is-a-plane-on-the-video-path.md) | A cell is a plane on the video path *(user-directed)* |
 | [0075](0075-a-cycle-carries-its-own-delay.md) | A cycle carries its own delay *(user-directed)* |
 | [0076](0076-the-processor-runs-a-program-as-il-once-it-is-built.md) | The processor runs a program as IL once it is built *(user-directed)* |
-| [0077](0077-the-picture-is-heard-only-through-a-scan.md) | The picture is heard only through a Scan *(user-directed; its aspect table's shell-export row retired by [0078](0078-export-leaves-the-shell-for-the-cli-that-already-writes-it.md))* |
+| [0077](0077-the-picture-is-heard-only-through-a-scan.md) | The picture is heard only through a Scan *(user-directed; its aspect table's shell-export row retired by [0078](0078-export-leaves-the-shell-for-the-cli-that-already-writes-it.md); its Live-engine row amended by [0083](0083-the-live-engines-aspect-follows-the-preview.md))* |
+| [0083](0083-the-live-engines-aspect-follows-the-preview.md) | The live engine's aspect follows the preview *(user-directed)* |
 
 ### The shell
 

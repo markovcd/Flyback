@@ -47,9 +47,11 @@ public sealed class AudioRenderer
     /// The width over the height of the frame this is the sound of, which is what
     /// Coordinates' <c>aspect</c> reads here. The speakers have no frame of their
     /// own, so whoever renders says which picture they belong to — an export and a
-    /// preview hear the same patch across a different width.
+    /// preview hear the same patch across a different width. Settable rather than
+    /// fixed at construction: the live engine's renderer outlives any one preview
+    /// size and follows it when it changes (ADR-0077).
     /// </summary>
-    public float Aspect { get; init; } = 1f;
+    public float Aspect { get; set; } = 1f;
 
     /// <summary>Internal rate multiplier. 1 disables both oversampling and the decimation filter.</summary>
     public int Oversample { get; }

@@ -33,9 +33,7 @@ public sealed class AudioEngine(IAudioDevice device) : IDisposable
         DelayState? Memory,
         LiveValues Live);
 
-    // The shape a sound export is told it has, so a patch reading Coordinates'
-    // aspect sounds the same played as written.
-    private readonly AudioRenderer renderer = new(device.SampleRate) { Aspect = SynthRenderer.AspectOf(16, 9) };
+    private readonly AudioRenderer renderer = new(device.SampleRate);
     private State activeState = new(CompiledPatch.Silent, null, LiveValues.None);
     private IAudioSink? capture;
 
@@ -60,6 +58,18 @@ public sealed class AudioEngine(IAudioDevice device) : IDisposable
 
     /// <summary>Sample-accurate position, and the master timeline while sound is on.</summary>
     public double Time => renderer.Time;
+
+    /// <summary>
+    /// The shape Coordinates' <c>aspect</c> reads while playing live. Follows the
+    /// preview's resolution — see <see cref="MainWindow.UseOutputSettings"/> —
+    /// rather than a fixed shape, so a Scan reaches the same edges live as it
+    /// does in an export of the same patch (ADR-0077).
+    /// </summary>
+    public float Aspect
+    {
+        get => renderer.Aspect;
+        set => renderer.Aspect = value;
+    }
 
     public void Start()
     {
