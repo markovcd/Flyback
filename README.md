@@ -4,7 +4,7 @@
 
 Flyback is a patchable synthesiser for .NET 10. One graph can generate both a picture and a sound. The visual path and the audio path share the same module graph and are compiled down to the same flat instruction stream.
 
-
+See [CHANGELOG.md](CHANGELOG.md) for what changed in each release.
 
 ## Quick start
 
