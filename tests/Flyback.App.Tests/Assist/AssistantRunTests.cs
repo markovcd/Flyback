@@ -133,6 +133,23 @@ public class AssistantRunTests
     }
 
     /// <summary>
+    /// A limit raised in the settings reaches the conversation already going, so
+    /// one that ran out can carry on rather than having to start again.
+    /// </summary>
+    [Fact]
+    public async Task Raising_the_limit_gives_a_conversation_more_turns()
+    {
+        using var run = RunOf(new ScriptedAssistant(new PatchEvent.Said("hello")), maxTurns: 1);
+
+        await Drain(run);
+        run.Exhausted.ShouldBeTrue();
+
+        run.MaxTurns = 2;
+
+        run.Exhausted.ShouldBeFalse();
+    }
+
+    /// <summary>
     /// The property the whole undo story rests on. The workbench takes a copy,
     /// so whatever was open is still exactly what it was — which is what makes
     /// "put it back" a single assignment in an application that has no undo.

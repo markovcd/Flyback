@@ -49,6 +49,36 @@ public class OutputSettingsFileTests : IDisposable
         settings.Compiled.ShouldBeFalse();
     }
 
+    [Fact]
+    public void Recording_and_sound_come_back()
+    {
+        new OutputSettings { FrameRate = 60, JpegQuality = 40, LatencyMilliseconds = 100 }.Save(File);
+
+        var settings = OutputSettings.Load(File);
+
+        settings.FrameRate.ShouldBe(60);
+        settings.JpegQuality.ShouldBe(40);
+        settings.LatencyMilliseconds.ShouldBe(100);
+    }
+
+    /// <summary>
+    /// A file edited by hand is brought into range rather than trusted: a frame
+    /// rate of nought would divide by it, and a latency of a minute would stall
+    /// the sound.
+    /// </summary>
+    [Fact]
+    public void Values_out_of_range_are_brought_into_it()
+    {
+        Directory.CreateDirectory(folder);
+        System.IO.File.WriteAllText(File, """{ "frameRate": 0, "jpegQuality": 400, "latencyMilliseconds": 60000 }""");
+
+        var settings = OutputSettings.Load(File);
+
+        settings.FrameRate.ShouldBe(OutputSettings.SlowestFrameRate);
+        settings.JpegQuality.ShouldBe(OutputSettings.HighestQuality);
+        settings.LatencyMilliseconds.ShouldBe(OutputSettings.LongestLatency);
+    }
+
     /// <summary>Losing a preference is not worth failing to start over.</summary>
     [Fact]
     public void A_file_that_is_not_json_is_the_defaults()

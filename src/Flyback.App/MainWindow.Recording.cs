@@ -127,8 +127,8 @@ public sealed partial class MainWindow
         var settings = new RecordingSettings(
             path,
             size,
-            MovieRenderer.DefaultFrameRate,
-            JpegWriter.DefaultQuality,
+            outputSettings.FrameRate,
+            outputSettings.JpegQuality,
             withSound ? audio.SampleRate : 0,
             withSound ? NodeCatalog.AudioChannels : 0);
 

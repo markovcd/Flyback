@@ -751,6 +751,48 @@ public class AssistantPanelTests : UiTest, IDisposable
         saved.LogConversations.ShouldBeTrue();
     }
 
+    [AvaloniaFact]
+    public void The_turn_limit_shows_what_was_saved_and_keeps_what_is_saved()
+    {
+        var saved = new AssistantSettings { TurnLimit = 20 };
+        var window = Showing(With(new Deaf()), saved);
+        var panel = All<AssistantPanel>(window).Single();
+
+        var host = Settings(window);
+        var turns = All<NumericUpDown>(host).Single(c => c.Name == "turnLimit");
+
+        turns.Value.ShouldBe(20);
+
+        turns.Value = 40;
+        Settle(host);
+
+        saved.TurnLimit.ShouldBe(20, "nothing is kept until Save");
+
+        panel.SaveSettings();
+        Settle(host);
+
+        saved.TurnLimit.ShouldBe(40);
+    }
+
+    /// <summary>Closing some way other than Save puts the box back to what was saved.</summary>
+    [AvaloniaFact]
+    public void Discarding_puts_the_turn_limit_back()
+    {
+        var saved = new AssistantSettings { TurnLimit = 20 };
+        var window = Showing(With(new Deaf()), saved);
+        var panel = All<AssistantPanel>(window).Single();
+
+        var host = Settings(window);
+        var turns = All<NumericUpDown>(host).Single(c => c.Name == "turnLimit");
+
+        turns.Value = 5;
+        panel.DiscardSettings();
+        Settle(host);
+
+        turns.Value.ShouldBe(20);
+        saved.TurnLimit.ShouldBe(20);
+    }
+
     /// <summary>
     /// In the box rather than beside it, and in the corner one finishes typing
     /// nearest. The box keeps a strip of padding along its bottom for it, so

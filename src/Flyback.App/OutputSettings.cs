@@ -1,11 +1,13 @@
 using System.Text.Json;
 using Flyback.Core;
+using Flyback.Core.Render;
+using Flyback.Plugins.Audio;
 
 namespace Flyback.App;
 
 /// <summary>
-/// What the picture is drawn at and by, and whether the processor runs the patch
-/// as machine code — the Output settings in the settings window.
+/// What comes out of the program and how: the picture, a recorded take, and the
+/// speakers — the Output, Recording and Sound sections of the settings window.
 /// </summary>
 /// <remarks>
 /// Properties of the machine rather than of the instrument, which is why none of it
@@ -37,6 +39,24 @@ public sealed class OutputSettings
     /// <summary>Whether the processor runs the sound, and a picture it draws, as IL rather than interpreting it (ADR-0076).</summary>
     public bool Compiled { get; set; } = true;
 
+    /// <summary>Frames a second in a recorded take — the Recording section.</summary>
+    public double FrameRate { get; set; } = MovieRenderer.DefaultFrameRate;
+
+    /// <summary>How a recorded take's frames are compressed, from 1 to 100 — the Recording section.</summary>
+    public int JpegQuality { get; set; } = JpegWriter.DefaultQuality;
+
+    /// <summary>
+    /// How far behind the patch the speakers may run, in milliseconds — the Sound
+    /// section. Asked of the device when it is opened, which is once a launch.
+    /// </summary>
+    public int LatencyMilliseconds { get; set; } = AudioFormat.Default.LatencyMilliseconds;
+
+    public const int LowestQuality = 1, HighestQuality = 100;
+
+    public const double SlowestFrameRate = 1, FastestFrameRate = 120;
+
+    public const int ShortestLatency = 5, LongestLatency = 500;
+
     public static string File => Path.Combine(GlobalConstants.DataFolder, "output.json");
 
     /// <summary>Never throws. A settings file is not worth a failure to start.</summary>
@@ -44,9 +64,18 @@ public sealed class OutputSettings
     {
         try
         {
-            return System.IO.File.Exists(path)
+            var settings = System.IO.File.Exists(path)
                 ? JsonSerializer.Deserialize<OutputSettings>(System.IO.File.ReadAllText(path), Options) ?? new()
                 : new OutputSettings();
+
+            // Brought into range rather than refused, since the file is one
+            // somebody may have edited by hand: a frame rate of nought or a
+            // latency of an hour would each break something far from here.
+            settings.FrameRate = Math.Clamp(settings.FrameRate, SlowestFrameRate, FastestFrameRate);
+            settings.JpegQuality = Math.Clamp(settings.JpegQuality, LowestQuality, HighestQuality);
+            settings.LatencyMilliseconds = Math.Clamp(settings.LatencyMilliseconds, ShortestLatency, LongestLatency);
+
+            return settings;
         }
         catch
         {

@@ -27,14 +27,16 @@ public sealed partial class MainWindow
     /// plugin, or one whose device refuses to open, gets silence and a disabled
     /// button — never a program that will not start.
     /// </summary>
-    private static AudioSetup OpenAudio(PluginCatalog plugins)
+    private static AudioSetup OpenAudio(PluginCatalog plugins, int latencyMilliseconds)
     {
         if (plugins.PreferredAudioOutput is not { } output)
             return new AudioSetup(new SilentAudioDevice(), null, null);
 
         try
         {
-            return new AudioSetup(output.Create(AudioFormat.Default), output, null);
+            var format = AudioFormat.Default with { LatencyMilliseconds = latencyMilliseconds };
+
+            return new AudioSetup(output.Create(format), output, null);
         }
         catch (Exception ex)
         {

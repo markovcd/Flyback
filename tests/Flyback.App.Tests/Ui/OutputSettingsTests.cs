@@ -103,9 +103,9 @@ public class OutputSettingsTests : UiTest, IDisposable
 
     /// <summary>
     /// Presses the settings button, waits for the window it puts up, and turns to
-    /// the Output tab unless told to stay on the one it opens on.
+    /// <paramref name="tab"/> — the Output tab unless told otherwise.
     /// </summary>
-    private static ModalOverlay OpenSettings(MainWindow window, bool toOutput = true)
+    private static ModalOverlay OpenSettings(MainWindow window, int tab = OutputTab)
     {
         Named<Button>(window, "settings").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
 
@@ -116,9 +116,9 @@ public class OutputSettingsTests : UiTest, IDisposable
 
         var dialog = All<ModalOverlay>(window).Single();
 
-        if (toOutput)
+        if (tab != 0)
         {
-            Tabs(dialog).SelectedIndex = 1;
+            Tabs(dialog).SelectedIndex = tab;
             Settle(window);
         }
 
@@ -126,6 +126,8 @@ public class OutputSettingsTests : UiTest, IDisposable
     }
 
     private static TabControl Tabs(Visual within) => All<TabControl>(within).Single(t => t.Name == "settingsTabs");
+
+    private const int OutputTab = 1, RecordingTab = 2, SoundTab = 3;
 
     /// <summary>Answers the settings window by its Save, or by its cross.</summary>
     private static void CloseSettings(MainWindow window, ModalOverlay dialog, bool save)
@@ -160,18 +162,18 @@ public class OutputSettingsTests : UiTest, IDisposable
     }
 
     /// <summary>
-    /// A tab each, opening on the agent's, and one Save under both — switching
-    /// tabs is not saving, and Save keeps the tab that is not showing as well.
+    /// A tab a section, opening on the agent's, and one Save under them all —
+    /// switching tabs is not saving, and Save keeps the tabs not showing as well.
     /// </summary>
     [AvaloniaFact]
-    public void The_settings_window_has_an_agent_tab_and_an_output_tab()
+    public void The_settings_window_has_a_tab_for_each_section()
     {
         var window = Open();
-        var dialog = OpenSettings(window, toOutput: false);
+        var dialog = OpenSettings(window, tab: 0);
         var tabs = Tabs(dialog);
 
         tabs.Items.Cast<TabItem>().Select(t => (t.Header as TextBlock)?.Text)
-            .ShouldBe(["Agent settings", "Output settings"]);
+            .ShouldBe(["Agent settings", "Output settings", "Recording settings", "Sound settings"]);
         tabs.SelectedIndex.ShouldBe(0);
         tabs.TabStripPlacement.ShouldBe(Dock.Left, "the sections are a list down the left");
         ShowingSettings(dialog).ShouldBeFalse("the Output tab is not the one showing");
@@ -179,12 +181,20 @@ public class OutputSettingsTests : UiTest, IDisposable
         var frame = All<Border>(dialog).Single(b => b.Name == "dialog");
         var size = frame.Bounds.Size;
 
-        tabs.SelectedIndex = 1;
+        tabs.SelectedIndex = OutputTab;
         Settle(window);
 
         ShowingSettings(dialog).ShouldBeTrue();
-        frame.Bounds.Size.ShouldBe(size, "the window keeps its size whichever section is showing");
-        All<Button>(dialog).Count(b => b.Content as string == "Save").ShouldBe(1, "one Save for both sections");
+
+        for (var tab = 0; tab < tabs.ItemCount; tab++)
+        {
+            tabs.SelectedIndex = tab;
+            Settle(window);
+
+            frame.Bounds.Size.ShouldBe(size, $"tab {tab}: the window keeps its size whichever section is showing");
+        }
+
+        All<Button>(dialog).Count(b => b.Content as string == "Save").ShouldBe(1, "one Save for every section");
     }
 
     /// <summary>
@@ -226,6 +236,77 @@ public class OutputSettingsTests : UiTest, IDisposable
 
         Size(again).SelectedIndex.ShouldBe(1);
         Processor(again).IsChecked.ShouldBe(false);
+    }
+
+    // --- the recording and sound sections ------------------------------------
+
+    private static ComboBox FrameRate(Visual within) => All<ComboBox>(within).Single(c => c.Name == "frameRate");
+
+    private static NumericUpDown Quality(Visual within) => All<NumericUpDown>(within).Single(c => c.Name == "jpegQuality");
+
+    private static ComboBox Latency(Visual within) => All<ComboBox>(within).Single(c => c.Name == "latency");
+
+    [AvaloniaFact]
+    public void Recording_and_sound_start_on_the_defaults()
+    {
+        var window = Open();
+
+        var recording = OpenSettings(window, RecordingTab);
+
+        (FrameRate(recording).SelectedItem as string).ShouldBe("30 fps");
+        Quality(recording).Value.ShouldBe(85);
+
+        Tabs(recording).SelectedIndex = SoundTab;
+        Settle(window);
+
+        (Latency(recording).SelectedItem as string).ShouldBe("30 ms");
+    }
+
+    [AvaloniaFact]
+    public void Recording_and_sound_are_kept_for_the_next_launch()
+    {
+        var window = Open(settingsPath);
+        var dialog = OpenSettings(window, RecordingTab);
+
+        FrameRate(dialog).SelectedIndex = 4;
+        Quality(dialog).Value = 60;
+
+        Tabs(dialog).SelectedIndex = SoundTab;
+        Settle(window);
+
+        Latency(dialog).SelectedIndex = 0;
+
+        CloseSettings(window, dialog, save: true);
+
+        var kept = OutputSettings.Load(settingsPath);
+
+        kept.FrameRate.ShouldBe(60);
+        kept.JpegQuality.ShouldBe(60);
+        kept.LatencyMilliseconds.ShouldBe(10);
+
+        var again = OpenSettings(Open(settingsPath), RecordingTab);
+
+        (FrameRate(again).SelectedItem as string).ShouldBe("60 fps");
+        Quality(again).Value.ShouldBe(60);
+    }
+
+    [AvaloniaFact]
+    public void Recording_and_sound_changes_are_dropped_without_save()
+    {
+        var window = Open(settingsPath);
+        var dialog = OpenSettings(window, RecordingTab);
+
+        FrameRate(dialog).SelectedIndex = 0;
+        Quality(dialog).Value = 20;
+
+        CloseSettings(window, dialog, save: false);
+
+        File.Exists(settingsPath).ShouldBeFalse();
+
+        var again = OpenSettings(window, RecordingTab);
+
+        (FrameRate(again).SelectedItem as string).ShouldBe("30 fps");
+        Quality(again).Value.ShouldBe(85);
     }
 
     /// <summary>The cross is every way out that is not Save, and changes nothing.</summary>

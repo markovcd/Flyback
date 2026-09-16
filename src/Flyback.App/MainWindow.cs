@@ -55,6 +55,37 @@ public sealed partial class MainWindow : Window
     /// </summary>
     private readonly StackPanel outputSection = new() { Spacing = 8, Width = 280 };
 
+    /// <summary>The Recording section: how a take's frames are timed and compressed.</summary>
+    private readonly StackPanel recordingSection = new() { Spacing = 8, Width = 280 };
+
+    /// <summary>The Sound section: how far behind the patch the speakers may run.</summary>
+    private readonly StackPanel soundSection = new() { Spacing = 8, Width = 280 };
+
+    private readonly ComboBox frameRate = new Picker
+    {
+        Name = "frameRate",
+        ItemsSource = FrameRates.Select(r => $"{r:0.##} fps").ToList(),
+        HorizontalAlignment = HorizontalAlignment.Stretch,
+    };
+
+    private readonly NumericUpDown jpegQuality = new()
+    {
+        Name = "jpegQuality",
+        Minimum = OutputSettings.LowestQuality,
+        Maximum = OutputSettings.HighestQuality,
+        Increment = 5,
+        FormatString = "0",
+        FontSize = Text.Body,
+        HorizontalAlignment = HorizontalAlignment.Stretch,
+    };
+
+    private readonly ComboBox latency = new Picker
+    {
+        Name = "latency",
+        ItemsSource = Latencies.Select(ms => $"{ms} ms").ToList(),
+        HorizontalAlignment = HorizontalAlignment.Stretch,
+    };
+
     /// <summary>
     /// What <see cref="outputSection"/> was last saved as, and so what closing the
     /// settings window without Save puts it back to.
@@ -272,9 +303,9 @@ public sealed partial class MainWindow : Window
     /// start on the default preset — see <see cref="Startup.OpenPath"/>.
     /// </param>
     /// <param name="outputSettingsPath">
-    /// Where the Output settings are read from and saved to. Null reads nothing
-    /// and keeps nothing — unlike <paramref name="groupFolder"/> — so that the
-    /// many tests that build a window with no arguments start on the defaults
+    /// Where the Output, Recording and Sound settings are read from and saved to.
+    /// Null reads nothing and keeps nothing — unlike <paramref name="groupFolder"/>
+    /// — so that the many tests that build a window with no arguments start on the defaults
     /// rather than on whatever the machine running them last saved. The program
     /// itself passes <see cref="OutputSettings.File"/>.
     /// </param>
@@ -285,7 +316,7 @@ public sealed partial class MainWindow : Window
 
         if (outputSettingsPath is not null) outputSettings = OutputSettings.Load(outputSettingsPath);
 
-        sound = OpenAudio(plugins);
+        sound = OpenAudio(plugins, outputSettings.LatencyMilliseconds);
         audio = new AudioEngine(sound.Device) { Compiler = compiler };
 
         // Nothing is opened by this. The backend is asked what is plugged in
@@ -830,18 +861,19 @@ public sealed partial class MainWindow : Window
     /// <summary>
     /// The settings window. One button on the toolbar rather than one per thing
     /// that has settings, so what it holds can grow without the bar doing the
-    /// same. Two sections, one tab each: the assistant's provider and key, and
-    /// what the picture is drawn at and by (ADR-0082).
+    /// same. A tab a section: the agent, the picture, recording and sound
+    /// (ADR-0082).
     /// </summary>
     private async Task ShowSettingsAsync()
     {
         if (assistant is not { } panel) return;
 
-        // Both sections are controls lent to the window rather than built for
-        // it, so what they were last set to is still on them the next time this
-        // is opened. The window around them is built fresh, so the Output
-        // section has to be taken back from the last one first.
-        if (outputSection.Parent is ContentControl lender) lender.Content = null;
+        // Every section is a set of controls lent to the window rather than
+        // built for it, so what they were last set to is still on them the next
+        // time this is opened. The window around them is built fresh, so each
+        // section the window owns has to be taken back from the last one first.
+        foreach (var section in new[] { outputSection, recordingSection, soundSection })
+            if (section.Parent is ContentControl lender) lender.Content = null;
 
         var save = new Button { Content = "Save", Width = 84 };
 
@@ -850,7 +882,8 @@ public sealed partial class MainWindow : Window
         // later is one more row rather than a strip running out of width. A
         // fixed size, so the window does not jump as the sections are flicked
         // through; a section taller than that scrolls inside its own tab. Save
-        // sits under both, because it saves both — not only the tab showing.
+        // sits under them all, because it saves them all — not only the tab
+        // showing.
         var tabs = new TabControl
         {
             Name = "settingsTabs",
@@ -862,6 +895,8 @@ public sealed partial class MainWindow : Window
 
         tabs.Items.Add(SectionTab("Agent settings", panel.SettingsSection()));
         tabs.Items.Add(SectionTab("Output settings", outputSection));
+        tabs.Items.Add(SectionTab("Recording settings", recordingSection));
+        tabs.Items.Add(SectionTab("Sound settings", soundSection));
 
         var content = new StackPanel { Spacing = 12, Margin = new Thickness(18, 4, 18, 18) };
 

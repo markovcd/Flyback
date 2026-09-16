@@ -58,8 +58,8 @@ public sealed class AssistantPanel : UserControl
     /// Where <see cref="settings"/> is written back to. Kept alongside <c>saved</c>
     /// rather than folded into it, because a test that hands in an in-memory
     /// <see cref="AssistantSettings"/> still runs through the real
-    /// <see cref="AssistantPanel.SaveSettings"/> — the object avoids the file, but the write does not unless this
-    /// does too.
+    /// <see cref="AssistantPanel.SaveSettings"/> — the object avoids the file, but
+    /// the write does not unless this does too.
     /// </summary>
     private readonly string? settingsPath;
 
@@ -236,6 +236,23 @@ public sealed class AssistantPanel : UserControl
     private readonly CheckBox logBox = new() { Content = "Log conversations to disk", FontSize = Text.Body };
 
     /// <summary>
+    /// How many turns a conversation may have — see
+    /// <see cref="AssistantSettings.TurnLimit"/>. Whole numbers only, so a value
+    /// typed with a fraction is rounded rather than refused.
+    /// </summary>
+    private readonly NumericUpDown turnBox = new()
+    {
+        Name = "turnLimit",
+        Minimum = AssistantSettings.FewestTurns,
+        Maximum = AssistantSettings.MostTurns,
+        Increment = 1,
+        FormatString = "0",
+        FontSize = Text.Body,
+        Width = 120,
+        HorizontalAlignment = HorizontalAlignment.Left,
+    };
+
+    /// <summary>
     /// Everything the chosen provider says it has, drawn from its own declaration.
     /// This panel does not know what is on it: which model, which endpoint,
     /// whether there is an ear at all are the provider's questions (ADR-0069), and
@@ -393,6 +410,7 @@ public sealed class AssistantPanel : UserControl
         // which the footer has to answer from the moment the panel exists.
         rememberBox.IsChecked = settings.RememberKey;
         logBox.IsChecked = settings.LogConversations;
+        turnBox.Value = settings.TurnLimit;
 
         // The list before what is chosen in it, and both before the handler that
         // watches it: a box with no rows in it cannot be told which row to show,
@@ -698,6 +716,8 @@ public sealed class AssistantPanel : UserControl
         fields.Children.Add(providerBox);
         fields.Children.Add(form);
         fields.Children.Add(keySection);
+        fields.Children.Add(Text.Quiet("Turns per conversation"));
+        fields.Children.Add(turnBox);
         fields.Children.Add(logBox);
 
         // Forgetting a key does not close the window the way Save does: somebody
@@ -734,6 +754,7 @@ public sealed class AssistantPanel : UserControl
         keyBox.Text = string.Empty;
         rememberBox.IsChecked = settings.RememberKey;
         logBox.IsChecked = settings.LogConversations;
+        turnBox.Value = settings.TurnLimit;
 
         ShowProviderForm();
         Refresh();
@@ -808,6 +829,16 @@ public sealed class AssistantPanel : UserControl
     {
         settings.RememberKey = rememberBox.IsChecked == true;
         settings.LogConversations = logBox.IsChecked == true;
+
+        // An emptied box keeps what was saved rather than becoming nought.
+        if (turnBox.Value is { } turns)
+            settings.TurnLimit = Math.Clamp((int)Math.Round(turns), AssistantSettings.FewestTurns, AssistantSettings.MostTurns);
+
+        turnBox.Value = settings.TurnLimit;
+
+        // Into the conversation already going, as well as the next one: a limit
+        // raised because a conversation ran out is raised for that conversation.
+        if (run is not null) run.MaxTurns = settings.TurnLimit;
 
         if (assistant is not null)
         {
@@ -1112,7 +1143,7 @@ public sealed class AssistantPanel : UserControl
     /// </remarks>
     private string? Unresumable(SavedConversation saved, AssistantConfig config)
     {
-        if (saved.Turns >= AssistantRun.TurnLimit) return "That conversation had its turns. Starting another.";
+        if (saved.Turns >= settings.TurnLimit) return "That conversation had its turns. Starting another.";
 
         if (assistant is null
             || !string.Equals(saved.Provider, assistant.Id, StringComparison.Ordinal)
@@ -1151,7 +1182,8 @@ public sealed class AssistantPanel : UserControl
 
         run?.Dispose();
         run = new AssistantRun(
-            with, config, plugins.Modules, current(), samples: samples, pictures: pictures, resuming: resuming);
+            with, config, plugins.Modules, current(), settings.TurnLimit,
+            samples: samples, pictures: pictures, resuming: resuming);
         runConfig = config;
         runAssistant = with;
 

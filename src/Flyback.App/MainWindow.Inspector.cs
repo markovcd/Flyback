@@ -104,6 +104,12 @@ public sealed partial class MainWindow
     /// <summary>960 x 540: enough to judge a patch by, cheap enough to keep up.</summary>
     private const int DefaultResolution = 3;
 
+    /// <summary>The frame rates a take can be recorded at: film, PAL, the usual, and the two doubles.</summary>
+    private static readonly double[] FrameRates = [24, 25, 30, 50, 60];
+
+    /// <summary>The latencies the speakers can be asked for, in milliseconds.</summary>
+    private static readonly int[] Latencies = [10, 20, 30, 50, 100, 200];
+
     private const string GpuTip =
         "Render the picture with a shader instead of the processor. Turn it off to " +
         "compare the two, or if a long session starts to look stepped.";
@@ -172,6 +178,8 @@ public sealed partial class MainWindow
         recordButton.Click += async (_, _) => await ToggleRecordAsync();
 
         BuildOutputSection();
+        BuildRecordingSection();
+        BuildSoundSection();
 
         // Quietly, because nobody asked for anything yet: a saved answer is
         // what the program starts in, not a change to report.
@@ -193,7 +201,18 @@ public sealed partial class MainWindow
         if (gpuButton.IsEnabled) gpuButton.IsChecked = settings.Gpu;
 
         compiledButton.IsChecked = settings.Compiled;
+
+        frameRate.SelectedIndex = Nearest(FrameRates, settings.FrameRate);
+        jpegQuality.Value = settings.JpegQuality;
+        latency.SelectedIndex = Nearest(Latencies.Select(ms => (double)ms).ToArray(), settings.LatencyMilliseconds);
     }
+
+    /// <summary>
+    /// The row of a list nearest a saved value, so a value written by hand that
+    /// the list does not offer shows as the closest one that it does.
+    /// </summary>
+    private static int Nearest(IReadOnlyList<double> rows, double value) =>
+        Enumerable.Range(0, rows.Count).MinBy(row => Math.Abs(rows[row] - value));
 
     /// <summary>
     /// Hands <paramref name="settings"/> to the preview and the compiler. The only
@@ -232,6 +251,7 @@ public sealed partial class MainWindow
     private void SaveOutputSettings()
     {
         var size = Resolutions[Math.Max(resolution.SelectedIndex, 0)].Size;
+        var before = outputSettings;
 
         outputSettings = new OutputSettings
         {
@@ -241,7 +261,18 @@ public sealed partial class MainWindow
             // was wanted, so the last answer is kept for a launch that has one.
             Gpu = gpuButton.IsEnabled ? gpuButton.IsChecked == true : outputSettings.Gpu,
             Compiled = compiledButton.IsChecked == true,
+            FrameRate = FrameRates[Math.Max(frameRate.SelectedIndex, 0)],
+
+            // An emptied box keeps what was saved rather than becoming nought.
+            JpegQuality = jpegQuality.Value is { } quality
+                ? Math.Clamp((int)Math.Round(quality), OutputSettings.LowestQuality, OutputSettings.HighestQuality)
+                : outputSettings.JpegQuality,
+
+            LatencyMilliseconds = Latencies[Math.Max(latency.SelectedIndex, 0)],
         };
+
+        if (outputSettings.LatencyMilliseconds != before.LatencyMilliseconds)
+            Report("The new latency takes effect the next time Flyback starts.");
 
         UseOutputSettings(outputSettings, say: true);
 
@@ -943,6 +974,38 @@ public sealed partial class MainWindow
         // Beside the GPU switch it is compared against, though it speeds the
         // sound up too — the tip says so.
         outputSection.Children.Add(Field("Processor", compiledButton));
+    }
+
+    /// <summary>The settings window's Recording section: what a take is written as.</summary>
+    private void BuildRecordingSection()
+    {
+        ToolTip.SetTip(frameRate, "Frames a second in a recorded video. Takes the next recording, not one already running.");
+        ToolTip.SetTip(jpegQuality,
+            "How finely each frame of a recorded video is compressed: higher looks better and "
+            + "makes a bigger file.");
+
+        recordingSection.Children.Add(Field("Frame rate", frameRate));
+        recordingSection.Children.Add(Field("Quality", jpegQuality));
+    }
+
+    /// <summary>The settings window's Sound section.</summary>
+    private void BuildSoundSection()
+    {
+        ToolTip.SetTip(latency,
+            "How far behind the patch the speakers may run. Lower answers a key sooner; "
+            + "raise it if the sound crackles.");
+
+        soundSection.Children.Add(Field("Latency", latency));
+
+        // Said on the tab rather than left to be found out: the device is opened
+        // once a launch, so a saved latency is not heard until the next one.
+        soundSection.Children.Add(new TextBlock
+        {
+            Text = "Takes effect the next time Flyback starts.",
+            FontSize = Text.Small,
+            Foreground = Text.Muted,
+            TextWrapping = TextWrapping.Wrap,
+        });
     }
 
     /// <summary>A labelled row on the same 78-pixel gutter the knob rows use.</summary>

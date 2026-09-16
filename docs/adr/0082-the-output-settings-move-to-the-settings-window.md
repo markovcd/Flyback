@@ -59,6 +59,32 @@ defaults.
 **The Output's panel carries its knobs and nothing else.** Selecting the Output
 still shows no delete button, because it cannot be deleted.
 
+**Amended: two more sections, and a fourth setting on the agent's.** Four
+values were fixed in code that are choices about this machine rather than
+about any patch, and the window was already the place for those:
+
+- *Recording settings* — a take's frame rate, picked from 24, 25, 30, 50 and
+  60, and its JPEG quality from 1 to 100. Both are read when a take starts, so
+  a take already running keeps what it began with. The command line's own
+  defaults are unchanged; a render is a deterministic export and takes its
+  numbers from its arguments.
+- *Sound settings* — the latency the device is asked for, from 10 to 200 ms.
+  The device is opened once a launch and the engine is built around it, so a
+  saved latency is heard from the next launch, and the tab says so. Reopening
+  the device in place would mean rebuilding the engine under a running audio
+  thread and the preview clock that follows it, for a setting somebody changes
+  once.
+- *Turns per conversation*, on the agent's tab, kept in `assistant.json` with
+  the rest of that section. Unlike the latency it reaches the conversation
+  already going: a limit raised because a conversation ran out is raised for
+  that conversation.
+
+The recording and sound values go in `output.json` beside the picture's. A value
+edited by hand out of range is brought into it on reading rather than trusted —
+a frame rate of nought would divide by it, and a latency of a minute would stall
+the sound. A saved value one of the lists does not offer shows as the nearest
+one that it does.
+
 ## Consequences
 
 **`MainWindow` takes the path to keep them at, and null keeps nothing.** That is

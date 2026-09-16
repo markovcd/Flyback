@@ -226,6 +226,23 @@ public class AssistantSettingsTests : IDisposable
     }
 
     [Fact]
+    public void The_turn_limit_is_kept()
+    {
+        new AssistantSettings { TurnLimit = 30 }.Save(path);
+
+        AssistantSettings.Load(path).TurnLimit.ShouldBe(30);
+    }
+
+    /// <summary>A limit of nought, typed into the file by hand, would leave no conversation that could start.</summary>
+    [Fact]
+    public void A_turn_limit_out_of_range_is_brought_into_it()
+    {
+        new AssistantSettings { TurnLimit = 0 }.Save(path);
+
+        AssistantSettings.Load(path).TurnLimit.ShouldBe(AssistantSettings.FewestTurns);
+    }
+
+    [Fact]
     public void What_is_written_out_contains_no_secret()
     {
         var settings = new AssistantSettings { Provider = "anthropic", RememberKey = true };

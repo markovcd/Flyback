@@ -20,11 +20,17 @@ namespace Flyback.App.Assist;
 /// </remarks>
 public sealed class AssistantRun : IDisposable
 {
-    /// <summary>How many turns a conversation may have before another has to be started.</summary>
-    public const int TurnLimit = 12;
+    /// <summary>How many turns a conversation may have before another has to be started, until a setting says otherwise.</summary>
+    public const int TurnLimit = AssistantSettings.DefaultTurnLimit;
 
     private readonly IPatchSession session;
-    private readonly int maxTurns;
+
+    /// <summary>
+    /// How many turns this conversation may have. Settable rather than fixed at
+    /// the start, so a limit saved in the settings reaches the conversation
+    /// already going rather than only the next one.
+    /// </summary>
+    public int MaxTurns { get; set; }
 
     /// <summary>Who this is with and what they were set to, which a saved conversation is checked against.</summary>
     private readonly string provider;
@@ -62,7 +68,7 @@ public sealed class AssistantRun : IDisposable
         SavedConversation? resuming = null)
     {
         Before = startingPoint;
-        this.maxTurns = maxTurns;
+        MaxTurns = maxTurns;
 
         provider = assistant.Id;
         values = config.Values;
@@ -139,7 +145,7 @@ public sealed class AssistantRun : IDisposable
     public Patch Before { get; private set; }
 
     /// <summary>Whether this conversation has had all the turns it may have.</summary>
-    public bool Exhausted => Turns >= maxTurns;
+    public bool Exhausted => Turns >= MaxTurns;
 
     public PatchWorkbench Workbench { get; }
 
@@ -256,10 +262,10 @@ public sealed class AssistantRun : IDisposable
             yield break;
         }
 
-        if (Turns >= maxTurns)
+        if (Turns >= MaxTurns)
         {
             yield return new PatchEvent.Failed(
-                $"this conversation has had its {maxTurns} turns. Start another one.");
+                $"this conversation has had its {MaxTurns} turns. Start another one.");
             yield break;
         }
 

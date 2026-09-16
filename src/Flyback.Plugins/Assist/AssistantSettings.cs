@@ -59,6 +59,19 @@ public sealed class AssistantSettings
     /// </summary>
     public bool LogConversations { get; set; }
 
+    /// <summary>What <see cref="TurnLimit"/> is until somebody changes it.</summary>
+    public const int DefaultTurnLimit = 12;
+
+    /// <summary>The fewest and most turns <see cref="TurnLimit"/> may be set to.</summary>
+    public const int FewestTurns = 1, MostTurns = 100;
+
+    /// <summary>
+    /// How many turns one conversation may have before it has to be started
+    /// again. A cap on what one request can cost, and so a choice about this
+    /// machine's account rather than about any provider.
+    /// </summary>
+    public int TurnLimit { get; set; } = DefaultTurnLimit;
+
     /// <summary>
     /// What each provider was last set to, filed under its id.
     /// </summary>
@@ -97,9 +110,15 @@ public sealed class AssistantSettings
         {
             var from = path ?? File;
 
-            return System.IO.File.Exists(from)
+            var settings = System.IO.File.Exists(from)
                 ? JsonSerializer.Deserialize<AssistantSettings>(System.IO.File.ReadAllText(from), Options) ?? new()
                 : new AssistantSettings();
+
+            // A file edited by hand to nought would leave a conversation that
+            // cannot be started at all.
+            settings.TurnLimit = Math.Clamp(settings.TurnLimit, FewestTurns, MostTurns);
+
+            return settings;
         }
         catch
         {
