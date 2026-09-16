@@ -109,6 +109,14 @@ public sealed partial class MainWindow
     /// <summary>The frame rates a take can be recorded at: film, PAL, the usual, and the two doubles.</summary>
     private static readonly double[] FrameRates = [24, 25, 30, 50, 60];
 
+    /// <summary>
+    /// The frame rates the preview itself can be capped to, 0 standing for
+    /// uncapped — the first row, since <see cref="Nearest"/> reads the list as
+    /// ascending and a saved 0 should not land on 24 for being the closest
+    /// positive number.
+    /// </summary>
+    private static readonly double[] PreviewFrameRates = [0, 24, 25, 30, 50, 60];
+
     /// <summary>The latencies the speakers can be asked for, in milliseconds.</summary>
     private static readonly int[] Latencies = [10, 20, 30, 50, 100, 200];
 
@@ -210,6 +218,7 @@ public sealed partial class MainWindow
         compiledButton.IsChecked = settings.Compiled;
 
         frameRate.SelectedIndex = Nearest(FrameRates, settings.FrameRate);
+        previewFrameRate.SelectedIndex = Nearest(PreviewFrameRates, settings.PreviewFrameRate);
         jpegQuality.Value = settings.JpegQuality;
         latency.SelectedIndex = Nearest(Latencies.Select(ms => (double)ms).ToArray(), settings.LatencyMilliseconds);
     }
@@ -230,6 +239,7 @@ public sealed partial class MainWindow
     {
         preview.Resolution = Resolutions[SizeRow(settings)].Size;
         preview.Use(settings.Gpu ? PreviewBackend.Gpu : PreviewBackend.Cpu);
+        preview.FrameRate = settings.PreviewFrameRate;
 
         if (compiler.Enabled == settings.Compiled) return;
 
@@ -269,6 +279,7 @@ public sealed partial class MainWindow
             Gpu = gpuButton.IsEnabled ? gpuButton.IsChecked == true : outputSettings.Gpu,
             Compiled = compiledButton.IsChecked == true,
             FrameRate = FrameRates[Math.Max(frameRate.SelectedIndex, 0)],
+            PreviewFrameRate = PreviewFrameRates[Math.Max(previewFrameRate.SelectedIndex, 0)],
 
             // An emptied box keeps what was saved rather than becoming nought.
             JpegQuality = jpegQuality.Value is { } quality
@@ -975,7 +986,13 @@ public sealed partial class MainWindow
     /// </remarks>
     private void BuildGraphicsSection()
     {
+        ToolTip.SetTip(previewFrameRate,
+            "How often the preview redraws itself. Lower to see it near what a recording will "
+            + "show, or to ease off a slow machine — the Recording section picks a take's own "
+            + "rate, and reads whatever the preview last drew whatever this says.");
+
         graphicsSection.Children.Add(Field("Size", resolution));
+        graphicsSection.Children.Add(Field("Preview rate", previewFrameRate));
         graphicsSection.Children.Add(Field("Render", gpuButton));
 
         // "CPU code" rather than "Processor", which beside a renderer that can

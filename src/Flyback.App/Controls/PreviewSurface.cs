@@ -26,12 +26,16 @@ public sealed class PreviewSurface : Control, IPreviewSurface
     private readonly DispatcherTimer timer;
     private readonly Stopwatch frameClock = Stopwatch.StartNew();
 
+    /// <summary>The tick rate with nothing asking for slower — as fast as the dispatcher allows.</summary>
+    private static readonly TimeSpan UncappedInterval = TimeSpan.FromMilliseconds(16);
+
     private WriteableBitmap? bitmap;
     private byte[] backBuffer = [];
     private PixelSize bufferSize;
     private PixelSize resolution = new(640, 360);
     private CompiledPatch activeProgram = CompiledPatch.Black;
     private LiveValues live = LiveValues.None;
+    private double frameRate;
     private TimeSpan lastTick;
     private TimeSpan restUntil;
     private bool rendering;
@@ -60,7 +64,7 @@ public sealed class PreviewSurface : Control, IPreviewSurface
 
     public PreviewSurface()
     {
-        timer = new DispatcherTimer(DispatcherPriority.Background) { Interval = TimeSpan.FromMilliseconds(16) };
+        timer = new DispatcherTimer(DispatcherPriority.Background) { Interval = UncappedInterval };
         timer.Tick += OnTick;
         timer.Start();
     }
@@ -78,6 +82,17 @@ public sealed class PreviewSurface : Control, IPreviewSurface
 
     /// <summary>Cost of the last frame, for the status readout.</summary>
     public double FrameMilliseconds { get; private set; }
+
+    /// <summary>How often the preview redraws itself, or 0 to run as fast as the dispatcher allows.</summary>
+    public double FrameRate
+    {
+        get => frameRate;
+        set
+        {
+            frameRate = value;
+            timer.Interval = value > 0 ? TimeSpan.FromSeconds(1d / value) : UncappedInterval;
+        }
+    }
 
     public PixelSize Resolution
     {

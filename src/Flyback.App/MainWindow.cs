@@ -68,6 +68,13 @@ public sealed partial class MainWindow : Window
         HorizontalAlignment = HorizontalAlignment.Stretch,
     };
 
+    private readonly ComboBox previewFrameRate = new Picker
+    {
+        Name = "previewFrameRate",
+        ItemsSource = PreviewFrameRates.Select(r => r <= 0 ? "Unlimited" : $"{r:0.##} fps").ToList(),
+        HorizontalAlignment = HorizontalAlignment.Stretch,
+    };
+
     private readonly NumericUpDown jpegQuality = new()
     {
         Name = "jpegQuality",

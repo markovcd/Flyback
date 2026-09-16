@@ -66,6 +66,13 @@ public sealed class PreviewHost : Decorator, IPreviewSurface
     /// <summary>Cost of the last frame, for the status readout.</summary>
     public double FrameMilliseconds => active.FrameMilliseconds;
 
+    /// <summary>How often the preview redraws itself, or 0 to run as fast as the renderer allows.</summary>
+    public double FrameRate
+    {
+        get => active.FrameRate;
+        set => active.FrameRate = value;
+    }
+
     public double Time
     {
         get => active.Time;
@@ -269,6 +276,7 @@ public sealed class PreviewHost : Decorator, IPreviewSurface
             surface.Resolution = active.Resolution;
             surface.Time = active.Time;
             surface.Clock = active.Clock;
+            surface.FrameRate = active.FrameRate;
 
             if (active is GpuPreviewSurface outgoing) outgoing.Failed -= OnGpuFailed;
         }

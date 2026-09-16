@@ -31,6 +31,13 @@ public interface IPreviewSurface
     /// <summary>Cost of the last frame, for the status readout.</summary>
     double FrameMilliseconds { get; }
 
+    /// <summary>
+    /// How often the preview redraws itself, or 0 to run as fast as the host
+    /// timer allows. Independent of a take's own frame rate (Recording
+    /// settings) — this is what is drawn, not what is written to a file.
+    /// </summary>
+    double FrameRate { get; set; }
+
     PixelSize Resolution { get; set; }
 
     CompiledPatch Program { get; set; }

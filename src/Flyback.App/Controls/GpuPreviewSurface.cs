@@ -39,6 +39,9 @@ public sealed class GpuPreviewSurface : OpenGlControlBase, IPreviewSurface
     /// </summary>
     private const int TolerableContextLosses = 2;
 
+    /// <summary>The tick rate with nothing asking for slower — as fast as the dispatcher allows.</summary>
+    private static readonly TimeSpan UncappedInterval = TimeSpan.FromMilliseconds(16);
+
     private readonly DispatcherTimer timer;
     private readonly Stopwatch frameClock = Stopwatch.StartNew();
     private readonly Lock gate = new();
@@ -50,6 +53,7 @@ public sealed class GpuPreviewSurface : OpenGlControlBase, IPreviewSurface
     private PixelSize resolution = new(640, 360);
     private PixelSize controlPixels;
     private double time;
+    private double frameRate;
     private bool rewindPending;
     private IFrameSink? capture;
     private bool dirty = true;
@@ -62,7 +66,7 @@ public sealed class GpuPreviewSurface : OpenGlControlBase, IPreviewSurface
 
     public GpuPreviewSurface()
     {
-        timer = new DispatcherTimer(DispatcherPriority.Background) { Interval = TimeSpan.FromMilliseconds(16) };
+        timer = new DispatcherTimer(DispatcherPriority.Background) { Interval = UncappedInterval };
         timer.Tick += OnTick;
         timer.Start();
     }
@@ -90,6 +94,22 @@ public sealed class GpuPreviewSurface : OpenGlControlBase, IPreviewSurface
 
     /// <summary>Cost of the last frame, for the status readout.</summary>
     public double FrameMilliseconds => BitConverter.Int64BitsToDouble(Interlocked.Read(ref frameCostBits));
+
+    /// <summary>
+    /// How often the preview redraws itself, or 0 to run as fast as the
+    /// dispatcher allows. Only <see cref="timer"/>'s own interval, which is
+    /// UI-thread state rather than anything the render thread reads, so this
+    /// needs none of <see cref="gate"/>'s protection.
+    /// </summary>
+    public double FrameRate
+    {
+        get => frameRate;
+        set
+        {
+            frameRate = value;
+            timer.Interval = value > 0 ? TimeSpan.FromSeconds(1d / value) : UncappedInterval;
+        }
+    }
 
     /// <summary>Whether the frame history had to be kept at eight bits per channel.</summary>
     public bool EightBitFeedback => renderer?.EightBitFeedback ?? false;

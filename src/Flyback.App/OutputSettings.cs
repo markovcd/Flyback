@@ -42,6 +42,15 @@ public sealed class OutputSettings
     /// <summary>Frames a second in a recorded take — the Recording section.</summary>
     public double FrameRate { get; set; } = MovieRenderer.DefaultFrameRate;
 
+    /// <summary>
+    /// Frames a second the preview redraws at, or 0 to draw as fast as the
+    /// renderer allows — the Graphics section. Independent of
+    /// <see cref="FrameRate"/>: what is on screen and what a take writes are
+    /// two different things, and a take reads whatever the preview last drew
+    /// regardless of this.
+    /// </summary>
+    public double PreviewFrameRate { get; set; }
+
     /// <summary>How a recorded take's frames are compressed, from 1 to 100 — the Recording section.</summary>
     public int JpegQuality { get; set; } = JpegWriter.DefaultQuality;
 
@@ -72,6 +81,14 @@ public sealed class OutputSettings
             // somebody may have edited by hand: a frame rate of nought or a
             // latency of an hour would each break something far from here.
             settings.FrameRate = Math.Clamp(settings.FrameRate, SlowestFrameRate, FastestFrameRate);
+
+            // Nought is a real choice here — uncapped — rather than the "nobody
+            // set this" that FrameRate above takes it for; only a value someone
+            // actually gave is brought into range.
+            settings.PreviewFrameRate = settings.PreviewFrameRate <= 0
+                ? 0
+                : Math.Clamp(settings.PreviewFrameRate, SlowestFrameRate, FastestFrameRate);
+
             settings.JpegQuality = Math.Clamp(settings.JpegQuality, LowestQuality, HighestQuality);
             settings.LatencyMilliseconds = Math.Clamp(settings.LatencyMilliseconds, ShortestLatency, LongestLatency);
 
