@@ -146,7 +146,7 @@ public class DecayTests
         foreach (var (port, value) in knobs) decay.InputValues[port] = value;
 
         var sink = NodeInstance.Create(Catalog.Require(NodeCatalog.OutputTypeId), 0, 0);
-        sink.InputValues[NodeCatalog.OutputGainPort] = 1f;
+        sink.InputValues[NodeCatalog.OutputVolumePort] = 1f;
 
         patch.Nodes.Add(coord);
         patch.Nodes.Add(decay);

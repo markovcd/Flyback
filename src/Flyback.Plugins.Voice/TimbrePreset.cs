@@ -39,7 +39,7 @@ internal static class TimbrePreset
         var fold = b.Add(FoldModule.TypeId);
         var filter = b.Add(FilterModule.TypeId, (2, 0.75f));
 
-        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputGainPort, 0.45f));
+        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 0.45f));
 
         b.Wire(sweep, 0, cutoff, 0)
          .Wire(wobble, 0, drive, 0)

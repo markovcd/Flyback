@@ -29,7 +29,7 @@ internal static class SupersawPreset
         var pitch = b.Add("audio.frequency", (0, 110f));
         var voice = b.Add(SupersawModule.TypeId, (3, 0.9f));
 
-        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputGainPort, 0.5f));
+        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 0.5f));
 
         b.Wire(pitch, 0, voice, 1)
          .Wire(sweep, 0, voice, 2)

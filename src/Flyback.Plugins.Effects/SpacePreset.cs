@@ -27,7 +27,7 @@ internal static class SpacePreset
         var echo = b.Add("flyback.effects.delay", (1, 0.33f), (2, 0.5f), (3, 0.45f));
         var room = b.Add("flyback.effects.reverb", (1, 0.7f), (2, 0.75f), (3, 0.35f));
 
-        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputGainPort, 0.5f));
+        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 0.5f));
 
         b.Wire(pitch, 0, tone, 1)
          .Wire(tone, 0, struck, 0)

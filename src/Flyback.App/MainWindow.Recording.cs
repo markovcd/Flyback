@@ -90,7 +90,7 @@ public sealed partial class MainWindow
 
         if (!wantsPicture && !withSound)
         {
-            Report("Turn the audio on before recording a WAV — there is nothing to record otherwise.");
+            Report("Turn the Output's Volume up before recording a WAV — there is nothing to record otherwise.");
             return;
         }
 

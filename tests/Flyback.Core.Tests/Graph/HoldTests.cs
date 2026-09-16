@@ -36,7 +36,7 @@ public class HoldTests
             trigger = b.Add("value", 0, 100, (0, 0f));
 
             var hold = b.Add(NodeCatalog.HoldTypeId, 200, 0);
-            var sink = b.Add(NodeCatalog.OutputTypeId, 400, 0, (NodeCatalog.OutputGainPort, 1f));
+            var sink = b.Add(NodeCatalog.OutputTypeId, 400, 0, (NodeCatalog.OutputVolumePort, 1f));
 
             // Both sinks, because the two answers differ and both are the point:
             // the speakers read 'left' and the screen reads 'color', and a node

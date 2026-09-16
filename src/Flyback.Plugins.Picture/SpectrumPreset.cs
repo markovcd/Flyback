@@ -50,7 +50,7 @@ internal static class SpectrumPreset
         var levels = b.Add("math.remap", (1, 0f), (2, 1f), (3, 3f), (4, 24f));
         var banded = b.Add(PosteriseModule.TypeId);
 
-        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputGainPort, 0.45f));
+        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 0.45f));
 
         b.Wire(coord, 0, across, 0)
          .Wire(coord, 1, down, 0)

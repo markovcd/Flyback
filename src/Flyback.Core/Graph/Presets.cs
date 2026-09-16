@@ -142,7 +142,7 @@ public static class Presets
         var lit = b.Add("math.mul");
         var color = b.Add("color.hsv", (1, 0.8f));
 
-        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputGainPort, 0.5f));
+        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 0.5f));
 
         b.Wire(steps, 0, note, 0)
          .Wire(note, 0, tone, 1)
@@ -195,7 +195,7 @@ public static class Presets
         var lit = b.Add("math.mul");
         var color = b.Add("color.hsv", (1, 0.75f));
 
-        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputGainPort, 0.6f));
+        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 0.6f));
 
         b.Wire(beat, 0, level, 0)
          .Wire(pitch, 0, tone, 1)
@@ -292,7 +292,7 @@ public static class Presets
     /// <summary>
     /// One patch heard and seen at once. A single slow oscillator sets both the
     /// hue of the image and the tremolo on the tone, so the two sinks are
-    /// visibly and audibly the same signal. Switch Audio on to hear it.
+    /// visibly and audibly the same signal.
     /// </summary>
     public static Patch Drone(ModuleCatalog modules)
     {
@@ -316,7 +316,7 @@ public static class Presets
 
         // Both halves land on the one block, which is what makes the shared
         // oscillator legible: two wires into the same module, from the same sine.
-        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputGainPort, 0.6f));
+        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 0.6f));
 
         b.Wire(pitch, 0, tone, 1)
          .Wire(tone, 0, tremolo, 0)
@@ -364,7 +364,7 @@ public static class Presets
         var tint = b.Add("color.hsv", (1, 0.7f));
         var lit = b.Add("math.add");
 
-        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputGainPort, 0.45f));
+        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 0.45f));
 
         // Ear: the field itself into the sweep, and out the other side as a
         // sample. Nothing between the picture and the speakers but the loop.
@@ -457,7 +457,7 @@ public static class Presets
         var glow = b.Add("math.remap", (1, 0f), (2, 1f), (3, 0.22f), (4, 0.95f));
         var map = b.Add("color.hsv", (1, 0.6f));
 
-        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputGainPort, 0.55f));
+        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 0.55f));
 
         b.Wire(time, 0, wander, 0)
          .Wire(wander, 0, field, 2)
@@ -635,7 +635,7 @@ public static class Presets
         var picture = b.Add("math.mixer");
 
         var tame = b.Add("color.gain", (1, 0.6f));
-        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputGainPort, 0.25f));
+        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 0.25f));
 
         b.Wire(chord, 0, output, NodeCatalog.OutputLeftPort)
          .Wire(picture, 0, tame, 0)
@@ -934,7 +934,7 @@ public static class Presets
         var limitL = b.Add("math.clamp", (1, -1f), (2, 1f));
         var limitR = b.Add("math.clamp", (1, -1f), (2, 1f));
 
-        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputGainPort, 0.62f));
+        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 0.62f));
 
         b.Wire(bassOut, 0, deskL, 0)
          .Wire(voiceL, 0, deskL, 2)
@@ -1205,7 +1205,7 @@ public static class Presets
         // PortDisplay.Duration — so this is 10^-1.7.
         var chart = b.Add(NodeCatalog.ScopeTypeId, (1, -1.7f));
 
-        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputGainPort, 0.5f));
+        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 0.5f));
 
         b.Wire(pitch, 0, tone, 1)
          .Wire(tone, 0, voice, 0)
@@ -1242,7 +1242,7 @@ public static class Presets
         var half = b.Add("math.step");
         var split = b.Add("color.mix");
 
-        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputGainPort, 0.45f));
+        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 0.45f));
 
         b.Wire(sweep, 0, hz, 0)
          .Wire(hz, 0, tone, 1)
@@ -1276,7 +1276,7 @@ public static class Presets
         // forward at its own speed from wherever the last edge left the zero.
         var clip = b.Add(NodeCatalog.SampleTypeId, (1, 0.9f));
 
-        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputGainPort, 0.7f));
+        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 0.7f));
 
         b.Wire(again, 0, clip, 2)
          .Wire(clip, 0, output, NodeCatalog.OutputLeftPort);
@@ -1362,7 +1362,7 @@ public static class Presets
         // a knob of its own rather than a constant buried in the Multiply.
         var keep = b.Add("math.mul", (1, 0.94f));
 
-        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputGainPort, 0.5f));
+        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 0.5f));
 
         // What the kept share is added back into is the wire that closes the loop,
         // so that is the one which runs backwards and carries the evaluation
@@ -1402,7 +1402,7 @@ public static class Presets
         var voiceL = b.Add("math.mul");
         var voiceR = b.Add("math.mul");
 
-        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputGainPort, 0.55f));
+        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 0.55f));
 
         b.Wire(note, 1, twin, 0)
          .Wire(note, 0, left, 1)

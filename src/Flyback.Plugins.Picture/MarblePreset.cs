@@ -50,7 +50,7 @@ internal static class MarblePreset
         var stone = b.Add("math.remap", (1, 0f), (2, 0.55f), (3, 1f), (4, 0.1f));
         var tint = b.Add("color.hsv", (1, 0.25f));
 
-        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputGainPort, 0.5f));
+        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 0.5f));
 
         b.Wire(clock, 0, drift, 2)
          .Wire(clock, 0, veins, 2)

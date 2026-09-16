@@ -205,7 +205,7 @@ compiles and means something else. So `t * 0.2 |> sine()` groups as
 
 ### Duration literals
 
-A `PortDisplay.Duration` port holds **log₁₀ seconds**. This is the sharpest
+A `PortDisplay.Duration` port holds **log10 seconds**. This is the sharpest
 edge in the whole instrument, and the presets carry hand-written comments to
 survive it — `// so -2.4 is about four milliseconds`, `// so this is 10^-1.7`.
 Here those knobs are written as what they are:
@@ -236,7 +236,7 @@ So `out` is a keyword rather than something a patch declares:
 ```
 someColor |> out.color
 someSignal |> out.left
-out.gain = 0.6
+out.volume = 0.6
 ```
 
 `out.right` is normalled to `out.left`, so a mono patch is stereo without saying
@@ -658,7 +658,7 @@ in the editor, and `picture("sunset.png")` is how a patch that has one says so.
 
 sample(level: 0.9, trigger: pulse(freq: 0.5, width: 0.02)) |> out.left
 
-out.gain = 0.7
+out.volume = 0.7
 ```
 
 ### Loop — [:2006](../src/Flyback.Core/Graph/Presets.cs)
@@ -672,7 +672,7 @@ let sum = square(freq: frequency(110)) * 0.06 |> add()
 sum.b <- sum * 0.94
 sum |> out.left
 
-out.gain = 0.5
+out.volume = 0.5
 ```
 
 ### Two channels — [:2067](../src/Flyback.Core/Graph/Presets.cs)
@@ -688,7 +688,7 @@ let shape = pulse(freq: 1.5, width: 0.3)
 saw(freq: root, amp: 0.7) * shape |> out.left
 saw(freq: twin, amp: 0.7) * shape |> out.right
 
-out.gain = 0.55
+out.volume = 0.55
 ```
 
 The second Note is fed from the first one's `note` output rather than its `hz`,
@@ -707,7 +707,7 @@ rings(freq: 3, offset: t)
   |> hsv(hue: slow, saturation: 0.85)
   |> out.color
 
-out.gain = 0.6
+out.volume = 0.6
 ```
 
 One node reaching both sinks, which is the patch. Nothing about it is said
@@ -728,7 +728,7 @@ rings(freq: steps.index |> remap(0..1, 1.5..9))
   |> hsv(hue: steps.index, saturation: 0.8)
   |> out.color
 
-out.gain = 0.5
+out.volume = 0.5
 ```
 
 All three of the sequencer's outputs, each used for what only it can do.
@@ -761,7 +761,7 @@ mixer(tintA, levelA, tintB, levelB, tintC, levelC, tintD, levelD)
   |> gain(gain: 0.6)
   |> out.color
 
-out.gain = 0.25
+out.volume = 0.25
 ```
 
 `saturation: 1` is written out although it is also the default, because it has
@@ -788,7 +788,7 @@ rings(freq: 5)
   |> hsv(hue: heard, saturation: 0.75)
   |> out.color
 
-out.gain = 0.6
+out.volume = 0.6
 ```
 
 Both of the Meter's readings: `peak` is the hit and lights the rings, `level` —
@@ -805,7 +805,7 @@ let voice = saw(freq: frequency(160)) * sine(freq: 0.8, amp: 0.45, bias: 0.55)
 voice |> out.left
 scope(voice, window: 20ms) |> out.color
 
-out.gain = 0.5
+out.volume = 0.5
 ```
 
 ### Ahead and behind — [:1798](../src/Flyback.Core/Graph/Presets.cs)
@@ -820,7 +820,7 @@ tone |> out.left
 color.mix(scope(tone, window: 25ms), probe(tone, window: 25ms), y |> step())
   |> out.color
 
-out.gain = 0.45
+out.volume = 0.45
 ```
 
 Two things worth noticing. `color.mix` is written in full because `mix` is one
@@ -844,7 +844,7 @@ bands |> remap(-1..1, 0.05..0.55)
       |> add(loop.view)
       |> out.color
 
-out.gain = 0.45
+out.volume = 0.45
 ```
 
 ### In key — [:731](../src/Flyback.Core/Graph/Presets.cs)
@@ -865,7 +865,7 @@ hsv(hue: key * (1 / 12) |> fract() |> remap(0..1, 0.02..0.6),
     value: field |> remap(0..1, 0.22..0.95))
   |> out.color
 
-out.gain = 0.55
+out.volume = 0.55
 ```
 
 `1 / 12` is two literals, so it is folded to a knob value rather than emitting a
@@ -1026,7 +1026,7 @@ group "Picture: Feedback" {
     |> out.color
 }
 
-out.gain = 0.62
+out.volume = 0.62
 ```
 
 Two things this one settles.

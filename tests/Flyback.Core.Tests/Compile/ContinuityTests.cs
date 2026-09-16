@@ -30,7 +30,7 @@ public class ContinuityTests
         var builder = new PatchBuilder();
         var time = builder.Add("time", 0, 0);
         var tone = builder.Add("osc.sine", 0, 0, (1, 440f));
-        var sink = builder.Add(NodeCatalog.OutputTypeId, 0, 0, (NodeCatalog.OutputGainPort, 1f));
+        var sink = builder.Add(NodeCatalog.OutputTypeId, 0, 0, (NodeCatalog.OutputVolumePort, 1f));
 
         builder.Wire(time, 0, tone, 0).Wire(tone, 0, sink, NodeCatalog.OutputLeftPort);
 
@@ -122,7 +122,7 @@ public class ContinuityTests
         var builder = new PatchBuilder();
         var time = builder.Add("time", 0, 0);
         var tone = builder.Add("osc.sine", 0, 0, (1, 440f));
-        var sink = builder.Add(NodeCatalog.OutputTypeId, 0, 0, (NodeCatalog.OutputGainPort, 1f));
+        var sink = builder.Add(NodeCatalog.OutputTypeId, 0, 0, (NodeCatalog.OutputVolumePort, 1f));
 
         builder.Wire(time, 0, tone, 0).Wire(tone, 0, sink, NodeCatalog.OutputLeftPort);
 
@@ -188,7 +188,7 @@ public class ContinuityTests
         var time = builder.Add("time", 0, 0);
         var left = builder.Add("osc.sine", 0, 0, (1, 440f));
         var right = builder.Add("osc.saw", 0, 0, (1, 110f));
-        var sink = builder.Add(NodeCatalog.OutputTypeId, 0, 0, (NodeCatalog.OutputGainPort, 1f));
+        var sink = builder.Add(NodeCatalog.OutputTypeId, 0, 0, (NodeCatalog.OutputVolumePort, 1f));
 
         builder
             .Wire(time, 0, left, 0).Wire(left, 0, sink, NodeCatalog.OutputLeftPort)
@@ -212,7 +212,7 @@ public class ContinuityTests
         var builder = new PatchBuilder();
         var time = builder.Add("time", 0, 0);
         var envelope = builder.Add(NodeCatalog.AdsrTypeId, 0, 0);
-        var sink = builder.Add(NodeCatalog.OutputTypeId, 0, 0, (NodeCatalog.OutputGainPort, 1f));
+        var sink = builder.Add(NodeCatalog.OutputTypeId, 0, 0, (NodeCatalog.OutputVolumePort, 1f));
 
         builder.Wire(time, 0, envelope, 0).Wire(envelope, 0, sink, NodeCatalog.OutputLeftPort);
 

@@ -591,7 +591,7 @@ public class ShapesTests
         var patch = new Patch();
 
         var shape = Add(patch, typeId, knobs);
-        var sink = Add(patch, NodeCatalog.OutputTypeId, (NodeCatalog.OutputGainPort, 1f));
+        var sink = Add(patch, NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 1f));
 
         patch.Connect(shape.Id, 0, sink.Id, NodeCatalog.OutputLeftPort);
 

@@ -150,7 +150,7 @@ public class StringTests
         foreach (var (port, value) in knobs) pluck.InputValues[port] = value;
 
         var sink = NodeInstance.Create(Catalog.Require(NodeCatalog.OutputTypeId), 0, 0);
-        sink.InputValues[NodeCatalog.OutputGainPort] = 1f;
+        sink.InputValues[NodeCatalog.OutputVolumePort] = 1f;
 
         patch.Nodes.Add(coord);
         patch.Nodes.Add(pluck);

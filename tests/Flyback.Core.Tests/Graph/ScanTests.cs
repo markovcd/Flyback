@@ -63,7 +63,7 @@ public class ScanTests
         var clock = b.Add(Time, 0, 0, (0, 1f));
         var source = b.Add(watched, 300, 0);
         var scanner = b.Add(Scan, 600, 0, knobs);
-        var output = b.Add(NodeCatalog.OutputTypeId, 900, 0, (NodeCatalog.OutputGainPort, 1f));
+        var output = b.Add(NodeCatalog.OutputTypeId, 900, 0, (NodeCatalog.OutputVolumePort, 1f));
 
         if (overCoordinates)
         {
@@ -181,7 +181,7 @@ public class ScanTests
         var wave = b.Add("math.sin", 700, 0);
 
         var scanner = b.Add(Scan, 900, 0, (Rate, 55f), (Radius, 0.5f));
-        var output = b.Add(NodeCatalog.OutputTypeId, 1100, 0, (NodeCatalog.OutputGainPort, 1f));
+        var output = b.Add(NodeCatalog.OutputTypeId, 1100, 0, (NodeCatalog.OutputVolumePort, 1f));
 
         // Coordinates' fourth output is the angle, which inside the sweep is the
         // bearing of the point on the loop.
@@ -325,7 +325,7 @@ public class ScanTests
 
         static float[] Played(string source)
         {
-            var load = PatchLanguage.Build(source + "\nout.gain = 1", NodeCatalog.BuiltIn);
+            var load = PatchLanguage.Build(source + "\nout.volume = 1", NodeCatalog.BuiltIn);
             load.Issues.ShouldBeEmpty(load.Report);
 
             var buffer = new float[GlobalConstants.SampleRate / 4 * 2];

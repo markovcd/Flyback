@@ -30,7 +30,7 @@ internal static class ModulationPreset
         var phaser = b.Add(PhaserModule.TypeId, (1, 0.4f), (2, 0.75f), (3, 0.5f), (4, 0.5f));
         var chorus = b.Add(ChorusModule.TypeId, (1, 0.6f), (2, 0.6f), (3, 0.5f));
 
-        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputGainPort, 0.6f));
+        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 0.6f));
 
         b.Wire(pitch, 0, saw, 1)
          .Wire(saw, 0, flanger, 0)

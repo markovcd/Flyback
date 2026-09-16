@@ -40,15 +40,15 @@ public static partial class NodeCatalog
     /// <summary>The screen's program, walking back from the Output's color.</summary>
     public static SinkKind Screen => new("screen", OutputColorPort..OutputLeftPort, 0..1, VideoChannels);
 
-    /// <summary>The speakers' program, walking back from left, right and gain.</summary>
-    public static SinkKind Speakers => new("speakers", OutputLeftPort..(OutputGainPort + 1), 1..3, AudioChannels);
+    /// <summary>The speakers' program, walking back from left, right and volume.</summary>
+    public static SinkKind Speakers => new("speakers", OutputLeftPort..(OutputVolumePort + 1), 1..3, AudioChannels);
 
     // Port indices on the Output, named because three separate places index it
     // and a shifted socket would otherwise be a silent change of meaning.
     public const int OutputColorPort = 0;
     public const int OutputLeftPort = 1;
     public const int OutputRightPort = 2;
-    public const int OutputGainPort = 3;
+    public const int OutputVolumePort = 3;
 
     private const float Tau = 6.283185307179586f;
 

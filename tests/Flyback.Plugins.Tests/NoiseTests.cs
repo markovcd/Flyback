@@ -337,7 +337,7 @@ public class NoiseTests
         var patch = new Patch();
 
         var node = Add(patch, typeId, 4);
-        var sink = Add(patch, NodeCatalog.OutputTypeId, 0, (NodeCatalog.OutputGainPort, 1f));
+        var sink = Add(patch, NodeCatalog.OutputTypeId, 0, (NodeCatalog.OutputVolumePort, 1f));
 
         patch.Connect(node.Id, 0, sink.Id, NodeCatalog.OutputLeftPort);
 

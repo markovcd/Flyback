@@ -94,7 +94,7 @@ internal static class FourFormsPreset
         var tint = b.Add("color.hsv", (1, 0.75f));
         var lit = b.Add("math.add");
 
-        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputGainPort, 0.4f));
+        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 0.4f));
 
         b.Wire(merged, 0, ink, 0)
          .Wire(melt, 0, tint, 0)

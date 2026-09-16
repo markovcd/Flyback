@@ -345,7 +345,7 @@ public class ModulationTests
 
         var coord = Add(patch, "coord");
         var effect = Add(patch, typeId, knobs);
-        var sink = Add(patch, NodeCatalog.OutputTypeId, (NodeCatalog.OutputGainPort, 1f));
+        var sink = Add(patch, NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 1f));
 
         patch.Connect(coord.Id, 0, effect.Id, 0);
         patch.Connect(effect.Id, port, sink.Id, NodeCatalog.OutputLeftPort);

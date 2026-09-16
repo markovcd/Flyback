@@ -62,7 +62,7 @@ public class KickTests
         var body = b.Add("osc.sine", 1020, 480);
         var struck = b.Add("math.mul", 1260, 300);
 
-        var output = b.Add(NodeCatalog.OutputTypeId, 1500, 420, (NodeCatalog.OutputGainPort, 0.8f));
+        var output = b.Add(NodeCatalog.OutputTypeId, 1500, 420, (NodeCatalog.OutputVolumePort, 0.8f));
 
         b.Wire(tempo, 0, beat, 1)
          .Wire(beat, 0, level, 0)

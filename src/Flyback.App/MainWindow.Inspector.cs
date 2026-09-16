@@ -177,15 +177,6 @@ public sealed partial class MainWindow
         // recording, and what would follow is the same frame for ever.
         preview.CaptureLost += Stop;
 
-        // It cannot be switched on at all where no plugin offered a device. The
-        // constructor turns it on once there is a patch to play — see there for
-        // why it starts on rather than off.
-        audioButton.IsEnabled = sound.Output is not null;
-        ToolTip.SetTip(audioButton, sound.Output is { } output
-            ? $"Play the patch through {output.Name}. Needs something wired into 'left'."
-            : "No sound backend is installed. See About for where plugins are looked for.");
-        audioButton.IsCheckedChanged += (_, _) => SetAudioEnabled(audioButton.IsChecked == true);
-
         // Shown while it is greyed out too, because a disabled control that will
         // not say why is the most annoying thing a panel can contain.
         ToolTip.SetShowOnDisabled(recordButton, true);
@@ -901,15 +892,12 @@ public sealed partial class MainWindow
         outputSettings.Children.Add(Field("Processor", compiledButton));
 
         outputSettings.Children.Add(Heading("Sound"));
-        outputSettings.Children.Add(audioButton);
 
         // Under Sound rather than a heading of its own, though it moves both
         // halves: a rewind that took the picture back and left the sound where it
-        // was would pull apart one instrument on one timeline.
-        //
-        // The width is the audio button's, because everything standalone here sits
-        // at its left edge and is only as wide as it needs to be — the two being
-        // the same width says they are a pair.
+        // was would pull apart one instrument on one timeline. Volume is what
+        // switches the speakers on and off now (ADR-0079), so this is the only
+        // standalone control Sound has left.
         var rewind = new Button { Content = "Rewind", Width = 92 };
 
         rewind.Click += (_, _) =>

@@ -275,7 +275,7 @@ public class SupersawTests
 
         var clock = Add(patch, "time");
         var osc = Add(patch, typeId, knobs);
-        var sink = Add(patch, NodeCatalog.OutputTypeId, (NodeCatalog.OutputGainPort, 1f));
+        var sink = Add(patch, NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 1f));
 
         patch.Connect(clock.Id, 0, osc.Id, 0);
         patch.Connect(osc.Id, 0, sink.Id, NodeCatalog.OutputLeftPort);

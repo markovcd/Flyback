@@ -528,7 +528,7 @@ public class PatchWorkbenchTests
 
         told.Text.ShouldNotContain("no output");
         (await Call(bench, "set_knobs", """
-            {"handle":"output1","knobs":[{"port":"gain","value":0.8}]}
+            {"handle":"output1","knobs":[{"port":"volume","value":0.8}]}
             """)).Text.ShouldContain("No issues.");
     }
 
@@ -1196,11 +1196,11 @@ public class PatchWorkbenchTests
         var bench = Bench();
 
         var turned = await Call(bench, "set_knobs", """
-            {"handle":"out","knobs":[{"port":"gain","value":0.8}]}
+            {"handle":"out","knobs":[{"port":"volume","value":0.8}]}
             """);
 
         turned.Ok.ShouldBeTrue(turned.Text);
-        bench.Snapshot().Output.InputValues[NodeCatalog.OutputGainPort].ShouldBe(0.8f);
+        bench.Snapshot().Output.InputValues[NodeCatalog.OutputVolumePort].ShouldBe(0.8f);
     }
 
     /// <summary>A name nobody has is still refused, and still says what the patch does have.</summary>
@@ -1208,7 +1208,7 @@ public class PatchWorkbenchTests
     public async Task A_handle_that_is_not_there_is_still_refused()
     {
         var refused = await Call(Bench(), "set_knobs", """
-            {"handle":"nonesuch","knobs":[{"port":"gain","value":0.8}]}
+            {"handle":"nonesuch","knobs":[{"port":"volume","value":0.8}]}
             """);
 
         refused.Ok.ShouldBeFalse();
@@ -1396,7 +1396,7 @@ public class PatchWorkbenchTests
     /// <summary>
     /// The caption is the only thing said about a payload the model hears rather
     /// than reads, so the number in it has to be the number in the file. A sine
-    /// through the Output's default gain of 0.5 peaks at half of full scale,
+    /// through the Output's default volume of 0.5 peaks at half of full scale,
     /// which is −6 dBFS.
     /// </summary>
     [Fact]
@@ -1428,7 +1428,7 @@ public class PatchWorkbenchTests
     /// A patch that is wired, compiles without a word, and makes no sound. The
     /// compiler catches the loud version of this — an oscillator with nothing at
     /// all on its 'in' is a warning — so what is left for the ear is the quiet
-    /// version: everything correct, and the gain at zero. Playing the model half
+    /// version: everything correct, and the volume at zero. Playing the model half
     /// a second of nothing would tell it far less than the sentence does, and
     /// costs a payload to say it.
     /// </summary>
@@ -1438,7 +1438,7 @@ public class PatchWorkbenchTests
         var bench = await Heard();
 
         var turned = await Call(bench, "set_knobs", """
-            {"handle":"output1","knobs":[{"port":"gain","value":0}]}
+            {"handle":"output1","knobs":[{"port":"volume","value":0}]}
             """);
         turned.Ok.ShouldBeTrue(turned.Text);
 
@@ -1446,7 +1446,7 @@ public class PatchWorkbenchTests
 
         heard.Wav.ShouldBeNull();
         heard.Text.ShouldContain("silence");
-        heard.Text.ShouldContain("gain");
+        heard.Text.ShouldContain("volume");
     }
 
     /// <summary>

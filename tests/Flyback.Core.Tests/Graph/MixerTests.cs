@@ -33,7 +33,7 @@ public class MixerTests
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
         var mixer = b.Add(Mixer, 0, 0, knobs);
-        var output = b.Add(NodeCatalog.OutputTypeId, 200, 0, (NodeCatalog.OutputGainPort, 1f));
+        var output = b.Add(NodeCatalog.OutputTypeId, 200, 0, (NodeCatalog.OutputVolumePort, 1f));
 
         b.Wire(mixer, 0, output, NodeCatalog.OutputLeftPort);
 
@@ -110,7 +110,7 @@ public class MixerTests
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
         var time = b.Add("time", 0, 0);
         var mixer = b.Add(Mixer, 200, 0, (In(1), 1f));
-        var output = b.Add(NodeCatalog.OutputTypeId, 400, 0, (NodeCatalog.OutputGainPort, 1f));
+        var output = b.Add(NodeCatalog.OutputTypeId, 400, 0, (NodeCatalog.OutputVolumePort, 1f));
 
         b.Wire(time, 0, mixer, Level(1))
          .Wire(mixer, 0, output, NodeCatalog.OutputLeftPort);

@@ -138,7 +138,7 @@ public class EuclidTests
         foreach (var (at, value) in knobs) euclid.InputValues[at] = value;
 
         var sink = NodeInstance.Create(Catalog.Require(NodeCatalog.OutputTypeId), 0, 0);
-        sink.InputValues[NodeCatalog.OutputGainPort] = 1f;
+        sink.InputValues[NodeCatalog.OutputVolumePort] = 1f;
 
         patch.Nodes.Add(euclid);
         patch.Nodes.Add(sink);

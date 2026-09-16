@@ -164,11 +164,11 @@ public sealed partial class MainWindow
             said = said.Prepend(probe.TypeId switch
             {
                 NodeCatalog.ScopeTypeId =>
-                    "Showing the Scope — it charts what the speakers played, so switch sound on "
-                    + "to see anything. Select another module for the picture.",
+                    "Showing the Scope — it charts what the speakers played, so turn the Output's "
+                    + "Volume up to see anything. Select another module for the picture.",
                 NodeCatalog.AnalyzerTypeId =>
                     "Showing the Analyzer — it charts the spectrum of what the speakers played, so "
-                    + "switch sound on to see anything. Select another module for the picture.",
+                    + "turn the Output's Volume up to see anything. Select another module for the picture.",
                 _ => "Showing the Probe — select another module for the picture.",
             });
         }
@@ -180,6 +180,7 @@ public sealed partial class MainWindow
         Report(said.ToList());
 
         MarkRecordable();
+        SyncAudioToVolume();
     }
 
     /// <summary>
@@ -201,14 +202,42 @@ public sealed partial class MainWindow
     /// </summary>
     private void Report(IReadOnlyList<string> messages) => report.Say(messages);
 
+    /// <summary>
+    /// Whether the Output's own Volume knob says the speakers should be running:
+    /// wired, where there is no default left to read and a signal is presumably
+    /// meant to be heard, or unwired and above nought — see ADR-0079.
+    /// </summary>
+    internal static bool VolumeIsUp(Patch patch) =>
+        patch.IncomingTo(patch.Output.Id, NodeCatalog.OutputVolumePort) is not null
+        || patch.Output.InputValues[NodeCatalog.OutputVolumePort] > 0f;
+
+    /// <summary>
+    /// Brings the audio device into line with what Volume now says, turning it on
+    /// exactly where the toggle this replaced would have been clicked on, and off
+    /// where it would have been clicked off — ADR-0079. Called after every
+    /// recompile, so a drag through nought is caught the moment it crosses rather
+    /// than on release.
+    /// </summary>
+    /// <remarks>
+    /// Guarded on <see cref="AudioEngine.IsRunning"/> rather than called
+    /// unconditionally: <see cref="SetAudioEnabled"/> opens or closes a real
+    /// device, and a recompile happens on every knob frame while a slider is
+    /// dragged (ADR-0021).
+    /// </remarks>
+    private void SyncAudioToVolume()
+    {
+        var wanted = sound.Output is not null && !audioBlocked && VolumeIsUp(editor.Patch);
+
+        if (wanted != audio.IsRunning) SetAudioEnabled(wanted);
+    }
+
     private void SetAudioEnabled(bool enabled)
     {
-        audioButton.Content = enabled ? "Audio on" : "Audio off";
-
         if (enabled)
         {
-            audio.Update(editor.Patch);
-
+            // Not audio.Update — Recompile, the only caller that reaches here,
+            // has already handed the engine a program built from Sounds, and a
+            // second one built without it would undo that with the wrong one.
             try
             {
                 audio.Start();
@@ -216,13 +245,12 @@ public sealed partial class MainWindow
             catch (Exception ex)
             {
                 // A device is only really opened here, so this is where a card
-                // that is busy, unplugged or missing its library says so. The
-                // button goes back off and stays off: whatever it is will not
-                // have fixed itself by the next click, and ADR-0025 promises
-                // that nothing a plugin does takes the shell down.
+                // that is busy, unplugged or missing its library says so. Blocked
+                // rather than retried: whatever it is will not have fixed itself
+                // by the next edit, and ADR-0025 promises that nothing a plugin
+                // does takes the shell down.
                 Report($"Sound could not start — {ex.Message}", PluginSummary());
-                audioButton.IsEnabled = false;
-                audioButton.IsChecked = false;
+                audioBlocked = true;
                 return;
             }
 

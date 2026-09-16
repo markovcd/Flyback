@@ -56,7 +56,7 @@ public class SampleTests : IDisposable
         var player = b.Add(NodeCatalog.SampleTypeId, 0, 0, (1, level));
         SampleExtra.Set(player, path);
 
-        var sink = b.Add(NodeCatalog.OutputTypeId, 200, 0, (NodeCatalog.OutputGainPort, 1f));
+        var sink = b.Add(NodeCatalog.OutputTypeId, 200, 0, (NodeCatalog.OutputVolumePort, 1f));
 
         b.Wire(position, 0, player, 0)
          .Wire(player, 0, sink, NodeCatalog.OutputLeftPort);
@@ -115,7 +115,7 @@ public class SampleTests : IDisposable
         var player = b.Add(NodeCatalog.SampleTypeId, 0, 0);
         SampleExtra.Set(player, Ramp("half.wav", 500));
 
-        var sink = b.Add(NodeCatalog.OutputTypeId, 200, 0, (NodeCatalog.OutputGainPort, 1f));
+        var sink = b.Add(NodeCatalog.OutputTypeId, 200, 0, (NodeCatalog.OutputVolumePort, 1f));
         b.Wire(player, 1, sink, NodeCatalog.OutputLeftPort);
 
         // 500 samples at 500 a second.
@@ -160,7 +160,7 @@ public class SampleTests : IDisposable
             var player = b.Add(NodeCatalog.SampleTypeId, 0, 0);
             SampleExtra.Set(player, fall);
 
-            var sink = b.Add(NodeCatalog.OutputTypeId, 300, 0, (NodeCatalog.OutputGainPort, 1f));
+            var sink = b.Add(NodeCatalog.OutputTypeId, 300, 0, (NodeCatalog.OutputVolumePort, 1f));
             b.Wire(player, 0, sink, NodeCatalog.OutputLeftPort);
 
             if (triggerHz > 0)
@@ -529,7 +529,7 @@ public class SampleTests : IDisposable
         SampleExtra.Set(second, path);
 
         var mix = b.Add("math.add", 200, 0);
-        var sink = b.Add(NodeCatalog.OutputTypeId, 400, 0, (NodeCatalog.OutputGainPort, 1f));
+        var sink = b.Add(NodeCatalog.OutputTypeId, 400, 0, (NodeCatalog.OutputVolumePort, 1f));
 
         b.Wire(early, 0, first, 0)
          .Wire(late, 0, second, 0)

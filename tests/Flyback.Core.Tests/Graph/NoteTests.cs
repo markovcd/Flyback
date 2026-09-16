@@ -35,7 +35,7 @@ public class NoteTests
         var note = b.Add("audio.note", 660, 220);
         var tone = b.Add("osc.sine", 880, 460);
 
-        var output = b.Add(NodeCatalog.OutputTypeId, 1470, 300, (NodeCatalog.OutputGainPort, 0.5f));
+        var output = b.Add(NodeCatalog.OutputTypeId, 1470, 300, (NodeCatalog.OutputVolumePort, 0.5f));
 
         b.Wire(ramp, 0, note, 1)
          .Wire(note, 0, tone, 1)
@@ -57,7 +57,7 @@ public class NoteTests
     {
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
         var note = builder.Add(TypeId, 0, 0, knobs);
-        var sink = builder.Add(NodeCatalog.OutputTypeId, 0, 0, (NodeCatalog.OutputGainPort, 1f));
+        var sink = builder.Add(NodeCatalog.OutputTypeId, 0, 0, (NodeCatalog.OutputVolumePort, 1f));
         builder.Wire(note, port, sink, NodeCatalog.OutputLeftPort);
 
         var program = builder.Patch.CompileForAudio(NodeCatalog.BuiltIn).Program;
@@ -175,7 +175,7 @@ public class NoteTests
         var time = builder.Add("time", 0, 0);
         var note = builder.Add(TypeId, 0, 0, (0, A3));
         var osc = builder.Add("osc.sine", 0, 0);
-        var sink = builder.Add(NodeCatalog.OutputTypeId, 0, 0, (NodeCatalog.OutputGainPort, 1f));
+        var sink = builder.Add(NodeCatalog.OutputTypeId, 0, 0, (NodeCatalog.OutputVolumePort, 1f));
 
         builder.Wire(time, 0, osc, 0)
             .Wire(note, 0, osc, 1)

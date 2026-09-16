@@ -543,7 +543,7 @@ internal static class AcidPreset
         var limitL = b.Add("math.clamp", (1, -1f), (2, 1f));
         var limitR = b.Add("math.clamp", (1, -1f), (2, 1f));
 
-        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputGainPort, 0.6f));
+        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 0.6f));
 
         b.Wire(punch, 0, lowEnd, 0)
          .Wire(weight, 0, lowEnd, 2)

@@ -107,7 +107,7 @@ public class LanguageTests
           |> hsv(hue: slow, saturation: 0.85)
           |> out.color
 
-        out.gain = 0.6
+        out.volume = 0.6
         """);
 
     [Fact]
@@ -146,7 +146,7 @@ public class LanguageTests
         sum.b <- sum * 0.94
         sum |> out.left
 
-        out.gain = 0.5
+        out.volume = 0.5
         """);
 
     [Fact]
@@ -159,7 +159,7 @@ public class LanguageTests
         saw(freq: root, amp: 0.7) * shape |> out.left
         saw(freq: twin, amp: 0.7) * shape |> out.right
 
-        out.gain = 0.55
+        out.volume = 0.55
         """);
 
     [Fact]
@@ -169,7 +169,7 @@ public class LanguageTests
         voice |> out.left
         scope(voice, window: 20ms) |> out.color
 
-        out.gain = 0.5
+        out.volume = 0.5
         """);
 
     [Fact]
@@ -184,7 +184,7 @@ public class LanguageTests
           |> hsv(hue: steps.index, saturation: 0.8)
           |> out.color
 
-        out.gain = 0.5
+        out.volume = 0.5
         """);
 
     [Fact]
@@ -203,7 +203,7 @@ public class LanguageTests
           |> hsv(hue: heard, saturation: 0.75)
           |> out.color
 
-        out.gain = 0.6
+        out.volume = 0.6
         """);
 
     [Fact]
@@ -215,7 +215,7 @@ public class LanguageTests
         color.mix(scope(tone, window: 25ms), probe(tone, window: 25ms), y |> step())
           |> out.color
 
-        out.gain = 0.45
+        out.volume = 0.45
         """);
 
     [Fact]
@@ -231,7 +231,7 @@ public class LanguageTests
               |> add(loop.view)
               |> out.color
 
-        out.gain = 0.45
+        out.volume = 0.45
         """);
 
     [Fact]
@@ -260,7 +260,7 @@ public class LanguageTests
     public void Clip() => Same("Clip", """
         sample(level: 0.9, trigger: pulse(freq: 0.5, width: 0.02)) |> out.left
 
-        out.gain = 0.7
+        out.volume = 0.7
         """);
 
     [Fact]
@@ -294,7 +294,7 @@ public class LanguageTests
           |> gain(gain: 0.6)
           |> out.color
 
-        out.gain = 0.25
+        out.volume = 0.25
         """);
 
     [Fact]
@@ -312,7 +312,7 @@ public class LanguageTests
             value: field |> remap(0..1, 0.22..0.95))
           |> out.color
 
-        out.gain = 0.55
+        out.volume = 0.55
         """);
 
     /// <summary>
@@ -436,7 +436,7 @@ public class LanguageTests
             |> out.color
         }
 
-        out.gain = 0.62
+        out.volume = 0.62
         """);
 
     // --- the pipe rule ---------------------------------------------------------

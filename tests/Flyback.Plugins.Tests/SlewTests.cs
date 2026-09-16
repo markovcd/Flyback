@@ -145,7 +145,7 @@ public class SlewTests
         foreach (var (port, value) in knobs) slew.InputValues[port] = value;
 
         sink = NodeInstance.Create(Catalog.Require(NodeCatalog.OutputTypeId), 0, 0);
-        sink.InputValues[NodeCatalog.OutputGainPort] = 1f;
+        sink.InputValues[NodeCatalog.OutputVolumePort] = 1f;
 
         patch.Nodes.Add(coord);
         patch.Nodes.Add(slew);

@@ -19,7 +19,7 @@ public class AudioRendererTests
         var builder = new PatchBuilder();
         var time = builder.Add("time", 0, 0);
         var osc = builder.Add(oscillator, 0, 0, (1, hz));
-        var sink = builder.Add(NodeCatalog.OutputTypeId, 0, 0, (NodeCatalog.OutputGainPort, gain));
+        var sink = builder.Add(NodeCatalog.OutputTypeId, 0, 0, (NodeCatalog.OutputVolumePort, gain));
 
         builder.Wire(time, 0, osc, 0).Wire(osc, 0, sink, NodeCatalog.OutputLeftPort);
 
@@ -190,7 +190,7 @@ public class AudioRendererTests
     {
         var builder = new PatchBuilder();
         var knob = builder.Add("value", 0, 0, (0, 1f));
-        var sink = builder.Add(NodeCatalog.OutputTypeId, 0, 0, (NodeCatalog.OutputGainPort, 1f));
+        var sink = builder.Add(NodeCatalog.OutputTypeId, 0, 0, (NodeCatalog.OutputVolumePort, 1f));
         builder.Wire(knob, 0, sink, NodeCatalog.OutputLeftPort);
 
         var buffer = Render(Compile(builder.Patch), GlobalConstants.SampleRate);
@@ -299,7 +299,7 @@ public class AudioRendererTests
     {
         var builder = new PatchBuilder();
         var coords = builder.Add("coord", 0, 0);
-        var sink = builder.Add(NodeCatalog.OutputTypeId, 0, 0, (NodeCatalog.OutputGainPort, 1f));
+        var sink = builder.Add(NodeCatalog.OutputTypeId, 0, 0, (NodeCatalog.OutputVolumePort, 1f));
         builder.Wire(coords, NodeCatalog.CoordXPort, sink, NodeCatalog.OutputLeftPort);
 
         var heard = new float[4_000 * 2];
@@ -320,7 +320,7 @@ public class AudioRendererTests
         var coords = builder.Add("coord", 0, 0);
         var osc = builder.Add("osc.sine", 0, 0, (1, 220f));
         var scaled = builder.Add("math.mul", 0, 0);
-        var sink = builder.Add(NodeCatalog.OutputTypeId, 0, 0, (NodeCatalog.OutputGainPort, 0.5f));
+        var sink = builder.Add(NodeCatalog.OutputTypeId, 0, 0, (NodeCatalog.OutputVolumePort, 0.5f));
 
         builder.Wire(time, 0, osc, 0)
             .Wire(osc, 0, scaled, 0)

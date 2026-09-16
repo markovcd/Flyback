@@ -84,7 +84,7 @@ internal static class Handbook
         - **`let` names a signal** so it can be used twice. Reading it again is
           a second wire out of the same module, not a second module.
         - **`out` is the Output**, which every patch already has:
-          `|> out.color`, `|> out.left`, `out.gain = 0.6`.
+          `|> out.color`, `|> out.left`, `out.volume = 0.6`.
         - **Sugar**: `x`, `y`, `radius`, `angle`, `aspect` and `t` are Coordinates and
           Time, one shared module each however often written. `+ - * / %` are
           the maths modules. `A3` and `C#4` are notes, on sockets that read
@@ -186,7 +186,8 @@ internal static class Handbook
           cannot add one and you cannot remove one, so it is never something
           to put in place first — it is there, and the work is wiring into it.
         - **`color` is the picture. `left` and `right` are the sound.** The
-          same block also carries `gain`, a knob on it like any other. The
+          same block also carries `volume`, a knob on it like any other — at
+          nought it is the speakers switched off, not merely quiet. The
           picture is heard by reading it through a **Scan** into `left`.
         - **`right` is normalled to `left`**, so a voice patched into `left`
           alone is heard from both speakers. Patch `right` only when the two

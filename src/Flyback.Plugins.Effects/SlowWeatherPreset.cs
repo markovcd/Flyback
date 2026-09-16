@@ -326,7 +326,7 @@ internal static class SlowWeatherPreset
         var safeL = b.Add("math.clamp", (1, -1f), (2, 1f));
         var safeR = b.Add("math.clamp", (1, -1f), (2, 1f));
 
-        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputGainPort, 0.85f));
+        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 0.85f));
 
         b.Wire(thicken, 0, deskL, 0)
          .Wire(bellL, 0, deskL, 2)

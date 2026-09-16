@@ -57,7 +57,7 @@ public class AudioEngineTests
 
         var time = builder.Add("time", 0, 0);
         var osc = builder.Add("osc.sine", 0, 0, (1, hz));
-        var speaker = builder.Add(NodeCatalog.OutputTypeId, 0, 0, (NodeCatalog.OutputGainPort, 1f));
+        var speaker = builder.Add(NodeCatalog.OutputTypeId, 0, 0, (NodeCatalog.OutputVolumePort, 1f));
 
         return builder
             .Wire(time, 0, osc, 0)
@@ -197,7 +197,7 @@ public class AudioEngineTests
         var coords = builder.Add("coord", 0, 0);
         var osc = builder.Add("osc.sine", 0, 0, (1, 220f));
         var scaled = builder.Add("math.mul", 0, 0);
-        var speaker = builder.Add(NodeCatalog.OutputTypeId, 0, 0, (NodeCatalog.OutputGainPort, 0.5f));
+        var speaker = builder.Add(NodeCatalog.OutputTypeId, 0, 0, (NodeCatalog.OutputVolumePort, 0.5f));
 
         builder.Wire(time, 0, osc, 0)
             .Wire(osc, 0, scaled, 0)
@@ -269,7 +269,7 @@ public class AudioEngineTests
 
         var held = builder.Add("value", 0, 0, (0, 0.5f));
         var meter = builder.Add(NodeCatalog.MeterTypeId, 0, 0);
-        var output = builder.Add(NodeCatalog.OutputTypeId, 0, 0, (NodeCatalog.OutputGainPort, 1f));
+        var output = builder.Add(NodeCatalog.OutputTypeId, 0, 0, (NodeCatalog.OutputVolumePort, 1f));
 
         builder.Wire(held, 0, meter, 0)
                .Wire(held, 0, output, NodeCatalog.OutputLeftPort)

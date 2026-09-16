@@ -177,7 +177,7 @@ public class TimbreTests
         var coord = Add(patch, "coord");
         var first = Add(patch, FilterType, (1, 1_000f), (2, 0f));
         var second = Add(patch, FilterType, (1, 1_000f), (2, 0f));
-        var sink = Add(patch, NodeCatalog.OutputTypeId, (NodeCatalog.OutputGainPort, 1f));
+        var sink = Add(patch, NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 1f));
 
         patch.Connect(coord.Id, 0, first.Id, 0);
         patch.Connect(first.Id, 0, second.Id, 0);
@@ -281,7 +281,7 @@ public class TimbreTests
 
         var color = Add(patch, "color.rgb", (0, 0.25f), (1, 0.9f), (2, 0.6f));
         var fold = Add(patch, FoldType, (1, 3f));
-        var screen = Add(patch, NodeCatalog.OutputTypeId, (NodeCatalog.OutputGainPort, 1f));
+        var screen = Add(patch, NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 1f));
 
         patch.Connect(color.Id, 0, fold.Id, 0);
         patch.Connect(fold.Id, 0, screen.Id, NodeCatalog.OutputColorPort);
@@ -396,7 +396,7 @@ public class TimbreTests
 
         var coord = Add(patch, "coord");
         var effect = Add(patch, typeId, knobs);
-        var sink = Add(patch, NodeCatalog.OutputTypeId, (NodeCatalog.OutputGainPort, 1f));
+        var sink = Add(patch, NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 1f));
 
         patch.Connect(coord.Id, 0, effect.Id, 0);
         patch.Connect(effect.Id, port, sink.Id, NodeCatalog.OutputLeftPort);

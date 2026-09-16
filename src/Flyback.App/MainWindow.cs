@@ -179,7 +179,6 @@ public sealed partial class MainWindow : Window
     /// </summary>
     private readonly ReportLine report = new();
 
-    private readonly ToggleButton audioButton = new() { Content = "Audio off", Width = 92 };
     private readonly ToggleButton gpuButton = new() { Content = "GPU", Width = 60 };
     private readonly ToggleButton compiledButton = new() { Content = "Compiled", Width = 92 };
     private readonly ToggleButton assistantButton =
@@ -213,6 +212,13 @@ public sealed partial class MainWindow : Window
 
     private readonly AudioSetup sound;
     private readonly AudioEngine audio;
+
+    /// <summary>
+    /// Set once a device has refused to start, so a Volume left above nought does
+    /// not retry it on every edit. Nothing clears it short of relaunching, which
+    /// is what a permanently disabled toggle used to mean — see ADR-0079.
+    /// </summary>
+    private bool audioBlocked;
 
     /// <summary>
     /// What runs the processor's programs as machine code once they are built —
@@ -334,14 +340,13 @@ public sealed partial class MainWindow : Window
 
         editor.Patch = Presets.Default();
 
-        // Sound on, if there is anything to make it with. A patch whose audio side
-        // is doing nothing looks exactly like one whose audio side is working, so a
-        // silent launch hides half the instrument. Here rather than in the toolbar,
-        // which is built before the preset is loaded.
-        //
-        // A device that will not open is not fatal — SetAudioEnabled reports it and
-        // puts the button back.
-        audioButton.IsChecked = audioButton.IsEnabled;
+        // No manual switch any more — Volume is the one now, and the Recompile
+        // that patch assignment just ran already brought sound up to match its
+        // default (ADR-0079). What is left to say only where turning it up would
+        // not help: nothing was there to open it with.
+        if (sound.Output is null)
+            Report("No sound backend is installed, so Volume will do nothing. "
+                + "See About for where plugins are looked for.");
 
         var ticker = new DispatcherTimer(DispatcherPriority.Background) { Interval = TimeSpan.FromMilliseconds(250) };
         ticker.Tick += (_, _) => UpdateStatus();

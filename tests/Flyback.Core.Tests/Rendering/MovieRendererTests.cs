@@ -235,7 +235,7 @@ public class MovieRendererTests
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
 
-        var output = b.Add(NodeCatalog.OutputTypeId, 900, 0, (NodeCatalog.OutputGainPort, 1f));
+        var output = b.Add(NodeCatalog.OutputTypeId, 900, 0, (NodeCatalog.OutputVolumePort, 1f));
         var voice = b.Add("osc.sine", 0, 0, (1, 110f));
 
         // A slow tremolo, so the level has something to follow: the frames of the

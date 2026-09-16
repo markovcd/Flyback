@@ -33,7 +33,7 @@ public class MidiTests
         {
             [MidiExtra.IndexField] = 1f,
         });
-        var sink = builder.Add(NodeCatalog.OutputTypeId, 0, 0, (NodeCatalog.OutputGainPort, 1f));
+        var sink = builder.Add(NodeCatalog.OutputTypeId, 0, 0, (NodeCatalog.OutputVolumePort, 1f));
 
         if (device is not null)
             midi.SetState(MidiExtra.StateKey, new System.Text.Json.Nodes.JsonObject
@@ -110,7 +110,7 @@ public class MidiTests
     {
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
         var saw = builder.Add("osc.saw", 0, 0);
-        var sink = builder.Add(NodeCatalog.OutputTypeId, 0, 0, (NodeCatalog.OutputGainPort, 1f));
+        var sink = builder.Add(NodeCatalog.OutputTypeId, 0, 0, (NodeCatalog.OutputVolumePort, 1f));
         builder.Wire(saw, 0, sink, NodeCatalog.OutputLeftPort);
 
         builder.Patch.CompileForAudio(NodeCatalog.BuiltIn).Program.LiveInputs.ShouldBeEmpty();
@@ -268,7 +268,7 @@ public class MidiTests
         {
             [MidiExtra.IndexField] = 1f,
         });
-        var sink = builder.Add(NodeCatalog.OutputTypeId, 0, 0, (NodeCatalog.OutputGainPort, 1f));
+        var sink = builder.Add(NodeCatalog.OutputTypeId, 0, 0, (NodeCatalog.OutputVolumePort, 1f));
 
         builder.Wire(first, Pitch, sink, NodeCatalog.OutputLeftPort);
         builder.Wire(second, Pitch, sink, NodeCatalog.OutputRightPort);

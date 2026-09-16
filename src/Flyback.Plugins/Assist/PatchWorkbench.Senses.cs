@@ -208,7 +208,7 @@ public sealed partial class PatchWorkbench
                         $"{Number(seconds)}s from {Number(from)}s is silence — nothing above "
                         + "-66 dBFS came out, so there is no point playing it to you. The "
                         + "compiler has already said whatever it can see, so look at what it "
-                        + "cannot: 'gain' on the Output sitting at zero, or an 'in' that is wired "
+                        + "cannot: 'volume' on the Output sitting at zero, or an 'in' that is wired "
                         + "but never moves — a knob, or anything else holding one value, drives a "
                         + "phase exactly as far as nothing does. Only a signal that changes with "
                         + "'t' makes an oscillator oscillate. A constant reaching 'left' is "

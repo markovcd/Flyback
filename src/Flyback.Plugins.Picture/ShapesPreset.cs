@@ -60,7 +60,7 @@ internal static class ShapesPreset
         var pitch = b.Add("audio.frequency", (0, 110f));
         var scan = b.Add(NodeCatalog.ScanTypeId, (3, 0.42f), (6, 0.5f));
 
-        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputGainPort, 0.5f));
+        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 0.5f));
 
         b.Wire(rock, 0, turn, 2)
          .Wire(turn, 0, star, 0)

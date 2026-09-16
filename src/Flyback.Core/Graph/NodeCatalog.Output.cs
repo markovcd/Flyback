@@ -124,7 +124,7 @@ public partial class NodeCatalog
                 Col("color"),
                 Num("left", 0f, -1f, 1f),
                 Normalled("right", OutputLeftPort, -1f, 1f),
-                Num("gain", 0.5f, 0f, 1f),
+                Num("volume", 0.5f, 0f, 1f),
             ],
             [],
 
@@ -133,7 +133,8 @@ public partial class NodeCatalog
             // takes is the only difference between the two compilations.
             (em, i) => [i[0], em.Mul(i[1], i[3]), em.Mul(i[2], i[3])],
             "Video and audio outputs in one node. 'color' drives the screen; 'left' and 'right' drive the speakers. "
-            + "To hear the picture, read it through a Scan and patch that into 'left'.");
+            + "To hear the picture, read it through a Scan and patch that into 'left'. 'volume' at nought "
+            + "is not just quiet — it is the speakers switched off, the device closed rather than fed silence.");
 
         yield return new NodeDef(
             "audio.frequency", "Frequency", ModuleCategories.Pitch,

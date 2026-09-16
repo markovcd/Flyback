@@ -301,7 +301,7 @@ public class MeterTests
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
 
-        var output = b.Add(NodeCatalog.OutputTypeId, 900, 0, (NodeCatalog.OutputGainPort, 1f));
+        var output = b.Add(NodeCatalog.OutputTypeId, 900, 0, (NodeCatalog.OutputVolumePort, 1f));
         var source = b.Add(watched, 0, 0, (1, 220f));
         var meter = b.Add(Meter, 400, 0, knobs);
 

@@ -117,7 +117,7 @@ internal static class EuclidKitPreset
         // --- desk --------------------------------------------------------------------
 
         var desk = b.Add("math.mixer", (1, 0.9f), (3, 0.35f), (5, 1.2f), (7, 0.5f));
-        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputGainPort, 0.5f));
+        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 0.5f));
 
         b.Wire(kick, 0, desk, 0)
          .Wire(hats, 2, desk, 2)
