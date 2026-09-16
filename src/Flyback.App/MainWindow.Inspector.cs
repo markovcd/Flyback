@@ -7,7 +7,9 @@ using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Platform.Storage;
+using Avalonia.Threading;
 using Flyback.App.Controls;
+using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Colors = Flyback.App.Controls.Colors;
 
@@ -105,6 +107,10 @@ public sealed partial class MainWindow
         "Render the picture with a shader instead of the processor. Turn it off to " +
         "compare the two, or if a long session starts to look stepped.";
 
+    private const string CompiledTip =
+        "Run the sound, and a picture drawn by the processor, as machine code rather than " +
+        "interpreting it. The two sound and look the same; turn it off to compare what they cost.";
+
     /// <summary>
     /// Sets up the controls that live on the Output's panel. Called once, from
     /// the constructor, rather than while building that panel: these are the
@@ -129,8 +135,32 @@ public sealed partial class MainWindow
         gpuButton.IsCheckedChanged += (_, _) =>
             preview.Use(gpuButton.IsChecked == true ? PreviewBackend.Gpu : PreviewBackend.Cpu);
 
+        // On by default, like the GPU and for the same reason: it is the faster of
+        // the two, and a program is interpreted anyway until its IL is ready, so
+        // nothing waits for it. Off is how the two get compared — they give the
+        // same numbers, so what differs is only what the status bar says it cost.
+        compiledButton.IsChecked = true;
+        ToolTip.SetTip(compiledButton, CompiledTip);
+        compiledButton.IsCheckedChanged += (_, _) =>
+        {
+            var on = compiledButton.IsChecked == true;
+
+            compiledButton.Content = on ? "Compiled" : "Interpreted";
+            compiler.Enabled = on;
+
+            Report(on
+                ? "The processor runs the patch as compiled code, once each edit has been compiled."
+                : "The processor interprets the patch.");
+        };
+
+        compiler.Failed += message => Dispatcher.UIThread.Post(() => Report(message));
+
         preview.BackendChanged += message =>
         {
+            // The picture's program is only worth compiling while the processor is
+            // the one drawing it; the shader has code of its own.
+            if (preview.Backend == PreviewBackend.Cpu) compiler.Submit(preview.Program, IlLane.Picture);
+
             // The choice rather than what is running: a patch the shader cannot
             // draw puts the picture on the processor without anybody having
             // asked, and a button that unticked itself would then be read as the
@@ -883,6 +913,10 @@ public sealed partial class MainWindow
         outputSettings.Children.Add(Heading("Picture"));
         outputSettings.Children.Add(Field("Size", resolution));
         outputSettings.Children.Add(Field("Render", gpuButton));
+
+        // With the picture's settings because it sits beside the GPU switch it is
+        // compared against, though it speeds the sound up too — the tip says so.
+        outputSettings.Children.Add(Field("Processor", compiledButton));
 
         outputSettings.Children.Add(Heading("Sound"));
         outputSettings.Children.Add(audioButton);

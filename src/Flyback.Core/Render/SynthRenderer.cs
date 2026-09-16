@@ -112,6 +112,10 @@ public sealed class SynthRenderer
         var outputBase = patch.OutputBase;
         var origin = (nint)destination;
 
+        // Read once, so every row of one frame is drawn by the same code. Either
+        // would draw the same bytes; this only keeps the question out of the loop.
+        var il = patch.Il;
+
         Parallel.For(
             0,
             height,
@@ -133,8 +137,16 @@ public sealed class SynthRenderer
                 // has a bank of its own and there is nowhere shared to leave it;
                 // at a few dozen ops against a row of a thousand pixels that is
                 // not a cost worth a handshake over.
-                patch.EvaluateStage(EvaluationStage.Frame, 0d, py, time, registers, feedback, aspect, live);
-                patch.EvaluateStage(EvaluationStage.Row, 0d, py, time, registers, feedback, aspect, live);
+                if (il is null)
+                {
+                    patch.EvaluateStage(EvaluationStage.Frame, 0d, py, time, registers, feedback, aspect, live);
+                    patch.EvaluateStage(EvaluationStage.Row, 0d, py, time, registers, feedback, aspect, live);
+                }
+                else
+                {
+                    il.EvaluateStage(EvaluationStage.Frame, 0d, py, time, registers, feedback, aspect, live);
+                    il.EvaluateStage(EvaluationStage.Row, 0d, py, time, registers, feedback, aspect, live);
+                }
 
                 for (var x = 0; x < width; x++)
                 {
@@ -145,8 +157,12 @@ public sealed class SynthRenderer
                     // row — see PlaneState.
                     var carried = planes.Count == 0 ? default : planes.At(y * width + x);
 
-                    patch.EvaluateStage(
-                        EvaluationStage.Pixel, px, py, time, registers, feedback, aspect, live, carried);
+                    if (il is null)
+                        patch.EvaluateStage(
+                            EvaluationStage.Pixel, px, py, time, registers, feedback, aspect, live, carried);
+                    else
+                        il.EvaluateStage(
+                            EvaluationStage.Pixel, px, py, time, registers, feedback, aspect, live, carried);
 
                     var r = Saturate(registers[outputBase + 0]);
                     var g = Saturate(registers[outputBase + 1]);

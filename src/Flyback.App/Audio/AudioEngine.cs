@@ -67,14 +67,22 @@ public sealed class AudioEngine(IAudioDevice device) : IDisposable
     /// <summary>Rewinds the cursor and clears the decimation and DC filter state.</summary>
     public void Rewind() => renderer.Reset();
 
+    /// <summary>What turns each program swapped in here into IL, or null for a program that is only ever interpreted.</summary>
+    public IlCompiler? Compiler { get; init; }
+
     /// <summary>
     /// Swaps in a freshly compiled patch. Sizing the register scratch and the
     /// program's memory happens here, on the UI thread, so the callback never has
     /// to allocate — and both go in with the program they belong to, in one write.
     /// </summary>
+
     public void Update(Patch patch, ISampleLibrary? samples = null)
     {
         var program = patch.CompileForAudio(samples: samples).Program;
+
+        // Interpreted from the first buffer; the compiler attaches IL to this same
+        // program when it has some, and the callback picks it up on the next buffer.
+        Compiler?.Submit(program, IlLane.Sound);
 
         renderer.Prepare(program);
 

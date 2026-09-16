@@ -1,6 +1,8 @@
 # ADR-0021: Recompile the whole patch on every edit
 
-**Status:** Accepted · 2026-08-11
+**Status:** Accepted · 2026-08-11 · amended by
+[0076](0076-the-processor-runs-a-program-as-il-once-it-is-built.md), where an edit is
+played interpreted until its compiled code arrives, so recompiling stays free
 
 ## Context
 

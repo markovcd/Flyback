@@ -15,6 +15,7 @@ public class FrameBenchmarks
     private readonly SynthRenderer renderer = new();
     private byte[] destination = null!;
     private CompiledPatch patch = null!;
+    private CompiledPatch compiled = null!;
 
     [Params("Plasma", "Nebula", "FeedbackTunnel", "WholeBand")]
     public string Preset { get; set; } = "Plasma";
@@ -22,17 +23,27 @@ public class FrameBenchmarks
     [GlobalSetup]
     public void Setup()
     {
-        patch = Patches.Video(Preset switch
+        Func<ModuleCatalog, Patch> preset = Preset switch
         {
             "Nebula" => Presets.Nebula,
             "FeedbackTunnel" => Presets.FeedbackTunnel,
             "WholeBand" => Presets.WholeBand,
             _ => Presets.Plasma,
-        });
+        };
+
+        patch = Patches.Video(preset);
+
+        // A second copy rather than the same program, so the interpreted arm
+        // cannot pick the IL up by accident.
+        compiled = Patches.Video(preset);
+        compiled.Attach(IlProgram.Compile(compiled));
 
         destination = new byte[Width * Height * 4];
     }
 
-    [Benchmark]
+    [Benchmark(Baseline = true)]
     public void Frame() => renderer.Render(patch, 1.5d, Width, Height, destination, Width * 4);
+
+    [Benchmark]
+    public void FrameCompiled() => renderer.Render(compiled, 1.5d, Width, Height, destination, Width * 4);
 }

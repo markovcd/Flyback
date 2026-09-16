@@ -226,6 +226,10 @@ public sealed class AudioRenderer
         // halfway through a buffer, which is the one place it must not.
         var lines = memory ?? Own(program);
 
+        // Once per buffer, like the memory: IL attached halfway through would
+        // change nothing that can be heard, but a buffer is the natural grain.
+        var il = program.Il;
+
         var left = program.OutputBase;
         var right = program.OutputWidth > 1 ? program.OutputBase + 1 : program.OutputBase;
 
@@ -249,7 +253,8 @@ public sealed class AudioRenderer
                 // far its input moved would be handed a staircase. The frame goes
                 // in even here, because a scanned patch sweeps x across exactly
                 // this width.
-                program.Evaluate(x, y, t, registers, default, lines, scan.Aspect, live);
+                if (il is null) program.Evaluate(x, y, t, registers, default, lines, scan.Aspect, live);
+                else il.Evaluate(x, y, t, registers, default, lines, scan.Aspect, live);
 
                 delayLines[0][historyPosition] = (float)registers[left];
                 delayLines[1][historyPosition] = (float)registers[right];

@@ -323,6 +323,67 @@ public class OutputSettingsTests : UiTest
         preview.Resolution.Width.ShouldBe(320);
     }
 
+    // --- the processor switch ----------------------------------------------
+
+    private static ToggleButton Processor(MainWindow window) =>
+        All<ToggleButton>(window).Single(b => b.Content as string is "Compiled" or "Interpreted");
+
+    /// <summary>
+    /// On by default, like the GPU beside it: a program is interpreted until its
+    /// IL is ready anyway, so being on never makes anything wait.
+    /// </summary>
+    [AvaloniaFact]
+    public void The_processor_starts_compiled_and_says_so()
+    {
+        var window = Open();
+        Select(window, Editor(window).Patch.Output);
+
+        var toggle = Processor(window);
+
+        toggle.IsChecked.ShouldBe(true);
+        toggle.Content.ShouldBe("Compiled");
+        (ToolTip.GetTip(toggle) as string).ShouldNotBeNull().ShouldContain("sound");
+    }
+
+    /// <summary>
+    /// Off puts the interpreter back under the picture at once — not at the next
+    /// edit — because it is how the two are compared.
+    /// </summary>
+    [AvaloniaFact]
+    public void Switching_to_interpreted_takes_the_il_off_the_picture()
+    {
+        var window = Open();
+        Select(window, Editor(window).Patch.Output);
+
+        var toggle = Processor(window);
+        toggle.IsChecked = false;
+        Dispatcher.UIThread.RunJobs();
+
+        toggle.Content.ShouldBe("Interpreted");
+        All<PreviewHost>(window).Single().Program.Il.ShouldBeNull();
+
+        toggle.IsChecked = true;
+        Dispatcher.UIThread.RunJobs();
+
+        toggle.Content.ShouldBe("Compiled");
+    }
+
+    [AvaloniaFact]
+    public void The_processor_switch_keeps_its_value_across_a_round_trip()
+    {
+        var window = Open();
+        var patch = Editor(window).Patch;
+        var other = patch.Nodes.First(n => n.TypeId != NodeCatalog.OutputTypeId);
+
+        Select(window, patch.Output);
+        Processor(window).IsChecked = false;
+
+        Select(window, other);
+        Select(window, patch.Output);
+
+        Processor(window).IsChecked.ShouldBe(false);
+    }
+
     // --- the export button --------------------------------------------------
 
     private static Button Export(MainWindow window) =>

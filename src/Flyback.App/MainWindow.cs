@@ -211,6 +211,7 @@ public sealed partial class MainWindow : Window
 
     private readonly ToggleButton audioButton = new() { Content = "Audio off", Width = 92 };
     private readonly ToggleButton gpuButton = new() { Content = "GPU", Width = 60 };
+    private readonly ToggleButton compiledButton = new() { Content = "Compiled", Width = 92 };
     private readonly ToggleButton assistantButton =
         Toggle("assistant", "✦", "Describe a patch and have one built.");
 
@@ -244,6 +245,13 @@ public sealed partial class MainWindow : Window
     private readonly AudioEngine audio;
 
     /// <summary>
+    /// What runs the processor's programs as machine code once they are built —
+    /// the sound always, and the picture while the processor is drawing it. See
+    /// ADR-0076.
+    /// </summary>
+    private readonly IlCompiler compiler = new();
+
+    /// <summary>
     /// Everything that plays the patch from outside it. The mirror of
     /// <see cref="audio"/>, which takes what the patch makes to a device. Assigned
     /// in the constructor because it is handed the MIDI backend the plugins
@@ -271,7 +279,7 @@ public sealed partial class MainWindow : Window
         this.groupFolder = groupFolder;
 
         sound = OpenAudio(plugins);
-        audio = new AudioEngine(sound.Device);
+        audio = new AudioEngine(sound.Device) { Compiler = compiler };
 
         // Nothing is opened by this. The backend is asked what is plugged in
         // when a picker is drawn, and asked for a device only once a compiled

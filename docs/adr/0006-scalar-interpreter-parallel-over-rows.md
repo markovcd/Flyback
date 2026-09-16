@@ -6,7 +6,9 @@ gains stateful ops and the video path keeps the purity this relies on, and by
 [0035](0035-a-glsl-backend-for-the-video-path.md), where this stops being the
 only renderer, and by
 [0064](0064-a-pixel-runs-only-what-a-pixel-changes.md), which takes the other
-reading of the dispatch-bound finding below and shortens the list instead
+reading of the dispatch-bound finding below and shortens the list instead, and by
+[0076](0076-the-processor-runs-a-program-as-il-once-it-is-built.md), which removes
+the dispatch itself while keeping this loop as the reference
 
 ## Context
 

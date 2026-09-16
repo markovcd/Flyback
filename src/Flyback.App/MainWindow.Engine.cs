@@ -1,4 +1,5 @@
 using System.Globalization;
+using Flyback.App.Controls;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Plugins.Audio;
@@ -131,6 +132,8 @@ public sealed partial class MainWindow
             : editor.Patch.CompileForProbe(probe.Id, samples: Sounds, pictures: Pictures);
 
         preview.Program = result.Program;
+        if (preview.Backend == PreviewBackend.Cpu) compiler.Submit(result.Program, IlLane.Picture);
+
         audio.Update(editor.Patch, Sounds);
 
         // A chart rooted at a Probe is a picture like any other, so the preview
@@ -259,6 +262,7 @@ public sealed partial class MainWindow
         Stop();
 
         audio.Dispose();
+        compiler.Dispose();
 
         // And the instruments, which are hardware somebody else may want back. A
         // port left open outlives the window that was reading it.
@@ -275,11 +279,18 @@ public sealed partial class MainWindow
         var ms = preview.FrameMilliseconds;
         var size = preview.Resolution;
 
+        // Whether the processor's frame came from IL is what it has actually got,
+        // not what the switch asks for: an edit is interpreted until its IL arrives,
+        // and the number on this line means something different either side of that.
+        var backend = preview.Backend != PreviewBackend.Cpu ? preview.BackendName
+            : preview.Program.Il is null ? $"{preview.BackendName}, interpreted"
+            : $"{preview.BackendName}, compiled";
+
         // The loop is capped at ~60 Hz, so report the cost of a frame rather
         // than a frame rate the timer would never let you observe. Which renderer
         // produced the number is part of what it means, so it is said alongside.
         status.Text = string.Create(
             CultureInfo.InvariantCulture,
-            $"{nodes} modules · {wires} wires · {ops} ops   |   t = {preview.Time:0.00}s   |   {ms:0.0} ms to render {size.Width} × {size.Height} on the {preview.BackendName}");
+            $"{nodes} modules · {wires} wires · {ops} ops   |   t = {preview.Time:0.00}s   |   {ms:0.0} ms to render {size.Width} × {size.Height} on the {backend}");
     }
 }

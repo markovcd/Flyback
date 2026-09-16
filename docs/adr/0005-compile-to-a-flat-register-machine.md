@@ -1,6 +1,7 @@
 # ADR-0005: Compile patches to a flat register machine
 
-**Status:** Accepted · 2026-08-11
+**Status:** Accepted · 2026-08-11 · option 3 taken up beside this, not instead of it, by
+[0076](0076-the-processor-runs-a-program-as-il-once-it-is-built.md)
 
 ## Context
 

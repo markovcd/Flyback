@@ -6,7 +6,8 @@ namespace Flyback.Core.Benchmarks;
 
 /// <summary>
 /// The interpreter's inner loop on its own: one program over a row of pixel
-/// coordinates, walked whole and walked in stages.
+/// coordinates, walked whole and walked in stages — and the same program lowered
+/// to IL, run the same two ways.
 /// </summary>
 [MemoryDiagnoser]
 public class EvaluateBenchmarks
@@ -18,6 +19,7 @@ public class EvaluateBenchmarks
 
     private CompiledPatch patch = null!;
     private double[] registers = null!;
+    private IlProgram il = null!;
 
     [Params("Plasma", "Kaleidoscope", "Nebula", "FeedbackTunnel", "WholeBand")]
     public string Preset { get; set; } = "Plasma";
@@ -35,6 +37,8 @@ public class EvaluateBenchmarks
         });
 
         registers = patch.AllocateRegisters();
+
+        il = IlProgram.Compile(patch);
     }
 
     [Benchmark(Baseline = true)]
@@ -64,6 +68,39 @@ public class EvaluateBenchmarks
         for (var i = 0; i < Pixels; i++)
         {
             patch.EvaluateStage(EvaluationStage.Pixel, At(i), Y, T, registers, feedback, Aspect);
+            total += registers[patch.OutputBase];
+        }
+
+        return total;
+    }
+
+    [Benchmark]
+    public double IlWhole()
+    {
+        var feedback = default(FeedbackFrame);
+        var total = 0d;
+
+        for (var i = 0; i < Pixels; i++)
+        {
+            il.Evaluate(At(i), Y, T, registers, feedback, aspect: Aspect);
+            total += registers[patch.OutputBase];
+        }
+
+        return total;
+    }
+
+    [Benchmark]
+    public double IlStaged()
+    {
+        var feedback = default(FeedbackFrame);
+        var total = 0d;
+
+        il.EvaluateStage(EvaluationStage.Frame, 0d, Y, T, registers, feedback, Aspect);
+        il.EvaluateStage(EvaluationStage.Row, 0d, Y, T, registers, feedback, Aspect);
+
+        for (var i = 0; i < Pixels; i++)
+        {
+            il.EvaluateStage(EvaluationStage.Pixel, At(i), Y, T, registers, feedback, Aspect);
             total += registers[patch.OutputBase];
         }
 

@@ -111,6 +111,41 @@ public sealed class CompiledPatch(
 
     private readonly LoadedImage[] pictureArray = pictures as LoadedImage[] ?? [.. pictures ?? []];
 
+    /// <summary>The clips as the IL backend hands them to its methods, for the reason the interpreter indexes them.</summary>
+    internal LoadedSample[] TableArray => tableArray;
+
+    /// <summary>The pictures, likewise.</summary>
+    internal LoadedImage[] PictureArray => pictureArray;
+
+    private IlProgram? il;
+
+    /// <summary>
+    /// This program lowered to IL and put through the JIT, or null while it is
+    /// only interpreted — see <see cref="IlCompiler"/>, which is what attaches one.
+    /// </summary>
+    /// <remarks>
+    /// A renderer reads this once per frame or per buffer and runs whichever it
+    /// found. Both give the same doubles, so it may change between two reads
+    /// without anything being heard or seen — which is what lets it arrive on a
+    /// background thread after the program is already playing. It is the one
+    /// thing about a compiled patch that changes after it is made, and it is a
+    /// faster way to the same answer rather than a different answer.
+    /// </remarks>
+    public IlProgram? Il => Volatile.Read(ref il);
+
+    /// <summary>
+    /// Makes <paramref name="program"/> what renderers run for this patch, or
+    /// puts the interpreter back when it is null.
+    /// </summary>
+    /// <exception cref="ArgumentException">The IL was bound to a different patch, whose constants it would read.</exception>
+    public void Attach(IlProgram? program)
+    {
+        if (program is not null && !ReferenceEquals(program.Source, this))
+            throw new ArgumentException("The IL program was bound to a different patch.", nameof(program));
+
+        Volatile.Write(ref il, program);
+    }
+
     public int RegisterCount { get; } = Vouch(ops, registerCount);
 
     /// <summary>
@@ -588,7 +623,7 @@ public sealed class CompiledPatch(
         MemoryMarshal.CreateSpan(ref Reg(ref bank, first), 3);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static double Guard(double v) => double.IsFinite(v) ? v : 0d;
+    internal static double Guard(double v) => double.IsFinite(v) ? v : 0d;
 
     /// <summary>
     /// Feedback held below one. At exactly one a delay line never decays and at
@@ -596,7 +631,7 @@ public sealed class CompiledPatch(
     /// knob is turned back down.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static double Feedback(double v) => double.IsFinite(v) ? Math.Clamp(v, -0.99d, 0.99d) : 0d;
+    internal static double Feedback(double v) => double.IsFinite(v) ? Math.Clamp(v, -0.99d, 0.99d) : 0d;
 
     /// <summary>
     /// What may be put in a plane, which is <see cref="DelayState.WritePlane"/>'s
@@ -609,7 +644,7 @@ public sealed class CompiledPatch(
     /// turning it into a NaN that spreads.
     /// </remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static float Bounded(double v) =>
+    internal static float Bounded(double v) =>
         double.IsFinite(v) ? (float)Math.Clamp(v, -16d, 16d) : 0f;
 
     /// <summary>
@@ -620,7 +655,7 @@ public sealed class CompiledPatch(
     private const double JustBelowOne = 0.99999999999999989d;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static double Fract(double v)
+    internal static double Fract(double v)
     {
         var fraction = v - Math.Floor(v);
         return fraction < 1d ? fraction : JustBelowOne;
@@ -633,12 +668,12 @@ public sealed class CompiledPatch(
     // ReSharper disable CompareOfFloatsByEqualityOperator
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static double Divide(double a, double b) => b == 0d ? 0d : Guard(a / b);
+    internal static double Divide(double a, double b) => b == 0d ? 0d : Guard(a / b);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static double Modulo(double a, double b) => b == 0d ? 0d : Guard(a - b * Math.Floor(a / b));
+    internal static double Modulo(double a, double b) => b == 0d ? 0d : Guard(a - b * Math.Floor(a / b));
 
-    private static double Smoothstep(double edge0, double edge1, double x)
+    internal static double Smoothstep(double edge0, double edge1, double x)
     {
         if (edge0 == edge1) return x < edge0 ? 0d : 1d;
 
@@ -648,7 +683,7 @@ public sealed class CompiledPatch(
 
     // ReSharper restore CompareOfFloatsByEqualityOperator
 
-    private static void HsvToRgb(double h, double s, double v, Span<double> rgb)
+    internal static void HsvToRgb(double h, double s, double v, Span<double> rgb)
     {
         h = Fract(h) * 6d;
         s = Math.Clamp(s, 0d, 1d);
@@ -671,7 +706,7 @@ public sealed class CompiledPatch(
     }
 
     /// <summary>Bilinear read of the previous frame in patch coordinates, clamped at the edges.</summary>
-    private static void Sample(in FeedbackFrame frame, double u, double v, Span<double> rgb)
+    internal static void Sample(in FeedbackFrame frame, double u, double v, Span<double> rgb)
     {
         var pixels = frame.Pixels;
         if (pixels is null || frame.Width < 2 || frame.Height < 2)

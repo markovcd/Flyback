@@ -56,6 +56,7 @@ context, decision, consequences.
 | [0064](0064-a-pixel-runs-only-what-a-pixel-changes.md) | A pixel runs only what a pixel changes |
 | [0074](0074-a-cell-is-a-plane-on-the-video-path.md) | A cell is a plane on the video path *(user-directed)* |
 | [0075](0075-a-cycle-carries-its-own-delay.md) | A cycle carries its own delay *(user-directed)* |
+| [0076](0076-the-processor-runs-a-program-as-il-once-it-is-built.md) | The processor runs a program as IL once it is built *(user-directed)* |
 
 ### The shell
 

@@ -24,6 +24,7 @@ public class RowBenchmarks
 
     private CompiledPatch patch = null!;
     private double[] registers = null!;
+    private IlProgram il = null!;
     private float[] history = null!;
     private byte[] row = null!;
 
@@ -44,6 +45,8 @@ public class RowBenchmarks
         registers = patch.AllocateRegisters();
         history = new float[Width * 3];
         row = new byte[Width * 4];
+
+        il = IlProgram.Compile(patch);
     }
 
     [Benchmark(Baseline = true)]
@@ -69,6 +72,21 @@ public class RowBenchmarks
         for (var x = 0; x < Width; x++)
         {
             patch.EvaluateStage(EvaluationStage.Pixel, At(x), Y, T, registers, feedback, Aspect);
+            Store(x);
+        }
+    }
+
+    [Benchmark]
+    public void IlStaged()
+    {
+        var feedback = default(FeedbackFrame);
+
+        il.EvaluateStage(EvaluationStage.Frame, 0d, Y, T, registers, feedback, Aspect);
+        il.EvaluateStage(EvaluationStage.Row, 0d, Y, T, registers, feedback, Aspect);
+
+        for (var x = 0; x < Width; x++)
+        {
+            il.EvaluateStage(EvaluationStage.Pixel, At(x), Y, T, registers, feedback, Aspect);
             Store(x);
         }
     }
