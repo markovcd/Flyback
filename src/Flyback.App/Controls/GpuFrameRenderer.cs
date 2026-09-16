@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using Avalonia;
 using Avalonia.OpenGL;
 using Flyback.App.Capture;
@@ -22,9 +23,31 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
 {
     // Not in GlConsts, which carries the ES 2.0 era set.
     private const int GlRgba16F = 0x881A;
+    private const int GlRgba32F = 0x8814;
     private const int GlHalfFloat = 0x140B;
     private const int GlBlend = 0x0BE2;
     private const int GlTriangleStrip = 0x0005;
+
+    /// <remarks>
+    /// <see cref="GlInterface"/> binds what Avalonia draws with, and Avalonia
+    /// draws into one attachment — so the call that turns the others on comes
+    /// through <see cref="GlInterface.GetProcAddress"/>, the door
+    /// <see cref="GpuReadback"/> uses for the same reason.
+    /// </remarks>
+    [UnmanagedFunctionPointer(CallingConvention.Winapi)]
+    private delegate void GlDrawBuffers(int count, IntPtr buffers);
+
+    /// <remarks>
+    /// Desktop GLSL 1.50 has no <c>layout(location = …)</c> on a fragment output,
+    /// so which attachment each one goes to is said from out here instead. ES has
+    /// the qualifier and not this call, which is why the shader carries both — see
+    /// <see cref="GlslEmitter"/>.
+    /// </remarks>
+    [UnmanagedFunctionPointer(CallingConvention.Winapi)]
+    private delegate void GlBindFragDataLocation(int program, int color, string name);
+
+    private GlDrawBuffers? drawBuffers;
+    private GlBindFragDataLocation? bindFragDataLocation;
 
     /// <summary>The four corners of the unit square, in strip order.</summary>
     private static readonly IntPtr Quad = new(4);
@@ -77,6 +100,19 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
 
     private readonly int[] textures = [0, 0];
     private readonly int[] framebuffers = [0, 0];
+
+    /// <summary>
+    /// The planes the patch carries from frame to frame, four to a texture and
+    /// ping-ponged beside the history: a shader cannot read the target it is
+    /// writing, which is the one thing the processor's planes do not have to care
+    /// about. Empty for a patch with no loop in it — see ADR-0074.
+    /// </summary>
+    private readonly int[][] planes = [[], []];
+
+    /// <summary>How many of those the program on the card wants, and where its samplers are.</summary>
+    private int planeTargets;
+
+    private int[] patchPlanes = [];
     private readonly GpuReadback readback = new();
     private PixelSize size;
     private int read;
@@ -139,11 +175,24 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
         blitScaleX = gl.GetUniformLocationString(blit, "uScaleX");
         blitScaleY = gl.GetUniformLocationString(blit, "uScaleY");
 
+        // Neither of these is fatal here either: a context without them draws
+        // every patch that has no loop in it, and a patch that has one is refused
+        // in SetPatch and drawn on the processor instead.
+        drawBuffers = Bind<GlDrawBuffers>(gl, "glDrawBuffers");
+        bindFragDataLocation = Bind<GlBindFragDataLocation>(gl, "glBindFragDataLocation");
+
         // Not fatal when it fails: a machine that cannot read frames back can
         // still show them, and only a recording is refused.
         readback.Initialise(gl);
 
         return null;
+    }
+
+    private static T? Bind<T>(GlInterface gl, string name) where T : Delegate
+    {
+        var address = gl.GetProcAddress(name);
+
+        return address == IntPtr.Zero ? null : Marshal.GetDelegateForFunctionPointer<T>(address);
     }
 
     /// <summary>
@@ -153,11 +202,29 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
     /// </summary>
     public string? SetPatch(GlInterface gl, CompiledPatch patch)
     {
-        // Asked first, because what follows would otherwise throw on an op with no
-        // lowering. The caller reads a refusal as "draw this one on the processor".
-        if (GlslEmitter.Unsupported(patch) is { } refusal) return refusal;
-
         var shaders = GlslEmitter.Emit(patch, dialect);
+
+        // A patch that carries something round per pixel needs a target per four
+        // planes, which needs the call that turns the extra attachments on. Where
+        // there is none, saying so hands the frame to the processor, which draws
+        // the same picture more slowly.
+        if (shaders.PlaneTargets > 0 && drawBuffers is null)
+            return "This context draws to one attachment, and a loop in the patch needs several.";
+
+        // Where the text cannot say which attachment an output goes to, something
+        // has to, and a linker left to choose would put the planes wherever it
+        // liked — which draws a picture rather than an error.
+        if (shaders.PlaneTargets > 0 && dialect is GlslDialect.Glsl150 && bindFragDataLocation is null)
+            return "This context cannot be told where a shader's outputs go, and a loop in the patch needs to say.";
+
+        // The attachments belong to the framebuffers, so a patch that gained or
+        // lost a loop is a reason to build them again. Forgetting the size is how
+        // that is asked for; Resize is the only thing that reads it.
+        if (shaders.PlaneTargets != planeTargets)
+        {
+            planeTargets = shaders.PlaneTargets;
+            size = default;
+        }
 
         // The values behind the constants change with every knob; where they sit
         // does not, so this is picked up whether or not the shader is rebuilt.
@@ -171,7 +238,12 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
         if (shaders.PatchFragment == liveSource) return null;
         if (shaders.PatchFragment == refusedSource) return null;
 
-        var program = Link(gl, shaders.PatchVertex, shaders.PatchFragment, out var error);
+        var program = Link(
+            gl,
+            shaders.PatchVertex,
+            shaders.PatchFragment,
+            out var error,
+            linking => BindOutputs(linking, shaders.PlaneTargets));
 
         if (program is not { } compiled)
         {
@@ -219,6 +291,14 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
             patchPictures[i] = gl.GetUniformLocationString(compiled, $"uPicture{i}");
             patchPictureAspects[i] = gl.GetUniformLocationString(compiled, $"uPictureAspect{i}");
         }
+
+        // And one sampler per plane target, holding what the frame before left in
+        // it. What is bound to them is chosen per frame, since which of the pair
+        // is being read alternates.
+        patchPlanes = new int[shaders.PlaneTargets];
+
+        for (var i = 0; i < patchPlanes.Length; i++)
+            patchPlanes[i] = gl.GetUniformLocationString(compiled, $"uPlane{i}");
 
         return null;
     }
@@ -332,7 +412,12 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
             for (var i = 0; i < 2; i++)
             {
                 gl.BindFramebuffer(GL_FRAMEBUFFER, framebuffers[i]);
-                gl.ClearColor(0f, 0f, 0f, 1f);
+
+                // Opaque black where the picture is all there is, and transparent
+                // black where the planes are attached beside it: the clear reaches
+                // every attachment, and a plane that took the picture's alpha
+                // would start every loop holding one rather than nothing.
+                gl.ClearColor(0f, 0f, 0f, planeTargets == 0 ? 1f : 0f);
                 gl.Clear(GL_COLOR_BUFFER_BIT);
             }
 
@@ -421,6 +506,17 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
 
             if (patchPictures[i] >= 0) gl.Uniform1i(patchPictures[i], 1 + i);
             if (patchPictureAspects[i] >= 0) gl.Uniform1f(patchPictureAspects[i], shown[i].Aspect);
+        }
+
+        // The planes as the frame before left them, on the units above the
+        // pictures. The pair alternates with the history, so what is read here is
+        // always the side that is not being written.
+        for (var i = 0; i < patchPlanes.Length && i < planes[read].Length; i++)
+        {
+            gl.ActiveTexture(GL_TEXTURE0 + 1 + pictures.Length + i);
+            gl.BindTexture(GL_TEXTURE_2D, planes[read][i]);
+
+            if (patchPlanes[i] >= 0) gl.Uniform1i(patchPlanes[i], 1 + pictures.Length + i);
         }
 
         gl.DrawArrays(GlTriangleStrip, 0, Quad);
@@ -512,7 +608,8 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
             if (complete)
             {
                 EightBitFeedback = eightBit;
-                return null;
+
+                return planeTargets == 0 ? null : Attach(gl, resolution);
             }
 
             Release(gl);
@@ -521,7 +618,121 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
         return "This GPU will not render to an offscreen buffer.";
     }
 
-    private static int? Link(GlInterface gl, string vertex, string fragment, out string? error)
+    /// <summary>
+    /// Says which attachment each of the fragment shader's outputs goes to, for
+    /// the dialect whose text cannot. Called between linking and compiling,
+    /// because that is the only moment a binding is read.
+    /// </summary>
+    /// <remarks>
+    /// Nothing to do where the shader carried its own locations — ES does, and
+    /// saying it twice would be this telling a driver something its own text has
+    /// already settled — and nothing to do for a patch with no planes, whose one
+    /// output goes to attachment zero wherever the linker puts it.
+    /// </remarks>
+    private void BindOutputs(int program, int targets)
+    {
+        if (targets == 0 || dialect is not GlslDialect.Glsl150) return;
+        if (bindFragDataLocation is not { } bind) return;
+
+        bind(program, 0, "fragColor");
+
+        for (var target = 0; target < targets; target++)
+            bind(program, target + 1, $"outPlane{target}");
+    }
+
+    /// <summary>
+    /// Hangs the plane targets off both framebuffers and turns the attachments
+    /// on. Null on success; a message where the card will not render to a float
+    /// surface, which hands the patch to the processor.
+    /// </summary>
+    /// <remarks>
+    /// Full floats first and half floats after. A colour tolerates ten bits of
+    /// mantissa — ADR-0012 argues that case for the history — but a plane is
+    /// usually an accumulator, and an accumulator quantised on every pass drifts
+    /// where a colour merely bands. Eight-bit is not offered at all: it cannot
+    /// hold what a plane is allowed to carry, let alone hold it still.
+    /// </remarks>
+    private string? Attach(GlInterface gl, PixelSize resolution)
+    {
+        foreach (var (internalFormat, type) in
+                 (ReadOnlySpan<(int, int)>)[(GlRgba32F, GL_FLOAT), (GlRgba16F, GlHalfFloat)])
+        {
+            var complete = true;
+
+            for (var i = 0; i < 2; i++)
+            {
+                planes[i] = new int[planeTargets];
+
+                gl.BindFramebuffer(GL_FRAMEBUFFER, framebuffers[i]);
+
+                for (var target = 0; target < planeTargets; target++)
+                {
+                    planes[i][target] = gl.GenTexture();
+                    gl.BindTexture(GL_TEXTURE_2D, planes[i][target]);
+                    gl.TexImage2D(
+                        GL_TEXTURE_2D, 0, internalFormat,
+                        resolution.Width, resolution.Height, 0,
+                        GL_RGBA, type, IntPtr.Zero);
+
+                    // Nearest and clamped, unlike the history: a plane is read at
+                    // the texel the fragment is, and a filtered read would blend
+                    // in the neighbours a plane is defined not to see.
+                    gl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+                    gl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+                    gl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+                    gl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+                    gl.FramebufferTexture2D(
+                        GL_FRAMEBUFFER,
+                        GL_COLOR_ATTACHMENT0 + target + 1,
+                        GL_TEXTURE_2D,
+                        planes[i][target],
+                        0);
+                }
+
+                Enable(gl);
+
+                complete &= gl.CheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE;
+            }
+
+            if (complete) return null;
+
+            ReleasePlanes(gl);
+        }
+
+        // Only the planes go; the history is sound and the message is what sends
+        // the frame to the processor, which will free the rest on the way out.
+        return "This GPU will not keep a value per pixel between frames.";
+    }
+
+    /// <summary>
+    /// Names the attachments the shader writes, in order, for the framebuffer
+    /// currently bound. A framebuffer draws to its first attachment and no other
+    /// until it is told otherwise, so without this the planes would be written
+    /// nowhere and read back as the nothing they started as.
+    /// </summary>
+    private void Enable(GlInterface gl)
+    {
+        if (drawBuffers is not { } enable) return;
+
+        Span<int> attachments = stackalloc int[planeTargets + 1];
+
+        for (var i = 0; i < attachments.Length; i++)
+            attachments[i] = GL_COLOR_ATTACHMENT0 + i;
+
+        unsafe
+        {
+            fixed (int* first = attachments)
+                enable(attachments.Length, (IntPtr)first);
+        }
+    }
+
+    private static int? Link(
+        GlInterface gl,
+        string vertex,
+        string fragment,
+        out string? error,
+        Action<int>? beforeLinking = null)
     {
         var vertexShader = gl.CreateShader(GL_VERTEX_SHADER);
         error = gl.CompileShaderAndGetError(vertexShader, vertex);
@@ -545,6 +756,9 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
         var program = gl.CreateProgram();
         gl.AttachShader(program, vertexShader);
         gl.AttachShader(program, fragmentShader);
+
+        beforeLinking?.Invoke(program);
+
         error = gl.LinkProgramAndGetError(program);
 
         gl.DeleteShader(vertexShader);
@@ -558,12 +772,30 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
 
     private void Release(GlInterface gl)
     {
+        ReleasePlanes(gl);
+
         for (var i = 0; i < 2; i++)
         {
             if (framebuffers[i] != 0) gl.DeleteFramebuffer(framebuffers[i]);
             if (textures[i] != 0) gl.DeleteTexture(textures[i]);
             framebuffers[i] = 0;
             textures[i] = 0;
+        }
+    }
+
+    /// <summary>
+    /// The planes alone, which one format's attempt hands back before the next is
+    /// tried — the framebuffers they were hung off are still good.
+    /// </summary>
+    private void ReleasePlanes(GlInterface gl)
+    {
+        for (var i = 0; i < 2; i++)
+        {
+            foreach (var texture in planes[i])
+                if (texture != 0)
+                    gl.DeleteTexture(texture);
+
+            planes[i] = [];
         }
     }
 

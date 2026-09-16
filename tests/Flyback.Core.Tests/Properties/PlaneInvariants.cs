@@ -188,19 +188,60 @@ public class PlaneInvariants
     }
 
     /// <summary>
-    /// The shader has nowhere to keep a plane, so it refuses the whole program
-    /// and the frame is drawn on the processor. Lowering the loop to nothing
-    /// instead would put a different picture on the GPU from the one the
-    /// interpreter draws, which is the one thing the two backends may not do.
+    /// The shader keeps a plane in a render target of its own: read at the texel
+    /// this fragment is, written back at the end of the pass, and carried between
+    /// frames by the same pair the history ping-pongs between.
     /// </summary>
     [Fact]
-    public void A_patch_with_a_loop_is_refused_by_the_shader()
+    public void The_shader_reads_a_plane_by_texel_and_writes_it_to_its_own_target()
     {
-        GlslEmitter.Unsupported(Accumulator()).ShouldNotBeNull();
+        var source = GlslEmitter.Emit(Accumulator(), GlslDialect.GlslEs300);
 
+        source.PlaneTargets.ShouldBe(1);
+
+        var fragment = source.PatchFragment;
+
+        fragment.ShouldContain("uniform sampler2D uPlane0;");
+        fragment.ShouldContain("layout(location = 1) out vec4 outPlane0;");
+
+        // By texel and not by sample: a plane is this pixel's, and a filtered read
+        // would blend the neighbours it is defined not to see.
+        fragment.ShouldContain("texelFetch(uPlane0, ivec2(gl_FragCoord.xy), 0)");
+
+        // Bounded on the way in, as the interpreter's is, and handed to the target
+        // whether this pass wrote it or not.
+        fragment.ShouldContain("pl0 = bd(");
+        fragment.ShouldContain("outPlane0 = vec4(pl0, 0.0, 0.0, 0.0);");
+    }
+
+    /// <summary>
+    /// Desktop GLSL 1.50 has no location qualifier on a fragment output, so the
+    /// shader declares plain outputs there and <c>GpuFrameRenderer</c> says which
+    /// attachment each goes to before it links. Emitting the qualifier anyway
+    /// would fail to compile on exactly the machines that path exists for.
+    /// </summary>
+    [Fact]
+    public void The_desktop_dialect_leaves_the_attachment_numbers_to_the_renderer()
+    {
+        var fragment = GlslEmitter.Emit(Accumulator(), GlslDialect.Glsl150).PatchFragment;
+
+        fragment.ShouldContain("out vec4 outPlane0;");
+        fragment.ShouldNotContain("layout(location");
+    }
+
+    /// <summary>
+    /// And a patch with no loop asks for no target, so nothing about the shader
+    /// or the framebuffers it draws into changes for the patches that had none.
+    /// </summary>
+    [Fact]
+    public void A_patch_with_no_loop_asks_for_no_target()
+    {
         var plasma = Presets.Plasma(NodeCatalog.BuiltIn).CompileForVideo(NodeCatalog.BuiltIn).Program;
+        var source = GlslEmitter.Emit(plasma, GlslDialect.GlslEs300);
 
-        GlslEmitter.Unsupported(plasma).ShouldBeNull();
+        source.PlaneTargets.ShouldBe(0);
+        source.PatchFragment.ShouldNotContain("uPlane");
+        source.PatchFragment.ShouldContain("out vec4 fragColor;");
     }
 
     // --- what survives an edit ----------------------------------------------

@@ -23,17 +23,13 @@ public class GlslEmitterTests
     /// rather than detected, so that adding one is a decision somebody made here
     /// rather than a silent hole in the theory below.
     /// </summary>
+    /// <remarks>
+    /// A plane write is here for a different reason from the rest: it does write
+    /// something, but what it writes is a plane rather than a register, and the
+    /// target it ends up in is assigned at the end of main.
+    /// </remarks>
     private static bool WritesNothing(OpCode code) =>
-        code is OpCode.UnitWrite or OpCode.ClockWrite or OpCode.Tap;
-
-    /// <summary>
-    /// The ops this backend has no answer for at all: a plane is a value per pixel
-    /// kept between frames, which wants a render target and a pair of them to
-    /// ping-pong. Refused whole rather than lowered to nothing, since a loop
-    /// quietly left open draws a different picture from the one the interpreter
-    /// draws.
-    /// </summary>
-    private static bool KeptPerPixel(OpCode code) => code is OpCode.PlaneRead or OpCode.PlaneWrite;
+        code is OpCode.UnitWrite or OpCode.ClockWrite or OpCode.Tap or OpCode.PlaneWrite;
 
     /// <summary>
     /// The test that matters: it fails the day an opcode is added and the shader
@@ -44,16 +40,6 @@ public class GlslEmitterTests
     [MemberData(nameof(AllOpCodes))]
     public void Every_opcode_lowers_to_a_line(OpCode code)
     {
-        if (KeptPerPixel(code))
-        {
-            // Said before the shader is built, so the caller can draw the frame on
-            // the processor instead — and still fatal underneath, so no later
-            // backend can lower half a plane by accident.
-            GlslEmitter.Unsupported(OneOp(code)).ShouldNotBeNull();
-            Should.Throw<NotSupportedException>(() => GlslEmitter.Emit(OneOp(code), GlslDialect.GlslEs300));
-            return;
-        }
-
         var source = GlslEmitter.Emit(OneOp(code), GlslDialect.GlslEs300);
 
         if (WritesNothing(code))
@@ -149,6 +135,34 @@ public class GlslEmitterTests
         await Verify(GlslEmitter.Emit(program, dialect).PatchFragment, "glsl")
             .UseDirectory("snapshots")
             .UseParameters(presetName, dialect);
+    }
+
+    /// <summary>
+    /// A patch that carries a value round, which is the shader with the most
+    /// moving parts: a sampler and a target it did not have before, a fetch by
+    /// texel, and a write back at the end of the pass whether or not this pass
+    /// touched the plane. Approved as text for the reason above — a loop drawn
+    /// wrongly looks like a picture rather than like an error.
+    /// </summary>
+    [Theory]
+    [MemberData(nameof(AllDialects))]
+    public async Task A_loop_lowers_as_approved(GlslDialect dialect)
+    {
+        var b = new PatchBuilder();
+
+        var unit = b.Add(NodeCatalog.UnitDelayTypeId, 200, 0);
+        var add = b.Add("math.add", 400, 0, (1, 0.25f));
+        var sink = b.Add(NodeCatalog.OutputTypeId, 600, 0);
+
+        b.Wire(unit, 0, add, 0)
+         .Wire(add, 0, unit, 0)
+         .Wire(unit, 0, sink, 0);
+
+        var program = b.Patch.CompileForVideo(NodeCatalog.BuiltIn).Program;
+
+        await Verify(GlslEmitter.Emit(program, dialect).PatchFragment, "glsl")
+            .UseDirectory("snapshots")
+            .UseParameters(dialect);
     }
 
     /// <summary>The three shaders that do not depend on the patch.</summary>

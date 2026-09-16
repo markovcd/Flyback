@@ -35,6 +35,12 @@ public enum GlslDialect
 /// <see cref="CompiledPatch.Pictures"/>, in that order, so the uploader reads the
 /// pixels off the program rather than out of here.
 /// </param>
+/// <param name="PlaneTargets">
+/// How many render targets the fragment shader writes besides the picture, one
+/// per four planes the patch carries — see <see cref="OpCode.PlaneRead"/>. Their
+/// outputs are named <c>outPlane0</c> upward and take locations 1 upward; the
+/// textures they were written to last frame come back as <c>uPlane0</c> upward.
+/// </param>
 public sealed record ShaderSource(
     string PatchVertex,
     string PatchFragment,
@@ -44,7 +50,8 @@ public sealed record ShaderSource(
     bool UsesFeedback,
     int OpCount,
     int LiveCount = 0,
-    int PictureCount = 0);
+    int PictureCount = 0,
+    int PlaneTargets = 0);
 
 /// <summary>
 /// Lowers a compiled patch to a fragment shader — the second backend ADR-0003
@@ -79,30 +86,14 @@ public static class GlslEmitter
         [.. patch.Ops.Where(op => op.Code == OpCode.Const).Select(op => op.K)];
 
     /// <summary>
-    /// Why <paramref name="patch"/> cannot be drawn as a shader, or null when it
-    /// can — which every patch could until a loop could be seen.
+    /// How many render targets the planes of <paramref name="patch"/> need: four
+    /// to a target, since each is one channel of an RGBA surface.
     /// </summary>
-    /// <remarks>
-    /// Asked before <see cref="Emit"/> rather than answered by it, because the
-    /// caller's move is to draw the frame on the processor instead: there is a
-    /// picture either way, and the only thing lost is the speed.
-    /// <para>
-    /// A plane is a value per pixel carried between frames, which here means a
-    /// render target per four planes and a pair of them to ping-pong, since a
-    /// shader cannot read the texture it is writing. Until this backend has them,
-    /// saying so is the honest answer — lowering a plane to zero would draw a
-    /// different picture from the one the interpreter draws, which is the one
-    /// thing the two backends may never do.
-    /// </para>
-    /// </remarks>
-    public static string? Unsupported(CompiledPatch patch)
+    public static int PlaneTargets(CompiledPatch patch)
     {
         ArgumentNullException.ThrowIfNull(patch);
 
-        return patch.PlaneCount == 0
-            ? null
-            : "A loop in the patch carries a value per pixel from frame to frame, "
-            + "which this shader backend has nowhere to keep.";
+        return (patch.PlaneCount + 3) / 4;
     }
 
     public static ShaderSource Emit(CompiledPatch patch, GlslDialect dialect)
@@ -121,7 +112,8 @@ public static class GlslEmitter
             UsesFeedback: feedback,
             OpCount: patch.Ops.Length,
             LiveCount: patch.LiveCount,
-            PictureCount: Textures(patch));
+            PictureCount: Textures(patch),
+            PlaneTargets: PlaneTargets(patch));
     }
 
     // --- headers -----------------------------------------------------------------
@@ -324,6 +316,18 @@ public static class GlslEmitter
         """;
 
     /// <summary>
+    /// The bound a value takes on its way into a plane, which is
+    /// <c>CompiledPatch.Bounded</c> and <c>DelayState.WritePlane</c> written a
+    /// third time. A cycle drawn as wires has no gain of its own, so a loop above
+    /// unity is easy to draw and this is where it stops.
+    /// </summary>
+    private const string PlaneHelper =
+        """
+        float bd(float v) { return fin(v) ? clamp(v, -16.0, 16.0) : 0.0; }
+
+        """;
+
+    /// <summary>
     /// The previous frame, read the way CompiledPatch.Sample reads it. The scales
     /// carry the whole mapping — patch coordinates to texel centres, and the y
     /// flip between a picture indexed downwards and a texture stored upwards — so
@@ -416,11 +420,46 @@ public static class GlslEmitter
         // no array and reads none.
         if (patch.LiveCount > 0) text.AppendLine($"uniform float uLive[{patch.LiveCount}];");
 
+        var targets = PlaneTargets(patch);
+
+        // One sampler per target, holding what these pixels left there when the
+        // frame before was drawn. Declared rather than arrayed, as the pictures
+        // are and for the same reason.
+        for (var target = 0; target < targets; target++)
+            text.AppendLine($"uniform sampler2D uPlane{target};");
+
         text.AppendLine();
         text.AppendLine("in vec2 vUv;");
-        text.AppendLine("out vec4 fragColor;");
+
+        // A location on every output or none: a shader that writes more than the
+        // picture has to say which attachment each goes to, and ES has no
+        // glBindFragDataLocation to say it from the outside — see
+        // GpuFrameRenderer, which binds the same numbers where the dialect will
+        // not carry them.
+        if (targets == 0)
+        {
+            text.AppendLine("out vec4 fragColor;");
+        }
+        else
+        {
+            var located = dialect is GlslDialect.GlslEs300;
+
+            text.AppendLine(located ? "layout(location = 0) out vec4 fragColor;" : "out vec4 fragColor;");
+
+            for (var target = 0; target < targets; target++)
+                text.AppendLine(located
+                    ? $"layout(location = {target + 1}) out vec4 outPlane{target};"
+                    : $"out vec4 outPlane{target};");
+        }
+
         text.AppendLine();
         text.Append(Helpers);
+
+        if (targets > 0)
+        {
+            text.AppendLine();
+            text.Append(PlaneHelper);
+        }
 
         if (feedback)
         {
@@ -445,6 +484,23 @@ public static class GlslEmitter
         // rasteriser has already centred.
         text.AppendLine("    float px = (vUv.x * 2.0 - 1.0) * uAspect;");
         text.AppendLine("    float py = vUv.y * 2.0 - 1.0;");
+
+        // What this pixel left in each plane, taken by texel rather than by
+        // sample: a plane is the pixel's own and a filtered read would blend its
+        // neighbours into it. Held in a variable apiece so that a plane nothing
+        // writes this pass carries on holding what it held, which is what a cell
+        // the interpreter never writes does.
+        if (patch.PlaneCount > 0)
+        {
+            text.AppendLine();
+
+            for (var target = 0; target < targets; target++)
+                text.AppendLine($"    vec4 pv{target} = texelFetch(uPlane{target}, ivec2(gl_FragCoord.xy), 0);");
+
+            for (var plane = 0; plane < patch.PlaneCount; plane++)
+                text.AppendLine($"    float pl{plane} = pv{plane / 4}[{plane % 4}];");
+        }
+
         text.AppendLine();
 
         var written = Body(patch, text);
@@ -453,10 +509,29 @@ public static class GlslEmitter
         text.AppendLine(
             $"    fragColor = vec4({Output(patch, written, 0)}, " +
             $"{Output(patch, written, 1)}, {Output(patch, written, 2)}, 1.0);");
+
+        for (var target = 0; target < targets; target++)
+            text.AppendLine($"    outPlane{target} = vec4({Carried(patch, target)});");
+
         text.AppendLine("}");
 
         return text.ToString();
     }
+
+    /// <summary>
+    /// The four channels one target writes back, and zero for a channel beyond
+    /// the last plane — a target holds four whether or not the patch drew four
+    /// loops.
+    /// </summary>
+    private static string Carried(CompiledPatch patch, int target) =>
+        string.Join(
+            ", ",
+            Enumerable.Range(0, 4).Select(channel =>
+            {
+                var plane = target * 4 + channel;
+
+                return plane < patch.PlaneCount ? $"pl{plane}" : "0.0";
+            }));
 
     /// <summary>
     /// Saturating here rather than at the end of the blit is deliberate: the
@@ -492,11 +567,16 @@ public static class GlslEmitter
             // A tap never reaches here — only the speakers' program has one — but
             // it is in the list because an op that fell through to the switch
             // would take the backend down rather than draw a wrong picture.
-            //
-            // A plane write is deliberately not in it. Skipping one would lower a
-            // loop to an open wire and draw something the interpreter does not:
-            // a program with planes is refused whole, above.
             if (op.Code is OpCode.UnitWrite or OpCode.ClockWrite or OpCode.Tap) continue;
+
+            // The other op with no register to write: what it writes is a plane,
+            // which the next frame reads and this one hands to its target at the
+            // end of main.
+            if (op.Code is OpCode.PlaneWrite)
+            {
+                text.AppendLine($"    pl{(int)op.K} = bd({Read(op.A)});");
+                continue;
+            }
 
             string a = Read(op.A), b = Read(op.B), c = Read(op.C);
 
@@ -578,11 +658,14 @@ public static class GlslEmitter
 
                 // A cell with nothing behind it reads as nothing, which leaves
                 // whatever asked for it open rather than closed — again what the
-                // interpreter does when it is handed no state. A cycle is not
-                // this: it takes a plane, which has no lowering here at all, and
-                // a program holding one is refused before it reaches this switch
-                // — see Unsupported.
+                // interpreter does when it is handed no state. A cycle is not one
+                // of these: it takes a plane, which this path does keep.
                 OpCode.UnitRead => "0.0",
+
+                // Fetched into pl{K} at the top of main, before any write can
+                // have moved it, so a read is the frame before's however the
+                // program is ordered.
+                OpCode.PlaneRead => $"pl{(int)op.K}",
 
                 OpCode.HsvToRgb => $"hsv({a}, {b}, {c})",
                 OpCode.SampleFeedback => $"fb({a}, {b})",

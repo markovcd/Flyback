@@ -1,9 +1,8 @@
 # ADR-0074: A cell is a plane on the video path
 
 **Status:** Accepted · 2026-09-16 · *user-directed* · implemented in
-`Compile/PlaneState.cs`, `Compile/CompiledPatch.cs` and `Render/SynthRenderer.cs`,
-except on the GPU, where a program with planes is refused and the frame is drawn
-on the processor · extends
+`Compile/PlaneState.cs`, `Compile/CompiledPatch.cs`, `Render/SynthRenderer.cs`,
+`Compile/GlslEmitter.cs` and `Controls/GpuFrameRenderer.cs` · extends
 [0012](0012-feedback-as-a-module-not-a-cycle.md) from a color to a value and
 [0041](0041-a-plugin-can-hold-state-without-a-new-opcode.md) from one sink to
 two · bounded by
@@ -111,10 +110,21 @@ eight-bit fallback is where this stops being tenable — a color quantized to ei
 bits posterises, while an accumulator quantized to eight bits is noise within a
 few frames.
 
-**Until those targets exist, the shader refuses the program rather than lowering
-it.** `GlslEmitter.Unsupported` answers before a shader is built and the surface
-falls back to the processor, which draws the patch correctly and more slowly.
-The alternative — lowering a plane read to zero, as `UnitRead` is lowered — would
+**The shader reads its planes by texel and writes them at the end of the pass.**
+`texelFetch` at `gl_FragCoord`, because a filtered read would blend in the
+neighbours a plane is defined not to see, and a variable per plane held across
+the body so that a plane nothing writes this pass carries on holding what it
+held — which is what a cell the interpreter never writes does. Full floats first
+and half floats second, and eight-bit not offered at all: a color tolerates the
+eight-bit ladder [0012](0012-feedback-as-a-module-not-a-cycle.md) describes,
+where an accumulator quantized on every pass drifts rather than bands.
+
+**Where a context cannot do that, it says so and the frame is drawn on the
+processor.** Three things can be missing — the call that turns the extra
+attachments on, a float surface to render to, and, on desktop GLSL 1.50, the
+call that says which attachment an output goes to, since that dialect has no
+`layout(location = …)` on a fragment output. Each is refused rather than worked
+around. Lowering a plane read to zero instead, as `UnitRead` is lowered, would
 leave the loop open and put a different picture on the GPU from the one the
 interpreter draws, and the two backends agreeing is what
 [0035](0035-a-glsl-backend-for-the-video-path.md) rests on.
@@ -165,10 +175,17 @@ is why that is stated rather than hidden: what a module should do about it is
 measure the interval, which is already there, and what a patch should do about it
 is know.
 
-**A patch with a loop draws on the processor for as long as the shader has no
-targets.** The preview says so and falls back, which is the one visible cost of
-shipping the half of this that the interpreter can do — and the half that decides
-whether the idea is worth the targets.
+**A patch that gained or lost a loop rebuilds the framebuffers.** The targets are
+attachments, attachments belong to a framebuffer, and how many there are is a
+fact about the program rather than about the size — so drawing the first frame of
+an edited patch costs what a resize costs, and the planes start from nothing
+there as they do after a resize.
+
+**The clear behind a patch with planes is transparent rather than opaque black.**
+One clear reaches every attachment, and a plane in the alpha channel of its
+target would otherwise begin holding one. Nothing reads the picture's alpha — the
+blit takes its three channels and the shader writes 1.0 into the fourth on every
+frame it draws.
 
 **What this does not do.** Feedback within a frame is still beyond the renderer,
 which is what [0012](0012-feedback-as-a-module-not-a-cycle.md) closed on: a plane
