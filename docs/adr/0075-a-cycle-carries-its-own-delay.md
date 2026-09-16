@@ -69,6 +69,13 @@ loop, and it starts again from nothing.
 wire, so two backward wires from the same socket read one plane rather than
 keeping the same number in two places.
 
+**A module may be wired to itself.** That is a loop of one, and there was never
+anything wrong with it beyond its being the shortest cycle — `Patch.Connect`
+refused it from the first commit, when every cycle was an error. The canvas
+slings such a wire under the module rather than straight across it, because
+resting wires are drawn beneath the modules and a loop of one drawn flat would
+be hidden by the box it belongs to.
+
 **Every read still lands before every write.** The compiler resolves the whole
 program, then drains the loops — and the writes are emitted in one pass after
 that draining is finished, because resolving one loop can reach another and a

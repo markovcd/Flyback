@@ -210,7 +210,13 @@ public sealed partial class NodeEditor
                 ? new Pen(new SolidColorBrush(color), LiftedWireThickness, dashes)
                 : new Pen(new SolidColorBrush(color, RestingWireOpacity), WireThickness, dashes);
 
-            DrawWire(context, from, to, pen);
+            // A loop of one module goes round underneath it rather than across
+            // it, where the module itself would be in the way — see DrawWire.
+            var under = connection.SourceNode == connection.TargetNode
+                ? NodeGeometry.Bounds(source, sourceDef).Bottom + SelfWireDrop
+                : (double?)null;
+
+            DrawWire(context, from, to, pen, under);
         }
     }
 
@@ -249,15 +255,24 @@ public sealed partial class NodeEditor
     }
 
     /// <summary>A horizontal-tangent bezier, so wires leave and enter sockets cleanly.</summary>
-    private static void DrawWire(DrawingContext context, Point from, Point to, IPen pen)
+    /// <param name="under">
+    /// A depth to sling the curve below, for a wire whose two ends are on the same
+    /// module. Resting wires are drawn beneath the modules, so a loop of one drawn
+    /// straight across would be hidden by the box it belongs to and read as two
+    /// stubs joined by nothing.
+    /// </param>
+    private static void DrawWire(DrawingContext context, Point from, Point to, IPen pen, double? under = null)
     {
         var reach = Math.Max(45, Math.Abs(to.X - from.X) * 0.5);
+
+        var first = under is { } depth ? new Point(from.X + reach, depth) : from.WithX(from.X + reach);
+        var second = under is { } sag ? new Point(to.X - reach, sag) : to.WithX(to.X - reach);
 
         var geometry = new StreamGeometry();
         using (var sink = geometry.Open())
         {
             sink.BeginFigure(from, false);
-            sink.CubicBezierTo(from.WithX(from.X + reach), to.WithX(to.X - reach), to);
+            sink.CubicBezierTo(first, second, to);
             sink.EndFigure(false);
         }
 

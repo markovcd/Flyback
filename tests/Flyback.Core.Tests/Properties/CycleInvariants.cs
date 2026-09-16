@@ -240,6 +240,31 @@ public class CycleInvariants
     // --- how the pieces are counted and shared -----------------------------
 
     /// <summary>
+    /// A module wired to itself is a loop like any other: one plane, one
+    /// evaluation of delay, and a running total for as long as it is played.
+    /// </summary>
+    [Fact]
+    public void A_module_wired_to_itself_carries_its_own_previous_evaluation()
+    {
+        var b = new PatchBuilder();
+
+        var add = b.Add("math.add", 200, 0, (1, 0.25f));
+        var sink = b.Add(NodeCatalog.OutputTypeId, 400, 0, (NodeCatalog.OutputGainPort, 1f));
+
+        b.Wire(add, 0, add, 0)
+         .Wire(add, 0, sink, NodeCatalog.OutputLeftPort);
+
+        var result = b.Patch.CompileForAudio();
+
+        result.HasErrors.ShouldBeFalse(string.Join("; ", result.Issues.Select(i => i.Message)));
+        result.Program.PlaneCount.ShouldBe(1);
+
+        var heard = Run(result.Program, new float[4]);
+
+        heard.ShouldBe([0.25f, 0.5f, 0.75f, 1f], 1e-6f);
+    }
+
+    /// <summary>
     /// An output that closes two loops is one plane, read twice and written once
     /// — otherwise the same delayed value would be kept in two places and cost
     /// two planes to say one number.

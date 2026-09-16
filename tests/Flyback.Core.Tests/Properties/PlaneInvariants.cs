@@ -31,14 +31,10 @@ public class PlaneInvariants
         var b = new PatchBuilder();
 
         var add = b.Add("math.add", 200, 0, (1, step));
-        var carry = b.Add("math.mul", 400, 0, (1, 1f));
         var sink = b.Add(NodeCatalog.OutputTypeId, 600, 0);
 
-        // Round through a second module, because a wire from a socket to its own
-        // module is not one the canvas will draw. What closes the ring is the
-        // wire back into the add, and that one carries the frame before.
-        b.Wire(add, 0, carry, 0)
-         .Wire(carry, 0, add, 0)
+        // A loop of one module: what it adds to is what it produced last frame.
+        b.Wire(add, 0, add, 0)
          .Wire(add, 0, sink, 0);
 
         return b.Patch.CompileForVideo().Program;

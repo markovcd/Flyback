@@ -45,6 +45,31 @@ public class CyclesTests
         backwards.Single().ShouldBe(new Connection(third.Id, 0, first.Id, 1));
     }
 
+    /// <summary>
+    /// The shortest loop there is: a module wired to itself. It was refused while
+    /// a cycle was an error — it is the smallest example of one — and there is
+    /// nothing else about it that needs saying no to.
+    /// </summary>
+    [Fact]
+    public void A_module_may_be_wired_to_itself()
+    {
+        var add = b.Add("math.add", 0, 0, (1, 0.25f));
+        var sink = b.Add(NodeCatalog.OutputTypeId, 200, 0);
+
+        b.Wire(add, 0, add, 0).Wire(add, 0, sink, NodeCatalog.OutputLeftPort);
+
+        b.Patch.IncomingTo(add.Id, 0).ShouldNotBeNull().SourceNode.ShouldBe(add.Id);
+
+        var backwards = Cycles.Backwards(b.Patch);
+
+        backwards.ShouldHaveSingleItem().ShouldBe(new Connection(add.Id, 0, add.Id, 0));
+
+        var result = b.Patch.CompileForAudio();
+
+        result.HasErrors.ShouldBeFalse(string.Join("; ", result.Issues.Select(i => i.Message)));
+        result.Program.PlaneCount.ShouldBe(1);
+    }
+
     /// <summary>Two loops that share nothing are two wires, one each.</summary>
     [Fact]
     public void Each_loop_gives_up_one_wire()

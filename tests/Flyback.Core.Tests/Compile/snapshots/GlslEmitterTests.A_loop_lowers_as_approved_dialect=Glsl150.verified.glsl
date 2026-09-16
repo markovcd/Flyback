@@ -2,7 +2,7 @@
 
 uniform float uTime;
 uniform float uAspect;
-uniform float uK[3];
+uniform float uK[2];
 uniform sampler2D uPlane0;
 
 in vec2 vUv;
@@ -117,9 +117,7 @@ void main()
     float r6 = uK[1];
     float r7 = r6 * r6;
     float r8 = r6 * r6;
-    float r9 = uK[2];
-    float r10 = r2 * r9;
-    pl0 = bd(r10);
+    pl0 = bd(r2);
 
     fragColor = vec4(sat(r3), sat(r4), sat(r5), 1.0);
     outPlane0 = vec4(pl0, 0.0, 0.0, 0.0);

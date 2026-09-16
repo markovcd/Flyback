@@ -141,6 +141,14 @@ public sealed partial class NodeEditor : Control
     /// </summary>
     private const double LiftedWireThickness = 3.4;
 
+    /// <summary>
+    /// How far below a module the wire from its own output to its own input is
+    /// slung. Far enough that the curve clears the box rather than hiding behind
+    /// it, and no further: a loop of one is about that module and should read as
+    /// belonging to it.
+    /// </summary>
+    private const double SelfWireDrop = 30;
+
     private static readonly Cursor ArrowCursor = new(StandardCursorType.Arrow);
     private static readonly Cursor PortCursor = new(StandardCursorType.Cross);
     private static readonly Cursor NodeCursor = new(StandardCursorType.SizeAll);

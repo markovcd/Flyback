@@ -546,10 +546,14 @@ public sealed class Patch
     /// Wires two sockets together, replacing whatever already fed the target
     /// input. Outputs may fan out to any number of inputs.
     /// </summary>
+    /// <remarks>
+    /// A module may be wired to itself: that is a loop of one, and the wire
+    /// closing it carries the evaluation before like the wire closing any other
+    /// (ADR-0075). It was refused while a cycle was an error, which is what it
+    /// was the shortest example of.
+    /// </remarks>
     public void Connect(Guid sourceNode, int sourcePort, Guid targetNode, int targetPort)
     {
-        if (sourceNode == targetNode) return;
-
         Connections.RemoveAll(c => c.TargetNode == targetNode && c.TargetPort == targetPort);
         Connections.Add(new Connection(sourceNode, sourcePort, targetNode, targetPort));
 

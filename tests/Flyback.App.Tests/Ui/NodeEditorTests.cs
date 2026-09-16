@@ -772,6 +772,32 @@ public class NodeEditorTests : UiTest
     }
 
     /// <summary>
+    /// A module's own output dropped on its own input is the shortest loop there
+    /// is, and is drawn like any other — the canvas slings it under the box so it
+    /// is not hidden behind the module it belongs to.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_module_can_be_wired_to_itself()
+    {
+        var patch = Loop(out var osc, out _, out _);
+        var (editor, window) = Editing(patch);
+
+        var sine = NodeCatalog.BuiltIn.Require("osc.sine");
+
+        Drag(editor, window,
+            NodeGeometry.OutputPort(osc, 0),
+            NodeGeometry.InputPort(osc, sine, 2));
+
+        var closing = patch.IncomingTo(osc.Id, 2);
+
+        closing.ShouldNotBeNull("the wire should have been drawn");
+        closing.SourceNode.ShouldBe(osc.Id);
+
+        Cycles.Backwards(patch).ShouldHaveSingleItem().ShouldBe(closing);
+        patch.CompileForAudio(NodeCatalog.BuiltIn).HasErrors.ShouldBeFalse();
+    }
+
+    /// <summary>
     /// A wire that runs forwards closes nothing, and is drawn solid because what
     /// it carries is this evaluation.
     /// </summary>
