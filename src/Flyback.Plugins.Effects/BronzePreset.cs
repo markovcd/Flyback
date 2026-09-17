@@ -22,7 +22,7 @@ namespace Flyback.Plugins.Effects;
 /// stroke does, and the screen reads the same number the speakers do.
 /// </para>
 /// </remarks>
-internal static class BronzePreset
+internal sealed class BronzePreset : PresetBench
 {
     public const string Name = "Bronze";
 
@@ -120,9 +120,16 @@ internal static class BronzePreset
             throw new InvalidOperationException(
                 $"it needs the Picture plugin ({Picture}), which is not installed.");
 
-        var b = new PatchBuilder(modules);
-        var boxed = 0;
+        return new BronzePreset(modules).Assemble();
+    }
 
+    private BronzePreset(ModuleCatalog modules)
+        : base(modules)
+    {
+    }
+
+    private Patch Assemble()
+    {
         // --- the clock -------------------------------------------------------
 
         // Beats gone by: the steady pace, less the two sines. What is subtracted is
@@ -744,88 +751,6 @@ internal static class BronzePreset
 
         return b.Build();
 
-        // Everything added since the last box, drawn as one. A module made inside a
-        // helper lands in the box that was open when it was made, which is the part
-        // of the patch it belongs to.
-        void Box(string name, params NodeInstance[] except)
-        {
-            b.Group(name, [.. b.Patch.Nodes.Skip(boxed).Except(except)]);
-            boxed = b.Patch.Nodes.Count;
-        }
-
-        // The arithmetic, as the wiring it stands for: one module each, the first
-        // operand on the first socket. 'from' is the output read, for the few
-        // sources whose first is not the one wanted.
-        NodeInstance Wired(string type, NodeInstance a, NodeInstance c, int from = 0, int second = 0)
-        {
-            var node = b.Add(type);
-            b.Wire(a, from, node, 0).Wire(c, second, node, 1);
-            return node;
-        }
-
-        NodeInstance Knobbed(string type, NodeInstance a, float by, int from = 0)
-        {
-            var node = b.Add(type, (1, by));
-            b.Wire(a, from, node, 0);
-            return node;
-        }
-
-        NodeInstance Through(string type, NodeInstance a)
-        {
-            var node = b.Add(type);
-            b.Wire(a, 0, node, 0);
-            return node;
-        }
-
-        NodeInstance Times(NodeInstance a, float by, int from = 0) => Knobbed("math.mul", a, by, from);
-
-        NodeInstance Plus(NodeInstance a, float by) => Knobbed("math.add", a, by);
-
-        NodeInstance Power(NodeInstance a, float by) => Knobbed("math.pow", a, by);
-
-        NodeInstance Less(NodeInstance a, NodeInstance c) => Wired("math.sub", a, c);
-
-        NodeInstance From(float whole, NodeInstance a)
-        {
-            var node = b.Add("math.sub", (0, whole));
-            b.Wire(a, 0, node, 1);
-            return node;
-        }
-
-        NodeInstance Sum(NodeInstance a, NodeInstance c) => Wired("math.add", a, c);
-
-        NodeInstance Sine(NodeInstance a) => Through("math.sin", a);
-
-        NodeInstance Floor(NodeInstance a) => Through("math.floor", a);
-
-        NodeInstance Fraction(NodeInstance a) => Through("math.fract", a);
-
-        // A product, of which the second operand may be read off another output: a
-        // Sequencer's gate, a Euclid's hit, a Fill's outline.
-        NodeInstance Product(NodeInstance a, NodeInstance c, int second = 0) =>
-            Wired("math.mul", a, c, 0, second);
-
-        NodeInstance Span(NodeInstance a, float inLow, float inHigh, float outLow, float outHigh, int from = 0)
-        {
-            var node = b.Add("math.remap", (1, inLow), (2, inHigh), (3, outLow), (4, outHigh));
-            b.Wire(a, from, node, 0);
-            return node;
-        }
-
-        NodeInstance Rises(NodeInstance a, float from, float to)
-        {
-            var node = b.Add("math.smoothstep", (0, from), (1, to));
-            b.Wire(a, 0, node, 2);
-            return node;
-        }
-
-        // How far through a stroke the position is, and how much of it is left.
-        (NodeInstance Gone, NodeInstance Left) Stroke(NodeInstance position)
-        {
-            var gone = Fraction(position);
-            return (gone, From(1f, gone));
-        }
-
         // A part: its list of degrees read at the beat, moved by the gong's lift.
         NodeInstance Degrees(Step[] steps, float rate)
         {
@@ -842,13 +767,6 @@ internal static class BronzePreset
             StepsExtra.Set(keys, Keys(root));
             b.Wire(degree, 0, keys, 0);
             return keys;
-        }
-
-        NodeInstance Tone(NodeInstance hz, NodeInstance stroke)
-        {
-            var tone = b.Add("osc.sine");
-            b.Wire(hz, 0, tone, 1).Wire(stroke, 0, tone, 3);
-            return tone;
         }
 
         // Struck metal out of two sines: one at the pitch, and one at an inharmonic

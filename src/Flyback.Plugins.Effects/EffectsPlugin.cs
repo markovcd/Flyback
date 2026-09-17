@@ -63,6 +63,12 @@ public sealed class EffectsPlugin : IFlybackPlugin
                 + "of one melody in a five-note scale, and a mandala with a ring for each tier.",
                 PresetKind.Showcase),
             new PatchPreset(
+                OutrunPreset.Name,
+                OutrunPreset.Build,
+                "A whole synthwave track: four chords, gated pads and a gated-reverb snare, under a "
+                + "drawn scene — a slatted sun, a ridge, and a grid that arrives a line to the beat.",
+                PresetKind.Showcase),
+            new PatchPreset(
                 SlowWeatherPreset.Name,
                 SlowWeatherPreset.Build,
                 "A generative patch with no clock in it, played into the two effects.",
