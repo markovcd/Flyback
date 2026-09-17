@@ -90,6 +90,30 @@ public sealed partial class MainWindow : Window
         HorizontalAlignment = HorizontalAlignment.Stretch,
     };
 
+    /// <summary>
+    /// How long a take is counted in for — the length ADR-0090 fixed at three
+    /// seconds and ADR-0091 made a choice.
+    /// </summary>
+    private readonly ComboBox countIn = new Picker
+    {
+        Name = "countIn",
+        ItemsSource = CountIns.Select(s => s <= 0 ? "None" : $"{s} s").ToList(),
+        HorizontalAlignment = HorizontalAlignment.Stretch,
+    };
+
+    /// <summary>
+    /// Whether a take starts at nought seconds. Its own row rather than another
+    /// entry on <see cref="countIn"/>, because standing ready and starting from
+    /// the beginning are two different things: a take may want either alone.
+    /// </summary>
+    private readonly CheckBox rewindBeforeTake = new()
+    {
+        Name = "rewindBeforeTake",
+        Content = "Rewind to zero first",
+        FontSize = Text.Body,
+        VerticalAlignment = VerticalAlignment.Center,
+    };
+
     private readonly ComboBox latency = new Picker
     {
         Name = "latency",

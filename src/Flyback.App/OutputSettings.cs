@@ -74,6 +74,24 @@ public sealed class OutputSettings
     public string SoundFormat { get; set; } = ClipFormats.Wav.Id;
 
     /// <summary>
+    /// How many seconds the status bar counts a take in for once its file has been
+    /// named, or 0 to start it at once — the Recording section (ADR-0091).
+    /// </summary>
+    public int CountInSeconds { get; set; } = DefaultCountIn;
+
+    /// <summary>
+    /// Whether a take takes the patch back to zero seconds before its first frame,
+    /// as the Rewind button does — the Recording section (ADR-0091).
+    /// </summary>
+    /// <remarks>
+    /// On by default, since a take that starts where the patch does is the one
+    /// worth having twice. Off for recording something a session has already
+    /// arrived at — an envelope halfway down, a loop full of what came before —
+    /// which a rewind would be the end of.
+    /// </remarks>
+    public bool RewindBeforeTake { get; set; } = true;
+
+    /// <summary>
     /// The ffmpeg to encode with, or empty to use whatever is on <c>PATH</c> —
     /// the Recording section.
     /// </summary>
@@ -118,6 +136,15 @@ public sealed class OutputSettings
     public const double SlowestFrameRate = 1, FastestFrameRate = 120;
 
     public const int ShortestLatency = 5, LongestLatency = 500;
+
+    /// <summary>
+    /// The count-in a machine with no settings file counts at: the three a
+    /// sequencer counts a bar in at, and long enough to let go of the mouse.
+    /// </summary>
+    public const int DefaultCountIn = 3;
+
+    /// <summary>Nought is no count at all, and the longest is a count nobody stands through twice.</summary>
+    public const int NoCountIn = 0, LongestCountIn = 10;
 
     public static string File => Path.Combine(GlobalConstants.DataFolder, "output.json");
 
@@ -167,6 +194,10 @@ public sealed class OutputSettings
                 : Math.Clamp(settings.PreviewFrameRate, SlowestFrameRate, FastestFrameRate);
 
             settings.JpegQuality = Math.Clamp(settings.JpegQuality, LowestQuality, HighestQuality);
+
+            // Nought is a real choice here, as it is for the preview rate: no
+            // count at all, rather than nobody having set one.
+            settings.CountInSeconds = Math.Clamp(settings.CountInSeconds, NoCountIn, LongestCountIn);
 
             // A format this build does not define reads as the one written here.
             // Whether ffmpeg is on this machine is not asked: that is a question

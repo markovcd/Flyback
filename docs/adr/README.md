@@ -71,7 +71,7 @@ context, decision, consequences.
 | [0017](0017-draw-the-node-editor-in-one-control.md) | Draw the node editor in one custom control |
 | [0018](0018-never-render-frames-on-the-ui-thread.md) | Never render frames on the UI thread |
 | [0039](0039-one-window-class-across-a-file-per-region.md) | One window class, across a file per region |
-| [0044](0044-lay-patches-out-in-layers-not-with-springs.md) | Lay patches out in layers, not with springs *(user-directed)* |
+| [0044](0044-lay-patches-out-in-layers-not-with-springs.md) | Lay patches out in layers, not with springs *(user-directed; what becomes of a drawing too large for the canvas settled by [0092](0092-a-drawing-too-wide-for-the-canvas-shuts-a-box.md))* |
 | [0045](0045-what-is-copied-is-a-patch-file.md) | What is copied is a patch file *(user-directed)* |
 | [0046](0046-the-module-list-is-a-gesture-not-a-panel.md) | The module list is a gesture, not a panel *(user-directed)* |
 | [0070](0070-a-preset-declares-no-coordinates.md) | A preset declares no coordinates *(user-directed)* |
@@ -81,7 +81,9 @@ context, decision, consequences.
 | [0081](0081-rewind-moves-to-the-toolbar-beside-record.md) | Rewind moves to the toolbar, beside Record *(user-directed; every take does it first by [0090](0090-a-take-is-counted-in-and-starts-at-zero.md))* |
 | [0082](0082-the-output-settings-move-to-the-settings-window.md) | The Output settings move to the settings window, and are kept *(user-directed; its next-launch latency made immediate by [0085](0085-a-sound-backend-declares-its-own-settings.md))* |
 | [0087](0087-the-assistant-moves-to-a-column-beside-the-patch.md) | The assistant moves to a column, beside the patch *(user-directed)* |
-| [0090](0090-a-take-is-counted-in-and-starts-at-zero.md) | A take is counted in, and starts at zero *(user-directed)* |
+| [0090](0090-a-take-is-counted-in-and-starts-at-zero.md) | A take is counted in, and starts at zero *(user-directed; its fixed three seconds and unconditional rewind made settings by [0091](0091-how-a-take-begins-is-two-settings.md))* |
+| [0091](0091-how-a-take-begins-is-two-settings.md) | How a take begins is two settings *(user-directed)* |
+| [0092](0092-a-drawing-too-wide-for-the-canvas-shuts-a-box.md) | A drawing too wide for the canvas shuts a box, and one that cannot fit moves nothing *(user-directed)* |
 
 ### Sound
 

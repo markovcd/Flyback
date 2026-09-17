@@ -69,6 +69,37 @@ public class OutputSettingsFileTests : IDisposable
         settings.LatencyMilliseconds.ShouldBe(100);
     }
 
+    /// <summary>How a take begins, which is two settings of its own (ADR-0091).</summary>
+    [Fact]
+    public void How_a_take_begins_comes_back()
+    {
+        new OutputSettings { CountInSeconds = 10, RewindBeforeTake = false }.Save(File);
+
+        var settings = OutputSettings.Load(File);
+
+        settings.CountInSeconds.ShouldBe(10);
+        settings.RewindBeforeTake.ShouldBeFalse();
+    }
+
+    /// <summary>A count of nought is none, which is a choice and not a value to be filled in.</summary>
+    [Fact]
+    public void No_count_in_comes_back_as_none()
+    {
+        new OutputSettings { CountInSeconds = OutputSettings.NoCountIn }.Save(File);
+
+        OutputSettings.Load(File).CountInSeconds.ShouldBe(OutputSettings.NoCountIn);
+    }
+
+    /// <summary>A machine with no file counts three in, and starts at zero.</summary>
+    [Fact]
+    public void No_file_counts_a_take_in_and_rewinds_it()
+    {
+        var settings = OutputSettings.Load(File);
+
+        settings.CountInSeconds.ShouldBe(OutputSettings.DefaultCountIn);
+        settings.RewindBeforeTake.ShouldBeTrue();
+    }
+
     /// <summary>
     /// A file edited by hand is brought into range rather than trusted: a frame
     /// rate of nought would divide by it, and a latency of a minute would stall
@@ -78,13 +109,14 @@ public class OutputSettingsFileTests : IDisposable
     public void Values_out_of_range_are_brought_into_it()
     {
         Directory.CreateDirectory(folder);
-        System.IO.File.WriteAllText(File, """{ "frameRate": 0, "jpegQuality": 400, "latencyMilliseconds": 60000 }""");
+        System.IO.File.WriteAllText(File, """{ "frameRate": 0, "jpegQuality": 400, "latencyMilliseconds": 60000, "countInSeconds": 600 }""");
 
         var settings = OutputSettings.Load(File);
 
         settings.FrameRate.ShouldBe(OutputSettings.SlowestFrameRate);
         settings.JpegQuality.ShouldBe(OutputSettings.HighestQuality);
         settings.LatencyMilliseconds.ShouldBe(OutputSettings.LongestLatency);
+        settings.CountInSeconds.ShouldBe(OutputSettings.LongestCountIn);
     }
 
     /// <summary>

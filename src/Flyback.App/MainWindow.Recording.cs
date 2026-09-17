@@ -26,9 +26,6 @@ public sealed partial class MainWindow
     /// <summary>How often the status line is refreshed while a take runs.</summary>
     private static readonly TimeSpan RecordingTick = TimeSpan.FromMilliseconds(500);
 
-    /// <summary>How many seconds a take is counted in for, once the file has been named.</summary>
-    private const int CountIn = 3;
-
     /// <summary>A second, as long as one number is left up before the next.</summary>
     private static readonly TimeSpan CountInStep = TimeSpan.FromSeconds(1);
 
@@ -66,9 +63,9 @@ public sealed partial class MainWindow
         "Record what the patch is doing now, knobs and all, as it happens.  (Ctrl+R)  A video "
         + "takes the picture off the GPU at whatever the Recording settings say, at "
         + "whatever Size says, with the sound alongside it; a sound file takes the sound "
-        + "on its own. Naming the file counts three seconds in and takes the patch back to "
-        + "zero, so a take starts where the patch does. It has no fixed length, unlike a "
-        + "file `flyback-cli render` writes — it runs until you stop it.";
+        + "on its own. What happens between naming the file and the first frame — a count-in, "
+        + "and the patch going back to zero — is set in Settings → Recording. It has no fixed "
+        + "length, unlike a file `flyback-cli render` writes — it runs until you stop it.";
 
     private const string StopTip = "End this take and write the file.  (Ctrl+R)";
 
@@ -170,6 +167,11 @@ public sealed partial class MainWindow
     /// called off first. The patch is read at the end rather than the beginning,
     /// because the count is time somebody may still be spending on the patch.
     /// </summary>
+    /// <remarks>
+    /// How long the count runs and whether the rewind happens at all are the two
+    /// Recording settings ADR-0091 added; a count of nought seconds is one
+    /// nobody sees, and the take starts on the press.
+    /// </remarks>
     /// <param name="step">
     /// How long one number stays up. A parameter because the only other caller
     /// is a test, which has nothing to stand ready for.
@@ -189,7 +191,7 @@ public sealed partial class MainWindow
 
         try
         {
-            for (var left = CountIn; left > 0; left--)
+            for (var left = outputSettings.CountInSeconds; left > 0; left--)
             {
                 // Reported as progress: the whole count is one sentence with a
                 // new number in it, and leaves the log one line rather than three.
@@ -217,10 +219,14 @@ public sealed partial class MainWindow
             }
         }
 
-        // What the count was for: the take begins at nought seconds, in the
-        // picture and in the sound, the same place Rewind puts them.
-        audio.Rewind();
-        preview.Rewind();
+        // What the count was for, where it was asked for: the take begins at
+        // nought seconds, in the picture and in the sound, the same place the
+        // Rewind button puts them.
+        if (outputSettings.RewindBeforeTake)
+        {
+            audio.Rewind();
+            preview.Rewind();
+        }
 
         Start(path, editor.Patch);
     }

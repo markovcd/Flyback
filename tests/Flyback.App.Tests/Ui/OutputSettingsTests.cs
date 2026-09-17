@@ -247,6 +247,11 @@ public class OutputSettingsTests : UiTest, IDisposable
 
     private static ComboBox Latency(Visual within) => All<ComboBox>(within).Single(c => c.Name == "latency");
 
+    private static ComboBox CountIn(Visual within) => All<ComboBox>(within).Single(c => c.Name == "countIn");
+
+    private static CheckBox RewindFirst(Visual within) =>
+        All<CheckBox>(within).Single(c => c.Name == "rewindBeforeTake");
+
     [AvaloniaFact]
     public void Recording_and_sound_start_on_the_defaults()
     {
@@ -256,6 +261,8 @@ public class OutputSettingsTests : UiTest, IDisposable
 
         (FrameRate(recording).SelectedItem as string).ShouldBe("30 fps");
         Quality(recording).Value.ShouldBe(85);
+        (CountIn(recording).SelectedItem as string).ShouldBe("3 s");
+        RewindFirst(recording).IsChecked.ShouldBe(true);
 
         Tabs(recording).SelectedIndex = SoundTab;
         Settle(window);
@@ -271,6 +278,8 @@ public class OutputSettingsTests : UiTest, IDisposable
 
         FrameRate(dialog).SelectedIndex = 4;
         Quality(dialog).Value = 60;
+        CountIn(dialog).SelectedIndex = 0;
+        RewindFirst(dialog).IsChecked = false;
 
         Tabs(dialog).SelectedIndex = SoundTab;
         Settle(window);
@@ -284,11 +293,15 @@ public class OutputSettingsTests : UiTest, IDisposable
         kept.FrameRate.ShouldBe(60);
         kept.JpegQuality.ShouldBe(60);
         kept.LatencyMilliseconds.ShouldBe(10);
+        kept.CountInSeconds.ShouldBe(OutputSettings.NoCountIn);
+        kept.RewindBeforeTake.ShouldBeFalse();
 
         var again = OpenSettings(Open(settingsPath), RecordingTab);
 
         (FrameRate(again).SelectedItem as string).ShouldBe("60 fps");
         Quality(again).Value.ShouldBe(60);
+        (CountIn(again).SelectedItem as string).ShouldBe("None");
+        RewindFirst(again).IsChecked.ShouldBe(false);
     }
 
     [AvaloniaFact]
@@ -299,6 +312,8 @@ public class OutputSettingsTests : UiTest, IDisposable
 
         FrameRate(dialog).SelectedIndex = 0;
         Quality(dialog).Value = 20;
+        CountIn(dialog).SelectedIndex = 0;
+        RewindFirst(dialog).IsChecked = false;
 
         CloseSettings(window, dialog, save: false);
 
@@ -308,6 +323,8 @@ public class OutputSettingsTests : UiTest, IDisposable
 
         (FrameRate(again).SelectedItem as string).ShouldBe("30 fps");
         Quality(again).Value.ShouldBe(85);
+        (CountIn(again).SelectedItem as string).ShouldBe("3 s");
+        RewindFirst(again).IsChecked.ShouldBe(true);
     }
 
     // --- which encoder a take goes through (ADR-0089) ------------------------
@@ -931,6 +948,58 @@ public class OutputSettingsTests : UiTest, IDisposable
 
         preview.Time.ShouldBeLessThan(1);
         Said(window).ShouldContain(line => line.Contains("Turn the Output's Volume up"));
+    }
+
+    /// <summary>
+    /// A step long enough that a count which was meant to be off would be caught
+    /// waiting one out, and never waited at all when it is.
+    /// </summary>
+    private static readonly TimeSpan Noticeable = TimeSpan.FromSeconds(2);
+
+    /// <summary>
+    /// No count-in starts the take on the press, with nothing counted on the bar
+    /// — what the picker's first row is for (ADR-0091).
+    /// </summary>
+    [AvaloniaFact]
+    public async Task A_count_in_of_none_starts_the_take_at_once()
+    {
+        var window = Open(settingsPath);
+        var dialog = OpenSettings(window, RecordingTab);
+
+        CountIn(dialog).SelectedIndex = 0;
+        CloseSettings(window, dialog, save: true);
+
+        await window.CountInAsync(TakePath(ClipFormats.Wav.Extension), Noticeable);
+
+        Settle(window);
+
+        Said(window).ShouldNotContain(line => line.Contains(" in 1"), "nothing was counted");
+        Said(window).ShouldContain(line => line.Contains("Turn the Output's Volume up"), "the take was tried");
+    }
+
+    /// <summary>
+    /// The rewind switched off leaves the clock where the session had got to, for
+    /// recording something a patch has already arrived at (ADR-0091).
+    /// </summary>
+    [AvaloniaFact]
+    public async Task The_rewind_switched_off_leaves_the_clock_alone()
+    {
+        var window = Open(settingsPath);
+        var dialog = OpenSettings(window, RecordingTab);
+
+        RewindFirst(dialog).IsChecked = false;
+        CloseSettings(window, dialog, save: true);
+
+        var preview = All<PreviewHost>(window).Single();
+
+        preview.Time = 30;
+
+        await window.CountInAsync(TakePath(ClipFormats.Wav.Extension), TimeSpan.Zero);
+
+        Settle(window);
+
+        preview.Time.ShouldBeGreaterThan(29);
+        Said(window).ShouldContain(line => line.Contains("Turn the Output's Volume up"), "the take was tried");
     }
 
     /// <summary>A greyed control that will not say why is worse than no control.</summary>

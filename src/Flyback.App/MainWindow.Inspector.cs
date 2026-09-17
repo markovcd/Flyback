@@ -129,6 +129,13 @@ public sealed partial class MainWindow
     /// <summary>The latencies the speakers can be asked for, in milliseconds.</summary>
     private static readonly int[] Latencies = [10, 20, 30, 50, 100, 200];
 
+    /// <summary>
+    /// The counts a take can be counted in for, in seconds, 0 standing for none
+    /// — the first row, for the reason <see cref="PreviewFrameRates"/> puts its
+    /// own 0 first.
+    /// </summary>
+    private static readonly int[] CountIns = [0, 1, 2, 3, 5, 10];
+
     private const string GpuTip =
         "Draw the picture with a shader on the GPU, or on the CPU. Switch to the CPU to " +
         "compare the two, or if a long session starts to look stepped.";
@@ -209,6 +216,9 @@ public sealed partial class MainWindow
         frameRate.SelectedIndex = Nearest(FrameRates, settings.FrameRate);
         previewFrameRate.SelectedIndex = Nearest(PreviewFrameRates, settings.PreviewFrameRate);
         jpegQuality.Value = settings.JpegQuality;
+
+        countIn.SelectedIndex = Nearest(CountIns.Select(s => (double)s).ToArray(), settings.CountInSeconds);
+        rewindBeforeTake.IsChecked = settings.RewindBeforeTake;
 
         videoFormat.SelectedIndex = Row(ClipFormats.Pictures, settings.VideoFormat, picture: true);
         soundFormat.SelectedIndex = Row(ClipFormats.Sounds, settings.SoundFormat, picture: false);
@@ -296,6 +306,9 @@ public sealed partial class MainWindow
                 : outputSettings.JpegQuality,
 
             LatencyMilliseconds = Latencies[Math.Max(latency.SelectedIndex, 0)],
+
+            CountInSeconds = CountIns[Math.Max(countIn.SelectedIndex, 0)],
+            RewindBeforeTake = rewindBeforeTake.IsChecked == true,
 
             VideoFormat = Chosen(ClipFormats.Pictures, videoFormat).Id,
             SoundFormat = Chosen(ClipFormats.Sounds, soundFormat).Id,
@@ -1047,14 +1060,32 @@ public sealed partial class MainWindow
         graphicsSection.Children.Add(Field("Render", gpuButton));
     }
 
-    /// <summary>The settings window's Recording section: what a take is written as.</summary>
+    /// <summary>
+    /// The settings window's Recording section: how a take begins, and what it is
+    /// written as.
+    /// </summary>
+    /// <remarks>
+    /// In the order a take happens — counted in, put back to zero, then written —
+    /// so the two rows about the moment Record is pressed are not read as
+    /// properties of the file (ADR-0091).
+    /// </remarks>
     private void BuildRecordingSection()
     {
+        ToolTip.SetTip(countIn,
+            "How long the status bar counts down after you have named the file, before "
+            + "the recording starts. Ctrl+R during the count calls it off.");
+        ToolTip.SetTip(rewindBeforeTake,
+            "Take the patch back to zero seconds as the recording starts, so a take begins "
+            + "where the patch does. Switch it off to record a session as it stands.");
+
         ToolTip.SetTip(frameRate, "Frames a second in a recorded video. Takes the next recording, not one already running.");
         ToolTip.SetTip(jpegQuality,
             "How good the picture in a recorded video is: higher looks better and makes a bigger "
             + "file. Read as a JPEG quality by the AVI written here, and as a rate factor by every "
             + "format ffmpeg writes.");
+
+        recordingSection.Children.Add(Field("Count-in", countIn));
+        recordingSection.Children.Add(rewindBeforeTake);
 
         recordingSection.Children.Add(Field("Frame rate", frameRate));
         recordingSection.Children.Add(Field("Quality", jpegQuality));

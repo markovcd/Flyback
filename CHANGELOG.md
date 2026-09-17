@@ -9,7 +9,8 @@
 - Mycelium, in the Effects plugin: a psybient track of ninety-six bars in six sections, with a picture driven by the same signals. It is the largest preset, and needs the Voice and Picture plugins.
 
 ### Recording and export
-- Record counts three seconds in on the status bar and takes the patch back to zero, so a take starts where the patch does. Ctrl+R during the count calls it off.
+- Record counts down on the status bar and takes the patch back to zero, so a take starts where the patch does. Ctrl+R during the count calls it off.
+- Settings → Recording sets how long the count-in is, or turns it off, and whether a take rewinds to zero first.
 - MP4, WebM, MOV, MP3, M4A and FLAC, encoded by ffmpeg where it is installed. An MP4 is around twenty-five times smaller than the AVI.
 - Settings → Recording picks the video and sound formats, and where ffmpeg is if it is not on your `PATH`.
 - `flyback-cli render` takes the format from the extension, with `--format` and `--ffmpeg` to override it.
@@ -19,6 +20,7 @@
 - A number too large for a number box — in a patch file, or typed into the text and applied — no longer crashes when its module is selected.
 - A filter, reverb, delay or loop with silence going into it no longer costs more than one with a signal. A patch with resting parts could crackle because of it.
 - Tidy no longer leaves a module at the top of a column when what feeds it is at the bottom of the one before, which could make a large patch too tall for the canvas.
+- Tidy on a patch too wide for the canvas shuts boxes until it fits and says which, instead of holding modules against the edge. A patch it cannot fit at all is left alone.
 - Several other bugfixes.
 
 ## 0.3.0 — 2026-09-17
