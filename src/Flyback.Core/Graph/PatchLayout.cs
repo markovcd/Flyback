@@ -503,11 +503,22 @@ public static class PatchLayout
 
         for (var sweep = 0; sweep < Sweeps; sweep++)
         {
-            for (var c = 1; c < columns.Count; c++) Settle(columns[c], into);
-            Reindex();
+            // Indexed again after every column rather than after every pass, so each
+            // column is sorted against the order its neighbour has now. Against the
+            // order it had a pass ago, the last sweep leaves pairs that disagree: a
+            // block at the top of its column fed from the bottom of the one before,
+            // which opening the column out then turns into a gap as tall as both.
+            for (var c = 1; c < columns.Count; c++)
+            {
+                Settle(columns[c], into);
+                Reindex();
+            }
 
-            for (var c = columns.Count - 2; c >= 0; c--) Settle(columns[c], outOf);
-            Reindex();
+            for (var c = columns.Count - 2; c >= 0; c--)
+            {
+                Settle(columns[c], outOf);
+                Reindex();
+            }
         }
 
         void Reindex()
