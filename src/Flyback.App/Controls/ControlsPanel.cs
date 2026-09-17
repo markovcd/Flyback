@@ -9,7 +9,8 @@ using Flyback.Core.Graph;
 namespace Flyback.App.Controls;
 
 /// <summary>
-/// The patch's knobs in a strip under the canvas, with a button that adds another.
+/// The patch's knobs under the canvas, wrapping onto more rows as they run out of
+/// width, with a button that adds another.
 /// </summary>
 /// <remarks>
 /// Draws what it is shown and reports what the hand does; the window decides what
@@ -19,7 +20,7 @@ internal sealed class ControlsPanel : Border
 {
     private const double CellWidth = 76;
 
-    private readonly StackPanel strip = new() { Orientation = Orientation.Horizontal, Spacing = 2 };
+    private readonly WrapPanel strip = new() { Orientation = Orientation.Horizontal, ItemSpacing = 2, LineSpacing = 4 };
 
     private readonly Dictionary<Guid, Cell> cells = [];
 
@@ -34,12 +35,11 @@ internal sealed class ControlsPanel : Border
         Background = new SolidColorBrush(Colors.Panel);
         BorderBrush = new SolidColorBrush(Colors.Edge);
         BorderThickness = new Thickness(0, 1, 0, 0);
-        Height = 112;
 
         Child = new ScrollViewer
         {
-            HorizontalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Auto,
-            VerticalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Disabled,
+            HorizontalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Disabled,
+            VerticalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Auto,
             Content = strip,
             Padding = new Thickness(8, 6),
         };
@@ -326,27 +326,27 @@ internal sealed class ControlsPanel : Border
             fade.Start();
         }
 
+        /// <summary>
+        /// The knob's menu, filled before it is ever opened: a flyout sizes itself as
+        /// it opens, so items added then show as an empty sliver. A cell is rebuilt
+        /// whenever its binding changes, so the items never go stale.
+        /// </summary>
         private MenuFlyout Menu()
         {
             var flyout = new MenuFlyout();
 
-            flyout.Opening += (_, _) =>
-            {
-                flyout.Items.Clear();
+            flyout.Items.Add(Item("Link sockets…", () => panel.LinkRequested?.Invoke(control.Id)));
 
-                flyout.Items.Add(Item("Link sockets…", () => panel.LinkRequested?.Invoke(control.Id)));
+            flyout.Items.Add(control.Midi is null
+                ? Item("Learn MIDI controller", () => panel.LearnRequested?.Invoke(control.Id))
+                : Item($"Forget {control.Midi.Label}", () => panel.ForgetRequested?.Invoke(control.Id)));
 
-                flyout.Items.Add(control.Midi is null
-                    ? Item("Learn MIDI controller", () => panel.LearnRequested?.Invoke(control.Id))
-                    : Item($"Forget {control.Midi.Label}", () => panel.ForgetRequested?.Invoke(control.Id)));
+            if (control.Midi is not null)
+                flyout.Items.Add(Item("Learn another controller", () => panel.LearnRequested?.Invoke(control.Id)));
 
-                if (control.Midi is not null)
-                    flyout.Items.Add(Item("Learn another controller", () => panel.LearnRequested?.Invoke(control.Id)));
-
-                flyout.Items.Add(new Separator());
-                flyout.Items.Add(Item("Rename", BeginRename));
-                flyout.Items.Add(Item("Remove knob", () => panel.RemoveRequested?.Invoke(control.Id)));
-            };
+            flyout.Items.Add(new Separator());
+            flyout.Items.Add(Item("Rename", BeginRename));
+            flyout.Items.Add(Item("Remove knob", () => panel.RemoveRequested?.Invoke(control.Id)));
 
             return flyout;
         }

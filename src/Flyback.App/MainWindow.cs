@@ -536,12 +536,14 @@ public sealed partial class MainWindow : Window
             [
                 new RowDefinition(new GridLength(2.2, GridUnitType.Star)) { MinHeight = 160 },
                 new RowDefinition(GridLength.Auto),
+                new RowDefinition(new GridLength(0)),
                 new RowDefinition(GridLength.Auto),
                 new RowDefinition(assistantShare),
             ],
         };
 
-        assistantRow = canvas.RowDefinitions[3];
+        controlsRow = canvas.RowDefinitions[2];
+        assistantRow = canvas.RowDefinitions[4];
         assistantSplitter = new GridSplitter { Background = Brushes.Transparent, Height = 5 };
 
         // The text sits in the canvas's own row rather than under it: they are
@@ -550,12 +552,14 @@ public sealed partial class MainWindow : Window
         // question ADR-0068 exists to answer — which one is being edited.
         Grid.SetRow(editor, 0);
         Grid.SetRow(source, 0);
-        Grid.SetRow(controlsPanel, 1);
-        Grid.SetRow(assistantSplitter, 2);
-        Grid.SetRow(assistant, 3);
+        Grid.SetRow(controlsSplitter, 1);
+        Grid.SetRow(controlsPanel, 2);
+        Grid.SetRow(assistantSplitter, 3);
+        Grid.SetRow(assistant, 4);
 
         canvas.Children.Add(editor);
         canvas.Children.Add(source);
+        canvas.Children.Add(controlsSplitter);
         canvas.Children.Add(controlsPanel);
         canvas.Children.Add(assistantSplitter);
         canvas.Children.Add(assistant);

@@ -18,6 +18,23 @@ public sealed partial class MainWindow
 {
     private readonly ControlsPanel controlsPanel = new() { IsVisible = false };
 
+    /// <summary>The edge above the panel, dragged to give it more rows or fewer.</summary>
+    private readonly GridSplitter controlsSplitter = new()
+    {
+        Name = "controls-splitter",
+        Background = Brushes.Transparent,
+        Height = 5,
+        IsVisible = false,
+    };
+
+    private RowDefinition? controlsRow;
+
+    /// <summary>
+    /// The panel's height, kept while it is hidden. One row of knobs to start with;
+    /// more rows wrap in beneath once it is dragged taller.
+    /// </summary>
+    private GridLength controlsShare = new(118);
+
     /// <summary>The settings window's MIDI section.</summary>
     private readonly StackPanel midiSection = new() { Spacing = 8, Width = 280 };
 
@@ -170,7 +187,18 @@ public sealed partial class MainWindow
     /// <summary>Shows or hides the panel, keeping the toolbar button in step.</summary>
     private void ShowControls(bool shown)
     {
+        if (controlsRow is not null)
+        {
+            // A pixel row rather than an auto one, so the splitter has a height to
+            // change; zeroed while hidden, with its minimum, the way the assistant's is.
+            if (!shown && controlsPanel.IsVisible) controlsShare = controlsRow.Height;
+
+            controlsRow.MinHeight = shown ? 60d : 0d;
+            controlsRow.Height = shown ? controlsShare : new GridLength(0);
+        }
+
         controlsPanel.IsVisible = shown;
+        controlsSplitter.IsVisible = shown;
 
         if (controlsButton.IsChecked != shown) controlsButton.IsChecked = shown;
 

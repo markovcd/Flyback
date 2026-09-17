@@ -197,4 +197,60 @@ public class KnobPanelTests : UiTest
 
         Editor(window).LinkingControl.ShouldBeNull();
     }
+
+    [AvaloniaFact]
+    public void The_knob_menu_opens_and_removes_the_knob()
+    {
+        var (patch, _) = Board();
+        patch.AddControl("Glow");
+        for (var i = 0; i < 14; i++) patch.AddControl();
+        var window = Open(patch);
+
+        var more = All<Button>(Panel(window)).First(b => b.Name == "knob-menu");
+        Click(window, OnWindow(window, more, new Point(more.Bounds.Width / 2, more.Bounds.Height / 2)));
+
+        var menu = more.Flyout.ShouldBeOfType<MenuFlyout>();
+        menu.IsOpen.ShouldBeTrue();
+
+        var remove = menu.Items.OfType<MenuItem>().Single(item => (item.Header as string) == "Remove knob");
+        remove.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(MenuItem.ClickEvent));
+        Settle(window);
+
+        Editor(window).Patch.Controls!.ShouldNotContain(c => c.Name == "Glow");
+    }
+
+    [AvaloniaFact]
+    public void Knobs_that_run_out_of_width_wrap_onto_another_row_before_anything_scrolls()
+    {
+        var (patch, _) = Board();
+        for (var i = 0; i < 20; i++) patch.AddControl();
+
+        var window = Open(patch);
+        var knobs = All<Knob>(Panel(window)).ToList();
+        var rows = knobs.Select(k => Math.Round(OnWindow(window, k, default).Y)).Distinct().Count();
+
+        rows.ShouldBeGreaterThan(1);
+        knobs.ShouldAllBe(k => OnWindow(window, k, new Point(k.Bounds.Width, 0)).X <= OnWindow(window, Panel(window), new Point(Panel(window).Bounds.Width, 0)).X);
+    }
+
+    [AvaloniaFact]
+    public void The_panel_can_be_dragged_taller()
+    {
+        var (patch, _) = Board();
+        patch.AddControl();
+
+        var window = Open(patch);
+        var splitter = All<GridSplitter>(window).Single(s => s.Name == "controls-splitter");
+        var before = Panel(window).Bounds.Height;
+        var from = OnWindow(window, splitter, new Point(splitter.Bounds.Width / 2, splitter.Bounds.Height / 2));
+
+        splitter.IsVisible.ShouldBeTrue();
+
+        window.MouseDown(from, MouseButton.Left);
+        window.MouseMove(from - new Point(0, 120));
+        window.MouseUp(from - new Point(0, 120), MouseButton.Left);
+        Settle(window);
+
+        Panel(window).Bounds.Height.ShouldBeGreaterThan(before + 60);
+    }
 }
