@@ -1,11 +1,10 @@
 namespace Flyback.Plugins.Midi;
 
-/// <summary>What a device just did. Notes and nothing else, which is what a voice can use.</summary>
+/// <summary>What a device just did: a note, or a knob turned.</summary>
 /// <remarks>
-/// A MIDI cable carries a great deal more — controllers, wheels, clock,
-/// aftertouch — and none of it is here, because nothing above this reads any of
-/// it: the module a patch holds has four outputs and every one is about a note. A
-/// signal added later is a case added here rather than a shape changed.
+/// A MIDI cable carries a great deal more — wheels, clock, aftertouch — and none
+/// of it is here, because nothing above this reads any of it. A signal added later
+/// is a case added here rather than a shape changed.
 /// </remarks>
 public enum MidiAction
 {
@@ -20,17 +19,35 @@ public enum MidiAction
     /// honest answer to a device that has stopped talking mid-chord.
     /// </summary>
     AllOff,
+
+    /// <summary>
+    /// A controller moved — a knob, a fader, anything sent as a control change.
+    /// <see cref="MidiMessage.Note"/> is the controller number and
+    /// <see cref="MidiMessage.Velocity"/> where it now sits, 0 to 1.
+    /// </summary>
+    Control,
 }
 
 /// <summary>
 /// One thing that happened on a device.
 /// </summary>
-/// <param name="Note">The MIDI note number, 0 to 127. Ignored for <see cref="MidiAction.AllOff"/>.</param>
-/// <param name="Velocity">
-/// How hard, 0 to 1 — already divided out of whatever the wire carried, because
-/// 127 is a fact about MIDI and not about anything above this line.
+/// <param name="Note">
+/// The MIDI note number, 0 to 127, or the controller number for
+/// <see cref="MidiAction.Control"/>. Ignored for <see cref="MidiAction.AllOff"/>.
 /// </param>
-public readonly record struct MidiMessage(MidiAction Action, int Note, float Velocity);
+/// <param name="Velocity">
+/// How hard, or for a controller how far, 0 to 1 — already divided out of whatever
+/// the wire carried, because 127 is a fact about MIDI and not about anything above
+/// this line.
+/// </param>
+public readonly record struct MidiMessage(MidiAction Action, int Note, float Velocity)
+{
+    /// <summary>
+    /// The channel it arrived on, 1 to 16, or 0 where nobody said. A voice ignores
+    /// it; a knob bound to a controller may not.
+    /// </summary>
+    public int Channel { get; init; }
+}
 
 /// <summary>
 /// Called when a device sends something. Called on whatever thread the backend
@@ -128,7 +145,7 @@ public interface IMidiInput
 /// </remarks>
 public static class MidiMessages
 {
-    /// <summary>The four bits of a status byte that say which channel, and are ignored here.</summary>
+    /// <summary>The four bits of a status byte that say which command; the other four are the channel.</summary>
     private const byte Command = 0xF0;
 
     private const byte NoteOff = 0x80;
@@ -143,23 +160,20 @@ public static class MidiMessages
     private const byte AllNotesOff = 123;
 
     /// <summary>
-    /// What a message means, or null where it means nothing to a voice — which is
-    /// most of them.
+    /// What a message means, or null where it means nothing to anything here —
+    /// which is most of them.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// Every channel is heard and none is distinguished, which is the right
-    /// default for a voice that plays one note at a time: a keyboard split across
-    /// two channels is still one pair of hands, and a patch could not ask for a
-    /// channel anyway because the module has nowhere to say so. A device sending
-    /// on several at once is merged, which is what a monophonic synth on a MIDI
-    /// thru chain has always done.
+    /// Every channel is heard and the channel is carried along, not acted on: a
+    /// voice merges them, which is what a monophonic synth on a MIDI thru chain has
+    /// always done, and a mapped knob may care which one it was.
     /// </para>
     /// <para>
-    /// Clock, active sensing, aftertouch, the wheels and every controller but the
-    /// two panics come back null. They are not dropped as a shortcut — there is
-    /// nothing above this that reads them, and a module that grew an output for
-    /// one would be a case added here.
+    /// Clock, active sensing, aftertouch and the pitch wheel come back null. They
+    /// are not dropped as a shortcut — there is nothing above this that reads them,
+    /// and a module that grew an output for one would be a case added here. The
+    /// modulation wheel is a controller like any other, and comes back as one.
     /// </para>
     /// </remarks>
     public static MidiMessage? Of(byte status, byte first, byte second)
@@ -175,8 +189,9 @@ public static class MidiMessages
 
         var note = first & 0x7F;
         var value = second & 0x7F;
+        var channel = (status & 0x0F) + 1;
 
-        return (status & Command) switch
+        MidiMessage? read = (status & Command) switch
         {
             // A note-on with no force behind it is a note-off said the other way
             // round, and a great many keyboards say it that way rather than
@@ -187,8 +202,12 @@ public static class MidiMessages
             ControlChange when note is AllSoundOff or AllNotesOff =>
                 new MidiMessage(MidiAction.AllOff, 0, 0f),
 
+            ControlChange => new MidiMessage(MidiAction.Control, note, value / 127f),
+
             _ => null,
         };
+
+        return read is { } message ? message with { Channel = channel } : null;
     }
 }
 

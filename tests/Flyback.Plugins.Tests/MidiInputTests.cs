@@ -243,6 +243,25 @@ public class MidiInputTests
         MidiMessages.Of(0xB0, controller, 0).ShouldNotBeNull().Action.ShouldBe(MidiAction.AllOff);
     }
 
+    [Fact]
+    public void A_turned_knob_is_a_controller_and_where_it_sits()
+    {
+        var message = MidiMessages.Of(0xB0, 21, 127).ShouldNotBeNull();
+
+        message.Action.ShouldBe(MidiAction.Control);
+        message.Note.ShouldBe(21);
+        message.Velocity.ShouldBe(1f);
+    }
+
+    [Theory]
+    [InlineData(0xB0, 1)]
+    [InlineData(0xB9, 10)]
+    [InlineData(0x9F, 16)]
+    public void A_message_says_which_channel_it_came_on(byte status, int channel)
+    {
+        MidiMessages.Of(status, 1, 64).ShouldNotBeNull().Channel.ShouldBe(channel);
+    }
+
     /// <summary>
     /// Everything a cable carries that this does not read. Clock at 0xF8 is the
     /// one that matters most: it arrives twenty-four times a beat, and a decoder
@@ -252,12 +271,11 @@ public class MidiInputTests
     [InlineData(0xF8, 0, 0)]     // clock
     [InlineData(0xFE, 0, 0)]     // active sensing
     [InlineData(0xF0, 0x7E, 0)]  // the start of a system-exclusive conversation
-    [InlineData(0xB0, 1, 64)]    // the modulation wheel
     [InlineData(0xE0, 0, 64)]    // pitch bend
     [InlineData(0xD0, 64, 0)]    // channel pressure
     [InlineData(0xC0, 5, 0)]     // a program change
     [InlineData(0x40, 60, 100)]  // a data byte where a status byte should be
-    public void Everything_else_means_nothing_to_a_voice(byte status, byte first, byte second)
+    public void Everything_else_means_nothing_here(byte status, byte first, byte second)
     {
         MidiMessages.Of(status, first, second).ShouldBeNull();
     }

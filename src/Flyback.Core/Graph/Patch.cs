@@ -247,7 +247,62 @@ public sealed class Patch
     /// </remarks>
     public List<NodeGroup>? Groups { get; set; }
 
+    /// <summary>The knobs on the patch's control panel, in panel order, and null where there are none.</summary>
+    public List<PatchControl>? Controls { get; set; }
+
     public NodeInstance? Find(Guid id) => Nodes.FirstOrDefault(n => n.Id == id);
+
+    /// <summary>The knob called <paramref name="id"/>, or null where the panel has none.</summary>
+    public PatchControl? Control(Guid id) => Controls?.FirstOrDefault(c => c.Id == id);
+
+    /// <summary>Puts a new knob at the end of the panel, and hands it back.</summary>
+    public PatchControl AddControl(string? name = null, float value = 0.5f)
+    {
+        var control = new PatchControl { Id = Guid.NewGuid(), Name = name ?? NextControlName(), Value = value };
+
+        (Controls ??= []).Add(control);
+        return control;
+    }
+
+    /// <summary>
+    /// Takes a knob off the panel, leaving every socket that followed it where the
+    /// knob had put it.
+    /// </summary>
+    public bool RemoveControl(Guid id)
+    {
+        if (Control(id) is not { } control) return false;
+
+        foreach (var (node, port, link) in ControlMap.Following(this, id).ToList())
+        {
+            if (port < node.InputValues.Length) node.InputValues[port] = link.At(control.Value);
+            ControlMap.Unlink(node, port);
+        }
+
+        Controls!.Remove(control);
+        if (Controls.Count == 0) Controls = null;
+
+        return true;
+    }
+
+    /// <summary>Writes where every knob rests into a fresh live block, so it does not start at zero.</summary>
+    public void Seed(Compile.LiveValues block)
+    {
+        ArgumentNullException.ThrowIfNull(block);
+
+        if (Controls is null) return;
+
+        foreach (var control in Controls) block.Set(control.Key, control.Value);
+    }
+
+    /// <summary>"Knob 1", "Knob 2"… — the first number no knob on the panel is using.</summary>
+    private string NextControlName()
+    {
+        var taken = Controls?.Select(c => c.Name).ToHashSet(StringComparer.Ordinal) ?? [];
+
+        for (var n = 1; ; n++)
+            if (!taken.Contains($"Knob {n}"))
+                return $"Knob {n}";
+    }
 
     /// <summary>The group holding <paramref name="nodeId"/>, or null where none does.</summary>
     public NodeGroup? GroupOf(Guid nodeId)

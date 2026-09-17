@@ -42,16 +42,18 @@ public static class PatchCompiler
         this Patch patch,
         ModuleCatalog? modules = null,
         ISampleLibrary? samples = null,
-        IImageLibrary? pictures = null) =>
-        Compile(patch, NodeCatalog.Screen, modules, samples: samples, pictures: pictures);
+        IImageLibrary? pictures = null,
+        bool played = false) =>
+        Compile(patch, NodeCatalog.Screen, modules, samples: samples, pictures: pictures, played: played);
 
     /// <summary>Compiles the program the speakers play, reading the Output's left and right.</summary>
     public static CompileResult CompileForAudio(
         this Patch patch,
         ModuleCatalog? modules = null,
         ISampleLibrary? samples = null,
-        IImageLibrary? pictures = null) =>
-        Compile(patch, NodeCatalog.Speakers, modules, samples: samples, pictures: pictures);
+        IImageLibrary? pictures = null,
+        bool played = false) =>
+        Compile(patch, NodeCatalog.Speakers, modules, samples: samples, pictures: pictures, played: played);
 
     /// <summary>
     /// Compiles the program a Probe shows, rooted at the probe rather than at the
@@ -67,13 +69,15 @@ public static class PatchCompiler
     /// <param name="modules"></param>
     /// <param name="samples"></param>
     /// <param name="pictures"></param>
+    /// <param name="played">Whether the panel's knobs are read live — see <c>Compile</c>.</param>
     public static CompileResult CompileForProbe(
         this Patch patch,
         Guid probe,
         ModuleCatalog? modules = null,
         ISampleLibrary? samples = null,
-        IImageLibrary? pictures = null) =>
-        Compile(patch, NodeCatalog.Screen, modules, probe, samples, pictures);
+        IImageLibrary? pictures = null,
+        bool played = false) =>
+        Compile(patch, NodeCatalog.Screen, modules, probe, samples, pictures, played);
 
     /// <param name="patch">The graph to lower.</param>
     /// <param name="sink">Which of the Output's results this program reads.</param>
@@ -89,13 +93,19 @@ public static class PatchCompiler
     /// </param>
     /// <param name="samples"></param>
     /// <param name="pictures"></param>
+    /// <param name="played">
+    /// Whether the panel's knobs may be turned while this runs. Only then does a
+    /// linked socket read its knob live; otherwise where the knob rests is baked in,
+    /// which is right for a file and for a renderer handed no live block.
+    /// </param>
     private static CompileResult Compile(
         Patch patch,
         NodeCatalog.SinkKind sink,
         ModuleCatalog? modules,
         Guid? probe = null,
         ISampleLibrary? samples = null,
-        IImageLibrary? pictures = null)
+        IImageLibrary? pictures = null,
+        bool played = false)
     {
         var catalog = modules ?? NodeCatalog.Current;
         var width = sink.Width;
@@ -298,7 +308,7 @@ public static class PatchCompiler
                 // until then, which is what a module that never asks gets.
                 if (spec.Swept)
                 {
-                    inputs[port] = emitter.Constant(DefaultFor(node, port, spec));
+                    inputs[port] = Knob(node, port, spec);
                     continue;
                 }
 
@@ -351,7 +361,7 @@ public static class PatchCompiler
                             IssueSeverity.Warning));
                     }
 
-                    slotValue = emitter.Constant(DefaultFor(node, port, spec));
+                    slotValue = Knob(node, port, spec);
                 }
 
                 // An Any port takes whatever arrives; typed ports coerce.
@@ -511,9 +521,46 @@ public static class PatchCompiler
             else if (spec.NormalledTo is { } bus && Hidden(bus) is { } carried)
                 slotValue = carried;
             else
-                slotValue = emitter.Constant(DefaultFor(node, port, spec));
+                slotValue = Knob(node, port, spec);
 
             return spec.Kind == PortKind.Any ? slotValue : emitter.Coerce(slotValue, spec.Width);
+        }
+
+        // What an unwired socket rests on: its own knob, or the panel knob it
+        // follows. Scaled here rather than by whoever turns the knob, because one
+        // knob may drive several sockets over different ranges.
+        Slot Knob(NodeInstance node, int port, PortSpec spec)
+        {
+            if (ControlMap.Of(node, port) is not { } link)
+                return emitter.Constant(DefaultFor(node, port, spec));
+
+            if (patch.Control(link.Control) is not { } control)
+            {
+                var name = catalog.Get(node.TypeId) is { } def ? node.Title(def) : node.TypeId;
+
+                issues.Add(new CompileIssue(
+                    node.Id,
+                    $"{name}'s '{spec.Name}' follows a knob this patch has no longer. "
+                    + "It rests where it is until it is linked to another.",
+                    IssueSeverity.Warning));
+
+                return emitter.Constant(DefaultFor(node, port, spec));
+            }
+
+            // A stepped socket must not be handed 2.4 notes because a knob was.
+            if (!played)
+            {
+                var resting = link.At(control.Value);
+
+                return emitter.Constant(spec.Stepped ? MathF.Floor(resting + 0.5f) : resting);
+            }
+
+            var turned = emitter.Live(control.Key);
+            var reading = emitter.Add(emitter.Mul(turned, link.Max - link.Min), link.Min);
+
+            return spec.Stepped
+                ? emitter.Unary(OpCode.Floor, emitter.Add(reading, 0.5f))
+                : reading;
         }
 
         // What a wire running backwards hands over: the plane its output left
