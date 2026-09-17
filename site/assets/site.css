@@ -1,0 +1,348 @@
+/*
+  The site wears the app's theme. Every color below is named after, and equal to,
+  one in src/Flyback.App/Controls/Colors.cs; the code colors are Flyback.xshd's.
+  The app has no light theme, so neither does this.
+*/
+
+:root {
+  color-scheme: dark;
+
+  /* surfaces, darkest first */
+  --edge: #101114;
+  --outline: #141518;
+  --window: #16181B;
+  --canvas: #1A1C20;
+  --panel: #1C1E22;
+  --toolbar: #22252A;
+  --grid: #24272C;
+  --grid-major: #2C3036;
+  --node: #2A2D34;
+  --node-selected: #32363E;
+  --separator: #3A3E46;
+
+  /* text */
+  --bright: #E9ECF1;
+  --label: #C8CCD4;
+  --value: #8A92A0;
+  --muted: #8A909A;
+  --normalled: #6C7482;
+
+  /* the one color that means "look here" */
+  --attention: #FFB040;
+
+  /* module accents */
+  --sink: #E05A5A;
+  --source: #4A9EDE;
+  --oscillator: #4FC387;
+  --sequencer: #D8B04A;
+  --maths: #7E8694;
+  --space: #B484E0;
+  --pattern: #E0A84A;
+  --tint: #E06AB8;
+  --feedback: #3FC8C8;
+  --form: #7A8CE8;
+  --note: #A8CE52;
+  --shaping: #D87A48;
+  --echo: #3EA0B0;
+  --reading: #92A8C8;
+
+  /* sockets */
+  --port-color: #E8C860;
+  --port-any: #9EC89E;
+  --port-scalar: #B8BCC4;
+
+  --beam-core: #FFF3DC;
+
+  --sans: "Inter", "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --mono: "Cascadia Mono", Consolas, Menlo, "DejaVu Sans Mono", ui-monospace, monospace;
+
+  --radius: 6px;
+  --gutter: 16px;
+  --measure: 46rem;
+}
+
+* { box-sizing: border-box; }
+
+html { scroll-padding-top: 76px; }
+
+body {
+  margin: 0;
+  background: var(--window);
+  color: var(--label);
+  font-family: var(--sans);
+  font-size: 16.5px;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+img, video, svg { max-width: 100%; }
+
+a { color: var(--attention); text-decoration-thickness: 1px; text-underline-offset: 3px; }
+a:hover { color: var(--beam-core); }
+:focus-visible { outline: 2px solid var(--attention); outline-offset: 3px; border-radius: 3px; }
+
+strong { color: var(--bright); font-weight: 650; }
+
+.wrap { max-width: 1180px; margin: 0 auto; padding: 0 var(--gutter); }
+@media (min-width: 720px) { .wrap { padding: 0 32px; } }
+
+/* ---- the toolbar ------------------------------------------------------- */
+
+.toolbar {
+  position: sticky; top: 0; z-index: 10;
+  background: var(--toolbar);
+  border-bottom: 1px solid var(--edge);
+}
+.toolbar .wrap { display: flex; align-items: center; gap: 10px; height: 60px; }
+
+.brand {
+  display: flex; align-items: center; gap: 10px;
+  color: var(--bright); text-decoration: none; font-weight: 650; font-size: 17px;
+  margin-right: auto;
+}
+.brand img { width: 30px; height: 30px; display: block; }
+.brand:hover { color: var(--bright); }
+
+.toolbar nav { display: flex; align-items: center; gap: 6px; }
+.toolbar nav a {
+  color: var(--label); text-decoration: none; font-size: 14px; font-weight: 500;
+  padding: 7px 12px; border-radius: 4px; border: 1px solid transparent;
+}
+.toolbar nav a:hover { background: var(--node); color: var(--bright); }
+.toolbar nav a[aria-current="page"] { background: var(--node-selected); color: var(--bright); border-color: var(--separator); }
+.toolbar .sep { width: 1px; height: 24px; background: var(--separator); margin: 0 4px; }
+@media (max-width: 640px) {
+  .toolbar nav a.optional, .toolbar .sep { display: none; }
+  .toolbar nav a { padding: 7px 8px; }
+  .brand span { display: none; }
+}
+
+/* ---- buttons, drawn like the toolbar's own ------------------------------ */
+
+.button {
+  display: inline-flex; align-items: center; gap: 9px;
+  font: 600 15px/1 var(--sans);
+  padding: 13px 18px; border-radius: 5px;
+  text-decoration: none; border: 1px solid var(--edge);
+  background: var(--node); color: var(--bright);
+}
+.button:hover { background: var(--node-selected); color: var(--bright); }
+.button.primary { background: var(--attention); color: #16181B; border-color: #C98A2E; }
+.button.primary:hover { background: #FFC266; color: #16181B; }
+.button svg { width: 17px; height: 17px; flex: none; }
+
+/* ---- the canvas: a grid every so often, brighter every tenth ------------- */
+
+.canvas {
+  background-color: var(--canvas);
+  background-image:
+    linear-gradient(var(--grid-major) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-major) 1px, transparent 1px),
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 240px 240px, 240px 240px, 24px 24px, 24px 24px;
+  background-position: -1px -1px;
+}
+
+/* ---- the sawtooth rule: one cycle of the retrace the program is named for */
+
+.saw { display: block; width: 100%; height: 10px; margin: 0; }
+
+/* ---- type ---------------------------------------------------------------- */
+
+h1, h2, h3, h4 { color: var(--bright); font-family: var(--sans); text-wrap: balance; }
+
+h1 { font-size: clamp(38px, 6.4vw, 64px); line-height: 1.04; letter-spacing: -0.03em; font-weight: 750; margin: 0; }
+h2 { font-size: clamp(26px, 3.4vw, 34px); line-height: 1.15; letter-spacing: -0.02em; font-weight: 700; margin: 0; }
+h3 { font-size: 19px; line-height: 1.3; letter-spacing: -0.01em; font-weight: 650; margin: 36px 0 0; }
+h4 { font-size: 15.5px; font-weight: 650; margin: 0; }
+
+p { margin: 14px 0 0; text-wrap: pretty; }
+
+.eyebrow {
+  display: inline-block;
+  font-size: 12px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--attention); margin: 0 0 14px;
+}
+
+.lede { font-size: clamp(18px, 2vw, 21px); line-height: 1.55; color: var(--label); max-width: 40rem; }
+.quiet { color: var(--muted); }
+
+code, kbd {
+  font-family: var(--mono); font-size: 0.88em;
+  background: var(--node); color: var(--label);
+  padding: 1.5px 6px; border-radius: 4px;
+}
+kbd {
+  border: 1px solid var(--separator); border-bottom-width: 2px;
+  color: var(--bright); font-size: 0.82em; padding: 1px 6px; white-space: nowrap;
+}
+
+pre {
+  font-family: var(--mono); font-size: 14px; line-height: 1.6;
+  background: var(--canvas); color: var(--label);
+  border: 1px solid var(--edge); border-radius: var(--radius);
+  padding: 16px 18px; margin: 18px 0 0; overflow-x: auto;
+  tab-size: 4;
+}
+pre code { background: none; padding: 0; font-size: inherit; color: inherit; border-radius: 0; }
+
+/* The code view's colors, from Flyback.xshd. */
+.t-com { color: #6C7482; font-style: italic; }
+.t-key { color: #3FC8C8; font-weight: 700; }
+.t-pipe { color: #E06AB8; font-weight: 700; }
+.t-sink { color: #E05A5A; }
+.t-dom { color: #4A9EDE; }
+.t-sock { color: #A8CE52; }
+.t-mod { color: #B484E0; }
+.t-num { color: #E0A84A; }
+.t-str { color: #4FC387; }
+
+/* C# and XML, in the same palette: keywords cyan, strings green, comments quiet. */
+.k { color: #3FC8C8; }
+.s { color: #4FC387; }
+.c { color: #6C7482; font-style: italic; }
+
+ul, ol { margin: 14px 0 0; padding-left: 22px; }
+li { margin: 7px 0; }
+li::marker { color: var(--normalled); }
+
+/* ---- nodes: the one card shape, borrowed from the patch canvas ----------- */
+
+.node {
+  --accent: var(--maths);
+  background: var(--node);
+  border: 1px solid var(--edge);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: 0 10px 30px -18px rgba(0, 0, 0, 0.9);
+}
+.node > header {
+  background: var(--accent);
+  color: #fff;
+  font-size: 13px; font-weight: 600;
+  padding: 6px 12px;
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.25);
+}
+.node > header small { font-weight: 500; opacity: 0.85; font-size: 11.5px; letter-spacing: 0.04em; text-transform: uppercase; }
+.node > .body { padding: 14px 16px 16px; }
+.node > .body p:first-child { margin-top: 0; }
+.node p { font-size: 15px; line-height: 1.6; }
+
+.ports { list-style: none; padding: 0; margin: 10px 0 0; font-size: 13px; }
+.ports li { display: flex; align-items: center; gap: 8px; margin: 3px 0; color: var(--label); }
+.ports li::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: var(--port-scalar); flex: none; }
+.ports li.color::before { background: var(--port-color); }
+.ports li.any::before { background: var(--port-any); }
+.ports li span { margin-left: auto; color: var(--value); font-variant-numeric: tabular-nums; }
+
+/* ---- windows: a screenshot framed as the app's own title bar ------------- */
+
+figure { margin: 28px 0 0; }
+figcaption { font-size: 13.5px; color: var(--muted); margin-top: 12px; line-height: 1.5; }
+
+.window {
+  border: 1px solid var(--edge);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--window);
+  box-shadow: 0 30px 80px -30px rgba(0, 0, 0, 0.95), 0 0 0 1px rgba(255, 255, 255, 0.02);
+}
+.window > .titlebar {
+  display: flex; align-items: center; gap: 8px;
+  height: 30px; padding: 0 12px;
+  background: #1F1F1F; color: var(--label); font-size: 12px;
+  border-bottom: 1px solid var(--edge);
+}
+.window > .titlebar img { width: 14px; height: 14px; }
+.window > .titlebar .controls { margin-left: auto; display: flex; gap: 18px; color: var(--muted); letter-spacing: 0.1em; }
+.window > img, .window > video { display: block; width: 100%; height: auto; }
+
+.shot { border: 1px solid var(--edge); border-radius: var(--radius); display: block; width: 100%; height: auto; }
+
+/* ---- notes ---------------------------------------------------------------- */
+
+.note {
+  background: var(--panel);
+  border: 1px solid var(--edge);
+  border-left: 3px solid var(--attention);
+  border-radius: 5px;
+  padding: 14px 18px;
+  margin: 24px 0 0;
+  font-size: 15.5px;
+}
+.note > :first-child { margin-top: 0; }
+.note .tag {
+  display: block; margin-bottom: 6px;
+  font-size: 11px; font-weight: 700; letter-spacing: 0.13em; text-transform: uppercase; color: var(--attention);
+}
+
+/* ---- tables --------------------------------------------------------------- */
+
+.scroll { overflow-x: auto; margin: 22px 0 0; }
+table { border-collapse: collapse; width: 100%; font-size: 15px; min-width: 460px; }
+caption { text-align: left; font-size: 13px; color: var(--muted); padding-bottom: 10px; }
+th, td { text-align: left; padding: 10px 14px 10px 0; border-bottom: 1px solid var(--grid-major); vertical-align: top; }
+th { font-size: 11.5px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); border-bottom-color: var(--separator); }
+td code { font-size: 12.8px; white-space: nowrap; }
+
+/* ---- docs layout: contents on the left, a column of prose ---------------- */
+
+.doc-head { padding: 64px 0 36px; }
+.doc-head .lede { margin-top: 18px; }
+
+.doc { display: grid; grid-template-columns: minmax(0, 1fr); gap: 40px; align-items: start; padding: 40px 0 96px; }
+@media (min-width: 1000px) {
+  .doc { grid-template-columns: 220px minmax(0, 1fr); gap: 64px; }
+  .doc nav.toc { position: sticky; top: 92px; max-height: calc(100vh - 110px); overflow-y: auto; }
+}
+
+nav.toc { font-size: 14px; line-height: 1.45; }
+nav.toc p { font-size: 11px; font-weight: 700; letter-spacing: 0.13em; text-transform: uppercase; color: var(--muted); margin: 0 0 12px; }
+nav.toc ol { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+nav.toc li { margin: 0; }
+nav.toc a {
+  display: block; color: var(--label); text-decoration: none;
+  padding: 5px 10px; border-left: 2px solid var(--separator);
+}
+nav.toc a:hover { color: var(--bright); border-left-color: var(--attention); background: var(--panel); }
+
+.doc main { min-width: 0; max-width: var(--measure); }
+.doc section { padding-top: 8px; }
+.doc section + section { margin-top: 56px; }
+.doc section h2 .num {
+  display: block; margin-bottom: 10px;
+  font-size: 11.5px; font-weight: 700; letter-spacing: 0.16em; color: var(--attention);
+  font-variant-numeric: tabular-nums;
+}
+.doc section h2 + p { margin-top: 16px; }
+
+.steps { counter-reset: step; list-style: none; padding: 0; }
+.steps > li { counter-increment: step; position: relative; padding-left: 42px; margin: 18px 0; }
+.steps > li::before {
+  content: counter(step);
+  position: absolute; left: 0; top: 1px;
+  width: 26px; height: 26px; border-radius: 50%;
+  background: var(--node); border: 1px solid var(--separator);
+  color: var(--bright); font-size: 13px; font-weight: 650;
+  display: grid; place-items: center;
+}
+
+.tiers { display: grid; gap: 14px; margin: 24px 0 0; }
+@media (min-width: 720px) { .tiers { grid-template-columns: repeat(3, 1fr); } }
+.tiers .where { display: block; margin-top: 10px; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+
+/* ---- footer --------------------------------------------------------------- */
+
+.site-foot { background: var(--toolbar); border-top: 1px solid var(--edge); padding: 28px 0 36px; font-size: 14px; color: var(--muted); }
+.site-foot .wrap { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 28px; }
+.site-foot a { color: var(--label); text-decoration: none; }
+.site-foot a:hover { color: var(--attention); }
+.site-foot .brand-foot { display: flex; align-items: center; gap: 10px; margin-right: auto; color: var(--label); }
+.site-foot .brand-foot img { width: 22px; height: 22px; }
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}

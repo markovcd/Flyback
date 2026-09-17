@@ -1,0 +1,517 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Flyback Tutorials</title>
+<meta name="description" content="Step-by-step tutorials for Flyback: build a first patch, make it move, make it sound, write it as text, play it from a keyboard, and record or render the result.">
+<meta name="theme-color" content="#22252A">
+<link rel="icon" href="assets/logo.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;650;700;750&display=swap">
+<link rel="stylesheet" href="assets/site.css">
+<style>
+  .doc-head { border-bottom: 1px solid var(--edge); }
+  .patch-fig { margin: 24px 0 0; }
+  .patch-fig .canvas { padding: 16px; border: 1px solid var(--edge); border-radius: var(--radius); overflow-x: auto; }
+  .patch-fig .canvas > div { min-width: var(--min, 420px); }
+
+  .result { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; margin-top: 24px; align-items: start; }
+  @media (min-width: 720px) { .result { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); } }
+  .result pre { margin: 0; }
+  .result figure { margin: 0; }
+  .result img { display: block; width: 100%; height: auto; border-radius: var(--radius); border: 1px solid var(--edge); background: #000; }
+
+  .keys td:first-child { white-space: nowrap; }
+  .wide-shot { margin-top: 24px; }
+</style>
+</head>
+<body>
+
+<header class="toolbar">
+  <div class="wrap">
+    <a class="brand" href="./"><img src="assets/logo.svg" alt=""><span>Flyback</span></a>
+    <nav aria-label="Site">
+      <a href="./" class="optional">Overview</a>
+      <a href="tutorials.html" aria-current="page">Tutorials</a>
+      <a href="plugins.html">Plugins</a>
+      <span class="sep" aria-hidden="true"></span>
+      <a href="https://github.com/markovcd/Flyback">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<div class="page">
+
+<div class="canvas">
+  <div class="wrap">
+    <header class="doc-head" style="border: 0">
+      <p class="eyebrow" style="color: var(--oscillator)">Tutorials · using Flyback</p>
+      <h1>From an empty canvas to a patch you can play.</h1>
+      <p class="lede">These tutorials build one patch step by step: rings that pulse, a color that drifts, a tone
+      underneath, and one slow oscillator that ties the picture and the sound together. Then they cover writing
+      it as text, playing it, and getting it out of the app.</p>
+    </header>
+  </div>
+</div>
+
+<div class="wrap">
+<div class="doc">
+
+  <nav class="toc" aria-label="Contents">
+    <p>Contents</p>
+    <ol>
+      <li><a href="#tour">A tour of the window</a></li>
+      <li><a href="#first">Your first patch</a></li>
+      <li><a href="#move">Make it move</a></li>
+      <li><a href="#sound">Make a sound</a></li>
+      <li><a href="#both">One signal, both sinks</a></li>
+      <li><a href="#text">The patch as text</a></li>
+      <li><a href="#play">Play it from a keyboard</a></li>
+      <li><a href="#knobs">Knobs and MIDI controllers</a></li>
+      <li><a href="#tidy">Keep a big patch tidy</a></li>
+      <li><a href="#record">Record and render</a></li>
+      <li><a href="#assistant">The assistant</a></li>
+      <li><a href="#keys">Keyboard shortcuts</a></li>
+    </ol>
+  </nav>
+
+  <main>
+
+  <section id="tour">
+    <h2><span class="num">01</span>A tour of the window</h2>
+
+    <p>Flyback opens with a patch already playing. The window has four parts: the <strong>toolbar</strong> across
+    the top, the <strong>canvas</strong> where modules are wired, the <strong>preview</strong> on the right, and
+    under the preview the <strong>inspector</strong>, which shows hints until you select a module.</p>
+
+    <figure>
+      <div class="window">
+        <img loading="lazy" src="assets/shots/plasma.webp" width="1600" height="863"
+             alt="The Flyback window with the Plasma preset: toolbar at the top, nine modules on the canvas, a rainbow diamond pattern in the preview, hints in the inspector, and a status bar at the bottom.">
+      </div>
+      <figcaption>The Plasma preset. The status bar counts modules, wires and compiled instructions, and shows
+      the time, the frame rate and whether the preview is drawn on the GPU or the CPU.</figcaption>
+    </figure>
+
+    <div class="scroll">
+      <table>
+        <caption>The toolbar, left to right.</caption>
+        <thead><tr><th scope="col">Button</th><th scope="col">What it does</th></tr></thead>
+        <tbody>
+          <tr><td>Presets</td><td>Replaces the patch with a built-in one.</td></tr>
+          <tr><td>Open, Save</td><td>Reads or writes a <code>.fbk</code> patch, a <code>.fbkb</code> bundle, or a <code>.fbks</code> text file.</td></tr>
+          <tr><td>Undo, Redo</td><td><kbd>Ctrl</kbd>+<kbd>Z</kbd> and <kbd>Ctrl</kbd>+<kbd>Y</kbd> (or <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd>).</td></tr>
+          <tr><td>Tidy</td><td>Lays the modules out left to right. <kbd>Ctrl</kbd>+<kbd>L</kbd>, and undoable.</td></tr>
+          <tr><td>Code</td><td>Shows the patch as text. <kbd>F2</kbd>.</td></tr>
+          <tr><td>Knobs</td><td>Shows the knob panel under the canvas. <kbd>Ctrl</kbd>+<kbd>K</kbd>.</td></tr>
+          <tr><td>Rewind, Record</td><td>Sets the clock back to zero, and starts or stops a live recording. <kbd>Ctrl</kbd>+<kbd>R</kbd>.</td></tr>
+          <tr><td>Assistant, Settings, About</td><td>A model that builds patches, the settings window, and what loaded (including plugins).</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>Double-click the preview to give it the whole window; double-click again or press <kbd>Esc</kbd> to come
+    back. On the canvas, drag the background to select, drag with the middle button to pan, and use the wheel
+    to zoom. <kbd>Ctrl</kbd>+<kbd>F</kbd> frames the whole patch.</p>
+  </section>
+
+  <section id="first">
+    <h2><span class="num">02</span>Your first patch</h2>
+
+    <p>Start from nothing. Open <strong>Presets</strong> and choose <strong>Empty</strong>, the last of the built-in
+    presets. The canvas now holds only the Output, which every patch has and which cannot be removed. The status
+    bar says nothing is wired into it yet.</p>
+
+    <ol class="steps">
+      <li>Point at an empty part of the canvas and press <kbd>Space</kbd> (or right-click). The module list opens
+      where you are pointing.</li>
+      <li>Type <code>rings</code>. The list narrows as you type, and the first match is highlighted, so press
+      <kbd>Enter</kbd> to add it.</li>
+      <li>Drag from the round socket beside Rings' <code>out</code> to the Output's <code>color</code> socket.</li>
+    </ol>
+
+    <figure>
+      <img class="shot" loading="lazy" src="assets/shots/palette.webp" width="900" height="560"
+           alt="The module list open on the canvas with 'sin' typed into its filter. It shows Sine under Oscillators, highlighted, and Sin under Maths.">
+      <figcaption>The module list, filtered. The headings are the module families, in the same colors as the
+      module headers on the canvas.</figcaption>
+    </figure>
+
+    <div class="patch-fig">
+      <div class="canvas"><div style="--min: 380px">
+        <figure style="margin: 0" data-label="Rings wired into the Output's color. Rings' x and y show Coordinates, because they are connected to it without a wire."
+          data-patch='{"nodes":[
+            {"id":"rings","name":"Rings","cat":"patterns","x":8,"y":8,"w":160,"outs":["out"],"ins":[["x","Coordinates x"],["y","Coordinates y"],["freq","4"],["offset","0"]]},
+            {"id":"out","name":"Output","cat":"output","x":230,"y":16,"outs":[],"ins":[["color","","color"],["left","0"],["right","0"],["volume","0.5"]]}
+          ],"wires":[["rings",0,"out",0]]}'></figure>
+      </div></div>
+    </div>
+
+    <div class="result">
+      <p style="margin: 0">The preview shows gray rings. You did not wire anything into Rings' <code>x</code> and
+      <code>y</code>, but they read <em>Coordinates x</em> and <em>Coordinates y</em>. Position sockets are
+      <strong>normalled</strong>: like the unplugged jack on a hardware synth, they already carry the signal
+      you would normally plug in. Wire something into one and that takes over; unplug it and the default comes
+      back.</p>
+      <figure><img loading="lazy" src="assets/shots/preview-tut-t1.webp" width="640" height="360" alt="Gray concentric rings on black."></figure>
+    </div>
+
+    <div class="note">
+      <span class="tag">Tip</span>
+      <p>Select Rings and the inspector shows a slider for every socket that is not wired. Drag <code>freq</code>
+      and the rings tighten as you drag: every edit recompiles the patch, and the picture never stops.</p>
+    </div>
+  </section>
+
+  <section id="move">
+    <h2><span class="num">03</span>Make it move</h2>
+
+    <p>A signal that changes over time is what makes a patch move. The <strong>Time</strong> module outputs
+    <code>t</code>, the clock in seconds.</p>
+
+    <ol class="steps">
+      <li>Add a <strong>Time</strong> module and wire <code>t</code> into Rings' <code>offset</code>. The rings
+      start to move, one ring's width every second.</li>
+      <li>Add an <strong>HSV</strong> module (it is in the Color family). Rewire Rings' <code>out</code> into
+      HSV's <code>value</code>, and HSV's <code>color</code> into the Output's <code>color</code>. Dragging a
+      connected input picks its wire up, so you can move the wire rather than drawing a new one.</li>
+      <li>Add a <strong>Multiply</strong>, wire <code>t</code> into its <code>a</code>, set <code>b</code> to
+      <code>0.1</code>, and wire its <code>out</code> into HSV's <code>hue</code>. The hue now goes round the
+      color wheel once every ten seconds.</li>
+      <li>Set HSV's <code>saturation</code> to about <code>0.85</code>.</li>
+    </ol>
+
+    <div class="patch-fig">
+      <div class="canvas"><div style="--min: 620px">
+        <figure style="margin: 0" data-label="Time feeds Rings' offset and a Multiply; the Multiply sets HSV's hue, Rings sets HSV's value, and HSV's color goes to the Output."
+          data-patch='{"nodes":[
+            {"id":"time","name":"Time","cat":"sources","x":8,"y":130,"outs":["t"],"ins":[]},
+            {"id":"rings","name":"Rings","cat":"patterns","x":170,"y":0,"w":160,"outs":["out"],"ins":[["x","Coordinates x"],["y","Coordinates y"],["freq","4"],"offset"]},
+            {"id":"mul","name":"Multiply","cat":"maths","x":170,"y":140,"outs":[["out","any"]],"ins":["a",["b","0.1"]]},
+            {"id":"hsv","name":"HSV","cat":"color","x":380,"y":40,"outs":[["color","color"]],"ins":["hue",["saturation","0.85"],"value"]},
+            {"id":"out","name":"Output","cat":"output","x":540,"y":40,"outs":[],"ins":[["color","","color"],["left","0"],["right","0"],["volume","0.5"]]}
+          ],"wires":[["time",0,"rings",3],["time",0,"mul",0],["mul",0,"hsv",0],["rings",0,"hsv",2],["hsv",0,"out",0]]}'></figure>
+      </div></div>
+    </div>
+
+    <div class="result">
+      <p style="margin: 0">The rings now travel and slowly change color. HSV takes
+      <code>value</code> from a signal that swings between −1 and 1, so the troughs of each ring are simply
+      black. There is no special "animation" feature: everything that moves in Flyback is a signal wired into a
+      socket.</p>
+      <figure><img loading="lazy" src="assets/shots/preview-tut-t3.webp" width="640" height="360" alt="Red rings on black."></figure>
+    </div>
+  </section>
+
+  <section id="sound">
+    <h2><span class="num">04</span>Make a sound</h2>
+
+    <p>The Output has two more sockets, <code>left</code> and <code>right</code>. Whatever is wired into them is
+    played through the speakers. <code>right</code> copies <code>left</code> until something is wired into it,
+    so a mono patch is stereo already.</p>
+
+    <ol class="steps">
+      <li>Add a <strong>Sine</strong> and a <strong>Frequency</strong> (from the Pitch family). Frequency is a
+      knob in hertz; the Sine's own <code>freq</code> knob covers the small numbers a picture needs, not
+      audible pitches.</li>
+      <li>Wire Frequency's <code>out</code> into the Sine's <code>freq</code>, and set Frequency to
+      <code>110</code>.</li>
+      <li>Wire the Sine's <code>out</code> into the Output's <code>left</code>. You hear a low A.</li>
+      <li>Use the Output's <code>volume</code> to set the level. At zero, the sound device is closed.</li>
+    </ol>
+
+    <div class="patch-fig">
+      <div class="canvas"><div style="--min: 480px">
+        <figure style="margin: 0" data-label="Frequency at 110 hertz wired into a Sine's freq, and the Sine wired into the Output's left. The Sine's in reads Time."
+          data-patch='{"nodes":[
+            {"id":"freq","name":"Frequency","cat":"pitch","x":8,"y":40,"outs":["out"],"ins":[["hz","110"]]},
+            {"id":"sine","name":"Sine","cat":"oscillators","x":170,"y":8,"outs":[["out","any"]],"ins":[["in","Time"],"freq",["phase","0"],["amp","1"],["bias","0"]]},
+            {"id":"out","name":"Output","cat":"output","x":340,"y":20,"outs":[],"ins":[["color","","color"],"left",["right","0"],["volume","0.5"]]}
+          ],"wires":[["freq",0,"sine",1],["sine",0,"out",1]]}'></figure>
+      </div></div>
+    </div>
+
+    <p>The Sine's <code>in</code> is normalled to Time. That is what makes an oscillator oscillate as soon as it
+    is placed. In the rings patch you wired a position into Rings instead, which is why it drew across the
+    screen rather than changing over time. The input a module reads across decides what it does: Coordinates
+    for a picture, Time for a sound.</p>
+
+    <div class="note">
+      <span class="tag">How one patch does both</span>
+      <p>Flyback compiles the patch once. The preview runs that program for every pixel with <code>x</code> and
+      <code>y</code> set to the pixel's position, and the sound runs it for every sample with <code>t</code>
+      advancing at the sample rate. Only the parts that reach <code>color</code> are drawn, and only the parts
+      that reach <code>left</code> and <code>right</code> are heard.</p>
+    </div>
+  </section>
+
+  <section id="both">
+    <h2><span class="num">05</span>One signal, both sinks</h2>
+
+    <p>Now for the idea Flyback is built around: one module that the eye and the ear both follow.</p>
+
+    <ol class="steps">
+      <li>Add another <strong>Sine</strong> and set <code>freq</code> to <code>0.15</code>, <code>amp</code> to
+      <code>0.5</code> and <code>bias</code> to <code>0.5</code>. It now swings slowly between 0 and 1, once
+      every six or seven seconds. Double-click its name in the inspector and call it <em>slow</em>.</li>
+      <li>Wire <em>slow</em> into HSV's <code>hue</code>, in place of the Multiply. Delete the Multiply.</li>
+      <li>Add a <strong>Multiply</strong> between the tone and the Output: the tone Sine into <code>a</code>,
+      <em>slow</em> into <code>b</code>, and the Multiply's <code>out</code> into <code>left</code>.</li>
+      <li>Press <kbd>Ctrl</kbd>+<kbd>L</kbd> to tidy the layout.</li>
+    </ol>
+
+    <figure class="wide-shot">
+      <div class="window">
+        <img loading="lazy" src="assets/shots/tutorial-canvas.webp" width="1600" height="863"
+             alt="The finished patch on the canvas: Frequency into Sine, Sine and a Sine named slow into a Multiply, slow into HSV's hue, Rings with Time on its offset into HSV's value, and HSV and the Multiply into the Output. The preview shows red rings.">
+      </div>
+      <figcaption>The finished patch. As the tone swells, the rings move through the color wheel with it, because
+      both are reading the same module.</figcaption>
+    </figure>
+
+    <p>This is the <strong>Drone</strong> preset, built by hand. Open Drone from the preset list to compare.</p>
+  </section>
+
+  <section id="text">
+    <h2><span class="num">06</span>The patch as text</h2>
+
+    <p>Press <kbd>F2</kbd>. The canvas is replaced by the same patch written in Flyback's text language. The text
+    is not an export: it builds back into exactly the same program, and you can work in either view.</p>
+
+    <pre><code class="fbks"># One slow oscillator setting both the hue of the image and the tremolo on the tone.
+let slow = sine(freq: 0.15, amp: 0.5, bias: 0.5)
+
+sine(freq: frequency(110)) * slow |> out.left
+
+rings(freq: 3, offset: t)
+  |> color.hsv(hue: slow, saturation: 0.85)
+  |> out.color
+
+out.volume = 0.6</code></pre>
+
+    <p>Read <code>|&gt;</code> as a wire. Its left side is plugged into the module on its right: into
+    <code>in</code> if the module has one, otherwise into the first socket the call did not name. Named
+    arguments set knobs or take other wires. <code>x</code>, <code>y</code> and <code>t</code> are
+    Coordinates and Time, and <code>a * b</code> is a Multiply.</p>
+
+    <ol class="steps">
+      <li>Change <code>rings(freq: 3</code> to <code>rings(freq: 8</code>.</li>
+      <li>Press <kbd>Ctrl</kbd>+<kbd>Enter</kbd> (or <strong>Apply</strong>) to build the text. The preview
+      updates straight away.</li>
+      <li>Save with the file type set to <code>.fbks</code> to keep the text as the document. When you open a
+      text file, the text owns the patch, and the canvas is a view of it until you press <strong>Edit on the
+      canvas</strong>.</li>
+    </ol>
+
+    <figure class="wide-shot">
+      <div class="window">
+        <img loading="lazy" src="assets/shots/tutorial-text.webp" width="1600" height="863"
+             alt="The code view with the patch above as colored text, the preview of red rings, and the inspector showing the module named slow with its in reading Time without a wire.">
+      </div>
+      <figcaption>The text view. Put the cursor in a module's call and the inspector edits that module; letting
+      go of a slider writes the new value into the text.</figcaption>
+    </figure>
+
+    <div class="note">
+      <span class="tag">Two modules, one short name</span>
+      <p>A module's short name is the last part of its type id, so <code>osc.sine</code> is <code>sine</code>.
+      When two installed modules share a short name, the text has to use the full id. With the Picture plugin
+      installed, <code>hsv</code> could be either <code>color.hsv</code> or <code>flyback.picture.hsv</code>, so
+      write <code>color.hsv</code>. The <a href="https://github.com/markovcd/Flyback/blob/main/docs/language.md">language
+      reference</a> covers the rest, including a transcription of every preset.</p>
+    </div>
+  </section>
+
+  <section id="play">
+    <h2><span class="num">07</span>Play it from a keyboard</h2>
+
+    <p>The <strong>MIDI In</strong> module has four outputs: <code>pitch</code> (the note number),
+    <code>gate</code> (high while a key is held), <code>velocity</code> and <code>trigger</code> (a pulse at the
+    start of each note). With a MIDI keyboard connected, pick it in <strong>Settings → MIDI</strong>. Without
+    one, the computer keyboard plays instead.</p>
+
+    <pre><code class="fbks"># Z to M plays C3 to B3, Q to U the octave above.
+let key = midi.in()
+
+sine(freq: key.pitch |> note())
+  * (key.gate |> adsr(attack: 5ms, decay: 300ms, sustain: 0.4, release: 400ms))
+  |> out.left
+
+rings(freq: key.pitch |> remap(48..84, 2..12), offset: t)
+  |> color.hsv(hue: key.pitch / 12, value: key.gate)
+  |> out.color
+
+out.volume = 0.5</code></pre>
+
+    <ul>
+      <li><strong>Note</strong> turns a note number into hertz. <strong>ADSR</strong> shapes the gate into an
+      envelope, so notes fade in and out instead of clicking.</li>
+      <li>The bottom letter row is the white keys from C3, with the black keys on the row above it; the
+      <kbd>Q</kbd> row and the number row above it are the same an octave up. <kbd>PgUp</kbd> and
+      <kbd>PgDn</kbd> move both rows by an octave.</li>
+      <li>Keys only play while the patch actually reads a MIDI In and you are not typing into a box, so click
+      the canvas or the preview before you play. <kbd>Ctrl</kbd> shortcuts keep working while you play.</li>
+      <li>For chords, add more MIDI In modules and give each its own voice index in the inspector.</li>
+    </ul>
+
+    <p>The <strong>Played</strong> preset is a finished example: four plucked strings into a reverb.</p>
+  </section>
+
+  <section id="knobs">
+    <h2><span class="num">08</span>Knobs and MIDI controllers</h2>
+
+    <p>A patch can carry a panel of knobs for the settings you want to perform with. Turning one changes the
+    playing patch without recompiling it, and recording captures the moves.</p>
+
+    <ol class="steps">
+      <li>Press <kbd>Ctrl</kbd>+<kbd>K</kbd> to show the knob panel under the canvas, and press
+      <strong>+</strong> to add a knob.</li>
+      <li>Click the knob's name, then click socket rows on the canvas to link them to it. Each socket follows the
+      knob over its own range. Click a linked row again to let it go, and press <kbd>Esc</kbd> when done.</li>
+      <li>To turn it from hardware, open the knob's menu and choose <strong>Learn MIDI controller</strong>, then
+      move a control. <strong>Settings → MIDI</strong> sets whether a controller jumps straight to its
+      position or picks the value up when it passes it.</li>
+    </ol>
+
+    <p>Knobs are renamed, reordered and removed from the same menu, and are saved with the patch.</p>
+  </section>
+
+  <section id="tidy">
+    <h2><span class="num">09</span>Keep a big patch tidy</h2>
+
+    <ul>
+      <li><strong>Select</strong> by dragging the background, <kbd>Ctrl</kbd>+click to add to the selection, or
+      <kbd>Ctrl</kbd>+<kbd>A</kbd> for everything. <kbd>Delete</kbd> removes the selection.</li>
+      <li><strong>Group</strong> a selection into one box with <kbd>Ctrl</kbd>+<kbd>G</kbd>. The box lists the
+      sockets that cross its edge. Double-click it to open it, and <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>G</kbd>
+      ungroups. <kbd>Ctrl</kbd>+<kbd>E</kbd> and <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>E</kbd> open and close
+      every box the selection touches.</li>
+      <li><strong>Copy</strong> and paste with <kbd>Ctrl</kbd>+<kbd>C</kbd> and <kbd>Ctrl</kbd>+<kbd>V</kbd>.
+      What is copied is a small patch file, so you can paste it into another patch or a text editor.</li>
+      <li><strong>Rewire quickly.</strong> Drag from a socket onto empty canvas to add a module that is already
+      plugged in. <kbd>Ctrl</kbd>+drag an output that has one wire to feed that wire from somewhere else.</li>
+      <li><strong>Tidy</strong> with <kbd>Ctrl</kbd>+<kbd>L</kbd>, and frame everything with
+      <kbd>Ctrl</kbd>+<kbd>F</kbd>.</li>
+    </ul>
+
+    <figure class="wide-shot">
+      <div class="window">
+        <img loading="lazy" src="assets/shots/euclid-kit.webp" width="1600" height="863"
+             alt="The Euclid kit preset with its modules grouped into boxes named Rhythm, Hats and snare, Bass, Kick, Picture: hand and Picture: hits, wired into a Mixer and the Output.">
+      </div>
+      <figcaption>The Euclid kit preset: forty-seven modules in six boxes, plus a Mixer and the Output.</figcaption>
+    </figure>
+  </section>
+
+  <section id="record">
+    <h2><span class="num">10</span>Record and render</h2>
+
+    <h3>Record a live take</h3>
+    <p>Press <kbd>Ctrl</kbd>+<kbd>R</kbd> (or <strong>Record</strong>), choose a file and play. Saving as
+    <code>.avi</code> records the picture from the GPU with the sound alongside it; <code>.wav</code> records
+    the sound only. A take runs until you press <kbd>Ctrl</kbd>+<kbd>R</kbd> again, and it includes every knob
+    you turn and every note you play. The picture size is set under <strong>Settings → Graphics</strong>, and
+    the frame rate and JPEG quality under <strong>Recording</strong>.</p>
+
+    <figure>
+      <img class="shot" loading="lazy" src="assets/shots/settings.webp" width="1600" height="863"
+           alt="The Settings window over the dimmed main window, on the Graphics tab: Size 1920 by 1080, Preview rate 60 fps, Render GPU. Tabs for Recording, Sound, MIDI and Agent are on the left.">
+    </figure>
+
+    <h3>Render exactly with the command line</h3>
+    <p><code>flyback-cli</code> ships beside the app and runs the same engine without the window. A render is
+    repeatable: the same patch and the same options give the same file.</p>
+
+<pre><code># a still frame, 2.5 seconds in
+flyback-cli render drone.fbk -o drone.png --size 1920x1080 --at 2.5
+
+# 30 seconds of video with sound, and the sound on its own
+flyback-cli render drone.fbk -o drone.avi --seconds 30 --fps 30
+flyback-cli render drone.fbk -o drone.wav --seconds 30
+
+# text patches work anywhere a patch does
+flyback-cli render my-patch.fbks -o my-patch.png</code></pre>
+
+    <h3>Check, inspect and share</h3>
+<pre><code>flyback-cli check my-patch.fbk --strict     # exit code 0, 1 or 2; good for CI
+flyback-cli info my-patch.fbk               # modules, wires and compile cost
+flyback-cli print my-patch.fbk -o my-patch.fbks
+flyback-cli pack my-patch.fbk -o my-patch.fbkb</code></pre>
+
+    <p>A patch that plays a sample or shows a picture refers to those files. <code>pack</code> writes a
+    <code>.fbkb</code> bundle, a zip of the patch and every file it uses, so it opens the same on another
+    machine.</p>
+  </section>
+
+  <section id="assistant">
+    <h2><span class="num">11</span>The assistant</h2>
+
+    <p>The assistant builds and edits patches from a description. It works with any chat-completions endpoint,
+    or with Gemini, whose models can also listen to what the patch sounds like.</p>
+
+    <ol class="steps">
+      <li>Open <strong>Settings → Agent</strong>, choose a provider, fill in what it asks for, and paste an API
+      key. Tick <strong>Keep this key</strong> to store it in the operating system's secret store.</li>
+      <li>Open <strong>Assistant</strong> on the toolbar, describe what you want, for example <em>"a slow kick
+      drum that makes the rings flash"</em>, and press <kbd>Enter</kbd>.</li>
+      <li>Nothing is sent until you ask. What comes back is an ordinary edit: <kbd>Ctrl</kbd>+<kbd>Z</kbd> takes
+      it off again.</li>
+    </ol>
+
+    <p>Conversations are saved beside the patch they are about. <code>flyback-cli probe</code> asks a provider
+    which models it offers and fills the model list in for you.</p>
+  </section>
+
+  <section id="keys">
+    <h2><span class="num">12</span>Keyboard shortcuts</h2>
+
+    <div class="scroll">
+      <table class="keys">
+        <thead><tr><th scope="col">Keys</th><th scope="col">Does</th></tr></thead>
+        <tbody>
+          <tr><td><kbd>Space</kbd> or right-click</td><td>Open the module list at the pointer</td></tr>
+          <tr><td>type, <kbd>↑</kbd> <kbd>↓</kbd>, <kbd>Enter</kbd></td><td>Filter the list, move through it, add the highlighted module</td></tr>
+          <tr><td><kbd>Esc</kbd></td><td>Clear the filter, then close the list; leave full-screen preview</td></tr>
+          <tr><td><kbd>Ctrl</kbd>+<kbd>Z</kbd> / <kbd>Ctrl</kbd>+<kbd>Y</kbd></td><td>Undo / redo</td></tr>
+          <tr><td><kbd>Ctrl</kbd>+<kbd>C</kbd> <kbd>X</kbd> <kbd>V</kbd></td><td>Copy, cut, paste</td></tr>
+          <tr><td><kbd>Ctrl</kbd>+<kbd>A</kbd></td><td>Select everything</td></tr>
+          <tr><td><kbd>Delete</kbd></td><td>Remove the selection</td></tr>
+          <tr><td><kbd>Ctrl</kbd>+<kbd>G</kbd> / <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>G</kbd></td><td>Group / ungroup</td></tr>
+          <tr><td><kbd>Ctrl</kbd>+<kbd>E</kbd> / <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>E</kbd></td><td>Open / close the boxes in the selection</td></tr>
+          <tr><td><kbd>Ctrl</kbd>+<kbd>L</kbd></td><td>Tidy the layout</td></tr>
+          <tr><td><kbd>Ctrl</kbd>+<kbd>F</kbd></td><td>Frame the whole patch</td></tr>
+          <tr><td><kbd>F2</kbd></td><td>Switch between the canvas and the text</td></tr>
+          <tr><td><kbd>Ctrl</kbd>+<kbd>Enter</kbd></td><td>Build the text into the patch</td></tr>
+          <tr><td><kbd>Ctrl</kbd>+<kbd>K</kbd></td><td>Show or hide the knob panel</td></tr>
+          <tr><td><kbd>Ctrl</kbd>+<kbd>R</kbd></td><td>Start or stop recording</td></tr>
+          <tr><td><kbd>PgUp</kbd> / <kbd>PgDn</kbd></td><td>Move the computer keyboard up or down an octave</td></tr>
+          <tr><td>double-click the preview</td><td>Full-screen preview</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p style="margin-top: 32px"><a class="button" href="plugins.html">Next: write a plugin →</a></p>
+  </section>
+
+  </main>
+</div>
+</div>
+
+</div>
+
+<footer class="site-foot">
+  <div class="wrap">
+    <span class="brand-foot"><img src="assets/logo.svg" alt="">Flyback · MIT License</span>
+    <a href="./">Overview</a>
+    <a href="plugins.html">Plugin guide</a>
+    <a href="https://github.com/markovcd/Flyback/blob/main/docs/language.md">Language reference</a>
+    <a href="https://github.com/markovcd/Flyback/blob/main/CHANGELOG.md">Changelog</a>
+    <a href="https://github.com/markovcd/Flyback">GitHub</a>
+  </div>
+</footer>
+
+<script src="assets/site.js"></script>
+</body>
+</html>

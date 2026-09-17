@@ -1,0 +1,422 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Flyback</title>
+<meta name="description" content="Flyback is a patchable synthesizer where one graph generates both a picture and a sound. Wire modules together, watch and hear the result live, and export it from the command line.">
+<meta name="theme-color" content="#22252A">
+<meta property="og:title" content="Flyback — one patch, a picture and a sound">
+<meta property="og:description" content="A patchable video and audio synthesizer for Windows, macOS and Linux.">
+<meta property="og:image" content="https://markovcd.github.io/Flyback/assets/shots/nebula.webp">
+<link rel="icon" href="assets/logo.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;650;700;750&display=swap">
+<link rel="stylesheet" href="assets/site.css">
+<style>
+  /* ---- hero ---- */
+  .hero { padding: 72px 0 0; border-bottom: 1px solid var(--edge); overflow: hidden; }
+  .hero .intro { max-width: 46rem; }
+  .hero h1 .sweep {
+    background: linear-gradient(90deg, var(--source), var(--feedback) 50%, var(--oscillator));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .hero .lede { margin-top: 22px; }
+  .hero .actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 32px; }
+  .hero .platforms { margin-top: 16px; font-size: 13.5px; color: var(--muted); }
+  .hero figure { margin: 56px 0 0; position: relative; }
+  .hero .window { border-bottom-left-radius: 0; border-bottom-right-radius: 0; border-bottom: none; }
+  @media (min-width: 900px) { .hero .window { margin: 0 -24px; } }
+
+  /* ---- sections ---- */
+  .band { padding: 96px 0; border-bottom: 1px solid var(--edge); }
+  .band.panel { background: var(--panel); }
+  .section-head { max-width: 44rem; }
+  .section-head p { color: var(--label); }
+
+  /* ---- one graph, two sinks ---- */
+  .twosinks { display: grid; grid-template-columns: minmax(0, 1fr); gap: 28px; margin-top: 40px; align-items: center; }
+  @media (min-width: 1000px) { .twosinks { grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); gap: 40px; } }
+  .diagram { padding: 20px; border-radius: 8px; border: 1px solid var(--edge); }
+  .diagram-scroll { overflow-x: auto; }
+  .diagram-scroll > figure { margin: 0; min-width: 640px; }
+  .as-text pre { margin: 0; }
+  .as-text .window { margin-top: 16px; }
+  .facts { display: grid; gap: 14px; margin-top: 40px; }
+  @media (min-width: 760px) { .facts { grid-template-columns: repeat(3, 1fr); } }
+  .fact { border-top: 2px solid var(--separator); padding-top: 14px; }
+  .fact h3 { margin: 0; font-size: 16px; }
+  .fact p { margin-top: 6px; font-size: 15px; color: var(--muted); }
+
+  /* ---- gallery ---- */
+  .clips { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; margin-top: 40px; }
+  @media (min-width: 760px) { .clips { grid-template-columns: repeat(2, 1fr); } }
+  .clip { margin: 0; }
+  .clip video { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; background: #000; border-radius: var(--radius); border: 1px solid var(--edge); }
+  .clip figcaption { display: flex; gap: 10px; align-items: baseline; }
+  .clip figcaption strong { font-size: 14.5px; }
+
+  .stills { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 16px; }
+  @media (min-width: 760px) { .stills { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+  .still { margin: 0; }
+  .still img { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 5px; border: 1px solid var(--edge); background: #000; }
+  .still figcaption { margin-top: 8px; font-size: 13px; }
+  .still figcaption strong { display: block; font-size: 13.5px; }
+
+  /* ---- features as modules ---- */
+  .modules { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; margin-top: 40px; }
+  @media (min-width: 640px) { .modules { grid-template-columns: repeat(2, 1fr); } }
+  @media (min-width: 1040px) { .modules { grid-template-columns: repeat(4, 1fr); } }
+
+  /* ---- tour ---- */
+  .tour { display: flex; flex-direction: column; gap: 80px; margin-top: 48px; }
+  .stop { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px 48px; align-items: start; }
+  @media (min-width: 960px) {
+    .stop { grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); }
+    .stop > div { display: contents; }
+    .stop > figure { grid-column: 1 / -1; }
+
+  }
+  .stop h3 { margin-top: 0; font-size: 22px; }
+  .stop figure { margin: 20px 0 0; }
+  .stop p { margin-top: 0; }
+  @media (max-width: 959px) { .stop p { margin-top: 12px; } }
+
+  /* ---- CLI and start ---- */
+  .split { display: grid; grid-template-columns: minmax(0, 1fr); gap: 32px; margin-top: 36px; }
+  @media (min-width: 960px) { .split { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 40px; } }
+  .split h3:first-child { margin-top: 0; }
+</style>
+</head>
+<body>
+
+<header class="toolbar">
+  <div class="wrap">
+    <a class="brand" href="./"><img src="assets/logo.svg" alt=""><span>Flyback</span></a>
+    <nav aria-label="Site">
+      <a href="./" aria-current="page" class="optional">Overview</a>
+      <a href="tutorials.html">Tutorials</a>
+      <a href="plugins.html">Plugins</a>
+      <span class="sep" aria-hidden="true"></span>
+      <a href="https://github.com/markovcd/Flyback">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+
+<section class="hero canvas">
+  <div class="wrap">
+    <div class="intro">
+      <p class="eyebrow">A patchable synthesizer for Windows, macOS and Linux</p>
+      <h1>One patch.<br><span class="sweep">A picture and a sound.</span></h1>
+      <p class="lede">Flyback is a modular synthesizer where the same graph of modules draws on the screen
+      and plays through the speakers. Wire oscillators, patterns, geometry and feedback together, and watch
+      and hear the result change as you turn a knob.</p>
+      <div class="actions">
+        <a class="button primary" href="https://github.com/markovcd/Flyback/releases/latest">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3v10M5.5 8.5 10 13l4.5-4.5M4 17h12"/></svg>
+          Download the latest release
+        </a>
+        <a class="button" href="tutorials.html">Start the tutorials</a>
+      </div>
+      <p class="platforms">Self-contained builds for win-x64, win-arm64, osx-x64, osx-arm64 and linux-x64. MIT licensed.</p>
+    </div>
+
+    <figure>
+      <div class="window">
+        <img src="assets/shots/nebula.webp" width="1600" height="863"
+             alt="The Flyback window: a patch of nineteen modules wired left to right on a dark grid canvas, and beside it a live preview of an orange and magenta kaleidoscopic flower.">
+      </div>
+    </figure>
+  </div>
+</section>
+
+<svg class="saw" viewBox="0 0 720 10" preserveAspectRatio="none" aria-hidden="true">
+  <defs>
+    <linearGradient id="sweep" x1="0" x2="1"><stop offset="0" stop-color="#4A9EDE"/><stop offset="0.5" stop-color="#3FC8C8"/><stop offset="1" stop-color="#4FC387"/></linearGradient>
+    <pattern id="saw" width="24" height="10" patternUnits="userSpaceOnUse"><path d="M0 9 L24 1.5 L24 9" fill="none" stroke="url(#sweep)" stroke-width="1.4"/></pattern>
+  </defs>
+  <rect width="720" height="10" fill="url(#saw)" opacity="0.6"/>
+</svg>
+
+<section class="band" id="how">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow">How it works</p>
+      <h2>A graph you draw, compiled to a program that runs twice.</h2>
+      <p>Every module declares its sockets, and every wire says where a signal goes. When the patch changes,
+      Flyback compiles the graph backwards from the Output into one flat list of instructions. The screen
+      runs that list once per pixel, and the speakers run it once per sample.</p>
+    </div>
+
+    <div class="twosinks">
+      <div class="diagram canvas">
+        <div class="diagram-scroll">
+          <figure data-label="The Plasma patch: Coordinates x and y each feed a Sine, Time slowly shifts the second Sine's phase through a Multiply, the two Sines are added, remapped to the range 0 to 1 and used as the hue of an HSV color wired into the Output."
+            data-patch='{"nodes":[
+              {"id":"coord","name":"Coordinates","cat":"sources","x":8,"y":110,"outs":["x","y","radius","angle","aspect"],"ins":[]},
+              {"id":"time","name":"Time","cat":"sources","x":8,"y":250,"outs":["t"],"ins":[]},
+              {"id":"mul","name":"Multiply","cat":"maths","x":160,"y":250,"outs":[["out","any"]],"ins":[["a","",""],["b","0.2"]]},
+              {"id":"sine1","name":"Sine","cat":"oscillators","x":160,"y":0,"outs":[["out","any"]],"ins":["in",["freq","1.5"],["phase","0"],["amp","1"],["bias","0"]]},
+              {"id":"sine2","name":"Sine","cat":"oscillators","x":312,"y":150,"outs":[["out","any"]],"ins":["in",["freq","1.1"],"phase",["amp","1"],["bias","0"]]},
+              {"id":"add","name":"Add","cat":"maths","x":464,"y":100,"outs":[["out","any"]],"ins":["a","b"]},
+              {"id":"remap","name":"Remap","cat":"maths","x":616,"y":90,"outs":[["out","any"]],"ins":["in",["in low","-2"],["in high","2"],["out low","0"],["out high","1"]]},
+              {"id":"hsv","name":"HSV","cat":"color","x":768,"y":80,"outs":[["color","color"]],"ins":["hue",["saturation","0.85"],["value","1"]]},
+              {"id":"out","name":"Output","cat":"output","x":920,"y":90,"outs":[],"ins":[["color","","color"],["left","0"],["right","0"],["volume","0.5"]]}
+            ],"wires":[
+              ["coord",0,"sine1",0],["coord",1,"sine2",0],["time",0,"mul",0],["mul",0,"sine2",2],
+              ["sine1",0,"add",0],["sine2",0,"add",1],["add",0,"remap",0],["remap",0,"hsv",0],["hsv",0,"out",0]
+            ]}'>
+            <figcaption>The Plasma preset on the canvas: nine modules and nine wires.</figcaption>
+          </figure>
+        </div>
+      </div>
+
+      <div class="as-text">
+        <pre><code class="fbks"># The same patch, as text.
+let slowly = t * 0.2
+
+x |> sine(freq: 1.5)
+  |> add(y |> sine(freq: 1.1, phase: slowly))
+  |> remap(-2..2, 0..1)
+  |> color.hsv(saturation: 0.85, value: 1)
+  |> out.color</code></pre>
+        <div class="window">
+          <video data-autoplay muted loop playsinline preload="none" poster="assets/shots/preview-plasma.webp" width="960" height="540"
+                 aria-label="The Plasma patch rendering: diamonds of rainbow hue drifting slowly.">
+            <source src="assets/clips/plasma.mp4" type="video/mp4">
+          </video>
+        </div>
+      </div>
+    </div>
+
+    <div class="facts">
+      <div class="fact">
+        <h3>Picture and sound share one patch</h3>
+        <p>Wire a signal into the Output's <code>color</code> and you see it. Wire it into <code>left</code> and
+        you hear it. A slow oscillator can set the hue of the image and the tremolo on the tone at the same time.</p>
+      </div>
+      <div class="fact">
+        <h3>Sockets have sensible defaults</h3>
+        <p>Position inputs are already connected to Coordinates and time inputs to Time, so an oscillator starts
+        oscillating as soon as you place it, before you draw a single wire.</p>
+      </div>
+      <div class="fact">
+        <h3>Every edit recompiles, live</h3>
+        <p>The preview draws on the GPU where it can, and the sound keeps playing while you patch. Undo takes
+        back any edit, including a whole patch the assistant built.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="band panel" id="gallery">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow" style="color: var(--tint)">Gallery</p>
+      <h2>What the presets look like.</h2>
+      <p>Flyback ships with more than thirty presets, from single ideas to whole tracks. These clips were
+      rendered with <code>flyback-cli render</code>, and the stills were captured from the running app.</p>
+    </div>
+
+    <div class="clips">
+      <figure class="clip">
+        <video data-autoplay muted loop playsinline preload="none" poster="assets/shots/preview-nebula.webp" width="960" height="540"
+               aria-label="Nebula: a kaleidoscopic flower of orange and magenta petals folding and trailing.">
+          <source src="assets/clips/nebula.mp4" type="video/mp4">
+        </video>
+        <figcaption><strong>Nebula</strong> Everything the video side can do: folded, warped and trailing its own frames.</figcaption>
+      </figure>
+      <figure class="clip">
+        <video data-autoplay muted loop playsinline preload="none" poster="assets/shots/preview-feedback-tunnel.webp" width="960" height="540"
+               aria-label="Feedback tunnel: orange rings receding into a dark tunnel.">
+          <source src="assets/clips/feedback-tunnel.mp4" type="video/mp4">
+        </video>
+        <figcaption><strong>Feedback tunnel</strong> Each frame read back slightly rotated, scaled and dimmed, with fresh rings on top.</figcaption>
+      </figure>
+    </div>
+
+    <div class="stills">
+      <figure class="still"><img loading="lazy" src="assets/shots/preview-whole-band.webp" width="888" height="500" alt="A many-pointed star in pinks, blues and reds."><figcaption><strong>Whole band</strong>Four instruments on four sequencers, and one picture driven by three of them.</figcaption></figure>
+      <figure class="still"><img loading="lazy" src="assets/shots/preview-acid.webp" width="888" height="500" alt="A dense swirl of green, pink and orange fragments."><figcaption><strong>Acid</strong>A 303 line through a resonant filter into two delays.</figcaption></figure>
+      <figure class="still"><img loading="lazy" src="assets/shots/preview-marble.webp" width="888" height="500" alt="Grey and lilac veins like polished stone."><figcaption><strong>Marble</strong>A fractal bent by a fractal, which is stone.</figcaption></figure>
+      <figure class="still"><img loading="lazy" src="assets/shots/preview-four-forms.webp" width="888" height="500" alt="A circle, a rounded square, a hexagon and a star in coral on black."><figcaption><strong>Four forms</strong>Four shapes on a turning ring.</figcaption></figure>
+      <figure class="still"><img loading="lazy" src="assets/shots/preview-ring-scan.webp" width="888" height="500" alt="Green concentric rings with a pale looping trace in the middle."><figcaption><strong>Ring scan</strong>A loop swept round a field at audio rate, so the picture is the waveform.</figcaption></figure>
+      <figure class="still"><img loading="lazy" src="assets/shots/preview-in-key.webp" width="888" height="500" alt="Soft terraces of ochre, green and teal."><figcaption><strong>In key</strong>A noise field snapped to a pentatonic scale: a melody, and the terraces it was cut into.</figcaption></figure>
+      <figure class="still"><img loading="lazy" src="assets/shots/preview-euclid-kit.webp" width="888" height="500" alt="An orange ring on black with a green clock hand."><figcaption><strong>Euclid kit</strong>Four Euclidean rhythms, drawn as a clock hand and a ring the kick pushes.</figcaption></figure>
+      <figure class="still"><img loading="lazy" src="assets/shots/preview-waveform.webp" width="888" height="500" alt="A green sawtooth waveform on a dark grid."><figcaption><strong>Waveform</strong>A Scope charting what the speakers actually played.</figcaption></figure>
+    </div>
+  </div>
+</section>
+
+<section class="band" id="features">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow" style="color: var(--oscillator)">Features</p>
+      <h2>Everything is a module, and every module is a few sockets.</h2>
+    </div>
+
+    <div class="modules">
+      <article class="node" style="--accent: var(--source)">
+        <header>Patch editor <small>Sources</small></header>
+        <div class="body"><p>Right-click the canvas or press <kbd>Space</kbd> to add a module where you are pointing.
+        Drag from a socket to wire it, drag a wire off to unplug it, and group modules into boxes.</p></div>
+      </article>
+      <article class="node" style="--accent: var(--oscillator)">
+        <header>Thirteen families <small>Oscillators</small></header>
+        <div class="body"><p>Sources, oscillators, patterns, forms, geometry, color, maths, pitch, timing, shaping,
+        time effects, feedback and measurement modules, with a preset for each family.</p></div>
+      </article>
+      <article class="node" style="--accent: var(--feedback)">
+        <header>Feedback <small>Feedback</small></header>
+        <div class="body"><p>Read the previous frame back in, or wire a module into itself. A loop is a delay:
+        a filter or a comb for the ears, a trail or a tunnel for the eyes.</p></div>
+      </article>
+      <article class="node" style="--accent: var(--space)">
+        <header>A text language <small>Geometry</small></header>
+        <div class="body"><p>Press <kbd>F2</kbd> and the patch is text you can edit, diff and generate. It
+        builds back to exactly the same program and saves as <code>.fbks</code>.</p></div>
+      </article>
+      <article class="node" style="--accent: var(--note)">
+        <header>Play it <small>Pitch</small></header>
+        <div class="body"><p>MIDI input on Windows, macOS and Linux, with polyphonic voices. With no controller,
+        the computer keyboard is the instrument. Knobs follow a MIDI controller too.</p></div>
+      </article>
+      <article class="node" style="--accent: var(--reading)">
+        <header>Record and render <small>Measurement</small></header>
+        <div class="body"><p>Record a live take, knobs and all, to AVI or WAV with <kbd>Ctrl</kbd>+<kbd>R</kbd>.
+        For exact, repeatable exports use <code>flyback-cli render</code> to write a PNG, AVI or WAV.</p></div>
+      </article>
+      <article class="node" style="--accent: var(--tint)">
+        <header>Assistant <small>Color</small></header>
+        <div class="body"><p>Describe a patch and have one built, over any chat-completions endpoint or Gemini,
+        whose models can listen to the patch themselves. What comes back is an edit you can undo.</p></div>
+      </article>
+      <article class="node" style="--accent: var(--sequencer)">
+        <header>Plugins <small>Timing</small></header>
+        <div class="body"><p>Modules, presets, sound backends and assistants all load from a folder. The
+        Picture, Voice and Effects modules ship as plugins themselves. <a href="plugins.html">Write your own.</a></p></div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="band panel" id="tour">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow" style="color: var(--source)">A look around</p>
+      <h2>Screenshots from the app.</h2>
+    </div>
+
+    <div class="tour">
+      <div class="stop">
+        <div>
+          <h3>Edit a module on the inspector</h3>
+          <p>Select a module to see its description and a slider for every socket that is not wired.
+          A wired socket reads <em>patched</em>. Values change the running patch as you drag.</p>
+        </div>
+        <figure>
+          <div class="window">
+            <img loading="lazy" src="assets/shots/plasma-inspector.webp" width="1600" height="863"
+                 alt="The Plasma patch with a Sine module selected. The inspector below the preview shows sliders for freq, phase, amp and bias.">
+          </div>
+        </figure>
+      </div>
+
+      <div class="stop flip">
+        <div>
+          <h3>Switch to text with F2</h3>
+          <p>The code view prints the patch in the language, in the same colors the canvas uses for each kind of
+          module. Edit it and press <kbd>Ctrl</kbd>+<kbd>Enter</kbd> to build it back into a patch.</p>
+        </div>
+        <figure>
+          <div class="window">
+            <img loading="lazy" src="assets/shots/plasma-code.webp" width="1600" height="863"
+                 alt="The code view: five lines of pipeline text with syntax colors, beside the live Plasma preview and the HSV module in the inspector.">
+          </div>
+        </figure>
+      </div>
+
+      <div class="stop">
+        <div>
+          <h3>Keep big patches readable with groups</h3>
+          <p>The Whole band preset is ninety-two modules in ten boxes: a clock, the sequences, four instruments,
+          a mixing desk and the picture. Double-click a box to open it, and press <kbd>Ctrl</kbd>+<kbd>G</kbd> to
+          make your own.</p>
+        </div>
+        <figure>
+          <div class="window">
+            <img loading="lazy" src="assets/shots/whole-band.webp" width="1600" height="863"
+                 alt="The Whole band patch collapsed into boxes named Clock, Sequences, Bass, Lead, Kick, Hats, Desk, Picture: Geometry, Picture: Color and Picture: Feedback, wired into the Output.">
+          </div>
+        </figure>
+      </div>
+
+      <div class="stop flip">
+        <div>
+          <h3>Start from a preset</h3>
+          <p>The first toolbar button lists every preset with a line saying what it shows. Presets that plugins add
+          appear after the built-in ones.</p>
+        </div>
+        <figure>
+          <div class="window">
+            <img loading="lazy" src="assets/shots/presets-list.webp" width="1600" height="863"
+                 alt="The preset list open over the canvas, showing Plasma, Kaleidoscope, Grid, Feedback tunnel, Picture in, Clip, Loop, Two channels and Echo chamber with their descriptions.">
+          </div>
+        </figure>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="band" id="start">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow" style="color: var(--sequencer)">Get started</p>
+      <h2>Download it, or run it from source.</h2>
+    </div>
+
+    <div class="split">
+      <div>
+        <h3>From a release</h3>
+        <p>Each <a href="https://github.com/markovcd/Flyback/releases">release</a> has a self-contained folder per
+        platform, with the app, the command line tool and the plugins side by side. There is nothing to install:
+        unpack it and run <code>Flyback</code>.</p>
+        <p>On macOS the build is <code>Flyback.app</code>, and it opens <code>.fbk</code>, <code>.fbkb</code> and
+        <code>.fbks</code> files by double-click.</p>
+        <p><a class="button" href="tutorials.html" style="margin-top: 10px">Your first patch →</a></p>
+      </div>
+      <div>
+        <h3>From source</h3>
+        <p>You need the .NET 10 SDK.</p>
+<pre><code>git clone https://github.com/markovcd/Flyback
+cd Flyback
+dotnet run --project src/Flyback.App -c Release</code></pre>
+        <h3>From the command line</h3>
+<pre><code>flyback-cli render nebula.fbk -o nebula.png --size 1920x1080 --at 2.5
+flyback-cli render drone.fbk -o drone.avi --seconds 30 --fps 30
+flyback-cli check nebula.fbk --strict
+flyback-cli print nebula.fbk -o nebula.fbks</code></pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="site-foot">
+  <div class="wrap">
+    <span class="brand-foot"><img src="assets/logo.svg" alt="">Flyback · MIT License</span>
+    <a href="tutorials.html">Tutorials</a>
+    <a href="plugins.html">Plugin guide</a>
+    <a href="https://github.com/markovcd/Flyback/blob/main/docs/language.md">Language reference</a>
+    <a href="https://github.com/markovcd/Flyback/blob/main/CHANGELOG.md">Changelog</a>
+    <a href="https://github.com/markovcd/Flyback">GitHub</a>
+  </div>
+</footer>
+
+<script src="assets/site.js"></script>
+</body>
+</html>

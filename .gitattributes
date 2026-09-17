@@ -13,6 +13,8 @@
 *.png  binary
 *.ico  binary
 *.icns binary
+*.webp binary
+*.mp4  binary
 
 # A bundle is a zip archive, so it must not be normalised on the way in.
 *.fbkb binary
