@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Platform.Storage;
@@ -115,13 +116,19 @@ public sealed partial class MainWindow
 
     private async Task OpenPatchAsync()
     {
+        var all = new FilePickerFileType(GlobalConstants.ApplicationName)
+        {
+            Patterns = [.. OpenKinds().SelectMany(o => o.Patterns ?? [])]
+        };
+        
         var files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
         {
             Title = "Open patch",
             AllowMultiple = false,
-            FileTypeFilter = OpenKinds(),
+            FileTypeFilter = [all, .. OpenKinds()],
         });
-
+        
+        
         if (files.Count == 0) return;
 
         await OpenFileAsync(files[0]);
