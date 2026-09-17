@@ -2,7 +2,10 @@
 
 **Status:** Accepted · 2026-08-19 · *user-directed* · finishes the placement
 [0033](0033-patches-authored-by-an-agent-behind-the-plugin-boundary.md) left
-half-done, and shares it with the editor
+half-done, and shares it with the editor · extended by
+[0092](0092-a-drawing-too-wide-for-the-canvas-shuts-a-box.md), which says what
+becomes of a drawing too large for the canvas and widens "nothing but
+coordinates" below to "nothing the compiler reads"
 
 ## Context
 

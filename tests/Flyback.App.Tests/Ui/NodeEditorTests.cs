@@ -922,15 +922,16 @@ public class NodeEditorTests : UiTest
     }
 
     /// <summary>
-    /// A patch too wide for the canvas is said rather than shown.
+    /// A patch too wide for the canvas with no box to shut is said rather than
+    /// shown, and nothing is moved (ADR-0092).
     /// </summary>
     /// <remarks>
-    /// Coordinates are held inside the canvas, so a drawing that does not fit
-    /// arrives with its far end folded onto the boundary and stacked, which reads
-    /// as a broken layout rather than an oversized patch.
+    /// Coordinates are held inside the canvas, so writing that drawing would fold
+    /// its far end onto the boundary and stack it, which reads as a broken layout
+    /// rather than as an oversized patch.
     /// </remarks>
     [AvaloniaFact]
-    public void Laying_out_a_patch_wider_than_the_canvas_says_so()
+    public void Laying_out_a_patch_wider_than_the_canvas_says_so_and_moves_nothing()
     {
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
 
@@ -953,9 +954,63 @@ public class NodeEditorTests : UiTest
         var said = string.Empty;
         editor.Reported += (_, message) => said = message;
 
+        var before = builder.Patch.Nodes.ToDictionary(n => n.Id, n => (n.X, n.Y));
+
+        editor.Tidy();
+
+        said.ShouldContain("too big to draw");
+
+        foreach (var node in editor.Patch.Nodes)
+            (node.X, node.Y).ShouldBe(before[node.Id], "nothing should have moved");
+    }
+
+    /// <summary>
+    /// And one too wide only because its boxes are open has boxes shut until it
+    /// fits, named in what it says (ADR-0092).
+    /// </summary>
+    [AvaloniaFact]
+    public void Laying_out_a_patch_too_wide_with_its_boxes_open_shuts_boxes_and_names_them()
+    {
+        var builder = new PatchBuilder(NodeCatalog.BuiltIn);
+
+        var sink = builder.Add(NodeCatalog.OutputTypeId, 0, 0);
+        NodeInstance? last = null;
+
+        // Six chains of twelve, each boxed: open, every box is a ring round twelve
+        // columns of its own, and six of those in a row want twice the canvas.
+        for (var chain = 0; chain < 6; chain++)
+        {
+            var made = new List<NodeInstance>();
+
+            for (var i = 0; i < 12; i++)
+            {
+                var node = builder.Add("math.mul", 0, 0);
+
+                if (last is { } feeding) builder.Wire(feeding, 0, node, 0);
+
+                made.Add(node);
+                last = node;
+            }
+
+            builder.Group($"Chain {chain}", [.. made]);
+        }
+
+        builder.Wire(last!, 0, sink, NodeCatalog.OutputLeftPort);
+
+        foreach (var group in builder.Patch.Groups!) group.Collapsed = false;
+
+        var (editor, _) = Editing(builder.Patch);
+
+        var said = string.Empty;
+        editor.Reported += (_, message) => said = message;
+
         editor.Tidy();
 
         said.ShouldContain("wider than the canvas");
+        said.ShouldContain("Chain ");
+        said.ShouldContain("shut");
+
+        editor.Patch.Groups!.ShouldContain(group => group.Collapsed);
     }
 
     /// <summary>And one that fits says nothing, since a patch that laid out is a patch that laid out.</summary>

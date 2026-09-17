@@ -76,6 +76,25 @@ public static class PatchLayout
             HeaderHeight + ((isOutput ? row : sockets.Outputs.Count + row) + 0.5d) * RowHeight;
     }
 
+    /// <summary>
+    /// What one run of the layout came to.
+    /// </summary>
+    /// <param name="Fitted">
+    /// Whether the drawing was put on the canvas. False only where every box was
+    /// shut and it was still too big, and then nothing was moved at all.
+    /// </param>
+    /// <param name="Shut">
+    /// The groups closed to make it fit, in the order they were closed, and empty
+    /// for the ordinary patch that fits as it stands.
+    /// </param>
+    public readonly record struct Arrangement(bool Fitted, IReadOnlyList<NodeGroup> Shut);
+
+    /// <summary>
+    /// What one pass came to: whether the drawing was small enough to be put on the
+    /// canvas, and the box worth shutting if it was not.
+    /// </summary>
+    private readonly record struct Pass(bool Fitted, NodeGroup? Worst);
+
     /// <summary>How many times the ordering is swept up and back down the columns.</summary>
     private const int Sweeps = 4;
 
@@ -133,24 +152,69 @@ public static class PatchLayout
     private readonly record struct Link(int From, int To, double Leaves, double Arrives);
 
     /// <summary>
-    /// Moves every node of <paramref name="patch"/>. No wire is added, removed or
+    /// Moves every node of <paramref name="patch"/>, shutting a box where the
+    /// drawing will not fit the canvas without it. No wire is added, removed or
     /// rerouted, so this is always safe to run and exactly undoable by putting the
-    /// old coordinates back.
+    /// old coordinates and the old boxes back.
     /// </summary>
     /// <param name="patch">The patch to place. Modified in place.</param>
     /// <param name="modules">Which catalogue the type ids mean, defaulting to the installed one.</param>
     /// <param name="metrics">How big the nodes are, defaulting to the editor's own.</param>
-    /// <returns>
-    /// Whether the drawing fits the canvas. What came out is correct either way,
-    /// but <see cref="NodeInstance.X"/> holds every coordinate inside the canvas,
-    /// so a drawing that does not fit arrives with its far edges folded onto the
-    /// boundary and stacked.
-    /// </returns>
-    public static bool Arrange(Patch patch, ModuleCatalog? modules = null, Metrics? metrics = null)
+    /// <remarks>
+    /// A drawing wider than the canvas is narrowed by shutting a box rather than by
+    /// squeezing, because there is nothing there to squeeze: an open group is a ring
+    /// round a sub-drawing of its own, so a row of long ones can want half again the
+    /// room there is, and closing every gap in the drawing to nothing does not win
+    /// that back. Shut, a box is one module wide and the columns are otherwise
+    /// untouched — a group is one block either way, so what changes is a width and
+    /// not the shape of the drawing. Which box goes is <see cref="Worst"/>'s to say,
+    /// and the fewest go. See ADR-0092.
+    /// <para>
+    /// And where there is nothing left to shut and it is still too big, nothing
+    /// moves at all. <see cref="NodeInstance.X"/> holds every coordinate inside the
+    /// canvas, so writing that drawing would fold its far edges onto the boundary
+    /// and stack them — and a heap against the edge is worse than the tangle the
+    /// button was pressed on. It is the caller's to say so instead.
+    /// </para>
+    /// </remarks>
+    public static Arrangement Arrange(
+        Patch patch,
+        ModuleCatalog? modules = null,
+        Metrics? metrics = null)
     {
         var catalog = modules ?? NodeCatalog.Current;
         var size = metrics ?? Metrics.Default;
 
+        // Where everything was, to put back if it turns out there is no drawing to
+        // be had. Taken before the first pass rather than inside one, because a
+        // pass has laid out the inside of every group before it knows the answer.
+        var before = patch.Nodes.Select(node => (Node: node, node.X, node.Y)).ToArray();
+        var shut = new List<NodeGroup>();
+
+        while (true)
+        {
+            var pass = Once(patch, catalog, size);
+
+            if (pass.Fitted) return new Arrangement(true, shut);
+
+            if (pass.Worst is not { } box)
+            {
+                foreach (var (node, x, y) in before) (node.X, node.Y) = (x, y);
+                foreach (var group in shut) group.Collapsed = false;
+
+                return new Arrangement(false, []);
+            }
+
+            box.Collapsed = true;
+            shut.Add(box);
+        }
+    }
+
+    /// <summary>
+    /// One go at the whole drawing, over the boxes as they now stand.
+    /// </summary>
+    private static Pass Once(Patch patch, ModuleCatalog catalog, Metrics size)
+    {
         // A node whose module is not installed is left where it is: it cannot be
         // measured, and moving it to a guessed height would scatter the one
         // thing a patch from a missing plugin still has going for it.
@@ -172,7 +236,7 @@ public static class PatchLayout
             else foreach (var id in group.Members) defs.Remove(id);
         }
 
-        if (defs.Count == 0) return true;
+        if (defs.Count == 0) return new Pass(true, null);
 
         var nodes = patch.Nodes.Where(n => defs.ContainsKey(n.Id)).ToDictionary(n => n.Id);
 
@@ -187,6 +251,11 @@ public static class PatchLayout
         var of = new Dictionary<Guid, int>();
         var kept = groups.ToHashSet();
 
+        // Every box standing open, and the block it is drawn as, which is what the
+        // retry above chooses between. Kept by block rather than by width, because
+        // which box is worth shutting is a question about columns.
+        var open = new List<(NodeGroup Group, int Block)>();
+
         for (var i = 0; i < patch.Nodes.Count; i++)
         {
             var node = patch.Nodes[i];
@@ -197,6 +266,8 @@ public static class PatchLayout
             {
                 foreach (var id in group.Members) of[id] = blocks.Count;
                 blocks.Add(Boxed(patch, nodes, defs, group, size, was[group.Id], i));
+
+                if (!group.Collapsed) open.Add((group, blocks.Count - 1));
             }
             else
             {
@@ -211,21 +282,85 @@ public static class PatchLayout
 
         Lay(blocks, Links(patch, defs, blocks, of), sink, size);
 
-        return Settle(blocks);
+        if (Settle(blocks)) return new Pass(true, null);
+
+        return new Pass(false, Worst(blocks, open, size));
     }
 
     /// <summary>
-    /// Puts the finished drawing in the middle of the canvas, and says whether it
-    /// fits on one. The placement runs from a corner because a column is easier
-    /// to reason about running one way; the middle is where that corner goes,
-    /// since it is the only choice that uses the whole canvas.
+    /// Which open box to shut, of those there are: the one its own column would
+    /// narrow the most for.
     /// </summary>
+    /// <remarks>
+    /// A column is as wide as the widest block in it, so shutting a box that is not
+    /// the widest in its own column narrows the drawing by nothing whatever — and
+    /// the widest box in a patch very often shares a column with another as wide.
+    /// What the column falls to is the next widest block in it, or one module, since
+    /// that is what the box becomes.
+    /// <para>
+    /// Where nothing would gain anything — two open boxes of one width in one column
+    /// — the widest goes anyway, because shutting either makes the other worth
+    /// shutting and standing still is not on offer. The column is read off the
+    /// placement rather than carried down to here: every block in a column sits at
+    /// one x.
+    /// </para>
+    /// </remarks>
+    private static NodeGroup? Worst(
+        List<Block> blocks,
+        List<(NodeGroup Group, int Block)> open,
+        Metrics size)
+    {
+        if (open.Count == 0) return null;
+
+        // The two widest blocks in each column, which between them are how wide it
+        // is and how wide it would be without its widest.
+        var columns = new Dictionary<double, (double Widest, double Next)>();
+
+        foreach (var block in blocks)
+        {
+            var (widest, next) = columns.GetValueOrDefault(block.X, (0d, 0d));
+
+            columns[block.X] = block.Width > widest
+                ? (block.Width, widest)
+                : (widest, Math.Max(next, block.Width));
+        }
+
+        return open
+            .Select(box => (box.Group, Gain: Gain(box.Block), blocks[box.Block].Width))
+            .OrderByDescending(box => box.Gain)
+            .ThenByDescending(box => box.Width)
+            .First()
+            .Group;
+
+        double Gain(int block)
+        {
+            var (widest, next) = columns[blocks[block].X];
+
+            return blocks[block].Width < widest ? 0d : widest - Math.Max(next, size.Width);
+        }
+    }
+
+    /// <summary>
+    /// Puts the finished drawing in the middle of the canvas, or writes nothing and
+    /// says it does not fit on one. The placement runs from a corner because a
+    /// column is easier to reason about running one way; the middle is where that
+    /// corner goes, since it is the only choice that uses the whole canvas.
+    /// </summary>
+    /// <remarks>
+    /// Measured before a coordinate is written, which is the whole of how a drawing
+    /// too big for the canvas leaves the patch alone: a coordinate is held inside
+    /// the canvas as it is set, so there is no writing one down and reading it back
+    /// to find out.
+    /// </remarks>
     private static bool Settle(List<Block> blocks)
     {
         var left = blocks.Min(block => block.X);
         var top = blocks.Min(block => block.Y);
         var right = blocks.Max(block => block.X + block.Width);
         var bottom = blocks.Max(block => block.Y + block.Height);
+
+        if (right - left > NodeInstance.Across * 2 || bottom - top > NodeInstance.Down * 2)
+            return false;
 
         var across = (left + right) / 2;
         var down = (top + bottom) / 2;
@@ -237,7 +372,7 @@ public static class PatchLayout
             block.Put();
         }
 
-        return right - left <= NodeInstance.Across * 2 && bottom - top <= NodeInstance.Down * 2;
+        return true;
     }
 
     /// <summary>

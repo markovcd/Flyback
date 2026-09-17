@@ -193,25 +193,51 @@ public sealed partial class NodeEditor
     /// another, and frames the result. One edit, so one Ctrl+Z puts every node back.
     /// </summary>
     /// <remarks>
-    /// Only coordinates change, so the patch compiles to exactly the same program
-    /// before and after (ADR-0044). A drawing too big for the canvas is said rather
-    /// than shown: coordinates are held inside it, so it would arrive with its far
-    /// edges folded onto the boundary.
+    /// Nothing the compiler reads changes, so the patch compiles to exactly the same
+    /// program before and after (ADR-0044) — a box shut to make the drawing fit is a
+    /// fact about the canvas and not about the patch (ADR-0092), and comes back in the
+    /// same one press. A patch too big to draw even with every box shut is left
+    /// exactly as it was, and said instead of shown.
     /// </remarks>
     public void Tidy()
     {
         if (patch.Nodes.Count == 0) return;
 
-        var fitted = PatchLayout.Arrange(patch, NodeCatalog.Current, NodeGeometry.Metrics);
+        var laid = PatchLayout.Arrange(patch, NodeCatalog.Current, NodeGeometry.Metrics);
+
+        if (!laid.Fitted)
+        {
+            Reported?.Invoke(
+                this,
+                "This patch is too big to draw on the canvas even with every box shut, "
+                + "so nothing has been moved.");
+
+            return;
+        }
 
         NotifyPatchChanged();
         FrameAll();
 
-        if (!fitted)
+        if (laid.Shut.Count > 0)
             Reported?.Invoke(
                 this,
-                "This patch is wider than the canvas with its groups open, so some modules "
-                + "are held at the edge. Shut a group or two and lay it out again.");
+                "With every box open this patch is wider than the canvas, so "
+                + $"{Named(laid.Shut)} {(laid.Shut.Count == 1 ? "was" : "were")} shut.");
+    }
+
+    /// <summary>
+    /// What to call the boxes the layout shut, for the line that reports them. Three
+    /// by name at most: which part of the patch went away is the point, and the line
+    /// it is written on is one line.
+    /// </summary>
+    private static string Named(IReadOnlyList<NodeGroup> groups)
+    {
+        var names = groups.Take(3).Select(group => group.Title()).ToArray();
+        var rest = groups.Count - names.Length;
+
+        if (rest > 0) return $"{string.Join(", ", names)} and {rest} more";
+
+        return names.Length == 1 ? names[0] : $"{string.Join(", ", names[..^1])} and {names[^1]}";
     }
 
     /// <summary>

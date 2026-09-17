@@ -186,7 +186,7 @@ public class PatchLayoutTests
         var patch = Preset(name);
         patch.Groups = null;
 
-        PatchLayout.Arrange(patch, NodeCatalog.BuiltIn).ShouldBeTrue($"'{name}' should fit");
+        PatchLayout.Arrange(patch, NodeCatalog.BuiltIn).Fitted.ShouldBeTrue($"'{name}' should fit");
 
         foreach (var drawn in Drawing(patch))
         {
@@ -255,6 +255,89 @@ public class PatchLayoutTests
     [Theory]
     [MemberData(nameof(EveryPreset))]
     public void A_preset_arrives_laid_out(string name) => NothingOverlaps(Preset(name));
+
+    /// <summary>
+    /// A drawing wider than the canvas with its boxes open has boxes shut until it
+    /// fits, and says which (ADR-0092).
+    /// </summary>
+    /// <remarks>
+    /// Eight chains of ten, each in a box of its own: open, each box is a ring round
+    /// ten columns of its own, and eight of those in a row want some twenty-five
+    /// thousand units against a canvas of fifteen. Shut, each is one module wide.
+    /// </remarks>
+    [Fact]
+    public void A_drawing_too_wide_with_its_boxes_open_has_boxes_shut_until_it_fits()
+    {
+        var b = new PatchBuilder(NodeCatalog.BuiltIn);
+        var output = b.Add(NodeCatalog.OutputTypeId);
+        NodeInstance? last = null;
+
+        for (var chain = 0; chain < 8; chain++)
+        {
+            var made = new List<NodeInstance>();
+
+            for (var i = 0; i < 10; i++)
+            {
+                var node = b.Add("math.mul", (1, 0.9f));
+
+                if (last is { } feeding) b.Wire(feeding, 0, node, 0);
+
+                made.Add(node);
+                last = node;
+            }
+
+            b.Group($"Chain {chain}", [.. made]);
+        }
+
+        b.Wire(last!, 0, output, NodeCatalog.OutputLeftPort);
+
+        foreach (var group in b.Patch.Groups!) group.Collapsed = false;
+
+        var laid = PatchLayout.Arrange(b.Patch, NodeCatalog.BuiltIn);
+
+        laid.Fitted.ShouldBeTrue("boxes should have been shut until the drawing fitted");
+        laid.Shut.ShouldNotBeEmpty();
+
+        foreach (var group in laid.Shut) group.Collapsed.ShouldBeTrue();
+
+        NothingOverlaps(b.Patch);
+
+        // And laying out the result is still laying out nothing: a drawing that had
+        // to have boxes shut is one that fits once they are, so the second press
+        // finds a patch it has no quarrel with.
+        var settled = b.Patch.Nodes.ToDictionary(node => node.Id, node => (node.X, node.Y));
+        var again = PatchLayout.Arrange(b.Patch, NodeCatalog.BuiltIn);
+
+        again.Fitted.ShouldBeTrue();
+        again.Shut.ShouldBeEmpty();
+
+        foreach (var node in b.Patch.Nodes)
+            (node.X, node.Y).ShouldBe(settled[node.Id], $"{node.TypeId} moved on the second pass");
+    }
+
+    /// <summary>
+    /// A patch too big to draw with nothing left to shut is left exactly where it
+    /// was, rather than written down and folded onto the boundary (ADR-0092).
+    /// </summary>
+    /// <remarks>
+    /// Two hundred modules wired to nothing is one column two hundred deep, which is
+    /// three times the canvas — and no box to shut, since there are no boxes.
+    /// </remarks>
+    [Fact]
+    public void A_patch_too_big_to_draw_is_left_exactly_where_it_was()
+    {
+        var b = new PatchBuilder(NodeCatalog.BuiltIn);
+
+        for (var i = 0; i < 200; i++) b.Add("pattern.noise", i * 7d, i * 11d);
+
+        var before = b.Patch.Nodes.Select(node => (node.X, node.Y)).ToArray();
+        var laid = PatchLayout.Arrange(b.Patch, NodeCatalog.BuiltIn);
+
+        laid.Fitted.ShouldBeFalse();
+        laid.Shut.ShouldBeEmpty();
+
+        b.Patch.Nodes.Select(node => (node.X, node.Y)).ShouldBe(before);
+    }
 
     /// <summary>
     /// A module wired to nothing goes before the first column rather than among

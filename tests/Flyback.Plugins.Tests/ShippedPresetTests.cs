@@ -114,31 +114,54 @@ public class ShippedPresetTests
         patch.Groups = null;
 
         PatchLayout.Arrange(patch, loaded.Modules)
-            .ShouldBeTrue($"'{name}' should fit the canvas with its groups off");
+            .Fitted.ShouldBeTrue($"'{name}' should fit the canvas with its groups off");
 
         NothingOverlaps(patch, loaded.Modules, name);
     }
 
     /// <summary>
-    /// Opening every group at once is the same again, and the one case that may
-    /// honestly not fit: an open group is a ring round its modules, so several in a
-    /// row can want more canvas than there is.
+    /// Opening every group at once fits too, by shutting boxes again where it must:
+    /// an open group is a ring round a sub-drawing of its own, so several in a row can
+    /// want more canvas than there is (ADR-0092).
     /// </summary>
-    /// <remarks>
-    /// So the claim is the one that is always true: a drawing that fits is a drawing
-    /// with nothing on top of anything. What a patch too big for the canvas gets is a
-    /// sentence saying so, which is <c>NodeEditor.Tidy</c>'s to say.
-    /// </remarks>
     [Theory]
     [MemberData(nameof(Every))]
-    public void A_preset_with_every_group_open_either_fits_the_canvas_or_says_it_does_not(string name)
+    public void A_preset_with_every_group_open_is_laid_out_to_fit(string name)
     {
         var loaded = PluginHost.Load();
         var patch = loaded.Presets.Single(p => p.Name == name).Build(loaded.Modules);
 
         foreach (var group in patch.Groups ?? []) group.Collapsed = false;
 
-        if (PatchLayout.Arrange(patch, loaded.Modules)) NothingOverlaps(patch, loaded.Modules, name);
+        PatchLayout.Arrange(patch, loaded.Modules)
+            .Fitted.ShouldBeTrue($"'{name}' should fit the canvas with boxes shut as needed");
+
+        NothingOverlaps(patch, loaded.Modules, name);
+    }
+
+    /// <summary>
+    /// And Mycelium is the preset that needs it: two hundred and ninety-five modules
+    /// in twenty-three boxes is some twenty-four thousand units wide with every box
+    /// open, against a canvas of fifteen.
+    /// </summary>
+    [Fact]
+    public void Mycelium_with_every_box_open_is_too_wide_for_the_canvas_and_has_boxes_shut()
+    {
+        var loaded = PluginHost.Load();
+        var patch = loaded.Presets.Single(p => p.Name == "Mycelium").Build(loaded.Modules);
+
+        foreach (var group in patch.Groups ?? []) group.Collapsed = false;
+
+        var laid = PatchLayout.Arrange(patch, loaded.Modules);
+
+        laid.Fitted.ShouldBeTrue();
+        laid.Shut.ShouldNotBeEmpty();
+
+        // Shut to make it fit and no further: the drawing it settled on still has
+        // boxes open, so what was closed was closed for the canvas and not for luck.
+        laid.Shut.Count.ShouldBeLessThan(patch.Groups!.Count);
+
+        foreach (var group in laid.Shut) group.Collapsed.ShouldBeTrue();
     }
 
     /// <summary>Nothing drawn sits on anything else drawn.</summary>
