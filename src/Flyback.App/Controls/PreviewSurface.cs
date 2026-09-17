@@ -80,8 +80,13 @@ public sealed class PreviewSurface : Control, IPreviewSurface
     /// </summary>
     public Func<double>? Clock { get; set; }
 
-    /// <summary>Cost of the last frame, for the status readout.</summary>
-    public double FrameMilliseconds { get; private set; }
+    private readonly FrameRateMeter meter = new();
+
+    /// <summary>Frames reaching the screen each second, for the status readout.</summary>
+    public double FramesPerSecond => meter.PerSecond;
+
+    /// <summary>Cost of the last frame, which sets how long the next tick rests.</summary>
+    private double FrameMilliseconds { get; set; }
 
     /// <summary>How often the preview redraws itself, or 0 to run as fast as the dispatcher allows.</summary>
     public double FrameRate
@@ -234,6 +239,7 @@ public sealed class PreviewSurface : Control, IPreviewSurface
 
         Blit(buffer, stride, size);
         InvalidateVisual();
+        meter.Mark();
     }
 
     /// <summary>Copies the finished frame into the bitmap. Cheap enough to keep on the UI thread.</summary>

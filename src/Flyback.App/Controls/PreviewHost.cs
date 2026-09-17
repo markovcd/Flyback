@@ -55,16 +55,8 @@ public sealed class PreviewHost : Decorator, IPreviewSurface
     /// </summary>
     public event Action<string>? BackendChanged;
 
-    /// <summary>What to call the running renderer on the status bar.</summary>
-    public string BackendName => Backend switch
-    {
-        PreviewBackend.Gpu when active is GpuPreviewSurface { EightBitFeedback: true } => "GPU, 8-bit feedback",
-        PreviewBackend.Gpu => "GPU",
-        _ => "CPU",
-    };
-
-    /// <summary>Cost of the last frame, for the status readout.</summary>
-    public double FrameMilliseconds => active.FrameMilliseconds;
+    /// <summary>Frames reaching the screen each second, for the status readout.</summary>
+    public double FramesPerSecond => active.FramesPerSecond;
 
     /// <summary>How often the preview redraws itself, or 0 to run as fast as the renderer allows.</summary>
     public double FrameRate

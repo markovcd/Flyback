@@ -28,8 +28,8 @@ public interface IPreviewSurface
     /// </summary>
     Func<double>? Clock { get; set; }
 
-    /// <summary>Cost of the last frame, for the status readout.</summary>
-    double FrameMilliseconds { get; }
+    /// <summary>Frames reaching the screen each second, for the status readout.</summary>
+    double FramesPerSecond { get; }
 
     /// <summary>
     /// How often the preview redraws itself, or 0 to run as fast as the host

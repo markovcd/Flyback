@@ -20,7 +20,7 @@ namespace Flyback.App.Controls;
 /// and nothing here blocks the dispatcher on it. What that costs is a hand-off,
 /// where the timer moves the clock and the render thread reads what it left;
 /// everything crossing between them goes through <see cref="gate"/> apart from the
-/// frame cost, which is one double exchanged atomically.
+/// frame count, which keeps a lock of its own.
 /// </remarks>
 public sealed class GpuPreviewSurface : OpenGlControlBase, IPreviewSurface
 {
@@ -58,7 +58,7 @@ public sealed class GpuPreviewSurface : OpenGlControlBase, IPreviewSurface
     private IFrameSink? capture;
     private bool dirty = true;
 
-    private long frameCostBits;
+    private readonly FrameRateMeter meter = new();
     private int contextLosses;
     private TimeSpan waitingSince;
     private volatile bool running;
@@ -92,8 +92,8 @@ public sealed class GpuPreviewSurface : OpenGlControlBase, IPreviewSurface
     /// </summary>
     public Func<double>? Clock { get; set; }
 
-    /// <summary>Cost of the last frame, for the status readout.</summary>
-    public double FrameMilliseconds => BitConverter.Int64BitsToDouble(Interlocked.Read(ref frameCostBits));
+    /// <summary>Frames reaching the screen each second, for the status readout.</summary>
+    public double FramesPerSecond => meter.PerSecond;
 
     /// <summary>
     /// How often the preview redraws itself, or 0 to run as fast as the
@@ -110,9 +110,6 @@ public sealed class GpuPreviewSurface : OpenGlControlBase, IPreviewSurface
             timer.Interval = value > 0 ? TimeSpan.FromSeconds(1d / value) : UncappedInterval;
         }
     }
-
-    /// <summary>Whether the frame history had to be kept at eight bits per channel.</summary>
-    public bool EightBitFeedback => renderer?.EightBitFeedback ?? false;
 
     /// <summary>
     /// Who wants the frames, while a recording lasts. Set from the UI thread and
@@ -346,7 +343,7 @@ public sealed class GpuPreviewSurface : OpenGlControlBase, IPreviewSurface
             return;
         }
 
-        Interlocked.Exchange(ref frameCostBits, BitConverter.DoubleToInt64Bits(active.PatchMilliseconds));
+        meter.Mark();
 
         running = true;
     }

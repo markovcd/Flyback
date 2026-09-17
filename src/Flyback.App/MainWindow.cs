@@ -437,8 +437,8 @@ public sealed partial class MainWindow : Window
             Report("No sound backend is installed, so Volume will do nothing. "
                 + "See About for where plugins are looked for.");
 
-        // Said once, because nothing on screen shows it but the status bar's
-        // "interpreted", and a run that is slower for a reason should say which.
+        // Said once, because nothing else on screen shows it, and a run that is
+        // slower for a reason should say which.
         if (interpreted)
             Report($"Running interpreted ({Startup.InterpretedFlag}): the CPU's programs are not compiled this run.");
 

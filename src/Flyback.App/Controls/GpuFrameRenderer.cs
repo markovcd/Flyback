@@ -135,19 +135,6 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
     /// </summary>
     public bool EightBitFeedback { get; private set; }
 
-    /// <summary>
-    /// What the patch shader itself cost, fenced so it is the drawing rather than
-    /// the asking.
-    /// </summary>
-    /// <remarks>
-    /// Timed around the offscreen pass alone and not the blit: the blit feeds the
-    /// compositor, so a fence after it reads one refresh interval whatever the
-    /// shader cost and would report a fast patch as a slow one.
-    /// </remarks>
-    public double PatchMilliseconds { get; private set; }
-
-    private readonly System.Diagnostics.Stopwatch clock = System.Diagnostics.Stopwatch.StartNew();
-
     /// <summary>The dialect a context of this version speaks, and whether it is new enough at all.</summary>
     public static bool CanRun(GlVersion version) => version.Type == GlProfileType.OpenGLES
         ? version.Major >= 3
@@ -424,10 +411,7 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
             clearPending = false;
         }
 
-        var started = clock.Elapsed;
         DrawPatch(gl, resolution, time, live);
-        gl.Finish();
-        PatchMilliseconds = (clock.Elapsed - started).TotalMilliseconds;
 
         // The frame just drawn becomes the one the next frame reads back.
         read = 1 - read;

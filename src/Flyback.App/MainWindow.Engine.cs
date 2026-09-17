@@ -344,21 +344,9 @@ public sealed partial class MainWindow
         var nodes = editor.Patch.Nodes.Count;
         var wires = editor.Patch.Connections.Count;
         var ops = preview.Program.Ops.Length;
-        var ms = preview.FrameMilliseconds;
-        var size = preview.Resolution;
 
-        // Whether the processor's frame came from IL is what it has actually got,
-        // not what the switch asks for: an edit is interpreted until its IL arrives,
-        // and the number on this line means something different either side of that.
-        var backend = preview.Backend != PreviewBackend.Cpu ? preview.BackendName
-            : preview.Program.Il is null ? $"{preview.BackendName}, interpreted"
-            : $"{preview.BackendName}, compiled";
-
-        // The loop is capped at ~60 Hz, so report the cost of a frame rather
-        // than a frame rate the timer would never let you observe. Which renderer
-        // produced the number is part of what it means, so it is said alongside.
         status.Text = string.Create(
             CultureInfo.InvariantCulture,
-            $"{nodes} modules · {wires} wires · {ops} ops   |   t = {preview.Time:0.00}s   |   {ms:0.0} ms to render {size.Width} × {size.Height} on the {backend}");
+            $"{nodes} modules · {wires} wires · {ops} ops   |   t = {preview.Time:0.00}s   |   {preview.FramesPerSecond:0} fps");
     }
 }
