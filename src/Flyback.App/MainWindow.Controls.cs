@@ -192,7 +192,9 @@ public sealed partial class MainWindow
     /// <summary>Shows or hides the panel, keeping the toolbar button in step.</summary>
     private void ShowControls(bool shown)
     {
-        if (controlsRow is not null)
+        // Only on a change: showing a panel already shown would put back the height
+        // it had when last hidden, over whatever it has been dragged to since.
+        if (controlsRow is not null && shown != controlsPanel.IsVisible)
         {
             // A pixel row rather than an auto one, so the splitter has a height to
             // change; zeroed while hidden, with its minimum, the way the assistant's is.

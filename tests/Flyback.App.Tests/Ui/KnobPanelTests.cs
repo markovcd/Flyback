@@ -254,6 +254,28 @@ public class KnobPanelTests : UiTest
         Panel(window).Bounds.Height.ShouldBeGreaterThan(before + 60);
     }
 
+    [AvaloniaFact]
+    public void Adding_a_knob_keeps_the_height_the_panel_was_dragged_to()
+    {
+        var (patch, _) = Board();
+        patch.AddControl();
+
+        var window = Open(patch);
+        var splitter = All<GridSplitter>(window).Single(s => s.Name == "controls-splitter");
+        var from = OnWindow(window, splitter, new Point(splitter.Bounds.Width / 2, splitter.Bounds.Height / 2));
+
+        window.MouseDown(from, MouseButton.Left);
+        window.MouseMove(from - new Point(0, 120));
+        window.MouseUp(from - new Point(0, 120), MouseButton.Left);
+        Settle(window);
+
+        var dragged = Panel(window).Bounds.Height;
+
+        AddKnob(window);
+
+        Panel(window).Bounds.Height.ShouldBe(dragged, 1);
+    }
+
     private static string Order(MainWindow window) =>
         string.Join(",", Editor(window).Patch.Controls!.Select(c => c.Name));
 
