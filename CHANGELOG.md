@@ -3,10 +3,7 @@
 ## Unreleased
 
 ### Updates
-- Flyback checks for a new release when it starts, downloads it in the background, and installs it the next time it starts. The status bar says when it has been updated, or why it could not be.
-- Only releases signed with Flyback's release key are installed. Each release now includes `SHA256SUMS` and its signature `SHA256SUMS.sig`.
-- On by default. Turn it off in the new Settings → Updates tab.
-- Copies that Flyback can't write to, such as one in a system folder, are not updated.
+- Flyback updates itself: it checks for a signed release at startup, downloads it in the background, and installs it the next time it starts. On by default, in the new Settings → Updates tab.
 
 ### Presets
 - Mycelium, in the Effects plugin: a psybient track of ninety-six bars in six sections, with a picture driven by the same signals. It is the largest preset, and needs the Voice and Picture plugins.
