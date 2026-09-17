@@ -84,6 +84,7 @@ context, decision, consequences.
 | [0090](0090-a-take-is-counted-in-and-starts-at-zero.md) | A take is counted in, and starts at zero *(user-directed; its fixed three seconds and unconditional rewind made settings by [0091](0091-how-a-take-begins-is-two-settings.md))* |
 | [0091](0091-how-a-take-begins-is-two-settings.md) | How a take begins is two settings *(user-directed)* |
 | [0092](0092-a-drawing-too-wide-for-the-canvas-shuts-a-box.md) | A drawing too wide for the canvas shuts a box, and one that cannot fit moves nothing *(user-directed)* |
+| [0093](0093-a-startup-preset-is-a-graphics-setting.md) | A startup preset is a Graphics setting *(user-directed)* |
 
 ### Sound
 

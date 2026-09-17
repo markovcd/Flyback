@@ -239,6 +239,75 @@ public class OutputSettingsTests : UiTest, IDisposable
         Size(again).SelectedIndex.ShouldBe(1);
     }
 
+    // --- which preset the window opens on next (ADR-0093) --------------------
+
+    private static ComboBox StartupPreset(Visual within) => All<ComboBox>(within).Single(c => c.Name == "defaultPreset");
+
+    /// <summary>A machine with no settings file opens the Startup patch box on the first preset.</summary>
+    [AvaloniaFact]
+    public void The_startup_preset_starts_on_the_first_preset()
+    {
+        var window = Open();
+
+        (StartupPreset(OpenSettings(window)).SelectedItem as string).ShouldBe(Presets.All[0].Name);
+    }
+
+    /// <summary>What is picked here is a launch's business, not this one's.</summary>
+    [AvaloniaFact]
+    public void Picking_a_startup_preset_does_not_change_the_canvas()
+    {
+        var window = Open();
+        var editor = Editor(window);
+        var before = editor.Patch;
+
+        var dialog = OpenSettings(window);
+
+        StartupPreset(dialog).SelectedIndex = 2;
+        Settle(window);
+
+        editor.Patch.ShouldBeSameAs(before);
+
+        CloseSettings(window, dialog, save: true);
+
+        editor.Patch.ShouldBeSameAs(before);
+    }
+
+    [AvaloniaFact]
+    public void The_startup_preset_is_kept_and_opens_the_next_launch_on_it()
+    {
+        var window = Open(settingsPath);
+        var dialog = OpenSettings(window);
+
+        var chosen = StartupPreset(dialog).ItemsSource!.Cast<string>().ElementAt(3);
+        StartupPreset(dialog).SelectedIndex = 3;
+
+        CloseSettings(window, dialog, save: true);
+
+        OutputSettings.Load(settingsPath).DefaultPreset.ShouldBe(chosen);
+
+        var next = Open(settingsPath);
+
+        next.Title.ShouldBe($"{chosen} — {Flyback.Core.GlobalConstants.ApplicationName}");
+        (StartupPreset(OpenSettings(next)).SelectedItem as string).ShouldBe(chosen);
+    }
+
+    /// <summary>Changed and not saved is dropped, like every other Graphics row.</summary>
+    [AvaloniaFact]
+    public void A_startup_preset_changed_and_not_saved_is_dropped()
+    {
+        var window = Open(settingsPath);
+        var dialog = OpenSettings(window);
+
+        var before = StartupPreset(dialog).SelectedItem as string;
+
+        StartupPreset(dialog).SelectedIndex = 4;
+        CloseSettings(window, dialog, save: false);
+
+        File.Exists(settingsPath).ShouldBeFalse();
+
+        (StartupPreset(OpenSettings(window)).SelectedItem as string).ShouldBe(before);
+    }
+
     // --- the recording and sound sections ------------------------------------
 
     private static ComboBox FrameRate(Visual within) => All<ComboBox>(within).Single(c => c.Name == "frameRate");

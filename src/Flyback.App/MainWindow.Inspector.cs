@@ -213,6 +213,8 @@ public sealed partial class MainWindow
         // the BackendChanged handler above already set.
         if (gpuButton.IsEnabled) gpuButton.SelectedIndex = settings.Gpu ? 0 : 1;
 
+        defaultPreset.SelectedIndex = PresetRow(OrderedPresets(), settings.DefaultPreset);
+
         frameRate.SelectedIndex = Nearest(FrameRates, settings.FrameRate);
         previewFrameRate.SelectedIndex = Nearest(PreviewFrameRates, settings.PreviewFrameRate);
         jpegQuality.Value = settings.JpegQuality;
@@ -297,6 +299,9 @@ public sealed partial class MainWindow
             // A box greyed out by a GPU that failed says nothing about what
             // was wanted, so the last answer is kept for a launch that has one.
             Gpu = gpuButton.IsEnabled ? gpuButton.SelectedIndex == 0 : outputSettings.Gpu,
+
+            DefaultPreset = defaultPreset.SelectedItem as string ?? outputSettings.DefaultPreset,
+
             FrameRate = FrameRates[Math.Max(frameRate.SelectedIndex, 0)],
             PreviewFrameRate = PreviewFrameRates[Math.Max(previewFrameRate.SelectedIndex, 0)],
 
@@ -1055,9 +1060,17 @@ public sealed partial class MainWindow
             + "show, or to ease off a slow machine — the Recording section picks a take's own "
             + "rate, and reads whatever the preview last drew whatever this says.");
 
+        // Named here rather than in the field initializer: the plugin catalogue's
+        // own presets are not there to ask for until the constructor has run.
+        defaultPreset.ItemsSource = OrderedPresets().Select(p => p.Name).ToList();
+        ToolTip.SetTip(defaultPreset,
+            "Which preset the window opens on the next time it starts. Picking one on the "
+            + "toolbar right now does not change this — it only changes what is on the canvas.");
+
         graphicsSection.Children.Add(Field("Size", resolution));
         graphicsSection.Children.Add(Field("Preview rate", previewFrameRate));
         graphicsSection.Children.Add(Field("Render", gpuButton));
+        graphicsSection.Children.Add(Field("Startup patch", defaultPreset));
     }
 
     /// <summary>

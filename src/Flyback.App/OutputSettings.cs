@@ -108,6 +108,19 @@ public sealed class OutputSettings
     public int LatencyMilliseconds { get; set; } = AudioFormat.Default.LatencyMilliseconds;
 
     /// <summary>
+    /// The preset the window opens on at the next launch, by name — the Graphics
+    /// section. Empty for the one written here, which is the first of the list
+    /// (ADR-0093).
+    /// </summary>
+    /// <remarks>
+    /// Kept as the name rather than the row: a plugin's preset list is not known
+    /// here, so a name this build does not offer is read as though nothing were
+    /// chosen rather than refused — the same courtesy <see cref="VideoFormat"/>
+    /// gets from a format list that is.
+    /// </remarks>
+    public string DefaultPreset { get; set; } = string.Empty;
+
+    /// <summary>
     /// What each sound backend's own form was last set to, filed under the backend's
     /// id — the rest of the Sound section, which the backend declares (ADR-0085).
     /// </summary>
@@ -207,6 +220,9 @@ public sealed class OutputSettings
             settings.SoundFormat = ClipFormats.Wanted(settings.SoundFormat, picture: false).Id;
             settings.FfmpegPath ??= string.Empty;
             settings.LatencyMilliseconds = Math.Clamp(settings.LatencyMilliseconds, ShortestLatency, LongestLatency);
+
+            // A "defaultPreset": null typed by hand is the one written here, not a fault.
+            settings.DefaultPreset ??= string.Empty;
 
             // A "sound": null typed by hand is nothing chosen, not a fault.
             settings.Sound ??= new(StringComparer.Ordinal);

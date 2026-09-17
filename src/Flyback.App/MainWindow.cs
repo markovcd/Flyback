@@ -79,6 +79,17 @@ public sealed partial class MainWindow : Window
         HorizontalAlignment = HorizontalAlignment.Stretch,
     };
 
+    /// <summary>
+    /// Which preset the window opens on at the next launch — the Graphics section
+    /// (ADR-0093). Its list is filled in by <see cref="BuildGraphicsSection"/>,
+    /// once the plugin catalogue's own presets are there to offer.
+    /// </summary>
+    private readonly ComboBox defaultPreset = new Picker
+    {
+        Name = "defaultPreset",
+        HorizontalAlignment = HorizontalAlignment.Stretch,
+    };
+
     private readonly NumericUpDown jpegQuality = new()
     {
         Name = "jpegQuality",
@@ -475,11 +486,23 @@ public sealed partial class MainWindow : Window
 
         Content = BuildLayout();
 
-        // The preset the box opens on, which is the patch about to be built —
-        // said here so the title agrees with the toolbar from the first frame.
-        Became(plugins.Presets.Count > 0 ? plugins.Presets[0].Name : null, beside: null);
+        // The preset the box opens on: whichever the Graphics section's "Startup
+        // patch" is set to, or the first of the list for a name it no longer
+        // offers — said here so the title and the toolbar's own selection agree
+        // with the canvas from the first frame (ADR-0093).
+        var available = OrderedPresets();
+        var openIndex = PresetRow(available, outputSettings.DefaultPreset);
+        var opening = available[openIndex];
 
-        editor.Patch = Presets.Default();
+        Became(opening.Name, beside: null);
+
+        editor.Patch = opening.Build(plugins.Modules);
+
+        // Set before the picker's own index, so its handler — which rebuilds the
+        // patch on a change — sees the row it is already showing and does
+        // nothing: the patch above is already built.
+        presetShowing = openIndex;
+        if (presetsPicker is not null) presetsPicker.SelectedIndex = openIndex;
 
         // No manual switch any more — Volume is the one now, and the Recompile
         // that patch assignment just ran already brought sound up to match its
@@ -693,14 +716,30 @@ public sealed partial class MainWindow : Window
         previewRow.Height = shown ? previewShare : new GridLength(0);
     }
 
+    /// <summary>
+    /// Every preset there is to start from, in the order both the toolbar's own
+    /// list and the Graphics section's "Startup patch" show them: ideas, then
+    /// interplay, then the big ones, then the blank canvas. A stable sort, so
+    /// within a kind the engine's own still come before any plugin's — the list
+    /// is the same wherever the program is installed.
+    /// </summary>
+    private List<PatchPreset> OrderedPresets() => plugins.Presets.OrderBy(p => p.Kind).ToList();
+
+    /// <summary>
+    /// The row of <paramref name="presets"/> named <paramref name="name"/>, or the
+    /// first row for one it does not offer — a plugin taken away, or a settings
+    /// file nobody has written to yet.
+    /// </summary>
+    private static int PresetRow(IReadOnlyList<PatchPreset> presets, string name)
+    {
+        var row = presets.ToList().FindIndex(p => p.Name == name);
+
+        return row < 0 ? 0 : row;
+    }
+
     private Control BuildToolbar()
     {
-        // Grouped by kind and only then by where they came from, so the list
-        // reads as three sections: the patches that teach one thing, the ones
-        // about the two sinks meeting, and the big ones. A stable sort, so within
-        // a kind the engine's own still come before any plugin's — the list the
-        // app opens on is the same wherever it is installed.
-        var available = plugins.Presets.OrderBy(p => p.Kind).ToList();
+        var available = OrderedPresets();
 
         // A Picker rather than a plain list, and this is the one where it matters
         // most: every change here throws the patch on the canvas away, so a

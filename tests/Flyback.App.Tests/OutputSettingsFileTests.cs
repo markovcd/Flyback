@@ -195,6 +195,32 @@ public class OutputSettingsFileTests : IDisposable
         OutputSettings.Load(File).VideoFormat.ShouldBe(ClipFormats.H265Mp4.Id);
     }
 
+    /// <summary>Which preset the window opens on next, by name (ADR-0093).</summary>
+    [Fact]
+    public void The_startup_preset_comes_back()
+    {
+        new OutputSettings { DefaultPreset = "Kaleidoscope" }.Save(File);
+
+        OutputSettings.Load(File).DefaultPreset.ShouldBe("Kaleidoscope");
+    }
+
+    /// <summary>No file, and no choice made yet, both read as the one written here.</summary>
+    [Fact]
+    public void No_file_has_no_startup_preset_chosen()
+    {
+        OutputSettings.Load(File).DefaultPreset.ShouldBe(string.Empty);
+    }
+
+    /// <summary>A "defaultPreset": null typed by hand is nothing chosen, not a fault.</summary>
+    [Fact]
+    public void A_null_startup_preset_reads_as_none_chosen()
+    {
+        Directory.CreateDirectory(folder);
+        System.IO.File.WriteAllText(File, """{ "defaultPreset": null }""");
+
+        OutputSettings.Load(File).DefaultPreset.ShouldBe(string.Empty);
+    }
+
     /// <summary>Losing a preference is not worth failing to start over.</summary>
     [Fact]
     public void A_file_that_is_not_json_is_the_defaults()

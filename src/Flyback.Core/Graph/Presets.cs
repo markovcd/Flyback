@@ -107,8 +107,6 @@ public static class Presets
             PresetKind.Blank),
     ];
 
-    public static Patch Default() => Plasma(NodeCatalog.Current);
-
     /// <summary>
     /// One sequencer, heard and seen at once. The steps are the tune; where the
     /// sequence has got to is the color, and the gate that makes a rest silent
