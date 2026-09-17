@@ -181,7 +181,7 @@ public class OutputSettingsTests : UiTest, IDisposable
         var tabs = Tabs(dialog);
 
         tabs.Items.Cast<TabItem>().Select(t => (t.Header as TextBlock)?.Text)
-            .ShouldBe(["Graphics", "Recording", "Sound", "MIDI", "Agent", "Updates"]);
+            .ShouldBe(["Graphics", "Recording", "Sound", "MIDI", "Agent", "Updates", "Usage"]);
         tabs.SelectedIndex.ShouldBe(0);
         tabs.TabStripPlacement.ShouldBe(Dock.Left, "the sections are a list down the left");
         ShowingSettings(dialog).ShouldBeTrue("the Graphics tab opens by default");

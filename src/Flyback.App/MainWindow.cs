@@ -9,6 +9,7 @@ using Avalonia.Threading;
 using Flyback.App.Audio;
 using Flyback.App.Controls;
 using Flyback.App.Midi;
+using Flyback.App.Statistics;
 using Flyback.App.Updates;
 using Flyback.Core.Compile;
 using Flyback.Core.Render;
@@ -383,28 +384,49 @@ public sealed partial class MainWindow : Window
     /// What the last update did, said once on the status bar — see
     /// <see cref="Startup.UpdateNote"/>.
     /// </param>
+    /// <param name="usageSettingsPath">
+    /// Where the Usage section is read from and saved to, null keeping it nowhere
+    /// for the reason <paramref name="outputSettingsPath"/> does.
+    /// </param>
+    /// <param name="usage">
+    /// What this run says about itself (ADR-0094). Null says nothing, which is what
+    /// every test gets: none of them has any business reaching a network.
+    /// </param>
     public MainWindow(
         string? groupFolder = null,
         string? openPath = null,
         string? outputSettingsPath = null,
         bool interpreted = false,
         string? updateSettingsPath = null,
-        string? updateNote = null)
+        string? updateNote = null,
+        string? usageSettingsPath = null,
+        Usage? usage = null)
     {
         this.groupFolder = groupFolder;
         this.outputSettingsPath = outputSettingsPath;
         this.updateSettingsPath = updateSettingsPath;
+        this.usageSettingsPath = usageSettingsPath;
+        this.usage = usage ?? Usage.Off;
 
         // Before anything is compiled, so no build is started only to be taken off.
         compiler.Enabled = !interpreted;
 
         if (outputSettingsPath is not null) outputSettings = OutputSettings.Load(outputSettingsPath);
         if (updateSettingsPath is not null) updateSettings = UpdateSettings.Load(updateSettingsPath);
+        if (usageSettingsPath is not null) usageSettings = UsageSettings.Load(usageSettingsPath);
 
         BuildUpdatesSection();
         ShowUpdateSettings(updateSettings);
 
+        BuildUsageSection();
+        ShowUsageSettings(usageSettings);
+
         sound = OpenAudio(plugins, outputSettings);
+
+        // Here rather than at the launch, because what a run started as includes
+        // which backend actually opened, and that is only known once one has been
+        // asked for.
+        this.usage.Started(plugins.Plugins.Select(plugin => plugin.Info.Id), sound.Output?.Id);
         audio = new AudioEngine(sound.Device) { Compiler = compiler };
 
         // Nothing is opened by this. The backend is asked what is plugged in
@@ -555,7 +577,8 @@ public sealed partial class MainWindow : Window
             // panel has no business knowing there is one.
             (message, detail) => Report(message, detail),
             samples: Sounds,
-            pictures: Pictures)
+            pictures: Pictures,
+            asked: usage.Assistant)
         {
             IsVisible = false,
         };
@@ -1016,7 +1039,8 @@ public sealed partial class MainWindow : Window
         // built for it, so what they were last set to is still on them the next
         // time this is opened. The window around them is built fresh, so each
         // section the window owns has to be taken back from the last one first.
-        foreach (var section in new[] { graphicsSection, recordingSection, soundSection, midiSection, updatesSection })
+        foreach (var section in new[]
+                 { graphicsSection, recordingSection, soundSection, midiSection, updatesSection, usageSection })
             if (section.Parent is ContentControl lender) lender.Content = null;
 
         var save = new Button { Content = "Save", Width = 84 };
@@ -1049,6 +1073,7 @@ public sealed partial class MainWindow : Window
         tabs.Items.Add(SectionTab("MIDI", midiSection));
         tabs.Items.Add(SectionTab("Agent", panel.SettingsSection()));
         tabs.Items.Add(SectionTab("Updates", updatesSection));
+        tabs.Items.Add(SectionTab("Usage", usageSection));
 
         var content = new StackPanel { Spacing = 12, Margin = new Thickness(18, 4, 18, 18) };
 
@@ -1078,6 +1103,7 @@ public sealed partial class MainWindow : Window
             panel.SaveSettings();
             SaveOutputSettings();
             SaveUpdateSettings();
+            SaveUsageSettings();
 
             // Saving is the end of the errand, so the window goes with it.
             Dialog.Close(save, true);
@@ -1096,6 +1122,7 @@ public sealed partial class MainWindow : Window
         panel.DiscardSettings();
         ShowOutputSettings(outputSettings);
         ShowUpdateSettings(updateSettings);
+        ShowUsageSettings(usageSettings);
     }
 
     /// <summary>

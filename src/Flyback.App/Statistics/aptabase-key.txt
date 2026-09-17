@@ -1,0 +1,6 @@
+# The Aptabase application key usage statistics are counted under (ADR-0094).
+# It is not a secret: every copy of Flyback carries it, as every program that
+# uses the service carries its own. The region is the middle part, and decides
+# where events are taken; a self-hosted key (A-SH-...) needs the address of the
+# service on the line after it. A file with no key in it counts nothing.
+A-EU-8282660952

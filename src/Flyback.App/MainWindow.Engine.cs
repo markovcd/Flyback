@@ -299,6 +299,12 @@ public sealed partial class MainWindow
                 return;
             }
 
+            // The patch is playing, which is the moment what is in it is worth
+            // counting (ADR-0094). Here rather than at a compile: a patch is
+            // recompiled on every knob frame, and what it is made of is only
+            // interesting where somebody is listening to it.
+            usage.Played(editor.Patch.Nodes.Select(node => node.TypeId));
+
             // Sound cannot stretch, so it leads and the picture follows — and
             // the same tick is where the picture is told what the speakers have
             // just played: a Scope's chart refilled, and a Meter's reading put

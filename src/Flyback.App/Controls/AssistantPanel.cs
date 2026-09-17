@@ -275,6 +275,13 @@ public sealed class AssistantPanel : UserControl
     private AssistantRun? run;
 
     /// <summary>
+    /// Told which provider a message went to, for the run's own count of itself
+    /// (ADR-0094). A callback rather than the counter itself, so that nothing here
+    /// has to know there is one; it is never told what was asked.
+    /// </summary>
+    private readonly Action<string>? asked;
+
+    /// <summary>
     /// Where <see cref="run"/>'s turns go when <see cref="AssistantSettings.LogConversations"/>
     /// asked for that. Starts closed, which writes nothing, so nothing here has
     /// to check the setting before every line.
@@ -381,6 +388,10 @@ public sealed class AssistantPanel : UserControl
     /// <param name="apply"></param>
     /// <param name="samples"></param>
     /// <param name="pictures"></param>
+    /// <param name="asked">
+    /// Told which provider a message went to, and nothing else. Null is nobody
+    /// listening, which is every test.
+    /// </param>
     public AssistantPanel(
         PluginCatalog plugins,
         Func<Patch> current,
@@ -389,8 +400,10 @@ public sealed class AssistantPanel : UserControl
         AssistantSettings? saved = null,
         string? settingsPath = null,
         ISampleLibrary? samples = null,
-        IImageLibrary? pictures = null)
+        IImageLibrary? pictures = null,
+        Action<string>? asked = null)
     {
+        this.asked = asked;
         this.settingsPath = settingsPath;
         settings = saved ?? AssistantSettings.Load(settingsPath);
         this.samples = samples;
@@ -1236,6 +1249,8 @@ public sealed class AssistantPanel : UserControl
         if (string.IsNullOrWhiteSpace(wanted)) return;
 
         var conversation = Conversation(assistant, config);
+
+        asked?.Invoke(assistant.Id);
 
         Put(Voice.You, wanted);
         log.Write("you", wanted);

@@ -30,6 +30,7 @@ dotnet run --project src/Flyback.App -c Release
 - Agentic patch authoring through a model-backed assistant that can listen, propose changes and work inside the same patch graph — over any chat-completions endpoint, or over Gemini, whose models hear the patch themselves
 - Cross-platform publish targets for Windows, macOS and Linux
 - Updates itself from signed GitHub releases: downloads a new release in the background and installs it at the next start (Settings → Updates to turn off)
+- Counts how it is used — version, operating system, plugins and sound backend, the kinds of module in a patch that plays, which assistant is asked — anonymously and with nothing about any patch in it (Settings → Usage to turn off)
 
 ## Build and publish
 

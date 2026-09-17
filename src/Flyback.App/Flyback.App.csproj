@@ -116,6 +116,14 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!--
+      The application key usage statistics are counted under, which is public and
+      names its own region. A file with no key in it counts nothing. See ADR-0094.
+    -->
+    <EmbeddedResource Include="Statistics\aptabase-key.txt" LogicalName="aptabase-key.txt" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Include="..\..\flyback.ico">
       <Link>flyback.ico</Link>
     </None>

@@ -4,6 +4,7 @@ using Avalonia.Markup.Xaml.Styling;
 using Avalonia.Platform.Storage;
 using Avalonia.Styling;
 using Avalonia.Themes.Fluent;
+using Flyback.App.Statistics;
 using Flyback.App.Updates;
 
 namespace Flyback.App;
@@ -38,12 +39,18 @@ public sealed class FlybackApp : Application
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
+            // Before the window, because the window says what it started as as
+            // soon as it has asked for a sound device (ADR-0094).
+            var usage = Usage.Start(UsageSettings.Load(UsageSettings.File));
+
             var window = new MainWindow(
                 openPath: Startup.OpenPath,
                 outputSettingsPath: OutputSettings.File,
                 updateSettingsPath: UpdateSettings.File,
                 interpreted: Startup.Interpreted,
-                updateNote: Startup.UpdateNote);
+                updateNote: Startup.UpdateNote,
+                usageSettingsPath: UsageSettings.File,
+                usage: usage);
             desktop.MainWindow = window;
 
             // Once there is a window, so a slow network is never a slow start.
