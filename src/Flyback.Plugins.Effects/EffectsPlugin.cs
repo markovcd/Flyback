@@ -75,6 +75,12 @@ public sealed class EffectsPlugin : IFlybackPlugin
                 + "through all twelve canons, and a picture of two dials that is the diagram of it.",
                 PresetKind.Showcase),
             new PatchPreset(
+                FracturePreset.Name,
+                FracturePreset.Build,
+                "Drum and bass at a hundred and seventy: a synthesized break chopped by bending the "
+                + "clock it reads, a Reese bass, and a picture cut into strips by the same list.",
+                PresetKind.Showcase),
+            new PatchPreset(
                 SlowWeatherPreset.Name,
                 SlowWeatherPreset.Build,
                 "A generative patch with no clock in it, played into the two effects.",

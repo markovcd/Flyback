@@ -16,6 +16,7 @@
 - Bronze, in the Effects plugin: a gamelan in a five-note pelog tuning, on a tempo that slows and quickens, with a mandala struck by the same beats. It needs the Voice and Picture plugins.
 - Outrun, in the Effects plugin: a synthwave track on four dark chords, under a drawn scene of a slatted sun, a ridge and a grid that scrolls to the beat. It needs the Voice and Picture plugins.
 - Phase, in the Effects plugin: phase music after Steve Reich, two players on one pattern drifting through all twelve canons, with a picture of two dials that shows where they are. It needs the Voice and Picture plugins.
+- Fracture, in the Effects plugin: drum and bass at 170 with a synthesized break that gets chopped, rolled and reversed, a Reese bass, and a picture cut into strips along with the drums. It needs the Voice and Picture plugins.
 - Settings → Graphics picks which preset Flyback opens on at the next start.
 
 ### Recording and export
