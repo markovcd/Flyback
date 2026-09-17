@@ -961,7 +961,13 @@ public sealed partial class MainWindow : Window
             Children = { save, cancel },
         };
 
+        // A line rather than a box around the tabs, so it reads as one sheet
+        // that ends before the buttons rather than a bordered pane sitting on
+        // another.
+        var divider = new Border { Height = 1, Background = new SolidColorBrush(Colors.Separator) };
+
         content.Children.Add(tabs);
+        content.Children.Add(divider);
         content.Children.Add(buttons);
 
         save.Click += (_, _) =>
@@ -1006,9 +1012,6 @@ public sealed partial class MainWindow : Window
             Header = new TextBlock { Text = name, FontSize = Text.Emphasis, FontWeight = FontWeight.SemiBold },
             Content = new Border
             {
-                BorderBrush = new SolidColorBrush(Colors.Separator, 0.35),
-                BorderThickness = new Thickness(1),
-                CornerRadius = new CornerRadius(6),
                 Padding = new Thickness(16),
                 Child = new ScrollViewer
                 {
@@ -1017,9 +1020,7 @@ public sealed partial class MainWindow : Window
                 },
             },
             Padding = new Thickness(4, 6, 12, 6),
-            MinHeight = 0,
-
-         
+            Height = 46,
             Width = 120,
         };
     }
