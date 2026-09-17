@@ -719,26 +719,9 @@ public static class PatchLayout
                 wanted[i] = Wanted(column[i], i);
             }
 
-            // Opened out in the order the column is already in, which is the
-            // order the crossing sweep chose: a block is put where it asked for
-            // unless the one above has taken the room, and then it goes under it.
-            var y = new double[column.Count];
-            var lowest = double.MinValue;
+            var y = Opened(column, wanted);
 
-            for (var i = 0; i < column.Count; i++)
-            {
-                y[i] = Math.Max(wanted[i], lowest);
-                lowest = y[i] + blocks[column[i]].Height + size.RowGap;
-            }
-
-            // Pushing down to make room drags the whole column down with it, so
-            // the shift is taken back out afterwards. What is kept is the
-            // spacing; what is not is the accumulated drift.
-            var drift = 0d;
-            for (var i = 0; i < column.Count; i++) drift += y[i] - wanted[i];
-            drift /= column.Count;
-
-            for (var i = 0; i < column.Count; i++) blocks[column[i]].Y = y[i] - drift;
+            for (var i = 0; i < column.Count; i++) blocks[column[i]].Y = y[i];
 
             // A column of ordinary modules is a column one module wide, which is
             // the even spacing this has always been — until a group standing
@@ -768,6 +751,50 @@ public static class PatchLayout
             }
 
             return count > 0 ? level / count : i * size.RowGap;
+        }
+
+        // The column opened out in the order it is already in, which is the order
+        // the crossing sweep chose, so that nothing overlaps and every block is as
+        // near where it asked to be as the ones around it allow.
+        //
+        // Blocks that would overlap are pooled into a run, stacked, and the run is
+        // put where its members asked on average; a run that then reaches the one
+        // above joins it. That is the least total movement the order permits. What
+        // it is not is "push everything under the first and take the mean shift
+        // back out", which agrees with it when nothing collides and when everything
+        // does, and between the two throws a block that had room a long way off to
+        // pay for a crowd that had none — one module above a canvas-height of gap.
+        double[] Opened(List<int> column, double[] wanted)
+        {
+            // How far under the top of its run each block sits if the run is tight,
+            // taken out of what it asked for so that a run is one number.
+            var under = new double[column.Count];
+            for (var i = 1; i < column.Count; i++)
+                under[i] = under[i - 1] + blocks[column[i - 1]].Height + size.RowGap;
+
+            var runs = new List<(double Sum, int Count)>();
+
+            for (var i = 0; i < column.Count; i++)
+            {
+                var run = (Sum: wanted[i] - under[i], Count: 1);
+
+                while (runs.Count > 0 && runs[^1].Sum / runs[^1].Count > run.Sum / run.Count)
+                {
+                    run = (run.Sum + runs[^1].Sum, run.Count + runs[^1].Count);
+                    runs.RemoveAt(runs.Count - 1);
+                }
+
+                runs.Add(run);
+            }
+
+            var y = new double[column.Count];
+            var at = 0;
+
+            foreach (var (sum, count) in runs)
+                for (var end = at + count; at < end; at++)
+                    y[at] = sum / count + under[at];
+
+            return y;
         }
     }
 }
