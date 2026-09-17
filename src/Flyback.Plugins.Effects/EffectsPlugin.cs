@@ -57,6 +57,12 @@ public sealed class EffectsPlugin : IFlybackPlugin
                 + "picture grown from the same signals, and one voice that is the picture heard.",
                 PresetKind.Showcase),
             new PatchPreset(
+                BronzePreset.Name,
+                BronzePreset.Build,
+                "A gamelan: sixteen gong cycles on a tempo that breathes, every part figured out "
+                + "of one melody in a five-note scale, and a mandala with a ring for each tier.",
+                PresetKind.Showcase),
+            new PatchPreset(
                 SlowWeatherPreset.Name,
                 SlowWeatherPreset.Build,
                 "A generative patch with no clock in it, played into the two effects.",

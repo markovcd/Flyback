@@ -7,6 +7,7 @@
 
 ### Presets
 - Mycelium, in the Effects plugin: a psybient track of ninety-six bars in six sections, with a picture driven by the same signals. It is the largest preset, and needs the Voice and Picture plugins.
+- Bronze, in the Effects plugin: a gamelan in a five-note pelog tuning, on a tempo that slows and quickens, with a mandala struck by the same beats. It needs the Voice and Picture plugins.
 
 ### Recording and export
 - Record counts down on the status bar and takes the patch back to zero, so a take starts where the patch does. Ctrl+R during the count calls it off.
