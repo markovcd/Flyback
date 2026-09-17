@@ -26,8 +26,21 @@ public sealed partial class MainWindow
     /// <summary>How often the status line is refreshed while a take runs.</summary>
     private static readonly TimeSpan RecordingTick = TimeSpan.FromMilliseconds(500);
 
+    /// <summary>How many seconds a take is counted in for, once the file has been named.</summary>
+    private const int CountIn = 3;
+
+    /// <summary>A second, as long as one number is left up before the next.</summary>
+    private static readonly TimeSpan CountInStep = TimeSpan.FromSeconds(1);
+
     /// <summary>Live while a take is running, and the only thing that says one is.</summary>
     private LiveRecorder? recorder;
+
+    /// <summary>
+    /// Live while a take is being counted in, and cancelled to call the count
+    /// off. Null otherwise, which is the only thing that says no count is
+    /// running — a take counted in is not yet a take.
+    /// </summary>
+    private CancellationTokenSource? counting;
 
     private DispatcherTimer? recordingTicker;
 
@@ -53,10 +66,13 @@ public sealed partial class MainWindow
         "Record what the patch is doing now, knobs and all, as it happens.  (Ctrl+R)  A video "
         + "takes the picture off the GPU at whatever the Recording settings say, at "
         + "whatever Size says, with the sound alongside it; a sound file takes the sound "
-        + "on its own. It has no fixed length, unlike a file `flyback-cli render` "
-        + "writes — it runs until you stop it.";
+        + "on its own. Naming the file counts three seconds in and takes the patch back to "
+        + "zero, so a take starts where the patch does. It has no fixed length, unlike a "
+        + "file `flyback-cli render` writes — it runs until you stop it.";
 
     private const string StopTip = "End this take and write the file.  (Ctrl+R)";
+
+    private const string CountingTip = "Call off the count and record nothing.  (Ctrl+R)";
 
     private const string StillFinishing = "The last take is still being written.";
 
@@ -72,28 +88,38 @@ public sealed partial class MainWindow
     /// <c>Stop</c> by then, and editing mid-take must not take away the only way to
     /// finish the file. The tip follows the same state, since a patch edit calls this
     /// again mid-take — ADR-0021 recompiles on every edit — and must not read as an
-    /// offer to start a second recording over the one already running.
+    /// offer to start a second recording over the one already running. A count-in is
+    /// the same case: unwiring the Output during it must not strand the count with no
+    /// way to call it off.
     /// </remarks>
     private void MarkRecordable()
     {
         var kinds = RecordingKinds();
 
-        recordButton.IsEnabled = recorder is not null || (finishing is null && kinds.Count > 0);
+        recordButton.IsEnabled =
+            recorder is not null || counting is not null || (finishing is null && kinds.Count > 0);
 
         ToolTip.SetTip(recordButton, recorder is not null ? StopTip
+            : counting is not null ? CountingTip
             : finishing is not null ? StillFinishing
             : kinds.Count > 0 ? RecordTip
             : NothingToRecord);
     }
 
     /// <summary>
-    /// What the toolbar button's press means: start a take, or end the one
-    /// running. The same control does both — a take has no length, so
-    /// stopping it is the only way it ever finishes.
+    /// What the toolbar button's press means: start a take, call off the count
+    /// before one, or end the one running. The same control does all three — a
+    /// take has no length, so stopping it is the only way it ever finishes.
     /// </summary>
     private async Task ToggleRecordAsync()
     {
         if (!recordButton.IsEnabled) return;
+
+        if (counting is not null)
+        {
+            CallOffCount();
+            return;
+        }
 
         if (recorder is not null)
         {
@@ -104,10 +130,9 @@ public sealed partial class MainWindow
         await RecordAsync();
     }
 
-    /// <summary>Asks where the take goes, and starts it.</summary>
+    /// <summary>Asks where the take goes, counts it in, and starts it.</summary>
     private async Task RecordAsync()
     {
-        var patch = editor.Patch;
         var kinds = RecordingKinds();
 
         if (kinds.Count == 0)
@@ -126,8 +151,85 @@ public sealed partial class MainWindow
 
         if (file?.TryGetLocalPath() is not { } path) return;
 
-        Start(path, patch);
+        // Before the count rather than only inside Start: a count-in is three
+        // seconds of standing ready, and spending them to be told there is no
+        // ffmpeg is three seconds nobody gets back.
+        var (format, ffmpeg) = Encoder(path);
+
+        if (Refusal(format, ffmpeg, editor.Patch) is { } refused)
+        {
+            Report(refused);
+            return;
+        }
+
+        await CountInAsync(path, CountInStep);
     }
+
+    /// <summary>
+    /// Counts the take in on the status bar and starts it, unless the count is
+    /// called off first. The patch is read at the end rather than the beginning,
+    /// because the count is time somebody may still be spending on the patch.
+    /// </summary>
+    /// <param name="step">
+    /// How long one number stays up. A parameter because the only other caller
+    /// is a test, which has nothing to stand ready for.
+    /// </param>
+    internal async Task CountInAsync(string path, TimeSpan step)
+    {
+        var name = Path.GetFileName(path);
+
+        using var count = new CancellationTokenSource();
+
+        counting = count;
+
+        // The glyph is the square from the moment the count starts: the button
+        // ends something from here on, and what it ends is the count.
+        recordButton.Content = Glyphs.Stop();
+        MarkRecordable();
+
+        try
+        {
+            for (var left = CountIn; left > 0; left--)
+            {
+                // Reported as progress: the whole count is one sentence with a
+                // new number in it, and leaves the log one line rather than three.
+                Report($"Recording {name} in {left}…", progress: true);
+
+                await Task.Delay(step, count.Token);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            if (!gone) Report($"{name} was not recorded.");
+            return;
+        }
+        finally
+        {
+            counting = null;
+
+            // Put back for every way out of the count, the take that follows
+            // included: Start swaps it straight back to the square, in this
+            // same turn of the dispatcher, so there is nothing to see.
+            if (!gone)
+            {
+                recordButton.Content = Glyphs.Record();
+                MarkRecordable();
+            }
+        }
+
+        // What the count was for: the take begins at nought seconds, in the
+        // picture and in the sound, the same place Rewind puts them.
+        audio.Rewind();
+        preview.Rewind();
+
+        Start(path, editor.Patch);
+    }
+
+    /// <summary>
+    /// Calls off a count-in. The take is not started and no file is written —
+    /// nothing has been opened yet, the name having only been chosen.
+    /// </summary>
+    private void CallOffCount() => counting?.Cancel();
 
     /// <summary>
     /// A patch's name as a file's. A preset is named for a person to read, and may
@@ -151,33 +253,49 @@ public sealed partial class MainWindow
         ClipFormats.Wanted(outputSettings.VideoFormat, picture: true),
         ClipFormats.Wanted(outputSettings.SoundFormat, picture: false));
 
+    /// <summary>
+    /// Why this take cannot be written, or null for one that can. Asked twice —
+    /// once before the count-in and once as the file is opened — because a count
+    /// is long enough for the Volume to be turned down inside it.
+    /// </summary>
+    private string? Refusal(ClipFormat format, string? ffmpeg, Patch patch)
+    {
+        if (format.NeedsFfmpeg && ffmpeg is null)
+        {
+            return $"{format.Label} is written by ffmpeg, and there is none on PATH. "
+                + "Find it in Settings → Recording, or record an "
+                + $"{ClipFormats.MotionJpegAvi.Extension} or a {ClipFormats.Wav.Extension}.";
+        }
+
+        if (!format.HasPicture && !WithSound(patch))
+        {
+            return $"Turn the Output's Volume up before recording a {format.Extension} — there is nothing to record otherwise.";
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Whether a take would have any sound in it: what is actually playing, not
+    /// what the patch could play. A take made with the audio switched off has
+    /// nothing to record from, whatever is wired up.
+    /// </summary>
+    private bool WithSound(Patch patch) => patch.Reaches().Sound && audio.IsRunning;
+
     private void Start(string path, Patch patch)
     {
         // The name decides, not the setting: an extension typed over the one the
         // picker suggested is what somebody meant by typing it.
         var (format, ffmpeg) = Encoder(path);
 
-        if (format.NeedsFfmpeg && ffmpeg is null)
+        if (Refusal(format, ffmpeg, patch) is { } why)
         {
-            Report(
-                $"{format.Label} is written by ffmpeg, and there is none on PATH. "
-                + "Find it in Settings → Recording, or record an "
-                + $"{ClipFormats.MotionJpegAvi.Extension} or a {ClipFormats.Wav.Extension}.");
-
+            Report(why);
             return;
         }
 
         var wantsPicture = format.HasPicture;
-
-        // What is actually playing, not what the patch could play. A take with
-        // the audio switched off has no sound to record, whatever is wired up.
-        var withSound = patch.Reaches().Sound && audio.IsRunning;
-
-        if (!wantsPicture && !withSound)
-        {
-            Report($"Turn the Output's Volume up before recording a {format.Extension} — there is nothing to record otherwise.");
-            return;
-        }
+        var withSound = WithSound(patch);
 
         var size = wantsPicture ? preview.Resolution : default;
 
@@ -369,6 +487,10 @@ public sealed partial class MainWindow
     /// </summary>
     private async Task FinishTakeAsync()
     {
+        // A count still running would otherwise open a file on a window that is
+        // leaving — there is nothing to wait for here, only a count to drop.
+        CallOffCount();
+
         Stop();
 
         if (finishing is { } pending) await pending;
@@ -381,6 +503,8 @@ public sealed partial class MainWindow
     private void FinishTakeNow()
     {
         gone = true;
+
+        CallOffCount();
 
         if (recorder is { } running)
         {

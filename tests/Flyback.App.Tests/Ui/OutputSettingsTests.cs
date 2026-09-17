@@ -844,6 +844,95 @@ public class OutputSettingsTests : UiTest, IDisposable
         Record(window).IsEnabled.ShouldBeTrue();
     }
 
+    // --- the count-in --------------------------------------------------------
+
+    /// <summary>What the status bar has said, newest last.</summary>
+    private static IReadOnlyList<string> Said(MainWindow window) =>
+        All<ReportLine>(window).Single().History;
+
+    /// <summary>Where a take under test would go, which is nowhere a machine keeps anything.</summary>
+    private static string TakePath(string extension) => Path.Combine(
+        Path.GetTempPath(),
+        $"flyback-take-{Guid.NewGuid():N}{extension}");
+
+    /// <summary>
+    /// A step no test waits out, for the count that is meant to be interrupted
+    /// rather than finished.
+    /// </summary>
+    private static readonly TimeSpan Unhurried = TimeSpan.FromMinutes(1);
+
+    /// <summary>
+    /// The numbers go on the status bar, where everything else this program has
+    /// to say goes — there is no second place for them to appear.
+    /// </summary>
+    [AvaloniaFact]
+    public async Task The_count_says_how_many_seconds_are_left()
+    {
+        var window = Open();
+        var path = TakePath(ClipFormats.MotionJpegAvi.Extension);
+
+        var counting = window.CountInAsync(path, Unhurried);
+        Settle(window);
+
+        Said(window)[^1].ShouldBe($"Recording {Path.GetFileName(path)} in 3…");
+
+        Record(window).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        await counting;
+    }
+
+    /// <summary>
+    /// The count is the one part of a take that can be called off, since no file
+    /// has been opened yet — and the button that starts it is what calls it off.
+    /// </summary>
+    [AvaloniaFact]
+    public async Task The_count_can_be_called_off_before_the_take_starts()
+    {
+        var window = Open();
+        var path = TakePath(ClipFormats.MotionJpegAvi.Extension);
+
+        var counting = window.CountInAsync(path, Unhurried);
+        Settle(window);
+
+        var button = Record(window);
+
+        button.IsEnabled.ShouldBeTrue("or the count could not be called off");
+        (ToolTip.GetTip(button) as string).ShouldNotBeNull().ShouldContain("Call off the count");
+
+        button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        await counting;
+
+        Settle(window);
+
+        Said(window)[^1].ShouldBe($"{Path.GetFileName(path)} was not recorded.");
+        File.Exists(path).ShouldBeFalse("nothing was ever opened");
+        (ToolTip.GetTip(button) as string).ShouldNotBeNull().ShouldContain("Record what the patch is doing");
+    }
+
+    /// <summary>
+    /// What the count is for: the take starts at nought seconds, so a recording
+    /// begins where the patch does rather than wherever the session had got to.
+    /// </summary>
+    /// <remarks>
+    /// A <c>.wav</c> with the sound stopped, which is what a headless test has:
+    /// the take is refused as it opens, which is the proof the count ran through
+    /// to starting one — and leaves no file to close.
+    /// </remarks>
+    [AvaloniaFact]
+    public async Task The_count_takes_the_patch_back_to_zero_before_the_take_starts()
+    {
+        var window = Open();
+        var preview = All<PreviewHost>(window).Single();
+
+        preview.Time = 30;
+
+        await window.CountInAsync(TakePath(ClipFormats.Wav.Extension), TimeSpan.Zero);
+
+        Settle(window);
+
+        preview.Time.ShouldBeLessThan(1);
+        Said(window).ShouldContain(line => line.Contains("Turn the Output's Volume up"));
+    }
+
     /// <summary>A greyed control that will not say why is worse than no control.</summary>
     [AvaloniaFact]
     public void The_greyed_record_button_says_why()

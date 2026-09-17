@@ -9,6 +9,7 @@
 - Mycelium, in the Effects plugin: a psybient track of ninety-six bars in six sections, with a picture driven by the same signals. It is the largest preset, and needs the Voice and Picture plugins.
 
 ### Recording and export
+- Record counts three seconds in on the status bar and takes the patch back to zero, so a take starts where the patch does. Ctrl+R during the count calls it off.
 - MP4, WebM, MOV, MP3, M4A and FLAC, encoded by ffmpeg where it is installed. An MP4 is around twenty-five times smaller than the AVI.
 - Settings → Recording picks the video and sound formats, and where ffmpeg is if it is not on your `PATH`.
 - `flyback-cli render` takes the format from the extension, with `--format` and `--ffmpeg` to override it.
