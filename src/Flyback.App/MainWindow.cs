@@ -922,13 +922,13 @@ public sealed partial class MainWindow : Window
             TabStripPlacement = Dock.Left,
             Width = SettingsWidth,
             Height = SettingsHeight,
-            Padding = new Thickness(20, 0, 0, 0),
+            Padding = new Thickness(4, 6, 0, 0),
         };
 
-        tabs.Items.Add(SectionTab("Agent settings", panel.SettingsSection()));
-        tabs.Items.Add(SectionTab("Graphics settings", graphicsSection));
-        tabs.Items.Add(SectionTab("Recording settings", recordingSection));
-        tabs.Items.Add(SectionTab("Sound settings", soundSection));
+        tabs.Items.Add(SectionTab("Graphics", graphicsSection));
+        tabs.Items.Add(SectionTab("Recording", recordingSection));
+        tabs.Items.Add(SectionTab("Sound", soundSection));
+        tabs.Items.Add(SectionTab("Agent", panel.SettingsSection()));
 
         var content = new StackPanel { Spacing = 12, Margin = new Thickness(18, 4, 18, 18) };
 
@@ -979,17 +979,33 @@ public sealed partial class MainWindow : Window
     /// The section scrolls in its own viewer, since the tabs are a fixed height
     /// and an assistant's form is as long as its provider declares it to be.
     /// </remarks>
-    private static TabItem SectionTab(string name, Control section) => new()
+    private static TabItem SectionTab(string name, Control section)
     {
-        Header = new TextBlock { Text = name, FontSize = Text.Emphasis, FontWeight = FontWeight.SemiBold },
-        Content = new ScrollViewer
+
+        section.HorizontalAlignment = HorizontalAlignment.Left;
+
+        return new TabItem
         {
-            HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
-            Content = section,
-        },
-        Padding = new Thickness(12, 6),
-        MinHeight = 0,
-    };
+            Header = new TextBlock { Text = name, FontSize = Text.Emphasis, FontWeight = FontWeight.SemiBold },
+            Content = new Border
+            {
+                BorderBrush = new SolidColorBrush(Colors.Separator, 0.35),
+                BorderThickness = new Thickness(1),
+                CornerRadius = new CornerRadius(6),
+                Padding = new Thickness(16),
+                Child = new ScrollViewer
+                {
+                    HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
+                    Content = section,
+                },
+            },
+            Padding = new Thickness(4, 6, 12, 6),
+            MinHeight = 0,
+
+         
+            Width = 120,
+        };
+    }
 
     /// <summary>
     /// The settings tabs' size, list and section together: wide enough for the
