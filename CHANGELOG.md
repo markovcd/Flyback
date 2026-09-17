@@ -7,7 +7,7 @@
 - Flyback counts how it is used — the version, the operating system, which plugins and sound backend are in use, how many of each kind of module a patch has when it plays, and which assistant is asked. Nothing about you, your machine or your patches. On by default, in the new Settings → Usage tab.
 
 ### Modules
-- Added Stroke (a drum envelope counted off the beat), Fade (brings a part in as a level rises), Hiss (cheap white noise), Wander (a slow random value) and Drum (a kick or tom from one envelope) to Voice.
+- Added Stroke (a drum envelope counted off the beat), Fade (brings a part in as a level rises), Wander (a slow random value) and Drum (a kick or tom from one envelope) to Voice.
 - Added Desk, a four-channel stereo mixer with a trim that chains into bigger ones.
 - Added Trails, which leaves the last frame fading behind the picture.
 
