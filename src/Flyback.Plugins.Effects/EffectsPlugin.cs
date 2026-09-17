@@ -69,6 +69,12 @@ public sealed class EffectsPlugin : IFlybackPlugin
                 + "drawn scene — a slatted sun, a ridge, and a grid that arrives a line to the beat.",
                 PresetKind.Showcase),
             new PatchPreset(
+                PhasePreset.Name,
+                PhasePreset.Build,
+                "Phase music, after Steve Reich: two players on one pattern, the second pulling ahead "
+                + "through all twelve canons, and a picture of two dials that is the diagram of it.",
+                PresetKind.Showcase),
+            new PatchPreset(
                 SlowWeatherPreset.Name,
                 SlowWeatherPreset.Build,
                 "A generative patch with no clock in it, played into the two effects.",

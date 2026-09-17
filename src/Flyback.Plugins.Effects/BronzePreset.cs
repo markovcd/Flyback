@@ -768,17 +768,5 @@ internal sealed class BronzePreset : PresetBench
             b.Wire(degree, 0, keys, 0);
             return keys;
         }
-
-        // Struck metal out of two sines: one at the pitch, and one at an inharmonic
-        // ratio above it leaning on the first one's phase. How hard it leans is the
-        // stroke, so the note is bright when it is hit and pure by the time it has
-        // rung — which is the whole character of a bell, for two oscillators.
-        NodeInstance Bell(NodeInstance hz, NodeInstance stroke, float ratio, float index)
-        {
-            var partial = Tone(Times(hz, ratio), Times(stroke, index));
-            var bell = Tone(hz, stroke);
-            b.Wire(partial, 0, bell, 2);
-            return bell;
-        }
     }
 }

@@ -122,4 +122,18 @@ internal abstract class PresetBench(ModuleCatalog modules)
         b.Wire(hz, 0, tone, 1).Wire(level, 0, tone, 3);
         return tone;
     }
+
+    /// <summary>
+    /// Struck metal out of two sines: one at the pitch, and one at a ratio above it
+    /// leaning on the first one's phase. How hard it leans is the stroke, so the note
+    /// is bright when it is hit and pure by the time it has rung — which is the whole
+    /// character of a bell, for two oscillators.
+    /// </summary>
+    protected NodeInstance Bell(NodeInstance hz, NodeInstance stroke, float ratio, float index)
+    {
+        var partial = Tone(Times(hz, ratio), Times(stroke, index));
+        var bell = Tone(hz, stroke);
+        b.Wire(partial, 0, bell, 2);
+        return bell;
+    }
 }
