@@ -53,6 +53,13 @@ the form says the default plays meanwhile, listing it under a readable name rath
 than its endpoint id. The endpoint is looked up each time the sound starts, not
 when the device is created, so one plugged in after launch is found.
 
+**System default follows the system.** While the default is what plays, the
+device listens for Windows changing its default output and reopens on the new
+one with the same callback, on a pool thread, since the notification must not
+block. The engine is never told: the sound carries on from where it was, as it
+does when Save swaps a device. A chosen device that has gone plays the default,
+so it follows too.
+
 **The answers are kept in `output.json`, under `sound`, per backend id** — beside
 latency, in the file 0082 made for the machine's output choices, and per backend
 for the reason 0069 kept them per provider.

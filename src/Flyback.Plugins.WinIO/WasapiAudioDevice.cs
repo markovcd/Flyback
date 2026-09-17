@@ -1,6 +1,7 @@
 using Flyback.Plugins.Audio;
 using Flyback.Plugins.Settings;
 using NAudio.CoreAudioApi;
+using NAudio.CoreAudioApi.Interfaces;
 using NAudio.Wave;
 
 namespace Flyback.Plugins.WinIO;
@@ -48,34 +49,178 @@ public sealed class WasapiAudioDevice(AudioFormat format, string? endpoint = nul
         }
     }
 
+    /// <summary>
+    /// Held by whatever opens or closes the output: the host's thread, and the pool
+    /// thread a change of default reopens it on. Never taken by the callback.
+    /// </summary>
+    private readonly Lock gate = new();
+
+    /// <summary>What the output plays, kept so a change of default can reopen it.</summary>
+    private AudioCallback? playing;
+
+    /// <summary>Told when Windows moves its default output, while the default is what plays.</summary>
+    private DefaultFollower? follower;
+
     public void Start(AudioCallback fill)
     {
-        if (activeOutput is not null) return;
+        lock (gate)
+        {
+            if (activeOutput is not null) return;
 
-        // Looked up on every start rather than once, so a device plugged in after
-        // launch is found the next time the sound comes on.
-        var output = Chosen() is { } device
-            ? new WasapiOut(device, AudioClientShareMode.Shared, true, format.LatencyMilliseconds)
-            : new WasapiOut(AudioClientShareMode.Shared, format.LatencyMilliseconds);
+            playing = fill;
+
+            // Looked up on every start rather than once, so a device plugged in after
+            // launch is found the next time the sound comes on.
+            var chosen = Chosen();
+
+            Open(chosen);
+
+            // The default is a choice that moves: Windows can be told to play
+            // somewhere else while the sound is on, and following it is what
+            // "System default" means. A chosen device that has gone plays the
+            // default too, so it follows as well.
+            // One left from a default that would not reopen is let go first.
+            follower?.Dispose();
+            follower = chosen is null ? DefaultFollower.Watch(() => ThreadPool.QueueUserWorkItem(_ => Reopen())) : null;
+        }
+    }
+
+    public void Stop()
+    {
+        lock (gate)
+        {
+            follower?.Dispose();
+            follower = null;
+            playing = null;
+
+            Close();
+        }
+    }
+
+    public void Dispose() => Stop();
+
+    /// <param name="device">The endpoint to play through, or null for the default.</param>
+    private void Open(MMDevice? device)
+    {
+        // The default asked for by role, the same role DefaultFollower listens to,
+        // so what is followed is exactly what plays.
+        if (device is null)
+        {
+            using var enumerator = new MMDeviceEnumerator();
+
+            device = enumerator.GetDefaultAudioEndpoint(DataFlow.Render, Role.Console);
+        }
+
+        var output = new WasapiOut(device, AudioClientShareMode.Shared, true, format.LatencyMilliseconds);
 
         output.Init(new CallbackSampleProvider(
             WaveFormat.CreateIeeeFloatWaveFormat(SampleRate, format.Channels),
             format.Channels,
-            fill));
+            playing!));
 
         output.Play();
 
         activeOutput = output;
     }
 
-    public void Stop()
+    private void Close()
     {
         activeOutput?.Stop();
         activeOutput?.Dispose();
         activeOutput = null;
     }
 
-    public void Dispose() => Stop();
+    /// <summary>
+    /// Moves the sound to whatever is the default now. The callback is the same one,
+    /// so the engine carries on from where it was and never knows the device changed.
+    /// </summary>
+    /// <remarks>
+    /// On a pool thread rather than in the notification, which Windows says must not
+    /// block — and stopping an output waits for its playback thread. A change that
+    /// arrives after the sound was stopped finds nothing playing and does nothing.
+    /// </remarks>
+    private void Reopen()
+    {
+        lock (gate)
+        {
+            if (playing is null || follower is null) return;
+
+            Close();
+
+            try
+            {
+                Open(null);
+            }
+            catch
+            {
+                // A default that will not open — mid-switch, or nothing left to
+                // play through — leaves the sound off rather than taking down a
+                // pool thread. The next change of default tries again.
+                activeOutput = null;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Listens for Windows changing its default output. Registered for as long as the
+    /// default is what plays, and the enumerator is kept with it, since that is what
+    /// the registration belongs to.
+    /// </summary>
+    private sealed class DefaultFollower : IMMNotificationClient, IDisposable
+    {
+        private readonly MMDeviceEnumerator enumerator = new();
+        private readonly Action changed;
+
+        private DefaultFollower(Action changed) => this.changed = changed;
+
+        /// <summary>A follower, or null where Windows will not say — the sound still plays, it just stays put.</summary>
+        public static DefaultFollower? Watch(Action changed)
+        {
+            var follower = new DefaultFollower(changed);
+
+            try
+            {
+                follower.enumerator.RegisterEndpointNotificationCallback(follower);
+                return follower;
+            }
+            catch
+            {
+                follower.enumerator.Dispose();
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Once per change: Windows reports the console, multimedia and communications
+        /// roles separately, and the console role is the one a plain output plays through.
+        /// </summary>
+        public void OnDefaultDeviceChanged(DataFlow flow, Role role, string defaultDeviceId)
+        {
+            if (flow == DataFlow.Render && role == Role.Console) changed();
+        }
+
+        public void OnDeviceStateChanged(string deviceId, DeviceState newState) { }
+
+        public void OnDeviceAdded(string pwstrDeviceId) { }
+
+        public void OnDeviceRemoved(string deviceId) { }
+
+        public void OnPropertyValueChanged(string pwstrDeviceId, PropertyKey key) { }
+
+        public void Dispose()
+        {
+            try
+            {
+                enumerator.UnregisterEndpointNotificationCallback(this);
+            }
+            catch
+            {
+                // Nothing to undo if Windows has already let it go.
+            }
+
+            enumerator.Dispose();
+        }
+    }
 
     /// <summary>
     /// The endpoint that was asked for, or null for the default — which is also what
