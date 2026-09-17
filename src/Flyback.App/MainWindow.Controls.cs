@@ -143,6 +143,11 @@ public sealed partial class MainWindow
             editor.NotifyPatchChanged();
         };
 
+        controlsPanel.MoveRequested += (id, index) =>
+        {
+            if (editor.Patch.MoveControl(id, index)) editor.NotifyPatchChanged();
+        };
+
         controlsPanel.RemoveRequested += id =>
         {
             if (editor.LinkingControl == id) Link(null);

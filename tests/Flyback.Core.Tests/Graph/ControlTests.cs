@@ -207,6 +207,20 @@ public class ControlTests
         PatchIO.ToJson(patch, NodeCatalog.BuiltIn).ShouldNotContain("Controls");
     }
 
+    [Theory]
+    [InlineData(0, 2, "Knob 2,Knob 3,Knob 1")]
+    [InlineData(2, 0, "Knob 3,Knob 1,Knob 2")]
+    [InlineData(1, 9, "Knob 1,Knob 3,Knob 2")]
+    public void A_knob_moves_to_any_place_on_the_panel(int from, int to, string order)
+    {
+        var (patch, _) = Built();
+        for (var i = 0; i < 3; i++) patch.AddControl();
+
+        patch.MoveControl(patch.Controls![from].Id, to).ShouldBeTrue();
+
+        string.Join(",", patch.Controls.Select(c => c.Name)).ShouldBe(order);
+    }
+
     [Fact]
     public void New_knobs_are_numbered_past_the_ones_already_there()
     {

@@ -14,7 +14,8 @@ namespace Flyback.App.Controls;
 /// </summary>
 /// <remarks>
 /// Draws what it is shown and reports what the hand does; the window decides what
-/// that does to the patch. Clicking a knob's name starts linking sockets to it.
+/// that does to the patch. Clicking a knob's name starts linking sockets to it, and
+/// dragging the name moves the knob.
 /// </remarks>
 internal sealed class ControlsPanel : Border
 {
@@ -64,6 +65,9 @@ internal sealed class ControlsPanel : Border
     public event Action<Guid, string>? Renamed;
 
     public event Action<Guid>? RemoveRequested;
+
+    /// <summary>A knob was moved: its id, and the place it should have once taken out of its old one.</summary>
+    public event Action<Guid, int>? MoveRequested;
 
     /// <summary>
     /// What a knob's value reads as, given its id and position — the socket's own
@@ -132,10 +136,10 @@ internal sealed class ControlsPanel : Border
         strip.Children.Clear();
         cells.Clear();
 
-        foreach (var control in controls)
+        for (var i = 0; i < controls.Count; i++)
         {
-            var cell = new Cell(this, control);
-            cells[control.Id] = cell;
+            var cell = new Cell(this, controls[i], i, controls.Count);
+            cells[controls[i].Id] = cell;
             strip.Children.Add(cell.Root);
         }
 
@@ -171,12 +175,49 @@ internal sealed class ControlsPanel : Border
         Learning = learning;
     }
 
+    /// <summary>
+    /// Where a knob dragged to <paramref name="point"/> (in the strip's coordinates)
+    /// lands, as an index among all the knobs, and which cell edge marks it.
+    /// </summary>
+    private (int Index, Cell Beside, bool After)? DropAt(Point point)
+    {
+        var ordered = cells.Values.OrderBy(c => c.Index).ToList();
+
+        if (ordered.Count == 0) return null;
+
+        // The nearest cell rather than the one under the pointer, so a drop in a gap
+        // or past the end of a wrapped row still lands somewhere.
+        var nearest = ordered.MinBy(c => Distance(c.Root.Bounds, point))!;
+        var after = point.X > nearest.Root.Bounds.Center.X;
+
+        return (nearest.Index + (after ? 1 : 0), nearest, after);
+
+        static double Distance(Rect r, Point p)
+        {
+            var dx = Math.Max(Math.Max(r.Left - p.X, 0), p.X - r.Right);
+            var dy = Math.Max(Math.Max(r.Top - p.Y, 0), p.Y - r.Bottom);
+            return dx * dx + dy * dy;
+        }
+    }
+
+    private void ClearDropMarks()
+    {
+        foreach (var cell in cells.Values) cell.Mark(null);
+    }
+
     private sealed class Cell
     {
         private static readonly IBrush Heard = new SolidColorBrush(Colors.Attention);
 
+        /// <summary>How far the name has to travel before a press is a move rather than a click.</summary>
+        private const double DragThreshold = 5;
+
         private readonly ControlsPanel panel;
         private readonly PatchControl control;
+        private readonly int count;
+        private readonly StackPanel body;
+        private Point? pressed;
+        private bool dragging;
         private readonly TextBlock name;
         private readonly TextBox renaming;
         private readonly TextBlock value;
@@ -184,10 +225,12 @@ internal sealed class ControlsPanel : Border
         private readonly Border dot;
         private readonly DispatcherTimer fade;
 
-        public Cell(ControlsPanel panel, PatchControl control)
+        public Cell(ControlsPanel panel, PatchControl control, int index, int count)
         {
             this.panel = panel;
             this.control = control;
+            this.count = count;
+            Index = index;
 
             name = new TextBlock
             {
@@ -201,7 +244,7 @@ internal sealed class ControlsPanel : Border
                 Background = Brushes.Transparent,
             };
 
-            ToolTip.SetTip(name, "Click to link sockets to this knob. Double-click to rename it.");
+            ToolTip.SetTip(name, "Click to link sockets to this knob, drag to move it, double-click to rename it.");
 
             renaming = new TextBox { FontSize = Text.Small, IsVisible = false, MinHeight = 0, Padding = new Thickness(2, 0) };
 
@@ -256,7 +299,7 @@ internal sealed class ControlsPanel : Border
                 Children = { dot, midi },
             });
 
-            Root = new StackPanel
+            body = new StackPanel
             {
                 Width = CellWidth,
                 Spacing = 1,
@@ -267,6 +310,14 @@ internal sealed class ControlsPanel : Border
                     value,
                     footer,
                 },
+            };
+
+            // An edge on each side, lit only while a dragged knob would land there.
+            Root = new Border
+            {
+                BorderThickness = new Thickness(2, 0),
+                BorderBrush = Brushes.Transparent,
+                Child = body,
             };
 
             Footer(learning: false);
@@ -281,14 +332,76 @@ internal sealed class ControlsPanel : Border
             Knob.Turned += turned => panel.Turning?.Invoke(control.Id, (float)turned);
             Knob.Released += () => panel.TurnEnded?.Invoke(control.Id);
 
+            // A click links and a drag moves, so which it was is only known once the
+            // button comes up or the pointer has travelled.
             name.PointerPressed += (_, e) =>
             {
                 if (!e.GetCurrentPoint(name).Properties.IsLeftButtonPressed) return;
 
-                if (e.ClickCount == 2) BeginRename();
-                else panel.LinkRequested?.Invoke(control.Id);
+                if (e.ClickCount == 2)
+                {
+                    pressed = null;
+                    BeginRename();
+                }
+                else
+                {
+                    pressed = e.GetPosition(panel.strip);
+                    dragging = false;
+                    e.Pointer.Capture(name);
+                }
 
                 e.Handled = true;
+            };
+
+            name.PointerMoved += (_, e) =>
+            {
+                if (pressed is not { } from) return;
+
+                var at = e.GetPosition(panel.strip);
+
+                if (!dragging && Math.Abs(at.X - from.X) + Math.Abs(at.Y - from.Y) < DragThreshold) return;
+
+                dragging = true;
+                body.Opacity = 0.45;
+
+                panel.ClearDropMarks();
+                if (panel.DropAt(at) is { } drop) drop.Beside.Mark(drop.After);
+            };
+
+            name.PointerReleased += (_, e) =>
+            {
+                if (pressed is null) return;
+
+                var wasDragging = dragging;
+                pressed = null;
+                dragging = false;
+                e.Pointer.Capture(null);
+                body.Opacity = 1;
+                panel.ClearDropMarks();
+
+                if (!wasDragging)
+                {
+                    panel.LinkRequested?.Invoke(control.Id);
+                    return;
+                }
+
+                if (panel.DropAt(e.GetPosition(panel.strip)) is not { } drop) return;
+
+                // Counted among the knobs as they stand, so one landing past its old
+                // place is one fewer along once it has been taken out.
+                var to = drop.Index > Index ? drop.Index - 1 : drop.Index;
+
+                if (to != Index) panel.MoveRequested?.Invoke(control.Id, to);
+            };
+
+            name.PointerCaptureLost += (_, _) =>
+            {
+                if (pressed is null) return;
+
+                pressed = null;
+                dragging = false;
+                body.Opacity = 1;
+                panel.ClearDropMarks();
             };
 
             renaming.KeyDown += (_, e) =>
@@ -303,7 +416,22 @@ internal sealed class ControlsPanel : Border
             renaming.LostFocus += (_, _) => EndRename(keep: true);
         }
 
-        public StackPanel Root { get; }
+        public Border Root { get; }
+
+        /// <summary>Where this knob stands on the panel.</summary>
+        public int Index { get; }
+
+        /// <summary>Lights the edge a dragged knob would land at: after, before, or neither.</summary>
+        public void Mark(bool? after)
+        {
+            Root.BorderBrush = after is null ? Brushes.Transparent : Heard;
+            Root.BorderThickness = after switch
+            {
+                true => new Thickness(0, 0, 2, 0),
+                false => new Thickness(2, 0, 0, 0),
+                null => new Thickness(2, 0),
+            };
+        }
 
         public Knob Knob { get; }
 
@@ -345,6 +473,14 @@ internal sealed class ControlsPanel : Border
                 flyout.Items.Add(Item("Learn another controller", () => panel.LearnRequested?.Invoke(control.Id)));
 
             flyout.Items.Add(new Separator());
+
+            var left = Item("Move left", () => panel.MoveRequested?.Invoke(control.Id, Index - 1));
+            var right = Item("Move right", () => panel.MoveRequested?.Invoke(control.Id, Index + 1));
+            left.IsEnabled = Index > 0;
+            right.IsEnabled = Index < count - 1;
+
+            flyout.Items.Add(left);
+            flyout.Items.Add(right);
             flyout.Items.Add(Item("Rename", BeginRename));
             flyout.Items.Add(Item("Remove knob", () => panel.RemoveRequested?.Invoke(control.Id)));
 

@@ -265,6 +265,25 @@ public sealed class Patch
     }
 
     /// <summary>
+    /// Moves a knob to <paramref name="index"/> on the panel, counted in the order
+    /// that holds once it has been taken out of its old place.
+    /// </summary>
+    /// <returns>Whether it moved.</returns>
+    public bool MoveControl(Guid id, int index)
+    {
+        if (Control(id) is not { } control) return false;
+
+        var from = Controls!.IndexOf(control);
+        var to = Math.Clamp(index, 0, Controls.Count - 1);
+
+        if (from == to) return false;
+
+        Controls.RemoveAt(from);
+        Controls.Insert(to, control);
+        return true;
+    }
+
+    /// <summary>
     /// Takes a knob off the panel, leaving every socket that followed it where the
     /// knob had put it.
     /// </summary>

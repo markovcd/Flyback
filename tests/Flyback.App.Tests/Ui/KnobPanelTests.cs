@@ -253,4 +253,54 @@ public class KnobPanelTests : UiTest
 
         Panel(window).Bounds.Height.ShouldBeGreaterThan(before + 60);
     }
+
+    private static string Order(MainWindow window) =>
+        string.Join(",", Editor(window).Patch.Controls!.Select(c => c.Name));
+
+    [AvaloniaFact]
+    public void Dragging_a_knob_by_its_name_moves_it_and_undo_puts_it_back()
+    {
+        var (patch, _) = Board();
+        for (var i = 0; i < 3; i++) patch.AddControl();
+        var window = Open(patch);
+
+        var names = All<TextBlock>(Panel(window)).Where(t => t.Name == "knob-name").ToList();
+        var from = OnWindow(window, names[0], new Point(names[0].Bounds.Width / 2, names[0].Bounds.Height / 2));
+        var last = names[2];
+        var to = OnWindow(window, last, new Point(last.Bounds.Width + 20, last.Bounds.Height / 2));
+
+        window.MouseDown(from, MouseButton.Left);
+        window.MouseMove(from + new Point(10, 0));
+        window.MouseMove(to);
+        window.MouseUp(to, MouseButton.Left);
+        Settle(window);
+
+        Order(window).ShouldBe("Knob 2,Knob 3,Knob 1");
+        Editor(window).LinkingControl.ShouldBeNull("a drag is not a click");
+
+        Editor(window).Undo().ShouldBeTrue();
+        Settle(window);
+
+        Order(window).ShouldBe("Knob 1,Knob 2,Knob 3");
+    }
+
+    [AvaloniaFact]
+    public void The_knob_menu_moves_a_knob_one_place()
+    {
+        var (patch, _) = Board();
+        for (var i = 0; i < 3; i++) patch.AddControl();
+        var window = Open(patch);
+
+        var more = All<Button>(Panel(window)).First(b => b.Name == "knob-menu");
+        var menu = more.Flyout.ShouldBeOfType<MenuFlyout>();
+        var items = menu.Items.OfType<MenuItem>().ToList();
+
+        items.Single(i => (i.Header as string) == "Move left").IsEnabled.ShouldBeFalse();
+
+        items.Single(i => (i.Header as string) == "Move right")
+            .RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(MenuItem.ClickEvent));
+        Settle(window);
+
+        Order(window).ShouldBe("Knob 2,Knob 1,Knob 3");
+    }
 }
