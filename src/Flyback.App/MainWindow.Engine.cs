@@ -345,8 +345,12 @@ public sealed partial class MainWindow
         var wires = editor.Patch.Connections.Count;
         var ops = preview.Program.Ops.Length;
 
+        // Which renderer produced the rate is part of what it means, so it is
+        // said alongside — what is actually drawing, not what was asked for.
+        var backend = preview.Backend == PreviewBackend.Gpu ? "GPU" : "CPU";
+
         status.Text = string.Create(
             CultureInfo.InvariantCulture,
-            $"{nodes} modules · {wires} wires · {ops} ops   |   t = {preview.Time:0.00}s   |   {preview.FramesPerSecond:0} fps");
+            $"{nodes} modules · {wires} wires · {ops} ops   |   t = {preview.Time:0.00}s   |   {preview.FramesPerSecond:0} fps   |   {backend}");
     }
 }

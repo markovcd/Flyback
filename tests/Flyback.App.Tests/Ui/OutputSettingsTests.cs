@@ -542,20 +542,15 @@ public class OutputSettingsTests : UiTest, IDisposable
     // --- the render switch and the interpreter -----------------------------------
 
     /// <summary>
-    /// Named for what it would draw with either way, rather than an unticked
-    /// "GPU" that leaves the CPU unnamed.
+    /// A choice between the two, named for what it would draw with either way.
     /// </summary>
     [AvaloniaFact]
-    public void The_render_switch_names_the_gpu_or_the_cpu()
+    public void The_render_box_offers_the_gpu_and_the_cpu()
     {
         var window = Open();
-        var render = All<ToggleButton>(OpenSettings(window)).Single(b => b.Name == "render");
+        var render = All<ComboBox>(OpenSettings(window)).Single(b => b.Name == "render");
 
-        render.IsChecked = true;
-        render.Content.ShouldBe("GPU");
-
-        render.IsChecked = false;
-        render.Content.ShouldBe("CPU");
+        render.ItemsSource.ShouldBe(new[] { "GPU", "CPU" });
     }
 
     /// <summary>
@@ -605,11 +600,11 @@ public class OutputSettingsTests : UiTest, IDisposable
         var wanted = preview.Wanted;
 
         var dialog = OpenSettings(window);
-        var gpu = All<ToggleButton>(dialog).Single(b => b.Name == "render");
+        var gpu = All<ComboBox>(dialog).Single(b => b.Name == "render");
 
         if (!gpu.IsEnabled) return;
 
-        gpu.IsChecked = false;
+        gpu.SelectedIndex = 1;
         Dispatcher.UIThread.RunJobs();
 
         preview.Wanted.ShouldBe(wanted);

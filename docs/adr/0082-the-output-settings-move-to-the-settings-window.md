@@ -130,3 +130,10 @@ exactly as before; the saved answer is tried again next launch.
 
 **The assistant panel's section lost its own Save button** to the window's, so
 `SaveSettings` is internal and the tests that pressed the button call it.
+
+**Amended: Render is a combo box, and the status bar names it again.** A
+two-state switch is a list of two either way, and reading "GPU" or "CPU" off a
+box's own text needed no separate line to keep in step with `IsChecked`. The
+status bar lost the renderer's name when it stopped timing a frame
+(2026-09-17); it now says which one is actually drawing, not what was asked
+for, beside the rate.

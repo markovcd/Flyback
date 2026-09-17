@@ -150,12 +150,7 @@ public sealed partial class MainWindow
         // Turning it off is how two backends get compared, and the answer to a
         // long session drifting — see ADR-0035 on float32 and the phase
         // accumulator. It disables itself if the GPU turns out to be unusable.
-        gpuButton.IsChecked = true;
-
-        // Named for what it would draw with, both ways: an unticked "GPU" would
-        // leave the CPU unnamed.
-        gpuButton.IsCheckedChanged += (_, _) =>
-            gpuButton.Content = gpuButton.IsChecked == true ? "GPU" : "CPU";
+        gpuButton.SelectedIndex = 0;
 
         compiler.Failed += message => Dispatcher.UIThread.Post(() => Report(message));
 
@@ -167,10 +162,10 @@ public sealed partial class MainWindow
 
             // The choice rather than what is running: a patch the shader cannot
             // draw puts the picture on the processor without anybody having
-            // asked, and a button that unticked itself would then be read as the
-            // setting having changed — and would be saved as changed the next
+            // asked, and a box that put itself back to CPU would then be read as
+            // the setting having changed — and would be saved as changed the next
             // time anybody pressed Save.
-            gpuButton.IsChecked = preview.Wanted == PreviewBackend.Gpu;
+            gpuButton.SelectedIndex = preview.Wanted == PreviewBackend.Gpu ? 0 : 1;
             gpuButton.IsEnabled = preview.GpuAvailable;
             ToolTip.SetTip(gpuButton, preview.GpuAvailable ? GpuTip : message);
             Report(message);
@@ -206,9 +201,9 @@ public sealed partial class MainWindow
     {
         resolution.SelectedIndex = SizeRow(settings);
 
-        // A switch greyed out by a GPU that failed shows what is running, which
+        // A box greyed out by a GPU that failed shows what is running, which
         // the BackendChanged handler above already set.
-        if (gpuButton.IsEnabled) gpuButton.IsChecked = settings.Gpu;
+        if (gpuButton.IsEnabled) gpuButton.SelectedIndex = settings.Gpu ? 0 : 1;
 
         frameRate.SelectedIndex = Nearest(FrameRates, settings.FrameRate);
         previewFrameRate.SelectedIndex = Nearest(PreviewFrameRates, settings.PreviewFrameRate);
@@ -267,9 +262,9 @@ public sealed partial class MainWindow
         {
             Width = size.Width,
             Height = size.Height,
-            // A switch greyed out by a GPU that failed says nothing about what
+            // A box greyed out by a GPU that failed says nothing about what
             // was wanted, so the last answer is kept for a launch that has one.
-            Gpu = gpuButton.IsEnabled ? gpuButton.IsChecked == true : outputSettings.Gpu,
+            Gpu = gpuButton.IsEnabled ? gpuButton.SelectedIndex == 0 : outputSettings.Gpu,
             FrameRate = FrameRates[Math.Max(frameRate.SelectedIndex, 0)],
             PreviewFrameRate = PreviewFrameRates[Math.Max(previewFrameRate.SelectedIndex, 0)],
 

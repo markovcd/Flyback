@@ -248,7 +248,13 @@ public sealed partial class MainWindow : Window
     /// </summary>
     private readonly ReportLine report = new();
 
-    private readonly ToggleButton gpuButton = new() { Name = "render", Content = "GPU", Width = 60 };
+    private readonly ComboBox gpuButton = new Picker
+    {
+        Name = "render",
+        ItemsSource = new[] { "GPU", "CPU" },
+        SelectedIndex = 0,
+        HorizontalAlignment = HorizontalAlignment.Stretch,
+    };
     private readonly ToggleButton assistantButton =
         Toggle("assistant", "✦", "Describe a patch and have one built.");
 
