@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Flyback.App.Midi;
 using Flyback.Core;
 using Flyback.Core.Render;
 using Flyback.Plugins.Audio;
@@ -71,6 +72,9 @@ public sealed class OutputSettings
     /// </remarks>
     public Dictionary<string, Dictionary<string, string>> Sound { get; set; } = new(StringComparer.Ordinal);
 
+    /// <summary>What a MIDI controller does to a knob sitting somewhere else — the MIDI section.</summary>
+    public Takeover Takeover { get; set; }
+
     /// <summary>What is set for one backend, and nothing for one nobody has configured.</summary>
     public SettingValues SoundOf(string backend) =>
         Sound.TryGetValue(backend, out var held) ? new SettingValues(held) : SettingValues.None;
@@ -113,6 +117,8 @@ public sealed class OutputSettings
 
             // A "sound": null typed by hand is nothing chosen, not a fault.
             settings.Sound ??= new(StringComparer.Ordinal);
+
+            if (!Enum.IsDefined(settings.Takeover)) settings.Takeover = Takeover.Jump;
 
             return settings;
         }

@@ -168,8 +168,8 @@ public sealed partial class MainWindow
         showingProbe = probe?.Id;
 
         var result = probe is null
-            ? editor.Patch.CompileForVideo(samples: Sounds, pictures: Pictures)
-            : editor.Patch.CompileForProbe(probe.Id, samples: Sounds, pictures: Pictures);
+            ? editor.Patch.CompileForVideo(samples: Sounds, pictures: Pictures, played: true)
+            : editor.Patch.CompileForProbe(probe.Id, samples: Sounds, pictures: Pictures, played: true);
 
         preview.Program = result.Program;
         if (preview.Backend == PreviewBackend.Cpu) compiler.Submit(result.Program, IlLane.Picture);
@@ -186,6 +186,7 @@ public sealed partial class MainWindow
         // and the note must not be cut off by the edit.
         preview.Live = new LiveValues(result.Program.LiveInputs);
         midi.Follow(preview.Live, audio.Live);
+        RefreshControls();
 
         // What the ear reaches is said too. Compiling backwards from one sink
         // means the video pass never visits a module only the speakers reach —

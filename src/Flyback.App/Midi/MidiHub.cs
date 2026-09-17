@@ -60,6 +60,9 @@ internal sealed class MidiHub(IMidiInput? hardware = null) : IDisposable
     /// </summary>
     private LiveValues[] following = [];
 
+    /// <summary>Devices held open whether or not a program reads them — see <see cref="Hold"/>.</summary>
+    private HashSet<string> held = new(StringComparer.Ordinal);
+
     /// <summary>
     /// Something moved. The picture is redrawn on a timer that skips a frame when
     /// nothing has changed, and a key going down while the clock is stopped is
@@ -79,6 +82,12 @@ internal sealed class MidiHub(IMidiInput? hardware = null) : IDisposable
     /// would explain why.
     /// </summary>
     public event Action<string>? Trouble;
+
+    /// <summary>
+    /// A controller moved on a device, with the device's id. Raised on the driver's
+    /// thread, outside the lock.
+    /// </summary>
+    public event Action<string, MidiMessage>? Controlled;
 
     /// <summary>
     /// What there is to play with: the computer's own keys, and then whatever is
@@ -110,6 +119,24 @@ internal sealed class MidiHub(IMidiInput? hardware = null) : IDisposable
         Listen(blocks);
 
         Publish();
+    }
+
+    /// <summary>
+    /// Keeps <paramref name="devices"/> open alongside whatever the running programs
+    /// read, for the knobs bound to their controllers and while a knob is learning
+    /// one. Replaces the previous set.
+    /// </summary>
+    public void Hold(IEnumerable<string> devices)
+    {
+        LiveValues[] blocks;
+
+        lock (gate)
+        {
+            held = devices.ToHashSet(StringComparer.Ordinal);
+            blocks = following;
+        }
+
+        Listen(blocks);
     }
 
     /// <summary>
@@ -242,13 +269,16 @@ internal sealed class MidiHub(IMidiInput? hardware = null) : IDisposable
     {
         if (hardware is null) return;
 
-        var wanted = Ports()
-            .Select(port => port.Id)
-            .Where(id => blocks.Any(block => Reads(block, id)))
-            .ToHashSet(StringComparer.Ordinal);
-
         List<IMidiPort> shutting;
         List<string> opening;
+
+        HashSet<string> holding;
+        lock (gate) holding = held;
+
+        var wanted = Ports()
+            .Select(port => port.Id)
+            .Where(id => holding.Contains(id) || blocks.Any(block => Reads(block, id)))
+            .ToHashSet(StringComparer.Ordinal);
 
         lock (gate)
         {
@@ -334,6 +364,12 @@ internal sealed class MidiHub(IMidiInput? hardware = null) : IDisposable
     /// </summary>
     private void Receive(string source, MidiMessage message)
     {
+        if (message.Action == MidiAction.Control)
+        {
+            Controlled?.Invoke(source, message);
+            return;
+        }
+
         lock (gate)
         {
             switch (message.Action)

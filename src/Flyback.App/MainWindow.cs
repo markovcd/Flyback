@@ -373,6 +373,8 @@ public sealed partial class MainWindow : Window
         // being silent, and this line is the only thing that would say why.
         midi.Trouble += message => Report(message);
 
+        WireControls();
+
         // Everything let go when this stops being the window you are typing
         // into. A key released over another program is a key this never hears
         // about, and the note would hang until something else happened to move
@@ -534,11 +536,12 @@ public sealed partial class MainWindow : Window
             [
                 new RowDefinition(new GridLength(2.2, GridUnitType.Star)) { MinHeight = 160 },
                 new RowDefinition(GridLength.Auto),
+                new RowDefinition(GridLength.Auto),
                 new RowDefinition(assistantShare),
             ],
         };
 
-        assistantRow = canvas.RowDefinitions[2];
+        assistantRow = canvas.RowDefinitions[3];
         assistantSplitter = new GridSplitter { Background = Brushes.Transparent, Height = 5 };
 
         // The text sits in the canvas's own row rather than under it: they are
@@ -547,11 +550,13 @@ public sealed partial class MainWindow : Window
         // question ADR-0068 exists to answer — which one is being edited.
         Grid.SetRow(editor, 0);
         Grid.SetRow(source, 0);
-        Grid.SetRow(assistantSplitter, 1);
-        Grid.SetRow(assistant, 2);
+        Grid.SetRow(controlsPanel, 1);
+        Grid.SetRow(assistantSplitter, 2);
+        Grid.SetRow(assistant, 3);
 
         canvas.Children.Add(editor);
         canvas.Children.Add(source);
+        canvas.Children.Add(controlsPanel);
         canvas.Children.Add(assistantSplitter);
         canvas.Children.Add(assistant);
 
@@ -821,6 +826,7 @@ public sealed partial class MainWindow : Window
         patchwork.Children.Add(tidy);
         patchwork.Children.Add(Separator());
         patchwork.Children.Add(codeButton);
+        patchwork.Children.Add(controlsButton);
 
         // On its own, between what is done to the patch and what is done to
         // the program: recording and rewinding are neither — both are facts
@@ -910,7 +916,7 @@ public sealed partial class MainWindow : Window
         // built for it, so what they were last set to is still on them the next
         // time this is opened. The window around them is built fresh, so each
         // section the window owns has to be taken back from the last one first.
-        foreach (var section in new[] { graphicsSection, recordingSection, soundSection })
+        foreach (var section in new[] { graphicsSection, recordingSection, soundSection, midiSection })
             if (section.Parent is ContentControl lender) lender.Content = null;
 
         var save = new Button { Content = "Save", Width = 84 };
@@ -934,6 +940,7 @@ public sealed partial class MainWindow : Window
         tabs.Items.Add(SectionTab("Graphics", graphicsSection));
         tabs.Items.Add(SectionTab("Recording", recordingSection));
         tabs.Items.Add(SectionTab("Sound", soundSection));
+        tabs.Items.Add(SectionTab("MIDI", midiSection));
         tabs.Items.Add(SectionTab("Agent", panel.SettingsSection()));
 
         var content = new StackPanel { Spacing = 12, Margin = new Thickness(18, 4, 18, 18) };

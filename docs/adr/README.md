@@ -52,6 +52,7 @@ context, decision, consequences.
 | [0055](0055-a-plugins-extra-declares-its-editor.md) | A plugin's extra declares its editor *(user-directed)* |
 | [0061](0061-what-a-module-carries-is-kept-in-one-store.md) | What a module carries is kept in one store *(user-directed)* |
 | [0062](0062-indexed-polyphonic-midi-voices.md) | MIDI input is polyphonic through indexed voices *(user-directed)* |
+| [0086](0086-panel-knobs-are-read-as-live-values.md) | Panel knobs are read as live values, and a MIDI controller turns a knob rather than a socket *(user-directed)* |
 | [0057](0057-a-shape-is-a-distance-and-one-module-inks-it.md) | A shape is a distance, and one module inks it *(user-directed)* |
 | [0064](0064-a-pixel-runs-only-what-a-pixel-changes.md) | A pixel runs only what a pixel changes |
 | [0074](0074-a-cell-is-a-plane-on-the-video-path.md) | A cell is a plane on the video path *(user-directed)* |

@@ -185,6 +185,7 @@ public sealed partial class MainWindow
         BuildGraphicsSection();
         BuildRecordingSection();
         BuildSoundSection();
+        BuildMidiSection();
 
         // Quietly, because nobody asked for anything yet: a saved answer is
         // what the program starts in, not a change to report.
@@ -209,6 +210,7 @@ public sealed partial class MainWindow
         previewFrameRate.SelectedIndex = Nearest(PreviewFrameRates, settings.PreviewFrameRate);
         jpegQuality.Value = settings.JpegQuality;
         latency.SelectedIndex = Nearest(Latencies.Select(ms => (double)ms).ToArray(), settings.LatencyMilliseconds);
+        takeover.SelectedIndex = settings.Takeover == Midi.Takeover.PickUp ? 1 : 0;
 
         if (plugins.PreferredAudioOutput is { } output)
             soundForm.Show(output.Form, settings.SoundOf(output.Id));
@@ -237,6 +239,8 @@ public sealed partial class MainWindow
         // step with the preview rather than fixed, now that the size list is not
         // all one shape.
         audio.Aspect = SynthRenderer.AspectOf(size.Width, size.Height);
+
+        controls.Takeover = settings.Takeover;
     }
 
     /// <summary>The row of the size list a saved size is, or the default for one the list no longer offers.</summary>
@@ -280,6 +284,8 @@ public sealed partial class MainWindow
             // A copy, because the backend's answers are about to be written into it
             // and what it held before is still to be compared against.
             Sound = new(before.Sound, StringComparer.Ordinal),
+
+            Takeover = takeover.SelectedIndex == 1 ? Midi.Takeover.PickUp : Midi.Takeover.Jump,
         };
 
         var soundChanged = false;
@@ -438,7 +444,14 @@ public sealed partial class MainWindow
         var patched = new char[def.Inputs.Count];
 
         for (var i = 0; i < patched.Length; i++)
-            patched[i] = editor.Patch.IncomingTo(node.Id, i) is null ? '.' : 'w';
+            patched[i] = editor.Patch.IncomingTo(node.Id, i) is not null ? 'w'
+                : ControlMap.Of(node, i) is { } link && editor.Patch.Control(link.Control) is not null ? 'k'
+                : '.';
+
+        // A knob's name and range are drawn on its row, so renaming it or changing
+        // the range from elsewhere has to rebuild the panel.
+        var linked = string.Concat(ControlMap.All(node).Select(l =>
+            $"{l.Port}{editor.Patch.Control(l.Link.Control)?.Name}{l.Link.Min}{l.Link.Max}"));
 
         // Which groups the selection touches and which way round each is drawn,
         // because that is what the open and close buttons are offered on.
@@ -447,7 +460,7 @@ public sealed partial class MainWindow
         foreach (var touched in editor.SelectedGroups)
             groups.Append($"{touched.Id:N}{(touched.Collapsed ? 'c' : 'o')}");
 
-        return $"{node.Id:N}{new string(patched)}{groups}";
+        return $"{node.Id:N}{new string(patched)}{groups}{linked}";
     }
 
     /// <summary>
@@ -1576,6 +1589,9 @@ public sealed partial class MainWindow
             row.Children.Add(unpatched);
             return row;
         }
+
+        if (ControlMap.Of(node, index) is { } link && editor.Patch.Control(link.Control) is { } knob)
+            return LinkedRow(node, spec, index, link, knob);
 
         var value = index < node.InputValues.Length ? node.InputValues[index] : spec.Default;
 

@@ -409,13 +409,15 @@ public sealed partial class NodeEditor
             var centre = NodeGeometry.InputPort(node, def, i);
             var connected = patch.IncomingTo(node.Id, i) is not null;
 
+            var linked = DrawLinkedRow(context, node, port, i, bounds, centre, connected);
+
             var label = Text(port.Name, 11.5, LabelBrush, bounds.Width * 0.55, true);
             context.DrawText(label, new Point(bounds.X + 14, centre.Y - label.Height / 2));
 
             // An unconnected input shows what it will compile to: the module
             // normalled to it where there is one — no wire is drawn for a wire
             // that is not in the patch — and otherwise the knob value.
-            if (!connected && NodeCatalog.Normalled(port) is { } source)
+            if (!linked && !connected && NodeCatalog.Normalled(port) is { } source)
             {
                 // Wider than the column a number gets, because this is a module
                 // name and a qualified one at that — "Coordinates x" does not
@@ -424,7 +426,7 @@ public sealed partial class NodeEditor
                 var name = Text(source, 11.5, NormalBrush, bounds.Width * 0.5, true);
                 context.DrawText(name, new Point(bounds.Right - 12 - name.Width, centre.Y - name.Height / 2));
             }
-            else if (!connected && i < node.InputValues.Length)
+            else if (!linked && !connected && i < node.InputValues.Length)
             {
                 var value = Text(port.Format(node.InputValues[i]), 11.5, ValueBrush, bounds.Width * 0.4, true);
                 context.DrawText(value, new Point(bounds.Right - 12 - value.Width, centre.Y - value.Height / 2));

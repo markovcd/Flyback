@@ -146,7 +146,7 @@ public sealed class AudioEngine(IAudioDevice device) : IDisposable
 
     public void Update(Patch patch, ISampleLibrary? samples = null)
     {
-        var program = patch.CompileForAudio(samples: samples).Program;
+        var program = patch.CompileForAudio(samples: samples, played: true).Program;
 
         // Interpreted from the first buffer; the compiler attaches IL to this same
         // program when it has some, and the callback picks it up on the next buffer.

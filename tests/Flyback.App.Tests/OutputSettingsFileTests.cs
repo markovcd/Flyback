@@ -49,6 +49,14 @@ public class OutputSettingsFileTests : IDisposable
     }
 
     [Fact]
+    public void How_a_controller_takes_over_a_knob_comes_back()
+    {
+        new OutputSettings { Takeover = App.Midi.Takeover.PickUp }.Save(File);
+
+        OutputSettings.Load(File).Takeover.ShouldBe(App.Midi.Takeover.PickUp);
+    }
+
+    [Fact]
     public void Recording_and_sound_come_back()
     {
         new OutputSettings { FrameRate = 60, JpegQuality = 40, LatencyMilliseconds = 100 }.Save(File);

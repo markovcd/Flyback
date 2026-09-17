@@ -261,6 +261,13 @@ public sealed partial class MainWindow
             return;
         }
 
+        if (e.Key == Key.Escape && StopControlModes())
+        {
+            Report("Done.");
+            e.Handled = true;
+            return;
+        }
+
         // Before the instrument, because F2 is not a note and never will be:
         // the keyboard-as-instrument maps letters, and a function key is free
         // for the shell in a way no letter is any more.
@@ -320,6 +327,11 @@ public sealed partial class MainWindow
             // button already is: see ToggleRecordAsync.
             case Key.R:
                 _ = ToggleRecordAsync();
+                e.Handled = true;
+                break;
+
+            case Key.K:
+                ShowControls(!controlsPanel.IsVisible);
                 e.Handled = true;
                 break;
         }

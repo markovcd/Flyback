@@ -62,6 +62,12 @@ public sealed partial class NodeEditor
         // — so one modifier serves both without either having to know.
         var ctrl = (e.KeyModifiers & (KeyModifiers.Control | KeyModifiers.Meta)) != 0;
 
+        if (PickSocket(graph))
+        {
+            e.Handled = true;
+            return;
+        }
+
         // A socket on a locked canvas is not a handle. Falls through to the
         // module under it, so a press on a port still selects the module — which
         // is what somebody reading a patch was reaching for anyway.

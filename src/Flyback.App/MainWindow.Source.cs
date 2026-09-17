@@ -845,6 +845,7 @@ public sealed partial class MainWindow
         // hands the patch to the canvas along with it.
         editor.Mark = Owning();
 
+        CarryControls(was, load.Patch);
         editor.ApplyEdit(load.Patch);
 
         // And on the text's stack, where the typing that led to it already is:
