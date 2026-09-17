@@ -31,14 +31,18 @@ ARG CONFIGURATION=Release
 # still works; the release workflow is what passes the real one.
 ARG VERSION=0.1.0
 
-# The one thing the SDK image does not already have. libSkiaSharp is what the
-# headless UI tests rasterise with, and it will not load at all without
-# fontconfig beside it — which reads as a DllNotFoundException in every UI test
-# rather than as anything to do with fonts. The fonts themselves are embedded in
-# the application, so there is nothing else to install: no X server, no ICU
-# (the projects are built InvariantGlobalization), no window manager.
+# What the SDK image does not already have. libSkiaSharp is what the headless
+# UI tests rasterise with, and it will not load at all without fontconfig
+# beside it — which reads as a DllNotFoundException in every UI test rather
+# than as anything to do with fonts. libX11 is Attention's ICCCM urgency hint
+# on the Linux side (see Attention.cs) — XOpenDisplay already returns null and
+# backs off quietly when there is no X server to answer, but the library it
+# calls into still has to be there to be called. The fonts themselves are
+# embedded in the application, so there is nothing else to install: no X
+# server, no ICU (the projects are built InvariantGlobalization), no window
+# manager.
 RUN apt-get update \
- && apt-get install --yes --no-install-recommends libfontconfig1 \
+ && apt-get install --yes --no-install-recommends libfontconfig1 libx11-6 \
  && rm -rf /var/lib/apt/lists/*
 
 ENV DOTNET_CLI_TELEMETRY_OPTOUT=1 \
