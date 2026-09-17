@@ -4,6 +4,7 @@ using Avalonia.Markup.Xaml.Styling;
 using Avalonia.Platform.Storage;
 using Avalonia.Styling;
 using Avalonia.Themes.Fluent;
+using Flyback.App.Updates;
 
 namespace Flyback.App;
 
@@ -40,8 +41,13 @@ public sealed class FlybackApp : Application
             var window = new MainWindow(
                 openPath: Startup.OpenPath,
                 outputSettingsPath: OutputSettings.File,
-                interpreted: Startup.Interpreted);
+                updateSettingsPath: UpdateSettings.File,
+                interpreted: Startup.Interpreted,
+                updateNote: Startup.UpdateNote);
             desktop.MainWindow = window;
+
+            // Once there is a window, so a slow network is never a slow start.
+            Updater.CheckInBackground(Startup.Updates);
 
             // Windows and Linux hand a file to open in through argv, which
             // Startup.OpenPath already carries — see Program.Main. macOS never

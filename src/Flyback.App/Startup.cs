@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Flyback.App.Updates;
 using Flyback.Core.Graph;
 using Flyback.Plugins.Hosting;
 
@@ -34,10 +35,29 @@ internal static class Startup
     /// </summary>
     public static bool Interpreted { get; private set; }
 
-    public static void Load(string? openPath = null, bool interpreted = false)
+    /// <summary>
+    /// Whether this launch looks for a new release — read before there was anything
+    /// else to read, since it decides whether this launch is this version's at all.
+    /// </summary>
+    public static UpdateSettings Updates { get; private set; } = new();
+
+    /// <summary>
+    /// What the last update did — that it installed, or why it could not — for the
+    /// window to say once, or null where nothing was tried since the last launch.
+    /// </summary>
+    public static string? UpdateNote { get; private set; }
+
+    public static void Load(string? openPath = null, bool interpreted = false, UpdateSettings? updates = null)
     {
         OpenPath = openPath;
         Interpreted = interpreted;
+        Updates = updates ?? new UpdateSettings();
+
+        // Before the plugins, so a version that has just been replaced by the
+        // one running is cleared away while nothing is reading it.
+        UpdateNote = Updater.Folder.Tidy(ReleaseFeed.Running());
+
+        if (UpdateNote is not null) Trace.WriteLine($"updates: {UpdateNote}");
 
         Plugins = PluginHost.Load();
         NodeCatalog.Install(Plugins.Modules);

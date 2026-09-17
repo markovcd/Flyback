@@ -107,6 +107,15 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!--
+      The public half of the release signing key, which an update has to be signed
+      with before it is installed. A placeholder with no key in it installs
+      nothing. See ADR-0088.
+    -->
+    <EmbeddedResource Include="Updates\release-key.pem" LogicalName="release-key.pem" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Include="..\..\flyback.ico">
       <Link>flyback.ico</Link>
     </None>
@@ -139,6 +148,9 @@
       <DependentUpon>MainWindow.cs</DependentUpon>
     </Compile>
     <Compile Update="MainWindow.Source.cs">
+      <DependentUpon>MainWindow.cs</DependentUpon>
+    </Compile>
+    <Compile Update="MainWindow.Updates.cs">
       <DependentUpon>MainWindow.cs</DependentUpon>
     </Compile>
   </ItemGroup>

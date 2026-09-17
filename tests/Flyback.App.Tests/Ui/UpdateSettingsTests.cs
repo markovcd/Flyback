@@ -1,0 +1,116 @@
+using Avalonia.Controls;
+using Avalonia.Headless.XUnit;
+using Avalonia.Interactivity;
+using Avalonia.Threading;
+using Flyback.App.Controls;
+using Flyback.App.Updates;
+using Shouldly;
+using Xunit;
+
+namespace Flyback.App.Tests.Ui;
+
+/// <summary>
+/// The Updates tab of the settings window, and the line the window opens with after
+/// an update was installed (ADR-0088).
+/// </summary>
+public sealed class UpdateSettingsTests : UiTest, IDisposable
+{
+    private readonly string settingsPath = Path.Combine(
+        Path.GetTempPath(),
+        "flyback-update-settings-" + Guid.NewGuid().ToString("N"),
+        "update.json");
+
+    private const int UpdatesTab = 5;
+
+    public void Dispose()
+    {
+        var folder = Path.GetDirectoryName(settingsPath);
+
+        if (folder is not null && Directory.Exists(folder)) Directory.Delete(folder, recursive: true);
+    }
+
+    private static MainWindow Open(string? settingsPath = null, string? note = null)
+    {
+        var window = new MainWindow(updateSettingsPath: settingsPath, updateNote: note);
+
+        window.Show();
+        Settle(window);
+        Dispatcher.UIThread.RunJobs();
+
+        return window;
+    }
+
+    private static ModalOverlay OpenSettings(MainWindow window)
+    {
+        All<Button>(window).Single(b => b.Name == "settings").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+
+        for (var attempt = 0; attempt < 20 && !All<ModalOverlay>(window).Any(); attempt++)
+            Dispatcher.UIThread.RunJobs();
+
+        Settle(window);
+
+        var dialog = All<ModalOverlay>(window).Single();
+
+        All<TabControl>(dialog).Single(t => t.Name == "settingsTabs").SelectedIndex = UpdatesTab;
+        Settle(window);
+
+        return dialog;
+    }
+
+    private static void Close(MainWindow window, ModalOverlay dialog, string by)
+    {
+        All<Button>(dialog)
+            .Single(b => b.Content as string == by)
+            .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+
+        for (var attempt = 0; attempt < 20 && All<ModalOverlay>(window).Any(); attempt++)
+            Dispatcher.UIThread.RunJobs();
+
+        Settle(window);
+    }
+
+    private static CheckBox Switch(ModalOverlay dialog) =>
+        All<CheckBox>(dialog).Single(c => c.Name == "checkForUpdates");
+
+    [AvaloniaFact]
+    public void Updates_are_on_until_switched_off()
+    {
+        var window = Open(settingsPath);
+
+        Switch(OpenSettings(window)).IsChecked.ShouldBe(true);
+    }
+
+    [AvaloniaFact]
+    public void Switching_off_and_saving_keeps_it_off()
+    {
+        var window = Open(settingsPath);
+        var dialog = OpenSettings(window);
+
+        Switch(dialog).IsChecked = false;
+        Close(window, dialog, "Save");
+
+        UpdateSettings.Load(settingsPath).CheckForUpdates.ShouldBeFalse();
+        Switch(OpenSettings(Open(settingsPath))).IsChecked.ShouldBe(false, "the next launch reads it back");
+    }
+
+    [AvaloniaFact]
+    public void Cancel_puts_the_switch_back()
+    {
+        var window = Open(settingsPath);
+        var dialog = OpenSettings(window);
+
+        Switch(dialog).IsChecked = false;
+        Close(window, dialog, "Cancel");
+
+        File.Exists(settingsPath).ShouldBeFalse();
+        Switch(OpenSettings(window)).IsChecked.ShouldBe(true);
+    }
+
+    [AvaloniaFact]
+    public void What_the_last_update_did_is_on_the_status_bar()
+    {
+        var window = Open(note: "Updated to Flyback 0.4.0.");
+
+        All<ReportLine>(window).Single().History.ShouldContain("Updated to Flyback 0.4.0.");
+    }
+}

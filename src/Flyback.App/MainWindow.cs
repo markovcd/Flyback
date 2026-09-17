@@ -9,6 +9,7 @@ using Avalonia.Threading;
 using Flyback.App.Audio;
 using Flyback.App.Controls;
 using Flyback.App.Midi;
+using Flyback.App.Updates;
 using Flyback.Core.Compile;
 using Flyback.Core.Render;
 using Flyback.Core.Graph;
@@ -339,19 +340,34 @@ public sealed partial class MainWindow : Window
     /// Keep the CPU's programs on the interpreter for the whole run — see
     /// <see cref="Startup.Interpreted"/>.
     /// </param>
+    /// <param name="updateSettingsPath">
+    /// Where the Updates section is read from and saved to, null keeping it nowhere
+    /// for the reason <paramref name="outputSettingsPath"/> does.
+    /// </param>
+    /// <param name="updateNote">
+    /// What the last update did, said once on the status bar — see
+    /// <see cref="Startup.UpdateNote"/>.
+    /// </param>
     public MainWindow(
         string? groupFolder = null,
         string? openPath = null,
         string? outputSettingsPath = null,
-        bool interpreted = false)
+        bool interpreted = false,
+        string? updateSettingsPath = null,
+        string? updateNote = null)
     {
         this.groupFolder = groupFolder;
         this.outputSettingsPath = outputSettingsPath;
+        this.updateSettingsPath = updateSettingsPath;
 
         // Before anything is compiled, so no build is started only to be taken off.
         compiler.Enabled = !interpreted;
 
         if (outputSettingsPath is not null) outputSettings = OutputSettings.Load(outputSettingsPath);
+        if (updateSettingsPath is not null) updateSettings = UpdateSettings.Load(updateSettingsPath);
+
+        BuildUpdatesSection();
+        ShowUpdateSettings(updateSettings);
 
         sound = OpenAudio(plugins, outputSettings);
         audio = new AudioEngine(sound.Device) { Compiler = compiler };
@@ -453,6 +469,9 @@ public sealed partial class MainWindow : Window
         // slower for a reason should say which.
         if (interpreted)
             Report($"Running interpreted ({Startup.InterpretedFlag}): the CPU's programs are not compiled this run.");
+
+        // Last, so it is what the bar is showing when the window first appears.
+        if (updateNote is not null) Report(updateNote);
 
         var ticker = new DispatcherTimer(DispatcherPriority.Background) { Interval = TimeSpan.FromMilliseconds(250) };
         ticker.Tick += (_, _) => UpdateStatus();
@@ -942,7 +961,7 @@ public sealed partial class MainWindow : Window
         // built for it, so what they were last set to is still on them the next
         // time this is opened. The window around them is built fresh, so each
         // section the window owns has to be taken back from the last one first.
-        foreach (var section in new[] { graphicsSection, recordingSection, soundSection, midiSection })
+        foreach (var section in new[] { graphicsSection, recordingSection, soundSection, midiSection, updatesSection })
             if (section.Parent is ContentControl lender) lender.Content = null;
 
         var save = new Button { Content = "Save", Width = 84 };
@@ -968,6 +987,7 @@ public sealed partial class MainWindow : Window
         tabs.Items.Add(SectionTab("Sound", soundSection));
         tabs.Items.Add(SectionTab("MIDI", midiSection));
         tabs.Items.Add(SectionTab("Agent", panel.SettingsSection()));
+        tabs.Items.Add(SectionTab("Updates", updatesSection));
 
         var content = new StackPanel { Spacing = 12, Margin = new Thickness(18, 4, 18, 18) };
 
@@ -996,6 +1016,7 @@ public sealed partial class MainWindow : Window
         {
             panel.SaveSettings();
             SaveOutputSettings();
+            SaveUpdateSettings();
 
             // Saving is the end of the errand, so the window goes with it.
             Dialog.Close(save, true);
@@ -1013,6 +1034,7 @@ public sealed partial class MainWindow : Window
 
         panel.DiscardSettings();
         ShowOutputSettings(outputSettings);
+        ShowUpdateSettings(updateSettings);
     }
 
     /// <summary>

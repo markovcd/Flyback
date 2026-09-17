@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Avalonia;
+using Flyback.App.Updates;
 
 namespace Flyback.App;
 
@@ -27,13 +28,30 @@ internal static class Program
             Terminal.Release();
         }
 
+        // A new version started by the old one to install itself, which is all
+        // this launch is for — see Updater. It opens no window, and starts the
+        // installed copy on its way out.
+        if (Updater.Applying(args))
+        {
+            Updater.Apply(args);
+            return;
+        }
+
+        // Before anything is loaded, because a version waiting to be installed
+        // replaces the files loading would read — and this launch becomes that
+        // version's, opened once it is in.
+        var updates = UpdateSettings.Load(UpdateSettings.File);
+
+        if (Updater.HandOff(args, updates)) return;
+
         // The one plain argument a launch can be given: a file dropped onto the
         // program's icon, or opened with it, arrives as the whole of args and
         // nothing else does — so anything that looks like a switch is left for
         // Avalonia's own lifetime to make of what it likes.
         Startup.Load(
             args.FirstOrDefault(a => !a.StartsWith('-')),
-            interpreted: args.Contains(Startup.InterpretedFlag, StringComparer.OrdinalIgnoreCase));
+            interpreted: args.Contains(Startup.InterpretedFlag, StringComparer.OrdinalIgnoreCase),
+            updates: updates);
 
         BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
     }

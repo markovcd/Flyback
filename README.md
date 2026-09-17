@@ -28,6 +28,7 @@ dotnet run --project src/Flyback.App -c Release
 - Patch bundles that package the patch with its referenced sample and image files
 - Agentic patch authoring through a model-backed assistant that can listen, propose changes and work inside the same patch graph — over any chat-completions endpoint, or over Gemini, whose models hear the patch themselves
 - Cross-platform publish targets for Windows, macOS and Linux
+- Updates itself from signed GitHub releases: downloads a new release in the background and installs it at the next start (Settings → Updates to turn off)
 
 ## Build and publish
 
@@ -69,6 +70,22 @@ To choose a specific set of runtimes:
 ```bash
 docker build --build-arg RIDS="win-x64 win-arm64 osx-arm64 osx-x64 linux-x64" --output artifacts .
 ```
+
+## Releases and updates
+
+The Release workflow (`.github/workflows/release.yml`) builds every platform, zips each one, and publishes them with a `SHA256SUMS` file and its signature, `SHA256SUMS.sig`. The app only installs an update when that signature checks out against the public key in `src/Flyback.App/Updates/release-key.pem`. The private key is kept in the repository secret `RELEASE_SIGNING_KEY`, and the workflow fails before it builds anything if the secret is missing or doesn't match the committed public key. [ADR-0088](docs/adr/0088-a-release-installs-itself-at-the-next-start.md) explains the design.
+
+To make the key pair, with the `openssl` that comes with Git Bash:
+
+```bash
+openssl genpkey -algorithm EC -pkeyopt ec_paramgen_curve:P-256 -out flyback-release.key
+```
+
+```bash
+openssl pkey -in flyback-release.key -pubout -out src/Flyback.App/Updates/release-key.pem
+```
+
+Commit the public key. Paste the whole contents of `flyback-release.key` into the `RELEASE_SIGNING_KEY` secret, keep a copy somewhere safe such as a password manager, and then delete the file. Never commit it. Installed copies only accept releases signed with the key they were built with, so a lost key means everyone installs the next release by hand.
 
 ## CLI
 

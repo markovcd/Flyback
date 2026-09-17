@@ -1,9 +1,13 @@
 # Builds a release the same way the README's Docker instructions do, tags it,
-# and publishes the per-platform folders as a GitHub Release.
+# and publishes the per-platform folders as a GitHub Release — with a signed
+# SHA256SUMS, which is what lets Flyback install the release as an update.
 #
 # Trigger from the Actions tab: Release -> Run workflow. Leave "version" blank
 # to bump the minor version of the latest vX.Y.Z tag (starting at 0.1.0 if
 # there is no tag yet), or type one (e.g. 1.4.0) to release that exact version.
+#
+# Needs the repository secret RELEASE_SIGNING_KEY: the private half of the key
+# whose public half is src/Flyback.App/Updates/release-key.pem. See ADR-0088.
 
 name: Release
 
@@ -25,6 +29,34 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      # First, so a missing or mismatched key fails in seconds rather than after
+      # the build. The public key committed is what every copy of Flyback checks
+      # updates against, so a secret that does not pair with it would publish a
+      # release that nothing installs.
+      - name: Check the signing key
+        env:
+          RELEASE_SIGNING_KEY: ${{ secrets.RELEASE_SIGNING_KEY }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "$RELEASE_SIGNING_KEY" ]; then
+            echo "The RELEASE_SIGNING_KEY secret is not set" >&2
+            exit 1
+          fi
+
+          umask 077
+          printf '%s\n' "$RELEASE_SIGNING_KEY" > "$RUNNER_TEMP/release-key.pem"
+          openssl pkey -in "$RUNNER_TEMP/release-key.pem" -pubout -outform DER -out "$RUNNER_TEMP/derived.der"
+          rm "$RUNNER_TEMP/release-key.pem"
+
+          # Compared as DER, so line endings and wrapping in the committed PEM
+          # make no difference.
+          if ! openssl pkey -pubin -in src/Flyback.App/Updates/release-key.pem -outform DER -out "$RUNNER_TEMP/committed.der" \
+             || ! cmp -s "$RUNNER_TEMP/derived.der" "$RUNNER_TEMP/committed.der"; then
+            echo "RELEASE_SIGNING_KEY is not the private half of src/Flyback.App/Updates/release-key.pem" >&2
+            exit 1
+          fi
 
       - name: Determine version
         id: version
@@ -78,11 +110,33 @@ jobs:
             zip -r "../dist/flyback-${{ steps.version.outputs.version }}-${platform}.zip" "$platform"
           done
 
+      # One signature over the list of package hashes rather than one per
+      # package. The key is written out only for the command that uses it, and
+      # the signature is checked against the committed public key before
+      # anything is published.
+      - name: Sign checksums
+        env:
+          RELEASE_SIGNING_KEY: ${{ secrets.RELEASE_SIGNING_KEY }}
+        run: |
+          set -euo pipefail
+          cd dist
+          sha256sum *.zip > SHA256SUMS
+
+          umask 077
+          printf '%s\n' "$RELEASE_SIGNING_KEY" > "$RUNNER_TEMP/release-key.pem"
+          openssl dgst -sha256 -sign "$RUNNER_TEMP/release-key.pem" -out SHA256SUMS.sig SHA256SUMS
+          rm "$RUNNER_TEMP/release-key.pem"
+
+          openssl dgst -sha256 -verify ../src/Flyback.App/Updates/release-key.pem -signature SHA256SUMS.sig SHA256SUMS
+
       - name: Create release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.version.outputs.tag }}
           name: ${{ steps.version.outputs.tag }}
           target_commitish: ${{ github.sha }}
-          files: dist/*.zip
+          files: |
+            dist/*.zip
+            dist/SHA256SUMS
+            dist/SHA256SUMS.sig
           generate_release_notes: true

@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+### Updates
+- Flyback checks for a new release when it starts, downloads it in the background, and installs it the next time it starts. The status bar says when it has been updated, or why it could not be.
+- Only releases signed with Flyback's release key are installed. Each release now includes `SHA256SUMS` and its signature `SHA256SUMS.sig`.
+- On by default. Turn it off in the new Settings → Updates tab.
+- Copies that Flyback can't write to, such as one in a system folder, are not updated.
+
 ## 0.3.0 — 2026-09-17
 
 71 commits since 0.2.0.
