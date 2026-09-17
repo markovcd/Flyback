@@ -42,6 +42,15 @@ public class AboutTests : UiTest
         said.ShouldContain(t => t.Contains(About.Licence) && t.Contains(About.Copyright));
     }
 
+    /// <summary>The site is a click away rather than a URL somebody has to retype.</summary>
+    [AvaloniaFact]
+    public void It_shows_a_link_to_the_website()
+    {
+        var window = Showing();
+
+        Words(window).ShouldContain(About.Website);
+    }
+
     /// <summary>The mark is drawn rather than loaded, so it is a control like any other.</summary>
     [AvaloniaFact]
     public void It_shows_the_logo()

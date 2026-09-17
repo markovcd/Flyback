@@ -1,6 +1,7 @@
 using System.Reflection;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Input.Platform;
 using Avalonia.Layout;
 using Avalonia.Media;
@@ -27,6 +28,9 @@ internal static class About
     public const string Description = "A patchable synthesiser for picture and sound.";
 
     public const string Author = "Arkadiusz Markowski";
+
+    /// <summary>Where the screenshots, the tutorials and the plugin guide live.</summary>
+    public const string Website = "https://markovcd.github.io/Flyback/";
 
     public const string Licence = "MIT";
 
@@ -86,6 +90,7 @@ internal static class About
         titles.Children.Add(Quiet(Description));
         titles.Children.Add(Quiet($"Version {Version}"));
         titles.Children.Add(Quiet($"by {Author}"));
+        titles.Children.Add(Link(Website));
 
         Grid.SetColumn(mark, 0);
         Grid.SetColumn(titles, 1);
@@ -156,6 +161,27 @@ internal static class About
         block.Children.Add(copy);
 
         return block;
+    }
+
+    /// <summary>A line of text that opens <paramref name="uri"/> in the system browser.</summary>
+    private static TextBlock Link(string uri)
+    {
+        var link = new TextBlock
+        {
+            Text = uri,
+            FontSize = Text.Body,
+            Foreground = new SolidColorBrush(Colors.Attention),
+            TextDecorations = TextDecorations.Underline,
+            Cursor = new Cursor(StandardCursorType.Hand),
+        };
+
+        link.PointerPressed += async (_, _) =>
+        {
+            if (TopLevel.GetTopLevel(link)?.Launcher is { } launcher)
+                await launcher.LaunchUriAsync(new Uri(uri));
+        };
+
+        return link;
     }
 
     private static TextBlock Quiet(string text) => new()
