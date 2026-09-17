@@ -64,6 +64,17 @@
   .still figcaption { margin-top: 8px; font-size: 13px; }
   .still figcaption strong { display: block; font-size: 13.5px; }
 
+  /* ---- listening ---- */
+  .listen { margin-top: 56px; }
+  .listen h3 { margin: 0; font-size: 22px; }
+  .listen > p { max-width: 44rem; }
+  .tracks { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; margin-top: 24px; }
+  @media (min-width: 960px) { .tracks { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+  .track { display: flex; flex-direction: column; }
+  .track .body { flex: 1; display: flex; flex-direction: column; }
+  .track .body > p { font-size: 14.5px; color: var(--muted); margin: 0 0 16px; flex: 1; }
+  .player audio { width: 100%; height: 36px; }
+
   /* ---- features as modules ---- */
   .modules { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; margin-top: 40px; }
   @media (min-width: 640px) { .modules { grid-template-columns: repeat(2, 1fr); } }
@@ -247,6 +258,45 @@ x |> sine(freq: 1.5)
       <figure class="still"><img loading="lazy" src="assets/shots/preview-in-key.webp" width="888" height="500" alt="Soft terraces of ochre, green and teal."><figcaption><strong>In key</strong>A noise field snapped to a pentatonic scale: a melody, and the terraces it was cut into.</figcaption></figure>
       <figure class="still"><img loading="lazy" src="assets/shots/preview-euclid-kit.webp" width="888" height="500" alt="An orange ring on black with a green clock hand."><figcaption><strong>Euclid kit</strong>Four Euclidean rhythms, drawn as a clock hand and a ring the kick pushes.</figcaption></figure>
       <figure class="still"><img loading="lazy" src="assets/shots/preview-waveform.webp" width="888" height="500" alt="A green sawtooth waveform on a dark grid."><figcaption><strong>Waveform</strong>A Scope charting what the speakers actually played.</figcaption></figure>
+    </div>
+
+    <div class="listen">
+      <h3>What they sound like</h3>
+      <p class="quiet">The first minute of three presets, rendered to WAV with <code>flyback-cli render</code> and
+      encoded to MP3. Nothing was added: every note, drum and echo comes out of the patch.</p>
+
+      <div class="tracks">
+        <article class="node track" style="--accent: var(--shaping)">
+          <header>Acid <small>Effects plugin</small></header>
+          <div class="body">
+            <p>A 303 line through a resonant filter into two delays, on sequences that take forty-two bars to come round.</p>
+            <div class="player" data-peaks=".87,.60,.51,.92,.42,.69,.81,.44,.81,.54,.68,.80,.58,.51,.89,.51,.36,.94,.33,.37,.89,.38,.75,.72,.54,.72,.71,.51,.76,.54,.35,.76,.45,.36,.91,.60,.51,.94,.48,.64,.60,.50,.40,.65,.56,.71,.44,.48,1.00,.43,.47,.89,.49,.55,.76,.41,.67,.51,.57,.64,.42,.49,.84,.53,.37,.94,.58,.50,.82,.45,.57,.59,.37,.68,.55,.50,.81,.59,.49,.95,.44,.50,.92,.25,.34,.81,.39,.66,.67,.49,.10,.10,.10,.10,.10,.10">
+              <audio controls preload="none" src="assets/audio/acid.mp3"></audio>
+            </div>
+          </div>
+        </article>
+
+        <article class="node track" style="--accent: var(--feedback)">
+          <header>Slow weather <small>Effects plugin</small></header>
+          <div class="body">
+            <p>A generative patch with no clock in it: three random voltages read out of noise choose the notes and open
+            the voices, through chorus, phaser and flanger into a delay and a reverb.</p>
+            <div class="player" data-peaks=".48,.60,.38,.42,.40,.40,.37,.54,.49,.69,.52,.58,.76,.71,.49,.49,.41,.35,.43,.49,.44,.72,.76,.61,.42,.43,.26,.47,.44,.45,.56,.55,.52,.52,.59,.58,.64,.78,.87,1.00,.63,.55,.53,.62,.41,.59,.57,.56,.46,.35,.32,.41,.41,.50,.58,.63,.55,.45,.51,.40,.38,.56,.43,.49,.41,.35,.34,.43,.45,.40,.65,.54,.42,.62,.36,.41,.44,.26,.35,.56,.41,.31,.42,.32,.42,.50,.30,.40,.25,.30,.33,.19,.24,.13,.10,.10">
+              <audio controls preload="none" src="assets/audio/slow-weather.mp3"></audio>
+            </div>
+          </div>
+        </article>
+
+        <article class="node track" style="--accent: var(--sequencer)">
+          <header>Whole band <small>Built in</small></header>
+          <div class="body">
+            <p>Bass, lead, kick and hats off four sequencers, mixed on a desk, with the picture following three of them.</p>
+            <div class="player" data-peaks=".78,.66,.37,.39,.68,.56,.62,.48,.57,.78,.46,.60,.81,.45,.26,.69,.64,.31,.80,.55,.36,.55,.29,.70,.83,.60,.32,.47,.68,.36,.71,.37,.65,.55,.31,.52,.80,.75,.61,.63,.41,.38,.87,.47,.40,.69,.51,.36,.73,.64,.30,.83,.85,.46,.49,.53,.58,.48,.25,.52,.90,.37,.40,.52,.74,.45,.89,.41,.42,.79,.34,.37,.61,.65,.37,.45,.71,.42,1.00,.62,.52,.55,.28,.73,.66,.48,.43,.67,.42,.37,.53,.10,.10,.10,.10,.10">
+              <audio controls preload="none" src="assets/audio/whole-band.mp3"></audio>
+            </div>
+          </div>
+        </article>
+      </div>
     </div>
   </div>
 </section>

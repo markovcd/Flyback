@@ -343,6 +343,24 @@ nav.toc a:hover { color: var(--bright); border-left-color: var(--attention); bac
 .site-foot .brand-foot { display: flex; align-items: center; gap: 10px; margin-right: auto; color: var(--label); }
 .site-foot .brand-foot img { width: 22px; height: 22px; }
 
+/* ---- the audio player: a toolbar button beside the track's waveform ---- */
+
+.player.ready { display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto auto; gap: 6px 12px; align-items: center; }
+.player.ready audio { display: none; }
+.player .play {
+  grid-row: 1 / span 2;
+  width: 40px; height: 40px; border-radius: 5px;
+  display: grid; place-items: center;
+  background: var(--toolbar); color: var(--bright);
+  border: 1px solid var(--edge); cursor: pointer;
+}
+.player .play:hover { background: var(--node-selected); }
+.player .play svg { width: 16px; height: 16px; }
+.player .wave { display: block; width: 100%; height: 40px; cursor: pointer; touch-action: none; }
+.player .wave rect { fill: var(--separator); }
+.player .wave rect.done { fill: var(--accent, var(--attention)); }
+.player .time { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; display: flex; justify-content: space-between; }
+
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 }

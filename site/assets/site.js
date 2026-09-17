@@ -154,6 +154,100 @@
 
   document.querySelectorAll("[data-patch]").forEach(drawPatch);
 
+  // Audio players: a play button and the track's loudness drawn as bars, which
+  // fill with the card's accent as the track plays and seek where clicked. The
+  // bars come precomputed in data-peaks, so nothing is downloaded until play.
+  // Without this script the native controls stay visible.
+  var players = [];
+
+  function clock(seconds) {
+    if (!isFinite(seconds)) seconds = 0;
+    var s = Math.floor(seconds);
+    return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
+  }
+
+  document.querySelectorAll(".player[data-peaks]").forEach(function (player) {
+    var audio = player.querySelector("audio");
+    if (!audio) return;
+
+    var peaks = player.getAttribute("data-peaks").split(",").map(Number);
+    var name = (player.closest(".track") || player).querySelector("header");
+    var label = name ? name.firstChild.textContent.trim() : "track";
+
+    var button = document.createElement("button");
+    button.type = "button";
+    button.className = "play";
+    var playIcon = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2.5v11l9-5.5z" fill="currentColor"/></svg>';
+    var pauseIcon = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 2.5h3v11h-3zM9.5 2.5h3v11h-3z" fill="currentColor"/></svg>';
+    button.innerHTML = playIcon;
+    button.setAttribute("aria-label", "Play " + label);
+
+    var gap = 1.5, bar = 3, height = 40;
+    var wave = el("svg", {
+      class: "wave", viewBox: "0 0 " + peaks.length * (bar + gap) + " " + height,
+      preserveAspectRatio: "none", role: "slider", tabindex: "0",
+      "aria-label": "Position in " + label, "aria-valuemin": "0", "aria-valuemax": "100", "aria-valuenow": "0",
+    });
+    var rects = peaks.map(function (p, i) {
+      var h = Math.max(2, p * height);
+      return el("rect", { x: i * (bar + gap), y: (height - h) / 2, width: bar, height: h, rx: 1 }, wave);
+    });
+
+    var time = document.createElement("div");
+    time.className = "time";
+    time.innerHTML = "<span>0:00</span><span>1:00</span>";
+
+    player.appendChild(button);
+    player.appendChild(wave);
+    player.appendChild(time);
+    player.classList.add("ready");
+    players.push(audio);
+
+    function draw() {
+      var fraction = audio.duration ? audio.currentTime / audio.duration : 0;
+      var lit = Math.round(fraction * rects.length);
+      rects.forEach(function (r, i) { r.classList.toggle("done", i < lit); });
+      time.firstChild.textContent = clock(audio.currentTime);
+      if (audio.duration) time.lastChild.textContent = clock(audio.duration);
+      wave.setAttribute("aria-valuenow", String(Math.round(fraction * 100)));
+    }
+
+    function toggle() {
+      if (audio.paused) {
+        players.forEach(function (other) { if (other !== audio) other.pause(); });
+        var played = audio.play();
+        if (played && played.catch) played.catch(function () {});
+      } else {
+        audio.pause();
+      }
+    }
+
+    function seek(fraction) {
+      fraction = Math.min(1, Math.max(0, fraction));
+      var go = function () { audio.currentTime = fraction * audio.duration; draw(); };
+      if (audio.duration) go();
+      else { audio.preload = "auto"; audio.addEventListener("loadedmetadata", go, { once: true }); audio.load(); }
+    }
+
+    button.addEventListener("click", toggle);
+    audio.addEventListener("play", function () { button.innerHTML = pauseIcon; button.setAttribute("aria-label", "Pause " + label); });
+    audio.addEventListener("pause", function () { button.innerHTML = playIcon; button.setAttribute("aria-label", "Play " + label); });
+    audio.addEventListener("timeupdate", draw);
+    audio.addEventListener("loadedmetadata", draw);
+    audio.addEventListener("ended", draw);
+
+    wave.addEventListener("pointerdown", function (e) {
+      var box = wave.getBoundingClientRect();
+      seek((e.clientX - box.left) / box.width);
+    });
+    wave.addEventListener("keydown", function (e) {
+      if (!audio.duration) return;
+      if (e.key === "ArrowRight") { audio.currentTime = Math.min(audio.duration, audio.currentTime + 5); e.preventDefault(); }
+      if (e.key === "ArrowLeft") { audio.currentTime = Math.max(0, audio.currentTime - 5); e.preventDefault(); }
+      if (e.key === " " || e.key === "Enter") { toggle(); e.preventDefault(); }
+    });
+  });
+
   // The gallery's clips play only while they are on screen.
   if ("IntersectionObserver" in window) {
     var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
