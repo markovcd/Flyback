@@ -80,6 +80,7 @@ context, decision, consequences.
 | [0080](0080-record-moves-to-the-toolbar-with-a-glyph-and-ctrl-r.md) | Record moves to the toolbar, with a glyph and Ctrl+R *(user-directed; its Output-panel `Rewind` row moved to the toolbar by [0081](0081-rewind-moves-to-the-toolbar-beside-record.md))* |
 | [0081](0081-rewind-moves-to-the-toolbar-beside-record.md) | Rewind moves to the toolbar, beside Record *(user-directed)* |
 | [0082](0082-the-output-settings-move-to-the-settings-window.md) | The Output settings move to the settings window, and are kept *(user-directed; its next-launch latency made immediate by [0085](0085-a-sound-backend-declares-its-own-settings.md))* |
+| [0087](0087-the-assistant-moves-to-a-column-beside-the-patch.md) | The assistant moves to a column, beside the patch *(user-directed)* |
 
 ### Sound
 

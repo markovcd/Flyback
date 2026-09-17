@@ -359,21 +359,18 @@ public class OutputSettingsTests : UiTest, IDisposable
     }
 
     /// <summary>
-    /// The assistant opens under the canvas rather than across the window, so
-    /// the palette and the inspector keep their height while a conversation is
-    /// going on. Both are the same width because they are the same column.
+    /// The assistant opens beside the canvas rather than under it, so the
+    /// palette and the inspector keep their width while a conversation is
+    /// going on. Both are the same height because they are the same row, and
+    /// a resize of the window leaves the assistant's own width alone.
     /// </summary>
     [AvaloniaFact]
-    public void The_assistant_shares_the_canvas_column()
+    public void The_assistant_shares_the_canvas_row()
     {
         var window = Open();
 
         var assistant = All<AssistantPanel>(window).Single();
         var editor = Editor(window);
-
-        assistant.GetVisualParent().ShouldBeSameAs(
-            editor.GetVisualParent(),
-            "the two are stacked in one column, not one above the whole window");
 
         var toggle = Named<ToggleButton>(window, "assistant");
 
@@ -383,8 +380,26 @@ public class OutputSettingsTests : UiTest, IDisposable
         window.UpdateLayout();
 
         assistant.IsVisible.ShouldBeTrue();
-        assistant.Bounds.Width.ShouldBe(editor.Bounds.Width, 1);
-        assistant.Bounds.Width.ShouldBeLessThan(window.Bounds.Width - 200, "the side panels are still beside it");
+        assistant.Bounds.Height.ShouldBe(editor.Bounds.Height, 1);
+
+        // Translated into the window's own coordinates, since the two are no
+        // longer siblings — the assistant hangs directly off the canvas and the
+        // editor off the patch grid nested inside it.
+        var assistantLeft = assistant.TranslatePoint(new Point(0, 0), window)
+            ?? throw new InvalidOperationException("the assistant is not in this window");
+        var editorLeft = editor.TranslatePoint(new Point(0, 0), window)
+            ?? throw new InvalidOperationException("the editor is not in this window");
+
+        assistantLeft.X.ShouldBeLessThan(editorLeft.X, "it sits to the left of the patch");
+
+        var widthBefore = assistant.Bounds.Width;
+
+        window.Width += 200;
+        window.UpdateLayout();
+        Dispatcher.UIThread.RunJobs();
+        window.UpdateLayout();
+
+        assistant.Bounds.Width.ShouldBe(widthBefore, 1, "resizing the window grows the patch, not the assistant");
     }
 
     /// <summary>

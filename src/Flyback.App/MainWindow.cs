@@ -272,11 +272,15 @@ public sealed partial class MainWindow : Window
         "Lay the modules out so the patch reads left to right  (Ctrl+L)";
 
     private AssistantPanel? assistant;
-    private RowDefinition? assistantRow;
+    private ColumnDefinition? assistantColumn;
     private GridSplitter? assistantSplitter;
 
-    /// <summary>How much of the window the assistant had when it was last open.</summary>
-    private GridLength assistantShare = new(1, GridUnitType.Star);
+    /// <summary>
+    /// How wide the assistant was when it was last open. A pixel width, not a
+    /// share of the window — resizing the window resizes the patch beside it,
+    /// not the conversation.
+    /// </summary>
+    private GridLength assistantShare = new(320, GridUnitType.Pixel);
 
     /// <summary>
     /// Read before this window existed, and already installed. Nothing here
@@ -523,28 +527,42 @@ public sealed partial class MainWindow : Window
             ],
         };
 
-        // Rows rather than a dock, so the edge between the patch and the assistant
-        // can be dragged. Both flexible rows are star-sized, because a GridSplitter
-        // redistributes star weights and a fixed-pixel track beside a star one just
-        // gets squeezed.
+        // Columns rather than a dock, so the edge between the assistant and the
+        // patch can be dragged. The assistant's is a pixel width rather than the
+        // star the patch's is, so a resize of the window goes to the patch —
+        // the thing being worked on — and leaves the conversation the width it
+        // was left at.
         //
         // In the canvas column rather than across the window, because what the
-        // assistant is talking about is the patch.
+        // assistant is talking about is the patch — beside it rather than under,
+        // so the conversation reads at the window's full height instead of a
+        // slice of the patch's own (ADR-0087).
         var canvas = new Grid
+        {
+            ColumnDefinitions =
+            [
+                new ColumnDefinition(assistantShare),
+                new ColumnDefinition(GridLength.Auto),
+                new ColumnDefinition(new GridLength(1, GridUnitType.Star)) { MinWidth = 280 },
+            ],
+        };
+
+        assistantColumn = canvas.ColumnDefinitions[0];
+        assistantSplitter = new GridSplitter { Background = Brushes.Transparent, Width = 5 };
+
+        // Rows of their own again, now that the assistant has left this axis for
+        // the column beside it: just the patch and its controls.
+        var patch = new Grid
         {
             RowDefinitions =
             [
                 new RowDefinition(new GridLength(2.2, GridUnitType.Star)) { MinHeight = 160 },
                 new RowDefinition(GridLength.Auto),
                 new RowDefinition(new GridLength(0)),
-                new RowDefinition(GridLength.Auto),
-                new RowDefinition(assistantShare),
             ],
         };
 
-        controlsRow = canvas.RowDefinitions[2];
-        assistantRow = canvas.RowDefinitions[4];
-        assistantSplitter = new GridSplitter { Background = Brushes.Transparent, Height = 5 };
+        controlsRow = patch.RowDefinitions[2];
 
         // The text sits in the canvas's own row rather than under it: they are
         // two views of one patch and only ever one of them shows, so putting
@@ -554,15 +572,19 @@ public sealed partial class MainWindow : Window
         Grid.SetRow(source, 0);
         Grid.SetRow(controlsSplitter, 1);
         Grid.SetRow(controlsPanel, 2);
-        Grid.SetRow(assistantSplitter, 3);
-        Grid.SetRow(assistant, 4);
 
-        canvas.Children.Add(editor);
-        canvas.Children.Add(source);
-        canvas.Children.Add(controlsSplitter);
-        canvas.Children.Add(controlsPanel);
-        canvas.Children.Add(assistantSplitter);
+        patch.Children.Add(editor);
+        patch.Children.Add(source);
+        patch.Children.Add(controlsSplitter);
+        patch.Children.Add(controlsPanel);
+
+        Grid.SetColumn(assistant, 0);
+        Grid.SetColumn(assistantSplitter, 1);
+        Grid.SetColumn(patch, 2);
+
         canvas.Children.Add(assistant);
+        canvas.Children.Add(assistantSplitter);
+        canvas.Children.Add(patch);
 
         BuildPalette();
         Grid.SetColumn(canvas, 0);
@@ -589,26 +611,26 @@ public sealed partial class MainWindow : Window
     }
 
     /// <summary>
-    /// Opens or closes the assistant, and gives its share of the window back when
-    /// it closes.
+    /// Opens or closes the assistant, and gives its pixel width back when it
+    /// closes.
     /// </summary>
     /// <remarks>
-    /// A star row keeps its weight whether or not anything in it is visible, so
-    /// hiding the panel alone would leave a third of the window empty. The share is
-    /// kept rather than recomputed, and the row's minimum has to go with it, since
-    /// a minimum outranks a height of zero.
+    /// A pixel column keeps its width whether or not anything in it is visible, so
+    /// hiding the panel alone would leave that many pixels empty. The width is
+    /// kept rather than recomputed, and the column's minimum has to go with it,
+    /// since a minimum outranks a width of zero.
     /// </remarks>
     private void ShowAssistant(bool shown)
     {
-        if (assistant is null || assistantRow is null || assistantSplitter is null) return;
+        if (assistant is null || assistantColumn is null || assistantSplitter is null) return;
 
-        if (!shown && assistant.IsVisible) assistantShare = assistantRow.Height;
+        if (!shown && assistant.IsVisible) assistantShare = assistantColumn.Width;
 
         assistant.IsVisible = shown;
         assistantSplitter.IsVisible = shown;
 
-        assistantRow.MinHeight = shown ? 140d : 0d;
-        assistantRow.Height = shown ? assistantShare : new GridLength(0);
+        assistantColumn.MinWidth = shown ? 280d : 0d;
+        assistantColumn.Width = shown ? assistantShare : new GridLength(0);
     }
 
     /// <summary>
