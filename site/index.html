@@ -121,7 +121,7 @@
         </a>
         <a class="button" href="tutorials.html">Start the tutorials</a>
       </div>
-      <p class="platforms">Self-contained builds for win-x64, win-arm64, osx-x64, osx-arm64 and linux-x64. MIT licensed.</p>
+      <p class="platforms">Releases are built for Windows x64, macOS on Apple silicon and Linux x64. MIT licensed.</p>
     </div>
 
     <figure>
@@ -390,7 +390,8 @@ x |> sine(freq: 1.5)
       </div>
       <div>
         <h3>From source</h3>
-        <p>You need the .NET 10 SDK.</p>
+        <p>You need the .NET 10 SDK. A build from source can also target Windows on Arm (<code>win-arm64</code>)
+        and Intel Macs (<code>osx-x64</code>), which the releases do not include.</p>
 <pre><code>git clone https://github.com/markovcd/Flyback
 cd Flyback
 dotnet run --project src/Flyback.App -c Release</code></pre>

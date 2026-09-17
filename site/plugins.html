@@ -61,7 +61,7 @@
       <li><a href="#module">Authoring a module</a></li>
       <li><a href="#state">Modules that remember</a></li>
       <li><a href="#presets">Shipping a patch</a></li>
-      <li><a href="#audio">Sound backends</a></li>
+      <li><a href="#audio">Sound and MIDI backends</a></li>
       <li><a href="#install">Building and installing</a></li>
       <li><a href="#refuse">How things fail</a></li>
       <li><a href="#testing">Testing</a></li>
@@ -108,8 +108,8 @@
 
           <g>
             <rect x="400" y="22" width="298" height="46" rx="4" fill="var(--node)" stroke="var(--separator)" stroke-width="1.5"/>
-            <text x="416" y="41" fill="var(--bright)" font-weight="650">Timbre/</text>
-            <text x="416" y="58" fill="var(--muted)" font-size="11.5">Flyback.Plugins.Timbre.dll · .deps.json</text>
+            <text x="416" y="41" fill="var(--bright)" font-weight="650">Voice/</text>
+            <text x="416" y="58" fill="var(--muted)" font-size="11.5">Flyback.Plugins.Voice.dll · .deps.json</text>
 
             <rect x="400" y="95" width="298" height="46" rx="4" fill="var(--node)" stroke="var(--separator)" stroke-width="1.5"/>
             <text x="416" y="114" fill="var(--bright)" font-weight="650">WinIO/</text>
@@ -203,7 +203,7 @@
   <section id="surface">
     <h2><span class="num">04</span>What you can contribute</h2>
 
-    <p><code>IPluginRegistry</code> has five methods. New kinds of extension arrive as new methods, so a
+    <p><code>IPluginRegistry</code> has six methods. New kinds of extension arrive as new methods, so a
     plugin compiled against an older contract keeps working.</p>
 
     <div class="scroll">
@@ -214,16 +214,18 @@
         </thead>
         <tbody>
           <tr><td><code>AddModules</code></td><td>Modules in the palette, keyed by a provider</td><td>—</td></tr>
-          <tr><td><code>AddPresets</code></td><td>Patches in the Patch dropdown</td><td>—</td></tr>
+          <tr><td><code>AddPresets</code></td><td>Patches in the preset list</td><td>—</td></tr>
           <tr><td><code>AddAudioOutput</code></td><td>A sound backend</td><td>Open a device</td></tr>
           <tr><td><code>AddSecretStore</code></td><td>Somewhere the OS holds a secret</td><td>Read or write one</td></tr>
           <tr><td><code>AddPatchAssistant</code></td><td>Something that can author a patch</td><td>Open a connection, or need a credential present</td></tr>
+          <tr><td><code>AddMidiInput</code></td><td>A MIDI backend</td><td>Open a device, or list the ones plugged in</td></tr>
         </tbody>
       </table>
     </div>
 
-    <p>A single plugin may call several. The Timbre plugin adds three modules and a preset; a sound backend
-    adds one output and nothing else.</p>
+    <p>A single plugin may call several. The Voice plugin adds eight modules and three presets; a platform
+    plugin such as WinIO adds a sound backend and a MIDI input and nothing else. Every kind is keyed by an id,
+    and a second registration under an id already taken is ignored, whichever plugin it comes from.</p>
   </section>
 
   <section id="module">
@@ -267,15 +269,24 @@
         </thead>
         <tbody>
           <tr><td><code>Kind</code></td><td><code>Scalar</code>, <code>Color</code>, or <code>Any</code>. <code>Any</code> passes through whatever arrives, which is how one Multiply works on both a tone and a picture.</td></tr>
-          <tr><td><code>Default</code>, <code>Min</code>, <code>Max</code></td><td>The knob on the node, and the range the editor gives it.</td></tr>
+          <tr><td><code>Default</code>, <code>Min</code>, <code>Max</code></td><td>The knob on the node, and the range the editor gives it. A <code>Color</code> input has no knob at all: a single number cannot hold a color, so it takes a wire only.</td></tr>
           <tr><td><code>NormalledFrom</code></td><td>Index of an earlier input this one falls back to when nothing is patched in — the hardware normalled jack. The Output's <code>right</code> carries <code>left</code> this way.</td></tr>
           <tr><td><code>NormalledTo</code></td><td>A module driving this input while nothing is patched into it, named as <code>new PortNormal(typeId, port)</code>. The module is hidden — no node, no wire — and one instance is shared by every socket normalled to it. The socket then has no knob: the value stored against it is never read, so the editor names the module where the number would be. Name a module the engine ships (<code>NodeCatalog.Clock</code> is Time, <code>Across</code> and <code>Down</code> are Coordinates) or one of your own; a type id the running catalog lacks drops the socket back to its knob.</td></tr>
-          <tr><td><code>Display</code></td><td><code>Number</code>, <code>Note</code> (57 reads as A3), or <code>Duration</code> (a power of ten of seconds, shown as the time it is).</td></tr>
+          <tr><td><code>Display</code></td><td><code>Number</code>, <code>Note</code> (57 reads as A3), <code>Duration</code> (a power of ten of seconds, shown as the time it is), or <code>Integer</code> (a whole-number setting). <code>Note</code> and <code>Integer</code> step rather than slide.</td></tr>
           <tr><td><code>Domain</code></td><td>True when this is the axis the module is read <em>across</em> rather than a value it uses. A constant on one is never sensible, which is why every domain in the catalog is <code>NormalledTo</code> Time; the compiler still warns about one that is normalled to nothing.</td></tr>
           <tr><td><code>Swept</code></td><td>True when the module supplies the domain this input is read <em>under</em>. Resolve it yourself with <code>EmitContext.Resolve</code>.</td></tr>
+          <tr><td><code>PatchOnly</code></td><td>True when <code>Default</code> is a filler nobody should dial, kept only so the compiler has something to read while nothing is wired in. The editor draws no knob for it and says what the socket does instead. The Output's <code>left</code> is one.</td></tr>
         </tbody>
       </table>
     </div>
+
+    <h3>Which sink a module is for</h3>
+
+    <p>Every module is compiled for both sinks, because a patch is one graph. <code>Sinks</code>, an init
+    property on the <code>NodeDef</code>, says where it means what it says: <code>ModuleSinks.Both</code> (the
+    default), <code>Audio</code> for a module that wants a memory and gives the screen something simpler, or
+    <code>Video</code> for one that wants a pixel or a past frame. It changes nothing that is emitted; the
+    assistant's handbook reads it, so set it whenever it is not <code>Both</code>.</p>
 
     <h3>Carrying something that is not a knob</h3>
 
@@ -315,8 +326,12 @@ Extras = [<span class="k">new</span> GlideExtra()],
     <p>The same declaration is what lets an assistant set your state, through one <code>set_extra</code> tool
     that works for any plugin's kind. There is nothing to write for it.</p>
 
-    <p>Two shapes exist — <code>Number</code> and <code>Toggle</code> — and the vocabulary grows only when a
-    plugin is genuinely blocked on a third. What it deliberately cannot express is a control of your own: no
+    <p>Three shapes exist. <code>Number</code> and <code>Toggle</code> are a value and a switch;
+    <code>Choice</code> picks one of a list of <code>ChoiceOption(id, name)</code>, read afresh each time the
+    row is drawn, so the list can be computed — MIDI In uses one to choose its instrument — and is read back
+    with <code>state.Chosen(key)</code>. A stored id that is not in the list is kept rather than reset, since it
+    is usually a device that is unplugged right now. The vocabulary grows only when a plugin is genuinely
+    blocked on another shape. What it deliberately cannot express is a control of your own: no
     keyboard, no waveform display, no list you reorder. The engine's own three kinds all needed one, and none
     of them could have been written as a plugin. If yours is that shape, say so — the trade is recorded in
     ADR-0055 and is meant to be revisited by a real case, not guessed at.</p>
@@ -355,7 +370,7 @@ Extras = [<span class="k">new</span> GlideExtra()],
     with a memory is a different kind of thing, which works for the speakers and has to say what it means for
     the screen.</p>
 
-    <p>There are three tiers, and it is worth knowing which one you need before you start.</p>
+    <p>There are four tiers, and it is worth knowing which one you need before you start.</p>
 
     <div class="tiers">
       <article class="node" style="--accent: var(--oscillator)">
@@ -369,6 +384,12 @@ Extras = [<span class="k">new</span> GlideExtra()],
         limiters, sample-and-hold. Available to any plugin, no engine change.</p></div>
       </article>
       <article class="node" style="--accent: var(--feedback)">
+        <header>A plane <small>Emitter planes</small></header>
+        <div class="body"><p>A cell the screen keeps too: one value per pixel, carried from the previous frame.
+        What a loop drawn on the canvas uses. Available to any plugin; ask for one only when a picture should
+        accumulate.</p></div>
+      </article>
+      <article class="node" style="--accent: var(--shaping)">
         <header>A buffer <small>Delay · Allpass</small></header>
         <div class="body"><p>Thousands of past samples — a delay line or a reverb tail. Needs an opcode, so it cannot come from
         a plugin; use the two that exist.</p></div>
@@ -385,6 +406,18 @@ Extras = [<span class="k">new</span> GlideExtra()],
 <span class="k">var</span> previous = em.UnitRead(cell);        <span class="c">// what it held last time</span>
 <span class="k">var</span> smoothed = em.Ternary(OpCode.Mix, previous, input, amount);
 em.UnitWrite(cell, smoothed);           <span class="c">// what it holds next time</span></code></pre>
+
+    <p>A value written to a cell is clamped to the rails on its way in, which keeps a bad value from
+    persisting. A cell holding a time rather than a signal — where a trigger arrived, say — is written with
+    <code>ClockWrite</code> instead, which is not clamped.</p>
+
+    <h3>Taking a plane</h3>
+
+    <p><code>AllocatePlaneSlot</code>, <code>PlaneRead</code> and <code>PlaneWrite</code> are the same three
+    calls, but on the video path the value is kept for each pixel from one frame to the next: a trail that
+    decays, a per-pixel envelope, a reaction-diffusion step. On the audio path a plane behaves like a cell.
+    Do not reach for one to make a filter work on a picture: a filter over frames is a different effect, and
+    every plane costs a value per pixel.</p>
 
     <h3>The two questions every stateful module has</h3>
 
@@ -416,7 +449,8 @@ em.UnitWrite(cell, smoothed);           <span class="c">// what it holds next ti
 
     <div class="note">
       <span class="tag">What the video path does on its own</span>
-      <p>With no state passed, <code>UnitRead</code> gives zero and <code>UnitWrite</code> goes nowhere, a
+      <p>With no state passed, <code>UnitRead</code> gives zero and <code>UnitWrite</code> goes nowhere
+      (only a plane is kept), a
       <code>Delay</code> hands its input straight through, and <code>Phase</code> becomes the multiply it
       replaced. Those fallbacks are total and will not crash — but whether they <em>mean</em> anything is
       yours to decide. A delay line becomes a wire for free; a bank of allpass stages becomes whatever the
@@ -429,9 +463,10 @@ em.UnitWrite(cell, smoothed);           <span class="c">// what it holds next ti
       table read — <code>em.Table</code>, which is a clip or a trace. A video program containing one takes the
       preview back to the CPU for as long as that patch is loaded, and nothing anywhere says so. Cells and
       delay lines are milder: they lower to the same no-state fallback the interpreter uses on the video path,
-      so the two backends still agree. If your module is for the picture, keep it to arithmetic and pin it
+      so the two backends still agree. Planes are kept by the shader as well, as channels of a float render
+      target; a graphics context that cannot provide one draws the frame on the CPU instead. If your module is for the picture, keep it to arithmetic and pin it
       with a test that <code>GlslEmitter.Emit</code> is happy in every dialect — that test is the complaint
-      the shader has no way to make. <code>Flyback.Plugins.Shapes</code> ships one.</p>
+      the shader has no way to make. The Picture plugin's tests do this for its modules.</p>
     </div>
 
     <h3>Buffers</h3>
@@ -485,7 +520,7 @@ em.UnitWrite(cell, smoothed);           <span class="c">// what it holds next ti
   </section>
 
   <section id="audio">
-    <h2><span class="num">08</span>Sound backends</h2>
+    <h2><span class="num">08</span>Sound and MIDI backends</h2>
 
     <p>The application has no platform-specific code in it at all; every sound device is a plugin. A backend
     is two classes — one that offers itself, one that opens the device.</p>
@@ -523,6 +558,33 @@ em.UnitWrite(cell, smoothed);           <span class="c">// what it holds next ti
     audio thread. It <strong>must not block, allocate or throw</strong>. If you cannot honor the requested
     format exactly, open the nearest thing you can and report the truth through
     <code>SampleRate</code>.</p>
+
+    <h3>MIDI inputs</h3>
+
+    <p>A MIDI backend has the same shape: <code>IMidiInput</code> offers itself with an <code>Id</code>,
+    <code>Name</code>, <code>Priority</code> and <code>IsSupported</code>, and opens a device as an
+    <code>IMidiPort</code>. The shipped ones live in the same platform plugins as the sound backends.</p>
+
+    <pre><code><span class="k">public sealed class</span> JackMidiInput : IMidiInput
+{
+    <span class="k">public string</span> Id =&gt; <span class="s">"jack-midi"</span>;
+    <span class="k">public string</span> Name =&gt; <span class="s">"JACK MIDI"</span>;
+    <span class="k">public int</span> Priority =&gt; 150;
+    <span class="k">public bool</span> IsSupported =&gt; OperatingSystem.IsLinux() &amp;&amp; JackIsRunning();
+
+    <span class="c">// Asked afresh whenever somebody opens a picker.</span>
+    <span class="k">public</span> IReadOnlyList&lt;MidiPortInfo&gt; Ports =&gt; ListPorts();
+
+    <span class="k">public</span> IMidiPort Open(<span class="k">string</span> port, MidiCallback deliver) =&gt;
+        <span class="k">new</span> JackMidiPort(port, deliver);
+}</code></pre>
+
+    <p><code>Ports</code> must not open anything or throw: a device that vanished is a shorter list, not a
+    failure. <code>Open</code> may throw, for a device another program has taken. The callback runs on
+    whatever thread your backend hears on, so it must not block. Hand it a <code>MidiMessage</code> — a note
+    down or up, all notes off, or a controller, with velocity already scaled to 0–1.
+    <code>MidiMessages.Of(status, data1, data2)</code> turns the three raw bytes into one, so a backend only
+    unpacks what its platform delivers.</p>
   </section>
 
   <section id="install">
@@ -571,6 +633,8 @@ em.UnitWrite(cell, smoothed);           <span class="c">// what it holds next ti
           <tr><td>Provider id already loaded, or blank</td><td>Refused</td></tr>
           <tr><td>A provider claiming ids that already exist</td><td>Refused — it could answer for modules saved patches mean something else by</td></tr>
           <tr><td>Two plugins with one <code>Info.Id</code></td><td>The second is ignored</td></tr>
+          <tr><td>A preset name already offered</td><td>The later preset is ignored</td></tr>
+          <tr><td>A sound backend, MIDI input, assistant or secret store id already registered</td><td>The later one is ignored</td></tr>
           <tr><td>A stray host-owned dll in your folder</td><td>Ignored, and the host's copy used</td></tr>
           <tr><td>A throw from <code>Register</code> or a preset</td><td>Reported; everything else carries on</td></tr>
         </tbody>
@@ -593,8 +657,7 @@ em.UnitWrite(cell, smoothed);           <span class="c">// what it holds next ti
     one way to push an arbitrary waveform through a module without building an oscillator to produce it.</p>
 
     <pre><code><span class="k">var</span> program = patch.CompileForAudio(catalog).Program;
-<span class="k">var</span> delays = <span class="k">new</span> DelayState(
-    program.DelayLengths, rate, program.PhaseCount, program.UnitCount);
+<span class="k">var</span> delays = <span class="k">new</span> DelayState(program, rate);
 
 <span class="k">var</span> registers = program.AllocateRegisters();
 
@@ -605,7 +668,7 @@ em.UnitWrite(cell, smoothed);           <span class="c">// what it holds next ti
 }</code></pre>
 
     <p>Compile for video as well, and pin what your module does with no state — passing <code>null</code>
-    for the delays is exactly what the renderer does. A test that says "with no state this is a wire" is
+    for the delays is exactly what the renderer does for a program that keeps no planes. A test that says "with no state this is a wire" is
     worth more than one that says the filter filters.</p>
 
     <p><code>flyback-cli check</code> compiles both sinks of a patch and carries the answer in its exit code,
@@ -636,8 +699,9 @@ em.UnitWrite(cell, smoothed);           <span class="c">// what it holds next ti
   <footer>
     <p>Written against the engine as it stands. The architecture decision records under
     <code>docs/adr</code> carry the reasoning behind the boundary — 0025 for why platform I/O is a plugin,
-    0026 for provenance in the patch file, 0027 for the delay opcodes, and 0041 and 0042 for how a plugin
-    came to hold state without one.</p>
+    0026 for provenance in the patch file, 0027 for the delay opcodes, 0041 and 0042 for how a plugin came
+    to hold state without one, 0055 for extras that declare their own editor, 0063 for one platform plugin
+    carrying both sound and MIDI, and 0074 for planes.</p>
   </footer>
 
   </main>

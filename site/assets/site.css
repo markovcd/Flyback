@@ -331,7 +331,7 @@ nav.toc a:hover { color: var(--bright); border-left-color: var(--attention); bac
 }
 
 .tiers { display: grid; gap: 14px; margin: 24px 0 0; }
-@media (min-width: 720px) { .tiers { grid-template-columns: repeat(3, 1fr); } }
+@media (min-width: 720px) { .tiers { grid-template-columns: repeat(2, 1fr); } }
 .tiers .where { display: block; margin-top: 10px; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
 
 /* ---- footer --------------------------------------------------------------- */
