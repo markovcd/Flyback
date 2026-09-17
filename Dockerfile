@@ -41,8 +41,15 @@ ARG VERSION=0.1.0
 # embedded in the application, so there is nothing else to install: no X
 # server, no ICU (the projects are built InvariantGlobalization), no window
 # manager.
+#
+# ffmpeg is the exception, and it is here for the tests rather than for the
+# build. Nothing links against it and nothing published below carries it — it
+# is a program Flyback looks for on PATH and does without (ADR-0089). But the
+# tests that write an MP4 skip themselves when there is none, so without this
+# the format most people will record in would be the one thing the gate below
+# never exercises.
 RUN apt-get update \
- && apt-get install --yes --no-install-recommends libfontconfig1 libx11-6 \
+ && apt-get install --yes --no-install-recommends libfontconfig1 libx11-6 ffmpeg \
  && rm -rf /var/lib/apt/lists/*
 
 ENV DOTNET_CLI_TELEMETRY_OPTOUT=1 \

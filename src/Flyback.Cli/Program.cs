@@ -161,7 +161,9 @@ internal static class Program
     {
         var output = new Option<FileInfo>("--out", "-o")
         {
-            Description = "Where to write it. The extension picks the format: .png, .wav or .avi.",
+            Description = "Where to write it. The extension picks the format: .png for a still, "
+                + string.Join(", ", ClipFormats.All.Select(f => f.Extension).Distinct())
+                + " for the rest.",
             Required = true,
         };
 
@@ -191,13 +193,28 @@ internal static class Program
 
         var quality = new Option<int>("--quality")
         {
-            Description = "JPEG quality inside an AVI, 1 to 100.",
+            Description = "How good the picture is, 1 to 100 — a JPEG quality in an AVI, "
+                + "and a rate factor everywhere else.",
             DefaultValueFactory = _ => JpegWriter.DefaultQuality,
+        };
+
+        var format = new Option<string>("--format")
+        {
+            Description = "Write this format rather than the one the extension names: "
+                + string.Join(", ", ClipFormats.All.Select(f => f.Id)) + ".",
+        };
+
+        format.CompletionSources.Add(_ => ClipFormats.All.Select(f => new CompletionItem(f.Id, f.Label)));
+
+        var ffmpeg = new Option<string>("--ffmpeg")
+        {
+            Description = $"The ffmpeg to encode with. Left out, the first on PATH is used, and "
+                + $"only {ClipFormats.MotionJpegAvi.Id} and {ClipFormats.Wav.Id} need none at all.",
         };
 
         var command = new Command("render", "Write a patch to a picture, a sound, or a clip of both.")
         {
-            patch, output, size, at, seconds, fps, quality,
+            patch, output, size, at, seconds, fps, quality, format, ffmpeg,
         };
 
         command.SetAction((result, cancellation) =>
@@ -222,7 +239,9 @@ internal static class Program
                 result.GetValue(at),
                 result.GetValue(seconds),
                 result.GetValue(fps),
-                result.GetValue(quality));
+                result.GetValue(quality),
+                result.GetValue(format),
+                result.GetValue(ffmpeg));
 
             return Task.FromResult(
                 RenderCommand.Run(

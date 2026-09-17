@@ -1,4 +1,5 @@
 using Flyback.Core.Graph;
+using Flyback.Core.Render;
 using Shouldly;
 using Xunit;
 
@@ -26,10 +27,16 @@ public class RecordKindsTests
     private static string[] Names(Patch patch) =>
         [.. MainWindow.RecordKinds(patch).Select(k => k.Name)];
 
-    /// <summary>Video first, for the reason the export gives: an AVI carries the sound too.</summary>
+    /// <summary>What the two formats written here are called, which is what a window with no settings offers.</summary>
+    private static string Movie => ClipFormats.MotionJpegAvi.Label;
+
+    /// <inheritdoc cref="Movie"/>
+    private static string Track => ClipFormats.Wav.Label;
+
+    /// <summary>Video first, for the reason the export gives: a video carries the sound too.</summary>
     [Fact]
     public void A_patch_with_both_is_offered_video_and_audio() =>
-        Names(Wired(picture: true, sound: true)).ShouldBe(["AVI video", "WAV audio"]);
+        Names(Wired(picture: true, sound: true)).ShouldBe([Movie, Track]);
 
     /// <summary>
     /// A silent AVI is a complete recording of a patch that makes no sound, so it
@@ -37,12 +44,27 @@ public class RecordKindsTests
     /// </summary>
     [Fact]
     public void A_patch_with_no_sound_is_offered_a_silent_video() =>
-        Names(Wired(picture: true, sound: false)).ShouldBe(["AVI video"]);
+        Names(Wired(picture: true, sound: false)).ShouldBe([Movie]);
 
     /// <summary>Nothing reaches the screen, so an AVI could only be a black rectangle.</summary>
     [Fact]
     public void A_patch_with_no_picture_is_offered_only_audio() =>
-        Names(Wired(picture: false, sound: true)).ShouldBe(["WAV audio"]);
+        Names(Wired(picture: false, sound: true)).ShouldBe([Track]);
+
+    /// <summary>
+    /// The picker names the formats the settings are on, not a fixed pair — one
+    /// row each, since choosing the format is the settings window's job and not
+    /// this dialogue's (ADR-0089).
+    /// </summary>
+    [Fact]
+    public void The_kinds_offered_are_the_formats_chosen()
+    {
+        var kinds = MainWindow.RecordKinds(
+            Wired(picture: true, sound: true), ClipFormats.H264Mp4, ClipFormats.Mp3);
+
+        kinds.Select(k => k.Name).ShouldBe([ClipFormats.H264Mp4.Label, ClipFormats.Mp3.Label]);
+        kinds.Select(k => k.Patterns?[0]).ShouldBe(["*.mp4", "*.mp3"]);
+    }
 
     /// <summary>A still is not a recording, whatever the patch draws.</summary>
     [Fact]

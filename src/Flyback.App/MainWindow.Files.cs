@@ -650,9 +650,9 @@ public sealed partial class MainWindow
         }
     }
 
-    private static FilePickerFileType Avi => new("AVI video") { Patterns = ["*.avi"] };
-
-    private static FilePickerFileType Wav => new("WAV audio") { Patterns = ["*.wav"] };
+    /// <summary>One format as the file picker asks about it.</summary>
+    private static FilePickerFileType Kind(ClipFormat format) =>
+        new(format.Label) { Patterns = [$"*{format.Extension}"] };
 
     /// <summary>
     /// The kinds a recording could be written to.
@@ -660,19 +660,37 @@ public sealed partial class MainWindow
     /// <remarks>
     /// No PNG, because a still is not a recording — ADR-0078 leaves stills to
     /// <c>flyback-cli render</c>. A patch that draws but makes no sound is still
-    /// offered an AVI, which simply has no audio stream: it is a recording of
+    /// offered a video, which simply has no audio stream: it is a recording of
     /// everything the patch does, and a silent one is only wrong when there was
     /// sound to be had.
+    /// <para>
+    /// One kind each rather than every format there is. The two the settings
+    /// window is set to are what this offers, since a picker listing nine
+    /// extensions would be a second place to choose a format and a slower way to
+    /// do it — and an extension typed over the suggestion is honoured anyway
+    /// (ADR-0089).
+    /// </para>
     /// </remarks>
-    internal static IReadOnlyList<FilePickerFileType> RecordKinds(Patch patch)
+    /// <param name="video">
+    /// The format a take with a picture is written as, defaulting to the one
+    /// written here — which is also what a window with no settings file has.
+    /// </param>
+    /// <param name="sound">The format a take of the sound alone is written as.</param>
+    internal static IReadOnlyList<FilePickerFileType> RecordKinds(
+        Patch patch,
+        ClipFormat? video = null,
+        ClipFormat? sound = null)
     {
-        var (picture, sound) = patch.Reaches();
+        var (picture, heard) = patch.Reaches();
 
-        return (picture, sound) switch
+        var movie = Kind(video ?? ClipFormats.MotionJpegAvi);
+        var track = Kind(sound ?? ClipFormats.Wav);
+
+        return (picture, heard) switch
         {
-            (true, true) => [Avi, Wav],
-            (true, false) => [Avi],
-            (false, true) => [Wav],
+            (true, true) => [movie, track],
+            (true, false) => [movie],
+            (false, true) => [track],
             _ => [],
         };
     }

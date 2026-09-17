@@ -410,11 +410,18 @@ out.volume = 0.5</code></pre>
     <h2><span class="num">10</span>Record and render</h2>
 
     <h3>Record a live take</h3>
-    <p>Press <kbd>Ctrl</kbd>+<kbd>R</kbd> (or <strong>Record</strong>), choose a file and play. Saving as
-    <code>.avi</code> records the picture from the GPU with the sound alongside it; <code>.wav</code> records
-    the sound only. A take runs until you press <kbd>Ctrl</kbd>+<kbd>R</kbd> again, and it includes every knob
-    you turn and every note you play. The picture size is set under <strong>Settings → Graphics</strong>, and
-    the frame rate and JPEG quality under <strong>Recording</strong>.</p>
+    <p>Press <kbd>Ctrl</kbd>+<kbd>R</kbd> (or <strong>Record</strong>), choose a file and play. The video
+    kind records the picture from the GPU with the sound alongside it; the sound kind records the sound only.
+    A take runs until you press <kbd>Ctrl</kbd>+<kbd>R</kbd> again, and it includes every knob you turn and
+    every note you play. The picture size is set under <strong>Settings → Graphics</strong>, and the frame
+    rate, quality and both formats under <strong>Recording</strong>.</p>
+
+    <p>Which formats you can choose depends on whether ffmpeg is on the machine. MP4 (H.264 or H.265), WebM
+    and MOV for the picture, and MP3, M4A and FLAC for the sound, are encoded by ffmpeg — found on your
+    <code>PATH</code>, or pointed at by hand in the same tab, which also says what it found. Motion JPEG AVI
+    and WAV are written by Flyback itself and need nothing installed; they are also around twenty-five times
+    the size of an MP4 of the same clip, and an AVI cannot pass 4&nbsp;GB, so they are the fallback rather
+    than the choice.</p>
 
     <figure>
       <img class="shot" loading="lazy" src="assets/shots/settings.webp" width="1600" height="863"
@@ -429,8 +436,15 @@ out.volume = 0.5</code></pre>
 flyback-cli render drone.fbk -o drone.png --size 1920x1080 --at 2.5
 
 # 30 seconds of video with sound, and the sound on its own
+flyback-cli render drone.fbk -o drone.mp4 --seconds 30 --fps 30
+flyback-cli render drone.fbk -o drone.mp3 --seconds 30
+
+# the extension picks the format, and needs no ffmpeg for these two
 flyback-cli render drone.fbk -o drone.avi --seconds 30 --fps 30
 flyback-cli render drone.fbk -o drone.wav --seconds 30
+
+# an ffmpeg that is not on PATH, and a format the extension does not name
+flyback-cli render drone.fbk -o drone.mkv --format mp4 --ffmpeg /opt/bin/ffmpeg
 
 # text patches work anywhere a patch does
 flyback-cli render my-patch.fbks -o my-patch.png</code></pre>

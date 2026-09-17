@@ -6,20 +6,36 @@ using Flyback.Core.Render;
 namespace Flyback.App.Capture;
 
 /// <summary>What a recording is, before it exists.</summary>
-/// <param name="Path">Where it goes. The extension has already decided the container.</param>
+/// <param name="Path">Where it goes. The extension already agrees with <paramref name="Format"/>.</param>
+/// <param name="Format">Which of <see cref="ClipFormats"/> it is written as.</param>
 /// <param name="Size">Frame size, or an empty size for a sound-only take.</param>
 /// <param name="Channels">Zero writes a silent video, the way a video-only export does.</param>
+/// <param name="Ffmpeg">Where ffmpeg is, for a format that needs it.</param>
 internal readonly record struct RecordingSettings(
     string Path,
+    ClipFormat Format,
     PixelSize Size,
     double FramesPerSecond,
     int Quality,
     int SampleRate,
-    int Channels)
+    int Channels,
+    string? Ffmpeg = null)
 {
-    public bool HasPicture => Size.Width > 0 && Size.Height > 0;
+    public bool HasPicture => Format.HasPicture && Size.Width > 0 && Size.Height > 0;
 
     public bool HasSound => Channels > 0 && SampleRate > 0;
+
+    /// <summary>What the writer is opened against — the same shape a render uses.</summary>
+    public ClipTarget Target => new(
+        Path,
+        Format,
+        Size.Width,
+        Size.Height,
+        FramesPerSecond,
+        Quality,
+        HasSound ? SampleRate : 0,
+        HasSound ? Channels : 0,
+        Ffmpeg);
 }
 
 /// <summary>How a recording is going, for the status bar to read.</summary>
@@ -59,11 +75,15 @@ internal sealed class LiveRecorder : IFrameSink, IAudioSink, IDisposable
     /// <summary>Long enough not to spin, short enough to be inside one frame at any rate worth using.</summary>
     private static readonly TimeSpan Idle = TimeSpan.FromMilliseconds(2);
 
+    /// <summary>
+    /// How long the worker is given to drain and close the file. Minutes rather
+    /// than seconds because an ffmpeg format ends by muxing the sound into the
+    /// picture, which reads and rewrites everything recorded.
+    /// </summary>
+    private static readonly TimeSpan Finishing = TimeSpan.FromMinutes(10);
+
     private readonly RecordingSettings settings;
-    private readonly Stream file;
-    private readonly AviWriter? avi;
-    private readonly WavStreamWriter? wav;
-    private readonly JpegWriter? jpeg;
+    private readonly IClipWriter clip;
 
     private readonly AudioRing? ring;
     private readonly FrameMailbox? mailbox;
@@ -75,13 +95,16 @@ internal sealed class LiveRecorder : IFrameSink, IAudioSink, IDisposable
     /// <summary>The encoder thread's own scratch — never touched from anywhere else.</summary>
     private readonly float[] drained;
     private readonly byte[] bgra;
-    private readonly MemoryStream encoded;
+
+    /// <summary>Whether <see cref="bgra"/> holds a frame, which is what a moment with none to spare repeats.</summary>
+    private bool held;
 
     private long samplesWritten;
     private long frames;
     private long duplicated;
     private volatile string? stopped;
     private volatile bool stopping;
+    private int closing;
     private bool disposed;
 
     public LiveRecorder(RecordingSettings settings)
@@ -91,45 +114,47 @@ internal sealed class LiveRecorder : IFrameSink, IAudioSink, IDisposable
 
         this.settings = settings;
 
-        file = File.Create(settings.Path);
+        // Opened before the thread starts, so a format that cannot be written at
+        // all — no ffmpeg, a folder nobody may write in — is a constructor that
+        // throws rather than a take that stops a moment after it began.
+        clip = ClipWriter.Open(settings.Target);
 
-        if (settings.HasPicture)
+        // From here on the file is open and nobody else holds it, so anything
+        // that goes wrong has to close it on the way out — an ffmpeg left with
+        // its input never closed would sit waiting for frames for ever.
+        try
         {
-            avi = new AviWriter(
-                file,
-                settings.Size.Width,
-                settings.Size.Height,
-                settings.FramesPerSecond,
-                settings.HasSound ? settings.SampleRate : 0,
-                settings.HasSound ? settings.Channels : 0);
+            if (settings.HasPicture)
+            {
+                mailbox = new FrameMailbox(settings.Size.Width * settings.Size.Height * 4);
+                pacer = new CapturePacer(settings.FramesPerSecond);
 
-            jpeg = new JpegWriter(settings.Quality);
-            mailbox = new FrameMailbox(settings.Size.Width * settings.Size.Height * 4);
-            pacer = new CapturePacer(settings.FramesPerSecond);
+                bgra = new byte[settings.Size.Width * settings.Size.Height * 4];
+            }
+            else
+            {
+                bgra = [];
+            }
 
-            bgra = new byte[settings.Size.Width * settings.Size.Height * 4];
-            encoded = new MemoryStream(settings.Size.Width * settings.Size.Height / 4);
+            if (settings.HasSound)
+            {
+                var capacity = (int)(RingSeconds * settings.SampleRate * settings.Channels);
+                ring = new AudioRing(capacity);
+                drained = new float[Math.Min(capacity, settings.SampleRate * settings.Channels / 4)];
+            }
+            else
+            {
+                drained = [];
+            }
+
+            worker = new Thread(Run) { IsBackground = true, Name = $"{GlobalConstants.ApplicationName} capture" };
+            worker.Start();
         }
-        else
+        catch
         {
-            wav = new WavStreamWriter(file, settings.SampleRate, settings.Channels);
-            bgra = [];
-            encoded = new MemoryStream(0);
+            Close();
+            throw;
         }
-
-        if (settings.HasSound)
-        {
-            var capacity = (int)(RingSeconds * settings.SampleRate * settings.Channels);
-            ring = new AudioRing(capacity);
-            drained = new float[Math.Min(capacity, settings.SampleRate * settings.Channels / 4)];
-        }
-        else
-        {
-            drained = [];
-        }
-
-        worker = new Thread(Run) { IsBackground = true, Name = $"{GlobalConstants.ApplicationName} capture" };
-        worker.Start();
     }
 
     /// <summary>Where the take is being written.</summary>
@@ -182,15 +207,26 @@ internal sealed class LiveRecorder : IFrameSink, IAudioSink, IDisposable
     }
 
     /// <summary>
-    /// Finishes the file. Blocks until the encoder has drained, which is what
-    /// patches the header — a take abandoned without this is not a video.
+    /// Finishes the file. Blocks until the encoder has drained and closed it,
+    /// which is what patches a header, writes an index or muxes the sound in —
+    /// a take abandoned without this is not a video.
     /// </summary>
+    /// <remarks>
+    /// The closing is the worker's own last act rather than something done after
+    /// it, because an ffmpeg format finishes by re-muxing the whole file and
+    /// that is not work for whichever thread happened to press Stop. What it
+    /// cost, or what went wrong doing it, is <see cref="RecordingStatus.Stopped"/>
+    /// by the time this returns.
+    /// </remarks>
     public void Stop()
     {
         if (stopping) return;
 
         stopping = true;
-        worker.Join(TimeSpan.FromSeconds(5));
+
+        // Long enough for a mux of a long take, which is the one thing here that
+        // scales with how much was recorded rather than with a frame.
+        worker.Join(Finishing);
     }
 
     public void Dispose()
@@ -200,10 +236,30 @@ internal sealed class LiveRecorder : IFrameSink, IAudioSink, IDisposable
 
         Stop();
 
-        avi?.Dispose();
-        wav?.Dispose();
-        file.Dispose();
-        encoded.Dispose();
+        // Only where the worker never got to it — a thread that would not join,
+        // or one that died before the loop began.
+        Close();
+    }
+
+    /// <summary>
+    /// Closes the file once. Called by the worker as it leaves, and by
+    /// <see cref="Dispose"/> for the case where the worker did not.
+    /// </summary>
+    private void Close()
+    {
+        if (Interlocked.Exchange(ref closing, 1) != 0) return;
+
+        try
+        {
+            clip.Dispose();
+        }
+        catch (Exception ex)
+        {
+            // What a format says on the way out — ffmpeg refusing the
+            // arguments, an AVI at its 4 GB ceiling — is the only account of
+            // why the file is not what was asked for.
+            stopped ??= ex.Message;
+        }
     }
 
     // --- the encoder thread ------------------------------------------------------
@@ -228,13 +284,17 @@ internal sealed class LiveRecorder : IFrameSink, IAudioSink, IDisposable
             catch (Exception ex)
             {
                 stopped = ex.Message;
-                return;
+                break;
             }
 
-            if (last) return;
+            if (last) break;
 
             Thread.Sleep(Idle);
         }
+
+        // Here rather than in Stop, so the whole cost of finishing a file is
+        // this thread's and not the caller's.
+        Close();
     }
 
     /// <summary>
@@ -245,7 +305,7 @@ internal sealed class LiveRecorder : IFrameSink, IAudioSink, IDisposable
     {
         if (mailbox!.TakeLatest() is { IsEmpty: false } first)
         {
-            Encode(first);
+            Flip(first);
             Drain(discard: true);
             clock.Restart();
 
@@ -270,16 +330,16 @@ internal sealed class LiveRecorder : IFrameSink, IAudioSink, IDisposable
         if (due <= 0) return;
 
         var fresh = mailbox!.TakeLatest();
-        if (!fresh.IsEmpty) Encode(fresh);
+        if (!fresh.IsEmpty) Flip(fresh);
 
-        // Cannot happen once started — the first frame is encoded before the take
-        // begins — but nothing is committed until it is written, so if it ever did
-        // the file would simply wait rather than skip a moment for good.
-        if (encoded.Length == 0) return;
+        // Cannot happen once started — the first frame is flipped before the
+        // take begins — but nothing is committed until it is written, so if it
+        // ever did the file would simply wait rather than skip a moment for good.
+        if (!held) return;
 
-        var picture = encoded.GetBuffer().AsSpan(0, (int)encoded.Length);
-
-        for (var i = 0; i < due; i++) avi!.WriteFrame(picture);
+        // The count rather than a loop here, so a format that pays to compress a
+        // frame pays once for one repeated.
+        clip.WriteFrame(bgra, settings.Size.Width * 4, due);
 
         pacer.Commit(due);
 
@@ -299,10 +359,7 @@ internal sealed class LiveRecorder : IFrameSink, IAudioSink, IDisposable
 
             if (discard) continue;
 
-            var samples = drained.AsSpan(0, taken);
-
-            if (avi is not null) avi.WriteAudio(samples);
-            else wav!.WriteAudio(samples);
+            clip.WriteAudio(drained.AsSpan(0, taken));
 
             Volatile.Write(ref samplesWritten, samplesWritten + taken);
         }
@@ -310,11 +367,11 @@ internal sealed class LiveRecorder : IFrameSink, IAudioSink, IDisposable
 
     /// <summary>
     /// OpenGL hands back RGBA with the first row at the bottom;
-    /// <see cref="JpegWriter"/> wants BGRA with the first row at the top. Both
+    /// <see cref="IClipWriter"/> wants BGRA with the first row at the top. Both
     /// halves of that are one pass, on this thread, where it costs nothing that
     /// anybody is waiting for.
     /// </summary>
-    private void Encode(ReadOnlySpan<byte> rgba)
+    private void Flip(ReadOnlySpan<byte> rgba)
     {
         var width = settings.Size.Width;
         var height = settings.Size.Height;
@@ -334,7 +391,6 @@ internal sealed class LiveRecorder : IFrameSink, IAudioSink, IDisposable
             }
         }
 
-        encoded.SetLength(0);
-        jpeg!.WriteBgra(encoded, bgra, width, height, stride);
+        held = true;
     }
 }

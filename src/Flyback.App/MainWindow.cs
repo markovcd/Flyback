@@ -958,6 +958,12 @@ public sealed partial class MainWindow : Window
 
         var save = new Button { Content = "Save", Width = 84 };
 
+        // Asked as the window opens rather than kept from the last time: ffmpeg
+        // may have been installed, moved or taken away since, and the Recording
+        // tab's note is only worth anything if it is about now. Not awaited —
+        // the window opens while the search runs and the note fills itself in.
+        _ = ShowFfmpegAsync();
+
         // Tabs rather than one long column, so moving between sections is a
         // click rather than a scroll, listed down the left so a section added
         // later is one more row rather than a strip running out of width. A

@@ -92,7 +92,8 @@ context, decision, consequences.
 | [0027](0027-delay-lines-give-the-audio-path-a-memory.md) | Delay lines give the audio path a memory *(user-directed)* |
 | [0029](0029-linux-sound-through-alsa.md) | Linux sound through ALSA, on a thread of our own |
 | [0030](0030-oscillators-accumulate-their-phase.md) | Oscillators accumulate their phase on the audio path |
-| [0036](0036-export-video-as-motion-jpeg-in-an-avi.md) | Export video as Motion JPEG in an AVI *(user-directed)* |
+| [0036](0036-export-video-as-motion-jpeg-in-an-avi.md) | Export video as Motion JPEG in an AVI *(user-directed; demoted to the fallback by [0089](0089-ffmpeg-encodes-what-it-can-and-the-avi-is-the-fallback.md))* |
+| [0089](0089-ffmpeg-encodes-what-it-can-and-the-avi-is-the-fallback.md) | ffmpeg encodes what it can, and the AVI is the fallback *(user-directed)* |
 | [0049](0049-record-the-gpu-frame-not-the-interpreter.md) | Record the GPU frame, not the interpreter *(user-directed)* |
 | [0038](0038-a-sequencers-notes-are-a-list-on-the-node.md) | A sequencer's notes are a list on the node *(user-directed)* |
 | [0037](0037-one-output-block-that-every-patch-has.md) | One Output block, which every patch has *(user-directed; its `gain` socket renamed `volume` by [0079](0079-the-gain-knob-becomes-volume-and-nought-is-off.md); its picture settings moved to the settings window by [0082](0082-the-output-settings-move-to-the-settings-window.md))* |
@@ -104,7 +105,7 @@ context, decision, consequences.
 
 | # | Decision |
 |---|---|
-| [0019](0019-no-third-party-dependencies-in-the-engine.md) | No third-party dependencies in the engine |
+| [0019](0019-no-third-party-dependencies-in-the-engine.md) | No third-party dependencies in the engine *(read as being about dependencies rather than about programs by [0089](0089-ffmpeg-encodes-what-it-can-and-the-avi-is-the-fallback.md))* |
 | [0020](0020-json-patch-files-keyed-by-string-type-ids.md) | JSON patch files keyed by string type IDs |
 | [0060](0060-a-bundle-is-a-patch-and-what-it-names.md) | A bundle is a patch and what it names *(user-directed)* |
 | [0025](0025-platform-io-behind-loadable-plugins.md) | Platform I/O behind plugins loaded at run time |

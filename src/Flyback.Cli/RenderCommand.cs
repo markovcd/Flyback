@@ -7,6 +7,13 @@ namespace Flyback.Cli;
 
 /// <summary>Everything about a render that is not the patch.</summary>
 /// <param name="At">Which moment a still is of. Ignored by the two that have a length instead.</param>
+/// <param name="Format">
+/// Which of <see cref="ClipFormats"/> to write, by id, or null to take it from the
+/// extension of <paramref name="Out"/>.
+/// </param>
+/// <param name="Ffmpeg">
+/// Where ffmpeg is, for a format that needs it. Null looks on <c>PATH</c>.
+/// </param>
 internal sealed record RenderOptions(
     FileInfo Out,
     int Width = 1920,
@@ -14,12 +21,15 @@ internal sealed record RenderOptions(
     double At = 0d,
     double Seconds = 10d,
     double Fps = MovieRenderer.DefaultFrameRate,
-    int Quality = JpegWriter.DefaultQuality);
+    int Quality = JpegWriter.DefaultQuality,
+    string? Format = null,
+    string? Ffmpeg = null);
 
 /// <summary>
-/// Writes a patch to a file: a PNG of one moment, a WAV of the sound, or an AVI of
-/// both. Which of the three comes from the extension, because that is what the person
-/// naming the file has already decided.
+/// Writes a patch to a file: a PNG of one moment, a sound file, or a clip of both.
+/// Which one comes from the extension, because that is what the person naming the
+/// file has already decided — see <see cref="ClipFormats"/> for the list, and
+/// ADR-0089 for why some of them are ffmpeg's work and two are this program's own.
 /// </summary>
 /// <remarks>
 /// Always the interpreter, never the shader backend: a GPU render needs a context and
@@ -38,19 +48,39 @@ internal static class RenderCommand
         ISampleLibrary? samples = null,
         IImageLibrary? pictures = null)
     {
-        var kind = options.Out.Extension.ToLowerInvariant();
+        var still = options.Out.Extension.Equals(".png", StringComparison.OrdinalIgnoreCase);
 
-        if (kind is not (".png" or ".wav" or ".avi"))
+        var format = still
+            ? null
+            : ClipFormats.ById(options.Format) ?? ClipFormats.ByExtension(options.Out.Name);
+
+        if (!still && format is null)
         {
-            error.WriteLine($"{GlobalConstants.ApplicationName}: {options.Out.Name}: write a .png, a .wav or an .avi.");
+            var known = string.Join(", ", ClipFormats.All.Select(f => f.Extension).Distinct());
+
+            error.WriteLine($"{GlobalConstants.ApplicationName}: {options.Out.Name}: write a .png or one of {known}.");
+            return Exit.Failed;
+        }
+
+        // Resolved before anything is compiled, so a machine with no ffmpeg is
+        // told so in a second rather than after rendering a clip it cannot write.
+        var ffmpeg = format?.NeedsFfmpeg == true ? Ffmpeg.Resolve(options.Ffmpeg) : null;
+
+        if (format?.NeedsFfmpeg == true && ffmpeg is null)
+        {
+            error.WriteLine(
+                $"{GlobalConstants.ApplicationName}: {format.Label} is written by ffmpeg, and there is none "
+                + "on PATH. Install it, point --ffmpeg at it, or ask for a "
+                + $"{ClipFormats.MotionJpegAvi.Extension} or {ClipFormats.Wav.Extension} instead.");
+
             return Exit.Failed;
         }
 
         // Only the half being written. A patch wired for the eye and not the ear
         // has plenty to say about its audio program, and none of it is worth
         // saying to somebody asking for a picture.
-        var wantsPicture = kind is ".png" or ".avi";
-        var wantsSound = kind is ".wav" or ".avi";
+        var wantsPicture = still || format!.HasPicture;
+        var wantsSound = !still && (!format!.HasPicture || patch.Reaches().Sound);
 
         var video = wantsPicture ? patch.CompileForVideo(samples: samples, pictures: pictures) : null;
         var audio = wantsSound ? patch.CompileForAudio(samples: samples) : null;
@@ -74,18 +104,17 @@ internal static class RenderCommand
 
         try
         {
-            switch (kind)
+            if (still)
             {
-                case ".png":
-                    Still(video!.Program, options);
-                    break;
-
-                case ".wav":
-                    Sound(audio!.Program, options);
-                    break;
-
-                default:
-                    return Movie(patch, video!.Program, audio!.Program, options, error, progress, cancellation);
+                Still(video!.Program, options);
+            }
+            else if (!format!.HasPicture)
+            {
+                Sound(audio!.Program, format, options, ffmpeg);
+            }
+            else
+            {
+                return Movie(video!.Program, audio?.Program, format, options, ffmpeg, error, progress, cancellation);
             }
         }
         catch (Exception ex)
@@ -107,7 +136,7 @@ internal static class RenderCommand
         PngWriter.WriteBgra(options.Out.FullName, pixels, options.Width, options.Height, stride);
     }
 
-    private static void Sound(CompiledPatch program, RenderOptions options)
+    private static void Sound(CompiledPatch program, ClipFormat format, RenderOptions options, string? ffmpeg)
     {
         // Nothing is drawn, but a patch reading Coordinates' aspect is still told
         // the frame it would have been drawn at.
@@ -117,27 +146,39 @@ internal static class RenderCommand
 
         renderer.Render(program, samples);
 
-        WavWriter.Write(options.Out.FullName, samples, renderer.SampleRate, NodeCatalog.AudioChannels);
+        // Rendered whole before a file is opened, unlike a clip: the sound of a
+        // patch is one array, and there is nothing to be gained by handing an
+        // encoder a tenth of it at a time.
+        using var clip = ClipWriter.Open(new ClipTarget(
+            options.Out.FullName,
+            format,
+            SampleRate: renderer.SampleRate,
+            Channels: NodeCatalog.AudioChannels,
+            Ffmpeg: ffmpeg));
+
+        clip.WriteAudio(samples);
     }
 
     private static int Movie(
-        Patch patch,
         CompiledPatch video,
-        CompiledPatch audio,
+        CompiledPatch? audio,
+        ClipFormat format,
         RenderOptions options,
+        string? ffmpeg,
         TextWriter error,
         IProgress<double>? progress,
         CancellationToken cancellation)
     {
         var settings = new MovieSettings(
-            options.Width, options.Height, options.Seconds, options.Fps, options.Quality);
+            options.Width, options.Height, options.Seconds, options.Fps, options.Quality, format, ffmpeg);
 
-        // Silence is not worth a track. A patch with nothing in its 'left' would
-        // otherwise get one full of zeroes, which is a bigger file saying less.
+        // Silence is not worth a track. A patch with nothing in its 'left' is
+        // compiled for the eye only above, and gets a clip with no audio stream
+        // rather than one full of zeroes.
         var written = MovieRenderer.Render(
             options.Out.FullName,
             video,
-            patch.Reaches().Sound ? audio : null,
+            audio,
             settings,
             progress,
             cancellation);

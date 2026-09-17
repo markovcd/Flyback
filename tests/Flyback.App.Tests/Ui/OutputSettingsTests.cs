@@ -9,6 +9,7 @@ using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Flyback.App.Controls;
 using Flyback.Core.Graph;
+using Flyback.Core.Render;
 using Shouldly;
 using Xunit;
 
@@ -307,6 +308,98 @@ public class OutputSettingsTests : UiTest, IDisposable
 
         (FrameRate(again).SelectedItem as string).ShouldBe("30 fps");
         Quality(again).Value.ShouldBe(85);
+    }
+
+    // --- which encoder a take goes through (ADR-0089) ------------------------
+
+    private static ComboBox VideoFormat(Visual within) => All<ComboBox>(within).Single(c => c.Name == "videoFormat");
+
+    private static ComboBox SoundFormat(Visual within) => All<ComboBox>(within).Single(c => c.Name == "soundFormat");
+
+    private static TextBox FfmpegBox(Visual within) => All<TextBox>(within).Single(c => c.Name == "ffmpeg");
+
+    /// <summary>
+    /// A window with no settings file of its own starts on the formats written
+    /// here — which is also what keeps this test the same on a machine with an
+    /// ffmpeg and one without.
+    /// </summary>
+    [AvaloniaFact]
+    public void The_formats_start_on_the_ones_written_here()
+    {
+        var recording = OpenSettings(Open(), RecordingTab);
+
+        (VideoFormat(recording).SelectedItem as string).ShouldBe(ClipFormats.MotionJpegAvi.Label);
+        (SoundFormat(recording).SelectedItem as string).ShouldBe(ClipFormats.Wav.Label);
+        FfmpegBox(recording).Text.ShouldBeNullOrEmpty();
+    }
+
+    /// <summary>Every format is offered, and only the ones of that kind.</summary>
+    [AvaloniaFact]
+    public void Each_picker_offers_its_own_list()
+    {
+        var recording = OpenSettings(Open(), RecordingTab);
+
+        VideoFormat(recording).ItemsSource.ShouldBe(ClipFormats.Pictures.Select(f => f.Label));
+        SoundFormat(recording).ItemsSource.ShouldBe(ClipFormats.Sounds.Select(f => f.Label));
+    }
+
+    [AvaloniaFact]
+    public void The_formats_and_the_ffmpeg_are_kept_for_the_next_launch()
+    {
+        var window = Open(settingsPath);
+        var dialog = OpenSettings(window, RecordingTab);
+
+        VideoFormat(dialog).SelectedIndex = ClipFormats.Pictures.ToList().IndexOf(ClipFormats.Vp9WebM);
+        SoundFormat(dialog).SelectedIndex = ClipFormats.Sounds.ToList().IndexOf(ClipFormats.Mp3);
+
+        // With a space on the end, which is what pasting one in leaves behind.
+        FfmpegBox(dialog).Text = " /opt/ffmpeg ";
+
+        CloseSettings(window, dialog, save: true);
+
+        var kept = OutputSettings.Load(settingsPath);
+
+        kept.VideoFormat.ShouldBe(ClipFormats.Vp9WebM.Id);
+        kept.SoundFormat.ShouldBe(ClipFormats.Mp3.Id);
+        kept.FfmpegPath.ShouldBe("/opt/ffmpeg");
+
+        var again = OpenSettings(Open(settingsPath), RecordingTab);
+
+        (VideoFormat(again).SelectedItem as string).ShouldBe(ClipFormats.Vp9WebM.Label);
+        (SoundFormat(again).SelectedItem as string).ShouldBe(ClipFormats.Mp3.Label);
+        FfmpegBox(again).Text.ShouldBe("/opt/ffmpeg");
+    }
+
+    [AvaloniaFact]
+    public void A_format_changed_and_not_saved_is_dropped()
+    {
+        var window = Open(settingsPath);
+        var dialog = OpenSettings(window, RecordingTab);
+
+        var before = VideoFormat(dialog).SelectedItem as string;
+
+        VideoFormat(dialog).SelectedIndex = ClipFormats.Pictures.Count - 1;
+
+        CloseSettings(window, dialog, save: false);
+
+        var again = OpenSettings(window, RecordingTab);
+
+        (VideoFormat(again).SelectedItem as string).ShouldBe(before);
+    }
+
+    /// <summary>
+    /// The one default that is a question about the machine: a new settings file
+    /// starts on H.264 wherever there is an ffmpeg to write it, because the AVI
+    /// is the fallback and not the preference — ADR-0089. Asked the same way the
+    /// program asks, so this says the same thing on either kind of machine.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_new_settings_file_starts_on_the_best_format_the_machine_can_write()
+    {
+        var recording = OpenSettings(Open(settingsPath), RecordingTab);
+
+        (VideoFormat(recording).SelectedItem as string)
+            .ShouldBe(ClipFormats.Preferred(Ffmpeg.Resolve(null) is not null).Label);
     }
 
     /// <summary>Save and Cancel sit side by side, in that order, against the right-hand edge.</summary>

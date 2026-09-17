@@ -154,6 +154,63 @@ public class MovieRendererTests
         Should.Throw<ArgumentOutOfRangeException>(() => Export(Small with { Seconds = 0d }));
     }
 
+    // --- the same loop, through ffmpeg -------------------------------------------
+
+    /// <summary>
+    /// An export in a format ffmpeg writes. The loop above is unchanged — what
+    /// differs is only who encodes what comes out of it (ADR-0089) — so what is
+    /// worth pinning here is that the same call writes the file, and that it is
+    /// the tenth of the size that was the whole reason for it.
+    /// </summary>
+    [Fact]
+    public void A_format_ffmpeg_writes_is_rendered_by_the_same_loop()
+    {
+        var ffmpeg = Ffmpeg.Resolve(null);
+
+        Assert.SkipWhen(ffmpeg is null, "no ffmpeg on this machine");
+
+        var folder = Directory.CreateTempSubdirectory("flyback-export-");
+
+        try
+        {
+            var (video, audio) = Drone();
+            var path = Path.Combine(folder.FullName, "drone.mp4");
+
+            var settings = new MovieSettings(160, 90, 1d, 15d)
+            {
+                Format = ClipFormats.H264Mp4,
+                Ffmpeg = ffmpeg,
+            };
+
+            var written = MovieRenderer.Render(
+                path, video, audio, settings, cancellation: TestContext.Current.CancellationToken);
+
+            written.ShouldBe(settings.FrameCount);
+
+            // The MJPEG of the same clip, for the comparison the decision rests on.
+            var avi = Export(settings with { Format = null, Ffmpeg = null });
+
+            var mp4 = new FileInfo(path).Length;
+
+            mp4.ShouldBeGreaterThan(0);
+            mp4.ShouldBeLessThan(avi.Length);
+
+            // Nothing left beside it: the sound goes to a WAV and the picture to
+            // a file of its own, and both are gone once they are muxed.
+            folder.GetFiles().Select(f => f.Name).ShouldBe(["drone.mp4"]);
+        }
+        finally
+        {
+            folder.Delete(recursive: true);
+        }
+    }
+
+    /// <summary>A stream can only hold the format written here, whatever is asked for.</summary>
+    [Fact]
+    public void A_sound_format_is_not_a_clip_of_a_patch() =>
+        Should.Throw<ArgumentOutOfRangeException>(() =>
+            Export(Small with { Format = ClipFormats.Mp3 }));
+
     // --- the JPEG bitstream ------------------------------------------------------
 
     [Fact]

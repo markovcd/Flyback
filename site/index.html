@@ -350,8 +350,9 @@ x |> sine(freq: 1.5)
       </article>
       <article class="node" style="--accent: var(--reading)">
         <header>Record and render <small>Measurement</small></header>
-        <div class="body"><p>Record a live take, knobs and all, to AVI or WAV with <kbd>Ctrl</kbd>+<kbd>R</kbd>.
-        For exact, repeatable exports use <code>flyback-cli render</code> to write a PNG, AVI or WAV.</p></div>
+        <div class="body"><p>Record a live take, knobs and all, with <kbd>Ctrl</kbd>+<kbd>R</kbd>.
+        For exact, repeatable exports use <code>flyback-cli render</code>. MP4, WebM, MOV, MP3, M4A and FLAC
+        where ffmpeg is installed; AVI and WAV are written by Flyback itself and need nothing.</p></div>
       </article>
       <article class="node" style="--accent: var(--tint)">
         <header>Assistant <small>Color</small></header>
@@ -464,7 +465,7 @@ cd Flyback
 dotnet run --project src/Flyback.App -c Release</code></pre>
         <h3>From the command line</h3>
 <pre><code>flyback-cli render nebula.fbk -o nebula.png --size 1920x1080 --at 2.5
-flyback-cli render drone.fbk -o drone.avi --seconds 30 --fps 30
+flyback-cli render drone.fbk -o drone.mp4 --seconds 30 --fps 30
 flyback-cli check nebula.fbk --strict
 flyback-cli print nebula.fbk -o nebula.fbks</code></pre>
       </div>

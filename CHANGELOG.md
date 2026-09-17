@@ -8,6 +8,11 @@
 ### Presets
 - Mycelium, in the Effects plugin: a psybient track of ninety-six bars in six sections, with a picture driven by the same signals. It is the largest preset, and needs the Voice and Picture plugins.
 
+### Recording and export
+- MP4, WebM, MOV, MP3, M4A and FLAC, encoded by ffmpeg where it is installed. An MP4 is around twenty-five times smaller than the AVI.
+- Settings → Recording picks the video and sound formats, and where ffmpeg is if it is not on your `PATH`.
+- `flyback-cli render` takes the format from the extension, with `--format` and `--ffmpeg` to override it.
+
 ### Fixes
 - Pressing Escape after "Learn MIDI controller" found no MIDI device no longer crashes.
 - A number too large for a number box — in a patch file, or typed into the text and applied — no longer crashes when its module is selected.

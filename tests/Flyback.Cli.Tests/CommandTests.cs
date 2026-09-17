@@ -239,13 +239,45 @@ public class CommandTests
         using var directory = new Scratch();
 
         var (code, _, error) = Run((_, e) => RenderCommand.Run(
-            Preset("Plasma"), new RenderOptions(directory.File("out.mp4"), 64, 36), e));
+            Preset("Plasma"), new RenderOptions(directory.File("out.gif"), 64, 36), e));
 
         code.ShouldBe(Exit.Failed);
         error.ShouldContain(".png");
         error.ShouldContain(".wav");
         error.ShouldContain(".avi");
+        error.ShouldContain(".mp4");
     }
+
+    /// <summary>
+    /// A format ffmpeg writes, asked for on a machine with no ffmpeg. Said before
+    /// anything is rendered, and said with what to do about it — ADR-0089.
+    /// </summary>
+    [Fact]
+    public void A_format_needing_ffmpeg_says_so_when_there_is_none()
+    {
+        using var directory = new Scratch();
+
+        var file = directory.File("out.mp4");
+
+        var (code, _, error) = Run((_, e) => RenderCommand.Run(
+            Preset("Plasma"),
+            new RenderOptions(file, 64, 36, Seconds: 0.2d, Ffmpeg: Missing),
+            e));
+
+        // Only where this machine has no ffmpeg of its own to fall back on, since
+        // a path that is not there falls back to PATH by design.
+        if (Core.Render.Ffmpeg.OnPath() is not null) return;
+
+        code.ShouldBe(Exit.Failed);
+        error.ShouldContain("ffmpeg");
+        error.ShouldContain("--ffmpeg");
+
+        file.Refresh();
+        file.Exists.ShouldBeFalse();
+    }
+
+    /// <summary>A path no ffmpeg is at, which is what pointing --ffmpeg at nothing looks like.</summary>
+    private static string Missing => Path.Combine(Path.GetTempPath(), $"no-ffmpeg-{Guid.NewGuid():N}");
 
     [Fact]
     public void A_path_that_cannot_be_written_is_a_failure_rather_than_a_throw()

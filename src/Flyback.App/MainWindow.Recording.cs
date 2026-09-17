@@ -32,9 +32,9 @@ public sealed partial class MainWindow
     private DispatcherTimer? recordingTicker;
 
     private static readonly string RecordTip =
-        "Record what the patch is doing now, knobs and all, as it happens.  (Ctrl+R)  An AVI "
-        + $"takes the picture off the GPU at {MovieRenderer.DefaultFrameRate:0} frames a second, at "
-        + "whatever Size says, with the sound alongside it; a WAV takes the sound "
+        "Record what the patch is doing now, knobs and all, as it happens.  (Ctrl+R)  A video "
+        + "takes the picture off the GPU at whatever the Recording settings say, at "
+        + "whatever Size says, with the sound alongside it; a sound file takes the sound "
         + "on its own. It has no fixed length, unlike a file `flyback-cli render` "
         + "writes — it runs until you stop it.";
 
@@ -56,7 +56,7 @@ public sealed partial class MainWindow
     /// </remarks>
     private void MarkRecordable()
     {
-        var kinds = RecordKinds(editor.Patch);
+        var kinds = RecordingKinds();
 
         recordButton.IsEnabled = recorder is not null || kinds.Count > 0;
 
@@ -87,7 +87,7 @@ public sealed partial class MainWindow
     private async Task RecordAsync()
     {
         var patch = editor.Patch;
-        var kinds = RecordKinds(patch);
+        var kinds = RecordingKinds();
 
         if (kinds.Count == 0)
         {
@@ -108,9 +108,32 @@ public sealed partial class MainWindow
         Start(path, patch);
     }
 
+    /// <summary>
+    /// What the picker offers: the guard on what the patch reaches, asked with the
+    /// two formats the settings are on.
+    /// </summary>
+    private IReadOnlyList<FilePickerFileType> RecordingKinds() => RecordKinds(
+        editor.Patch,
+        ClipFormats.Wanted(outputSettings.VideoFormat, picture: true),
+        ClipFormats.Wanted(outputSettings.SoundFormat, picture: false));
+
     private void Start(string path, Patch patch)
     {
-        var wantsPicture = path.EndsWith(".avi", StringComparison.OrdinalIgnoreCase);
+        // The name decides, not the setting: an extension typed over the one the
+        // picker suggested is what somebody meant by typing it.
+        var (format, ffmpeg) = Encoder(path);
+
+        if (format.NeedsFfmpeg && ffmpeg is null)
+        {
+            Report(
+                $"{format.Label} is written by ffmpeg, and there is none on PATH. "
+                + "Find it in Settings → Recording, or record an "
+                + $"{ClipFormats.MotionJpegAvi.Extension} or a {ClipFormats.Wav.Extension}.");
+
+            return;
+        }
+
+        var wantsPicture = format.HasPicture;
 
         // What is actually playing, not what the patch could play. A take with
         // the audio switched off has no sound to record, whatever is wired up.
@@ -118,7 +141,7 @@ public sealed partial class MainWindow
 
         if (!wantsPicture && !withSound)
         {
-            Report("Turn the Output's Volume up before recording a WAV — there is nothing to record otherwise.");
+            Report($"Turn the Output's Volume up before recording a {format.Extension} — there is nothing to record otherwise.");
             return;
         }
 
@@ -126,11 +149,13 @@ public sealed partial class MainWindow
 
         var settings = new RecordingSettings(
             path,
+            format,
             size,
             outputSettings.FrameRate,
             outputSettings.JpegQuality,
             withSound ? audio.SampleRate : 0,
-            withSound ? NodeCatalog.AudioChannels : 0);
+            withSound ? NodeCatalog.AudioChannels : 0,
+            ffmpeg);
 
         LiveRecorder started;
 
@@ -149,7 +174,17 @@ public sealed partial class MainWindow
         if (wantsPicture && preview.BeginCapture(started) is { } refused)
         {
             started.Dispose();
-            File.Delete(path);
+
+            // A file nothing was ever written to, so whether it can be removed
+            // says nothing worth saying over the reason the take did not start.
+            try
+            {
+                File.Delete(path);
+            }
+            catch (IOException)
+            {
+                // Left where it is, empty.
+            }
 
             Report($"Could not record the picture: {refused}");
             return;
@@ -202,9 +237,17 @@ public sealed partial class MainWindow
     }
 
     /// <summary>
-    /// Finishes the file and says so. Everything that ends a take goes through
-    /// here, including the ones nobody asked for.
+    /// Ends a take and says so. Everything that ends one goes through here,
+    /// including the ones nobody asked for.
     /// </summary>
+    /// <remarks>
+    /// The shell is handed back at once and the file is finished behind it, because
+    /// finishing is no longer a header patch: an ffmpeg format ends by muxing the
+    /// sound into the picture, which reads and rewrites everything recorded, and
+    /// the window must not be frozen for the length of that. So the last word on
+    /// a take — its length, or what went wrong writing it — is reported when the
+    /// file is actually closed rather than when Stop was pressed.
+    /// </remarks>
     private void Stop(string? because = null)
     {
         if (recorder is not { } running) return;
@@ -217,10 +260,11 @@ public sealed partial class MainWindow
         recordingTicker?.Stop();
         recordingTicker = null;
 
-        var status = running.Status;
         var name = Path.GetFileName(running.Path);
 
-        running.Dispose();
+        // Taken off the field before anything is awaited, so a second press —
+        // or the preview losing its picture as this runs — is a no-op rather
+        // than a second attempt to close the same file.
         recorder = null;
 
         recordButton.Content = Glyphs.Record();
@@ -228,6 +272,35 @@ public sealed partial class MainWindow
 
         MarkRecordable();
 
-        Report(because ?? $"Recorded {status.Seconds:0.0}s to {name}.");
+        // A take that ended for a reason has its last word already. One that was
+        // simply stopped gets a holding line, since closing the file is the only
+        // part of this that can take long enough to need one.
+        Report(because ?? $"Finishing {name}…", progress: because is null);
+
+        _ = FinishAsync(running, name, said: because is not null);
+    }
+
+    /// <summary>
+    /// Closes the file off the UI thread and reports what it came to. What the
+    /// writer says on the way out — ffmpeg refusing an argument, an AVI at its
+    /// 4 GB ceiling — is the only account of a take that is not what was asked
+    /// for, so it is read after the close rather than before it.
+    /// </summary>
+    /// <param name="said">
+    /// Whether <see cref="Stop"/> has already reported why this ended. Then the
+    /// close is only how a take that had already failed was tidied up, and
+    /// saying anything more would write over the reason.
+    /// </param>
+    private async Task FinishAsync(LiveRecorder running, string name, bool said)
+    {
+        await Task.Run(running.Dispose);
+
+        if (said) return;
+
+        var status = running.Status;
+
+        Report(status.Stopped is { } failure
+            ? $"Recording stopped: {failure}"
+            : $"Recorded {status.Seconds:0.0}s to {name}.");
     }
 }

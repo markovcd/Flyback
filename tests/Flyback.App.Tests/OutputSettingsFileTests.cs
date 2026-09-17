@@ -1,3 +1,4 @@
+using Flyback.Core.Render;
 using Flyback.Plugins.Settings;
 using Shouldly;
 using Xunit;
@@ -113,6 +114,53 @@ public class OutputSettingsFileTests : IDisposable
         System.IO.File.WriteAllText(File, """{ "sound": null }""");
 
         OutputSettings.Load(File).SoundOf("wasapi").ShouldBe(SettingValues.None);
+    }
+
+    /// <summary>Which encoder a take goes through, and which ffmpeg (ADR-0089).</summary>
+    [Fact]
+    public void The_formats_and_the_ffmpeg_come_back()
+    {
+        new OutputSettings
+        {
+            VideoFormat = ClipFormats.Vp9WebM.Id,
+            SoundFormat = ClipFormats.Mp3.Id,
+            FfmpegPath = @"C:	oolsfmpeg.exe",
+        }.Save(File);
+
+        var settings = OutputSettings.Load(File);
+
+        settings.VideoFormat.ShouldBe(ClipFormats.Vp9WebM.Id);
+        settings.SoundFormat.ShouldBe(ClipFormats.Mp3.Id);
+        settings.FfmpegPath.ShouldBe(@"C:	oolsfmpeg.exe");
+    }
+
+    /// <summary>
+    /// A format id this build does not define, and one saved into the wrong list.
+    /// Both read as the format written here, which is the one that always works.
+    /// </summary>
+    [Fact]
+    public void A_format_nothing_defines_reads_as_the_one_written_here()
+    {
+        Directory.CreateDirectory(folder);
+        System.IO.File.WriteAllText(File, """{ "videoFormat": "av1", "soundFormat": "mp4" }""");
+
+        var settings = OutputSettings.Load(File);
+
+        settings.VideoFormat.ShouldBe(ClipFormats.MotionJpegAvi.Id);
+        settings.SoundFormat.ShouldBe(ClipFormats.Wav.Id);
+    }
+
+    /// <summary>
+    /// A saved format is never second-guessed by what this machine has. Somebody
+    /// who chose H.265 on a machine with ffmpeg and opened the program on one
+    /// without it still has H.265 chosen when they go back.
+    /// </summary>
+    [Fact]
+    public void A_saved_format_survives_a_machine_that_cannot_write_it()
+    {
+        new OutputSettings { VideoFormat = ClipFormats.H265Mp4.Id }.Save(File);
+
+        OutputSettings.Load(File).VideoFormat.ShouldBe(ClipFormats.H265Mp4.Id);
     }
 
     /// <summary>Losing a preference is not worth failing to start over.</summary>

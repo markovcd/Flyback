@@ -209,6 +209,10 @@ public sealed partial class MainWindow
         frameRate.SelectedIndex = Nearest(FrameRates, settings.FrameRate);
         previewFrameRate.SelectedIndex = Nearest(PreviewFrameRates, settings.PreviewFrameRate);
         jpegQuality.Value = settings.JpegQuality;
+
+        videoFormat.SelectedIndex = Row(ClipFormats.Pictures, settings.VideoFormat, picture: true);
+        soundFormat.SelectedIndex = Row(ClipFormats.Sounds, settings.SoundFormat, picture: false);
+        ffmpegBox.Text = settings.FfmpegPath;
         latency.SelectedIndex = Nearest(Latencies.Select(ms => (double)ms).ToArray(), settings.LatencyMilliseconds);
         takeover.SelectedIndex = settings.Takeover == Midi.Takeover.PickUp ? 1 : 0;
 
@@ -222,6 +226,20 @@ public sealed partial class MainWindow
     /// </summary>
     private static int Nearest(IReadOnlyList<double> rows, double value) =>
         Enumerable.Range(0, rows.Count).MinBy(row => Math.Abs(rows[row] - value));
+
+    /// <summary>
+    /// The row of a format list a saved id is. The nearest thing a list of names
+    /// has to <see cref="Nearest"/>: an id this build does not define shows as
+    /// the format written here, which is the first row of either list.
+    /// </summary>
+    private static int Row(IReadOnlyList<ClipFormat> formats, string? id, bool picture)
+    {
+        var wanted = ClipFormats.Wanted(id, picture);
+
+        // Nought either way: it is where the format written here sits in both
+        // lists, and so is both the answer and the fallback.
+        return Enumerable.Range(0, formats.Count).FirstOrDefault(row => formats[row] == wanted);
+    }
 
     /// <summary>
     /// Hands <paramref name="settings"/> to the preview and the sound. The only way
@@ -278,6 +296,13 @@ public sealed partial class MainWindow
                 : outputSettings.JpegQuality,
 
             LatencyMilliseconds = Latencies[Math.Max(latency.SelectedIndex, 0)],
+
+            VideoFormat = Chosen(ClipFormats.Pictures, videoFormat).Id,
+            SoundFormat = Chosen(ClipFormats.Sounds, soundFormat).Id,
+
+            // Trimmed, because a path pasted in with a space on the end is a
+            // path nobody meant and one File.Exists would refuse.
+            FfmpegPath = (ffmpegBox.Text ?? string.Empty).Trim(),
 
             // Every backend's, not only the one showing, so a backend that is not
             // installed this launch keeps what it was set to.
@@ -1027,11 +1052,14 @@ public sealed partial class MainWindow
     {
         ToolTip.SetTip(frameRate, "Frames a second in a recorded video. Takes the next recording, not one already running.");
         ToolTip.SetTip(jpegQuality,
-            "How finely each frame of a recorded video is compressed: higher looks better and "
-            + "makes a bigger file.");
+            "How good the picture in a recorded video is: higher looks better and makes a bigger "
+            + "file. Read as a JPEG quality by the AVI written here, and as a rate factor by every "
+            + "format ffmpeg writes.");
 
         recordingSection.Children.Add(Field("Frame rate", frameRate));
         recordingSection.Children.Add(Field("Quality", jpegQuality));
+
+        BuildEncodingRows(recordingSection);
     }
 
     /// <summary>

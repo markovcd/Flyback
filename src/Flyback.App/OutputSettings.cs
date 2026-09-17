@@ -51,7 +51,37 @@ public sealed class OutputSettings
     public double PreviewFrameRate { get; set; }
 
     /// <summary>How a recorded take's frames are compressed, from 1 to 100 — the Recording section.</summary>
+    /// <remarks>
+    /// Named for the encoder it was written for, and kept that way so a file
+    /// saved before <see cref="VideoFormat"/> existed still reads. Every format
+    /// reads it: a JPEG quality to the one written here, a rate factor to the
+    /// rest — see <see cref="ClipFormat.Crf"/>.
+    /// </remarks>
     public int JpegQuality { get; set; } = JpegWriter.DefaultQuality;
+
+    /// <summary>
+    /// Which of <see cref="ClipFormats.Pictures"/> a recorded take with a picture
+    /// is written as — the Recording section.
+    /// </summary>
+    /// <remarks>
+    /// The id rather than the row of the list, for the reason <see cref="Width"/>
+    /// is the number rather than the row: a list that gains or loses a format
+    /// still reads a file written against the old one.
+    /// </remarks>
+    public string VideoFormat { get; set; } = ClipFormats.MotionJpegAvi.Id;
+
+    /// <inheritdoc cref="VideoFormat"/>
+    public string SoundFormat { get; set; } = ClipFormats.Wav.Id;
+
+    /// <summary>
+    /// The ffmpeg to encode with, or empty to use whatever is on <c>PATH</c> —
+    /// the Recording section.
+    /// </summary>
+    /// <remarks>
+    /// Kept even while the formats chosen need no ffmpeg, so that picking one
+    /// that does is one click rather than two.
+    /// </remarks>
+    public string FfmpegPath { get; set; } = string.Empty;
 
     /// <summary>
     /// How far behind the patch the speakers may run, in milliseconds — the Sound
@@ -91,14 +121,38 @@ public sealed class OutputSettings
 
     public static string File => Path.Combine(GlobalConstants.DataFolder, "output.json");
 
+    /// <summary>
+    /// What a machine with no settings file yet starts on: the properties' own
+    /// defaults, except that the video format is H.264 wherever there is an
+    /// ffmpeg to write it with.
+    /// </summary>
+    /// <remarks>
+    /// The one setting whose default is a question about the machine rather than
+    /// a number. Motion JPEG is written here and so is always available, but it
+    /// is twenty-five times the size and reaches AVI's 4 GB ceiling in about half
+    /// an hour — a fallback rather than a preference (ADR-0089). The sound default stays
+    /// the WAV, which is exact; an MP3 is a choice somebody makes, not one to
+    /// make for them.
+    /// <para>
+    /// Only for a file that does not exist. A saved format is never second-guessed
+    /// — see <see cref="ClipFormats.Wanted"/> — so this cannot overwrite what
+    /// anybody chose, and a machine that gains an ffmpeg after the first launch
+    /// is one settings window away from using it.
+    /// </para>
+    /// </remarks>
+    private static OutputSettings Fresh() => new()
+    {
+        VideoFormat = ClipFormats.Preferred(Core.Render.Ffmpeg.Resolve(null) is not null).Id,
+    };
+
     /// <summary>Never throws. A settings file is not worth a failure to start.</summary>
     public static OutputSettings Load(string path)
     {
         try
         {
             var settings = System.IO.File.Exists(path)
-                ? JsonSerializer.Deserialize<OutputSettings>(System.IO.File.ReadAllText(path), Options) ?? new()
-                : new OutputSettings();
+                ? JsonSerializer.Deserialize<OutputSettings>(System.IO.File.ReadAllText(path), Options) ?? Fresh()
+                : Fresh();
 
             // Brought into range rather than refused, since the file is one
             // somebody may have edited by hand: a frame rate of nought or a
@@ -113,6 +167,14 @@ public sealed class OutputSettings
                 : Math.Clamp(settings.PreviewFrameRate, SlowestFrameRate, FastestFrameRate);
 
             settings.JpegQuality = Math.Clamp(settings.JpegQuality, LowestQuality, HighestQuality);
+
+            // A format this build does not define reads as the one written here.
+            // Whether ffmpeg is on this machine is not asked: that is a question
+            // about this launch, and the answer to it must not overwrite what
+            // somebody chose.
+            settings.VideoFormat = ClipFormats.Wanted(settings.VideoFormat, picture: true).Id;
+            settings.SoundFormat = ClipFormats.Wanted(settings.SoundFormat, picture: false).Id;
+            settings.FfmpegPath ??= string.Empty;
             settings.LatencyMilliseconds = Math.Clamp(settings.LatencyMilliseconds, ShortestLatency, LongestLatency);
 
             // A "sound": null typed by hand is nothing chosen, not a fault.

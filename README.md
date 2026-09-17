@@ -21,6 +21,7 @@ dotnet run --project src/Flyback.App -c Release
 - Feedback and iterative image generation via feedback modules and previous-frame sampling
 - Sources, oscillators, patterns, forms, geometry, color, maths, pitch, timing, shaping, time effects, feedback and measurement modules, with presets for each
 - Live preview, output settings and live recording in the app shell; deterministic export through the CLI
+- MP4, WebM, MOV, MP3, M4A and FLAC through ffmpeg where it is installed, found on `PATH` or picked by hand; Motion JPEG AVI and WAV are written by Flyback itself and need nothing
 - MIDI input support through platform backends (Windows, macOS and Linux)
 - CLI tools for rendering, checking, inspecting and bundling patches
 - A text language a patch can be written in, saved as and read back from — the same instrument, as source
@@ -93,8 +94,11 @@ The CLI runs the same engine without the Avalonia shell, so it is useful for ren
 
 ```bash
 flyback-cli render nebula.fbk -o nebula.png --size 1920x1080 --at 2.5
+flyback-cli render drone.fbk -o drone.mp4 --seconds 30 --fps 30
 flyback-cli render drone.fbk -o drone.avi --seconds 30 --fps 30
+flyback-cli render drone.fbk -o drone.mp3 --seconds 30
 flyback-cli render drone.fbk -o drone.wav --seconds 30
+flyback-cli render drone.fbk -o drone.mkv --seconds 30 --format mp4 --ffmpeg /opt/bin/ffmpeg
 flyback-cli check nebula.fbk
 flyback-cli check nebula.fbk --strict
 flyback-cli info nebula.fbk
@@ -109,7 +113,7 @@ flyback-cli probe --provider all
 
 ### Commands
 
-- `render`: renders an image, movie or WAV from a patch
+- `render`: renders a still, a clip or a sound file from a patch. The extension picks the format — `.png`, `.avi`, `.mp4`, `.webm`, `.mov`, `.wav`, `.mp3`, `.m4a`, `.flac` — and everything but `.png`, `.avi` and `.wav` is encoded by ffmpeg, taken from `PATH` unless `--ffmpeg` names one. `--format` overrides the extension.
 - `check`: compiles the patch and reports issues
 - `info`: shows module and wire counts and compile cost
 - `pack`: packs a patch together with the files it references

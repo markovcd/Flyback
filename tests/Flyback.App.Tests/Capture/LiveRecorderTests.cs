@@ -4,6 +4,7 @@ using System.Text;
 using Avalonia;
 using Flyback.App.Capture;
 using Flyback.Core;
+using Flyback.Core.Render;
 using Shouldly;
 using Xunit;
 
@@ -29,7 +30,9 @@ public class LiveRecorderTests : IDisposable
 
     public void Dispose()
     {
-        foreach (var kind in new[] { ".avi", ".wav" })
+        // Every extension a take here could have been written under, and the two
+        // names the ffmpeg formats write beside the file while they are going.
+        foreach (var kind in new[] { ".avi", ".wav", ".mp4", ".mp3", ".mp4.part.mp4", ".mp4.part.wav" })
             if (File.Exists(path + kind))
                 File.Delete(path + kind);
 
@@ -38,13 +41,15 @@ public class LiveRecorderTests : IDisposable
 
     private RecordingSettings Video(bool withSound = true) => new(
         path + ".avi",
+        ClipFormats.MotionJpegAvi,
         Size,
         Rate,
         Quality: 60,
         withSound ? SampleRate : 0,
         withSound ? Channels : 0);
 
-    private RecordingSettings Audio() => new(path + ".wav", default, Rate, 60, SampleRate, Channels);
+    private RecordingSettings Audio() => new(
+        path + ".wav", ClipFormats.Wav, default, Rate, 60, SampleRate, Channels);
 
     /// <summary>
     /// One frame's worth of picture and sound, offered the way the two threads
@@ -70,6 +75,89 @@ public class LiveRecorderTests : IDisposable
             Thread.Sleep(1);
         }
     }
+
+    // --- the same take, through ffmpeg (ADR-0089) ----------------------------
+
+    /// <summary>What is on this machine, asked once.</summary>
+    private static readonly string? Encoder = Flyback.Core.Render.Ffmpeg.Resolve(null);
+
+    private RecordingSettings Through(ClipFormat format) => new(
+        path + format.Extension,
+        format,
+        format.HasPicture ? Size : default,
+        Rate,
+        Quality: 60,
+        SampleRate,
+        Channels,
+        Encoder);
+
+    /// <summary>
+    /// A live take in the format most people will record in. The picture is
+    /// piped to ffmpeg while the sound goes to a WAV beside the file, and the
+    /// two are muxed as the take is finished — so what this really pins is that
+    /// finishing works from the recorder's own thread.
+    /// </summary>
+    [Fact]
+    public void A_take_is_written_through_ffmpeg()
+    {
+        Assert.SkipWhen(Encoder is null, "no ffmpeg on this machine");
+
+        var file = path + ClipFormats.H264Mp4.Extension;
+
+        using (var recorder = new LiveRecorder(Through(ClipFormats.H264Mp4)))
+        {
+            Drive(recorder, untilFrames: 8);
+
+            recorder.Stop();
+
+            recorder.Status.Stopped.ShouldBeNull();
+            recorder.Status.Frames.ShouldBeGreaterThanOrEqualTo(8);
+        }
+
+        new FileInfo(file).Length.ShouldBeGreaterThan(0);
+
+        // Both halves of the sound pass are gone: on a long take each is as big
+        // as everything recorded.
+        File.Exists(file + ".part.mp4").ShouldBeFalse();
+        File.Exists(file + ".part.wav").ShouldBeFalse();
+    }
+
+    /// <summary>A take of the sound alone, in the format somebody sends to somebody.</summary>
+    [Fact]
+    public void A_sound_only_take_is_written_through_ffmpeg()
+    {
+        Assert.SkipWhen(Encoder is null, "no ffmpeg on this machine");
+
+        using (var recorder = new LiveRecorder(Through(ClipFormats.Mp3)))
+        {
+            Drive(recorder, untilFrames: 0, picture: false);
+
+            // Nothing counts frames in a sound-only take, so it is driven by the
+            // clock instead: long enough for the ring to have been drained.
+            Thread.Sleep(250);
+
+            recorder.Stop();
+
+            recorder.Status.Stopped.ShouldBeNull();
+        }
+
+        new FileInfo(path + ClipFormats.Mp3.Extension).Length.ShouldBeGreaterThan(0);
+    }
+
+    /// <summary>
+    /// A format needing ffmpeg with none to be had. Refused by the constructor,
+    /// which is what lets the shell say so before a take looks like it started.
+    /// </summary>
+    [Fact]
+    public void A_take_in_a_format_this_machine_cannot_write_is_refused() =>
+        Should.Throw<InvalidOperationException>(() => new LiveRecorder(new RecordingSettings(
+            path + ".mp4",
+            ClipFormats.H264Mp4,
+            Size,
+            Rate,
+            Quality: 60,
+            SampleRate,
+            Channels)));
 
     /// <summary>
     /// Counts chunks of one fourcc by walking the movi list, which is the file's
@@ -243,7 +331,8 @@ public class LiveRecorderTests : IDisposable
     [Fact]
     public void A_take_of_neither_is_refused() =>
         Should.Throw<ArgumentException>(() =>
-            new LiveRecorder(new RecordingSettings(path + ".avi", default, Rate, 60, 0, 0)));
+            new LiveRecorder(new RecordingSettings(
+                path + ".avi", ClipFormats.MotionJpegAvi, default, Rate, 60, 0, 0)));
 
     /// <summary>Stopping twice is what closing the window during a take does.</summary>
     [Fact]

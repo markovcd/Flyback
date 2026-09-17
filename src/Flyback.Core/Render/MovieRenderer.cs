@@ -9,22 +9,35 @@ namespace Flyback.Core.Render;
 /// everything else has a defensible default and this does not, because a patch
 /// is an endless function of time and only a person can say where to stop.
 /// </param>
-/// <param name="Quality">JPEG quality, 1 to 100. See <see cref="JpegWriter"/>.</param>
+/// <param name="Quality">
+/// 1 to 100, read as a JPEG quality by the format written here and as a rate
+/// factor by the rest — see <see cref="ClipFormat.Crf"/>.
+/// </param>
+/// <param name="Format">
+/// Which of <see cref="ClipFormats.Pictures"/> the file is. Null is the one this
+/// program writes itself, which is what a machine with no ffmpeg has.
+/// </param>
+/// <param name="Ffmpeg">Where ffmpeg is, for a format that needs one.</param>
 public readonly record struct MovieSettings(
     int Width,
     int Height,
     double Seconds,
     double FramesPerSecond = MovieRenderer.DefaultFrameRate,
-    int Quality = JpegWriter.DefaultQuality)
+    int Quality = JpegWriter.DefaultQuality,
+    ClipFormat? Format = null,
+    string? Ffmpeg = null)
 {
     /// <summary>Always at least one, so the shortest export is still a picture.</summary>
     public int FrameCount => Math.Max(1, (int)Math.Round(Seconds * FramesPerSecond));
+
+    /// <summary>The format asked for, or the one written here.</summary>
+    public ClipFormat Written => Format ?? ClipFormats.MotionJpegAvi;
 }
 
 /// <summary>
-/// Renders both sinks of a patch to one file: the video program frame by frame
-/// as Motion JPEG, the audio program sample by sample as PCM, interleaved into an
-/// AVI.
+/// Renders both sinks of a patch to one file: the video program frame by frame,
+/// the audio program sample by sample, into whichever
+/// <see cref="ClipFormat"/> was asked for.
 /// </summary>
 /// <remarks>
 /// Offline, so time is taken from the frame number rather than a stopwatch and a
@@ -40,6 +53,11 @@ public static class MovieRenderer
     /// </summary>
     public const double DefaultFrameRate = 30d;
 
+    /// <summary>
+    /// Renders to a file, in whichever format <paramref name="settings"/> names.
+    /// The only entry that can reach a format ffmpeg writes, since ffmpeg is
+    /// given somewhere to write rather than something to write into.
+    /// </summary>
     /// <inheritdoc cref="Render(Stream, CompiledPatch, CompiledPatch, MovieSettings, IProgress{double}, CancellationToken)"/>
     public static int Render(
         string path,
@@ -49,9 +67,20 @@ public static class MovieRenderer
         IProgress<double>? progress = null,
         CancellationToken cancellation = default)
     {
-        using var file = File.Create(path);
+        Check(settings);
 
-        return Render(file, video, audio, settings, progress, cancellation);
+        using var clip = ClipWriter.Open(new ClipTarget(
+            path,
+            settings.Written,
+            settings.Width,
+            settings.Height,
+            settings.FramesPerSecond,
+            settings.Quality,
+            audio is null ? 0 : GlobalConstants.SampleRate,
+            audio is null ? 0 : NodeCatalog.AudioChannels,
+            settings.Ffmpeg));
+
+        return Render(clip, video, audio, settings, progress, cancellation);
     }
 
     /// <param name="video">The picture's compiled program, rooted at the Output's color.</param>
@@ -66,7 +95,10 @@ public static class MovieRenderer
     /// rendered is kept and the file is closed properly, so stopping a long
     /// export leaves a shorter video rather than a broken one.
     /// </param>
-    /// <param name="output">Where the file is written.</param>
+    /// <param name="output">
+    /// Where the file is written. Always Motion JPEG in an AVI — the one format
+    /// written here, and so the only one a stream can hold.
+    /// </param>
     /// <param name="settings">Size, length, rate and quality: everything about the file that is not a program.</param>
     /// <returns>Frames written — fewer than <see cref="MovieSettings.FrameCount"/> if stopped.</returns>
     public static int Render(
@@ -77,12 +109,45 @@ public static class MovieRenderer
         IProgress<double>? progress = null,
         CancellationToken cancellation = default)
     {
-        var width = settings.Width;
-        var height = settings.Height;
+        Check(settings);
 
-        if (width <= 0 || height <= 0) throw new ArgumentOutOfRangeException(nameof(settings), "A frame needs both dimensions.");
+        using var clip = new AviClipWriter(output, new ClipTarget(
+            string.Empty,
+            ClipFormats.MotionJpegAvi,
+            settings.Width,
+            settings.Height,
+            settings.FramesPerSecond,
+            settings.Quality,
+            audio is null ? 0 : GlobalConstants.SampleRate,
+            audio is null ? 0 : NodeCatalog.AudioChannels));
+
+        return Render(clip, video, audio, settings, progress, cancellation);
+    }
+
+    /// <summary>Everything that has to be true of a clip before a file is opened for it.</summary>
+    private static void Check(MovieSettings settings)
+    {
+        if (settings.Width <= 0 || settings.Height <= 0) throw new ArgumentOutOfRangeException(nameof(settings), "A frame needs both dimensions.");
         if (settings.FramesPerSecond <= 0d) throw new ArgumentOutOfRangeException(nameof(settings), "A frame rate has to be positive.");
         if (settings.Seconds <= 0d) throw new ArgumentOutOfRangeException(nameof(settings), "An export has to have a length.");
+        if (!settings.Written.HasPicture) throw new ArgumentOutOfRangeException(nameof(settings), "A clip of a patch has a picture in it.");
+    }
+
+    /// <summary>
+    /// The loop itself, which is the same whoever encodes what comes out of it.
+    /// What a format costs is <see cref="IClipWriter"/>'s business and changes
+    /// nothing about the order the two sinks are advanced in.
+    /// </summary>
+    private static int Render(
+        IClipWriter clip,
+        CompiledPatch video,
+        CompiledPatch? audio,
+        MovieSettings settings,
+        IProgress<double>? progress,
+        CancellationToken cancellation)
+    {
+        var width = settings.Width;
+        var height = settings.Height;
 
         var total = settings.FrameCount;
         var rate = settings.FramesPerSecond;
@@ -91,9 +156,6 @@ public static class MovieRenderer
         var frames = new SynthRenderer();
         var pixels = new byte[(long)stride * height];
 
-        var jpeg = new JpegWriter(settings.Quality);
-        var encoded = new MemoryStream(width * height / 4);
-
         // The sound of this frame, so a Scan crossing the width crosses the one
         // being written.
         var speaker = audio is null
@@ -101,14 +163,6 @@ public static class MovieRenderer
             : new AudioRenderer { Aspect = SynthRenderer.AspectOf(width, height) };
         var samples = Array.Empty<float>();
         var written = 0L;
-
-        using var avi = new AviWriter(
-            output,
-            width,
-            height,
-            rate,
-            speaker?.SampleRate ?? 0,
-            speaker is null ? 0 : NodeCatalog.AudioChannels);
 
         // What the picture is told about the sound — a Meter's reading, and
         // nothing else offline, since nobody is playing a keyboard into a file.
@@ -157,15 +211,13 @@ public static class MovieRenderer
             // track that counts its own samples exactly.
             frames.Render(video, frame / rate, width, height, pixels, stride, heard);
 
-            encoded.SetLength(0);
-            jpeg.WriteBgra(encoded, pixels, width, height, stride);
-            avi.WriteFrame(encoded.GetBuffer().AsSpan(0, (int)encoded.Length));
+            clip.WriteFrame(pixels, stride);
 
-            if (sounded > 0) avi.WriteAudio(samples.AsSpan(0, sounded));
+            if (sounded > 0) clip.WriteAudio(samples.AsSpan(0, sounded));
 
             progress?.Report((frame + 1) / (double)total);
         }
 
-        return avi.FrameCount;
+        return (int)clip.FrameCount;
     }
 }
