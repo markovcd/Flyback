@@ -34,6 +34,14 @@ internal static class AcidPreset
 
     private const string DriveType = "flyback.voice.drive";
 
+    private const string RandomType = "flyback.voice.random";
+
+    private const string WanderType = "flyback.voice.wander";
+
+    private const string DeskType = "math.desk";
+
+    private const string TrailsType = "feedback.trails";
+
     private const string FractalType = "flyback.picture.fractal";
 
     private const string PaletteType = "flyback.picture.palette";
@@ -327,25 +335,12 @@ internal static class AcidPreset
 
         // --- the hiss both drum sounds are made of ------------------------------
 
-        // Nothing in the catalogue makes a noise a point in the plane can hear:
-        // Noise and Fractal are fields in x and y, and the audio path stands at one
-        // point of it. What makes the hiss is the hash every shader writes — a
-        // large multiple of the clock, a sine, a larger multiple, the fraction.
-        // Built once and read by the hats and the clap, because two drums made of
-        // the same air is what a drum machine is.
-        var grain = b.Add("math.mul", (1, 3571f));
-        var hash = b.Add("math.sin");
-        var scatter = b.Add("math.mul", (1, 4371.3f));
-        var white = b.Add("math.fract");
-        var hiss = b.Add("math.remap", (1, 0f), (2, 1f), (3, -1f), (4, 1f));
-
-        b.Wire(clock, 0, grain, 0)
-         .Wire(grain, 0, hash, 0)
-         .Wire(hash, 0, scatter, 0)
-         .Wire(scatter, 0, white, 0)
-         .Wire(white, 0, hiss, 0);
-
-        b.Group("Hiss", grain, hash, scatter, white, hiss);
+        // Nothing in the engine's own catalogue makes a noise a point in the plane
+        // can hear: Noise and Fractal are fields in x and y, and the audio path
+        // stands at one point of it. Random's white is that field read along the
+        // clock instead. One, read by the hats and the clap, because two drums made
+        // of the same air is what a drum machine is.
+        var hiss = b.Add(RandomType);
 
         // --- the hats ----------------------------------------------------------
 
@@ -380,7 +375,7 @@ internal static class AcidPreset
          .Wire(hiss, 0, hats, 0)
          .Wire(hatEnv, 0, hats, 1);
 
-        b.Group("Hats", hatSeq, open, hatEnv, hats);
+        b.Group("Hats", hiss, hatSeq, open, hatEnv, hats);
 
         // --- the clap ----------------------------------------------------------
 
@@ -426,52 +421,30 @@ internal static class AcidPreset
 
         // --- the slow weather ----------------------------------------------------
 
-        // Two smooth random voltages, which keep the patch changing once the
-        // sequencers have been heard: a Noise field walked slowly along z alone is
-        // the lagged sample-and-hold a modular patch would reach for.
+        // Two Wanders, which keep the patch changing once the sequencers have been
+        // heard: the lagged sample-and-hold a modular patch would reach for. Each
+        // has a seed of its own, and is the same value on the screen as in the
+        // speakers, so the two sinks agree about what the weather is doing.
         //
-        // Their x and y are pinned by a Value rather than left to the normal.
-        // Unpinned they would read the pixel's own position, so the screen would
-        // get a field where the speakers get a number, and the two sinks would
-        // disagree about what the weather is doing.
-        var lane = b.Add("value", (0, 0.29f));
-        var farLane = b.Add("value", (0, 2.31f));
+        // What the first does: the drive after the filter, from a purr to a snarl.
+        var grit = b.Add(WanderType, (1, 0.09f), (2, 0.29f), (3, 2.2f), (4, 6.5f));
 
-        var driftA = b.Add("math.mul", (1, 0.09f));
-        var driftB = b.Add("math.mul", (1, 0.06f));
+        // And the second: how long the echoes hang about.
+        var hang = b.Add(WanderType, (1, 0.06f), (2, 2.31f), (3, 0.24f), (4, 0.6f));
 
-        var moodA = b.Add("pattern.noise", (3, 1f));
-        var moodB = b.Add("pattern.noise", (3, 1f));
-
-        // What A does: the filter's resonance and the drive after it together,
-        // because dirt and ring are one thing to the ear. Never down to nothing —
-        // a 303 with no resonance is not quiet, it is a different instrument.
+        // The filter's resonance follows the slower of the two hands on the line.
+        // Never down to nothing — a 303 with no resonance is not quiet, it is a
+        // different instrument.
         var ring = b.Add("math.remap", (1, -1f), (2, 1f), (3, 0.55f), (4, 0.95f));
-        var grit = b.Add("math.remap", (1, 0f), (2, 1f), (3, 2.2f), (4, 6.5f));
 
-        // And what B does: how long the echoes hang about, and how loud the hats
-        // are. The second is the arrangement — a level is a socket like any other,
-        // so a slow voltage on it is a part fading in and out over a minute.
-        var hang = b.Add("math.remap", (1, 0f), (2, 1f), (3, 0.24f), (4, 0.6f));
-
-        b.Wire(clock, 0, driftA, 0)
-         .Wire(clock, 0, driftB, 0)
-         .Wire(lane, 0, moodA, 0)
-         .Wire(lane, 0, moodA, 1)
-         .Wire(driftA, 0, moodA, 2)
-         .Wire(farLane, 0, moodB, 0)
-         .Wire(farLane, 0, moodB, 1)
-         .Wire(driftB, 0, moodB, 2)
-         .Wire(slower, 0, ring, 0)
-         .Wire(moodA, 0, grit, 0)
-         .Wire(moodB, 0, hang, 0)
+        b.Wire(slower, 0, ring, 0)
 
          .Wire(ring, 0, filter, 2)
          .Wire(grit, 0, drive, 1)
          .Wire(hang, 0, echoL, 2)
          .Wire(hang, 0, echoR, 2);
 
-        b.Group("Slow Weather", lane, farLane, driftA, driftB, moodA, moodB, ring, grit, hang);
+        b.Group("Slow Weather", ring, grit, hang);
 
         // --- the arrangement -----------------------------------------------------
 
@@ -499,20 +472,12 @@ internal static class AcidPreset
         var shimmer = b.Add("math.remap", (1, 0f), (2, 1f), (3, 0.05f), (4, 0.55f));
         var smack = b.Add("math.remap", (1, 0f), (2, 1f), (3, 0.1f), (4, 0.62f));
 
-        // Half again on the right for the hats and the reverse for the clap, so
-        // the two lean opposite ways and keep the width they had when both were
-        // knobs.
-        var shimmerWide = b.Add("math.mul", (1, 1.45f));
-        var smackWide = b.Add("math.mul", (1, 0.62f));
-
         b.Wire(tempo, 0, bars, 0)
          .Wire(bars, 0, arrange, 1)
          .Wire(arrange, 0, shimmer, 0)
-         .Wire(arrange, 0, smack, 0)
-         .Wire(shimmer, 0, shimmerWide, 0)
-         .Wire(smack, 0, smackWide, 0);
+         .Wire(arrange, 0, smack, 0);
 
-        b.Group("Arrangement", bars, arrange, shimmer, smack, shimmerWide, smackWide);
+        b.Group("Arrangement", bars, arrange, shimmer, smack);
 
         // --- the desk ----------------------------------------------------------
 
@@ -521,7 +486,7 @@ internal static class AcidPreset
         // width here is two signals that are genuinely different.
         //
         // The kick and the bass are summed before the desk, partly for the four
-        // channels a Mixer has and partly because they are one instrument tied
+        // channels a Desk has and partly because they are one instrument tied
         // together by the duck — a balance to set once rather than twice.
         var lowEnd = b.Add("math.mixer", (1, 1f), (3, 0.6f));
 
@@ -531,46 +496,41 @@ internal static class AcidPreset
         // patch. A saw through a resonant filter into two delay lines is a
         // continuous sound, and turning it down makes the gaps in the bar audible
         // again — which is where the clap lives.
-        var deskL = b.Add("math.mixer", (1, 0.38f), (3, 1f));
-        var deskR = b.Add("math.mixer", (1, 0.38f), (3, 1f));
+        //
+        // Past unity on the trim on purpose, with the Desk's rails after it as the
+        // thing that makes that safe: a desk sums the way a desk sums, and four
+        // instruments at once is four times over.
+        var desk = b.Add(DeskType, (2, 0.38f), (5, 1f), (14, 1.15f));
 
-        // Past unity on purpose, with the Clamp after it as the thing that makes
-        // that safe: a desk sums the way a desk sums, and four instruments at
-        // once is four times over.
-        var hotL = b.Add("math.mul", (1, 1.15f));
-        var hotR = b.Add("math.mul", (1, 1.15f));
-
-        var limitL = b.Add("math.clamp", (1, -1f), (2, 1f));
-        var limitR = b.Add("math.clamp", (1, -1f), (2, 1f));
+        // Half again on the right for the hats and the reverse for the clap, so
+        // the two lean opposite ways. A Desk has one level for both sides of a
+        // channel, so the lean is on the signal.
+        var hatsWide = b.Add("math.mul", (1, 1.45f));
+        var loudWide = b.Add("math.mul", (1, 0.62f));
 
         var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 0.6f));
 
         b.Wire(punch, 0, lowEnd, 0)
          .Wire(weight, 0, lowEnd, 2)
 
-         .Wire(echoL, 0, deskL, 0)
-         .Wire(lowEnd, 0, deskL, 2)
-         .Wire(hats, 0, deskL, 4)
-         .Wire(loud, 0, deskL, 6)
+         .Wire(echoL, 0, desk, 0)
+         .Wire(echoR, 0, desk, 1)
+         .Wire(lowEnd, 0, desk, 3)
 
-         .Wire(echoR, 0, deskR, 0)
-         .Wire(lowEnd, 0, deskR, 2)
-         .Wire(hats, 0, deskR, 4)
-         .Wire(loud, 0, deskR, 6)
+         .Wire(hats, 0, hatsWide, 0)
+         .Wire(hats, 0, desk, 6)
+         .Wire(hatsWide, 0, desk, 7)
+         .Wire(shimmer, 0, desk, 8)
 
-         .Wire(shimmer, 0, deskL, 5)
-         .Wire(shimmerWide, 0, deskR, 5)
-         .Wire(smack, 0, deskL, 7)
-         .Wire(smackWide, 0, deskR, 7)
+         .Wire(loud, 0, loudWide, 0)
+         .Wire(loud, 0, desk, 9)
+         .Wire(loudWide, 0, desk, 10)
+         .Wire(smack, 0, desk, 11)
 
-         .Wire(deskL, 0, hotL, 0)
-         .Wire(deskR, 0, hotR, 0)
-         .Wire(hotL, 0, limitL, 0)
-         .Wire(hotR, 0, limitR, 0)
-         .Wire(limitL, 0, output, NodeCatalog.OutputLeftPort)
-         .Wire(limitR, 0, output, NodeCatalog.OutputRightPort);
+         .Wire(desk, 0, output, NodeCatalog.OutputLeftPort)
+         .Wire(desk, 1, output, NodeCatalog.OutputRightPort);
 
-        b.Group("Desk", lowEnd, deskL, deskR, hotL, hotR, limitL, limitR);
+        b.Group("Desk", lowEnd, hatsWide, loudWide, desk);
 
         // --- the picture: geometry ---------------------------------------------
 
@@ -712,31 +672,19 @@ internal static class AcidPreset
         // --- the picture: feedback ------------------------------------------------
 
         // The last frame, zoomed in a hair and turned by an amount the kick
-        // sets, so the trail lurches on the beat rather than drifting evenly.
-        var inward = b.Add("space.scale", (2, 1.03f));
+        // sets, so the trail lurches on the beat rather than drifting evenly. What
+        // comes out is the brighter of that and the new frame, for FeedbackTunnel's
+        // reason: a trail brighter than the new frame keeps its brightness, which is
+        // what makes a streak read as a streak rather than as a smeared copy.
         var twist = b.Add("math.remap", (1, -1f), (2, 1f), (3, 0.01f), (4, 0.045f));
-        var swirl = b.Add("space.rotate");
-        var past = b.Add("feedback");
-        var trail = b.Add("color.gain", (1, 0.88f), (2, 0f));
-
-        // Max rather than a blend, for FeedbackTunnel's reason: a trail brighter
-        // than the new frame keeps its brightness, which is what makes a streak
-        // read as a streak rather than as a smeared copy.
-        var combine = b.Add("math.max");
+        var trail = b.Add(TrailsType, (3, 1.03f), (7, 0.88f));
 
         b.Wire(beat, 0, twist, 0)
-         .Wire(inward, 0, swirl, 0)
-         .Wire(inward, 1, swirl, 1)
-         .Wire(twist, 0, swirl, 2)
-         .Wire(swirl, 0, past, 0)
-         .Wire(swirl, 1, past, 1)
-         .Wire(past, 0, trail, 0)
+         .Wire(twist, 0, trail, 4)
+         .Wire(flat, 0, trail, 0)
+         .Wire(trail, 0, output, NodeCatalog.OutputColorPort);
 
-         .Wire(trail, 0, combine, 0)
-         .Wire(flat, 0, combine, 1)
-         .Wire(combine, 0, output, NodeCatalog.OutputColorPort);
-
-        b.Group("Picture: Feedback", inward, twist, swirl, past, trail, combine);
+        b.Group("Picture: Feedback", twist, trail);
 
         return b.Build();
     }

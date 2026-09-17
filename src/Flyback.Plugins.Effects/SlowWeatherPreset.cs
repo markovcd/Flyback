@@ -24,6 +24,9 @@ internal static class SlowWeatherPreset
     private const string Phaser = "flyback.effects.phaser";
     private const string Flanger = "flyback.effects.flanger";
     private const string Filter = "flyback.voice.filter";
+    private const string Wander = "flyback.voice.wander";
+    private const string Desk = "math.desk";
+    private const string Trails = "feedback.trails";
 
     public static Patch Build(ModuleCatalog modules)
     {
@@ -37,43 +40,18 @@ internal static class SlowWeatherPreset
 
         var clock = b.Add("time");
 
-        // Where in the field each voltage is read. A knob and two wires, and it
-        // is the whole of what turns Noise from a texture into a source — see
-        // the remarks. Three different constants are three different lanes: the
-        // field is hashed per lattice cell, so lanes one apart share nothing.
-        var laneOne = b.Add("value", (0, 0f));
-        var laneTwo = b.Add("value", (0, 1f));
-        var laneThree = b.Add("value", (0, 2f));
+        // Three Wanders, each with a seed of its own: the engine's noise walked
+        // along one line, so it is a source rather than a texture, and the same
+        // number on the screen as in the speakers.
+        //
+        // The rate is how fast the line is walked, in values a second. The slowest
+        // takes nearly two minutes to reach the next value it has not seen, which
+        // is what makes the bass move like weather rather than like a bass line.
+        var wander = b.Add(Wander, (1, 0.043f), (2, 0f));
+        var flutter = b.Add(Wander, (1, 0.091f), (2, 1f));
+        var tide = b.Add(Wander, (1, 0.0097f), (2, 2f));
 
-        // How fast each lane is walked, in cells a second. The slowest takes
-        // nearly two minutes to reach the next value it has not seen, which is
-        // what makes the bass move like weather rather than like a bass line.
-        var minutes = b.Add("math.mul", (1, 0.043f));
-        var seconds = b.Add("math.mul", (1, 0.091f));
-        var hours = b.Add("math.mul", (1, 0.0097f));
-
-        var wander = b.Add("pattern.noise", (3, 1f));
-        var flutter = b.Add("pattern.noise", (3, 1f));
-        var tide = b.Add("pattern.noise", (3, 1f));
-
-        b.Wire(clock, 0, minutes, 0)
-         .Wire(clock, 0, seconds, 0)
-         .Wire(clock, 0, hours, 0)
-
-         .Wire(laneOne, 0, wander, 0)
-         .Wire(laneOne, 0, wander, 1)
-         .Wire(minutes, 0, wander, 2)
-
-         .Wire(laneTwo, 0, flutter, 0)
-         .Wire(laneTwo, 0, flutter, 1)
-         .Wire(seconds, 0, flutter, 2)
-
-         .Wire(laneThree, 0, tide, 0)
-         .Wire(laneThree, 0, tide, 1)
-         .Wire(hours, 0, tide, 2);
-
-        b.Group("Three Random Voltages", clock, laneOne, laneTwo, laneThree,
-            minutes, seconds, hours, wander, flutter, tide);
+        b.Group("Three Random Voltages", clock, wander, flutter, tide);
 
         // --- three quantisers ------------------------------------------------
 
@@ -294,8 +272,9 @@ internal static class SlowWeatherPreset
 
         // --- the desk, and the two rooms ---------------------------------------
 
-        var deskL = b.Add("math.mixer", (1, 0.95f), (3, 0.6f), (5, 0.7f), (7, 0.16f));
-        var deskR = b.Add("math.mixer", (1, 0.95f), (3, 0.6f), (5, 0.7f), (7, 0.16f));
+        // The four voices, read off the Desk's buses rather than its outputs: what
+        // goes into the echoes is the sum, and the rails belong after the rooms.
+        var desk = b.Add(Desk, (2, 0.95f), (5, 0.6f), (8, 0.7f), (11, 0.16f));
 
         // Two Delays rather than one, at times far enough apart not to be heard as
         // one echo and each on a different voltage, so the two sides pull apart
@@ -320,32 +299,29 @@ internal static class SlowWeatherPreset
 
         // No drive in front of these, unlike every other patch with a limiter in
         // it. Ambient has no transients to catch and nothing to gain by being
-        // pushed into a wall; the Clamps are here because a Mixer sums, a reverb
-        // adds a tail to what it sums, and four voices that each breathe on
-        // their own will occasionally breathe in at once.
-        var safeL = b.Add("math.clamp", (1, -1f), (2, 1f));
-        var safeR = b.Add("math.clamp", (1, -1f), (2, 1f));
+        // pushed into a wall; the master is here for its rails, because a Desk
+        // sums, a reverb adds a tail to what it sums, and four voices that each
+        // breathe on their own will occasionally breathe in at once.
+        var master = b.Add(Desk);
 
         var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 0.85f));
 
-        b.Wire(thicken, 0, deskL, 0)
-         .Wire(bellL, 0, deskL, 2)
-         .Wire(shaped, 0, deskL, 4)
-         .Wire(airL, 0, deskL, 6)
-
-         .Wire(thicken, 1, deskR, 0)
-         .Wire(bellR, 0, deskR, 2)
-         .Wire(shaped, 0, deskR, 4)
-         .Wire(airR, 0, deskR, 6)
+        b.Wire(thicken, 0, desk, 0)
+         .Wire(thicken, 1, desk, 1)
+         .Wire(bellL, 0, desk, 3)
+         .Wire(bellR, 0, desk, 4)
+         .Wire(shaped, 0, desk, 6)
+         .Wire(airL, 0, desk, 9)
+         .Wire(airR, 0, desk, 10)
 
          .Wire(wander, 0, echoLeft, 0)
          .Wire(flutter, 0, echoRight, 0)
          .Wire(tide, 0, roomSize, 0)
          .Wire(wander, 0, roomWide, 0)
 
-         .Wire(deskL, 0, repeatsL, 0)
+         .Wire(desk, 2, repeatsL, 0)
          .Wire(echoLeft, 0, repeatsL, 1)
-         .Wire(deskR, 0, repeatsR, 0)
+         .Wire(desk, 3, repeatsR, 0)
          .Wire(echoRight, 0, repeatsR, 1)
 
          .Wire(repeatsL, 0, hallL, 0)
@@ -353,13 +329,13 @@ internal static class SlowWeatherPreset
          .Wire(repeatsR, 0, hallR, 0)
          .Wire(roomWide, 0, hallR, 1)
 
-         .Wire(hallL, 0, safeL, 0)
-         .Wire(hallR, 0, safeR, 0)
-         .Wire(safeL, 0, output, NodeCatalog.OutputLeftPort)
-         .Wire(safeR, 0, output, NodeCatalog.OutputRightPort);
+         .Wire(hallL, 0, master, 0)
+         .Wire(hallR, 0, master, 1)
+         .Wire(master, 0, output, NodeCatalog.OutputLeftPort)
+         .Wire(master, 1, output, NodeCatalog.OutputRightPort);
 
-        b.Group("Desk & Rooms", deskL, deskR, echoLeft, echoRight, repeatsL, repeatsR,
-            roomSize, roomWide, hallL, hallR, safeL, safeR);
+        b.Group("Desk & Rooms", desk, echoLeft, echoRight, repeatsL, repeatsR,
+            roomSize, roomWide, hallL, hallR, master);
 
         // --- the picture: geometry ---------------------------------------------
 
@@ -498,30 +474,23 @@ internal static class SlowWeatherPreset
         // lets the frame forget.
         //
         // How much it forgets is the fastest of the three voltages, so the picture
-        // is sharp for a while and long-exposed for a while. The Feedback module
-        // rather than this plugin's Delay, for the reason the plugin exists to
-        // explain: a delay line has no per-pixel past.
-        var adrift = b.Add("space.scale", (2, 1.008f));
-        var aturn = b.Add("space.rotate", (2, 0.0035f));
-        var previous = b.Add("feedback");
-        var memory = b.Add("color.gain", (1, 0.985f), (2, 0f));
+        // is sharp for a while and long-exposed for a while. So it is the Trails'
+        // tail that is read, the dimmed last frame on its own, and nothing is
+        // patched into the Trails at all. A Trails rather than this plugin's Delay,
+        // for the reason the plugin exists to explain: a delay line has no
+        // per-pixel past.
+        var memory = b.Add(Trails, (3, 1.008f), (4, 0.0035f), (7, 0.985f));
 
         var settle = b.Add("math.remap", (1, 0f), (2, 1f), (3, 0.05f), (4, 0.2f));
         var combine = b.Add("color.mix");
 
-        b.Wire(adrift, 0, aturn, 0)
-         .Wire(adrift, 1, aturn, 1)
-         .Wire(aturn, 0, previous, 0)
-         .Wire(aturn, 1, previous, 1)
-         .Wire(previous, 0, memory, 0)
-
-         .Wire(wander, 0, settle, 0)
-         .Wire(memory, 0, combine, 0)
+        b.Wire(wander, 0, settle, 0)
+         .Wire(memory, 1, combine, 0)
          .Wire(fresh, 0, combine, 1)
          .Wire(settle, 0, combine, 2)
          .Wire(combine, 0, output, NodeCatalog.OutputColorPort);
 
-        b.Group("Picture: Memory", adrift, aturn, previous, memory, settle, combine);
+        b.Group("Picture: Memory", memory, settle, combine);
 
         return b.Build();
     }

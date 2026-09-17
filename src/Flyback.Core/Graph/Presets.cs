@@ -526,16 +526,11 @@ public static class Presets
         var fresh = b.Add("color.hsv", (1, 0.85f));
 
         // The previous frame, zoomed out a hair and turned, so what is already on
-        // screen spirals outward while new filaments arrive underneath it.
-        var widen = b.Add("space.scale", (2, 0.99f));
-        var swirl = b.Add("space.rotate", (2, 0.015f));
-        var previous = b.Add("feedback");
-        var trail = b.Add("color.gain", (1, 0.92f), (2, 0f));
-
-        // Max rather than a blend: a trail that is brighter than the new frame
-        // keeps its brightness, which is what makes the streaks read as trails
-        // rather than as a smeared copy.
-        var combine = b.Add("math.max");
+        // screen spirals outward while new filaments arrive underneath it. A Trails
+        // hands on the brighter of the two rather than a blend: a trail that is
+        // brighter than the new frame keeps its brightness, which is what makes the
+        // streaks read as trails rather than as a smeared copy.
+        var trail = b.Add("feedback.trails", (3, 0.99f), (4, 0.015f), (7, 0.92f));
         var output = b.Add(NodeCatalog.OutputTypeId);
 
         b.Wire(clock, 0, spin, 0)
@@ -559,14 +554,8 @@ public static class Presets
          .Wire(drift, 0, hue, 0)
          .Wire(hue, 0, fresh, 0)
          .Wire(filament, 0, fresh, 2)
-         .Wire(widen, 0, swirl, 0)
-         .Wire(widen, 1, swirl, 1)
-         .Wire(swirl, 0, previous, 0)
-         .Wire(swirl, 1, previous, 1)
-         .Wire(previous, 0, trail, 0)
-         .Wire(trail, 0, combine, 0)
-         .Wire(fresh, 0, combine, 1)
-         .Wire(combine, 0, output, NodeCatalog.OutputColorPort);
+         .Wire(fresh, 0, trail, 0)
+         .Wire(trail, 0, output, NodeCatalog.OutputColorPort);
 
         return b.Build();
     }
@@ -923,35 +912,29 @@ public static class Presets
 
         // --- the desk --------------------------------------------------------
 
-        var deskL = b.Add("math.mixer", (1, 0.55f), (3, 0.72f), (5, 1f), (7, 0.55f));
-        var deskR = b.Add("math.mixer", (1, 0.55f), (3, 0.72f), (5, 1f), (7, 0.8f));
+        // One Desk: the bass and the kick in the middle, the lead's two voices a side
+        // each, and a trim past unity with the rails after it, because four
+        // instruments at once is a sum.
+        var desk = b.Add("math.desk", (2, 0.55f), (5, 0.72f), (8, 1f), (11, 0.55f), (14, 1.2f));
 
-        var driveL = b.Add("math.mul", (1, 1.2f));
-        var driveR = b.Add("math.mul", (1, 1.2f));
-
-        var limitL = b.Add("math.clamp", (1, -1f), (2, 1f));
-        var limitR = b.Add("math.clamp", (1, -1f), (2, 1f));
+        // The hats lean right, 0.8 to the left's 0.55. A Desk has one level for both
+        // sides of a channel, so the lean is on the signal.
+        var hatLean = b.Add("math.mul", (1, 0.8f / 0.55f));
 
         var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 0.62f));
 
-        b.Wire(bassOut, 0, deskL, 0)
-         .Wire(voiceL, 0, deskL, 2)
-         .Wire(kickOut, 0, deskL, 4)
-         .Wire(hatOut, 0, deskL, 6)
+        b.Wire(bassOut, 0, desk, 0)
+         .Wire(voiceL, 0, desk, 3)
+         .Wire(voiceR, 0, desk, 4)
+         .Wire(kickOut, 0, desk, 6)
+         .Wire(hatOut, 0, desk, 9)
+         .Wire(hatOut, 0, hatLean, 0)
+         .Wire(hatLean, 0, desk, 10)
 
-         .Wire(bassOut, 0, deskR, 0)
-         .Wire(voiceR, 0, deskR, 2)
-         .Wire(kickOut, 0, deskR, 4)
-         .Wire(hatOut, 0, deskR, 6)
+         .Wire(desk, 0, output, NodeCatalog.OutputLeftPort)
+         .Wire(desk, 1, output, NodeCatalog.OutputRightPort);
 
-         .Wire(deskL, 0, driveL, 0)
-         .Wire(deskR, 0, driveR, 0)
-         .Wire(driveL, 0, limitL, 0)
-         .Wire(driveR, 0, limitR, 0)
-         .Wire(limitL, 0, output, NodeCatalog.OutputLeftPort)
-         .Wire(limitR, 0, output, NodeCatalog.OutputRightPort);
-
-        b.Group("Desk", deskL, deskR, driveL, driveR, limitL, limitR);
+        b.Group("Desk", hatLean, desk);
 
         // --- the picture: geometry -------------------------------------------
 

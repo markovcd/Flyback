@@ -50,7 +50,7 @@ fit none of them. And a seventh that was found and is not here: white noise out
 of a Sine and a Fraction, in six presets of eight, built by hand only because
 Random's white came with a pink nobody had asked for. That was a cost and not a
 missing module, and [0096](0096-an-op-nothing-reads-is-left-out.md) took the cost
-away, so those presets read Random's white.
+away, so the presets that can reach Voice read Random's white.
 
 **Desk and Trails are the engine's because Mixer and Feedback are.** The engine's
 own presets may not need a plugin, and Nebula and Whole band close with a tail

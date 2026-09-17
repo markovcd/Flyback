@@ -40,6 +40,18 @@ internal static class MyceliumPreset
 
     private const string DriveType = "flyback.voice.drive";
 
+    private const string RandomType = "flyback.voice.random";
+
+    private const string WanderType = "flyback.voice.wander";
+
+    private const string StrokeType = "flyback.voice.stroke";
+
+    private const string FadeType = "flyback.voice.fade";
+
+    private const string DrumType = "flyback.voice.drum";
+
+    private const string DeskType = "math.desk";
+
     private const string FoldType = "flyback.voice.fold";
 
     private const string FractalType = "flyback.picture.fractal";
@@ -112,16 +124,14 @@ internal static class MyceliumPreset
         // Eight bars: one step of the arrangement, and the unit the track is built in.
         var phrases = b.Add("math.mul", (1, 0.03125f));
 
-        // The sixteenths, counted rather than sequenced: how many have gone by, the
-        // fraction through the one that is playing, and that fraction turned over so it
-        // starts at one and falls. Cubed, it is a pluck — an envelope that costs four
-        // ops, needs no trigger and cannot drift off the grid, because it is the grid.
-        // The bass's filter, the arp, the hats and the lead's bite are this one signal.
+        // The sixteenths, counted rather than sequenced: how many have gone by, and a
+        // Stroke off the count — what is left of the one that is playing, cubed. It is
+        // a pluck: an envelope that needs no trigger and cannot drift off the grid,
+        // because it is the grid. The bass's filter, the arp and the lead's bite are
+        // this one signal, and the hats are the same Stroke with a sharper curve.
         var clock = b.Add(NodeCatalog.TimeTypeId);
         var counted = b.Add("math.mul");
-        var within = b.Add("math.fract");
-        var tick = b.Add("math.sub", (0, 1f));
-        var pluck = b.Add("math.pow", (1, 3f));
+        var pluck = b.Add(StrokeType, (3, 3f));
 
         b.Wire(beat, 0, sixteenths, 0)
          .Wire(beat, 0, eighths, 0)
@@ -129,12 +139,9 @@ internal static class MyceliumPreset
          .Wire(beat, 0, phrases, 0)
          .Wire(clock, 0, counted, 0)
          .Wire(sixteenths, 0, counted, 1)
-         .Wire(counted, 0, within, 0)
-         .Wire(within, 0, tick, 1)
-         .Wire(tick, 0, pluck, 0);
+         .Wire(counted, 0, pluck, 0);
 
-        b.Group("Clock", beat, sixteenths, eighths, bars, phrases, clock, counted, within, tick,
-            pluck);
+        b.Group("Clock", beat, sixteenths, eighths, bars, phrases, clock, counted, pluck);
 
         // --- the arrangement -------------------------------------------------
 
@@ -183,7 +190,6 @@ internal static class MyceliumPreset
         // downbeat — the kick halfway up the build, the snare only once the groove has
         // arrived — and wide ones for what swells.
         var drumsIn = b.Add("math.smoothstep", (0, 0.42f), (1, 0.48f));
-        var snareIn = b.Add("math.smoothstep", (0, 0.55f), (1, 0.62f));
         var bassIn = b.Add("math.smoothstep", (0, 0.3f), (1, 0.45f));
         var hatsIn = b.Add("math.smoothstep", (0, 0.18f), (1, 0.6f));
         var leadIn = b.Add("math.smoothstep", (0, 0.75f), (1, 0.9f));
@@ -223,7 +229,6 @@ internal static class MyceliumPreset
          .Wire(secondHalf, 0, ramp, 0)
          .Wire(turns, 0, ramp, 1)
          .Wire(song, 0, drumsIn, 2)
-         .Wire(song, 0, snareIn, 2)
          .Wire(song, 0, bassIn, 2)
          .Wire(song, 0, hatsIn, 2)
          .Wire(swell, 0, leadIn, 2)
@@ -235,64 +240,41 @@ internal static class MyceliumPreset
          .Wire(root, 0, shift, 0);
 
         b.Group("Arrangement", song, swell, thirds, lastOfFour, turning, notTheEnd, turns,
-            phrasePos, throughIt, secondHalf, ramp, drumsIn, snareIn, bassIn, hatsIn, leadIn, arpIn,
+            phrasePos, throughIt, secondHalf, ramp, drumsIn, bassIn, hatsIn, leadIn, arpIn,
             padIn, scanFade, scanIn, root, shift);
 
         // --- chance ----------------------------------------------------------
 
-        // White noise out of arithmetic — a large multiple of the clock, a sine, a
-        // larger multiple, the fraction. Five ops, where the Random module's white
-        // is a lookup into the engine's noise, which is eight hashes and a blend.
-        var grain = b.Add("math.mul", (1, 3571f));
-        var hash = b.Add("math.sin");
-        var scatter = b.Add("math.mul", (1, 4371.3f));
-        var white = b.Add("math.fract");
-        var hiss = b.Add("math.remap", (1, 0f), (2, 1f), (3, -1f), (4, 1f));
-
-        // Where in the Noise field each voltage below is read. Whole numbers, because
-        // value noise at a lattice point is the hash itself — which is what makes
-        // 'dice' a die rather than a wobble. Pinned by a Value rather than left to the
-        // normal, so the screen and the speakers read the same weather.
-        var lane = b.Add("value", (0, 3f));
-        var farLane = b.Add("value", (0, 7f));
+        // White noise, for the snare, the hats and the riser.
+        var hiss = b.Add(RandomType);
 
         // One slow voltage for the things that should never repeat: how busy the hats
-        // are, how open the pad is, how far the picture bends.
-        var slowly = b.Add("math.mul", (1, 0.05f));
-        var weather = b.Add("pattern.noise", (3, 1f));
+        // are, how open the pad is, how far the picture bends. A Wander, which is the
+        // same value on the screen as in the speakers.
+        var weather = b.Add(WanderType, (1, 0.05f), (2, 3f));
 
-        // A new number every sixteenth. The step count floored is a whole lattice
-        // point on all three axes, so the field is read only where it does not
-        // interpolate.
+        // A new number every sixteenth, which a Wander cannot be: the step count
+        // floored is a whole lattice point on all three axes of a Noise, so the field
+        // is read only where it does not interpolate. Whole numbers on the other two,
+        // because value noise at a lattice point is the hash itself — which is what
+        // makes this a die rather than a wobble — and pinned by a Value rather than
+        // left to the normal, so the screen and the speakers read the same throw.
+        var lane = b.Add("value", (0, 3f));
+        var farLane = b.Add("value", (0, 7f));
         var thrown = b.Add("math.floor");
         var dice = b.Add("pattern.noise", (3, 1f));
 
         // And one that wanders a bar at a time, which decides when the arp plays and
-        // when it rests.
-        var barwise = b.Add("math.mul");
-        var drift = b.Add("pattern.noise", (3, 1f));
+        // when it rests. Its rate is a wire.
+        var drift = b.Add(WanderType, (2, 7f));
 
-        b.Wire(clock, 0, grain, 0)
-         .Wire(grain, 0, hash, 0)
-         .Wire(hash, 0, scatter, 0)
-         .Wire(scatter, 0, white, 0)
-         .Wire(white, 0, hiss, 0)
-         .Wire(clock, 0, slowly, 0)
-         .Wire(lane, 0, weather, 0)
-         .Wire(lane, 0, weather, 1)
-         .Wire(slowly, 0, weather, 2)
-         .Wire(counted, 0, thrown, 0)
+        b.Wire(counted, 0, thrown, 0)
          .Wire(lane, 0, dice, 0)
          .Wire(farLane, 0, dice, 1)
          .Wire(thrown, 0, dice, 2)
-         .Wire(clock, 0, barwise, 0)
-         .Wire(bars, 0, barwise, 1)
-         .Wire(farLane, 0, drift, 0)
-         .Wire(farLane, 0, drift, 1)
-         .Wire(barwise, 0, drift, 2);
+         .Wire(bars, 0, drift, 1);
 
-        b.Group("Chance", grain, hash, scatter, white, hiss, lane, farLane, slowly, weather, thrown,
-            dice, barwise, drift);
+        b.Group("Chance", hiss, weather, lane, farLane, thrown, dice, drift);
 
         // --- the kick --------------------------------------------------------
 
@@ -305,17 +287,12 @@ internal static class MyceliumPreset
         // is a kick that is felt.
         var thump = b.Add(DecayType, (1, -3.30103f), (2, -0.39794f), (3, 0.65f));
 
-        // The pitch envelope is the level envelope to the fifth power, so there is one
-        // envelope and the beater is over long before the shell is. Forty-one hertz at
-        // the bottom of the fall.
-        var snap = b.Add("math.pow", (1, 5f));
-        var fall = b.Add("math.remap", (1, 0f), (2, 1f), (3, 41f), (4, 191f));
-        var kickBody = b.Add("osc.sine");
-        var kickVoiced = b.Add("math.mul");
-
-        // Harmonics, which are all a small speaker has of forty-one hertz. The Drive
-        // normalizes as it goes, so this cannot make the kick louder.
-        var kickPunch = b.Add(DriveType, (1, 2.5f));
+        // A Drum off that one envelope. The pitch is the level to the fifth power, so
+        // the beater is over long before the shell is, and it comes to rest at
+        // forty-one hertz. The drive is harmonics, which are all a small speaker has of
+        // forty-one hertz, and it normalizes as it goes, so it cannot make the kick
+        // louder.
+        var kickPunch = b.Add(DrumType, (2, 41f), (3, 150f), (4, 5f), (5, 2.5f));
         var kickOut = b.Add("math.mul");
 
         // The sidechain: the kick's own level, upside down, on the bass. Down to a
@@ -326,32 +303,22 @@ internal static class MyceliumPreset
 
         b.Wire(eighths, 0, kickHits, 1)
          .Wire(kickHits, 0, thump, 0)
-         .Wire(thump, 0, snap, 0)
-         .Wire(snap, 0, fall, 0)
-         .Wire(fall, 0, kickBody, 1)
-         .Wire(kickBody, 0, kickVoiced, 0)
-         .Wire(thump, 0, kickVoiced, 1)
-         .Wire(kickVoiced, 0, kickPunch, 0)
+         .Wire(thump, 0, kickPunch, 1)
          .Wire(kickPunch, 0, kickOut, 0)
          .Wire(drumsIn, 0, kickOut, 1)
          .Wire(thump, 0, kickLevel, 0)
          .Wire(drumsIn, 0, kickLevel, 1)
          .Wire(kickLevel, 0, duck, 0);
 
-        b.Group("Kick", kickHits, thump, snap, fall, kickBody, kickVoiced, kickPunch, kickOut,
-            kickLevel, duck);
+        b.Group("Kick", kickHits, thump, kickPunch, kickOut, kickLevel, duck);
 
         // --- the snare -------------------------------------------------------
 
         // Two and four with no sequencer and no envelope: half the beat rate, offset
-        // by half a cycle, is a ramp that restarts on every backbeat. Turned over and
-        // raised to the tenth it is a quarter of a second of fall.
+        // by half a cycle, is a Stroke that restarts on every backbeat. To the tenth
+        // power it is a quarter of a second of fall.
         var halfBeat = b.Add("math.mul", (1, 0.5f));
-        var halfCount = b.Add("math.mul");
-        var offBeat = b.Add("math.add", (1, 0.5f));
-        var sinceSnare = b.Add("math.fract");
-        var snareTick = b.Add("math.sub", (0, 1f));
-        var backbeat = b.Add("math.pow", (1, 10f));
+        var backbeat = b.Add(StrokeType, (2, 0.5f), (3, 10f));
 
         // The band of a Filter around two kilohertz is the wires, made loud because a
         // bandpass keeps only what fits between its skirts, and a sine at the shell's
@@ -362,15 +329,13 @@ internal static class MyceliumPreset
         var shell = b.Add("osc.sine", (3, 0.5f));
         var snareSum = b.Add("math.add");
         var snareHit = b.Add("math.mul");
-        var snareOut = b.Add("math.mul");
+
+        // The snare comes in a little over halfway up the arrangement. A Fade, since
+        // nothing but the snare asks.
+        var snareOut = b.Add(FadeType, (2, 0.55f), (3, 0.62f));
 
         b.Wire(beat, 0, halfBeat, 0)
-         .Wire(clock, 0, halfCount, 0)
-         .Wire(halfBeat, 0, halfCount, 1)
-         .Wire(halfCount, 0, offBeat, 0)
-         .Wire(offBeat, 0, sinceSnare, 0)
-         .Wire(sinceSnare, 0, snareTick, 1)
-         .Wire(snareTick, 0, backbeat, 0)
+         .Wire(halfBeat, 0, backbeat, 1)
          .Wire(hiss, 0, rattle, 0)
          .Wire(rattle, 1, rattleLoud, 0)
          .Wire(frequency, 0, shell, 1)
@@ -379,9 +344,9 @@ internal static class MyceliumPreset
          .Wire(snareSum, 0, snareHit, 0)
          .Wire(backbeat, 0, snareHit, 1)
          .Wire(snareHit, 0, snareOut, 0)
-         .Wire(snareIn, 0, snareOut, 1);
+         .Wire(song, 0, snareOut, 1);
 
-        b.Group("Snare", halfBeat, halfCount, offBeat, sinceSnare, snareTick, backbeat, rattle,
+        b.Group("Snare", halfBeat, backbeat, rattle,
             rattleLoud, frequency, shell, snareSum, snareHit, snareOut);
 
         // --- the hats --------------------------------------------------------
@@ -394,7 +359,7 @@ internal static class MyceliumPreset
 
         // The pluck again, steeper, and only on the steps the Euclid says. 'hit' rather
         // than 'gate', because the clock is already the envelope.
-        var hatTick = b.Add("math.pow", (1, 7f));
+        var hatTick = b.Add(StrokeType, (3, 7f));
         var hatEnv = b.Add("math.mul");
         var hatVoiced = b.Add("math.mul");
         var hatOut = b.Add("math.mul");
@@ -402,7 +367,7 @@ internal static class MyceliumPreset
         b.Wire(weather, 0, density, 0)
          .Wire(sixteenths, 0, hatHits, 1)
          .Wire(density, 0, hatHits, 3)
-         .Wire(tick, 0, hatTick, 0)
+         .Wire(counted, 0, hatTick, 0)
          .Wire(hatTick, 0, hatEnv, 0)
          .Wire(hatHits, 1, hatEnv, 1)
          .Wire(hiss, 0, hatVoiced, 0)
@@ -1156,65 +1121,56 @@ internal static class MyceliumPreset
 
         // --- the desk --------------------------------------------------------
 
-        // The kick and the bass are summed first because the duck ties them into one
-        // instrument, and everything else arrives in buses for the four channels a
-        // Mixer has. Left and right differ in which echo tap and which side of the
-        // Chorus and the Reverb they carry, and in how the arp and the drips lean.
-        var lowEnd = b.Add("math.mixer", (1, 0.9f), (3, 0.7f));
-        var top = b.Add("math.mixer", (1, 0.85f), (3, 0.4f), (5, 0.5f));
-        var musicL = b.Add("math.mixer", (1, 0.5f), (3, 0.45f), (5, 0.5f), (7, 0.35f));
-        var musicR = b.Add("math.mixer", (1, 0.5f), (3, 0.3f), (5, 0.5f), (7, 0.55f));
-        var fxL = b.Add("math.mixer", (1, 0.55f), (3, 0.5f), (5, 0.4f));
-        var fxR = b.Add("math.mixer", (1, 0.55f), (3, 0.5f), (5, 0.4f));
-        var deskL = b.Add("math.mixer");
-        var deskR = b.Add("math.mixer");
+        // Three Desks of four, chained by their buses: the rhythm, the music, and what
+        // comes back from the effects. Left and right differ in which echo tap and
+        // which side of the Chorus and the Reverb they carry, and in how the arp and
+        // the drips lean — which is two levels for one signal, and a Desk has one, so
+        // those two are leaned in a pair of Mixers and arrive as one stereo channel.
+        var rhythm = b.Add(DeskType, (2, 0.9f), (5, 0.7f), (8, 0.85f), (11, 0.4f));
+        var leanL = b.Add("math.mixer", (1, 0.45f), (3, 0.35f));
+        var leanR = b.Add("math.mixer", (1, 0.3f), (3, 0.55f));
+        var music = b.Add(DeskType, (2, 0.5f), (5, 0.5f), (8, 1f), (11, 0.5f));
 
-        // A trim under unity and a Clamp that should never be reached. No Drive on the
-        // way out: a saturator here brings the quiet parts up into the kick and the
-        // sub, and that is heard as distortion rather than as loudness.
-        var trimL = b.Add("math.mul", (1, 0.9f));
-        var trimR = b.Add("math.mul", (1, 0.9f));
-        var safeL = b.Add("math.clamp", (1, -1f), (2, 1f));
-        var safeR = b.Add("math.clamp", (1, -1f), (2, 1f));
+        // The last is the master: a trim under unity and rails that should never be
+        // reached. No Drive on the way out: a saturator here brings the quiet parts up
+        // into the kick and the sub, and that is heard as distortion rather than as
+        // loudness.
+        var returns = b.Add(DeskType, (2, 0.55f), (5, 0.5f), (8, 0.4f), (14, 0.9f));
 
         var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 0.7f));
 
-        b.Wire(kickOut, 0, lowEnd, 0)
-         .Wire(bassOut, 0, lowEnd, 2)
-         .Wire(snareOut, 0, top, 0)
-         .Wire(hatOut, 0, top, 2)
-         .Wire(riserOut, 0, top, 4)
-         .Wire(wide, 0, musicL, 0)
-         .Wire(arpOut, 0, musicL, 2)
-         .Wire(leadOut, 0, musicL, 4)
-         .Wire(dripOut, 0, musicL, 6)
-         .Wire(wide, 1, musicR, 0)
-         .Wire(arpOut, 0, musicR, 2)
-         .Wire(leadOut, 0, musicR, 4)
-         .Wire(dripOut, 0, musicR, 6)
-         .Wire(tapL, 0, fxL, 0)
-         .Wire(room, 0, fxL, 2)
-         .Wire(scanOut, 0, fxL, 4)
-         .Wire(tapR, 0, fxR, 0)
-         .Wire(room, 1, fxR, 2)
-         .Wire(scanOut, 0, fxR, 4)
-         .Wire(lowEnd, 0, deskL, 0)
-         .Wire(top, 0, deskL, 2)
-         .Wire(musicL, 0, deskL, 4)
-         .Wire(fxL, 0, deskL, 6)
-         .Wire(lowEnd, 0, deskR, 0)
-         .Wire(top, 0, deskR, 2)
-         .Wire(musicR, 0, deskR, 4)
-         .Wire(fxR, 0, deskR, 6)
-         .Wire(deskL, 0, trimL, 0)
-         .Wire(deskR, 0, trimR, 0)
-         .Wire(trimL, 0, safeL, 0)
-         .Wire(trimR, 0, safeR, 0)
-         .Wire(safeL, 0, output, NodeCatalog.OutputLeftPort)
-         .Wire(safeR, 0, output, NodeCatalog.OutputRightPort);
+        b.Wire(kickOut, 0, rhythm, 0)
+         .Wire(bassOut, 0, rhythm, 3)
+         .Wire(snareOut, 0, rhythm, 6)
+         .Wire(hatOut, 0, rhythm, 9)
 
-        b.Group("Desk", lowEnd, top, musicL, musicR, fxL, fxR, deskL, deskR, trimL, trimR, safeL,
-            safeR);
+         .Wire(arpOut, 0, leanL, 0)
+         .Wire(dripOut, 0, leanL, 2)
+         .Wire(arpOut, 0, leanR, 0)
+         .Wire(dripOut, 0, leanR, 2)
+
+         .Wire(wide, 0, music, 0)
+         .Wire(wide, 1, music, 1)
+         .Wire(leadOut, 0, music, 3)
+         .Wire(leanL, 0, music, 6)
+         .Wire(leanR, 0, music, 7)
+         .Wire(riserOut, 0, music, 9)
+
+         .Wire(tapL, 0, returns, 0)
+         .Wire(tapR, 0, returns, 1)
+         .Wire(room, 0, returns, 3)
+         .Wire(room, 1, returns, 4)
+         .Wire(scanOut, 0, returns, 6)
+
+         .Wire(rhythm, 2, music, 12)
+         .Wire(rhythm, 3, music, 13)
+         .Wire(music, 2, returns, 12)
+         .Wire(music, 3, returns, 13)
+
+         .Wire(returns, 0, output, NodeCatalog.OutputLeftPort)
+         .Wire(returns, 1, output, NodeCatalog.OutputRightPort);
+
+        b.Group("Desk", rhythm, leanL, leanR, music, returns);
 
         // --- the picture: print ----------------------------------------------
 

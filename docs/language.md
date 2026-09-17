@@ -890,12 +890,7 @@ let fresh = folded
               |> smoothstep(0.15, 0.85)
               |> hsv(hue: field + pulse |> fract(), saturation: 0.85)
 
-let past = scale(scale: 0.99)
-             |> rotate(angle: 0.015)
-             |> feedback()
-             |> gain(gain: 0.92, bias: 0)
-
-past |> max(fresh) |> out.color
+fresh |> trails(zoom: 0.99, angle: 0.015, persist: 0.92) |> out.color
 ```
 
 `folded` fans out to the Noise and to the Warp, which is the two wires the
@@ -978,11 +973,14 @@ group "Hats" {
 }
 
 group "Desk" {
-  mixer(bassOut, 0.55, voiceL, 0.72, kickOut, 1, hatOut, 0.55)
-    |> mul(1.2) |> clamp(-1, 1) |> out.left
+  let master = desk(left_1: bassOut, level_1: 0.55,
+                    left_2: voiceL, right_2: voiceR, level_2: 0.72,
+                    left_3: kickOut, level_3: 1,
+                    left_4: hatOut, right_4: hatOut * 1.4545455, level_4: 0.55,
+                    trim: 1.2)
 
-  mixer(bassOut, 0.55, voiceR, 0.72, kickOut, 1, hatOut, 0.8)
-    |> mul(1.2) |> clamp(-1, 1) |> out.right
+  master.left  |> out.left
+  master.right |> out.right
 }
 
 group "Picture: Geometry" {

@@ -100,8 +100,8 @@ public class ShippedPresetTests
     /// </summary>
     /// <remarks>
     /// The plugins' presets are the big ones and the size is the point: Slow weather
-    /// is ten boxes across three columns, and the hundred and five modules behind them
-    /// take seventeen — nothing in <c>PatchLayoutTests</c> reaches the end of the
+    /// is ten boxes across three columns, and the ninety-four modules behind them
+    /// take sixteen — nothing in <c>PatchLayoutTests</c> reaches the end of the
     /// canvas.
     /// </remarks>
     [Theory]
@@ -140,7 +140,7 @@ public class ShippedPresetTests
     }
 
     /// <summary>
-    /// And Mycelium is the preset that needs it: two hundred and ninety-five modules
+    /// And Mycelium is the preset that needs it: two hundred and seventy-one modules
     /// in twenty-three boxes is some twenty-four thousand units wide with every box
     /// open, against a canvas of fifteen.
     /// </summary>
