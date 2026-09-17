@@ -196,7 +196,7 @@ internal static class ProbeCommand
             found = await survey.Survey(
                 new AssistantConfig(key, values),
                 new SurveyOptions(options.Only, options.All, options.Bounds),
-                options.Json ? null : new Progress<string>(output.WriteLine),
+                options.Json ? null : new Commentary(output),
                 cancel).ConfigureAwait(false);
         }
         catch (OperationCanceledException)
@@ -313,5 +313,18 @@ internal static class ProbeCommand
 
             output.WriteLine($"  {model.Id} — {(senses.Count == 0 ? "text only" : string.Join(", ", senses))}");
         }
+    }
+
+    /// <summary>A survey's running commentary, written as it is reported.</summary>
+    /// <remarks>
+    /// Deliberately not <see cref="Progress{T}"/>. With no synchronization context to
+    /// capture — which is every way this command is run — that one hands each callback to
+    /// the thread pool, so a line can be written after the command has returned, and two
+    /// of them can be written at once. A command's output is a transcript: it is written
+    /// on the thread that reported it, in the order it happened.
+    /// </remarks>
+    private sealed class Commentary(TextWriter output) : IProgress<string>
+    {
+        public void Report(string value) => output.WriteLine(value);
     }
 }

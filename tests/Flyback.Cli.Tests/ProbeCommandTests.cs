@@ -158,6 +158,21 @@ public class ProbeCommandTests : IDisposable
         AssistantSettings.Load(path).Of("one").Text(Survey.Key).ShouldBeEmpty();
     }
 
+    /// <summary>
+    /// A survey reports as it goes, and what it reported is part of what the command
+    /// wrote: it is all there once the command has returned, rather than turning up
+    /// afterwards whenever a thread pool gets to it.
+    /// </summary>
+    [Fact]
+    public async Task What_a_survey_says_as_it_goes_is_written_before_it_returns()
+    {
+        Keyed("ONE_KEY");
+
+        var (_, said, _) = await Probe(new Options { Provider = "one", Dry = true });
+
+        said.ShouldContain("one-flash: sees, hears");
+    }
+
     [Fact]
     public async Task Keys_says_where_each_would_come_from_and_asks_nothing()
     {
