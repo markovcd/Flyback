@@ -94,8 +94,24 @@ launch, which is said on the status bar.
 **A device that will not start says so the way it does at launch**, and saving
 another one clears the block that left behind. Before this, only a relaunch did.
 
-**CoreAudio and ALSA declare nothing yet.** Both take the new `Create` and ignore
-the bag. Each can grow a picker without the shell changing, which is the point.
+**All three native backends ask the same question.** Each files its own kind of id
+under `device`, with `default` for the system's choice. The shell did not change
+to take the other two, which is the point.
+
+- *CoreAudio* lists every device with an output stream, by the UID that survives a
+  reboot. A chosen device is played through the HAL output unit attached to it.
+  The default is played through the default output unit, which follows the
+  system's choice by itself, so nothing has to listen for it.
+- *ALSA* lists what its configuration names for playback, the list `aplay -L`
+  prints. It leaves out capture-only devices, `null`, and raw `hw:` routes, which
+  take the card exclusively and rarely accept float; the `plughw:` route beside
+  each reaches the same card. `default` on a desktop is PipeWire or PulseAudio,
+  and they move the stream when the default sink changes. On a bare ALSA machine
+  the default is a line of configuration, and nothing announces a change to it.
+- A chosen device that will not open plays the default on both, as on Windows.
+
+Neither was run on its own platform when written: only the "not supported" path
+is exercised by the suite on Windows.
 
 **A plugin written against the old names does not build.** There is one
 out-of-tree plugin kind this touches — an assistant — and the rename is mechanical.

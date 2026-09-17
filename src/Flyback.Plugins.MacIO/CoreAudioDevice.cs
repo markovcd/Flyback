@@ -3,19 +3,21 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 using Flyback.Plugins.Audio;
+using Flyback.Plugins.Settings;
 
 namespace Flyback.Plugins.MacIO;
 
 /// <summary>
-/// Output through the default output audio unit — the macOS counterpart of the WASAPI
+/// Output through an Audio Toolbox output unit — the macOS counterpart of the WASAPI
 /// device, and the same shape: nothing outside this assembly knows Audio Toolbox
 /// exists.
 /// </summary>
 /// <remarks>
-/// The default output unit follows the user's choice of output while the program is
-/// running and converts the sample rate when the hardware is not at ours, which makes
-/// <see cref="SampleRate"/> the rate the callback is rendered at rather than one we
-/// discovered.
+/// The default output unit plays the system default and follows the user's choice of
+/// output while the program is running; a chosen device is played through the HAL
+/// output unit attached to it. Both convert the sample rate when the hardware is not
+/// at ours, which makes <see cref="SampleRate"/> the rate the callback is rendered at
+/// rather than one we discovered.
 /// <para>
 /// The render callback is a static function pointer with the device handed to it as
 /// context, so no delegate has to be kept alive and no marshalling stub sits on the
@@ -23,8 +25,33 @@ namespace Flyback.Plugins.MacIO;
 /// allocates nothing, locks nothing, and cannot throw.
 /// </para>
 /// </remarks>
-public sealed unsafe class CoreAudioDevice(AudioFormat format) : IAudioDevice
+/// <param name="format">What to play.</param>
+/// <param name="uid">
+/// The UID of the device to play through, or null for the default output — which
+/// follows the system's choice by itself, so nothing here has to listen for it.
+/// </param>
+public sealed unsafe class CoreAudioDevice(AudioFormat format, string? uid = null) : IAudioDevice
 {
+    /// <summary>
+    /// Every device that could play right now, as its UID and the name the Sound
+    /// settings show. Empty where the list cannot be read, since a form is not
+    /// somewhere to fail from, and the default is still offered.
+    /// </summary>
+    public static IReadOnlyList<SettingOption> Outputs()
+    {
+        try
+        {
+            return AudioHardware.OutputDevices()
+                .Select(device => new SettingOption(device.Uid, device.Name))
+                .OrderBy(option => option.Name, StringComparer.CurrentCultureIgnoreCase)
+                .ToList();
+        }
+        catch
+        {
+            return [];
+        }
+    }
+
     private readonly int channels = Math.Max(1, format.Channels);
 
     /// <summary>Keeps this instance findable from the callback's context pointer.</summary>
@@ -95,22 +122,43 @@ public sealed unsafe class CoreAudioDevice(AudioFormat format) : IAudioDevice
     /// </summary>
     private IntPtr Open()
     {
+        // Looked up on every start rather than once, so a device plugged in after
+        // launch is found the next time the sound comes on. One that is not there
+        // plays the default, because sound through the wrong speakers is easier to
+        // notice and fix than no sound at all.
+        var chosen = Chosen();
+
         var description = new AudioToolbox.AudioComponentDescription
         {
             ComponentType = AudioToolbox.OutputComponentType,
-            ComponentSubType = AudioToolbox.DefaultOutputSubType,
+            ComponentSubType = chosen is null ? AudioToolbox.DefaultOutputSubType : AudioToolbox.HalOutputSubType,
             ComponentManufacturer = AudioToolbox.AppleManufacturer,
         };
 
         var component = AudioToolbox.AudioComponentFindNext(IntPtr.Zero, description);
 
         if (component == IntPtr.Zero)
-            throw new InvalidOperationException("this machine has no default audio output component.");
+            throw new InvalidOperationException("this machine has no audio output component.");
 
-        Check(AudioToolbox.AudioComponentInstanceNew(component, out var opened), "open the default output unit");
+        Check(AudioToolbox.AudioComponentInstanceNew(component, out var opened), "open the output unit");
 
         try
         {
+            // Before anything else is set: the unit's formats belong to the device
+            // it is attached to.
+            if (chosen is { } device)
+            {
+                Check(
+                    AudioToolbox.AudioUnitSetProperty(
+                        opened,
+                        AudioToolbox.CurrentDeviceProperty,
+                        AudioToolbox.GlobalScope,
+                        0,
+                        device,
+                        sizeof(uint)),
+                    "choose the output device");
+            }
+
             Configure(opened);
         }
         catch
@@ -122,6 +170,28 @@ public sealed unsafe class CoreAudioDevice(AudioFormat format) : IAudioDevice
         }
 
         return opened;
+    }
+
+    /// <summary>
+    /// The device this boot knows the chosen UID by, or null for the default — which
+    /// is also what a device that is unplugged or no longer known gets.
+    /// </summary>
+    private uint? Chosen()
+    {
+        if (uid is null) return null;
+
+        try
+        {
+            foreach (var device in AudioHardware.OutputDevices())
+                if (device.Uid == uid)
+                    return device.Id;
+        }
+        catch
+        {
+            // A list that cannot be read is a default that can still play.
+        }
+
+        return null;
     }
 
     /// <summary>

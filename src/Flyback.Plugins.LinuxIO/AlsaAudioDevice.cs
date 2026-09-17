@@ -1,11 +1,12 @@
 using Flyback.Core;
 using Flyback.Plugins.Audio;
+using Flyback.Plugins.Settings;
 
 namespace Flyback.Plugins.LinuxIO;
 
 /// <summary>
-/// Output through libasound's <c>default</c> device. The Linux counterpart of the
-/// WASAPI and CoreAudio devices, and the odd one of the three.
+/// Output through libasound, to its <c>default</c> device or one chosen by name. The
+/// Linux counterpart of the WASAPI and CoreAudio devices, and the odd one of the three.
 /// </summary>
 /// <remarks>
 /// ALSA has no callback: <c>snd_pcm_writei</c> blocks until the card has room, so this
@@ -14,8 +15,33 @@ namespace Flyback.Plugins.LinuxIO;
 /// call on the handle is made from that one thread, which is what alsa-lib asks for,
 /// so stopping waits for the writer to finish.
 /// </remarks>
-public sealed class AlsaAudioDevice(AudioFormat format) : IAudioDevice
+/// <param name="format">What to play.</param>
+/// <param name="device">
+/// The PCM name to open, or null for <c>default</c> — which on a desktop is PipeWire
+/// or PulseAudio, and they move the stream when the system's default output changes,
+/// so nothing here has to listen for it.
+/// </param>
+public sealed class AlsaAudioDevice(AudioFormat format, string? device = null) : IAudioDevice
 {
+    /// <summary>
+    /// Every device that could play, as the name ALSA opens it by and a description a
+    /// person can read. Empty where the list cannot be read, since a form is not
+    /// somewhere to fail from, and the default is still offered.
+    /// </summary>
+    public static IReadOnlyList<SettingOption> Outputs()
+    {
+        try
+        {
+            return LibAsound.PlaybackDevices()
+                .Select(found => new SettingOption(found.Name, found.Description))
+                .ToList();
+        }
+        catch
+        {
+            return [];
+        }
+    }
+
     /// <summary>
     /// Long enough that a device merely being slow is not mistaken for a device
     /// that has stopped answering: a write returns within one period, and a
@@ -43,9 +69,18 @@ public sealed class AlsaAudioDevice(AudioFormat format) : IAudioDevice
     {
         if (pcm != IntPtr.Zero) return;
 
-        Check(
-            LibAsound.Open(out var opened, LibAsound.DefaultDevice, LibAsound.PlaybackStream, LibAsound.Blocking),
-            $"open the '{LibAsound.DefaultDevice}' device");
+        // A chosen device that will not open — unplugged, or taken exclusively by
+        // another program — plays the default instead, because sound through the
+        // wrong speakers is easier to notice and fix than no sound at all.
+        var opened = IntPtr.Zero;
+
+        if (device is null
+            || LibAsound.Open(out opened, device, LibAsound.PlaybackStream, LibAsound.Blocking) < 0)
+        {
+            Check(
+                LibAsound.Open(out opened, LibAsound.DefaultDevice, LibAsound.PlaybackStream, LibAsound.Blocking),
+                $"open the '{LibAsound.DefaultDevice}' device");
+        }
 
         try
         {

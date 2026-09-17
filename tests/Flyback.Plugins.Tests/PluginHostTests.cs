@@ -116,16 +116,18 @@ public class PluginHostTests
     }
 
     /// <summary>
-    /// WASAPI asks one thing, which device plays, and starts on whatever Windows is
-    /// playing through. Off Windows it asks nothing, and never reaches for NAudio to
-    /// find that out.
+    /// Each native backend asks one thing, which device plays, and starts on whatever
+    /// the system is playing through. Where it is not supported it asks nothing, and
+    /// never reaches for a library the machine does not have to find that out.
     /// </summary>
-    [Fact]
-    public void Wasapi_asks_which_device_plays()
+    [Theory]
+    [MemberData(nameof(PlatformBackends))]
+    public void A_native_backend_asks_which_device_plays(string id)
     {
-        var form = Shipped().AudioOutputs.Single(o => o.Id == "wasapi").Form(SettingValues.None);
+        var output = Shipped().AudioOutputs.Single(o => o.Id == id);
+        var form = output.Form(SettingValues.None);
 
-        if (!OperatingSystem.IsWindows())
+        if (!output.IsSupported)
         {
             form.ShouldBeEmpty();
             return;

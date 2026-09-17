@@ -27,12 +27,16 @@ internal static partial class AudioToolbox
     // Four-character codes, in the order the bytes appear in the name.
     public const uint OutputComponentType = 0x6175_6F75;   // 'auou'
     public const uint DefaultOutputSubType = 0x6465_6620;  // 'def '
+    public const uint HalOutputSubType = 0x6168_616C;      // 'ahal'
     public const uint AppleManufacturer = 0x6170_706C;     // 'appl'
     public const uint LinearPcmFormat = 0x6C70_636D;       // 'lpcm'
     public const uint BufferFrameSizeProperty = 0x6673_697A; // 'fsiz'
 
     public const uint StreamFormatProperty = 8;
     public const uint SetRenderCallbackProperty = 23;
+
+    /// <summary><c>kAudioOutputUnitProperty_CurrentDevice</c> — which device a HAL output unit plays through.</summary>
+    public const uint CurrentDeviceProperty = 2000;
 
     public const uint GlobalScope = 0;
     public const uint InputScope = 1;

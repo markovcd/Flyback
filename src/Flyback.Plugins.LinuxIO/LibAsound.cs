@@ -72,6 +72,79 @@ internal static partial class LibAsound
     [LibraryImport(Library, EntryPoint = "snd_pcm_close")]
     public static partial int Close(IntPtr pcm);
 
+    /// <summary>
+    /// Every device of one interface ALSA's configuration names, on every card when
+    /// <paramref name="card"/> is -1. The array is ALSA's and ends at a null; give it
+    /// back with <see cref="FreeHints"/>.
+    /// </summary>
+    [LibraryImport(Library, EntryPoint = "snd_device_name_hint", StringMarshalling = StringMarshalling.Utf8)]
+    private static unsafe partial int Hints(int card, string iface, out IntPtr* hints);
+
+    /// <summary>One field of a hint — <c>NAME</c>, <c>DESC</c> or <c>IOID</c> — as a string the caller frees, or null.</summary>
+    [LibraryImport(Library, EntryPoint = "snd_device_name_get_hint", StringMarshalling = StringMarshalling.Utf8)]
+    private static partial IntPtr Hint(IntPtr hint, string field);
+
+    [LibraryImport(Library, EntryPoint = "snd_device_name_free_hint")]
+    private static unsafe partial int FreeHints(IntPtr* hints);
+
+    /// <summary>
+    /// Every PCM device that can play, as the name <c>snd_pcm_open</c> takes and the
+    /// description ALSA gives it — the same list <c>aplay -L</c> prints.
+    /// </summary>
+    /// <remarks>
+    /// Devices that capture only are left out, and so are <c>null</c>, which plays
+    /// nothing, <c>default</c>, which the caller offers under its own name, and raw
+    /// <c>hw:</c> routes, which the float this plugin writes would not open.
+    /// </remarks>
+    public static unsafe IReadOnlyList<(string Name, string Description)> PlaybackDevices()
+    {
+        if (Hints(-1, "pcm", out var hints) < 0 || hints == null) return [];
+
+        var found = new List<(string, string)>();
+
+        try
+        {
+            for (var hint = hints; *hint != IntPtr.Zero; hint++)
+            {
+                var name = Take(Hint(*hint, "NAME"));
+
+                // Null is both directions, which is most of them.
+                if (name is null or "null" or DefaultDevice || Take(Hint(*hint, "IOID")) == "Input") continue;
+
+                // A bare hw: route takes the card exclusively and plays only the
+                // formats the chip does, float rarely among them. The plughw: route
+                // beside it reaches the same card and converts.
+                if (name.StartsWith("hw:", StringComparison.Ordinal)) continue;
+
+                // Two lines — the card, then what this route to it is — read as one.
+                var description = Take(Hint(*hint, "DESC"))?.Replace('\n', ' ').Trim();
+
+                found.Add((name, string.IsNullOrEmpty(description) ? name : $"{description} ({name})"));
+            }
+        }
+        finally
+        {
+            FreeHints(hints);
+        }
+
+        return found;
+    }
+
+    /// <summary>A string ALSA allocated, read and then freed — its allocator is the C one.</summary>
+    private static unsafe string? Take(IntPtr text)
+    {
+        if (text == IntPtr.Zero) return null;
+
+        try
+        {
+            return Marshal.PtrToStringUTF8(text);
+        }
+        finally
+        {
+            NativeMemory.Free((void*)text);
+        }
+    }
+
     [LibraryImport(Library, EntryPoint = "snd_strerror")]
     private static partial IntPtr ErrorString(int error);
 

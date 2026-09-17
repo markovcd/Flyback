@@ -778,7 +778,7 @@ em.UnitWrite(cell, smoothed);           <span class="c">// what it holds next ti
     <code>output.json</code> under your backend's id, and hands them to <code>Create</code> at launch and
     again on every Save that changes them, so the new device plays at once. Open nothing until
     <code>Start</code>, which is what lets Save swap devices in place. Leave <code>Form</code> out and the tab
-    shows only latency. The shipped WASAPI backend uses it to pick the output device.</p>
+    shows only latency. All three shipped backends use it to pick the output device.</p>
 
     <p><code>IAudioDevice.Start</code> is handed a callback that fills an interleaved stereo buffer on the
     audio thread. It <strong>must not block, allocate or throw</strong>. If you cannot honour the requested
