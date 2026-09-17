@@ -6,6 +6,11 @@
 - Flyback updates itself: it checks for a signed release at startup, downloads it in the background, and installs it the next time it starts. On by default, in the new Settings → Updates tab.
 - Flyback counts how it is used — the version, the operating system, which plugins and sound backend are in use, how many of each kind of module a patch has when it plays, and which assistant is asked. Nothing about you, your machine or your patches. On by default, in the new Settings → Usage tab.
 
+### Modules
+- Added Stroke (a drum envelope counted off the beat), Fade (brings a part in as a level rises), Hiss (cheap white noise), Wander (a slow random value) and Drum (a kick or tom from one envelope) to Voice.
+- Added Desk, a four-channel stereo mixer with a trim that chains into bigger ones.
+- Added Trails, which leaves the last frame fading behind the picture.
+
 ### Presets
 - Mycelium, in the Effects plugin: a psybient track of ninety-six bars in six sections, with a picture driven by the same signals. It is the largest preset, and needs the Voice and Picture plugins.
 - Bronze, in the Effects plugin: a gamelan in a five-note pelog tuning, on a tempo that slows and quickens, with a mandala struck by the same beats. It needs the Voice and Picture plugins.

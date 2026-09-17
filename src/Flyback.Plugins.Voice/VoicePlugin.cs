@@ -4,8 +4,8 @@ namespace Flyback.Plugins.Voice;
 
 /// <summary>
 /// What makes a tone and what is done to it before it leaves the instrument: the
-/// stacked oscillator and noise, the three ways of changing a waveform's shape, and
-/// the slew, the struck envelope and the rhythm that play it.
+/// stacked oscillator, the drum and the noises, the three ways of changing a
+/// waveform's shape, and the slew, the envelopes, the rhythm and the fade that play it.
 /// </summary>
 /// <remarks>
 /// The Filter, Slew and Decay are not pure: they carry state in one-evaluation cells
@@ -18,8 +18,9 @@ public sealed class VoicePlugin : IFlybackPlugin
     public PluginInfo Info { get; } = new(
         "flyback.voice",
         "Voice",
-        "A seven-oscillator supersaw and noise, the fold, drive and filter that shape them, "
-        + "a slew for glide, and a struck envelope with a Euclidean rhythm to play it.");
+        "A seven-oscillator supersaw, a drum and three kinds of noise, the fold, drive and "
+        + "filter that shape them, a slew for glide, struck and counted envelopes with a "
+        + "Euclidean rhythm to play them, and a fade to arrange them.");
 
     public void Register(IPluginRegistry registry)
     {
@@ -34,6 +35,11 @@ public sealed class VoicePlugin : IFlybackPlugin
                 SlewModule.Definition,
                 DecayModule.Definition,
                 EuclidModule.Definition,
+                StrokeModule.Definition,
+                FadeModule.Definition,
+                HissModule.Definition,
+                WanderModule.Definition,
+                DrumModule.Definition,
             ]);
 
         registry.AddPresets(

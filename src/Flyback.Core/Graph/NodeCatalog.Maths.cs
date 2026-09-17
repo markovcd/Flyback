@@ -43,6 +43,8 @@ public partial class NodeCatalog
 
         yield return Mixer();
 
+        yield return Desk();
+
         yield return new NodeDef(
             "math.smoothstep", "Smoothstep", ModuleCategories.Maths,
             [Any("edge0"), Any("edge1", 1f), Any("in")], [Any("out")],
@@ -112,5 +114,67 @@ public partial class NodeCatalog
             + "levels down, or the Output's gain. An unused input rests on a knob at zero, so it "
             + "adds nothing until something is patched in. Colors mix as readily as tones: patch "
             + "a picture into any input and the levels are a four-way blend of pictures.");
+    }
+
+    /// <summary>
+    /// The Mixer twice over with the end of the chain built in: four stereo
+    /// channels summed to a left and a right, trimmed, and held to the rails.
+    /// </summary>
+    /// <remarks>
+    /// A track's last box is otherwise the same Mixer built once for each ear, a
+    /// Multiply under unity on each and a Clamp on each. A 'right' left unpatched
+    /// carries its 'left', so a mono voice is one wire. The 'bus' sockets are how
+    /// two of these become one desk of eight: the 'bus' outputs are the sum before
+    /// the trim and the rails, and the next Desk adds them in at unity — so only the
+    /// last in the chain trims and only the last can clip.
+    /// </remarks>
+    private static NodeDef Desk()
+    {
+        const int channels = 4;
+        const int busLeft = channels * 3;
+        const int busRight = busLeft + 1;
+        const int trim = busLeft + 2;
+
+        var ports = new PortSpec[trim + 1];
+        for (var ch = 0; ch < channels; ch++)
+        {
+            ports[ch * 3] = new PortSpec($"left {ch + 1}", PatchOnly: true);
+            ports[ch * 3 + 1] = new PortSpec($"right {ch + 1}", NormalledFrom: ch * 3, PatchOnly: true);
+            ports[ch * 3 + 2] = Num($"level {ch + 1}", 1f, 0f, 1f);
+        }
+
+        ports[busLeft] = new PortSpec("bus left", PatchOnly: true);
+        ports[busRight] = new PortSpec("bus right", PatchOnly: true);
+        ports[trim] = Num("trim", 1f, 0f, 2f);
+
+        return new NodeDef(
+            "math.desk", "Desk", ModuleCategories.Maths,
+            ports, [Num("left"), Num("right"), Num("bus left"), Num("bus right")],
+            (em, i) =>
+            {
+                var left = Side(0, busLeft);
+                var right = Side(1, busRight);
+
+                return [Railed(left), Railed(right), left, right];
+
+                Slot Side(int side, int bus)
+                {
+                    var sum = em.Mul(i[side], i[2]);
+                    for (var ch = 1; ch < channels; ch++)
+                        sum = em.Add(sum, em.Mul(i[ch * 3 + side], i[ch * 3 + 2]));
+                    return em.Add(sum, i[bus]);
+                }
+
+                Slot Railed(Slot sum) =>
+                    em.Ternary(OpCode.Clamp, em.Mul(sum, i[trim]), em.Constant(-1f), em.Constant(1f));
+            },
+            "A stereo mixer for the end of a patch. Four channels, each a 'left', a 'right' and one "
+            + "'level' for both; leave 'right' unpatched and it carries the left, so a mono voice "
+            + "is one wire and a stereo effect is two. 'left' and 'right' out are the sum times "
+            + "'trim', held to -1..1 so nothing reaches the speakers hotter than full scale — "
+            + "patch them into the Output. For more than four channels chain Desks: 'bus left' "
+            + "and 'bus right' out are the sum before the trim and the rails, and patched into "
+            + "the next Desk's 'bus' inputs they are added at full level, so the last Desk in the "
+            + "chain is the master.");
     }
 }

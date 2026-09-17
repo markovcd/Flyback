@@ -54,6 +54,7 @@ context, decision, consequences.
 | [0062](0062-indexed-polyphonic-midi-voices.md) | MIDI input is polyphonic through indexed voices *(user-directed)* |
 | [0086](0086-panel-knobs-are-read-as-live-values.md) | Panel knobs are read as live values, and a MIDI controller turns a knob rather than a socket *(user-directed)* |
 | [0057](0057-a-shape-is-a-distance-and-one-module-inks-it.md) | A shape is a distance, and one module inks it *(user-directed)* |
+| [0095](0095-a-module-may-be-a-handful-of-others-if-it-is-exactly-them.md) | A module may be a handful of others, if it is exactly them *(user-directed)* |
 | [0064](0064-a-pixel-runs-only-what-a-pixel-changes.md) | A pixel runs only what a pixel changes |
 | [0074](0074-a-cell-is-a-plane-on-the-video-path.md) | A cell is a plane on the video path *(user-directed)* |
 | [0075](0075-a-cycle-carries-its-own-delay.md) | A cycle carries its own delay *(user-directed)* |

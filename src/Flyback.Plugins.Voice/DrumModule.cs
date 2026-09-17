@@ -1,0 +1,68 @@
+using Flyback.Core.Compile;
+using Flyback.Core.Graph;
+
+namespace Flyback.Plugins.Voice;
+
+/// <summary>
+/// A kick or a tom from one envelope: a sine whose level is the envelope and whose
+/// pitch is the envelope bent, through a Drive.
+/// </summary>
+/// <remarks>
+/// The pitch falls faster than the level because it is the level to a power, so the
+/// beater is over long before the shell is and there is one envelope to get right
+/// rather than two to keep in step. The saturation is <see cref="DriveModule"/>'s
+/// curve and its normalisation, so a 'drive' here is the same number as one there;
+/// at nought it is skipped rather than evaluated at the curve's floor, which is
+/// nearly clean and not quite.
+/// </remarks>
+internal static class DrumModule
+{
+    public const string TypeId = "flyback.voice.drum";
+
+    private const float Tau = 6.283185307179586f;
+
+    /// <summary>The least drive the curve is evaluated at — see <see cref="DriveModule"/>.</summary>
+    private const float Least = 0.05f;
+
+    /// <summary>Under this 'drive' is off.</summary>
+    private const float Off = 1e-3f;
+
+    public static NodeDef Definition { get; } = new(
+        TypeId, "Drum", ModuleCategories.Oscillators,
+        [
+            new PortSpec("in", NormalledTo: NodeCatalog.Clock, Domain: true),
+            new PortSpec("level", PortKind.Scalar, 0f, 0f, 1f),
+            new PortSpec("pitch", PortKind.Scalar, 50f, 20f, 400f),
+            new PortSpec("sweep", PortKind.Scalar, 120f, 0f, 1000f),
+            new PortSpec("bend", PortKind.Scalar, 4f, 0.5f, 8f),
+            new PortSpec("drive", PortKind.Scalar, 2f, 0f, 16f),
+        ],
+        [new PortSpec("out")],
+        Emit,
+        "A kick drum, or a tom. Patch an envelope into 'level' — a Stroke, a Decay, an ADSR — "
+        + "and that one envelope is both how loud the drum is and how far its pitch drops. "
+        + "'pitch' is where it comes to rest, in hertz: 45 is a kick, 100 to 250 a tom. 'sweep' "
+        + "is how many hertz above that the hit starts, and 'bend' how quickly it falls — high "
+        + "is a click at the front, low a long dive. 'drive' thickens it without making it "
+        + "louder, and 0 is clean.");
+
+    private static Slot[] Emit(Emitter em, EmitContext node)
+    {
+        var one = em.Constant(1f);
+        var level = node[1];
+
+        var hz = em.Add(node[2], em.Mul(em.Binary(OpCode.Pow, level, node[4]), node[3]));
+        var tone = em.Mul(em.Unary(OpCode.Sin, em.Mul(em.Phase(node[0], hz, em.Constant(0f)), Tau)), level);
+
+        var drive = em.Binary(OpCode.Max, node[5], em.Constant(Least));
+        var driven = em.Mul(tone, drive);
+        var curve = em.Binary(OpCode.Div, driven, em.Add(em.Unary(OpCode.Abs, driven), 1f));
+        var shaped = em.Binary(OpCode.Div, curve, em.Binary(OpCode.Div, drive, em.Add(drive, 1f)));
+
+        // Two products and a sum rather than a Mix, which at either end is its
+        // operands exactly only when they are equal.
+        var on = em.Binary(OpCode.Step, em.Constant(Off), node[5]);
+
+        return [em.Add(em.Mul(tone, em.Sub(one, on)), em.Mul(shaped, on))];
+    }
+}
