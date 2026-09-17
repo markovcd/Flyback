@@ -90,7 +90,8 @@ public class MeterTests
         var drawn = b.Patch.CompileForVideo(NodeCatalog.BuiltIn).Program;
 
         drawn.Ops.Count(op => op.Code == OpCode.Sin).ShouldBe(0);
-        drawn.Ops.Count(op => op.Code == OpCode.LoadLive).ShouldBe(2);
+        // One of the Meter's two, since only the level is wired.
+        drawn.Ops.Count(op => op.Code == OpCode.LoadLive).ShouldBe(1);
 
         // The speakers, by contrast, evaluate the whole chain — the socket is a
         // root of that program whether or not anything downstream reads it.

@@ -276,7 +276,9 @@ public class MidiTests
         var program = builder.Patch.CompileForAudio(NodeCatalog.BuiltIn).Program;
 
         program.LiveInputs.Count(key => key.EndsWith(MidiSignal.Pitch)).ShouldBe(1);
-        program.Ops.Count(op => op.Code == OpCode.LoadLive).ShouldBe(program.LiveInputs.Count);
+        var pitch = program.LiveInputs.ToList().FindIndex(key => key.EndsWith(MidiSignal.Pitch));
+
+        program.Ops.Count(op => op.Code == OpCode.LoadLive && (int)op.K == pitch).ShouldBe(1);
     }
 
     /// <summary>

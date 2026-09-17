@@ -1,7 +1,8 @@
 # ADR-0011: Compile backwards from the Output node
 
 **Status:** Accepted · 2026-08-11 · amended by
-[0037](0037-one-output-block-that-every-patch-has.md)
+[0037](0037-one-output-block-that-every-patch-has.md) and
+[0096](0096-an-op-nothing-reads-is-left-out.md)
 
 ## Context
 
@@ -97,6 +98,13 @@ aimed at one of them is the normal case rather than a mistake; only a patch
 aimed at neither is remarked on.
 
 ## Amendments
+
+**2026-09-18 — and then one pass.**
+[0096](0096-an-op-nothing-reads-is-left-out.md) sweeps the finished program for
+ops nothing reads. "Dead code elimination is not a pass" stands for modules,
+which is what it was said about: what the Output cannot reach is still never
+visited. What it could not cover is inside a module that is reached, which is
+emitted whole whichever of its outputs a wire takes.
 
 **2026-08-17 (later) — one sink, and it is always there.**
 [0037](0037-one-output-block-that-every-patch-has.md) merged the two sink modules

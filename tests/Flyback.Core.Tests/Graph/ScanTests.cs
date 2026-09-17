@@ -280,12 +280,11 @@ public class ScanTests
 
         var program = patch.CompileForVideo().Program;
 
-        // Three, and each is accounted for: the Rings' own radius, the
-        // Coordinates feeding it — which emits all five of its outputs whether
-        // or not a wire takes them — and the Scan's display measuring the pixel
-        // off the centre. A subtree lowered once for the ear and again for the
-        // eye would put a fourth here.
-        program.Ops.Count(op => op.Code == OpCode.Hypot).ShouldBe(3);
+        // The Rings' own radius and nothing else: the Coordinates' radius and the
+        // Scan's display both measure a distance too, but no wire takes either,
+        // so neither is in the program. A subtree lowered once for the ear and
+        // again for the eye would put a second here.
+        program.Ops.Count(op => op.Code == OpCode.Hypot).ShouldBe(1);
     }
 
     /// <summary>

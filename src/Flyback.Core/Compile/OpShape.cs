@@ -73,4 +73,19 @@ internal static class OpShape
         OpCode.HsvToRgb or OpCode.SampleFeedback or OpCode.SamplePicture => 3,
         _ => 1,
     };
+
+    /// <summary>
+    /// Whether the op stays in a program that never reads its result — see
+    /// <see cref="Emitter.ToProgram(Slot)"/>.
+    /// </summary>
+    /// <remarks>
+    /// An op that writes no register is kept because a register was never what it
+    /// was for. The three that own memory by position are kept because the
+    /// position is the memory: a renderer hands out delay lines and phase cells in
+    /// the order these ops run, and <see cref="StateOwners"/> names their modules
+    /// in the same order, so taking one out would hand every one after it its
+    /// neighbor's past.
+    /// </remarks>
+    public static bool Kept(OpCode code) =>
+        Outputs(code) == 0 || code is OpCode.Delay or OpCode.Allpass or OpCode.Phase;
 }

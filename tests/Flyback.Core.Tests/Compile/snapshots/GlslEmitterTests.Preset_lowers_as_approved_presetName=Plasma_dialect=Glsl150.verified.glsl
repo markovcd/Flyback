@@ -103,9 +103,6 @@ void main()
 
     float r0 = px;
     float r1 = py;
-    float r2 = sqrt(r0 * r0 + r1 * r1);
-    float r3 = at2(r1, r0);
-    float r4 = uAspect;
     float r5 = uK[0];
     float r6 = uK[1];
     float r7 = uK[2];
@@ -134,8 +131,6 @@ void main()
     float r30 = uK[8];
     vec3 t31 = hsv(r29, r30, r7);
     float r31 = t31.x; float r32 = t31.y; float r33 = t31.z;
-    float r34 = r6 * r6;
-    float r35 = r6 * r6;
 
     fragColor = vec4(sat(r31), sat(r32), sat(r33), 1.0);
 }

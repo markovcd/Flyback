@@ -115,9 +115,6 @@ void main()
 
     float r0 = px;
     float r1 = py;
-    float r2 = sqrt(r0 * r0 + r1 * r1);
-    float r3 = at2(r1, r0);
-    float r4 = uAspect;
     float r5 = uTime;
     float r6 = uK[0];
     float r7 = r5 * r6;
@@ -159,8 +156,6 @@ void main()
     float r45 = max(r27, r42);
     float r46 = max(r28, r43);
     float r47 = max(r29, r44);
-    float r48 = r23 * r23;
-    float r49 = r23 * r23;
 
     fragColor = vec4(sat(r45), sat(r46), sat(r47), 1.0);
 }

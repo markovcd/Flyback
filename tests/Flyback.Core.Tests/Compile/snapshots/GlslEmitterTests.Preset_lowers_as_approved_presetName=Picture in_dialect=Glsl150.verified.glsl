@@ -2,7 +2,7 @@
 
 uniform float uTime;
 uniform float uAspect;
-uniform float uK[12];
+uniform float uK[4];
 
 in vec2 vUv;
 out vec4 fragColor;
@@ -101,64 +101,21 @@ void main()
     float px = (vUv.x * 2.0 - 1.0) * uAspect;
     float py = vUv.y * 2.0 - 1.0;
 
-    float r0 = px;
-    float r1 = py;
-    float r2 = sqrt(r0 * r0 + r1 * r1);
-    float r3 = at2(r1, r0);
-    float r4 = uAspect;
     float r5 = uTime;
     float r6 = uK[0];
     float r7 = uK[1];
-    float r8 = uK[2];
     float r9 = r5 * r6 + r7;
-    float r10 = uK[3];
-    float r11 = r9 * r10;
-    float r12 = sin(r11);
-    float r13 = r12 * r8;
-    float r14 = r13 + r7;
-    float r15 = uK[4];
-    float r16 = uK[5];
-    float r17 = uK[6];
-    float r18 = r14 - r15;
-    float r19 = r8 - r15;
-    float r20 = dv(r18, r19);
-    float r21 = r16 + (r17 - r16) * r20;
-    float r22 = r0 * r21;
-    float r23 = r1 * r21;
-    float r24 = r5 * r6;
-    float r25 = cos(r24);
-    float r26 = sin(r24);
-    float r27 = r22 * r25;
-    float r28 = r23 * r26;
-    float r29 = r27 - r28;
-    float r30 = r22 * r26;
-    float r31 = r23 * r25;
-    float r32 = r30 + r31;
-    float r33 = uK[7];
-    float r34 = r5 * r33;
-    float r35 = uK[8];
-    float r36 = r0 * r35;
-    float r37 = r1 * r35;
-    float r38 = nz(r36, r37, r34);
-    float r39 = uK[9];
-    float r40 = r38 * r39;
-    float r41 = r29 + r40;
-    float r42 = r40 * r10;
-    float r43 = sin(r42);
-    float r44 = r32 + r43;
     float r45 = r7;
     float r46 = r7;
     float r47 = r7;
-    float r48 = uK[10];
-    float r49 = uK[11];
+    float r48 = uK[2];
+    float r49 = uK[3];
     float r50 = r45 * r48;
     float r51 = r46 * r48;
     float r52 = r47 * r48;
     float r53 = r50 + r49;
     float r54 = r51 + r49;
     float r55 = r52 + r49;
-    float r56 = r7 * r7;
-    float r57 = r7 * r7;
 
     fragColor = vec4(sat(r53), sat(r54), sat(r55), 1.0);
 }

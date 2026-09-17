@@ -29,7 +29,7 @@ context, decision, consequences.
 | [0008](0008-modules-as-data-in-one-catalogue.md) | Modules are data in a single catalogue |
 | [0009](0009-editable-defaults-on-every-input.md) | Every input port carries an editable default *(color ports and Output's `left` exempted by [0084](0084-a-socket-with-nothing-to-dial-gets-no-knob.md))* |
 | [0010](0010-any-typed-ports-for-polymorphic-maths.md) | `Any`-typed ports make maths modules polymorphic |
-| [0011](0011-compile-backwards-from-output.md) | Compile backwards from the Output node |
+| [0011](0011-compile-backwards-from-output.md) | Compile backwards from the Output node *(unread ops inside a reached module swept by [0096](0096-an-op-nothing-reads-is-left-out.md))* |
 | [0012](0012-feedback-as-a-module-not-a-cycle.md) | Feedback is an explicit module, not a graph cycle *(cycles superseded by [0075](0075-a-cycle-carries-its-own-delay.md))* |
 | [0013](0013-guard-arithmetic-instead-of-propagating-nan.md) | Guard arithmetic instead of propagating NaN |
 | [0014](0014-coordinate-and-value-conventions.md) | Coordinate and value conventions |
@@ -59,6 +59,7 @@ context, decision, consequences.
 | [0074](0074-a-cell-is-a-plane-on-the-video-path.md) | A cell is a plane on the video path *(user-directed)* |
 | [0075](0075-a-cycle-carries-its-own-delay.md) | A cycle carries its own delay *(user-directed)* |
 | [0076](0076-the-processor-runs-a-program-as-il-once-it-is-built.md) | The processor runs a program as IL once it is built *(user-directed)* |
+| [0096](0096-an-op-nothing-reads-is-left-out.md) | An op nothing reads is left out *(user-directed)* |
 | [0077](0077-the-picture-is-heard-only-through-a-scan.md) | The picture is heard only through a Scan *(user-directed; its aspect table's shell-export row retired by [0078](0078-export-leaves-the-shell-for-the-cli-that-already-writes-it.md); its Live-engine row amended by [0083](0083-the-live-engines-aspect-follows-the-preview.md))* |
 | [0083](0083-the-live-engines-aspect-follows-the-preview.md) | The live engine's aspect follows the preview *(user-directed)* |
 | [0084](0084-a-socket-with-nothing-to-dial-gets-no-knob.md) | A socket with nothing to dial gets no knob *(user-directed)* |

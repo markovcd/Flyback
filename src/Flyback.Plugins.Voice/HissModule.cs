@@ -8,13 +8,13 @@ namespace Flyback.Plugins.Voice;
 /// a sine, a larger multiple, the fraction.
 /// </summary>
 /// <remarks>
-/// <see cref="RandomModule"/> makes white too, beside a pink and two stepped values
-/// it builds whether or not anything listens — sixteen noise lookups a sample where
-/// this is a sine and a fraction. It is the cheap one, for the hats, snares and
-/// risers a track wants several of. What it gives up is Random's guarantee of the
-/// same value on every backend: a sine of a number in the millions differs in its
-/// last digits between a double and a shader's float, and the multiple makes those
-/// the digits that are kept. For hiss that is the same hiss.
+/// <see cref="RandomModule"/> makes white too, out of a lookup into the engine's
+/// value noise — eight hashes and a blend between them — where this is a sine and
+/// a fraction. It is the cheap one, for the hats, snares and risers a track wants
+/// several of. What it gives up is Random's guarantee of the same value on every
+/// backend: a sine of a number in the millions differs in its last digits between
+/// a double and a shader's float, and the multiple makes those the digits that are
+/// kept. For hiss that is the same hiss.
 /// </remarks>
 internal static class HissModule
 {
@@ -42,7 +42,8 @@ internal static class HissModule
         + "through a Filter and multiply by a Stroke or a Decay for hats, snares and claps; "
         + "sweep the Filter for a riser. One Hiss can feed every drum in a patch. Two with the "
         + "same 'seed' are the same noise, so give a left and a right their own. Random also "
-        + "has a white output, with pink and chance beside it, and costs several times as much.");
+        + "has a white output, with pink and chance beside it, which costs more and is the "
+        + "same on the screen as in the speakers.");
 
     private static Slot[] Emit(Emitter em, EmitContext node)
     {

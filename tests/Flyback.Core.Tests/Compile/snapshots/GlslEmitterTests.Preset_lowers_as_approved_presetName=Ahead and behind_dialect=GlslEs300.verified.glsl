@@ -286,14 +286,10 @@ void main()
     float r179 = r170 + r176;
     float r180 = r171 + r177;
     float r181 = r172 + r178;
-    float r182 = sqrt(r3 * r3 + r4 * r4);
-    float r183 = at2(r4, r3);
     float r184 = step(r0, r4);
     float r185 = r89 + (r179 - r89) * r184;
     float r186 = r90 + (r180 - r90) * r184;
     float r187 = r91 + (r181 - r91) * r184;
-    float r188 = r0 * r0;
-    float r189 = r0 * r0;
 
     fragColor = vec4(sat(r185), sat(r186), sat(r187), 1.0);
 }

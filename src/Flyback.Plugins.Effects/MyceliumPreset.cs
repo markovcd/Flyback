@@ -241,9 +241,8 @@ internal static class MyceliumPreset
         // --- chance ----------------------------------------------------------
 
         // White noise out of arithmetic — a large multiple of the clock, a sine, a
-        // larger multiple, the fraction. Five ops. The Random module makes white too,
-        // beside a pink it builds whether or not anything listens, and sixteen noise
-        // lookups a sample is more than this patch has left to spend.
+        // larger multiple, the fraction. Five ops, where the Random module's white
+        // is a lookup into the engine's noise, which is eight hashes and a blend.
         var grain = b.Add("math.mul", (1, 3571f));
         var hash = b.Add("math.sin");
         var scatter = b.Add("math.mul", (1, 4371.3f));

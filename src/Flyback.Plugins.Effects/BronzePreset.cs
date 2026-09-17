@@ -342,8 +342,8 @@ internal sealed class BronzePreset : PresetBench
         // --- the cymbals -----------------------------------------------------
 
         // White noise out of arithmetic — a large multiple of the clock, a sine, a
-        // larger multiple, the fraction — because the Random module builds a pink
-        // beside its white whether or not anything listens.
+        // larger multiple, the fraction — less than the lookup into the engine's
+        // noise that the Random module's white is.
         var white = b.Add("math.fract");
         var hiss = Span(white, 0f, 1f, -1f, 1f);
 

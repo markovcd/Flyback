@@ -246,7 +246,7 @@ public static class PatchCompiler
 
         return new CompileResult(
             new CompiledPatch(
-                emitter.ToProgram(),
+                emitter.ToProgram(value),
                 emitter.RegisterCount,
                 value.Base,
                 width,

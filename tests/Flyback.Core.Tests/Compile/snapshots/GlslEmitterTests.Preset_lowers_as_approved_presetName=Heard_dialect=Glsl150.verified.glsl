@@ -2,7 +2,7 @@
 
 uniform float uTime;
 uniform float uAspect;
-uniform float uK[10];
+uniform float uK[9];
 uniform float uLive[2];
 
 in vec2 vUv;
@@ -103,40 +103,34 @@ void main()
     float py = vUv.y * 2.0 - 1.0;
 
     float r0 = uK[0];
-    float r1 = uK[1];
-    float r2 = uK[2];
-    float r3 = uK[3];
+    float r2 = uK[1];
+    float r3 = uK[2];
     float r4 = max(r2, r3);
     float r5 = uLive[0];
     float r6 = dv(r5, r4);
     float r7 = uLive[1];
     float r8 = dv(r7, r4);
-    float r9 = uK[4];
+    float r9 = uK[3];
     float r10 = px;
     float r11 = py;
-    float r12 = sqrt(r10 * r10 + r11 * r11);
-    float r13 = at2(r11, r10);
-    float r14 = uAspect;
-    float r15 = uK[5];
+    float r15 = uK[4];
     float r16 = sqrt(r10 * r10 + r11 * r11);
     float r17 = r16 * r15;
     float r18 = r17 + r0;
-    float r19 = uK[6];
+    float r19 = uK[5];
     float r20 = r18 * r19;
     float r21 = sin(r20);
-    float r22 = uK[7];
-    float r23 = uK[8];
+    float r22 = uK[6];
+    float r23 = uK[7];
     float r24 = r21 - r22;
     float r25 = r2 - r22;
     float r26 = dv(r24, r25);
     float r27 = r23 + (r2 - r23) * r26;
-    float r28 = uK[9];
+    float r28 = uK[8];
     float r29 = r8 + r28;
     float r30 = r27 * r29;
     vec3 t31 = hsv(r6, r9, r30);
     float r31 = t31.x; float r32 = t31.y; float r33 = t31.z;
-    float r34 = r0 * r0;
-    float r35 = r0 * r0;
 
     fragColor = vec4(sat(r31), sat(r32), sat(r33), 1.0);
 }

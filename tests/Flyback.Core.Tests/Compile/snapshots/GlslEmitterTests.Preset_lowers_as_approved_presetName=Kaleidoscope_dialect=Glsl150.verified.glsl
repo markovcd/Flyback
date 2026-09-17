@@ -2,7 +2,7 @@
 
 uniform float uTime;
 uniform float uAspect;
-uniform float uK[9];
+uniform float uK[8];
 
 in vec2 vUv;
 out vec4 fragColor;
@@ -103,9 +103,6 @@ void main()
 
     float r0 = px;
     float r1 = py;
-    float r2 = sqrt(r0 * r0 + r1 * r1);
-    float r3 = at2(r1, r0);
-    float r4 = uAspect;
     float r5 = uTime;
     float r6 = uK[0];
     float r7 = r5 * r6;
@@ -141,9 +138,6 @@ void main()
     float r37 = uK[7];
     vec3 t38 = hsv(r35, r36, r37);
     float r38 = t38.x; float r39 = t38.y; float r40 = t38.z;
-    float r41 = uK[8];
-    float r42 = r41 * r41;
-    float r43 = r41 * r41;
 
     fragColor = vec4(sat(r38), sat(r39), sat(r40), 1.0);
 }

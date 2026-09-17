@@ -117,6 +117,59 @@ public sealed class Emitter
 
     public Op[] ToProgram() => [.. ops];
 
+    /// <summary>
+    /// The program without the ops nothing reads: what <paramref name="result"/>
+    /// is worked out from, and what the program remembers or hands outside.
+    /// </summary>
+    /// <remarks>
+    /// The graph walk already leaves out every module the sink cannot reach, and
+    /// this is the same rule one level down. A module is emitted whole, since its
+    /// emit function cannot know which of its outputs are wired — so a Random read
+    /// only for its hiss would otherwise run thirteen rows of pink on every
+    /// sample. The program is SSA and in order, so one pass backwards is enough:
+    /// by the time an op is reached, everything that could read it has been.
+    /// <para>
+    /// Registers keep their numbers, which leaves holes in the bank and leaves
+    /// every slot a caller is holding meaning what it meant.
+    /// </para>
+    /// </remarks>
+    public Op[] ToProgram(Slot result)
+    {
+        var read = new bool[RegisterCount];
+
+        for (var i = 0; i < result.Width; i++) read[result.Base + i] = true;
+
+        var kept = new bool[ops.Count];
+        var count = 0;
+
+        for (var at = ops.Count - 1; at >= 0; at--)
+        {
+            var op = ops[at];
+            var keep = OpShape.Kept(op.Code);
+
+            for (var w = 0; !keep && w < OpShape.Outputs(op.Code); w++)
+                keep = read[op.Out + w];
+
+            if (!keep) continue;
+
+            kept[at] = true;
+            count++;
+
+            var inputs = OpShape.Inputs(op.Code);
+
+            if (inputs > 0) read[op.A] = true;
+            if (inputs > 1) read[op.B] = true;
+            if (inputs > 2) read[op.C] = true;
+        }
+
+        var program = new Op[count];
+
+        for (int at = 0, next = 0; at < ops.Count; at++)
+            if (kept[at]) program[next++] = ops[at];
+
+        return program;
+    }
+
     private int Allocate(int count)
     {
         var first = RegisterCount;

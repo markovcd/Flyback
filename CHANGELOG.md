@@ -25,6 +25,9 @@
 - Settings → Recording picks the video and sound formats, and where ffmpeg is if it is not on your `PATH`.
 - `flyback-cli render` takes the format from the extension, with `--format` and `--ffmpeg` to override it.
 
+### Performance
+- An output with no wire on it no longer costs anything. The big presets run 2–19% fewer operations a sample, and Random's white is a sixteenth of what it was.
+
 ### Fixes
 - Pressing Escape after "Learn MIDI controller" found no MIDI device no longer crashes.
 - A number too large for a number box — in a patch file, or typed into the text and applied — no longer crashes when its module is selected.

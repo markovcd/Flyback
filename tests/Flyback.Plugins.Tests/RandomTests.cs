@@ -142,6 +142,21 @@ public class RandomTests
         }
     }
 
+    /// <summary>
+    /// Thirteen of the sixteen lookups are pink's rows, and a patch that wants
+    /// hiss for a hat runs none of them.
+    /// </summary>
+    [Fact]
+    public void An_output_costs_its_own_lookups_and_no_other_output_s()
+    {
+        int Lookups(int port) => Program(port).Compiled.Ops.Count(op => op.Code == OpCode.Noise3);
+
+        Lookups(White).ShouldBe(1);
+        Lookups(Pink).ShouldBe(13);
+        Lookups(Stepped).ShouldBe(1);
+        Lookups(Drift).ShouldBe(1);
+    }
+
     // --- harness -----------------------------------------------------------------
 
     private static float[] Samples(int port, int count, params (int Port, float Value)[] knobs)

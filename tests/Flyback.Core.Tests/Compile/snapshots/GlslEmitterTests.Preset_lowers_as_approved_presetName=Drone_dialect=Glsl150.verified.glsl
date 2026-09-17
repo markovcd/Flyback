@@ -114,9 +114,6 @@ void main()
     float r10 = uK[4];
     float r11 = px;
     float r12 = py;
-    float r13 = sqrt(r11 * r11 + r12 * r12);
-    float r14 = at2(r12, r11);
-    float r15 = uAspect;
     float r16 = uK[5];
     float r17 = sqrt(r11 * r11 + r12 * r12);
     float r18 = r17 * r16;
@@ -125,8 +122,6 @@ void main()
     float r21 = sin(r20);
     vec3 t22 = hsv(r9, r10, r21);
     float r22 = t22.x; float r23 = t22.y; float r24 = t22.z;
-    float r25 = r2 * r2;
-    float r26 = r2 * r2;
 
     fragColor = vec4(sat(r22), sat(r23), sat(r24), 1.0);
 }
