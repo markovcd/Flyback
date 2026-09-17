@@ -196,7 +196,7 @@ public class PickerTests : UiTest
             .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Settle(window);
 
-        All<TabControl>(window).Single(tabs => tabs.Name == "settingsTabs").SelectedIndex = 1;
+        All<TabControl>(window).Single(tabs => tabs.Name == "settingsTabs").SelectedIndex = 0;
         Settle(window);
 
         Named(window, "960 x 540").ShouldBeOfType<Picker>();

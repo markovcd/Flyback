@@ -127,7 +127,7 @@ public class OutputSettingsTests : UiTest, IDisposable
 
     private static TabControl Tabs(Visual within) => All<TabControl>(within).Single(t => t.Name == "settingsTabs");
 
-    private const int GraphicsTab = 1, RecordingTab = 2, SoundTab = 3;
+    private const int GraphicsTab = 0, RecordingTab = 1, SoundTab = 2;
 
     /// <summary>Answers the settings window by its Save, or by its cross.</summary>
     private static void CloseSettings(MainWindow window, ModalOverlay dialog, bool save) =>
@@ -169,7 +169,7 @@ public class OutputSettingsTests : UiTest, IDisposable
     }
 
     /// <summary>
-    /// A tab a section, opening on the agent's, and one Save under them all —
+    /// A tab a section, opening on the Graphics tab, and one Save under them all —
     /// switching tabs is not saving, and Save keeps the tabs not showing as well.
     /// </summary>
     [AvaloniaFact]
@@ -180,18 +180,13 @@ public class OutputSettingsTests : UiTest, IDisposable
         var tabs = Tabs(dialog);
 
         tabs.Items.Cast<TabItem>().Select(t => (t.Header as TextBlock)?.Text)
-            .ShouldBe(["Agent settings", "Graphics settings", "Recording settings", "Sound settings"]);
+            .ShouldBe(["Graphics", "Recording", "Sound", "Agent"]);
         tabs.SelectedIndex.ShouldBe(0);
         tabs.TabStripPlacement.ShouldBe(Dock.Left, "the sections are a list down the left");
-        ShowingSettings(dialog).ShouldBeFalse("the Graphics tab is not the one showing");
+        ShowingSettings(dialog).ShouldBeTrue("the Graphics tab opens by default");
 
         var frame = All<Border>(dialog).Single(b => b.Name == "dialog");
         var size = frame.Bounds.Size;
-
-        tabs.SelectedIndex = GraphicsTab;
-        Settle(window);
-
-        ShowingSettings(dialog).ShouldBeTrue();
 
         for (var tab = 0; tab < tabs.ItemCount; tab++)
         {
