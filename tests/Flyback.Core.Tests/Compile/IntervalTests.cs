@@ -104,6 +104,29 @@ public class IntervalTests
         state.ReadUnit(0).ShouldBe(0d);
     }
 
+    /// <summary>
+    /// A loop fed silence decays towards nought without arriving, and what it
+    /// passes through on the way is a subnormal: a number the processor takes
+    /// several times as long over. It is written as the nought it was heading for,
+    /// and the smallest number that is not one of those is kept as it is.
+    /// </summary>
+    [Fact]
+    public void A_cell_that_has_decayed_to_a_subnormal_holds_nothing()
+    {
+        var state = new DelayState([], Rate, 0, 1);
+
+        state.WriteUnit(0, double.Epsilon * 1024d);
+        state.ReadUnit(0).ShouldBe(0d);
+
+        state.WriteUnit(0, -double.Epsilon);
+        state.ReadUnit(0).ShouldBe(0d);
+
+        const double Smallest = 2.2250738585072014e-308;
+
+        state.WriteUnit(0, Smallest);
+        state.ReadUnit(0).ShouldBe(Smallest);
+    }
+
     [Fact]
     public void A_clock_is_kept_whole_and_a_broken_one_is_not()
     {

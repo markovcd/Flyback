@@ -480,16 +480,24 @@ public sealed class DelayState
     /// above one is easy to draw and this is the only place to catch it. Clamping
     /// rather than refusing keeps the runaway audible at the rails instead of
     /// turning the patch into silent NaN.
+    /// <para>
+    /// A subnormal is written as nought, along with everything else that is not a
+    /// normal number. A loop with a gain below one fed silence decays for ever and
+    /// never arrives, and within a tenth of a second it is holding numbers the
+    /// processor does arithmetic on several times slower than on any other — so a
+    /// filter with nothing going through it would cost more than one with a
+    /// signal, for as long as the part it belongs to was resting.
+    /// </para>
     /// </remarks>
     public void WriteUnit(int slot, double value) =>
-        units[slot] = double.IsFinite(value) ? Math.Clamp(value, -16d, 16d) : 0d;
+        units[slot] = double.IsNormal(value) ? Math.Clamp(value, -16d, 16d) : 0d;
 
     /// <summary>What plane <paramref name="slot"/> was left holding, the ear's one cell of it.</summary>
     public double ReadPlane(int slot) => planes[slot];
 
     /// <summary>Puts a value in plane <paramref name="slot"/>, bounded as <see cref="WriteUnit"/> is.</summary>
     public void WritePlane(int slot, double value) =>
-        planes[slot] = double.IsFinite(value) ? Math.Clamp(value, -16d, 16d) : 0d;
+        planes[slot] = double.IsNormal(value) ? Math.Clamp(value, -16d, 16d) : 0d;
 
     /// <summary>
     /// The same, for a cell holding the renderer's clock rather than a signal —
@@ -564,12 +572,18 @@ public sealed class DelayState
     }
 
     /// <summary>Writes at the head of line <paramref name="slot"/> and advances it.</summary>
+    /// <remarks>
+    /// Narrowed before it is tested, because the line holds floats: a tail that is
+    /// still a normal double is a subnormal float long before it is nothing, and it
+    /// is the narrow one that is read back on every tap. See <see cref="WriteUnit"/>.
+    /// </remarks>
     public void Write(int slot, double value)
     {
         var line = lines[slot];
         var next = Index(positions[slot] + 1, line.Length);
+        var narrow = (float)value;
 
-        line[next] = double.IsFinite(value) ? (float)Math.Clamp(value, -16d, 16d) : 0f;
+        line[next] = float.IsNormal(narrow) ? Math.Clamp(narrow, -16f, 16f) : 0f;
         positions[slot] = next;
     }
 
