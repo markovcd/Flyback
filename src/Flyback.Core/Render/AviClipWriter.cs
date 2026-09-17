@@ -59,9 +59,17 @@ public sealed class AviClipWriter : IClipWriter
 
     public void Dispose()
     {
-        avi.Dispose();
-        encoded.Dispose();
-        owned?.Dispose();
+        // The index can refuse to be written — an AVI at its ceiling — and the
+        // file has to be let go of all the same.
+        try
+        {
+            avi.Dispose();
+        }
+        finally
+        {
+            encoded.Dispose();
+            owned?.Dispose();
+        }
     }
 }
 
@@ -94,7 +102,13 @@ public sealed class WavClipWriter : IClipWriter
 
     public void Dispose()
     {
-        wav.Dispose();
-        owned?.Dispose();
+        try
+        {
+            wav.Dispose();
+        }
+        finally
+        {
+            owned?.Dispose();
+        }
     }
 }

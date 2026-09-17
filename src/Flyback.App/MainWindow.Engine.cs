@@ -330,9 +330,11 @@ public sealed partial class MainWindow
     protected override void OnClosed(EventArgs e)
     {
         // Before the device goes, and before anything else: a take whose header
-        // was never patched is not a file, so closing the window mid-recording
-        // has to finish it rather than abandon it.
-        Stop();
+        // was never patched is not a file, so a window closed mid-recording
+        // waits here for it rather than abandoning it. OnClosing has normally
+        // dealt with it already, and this is for the close that could not be
+        // put off.
+        FinishTakeNow();
 
         audio.Dispose();
         compiler.Dispose();

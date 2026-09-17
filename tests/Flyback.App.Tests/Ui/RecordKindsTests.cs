@@ -66,6 +66,30 @@ public class RecordKindsTests
         kinds.Select(k => k.Patterns?[0]).ShouldBe(["*.mp4", "*.mp3"]);
     }
 
+    /// <summary>
+    /// H.265 shares its extension with H.264, so the name alone cannot ask for
+    /// it: the settings break the tie, and only the tie.
+    /// </summary>
+    [Fact]
+    public void A_shared_extension_means_the_format_chosen()
+    {
+        MainWindow.TakeFormat("take.mp4", ClipFormats.H265Mp4, ClipFormats.Wav).ShouldBe(ClipFormats.H265Mp4);
+        MainWindow.TakeFormat("take.MP4", ClipFormats.MotionJpegAvi, ClipFormats.Wav).ShouldBe(ClipFormats.H264Mp4);
+        MainWindow.TakeFormat("take.webm", ClipFormats.H265Mp4, ClipFormats.Wav).ShouldBe(ClipFormats.Vp9WebM);
+        MainWindow.TakeFormat("take.flac", ClipFormats.H265Mp4, ClipFormats.Wav).ShouldBe(ClipFormats.Flac);
+        MainWindow.TakeFormat("take", ClipFormats.H265Mp4, ClipFormats.Wav).ShouldBe(ClipFormats.H265Mp4);
+    }
+
+    /// <summary>The picker suggests the patch's name, which a preset's may not be fit for as it stands.</summary>
+    [Theory]
+    [InlineData("Mycelium", "Mycelium")]
+    [InlineData("Plasma / slow", "Plasma _ slow")]
+    [InlineData(null, "take")]
+    [InlineData("  ", "take")]
+    [InlineData("...", "take")]
+    public void A_take_is_named_for_its_patch(string? patch, string expected) =>
+        MainWindow.FileNameFor(patch).ShouldBe(expected);
+
     /// <summary>A still is not a recording, whatever the patch draws.</summary>
     [Fact]
     public void A_still_is_never_offered()

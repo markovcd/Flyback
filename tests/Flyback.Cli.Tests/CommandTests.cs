@@ -248,6 +248,46 @@ public class CommandTests
         error.ShouldContain(".mp4");
     }
 
+    /// <summary>A --format nothing defines is refused, not quietly read as the extension's.</summary>
+    [Fact]
+    public void A_format_nothing_defines_is_said_plainly()
+    {
+        using var directory = new Scratch();
+
+        var file = directory.File("out.mp4");
+
+        var (code, _, error) = Run((_, e) => RenderCommand.Run(
+            Preset("Plasma"), new RenderOptions(file, 64, 36, Seconds: 0.2d, Format: "h265"), e));
+
+        code.ShouldBe(Exit.Failed);
+        error.ShouldContain("h265");
+        error.ShouldContain(ClipFormats.H265Mp4.Id);
+
+        file.Refresh();
+        file.Exists.ShouldBeFalse();
+    }
+
+    /// <summary>
+    /// The formats written here have one container each. ffmpeg's are left to
+    /// ffmpeg, which reads the container off the name.
+    /// </summary>
+    [Fact]
+    public void A_format_written_here_is_refused_under_another_extension()
+    {
+        using var directory = new Scratch();
+
+        var file = directory.File("out.mp4");
+
+        var (code, _, error) = Run((_, e) => RenderCommand.Run(
+            Preset("Plasma"), new RenderOptions(file, 64, 36, Seconds: 0.2d, Format: ClipFormats.MotionJpegAvi.Id), e));
+
+        code.ShouldBe(Exit.Failed);
+        error.ShouldContain(ClipFormats.MotionJpegAvi.Extension);
+
+        file.Refresh();
+        file.Exists.ShouldBeFalse();
+    }
+
     /// <summary>
     /// A format ffmpeg writes, asked for on a machine with no ffmpeg. Said before
     /// anything is rendered, and said with what to do about it — ADR-0089.

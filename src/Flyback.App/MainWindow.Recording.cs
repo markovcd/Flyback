@@ -31,6 +31,24 @@ public sealed partial class MainWindow
 
     private DispatcherTimer? recordingTicker;
 
+    /// <summary>
+    /// A take that has been stopped and whose file is still closing. Null
+    /// otherwise, and the only thing that says another take may not start —
+    /// which is what keeps one from being written over a file not yet finished.
+    /// </summary>
+    private Task? finishing;
+
+    /// <summary>
+    /// The closing of the file alone, which runs on no thread of the window's and
+    /// so is the one part of <see cref="finishing"/> that can be waited for from it.
+    /// </summary>
+    private Task? closingFile;
+
+    /// <summary>Set once the window has closed, after which nothing may be reported.</summary>
+    private bool gone;
+
+    private const string DefaultTakeName = "take";
+
     private static readonly string RecordTip =
         "Record what the patch is doing now, knobs and all, as it happens.  (Ctrl+R)  A video "
         + "takes the picture off the GPU at whatever the Recording settings say, at "
@@ -39,6 +57,8 @@ public sealed partial class MainWindow
         + "writes — it runs until you stop it.";
 
     private const string StopTip = "End this take and write the file.  (Ctrl+R)";
+
+    private const string StillFinishing = "The last take is still being written.";
 
     private const string NothingToRecord =
         "Nothing is wired into the Output, so there is nothing to record. "
@@ -58,9 +78,10 @@ public sealed partial class MainWindow
     {
         var kinds = RecordingKinds();
 
-        recordButton.IsEnabled = recorder is not null || kinds.Count > 0;
+        recordButton.IsEnabled = recorder is not null || (finishing is null && kinds.Count > 0);
 
         ToolTip.SetTip(recordButton, recorder is not null ? StopTip
+            : finishing is not null ? StillFinishing
             : kinds.Count > 0 ? RecordTip
             : NothingToRecord);
     }
@@ -99,13 +120,26 @@ public sealed partial class MainWindow
         {
             Title = "Record",
             FileTypeChoices = kinds,
-            SuggestedFileName = "take",
+            SuggestedFileName = FileNameFor(patchName),
             DefaultExtension = kinds[0].Patterns?[0].TrimStart('*', '.'),
         });
 
         if (file?.TryGetLocalPath() is not { } path) return;
 
         Start(path, patch);
+    }
+
+    /// <summary>
+    /// A patch's name as a file's. A preset is named for a person to read, and may
+    /// hold what no file name can.
+    /// </summary>
+    internal static string FileNameFor(string? patchName)
+    {
+        if (string.IsNullOrWhiteSpace(patchName)) return DefaultTakeName;
+
+        var cleaned = string.Join("_", patchName.Split(Path.GetInvalidFileNameChars())).Trim(' ', '.');
+
+        return cleaned.Length > 0 ? cleaned : DefaultTakeName;
     }
 
     /// <summary>
@@ -252,55 +286,110 @@ public sealed partial class MainWindow
     {
         if (recorder is not { } running) return;
 
-        // Detached first, so neither the render thread nor the sound callback is
-        // still handing frames to something that is closing its file.
-        preview.EndCapture();
-        audio.Capture = null;
-
-        recordingTicker?.Stop();
-        recordingTicker = null;
-
         var name = Path.GetFileName(running.Path);
 
-        // Taken off the field before anything is awaited, so a second press —
-        // or the preview losing its picture as this runs — is a no-op rather
-        // than a second attempt to close the same file.
-        recorder = null;
-
-        recordButton.Content = Glyphs.Record();
-        resolution.IsEnabled = true;
-
-        MarkRecordable();
+        Detach();
 
         // A take that ended for a reason has its last word already. One that was
         // simply stopped gets a holding line, since closing the file is the only
         // part of this that can take long enough to need one.
         Report(because ?? $"Finishing {name}…", progress: because is null);
 
-        _ = FinishAsync(running, name, said: because is not null);
+        closingFile = Task.Run(running.Dispose);
+        finishing = FinishAsync(running, closingFile, name, said: because is not null);
+
+        MarkRecordable();
     }
 
     /// <summary>
-    /// Closes the file off the UI thread and reports what it came to. What the
-    /// writer says on the way out — ffmpeg refusing an argument, an AVI at its
-    /// 4 GB ceiling — is the only account of a take that is not what was asked
-    /// for, so it is read after the close rather than before it.
+    /// Takes the running take away from everything feeding it and puts the
+    /// toolbar back, leaving the file still to be closed.
+    /// </summary>
+    private void Detach()
+    {
+        // Neither the render thread nor the sound callback may still be handing
+        // frames to something that is closing its file.
+        preview.EndCapture();
+        audio.Capture = null;
+
+        recordingTicker?.Stop();
+        recordingTicker = null;
+
+        recorder = null;
+
+        recordButton.Content = Glyphs.Record();
+        resolution.IsEnabled = true;
+    }
+
+    /// <summary>
+    /// Waits for the file to close and reports what it came to. What the writer
+    /// says on the way out — ffmpeg refusing an argument, an AVI at its 4 GB
+    /// ceiling — is the only account of a take that is not what was asked for,
+    /// so it is read after the close rather than before it.
     /// </summary>
     /// <param name="said">
     /// Whether <see cref="Stop"/> has already reported why this ended. Then the
     /// close is only how a take that had already failed was tidied up, and
     /// saying anything more would write over the reason.
     /// </param>
-    private async Task FinishAsync(LiveRecorder running, string name, bool said)
+    private async Task FinishAsync(LiveRecorder running, Task closing, string name, bool said)
     {
-        await Task.Run(running.Dispose);
+        try
+        {
+            await closing;
 
-        if (said) return;
+            if (said || gone) return;
 
-        var status = running.Status;
+            var status = running.Status;
 
-        Report(status.Stopped is { } failure
-            ? $"Recording stopped: {failure}"
-            : $"Recorded {status.Seconds:0.0}s to {name}.");
+            Report(status.Stopped is { } failure
+                ? $"Recording stopped: {failure}"
+                : $"Recorded {status.Seconds:0.0}s to {name}.");
+        }
+        catch (Exception ex)
+        {
+            // Nothing awaits this but a window on its way out, so it may not throw.
+            if (!gone) Report($"Could not finish {name}: {ex.Message}");
+        }
+        finally
+        {
+            finishing = null;
+            closingFile = null;
+
+            if (!gone) MarkRecordable();
+        }
+    }
+
+    /// <summary>Whether a take is running, or stopped and its file not yet closed.</summary>
+    private bool TakeInHand => recorder is not null || finishing is not null;
+
+    /// <summary>
+    /// Stops the take if one is running and waits for its file to close, which is
+    /// what a window about to close has to do first.
+    /// </summary>
+    private async Task FinishTakeAsync()
+    {
+        Stop();
+
+        if (finishing is { } pending) await pending;
+    }
+
+    /// <summary>
+    /// The close nothing could put off: the file is closed on this thread, since
+    /// there will be no other once the window has gone.
+    /// </summary>
+    private void FinishTakeNow()
+    {
+        gone = true;
+
+        if (recorder is { } running)
+        {
+            Detach();
+            running.Dispose();
+        }
+
+        // Only the closing of the file. The rest of a finish resumes on this
+        // thread and would wait for ever on being waited for.
+        closingFile?.Wait();
     }
 }

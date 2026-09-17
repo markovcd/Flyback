@@ -99,6 +99,49 @@ public class FfmpegClipWriterTests : IDisposable
         return path;
     }
 
+    /// <summary>
+    /// The index ahead of the data, which is what <c>+faststart</c> asks for and
+    /// what a page needs to start playing before the file has arrived. Asked of
+    /// the pass that writes the finished file, whichever that is.
+    /// </summary>
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void An_mp4_is_indexed_at_the_front_with_or_without_sound(bool sound)
+    {
+        Assert.SkipWhen(Encoder is null, "no ffmpeg on this machine");
+
+        var bytes = System.IO.File.ReadAllBytes(Write(ClipFormats.H264Mp4, "fast.mp4", sound: sound));
+
+        var text = System.Text.Encoding.Latin1.GetString(bytes);
+
+        text.IndexOf("moov", StringComparison.Ordinal).ShouldBeGreaterThan(0);
+        text.IndexOf("moov", StringComparison.Ordinal).ShouldBeLessThan(text.IndexOf("mdat", StringComparison.Ordinal));
+    }
+
+    /// <summary>An ffmpeg that will not start leaves nothing of the sound pass behind it.</summary>
+    [Fact]
+    public void An_encoder_that_will_not_start_leaves_no_files()
+    {
+        var path = File("never.mp4");
+        var impostor = File("not-ffmpeg.txt");
+
+        System.IO.File.WriteAllText(impostor, "not a program");
+
+        Should.Throw<Exception>(() => new FfmpegClipWriter(
+            new ClipTarget(
+                path,
+                ClipFormats.H264Mp4,
+                Width,
+                Height,
+                Rate,
+                SampleRate: GlobalConstants.SampleRate,
+                Channels: Channels),
+            impostor));
+
+        Directory.GetFiles(folder).ShouldBe([impostor]);
+    }
+
     [Theory]
     [InlineData("mp4")]
     [InlineData("hevc")]

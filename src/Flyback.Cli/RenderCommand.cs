@@ -50,9 +50,32 @@ internal static class RenderCommand
     {
         var still = options.Out.Extension.Equals(".png", StringComparison.OrdinalIgnoreCase);
 
+        var asked = still ? null : options.Format;
+
+        if (asked is not null && ClipFormats.ById(asked) is null)
+        {
+            var ids = string.Join(", ", ClipFormats.All.Select(f => f.Id));
+
+            error.WriteLine($"{GlobalConstants.ApplicationName}: --format {asked}: choose one of {ids}.");
+            return Exit.Failed;
+        }
+
         var format = still
             ? null
-            : ClipFormats.ById(options.Format) ?? ClipFormats.ByExtension(options.Out.Name);
+            : ClipFormats.ById(asked) ?? ClipFormats.ByExtension(options.Out.Name);
+
+        // ffmpeg takes the container from the name, so one of its formats under
+        // another extension is its business. A format written here has one
+        // container, and under any other name is a file that lies about itself.
+        if (format is { NeedsFfmpeg: false }
+            && !options.Out.Extension.Equals(format.Extension, StringComparison.OrdinalIgnoreCase))
+        {
+            error.WriteLine(
+                $"{GlobalConstants.ApplicationName}: {options.Out.Name}: {format.Label} goes in a "
+                + $"{format.Extension} file.");
+
+            return Exit.Failed;
+        }
 
         if (!still && format is null)
         {

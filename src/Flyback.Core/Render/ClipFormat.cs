@@ -20,13 +20,19 @@ namespace Flyback.Core.Render;
 /// here. Read on its own for a sound-only format, and when muxing sound into a
 /// video one.
 /// </param>
+/// <param name="Container">
+/// ffmpeg's arguments for the file itself rather than a stream in it. They go to
+/// whichever pass writes the finished file, since a mux rewrites the container
+/// and keeps nothing the encode asked of it.
+/// </param>
 public sealed record ClipFormat(
     string Id,
     string Label,
     string Extension,
     bool HasPicture,
     string Picture = "",
-    string Sound = "")
+    string Sound = "",
+    string Container = "")
 {
     /// <summary>
     /// Whether writing this needs ffmpeg on the machine. The two formats written
@@ -79,15 +85,17 @@ public static class ClipFormats
     public static readonly ClipFormat H264Mp4 = new(
         "mp4", "MP4, H.264", ".mp4", HasPicture: true,
         Picture: "-c:v libx264 -preset medium -crf {crf} -pix_fmt yuv420p "
-            + "-vf pad=ceil(iw/2)*2:ceil(ih/2)*2 -movflags +faststart",
-        Sound: "-c:a aac -b:a 192k");
+            + "-vf pad=ceil(iw/2)*2:ceil(ih/2)*2",
+        Sound: "-c:a aac -b:a 192k",
+        Container: "-movflags +faststart");
 
     /// <summary>About half the size of H.264 at the same quality, for a clip that has to travel.</summary>
     public static readonly ClipFormat H265Mp4 = new(
         "hevc", "MP4, H.265", ".mp4", HasPicture: true,
         Picture: "-c:v libx265 -preset medium -crf {crf} -pix_fmt yuv420p "
-            + "-vf pad=ceil(iw/2)*2:ceil(ih/2)*2 -tag:v hvc1 -movflags +faststart",
-        Sound: "-c:a aac -b:a 192k");
+            + "-vf pad=ceil(iw/2)*2:ceil(ih/2)*2 -tag:v hvc1",
+        Sound: "-c:a aac -b:a 192k",
+        Container: "-movflags +faststart");
 
     /// <summary>What goes on a web page without asking anybody's permission.</summary>
     public static readonly ClipFormat Vp9WebM = new(

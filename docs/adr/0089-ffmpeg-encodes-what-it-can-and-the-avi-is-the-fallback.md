@@ -100,7 +100,21 @@ between a transparent MP3 and a smaller one.
 
 **The extension decides, not the setting.** `flyback-cli render -o take.mp4`
 needs no flag, and a name typed over what the record picker suggested means what
-it says. `--format` overrides the extension, and `--ffmpeg` names the executable.
+it says. `--format` overrides the extension, an id nothing defines being refused
+rather than read as the extension's, and `--ffmpeg` names the executable. The one
+extension two formats share is the exception: in the shell `.mp4` means whichever
+of H.264 and H.265 the settings are on, since no name could otherwise ask for the
+second.
+
+**One take at a time, counting the one being finished.** Finishing runs behind
+the window, so Record stays disabled until the last file is closed — a second
+take could otherwise be written over it. The picker suggests the patch's name
+rather than a fixed one, and closing the window waits for the file first.
+
+**What a format asks of the container goes to the pass that writes the file.**
+`+faststart` on the encode would be undone by the mux, which rewrites the
+container, so `ClipFormat.Container` is kept apart from the video arguments and
+handed to whichever pass is the last.
 
 **A new settings file starts on H.264 wherever there is an ffmpeg to write it
 with.** The one default in this program that is a question about the machine

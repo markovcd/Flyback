@@ -60,6 +60,9 @@ public sealed partial class MainWindow
     /// </summary>
     private bool questionIsUp;
 
+    /// <summary>Set while a close is waiting for a take to be finished, so a second close does not wait twice.</summary>
+    private bool waitingOnTake;
+
     /// <summary>What to do about a patch that has been edited and not written out.</summary>
     private enum Unsaved
     {
@@ -260,6 +263,22 @@ public sealed partial class MainWindow
         if (questionIsUp)
         {
             e.Cancel = true;
+            return;
+        }
+
+        // A take first, since it is the one thing here that cannot be had again:
+        // its file is closed, and then the close is tried once more.
+        if (TakeInHand)
+        {
+            e.Cancel = true;
+
+            if (waitingOnTake) return;
+
+            waitingOnTake = true;
+            await FinishTakeAsync();
+            waitingOnTake = false;
+
+            Close();
             return;
         }
 

@@ -83,7 +83,21 @@ public sealed class FfmpegClipWriter : IClipWriter
             sound = new WavStreamWriter(soundFile, target.SampleRate, target.Channels);
         }
 
-        encoder = Start(target.Format.HasPicture ? PictureArguments() : SoundArguments());
+        // An ffmpeg that will not start must not leave the WAV it never got to
+        // use open and on the disk.
+        try
+        {
+            encoder = Start(target.Format.HasPicture ? PictureArguments() : SoundArguments());
+        }
+        catch
+        {
+            sound?.Dispose();
+            soundFile?.Dispose();
+            Discard(soundPath);
+
+            throw;
+        }
+
         input = encoder.StandardInput.BaseStream;
     }
 
@@ -231,7 +245,7 @@ public sealed class FfmpegClipWriter : IClipWriter
         }
         catch (Exception ex) when (ex is IOException or ObjectDisposedException)
         {
-            encoder.WaitForExit(Patience);
+            if (encoder.WaitForExit(Patience)) encoder.WaitForExit();
 
             throw Failed($"ffmpeg stopped after {frames} frames");
         }
@@ -259,6 +273,11 @@ public sealed class FfmpegClipWriter : IClipWriter
 
             return "ffmpeg did not finish";
         }
+
+        // The timed wait returns at the exit and not at the end of what was
+        // said, and what was said is the reason; only the untimed one waits for
+        // both pipes to run dry.
+        process.WaitForExit();
 
         return process.ExitCode == 0 ? null : $"ffmpeg exited with {process.ExitCode}";
     }
@@ -321,6 +340,7 @@ public sealed class FfmpegClipWriter : IClipWriter
         "-i", "pipe:0",
         "-an",
         .. Split(target.Format.PictureArguments(target.Quality)),
+        .. Split(partial is null ? target.Format.Container : string.Empty),
         partial ?? target.Path,
     ];
 
@@ -337,6 +357,7 @@ public sealed class FfmpegClipWriter : IClipWriter
         "-ac", target.Channels.ToString(CultureInfo.InvariantCulture),
         "-i", "pipe:0",
         .. Split(target.Format.Sound),
+        .. Split(target.Format.Container),
         target.Path,
     ];
 
@@ -355,6 +376,7 @@ public sealed class FfmpegClipWriter : IClipWriter
         "-map", "1:a:0",
         "-c:v", "copy",
         .. Split(target.Format.Sound),
+        .. Split(target.Format.Container),
         "-shortest",
         target.Path,
     ];
