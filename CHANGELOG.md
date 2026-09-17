@@ -1,8 +1,8 @@
 # Changelog
 
-## 0.3.0 — 2026-09-16
+## 0.3.0 — 2026-09-17
 
-38 commits since 0.2.0.
+71 commits since 0.2.0.
 
 ### Feedback loops
 - Loops now draw as well as sound. A loop carries each pixel's value from the previous frame, on both the CPU renderer and the GPU shader.
@@ -10,12 +10,36 @@
 - A module can be wired to itself, and the wire is drawn beneath the module.
 - The wire a loop is cut at no longer changes when a module is dragged. Wires whose input sits left of their output are drawn as a U-turn.
 
+### Knobs and MIDI
+- A patch carries a panel of knobs, shown under the canvas with Ctrl+K. Knobs can be added, renamed and removed, and reordered by dragging their names or from their menu.
+- Any unwired socket can follow a knob over its own range: click the knob's name, then socket rows on the canvas. The inspector shows a linked socket's knob and range.
+- Turning a knob on screen or on a bound MIDI controller changes the playing patch without a recompile. A knob learns its controller from its menu, and the MIDI settings tab chooses whether a controller jumps or picks up (ADR-0086).
+- The panel wraps knobs onto more rows and is resized by dragging the splitter above it.
+
 ### Modules
 - Added Random (white and pink noise, stepped or drifting values), Slew, Decay and Euclid to Voice.
 - Added String, a Karplus-Strong plucked-string voice.
 - Added Layer (eight blend modes through a mask) and Line (distance to a segment) to Picture.
 - Added Analyzer, which charts the spectrum of the audio output on a log frequency axis.
 - Added the Euclid kit preset. Played is rebuilt as four plucked strings into a reverb and moves to the Effects plugin.
+- The Output loses its scan knobs, and the speakers are always evaluated at the origin. The picture is heard through a Scan instead, and Coordinates gains an `aspect` output (ADR-0077).
+- The Output's gain is renamed Volume. Turning it to zero closes the audio device, which replaces the Audio on/off toggle (ADR-0079).
+- Color inputs, and the Output's left and right, lose a slider that could only offer a grey or a hum, and take a wire only (ADR-0084).
+
+### Performance
+- The CPU runs a patch as compiled IL once it has been built, and interprets it until then with no audible or visible hand-over. Frames run 1.5–2.1x faster and audio callbacks about 1.7x. A knob move rebinds without recompiling, and `--interpreted` keeps a run on the interpreter (ADR-0076).
+
+### Settings
+- The settings window has a tab per section (Graphics, Recording, Sound, MIDI and Agent) with Save and Cancel. Choices are kept in `output.json` beside `assistant.json` and applied at startup (ADR-0082).
+- Graphics: output size, now with 1440p, 4K, 4:3, square, portrait and ultrawide; GPU or CPU rendering; and an optional cap on the preview's frame rate. The live sound's aspect follows the chosen size (ADR-0083).
+- Recording: a take's frame rate and JPEG quality.
+- Sound: latency and the output device, applied on Save while the sound carries on. Sound backends declare their own settings (ADR-0085). WASAPI, CoreAudio and ALSA list their devices, and System default follows the system's default device when it changes.
+- Agent: how many turns a conversation may have.
+
+### Recording and playback
+- Record and Rewind move from the Output's panel to the toolbar, with glyphs, and Ctrl+R starts or stops a take (ADR-0080, ADR-0081).
+- Removed the Output panel's Export button. `flyback-cli render` writes the same files (ADR-0078).
+- Rewind clears the playing program's memory on the audio thread, so it no longer sets off a loud, clipped burst.
 
 ### Assistant
 - Conversations are saved with their patch: inside a bundle, or alongside a `.fbk`/`.fbks` in the user's data folder.
@@ -32,6 +56,9 @@
 - `check --strict` fails on warnings, `pack` supports `--json`, and the CLI supports shell completion.
 
 ### Canvas and interface
+- The middle button pans while a wire or other drag is in progress, and the drag carries on afterwards.
+- A dialog raised while the window is in the background flashes the taskbar, dock or window-list entry. Every dialog casts a shadow.
+- The status bar shows the preview's frames per second and which renderer is actually drawing.
 - The layout places a group as a single block, and a tidied patch is centered on the canvas.
 - The canvas is 15000×10000, and zoom goes out to an eighth.
 - Ctrl+E opens every group in the selection, and Ctrl+Shift+E closes them.
@@ -41,6 +68,7 @@
 ### Internals
 - Code comments across the engine, shell, plugins and tests were trimmed to the non-obvious parts.
 - Added ADRs for per-pixel loop state, saved conversations and the Analyzer.
+- The README links the changelog.
 
 ## 0.2.0 — 2026-09-10
 
