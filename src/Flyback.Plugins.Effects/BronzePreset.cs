@@ -40,6 +40,8 @@ internal sealed class BronzePreset : PresetBench
 
     private const string DriveType = "flyback.voice.drive";
 
+    private const string RandomType = "flyback.voice.random";
+
     private const string FoldType = "flyback.voice.fold";
 
     private const string StarType = "flyback.picture.star";
@@ -143,16 +145,16 @@ internal sealed class BronzePreset : PresetBench
         var behindTwice = Times(leanTwice, Settle / (2f * Breath));
         var beats = Less(Less(steady, behind), behindTwice);
 
-        // The tiers. Each is the count slowed down, how far through its own stroke
-        // it is, and how much of the stroke is left — which is the envelope.
-        var gongPos = Times(beats, 1f / Cycle);
-        var (gongGone, gongLeft) = Stroke(gongPos);
+        // The tiers. Each is a Stroke off the count at its own rate: what is left of
+        // the stroke, to a power, is the envelope, and how far through it is comes
+        // out beside it. The faster tiers are made where they are struck.
+        var gongFall = Stroke(beats, 1f / Cycle, 5f);
+        var fourFall = Stroke(beats, 0.25f, 3f);
+        var twoFall = Stroke(beats, 0.5f, 3f);
+
+        // The two slow counts themselves, which the picture turns by.
         var fourPos = Times(beats, 0.25f);
-        var (fourGone, fourLeft) = Stroke(fourPos);
         var twoPos = Times(beats, 0.5f);
-        var (twoGone, twoLeft) = Stroke(twoPos);
-        var (_, beatLeft) = Stroke(beats);
-        var (_, quarterLeft) = Stroke(Times(beats, 4f));
 
         Box("Clock");
 
@@ -183,14 +185,11 @@ internal sealed class BronzePreset : PresetBench
         var slow = b.Add("math.step", (1, 0.28f));
         var figureRate = Span(slow, 0f, 1f, 4f, 8f);
 
-        // Who is in, as thresholds on the one number. They change on a gong, where
-        // every stroke in the orchestra restarts anyway, so nothing is cut off.
-        var coreIn = Rises(song, 0.15f, 0.2f);
-        var figureIn = Rises(song, 0.12f, 0.45f);
-        var timeIn = Rises(song, 0.36f, 0.4f);
-        var drumsIn = Rises(song, 0.5f, 0.55f);
-        var chimesIn = Rises(song, 0.6f, 0.7f);
-        var burstIn = Rises(song, 0.9f, 0.95f);
+        // Who is in is a Fade on the one number, made where each part is struck. They
+        // change on a gong, where every stroke in the orchestra restarts anyway, so
+        // nothing is cut off. The burst at the top is here because the chimes and the
+        // cymbals both take it.
+        var burst = Enters(Stroke(beats, 1f / Cycle, 70f), song, 0.9f, 0.95f);
 
         // The flute runs the other way, and fades rather than enters: three seconds
         // up and one and a half down, in decades of a second. On the screen a Slew is
@@ -231,7 +230,9 @@ internal sealed class BronzePreset : PresetBench
 
         // How far through a figure's stroke it is. Its rate is a wire, so it cannot
         // be a tier above.
-        var (_, figureLeft) = Stroke(Product(beats, figureRate));
+        var figureFall = Stroke(beats, 0f, 4f);
+
+        b.Wire(figureRate, 0, figureFall, 1);
 
         // The flute's line, a note to four beats, high in the same scale.
         var air = b.Add("seq.values", (1, 0.25f), (2, 0.9f), (3, 0.1f));
@@ -255,20 +256,19 @@ internal sealed class BronzePreset : PresetBench
         // lower of them bent by a third at an inharmonic ratio while the stroke is
         // fresh. A millisecond or two of rise, as a share of the cycle, because a
         // sine switched on at full height is a click and down here a click is heard.
-        var gongStroke = Product(Power(gongLeft, 5f), Rises(gongGone, 0f, 0.0015f));
+        var gongStroke = Product(gongFall, Rises(gongFall, 0f, 0.0015f, StrokePhase));
         var gongHz = b.Add("audio.frequency", (0, 69.3f));
         var gong = Sum(
             Bell(gongHz, gongStroke, 2.41f, 0.3f),
             Tone(Plus(gongHz, 1.3f), gongStroke));
 
         // The smaller gong answers it half way round, a pelog fifth up.
-        var (_, halfLeft) = Stroke(Plus(gongPos, 0.5f));
-        var kempurStroke = Power(halfLeft, 9f);
+        var kempurStroke = Stroke(beats, 1f / Cycle, 9f, 0.5f);
         var kempur = Bell(b.Add("audio.frequency", (0, 102.1f)), kempurStroke, 2.41f, 0.35f);
 
         // And the timekeeper: one dry note on every beat, which is what the rest of
         // the orchestra is listening to while the tempo moves.
-        var timeStroke = Product(Power(beatLeft, 16f), timeIn);
+        var timeStroke = Enters(Stroke(beats, 1f, 16f), song, 0.36f, 0.4f);
         var kempli = Bell(b.Add("audio.frequency", (0, 620f)), timeStroke, 1.41f, 0.6f);
 
         Box("Gongs");
@@ -278,15 +278,15 @@ internal sealed class BronzePreset : PresetBench
         // Every fourth note of the melody, left to ring for the four beats it has.
         // The pair are tuned three and a half hertz apart — the shimmer that makes
         // bronze sound alive rather than struck.
-        var jegogStroke = Product(Power(fourLeft, 3f), Rises(fourGone, 0f, 0.004f));
+        var jegogStroke = Product(fourFall, Rises(fourFall, 0f, 0.004f, StrokePhase));
         var jegogHz = Tuned(jegog, 138.6f);
         var jegogan = Sum(
             Bell(jegogHz, jegogStroke, 2.76f, 0.3f),
             Tone(Plus(jegogHz, 3.5f), jegogStroke));
 
         // Every second note, an octave up, the same way and beating faster.
-        var calungStroke = Product(
-            Product(Power(twoLeft, 3f), Rises(twoGone, 0f, 0.006f)), coreIn);
+        var calungStroke = Enters(
+            Product(twoFall, Rises(twoFall, 0f, 0.006f, StrokePhase)), song, 0.15f, 0.2f);
         var calungHz = Tuned(calung, 277.2f);
         var calungPair = Sum(
             Bell(calungHz, calungStroke, 2.76f, 0.35f),
@@ -294,7 +294,7 @@ internal sealed class BronzePreset : PresetBench
 
         // And the melody itself, a beat a note. 2.76 is the second partial of a bar
         // free at both ends, which is what these keys are.
-        var pokokStroke = Product(Power(beatLeft, 5f), coreIn);
+        var pokokStroke = Enters(Stroke(beats, 1f, 5f), song, 0.15f, 0.2f);
         var ugal = Bell(Tuned(pokok, 554.4f), pokokStroke, 2.76f, 0.45f);
 
         Box("Low Metal");
@@ -305,7 +305,7 @@ internal sealed class BronzePreset : PresetBench
         // different ones, and an instrument each seven hertz apart. Whose note it is
         // is the step itself: nought is the first player's alone, two the second's,
         // and one is both.
-        var figureStroke = Product(Product(Power(figureLeft, 4f), figureIn), figure, 1);
+        var figureStroke = Product(Enters(figureFall, song, 0.12f, 0.45f), figure, 1);
         var figureHz = Tuned(figureDegree, 1108.7f);
         var firstHand = b.Add("math.min", (1, 1f));
         var secondHand = b.Add("math.min", (1, 1f));
@@ -323,14 +323,13 @@ internal sealed class BronzePreset : PresetBench
 
         // The burst: the whole orchestra on the gong, for a twentieth of a second,
         // in the two gongs of each half that are marked full.
-        var burst = Product(Power(gongLeft, 70f), burstIn);
 
         // Five in sixteen, off the beat, a fourth of the scale above the melody. The
         // bell is folded after its envelope, so the fold opens with the stroke and
         // closes as it rings: brass at the front of the note and bronze at the back.
         var chimeHits = b.Add(EuclidType, (1, 4f), (2, 16f), (3, 5f), (4, 2f));
-        var chimeStroke = Product(
-            Wired("math.max", Product(Power(quarterLeft, 6f), chimeHits, 1), burst), chimesIn);
+        var chimeStroke = Enters(
+            Wired("math.max", Product(Stroke(beats, 4f, 6f), chimeHits, 1), burst), song, 0.6f, 0.7f);
         var chimeBell = Bell(Tuned(Plus(pokok, 3f), 554.4f), chimeStroke, 1.41f, 0.5f);
         var chimes = b.Add(FoldType, (1, 2.2f));
 
@@ -341,21 +340,16 @@ internal sealed class BronzePreset : PresetBench
 
         // --- the cymbals -----------------------------------------------------
 
-        // White noise out of arithmetic — a large multiple of the clock, a sine, a
-        // larger multiple, the fraction — less than the lookup into the engine's
-        // noise that the Random module's white is.
-        var white = b.Add("math.fract");
-        var hiss = Span(white, 0f, 1f, -1f, 1f);
-
-        b.Wire(Times(Sine(Times(clock, 3571f)), 4371.3f), 0, white, 0);
+        // A Random's white, which the flute's breath is a band of as well.
+        var hiss = b.Add(RandomType);
 
         // Every quarter of a beat, with the tresillo leaned on, and the top of a
         // Filter for the sizzle.
         var accents = b.Add(EuclidType, (1, 4f), (2, 8f), (3, 3f));
         var sizzle = b.Add(FilterType, (1, 6500f), (2, 0.3f));
-        var cymbalStroke = Product(
-            Sum(Product(Power(quarterLeft, 8f), Span(accents, 0f, 1f, 0.3f, 1f, 1)), burst),
-            drumsIn);
+        var cymbalStroke = Enters(
+            Sum(Product(Stroke(beats, 4f, 8f), Span(accents, 0f, 1f, 0.3f, 1f, 1)), burst),
+            song, 0.5f, 0.55f);
         var cymbals = Product(cymbalStroke, sizzle, 2);
 
         b.Wire(beats, 0, accents, 0)
@@ -369,12 +363,12 @@ internal sealed class BronzePreset : PresetBench
         // orchestra fills — its hits are the song — and its pitch is its own stroke
         // cubed, so the skin drops as it is let go.
         var lowHits = b.Add(EuclidType, (1, 4f), (2, 16f), (4, 3f));
-        var lowStroke = Product(Product(Power(quarterLeft, 4f), lowHits, 1), drumsIn);
-        var lowDrum = Tone(Span(Power(lowStroke, 3f), 0f, 1f, 82f, 150f), lowStroke);
+        var lowStroke = Enters(Product(Stroke(beats, 4f, 4f), lowHits, 1), song, 0.5f, 0.55f);
+        var lowDrum = Drum(lowStroke, 82f, 68f, 3f, 0f);
 
         var highHits = b.Add(EuclidType, (1, 4f), (2, 16f), (3, 5f), (4, 7f));
-        var highStroke = Product(Product(Power(quarterLeft, 7f), highHits, 1), drumsIn);
-        var highDrum = Tone(Span(Power(highStroke, 3f), 0f, 1f, 210f, 330f), highStroke);
+        var highStroke = Enters(Product(Stroke(beats, 4f, 7f), highHits, 1), song, 0.5f, 0.55f);
+        var highDrum = Drum(highStroke, 210f, 120f, 3f, 0f);
 
         // A Drive for the hand on the skin. It normalizes as it goes, so this is
         // harmonics rather than level.
@@ -436,49 +430,36 @@ internal sealed class BronzePreset : PresetBench
 
         // --- the desk --------------------------------------------------------
 
-        // Buses for the four channels a Mixer has. The two sides differ in one thing
-        // that matters: the first player is on the left and the second on the right,
-        // so the figuration crosses the room a note at a time.
-        var low = b.Add("math.mixer", (1, 0.32f), (3, 0.28f), (5, 0.21f), (7, 0.33f));
-        var middle = b.Add("math.mixer", (1, 0.16f), (3, 0.31f), (5, 0.12f), (7, 0.24f));
-        var topL = b.Add("math.mixer", (1, 0.35f), (3, 0.3f), (5, 0.22f), (7, 0.17f));
-        var topR = b.Add("math.mixer", (1, 0.35f), (3, 0.3f), (5, 0.22f), (7, 0.17f));
-        var deskL = b.Add("math.mixer");
-        var deskR = b.Add("math.mixer");
+        // Three Desks of four, chained by their buses. The two sides differ in one
+        // thing that matters: the first player is on the left and the second on the
+        // right, so the figuration crosses the room a note at a time.
+        var low = b.Add(DeskType);
+        var middle = b.Add(DeskType);
 
-        // A trim well under unity, because on a gong every stroke in the orchestra
-        // lands at once, and a Clamp that should never be reached.
-        var safeL = b.Add("math.clamp", (1, -1f), (2, 1f));
-        var safeR = b.Add("math.clamp", (1, -1f), (2, 1f));
+        // The last is the master. A trim well under unity, because on a gong every
+        // stroke in the orchestra lands at once, and rails that should never be
+        // reached.
+        var top = b.Add(DeskType, (DeskTrim, 0.55f));
 
         var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 0.7f));
 
-        b.Wire(gong, 0, low, 0)
-         .Wire(kempur, 0, low, 2)
-         .Wire(jegogan, 0, low, 4)
-         .Wire(kendang, 0, low, 6)
-         .Wire(calungPair, 0, middle, 0)
-         .Wire(ugal, 0, middle, 2)
-         .Wire(kempli, 0, middle, 4)
-         .Wire(chimes, 0, middle, 6)
-         .Wire(polos, 0, topL, 0)
-         .Wire(cymbals, 0, topL, 2)
-         .Wire(suling, 0, topL, 4)
-         .Wire(room, 0, topL, 6)
-         .Wire(sangsih, 0, topR, 0)
-         .Wire(cymbals, 0, topR, 2)
-         .Wire(suling, 0, topR, 4)
-         .Wire(room, 1, topR, 6)
-         .Wire(low, 0, deskL, 0)
-         .Wire(middle, 0, deskL, 2)
-         .Wire(topL, 0, deskL, 4)
-         .Wire(low, 0, deskR, 0)
-         .Wire(middle, 0, deskR, 2)
-         .Wire(topR, 0, deskR, 4)
-         .Wire(Times(deskL, 0.55f), 0, safeL, 0)
-         .Wire(Times(deskR, 0.55f), 0, safeR, 0)
-         .Wire(safeL, 0, output, NodeCatalog.OutputLeftPort)
-         .Wire(safeR, 0, output, NodeCatalog.OutputRightPort);
+        Channel(low, 1, 0.32f, gong);
+        Channel(low, 2, 0.28f, kempur);
+        Channel(low, 3, 0.21f, jegogan);
+        Channel(low, 4, 0.33f, kendang);
+
+        Channel(middle, 1, 0.16f, calungPair);
+        Channel(middle, 2, 0.31f, ugal);
+        Channel(middle, 3, 0.12f, kempli);
+        Channel(middle, 4, 0.24f, chimes);
+
+        Channel(top, 1, 0.35f, polos, sangsih);
+        Channel(top, 2, 0.3f, cymbals);
+        Channel(top, 3, 0.22f, suling);
+        Channel(top, 4, 0.17f, room, room, rightFrom: 1);
+
+        b.Wire(Chained(low, middle, top), 0, output, NodeCatalog.OutputLeftPort)
+         .Wire(top, 1, output, NodeCatalog.OutputRightPort);
 
         Box("Desk", output);
 
@@ -516,7 +497,7 @@ internal sealed class BronzePreset : PresetBench
          .Wire(boss, 0, bossFill, 0)
          .Wire(plane, 0, wave, 0)
          .Wire(plane, 1, wave, 1)
-         .Wire(Times(gongGone, -6f), 0, wave, 3);
+         .Wire(Times(gongFall, -6f, StrokePhase), 0, wave, 3);
 
         Box("Picture: Gong");
 
@@ -532,7 +513,7 @@ internal sealed class BronzePreset : PresetBench
 
         b.Wire(plane, 0, squareTurn, 0)
          .Wire(plane, 1, squareTurn, 1)
-         .Wire(Times(Sum(Floor(fourPos), Rises(fourGone, 0f, 0.25f)), MathF.PI / 4f), 0, squareTurn, 2)
+         .Wire(Times(Sum(Floor(fourPos), Rises(fourFall, 0f, 0.25f, StrokePhase)), MathF.PI / 4f), 0, squareTurn, 2)
          .Wire(squareTurn, 0, square, 0)
          .Wire(squareTurn, 1, square, 1)
          .Wire(square, 0, squareLine, 0);
@@ -716,14 +697,9 @@ internal sealed class BronzePreset : PresetBench
         // nearer the middle than where it is drawn, which moves everything in it
         // outwards: each stroke leaves the wheel as a fading copy of itself. A long
         // memory while the orchestra is thin and a short one when it is full.
-        var nearer = b.Add("space.scale", (2, 0.982f));
-        var slipped = b.Add("space.rotate", (2, -0.008f));
-        var before = b.Add("feedback");
-        var ringing = b.Add("color.gain");
-
-        // Maximum rather than a blend, so an echo brighter than the new frame keeps
-        // its brightness and reads as a wake.
-        var printed = b.Add("math.max");
+        // The brighter of the two rather than a blend, so an echo brighter than the
+        // new frame keeps its brightness and reads as a wake.
+        var printed = b.Add(TrailsType, (TrailsZoom, 0.982f), (TrailsAngle, -0.008f));
 
         // Here for 'radius', which darkens the corners, and graded by the song last
         // so the opening is muted and the burst is not.
@@ -732,14 +708,8 @@ internal sealed class BronzePreset : PresetBench
         var shaded = b.Add("color.gain");
         var graded = b.Add(GradeType, (2, 1.1f));
 
-        b.Wire(nearer, 0, slipped, 0)
-         .Wire(nearer, 1, slipped, 1)
-         .Wire(slipped, 0, before, 0)
-         .Wire(slipped, 1, before, 1)
-         .Wire(before, 0, ringing, 0)
-         .Wire(Span(song, 0f, 1f, 0.92f, 0.8f), 0, ringing, 1)
-         .Wire(ringing, 0, printed, 0)
-         .Wire(fresh, 0, printed, 1)
+        b.Wire(fresh, 0, printed, 0)
+         .Wire(Span(song, 0f, 1f, 0.92f, 0.8f), 0, printed, TrailsPersist)
          .Wire(Span(coord, 0.4f, 1.7f, 1f, 0.3f, 2), 0, vignette, 0)
          .Wire(printed, 0, shaded, 0)
          .Wire(vignette, 0, shaded, 1)

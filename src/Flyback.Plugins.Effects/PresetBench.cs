@@ -104,15 +104,108 @@ internal abstract class PresetBench(ModuleCatalog modules)
         return node;
     }
 
+    /// <summary>The Stroke's second output: how far through the stroke it is.</summary>
+    protected const int StrokePhase = 1;
+
+    /// <summary>The Fade's second output: the fade alone, without what it fades.</summary>
+    protected const int FadeGate = 1;
+
     /// <summary>
-    /// How far through a stroke the position is, and how much of it is left. The
-    /// second, raised to a power, is an envelope that needs no trigger and that the
-    /// screen can read as well as the speakers can.
+    /// A Stroke: what is left of each <paramref name="rate"/>th of the position, to
+    /// the power <paramref name="curve"/> — an envelope that needs no trigger and that
+    /// the screen can read as well as the speakers can.
     /// </summary>
-    protected (NodeInstance Gone, NodeInstance Left) Stroke(NodeInstance position)
+    protected NodeInstance Stroke(NodeInstance position, float rate, float curve, float offset = 0f)
     {
-        var gone = Fraction(position);
-        return (gone, From(1f, gone));
+        var node = b.Add("flyback.voice.stroke", (1, rate), (2, offset), (3, curve));
+        b.Wire(position, 0, node, 0);
+        return node;
+    }
+
+    /// <summary>
+    /// A Fade: <paramref name="a"/> let through as <paramref name="level"/> passes from
+    /// <paramref name="from"/> to <paramref name="to"/>, which is how a part enters.
+    /// </summary>
+    protected NodeInstance Enters(NodeInstance a, NodeInstance level, float from, float to)
+    {
+        var node = Enters(level, from, to);
+        b.Wire(a, 0, node, 0);
+        return node;
+    }
+
+    /// <summary>
+    /// The same with nothing to fade yet, for a part whose entry is wanted before the
+    /// part has been built. Wire the part into socket nought when it has.
+    /// </summary>
+    protected NodeInstance Enters(NodeInstance level, float from, float to)
+    {
+        var node = b.Add("flyback.voice.fade", (2, from), (3, to));
+        b.Wire(level, 0, node, 1);
+        return node;
+    }
+
+    /// <summary>The Drum's pitch, for one whose resting pitch is a wire.</summary>
+    protected const int DrumPitch = 2;
+
+    /// <summary>A Drum: a sine at <paramref name="pitch"/>, swept and leveled by one envelope.</summary>
+    protected NodeInstance Drum(NodeInstance level, float pitch, float sweep, float bend, float drive)
+    {
+        var node = b.Add("flyback.voice.drum", (2, pitch), (3, sweep), (4, bend), (5, drive));
+        b.Wire(level, 0, node, 1);
+        return node;
+    }
+
+    /// <summary>A Wander: a slow random value between two ends, on a lane of its own.</summary>
+    protected NodeInstance Wander(float rate, float seed, float low = 0f, float high = 1f) =>
+        b.Add("flyback.voice.wander", (1, rate), (2, seed), (3, low), (4, high));
+
+    /// <summary>The Trails module and the knobs a preset sets on one, after its picture and its position.</summary>
+    protected const string TrailsType = "feedback.trails";
+
+    protected const int TrailsZoom = 3;
+
+    protected const int TrailsAngle = 4;
+
+    protected const int TrailsDx = 5;
+
+    protected const int TrailsPersist = 7;
+
+    protected const string DeskType = "math.desk";
+
+    /// <summary>The Desk's trim, after its four channels of left, right and level and its two bus inputs.</summary>
+    protected const int DeskTrim = 14;
+
+    /// <summary>
+    /// One channel of a Desk, counted from one: a level, and a left that is also the
+    /// right unless <paramref name="right"/> is given. <paramref name="from"/> and
+    /// <paramref name="rightFrom"/> are the outputs read, for a Chorus or a Reverb
+    /// whose second output is its other side.
+    /// </summary>
+    protected void Channel(
+        NodeInstance desk, int channel, float level,
+        NodeInstance left, NodeInstance? right = null, int from = 0, int rightFrom = 0)
+    {
+        var at = (channel - 1) * 3;
+
+        desk.InputValues[at + 2] = level;
+        b.Wire(left, from, desk, at);
+        if (right is not null) b.Wire(right, rightFrom, desk, at + 1);
+    }
+
+    /// <summary>
+    /// Desks made one: each hands its buses to the next, so the last is the master
+    /// and the only one whose trim and rails are heard.
+    /// </summary>
+    protected NodeInstance Chained(params NodeInstance[] desks)
+    {
+        const int busOut = 2;
+        const int busIn = 12;
+
+        for (var i = 1; i < desks.Length; i++)
+            b.Wire(desks[i - 1], busOut, desks[i], busIn)
+             .Wire(desks[i - 1], busOut + 1, desks[i], busIn + 1);
+
+        return desks[^1];
     }
 
     /// <summary>A sine at a frequency and a level, both wires.</summary>

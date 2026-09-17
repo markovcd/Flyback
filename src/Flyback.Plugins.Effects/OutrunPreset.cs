@@ -41,6 +41,8 @@ internal sealed class OutrunPreset : PresetBench
 
     private const string DriveType = "flyback.voice.drive";
 
+    private const string RandomType = "flyback.voice.random";
+
     private const string CellsType = "flyback.picture.cells";
 
     private const string PolygonType = "flyback.picture.polygon";
@@ -99,12 +101,10 @@ internal sealed class OutrunPreset : PresetBench
         var clock = b.Add(NodeCatalog.TimeTypeId);
         var beats = Product(clock, beat);
 
-        // The count as envelopes: what is left of the beat is the kick, and what is
-        // left of the sixteenth, cubed, is a pluck that cannot drift off the grid
-        // because it is the grid.
-        var (_, beatLeft) = Stroke(beats);
-        var (_, quarterLeft) = Stroke(Times(beats, 4f));
-        var pluck = Power(quarterLeft, 3f);
+        // The count as an envelope: what is left of the sixteenth, cubed, is a pluck
+        // that cannot drift off the grid because it is the grid. Every drum below is
+        // a Stroke off the same count.
+        var pluck = Stroke(beats, 4f, 3f);
 
         // Eight bars is one step of the arrangement.
         var phraseGone = Fraction(Times(beats, 1f / 32f));
@@ -137,11 +137,9 @@ internal sealed class OutrunPreset : PresetBench
         var turns = Product(turning, notTheEnd);
         var ramp = Product(Rises(phraseGone, 0.5f, 1f), turns);
 
-        var bassIn = Rises(song, 0.25f, 0.3f);
-        var hatsIn = Rises(song, 0.4f, 0.45f);
-        var kickIn = Rises(song, 0.42f, 0.48f);
-        var snareIn = Rises(song, 0.55f, 0.62f);
-        var leadIn = Rises(song, 0.9f, 0.94f);
+        // Four on the floor, from a little under halfway up. The kick's Fade is here
+        // rather than with the kick because the fill wants to know the same thing.
+        var kickStroke = Enters(Stroke(beats, 1f, 5f), song, 0.42f, 0.48f);
 
         // How hard the pads are chopped. Whole in the intro and the breakdown, and
         // cut to the sixteenths once the drums are in.
@@ -149,7 +147,7 @@ internal sealed class OutrunPreset : PresetBench
 
         // The last two beats of a phrase, wherever there are drums to fill them.
         var lastTwo = b.Add("math.step", (0, 0.9375f));
-        var fill = Product(lastTwo, kickIn);
+        var fill = Product(lastTwo, kickStroke, FadeGate);
 
         // The harmony, a bar at a time: A, F, B and E, two bars each. From F the bass
         // drops a tritone to the B under it, and E is the way home. It is the only
@@ -170,45 +168,36 @@ internal sealed class OutrunPreset : PresetBench
 
         Box("Arrangement");
 
-        // --- the noise -------------------------------------------------------
-
-        // White noise out of arithmetic — a large multiple of the clock, a sine, a
-        // larger multiple, the fraction. The snare, the hats and the riser are this
-        // one signal through three Filters.
-        var hiss = Span(Fraction(Times(Sine(Times(clock, 3571f)), 4371.3f)), 0f, 1f, -1f, 1f);
-
-        Box("Noise");
-
         // --- the kick --------------------------------------------------------
 
-        // Four on the floor. The pitch is the level to the fourth power, so there is
-        // one envelope and the beater is over long before the shell is.
-        var kickStroke = Product(Power(beatLeft, 5f), kickIn);
-        var kick = b.Add(DriveType, (1, 2.5f));
+        // The pitch is the level to the fourth power, so there is one envelope and
+        // the beater is over long before the shell is.
+        var kick = Drum(kickStroke, 45f, 125f, 4f, 2.5f);
 
         // The sidechain: the kick's level, upside down, on the bass.
         var duck = Span(kickStroke, 0f, 1f, 1f, 0.35f);
-
-        b.Wire(Tone(Span(Power(kickStroke, 4f), 0f, 1f, 45f, 170f), kickStroke), 0, kick, 0);
 
         Box("Kick");
 
         // --- the snare -------------------------------------------------------
 
         // Two and four: half the beat, offset by half a cycle, restarts on every
-        // backbeat. A band of the hiss for the wires and a sine for the shell.
-        var (snareGone, snareLeft) = Stroke(Plus(Times(beats, 0.5f), 0.5f));
-        var snareStroke = Product(Power(snareLeft, 9f), snareIn);
+        // backbeat. A band of the hiss for the wires and a Drum that does not sweep
+        // for the shell. The hats and the riser are the same hiss through Filters of
+        // their own.
+        var hiss = b.Add(RandomType);
+        var backbeat = Stroke(beats, 0.5f, 9f, 0.5f);
+        var snareStroke = Enters(backbeat, song, 0.55f, 0.62f);
         var rattle = b.Add(FilterType, (1, 1900f), (2, 0.3f));
         var snareDry = Sum(
             Times(Product(snareStroke, rattle, 1), 2.5f),
-            Tone(b.Add("audio.frequency", (0, 190f)), snareStroke));
+            Drum(snareStroke, 190f, 0f, 1f, 0f));
 
         // And the sound of the decade: a hall far too big for a drum, shut off a
         // fifth of a second after the hit instead of being left to die. The gate is
         // the same ramp that struck the drum, so it cannot open late.
         var hall = b.Add(ReverbModule.TypeId, (1, 0.9f), (2, 0.85f), (3, 1f));
-        var gate = From(1f, Rises(snareGone, 0.2f, 0.26f));
+        var gate = From(1f, Rises(backbeat, 0.2f, 0.26f, StrokePhase));
         var snareL = Sum(snareDry, Times(Product(gate, hall), 0.8f));
         var snareR = Sum(snareDry, Times(Product(gate, hall, 1), 0.8f));
 
@@ -221,9 +210,9 @@ internal sealed class OutrunPreset : PresetBench
 
         // Closed on every sixteenth and open on the off-beat, which is half a beat
         // late and rings three times as long.
-        var (_, offLeft) = Stroke(Plus(beats, 0.5f));
-        var hatStroke = Product(
-            Sum(Times(Power(quarterLeft, 7f), 0.5f), Times(Power(offLeft, 3f), 0.7f)), hatsIn);
+        var hatStroke = Enters(
+            Sum(Times(Stroke(beats, 4f, 7f), 0.5f), Times(Stroke(beats, 1f, 3f, 0.5f), 0.7f)),
+            song, 0.4f, 0.45f);
         var sizzle = b.Add(FilterType, (1, 8000f), (2, 0.2f));
         var hats = Product(hatStroke, sizzle, 2);
 
@@ -235,10 +224,10 @@ internal sealed class OutrunPreset : PresetBench
 
         // The fill: eight sixteenths down a drum kit nobody could afford, pitched by
         // how far through the phrase it has got, so the run falls without a list.
-        var tomStroke = Product(Power(quarterLeft, 2.5f), fill);
-        var toms = Tone(
-            Sum(Span(phraseGone, 0.9375f, 1f, 230f, 95f), Times(Power(tomStroke, 3f), 60f)),
-            tomStroke);
+        var tomStroke = Product(Stroke(beats, 4f, 2.5f), fill);
+        var toms = Drum(tomStroke, 0f, 60f, 3f, 0f);
+
+        b.Wire(Span(phraseGone, 0.9375f, 1f, 230f, 95f), 0, toms, DrumPitch);
 
         Box("Toms");
 
@@ -258,8 +247,8 @@ internal sealed class OutrunPreset : PresetBench
 
         // The sub, an octave under and added after the Drive so that it stays a sine.
         var sub = b.Add("osc.sine", (3, 0.5f));
-        var bass = Product(
-            Product(Sum(bassGrit, Product(sub, bassLine, 1)), duck), bassIn);
+        var bass = Enters(
+            Product(Sum(bassGrit, Product(sub, bassLine, 1)), duck), song, 0.25f, 0.3f);
 
         // How far the pluck opens the Filter is the arrangement.
         b.Wire(beats, 0, bassLine, 0)
@@ -376,7 +365,7 @@ internal sealed class OutrunPreset : PresetBench
         var leadPulse = b.Add("osc.pulse", (3, 0.4f), (4, 0.5f));
         var leadTone = b.Add(FilterType, (1, 3400f), (2, 0.35f));
         var tongue = b.Add(SlewType, (1, -2.5f), (2, -1.2f));
-        var lead = Product(Product(leadTone, tongue), leadIn);
+        var lead = Enters(Product(leadTone, tongue), song, 0.9f, 0.94f);
 
         b.Wire(beats, 0, leadLine, 0)
          .Wire(leadLine, 0, glide, 0)
@@ -432,55 +421,34 @@ internal sealed class OutrunPreset : PresetBench
 
         // --- the desk --------------------------------------------------------
 
-        // Buses for the four channels a Mixer has. Left and right differ in which
-        // echo tap and which side of the Chorus and the two Reverbs they carry.
-        var drumsL = b.Add("math.mixer", (1, 0.85f), (3, 0.55f), (5, 0.3f), (7, 0.55f));
-        var drumsR = b.Add("math.mixer", (1, 0.85f), (3, 0.55f), (5, 0.3f), (7, 0.55f));
-        var musicL = b.Add("math.mixer", (1, 0.7f), (3, 0.4f), (5, 0.5f), (7, 0.45f));
-        var musicR = b.Add("math.mixer", (1, 0.7f), (3, 0.4f), (5, 0.5f), (7, 0.45f));
-        var spaceL = b.Add("math.mixer", (1, 0.45f), (3, 0.5f), (5, 0.4f));
-        var spaceR = b.Add("math.mixer", (1, 0.45f), (3, 0.5f), (5, 0.4f));
-        var deskL = b.Add("math.mixer");
-        var deskR = b.Add("math.mixer");
+        // Three Desks of four, chained by their buses into one of twelve. Left and
+        // right differ in which echo tap and which side of the snare's hall, the
+        // Chorus and the Reverb they carry.
+        var drums = b.Add(DeskType);
+        var music = b.Add(DeskType);
 
-        // A trim under unity and a Clamp that should never be reached.
-        var safeL = b.Add("math.clamp", (1, -1f), (2, 1f));
-        var safeR = b.Add("math.clamp", (1, -1f), (2, 1f));
+        // The last in the chain is the master: a trim under unity, and rails that
+        // should never be reached.
+        var space = b.Add(DeskType, (DeskTrim, 0.34f));
 
         var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 0.7f));
 
-        b.Wire(kick, 0, drumsL, 0)
-         .Wire(snareL, 0, drumsL, 2)
-         .Wire(hats, 0, drumsL, 4)
-         .Wire(toms, 0, drumsL, 6)
-         .Wire(kick, 0, drumsR, 0)
-         .Wire(snareR, 0, drumsR, 2)
-         .Wire(hats, 0, drumsR, 4)
-         .Wire(toms, 0, drumsR, 6)
-         .Wire(bass, 0, musicL, 0)
-         .Wire(arpTone, 0, musicL, 2)
-         .Wire(pad, 0, musicL, 4)
-         .Wire(lead, 0, musicL, 6)
-         .Wire(bass, 0, musicR, 0)
-         .Wire(arpTone, 0, musicR, 2)
-         .Wire(pad, 1, musicR, 4)
-         .Wire(lead, 0, musicR, 6)
-         .Wire(tapL, 0, spaceL, 0)
-         .Wire(room, 0, spaceL, 2)
-         .Wire(riser, 0, spaceL, 4)
-         .Wire(tapR, 0, spaceR, 0)
-         .Wire(room, 1, spaceR, 2)
-         .Wire(riser, 0, spaceR, 4)
-         .Wire(drumsL, 0, deskL, 0)
-         .Wire(musicL, 0, deskL, 2)
-         .Wire(spaceL, 0, deskL, 4)
-         .Wire(drumsR, 0, deskR, 0)
-         .Wire(musicR, 0, deskR, 2)
-         .Wire(spaceR, 0, deskR, 4)
-         .Wire(Times(deskL, 0.34f), 0, safeL, 0)
-         .Wire(Times(deskR, 0.34f), 0, safeR, 0)
-         .Wire(safeL, 0, output, NodeCatalog.OutputLeftPort)
-         .Wire(safeR, 0, output, NodeCatalog.OutputRightPort);
+        Channel(drums, 1, 0.85f, kick);
+        Channel(drums, 2, 0.55f, snareL, snareR);
+        Channel(drums, 3, 0.3f, hats);
+        Channel(drums, 4, 0.55f, toms);
+
+        Channel(music, 1, 0.7f, bass);
+        Channel(music, 2, 0.4f, arpTone);
+        Channel(music, 3, 0.5f, pad, pad, rightFrom: 1);
+        Channel(music, 4, 0.45f, lead);
+
+        Channel(space, 1, 0.45f, tapL, tapR);
+        Channel(space, 2, 0.5f, room, room, rightFrom: 1);
+        Channel(space, 3, 0.4f, riser);
+
+        b.Wire(Chained(drums, music, space), 0, output, NodeCatalog.OutputLeftPort)
+         .Wire(space, 1, output, NodeCatalog.OutputRightPort);
 
         Box("Desk", output);
 
@@ -622,7 +590,7 @@ internal sealed class OutrunPreset : PresetBench
 
         // Faded out before the horizon, where the lines are closer than a pixel, and
         // struck by the bass. The color is the chord: magenta under B, cyan under A.
-        var bassSeen = Product(pluck, bassIn);
+        var bassSeen = Enters(pluck, song, 0.25f, 0.3f);
         var cyan = b.Add("color.rgb", (0, 0.1f), (1, 0.9f), (2, 1f));
         var gridColor = b.Add("color.mix");
         var floor = b.Add("color.rgb", (0, 0.07f), (1, 0f), (2, 0.14f));
@@ -687,10 +655,7 @@ internal sealed class OutrunPreset : PresetBench
         // side is a ghost that trails everything bright; scanlines are a sine down
         // the frame on the brightness; and the riser takes the colors away a level at
         // a time until the drop gives them back.
-        var aside = b.Add("space.translate", (2, 0.007f));
-        var before = b.Add("feedback");
-        var ghost = b.Add("color.gain", (1, 0.6f));
-        var taped = b.Add("math.max");
+        var taped = b.Add(TrailsType, (TrailsDx, 0.007f), (TrailsPersist, 0.6f));
         var banded = b.Add(PosteriseType);
         var scanned = b.Add("color.gain");
 
@@ -700,11 +665,7 @@ internal sealed class OutrunPreset : PresetBench
         var shaded = b.Add("color.gain");
         var graded = b.Add(GradeType, (2, 1.08f));
 
-        b.Wire(aside, 0, before, 0)
-         .Wire(aside, 1, before, 1)
-         .Wire(before, 0, ghost, 0)
-         .Wire(ghost, 0, taped, 0)
-         .Wire(scene, 0, taped, 1)
+        b.Wire(scene, 0, taped, 0)
          .Wire(taped, 0, banded, 0)
          .Wire(Span(ramp, 0f, 1f, 32f, 4f), 0, banded, 1)
          .Wire(banded, 0, scanned, 0)
