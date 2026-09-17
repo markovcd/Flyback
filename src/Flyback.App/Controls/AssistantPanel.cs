@@ -1490,8 +1490,9 @@ public sealed class AssistantPanel : UserControl
 
         // What this run just put on the canvas is not somebody editing behind
         // it, so the next message carries on the same conversation rather than
-        // starting one about a patch it does not remember building.
-        run.Rebase(proposed);
+        // starting one about a patch it does not remember building. Whatever the
+        // canvas made of the proposal, since a text document builds its own copy.
+        run.Rebase(current());
 
         Put(Voice.Aside, overwrote
             ? "Applied — this replaced the edits you made while it ran. Ctrl+Z puts them back."

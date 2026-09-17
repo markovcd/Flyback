@@ -94,7 +94,9 @@ public sealed partial class NodeEditor
         // them and the box follows because it is drawn from where they are.
         if (HitBox(graph) is { } box)
         {
-            if (e.ClickCount == 2) ToggleBox(box);
+            // Opening a box is an edit, so a locked canvas selects it instead —
+            // the same answer Ctrl+E gets.
+            if (e.ClickCount == 2 && !Locked) ToggleBox(box);
             else PressGroup(box, ctrl);
 
             e.Pointer.Capture(this);
@@ -104,7 +106,7 @@ public sealed partial class NodeEditor
 
         if (HitOpenGroupHandle(graph) is { } opened)
         {
-            if (e.ClickCount == 2) ToggleBox(opened);
+            if (e.ClickCount == 2 && !Locked) ToggleBox(opened);
             else PressGroup(opened, ctrl);
 
             e.Pointer.Capture(this);
@@ -516,21 +518,11 @@ public sealed partial class NodeEditor
         // the program can hear, so it goes into the history without asking
         // anything to recompile — a picture and a sound rebuilt because a block
         // was nudged would be work done for a change neither of them has in it.
-        if (drag == Drag.Node)
+        if (drag == Drag.Node && !RecordMove() && pendingNarrow is { } one)
         {
-            var moved = SelectedNodes.Any(node =>
-                dragOrigins.TryGetValue(node.Id, out var from)
-                && (node.X != from.X || node.Y != from.Y));
-
-            if (moved && history.Record(patch, mark: Mark))
-            {
-                HistoryChanged?.Invoke(this, EventArgs.Empty);
-                Recorded?.Invoke(this, EventArgs.Empty);
-            }
-
             // A press on one module of a group that turned out not to be a drag
             // was a click, and a click picks that module out of the group.
-            else if (pendingNarrow is { } one) Select(one);
+            Select(one);
         }
 
         EndGesture();
@@ -544,6 +536,45 @@ public sealed partial class NodeEditor
         Cursor = CursorOver(ToGraph(e.GetPosition(this)));
 
         e.Pointer.Capture(null);
+        InvalidateVisual();
+    }
+
+    /// <summary>Puts a drag that moved something into the history, and says whether it did.</summary>
+    private bool RecordMove()
+    {
+        var moved = SelectedNodes.Any(node =>
+            dragOrigins.TryGetValue(node.Id, out var from)
+            && (node.X != from.X || node.Y != from.Y));
+
+        if (!moved || !history.Record(patch, mark: Mark)) return false;
+
+        HistoryChanged?.Invoke(this, EventArgs.Empty);
+        Recorded?.Invoke(this, EventArgs.Empty);
+
+        return true;
+    }
+
+    /// <summary>
+    /// The pointer was taken away mid-gesture, and the button will come up
+    /// somewhere this never hears about: another window brought forward, a system
+    /// dialog, the lock screen.
+    /// </summary>
+    /// <remarks>
+    /// The gesture ends where it stood. A module stays where it was dragged to, as
+    /// a step; a wire is dropped rather than completed, since nobody chose where it
+    /// ended. A release gives up the capture itself and arrives here with nothing
+    /// left under way.
+    /// </remarks>
+    protected override void OnPointerCaptureLost(PointerCaptureLostEventArgs e)
+    {
+        base.OnPointerCaptureLost(e);
+
+        if (drag == Drag.None) return;
+
+        if (drag == Drag.Node || panSuspended == Drag.Node) RecordMove();
+
+        EndGesture();
+        Cursor = ArrowCursor;
         InvalidateVisual();
     }
 
@@ -593,6 +624,18 @@ public sealed partial class NodeEditor
         e.Handled = true;
     }
 
+    /// <summary>
+    /// Whether a key may change the patch: not on a locked canvas, and not while the
+    /// pointer is holding a piece of it.
+    /// </summary>
+    /// <remarks>
+    /// The pointer is captured for a drag and the keyboard is not, so Delete arrives
+    /// mid-wire perfectly well — and the wire would then be completed from a module
+    /// that has gone. Ignored rather than queued: letting go leaves the press to be
+    /// made again.
+    /// </remarks>
+    private bool Editable => !Locked && drag == Drag.None;
+
     protected override void OnKeyDown(KeyEventArgs e)
     {
         base.OnKeyDown(e);
@@ -614,12 +657,12 @@ public sealed partial class NodeEditor
                 // Cut and paste change the patch, so a locked canvas has
                 // neither. Copy above does not, and stays: reading a patch and
                 // taking a piece of it elsewhere is exactly what a view is for.
-                case Key.X when !Locked:
+                case Key.X when Editable:
                     Clipboard(CutSelectionAsync);
                     e.Handled = true;
                     return;
 
-                case Key.V when !Locked:
+                case Key.V when Editable:
                     Clipboard(PasteAsync);
                     e.Handled = true;
                     return;
@@ -632,7 +675,7 @@ public sealed partial class NodeEditor
                 // Group and ungroup, on the letter every editor with a canvas
                 // uses for it. Shift tells them apart rather than a second key,
                 // which is the same pairing undo and redo already use.
-                case Key.G when !Locked:
+                case Key.G when Editable:
                     if ((e.KeyModifiers & KeyModifiers.Shift) != 0) UngroupSelected();
                     else GroupSelected();
 
@@ -642,7 +685,7 @@ public sealed partial class NodeEditor
                 // A double-click opens the one box it lands on; this opens every
                 // group the selection reaches. Shift shuts them, the pairing
                 // group and ungroup use above.
-                case Key.E when !Locked:
+                case Key.E when Editable:
                     if ((e.KeyModifiers & KeyModifiers.Shift) != 0) CloseSelectedGroups();
                     else OpenSelectedGroups();
 
@@ -668,7 +711,7 @@ public sealed partial class NodeEditor
 
         switch (e.Key)
         {
-            case Key.Delete or Key.Back when !Locked:
+            case Key.Delete or Key.Back when Editable:
                 DeleteSelected();
                 e.Handled = true;
                 break;
@@ -677,7 +720,7 @@ public sealed partial class NodeEditor
             // was, so it lands under the hand the way the right-click does —
             // and in the middle of the view when the pointer has never been
             // over the canvas at all.
-            case Key.Space when !Locked:
+            case Key.Space when Editable:
                 MenuRequested?.Invoke(
                     this,
                     lastPointer ?? ToGraph(new Point(Bounds.Width / 2, Bounds.Height / 2)));

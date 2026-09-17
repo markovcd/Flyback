@@ -300,9 +300,10 @@ out.volume = 0.6</code></pre>
       <li>Change <code>rings(freq: 3</code> to <code>rings(freq: 8</code>.</li>
       <li>Press <kbd>Ctrl</kbd>+<kbd>Enter</kbd> (or <strong>Apply</strong>) to build the text. The preview
       updates straight away.</li>
-      <li>Save with the file type set to <code>.fbks</code> to keep the text as the document. When you open a
-      text file, the text owns the patch, and the canvas is a view of it until you press <strong>Edit on the
-      canvas</strong>.</li>
+      <li>Save. Once the text is the document the dialog offers <code>.fbks</code> first, which keeps the text
+      as you wrote it; saving as a <code>.fbk</code> or a bundle hands the patch back to the canvas, and asks
+      first if the text has not been saved. When you open a text file, the text owns the patch, and the canvas
+      is a view of it until you press <strong>Edit on the canvas</strong>.</li>
     </ol>
 
     <figure class="wide-shot">
@@ -457,7 +458,8 @@ flyback-cli pack my-patch.fbk -o my-patch.fbkb</code></pre>
       <li>Open <strong>Assistant</strong> on the toolbar, describe what you want, for example <em>"a slow kick
       drum that makes the rings flash"</em>, and press <kbd>Enter</kbd>.</li>
       <li>Nothing is sent until you ask. What comes back is an ordinary edit: <kbd>Ctrl</kbd>+<kbd>Z</kbd> takes
-      it off again.</li>
+      it off again. Where the text is the document, the new patch is written into the text, and the same
+      press puts your text back.</li>
     </ol>
 
     <p>Conversations are saved beside the patch they are about. <code>flyback-cli probe</code> asks a provider

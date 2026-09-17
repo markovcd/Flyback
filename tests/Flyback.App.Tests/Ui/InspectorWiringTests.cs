@@ -323,4 +323,25 @@ public class InspectorWiringTests : UiTest
         Editor(window).Patch.Find(sine.Id).ShouldNotBeNull()
             .InputValues[1].ShouldBe(was, 0.001f);
     }
+
+    /// <summary>
+    /// A knob is a float and its number box holds a decimal, which stops near
+    /// 7.9e28. A file may say any float, and selecting the module must not throw.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_module_with_a_knob_past_what_a_number_box_holds_can_be_selected()
+    {
+        var (patch, sine, _) = Board();
+
+        for (var i = 0; i < sine.InputValues.Length; i++) sine.InputValues[i] = 1e30f;
+
+        // Through the file format, which is how one arrives.
+        var window = Open(PatchIO.Read(PatchIO.ToJson(patch)).Patch);
+        var opened = Editor(window).Patch.Find(sine.Id).ShouldNotBeNull();
+
+        Should.NotThrow(() => Select(window, opened));
+
+        opened.InputValues.ShouldAllBe(v => v == 1e30f, "showing a number must not change it");
+        Knobs(window).ShouldBeGreaterThan(0);
+    }
 }

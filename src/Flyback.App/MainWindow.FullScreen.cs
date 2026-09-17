@@ -74,6 +74,11 @@ public sealed partial class MainWindow
         foreach (var child in columns.Children) child.IsVisible = !full || child == rightPanel;
         foreach (var child in rightPanel.Children) child.IsVisible = !full || child == previewBox;
 
+        // ShowPreview stands aside while the preview has the window, and the patch
+        // may have lost its picture meanwhile. Only ever put away here: the row has
+        // just been given back the height it was dragged to.
+        if (!full && !HasPicture) ShowPreview(false);
+
         void Collapse()
         {
             stateBefore = WindowState;

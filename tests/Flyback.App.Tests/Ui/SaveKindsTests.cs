@@ -89,4 +89,29 @@ public class SaveKindsTests
             .ShouldBe(patch.CompileForVideo(NodeCatalog.BuiltIn).Program.Ops
                 .Select(o => (o.Code, o.Out, o.A, o.B, o.C, o.K)));
     }
+
+    // --- a document that is text ------------------------------------------------
+
+    /// <summary>
+    /// Where the text is the document it is the one kind that loses nothing — a
+    /// patch written from it drops the comments, the names and the defs — so it is
+    /// where the habit of pressing Save should land.
+    /// </summary>
+    [Fact]
+    public void A_text_document_is_offered_its_own_kind_first()
+    {
+        Names(MainWindow.SaveKinds(bundled: false, sourced: true))
+            .ShouldBe(["Flyback text", "Flyback patch", "Flyback bundle"]);
+
+        MainWindow.SaveExtension(bundled: false, sourced: true).ShouldBe(PatchLanguage.FileExtension);
+    }
+
+    /// <summary>The extension offered is the first kind's, whichever that is.</summary>
+    [Theory]
+    [InlineData(false, false)]
+    [InlineData(true, false)]
+    [InlineData(false, true)]
+    public void The_extension_offered_is_the_first_kinds(bool bundled, bool sourced) =>
+        MainWindow.SaveKinds(bundled, sourced)[0].Patterns.ShouldNotBeNull()
+            .ShouldContain($"*.{MainWindow.SaveExtension(bundled, sourced)}");
 }

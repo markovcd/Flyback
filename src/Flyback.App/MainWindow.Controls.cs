@@ -287,7 +287,6 @@ public sealed partial class MainWindow
         if (editor.Patch.Control(id) is not { } knob) return;
 
         learning?.Cancel();
-        using var cancel = learning = new CancellationTokenSource();
 
         var devices = midi.Sources.Select(s => s.Id).Where(s => s != MidiSources.Keyboard).ToList();
 
@@ -296,6 +295,11 @@ public sealed partial class MainWindow
             Report("No MIDI device is plugged in, so there is no controller to learn.");
             return;
         }
+
+        // Only once there is something to wait for: the field is cleared by the
+        // finally below, and a source left in it after this method has disposed it
+        // throws the next time Escape cancels it.
+        using var cancel = learning = new CancellationTokenSource();
 
         controlsPanel.Learning = id;
         ShowControls(true);
@@ -427,7 +431,7 @@ public sealed partial class MainWindow
         {
             var box = new NumericUpDown
             {
-                Value = (decimal)value,
+                Value = Boxed.Of(value),
                 Increment = spec.Stepped ? 1m : 0.05m,
                 FormatString = spec.Stepped ? "0.##" : "0.###",
                 FontSize = Text.Body,

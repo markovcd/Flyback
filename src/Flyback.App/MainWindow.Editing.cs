@@ -122,6 +122,39 @@ public sealed partial class MainWindow
     }
 
     /// <summary>
+    /// Whether a save that makes <paramref name="name"/> the document may empty text
+    /// that is written nowhere else.
+    /// </summary>
+    /// <remarks>
+    /// Two answers rather than three: Save… is how this was reached. It may be
+    /// reached from inside the unsaved question, whose own dialog is down by then,
+    /// so it puts its own up rather than going through <see cref="AnsweredAsync"/>
+    /// — and holds <see cref="questionIsUp"/> for as long as it is.
+    /// </remarks>
+    private async Task<bool> MayLoseTheTextToAsync(string name)
+    {
+        if (!SourceIsUnapplied) return true;
+
+        var was = questionIsUp;
+        questionIsUp = true;
+
+        try
+        {
+            return await AskAboutUnsavedAsync(
+                "Unsaved text",
+                $"Saving as {name} makes the canvas the document and empties this text, which has "
+                + "not been saved: its comments, its names and its defs go with it. Save it as "
+                + $"{GlobalConstants.ApplicationName} text to keep them.",
+                discard: "Save without the text",
+                offerSave: false) == Unsaved.Discard;
+        }
+        finally
+        {
+            questionIsUp = was;
+        }
+    }
+
+    /// <summary>
     /// Puts the three answers up and does what the answer says, for whoever is
     /// about to lose something.
     /// </summary>
@@ -163,7 +196,13 @@ public sealed partial class MainWindow
     /// <c>default</c>, so the answer nobody gave is harmless by the language's own
     /// rule.
     /// </remarks>
-    private async Task<Unsaved> AskAboutUnsavedAsync(string about, string question)
+    /// <param name="discard">What the answer that goes ahead is called.</param>
+    /// <param name="offerSave">Whether saving is one of the answers, which it is not where saving is what asked.</param>
+    private async Task<Unsaved> AskAboutUnsavedAsync(
+        string about,
+        string question,
+        string discard = "Discard changes",
+        bool offerSave = true)
     {
         var buttons = new StackPanel
         {
@@ -172,8 +211,9 @@ public sealed partial class MainWindow
             HorizontalAlignment = HorizontalAlignment.Right,
         };
 
-        buttons.Children.Add(Answering("Save…", Unsaved.Save));
-        buttons.Children.Add(Answering("Discard changes", Unsaved.Discard, wide: true));
+        if (offerSave) buttons.Children.Add(Answering("Save…", Unsaved.Save));
+
+        buttons.Children.Add(Answering(discard, Unsaved.Discard, wide: true));
         buttons.Children.Add(Answering("Cancel", Unsaved.Cancel));
 
         var asking = new StackPanel

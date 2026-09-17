@@ -46,6 +46,9 @@ public sealed partial class MainWindow
 
         soundFolder.Beside = beside;
         pictureFolder.Beside = beside;
+
+        // Where the last document's knobs were left says nothing about this one's.
+        controls.Forget();
     }
 
     /// <summary>
@@ -385,12 +388,24 @@ public sealed partial class MainWindow
 
     /// <summary>
     /// What the save dialog offers, with whichever kind this document already is
-    /// in front — a bundle saved again should stay one without anybody having to
-    /// type the extension.
+    /// in front — a bundle or a text saved again should stay one without anybody
+    /// having to type the extension.
     /// </summary>
-    internal static IReadOnlyList<FilePickerFileType> SaveKinds(bool bundled) => bundled
-        ? [BundleFileType, PatchFileType, SourceFileType]
+    /// <param name="sourced">
+    /// Whether the text is the document. It is then the one kind that loses
+    /// nothing: a patch or a bundle written from it drops its comments, names and
+    /// defs.
+    /// </param>
+    internal static IReadOnlyList<FilePickerFileType> SaveKinds(bool bundled, bool sourced = false) =>
+        sourced ? [SourceFileType, PatchFileType, BundleFileType]
+        : bundled ? [BundleFileType, PatchFileType, SourceFileType]
         : [PatchFileType, BundleFileType, SourceFileType];
+
+    /// <summary>The extension a save offers, which is the first of <see cref="SaveKinds"/>.</summary>
+    internal static string SaveExtension(bool bundled, bool sourced = false) =>
+        sourced ? PatchLanguage.FileExtension
+        : bundled ? PatchBundle.Extension[1..]
+        : PatchIO.FileExtension;
 
     /// <summary>Everything the open dialog will read.</summary>
     internal static IReadOnlyList<FilePickerFileType> OpenKinds() =>
@@ -570,17 +585,25 @@ public sealed partial class MainWindow
             // chosen belongs.
             SuggestedFileName = patchName ?? "patch",
 
-            // Whichever kind this document already is. A bundle saved again
-            // should stay one without anybody having to type the extension.
-            DefaultExtension = bundled ? PatchBundle.Extension[1..] : PatchIO.FileExtension,
-            FileTypeChoices = SaveKinds(bundled),
+            // Whichever kind this document already is — see SaveKinds.
+            DefaultExtension = SaveExtension(bundled, sourceOwned),
+            FileTypeChoices = SaveKinds(bundled, sourceOwned),
         });
 
-        if (file is null) return false;
+        return file is not null && await SaveToAsync(file);
+    }
 
-        // The name decides which, the way it does for an export.
-        if (Bundled(file.Name)) return await SaveBundleAsync(file);
+    /// <summary>Writes the document to a file the picker handed back, as the kind its name says.</summary>
+    /// <returns>Whether a file was written.</returns>
+    internal async Task<bool> SaveToAsync(IStorageFile file)
+    {
         if (Sourced(file.Name)) return await SaveSourceAsync(file);
+
+        // Either of the other two hands the patch to the graph and empties the
+        // text, so text that is nowhere else is asked about first — ADR-0068.
+        if (!await MayLoseTheTextToAsync(file.Name)) return false;
+
+        if (Bundled(file.Name)) return await SaveBundleAsync(file);
 
         try
         {
@@ -672,8 +695,8 @@ public sealed partial class MainWindow
 
     /// <summary>
     /// The patch written in the language — text, and readable as text. Last of the
-    /// three in every list: a patch and a bundle are what a document is saved as,
-    /// and offering the lossy one first would put it where the habit lands.
+    /// three for a document the graph owns: a patch and a bundle are what that is
+    /// saved as, and offering the lossy one first would put it where the habit lands.
     /// </summary>
     private static FilePickerFileType SourceFileType => new($"{GlobalConstants.ApplicationName} text")
     {

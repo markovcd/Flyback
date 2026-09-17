@@ -412,13 +412,22 @@ internal sealed class SourceView : UserControl
         var line = text.TextArea.Caret.Line;
         var column = text.TextArea.Caret.Column;
 
-        text.Document.BeginUpdate();
-        text.Document.Text = folded;
-        text.Document.EndUpdate();
+        Rewrite(folded);
 
         text.TextArea.Caret.Line = Math.Clamp(line, 1, text.Document.LineCount);
         text.TextArea.Caret.Column = Math.Max(column, 1);
         text.TextArea.Caret.BringCaretToView();
+    }
+
+    /// <summary>
+    /// Replaces the whole text as one edit that can be taken back — which assigning
+    /// <see cref="Source"/> cannot, since that loads a document and empties the stack.
+    /// </summary>
+    public void Rewrite(string source)
+    {
+        text.Document.BeginUpdate();
+        text.Document.Text = source;
+        text.Document.EndUpdate();
     }
 
     /// <summary>The text as it stands, which is the document while this view owns it.</summary>

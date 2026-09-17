@@ -9,6 +9,7 @@ using Avalonia.Threading;
 using Flyback.App.Controls;
 using Shouldly;
 using Xunit;
+using System.Threading;
 
 namespace Flyback.App.Tests.Ui;
 
@@ -23,8 +24,17 @@ namespace Flyback.App.Tests.Ui;
 /// press one. The other half is that it is a panel rather than a window, so nothing
 /// about being modal comes from the platform.
 /// </remarks>
-public class UnsavedDialogTests : UiTest
+public class UnsavedDialogTests : UiTest, IDisposable
 {
+    /// <summary>Where the tests that write a file write it.</summary>
+    private readonly string folder = Path.Combine(
+        Path.GetTempPath(), "flyback-unsaved-" + Guid.NewGuid().ToString("N"));
+
+    public void Dispose()
+    {
+        if (Directory.Exists(folder)) Directory.Delete(folder, recursive: true);
+    }
+
     /// <summary>A window whose patch has been edited, so closing it has to ask.</summary>
     private static MainWindow OpenAndEdit()
     {
@@ -336,5 +346,122 @@ public class UnsavedDialogTests : UiTest
             on.MouseUp(at, MouseButton.Left);
             Settle(on);
         }
+    }
+
+    // --- saving a text document as something else ------------------------------
+
+    /// <summary>The platform's own file-backed storage file — see <c>FileDropTests</c>.</summary>
+    private static Avalonia.Platform.Storage.IStorageFile RealStorageFile(string path)
+    {
+        var type = typeof(Avalonia.Platform.Storage.IStorageFile).Assembly.GetType(
+            "Avalonia.Platform.Storage.FileIO.BclStorageFile", throwOnError: true)!;
+
+        var flags = System.Reflection.BindingFlags.Public
+            | System.Reflection.BindingFlags.NonPublic
+            | System.Reflection.BindingFlags.Instance;
+
+        return (Avalonia.Platform.Storage.IStorageFile)type.GetConstructors(flags)[0].Invoke([new FileInfo(path)]);
+    }
+
+    /// <summary>A window whose document is text that has been applied and written nowhere.</summary>
+    private static MainWindow OpenOnUnsavedText()
+    {
+        var window = new MainWindow();
+
+        window.Show();
+        Settle(window);
+
+        All<ToggleButton>(window).Single(b => b.Name == "code").IsChecked = true;
+        Settle(window);
+
+        All<AvaloniaEdit.TextEditor>(window).Single(b => b.Name == "source").Text = """
+            # a tone, and a note about it
+            let hum = t |> sine(freq: 220)
+            hum |> out.left
+            """;
+
+        All<Button>(window).Single(b => b.Name == "apply").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Settle(window);
+
+        All<NodeEditor>(window).Single().Locked.ShouldBeTrue("the text is the document");
+
+        return window;
+    }
+
+    private static bool Finished(Task<bool> saving)
+    {
+        var deadline = DateTime.UtcNow.AddSeconds(5);
+
+        while (!saving.IsCompleted && DateTime.UtcNow < deadline)
+        {
+            Dispatcher.UIThread.RunJobs();
+            Thread.Sleep(5);
+        }
+
+        saving.IsCompleted.ShouldBeTrue("the save should have finished");
+
+        return saving.GetAwaiter().GetResult();
+    }
+
+    /// <summary>
+    /// Saving a text document as a patch hands it to the graph and empties the text
+    /// (ADR-0068), so text that is written nowhere else is asked about first — and
+    /// backing out writes nothing.
+    /// </summary>
+    [AvaloniaFact]
+    public void Saving_unsaved_text_as_a_patch_asks_first_and_cancel_writes_nothing()
+    {
+        var window = OpenOnUnsavedText();
+        var path = Path.Combine(folder, "hum.fbk");
+
+        Directory.CreateDirectory(folder);
+
+        var saving = window.SaveToAsync(RealStorageFile(path));
+        var dialog = Asking(window);
+
+        Words(dialog).ShouldContain("Unsaved text");
+        All<Button>(dialog).Select(b => b.Content as string).ShouldNotContain("Save…", "saving is what asked");
+
+        Press(dialog, "Cancel");
+
+        Finished(saving).ShouldBeFalse("nothing was saved");
+        File.Exists(path).ShouldBeFalse();
+
+        All<NodeEditor>(window).Single().Locked.ShouldBeTrue("and the text is still the document");
+        All<AvaloniaEdit.TextEditor>(window).Single(b => b.Name == "source").Text.ShouldContain("a note about it");
+    }
+
+    /// <summary>And going ahead writes the patch and hands it to the canvas.</summary>
+    [AvaloniaFact]
+    public void Saving_unsaved_text_as_a_patch_goes_ahead_when_told_to()
+    {
+        var window = OpenOnUnsavedText();
+        var path = Path.Combine(folder, "hum.fbk");
+
+        Directory.CreateDirectory(folder);
+
+        var saving = window.SaveToAsync(RealStorageFile(path));
+
+        Press(Asking(window), "Save without the text");
+
+        Finished(saving).ShouldBeTrue();
+        File.Exists(path).ShouldBeTrue();
+
+        All<NodeEditor>(window).Single().Locked.ShouldBeFalse("a patch file is the document, so the graph owns it");
+    }
+
+    /// <summary>Saved as text there is nothing to lose, and nothing is asked.</summary>
+    [AvaloniaFact]
+    public void Saving_unsaved_text_as_text_asks_nothing()
+    {
+        var window = OpenOnUnsavedText();
+        var path = Path.Combine(folder, "hum.fbks");
+
+        Directory.CreateDirectory(folder);
+
+        Finished(window.SaveToAsync(RealStorageFile(path))).ShouldBeTrue();
+
+        All<ModalOverlay>(window).ShouldBeEmpty();
+        File.ReadAllText(path).ShouldContain("a note about it");
     }
 }

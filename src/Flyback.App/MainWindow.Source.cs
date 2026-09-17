@@ -163,10 +163,20 @@ public sealed partial class MainWindow
         editor.Recorded += (_, _) =>
         {
             if (sourceOwned) unstacked++;
+
+            // A new step empties the canvas's redo stack.
+            sinceHandover = null;
         };
 
         source.EvaluateRequested += (_, _) => Evaluate();
-        source.Changed += (_, _) => RefreshEditState();
+        source.Changed += (_, _) =>
+        {
+            // Typing empties the text's redo stack. A step being walked is not
+            // typing, and sets this for itself.
+            if (!stepping) sinceHandover = null;
+
+            RefreshEditState();
+        };
         source.Moved += (_, at) => PointAt(at);
         source.HandBackRequested += async (_, _) => await HandBackAsync();
 
@@ -517,21 +527,39 @@ public sealed partial class MainWindow
     }
 
     /// <remarks>
-    /// Occupancy alone — not the owner or the view above, which agree with it
-    /// everywhere but the press right after an undo that crossed the ownership
-    /// boundary, where <see cref="Handed"/> changes both out from under it. Asking
-    /// them there would land the press on the wrong stack.
+    /// The text's stack first wherever the text is in play — it owns the patch, or
+    /// it is what is showing — and the canvas's alone otherwise. A canvas that owns
+    /// the patch and is showing must not reach into the text: what is on that stack
+    /// then is typing into a printing nobody is looking at.
     /// </remarks>
     private Landing? UndoLandsOn =>
-        source.CanUndo ? Landing.Text
+        TextInPlay && source.CanUndo ? Landing.Text
         : editor.CanUndo ? Landing.Canvas
         : null;
 
-    /// <remarks>See <see cref="UndoLandsOn"/>.</remarks>
+    /// <remarks>
+    /// As <see cref="UndoLandsOn"/>, and the text's stack besides for the one press
+    /// that puts an evaluation back — see <see cref="sinceHandover"/>.
+    /// </remarks>
     private Landing? RedoLandsOn =>
-        source.CanRedo ? Landing.Text
+        (TextInPlay || sinceHandover == 0) && source.CanRedo ? Landing.Text
         : editor.CanRedo ? Landing.Canvas
         : null;
+
+    /// <summary>Whether the text owns the patch or is the view showing.</summary>
+    private bool TextInPlay => sourceOwned || showingCode;
+
+    /// <summary>
+    /// How many canvas steps have been taken back since an undo handed the patch to
+    /// the canvas, or null where none has.
+    /// </summary>
+    /// <remarks>
+    /// Undoing an evaluation moves the owner and the view to the canvas and leaves
+    /// the deed that puts it back on top of the text's redo stack. At nought that
+    /// deed is the next thing to redo, though neither the owner nor the view says
+    /// so; anything that empties either redo stack ends it.
+    /// </remarks>
+    private int? sinceHandover;
 
     private void Undo()
     {
@@ -546,6 +574,7 @@ public sealed partial class MainWindow
             case Landing.Canvas:
                 editor.Undo();
                 Owed(-1);
+                if (sinceHandover is { } behind) sinceHandover = behind + 1;
                 Stepped();
                 break;
         }
@@ -566,6 +595,7 @@ public sealed partial class MainWindow
             case Landing.Canvas:
                 editor.Redo();
                 Owed(1);
+                if (sinceHandover is { } behind) sinceHandover = Math.Max(0, behind - 1);
                 Stepped();
                 break;
         }
@@ -655,6 +685,8 @@ public sealed partial class MainWindow
     /// <summary>Walks the canvas's history, and who owns the patch, with it.</summary>
     private void StepPatch(int steps, bool back)
     {
+        var owned = sourceOwned;
+
         stepping = true;
 
         try
@@ -667,6 +699,8 @@ public sealed partial class MainWindow
         {
             stepping = false;
         }
+
+        sinceHandover = back && owned && !sourceOwned ? 0 : null;
 
         RefreshEditState();
     }
@@ -713,6 +747,8 @@ public sealed partial class MainWindow
     /// </summary>
     private void Tidy()
     {
+        if (Gesturing) return;
+
         if (Coding) source.Tidy();
         else editor.Tidy();
     }
@@ -808,7 +844,9 @@ public sealed partial class MainWindow
     /// its accumulator and its delay line (ADR-0067). A text that does not read
     /// changes nothing at all, so there is no half-applied state to be left in.
     /// </remarks>
-    private void Evaluate()
+    /// <param name="applied">What to say under the text once it is built, where the usual count would not do.</param>
+    /// <returns>Whether the text read, and so whether anything changed.</returns>
+    private bool Evaluate(string? applied = null)
     {
         var load = PatchLanguage.Build(source.Source);
 
@@ -819,7 +857,7 @@ public sealed partial class MainWindow
                 $"The text does not read — {load.Issues.Count} thing(s) to fix. Nothing has changed.",
                 load.Report);
 
-            return;
+            return false;
         }
 
         // Before the patch is replaced, so what is counted is how much of the
@@ -872,11 +910,53 @@ public sealed partial class MainWindow
 
         var total = load.Patch.Nodes.Count;
 
-        source.Show(load, $"Applied — {total} modules, {kept} of them carried over.");
+        source.Show(load, applied ?? $"Applied — {total} modules, {kept} of them carried over.");
 
         Report(taken
             ? $"Applied. The text is the document from here on — {total} modules."
             : $"Applied — {total} modules, {kept} carried over.");
+
+        return true;
+    }
+
+    /// <summary>
+    /// Puts a patch an assistant built on the canvas, as an edit, and keeps the
+    /// text in step with it.
+    /// </summary>
+    /// <remarks>
+    /// An assistant builds a graph, and no text describes one. Over a printing that
+    /// is an edit like any other and the printing is made afresh. Where the text is
+    /// the document it has to go on saying what the canvas holds — it is what a
+    /// save writes and what the next apply builds — so the patch is printed into it
+    /// and built from there, the way a preset picked from the text view is. The
+    /// printing and the build are one thing to take back, and taking them back
+    /// returns the text as it was written, comments and all.
+    /// </remarks>
+    private void TakeFromAssistant(Patch patch)
+    {
+        if (!sourceOwned)
+        {
+            editor.ApplyEdit(patch);
+            Reprint();
+
+            return;
+        }
+
+        bool read;
+
+        // Said under the text rather than on the status bar, which the assistant
+        // panel clears as the turn ends.
+        using (source.Together())
+        {
+            source.Rewrite(PatchPrinter.Print(patch));
+
+            read = Evaluate("The assistant's patch, written as text. Ctrl+Z puts back the text "
+                + "as it was, and the patch with it.");
+        }
+
+        // A printing that will not read is this program's fault, and the text it
+        // replaced is somebody's work: back it comes, with nothing applied.
+        if (!read) source.Undo();
     }
 
     /// <summary>
@@ -1017,7 +1097,9 @@ public sealed partial class MainWindow
         mapped = null;
         means = null;
         turned.Clear();
+        restated.Clear();
         unstacked = 0;
+        sinceHandover = null;
     }
 
     /// <summary>Marks the text as written, so closing stops asking about it.</summary>

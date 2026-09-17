@@ -1639,4 +1639,241 @@ public class SourceViewTests : UiTest
 
         Text(window).Text.Trim().ShouldBe("let riff = notes() [ A#3 C4 ]\nriff |> out.left");
     }
+
+    // --- which view a press of undo belongs to ------------------------------
+
+    /// <summary>
+    /// Undo follows the view where the canvas owns the patch. Typing into a printing
+    /// is on the text's stack, and with the canvas showing it is typing nobody can
+    /// see — a press there takes back the last thing done to the canvas.
+    /// </summary>
+    [AvaloniaFact]
+    public void Undo_on_the_canvas_leaves_typing_in_a_hidden_printing_alone()
+    {
+        var window = Open();
+        var text = ShowCode(window);
+
+        // Through the document, which is what typing is.
+        text.Document.Insert(0, "# a note to myself\n");
+        Settle(window);
+
+        CodeButton(window).IsChecked = false;
+        Settle(window);
+
+        var before = Editor(window).Patch.Nodes.Count;
+
+        Editor(window).AddNode("value").ShouldNotBeNull();
+        Settle(window);
+
+        Press(Undo(window));
+        Settle(window);
+
+        Editor(window).Patch.Nodes.Count.ShouldBe(before, "the module just added is what came back");
+        text.Text.ShouldStartWith("# a note to myself", customMessage: "and the typing was left alone");
+
+        // With nothing left on the canvas's stack the button goes grey, rather
+        // than offering a press that would land where nobody is looking.
+        Undo(window).IsEnabled.ShouldBeFalse();
+
+        // The typing is still there to take back from the view it was done in.
+        ShowCode(window);
+
+        Press(Undo(window));
+        Settle(window);
+
+        text.Text.ShouldNotStartWith("# a note to myself");
+    }
+
+    // --- a number no box can hold -------------------------------------------
+
+    /// <summary>
+    /// A knob is a float and its number box holds a decimal, which stops near
+    /// 7.9e28. Applying points the panel at the caret, so text holding a larger
+    /// number has to survive the panel being built for it.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_number_past_what_a_number_box_holds_can_be_applied()
+    {
+        var window = Open();
+        var text = ShowCode(window);
+
+        text.Text = "t |> sine(freq: 100000000000000000000000000000000) |> out.left";
+        text.CaretOffset = text.Text.IndexOf("sine", StringComparison.Ordinal) + 1;
+        Settle(window);
+
+        Should.NotThrow(() =>
+        {
+            Apply(window).RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+            Settle(window);
+        });
+
+        Editor(window).SelectedNode.ShouldNotBeNull().TypeId.ShouldBe("osc.sine");
+    }
+
+    // --- a locked canvas, and a box on it --------------------------------------
+
+    /// <summary>
+    /// Opening a box is an edit, so a double-click on a locked canvas is refused the
+    /// way Ctrl+E is — and selects what is inside, which a locked canvas still does.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_locked_canvas_will_not_open_a_box_on_a_double_click()
+    {
+        var window = Open();
+
+        Evaluate(window, """
+            group "Voice" {
+              let a = t |> sine(freq: 220)
+              let b = a |> mul(b: 0.5)
+            }
+            b |> out.left
+            """);
+
+        var editor = Editor(window);
+
+        editor.Locked.ShouldBeTrue();
+
+        CodeButton(window).IsChecked = false;
+        Settle(window);
+
+        var group = editor.Patch.Groups.ShouldNotBeNull().ShouldHaveSingleItem();
+
+        group.Collapsed.ShouldBeTrue("a group built from text arrives shut");
+
+        var box = NodeGeometry.GroupBounds(editor.Patch, group, editor.Patch.SocketsOf(group));
+
+        var at = editor.TranslatePoint(
+                editor.GraphToScreen.Transform(new Point(box.X + (box.Width / 2), box.Y + 8)), window)
+            ?? throw new InvalidOperationException("the editor is not in this window");
+
+        var steps = 0;
+        editor.Recorded += (_, _) => steps++;
+
+        for (var click = 0; click < 2; click++)
+        {
+            window.MouseDown(at, Avalonia.Input.MouseButton.Left);
+            window.MouseUp(at, Avalonia.Input.MouseButton.Left);
+        }
+
+        Settle(window);
+
+        group.Collapsed.ShouldBeTrue();
+        steps.ShouldBe(0, "nothing done to a locked canvas is an edit to the patch");
+        editor.SelectedGroup.ShouldBe(group, "the press still selects what the box stands for");
+    }
+
+    // --- an assistant's patch, and the text ---------------------------------
+
+    /// <summary>
+    /// What the window handed the assistant panel to put a patch on the canvas with,
+    /// which is the one thing the end of a turn does to the shell.
+    /// </summary>
+    /// <remarks>
+    /// By reflection: the window takes its plugins from a static no test can put a
+    /// provider into, so no turn can be run against a real window.
+    /// </remarks>
+    private static Action<Flyback.Core.Graph.Patch> AssistantApplies(MainWindow window)
+    {
+        var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+
+        return (Action<Flyback.Core.Graph.Patch>)typeof(AssistantPanel)
+            .GetField("apply", flags)!
+            .GetValue(All<AssistantPanel>(window).Single())!;
+    }
+
+    /// <summary>Two oscillators mixed into the left speaker: a patch no text here describes.</summary>
+    private static Flyback.Core.Graph.Patch Drone()
+    {
+        var b = new Flyback.Core.Graph.PatchBuilder(Flyback.Core.Graph.NodeCatalog.BuiltIn);
+
+        var output = b.Add(Flyback.Core.Graph.NodeCatalog.OutputTypeId, 900, 40);
+        var one = b.Add("osc.sine", 40, 40);
+        var two = b.Add("osc.sine", 40, 240);
+        var mix = b.Add("math.add", 400, 40);
+
+        b.Wire(one, 0, mix, 0)
+            .Wire(two, 0, mix, 1)
+            .Wire(mix, 0, output, Flyback.Core.Graph.NodeCatalog.OutputLeftPort);
+
+        return b.Patch;
+    }
+
+    private static int Oscillators(Flyback.Core.Graph.Patch patch) =>
+        patch.Nodes.Count(n => n.TypeId == "osc.sine");
+
+    /// <summary>
+    /// A printing keeps up with an assistant's patch as it keeps up with an undo.
+    /// The assistant column is beside the text view, so a turn ending over a
+    /// printing is ordinary — and applying a stale one would put the old patch back.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_printing_keeps_up_with_an_assistants_patch()
+    {
+        var window = Open();
+        var text = ShowCode(window);
+
+        AssistantApplies(window)(Drone());
+        Settle(window);
+
+        Editor(window).Locked.ShouldBeFalse("a printing is a reading; the canvas still owns the patch");
+        Notice(window).ShouldNotBeNull();
+
+        Oscillators(Flyback.Core.Language.PatchLanguage.Build(text.Text).Patch).ShouldBe(2);
+    }
+
+    /// <summary>
+    /// Where the text is the document it goes on saying what the canvas holds, since
+    /// it is what a save writes and what the next apply builds: the assistant's
+    /// patch is written into it and built from there.
+    /// </summary>
+    [AvaloniaFact]
+    public void An_assistants_patch_over_a_text_document_is_written_into_the_text()
+    {
+        var window = Open();
+
+        Evaluate(window, Hum);
+
+        AssistantApplies(window)(Drone());
+        Settle(window);
+
+        var editor = Editor(window);
+
+        editor.Locked.ShouldBeTrue("the text is still the document");
+        Oscillators(editor.Patch).ShouldBe(2, "the assistant's patch is on the canvas");
+        Oscillators(Flyback.Core.Language.PatchLanguage.Build(Text(window).Text).Patch).ShouldBe(2);
+    }
+
+    /// <summary>
+    /// And one press takes both back: the patch, and the text as it was written —
+    /// the comment in it included, which no printing could have kept.
+    /// </summary>
+    [AvaloniaFact]
+    public void Undoing_an_assistants_patch_puts_back_the_text_as_it_was_written()
+    {
+        var window = Open();
+
+        Evaluate(window, Hum);
+
+        var text = Text(window);
+
+        // Typed rather than loaded, so there is a stack under the text to go back
+        // down — and a second apply, so the patch is this text's.
+        text.Document.Insert(text.Document.TextLength, "\n# and a second note");
+        Apply(window).RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        Settle(window);
+
+        var written = text.Text;
+
+        AssistantApplies(window)(Drone());
+        Settle(window);
+
+        text.Text.ShouldNotBe(written);
+
+        Press(Undo(window));
+        Settle(window);
+
+        text.Text.ShouldBe(written);
+        Oscillators(Editor(window).Patch).ShouldBe(1, "the patch the text describes is back with it");
+        Editor(window).Locked.ShouldBeTrue();
+    }
 }

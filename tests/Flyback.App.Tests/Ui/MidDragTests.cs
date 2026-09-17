@@ -159,4 +159,124 @@ public class MidDragTests : UiTest
 
         editor.Patch.Connections.ShouldBeEmpty();
     }
+
+    /// <summary>
+    /// The platform takes the pointer away without a release when the window loses
+    /// the mouse mid-drag — another window brought forward, a system dialog, the
+    /// lock screen. The drag ends where it stood, as a step.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_drag_that_loses_the_pointer_is_over()
+    {
+        var (window, source, _) = Open();
+        var editor = Editor(window);
+
+        IPointer? pointer = null;
+
+        editor.AddHandler(
+            InputElement.PointerPressedEvent,
+            (_, e) => pointer = e.Pointer,
+            RoutingStrategies.Bubble,
+            handledEventsToo: true);
+
+        window.MouseDown(OnWindow(window, Body(source)), MouseButton.Left);
+        window.MouseMove(OnWindow(window, new Point(source.X + 120, source.Y + 60)));
+        Settle(window);
+
+        editor.Gesturing.ShouldBeTrue("the module is being dragged");
+
+        pointer.ShouldNotBeNull().Capture(null);
+        Settle(window);
+
+        var dragged = editor.Patch.Find(source.Id).ShouldNotBeNull();
+        var left = (dragged.X, dragged.Y);
+
+        window.MouseMove(OnWindow(window, new Point(source.X + 300, source.Y + 200)));
+        Settle(window);
+
+        (dragged.X, dragged.Y).ShouldBe(left, "a pointer moving with no button down drags nothing");
+        editor.Gesturing.ShouldBeFalse("nothing is holding the module any more");
+        editor.CanUndo.ShouldBeTrue("and where it was left is a step to take back");
+    }
+
+    /// <summary>
+    /// Delete waits for the hand to come off, as undo does. The wire being drawn is
+    /// holding the module by its id, and would otherwise be completed from one that
+    /// has gone.
+    /// </summary>
+    [AvaloniaFact]
+    public void Delete_is_not_answered_while_a_wire_is_being_drawn()
+    {
+        var (window, source, fed) = Open();
+        var editor = Editor(window);
+
+        editor.Select(source.Id);
+        Settle(window);
+
+        window.MouseDown(OnWindow(window, Output(source)), MouseButton.Left);
+        window.MouseMove(OnWindow(window, new Point(source.X + 250, source.Y + 40)));
+        Settle(window);
+
+        editor.Gesturing.ShouldBeTrue("a wire is being drawn");
+
+        window.KeyPressQwerty(PhysicalKey.Delete, RawInputModifiers.None);
+        Settle(window);
+
+        editor.Patch.Find(source.Id).ShouldNotBeNull("the module the wire is held by is still there");
+
+        var target = OnWindow(window, Input(fed, 0));
+
+        window.MouseMove(target);
+        window.MouseUp(target, MouseButton.Left);
+        Settle(window);
+
+        editor.Patch.Connections.ShouldHaveSingleItem().SourceNode.ShouldBe(source.Id);
+
+        // And the press works again the moment the hand is off.
+        window.KeyPressQwerty(PhysicalKey.Delete, RawInputModifiers.None);
+        Settle(window);
+
+        editor.Patch.Find(source.Id).ShouldBeNull();
+        editor.Patch.Connections.ShouldBeEmpty("a wire has a module at both ends");
+    }
+
+    /// <summary>
+    /// The same key during a press on one module of a set, which the release would
+    /// otherwise answer by selecting a module that had been deleted.
+    /// </summary>
+    [AvaloniaFact]
+    public void Delete_is_not_answered_while_a_module_is_held()
+    {
+        var (window, source, fed) = Open();
+        var editor = Editor(window);
+
+        editor.Select(source.Id);
+        Settle(window);
+
+        var other = OnWindow(window, Body(fed));
+
+        window.MouseDown(other, MouseButton.Left, RawInputModifiers.Control);
+        window.MouseUp(other, MouseButton.Left, RawInputModifiers.Control);
+        Settle(window);
+
+        editor.SelectedNodes.Count.ShouldBe(2, "both modules are selected");
+
+        var held = OnWindow(window, Body(editor.Patch.Find(source.Id)!));
+
+        window.MouseDown(held, MouseButton.Left);
+        Settle(window);
+
+        window.KeyPressQwerty(PhysicalKey.Delete, RawInputModifiers.None);
+        Settle(window);
+
+        window.MouseUp(held, MouseButton.Left);
+        Settle(window);
+
+        editor.Patch.Find(source.Id).ShouldNotBeNull();
+        editor.Patch.Find(fed.Id).ShouldNotBeNull();
+
+        // A press that was not a drag picks the one module out of the set, and
+        // what it picked is a module that is there.
+        editor.SelectedNodes.ShouldHaveSingleItem().Id.ShouldBe(source.Id);
+    }
 }

@@ -111,6 +111,23 @@ internal sealed class ControlHub
     }
 
     /// <summary>
+    /// Forgets where every knob was turned to, for a different document arriving.
+    /// </summary>
+    /// <remarks>
+    /// Two files share their knobs' ids whenever one began as a copy of the other,
+    /// and the one being opened says where its own knobs are.
+    /// </remarks>
+    public void Forget()
+    {
+        lock (gate)
+        {
+            values.Clear();
+            caught.Clear();
+            lastHeard.Clear();
+        }
+    }
+
+    /// <summary>
     /// Turns a knob from the screen. A controller bound to it has to catch up again
     /// before it takes over, under <see cref="Takeover.PickUp"/>.
     /// </summary>

@@ -325,4 +325,33 @@ public class KnobPanelTests : UiTest
 
         Order(window).ShouldBe("Knob 2,Knob 1,Knob 3");
     }
+
+    /// <summary>
+    /// Escape after a learn that found no controller to learn from. The field
+    /// Escape cancels must never be left holding a source that has been disposed.
+    /// </summary>
+    [AvaloniaFact]
+    public void Escape_after_learning_found_no_controller_does_nothing()
+    {
+        var (patch, _) = Board();
+        patch.AddControl("Glow");
+        var window = Open(patch);
+
+        var more = All<Button>(Panel(window)).First(b => b.Name == "knob-menu");
+        var menu = more.Flyout.ShouldBeOfType<MenuFlyout>();
+
+        // No MIDI backend is installed in a test run, which is what a machine with
+        // no controller plugged in looks like to this.
+        menu.Items.OfType<MenuItem>().Single(item => (item.Header as string) == "Learn MIDI controller")
+            .RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(MenuItem.ClickEvent));
+        Settle(window);
+
+        Editor(window).Focus();
+
+        Should.NotThrow(() =>
+        {
+            window.KeyPress(Key.Escape, RawInputModifiers.None, PhysicalKey.Escape, null);
+            Settle(window);
+        });
+    }
 }

@@ -144,6 +144,12 @@ public sealed partial class MainWindow
     private NodeInstance? Probed =>
         editor.SelectedNode is { } selected && NodeCatalog.IsChart(selected.TypeId) ? selected : null;
 
+    /// <summary>
+    /// Whether there is anything for the preview to show. A chart rooted at a Probe
+    /// is a picture like any other, whatever the Output's own 'color' says.
+    /// </summary>
+    private bool HasPicture => Probed is not null || editor.Patch.Reaches().Picture;
+
     /// <summary>Which probe the picture was last compiled for, or null for the patch itself.</summary>
     private Guid? showingProbe;
 
@@ -176,9 +182,7 @@ public sealed partial class MainWindow
 
         audio.Update(editor.Patch, Sounds);
 
-        // A chart rooted at a Probe is a picture like any other, so the preview
-        // stays up for one whatever the Output's own 'color' says.
-        ShowPreview(probe is not null || editor.Patch.Reaches().Picture);
+        ShowPreview(HasPicture);
 
         // Both programs are new, so both of their blocks are, and whatever is
         // being held has to be written into them before the next frame or the

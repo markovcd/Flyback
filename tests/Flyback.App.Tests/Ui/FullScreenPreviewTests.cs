@@ -232,4 +232,49 @@ public class FullScreenPreviewTests : UiTest
         PressEscape(window);
         editor.IsEffectivelyVisible.ShouldBeTrue();
     }
+
+    /// <summary>
+    /// The preview row is left alone while the preview has the window, so it is
+    /// asked about again on the way out: Ctrl+Z works in full screen, and may take
+    /// the picture away.
+    /// </summary>
+    [AvaloniaFact]
+    public void Leaving_full_screen_puts_the_preview_away_for_a_patch_that_lost_its_picture()
+    {
+        var window = Open();
+        var editor = Editor(window);
+
+        var output = editor.Patch.Output;
+        var color = editor.Patch.IncomingTo(output.Id, Flyback.Core.Graph.NodeCatalog.OutputColorPort)
+            .ShouldNotBeNull();
+
+        // A patch with no picture, and then the one edit that gives it one — so
+        // that taking the edit back is what takes the picture away.
+        editor.Patch.Disconnect(output.Id, Flyback.Core.Graph.NodeCatalog.OutputColorPort);
+        editor.NotifyPatchChanged();
+        Settle(window);
+
+        var box = All<Border>(window).First(b => b.Child is PreviewHost);
+
+        box.IsVisible.ShouldBeFalse("nothing reaches 'color'");
+
+        editor.Patch.Connect(
+            color.SourceNode, color.SourcePort, output.Id, Flyback.Core.Graph.NodeCatalog.OutputColorPort);
+        editor.NotifyPatchChanged();
+        Settle(window);
+
+        box.IsVisible.ShouldBeTrue("and now something does");
+
+        DoubleClick(window);
+
+        window.KeyPressQwerty(PhysicalKey.Z, RawInputModifiers.Control);
+        Settle(window);
+
+        editor.Patch.IncomingTo(output.Id, Flyback.Core.Graph.NodeCatalog.OutputColorPort)
+            .ShouldBeNull("the wire was taken back");
+
+        PressEscape(window);
+
+        box.IsVisible.ShouldBeFalse("a patch with no picture has no preview, in or out of full screen");
+    }
 }

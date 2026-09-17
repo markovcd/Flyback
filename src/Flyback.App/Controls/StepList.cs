@@ -358,9 +358,9 @@ internal sealed class StepList
     {
         var box = new NumericUpDown
         {
-            Value = (decimal)value,
-            Minimum = (decimal)min,
-            Maximum = (decimal)max,
+            Value = Boxed.Of(value),
+            Minimum = Boxed.Of(min),
+            Maximum = Boxed.Of(max),
             Increment = increment,
             FormatString = format,
             FontSize = Text.Body,

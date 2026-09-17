@@ -384,3 +384,24 @@ something.
 so the patch and the text are both marked as they stand — the same state a
 preset picked on the canvas leaves. A title claiming unsaved work a moment after
 a preset was picked would be claiming somebody else's.
+
+**2026-09-17 — an assistant's patch over a text document is read into text, and
+a text document is saved as text first.** An assistant builds a graph, and its
+answer landed on the canvas as an edit whoever owned the patch. Over a text
+document that left the text describing the patch from before it: the text is what
+a save writes and what the next apply builds, so both lost the assistant's work.
+The patch is now printed into the text and built from there — `Evaluate` again,
+for the reason a preset goes through it — as one step on the text's stack, so one
+press puts back the patch and the text as it was written. It gives up the
+comments, names and `def`s, which the press returns, and whatever groups the
+assistant drew, which text has no place for; the alternatives were text that
+lies or text that is gone. Over a printing the edit lands as it always did and
+the printing is made afresh, as it is after an undo.
+
+The save dialog put the text last for every document, because a printing is the
+lossy kind. Where the text is the document it is the other two that lose
+something, so it is offered first there, as a bundle is offered first to a
+bundle. Saving as `.fbk` or as a bundle still hands the patch to the graph and
+empties the text, and text that is written nowhere is now asked about first —
+the question handing it back always asked, with saving left off its answers
+since saving is what asked.

@@ -288,6 +288,9 @@ public sealed partial class MainWindow
             Takeover = takeover.SelectedIndex == 1 ? Midi.Takeover.PickUp : Midi.Takeover.Jump,
         };
 
+        // So an emptied box says what it kept, the next time it is looked at.
+        jpegQuality.Value = outputSettings.JpegQuality;
+
         var soundChanged = false;
 
         if (plugins.PreferredAudioOutput is { } output)
@@ -1667,7 +1670,7 @@ public sealed partial class MainWindow
 
         var numeric = new NumericUpDown
         {
-            Value = (decimal)value,
+            Value = Boxed.Of(value),
             Increment = whole ? 1m : 0.05m,
             FormatString = whole ? "0.##" : "0.###",
             FontSize = Text.Body,
@@ -1718,7 +1721,7 @@ public sealed partial class MainWindow
             updating = true;
             store(next);
             slider.Value = next;
-            numeric.Value = (decimal)next;
+            numeric.Value = Boxed.Of(next);
             name.Text = spec.Format(next);
             updating = false;
 

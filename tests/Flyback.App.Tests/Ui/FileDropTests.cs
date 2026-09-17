@@ -239,4 +239,42 @@ public class FileDropTests : UiTest, IDisposable
 
         editor.Patch.Nodes.Count.ShouldBe(nodes, "cancelling should have left the edited patch alone");
     }
+
+    /// <summary>
+    /// A knob opens where its own file left it. Two files share their knobs' ids
+    /// whenever one began as a copy of the other, and where the last document's
+    /// were turned to says nothing about this one's.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_knob_opens_where_its_file_left_it()
+    {
+        var window = Open();
+
+        var patch = new Patch();
+        patch.EnsureOutput();
+
+        var knob = patch.AddControl("Glow");
+
+        Directory.CreateDirectory(folder);
+
+        knob.Value = 0.2f;
+        var quiet = Path.Combine(folder, "quiet.fbk");
+        File.WriteAllText(quiet, PatchIO.ToJson(patch));
+
+        knob.Value = 0.8f;
+        var loud = Path.Combine(folder, "loud.fbk");
+        File.WriteAllText(loud, PatchIO.ToJson(patch));
+
+        var named = window.Title;
+        Drop(window, Carrying(RealStorageFile(quiet)));
+        WaitForTitleChange(window, named);
+
+        Editor(window).Patch.Control(knob.Id).ShouldNotBeNull().Value.ShouldBe(0.2f);
+
+        named = window.Title;
+        Drop(window, Carrying(RealStorageFile(loud)));
+        WaitForTitleChange(window, named);
+
+        Editor(window).Patch.Control(knob.Id).ShouldNotBeNull().Value.ShouldBe(0.8f);
+    }
 }

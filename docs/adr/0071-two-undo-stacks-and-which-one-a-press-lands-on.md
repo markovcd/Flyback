@@ -38,26 +38,29 @@ one that cannot be reasoned about before it is changed, only after it breaks.
 they are written.
 
 **1. A press lands on one stack, and one expression says which.** The text's
-stack where it has something left, the canvas's otherwise, and neither where
-neither has anything. `UndoLandsOn` is that expression, and the toolbar greys
-its button from the same property the gesture acts on — so a button offering a
-press that does nothing, and a press doing something the button said it could
-not, are the same impossible bug rather than two likely ones.
+stack where the text is in play and has something left, the canvas's otherwise,
+and neither where neither has anything. The text is in play where it owns the
+document or is the view showing. `UndoLandsOn` is that expression, and the
+toolbar greys its button from the same property the gesture acts on — so a
+button offering a press that does nothing, and a press doing something the
+button said it could not, are the same impossible bug rather than two likely
+ones.
 
-Occupancy rather than the owner or the view, though the three agree almost
-everywhere: looking at the text is what makes Ctrl+Z mean the last thing typed,
-and switching views hands the stacks back without either disturbing the other,
-because nothing reaches the text's stack except a `Deed` handed over while the
-text owned the document (rule 2). The one place owner and view disagree with
-occupancy is the single press right after an undo or redo that crossed the
-ownership boundary — that press is what hands the document back in the first
-place (`Handed`, driven off `PatchHistory`'s `mark`), so by the time the next
-press is evaluated the owner and the view have already moved, and a rule keyed
-to them would ask the wrong stack for the matching step. An earlier version did
-key the read on the owner and the view, and left exactly that press stranding
-the `Deed` unconsumed on the text's stack — answered only by the press after
-it, finding the stack it was moved to already empty: a redo that silently did
-nothing.
+Looking at the text is what makes Ctrl+Z mean the last thing typed, and where
+the text owns the document its stack is the history from either view (rule 2).
+What is left is a canvas that owns the patch and is showing, and there the
+text's stack is out of reach: it holds typing into a printing, which a press
+made over the canvas would take back where nobody could see it happen.
+
+One press does not fit, and `sinceHandover` is the whole of the exception.
+Undoing an evaluation hands the document back (`Handed`, driven off
+`PatchHistory`'s `mark`), so by the time the next press is evaluated the owner
+and the view have both moved to the canvas — while the `Deed` that redoes the
+evaluation sits on top of the text's redo stack. Asking the owner and the view
+alone would send that redo to the canvas and strand the `Deed`, to be met later
+as a redo that silently does nothing. So the handover is noted as it happens,
+counted through any canvas steps taken back and put again after it, and ended by
+whatever empties either redo stack: a new canvas step, or typing.
 
 **2. While the text owns the document, a canvas step goes onto the text's
 stack.** Not as a copy of the patch — as a `Deed`, an `IUndoableOperation`

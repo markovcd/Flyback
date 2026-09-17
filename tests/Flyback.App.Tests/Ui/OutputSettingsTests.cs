@@ -783,4 +783,21 @@ public class OutputSettingsTests : UiTest, IDisposable
         ShowingSettings(window).ShouldBeFalse("a sequencer is not the Output");
         All<TextBlock>(window).Select(t => t.Text).ShouldContain("A3", "but it does get its notes");
     }
+
+    /// <summary>
+    /// An emptied Quality box keeps what was saved, and says so: the controls are
+    /// kept between openings, so a blank left in one is what the next opening shows.
+    /// </summary>
+    [AvaloniaFact]
+    public void An_emptied_quality_box_says_what_it_kept()
+    {
+        var window = Open();
+
+        var dialog = OpenSettings(window, RecordingTab);
+
+        Quality(dialog).Value = null;
+        CloseSettings(window, dialog, save: true);
+
+        Quality(OpenSettings(window, RecordingTab)).Value.ShouldBe(85);
+    }
 }
