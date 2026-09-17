@@ -44,7 +44,7 @@ public partial class NodeCatalog
     /// </summary>
     /// <remarks>
     /// Stateful, in two of the one-evaluation cells
-    /// <see cref="Emitter.AllocateUnitSlot"/> hands out rather than an opcode of its
+    /// <see cref="Emitter.AllocateUnitSlot()"/> hands out rather than an opcode of its
     /// own (ADR-0041). One cell is the level; the other is whether the peak has been
     /// reached since the gate opened, which is what makes this an envelope rather
     /// than a slew limiter — read off the level instead, the answer would flip back

@@ -148,7 +148,7 @@ public partial class NodeCatalog
     /// </summary>
     /// <remarks>
     /// Stateful, and holding that state in the one-evaluation cells
-    /// <see cref="Emitter.AllocateUnitSlot"/> hands out rather than in an opcode
+    /// <see cref="Emitter.AllocateUnitSlot()"/> hands out rather than in an opcode
     /// of its own — the same way the ADSR holds its level and ADR-0041 has a
     /// plugin hold a filter's integrators. Nothing in the engine had to change
     /// for it, which is the third time that has been true and is worth counting.

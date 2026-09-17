@@ -216,7 +216,7 @@ public sealed record AssistantSchema(
     /// Two settings are held to what the chosen model can do rather than to what the
     /// switch shows: a picture sent to a model recorded as refusing one is a 400,
     /// and listening with nobody to listen is a tool answered with a sentence saying
-    /// nobody heard it. <see cref="EarModel"/> is null where the model takes a sound
+    /// nobody heard it. <see cref="AssistantChoices.EarModel"/> is null where the model takes a sound
     /// itself, since an ear names the model asked instead.
     /// </remarks>
     public AssistantChoices Read(SettingValues values)

@@ -99,7 +99,7 @@ public sealed class Emitter
 
     /// <summary>
     /// Claims a plane: a cell the screen can keep as well as the speakers, which
-    /// is a number per pixel where <see cref="AllocateUnitSlot"/> is one number.
+    /// is a number per pixel where <see cref="AllocateUnitSlot()"/> is one number.
     /// </summary>
     /// <remarks>
     /// Asked for rather than given, because most cells do not want one. A filter
