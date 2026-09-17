@@ -8,18 +8,15 @@
 - On by default. Turn it off in the new Settings → Updates tab.
 - Copies that Flyback can't write to, such as one in a system folder, are not updated.
 
+### Presets
+- Mycelium, in the Effects plugin: a psybient track of ninety-six bars in six sections, with a picture driven by the same signals. It is the largest preset, and needs the Voice and Picture plugins.
+
 ### Fixes
 - Pressing Escape after "Learn MIDI controller" found no MIDI device no longer crashes.
 - A number too large for a number box — in a patch file, or typed into the text and applied — no longer crashes when its module is selected.
-- An assistant's patch arriving while the text is the document is written into the text, and one Ctrl+Z puts back the text and the patch together. Before, the text went on describing the old patch, and saving or applying it lost the assistant's work. A printing keeps up with an assistant's patch too.
-- A text document is offered `.fbks` first when saved. Saving one as a patch or a bundle asks before it empties text that has not been saved.
-- A knob opens where its own file left it, not where the last document's knob of the same id was turned to.
-- Undo on the canvas no longer takes back typing in the hidden text view first.
-- A module being dragged when Flyback loses the mouse, as on Alt+Tab, no longer follows the pointer afterwards.
-- Delete, cut, paste, group, the module list and Ctrl+L wait until a drag on the canvas has ended. Delete pressed while drawing a wire could leave a wire to a module that was gone.
-- Double-clicking a box on a canvas the text owns no longer opens it, as Ctrl+E already did not.
-- Leaving the full-screen preview puts the preview away if the patch lost its picture meanwhile.
-- The recording Quality box, emptied and saved, shows the value it kept.
+- A filter, reverb, delay or loop with silence going into it no longer costs more than one with a signal. A patch with resting parts could crackle because of it.
+- Tidy no longer leaves a module at the top of a column when what feeds it is at the bottom of the one before, which could make a large patch too tall for the canvas.
+- Several other bugfixes.
 
 ## 0.3.0 — 2026-09-17
 

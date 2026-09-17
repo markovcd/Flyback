@@ -51,6 +51,12 @@ public sealed class EffectsPlugin : IFlybackPlugin
                 + "delays, on sequences that take forty-two bars to come round.",
                 PresetKind.Showcase),
             new PatchPreset(
+                MyceliumPreset.Name,
+                MyceliumPreset.Build,
+                "A whole psybient track: ninety-six bars in six sections off one sequencer, a "
+                + "picture grown from the same signals, and one voice that is the picture heard.",
+                PresetKind.Showcase),
+            new PatchPreset(
                 SlowWeatherPreset.Name,
                 SlowWeatherPreset.Build,
                 "A generative patch with no clock in it, played into the two effects.",
