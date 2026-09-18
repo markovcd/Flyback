@@ -459,6 +459,9 @@ flyback-cli render drone.fbk -o drone.wav --seconds 30
 # an ffmpeg that is not on PATH, and a format the extension does not name
 flyback-cli render drone.fbk -o drone.mkv --format mp4 --ffmpeg /opt/bin/ffmpeg
 
+# how loud it came out, in LUFS and true peak, as a streaming service measures it
+flyback-cli render drone.fbk -o drone.wav --seconds 30 --loudness
+
 # text patches work anywhere a patch does
 flyback-cli render my-patch.fbks -o my-patch.png</code></pre>
 

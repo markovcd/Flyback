@@ -59,13 +59,15 @@ public static class MovieRenderer
     /// given somewhere to write rather than something to write into.
     /// </summary>
     /// <inheritdoc cref="Render(Stream, CompiledPatch, CompiledPatch, MovieSettings, IProgress{double}, CancellationToken)"/>
+    /// <param name="loudness">Fed every sample of the sound as it is written, or null to measure nothing.</param>
     public static int Render(
         string path,
         CompiledPatch video,
         CompiledPatch? audio,
         MovieSettings settings,
         IProgress<double>? progress = null,
-        CancellationToken cancellation = default)
+        CancellationToken cancellation = default,
+        LoudnessMeter? loudness = null)
     {
         Check(settings);
 
@@ -80,7 +82,7 @@ public static class MovieRenderer
             audio is null ? 0 : NodeCatalog.AudioChannels,
             settings.Ffmpeg));
 
-        return Render(clip, video, audio, settings, progress, cancellation);
+        return Render(clip, video, audio, settings, progress, cancellation, loudness);
     }
 
     /// <param name="video">The picture's compiled program, rooted at the Output's color.</param>
@@ -121,7 +123,7 @@ public static class MovieRenderer
             audio is null ? 0 : GlobalConstants.SampleRate,
             audio is null ? 0 : NodeCatalog.AudioChannels));
 
-        return Render(clip, video, audio, settings, progress, cancellation);
+        return Render(clip, video, audio, settings, progress, cancellation, null);
     }
 
     /// <summary>Everything that has to be true of a clip before a file is opened for it.</summary>
@@ -144,7 +146,8 @@ public static class MovieRenderer
         CompiledPatch? audio,
         MovieSettings settings,
         IProgress<double>? progress,
-        CancellationToken cancellation)
+        CancellationToken cancellation,
+        LoudnessMeter? loudness)
     {
         var width = settings.Width;
         var height = settings.Height;
@@ -192,6 +195,7 @@ public static class MovieRenderer
                     if (samples.Length < sounded) samples = new float[sounded];
 
                     speaker.Render(audio, samples.AsSpan(0, sounded));
+                    loudness?.Add(samples.AsSpan(0, sounded));
                     written = due;
                 }
 

@@ -35,6 +35,7 @@
     <PluginProject Include="..\..\src\Flyback.Plugins.Picture\Flyback.Plugins.Picture.csproj" FolderName="Picture" />
     <PluginProject Include="..\..\src\Flyback.Plugins.Voice\Flyback.Plugins.Voice.csproj" FolderName="Voice" />
     <PluginProject Include="..\..\src\Flyback.Plugins.Effects\Flyback.Plugins.Effects.csproj" FolderName="Effects" />
+    <PluginProject Include="..\..\src\Flyback.Plugins.Mastering\Flyback.Plugins.Mastering.csproj" FolderName="Mastering" />
   </ItemGroup>
 
   <ItemGroup>

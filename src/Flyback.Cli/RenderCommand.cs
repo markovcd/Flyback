@@ -1,3 +1,4 @@
+using System.Globalization;
 using Flyback.Core;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
@@ -14,6 +15,10 @@ namespace Flyback.Cli;
 /// <param name="Ffmpeg">
 /// Where ffmpeg is, for a format that needs it. Null looks on <c>PATH</c>.
 /// </param>
+/// <param name="Loudness">
+/// Whether to measure the sound as it is written and say how loud it came out.
+/// Ignored for a still, which has none.
+/// </param>
 internal sealed record RenderOptions(
     FileInfo Out,
     int Width = 1920,
@@ -23,7 +28,8 @@ internal sealed record RenderOptions(
     double Fps = MovieRenderer.DefaultFrameRate,
     int Quality = JpegWriter.DefaultQuality,
     string? Format = null,
-    string? Ffmpeg = null);
+    string? Ffmpeg = null,
+    bool Loudness = false);
 
 /// <summary>
 /// Writes a patch to a file: a PNG of one moment, a sound file, or a clip of both.
@@ -46,7 +52,8 @@ internal static class RenderCommand
         IProgress<double>? progress = null,
         CancellationToken cancellation = default,
         ISampleLibrary? samples = null,
-        IImageLibrary? pictures = null)
+        IImageLibrary? pictures = null,
+        TextWriter? output = null)
     {
         var still = options.Out.Extension.Equals(".png", StringComparison.OrdinalIgnoreCase);
 
@@ -125,19 +132,29 @@ internal static class RenderCommand
             return Exit.Problems;
         }
 
+        // Measured as it is written, so a loudness report costs no second pass
+        // over a sound that may be an hour long.
+        var loudness = options.Loudness && audio is not null
+            ? new LoudnessMeter(GlobalConstants.SampleRate, NodeCatalog.AudioChannels)
+            : null;
+
+        int code;
+
         try
         {
             if (still)
             {
                 Still(video!.Program, options);
+                code = Exit.Ok;
             }
             else if (!format!.HasPicture)
             {
-                Sound(audio!.Program, format, options, ffmpeg);
+                Sound(audio!.Program, format, options, ffmpeg, loudness);
+                code = Exit.Ok;
             }
             else
             {
-                return Movie(video!.Program, audio?.Program, format, options, ffmpeg, error, progress, cancellation);
+                code = Movie(video!.Program, audio?.Program, format, options, ffmpeg, error, progress, cancellation, loudness);
             }
         }
         catch (Exception ex)
@@ -146,7 +163,30 @@ internal static class RenderCommand
             return Exit.Failed;
         }
 
-        return Exit.Ok;
+        if (options.Loudness) Report(loudness, output ?? Console.Out);
+
+        return code;
+    }
+
+    /// <summary>
+    /// The loudness line: integrated loudness and true peak, the two numbers a
+    /// streaming service's delivery spec asks for.
+    /// </summary>
+    private static void Report(LoudnessMeter? loudness, TextWriter output)
+    {
+        if (loudness is null)
+        {
+            output.WriteLine("loudness: no sound to measure");
+            return;
+        }
+
+        output.WriteLine(string.Create(
+            CultureInfo.InvariantCulture,
+            $"loudness: {Decibels(loudness.Integrated)} LUFS integrated, "
+            + $"{Decibels(20d * Math.Log10(loudness.TruePeak))} dBTP true peak"));
+
+        static string Decibels(double value) =>
+            double.IsFinite(value) ? value.ToString("0.0", CultureInfo.InvariantCulture) : "-inf";
     }
 
     private static void Still(CompiledPatch program, RenderOptions options)
@@ -159,7 +199,8 @@ internal static class RenderCommand
         PngWriter.WriteBgra(options.Out.FullName, pixels, options.Width, options.Height, stride);
     }
 
-    private static void Sound(CompiledPatch program, ClipFormat format, RenderOptions options, string? ffmpeg)
+    private static void Sound(
+        CompiledPatch program, ClipFormat format, RenderOptions options, string? ffmpeg, LoudnessMeter? loudness)
     {
         // Nothing is drawn, but a patch reading Coordinates' aspect is still told
         // the frame it would have been drawn at.
@@ -168,6 +209,7 @@ internal static class RenderCommand
         var samples = new float[frames * NodeCatalog.AudioChannels];
 
         renderer.Render(program, samples);
+        loudness?.Add(samples);
 
         // Rendered whole before a file is opened, unlike a clip: the sound of a
         // patch is one array, and there is nothing to be gained by handing an
@@ -190,7 +232,8 @@ internal static class RenderCommand
         string? ffmpeg,
         TextWriter error,
         IProgress<double>? progress,
-        CancellationToken cancellation)
+        CancellationToken cancellation,
+        LoudnessMeter? loudness)
     {
         var settings = new MovieSettings(
             options.Width, options.Height, options.Seconds, options.Fps, options.Quality, format, ffmpeg);
@@ -204,7 +247,8 @@ internal static class RenderCommand
             audio,
             settings,
             progress,
-            cancellation);
+            cancellation,
+            loudness);
 
         if (written >= settings.FrameCount) return Exit.Ok;
 

@@ -14,6 +14,7 @@
 - Added Echo to Effects, a stereo delay whose times are counted in steps of the tempo.
 - Added Transform (zoom, turn and slide in one), Ink (draws a shape in one color), Vignette (darkens the corners) and Tune (a Quantiser and a Note in one).
 - Euclid has a `stroke` output, an envelope on the steps that are hits, and Tempo has `beats`, the count of beats so far.
+- Added the Mastering plugin, for the end of a patch: EQ, Width, Crossover (three bands), Compressor, Limiter (nothing past a ceiling) and Loudness (a LUFS meter).
 - MIDI In can lay the computer keyboard out by scale: the notes you pick are played one to a key along the A row, with the Q row an octave up and the Z row an octave down.
 
 ### Presets
@@ -36,6 +37,7 @@
 - MP4, WebM, MOV, MP3, M4A and FLAC, encoded by ffmpeg where it is installed. An MP4 is around twenty-five times smaller than the AVI.
 - Settings → Recording picks the video and sound formats, and where ffmpeg is if it is not on your `PATH`.
 - `flyback-cli render` takes the format from the extension, with `--format` and `--ffmpeg` to override it.
+- `flyback-cli render --loudness` says how loud the sound came out, in LUFS, and its true peak.
 
 ### Assistant
 - The assistant is told what every module does again. Settings → Agent sets how long that briefing may get and names an editable list of modules that are always included. Any module left out is marked on the canvas.

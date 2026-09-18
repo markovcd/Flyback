@@ -212,9 +212,15 @@ internal static class Program
                 + $"only {ClipFormats.MotionJpegAvi.Id} and {ClipFormats.Wav.Id} need none at all.",
         };
 
+        var loudness = new Option<bool>("--loudness")
+        {
+            Description = "Say how loud the sound came out: integrated loudness in LUFS and true peak "
+                + "in dBTP, measured as ITU-R BS.1770 does.",
+        };
+
         var command = new Command("render", "Write a patch to a picture, a sound, or a clip of both.")
         {
-            patch, output, size, at, seconds, fps, quality, format, ffmpeg,
+            patch, output, size, at, seconds, fps, quality, format, ffmpeg, loudness,
         };
 
         command.SetAction((result, cancellation) =>
@@ -241,7 +247,8 @@ internal static class Program
                 result.GetValue(fps),
                 result.GetValue(quality),
                 result.GetValue(format),
-                result.GetValue(ffmpeg));
+                result.GetValue(ffmpeg),
+                result.GetValue(loudness));
 
             return Task.FromResult(
                 RenderCommand.Run(

@@ -198,6 +198,34 @@ public class CommandTests
         file.Length.ShouldBeGreaterThan(0);
     }
 
+    [Theory]
+    [InlineData(".wav")]
+    [InlineData(".avi")]
+    public void Asked_for_its_loudness_a_render_says_how_loud_it_came_out(string extension)
+    {
+        using var directory = new Scratch();
+
+        var (code, output, _) = Run((o, e) => RenderCommand.Run(
+            Preset("Drone"),
+            new RenderOptions(directory.File($"out{extension}"), 64, 36, Seconds: 1d, Fps: 8d, Loudness: true),
+            e,
+            output: o));
+
+        code.ShouldBe(Exit.Ok);
+        output.ShouldMatch(@"loudness: -?\d+\.\d LUFS integrated, -?\d+\.\d dBTP true peak");
+    }
+
+    [Fact]
+    public void A_still_has_no_loudness_to_report()
+    {
+        using var directory = new Scratch();
+
+        var (_, output, _) = Run((o, e) => RenderCommand.Run(
+            Preset("Drone"), new RenderOptions(directory.File("out.png"), 64, 36, Loudness: true), e, output: o));
+
+        output.ShouldContain("no sound to measure");
+    }
+
     /// <summary>
     /// A file made of stand-ins looks exactly like a real one, so it is not
     /// written at all.

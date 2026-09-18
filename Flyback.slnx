@@ -20,6 +20,7 @@
     <Project Path="src/Flyback.Plugins.OpenAi/Flyback.Plugins.OpenAi.csproj" />
     <Project Path="src/Flyback.Plugins.Gemini/Flyback.Plugins.Gemini.csproj" />
     <Project Path="src/Flyback.Plugins.Effects/Flyback.Plugins.Effects.csproj" />
+    <Project Path="src/Flyback.Plugins.Mastering/Flyback.Plugins.Mastering.csproj" />
     <Project Path="src/Flyback.Plugins.WinIO/Flyback.Plugins.WinIO.csproj" />
   </Folder>
   <Folder Name="/tests/">

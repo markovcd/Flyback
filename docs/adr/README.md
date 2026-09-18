@@ -108,6 +108,7 @@ context, decision, consequences.
 | [0041](0041-a-plugin-can-hold-state-without-a-new-opcode.md) | A plugin can hold state without a new opcode *(user-directed)* |
 | [0042](0042-the-clock-and-the-memory-flag-belong-to-the-emitter.md) | The clock and the memory flag belong to the emitter |
 | [0079](0079-the-gain-knob-becomes-volume-and-nought-is-off.md) | The gain knob becomes Volume, and nought is off *(user-directed)* |
+| [0100](0100-mastering-is-a-plugin-of-stateful-primitives.md) | Mastering is a plugin of stateful primitives *(user-directed)* |
 
 ### Boundaries
 

@@ -46,7 +46,7 @@ Flyback.exe          the app
 flyback-cli.exe      the command line tool
 Flyback.Core.dll     shared engine
 Flyback.Plugins.dll  shared plugin host
-plugins/             platform backends, and the Picture, Voice and Effects modules
+plugins/             platform backends, and the Picture, Voice, Effects and Mastering modules
 ```
 
 Supported publish targets include:
@@ -99,6 +99,7 @@ flyback-cli render drone.fbk -o drone.mp4 --seconds 30 --fps 30
 flyback-cli render drone.fbk -o drone.avi --seconds 30 --fps 30
 flyback-cli render drone.fbk -o drone.mp3 --seconds 30
 flyback-cli render drone.fbk -o drone.wav --seconds 30
+flyback-cli render drone.fbk -o drone.wav --seconds 30 --loudness
 flyback-cli render drone.fbk -o drone.mkv --seconds 30 --format mp4 --ffmpeg /opt/bin/ffmpeg
 flyback-cli check nebula.fbk
 flyback-cli check nebula.fbk --strict
@@ -114,7 +115,7 @@ flyback-cli probe --provider all
 
 ### Commands
 
-- `render`: renders a still, a clip or a sound file from a patch. The extension picks the format — `.png`, `.avi`, `.mp4`, `.webm`, `.mov`, `.wav`, `.mp3`, `.m4a`, `.flac` — and everything but `.png`, `.avi` and `.wav` is encoded by ffmpeg, taken from `PATH` unless `--ffmpeg` names one. `--format` overrides the extension.
+- `render`: renders a still, a clip or a sound file from a patch. The extension picks the format — `.png`, `.avi`, `.mp4`, `.webm`, `.mov`, `.wav`, `.mp3`, `.m4a`, `.flac` — and everything but `.png`, `.avi` and `.wav` is encoded by ffmpeg, taken from `PATH` unless `--ffmpeg` names one. `--format` overrides the extension, and `--loudness` prints how loud the sound came out: integrated loudness in LUFS and true peak in dBTP, measured as ITU-R BS.1770 does.
 - `check`: compiles the patch and reports issues
 - `info`: shows module and wire counts and compile cost
 - `pack`: packs a patch together with the files it references
