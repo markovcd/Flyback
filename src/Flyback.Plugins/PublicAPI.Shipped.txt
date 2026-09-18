@@ -1,0 +1,739 @@
+#nullable enable
+Flyback.Plugins.Assist.AssistantChoices
+Flyback.Plugins.Assist.AssistantChoices.<Clone>$() -> Flyback.Plugins.Assist.AssistantChoices!
+Flyback.Plugins.Assist.AssistantChoices.AssistantChoices(string! Model, string? BaseUrl = null, bool Vision = true, bool Hearing = false, string? EarModel = null, Flyback.Plugins.Assist.AssistantEffort Effort = Flyback.Plugins.Assist.AssistantEffort.Medium) -> void
+Flyback.Plugins.Assist.AssistantChoices.BaseUrl.get -> string?
+Flyback.Plugins.Assist.AssistantChoices.BaseUrl.init -> void
+Flyback.Plugins.Assist.AssistantChoices.Deconstruct(out string! Model, out string? BaseUrl, out bool Vision, out bool Hearing, out string? EarModel, out Flyback.Plugins.Assist.AssistantEffort Effort) -> void
+Flyback.Plugins.Assist.AssistantChoices.EarModel.get -> string?
+Flyback.Plugins.Assist.AssistantChoices.EarModel.init -> void
+Flyback.Plugins.Assist.AssistantChoices.Effort.get -> Flyback.Plugins.Assist.AssistantEffort
+Flyback.Plugins.Assist.AssistantChoices.Effort.init -> void
+Flyback.Plugins.Assist.AssistantChoices.Equals(Flyback.Plugins.Assist.AssistantChoices? other) -> bool
+Flyback.Plugins.Assist.AssistantChoices.Hearing.get -> bool
+Flyback.Plugins.Assist.AssistantChoices.Hearing.init -> void
+Flyback.Plugins.Assist.AssistantChoices.Model.get -> string!
+Flyback.Plugins.Assist.AssistantChoices.Model.init -> void
+Flyback.Plugins.Assist.AssistantChoices.Vision.get -> bool
+Flyback.Plugins.Assist.AssistantChoices.Vision.init -> void
+Flyback.Plugins.Assist.AssistantConfig
+Flyback.Plugins.Assist.AssistantConfig.<Clone>$() -> Flyback.Plugins.Assist.AssistantConfig!
+Flyback.Plugins.Assist.AssistantConfig.ApiKey.get -> string!
+Flyback.Plugins.Assist.AssistantConfig.ApiKey.init -> void
+Flyback.Plugins.Assist.AssistantConfig.AssistantConfig(string! ApiKey, Flyback.Plugins.Settings.SettingValues! Values) -> void
+Flyback.Plugins.Assist.AssistantConfig.Deconstruct(out string! ApiKey, out Flyback.Plugins.Settings.SettingValues! Values) -> void
+Flyback.Plugins.Assist.AssistantConfig.Equals(Flyback.Plugins.Assist.AssistantConfig? other) -> bool
+Flyback.Plugins.Assist.AssistantConfig.Values.get -> Flyback.Plugins.Settings.SettingValues!
+Flyback.Plugins.Assist.AssistantConfig.Values.init -> void
+Flyback.Plugins.Assist.AssistantCredential
+Flyback.Plugins.Assist.AssistantCredential.<Clone>$() -> Flyback.Plugins.Assist.AssistantCredential!
+Flyback.Plugins.Assist.AssistantCredential.AssistantCredential(string! EnvironmentVariable, string! Help) -> void
+Flyback.Plugins.Assist.AssistantCredential.Deconstruct(out string! EnvironmentVariable, out string! Help) -> void
+Flyback.Plugins.Assist.AssistantCredential.EnvironmentVariable.get -> string!
+Flyback.Plugins.Assist.AssistantCredential.EnvironmentVariable.init -> void
+Flyback.Plugins.Assist.AssistantCredential.Equals(Flyback.Plugins.Assist.AssistantCredential? other) -> bool
+Flyback.Plugins.Assist.AssistantCredential.Help.get -> string!
+Flyback.Plugins.Assist.AssistantCredential.Help.init -> void
+Flyback.Plugins.Assist.AssistantEffort
+Flyback.Plugins.Assist.AssistantEffort.High = 2 -> Flyback.Plugins.Assist.AssistantEffort
+Flyback.Plugins.Assist.AssistantEffort.Low = 0 -> Flyback.Plugins.Assist.AssistantEffort
+Flyback.Plugins.Assist.AssistantEffort.Medium = 1 -> Flyback.Plugins.Assist.AssistantEffort
+Flyback.Plugins.Assist.AssistantModel
+Flyback.Plugins.Assist.AssistantModel.<Clone>$() -> Flyback.Plugins.Assist.AssistantModel!
+Flyback.Plugins.Assist.AssistantModel.AssistantModel(string! Id, bool Vision = true, bool Hearing = false) -> void
+Flyback.Plugins.Assist.AssistantModel.Deconstruct(out string! Id, out bool Vision, out bool Hearing) -> void
+Flyback.Plugins.Assist.AssistantModel.Equals(Flyback.Plugins.Assist.AssistantModel? other) -> bool
+Flyback.Plugins.Assist.AssistantModel.Hearing.get -> bool
+Flyback.Plugins.Assist.AssistantModel.Hearing.init -> void
+Flyback.Plugins.Assist.AssistantModel.Id.get -> string!
+Flyback.Plugins.Assist.AssistantModel.Id.init -> void
+Flyback.Plugins.Assist.AssistantModel.Vision.get -> bool
+Flyback.Plugins.Assist.AssistantModel.Vision.init -> void
+Flyback.Plugins.Assist.AssistantSchema
+Flyback.Plugins.Assist.AssistantSchema.<Clone>$() -> Flyback.Plugins.Assist.AssistantSchema!
+Flyback.Plugins.Assist.AssistantSchema.AssistantSchema(string! DefaultModel, System.Collections.Generic.IReadOnlyList<Flyback.Plugins.Assist.AssistantModel!>! SuggestedModels, string! EnvironmentVariable, string! CredentialHelp, string? DefaultBaseUrl = null, bool BaseUrlEditable = false) -> void
+Flyback.Plugins.Assist.AssistantSchema.BaseUrlEditable.get -> bool
+Flyback.Plugins.Assist.AssistantSchema.BaseUrlEditable.init -> void
+Flyback.Plugins.Assist.AssistantSchema.Credential.get -> Flyback.Plugins.Assist.AssistantCredential!
+Flyback.Plugins.Assist.AssistantSchema.CredentialHelp.get -> string!
+Flyback.Plugins.Assist.AssistantSchema.CredentialHelp.init -> void
+Flyback.Plugins.Assist.AssistantSchema.Deconstruct(out string! DefaultModel, out System.Collections.Generic.IReadOnlyList<Flyback.Plugins.Assist.AssistantModel!>! SuggestedModels, out string! EnvironmentVariable, out string! CredentialHelp, out string? DefaultBaseUrl, out bool BaseUrlEditable) -> void
+Flyback.Plugins.Assist.AssistantSchema.DefaultBaseUrl.get -> string?
+Flyback.Plugins.Assist.AssistantSchema.DefaultBaseUrl.init -> void
+Flyback.Plugins.Assist.AssistantSchema.DefaultModel.get -> string!
+Flyback.Plugins.Assist.AssistantSchema.DefaultModel.init -> void
+Flyback.Plugins.Assist.AssistantSchema.Ears.get -> System.Collections.Generic.IEnumerable<Flyback.Plugins.Assist.AssistantModel!>!
+Flyback.Plugins.Assist.AssistantSchema.EnvironmentVariable.get -> string!
+Flyback.Plugins.Assist.AssistantSchema.EnvironmentVariable.init -> void
+Flyback.Plugins.Assist.AssistantSchema.Equals(Flyback.Plugins.Assist.AssistantSchema? other) -> bool
+Flyback.Plugins.Assist.AssistantSchema.Form(Flyback.Plugins.Settings.SettingValues! values) -> System.Collections.Generic.IReadOnlyList<Flyback.Plugins.Settings.SettingField!>!
+Flyback.Plugins.Assist.AssistantSchema.Known(string? model) -> Flyback.Plugins.Assist.AssistantModel?
+Flyback.Plugins.Assist.AssistantSchema.Read(Flyback.Plugins.Settings.SettingValues! values) -> Flyback.Plugins.Assist.AssistantChoices!
+Flyback.Plugins.Assist.AssistantSchema.Senses(Flyback.Plugins.Settings.SettingValues! values) -> Flyback.Plugins.Assist.AssistantSenses
+Flyback.Plugins.Assist.AssistantSchema.SuggestedModels.get -> System.Collections.Generic.IReadOnlyList<Flyback.Plugins.Assist.AssistantModel!>!
+Flyback.Plugins.Assist.AssistantSchema.SuggestedModels.init -> void
+Flyback.Plugins.Assist.AssistantSchema.Surveyed(Flyback.Plugins.Settings.SettingValues! values) -> Flyback.Plugins.Assist.AssistantSchema!
+Flyback.Plugins.Assist.AssistantSenses
+Flyback.Plugins.Assist.AssistantSenses.AssistantSenses() -> void
+Flyback.Plugins.Assist.AssistantSenses.AssistantSenses(bool Vision = true, Flyback.Plugins.Assist.Listener Hearing = Flyback.Plugins.Assist.Listener.None) -> void
+Flyback.Plugins.Assist.AssistantSenses.Deconstruct(out bool Vision, out Flyback.Plugins.Assist.Listener Hearing) -> void
+Flyback.Plugins.Assist.AssistantSenses.Equals(Flyback.Plugins.Assist.AssistantSenses other) -> bool
+Flyback.Plugins.Assist.AssistantSenses.Hearing.get -> Flyback.Plugins.Assist.Listener
+Flyback.Plugins.Assist.AssistantSenses.Hearing.init -> void
+Flyback.Plugins.Assist.AssistantSenses.Vision.get -> bool
+Flyback.Plugins.Assist.AssistantSenses.Vision.init -> void
+Flyback.Plugins.Assist.AssistantSettings
+Flyback.Plugins.Assist.AssistantSettings.AssistantSettings() -> void
+Flyback.Plugins.Assist.AssistantSettings.Choices.get -> System.Collections.Generic.Dictionary<string!, System.Collections.Generic.Dictionary<string!, string!>!>!
+Flyback.Plugins.Assist.AssistantSettings.Choices.set -> void
+Flyback.Plugins.Assist.AssistantSettings.LogConversations.get -> bool
+Flyback.Plugins.Assist.AssistantSettings.LogConversations.set -> void
+Flyback.Plugins.Assist.AssistantSettings.Of(string! provider) -> Flyback.Plugins.Settings.SettingValues!
+Flyback.Plugins.Assist.AssistantSettings.ProseBudget.get -> int
+Flyback.Plugins.Assist.AssistantSettings.ProseBudget.set -> void
+Flyback.Plugins.Assist.AssistantSettings.Provider.get -> string!
+Flyback.Plugins.Assist.AssistantSettings.Provider.set -> void
+Flyback.Plugins.Assist.AssistantSettings.Remember(string! provider, Flyback.Plugins.Settings.SettingValues! values) -> void
+Flyback.Plugins.Assist.AssistantSettings.RememberKey.get -> bool
+Flyback.Plugins.Assist.AssistantSettings.RememberKey.set -> void
+Flyback.Plugins.Assist.AssistantSettings.Save(string? path = null) -> void
+Flyback.Plugins.Assist.AssistantSettings.TurnLimit.get -> int
+Flyback.Plugins.Assist.AssistantSettings.TurnLimit.set -> void
+Flyback.Plugins.Assist.ConversationLog
+Flyback.Plugins.Assist.ConversationLog.Dispose() -> void
+Flyback.Plugins.Assist.ConversationLog.Write(string! who, string! text) -> void
+Flyback.Plugins.Assist.CredentialSource
+Flyback.Plugins.Assist.CredentialSource.Environment = 1 -> Flyback.Plugins.Assist.CredentialSource
+Flyback.Plugins.Assist.CredentialSource.Kept = 2 -> Flyback.Plugins.Assist.CredentialSource
+Flyback.Plugins.Assist.CredentialSource.None = 0 -> Flyback.Plugins.Assist.CredentialSource
+Flyback.Plugins.Assist.CredentialSource.Session = 3 -> Flyback.Plugins.Assist.CredentialSource
+Flyback.Plugins.Assist.Credentials
+Flyback.Plugins.Assist.Credentials.Accept(string! account, string! secret, bool keep) -> void
+Flyback.Plugins.Assist.Credentials.CanKeep.get -> bool
+Flyback.Plugins.Assist.Credentials.Credentials(Flyback.Plugins.Secrets.ISecretStore? store) -> void
+Flyback.Plugins.Assist.Credentials.Forget(string! account) -> void
+Flyback.Plugins.Assist.Credentials.HasEntered(string! account) -> bool
+Flyback.Plugins.Assist.Credentials.KeepWhatIsHeld(string! account) -> void
+Flyback.Plugins.Assist.Credentials.Of(string! account, string! environmentVariable) -> string?
+Flyback.Plugins.Assist.Credentials.SourceOf(string! account, string! environmentVariable) -> Flyback.Plugins.Assist.CredentialSource
+Flyback.Plugins.Assist.Credentials.Store.get -> Flyback.Plugins.Secrets.ISecretStore?
+Flyback.Plugins.Assist.IModelSurvey
+Flyback.Plugins.Assist.IModelSurvey.Survey(Flyback.Plugins.Assist.AssistantConfig! config, Flyback.Plugins.Assist.SurveyOptions! options, System.IProgress<string!>? said = null, System.Threading.CancellationToken cancel = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<Flyback.Plugins.Assist.ModelReport!>!>!
+Flyback.Plugins.Assist.IPatchAssistant
+Flyback.Plugins.Assist.IPatchAssistant.Credential.get -> Flyback.Plugins.Assist.AssistantCredential!
+Flyback.Plugins.Assist.IPatchAssistant.Form(Flyback.Plugins.Settings.SettingValues! values) -> System.Collections.Generic.IReadOnlyList<Flyback.Plugins.Settings.SettingField!>!
+Flyback.Plugins.Assist.IPatchAssistant.Id.get -> string!
+Flyback.Plugins.Assist.IPatchAssistant.Name.get -> string!
+Flyback.Plugins.Assist.IPatchAssistant.Priority.get -> int
+Flyback.Plugins.Assist.IPatchAssistant.Resume(Flyback.Plugins.Assist.PatchWorkbench! workbench, Flyback.Plugins.Assist.AssistantConfig! config, string! saved) -> Flyback.Plugins.Assist.IPatchSession?
+Flyback.Plugins.Assist.IPatchAssistant.Senses(Flyback.Plugins.Settings.SettingValues! values) -> Flyback.Plugins.Assist.AssistantSenses
+Flyback.Plugins.Assist.IPatchAssistant.Start(Flyback.Plugins.Assist.PatchWorkbench! workbench, Flyback.Plugins.Assist.AssistantConfig! config) -> Flyback.Plugins.Assist.IPatchSession!
+Flyback.Plugins.Assist.IPatchAssistant.Unavailable(Flyback.Plugins.Assist.AssistantConfig! config) -> string?
+Flyback.Plugins.Assist.IPatchSession
+Flyback.Plugins.Assist.IPatchSession.Ask(string! instruction, System.Threading.CancellationToken cancel) -> System.Collections.Generic.IAsyncEnumerable<Flyback.Plugins.Assist.PatchEvent!>!
+Flyback.Plugins.Assist.IPatchSession.Save() -> string?
+Flyback.Plugins.Assist.Listener
+Flyback.Plugins.Assist.Listener.Another = 1 -> Flyback.Plugins.Assist.Listener
+Flyback.Plugins.Assist.Listener.Itself = 2 -> Flyback.Plugins.Assist.Listener
+Flyback.Plugins.Assist.Listener.None = 0 -> Flyback.Plugins.Assist.Listener
+Flyback.Plugins.Assist.ModelReport
+Flyback.Plugins.Assist.ModelReport.<Clone>$() -> Flyback.Plugins.Assist.ModelReport!
+Flyback.Plugins.Assist.ModelReport.Deconstruct(out string! Id) -> void
+Flyback.Plugins.Assist.ModelReport.Equals(Flyback.Plugins.Assist.ModelReport? other) -> bool
+Flyback.Plugins.Assist.ModelReport.Hearing.get -> bool
+Flyback.Plugins.Assist.ModelReport.Hearing.init -> void
+Flyback.Plugins.Assist.ModelReport.Id.get -> string!
+Flyback.Plugins.Assist.ModelReport.Id.init -> void
+Flyback.Plugins.Assist.ModelReport.Least.get -> int?
+Flyback.Plugins.Assist.ModelReport.Least.init -> void
+Flyback.Plugins.Assist.ModelReport.ModelReport(string! Id) -> void
+Flyback.Plugins.Assist.ModelReport.Most.get -> int?
+Flyback.Plugins.Assist.ModelReport.Most.init -> void
+Flyback.Plugins.Assist.ModelReport.Suggestion.get -> Flyback.Plugins.Assist.AssistantModel!
+Flyback.Plugins.Assist.ModelReport.Vision.get -> bool
+Flyback.Plugins.Assist.ModelReport.Vision.init -> void
+Flyback.Plugins.Assist.PatchEvent
+Flyback.Plugins.Assist.PatchEvent.Cost
+Flyback.Plugins.Assist.PatchEvent.Cost.CacheRead.get -> int
+Flyback.Plugins.Assist.PatchEvent.Cost.CacheRead.init -> void
+Flyback.Plugins.Assist.PatchEvent.Cost.Cost(int Input, int CacheRead, int Output) -> void
+Flyback.Plugins.Assist.PatchEvent.Cost.Deconstruct(out int Input, out int CacheRead, out int Output) -> void
+Flyback.Plugins.Assist.PatchEvent.Cost.Equals(Flyback.Plugins.Assist.PatchEvent.Cost? other) -> bool
+Flyback.Plugins.Assist.PatchEvent.Cost.Input.get -> int
+Flyback.Plugins.Assist.PatchEvent.Cost.Input.init -> void
+Flyback.Plugins.Assist.PatchEvent.Cost.Output.get -> int
+Flyback.Plugins.Assist.PatchEvent.Cost.Output.init -> void
+Flyback.Plugins.Assist.PatchEvent.Did
+Flyback.Plugins.Assist.PatchEvent.Did.Deconstruct(out string! Summary) -> void
+Flyback.Plugins.Assist.PatchEvent.Did.Did(string! Summary) -> void
+Flyback.Plugins.Assist.PatchEvent.Did.Equals(Flyback.Plugins.Assist.PatchEvent.Did? other) -> bool
+Flyback.Plugins.Assist.PatchEvent.Did.Summary.get -> string!
+Flyback.Plugins.Assist.PatchEvent.Did.Summary.init -> void
+Flyback.Plugins.Assist.PatchEvent.Failed
+Flyback.Plugins.Assist.PatchEvent.Failed.Deconstruct(out string! Message) -> void
+Flyback.Plugins.Assist.PatchEvent.Failed.Equals(Flyback.Plugins.Assist.PatchEvent.Failed? other) -> bool
+Flyback.Plugins.Assist.PatchEvent.Failed.Failed(string! Message) -> void
+Flyback.Plugins.Assist.PatchEvent.Failed.Message.get -> string!
+Flyback.Plugins.Assist.PatchEvent.Failed.Message.init -> void
+Flyback.Plugins.Assist.PatchEvent.Heard
+Flyback.Plugins.Assist.PatchEvent.Heard.Caption.get -> string!
+Flyback.Plugins.Assist.PatchEvent.Heard.Caption.init -> void
+Flyback.Plugins.Assist.PatchEvent.Heard.Deconstruct(out byte[]! Wav, out string! Caption) -> void
+Flyback.Plugins.Assist.PatchEvent.Heard.Equals(Flyback.Plugins.Assist.PatchEvent.Heard? other) -> bool
+Flyback.Plugins.Assist.PatchEvent.Heard.Heard(byte[]! Wav, string! Caption) -> void
+Flyback.Plugins.Assist.PatchEvent.Heard.Wav.get -> byte[]!
+Flyback.Plugins.Assist.PatchEvent.Heard.Wav.init -> void
+Flyback.Plugins.Assist.PatchEvent.PatchEvent(Flyback.Plugins.Assist.PatchEvent! original) -> void
+Flyback.Plugins.Assist.PatchEvent.Proposed
+Flyback.Plugins.Assist.PatchEvent.Proposed.Deconstruct(out Flyback.Core.Graph.Patch! Patch, out string! Summary) -> void
+Flyback.Plugins.Assist.PatchEvent.Proposed.Equals(Flyback.Plugins.Assist.PatchEvent.Proposed? other) -> bool
+Flyback.Plugins.Assist.PatchEvent.Proposed.Patch.get -> Flyback.Core.Graph.Patch!
+Flyback.Plugins.Assist.PatchEvent.Proposed.Patch.init -> void
+Flyback.Plugins.Assist.PatchEvent.Proposed.Proposed(Flyback.Core.Graph.Patch! Patch, string! Summary) -> void
+Flyback.Plugins.Assist.PatchEvent.Proposed.Summary.get -> string!
+Flyback.Plugins.Assist.PatchEvent.Proposed.Summary.init -> void
+Flyback.Plugins.Assist.PatchEvent.Said
+Flyback.Plugins.Assist.PatchEvent.Said.Deconstruct(out string! Text) -> void
+Flyback.Plugins.Assist.PatchEvent.Said.Equals(Flyback.Plugins.Assist.PatchEvent.Said? other) -> bool
+Flyback.Plugins.Assist.PatchEvent.Said.Said(string! Text) -> void
+Flyback.Plugins.Assist.PatchEvent.Said.Text.get -> string!
+Flyback.Plugins.Assist.PatchEvent.Said.Text.init -> void
+Flyback.Plugins.Assist.PatchEvent.Saw
+Flyback.Plugins.Assist.PatchEvent.Saw.Caption.get -> string!
+Flyback.Plugins.Assist.PatchEvent.Saw.Caption.init -> void
+Flyback.Plugins.Assist.PatchEvent.Saw.Deconstruct(out byte[]! Png, out string! Caption) -> void
+Flyback.Plugins.Assist.PatchEvent.Saw.Equals(Flyback.Plugins.Assist.PatchEvent.Saw? other) -> bool
+Flyback.Plugins.Assist.PatchEvent.Saw.Png.get -> byte[]!
+Flyback.Plugins.Assist.PatchEvent.Saw.Png.init -> void
+Flyback.Plugins.Assist.PatchEvent.Saw.Saw(byte[]! Png, string! Caption) -> void
+Flyback.Plugins.Assist.PatchTool
+Flyback.Plugins.Assist.PatchTool.<Clone>$() -> Flyback.Plugins.Assist.PatchTool!
+Flyback.Plugins.Assist.PatchTool.Deconstruct(out string! Name, out string! Description, out string! Schema) -> void
+Flyback.Plugins.Assist.PatchTool.Description.get -> string!
+Flyback.Plugins.Assist.PatchTool.Description.init -> void
+Flyback.Plugins.Assist.PatchTool.Equals(Flyback.Plugins.Assist.PatchTool? other) -> bool
+Flyback.Plugins.Assist.PatchTool.Name.get -> string!
+Flyback.Plugins.Assist.PatchTool.Name.init -> void
+Flyback.Plugins.Assist.PatchTool.PatchTool(string! Name, string! Description, string! Schema) -> void
+Flyback.Plugins.Assist.PatchTool.Schema.get -> string!
+Flyback.Plugins.Assist.PatchTool.Schema.init -> void
+Flyback.Plugins.Assist.PatchWorkbench
+Flyback.Plugins.Assist.PatchWorkbench.Briefing.get -> string!
+Flyback.Plugins.Assist.PatchWorkbench.Edits.get -> int
+Flyback.Plugins.Assist.PatchWorkbench.HasProposal.get -> bool
+Flyback.Plugins.Assist.PatchWorkbench.InvokeAsync(string! tool, System.Text.Json.JsonElement arguments, System.Threading.CancellationToken cancel) -> System.Threading.Tasks.Task<Flyback.Plugins.Assist.ToolOutcome!>!
+Flyback.Plugins.Assist.PatchWorkbench.PatchWorkbench(Flyback.Core.Graph.ModuleCatalog! modules, Flyback.Core.Graph.Patch! startingPoint, bool vision = true, Flyback.Plugins.Assist.Listener hearing = Flyback.Plugins.Assist.Listener.None, Flyback.Plugins.Assist.WorkbenchLimits? limits = null, Flyback.Core.Compile.ISampleLibrary? samples = null, Flyback.Core.Compile.IImageLibrary? pictures = null, Flyback.Plugins.Assist.ProsePolicy? prose = null) -> void
+Flyback.Plugins.Assist.PatchWorkbench.ProposalSummary.get -> string!
+Flyback.Plugins.Assist.PatchWorkbench.Reopen() -> void
+Flyback.Plugins.Assist.PatchWorkbench.Restore(Flyback.Plugins.Assist.WorkbenchState! state) -> void
+Flyback.Plugins.Assist.PatchWorkbench.Save() -> Flyback.Plugins.Assist.WorkbenchState!
+Flyback.Plugins.Assist.PatchWorkbench.Snapshot() -> Flyback.Core.Graph.Patch!
+Flyback.Plugins.Assist.PatchWorkbench.ToolCalls.get -> int
+Flyback.Plugins.Assist.PatchWorkbench.Tools.get -> System.Collections.Generic.IReadOnlyList<Flyback.Plugins.Assist.PatchTool!>!
+Flyback.Plugins.Assist.PatchWorkbench.Undescribed.get -> System.Collections.Generic.IReadOnlySet<string!>!
+Flyback.Plugins.Assist.PriorityModules
+Flyback.Plugins.Assist.Probe
+Flyback.Plugins.Assist.ProsePolicy
+Flyback.Plugins.Assist.ProsePolicy.<Clone>$() -> Flyback.Plugins.Assist.ProsePolicy!
+Flyback.Plugins.Assist.ProsePolicy.Budget.get -> int
+Flyback.Plugins.Assist.ProsePolicy.Budget.init -> void
+Flyback.Plugins.Assist.ProsePolicy.Deconstruct(out int Budget, out System.Collections.Generic.IReadOnlySet<string!>! Priority) -> void
+Flyback.Plugins.Assist.ProsePolicy.Equals(Flyback.Plugins.Assist.ProsePolicy? other) -> bool
+Flyback.Plugins.Assist.ProsePolicy.Priority.get -> System.Collections.Generic.IReadOnlySet<string!>!
+Flyback.Plugins.Assist.ProsePolicy.Priority.init -> void
+Flyback.Plugins.Assist.ProsePolicy.ProsePolicy(int Budget, System.Collections.Generic.IReadOnlySet<string!>! Priority) -> void
+Flyback.Plugins.Assist.ProsePolicy.Undescribed(Flyback.Core.Graph.ModuleCatalog! modules) -> System.Collections.Generic.IReadOnlySet<string!>!
+Flyback.Plugins.Assist.Survey
+Flyback.Plugins.Assist.SurveyOptions
+Flyback.Plugins.Assist.SurveyOptions.<Clone>$() -> Flyback.Plugins.Assist.SurveyOptions!
+Flyback.Plugins.Assist.SurveyOptions.All.get -> bool
+Flyback.Plugins.Assist.SurveyOptions.All.init -> void
+Flyback.Plugins.Assist.SurveyOptions.Bounds.get -> bool
+Flyback.Plugins.Assist.SurveyOptions.Bounds.init -> void
+Flyback.Plugins.Assist.SurveyOptions.Deconstruct(out System.Collections.Generic.IReadOnlyList<string!>? Only, out bool All, out bool Bounds) -> void
+Flyback.Plugins.Assist.SurveyOptions.Equals(Flyback.Plugins.Assist.SurveyOptions? other) -> bool
+Flyback.Plugins.Assist.SurveyOptions.Only.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Flyback.Plugins.Assist.SurveyOptions.Only.init -> void
+Flyback.Plugins.Assist.SurveyOptions.SurveyOptions(System.Collections.Generic.IReadOnlyList<string!>? Only = null, bool All = false, bool Bounds = false) -> void
+Flyback.Plugins.Assist.ToolOutcome
+Flyback.Plugins.Assist.ToolOutcome.<Clone>$() -> Flyback.Plugins.Assist.ToolOutcome!
+Flyback.Plugins.Assist.ToolOutcome.Deconstruct(out bool Ok, out string! Text, out byte[]? Png, out byte[]? Wav) -> void
+Flyback.Plugins.Assist.ToolOutcome.Equals(Flyback.Plugins.Assist.ToolOutcome? other) -> bool
+Flyback.Plugins.Assist.ToolOutcome.Ok.get -> bool
+Flyback.Plugins.Assist.ToolOutcome.Ok.init -> void
+Flyback.Plugins.Assist.ToolOutcome.Png.get -> byte[]?
+Flyback.Plugins.Assist.ToolOutcome.Png.init -> void
+Flyback.Plugins.Assist.ToolOutcome.Text.get -> string!
+Flyback.Plugins.Assist.ToolOutcome.Text.init -> void
+Flyback.Plugins.Assist.ToolOutcome.ToolOutcome(bool Ok, string! Text, byte[]? Png = null, byte[]? Wav = null) -> void
+Flyback.Plugins.Assist.ToolOutcome.Wav.get -> byte[]?
+Flyback.Plugins.Assist.ToolOutcome.Wav.init -> void
+Flyback.Plugins.Assist.WorkbenchLimits
+Flyback.Plugins.Assist.WorkbenchLimits.<Clone>$() -> Flyback.Plugins.Assist.WorkbenchLimits!
+Flyback.Plugins.Assist.WorkbenchLimits.Deconstruct(out int MaxNodes, out int MaxToolCalls, out int FrameWidth, out int FrameHeight, out int MaxFrames, out double LatestTime, out double WarmUpStep, out int ListenRate, out double LongestListen) -> void
+Flyback.Plugins.Assist.WorkbenchLimits.Equals(Flyback.Plugins.Assist.WorkbenchLimits? other) -> bool
+Flyback.Plugins.Assist.WorkbenchLimits.FrameHeight.get -> int
+Flyback.Plugins.Assist.WorkbenchLimits.FrameHeight.init -> void
+Flyback.Plugins.Assist.WorkbenchLimits.FrameWidth.get -> int
+Flyback.Plugins.Assist.WorkbenchLimits.FrameWidth.init -> void
+Flyback.Plugins.Assist.WorkbenchLimits.LatestTime.get -> double
+Flyback.Plugins.Assist.WorkbenchLimits.LatestTime.init -> void
+Flyback.Plugins.Assist.WorkbenchLimits.ListenRate.get -> int
+Flyback.Plugins.Assist.WorkbenchLimits.ListenRate.init -> void
+Flyback.Plugins.Assist.WorkbenchLimits.LongestListen.get -> double
+Flyback.Plugins.Assist.WorkbenchLimits.LongestListen.init -> void
+Flyback.Plugins.Assist.WorkbenchLimits.MaxFrames.get -> int
+Flyback.Plugins.Assist.WorkbenchLimits.MaxFrames.init -> void
+Flyback.Plugins.Assist.WorkbenchLimits.MaxNodes.get -> int
+Flyback.Plugins.Assist.WorkbenchLimits.MaxNodes.init -> void
+Flyback.Plugins.Assist.WorkbenchLimits.MaxToolCalls.get -> int
+Flyback.Plugins.Assist.WorkbenchLimits.MaxToolCalls.init -> void
+Flyback.Plugins.Assist.WorkbenchLimits.WarmUpStep.get -> double
+Flyback.Plugins.Assist.WorkbenchLimits.WarmUpStep.init -> void
+Flyback.Plugins.Assist.WorkbenchLimits.WorkbenchLimits(int MaxNodes = 120, int MaxToolCalls = 200, int FrameWidth = 320, int FrameHeight = 180, int MaxFrames = 4, double LatestTime = 8, double WarmUpStep = 0.03333333333333333, int ListenRate = 24000, double LongestListen = 4) -> void
+Flyback.Plugins.Assist.WorkbenchState
+Flyback.Plugins.Assist.WorkbenchState.<Clone>$() -> Flyback.Plugins.Assist.WorkbenchState!
+Flyback.Plugins.Assist.WorkbenchState.Deconstruct(out string! Start, out string! Working, out System.Collections.Generic.IReadOnlyDictionary<string!, System.Guid>! Handles, out int Edits, out int ToolCalls) -> void
+Flyback.Plugins.Assist.WorkbenchState.Edits.get -> int
+Flyback.Plugins.Assist.WorkbenchState.Edits.init -> void
+Flyback.Plugins.Assist.WorkbenchState.Equals(Flyback.Plugins.Assist.WorkbenchState? other) -> bool
+Flyback.Plugins.Assist.WorkbenchState.Handles.get -> System.Collections.Generic.IReadOnlyDictionary<string!, System.Guid>!
+Flyback.Plugins.Assist.WorkbenchState.Handles.init -> void
+Flyback.Plugins.Assist.WorkbenchState.Start.get -> string!
+Flyback.Plugins.Assist.WorkbenchState.Start.init -> void
+Flyback.Plugins.Assist.WorkbenchState.ToolCalls.get -> int
+Flyback.Plugins.Assist.WorkbenchState.ToolCalls.init -> void
+Flyback.Plugins.Assist.WorkbenchState.WorkbenchState(string! Start, string! Working, System.Collections.Generic.IReadOnlyDictionary<string!, System.Guid>! Handles, int Edits, int ToolCalls) -> void
+Flyback.Plugins.Assist.WorkbenchState.Working.get -> string!
+Flyback.Plugins.Assist.WorkbenchState.Working.init -> void
+Flyback.Plugins.Audio.AudioCallback
+Flyback.Plugins.Audio.AudioFormat
+Flyback.Plugins.Audio.AudioFormat.AudioFormat() -> void
+Flyback.Plugins.Audio.AudioFormat.AudioFormat(int SampleRate, int Channels, int LatencyMilliseconds) -> void
+Flyback.Plugins.Audio.AudioFormat.Channels.get -> int
+Flyback.Plugins.Audio.AudioFormat.Channels.init -> void
+Flyback.Plugins.Audio.AudioFormat.Deconstruct(out int SampleRate, out int Channels, out int LatencyMilliseconds) -> void
+Flyback.Plugins.Audio.AudioFormat.Equals(Flyback.Plugins.Audio.AudioFormat other) -> bool
+Flyback.Plugins.Audio.AudioFormat.LatencyMilliseconds.get -> int
+Flyback.Plugins.Audio.AudioFormat.LatencyMilliseconds.init -> void
+Flyback.Plugins.Audio.AudioFormat.SampleRate.get -> int
+Flyback.Plugins.Audio.AudioFormat.SampleRate.init -> void
+Flyback.Plugins.Audio.IAudioDevice
+Flyback.Plugins.Audio.IAudioDevice.IsRunning.get -> bool
+Flyback.Plugins.Audio.IAudioDevice.SampleRate.get -> int
+Flyback.Plugins.Audio.IAudioDevice.Start(Flyback.Plugins.Audio.AudioCallback! fill) -> void
+Flyback.Plugins.Audio.IAudioDevice.Stop() -> void
+Flyback.Plugins.Audio.IAudioOutput
+Flyback.Plugins.Audio.IAudioOutput.Create(Flyback.Plugins.Audio.AudioFormat format, Flyback.Plugins.Settings.SettingValues! settings) -> Flyback.Plugins.Audio.IAudioDevice!
+Flyback.Plugins.Audio.IAudioOutput.Form(Flyback.Plugins.Settings.SettingValues! values) -> System.Collections.Generic.IReadOnlyList<Flyback.Plugins.Settings.SettingField!>!
+Flyback.Plugins.Audio.IAudioOutput.Id.get -> string!
+Flyback.Plugins.Audio.IAudioOutput.IsSupported.get -> bool
+Flyback.Plugins.Audio.IAudioOutput.Name.get -> string!
+Flyback.Plugins.Audio.IAudioOutput.Priority.get -> int
+Flyback.Plugins.Audio.SilentAudioDevice
+Flyback.Plugins.Audio.SilentAudioDevice.Dispose() -> void
+Flyback.Plugins.Audio.SilentAudioDevice.IsRunning.get -> bool
+Flyback.Plugins.Audio.SilentAudioDevice.SampleRate.get -> int
+Flyback.Plugins.Audio.SilentAudioDevice.SilentAudioDevice(int sampleRate = 48000) -> void
+Flyback.Plugins.Audio.SilentAudioDevice.Start(Flyback.Plugins.Audio.AudioCallback! fill) -> void
+Flyback.Plugins.Audio.SilentAudioDevice.Stop() -> void
+Flyback.Plugins.Hosting.LoadedPlugin
+Flyback.Plugins.Hosting.LoadedPlugin.<Clone>$() -> Flyback.Plugins.Hosting.LoadedPlugin!
+Flyback.Plugins.Hosting.LoadedPlugin.AssemblyPath.get -> string!
+Flyback.Plugins.Hosting.LoadedPlugin.AssemblyPath.init -> void
+Flyback.Plugins.Hosting.LoadedPlugin.Deconstruct(out Flyback.Plugins.PluginInfo! Info, out string! AssemblyPath) -> void
+Flyback.Plugins.Hosting.LoadedPlugin.Equals(Flyback.Plugins.Hosting.LoadedPlugin? other) -> bool
+Flyback.Plugins.Hosting.LoadedPlugin.Info.get -> Flyback.Plugins.PluginInfo!
+Flyback.Plugins.Hosting.LoadedPlugin.Info.init -> void
+Flyback.Plugins.Hosting.LoadedPlugin.LoadedPlugin(Flyback.Plugins.PluginInfo! Info, string! AssemblyPath) -> void
+Flyback.Plugins.Hosting.PluginCatalog
+Flyback.Plugins.Hosting.PluginCatalog.Assistant(string! id) -> Flyback.Plugins.Assist.IPatchAssistant?
+Flyback.Plugins.Hosting.PluginCatalog.Assistants.get -> System.Collections.Generic.IReadOnlyList<Flyback.Plugins.Assist.IPatchAssistant!>!
+Flyback.Plugins.Hosting.PluginCatalog.AudioOutputs.get -> System.Collections.Generic.IReadOnlyList<Flyback.Plugins.Audio.IAudioOutput!>!
+Flyback.Plugins.Hosting.PluginCatalog.MidiInputs.get -> System.Collections.Generic.IReadOnlyList<Flyback.Plugins.Midi.IMidiInput!>!
+Flyback.Plugins.Hosting.PluginCatalog.Modules.get -> Flyback.Core.Graph.ModuleCatalog!
+Flyback.Plugins.Hosting.PluginCatalog.Plugins.get -> System.Collections.Generic.IReadOnlyList<Flyback.Plugins.Hosting.LoadedPlugin!>!
+Flyback.Plugins.Hosting.PluginCatalog.PreferredAssistant.get -> Flyback.Plugins.Assist.IPatchAssistant?
+Flyback.Plugins.Hosting.PluginCatalog.PreferredAudioOutput.get -> Flyback.Plugins.Audio.IAudioOutput?
+Flyback.Plugins.Hosting.PluginCatalog.PreferredMidiInput.get -> Flyback.Plugins.Midi.IMidiInput?
+Flyback.Plugins.Hosting.PluginCatalog.PreferredSecretStore.get -> Flyback.Plugins.Secrets.ISecretStore?
+Flyback.Plugins.Hosting.PluginCatalog.Presets.get -> System.Collections.Generic.IReadOnlyList<Flyback.Core.Graph.PatchPreset!>!
+Flyback.Plugins.Hosting.PluginCatalog.Problems.get -> System.Collections.Generic.IReadOnlyList<Flyback.Plugins.Hosting.PluginProblem!>!
+Flyback.Plugins.Hosting.PluginCatalog.SecretStores.get -> System.Collections.Generic.IReadOnlyList<Flyback.Plugins.Secrets.ISecretStore!>!
+Flyback.Plugins.Hosting.PluginHost
+Flyback.Plugins.Hosting.PluginProblem
+Flyback.Plugins.Hosting.PluginProblem.<Clone>$() -> Flyback.Plugins.Hosting.PluginProblem!
+Flyback.Plugins.Hosting.PluginProblem.Deconstruct(out string! Source, out string! Message) -> void
+Flyback.Plugins.Hosting.PluginProblem.Equals(Flyback.Plugins.Hosting.PluginProblem? other) -> bool
+Flyback.Plugins.Hosting.PluginProblem.Message.get -> string!
+Flyback.Plugins.Hosting.PluginProblem.Message.init -> void
+Flyback.Plugins.Hosting.PluginProblem.PluginProblem(string! Source, string! Message) -> void
+Flyback.Plugins.Hosting.PluginProblem.Source.get -> string!
+Flyback.Plugins.Hosting.PluginProblem.Source.init -> void
+Flyback.Plugins.IFlybackPlugin
+Flyback.Plugins.IFlybackPlugin.Info.get -> Flyback.Plugins.PluginInfo!
+Flyback.Plugins.IFlybackPlugin.Register(Flyback.Plugins.IPluginRegistry! registry) -> void
+Flyback.Plugins.IPluginRegistry
+Flyback.Plugins.IPluginRegistry.AddAudioOutput(Flyback.Plugins.Audio.IAudioOutput! output) -> void
+Flyback.Plugins.IPluginRegistry.AddMidiInput(Flyback.Plugins.Midi.IMidiInput! input) -> void
+Flyback.Plugins.IPluginRegistry.AddModules(Flyback.Core.Graph.ModuleProvider! provider, System.Collections.Generic.IReadOnlyList<Flyback.Core.Graph.NodeDef!>! modules) -> void
+Flyback.Plugins.IPluginRegistry.AddPatchAssistant(Flyback.Plugins.Assist.IPatchAssistant! assistant) -> void
+Flyback.Plugins.IPluginRegistry.AddPresets(System.Collections.Generic.IReadOnlyList<Flyback.Core.Graph.PatchPreset!>! presets) -> void
+Flyback.Plugins.IPluginRegistry.AddSecretStore(Flyback.Plugins.Secrets.ISecretStore! store) -> void
+Flyback.Plugins.Midi.IMidiInput
+Flyback.Plugins.Midi.IMidiInput.Id.get -> string!
+Flyback.Plugins.Midi.IMidiInput.IsSupported.get -> bool
+Flyback.Plugins.Midi.IMidiInput.Name.get -> string!
+Flyback.Plugins.Midi.IMidiInput.Open(string! port, Flyback.Plugins.Midi.MidiCallback! deliver) -> Flyback.Plugins.Midi.IMidiPort!
+Flyback.Plugins.Midi.IMidiInput.Ports.get -> System.Collections.Generic.IReadOnlyList<Flyback.Plugins.Midi.MidiPortInfo>!
+Flyback.Plugins.Midi.IMidiInput.Priority.get -> int
+Flyback.Plugins.Midi.IMidiPort
+Flyback.Plugins.Midi.IMidiPort.Id.get -> string!
+Flyback.Plugins.Midi.IMidiPort.IsOpen.get -> bool
+Flyback.Plugins.Midi.MidiAction
+Flyback.Plugins.Midi.MidiAction.AllOff = 2 -> Flyback.Plugins.Midi.MidiAction
+Flyback.Plugins.Midi.MidiAction.Control = 3 -> Flyback.Plugins.Midi.MidiAction
+Flyback.Plugins.Midi.MidiAction.Down = 0 -> Flyback.Plugins.Midi.MidiAction
+Flyback.Plugins.Midi.MidiAction.Up = 1 -> Flyback.Plugins.Midi.MidiAction
+Flyback.Plugins.Midi.MidiCallback
+Flyback.Plugins.Midi.MidiMessage
+Flyback.Plugins.Midi.MidiMessage.Action.get -> Flyback.Plugins.Midi.MidiAction
+Flyback.Plugins.Midi.MidiMessage.Action.init -> void
+Flyback.Plugins.Midi.MidiMessage.Channel.get -> int
+Flyback.Plugins.Midi.MidiMessage.Channel.init -> void
+Flyback.Plugins.Midi.MidiMessage.Deconstruct(out Flyback.Plugins.Midi.MidiAction Action, out int Note, out float Velocity) -> void
+Flyback.Plugins.Midi.MidiMessage.Equals(Flyback.Plugins.Midi.MidiMessage other) -> bool
+Flyback.Plugins.Midi.MidiMessage.MidiMessage() -> void
+Flyback.Plugins.Midi.MidiMessage.MidiMessage(Flyback.Plugins.Midi.MidiAction Action, int Note, float Velocity) -> void
+Flyback.Plugins.Midi.MidiMessage.Note.get -> int
+Flyback.Plugins.Midi.MidiMessage.Note.init -> void
+Flyback.Plugins.Midi.MidiMessage.Velocity.get -> float
+Flyback.Plugins.Midi.MidiMessage.Velocity.init -> void
+Flyback.Plugins.Midi.MidiMessages
+Flyback.Plugins.Midi.MidiPortInfo
+Flyback.Plugins.Midi.MidiPortInfo.Deconstruct(out string! Id, out string! Name) -> void
+Flyback.Plugins.Midi.MidiPortInfo.Equals(Flyback.Plugins.Midi.MidiPortInfo other) -> bool
+Flyback.Plugins.Midi.MidiPortInfo.Id.get -> string!
+Flyback.Plugins.Midi.MidiPortInfo.Id.init -> void
+Flyback.Plugins.Midi.MidiPortInfo.MidiPortInfo() -> void
+Flyback.Plugins.Midi.MidiPortInfo.MidiPortInfo(string! Id, string! Name) -> void
+Flyback.Plugins.Midi.MidiPortInfo.Name.get -> string!
+Flyback.Plugins.Midi.MidiPortInfo.Name.init -> void
+Flyback.Plugins.Midi.MidiPorts
+Flyback.Plugins.PluginInfo
+Flyback.Plugins.PluginInfo.<Clone>$() -> Flyback.Plugins.PluginInfo!
+Flyback.Plugins.PluginInfo.Deconstruct(out string! Id, out string! Name, out string! Description) -> void
+Flyback.Plugins.PluginInfo.Description.get -> string!
+Flyback.Plugins.PluginInfo.Description.init -> void
+Flyback.Plugins.PluginInfo.Equals(Flyback.Plugins.PluginInfo? other) -> bool
+Flyback.Plugins.PluginInfo.Id.get -> string!
+Flyback.Plugins.PluginInfo.Id.init -> void
+Flyback.Plugins.PluginInfo.Name.get -> string!
+Flyback.Plugins.PluginInfo.Name.init -> void
+Flyback.Plugins.PluginInfo.PluginInfo(string! Id, string! Name, string! Description = "") -> void
+Flyback.Plugins.Secrets.ISecretStore
+Flyback.Plugins.Secrets.ISecretStore.Forget(string! account) -> void
+Flyback.Plugins.Secrets.ISecretStore.Id.get -> string!
+Flyback.Plugins.Secrets.ISecretStore.IsSupported.get -> bool
+Flyback.Plugins.Secrets.ISecretStore.Keep(string! account, string! secret) -> void
+Flyback.Plugins.Secrets.ISecretStore.Name.get -> string!
+Flyback.Plugins.Secrets.ISecretStore.Priority.get -> int
+Flyback.Plugins.Secrets.ISecretStore.Recall(string! account) -> string?
+Flyback.Plugins.Settings.SettingField
+Flyback.Plugins.Settings.SettingField.Because.get -> string?
+Flyback.Plugins.Settings.SettingField.Because.init -> void
+Flyback.Plugins.Settings.SettingField.Deconstruct(out string! Key, out string! Label) -> void
+Flyback.Plugins.Settings.SettingField.Enabled.get -> bool
+Flyback.Plugins.Settings.SettingField.Enabled.init -> void
+Flyback.Plugins.Settings.SettingField.Key.get -> string!
+Flyback.Plugins.Settings.SettingField.Key.init -> void
+Flyback.Plugins.Settings.SettingField.Label.get -> string!
+Flyback.Plugins.Settings.SettingField.Label.init -> void
+Flyback.Plugins.Settings.SettingField.Note.get -> string?
+Flyback.Plugins.Settings.SettingField.Note.init -> void
+Flyback.Plugins.Settings.SettingField.Pick
+Flyback.Plugins.Settings.SettingField.Pick.Deconstruct(out string! Key, out string! Label, out System.Collections.Generic.IReadOnlyList<Flyback.Plugins.Settings.SettingOption>! Options, out string! Fallback, out bool Editable) -> void
+Flyback.Plugins.Settings.SettingField.Pick.Editable.get -> bool
+Flyback.Plugins.Settings.SettingField.Pick.Editable.init -> void
+Flyback.Plugins.Settings.SettingField.Pick.Equals(Flyback.Plugins.Settings.SettingField.Pick? other) -> bool
+Flyback.Plugins.Settings.SettingField.Pick.Fallback.get -> string!
+Flyback.Plugins.Settings.SettingField.Pick.Fallback.init -> void
+Flyback.Plugins.Settings.SettingField.Pick.Name(string! id) -> string!
+Flyback.Plugins.Settings.SettingField.Pick.Options.get -> System.Collections.Generic.IReadOnlyList<Flyback.Plugins.Settings.SettingOption>!
+Flyback.Plugins.Settings.SettingField.Pick.Options.init -> void
+Flyback.Plugins.Settings.SettingField.Pick.Pick(string! Key, string! Label, System.Collections.Generic.IReadOnlyList<Flyback.Plugins.Settings.SettingOption>! Options, string! Fallback = "", bool Editable = false) -> void
+Flyback.Plugins.Settings.SettingField.SettingField(Flyback.Plugins.Settings.SettingField! original) -> void
+Flyback.Plugins.Settings.SettingField.SettingField(string! Key, string! Label) -> void
+Flyback.Plugins.Settings.SettingField.Switch
+Flyback.Plugins.Settings.SettingField.Switch.Deconstruct(out string! Key, out string! Label, out bool On) -> void
+Flyback.Plugins.Settings.SettingField.Switch.Equals(Flyback.Plugins.Settings.SettingField.Switch? other) -> bool
+Flyback.Plugins.Settings.SettingField.Switch.On.get -> bool
+Flyback.Plugins.Settings.SettingField.Switch.On.init -> void
+Flyback.Plugins.Settings.SettingField.Switch.Switch(string! Key, string! Label, bool On = false) -> void
+Flyback.Plugins.Settings.SettingField.Switch.Value(string? stored) -> bool
+Flyback.Plugins.Settings.SettingField.Text
+Flyback.Plugins.Settings.SettingField.Text.Deconstruct(out string! Key, out string! Label, out string! Fallback, out string! Placeholder) -> void
+Flyback.Plugins.Settings.SettingField.Text.Equals(Flyback.Plugins.Settings.SettingField.Text? other) -> bool
+Flyback.Plugins.Settings.SettingField.Text.Fallback.get -> string!
+Flyback.Plugins.Settings.SettingField.Text.Fallback.init -> void
+Flyback.Plugins.Settings.SettingField.Text.Placeholder.get -> string!
+Flyback.Plugins.Settings.SettingField.Text.Placeholder.init -> void
+Flyback.Plugins.Settings.SettingField.Text.Text(string! Key, string! Label, string! Fallback = "", string! Placeholder = "") -> void
+Flyback.Plugins.Settings.SettingOption
+Flyback.Plugins.Settings.SettingOption.Deconstruct(out string! Id, out string! Name) -> void
+Flyback.Plugins.Settings.SettingOption.Equals(Flyback.Plugins.Settings.SettingOption other) -> bool
+Flyback.Plugins.Settings.SettingOption.Id.get -> string!
+Flyback.Plugins.Settings.SettingOption.Id.init -> void
+Flyback.Plugins.Settings.SettingOption.Name.get -> string!
+Flyback.Plugins.Settings.SettingOption.Name.init -> void
+Flyback.Plugins.Settings.SettingOption.SettingOption() -> void
+Flyback.Plugins.Settings.SettingOption.SettingOption(string! Id, string! Name) -> void
+Flyback.Plugins.Settings.SettingValues
+Flyback.Plugins.Settings.SettingValues.All.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
+Flyback.Plugins.Settings.SettingValues.Equals(Flyback.Plugins.Settings.SettingValues? other) -> bool
+Flyback.Plugins.Settings.SettingValues.Flag(string! key, bool fallback = false) -> bool
+Flyback.Plugins.Settings.SettingValues.SettingValues(System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string!, string!>>? from = null) -> void
+Flyback.Plugins.Settings.SettingValues.Text(string! key, string! fallback = "") -> string!
+Flyback.Plugins.Settings.SettingValues.With(string! key, string! value) -> Flyback.Plugins.Settings.SettingValues!
+Flyback.Plugins.Settings.SettingValues.Word<TWord>(string! key, TWord fallback) -> TWord
+abstract Flyback.Plugins.Assist.PatchEvent.<Clone>$() -> Flyback.Plugins.Assist.PatchEvent!
+abstract Flyback.Plugins.Settings.SettingField.<Clone>$() -> Flyback.Plugins.Settings.SettingField!
+abstract Flyback.Plugins.Settings.SettingField.Sane(string? stored) -> string!
+const Flyback.Plugins.Assist.AssistantSchema.EarKey = "ear" -> string!
+const Flyback.Plugins.Assist.AssistantSchema.EffortKey = "effort" -> string!
+const Flyback.Plugins.Assist.AssistantSchema.EndpointKey = "endpoint" -> string!
+const Flyback.Plugins.Assist.AssistantSchema.HearingKey = "hearing" -> string!
+const Flyback.Plugins.Assist.AssistantSchema.ModelKey = "model" -> string!
+const Flyback.Plugins.Assist.AssistantSchema.VisionKey = "vision" -> string!
+const Flyback.Plugins.Assist.AssistantSettings.DefaultProseBudget = 100000 -> int
+const Flyback.Plugins.Assist.AssistantSettings.DefaultTurnLimit = 12 -> int
+const Flyback.Plugins.Assist.AssistantSettings.FewestTurns = 1 -> int
+const Flyback.Plugins.Assist.AssistantSettings.LeastProse = 10000 -> int
+const Flyback.Plugins.Assist.AssistantSettings.MostProse = 1000000 -> int
+const Flyback.Plugins.Assist.AssistantSettings.MostTurns = 100 -> int
+const Flyback.Plugins.Assist.Survey.Key = "models" -> string!
+const Flyback.Plugins.Hosting.PluginHost.DirectoryName = "plugins" -> string!
+const Flyback.Plugins.Midi.MidiPorts.Prefix = "midi:" -> string!
+override Flyback.Plugins.Assist.AssistantChoices.Equals(object? obj) -> bool
+override Flyback.Plugins.Assist.AssistantChoices.GetHashCode() -> int
+override Flyback.Plugins.Assist.AssistantChoices.ToString() -> string!
+override Flyback.Plugins.Assist.AssistantConfig.Equals(object? obj) -> bool
+override Flyback.Plugins.Assist.AssistantConfig.GetHashCode() -> int
+override Flyback.Plugins.Assist.AssistantConfig.ToString() -> string!
+override Flyback.Plugins.Assist.AssistantCredential.Equals(object? obj) -> bool
+override Flyback.Plugins.Assist.AssistantCredential.GetHashCode() -> int
+override Flyback.Plugins.Assist.AssistantCredential.ToString() -> string!
+override Flyback.Plugins.Assist.AssistantModel.Equals(object? obj) -> bool
+override Flyback.Plugins.Assist.AssistantModel.GetHashCode() -> int
+override Flyback.Plugins.Assist.AssistantModel.ToString() -> string!
+override Flyback.Plugins.Assist.AssistantSchema.Equals(object? obj) -> bool
+override Flyback.Plugins.Assist.AssistantSchema.GetHashCode() -> int
+override Flyback.Plugins.Assist.AssistantSchema.ToString() -> string!
+override Flyback.Plugins.Assist.AssistantSenses.GetHashCode() -> int
+override Flyback.Plugins.Assist.ModelReport.Equals(object? obj) -> bool
+override Flyback.Plugins.Assist.ModelReport.GetHashCode() -> int
+override Flyback.Plugins.Assist.ModelReport.ToString() -> string!
+override Flyback.Plugins.Assist.PatchEvent.Cost.<Clone>$() -> Flyback.Plugins.Assist.PatchEvent.Cost!
+override Flyback.Plugins.Assist.PatchEvent.Cost.Equals(object? obj) -> bool
+override Flyback.Plugins.Assist.PatchEvent.Cost.GetHashCode() -> int
+override Flyback.Plugins.Assist.PatchEvent.Cost.ToString() -> string!
+override Flyback.Plugins.Assist.PatchEvent.Did.<Clone>$() -> Flyback.Plugins.Assist.PatchEvent.Did!
+override Flyback.Plugins.Assist.PatchEvent.Did.Equals(object? obj) -> bool
+override Flyback.Plugins.Assist.PatchEvent.Did.GetHashCode() -> int
+override Flyback.Plugins.Assist.PatchEvent.Did.ToString() -> string!
+override Flyback.Plugins.Assist.PatchEvent.Equals(object? obj) -> bool
+override Flyback.Plugins.Assist.PatchEvent.Failed.<Clone>$() -> Flyback.Plugins.Assist.PatchEvent.Failed!
+override Flyback.Plugins.Assist.PatchEvent.Failed.Equals(object? obj) -> bool
+override Flyback.Plugins.Assist.PatchEvent.Failed.GetHashCode() -> int
+override Flyback.Plugins.Assist.PatchEvent.Failed.ToString() -> string!
+override Flyback.Plugins.Assist.PatchEvent.GetHashCode() -> int
+override Flyback.Plugins.Assist.PatchEvent.Heard.<Clone>$() -> Flyback.Plugins.Assist.PatchEvent.Heard!
+override Flyback.Plugins.Assist.PatchEvent.Heard.Equals(object? obj) -> bool
+override Flyback.Plugins.Assist.PatchEvent.Heard.GetHashCode() -> int
+override Flyback.Plugins.Assist.PatchEvent.Heard.ToString() -> string!
+override Flyback.Plugins.Assist.PatchEvent.Proposed.<Clone>$() -> Flyback.Plugins.Assist.PatchEvent.Proposed!
+override Flyback.Plugins.Assist.PatchEvent.Proposed.Equals(object? obj) -> bool
+override Flyback.Plugins.Assist.PatchEvent.Proposed.GetHashCode() -> int
+override Flyback.Plugins.Assist.PatchEvent.Proposed.ToString() -> string!
+override Flyback.Plugins.Assist.PatchEvent.Said.<Clone>$() -> Flyback.Plugins.Assist.PatchEvent.Said!
+override Flyback.Plugins.Assist.PatchEvent.Said.Equals(object? obj) -> bool
+override Flyback.Plugins.Assist.PatchEvent.Said.GetHashCode() -> int
+override Flyback.Plugins.Assist.PatchEvent.Said.ToString() -> string!
+override Flyback.Plugins.Assist.PatchEvent.Saw.<Clone>$() -> Flyback.Plugins.Assist.PatchEvent.Saw!
+override Flyback.Plugins.Assist.PatchEvent.Saw.Equals(object? obj) -> bool
+override Flyback.Plugins.Assist.PatchEvent.Saw.GetHashCode() -> int
+override Flyback.Plugins.Assist.PatchEvent.Saw.ToString() -> string!
+override Flyback.Plugins.Assist.PatchEvent.ToString() -> string!
+override Flyback.Plugins.Assist.PatchTool.Equals(object? obj) -> bool
+override Flyback.Plugins.Assist.PatchTool.GetHashCode() -> int
+override Flyback.Plugins.Assist.PatchTool.ToString() -> string!
+override Flyback.Plugins.Assist.ProsePolicy.Equals(object? obj) -> bool
+override Flyback.Plugins.Assist.ProsePolicy.GetHashCode() -> int
+override Flyback.Plugins.Assist.ProsePolicy.ToString() -> string!
+override Flyback.Plugins.Assist.SurveyOptions.Equals(object? obj) -> bool
+override Flyback.Plugins.Assist.SurveyOptions.GetHashCode() -> int
+override Flyback.Plugins.Assist.SurveyOptions.ToString() -> string!
+override Flyback.Plugins.Assist.ToolOutcome.Equals(object? obj) -> bool
+override Flyback.Plugins.Assist.ToolOutcome.GetHashCode() -> int
+override Flyback.Plugins.Assist.ToolOutcome.ToString() -> string!
+override Flyback.Plugins.Assist.WorkbenchLimits.Equals(object? obj) -> bool
+override Flyback.Plugins.Assist.WorkbenchLimits.GetHashCode() -> int
+override Flyback.Plugins.Assist.WorkbenchLimits.ToString() -> string!
+override Flyback.Plugins.Assist.WorkbenchState.Equals(object? obj) -> bool
+override Flyback.Plugins.Assist.WorkbenchState.GetHashCode() -> int
+override Flyback.Plugins.Assist.WorkbenchState.ToString() -> string!
+override Flyback.Plugins.Audio.AudioFormat.GetHashCode() -> int
+override Flyback.Plugins.Hosting.LoadedPlugin.Equals(object? obj) -> bool
+override Flyback.Plugins.Hosting.LoadedPlugin.GetHashCode() -> int
+override Flyback.Plugins.Hosting.LoadedPlugin.ToString() -> string!
+override Flyback.Plugins.Hosting.PluginProblem.Equals(object? obj) -> bool
+override Flyback.Plugins.Hosting.PluginProblem.GetHashCode() -> int
+override Flyback.Plugins.Hosting.PluginProblem.ToString() -> string!
+override Flyback.Plugins.Midi.MidiMessage.GetHashCode() -> int
+override Flyback.Plugins.Midi.MidiPortInfo.GetHashCode() -> int
+override Flyback.Plugins.PluginInfo.Equals(object? obj) -> bool
+override Flyback.Plugins.PluginInfo.GetHashCode() -> int
+override Flyback.Plugins.PluginInfo.ToString() -> string!
+override Flyback.Plugins.Settings.SettingField.Equals(object? obj) -> bool
+override Flyback.Plugins.Settings.SettingField.GetHashCode() -> int
+override Flyback.Plugins.Settings.SettingField.Pick.<Clone>$() -> Flyback.Plugins.Settings.SettingField.Pick!
+override Flyback.Plugins.Settings.SettingField.Pick.Equals(object? obj) -> bool
+override Flyback.Plugins.Settings.SettingField.Pick.GetHashCode() -> int
+override Flyback.Plugins.Settings.SettingField.Pick.Sane(string? stored) -> string!
+override Flyback.Plugins.Settings.SettingField.Pick.ToString() -> string!
+override Flyback.Plugins.Settings.SettingField.Switch.<Clone>$() -> Flyback.Plugins.Settings.SettingField.Switch!
+override Flyback.Plugins.Settings.SettingField.Switch.Equals(object? obj) -> bool
+override Flyback.Plugins.Settings.SettingField.Switch.GetHashCode() -> int
+override Flyback.Plugins.Settings.SettingField.Switch.Sane(string? stored) -> string!
+override Flyback.Plugins.Settings.SettingField.Switch.ToString() -> string!
+override Flyback.Plugins.Settings.SettingField.Text.<Clone>$() -> Flyback.Plugins.Settings.SettingField.Text!
+override Flyback.Plugins.Settings.SettingField.Text.Equals(object? obj) -> bool
+override Flyback.Plugins.Settings.SettingField.Text.GetHashCode() -> int
+override Flyback.Plugins.Settings.SettingField.Text.Sane(string? stored) -> string!
+override Flyback.Plugins.Settings.SettingField.Text.ToString() -> string!
+override Flyback.Plugins.Settings.SettingField.ToString() -> string!
+override Flyback.Plugins.Settings.SettingOption.GetHashCode() -> int
+override Flyback.Plugins.Settings.SettingValues.Equals(object? obj) -> bool
+override Flyback.Plugins.Settings.SettingValues.GetHashCode() -> int
+override sealed Flyback.Plugins.Assist.PatchEvent.Cost.Equals(Flyback.Plugins.Assist.PatchEvent? other) -> bool
+override sealed Flyback.Plugins.Assist.PatchEvent.Did.Equals(Flyback.Plugins.Assist.PatchEvent? other) -> bool
+override sealed Flyback.Plugins.Assist.PatchEvent.Failed.Equals(Flyback.Plugins.Assist.PatchEvent? other) -> bool
+override sealed Flyback.Plugins.Assist.PatchEvent.Heard.Equals(Flyback.Plugins.Assist.PatchEvent? other) -> bool
+override sealed Flyback.Plugins.Assist.PatchEvent.Proposed.Equals(Flyback.Plugins.Assist.PatchEvent? other) -> bool
+override sealed Flyback.Plugins.Assist.PatchEvent.Said.Equals(Flyback.Plugins.Assist.PatchEvent? other) -> bool
+override sealed Flyback.Plugins.Assist.PatchEvent.Saw.Equals(Flyback.Plugins.Assist.PatchEvent? other) -> bool
+override sealed Flyback.Plugins.Settings.SettingField.Pick.Equals(Flyback.Plugins.Settings.SettingField? other) -> bool
+override sealed Flyback.Plugins.Settings.SettingField.Switch.Equals(Flyback.Plugins.Settings.SettingField? other) -> bool
+override sealed Flyback.Plugins.Settings.SettingField.Text.Equals(Flyback.Plugins.Settings.SettingField? other) -> bool
+static Flyback.Plugins.Assist.AssistantChoices.operator !=(Flyback.Plugins.Assist.AssistantChoices? left, Flyback.Plugins.Assist.AssistantChoices? right) -> bool
+static Flyback.Plugins.Assist.AssistantChoices.operator ==(Flyback.Plugins.Assist.AssistantChoices? left, Flyback.Plugins.Assist.AssistantChoices? right) -> bool
+static Flyback.Plugins.Assist.AssistantConfig.Unset.get -> Flyback.Plugins.Assist.AssistantConfig!
+static Flyback.Plugins.Assist.AssistantConfig.operator !=(Flyback.Plugins.Assist.AssistantConfig? left, Flyback.Plugins.Assist.AssistantConfig? right) -> bool
+static Flyback.Plugins.Assist.AssistantConfig.operator ==(Flyback.Plugins.Assist.AssistantConfig? left, Flyback.Plugins.Assist.AssistantConfig? right) -> bool
+static Flyback.Plugins.Assist.AssistantCredential.operator !=(Flyback.Plugins.Assist.AssistantCredential? left, Flyback.Plugins.Assist.AssistantCredential? right) -> bool
+static Flyback.Plugins.Assist.AssistantCredential.operator ==(Flyback.Plugins.Assist.AssistantCredential? left, Flyback.Plugins.Assist.AssistantCredential? right) -> bool
+static Flyback.Plugins.Assist.AssistantModel.operator !=(Flyback.Plugins.Assist.AssistantModel? left, Flyback.Plugins.Assist.AssistantModel? right) -> bool
+static Flyback.Plugins.Assist.AssistantModel.operator ==(Flyback.Plugins.Assist.AssistantModel? left, Flyback.Plugins.Assist.AssistantModel? right) -> bool
+static Flyback.Plugins.Assist.AssistantSchema.operator !=(Flyback.Plugins.Assist.AssistantSchema? left, Flyback.Plugins.Assist.AssistantSchema? right) -> bool
+static Flyback.Plugins.Assist.AssistantSchema.operator ==(Flyback.Plugins.Assist.AssistantSchema? left, Flyback.Plugins.Assist.AssistantSchema? right) -> bool
+static Flyback.Plugins.Assist.AssistantSenses.operator !=(Flyback.Plugins.Assist.AssistantSenses left, Flyback.Plugins.Assist.AssistantSenses right) -> bool
+static Flyback.Plugins.Assist.AssistantSenses.operator ==(Flyback.Plugins.Assist.AssistantSenses left, Flyback.Plugins.Assist.AssistantSenses right) -> bool
+static Flyback.Plugins.Assist.AssistantSettings.File.get -> string!
+static Flyback.Plugins.Assist.AssistantSettings.Load(string? path = null) -> Flyback.Plugins.Assist.AssistantSettings!
+static Flyback.Plugins.Assist.ConversationLog.Folder.get -> string!
+static Flyback.Plugins.Assist.ConversationLog.Start(bool enabled, string! provider, string? folder = null) -> Flyback.Plugins.Assist.ConversationLog!
+static Flyback.Plugins.Assist.ModelReport.operator !=(Flyback.Plugins.Assist.ModelReport? left, Flyback.Plugins.Assist.ModelReport? right) -> bool
+static Flyback.Plugins.Assist.ModelReport.operator ==(Flyback.Plugins.Assist.ModelReport? left, Flyback.Plugins.Assist.ModelReport? right) -> bool
+static Flyback.Plugins.Assist.PatchEvent.Cost.operator !=(Flyback.Plugins.Assist.PatchEvent.Cost? left, Flyback.Plugins.Assist.PatchEvent.Cost? right) -> bool
+static Flyback.Plugins.Assist.PatchEvent.Cost.operator ==(Flyback.Plugins.Assist.PatchEvent.Cost? left, Flyback.Plugins.Assist.PatchEvent.Cost? right) -> bool
+static Flyback.Plugins.Assist.PatchEvent.Did.operator !=(Flyback.Plugins.Assist.PatchEvent.Did? left, Flyback.Plugins.Assist.PatchEvent.Did? right) -> bool
+static Flyback.Plugins.Assist.PatchEvent.Did.operator ==(Flyback.Plugins.Assist.PatchEvent.Did? left, Flyback.Plugins.Assist.PatchEvent.Did? right) -> bool
+static Flyback.Plugins.Assist.PatchEvent.Failed.operator !=(Flyback.Plugins.Assist.PatchEvent.Failed? left, Flyback.Plugins.Assist.PatchEvent.Failed? right) -> bool
+static Flyback.Plugins.Assist.PatchEvent.Failed.operator ==(Flyback.Plugins.Assist.PatchEvent.Failed? left, Flyback.Plugins.Assist.PatchEvent.Failed? right) -> bool
+static Flyback.Plugins.Assist.PatchEvent.Heard.operator !=(Flyback.Plugins.Assist.PatchEvent.Heard? left, Flyback.Plugins.Assist.PatchEvent.Heard? right) -> bool
+static Flyback.Plugins.Assist.PatchEvent.Heard.operator ==(Flyback.Plugins.Assist.PatchEvent.Heard? left, Flyback.Plugins.Assist.PatchEvent.Heard? right) -> bool
+static Flyback.Plugins.Assist.PatchEvent.Proposed.operator !=(Flyback.Plugins.Assist.PatchEvent.Proposed? left, Flyback.Plugins.Assist.PatchEvent.Proposed? right) -> bool
+static Flyback.Plugins.Assist.PatchEvent.Proposed.operator ==(Flyback.Plugins.Assist.PatchEvent.Proposed? left, Flyback.Plugins.Assist.PatchEvent.Proposed? right) -> bool
+static Flyback.Plugins.Assist.PatchEvent.Said.operator !=(Flyback.Plugins.Assist.PatchEvent.Said? left, Flyback.Plugins.Assist.PatchEvent.Said? right) -> bool
+static Flyback.Plugins.Assist.PatchEvent.Said.operator ==(Flyback.Plugins.Assist.PatchEvent.Said? left, Flyback.Plugins.Assist.PatchEvent.Said? right) -> bool
+static Flyback.Plugins.Assist.PatchEvent.Saw.operator !=(Flyback.Plugins.Assist.PatchEvent.Saw? left, Flyback.Plugins.Assist.PatchEvent.Saw? right) -> bool
+static Flyback.Plugins.Assist.PatchEvent.Saw.operator ==(Flyback.Plugins.Assist.PatchEvent.Saw? left, Flyback.Plugins.Assist.PatchEvent.Saw? right) -> bool
+static Flyback.Plugins.Assist.PatchEvent.operator !=(Flyback.Plugins.Assist.PatchEvent? left, Flyback.Plugins.Assist.PatchEvent? right) -> bool
+static Flyback.Plugins.Assist.PatchEvent.operator ==(Flyback.Plugins.Assist.PatchEvent? left, Flyback.Plugins.Assist.PatchEvent? right) -> bool
+static Flyback.Plugins.Assist.PatchTool.operator !=(Flyback.Plugins.Assist.PatchTool? left, Flyback.Plugins.Assist.PatchTool? right) -> bool
+static Flyback.Plugins.Assist.PatchTool.operator ==(Flyback.Plugins.Assist.PatchTool? left, Flyback.Plugins.Assist.PatchTool? right) -> bool
+static Flyback.Plugins.Assist.PriorityModules.File.get -> string!
+static Flyback.Plugins.Assist.PriorityModules.Install(string? path = null) -> void
+static Flyback.Plugins.Assist.PriorityModules.Load(string? path = null) -> System.Collections.Generic.IReadOnlySet<string!>!
+static Flyback.Plugins.Assist.PriorityModules.Parse(string! text) -> System.Collections.Generic.IReadOnlySet<string!>!
+static Flyback.Plugins.Assist.PriorityModules.Shipped.get -> string!
+static Flyback.Plugins.Assist.Probe.Client(System.Net.Http.HttpMessageHandler? transport) -> System.Net.Http.HttpClient!
+static Flyback.Plugins.Assist.Probe.Detail(string! body) -> string!
+static Flyback.Plugins.Assist.Probe.Picture() -> byte[]!
+static Flyback.Plugins.Assist.Probe.Sound() -> byte[]!
+static Flyback.Plugins.Assist.ProsePolicy.Default.get -> Flyback.Plugins.Assist.ProsePolicy!
+static Flyback.Plugins.Assist.ProsePolicy.operator !=(Flyback.Plugins.Assist.ProsePolicy? left, Flyback.Plugins.Assist.ProsePolicy? right) -> bool
+static Flyback.Plugins.Assist.ProsePolicy.operator ==(Flyback.Plugins.Assist.ProsePolicy? left, Flyback.Plugins.Assist.ProsePolicy? right) -> bool
+static Flyback.Plugins.Assist.Survey.Read(string? stored) -> System.Collections.Generic.IReadOnlyList<Flyback.Plugins.Assist.ModelReport!>!
+static Flyback.Plugins.Assist.Survey.Write(System.Collections.Generic.IEnumerable<Flyback.Plugins.Assist.ModelReport!>! found) -> string!
+static Flyback.Plugins.Assist.SurveyOptions.operator !=(Flyback.Plugins.Assist.SurveyOptions? left, Flyback.Plugins.Assist.SurveyOptions? right) -> bool
+static Flyback.Plugins.Assist.SurveyOptions.operator ==(Flyback.Plugins.Assist.SurveyOptions? left, Flyback.Plugins.Assist.SurveyOptions? right) -> bool
+static Flyback.Plugins.Assist.ToolOutcome.Fine(string! text) -> Flyback.Plugins.Assist.ToolOutcome!
+static Flyback.Plugins.Assist.ToolOutcome.Looked(byte[]! png, string! caption) -> Flyback.Plugins.Assist.ToolOutcome!
+static Flyback.Plugins.Assist.ToolOutcome.Played(byte[]! wav, string! caption) -> Flyback.Plugins.Assist.ToolOutcome!
+static Flyback.Plugins.Assist.ToolOutcome.Refused(string! text) -> Flyback.Plugins.Assist.ToolOutcome!
+static Flyback.Plugins.Assist.ToolOutcome.operator !=(Flyback.Plugins.Assist.ToolOutcome? left, Flyback.Plugins.Assist.ToolOutcome? right) -> bool
+static Flyback.Plugins.Assist.ToolOutcome.operator ==(Flyback.Plugins.Assist.ToolOutcome? left, Flyback.Plugins.Assist.ToolOutcome? right) -> bool
+static Flyback.Plugins.Assist.WorkbenchLimits.operator !=(Flyback.Plugins.Assist.WorkbenchLimits? left, Flyback.Plugins.Assist.WorkbenchLimits? right) -> bool
+static Flyback.Plugins.Assist.WorkbenchLimits.operator ==(Flyback.Plugins.Assist.WorkbenchLimits? left, Flyback.Plugins.Assist.WorkbenchLimits? right) -> bool
+static Flyback.Plugins.Assist.WorkbenchState.operator !=(Flyback.Plugins.Assist.WorkbenchState? left, Flyback.Plugins.Assist.WorkbenchState? right) -> bool
+static Flyback.Plugins.Assist.WorkbenchState.operator ==(Flyback.Plugins.Assist.WorkbenchState? left, Flyback.Plugins.Assist.WorkbenchState? right) -> bool
+static Flyback.Plugins.Audio.AudioFormat.Default.get -> Flyback.Plugins.Audio.AudioFormat
+static Flyback.Plugins.Audio.AudioFormat.operator !=(Flyback.Plugins.Audio.AudioFormat left, Flyback.Plugins.Audio.AudioFormat right) -> bool
+static Flyback.Plugins.Audio.AudioFormat.operator ==(Flyback.Plugins.Audio.AudioFormat left, Flyback.Plugins.Audio.AudioFormat right) -> bool
+static Flyback.Plugins.Hosting.LoadedPlugin.operator !=(Flyback.Plugins.Hosting.LoadedPlugin? left, Flyback.Plugins.Hosting.LoadedPlugin? right) -> bool
+static Flyback.Plugins.Hosting.LoadedPlugin.operator ==(Flyback.Plugins.Hosting.LoadedPlugin? left, Flyback.Plugins.Hosting.LoadedPlugin? right) -> bool
+static Flyback.Plugins.Hosting.PluginCatalog.Empty.get -> Flyback.Plugins.Hosting.PluginCatalog!
+static Flyback.Plugins.Hosting.PluginHost.DefaultDirectory.get -> string!
+static Flyback.Plugins.Hosting.PluginHost.Load() -> Flyback.Plugins.Hosting.PluginCatalog!
+static Flyback.Plugins.Hosting.PluginHost.Load(string! directory) -> Flyback.Plugins.Hosting.PluginCatalog!
+static Flyback.Plugins.Hosting.PluginProblem.operator !=(Flyback.Plugins.Hosting.PluginProblem? left, Flyback.Plugins.Hosting.PluginProblem? right) -> bool
+static Flyback.Plugins.Hosting.PluginProblem.operator ==(Flyback.Plugins.Hosting.PluginProblem? left, Flyback.Plugins.Hosting.PluginProblem? right) -> bool
+static Flyback.Plugins.Midi.MidiMessage.operator !=(Flyback.Plugins.Midi.MidiMessage left, Flyback.Plugins.Midi.MidiMessage right) -> bool
+static Flyback.Plugins.Midi.MidiMessage.operator ==(Flyback.Plugins.Midi.MidiMessage left, Flyback.Plugins.Midi.MidiMessage right) -> bool
+static Flyback.Plugins.Midi.MidiMessages.Of(byte status, byte first, byte second) -> Flyback.Plugins.Midi.MidiMessage?
+static Flyback.Plugins.Midi.MidiPortInfo.operator !=(Flyback.Plugins.Midi.MidiPortInfo left, Flyback.Plugins.Midi.MidiPortInfo right) -> bool
+static Flyback.Plugins.Midi.MidiPortInfo.operator ==(Flyback.Plugins.Midi.MidiPortInfo left, Flyback.Plugins.Midi.MidiPortInfo right) -> bool
+static Flyback.Plugins.Midi.MidiPorts.Named(System.Collections.Generic.IEnumerable<string!>! names) -> System.Collections.Generic.IReadOnlyList<Flyback.Plugins.Midi.MidiPortInfo>!
+static Flyback.Plugins.PluginInfo.operator !=(Flyback.Plugins.PluginInfo? left, Flyback.Plugins.PluginInfo? right) -> bool
+static Flyback.Plugins.PluginInfo.operator ==(Flyback.Plugins.PluginInfo? left, Flyback.Plugins.PluginInfo? right) -> bool
+static Flyback.Plugins.Settings.SettingField.Pick.operator !=(Flyback.Plugins.Settings.SettingField.Pick? left, Flyback.Plugins.Settings.SettingField.Pick? right) -> bool
+static Flyback.Plugins.Settings.SettingField.Pick.operator ==(Flyback.Plugins.Settings.SettingField.Pick? left, Flyback.Plugins.Settings.SettingField.Pick? right) -> bool
+static Flyback.Plugins.Settings.SettingField.Switch.Spell(bool on) -> string!
+static Flyback.Plugins.Settings.SettingField.Switch.operator !=(Flyback.Plugins.Settings.SettingField.Switch? left, Flyback.Plugins.Settings.SettingField.Switch? right) -> bool
+static Flyback.Plugins.Settings.SettingField.Switch.operator ==(Flyback.Plugins.Settings.SettingField.Switch? left, Flyback.Plugins.Settings.SettingField.Switch? right) -> bool
+static Flyback.Plugins.Settings.SettingField.Text.operator !=(Flyback.Plugins.Settings.SettingField.Text? left, Flyback.Plugins.Settings.SettingField.Text? right) -> bool
+static Flyback.Plugins.Settings.SettingField.Text.operator ==(Flyback.Plugins.Settings.SettingField.Text? left, Flyback.Plugins.Settings.SettingField.Text? right) -> bool
+static Flyback.Plugins.Settings.SettingField.operator !=(Flyback.Plugins.Settings.SettingField? left, Flyback.Plugins.Settings.SettingField? right) -> bool
+static Flyback.Plugins.Settings.SettingField.operator ==(Flyback.Plugins.Settings.SettingField? left, Flyback.Plugins.Settings.SettingField? right) -> bool
+static Flyback.Plugins.Settings.SettingOption.operator !=(Flyback.Plugins.Settings.SettingOption left, Flyback.Plugins.Settings.SettingOption right) -> bool
+static Flyback.Plugins.Settings.SettingOption.operator ==(Flyback.Plugins.Settings.SettingOption left, Flyback.Plugins.Settings.SettingOption right) -> bool
+static Flyback.Plugins.Settings.SettingValues.None.get -> Flyback.Plugins.Settings.SettingValues!
+virtual Flyback.Plugins.Assist.PatchEvent.EqualityContract.get -> System.Type!
+virtual Flyback.Plugins.Assist.PatchEvent.Equals(Flyback.Plugins.Assist.PatchEvent? other) -> bool
+virtual Flyback.Plugins.Assist.PatchEvent.PrintMembers(System.Text.StringBuilder! builder) -> bool
+virtual Flyback.Plugins.Audio.AudioCallback.Invoke(System.Span<float> interleavedStereo) -> void
+virtual Flyback.Plugins.Midi.MidiCallback.Invoke(Flyback.Plugins.Midi.MidiMessage message) -> void
+virtual Flyback.Plugins.Settings.SettingField.EqualityContract.get -> System.Type!
+virtual Flyback.Plugins.Settings.SettingField.Equals(Flyback.Plugins.Settings.SettingField? other) -> bool
+virtual Flyback.Plugins.Settings.SettingField.PrintMembers(System.Text.StringBuilder! builder) -> bool
+~override Flyback.Plugins.Assist.AssistantSenses.Equals(object obj) -> bool
+~override Flyback.Plugins.Assist.AssistantSenses.ToString() -> string
+~override Flyback.Plugins.Audio.AudioFormat.Equals(object obj) -> bool
+~override Flyback.Plugins.Audio.AudioFormat.ToString() -> string
+~override Flyback.Plugins.Midi.MidiMessage.Equals(object obj) -> bool
+~override Flyback.Plugins.Midi.MidiMessage.ToString() -> string
+~override Flyback.Plugins.Midi.MidiPortInfo.Equals(object obj) -> bool
+~override Flyback.Plugins.Midi.MidiPortInfo.ToString() -> string
+~override Flyback.Plugins.Settings.SettingOption.Equals(object obj) -> bool
+~override Flyback.Plugins.Settings.SettingOption.ToString() -> string

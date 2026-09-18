@@ -50,10 +50,13 @@
         patch   never moves, since a fix that changes no signature changes
                 nothing a plugin was compiled against
 
-      tests/Flyback.Plugins.Tests/snapshots holds that surface written down, one
-      file for each of the two, with this number on its first line. A change to
-      either fails ContractSurfaceTests until the file is approved again, so
-      the question of which number moves is asked in the commit that moves it.
+      PublicAPI.Shipped.txt beside each of the two projects is that surface as
+      the last release offered it, and PublicAPI.Unshipped.txt is what has
+      changed since. Neither project builds until a change to its surface is
+      written into the second file (the error names the line), so the question
+      of which number moves is asked in the commit that moves it: the minor
+      with the first line added since a release, the major with the first line
+      marked *REMOVED*. A release moves what is unshipped into what is shipped.
     -->
     <PluginContractVersion>1.0.0</PluginContractVersion>
   </PropertyGroup>

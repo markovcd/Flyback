@@ -86,15 +86,23 @@ plugin's assembly says it referenced — the compiler wrote it down, so a plugin
 declares nothing — and a plugin from another major, or from a later minor, is a
 line in `PluginCatalog.Problems` saying which of the two needs replacing.
 
-**The surface is approved as text.** `ContractSurfaceTests` writes out everything
-public in the two assemblies, one member to a line, with the contract version on
-the first line, and fails until a change is approved. It records what a signature
-does not: the number behind each enum member, the value of each constant and the
-default of each optional parameter, because the compiler copies all three into
-the plugin. `Microsoft.CodeAnalysis.PublicApiAnalyzers` does most of this and was
-passed over: approving a snapshot is something this repository already does for
-shaders and pictures, and an analyzer is a package in the one project
-[0019](0019-no-third-party-dependencies-in-the-engine.md) keeps free of them.
+**The surface is written down, and the build holds the code to it.**
+`Microsoft.CodeAnalysis.PublicApiAnalyzers` keeps two files beside each contract
+project: `PublicAPI.Shipped.txt` is the surface as the last release offered it,
+and `PublicAPI.Unshipped.txt` is what has changed since, with anything taken away
+marked `*REMOVED*`. A public member in neither is a build error that names the
+line to add. The files record what a signature does not — the number behind each
+enum member, the value of each constant, the default of each optional parameter —
+because the compiler copies all three into the plugin. So the second file is the
+answer to which number moves: the minor with the first line added since a
+release, the major with the first `*REMOVED*`. A release moves what is unshipped
+into what is shipped.
+
+It is a package in the one project
+[0019](0019-no-third-party-dependencies-in-the-engine.md) keeps free of them, and
+is let in on two grounds. It is Microsoft's, from the compiler's own repository.
+And it runs in the compiler and is gone from what is built: Core still references
+nothing outside the BCL, which is what that decision was protecting.
 
 **What may change without a new major:**
 
@@ -102,8 +110,8 @@ shaders and pictures, and an analyzer is a package in the one project
   class used as one — gains members freely.
 - *An interface a plugin implements* — `IAudioOutput`, `IMidiInput`,
   `ISecretStore`, `IPatchAssistant` — gains a member only with a default body, or
-  as a second interface the host looks for with `is`. The snapshot marks such a
-  member `default`.
+  as a second interface the host looks for with `is`. The file does not say which
+  members have a body, so this one is a person's to check.
 - *A record's positional parameters are closed.* An optional one added to the end
   is a different constructor, and the old one is gone. What is new is an init
   property, as it has been on `NodeDef` and `EmitContext` since
@@ -134,7 +142,7 @@ assistants in the box would stop compiling.
 
 **Shape is checked; behavior is not.** A module that lowers to something
 different, a default that means something new, a preset's built-in that gained a
-port in the middle: none of these changes a line of the snapshot in a way that
+port in the middle: none of these changes a line of either file in a way that
 says "breaking", and a person still has to say so.
 
 Only a folder's entry assemblies are asked. A plugin's private dependency that was
@@ -143,7 +151,7 @@ itself built against the contract is not, and would fail the old way.
 No plugin built against an earlier contract is kept and loaded by the tests,
 because there is not one yet: 1.0.0 is the first. The release that ships it is the
 first binary worth freezing, and a test that loads it with every method prepared
-is what would turn "the snapshot did not change" into "the old plugin still
+is what would turn "the surface did not change" into "the old plugin still
 runs".
 
 What [0026](0026-modules-from-plugins-with-provenance-in-the-file.md) left open is
