@@ -4,7 +4,10 @@
 [0026](0026-modules-from-plugins-with-provenance-in-the-file.md), which extends
 plugins to modules once a patch records where its modules came from, and by
 [0028](0028-publish-one-platform-at-a-time.md), which decides which of them ship
-where
+where, and by
+[0102](0102-a-plugin-is-compiled-against-a-contract-with-a-version-of-its-own.md),
+which takes what runs a patch out of what a plugin is compiled against and gives
+the rest a version
 
 ## Context
 

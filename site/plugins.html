@@ -625,6 +625,15 @@ em.UnitWrite(cell, smoothed);           <span class="c">// what it holds next ti
     is for, and leaves it out of builds for anywhere else. A module plugin wants no platform at all, so that
     it goes everywhere.</p>
 
+    <p>What you compiled against has a version of its own, apart from the application's.
+    <code>Flyback.Core</code> and <code>Flyback.Plugins</code> share one number — the contract's — and it
+    moves only when something a plugin can see does: the major when anything was removed or changed, the
+    minor when something was added. The compiler stamps that number into your assembly, and the host reads
+    it back before running any of your code. A plugin from the same major, built against this minor or an
+    earlier one, loads in every release that offers it; anything else is refused with a line in About
+    saying which side needs replacing, rather than failing later on whichever thread first reached for what
+    had gone.</p>
+
     <div class="note">
       <span class="tag">Two things that catch people out</span>
       <p><strong>Plugins are read once, at startup.</strong> Installing one means restarting the
@@ -659,6 +668,8 @@ em.UnitWrite(cell, smoothed);           <span class="c">// what it holds next ti
           <tr><td>A preset name already offered</td><td>The later preset is ignored</td></tr>
           <tr><td>A sound backend, MIDI input, assistant or secret store id already registered</td><td>The later one is ignored</td></tr>
           <tr><td>A stray host-owned dll in your folder</td><td>Ignored, and the host's copy used</td></tr>
+          <tr><td>Built against an earlier major of the contract</td><td>The plugin is ignored, and About says it needs rebuilding</td></tr>
+          <tr><td>Built against a later contract than this release offers</td><td>The plugin is ignored, and About says it needs a newer Flyback</td></tr>
           <tr><td>A throw from <code>Register</code> or a preset</td><td>Reported; everything else carries on</td></tr>
         </tbody>
       </table>

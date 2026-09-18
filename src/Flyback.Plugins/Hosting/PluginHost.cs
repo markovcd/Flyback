@@ -14,8 +14,9 @@ namespace Flyback.Plugins.Hosting;
 /// <remarks>
 /// One folder per plugin under <c>plugins/</c>, each holding the plugin assembly,
 /// its <c>.deps.json</c> and its private dependencies. Nothing here throws: a
-/// plugin that is missing, broken, built against another runtime or simply hostile
-/// is a line in <see cref="PluginCatalog.Problems"/>.
+/// plugin that is missing, broken, built against another runtime or against a
+/// contract this host does not offer (<see cref="ContractVersion"/>), or simply
+/// hostile is a line in <see cref="PluginCatalog.Problems"/>.
 /// </remarks>
 public static class PluginHost
 {
@@ -67,6 +68,14 @@ public static class PluginHost
         {
             var assembly = TryLoad(context, entry, problems);
             if (assembly is null) continue;
+
+            // Before a type of it is looked at: loading has bound nothing yet, so
+            // a plugin refused here has run none of its code and named none of ours.
+            if (ContractVersion.Refusal(assembly) is { } refusal)
+            {
+                problems.Add(new PluginProblem(Path.GetFileName(entry), refusal));
+                continue;
+            }
 
             foreach (var type in PluginTypes(assembly, problems))
                 Instantiate(type, entry, plugins, registry, problems);

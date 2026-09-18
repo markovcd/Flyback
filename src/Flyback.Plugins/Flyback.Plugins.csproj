@@ -4,6 +4,9 @@
     <RootNamespace>Flyback.Plugins</RootNamespace>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <NoWarn>$(NoWarn);CS1591;CS1573</NoWarn>
+
+    <!-- Half of what a plugin is compiled against; see Directory.Build.props. -->
+    <AssemblyVersion>$(PluginContractVersion)</AssemblyVersion>
   </PropertyGroup>
 
   <ItemGroup>

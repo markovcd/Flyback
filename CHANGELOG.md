@@ -6,6 +6,9 @@
 - Flyback updates itself: it checks for a signed release at startup, downloads it in the background, and installs it the next time it starts. On by default, in the new Settings → Updates tab.
 - Flyback counts how it is used — the version, the operating system, which plugins and sound backend are in use, how many of each kind of module a patch has when it plays, and which assistant is asked. Nothing about you, your machine or your patches. On by default, in the new Settings → Usage tab.
 
+### Plugins
+- A plugin built for a Flyback that has since changed what plugins are built against is left out at startup, and About says whether the plugin or Flyback is the one to update.
+
 ### Modules
 - Added Stroke (a drum envelope counted off the beat), Fade (brings a part in as a level rises), Wander (a slow random value) and Drum (a kick or tom from one envelope) to Voice.
 - Added Desk, a four-channel stereo mixer with a trim that chains into bigger ones.

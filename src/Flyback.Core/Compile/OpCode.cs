@@ -6,19 +6,26 @@ namespace Flyback.Core.Compile;
 /// is a flat, allocation-free list that can be walked per pixel — and each op
 /// maps to one line of shader code.
 /// </summary>
+/// <remarks>
+/// Numbered by hand, and a number once given is never given to anything else. A
+/// module names these, and the compiler writes the number rather than the name
+/// into whatever it builds — so an op slipped in among the others would renumber
+/// every one after it in the host, and in no plugin that was already built. New
+/// ops take the next number, wherever in the list they read best.
+/// </remarks>
 public enum OpCode : byte
 {
     /// <summary>out = K</summary>
-    Const,
+    Const = 0,
 
     /// <summary>out = pixel x coordinate</summary>
-    LoadX,
+    LoadX = 1,
 
     /// <summary>out = pixel y coordinate</summary>
-    LoadY,
+    LoadY = 2,
 
     /// <summary>out = current time in seconds</summary>
-    LoadT,
+    LoadT = 3,
 
     /// <summary>out = how far x reaches, which is half the frame's width in y's units</summary>
     /// <remarks>
@@ -28,7 +35,7 @@ public enum OpCode : byte
     /// constant, because one program is drawn at preview size, at export size and
     /// into a movie.
     /// </remarks>
-    LoadAspect,
+    LoadAspect = 4,
 
     /// <summary>out = live input K, which is 0 wherever nothing is playing one</summary>
     /// <remarks>
@@ -46,54 +53,54 @@ public enum OpCode : byte
     /// honest answer — nobody was playing.
     /// </para>
     /// </remarks>
-    LoadLive,
+    LoadLive = 5,
 
     /// <summary>out = a</summary>
-    Copy,
+    Copy = 6,
 
     // --- unary ---
-    Neg,
-    Abs,
-    Sin,
-    Cos,
-    Tan,
-    Sqrt,
-    Floor,
-    Ceil,
-    Fract,
-    Sign,
-    Exp,
-    Log,
+    Neg = 7,
+    Abs = 8,
+    Sin = 9,
+    Cos = 10,
+    Tan = 11,
+    Sqrt = 12,
+    Floor = 13,
+    Ceil = 14,
+    Fract = 15,
+    Sign = 16,
+    Exp = 17,
+    Log = 18,
 
     // --- binary ---
-    Add,
-    Sub,
-    Mul,
-    Div,
-    Mod,
-    Pow,
-    Min,
-    Max,
-    Atan2,
+    Add = 19,
+    Sub = 20,
+    Mul = 21,
+    Div = 22,
+    Mod = 23,
+    Pow = 24,
+    Min = 25,
+    Max = 26,
+    Atan2 = 27,
 
     /// <summary>out = b &lt; a ? 0 : 1 (GLSL step(edge: a, x: b))</summary>
-    Step,
+    Step = 28,
 
     /// <summary>out = sqrt(a*a + b*b)</summary>
-    Hypot,
+    Hypot = 29,
 
     // --- ternary ---
     /// <summary>out = clamp(a, b, c)</summary>
-    Clamp,
+    Clamp = 30,
 
     /// <summary>out = a + (b - a) * c</summary>
-    Mix,
+    Mix = 31,
 
     /// <summary>out = smoothstep(edge0: a, edge1: b, x: c)</summary>
-    Smoothstep,
+    Smoothstep = 32,
 
     /// <summary>out = value noise at (a, b, c)</summary>
-    Noise3,
+    Noise3 = 33,
 
     // --- stateful: these remember something from the last evaluation, and are
     //     the only ops that do. The video path renders pixels in parallel and
@@ -105,14 +112,14 @@ public enum OpCode : byte
     /// feedback comb: the delay itself, and the building block of a reverb. K is
     /// the longest delay this instance will ask for, which sizes the buffer.
     /// </summary>
-    Delay,
+    Delay = 34,
 
     /// <summary>
     /// out = line[now - c] - b * v, where v = a + b * line[now - c] is what gets
     /// written. A Schroeder allpass: it smears a signal in time without coloring
     /// it, which is what turns a bank of combs into a reverb rather than an echo.
     /// </summary>
-    Allpass,
+    Allpass = 35,
 
     /// <summary>
     /// out = fract(phase + (a - a_previous) * b) + c, where phase is carried from
@@ -130,7 +137,7 @@ public enum OpCode : byte
     /// evaluation per pixel, with no previous sample to carry anything from.
     /// </para>
     /// </summary>
-    Phase,
+    Phase = 36,
 
     /// <summary>
     /// out = the value slot K held when the previous evaluation finished, and
@@ -148,14 +155,14 @@ public enum OpCode : byte
     /// these two is deliberately not the same.
     /// </para>
     /// </remarks>
-    UnitRead,
+    UnitRead = 37,
 
     /// <summary>
     /// slot K = a. The one op that writes no register at all, because what it
     /// writes is read by the next evaluation's <see cref="UnitRead"/>.
     /// <c>Out</c> is -1 to say so.
     /// </summary>
-    UnitWrite,
+    UnitWrite = 38,
 
     /// <summary>
     /// out = what plane K held at this pixel when the previous evaluation of it
@@ -180,13 +187,13 @@ public enum OpCode : byte
     /// <see cref="UnitRead"/>'s is and for the same reason.
     /// </para>
     /// </remarks>
-    PlaneRead,
+    PlaneRead = 39,
 
     /// <summary>
     /// plane K at this pixel = a, writing no register — <see cref="UnitWrite"/>
     /// for a plane, bounded the same way.
     /// </summary>
-    PlaneWrite,
+    PlaneWrite = 40,
 
     /// <summary>
     /// slot K = a, unbounded. <see cref="UnitWrite"/> for a cell holding the
@@ -199,7 +206,7 @@ public enum OpCode : byte
     /// left playing, and clamped it sticks — leaving every module that measures
     /// its own rate off it with a rate that grows without end.
     /// </remarks>
-    ClockWrite,
+    ClockWrite = 41,
 
     /// <summary>
     /// out = clip K at a seconds from its start, interpolated, and silence either
@@ -213,7 +220,7 @@ public enum OpCode : byte
     /// compiled with no clips reads silence, which is what the shader does and
     /// what the screen gets.
     /// </remarks>
-    Table,
+    Table = 42,
 
     /// <summary>
     /// trace K keeps a, and nothing is written to a register.
@@ -230,14 +237,14 @@ public enum OpCode : byte
     /// without it.
     /// </para>
     /// </remarks>
-    Tap,
+    Tap = 43,
 
     // --- multi-register writes: these fill out, out+1, out+2 ---
     /// <summary>(out, out+1, out+2) = hsv2rgb(a, b, c)</summary>
-    HsvToRgb,
+    HsvToRgb = 44,
 
     /// <summary>(out, out+1, out+2) = previous frame sampled at (a, b)</summary>
-    SampleFeedback,
+    SampleFeedback = 45,
 
     /// <summary>
     /// (out, out+1, out+2) = picture K sampled at (a, b), and black off its edges.
@@ -252,5 +259,5 @@ public enum OpCode : byte
     /// with black beyond — see <see cref="LoadedImage.At"/>, which is what this
     /// lowers to on the processor and what the shader agrees with.
     /// </remarks>
-    SamplePicture,
+    SamplePicture = 46,
 }

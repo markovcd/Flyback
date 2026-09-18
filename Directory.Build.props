@@ -34,6 +34,28 @@
     -->
     <IncludeSourceRevisionInInformationalVersion Condition="'$(_VersionSpecified)' != 'true'">true</IncludeSourceRevisionInInformationalVersion>
     <IncludeSourceRevisionInInformationalVersion Condition="'$(_VersionSpecified)' == 'true'">false</IncludeSourceRevisionInInformationalVersion>
+
+    <!--
+      The version of what a plugin is compiled against: the public surface of
+      Flyback.Core and Flyback.Plugins, and nothing else. Those two take it as
+      their AssemblyVersion in place of the release's, because it is what the
+      compiler stamps into a plugin and what the host reads back before loading
+      one, and a release that changed nothing a plugin can see should not look
+      like one that did.
+
+        major   something a plugin could have used was removed or changed; every
+                plugin built against the last one is refused until it is rebuilt
+        minor   something was added; a plugin built against the new one is
+                refused by a host that only has the old
+        patch   never moves, since a fix that changes no signature changes
+                nothing a plugin was compiled against
+
+      tests/Flyback.Plugins.Tests/snapshots holds that surface written down, one
+      file for each of the two, with this number on its first line. A change to
+      either fails ContractSurfaceTests until the file is approved again, so
+      the question of which number moves is asked in the commit that moves it.
+    -->
+    <PluginContractVersion>1.0.0</PluginContractVersion>
   </PropertyGroup>
 
   <!--
