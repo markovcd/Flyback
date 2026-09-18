@@ -36,9 +36,7 @@
 - Pressing Escape after "Learn MIDI controller" found no MIDI device no longer crashes.
 - A number too large for a number box — in a patch file, or typed into the text and applied — no longer crashes when its module is selected.
 - A filter, reverb, delay or loop with silence going into it no longer costs more than one with a signal. A patch with resting parts could crackle because of it.
-- Tidy no longer leaves a module at the top of a column when what feeds it is at the bottom of the one before, which could make a large patch too tall for the canvas.
-- Tidy on a patch too wide for the canvas shuts boxes until it fits and says which, instead of holding modules against the edge. A patch it cannot fit at all is left alone.
-- Tidy no longer throws one module far above a crowded column to make room for the rest, and lays the big presets out about a third shorter.
+- Tidy no longer mislays modules on a patch too tall or too wide for the canvas, and lays the big presets out about a third shorter.
 - Several other bugfixes.
 
 ## 0.3.0 — 2026-09-17
