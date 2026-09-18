@@ -105,6 +105,33 @@ internal abstract class PresetBench(ModuleCatalog modules)
         return node;
     }
 
+    /// <summary>A knob on the patch's panel, resting at <paramref name="at"/> of its turn.</summary>
+    protected PatchControl Panel(string name, float at) => b.Patch.AddControl(name, at);
+
+    /// <summary>
+    /// A socket that follows a panel knob from <paramref name="low"/> to
+    /// <paramref name="high"/>, left resting where the knob rests. A
+    /// <paramref name="low"/> over the <paramref name="high"/> turns the knob round.
+    /// </summary>
+    protected void Follows(NodeInstance node, int port, PatchControl knob, float low, float high)
+    {
+        var link = new ControlLink(knob.Id, low, high);
+
+        node.InputValues[port] = link.At(knob.Value);
+        ControlMap.Link(node, port, link);
+    }
+
+    /// <summary>
+    /// A panel knob as a signal, for what a knob has to reach through arithmetic: a
+    /// Value whose one socket follows it.
+    /// </summary>
+    protected NodeInstance Dial(PatchControl knob, float low, float high)
+    {
+        var dial = b.Add("value");
+        Follows(dial, 0, knob, low, high);
+        return dial;
+    }
+
     /// <summary>The Stroke's second output: how far through the stroke it is.</summary>
     protected const int StrokePhase = 1;
 

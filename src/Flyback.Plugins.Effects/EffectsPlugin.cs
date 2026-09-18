@@ -89,6 +89,13 @@ public sealed class EffectsPlugin : IFlybackPlugin
                 + "its own phase, an echo that darkens every time round, voices that push each other "
                 + "down, and a picture steered by where it was bright a frame ago.",
                 PresetKind.Showcase),
+            new PatchPreset(
+                DubPreset.Name,
+                DubPreset.Build,
+                "Dub techno to perform: a kick, hats and a sub that run on their own, four keys of "
+                + "chord to hold over them, and eight panel knobs — filter, echo, room, drums, bass — "
+                + "that move the rings on the screen as they move the sound.",
+                PresetKind.Showcase),
         ]);
     }
 }
