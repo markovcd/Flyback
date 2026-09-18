@@ -101,8 +101,9 @@
     apart — it can change from one release to the next without a plugin built against an older one
     noticing.</p>
 
-    <p>Both are left on disk rather than folded into a single-file bundle when the shell is published, so you
-    can build a plugin against the exact version a given release shipped.</p>
+    <p>All three are left on disk beside the executable rather than folded into it, so the two you need are
+    there to compile against. What you build keeps loading in later releases for as long as the contract
+    it was built against is still offered — see <a href="#install">Building and installing</a>.</p>
 
     <figure>
       <svg viewBox="0 0 700 260" width="100%" role="img" aria-label="Flyback.exe loads three plugin folders, each into its own load context; Flyback.Core and Flyback.Plugins resolve back to the host's copy.">
@@ -685,6 +686,14 @@ em.UnitWrite(cell, smoothed);           <span class="c">// what it holds next ti
     <p>Test against the real plugin loaded off disk, not a stub — that way the thing under test is the thing
     that has to work: a separate assembly, its own dependencies, and a deps file the resolver has to read.
     Add a <code>PluginProject</code> item to the test project and load the catalog the way the app does.</p>
+
+    <p>The test project references <code>Flyback.Engine</code> as well, which the plugin never does. A
+    plugin says what a module lowers to; finding out what that sounds like means compiling and running it,
+    and that is the engine's half. Keeping the reference in the tests is what lets them use it without the
+    plugin being bound to a release.</p>
+
+    <pre><code>&lt;<span class="k">ProjectReference</span> Include=<span class="s">"..\..\src\Flyback.Plugins\Flyback.Plugins.csproj"</span> /&gt;
+&lt;<span class="k">ProjectReference</span> Include=<span class="s">"..\..\src\Flyback.Engine\Flyback.Engine.csproj"</span> /&gt;</code></pre>
 
     <p>To drive a module sample by sample, feed the signal in through the Coordinates module's <code>x</code>
     and the clock through <code>t</code>. <code>Evaluate</code> takes both per evaluation, which makes it the
