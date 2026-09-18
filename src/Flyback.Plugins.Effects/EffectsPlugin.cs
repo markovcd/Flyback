@@ -48,8 +48,9 @@ public sealed class EffectsPlugin : IFlybackPlugin
             new PatchPreset(
                 AcidPreset.Name,
                 AcidPreset.Build,
-                "A whole acid techno track: a 303 line through a resonant filter into two "
-                + "delays, on sequences that take forty-two bars to come round.",
+                "A whole acid techno track: a hundred and twenty-eight bars of a 303 line in two "
+                + "themes, with accents and slides through a four-pole filter, over a galloping "
+                + "bass — three builds, a breakdown, and a second 303 that answers the first.",
                 PresetKind.Showcase),
             new PatchPreset(
                 MyceliumPreset.Name,

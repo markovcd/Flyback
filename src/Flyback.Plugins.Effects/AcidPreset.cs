@@ -4,12 +4,26 @@ using System.Text.Json.Nodes;
 namespace Flyback.Plugins.Effects;
 
 /// <summary>
-/// A whole acid techno track: one sequencer through a resonant filter with an
-/// envelope on its cutoff, a sub bass under it, a four-on-the-floor kick, hats
-/// and a clap, into a ping-pong delay — and a picture driven by the same three
-/// signals that drive the sound.
+/// A whole acid techno track — a hundred and twenty-eight bars of a 303 line in two
+/// themes, a galloping bass under it, a breakdown, three builds and a second 303 that
+/// answers the first — and a picture driven by the same signals that drive the sound.
 /// </summary>
-internal static class AcidPreset
+/// <remarks>
+/// The line is the instrument the music is named after, so it is built the way the
+/// instrument is rather than the way a synth voice usually is. A step can be accented
+/// and can slide into the next, and both are in the pattern rather than on a knob. The
+/// filter is two Filters in a row, which is four poles. Its cutoff is counted in octaves
+/// and raised to a power of two at the end, so the envelope sweeps the way an ear hears
+/// a sweep. And an accent does not only open the filter further: it charges a Slew that
+/// takes a quarter of a second to fall, so accents close together climb on each other's
+/// backs, which is the wow a run of them makes.
+/// <para>
+/// The harmony is a root a bar, added to everything pitched before its Note, so a change
+/// of chord moves the line, the bass and the pad in parallel. That is how the machine
+/// itself transposes a pattern, and it is why no part here needs a scale.
+/// </para>
+/// </remarks>
+internal sealed class AcidPreset : PresetBench
 {
     public const string Name = "Acid";
 
@@ -18,37 +32,18 @@ internal static class AcidPreset
 
     private const string Picture = "flyback.picture";
 
-    /// <summary>
-    /// How many sixteenths of a beat each delay is. Left is dotted-eighth and
-    /// right is a straight eighth, which is the pairing that walks rather than
-    /// bouncing evenly.
-    /// </summary>
-    private const float LeftSixteenths = 3f;
-
-    private const float RightSixteenths = 2f;
-
-    /// <summary>
-    /// The modules this borrows, named by id rather than by type.
-    /// </summary>
+    /// <summary>The modules this borrows, named by id rather than by type.</summary>
     private const string FilterType = "flyback.voice.filter";
 
     private const string DriveType = "flyback.voice.drive";
 
-    private const string RandomType = "flyback.voice.random";
+    private const string SlewType = "flyback.voice.slew";
 
-    private const string HissType = "flyback.voice.hiss";
+    private const string DecayType = "flyback.voice.decay";
 
-    private const string TransformType = "space.transform";
+    private const string StrokeType = "flyback.voice.stroke";
 
-    private const int TransformZoom = 2;
-
-    private const int TransformAngle = 3;
-
-    private const string WanderType = "flyback.voice.wander";
-
-    private const string DeskType = "math.desk";
-
-    private const string TrailsType = "feedback.trails";
+    private const string SupersawType = "flyback.voice.osc";
 
     private const string FractalType = "flyback.picture.fractal";
 
@@ -60,6 +55,53 @@ internal static class AcidPreset
     private const string FractalState = "fractal";
 
     private const string OctaveField = "octaves";
+
+    /// <summary>A Filter's third output: what is over the cutoff.</summary>
+    private const int High = 2;
+
+    /// <summary>
+    /// How hard a step of the line is played. Both are over a half, which is where a
+    /// Decay takes a gate to have opened, and an accent is told from a plain note by
+    /// which side of the gap between them the gate is on.
+    /// </summary>
+    private const float Accent = 1f;
+
+    private const float Plain = 0.7f;
+
+    /// <summary>One step of a 303 pattern: a pitch, how hard, and whether it slides into the next.</summary>
+    private readonly record struct Played(float Note, float Level, bool Slides = false);
+
+    private static Played Hit(float note, bool slides = false) => new(note, Plain, slides);
+
+    private static Played Hard(float note, bool slides = false) => new(note, Accent, slides);
+
+    /// <summary>A rest keeps a pitch, so nothing jumps while it is silent.</summary>
+    private static Played Rest(float note) => new(note, 0f);
+
+    /// <summary>
+    /// The first theme: a bar that sits on a low A and keeps leaving it — up an octave
+    /// and sliding back, a flat second on the third beat, which is the note that makes
+    /// it acid rather than blues.
+    /// </summary>
+    private static readonly Played[] First =
+    [
+        Hard(45f), Hit(45f), Hit(57f, slides: true), Hit(55f),
+        Hard(45f), Rest(45f), Hit(48f), Hit(45f, slides: true),
+        Hard(46f), Hit(45f), Hard(52f), Rest(52f),
+        Hit(45f), Hit(43f, slides: true), Hard(45f), Hit(48f),
+    ];
+
+    /// <summary>
+    /// The second: busier and higher, with no rest until the second beat is over and the
+    /// flat second an octave up, slid into from the note under it.
+    /// </summary>
+    private static readonly Played[] Second =
+    [
+        Hard(45f), Hit(57f), Hit(45f), Hard(52f, slides: true),
+        Hit(50f), Hit(45f), Hard(48f), Rest(48f),
+        Hit(45f), Hard(57f, slides: true), Hit(58f), Hit(45f),
+        Hard(55f), Hit(52f, slides: true), Hit(55f), Hit(45f),
+    ];
 
     /// <summary>
     /// How many octaves the field builds. A choice on the node rather than a
@@ -86,599 +128,565 @@ internal static class AcidPreset
             throw new InvalidOperationException(
                 $"it needs the Picture plugin ({Picture}), which is not installed.");
 
-        var b = new PatchBuilder(modules);
+        return new AcidPreset(modules).Assemble();
+    }
 
-        // --- the clock ---------------------------------------------------------
+    private AcidPreset(ModuleCatalog modules)
+        : base(modules)
+    {
+    }
 
-        // Here for the things that have to be told to move and are not an 'in':
-        // the Fractal's z, three drift rates, and the hash the hats are made of.
-        var clock = b.Add("time");
+    /// <summary>A Mix between two sources, read at the same output of each.</summary>
+    private NodeInstance Either(NodeInstance a, NodeInstance c, NodeInstance t, int from = 0)
+    {
+        var mix = b.Add("math.mix");
+        b.Wire(a, from, mix, 0).Wire(c, from, mix, 1).Wire(t, 0, mix, 2);
+        return mix;
+    }
 
-        // 130 a minute, which is where this music lives. Everything timed in the
-        // patch is one of these two numbers and nothing is typed in seconds.
-        var tempo = b.Add(NodeCatalog.TempoTypeId, (0, 130f));
-        var sixteenths = b.Add("math.mul", (1, 4f));
+    /// <summary>Two to the power of a signal: octaves turned into a ratio.</summary>
+    private NodeInstance Doublings(NodeInstance octaves)
+    {
+        var ratio = b.Add("math.pow", (0, 2f));
+        b.Wire(octaves, 0, ratio, 1);
+        return ratio;
+    }
 
-        // Half of that, which is what the bass runs on. Taken off the sixteenths
-        // rather than off the tempo again, so the two rates are one number apart
-        // by construction and cannot be left disagreeing.
-        var eighths = b.Add("math.mul", (1, 0.5f));
+    /// <summary>
+    /// One 303 pattern as the two Sequencers it takes: the notes, and the marks that say
+    /// how they are joined.
+    /// </summary>
+    /// <remarks>
+    /// A slide is two things a step apart. The step that slides holds its gate the whole
+    /// way into the next, and the step it slides into arrives by glide and is not struck.
+    /// So the marks carry both: a step's volume is whether it slides, and is wired to the
+    /// notes' gate length, and its value is whether the step before it did — the same
+    /// list turned by one, which is worked out here so that it is written once.
+    /// <para>
+    /// The marks' value is read rather than its gate, because a gate dips at every step
+    /// and the glide is wanted exactly there.
+    /// </para>
+    /// </remarks>
+    private (NodeInstance Notes, NodeInstance Marks) Pattern(NodeInstance beats, Played[] steps)
+    {
+        var notes = b.Add("seq.notes", (1, 4f), (3, 0f));
+        StepsExtra.Set(notes, [.. steps.Select(s => new Step(s.Note, 1f, s.Level))]);
 
-        b.Wire(tempo, 0, sixteenths, 0)
-         .Wire(sixteenths, 0, eighths, 0);
-
-        b.Group("Clock", clock, tempo, sixteenths, eighths);
-
-        // --- the acid line -----------------------------------------------------
-
-        // Two bars of sixteenths in A minor pentatonic, and the second is not the
-        // first. The volumes are the accents — 0.95 opens the filter, 0.6 does
-        // not, and a rest leaves the pitch where it was.
-        var line = b.Add("seq.notes", (2, 0.5f), (3, 0.02f));
-        StepsExtra.Set(line,
+        var marks = b.Add("seq.values", (1, 4f), (2, 1f), (3, 0f));
+        StepsExtra.Set(marks,
         [
-            new Step(45f, 1f, 0.95f), new Step(45f, 1f, 0.6f),
-            new Step(57f, 1f, 0.9f), new Step(45f, 1f, 0.6f),
-            new Step(48f, 1f, 0.95f), new Step(45f, 1f, 0f),
-            new Step(52f, 1f, 0.85f), new Step(45f, 1f, 0.6f),
-            new Step(43f, 1f, 0.95f), new Step(45f, 1f, 0.6f),
-            new Step(55f, 1f, 0.9f), new Step(48f, 1f, 0.6f),
-            new Step(45f, 1f, 0.95f), new Step(52f, 1f, 0f),
-            new Step(45f, 1f, 0.7f), new Step(57f, 1f, 0.9f),
-
-            new Step(45f, 1f, 0.9f), new Step(57f, 1f, 0.6f),
-            new Step(45f, 1f, 0.95f), new Step(57f, 1f, 0.6f),
-            new Step(48f, 1f, 0.9f), new Step(60f, 1f, 0.85f),
-            new Step(48f, 1f, 0f), new Step(45f, 1f, 0.6f),
-            new Step(43f, 1f, 0.95f), new Step(55f, 1f, 0.6f),
-            new Step(43f, 1f, 0.9f), new Step(50f, 1f, 0.6f),
-            new Step(45f, 1f, 0.95f), new Step(45f, 1f, 0f),
-            new Step(57f, 1f, 0.85f), new Step(52f, 1f, 0.7f),
+            .. steps.Select((s, i) => new Step(
+                steps[(i + steps.Length - 1) % steps.Length].Slides ? 1f : 0f,
+                1f,
+                s.Slides ? 1f : 0f)),
         ]);
 
-        var pitch = b.Add("audio.note");
-        var osc = b.Add("osc.saw", (3, 0.9f));
+        b.Wire(beats, 0, notes, 0)
+         .Wire(beats, 0, marks, 0)
+         .Wire(Span(marks, 0f, 1f, 0.55f, 1f, 1), 0, notes, 2);
 
-        // Almost flat, which is the point: a 303's volume envelope barely moves
-        // and everything you hear happening to a note is the filter.
-        var level = b.Add(NodeCatalog.AdsrTypeId, (1, -3f), (2, -1.1f), (3, 0.75f), (4, -1.7f));
+        return (notes, marks);
+    }
 
-        // And the one that does the work. Short, and down to almost nothing, so
-        // the cutoff falls away under every note.
-        var shape = b.Add(NodeCatalog.AdsrTypeId, (1, -3.2f), (2, -0.95f), (3, 0.05f), (4, -1.6f));
+    private Patch Assemble()
+    {
+        // --- the clock -------------------------------------------------------
 
-        // The hand on the knob: half a minute a cycle, sharing no factor with
-        // the bar, so the track never arrives at the same place twice.
-        var sweep = b.Add("osc.sine", (1, 0.045f));
+        // A hundred and thirty a minute, which is where this music lives. Every part
+        // reads the count of beats rather than the clock, so the tempo is this one knob.
+        var beat = b.Add(NodeCatalog.TempoTypeId, (0, 130f));
+        var clock = b.Add(NodeCatalog.TimeTypeId);
+        var beats = Product(clock, beat);
 
-        // A second hand on a second knob, at a rate that shares nothing with the
-        // first: nearly a minute against twenty-two seconds, so the two are never
-        // in the same relation twice and the line keeps arriving somewhere new.
-        var slower = b.Add("osc.sine", (1, 0.017f));
+        // Eight bars is one step of the arrangement.
+        var phraseGone = Fraction(Times(beats, 1f / 32f));
 
-        // Seven steps against the line's thirty-two, carrying how far the filter
-        // envelope may open: the two share no factor, so the pairing takes
-        // fourteen bars to come round.
-        //
-        // Wired into the Remap's 'out high' rather than multiplied onto the
-        // result, because that socket is what the envelope's full travel means.
-        var mutate = b.Add("seq.values", (2, 0.9f), (3, 0.2f));
-        StepsExtra.Set(mutate,
+        Box("Clock");
+
+        // --- the arrangement -------------------------------------------------
+
+        // One number for each eight bars saying how much track there is, and each part
+        // decides below how much of it it needs. An intro and a build, four phrases of
+        // the first drop, a phrase stripped back and a second build, the second drop, a
+        // breakdown with no drums at all, a third build, three phrases of everything and
+        // the way out. The builds are all at six tenths, which is how they are known.
+        var song = b.Add("seq.values", (1, 1f / 32f));
+        StepsExtra.Set(song,
         [
-            new Step(0.55f), new Step(1f), new Step(0.72f), new Step(0.3f),
-            new Step(0.92f), new Step(0.6f), new Step(0.85f),
+            new Step(0.3f), new Step(0.6f), new Step(0.8f), new Step(0.8f),
+            new Step(0.85f), new Step(0.85f), new Step(0.45f), new Step(0.6f),
+            new Step(1f), new Step(1f), new Step(0.05f), new Step(0.6f),
+            new Step(1f), new Step(1f), new Step(0.95f), new Step(0.3f),
         ]);
 
-        var reachTop = b.Add("math.remap", (1, 0f), (2, 1f), (3, 1400f), (4, 4200f));
+        // Which theme it is, a phrase at a time: the second for the back half of the
+        // first drop, and from the breakdown through the build into the last drop, so
+        // that the first theme coming back is the track coming home. A lane of its own,
+        // and a switch, because a pattern half way between two patterns is neither.
+        var theme = b.Add("seq.values", (1, 1f / 32f));
+        StepsExtra.Set(theme,
+        [
+            new Step(0f), new Step(0f), new Step(0f), new Step(0f),
+            new Step(1f), new Step(1f), new Step(0f), new Step(0f),
+            new Step(0f), new Step(0f), new Step(1f), new Step(1f),
+            new Step(1f), new Step(0f), new Step(0f), new Step(0f),
+        ]);
 
-        // The three parts of the cutoff, in hertz. The envelope is the biggest
-        // by a long way and the accent is the smallest, which is the balance
-        // that makes an accent read as emphasis rather than as a second voice.
-        var depth = b.Add("math.remap", (1, 0f), (2, 1f), (3, 0f));
-        var accent = b.Add("math.remap", (1, 0f), (2, 1f), (3, 200f), (4, 900f));
-        var knob = b.Add("math.remap", (1, -1f), (2, 1f), (3, 180f), (4, 2600f));
+        // And the hand on the cutoff knob, which is the other half of how this music is
+        // arranged: where it is left for each phrase. It gets there over six seconds and
+        // comes back over three, in decades of a second, so it is turned rather than set.
+        var knob = b.Add("seq.values", (1, 1f / 32f));
+        StepsExtra.Set(knob,
+        [
+            new Step(0.15f), new Step(0.4f), new Step(0.7f), new Step(0.85f),
+            new Step(0.7f), new Step(0.9f), new Step(0.3f), new Step(0.5f),
+            new Step(0.85f), new Step(1f), new Step(0.35f), new Step(0.5f),
+            new Step(0.9f), new Step(1f), new Step(0.8f), new Step(0.2f),
+        ]);
+        var turned = b.Add(SlewType, (1, 0.78f), (2, 0.48f));
 
-        var floor = b.Add("math.add");
-        var cutoff = b.Add("math.add");
+        // A build is a phrase at six tenths. Its second half is a ramp, which the riser,
+        // the roll and the knob all climb, and its last bar has no kick and no bass in
+        // it, so the drop lands on a bar of nothing.
+        var atLeast = b.Add("math.step", (0, 0.57f));
+        var atMost = b.Add("math.step", (1, 0.63f));
+        var building = Product(atLeast, atMost);
+        var ramp = Product(Rises(phraseGone, 0.5f, 1f), building);
+        var lastBar = b.Add("math.step", (0, 0.875f));
+        var hush = From(1f, Product(lastBar, building));
 
-        // Resonance high enough to whistle, which is the sound. Only 'low' is
-        // taken; the clap below takes 'band' off a filter of its own.
-        var filter = b.Add(FilterType);
-        var vca = b.Add("math.mul");
+        // The knob with the ramp on it, and a little of a hand that is never quite still.
+        var hand = Sum(Sum(turned, Times(ramp, 0.3f)), Wander(0.07f, 4.1f, -0.06f, 0.06f));
+
+        // The harmony, a bar at a time, in semitones from A. The first theme stays home
+        // for six bars and goes up to C and down to G to come back; the second rocks
+        // between F and G and ends on E, which wants the A.
+        var firstRoots = b.Add("seq.values", (1, 0.25f));
+        StepsExtra.Set(firstRoots,
+        [
+            new Step(0f), new Step(0f), new Step(0f), new Step(0f),
+            new Step(0f), new Step(0f), new Step(3f), new Step(-2f),
+        ]);
+        var secondRoots = b.Add("seq.values", (1, 0.25f));
+        StepsExtra.Set(secondRoots,
+        [
+            new Step(-4f), new Step(-4f), new Step(-2f), new Step(-2f),
+            new Step(-4f), new Step(-4f), new Step(-2f), new Step(-5f),
+        ]);
+
+        b.Wire(beats, 0, song, 0)
+         .Wire(beats, 0, theme, 0)
+         .Wire(beats, 0, knob, 0)
+         .Wire(knob, 0, turned, 0)
+         .Wire(song, 0, atLeast, 1)
+         .Wire(song, 0, atMost, 0)
+         .Wire(phraseGone, 0, lastBar, 1)
+         .Wire(beats, 0, firstRoots, 0)
+         .Wire(beats, 0, secondRoots, 0);
+
+        var root = Either(firstRoots, secondRoots, theme);
+
+        Box("Arrangement");
+
+        // --- the kick --------------------------------------------------------
+
+        // Four on the floor, from the first bar, and out for the breakdown. The pitch is
+        // the level to the fifth power, so there is one envelope and the beater is over
+        // long before the shell is.
+        var kickStroke = Enters(Product(Stroke(beats, 1f, 5f), hush), song, 0.1f, 0.15f);
+        var kick = Drum(kickStroke, 46f, 170f, 5f, 3f);
+
+        // The sidechain: the kick's level, upside down, on the bass and the pad.
+        var duck = Span(kickStroke, 0f, 1f, 1f, 0.3f);
+
+        Box("Kick");
+
+        // --- the acid line ---------------------------------------------------
+
+        // Both themes run the whole time and the lane chooses between them, so either
+        // is in the right place in its bar whenever it is switched to.
+        var (firstNotes, firstMarks) = Pattern(beats, First);
+        var (secondNotes, secondMarks) = Pattern(beats, Second);
+        var gate = Either(firstNotes, secondNotes, theme, 1);
+        var slidInto = Either(firstMarks, secondMarks, theme);
+
+        // The glide is on the frequency rather than on the note, because a Note snaps to
+        // the semitone and a slide through semitones is a run. A millisecond where
+        // there is no slide, which is no glide at all, and sixty where there is.
+        var lineHz = Through("audio.note", Sum(Either(firstNotes, secondNotes, theme), root));
+        var glideTime = Span(slidInto, 0f, 1f, -3f, -1.22f);
+        var glide = b.Add(SlewType);
+        var saw = b.Add("osc.saw", (3, 0.9f));
+
+        // A step that was slid into is not struck: the filter's envelope carries on down
+        // from the note before. It falls faster with the knob shut than open, an eighth
+        // of a second to a third, which is the other knob a hand is on.
+        var squelch = b.Add(DecayType, (1, -3f), (3, 0.4f));
+
+        // The accent. Whether this step has one is which side of the gap its gate is on,
+        // and what it adds is the envelope through a Slew that rises at once and takes a
+        // quarter of a second to fall — so two accents close together start the second
+        // from where the first had got to, and a run of them climbs.
+        var push = b.Add(SlewType, (1, -2.3f), (2, -0.6f));
+
+        // The cutoff in octaves over a hundred and eighty hertz: where the hand has the
+        // knob, the envelope by as much as the knob allows it, and the accent on top.
+        // Shut, a note peaks under a kilohertz and bubbles; open and accented it is past
+        // anything a filter takes away, and what is heard is the saw and the Drive.
+        var octaves = Sum(
+            Sum(Span(hand, 0f, 1f, 0f, 3f), Product(squelch, Span(hand, 0f, 1f, 1.8f, 3f))),
+            Times(push, 0.9f));
+        var cutoff = Times(Doublings(octaves), 180f);
+
+        // Four poles: a Filter with nearly no resonance into one with nearly all of it.
+        // Twice the slope is what makes the sweep a gesture rather than a tone control,
+        // and the ringing goes into the Drive after it, which is where the snarl is.
+        var pole = b.Add(FilterType, (2, 0.1f));
+        var ringing = b.Add(FilterType);
+
+        // Nearly flat, which is the point: the machine's volume envelope barely moves
+        // and everything heard happening to a note is the filter. A Slew on the gate
+        // also rides over the dip between a sliding note and the next.
+        var level = b.Add(SlewType, (1, -2.7f), (2, -1.5f));
         var drive = b.Add(DriveType);
 
-        b.Wire(sixteenths, 0, line, 1)
-         .Wire(line, 0, pitch, 0)
-         .Wire(pitch, 0, osc, 1)
-         .Wire(line, 1, level, 0)
-         .Wire(line, 1, shape, 0)
-         .Wire(shape, 0, depth, 0)
-         .Wire(sixteenths, 0, mutate, 1)
-         .Wire(mutate, 0, reachTop, 0)
-         .Wire(reachTop, 0, depth, 4)
-         .Wire(line, 1, accent, 0)
-         .Wire(sweep, 0, knob, 0)
-         .Wire(knob, 0, floor, 0)
-         .Wire(accent, 0, floor, 1)
-         .Wire(floor, 0, cutoff, 0)
-         .Wire(depth, 0, cutoff, 1)
-         .Wire(osc, 0, filter, 0)
-         .Wire(cutoff, 0, filter, 1)
-         .Wire(filter, 0, vca, 0)
-         .Wire(level, 0, vca, 1)
-         .Wire(vca, 0, drive, 0);
+        // And its 'high' taken from a third Filter, at a hundred and fifty hertz. The
+        // machine has no bottom octave to speak of, and here that octave belongs to
+        // the kick and the bass: a line that is all fundamental sits on both.
+        var thinned = b.Add(FilterType, (1, 150f), (2, 0.1f));
 
-        b.Group("Acid Line", line, pitch, osc, level, shape, sweep, slower, mutate, reachTop,
-            depth, accent, knob, floor, cutoff, filter, vca, drive);
+        b.Wire(lineHz, 0, glide, 0)
+         .Wire(glideTime, 0, glide, 1)
+         .Wire(glideTime, 0, glide, 2)
+         .Wire(glide, 0, saw, 1)
+         .Wire(Product(gate, From(1f, slidInto)), 0, squelch, 0)
+         .Wire(Span(hand, 0f, 1f, -0.9f, -0.45f), 0, squelch, 2)
+         .Wire(Product(Rises(gate, 0.75f, 0.95f), squelch), 0, push, 0)
+         .Wire(saw, 0, pole, 0)
+         .Wire(cutoff, 0, pole, 1)
+         .Wire(pole, 0, ringing, 0)
+         .Wire(cutoff, 0, ringing, 1)
+         .Wire(gate, 0, level, 0)
+         .Wire(Product(ringing, level), 0, drive, 0)
+         .Wire(drive, 0, thinned, 0);
 
-        // --- the echoes --------------------------------------------------------
+        Box("Acid Line");
 
-        // Three sixteenths and two, both counted off the tempo rather than typed
-        // in seconds. Side by side rather than in a row: each tap hears the line
-        // and repeats on its own, so the two sides drift apart and come back.
-        var echoes = b.Add(EchoModule.TypeId, (2, LeftSixteenths), (3, RightSixteenths), (5, 0.32f));
-        echoes.SetState(EchoModule.StateKey, new JsonObject { [EchoModule.TapsKey] = EchoModule.SideBySide });
+        // --- the answer ------------------------------------------------------
 
-        b.Wire(drive, 0, echoes, 0)
-         .Wire(tempo, 0, echoes, 1);
-
-        b.Group("Echoes", echoes);
-
-        // --- the kick ----------------------------------------------------------
-
-        // Four on the floor, and the one instrument with no sequencer: every
-        // beat is the same beat, and a list saying so sixteen times is a list
-        // saying nothing. Its 'freq' is the tempo itself.
-        var beat = b.Add("osc.pulse", (3, 0.02f));
-
-        // A quarter of a second of fall, which is nearer what a kick needs to be
-        // felt than to be heard: what moves air is the tail. Half a beat at this
-        // tempo, so the four are four rather than a drone.
-        var thump = b.Add(NodeCatalog.AdsrTypeId, (1, -3f), (2, -0.6f), (3, 0f), (4, -1.1f));
-
-        // The pitch envelope, an order of magnitude shorter than the level one:
-        // what the ear hears at the top is the beater and after it the shell.
-        var fall = b.Add(NodeCatalog.AdsrTypeId, (1, -3.4f), (2, -1.45f), (3, 0f), (4, -1.9f));
-
-        // Forty-two hertz at the bottom rather than forty-eight, which is a
-        // sixth of an octave and the difference between a kick with a note in it
-        // and one with weight in it. Much lower than this and it stops being
-        // reproduced at all; much higher and the whole sound is the beater.
-        var boom = b.Add("math.remap", (1, 0f), (2, 1f), (3, 42f), (4, 220f));
-        var body = b.Add("osc.sine");
-        var kick = b.Add("math.mul");
-
-        // Saturation, which cannot make this louder — the Drive normalises as it
-        // goes. What it does is give a sine harmonics, and those are the whole of
-        // what a small speaker has of a forty-two hertz note.
-        var punch = b.Add(DriveType, (1, 2f));
-
-        b.Wire(tempo, 0, beat, 1)
-         .Wire(beat, 0, thump, 0)
-         .Wire(beat, 0, fall, 0)
-         .Wire(fall, 0, boom, 0)
-         .Wire(boom, 0, body, 1)
-         .Wire(body, 0, kick, 0)
-         .Wire(thump, 0, kick, 1)
-         .Wire(kick, 0, punch, 0);
-
-        b.Group("Kick", beat, thump, fall, boom, body, kick, punch);
-
-        // --- the bass ----------------------------------------------------------
-
-        // The floor the patch had none of: the acid line's lowest note is an A at
-        // fifty-five hertz and the kick is gone a quarter of a second into every
-        // beat. Deliberately not a second acid line — one voice moving is the
-        // sound of this music.
-        //
-        // Sixteen eighths, exactly the length of the line above it: the hats and
-        // the mutate track walk against the bar, and a floor that walked would
-        // not be one. The notes are the line's own roots, written at its octave
-        // and dropped one on the Note module so the list says where the harmony
-        // is.
-        var bassSeq = b.Add("seq.notes", (2, 0.8f), (3, 0.03f));
-        StepsExtra.Set(bassSeq,
+        // A second machine for the second drop and the last, set to its square wave, well
+        // over an octave up, and playing in the gaps: nothing on the first beat, where the line
+        // is loudest, and most of what it has to say at the end of the bar. One Filter
+        // rather than two, so it is thinner than the line as well as higher.
+        var answer = b.Add("seq.notes", (1, 4f), (2, 0.6f), (3, 0.02f));
+        StepsExtra.Set(answer,
         [
-            new Step(45f, 1f, 1f), new Step(45f, 1f, 0.7f),
-            new Step(45f, 1f, 0.85f), new Step(48f, 1f, 0.75f),
-            new Step(43f, 1f, 1f), new Step(43f, 1f, 0.7f),
-            new Step(45f, 1f, 0.9f), new Step(45f, 1f, 0.7f),
+            new Step(64f, 1f, 0f), new Step(64f, 1f, 0f), new Step(64f, 1f, Accent), new Step(64f, 1f, 0f),
+            new Step(64f, 1f, 0f), new Step(67f, 1f, 0f), new Step(67f, 1f, Plain), new Step(69f, 1f, Plain),
+            new Step(69f, 1f, 0f), new Step(72f, 1f, 0f), new Step(72f, 1f, Accent), new Step(69f, 1f, Plain),
+            new Step(69f, 1f, 0f), new Step(67f, 1f, Plain), new Step(69f, 1f, Accent), new Step(69f, 1f, 0f),
+        ]);
+        var square = b.Add("osc.pulse", (3, 0.5f), (4, 0.8f));
+        var chirp = b.Add(DecayType, (1, -3f), (2, -0.75f), (3, 0.7f));
+        var answerTone = b.Add(FilterType, (2, 0.8f));
+        var answerLevel = b.Add(SlewType, (1, -2.7f), (2, -1.5f));
+        var answerDrive = b.Add(DriveType, (1, 3f));
+        var answered = Enters(answerDrive, song, 0.9f, 0.94f);
 
-            new Step(45f, 1f, 1f), new Step(45f, 1f, 0.7f),
-            new Step(48f, 1f, 0.9f), new Step(48f, 1f, 0.7f),
-            new Step(43f, 1f, 1f), new Step(43f, 1f, 0.75f),
-            new Step(45f, 1f, 0.9f), new Step(52f, 1f, 0.8f),
+        b.Wire(beats, 0, answer, 0)
+         .Wire(Through("audio.note", Sum(answer, root)), 0, square, 1)
+         .Wire(answer, 1, chirp, 0)
+         .Wire(square, 0, answerTone, 0)
+         .Wire(
+             Times(Doublings(Sum(Times(chirp, 3f), Span(hand, 0f, 1f, 0f, 1.5f))), 300f),
+             0, answerTone, 1)
+         .Wire(answer, 1, answerLevel, 0)
+         .Wire(Product(answerTone, answerLevel), 0, answerDrive, 0);
+
+        Box("Answer");
+
+        // --- the bass --------------------------------------------------------
+
+        // The gallop: nothing where the kick is, and the two sixteenths after the
+        // off-beat, with a pick-up and an octave at the end of the bar. The kick and
+        // this are one rhythm shared out between two instruments.
+        var bassLine = b.Add("seq.values", (1, 4f), (2, 0.8f), (3, 0.04f));
+        StepsExtra.Set(bassLine,
+        [
+            new Step(0f, 1f, 0f), new Step(0f, 1f, 0f), new Step(0f), new Step(0f, 1f, 0.75f),
+            new Step(0f, 1f, 0f), new Step(0f, 1f, 0f), new Step(0f), new Step(0f, 1f, 0.75f),
+            new Step(0f, 1f, 0f), new Step(0f, 1f, 0f), new Step(0f), new Step(0f, 1f, 0.75f),
+            new Step(0f, 1f, 0f), new Step(0f, 1f, 0.6f), new Step(0f), new Step(12f, 1f, 0.85f),
         ]);
 
-        var bassPitch = b.Add("audio.note", (1, -1f));
+        // An octave under the line, and a root that is under A is taken up an octave
+        // instead: F and E an octave down are under what most speakers have, and a
+        // bass that goes up for the second theme is a lift.
+        var under = b.Add("math.step", (1, -1.5f));
+        var bassHz = Through("audio.note", Sum(Sum(Plus(root, 33f), Times(under, 12f)), bassLine));
 
-        // A sine, because the job is the fundamental and nothing else. Anything
-        // with harmonics of its own down here would be in the same room as the
-        // line, and the line is the thing that is supposed to be heard.
-        var bassOsc = b.Add("osc.sine");
+        // A saw through a Filter the same sixteenth plucks, for the part of a bass that
+        // is heard, and how far the pluck opens it is the hand on the knob again.
+        var bassSaw = b.Add("osc.saw", (3, 0.8f));
+        var bassTone = b.Add(FilterType, (2, 0.35f));
+        var bassGrit = b.Add(DriveType, (1, 3f));
 
-        // The opposite envelope to the line's: there the filter does everything
-        // and the volume barely moves, here the note simply holds for its eighth.
-        // Released over a twentieth of a second rather than cut, because at
-        // fifty-five hertz a cut lands mid-cycle and clicks.
-        var bassEnv = b.Add(NodeCatalog.AdsrTypeId, (1, -2.4f), (2, -1f), (3, 0.9f), (4, -1.3f));
+        // And a sine at the same pitch for the part that is felt, added after the Drive
+        // so that it stays a sine.
+        var sub = b.Add("osc.sine", (3, 0.85f));
+        var bass = Enters(
+            Product(Product(Sum(bassGrit, Product(sub, bassLine, 1)), duck), hush), song, 0.4f, 0.45f);
 
-        var bassVca = b.Add("math.mul");
+        b.Wire(root, 0, under, 0)
+         .Wire(beats, 0, bassLine, 0)
+         .Wire(bassHz, 0, bassSaw, 1)
+         .Wire(bassSaw, 0, bassTone, 0)
+         .Wire(
+             Plus(Product(Stroke(beats, 4f, 2.5f), Span(hand, 0f, 1f, 350f, 1100f)), 90f),
+             0, bassTone, 1)
+         .Wire(Product(bassTone, bassLine, 1), 0, bassGrit, 0)
+         .Wire(bassHz, 0, sub, 1);
 
-        // The kick's own level envelope, upside down, on the bass's level — a
-        // sidechain compressor written as one Remap, so the bass steps out of the
-        // way for the beat and comes straight back.
-        //
-        // Down to a fifth rather than to nothing: at zero there is a hole on every
-        // beat and the ear finds it, and the point of a sidechain is that nobody
-        // hears it happening.
-        var duck = b.Add("math.remap", (1, 0f), (2, 1f), (3, 1f), (4, 0.2f));
-        var ducked = b.Add("math.mul");
+        Box("Bass");
 
-        // And the same saturation the kick has, harder, for the same reason: the
-        // harmonics of a fifty-five hertz sine are what a small speaker actually
-        // reproduces of it, and without them this part is felt on one system and
-        // simply absent on every other.
-        var weight = b.Add(DriveType, (1, 3.2f));
+        // --- the hats --------------------------------------------------------
 
-        b.Wire(eighths, 0, bassSeq, 1)
-         .Wire(bassSeq, 0, bassPitch, 0)
-         .Wire(bassPitch, 0, bassOsc, 1)
-         .Wire(bassSeq, 1, bassEnv, 0)
-         .Wire(bassOsc, 0, bassVca, 0)
-         .Wire(bassEnv, 0, bassVca, 1)
-         .Wire(thump, 0, duck, 0)
-         .Wire(bassVca, 0, ducked, 0)
-         .Wire(duck, 0, ducked, 1)
-         .Wire(ducked, 0, weight, 0);
+        // Closed on every sixteenth, at four strengths that repeat every beat so the
+        // off-beat leans, and open on the off-beat once the drop has come: half a beat
+        // late and three times as long.
+        var lean = b.Add("seq.values", (1, 4f));
+        StepsExtra.Set(lean, [new Step(0.55f), new Step(0.3f), new Step(0.8f), new Step(0.4f)]);
+        var shut = Enters(Product(Stroke(beats, 4f, 7f), lean), song, 0.2f, 0.25f);
+        var open = Enters(Stroke(beats, 1f, 3f, 0.5f), song, 0.7f, 0.75f);
+        var hats = Hiss(Sum(shut, Times(open, 0.7f)), 8000f, 0.2f, "high");
 
-        b.Group("Bass", bassSeq, bassPitch, bassOsc, bassEnv, bassVca, duck, ducked, weight);
+        b.Wire(beats, 0, lean, 0);
 
-        // --- the hiss the hats are made of --------------------------------------
+        Box("Hats");
 
-        // Nothing in the engine's own catalogue makes a noise a point in the plane
-        // can hear: Noise and Fractal are fields in x and y, and the audio path
-        // stands at one point of it. Random's white is that field read along the
-        // clock instead. The clap's Hiss has the same seed, so the two drums are
-        // made of the same air, which is what a drum machine is.
-        var hiss = b.Add(RandomType);
+        // --- the clap --------------------------------------------------------
 
-        // --- the hats ----------------------------------------------------------
+        // Two and four: half the beat, offset by half a cycle. A clap is several hands
+        // not quite together, so the first twentieth of the stroke is three short bursts
+        // — thirty-two to the beat — and the tail is let through only after them.
+        var backbeat = Stroke(beats, 0.5f, 12f, 0.5f);
+        var after = Rises(backbeat, 0.045f, 0.05f, StrokePhase);
+        var hands = Sum(Product(Stroke(beats, 32f, 1.5f), From(1f, after)), Product(backbeat, after));
+        var clap = Hiss(Enters(hands, song, 0.55f, 0.58f), 1300f, 0.5f, "band", 3.5f, seed: 1f);
 
-        // The step's own value is a decay time rather than a pitch, which needs a
-        // Sequencer rather than a Note Sequencer: a high step rings and a low one
-        // ticks, so open and closed hats are one instrument and one list.
-        //
-        // Twelve steps rather than sixteen is why this does not sound like a loop:
-        // three quarters of a bar, so the pattern arrives a beat earlier each time
-        // and takes three bars to land the same way against the kick.
-        var hatSeq = b.Add("seq.values", (2, 0.3f), (3, 0.01f));
-        StepsExtra.Set(hatSeq,
-        [
-            new Step(0.12f, 1f, 0.45f), new Step(0.12f, 1f, 0.85f),
-            new Step(0.12f, 1f, 0.5f), new Step(0.12f, 1f, 0.85f),
-            new Step(0.12f, 1f, 0.45f), new Step(0.55f, 1f, 0.9f),
-            new Step(0.12f, 1f, 0.5f), new Step(0.12f, 1f, 0.85f),
-            new Step(0.12f, 1f, 0.45f), new Step(0.12f, 1f, 0.9f),
-            new Step(1f, 1f, 0.7f), new Step(0.2f, 1f, 0.6f),
-        ]);
+        Box("Clap");
 
-        // The knob is in decades of seconds, so this is three milliseconds at
-        // the bottom of the list and a tenth of a second at the top.
-        var open = b.Add("math.remap", (1, 0f), (2, 1f), (3, -2.6f), (4, -1f));
-        var hatEnv = b.Add(NodeCatalog.AdsrTypeId, (1, -3.8f), (3, 0f), (4, -2.4f));
-        var hats = b.Add("math.mul");
+        // --- the builds ------------------------------------------------------
 
-        b.Wire(sixteenths, 0, hatSeq, 1)
-         .Wire(hatSeq, 0, open, 0)
-         .Wire(open, 0, hatEnv, 2)
-         .Wire(hatSeq, 1, hatEnv, 0)
-         .Wire(hiss, 0, hats, 0)
-         .Wire(hatEnv, 0, hats, 1);
+        // A snare roll in sixteenths that doubles for the last bar, getting louder as the
+        // square of the ramp, and a Hiss whose band climbs nearly five octaves under it.
+        var rollRate = Plus(Times(lastBar, 4f), 4f);
+        var roll = b.Add(StrokeType, (3, 2.5f));
+        var snare = Hiss(Product(roll, Power(ramp, 2f)), 2200f, 0.35f, "band", 2.5f, seed: 2f);
+        var riser = Hiss(ramp, 250f, 0.55f, "band", 1.4f, seed: 3f);
 
-        b.Group("Hats", hiss, hatSeq, open, hatEnv, hats);
+        // And what the drop lands on: one stroke to the phrase, steep enough that eight
+        // bars of it is two seconds of cymbal, wherever there is a drop to mark.
+        var crash = Hiss(
+            Enters(Stroke(beats, 1f / 32f, 16f), song, 0.75f, 0.78f), 5000f, 0.1f, "high", 0.9f, seed: 4f);
 
-        // --- the clap ----------------------------------------------------------
+        b.Wire(beats, 0, roll, 0)
+         .Wire(rollRate, 0, roll, 1)
+         .Wire(Span(ramp, 0f, 1f, 250f, 7000f), 0, riser, HissCutoff);
 
-        // Two and four, and the same noise through a band. A band of noise around
-        // 1.4 kHz with a longish tail is a clap; the same noise flat is a hat.
-        //
-        // Two bars, so the answering ghosts differ between them: the backbeat is
-        // what a listener sets their watch by, and everything around it moves.
-        var clapSeq = b.Add("seq.values", (2, 0.35f), (3, 0.01f));
-        StepsExtra.Set(clapSeq,
-        [
-            new Step(0f, 1f, 0f), new Step(0f, 1f, 0f), new Step(0f, 1f, 0f), new Step(0f, 1f, 0f),
-            new Step(0f, 1f, 0.9f), new Step(0f, 1f, 0f), new Step(0f, 1f, 0f), new Step(0f, 1f, 0f),
-            new Step(0f, 1f, 0f), new Step(0f, 1f, 0f), new Step(0f, 1f, 0f), new Step(0f, 1f, 0f),
-            new Step(0f, 1f, 0.9f), new Step(0f, 1f, 0f), new Step(0f, 1f, 0.35f), new Step(0f, 1f, 0f),
+        var noises = Sum(Sum(snare, riser), crash);
 
-            new Step(0f, 1f, 0f), new Step(0f, 1f, 0f), new Step(0f, 1f, 0f), new Step(0f, 1f, 0.3f),
-            new Step(0f, 1f, 0.9f), new Step(0f, 1f, 0f), new Step(0f, 1f, 0f), new Step(0f, 1f, 0f),
-            new Step(0f, 1f, 0f), new Step(0f, 1f, 0f), new Step(0f, 1f, 0.4f), new Step(0f, 1f, 0f),
-            new Step(0f, 1f, 0.9f), new Step(0f, 1f, 0f), new Step(0f, 1f, 0f), new Step(0f, 1f, 0.5f),
-        ]);
+        Box("Builds");
 
-        var clapEnv = b.Add(NodeCatalog.AdsrTypeId, (1, -2.7f), (2, -1.15f), (3, 0f), (4, -1.2f));
+        // --- the pad ---------------------------------------------------------
 
-        // A Hiss on its middle band, with a gain past unity, which is not a taste
-        // decision: a bandpass keeps only what fits between its skirts, so this
-        // noise carries about a seventh of what the hats do and was inaudible
-        // under the drums.
-        var loud = b.Add(HissType, (2, 1400f), (3, 0.55f), (4, 3.5f));
-        loud.SetState("hiss", new JsonObject { ["band"] = "band" });
+        // The chord the line only implies, for the places the drums are thin enough to
+        // hear it in: the intro, the breakdown and the way out. Seven detuned saws on the
+        // root and a saw each on the minor third and the fifth, counted in semitones
+        // rather than found in a scale, so the chord moves in parallel with everything
+        // else. It follows the arrangement through a Slew, two seconds to go and half a
+        // second to come, because a chord that cuts out is a mistake and one that
+        // arrives with the silence is not.
+        var padNote = Plus(root, 57f);
+        var strings = b.Add(SupersawType, (2, 0.3f), (3, 0.8f), (5, 0.5f));
+        var third = b.Add("osc.saw", (3, 0.3f));
+        var fifth = b.Add("osc.saw", (3, 0.3f));
+        var padTone = b.Add(FilterType, (2, 0.2f));
+        var thin = b.Add(SlewType, (1, 0.3f), (2, -0.3f));
 
-        b.Wire(sixteenths, 0, clapSeq, 1)
-         .Wire(clapSeq, 1, clapEnv, 0)
-         .Wire(clapEnv, 0, loud, 1);
+        // The Chorus is what makes it stereo: 'out' and 'wide' are swept in opposite
+        // directions, which is wider than panning and costs one module.
+        var pad = b.Add(ChorusModule.TypeId, (1, 0.2f), (2, 0.7f), (3, 0.6f));
 
-        b.Group("Clap", clapSeq, clapEnv, loud);
+        b.Wire(Through("audio.note", padNote), 0, strings, 1)
+         .Wire(Through("audio.note", Plus(padNote, 3f)), 0, third, 1)
+         .Wire(Through("audio.note", Plus(padNote, 7f)), 0, fifth, 1)
+         .Wire(Sum(Sum(strings, third), fifth), 0, padTone, 0)
+         .Wire(Span(hand, 0f, 1f, 1500f, 4000f), 0, padTone, 1)
+         .Wire(song, 0, thin, 0)
+         .Wire(Enters(Product(padTone, duck), thin, 0.5f, 0.35f), 0, pad, 0);
 
-        // --- the slow weather ----------------------------------------------------
+        Box("Pad");
 
-        // Two Wanders, which keep the patch changing once the sequencers have been
-        // heard: the lagged sample-and-hold a modular patch would reach for. Each
-        // has a seed of its own, and is the same value on the screen as in the
-        // speakers, so the two sinks agree about what the weather is doing.
-        //
-        // What the first does: the drive after the filter, from a purr to a snarl.
-        var grit = b.Add(WanderType, (1, 0.09f), (2, 0.29f), (3, 2.2f), (4, 6.5f));
+        // --- the space -------------------------------------------------------
 
-        // And the second: how long the echoes hang about.
-        var hang = b.Add(WanderType, (1, 0.06f), (2, 2.31f), (3, 0.24f), (4, 0.6f));
+        // Three sixteenths on the left and two on the right, side by side rather than in
+        // a row: each tap hears the two machines and repeats on its own, so the sides
+        // drift apart and come back. How long they hang about is a Wander.
+        var taps = Echo(Wired("math.add", thinned, Times(answered, 0.3f), High), beat, 3f, 2f, 0.32f, 0.32f, sideBySide: true);
 
-        // The filter's resonance follows the slower of the two hands on the line.
-        // Never down to nothing — a 303 with no resonance is not quiet, it is a
-        // different instrument.
-        var ring = b.Add("math.remap", (1, -1f), (2, 1f), (3, 0.55f), (4, 0.95f));
+        // One room on a send, for what should sound further off than the drums.
+        var roomSend = b.Add("math.mixer", (1, 0.5f), (3, 0.6f), (5, 0.4f), (7, 0.15f));
+        var room = b.Add(ReverbModule.TypeId, (1, 0.8f), (2, 0.75f), (3, 1f));
 
-        b.Wire(slower, 0, ring, 0)
+        // The slow weather, which keeps the patch changing once the patterns have been
+        // heard: the Drive after the filter from a purr to a snarl, and the resonance
+        // from ringing to whistling. Never down to nothing — a 303 with no resonance is
+        // not quiet, it is a different instrument.
+        b.Wire(Wander(0.06f, 2.31f, 0.24f, 0.6f), 0, taps, EchoFeedback)
+         .Wire(Wander(0.09f, 0.29f, 2.2f, 6.5f), 0, drive, 1)
+         .Wire(Wander(0.04f, 1.7f, 0.6f, 0.93f), 0, ringing, 2)
+         .Wire(clap, 0, roomSend, 0)
+         .Wire(pad, 0, roomSend, 2)
+         .Wire(answered, 0, roomSend, 4)
+         .Wire(thinned, High, roomSend, 6)
+         .Wire(roomSend, 0, room, 0);
 
-         .Wire(ring, 0, filter, 2)
-         .Wire(grit, 0, drive, 1)
-         .Wire(hang, 0, echoes, 4);
+        Box("Space");
 
-        b.Group("Slow Weather", ring, grit, hang);
+        // --- the desk --------------------------------------------------------
 
-        // --- the arrangement -----------------------------------------------------
-
-        // One step a bar rather than one a sixteenth, which is the same module
-        // deciding how much of the kit is in rather than playing a part. Sixteen
-        // bars is about half a minute, and the shape of the list is the shape of
-        // the track.
-        //
-        // The kick is deliberately not on it: something has to be the thing the
-        // room is counting.
-        var bars = b.Add("math.mul", (1, 0.25f));
-
-        var arrange = b.Add("seq.values", (2, 0.95f), (3, 0.3f));
-        StepsExtra.Set(arrange,
-        [
-            new Step(0.1f), new Step(0.1f), new Step(0.35f), new Step(0.4f),
-            new Step(0.7f), new Step(0.8f), new Step(1f), new Step(1f),
-            new Step(0.12f), new Step(0.2f), new Step(0.45f), new Step(0.55f),
-            new Step(0.8f), new Step(1f), new Step(1f), new Step(0.6f),
-        ]);
-
-        // The two parts that come and go, and the levels they travel between. The
-        // bottom of each is not silence: a section with the hats gone entirely
-        // reads as the patch having stopped rather than as it having got quiet.
-        var shimmer = b.Add("math.remap", (1, 0f), (2, 1f), (3, 0.05f), (4, 0.55f));
-        var smack = b.Add("math.remap", (1, 0f), (2, 1f), (3, 0.1f), (4, 0.62f));
-
-        b.Wire(tempo, 0, bars, 0)
-         .Wire(bars, 0, arrange, 1)
-         .Wire(arrange, 0, shimmer, 0)
-         .Wire(arrange, 0, smack, 0);
-
-        b.Group("Arrangement", bars, arrange, shimmer, smack);
-
-        // --- the desk ----------------------------------------------------------
-
-        // Left and right differ in which echo they carry and how the drums lean,
-        // and in nothing else. There is no pan module and this patch wants none:
-        // width here is two signals that are genuinely different.
-        //
-        // The kick and the bass are summed before the desk, partly for the four
-        // channels a Desk has and partly because they are one instrument tied
-        // together by the duck — a balance to set once rather than twice.
-        var lowEnd = b.Add("math.mixer", (1, 1f), (3, 0.6f));
-
-        // The line comes in at a third rather than two thirds, which is what makes
-        // the clap audible. The two occupy the same band, so the clap could not be
-        // brought out from under it without becoming the loudest thing in the
-        // patch. A saw through a resonant filter into two delay lines is a
-        // continuous sound, and turning it down makes the gaps in the bar audible
-        // again — which is where the clap lives.
-        //
-        // Past unity on the trim on purpose, with the Desk's rails after it as the
-        // thing that makes that safe: a desk sums the way a desk sums, and four
-        // instruments at once is four times over.
-        var desk = b.Add(DeskType, (2, 0.38f), (5, 1f), (14, 1.15f));
-
-        // Half again on the right for the hats and the reverse for the clap, so
-        // the two lean opposite ways. A Desk has one level for both sides of a
+        // Two Desks of four, chained by their buses into one of eight. Left and right
+        // differ in which echo tap and which side of the Chorus and the Reverb they
+        // carry, and in how the hats and the clap lean: half again on the right for the
+        // one and the reverse for the other. A Desk has one level for both sides of a
         // channel, so the lean is on the signal.
-        var hatsWide = b.Add("math.mul", (1, 1.45f));
-        var loudWide = b.Add("math.mul", (1, 0.62f));
+        var drums = b.Add(DeskType);
 
-        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 0.6f));
+        // The last in the chain is the master: a trim under unity, and rails that
+        // should never be reached.
+        var music = b.Add(DeskType, (DeskTrim, 0.55f));
 
-        b.Wire(punch, 0, lowEnd, 0)
-         .Wire(weight, 0, lowEnd, 2)
+        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 0.7f));
 
-         .Wire(echoes, 0, desk, 0)
-         .Wire(echoes, 1, desk, 1)
-         .Wire(lowEnd, 0, desk, 3)
+        Channel(drums, 1, 0.75f, kick);
+        Channel(drums, 2, 0.5f, hats, Times(hats, 1.45f));
+        Channel(drums, 3, 0.6f, clap, Times(clap, 0.62f));
+        Channel(drums, 4, 0.4f, noises);
 
-         .Wire(hats, 0, hatsWide, 0)
-         .Wire(hats, 0, desk, 6)
-         .Wire(hatsWide, 0, desk, 7)
-         .Wire(shimmer, 0, desk, 8)
+        Channel(music, 1, 0.75f, bass);
+        Channel(music, 2, 1f, taps, taps, rightFrom: EchoRight);
+        Channel(music, 3, 0.45f, pad, pad, rightFrom: 1);
+        Channel(music, 4, 0.5f, room, room, rightFrom: 1);
 
-         .Wire(loud, 0, loudWide, 0)
-         .Wire(loud, 0, desk, 9)
-         .Wire(loudWide, 0, desk, 10)
-         .Wire(smack, 0, desk, 11)
+        b.Wire(Chained(drums, music), 0, output, NodeCatalog.OutputLeftPort)
+         .Wire(music, 1, output, NodeCatalog.OutputRightPort);
 
-         .Wire(desk, 0, output, NodeCatalog.OutputLeftPort)
-         .Wire(desk, 1, output, NodeCatalog.OutputRightPort);
+        Box("Desk", output);
 
-        b.Group("Desk", lowEnd, hatsWide, loudWide, desk);
+        // --- the picture: geometry -------------------------------------------
 
-        // --- the picture: geometry ---------------------------------------------
-
-        // One clock read at three speeds. Multiplies rather than three Times,
-        // for the reason Nebula gives: seconds are seconds, and what differs
-        // between these is only how much of them each part wants.
-        var spin = b.Add("math.mul", (1, 0.04f));
-        var boil = b.Add("math.mul", (1, 0.22f));
-        var crawl = b.Add("math.mul", (1, 0.015f));
-
-        // The kick moves the light, and it is read as the Pulse rather than
-        // through either of its envelopes: an envelope has no memory drawn and
-        // would hand over this same gate anyway. It is doing three things — the
-        // zoom, the brightness, and the twist on the feedback.
-        var pump = b.Add("math.remap", (1, -1f), (2, 1f), (3, 0.96f), (4, 1.3f));
-
-        // And the sequencer moves the frame: where the line has got to in its
-        // bar is how many wedges the fold has, so the picture rebuilds itself
-        // once a bar rather than once a note.
-        var wedges = b.Add("math.remap", (1, 0f), (2, 1f), (3, 3f), (4, 9f));
+        // One clock read at three speeds: seconds are seconds, and what differs between
+        // these is only how much of them each part wants.
+        var spin = Times(clock, 0.04f);
+        var boil = Times(clock, 0.22f);
+        var crawl = Times(clock, 0.015f);
 
         // x and y take no wire anywhere in this chain: each is normalled to
-        // Coordinates, so it reads the pixel's own position (ADR-0050).
-        var placed = b.Add(TransformType);
-        placed.SetState(
-            NodeCatalog.TransformStateKey,
-            new JsonObject { [NodeCatalog.TransformOrderKey] = NodeCatalog.TurnThenZoom });
+        // Coordinates, so it reads the pixel's own position (ADR-0050). The kick moves
+        // the light, and it is doing three things — the zoom here, the brightness, and
+        // the twist on the feedback — so the breakdown is the picture holding still.
+        var placed = TurnedThenZoomed();
+
+        // And the sequencer moves the frame: where the line has got to in its bar is
+        // how many wedges the fold has, so the picture rebuilds itself once a bar
+        // rather than once a note.
         var fold = b.Add("space.kaleidoscope");
 
         // Read from the folded plane rather than the flat one, so the field is
         // itself symmetric — warping by anything asymmetric here would quietly
         // undo the fold and leave the picture looking like ordinary noise.
         // Five octaves, because detail is the whole of what is being looked at.
-        var field = Octaves(
-            b.Add(FractalType, (3, 2.4f), (4, 0.55f)), 5);
+        var field = Octaves(b.Add(FractalType, (3, 2.4f), (4, 0.55f)), 5);
 
-        // The sweep again, and this is the wire the preset is built round: the
-        // same signal that opens the filter opens the warp and, below, the
-        // palette. Nothing is said twice — it is one module read in three places.
-        var reach = b.Add("math.remap", (1, -1f), (2, 1f), (3, 0.15f), (4, 0.6f));
+        // The hand on the knob again, and this is the wire the preset is built round:
+        // the same signal that opens the filter opens the warp and, below, the palette.
         var bend = b.Add("space.warp");
 
-        // The line's gate widens the rings, so a sixteenth arrives as a band
-        // rather than only as a change of color.
-        var count = b.Add("math.remap", (1, 0f), (2, 1f), (3, 2.2f), (4, 5.5f));
+        // The line's gate widens the rings, so a sixteenth arrives as a band rather
+        // than only as a change of color. Rings are a sine, so most of the frame is
+        // dark and only the crests survive as filaments.
         var bands = b.Add("pattern.rings");
+        var filament = Rises(bands, 0.2f, 0.9f);
 
-        // Rings are a sine, so most of the frame is dark and only the crests
-        // survive as filaments.
-        var filament = b.Add("math.smoothstep", (0, 0.2f), (1, 0.9f));
+        b.Wire(spin, 0, placed, TransformAngle)
+         .Wire(Span(kickStroke, 0f, 1f, 0.98f, 1.22f), 0, placed, TransformZoom)
 
-        b.Wire(clock, 0, spin, 0)
-         .Wire(clock, 0, boil, 0)
-         .Wire(clock, 0, crawl, 0)
-
-         .Wire(spin, 0, placed, TransformAngle)
-         .Wire(beat, 0, pump, 0)
-         .Wire(pump, 0, placed, TransformZoom)
-
-         .Wire(line, 2, wedges, 0)
          .Wire(placed, 0, fold, 0)
          .Wire(placed, 1, fold, 1)
-         .Wire(wedges, 0, fold, 2)
+         .Wire(Span(firstNotes, 0f, 1f, 3f, 9f, 2), 0, fold, 2)
 
          .Wire(fold, 0, field, 0)
          .Wire(fold, 1, field, 1)
          .Wire(boil, 0, field, 2)
 
-         .Wire(sweep, 0, reach, 0)
          .Wire(fold, 0, bend, 0)
          .Wire(fold, 1, bend, 1)
          .Wire(field, 1, bend, 2)
-         .Wire(reach, 0, bend, 3)
+         .Wire(Span(hand, 0f, 1f, 0.15f, 0.6f), 0, bend, 3)
 
-         .Wire(line, 1, count, 0)
          .Wire(bend, 0, bands, 0)
          .Wire(bend, 1, bands, 1)
-         .Wire(count, 0, bands, 2)
-         .Wire(crawl, 0, bands, 3)
-         .Wire(bands, 0, filament, 2);
+         .Wire(Span(firstNotes, 0f, 1f, 2.2f, 5.5f, 1), 0, bands, 2)
+         .Wire(crawl, 0, bands, 3);
 
-        b.Group("Picture: Geometry", spin, boil, crawl, pump, wedges, placed, fold, field,
-            reach, bend, count, bands, filament);
+        Box("Picture: Geometry");
 
-        // --- the picture: color -------------------------------------------------
+        // --- the picture: color ----------------------------------------------
 
-        // A Palette rather than an HSV hue, which is the difference between a
-        // handful of colors that go together and every color there is. Where
-        // in it to look is the field plus the slowest of the three clocks,
-        // wrapped rather than clamped because a palette is a loop.
-        var wash = b.Add("math.mul", (1, 0.7f));
-        var slide = b.Add("math.add");
-        var where = b.Add("math.fract");
+        // A Palette rather than an HSV hue, which is the difference between a handful
+        // of colors that go together and every color there is. Where in it to look is
+        // the field plus the slowest of the three clocks, wrapped rather than clamped
+        // because a palette is a loop — and moved most of half way round it by the
+        // second theme, so a change of theme is a change of color.
+        var where = Fraction(Sum(Sum(Times(field, 0.7f), crawl), Times(theme, 0.4f)));
 
-        // And how wide the palette is comes off the filter sweep, which is the
-        // correspondence the whole patch is arranged around: a hum is tints of one
-        // color, and a filter screaming is a full spectrum.
-        var spread = b.Add("math.remap", (1, -1f), (2, 1f), (3, 0.06f), (4, 0.42f));
-
+        // And how wide the palette is comes off the knob, which is the correspondence
+        // the whole patch is arranged around: a hum is tints of one color, and a
+        // filter screaming is a full spectrum.
         var palette = b.Add(PaletteType, (1, 2f), (3, 0.5f), (4, 0.55f));
 
-        // The kick again, as brightness. Past one on purpose, with the Clamp
-        // after it: a value past one is not brighter, it is only wrong.
-        var glow = b.Add("math.remap", (1, -1f), (2, 1f), (3, 0.5f), (4, 1.7f));
-        var lit = b.Add("math.mul");
+        // The kick again, as brightness. Past one on purpose, with the Clamp after
+        // it: a value past one is not brighter, it is only wrong.
         var visible = b.Add("math.clamp", (1, 0f), (2, 1f));
-
         var inked = b.Add("color.gain", (2, 0f));
 
         // Bands rather than a gradient, because techno is a hard-edged music. The
-        // count comes off the arrangement rather than the sweep, so the sections
-        // are visible as well as audible.
-        var levels = b.Add("math.remap", (1, 0f), (2, 1f), (3, 5f), (4, 26f));
+        // count comes off the arrangement, so the sections are visible as well as
+        // audible.
         var flat = b.Add(PosteriseType);
 
-        b.Wire(field, 0, wash, 0)
-         .Wire(wash, 0, slide, 0)
-         .Wire(crawl, 0, slide, 1)
-         .Wire(slide, 0, where, 0)
-         .Wire(where, 0, palette, 0)
-         .Wire(sweep, 0, spread, 0)
-         .Wire(spread, 0, palette, 2)
-
-         .Wire(beat, 0, glow, 0)
-         .Wire(filament, 0, lit, 0)
-         .Wire(glow, 0, lit, 1)
-         .Wire(lit, 0, visible, 0)
-
+        b.Wire(where, 0, palette, 0)
+         .Wire(Span(hand, 0f, 1f, 0.06f, 0.42f), 0, palette, 2)
+         .Wire(Product(filament, Span(kickStroke, 0f, 1f, 0.6f, 1.7f)), 0, visible, 0)
          .Wire(palette, 0, inked, 0)
          .Wire(visible, 0, inked, 1)
-
-         .Wire(arrange, 0, levels, 0)
          .Wire(inked, 0, flat, 0)
-         .Wire(levels, 0, flat, 1);
+         .Wire(Span(song, 0f, 1f, 5f, 26f), 0, flat, 1);
 
-        b.Group("Picture: Color", wash, slide, where, spread, palette, glow, lit, visible,
-            inked, levels, flat);
+        Box("Picture: Color");
 
-        // --- the picture: feedback ------------------------------------------------
+        // --- the picture: feedback -------------------------------------------
 
-        // The last frame, zoomed in a hair and turned by an amount the kick
-        // sets, so the trail lurches on the beat rather than drifting evenly. What
-        // comes out is the brighter of that and the new frame, for FeedbackTunnel's
-        // reason: a trail brighter than the new frame keeps its brightness, which is
-        // what makes a streak read as a streak rather than as a smeared copy.
-        var twist = b.Add("math.remap", (1, -1f), (2, 1f), (3, 0.01f), (4, 0.045f));
-        var trail = b.Add(TrailsType, (3, 1.03f), (7, 0.88f));
+        // The last frame, zoomed in a hair and turned by an amount the kick sets, so
+        // the trail lurches on the beat rather than drifting evenly.
+        var trail = b.Add(TrailsType, (TrailsZoom, 1.03f), (TrailsPersist, 0.88f));
 
-        b.Wire(beat, 0, twist, 0)
-         .Wire(twist, 0, trail, 4)
+        b.Wire(Span(kickStroke, 0f, 1f, 0.01f, 0.045f), 0, trail, TrailsAngle)
          .Wire(flat, 0, trail, 0)
          .Wire(trail, 0, output, NodeCatalog.OutputColorPort);
 
-        b.Group("Picture: Feedback", twist, trail);
+        Box("Picture: Feedback");
 
         return b.Build();
     }
