@@ -9,6 +9,15 @@
   <ItemGroup>
     <!-- A module is engine data, so contributing one means speaking Core's types. -->
     <ProjectReference Include="..\Flyback.Core\Flyback.Core.csproj" />
+
+    <!--
+      What the host and the workbench run a patch with, and nothing a plugin is
+      handed. Private, so it does not flow on to whatever references this
+      assembly: a plugin is compiled against Core and this, and one that reached
+      for the engine through here would fail to build rather than ship bound to
+      a release.
+    -->
+    <ProjectReference Include="..\Flyback.Engine\Flyback.Engine.csproj" PrivateAssets="all" />
   </ItemGroup>
 
   <ItemGroup>

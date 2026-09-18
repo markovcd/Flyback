@@ -57,7 +57,7 @@ public sealed class PatchControl
     /// <summary>The hardware controller it follows, or null for a knob only turned on screen.</summary>
     public MidiBinding? Midi { get; set; }
 
-    /// <summary>What a program reading this knob calls it in <see cref="CompiledPatch.LiveInputs"/>.</summary>
+    /// <summary>What a program reading this knob calls it in <c>CompiledPatch.LiveInputs</c>.</summary>
     public static string KeyOf(Guid control) => $"control/{control:N}";
 
     /// <inheritdoc cref="KeyOf(Guid)"/>

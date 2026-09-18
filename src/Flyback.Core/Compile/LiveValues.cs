@@ -6,7 +6,7 @@ namespace Flyback.Core.Compile;
 /// down.
 /// </summary>
 /// <remarks>
-/// The mirror of <see cref="DelayState"/> — that is what a program remembers
+/// The mirror of <c>DelayState</c> — that is what a program remembers
 /// between evaluations and this is what is done to it from outside — and alike in
 /// the ways that matter: both belong to whoever runs the program, both are swapped
 /// alongside it, and a renderer given neither still renders.

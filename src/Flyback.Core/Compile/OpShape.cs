@@ -6,7 +6,7 @@ namespace Flyback.Core.Compile;
 /// </summary>
 /// <remarks>
 /// The interpreter reads registers without a bounds check, so
-/// <see cref="CompiledPatch"/>'s constructor walks the program once with this. It
+/// <c>CompiledPatch</c>'s constructor walks the program once with this. It
 /// can only ask about the fields an op reads — <c>A</c> is -1 on a
 /// <see cref="OpCode.Const"/> — so a table of arities is what separates "names a
 /// register out of range" from "names no register at all". A table rather than a

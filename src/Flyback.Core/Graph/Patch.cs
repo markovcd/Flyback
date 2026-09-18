@@ -219,9 +219,9 @@ public sealed class Patch
     /// <summary>
     /// Which layout of the file this came from, stamped as it is written and
     /// declared first. Null on a patch that has not been through
-    /// <see cref="PatchIO.ToJson"/> and on every file written before the stamp
+    /// <c>PatchIO.ToJson</c> and on every file written before the stamp
     /// existed, which is why reading treats null as
-    /// <see cref="PatchIO.FirstVersion"/> rather than as a fault.
+    /// <c>PatchIO.FirstVersion</c> rather than as a fault.
     /// </summary>
     public int? Version { get; set; }
 
@@ -243,7 +243,7 @@ public sealed class Patch
     /// The one field here that says nothing about what the patch computes: a
     /// reader that does not know about groups draws every module separately and
     /// is otherwise correct, which is why this could be added without moving
-    /// <see cref="PatchIO.FormatVersion"/>.
+    /// <c>PatchIO.FormatVersion</c>.
     /// </remarks>
     public List<NodeGroup>? Groups { get; set; }
 

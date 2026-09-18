@@ -119,7 +119,7 @@ public abstract record NodeExtra
     /// <summary>
     /// The files this instance names, and none for the kinds that name nothing
     /// outside the patch — what a bundle is packed from, see
-    /// <see cref="PatchBundle"/>.
+    /// <c>PatchBundle</c>.
     /// </summary>
     /// <remarks>
     /// Asked of the kind rather than read off the node, so nothing doing the

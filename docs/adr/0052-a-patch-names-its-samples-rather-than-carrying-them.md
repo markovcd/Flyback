@@ -15,7 +15,7 @@ What was missing was a way to get audio into one of those buffers, and somewhere
 for the audio to live.
 
 The second is the whole decision. A patch is JSON, and
-[`PatchHistory`](../../src/Flyback.Core/Graph/PatchHistory.cs) snapshots the
+[`PatchHistory`](../../src/Flyback.Engine/Graph/PatchHistory.cs) snapshots the
 whole document on every edit, two hundred deep. Its own remarks justify that:
 *"a patch is small enough that the trade is not close — the largest preset in the
 box is twenty-six modules and a few kilobytes."* Base64 a five-second stereo clip

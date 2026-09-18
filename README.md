@@ -44,7 +44,8 @@ This produces a self-contained folder with the app and CLI, plus the shared runt
 ```text
 Flyback.exe          the app
 flyback-cli.exe      the command line tool
-Flyback.Core.dll     shared engine
+Flyback.Core.dll     the patch model and the module API, which plugins are built against
+Flyback.Engine.dll   the compiler, the language and the renderers
 Flyback.Plugins.dll  shared plugin host
 plugins/             platform backends, and the Picture, Voice, Effects and Mastering modules
 ```
@@ -181,7 +182,8 @@ The project is split roughly as:
 src/
   Flyback.App       app shell and editor
   Flyback.Cli       command line tool
-  Flyback.Core      engine and compiler
+  Flyback.Core      patch model, module API and the built-in modules
+  Flyback.Engine    compiler, text language, renderers and file formats
   Flyback.Plugins   plugin host and built-in plugin logic
 
 tests/

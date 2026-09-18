@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!--
+      The namespaces are Core's, and stay that way: a namespace says what a type
+      is about and an assembly says who may see it. The compiler and the emitter
+      a module writes to are both about compiling; only one of them is something
+      a plugin is handed.
+    -->
+    <RootNamespace>Flyback.Core</RootNamespace>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Optimize Condition="'$(Configuration)' == 'Release'">true</Optimize>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591;CS1573</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!--
+      One way only. Core is what a plugin is compiled against, so nothing in it
+      may need anything here — which is what keeps this assembly free to change
+      between releases without a plugin noticing.
+    -->
+    <ProjectReference Include="..\Flyback.Core\Flyback.Core.csproj" />
+  </ItemGroup>
+
+</Project>

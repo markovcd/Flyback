@@ -60,7 +60,7 @@ public partial class NodeCatalog
     /// the way out.
     /// </summary>
     /// <remarks>
-    /// A cell is clamped to ±16 — see <see cref="DelayState.WriteUnit"/> — which
+    /// A cell is clamped to ±16 — see <c>DelayState.WriteUnit</c> — which
     /// is the only place a cycle drawn as wires can be caught running away, and so
     /// not negotiable from here. It is a useless bound for the two things anybody
     /// most wants to hold: a note number runs to 127 and a frequency to thousands,

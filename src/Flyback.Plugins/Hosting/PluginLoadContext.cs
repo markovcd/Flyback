@@ -21,15 +21,16 @@ internal sealed class PluginLoadContext(string entryAssemblyPath)
     /// would have two identities and every cast across the boundary would fail.
     /// </summary>
     /// <remarks>
-    /// The same two are held out of the single-file bundle when the shell is published,
-    /// so a plugin can be compiled against the copies a given build shipped. That is a
-    /// convenience and this is a correctness rule; they name the same pair because
-    /// being the boundary is what makes both true.
+    /// The first two are the boundary: what a plugin is compiled against, and the
+    /// only two it should ever name. The engine is here for the plugin that names
+    /// it anyway, and for a copy left in a plugin folder — nothing a plugin is
+    /// handed comes from it, but what the host runs a patch with must be one thing.
     /// </remarks>
     private static readonly string[] HostOwned =
     [
         typeof(IFlybackPlugin).Assembly.GetName().Name!,
         $"{nameof(Flyback)}.{nameof(Core)}",
+        $"{nameof(Flyback)}.Engine",
     ];
 
     private readonly AssemblyDependencyResolver resolver = new(entryAssemblyPath);

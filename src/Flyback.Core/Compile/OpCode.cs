@@ -35,7 +35,7 @@ public enum OpCode : byte
     /// The one op whose answer comes from outside the program and outside the
     /// patch: it reads what somebody is doing to a keyboard right now.
     /// <para>
-    /// K is a position in <see cref="CompiledPatch.LiveInputs"/> — which signal of
+    /// K is a position in <c>CompiledPatch.LiveInputs</c> — which signal of
     /// which instrument, named there by a string. Named rather than numbered
     /// because the two ends never meet: a module asks for "keyboard/gate" while it
     /// is compiled, and something outside fills that in as a key moves.
@@ -207,7 +207,7 @@ public enum OpCode : byte
     /// </summary>
     /// <remarks>
     /// K is which clip rather than how long a buffer is, and the audio behind it
-    /// is carried by the program — see <see cref="CompiledPatch.Tables"/> —
+    /// is carried by the program — see <c>CompiledPatch.Tables</c> —
     /// because it is the same for every evaluation and every renderer. Not
     /// stateful: a clip is a function of the position asked for. A program
     /// compiled with no clips reads silence, which is what the shader does and
@@ -221,7 +221,7 @@ public enum OpCode : byte
     /// <remarks>
     /// The one op whose whole purpose is outside the program: it hands a value to
     /// whoever is watching and produces nothing. A Scope is the only module that
-    /// emits one — see <see cref="DelayState.Tap"/>.
+    /// emits one — see <c>DelayState.Tap</c>.
     /// <para>
     /// It is also the one op that makes a program larger than what it computes.
     /// The compiler roots at every tap as well as at the sink, which keeps its
@@ -241,7 +241,7 @@ public enum OpCode : byte
 
     /// <summary>
     /// (out, out+1, out+2) = picture K sampled at (a, b), and black off its edges.
-    /// K is a position in <see cref="CompiledPatch.Pictures"/>.
+    /// K is a position in <c>CompiledPatch.Pictures</c>.
     /// </summary>
     /// <remarks>
     /// A file, named by the patch and loaded before any of this ran.

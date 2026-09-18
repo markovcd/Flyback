@@ -16,6 +16,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Flyback.Core\Flyback.Core.csproj" />
+    <ProjectReference Include="..\..\src\Flyback.Engine\Flyback.Engine.csproj" />
   </ItemGroup>
 
   <ItemGroup>

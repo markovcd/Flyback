@@ -12,7 +12,7 @@ public partial class NodeCatalog
     
     /// <summary>
     /// The chart module. Named here because the shell roots the picture at one
-    /// when it is selected — see <see cref="Compile.PatchCompiler"/>.
+    /// when it is selected — see <c>Compile.PatchCompiler</c>.
     /// </summary>
     public const string ProbeTypeId = "probe";
 
@@ -34,7 +34,7 @@ public partial class NodeCatalog
 
     /// <summary>
     /// The level meter. Named here because what it reads is filled in from
-    /// outside the program — see <see cref="Compile.Meters"/>.
+    /// outside the program — see <c>Compile.Meters</c>.
     /// </summary>
     public const string MeterTypeId = "meter";
 
@@ -43,7 +43,7 @@ public partial class NodeCatalog
     /// </summary>
     /// <remarks>
     /// No opcode and no arithmetic: two <see cref="OpCode.LoadLive"/>s and a
-    /// divide, filled in once a frame by <see cref="Meters"/> from the ring the
+    /// divide, filled in once a frame by <c>Meters</c> from the ring the
     /// Scope charts — so this survives to the shader, where a Scope cannot. The
     /// input is tapped and <see cref="PortSpec.Swept"/>, so a picture driven by a
     /// bass line reads one number rather than computing the line per pixel.
@@ -654,7 +654,7 @@ public partial class NodeCatalog
     /// <remarks>
     /// A Scope in every respect but what fills its buffer. The input is tapped and
     /// never lowered into the picture, and the buffer is refilled once a frame —
-    /// with <see cref="Spectra.Chart"/> rather than a resampling, which is the
+    /// with <c>Spectra.Chart</c> rather than a resampling, which is the
     /// whole of <see cref="NodeDef.ChartsSpectrum"/>. So it inherits all three of
     /// the Scope's cliffs, and the table read that keeps it off the shader.
     /// <para>

@@ -1,11 +1,18 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Optimize Condition="'$(Configuration)' == 'Release'">true</Optimize>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <NoWarn>$(NoWarn);CS1591;CS1573</NoWarn>
   </PropertyGroup>
+
+  <ItemGroup>
+    <!--
+      The engine walks the same op list the emitter builds, so the two share what
+      an op is shaped like without that becoming something a plugin can name.
+    -->
+    <InternalsVisibleTo Include="Flyback.Engine" />
+  </ItemGroup>
 
   <ItemGroup>
     <Compile Update="Graph\NodeCatalog.Color.cs">

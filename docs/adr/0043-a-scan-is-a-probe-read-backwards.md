@@ -16,7 +16,7 @@ image, and nothing is measured, kept or read back.
 
 The other direction had no module. It did have a knob: the Output's `scan`
 sweeps `x = fract(t·rate)` and drives the whole audio render off the picture
-([`AudioScan`](../../src/Flyback.Core/Render/AudioRenderer.cs)). Three things are
+([`AudioScan`](../../src/Flyback.Engine/Render/AudioRenderer.cs)). Three things are
 wrong with it as the answer to *image becomes audio*.
 
 It is **render-wide**. `AudioScan.For` reads the knobs rather than the sockets,

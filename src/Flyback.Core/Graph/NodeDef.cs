@@ -247,7 +247,7 @@ public sealed record NodeDef(
     /// buffer, not whether there is one. The buffer then runs from
     /// <see cref="Compile.SpectrumAxis.Lowest"/> to <see cref="Compile.SpectrumAxis.Highest"/>
     /// on a log axis and holds linear amplitude — see
-    /// <see cref="Compile.Spectra"/>.
+    /// <c>Compile.Spectra</c>.
     /// </remarks>
     public bool ChartsSpectrum { get; init; }
 

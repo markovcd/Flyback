@@ -91,9 +91,15 @@
     <code>AssemblyLoadContext</code>, and asks whatever it finds inside what it would like to contribute.</p>
 
     <p>Two assemblies are <strong>host-owned</strong>: <code>Flyback.Plugins</code>, which is the contract,
-    and <code>Flyback.Core</code>, which is the engine — the graph, the compiler, the renderer. A plugin
+    and <code>Flyback.Core</code>, which is what a patch and a module are made of — the graph, the sockets,
+    the emitter a module lowers itself through, and the built-in modules a preset can name. A plugin
     compiles against both and ships neither. That rule is not a convention; it is what stops the same type
     having two identities and every cast across the boundary failing.</p>
+
+    <p>What runs a patch is a third assembly, <code>Flyback.Engine</code>: the compiler, the text language,
+    the renderers and the file formats. A plugin never references it, which is the point of keeping it
+    apart — it can change from one release to the next without a plugin built against an older one
+    noticing.</p>
 
     <p>Both are left on disk rather than folded into a single-file bundle when the shell is published, so you
     can build a plugin against the exact version a given release shipped.</p>

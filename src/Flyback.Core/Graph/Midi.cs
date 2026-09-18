@@ -100,7 +100,7 @@ public static class MidiSignal
 
     /// <summary>
     /// What one signal of one instrument is called in
-    /// <see cref="Compile.CompiledPatch.LiveInputs"/>.
+    /// <c>Compile.CompiledPatch.LiveInputs</c>.
     /// </summary>
     public static string Key(string source, string signal) => Key(source, 1, signal);
 
