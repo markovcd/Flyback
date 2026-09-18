@@ -254,6 +254,43 @@ public sealed class AssistantPanel : UserControl
     };
 
     /// <summary>
+    /// How long the briefing may run before module descriptions are left out of
+    /// it — see <see cref="AssistantSettings.ProseBudget"/>. Stepped in tens of
+    /// thousands, since a few characters either way changes nothing.
+    /// </summary>
+    private readonly NumericUpDown proseBox = new()
+    {
+        Name = "proseBudget",
+        Minimum = AssistantSettings.LeastProse,
+        Maximum = AssistantSettings.MostProse,
+        Increment = 10_000,
+        FormatString = "0",
+        FontSize = Text.Body,
+        Width = 120,
+        HorizontalAlignment = HorizontalAlignment.Left,
+    };
+
+    /// <summary>
+    /// What a module the assistant is not told about says so with, on the canvas
+    /// and under its knobs alike.
+    /// </summary>
+    public const string UndescribedNote =
+        "The assistant is not told what this module does. Every module's description "
+        + "together would run past its budget, and this one is not on the priority list. "
+        + "It can still look the module up when it needs to. The budget and the list are "
+        + "in Settings → Agent.";
+
+    /// <summary>
+    /// Type ids whose descriptions the assistant's briefing leaves out, for the
+    /// canvas to mark. Empty with no provider chosen: nobody is being told
+    /// anything, so nothing is being left out of it.
+    /// </summary>
+    public IReadOnlySet<string> Undescribed { get; private set; } = new HashSet<string>();
+
+    /// <summary><see cref="Undescribed"/> is a different set of modules.</summary>
+    public event EventHandler? UndescribedChanged;
+
+    /// <summary>
     /// Everything the chosen provider says it has, drawn from its own declaration.
     /// This panel does not know what is on it: which model, which endpoint,
     /// whether there is an ear at all are the provider's questions (ADR-0069), and
@@ -425,6 +462,9 @@ public sealed class AssistantPanel : UserControl
         rememberBox.IsChecked = settings.RememberKey;
         logBox.IsChecked = settings.LogConversations;
         turnBox.Value = settings.TurnLimit;
+        proseBox.Value = settings.ProseBudget;
+
+        Recount();
 
         // The list before what is chosen in it, and both before the handler that
         // watches it: a box with no rows in it cannot be told which row to show,
@@ -733,6 +773,21 @@ public sealed class AssistantPanel : UserControl
         fields.Children.Add(Text.Quiet("Turns per conversation"));
         fields.Children.Add(turnBox);
         fields.Children.Add(logBox);
+        fields.Children.Add(Text.Quiet("Briefing budget, in characters"));
+        fields.Children.Add(proseBox);
+        fields.Children.Add(Note(
+            "Past this, the modules on the priority list keep their descriptions, the rest keep "
+            + "theirs while there is room, and the ones left out are marked on the canvas. The "
+            + "list is a file, one type id a line, read again whenever settings are saved:"));
+
+        // Selectable, so the path can be copied into a file manager or an editor.
+        fields.Children.Add(new SelectableTextBlock
+        {
+            Name = "priorityFile",
+            Text = PriorityFile,
+            FontSize = Text.Small,
+            TextWrapping = TextWrapping.Wrap,
+        });
 
         // Forgetting a key does not close the window the way Save does: somebody
         // who has just taken one out is as likely as not about to put another in.
@@ -746,6 +801,42 @@ public sealed class AssistantPanel : UserControl
         };
 
         return fields;
+
+        static TextBlock Note(string text) => new()
+        {
+            Text = text,
+            FontSize = Text.Small,
+            Foreground = Text.Muted,
+            TextWrapping = TextWrapping.Wrap,
+        };
+    }
+
+    /// <summary>
+    /// The budget and the priority list as they stand. The list is read from its
+    /// file every time, so an edit to it counts from the next conversation, and
+    /// from the next save as far as the canvas is concerned.
+    /// </summary>
+    private ProsePolicy Policy() => new(settings.ProseBudget, PriorityModules.Load(PriorityFile));
+
+    /// <summary>
+    /// Where the priority list is read from: beside the settings, which for a panel
+    /// under test is a folder of its own rather than this machine's.
+    /// </summary>
+    private string PriorityFile => settingsPath is null
+        ? PriorityModules.File
+        : System.IO.Path.Combine(System.IO.Path.GetDirectoryName(settingsPath) ?? string.Empty, System.IO.Path.GetFileName(PriorityModules.File));
+
+    /// <summary>Works <see cref="Undescribed"/> out again, and says so if it moved.</summary>
+    private void Recount()
+    {
+        var now = assistant is null
+            ? new HashSet<string>()
+            : Policy().Undescribed(plugins.Modules);
+
+        if (now.SetEquals(Undescribed)) return;
+
+        Undescribed = now;
+        UndescribedChanged?.Invoke(this, EventArgs.Empty);
     }
 
     /// <summary>
@@ -769,9 +860,11 @@ public sealed class AssistantPanel : UserControl
         rememberBox.IsChecked = settings.RememberKey;
         logBox.IsChecked = settings.LogConversations;
         turnBox.Value = settings.TurnLimit;
+        proseBox.Value = settings.ProseBudget;
 
         ShowProviderForm();
         Refresh();
+        Recount();
     }
 
     /// <summary>
@@ -850,6 +943,11 @@ public sealed class AssistantPanel : UserControl
 
         turnBox.Value = settings.TurnLimit;
 
+        if (proseBox.Value is { } prose)
+            settings.ProseBudget = Math.Clamp((int)Math.Round(prose), AssistantSettings.LeastProse, AssistantSettings.MostProse);
+
+        proseBox.Value = settings.ProseBudget;
+
         // Into the conversation already going, as well as the next one: a limit
         // raised because a conversation ran out is raised for that conversation.
         if (run is not null) run.MaxTurns = settings.TurnLimit;
@@ -895,6 +993,7 @@ public sealed class AssistantPanel : UserControl
         }
 
         Refresh();
+        Recount();
     }
 
     /// <summary>
@@ -1200,7 +1299,7 @@ public sealed class AssistantPanel : UserControl
         run?.Dispose();
         run = new AssistantRun(
             with, config, plugins.Modules, current(), settings.TurnLimit,
-            samples: samples, pictures: pictures, resuming: resuming);
+            samples: samples, pictures: pictures, resuming: resuming, prose: Policy());
         runConfig = config;
         runAssistant = with;
 

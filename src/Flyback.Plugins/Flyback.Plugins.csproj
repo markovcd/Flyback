@@ -22,6 +22,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="Assist\priority-modules.txt" LogicalName="priority-modules.txt" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Compile Update="Assist\PatchWorkbench.Senses.cs">
       <DependentUpon>PatchWorkbench.cs</DependentUpon>
     </Compile>

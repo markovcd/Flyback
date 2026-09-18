@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using Flyback.App.Updates;
 using Flyback.Core.Graph;
+using Flyback.Plugins.Assist;
 using Flyback.Plugins.Hosting;
 
 namespace Flyback.App;
@@ -61,6 +62,10 @@ internal static class Startup
 
         Plugins = PluginHost.Load();
         NodeCatalog.Install(Plugins.Modules);
+
+        // Here rather than when the assistant is first asked, so the file the
+        // settings point at is there to open before anybody has used it.
+        PriorityModules.Install();
 
         Announce(Plugins);
     }

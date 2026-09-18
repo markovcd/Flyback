@@ -1,0 +1,111 @@
+# Modules whose descriptions the assistant is always given.
+#
+# When every module's description would run past the budget set under
+# Settings → Agent, these keep theirs, the rest keep theirs in module-list order
+# for as long as there is room, and every one left out is marked on the canvas.
+# The assistant can still look up any module it was not told about.
+#
+# One type id a line. A line starting with # is a note, and an id no loaded
+# module has is passed over. This file is written once and never overwritten:
+# delete it to have the list Flyback ships with put back at the next start.
+
+# What every patch is made of.
+output
+time
+coord
+value
+audio.frequency
+audio.note
+audio.quantiser
+audio.tune
+audio.sample
+picture
+midi.in
+
+osc.sine
+osc.saw
+osc.triangle
+osc.square
+osc.pulse
+osc.string
+
+seq.tempo
+seq.hold
+seq.notes
+seq.values
+env.adsr
+
+math.add
+math.sub
+math.mul
+math.div
+math.mod
+math.pow
+math.min
+math.max
+math.atan2
+math.hypot
+math.abs
+math.neg
+math.sin
+math.cos
+math.tan
+math.sqrt
+math.floor
+math.fract
+math.sign
+math.exp
+math.log
+math.clamp
+math.mix
+math.mixer
+math.desk
+math.smoothstep
+math.step
+math.remap
+
+space.rotate
+space.scale
+space.translate
+space.transform
+space.polar
+space.tile
+space.mirror
+space.kaleidoscope
+space.warp
+
+pattern.noise
+pattern.checker
+pattern.rings
+
+color.rgb
+color.hsv
+color.split
+color.mix
+color.gain
+color.ink
+color.vignette
+
+feedback
+feedback.trails
+
+# From the plugins Flyback ships with: the voice of nearly every track, and the
+# shapes most pictures start from.
+flyback.voice.filter
+flyback.voice.decay
+flyback.voice.drive
+flyback.voice.drum
+flyback.voice.euclid
+flyback.voice.fade
+flyback.voice.hiss
+
+flyback.effects.delay
+flyback.effects.echo
+flyback.effects.reverb
+
+flyback.picture.circle
+flyback.picture.box
+flyback.picture.combine
+flyback.picture.fill
+flyback.picture.layer
+flyback.picture.palette

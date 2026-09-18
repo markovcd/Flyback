@@ -776,6 +776,85 @@ public class AssistantPanelTests : UiTest, IDisposable
         saved.TurnLimit.ShouldBe(40);
     }
 
+    [AvaloniaFact]
+    public void The_briefing_budget_shows_what_was_saved_and_keeps_what_is_saved()
+    {
+        var saved = new AssistantSettings { ProseBudget = 90_000 };
+        var window = Showing(With(new Deaf()), saved);
+        var panel = All<AssistantPanel>(window).Single();
+
+        var host = Settings(window);
+        var budget = All<NumericUpDown>(host).Single(c => c.Name == "proseBudget");
+
+        budget.Value.ShouldBe(90_000);
+
+        budget.Value = 50_000;
+        Settle(host);
+
+        saved.ProseBudget.ShouldBe(90_000, "nothing is kept until Save");
+
+        panel.SaveSettings();
+        Settle(host);
+
+        saved.ProseBudget.ShouldBe(50_000);
+    }
+
+    /// <summary>The list is somebody's to edit, so the settings say where it is.</summary>
+    [AvaloniaFact]
+    public void The_settings_say_where_the_priority_list_is()
+    {
+        var window = Showing(With(new Deaf()));
+        var host = Settings(window);
+
+        All<SelectableTextBlock>(host).Single(t => t.Name == "priorityFile").Text
+            .ShouldBe(Path.Combine(Path.GetDirectoryName(settingsPath)!, "priority-modules.txt"));
+    }
+
+    [AvaloniaFact]
+    public void Past_the_budget_the_modules_off_the_list_are_undescribed()
+    {
+        Directory.CreateDirectory(Path.GetDirectoryName(settingsPath)!);
+        File.WriteAllText(Path.Combine(Path.GetDirectoryName(settingsPath)!, "priority-modules.txt"), "osc.string");
+
+        var window = Showing(
+            With(new Deaf()),
+            new AssistantSettings { Provider = "deaf", ProseBudget = AssistantSettings.LeastProse });
+        var panel = All<AssistantPanel>(window).Single();
+
+        panel.Undescribed.ShouldContain("scan");
+        panel.Undescribed.ShouldNotContain("osc.string");
+    }
+
+    /// <summary>With nobody to tell, nothing is being left out of what they are told.</summary>
+    [AvaloniaFact]
+    public void With_no_provider_nothing_is_undescribed()
+    {
+        var window = Showing(With(new Deaf()), new AssistantSettings { ProseBudget = AssistantSettings.LeastProse });
+
+        All<AssistantPanel>(window).Single().Undescribed.ShouldBeEmpty();
+    }
+
+    [AvaloniaFact]
+    public void Saving_a_budget_that_fits_takes_the_marks_away()
+    {
+        var saved = new AssistantSettings { Provider = "deaf", ProseBudget = AssistantSettings.LeastProse };
+        var window = Showing(With(new Deaf()), saved);
+        var panel = All<AssistantPanel>(window).Single();
+        var changed = 0;
+
+        panel.UndescribedChanged += (_, _) => changed++;
+        panel.Undescribed.ShouldNotBeEmpty();
+
+        var host = Settings(window);
+
+        All<NumericUpDown>(host).Single(c => c.Name == "proseBudget").Value = AssistantSettings.DefaultProseBudget;
+        panel.SaveSettings();
+        Settle(host);
+
+        panel.Undescribed.ShouldBeEmpty();
+        changed.ShouldBe(1);
+    }
+
     /// <summary>Closing some way other than Save puts the box back to what was saved.</summary>
     [AvaloniaFact]
     public void Discarding_puts_the_turn_limit_back()

@@ -244,6 +244,31 @@ public class AssistantSettingsTests : IDisposable
     }
 
     [Fact]
+    public void The_briefing_budget_is_kept()
+    {
+        new AssistantSettings { ProseBudget = 120_000 }.Save(path);
+
+        AssistantSettings.Load(path).ProseBudget.ShouldBe(120_000);
+    }
+
+    [Fact]
+    public void A_file_written_before_there_was_a_briefing_budget_gets_the_default()
+    {
+        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+        File.WriteAllText(path, """{ "Provider": "gemini" }""");
+
+        AssistantSettings.Load(path).ProseBudget.ShouldBe(AssistantSettings.DefaultProseBudget);
+    }
+
+    [Fact]
+    public void A_briefing_budget_out_of_range_is_brought_into_it()
+    {
+        new AssistantSettings { ProseBudget = 12 }.Save(path);
+
+        AssistantSettings.Load(path).ProseBudget.ShouldBe(AssistantSettings.LeastProse);
+    }
+
+    [Fact]
     public void What_is_written_out_contains_no_secret()
     {
         var settings = new AssistantSettings { Provider = "anthropic", RememberKey = true };

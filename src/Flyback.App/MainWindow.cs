@@ -590,6 +590,15 @@ public sealed partial class MainWindow : Window
         // saved is something the title and the close have to know about.
         assistant.ConversationChanged += (_, _) => RefreshEditState();
 
+        // Which modules the assistant is not told about is a question about the
+        // catalogue and the settings, so it moves only when settings are saved.
+        editor.Undescribed = assistant.Undescribed;
+        assistant.UndescribedChanged += (_, _) =>
+        {
+            editor.Undescribed = assistant.Undescribed;
+            BuildInspector();
+        };
+
         toolbar = BuildToolbar();
         statusBar = BuildStatusBar();
         DockPanel.SetDock(toolbar, Dock.Top);

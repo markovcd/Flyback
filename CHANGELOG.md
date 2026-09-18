@@ -34,6 +34,9 @@
 - Settings → Recording picks the video and sound formats, and where ffmpeg is if it is not on your `PATH`.
 - `flyback-cli render` takes the format from the extension, with `--format` and `--ffmpeg` to override it.
 
+### Assistant
+- The assistant is told what every module does again. Settings → Agent sets how long that briefing may get and names an editable list of modules that are always included. Any module left out is marked on the canvas.
+
 ### Performance
 - An output with no wire on it no longer costs anything. The big presets run 2–19% fewer operations a sample, and Random's white is a sixteenth of what it was.
 

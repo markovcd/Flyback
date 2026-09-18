@@ -485,6 +485,12 @@ flyback-cli pack my-patch.fbk -o my-patch.fbkb</code></pre>
 
     <p>Conversations are saved beside the patch they are about. <code>flyback-cli probe</code> asks a provider
     which models it offers and fills the model list in for you.</p>
+
+    <p>Every request tells the model what each module does, up to the <strong>Briefing budget</strong> in
+    <strong>Settings → Agent</strong>, 80,000 characters by default. With many plugins installed that can run
+    out. The modules in <code>priority-modules.txt</code> are always described, and the settings show where
+    that file is so you can edit it. A module left out gets a small dotted tag on its header. The assistant can
+    still look it up.</p>
   </section>
 
   <section id="keys">

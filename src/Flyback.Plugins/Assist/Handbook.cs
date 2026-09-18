@@ -18,14 +18,6 @@ namespace Flyback.Plugins.Assist;
 internal static class Handbook
 {
     /// <summary>
-    /// Above this many characters the module prose is dropped and the assistant
-    /// is handed tools to look modules up instead. A cached prefix beats a round
-    /// trip at every size that fits in one; this is roughly where it stops
-    /// fitting.
-    /// </summary>
-    public const int ProseBudget = 40_000;
-
-    /// <summary>
     /// What the catalogue cannot say about itself. Hand-written, and the place
     /// to state a convention that lives in an ADR rather than in a type.
     /// </summary>
@@ -418,19 +410,28 @@ internal static class Handbook
         """;
 
     /// <summary>
-    /// The whole briefing. <paramref name="prose"/> false drops each module's
-    /// description, which is what makes a large catalogue fit — see
-    /// <see cref="ProseBudget"/>.
+    /// Said only when some module's description was left out, since otherwise
+    /// a module with none would read as a module with nothing to say.
     /// </summary>
-    /// <param name="prose"></param>
+    private const string Unexplained = """
+        Some modules below have no description line. They have one all the
+        same, left out to keep this list short: `describe_module` gives it, and
+        `find_modules` searches every description.
+
+        """;
+
+    /// <summary>The whole briefing, with every description but <paramref name="undescribed"/>'s.</summary>
+    /// <param name="modules"></param>
+    /// <param name="undescribed">
+    /// Type ids whose descriptions are left out — see <see cref="ProsePolicy"/>.
+    /// </param>
     /// <param name="hearing">
     /// Whether this run has the <c>listen</c> tool, and whose ear answers it. The
     /// briefing is the only place the model is told what it can check, and being
     /// wrong about that either wastes a tool it has or credits its own impression to
     /// a listener that was never there.
     /// </param>
-    /// <param name="modules"></param>
-    public static string Render(ModuleCatalog modules, bool prose, Listener hearing = Listener.None)
+    public static string Render(ModuleCatalog modules, IReadOnlySet<string> undescribed, Listener hearing = Listener.None)
     {
         var text = new StringBuilder(Conventions)
             .Append(hearing switch
@@ -441,16 +442,63 @@ internal static class Handbook
             })
             .Append(Working);
 
+        if (undescribed.Count > 0) text.Append(Unexplained);
+
         // Catalogue order, not sorted: it is already deterministic (built-ins in
         // declaration order, then each plugin in load order) and re-sorting here
         // would be one more thing that could quietly stop matching itself.
         foreach (var def in modules.All)
         {
-            Describe(text, def, modules, prose);
+            Describe(text, def, modules, prose: !undescribed.Contains(def.TypeId));
             text.AppendLine();
         }
 
         return text.ToString();
+    }
+
+    /// <summary>
+    /// Which descriptions <paramref name="policy"/> leaves out of the briefing for
+    /// <paramref name="modules"/> — see <see cref="ProsePolicy"/>.
+    /// </summary>
+    /// <remarks>
+    /// Measured against the longest of the three things the briefing can say about
+    /// hearing, so that the answer does not depend on which model is asked: the
+    /// canvas marks these modules long before any conversation has a listener.
+    /// </remarks>
+    internal static IReadOnlySet<string> Undescribed(ModuleCatalog modules, ProsePolicy policy)
+    {
+        var described = modules.All.Where(def => def.Description.Length > 0).ToArray();
+        var everyone = described.Select(def => def.TypeId).ToHashSet(StringComparer.Ordinal);
+
+        if (everyone.Count == 0) return everyone;
+
+        // What the briefing costs with every description left out, the note saying
+        // so included.
+        var fixedCost = new[] { Listener.None, Listener.Another, Listener.Itself }
+            .Max(hearing => Render(modules, everyone, hearing).Length);
+
+        var room = policy.Budget - fixedCost;
+
+        if (described.Sum(Cost) <= room + Unexplained.Length) return new HashSet<string>(StringComparer.Ordinal);
+
+        room -= described.Where(def => policy.Priority.Contains(def.TypeId)).Sum(Cost);
+
+        var left = new HashSet<string>(StringComparer.Ordinal);
+
+        foreach (var def in described)
+        {
+            if (policy.Priority.Contains(def.TypeId)) continue;
+
+            var cost = Cost(def);
+
+            if (cost <= room) room -= cost;
+            else left.Add(def.TypeId);
+        }
+
+        return left;
+
+        // What Describe adds for a description: the indent, the text and the line end.
+        static int Cost(NodeDef def) => 2 + def.Description.Length + Environment.NewLine.Length;
     }
 
     private static void Describe(StringBuilder text, NodeDef def, ModuleCatalog modules, bool prose)

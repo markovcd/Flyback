@@ -389,9 +389,13 @@ public sealed partial class NodeEditor
             null,
             new RoundedRect(header, NodeGeometry.CornerRadius, NodeGeometry.CornerRadius, 0, 0));
 
+        var tagged = Tagged(def);
+
         context.DrawText(
-            Text(node.Title(def), 12.5, HeaderTextBrush, bounds.Width - 16, true),
+            Text(node.Title(def), 12.5, HeaderTextBrush, bounds.Width - 16 - (tagged ? TagRoom : 0), true),
             new Point(bounds.X + 9, bounds.Y + 5));
+
+        if (tagged) DrawTag(context, bounds);
 
         for (var i = 0; i < def.Outputs.Count; i++)
         {

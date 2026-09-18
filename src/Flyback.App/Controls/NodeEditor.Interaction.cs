@@ -444,6 +444,7 @@ public sealed partial class NodeEditor
 
             default:
                 Cursor = CursorOver(graph);
+                TipOver(graph);
                 return;
         }
     }

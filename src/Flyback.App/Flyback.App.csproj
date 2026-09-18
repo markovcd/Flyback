@@ -182,6 +182,9 @@
     <Compile Update="Controls\NodeEditor.Painting.cs">
       <DependentUpon>NodeEditor.cs</DependentUpon>
     </Compile>
+    <Compile Update="Controls\NodeEditor.Undescribed.cs">
+      <DependentUpon>NodeEditor.cs</DependentUpon>
+    </Compile>
   </ItemGroup>
 
   <!-- Turns the macOS publish output into something the Finder will launch. -->

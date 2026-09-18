@@ -73,6 +73,20 @@ public sealed class AssistantSettings
     /// </summary>
     public int TurnLimit { get; set; } = DefaultTurnLimit;
 
+    /// <summary>What <see cref="ProseBudget"/> is until somebody changes it.</summary>
+    public const int DefaultProseBudget = 80_000;
+
+    /// <summary>The least and most characters <see cref="ProseBudget"/> may be set to.</summary>
+    public const int LeastProse = 10_000, MostProse = 1_000_000;
+
+    /// <summary>
+    /// How many characters the briefing may run to before module descriptions
+    /// start being left out of it — see <see cref="ProsePolicy"/>. Every request
+    /// in a conversation carries the whole briefing, so this is a cap on what each
+    /// one costs, and on how much of a small model's context it takes up.
+    /// </summary>
+    public int ProseBudget { get; set; } = DefaultProseBudget;
+
     /// <summary>
     /// What each provider was last set to, filed under its id.
     /// </summary>
@@ -118,6 +132,7 @@ public sealed class AssistantSettings
             // A file edited by hand to nought would leave a conversation that
             // cannot be started at all.
             settings.TurnLimit = Math.Clamp(settings.TurnLimit, FewestTurns, MostTurns);
+            settings.ProseBudget = Math.Clamp(settings.ProseBudget, LeastProse, MostProse);
 
             return settings;
         }

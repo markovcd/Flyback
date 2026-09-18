@@ -62,6 +62,10 @@ public sealed partial class PatchWorkbench
     /// </param>
     /// <param name="modules"></param>
     /// <param name="pictures"></param>
+    /// <param name="prose">
+    /// How much of the catalogue's prose the briefing carries, and <see cref="ProsePolicy.Default"/>
+    /// where nobody said.
+    /// </param>
     public PatchWorkbench(
         ModuleCatalog modules,
         Patch startingPoint,
@@ -69,7 +73,8 @@ public sealed partial class PatchWorkbench
         Listener hearing = Listener.None,
         WorkbenchLimits? limits = null,
         ISampleLibrary? samples = null,
-        IImageLibrary? pictures = null)
+        IImageLibrary? pictures = null,
+        ProsePolicy? prose = null)
     {
         this.modules = modules;
         this.samples = samples;
@@ -82,12 +87,13 @@ public sealed partial class PatchWorkbench
 
         Adopt(PatchIO.Read(this.startingPoint, modules).Patch);
 
-        var prose = Handbook.Render(modules, prose: true, hearing);
-        var large = prose.Length > Handbook.ProseBudget;
+        Undescribed = (prose ?? ProsePolicy.Default).Undescribed(modules);
+        Briefing = Handbook.Render(modules, Undescribed, hearing);
 
-        Briefing = large ? Handbook.Render(modules, prose: false, hearing) : prose;
-
-        var vocabulary = BuildTools(vision, hearing, lookups: large);
+        // Only where there is something the briefing did not say. Offered on every
+        // run they would be two more tools to weigh on every turn, for looking up
+        // what is already in front of the model.
+        var vocabulary = BuildTools(vision, hearing, lookups: Undescribed.Count > 0);
 
         Tools = [.. vocabulary.Where(tool => tool.Offered).Select(tool => tool.Spec)];
         bodies = vocabulary.ToDictionary(tool => tool.Spec.Name, tool => tool.Run, StringComparer.Ordinal);
@@ -95,6 +101,9 @@ public sealed partial class PatchWorkbench
 
     /// <summary>The conventions and the catalogue, as a model should be told them.</summary>
     public string Briefing { get; }
+
+    /// <summary>The type ids whose descriptions <see cref="Briefing"/> leaves out.</summary>
+    public IReadOnlySet<string> Undescribed { get; }
 
     public IReadOnlyList<PatchTool> Tools { get; }
 

@@ -602,13 +602,21 @@ public sealed partial class MainWindow
         // The Output cannot be deleted, so it gets no button for it. What the
         // picture is drawn at and by is a property of the machine rather than of
         // this block, and is in the settings window — ADR-0082.
-        if (NodeCatalog.IsSink(node.TypeId)) return;
+        if (NodeCatalog.IsSink(node.TypeId))
+        {
+            Undescribed();
+            return;
+        }
 
         // What the graph is made of belongs to whoever owns it. A knob turned on
         // a locked canvas is written back into the text (ADR-0068); a module
         // deleted from one could not be, so the button is not offered rather
         // than offered and undone by the next apply.
-        if (editor.Locked) return;
+        if (editor.Locked)
+        {
+            Undescribed();
+            return;
+        }
 
         // Grouping sits above deleting rather than beside it, so the destructive
         // button keeps the place a hand already knows.
@@ -639,6 +647,25 @@ public sealed partial class MainWindow
         var going = editor.SelectedNodes.Count(n => !NodeCatalog.IsSink(n.TypeId));
 
         Act(going > 1 ? $"Delete {going} modules" : "Delete module", editor.DeleteSelected, 14);
+
+        Undescribed();
+
+        // Last, under everything that can be done to the module: it is a note
+        // about the assistant, and the one thing on the panel not about the patch.
+        void Undescribed()
+        {
+            if (!editor.Undescribed.Contains(def.TypeId)) return;
+
+            inspector.Children.Add(new TextBlock
+            {
+                Name = "undescribedNote",
+                Text = AssistantPanel.UndescribedNote,
+                TextWrapping = TextWrapping.Wrap,
+                Foreground = Text.Muted,
+                FontSize = Text.Small,
+                Margin = new Thickness(0, 18, 0, 0),
+            });
+        }
 
         void Act(string caption, Action gesture, double above)
         {

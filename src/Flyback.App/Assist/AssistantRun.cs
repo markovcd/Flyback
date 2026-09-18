@@ -57,6 +57,7 @@ public sealed class AssistantRun : IDisposable
     /// <param name="samples"></param>
     /// <param name="pictures"></param>
     /// <param name="resuming">A conversation saved with that patch, to carry on rather than start afresh.</param>
+    /// <param name="prose">How much of the catalogue's prose the briefing carries.</param>
     public AssistantRun(
         IPatchAssistant assistant,
         AssistantConfig config,
@@ -66,7 +67,8 @@ public sealed class AssistantRun : IDisposable
         WorkbenchLimits? limits = null,
         ISampleLibrary? samples = null,
         IImageLibrary? pictures = null,
-        SavedConversation? resuming = null)
+        SavedConversation? resuming = null,
+        ProsePolicy? prose = null)
     {
         Before = startingPoint;
         MaxTurns = maxTurns;
@@ -84,10 +86,10 @@ public sealed class AssistantRun : IDisposable
         // played the sound.
         var senses = assistant.Senses(config.Values);
 
-        var restored = resuming is null ? null : Restored(resuming, modules, senses, limits, samples, pictures);
+        var restored = resuming is null ? null : Restored(resuming, modules, senses, limits, samples, pictures, prose);
 
         Workbench = restored ?? new PatchWorkbench(
-            modules, startingPoint, senses.Vision, senses.Hearing, limits, samples, pictures);
+            modules, startingPoint, senses.Vision, senses.Hearing, limits, samples, pictures, prose);
 
         if (restored is null)
         {
@@ -116,7 +118,8 @@ public sealed class AssistantRun : IDisposable
         AssistantSenses senses,
         WorkbenchLimits? limits,
         ISampleLibrary? samples,
-        IImageLibrary? pictures)
+        IImageLibrary? pictures,
+        ProsePolicy? prose)
     {
         try
         {
@@ -127,7 +130,8 @@ public sealed class AssistantRun : IDisposable
                 senses.Hearing,
                 limits,
                 samples,
-                pictures);
+                pictures,
+                prose);
 
             bench.Restore(saved.Bench);
 
