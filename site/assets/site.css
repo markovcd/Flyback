@@ -242,6 +242,7 @@ li::marker { color: var(--normalled); }
 
 figure { margin: 28px 0 0; }
 figcaption { font-size: 13.5px; color: var(--muted); margin-top: 12px; line-height: 1.5; }
+.clip iframe { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; border: 0; border-radius: 8px; background: var(--window); }
 
 .window {
   border: 1px solid var(--edge);
