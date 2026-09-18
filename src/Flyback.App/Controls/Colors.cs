@@ -169,6 +169,25 @@ internal static class Colors
         _ => Unknown,
     };
 
+    /// <summary>
+    /// What color a preset's kind is drawn in where it heads that kind's run of
+    /// the preset list.
+    /// </summary>
+    /// <remarks>
+    /// The three that are patches run cool to warm as they grow, from one idea
+    /// to a whole piece. The blank canvas takes the Output's own red, that being
+    /// the whole of what is in it — and the one of the four that is a category
+    /// color meaning its category, since the module it heads a list of is the
+    /// Output.
+    /// </remarks>
+    public static Color PresetAccent(PresetKind kind) => kind switch
+    {
+        PresetKind.Idea => Source,
+        PresetKind.Interplay => Space,
+        PresetKind.Showcase => Pattern,
+        _ => Sink,
+    };
+
     // --- sockets ------------------------------------------------------------
 
     public static Color ColorPort { get; } = Color.FromRgb(0xE8, 0xC8, 0x60);

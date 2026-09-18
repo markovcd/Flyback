@@ -5,6 +5,8 @@ using Avalonia.Styling;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Avalonia.Themes.Fluent;
+using Flyback.Core.Graph;
+using Shouldly;
 using Flyback.App.Tests.Ui;
 
 // Every [AvaloniaFact] and [AvaloniaTheory] in this assembly runs against this
@@ -79,6 +81,22 @@ public class UiTest
     }
 
     protected static IEnumerable<T> All<T>(Visual root) where T : Visual => Tree(root).OfType<T>();
+
+    /// <summary>Picks the preset called <paramref name="name"/> out of a preset list.</summary>
+    /// <remarks>
+    /// By name rather than by row, because the toolbar's list is headed section by
+    /// section: a row number there is a preset until a kind gains one, and then it
+    /// is a heading and picking it does nothing at all.
+    /// </remarks>
+    protected static void Pick(ComboBox presets, string name)
+    {
+        var rows = presets.ItemsSource!.Cast<object>().ToList();
+        var row = rows.FindIndex(item => item is PatchPreset preset && preset.Name == name);
+
+        row.ShouldBeGreaterThanOrEqualTo(0, $"the list offers no preset called {name}");
+
+        presets.SelectedIndex = row;
+    }
 }
 
 /// <summary>Nothing but the theme — the shell's own App does far more than a test wants.</summary>

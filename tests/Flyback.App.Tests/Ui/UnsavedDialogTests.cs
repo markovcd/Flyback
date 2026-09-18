@@ -101,7 +101,7 @@ public class UnsavedDialogTests : UiTest, IDisposable
         All<ToggleButton>(window).Single(b => b.Name == "code").IsChecked = true;
         Settle(window);
 
-        All<ComboBox>(window).First(box => box.Name == "presets").SelectedIndex = 1;
+        Pick(All<ComboBox>(window).First(box => box.Name == "presets"), "Kaleidoscope");
         Settle(window);
 
         All<NodeEditor>(window).Single().IsModified

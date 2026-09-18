@@ -84,6 +84,7 @@ public class PickerTests : UiTest
     {
         var window = Open();
         var presets = Presets(window);
+        var opened = presets.SelectedIndex;
 
         presets.Focus();
         Settle(window);
@@ -92,7 +93,7 @@ public class PickerTests : UiTest
         window.KeyTextInput("k");
         Settle(window);
 
-        presets.SelectedIndex.ShouldBe(0);
+        presets.SelectedIndex.ShouldBe(opened);
     }
 
     [AvaloniaFact]
@@ -100,6 +101,7 @@ public class PickerTests : UiTest
     {
         var window = Open();
         var presets = Presets(window);
+        var opened = presets.SelectedIndex;
 
         presets.Focus();
         Settle(window);
@@ -108,7 +110,7 @@ public class PickerTests : UiTest
         window.KeyPressQwerty(PhysicalKey.ArrowUp, RawInputModifiers.None);
         Settle(window);
 
-        presets.SelectedIndex.ShouldBe(0);
+        presets.SelectedIndex.ShouldBe(opened);
     }
 
     /// <summary>

@@ -322,7 +322,7 @@ public class SourceViewTests : UiTest
 
         var before = ShowCode(window).Text;
 
-        Presets(window).SelectedIndex = 1;
+        Pick(Presets(window), "Kaleidoscope");
         Settle(window);
 
         Text(window).IsVisible.ShouldBeTrue("the text is the view the preset was picked from");
@@ -350,7 +350,7 @@ public class SourceViewTests : UiTest
 
         ShowCode(window);
 
-        Presets(window).SelectedIndex = 1;
+        Pick(Presets(window), "Kaleidoscope");
         Settle(window);
 
         Editor(window).IsModified.ShouldBeFalse();
@@ -371,7 +371,7 @@ public class SourceViewTests : UiTest
 
         ShowCode(window);
 
-        Presets(window).SelectedIndex = 1;
+        Pick(Presets(window), "Kaleidoscope");
         Settle(window);
 
         Undo(window).IsEnabled.ShouldBeFalse("nothing has been done to this patch yet");
@@ -399,7 +399,7 @@ public class SourceViewTests : UiTest
     {
         var window = Open();
 
-        Presets(window).SelectedIndex = 1;
+        Pick(Presets(window), "Kaleidoscope");
         Settle(window);
 
         Editor(window).Locked.ShouldBeFalse();

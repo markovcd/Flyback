@@ -243,13 +243,18 @@ public class OutputSettingsTests : UiTest, IDisposable
 
     private static ComboBox StartupPreset(Visual within) => All<ComboBox>(within).Single(c => c.Name == "defaultPreset");
 
-    /// <summary>A machine with no settings file opens the Startup patch box on the first preset.</summary>
+    /// <summary>
+    /// A machine with no settings file opens the Startup patch box on the first
+    /// preset that is a patch — which is not the first preset, the blank canvas
+    /// heading the list.
+    /// </summary>
     [AvaloniaFact]
-    public void The_startup_preset_starts_on_the_first_preset()
+    public void The_startup_preset_starts_on_the_first_patch()
     {
         var window = Open();
 
-        (StartupPreset(OpenSettings(window)).SelectedItem as string).ShouldBe(Presets.All[0].Name);
+        (StartupPreset(OpenSettings(window)).SelectedItem as string)
+            .ShouldBe(Presets.All.First(p => p.Kind is not PresetKind.Blank).Name);
     }
 
     /// <summary>What is picked here is a launch's business, not this one's.</summary>

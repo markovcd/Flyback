@@ -45,10 +45,11 @@ public class WindowTitleTests : UiTest
     {
         var window = Open();
 
-        // Whatever the list opens on, which is the patch that was built.
+        // Whatever the list opens on, which is the patch that was built — the
+        // first of them that is a patch, the blank canvas heading the list.
         var opening = (PresetList(window).SelectedItem as PatchPreset)?.Name;
 
-        opening.ShouldBe(Presets.All[0].Name);
+        opening.ShouldBe(Presets.All.First(p => p.Kind is not PresetKind.Blank).Name);
         window.Title.ShouldBe($"{opening} — {Program}");
     }
 
@@ -58,7 +59,7 @@ public class WindowTitleTests : UiTest
         var window = Open();
         var presets = PresetList(window);
 
-        presets.SelectedIndex = 3;
+        Pick(presets, "Kaleidoscope");
         Settle(window);
 
         var picked = (presets.SelectedItem as PatchPreset)?.Name;
@@ -103,12 +104,12 @@ public class WindowTitleTests : UiTest
         var window = Open();
         var presets = PresetList(window);
 
-        presets.SelectedIndex = 2;
+        Pick(presets, "Kaleidoscope");
         Settle(window);
 
         var first = window.Title;
 
-        presets.SelectedIndex = 5;
+        Pick(presets, "Grid");
         Settle(window);
 
         window.Title.ShouldNotBe(first);
@@ -135,7 +136,7 @@ public class WindowTitleTests : UiTest
         Coding(window).IsChecked = true;
         Settle(window);
 
-        PresetList(window).SelectedIndex = 1;
+        Pick(PresetList(window), "Kaleidoscope");
         Settle(window);
 
         var named = window.Title.ShouldNotBeNull();

@@ -5,6 +5,13 @@ namespace Flyback.Core.Graph;
 /// </summary>
 public enum PresetKind
 {
+    /// <summary>The Output and nothing else, which is not teaching anything.</summary>
+    /// <remarks>
+    /// First, though it is the least of them: somebody who means to build their
+    /// own patch should not have to read past thirty that somebody else built.
+    /// </remarks>
+    Blank,
+
     /// <summary>
     /// One idea, at one sink: a patch about sound has no picture in it, and one
     /// about picture makes no sound.
@@ -22,9 +29,6 @@ public enum PresetKind
     /// one-idea rule.
     /// </summary>
     Showcase,
-
-    /// <summary>The Output and nothing else, which is not teaching anything.</summary>
-    Blank,
 }
 
 /// <summary>
@@ -42,11 +46,17 @@ public sealed record PatchPreset(
 public static class Presets
 {
     /// <summary>
-    /// Everything the engine ships, in the order the picker shows it: ideas,
-    /// then interplay, then the big ones, then the blank canvas.
+    /// Everything the engine ships, in the order the picker shows it: the blank
+    /// canvas, then ideas, then interplay, then the big ones.
     /// </summary>
     public static IReadOnlyList<PatchPreset> All =>
     [
+        // --- nothing yet -------------------------------------------------------
+
+        new("Empty", Empty,
+            "The Output, with everything still to plug into it.",
+            PresetKind.Blank),
+
         // --- one idea, one sink ------------------------------------------------
 
         new("Plasma", Plasma,
@@ -101,10 +111,6 @@ public static class Presets
         new("Whole band", WholeBand,
             "Four instruments off four sequencers, and one picture off three of them.",
             PresetKind.Showcase),
-
-        new("Empty", Empty,
-            "The Output, with everything still to plug into it.",
-            PresetKind.Blank),
     ];
 
     /// <summary>

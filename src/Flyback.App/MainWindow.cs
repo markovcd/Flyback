@@ -512,9 +512,12 @@ public sealed partial class MainWindow : Window
         // patch" is set to, or the first of the list for a name it no longer
         // offers — said here so the title and the toolbar's own selection agree
         // with the canvas from the first frame (ADR-0093).
-        var available = OrderedPresets();
-        var openIndex = PresetRow(available, outputSettings.DefaultPreset);
-        var opening = available[openIndex];
+        var rows = PresetRows(OrderedPresets());
+        var openIndex = PresetRow(rows, outputSettings.DefaultPreset);
+
+        // A preset and not a heading: PresetRow only ever answers with a row
+        // holding one, there being no name a heading could have been asked for by.
+        var opening = (PatchPreset)rows[openIndex];
 
         Became(opening.Name, beside: null);
 
@@ -741,28 +744,84 @@ public sealed partial class MainWindow : Window
 
     /// <summary>
     /// Every preset there is to start from, in the order both the toolbar's own
-    /// list and the Graphics section's "Startup patch" show them: ideas, then
-    /// interplay, then the big ones, then the blank canvas. A stable sort, so
+    /// list and the Graphics section's "Startup patch" show them: the blank
+    /// canvas, then ideas, then interplay, then the big ones. A stable sort, so
     /// within a kind the engine's own still come before any plugin's — the list
     /// is the same wherever the program is installed.
     /// </summary>
     private List<PatchPreset> OrderedPresets() => plugins.Presets.OrderBy(p => p.Kind).ToList();
 
     /// <summary>
-    /// The row of <paramref name="presets"/> named <paramref name="name"/>, or the
-    /// first row for one it does not offer — a plugin taken away, or a settings
-    /// file nobody has written to yet.
+    /// The row of <paramref name="rows"/> holding the preset called
+    /// <paramref name="name"/>, or the row holding the first patch in the list
+    /// for one it does not offer — a plugin taken away, or a settings file nobody
+    /// has written to yet.
     /// </summary>
-    private static int PresetRow(IReadOnlyList<PatchPreset> presets, string name)
+    /// <remarks>
+    /// Rows rather than presets, because the toolbar's list has headings among
+    /// its presets and the Graphics section's has not: an index means a row of
+    /// the list it was counted in.
+    /// </remarks>
+    private static int PresetRow(IReadOnlyList<object> rows, string name)
     {
-        var row = presets.ToList().FindIndex(p => p.Name == name);
+        var listed = rows.ToList();
+        var row = listed.FindIndex(r => r is PatchPreset preset && preset.Name == name);
 
-        return row < 0 ? 0 : row;
+        if (row >= 0) return row;
+
+        // Nothing chosen yet, or a name this build no longer offers: the first
+        // preset that is a patch, which is not the first preset. The blank canvas
+        // heads the list, and a program that shipped thirty patches and opened on
+        // none of them would be one whose presets nobody found.
+        return Math.Max(listed.FindIndex(r => r is PatchPreset { Kind: not PresetKind.Blank }), 0);
     }
+
+    /// <summary>A heading in the preset list — the rows in it that are not presets.</summary>
+    private sealed record PresetHeading(PresetKind Kind);
+
+    /// <summary>
+    /// The preset list as the toolbar's dropdown holds it: the presets of
+    /// <paramref name="ordered"/> as they are, with a heading before each run of
+    /// a kind, so the order the list is already in is read rather than only felt.
+    /// </summary>
+    /// <remarks>
+    /// A row of its own rather than a line drawn on the first preset of the run:
+    /// a row of a list lights up whole, so a heading carried on one would light
+    /// with it and read as a label for that one preset.
+    /// </remarks>
+    private static List<object> PresetRows(IReadOnlyList<PatchPreset> ordered)
+    {
+        var rows = new List<object>();
+
+        for (var row = 0; row < ordered.Count; row++)
+        {
+            if (row == 0 || ordered[row - 1].Kind != ordered[row].Kind)
+                rows.Add(new PresetHeading(ordered[row].Kind));
+
+            rows.Add(ordered[row]);
+        }
+
+        return rows;
+    }
+
+    /// <summary>
+    /// What a <see cref="PresetKind"/> is called where it heads its own run of
+    /// presets — said in the words somebody choosing a patch would use, since
+    /// nobody opening the list is looking for an Interplay. Shouted like the
+    /// module palette's section headings, being the same thing in the same kind
+    /// of list.
+    /// </summary>
+    private static string KindHeading(PresetKind kind) => kind switch
+    {
+        PresetKind.Idea => "ONE IDEA",
+        PresetKind.Interplay => "SOUND AND PICTURE",
+        PresetKind.Showcase => "SHOWCASE",
+        _ => "BLANK",
+    };
 
     private Control BuildToolbar()
     {
-        var available = OrderedPresets();
+        var rows = PresetRows(OrderedPresets());
 
         // A Picker rather than a plain list, and this is the one where it matters
         // most: every change here throws the patch on the canvas away, so a
@@ -771,8 +830,12 @@ public sealed partial class MainWindow : Window
         var presets = new Picker
         {
             Name = "presets",
-            ItemsSource = available,
-            SelectedIndex = 0,
+            ItemsSource = rows,
+
+            // The first row of the list is a heading, and a heading is not a row
+            // to be on. Which preset the window actually opens on is the
+            // constructor's to say, a moment after this.
+            SelectedIndex = rows.FindIndex(row => row is PatchPreset),
 
             // Sized to match the glyph button stacked in front of it below —
             // not shown itself, so what it is sized for is only where its
@@ -787,30 +850,57 @@ public sealed partial class MainWindow : Window
             SelectionBoxItemTemplate = new FuncDataTemplate<PatchPreset>((preset, _) =>
                 preset is null ? null : new TextBlock { Text = preset.Name, FontSize = Text.Body }),
 
-            // Two lines per row in the dropdown: what it is called, and the one
-            // sentence saying what it is for. The descriptions are the part of
-            // each preset's documentation a person choosing between twenty names
-            // actually needs.
-            ItemTemplate = new FuncDataTemplate<PatchPreset>((preset, _) =>
-                preset is null
-                    ? null
-                    : new StackPanel
+            // Two lines per preset in the dropdown: what it is called, and the
+            // one sentence saying what it is for. The descriptions are the part
+            // of each preset's documentation a person choosing between twenty
+            // names actually needs.
+            //
+            // And a heading over each run of a kind, drawn in that kind's color
+            // the way the module palette draws its sections. One template for
+            // both, because the list holds both — see PresetRows.
+            ItemTemplate = new FuncDataTemplate<object>((row, _) => row switch
+            {
+                PresetHeading heading => new TextBlock
+                {
+                    Text = KindHeading(heading.Kind),
+                    FontSize = Text.Caption,
+                    FontWeight = FontWeight.SemiBold,
+                    Foreground = new SolidColorBrush(Colors.PresetAccent(heading.Kind)),
+                    Margin = new Thickness(0, 4, 0, 2),
+                },
+
+                PatchPreset preset => new StackPanel
+                {
+                    Spacing = 1,
+                    Children =
                     {
-                        Spacing = 1,
-                        Children =
+                        new TextBlock { Text = preset.Name, FontSize = Text.Body },
+                        new TextBlock
                         {
-                            new TextBlock { Text = preset.Name, FontSize = Text.Body },
-                            new TextBlock
-                            {
-                                Text = preset.Description,
-                                FontSize = Text.Caption,
-                                Foreground = new SolidColorBrush(Colors.Muted),
-                                TextWrapping = TextWrapping.Wrap,
-                                MaxWidth = 260,
-                                IsVisible = preset.Description.Length > 0,
-                            },
+                            Text = preset.Description,
+                            FontSize = Text.Caption,
+                            Foreground = Text.Muted,
+                            TextWrapping = TextWrapping.Wrap,
+                            MaxWidth = 260,
+                            IsVisible = preset.Description.Length > 0,
                         },
-                    }),
+                    },
+                },
+
+                _ => null,
+            }),
+        };
+
+        // A heading is not something to point at: no hover, no click, no focus,
+        // so the run below it is lit a row at a time and the heading stays the
+        // one thing in the list that is only read. Left enabled rather than
+        // disabled, a disabled row being greyed as well as deaf.
+        presets.ContainerPrepared += (_, prepared) =>
+        {
+            var heading = rows[prepared.Index] is PresetHeading;
+
+            prepared.Container.IsHitTestVisible = !heading;
+            prepared.Container.Focusable = !heading;
         };
 
         // Invisible and unclickable in its own right: the glyph button stacked
@@ -845,7 +935,10 @@ public sealed partial class MainWindow : Window
         presets.SelectionChanged += async (_, _) =>
         {
             if (restoring) return;
-            if (presets.SelectedIndex < 0 || presets.SelectedIndex >= available.Count) return;
+
+            // Nothing on no selection, and nothing on a heading either — which
+            // no pointer can land on, and so can only have been set from here.
+            if (presets.SelectedItem is not PatchPreset preset) return;
             if (presets.SelectedIndex == presetShowing) return;
 
             var wanted = presets.SelectedIndex;
@@ -855,8 +948,6 @@ public sealed partial class MainWindow : Window
                 PutTheBoxBack();
                 return;
             }
-
-            var preset = available[wanted];
 
             try
             {

@@ -487,6 +487,11 @@ em.UnitWrite(cell, smoothed);           <span class="c">// what it holds next ti
     function is handed the catalog when the preset is <em>picked</em>, not when it is registered — so it can
     freely use the modules the same plugin just added.</p>
 
+    <p>A fourth argument, the <code>PresetKind</code>, says which heading of the preset list it belongs under:
+    <code>Idea</code> for one idea at one sink, which is the default; <code>Interplay</code> where sound and
+    picture are the same thought; <code>Showcase</code> for a whole piece. Say which, or yours is filed as an
+    idea whatever it is.</p>
+
     <pre><code>registry.AddPresets([<span class="k">new</span> PatchPreset(<span class="s">"Your preset"</span>, Build)]);
 
 <span class="k">static</span> Patch Build(ModuleCatalog modules)

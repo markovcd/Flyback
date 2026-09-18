@@ -68,7 +68,7 @@ public class DocumentIdentityTests : UiTest
 
         OpenABundle(window);
 
-        PresetList(window).SelectedIndex = 3;
+        Pick(PresetList(window), "Kaleidoscope");
         Dispatcher.UIThread.RunJobs();
 
         window.IsBundle.ShouldBeFalse("a preset came out of no file at all");

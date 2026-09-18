@@ -20,6 +20,7 @@
 - Acid, Bronze, Mycelium, Nebula, Outrun, Phase, Slow weather and Whole band are rebuilt on the new modules, with up to a fifth fewer modules each.
 - Slow weather is rebuilt around five feedback loops: a drone that bends its own phase, an echo that darkens every time round, two voices that push each other down, and a picture steered by where it was bright a frame ago.
 - Settings → Graphics picks which preset Flyback opens on at the next start.
+- The preset list is sorted into headed sections: the blank canvas first, then the patches about one idea, then the ones where sound and picture are the same thought, then the showcases.
 
 ### Recording and export
 - Record counts down on the status bar and takes the patch back to zero, so a take starts where the patch does. Ctrl+R during the count calls it off.
