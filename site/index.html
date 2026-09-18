@@ -11,10 +11,10 @@
 <meta property="og:url" content="https://markovcd.github.io/Flyback/">
 <meta property="og:title" content="Flyback — one patch, a picture and a sound">
 <meta property="og:description" content="A patchable video and audio synthesizer for Windows, macOS and Linux.">
-<meta property="og:image" content="https://markovcd.github.io/Flyback/assets/shots/nebula.webp">
-<meta property="og:image:width" content="1600">
-<meta property="og:image:height" content="863">
-<meta property="og:image:alt" content="The Flyback window: a patch of wired modules on the canvas beside a magenta and orange kaleidoscope in the preview.">
+<meta property="og:image" content="https://markovcd.github.io/Flyback/assets/share.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="The Flyback logo and the words One patch. A picture and a sound., in front of a wall of pictures Flyback presets make.">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#22252A">
 <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
@@ -29,7 +29,7 @@
   "name": "Flyback",
   "description": "A patchable synthesizer where one graph of modules generates both a picture and a sound.",
   "url": "https://markovcd.github.io/Flyback/",
-  "image": "https://markovcd.github.io/Flyback/assets/shots/nebula.webp",
+  "image": "https://markovcd.github.io/Flyback/assets/share.jpg",
   "applicationCategory": "MultimediaApplication",
   "operatingSystem": "Windows, macOS, Linux",
   "license": "https://opensource.org/licenses/MIT",
@@ -40,7 +40,21 @@
 </script>
 <style>
   /* ---- hero ---- */
-  .hero { padding: 72px 0 0; border-bottom: 1px solid var(--edge); overflow: hidden; }
+  .hero { padding: 72px 0 0; border-bottom: 1px solid var(--edge); overflow: hidden; position: relative; }
+  .hero > .wrap { position: relative; }
+  /* Pictures presets make, stacked behind the headline and fading out before they reach it. */
+  .hero .wall {
+    display: none; position: absolute; top: 0; right: 0; left: calc(50vw + 40px);
+    flex-direction: column; gap: 12px; padding-top: 12px; opacity: 0.5; pointer-events: none;
+    -webkit-mask-image: linear-gradient(90deg, transparent 8%, #000 55%), linear-gradient(#000 50%, transparent 85%);
+    -webkit-mask-composite: source-in;
+    mask-image: linear-gradient(90deg, transparent 8%, #000 55%), linear-gradient(#000 50%, transparent 85%);
+    mask-composite: intersect;
+  }
+  @media (min-width: 1280px) { .hero .wall { display: flex; } }
+  .hero .wall > div { display: flex; gap: 12px; }
+  .hero .wall > div:nth-child(odd) { margin-left: -122px; }
+  .hero .wall img { flex: none; width: 232px; height: auto; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 5px; border: 1px solid var(--edge); background: #000; }
   .hero .intro { max-width: 46rem; }
   .hero h1 .sweep {
     background: linear-gradient(90deg, var(--source), var(--feedback) 50%, var(--oscillator));
@@ -143,6 +157,13 @@
 <main>
 
 <section class="hero canvas">
+  <div class="wall" aria-hidden="true">
+    <div><img src="assets/shots/preview-acid.webp" alt=""><img src="assets/shots/preview-in-key.webp" alt=""><img src="assets/shots/preview-waveform.webp" alt=""><img src="assets/shots/preview-nebula.webp" alt=""><img src="assets/shots/preview-whole-band.webp" alt=""></div>
+    <div><img src="assets/shots/preview-marble.webp" alt=""><img src="assets/shots/preview-four-forms.webp" alt=""><img src="assets/shots/preview-acid.webp" alt=""><img src="assets/shots/preview-in-key.webp" alt=""><img src="assets/shots/preview-waveform.webp" alt=""></div>
+    <div><img src="assets/shots/preview-ring-scan.webp" alt=""><img src="assets/shots/preview-tut-t1.webp" alt=""><img src="assets/shots/preview-marble.webp" alt=""><img src="assets/shots/preview-four-forms.webp" alt=""><img src="assets/shots/preview-acid.webp" alt=""></div>
+    <div><img src="assets/shots/preview-euclid-kit.webp" alt=""><img src="assets/shots/preview-feedback-tunnel.webp" alt=""><img src="assets/shots/preview-ring-scan.webp" alt=""><img src="assets/shots/preview-tut-t1.webp" alt=""><img src="assets/shots/preview-marble.webp" alt=""></div>
+    <div><img src="assets/shots/preview-tut-t3.webp" alt=""><img src="assets/shots/preview-plasma.webp" alt=""><img src="assets/shots/preview-euclid-kit.webp" alt=""><img src="assets/shots/preview-feedback-tunnel.webp" alt=""><img src="assets/shots/preview-ring-scan.webp" alt=""></div>
+  </div>
   <div class="wrap">
     <div class="intro">
       <p class="eyebrow">A patchable synthesizer for Windows, macOS and Linux</p>
