@@ -29,7 +29,11 @@ public sealed class Parser(IReadOnlyList<Token> tokens, List<LanguageIssue> issu
         {
             var before = at;
 
-            if (Statement() is { } statement) statements.Add(statement);
+            if (Statement() is { } statement)
+            {
+                statements.Add(statement);
+                Finished();
+            }
 
             // Whatever happened, do not sit still: a statement parser that
             // consumed nothing would spin here forever on the token it could
@@ -51,6 +55,20 @@ public sealed class Parser(IReadOnlyList<Token> tokens, List<LanguageIssue> issu
     private void SkipToBreak()
     {
         while (Current.Kind is not (TokenKind.NewLine or TokenKind.End)) at++;
+    }
+
+    /// <summary>
+    /// Says so where a statement that read cleanly stopped short of the end of
+    /// its line. What is left is about to be skipped, and text that is skipped
+    /// without a word is a patch that builds and means something else.
+    /// </summary>
+    /// <param name="inBraces">Whether a closing brace may end the statement as well.</param>
+    private void Finished(bool inBraces = false)
+    {
+        if (Current.Kind is TokenKind.NewLine or TokenKind.End) return;
+        if (inBraces && Current.Kind == TokenKind.CloseBrace) return;
+
+        Complain("the statement ended before this, and nothing reads what is left of the line.");
     }
 
     private bool Take(TokenKind kind)
@@ -306,7 +324,12 @@ public sealed class Parser(IReadOnlyList<Token> tokens, List<LanguageIssue> issu
         {
             var before = at;
 
-            if (Statement() is { } statement) body.Add(statement);
+            if (Statement() is { } statement)
+            {
+                body.Add(statement);
+                Finished(inBraces: true);
+            }
+
             if (at == before) at++;
 
             SkipToBreakOrBrace();
@@ -508,7 +531,7 @@ public sealed class Parser(IReadOnlyList<Token> tokens, List<LanguageIssue> issu
 
                 if (Pipeline() is not { } inner) return null;
 
-                return Expect(TokenKind.CloseParen, "')'") ? inner : null;
+                return Expect(TokenKind.CloseParen, "')'") ? Selected(inner) : null;
             }
 
             case TokenKind.Identifier:
@@ -573,7 +596,30 @@ public sealed class Parser(IReadOnlyList<Token> tokens, List<LanguageIssue> issu
             at++;
         }
 
-        return new CallExpr(string.Join('.', parts), arguments, block, line, column);
+        return Selected(new CallExpr(string.Join('.', parts), arguments, block, line, column));
+    }
+
+    /// <summary>
+    /// The outputs taken off what was just read, if any are:
+    /// <c>tempo(bpm: 104).beats</c>.
+    /// </summary>
+    /// <remarks>
+    /// Only a call and a bracketed pipeline come here. A binding's selector is
+    /// read as part of its name, because <c>riff.gate</c> and <c>midi.in</c> are
+    /// the same shape until the brackets after one of them say which it was.
+    /// </remarks>
+    private Expr? Selected(Expr source)
+    {
+        while (Take(TokenKind.Dot))
+        {
+            if (Current.Kind != TokenKind.Identifier)
+                return Refuse("expected the name of an output after '.'.");
+
+            source = new SelectExpr(source, Current.Text, Current.Line, Current.Column);
+            at++;
+        }
+
+        return source;
     }
 
     private Expr? Refuse(string message)

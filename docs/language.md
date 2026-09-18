@@ -55,7 +55,8 @@ group "Name" { statements }      # draw these together on the canvas
 
 Statements are newline-separated. A pipeline may be broken across lines freely;
 a line ending in `|>` or `,`, or a line beginning with `|>`, continues the one
-before it.
+before it. Whatever a statement leaves unread on its line is a complaint, never
+something skipped.
 
 ---
 
@@ -123,6 +124,22 @@ riff.index  # where in the pattern it has got to
 A `let` binds the node rather than one of its outputs, so a binding piped into a
 position carries its pair on — `plane |> checker(size: 3)` is both of To polar's
 outputs — and anywhere else is its first output alone.
+
+A call takes the same selector, so a module read once needs no name to be read
+by:
+
+```
+let beats = tempo(bpm: 104).beats          # the count of beats, not the rate
+
+beats |> notes(rate: 2) [ A2 E3 ].gate     # the sequencer's gate, with the beats arriving
+  |> adsr()
+```
+
+Here the `let` binds the one output that was chosen, which is all the name can
+then stand for: `beats.bpm = 90` has no module to turn a knob on. A selector
+binds tighter than the pipe, so after a stage it chooses among the *stage's*
+outputs. It follows a bracketed pipeline as well — `(a |> b()).gate` — and a
+`def` that hands back a module.
 
 ### The pipe into an oscillator is its domain
 
@@ -511,9 +528,9 @@ Nodes inlined into a chain stay anonymous, which is right — they had no name t
 lose.
 
 The printer emits a `let` for any module that more than one wire leaves, that
-nothing leaves, whose output is read from a socket other than the first — no
-expression can stand for a Sequencer's `gate` — or that somebody named. It
-inlines everything else, choosing the pipe so that the rule which reads it back
+nothing leaves, whose output is read from a socket other than the first — a
+Sequencer's `gate` reads better off a name than off the end of the call that
+wrote its tune — or that somebody named. It inlines everything else, choosing the pipe so that the rule which reads it back
 puts the signal where it came from.
 
 Numbers are written to whatever precision reads back as the same knob, and no
@@ -541,13 +558,14 @@ body       = pipeline | "{" { statement } result "}" ;
 result     = pipeline | "(" pipeline { "," pipeline } ")" ;
 
 pipeline   = expr { "|>" stage } ;
-stage      = call | selector ;
+stage      = call outputs | selector ;
 
 expr       = term { ("+" | "-") term } ;
 term       = ranged { ("*" | "/" | "%") ranged } ;
 ranged     = factor [ ".." factor ] ;
 factor     = [ "-" ] primary ;
-primary    = literal | selector | call | "(" pipeline ")" ;
+primary    = literal | selector | ( call | "(" pipeline ")" ) outputs ;
+outputs    = { "." ident } ;
 
 call       = name "(" [ arg { "," arg } ] ")" [ block ] ;
 arg        = [ ident ":" ] pipeline ;
@@ -563,6 +581,9 @@ duration   = number ( "us" | "ms" | "s" ) ;
 
 `step` is the mini-notation of section 7. A `name` with dots is a type id
 written in full; a `selector` with a dot is a binding and one of its ports.
+`outputs` is the same choice made on a module with no name. The grammar lets
+one follow another and the binder refuses the second, since one output has no
+outputs of its own.
 
 ---
 

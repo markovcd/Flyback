@@ -669,6 +669,78 @@ public class LanguageTests
     }
 
     /// <summary>
+    /// An output is taken off a call the way it is taken off a binding, so a
+    /// module read once for something other than its first output needs no name.
+    /// A Tempo's first output is its rate and its second the beats, and a
+    /// selector that went unread would wire the rate: a patch that builds,
+    /// plays, and keeps different time.
+    /// </summary>
+    [Fact]
+    public void An_output_is_taken_off_a_call_by_name()
+    {
+        var patch = Build("""
+            let beats = tempo(bpm: 104).beats
+
+            sine(in: beats, freq: 1) |> out.left
+            """);
+
+        var tempo = patch.Nodes.Single(n => n.TypeId == NodeCatalog.TempoTypeId);
+        var sine = patch.Nodes.Single(n => n.TypeId == "osc.sine");
+
+        var beats = Index(NodeCatalog.BuiltIn.Require(tempo.TypeId).Outputs, "beats");
+        var domain = Index(NodeCatalog.BuiltIn.Require(sine.TypeId).Inputs, "in");
+
+        beats.ShouldBeGreaterThan(0);
+        patch.IncomingTo(sine.Id, domain).ShouldBe(new Connection(tempo.Id, beats, sine.Id, domain));
+
+        static int Index(IReadOnlyList<PortSpec> ports, string name) =>
+            ports.Select(p => p.Name).ToList().IndexOf(name);
+    }
+
+    /// <summary>
+    /// The selector binds tighter than the pipe, so after a stage it chooses
+    /// among the stage's outputs — with what was arriving still arriving.
+    /// </summary>
+    [Fact]
+    public void A_selector_on_a_stage_picks_the_stages_output()
+    {
+        var patch = Build("""
+            tempo(bpm: 104).beats |> notes(rate: 2) [ A2 E3 ].gate |> adsr() |> out.left
+            """);
+
+        var tempo = patch.Nodes.Single(n => n.TypeId == NodeCatalog.TempoTypeId);
+        var steps = patch.Nodes.Single(n => n.TypeId == "seq.notes");
+        var envelope = patch.Nodes.Single(n => n.TypeId == NodeCatalog.AdsrTypeId);
+
+        patch.Connections.ShouldContain(c => c.SourceNode == tempo.Id && c.SourcePort == 1 && c.TargetNode == steps.Id);
+        patch.Connections.ShouldContain(c => c.SourceNode == steps.Id && c.SourcePort == 1 && c.TargetNode == envelope.Id);
+    }
+
+    /// <summary>A selector is checked against the module it follows, and the complaint stands on the selector.</summary>
+    [Fact]
+    public void A_selector_a_call_has_no_output_for_is_refused_where_it_stands()
+    {
+        var load = Try("let beats = tempo(bpm: 104).beat");
+
+        load.Report.ShouldContain("has no output called 'beat'");
+        load.Issues.ShouldContain(i => i.Line == 1 && i.Column == 29);
+    }
+
+    /// <summary>
+    /// A statement that reads cleanly and stops short of its line says so. What
+    /// is left would otherwise be skipped without a word, and the patch would
+    /// build as though it had never been written.
+    /// </summary>
+    [Fact]
+    public void What_is_left_of_a_line_is_complained_about()
+    {
+        var load = Try("let slow = sine(freq: 0.2) 0.5");
+
+        load.Report.ShouldContain("nothing reads what is left of the line");
+        load.Issues.ShouldContain(i => i.Line == 1 && i.Column == 28);
+    }
+
+    /// <summary>
     /// A position takes two signals and nothing else does. The Sequence preset
     /// is why: its 'steps |> note()' would otherwise have put the sequencer's
     /// gate into Note's octave and its index into the cents — a patch that

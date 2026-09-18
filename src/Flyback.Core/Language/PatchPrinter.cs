@@ -383,8 +383,9 @@ public static class PatchPrinter
     /// <summary>
     /// Decides which modules get a name of their own before anything is written:
     /// where more than one wire leaves, where none does, where what leaves is an
-    /// output other than the first — no expression can stand for a Sequencer's
-    /// gate — or where somebody named it on the canvas.
+    /// output other than the first — a Sequencer's gate reads better off a name
+    /// than off the end of the call that wrote its tune — or where somebody
+    /// named it on the canvas.
     /// </summary>
     private static Plan Prepare(
         Patch patch,

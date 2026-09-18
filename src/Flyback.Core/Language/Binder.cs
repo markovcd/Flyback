@@ -407,6 +407,7 @@ public sealed class Binder
         BinaryExpr binary => Arithmetic(binary, scope),
         NameExpr name => Read(name, scope),
         CallExpr call => Call(call, scope, piped: null),
+        SelectExpr select => Select(select, scope, piped: null),
         PipeExpr pipe => Pipe(pipe, scope),
         RangeExpr range => Refuse(range.Line, range.Column, "a range only means something as an argument."),
         _ => null,
@@ -502,15 +503,43 @@ public sealed class Binder
 
         if (expr.Port is null) return value;
 
-        if (value is not Placed placed)
+        if (value is not Placed)
             return Refuse(expr.Line, expr.Column, $"'{expr.Name}' is not a module, so it has no sockets.");
 
-        var port = Find(placed.Def.Outputs, expr.Port);
+        return Output(value, expr.Port, expr.Line, expr.Column);
+    }
+
+    /// <summary>
+    /// One output of what an expression placed, which is a binding's selector
+    /// without the binding: <c>tempo(bpm: 104).beats</c>.
+    /// </summary>
+    /// <param name="piped">What is arriving, where the expression is a stage of a pipeline.</param>
+    private Value? Select(SelectExpr expr, Scope scope, Value? piped)
+    {
+        var source = expr.Source switch
+        {
+            CallExpr call => Call(call, scope, piped),
+            SelectExpr inner => Select(inner, scope, piped),
+            _ => Bind(expr.Source, scope),
+        };
+
+        return source is null ? null : Output(source, expr.Port, expr.Line, expr.Column);
+    }
+
+    /// <summary>The output of <paramref name="value"/> called <paramref name="name"/>.</summary>
+    private Value? Output(Value value, string name, int line, int column)
+    {
+        // A def may hand back one output, several things or a number, and none
+        // of those has outputs of its own to choose between.
+        if (value is not Placed placed)
+            return Refuse(line, column, $"this is not a module, so it has no output called '{name}'.");
+
+        var port = Find(placed.Def.Outputs, name);
 
         if (port < 0)
         {
-            return Refuse(expr.Line, expr.Column,
-                $"'{placed.Def.Name}' has no output called '{expr.Port}'. It has {List(placed.Def.Outputs)}.");
+            return Refuse(line, column,
+                $"'{placed.Def.Name}' has no output called '{name}'. It has {List(placed.Def.Outputs)}.");
         }
 
         return new Socket(placed.Id, port);
@@ -580,6 +609,11 @@ public sealed class Binder
         }
 
         if (expr.Stage is CallExpr call) return Call(call, scope, value);
+
+        // 'beats |> notes() [ A3 C4 ].gate' is the sequencer with the beats
+        // arriving, and then its gate: the selector binds tighter than the pipe,
+        // so it is the stage's output that is chosen and not the source's.
+        if (expr.Stage is SelectExpr select) return Select(select, scope, value);
 
         return Refuse(expr.Line, expr.Column, "only a module or a socket may follow '|>'.");
     }
@@ -1241,6 +1275,13 @@ public sealed class Binder
         {
             node = found;
             def = placed.Def;
+        }
+        else if (scope.Find(target.Name) is not null)
+        {
+            // A name bound to one output, a number or a def's several results:
+            // it is there, and it is not something with sockets.
+            Complain(target.Line, target.Column, $"'{target.Name}' is not a module, so it has no sockets.");
+            return null;
         }
         else
         {

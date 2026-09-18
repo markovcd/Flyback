@@ -54,6 +54,8 @@
 - Answering "Save…" to the unsaved-changes question and then saving a text copy no longer closes the patch as if it had been saved.
 - Fading Volume to zero during a recording no longer stops the file there.
 - A module moved with a middle-button pan or a zoom in the middle of the drag stays under the pointer, and the move can be undone.
+- In text, an output named straight after a call, as in `tempo(bpm: 104).beats`, is read rather than dropped for the first output.
+- In text, anything left on a line after its statement is a complaint rather than skipped.
 - Several other bugfixes.
 
 ## 0.3.0 — 2026-09-17
