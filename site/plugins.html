@@ -184,6 +184,40 @@
       <li>Reference packages of your own freely. Your folder is your own load context, so your version of
       something does not have to agree with anyone else's.</li>
     </ul>
+
+    <h3>Without the source</h3>
+
+    <p>That project sits inside this repository, beside the two it references. A plugin of your own need
+    not: an installed Flyback has both assemblies beside the executable, and they are all there is to
+    compile against.</p>
+
+    <pre><code>&lt;<span class="k">Project</span> Sdk=<span class="s">"Microsoft.NET.Sdk"</span>&gt;
+
+  &lt;<span class="k">PropertyGroup</span>&gt;
+    &lt;TargetFramework&gt;<span class="s">net10.0</span>&lt;/TargetFramework&gt;
+    &lt;EnableDynamicLoading&gt;<span class="s">true</span>&lt;/EnableDynamicLoading&gt;
+
+    <span class="c">&lt;!-- The folder Flyback is installed in: the one holding the executable. --&gt;</span>
+    &lt;Flyback&gt;<span class="s">C:\Path\To\Flyback</span>&lt;/Flyback&gt;
+  &lt;/<span class="k">PropertyGroup</span>&gt;
+
+  &lt;<span class="k">ItemGroup</span>&gt;
+    &lt;<span class="k">Reference</span> Include=<span class="s">"Flyback.Plugins"</span> HintPath=<span class="s">"$(Flyback)\Flyback.Plugins.dll"</span> Private=<span class="s">"false"</span> /&gt;
+    &lt;<span class="k">Reference</span> Include=<span class="s">"Flyback.Core"</span> HintPath=<span class="s">"$(Flyback)\Flyback.Core.dll"</span> Private=<span class="s">"false"</span> /&gt;
+  &lt;/<span class="k">ItemGroup</span>&gt;
+
+&lt;/<span class="k">Project</span>&gt;</code></pre>
+
+    <ul>
+      <li><code>Private="false"</code> does here what it does above: your output is your assembly and its
+      <code>.deps.json</code>, and neither of the host's.</li>
+      <li><strong>Leave <code>Flyback.Engine.dll</code> alone</strong>, though it sits in the same folder.
+      Nothing a plugin is handed comes from it, and a plugin that references it is bound to the one release
+      it was copied from.</li>
+      <li>The release you compile against sets the oldest Flyback your plugin loads in, not the newest —
+      see <a href="#install">Building and installing</a>. Build against the oldest one you mean to
+      support.</li>
+    </ul>
   </section>
 
   <section id="entry">
