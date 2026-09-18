@@ -189,7 +189,7 @@ public sealed partial class MainWindow
         // next buffer. Turning a knob while playing a note recompiles the patch,
         // and the note must not be cut off by the edit.
         preview.Live = new LiveValues(result.Program.LiveInputs);
-        midi.Lay(MidiExtra.KeyboardScale(editor.Patch));
+        var relaid = midi.Lay(editor.Patch.KeyboardScale);
         midi.Follow(preview.Live, audio.Live);
         RefreshControls();
 
@@ -218,6 +218,11 @@ public sealed partial class MainWindow
                 _ => "Showing the Probe — select another module for the picture.",
             });
         }
+
+        // Said when it changes, since nothing on the canvas shows it: a patch
+        // opened on a scale plays differently from the keys under your hands
+        // before anything is selected.
+        if (relaid) said = said.Prepend(midi.Keyboard.Described);
 
         // Each of them, rather than one sentence with bullets between: they are
         // separate problems, they arrive and are fixed separately, and the log

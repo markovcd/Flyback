@@ -194,33 +194,21 @@ public class KeyboardTests
         Read(block, Pitch).ShouldBe(48d);
     }
 
+    /// <summary>
+    /// What the window says on the status bar hangs on whether the layout
+    /// changed, so an unchanged one has to answer no.
+    /// </summary>
     [Fact]
-    public void The_patch_says_which_layout_the_keyboard_takes()
+    public void Laying_out_says_whether_anything_changed()
     {
-        var patch = new Patch();
-        var def = NodeCatalog.BuiltIn.Get(NodeCatalog.MidiTypeId)!;
-        var node = NodeInstance.Create(def, 0d, 0d);
-        patch.Nodes.Add(node);
+        var hub = new MidiHub();
 
-        MidiExtra.KeyboardScale(patch).ShouldBeNull();
-
-        node.SetState(MidiExtra.StateKey, new System.Text.Json.Nodes.JsonObject
-        {
-            [MidiExtra.DeviceField] = MidiSources.Keyboard,
-            [MidiExtra.KeysField] = MidiExtra.ScaleKeys,
-        });
-        ScaleExtra.Set(node, [9, 0, 4]);
-
-        MidiExtra.KeyboardScale(patch).ShouldBe([0, 4, 9]);
-
-        // A module listening to something else does not lay the keyboard out.
-        node.SetState(MidiExtra.StateKey, new System.Text.Json.Nodes.JsonObject
-        {
-            [MidiExtra.DeviceField] = "some-device",
-            [MidiExtra.KeysField] = MidiExtra.ScaleKeys,
-        });
-
-        MidiExtra.KeyboardScale(patch).ShouldBeNull();
+        hub.Lay(null).ShouldBeFalse();
+        hub.Lay([0, 2, 4]).ShouldBeTrue();
+        hub.Lay([4, 2, 0]).ShouldBeFalse();
+        hub.Keyboard.Described.ShouldContain("C D E on A to D");
+        hub.Lay(null).ShouldBeTrue();
+        hub.Keyboard.Described.ShouldStartWith("Keyboard: piano");
     }
 
     [Fact]

@@ -17,6 +17,9 @@ internal static class Vocabulary
     public const string SetPicture = "set_picture";
     public const string SetExtra = "set_extra";
 
+    /// <summary>Lays the computer keyboard out, which is the patch's and no module's.</summary>
+    public const string SetKeyboard = "set_keyboard";
+
     /// <summary>
     /// The tool that writes the extra filed under <paramref name="key"/>.
     /// </summary>

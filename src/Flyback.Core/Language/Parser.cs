@@ -85,6 +85,10 @@ public sealed class Parser(IReadOnlyList<Token> tokens, List<LanguageIssue> issu
         if (AtWord("def")) return Def(line, column);
         if (AtWord("group")) return Group(line, column);
 
+        // Only with the layout after it, so a binding somebody called 'keyboard'
+        // still starts a pipeline the way any other name does.
+        if (AtWord("keyboard") && Ahead().Kind == TokenKind.Identifier) return Keyboard(line, column);
+
         // A knob or a back-wire begins the same way an ordinary pipeline does,
         // so which it is only shows up at the operator after the name.
         if (Current.Kind == TokenKind.Identifier
@@ -312,6 +316,33 @@ public sealed class Parser(IReadOnlyList<Token> tokens, List<LanguageIssue> issu
         if (!Expect(TokenKind.CloseBrace, "'}' to close the group")) return null;
 
         return new GroupStatement(name, body, line, column);
+    }
+
+    private Statement? Keyboard(int line, int column)
+    {
+        at++;
+
+        var layout = Current.Text;
+        at++;
+
+        if (layout == "piano") return new KeyboardStatement(null, line, column);
+
+        if (layout != "scale")
+        {
+            Complain($"'{layout}' is not a layout. The keyboard is 'piano' or 'scale [ ... ]'.");
+            return null;
+        }
+
+        if (Current.Kind != TokenKind.Block)
+        {
+            Complain("expected the notes of the scale in brackets after 'keyboard scale'.");
+            return null;
+        }
+
+        var block = Current.Text;
+        at++;
+
+        return new KeyboardStatement(block, line, column);
     }
 
     private void SkipToBreakOrBrace()

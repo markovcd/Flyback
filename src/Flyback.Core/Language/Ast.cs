@@ -120,6 +120,14 @@ public sealed record KnobStatement(NameExpr Target, Expr Value, int Line, int Co
 public sealed record BackWireStatement(NameExpr Target, Expr Value, int Line, int Column)
     : Statement(Line, Column);
 
+/// <summary>
+/// <c>keyboard scale [ C D E G A ]</c> or <c>keyboard piano</c>: how the
+/// computer keyboard is laid out, which belongs to the patch rather than to any
+/// module in it.
+/// </summary>
+/// <param name="Scale">The block as it was written, and null for a piano.</param>
+public sealed record KeyboardStatement(string? Scale, int Line, int Column) : Statement(Line, Column);
+
 /// <summary><c>group "Name" { ... }</c>, a box drawn round what is declared inside it.</summary>
 public sealed record GroupStatement(
     string Name,

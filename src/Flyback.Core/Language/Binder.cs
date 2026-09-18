@@ -181,6 +181,7 @@ public sealed class Binder
         BackWireStatement back => Aimed(back.Target) + " <-",
         GroupStatement group => "group " + group.Name,
         DefStatement def => "def " + def.Name,
+        KeyboardStatement => "keyboard",
         PipelineStatement pipeline => Ending(pipeline.Value) ?? Anonymous(),
         _ => Anonymous(),
     };
@@ -237,6 +238,10 @@ public sealed class Binder
 
             case GroupStatement group:
                 Box(group, scope);
+                break;
+
+            case KeyboardStatement keyboard:
+                Lay(keyboard);
                 break;
         }
     }
@@ -964,6 +969,23 @@ public sealed class Binder
 
         patch.Connect(wire.SourceNode, wire.SourcePort, scale.Id, 0);
         patch.Connect(scale.Id, 0, node.Id, rate);
+    }
+
+    /// <summary>Whether a <c>keyboard</c> line has been read already, so a second is said rather than obeyed.</summary>
+    private bool laid;
+
+    /// <summary>Lays the computer keyboard out, once — there is one keyboard.</summary>
+    private void Lay(KeyboardStatement statement)
+    {
+        if (laid)
+        {
+            Complain(statement.Line, statement.Column,
+                "the keyboard is already laid out further up. A patch has one keyboard, so it says so once.");
+            return;
+        }
+
+        laid = true;
+        patch.KeyboardScale = statement.Scale is { } block ? Pitch.Scale(Classes(block, statement.Line)) : null;
     }
 
     /// <summary>The pitch classes a scale block names, by letter or by number.</summary>

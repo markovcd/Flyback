@@ -266,10 +266,21 @@ trailing block:
 ```
 let riff  = notes(rate: 4, gate_length: 0.5) [ A3 C4 [E4 G4] ~ ]
 let snap  = quantiser() [ C D E G A ]
-let lead  = midi.in(keys: "scale") [ C D E G A ]
 let clip  = sample("kick.wav")
 let photo = picture("sunset.png")
 ```
+
+How the computer keyboard is laid out belongs to the patch rather than to any
+module, so it is a line of its own, once, and a printing puts it first
+([0099](adr/0099-the-computer-keyboard-can-be-laid-out-by-scale.md)):
+
+```
+keyboard scale [ C D E G A ]
+```
+
+The picked notes sit side by side along the `A` row, with the `Q` row an octave
+up and the `Z` row an octave down. `keyboard piano` is the tracker layout, and
+what a patch that says nothing gets.
 
 A block goes **after** the brackets and there is at most one, so it needs no
 name. A file goes **inside** them and has no name either — a call carries at

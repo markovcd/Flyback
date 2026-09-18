@@ -42,9 +42,17 @@ internal sealed class ScaleKeys
     private static readonly IBrush OffText = new SolidColorBrush(Colors.Value);
     private static readonly IPen Edge = new Pen(new SolidColorBrush(Colors.Outline));
 
-    private readonly NodeInstance node;
-    private readonly ScaleUse use;
-    private readonly Action<string?> changed;
+    /// <summary>The scale as it stands, from wherever it is kept.</summary>
+    private readonly Func<List<int>> read;
+
+    /// <summary>Puts a new scale where it is kept and says it changed.</summary>
+    private readonly Action<List<int>> write;
+
+    /// <summary>
+    /// Whether these are the notes the computer keyboard plays rather than the
+    /// ones a quantiser snaps to, which changes only what the words say.
+    /// </summary>
+    private readonly bool played;
     private readonly Dictionary<int, Button> keys = [];
 
     /// <summary>
@@ -62,15 +70,33 @@ internal sealed class ScaleKeys
         Margin = new Thickness(0, 6, 0, 0),
     };
 
-    public ScaleKeys(NodeInstance node, NodeDef def, ScaleUse use, Action<string?> changed)
+    /// <summary>The scale a module carries.</summary>
+    public ScaleKeys(NodeInstance node, NodeDef def, Action<string?> changed)
+        : this(
+            def.Category,
+            () => ScaleExtra.Of(node),
+            scale =>
+            {
+                ScaleExtra.Set(node, scale);
+                changed(null);
+            },
+            played: false)
     {
-        this.node = node;
-        this.use = use;
-        this.changed = changed;
+    }
 
-        on = new SolidColorBrush(Colors.Accent(def.Category));
+    /// <summary>
+    /// A scale kept anywhere, under the accent of <paramref name="category"/> —
+    /// which is how the patch's keyboard is edited from the module that plays it.
+    /// </summary>
+    public ScaleKeys(string category, Func<List<int>> read, Action<List<int>> write, bool played)
+    {
+        this.read = read;
+        this.write = write;
+        this.played = played;
 
-        var panel = new StackPanel { Margin = new Thickness(0, 14, 0, 0) };
+        on = new SolidColorBrush(Colors.Accent(category));
+
+        var panel = new StackPanel { Margin = new Thickness(0, played ? 6 : 14, 0, 0) };
 
         panel.Children.Add(new TextBlock
         {
@@ -190,11 +216,11 @@ internal sealed class ScaleKeys
 
         row.Children.Add(Shortcut(
             "All",
-            use == ScaleUse.Keys ? "Every note, one to a key." : "Every note, which is the nearest semitone.",
+            played ? "Every note, one to a key." : "Every note, which is the nearest semitone.",
             [.. Enumerable.Range(0, Pitch.Classes)]));
         row.Children.Add(Shortcut(
             "None",
-            use == ScaleUse.Keys ? "No note, so the keys play nothing." : "No note, which passes the signal through unchanged.",
+            played ? "No note, so the keys play nothing." : "No note, which passes the signal through unchanged.",
             []));
 
         return row;
@@ -207,9 +233,8 @@ internal sealed class ScaleKeys
 
             button.Click += (_, _) =>
             {
-                ScaleExtra.Set(node, scale);
+                write([.. scale]);
                 Refresh();
-                changed(null);
             };
 
             return button;
@@ -218,14 +243,13 @@ internal sealed class ScaleKeys
 
     private void Toggle(int pitchClass)
     {
-        var scale = ScaleExtra.Of(node);
+        var scale = read();
 
         if (!scale.Remove(pitchClass)) scale.Add(pitchClass);
 
-        ScaleExtra.Set(node, Pitch.Scale(scale));
+        write(Pitch.Scale(scale));
 
         Refresh();
-        changed(null);
     }
 
     /// <summary>
@@ -239,7 +263,7 @@ internal sealed class ScaleKeys
     /// </remarks>
     private void Refresh()
     {
-        var scale = ScaleExtra.Of(node);
+        var scale = read();
 
         foreach (var (pitchClass, key) in keys)
         {
@@ -251,7 +275,7 @@ internal sealed class ScaleKeys
             key.Opacity = lit ? 1 : 0.75;
         }
 
-        summary.Text = use == ScaleUse.Keys ? Keys(scale) : scale.Count switch
+        summary.Text = played ? Played(scale) : scale.Count switch
         {
             0 => "Nothing is switched on, so there is nothing to snap to and the signal "
                  + "passes straight through.",
@@ -262,21 +286,16 @@ internal sealed class ScaleKeys
         };
     }
 
-    /// <summary>
-    /// What the scale does to the computer keyboard, which is nothing at all
-    /// until 'keys' is set to Scale — said, because the keys light up either way.
-    /// </summary>
-    private static string Keys(List<int> scale)
+    /// <summary>Where on the computer keyboard the picked notes land.</summary>
+    private static string Played(List<int> scale)
     {
-        const string when = " When keys is Scale.";
-
-        if (scale.Count == 0) return "Nothing is picked, so the computer keyboard plays nothing." + when;
+        if (scale.Count == 0) return "Nothing is picked, so the keys play nothing.";
 
         var named = string.Join(" ", scale.Select(Pitch.ClassName));
         var home = string.Concat("ASDFGHJKL;'\\".Take(scale.Count));
-        var lost = scale.Count > 10 ? " The Z row has ten keys, so it stops short of the top." : "";
+        var shortfall = scale.Count > 10 ? " The Z row has ten keys, so it stops short of the top." : "";
 
-        return $"{named}, one to a key: {home} along the home row, the row above an octave up and "
-               + $"the Z row an octave down.{lost}{when}";
+        return $"{named}, one to a key along {home}; the Q row is an octave up and the Z row an "
+               + $"octave down.{shortfall}";
     }
 }

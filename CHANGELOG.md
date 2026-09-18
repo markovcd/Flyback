@@ -15,7 +15,7 @@
 - Added Transform (zoom, turn and slide in one), Ink (draws a shape in one color), Vignette (darkens the corners) and Tune (a Quantiser and a Note in one).
 - Euclid has a `stroke` output, an envelope on the steps that are hits, and Tempo has `beats`, the count of beats so far.
 - Added the Mastering plugin, for the end of a patch: EQ, Width, Crossover (three bands), Compressor, Limiter (nothing past a ceiling) and Loudness (a LUFS meter).
-- MIDI In can lay the computer keyboard out by scale: the notes you pick are played one to a key along the A row, with the Q row an octave up and the Z row an octave down.
+- The computer keyboard can be laid out by scale, chosen on any MIDI In and saved with the patch: the notes you pick are played one to a key along the A row, with the Q row an octave up and the Z row an octave down.
 
 ### Presets
 - Mycelium, in the Effects plugin: a psybient track of ninety-six bars in six sections, with a picture driven by the same signals. It is the largest preset, and needs the Voice and Picture plugins.

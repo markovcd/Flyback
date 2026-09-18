@@ -623,6 +623,8 @@ public sealed partial class MainWindow
             if (EditorFor(extra, node, def, reading) is { } control)
                 inspector.Children.Add(control);
 
+        if (BuildKeyboardSection(node, def) is { } keyboard) inspector.Children.Add(keyboard);
+
         if (def.Inputs.Count == 0 && def.Extras.Count == 0)
             inspector.Children.Add(new TextBlock
             {
@@ -1310,7 +1312,7 @@ public sealed partial class MainWindow
 
         // A quantiser's scale is a set rather than a sequence, so it is edited
         // as the octave it is a subset of rather than as a list of numbers.
-        ScaleExtra scale => new ScaleKeys(node, def, scale.Use, because => Edited(node, because)).View,
+        ScaleExtra => new ScaleKeys(node, def, because => Edited(node, because)).View,
 
         // The one a node carries that is not a number, so it is a name and a
         // button rather than a control with a range.
@@ -1322,6 +1324,87 @@ public sealed partial class MainWindow
         // declares nothing simply gets no rows.
         _ => BuildDeclaredRows(node, extra, reading),
     };
+
+    /// <summary>
+    /// How the computer keyboard is laid out, on a MIDI In that listens to it.
+    /// </summary>
+    /// <remarks>
+    /// The patch's setting rather than the module's (ADR-0099), shown here
+    /// because this is where somebody playing the keys is looking. Every MIDI In
+    /// on the keyboard shows the same one, and the heading says so, so that
+    /// changing it on one and finding it changed on another is what was
+    /// expected. Not shown on a module listening to a device, whose notes are
+    /// its own.
+    /// </remarks>
+    private Control? BuildKeyboardSection(NodeInstance node, NodeDef def)
+    {
+        if (node.TypeId != NodeCatalog.MidiTypeId) return null;
+
+        var device = new ExtraState(new MidiExtra().Fields, node.StateOf(MidiExtra.StateKey)).Chosen(MidiExtra.DeviceField);
+
+        if (!string.IsNullOrWhiteSpace(device) && device != MidiSources.Keyboard) return null;
+
+        var panel = new StackPanel { Margin = new Thickness(0, 14, 0, 0) };
+
+        panel.Children.Add(new TextBlock
+        {
+            Text = "computer keyboard — the whole patch's, the same on every MIDI In",
+            FontSize = Text.Micro,
+            Foreground = Text.Muted,
+            TextWrapping = TextWrapping.Wrap,
+            Margin = new Thickness(0, 0, 0, 4),
+        });
+
+        var layout = new ExtraField.Choice(
+            "layout",
+            "layout",
+            [new ChoiceOption(Piano, "Piano"), new ChoiceOption(ByScale, "Scale")],
+            Piano);
+
+        panel.Children.Add(ChoiceRow(
+            layout,
+            editor.Patch.KeyboardScale is null ? Piano : ByScale,
+            picked =>
+            {
+                // A scale left behind is picked up again, so trying the piano
+                // for a moment does not cost the notes that had been chosen.
+                if (picked == ByScale) editor.Patch.KeyboardScale = [.. (IEnumerable<int>?)keptKeyboardScale ?? Major];
+                else
+                {
+                    keptKeyboardScale = editor.Patch.KeyboardScale;
+                    editor.Patch.KeyboardScale = null;
+                }
+
+                Relaid();
+
+                // After the picker has finished with its own event, since what
+                // is rebuilt includes the picker.
+                Dispatcher.UIThread.Post(BuildInspector);
+            }));
+
+        if (editor.Patch.KeyboardScale is not null)
+            panel.Children.Add(new ScaleKeys(
+                def.Category,
+                () => [.. editor.Patch.KeyboardScale ?? []],
+                scale =>
+                {
+                    editor.Patch.KeyboardScale = scale;
+                    Relaid();
+                    editor.NotifyPatchChanged();
+                },
+                played: true).View);
+
+        return panel;
+    }
+
+    private const string Piano = "piano";
+    private const string ByScale = "scale";
+
+    /// <summary>What a fresh scale layout starts on: C major, what a fresh Quantiser starts on.</summary>
+    private static readonly int[] Major = [0, 2, 4, 5, 7, 9, 11];
+
+    /// <summary>The scale last switched away from, for switching back to.</summary>
+    private List<int>? keptKeyboardScale;
 
     /// <summary>
     /// A plugin's extra, drawn from its <see cref="NodeExtra.Fields"/>.
@@ -1370,7 +1453,14 @@ public sealed partial class MainWindow
         ExtraField.Choice choice => ChoiceRow(
             choice,
             choice.Value(node.StateOf(extra.Key)?[field.Key]),
-            next => Store(node, extra, field, JsonValue.Create(next)),
+            next =>
+            {
+                Store(node, extra, field, JsonValue.Create(next));
+
+                // The keyboard's section belongs to a MIDI In on the keyboard,
+                // so it comes and goes with the device.
+                if (extra is MidiExtra && field.Key == MidiExtra.DeviceField) Dispatcher.UIThread.Post(BuildInspector);
+            },
 
             // What the same field would say if asked again. An extra is free to
             // compute its fields afresh — MidiExtra does, because what it lists

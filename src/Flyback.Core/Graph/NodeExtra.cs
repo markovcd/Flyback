@@ -309,20 +309,8 @@ public sealed record StepsExtra(StepSpec Spec) : NodeExtra
         value.ToString(System.Globalization.CultureInfo.InvariantCulture);
 }
 
-/// <summary>What a scale is for, which decides only how it is described.</summary>
-public enum ScaleUse
-{
-    /// <summary>The notes a quantiser snaps a signal to.</summary>
-    Snap,
-
-    /// <summary>The notes the computer's keyboard plays, side by side along each row.</summary>
-    Keys,
-}
-
-/// <summary>The notes of the octave a quantiser snaps to, or a keyboard plays.</summary>
-/// <param name="Default">The scale a freshly placed instance carries.</param>
-/// <param name="Use">What the scale is for — see <see cref="ScaleUse"/>.</param>
-public sealed record ScaleExtra(IReadOnlyList<int> Default, ScaleUse Use = ScaleUse.Snap) : NodeExtra
+/// <summary>The notes of the octave a quantiser snaps to.</summary>
+public sealed record ScaleExtra(IReadOnlyList<int> Default) : NodeExtra
 {
     /// <inheritdoc cref="StepsExtra.Name"/>
     public const string Name = "scale";
@@ -359,24 +347,18 @@ public sealed record ScaleExtra(IReadOnlyList<int> Default, ScaleUse Use = Scale
     public override string Report(NodeInstance node)
     {
         if (Of(node) is not { Count: > 0 } scale)
-            return Use == ScaleUse.Keys
-                ? "Its scale is empty, so the computer keyboard plays nothing when laid out by scale."
-                : "Its scale is empty, so it passes the signal through unchanged.";
+            return "Its scale is empty, so it passes the signal through unchanged.";
 
         var named = string.Join(" ", scale.Select(Pitch.ClassName));
         var numbers = string.Join(", ", scale);
-
-        if (Use == ScaleUse.Keys)
-            return $"Scale: {named} ({numbers}), played along each row of the computer keyboard when laid out by scale.";
 
         return scale.Count == Pitch.Classes
             ? $"Scale: all twelve ({numbers}), which is the nearest semitone."
             : $"Scale: {named} ({numbers}).";
     }
 
-    public override string Announce() => Use == ScaleUse.Keys
-        ? $"  scale  which of the {Pitch.Classes} pitch classes the computer keyboard plays when keys is \"scale\" — not knobs"
-        : $"  scale  which of the {Pitch.Classes} pitch classes are on — not knobs";
+    public override string Announce() =>
+        $"  scale  which of the {Pitch.Classes} pitch classes are on — not knobs";
 }
 
 /// <summary>The audio file a player reads.</summary>

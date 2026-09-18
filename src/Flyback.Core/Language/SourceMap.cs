@@ -250,6 +250,60 @@ public sealed class SourceMap
             : Argument(brackets, quoted, first: true);
     }
 
+    /// <summary>
+    /// The edit that makes the text lay the computer keyboard out as
+    /// <paramref name="line"/> says, or null where the text already does.
+    /// </summary>
+    /// <remarks>
+    /// Found from the tokens rather than recorded by the binder, because the line
+    /// is about no module and so nothing else here would know where it is. The
+    /// first one standing at the start of a statement is the one the binder
+    /// obeys. With no line to put there — back to a piano — it is taken out, and
+    /// with none to replace a new one goes at the top, where a printing puts it.
+    /// </remarks>
+    /// <param name="line">What <see cref="PatchPrinter.Keyboard"/> writes, and null for a piano.</param>
+    public Change? Keyboard(string? line)
+    {
+        (int From, int To)? found = null;
+        var start = true;
+
+        for (var i = 0; i < tokens.Count && found is null; i++)
+        {
+            var token = tokens[i];
+
+            if (start
+                && token.Kind == TokenKind.Identifier
+                && token.Text == "keyboard"
+                && i + 1 < tokens.Count
+                && tokens[i + 1].Kind == TokenKind.Identifier)
+            {
+                var to = Offset(tokens[i + 1]) + tokens[i + 1].Text.Length;
+
+                if (i + 2 < tokens.Count && tokens[i + 2].Kind == TokenKind.Block) to = Closed(Offset(tokens[i + 2]));
+
+                found = (Offset(token), to);
+            }
+
+            start = token.Kind is TokenKind.NewLine or TokenKind.OpenBrace;
+        }
+
+        if (found is { } span)
+        {
+            if (line is not null)
+                return source[span.From..span.To] == line ? null : new Change(span.From, span.To - span.From, line);
+
+            // The line and the break after it, so taking it out leaves no gap.
+            var end = span.To;
+            while (end < source.Length && source[end] is ' ' or '\t') end++;
+            if (end < source.Length && source[end] == '\r') end++;
+            if (end < source.Length && source[end] == '\n') end++;
+
+            return new Change(span.From, end - span.From, string.Empty);
+        }
+
+        return line is null ? null : new Change(0, 0, line + "\n\n");
+    }
+
     /// <summary>The offset a line and a column name, clamped to the text.</summary>
     private int Offset(Site site)
     {

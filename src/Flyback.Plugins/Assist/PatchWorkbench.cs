@@ -326,6 +326,51 @@ public sealed partial class PatchWorkbench
     /// applied, and twelve calls to switch twelve notes is twelve chances to end
     /// up with a scale nobody asked for.
     /// </summary>
+    /// <summary>
+    /// The computer keyboard's layout, which is the patch's rather than any
+    /// module's (ADR-0099) — so it takes no handle.
+    /// </summary>
+    private ToolOutcome SetKeyboard(JsonElement arguments)
+    {
+        var layout = arguments.TryGetProperty("layout", out var given) && given.ValueKind == JsonValueKind.String
+            ? given.GetString()
+            : null;
+
+        if (layout == "piano")
+        {
+            working.KeyboardScale = null;
+            Edits++;
+
+            return Fine($"the computer keyboard is a piano. {Issues()}");
+        }
+
+        if (layout != "scale")
+            return ToolOutcome.Refused("'layout' is required, and is 'piano' or 'scale'.");
+
+        if (!arguments.TryGetProperty("notes", out var notes) || notes.ValueKind != JsonValueKind.Array)
+            return ToolOutcome.Refused(
+                "a scale needs 'notes': pitch classes, 0 to 11, where 0 is C and 9 is A.");
+
+        var classes = new List<int>();
+
+        foreach (var note in notes.EnumerateArray())
+        {
+            if (note.ValueKind != JsonValueKind.Number
+                || !note.TryGetInt32(out var pitchClass)
+                || pitchClass is < 0 or >= Pitch.Classes)
+            {
+                return ToolOutcome.Refused("every note has to be a whole number from 0 to 11.");
+            }
+
+            classes.Add(pitchClass);
+        }
+
+        working.KeyboardScale = Pitch.Scale(classes);
+        Edits++;
+
+        return Fine($"laid the computer keyboard out as {PatchPrinter.Keyboard(working.KeyboardScale)}. {Issues()}");
+    }
+
     private ToolOutcome SetScale(JsonElement arguments)
     {
         if (!Node(arguments, "handle", out var node, out var def, out var refusal))
@@ -333,7 +378,7 @@ public sealed partial class PatchWorkbench
 
         if (def.Extra<ScaleExtra>() is not { } carries)
             return ToolOutcome.Refused(
-                $"{Handle(node)} is a {def.Name}, which has no scale. The Quantiser, Tune and MIDI In have one.");
+                $"{Handle(node)} is a {def.Name}, which has no scale. Only the Quantiser has one.");
 
         if (!arguments.TryGetProperty("notes", out var given) || given.ValueKind != JsonValueKind.Array)
             return ToolOutcome.Refused(
@@ -1028,9 +1073,7 @@ public sealed partial class PatchWorkbench
                 + "in the scale rather than a single note, which is what makes a scale repeat up "
                 + "the keyboard. Order and repeats do not matter. C major is [0,2,4,5,7,9,11] "
                 + "and a minor pentatonic on A is [0,3,5,7,10]. All twelve snaps to the nearest "
-                + "semitone, which is what a Note module already does; an empty list is a wire. "
-                + "A MIDI In carries one too: the notes the computer keyboard plays along each "
-                + "row when its keys field is \"scale\".",
+                + "semitone, which is what a Note module already does; an empty list is a wire.",
                 """
                 {
                   "properties": {
@@ -1041,6 +1084,25 @@ public sealed partial class PatchWorkbench
                     }
                   },
                   "required": ["handle", "notes"]
+                }
+                """),
+
+            Does(Vocabulary.SetKeyboard, SetKeyboard,
+                "Lays the computer keyboard out for whoever plays a MIDI In listening to it. "
+                + "'piano' is the tracker layout, and the default. 'scale' puts the notes given, "
+                + "pitch classes 0 to 11, side by side along the A row, with the Q row an octave up "
+                + "and the Z row an octave down — so a player can only hit notes in the key. One "
+                + "layout for the whole patch, since there is one keyboard.",
+                """
+                {
+                  "properties": {
+                    "layout": { "type": "string", "enum": ["piano", "scale"] },
+                    "notes": {
+                      "type": "array",
+                      "items": { "type": "integer", "minimum": 0, "maximum": 11 }
+                    }
+                  },
+                  "required": ["layout"]
                 }
                 """),
 

@@ -475,6 +475,74 @@ public class MidiInputTests : UiTest
         Held(preview, MidiSignal.Gate).ShouldBe(1d);
     }
 
+    /// <summary>The picker for how the computer keyboard is laid out, where the panel has one.</summary>
+    private static ComboBox? Layout(MainWindow window) =>
+        All<ComboBox>(window).FirstOrDefault(box =>
+            box.ItemsSource?.Cast<object>().OfType<ChoiceOption>().Any(option => option.Id == "scale") == true);
+
+    /// <summary>
+    /// The layout is the patch's, edited from the module that plays it: picking
+    /// Scale lays the keys out at once, starting on C major, and the home row
+    /// plays its notes one to a key.
+    /// </summary>
+    [AvaloniaFact]
+    public void Picking_scale_on_a_MIDI_In_lays_the_keyboard_out_for_the_patch()
+    {
+        var (patch, midi) = Board();
+        var window = Open(patch);
+        var preview = All<PreviewHost>(window).Single();
+
+        Select(window, midi);
+
+        var layout = Layout(window);
+        layout.ShouldNotBeNull();
+        All<Button>(window).ShouldNotContain(b => b.Classes.Contains(ScaleKeys.KeyTag));
+
+        layout.SelectedIndex = 1;
+        Settle(window);
+
+        All<NodeEditor>(window).Single().Patch.KeyboardScale.ShouldBe([0, 2, 4, 5, 7, 9, 11]);
+        All<Button>(window).ShouldContain(b => b.Classes.Contains(ScaleKeys.KeyTag));
+
+        window.KeyPressQwerty(PhysicalKey.S, RawInputModifiers.None);
+        Settle(window);
+
+        Held(preview, MidiSignal.Pitch).ShouldBe(50d);
+    }
+
+    /// <summary>A patch saved on a scale opens on one, before anything is selected.</summary>
+    [AvaloniaFact]
+    public void A_patch_that_carries_a_scale_plays_it()
+    {
+        var (patch, _) = Board();
+        patch.KeyboardScale = [0, 3, 7];
+
+        var window = Open(patch);
+        var preview = All<PreviewHost>(window).Single();
+
+        window.KeyPressQwerty(PhysicalKey.D, RawInputModifiers.None);
+        Settle(window);
+
+        Held(preview, MidiSignal.Pitch).ShouldBe(55d);
+    }
+
+    /// <summary>A module listening to a device has nothing to do with the keys.</summary>
+    [AvaloniaFact]
+    public void A_MIDI_In_on_a_device_does_not_offer_the_layout()
+    {
+        var (patch, midi) = Board();
+        midi.SetState(MidiExtra.StateKey, new System.Text.Json.Nodes.JsonObject
+        {
+            [MidiExtra.DeviceField] = "some-device",
+        });
+
+        var window = Open(patch);
+
+        Select(window, midi);
+
+        Layout(window).ShouldBeNull();
+    }
+
     private static double Held(PreviewHost preview, string signal)
     {
         var block = preview.Live;

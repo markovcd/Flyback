@@ -117,6 +117,17 @@ public static class PatchPrinter
     public static string? Carried(NodeInstance node, NodeDef def) => Writer.Carried(node, def);
 
     /// <summary>
+    /// How the computer keyboard is laid out, as the line that says it — or null
+    /// for the piano, which is what a patch that says nothing is.
+    /// </summary>
+    public static string? Keyboard(IReadOnlyList<int>? scale) =>
+        scale is null
+            ? null
+            : scale.Count == 0
+                ? "keyboard scale [ ]"
+                : "keyboard scale [ " + string.Join(' ', scale.Select(Pitch.ClassName)) + " ]";
+
+    /// <summary>
     /// The file a module names rather than carries (ADR-0052), or null where it
     /// names none.
     /// </summary>
@@ -549,6 +560,14 @@ public static class PatchPrinter
             Cycles();
 
             var ordered = Ordered();
+
+            // First, because it is about the whole patch and not about any line
+            // below it.
+            if (Keyboard(patch.KeyboardScale) is { } keyboard)
+            {
+                text.AppendLine(keyboard);
+                text.AppendLine();
+            }
 
             foreach (var statement in ordered) text.AppendLine(statement.Text);
 

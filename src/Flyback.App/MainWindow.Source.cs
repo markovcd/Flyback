@@ -351,6 +351,15 @@ public sealed partial class MainWindow
     private void Restated(Guid node, string? key = null) => restated.Add((node, key));
 
     /// <summary>
+    /// Notes that the computer keyboard has been laid out again in the panel, for
+    /// the next write-back — the one thing the panel changes that is about no
+    /// module.
+    /// </summary>
+    private void Relaid() => relaid = true;
+
+    private bool relaid;
+
+    /// <summary>
     /// What a module carries has been edited: heard now, and written into the
     /// text when the hand comes off it.
     /// </summary>
@@ -373,7 +382,7 @@ public sealed partial class MainWindow
     /// </remarks>
     private void WriteBack()
     {
-        if ((turned.Count == 0 && restated.Count == 0) || writingBack || stepping) return;
+        if ((turned.Count == 0 && restated.Count == 0 && !relaid) || writingBack || stepping) return;
 
         var knobs = turned.ToArray();
         var kept = restated.ToArray();
@@ -383,8 +392,11 @@ public sealed partial class MainWindow
         // from its printing when it is one.
         var reading = !sourceOwned && source.Source == printed;
 
+        var keyboard = relaid;
+
         turned.Clear();
         restated.Clear();
+        relaid = false;
         writingBack = true;
 
         // The numbers written here and the turning of the knobs behind them are
@@ -397,6 +409,8 @@ public sealed partial class MainWindow
             {
                 foreach (var (id, port) in knobs) Write(id, port, ref lost);
                 foreach (var (id, key) in kept) Carry(id, key, ref lost);
+
+                if (keyboard) Lay();
             }
             finally
             {
@@ -469,6 +483,17 @@ public sealed partial class MainWindow
         }
 
         if (PatchPrinter.Held(node, def) is { Length: > 0 } path) Put(Map.File(id, path), id, ref lost);
+    }
+
+    /// <summary>Puts the keyboard's layout into the text, as the one line that says it.</summary>
+    private void Lay()
+    {
+        if (Map.Keyboard(PatchPrinter.Keyboard(editor.Patch.KeyboardScale)) is not { } edit) return;
+        if (!source.Apply(edit)) return;
+
+        if (!sourceOwned) printed = source.Source;
+
+        mapped = null;
     }
 
     /// <summary>
@@ -1112,6 +1137,7 @@ public sealed partial class MainWindow
         means = null;
         turned.Clear();
         restated.Clear();
+        relaid = false;
         unstacked = 0;
         sinceHandover = null;
     }

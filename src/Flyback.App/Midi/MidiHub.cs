@@ -203,11 +203,12 @@ internal sealed class MidiHub(IMidiInput? hardware = null) : IDisposable
     /// Asked on every recompile, so a layout that is the same as before is left
     /// alone: letting go there would cut a held note off at every knob turned.
     /// </remarks>
-    public void Lay(IReadOnlyList<int>? scale)
+    /// <returns>Whether the layout changed, which is when it is worth saying.</returns>
+    public bool Lay(IReadOnlyList<int>? scale)
     {
         var current = Keyboard.Scale;
 
-        if (current is null ? scale is null : scale is not null && current.SequenceEqual(Pitch.Scale(scale))) return;
+        if (current is null ? scale is null : scale is not null && current.SequenceEqual(Pitch.Scale(scale))) return false;
 
         lock (gate)
         {
@@ -216,6 +217,8 @@ internal sealed class MidiHub(IMidiInput? hardware = null) : IDisposable
         }
 
         Publish();
+
+        return true;
     }
 
     /// <summary>

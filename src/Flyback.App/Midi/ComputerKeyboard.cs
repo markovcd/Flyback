@@ -162,6 +162,24 @@ internal sealed class ComputerKeyboard
     }
 
     /// <summary>
+    /// How the keys are laid out and what they reach, for the status bar when
+    /// the layout changes — the one place it is said while nothing is selected.
+    /// </summary>
+    public string Described
+    {
+        get
+        {
+            if (Scale is not { } scale) return $"Keyboard: piano, {Range}.";
+            if (scale.Count == 0) return "Keyboard: scale, with no notes picked, so it plays nothing.";
+
+            var keys = string.Concat("ASDFGHJKL;'\\".Take(scale.Count));
+            var notes = string.Join(" ", scale.Select(Pitch.ClassName));
+
+            return $"Keyboard: {notes} on {keys[0]} to {keys[^1]}, Q row an octave up, Z row an octave down — {Range}.";
+        }
+    }
+
+    /// <summary>
     /// What the rows currently reach, written the way the notes are — for saying
     /// on the status bar when the octave moves, since rows of letters give no
     /// clue where they are.

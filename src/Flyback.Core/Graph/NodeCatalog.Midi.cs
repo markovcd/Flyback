@@ -26,10 +26,7 @@ public partial class NodeCatalog
             "Keyboard or MIDI input. 'pitch' is the current note; 'gate' is high while a key is held; "
             + "'velocity' follows note strength; 'trigger' fires on each note start. The index selects a polyphonic voice." )
         {
-            // The scale is only read by the computer's keyboard, and only when
-            // 'keys' says so. Empty to start with, so a module played as a piano
-            // carries nothing a printing has to write out.
-            Extras = [new MidiExtra(), new ScaleExtra([], ScaleUse.Keys)],
+            Extras = [new MidiExtra()],
         };
     }
 
@@ -113,15 +110,6 @@ public sealed record MidiExtra : NodeExtra
     public const string DeviceField = "device";
     public const string IndexField = "index";
 
-    /// <summary>
-    /// How the computer's keyboard is laid out: as a piano, or as the notes of
-    /// the module's scale one after another along each row.
-    /// </summary>
-    public const string KeysField = "keys";
-
-    public const string PianoKeys = "piano";
-    public const string ScaleKeys = "scale";
-
     public override string Key => StateKey;
 
     public override IReadOnlyList<ExtraField> Fields =>
@@ -132,44 +120,7 @@ public sealed record MidiExtra : NodeExtra
             [.. MidiSources.All.Select(source => new ChoiceOption(source.Id, source.Name))],
             MidiSources.Keyboard),
         new ExtraField.Number(IndexField, "voice", new PortSpec("voice", PortKind.Scalar, 0f, 0f, 8f, -1, PortDisplay.Integer)),
-        new ExtraField.Choice(
-            KeysField,
-            "keys",
-            [new ChoiceOption(PianoKeys, "Piano"), new ChoiceOption(ScaleKeys, "Scale")],
-            PianoKeys),
     ];
-
-    /// <summary>
-    /// The notes the computer's keyboard plays along a row, or null where it is
-    /// a piano — asked of the first MIDI In listening to the keyboard that lays
-    /// it out by scale.
-    /// </summary>
-    /// <remarks>
-    /// One layout for the whole patch because there is one keyboard: two modules
-    /// asking for two scales cannot both have the keys, and patch order is a
-    /// tie-break a reader can see. The empty scale is kept rather than read as a
-    /// piano, since switching to a scale and picking nothing is a choice the
-    /// keys should answer with silence rather than with the other layout.
-    /// </remarks>
-    public static IReadOnlyList<int>? KeyboardScale(Patch patch)
-    {
-        var extra = new MidiExtra();
-
-        foreach (var node in patch.Nodes)
-        {
-            if (node.TypeId != NodeCatalog.MidiTypeId) continue;
-
-            var state = new ExtraState(extra.Fields, node.StateOf(StateKey));
-            var device = state.Chosen(DeviceField);
-
-            if (!string.IsNullOrWhiteSpace(device) && device != MidiSources.Keyboard) continue;
-            if (state.Chosen(KeysField) != ScaleKeys) continue;
-
-            return Pitch.Scale(ScaleExtra.Of(node));
-        }
-
-        return null;
-    }
 
     /// <summary>
     /// The ordinary fold, and a word about a device that is not here. Reported
@@ -206,8 +157,6 @@ public sealed record MidiExtra : NodeExtra
         var offered = string.Join(", ", MidiSources.All.Select(source => source.Id));
 
         return $"  midi   device, which instrument it listens to — one of {offered}, "
-            + "as a string; not a knob; voice, 0 for automatic assignment or 1 to 8; "
-            + $"keys, \"{PianoKeys}\" or \"{ScaleKeys}\" — how the computer keyboard is laid out, "
-            + "where a scale puts the notes of the module's scale side by side along each row";
+            + "as a string; not a knob; voice, 0 for automatic assignment or 1 to 8";
     }
 }

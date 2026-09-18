@@ -637,6 +637,32 @@ public class PatchWorkbenchTests
         briefing.ShouldContain("notes");
     }
 
+    // --- the computer keyboard ------------------------------------------------
+
+    /// <summary>
+    /// The patch's layout rather than a module's, so it takes no handle, and it
+    /// is written out where describe_patch and write_patch both see it.
+    /// </summary>
+    [Fact]
+    public async Task The_keyboard_is_laid_out_for_the_whole_patch()
+    {
+        var bench = Bench();
+
+        var set = await Call(bench, "set_keyboard", """{"layout":"scale","notes":[9,0,4]}""");
+
+        set.Ok.ShouldBeTrue(set.Text);
+        bench.Snapshot().KeyboardScale.ShouldBe([0, 4, 9]);
+
+        (await Call(bench, "set_keyboard", """{"layout":"piano"}""")).Ok.ShouldBeTrue();
+        bench.Snapshot().KeyboardScale.ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task A_scale_layout_with_no_notes_is_refused()
+    {
+        (await Call(Bench(), "set_keyboard", """{"layout":"scale"}""")).Ok.ShouldBeFalse();
+    }
+
     // --- a quantiser's scale --------------------------------------------------
 
     /// <summary>

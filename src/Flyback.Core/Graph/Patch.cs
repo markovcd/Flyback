@@ -250,6 +250,20 @@ public sealed class Patch
     /// <summary>The knobs on the patch's control panel, in panel order, and null where there are none.</summary>
     public List<PatchControl>? Controls { get; set; }
 
+    /// <summary>
+    /// The notes the computer keyboard plays along each row, and null where it is
+    /// laid out as a piano.
+    /// </summary>
+    /// <remarks>
+    /// The patch's rather than a MIDI In's, because there is one keyboard and it
+    /// can only be laid out one way: kept on a module, two modules could ask for
+    /// two layouts and a panel would show one that is not being played (ADR-0099).
+    /// Empty is not null: a scale with nothing picked is a keyboard that plays
+    /// nothing, which is what the panel shows. Null rather than a piano written
+    /// out, so a patch that never asked for a scale saves as it always did.
+    /// </remarks>
+    public List<int>? KeyboardScale { get; set; }
+
     public NodeInstance? Find(Guid id) => Nodes.FirstOrDefault(n => n.Id == id);
 
     /// <summary>The knob called <paramref name="id"/>, or null where the panel has none.</summary>

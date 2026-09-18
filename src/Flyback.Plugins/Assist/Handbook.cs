@@ -90,6 +90,9 @@ internal static class Handbook
           pass and `a(3,8)` is three sounding steps spread over eight. `E5%0` is
           that note silenced, which is not the same as a rest.
         - **A file is a string**: `sample("kick.wav")`, `picture("photo.png")`.
+        - **`keyboard scale [ C D E G A ]`**, on a line of its own, lays the
+          computer keyboard out for whoever plays a MIDI In: the notes side by
+          side along each row. Once a patch; say nothing for a piano.
         - **A length of time is written as one.** `attack: 10ms`, not
           `attack: 0.01`. These sockets hold a power of ten, so a bare number is
           refused rather than read as a hundred times what you meant.
