@@ -141,12 +141,13 @@ public class LanguageTests
 
     [Fact]
     public void Loop() => Same("Loop", """
-        let sum = square(freq: frequency(110)) * 0.06 |> add()
+        let keep = sine(freq: 0.1) |> remap(-1..1, 0.92..0.996)
+        let sum  = square(freq: frequency(110)) * (1 - keep) |> add()
 
-        sum.b <- sum * 0.94
+        sum.b <- sum * keep
         sum |> out.left
 
-        out.volume = 0.5
+        out.volume = 0.2
         """);
 
     [Fact]
@@ -164,12 +165,18 @@ public class LanguageTests
 
     [Fact]
     public void Waveform() => Alike("Waveform", """
-        let voice = saw(freq: frequency(160)) * sine(freq: 0.8, amp: 0.45, bias: 0.55)
+        let pitch = frequency(110)
+
+        let voice = mixer(
+          in_1: sine(freq: pitch),     level_1: max(sine(freq: 0.08, phase: 0.25), 0),
+          in_2: triangle(freq: pitch), level_2: max(sine(freq: 0.08), 0),
+          in_3: square(freq: pitch),   level_3: max(sine(freq: 0.08, phase: 0.75), 0),
+          in_4: saw(freq: pitch),      level_4: max(sine(freq: 0.08, phase: 0.5), 0))
 
         voice |> out.left
-        scope(voice, window: 20ms) |> out.color
+        scope(voice, window: 30ms, scale: 1.5) |> out.color
 
-        out.volume = 0.5
+        out.volume = 0.25
         """);
 
     [Fact]
@@ -215,7 +222,7 @@ public class LanguageTests
         color.mix(scope(tone, window: 25ms), probe(tone, window: 25ms), y |> step())
           |> out.color
 
-        out.volume = 0.45
+        out.volume = 0.3
         """);
 
     [Fact]
@@ -231,7 +238,7 @@ public class LanguageTests
               |> add(loop.view)
               |> out.color
 
-        out.volume = 0.45
+        out.volume = 0.25
         """);
 
     [Fact]
@@ -266,6 +273,61 @@ public class LanguageTests
           |> picture()
           |> gain(gain: 1.15, bias: -0.05)
           |> out.color
+        """);
+
+    [Fact]
+    public void ThreeChannels() => Same("Three channels", """
+        let apart = sine(freq: 0.08) |> remap(-1..1, 0..0.1)
+        let plane = rotate(angle: t * 0.06) |> kaleidoscope(segments: 6) |> translate(dx: 0.55)
+        let flow  = t * 0.15
+
+        let red   = plane |> scale(scale: 1 + apart) |> rings(freq: 2.5, offset: flow) |> smoothstep(0.75, 1)
+        let green = plane |> rings(freq: 2.5, offset: flow) |> smoothstep(0.75, 1)
+        let blue  = plane |> scale(scale: 1 - apart) |> rings(freq: 2.5, offset: flow) |> smoothstep(0.75, 1)
+
+        rgb(r: red, g: green, b: blue) |> out.color
+        """);
+
+    [Fact]
+    public void Trails() => Same("Trails", """
+        let px = sine(freq: 0.3, amp: 0.5)
+        let py = sine(freq: 0.2, phase: 0.25, amp: 0.3)
+
+        let dot = hypot(x - px, y - py) |> smoothstep(0.09, 0.03)
+
+        hsv(hue: t * 0.08, saturation: 0.85, value: dot)
+          |> trails(zoom: 0.985, angle: 0.015, persist: 0.99)
+          |> out.color
+        """);
+
+    [Fact]
+    public void Staircase() => Alike("Staircase", """
+        let clock = pulse(freq: 6)
+        let slope = sine(freq: 0.11) + sine(freq: 0.37, amp: 0.5)
+        let stair = hold(in: slope |> remap(-1.5..1.5, 45..81), trigger: clock)
+        let pitch = tune(in: stair) [ A C D E G ]
+
+        triangle(freq: pitch) * (clock |> adsr(attack: 3ms, decay: 120ms, sustain: 0.2, release: 60ms))
+          |> out.left
+
+        out.volume = 0.5
+        """);
+
+    [Fact]
+    public void Sidebands() => Alike("Sidebands", """
+        let strike = pulse(freq: 0.5, width: 0.1)
+                       |> adsr(attack: 2ms, decay: 1500ms, sustain: 0, release: 300ms)
+
+        let depth = sine(freq: 0.07) |> remap(-1..1, 0.2..1.6)
+
+        let root      = note(A3)
+        let modulator = sine(freq: root * 3.5)
+        let voice     = sine(freq: root, phase: modulator * (strike * depth)) * strike
+
+        voice |> out.left
+        analyzer(voice, window: 50ms, range: 72) |> out.color
+
+        out.volume = 0.3
         """);
 
     [Fact]

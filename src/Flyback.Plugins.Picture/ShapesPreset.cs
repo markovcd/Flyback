@@ -60,6 +60,11 @@ internal static class ShapesPreset
         var pitch = b.Add("audio.frequency", (0, 110f));
         var scan = b.Add(NodeCatalog.ScanTypeId, (3, 0.42f), (6, 0.5f));
 
+        // A distance is a small number: the star's field swings a tenth either
+        // side of nought where a pattern swings one, so what the loop reads is
+        // brought up to the level of every other voice in the list.
+        var lift = b.Add("math.mul", (1, 4f));
+
         var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 0.5f));
 
         b.Wire(rock, 0, turn, 2)
@@ -81,12 +86,13 @@ internal static class ShapesPreset
          // loop; 'right' carries 'left' through with no wire.
          .Wire(cut, 2, scan, 0)
          .Wire(pitch, 0, scan, 2)
-         .Wire(scan, 0, output, NodeCatalog.OutputLeftPort);
+         .Wire(scan, 0, lift, 0)
+         .Wire(lift, 0, output, NodeCatalog.OutputLeftPort);
 
         b.Group("Sweeps", rock, grow)
          .Group("Shape", turn, star, hole, cut, ink)
          .Group("Eye", tint, lit)
-         .Group("Ear", pitch, scan);
+         .Group("Ear", pitch, scan, lift);
 
         return b.Build();
     }

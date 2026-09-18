@@ -77,6 +77,16 @@ public sealed class PicturePlugin : IFlybackPlugin
                 MarblePreset.Build,
                 "A fractal bent by a fractal, which is stone.",
                 PresetKind.Idea),
+            new PatchPreset(
+                StainedGlassPreset.Name,
+                StainedGlassPreset.Build,
+                "Cells as panes: the cell picks a color, the edge is the lead, and jitter slides grid to scatter.",
+                PresetKind.Idea),
+            new PatchPreset(
+                LayersPreset.Name,
+                LayersPreset.Build,
+                "A sunset composed back to front: a sky, a sun screened over it, a sea multiplied in, a line inked on top.",
+                PresetKind.Idea),
         ]);
     }
 }

@@ -333,6 +333,51 @@ public class MovieRendererTests
         distinct.ShouldBeGreaterThan(4);
     }
 
+    /// <summary>
+    /// A Scope works in an export for the same reason a Meter does: the loop that
+    /// writes the frames is the loop that plays the sound, so the rings a chart is
+    /// filled from are there to be read.
+    /// </summary>
+    [Fact]
+    public void A_chart_of_what_was_played_is_drawn_in_an_export()
+    {
+        var b = new PatchBuilder(NodeCatalog.BuiltIn);
+
+        var output = b.Add(NodeCatalog.OutputTypeId, 900, 0, (NodeCatalog.OutputVolumePort, 1f));
+        var voice = b.Add("osc.sine", 0, 0, (1, 110f));
+
+        // A slow tremolo, so the chart is a different height from one frame to the
+        // next; a chart nobody filled is the same flat line in all of them.
+        var swell = b.Add("osc.sine", 0, 200, (1, 2f), (3, 0.5f), (4, 0.5f));
+        var swelled = b.Add("math.mul", 200, 100);
+
+        var chart = b.Add(NodeCatalog.ScopeTypeId, 400, 0);
+
+        b.Wire(voice, 0, swelled, 0)
+         .Wire(swell, 0, swelled, 1)
+         .Wire(swelled, 0, output, NodeCatalog.OutputLeftPort)
+         .Wire(swelled, 0, chart, 0)
+         .Wire(chart, 0, output, NodeCatalog.OutputColorPort);
+
+        var file = new MemoryStream();
+
+        MovieRenderer.Render(
+            file,
+            b.Patch.CompileForVideo(NodeCatalog.BuiltIn).Program,
+            b.Patch.CompileForAudio(NodeCatalog.BuiltIn).Program,
+            new MovieSettings(64, 48, 1d, 20d),
+            cancellation: TestContext.Current.CancellationToken);
+
+        var avi = file.ToArray();
+
+        Movi(avi, "00dc")
+            .Select(f => Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(
+                avi.AsSpan(f.Offset, (int)f.Size))))
+            .Distinct()
+            .Count()
+            .ShouldBeGreaterThan(4);
+    }
+
     private static string Ascii(byte[] data, int offset) => Encoding.ASCII.GetString(data, offset, 4);
 
     private static int Find(byte[] data, string fourCc)

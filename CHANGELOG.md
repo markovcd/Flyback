@@ -29,7 +29,17 @@
 - Whole band is a whole song now: twelve phrases with verses, a chorus, a bridge and fills, and a snare, plucked strings, a pad and a room added to the band.
 - Slow weather is rebuilt around five feedback loops: a drone that bends its own phase, an echo that darkens every time round, two voices that push each other down, and a picture steered by where it was bright a frame ago.
 - Settings → Graphics picks which preset Flyback opens on at the next start.
-- The preset list is sorted into headed sections: the blank canvas first, then the patches about one idea, then the ones where sound and picture are the same thought, then the showcases.
+- The preset list is sorted into headed sections: the blank canvas first, with Picture in and Clip beside it since both wait on a file, then the patches about one idea, then the ones where sound and picture are the same thought, then the showcases.
+- Three channels: one field read three times, a little apart, one reading to each of red, green and blue.
+- Trails: a dot on a looping path that draws a ribbon.
+- Staircase: a Sample & Hold cutting a slow slope into a tune.
+- Sidebands: FM built from two sines, on an Analyzer that shows the partials.
+- Stained glass, in the Picture plugin: Cells as colored panes with leading between them.
+- Layers, in the Picture plugin: a sunset composed back to front with Layer, Ink and Vignette.
+- Struck, in the Voice plugin: a kick, a hat and a wandering bell, each a Stroke into one module.
+- Before and after, in the Mastering plugin: a small mix with the mastering chain switched out and in every four bars.
+- Waveform fades through sine, triangle, square and saw on its Scope, and Loop sweeps the filter it builds.
+- Ring scan, Ahead and behind, Filter sweep and Shape scan play at the level of the other presets.
 
 ### Recording and export
 - Record counts down on the status bar and takes the patch back to zero, so a take starts where the patch does. Ctrl+R during the count calls it off.
@@ -38,6 +48,7 @@
 - Settings → Recording picks the video and sound formats, and where ffmpeg is if it is not on your `PATH`.
 - `flyback-cli render` takes the format from the extension, with `--format` and `--ffmpeg` to override it.
 - `flyback-cli render --loudness` says how loud the sound came out, in LUFS, and its true peak.
+- A Scope or an Analyzer is drawn in an exported clip.
 
 ### Assistant
 - The assistant is told what every module does again. Settings → Agent sets how long that briefing may get and names an editable list of modules that are always included. Any module left out is marked on the canvas.

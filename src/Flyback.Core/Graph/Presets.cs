@@ -7,10 +7,16 @@ namespace Flyback.Core.Graph;
 /// </summary>
 public enum PresetKind
 {
-    /// <summary>The Output and nothing else, which is not teaching anything.</summary>
+    /// <summary>
+    /// A patch with its owner's part still to do: the Output alone, or a player
+    /// with no file chosen, which draws and plays nothing until one is.
+    /// </summary>
     /// <remarks>
     /// First, though it is the least of them: somebody who means to build their
     /// own patch should not have to read past thirty that somebody else built.
+    /// The players are here rather than among the ideas because a preset that
+    /// opens silent and black reads as a fault anywhere else in the list, and
+    /// because the window does not open on one of these unless it is told to.
     /// </remarks>
     Blank,
 
@@ -58,6 +64,12 @@ public static partial class Presets
         new("Empty", Empty,
             "The Output, with everything still to plug into it.",
             PresetKind.Blank),
+        new("Picture in", PictureIn,
+            "A photograph put through the same geometry a generated field goes through, once you choose one.",
+            PresetKind.Blank),
+        new("Clip", Clip,
+            "A WAV file played and retriggered every two seconds, once you choose one.",
+            PresetKind.Blank),
 
         // --- one idea, one sink ------------------------------------------------
 
@@ -67,16 +79,18 @@ public static partial class Presets
             "Rotating wedges filled with noise that boils over time."),
         new("Grid", Grid,
             "Tile, mirror and polar in a row, so what each one does to the plane is separable."),
+        new("Three channels", ThreeChannels,
+            "One field read three times, a little apart: a color is three signals, and here they disagree."),
         new("Feedback tunnel", FeedbackTunnel,
             "Each frame re-read slightly rotated, scaled and dimmed, with fresh rings on top."),
-        new("Picture in", PictureIn,
-            "A photograph put through the same geometry a generated field goes through."),
-        new("Clip", Clip,
-            "A WAV file played, scrubbed and retriggered."),
+        new("Trails", Trails,
+            "A dot on a looping path and a Trails keeping where it has been, so a point draws a ribbon."),
         new("Loop", Loop,
-            "A wire running backwards into what feeds it, which is how a filter and a comb are built."),
+            "A wire running backwards: a lowpass built from an add and a multiply, with its one number swept."),
         new("Two channels", TwoChannels,
             "Stereo from one voice: left and right fed differently rather than panned."),
+        new("Staircase", Staircase,
+            "A slope caught six times a second by a Sample & Hold, which makes steps, and steps are a tune."),
 
         // --- the two sinks meeting ---------------------------------------------
 
@@ -93,7 +107,10 @@ public static partial class Presets
             "A drum the picture listens to rather than being told about, through a Meter.",
             PresetKind.Interplay),
         new("Waveform", Waveform,
-            "A Scope charting what the speakers actually played, rather than what the screen computes.",
+            "Sine, triangle, square and saw faded one into the next, on a Scope drawing the shape being heard.",
+            PresetKind.Interplay),
+        new("Sidebands", Sidebands,
+            "One sine bending another's phase at audio rate, on an Analyzer showing the partials that grows.",
             PresetKind.Interplay),
         new("Ahead and behind", AheadAndBehind,
             "A Probe and a Scope on one signal, which is the only way to see how they differ.",
@@ -370,7 +387,7 @@ public static partial class Presets
         var tint = b.Add("color.hsv", (1, 0.7f));
         var lit = b.Add("math.add");
 
-        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 0.45f));
+        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 0.25f));
 
         // Ear: the field itself into the sweep, and out the other side as a
         // sample. Nothing between the picture and the speakers but the loop.
@@ -740,33 +757,57 @@ public static partial class Presets
     }
 
     /// <summary>
-    /// A tone, and a Scope drawing what the speakers actually played of it.
+    /// The four wave shapes at one pitch, faded one into the next, and a Scope
+    /// drawing what the speakers actually played — so a change of timbre is heard
+    /// while the change of shape that makes it is on the screen.
     /// </summary>
     public static Patch Waveform(ModuleCatalog modules)
     {
         var b = new PatchBuilder(modules);
 
-        var pitch = b.Add("audio.frequency", (0, 160f));
-        var tone = b.Add("osc.saw");
+        var pitch = b.Add("audio.frequency", (0, 110f));
+        var blend = b.Add("math.mixer");
 
-        // The tremolo, and the only thing in the patch that moves slowly enough
-        // to be seen across a frame of the chart.
-        var swell = b.Add("osc.sine", (1, 0.8f), (3, 0.45f), (4, 0.55f));
-        var voice = b.Add("math.mul");
+        // About thirty milliseconds, which is three cycles and a bit: enough to
+        // see that the shape repeats and few enough to see the shape. The knob is
+        // in decades — see PortDisplay.Duration. Two faders are up at once and
+        // together reach 1.4, so 'scale' leaves the chart room for both.
+        var chart = b.Add(NodeCatalog.ScopeTypeId, (1, -1.52f), (2, 1.5f));
 
-        // About twenty milliseconds, which holds a few cycles of the tremolo and
-        // a great many of the tone. The knob is in decades — see
-        // PortDisplay.Duration — so this is 10^-1.7.
-        var chart = b.Add(NodeCatalog.ScopeTypeId, (1, -1.7f));
+        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 0.25f));
 
-        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 0.5f));
-
-        b.Wire(pitch, 0, tone, 1)
-         .Wire(tone, 0, voice, 0)
-         .Wire(swell, 0, voice, 1)
-         .Wire(voice, 0, output, NodeCatalog.OutputLeftPort)
-         .Wire(voice, 0, chart, 0)
+        b.Wire(blend, 0, output, NodeCatalog.OutputLeftPort)
+         .Wire(blend, 0, chart, 0)
          .Wire(chart, 0, output, NodeCatalog.OutputColorPort);
+
+        // Smoothest first, so each shape in turn adds harmonics to the last. The
+        // phases put a quarter of a turn between one fader's peak and the next,
+        // and the sine's at the start, so the patch opens on the plainest tone.
+        (string Shape, float Phase)[] shapes =
+        [
+            ("osc.sine", 0.25f),
+            ("osc.triangle", 0f),
+            ("osc.square", 0.75f),
+            ("osc.saw", 0.5f),
+        ];
+
+        for (var s = 0; s < shapes.Length; s++)
+        {
+            var (shape, phase) = shapes[s];
+
+            var tone = b.Add(shape);
+
+            // The fader: the top half of a slow sine. A Mixer's level is a
+            // multiply and nothing else, so the bottom half would bring the
+            // shape back upside down rather than leave it out.
+            var turn = b.Add("osc.sine", (1, 0.08f), (2, phase));
+            var fader = b.Add("math.max", (1, 0f));
+
+            b.Wire(pitch, 0, tone, 1)
+             .Wire(tone, 0, blend, s * 2)
+             .Wire(turn, 0, fader, 0)
+             .Wire(fader, 0, blend, s * 2 + 1);
+        }
 
         return b.Build();
     }
@@ -796,7 +837,7 @@ public static partial class Presets
         var half = b.Add("math.step");
         var split = b.Add("color.mix");
 
-        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 0.45f));
+        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 0.3f));
 
         b.Wire(sweep, 0, hz, 0)
          .Wire(hz, 0, tone, 1)
@@ -892,8 +933,9 @@ public static partial class Presets
     }
 
     /// <summary>
-    /// One wire running backwards, which is a filter built by hand out of an add
-    /// and a multiply.
+    /// One wire running backwards, which is a lowpass built by hand out of an add
+    /// and a multiply, with the one number that is its cutoff swept so that it
+    /// can be heard to be one.
     /// </summary>
     public static Patch Loop(ModuleCatalog modules)
     {
@@ -905,28 +947,36 @@ public static partial class Presets
         // lowpass visibly and audibly takes off.
         var source = b.Add("osc.square");
 
-        // Quiet going in, because the loop below has a great deal of gain in it:
-        // what comes out is roughly the input divided by one minus the feedback.
-        var quiet = b.Add("math.mul", (1, 0.06f));
+        // How much of the last evaluation is kept, which is the whole of the
+        // filter: the nearer one, the lower the cutoff. The useful range is all
+        // in the last tenth, so that is all the sweep covers — from a square
+        // with its corners on down to little more than its fundamental.
+        var sweep = b.Add("osc.sine", (1, 0.1f));
+        var keep = b.Add("math.remap", (1, -1f), (2, 1f), (3, 0.92f), (4, 0.996f));
+
+        // What is let in is what is not kept, so the two shares make one and the
+        // loop comes out as loud as it went in however far the sweep has got.
+        var share = b.Add("math.sub", (0, 1f));
+        var fresh = b.Add("math.mul");
 
         var sum = b.Add("math.add");
+        var kept = b.Add("math.mul");
 
-        // How much of the last evaluation is kept. Near one is a gentle filter,
-        // and the useful range is all in the last hundredth — which is why it is
-        // a knob of its own rather than a constant buried in the Multiply.
-        var keep = b.Add("math.mul", (1, 0.94f));
-
-        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 0.5f));
+        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 0.2f));
 
         // What the kept share is added back into is the wire that closes the loop,
         // so that is the one which runs backwards and carries the evaluation
         // before — the whole of what makes this a filter rather than a ring of
         // wires with nothing in it. The canvas draws that one dashed.
         b.Wire(pitch, 0, source, 1)
-         .Wire(source, 0, quiet, 0)
-         .Wire(quiet, 0, sum, 0)
-         .Wire(keep, 0, sum, 1)
-         .Wire(sum, 0, keep, 0)
+         .Wire(sweep, 0, keep, 0)
+         .Wire(keep, 0, share, 1)
+         .Wire(source, 0, fresh, 0)
+         .Wire(share, 0, fresh, 1)
+         .Wire(fresh, 0, sum, 0)
+         .Wire(kept, 0, sum, 1)
+         .Wire(sum, 0, kept, 0)
+         .Wire(keep, 0, kept, 1)
          .Wire(sum, 0, output, NodeCatalog.OutputLeftPort);
 
         return b.Build();
@@ -968,6 +1018,241 @@ public static partial class Presets
          .Wire(shape, 0, voiceR, 1)
          .Wire(voiceL, 0, output, NodeCatalog.OutputLeftPort)
          .Wire(voiceR, 0, output, NodeCatalog.OutputRightPort);
+
+        return b.Build();
+    }
+
+    /// <summary>
+    /// One field read at three sizes, one reading to each of red, green and
+    /// blue: a color is three signals, and nothing says they have to agree.
+    /// </summary>
+    public static Patch ThreeChannels(ModuleCatalog modules)
+    {
+        var b = new PatchBuilder(modules);
+
+        var clock = b.Add("time");
+        var spin = b.Add("math.mul", (1, 0.06f));
+        var flow = b.Add("math.mul", (1, 0.15f));
+
+        // How far apart the three readings are, from not at all to a tenth. At
+        // nothing the picture is white lines on black, which is the point of
+        // starting there: the colors are made by the disagreement and by
+        // nothing else.
+        var sweep = b.Add("osc.sine", (1, 0.08f));
+        var apart = b.Add("math.remap", (1, -1f), (2, 1f), (3, 0f), (4, 0.1f));
+        var larger = b.Add("math.add", (0, 1f));
+        var smaller = b.Add("math.sub", (0, 1f));
+
+        // The plane all three read: folded, and then pushed off the middle so
+        // the rings are centred six times round it rather than once.
+        var turn = b.Add("space.rotate");
+        var fold = b.Add("space.kaleidoscope", (2, 6f));
+        var aside = b.Add("space.translate", (2, 0.55f));
+
+        var color = b.Add("color.rgb");
+        var output = b.Add(NodeCatalog.OutputTypeId);
+
+        b.Wire(clock, 0, spin, 0)
+         .Wire(clock, 0, flow, 0)
+         .Wire(spin, 0, turn, 2)
+         .Wire(turn, 0, fold, 0)
+         .Wire(turn, 1, fold, 1)
+         .Wire(fold, 0, aside, 0)
+         .Wire(fold, 1, aside, 1)
+         .Wire(sweep, 0, apart, 0)
+         .Wire(apart, 0, larger, 1)
+         .Wire(apart, 0, smaller, 1)
+         .Wire(color, 0, output, NodeCatalog.OutputColorPort);
+
+        // Red through a Scale a little over one, green straight, blue through
+        // one a little under. A scale moves a point further the further out it
+        // is, so the fringes open towards the edges as a lens's do.
+        NodeInstance?[] sizes = [larger, null, smaller];
+
+        for (var channel = 0; channel < sizes.Length; channel++)
+        {
+            var rings = b.Add("pattern.rings", (2, 2.5f));
+
+            // Only the crests, so a channel is a line rather than a band and
+            // three of them side by side stay three.
+            var line = b.Add("math.smoothstep", (0, 0.75f), (1, 1f));
+
+            if (sizes[channel] is { } size)
+            {
+                var scale = b.Add("space.scale");
+
+                b.Wire(aside, 0, scale, 0)
+                 .Wire(aside, 1, scale, 1)
+                 .Wire(size, 0, scale, 2)
+                 .Wire(scale, 0, rings, 0)
+                 .Wire(scale, 1, rings, 1);
+            }
+            else
+            {
+                b.Wire(aside, 0, rings, 0)
+                 .Wire(aside, 1, rings, 1);
+            }
+
+            b.Wire(flow, 0, rings, 3)
+             .Wire(rings, 0, line, 2)
+             .Wire(line, 0, color, channel);
+        }
+
+        return b.Build();
+    }
+
+    /// <summary>
+    /// A dot steered round a looping path by two sines, and a Trails keeping
+    /// where it has been.
+    /// </summary>
+    public static Patch Trails(ModuleCatalog modules)
+    {
+        var b = new PatchBuilder(modules);
+
+        // Here because the dot is a distance from somewhere other than the
+        // middle, which takes the pixel's own position to subtract from.
+        var coord = b.Add("coord");
+        var clock = b.Add("time");
+
+        // Three to two, a quarter of a turn apart: a path that crosses itself
+        // and takes ten seconds to come round.
+        var across = b.Add("osc.sine", (1, 0.3f), (3, 0.5f));
+        var down = b.Add("osc.sine", (1, 0.2f), (2, 0.25f), (3, 0.3f));
+
+        var fromX = b.Add("math.sub");
+        var fromY = b.Add("math.sub");
+        var distance = b.Add("math.hypot");
+
+        // The edges the wrong way round, which is a Smoothstep read backwards: 1
+        // inside the dot and 0 outside it.
+        var dot = b.Add("math.smoothstep", (0, 0.09f), (1, 0.03f));
+
+        var drift = b.Add("math.mul", (1, 0.08f));
+        var tint = b.Add("color.hsv", (1, 0.85f));
+
+        // 'zoom' under one pushes what is already on screen outward and 'angle'
+        // turns it, so the path the dot leaves swells into a ribbon rather than
+        // fading where it lay.
+        var trail = b.Add("feedback.trails", (3, 0.985f), (4, 0.015f), (7, 0.99f));
+        var output = b.Add(NodeCatalog.OutputTypeId);
+
+        b.Wire(coord, 0, fromX, 0)
+         .Wire(across, 0, fromX, 1)
+         .Wire(coord, 1, fromY, 0)
+         .Wire(down, 0, fromY, 1)
+         .Wire(fromX, 0, distance, 0)
+         .Wire(fromY, 0, distance, 1)
+         .Wire(distance, 0, dot, 2)
+         .Wire(clock, 0, drift, 0)
+         .Wire(drift, 0, tint, 0)
+         .Wire(dot, 0, tint, 2)
+         .Wire(tint, 0, trail, 0)
+         .Wire(trail, 0, output, NodeCatalog.OutputColorPort);
+
+        return b.Build();
+    }
+
+    /// <summary>
+    /// A Sample &amp; Hold catching a slow slope on every tick of a clock: what
+    /// comes out is a staircase, and a staircase put through a scale is a tune.
+    /// </summary>
+    public static Patch Staircase(ModuleCatalog modules)
+    {
+        var b = new PatchBuilder(modules);
+
+        // Six ticks a second, and the one clock: it catches the pitch and it
+        // plucks the note, so a note cannot change pitch while it sounds.
+        var clock = b.Add("osc.pulse", (1, 6f));
+
+        // The slope: two sines whose rates share nothing, so the staircase cut
+        // from it climbs and falls without ever quite repeating.
+        var slow = b.Add("osc.sine", (1, 0.11f));
+        var quick = b.Add("osc.sine", (1, 0.37f), (3, 0.5f));
+        var slope = b.Add("math.add");
+
+        // Three octaves from A2.
+        var range = b.Add("math.remap", (1, -1.5f), (2, 1.5f), (3, 45f), (4, 81f));
+
+        var stair = b.Add(NodeCatalog.HoldTypeId);
+
+        // A minor pentatonic. A held value is still any number at all — what
+        // makes it a note is this.
+        var key = b.Add("audio.tune");
+        ScaleExtra.Set(key, [0, 2, 4, 7, 9]);
+
+        var tone = b.Add("osc.triangle");
+        var pluck = b.Add(NodeCatalog.AdsrTypeId, (1, -2.52f), (2, -0.92f), (3, 0.2f), (4, -1.22f));
+        var voice = b.Add("math.mul");
+
+        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 0.5f));
+
+        b.Wire(slow, 0, slope, 0)
+         .Wire(quick, 0, slope, 1)
+         .Wire(slope, 0, range, 0)
+         .Wire(range, 0, stair, 0)
+         .Wire(clock, 0, stair, 1)
+         .Wire(stair, 0, key, 0)
+         .Wire(key, 0, tone, 1)
+         .Wire(clock, 0, pluck, 0)
+         .Wire(tone, 0, voice, 0)
+         .Wire(pluck, 0, voice, 1)
+         .Wire(voice, 0, output, NodeCatalog.OutputLeftPort);
+
+        return b.Build();
+    }
+
+    /// <summary>
+    /// Frequency modulation built by hand: one sine into another's phase, the
+    /// amount struck and left to fall, and an Analyzer on what comes out.
+    /// </summary>
+    public static Patch Sidebands(ModuleCatalog modules)
+    {
+        var b = new PatchBuilder(modules);
+
+        // Every two seconds, and nothing sustained: the note is all decay, which
+        // is what lets the partials be watched leaving.
+        var beat = b.Add("osc.pulse", (1, 0.5f), (3, 0.1f));
+        var strike = b.Add(NodeCatalog.AdsrTypeId, (1, -2.7f), (2, 0.176f), (3, 0f), (4, -0.52f));
+
+        // How hard the next strike bends the carrier, wandering between a
+        // mellow note and a clangorous one so no two strikes are the same bell.
+        var sweep = b.Add("osc.sine", (1, 0.07f));
+        var depth = b.Add("math.remap", (1, -1f), (2, 1f), (3, 0.2f), (4, 1.6f));
+
+        // A3, and a modulator three and a half times above it. Not a whole
+        // number, so the partials it makes are not harmonics — which is the
+        // difference between an organ and a bell.
+        var root = b.Add("audio.note", (0, 57f));
+        var ratio = b.Add("math.mul", (1, 3.5f));
+        var modulator = b.Add("osc.sine");
+
+        // The index. It falls with the strike, so the note starts bright and
+        // rings pure: on the chart a comb of peaks closing up into one.
+        var struck = b.Add("math.mul");
+        var index = b.Add("math.mul");
+
+        var carrier = b.Add("osc.sine");
+        var voice = b.Add("math.mul");
+
+        var chart = b.Add(NodeCatalog.AnalyzerTypeId, (1, -1.3f), (2, 72f));
+
+        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 0.3f));
+
+        b.Wire(beat, 0, strike, 0)
+         .Wire(sweep, 0, depth, 0)
+         .Wire(root, 0, ratio, 0)
+         .Wire(ratio, 0, modulator, 1)
+         .Wire(strike, 0, struck, 0)
+         .Wire(depth, 0, struck, 1)
+         .Wire(modulator, 0, index, 0)
+         .Wire(struck, 0, index, 1)
+         .Wire(root, 0, carrier, 1)
+         .Wire(index, 0, carrier, 2)
+         .Wire(carrier, 0, voice, 0)
+         .Wire(strike, 0, voice, 1)
+         .Wire(voice, 0, output, NodeCatalog.OutputLeftPort)
+         .Wire(voice, 0, chart, 0)
+         .Wire(chart, 0, output, NodeCatalog.OutputColorPort);
 
         return b.Build();
     }

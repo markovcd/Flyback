@@ -71,6 +71,24 @@ public class PresetRulesTests
         }
     }
 
+    /// <summary>
+    /// A patch built round a player is blank, because no file ships with it: it
+    /// opens on a black screen or on silence, and only the heading it is under
+    /// says that this is what it is meant to do.
+    /// </summary>
+    [Theory]
+    [MemberData(nameof(Every))]
+    public void A_preset_waiting_on_a_file_is_blank(string name)
+    {
+        var preset = Preset(name);
+
+        var waits = preset.Build(NodeCatalog.BuiltIn).Nodes
+            .Any(n => n.TypeId is NodeCatalog.SampleTypeId or NodeCatalog.PictureTypeId);
+
+        if (waits)
+            preset.Kind.ShouldBe(PresetKind.Blank, $"'{name}' plays a file and ships none");
+    }
+
     /// <summary>Every shipped patch compiles clean for both sinks.</summary>
     /// <remarks>
     /// Warnings are allowed and are load-bearing for two of them: Clip and
@@ -97,16 +115,14 @@ public class PresetRulesTests
     /// <summary>Every shipped patch says what it is for.</summary>
     /// <remarks>
     /// The description is what the picker shows under the name, so a preset
-    /// without one is a row that says less than it could. Empty is allowed for
-    /// nothing except the blank canvas, which has nothing to say.
+    /// without one is a row that says less than it could. The blank ones most
+    /// of all: what a player is waiting for is the first thing to say about it.
     /// </remarks>
     [Theory]
     [MemberData(nameof(Every))]
     public void Every_preset_describes_itself(string name)
     {
         var preset = Preset(name);
-
-        if (preset.Kind is PresetKind.Blank) return;
 
         preset.Description.ShouldNotBeNullOrWhiteSpace();
         preset.Description.Length.ShouldBeLessThan(

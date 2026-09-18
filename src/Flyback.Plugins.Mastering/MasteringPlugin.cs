@@ -16,7 +16,8 @@ public sealed class MasteringPlugin : IFlybackPlugin
         "An EQ, stereo width, a crossover, a compressor, a lookahead limiter, a one-knob "
         + "maximizer and a loudness meter, for the end of a patch.");
 
-    public void Register(IPluginRegistry registry) =>
+    public void Register(IPluginRegistry registry)
+    {
         registry.AddModules(
             Provider,
             [
@@ -28,4 +29,15 @@ public sealed class MasteringPlugin : IFlybackPlugin
                 MaximizerModule.Definition,
                 LoudnessModule.Definition,
             ]);
+
+        registry.AddPresets(
+        [
+            new PatchPreset(
+                BeforeAndAfterPreset.Name,
+                BeforeAndAfterPreset.Build,
+                "A small mix with an EQ, a Compressor and a Maximizer after it, switched out and in "
+                + "every four bars.",
+                PresetKind.Idea),
+        ]);
+    }
 }

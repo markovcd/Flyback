@@ -208,6 +208,10 @@ public static class MovieRenderer
                 // samples are still counted from the frame number, and they are
                 // still written to the file after the picture.
                 Meters.Refresh(audio, speaker.Memory, heard);
+
+                // And a Scope or an Analyzer is refilled from the same rings, so
+                // a chart in a clip is a chart of the clip's own sound.
+                Traces.Refresh(video, audio, speaker.Memory);
             }
 
             // From the frame number, not from an accumulated delta: a rounding

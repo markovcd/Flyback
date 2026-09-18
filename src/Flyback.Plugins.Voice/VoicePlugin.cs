@@ -56,6 +56,11 @@ public sealed class VoicePlugin : IFlybackPlugin
                 "A saw folded and then filtered: make the harmonics first, take them away second.",
                 PresetKind.Idea),
             new PatchPreset(
+                StruckPreset.Name,
+                StruckPreset.Build,
+                "A kick, a hat and a wandering bell: each a Stroke into one module, all counted off one Tempo.",
+                PresetKind.Idea),
+            new PatchPreset(
                 EuclidKitPreset.Name,
                 EuclidKitPreset.Build,
                 "Four Euclidean rhythms playing a noise kit and a gliding bass, drawn as a clock "

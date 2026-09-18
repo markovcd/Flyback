@@ -598,7 +598,34 @@ marked as one.
 
 The Output, alone. An empty file.
 
-### Plasma — [:484](../src/Flyback.Core/Graph/Presets.cs)
+### Picture in — [:886](../src/Flyback.Core/Graph/Presets.cs)
+
+```
+# A photograph put through the same geometry a generated field goes through, once you
+# choose one.
+
+scale(scale: sine(freq: 0.05) |> remap(-1..1, 0.85..1.4))
+  |> rotate(angle: t * 0.05)
+  |> warp(by: noise(z: t * 0.15, scale: 1.8), amount: 0.12)
+  |> picture()
+  |> gain(gain: 1.15, bias: -0.05)
+  |> out.color
+```
+
+`picture()` names no file, exactly as the preset ships it — the file is chosen
+in the editor, and `picture("sunset.png")` is how a patch that has one says so.
+
+### Clip — [:861](../src/Flyback.Core/Graph/Presets.cs)
+
+```
+# A WAV file played and retriggered every two seconds, once you choose one.
+
+sample(level: 0.9, trigger: pulse(freq: 0.5, width: 0.02)) |> out.left
+
+out.volume = 0.7
+```
+
+### Plasma — [:250](../src/Flyback.Core/Graph/Presets.cs)
 
 ```
 # Two sine fields crossed and read as hue.
@@ -612,7 +639,7 @@ x |> sine(freq: 1.5)
   |> out.color
 ```
 
-### Kaleidoscope — [:518](../src/Flyback.Core/Graph/Presets.cs)
+### Kaleidoscope — [:284](../src/Flyback.Core/Graph/Presets.cs)
 
 ```
 # Rotating wedges filled with noise that boils over time.
@@ -627,7 +654,7 @@ rotate(angle: t * 0.15)
 One clock and two speeds off it, as the preset has — `t` is the same node both
 times.
 
-### Grid — [:1663](../src/Flyback.Core/Graph/Presets.cs)
+### Grid — [:712](../src/Flyback.Core/Graph/Presets.cs)
 
 ```
 # Tile, mirror and polar in a row, so what each does to the plane is separable.
@@ -646,7 +673,7 @@ plane |> checker(size: 3)
 `plane` is piped as the pair `(radius, angle)` into Checker, and read once more
 by name for the hue. That is the fan-out the preset draws with two wires.
 
-### Feedback tunnel — [:961](../src/Flyback.Core/Graph/Presets.cs)
+### Feedback tunnel — [:592](../src/Flyback.Core/Graph/Presets.cs)
 
 ```
 # Each frame re-read slightly rotated, scaled and dimmed, with fresh rings on top.
@@ -668,47 +695,65 @@ past |> max(fresh) |> out.color
 The Smoothstep is where the `in` rule earns itself: the rings go to `in`, which
 is the module's *third* port.
 
-### Picture in — [:1924](../src/Flyback.Core/Graph/Presets.cs)
+### Three channels — [:1029](../src/Flyback.Core/Graph/Presets.cs)
 
 ```
-# A photograph put through the same geometry a generated field goes through.
+# One field read three times, a little apart: a color is three signals, and here
+# they disagree.
 
-scale(scale: sine(freq: 0.05) |> remap(-1..1, 0.85..1.4))
-  |> rotate(angle: t * 0.05)
-  |> warp(by: noise(z: t * 0.15, scale: 1.8), amount: 0.12)
-  |> picture()
-  |> gain(gain: 1.15, bias: -0.05)
+let apart = sine(freq: 0.08) |> remap(-1..1, 0..0.1)
+let plane = rotate(angle: t * 0.06) |> kaleidoscope(segments: 6) |> translate(dx: 0.55)
+let flow  = t * 0.15
+
+let red   = plane |> scale(scale: 1 + apart) |> rings(freq: 2.5, offset: flow) |> smoothstep(0.75, 1)
+let green = plane |> rings(freq: 2.5, offset: flow) |> smoothstep(0.75, 1)
+let blue  = plane |> scale(scale: 1 - apart) |> rings(freq: 2.5, offset: flow) |> smoothstep(0.75, 1)
+
+rgb(r: red, g: green, b: blue) |> out.color
+```
+
+The preset is a loop over three channels in C#, and three lines here rather than
+a `def`: the three share `plane` and `flow`, and what is shared is a `let`
+outside.
+
+### Trails — [:1108](../src/Flyback.Core/Graph/Presets.cs)
+
+```
+# A dot on a looping path and a Trails keeping where it has been.
+
+let px = sine(freq: 0.3, amp: 0.5)
+let py = sine(freq: 0.2, phase: 0.25, amp: 0.3)
+
+let dot = hypot(x - px, y - py) |> smoothstep(0.09, 0.03)
+
+hsv(hue: t * 0.08, saturation: 0.85, value: dot)
+  |> trails(zoom: 0.985, angle: 0.015, persist: 0.99)
   |> out.color
 ```
 
-`picture()` names no file, exactly as the preset ships it — the file is chosen
-in the editor, and `picture("sunset.png")` is how a patch that has one says so.
+One of the few patches that names `x` and `y`: a distance from somewhere other
+than the middle needs the pixel's own position to take that somewhere from. The
+Smoothstep's edges are the wrong way round on purpose, which reads it backwards.
 
-### Clip — [:1871](../src/Flyback.Core/Graph/Presets.cs)
-
-```
-# A WAV file played, scrubbed and retriggered.
-
-sample(level: 0.9, trigger: pulse(freq: 0.5, width: 0.02)) |> out.left
-
-out.volume = 0.7
-```
-
-### Loop — [:2006](../src/Flyback.Core/Graph/Presets.cs)
+### Loop — [:940](../src/Flyback.Core/Graph/Presets.cs)
 
 ```
-# A wire running backwards into what feeds it, which is how a filter and a comb
-# are built.
+# A wire running backwards: a lowpass built from an add and a multiply, with its
+# one number swept.
 
-let sum = square(freq: frequency(110)) * 0.06 |> add()
+let keep = sine(freq: 0.1) |> remap(-1..1, 0.92..0.996)
+let sum  = square(freq: frequency(110)) * (1 - keep) |> add()
 
-sum.b <- sum * 0.94
+sum.b <- sum * keep
 sum |> out.left
 
-out.volume = 0.5
+out.volume = 0.2
 ```
 
-### Two channels — [:2067](../src/Flyback.Core/Graph/Presets.cs)
+`keep` is read twice, once as it is and once taken from one, and the two shares
+are what make this a filter that comes out as loud as it went in.
+
+### Two channels — [:989](../src/Flyback.Core/Graph/Presets.cs)
 
 ```
 # Stereo from one voice: left and right fed differently rather than panned.
@@ -727,7 +772,27 @@ out.volume = 0.55
 The second Note is fed from the first one's `note` output rather than its `hz`,
 which is the whole trick — nine cents of detune on the same note number.
 
-### Drone — [:558](../src/Flyback.Core/Graph/Presets.cs)
+### Staircase — [:1159](../src/Flyback.Core/Graph/Presets.cs)
+
+```
+# A slope caught six times a second by a Sample & Hold, which makes steps, and
+# steps are a tune.
+
+let clock = pulse(freq: 6)
+let slope = sine(freq: 0.11) + sine(freq: 0.37, amp: 0.5)
+let stair = hold(in: slope |> remap(-1.5..1.5, 45..81), trigger: clock)
+let pitch = tune(in: stair) [ A C D E G ]
+
+triangle(freq: pitch) * (clock |> adsr(attack: 3ms, decay: 120ms, sustain: 0.2, release: 60ms))
+  |> out.left
+
+out.volume = 0.5
+```
+
+The one clock goes to the Hold's `trigger` and the envelope's `gate`, so a pitch
+is caught on the same edge that plucks it.
+
+### Drone — [:320](../src/Flyback.Core/Graph/Presets.cs)
 
 ```
 # One slow oscillator setting both the hue of the image and the tremolo on the tone.
@@ -746,7 +811,7 @@ out.volume = 0.6
 One node reaching both sinks, which is the patch. Nothing about it is said
 twice.
 
-### Sequence — [:167](../src/Flyback.Core/Graph/Presets.cs)
+### Sequence — [:140](../src/Flyback.Core/Graph/Presets.cs)
 
 ```
 # One sequencer heard and seen at once: the steps are the tune and the color.
@@ -766,7 +831,7 @@ out.volume = 0.5
 
 All three of the sequencer's outputs, each used for what only it can do.
 
-### Four voices — [:1029](../src/Flyback.Core/Graph/Presets.cs)
+### Four voices — [:638](../src/Flyback.Core/Graph/Presets.cs)
 
 The preset is a `for` loop over four voices in C#. It is a `def` here — and it
 is the patch that decides `def` must be able to hand back more than one thing,
@@ -802,7 +867,7 @@ to be: the pipe takes the first port the call did not name, and leaving
 saturation off would put the band there instead of in `value`. Name the ports
 you mean.
 
-### Heard — [:274](../src/Flyback.Core/Graph/Presets.cs)
+### Heard — [:193](../src/Flyback.Core/Graph/Presets.cs)
 
 ```
 # A drum the picture listens to rather than being told about, through a Meter.
@@ -828,20 +893,55 @@ Both of the Meter's readings: `peak` is the hit and lights the rings, `level` �
 which is what the bare name means — takes the hue, so the color lags the flash
 by as much as a room does.
 
-### Waveform — [:1740](../src/Flyback.Core/Graph/Presets.cs)
+### Waveform — [:764](../src/Flyback.Core/Graph/Presets.cs)
 
 ```
-# A Scope charting what the speakers actually played.
+# Sine, triangle, square and saw faded one into the next, on a Scope drawing the
+# shape being heard.
 
-let voice = saw(freq: frequency(160)) * sine(freq: 0.8, amp: 0.45, bias: 0.55)
+let pitch = frequency(110)
+
+let voice = mixer(
+  in_1: sine(freq: pitch),     level_1: max(sine(freq: 0.08, phase: 0.25), 0),
+  in_2: triangle(freq: pitch), level_2: max(sine(freq: 0.08), 0),
+  in_3: square(freq: pitch),   level_3: max(sine(freq: 0.08, phase: 0.75), 0),
+  in_4: saw(freq: pitch),      level_4: max(sine(freq: 0.08, phase: 0.5), 0))
 
 voice |> out.left
-scope(voice, window: 20ms) |> out.color
+scope(voice, window: 30ms, scale: 1.5) |> out.color
 
-out.volume = 0.5
+out.volume = 0.25
 ```
 
-### Ahead and behind — [:1798](../src/Flyback.Core/Graph/Presets.cs)
+A socket with a space in its name takes an underscore, so the Mixer's `in 1` is
+`in_1`. Each fader is the top half of a slow sine, a quarter of a turn after the
+last.
+
+### Sidebands — [:1208](../src/Flyback.Core/Graph/Presets.cs)
+
+```
+# One sine bending another's phase at audio rate, on an Analyzer showing the
+# partials that grows.
+
+let strike = pulse(freq: 0.5, width: 0.1)
+               |> adsr(attack: 2ms, decay: 1500ms, sustain: 0, release: 300ms)
+
+let depth = sine(freq: 0.07) |> remap(-1..1, 0.2..1.6)
+
+let root      = note(A3)
+let modulator = sine(freq: root * 3.5)
+let voice     = sine(freq: root, phase: modulator * (strike * depth)) * strike
+
+voice |> out.left
+analyzer(voice, window: 50ms, range: 72) |> out.color
+
+out.volume = 0.3
+```
+
+`root * 3.5` is a frequency times a number, which is a Multiply like any other:
+the language has no idea that one side of it is a pitch.
+
+### Ahead and behind — [:819](../src/Flyback.Core/Graph/Presets.cs)
 
 ```
 # A Probe on one half of the screen and a Scope on the other.
@@ -853,7 +953,7 @@ tone |> out.left
 color.mix(scope(tone, window: 25ms), probe(tone, window: 25ms), y |> step())
   |> out.color
 
-out.volume = 0.45
+out.volume = 0.3
 ```
 
 Two things worth noticing. `color.mix` is written in full because `mix` is one
@@ -861,7 +961,7 @@ of the two ambiguous short names. And the split is `y |> step()` rather than
 `step(y)`, because Threshold is `[edge, in]` — a positional `y` would have
 become the edge.
 
-### Ring scan — [:634](../src/Flyback.Core/Graph/Presets.cs)
+### Ring scan — [:362](../src/Flyback.Core/Graph/Presets.cs)
 
 ```
 # One field read twice: drawn as rings, and played by a Scan running round them.
@@ -877,10 +977,10 @@ bands |> remap(-1..1, 0.05..0.55)
       |> add(loop.view)
       |> out.color
 
-out.volume = 0.45
+out.volume = 0.25
 ```
 
-### In key — [:731](../src/Flyback.Core/Graph/Presets.cs)
+### In key — [:415](../src/Flyback.Core/Graph/Presets.cs)
 
 ```
 # A wandering field snapped to a pentatonic scale and struck on the beat.
@@ -906,7 +1006,7 @@ Divide. **Arithmetic between literals is constant-folded at parse time;
 arithmetic involving a signal emits a module.** That is what keeps `t * 0.2` a
 Multiply and `1 / 12` a number.
 
-### Nebula — [:873](../src/Flyback.Core/Graph/Presets.cs)
+### Nebula — [:520](../src/Flyback.Core/Graph/Presets.cs)
 
 ```
 # Kaleidoscoped noise warped into filaments, over a feedback trail.
