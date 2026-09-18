@@ -83,7 +83,9 @@ public sealed class EffectsPlugin : IFlybackPlugin
             new PatchPreset(
                 SlowWeatherPreset.Name,
                 SlowWeatherPreset.Build,
-                "A generative patch with no clock in it, played into the two effects.",
+                "A generative ambient patch with no clock in it and five loops: a drone that bends "
+                + "its own phase, an echo that darkens every time round, voices that push each other "
+                + "down, and a picture steered by where it was bright a frame ago.",
                 PresetKind.Showcase),
         ]);
     }

@@ -3,30 +3,88 @@ using Flyback.Core.Graph;
 namespace Flyback.Plugins.Effects;
 
 /// <summary>
-/// A generative patch with no clock in it, played into the two effects this
-/// plugin is for. Three random voltages read out of a noise field choose the
-/// notes, open the voices and move the picture; nothing anywhere is counting
-/// beats, so there is no bar for any of it to come round on.
+/// A generative patch with no clock in it and five wires that run backwards.
+/// Four random voltages read out of a noise field choose the notes, open the
+/// voices and move the picture, so nothing is counting beats and there is no bar
+/// for any of it to come round on. What makes it change rather than merely vary
+/// is the loops: a drone that bends its own phase, an echo that darkens and
+/// smears itself every time round, two followers that let one voice push another
+/// down, and a picture steered by where it was bright a frame ago.
 /// </summary>
-internal static class SlowWeatherPreset
+/// <remarks>
+/// A loop is one evaluation of delay (ADR-0075): a sample to the ear, and to the
+/// eye the frame before at this pixel and no other. Each loop here has a gain
+/// under one somewhere in it and says where, so every one of them is stable by
+/// construction and none of them by luck.
+/// <para>
+/// Nothing in it is bright on purpose. Every voice is a sine, a sine bent a
+/// little or one triangle, the wind is pink noise through a bandpass, the echo
+/// passes a lowpass on every repeat and the room darkens as it rings — so the
+/// spectrum tilts down the way a quiet room's does, about three decibels an
+/// octave through the middle, and nothing above a kilohertz or so is ever the
+/// loudest thing in it.
+/// </para>
+/// </remarks>
+internal sealed class SlowWeatherPreset : PresetBench
 {
     public const string Name = "Slow weather";
 
     /// <summary>
-    /// The one module here that is not this plugin's. The three sweeps live
-    /// beside this preset now; the Filter is in Voice, so this is still a patch
-    /// that reaches across a boundary and still has to say so when the other
+    /// The plugin the voices are borrowed from. The effects live beside this
+    /// preset; the Filter, Wander, Random and Slew are in Voice, so this is a
+    /// patch that reaches across a boundary and has to say so when the other
     /// plugin is not there.
     /// </summary>
     private const string Voice = "flyback.voice";
 
-    private const string Chorus = "flyback.effects.chorus";
-    private const string Phaser = "flyback.effects.phaser";
-    private const string Flanger = "flyback.effects.flanger";
-    private const string Filter = "flyback.voice.filter";
-    private const string Wander = "flyback.voice.wander";
-    private const string Desk = "math.desk";
-    private const string Trails = "feedback.trails";
+    private const string ChorusType = "flyback.effects.chorus";
+
+    private const string PhaserType = "flyback.effects.phaser";
+
+    private const string DelayType = "flyback.effects.delay";
+
+    private const string ReverbType = "flyback.effects.reverb";
+
+    private const string FilterType = "flyback.voice.filter";
+
+    private const string RandomType = "flyback.voice.random";
+
+    private const string SlewType = "flyback.voice.slew";
+
+    /// <summary>The outputs read by number below, named so a wire says which.</summary>
+    private const int Hz = 0;
+
+    private const int NoteNumber = 1;
+
+    private const int Gate = 1;
+
+    private const int Index = 2;
+
+    private const int FilterLow = 0;
+
+    private const int FilterBand = 1;
+
+    private const int Pink = 1;
+
+    private const int ChorusWide = 1;
+
+    private const int ReverbWide = 1;
+
+    private const int BusLeft = 2;
+
+    private const int BusRight = 3;
+
+    private const int Radius = 2;
+
+    private const int Tail = 1;
+
+    /// <summary>
+    /// How much of the last evaluation an envelope follower keeps. At the
+    /// oversampled rate this is a time constant of about fifty milliseconds,
+    /// which is enough to take the waveform out of the reading and leave the
+    /// swell; the Slew after each follower is what makes the reading slow.
+    /// </summary>
+    private const float Kept = 0.9999f;
 
     public static Patch Build(ModuleCatalog modules)
     {
@@ -34,463 +92,426 @@ internal static class SlowWeatherPreset
             throw new InvalidOperationException(
                 $"it needs the Voice plugin ({Voice}), which is not installed.");
 
-        var b = new PatchBuilder(modules);
+        return new SlowWeatherPreset(modules).Assemble();
+    }
 
-        // --- three random voltages -------------------------------------------
+    private SlowWeatherPreset(ModuleCatalog modules)
+        : base(modules)
+    {
+    }
 
-        var clock = b.Add("time");
+    /// <summary>
+    /// A Wander held against a list of notes. 'rate' is how much of the list one
+    /// full swing of the voltage covers, so setting it to the length of the list
+    /// is what makes the whole scale reachable and nothing beyond it. The gate is
+    /// at its longest and softest, which makes it a hump a note rather than a
+    /// switch: the voices below use it as their swell.
+    /// </summary>
+    private NodeInstance Quantised(NodeInstance voltage, float[] notes)
+    {
+        var steps = b.Add("seq.notes", (1, notes.Length), (2, 1f), (3, 0.5f));
+        StepsExtra.Set(steps, [.. notes.Select(n => new Step(n))]);
+        b.Wire(voltage, 0, steps, 0);
+        return steps;
+    }
 
-        // Three Wanders, each with a seed of its own: the engine's noise walked
+    /// <summary>
+    /// A level, followed. The loop is an integrator on the size of the signal —
+    /// each evaluation keeps most of what it held and adds a sliver of what
+    /// arrived — and the wire back into it is the one that carries the evaluation
+    /// before. The Slew is what makes the reading musical: it catches a swell in
+    /// under a second and lets go of it over several, so whatever it drives is
+    /// pushed quickly and comes back slowly.
+    /// </summary>
+    private NodeInstance Followed(NodeInstance signal, int from, float rise, float fall)
+    {
+        var kept = b.Add("math.mul", (1, Kept));
+        var follow = Sum(kept, Times(Size(signal, from), 1f - Kept));
+        b.Wire(follow, 0, kept, 0);
+
+        var settled = b.Add(SlewType, (1, rise), (2, fall));
+        b.Wire(follow, 0, settled, 0);
+        return settled;
+    }
+
+    /// <summary>One minus a scaled reading, held above a floor: what a follower turns a level down by.</summary>
+    private NodeInstance Ducked(NodeInstance reading, float by, float floor)
+    {
+        var duck = b.Add("math.clamp", (1, floor), (2, 1f));
+        b.Wire(From(1f, Times(reading, by)), 0, duck, 0);
+        return duck;
+    }
+
+    private Patch Assemble()
+    {
+        // --- four random voltages --------------------------------------------
+
+        // Four Wanders, each with a seed of its own: the engine's noise walked
         // along one line, so it is a source rather than a texture, and the same
-        // number on the screen as in the speakers.
-        //
-        // The rate is how fast the line is walked, in values a second. The slowest
-        // takes nearly two minutes to reach the next value it has not seen, which
-        // is what makes the bass move like weather rather than like a bass line.
-        var wander = b.Add(Wander, (1, 0.043f), (2, 0f));
-        var flutter = b.Add(Wander, (1, 0.091f), (2, 1f));
-        var tide = b.Add(Wander, (1, 0.0097f), (2, 2f));
+        // number on the screen as in the speakers. The rate is how fast the line
+        // is walked, in values a second; the slowest takes nearly two minutes to
+        // reach a value it has not seen, which is what makes the bass move like
+        // weather rather than like a bass line.
+        var clock = b.Add(NodeCatalog.TimeTypeId);
+        var tide = Wander(0.0097f, 2f);
+        var wander = Wander(0.043f, 0f);
+        var flutter = Wander(0.091f, 1f);
+        var weather = Wander(0.019f, 3f);
 
-        b.Group("Three Random Voltages", clock, wander, flutter, tide);
+        Box("Four Random Voltages");
 
         // --- three quantisers ------------------------------------------------
 
         // D minor pentatonic over three octaves, split into three lists of
         // coprime length: eight notes for the pad, seven for the bell, five for
-        // the root. 'rate' is how much of the list one full swing of the voltage
-        // covers, so setting it to the length of the list is what makes the
-        // whole scale reachable and nothing beyond it.
-        var padSteps = b.Add("seq.notes", (1, 8f), (2, 1f), (3, 0.5f));
-        StepsExtra.Set(padSteps,
-        [
-            new Step(57f), new Step(60f), new Step(62f), new Step(65f),
-            new Step(67f), new Step(69f), new Step(72f), new Step(74f),
-        ]);
+        // the root.
+        var padSteps = Quantised(wander, [57f, 60f, 62f, 65f, 67f, 69f, 72f, 74f]);
+        var bellSteps = Quantised(flutter, [60f, 62f, 65f, 67f, 69f, 72f, 74f]);
+        var rootSteps = Quantised(tide, [38f, 43f, 45f, 41f, 36f]);
 
-        var bellSteps = b.Add("seq.notes", (1, 7f), (2, 1f), (3, 0.5f));
-        StepsExtra.Set(bellSteps,
-        [
-            new Step(60f), new Step(62f), new Step(65f), new Step(67f),
-            new Step(69f), new Step(72f), new Step(74f),
-        ]);
+        Box("Three Quantisers");
 
-        var rootSteps = b.Add("seq.notes", (1, 5f), (2, 1f), (3, 0.5f));
-        StepsExtra.Set(rootSteps,
-        [
-            new Step(38f), new Step(43f), new Step(45f), new Step(41f), new Step(36f),
-        ]);
+        // --- ground ----------------------------------------------------------
 
-        b.Wire(wander, 0, padSteps, 0)
-         .Wire(flutter, 0, bellSteps, 0)
-         .Wire(tide, 0, rootSteps, 0);
-
-        b.Group("Three Quantisers", padSteps, bellSteps, rootSteps);
-
-        // --- pad ---------------------------------------------------------------
-
-        // Two sines a few cents apart, with the cents themselves on a sine
-        // slower than either — so the beating between them speeds up and slows
-        // down instead of sitting at one rate. The Chorus after them is what
-        // makes the pair stereo: 'out' and 'wide' are swept in opposite
-        // directions, which is a wider and cheaper answer than panning.
-        var padNote = b.Add("audio.note");
-        var detune = b.Add("osc.sine", (1, 0.0233f), (3, 7f));
-        var padTwin = b.Add("audio.note");
-
-        var padLower = b.Add("osc.sine", (3, 0.6f));
-        var padUpper = b.Add("osc.sine", (3, 0.6f));
-        var padPair = b.Add("math.add");
-
-        // The swell, on a floor. A gate at 'gate length' one and 'shape' at its
-        // longest is a hump rather than a switch, and the Remap under it is what
-        // stops the hump reaching nothing — see the remarks.
-        var padSwell = b.Add("math.remap", (1, 0f), (2, 1f), (3, 0.45f), (4, 1f));
-        var padBreath = b.Add("osc.sine", (1, 0.0173f), (3, 0.2f), (4, 0.8f));
-        var padLevel = b.Add("math.mul");
-        var padVoiced = b.Add("math.mul");
-
-        var thicken = b.Add(Chorus, (1, 0.19f), (2, 0.75f), (3, 0.6f));
-
-        b.Wire(padSteps, 0, padNote, 0)
-         .Wire(padNote, 1, padTwin, 0)
-         .Wire(detune, 0, padTwin, 2)
-         .Wire(padNote, 0, padLower, 1)
-         .Wire(padTwin, 0, padUpper, 1)
-         .Wire(padLower, 0, padPair, 0)
-         .Wire(padUpper, 0, padPair, 1)
-
-         .Wire(padSteps, 1, padSwell, 0)
-         .Wire(padSwell, 0, padLevel, 0)
-         .Wire(padBreath, 0, padLevel, 1)
-
-         .Wire(padPair, 0, padVoiced, 0)
-         .Wire(padLevel, 0, padVoiced, 1)
-         .Wire(padVoiced, 0, thicken, 0);
-
-        b.Group("Pad", padNote, detune, padTwin, padLower, padUpper, padPair,
-            padSwell, padBreath, padLevel, padVoiced, thicken);
-
-        // --- bell --------------------------------------------------------------
-
-        // The one voice allowed to disappear, so the pad holds the patch up and
-        // this is what happens in it. Through a Phaser slow enough to take most of
-        // a minute a turn, so no two strikes of the same note have the same shape.
-        // Panned by two sines at unrelated rates, which makes it wander across the
-        // field rather than swing across it.
-        var bellNote = b.Add("audio.note");
-        var bell = b.Add("osc.sine", (3, 0.6f));
-        var bellVoiced = b.Add("math.mul");
-
-        var sweep = b.Add(Phaser, (1, 0.023f), (2, 0.85f), (3, 0.55f), (4, 0.7f));
-
-        var bellDriftL = b.Add("osc.sine", (1, 0.0311f), (3, 0.4f), (4, 0.55f));
-        var bellDriftR = b.Add("osc.sine", (1, 0.0419f), (2, 0.5f), (3, 0.4f), (4, 0.55f));
-        var bellL = b.Add("math.mul");
-        var bellR = b.Add("math.mul");
-
-        b.Wire(bellSteps, 0, bellNote, 0)
-         .Wire(bellNote, 0, bell, 1)
-         .Wire(bell, 0, bellVoiced, 0)
-         .Wire(bellSteps, 1, bellVoiced, 1)
-         .Wire(bellVoiced, 0, sweep, 0)
-         .Wire(sweep, 0, bellL, 0)
-         .Wire(bellDriftL, 0, bellL, 1)
-         .Wire(sweep, 0, bellR, 0)
-         .Wire(bellDriftR, 0, bellR, 1);
-
-        b.Group("Bell", bellNote, bell, bellVoiced, sweep, bellDriftL, bellDriftR, bellL, bellR);
-
-        // --- drone -------------------------------------------------------------
-
-        var rootNote = b.Add("audio.note");
+        // The first loop. A sine whose phase is pushed by its own last sample,
+        // which is the feedback of a classic FM operator: at nothing it is a sine,
+        // and as the index rises the wave leans over into something like a saw,
+        // harmonic by harmonic and with no edge anywhere. The index is a voltage,
+        // so the drone's timbre moves the way its pitch does. It is held well
+        // under a quarter of a turn, which is where this loop stops being a
+        // waveform and starts being chaos.
+        var rootNote = Through("audio.note", rootSteps);
         var subNote = b.Add("audio.note", (1, -1f));
+        var groundIndex = Span(weather, 0f, 1f, 0.02f, 0.16f);
+        var ground = b.Add("osc.sine");
+        var bite = b.Add("math.mul");
+        var sub = b.Add("osc.sine", (3, 0.45f));
 
-        var droneTone = b.Add("osc.triangle", (3, 0.45f));
-        var droneSub = b.Add("osc.sine", (3, 0.7f));
-        var droneSum = b.Add("math.add");
+        b.Wire(rootSteps, 0, subNote, 0)
+         .Wire(rootNote, Hz, ground, 1)
+         .Wire(ground, 0, bite, 0)
+         .Wire(groundIndex, 0, bite, 1)
+         .Wire(bite, 0, ground, 2)
+         .Wire(subNote, Hz, sub, 1);
 
         // Nearly always on. The floor is high and the breath on top of it is
         // shallow, because a root that comes and goes is a part rather than a
-        // ground, and this is the ground.
-        var droneHold = b.Add("math.remap", (1, 0f), (2, 1f), (3, 0.55f), (4, 1f));
-        var droneBreath = b.Add("osc.sine", (1, 0.0133f), (3, 0.25f), (4, 0.75f));
-        var droneLevel = b.Add("math.mul");
-        var droneVoiced = b.Add("math.mul");
+        // ground, and this is the ground. The one filter on a voice is here, on
+        // the one voice with harmonics worth taking off, and its cutoff is the
+        // slowest voltage, so the bottom of the mix opens and closes over minutes.
+        var groundHold = Span(rootSteps, 0f, 1f, 0.55f, 1f, Gate);
+        var groundBreath = b.Add("osc.sine", (1, 0.0133f), (3, 0.25f), (4, 0.75f));
+        var groundVoiced = Product(Sum(ground, sub), Product(groundHold, groundBreath));
+        var opening = Span(tide, 0f, 1f, 240f, 1500f);
+        var shaped = b.Add(FilterType, (2, 0.25f));
 
-        // The one filter in the patch, on the one voice with harmonics worth
-        // taking off. Its cutoff is the slowest voltage, so the bottom of the mix
-        // opens and closes over minutes. 'low' rather than 'band' or 'high':
-        // what a drone wants is less.
-        var opening = b.Add("math.remap", (1, 0f), (2, 1f), (3, 130f), (4, 900f));
-        var shaped = b.Add(Filter, (2, 0.35f));
-
-        b.Wire(rootSteps, 0, rootNote, 0)
-         .Wire(rootSteps, 0, subNote, 0)
-         .Wire(rootNote, 0, droneTone, 1)
-         .Wire(subNote, 0, droneSub, 1)
-         .Wire(droneTone, 0, droneSum, 0)
-         .Wire(droneSub, 0, droneSum, 1)
-
-         .Wire(rootSteps, 1, droneHold, 0)
-         .Wire(droneHold, 0, droneLevel, 0)
-         .Wire(droneBreath, 0, droneLevel, 1)
-
-         .Wire(droneSum, 0, droneVoiced, 0)
-         .Wire(droneLevel, 0, droneVoiced, 1)
-         .Wire(tide, 0, opening, 0)
-         .Wire(droneVoiced, 0, shaped, 0)
+        b.Wire(groundVoiced, 0, shaped, 0)
          .Wire(opening, 0, shaped, 1);
 
-        b.Group("Drone", rootNote, subNote, droneTone, droneSub, droneSum,
-            droneHold, droneBreath, droneLevel, droneVoiced, opening, shaped);
+        Box("Ground");
 
-        // --- air ---------------------------------------------------------------
+        // --- bell ------------------------------------------------------------
 
-        // The one voice that is not quantised: two sines sliding freely over the
-        // voltages that quantise everything else, multiplied. A product of two
-        // sines is their sum and their difference and nothing else, which is why
-        // this sounds like a room rather than two oscillators.
-        //
-        // Both are kept low, which is a correction rather than a taste: the sum is
-        // inharmonic, never gated off and sliding, so an octave higher it is one
-        // thin whistle in the range the ear is most sensitive to. Held down, it
-        // lands under a kilohertz and reads as air.
-        //
-        // Then a Flanger, on the one signal with enough going on for a comb of
-        // notches to bite. Its feedback is negative, which puts the peaks where
-        // the notches were: at this depth that is wind rather than a jet.
-        var airOne = b.Add("math.remap", (1, 0f), (2, 1f), (3, 210f), (4, 610f));
-        var airTwo = b.Add("math.remap", (1, 0f), (2, 1f), (3, 155f), (4, 440f));
-        var glideOne = b.Add("osc.sine");
-        var glideTwo = b.Add("osc.sine");
-        var ring = b.Add("math.mul");
+        // A sine with one partial in its phase, at just over three times the
+        // pitch so the two never quite lock, and the swell is the index as well
+        // as the level: the note brightens as it comes up and dulls as it goes,
+        // which is what a struck thing does backwards. Through a Phaser slow
+        // enough to take most of a minute a turn, so no two swells of the same
+        // note have the same shape, and panned by two sines at unrelated rates,
+        // which makes it wander across the field rather than swing across it.
+        var bellNote = Through("audio.note", bellSteps);
+        var bellIndex = Span(flutter, 0f, 1f, 0.08f, 0.22f);
+        var partial = Tone(Times(bellNote, 3.01f, Hz), Product(bellIndex, bellSteps, Gate));
+        var bell = b.Add("osc.sine");
 
-        var wind = b.Add(Flanger, (1, 0.037f), (2, 0.55f), (3, -0.3f), (4, 0.35f));
+        b.Wire(bellNote, Hz, bell, 1)
+         .Wire(partial, 0, bell, 2)
+         .Wire(bellSteps, Gate, bell, 3);
 
-        // And a lid on it, because a flanger's comb puts peaks back wherever it
-        // likes and the whole point of the register above is that nothing in
-        // this voice is allowed to get shrill. Its cutoff rides a voltage like
-        // everything else, so the lid is not a fixed one — but it is always
-        // there, which is the difference between an effect and a safeguard.
-        var airOpen = b.Add("math.remap", (1, 0f), (2, 1f), (3, 300f), (4, 800f));
-        var soften = b.Add(Filter, (2, 0.1f));
+        var bellSoft = Times(bell, 0.6f);
+        var sweep = b.Add(PhaserType, (1, 0.023f), (2, 0.85f), (3, 0.55f), (4, 0.7f));
+        var bellDriftL = b.Add("osc.sine", (1, 0.0311f), (3, 0.4f), (4, 0.55f));
+        var bellDriftR = b.Add("osc.sine", (1, 0.0419f), (2, 0.5f), (3, 0.4f), (4, 0.55f));
 
-        // And the thing that finally made this voice behave: it is allowed to not
-        // be there. Every other voice is gated by a quantiser, and a flanger's comb
-        // is eight tones within a decibel of each other — a permanent cluster at
-        // seven hundred hertz over a pad that lives below three hundred is heard as
-        // a whistle however far it is turned down. A Smoothstep off the slowest
-        // voltage takes it away for whole minutes, which makes it an event.
-        var presence = b.Add("math.smoothstep", (0, 0.32f), (1, 0.72f));
-        var airPresent = b.Add("math.mul");
+        b.Wire(bellSoft, 0, sweep, 0);
 
-        var airDriftL = b.Add("osc.sine", (1, 0.0533f), (3, 0.45f), (4, 0.5f));
-        var airDriftR = b.Add("osc.sine", (1, 0.0631f), (2, 0.5f), (3, 0.45f), (4, 0.5f));
-        var airL = b.Add("math.mul");
-        var airR = b.Add("math.mul");
+        var bellL = Product(sweep, bellDriftL);
+        var bellR = Product(sweep, bellDriftR);
 
-        b.Wire(flutter, 0, airOne, 0)
-         .Wire(wander, 0, airTwo, 0)
-         .Wire(airOne, 0, glideOne, 1)
-         .Wire(airTwo, 0, glideTwo, 1)
-         .Wire(glideOne, 0, ring, 0)
-         .Wire(glideTwo, 0, ring, 1)
-         .Wire(ring, 0, wind, 0)
-         .Wire(flutter, 0, airOpen, 0)
-         .Wire(wind, 0, soften, 0)
-         .Wire(airOpen, 0, soften, 1)
-         .Wire(tide, 0, presence, 2)
-         .Wire(soften, 0, airPresent, 0)
-         .Wire(presence, 0, airPresent, 1)
-         .Wire(airPresent, 0, airL, 0)
-         .Wire(airDriftL, 0, airL, 1)
-         .Wire(airPresent, 0, airR, 0)
-         .Wire(airDriftR, 0, airR, 1);
+        Box("Bell");
 
-        b.Group("Air", airOne, airTwo, glideOne, glideTwo, ring, wind, airOpen, soften,
-            presence, airPresent, airDriftL, airDriftR, airL, airR);
+        // --- the bell leans on the pad ---------------------------------------
 
-        // --- the desk, and the two rooms ---------------------------------------
+        // The second loop, and the first of two followers. The bell's level is
+        // read off its own wave, and what it reads turns the pad down: a swell in
+        // the bell pushes the pad away in under a second, and the pad takes four
+        // to come back. That is the one thing here that happens *because* of
+        // something else, and it is what makes two voices sound like one room.
+        var bellHeard = Followed(bellSoft, 0, -0.5f, 0.6f);
+        var duck = Ducked(bellHeard, 1.6f, 0.3f);
 
-        // The four voices, read off the Desk's buses rather than its outputs: what
-        // goes into the echoes is the sum, and the rails belong after the rooms.
-        var desk = b.Add(Desk, (2, 0.95f), (5, 0.6f), (8, 0.7f), (11, 0.16f));
+        Box("Bell Follower");
 
-        // Two Delays rather than one, at times far enough apart not to be heard as
-        // one echo and each on a different voltage, so the two sides pull apart
-        // over minutes. A swept delay line interpolates rather than steps, so what
-        // that does to the repeats is tape wow.
-        var echoLeft = b.Add("math.remap", (1, 0f), (2, 1f), (3, 0.54f), (4, 0.68f));
-        var echoRight = b.Add("math.remap", (1, 0f), (2, 1f), (3, 0.79f), (4, 0.93f));
+        // --- pad -------------------------------------------------------------
 
-        var repeatsL = b.Add("flyback.effects.delay", (2, 0.62f), (3, 0.4f));
-        var repeatsR = b.Add("flyback.effects.delay", (2, 0.6f), (3, 0.4f));
+        // A sine and a triangle a few cents apart, with the cents themselves on
+        // a sine slower than either — so the beating between them speeds up and
+        // slows down instead of sitting at one rate. The triangle is the only
+        // plain waveform with harmonics in the patch, and it is here because its
+        // odd ones fall off fast enough to fill the middle of the spectrum
+        // without ever reaching the top of it. The Chorus after them is what
+        // makes the pair stereo: 'out' and 'wide' are swept in opposite
+        // directions, which is a wider and cheaper answer than panning.
+        var padNote = Through("audio.note", padSteps);
+        var detune = b.Add("osc.sine", (1, 0.0233f), (3, 7f));
+        var padTwin = b.Add("audio.note");
+        var padLower = b.Add("osc.sine", (3, 0.6f));
+        var padUpper = b.Add("osc.triangle", (3, 0.45f));
 
-        // The room, and it changes size. Two of them because one would put both
-        // sides in the same place, and the sizes are offset so the tails are not
-        // the same tail — a reverb is a bank of delays, and two banks a little
-        // apart is what a room sounds like from a seat in it rather than from a
-        // point in the middle.
-        var roomSize = b.Add("math.remap", (1, 0f), (2, 1f), (3, 0.72f), (4, 0.98f));
-        var roomWide = b.Add("math.remap", (1, 0f), (2, 1f), (3, 0.66f), (4, 0.92f));
+        // And the octave, quietly: a third sine at twice the pitch, which is the
+        // one place the middle of the spectrum gets its share from a voice that
+        // is otherwise all fundamental.
+        var padOctave = b.Add("osc.sine", (3, 0.45f));
 
-        var hallL = b.Add("flyback.effects.reverb", (2, 0.86f), (3, 0.42f));
-        var hallR = b.Add("flyback.effects.reverb", (2, 0.86f), (3, 0.42f));
+        b.Wire(padNote, NoteNumber, padTwin, 0)
+         .Wire(detune, 0, padTwin, 2)
+         .Wire(padNote, Hz, padLower, 1)
+         .Wire(padTwin, Hz, padUpper, 1)
+         .Wire(Times(padNote, 2f, Hz), 0, padOctave, 1);
 
-        // No drive in front of these, unlike every other patch with a limiter in
-        // it. Ambient has no transients to catch and nothing to gain by being
-        // pushed into a wall; the master is here for its rails, because a Desk
-        // sums, a reverb adds a tail to what it sums, and four voices that each
-        // breathe on their own will occasionally breathe in at once.
-        var master = b.Add(Desk);
+        // The swell, on a floor, so the hump reaches something rather than
+        // nothing; then breathed on, then ducked under the bell.
+        var padSwell = Span(padSteps, 0f, 1f, 0.45f, 1f, Gate);
+        var padBreath = b.Add("osc.sine", (1, 0.0173f), (3, 0.2f), (4, 0.8f));
+        var padLevel = Product(Product(padSwell, padBreath), duck);
+        var padVoiced = Product(Sum(Sum(padLower, padUpper), padOctave), padLevel);
+        var thicken = b.Add(ChorusType, (1, 0.19f), (2, 0.75f), (3, 0.6f));
 
+        b.Wire(padVoiced, 0, thicken, 0);
+
+        Box("Pad");
+
+        // --- the melody desk -------------------------------------------------
+
+        // The two voices that come and go, on a desk of their own, because what
+        // the wind below listens to is the sum of exactly these: the ground is
+        // nearly always on and would drown the reading.
+        var melody = b.Add(DeskType);
+
+        Channel(melody, 1, 0.5f, thicken, thicken, 0, ChorusWide);
+        Channel(melody, 2, 0.6f, bellL, bellR);
+
+        Box("Melody Desk");
+
+        // --- wind ------------------------------------------------------------
+
+        // Pink noise through a bandpass whose centre is a voltage, which is wind;
+        // the resonance is what makes it whistle in the distance rather than
+        // hiss. Its level is the third loop: a follower on the melody desk's bus,
+        // turned upside down, so the wind comes up when the pad and the bell are
+        // quiet and goes when they return. Nothing here decides when that is.
+        var gust = b.Add(RandomType, (2, 4f));
+        var windOpen = Span(flutter, 0f, 1f, 500f, 3000f);
+        var windBand = b.Add(FilterType, (2, 0.6f));
+
+        b.Wire(gust, Pink, windBand, 0)
+         .Wire(windOpen, 0, windBand, 1);
+
+        var melodyHeard = Followed(melody, BusLeft, -0.3f, 0.7f);
+        var hush = Ducked(melodyHeard, 2.2f, 0.1f);
+        var windDrift = Wander(0.029f, 5f, 0.25f, 1f);
+        var windVoiced = Product(Product(hush, windDrift), windBand, FilterBand);
+        var windDriftL = b.Add("osc.sine", (1, 0.0533f), (3, 0.45f), (4, 0.5f));
+        var windDriftR = b.Add("osc.sine", (1, 0.0631f), (2, 0.5f), (3, 0.45f), (4, 0.5f));
+        var windL = Product(windVoiced, windDriftL);
+        var windR = Product(windVoiced, windDriftR);
+
+        Box("Wind");
+
+        // --- the desk --------------------------------------------------------
+
+        // The ground and the wind, with the melody desk's bus arriving at full,
+        // so the buses out of here carry all four voices. They are read as buses
+        // rather than as outputs: what goes into the echo is the sum, and the
+        // rails belong after the rooms.
+        var desk = b.Add(DeskType);
+
+        Channel(desk, 1, 0.34f, shaped);
+        Channel(desk, 2, 0.36f, windL, windR);
+        Chained(melody, desk);
+
+        Box("Desk");
+
+        // --- echo ------------------------------------------------------------
+
+        // The fourth loop, and the one the plugin's Delay does not do on its own:
+        // its 'feedback' is left at nothing, and the repeats go round the graph
+        // instead — through a lowpass, so each is darker than the last, and a
+        // Chorus, so each is a little wider and a little less in tune. A dozen
+        // times round, that is a tail that has forgotten what note it was. The
+        // gain in the loop is the Multiply, and it is well under one; the filter
+        // does not peak at this resonance and the Chorus never gains, so nothing
+        // in the ring can grow. The time is a voltage, and a swept delay line
+        // glides rather than steps, so what that does to the repeats is tape wow.
+        var send = Times(Wired("math.add", desk, desk, BusLeft, BusRight), 0.2f);
+        var ring = b.Add("math.add");
+        var echoTime = Span(wander, 0f, 1f, 0.52f, 0.86f);
+        var repeats = b.Add(DelayType, (2, 0f), (3, 1f));
+        var darkenTo = Span(tide, 0f, 1f, 800f, 3200f);
+        var darken = b.Add(FilterType, (2, 0.1f));
+        var smear = b.Add(ChorusType, (1, 0.11f), (2, 0.5f), (3, 0.35f));
+        var back = Times(smear, 0.62f);
+
+        b.Wire(send, 0, ring, 0)
+         .Wire(back, 0, ring, 1)
+         .Wire(ring, 0, repeats, 0)
+         .Wire(echoTime, 0, repeats, 1)
+         .Wire(repeats, 0, darken, 0)
+         .Wire(darkenTo, 0, darken, 1)
+         .Wire(darken, FilterLow, smear, 0);
+
+        // The two sides of the Chorus are the two sides of the echo, so the
+        // repeats are not in the same place twice.
+        var withEchoL = Wired("math.add", desk, Times(smear, 0.8f), BusLeft);
+        var withEchoR = Wired("math.add", desk, Times(smear, 0.8f, ChorusWide), BusRight);
+
+        Box("Echo");
+
+        // --- the rooms -------------------------------------------------------
+
+        // Two of them because one would put both sides in the same place, and
+        // the sizes are offset so the tails are not the same tail — a reverb is
+        // a bank of delays, and two banks a little apart is what a room sounds
+        // like from a seat in it rather than from a point in the middle.
+        var roomSize = Span(tide, 0f, 1f, 0.72f, 0.98f);
+        var roomWide = Span(wander, 0f, 1f, 0.66f, 0.92f);
+        var hallL = b.Add(ReverbType, (2, 0.86f), (3, 0.42f));
+        var hallR = b.Add(ReverbType, (2, 0.86f), (3, 0.42f));
+
+        b.Wire(withEchoL, 0, hallL, 0)
+         .Wire(roomSize, 0, hallL, 1)
+         .Wire(withEchoR, 0, hallR, 0)
+         .Wire(roomWide, 0, hallR, 1);
+
+        // No drive in front of the master, unlike every other patch with a
+        // limiter in it. Ambient has no transients to catch and nothing to gain
+        // by being pushed into a wall; the master is here for its rails, because
+        // four voices that each breathe on their own will occasionally breathe
+        // in at once, and the trim is where the mix is set so that they can.
+        var master = b.Add(DeskType, (DeskTrim, 0.7f));
         var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 0.85f));
 
-        b.Wire(thicken, 0, desk, 0)
-         .Wire(thicken, 1, desk, 1)
-         .Wire(bellL, 0, desk, 3)
-         .Wire(bellR, 0, desk, 4)
-         .Wire(shaped, 0, desk, 6)
-         .Wire(airL, 0, desk, 9)
-         .Wire(airR, 0, desk, 10)
+        Channel(master, 1, 1f, hallL, hallR, 0, ReverbWide);
 
-         .Wire(wander, 0, echoLeft, 0)
-         .Wire(flutter, 0, echoRight, 0)
-         .Wire(tide, 0, roomSize, 0)
-         .Wire(wander, 0, roomWide, 0)
-
-         .Wire(desk, 2, repeatsL, 0)
-         .Wire(echoLeft, 0, repeatsL, 1)
-         .Wire(desk, 3, repeatsR, 0)
-         .Wire(echoRight, 0, repeatsR, 1)
-
-         .Wire(repeatsL, 0, hallL, 0)
-         .Wire(roomSize, 0, hallL, 1)
-         .Wire(repeatsR, 0, hallR, 0)
-         .Wire(roomWide, 0, hallR, 1)
-
-         .Wire(hallL, 0, master, 0)
-         .Wire(hallR, 0, master, 1)
-         .Wire(master, 0, output, NodeCatalog.OutputLeftPort)
+        b.Wire(master, 0, output, NodeCatalog.OutputLeftPort)
          .Wire(master, 1, output, NodeCatalog.OutputRightPort);
 
-        b.Group("Desk & Rooms", desk, echoLeft, echoRight, repeatsL, repeatsR,
-            roomSize, roomWide, hallL, hallR, master);
+        Box("Rooms & Master", output);
 
-        // --- the picture: geometry ---------------------------------------------
+        // --- the picture: geometry -------------------------------------------
 
-        // The only thing on the screen that moves at a steady rate, and it is a
-        // rotation, which has nowhere to arrive. Everything else here is one of
-        // the three voltages, so nothing in the frame is on its way anywhere in
-        // particular.
-        var creep = b.Add("math.mul", (1, 0.011f));
-        var sway = b.Add("math.remap", (1, 0f), (2, 1f), (3, -0.6f), (4, 0.6f));
-        var angle = b.Add("math.add");
+        // The only thing on the screen that moves at a steady rate is a rotation,
+        // which has nowhere to arrive. Everything else here is one of the
+        // voltages, so nothing in the frame is on its way anywhere in particular.
+        var creep = Times(clock, 0.011f);
         var turn = b.Add("space.rotate");
-
-        var breathe = b.Add("math.remap", (1, 0f), (2, 1f), (3, 0.75f), (4, 1.45f));
         var zoom = b.Add("space.scale");
-
-        // How many wedges, off the slowest voltage — so the symmetry of the
-        // whole picture changes every couple of minutes, and changes to
-        // somewhere it has not necessarily been.
-        var wedges = b.Add("math.remap", (1, 0f), (2, 1f), (3, 2f), (4, 9f));
         var fold = b.Add("space.kaleidoscope");
 
+        b.Wire(Sum(creep, Span(tide, 0f, 1f, -0.6f, 0.6f)), 0, turn, 2)
+         .Wire(turn, 0, zoom, 0)
+         .Wire(turn, 1, zoom, 1)
+         .Wire(Span(wander, 0f, 1f, 0.75f, 1.45f), 0, zoom, 2)
+         .Wire(zoom, 0, fold, 0)
+         .Wire(zoom, 1, fold, 1)
+         .Wire(Span(tide, 0f, 1f, 2f, 9f), 0, fold, 2);
+
         // The cloud is Noise read the ordinary way — per pixel, off the folded
-        // plane, boiling on its own clock. The same module as the three
-        // voltages, and the difference between a source and a texture is
-        // entirely in what its x and y are patched to.
-        var boil = b.Add("math.mul", (1, 0.035f));
+        // plane, boiling on its own clock. The same module as the voltages, and
+        // the difference between a source and a texture is entirely in what its
+        // x and y are patched to.
         var cloud = b.Add("pattern.noise", (3, 1.6f));
 
-        var depth = b.Add("math.remap", (1, 0f), (2, 1f), (3, 0.25f), (4, 0.85f));
-        var bend = b.Add("space.warp");
+        b.Wire(fold, 0, cloud, 0)
+         .Wire(fold, 1, cloud, 1)
+         .Wire(Times(clock, 0.035f), 0, cloud, 2);
 
-        var spacing = b.Add("math.remap", (1, 0f), (2, 1f), (3, 1.4f), (4, 3.6f));
-        var swim = b.Add("math.mul", (1, 0.09f));
+        Box("Picture: Geometry");
+
+        // --- the picture: memory ---------------------------------------------
+
+        // The fifth loop, and the one on the screen. A Blend of what this pixel
+        // held a frame ago and what it sees now, which is a long exposure with
+        // no buffer; how much of the new frame it takes is the fastest voltage,
+        // so the picture is sharp for a while and smeared for a while. And what
+        // it held is patched back into the geometry: the warp that bends the
+        // rings is pushed by the cloud *and* by the memory, so a place that was
+        // bright reads the rings from somewhere else than a place that was dark,
+        // and the pattern drifts on its own account rather than with the clock.
+        // The push is kept small. Larger, a pixel can push itself to somewhere
+        // brighter and stay, and the frame fills with light that never leaves.
+        var memory = b.Add("math.mix");
+        var swirl = Times(memory, 1f);
+        var bend = b.Add("space.warp");
         var veil = b.Add("pattern.rings");
+
+        b.Wire(Span(weather, 0f, 1f, 0.04f, 0.22f), 0, swirl, 1)
+         .Wire(fold, 0, bend, 0)
+         .Wire(fold, 1, bend, 1)
+         .Wire(Sum(cloud, swirl), 0, bend, 2)
+         .Wire(Span(flutter, 0f, 1f, 0.25f, 0.85f), 0, bend, 3)
+         .Wire(bend, 0, veil, 0)
+         .Wire(bend, 1, veil, 1)
+         .Wire(Span(padSteps, 0f, 1f, 1.4f, 3.6f, Index), 0, veil, 2)
+         .Wire(Times(clock, 0.09f), 0, veil, 3);
 
         // Wide edges, unlike every other preset that does this. A hard threshold
         // makes filaments and a soft one makes weather, and the difference is
         // where the two numbers are put.
-        var haze = b.Add("math.smoothstep", (0, -0.55f), (1, 0.9f));
+        var haze = Rises(veil, -0.55f, 0.9f);
 
-        b.Wire(clock, 0, creep, 0)
-         .Wire(clock, 0, boil, 0)
-         .Wire(clock, 0, swim, 0)
+        b.Wire(memory, 0, memory, 0)
+         .Wire(haze, 0, memory, 1)
+         .Wire(Span(flutter, 0f, 1f, 0.06f, 0.25f), 0, memory, 2);
 
-         .Wire(tide, 0, sway, 0)
-         .Wire(creep, 0, angle, 0)
-         .Wire(sway, 0, angle, 1)
-         .Wire(angle, 0, turn, 2)
+        Box("Picture: Memory");
 
-         .Wire(wander, 0, breathe, 0)
-         .Wire(turn, 0, zoom, 0)
-         .Wire(turn, 1, zoom, 1)
-         .Wire(breathe, 0, zoom, 2)
+        // --- the picture: color ----------------------------------------------
 
-         .Wire(tide, 0, wedges, 0)
-         .Wire(zoom, 0, fold, 0)
-         .Wire(zoom, 1, fold, 1)
-         .Wire(wedges, 0, fold, 2)
-
-         .Wire(fold, 0, cloud, 0)
-         .Wire(fold, 1, cloud, 1)
-         .Wire(boil, 0, cloud, 2)
-
-         .Wire(flutter, 0, depth, 0)
-         .Wire(fold, 0, bend, 0)
-         .Wire(fold, 1, bend, 1)
-         .Wire(cloud, 0, bend, 2)
-         .Wire(depth, 0, bend, 3)
-
-         .Wire(padSteps, 2, spacing, 0)
-         .Wire(bend, 0, veil, 0)
-         .Wire(bend, 1, veil, 1)
-         .Wire(spacing, 0, veil, 2)
-         .Wire(swim, 0, veil, 3)
-         .Wire(veil, 0, haze, 2);
-
-        b.Group("Picture: Geometry", creep, sway, angle, turn, breathe, zoom, wedges, fold,
-            boil, cloud, depth, bend, spacing, swim, veil, haze);
-
-        // --- the picture: color -------------------------------------------------
-
-        // Here for 'radius', which is the one Coordinates output nothing is
+        // Coordinates are here for 'radius', which is the one output nothing is
         // normalled to, and the only thing in the patch that knows where the
         // edge of the frame is.
-        var coord = b.Add("coord");
-        var falloff = b.Add("math.remap", (1, 0f), (2, 2.2f), (3, 1f), (4, 0.3f));
-
-        var glow = b.Add("math.remap", (1, 0f), (2, 1f), (3, 0.7f), (4, 1.35f));
-        var lit = b.Add("math.mul");
-        var shaded = b.Add("math.mul");
+        var coord = b.Add(NodeCatalog.CoordTypeId);
+        var falloff = Span(coord, 0f, 2.2f, 1f, 0.3f, Radius);
+        var glow = Span(padSteps, 0f, 1f, 0.9f, 1.6f, Gate);
         var visible = b.Add("math.clamp", (1, 0f), (2, 1f));
+
+        b.Wire(Product(Product(memory, glow), falloff), 0, visible, 0);
 
         // Hue off the cloud and the slowest voltage together, so the palette
         // moves across the frame and drifts as a whole at the same time, and the
         // creep under both means it never settles even where the two do.
-        var spread = b.Add("math.mul", (1, 0.55f));
-        var season = b.Add("math.mul", (1, 0.4f));
-        var blend = b.Add("math.add");
-        var slide = b.Add("math.add");
-        var hue = b.Add("math.fract");
-
-        var wash = b.Add("math.remap", (1, 0f), (2, 1f), (3, 0.3f), (4, 0.75f));
-
+        var hue = Fraction(Sum(Sum(Times(cloud, 0.55f), Times(tide, 0.4f)), creep));
         var fresh = b.Add("color.hsv");
 
-        b.Wire(coord, 2, falloff, 0)
-
-         .Wire(padSteps, 1, glow, 0)
-         .Wire(haze, 0, lit, 0)
-         .Wire(glow, 0, lit, 1)
-         .Wire(lit, 0, shaded, 0)
-         .Wire(falloff, 0, shaded, 1)
-         .Wire(shaded, 0, visible, 0)
-
-         .Wire(cloud, 0, spread, 0)
-         .Wire(tide, 0, season, 0)
-         .Wire(spread, 0, blend, 0)
-         .Wire(season, 0, blend, 1)
-         .Wire(blend, 0, slide, 0)
-         .Wire(creep, 0, slide, 1)
-         .Wire(slide, 0, hue, 0)
-
-         .Wire(flutter, 0, wash, 0)
-
-         .Wire(hue, 0, fresh, 0)
-         .Wire(wash, 0, fresh, 1)
+        b.Wire(hue, 0, fresh, 0)
+         .Wire(Span(flutter, 0f, 1f, 0.3f, 0.75f), 0, fresh, 1)
          .Wire(visible, 0, fresh, 2);
 
-        b.Group("Picture: Color", coord, falloff, glow, lit, shaded, visible,
-            spread, season, blend, slide, hue, wash, fresh);
-
-        // --- the picture: memory -------------------------------------------------
-
-        // Blended rather than maximised, which is what a still picture needs:
-        // Maximum keeps whatever was brightest and reads as a streak, where a Blend
-        // lets the frame forget.
-        //
-        // How much it forgets is the fastest of the three voltages, so the picture
-        // is sharp for a while and long-exposed for a while. So it is the Trails'
-        // tail that is read, the dimmed last frame on its own, and nothing is
-        // patched into the Trails at all. A Trails rather than this plugin's Delay,
-        // for the reason the plugin exists to explain: a delay line has no
-        // per-pixel past.
-        var memory = b.Add(Trails, (3, 1.008f), (4, 0.0035f), (7, 0.985f));
-
-        var settle = b.Add("math.remap", (1, 0f), (2, 1f), (3, 0.05f), (4, 0.2f));
+        // The memory above forgets in place; this is the drift. A Trails with
+        // nothing patched into it, whose 'tail' is the dimmed last frame read a
+        // little zoomed and a little turned, blended under the fresh picture: a
+        // delay line has no per-pixel past, and a loop has no elsewhere, and this
+        // is the module for the one thing neither of them can do.
+        var drift = b.Add(TrailsType, (TrailsZoom, 1.008f), (TrailsAngle, 0.0035f), (TrailsPersist, 0.985f));
         var combine = b.Add("color.mix");
 
-        b.Wire(wander, 0, settle, 0)
-         .Wire(memory, 1, combine, 0)
+        b.Wire(drift, Tail, combine, 0)
          .Wire(fresh, 0, combine, 1)
-         .Wire(settle, 0, combine, 2)
+         .Wire(Span(wander, 0f, 1f, 0.12f, 0.35f), 0, combine, 2)
          .Wire(combine, 0, output, NodeCatalog.OutputColorPort);
 
-        b.Group("Picture: Memory", memory, settle, combine);
+        Box("Picture: Color");
 
         return b.Build();
     }
