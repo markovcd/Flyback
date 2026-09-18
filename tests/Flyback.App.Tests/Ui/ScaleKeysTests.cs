@@ -30,7 +30,7 @@ public class ScaleKeysTests : UiTest
         node = built;
         edits = () => count;
 
-        return Show(new ScaleKeys(built, def, _ => count++).View);
+        return Show(new ScaleKeys(built, def, ScaleUse.Snap, _ => count++).View);
     }
 
     /// <summary>Every key, in the order the canvas holds them: seven naturals then five sharps.</summary>

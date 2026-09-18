@@ -43,6 +43,7 @@ internal sealed class ScaleKeys
     private static readonly IPen Edge = new Pen(new SolidColorBrush(Colors.Outline));
 
     private readonly NodeInstance node;
+    private readonly ScaleUse use;
     private readonly Action<string?> changed;
     private readonly Dictionary<int, Button> keys = [];
 
@@ -61,9 +62,10 @@ internal sealed class ScaleKeys
         Margin = new Thickness(0, 6, 0, 0),
     };
 
-    public ScaleKeys(NodeInstance node, NodeDef def, Action<string?> changed)
+    public ScaleKeys(NodeInstance node, NodeDef def, ScaleUse use, Action<string?> changed)
     {
         this.node = node;
+        this.use = use;
         this.changed = changed;
 
         on = new SolidColorBrush(Colors.Accent(def.Category));
@@ -186,8 +188,14 @@ internal sealed class ScaleKeys
             Spacing = 6,
         };
 
-        row.Children.Add(Shortcut("All", "Every note, which is the nearest semitone.", [.. Enumerable.Range(0, Pitch.Classes)]));
-        row.Children.Add(Shortcut("None", "No note, which passes the signal through unchanged.", []));
+        row.Children.Add(Shortcut(
+            "All",
+            use == ScaleUse.Keys ? "Every note, one to a key." : "Every note, which is the nearest semitone.",
+            [.. Enumerable.Range(0, Pitch.Classes)]));
+        row.Children.Add(Shortcut(
+            "None",
+            use == ScaleUse.Keys ? "No note, so the keys play nothing." : "No note, which passes the signal through unchanged.",
+            []));
 
         return row;
 
@@ -243,7 +251,7 @@ internal sealed class ScaleKeys
             key.Opacity = lit ? 1 : 0.75;
         }
 
-        summary.Text = scale.Count switch
+        summary.Text = use == ScaleUse.Keys ? Keys(scale) : scale.Count switch
         {
             0 => "Nothing is switched on, so there is nothing to snap to and the signal "
                  + "passes straight through.",
@@ -252,5 +260,23 @@ internal sealed class ScaleKeys
             _ => $"{scale.Count} notes: {string.Join(" ", scale.Select(Pitch.ClassName))}. "
                  + "Every octave of each, so a sweep runs up the scale.",
         };
+    }
+
+    /// <summary>
+    /// What the scale does to the computer keyboard, which is nothing at all
+    /// until 'keys' is set to Scale — said, because the keys light up either way.
+    /// </summary>
+    private static string Keys(List<int> scale)
+    {
+        const string when = " When keys is Scale.";
+
+        if (scale.Count == 0) return "Nothing is picked, so the computer keyboard plays nothing." + when;
+
+        var named = string.Join(" ", scale.Select(Pitch.ClassName));
+        var home = string.Concat("ASDFGHJKL;'\\".Take(scale.Count));
+        var lost = scale.Count > 10 ? " The Z row has ten keys, so it stops short of the top." : "";
+
+        return $"{named}, one to a key: {home} along the home row, the row above an octave up and "
+               + $"the Z row an octave down.{lost}{when}";
     }
 }

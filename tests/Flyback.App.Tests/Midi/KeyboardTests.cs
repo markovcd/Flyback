@@ -85,6 +85,144 @@ public class KeyboardTests
         keys.Note(Key.Z)!.Value.ShouldBeInRange(0, 127);
     }
 
+    /// <summary>
+    /// All twelve picked: the home row is the octave the piano's lower row was,
+    /// one note a key, with the row above an octave up and the one below an
+    /// octave down.
+    /// </summary>
+    [Fact]
+    public void A_scale_of_twelve_fills_the_home_row()
+    {
+        var keys = new ComputerKeyboard { Scale = [.. Enumerable.Range(0, 12)] };
+
+        keys.Note(Key.A).ShouldBe(48);
+        keys.Note(Key.S).ShouldBe(49);
+        keys.Note(Key.OemPipe).ShouldBe(59);
+
+        keys.Note(Key.Q).ShouldBe(60);
+        keys.Note(Key.OemCloseBrackets).ShouldBe(71);
+
+        keys.Note(Key.Z).ShouldBe(36);
+        keys.Note(Key.OemQuestion).ShouldBe(45);
+    }
+
+    /// <summary>
+    /// A row holds as many notes as are picked, so seven fill A to J and the
+    /// keys past them play nothing rather than running on into the next octave.
+    /// </summary>
+    [Fact]
+    public void A_scale_of_seven_takes_seven_keys_a_row()
+    {
+        var keys = new ComputerKeyboard { Scale = [0, 2, 4, 5, 7, 9, 11] };
+
+        keys.Note(Key.A).ShouldBe(48);
+        keys.Note(Key.D).ShouldBe(52);
+        keys.Note(Key.J).ShouldBe(59);
+        keys.Note(Key.K).ShouldBeNull();
+
+        keys.Note(Key.U).ShouldBe(71);
+        keys.Note(Key.I).ShouldBeNull();
+
+        keys.Note(Key.M).ShouldBe(47);
+        keys.Note(Key.OemComma).ShouldBeNull();
+    }
+
+    [Fact]
+    public void A_scale_of_five_takes_five_keys_a_row()
+    {
+        var keys = new ComputerKeyboard { Scale = [0, 2, 4, 7, 9] };
+
+        keys.Note(Key.G).ShouldBe(57);
+        keys.Note(Key.H).ShouldBeNull();
+        keys.Note(Key.T).ShouldBe(69);
+        keys.Note(Key.Y).ShouldBeNull();
+        keys.Note(Key.B).ShouldBe(45);
+    }
+
+    /// <summary>The bottom row has ten keys, so the eleventh and twelfth notes are not on it.</summary>
+    [Fact]
+    public void The_bottom_row_stops_at_ten()
+    {
+        var keys = new ComputerKeyboard { Scale = [.. Enumerable.Range(0, 11)] };
+
+        keys.Note(Key.OemQuestion).ShouldBe(45);
+        keys.Note(Key.OemQuotes).ShouldBe(58);
+        keys.Note(Key.OemPipe).ShouldBeNull();
+    }
+
+    [Fact]
+    public void An_empty_scale_plays_nothing()
+    {
+        var keys = new ComputerKeyboard { Scale = [] };
+
+        keys.Note(Key.A).ShouldBeNull();
+        keys.Note(Key.Z).ShouldBeNull();
+    }
+
+    [Fact]
+    public void A_scale_keeps_every_key_a_note_that_exists_at_either_end()
+    {
+        var keys = new ComputerKeyboard { Scale = [.. Enumerable.Range(0, 12)], Octave = 99 };
+        keys.Note(Key.OemCloseBrackets)!.Value.ShouldBeInRange(0, 127);
+
+        keys.Octave = -99;
+        keys.Note(Key.Z)!.Value.ShouldBeInRange(0, 127);
+    }
+
+    /// <summary>
+    /// Laying the keys out again lets go of what is held, since the key coming
+    /// up would otherwise name a different note — and laying them out the same
+    /// way again, which every recompile does, must not.
+    /// </summary>
+    [Fact]
+    public void Changing_the_layout_lets_go_and_keeping_it_does_not()
+    {
+        var hub = new MidiHub();
+        var block = Block();
+        hub.Follow(block);
+
+        hub.KeyDown(Key.Z);
+        hub.Lay(null);
+        Read(block, Gate).ShouldBe(1d);
+
+        hub.Lay([0, 2, 4, 5, 7, 9, 11]);
+        Read(block, Gate).ShouldBe(0d);
+
+        hub.KeyDown(Key.A);
+        hub.Lay([11, 9, 7, 5, 4, 2, 0]);
+        Read(block, Gate).ShouldBe(1d);
+        Read(block, Pitch).ShouldBe(48d);
+    }
+
+    [Fact]
+    public void The_patch_says_which_layout_the_keyboard_takes()
+    {
+        var patch = new Patch();
+        var def = NodeCatalog.BuiltIn.Get(NodeCatalog.MidiTypeId)!;
+        var node = NodeInstance.Create(def, 0d, 0d);
+        patch.Nodes.Add(node);
+
+        MidiExtra.KeyboardScale(patch).ShouldBeNull();
+
+        node.SetState(MidiExtra.StateKey, new System.Text.Json.Nodes.JsonObject
+        {
+            [MidiExtra.DeviceField] = MidiSources.Keyboard,
+            [MidiExtra.KeysField] = MidiExtra.ScaleKeys,
+        });
+        ScaleExtra.Set(node, [9, 0, 4]);
+
+        MidiExtra.KeyboardScale(patch).ShouldBe([0, 4, 9]);
+
+        // A module listening to something else does not lay the keyboard out.
+        node.SetState(MidiExtra.StateKey, new System.Text.Json.Nodes.JsonObject
+        {
+            [MidiExtra.DeviceField] = "some-device",
+            [MidiExtra.KeysField] = MidiExtra.ScaleKeys,
+        });
+
+        MidiExtra.KeyboardScale(patch).ShouldBeNull();
+    }
+
     [Fact]
     public void A_key_down_plays_its_note()
     {

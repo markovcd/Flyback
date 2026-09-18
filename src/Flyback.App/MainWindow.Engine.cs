@@ -189,6 +189,7 @@ public sealed partial class MainWindow
         // next buffer. Turning a knob while playing a note recompiles the patch,
         // and the note must not be cut off by the edit.
         preview.Live = new LiveValues(result.Program.LiveInputs);
+        midi.Lay(MidiExtra.KeyboardScale(editor.Patch));
         midi.Follow(preview.Live, audio.Live);
         RefreshControls();
 

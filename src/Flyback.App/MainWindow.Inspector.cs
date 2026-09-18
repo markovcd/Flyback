@@ -1310,7 +1310,7 @@ public sealed partial class MainWindow
 
         // A quantiser's scale is a set rather than a sequence, so it is edited
         // as the octave it is a subset of rather than as a list of numbers.
-        ScaleExtra => new ScaleKeys(node, def, because => Edited(node, because)).View,
+        ScaleExtra scale => new ScaleKeys(node, def, scale.Use, because => Edited(node, because)).View,
 
         // The one a node carries that is not a number, so it is a name and a
         // button rather than a control with a range.

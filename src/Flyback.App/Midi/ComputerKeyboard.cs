@@ -4,12 +4,22 @@ using Flyback.Core.Graph;
 namespace Flyback.App.Midi;
 
 /// <summary>
-/// The keys under your hands, read as two octaves of a piano.
+/// The keys under your hands, read as two octaves of a piano or as three octaves
+/// of a scale.
 /// </summary>
 /// <remarks>
-/// The tracker layout, which everybody who has played one already knows: the bottom
-/// row is the white notes with the black ones over the gaps above, and the two rows
-/// above that are the same shape an octave up.
+/// The piano is the tracker layout, which everybody who has played one already
+/// knows: the bottom row is the white notes with the black ones over the gaps
+/// above, and the two rows above that are the same shape an octave up.
+/// <para>
+/// The scale is a row an octave: the notes that are picked, next to each other
+/// from the left, with the home row where the piano's lower octave is, the row
+/// above it an octave up and the row below an octave down. A row holds as many
+/// notes as are picked and no more, so the keys past the last one play nothing
+/// — every key then means the same note wherever the octave is, and the key
+/// under a finger is always the same degree of the scale. The bottom row has
+/// ten keys, so a scale of eleven or twelve loses its top notes there.
+/// </para>
 /// <para>
 /// Keyed by <see cref="Key"/> rather than the character typed, so it stays a piano on
 /// a keyboard whose letters are somewhere else. What it costs is that the printed
@@ -66,6 +76,20 @@ internal sealed class ComputerKeyboard
     };
 
     /// <summary>
+    /// The rows a scale is laid along, from the octave below to the octave above,
+    /// each as far across as the keyboard goes.
+    /// </summary>
+    private static readonly Key[][] Rows =
+    [
+        [Key.Z, Key.X, Key.C, Key.V, Key.B, Key.N, Key.M, Key.OemComma, Key.OemPeriod, Key.OemQuestion],
+        [Key.A, Key.S, Key.D, Key.F, Key.G, Key.H, Key.J, Key.K, Key.L, Key.OemSemicolon, Key.OemQuotes, Key.OemPipe],
+        [Key.Q, Key.W, Key.E, Key.R, Key.T, Key.Y, Key.U, Key.I, Key.O, Key.P, Key.OemOpenBrackets, Key.OemCloseBrackets],
+    ];
+
+    /// <summary>Which row is <see cref="Bottom"/>'s octave: the home row.</summary>
+    private const int HomeRow = 1;
+
+    /// <summary>
     /// Where the bottom of the lower row sits by default: C3, an octave and a bit
     /// below middle C, which puts the two rows either side of where a melody
     /// usually is.
@@ -74,10 +98,9 @@ internal sealed class ComputerKeyboard
 
     /// <summary>How far the whole layout has been moved, in octaves.</summary>
     /// <remarks>
-    /// Held to what leaves every key on the layout a note that exists. The top of
-    /// the run is 28 semitones above the bottom, so this cannot go so high that a
-    /// key would ask for a note past 127 or so low that one would ask for less
-    /// than nothing.
+    /// Held to what leaves every key on the layout a note that exists: this
+    /// cannot go so high that a key would ask for a note past 127 or so low that
+    /// one would ask for less than nothing.
     /// </remarks>
     public int Octave
     {
@@ -85,9 +108,33 @@ internal sealed class ComputerKeyboard
         set => field = Math.Clamp(value, Lowest, Highest);
     }
 
-    private const int Lowest = -Bottom / 12;
+    /// <summary>
+    /// The notes of the octave laid along each row, or null where the keys are a
+    /// piano. Setting it holds the octave to what the new layout reaches.
+    /// </summary>
+    public IReadOnlyList<int>? Scale
+    {
+        get;
+        set
+        {
+            field = value is null ? null : Pitch.Scale(value);
+            Octave = Octave;
+        }
+    }
 
-    private const int Highest = (127 - Bottom - 28) / 12;
+    /// <summary>How far below <see cref="Bottom"/> the lowest key reaches: an octave, for a scale's bottom row.</summary>
+    private int Below => Scale is null ? 0 : 12;
+
+    /// <summary>
+    /// How far above <see cref="Bottom"/> the highest key reaches: the piano's run
+    /// carries on to the E above the upper C, and a scale's top row ends within
+    /// its octave.
+    /// </summary>
+    private int Above => Scale is null ? 28 : 23;
+
+    private int Lowest => -((Bottom - Below) / 12);
+
+    private int Highest => (127 - Bottom - Above) / 12;
 
     /// <summary>
     /// A typist strikes every key the same, so there is nothing to measure. Not
@@ -98,16 +145,41 @@ internal sealed class ComputerKeyboard
     public const float Velocity = 0.8f;
 
     /// <summary>What note <paramref name="key"/> plays, or null where it plays none.</summary>
-    public int? Note(Key key) =>
-        Layout.TryGetValue(key, out var semitones)
-            ? Bottom + Octave * 12 + semitones
-            : null;
+    public int? Note(Key key)
+    {
+        if (Scale is not { } scale)
+            return Layout.TryGetValue(key, out var semitones) ? Bottom + Octave * 12 + semitones : null;
+
+        for (var row = 0; row < Rows.Length; row++)
+        {
+            var place = Array.IndexOf(Rows[row], key);
+
+            if (place >= 0)
+                return place < scale.Count ? Bottom + (Octave + row - HomeRow) * 12 + scale[place] : null;
+        }
+
+        return null;
+    }
 
     /// <summary>
-    /// What the two rows currently reach, written the way the notes are — for
-    /// saying on the status bar when the octave moves, since two rows of letters
-    /// give no clue where they are.
+    /// What the rows currently reach, written the way the notes are — for saying
+    /// on the status bar when the octave moves, since rows of letters give no
+    /// clue where they are.
     /// </summary>
-    public string Range =>
-        $"{Pitch.Name(Bottom + Octave * 12)} to {Pitch.Name(Bottom + Octave * 12 + 28)}";
+    public string Range
+    {
+        get
+        {
+            var bottom = Bottom + Octave * 12;
+
+            if (Scale is not { } scale)
+                return $"{Pitch.Name(bottom)} to {Pitch.Name(bottom + Above)}";
+
+            if (scale.Count == 0) return "nothing, since the scale has no notes picked";
+
+            var top = scale[Math.Min(scale.Count, Rows[^1].Length) - 1];
+
+            return $"{Pitch.Name(bottom - 12 + scale[0])} to {Pitch.Name(bottom + 12 + top)}";
+        }
+    }
 }

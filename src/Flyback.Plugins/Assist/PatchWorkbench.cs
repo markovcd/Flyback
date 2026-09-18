@@ -333,7 +333,7 @@ public sealed partial class PatchWorkbench
 
         if (def.Extra<ScaleExtra>() is not { } carries)
             return ToolOutcome.Refused(
-                $"{Handle(node)} is a {def.Name}, which has no scale. Only the Quantiser has one.");
+                $"{Handle(node)} is a {def.Name}, which has no scale. The Quantiser, Tune and MIDI In have one.");
 
         if (!arguments.TryGetProperty("notes", out var given) || given.ValueKind != JsonValueKind.Array)
             return ToolOutcome.Refused(
@@ -1028,7 +1028,9 @@ public sealed partial class PatchWorkbench
                 + "in the scale rather than a single note, which is what makes a scale repeat up "
                 + "the keyboard. Order and repeats do not matter. C major is [0,2,4,5,7,9,11] "
                 + "and a minor pentatonic on A is [0,3,5,7,10]. All twelve snaps to the nearest "
-                + "semitone, which is what a Note module already does; an empty list is a wire.",
+                + "semitone, which is what a Note module already does; an empty list is a wire. "
+                + "A MIDI In carries one too: the notes the computer keyboard plays along each "
+                + "row when its keys field is \"scale\".",
                 """
                 {
                   "properties": {

@@ -266,6 +266,7 @@ trailing block:
 ```
 let riff  = notes(rate: 4, gate_length: 0.5) [ A3 C4 [E4 G4] ~ ]
 let snap  = quantiser() [ C D E G A ]
+let lead  = midi.in(keys: "scale") [ C D E G A ]
 let clip  = sample("kick.wav")
 let photo = picture("sunset.png")
 ```

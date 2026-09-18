@@ -195,6 +195,30 @@ internal sealed class MidiHub(IMidiInput? hardware = null) : IDisposable
     }
 
     /// <summary>
+    /// Lays the computer keyboard out as a piano, or as <paramref name="scale"/>
+    /// along each row. Everything already down is let go first when that changes
+    /// what a key plays, for the reason <see cref="Shift"/> does.
+    /// </summary>
+    /// <remarks>
+    /// Asked on every recompile, so a layout that is the same as before is left
+    /// alone: letting go there would cut a held note off at every knob turned.
+    /// </remarks>
+    public void Lay(IReadOnlyList<int>? scale)
+    {
+        var current = Keyboard.Scale;
+
+        if (current is null ? scale is null : scale is not null && current.SequenceEqual(Pitch.Scale(scale))) return;
+
+        lock (gate)
+        {
+            foreach (var voice in Voices(MidiSources.Keyboard)) voice.Silence();
+            Keyboard.Scale = scale;
+        }
+
+        Publish();
+    }
+
+    /// <summary>
     /// Everything let go. The window calls this when it stops being the window you
     /// are typing into: a key released over another program is one this never hears
     /// about.

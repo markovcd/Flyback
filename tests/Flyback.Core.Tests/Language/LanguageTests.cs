@@ -1030,6 +1030,17 @@ public class LanguageTests
         ScaleExtra.Of(Build("quantiser() [ C D E G A ] |> out.left").Nodes
             .Single(n => n.TypeId == NodeCatalog.QuantiserTypeId)).ShouldBe([0, 2, 4, 7, 9]);
 
+    /// <summary>A MIDI In carries a scale too, for the computer keyboard to be laid out along.</summary>
+    [Fact]
+    public void A_midi_in_takes_a_scale_and_a_layout()
+    {
+        var patch = Build("""midi.in(keys: "scale") [ C D E G A ] |> out.left""");
+        var node = patch.Nodes.Single(n => n.TypeId == NodeCatalog.MidiTypeId);
+
+        ScaleExtra.Of(node).ShouldBe([0, 2, 4, 7, 9]);
+        MidiExtra.KeyboardScale(patch).ShouldBe([0, 2, 4, 7, 9]);
+    }
+
     [Fact]
     public void A_player_names_its_file() =>
         SampleExtra.Of(Build("""sample("kick.wav") |> out.left""").Nodes
