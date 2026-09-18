@@ -43,13 +43,30 @@ internal static class CrossoverModule
     private static Slot[] Emit(Emitter em, EmitContext node)
     {
         var live = em.HasMemory();
-        var k = em.Constant(Butterworth);
         var dry = node[In];
 
-        var lowG = Dsp.Warp(em, node[Low]);
+        var (low, mid, high) = Split(em, dry, node[Low], node[High]);
+
+        return
+        [
+            Dsp.Pick(em, dry, low, live),
+            em.Mul(mid, live),
+            em.Mul(high, live),
+        ];
+    }
+
+    /// <summary>
+    /// The three bands of <paramref name="dry"/>, for a module with a crossover
+    /// inside it — see <see cref="MaximizerModule"/>.
+    /// </summary>
+    public static (Slot Low, Slot Mid, Slot High) Split(Emitter em, Slot dry, Slot lowHertz, Slot highHertz)
+    {
+        var k = em.Constant(Butterworth);
+
+        var lowG = Dsp.Warp(em, lowHertz);
 
         // A 'high' below 'low' is read as 'low', which leaves the middle empty.
-        var highG = Dsp.Warp(em, em.Binary(OpCode.Max, node[High], node[Low]));
+        var highG = Dsp.Warp(em, em.Binary(OpCode.Max, highHertz, lowHertz));
 
         var under = Lowpass(Lowpass(dry, lowG), lowG);
         var over = Highpass(Highpass(dry, lowG), lowG);
@@ -61,12 +78,7 @@ internal static class CrossoverModule
         var turned = Dsp.Filter(em, under, highG, k);
         var low = em.Sub(em.Add(turned.Low, turned.High), em.Mul(k, turned.Band));
 
-        return
-        [
-            Dsp.Pick(em, dry, low, live),
-            em.Mul(mid, live),
-            em.Mul(high, live),
-        ];
+        return (low, mid, high);
 
         Slot Lowpass(Slot x, Slot g) => Dsp.Filter(em, x, g, k).Low;
 

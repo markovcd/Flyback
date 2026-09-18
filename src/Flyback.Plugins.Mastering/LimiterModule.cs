@@ -75,15 +75,37 @@ internal static class LimiterModule
     private static Slot[] Emit(Emitter em, EmitContext node)
     {
         var live = em.HasMemory();
+        var lookahead = em.Mul(node[Lookahead], 1e-3f);
+
+        var (left, right, gain) = Limit(
+            em, node[Left], node[Right], Dsp.Linear(em, node[Ceiling]), node[Release], lookahead);
+
+        return
+        [
+            Dsp.Pick(em, node[Left], left, live),
+            Dsp.Pick(em, node[Right], right, live),
+            Dsp.Pick(em, em.Constant(1f), gain, live),
+        ];
+    }
+
+    /// <summary>
+    /// A pair limited to <paramref name="ceiling"/>, a lookahead late, and the gain
+    /// that did it, for a module with a limiter inside it — see
+    /// <see cref="MaximizerModule"/>. What the picture sees is the caller's to decide.
+    /// </summary>
+    /// <param name="ceiling">As a gain, not in dB.</param>
+    /// <param name="release">A power of ten of seconds, as the socket has it.</param>
+    /// <param name="lookahead">In seconds, held to what the delay can hold.</param>
+    public static (Slot Left, Slot Right, Slot Gain) Limit(
+        Emitter em, Slot left, Slot right, Slot ceiling, Slot release, Slot lookahead)
+    {
         var step = em.Interval();
         var one = em.Constant(1f);
 
-        var ceiling = Dsp.Linear(em, node[Ceiling]);
-        var lookahead = em.Ternary(
-            OpCode.Clamp, em.Mul(node[Lookahead], 1e-3f), em.Constant(Least), em.Constant(Longest));
+        lookahead = em.Ternary(OpCode.Clamp, lookahead, em.Constant(Least), em.Constant(Longest));
 
         // The gain this sample will need when it is heard.
-        var peak = em.Binary(OpCode.Max, em.Unary(OpCode.Abs, node[Left]), em.Unary(OpCode.Abs, node[Right]));
+        var peak = em.Binary(OpCode.Max, em.Unary(OpCode.Abs, left), em.Unary(OpCode.Abs, right));
         var needed = em.Binary(
             OpCode.Min, one, em.Binary(OpCode.Div, ceiling, em.Binary(OpCode.Max, peak, em.Constant(1e-9f))));
 
@@ -119,7 +141,7 @@ internal static class LimiterModule
         var fall = em.Binary(OpCode.Div, em.Mul(em.Sub(one, aimAfter), step), lookahead);
         var falling = em.Binary(OpCode.Max, aimAfter, em.Sub(held, fall));
         var rising = em.Ternary(
-            OpCode.Mix, held, aimAfter, Dsp.Closing(em, Dsp.Seconds(em, node[Release])));
+            OpCode.Mix, held, aimAfter, Dsp.Closing(em, Dsp.Seconds(em, release)));
         var gain = Dsp.Pick(em, rising, falling, Dsp.AtLeast(em, held, aimAfter));
 
         em.UnitWrite(aimCell, em.Sub(one, aimAfter));
@@ -130,12 +152,7 @@ internal static class LimiterModule
         var zero = em.Constant(0f);
         var negative = em.Unary(OpCode.Neg, ceiling);
 
-        return
-        [
-            Heard(node[Left]),
-            Heard(node[Right]),
-            Dsp.Pick(em, one, gain, live),
-        ];
+        return (Heard(left), Heard(right), gain);
 
         Slot Heard(Slot dry)
         {
@@ -143,9 +160,8 @@ internal static class LimiterModule
             // than it is asked for. One is taken off, and the latency is exactly
             // the lookahead.
             var late = em.DelayLine(OpCode.Delay, dry, zero, em.Sub(lookahead, step), Longest);
-            var limited = em.Ternary(OpCode.Clamp, em.Mul(late, gain), negative, ceiling);
 
-            return Dsp.Pick(em, dry, limited, live);
+            return em.Ternary(OpCode.Clamp, em.Mul(late, gain), negative, ceiling);
         }
     }
 }

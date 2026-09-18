@@ -13,8 +13,8 @@ public sealed class MasteringPlugin : IFlybackPlugin
     public PluginInfo Info { get; } = new(
         "flyback.mastering",
         "Mastering",
-        "An EQ, stereo width, a crossover, a compressor, a lookahead limiter and a loudness "
-        + "meter, for the end of a patch.");
+        "An EQ, stereo width, a crossover, a compressor, a lookahead limiter, a one-knob "
+        + "maximizer and a loudness meter, for the end of a patch.");
 
     public void Register(IPluginRegistry registry) =>
         registry.AddModules(
@@ -25,6 +25,7 @@ public sealed class MasteringPlugin : IFlybackPlugin
                 CrossoverModule.Definition,
                 CompressorModule.Definition,
                 LimiterModule.Definition,
+                MaximizerModule.Definition,
                 LoudnessModule.Definition,
             ]);
 }

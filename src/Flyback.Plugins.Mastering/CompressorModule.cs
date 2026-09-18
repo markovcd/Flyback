@@ -81,14 +81,37 @@ internal static class CompressorModule
             ? em.Binary(OpCode.Max, em.Unary(OpCode.Abs, node[Left]), em.Unary(OpCode.Abs, node[Right]))
             : em.Unary(OpCode.Abs, node[Key]);
 
-        var over = em.Sub(Dsp.Decibels(em, level, Floor), node[Threshold]);
+        var gain = Gain(em, level, node[Threshold], node[Ratio], node[Attack], node[Release], node[Knee]);
+        var applied = em.Mul(gain, Dsp.Linear(em, node[Makeup]));
+
+        return
+        [
+            Dsp.Pick(em, node[Left], em.Mul(node[Left], applied), live),
+            Dsp.Pick(em, node[Right], em.Mul(node[Right], applied), live),
+            Dsp.Pick(em, one, gain, live),
+        ];
+    }
+
+    /// <summary>
+    /// The smoothed gain for a detector reading <paramref name="level"/>, for a
+    /// module with a compressor inside it — see <see cref="MaximizerModule"/>.
+    /// </summary>
+    /// <param name="threshold">In dB.</param>
+    /// <param name="attack">A power of ten of seconds, as the socket has it.</param>
+    /// <param name="release">A power of ten of seconds.</param>
+    /// <param name="knee">In dB.</param>
+    public static Slot Gain(
+        Emitter em, Slot level, Slot threshold, Slot ratio, Slot attack, Slot release, Slot knee)
+    {
+        var one = em.Constant(1f);
+
+        var over = em.Sub(Dsp.Decibels(em, level, Floor), threshold);
 
         // The gain computer's slope above the knee: 1/ratio - 1, so a ratio of
         // one is no slope and the module a wire.
-        var ratio = em.Binary(OpCode.Max, node[Ratio], one);
-        var slope = em.Sub(em.Binary(OpCode.Div, one, ratio), one);
+        var slope = em.Sub(em.Binary(OpCode.Div, one, em.Binary(OpCode.Max, ratio, one)), one);
 
-        var width = em.Binary(OpCode.Max, node[Knee], em.Constant(Hardest));
+        var width = em.Binary(OpCode.Max, knee, em.Constant(Hardest));
         var half = em.Mul(width, 0.5f);
 
         var hard = em.Mul(slope, em.Binary(OpCode.Max, over, em.Constant(0f)));
@@ -105,21 +128,14 @@ internal static class CompressorModule
         var attacking = Dsp.AtLeast(em, held, wanted);
         var closing = Dsp.Pick(
             em,
-            Dsp.Closing(em, Dsp.Seconds(em, node[Release])),
-            Dsp.Closing(em, Dsp.Seconds(em, node[Attack])),
+            Dsp.Closing(em, Dsp.Seconds(em, release)),
+            Dsp.Closing(em, Dsp.Seconds(em, attack)),
             attacking);
 
         var gain = em.Ternary(OpCode.Mix, held, wanted, closing);
 
         em.UnitWrite(cell, em.Sub(one, gain));
 
-        var applied = em.Mul(gain, Dsp.Linear(em, node[Makeup]));
-
-        return
-        [
-            Dsp.Pick(em, node[Left], em.Mul(node[Left], applied), live),
-            Dsp.Pick(em, node[Right], em.Mul(node[Right], applied), live),
-            Dsp.Pick(em, one, gain, live),
-        ];
+        return gain;
     }
 }

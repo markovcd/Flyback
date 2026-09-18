@@ -74,7 +74,7 @@ public sealed class AssistantSettings
     public int TurnLimit { get; set; } = DefaultTurnLimit;
 
     /// <summary>What <see cref="ProseBudget"/> is until somebody changes it.</summary>
-    public const int DefaultProseBudget = 80_000;
+    public const int DefaultProseBudget = 100_000;
 
     /// <summary>The least and most characters <see cref="ProseBudget"/> may be set to.</summary>
     public const int LeastProse = 10_000, MostProse = 1_000_000;

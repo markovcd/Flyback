@@ -109,6 +109,7 @@ context, decision, consequences.
 | [0042](0042-the-clock-and-the-memory-flag-belong-to-the-emitter.md) | The clock and the memory flag belong to the emitter |
 | [0079](0079-the-gain-knob-becomes-volume-and-nought-is-off.md) | The gain knob becomes Volume, and nought is off *(user-directed)* |
 | [0100](0100-mastering-is-a-plugin-of-stateful-primitives.md) | Mastering is a plugin of stateful primitives *(user-directed)* |
+| [0101](0101-a-one-knob-maximizer-is-a-module-of-its-own.md) | A one-knob maximizer is a module of its own *(user-directed)* |
 
 ### Boundaries
 
@@ -130,4 +131,4 @@ context, decision, consequences.
 | [0069](0069-an-assistant-declares-its-own-settings.md) | An assistant declares its own settings *(user-directed; its field vocabulary shared with every plugin by [0085](0085-a-sound-backend-declares-its-own-settings.md))* |
 | [0085](0085-a-sound-backend-declares-its-own-settings.md) | A sound backend declares its own settings *(user-directed)* |
 | [0072](0072-a-conversation-is-saved-with-the-patch-it-is-about.md) | A conversation is saved with the patch it is about *(user-directed)* |
-| [0098](0098-the-briefing-has-a-budget-and-a-list-that-outranks-it.md) | The briefing has a budget, and a list that outranks it *(user-directed)* |
+| [0098](0098-the-briefing-has-a-budget-and-a-list-that-outranks-it.md) | The briefing has a budget, and a list that outranks it *(user-directed; its default raised to 100,000 by [0101](0101-a-one-knob-maximizer-is-a-module-of-its-own.md))* |
