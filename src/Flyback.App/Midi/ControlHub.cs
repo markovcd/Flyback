@@ -38,6 +38,12 @@ internal sealed class ControlHub
     /// <summary>Every knob's position, keyed by id.</summary>
     private readonly Dictionary<Guid, float> values = [];
 
+    /// <summary>
+    /// Where each knob that has left the patch was when it went, for one that
+    /// comes back — see <see cref="Follow"/>.
+    /// </summary>
+    private readonly Dictionary<Guid, float> gone = [];
+
     private (MidiBinding Binding, Guid Control)[] bindings = [];
 
     /// <summary>The knobs a controller has caught up with, under <see cref="Takeover.PickUp"/>.</summary>
@@ -95,11 +101,20 @@ internal sealed class ControlHub
 
             foreach (var control in controls)
             {
-                if (known.TryGetValue(control.Id, out var turned)) control.Value = turned;
+                if (known.TryGetValue(control.Id, out var turned) || gone.Remove(control.Id, out turned))
+                    control.Value = turned;
 
                 values[control.Id] = control.Value;
                 foreach (var block in blocks) block.Set(control.Key, control.Value);
             }
+
+            // A knob that has left the patch may be on its way back: removing one
+            // is an edit, and so is the undo that returns it. The snapshot it
+            // returns from holds it where the last edit found it, which is not
+            // where the hand left it.
+            foreach (var (id, at) in known)
+                if (!values.ContainsKey(id))
+                    gone[id] = at;
 
             caught.RemoveWhere(id => !values.ContainsKey(id));
 
@@ -122,6 +137,7 @@ internal sealed class ControlHub
         lock (gate)
         {
             values.Clear();
+            gone.Clear();
             caught.Clear();
             lastHeard.Clear();
         }
@@ -171,11 +187,19 @@ internal sealed class ControlHub
             }
             finally
             {
-                lock (gate)
-                    if (learning == waiting)
-                        learning = null;
+                bool last;
 
-                Hold();
+                lock (gate)
+                {
+                    last = learning == waiting;
+                    if (last) learning = null;
+                }
+
+                // Only the learn nothing has taken over from gives the devices
+                // back. One that gave way to another ends after the other has
+                // opened them for itself, and closing them now would leave that
+                // one waiting on ports that are shut.
+                if (last) Hold();
             }
         }
     }
@@ -183,7 +207,16 @@ internal sealed class ControlHub
     private void Hold()
     {
         string[] devices;
-        lock (gate) devices = bound;
+
+        lock (gate)
+        {
+            // A learn has every device open and gives them back when it ends,
+            // to whatever is bound by then. A recompile in the middle of one
+            // must not shut them under it.
+            if (learning is not null) return;
+
+            devices = bound;
+        }
 
         midi.Hold(devices);
     }

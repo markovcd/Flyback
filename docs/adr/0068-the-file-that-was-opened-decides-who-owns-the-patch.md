@@ -405,3 +405,17 @@ bundle. Saving as `.fbk` or as a bundle still hands the patch to the graph and
 empties the text, and text that is written nowhere is now asked about first —
 the question handing it back always asked, with saving left off its answers
 since saving is what asked.
+
+**2026-09-18 — a printing written out does not answer the unsaved question, and
+what is beside a step keeps up with the disk.** "A graph-owned one prints, and
+stays a copy" was true of the file and not of the save's answer, which said yes:
+"Save…" in the unsaved-changes question, a printing chosen in the picker, and
+the window closed over the only whole patch there was — without the groups the
+printing had just dropped. The save now answers whether anything is still
+unsaved. Two facts kept beside each step were also going stale. The printing on
+show is noted beside the patch as it stands, not only beside the next step, so
+undoing the apply of an untouched printing hands back a printing rather than
+text taken for somebody's typing and never printed again. And what is on disk is
+restated beside every step the text owns when the text is saved, so stepping
+back and forward across the apply does not hand back an unsaved document over a
+file that has it to the letter.

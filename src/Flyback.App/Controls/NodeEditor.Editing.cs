@@ -98,6 +98,26 @@ public sealed partial class NodeEditor
     }
 
     /// <summary>
+    /// Restates what is beside each step, for a fact that has moved under some of
+    /// them — see <see cref="PatchHistory.Remark(Func{object?, object?})"/>.
+    /// </summary>
+    public void Remark(Func<object?, object?> restated)
+    {
+        history.Remark(restated);
+        Mark = history.Mark;
+    }
+
+    /// <summary>
+    /// Says what stands beside the patch as it now is: what the next step recorded
+    /// hands back when it is undone, as well as what that step itself is noted with.
+    /// </summary>
+    public void Note(object? mark)
+    {
+        Mark = mark;
+        history.Note(mark);
+    }
+
+    /// <summary>
     /// Shows a patch that came out of the history. Not the <see cref="Patch"/>
     /// setter, which is for a document arriving from outside and resets both the
     /// view and the history — neither of which an undo should touch. The canvas
@@ -152,7 +172,11 @@ public sealed partial class NodeEditor
         HoldInside();
 
         selection.RemoveWhere(id => patch.Find(id) is null);
-        if (focus is { } kept && !selection.Contains(kept)) focus = null;
+
+        // The step may have shut a box round part of what is selected, or taken
+        // away the one module the inspector was about and left the rest.
+        SelectWholeBoxes();
+        Refocus();
 
         EndGesture();
         InvalidateVisual();

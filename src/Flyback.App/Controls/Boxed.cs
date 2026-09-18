@@ -1,7 +1,10 @@
+using Avalonia.Controls;
+
 namespace Flyback.App.Controls;
 
 /// <summary>
-/// A knob's value as a number box can hold it.
+/// What stands between a knob and the number box showing it: the knob's value as
+/// a box can hold it, and a box that goes on saying it.
 /// </summary>
 /// <remarks>
 /// A knob is a <see cref="float"/> and a <c>NumericUpDown</c> holds a
@@ -16,4 +19,31 @@ internal static class Boxed
 
     public static decimal Of(float value) =>
         float.IsNaN(value) ? 0m : (decimal)Math.Clamp(value, -Furthest, Furthest);
+
+    /// <summary>
+    /// Has a box say the number in force once it is left, where it was left empty.
+    /// </summary>
+    /// <remarks>
+    /// An emptied box is no number, so whatever reads it keeps the one it had —
+    /// and the box would go on showing nothing beside a knob that is somewhere.
+    /// While it has the focus it is left alone: empty is what a box is on the way
+    /// from one number to another.
+    /// </remarks>
+    /// <returns>The same box, so this can wrap the expression that makes one.</returns>
+    public static NumericUpDown NeverBlank(NumericUpDown box)
+    {
+        var kept = box.Value;
+
+        box.ValueChanged += (_, e) =>
+        {
+            if (e.NewValue is { } said) kept = said;
+        };
+
+        box.LostFocus += (_, _) =>
+        {
+            if (box.Value is null) box.Value = kept;
+        };
+
+        return box;
+    }
 }

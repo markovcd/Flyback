@@ -133,9 +133,12 @@ public sealed partial class MainWindow
 
         ffmpegNote.Text = "Looking for ffmpeg…";
 
+        // Trimmed, as Save trims it: what is asked about is what would be kept.
+        var typed = picked.Trim();
+
         var (path, version) = await Task.Run(() =>
         {
-            var found = Ffmpeg.Resolve(picked);
+            var found = Ffmpeg.Resolve(typed);
 
             return (found, found is null ? null : Ffmpeg.Version(found));
         });
@@ -145,16 +148,28 @@ public sealed partial class MainWindow
         // asking about any more is worse than none.
         if ((ffmpegBox.Text ?? string.Empty) != picked) return;
 
+        // The one found is not the one named: looking falls back to PATH without a
+        // word, and the version of that one under a path that leads nowhere would
+        // read as the path having been taken.
+        // A path that was taken comes back as it was given, so no more than the
+        // two strings needs comparing.
+        var elsewhere = typed.Length > 0
+            && path is not null
+            && !string.Equals(path, typed, StringComparison.OrdinalIgnoreCase);
+
         ffmpegNote.Text = (path, version) switch
         {
-            (null, _) when picked.Length > 0 => $"There is nothing at {picked}, and no ffmpeg on PATH.",
+            (null, _) when typed.Length > 0 => $"There is nothing at {typed}, and no ffmpeg on PATH.",
 
             (null, _) => "No ffmpeg on PATH. Find it here to write anything but "
                 + $"{ClipFormats.MotionJpegAvi.Label} or {ClipFormats.Wav.Label}.",
 
+            _ when elsewhere => $"There is nothing at {typed}, so takes use the one on PATH at {path}"
+                + (version is null ? "." : $" — {version}."),
+
             (_, null) => $"Found {path}, but it would not say what it is.",
 
-            _ when picked.Length > 0 => $"{version}.",
+            _ when typed.Length > 0 => $"{version}.",
 
             _ => $"{version}, on PATH at {path}.",
         };

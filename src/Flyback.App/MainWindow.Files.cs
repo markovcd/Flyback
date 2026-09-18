@@ -237,8 +237,12 @@ public sealed partial class MainWindow
     {
         DragDrop.SetAllowDrop(this, true);
 
+        // Refused under a dialog, and shown as refused, for the reason
+        // OpenActivatedFileAsync gives.
         AddHandler(DragDrop.DragOverEvent, (_, e) =>
-            e.DragEffects = e.DataTransfer.Contains(DataFormat.File) ? DragDropEffects.Copy : DragDropEffects.None);
+            e.DragEffects = e.DataTransfer.Contains(DataFormat.File) && !this.HasDialogUp
+                ? DragDropEffects.Copy
+                : DragDropEffects.None);
 
         AddHandler(DragDrop.DropEvent, async (_, e) =>
         {
@@ -259,8 +263,20 @@ public sealed partial class MainWindow
     /// that launches the program or lands on its Dock icon while it is
     /// already running. See <see cref="FlybackApp.OnFrameworkInitializationCompleted"/>.
     /// </summary>
+    /// <remarks>
+    /// Not while a dialog is up. A dialog stops the pointer and the keyboard and
+    /// neither of these arrives by them, so with nothing unsaved to ask about the
+    /// document would be replaced behind the sheet — and a text one takes the
+    /// focus with it, out of a dialog that then no longer hears Escape.
+    /// </remarks>
     internal async Task OpenActivatedFileAsync(IStorageFile file)
     {
+        if (this.HasDialogUp)
+        {
+            Report($"{file.Name} was not opened: there is a dialog to answer first.");
+            return;
+        }
+
         if (await MayReplaceThePatchAsync()) await OpenFileAsync(file);
     }
 
@@ -436,6 +452,13 @@ public sealed partial class MainWindow
 
             if (sourceOwned)
             {
+                // What a bundle was carrying goes beside the text, and the text
+                // measures its files from there now — both for the reason a save
+                // as a patch file does them (ADR-0060): what has just been written
+                // names those files, and they were nowhere but in memory.
+                var folder = Path.GetDirectoryName(file.TryGetLocalPath());
+                var spilled = folder is { Length: > 0 } ? Scatter(folder) : 0;
+
                 SavedAs(Path.GetFileNameWithoutExtension(file.Name), asBundle: false);
                 MarkSourceSaved();
 
@@ -444,7 +467,13 @@ public sealed partial class MainWindow
                 // and a copy takes nothing with it — ADR-0072.
                 KeepConversation(file, written);
 
-                Report($"Saved {file.Name}.");
+                soundFolder.Beside = folder;
+                pictureFolder.Beside = folder;
+                Recompile();
+
+                Report(spilled > 0
+                    ? $"Saved {file.Name}, and {spilled} file(s) beside it."
+                    : $"Saved {file.Name}.");
 
                 return true;
             }
@@ -459,7 +488,11 @@ public sealed partial class MainWindow
                 : $"Wrote {file.Name}, without its {groups} group(s) — text has no place to keep them. "
                   + $"What is open is still {patchName ?? "the patch"}.");
 
-            return true;
+            // A copy saves nothing, so whatever asked for a save has not had one.
+            // The unsaved-changes question is what reads this, and going ahead
+            // on the strength of a printing would shut the only whole patch
+            // there is — with its groups, which the printing has just dropped.
+            return !SomethingToLose;
         }
         catch (Exception ex)
         {
@@ -546,6 +579,16 @@ public sealed partial class MainWindow
                 bundle = PatchBundle.Read(whole, plugins.Modules);
             }
 
+            // Refused for the reason a loose patch is, and before anything says
+            // this is the document: opened with holes in it — or empty, which is
+            // how a later version's reads — it would take the bundle's name, and
+            // the next save would write that over the real one.
+            if (bundle.Load is { IsComplete: false } lacking)
+            {
+                Report($"Not opened. {lacking.Summary}", lacking.Detail);
+                return;
+            }
+
             // A bundle answers for its own files first and falls through to the folder
             // it was opened from, which is why that folder is this one's rather than
             // whatever the last document left behind.
@@ -574,7 +617,7 @@ public sealed partial class MainWindow
         }
     }
 
-    /// <returns>Whether a file was written. A cancelled picker is not one.</returns>
+    /// <returns>Whether the document was saved. A cancelled picker is not a save, and nor is a copy.</returns>
     private async Task<bool> SavePatchAsync()
     {
         var file = await StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
@@ -594,7 +637,11 @@ public sealed partial class MainWindow
     }
 
     /// <summary>Writes the document to a file the picker handed back, as the kind its name says.</summary>
-    /// <returns>Whether a file was written.</returns>
+    /// <returns>
+    /// Whether the document was saved — which writing a file is, except where the
+    /// file is a printing of a patch the graph owns: that is a copy, and leaves
+    /// whatever was unsaved as unsaved as it was.
+    /// </returns>
     internal async Task<bool> SaveToAsync(IStorageFile file)
     {
         if (Sourced(file.Name)) return await SaveSourceAsync(file);

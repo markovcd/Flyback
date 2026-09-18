@@ -86,6 +86,27 @@ public class SavedConversationTests
     public void Anything_that_is_not_one_reads_as_none(string? json) =>
         SavedConversation.Read(json).ShouldBeNull();
 
+    /// <summary>
+    /// A conversation file with something that is not a line in its transcript
+    /// reads without throwing, as the summary of <c>Read</c> promises.
+    /// </summary>
+    /// <remarks>
+    /// Asking a number for its "voice" is an
+    /// <see cref="InvalidOperationException"/> rather than a null, and not the
+    /// exception a read catches, so only what is a line is asked. The read
+    /// happens half way through opening a patch, where a throw would skip what
+    /// follows and say "Could not open patch" over a patch that opened.
+    /// </remarks>
+    [Fact]
+    public void A_transcript_holding_something_that_is_not_a_line_reads_as_nothing()
+    {
+        const string damaged = """
+            {"shape":1,"provider":"p","settings":"s","start":"{}","working":"{}","transcript":[1]}
+            """;
+
+        Should.NotThrow(() => SavedConversation.Read(damaged));
+    }
+
     [Fact]
     public void Settings_are_the_same_however_they_were_built_up() =>
         SavedConversation.SettingsOf(Values(("model", "a"), ("effort", "high")))

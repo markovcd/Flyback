@@ -7,6 +7,8 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
 using Flyback.App.Controls;
+using Flyback.Core.Graph;
+using Flyback.Core.Render;
 using Shouldly;
 using Xunit;
 using System.Threading;
@@ -463,5 +465,89 @@ public class UnsavedDialogTests : UiTest, IDisposable
 
         All<ModalOverlay>(window).ShouldBeEmpty();
         File.ReadAllText(path).ShouldContain("a note about it");
+    }
+
+    // --- and saving as text ------------------------------------------------------
+
+    /// <summary>
+    /// A printing written from the unsaved-changes question does not count as
+    /// the save.
+    /// </summary>
+    /// <remarks>
+    /// A graph-owned patch saved as text is a copy that drops the groups
+    /// (ADR-0068) and leaves the patch unsaved, and the status line says so. The
+    /// save answers false for the same reason: "Save…" in the question goes on
+    /// to close the window or replace the patch only on a true, and that would
+    /// be the only whole copy gone.
+    /// </remarks>
+    [AvaloniaFact]
+    public void A_printing_written_from_the_question_is_not_taken_for_the_save()
+    {
+        var window = OpenAndEdit();
+        var editor = All<NodeEditor>(window).Single();
+
+        Directory.CreateDirectory(folder);
+
+        var went = Finished(window.SaveToAsync(RealStorageFile(Path.Combine(folder, "copy.fbks"))));
+        Settle(window);
+
+        editor.IsModified.ShouldBeTrue("a printing is a copy, and the patch is as unsaved as it was");
+
+        went.ShouldBeFalse("so the question that asked for a save has not had one, and must not go ahead");
+    }
+
+    /// <summary>
+    /// A bundle saved as text puts what it was carrying beside the text, the way
+    /// saving it as a patch file does (ADR-0060).
+    /// </summary>
+    /// <remarks>
+    /// The saved text names <c>files/kick.wav</c>, which until then is nowhere
+    /// but in the memory of a window that no longer says it is a bundle. Written
+    /// beside the text, it still plays the next time the text is opened.
+    /// </remarks>
+    [AvaloniaFact]
+    public void A_bundle_saved_as_text_puts_its_files_beside_the_text()
+    {
+        const string carriedPath = "files/kick.wav";
+
+        var b = new PatchBuilder(NodeCatalog.BuiltIn);
+
+        var output = b.Add(NodeCatalog.OutputTypeId, 700, 40);
+        var player = b.Add(NodeCatalog.SampleTypeId, 200, 40);
+        SampleExtra.Set(player, carriedPath);
+        b.Wire(player, 0, output, NodeCatalog.OutputLeftPort);
+
+        var window = new MainWindow();
+
+        window.Show();
+        Settle(window);
+
+        window.Became("nebula", beside: null, new BundleFiles(
+            new Dictionary<string, byte[]> { [carriedPath] = [1, 2, 3, 4] }));
+        All<NodeEditor>(window).Single().Patch = b.Patch;
+        Settle(window);
+
+        window.IsBundle.ShouldBeTrue();
+
+        // The text takes the patch, so text is what Save offers first.
+        All<ToggleButton>(window).Single(t => t.Name == "code").IsChecked = true;
+        Settle(window);
+
+        All<Button>(window).Single(a => a.Name == "apply").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Settle(window);
+
+        All<NodeEditor>(window).Single().Locked.ShouldBeTrue("the text is the document");
+
+        Directory.CreateDirectory(folder);
+
+        var saved = Path.Combine(folder, "nebula.fbks");
+
+        Finished(window.SaveToAsync(RealStorageFile(saved))).ShouldBeTrue();
+        Settle(window);
+
+        File.ReadAllText(saved).ShouldContain("kick.wav", customMessage: "the text names the file");
+
+        File.Exists(Path.Combine(folder, "files", "kick.wav"))
+            .ShouldBeTrue("and the file it names is where it says");
     }
 }

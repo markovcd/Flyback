@@ -27,6 +27,14 @@ internal static class Dialog
 {
     extension(Window owner)
     {
+        /// <summary>
+        /// Whether a dialog is over the window now. For whatever reaches the
+        /// window without going through the pointer or the keyboard the sheet
+        /// already stops — a file dropped from outside is the one there is.
+        /// </summary>
+        public bool HasDialogUp =>
+            OverlayLayer.GetOverlayLayer(owner)?.Children.OfType<ModalOverlay>().Any() == true;
+
         public Task ShowDialog(string title, Control content) =>
             owner.ShowDialog<object?>(title, content);
 

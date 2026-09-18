@@ -213,7 +213,7 @@ public sealed partial class MainWindow
         // the BackendChanged handler above already set.
         if (gpuButton.IsEnabled) gpuButton.SelectedIndex = settings.Gpu ? 0 : 1;
 
-        defaultPreset.SelectedIndex = PresetRow(OrderedPresets(), settings.DefaultPreset);
+        ShowStartupPatch(settings.DefaultPreset);
 
         frameRate.SelectedIndex = Nearest(FrameRates, settings.FrameRate);
         previewFrameRate.SelectedIndex = Nearest(PreviewFrameRates, settings.PreviewFrameRate);
@@ -236,6 +236,32 @@ public sealed partial class MainWindow
     /// The row of a list nearest a saved value, so a value written by hand that
     /// the list does not offer shows as the closest one that it does.
     /// </summary>
+    /// <summary>
+    /// Shows which preset the window starts on, listing the one chosen even where
+    /// this launch does not offer it.
+    /// </summary>
+    /// <remarks>
+    /// A plugin's preset, on a launch the plugin is away from. The window opened
+    /// on the first patch instead, and showing that row here would have the next
+    /// Save — of anything at all — write it over the choice. Listed at the end, as
+    /// a choice row lists a device that is switched off, the choice is what Save
+    /// writes back and is still there when the plugin is. Nothing chosen yet shows
+    /// the row the window opens on, which is what saving it then means.
+    /// </remarks>
+    private void ShowStartupPatch(string chosen)
+    {
+        var presets = OrderedPresets();
+        var offered = presets.Select(preset => preset.Name).ToList();
+
+        if (chosen.Length > 0 && !offered.Contains(chosen)) offered.Add(chosen);
+
+        defaultPreset.ItemsSource = offered;
+
+        defaultPreset.SelectedIndex = offered.IndexOf(chosen) is >= 0 and var listed
+            ? listed
+            : PresetRow(presets, chosen);
+    }
+
     private static int Nearest(IReadOnlyList<double> rows, double value) =>
         Enumerable.Range(0, rows.Count).MinBy(row => Math.Abs(rows[row] - value));
 
@@ -289,6 +315,12 @@ public sealed partial class MainWindow
     /// </summary>
     private void SaveOutputSettings()
     {
+        // Greyed out for the length of a take, whose file has committed to a size
+        // and drops every frame that arrives at another. Greying a box does not
+        // take back a row already picked in it — during the count-in, say — so
+        // what it holds is not read while it is grey, and the row is put back.
+        if (!resolution.IsEnabled) resolution.SelectedIndex = SizeRow(outputSettings);
+
         var size = Resolutions[Math.Max(resolution.SelectedIndex, 0)].Size;
         var before = outputSettings;
 
@@ -1087,9 +1119,7 @@ public sealed partial class MainWindow
             + "show, or to ease off a slow machine — the Recording section picks a take's own "
             + "rate, and reads whatever the preview last drew whatever this says.");
 
-        // Named here rather than in the field initializer: the plugin catalogue's
-        // own presets are not there to ask for until the constructor has run.
-        defaultPreset.ItemsSource = OrderedPresets().Select(p => p.Name).ToList();
+        // What it lists is ShowStartupPatch's, which knows what was chosen.
         ToolTip.SetTip(defaultPreset,
             "Which preset the window opens on the next time it starts. Picking one on the "
             + "toolbar right now does not change this — it only changes what is on the canvas.");
@@ -1799,6 +1829,8 @@ public sealed partial class MainWindow
         {
             if (e.NewValue is { } d) Apply((float)d);
         };
+
+        Boxed.NeverBlank(numeric);
 
         Grid.SetColumn(slider, 1);
         Grid.SetColumn(numeric, reading ? 3 : 2);

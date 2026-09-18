@@ -1,3 +1,4 @@
+using System.IO.Compression;
 using System.Reflection;
 using System.Threading;
 using Avalonia.Controls;
@@ -238,6 +239,79 @@ public class FileDropTests : UiTest, IDisposable
         Dispatcher.UIThread.RunJobs();
 
         editor.Patch.Nodes.Count.ShouldBe(nodes, "cancelling should have left the edited patch alone");
+    }
+
+    /// <summary>
+    /// A bundle written by a later version is refused, the way a patch file
+    /// from one is.
+    /// </summary>
+    /// <remarks>
+    /// A bundle reads without throwing whatever is in it, so its load says
+    /// whether the patch is all there, and one that is not is refused before
+    /// anything calls it the document. Opened empty it would take the bundle's
+    /// name, and the next save would write that emptiness over the real file.
+    /// </remarks>
+    [AvaloniaFact]
+    public void A_bundle_from_a_later_version_is_not_opened_as_an_empty_patch()
+    {
+        Directory.CreateDirectory(folder);
+
+        var path = Path.Combine(folder, "future.fbkb");
+
+        using (var zip = ZipFile.Open(path, ZipArchiveMode.Create))
+        using (var writer = new StreamWriter(zip.CreateEntry(PatchBundle.PatchEntry).Open()))
+        {
+            writer.Write("{\"Version\":99,\"Nodes\":[]}");
+        }
+
+        var window = Open();
+        var title = window.Title;
+        var modules = Editor(window).Patch.Nodes.Count;
+
+        modules.ShouldBeGreaterThan(1, "the window opens on a preset");
+
+        Drop(window, Carrying(RealStorageFile(path)));
+        WaitForTitleChange(window, title);
+
+        window.IsBundle.ShouldBeFalse("a bundle this build cannot read has not become the document");
+        Editor(window).Patch.Nodes.Count.ShouldBe(modules, "and what was open is still open");
+        window.Title.ShouldBe(title);
+    }
+
+    /// <summary>
+    /// A file dropped while Settings is up is refused — it does not replace the
+    /// document behind the dialog.
+    /// </summary>
+    /// <remarks>
+    /// A dialog stops the pointer and the keyboard, and a drop arrives by
+    /// neither. With nothing unsaved there is no question to stand in its way,
+    /// so the drop itself asks whether a dialog is up: a text file opening under
+    /// one would take the keyboard with it, and Escape would not reach the
+    /// dialog.
+    /// </remarks>
+    [AvaloniaFact]
+    public void A_file_dropped_under_the_settings_dialog_does_not_open_behind_it()
+    {
+        Directory.CreateDirectory(folder);
+
+        var path = Path.Combine(folder, "dropped.fbks");
+        File.WriteAllText(path, "t |> sine(freq: 220) |> out.left");
+
+        var window = Open();
+        var title = window.Title;
+
+        All<Button>(window).Single(b => b.Name == "settings")
+            .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+
+        Pump(() => All<ModalOverlay>(window).Any());
+        Settle(window);
+
+        All<ModalOverlay>(window).ShouldNotBeEmpty("Settings is up");
+
+        Drop(window, Carrying(RealStorageFile(path)));
+        WaitForTitleChange(window, title);
+
+        window.Title.ShouldBe(title, "the document behind a dialog is not replaced while the dialog is up");
     }
 
     /// <summary>

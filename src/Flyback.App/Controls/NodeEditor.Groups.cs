@@ -178,9 +178,54 @@ public sealed partial class NodeEditor
         }
     }
 
+    /// <summary>
+    /// Takes in the rest of every shut box the selection reaches into, and says
+    /// whether that changed anything.
+    /// </summary>
+    /// <remarks>
+    /// A shut box is selected whole or not at all: it is drawn selected only when
+    /// every member is, and a member nobody can see answering Delete or riding
+    /// along on a drag is the module under a box answering a click again. Asked
+    /// wherever a box can shut round a selection — the gesture, a layout that shut
+    /// one to fit, and a step through the history.
+    /// </remarks>
+    private bool SelectWholeBoxes()
+    {
+        if (patch.Groups is null || selection.Count == 0) return false;
+
+        var before = selection.Count;
+
+        foreach (var group in patch.Groups)
+            if (group.Collapsed && group.Members.Any(selection.Contains))
+                selection.UnionWith(group.Members);
+
+        return selection.Count != before;
+    }
+
+    /// <summary>
+    /// Leaves the inspector about something selected wherever anything is: the
+    /// module it was about if that is still one of them, and otherwise the one
+    /// drawn on top — the rule the rubber band and Delete use.
+    /// </summary>
+    private void Refocus()
+    {
+        if (focus is { } kept && selection.Contains(kept)) return;
+
+        focus = patch.Nodes.LastOrDefault(node => selection.Contains(node.Id))?.Id;
+    }
+
     /// <summary>Draws the selected modules as one box.</summary>
     public void GroupSelected()
     {
+        // Already one. Grouping it again would dissolve it to make it: a new box
+        // round the same modules, without its name and without the sockets left
+        // on its edge, under a line saying only that modules were grouped.
+        if (SelectedGroup is not null)
+        {
+            Reported?.Invoke(this, "These modules are a group already. Ctrl+Shift+G ungroups them.");
+            return;
+        }
+
         if (patch.Group(selection) is not { } made)
         {
             // Said rather than ignored, but only where something was actually
@@ -287,8 +332,8 @@ public sealed partial class NodeEditor
         foreach (var group in moved) group.Collapsed = collapsed;
 
         // Opening takes in what came out, so the panel is about modules on the
-        // canvas. Shutting adds nothing: a box is drawn from the modules it
-        // stands for, which are selected already.
+        // canvas. Shutting takes in the rest of each box for the opposite reason:
+        // what was selected inside one is about to be out of sight.
         if (!collapsed)
         {
             foreach (var group in moved)
@@ -298,6 +343,10 @@ public sealed partial class NodeEditor
             // The module drawn on top, the same rule the rubber band uses.
             focus = patch.Nodes.LastOrDefault(node => selection.Contains(node.Id))?.Id;
 
+            SelectionChanged?.Invoke(this, EventArgs.Empty);
+        }
+        else if (SelectWholeBoxes())
+        {
             SelectionChanged?.Invoke(this, EventArgs.Empty);
         }
 

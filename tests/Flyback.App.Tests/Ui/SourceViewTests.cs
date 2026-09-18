@@ -1006,6 +1006,43 @@ public class SourceViewTests : UiTest
         editor.SelectedNode.ShouldNotBeNull();
     }
 
+    /// <summary>
+    /// A printing applied as it stood and taken back is a printing again, and
+    /// keeps up with the canvas.
+    /// </summary>
+    /// <remarks>
+    /// Making a printing is noted beside the patch as it then stands, and not
+    /// only beside the next step. The apply is recorded as a step back to there,
+    /// so what Ctrl+Z hands back includes that the text on show is the window's
+    /// own printing — not somebody's typing, which is never printed over.
+    /// </remarks>
+    [AvaloniaFact]
+    public void A_printing_applied_and_taken_back_still_follows_the_canvas()
+    {
+        var window = Open();
+        var text = ShowCode(window);
+
+        Press(Apply(window));
+        Settle(window);
+
+        Press(Undo(window));
+        Settle(window);
+
+        Editor(window).Locked.ShouldBeFalse("the patch is the canvas's again");
+
+        CodeButton(window).IsChecked = false;
+        Settle(window);
+
+        Editor(window).AddNode("value").ShouldNotBeNull();
+        Settle(window);
+
+        ShowCode(window);
+
+        text.Text.ShouldBe(
+            Flyback.Core.Language.PatchPrinter.Print(Editor(window).Patch),
+            "nothing was typed, so the text is a printing of what is on the canvas");
+    }
+
     /// <summary>Everything the panel is saying, for the states where it says something.</summary>
     private static string Panel(MainWindow window) =>
         string.Join(" ", All<TextBlock>(Inspector(window)).Select(block => block.Text));
@@ -1682,6 +1719,51 @@ public class SourceViewTests : UiTest
         Settle(window);
 
         text.Text.ShouldNotStartWith("# a note to myself");
+    }
+
+    /// <summary>
+    /// A knob turned on the canvas leaves typing in the hidden printing its
+    /// undo.
+    /// </summary>
+    /// <remarks>
+    /// Writing a knob back into a printing forgets the text's steps, since the
+    /// reading is made afresh and one of them would put the old number back. A
+    /// printing that has been typed into is not written to, and the steps on
+    /// its stack are the typing, so those are kept.
+    /// </remarks>
+    [AvaloniaFact]
+    public void A_knob_turned_on_the_canvas_leaves_hidden_typing_its_undo()
+    {
+        var window = Open();
+        var text = ShowCode(window);
+
+        // Through the document, which is what typing is.
+        text.Document.Insert(0, "# a note to myself\n");
+        Settle(window);
+
+        CodeButton(window).IsChecked = false;
+        Settle(window);
+
+        var editor = Editor(window);
+        var turned = editor.Patch.Nodes.First(n =>
+            n.TypeId != Flyback.Core.Graph.NodeCatalog.OutputTypeId
+            && Flyback.Core.Graph.NodeCatalog.BuiltIn.Require(n.TypeId).Inputs.Count > 0);
+
+        editor.Select(turned.Id);
+        Settle(window);
+
+        var slider = All<Slider>(window).First();
+
+        Turn(window, slider.Minimum + ((slider.Maximum - slider.Minimum) * 0.37));
+
+        ShowCode(window);
+
+        text.Text.ShouldStartWith("# a note to myself");
+
+        Press(Undo(window));
+        Settle(window);
+
+        text.Text.ShouldNotStartWith("# a note to myself", customMessage: "the typing is what Ctrl+Z takes back in the view it was done in");
     }
 
     // --- a number no box can hold -------------------------------------------

@@ -203,4 +203,48 @@ public class DragBoundsTests : UiTest
 
         near.X.ShouldBe(Wall - 460, 0.001);
     }
+
+    /// <summary>Zooming with a module in hand leaves it in the hand.</summary>
+    /// <remarks>
+    /// The drag measures from where the press landed on the canvas rather than
+    /// on the screen, so the distance already covered is not read again at the
+    /// new scale when the wheel turns.
+    /// </remarks>
+    [AvaloniaFact]
+    public void A_module_stays_under_the_pointer_when_the_wheel_turns_mid_drag()
+    {
+        var builder = new PatchBuilder(NodeCatalog.BuiltIn);
+
+        var module = builder.Add("osc.sine", 40, 40);
+        builder.Add("math.add", 500, 300);
+        builder.Add(NodeCatalog.OutputTypeId, 900, 40);
+
+        var (editor, window) = Editing(builder.Patch);
+
+        var grab = Screen(editor, window, Body(module));
+        var carried = grab + new Point(300, 200);
+
+        window.MouseDown(grab, MouseButton.Left);
+        window.MouseMove(carried, RawInputModifiers.LeftMouseButton);
+        Settle(window);
+
+        Point Held() => editor.GraphToScreen.Invert().Transform(
+            window.TranslatePoint(carried, editor) ?? carried) - new Point(module.X, module.Y);
+
+        var before = Held();
+
+        window.MouseWheel(carried, new Vector(0, -3), RawInputModifiers.LeftMouseButton);
+        window.MouseMove(carried + new Point(1, 0), RawInputModifiers.LeftMouseButton);
+        Settle(window);
+
+        window.MouseMove(carried, RawInputModifiers.LeftMouseButton);
+        Settle(window);
+
+        var after = Held();
+
+        window.MouseUp(carried, MouseButton.Left);
+
+        Math.Abs(after.X - before.X).ShouldBeLessThan(5, "the module is still held where it was grabbed");
+        Math.Abs(after.Y - before.Y).ShouldBeLessThan(5, "the module is still held where it was grabbed");
+    }
 }

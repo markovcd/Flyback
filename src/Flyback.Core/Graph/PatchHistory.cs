@@ -133,6 +133,19 @@ public sealed class PatchHistory(ModuleCatalog? modules = null)
         // ends rather than adding one of its own.
         var stepped = coalesce is null || coalesce != gesture;
 
+        // A gesture that has come back to where it began: a wire lifted and put
+        // back, a slider returned to its notch. The step it made would put
+        // nothing back, so it goes, and the patch is as unedited as it was.
+        if (!stepped && past.Count > 0 && past[^1].Snapshot == now)
+        {
+            past.RemoveAt(past.Count - 1);
+            current = now;
+            this.mark = mark;
+            gesture = null;
+
+            return false;
+        }
+
         if (stepped)
         {
             past.Add((current, this.mark));
@@ -163,6 +176,38 @@ public sealed class PatchHistory(ModuleCatalog? modules = null)
 
         this.mark = mark;
     }
+
+    /// <summary>
+    /// Restates what is beside each step, one at a time, for a fact that has
+    /// changed about some of them and not others.
+    /// </summary>
+    /// <remarks>
+    /// A mark may hold something true of the world rather than of the step — what
+    /// is on disk, say — and that moves under every step it is written beside
+    /// without any of them being taken. Stepping onto one afterwards should find
+    /// the world as it is.
+    /// </remarks>
+    /// <param name="restated">Given each mark there is, the one to keep in its place.</param>
+    public void Remark(Func<object?, object?> restated)
+    {
+        ArgumentNullException.ThrowIfNull(restated);
+
+        for (var i = 0; i < past.Count; i++) past[i] = (past[i].Snapshot, restated(past[i].Mark));
+        for (var i = 0; i < future.Count; i++) future[i] = (future[i].Snapshot, restated(future[i].Mark));
+
+        mark = restated(mark);
+    }
+
+    /// <summary>
+    /// Says what stands beside the patch as it now is, and beside no other step.
+    /// </summary>
+    /// <remarks>
+    /// For something kept beside the patch that changed with no edit and is true
+    /// from here on only. The next step recorded is a step back to here, and what
+    /// it hands back should be what was so here — not what was so when the last
+    /// edit happened to be made.
+    /// </remarks>
+    public void Note(object? mark) => this.mark = mark;
 
     /// <summary>
     /// The gesture named in the last <see cref="Record"/> is over, so the next

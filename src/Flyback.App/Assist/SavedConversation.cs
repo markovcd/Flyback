@@ -149,9 +149,12 @@ public sealed record SavedConversation(
 
             if (body["transcript"] is JsonArray lines)
             {
-                foreach (var line in lines)
+                // Only what is a line. Asking a number or a string for its
+                // "voice" is not a null but an exception, and not the one caught
+                // below.
+                foreach (var line in lines.OfType<JsonObject>())
                 {
-                    if (Enum.TryParse<Voice>(Word(line?["voice"]), out var voice) && Word(line?["text"]) is { } text)
+                    if (Enum.TryParse<Voice>(Word(line["voice"]), out var voice) && Word(line["text"]) is { } text)
                         transcript.Add(new TranscriptLine(voice, text));
                 }
             }

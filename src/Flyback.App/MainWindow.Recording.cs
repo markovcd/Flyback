@@ -420,7 +420,19 @@ public sealed partial class MainWindow
         Report(because ?? $"Finishing {name}…", progress: because is null);
 
         closingFile = Task.Run(running.Dispose);
-        finishing = FinishAsync(running, closingFile, name, said: because is not null);
+
+        // Kept only while it is still to come. A close that has finished by the
+        // time it is awaited — a take that failed on its own has nothing left to
+        // write — runs this to its end before it returns, and its last act is to
+        // clear the field: assigned regardless, the finished task would go back
+        // in after that and stay, with Record greyed out behind it for good.
+        var closing = FinishAsync(running, closingFile, name, said: because is not null);
+
+        finishing = closing.IsCompleted ? null : closing;
+
+        // The device was kept running for the take whatever Volume said, so it
+        // is asked again now there is none — see SyncAudioToVolume.
+        SyncAudioToVolume();
 
         MarkRecordable();
     }

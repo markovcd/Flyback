@@ -374,7 +374,7 @@ internal sealed class StepList
             if (e.NewValue is { } d) apply((float)d);
         };
 
-        return box;
+        return Boxed.NeverBlank(box);
     }
 
     /// <summary>

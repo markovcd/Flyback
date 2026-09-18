@@ -22,7 +22,7 @@ public sealed partial class NodeEditor
         var properties = e.GetCurrentPoint(this).Properties;
         var screen = e.GetPosition(this);
         var graph = ToGraph(screen);
-        dragOrigin = screen;
+        dragOrigin = graph;
 
         // Panning is the middle button and nothing else: the right one opens
         // the module list instead — ADR-0046 — because a button cannot both
@@ -79,7 +79,10 @@ public sealed partial class NodeEditor
             return;
         }
 
-        if (HitNode(graph) is { } node)
+        // A box before a module, because that is the order they are painted in:
+        // a box is drawn at its members' least corner, which need not be where
+        // any of them is, and over whatever module happens to be there.
+        if (HitBox(graph) is null && HitNode(graph) is { } node)
         {
             PressNode(node, ctrl);
             e.Pointer.Capture(this);
@@ -325,9 +328,11 @@ public sealed partial class NodeEditor
     private void StartWire(Guid nodeId, int portIndex, bool isOutput, bool lifting, Point graph)
     {
         wireGesture++;
+        lifted = null;
 
         if (!isOutput && patch.IncomingTo(nodeId, portIndex) is { } existing)
         {
+            lifted = (existing, patch.Connections.IndexOf(existing));
             patch.Disconnect(nodeId, portIndex);
             wireNode = existing.SourceNode;
             wirePort = existing.SourcePort;
@@ -342,6 +347,7 @@ public sealed partial class NodeEditor
             // target; grabbing an output keeps the target and looks for a new
             // source, so what is being changed is where the signal comes from
             // while what it feeds stays put.
+            lifted = (sole, patch.Connections.IndexOf(sole));
             patch.Disconnect(sole.TargetNode, sole.TargetPort);
             wireNode = sole.TargetNode;
             wirePort = sole.TargetPort;
@@ -384,16 +390,10 @@ public sealed partial class NodeEditor
         }
         else if (!middleDown && drag == Drag.Pan && panSuspended != Drag.None)
         {
+            // Nothing to put right: every gesture a pan can suspend is held in
+            // the canvas's coordinates, which a pan does not move.
             drag = panSuspended;
             panSuspended = Drag.None;
-            dragOrigin = screen;
-
-            if (drag == Drag.Node)
-            {
-                dragOrigins.Clear();
-                foreach (var moving in SelectedNodes)
-                    dragOrigins[moving.Id] = new Point(moving.X, moving.Y);
-            }
 
             Cursor = drag == Drag.Wire ? PortCursor : CursorOver(graph);
         }
@@ -418,7 +418,7 @@ public sealed partial class NodeEditor
                 return;
 
             case Drag.Node when dragOrigins.Count > 0:
-                var delta = Held((screen - dragOrigin) / zoom, dragOrigins);
+                var delta = Held(graph - dragOrigin, dragOrigins);
 
                 foreach (var moving in SelectedNodes)
                 {
@@ -485,17 +485,7 @@ public sealed partial class NodeEditor
                 drag = panSuspended;
                 panSuspended = Drag.None;
 
-                var screen = e.GetPosition(this);
-                dragOrigin = screen;
-
-                if (drag == Drag.Node)
-                {
-                    dragOrigins.Clear();
-                    foreach (var moving in SelectedNodes)
-                        dragOrigins[moving.Id] = new Point(moving.X, moving.Y);
-                }
-
-                Cursor = drag == Drag.Wire ? PortCursor : CursorOver(ToGraph(screen));
+                Cursor = drag == Drag.Wire ? PortCursor : CursorOver(ToGraph(e.GetPosition(this)));
                 InvalidateVisual();
                 return;
             }
@@ -511,6 +501,13 @@ public sealed partial class NodeEditor
 
             return;
         }
+
+        // The button that began the gesture came up while the pan it was put on
+        // hold for was still going, so this release is the pan's own and the last
+        // one there will be. What was on hold ends here as it would have: a module
+        // stays where it was carried to, as a step; a wire is dropped rather than
+        // completed, since its end was let go of over a view that was moving.
+        if (drag == Drag.Pan && panSuspended == Drag.Node) RecordMove();
 
         if (drag == Drag.Wire)
             CompleteWire(ToGraph(e.GetPosition(this)));
@@ -603,6 +600,16 @@ public sealed partial class NodeEditor
         // the cycle is the whole gesture and there is nothing to put on it. The
         // canvas dashes it; see Cycles.Backwards and ADR-0075.
         patch.Connect(sourceNode, sourcePort, targetNode, targetPort);
+
+        // Put straight back where it was lifted from, and into the place in the
+        // list it was lifted out of: the patch is then the one the gesture began
+        // with, which the history can see and drops the step for.
+        if (lifted is { } was
+            && was.Wire == new Connection(sourceNode, sourcePort, targetNode, targetPort)
+            && patch.Connections.Remove(was.Wire))
+        {
+            patch.Connections.Insert(Math.Min(was.At, patch.Connections.Count), was.Wire);
+        }
 
         NotifyPatchChanged(WireGesture);
     }

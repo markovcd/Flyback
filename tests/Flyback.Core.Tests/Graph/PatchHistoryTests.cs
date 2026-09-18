@@ -103,6 +103,27 @@ public class PatchHistoryTests
     }
 
     /// <summary>
+    /// A wire drawn where there is one already changes nothing, the order the
+    /// patch holds its wires in included — which is what a snapshot would see.
+    /// </summary>
+    [Fact]
+    public void A_wire_drawn_over_itself_is_not_an_edit()
+    {
+        var patch = Wired(out var source, out var sink);
+
+        patch.Connect(source.Id, 0, sink.Id, NodeCatalog.OutputColorPort);
+
+        var history = Opened(patch);
+        var before = patch.Connections.ToArray();
+
+        // The first of the two, which taken off and put back would be the last.
+        patch.Connect(source.Id, 0, sink.Id, NodeCatalog.OutputLeftPort);
+
+        patch.Connections.ShouldBe(before);
+        history.Record(patch).ShouldBeFalse();
+    }
+
+    /// <summary>
     /// Where a module sits is part of the document, so it undoes like the rest
     /// of it. Nothing in here knows this edit is any different from the others.
     /// </summary>
@@ -161,6 +182,57 @@ public class PatchHistoryTests
             .InputValues[0].ShouldBe(0.25f);
 
         history.CanUndo.ShouldBeFalse("the whole drag was the one step");
+    }
+
+    /// <summary>
+    /// A gesture that ends where it began leaves no step behind it.
+    /// </summary>
+    /// <remarks>
+    /// A slider dragged away and back to its notch, a wire lifted and put back in
+    /// its socket. The step the first frame made would put nothing back, and a
+    /// patch with a step on it that changes nothing is a patch that claims to
+    /// have been edited.
+    /// </remarks>
+    [Fact]
+    public void A_gesture_that_comes_back_to_where_it_began_is_not_a_step()
+    {
+        var patch = Wired(out var source, out _);
+        var history = Opened(patch);
+
+        source.InputValues[0] = 0.75f;
+        history.Record(patch, "the slider").ShouldBeTrue();
+
+        source.InputValues[0] = 0.25f;
+        history.Record(patch, "the slider").ShouldBeFalse("it is where it started");
+
+        history.CanUndo.ShouldBeFalse("there is nothing to put back");
+        history.IsModified.ShouldBeFalse("and nothing to save");
+
+        // The gesture is over with it, so the same slider moved again is a step
+        // of its own and not the tail of one that has gone.
+        source.InputValues[0] = 0.5f;
+        history.Record(patch, "the slider").ShouldBeTrue();
+    }
+
+    /// <summary>
+    /// Only the gesture under way. An edit that happens to undo the one before
+    /// it is two edits, and both can be taken back.
+    /// </summary>
+    [Fact]
+    public void A_discrete_edit_that_reverses_the_last_one_is_still_a_step()
+    {
+        var patch = Wired(out var source, out _);
+        var history = Opened(patch);
+
+        source.InputValues[0] = 0.75f;
+        history.Record(patch).ShouldBeTrue();
+
+        source.InputValues[0] = 0.25f;
+        history.Record(patch).ShouldBeTrue();
+
+        history.Undo().ShouldNotBeNull()
+            .Find(source.Id).ShouldNotBeNull()
+            .InputValues[0].ShouldBe(0.75f);
     }
 
     /// <summary>
@@ -490,6 +562,67 @@ public class PatchHistoryTests
 
         history.Undo().ShouldNotBeNull();
         history.Mark.ShouldBe("graph");
+    }
+
+    /// <summary>
+    /// Or of some steps and not others, for a fact about the world that moved
+    /// under the ones it was written beside.
+    /// </summary>
+    [Fact]
+    public void Remarking_can_restate_each_step_on_its_own()
+    {
+        var patch = Wired(out var source, out _);
+        var history = new PatchHistory(Catalog);
+
+        history.Opened(patch, "graph");
+
+        source.InputValues[0] = 0.5f;
+        history.Record(patch, mark: "text, unsaved");
+
+        source.InputValues[0] = 0.75f;
+        history.Record(patch, mark: "text, unsaved");
+
+        history.Remark(mark => mark is "text, unsaved" ? "text, saved" : mark);
+
+        history.Mark.ShouldBe("text, saved");
+
+        history.Undo().ShouldNotBeNull();
+        history.Mark.ShouldBe("text, saved");
+
+        history.Undo().ShouldNotBeNull();
+        history.Mark.ShouldBe("graph", "a step the fact was never true of is left alone");
+    }
+
+    /// <summary>
+    /// What is noted beside the patch as it stands is what the next step hands
+    /// back, and is beside no step already taken.
+    /// </summary>
+    /// <remarks>
+    /// A step is recorded with how things were before it, and "before it" is the
+    /// moment of the edit rather than of the last one — so something that became
+    /// true in between has to be sayable without an edit to say it with.
+    /// </remarks>
+    [Fact]
+    public void A_note_is_beside_the_patch_as_it_stands_and_no_other_step()
+    {
+        var patch = Wired(out var source, out _);
+        var history = new PatchHistory(Catalog);
+
+        history.Opened(patch, "graph");
+
+        source.InputValues[0] = 0.5f;
+        history.Record(patch, mark: "graph");
+
+        history.Note("graph, printed");
+
+        source.InputValues[0] = 0.75f;
+        history.Record(patch, mark: "text");
+
+        history.Undo().ShouldNotBeNull();
+        history.Mark.ShouldBe("graph, printed", "what was so when the edit was made");
+
+        history.Undo().ShouldNotBeNull();
+        history.Mark.ShouldBe("graph", "and not before it");
     }
 
     [Fact]

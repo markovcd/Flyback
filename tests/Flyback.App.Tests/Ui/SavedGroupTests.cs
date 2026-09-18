@@ -198,6 +198,41 @@ public class SavedGroupTests : UiTest, IDisposable
         groups.ShouldAllBe(g => g.Collapsed, "a kept group arrives shut, which is what makes it one thing");
     }
 
+    /// <summary>A shut box put down at a point lands on that point.</summary>
+    /// <remarks>
+    /// A shut box does not show the spread of its members: it is drawn at their
+    /// least corner, one module wide. So a fragment is centered by what it will
+    /// look like on the canvas, and a group laid out by hand over 1200 units
+    /// arrives where it was asked for rather than 600 to the left of it.
+    /// </remarks>
+    [AvaloniaFact]
+    public void A_shut_box_added_at_a_point_is_drawn_there()
+    {
+        var builder = new PatchBuilder(NodeCatalog.BuiltIn);
+
+        var left = builder.Add("time", 0, 0);
+        var right = builder.Add("osc.sine", 1200, 0);
+        builder.Wire(left, 0, right, 0);
+
+        var group = builder.Patch.Group([left.Id, right.Id]).ShouldNotBeNull();
+        group.Collapsed.ShouldBeTrue();
+
+        var fragment = PatchClipboard.Copy(builder.Patch, [left.Id, right.Id]);
+
+        var window = Open(out var already);
+        var editor = Editor(window);
+        var at = new Point(2000, 1500);
+
+        editor.AddFragment(fragment, at);
+        Settle(window);
+
+        var added = editor.Patch.Groups.ShouldNotBeNull().Where(g => g.Id != already.Id).ShouldHaveSingleItem();
+        var bounds = NodeGeometry.GroupBounds(editor.Patch, added, editor.Patch.SocketsOf(added));
+
+        bounds.Inflate(40).Contains(at).ShouldBeTrue(
+            $"asked for at {at}, and the box is drawn at {bounds}");
+    }
+
     // --- taking one off -----------------------------------------------------
 
     /// <summary>

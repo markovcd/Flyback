@@ -282,6 +282,12 @@ public sealed partial class MainWindow
             return;
         }
 
+        // A count is not a take — nothing is being written yet — but it would
+        // become one under the question below, which can stay up for as long as
+        // it likes: the patch rewound and a file opened behind a dialog asking
+        // whether to save. Closing calls it off whatever the answer (ADR-0090).
+        CallOffCount();
+
         if (!SomethingToLose) return;
 
         e.Cancel = true;

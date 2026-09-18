@@ -1,6 +1,8 @@
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Headless.XUnit;
+using Avalonia.Interactivity;
+using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using Flyback.App.Controls;
 using Flyback.Core;
@@ -19,9 +21,20 @@ namespace Flyback.App.Tests.Ui;
 /// headless platform does not put up, and the name is written down in one place for
 /// all three.
 /// </remarks>
-public class WindowTitleTests : UiTest
+public class WindowTitleTests : UiTest, IDisposable
 {
     private const string Program = GlobalConstants.ApplicationName;
+
+    /// <summary>Where the test that saves a file saves it.</summary>
+    private readonly string folder = Path.Combine(
+        Path.GetTempPath(), "flyback-title-" + Guid.NewGuid().ToString("N"));
+
+    public void Dispose()
+    {
+        if (Directory.Exists(folder)) Directory.Delete(folder, recursive: true);
+
+        GC.SuppressFinalize(this);
+    }
 
     private static MainWindow Open()
     {
@@ -151,9 +164,63 @@ public class WindowTitleTests : UiTest
         window.Title.ShouldBe(named + " •");
     }
 
+    /// <summary>
+    /// A text document saved, then stepped back and forward across the apply
+    /// that made it one, is still saved.
+    /// </summary>
+    /// <remarks>
+    /// What is on disk is a fact about the disk rather than about a step, so a
+    /// save restates it beside every step the text owns. The redo then hands
+    /// back the document as the file has it, not as it stood when the apply was
+    /// recorded, with nothing written anywhere.
+    /// </remarks>
+    [AvaloniaFact]
+    public async Task Undo_and_redo_across_the_handover_do_not_unsave_a_saved_text()
+    {
+        var window = Open();
+
+        Coding(window).IsChecked = true;
+        Settle(window);
+
+        Press(window, "apply");
+
+        Directory.CreateDirectory(folder);
+
+        (await window.SaveToAsync(RealStorageFile(Path.Combine(folder, "saved.fbks")))).ShouldBeTrue();
+        Settle(window);
+
+        window.Title.ShouldNotBeNull().ShouldNotEndWith("•");
+
+        Press(window, "undo");
+        Press(window, "redo");
+
+        Editor(window).Locked.ShouldBeTrue("the text is the document again");
+        window.Title.ShouldNotBeNull().ShouldNotEndWith("•", customMessage: "and it is the text that was saved");
+    }
+
     private static ToggleButton Coding(MainWindow window) =>
         All<ToggleButton>(window).Single(b => b.Name == "code");
 
     private static AvaloniaEdit.TextEditor Writing(MainWindow window) =>
         All<AvaloniaEdit.TextEditor>(window).Single(b => b.Name == "source");
+
+    /// <summary>Presses the toolbar button of this name, the way the mouse would.</summary>
+    private static void Press(MainWindow window, string named)
+    {
+        All<Button>(window).Single(b => b.Name == named).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Settle(window);
+    }
+
+    /// <summary>The platform's own file-backed storage file — see <c>FileDropTests</c>.</summary>
+    private static IStorageFile RealStorageFile(string path)
+    {
+        var type = typeof(IStorageFile).Assembly.GetType(
+            "Avalonia.Platform.Storage.FileIO.BclStorageFile", throwOnError: true)!;
+
+        var flags = System.Reflection.BindingFlags.Public
+            | System.Reflection.BindingFlags.NonPublic
+            | System.Reflection.BindingFlags.Instance;
+
+        return (IStorageFile)type.GetConstructors(flags)[0].Invoke([new FileInfo(path)]);
+    }
 }

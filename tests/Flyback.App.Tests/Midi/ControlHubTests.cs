@@ -181,6 +181,47 @@ public class ControlHubTests
         hub.Learning.ShouldBeFalse();
     }
 
+    /// <summary>
+    /// Asking a second knob to learn while the first is still waiting leaves the
+    /// second one listening.
+    /// </summary>
+    /// <remarks>
+    /// "Learn MIDI controller" on knob A, then on knob B without Escape between.
+    /// The second learn ends the first and opens the devices for itself, and the
+    /// first's clean-up runs after that. Only the learn nothing has taken over
+    /// from gives the devices back: on a patch learning its first controller
+    /// none are bound, and giving them back would shut the port under the learn
+    /// still waiting.
+    /// </remarks>
+    [Fact]
+    public async Task A_second_learn_is_not_deafened_by_the_first_one_ending()
+    {
+        var backend = new FakeInput("Test Controller");
+        using var midi = new MidiHub(backend);
+        var hub = new ControlHub(midi);
+
+        hub.Follow(new Patch(), new LiveValues([]));
+
+        var first = hub.LearnAsync([Device], CancellationToken.None);
+        var second = hub.LearnAsync([Device], CancellationToken.None);
+
+        (await first).ShouldBeNull("the first learn gave way to the second");
+
+        second.IsCompleted.ShouldBeFalse("the second is still waiting for a controller to move");
+
+        var listening = backend.Opened.Where(port => port.IsOpen).ToList();
+
+        listening.ShouldNotBeEmpty("so the device it is waiting on is still open");
+
+        listening[^1].Send(Cc(21, 10));
+        listening[^1].Send(Cc(21, 20));
+
+        var learned = await Task.WhenAny(second, Task.Delay(TimeSpan.FromSeconds(2), TestContext.Current.CancellationToken));
+
+        learned.ShouldBe(second, "and a controller moving is what it learns");
+        (await second).ShouldBe(new MidiBinding(Device, 0, 21));
+    }
+
     private sealed class FakeInput(params string[] names) : IMidiInput
     {
         public List<FakePort> Opened { get; } = [];

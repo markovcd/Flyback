@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using Flyback.App.Updates;
+using Flyback.Core.Graph;
 
 namespace Flyback.App.Statistics;
 
@@ -152,7 +153,7 @@ public sealed class Usage
 
         foreach (var module in modules)
         {
-            var name = Property(module);
+            var name = Module(module);
             tally[name] = tally.GetValueOrDefault(name) + 1;
             total++;
         }
@@ -208,4 +209,14 @@ public sealed class Usage
 
         return known.Length <= LongestProperty ? known : Other;
     }
+
+    /// <summary>
+    /// A module's type as it may be sent. The engine's own are asked of its
+    /// catalogue, because nothing in their ids says whose they are: a plugin's
+    /// module carries its plugin's id in front and "osc.sine" carries nothing, so
+    /// read as <see cref="Known"/> reads a plugin's, every module the engine ships
+    /// would be one nobody shipped.
+    /// </summary>
+    private static string Module(string id) =>
+        NodeCatalog.BuiltIn.Get(id) is not null && id.Length <= LongestProperty ? id : Property(id);
 }

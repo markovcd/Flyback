@@ -1,5 +1,6 @@
 using System.Runtime.InteropServices;
 using Flyback.App.Statistics;
+using Flyback.Core.Graph;
 using Shouldly;
 using Xunit;
 
@@ -83,6 +84,25 @@ public sealed class UsageTests
 
         Only.Props[Usage.Other].ShouldBe(2);
         Only.Props.ShouldNotContainKey("acme.modular.vco");
+    }
+
+    /// <summary>The engine's own modules are counted by name.</summary>
+    /// <remarks>
+    /// A plugin's module is named when its id starts with a shipped plugin's.
+    /// The engine's own ids carry no such prefix — "osc.sine", "output" — so
+    /// they are asked of its catalogue instead. The ids fed above are invented
+    /// ones that do carry a prefix, so this feeds a preset's.
+    /// </remarks>
+    [Fact]
+    public void A_played_patch_names_the_engines_own_modules()
+    {
+        var patch = Presets.All
+            .Select(preset => preset.Build(NodeCatalog.BuiltIn))
+            .First(built => built.Nodes.Count > 2);
+
+        Run.Played(patch.Nodes.Select(node => node.TypeId));
+
+        Only.Props.ShouldNotContainKey(Usage.Other, "every module in a preset the engine ships is one it ships");
     }
 
     [Fact]

@@ -252,8 +252,16 @@ public sealed partial class MainWindow
     /// wired, where there is no default left to read and a signal is presumably
     /// meant to be heard, or unwired and above nought — see ADR-0079.
     /// </summary>
+    /// <remarks>
+    /// Following a panel knob counts as wired, and for the same reason with one
+    /// more: the number the socket rests at is not the one playing, and a knob
+    /// turning recompiles nothing (ADR-0086), so this is not asked again as it
+    /// crosses nought. A fader brought up from the bottom has to find the device
+    /// already running.
+    /// </remarks>
     internal static bool VolumeIsUp(Patch patch) =>
         patch.IncomingTo(patch.Output.Id, NodeCatalog.OutputVolumePort) is not null
+        || ControlMap.Of(patch.Output, NodeCatalog.OutputVolumePort) is not null
         || patch.Output.InputValues[NodeCatalog.OutputVolumePort] > 0f;
 
     /// <summary>
@@ -272,6 +280,13 @@ public sealed partial class MainWindow
     private void SyncAudioToVolume()
     {
         var wanted = sound.Output is not null && !audioBlocked && VolumeIsUp(editor.Patch);
+
+        // Never off in the middle of a take. One with sound in it is paced by the
+        // samples it is handed, so a device stopped under it stops the file —
+        // picture and all — at that instant, and fading Volume to nought is how
+        // a take is ended. It records the silence instead, and the device is
+        // asked about again when the take is over.
+        if (!wanted && recorder is not null) return;
 
         if (wanted != audio.IsRunning) SetAudioEnabled(wanted);
     }

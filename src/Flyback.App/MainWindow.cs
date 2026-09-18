@@ -990,6 +990,12 @@ public sealed partial class MainWindow : Window
                 if (showingCode) ReadIntoText();
 
                 presetShowing = wanted;
+
+                // The question above may have been answered with a save, and a
+                // save takes the selection off this list: what was saved is a
+                // file, and no preset. The row that was picked is picked again,
+                // or the title would name a preset the list does not show.
+                PutTheBoxBack();
             }
             catch (Exception ex)
             {

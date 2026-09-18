@@ -56,4 +56,29 @@ public class VolumeIsUpTests
 
         MainWindow.VolumeIsUp(builder.Patch).ShouldBeTrue();
     }
+
+    /// <summary>
+    /// Whether the speakers are wanted asks the knob, where Volume is linked
+    /// to one.
+    /// </summary>
+    /// <remarks>
+    /// A linked socket keeps its resting number and plays the knob's, and a knob
+    /// turning recompiles nothing (ADR-0086), so the question is not asked again
+    /// as it crosses nought. Following a knob counts as wired: Volume resting at
+    /// nought under a knob turned all the way up has to find the device open.
+    /// </remarks>
+    [Fact]
+    public void Volume_linked_to_a_knob_that_is_up_is_up()
+    {
+        var builder = new PatchBuilder(NodeCatalog.BuiltIn);
+        var source = builder.Add("osc.sine");
+        var output = builder.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 0f));
+
+        builder.Wire(source, 0, output, NodeCatalog.OutputLeftPort);
+
+        var knob = builder.Patch.AddControl(value: 1f);
+        ControlMap.Link(output, NodeCatalog.OutputVolumePort, new ControlLink(knob.Id, 0f, 1f));
+
+        MainWindow.VolumeIsUp(builder.Patch).ShouldBeTrue("the knob Volume follows is all the way up");
+    }
 }

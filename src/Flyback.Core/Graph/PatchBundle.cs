@@ -31,10 +31,17 @@ public readonly record struct BundleReport(
 /// The text of <see cref="PatchBundle.ConversationEntry"/>, or null for a bundle
 /// saved with none.
 /// </param>
+/// <param name="Load">
+/// How the patch inside read, which is what says whether it is all there: a
+/// bundle from a later version, or one naming a module this build does not have,
+/// reads without throwing and is not the patch that was packed. Null only for a
+/// value made by hand.
+/// </param>
 public readonly record struct LoadedBundle(
     Patch Patch,
     IReadOnlyDictionary<string, byte[]> Files,
-    string? Conversation = null);
+    string? Conversation = null,
+    PatchLoad? Load = null);
 
 /// <summary>
 /// A patch and everything it names, in one file.
@@ -209,7 +216,9 @@ public static class PatchBundle
             conversation = reading.ReadToEnd();
         }
 
-        return new LoadedBundle(PatchIO.Read(json, against).Patch, files, conversation);
+        var load = PatchIO.Read(json, against);
+
+        return new LoadedBundle(load.Patch, files, conversation, load);
     }
 
     /// <summary>

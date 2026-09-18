@@ -344,4 +344,37 @@ public class InspectorWiringTests : UiTest
         opened.InputValues.ShouldAllBe(v => v == 1e30f, "showing a number must not change it");
         Knobs(window).ShouldBeGreaterThan(0);
     }
+
+    /// <summary>A number box emptied and left says the number in force.</summary>
+    /// <remarks>
+    /// An emptied box is no number, so the knob keeps the one it had, and a box
+    /// showing nothing beside it would disagree. While it has the focus it is
+    /// left alone: empty is what a box is on the way from one number to another.
+    /// </remarks>
+    [AvaloniaFact]
+    public void An_emptied_number_box_in_the_inspector_says_what_is_in_force()
+    {
+        var (patch, sine, _) = Board();
+
+        sine.InputValues[1] = 0.2f;
+
+        var window = Open(patch);
+
+        Select(window, sine);
+
+        // The first box on a Sine is 'freq', beside the first knob.
+        var box = All<NumericUpDown>(All<StackPanel>(window).Single(p => p.Name == "inspector")).First();
+
+        box.Focus();
+        box.Value = null;
+        Settle(window);
+
+        // Focus goes elsewhere, which is where a box that was being typed into
+        // settles on what it says.
+        Editor(window).Focus();
+        Settle(window);
+
+        sine.InputValues[1].ShouldBe(0.2f, "an empty box is not a number, and the knob keeps the one it had");
+        box.Value.ShouldBe(0.2m, "and the box says so");
+    }
 }

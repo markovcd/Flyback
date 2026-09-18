@@ -45,6 +45,10 @@
 - A number too large for a number box — in a patch file, or typed into the text and applied — no longer crashes when its module is selected.
 - A filter, reverb, delay or loop with silence going into it no longer costs more than one with a signal. A patch with resting parts could crackle because of it.
 - Tidy no longer mislays modules on a patch too tall or too wide for the canvas, and lays the big presets out about a third shorter.
+- A bundle saved by a newer Flyback, or one using a module you do not have, is refused rather than opened as an empty or partial patch that the next save would write over it.
+- Answering "Save…" to the unsaved-changes question and then saving a text copy no longer closes the patch as if it had been saved.
+- Fading Volume to zero during a recording no longer stops the file there.
+- A module moved with a middle-button pan or a zoom in the middle of the drag stays under the pointer, and the move can be undone.
 - Several other bugfixes.
 
 ## 0.3.0 — 2026-09-17

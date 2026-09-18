@@ -234,6 +234,17 @@ public sealed partial class NodeEditor : Control
 
     private bool framePending = true;
     private Drag drag;
+
+    /// <summary>
+    /// Where on the canvas a module drag took hold, in the patch's own coordinates.
+    /// </summary>
+    /// <remarks>
+    /// The canvas's rather than the screen's, because the view may move under a drag
+    /// — the middle button pans mid-gesture and the wheel zooms — and a distance in
+    /// pixels means something else after either. The point of the canvas under the
+    /// pointer is what both of them hold still, so measured from there a module
+    /// stays in the hand through a pan and a zoom with nothing to put right after.
+    /// </remarks>
     private Point dragOrigin;
 
     /// <summary>
@@ -304,6 +315,12 @@ public sealed partial class NodeEditor : Control
     private string WireGesture => $"wire {wireGesture}";
 
     private Point wireEnd;
+
+    /// <summary>
+    /// The wire this re-patch picked up and where in the patch's list it was, or
+    /// null for a wire being drawn new.
+    /// </summary>
+    private (Connection Wire, int At)? lifted;
 
     public NodeEditor()
     {

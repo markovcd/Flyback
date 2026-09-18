@@ -253,6 +253,45 @@ public class WireLiftTests : UiTest
         editor.Patch.Connections.ShouldBeEmpty();
     }
 
+    /// <summary>A wire picked up and put straight back is not an edit.</summary>
+    /// <remarks>
+    /// The lift records a step and the drop folds into it. The wire goes back
+    /// into the place in the list it was lifted out of, so the patch compares
+    /// equal to the one the gesture began with, and the history drops a step
+    /// that ends where it began.
+    /// </remarks>
+    [AvaloniaFact]
+    public void A_wire_put_back_where_it_was_is_not_an_edit()
+    {
+        var board = Open();
+        var editor = board.Editor;
+
+        // Two wires that arrive with the patch rather than being drawn, so the
+        // history opens on them, and the one lifted is not the last in the list.
+        board.Patch.Connect(board.Source.Id, 0, board.Fed.Id, 0);
+        board.Patch.Connect(board.Other.Id, 0, board.Spare.Id, 0);
+        editor.Patch = board.Patch;
+        Settle(board.Window);
+
+        editor.CanUndo.ShouldBeFalse();
+        editor.IsModified.ShouldBeFalse();
+
+        var port = OnWindow(board.Window, Input(board.Fed, 0));
+
+        board.Window.MouseDown(port, MouseButton.Left);
+        board.Window.MouseMove(port - new Point(60, 30), RawInputModifiers.LeftMouseButton);
+        Settle(board.Window);
+        board.Window.MouseMove(port, RawInputModifiers.LeftMouseButton);
+        board.Window.MouseUp(port, MouseButton.Left);
+        Settle(board.Window);
+
+        editor.Patch.IncomingTo(board.Fed.Id, 0).ShouldNotBeNull("the wire is back where it was");
+        editor.Patch.Connections.Count.ShouldBe(2);
+
+        editor.IsModified.ShouldBeFalse("nothing changed, so there is nothing to save");
+        editor.CanUndo.ShouldBeFalse("and nothing to take back");
+    }
+
     /// <summary>
     /// An input still needs no modifier, and Ctrl on one changes nothing: it
     /// keeps the source and looks for a new target, held or not.

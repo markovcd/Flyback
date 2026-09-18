@@ -363,6 +363,35 @@ public class MultiSelectTests : UiTest
         Selected(editor).ShouldBe(["time", "value"]);
     }
 
+    /// <summary>
+    /// Taking back the module the inspector was about leaves it about one of the
+    /// others still selected.
+    /// </summary>
+    /// <remarks>
+    /// An undo refocuses on what is left of the selection, as Delete does, so the
+    /// panel never says nothing is selected beside modules that are still ringed.
+    /// </remarks>
+    [AvaloniaFact]
+    public void An_undo_that_takes_the_focused_module_leaves_the_selection_a_focus()
+    {
+        var patch = Three(out _, out _, out _);
+        var (editor, window) = Editing(patch);
+
+        editor.AddNode("osc.sine").ShouldNotBeNull();
+        Settle(window);
+
+        editor.SelectAll();
+        Settle(window);
+
+        editor.SelectedNodes.Count.ShouldBe(5);
+
+        editor.Undo();
+        Settle(window);
+
+        editor.SelectedNodes.Count.ShouldBe(4, "the four that were there before are still selected");
+        editor.SelectedNode.ShouldNotBeNull("and one of them is what the inspector is about");
+    }
+
     // --- selecting everything -----------------------------------------------
 
     /// <summary>

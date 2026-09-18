@@ -319,8 +319,15 @@ public sealed partial class MainWindow
         }
         finally
         {
-            if (learning == cancel) learning = null;
-            if (controlsPanel.Learning == id) controlsPanel.Learning = null;
+            // Only where this is still the learn under way. One that gave way to
+            // another ends after the other has begun, and the other may be for
+            // this same knob — whose "move a controller" it would be wiping.
+            if (learning == cancel)
+            {
+                learning = null;
+
+                if (controlsPanel.Learning == id) controlsPanel.Learning = null;
+            }
         }
     }
 
@@ -445,10 +452,18 @@ public sealed partial class MainWindow
 
                 link = with((float)next);
                 ControlMap.Link(node, index, link);
+
+                // The range is part of what the panel takes its shape from, so
+                // that one changed from elsewhere rebuilds this row. Changed from
+                // here the row already says it, and rebuilding would take the box
+                // out from under the number being typed into it — after its
+                // first digit, a box taking its value a keystroke at a time.
+                inspectorShape = InspectorShape();
+
                 editor.NotifyPatchChanged($"{node.Id} range {index}");
             };
 
-            return box;
+            return Boxed.NeverBlank(box);
         }
     }
 }

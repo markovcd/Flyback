@@ -628,6 +628,10 @@ public sealed class Patch
     /// </remarks>
     public void Connect(Guid sourceNode, int sourcePort, Guid targetNode, int targetPort)
     {
+        // Already there. Taken off and put on the end it would be the same patch
+        // in a different order, which a snapshot cannot tell from an edit.
+        if (Connections.Contains(new Connection(sourceNode, sourcePort, targetNode, targetPort))) return;
+
         Connections.RemoveAll(c => c.TargetNode == targetNode && c.TargetPort == targetPort);
         Connections.Add(new Connection(sourceNode, sourcePort, targetNode, targetPort));
 

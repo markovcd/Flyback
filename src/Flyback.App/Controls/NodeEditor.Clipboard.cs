@@ -111,11 +111,11 @@ public sealed partial class NodeEditor
         var arriving = fragment.Nodes.Where(n => !NodeCatalog.IsSink(n.TypeId)).ToArray();
         if (arriving.Length == 0) return [];
 
-        var box = BoxAround(arriving);
+        var box = Drawn(fragment, arriving);
 
         var (dx, dy) = at is { } point
             ? (point.X - box.Center.X, point.Y - box.Center.Y)
-            : WhereToPaste(arriving);
+            : WhereToPaste(box);
 
         var added = PatchClipboard.Paste(patch, fragment, dx, dy);
         if (added.Count == 0) return [];
@@ -140,12 +140,11 @@ public sealed partial class NodeEditor
     /// happened. The step is capped: a dense patch has no clear middle, and what
     /// arrives is selected, so dragging it somewhere better is one gesture.
     /// </remarks>
-    private (double X, double Y) WhereToPaste(IReadOnlyList<NodeInstance> arriving)
+    private (double X, double Y) WhereToPaste(Rect group)
     {
         const double step = 28;
         const int tries = 40;
 
-        var group = BoxAround(arriving);
         var taken = OnCanvas().ToArray();
 
         var centre = ToGraph(new Point(Bounds.Width / 2, Bounds.Height / 2));
@@ -164,6 +163,32 @@ public sealed partial class NodeEditor
         }
 
         return (dx, dy);
+    }
+
+    /// <summary>
+    /// The one rectangle that holds what a fragment will look like on the canvas.
+    /// </summary>
+    /// <remarks>
+    /// Which is not where its modules are, for a fragment with a shut box in it: a
+    /// box is drawn at its members' least corner and one module wide, however far
+    /// apart they were left. Placed by the spread instead, a group saved from a
+    /// chain laid out by hand lands half its hidden width away from the click.
+    /// </remarks>
+    private static Rect Drawn(Patch fragment, IReadOnlyList<NodeInstance> arriving)
+    {
+        var shut = fragment.Groups?.Where(group => group.Collapsed).ToArray() ?? [];
+        var hidden = shut.SelectMany(group => group.Members).ToHashSet();
+
+        var seen = BoxAround([.. arriving.Where(node => !hidden.Contains(node.Id))]);
+
+        foreach (var group in shut)
+        {
+            var box = NodeGeometry.GroupBounds(fragment, group, fragment.SocketsOf(group));
+
+            seen = seen == default ? box : seen.Union(box);
+        }
+
+        return seen;
     }
 
     /// <summary>The one rectangle that holds all of these modules.</summary>
@@ -214,6 +239,9 @@ public sealed partial class NodeEditor
 
             return;
         }
+
+        // A box the layout shut may have had part of itself selected.
+        if (SelectWholeBoxes()) SelectionChanged?.Invoke(this, EventArgs.Empty);
 
         NotifyPatchChanged();
         FrameAll();

@@ -197,6 +197,35 @@ public class GroupTests : UiTest
         patch.Groups.ShouldBeNull();
     }
 
+    /// <summary>Ctrl+G on a box that is already one keeps it.</summary>
+    /// <remarks>
+    /// Grouping forgets every member's old group first, so going ahead would
+    /// dissolve the box to make it again: the same modules, without the name and
+    /// without the sockets left on its edge. It is declined instead.
+    /// </remarks>
+    [AvaloniaFact]
+    public void Grouping_a_box_that_is_already_one_keeps_its_name()
+    {
+        var patch = Pairs(out _, out _, out var lowLeft, out var lowRight);
+        var (editor, window) = Editing(patch);
+
+        var low = patch.Group([lowLeft.Id, lowRight.Id]).ShouldNotBeNull();
+        low.Name = "Voice";
+        editor.NotifyPatchChanged();
+        Settle(window);
+
+        // A click on the shut box selects it, members and all.
+        Click(editor, window, BoxHeader(patch, low));
+
+        editor.SelectedGroup.ShouldBe(low);
+
+        window.KeyPressQwerty(PhysicalKey.G, RawInputModifiers.Control);
+        Settle(window);
+
+        var kept = editor.Patch.Groups.ShouldNotBeNull().ShouldHaveSingleItem();
+        kept.Name.ShouldBe("Voice", "the box was already a group, and grouping it again cost it its name");
+    }
+
     /// <summary>
     /// The bug this feature can have. A module under a box is not on the canvas,
     /// so a press where it used to be must not reach it — otherwise it could be
@@ -215,6 +244,41 @@ public class GroupTests : UiTest
         Click(editor, window, Body(second));
 
         editor.SelectedNodes.ShouldNotContain(second);
+    }
+
+    /// <summary>
+    /// A click on a shut box is the box's, whatever lies under it.
+    /// </summary>
+    /// <remarks>
+    /// A box is drawn at its members' least x and least y, which need not be
+    /// where any member is, and is painted over whatever module is there. The
+    /// press asks the boxes before the modules, which is the order they are
+    /// painted in, so the module nobody can see does not take it.
+    /// </remarks>
+    [AvaloniaFact]
+    public void A_click_on_a_shut_box_is_not_taken_by_a_module_lying_under_it()
+    {
+        var builder = new PatchBuilder(NodeCatalog.BuiltIn);
+
+        var under = builder.Add("time", 0, 0);
+        var left = builder.Add("osc.sine", 0, 400);
+        var right = builder.Add("math.add", 400, 0);
+        builder.Add(NodeCatalog.OutputTypeId, 900, 400);
+        builder.Wire(left, 0, right, 0);
+
+        var (editor, window) = Editing(builder.Patch);
+
+        var box = editor.Patch.Group([left.Id, right.Id]).ShouldNotBeNull();
+        editor.NotifyPatchChanged();
+        Settle(window);
+
+        var bounds = NodeGeometry.GroupBounds(editor.Patch, box, editor.Patch.SocketsOf(box));
+        bounds.Contains(Body(under)).ShouldBeTrue("the box is drawn over the module this test is about");
+
+        Click(editor, window, Body(under));
+
+        editor.SelectedNodes.Select(n => n.Id).ShouldNotContain(under.Id, "the module under the box cannot be seen");
+        editor.SelectedGroup.ShouldBe(box, "the click landed on the box");
     }
 
     [AvaloniaFact]
@@ -385,6 +449,43 @@ public class GroupTests : UiTest
 
         // One moved, and the count leaves out the group already open.
         said.ShouldBe("Opened one group.");
+    }
+
+    /// <summary>
+    /// Shutting a box around one selected member does not leave a module nobody
+    /// can see selected.
+    /// </summary>
+    /// <remarks>
+    /// A box is drawn selected only when every member is, so a shut one is
+    /// selected whole or not at all: one member left selected inside it would
+    /// answer Delete from under a box drawn plain.
+    /// </remarks>
+    [AvaloniaFact]
+    public void Shutting_a_box_around_one_selected_member_leaves_nothing_hidden_selected()
+    {
+        var patch = Pairs(out var topLeft, out var topRight, out var lowLeft, out var lowRight);
+        var (editor, window) = Editing(patch);
+
+        var (_, low) = TwoBoxes(editor, window, topLeft, topRight, lowLeft, lowRight);
+
+        editor.ToggleBox(low);
+        Settle(window);
+        low.Collapsed.ShouldBeFalse("the box is open, so its members can be clicked");
+
+        Click(editor, window, Body(lowLeft));
+        editor.SelectedNodes.Select(n => n.Id).ShouldBe([lowLeft.Id]);
+
+        window.KeyPressQwerty(PhysicalKey.E, RawInputModifiers.Control | RawInputModifiers.Shift);
+        Settle(window);
+
+        low.Collapsed.ShouldBeTrue("Ctrl+Shift+E shut the box");
+
+        var selected = editor.SelectedNodes.Select(n => n.Id).ToHashSet();
+
+        // Either answer is a whole one: the box, or nothing. One hidden member
+        // is neither.
+        (selected.Count == 0 || selected.SetEquals(low.Members)).ShouldBeTrue(
+            "what is selected is the box or nothing, not one module inside it");
     }
 
     /// <summary>

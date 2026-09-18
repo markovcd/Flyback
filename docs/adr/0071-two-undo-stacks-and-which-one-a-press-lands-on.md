@@ -125,3 +125,18 @@ groups do not survive printing
 ([0065](0065-a-text-language-that-parses-to-a-patch.md)), so undo would quietly
 lose them. *Asking both stacks and interleaving by timestamp* — the guess this
 mechanism exists to avoid.
+
+## Amendments
+
+**2026-09-18 — a knob turned on the canvas leaves typing in a hidden printing
+its steps, and a gesture that comes home leaves none.** Writing a knob back into
+a printing empties the text's stack, because what was written is nobody's edit.
+That is only so of a printing: one that has been typed into is not written to at
+all, and what is on its stack is the typing, so the stack is now emptied only
+where the text was still the printing before anything was written. On the
+canvas's side, a named gesture that ends on the snapshot it began from — a wire
+lifted and put back in its socket, a slider returned to its notch — takes its
+step off again, since undoing it would put nothing back; `Patch.Connect` leaves
+a wire that is already there where it is in the list, and the canvas puts a
+lifted one back where it came from, so that "the same patch" is something a
+snapshot can see.

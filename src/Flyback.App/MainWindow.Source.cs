@@ -379,6 +379,10 @@ public sealed partial class MainWindow
         var kept = restated.ToArray();
         var lost = 0;
 
+        // Asked before anything is written, which is what makes the text differ
+        // from its printing when it is one.
+        var reading = !sourceOwned && source.Source == printed;
+
         turned.Clear();
         restated.Clear();
         writingBack = true;
@@ -407,7 +411,11 @@ public sealed partial class MainWindow
         // and makes the reading afresh. Left on this stack, one press would put the
         // old number back over a patch still playing the new one. Said after the
         // group is closed, since emptying a stack closes what is open on it.
-        if (!sourceOwned) source.ForgetSteps();
+        //
+        // Only a printing, though. One that has been typed into is somebody's
+        // work that nothing here could write to, and the steps on its stack are
+        // the typing — theirs to take back in the view they did it in.
+        if (reading) source.ForgetSteps();
 
         if (lost > 0)
             Report($"{lost} value(s) could not be written into the text — "
@@ -817,6 +825,12 @@ public sealed partial class MainWindow
 
         source.Clear();
         source.Notice = Reading();
+
+        // Beside the patch as it now stands, and not only beside the next step:
+        // applying this printing is recorded as a step back to here, and what
+        // that step hands back on Ctrl+Z has to include the printing — or the
+        // text would come back as somebody's typing, never to be printed again.
+        editor.Note(Owning());
     }
 
     /// <summary>
@@ -1103,7 +1117,20 @@ public sealed partial class MainWindow
     }
 
     /// <summary>Marks the text as written, so closing stops asking about it.</summary>
-    private void MarkSourceSaved() => sourceOnDisk = source.Source;
+    /// <remarks>
+    /// Beside every step the text owns as well as here. What is on disk is a fact
+    /// about the disk, and a step noted before the save would otherwise hand back
+    /// an unsaved document over a file that has it to the letter — Ctrl+Z and back
+    /// across the apply that made the text the document is all it took.
+    /// </remarks>
+    private void MarkSourceSaved()
+    {
+        sourceOnDisk = source.Source;
+
+        var saved = sourceOnDisk;
+
+        editor.Remark(mark => mark is Ownership { Owned: true } was ? was with { OnDisk = saved } : mark);
+    }
 
     /// <summary>
     /// Puts every control that edits the patch in step with who owns it.

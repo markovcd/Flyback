@@ -4,6 +4,7 @@ using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 using Flyback.App.Controls;
 using Flyback.Core.Graph;
 using Shouldly;
@@ -217,6 +218,85 @@ public class KnobPanelTests : UiTest
         Settle(window);
 
         Editor(window).Patch.Controls!.ShouldNotContain(c => c.Name == "Glow");
+    }
+
+    /// <summary>
+    /// A knob taken off and brought back by Ctrl+Z comes back where the hand
+    /// left it.
+    /// </summary>
+    /// <remarks>
+    /// Turning a knob is not an edit (ADR-0086), so the snapshot the undo
+    /// restores holds the knob where the last edit found it. The hub keeps the
+    /// position of a knob that has left the patch, for the one that comes back.
+    /// </remarks>
+    [AvaloniaFact]
+    public void A_removed_knob_comes_back_where_it_was_left()
+    {
+        var (patch, value) = Board(knob: 0.2f);
+        var window = Open(patch);
+
+        window.KeyPressQwerty(PhysicalKey.K, RawInputModifiers.Control);
+        Settle(window);
+        AddKnob(window);
+        ClickInputRow(window, Editor(window).Patch.Find(value.Id)!, 0);
+        window.KeyPress(Key.Escape, RawInputModifiers.None, PhysicalKey.Escape, null);
+        Settle(window);
+
+        ControlMap.Of(Editor(window).Patch.Find(value.Id)!, 0).ShouldNotBeNull("the knob is linked to the socket");
+
+        Turn(window, up: 60);
+
+        var left = Editor(window).Patch.Controls!.Single().Value;
+        left.ShouldNotBe(0.5f, "the knob was turned");
+
+        var more = All<Button>(Panel(window)).First(b => b.Name == "knob-menu");
+        var menu = more.Flyout.ShouldBeOfType<MenuFlyout>();
+
+        menu.Items.OfType<MenuItem>().Single(item => (item.Header as string) == "Remove knob")
+            .RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(MenuItem.ClickEvent));
+        Settle(window);
+
+        (Editor(window).Patch.Controls?.Count ?? 0).ShouldBe(0);
+
+        All<Button>(window).Single(b => b.Name == "undo")
+            .RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        Settle(window);
+
+        Editor(window).Patch.Controls!.Single().Value.ShouldBe(left, 1e-4f, "where a hand left a knob is not something Ctrl+Z takes back");
+    }
+
+    /// <summary>
+    /// A linked socket's range box is still there after a number has gone into
+    /// it.
+    /// </summary>
+    /// <remarks>
+    /// The range is part of what the inspector takes its shape from, so that one
+    /// changed from elsewhere rebuilds the row. Changed from the box itself the
+    /// row already says it, and a rebuild would take the box out from under the
+    /// typing: a number box takes its value on every keystroke, so "2.5" would
+    /// get as far as "2" before the rest was typed at the window.
+    /// </remarks>
+    [AvaloniaFact]
+    public void A_range_box_survives_being_typed_into()
+    {
+        var (patch, value) = Board();
+        var knob = patch.AddControl();
+        ControlMap.Link(value, 0, new ControlLink(knob.Id, 0f, 1f));
+
+        var window = Open(patch);
+
+        Editor(window).Select(value.Id);
+        Settle(window);
+
+        var inspector = All<StackPanel>(window).Single(p => p.Name == "inspector");
+        var unlink = All<Button>(inspector).Single(b => b.Name == "unlink");
+        var box = All<NumericUpDown>(unlink.GetVisualParent()!).Last();
+
+        box.Value = 2m;
+        Settle(window);
+
+        ControlMap.Of(value, 0)!.Value.Max.ShouldBe(2f, "the range was taken");
+        All<NumericUpDown>(window).ShouldContain(box, "and the box it was typed into is still on the screen");
     }
 
     [AvaloniaFact]

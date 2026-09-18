@@ -274,6 +274,37 @@ public class PatchBundleTests
     }
 
     /// <summary>
+    /// A bundle whose patch does not read whole says so, the way a loose patch
+    /// does, and leaves refusing it to whoever asked.
+    /// </summary>
+    /// <remarks>
+    /// Read rather than thrown, because there is a patch: one written by a later
+    /// version reads as an empty one, and a caller handed only that would open it
+    /// under the bundle's name with nothing to say it is not what was packed.
+    /// </remarks>
+    [Fact]
+    public void A_bundle_says_how_the_patch_inside_it_read()
+    {
+        var archive = new MemoryStream();
+
+        using (var zip = new ZipArchive(archive, ZipArchiveMode.Create, leaveOpen: true))
+        using (var writing = zip.CreateEntry(PatchBundle.PatchEntry).Open())
+            writing.Write(Encoding.UTF8.GetBytes($"{{\"Version\":{PatchIO.FormatVersion + 1},\"Nodes\":[]}}"));
+
+        archive.Position = 0;
+
+        var load = PatchBundle.Read(archive, NodeCatalog.BuiltIn).Load.ShouldNotBeNull();
+
+        load.TooNew.ShouldBeTrue();
+        load.IsComplete.ShouldBeFalse();
+
+        Packed(Both(), out var whole);
+
+        PatchBundle.Read(new MemoryStream(whole), NodeCatalog.BuiltIn).Load.ShouldNotBeNull()
+            .IsComplete.ShouldBeTrue("one this build wrote reads whole");
+    }
+
+    /// <summary>
     /// The property that makes a bundle a document rather than an archive: it is
     /// opened, worked on and written again without ever being unpacked, and what
     /// comes out the second time is what went in the first — the same picture,

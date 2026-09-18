@@ -313,6 +313,39 @@ public class OutputSettingsTests : UiTest, IDisposable
         (StartupPreset(OpenSettings(window)).SelectedItem as string).ShouldBe(before);
     }
 
+    /// <summary>
+    /// Saving some other setting leaves a startup patch this launch cannot
+    /// offer as it was.
+    /// </summary>
+    /// <remarks>
+    /// A plugin's preset chosen as the startup patch, and one launch without
+    /// the plugin. The choice is listed all the same, so it is the row shown
+    /// and what Save writes back, rather than the patch the window fell back
+    /// to. The sound settings beside it are kept for a backend that is not
+    /// installed this launch, for the same reason.
+    /// </remarks>
+    [AvaloniaFact]
+    public void A_startup_patch_this_launch_does_not_offer_is_kept()
+    {
+        Directory.CreateDirectory(Path.GetDirectoryName(settingsPath)!);
+        File.WriteAllText(settingsPath, "{\"defaultPreset\":\"A Plugin's Preset\"}");
+
+        OutputSettings.Load(settingsPath).DefaultPreset
+            .ShouldBe("A Plugin's Preset", "the file is read the way this test expects");
+
+        var window = Open(settingsPath);
+        var dialog = OpenSettings(window);
+
+        var rate = PreviewFrameRate(dialog);
+
+        rate.SelectedIndex = rate.SelectedIndex == 1 ? 2 : 1;
+        Settle(window);
+
+        CloseSettings(window, dialog, save: true);
+
+        OutputSettings.Load(settingsPath).DefaultPreset.ShouldBe("A Plugin's Preset");
+    }
+
     // --- the recording and sound sections ------------------------------------
 
     private static ComboBox FrameRate(Visual within) => All<ComboBox>(within).Single(c => c.Name == "frameRate");
@@ -678,6 +711,47 @@ public class OutputSettingsTests : UiTest, IDisposable
         preview.Resolution.Width.ShouldBe(320);
     }
 
+    /// <summary>
+    /// A row picked in the size picker before it was greyed out is not what Save
+    /// takes.
+    /// </summary>
+    /// <remarks>
+    /// The picker is greyed out for the length of a take, whose file has
+    /// committed to a size and drops every frame that arrives at another.
+    /// Greying a box does not take back a row already picked in it — during the
+    /// count-in, say — so Save does not read the box while it is grey, and puts
+    /// its row back.
+    /// </remarks>
+    [AvaloniaFact]
+    public void A_size_picked_while_the_picker_is_greyed_out_is_not_saved()
+    {
+        var window = Open(settingsPath);
+        var preview = All<PreviewHost>(window).Single();
+        var before = preview.Resolution;
+
+        var dialog = OpenSettings(window);
+        var size = Size(dialog);
+        var row = size.SelectedIndex;
+
+        // As a take finds it: grey, with a row picked that was never saved.
+        size.IsEnabled = false;
+        size.SelectedIndex = row == 0 ? 1 : 0;
+        Settle(window);
+
+        size.IsEnabled.ShouldBeFalse();
+        size.SelectedIndex.ShouldNotBe(row, "a grey box still holds whatever row it is given");
+
+        CloseSettings(window, dialog, save: true);
+
+        var saved = OutputSettings.Load(settingsPath);
+
+        saved.Width.ShouldBe(before.Width, "the size in force is the one written");
+        saved.Height.ShouldBe(before.Height);
+        preview.Resolution.ShouldBe(before, "and the preview keeps it");
+
+        size.SelectedIndex.ShouldBe(row, "the box says the size in force again");
+    }
+
     // --- the preview's own frame rate ------------------------------------
 
     private static ComboBox PreviewFrameRate(Visual within) =>
@@ -997,6 +1071,35 @@ public class OutputSettingsTests : UiTest, IDisposable
         Said(window)[^1].ShouldBe($"{Path.GetFileName(path)} was not recorded.");
         File.Exists(path).ShouldBeFalse("nothing was ever opened");
         (ToolTip.GetTip(button) as string).ShouldNotBeNull().ShouldContain("Record what the patch is doing");
+    }
+
+    /// <summary>
+    /// Closing the window calls a count-in off, unsaved work or none (ADR-0090).
+    /// </summary>
+    /// <remarks>
+    /// With something to lose the close puts its question up, which can stay up
+    /// for as long as it likes. The count is called off before anything is
+    /// asked, so it never runs on underneath to start a take behind a modal
+    /// question.
+    /// </remarks>
+    [AvaloniaFact]
+    public async Task Closing_with_unsaved_work_calls_a_count_in_off()
+    {
+        var window = Open();
+
+        Editor(window).AddNode("value").ShouldNotBeNull();
+
+        var counting = window.CountInAsync(TakePath(ClipFormats.MotionJpegAvi.Extension), Unhurried);
+        Settle(window);
+
+        counting.IsCompleted.ShouldBeFalse("the count is under way");
+
+        window.Close();
+
+        await Task.WhenAny(counting, Task.Delay(TimeSpan.FromSeconds(1), TestContext.Current.CancellationToken));
+        Settle(window);
+
+        counting.IsCompleted.ShouldBeTrue("the close called the count off before asking about anything");
     }
 
     /// <summary>

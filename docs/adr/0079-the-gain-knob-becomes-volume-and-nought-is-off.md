@@ -100,3 +100,19 @@ record of what the speakers actually played, and nothing did.
 Rewind is what remains there; Volume itself is already visible above, as one
 of the Output's ordinary knob rows, so nothing about the instrument became
 harder to find — the switch moved onto the knob it always agreed with.
+
+## Amendments
+
+**2026-09-18 — nought is not off in the middle of a take, and a Volume that
+follows a knob counts as wired.** Two cases where the stored number is the wrong
+thing to ask. A take with sound in it is paced by the samples it is handed
+([0049](0049-record-the-gpu-frame-not-the-interpreter.md)), so a device
+stopped under it stops the file, picture included, at that instant — and fading
+Volume to nought is how a take is ended. The device is left running for the
+length of a take, which records the silence, and is asked about again when the
+take is over. And a socket that follows a panel knob
+([0086](0086-panel-knobs-are-read-as-live-values.md)) keeps its resting number
+while it plays the knob's, with no recompile as the knob turns and so nothing to
+ask this again as it crosses nought: resting at nought under a fader, the device
+would never open. It is treated as a wire is, and for the reason a wire is —
+something is driving Volume, and is presumably meant to be heard.

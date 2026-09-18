@@ -126,3 +126,15 @@ and a bundle is the whole of the document wherever it is taken, so a bundle with
 it would be the one kind of file that could not carry on the conversation that
 built it. It is still not a workspace. Nothing about the window, the view or the
 settings goes in, and the conversation holds no key and no endpoint.
+
+**2026-09-18 — saved as text, a bundle scatters too, and one that does not read
+whole is not opened.** Scattering was written for the save as a loose patch and
+the save as text had been left out of it, so a text document made from a bundle
+named `files/kick.wav` from a folder that had no such file: it played until the
+window shut and was silent the next time it was opened. Text that is the
+document is a save like the other ([0068](0068-the-file-that-was-opened-decides-who-owns-the-patch.md)),
+and does what the other does — the files go beside it, and it measures them from
+there. On the way in, `LoadedBundle` now carries how the patch inside read, and
+the window refuses one that is short of a module or written by a later version,
+as it refuses a loose patch for the same: read anyway, the second is an empty
+patch under the bundle's name, and the next save writes that over the bundle.
