@@ -138,8 +138,8 @@ public class MeterTests
 
         var drawn = b.Patch.CompileForVideo(NodeCatalog.BuiltIn).Program;
 
-        drawn.LiveInputs.ShouldContain(Meters.Key(first.Id, Meters.Level));
-        drawn.LiveInputs.ShouldContain(Meters.Key(second.Id, Meters.Peak));
+        drawn.LiveInputs.ShouldContain(MeterSignals.Key(first.Id, MeterSignals.Level));
+        drawn.LiveInputs.ShouldContain(MeterSignals.Key(second.Id, MeterSignals.Peak));
         drawn.LiveInputs.Distinct().Count().ShouldBe(drawn.LiveInputs.Count);
     }
 
@@ -277,7 +277,7 @@ public class MeterTests
         b.Wire(source, 0, scope, In);
 
         var heard = b.Patch.CompileForAudio(NodeCatalog.BuiltIn).Program;
-        var block = new LiveValues([Meters.Key(scope.Id, Meters.Level)]);
+        var block = new LiveValues([MeterSignals.Key(scope.Id, MeterSignals.Level)]);
 
         // Written when something does read it — the block here is contrived to,
         // which is how this test knows the ring was measured at all.

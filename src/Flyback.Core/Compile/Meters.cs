@@ -23,28 +23,6 @@ namespace Flyback.Core.Compile;
 public static class Meters
 {
     /// <summary>
-    /// What a Meter listens on, before the signal it wants. The prefix is a word
-    /// no instrument can take, so a meter and a keyboard can never collide in one
-    /// block — see <see cref="LiveValues"/>, which is keyed by name for this
-    /// reason.
-    /// </summary>
-    private const string Prefix = "meter";
-
-    /// <summary>The loudness of the window, which is what a level meter shows.</summary>
-    public const string Level = "level";
-
-    /// <summary>The furthest the window got from nought, which is what hits.</summary>
-    public const string Peak = "peak";
-
-    /// <summary>
-    /// The name one Meter's reading is played on. Built from the node id because
-    /// the two programs of a patch share no numbering and this is the only thing
-    /// they do share — the same problem <see cref="TapSpec.Node"/> answers the
-    /// same way.
-    /// </summary>
-    public static string Key(Guid node, string signal) => $"{Prefix}/{node:N}/{signal}";
-
-    /// <summary>
     /// Measures every Meter the picture is listening to and plays the answer into
     /// <paramref name="blocks"/>.
     /// </summary>
@@ -73,8 +51,8 @@ public static class Meters
         {
             var tap = heard.Taps[slot];
 
-            var level = Key(tap.Node, Level);
-            var peak = Key(tap.Node, Peak);
+            var level = MeterSignals.Key(tap.Node, MeterSignals.Level);
+            var peak = MeterSignals.Key(tap.Node, MeterSignals.Peak);
 
             // Every tap is offered, and a Scope's is refused here by nobody
             // reading it. That is cheaper than knowing which kind of module each

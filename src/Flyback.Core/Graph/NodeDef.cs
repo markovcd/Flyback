@@ -245,7 +245,7 @@ public sealed record NodeDef(
     /// <remarks>
     /// Means nothing without <see cref="ChartsSignal"/>: it changes what fills the
     /// buffer, not whether there is one. The buffer then runs from
-    /// <see cref="Compile.Spectra.Lowest"/> to <see cref="Compile.Spectra.Highest"/>
+    /// <see cref="Compile.SpectrumAxis.Lowest"/> to <see cref="Compile.SpectrumAxis.Highest"/>
     /// on a log axis and holds linear amplitude — see
     /// <see cref="Compile.Spectra"/>.
     /// </remarks>

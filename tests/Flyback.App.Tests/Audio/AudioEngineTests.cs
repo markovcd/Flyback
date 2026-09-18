@@ -287,7 +287,7 @@ public class AudioEngineTests
         engine.Update(builder.Patch);
         engine.Start();
 
-        var level = Meters.Key(meter.Id, Meters.Level);
+        var level = MeterSignals.Key(meter.Id, MeterSignals.Level);
 
         // Nothing played yet, so nothing heard.
         engine.Listen(drawn, watching);

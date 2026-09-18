@@ -70,8 +70,8 @@ public partial class NodeCatalog
 
                 return
                 [
-                    em.Binary(OpCode.Div, em.Live(Meters.Key(node.Node, Meters.Level)), scale),
-                    em.Binary(OpCode.Div, em.Live(Meters.Key(node.Node, Meters.Peak)), scale),
+                    em.Binary(OpCode.Div, em.Live(MeterSignals.Key(node.Node, MeterSignals.Level)), scale),
+                    em.Binary(OpCode.Div, em.Live(MeterSignals.Key(node.Node, MeterSignals.Peak)), scale),
                 ];
             },
             "How loud the sound is, as a number to draw with. Patch the signal you want it to "
@@ -668,8 +668,8 @@ public partial class NodeCatalog
         // Eight rows down however far 'range' reaches, and the grid's columns on
         // the decades — 100 Hz, 1 kHz and 10 kHz — rather than evenly from the
         // edge, since a decade is what a log axis is read in.
-        var decades = Math.Log10(Spectra.Highest / Spectra.Lowest);
-        var firstDecade = (float)(Math.Log10(100d / Spectra.Lowest) / decades);
+        var decades = Math.Log10(SpectrumAxis.Highest / SpectrumAxis.Lowest);
+        var firstDecade = (float)(Math.Log10(100d / SpectrumAxis.Lowest) / decades);
 
         // Twenty over the natural log of ten, which turns a natural log of an
         // amplitude into decibels.

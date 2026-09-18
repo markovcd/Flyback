@@ -5,7 +5,7 @@ namespace Flyback.Core.Compile;
 
 /// <summary>
 /// What an Analyzer charts: the frequency content of a stretch of what the
-/// speakers played, laid out across a chart's buffer on a logarithmic axis.
+/// speakers played, laid out across a chart's buffer along <see cref="SpectrumAxis"/>.
 /// </summary>
 /// <remarks>
 /// The other transformation <see cref="Traces.Refresh"/> can do on the way from a
@@ -22,12 +22,6 @@ namespace Flyback.Core.Compile;
 /// </remarks>
 public static class Spectra
 {
-    /// <summary>The frequency at the left-hand edge of the chart, in hertz.</summary>
-    public const double Lowest = 20d;
-
-    /// <summary>The frequency at the right-hand edge, in hertz.</summary>
-    public const double Highest = 20_000d;
-
     /// <summary>
     /// The longest segment the window is cut into, in evaluations: about 85 ms at
     /// the oversampled rate, which puts a bin every 12 Hz.
@@ -54,14 +48,6 @@ public static class Spectra
     /// what a frame costs independent of the knob.
     /// </summary>
     public const int MaxSegments = 8;
-
-    /// <summary>The frequency a point of a buffer <paramref name="points"/> long stands for.</summary>
-    public static double FrequencyAt(int point, int points) =>
-        Lowest * Math.Pow(Highest / Lowest, point / (double)Math.Max(points - 1, 1));
-
-    /// <summary>Where along a buffer <paramref name="points"/> long a frequency falls, in points.</summary>
-    public static double PointOf(double hertz, int points) =>
-        Math.Log(hertz / Lowest) / Math.Log(Highest / Lowest) * (points - 1);
 
     /// <summary>
     /// Lays the spectrum of the newest <paramref name="span"/> evaluations of a
@@ -123,11 +109,11 @@ public static class Spectra
 
             // Halfway to the neighboring points in either direction, on the log
             // axis, which is the stretch of spectrum a point stands for.
-            var halfStep = Math.Pow(Highest / Lowest, 0.5d / Math.Max(into.Length - 1, 1));
+            var halfStep = Math.Pow(SpectrumAxis.Highest / SpectrumAxis.Lowest, 0.5d / Math.Max(into.Length - 1, 1));
 
             for (var i = 0; i < into.Length; i++)
             {
-                var center = FrequencyAt(i, into.Length) / perBin;
+                var center = SpectrumAxis.FrequencyAt(i, into.Length) / perBin;
                 var from = (int)Math.Ceiling(center / halfStep);
                 var to = (int)Math.Floor(center * halfStep);
 
