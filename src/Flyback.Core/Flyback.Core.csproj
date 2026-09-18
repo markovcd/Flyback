@@ -44,6 +44,9 @@
     <Compile Update="Graph\NodeCatalog.Strings.cs">
       <DependentUpon>NodeCatalog.cs</DependentUpon>
     </Compile>
+    <Compile Update="Graph\Presets.WholeBand.cs">
+      <DependentUpon>Presets.cs</DependentUpon>
+    </Compile>
   </ItemGroup>
 
 </Project>

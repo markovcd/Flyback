@@ -897,119 +897,298 @@ fresh |> trails(zoom: 0.99, angle: 0.015, persist: 0.92) |> out.color
 preset draws from one node. `field + pulse |> fract()` groups as
 `(field + pulse) |> fract()`, because the pipe is the loosest operator there is.
 
-### Whole band — [:1169](../src/Flyback.Core/Graph/Presets.cs)
+### Whole band — [:27](../src/Flyback.Core/Graph/Presets.WholeBand.cs)
 
-The showcase, and the stress test: about a hundred modules in ten groups. It is
-also the patch that argues hardest for `group`, since the C# builds it that way
-already.
+The showcase, and the stress test: a whole song, two hundred and twenty-five
+modules in fifteen groups. It is also the patch that argues hardest for `group`,
+since the C# builds it that way already.
 
 ```
 # What one patch can be rather than what one module does.
 
 group "Clock" {
-  let beat       = tempo(112)
-  let eighths    = beat * 2
-  let sixteenths = beat * 4
+  let beat = tempo(112)
 }
 
-group "Sequences" {
-  let bass = notes(rate: eighths, gate_length: 0.55, shape: 0.02) [
-    A1@1.5 A1@0.5%0.55 E2%0.8 A1%0.65
-    G1@1.5 G1@0.5%0.55 D2%0.8 G1%0.65
-    F1@1.5 C2@0.5%0.6  F1@2%0.85 E1@4
+group "Song" {
+  let song = beat.beats |> values(rate: 0.03125, gate_length: 1, shape: 0) [
+    0.1%0.9 0.3%0.8 0.6%0.45 0.7%0.5  1%0.75 1%0.75 0.7%0.5 0.2
+    1%0.8 1%0.8 0.45%0.6 0.1%0.9
   ]
 
-  let lead = notes(rate: sixteenths, gate_length: 0.62, shape: 0.045) [
+  let theme = beat.beats |> values(rate: 0.03125, gate_length: 1, shape: 0) [
+    ~ ~ ~ 0  1 1 0 0  1 1 0 ~
+  ]
+
+  let turn = beat.beats |> values(rate: 0.03125, gate_length: 1, shape: 0) [
+    0 0 0 1  0 1 0 1  0 1 0 0
+  ]
+
+  let phrase  = beat.beats * 0.03125 |> fract()
+  let filling = (phrase |> step(edge: 0.875)) * turn
+  let ramp    = phrase |> remap(0.875..1, 0.35..1)
+
+  let root = math.mix(
+    beat.beats |> values(rate: 0.25, gate_length: 1, shape: 0) [ 0 -2 -4 -5 ],
+    beat.beats |> values(rate: 0.25, gate_length: 1, shape: 0) [ -4 3 -2 0  -4 3 -5 -5 ],
+    theme)
+}
+
+group "Noise" {
+  let hiss = fract(sin(t * 3571) * 4371.3) |> remap(0..1, -1..1)
+}
+
+group "Kick" {
+  let verseKick = beat.beats |> values(shape: 0.01) [
+    1 ~ ~ ~  ~ ~ 0.75 ~  0.95 ~ ~ ~  ~ ~ 0.6 ~
+  ]
+
+  let chorusKick = beat.beats |> values(shape: 0.01) [
+    1 ~ ~ ~  0.9 ~ ~ ~  0.95 ~ ~ ~  0.9 ~ 0.6 ~
+  ]
+
+  let kickGate = math.mix(verseKick.gate, chorusKick.gate, theme) * (song |> step(edge: 0.25))
+  let kickHard = math.mix(verseKick, chorusKick, theme) |> hold(trigger: kickGate)
+
+  let kickLevel = kickGate |> adsr(attack: 1.26ms, decay: 240ms, sustain: 0, release: 79ms)
+  let sweep     = kickGate |> adsr(attack: 0.5ms, decay: 44.7ms, sustain: 0, release: 15.8ms)
+
+  let kick = sine(freq: sweep |> remap(0..1, 46..200)) * kickLevel * kickHard * 1.7
+               |> clamp(-1, 1)
+
+  let duck = kickLevel |> remap(0..1, 1..0.45)
+}
+
+group "Hats" {
+  let hatSeq = beat.beats |> values(gate_length: 0.4, shape: 0.01) [
+    0.8 0.3 0.55 0.3  0.75 0.3 0.6 0.35  0.8 0.3 0.55 0.3  0.75 0.35 0.65 0.5
+  ]
+
+  let shut = (1 - fract(beat.beats * 4) |> pow(10)) * hatSeq * (song |> step(edge: 0.25))
+  let open = (1 - fract(beat.beats + 0.5) |> pow(3)) * theme
+
+  let hatLevel = shut + open * 0.6
+
+  let under = math.mix(b: hiss, t: 0.2291)
+  under.a <- under
+
+  let hats = (hiss - under) * hatLevel
+}
+
+group "Snare" {
+  let snareSeq = beat.beats |> values(shape: 0.01) [
+    ~ ~ ~ ~  1 ~ ~ ~  ~ ~ ~ ~  0.95 ~ ~ 0.45
+  ]
+
+  let snareGate = math.mix(snareSeq.gate * (song |> step(edge: 0.5)), hatSeq.gate, filling)
+  let snareHard = math.mix(snareSeq, ramp, filling) |> hold(trigger: snareGate)
+
+  let snareLevel = snareGate |> adsr(attack: 0.5ms, decay: 158ms, sustain: 0, release: 63ms)
+
+  let rumble = math.mix(b: hiss, t: 0.036)
+  let wires  = math.mix(b: hiss - rumble, t: 0.2127)
+  rumble.a <- rumble
+  wires.a <- wires
+
+  let shell = sine(freq: frequency(185), amp: 0.6) * (snareLevel * snareLevel)
+  let snare = (wires * 2.2 * snareLevel + shell) * snareHard
+}
+
+group "Bass" {
+  let verseBass = beat.beats |> values(rate: 2, gate_length: 0.6) [
+    0@1.5 0%0.6@0.5 7%0.85 0%0.7  0@1.5 12%0.7@0.5 0%0.85 7%0.75
+  ]
+
+  let chorusBass = beat.beats |> values(rate: 2, gate_length: 0.7) [
+    0 0%0.7 0%0.85 0%0.7  0 0%0.7 12%0.85 0%0.75
+  ]
+
+  let bassGate = math.mix(verseBass.gate, chorusBass.gate, theme) * (song |> step(edge: 0.4))
+  let bassHz   = math.mix(verseBass, chorusBass, theme) + root + 33 |> note()
+
+  let accent = math.mix(b: bassGate, t: 0.001)
+  accent.a <- accent
+
+  let pluck = (bassGate |> adsr(attack: 1ms, decay: 126ms, sustain: 0.4, release: 63ms)) * accent
+
+  let f = pluck |> remap(in_low: 0, out_low: 0.002291,
+                         out_high: song |> remap(0..1, 0.02945..0.08508))
+
+  let fromLow = saw(freq: bassHz, amp: 0.8) |> sub()
+  let ringing = mul(b: 0.45)
+  let band    = add(b: f * (fromLow - ringing))
+  let low     = add(b: f * band)
+  fromLow.b <- low
+  ringing.a <- band
+  band.a <- band
+  low.a <- low
+
+  let bass = ((low * pluck * 2.2 |> clamp(-1, 1)) + sine(freq: bassHz, amp: 0.75) * pluck) * duck
+}
+
+group "Strings" {
+  let firstArp = beat.beats |> values(rate: 2) [
+    57 64%0.7 69%0.8 64%0.7  72.6%0.9 64%0.7 69%0.8 64%0.7
+  ]
+
+  let secondArp = beat.beats |> add(b: -0.25) |> values(rate: 2) [
+    69 72.6 76 72.6  69 76 72.6 69
+  ]
+
+  let stringTone = song |> remap(0..1, 0.02945..0.072)
+
+  let firstOnce = math.mix(
+    b: string(trigger: firstArp.gate,
+              freq: firstArp |> tune(transpose: root) [ C D E F G G# A B ],
+              decay: 708ms),
+    t: stringTone)
+  let firstTwice = math.mix(b: firstOnce, t: stringTone)
+  firstOnce.a <- firstOnce
+  firstTwice.a <- firstTwice
+
+  let secondOnce = math.mix(
+    b: string(trigger: secondArp.gate * (song |> step(edge: 0.2)),
+              freq: secondArp |> tune(transpose: root) [ C D E F G G# A B ],
+              decay: 708ms),
+    t: stringTone)
+  let secondTwice = math.mix(b: secondOnce, t: stringTone)
+  secondOnce.a <- secondOnce
+  secondTwice.a <- secondTwice
+
+  let firstString  = firstTwice * 2.2
+  let secondString = secondTwice * 2.2
+
+  let strings  = firstString + secondString
+  let between  = strings * 0.5
+  let stringsL = firstString + between
+  let stringsR = secondString + between
+}
+
+group "Pad" {
+  let padRoot   = pulse(freq: root + 57 |> note(),
+                        width: sine(freq: 0.17, amp: 0.22, bias: 0.5), amp: 0.5)
+  let padMiddle = pulse(freq: tune(in: 60.6, transpose: root) [ C D E F G G# A B ],
+                        width: sine(freq: 0.23, amp: 0.22, bias: 0.5), amp: 0.5)
+  let padFifth  = pulse(freq: root + 64 |> note(),
+                        width: sine(freq: 0.29, amp: 0.22, bias: 0.5), amp: 0.5)
+
+  let padTone = song |> remap(0..1, 0.02291..0.07854)
+
+  let padToneL = math.mix(
+    b: mixer(in_1: padRoot, level_1: 0.8, in_2: padMiddle, level_2: 0.9,
+             in_3: padFifth, level_3: 0.35),
+    t: padTone)
+  let padToneR = math.mix(
+    b: mixer(in_1: padRoot, level_1: 0.8, in_2: padMiddle, level_2: 0.35,
+             in_3: padFifth, level_3: 0.9),
+    t: padTone)
+  padToneL.a <- padToneL
+  padToneR.a <- padToneR
+
+  let swelled = math.mix(b: song.gate, t: 0.00001)
+  swelled.a <- swelled
+
+  let padLevel = swelled * duck
+  let padL = padToneL * padLevel
+  let padR = padToneR * padLevel
+}
+
+group "Lead" {
+  let hook = beat.beats |> notes(gate_length: 0.62, shape: 0.045) [
     A4 C5%0.8 E5%0.9 C5%0.6   F5 E5%0.85 E5%0 D5%0.9
     B4%0.8 D5%0.7 G5 F5%0.85  E5%0.9 D5%0.6 C5%0.95 C5%0
     B4%0.85 A4 G4%0.7 A4%0.8
   ]
 
-  let kick = values(rate: sixteenths, gate_length: 0.32, shape: 0.01) [
-    0 ~ ~ ~  0%0.9 ~ 0%0.5 ~  0%0.95 ~ ~ ~  0%0.85 ~ 0%0.55 ~
+  let melody = beat.beats |> notes(rate: 2, gate_length: 0.85, shape: 0.03) [
+    C5@3 A4%0.8 C5%0.9@2 F5@2   E5@4 D5%0.85@2 C5%0.9@2
+    D5@3 B4%0.8 D5%0.9@2 G5@2   E5@6 E5%0@2
   ]
 
-  let hats = values(rate: sixteenths, gate_length: 0.4, shape: 0.01) [
-    0.15%0.9 0.1%0.35 0.15%0.6 0.1%0.3  0.15%0.85 0.1%0.35 0.55%0.7 0.1%0.3
-    0.15%0.9 0.1%0.35 0.15%0.6 0.1%0.3  0.15%0.8  0.1%0.4  1%0.85   0.1%0.5
-  ]
+  let leadStep = math.mix(hook, melody, theme)
+  let leadGate = math.mix(hook.gate, melody.gate, theme) * theme.gate
+
+  let tuned = leadStep |> note()
+  let wide  = note(tuned.note, cents: sine(freq: 5.4, amp: 9))
+  let fifth = triangle(freq: leadStep + 7 |> note(), amp: 0.5)
+                * sine(freq: 0.043, amp: 0.5, bias: 0.5)
+
+  let leadEnv = leadGate |> adsr(attack: 3.16ms, decay: 112ms,
+                                 sustain: theme |> remap(0..1, 0.3..0.7), release: 141ms)
+
+  let leadTone  = leadEnv |> remap(0..1, 0.01636..0.1702)
+  let leadToneL = math.mix(b: saw(freq: tuned, amp: 0.7) + fifth, t: leadTone)
+  let leadToneR = math.mix(b: saw(freq: wide,  amp: 0.7) + fifth, t: leadTone)
+  leadToneL.a <- leadToneL
+  leadToneR.a <- leadToneR
+
+  let leadLevel = leadEnv * (theme |> remap(0..1, 0.6..0.9))
+  let leadL = leadToneL * leadLevel
+  let leadR = leadToneR * leadLevel
 }
 
-group "Bass" {
-  let tuned  = note(bass)
-  let body   = saw(freq: tuned, amp: 0.8) + sine(freq: note(bass, octave: -1), amp: 0.6)
-  let shaped = body * (bass.gate |> adsr(attack: 1ms, decay: 79ms,
-                                         sustain: 0.35, release: 63ms))
-  let bassOut = shaped * 2.4 |> clamp(-1, 1)
-}
+group "Room" {
+  let dark = math.mix(
+    b: mixer(in_1: snare, level_1: 0.5, in_2: leadL + leadR, level_2: 0.4,
+             in_3: strings, level_3: 0.5, in_4: hats, level_4: 0.12),
+    t: 0.08508)
+  dark.a <- dark
 
-group "Lead" {
-  let tuned  = note(lead)
-  let wide   = note(tuned.note, cents: sine(freq: 5.4, amp: 9))
-  let swell  = sine(freq: 0.043, amp: 0.5, bias: 0.5)
-  let fifth  = triangle(freq: note(lead + 7), amp: 0.5) * swell
-  let env    = lead.gate |> adsr(attack: 2ms, decay: 71ms, sustain: 0.28, release: 40ms)
+  let dry = dark * 3
 
-  let voiceL = (saw(freq: tuned, amp: 0.7) + fifth) * env
-  let voiceR = (saw(freq: wide,  amp: 0.7) + fifth) * env
-}
+  let roomL = (dark |> string(freq: 22.47, decay: 1.25892542s, brightness: 0.25))
+                + (dark |> string(freq: 29.99, decay: 1.25892542s, brightness: 0.25))
+                + (dark |> string(freq: 37.78, decay: 1.25892542s, brightness: 0.25))
+                - dry
 
-group "Kick" {
-  let sweep   = kick.gate |> adsr(attack: 0.5ms, decay: 40ms, sustain: 0, release: 16ms)
-  let kickOut = sine(freq: sweep |> remap(0..1, 47..205))
-                  * (kick.gate |> adsr(attack: 1.26ms, decay: 240ms,
-                                       sustain: 0, release: 79ms))
-}
-
-group "Hats" {
-  # White noise built out of arithmetic, since Noise is a smooth field.
-  let hiss = fract(sin(t * 3571) * 4371.3) |> remap(0..1, -1..1)
-
-  let hatOut = hiss * adsr(gate: hats.gate,
-                           attack: 0.2ms,
-                           decay:  hats |> remap(0..1, -2.5..-0.85),
-                           sustain: 0,
-                           release: 6.3ms)
+  let roomR = (dark |> string(freq: 25.22, decay: 1.25892542s, brightness: 0.25))
+                + (dark |> string(freq: 33.66, decay: 1.25892542s, brightness: 0.25))
+                + (dark |> string(freq: 40.03, decay: 1.25892542s, brightness: 0.25))
+                - dry
 }
 
 group "Desk" {
-  let master = desk(left_1: bassOut, level_1: 0.55,
-                    left_2: voiceL, right_2: voiceR, level_2: 0.72,
-                    left_3: kickOut, level_3: 1,
-                    left_4: hatOut, right_4: hatOut * 1.4545455, level_4: 0.55,
-                    trim: 1.2)
+  let drums = desk(left_1: kick, level_1: 0.85,
+                   left_2: snare, level_2: 0.6,
+                   left_3: hats, right_3: hats * 1.45, level_3: 0.4,
+                   left_4: bass, level_4: 0.8)
+
+  let master = desk(left_1: stringsL, right_1: stringsR, level_1: 0.8,
+                    left_2: padL, right_2: padR, level_2: 0.42,
+                    left_3: leadL, right_3: leadR, level_3: 0.6,
+                    left_4: roomL, right_4: roomR, level_4: 0.17,
+                    bus_left: drums.bus_left, bus_right: drums.bus_right,
+                    trim: 0.7)
 
   master.left  |> out.left
   master.right |> out.right
 }
 
 group "Picture: Geometry" {
-  let boil  = t * 0.18
-  let crawl = t * 0.02
-
-  let fold = transform(angle: t * 0.055 + (bass.index |> remap(0..1, -0.4..0.4)),
-                       zoom:  kick.gate |> remap(0..1, 0.96..1.3),
+  let fold = transform(angle: t * 0.055 + root * 0.08,
+                       zoom:  kickGate |> remap(0..1, 0.96..1.3),
                        order: "turn")
-               |> kaleidoscope(segments: bass.index |> remap(0..1, 3..10))
+               |> kaleidoscope(segments: root |> remap(-5..3, 4..10))
 
-  let field = fold |> noise(z: boil, scale: 2.1)
+  let field = fold |> noise(z: t * 0.18, scale: 2.1)
 
   let filament = fold
     |> warp(by: field,
-            amount: sine(freq: 0.071, amp: 0.5, bias: 0.5) |> remap(0..1, 0.2..0.7))
-    |> rings(freq: lead.gate |> remap(0..1, 2.6..5.5), offset: t * 0.4)
+            amount: sine(freq: 0.071, amp: 0.25, bias: 0.45) + firstArp.gate * 0.15)
+    |> rings(freq: (leadGate |> remap(0..1, 2.2..4.4)) + song * 1.6, offset: t * 0.4)
     |> smoothstep(0.2, 0.95)
 }
 
 group "Picture: Color" {
   let fresh = hsv(
-    hue:        lead.index * 0.8 + field * 0.9 + crawl |> fract(),
-    saturation: bass.gate |> remap(0..1, 0.55..0.95),
-    value:      filament * (kick.gate |> remap(0..1, 0.75..1.7)) |> clamp(0, 1))
+    hue:        leadStep * (1 / 12) + field * 0.9 + (t * 0.02 + theme * 0.45) |> fract(),
+    saturation: (bassGate |> remap(0..1, 0.55..0.95)) * (snareGate |> remap(0..1, 1..0.3)),
+    value:      filament * ((kickGate |> remap(0..1, 0.75..1.7)) + hatLevel * 0.35)
+                  |> clamp(0, 1))
 }
 
 group "Picture: Feedback" {
-  let warm = transform(zoom: 1.035, angle: kick.gate |> remap(0..1, 0.012..0.05))
+  let warm = transform(zoom: 1.035, angle: kickGate |> remap(0..1, 0.012..0.05))
                |> feedback()
                |> color.split()
 
@@ -1018,7 +1197,7 @@ group "Picture: Feedback" {
                |> color.split()
 
   rgb(warm, cool.g, cool.b)
-    |> gain(gain: 0.85, bias: 0)
+    |> gain(gain: song |> remap(0..1, 0.78..0.9), bias: 0)
     |> max(fresh)
     |> out.color
 }
@@ -1028,16 +1207,18 @@ out.volume = 0.62
 
 Two things this one settles.
 
-**A computed duration stays in decades.** The Hats' decay is not a knob but a
-wire off the sequencer, and what it carries is `PortDisplay.Duration`'s own
-scale. The `ms` literal is sugar for a *knob*; a Remap's `out low` and `out
-high` are ordinary Number ports, so the range there is written `-2.5..-0.85` and
-means what the preset means. The sugar stops exactly where the arithmetic
-starts, which is the honest place for it to stop.
+**A loop may close on a name that comes after it.** The bass filter is two Adds
+that each feed themselves, and what goes into the first is the saw less what the
+second holds — so `fromLow` needs `low` four lines before `low` exists. It is
+declared with the socket empty and `fromLow.b <- low` fills it once both names
+do. The eighteen `<-` lines here are every wire the canvas draws dashed, and
+nothing else in the source runs backwards.
 
-**Names are scoped to their group.** Both the Bass and the Lead group want to
-call something `tuned`. A group is a naming scope as well as a box; a name
-declared in one is visible after it, and a later group may reuse it.
+**A rounded constant is a different program.** The room's decay is a knob at a
+tenth of a decade, which is `1.25892542s`, and the compiler keeps one register
+for each distinct number. Written `1.26s` the patch plays the same and carries a
+constant the preset does not have — so a duration that has to match another one
+in the patch is written in full, and one that stands alone can be rounded.
 
 ---
 
@@ -1054,8 +1235,8 @@ holes would show up while the design was still cheap to move. Four did.
   macros, and a voice hands back a tone, a tint and one fader shared between
   them. A single-pipeline body could not say it without duplicating the fader
   and changing the graph.
-- **Groups had to be expressible.** Whole band organises about a hundred modules
-  into ten of them. Dropping groups on `print` would have made the one patch
+- **Groups had to be expressible.** Whole band organises over two hundred modules
+  into fifteen of them. Dropping groups on `print` would have made the one patch
   that most needs reading the one least able to be read.
 - **Literal arithmetic has to fold.** In key sets a knob to `1 / 12`. Without
   constant folding that is a Divide module the preset does not have.

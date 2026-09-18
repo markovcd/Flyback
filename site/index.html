@@ -69,7 +69,7 @@
   .listen h3 { margin: 0; font-size: 22px; }
   .listen > p { max-width: 44rem; }
   .tracks { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; margin-top: 24px; }
-  @media (min-width: 960px) { .tracks { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+  @media (min-width: 960px) { .tracks { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
   .track { display: flex; flex-direction: column; }
   .track .body { flex: 1; display: flex; flex-direction: column; }
   .track .body > p { font-size: 14.5px; color: var(--muted); margin: 0 0 16px; flex: 1; }
@@ -250,7 +250,7 @@ x |> sine(freq: 1.5)
     </div>
 
     <div class="stills">
-      <figure class="still"><img loading="lazy" src="assets/shots/preview-whole-band.webp" width="888" height="500" alt="A many-pointed star in pinks, blues and reds."><figcaption><strong>Whole band</strong>Four instruments on four sequencers, and one picture driven by three of them.</figcaption></figure>
+      <figure class="still"><img loading="lazy" src="assets/shots/preview-whole-band.webp" width="888" height="500" alt="A many-pointed star in pinks, blues and reds."><figcaption><strong>Whole band</strong>A whole song from the engine's own modules, and one picture every part moves.</figcaption></figure>
       <figure class="still"><img loading="lazy" src="assets/shots/preview-acid.webp" width="888" height="500" alt="A dense swirl of green, pink and orange fragments."><figcaption><strong>Acid</strong>A 303 line through a resonant filter into two delays.</figcaption></figure>
       <figure class="still"><img loading="lazy" src="assets/shots/preview-marble.webp" width="888" height="500" alt="Grey and lilac veins like polished stone."><figcaption><strong>Marble</strong>A fractal bent by a fractal, which is stone.</figcaption></figure>
       <figure class="still"><img loading="lazy" src="assets/shots/preview-four-forms.webp" width="888" height="500" alt="A circle, a rounded square, a hexagon and a star in coral on black."><figcaption><strong>Four forms</strong>Four shapes on a turning ring.</figcaption></figure>
@@ -262,7 +262,7 @@ x |> sine(freq: 1.5)
 
     <div class="listen">
       <h3>What they sound like</h3>
-      <p class="quiet">The first minute of three presets, rendered to WAV with <code>flyback-cli render</code> and
+      <p class="quiet">The first minute of two presets, rendered to WAV with <code>flyback-cli render</code> and
       encoded to MP3. Nothing was added: every note, drum and echo comes out of the patch.</p>
 
       <div class="tracks">
@@ -285,16 +285,6 @@ x |> sine(freq: 1.5)
             and the voices push each other down.</p>
             <div class="player" data-peaks=".61,.69,.60,.48,.39,.44,.42,.44,.62,.54,.46,.62,.85,.84,.94,.70,.64,.69,.57,.58,.62,.63,.61,.56,.57,.68,.63,.51,.71,.62,.57,.65,.85,.96,1.00,.92,.77,.70,.66,.83,.65,.58,.55,.52,.55,.64,.68,.62,.63,.61,.34,.32,.32,.43,.40,.67,.82,.58,.65,.76,.72,.57,.57,.57,.48,.53,.48,.45,.42,.41,.45,.48,.28,.44,.27,.37,.36,.25,.26,.34,.35,.33,.42,.36,.37,.38,.39,.37,.29,.35,.40,.33,.33,.18,.10,.10">
               <audio controls preload="none" src="assets/audio/slow-weather.mp3"></audio>
-            </div>
-          </div>
-        </article>
-
-        <article class="node track" style="--accent: var(--sequencer)">
-          <header>Whole band <small>Built in</small></header>
-          <div class="body">
-            <p>Bass, lead, kick and hats off four sequencers, mixed on a desk, with the picture following three of them.</p>
-            <div class="player" data-peaks=".78,.66,.37,.39,.68,.56,.62,.48,.57,.78,.46,.60,.81,.45,.26,.69,.64,.31,.80,.55,.36,.55,.29,.70,.83,.60,.32,.47,.68,.36,.71,.37,.65,.55,.31,.52,.80,.75,.61,.63,.41,.38,.87,.47,.40,.69,.51,.36,.73,.64,.30,.83,.85,.46,.49,.53,.58,.48,.25,.52,.90,.37,.40,.52,.74,.45,.89,.41,.42,.79,.34,.37,.61,.65,.37,.45,.71,.42,1.00,.62,.52,.55,.28,.73,.66,.48,.43,.67,.42,.37,.53,.10,.10,.10,.10,.10">
-              <audio controls preload="none" src="assets/audio/whole-band.mp3"></audio>
             </div>
           </div>
         </article>
@@ -338,6 +328,16 @@ x |> sine(freq: 1.5)
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                 referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
         <figcaption><strong>Phase</strong> Four minutes four, with sound.</figcaption>
+      </figure>
+      <p class="quiet" style="margin-top: 32px">Whole band is the one built into the engine, so it has no filter,
+      no reverb and no noise module to reach for and builds all three: a Mix fed its own output is a lowpass, two
+      Adds that feed themselves are a filter that rings, and six Strings nobody plucks are the room. Seven parts,
+      twelve phrases of eight bars, and a picture every part moves.</p>
+      <figure class="clip" style="margin-top: 24px">
+        <iframe src="https://www.youtube-nocookie.com/embed/L6fUUqIo_s8" title="Whole band" loading="lazy"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+        <figcaption><strong>Whole band</strong> Three minutes twenty-three, with sound.</figcaption>
       </figure>
     </div>
   </div>
@@ -435,8 +435,8 @@ x |> sine(freq: 1.5)
       <div class="stop">
         <div>
           <h3>Keep big patches readable with groups</h3>
-          <p>The Whole band preset is eighty-five modules in ten boxes: a clock, the sequences, four instruments,
-          a mixing desk and the picture. Double-click a box to open it, and press <kbd>Ctrl</kbd>+<kbd>G</kbd> to
+          <p>The Whole band preset is two hundred and twenty-five modules in fifteen boxes: a clock, the song, seven
+          instruments, a room, a mixing desk and the picture. Double-click a box to open it, and press <kbd>Ctrl</kbd>+<kbd>G</kbd> to
           make your own.</p>
         </div>
         <figure>
