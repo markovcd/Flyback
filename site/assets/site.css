@@ -101,7 +101,7 @@ strong { color: var(--bright); font-weight: 650; }
   color: var(--bright); text-decoration: none; font-weight: 650; font-size: 17px;
   margin-right: auto;
 }
-.brand img { width: 30px; height: 30px; display: block; }
+.brand img { width: 30px; height: 30px; display: block; flex: none; }
 .brand:hover { color: var(--bright); }
 
 .toolbar nav { display: flex; align-items: center; gap: 6px; }
@@ -116,6 +116,10 @@ strong { color: var(--bright); font-weight: 650; }
   .toolbar nav a.optional, .toolbar .sep { display: none; }
   .toolbar nav a { padding: 7px 8px; }
   .brand span { display: none; }
+}
+@media (max-width: 400px) {
+  .toolbar nav { gap: 2px; }
+  .toolbar nav a { padding: 7px 4px; font-size: 13.5px; }
 }
 
 /* ---- buttons, drawn like the toolbar's own ------------------------------ */
