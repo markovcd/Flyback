@@ -230,11 +230,11 @@ internal sealed class FracturePreset : PresetBench
         var snare = Sum(Drum(snareStroke, 200f, 170f, 4f, 3f), Product(snareStroke, wires));
 
         // Eleven sixteenths in sixteen, off the same bent clock, so a roll rolls the hats
-        // too.
-        var hatHits = b.Add(EuclidType, (1, 4f), (2, 16f), (3, 11f));
-        var hatStroke = Enters(Product(Stroke(drumBeats, 4f, 4f), hatHits, 1), song, 0.25f, 0.3f);
-        var sizzle = b.Add(FilterType, (1, 8500f), (2, 0.2f));
-        var hats = Times(Product(hatStroke, sizzle, 2), 0.8f);
+        // too. The Euclid's own stroke is the envelope, and the Hiss shares the wires'
+        // seed, so it is the same noise.
+        var hatHits = b.Add(EuclidType, (1, 4f), (2, 16f), (3, 11f), (EuclidCurve, 4f));
+        var hatStroke = Enters(hatHits, song, 0.25f, 0.3f, EuclidStroke);
+        var hats = Hiss(hatStroke, 8500f, 0.2f, "high", 0.8f, seed: 1f);
 
         // And the other thing done to a break: a Sample and Hold clocked at five
         // kilohertz is a sampler with not enough of them. Only while the die is rolling.
@@ -250,7 +250,6 @@ internal sealed class FracturePreset : PresetBench
         b.Wire(drumBeats, 0, pattern, 0)
          .Wire(noise, 0, rattle, 0)
          .Wire(drumBeats, 0, hatHits, 0)
-         .Wire(noise, 0, sizzle, 0)
          .Wire(b.Add("audio.frequency", (0, 5200f)), 0, ticks, 1)
          .Wire(Sum(Sum(kick, snare), hats), 0, kit, 0)
          .Wire(kit, 0, coarse, 0)
@@ -338,8 +337,8 @@ internal sealed class FracturePreset : PresetBench
         var pad = b.Add(ChorusModule.TypeId, (1, 0.17f), (2, 0.7f), (3, 0.6f));
 
         b.Wire(Through("audio.note", padNote), 0, strings, 1)
-         .Wire(Through("audio.note", Snapped(Plus(padNote, 3.6f))), 0, third, 1)
-         .Wire(Through("audio.note", Snapped(Plus(padNote, 10.4f))), 0, seventh, 1)
+         .Wire(InKey(padNote, Scale, 3.6f), 0, third, 1)
+         .Wire(InKey(padNote, Scale, 10.4f), 0, seventh, 1)
          .Wire(Sum(Sum(strings, third), seventh), 0, padTone, 0)
          .Wire(Wander(0.07f, 1f, 600f, 2600f), 0, padTone, 1)
          .Wire(Product(padTone, Span(swell, 0f, 1f, 1f, 0.5f)), 0, pad, 0);
@@ -353,12 +352,14 @@ internal sealed class FracturePreset : PresetBench
         // a Wander, and a Euclid spreads whatever number arrives evenly again. They
         // belong to the first theme, and stop for the second.
         var notes = b.Add(RandomType, (1, 4f), (2, 9f));
-        var bellHits = b.Add(EuclidType, (1, 4f), (2, 16f));
-        var bellStroke = Product(Product(Stroke(beats, 4f, 4f), bellHits, 1), From(1f, second));
-        var bells = Bell(
-            Through("audio.note", Snapped(Plus(Times(notes, 12f, Held), 77f))), bellStroke, 3.5f, 0.3f);
+        var bellHits = b.Add(EuclidType, (1, 4f), (2, 16f), (EuclidCurve, 4f));
+        var bellStroke = Wired("math.mul", bellHits, From(1f, second), EuclidStroke);
+        var bellNote = b.Add("audio.tune", (0, 77f));
+        ScaleExtra.Set(bellNote, Scale);
+        var bells = Bell(bellNote, bellStroke, 3.5f, 0.3f);
 
-        b.Wire(beats, 0, notes, 0)
+        b.Wire(Times(notes, 12f, Held), 0, bellNote, 1)
+         .Wire(beats, 0, notes, 0)
          .Wire(beats, 0, bellHits, 0)
          .Wire(Wander(0.1f, 2f, 3f, 9f), 0, bellHits, 3);
 
@@ -407,29 +408,17 @@ internal sealed class FracturePreset : PresetBench
 
         // --- the space -------------------------------------------------------
 
-        // The riser: the noise through a band that climbs nearly five octaves in four
-        // bars. The ramp that moves the band also opens it.
-        var sweep = b.Add(FilterType, (2, 0.55f));
-        var riser = Times(Product(ramp, sweep, 1), 1.4f);
+        // The riser: a Hiss whose band climbs nearly five octaves in four bars. The
+        // ramp that moves the band also opens it.
+        var riser = Hiss(ramp, 250f, 0.55f, "band", 1.4f, seed: 1f);
 
-        // A dotted eighth on the left and the beat after it on the right, worked out from
-        // the tempo, and one hall for what should sound far away.
-        var sixteenths = Times(beat, 4f);
-        var dotted = b.Add("math.div", (0, 3f));
-        var straightTime = b.Add("math.div", (0, 2f));
-        var tapL = b.Add(DelayModule.TypeId, (2, 0.5f), (3, 1f));
-        var tapR = b.Add(DelayModule.TypeId, (2, 0f), (3, 1f));
+        // An Echo of three sixteenths on the left and two more on the right — a dotted
+        // eighth and the beat after it — and one hall for what should sound far away.
+        var taps = Echo(Sum(bells, Times(lead, 0.6f)), beat, 3f, 2f, 0.5f, 1f);
         var roomSend = b.Add("math.mixer", (1, 0.6f), (3, 0.5f), (5, 0.25f), (7, 0.7f));
         var room = b.Add(ReverbModule.TypeId, (1, 0.85f), (2, 0.8f), (3, 1f));
 
-        b.Wire(noise, 0, sweep, 0)
-         .Wire(Span(ramp, 0f, 1f, 250f, 7000f), 0, sweep, 1)
-         .Wire(sixteenths, 0, dotted, 1)
-         .Wire(sixteenths, 0, straightTime, 1)
-         .Wire(Sum(bells, Times(lead, 0.6f)), 0, tapL, 0)
-         .Wire(dotted, 0, tapL, 1)
-         .Wire(tapL, 0, tapR, 0)
-         .Wire(straightTime, 0, tapR, 1)
+        b.Wire(Span(ramp, 0f, 1f, 250f, 7000f), 0, riser, HissCutoff)
          .Wire(bells, 0, roomSend, 0)
          .Wire(pad, 0, roomSend, 2)
          .Wire(snare, 0, roomSend, 4)
@@ -451,7 +440,7 @@ internal sealed class FracturePreset : PresetBench
         Channel(rhythm, 3, 0.4f, pad, pad, rightFrom: 1);
         Channel(rhythm, 4, 0.4f, riser);
         Channel(air, 1, 0.4f, bells);
-        Channel(air, 2, 0.4f, tapL, tapR);
+        Channel(air, 2, 0.4f, taps, taps, rightFrom: EchoRight);
         Channel(air, 3, 0.45f, room, room, rightFrom: 1);
         Channel(air, 4, 0.5f, lead);
 
@@ -538,8 +527,6 @@ internal sealed class FracturePreset : PresetBench
         var chosen = b.Add("math.step", (0, 0.85f));
         var tile = b.Add(BoxType, (2, 0.3f), (3, 0.3f), (4, 0f));
         var tileFill = b.Add(FillType, (1, 0.02f));
-        var green = b.Add("color.rgb", (0, 0.3f), (1, 1f), (2, 0.5f));
-        var sparks = b.Add("color.gain");
 
         // And the hats are grain: a Random read across the frame instead of along the
         // clock, which is a different speck at every pixel and a new set every frame.
@@ -550,9 +537,11 @@ internal sealed class FracturePreset : PresetBench
          .Wire(Plus(Fraction(cellX), -0.5f), 0, tile, 0)
          .Wire(Plus(Fraction(cellY), -0.5f), 0, tile, 1)
          .Wire(tile, 0, tileFill, 0)
-         .Wire(green, 0, sparks, 0)
-         .Wire(Product(Product(tileFill, chosen), Sum(bellStroke, leadStroke)), 0, sparks, 1)
          .Wire(Sum(Sum(Times(coord, 97.3f), Times(coord, 413.7f, 1)), Times(clock, 60f)), 0, speck, 0);
+
+        // Green, laid on the tunnel as light.
+        var sparks = Ink(
+            tunnel, Product(Product(tileFill, chosen), Sum(bellStroke, leadStroke)), 0.3f, 1f, 0.5f);
 
         Box("Picture: Sparks");
 
@@ -565,17 +554,13 @@ internal sealed class FracturePreset : PresetBench
         var banded = b.Add(PosteriseType);
 
         // Darkened at the corners, and graded by the section last.
-        var vignette = b.Add("math.clamp", (1, 0f), (2, 1f));
-        var shaded = b.Add("color.gain");
+        var shaded = Vignette(banded, 0.5f, 2f, 0.35f);
         var graded = b.Add(GradeType, (2, 1.1f));
 
-        b.Wire(Sum(Sum(tunnel, sparks), grain), 0, trailed, 0)
+        b.Wire(Sum(sparks, grain), 0, trailed, 0)
          .Wire(Span(song, 0f, 1f, 0.85f, 0.6f), 0, trailed, TrailsPersist)
          .Wire(trailed, 0, banded, 0)
          .Wire(Span(crush, 0f, 1f, 24f, 3f), 0, banded, 1)
-         .Wire(Span(coord, 0.5f, 2f, 1f, 0.35f, 2), 0, vignette, 0)
-         .Wire(banded, 0, shaded, 0)
-         .Wire(vignette, 0, shaded, 1)
          .Wire(shaded, 0, graded, 0)
          .Wire(Span(song, 0f, 1f, 0.8f, 1.3f), 0, graded, 1)
          .Wire(graded, 0, output, NodeCatalog.OutputColorPort);
@@ -583,15 +568,6 @@ internal sealed class FracturePreset : PresetBench
         Box("Picture: Print");
 
         return b.Build();
-
-        // A note snapped to the scale.
-        NodeInstance Snapped(NodeInstance note)
-        {
-            var snap = b.Add(NodeCatalog.QuantiserTypeId);
-            ScaleExtra.Set(snap, Scale);
-            b.Wire(note, 0, snap, 0);
-            return snap;
-        }
 
         // One tunnel: the plane turned, a distance from the middle, and the fraction of
         // that run outwards by the beat and cut in half. A square's distance is the larger

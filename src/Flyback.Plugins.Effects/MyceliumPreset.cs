@@ -42,6 +42,19 @@ internal static class MyceliumPreset
 
     private const string RandomType = "flyback.voice.random";
 
+    private const string HissType = "flyback.voice.hiss";
+
+    private const string TuneType = "audio.tune";
+
+    /// <summary>The Tune's second output: the note it snapped to, as a number.</summary>
+    private const int TuneNote = 1;
+
+    private const string TransformType = "space.transform";
+
+    private const int TransformZoom = 2;
+
+    private const int TransformAngle = 3;
+
     private const string WanderType = "flyback.voice.wander";
 
     private const string StrokeType = "flyback.voice.stroke";
@@ -97,6 +110,22 @@ internal static class MyceliumPreset
     {
         layer.SetState("layer", new JsonObject { ["mode"] = mode });
         return layer;
+    }
+
+    /// <summary>The middle band of a Hiss rather than the top, written the same way.</summary>
+    private static NodeInstance Banded(NodeInstance hiss)
+    {
+        hiss.SetState("hiss", new JsonObject { ["band"] = "band" });
+        return hiss;
+    }
+
+    /// <summary>A Transform that turns before it zooms, which is a Rotate into a Scale.</summary>
+    private static NodeInstance TurnedFirst(NodeInstance transform)
+    {
+        transform.SetState(
+            NodeCatalog.TransformStateKey,
+            new JsonObject { [NodeCatalog.TransformOrderKey] = NodeCatalog.TurnThenZoom });
+        return transform;
     }
 
     public static Patch Build(ModuleCatalog modules)
@@ -320,11 +349,10 @@ internal static class MyceliumPreset
         var halfBeat = b.Add("math.mul", (1, 0.5f));
         var backbeat = b.Add(StrokeType, (2, 0.5f), (3, 10f));
 
-        // The band of a Filter around two kilohertz is the wires, made loud because a
-        // bandpass keeps only what fits between its skirts, and a sine at the shell's
-        // pitch is the drum under them.
-        var rattle = b.Add(FilterType, (1, 1900f), (2, 0.3f));
-        var rattleLoud = b.Add("math.mul", (1, 2.7f));
+        // The band of a Hiss around two kilohertz is the wires, left wide open and
+        // made loud because a bandpass keeps only what fits between its skirts, and a
+        // sine at the shell's pitch is the drum under them.
+        var rattle = Banded(b.Add(HissType, (1, 1f), (2, 1900f), (3, 0.3f), (4, 2.7f)));
         var frequency = b.Add("audio.frequency", (0, 185f));
         var shell = b.Add("osc.sine", (3, 0.5f));
         var snareSum = b.Add("math.add");
@@ -336,18 +364,15 @@ internal static class MyceliumPreset
 
         b.Wire(beat, 0, halfBeat, 0)
          .Wire(halfBeat, 0, backbeat, 1)
-         .Wire(hiss, 0, rattle, 0)
-         .Wire(rattle, 1, rattleLoud, 0)
          .Wire(frequency, 0, shell, 1)
-         .Wire(rattleLoud, 0, snareSum, 0)
+         .Wire(rattle, 0, snareSum, 0)
          .Wire(shell, 0, snareSum, 1)
          .Wire(snareSum, 0, snareHit, 0)
          .Wire(backbeat, 0, snareHit, 1)
          .Wire(snareHit, 0, snareOut, 0)
          .Wire(song, 0, snareOut, 1);
 
-        b.Group("Snare", halfBeat, backbeat, rattle,
-            rattleLoud, frequency, shell, snareSum, snareHit, snareOut);
+        b.Group("Snare", halfBeat, backbeat, rattle, frequency, shell, snareSum, snareHit, snareOut);
 
         // --- the hats --------------------------------------------------------
 
@@ -355,27 +380,21 @@ internal static class MyceliumPreset
         // twelve is a shaker. A Euclid spreads whatever number arrives evenly again,
         // so the pattern changes shape rather than merely filling in.
         var density = b.Add("math.remap", (1, 0.2f), (2, 0.8f), (3, 5f), (4, 12f));
-        var hatHits = b.Add(EuclidType, (2, 16f), (4, 2f), (5, 0.3f));
-
-        // The pluck again, steeper, and only on the steps the Euclid says. 'hit' rather
-        // than 'gate', because the clock is already the envelope.
-        var hatTick = b.Add(StrokeType, (3, 7f));
-        var hatEnv = b.Add("math.mul");
+        // Its 'stroke' is the pluck again, steeper, and only on the steps that are
+        // hits: the clock is already the envelope, so nothing is triggered.
+        var hatHits = b.Add(EuclidType, (2, 16f), (4, 2f), (5, 0.3f), (6, 7f));
         var hatVoiced = b.Add("math.mul");
         var hatOut = b.Add("math.mul");
 
         b.Wire(weather, 0, density, 0)
          .Wire(sixteenths, 0, hatHits, 1)
          .Wire(density, 0, hatHits, 3)
-         .Wire(counted, 0, hatTick, 0)
-         .Wire(hatTick, 0, hatEnv, 0)
-         .Wire(hatHits, 1, hatEnv, 1)
          .Wire(hiss, 0, hatVoiced, 0)
-         .Wire(hatEnv, 0, hatVoiced, 1)
+         .Wire(hatHits, 3, hatVoiced, 1)
          .Wire(hatVoiced, 0, hatOut, 0)
          .Wire(hatsIn, 0, hatOut, 1);
 
-        b.Group("Hats", density, hatHits, hatTick, hatEnv, hatVoiced, hatOut);
+        b.Group("Hats", density, hatHits, hatVoiced, hatOut);
 
         // --- the bass --------------------------------------------------------
 
@@ -451,15 +470,14 @@ internal static class MyceliumPreset
         // --- the arp ---------------------------------------------------------
 
         // A tune nobody wrote. A sine one bar long is the contour, the die is thrown
-        // on every sixteenth to knock it about by half an octave, and the Quantiser
-        // snaps what results to the scale. With no 'hold' it snaps continuously, which
-        // is right here: the die only moves on the grid.
+        // on every sixteenth to knock it about by half an octave, and the Tune snaps
+        // what results to the scale. With no 'hold' it snaps continuously, which is
+        // right here: the die only moves on the grid.
         var arc = b.Add("osc.sine", (3, 9f), (4, 66f));
         var jitter = b.Add("math.remap", (1, 0f), (2, 1f), (3, -6f), (4, 6f));
         var contour = b.Add("math.add");
-        var arpNote = b.Add(NodeCatalog.QuantiserTypeId);
+        var arpNote = b.Add(TuneType);
         ScaleExtra.Set(arpNote, Scale);
-        var arpHz = b.Add("audio.note");
 
         // It rests whenever the drift is low, so it comes and goes in phrases rather
         // than in notes.
@@ -480,9 +498,8 @@ internal static class MyceliumPreset
          .Wire(arc, 0, contour, 0)
          .Wire(jitter, 0, contour, 1)
          .Wire(contour, 0, arpNote, 0)
-         .Wire(arpNote, 0, arpHz, 0)
          .Wire(drift, 0, arpGate, 1)
-         .Wire(arpHz, 0, arpOsc, 1)
+         .Wire(arpNote, 0, arpOsc, 1)
          .Wire(arpWidth, 0, arpOsc, 3)
          .Wire(arpOsc, 0, arpPlucked, 0)
          .Wire(pluck, 0, arpPlucked, 1)
@@ -494,7 +511,7 @@ internal static class MyceliumPreset
          .Wire(arpVoice, 0, arpOut, 0)
          .Wire(arpIn, 0, arpOut, 1);
 
-        b.Group("Arp", arc, jitter, contour, arpNote, arpHz, arpGate, arpWidth, arpOsc, arpPlucked,
+        b.Group("Arp", arc, jitter, contour, arpNote, arpGate, arpWidth, arpOsc, arpPlucked,
             arpTone, arpOpen, arpVoice, arpOut);
 
         // --- the drips -------------------------------------------------------
@@ -512,7 +529,7 @@ internal static class MyceliumPreset
         var dripOut = b.Add("math.mul");
 
         b.Wire(sixteenths, 0, dripHits, 1)
-         .Wire(arpNote, 0, dripPitch, 0)
+         .Wire(arpNote, TuneNote, dripPitch, 0)
          .Wire(dripPitch, 0, dripHz, 0)
          .Wire(dripHits, 0, dripHz, 1)
          .Wire(dripHits, 0, dripString, 1)
@@ -651,8 +668,7 @@ internal static class MyceliumPreset
         // seam in it.
         var wedgeCount = b.Add("math.remap", (1, 0f), (2, 1f), (3, 3f), (4, 9f));
         var wedges = b.Add("math.floor");
-        var turn = b.Add("space.rotate");
-        var zoom = b.Add("space.scale");
+        var placed = TurnedFirst(b.Add(TransformType));
         var plane = b.Add("space.kaleidoscope");
 
         b.Wire(clock, 0, creep, 0)
@@ -664,16 +680,14 @@ internal static class MyceliumPreset
          .Wire(kickSeen, 0, pump, 0)
          .Wire(song, 0, wedgeCount, 0)
          .Wire(wedgeCount, 0, wedges, 0)
-         .Wire(spin, 0, turn, 2)
-         .Wire(turn, 0, zoom, 0)
-         .Wire(turn, 1, zoom, 1)
-         .Wire(pump, 0, zoom, 2)
-         .Wire(zoom, 0, plane, 0)
-         .Wire(zoom, 1, plane, 1)
+         .Wire(spin, 0, placed, TransformAngle)
+         .Wire(pump, 0, placed, TransformZoom)
+         .Wire(placed, 0, plane, 0)
+         .Wire(placed, 1, plane, 1)
          .Wire(wedges, 0, plane, 2);
 
         b.Group("Picture: Space", creep, sectionTurn, spin, kickSeen, pump, wedgeCount, wedges,
-            turn, zoom, plane);
+            placed, plane);
 
         // --- the picture: growth ---------------------------------------------
 
@@ -825,8 +839,7 @@ internal static class MyceliumPreset
 
         // Turning against the plane behind it, and pushed by the same kick.
         var counter = b.Add("math.mul", (1, -0.11f));
-        var turnBack = b.Add("space.rotate");
-        var turned = b.Add("space.scale");
+        var turned = TurnedFirst(b.Add(TransformType));
 
         // Six points on D, seven on E flat, four on C: the chord as a shape. The lead
         // sharpens them into needles while a note sounds.
@@ -860,10 +873,8 @@ internal static class MyceliumPreset
         var sigil = b.Add("color.gain");
 
         b.Wire(clock, 0, counter, 0)
-         .Wire(counter, 0, turnBack, 2)
-         .Wire(turnBack, 0, turned, 0)
-         .Wire(turnBack, 1, turned, 1)
-         .Wire(pump, 0, turned, 2)
+         .Wire(counter, 0, turned, TransformAngle)
+         .Wire(pump, 0, turned, TransformZoom)
          .Wire(shift, 0, points, 0)
          .Wire(leadSeq, 1, leadSeen, 0)
          .Wire(leadIn, 0, leadSeen, 1)
@@ -895,7 +906,7 @@ internal static class MyceliumPreset
          .Wire(sigilHue, 0, sigil, 0)
          .Wire(linesLit, 0, sigil, 1);
 
-        b.Group("Picture: Mandala", counter, turnBack, turned, points, leadSeen, sharpness, petals,
+        b.Group("Picture: Mandala", counter, turned, points, leadSeen, sharpness, petals,
             core, halo, form, seal, ring, ringFaint, lines, thud, felt, seen, bright, linesLit,
             aside, whereSigil, sigilHue, sigil);
 
@@ -929,7 +940,7 @@ internal static class MyceliumPreset
         var splash = b.Add("math.mul");
         var marks = b.Add("math.add");
 
-        b.Wire(arpNote, 0, spacing, 0)
+        b.Wire(arpNote, TuneNote, spacing, 0)
          .Wire(clock, 0, outward, 0)
          .Wire(spacing, 0, wave, 2)
          .Wire(outward, 0, wave, 3)
@@ -972,13 +983,11 @@ internal static class MyceliumPreset
         // field so the trail runs like liquid, and lurches on the kick; the other
         // backs away and turns against it.
         var drag = b.Add("space.warp", (3, 0.015f));
-        var closer = b.Add("space.scale", (2, 1.02f));
+        var closer = b.Add(TransformType, (TransformZoom, 1.02f));
         var lurch = b.Add("math.remap", (1, 0f), (2, 1f), (3, 0.004f), (4, 0.03f));
-        var swirl = b.Add("space.rotate");
         var inward = b.Add("feedback");
         var warm = b.Add("color.split");
-        var further = b.Add("space.scale", (2, 0.985f));
-        var unswirl = b.Add("space.rotate", (2, -0.012f));
+        var further = b.Add(TransformType, (TransformZoom, 0.985f), (TransformAngle, -0.012f));
         var away = b.Add("feedback");
         var cool = b.Add("color.split");
 
@@ -993,16 +1002,12 @@ internal static class MyceliumPreset
          .Wire(drag, 0, closer, 0)
          .Wire(drag, 1, closer, 1)
          .Wire(kickHits, 0, lurch, 0)
-         .Wire(closer, 0, swirl, 0)
-         .Wire(closer, 1, swirl, 1)
-         .Wire(lurch, 0, swirl, 2)
-         .Wire(swirl, 0, inward, 0)
-         .Wire(swirl, 1, inward, 1)
+         .Wire(lurch, 0, closer, TransformAngle)
+         .Wire(closer, 0, inward, 0)
+         .Wire(closer, 1, inward, 1)
          .Wire(inward, 0, warm, 0)
-         .Wire(further, 0, unswirl, 0)
-         .Wire(further, 1, unswirl, 1)
-         .Wire(unswirl, 0, away, 0)
-         .Wire(unswirl, 1, away, 1)
+         .Wire(further, 0, away, 0)
+         .Wire(further, 1, away, 1)
          .Wire(away, 0, cool, 0)
          .Wire(warm, 0, both, 0)
          .Wire(cool, 1, both, 1)
@@ -1011,8 +1016,8 @@ internal static class MyceliumPreset
          .Wire(both, 0, trail, 0)
          .Wire(memory, 0, trail, 1);
 
-        b.Group("Picture: Feedback", drag, closer, lurch, swirl, inward, warm, further, unswirl,
-            away, cool, both, memory, trail);
+        b.Group("Picture: Feedback", drag, closer, lurch, inward, warm, further, away, cool, both,
+            memory, trail);
 
         // --- the picture, heard ----------------------------------------------
 
@@ -1044,34 +1049,26 @@ internal static class MyceliumPreset
         // The same hiss through a band that climbs nearly five octaves in four bars.
         // The ramp that moves the band also opens it.
         var sweepCut = b.Add("math.remap", (1, 0f), (2, 1f), (3, 250f), (4, 7000f));
-        var sweep = b.Add(FilterType, (2, 0.55f));
-        var sweepIn = b.Add("math.mul");
-        var riserOut = b.Add("math.mul", (1, 1.6f));
+        var riserOut = Banded(b.Add(HissType, (3, 0.55f), (4, 1.6f)));
 
         b.Wire(ramp, 0, sweepCut, 0)
-         .Wire(hiss, 0, sweep, 0)
-         .Wire(sweepCut, 0, sweep, 1)
-         .Wire(sweep, 1, sweepIn, 0)
-         .Wire(ramp, 0, sweepIn, 1)
-         .Wire(sweepIn, 0, riserOut, 0);
+         .Wire(ramp, 0, riserOut, 1)
+         .Wire(sweepCut, 0, riserOut, 2);
 
-        b.Group("Riser", sweepCut, sweep, sweepIn, riserOut);
+        b.Group("Riser", sweepCut, riserOut);
 
         // --- the dub echo ----------------------------------------------------
 
         // What goes in: the arp, the drips, the lead, and a little of the snare.
         var send = b.Add("math.mixer", (1, 0.8f), (3, 0.7f), (5, 0.6f), (7, 0.2f));
 
-        // A feedback loop drawn rather than dialed. Both Delays have their own
-        // feedback at nothing, and the repeats come round through the wire at the
-        // bottom of this group instead — which is what lets something be done to them
-        // on the way. Three sixteenths then two, worked out from the tempo, so the
-        // left tap is a dotted eighth and the right lands on the beat after it.
+        // A feedback loop drawn rather than dialed. The Echo has its own feedback at
+        // nothing, and the repeats come round through the wire at the bottom of this
+        // group instead — which is what lets something be done to them on the way.
+        // Three sixteenths then two, counted off the tempo, so the left tap is a
+        // dotted eighth and the right lands on the beat after it.
         var echoIn = b.Add("math.add");
-        var dotted = b.Add("math.div", (0, 3f));
-        var straight = b.Add("math.div", (0, 2f));
-        var tapL = b.Add(DelayModule.TypeId, (2, 0f), (3, 1f));
-        var tapR = b.Add(DelayModule.TypeId, (2, 0f), (3, 1f));
+        var taps = b.Add(EchoModule.TypeId, (2, 3f), (3, 2f), (4, 0f), (5, 1f));
 
         // Each time round, a lowpass made the way the one above is, a Drive, and a
         // little over half the level: every repeat is darker and rounder than the
@@ -1086,18 +1083,14 @@ internal static class MyceliumPreset
          .Wire(snareOut, 0, send, 6)
          .Wire(send, 0, echoIn, 0)
          .Wire(returned, 0, echoIn, 1)
-         .Wire(sixteenths, 0, dotted, 1)
-         .Wire(sixteenths, 0, straight, 1)
-         .Wire(echoIn, 0, tapL, 0)
-         .Wire(dotted, 0, tapL, 1)
-         .Wire(tapL, 0, tapR, 0)
-         .Wire(straight, 0, tapR, 1)
+         .Wire(echoIn, 0, taps, 0)
+         .Wire(beat, 0, taps, 1)
          .Wire(dark, 0, dark, 0)
-         .Wire(tapR, 0, dark, 1)
+         .Wire(taps, 1, dark, 1)
          .Wire(dark, 0, worn, 0)
          .Wire(worn, 0, returned, 0);
 
-        b.Group("Dub Echo", send, echoIn, dotted, straight, tapL, tapR, dark, worn, returned);
+        b.Group("Dub Echo", send, echoIn, taps, dark, worn, returned);
 
         // --- the room --------------------------------------------------------
 
@@ -1109,7 +1102,7 @@ internal static class MyceliumPreset
         var room = b.Add(ReverbModule.TypeId, (1, 0.85f), (2, 0.8f), (3, 1f));
 
         b.Wire(wide, 0, roomSend, 0)
-         .Wire(tapL, 0, roomSend, 2)
+         .Wire(taps, 0, roomSend, 2)
          .Wire(dripOut, 0, roomSend, 4)
          .Wire(scanOut, 0, roomSend, 6)
          .Wire(snareOut, 0, snareSend, 0)
@@ -1156,8 +1149,8 @@ internal static class MyceliumPreset
          .Wire(leanR, 0, music, 7)
          .Wire(riserOut, 0, music, 9)
 
-         .Wire(tapL, 0, returns, 0)
-         .Wire(tapR, 0, returns, 1)
+         .Wire(taps, 0, returns, 0)
+         .Wire(taps, 1, returns, 1)
          .Wire(room, 0, returns, 3)
          .Wire(room, 1, returns, 4)
          .Wire(scanOut, 0, returns, 6)
@@ -1180,12 +1173,8 @@ internal static class MyceliumPreset
         var marked = b.Add("math.add");
         var traced = Mode(b.Add(LayerType), "add");
 
-        // Here for 'radius', the one Coordinates output nothing is normalled to, which
-        // darkens the corners.
-        var coord = b.Add(NodeCatalog.CoordTypeId);
-        var edgeFall = b.Add("math.remap", (1, 0.3f), (2, 1.6f), (3, 1f), (4, 0.35f));
-        var vignette = b.Add("math.clamp", (1, 0f), (2, 1f));
-        var fresh = b.Add("color.gain");
+        // The corners darkened.
+        var fresh = b.Add("color.vignette", (3, 0.3f), (4, 1.6f), (5, 0.35f));
 
         // Maximum rather than a blend, so a trail brighter than the new frame keeps
         // its brightness and reads as a streak.
@@ -1210,10 +1199,7 @@ internal static class MyceliumPreset
          .Wire(marked, 0, traced, 0)
          .Wire(reader, 1, traced, 1)
          .Wire(scanIn, 0, traced, 2)
-         .Wire(coord, 2, edgeFall, 0)
-         .Wire(edgeFall, 0, vignette, 0)
          .Wire(traced, 0, fresh, 0)
-         .Wire(vignette, 0, fresh, 1)
          .Wire(trail, 0, combined, 0)
          .Wire(fresh, 0, combined, 1)
          .Wire(ramp, 0, strain, 0)
@@ -1225,7 +1211,7 @@ internal static class MyceliumPreset
          .Wire(richness, 0, graded, 1)
          .Wire(graded, 0, output, NodeCatalog.OutputColorPort);
 
-        b.Group("Picture: Print", stamped, marked, traced, coord, edgeFall, vignette, fresh,
+        b.Group("Picture: Print", stamped, marked, traced, fresh,
             combined, strain, foldDrive, creased, richness, graded);
 
         return b.Build();

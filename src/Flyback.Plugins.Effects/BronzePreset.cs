@@ -36,11 +36,7 @@ internal sealed class BronzePreset : PresetBench
 
     private const string SlewType = "flyback.voice.slew";
 
-    private const string FilterType = "flyback.voice.filter";
-
     private const string DriveType = "flyback.voice.drive";
-
-    private const string RandomType = "flyback.voice.random";
 
     private const string FoldType = "flyback.voice.fold";
 
@@ -91,6 +87,9 @@ internal sealed class BronzePreset : PresetBench
     /// beats coming back down to it.
     /// </summary>
     private static readonly int[] Pokok = [0, 2, 3, 2, 4, 3, 2, 1, 2, 4, 5, 4, 3, 1, 2, 1];
+
+    /// <summary>The green that bronze goes in the rain, which is both blended and drawn with.</summary>
+    private const float VerdigrisRed = 0.25f, VerdigrisGreen = 0.8f, VerdigrisBlue = 0.65f;
 
     /// <summary>A Layer's blend mode, written as the state the module reads.</summary>
     private static NodeInstance Mode(NodeInstance layer, string mode)
@@ -327,9 +326,8 @@ internal sealed class BronzePreset : PresetBench
         // Five in sixteen, off the beat, a fourth of the scale above the melody. The
         // bell is folded after its envelope, so the fold opens with the stroke and
         // closes as it rings: brass at the front of the note and bronze at the back.
-        var chimeHits = b.Add(EuclidType, (1, 4f), (2, 16f), (3, 5f), (4, 2f));
-        var chimeStroke = Enters(
-            Wired("math.max", Product(Stroke(beats, 4f, 6f), chimeHits, 1), burst), song, 0.6f, 0.7f);
+        var chimeHits = b.Add(EuclidType, (1, 4f), (2, 16f), (3, 5f), (4, 2f), (EuclidCurve, 6f));
+        var chimeStroke = Enters(Wired("math.max", chimeHits, burst, EuclidStroke), song, 0.6f, 0.7f);
         var chimeBell = Bell(Tuned(Plus(pokok, 3f), 554.4f), chimeStroke, 1.41f, 0.5f);
         var chimes = b.Add(FoldType, (1, 2.2f));
 
@@ -340,20 +338,15 @@ internal sealed class BronzePreset : PresetBench
 
         // --- the cymbals -----------------------------------------------------
 
-        // A Random's white, which the flute's breath is a band of as well.
-        var hiss = b.Add(RandomType);
-
         // Every quarter of a beat, with the tresillo leaned on, and the top of a
-        // Filter for the sizzle.
+        // Hiss for the sizzle.
         var accents = b.Add(EuclidType, (1, 4f), (2, 8f), (3, 3f));
-        var sizzle = b.Add(FilterType, (1, 6500f), (2, 0.3f));
         var cymbalStroke = Enters(
             Sum(Product(Stroke(beats, 4f, 8f), Span(accents, 0f, 1f, 0.3f, 1f, 1)), burst),
             song, 0.5f, 0.55f);
-        var cymbals = Product(cymbalStroke, sizzle, 2);
+        var cymbals = Hiss(cymbalStroke, 6500f, 0.3f, "high");
 
-        b.Wire(beats, 0, accents, 0)
-         .Wire(hiss, 0, sizzle, 0);
+        b.Wire(beats, 0, accents, 0);
 
         Box("Cymbals");
 
@@ -362,12 +355,12 @@ internal sealed class BronzePreset : PresetBench
         // The pair of drums that lead a gamelan. The lower plays more as the
         // orchestra fills — its hits are the song — and its pitch is its own stroke
         // cubed, so the skin drops as it is let go.
-        var lowHits = b.Add(EuclidType, (1, 4f), (2, 16f), (4, 3f));
-        var lowStroke = Enters(Product(Stroke(beats, 4f, 4f), lowHits, 1), song, 0.5f, 0.55f);
+        var lowHits = b.Add(EuclidType, (1, 4f), (2, 16f), (4, 3f), (EuclidCurve, 4f));
+        var lowStroke = Enters(lowHits, song, 0.5f, 0.55f, EuclidStroke);
         var lowDrum = Drum(lowStroke, 82f, 68f, 3f, 0f);
 
-        var highHits = b.Add(EuclidType, (1, 4f), (2, 16f), (3, 5f), (4, 7f));
-        var highStroke = Enters(Product(Stroke(beats, 4f, 7f), highHits, 1), song, 0.5f, 0.55f);
+        var highHits = b.Add(EuclidType, (1, 4f), (2, 16f), (3, 5f), (4, 7f), (EuclidCurve, 7f));
+        var highStroke = Enters(highHits, song, 0.5f, 0.55f, EuclidStroke);
         var highDrum = Drum(highStroke, 210f, 120f, 3f, 0f);
 
         // A Drive for the hand on the skin. It normalizes as it goes, so this is
@@ -385,13 +378,13 @@ internal sealed class BronzePreset : PresetBench
 
         // The one voice that is not struck. Its pitch glides — eighty milliseconds
         // either way — its phase is leaned on five times a second, which is vibrato
-        // without touching the frequency, and the breath is the hiss through a band
-        // an octave over the note.
+        // without touching the frequency, and the breath is a Hiss in a band an
+        // octave over the note.
         var glide = b.Add(SlewType, (1, -1.09691f), (2, -1.09691f));
         var vibrato = b.Add("osc.sine", (1, 5.2f), (3, 0.25f));
         var reed = b.Add("osc.triangle");
-        var breathBand = b.Add(FilterType, (2, 0.5f));
-        var blown = Sum(reed, Times(breathBand, 0.3f, 1));
+        var breath = Hiss(null, 800f, 0.5f, "band", 0.3f);
+        var blown = Sum(reed, breath);
 
         // Tongued by the Sequencer's own gate, slewed so that it is a breath and not
         // a switch, and swelling on a period that shares nothing with the beat.
@@ -402,8 +395,7 @@ internal sealed class BronzePreset : PresetBench
         b.Wire(Tuned(airDegree, 554.4f), 0, glide, 0)
          .Wire(glide, 0, reed, 1)
          .Wire(vibrato, 0, reed, 2)
-         .Wire(hiss, 0, breathBand, 0)
-         .Wire(Times(glide, 2f), 0, breathBand, 1)
+         .Wire(Times(glide, 2f), 0, breath, HissCutoff)
          .Wire(air, 1, tongue, 0);
 
         Box("Flute");
@@ -467,14 +459,11 @@ internal sealed class BronzePreset : PresetBench
 
         // The mandala turns with the count rather than the clock, so it slows when
         // the music does, and the low drum pushes it in a little on every hit.
-        var turned = b.Add("space.rotate");
-        var plane = b.Add("space.scale");
+        var plane = TurnedThenZoomed();
         var around = b.Add("space.polar");
 
-        b.Wire(Times(beats, 0.04f), 0, turned, 2)
-         .Wire(turned, 0, plane, 0)
-         .Wire(turned, 1, plane, 1)
-         .Wire(Span(lowStroke, 0f, 1f, 1f, 0.94f), 0, plane, 2)
+        b.Wire(Times(beats, 0.04f), 0, plane, TransformAngle)
+         .Wire(Span(lowStroke, 0f, 1f, 1f, 0.94f), 0, plane, TransformZoom)
          .Wire(plane, 0, around, 0)
          .Wire(plane, 1, around, 1);
 
@@ -644,16 +633,15 @@ internal sealed class BronzePreset : PresetBench
         var eighth = b.Add("space.rotate", (2, MathF.PI / 4f));
         var petals = b.Add(StarType, (2, 0.85f), (3, 4f), (4, 0.55f));
         var stitch = b.Add(FillType, (1, 0.02f), (2, 0.07f));
-        var indigo = b.Add("color.rgb", (0, 0.14f), (1, 0.18f), (2, 0.5f));
-        var cloth = b.Add("color.gain");
 
         b.Wire(tiles, 0, eighth, 0)
          .Wire(tiles, 1, eighth, 1)
          .Wire(eighth, 0, petals, 0)
          .Wire(eighth, 1, petals, 1)
-         .Wire(petals, 0, stitch, 0)
-         .Wire(indigo, 0, cloth, 0)
-         .Wire(Product(Span(gongStroke, 0f, 1f, 0.35f, 0.9f), stitch, 1), 0, cloth, 1);
+         .Wire(petals, 0, stitch, 0);
+
+        // Indigo, on nothing: the Layer below lays it under the metal.
+        var cloth = Ink(null, Product(Span(gongStroke, 0f, 1f, 0.35f, 0.9f), stitch, 1), 0.14f, 0.18f, 0.5f);
 
         Box("Picture: Cloth");
 
@@ -664,12 +652,11 @@ internal sealed class BronzePreset : PresetBench
         // bronze goes when it is left out in the rain.
         var gold = b.Add("color.rgb", (0, 1f), (1, 0.78f), (2, 0.3f));
         var copper = b.Add("color.rgb", (0, 0.9f), (1, 0.4f), (2, 0.2f));
-        var verdigris = b.Add("color.rgb", (0, 0.25f), (1, 0.8f), (2, 0.65f));
+        var verdigris = b.Add("color.rgb", (0, VerdigrisRed), (1, VerdigrisGreen), (2, VerdigrisBlue));
         var metal = b.Add("color.mix");
         var brickInk = b.Add("color.mix");
         var struckInk = b.Add("color.gain");
         var wallInk = b.Add("color.gain");
-        var fluteInk = b.Add("color.gain");
 
         b.Wire(gold, 0, metal, 0)
          .Wire(copper, 0, metal, 1)
@@ -680,13 +667,11 @@ internal sealed class BronzePreset : PresetBench
          .Wire(metal, 0, struckInk, 0)
          .Wire(Sum(Sum(Sum(bossLit, crest), Sum(squareLit, starLit)), Sum(beads, rim)), 0, struckInk, 1)
          .Wire(brickInk, 0, wallInk, 0)
-         .Wire(wall, 0, wallInk, 1)
-         .Wire(verdigris, 0, fluteInk, 0)
-         .Wire(breathLit, 0, fluteInk, 1);
+         .Wire(wall, 0, wallInk, 1);
 
         var fresh = Mode(b.Add(LayerType), "add");
 
-        b.Wire(Sum(Sum(struckInk, wallInk), fluteInk), 0, fresh, 0)
+        b.Wire(Ink(Sum(struckInk, wallInk), breathLit, VerdigrisRed, VerdigrisGreen, VerdigrisBlue), 0, fresh, 0)
          .Wire(cloth, 0, fresh, 1);
 
         Box("Picture: Metal");
@@ -701,18 +686,13 @@ internal sealed class BronzePreset : PresetBench
         // new frame keeps its brightness and reads as a wake.
         var printed = b.Add(TrailsType, (TrailsZoom, 0.982f), (TrailsAngle, -0.008f));
 
-        // Here for 'radius', which darkens the corners, and graded by the song last
-        // so the opening is muted and the burst is not.
-        var coord = b.Add(NodeCatalog.CoordTypeId);
-        var vignette = b.Add("math.clamp", (1, 0f), (2, 1f));
-        var shaded = b.Add("color.gain");
+        // Darkened at the corners, and graded by the song last so the opening is
+        // muted and the burst is not.
+        var shaded = Vignette(printed, 0.4f, 1.7f, 0.3f);
         var graded = b.Add(GradeType, (2, 1.1f));
 
         b.Wire(fresh, 0, printed, 0)
          .Wire(Span(song, 0f, 1f, 0.92f, 0.8f), 0, printed, TrailsPersist)
-         .Wire(Span(coord, 0.4f, 1.7f, 1f, 0.3f, 2), 0, vignette, 0)
-         .Wire(printed, 0, shaded, 0)
-         .Wire(vignette, 0, shaded, 1)
          .Wire(shaded, 0, graded, 0)
          .Wire(Span(song, 0f, 1f, 0.8f, 1.3f), 0, graded, 1)
          .Wire(graded, 0, output, NodeCatalog.OutputColorPort);

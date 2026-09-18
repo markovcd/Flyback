@@ -16,12 +16,14 @@ public class EuclidTests
     private const int Gate = 0;
     private const int Hit = 1;
     private const int Index = 2;
+    private const int Stroke = 3;
 
     private const int RatePort = 1;
     private const int StepsPort = 2;
     private const int HitsPort = 3;
     private const int RotatePort = 4;
     private const int LengthPort = 5;
+    private const int CurvePort = 6;
 
     private const float Rate = 4f;
 
@@ -35,7 +37,7 @@ public class EuclidTests
         def.Name.ShouldBe("Euclid");
         def.Category.ShouldBe(ModuleCategories.Timing);
         def.Sinks.ShouldBe(ModuleSinks.Both);
-        def.Outputs.Select(p => p.Name).ShouldBe(["gate", "hit", "index"]);
+        def.Outputs.Select(p => p.Name).ShouldBe(["gate", "hit", "index", "stroke"]);
         Catalog.ProviderOf(EuclidType)!.Id.ShouldBe("flyback.voice");
         Catalog.All.Count(d => d.TypeId.Split('.')[^1] == "euclid").ShouldBe(1);
     }
@@ -104,9 +106,48 @@ public class EuclidTests
     }
 
     [Fact]
+    public void The_stroke_falls_over_a_hit_step_and_is_nothing_on_the_others()
+    {
+        // Three in eight is x..x..x. — the second step is a rest and the fourth a hit.
+        var stroke = Reader(Stroke, (StepsPort, 8f), (HitsPort, 3f), (CurvePort, 1f));
+
+        stroke(3.0 / Rate).ShouldBe(1f, 1e-5f);
+        stroke(3.5 / Rate).ShouldBe(0.5f, 1e-5f);
+        stroke(1.25 / Rate).ShouldBe(0f);
+    }
+
+    /// <summary>
+    /// A Stroke at the same rate and a Multiply by 'hit', against the 'stroke'
+    /// output. Equal rather than close, so a drum moved onto it is the drum it was.
+    /// </summary>
+    [Fact]
+    public void The_stroke_is_a_stroke_let_through_on_the_hits_to_the_last_bit()
+    {
+        var b = new PatchBuilder(Catalog);
+        var euclid = b.Add(EuclidType, (RatePort, Rate), (StepsPort, 16f), (HitsPort, 5f), (RotatePort, 7f));
+        var envelope = b.Add("flyback.voice.stroke", (1, Rate), (3, 7f));
+        var let = b.Add("math.mul");
+        var sink = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 1f));
+
+        b.Wire(envelope, 0, let, 0).Wire(euclid, Hit, let, 1).Wire(let, 0, sink, NodeCatalog.OutputLeftPort);
+
+        var byHand = b.Patch.CompileForAudio(Catalog).Program;
+        var registers = byHand.AllocateRegisters();
+        var stroke = Reader(Stroke, (StepsPort, 16f), (HitsPort, 5f), (RotatePort, 7f), (CurvePort, 7f));
+
+        for (var i = 0; i < 4_000; i++)
+        {
+            var t = i / 997d;
+
+            byHand.Evaluate(0f, 0f, t, registers, default);
+            stroke(t).ShouldBe((float)registers[byHand.OutputBase]);
+        }
+    }
+
+    [Fact]
     public void The_picture_sees_the_same_rhythm_as_the_speakers()
     {
-        foreach (var port in new[] { Gate, Hit, Index })
+        foreach (var port in new[] { Gate, Hit, Index, Stroke })
         {
             var audio = Reader(port, (StepsPort, 12f), (HitsPort, 5f));
             var video = Reader(port, video: true, (StepsPort, 12f), (HitsPort, 5f));

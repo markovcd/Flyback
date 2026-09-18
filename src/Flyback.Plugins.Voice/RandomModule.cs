@@ -49,36 +49,50 @@ internal static class RandomModule
         + "the same 'seed' produce the same noise, so give each its own. On the picture it "
         + "runs across its domain: on Time the frame flickers, from a coordinate it is grain.");
 
-    private static Slot[] Emit(Emitter em, EmitContext node)
+    /// <summary>
+    /// White and pink over a domain, each -1 to 1, for a module that is noise
+    /// through something — see <see cref="HissModule"/>.
+    /// </summary>
+    /// <remarks>
+    /// Neither has a memory, so two modules asking with the same domain and seed
+    /// are handed the same samples: a module that makes its own noise plays what
+    /// one fed from a shared Random played.
+    /// </remarks>
+    public static (Slot White, Slot Pink) Noise(Emitter em, Slot domain, Slot seed)
     {
-        var domain = node[0];
-        var seed = node[2];
-
         // Split into whole seconds and the fraction, because domain * Grain would
         // overflow the hash's int after about nine minutes.
         var lanes = em.Mul(em.Unary(OpCode.Floor, domain), Lanes);
         var within = em.Unary(OpCode.Fract, domain);
 
-        var white = Hash(lanes, em.Unary(OpCode.Floor, em.Mul(within, Grain)));
+        var white = Hash(em, lanes, em.Unary(OpCode.Floor, em.Mul(within, Grain)), seed);
 
         var pink = em.Constant(0f);
         for (var row = 0; row < Rows; row++)
         {
             var index = em.Unary(OpCode.Floor, em.Mul(within, MathF.Pow(2f, Fastest - row)));
-            pink = em.Add(pink, Hash(em.Add(lanes, row + 1f), index));
+            pink = em.Add(pink, Hash(em, em.Add(lanes, row + 1f), index, seed));
         }
 
-        pink = em.Ternary(OpCode.Clamp, em.Mul(pink, PinkScale), em.Constant(-1f), em.Constant(1f));
+        return (white, em.Ternary(OpCode.Clamp, em.Mul(pink, PinkScale), em.Constant(-1f), em.Constant(1f)));
+    }
+
+    /// <summary>The hash at a lattice point, -1 to 1. The seed is the third axis, so a fractional seed crossfades two.</summary>
+    private static Slot Hash(Emitter em, Slot x, Slot y, Slot seed) =>
+        em.Add(em.Mul(em.Ternary(OpCode.Noise3, x, y, seed), 2f), -1f);
+
+    private static Slot[] Emit(Emitter em, EmitContext node)
+    {
+        var domain = node[0];
+        var seed = node[2];
+
+        var (white, pink) = Noise(em, domain, seed);
 
         var along = em.Mul(domain, node[1]);
-        var random = Hash(em.Unary(OpCode.Floor, along), em.Constant(ChanceRow));
-        var drift = Hash(along, em.Constant(ChanceRow));
+        var random = Hash(em, em.Unary(OpCode.Floor, along), em.Constant(ChanceRow), seed);
+        var drift = Hash(em, along, em.Constant(ChanceRow), seed);
 
         return [Scaled(white), Scaled(pink), Scaled(random), Scaled(drift)];
-
-        // The seed is the third axis, so a fractional seed crossfades two.
-        Slot Hash(Slot x, Slot y) =>
-            em.Add(em.Mul(em.Ternary(OpCode.Noise3, x, y, seed), 2f), -1f);
 
         Slot Scaled(Slot signal) => em.Add(em.Mul(signal, node[3]), node[4]);
     }

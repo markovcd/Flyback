@@ -57,9 +57,15 @@ internal static class FilterModule
         + "Audio only: a picture is one evaluation with nothing before it, so 'low' passes "
         + "straight through and the other two are silent.");
 
-    private static Slot[] Emit(Emitter em, EmitContext inputs)
+    private static Slot[] Emit(Emitter em, EmitContext inputs) =>
+        Responses(em, inputs[0], inputs[1], inputs[2]);
+
+    /// <summary>
+    /// Low, band and high of <paramref name="dry"/>, for a module with a filter
+    /// inside it — see <see cref="HissModule"/>.
+    /// </summary>
+    public static Slot[] Responses(Emitter em, Slot dry, Slot cutoff, Slot resonance)
     {
-        var dry = inputs[0];
 
         // Nothing in a module is told the sample rate, and neither of these is a
         // socket: the interval is measured off the renderer's own clock and the
@@ -76,11 +82,11 @@ internal static class FilterModule
         // coefficient is actually a function of. Clamping here rather than on the
         // socket is deliberate: cutoff is a signal, and what a sweep reaches for
         // matters more than what the knob is set to.
-        var period = em.Ternary(OpCode.Clamp, em.Mul(inputs[1], step), zero, em.Constant(Highest));
+        var period = em.Ternary(OpCode.Clamp, em.Mul(cutoff, step), zero, em.Constant(Highest));
         var g = em.Unary(OpCode.Tan, em.Mul(period, MathF.PI));
 
-        var resonance = em.Ternary(OpCode.Clamp, inputs[2], zero, one);
-        var k = em.Add(em.Mul(resonance, -(Damped - Ringing)), Damped);
+        var ringing = em.Ternary(OpCode.Clamp, resonance, zero, one);
+        var k = em.Add(em.Mul(ringing, -(Damped - Ringing)), Damped);
 
         // The three coefficients the topology resolves its implicit loop with.
         // Solving that loop rather than iterating it is the whole of what TPT

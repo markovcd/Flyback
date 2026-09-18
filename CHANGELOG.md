@@ -10,6 +10,10 @@
 - Added Stroke (a drum envelope counted off the beat), Fade (brings a part in as a level rises), Wander (a slow random value) and Drum (a kick or tom from one envelope) to Voice.
 - Added Desk, a four-channel stereo mixer with a trim that chains into bigger ones.
 - Added Trails, which leaves the last frame fading behind the picture.
+- Added Hiss (a hi-hat, a snare's wires or a riser from one envelope) and Bell (struck metal from two sines) to Voice.
+- Added Echo to Effects, a stereo delay whose times are counted in steps of the tempo.
+- Added Transform (zoom, turn and slide in one), Ink (draws a shape in one color), Vignette (darkens the corners) and Tune (a Quantiser and a Note in one).
+- Euclid has a `stroke` output, an envelope on the steps that are hits, and Tempo has `beats`, the count of beats so far.
 
 ### Presets
 - Mycelium, in the Effects plugin: a psybient track of ninety-six bars in six sections, with a picture driven by the same signals. It is the largest preset, and needs the Voice and Picture plugins.

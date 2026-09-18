@@ -41,8 +41,6 @@ internal sealed class OutrunPreset : PresetBench
 
     private const string DriveType = "flyback.voice.drive";
 
-    private const string RandomType = "flyback.voice.random";
-
     private const string CellsType = "flyback.picture.cells";
 
     private const string PolygonType = "flyback.picture.polygon";
@@ -71,6 +69,16 @@ internal sealed class OutrunPreset : PresetBench
 
     /// <summary>How far over the middle of the frame the sun's own middle is.</summary>
     private const float SunHeight = 0.24f;
+
+    /// <summary>
+    /// The three colors that are both blended and drawn with: the pink of the
+    /// horizon, the hot pink at the foot of the sun, and the cyan of the neon.
+    /// </summary>
+    private const float PinkRed = 1f, PinkGreen = 0.35f, PinkBlue = 0.5f;
+
+    private const float HotRed = 1f, HotGreen = 0.18f, HotBlue = 0.55f;
+
+    private const float CyanRed = 0.1f, CyanGreen = 0.9f, CyanBlue = 1f;
 
     public static Patch Build(ModuleCatalog modules)
     {
@@ -182,15 +190,12 @@ internal sealed class OutrunPreset : PresetBench
         // --- the snare -------------------------------------------------------
 
         // Two and four: half the beat, offset by half a cycle, restarts on every
-        // backbeat. A band of the hiss for the wires and a Drum that does not sweep
-        // for the shell. The hats and the riser are the same hiss through Filters of
-        // their own.
-        var hiss = b.Add(RandomType);
+        // backbeat. A band of Hiss for the wires and a Drum that does not sweep for the
+        // shell.
         var backbeat = Stroke(beats, 0.5f, 9f, 0.5f);
         var snareStroke = Enters(backbeat, song, 0.55f, 0.62f);
-        var rattle = b.Add(FilterType, (1, 1900f), (2, 0.3f));
         var snareDry = Sum(
-            Times(Product(snareStroke, rattle, 1), 2.5f),
+            Hiss(snareStroke, 1900f, 0.3f, "band", 2.5f),
             Drum(snareStroke, 190f, 0f, 1f, 0f));
 
         // And the sound of the decade: a hall far too big for a drum, shut off a
@@ -201,8 +206,7 @@ internal sealed class OutrunPreset : PresetBench
         var snareL = Sum(snareDry, Times(Product(gate, hall), 0.8f));
         var snareR = Sum(snareDry, Times(Product(gate, hall, 1), 0.8f));
 
-        b.Wire(hiss, 0, rattle, 0)
-         .Wire(snareDry, 0, hall, 0);
+        b.Wire(snareDry, 0, hall, 0);
 
         Box("Snare");
 
@@ -213,10 +217,7 @@ internal sealed class OutrunPreset : PresetBench
         var hatStroke = Enters(
             Sum(Times(Stroke(beats, 4f, 7f), 0.5f), Times(Stroke(beats, 1f, 3f, 0.5f), 0.7f)),
             song, 0.4f, 0.45f);
-        var sizzle = b.Add(FilterType, (1, 8000f), (2, 0.2f));
-        var hats = Product(hatStroke, sizzle, 2);
-
-        b.Wire(hiss, 0, sizzle, 0);
+        var hats = Hiss(hatStroke, 8000f, 0.2f, "high");
 
         Box("Hats");
 
@@ -274,14 +275,11 @@ internal sealed class OutrunPreset : PresetBench
             new Step(0f), new Step(7f), new Step(12f), new Step(12f + Third),
             new Step(19f), new Step(24f), new Step(19f), new Step(12f + Third),
         ]);
-        var arpNote = b.Add(NodeCatalog.QuantiserTypeId);
-        ScaleExtra.Set(arpNote, Scale);
         var arpOsc = b.Add("osc.pulse", (3, 0.35f), (4, 0.8f));
         var arpTone = b.Add(FilterType, (2, 0.3f));
 
         b.Wire(beats, 0, arpLine, 0)
-         .Wire(Plus(Sum(arpLine, root), 12f), 0, arpNote, 0)
-         .Wire(Through("audio.note", arpNote), 0, arpOsc, 1)
+         .Wire(InKey(Sum(arpLine, root), Scale, 12f), 0, arpOsc, 1)
          .Wire(Product(arpOsc, pluck), 0, arpTone, 0)
          .Wire(Span(swell, 0f, 1f, 900f, 4200f), 0, arpTone, 1);
 
@@ -294,11 +292,7 @@ internal sealed class OutrunPreset : PresetBench
         var padNote = Plus(root, 12f);
         var padHz = Through("audio.note", padNote);
         var strings = b.Add(SupersawType, (2, 0.3f), (3, 0.8f), (5, 0.5f));
-        var thirdNote = b.Add(NodeCatalog.QuantiserTypeId);
-        ScaleExtra.Set(thirdNote, Scale);
         var third = b.Add("osc.saw", (3, 0.35f));
-        var fifthNote = b.Add(NodeCatalog.QuantiserTypeId);
-        ScaleExtra.Set(fifthNote, Scale);
         var fifth = b.Add("osc.saw", (3, 0.3f));
         var padTone = b.Add(FilterType, (2, 0.2f));
 
@@ -321,10 +315,8 @@ internal sealed class OutrunPreset : PresetBench
         var pad = b.Add(ChorusModule.TypeId, (1, 0.2f), (2, 0.7f), (3, 0.6f));
 
         b.Wire(padHz, 0, strings, 1)
-         .Wire(Plus(padNote, Third), 0, thirdNote, 0)
-         .Wire(Through("audio.note", thirdNote), 0, third, 1)
-         .Wire(Plus(padNote, 7f), 0, fifthNote, 0)
-         .Wire(Through("audio.note", fifthNote), 0, fifth, 1)
+         .Wire(InKey(padNote, Scale, Third), 0, third, 1)
+         .Wire(InKey(padNote, Scale, 7f), 0, fifth, 1)
          .Wire(Sum(Sum(strings, third), fifth), 0, padTone, 0)
          .Wire(Span(swell, 0f, 1f, 700f, 3200f), 0, padTone, 1)
          .Wire(beats, 0, chopLine, 0)
@@ -379,38 +371,27 @@ internal sealed class OutrunPreset : PresetBench
 
         // --- the riser -------------------------------------------------------
 
-        // The hiss through a band that climbs nearly five octaves in four bars. The
-        // ramp that moves the band also opens it.
-        var sweep = b.Add(FilterType, (2, 0.55f));
-        var riser = Times(Product(ramp, sweep, 1), 1.4f);
+        // A Hiss whose band climbs nearly five octaves in four bars. The ramp that
+        // moves the band also opens it.
+        var riser = Hiss(ramp, 250f, 0.55f, "band", 1.4f);
 
-        b.Wire(hiss, 0, sweep, 0)
-         .Wire(Span(ramp, 0f, 1f, 250f, 7000f), 0, sweep, 1);
+        b.Wire(Span(ramp, 0f, 1f, 250f, 7000f), 0, riser, HissCutoff);
 
         Box("Riser");
 
         // --- the space -------------------------------------------------------
 
-        // A dotted eighth on the left and the beat after it on the right, worked out
-        // from the tempo, and one hall on a send for what should sound far away.
+        // An Echo of three sixteenths on the left and two more on the right — a dotted
+        // eighth and the beat after it — and one hall on a send for what should sound
+        // far away.
         var send = b.Add("math.mixer", (1, 0.6f), (3, 0.7f), (5, 0.3f));
-        var dotted = b.Add("math.div", (0, 3f));
-        var straight = b.Add("math.div", (0, 2f));
-        var tapL = b.Add(DelayModule.TypeId, (2, 0.45f), (3, 1f));
-        var tapR = b.Add(DelayModule.TypeId, (2, 0f), (3, 1f));
+        var taps = Echo(send, beat, 3f, 2f, 0.45f, 1f);
         var roomSend = b.Add("math.mixer", (1, 0.7f), (3, 0.4f), (5, 0.5f), (7, 0.5f));
         var room = b.Add(ReverbModule.TypeId, (1, 0.85f), (2, 0.8f), (3, 1f));
-        var sixteenths = Times(beat, 4f);
 
         b.Wire(arpTone, 0, send, 0)
          .Wire(lead, 0, send, 2)
          .Wire(toms, 0, send, 4)
-         .Wire(sixteenths, 0, dotted, 1)
-         .Wire(sixteenths, 0, straight, 1)
-         .Wire(send, 0, tapL, 0)
-         .Wire(dotted, 0, tapL, 1)
-         .Wire(tapL, 0, tapR, 0)
-         .Wire(straight, 0, tapR, 1)
          .Wire(lead, 0, roomSend, 0)
          .Wire(arpTone, 0, roomSend, 2)
          .Wire(pad, 0, roomSend, 4)
@@ -443,7 +424,7 @@ internal sealed class OutrunPreset : PresetBench
         Channel(music, 3, 0.5f, pad, pad, rightFrom: 1);
         Channel(music, 4, 0.45f, lead);
 
-        Channel(space, 1, 0.45f, tapL, tapR);
+        Channel(space, 1, 0.45f, taps, taps, rightFrom: EchoRight);
         Channel(space, 2, 0.5f, room, room, rightFrom: 1);
         Channel(space, 3, 0.4f, riser);
 
@@ -457,7 +438,7 @@ internal sealed class OutrunPreset : PresetBench
         // Three colors up the frame: the pink of the horizon, violet over it, and
         // nearly black at the top. Each Blend is one band of the gradient.
         var coord = b.Add(NodeCatalog.CoordTypeId);
-        var pink = b.Add("color.rgb", (0, 1f), (1, 0.35f), (2, 0.5f));
+        var pink = b.Add("color.rgb", (0, PinkRed), (1, PinkGreen), (2, PinkBlue));
         var violet = b.Add("color.rgb", (0, 0.32f), (1, 0.06f), (2, 0.5f));
         var zenith = b.Add("color.rgb", (0, 0.04f), (1, 0.01f), (2, 0.16f));
         var dusk = b.Add("color.mix");
@@ -496,7 +477,7 @@ internal sealed class OutrunPreset : PresetBench
 
         // Yellow at the top and hot pink at the bottom.
         var yellow = b.Add("color.rgb", (0, 1f), (1, 0.92f), (2, 0.35f));
-        var hot = b.Add("color.rgb", (0, 1f), (1, 0.18f), (2, 0.55f));
+        var hot = b.Add("color.rgb", (0, HotRed), (1, HotGreen), (2, HotBlue));
         var sunColor = b.Add("color.mix");
 
         // The slats. Nine bands down the disc, sliding downwards a band every four
@@ -591,7 +572,7 @@ internal sealed class OutrunPreset : PresetBench
         // Faded out before the horizon, where the lines are closer than a pixel, and
         // struck by the bass. The color is the chord: magenta under B, cyan under A.
         var bassSeen = Enters(pluck, song, 0.25f, 0.3f);
-        var cyan = b.Add("color.rgb", (0, 0.1f), (1, 0.9f), (2, 1f));
+        var cyan = b.Add("color.rgb", (0, CyanRed), (1, CyanGreen), (2, CyanBlue));
         var gridColor = b.Add("color.mix");
         var floor = b.Add("color.rgb", (0, 0.07f), (1, 0f), (2, 0.14f));
         var gridInk = b.Add("color.gain");
@@ -617,35 +598,27 @@ internal sealed class OutrunPreset : PresetBench
         // The depth of the scene is the order of these. The sky with its stars and
         // the sun's haze; the sun mixed over that where a slat shows; the triangle
         // added; the mountains over all of it, and the ground over them.
-        var hazeInk = b.Add("color.gain");
         var withSun = b.Add("color.mix");
-        var neonInk = b.Add("color.gain");
         var withRidge = b.Add("color.mix");
         var below = b.Add("math.step", (1, Horizon));
         var withGround = b.Add("color.mix");
 
         // And the line of light where they meet, which the kick brightens.
         var seam = Power(From(1f, Rises(Size(Plus(coord, -Horizon, 1)), 0f, 0.07f)), 2f);
-        var seamInk = b.Add("color.gain");
 
-        b.Wire(hot, 0, hazeInk, 0)
-         .Wire(Times(haze, 0.4f), 0, hazeInk, 1)
-         .Wire(Sum(Sum(sky, stars), hazeInk), 0, withSun, 0)
+        b.Wire(Ink(Sum(sky, stars), Times(haze, 0.4f), HotRed, HotGreen, HotBlue), 0, withSun, 0)
          .Wire(sunColor, 0, withSun, 1)
          .Wire(sun, 0, withSun, 2)
-         .Wire(cyan, 0, neonInk, 0)
-         .Wire(neon, 0, neonInk, 1)
-         .Wire(Sum(withSun, neonInk), 0, withRidge, 0)
+         .Wire(Ink(withSun, neon, CyanRed, CyanGreen, CyanBlue), 0, withRidge, 0)
          .Wire(mountain, 0, withRidge, 1)
          .Wire(under, 0, withRidge, 2)
          .Wire(coord, 1, below, 0)
          .Wire(withRidge, 0, withGround, 0)
          .Wire(ground, 0, withGround, 1)
-         .Wire(below, 0, withGround, 2)
-         .Wire(pink, 0, seamInk, 0)
-         .Wire(Product(seam, Span(kickStroke, 0f, 1f, 0.6f, 1.3f)), 0, seamInk, 1);
+         .Wire(below, 0, withGround, 2);
 
-        var scene = Sum(withGround, seamInk);
+        var scene = Ink(
+            withGround, Product(seam, Span(kickStroke, 0f, 1f, 0.6f, 1.3f)), PinkRed, PinkGreen, PinkBlue);
 
         Box("Picture: Scene");
 
@@ -661,8 +634,7 @@ internal sealed class OutrunPreset : PresetBench
 
         // Darkened at the corners, and graded by the section last, so the intro is
         // muted and the peak is not.
-        var vignette = b.Add("math.clamp", (1, 0f), (2, 1f));
-        var shaded = b.Add("color.gain");
+        var shaded = Vignette(scanned, 0.5f, 2f, 0.35f);
         var graded = b.Add(GradeType, (2, 1.08f));
 
         b.Wire(scene, 0, taped, 0)
@@ -670,9 +642,6 @@ internal sealed class OutrunPreset : PresetBench
          .Wire(Span(ramp, 0f, 1f, 32f, 4f), 0, banded, 1)
          .Wire(banded, 0, scanned, 0)
          .Wire(Span(Sine(Times(coord, 400f, 1)), -1f, 1f, 0.86f, 1f), 0, scanned, 1)
-         .Wire(Span(coord, 0.5f, 2f, 1f, 0.35f, 2), 0, vignette, 0)
-         .Wire(scanned, 0, shaded, 0)
-         .Wire(vignette, 0, shaded, 1)
          .Wire(shaded, 0, graded, 0)
          .Wire(Span(song, 0f, 1f, 0.85f, 1.35f), 0, graded, 1)
          .Wire(graded, 0, output, NodeCatalog.OutputColorPort);

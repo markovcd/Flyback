@@ -987,8 +987,9 @@ group "Picture: Geometry" {
   let boil  = t * 0.18
   let crawl = t * 0.02
 
-  let fold = rotate(angle: t * 0.055 + (bass.index |> remap(0..1, -0.4..0.4)))
-               |> scale(scale: kick.gate |> remap(0..1, 0.96..1.3))
+  let fold = transform(angle: t * 0.055 + (bass.index |> remap(0..1, -0.4..0.4)),
+                       zoom:  kick.gate |> remap(0..1, 0.96..1.3),
+                       order: "turn")
                |> kaleidoscope(segments: bass.index |> remap(0..1, 3..10))
 
   let field = fold |> noise(z: boil, scale: 2.1)
@@ -1008,13 +1009,11 @@ group "Picture: Color" {
 }
 
 group "Picture: Feedback" {
-  let warm = scale(scale: 1.035)
-               |> rotate(angle: kick.gate |> remap(0..1, 0.012..0.05))
+  let warm = transform(zoom: 1.035, angle: kick.gate |> remap(0..1, 0.012..0.05))
                |> feedback()
                |> color.split()
 
-  let cool = scale(scale: 0.972)
-               |> rotate(angle: -0.016)
+  let cool = transform(zoom: 0.972, angle: -0.016)
                |> feedback()
                |> color.split()
 

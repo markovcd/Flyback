@@ -18,7 +18,7 @@ public sealed class VoicePlugin : IFlybackPlugin
     public PluginInfo Info { get; } = new(
         "flyback.voice",
         "Voice",
-        "A seven-oscillator supersaw, a drum, noise and a slow random value, the fold, drive and "
+        "A seven-oscillator supersaw, a drum, a bell, a hiss, noise and a slow random value, the fold, drive and "
         + "filter that shape them, a slew for glide, struck and counted envelopes with a "
         + "Euclidean rhythm to play them, and a fade to arrange them.");
 
@@ -39,6 +39,8 @@ public sealed class VoicePlugin : IFlybackPlugin
                 FadeModule.Definition,
                 WanderModule.Definition,
                 DrumModule.Definition,
+                BellModule.Definition,
+                HissModule.Definition,
             ]);
 
         registry.AddPresets(

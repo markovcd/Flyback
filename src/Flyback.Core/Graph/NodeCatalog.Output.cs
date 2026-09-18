@@ -151,34 +151,11 @@ public partial class NodeCatalog
                 Num("cents", 0f, -100f, 100f),
             ],
             [Num("hz"), Num("note")],
-            (em, i) =>
-            {
-                // Octaves are twelve semitones, so anything patched into
-                // 'octave' arrives on the same scale the note number is in
-                // and the two simply add up before the snap.
-                var wanted = em.Add(i[0], em.Mul(i[1], Pitch.Semitones));
-
-                // Halfway between two notes is where the snap belongs, and a
-                // floor of the note plus a half is that. Instant, with nothing
-                // smoothing it: an accumulated phase (ADR-0030) moves the
-                // waveform's slope rather than its value, and a slope has no
-                // click in it.
-                var note = em.Unary(OpCode.Floor, em.Add(wanted, 0.5f));
-
-                // Detune is applied after the snap, which is the whole point
-                // of having it: it is the one way to sit between two notes.
-                var tuned = em.Add(note, em.Mul(i[2], 0.01f));
-                var octaves = em.Mul(em.Add(tuned, -Pitch.ConcertNote), 1f / Pitch.Semitones);
-
-                return
-                [
-                    em.Mul(em.Binary(OpCode.Pow, em.Constant(2f), octaves), Pitch.ConcertPitch),
-                    note,
-                ];
-            },
+            (em, i) => Sounded(em, i[0], i[1], i[2]),
             "Pitch in note numbers. Patch in a signal to snap it to the nearest semitone, or use the knob for a direct note value.");
 
         yield return Quantiser();
+        yield return Tune();
         yield return Probe();
         yield return Scope();
         yield return Analyzer();
@@ -302,6 +279,36 @@ public partial class NodeCatalog
     }
 
     /// <summary>
+    /// A note number as a frequency, and the semitone it was snapped to on the way:
+    /// the whole of a Note.
+    /// </summary>
+    private static Slot[] Sounded(Emitter em, Slot pitch, Slot octave, Slot cents)
+    {
+        // Octaves are twelve semitones, so anything patched into
+        // 'octave' arrives on the same scale the note number is in
+        // and the two simply add up before the snap.
+        var wanted = em.Add(pitch, em.Mul(octave, Pitch.Semitones));
+
+        // Halfway between two notes is where the snap belongs, and a
+        // floor of the note plus a half is that. Instant, with nothing
+        // smoothing it: an accumulated phase (ADR-0030) moves the
+        // waveform's slope rather than its value, and a slope has no
+        // click in it.
+        var note = em.Unary(OpCode.Floor, em.Add(wanted, 0.5f));
+
+        // Detune is applied after the snap, which is the whole point
+        // of having it: it is the one way to sit between two notes.
+        var tuned = em.Add(note, em.Mul(cents, 0.01f));
+        var octaves = em.Mul(em.Add(tuned, -Pitch.ConcertNote), 1f / Pitch.Semitones);
+
+        return
+        [
+            em.Mul(em.Binary(OpCode.Pow, em.Constant(2f), octaves), Pitch.ConcertPitch),
+            note,
+        ];
+    }
+
+    /// <summary>
     /// The notes a freshly placed Quantiser snaps to: a major scale, so the
     /// module audibly does something the moment it is placed. Chromatic would
     /// snap to the nearest semitone, which the Note module already does.
@@ -353,21 +360,51 @@ public partial class NodeCatalog
     /// rounding's constant, leaving a floor and three ops per candidate. Ties go
     /// to the note the scale names later, which is the higher pitch class.
     /// </remarks>
-    private static Slot[] EmitQuantiser(Emitter em, EmitContext node)
+    private static Slot[] EmitQuantiser(Emitter em, EmitContext node) =>
+        [Snapped(em, node[0], node[1], node.Scale)];
+
+    /// <summary>
+    /// A transposition, a Quantiser and a Note: a line of a part moved onto the
+    /// chord, held to the scale, and turned into the frequency an oscillator wants.
+    /// </summary>
+    /// <remarks>
+    /// The three are nearly always patched in that order and nothing is wanted from
+    /// between them, so this is their arithmetic with the Note's 'octave' and
+    /// 'cents' at rest. The scale is the Quantiser's, carried the same way.
+    /// </remarks>
+    private static NodeDef Tune() => new(
+        "audio.tune", "Tune", ModuleCategories.Pitch,
+        [Pitched("in", 57f), Num("transpose", 0f, -48f, 48f), Num("hold", 0f, 0f, 1f)],
+        [Num("hz"), Num("note")],
+        (em, i) =>
+        {
+            var nought = em.Constant(0f);
+            var snapped = Snapped(em, em.Add(i[0], i[1]), i[2], i.Scale);
+
+            return Sounded(em, snapped, nought, nought);
+        },
+        "A Quantiser and a Note in one: a note number in, a frequency in the scale out. "
+        + "'transpose' is added first, in semitones — patch a chord's root into it, or set 12 "
+        + "for an octave up. 'hz' goes to an oscillator's freq and 'note' is the same as a "
+        + "number. 'hold' freezes it while it is up, as the Quantiser's does.")
     {
-        var signal = node[0];
-        var scale = node.Scale;
+        Extras = [new ScaleExtra(Major)],
+    };
+
+    /// <summary>What arrives, snapped to the scale and frozen while 'hold' is up.</summary>
+    private static Slot Snapped(Emitter em, Slot signal, Slot hold, IReadOnlyList<int> scale)
+    {
 
         // Nothing switched on: there is no note to snap to, so what comes out is
         // what went in. The same answer a Delay with nothing to remember gives,
         // and it is what makes the twelve switches safe to turn off one at a
         // time — the module fades out of the patch rather than falling out of it.
-        if (scale.Count == 0) return [Frozen(em, node, signal)];
+        if (scale.Count == 0) return Frozen(em, hold, signal);
 
         // Every note switched on: the nearest of all twelve is the nearest
         // semitone, and that is a rounding rather than twelve candidates.
         if (scale.Count == Pitch.Classes)
-            return [Frozen(em, node, em.Unary(OpCode.Floor, em.Add(signal, 0.5f)))];
+            return Frozen(em, hold, em.Unary(OpCode.Floor, em.Add(signal, 0.5f)));
 
         // The signal in octaves. Every candidate is a floor of this plus a
         // constant, so it is worth one op here rather than one per note.
@@ -402,7 +439,7 @@ public partial class NodeCatalog
             nearest = em.Ternary(OpCode.Mix, nearest, away, closer);
         }
 
-        return [Frozen(em, node, best)];
+        return Frozen(em, hold, best);
     }
 
     /// <summary>
@@ -422,7 +459,7 @@ public partial class NodeCatalog
     /// <see cref="HoldHeadroom"/>.
     /// </para>
     /// </remarks>
-    private static Slot Frozen(Emitter em, EmitContext node, Slot note)
+    private static Slot Frozen(Emitter em, Slot hold, Slot note)
     {
         var one = em.Constant(1f);
         var live = em.HasMemory();
@@ -433,7 +470,7 @@ public partial class NodeCatalog
         var held = em.Mul(em.UnitRead(heldCell), HoldHeadroom);
         var before = em.UnitRead(edgeCell);
 
-        var up = em.Binary(OpCode.Step, em.Constant(GateOpen), node[1]);
+        var up = em.Binary(OpCode.Step, em.Constant(GateOpen), hold);
 
         // Taken while the hold is down, and on the evaluation it goes up — so
         // what is frozen is the note as it stood the moment the gate opened

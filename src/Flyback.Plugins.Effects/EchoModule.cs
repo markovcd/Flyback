@@ -1,0 +1,91 @@
+using Flyback.Core.Compile;
+using Flyback.Core.Graph;
+
+namespace Flyback.Plugins.Effects;
+
+/// <summary>
+/// Two echoes in time with the music, one to each side: two Delays whose times are
+/// counted in steps of the beat rather than typed in seconds.
+/// </summary>
+/// <remarks>
+/// The arithmetic of what it replaces: the tempo times the steps in a beat, a Divide
+/// for each side with the count of steps on top, and a <see cref="DelayModule"/>
+/// for each. How the two are fed is a setting because it changes what is wired to
+/// what. In a row the right tap hears the left one, so the repeats cross from side
+/// to side, and only the left feeds back — the right repeats what reaches it
+/// already. Side by side both hear the input and both feed back.
+/// </remarks>
+internal static class EchoModule
+{
+    public const string TypeId = "flyback.effects.echo";
+
+    public const string StateKey = "echo";
+
+    public const string TapsKey = "taps";
+
+    public const string DivisionKey = "division";
+
+    /// <summary>The taps setting that is not the default: both taps hear the input.</summary>
+    public const string SideBySide = "side";
+
+    private const string InARow = "row";
+
+    private static readonly ExtraField.Number Division = new(
+        DivisionKey,
+        "steps per beat",
+        new PortSpec("steps per beat", PortKind.Scalar, 4f, 1f, 16f, -1, PortDisplay.Integer));
+
+    public static NodeDef Definition { get; } = new(
+        TypeId, "Echo", ModuleCategories.TimeEffects,
+        [
+            new PortSpec("in", PortKind.Scalar, 0f, -1f, 1f),
+            new PortSpec("tempo", PortKind.Scalar, 2f, 0.25f, 8f),
+            new PortSpec("left", PortKind.Scalar, 3f, 0.25f, 16f),
+            new PortSpec("right", PortKind.Scalar, 2f, 0.25f, 16f),
+            new PortSpec("feedback", PortKind.Scalar, 0.45f, 0f, 0.95f),
+            new PortSpec("mix", PortKind.Scalar, 0.4f, 0f, 1f),
+        ],
+        [new PortSpec("left"), new PortSpec("right")],
+        Emit,
+        "A stereo echo that keeps time. Patch a Tempo into 'tempo' and the two delay times are "
+        + "counted in steps: 'left' at 3 and 'right' at 2, with four steps to the beat, is a "
+        + "dotted eighth on one side and the beat after it on the other. 'feedback' is how much "
+        + "comes round again and 'mix' how much of the echo against the dry signal — 1 for a "
+        + "send. Two things are set on the node: how many steps there are in a beat, and whether "
+        + "the taps are in a row, the right one hearing the left so the repeats cross over, or "
+        + "side by side, each hearing the input. A delay holds two seconds at most. Audio only, "
+        + "like the Delay.")
+    {
+        Extras =
+        [
+            new SettingsExtra(
+                StateKey,
+                [
+                    new ExtraField.Choice(
+                        TapsKey,
+                        "taps",
+                        [new ChoiceOption(InARow, "In a row"), new ChoiceOption(SideBySide, "Side by side")],
+                        InARow),
+                    Division,
+                ]),
+        ],
+    };
+
+    private static Slot[] Emit(Emitter em, EmitContext node)
+    {
+        var settings = node.Extra<ExtraState>(StateKey);
+        var apart = settings?.Chosen(TapsKey) == SideBySide;
+
+        var steps = em.Mul(node[1], settings?.Number(DivisionKey) ?? Division.Spec.Default);
+        var leftTime = em.Binary(OpCode.Div, node[2], steps);
+        var rightTime = em.Binary(OpCode.Div, node[3], steps);
+
+        var left = DelayModule.Echoed(em, node[0], leftTime, node[4], node[5]);
+
+        var right = apart
+            ? DelayModule.Echoed(em, node[0], rightTime, node[4], node[5])
+            : DelayModule.Echoed(em, left, rightTime, em.Constant(0f), node[5]);
+
+        return [left, right];
+    }
+}

@@ -32,7 +32,7 @@ public class TempoTests
         var def = NodeCatalog.BuiltIn.Require(NodeCatalog.TempoTypeId);
         var emitter = new Emitter();
 
-        var outputs = def.Emit(emitter, new EmitContext([emitter.Constant(bpm)]));
+        var outputs = def.Emit(emitter, new EmitContext([emitter.Constant(bpm), emitter.Constant(0f)]));
         var program = new CompiledPatch(
             emitter.ToProgram(), emitter.RegisterCount, outputs[0].Base, 1);
 

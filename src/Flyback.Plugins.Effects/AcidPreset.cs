@@ -36,6 +36,14 @@ internal static class AcidPreset
 
     private const string RandomType = "flyback.voice.random";
 
+    private const string HissType = "flyback.voice.hiss";
+
+    private const string TransformType = "space.transform";
+
+    private const int TransformZoom = 2;
+
+    private const int TransformAngle = 3;
+
     private const string WanderType = "flyback.voice.wander";
 
     private const string DeskType = "math.desk";
@@ -205,23 +213,16 @@ internal static class AcidPreset
 
         // --- the echoes --------------------------------------------------------
 
-        // Three sixteenths and two, both worked out from the tempo rather than
-        // typed: a Divide with the count on its 'a' and the sixteenth-note rate
-        // on its 'b' is that many sixteenths in seconds.
-        var leftTime = b.Add("math.div", (0, LeftSixteenths));
-        var rightTime = b.Add("math.div", (0, RightSixteenths));
+        // Three sixteenths and two, both counted off the tempo rather than typed
+        // in seconds. Side by side rather than in a row: each tap hears the line
+        // and repeats on its own, so the two sides drift apart and come back.
+        var echoes = b.Add(EchoModule.TypeId, (2, LeftSixteenths), (3, RightSixteenths), (5, 0.32f));
+        echoes.SetState(EchoModule.StateKey, new JsonObject { [EchoModule.TapsKey] = EchoModule.SideBySide });
 
-        var echoL = b.Add(DelayModule.TypeId, (3, 0.32f));
-        var echoR = b.Add(DelayModule.TypeId, (3, 0.32f));
+        b.Wire(drive, 0, echoes, 0)
+         .Wire(tempo, 0, echoes, 1);
 
-        b.Wire(sixteenths, 0, leftTime, 1)
-         .Wire(sixteenths, 0, rightTime, 1)
-         .Wire(drive, 0, echoL, 0)
-         .Wire(leftTime, 0, echoL, 1)
-         .Wire(drive, 0, echoR, 0)
-         .Wire(rightTime, 0, echoR, 1);
-
-        b.Group("Echoes", leftTime, rightTime, echoL, echoR);
+        b.Group("Echoes", echoes);
 
         // --- the kick ----------------------------------------------------------
 
@@ -333,13 +334,13 @@ internal static class AcidPreset
 
         b.Group("Bass", bassSeq, bassPitch, bassOsc, bassEnv, bassVca, duck, ducked, weight);
 
-        // --- the hiss both drum sounds are made of ------------------------------
+        // --- the hiss the hats are made of --------------------------------------
 
         // Nothing in the engine's own catalogue makes a noise a point in the plane
         // can hear: Noise and Fractal are fields in x and y, and the audio path
         // stands at one point of it. Random's white is that field read along the
-        // clock instead. One, read by the hats and the clap, because two drums made
-        // of the same air is what a drum machine is.
+        // clock instead. The clap's Hiss has the same seed, so the two drums are
+        // made of the same air, which is what a drum machine is.
         var hiss = b.Add(RandomType);
 
         // --- the hats ----------------------------------------------------------
@@ -379,8 +380,7 @@ internal static class AcidPreset
 
         // --- the clap ----------------------------------------------------------
 
-        // Two and four, and the same hiss through a second Filter — its 'band'
-        // this time, which the acid line has no use for. A band of noise around
+        // Two and four, and the same noise through a band. A band of noise around
         // 1.4 kHz with a longish tail is a clap; the same noise flat is a hat.
         //
         // Two bars, so the answering ghosts differ between them: the backbeat is
@@ -399,25 +399,20 @@ internal static class AcidPreset
             new Step(0f, 1f, 0.9f), new Step(0f, 1f, 0f), new Step(0f, 1f, 0f), new Step(0f, 1f, 0.5f),
         ]);
 
-        var crack = b.Add(FilterType, (1, 1400f), (2, 0.55f));
         var clapEnv = b.Add(NodeCatalog.AdsrTypeId, (1, -2.7f), (2, -1.15f), (3, 0f), (4, -1.2f));
 
-        var clap = b.Add("math.mul");
-
-        // And a gain past unity on the way out, which is not a taste decision: a
-        // bandpass keeps only what fits between its skirts, so this noise carries
-        // about a seventh of what the hats do and was inaudible under the drums.
-        // The 'band' output is simply a quiet socket.
-        var loud = b.Add("math.mul", (1, 3.5f));
+        // A Hiss on its middle band, with a gain past unity, which is not a taste
+        // decision: a bandpass keeps only what fits between its skirts, so this
+        // noise carries about a seventh of what the hats do and was inaudible
+        // under the drums.
+        var loud = b.Add(HissType, (2, 1400f), (3, 0.55f), (4, 3.5f));
+        loud.SetState("hiss", new JsonObject { ["band"] = "band" });
 
         b.Wire(sixteenths, 0, clapSeq, 1)
          .Wire(clapSeq, 1, clapEnv, 0)
-         .Wire(hiss, 0, crack, 0)
-         .Wire(crack, 1, clap, 0)
-         .Wire(clapEnv, 0, clap, 1)
-         .Wire(clap, 0, loud, 0);
+         .Wire(clapEnv, 0, loud, 1);
 
-        b.Group("Clap", clapSeq, crack, clapEnv, clap, loud);
+        b.Group("Clap", clapSeq, clapEnv, loud);
 
         // --- the slow weather ----------------------------------------------------
 
@@ -441,8 +436,7 @@ internal static class AcidPreset
 
          .Wire(ring, 0, filter, 2)
          .Wire(grit, 0, drive, 1)
-         .Wire(hang, 0, echoL, 2)
-         .Wire(hang, 0, echoR, 2);
+         .Wire(hang, 0, echoes, 4);
 
         b.Group("Slow Weather", ring, grit, hang);
 
@@ -513,8 +507,8 @@ internal static class AcidPreset
         b.Wire(punch, 0, lowEnd, 0)
          .Wire(weight, 0, lowEnd, 2)
 
-         .Wire(echoL, 0, desk, 0)
-         .Wire(echoR, 0, desk, 1)
+         .Wire(echoes, 0, desk, 0)
+         .Wire(echoes, 1, desk, 1)
          .Wire(lowEnd, 0, desk, 3)
 
          .Wire(hats, 0, hatsWide, 0)
@@ -554,8 +548,10 @@ internal static class AcidPreset
 
         // x and y take no wire anywhere in this chain: each is normalled to
         // Coordinates, so it reads the pixel's own position (ADR-0050).
-        var turn = b.Add("space.rotate");
-        var zoom = b.Add("space.scale");
+        var placed = b.Add(TransformType);
+        placed.SetState(
+            NodeCatalog.TransformStateKey,
+            new JsonObject { [NodeCatalog.TransformOrderKey] = NodeCatalog.TurnThenZoom });
         var fold = b.Add("space.kaleidoscope");
 
         // Read from the folded plane rather than the flat one, so the field is
@@ -584,15 +580,13 @@ internal static class AcidPreset
          .Wire(clock, 0, boil, 0)
          .Wire(clock, 0, crawl, 0)
 
-         .Wire(spin, 0, turn, 2)
+         .Wire(spin, 0, placed, TransformAngle)
          .Wire(beat, 0, pump, 0)
-         .Wire(turn, 0, zoom, 0)
-         .Wire(turn, 1, zoom, 1)
-         .Wire(pump, 0, zoom, 2)
+         .Wire(pump, 0, placed, TransformZoom)
 
          .Wire(line, 2, wedges, 0)
-         .Wire(zoom, 0, fold, 0)
-         .Wire(zoom, 1, fold, 1)
+         .Wire(placed, 0, fold, 0)
+         .Wire(placed, 1, fold, 1)
          .Wire(wedges, 0, fold, 2)
 
          .Wire(fold, 0, field, 0)
@@ -612,7 +606,7 @@ internal static class AcidPreset
          .Wire(crawl, 0, bands, 3)
          .Wire(bands, 0, filament, 2);
 
-        b.Group("Picture: Geometry", spin, boil, crawl, pump, wedges, turn, zoom, fold, field,
+        b.Group("Picture: Geometry", spin, boil, crawl, pump, wedges, placed, fold, field,
             reach, bend, count, bands, filament);
 
         // --- the picture: color -------------------------------------------------

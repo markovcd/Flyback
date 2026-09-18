@@ -29,14 +29,17 @@ internal static class EuclidModule
             new PortSpec("hits", PortKind.Scalar, 3f, 0f, MostSteps, Display: PortDisplay.Integer),
             new PortSpec("rotate", PortKind.Scalar, 0f, 0f, MostSteps, Display: PortDisplay.Integer),
             new PortSpec("gate length", PortKind.Scalar, 0.5f, 0f, 1f),
+            new PortSpec("curve", PortKind.Scalar, 3f, 0.1f, 16f),
         ],
-        [new PortSpec("gate"), new PortSpec("hit"), new PortSpec("index")],
+        [new PortSpec("gate"), new PortSpec("hit"), new PortSpec("index"), new PortSpec("stroke")],
         Emit,
         "A rhythm from two numbers: 'hits' spread as evenly as possible over 'steps', moving at "
         + "'rate' steps a second — 3 in 8 is the tresillo, 5 in 8 the cinquillo. 'rotate' "
         + "slides the pattern along the loop by whole steps. 'gate' opens for 'gate length' of each hit step, to trigger a "
         + "Decay or an ADSR; 'hit' is 1 for the whole step. 'index' is how far through the loop "
-        + "it is, 0 to 1. On the picture it runs across its domain like a Sequencer.");
+        + "it is, 0 to 1. 'stroke' is an envelope with no trigger: 1 at the start of each hit "
+        + "step, fallen to 0 by the end of it, bent by 'curve' the way a Stroke's is — patch it "
+        + "into a Drum's 'level'. On the picture it runs across its domain like a Sequencer.");
 
     private static Slot[] Emit(Emitter em, EmitContext node)
     {
@@ -58,11 +61,15 @@ internal static class EuclidModule
         var opening = em.Ternary(OpCode.Smoothstep, zero, em.Constant(Edge), within);
         var closing = em.Sub(one, em.Ternary(OpCode.Smoothstep, em.Sub(length, em.Constant(Edge)), length, within));
 
+        // A Stroke at this rate, let through on the steps that are hits.
+        var stroke = em.Mul(em.Binary(OpCode.Pow, em.Sub(one, within), node[6]), hit);
+
         return
         [
             em.Mul(hit, em.Mul(opening, closing)),
             hit,
             em.Binary(OpCode.Div, index, steps),
+            stroke,
         ];
 
         Slot Whole(Slot value) => em.Unary(OpCode.Floor, em.Add(value, 0.5f));

@@ -33,10 +33,6 @@ internal sealed class PhasePreset : PresetBench
     /// <summary>The modules this borrows, named by id rather than by type.</summary>
     private const string EuclidType = "flyback.voice.euclid";
 
-    private const string FilterType = "flyback.voice.filter";
-
-    private const string RandomType = "flyback.voice.random";
-
     private const string CircleType = "flyback.picture.circle";
 
     private const string BoxType = "flyback.picture.box";
@@ -195,8 +191,8 @@ internal sealed class PhasePreset : PresetBench
         var highBreath = Sine(Times(Fraction(Times(stage, 3f)), MathF.PI));
         var organStroke = Enters(Product(pulse, highBreath), song, 0.65f, 0.7f);
         var organ = Sum(
-            Tone(Through("audio.note", Snapped(Plus(root, 31f))), organStroke),
-            Tone(Through("audio.note", Snapped(Plus(root, 40f))), Times(organStroke, 0.7f)));
+            Tone(InKey(root, Scale, 31f), organStroke),
+            Tone(InKey(root, Scale, 40f), Times(organStroke, 0.7f)));
 
         b.Wire(lowHz, 0, reed, 1)
          .Wire(lowStroke, 0, reed, 3);
@@ -225,13 +221,9 @@ internal sealed class PhasePreset : PresetBench
 
         // --- the shaker ------------------------------------------------------
 
-        // Every note, quietly: white noise, the top of a Filter, and what is left of
-        // the note to the tenth power.
-        var hiss = b.Add(RandomType);
-        var sizzle = b.Add(FilterType, (1, 7000f), (2, 0.2f));
-        var shaker = Product(Enters(Stroke(count, 1f, 10f), song, 0.35f, 0.4f), sizzle, 2);
-
-        b.Wire(hiss, 0, sizzle, 0);
+        // Every note, quietly: the top of a Hiss, and what is left of the note to the
+        // tenth power.
+        var shaker = Hiss(Enters(Stroke(count, 1f, 10f), song, 0.35f, 0.4f), 7000f, 0.2f, "high");
 
         Box("Shaker");
 
@@ -356,7 +348,7 @@ internal sealed class PhasePreset : PresetBench
 
         // Tinted by where in the sixteen stages the piece is, in tints of one color.
         var tint = b.Add(PaletteType, (2, 0.12f), (3, 0.6f), (4, 0.4f));
-        var moireInk = b.Add("color.gain");
+        var moireLit = b.Add("color.gain");
 
         b.Wire(apart, 0, pushedA, 2)
          .Wire(Times(apart, -1f), 0, pushedB, 2)
@@ -369,21 +361,18 @@ internal sealed class PhasePreset : PresetBench
          .Wire(ringsA, 0, cutA, 1)
          .Wire(ringsB, 0, cutB, 1)
          .Wire(song, 2, tint, 0)
-         .Wire(tint, 0, moireInk, 0)
-         .Wire(moire, 0, moireInk, 1);
+         .Wire(tint, 0, moireLit, 0)
+         .Wire(moire, 0, moireLit, 1);
 
         Box("Picture: Rings");
 
         // --- the picture: print ----------------------------------------------
 
-        // Three inks: the first player's red, the second's blue-green, and cream for
-        // what belongs to both — the spoke and the flash.
-        var red = b.Add("color.rgb", (0, 0.95f), (1, 0.33f), (2, 0.2f));
-        var teal = b.Add("color.rgb", (0, 0.15f), (1, 0.72f), (2, 0.75f));
-        var cream = b.Add("color.rgb", (0, 0.96f), (1, 0.92f), (2, 0.82f));
-        var inkA = b.Add("color.gain");
-        var inkB = b.Add("color.gain");
-        var inkBoth = b.Add("color.gain");
+        // Three Inks: the first player's red with the second's blue-green laid on it,
+        // and cream over the rings for what belongs to both — the spoke and the flash.
+        var inkA = Ink(null, Sum(dialA, rowA), 0.95f, 0.33f, 0.2f);
+        var inkB = Ink(inkA, Sum(dialB, rowB), 0.15f, 0.72f, 0.75f);
+        var inkBoth = Ink(moireLit, Sum(Times(spoke, 0.3f), flash), 0.96f, 0.92f, 0.82f);
 
         // Each note leaves the dial as a fading copy of itself, a little larger: the
         // last frame read from nearer the middle. Maximum rather than a blend, so an
@@ -391,20 +380,10 @@ internal sealed class PhasePreset : PresetBench
         var printed = b.Add(TrailsType, (TrailsZoom, 0.985f), (TrailsPersist, 0.84f));
 
         // Darkened at the corners, and graded by the stage last.
-        var vignette = b.Add("math.clamp", (1, 0f), (2, 1f));
-        var shaded = b.Add("color.gain");
+        var shaded = Vignette(printed, 0.5f, 2f, 0.35f);
         var graded = b.Add(GradeType, (2, 1.08f));
 
-        b.Wire(red, 0, inkA, 0)
-         .Wire(Sum(dialA, rowA), 0, inkA, 1)
-         .Wire(teal, 0, inkB, 0)
-         .Wire(Sum(dialB, rowB), 0, inkB, 1)
-         .Wire(cream, 0, inkBoth, 0)
-         .Wire(Sum(Times(spoke, 0.3f), flash), 0, inkBoth, 1)
-         .Wire(Sum(Sum(inkA, inkB), Sum(inkBoth, moireInk)), 0, printed, 0)
-         .Wire(Span(coord, 0.5f, 2f, 1f, 0.35f, 2), 0, vignette, 0)
-         .Wire(printed, 0, shaded, 0)
-         .Wire(vignette, 0, shaded, 1)
+        b.Wire(Sum(inkB, inkBoth), 0, printed, 0)
          .Wire(shaded, 0, graded, 0)
          .Wire(Span(song, 0f, 1f, 0.85f, 1.3f), 0, graded, 1)
          .Wire(graded, 0, output, NodeCatalog.OutputColorPort);
@@ -426,15 +405,6 @@ internal sealed class PhasePreset : PresetBench
              .Wire(Through("audio.note", notes), 0, plucked, 2);
 
             return (notes, plucked);
-        }
-
-        // A note snapped to the pattern's five pitches.
-        NodeInstance Snapped(NodeInstance note)
-        {
-            var snap = b.Add(NodeCatalog.QuantiserTypeId);
-            ScaleExtra.Set(snap, Scale);
-            b.Wire(note, 0, snap, 0);
-            return snap;
         }
 
         // One dial. 'round' is the angle in twelfths of a turn; 'lit' is the note its

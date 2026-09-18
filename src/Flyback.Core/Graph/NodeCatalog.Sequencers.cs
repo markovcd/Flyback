@@ -80,10 +80,17 @@ public partial class NodeCatalog
         // hertz rather than in the single digits a picture is drawn from.
         yield return new NodeDef(
             TempoTypeId, "Tempo", ModuleCategories.Timing,
-            [Num("bpm", 120f, 20f, 300f)],
-            [Num("out")],
-            (em, node) => [em.Mul(node[0], 1f / Minute)],
-            "Tempo in BPM, converted to beats per second. Patch it into a sequencer's rate for one step per beat.");
+            [Num("bpm", 120f, 20f, 300f), Domain("in")],
+            [Num("out"), Num("beats")],
+            (em, node) =>
+            {
+                var rate = em.Mul(node[0], 1f / Minute);
+
+                return [rate, em.Mul(node[1], rate)];
+            },
+            "Tempo in BPM, converted to beats per second. Patch it into a sequencer's rate for one step per beat. "
+            + "'beats' is the count of beats so far, Time multiplied by the tempo: patch it into the "
+            + "'in' of whatever should keep to it.");
 
         yield return new NodeDef(
             HoldTypeId, "Sample & Hold", ModuleCategories.Timing,

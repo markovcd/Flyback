@@ -1,3 +1,5 @@
+using System.Text.Json.Nodes;
+
 namespace Flyback.Core.Graph;
 
 /// <summary>
@@ -681,6 +683,11 @@ public static class Presets
         return b.Build();
     }
 
+    /// <summary>The Transform's knobs, after its position.</summary>
+    private const int TransformZoom = 2;
+
+    private const int TransformAngle = 3;
+
     /// <summary>
     /// Four instruments off four sequencers, and one picture off three of them.
     /// A bass line, a two-oscillator lead with a fifth over it, a kick and a
@@ -957,13 +964,17 @@ public static class Presets
         // once a bar, which reads as an arrangement rather than as a fault.
         var stride = b.Add("math.remap", (1, 0f), (2, 1f), (3, -0.4f), (4, 0.4f));
         var angle = b.Add("math.add");
-        var turn = b.Add("space.rotate");
 
         // The kick moves the light. Its gate is read directly rather than
         // through an envelope — see the remarks — and it is doing three things
         // at once: the zoom, the brightness, and the twist on the feedback.
         var pump = b.Add("math.remap", (1, 0f), (2, 1f), (3, 0.96f), (4, 1.3f));
-        var zoom = b.Add("space.scale");
+
+        // Turned, then zoomed.
+        var placed = b.Add("space.transform");
+        placed.SetState(
+            NodeCatalog.TransformStateKey,
+            new JsonObject { [NodeCatalog.TransformOrderKey] = NodeCatalog.TurnThenZoom });
 
         var segments = b.Add("math.remap", (1, 0f), (2, 1f), (3, 3f), (4, 10f));
         var fold = b.Add("space.kaleidoscope");
@@ -993,16 +1004,14 @@ public static class Presets
          .Wire(bassSeq, 2, stride, 0)
          .Wire(spin, 0, angle, 0)
          .Wire(stride, 0, angle, 1)
-         .Wire(angle, 0, turn, 2)
+         .Wire(angle, 0, placed, TransformAngle)
 
          .Wire(kickSeq, 1, pump, 0)
-         .Wire(turn, 0, zoom, 0)
-         .Wire(turn, 1, zoom, 1)
-         .Wire(pump, 0, zoom, 2)
+         .Wire(pump, 0, placed, TransformZoom)
 
          .Wire(bassSeq, 2, segments, 0)
-         .Wire(zoom, 0, fold, 0)
-         .Wire(zoom, 1, fold, 1)
+         .Wire(placed, 0, fold, 0)
+         .Wire(placed, 1, fold, 1)
          .Wire(segments, 0, fold, 2)
 
          .Wire(fold, 0, field, 0)
@@ -1022,8 +1031,8 @@ public static class Presets
          .Wire(drift, 0, bands, 3)
          .Wire(bands, 0, filament, 2);
 
-        b.Group("Picture: Geometry", spin, boil, drift, crawl, stride, angle, turn, pump,
-            zoom, segments, fold, field, breath, reach, bend, count, bands, filament);
+        b.Group("Picture: Geometry", spin, boil, drift, crawl, stride, angle, pump,
+            placed, segments, fold, field, breath, reach, bend, count, bands, filament);
 
         // --- the picture: color ----------------------------------------------
 
@@ -1073,14 +1082,12 @@ public static class Presets
         // Two readings of the last frame turning opposite ways, red from one and
         // green and blue from the other. That makes a chromatic tunnel, with no
         // lens anywhere in it.
-        var inward = b.Add("space.scale", (2, 1.035f));
+        var inward = b.Add("space.transform", (TransformZoom, 1.035f));
         var twist = b.Add("math.remap", (1, 0f), (2, 1f), (3, 0.012f), (4, 0.05f));
-        var inTurn = b.Add("space.rotate");
         var pastIn = b.Add("feedback");
         var warm = b.Add("color.split");
 
-        var outward = b.Add("space.scale", (2, 0.972f));
-        var outTurn = b.Add("space.rotate", (2, -0.016f));
+        var outward = b.Add("space.transform", (TransformZoom, 0.972f), (TransformAngle, -0.016f));
         var pastOut = b.Add("feedback");
         var cool = b.Add("color.split");
 
@@ -1093,17 +1100,13 @@ public static class Presets
         var combine = b.Add("math.max");
 
         b.Wire(kickSeq, 1, twist, 0)
-         .Wire(inward, 0, inTurn, 0)
-         .Wire(inward, 1, inTurn, 1)
-         .Wire(twist, 0, inTurn, 2)
-         .Wire(inTurn, 0, pastIn, 0)
-         .Wire(inTurn, 1, pastIn, 1)
+         .Wire(twist, 0, inward, TransformAngle)
+         .Wire(inward, 0, pastIn, 0)
+         .Wire(inward, 1, pastIn, 1)
          .Wire(pastIn, 0, warm, 0)
 
-         .Wire(outward, 0, outTurn, 0)
-         .Wire(outward, 1, outTurn, 1)
-         .Wire(outTurn, 0, pastOut, 0)
-         .Wire(outTurn, 1, pastOut, 1)
+         .Wire(outward, 0, pastOut, 0)
+         .Wire(outward, 1, pastOut, 1)
          .Wire(pastOut, 0, cool, 0)
 
          .Wire(warm, 0, ghost, 0)
@@ -1115,8 +1118,8 @@ public static class Presets
          .Wire(fresh, 0, combine, 1)
          .Wire(combine, 0, output, NodeCatalog.OutputColorPort);
 
-        b.Group("Picture: Feedback", inward, twist, inTurn, pastIn, warm,
-            outward, outTurn, pastOut, cool, ghost, trail, combine);
+        b.Group("Picture: Feedback", inward, twist, pastIn, warm,
+            outward, pastOut, cool, ghost, trail, combine);
 
         return b.Build();
     }

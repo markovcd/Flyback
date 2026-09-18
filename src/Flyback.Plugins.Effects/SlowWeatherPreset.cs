@@ -47,8 +47,6 @@ internal sealed class SlowWeatherPreset : PresetBench
 
     private const string FilterType = "flyback.voice.filter";
 
-    private const string RandomType = "flyback.voice.random";
-
     private const string SlewType = "flyback.voice.slew";
 
     /// <summary>The outputs read by number below, named so a wire says which.</summary>
@@ -62,10 +60,6 @@ internal sealed class SlowWeatherPreset : PresetBench
 
     private const int FilterLow = 0;
 
-    private const int FilterBand = 1;
-
-    private const int Pink = 1;
-
     private const int ChorusWide = 1;
 
     private const int ReverbWide = 1;
@@ -73,8 +67,6 @@ internal sealed class SlowWeatherPreset : PresetBench
     private const int BusLeft = 2;
 
     private const int BusRight = 3;
-
-    private const int Radius = 2;
 
     private const int Tail = 1;
 
@@ -221,12 +213,11 @@ internal sealed class SlowWeatherPreset : PresetBench
         // which makes it wander across the field rather than swing across it.
         var bellNote = Through("audio.note", bellSteps);
         var bellIndex = Span(flutter, 0f, 1f, 0.08f, 0.22f);
-        var partial = Tone(Times(bellNote, 3.01f, Hz), Product(bellIndex, bellSteps, Gate));
-        var bell = b.Add("osc.sine");
+        var bell = b.Add("flyback.voice.bell", (3, 3.01f));
 
         b.Wire(bellNote, Hz, bell, 1)
-         .Wire(partial, 0, bell, 2)
-         .Wire(bellSteps, Gate, bell, 3);
+         .Wire(bellSteps, Gate, bell, 2)
+         .Wire(bellIndex, 0, bell, BellIndex);
 
         var bellSoft = Times(bell, 0.6f);
         var sweep = b.Add(PhaserType, (1, 0.023f), (2, 0.85f), (3, 0.55f), (4, 0.7f));
@@ -305,22 +296,17 @@ internal sealed class SlowWeatherPreset : PresetBench
 
         // --- wind ------------------------------------------------------------
 
-        // Pink noise through a bandpass whose centre is a voltage, which is wind;
+        // A Hiss set to pink, on a band whose centre is a voltage, which is wind;
         // the resonance is what makes it whistle in the distance rather than
         // hiss. Its level is the third loop: a follower on the melody desk's bus,
         // turned upside down, so the wind comes up when the pad and the bell are
         // quiet and goes when they return. Nothing here decides when that is.
-        var gust = b.Add(RandomType, (2, 4f));
-        var windOpen = Span(flutter, 0f, 1f, 500f, 3000f);
-        var windBand = b.Add(FilterType, (2, 0.6f));
-
-        b.Wire(gust, Pink, windBand, 0)
-         .Wire(windOpen, 0, windBand, 1);
-
         var melodyHeard = Followed(melody, BusLeft, -0.3f, 0.7f);
         var hush = Ducked(melodyHeard, 2.2f, 0.1f);
         var windDrift = Wander(0.029f, 5f, 0.25f, 1f);
-        var windVoiced = Product(Product(hush, windDrift), windBand, FilterBand);
+        var windVoiced = Hiss(Product(hush, windDrift), 800f, 0.6f, "band", noise: "pink", seed: 4f);
+
+        b.Wire(Span(flutter, 0f, 1f, 500f, 3000f), 0, windVoiced, HissCutoff);
         var windDriftL = b.Add("osc.sine", (1, 0.0533f), (3, 0.45f), (4, 0.5f));
         var windDriftR = b.Add("osc.sine", (1, 0.0631f), (2, 0.5f), (3, 0.45f), (4, 0.5f));
         var windL = Product(windVoiced, windDriftL);
@@ -414,16 +400,13 @@ internal sealed class SlowWeatherPreset : PresetBench
         // which has nowhere to arrive. Everything else here is one of the
         // voltages, so nothing in the frame is on its way anywhere in particular.
         var creep = Times(clock, 0.011f);
-        var turn = b.Add("space.rotate");
-        var zoom = b.Add("space.scale");
+        var placed = TurnedThenZoomed();
         var fold = b.Add("space.kaleidoscope");
 
-        b.Wire(Sum(creep, Span(tide, 0f, 1f, -0.6f, 0.6f)), 0, turn, 2)
-         .Wire(turn, 0, zoom, 0)
-         .Wire(turn, 1, zoom, 1)
-         .Wire(Span(wander, 0f, 1f, 0.75f, 1.45f), 0, zoom, 2)
-         .Wire(zoom, 0, fold, 0)
-         .Wire(zoom, 1, fold, 1)
+        b.Wire(Sum(creep, Span(tide, 0f, 1f, -0.6f, 0.6f)), 0, placed, TransformAngle)
+         .Wire(Span(wander, 0f, 1f, 0.75f, 1.45f), 0, placed, TransformZoom)
+         .Wire(placed, 0, fold, 0)
+         .Wire(placed, 1, fold, 1)
          .Wire(Span(tide, 0f, 1f, 2f, 9f), 0, fold, 2);
 
         // The cloud is Noise read the ordinary way — per pixel, off the folded
@@ -478,15 +461,13 @@ internal sealed class SlowWeatherPreset : PresetBench
 
         // --- the picture: color ----------------------------------------------
 
-        // Coordinates are here for 'radius', which is the one output nothing is
-        // normalled to, and the only thing in the patch that knows where the
-        // edge of the frame is.
-        var coord = b.Add(NodeCatalog.CoordTypeId);
-        var falloff = Span(coord, 0f, 2.2f, 1f, 0.3f, Radius);
+        // A Vignette with no picture in it, read for its 'shade': the only thing
+        // in the patch that knows where the edge of the frame is.
+        var falloff = Vignette(null, 0f, 2.2f, 0.3f);
         var glow = Span(padSteps, 0f, 1f, 0.9f, 1.6f, Gate);
         var visible = b.Add("math.clamp", (1, 0f), (2, 1f));
 
-        b.Wire(Product(Product(memory, glow), falloff), 0, visible, 0);
+        b.Wire(Product(Product(memory, glow), falloff, VignetteShade), 0, visible, 0);
 
         // Hue off the cloud and the slowest voltage together, so the palette
         // moves across the frame and drifts as a whole at the same time, and the

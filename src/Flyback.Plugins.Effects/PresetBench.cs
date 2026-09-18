@@ -1,3 +1,4 @@
+using System.Text.Json.Nodes;
 using Flyback.Core.Graph;
 
 namespace Flyback.Plugins.Effects;
@@ -125,11 +126,13 @@ internal abstract class PresetBench(ModuleCatalog modules)
     /// <summary>
     /// A Fade: <paramref name="a"/> let through as <paramref name="level"/> passes from
     /// <paramref name="from"/> to <paramref name="to"/>, which is how a part enters.
+    /// <paramref name="output"/> is the output of <paramref name="a"/> read, for a
+    /// Euclid's stroke.
     /// </summary>
-    protected NodeInstance Enters(NodeInstance a, NodeInstance level, float from, float to)
+    protected NodeInstance Enters(NodeInstance a, NodeInstance level, float from, float to, int output = 0)
     {
         var node = Enters(level, from, to);
-        b.Wire(a, 0, node, 0);
+        b.Wire(a, output, node, 0);
         return node;
     }
 
@@ -216,17 +219,119 @@ internal abstract class PresetBench(ModuleCatalog modules)
         return tone;
     }
 
+    /// <summary>The Bell's index, for one whose brightness is a wire.</summary>
+    protected const int BellIndex = 4;
+
     /// <summary>
-    /// Struck metal out of two sines: one at the pitch, and one at a ratio above it
-    /// leaning on the first one's phase. How hard it leans is the stroke, so the note
-    /// is bright when it is hit and pure by the time it has rung — which is the whole
-    /// character of a bell, for two oscillators.
+    /// A Bell: struck metal at <paramref name="hz"/>, with an overtone at
+    /// <paramref name="ratio"/> times the pitch that is <paramref name="index"/> strong
+    /// when the stroke is at its height and gone by the time it has rung.
     /// </summary>
-    protected NodeInstance Bell(NodeInstance hz, NodeInstance stroke, float ratio, float index)
+    protected NodeInstance Bell(NodeInstance hz, NodeInstance stroke, float ratio, float index, int from = 0)
     {
-        var partial = Tone(Times(hz, ratio), Times(stroke, index));
-        var bell = Tone(hz, stroke);
-        b.Wire(partial, 0, bell, 2);
+        var bell = b.Add("flyback.voice.bell", (3, ratio), (BellIndex, index));
+        b.Wire(hz, from, bell, 1).Wire(stroke, 0, bell, 2);
         return bell;
     }
+
+    /// <summary>The Hiss's cutoff, for one that is swept.</summary>
+    protected const int HissCutoff = 2;
+
+    /// <summary>
+    /// A Hiss: noise through one band of a filter, as loud as <paramref name="level"/>,
+    /// or wide open where there is none and whatever follows plays it.
+    /// <paramref name="band"/> is low, band or high, and <paramref name="noise"/>
+    /// white or pink.
+    /// </summary>
+    protected NodeInstance Hiss(
+        NodeInstance? level, float cutoff, float resonance, string band,
+        float gain = 1f, string noise = "white", float seed = 0f)
+    {
+        var hiss = b.Add("flyback.voice.hiss", (HissCutoff, cutoff), (3, resonance), (4, gain), (5, seed));
+        hiss.SetState("hiss", new JsonObject { ["noise"] = noise, ["band"] = band });
+
+        if (level is null) hiss.InputValues[1] = 1f;
+        else b.Wire(level, 0, hiss, 1);
+
+        return hiss;
+    }
+
+    /// <summary>The Echo's feedback, for one whose repeats are a wire, and its right side.</summary>
+    protected const int EchoFeedback = 4;
+
+    protected const int EchoRight = 1;
+
+    /// <summary>
+    /// An Echo: two taps counted in sixteenths of <paramref name="tempo"/>, in a row
+    /// unless <paramref name="sideBySide"/>.
+    /// </summary>
+    protected NodeInstance Echo(
+        NodeInstance from, NodeInstance tempo, float left, float right, float feedback, float mix,
+        bool sideBySide = false)
+    {
+        var echo = b.Add(EchoModule.TypeId, (2, left), (3, right), (EchoFeedback, feedback), (5, mix));
+
+        if (sideBySide)
+            echo.SetState(EchoModule.StateKey, new JsonObject { [EchoModule.TapsKey] = EchoModule.SideBySide });
+
+        b.Wire(from, 0, echo, 0).Wire(tempo, 0, echo, 1);
+        return echo;
+    }
+
+    /// <summary>
+    /// A Tune: <paramref name="note"/> moved by <paramref name="transpose"/> semitones,
+    /// snapped to <paramref name="scale"/>, as a frequency.
+    /// </summary>
+    protected NodeInstance InKey(NodeInstance note, int[] scale, float transpose = 0f, int from = 0)
+    {
+        var tune = b.Add("audio.tune", (1, transpose));
+        ScaleExtra.Set(tune, scale);
+        b.Wire(note, from, tune, 0);
+        return tune;
+    }
+
+    /// <summary>The Transform's knobs, after its position.</summary>
+    protected const string TransformType = "space.transform";
+
+    protected const int TransformZoom = 2;
+
+    protected const int TransformAngle = 3;
+
+    /// <summary>A Transform that turns before it zooms, which is a Rotate into a Scale.</summary>
+    protected NodeInstance TurnedThenZoomed(params (int Port, float Value)[] knobs)
+    {
+        var placed = b.Add(TransformType, knobs);
+        placed.SetState(
+            NodeCatalog.TransformStateKey,
+            new JsonObject { [NodeCatalog.TransformOrderKey] = NodeCatalog.TurnThenZoom });
+        return placed;
+    }
+
+    /// <summary>
+    /// An Ink: one color laid on <paramref name="under"/> as light, through
+    /// <paramref name="mask"/>.
+    /// </summary>
+    protected NodeInstance Ink(NodeInstance? under, NodeInstance mask, float red, float green, float blue)
+    {
+        var ink = b.Add("color.ink", (2, red), (3, green), (4, blue));
+        if (under is not null) b.Wire(under, 0, ink, 0);
+        b.Wire(mask, 0, ink, 1);
+        return ink;
+    }
+
+    /// <summary>The Vignette's second output: the darkening alone.</summary>
+    protected const int VignetteShade = 1;
+
+    /// <summary>A Vignette: the corners of <paramref name="picture"/> darkened.</summary>
+    protected NodeInstance Vignette(NodeInstance? picture, float from, float to, float dark)
+    {
+        var vignette = b.Add("color.vignette", (3, from), (4, to), (5, dark));
+        if (picture is not null) b.Wire(picture, 0, vignette, 0);
+        return vignette;
+    }
+
+    /// <summary>The Euclid's envelope, and the knob that bends it.</summary>
+    protected const int EuclidStroke = 3;
+
+    protected const int EuclidCurve = 6;
 }

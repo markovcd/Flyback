@@ -33,14 +33,16 @@ internal static class DelayModule
         + "rather than steps. 'feedback' is how much comes back round for the next repeat. "
         + "Audio only: with no picture to remember, it passes straight through.");
 
-    private static Slot[] Emit(Emitter em, EmitContext inputs)
-    {
-        var dry = inputs[0];
+    private static Slot[] Emit(Emitter em, EmitContext inputs) =>
+        [Echoed(em, inputs[0], inputs[1], inputs[2], inputs[3])];
 
-        var echo = em.DelayLine(OpCode.Delay, dry, inputs[2], inputs[1], Longest);
+    /// <summary>One Delay's worth of ops, for a module with a Delay inside it — see <see cref="EchoModule"/>.</summary>
+    public static Slot Echoed(Emitter em, Slot dry, Slot time, Slot feedback, Slot mix)
+    {
+        var echo = em.DelayLine(OpCode.Delay, dry, feedback, time, Longest);
 
         // Mix is a straight crossfade, so at 0 the module is exactly a wire and
         // at 1 the dry signal is gone entirely.
-        return [em.Ternary(OpCode.Mix, dry, echo, inputs[3])];
+        return em.Ternary(OpCode.Mix, dry, echo, mix);
     }
 }

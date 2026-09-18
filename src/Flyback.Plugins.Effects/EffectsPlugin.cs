@@ -3,8 +3,8 @@ using Flyback.Core.Graph;
 namespace Flyback.Plugins.Effects;
 
 /// <summary>
-/// The five effects built on a delay line: repeats, a room, and the three
-/// sweeps.
+/// The effects built on a delay line: repeats, repeats in time, a room, and the
+/// three sweeps.
 /// </summary>
 public sealed class EffectsPlugin : IFlybackPlugin
 {
@@ -13,7 +13,7 @@ public sealed class EffectsPlugin : IFlybackPlugin
     public PluginInfo Info { get; } = new(
         "flyback.effects",
         "Effects",
-        "Delay, reverb, chorus, flanger and phaser — everything built on a delay line.");
+        "Delay, a tempo echo, reverb, chorus, flanger and phaser — everything built on a delay line.");
 
     public void Register(IPluginRegistry registry)
     {
@@ -21,6 +21,7 @@ public sealed class EffectsPlugin : IFlybackPlugin
             Provider,
             [
                 DelayModule.Definition,
+                EchoModule.Definition,
                 ReverbModule.Definition,
                 ChorusModule.Definition,
                 FlangerModule.Definition,
