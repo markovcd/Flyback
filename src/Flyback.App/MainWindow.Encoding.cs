@@ -67,7 +67,17 @@ public sealed partial class MainWindow
             "Which ffmpeg to encode with. Left empty, the first one on PATH is used — "
             + "fill it in only if that is not the one you mean.");
 
-        var browse = new Button { Content = "…", Width = 32, FontSize = Text.Body };
+        // As tall as the box it sits beside, and a step away from it.
+        var browse = new Button
+        {
+            Content = "…",
+            Width = 32,
+            FontSize = Text.Body,
+            Margin = new Avalonia.Thickness(4, 0, 0, 0),
+            VerticalAlignment = VerticalAlignment.Stretch,
+            VerticalContentAlignment = VerticalAlignment.Center,
+            HorizontalContentAlignment = HorizontalAlignment.Center,
+        };
 
         ToolTip.SetTip(browse, "Find ffmpeg on this machine.");
 
@@ -80,9 +90,9 @@ public sealed partial class MainWindow
 
         // The gutter every other row uses, then the box, then the button — one
         // column more than Field builds, which is why this row is built here.
-        var row = Row("*,Auto");
+        var row = Row("*,Auto", SettingsGutter);
 
-        var label = Caption("ffmpeg");
+        var label = Caption("ffmpeg", SettingsGutter);
 
         Grid.SetColumn(label, 0);
         Grid.SetColumn(ffmpegBox, 1);

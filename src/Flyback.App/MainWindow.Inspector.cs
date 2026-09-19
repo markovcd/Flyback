@@ -1177,7 +1177,6 @@ public sealed partial class MainWindow
         soundSection.Children.Add(Field("Latency", latency));
     }
 
-    /// <summary>A labelled row on the same 78-pixel gutter the knob rows use.</summary>
     /// <summary>
     /// How wide the column every row puts its name in is. One number rather than
     /// seven, because it is stated twice per row — as the grid column and as the
@@ -1186,19 +1185,26 @@ public sealed partial class MainWindow
     /// </summary>
     private const double Gutter = 78;
 
+    /// <summary>
+    /// The gutter of a row in the settings window, which is wider than a knob's:
+    /// its names are whole phrases like "Startup patch", and the window has the
+    /// room the inspector does not.
+    /// </summary>
+    private const double SettingsGutter = SettingsForm.Gutter;
+
     /// <summary>A row's name, in the gutter every row shares.</summary>
-    private static TextBlock Caption(string text) => new()
+    private static TextBlock Caption(string text, double width = Gutter) => new()
     {
         Text = text,
-        Width = Gutter,
+        Width = width,
         FontSize = Text.Body,
         VerticalAlignment = VerticalAlignment.Center,
         TextTrimming = TextTrimming.CharacterEllipsis,
     };
 
     /// <summary>The gutter, and whatever columns the caller needs beside it.</summary>
-    private static Grid Row(string beside) =>
-        new() { ColumnDefinitions = new ColumnDefinitions($"{Gutter},{beside}") };
+    private static Grid Row(string beside, double gutter = Gutter) =>
+        new() { ColumnDefinitions = new ColumnDefinitions($"{gutter},{beside}") };
 
     /// <summary>
     /// A knob whose number is not what it means, and so wants a column for what it
@@ -1227,11 +1233,12 @@ public sealed partial class MainWindow
     /// </remarks>
     private static Grid KnobRow(bool reading) => Row(reading ? "*,60,84" : "*,84");
 
+    /// <summary>A labelled row in the settings window, on the gutter its declared rows use too.</summary>
     private static Control Field(string name, Control control)
     {
-        var row = Row("*");
+        var row = Row("*", SettingsGutter);
 
-        var label = Caption(name);
+        var label = Caption(name, SettingsGutter);
 
         Grid.SetColumn(label, 0);
         Grid.SetColumn(control, 1);

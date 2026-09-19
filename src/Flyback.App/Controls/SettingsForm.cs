@@ -25,6 +25,12 @@ namespace Flyback.App.Controls;
 /// </remarks>
 public sealed class SettingsForm : UserControl
 {
+    /// <summary>
+    /// How wide the column a caption sits in is, on a form whose captions sit
+    /// beside their controls — the same column the settings window's own rows
+    /// use, so a declared row lines up with the host's rows under it.
+    /// </summary>
+    public const double Gutter = 96;
 
     private readonly StackPanel rows = new() { Spacing = 10 };
     private readonly Dictionary<string, Row> built = new(StringComparer.Ordinal);
@@ -46,6 +52,13 @@ public sealed class SettingsForm : UserControl
     private bool quiet;
 
     public SettingsForm() => Content = rows;
+
+    /// <summary>
+    /// Whether a caption sits beside its control rather than above it. Beside
+    /// where the form shares a section with rows laid out that way, as the Sound
+    /// section's does; above where it stands alone, as the agent's does.
+    /// </summary>
+    public bool Beside { get; init; }
 
     /// <summary>Raised when somebody changes something. Not when the form is filled in.</summary>
     public event EventHandler? Changed;
@@ -100,6 +113,8 @@ public sealed class SettingsForm : UserControl
                 if (!built.TryGetValue(field.Key, out var row))
                 {
                     if (Build(field) is not { } fresh) continue;
+
+                    fresh.Beside = Beside;
 
                     built[field.Key] = row = fresh;
                 }
@@ -175,6 +190,9 @@ public sealed class SettingsForm : UserControl
 
         public StackPanel View { get; } = new() { Spacing = 3 };
 
+        /// <summary>Whether the caption goes beside the control — see <see cref="SettingsForm.Beside"/>.</summary>
+        public bool Beside { get; set; }
+
         public void Apply(SettingField field, SettingValues values)
         {
             // Laid out on the first application rather than in the constructor,
@@ -183,11 +201,7 @@ public sealed class SettingsForm : UserControl
             if (!laid)
             {
                 laid = true;
-
-                if (caption is not null) View.Children.Add(caption);
-
-                View.Children.Add(Control);
-                View.Children.Add(note);
+                Lay();
             }
 
             if (caption is not null) caption.Text = field.Label;
@@ -199,6 +213,44 @@ public sealed class SettingsForm : UserControl
             note.IsVisible = !string.IsNullOrEmpty(field.Note);
 
             Fill(field, field.Sane(values.All.GetValueOrDefault(field.Key)));
+        }
+
+        private void Lay()
+        {
+            if (!Beside || caption is null)
+            {
+                if (caption is not null) View.Children.Add(caption);
+
+                View.Children.Add(Control);
+                View.Children.Add(note);
+
+                return;
+            }
+
+            // The control takes what the gutter leaves rather than its own width,
+            // as the host's rows beside it do, and the note starts under the
+            // control rather than under the caption.
+            caption.Width = Gutter;
+            caption.FontSize = Text.Body;
+            caption.ClearValue(TextBlock.ForegroundProperty);
+            caption.VerticalAlignment = VerticalAlignment.Center;
+            caption.TextTrimming = TextTrimming.CharacterEllipsis;
+
+            Control.Width = double.NaN;
+            Control.HorizontalAlignment = HorizontalAlignment.Stretch;
+
+            note.Width = double.NaN;
+            note.Margin = new Thickness(Gutter, 0, 0, 0);
+
+            var line = new Grid { ColumnDefinitions = new ColumnDefinitions($"{Gutter},*") };
+
+            Grid.SetColumn(Control, 1);
+
+            line.Children.Add(caption);
+            line.Children.Add(Control);
+
+            View.Children.Add(line);
+            View.Children.Add(note);
         }
 
         protected abstract Control Control { get; }

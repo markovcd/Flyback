@@ -138,7 +138,7 @@ public sealed partial class MainWindow : Window
     /// what it declares (ADR-0085). Empty where no backend is installed or it has
     /// nothing to ask.
     /// </summary>
-    private readonly SettingsForm soundForm = new() { Name = "soundForm" };
+    private readonly SettingsForm soundForm = new() { Name = "soundForm", Beside = true };
 
     /// <summary>
     /// What the Graphics, Recording and Sound sections were last saved as, and so

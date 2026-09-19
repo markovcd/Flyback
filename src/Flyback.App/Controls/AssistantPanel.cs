@@ -219,7 +219,7 @@ public sealed class AssistantPanel : UserControl
         HorizontalAlignment = HorizontalAlignment.Left,
     };
 
-    private readonly Button forget = new() { Content = "Forget key", Width = 100 };
+    private readonly Button forget = new() { Content = "Forget key", FontSize = Text.Body };
     private readonly CheckBox rememberBox = new() { Content = "Keep this key", FontSize = Text.Body };
 
     /// <summary>
@@ -249,7 +249,7 @@ public sealed class AssistantPanel : UserControl
         Increment = 1,
         FormatString = "0",
         FontSize = Text.Body,
-        Width = 120,
+        Width = 260,
         HorizontalAlignment = HorizontalAlignment.Left,
     };
 
@@ -266,7 +266,7 @@ public sealed class AssistantPanel : UserControl
         Increment = 10_000,
         FormatString = "0",
         FontSize = Text.Body,
-        Width = 120,
+        Width = 260,
         HorizontalAlignment = HorizontalAlignment.Left,
     };
 
