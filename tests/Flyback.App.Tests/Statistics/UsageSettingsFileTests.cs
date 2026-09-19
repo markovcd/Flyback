@@ -1,4 +1,5 @@
 using Flyback.App.Statistics;
+using Flyback.App.Updates;
 using Shouldly;
 using Xunit;
 
@@ -42,8 +43,8 @@ public sealed class UsageSettingsFileTests : IDisposable
     [Fact]
     public void A_build_that_is_not_a_release_counts_nothing()
     {
-        Usage.Start(new UsageSettings { SendUsageStatistics = true })
-            .ShouldBeSameAs(Usage.Off, "the tests are not a release build");
+        Usage.Start(new UsageSettings { SendUsageStatistics = true }, ReleaseFeed.Released("0.1.0+37fc87f"))
+            .ShouldBeSameAs(Usage.Off);
     }
 
     [Fact]

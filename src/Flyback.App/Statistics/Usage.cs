@@ -85,11 +85,19 @@ public sealed class Usage
     /// somebody working on Flyback rather than using it — or a build carrying no
     /// application key, which is any fork of this repository.
     /// </summary>
-    public static Usage Start(UsageSettings settings)
+    public static Usage Start(UsageSettings settings) => Start(settings, ReleaseFeed.Running());
+
+    /// <param name="settings"><inheritdoc cref="Start(UsageSettings)"/></param>
+    /// <param name="running">
+    /// The release this is, or null for a build that is not one. Taken rather than
+    /// read from the assembly because a build with no git checkout beside it — the
+    /// Docker one — carries a bare version and cannot be told from a release.
+    /// </param>
+    internal static Usage Start(UsageSettings settings, Version? running)
     {
         if (!settings.SendUsageStatistics) return Off;
 
-        if (ReleaseFeed.Running() is not { } running)
+        if (running is null)
         {
             Trace.WriteLine("usage: not a release build, so nothing is counted");
             return Off;
