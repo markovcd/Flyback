@@ -15,10 +15,16 @@ namespace Flyback.App.Controls;
 internal sealed record Thumbnail(byte[]? Pixels, string Words)
 {
     /// <summary>
-    /// A patch with no picture in it — one that is only heard, or one with nothing
-    /// wired yet. The tile is left bare, its name and description saying which.
+    /// A patch that is heard and never seen, which has no frame to take. Shown as a
+    /// speaker, the words being what it says when pointed at.
     /// </summary>
-    public static Thumbnail Blank { get; } = new(null, "");
+    public static Thumbnail SoundOnly { get; } = new(null, "Sound only");
+
+    /// <summary>
+    /// A patch with nothing wired to either half of the Output yet. Left bare, its
+    /// name and description being what says so.
+    /// </summary>
+    public static Thumbnail Nothing { get; } = new(null, "");
 
     /// <summary>A patch that would not build or compile, so there is no frame to show.</summary>
     public static Thumbnail Unavailable { get; } = new(null, "No preview");
@@ -86,7 +92,9 @@ internal sealed class PresetThumbnails(ModuleCatalog modules)
             // A preset from a plugin is built here for the same reason the toolbar
             // builds it when it is picked: it needs the modules that plugin added.
             var patch = preset.Build(modules);
-            if (!patch.Reaches().Picture) return Thumbnail.Blank;
+            var (picture, sound) = patch.Reaches();
+
+            if (!picture) return sound ? Thumbnail.SoundOnly : Thumbnail.Nothing;
 
             var video = patch.CompileForVideo(
                 samples: new SampleLibrary(),

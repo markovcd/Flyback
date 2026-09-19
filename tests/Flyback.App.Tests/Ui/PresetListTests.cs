@@ -191,25 +191,29 @@ public class PresetListTests : UiTest
     }
 
     /// <summary>
-    /// A preset with no picture in it — a patch that is only heard, or one with
-    /// nothing wired yet — leaves its tile bare: no frame, and no words over it.
+    /// A preset with no picture in it has no frame to show: one that is only heard
+    /// shows a speaker, and one with nothing wired yet leaves its tile bare.
     /// </summary>
     [AvaloniaFact]
-    public void A_preset_with_no_picture_leaves_its_tile_bare()
+    public void A_preset_with_no_picture_shows_a_speaker_or_nothing()
     {
         var window = Open();
 
         OpenGallery(window);
 
-        // Asked for after both, so by the time it is drawn they have been too:
-        // the thumbnails are taken one at a time.
-        UntilDrawn(window, () => All<Image>(Tile(window, "Plasma")).Single().Source is not null);
+        Control Speaker(string preset) => All<ContentControl>(Tile(window, preset)).Single(c => c.Name == "sound-only");
+        string Says(string preset) => All<TextBlock>(Tile(window, preset)).Single(t => t.Parent is Grid).Text ?? "";
 
-        foreach (var preset in new[] { "Clip", "Empty" })
-        {
-            All<Image>(Tile(window, preset)).Single().Source.ShouldBeNull();
-            All<TextBlock>(Tile(window, preset)).Single(t => t.Parent is Grid).Text.ShouldBeNullOrEmpty();
-        }
+        UntilDrawn(window, () => Speaker("Clip").IsVisible);
+
+        ToolTip.GetTip(Speaker("Clip")).ShouldBe("Sound only");
+        Says("Clip").ShouldBeEmpty();
+        All<Image>(Tile(window, "Clip")).Single().Source.ShouldBeNull();
+
+        // Asked for before Clip, so drawn by now: the thumbnails are taken one at a time.
+        Speaker("Empty").IsVisible.ShouldBeFalse();
+        Says("Empty").ShouldBeEmpty();
+        All<Image>(Tile(window, "Empty")).Single().Source.ShouldBeNull();
     }
 
     /// <summary>

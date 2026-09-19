@@ -88,14 +88,26 @@ internal static class PresetGallery
     {
         var image = new Image { Stretch = Stretch.UniformToFill };
 
-        // Said only of a preset that would not draw. One with no picture in it is
-        // left bare, its name and description being what says so.
+        // Said only of a preset that would not draw. One that is only heard is
+        // drawn as a speaker instead, and one with nothing wired is left bare.
         var words = new TextBlock
         {
             FontSize = Text.Small,
             Foreground = Text.Muted,
             HorizontalAlignment = HorizontalAlignment.Center,
             VerticalAlignment = VerticalAlignment.Center,
+        };
+
+        // In the muted color the words are, through a ContentControl because
+        // that is where a glyph takes its color from.
+        var speaker = new ContentControl
+        {
+            Name = "sound-only",
+            Foreground = Text.Muted,
+            IsVisible = false,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center,
+            Content = new Viewbox { Width = 40, Height = 40, Child = Glyphs.Speaker() },
         };
 
         var picture = new Border
@@ -106,7 +118,7 @@ internal static class PresetGallery
             Background = new SolidColorBrush(Colors.Canvas),
             ClipToBounds = true,
             CornerRadius = new CornerRadius(3),
-            Child = new Grid { Children = { image, words } },
+            Child = new Grid { Children = { image, words, speaker } },
         };
 
         var accent = Colors.PresetAccent(preset.Kind);
@@ -146,7 +158,7 @@ internal static class PresetGallery
         tile.PointerEntered += (_, _) => pointedAt?.Invoke(new PointedTile(preset, image));
         tile.PointerExited += (_, _) => pointedAt?.Invoke(null);
 
-        _ = Fill(image, words, thumbnails.Of(preset));
+        _ = Fill(image, words, speaker, thumbnails.Of(preset));
 
         return tile;
     }
@@ -155,11 +167,19 @@ internal static class PresetGallery
     /// Puts the thumbnail on its tile when it is drawn. Awaited from the UI thread,
     /// so what follows the wait is on it too.
     /// </summary>
-    private static async Task Fill(Image image, TextBlock words, Task<Thumbnail> drawing)
+    private static async Task Fill(Image image, TextBlock words, Control speaker, Task<Thumbnail> drawing)
     {
         var thumbnail = await drawing;
 
-        words.Text = thumbnail.Words;
+        if (thumbnail == Thumbnail.SoundOnly)
+        {
+            speaker.IsVisible = true;
+            ToolTip.SetTip(speaker, thumbnail.Words);
+        }
+        else
+        {
+            words.Text = thumbnail.Words;
+        }
 
         if (thumbnail.Pixels is { } pixels) image.Source = Bitmap(pixels);
     }

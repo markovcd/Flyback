@@ -65,6 +65,15 @@ internal static class Glyphs
         Filled(Geometry.Parse("M3,3 L4.5,3 L4.5,13 L3,13 Z M13,3 L13,13 L5,8 Z"));
 
     /// <summary>
+    /// A loudspeaker with two waves coming off it — what a preset that is heard
+    /// and never seen shows where its picture would be.
+    /// </summary>
+    public static Control Speaker() => Stroked(
+        "M2.5,6 L5,6 L8.5,3 L8.5,13 L5,10 L2.5,10 Z "
+        + "M10.5,6 Q11.8,8 10.5,10 "
+        + "M12.5,4 Q15,8 12.5,12");
+
+    /// <summary>
     /// Outlined rather than filled, to sit at the weight of the glyphs beside
     /// it, and colored from whatever holds it so that hovering, pressing and
     /// grey-out all reach it without being handled here.
