@@ -14,4 +14,4 @@ Before sending keys, bring your window to the front and check that `GetForegroun
 
 **Why:** a capture script once took the first Flyback window it found and began by stopping every `Flyback` process. The window it then drove, maximizing it, clicking its canvas and pressing Ctrl+F, was a Release build from the main checkout, not the Debug build the session had launched. It may have been the user's own.
 
-A preset that makes sound plays through the user's speakers the moment it opens. To look at one, open a copy with the Output's `volume` at nought, or leave it to the user (see the `site-screenshots` skill).
+A preset that makes sound plays through the user's speakers the moment it opens. To look at one, open a copy with the Output's `volume` at nought.
