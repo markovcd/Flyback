@@ -45,7 +45,7 @@ internal static class FmModule
         [
             new PortSpec("in", NormalledTo: NodeCatalog.Clock, Domain: true),
             new PortSpec("freq", PortKind.Scalar, 440f, 20f, 4000f),
-            new PortSpec("level", PortKind.Scalar, 0f, 0f, 1f),
+            new PortSpec("level", PortKind.Scalar, 1f, 0f, 1f),
             new PortSpec("tone", PortKind.Scalar, 1f, 0f, 2f),
             new PortSpec("ratio2", PortKind.Scalar, 1f, 0.25f, 16f),
             new PortSpec("ratio3", PortKind.Scalar, 2f, 0.25f, 16f),

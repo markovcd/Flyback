@@ -31,7 +31,7 @@ internal static class DrumModule
         TypeId, "Drum", ModuleCategories.Oscillators,
         [
             new PortSpec("in", NormalledTo: NodeCatalog.Clock, Domain: true),
-            new PortSpec("level", PortKind.Scalar, 0f, 0f, 1f),
+            new PortSpec("level", PortKind.Scalar, 1f, 0f, 1f),
             new PortSpec("pitch", PortKind.Scalar, 50f, 20f, 400f),
             new PortSpec("sweep", PortKind.Scalar, 120f, 0f, 1000f),
             new PortSpec("bend", PortKind.Scalar, 4f, 0.5f, 8f),
