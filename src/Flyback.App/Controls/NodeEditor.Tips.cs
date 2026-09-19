@@ -81,6 +81,14 @@ public sealed partial class NodeEditor
             {
                 return (node.Id, title);
             }
+
+            // A formula too long for the body is cut on its last line.
+            if (FormulaBlock(node, def, bounds) is { Cut: true, Area: var area }
+                && area.Contains(graph)
+                && NodeCatalog.FormulaOf(node) is { } formula)
+            {
+                return ((node.Id, "formula"), formula);
+            }
         }
 
         return (null, null);

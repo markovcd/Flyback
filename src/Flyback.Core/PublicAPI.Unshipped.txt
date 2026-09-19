@@ -23,3 +23,4 @@ static Flyback.Core.Graph.ExtraField.Text.operator ==(Flyback.Core.Graph.ExtraFi
 Flyback.Core.Graph.ExpressionFusion
 static Flyback.Core.Graph.ExpressionFusion.Fuse(Flyback.Core.Graph.Patch! patch, Flyback.Core.Graph.ModuleCatalog! modules) -> Flyback.Core.Graph.Patch!
 static Flyback.Core.Graph.Presets.Fused(Flyback.Core.Graph.PatchPreset! preset) -> Flyback.Core.Graph.PatchPreset!
+static Flyback.Core.Graph.NodeCatalog.FormulaOf(Flyback.Core.Graph.NodeInstance! node) -> string?

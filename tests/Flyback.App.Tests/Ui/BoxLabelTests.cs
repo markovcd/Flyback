@@ -4,6 +4,7 @@ using Avalonia.Media;
 using Flyback.App.Controls;
 using Flyback.Core.Graph;
 using Shouldly;
+using Xunit;
 
 namespace Flyback.App.Tests.Ui;
 
@@ -77,4 +78,18 @@ public class BoxLabelTests : UiTest
         editor.Named(sockets.Inputs.ShouldHaveSingleItem()).ShouldNotBeNull().Label.ShouldBe("Time.t");
         editor.Named(sockets.Outputs.ShouldHaveSingleItem()).ShouldNotBeNull().Label.ShouldBe("a * 2.out");
     }
+
+    /// <summary>
+    /// A socket is its letter standing alone: the a in abs and the c in fract are
+    /// not sockets, and an Expression shows a knob only for a socket it reads.
+    /// </summary>
+    [AvaloniaTheory]
+    [InlineData("sin(a * 6 + b) * c + 0.5", 0, true)]
+    [InlineData("sin(a * 6 + b) * c + 0.5", 3, false)]
+    [InlineData("abs(b) * 2", 0, false)]
+    [InlineData("abs(b) * 2", 1, true)]
+    [InlineData("fract(a) + tau", 2, false)]
+    [InlineData("a*b", 1, true)]
+    public void A_formula_reads_the_sockets_it_names(string formula, int socket, bool reads) =>
+        NodeEditor.Reads(formula, socket).ShouldBe(reads);
 }

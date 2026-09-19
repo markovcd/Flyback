@@ -395,6 +395,8 @@ public sealed partial class NodeEditor
 
         if (Tagged(def)) DrawTag(context, bounds);
 
+        var formula = NodeCatalog.FormulaOf(node);
+
         for (var i = 0; i < def.Outputs.Count; i++)
         {
             var port = def.Outputs[i];
@@ -428,13 +430,17 @@ public sealed partial class NodeEditor
                 var name = Text(source, 11.5, NormalBrush, bounds.Width * 0.5, true);
                 context.DrawText(name, new Point(bounds.Right - 12 - name.Width, centre.Y - name.Height / 2));
             }
-            else if (!linked && !connected && i < node.InputValues.Length)
+            else if (!linked && !connected && i < node.InputValues.Length && (formula is null || Reads(formula, i)))
             {
+                // A socket its formula never reads has a knob that turns nothing,
+                // so an Expression shows the values of the ones it does and no more.
                 var value = Text(port.Format(node.InputValues[i]), 11.5, ValueBrush, bounds.Width * 0.4, true);
                 context.DrawText(value, new Point(bounds.Right - 12 - value.Width, centre.Y - value.Height / 2));
             }
 
             DrawPort(context, centre, port.Kind);
         }
+
+        if (FormulaBlock(node, def, bounds) is var (text, at, _, _)) context.DrawText(text, at);
     }
 }

@@ -220,6 +220,10 @@ public partial class NodeCatalog
     };
 
     public const string ExpressionTypeId = "math.expression";
+
+    /// <summary>An Expression's formula as typed, and null for any other module.</summary>
+    public static string? FormulaOf(NodeInstance node) =>
+        node.TypeId == ExpressionTypeId ? FormulaExtra.Of(node) : null;
 }
 
 /// <summary>An Expression's formula: one line of text, read where the module is compiled.</summary>
