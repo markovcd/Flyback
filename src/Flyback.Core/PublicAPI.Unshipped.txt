@@ -20,3 +20,6 @@ override Flyback.Core.Graph.ExtraField.Text.ToString() -> string!
 override sealed Flyback.Core.Graph.ExtraField.Text.Equals(Flyback.Core.Graph.ExtraField? other) -> bool
 static Flyback.Core.Graph.ExtraField.Text.operator !=(Flyback.Core.Graph.ExtraField.Text? left, Flyback.Core.Graph.ExtraField.Text? right) -> bool
 static Flyback.Core.Graph.ExtraField.Text.operator ==(Flyback.Core.Graph.ExtraField.Text? left, Flyback.Core.Graph.ExtraField.Text? right) -> bool
+Flyback.Core.Graph.ExpressionFusion
+static Flyback.Core.Graph.ExpressionFusion.Fuse(Flyback.Core.Graph.Patch! patch, Flyback.Core.Graph.ModuleCatalog! modules) -> Flyback.Core.Graph.Patch!
+static Flyback.Core.Graph.Presets.Fused(Flyback.Core.Graph.PatchPreset! preset) -> Flyback.Core.Graph.PatchPreset!

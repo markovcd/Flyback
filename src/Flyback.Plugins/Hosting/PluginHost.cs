@@ -221,7 +221,9 @@ public static class PluginHost
                     continue;
                 }
 
-                presets.Add(preset);
+                // A plugin's preset arrives with its Maths chains folded into
+                // Expressions, the same as the engine's.
+                presets.Add(Flyback.Core.Graph.Presets.Fused(preset));
             }
         }
 

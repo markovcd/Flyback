@@ -184,7 +184,7 @@
     <figure>
       <div class="window">
         <img src="assets/shots/nebula.webp" width="1600" height="863"
-             alt="The Flyback window: a patch of nineteen modules wired left to right on a dark grid canvas, and beside it a live preview of an orange and magenta kaleidoscopic flower.">
+             alt="The Flyback window: a patch of fourteen modules wired left to right on a dark grid canvas, and beside it a live preview of an orange and magenta kaleidoscopic flower.">
       </div>
     </figure>
   </div>
@@ -211,14 +211,14 @@
     <div class="twosinks">
       <div class="diagram canvas">
         <div class="diagram-scroll">
-          <figure data-label="The Plasma patch: Coordinates x and y each feed a Sine, Time slowly shifts the second Sine's phase through a Multiply, the two Sines are added, remapped to the range 0 to 1 and used as the hue of an HSV color wired into the Output."
+          <figure data-label="The Plasma patch: Coordinates x and y each feed a Sine, Time slowly shifts the second Sine's phase through an Expression multiplying it by 0.2, a second Expression adds the two Sines, and the sum is remapped to the range 0 to 1 and used as the hue of an HSV color wired into the Output."
             data-patch='{"nodes":[
               {"id":"coord","name":"Coordinates","cat":"sources","x":8,"y":110,"outs":["x","y","radius","angle","aspect"],"ins":[]},
               {"id":"time","name":"Time","cat":"sources","x":8,"y":250,"outs":["t"],"ins":[]},
-              {"id":"mul","name":"Multiply","cat":"maths","x":160,"y":250,"outs":[["out","any"]],"ins":[["a","",""],["b","0.2"]]},
+              {"id":"mul","name":"a * 0.2","cat":"maths","x":160,"y":250,"outs":[["out","any"]],"ins":[["a","",""],["b","1"],["c","0"],["d","0"]]},
               {"id":"sine1","name":"Sine","cat":"oscillators","x":160,"y":0,"outs":[["out","any"]],"ins":["in",["freq","1.5"],["phase","0"],["amp","1"],["bias","0"]]},
               {"id":"sine2","name":"Sine","cat":"oscillators","x":312,"y":150,"outs":[["out","any"]],"ins":["in",["freq","1.1"],"phase",["amp","1"],["bias","0"]]},
-              {"id":"add","name":"Add","cat":"maths","x":464,"y":100,"outs":[["out","any"]],"ins":["a","b"]},
+              {"id":"add","name":"a + b","cat":"maths","x":464,"y":100,"outs":[["out","any"]],"ins":["a","b",["c","0"],["d","0"]]},
               {"id":"remap","name":"Remap","cat":"maths","x":616,"y":90,"outs":[["out","any"]],"ins":["in",["in low","-2"],["in high","2"],["out low","0"],["out high","1"]]},
               {"id":"hsv","name":"HSV","cat":"color","x":768,"y":80,"outs":[["color","color"]],"ins":["hue",["saturation","0.85"],["value","1"]]},
               {"id":"out","name":"Output","cat":"output","x":920,"y":90,"outs":[],"ins":[["color","","color"],["left","0"],["right","0"],["volume","0.5"]]}
@@ -235,8 +235,7 @@
         <pre><code class="fbks"># The same patch, as text.
 let slowly = t * 0.2
 
-x |> sine(freq: 1.5)
-  |> add(y |> sine(freq: 1.1, phase: slowly))
+(x |> sine(freq: 1.5)) + (y |> sine(freq: 1.1, phase: slowly))
   |> remap(-2..2, 0..1)
   |> color.hsv(saturation: 0.85, value: 1)
   |> out.color</code></pre>
@@ -484,7 +483,7 @@ x |> sine(freq: 1.5)
       <div class="stop">
         <div>
           <h3>Keep big patches readable with groups</h3>
-          <p>The Whole band preset is two hundred and twenty-five modules in fifteen boxes: a clock, the song, seven
+          <p>The Whole band preset is a hundred and eighty-two modules in fifteen boxes: a clock, the song, seven
           instruments, a room, a mixing desk and the picture. Double-click a box to open it, and press <kbd>Ctrl</kbd>+<kbd>G</kbd> to
           make your own.</p>
         </div>

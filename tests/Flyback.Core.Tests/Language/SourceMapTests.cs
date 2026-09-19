@@ -207,7 +207,11 @@ public class SourceMapTests
             {
                 if (patch.IncomingTo(node.Id, port) is not null) continue;
                 if (NodeCatalog.BuiltIn.Normalled(def.Inputs[port]) is not null) continue;
-                if (printing.Map.Where(node.Id) is null) continue;
+                if (printing.Map.Where(node.Id) is not { } span) continue;
+
+                // A sum written as arithmetic has no brackets to take a knob, and
+                // the only one it leaves unwired is a socket its formula never reads.
+                if ("+-*/%".Contains(printing.Source[span.From])) continue;
 
                 var socket = def.Inputs[port].Name.Replace(' ', '_');
 

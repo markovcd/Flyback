@@ -33,4 +33,6 @@ Measured on the user's machine: the audio path runs at 4x oversampling on one th
 
 `PresetBench.Formula("...", a, b, ...)` adds an Expression (ADR-0104). To move a preset's arithmetic onto formulas without changing a pixel, spell a constant the way C# folded it (`1 / 45`, `4 * (8 / 45)`, `45 * 2 * pi`; the formula folds number-on-number in float). Dump before and after, `render --at` a handful of stills and `cmp` them: Overworld's picture went 510 -> 381 modules with all eight stills byte-identical. Its sound moved the same way (381 -> 306), checked by comparing both compiled programs as sets of op fingerprints in a scratch test, then the full-length WAV.
 
+Every preset is folded as it is built (`Presets.Fused`, ADR-0108), so a preset written with `Times`/`Plus`/`Product` arrives as Expressions anyway; hand-written formulas are only worth it where a formula reads better than the chain. To check a change to the folding, dump every preset from the previous commit in a scratch `git worktree` (it needs `dotnet restore` first) and compare `CompiledPatch.Ops` of each against the current build, register for register: all 47 matched.
+
 Keep the website in step when a preset changes audibly or visibly (see the `site-audio-tracks` and `site-screenshots` skills). See also `played-presets` and `convenience-modules`.

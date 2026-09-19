@@ -845,8 +845,9 @@ public static class PatchPrinter
         /// so what is written has to be one: every socket it reads wired, and wired
         /// forwards, and every wire into it read. A socket's source may not be an
         /// Expression written the same way, or the two sums would read back as one;
-        /// and a source written out in full may stand only once, or it would read
-        /// back as two modules. Anything else is the call, which always reads back.
+        /// a source written out in full may stand only once, or it would read back
+        /// as two modules; and a source that is a pipeline would need brackets the
+        /// layout cannot fold. Anything else is the call, which always reads back.
         /// <para>
         /// The module is placed where the operator that joins the whole sum stands,
         /// so the modules its sockets name come back either side of it.
@@ -886,6 +887,10 @@ public static class PatchPrinter
 
                 if (part.Calls.Count > 0 && reads.Count(r => r.Socket == port) > 1) return null;
 
+                // A pipeline bracketed into a sum is the one line the layout cannot
+                // fold, and it reads better piped into the call.
+                if (!Atom(part.Text)) return null;
+
                 parts[port] = part;
             }
 
@@ -895,7 +900,7 @@ public static class PatchPrinter
                 formula,
                 extra.Functions,
                 value => Value(value, PortDisplay.Number),
-                port => Atom(parts[port].Text) ? parts[port].Text : $"({parts[port].Text})",
+                port => parts[port].Text,
                 reads);
 
             if (text is null) return null;
@@ -910,8 +915,8 @@ public static class PatchPrinter
         }
 
         /// <summary>
-        /// Whether written text reads as one value inside a sum, or needs brackets:
-        /// a pipeline or a sum of its own, at the top level, does.
+        /// Whether written text reads as one value inside a sum without brackets,
+        /// which a pipeline or a sum at its top level does not.
         /// </summary>
         private static bool Atom(string text)
         {

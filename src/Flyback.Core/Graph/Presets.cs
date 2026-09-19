@@ -57,7 +57,24 @@ public static partial class Presets
     /// Everything the engine ships, in the order the picker shows it: the blank
     /// canvas, then ideas, then interplay, then the big ones.
     /// </summary>
-    public static IReadOnlyList<PatchPreset> All =>
+    public static IReadOnlyList<PatchPreset> All => [.. Shipped.Select(Fused)];
+
+    /// <summary>
+    /// A preset whose chains of Maths modules arrive folded into Expressions —
+    /// see <see cref="ExpressionFusion"/> — and laid out again with what is left.
+    /// </summary>
+    public static PatchPreset Fused(PatchPreset preset) => preset with
+    {
+        Build = modules =>
+        {
+            var patch = ExpressionFusion.Fuse(preset.Build(modules), modules);
+
+            PatchLayout.Arrange(patch, modules);
+            return patch;
+        },
+    };
+
+    private static IReadOnlyList<PatchPreset> Shipped =>
     [
         // --- nothing yet -------------------------------------------------------
 

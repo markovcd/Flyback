@@ -233,8 +233,9 @@ A printing writes an Expression back as its sum
 ([0107](adr/0107-an-expression-is-printed-as-the-sum-it-is.md)) wherever that
 reads back as the same module. Otherwise it writes the call,
 `x |> expression(formula: "floor(a * 8) / 8")`. That happens when the
-formula uses a function, `pi` or `tau`, or when a socket it reads rests on its
-knob.
+formula uses a function, `pi` or `tau`, when a socket it reads rests on its
+knob, or when what is wired into a socket is a pipeline, which would need
+brackets inside the sum.
 
 ### Duration literals
 

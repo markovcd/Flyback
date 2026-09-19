@@ -34,6 +34,7 @@
 - Overworld, in the Effects plugin: a chiptune track on a console's four voices, with a key change and a kick-keyed compressor at the end of the chain, under a side-scroller drawn a pixel at a time. It needs the Voice, Picture and Mastering plugins.
 - Captions, in the Picture plugin: lines of text paged and typed out by the clock.
 - Acid, Bronze, Mycelium, Nebula, Outrun, Phase, Slow weather and Whole band are rebuilt on the new modules, with up to a fifth fewer modules each.
+- Every preset's arithmetic arrives as Expressions, a seventh to a third fewer modules in the big ones, sounding and looking the same.
 - Acid is a whole track now: a hundred and twenty-eight bars in two themes, with builds, a breakdown, a bass line and a second 303, and a line that accents and slides.
 - Whole band is a whole song now: twelve phrases with verses, a chorus, a bridge and fills, and a snare, plucked strings, a pad and a room added to the band.
 - Slow weather is rebuilt around five feedback loops: a drone that bends its own phase, an echo that darkens every time round, two voices that push each other down, and a picture steered by where it was bright a frame ago.
