@@ -26,4 +26,4 @@ ADR-0095 (Stroke, Fade, Wander, Drum in Voice; Desk, Trails in the engine) and A
 
 Dump every preset with `PatchIO.ToJson` first. Then a throwaway xunit test compares each preset built now against its dump: audio sample by sample with `new DelayState(program, rate)` over six windows, video byte by byte via `SynthRenderer` frames. It needs the `DelayState(CompiledPatch, int)` constructor, or presets with planes throw. Give the test an option to splice the old arithmetic hiss back in, so everything but the noise can be shown exact.
 
-See `authoring-presets`. `site/assets/shots/whole-band.webp` still reads 92 modules in its status bar (it is 85); it has sound, so it is the user's to recapture (see `site-screenshots`).
+See `authoring-presets`.
