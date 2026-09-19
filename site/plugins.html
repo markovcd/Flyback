@@ -379,11 +379,12 @@ Extras = [<span class="k">new</span> GlideExtra()],
     <p>The same declaration is what lets an assistant set your state, through one <code>set_extra</code> tool
     that works for any plugin's kind. There is nothing to write for it.</p>
 
-    <p>Three shapes exist. <code>Number</code> and <code>Toggle</code> are a value and a switch;
+    <p>Four shapes exist. <code>Number</code> and <code>Toggle</code> are a value and a switch;
     <code>Choice</code> picks one of a list of <code>ChoiceOption(id, name)</code>, read afresh each time the
     row is drawn, so the list can be computed — MIDI In uses one to choose its instrument — and is read back
     with <code>state.Chosen(key)</code>. A stored id that is not in the list is kept rather than reset, since it
-    is usually a device that is unplugged right now. The vocabulary grows only when a plugin is genuinely
+    is usually a device that is unplugged right now. <code>Text</code> is a line somebody types, read back with
+    <code>state.Text(key)</code>; an Expression's formula is one. The vocabulary grows only when a plugin is genuinely
     blocked on another shape. What it deliberately cannot express is a control of your own: no
     keyboard, no waveform display, no list you reorder. The engine's own three kinds all needed one, and none
     of them could have been written as a plugin. If yours is that shape, say so — the trade is recorded in

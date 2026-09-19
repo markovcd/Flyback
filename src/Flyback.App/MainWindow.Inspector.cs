@@ -1560,6 +1560,11 @@ public sealed partial class MainWindow
             value = typed;
             store(typed);
             editor.NotifyPatchChanged();
+
+            // Kept is the hand coming off, and the only sign of it there will be:
+            // the panel is drawn again with what was typed, so the key that did it
+            // is let go of over a box that is no longer there.
+            HandCameOff();
         }
     }
 

@@ -227,10 +227,10 @@ public static class PatchPrinter
 
         if (issues.Count > 0) return SourceMap.Empty;
 
-        var written = new List<CallExpr>();
+        var written = new List<Expr>();
         var mentioned = new List<NameExpr>();
         var turns = new List<KnobStatement>();
-        var principals = new List<CallExpr>();
+        var principals = new List<Expr>();
 
         foreach (var statement in read) Gather(statement, written, mentioned, turns, principals);
 
@@ -241,18 +241,22 @@ public static class PatchPrinter
         var mentions = new List<(Site Where, Guid Node)>();
         var calls = new Dictionary<Guid, Site>();
         var values = new Dictionary<(Guid Node, string Name), Site?>();
-        var placed = new Dictionary<CallExpr, Guid>();
+        var placed = new Dictionary<Expr, Guid>();
         var sink = patch.Nodes.FirstOrDefault(n => NodeCatalog.IsSink(n.TypeId));
 
         for (var i = 0; i < written.Count; i++)
         {
-            var call = written[i];
             var node = order[i];
-            var site = new Site(call.Line, call.Column);
+            var site = new Site(written[i].Line, written[i].Column);
 
-            placed[call] = node;
-            calls[node] = site;
+            placed[written[i]] = node;
             mentions.Add((site, node));
+
+            // A sum places its Expression at its operator, and has no brackets of
+            // its own for anything to be written into.
+            if (written[i] is not CallExpr call) continue;
+
+            calls[node] = site;
 
             if (patch.Find(node) is not { } instance || modules.Get(instance.TypeId) is not { } def) continue;
 
@@ -300,13 +304,13 @@ public static class PatchPrinter
             principals.Where(placed.ContainsKey).Select(call => placed[call]).ToHashSet());
     }
 
-    /// <summary>Every call, name and knob one statement writes.</summary>
+    /// <summary>Every call and sum, name and knob one statement writes.</summary>
     private static void Gather(
         Statement statement,
-        List<CallExpr> calls,
+        List<Expr> calls,
         List<NameExpr> names,
         List<KnobStatement> turns,
-        List<CallExpr> principals)
+        List<Expr> principals)
     {
         switch (statement)
         {
@@ -333,13 +337,27 @@ public static class PatchPrinter
         }
     }
 
-    private static void Inside(Expr expr, List<CallExpr> calls, List<NameExpr> names)
+    private static void Inside(Expr expr, List<Expr> calls, List<NameExpr> names, bool summing = false)
     {
         switch (expr)
         {
             case CallExpr call:
                 calls.Add(call);
                 foreach (var argument in call.Arguments) Inside(argument.Value, calls, names);
+                break;
+
+            // The outermost operator of a sum that reads a signal is an Expression;
+            // the operators inside it are that same one.
+            case BinaryExpr or NegateExpr:
+                if (!summing && Signalled(expr)) calls.Add(expr);
+
+                if (expr is BinaryExpr binary)
+                {
+                    Inside(binary.Left, calls, names, summing: true);
+                    Inside(binary.Right, calls, names, summing: true);
+                }
+                else Inside(((NegateExpr)expr).Value, calls, names, summing: true);
+
                 break;
 
             case PipeExpr pipe:
@@ -357,11 +375,21 @@ public static class PatchPrinter
     /// The call a statement is about, which is the last stage of its pipeline —
     /// <c>let hum = t |&gt; sine(...) |&gt; gain(...)</c> is a Gain called hum.
     /// </summary>
-    private static CallExpr? Principal(Expr expr) => expr switch
+    private static Expr? Principal(Expr expr) => expr switch
     {
         PipeExpr pipe => Principal(pipe.Stage) ?? Principal(pipe.Source),
         CallExpr call => call,
+        BinaryExpr or NegateExpr when Signalled(expr) => expr,
         _ => null,
+    };
+
+    /// <summary>Whether arithmetic reads anything but numbers, which is whether it places a module.</summary>
+    private static bool Signalled(Expr expr) => expr switch
+    {
+        NumberExpr => false,
+        NegateExpr negate => Signalled(negate.Value),
+        BinaryExpr binary => Signalled(binary.Left) || Signalled(binary.Right),
+        _ => true,
     };
 
     /// <summary>
@@ -666,6 +694,8 @@ public static class PatchPrinter
         /// </remarks>
         private Part Call(NodeInstance node, NodeDef def)
         {
+            if (Infix(node, def) is { } sum) return sum;
+
             var used = new HashSet<int>();
             var before = new List<Guid>();
             var after = new List<Guid>();
@@ -804,6 +834,106 @@ public static class PatchPrinter
             }
 
             return Call(node, def);
+        }
+
+        /// <summary>
+        /// An Expression written as the arithmetic it is, or null where that would
+        /// not read back as this module.
+        /// </summary>
+        /// <remarks>
+        /// Read back, a sum is one Expression whose signals are its sockets (ADR-0106),
+        /// so what is written has to be one: every socket it reads wired, and wired
+        /// forwards, and every wire into it read. A socket's source may not be an
+        /// Expression written the same way, or the two sums would read back as one;
+        /// and a source written out in full may stand only once, or it would read
+        /// back as two modules. Anything else is the call, which always reads back.
+        /// <para>
+        /// The module is placed where the operator that joins the whole sum stands,
+        /// so the modules its sockets name come back either side of it.
+        /// </para>
+        /// </remarks>
+        private Part? Infix(NodeInstance node, NodeDef def)
+        {
+            if (def.Extra<FormulaExtra>() is not { } extra) return null;
+
+            var formula = FormulaExtra.Of(node);
+            var reads = new List<(int Socket, bool After)>();
+
+            if (Formula.Infix(formula, extra.Functions, _ => "0", _ => "a", reads) is null) return null;
+
+            var read = reads.Select(r => r.Socket).ToHashSet();
+
+            for (var port = 0; port < def.Inputs.Count; port++)
+            {
+                var incoming = patch.IncomingTo(node.Id, port);
+
+                if (read.Contains(port) != (incoming is not null)) return null;
+                if (incoming is null) continue;
+                if (Forward(node.Id, port) is null) return null;
+
+                if (patch.Find(incoming.SourceNode) is { TypeId: NodeCatalog.ExpressionTypeId }
+                    && !plan.Bound.Contains(incoming.SourceNode))
+                {
+                    return null;
+                }
+            }
+
+            var parts = new Dictionary<int, Part>();
+
+            foreach (var port in read)
+            {
+                var part = From(Forward(node.Id, port)!);
+
+                if (part.Calls.Count > 0 && reads.Count(r => r.Socket == port) > 1) return null;
+
+                parts[port] = part;
+            }
+
+            reads.Clear();
+
+            var text = Formula.Infix(
+                formula,
+                extra.Functions,
+                value => Value(value, PortDisplay.Number),
+                port => Atom(parts[port].Text) ? parts[port].Text : $"({parts[port].Text})",
+                reads);
+
+            if (text is null) return null;
+
+            return new Part(
+                text,
+                [
+                    .. reads.Where(r => !r.After).SelectMany(r => parts[r.Socket].Calls),
+                    node.Id,
+                    .. reads.Where(r => r.After).SelectMany(r => parts[r.Socket].Calls),
+                ]);
+        }
+
+        /// <summary>
+        /// Whether written text reads as one value inside a sum, or needs brackets:
+        /// a pipeline or a sum of its own, at the top level, does.
+        /// </summary>
+        private static bool Atom(string text)
+        {
+            if (text.StartsWith('-')) return false;
+
+            var depth = 0;
+            var quoted = false;
+
+            for (var i = 0; i < text.Length; i++)
+            {
+                var c = text[i];
+
+                if (c == '"') quoted = !quoted;
+                if (quoted) continue;
+
+                if (c is '(' or '[') depth++;
+                else if (c is ')' or ']') depth--;
+                else if (depth == 0 && (c is '|' or '+' or '*' or '/' or '%' || (c == '-' && i > 0 && text[i - 1] == ' ')))
+                    return false;
+            }
+
+            return true;
         }
 
         /// <summary>

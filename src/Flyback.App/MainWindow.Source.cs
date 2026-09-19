@@ -395,6 +395,8 @@ public sealed partial class MainWindow
 
         var keyboard = relaid;
 
+        reprint = false;
+
         turned.Clear();
         restated.Clear();
         relaid = false;
@@ -432,10 +434,20 @@ public sealed partial class MainWindow
         // the typing — theirs to take back in the view they did it in.
         if (reading) source.ForgetSteps();
 
+        // A printing that could not take a value in place is printed again,
+        // which is what a printing is for.
+        if (reprint) Reprint();
+
         if (lost > 0)
             Report($"{lost} value(s) could not be written into the text — "
                 + "the code says them in a form this cannot change in place.");
     }
+
+    /// <summary>
+    /// Whether this write-back met a value the printing had nowhere to put in
+    /// place — a formula printed as the sum it is has no argument to write into.
+    /// </summary>
+    private bool reprint;
 
     /// <summary>Puts one knob into the text, or counts it as one that could not go.</summary>
     private void Write(Guid id, int port, ref int lost)
@@ -468,8 +480,19 @@ public sealed partial class MainWindow
         {
             foreach (var extra in def.Extras)
                 foreach (var field in extra.Fields)
-                    if (field.Key == key && PatchPrinter.Field(node, extra, field) is { } value)
-                        Put(Map.Knob(id, field.Key, value), id, ref lost);
+                {
+                    if (field.Key != key || PatchPrinter.Field(node, extra, field) is not { } value) continue;
+
+                    var change = Map.Knob(id, field.Key, value);
+
+                    if (change is null && !sourceOwned && source.Source == printed)
+                    {
+                        reprint = true;
+                        continue;
+                    }
+
+                    Put(change, id, ref lost);
+                }
 
             return;
         }

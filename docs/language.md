@@ -229,6 +229,13 @@ still the module it names. A sum reading more than the four signals an
 Expression has sockets for gives its busier side an Expression of its own. It is
 the same program the Maths modules it replaces would have been, op for op.
 
+A printing writes an Expression back as its sum
+([0107](adr/0107-an-expression-is-printed-as-the-sum-it-is.md)) wherever that
+reads back as the same module. Otherwise it writes the call,
+`x |> expression(formula: "floor(a * 8) / 8")`. That happens when the
+formula uses a function, `pi` or `tau`, or when a socket it reads rests on its
+knob.
+
 ### Duration literals
 
 A `PortDisplay.Duration` port holds **log10 seconds**. This is the sharpest

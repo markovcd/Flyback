@@ -100,6 +100,100 @@ internal sealed class Formula
         }
     }
 
+    // --- spelling it as infix -----------------------------------------------------
+
+    /// <summary>The Maths modules the text language writes as an operator.</summary>
+    private static readonly Dictionary<string, char> Operators = new()
+    {
+        ["math.add"] = '+',
+        ["math.sub"] = '-',
+        ["math.mul"] = '*',
+        ["math.div"] = '/',
+        ["math.mod"] = '%',
+    };
+
+    /// <summary>
+    /// <paramref name="text"/> written as the text language's arithmetic, or null
+    /// where that would not read back as this formula.
+    /// </summary>
+    /// <remarks>
+    /// Only operators, numbers and sockets have a spelling there: a call is a
+    /// module of its own in the language and <c>pi</c> is a word it does not
+    /// know. Two numbers either side of an operator have none either, because the
+    /// language would fold them into one — and the formula only leaves them
+    /// unfolded where folding would not be what it computes, as with <c>%</c>.
+    /// </remarks>
+    /// <param name="number">How a number is written.</param>
+    /// <param name="socket">What stands for a socket, which is read as a single value.</param>
+    /// <param name="reads">
+    /// Filled with each socket as the text reads it, and whether it stands after
+    /// the operator that joins the whole — which is where the language places the
+    /// module.
+    /// </param>
+    public static string? Infix(
+        string text,
+        IReadOnlyDictionary<string, NodeDef> functions,
+        Func<float, string> number,
+        Func<int, string> socket,
+        List<(int Socket, bool After)> reads)
+    {
+        if (Read(text, functions, out _) is not { root: var root }) return null;
+
+        return root is Call { Arguments.Count: 2 } whole && Operators.ContainsKey(whole.Module.TypeId)
+            ? Spell(whole, after: null)
+            : Spell(root, after: true);
+
+        // 'after' is null only for the operator that joins the whole: what is on
+        // its left stands before it and what is on its right after.
+        string? Spell(Term term, bool? after)
+        {
+            switch (term)
+            {
+                case Literal literal:
+                    return number(literal.Value);
+
+                case Socket read:
+                    reads.Add((read.Index, after ?? false));
+                    return socket(read.Index);
+
+                case Call { Module.TypeId: "math.neg", Arguments: [var operand] } when operand is not Literal:
+                {
+                    if (Spell(operand, after ?? true) is not { } inner) return null;
+
+                    return Strength(operand) < Strength(term) ? $"-({inner})" : $"-{inner}";
+                }
+
+                case Call { Arguments: [var left, var right] } call
+                    when Operators.TryGetValue(call.Module.TypeId, out var sign)
+                        && !(left is Literal && right is Literal):
+                {
+                    if (Spell(left, after ?? false) is not { } l) return null;
+                    if (Spell(right, after ?? true) is not { } r) return null;
+
+                    var strength = Strength(call);
+
+                    if (Strength(left) < strength) l = $"({l})";
+                    if (Strength(right) <= strength) r = $"({r})";
+
+                    return $"{l} {sign} {r}";
+                }
+
+                default:
+                    return null;
+            }
+        }
+    }
+
+    /// <summary>How tightly a part holds together as the language reads it: a sum least, a value most.</summary>
+    private static int Strength(Term term) => term switch
+    {
+        Call { Module.TypeId: "math.neg" } => 3,
+        Call { Module.TypeId: "math.add" or "math.sub" } => 1,
+        Call => 2,
+        Literal { Value: < 0 } => 3,
+        _ => 4,
+    };
+
     // --- the tree ------------------------------------------------------------------
 
     /// <summary>

@@ -1,10 +1,13 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
+using Avalonia.Controls.Primitives;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.Threading;
+using AvaloniaEdit;
 using Flyback.App.Controls;
+using System.Text.Json.Nodes;
 using Flyback.Core.Graph;
 using Shouldly;
 
@@ -16,12 +19,15 @@ namespace Flyback.App.Tests.Ui;
 /// </summary>
 public class ExpressionInspectorTests : UiTest
 {
-    private static MainWindow Open(out NodeInstance expression)
+    private static MainWindow Open(out NodeInstance expression, string? written = null)
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
 
         var coord = b.Add(NodeCatalog.CoordTypeId, 40, 40);
         var formula = b.Add(NodeCatalog.ExpressionTypeId, 360, 40);
+
+        if (written is not null) formula.SetState("expression", new JsonObject { ["formula"] = written });
+
         var screen = b.Add(NodeCatalog.OutputTypeId, 700, 40);
         b.Wire(coord, 0, formula, 0).Wire(formula, 0, screen, NodeCatalog.OutputColorPort);
 
@@ -109,5 +115,36 @@ public class ExpressionInspectorTests : UiTest
 
         Formula(window).Text.ShouldBe("a * b + c");
         Held(expression).ShouldBe("a * b + c");
+    }
+
+    /// <summary>
+    /// A formula printed as the sum it is has no argument for the new one to be
+    /// written into, so the printing is printed again rather than left saying the
+    /// old sum.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_formula_edited_over_a_printing_is_printed_again()
+    {
+        var window = Open(out var expression, "a * 2");
+
+        All<ToggleButton>(window).Single(b => b.Name == "code").IsChecked = true;
+        Settle(window);
+
+        var text = All<TextEditor>(window).Single(e => e.Name == "source");
+
+        text.Text.ShouldContain("x * 2 |> out.color");
+
+        // The caret on the operator is the caret on the module the sum placed.
+        text.CaretOffset = text.Text.IndexOf('*');
+        Settle(window);
+
+        All<NodeEditor>(window).Single().SelectedNode.ShouldNotBeNull().Id.ShouldBe(expression.Id);
+
+        Formula(window).Text = "a * 3 - 1";
+        Press(window, Key.Enter);
+
+        Held(expression).ShouldBe("a * 3 - 1");
+        text.Text.ShouldContain("x * 3 - 1 |> out.color");
+        All<TextBlock>(window).ShouldNotContain(block => block.Text != null && block.Text.Contains("could not be written"));
     }
 }

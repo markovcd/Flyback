@@ -616,7 +616,13 @@ public sealed class Binder
         var placed = Place(def, [.. inputs.Select((input, socket) => (socket, input.Value))], operation.Line, operation.Column);
 
         if (placed is Placed { Id: var id } && patch.Find(id) is { } node)
+        {
             node.SetState(FormulaExtra.StateKey, new JsonObject { [FormulaExtra.FormulaField] = formula });
+
+            // Where the sum's operator stands, so the text points at the module it
+            // placed. Not a call: there are no brackets to write a knob into.
+            mentions.Add((new Site(operation.Line, operation.Column), id));
+        }
 
         return placed;
     }

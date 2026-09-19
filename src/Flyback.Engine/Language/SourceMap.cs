@@ -323,7 +323,15 @@ public sealed class SourceMap
     {
         var from = Offset(site);
 
-        if (!beginning.TryGetValue(from, out var i) || tokens[i].Kind != TokenKind.Identifier) return null;
+        if (!beginning.TryGetValue(from, out var i)) return null;
+
+        // A sum is placed at the operator that joins it, and the operator is what
+        // stands for it: what is either side is its operands, each somewhere to
+        // click of its own.
+        if (tokens[i].Kind is TokenKind.Plus or TokenKind.Minus or TokenKind.Star or TokenKind.Slash or TokenKind.Percent)
+            return (from, from + tokens[i].Text.Length);
+
+        if (tokens[i].Kind != TokenKind.Identifier) return null;
 
         var to = from + tokens[i].Text.Length;
         i++;
