@@ -498,6 +498,23 @@ public class PatchHistoryTests
     }
 
     /// <summary>
+    /// A patch written nowhere, such as one a crash left, is unsaved before anybody
+    /// edits it, and stays so until it is written out.
+    /// </summary>
+    [Fact]
+    public void A_patch_written_nowhere_is_unsaved_until_it_is_saved()
+    {
+        var patch = Wired(out _, out _);
+        var history = Opened(patch);
+
+        history.Unsaved();
+        history.IsModified.ShouldBeTrue();
+
+        history.Saved(patch);
+        history.IsModified.ShouldBeFalse();
+    }
+
+    /// <summary>
     /// And it says whether it made one, for a caller keeping a history of its
     /// own beside this and needing to know what to keep in step with.
     /// </summary>

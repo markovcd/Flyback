@@ -370,6 +370,9 @@ public sealed partial class MainWindow
         // put off.
         FinishTakeNow();
 
+        // Whatever there was to lose has been asked about by now, and answered.
+        StopRecovery();
+
         audio.Dispose();
         compiler.Dispose();
 

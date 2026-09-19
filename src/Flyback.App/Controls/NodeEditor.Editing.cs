@@ -44,6 +44,16 @@ public sealed partial class NodeEditor
     }
 
     /// <summary>
+    /// The patch as it stands has arrived from somewhere that is not a file, so
+    /// all of it is unsaved — see <see cref="PatchHistory.Unsaved"/>.
+    /// </summary>
+    public void MarkUnsaved()
+    {
+        history.Unsaved();
+        HistoryChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>
     /// The hand has come off whatever it was holding, so the next edit starts a step
     /// of its own rather than folding into the one before.
     /// </summary>

@@ -427,6 +427,11 @@ public sealed partial class MainWindow : Window
     /// What this run says about itself (ADR-0094). Null says nothing, which is what
     /// every test gets: none of them has any business reaching a network.
     /// </param>
+    /// <param name="recoveryFolder">
+    /// Where unsaved work is kept against a crash, and where what a crash left is
+    /// looked for (ADR-0103). Null keeps nothing and offers nothing, for the reason
+    /// <paramref name="outputSettingsPath"/> reads nothing.
+    /// </param>
     public MainWindow(
         string? groupFolder = null,
         string? openPath = null,
@@ -436,7 +441,8 @@ public sealed partial class MainWindow : Window
         string? updateNote = null,
         string? usageSettingsPath = null,
         Usage? usage = null,
-        ReleaseNotes? whatsNew = null)
+        ReleaseNotes? whatsNew = null,
+        string? recoveryFolder = null)
     {
         this.groupFolder = groupFolder;
         this.outputSettingsPath = outputSettingsPath;
@@ -588,23 +594,28 @@ public sealed partial class MainWindow : Window
             Report($"Running interpreted ({Startup.InterpretedFlag}): the CPU's programs are not compiled this run.");
 
         // Last, so it is what the bar is showing when the window first appears.
-        // Opened for the dialog, since there is nothing to put one over before.
-        if (whatsNew is not null)
-            Opened += async (_, _) => await this.ShowDialog(WhatsNew.Title(whatsNew), WhatsNew.View(whatsNew));
-        else if (updateNote is not null)
-            Report(updateNote);
+        if (whatsNew is null && updateNote is not null) Report(updateNote);
 
         var ticker = new DispatcherTimer(DispatcherPriority.Background) { Interval = TimeSpan.FromMilliseconds(250) };
         ticker.Tick += (_, _) => UpdateStatus();
         ticker.Start();
 
-        // Opened rather than called straight away: the platform window behind
-        // this one — and the storage provider that comes with it — is not
-        // guaranteed to exist until then, and this is the one caller of
-        // OpenPathAsync that cannot wait for a click to find that out.
-        if (openPath is { } path) Opened += async (_, _) =>
+        if (recoveryFolder is not null) KeepRecovery(recoveryFolder);
+
+        // Opened rather than called straight away: there is nothing to put a
+        // dialog over before, and the platform window behind this one — and the
+        // storage provider that comes with it — is not guaranteed to exist until
+        // then, which OpenPathAsync cannot wait for a click to find out. One
+        // handler, so the three come one after another: what changed, then what
+        // a crash left, then the file this launch was for, which asks about
+        // unsaved work like any other and so about work just restored.
+        Opened += async (_, _) =>
         {
-            if (await MayReplaceThePatchAsync()) await OpenPathAsync(path);
+            if (whatsNew is not null) await this.ShowDialog(WhatsNew.Title(whatsNew), WhatsNew.View(whatsNew));
+
+            await OfferRecoveryAsync();
+
+            if (openPath is { } path && await MayReplaceThePatchAsync()) await OpenPathAsync(path);
         };
     }
 

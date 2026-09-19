@@ -81,6 +81,13 @@ public sealed class PatchHistory(ModuleCatalog? modules = null)
     }
 
     /// <summary>
+    /// The patch as it now stands is written nowhere, so it has everything to lose
+    /// until it is saved — and no undo lands on a patch that is. For a document
+    /// that arrived out of something other than a file, such as what a crash left.
+    /// </summary>
+    public void Unsaved() => saved = string.Empty;
+
+    /// <summary>
     /// Take note of an edit that has already happened. The patch is read as it now
     /// stands, and what is kept is how it stood before.
     /// </summary>

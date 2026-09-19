@@ -52,6 +52,7 @@
 
 ### Canvas and interface
 - A toolbar button swaps the preview and the canvas, for a bigger picture while you patch.
+- Unsaved work survives a crash: the next start offers to restore it.
 
 ### Performance
 - An output with no wire on it no longer costs anything. The big presets run 2–19% fewer operations a sample, and Random's white is a sixteenth of what it was.
