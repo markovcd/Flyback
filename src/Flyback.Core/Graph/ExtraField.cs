@@ -13,8 +13,8 @@ namespace Flyback.Core.Graph;
 /// <para>
 /// The vocabulary is deliberately short — every shape here is public API that
 /// cannot be taken back — and what it cannot express is a control of its own: a
-/// keyboard, a waveform, a list you reorder. The engine's own three kinds each
-/// needed one, and none of them goes through here.
+/// keyboard, a waveform, a list you reorder. The engine's own kinds each needed
+/// one, and none of them goes through here.
 /// </para>
 /// </remarks>
 /// <param name="Key">
@@ -127,23 +127,39 @@ public abstract record ExtraField(string Key, string Label)
     }
 
     /// <summary>
-    /// A line of text somebody types — what a module reads rather than a name it
-    /// picks from a list.
+    /// Text somebody types — what a module reads rather than a name it picks
+    /// from a list: a formula on one line, or a caption's lines on several.
     /// </summary>
     /// <remarks>
     /// Kept as typed: what it means is the module's to say, and a module that
     /// cannot read it says so where it compiles rather than having it corrected
-    /// here. Only held to a length, so a file cannot hand the panel a novel.
+    /// here. Only held to a length, so a file cannot hand the panel a novel. The
+    /// one thing changed is how lines break where the field takes several: a
+    /// break is one character whoever typed it, so a patch saved on Windows and
+    /// one saved anywhere else hold the same text.
     /// </remarks>
     /// <param name="Fallback">What a fresh instance carries, and what anything but a string falls back to.</param>
-    public sealed record Text(string Key, string Label, string Fallback = "") : ExtraField(Key, Label)
+    /// <param name="Multiline">
+    /// Whether a line break is part of the value, which is what the inspector
+    /// draws a box of several lines for.
+    /// </param>
+    public sealed record Text(
+        string Key,
+        string Label,
+        string Fallback = "",
+        bool Multiline = false) : ExtraField(Key, Label)
     {
         /// <summary>The most a value may hold, in characters.</summary>
-        public const int Limit = 500;
+        public const int Limit = 4096;
 
         public override JsonNode Sane(JsonNode? stored) => JsonValue.Create(Value(stored));
 
-        public override string Format(JsonNode? stored) => Value(stored);
+        /// <remarks>
+        /// A break written as <c>\n</c>, so text of several lines reads as one
+        /// value rather than ending the sentence it is reported in.
+        /// </remarks>
+        public override string Format(JsonNode? stored) =>
+            Multiline ? Value(stored).Replace("\n", "\\n") : Value(stored);
 
         /// <summary>What was typed, or the fallback where nothing was.</summary>
         public string Value(JsonNode? stored)
@@ -152,6 +168,8 @@ public abstract record ExtraField(string Key, string Label)
                 && stored.AsValue().TryGetValue<string>(out var held)
                     ? held
                     : Fallback;
+
+            if (Multiline) typed = typed.Replace("\r\n", "\n");
 
             return typed.Length > Limit ? typed[..Limit] : typed;
         }

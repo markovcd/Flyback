@@ -28,6 +28,7 @@ public class SetExtraTests
         [
             new ExtraField.Number("time", "time", new PortSpec("time", PortKind.Scalar, 0.1f, 0f, 1f)),
             new ExtraField.Toggle("legato", "legato"),
+            new ExtraField.Text("label", "label", Multiline: true),
         ];
     }
 
@@ -81,6 +82,32 @@ public class SetExtraTests
 
         var node = bench.Snapshot().FirstOf("test.glide.porta").ShouldNotBeNull();
         node.StateOf("glide")!["legato"]!.GetValue<bool>().ShouldBeTrue();
+    }
+
+    [Fact]
+    public async Task Declared_text_takes_a_string_with_its_line_breaks()
+    {
+        var bench = await WithGlide();
+
+        var set = await Call(bench, "set_extra",
+            """{"handle":"g1","extra":"glide","field":"label","value":"up\ndown"}""");
+
+        set.Ok.ShouldBeTrue(set.Text);
+
+        var node = bench.Snapshot().FirstOf("test.glide.porta").ShouldNotBeNull();
+        node.StateOf("glide")!["label"]!.GetValue<string>().ShouldBe("up\ndown");
+    }
+
+    [Fact]
+    public async Task Declared_text_refuses_a_number_and_says_how_lines_are_written()
+    {
+        var bench = await WithGlide();
+
+        var set = await Call(bench, "set_extra",
+            """{"handle":"g1","extra":"glide","field":"label","value":3}""");
+
+        set.Ok.ShouldBeFalse();
+        set.Text.ShouldContain("line break");
     }
 
     [Fact]

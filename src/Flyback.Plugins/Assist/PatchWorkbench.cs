@@ -550,8 +550,11 @@ public sealed partial class PatchWorkbench
                 value = JsonValue.Create(given.GetString() ?? string.Empty);
                 break;
 
-            case ExtraField.Text:
-                return ToolOutcome.Refused($"'{name}' is text, as a string.");
+            case ExtraField.Text text:
+                return ToolOutcome.Refused(
+                    text.Multiline
+                        ? $"'{name}' is text, as a string, with a line break (\\n) between lines."
+                        : $"'{name}' is text, as a string.");
 
             default:
                 return ToolOutcome.Refused(
@@ -1155,8 +1158,9 @@ public sealed partial class PatchWorkbench
                 + "'chord', rather than as 'in N'. Take the extra's name and the field's from "
                 + "that listing; describe_module says what a given module carries and what each "
                 + "field may hold. A number is clamped to the field's range, a switch takes "
-                + "true or false, and a choice takes the id of one of the things it offers — "
-                + "describe_module lists them, and a refusal names them too. The built-in "
+                + "true or false, a choice takes the id of one of the things it offers — "
+                + "describe_module lists them, and a refusal names them too — and text takes a "
+                + "string, with \\n between lines where it holds several. The built-in "
                 + "notes, scale, file and picture are not set this way: they have set_steps, "
                 + "set_scale, set_sample and set_picture.",
                 """
@@ -1165,7 +1169,7 @@ public sealed partial class PatchWorkbench
                     "handle": { "type": "string" },
                     "extra": { "type": "string", "description": "Which extra, as the listing names it." },
                     "field": { "type": "string", "description": "Which of its values." },
-                    "value": { "description": "A number, a boolean, or a choice's id as a string — matching the field." }
+                    "value": { "description": "A number, a boolean, a choice's id as a string, or text — matching the field." }
                   },
                   "required": ["handle", "extra", "field", "value"]
                 }

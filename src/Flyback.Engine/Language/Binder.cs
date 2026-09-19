@@ -1073,6 +1073,7 @@ public sealed class Binder
         {
             Figure figure when field is ExtraField.Toggle => JsonValue.Create(figure.Amount != 0d),
             Figure figure => JsonValue.Create((float)figure.Amount),
+            Named named when field is ExtraField.Text { Multiline: true } => JsonValue.Create(named.Path.Replace(PatchPrinter.LineBreak, '\n')),
             Named named => JsonValue.Create(named.Path),
             _ => null,
         };

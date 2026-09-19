@@ -314,14 +314,18 @@ arguments like any knob:
 let land = fractal(octaves: "6")
 let keys = midi.in(device: "Launchkey 49", voice: 2)
 let px   = expression(x, formula: "(floor(a * 45) + 0.5) / 45")
+let card = text(lines: "Hello|World", line: beats)
 ```
 
-Four shapes and three spellings. A **number** is written on whatever scale the
+Four shapes and four spellings. A **number** is written on whatever scale the
 field reads on, so a note-scaled one is its note and a time-scaled one is its
 time — exactly as a knob is. A **switch** is `1` or `0`. A **choice** is a
 string, because what is stored is an id and an id is not a number, and so is
 **text**, which is what was typed — an Expression's formula is the one the
-engine ships.
+engine ships. A string is one line with no escapes, so in text that takes
+several lines, like Text's, a `|` is a line break. Such text holding a `|` of
+its own has no spelling, and is left out of a printing the way a string holding
+a quote is.
 
 The formula is not this language, though it reads like its arithmetic: it is
 read where the Expression is compiled, over the sockets `a` to `d` rather than

@@ -49,12 +49,13 @@ context, decision, consequences.
 | [0058](0058-the-picture-is-told-how-loud-the-sound-is.md) | The picture is told how loud the sound is *(user-directed)* |
 | [0073](0073-an-analyzer-is-a-scope-filled-with-a-spectrum.md) | An Analyzer is a Scope filled with a spectrum *(user-directed)* |
 | [0054](0054-what-a-module-carries-is-a-part-not-a-subtype.md) | What a module carries is a part, not a subtype *(user-directed)* |
-| [0055](0055-a-plugins-extra-declares-its-editor.md) | A plugin's extra declares its editor *(user-directed)* |
+| [0055](0055-a-plugins-extra-declares-its-editor.md) | A plugin's extra declares its editor *(user-directed; a fourth shape, text, added by [0104](0104-a-formula-is-one-block-and-exactly-the-modules-it-names.md) and given several lines by [0105](0105-text-is-a-shape-baked-into-a-picture.md))* |
 | [0061](0061-what-a-module-carries-is-kept-in-one-store.md) | What a module carries is kept in one store *(user-directed)* |
 | [0062](0062-indexed-polyphonic-midi-voices.md) | MIDI input is polyphonic through indexed voices *(user-directed)* |
 | [0099](0099-the-computer-keyboard-can-be-laid-out-by-scale.md) | The computer keyboard can be laid out by scale, and the patch says how *(user-directed)* |
 | [0086](0086-panel-knobs-are-read-as-live-values.md) | Panel knobs are read as live values, and a MIDI controller turns a knob rather than a socket *(user-directed)* |
 | [0057](0057-a-shape-is-a-distance-and-one-module-inks-it.md) | A shape is a distance, and one module inks it *(user-directed)* |
+| [0105](0105-text-is-a-shape-baked-into-a-picture.md) | Text is a shape, baked into a picture *(user-directed)* |
 | [0095](0095-a-module-may-be-a-handful-of-others-if-it-is-exactly-them.md) | A module may be a handful of others, if it is exactly them *(user-directed; the Bell it left out counted again and added by [0097](0097-a-wrapping-module-carries-a-setting-where-what-it-wraps-differed.md))* |
 | [0097](0097-a-wrapping-module-carries-a-setting-where-what-it-wraps-differed.md) | A wrapping module carries a setting where what it wraps differed *(user-directed)* |
 | [0104](0104-a-formula-is-one-block-and-exactly-the-modules-it-names.md) | A formula is one block, and exactly the modules it names *(user-directed)* |

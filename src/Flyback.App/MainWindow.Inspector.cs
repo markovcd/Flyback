@@ -1473,7 +1473,7 @@ public sealed partial class MainWindow
                 .FirstOrDefault(again => again.Key == field.Key)?.Options ?? choice.Options),
 
         ExtraField.Text text => TextRow(
-            field.Label,
+            text,
             text.Value(node.StateOf(extra.Key)?[field.Key]),
             next =>
             {
@@ -1489,26 +1489,32 @@ public sealed partial class MainWindow
     };
 
     /// <summary>
-    /// A label and a line to type into, on the same grid a knob's row uses.
+    /// A label and a box to type into, on the same grid a knob's row uses —
+    /// several lines tall where the field takes several lines.
     /// </summary>
     /// <remarks>
     /// Kept when Enter is pressed or the focus goes elsewhere, and put back by
     /// Escape, as a name being typed is. Stored once, when it is kept, rather
     /// than at every key: a formula half typed is not one anybody meant, and
-    /// each would be a step in the history.
+    /// each would be a step in the history. In a box of several lines Enter
+    /// starts the next one, so there it is Ctrl+Enter that keeps it.
     /// </remarks>
-    private Control TextRow(string label, string value, Action<string> store)
+    private Control TextRow(ExtraField.Text field, string value, Action<string> store)
     {
         var row = Row("*");
 
-        var caption = Caption(label);
+        var caption = Caption(field.Label);
+        caption.VerticalAlignment = field.Multiline ? VerticalAlignment.Top : VerticalAlignment.Center;
+        caption.Margin = field.Multiline ? new Thickness(0, 6, 0, 0) : default;
 
         var box = new TextBox
         {
             Text = value,
             MaxLength = ExtraField.Text.Limit,
             FontSize = Text.Body,
-            TextWrapping = TextWrapping.Wrap,
+            AcceptsReturn = field.Multiline,
+            TextWrapping = field.Multiline ? TextWrapping.NoWrap : TextWrapping.Wrap,
+            MinHeight = field.Multiline ? 72 : 0,
             VerticalAlignment = VerticalAlignment.Center,
         };
 
@@ -1516,6 +1522,9 @@ public sealed partial class MainWindow
         {
             switch (e.Key)
             {
+                case Key.Enter when field.Multiline && !e.KeyModifiers.HasFlag(KeyModifiers.Control):
+                    return;
+
                 case Key.Enter:
                     Keep();
                     break;
@@ -1542,7 +1551,10 @@ public sealed partial class MainWindow
 
         void Keep()
         {
-            var typed = box.Text ?? string.Empty;
+            // The box breaks lines the way the platform does, and what is kept
+            // breaks them one way — see ExtraField.Text — so leaving it untouched
+            // is not an edit.
+            var typed = (box.Text ?? string.Empty).ReplaceLineEndings("\n");
             if (typed == value) return;
 
             value = typed;

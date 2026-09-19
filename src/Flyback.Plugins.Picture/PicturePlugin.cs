@@ -7,9 +7,10 @@ namespace Flyback.Plugins.Picture;
 /// colors chosen rather than swept, and the two famous noises.
 /// </summary>
 /// <remarks>
-/// Every module here is pure arithmetic over ops the engine already has — none
-/// reaches for a table, a cell or a delay line — so all cost the same at either
-/// sink and all survive to the shader. That last is the gate that matters for a
+/// Every module here is arithmetic over ops the engine already has — none
+/// reaches for a table, a cell or a delay line, and the picture Text reads is a
+/// texture there — so all cost the same at either sink and all survive to the
+/// shader. That last is the gate that matters for a
 /// video plugin: a program the shader cannot draw takes the preview back to the
 /// CPU for as long as the patch is loaded.
 /// <para>
@@ -21,7 +22,7 @@ namespace Flyback.Plugins.Picture;
 /// </para>
 /// <para>
 /// Three categories rather than one, because a section called "Picture" holding
-/// fourteen modules is a worse palette than three holding seven, five and two.
+/// fifteen modules is a worse palette than three holding eight, five and two.
 /// </para>
 /// </remarks>
 public sealed class PicturePlugin : IFlybackPlugin
@@ -31,7 +32,7 @@ public sealed class PicturePlugin : IFlybackPlugin
     public PluginInfo Info { get; } = new(
         "flyback.picture",
         "Picture",
-        "Shapes and lines to fill and combine, palettes, grading and layers, and the two "
+        "Shapes, lines and text to fill and combine, palettes, grading and layers, and the two "
         + "fractal noises.");
 
     public void Register(IPluginRegistry registry)
@@ -44,6 +45,7 @@ public sealed class PicturePlugin : IFlybackPlugin
                 PolygonModule.Definition,
                 StarModule.Definition,
                 LineModule.Definition,
+                TextModule.Definition,
                 CombineModule.Definition,
                 FillModule.Definition,
                 PaletteModule.Definition,
@@ -67,6 +69,11 @@ public sealed class PicturePlugin : IFlybackPlugin
                 ShapesPreset.Build,
                 "A star's points heard as bumps in a waveform, by sweeping a loop through its field.",
                 PresetKind.Interplay),
+            new PatchPreset(
+                CaptionsPreset.Name,
+                CaptionsPreset.Build,
+                "Lines of text, chosen by the clock and typed out as each one arrives.",
+                PresetKind.Idea),
             new PatchPreset(
                 SpectrumPreset.Name,
                 SpectrumPreset.Build,

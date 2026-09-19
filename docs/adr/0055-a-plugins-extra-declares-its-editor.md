@@ -3,7 +3,9 @@
 **Status:** Accepted · 2026-08-26 · *user-directed* · opens what
 [0054](0054-what-a-module-carries-is-a-part-not-a-subtype.md) recorded as closed,
 and extends the storage
-[0020](0020-json-patch-files-keyed-by-string-type-ids.md) describes
+[0020](0020-json-patch-files-keyed-by-string-type-ids.md) describes · a fourth
+shape, text, is added by [0104](0104-a-formula-is-one-block-and-exactly-the-modules-it-names.md) and given
+several lines by [0105](0105-text-is-a-shape-baked-into-a-picture.md)
 
 ## Context
 

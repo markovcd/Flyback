@@ -32,6 +32,7 @@ public class CarriedTests
             new ExtraField.Number("root", "root", new PortSpec("root", PortKind.Scalar, 57f, 0f, 127f, -1, PortDisplay.Note)),
             new ExtraField.Toggle("wide", "wide", On: true),
             new ExtraField.Choice("shape", "shape", [new ChoiceOption("round", "Round")], "square"),
+            new ExtraField.Text("caption", "caption", "hi", Multiline: true),
         ];
     }
 
@@ -63,6 +64,7 @@ public class CarriedTests
             ["root"] = 60f,
             ["wide"] = false,
             ["shape"] = "round",
+            ["caption"] = "one\ntwo",
         });
 
         patch.Nodes.Add(node);
@@ -91,6 +93,41 @@ public class CarriedTests
         Held(again, "root")!.GetValue<float>().ShouldBe(60f);
         Held(again, "wide")!.GetValue<bool>().ShouldBeFalse();
         Held(again, "shape")!.GetValue<string>().ShouldBe("round");
+        Held(again, "caption")!.GetValue<string>().ShouldBe("one\ntwo");
+    }
+
+    /// <summary>
+    /// A string in the language is one line with no escapes, so a break inside a
+    /// text field is written as a bar, and read back as a break.
+    /// </summary>
+    [Fact]
+    public void A_line_break_in_text_is_written_as_a_bar()
+    {
+        var modules = Catalog();
+
+        PatchPrinter.Print(Built(modules), modules).ShouldContain("caption: \"one|two\"");
+
+        var load = Read("dials(caption: \"up|down\") |> out.left", modules);
+
+        Held(load.Patch.Nodes.Single(n => n.TypeId == "test.carried.dials"), "caption")!
+            .GetValue<string>().ShouldBe("up\ndown");
+    }
+
+    /// <summary>
+    /// A bar already in the text would come back as a break, so the field is left
+    /// out of the printing rather than written as something it does not say —
+    /// the rule a quote already follows.
+    /// </summary>
+    [Fact]
+    public void Text_holding_a_bar_is_not_written()
+    {
+        var modules = Catalog();
+        var patch = Built(modules);
+
+        var node = patch.Nodes.Single(n => n.TypeId == "test.carried.dials");
+        node.StateOf("dials")!["caption"] = "either|or";
+
+        PatchPrinter.Print(patch, modules).ShouldNotContain("caption");
     }
 
     /// <summary>

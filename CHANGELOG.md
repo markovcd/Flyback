@@ -21,6 +21,7 @@
 - Euclid has a `stroke` output, an envelope on the steps that are hits, and Tempo has `beats`, the count of beats so far.
 - Added the Mastering plugin, for the end of a patch: EQ, Width, Crossover (three bands), Compressor, Limiter (nothing past a ceiling), Maximizer (one knob for a louder, denser mix) and Loudness (a LUFS meter).
 - The computer keyboard can be laid out by scale, chosen on any MIDI In and saved with the patch: the notes you pick are played one to a key along the A row, with the Q row an octave up and the Z row an octave down.
+- Added Text to Picture: lines of text in a pixel font, drawn as a shape, with a socket that picks the line and one that types it out.
 
 ### Presets
 - Mycelium, in the Effects plugin: a psybient track of ninety-six bars in six sections, with a picture driven by the same signals. It is the largest preset, and needs the Voice and Picture plugins.
@@ -30,6 +31,7 @@
 - Fracture, in the Effects plugin: drum and bass at 170 with a synthesized break that gets chopped, rolled and reversed, a Reese bass, and a picture cut into strips along with the drums. It needs the Voice and Picture plugins.
 - Dub, in the Effects plugin: dub techno to play rather than listen to. Drums and a sub run on their own, four keys hold a chord over them, and eight panel knobs ride the filter, the echo, the room and the mix, moving the picture with the sound. It needs the Voice and Picture plugins.
 - Overworld, in the Effects plugin: a chiptune track on a console's four voices, with a key change and a kick-keyed compressor at the end of the chain, under a side-scroller drawn a pixel at a time. It needs the Voice, Picture and Mastering plugins.
+- Captions, in the Picture plugin: lines of text paged and typed out by the clock.
 - Acid, Bronze, Mycelium, Nebula, Outrun, Phase, Slow weather and Whole band are rebuilt on the new modules, with up to a fifth fewer modules each.
 - Acid is a whole track now: a hundred and twenty-eight bars in two themes, with builds, a breakdown, a bass line and a second 303, and a line that accents and slides.
 - Whole band is a whole song now: twelve phrases with verses, a chorus, a bridge and fills, and a snare, plucked strings, a pad and a room added to the band.

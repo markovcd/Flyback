@@ -147,9 +147,10 @@ public static class PatchPrinter
     /// </summary>
     /// <remarks>
     /// A number on whatever scale the field reads on, a switch as one or nought,
-    /// and a choice or a line of text as the one string the language has, since
-    /// what is stored is an id or what was typed. A shape this build has never heard of is left alone rather than
-    /// written wrongly.
+    /// and a choice or text as the one string the language has, since what is
+    /// stored is an id or what was typed. Text of several lines has a bar where a
+    /// line breaks — see <see cref="LineBreak"/>. A shape this build has never
+    /// heard of is left alone rather than written wrongly.
     /// </remarks>
     public static string? Field(NodeInstance node, NodeExtra extra, ExtraField field)
     {
@@ -160,6 +161,7 @@ public static class PatchPrinter
             ExtraField.Number number => Writer.Value(number.Value(stored), number.Spec.Display),
             ExtraField.Toggle toggle => toggle.Value(stored) ? "1" : "0",
             ExtraField.Choice choice => Quotable(choice.Value(stored)),
+            ExtraField.Text { Multiline: true } text => Lines(text.Value(stored)),
             ExtraField.Text text => Quotable(text.Value(stored)),
             _ => null,
         };
@@ -188,6 +190,19 @@ public static class PatchPrinter
     /// carrying one is refused rather than written unreadably.
     /// </remarks>
     private static string? Quotable(string value) => value.Contains('"') ? null : $"\"{value}\"";
+
+    /// <summary>
+    /// What a line break inside a text field is written as, since a string in
+    /// the language is one line and has no escapes.
+    /// </summary>
+    public const char LineBreak = '|';
+
+    /// <summary>
+    /// Text of several lines as one string, or null where it cannot be written:
+    /// a bar already in it would read back as a break.
+    /// </summary>
+    private static string? Lines(string value) =>
+        value.Contains(LineBreak) ? null : Quotable(value.Replace('\n', LineBreak));
 
     /// <summary>
     /// Where each module ended up in the text that was just written.
