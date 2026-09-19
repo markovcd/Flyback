@@ -48,10 +48,15 @@ formula. It is written to four font pixels either side of an edge. Beyond the
 picture, a box around the ink takes over, so the black outside the texture never
 reads as ink.
 
-**The font is drawn in the repository.** It is printable ASCII, five pixels by
-nine: seven to the baseline and two for tails. It is kept in the source as the
-sheet it was drawn on. A character it has no glyph for is drawn as an empty box,
-so what was typed can be seen to be there.
+**The fonts are drawn in the repository, and chosen on the node.** Pixel is
+printable ASCII, five pixels by nine: seven to the baseline and two for tails.
+Tiny is three by five and has one case, drawing a small letter as its capital.
+Each is kept in the source as the sheets it was drawn on. A character a font has
+no glyph for is drawn as an empty box, so what was typed can be seen to be there.
+The font is a choice field beside the lines, so the panel offers it as a list, and
+a patch naming a font this build lacks is drawn in Pixel with a warning, keeping
+its choice. 'size' is the height of a capital in either font, so changing the font
+changes the letters and not how big they are.
 
 **The words are the text field an Expression's formula already is
 ([0104](0104-a-formula-is-one-block-and-exactly-the-modules-it-names.md)), given several lines.** `ExtraField.Text`
@@ -84,9 +89,8 @@ picture, so a knob turned beside a Text uploads nothing. Typing into the box
 bakes once per keystroke, which for a caption is well under a frame.
 
 An atlas holds 64 lines of 64 letters, and a compile warning says so when there
-are more. There are no glyphs beyond ASCII, no proportional spacing and no
-second font. Each of those would be a font of its own, not a change to this
-module.
+are more. There are no glyphs beyond ASCII and no proportional spacing. Another
+font is a sheet and one line in the list.
 
 A stroke is one pixel wide, so the distance inside one is a ridge half a pixel
 high. A read between texels a quarter-pixel apart rounds the top of that ridge

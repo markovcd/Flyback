@@ -21,7 +21,7 @@
 - Euclid has a `stroke` output, an envelope on the steps that are hits, and Tempo has `beats`, the count of beats so far.
 - Added the Mastering plugin, for the end of a patch: EQ, Width, Crossover (three bands), Compressor, Limiter (nothing past a ceiling), Maximizer (one knob for a louder, denser mix) and Loudness (a LUFS meter).
 - The computer keyboard can be laid out by scale, chosen on any MIDI In and saved with the patch: the notes you pick are played one to a key along the A row, with the Q row an octave up and the Z row an octave down.
-- Added Text to Picture: lines of text in a pixel font, drawn as a shape, with a socket that picks the line and one that types it out.
+- Added Text to Picture: lines of text in one of two pixel fonts, drawn as a shape, with a socket that picks the line and one that types it out.
 
 ### Presets
 - Mycelium, in the Effects plugin: a psybient track of ninety-six bars in six sections, with a picture driven by the same signals. It is the largest preset, and needs the Voice and Picture plugins.

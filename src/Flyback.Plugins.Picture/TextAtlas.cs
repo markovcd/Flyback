@@ -29,10 +29,11 @@ namespace Flyback.Plugins.Picture;
 /// </para>
 /// </remarks>
 /// <param name="Image">The bands, top to bottom.</param>
+/// <param name="Font">What the letters are drawn in.</param>
 /// <param name="Lines">How many bands there are.</param>
 /// <param name="Columns">How many letters the longest line holds, which every band is as wide as.</param>
 /// <param name="Cut">Whether lines or letters past what one atlas holds were left out.</param>
-internal sealed record TextAtlas(LoadedImage Image, int Lines, int Columns, bool Cut)
+internal sealed record TextAtlas(LoadedImage Image, BitmapFont Font, int Lines, int Columns, bool Cut)
 {
     /// <summary>Texels to a font pixel.</summary>
     public const int Texels = 4;
@@ -50,38 +51,38 @@ internal sealed record TextAtlas(LoadedImage Image, int Lines, int Columns, bool
     public const int MostColumns = 64;
 
     /// <summary>A band's height in font pixels: the glyph, and a margin above and below.</summary>
-    public const int Band = PixelFont.Height + 2 * Margin;
+    public int Band => Font.Height + 2 * Margin;
 
     /// <summary>How wide the widest line's ink is, in font pixels.</summary>
-    public int Ink => Columns * PixelFont.Advance - 1;
+    public int Ink => Columns * Font.Advance - 1;
 
-    private static readonly Dictionary<string, TextAtlas?> Baked = [];
+    private static readonly Dictionary<(string Font, string Text), TextAtlas?> Baked = [];
 
     /// <summary>
-    /// The atlas for <paramref name="text"/>, one line to each line break, or null
-    /// where there is nothing to draw.
+    /// The atlas for <paramref name="text"/> in <paramref name="font"/>, one line
+    /// to each line break, or null where there is nothing to draw.
     /// </summary>
     /// <remarks>
-    /// The same instance for the same text, for as long as it is asked for:
+    /// The same instance for the same text in the same font, for as long as it is asked for:
     /// every edit recompiles the patch, and the renderer keeps a texture for as
     /// long as it is handed the same picture — so a knob turned beside a Text
     /// bakes nothing and uploads nothing. The texts it remembers are forgotten
     /// together once there are more than a handful, which is a patch being typed
     /// into rather than one being played.
     /// </remarks>
-    public static TextAtlas? Of(string text)
+    public static TextAtlas? Of(BitmapFont font, string text)
     {
         lock (Baked)
         {
-            if (Baked.TryGetValue(text, out var known)) return known;
+            if (Baked.TryGetValue((font.Id, text), out var known)) return known;
 
             if (Baked.Count >= 32) Baked.Clear();
 
-            return Baked[text] = Bake(text);
+            return Baked[(font.Id, text)] = Bake(font, text);
         }
     }
 
-    private static TextAtlas? Bake(string text)
+    private static TextAtlas? Bake(BitmapFont font, string text)
     {
         var lines = text.Split('\n').ToList();
 
@@ -96,10 +97,11 @@ internal sealed record TextAtlas(LoadedImage Image, int Lines, int Columns, bool
         lines = [.. lines.Take(MostLines).Select(line => line.Length > MostColumns ? line[..MostColumns] : line)];
 
         var columns = Math.Max(1, lines.Max(line => line.Length));
-        var across = columns * PixelFont.Advance + 1;
+        var across = columns * font.Advance + 1;
 
         var width = across * Texels;
-        var height = lines.Count * Band * Texels;
+        var band = font.Height + 2 * Margin;
+        var height = lines.Count * band * Texels;
         var pixels = new float[width * height * 3];
 
         Parallel.For(0, lines.Count, index =>
@@ -108,12 +110,12 @@ internal sealed record TextAtlas(LoadedImage Image, int Lines, int Columns, bool
 
             // Centred in the band by whole letters' worth of half-advances, which
             // is a whole number of font pixels since an advance is even.
-            var indent = Margin + (columns - line.Length) * PixelFont.Advance / 2;
+            var indent = Margin + (columns - line.Length) * font.Advance / 2;
 
             // Which letter of the line inks each font pixel of the band, or -1.
-            var owner = new int[Band, across];
+            var owner = new int[band, across];
 
-            for (var row = 0; row < Band; row++)
+            for (var row = 0; row < band; row++)
                 for (var column = 0; column < across; column++)
                 {
                     owner[row, column] = -1;
@@ -121,19 +123,19 @@ internal sealed record TextAtlas(LoadedImage Image, int Lines, int Columns, bool
                     var from = column - indent;
                     if (from < 0) continue;
 
-                    var letter = from / PixelFont.Advance;
+                    var letter = from / font.Advance;
                     if (letter >= line.Length) continue;
 
-                    if (PixelFont.Inked(line[letter], from % PixelFont.Advance, row - Margin))
+                    if (font.Inked(line[letter], from % font.Advance, row - Margin))
                         owner[row, column] = letter;
                 }
 
-            for (var ty = 0; ty < Band * Texels; ty++)
+            for (var ty = 0; ty < band * Texels; ty++)
                 for (var tx = 0; tx < width; tx++)
                 {
                     var (distance, nearest) = Nearest(owner, (tx + 0.5) / Texels, (ty + 0.5) / Texels);
 
-                    var at = (((index * Band * Texels) + ty) * width + tx) * 3;
+                    var at = (((index * band * Texels) + ty) * width + tx) * 3;
 
                     pixels[at + 0] = (float)(0.5 + distance / (2 * Reach));
                     pixels[at + 1] = nearest < 0 ? 0f : (nearest + 1f) / line.Length;
@@ -141,7 +143,7 @@ internal sealed record TextAtlas(LoadedImage Image, int Lines, int Columns, bool
                 }
         });
 
-        return new TextAtlas(new LoadedImage(pixels, width, height), lines.Count, columns, cut);
+        return new TextAtlas(new LoadedImage(pixels, width, height), font, lines.Count, columns, cut);
     }
 
     /// <summary>

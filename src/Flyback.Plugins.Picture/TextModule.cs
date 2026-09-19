@@ -19,7 +19,8 @@ namespace Flyback.Plugins.Picture;
 /// </para>
 /// <para>
 /// 'size' is the height of a capital, the number a person means by how big text
-/// is. The tails of g and y hang below it, and the line is centred on its
+/// is, in whichever font is chosen — so changing the font changes the letters
+/// and not how big they are. The tails of g and y hang below it, and the line is centred on its
 /// capitals rather than on its tails, so a caption does not jump when a y
 /// arrives.
 /// </para>
@@ -39,6 +40,7 @@ internal static class TextModule
 
     private const string StateKey = "text";
     private const string LinesKey = "lines";
+    private const string FontKey = "font";
 
     /// <summary>What the distance reads where there is no text at all: nowhere near.</summary>
     private const float Far = 2f;
@@ -54,7 +56,8 @@ internal static class TextModule
         [Field.Distance("distance")],
         Emit,
         "Lines of text in a pixel font, as the distance to the letters, so patch it into a "
-        + "Fill to see it. The lines are typed on the node, one to a line break. 'line' "
+        + "Fill to see it. The lines are typed on the node, one to a line break, and the font "
+        + "is picked there too: Pixel, or Tiny, which is blockier and has one case. 'line' "
         + "chooses which shows and wraps round past the last, so a counted clock or a "
         + "sequencer's step pages through them. 'reveal' is how much of the line shows, "
         + "letter by letter from the left: sweep it 0 to 1 to type it out. 'size' is the "
@@ -79,9 +82,22 @@ internal static class TextModule
         return node;
     }
 
+    /// <summary>Sets the font an instance draws in.</summary>
+    public static NodeInstance WithFont(NodeInstance node, BitmapFont font)
+    {
+        var extra = Definition.Extra<LinesExtra>() ?? new LinesExtra();
+
+        var held = extra.Stored(node.StateOf(StateKey));
+        held[FontKey] = JsonValue.Create(font.Id);
+
+        node.SetState(StateKey, held);
+
+        return node;
+    }
+
     /// <summary>
-    /// The words, carried as one field of several lines and folded onto the
-    /// context already baked.
+    /// The words, carried as one field of several lines and a choice of font,
+    /// and folded onto the context already baked.
     /// </summary>
     /// <remarks>
     /// Baked at both sinks rather than only where the picture is drawn: reading
@@ -96,13 +112,32 @@ internal static class TextModule
         public override IReadOnlyList<ExtraField> Fields =>
         [
             new ExtraField.Text(LinesKey, "lines", Greeting, Multiline: true),
+            new ExtraField.Choice(FontKey, "font", Fonts, BitmapFont.Pixel.Id),
         ];
+
+        private static IReadOnlyList<ChoiceOption> Fonts { get; } =
+            [.. BitmapFont.All.Select(font => new ChoiceOption(font.Id, font.Name))];
 
         public override EmitContext Fold(EmitContext ctx, NodeInstance node, ExtraEnv env)
         {
-            var text = new ExtraState(Fields, node.StateOf(StateKey)).Text(LinesKey);
+            var state = new ExtraState(Fields, node.StateOf(StateKey));
+            var chosen = state.Chosen(FontKey);
 
-            if (TextAtlas.Of(text) is not { } atlas) return ctx;
+            // Kept as chosen rather than corrected, as a choice is: a patch written
+            // by a build with a font this one lacks draws in Pixel here and says
+            // so, and still names its own font when it is saved again.
+            if (BitmapFont.Find(chosen) is not { } font)
+            {
+                font = BitmapFont.Pixel;
+
+                env.Report(new CompileIssue(
+                    node.Id,
+                    $"'{env.Title}' asks for a font called '{chosen}', which this build does not "
+                    + $"have, so it is drawn in {font.Name}.",
+                    IssueSeverity.Warning));
+            }
+
+            if (TextAtlas.Of(font, state.Text(LinesKey)) is not { } atlas) return ctx;
 
             if (atlas.Cut)
             {
@@ -128,10 +163,12 @@ internal static class TextModule
     {
         if (node.Extra<TextAtlas>(StateKey) is not { } atlas) return [em.Constant(Far)];
 
+        var font = atlas.Font;
+
         var zero = em.Constant(0f);
         var one = em.Constant(1f);
 
-        var pixel = em.Mul(em.Binary(OpCode.Max, node[2], em.Constant(1e-3f)), 1f / PixelFont.Cap);
+        var pixel = em.Mul(em.Binary(OpCode.Max, node[2], em.Constant(1e-3f)), 1f / font.Cap);
         var across = em.Binary(OpCode.Div, node[0], pixel);
         var up = em.Binary(OpCode.Div, node[1], pixel);
 
@@ -143,7 +180,7 @@ internal static class TextModule
         // the coordinates a picture is read at — see LoadedImage.At.
         var halfInk = atlas.Ink / 2f;
         var inBand = em.Add(across, halfInk + TextAtlas.Margin);
-        var downBand = em.Add(em.Mul(row, TextAtlas.Band), em.Sub(em.Constant(TextAtlas.Margin + PixelFont.Cap / 2f), up));
+        var downBand = em.Add(em.Mul(row, atlas.Band), em.Sub(em.Constant(TextAtlas.Margin + font.Cap / 2f), up));
 
         var scale = 2f * TextAtlas.Texels / atlas.Image.Height;
         var x = em.Add(em.Mul(inBand, scale), -(float)atlas.Image.Width / atlas.Image.Height);
@@ -160,8 +197,8 @@ internal static class TextModule
 
         // The box the ink sits in: from the tops of the capitals to the ends of
         // the tails, and as wide as the widest line.
-        var middle = (PixelFont.Height - PixelFont.Cap) / 2f;
-        var halfHeight = PixelFont.Height / 2f;
+        var middle = (font.Height - font.Cap) / 2f;
+        var halfHeight = font.Height / 2f;
         var outX = em.Sub(em.Unary(OpCode.Abs, across), em.Constant(halfInk));
         var outY = em.Sub(em.Unary(OpCode.Abs, em.Add(up, middle)), em.Constant(halfHeight));
         var box = em.Add(

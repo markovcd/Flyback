@@ -165,6 +165,84 @@ public class TextTests
         (text.At(3f * Pixel, 0f) < 0).ShouldBe(second);
     }
 
+    // --- the font --------------------------------------------------------------
+
+    /// <summary>
+    /// The font is a choice on the panel, which is a list to pick from, and a
+    /// fresh Text is in Pixel.
+    /// </summary>
+    [Fact]
+    public void The_font_is_picked_from_a_list_and_starts_as_pixel()
+    {
+        var font = Catalog.Require(TextType).Extras.Single().Fields
+            .OfType<ExtraField.Choice>().Single(field => field.Key == "font");
+
+        font.Options.Select(option => option.Name).ShouldBe(["Pixel", "Tiny"]);
+        font.Fallback.ShouldBe("pixel");
+    }
+
+    /// <summary>
+    /// 'size' is the height of a capital whichever font draws it, so changing the
+    /// font changes the letters and not how big they are. An I's top bar is at
+    /// half a capital above the middle in both.
+    /// </summary>
+    [Theory]
+    [InlineData("pixel")]
+    [InlineData("tiny")]
+    public void Size_is_the_height_of_a_capital_in_either_font(string font)
+    {
+        var text = new Reading(Program("I", font));
+
+        text.At(0f, 0.095f).ShouldBeLessThan(0d);
+        text.At(0f, 0.105f).ShouldBeGreaterThan(0d);
+    }
+
+    /// <summary>
+    /// Tiny has one case: a small letter is its capital, read at the same
+    /// points to the same distance.
+    /// </summary>
+    [Fact]
+    public void Tiny_draws_a_small_letter_as_its_capital()
+    {
+        var small = new Reading(Program("a", "tiny"));
+        var capital = new Reading(Program("A", "tiny"));
+
+        foreach (var (x, y) in new[] { (-0.04f, 0.08f), (0f, 0.03f), (0.03f, -0.07f), (0f, -0.02f) })
+            small.At(x, y).ShouldBe(capital.At(x, y), 1e-9);
+
+        small.At(-0.04f, 0.08f).ShouldBeLessThan(0d);
+    }
+
+    [Fact]
+    public void The_same_lines_in_another_font_are_another_picture()
+    {
+        var pixel = Program("Hello", "pixel").Pictures.ShouldHaveSingleItem();
+        var tiny = Program("Hello", "tiny").Pictures.ShouldHaveSingleItem();
+
+        tiny.ShouldNotBeSameAs(pixel);
+        tiny.Height.ShouldBeLessThan(pixel.Height);
+    }
+
+    /// <summary>
+    /// A font this build does not have is drawn in Pixel and said so, and the
+    /// choice is left as it was, so the patch still names it when saved again.
+    /// </summary>
+    [Fact]
+    public void A_font_this_build_lacks_is_drawn_in_pixel_and_said_so()
+    {
+        var patch = Patched("Hello", "gothic");
+
+        var issue = patch.CompileForVideo(Catalog).Issues.ShouldHaveSingleItem();
+        issue.Severity.ShouldBe(IssueSeverity.Warning);
+        issue.Message.ShouldContain("'gothic'");
+
+        new Reading(patch.CompileForVideo(Catalog).Program).At(-14f * Pixel, 0f)
+            .ShouldBe(Shape(null).At(-14f * Pixel, 0f), 1e-9);
+
+        patch.Nodes.Single(n => n.TypeId == TextType).StateOf("text")!["font"]!
+            .GetValue<string>().ShouldBe("gothic");
+    }
+
     // --- what the renderer is handed -------------------------------------------
 
     /// <summary>
@@ -279,6 +357,18 @@ public class TextTests
 
     private static CompiledPatch Program(string? lines, params (int Port, float Value)[] knobs) =>
         Patched(lines, knobs).CompileForVideo(Catalog).Program;
+
+    private static CompiledPatch Program(string lines, string font) =>
+        Patched(lines, font).CompileForVideo(Catalog).Program;
+
+    private static Patch Patched(string lines, string font)
+    {
+        var patch = Patched(lines);
+
+        patch.Nodes.Single(n => n.TypeId == TextType).StateOf("text")!["font"] = font;
+
+        return patch;
+    }
 
     private static Patch Patched(string? lines, params (int Port, float Value)[] knobs)
     {
