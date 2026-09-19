@@ -188,7 +188,7 @@ public sealed partial class MainWindow
             usage.Count(Used.Opened);
 
             editor.Patch = loaded.Patch;
-            preview.Rewind();
+            RewindToZero();
 
             // Whatever was said about this patch was kept beside it, if anything
             // was and the file is still what it was saved as — ADR-0072.
@@ -537,7 +537,7 @@ public sealed partial class MainWindow
             usage.Count(Used.Opened);
 
             editor.Patch = load.Patch;
-            preview.Rewind();
+            RewindToZero();
 
             // The text is the document now, and the canvas is a view of it —
             // ADR-0068. Said by opening on it, because somebody who opened a
@@ -610,7 +610,7 @@ public sealed partial class MainWindow
             usage.Count(Used.Opened);
 
             editor.Patch = bundle.Patch;
-            preview.Rewind();
+            RewindToZero();
             DropSource();
 
             // A bundle carries its conversation inside it — ADR-0072.

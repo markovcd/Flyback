@@ -215,7 +215,7 @@ public sealed partial class MainWindow
         ClearPresetSelection();
 
         editor.Patch = loaded.Patch;
-        preview.Rewind();
+        RewindToZero();
 
         if (work.Source is { } text)
         {

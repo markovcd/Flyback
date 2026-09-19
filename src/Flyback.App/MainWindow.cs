@@ -39,6 +39,13 @@ public sealed partial class MainWindow : Window
     /// </summary>
     private readonly Button rewindButton = new();
 
+    /// <summary>Takes the picture and the sound back to zero seconds.</summary>
+    private void RewindToZero()
+    {
+        audio.Rewind();
+        preview.Rewind();
+    }
+
     /// <summary>What the rewind button does — the same sentence its Output-panel tip used to carry.</summary>
     private const string RewindTip =
         "Take the patch back to zero seconds, in the picture and in the sound.";
@@ -999,7 +1006,7 @@ public sealed partial class MainWindow : Window
                 // in its own bundle, not the one inside a bundle somebody happened to
                 // open first.
                 editor.Patch = Arrive(preset);
-                preview.Rewind();
+                RewindToZero();
 
                 // A preset has no file to have saved a conversation with, so it
                 // arrives with none — ADR-0072.
@@ -1063,11 +1070,7 @@ public sealed partial class MainWindow : Window
         Marked(recordButton, "record", Glyphs.Record(), RecordTip);
 
         Marked(rewindButton, "rewind", Glyphs.Rewind(), RewindTip);
-        rewindButton.Click += (_, _) =>
-        {
-            audio.Rewind();
-            preview.Rewind();
-        };
+        rewindButton.Click += (_, _) => RewindToZero();
 
         WireSource();
         RefreshEditState();

@@ -225,8 +225,7 @@ public sealed partial class MainWindow
         // Rewind button puts them.
         if (outputSettings.RewindBeforeTake)
         {
-            audio.Rewind();
-            preview.Rewind();
+            RewindToZero();
         }
 
         Start(path, editor.Patch);
