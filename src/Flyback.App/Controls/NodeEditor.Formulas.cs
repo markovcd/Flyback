@@ -37,8 +37,7 @@ public sealed partial class NodeEditor
     {
         if (NodeCatalog.FormulaOf(node) is not { } formula || string.IsNullOrWhiteSpace(formula)) return null;
 
-        // Said once already where the header is the whole formula.
-        if (node.Name is null && !Overflows(formula.Trim(), HeaderSize, HeaderWidth(bounds, def))) return null;
+        if (!InBody(node, def, bounds, formula)) return null;
 
         var reserve = Reserve(node, def, bounds, formula);
 
@@ -58,6 +57,24 @@ public sealed partial class NodeEditor
         // the output rather than floating in the middle of the body.
         return (text, new Point(area.X, area.Y + 2), area, cut);
     }
+
+    /// <summary>
+    /// What a module's header says: its title, except for an Expression whose
+    /// formula is written in its body, which is called Expression there so the
+    /// formula is said once.
+    /// </summary>
+    internal string HeaderTitle(NodeInstance node, NodeDef def, Rect bounds) =>
+        node.Name is null && NodeCatalog.FormulaOf(node) is { } formula && InBody(node, def, bounds, formula)
+            ? def.Name
+            : node.Title(def);
+
+    /// <summary>
+    /// Whether an Expression's formula goes in its body: where it has a name for
+    /// the header, or a formula too long for one.
+    /// </summary>
+    private bool InBody(NodeInstance node, NodeDef def, Rect bounds, string formula) =>
+        !string.IsNullOrWhiteSpace(formula)
+        && (node.Name is not null || Overflows(formula.Trim(), HeaderSize, HeaderWidth(bounds, def)));
 
     /// <summary>
     /// How much of the right of the body the formula keeps clear of: the output's

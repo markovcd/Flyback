@@ -74,7 +74,7 @@ public sealed partial class NodeEditor
         if (HitNode(graph) is { } node && NodeCatalog.Get(node.TypeId) is { } def)
         {
             var bounds = NodeGeometry.Bounds(node, def);
-            var title = node.Title(def);
+            var title = HeaderTitle(node, def, bounds);
 
             if (new Rect(bounds.X, bounds.Y, bounds.Width, NodeGeometry.HeaderHeight).Contains(graph)
                 && Overflows(title, HeaderSize, HeaderWidth(bounds, def)))

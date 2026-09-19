@@ -92,4 +92,31 @@ public class BoxLabelTests : UiTest
     [InlineData("a*b", 1, true)]
     public void A_formula_reads_the_sockets_it_names(string formula, int socket, bool reads) =>
         NodeEditor.Reads(formula, socket).ShouldBe(reads);
+
+    /// <summary>
+    /// A formula is said once: in the header where it fits there, and otherwise in
+    /// the body under a header that says what the module is, or what it is called.
+    /// </summary>
+    [AvaloniaFact]
+    public void The_header_does_not_repeat_a_formula_the_body_shows()
+    {
+        var b = new PatchBuilder(NodeCatalog.BuiltIn);
+        var longOne = Expression(b, Long, 0);
+        var shortOne = Expression(b, "a * 2", 300);
+        var named = Expression(b, "a * 2", 600);
+        named.Name = "gain";
+
+        var editor = new NodeEditor { Width = 1200, Height = 800 };
+        var window = Show(editor, 1200);
+        editor.Patch = b.Patch;
+        Settle(window);
+
+        var def = NodeCatalog.BuiltIn.Require(NodeCatalog.ExpressionTypeId);
+
+        string Header(NodeInstance node) => editor.HeaderTitle(node, def, NodeGeometry.Bounds(node, def));
+
+        Header(longOne).ShouldBe("Expression");
+        Header(shortOne).ShouldBe("a * 2");
+        Header(named).ShouldBe("gain");
+    }
 }
