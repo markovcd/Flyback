@@ -96,6 +96,13 @@ public sealed class EffectsPlugin : IFlybackPlugin
                 + "chord to hold over them, and eight panel knobs — filter, echo, room, drums, bass — "
                 + "that move the rings on the screen as they move the sound.",
                 PresetKind.Showcase),
+            new PatchPreset(
+                OverworldPreset.Name,
+                OverworldPreset.Build,
+                "A whole chiptune track on a console's four voices — two pulses, a stepped triangle "
+                + "and crunching noise — with a key change, mastered through a kick-keyed compressor, "
+                + "under a side-scroller drawn a pixel at a time.",
+                PresetKind.Showcase),
         ]);
     }
 }

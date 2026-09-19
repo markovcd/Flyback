@@ -27,6 +27,7 @@
 - Phase, in the Effects plugin: phase music after Steve Reich, two players on one pattern drifting through all twelve canons, with a picture of two dials that shows where they are. It needs the Voice and Picture plugins.
 - Fracture, in the Effects plugin: drum and bass at 170 with a synthesized break that gets chopped, rolled and reversed, a Reese bass, and a picture cut into strips along with the drums. It needs the Voice and Picture plugins.
 - Dub, in the Effects plugin: dub techno to play rather than listen to. Drums and a sub run on their own, four keys hold a chord over them, and eight panel knobs ride the filter, the echo, the room and the mix, moving the picture with the sound. It needs the Voice and Picture plugins.
+- Overworld, in the Effects plugin: a chiptune track on a console's four voices, with a key change and a kick-keyed compressor at the end of the chain, under a side-scroller drawn a pixel at a time. It needs the Voice, Picture and Mastering plugins.
 - Acid, Bronze, Mycelium, Nebula, Outrun, Phase, Slow weather and Whole band are rebuilt on the new modules, with up to a fifth fewer modules each.
 - Acid is a whole track now: a hundred and twenty-eight bars in two themes, with builds, a breakdown, a bass line and a second 303, and a line that accents and slides.
 - Whole band is a whole song now: twelve phrases with verses, a chorus, a bridge and fills, and a snare, plucked strings, a pad and a room added to the band.
