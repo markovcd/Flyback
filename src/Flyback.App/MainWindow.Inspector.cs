@@ -843,6 +843,9 @@ public sealed partial class MainWindow
                 Foreground = new SolidColorBrush(Colors.PortColor(spec.Kind)),
             };
 
+            // A label cut short here is usually a formula, whole in the tooltip.
+            ToolTip.SetTip(text, label);
+
             if (!editor.Patch.Wired(group, socket) && !editor.Locked)
             {
                 var remove = new Button

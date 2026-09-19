@@ -25,9 +25,6 @@ public sealed partial class NodeEditor
 
     private IReadOnlySet<string> undescribed = new HashSet<string>();
 
-    /// <summary>The module whose tag the tooltip is up for, null while none is.</summary>
-    private Guid? tagged;
-
     /// <summary>
     /// Type ids whose descriptions the assistant's briefing leaves out — see
     /// <see cref="AssistantPanel.Undescribed"/>. Each module of one is tagged.
@@ -77,37 +74,4 @@ public sealed partial class NodeEditor
         && TagBounds(NodeGeometry.Bounds(node, def)).Inflate(2).Contains(graph)
             ? node
             : null;
-
-    /// <summary>
-    /// Puts the tooltip up over a tag and takes it down off one. Opened by hand,
-    /// because the canvas is one control: the pointer never enters anything new
-    /// for the tooltip service to notice.
-    /// </summary>
-    private void TipOver(Point graph)
-    {
-        var over = HitTag(graph)?.Id;
-
-        if (over == tagged) return;
-
-        tagged = over;
-
-        if (over is null)
-        {
-            ToolTip.SetIsOpen(this, false);
-            ToolTip.SetTip(this, null);
-            return;
-        }
-
-        ToolTip.SetTip(this, AssistantPanel.UndescribedNote);
-        ToolTip.SetIsOpen(this, true);
-    }
-
-    protected override void OnPointerExited(PointerEventArgs e)
-    {
-        base.OnPointerExited(e);
-
-        tagged = null;
-        ToolTip.SetIsOpen(this, false);
-        ToolTip.SetTip(this, null);
-    }
 }
