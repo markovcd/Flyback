@@ -14,6 +14,7 @@
 - Added Desk, a four-channel stereo mixer with a trim that chains into bigger ones.
 - Added Trails, which leaves the last frame fading behind the picture.
 - Added Hiss (a hi-hat, a snare's wires or a riser from one envelope) and Bell (struck metal from two sines) to Voice.
+- Added FM to Voice, a four-operator FM synth for electric pianos, brass and bells, with five algorithms.
 - Added Echo to Effects, a stereo delay whose times are counted in steps of the tempo.
 - Added Transform (zoom, turn and slide in one), Ink (draws a shape in one color), Vignette (darkens the corners) and Tune (a Quantiser and a Note in one).
 - Euclid has a `stroke` output, an envelope on the steps that are hits, and Tempo has `beats`, the count of beats so far.
