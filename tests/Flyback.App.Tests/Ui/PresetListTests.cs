@@ -1,3 +1,5 @@
+using Avalonia;
+using Avalonia.Headless;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Interactivity;
@@ -225,5 +227,35 @@ public class PresetListTests : UiTest
 
         (presets.SelectedItem as PatchPreset).ShouldNotBeNull()
             .Kind.ShouldNotBe(PresetKind.Blank, "the window opens on a patch");
+    }
+    /// <summary>
+    /// Resting the pointer on a tile plays the preset's picture on it, frame after
+    /// frame, and moving off puts the still back.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_tile_the_pointer_rests_on_plays_its_picture()
+    {
+        var window = Open();
+        OpenGallery(window);
+
+        var tile = Tile(window, "Plasma");
+        var image = All<Image>(tile).Single();
+
+        UntilDrawn(window, () => image.Source is not null);
+        var still = image.Source;
+
+        var middle = tile.TranslatePoint(new Point(tile.Bounds.Width / 2, 20), window)!.Value;
+        window.MouseMove(middle);
+        Settle(window);
+        tile.IsPointerOver.ShouldBeTrue();
+
+        UntilDrawn(window, () => image.Source != still);
+        var playing = image.Source.ShouldBeOfType<WriteableBitmap>();
+
+        window.MouseMove(new Point(1, 1));
+        Settle(window);
+
+        image.Source.ShouldBe(still);
+        playing.ShouldNotBe(still);
     }
 }

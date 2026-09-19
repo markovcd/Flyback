@@ -458,20 +458,29 @@ public class AudioEngineTests
         engine.Start();
         var playing = Peak(device.Pump());
 
+        // The same preset heard with nothing under it, to tell the patch apart from it.
+        using var aloneDevice = new LoopbackDevice();
+        using var alone = new AudioEngine(aloneDevice);
+        alone.Start();
+
         engine.StartAudition(engine.PrepareAudition(Tone(330f)).ShouldNotBeNull());
+        alone.StartAudition(alone.PrepareAudition(Tone(330f)).ShouldNotBeNull());
         engine.IsAuditioning.ShouldBeTrue();
 
-        var fadingOut = Enumerable.Range(0, BuffersFor(AudioEngine.AuditionFadeOut) + 1).Select(_ => device.Pump()).ToList();
+        var fading = BuffersFor(AudioEngine.AuditionFadeOut) + 1;
+        var fadingOut = Enumerable.Range(0, fading).Select(_ => device.Pump()).ToList();
+        for (var i = 0; i < fading; i++) aloneDevice.Pump();
+
+        // Once the patch has faded, what is heard is the preset and nothing else.
+        var faded = device.Pump();
+        faded.ShouldBe(aloneDevice.Pump(), tolerance: 1e-6f);
 
         engine.EndAudition();
         engine.IsAuditioning.ShouldBeFalse();
 
         var back = Enumerable.Range(0, 2 * BuffersFor(AudioEngine.AuditionFadeOut) + 1).Select(_ => device.Pump()).ToList();
 
-        // Barely begun when the patch has gone: at its lowest it is the audition
-        // alone, which has hardly swelled in the time the patch took to go.
-        fadingOut.Min(Peak).ShouldBeLessThan(0.1f);
-        LargestStep([.. fadingOut, .. back]).ShouldBeLessThan(0.05f);
+        LargestStep([.. fadingOut, faded, .. back]).ShouldBeLessThan(0.05f);
         Peak(back[^1]).ShouldBe(playing, tolerance: 0.01f);
     }
 

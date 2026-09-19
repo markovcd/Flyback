@@ -9,6 +9,9 @@ using Flyback.Core.Graph;
 
 namespace Flyback.App.Controls;
 
+/// <summary>A tile of the gallery: the preset it picks, and the picture it shows it by.</summary>
+internal sealed record PointedTile(PatchPreset Preset, Image Picture);
+
 /// <summary>
 /// Every preset as a tile — a picture, its name and what it is for — under a heading
 /// for each kind, to be shown in a dialog and picked from with a click.
@@ -44,14 +47,14 @@ internal static class PresetGallery
     /// canvas.
     /// </summary>
     /// <param name="pointedAt">
-    /// Told the preset whose tile the pointer has come to rest on, and null when it
-    /// leaves one — what the caller auditions.
+    /// Told the tile the pointer has come to rest on, and null when it leaves one —
+    /// what the caller auditions.
     /// </param>
     public static Control Build(
         IReadOnlyList<PatchPreset> ordered,
         PatchPreset? showing,
         PresetThumbnails thumbnails,
-        Action<PatchPreset?>? pointedAt = null)
+        Action<PointedTile?>? pointedAt = null)
     {
         var gallery = new StackPanel { Name = "gallery", Spacing = 6, Margin = new Thickness(16, 8, 16, 16) };
 
@@ -81,7 +84,7 @@ internal static class PresetGallery
         PatchPreset preset,
         bool showing,
         PresetThumbnails thumbnails,
-        Action<PatchPreset?>? pointedAt)
+        Action<PointedTile?>? pointedAt)
     {
         var image = new Image { Stretch = Stretch.UniformToFill };
 
@@ -140,7 +143,7 @@ internal static class PresetGallery
         };
 
         tile.Click += (_, _) => Dialog.Close<PatchPreset?>(tile, preset);
-        tile.PointerEntered += (_, _) => pointedAt?.Invoke(preset);
+        tile.PointerEntered += (_, _) => pointedAt?.Invoke(new PointedTile(preset, image));
         tile.PointerExited += (_, _) => pointedAt?.Invoke(null);
 
         _ = Fill(image, words, thumbnails.Of(preset));

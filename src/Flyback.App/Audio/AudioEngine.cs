@@ -225,10 +225,10 @@ public sealed class AudioEngine(IAudioDevice device) : IDisposable
     }
 
     /// <summary>How loud a preset is auditioned at its fullest, against the patch's own level.</summary>
-    public const float AuditionLevel = 0.35f;
+    public const float AuditionLevel = 0.7f;
 
     /// <summary>How long a preset takes to swell to <see cref="AuditionLevel"/>.</summary>
-    public static readonly TimeSpan AuditionFadeIn = TimeSpan.FromSeconds(1);
+    public static readonly TimeSpan AuditionFadeIn = TimeSpan.FromSeconds(0.4);
 
     /// <summary>How long a preset takes to die away, and the patch to go quiet or come back.</summary>
     public static readonly TimeSpan AuditionFadeOut = TimeSpan.FromSeconds(0.5);
@@ -252,6 +252,9 @@ public sealed class AudioEngine(IAudioDevice device) : IDisposable
         internal DelayState? Memory { get; }
         internal LiveValues Live { get; }
         internal AudioRenderer Renderer { get; }
+
+        /// <summary>How far into the preset the sound has played, which its picture follows.</summary>
+        public double Time => Renderer.Time;
 
         /// <summary>Where it is rendered before it is mixed in, sized here so the callback never allocates.</summary>
         internal float[] Scratch { get; } = new float[4096];
