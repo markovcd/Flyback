@@ -49,6 +49,9 @@
 ### Assistant
 - The assistant is told what every module does again. Settings → Agent sets how long that briefing may get and names an editable list of modules that are always included. Any module left out is marked on the canvas.
 
+### Canvas and interface
+- A toolbar button swaps the preview and the canvas, for a bigger picture while you patch.
+
 ### Performance
 - An output with no wire on it no longer costs anything. The big presets run 2–19% fewer operations a sample, and Random's white is a sixteenth of what it was.
 

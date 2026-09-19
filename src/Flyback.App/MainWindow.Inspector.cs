@@ -400,18 +400,12 @@ public sealed partial class MainWindow
         fields.All(field =>
             field.Sane(a.All.GetValueOrDefault(field.Key)) == field.Sane(b.All.GetValueOrDefault(field.Key)));
 
-    private Grid BuildRightPanel()
+    /// <summary>
+    /// The preview, the splitter under it and the inspector, down one column of
+    /// <paramref name="grid"/>, whose three rows are theirs.
+    /// </summary>
+    private void BuildRightPanel(Grid grid, int column)
     {
-        var grid = new Grid
-        {
-            RowDefinitions =
-            [
-                new RowDefinition(new GridLength(1, GridUnitType.Star)) { MinHeight = 140 },
-                new RowDefinition(GridLength.Auto),
-                new RowDefinition(new GridLength(1.1, GridUnitType.Star)) { MinHeight = 120 },
-            ],
-        };
-
         previewBox = new Border
         {
             Background = Brushes.Black,
@@ -427,11 +421,13 @@ public sealed partial class MainWindow
             e.Handled = true;
         };
 
+        Grid.SetColumn(previewBox, column);
         Grid.SetRow(previewBox, 0);
 
         previewRow = grid.RowDefinitions[0];
 
         var splitter = previewSplitter = new GridSplitter { Background = Brushes.Transparent, Height = 5 };
+        Grid.SetColumn(splitter, column);
         Grid.SetRow(splitter, 1);
 
         // The mark sits behind the inspector rather than beside it, and never
@@ -452,13 +448,12 @@ public sealed partial class MainWindow
                 },
             },
         };
+        Grid.SetColumn(inspectorBorder, column);
         Grid.SetRow(inspectorBorder, 2);
 
         grid.Children.Add(previewBox);
         grid.Children.Add(splitter);
         grid.Children.Add(inspectorBorder);
-
-        return grid;
     }
 
     /// <summary>

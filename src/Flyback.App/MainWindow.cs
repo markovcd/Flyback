@@ -191,7 +191,6 @@ public sealed partial class MainWindow : Window
     /// never null once <see cref="BuildLayout"/> has run.
     /// </summary>
     private Grid? columns;
-    private Grid? rightPanel;
     private Border? previewBox;
     private Control? toolbar;
     private Control? statusBar;
@@ -223,6 +222,28 @@ public sealed partial class MainWindow : Window
 
     /// <summary>The preview row's height while it was last shown, kept across a hide.</summary>
     private GridLength previewShare = new(1, GridUnitType.Star);
+
+    /// <summary>
+    /// The canvas, the text and the assistant beside them: what trades places
+    /// with the preview — see <see cref="SwapPreview"/>. Null only before
+    /// <see cref="BuildLayout"/> has run.
+    /// </summary>
+    private Grid? canvasPane;
+
+    /// <summary>
+    /// Puts the picture in the wide column and the canvas where the picture
+    /// was. Enabled only while there is a picture to put there — see
+    /// <see cref="ShowPreview"/>.
+    /// </summary>
+    private readonly ToggleButton swapButton = Toggle("swap", "⇄", NoPictureToSwapTip);
+
+    /// <summary>What the swap button says while it can be pressed.</summary>
+    private const string SwapTip =
+        "Swap the preview and the canvas, for a bigger picture while you patch.";
+
+    /// <summary>What it says while it cannot.</summary>
+    private const string NoPictureToSwapTip =
+        "Nothing is wired into the Output's 'color', so there is no picture to swap in.";
 
     /// <summary>
     /// Behind the inspector, and brighter when there is nothing selected for it
@@ -616,6 +637,12 @@ public sealed partial class MainWindow : Window
 
         // The two flexible columns are star-sized: GridSplitter redistributes
         // star weights, and a fixed-pixel column next to one just gets squeezed.
+        //
+        // The rows are the right-hand column's — preview, splitter, inspector —
+        // and the canvas spans all three. One grid rather than a panel nested in
+        // a column, so the preview and the canvas trade places by changing cells:
+        // the preview is never taken off its parent, which would tear its GPU
+        // context down (see MainWindow.FullScreen).
         columns = new Grid
         {
             // Named because the fullscreen preview's test has to find exactly
@@ -627,6 +654,12 @@ public sealed partial class MainWindow : Window
                 new ColumnDefinition(new GridLength(3, GridUnitType.Star)) { MinWidth = 280 },
                 new ColumnDefinition(GridLength.Auto),
                 new ColumnDefinition(new GridLength(1.6, GridUnitType.Star)) { MinWidth = 300 },
+            ],
+            RowDefinitions =
+            [
+                new RowDefinition(new GridLength(1, GridUnitType.Star)) { MinHeight = 140 },
+                new RowDefinition(GridLength.Auto),
+                new RowDefinition(new GridLength(1.1, GridUnitType.Star)) { MinHeight = 120 },
             ],
         };
 
@@ -640,7 +673,7 @@ public sealed partial class MainWindow : Window
         // assistant is talking about is the patch — beside it rather than under,
         // so the conversation reads at the window's full height instead of a
         // slice of the patch's own (ADR-0087).
-        var canvas = new Grid
+        var canvas = canvasPane = new Grid
         {
             ColumnDefinitions =
             [
@@ -691,16 +724,16 @@ public sealed partial class MainWindow : Window
 
         BuildPalette();
         Grid.SetColumn(canvas, 0);
+        Grid.SetRowSpan(canvas, 3);
 
         var rightSplitter = new GridSplitter { Width = 5, Background = Brushes.Transparent };
         Grid.SetColumn(rightSplitter, 1);
-
-        var right = rightPanel = BuildRightPanel();
-        Grid.SetColumn(right, 2);
+        Grid.SetRowSpan(rightSplitter, 3);
 
         columns.Children.Add(canvas);
         columns.Children.Add(rightSplitter);
-        columns.Children.Add(right);
+
+        BuildRightPanel(columns, column: 2);
 
         // Hidden costs nothing, which is why this needs no dialog — and this
         // application has none.
@@ -749,8 +782,18 @@ public sealed partial class MainWindow : Window
     /// </remarks>
     private void ShowPreview(bool shown)
     {
+        // Ahead of the full screen guard, so the button is right by the time the
+        // toolbar comes back.
+        swapButton.IsEnabled = shown;
+        ToolTip.SetTip(swapButton, shown ? SwapTip : NoPictureToSwapTip);
+
         if (previewIsFullScreen) return;
         if (previewBox is null || previewRow is null || previewSplitter is null) return;
+
+        // A picture that has gone gives the canvas its column back before the row
+        // it would stand in is put away. Unticking is what moves it — see the
+        // button's handler in BuildToolbar.
+        if (!shown) swapButton.IsChecked = false;
 
         if (!shown && previewBox.IsVisible) previewShare = previewRow.Height;
 
@@ -759,6 +802,26 @@ public sealed partial class MainWindow : Window
 
         previewRow.MinHeight = shown ? 140d : 0d;
         previewRow.Height = shown ? previewShare : new GridLength(0);
+    }
+
+    /// <summary>
+    /// Puts the preview in the canvas's wide column at full height, and the canvas
+    /// in the preview's cell above the inspector — or puts both back.
+    /// </summary>
+    /// <remarks>
+    /// Only cells change, and the columns keep their widths: the wide one stays
+    /// wide, and what stands in it is what gets the room. The assistant goes with
+    /// the canvas, since it sits in the canvas's own grid.
+    /// </remarks>
+    private void SwapPreview(bool swapped)
+    {
+        if (previewBox is null || canvasPane is null) return;
+
+        Grid.SetColumn(previewBox, swapped ? 0 : 2);
+        Grid.SetRowSpan(previewBox, swapped ? 3 : 1);
+
+        Grid.SetColumn(canvasPane, swapped ? 2 : 0);
+        Grid.SetRowSpan(canvasPane, swapped ? 1 : 3);
     }
 
     /// <summary>
@@ -924,6 +987,10 @@ public sealed partial class MainWindow : Window
 
         tidy.Click += (_, _) => Tidy();
 
+        // The same, for a patch with no picture to swap in.
+        ToolTip.SetShowOnDisabled(swapButton, true);
+        swapButton.IsCheckedChanged += (_, _) => SwapPreview(swapButton.IsChecked == true);
+
         // The glyph and the tip are set here, alongside every other toolbar
         // button; what the tip actually says is decided per patch by
         // MarkRecordable, which runs before this is ever shown.
@@ -954,6 +1021,7 @@ public sealed partial class MainWindow : Window
         patchwork.Children.Add(Separator());
         patchwork.Children.Add(codeButton);
         patchwork.Children.Add(controlsButton);
+        patchwork.Children.Add(swapButton);
 
         // On its own, between what is done to the patch and what is done to
         // the program: recording and rewinding are neither — both are facts

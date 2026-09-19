@@ -21,7 +21,7 @@ public sealed partial class MainWindow
     /// definition. That keeps the dragged layout when the preview is toggled.
     /// </remarks>
     private (GridLength Size, double Minimum)[]? columnsBefore;
-    private (GridLength Size, double Minimum)[]? rightRowsBefore;
+    private (GridLength Size, double Minimum)[]? rowsBefore;
 
     /// <summary>
     /// Whether the window was maximised, or merely open, before it went full
@@ -52,13 +52,9 @@ public sealed partial class MainWindow
     {
         if (full == previewIsFullScreen) return;
 
-        // All five arrive together when the layout is built, so this is one
-        // question rather than five. Before that there is nothing to show.
-        if (columns is null || rightPanel is null || previewBox is null
-            || toolbar is null || statusBar is null)
-        {
-            return;
-        }
+        // All four arrive together when the layout is built, so this is one
+        // question rather than four. Before that there is nothing to show.
+        if (columns is null || previewBox is null || toolbar is null || statusBar is null) return;
 
         previewIsFullScreen = full;
 
@@ -68,11 +64,10 @@ public sealed partial class MainWindow
         toolbar.IsVisible = !full;
         statusBar.IsVisible = !full;
 
-        // Everything in these two is visible in the ordinary way of things — the
-        // assistant, which is not, hangs off the canvas rather than off either of
-        // them — so putting them back is a plain yes rather than a remembered one.
-        foreach (var child in columns.Children) child.IsVisible = !full || child == rightPanel;
-        foreach (var child in rightPanel.Children) child.IsVisible = !full || child == previewBox;
+        // Everything in the grid is visible in the ordinary way of things while the
+        // preview is — the assistant, which is not, hangs off the canvas rather than
+        // off the grid — so putting it back is a plain yes rather than a remembered one.
+        foreach (var child in columns.Children) child.IsVisible = !full || child == previewBox;
 
         // ShowPreview stands aside while the preview has the window, and the patch
         // may have lost its picture meanwhile. Only ever put away here: the row has
@@ -84,12 +79,12 @@ public sealed partial class MainWindow
             stateBefore = WindowState;
 
             columnsBefore = [.. columns.ColumnDefinitions.Select(c => (c.Width, c.MinWidth))];
-            rightRowsBefore = [.. rightPanel.RowDefinitions.Select(r => (r.Height, r.MinHeight))];
+            rowsBefore = [.. columns.RowDefinitions.Select(r => (r.Height, r.MinHeight))];
 
             // Which track to leave standing is read off the layout rather than
-            // written down here, so moving the preview panel cannot leave this
-            // collapsing the wrong column.
-            var keepColumn = Grid.GetColumn(rightPanel);
+            // written down here, since the preview is in the wide column while it
+            // is swapped with the canvas and in the narrow one otherwise.
+            var keepColumn = Grid.GetColumn(previewBox);
             var keepRow = Grid.GetRow(previewBox);
 
             for (var i = 0; i < columns.ColumnDefinitions.Count; i++)
@@ -103,9 +98,9 @@ public sealed partial class MainWindow
                 column.Width = i == keepColumn ? Everything : None;
             }
 
-            for (var i = 0; i < rightPanel.RowDefinitions.Count; i++)
+            for (var i = 0; i < columns.RowDefinitions.Count; i++)
             {
-                var row = rightPanel.RowDefinitions[i];
+                var row = columns.RowDefinitions[i];
 
                 row.MinHeight = 0;
                 row.Height = i == keepRow ? Everything : None;
@@ -125,12 +120,12 @@ public sealed partial class MainWindow
                 }
             }
 
-            if (rightRowsBefore is { } savedRows)
+            if (rowsBefore is { } savedRows)
             {
-                for (var i = 0; i < savedRows.Length && i < rightPanel.RowDefinitions.Count; i++)
+                for (var i = 0; i < savedRows.Length && i < columns.RowDefinitions.Count; i++)
                 {
-                    rightPanel.RowDefinitions[i].Height = savedRows[i].Size;
-                    rightPanel.RowDefinitions[i].MinHeight = savedRows[i].Minimum;
+                    columns.RowDefinitions[i].Height = savedRows[i].Size;
+                    columns.RowDefinitions[i].MinHeight = savedRows[i].Minimum;
                 }
             }
 
