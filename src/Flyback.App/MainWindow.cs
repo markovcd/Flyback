@@ -950,7 +950,7 @@ public sealed partial class MainWindow : Window
         {
             var showing = presets.SelectedItem as PatchPreset;
             var gallery = PresetGallery.Build([.. plugins.Presets.OrderBy(p => p.Kind)], showing, thumbnails, PointedAt, Yours());
-            var chosen = await this.ShowDialog<PatchPreset?>("Start from a preset", gallery.Tiles, gallery.Filter);
+            var chosen = await this.ShowDialog<PatchPreset?>("Start from a preset", gallery.Tiles, gallery.Filter, fill: true);
 
             PointedAt(null);
 

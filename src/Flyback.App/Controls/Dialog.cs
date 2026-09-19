@@ -53,7 +53,13 @@ internal static class Dialog
         /// content scrolls — a filter that scrolled away with what it filters
         /// would be the wrong way round.
         /// </param>
-        public async Task<TResult> ShowDialog<TResult>(string title, Control content, Control? header = null)
+        /// <param name="fill">
+        /// Takes all the room it may rather than only what the content needs, for
+        /// content whose size changes while it is up — a gallery being filtered
+        /// would otherwise shrink and grow the frame around whatever is typed.
+        /// </param>
+        public async Task<TResult> ShowDialog<TResult>(
+            string title, Control content, Control? header = null, bool fill = false)
         {
             // Avalonia's own layer for things drawn over a window — what a flyout
             // or a tooltip is put in. Using it rather than a panel of our own
@@ -67,7 +73,7 @@ internal static class Dialog
             // whatever had it is its own small rudeness.
             var before = owner.FocusManager.GetFocusedElement();
 
-            var overlay = new ModalOverlay(title, content, header);
+            var overlay = new ModalOverlay(title, content, header, fill);
 
             layer.Children.Add(overlay);
             overlay.Focus();
@@ -121,7 +127,7 @@ internal sealed class ModalOverlay : Border
     /// </summary>
     private Visual? layer;
 
-    public ModalOverlay(string title, Control content, Control? header = null)
+    public ModalOverlay(string title, Control content, Control? header = null, bool fill = false)
     {
         Name = "modal";
         Background = new SolidColorBrush(Colors.Scrim);
@@ -135,7 +141,7 @@ internal sealed class ModalOverlay : Border
         // when the sheet was clicked would be one a missed button press could
         // dismiss, and the two dialogs that are read rather than answered are
         // exactly the ones somebody clicks around in while reading.
-        Child = Frame(title, content, header);
+        Child = Frame(title, content, header, fill);
     }
 
     /// <summary>Completes when the dialog has been answered or dismissed.</summary>
@@ -213,7 +219,7 @@ internal sealed class ModalOverlay : Border
         e.Handled = true;
     }
 
-    private Control Frame(string title, Control content, Control? header)
+    private Control Frame(string title, Control content, Control? header, bool fill)
     {
         var heading = new TextBlock
         {
@@ -291,9 +297,9 @@ internal sealed class ModalOverlay : Border
                 Color = Colors.DialogShadow,
             }),
 
-            // Centred and no bigger than it has to be.
-            HorizontalAlignment = HorizontalAlignment.Center,
-            VerticalAlignment = VerticalAlignment.Center,
+            // Centred and no bigger than it has to be, unless asked to hold its size.
+            HorizontalAlignment = fill ? HorizontalAlignment.Stretch : HorizontalAlignment.Center,
+            VerticalAlignment = fill ? VerticalAlignment.Stretch : VerticalAlignment.Center,
             Margin = new Thickness(Inset),
             MaxWidth = Widest,
 

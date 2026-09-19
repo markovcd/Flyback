@@ -206,6 +206,28 @@ public class PresetListTests : UiTest
         All<ModalOverlay>(window).ShouldBeEmpty();
     }
 
+    /// <summary>The frame stays the size it opened at however few tiles the filter leaves.</summary>
+    [AvaloniaFact]
+    public void Typing_does_not_resize_the_gallery()
+    {
+        var window = Open();
+
+        OpenGallery(window);
+
+        var frame = All<Border>(window).Single(b => b.Name == "dialog");
+        var opened = frame.Bounds.Size;
+
+        Filter(window).Text = "kaleido";
+        Settle(window);
+
+        frame.Bounds.Size.ShouldBe(opened);
+
+        Filter(window).Text = "zzzz";
+        Settle(window);
+
+        frame.Bounds.Size.ShouldBe(opened);
+    }
+
     /// <summary>A heading's own words match everything under it, as a category does in the module list.</summary>
     [AvaloniaFact]
     public void Typing_a_heading_keeps_its_whole_run()
