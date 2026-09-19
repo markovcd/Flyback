@@ -80,8 +80,10 @@ so.
 installed one after it is replaced**, with `codesign --sign -`, which is part of
 macOS.
 
-**What happened is said once**, on the status bar of the window that opens after:
-that Flyback was updated, or why it could not be. A version that fails three times
+**What happened is said once**, by the window that opens after. An install that
+worked opens a dialog with the new version's section of the changelog, which the
+build carries inside itself; one that failed says why on the status bar, as does a
+build whose changelog has no section for its own version. A version that fails three times
 is left for the next release, and a failure is never retried in the same start.
 
 **It is on by default**, in `update.json` beside the other settings files, and the

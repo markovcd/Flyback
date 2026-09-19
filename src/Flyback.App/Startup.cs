@@ -48,6 +48,12 @@ internal static class Startup
     /// </summary>
     public static string? UpdateNote { get; private set; }
 
+    /// <summary>
+    /// What the release just installed changed, where <see cref="UpdateNote"/> says it
+    /// installed and its changelog has a section for it — shown in place of the note.
+    /// </summary>
+    public static ReleaseNotes? WhatsNew { get; private set; }
+
     public static void Load(string? openPath = null, bool interpreted = false, UpdateSettings? updates = null)
     {
         OpenPath = openPath;
@@ -56,7 +62,12 @@ internal static class Startup
 
         // Before the plugins, so a version that has just been replaced by the
         // one running is cleared away while nothing is reading it.
-        UpdateNote = Updater.Folder.Tidy(ReleaseFeed.Running());
+        var running = ReleaseFeed.Running();
+
+        UpdateNote = Updater.Folder.Tidy(running);
+
+        if (running is not null && UpdateNote == Updater.Installed(running))
+            WhatsNew = ReleaseNotes.Of(running);
 
         if (UpdateNote is not null) Trace.WriteLine($"updates: {UpdateNote}");
 

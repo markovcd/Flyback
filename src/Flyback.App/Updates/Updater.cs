@@ -139,7 +139,7 @@ internal static class Updater
             // bundle may hold plugins nobody signed at all.
             if (target.Bundle) Sign(target.Root);
 
-            folder.Note($"Updated to {name}.");
+            folder.Note(Installed(version));
         }
         catch (Exception ex)
         {
@@ -150,6 +150,12 @@ internal static class Updater
                 : $"Could not update to {name}: {ex.Message} It can be downloaded from the releases page instead.");
         }
     }
+
+    /// <summary>
+    /// The note an install of <paramref name="version"/> leaves when it worked, which
+    /// is how the window that opens after knows to show what the release changed.
+    /// </summary>
+    public static string Installed(Version version) => $"Updated to Flyback {version.ToString(3)}.";
 
     /// <summary>
     /// Whether the version that started this one has gone. It exits straight after,

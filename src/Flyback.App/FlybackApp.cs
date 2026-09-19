@@ -49,6 +49,7 @@ public sealed class FlybackApp : Application
                 updateSettingsPath: UpdateSettings.File,
                 interpreted: Startup.Interpreted,
                 updateNote: Startup.UpdateNote,
+                whatsNew: Startup.WhatsNew,
                 usageSettingsPath: UsageSettings.File,
                 usage: usage);
             desktop.MainWindow = window;

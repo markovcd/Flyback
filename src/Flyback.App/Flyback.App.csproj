@@ -119,6 +119,14 @@
 
   <ItemGroup>
     <!--
+      The changelog, so the window that opens after an update can say what the
+      release changed without asking the network. See ReleaseNotes.
+    -->
+    <EmbeddedResource Include="..\..\CHANGELOG.md" LogicalName="CHANGELOG.md" Link="CHANGELOG.md" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
       The application key usage statistics are counted under, which is public and
       names its own region. A file with no key in it counts nothing. See ADR-0094.
     -->

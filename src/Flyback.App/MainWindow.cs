@@ -387,6 +387,11 @@ public sealed partial class MainWindow : Window
     /// What the last update did, said once on the status bar — see
     /// <see cref="Startup.UpdateNote"/>.
     /// </param>
+    /// <param name="whatsNew">
+    /// What the release just installed changed, shown once in a dialog when the
+    /// window opens in place of <paramref name="updateNote"/> — see
+    /// <see cref="Startup.WhatsNew"/>.
+    /// </param>
     /// <param name="usageSettingsPath">
     /// Where the Usage section is read from and saved to, null keeping it nowhere
     /// for the reason <paramref name="outputSettingsPath"/> does.
@@ -403,7 +408,8 @@ public sealed partial class MainWindow : Window
         string? updateSettingsPath = null,
         string? updateNote = null,
         string? usageSettingsPath = null,
-        Usage? usage = null)
+        Usage? usage = null,
+        ReleaseNotes? whatsNew = null)
     {
         this.groupFolder = groupFolder;
         this.outputSettingsPath = outputSettingsPath;
@@ -543,7 +549,11 @@ public sealed partial class MainWindow : Window
             Report($"Running interpreted ({Startup.InterpretedFlag}): the CPU's programs are not compiled this run.");
 
         // Last, so it is what the bar is showing when the window first appears.
-        if (updateNote is not null) Report(updateNote);
+        // Opened for the dialog, since there is nothing to put one over before.
+        if (whatsNew is not null)
+            Opened += async (_, _) => await this.ShowDialog(WhatsNew.Title(whatsNew), WhatsNew.View(whatsNew));
+        else if (updateNote is not null)
+            Report(updateNote);
 
         var ticker = new DispatcherTimer(DispatcherPriority.Background) { Interval = TimeSpan.FromMilliseconds(250) };
         ticker.Tick += (_, _) => UpdateStatus();
