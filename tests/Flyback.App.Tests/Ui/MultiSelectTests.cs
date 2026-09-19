@@ -318,9 +318,9 @@ public class MultiSelectTests : UiTest
         Click(editor, window, Body(a));
         Click(editor, window, Body(b), RawInputModifiers.Control);
 
-        editor.AddNode("math.mul").ShouldNotBeNull();
+        editor.AddNode("osc.sine").ShouldNotBeNull();
 
-        Selected(editor).ShouldBe(["math.mul"]);
+        Selected(editor).ShouldBe(["osc.sine"]);
     }
 
     /// <summary>
@@ -497,5 +497,22 @@ public class MultiSelectTests : UiTest
 
         pressed.Handled.ShouldBeFalse();
         editor.SelectedNodes.ShouldBeEmpty();
+    }
+
+    /// <summary>
+    /// A Maths module an Expression stands for arrives as that Expression, with the
+    /// module's knobs as they rest (ADR-0109).
+    /// </summary>
+    [AvaloniaFact]
+    public void Adding_a_retired_maths_module_adds_its_expression()
+    {
+        var patch = Three(out _, out _, out _);
+        var (editor, _) = Editing(patch);
+
+        var added = editor.AddNode("math.pow").ShouldNotBeNull();
+
+        added.TypeId.ShouldBe(NodeCatalog.ExpressionTypeId);
+        NodeCatalog.FormulaOf(added).ShouldBe("pow(a, b)");
+        added.InputValues[1].ShouldBe(2f);
     }
 }

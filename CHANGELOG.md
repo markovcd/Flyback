@@ -14,6 +14,7 @@
 - Added Desk, a four-channel stereo mixer with a trim that chains into bigger ones.
 - Added Expression, one block that computes a formula you type over its four inputs, such as `(floor(a * 45) + 0.5) / 45`. On the canvas it is titled by its formula.
 - Arithmetic in the text view, such as `(x * 2 - 1) * aspect`, is one Expression, and an Expression shows there as arithmetic.
+- Add, Multiply, Floor and the other one- and two-input Maths modules are Expressions now: the module list finds them by name and adds the Expression.
 - Added Trails, which leaves the last frame fading behind the picture.
 - Added Hiss (a hi-hat, a snare's wires or a riser from one envelope) and Bell (struck metal from two sines) to Voice.
 - Added FM to Voice, a four-operator FM synth for electric pianos, brass and bells, with five algorithms.

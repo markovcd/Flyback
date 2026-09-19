@@ -219,6 +219,12 @@ deliberately — `-2..2` is a range from minus two, and the other way round pars
 compiles and means something else. So `t * 0.2 |> sine()` groups as
 `(t * 0.2) |> sine()`, which is what it looks like.
 
+A call to one of the Maths modules an Expression stands for — `mul(...)`,
+`fract(...)`, `floor(...)` and the rest of the one- and two-input ones
+([0109](adr/0109-the-expression-stands-for-the-small-maths-modules.md)) — builds an
+Expression too, and joins the sum it sits in: `fract(t * 60) * 2 - 1` is one
+Expression, `fract(a * 60) * 2 - 1`.
+
 **A sum is one Expression**, however much of it there is
 ([0106](adr/0106-a-sum-in-the-text-is-one-expression.md)).
 `(fract(t * 60) * 2 - 1) * aspect` is an Expression reading `t`, a Fraction, and

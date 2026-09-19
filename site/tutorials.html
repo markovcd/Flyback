@@ -190,19 +190,20 @@
       <li>Add an <strong>HSV</strong> module (it is in the Color family). Rewire Rings' <code>out</code> into
       HSV's <code>value</code>, and HSV's <code>color</code> into the Output's <code>color</code>. Dragging a
       connected input picks its wire up, so you can move the wire rather than drawing a new one.</li>
-      <li>Add a <strong>Multiply</strong>, wire <code>t</code> into its <code>a</code>, set <code>b</code> to
-      <code>0.1</code>, and wire its <code>out</code> into HSV's <code>hue</code>. The hue now goes round the
-      color wheel once every ten seconds.</li>
+      <li>Add an <strong>Expression</strong> (it is in the Maths family), type <code>a * 0.1</code> as its
+      formula in the inspector, wire <code>t</code> into its <code>a</code>, and wire its <code>out</code> into
+      HSV's <code>hue</code>. The hue now goes round the color wheel once every ten seconds. Typing
+      <em>Multiply</em> in the module list finds the same thing, with <code>a * b</code> filled in.</li>
       <li>Set HSV's <code>saturation</code> to about <code>0.85</code>.</li>
     </ol>
 
     <div class="patch-fig">
       <div class="canvas"><div style="--min: 620px">
-        <figure style="margin: 0" data-label="Time feeds Rings' offset and a Multiply; the Multiply sets HSV's hue, Rings sets HSV's value, and HSV's color goes to the Output."
+        <figure style="margin: 0" data-label="Time feeds Rings' offset and an Expression, a times 0.1; the Expression sets HSV's hue, Rings sets HSV's value, and HSV's color goes to the Output."
           data-patch='{"nodes":[
             {"id":"time","name":"Time","cat":"sources","x":8,"y":130,"outs":["t"],"ins":[]},
             {"id":"rings","name":"Rings","cat":"patterns","x":170,"y":0,"w":160,"outs":["out"],"ins":[["x","Coordinates x"],["y","Coordinates y"],["freq","4"],"offset"]},
-            {"id":"mul","name":"Multiply","cat":"maths","x":170,"y":140,"outs":[["out","any"]],"ins":["a",["b","0.1"]]},
+            {"id":"mul","name":"a * 0.1","cat":"maths","x":170,"y":140,"outs":[["out","any"]],"ins":["a","b","c","d"]},
             {"id":"hsv","name":"HSV","cat":"color","x":380,"y":40,"outs":[["color","color"]],"ins":["hue",["saturation","0.85"],"value"]},
             {"id":"out","name":"Output","cat":"output","x":540,"y":40,"outs":[],"ins":[["color","","color"],["left","0"],["right","0"],["volume","0.5"]]}
           ],"wires":[["time",0,"rings",3],["time",0,"mul",0],["mul",0,"hsv",0],["rings",0,"hsv",2],["hsv",0,"out",0]]}'></figure>
@@ -269,16 +270,17 @@
       <li>Add another <strong>Sine</strong> and set <code>freq</code> to <code>0.15</code>, <code>amp</code> to
       <code>0.5</code> and <code>bias</code> to <code>0.5</code>. It now swings slowly between 0 and 1, once
       every six or seven seconds. Double-click its name in the inspector and call it <em>slow</em>.</li>
-      <li>Wire <em>slow</em> into HSV's <code>hue</code>, in place of the Multiply. Delete the Multiply.</li>
-      <li>Add a <strong>Multiply</strong> between the tone and the Output: the tone Sine into <code>a</code>,
-      <em>slow</em> into <code>b</code>, and the Multiply's <code>out</code> into <code>left</code>.</li>
+      <li>Wire <em>slow</em> into HSV's <code>hue</code>, in place of the Expression. Delete the Expression.</li>
+      <li>Add an <strong>Expression</strong> with the formula <code>a * b</code> between the tone and the Output:
+      the tone Sine into <code>a</code>, <em>slow</em> into <code>b</code>, and its <code>out</code> into
+      <code>left</code>.</li>
       <li>Press <kbd>Ctrl</kbd>+<kbd>L</kbd> to tidy the layout.</li>
     </ol>
 
     <figure class="wide-shot">
       <div class="window">
         <img loading="lazy" src="assets/shots/tutorial-canvas.webp" width="1600" height="863"
-             alt="The finished patch on the canvas: Frequency into Sine, Sine and a Sine named slow into a Multiply, slow into HSV's hue, Rings with Time on its offset into HSV's value, and HSV and the Multiply into the Output. The preview shows red rings.">
+             alt="The finished patch on the canvas: Frequency into Sine, Sine and a Sine named slow into an Expression multiplying them, slow into HSV's hue, Rings with Time on its offset into HSV's value, and HSV and the Expression into the Output. The preview shows red rings.">
       </div>
       <figcaption>The finished patch. As the tone swells, the rings move through the color wheel with it, because
       both are reading the same module.</figcaption>

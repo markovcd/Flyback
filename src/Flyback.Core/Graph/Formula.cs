@@ -100,6 +100,29 @@ internal sealed class Formula
         }
     }
 
+    /// <summary>
+    /// The formula's tree, handed leaf by leaf to what builds another of it: a
+    /// number, a socket by its index, and a call with its arguments as written —
+    /// one left off is that module's knob at rest, so it is handed on as a number.
+    /// </summary>
+    public T Walk<T>(Func<float, T> literal, Func<int, T> socket, Func<NodeDef, IReadOnlyList<T>, T> call)
+    {
+        return Visit(root);
+
+        T Visit(Term term) => term switch
+        {
+            Literal number => literal(number.Value),
+            Socket read => socket(read.Index),
+            Call made => call(
+                made.Module,
+                [
+                    .. made.Arguments.Select(Visit),
+                    .. made.Module.Inputs.Skip(made.Arguments.Count).Select(port => literal(port.Default)),
+                ]),
+            _ => throw new InvalidOperationException($"No walk for {term.GetType().Name}."),
+        };
+    }
+
     // --- spelling it as infix -----------------------------------------------------
 
     /// <summary>The Maths modules the text language writes as an operator.</summary>

@@ -10,7 +10,7 @@ namespace Flyback.Core.Tests.Language;
 /// </summary>
 /// <remarks>
 /// By position rather than by name, which is the whole of why this exists. The
-/// module in <c>atan2(a: 1.5) |&gt; out.left</c> is called nothing, and anything
+/// module in <c>clamp(low: 1.5) |&gt; out.left</c> is called nothing, and anything
 /// that needed a name to find it would have to invent one and write it into
 /// somebody's file.
 /// </remarks>
@@ -39,25 +39,25 @@ public class SourceMapTests
     [Fact]
     public void A_call_with_no_name_is_still_something_to_point_at()
     {
-        const string source = "atan2(a: 1.5524476) |> out.left";
+        const string source = "clamp(low: 1.5524476) |> out.left";
 
         var load = Built(source);
 
-        Under(load, source, "atan2")!.TypeId.ShouldBe("math.atan2");
+        Under(load, source, "clamp")!.TypeId.ShouldBe("math.clamp");
     }
 
     [Fact]
     public void A_knob_is_changed_where_the_text_already_says_it()
     {
-        const string source = "atan2(a: 1.5524476) |> out.left";
+        const string source = "clamp(low: 1.5524476) |> out.left";
 
         var load = Built(source);
-        var node = Under(load, source, "atan2")!;
+        var node = Under(load, source, "clamp")!;
 
-        var change = load.Map.Knob(node.Id, "a", "2");
+        var change = load.Map.Knob(node.Id, "low", "2");
 
         change.ShouldNotBeNull();
-        Applied(source, change.Value).ShouldBe("atan2(a: 2) |> out.left");
+        Applied(source, change.Value).ShouldBe("clamp(low: 2) |> out.left");
     }
 
     /// <summary>
@@ -67,24 +67,24 @@ public class SourceMapTests
     [Fact]
     public void A_knob_the_text_does_not_mention_is_added_to_the_call()
     {
-        const string source = "atan2(a: 1.5) |> out.left";
+        const string source = "clamp(low: 1.5) |> out.left";
 
         var load = Built(source);
-        var node = Under(load, source, "atan2")!;
+        var node = Under(load, source, "clamp")!;
 
-        Applied(source, load.Map.Knob(node.Id, "b", "0.25")!.Value)
-            .ShouldBe("atan2(a: 1.5, b: 0.25) |> out.left");
+        Applied(source, load.Map.Knob(node.Id, "high", "0.25")!.Value)
+            .ShouldBe("clamp(low: 1.5, high: 0.25) |> out.left");
     }
 
     [Fact]
     public void A_knob_added_to_an_empty_call_takes_no_comma()
     {
-        const string source = "atan2() |> out.left";
+        const string source = "clamp() |> out.left";
 
         var load = Built(source);
-        var node = Under(load, source, "atan2")!;
+        var node = Under(load, source, "clamp")!;
 
-        Applied(source, load.Map.Knob(node.Id, "a", "2")!.Value).ShouldBe("atan2(a: 2) |> out.left");
+        Applied(source, load.Map.Knob(node.Id, "low", "2")!.Value).ShouldBe("clamp(low: 2) |> out.left");
     }
 
     /// <summary>
@@ -94,12 +94,12 @@ public class SourceMapTests
     [Fact]
     public void A_negative_knob_is_replaced_with_its_minus()
     {
-        const string source = "atan2(a: -0.5) |> out.left";
+        const string source = "clamp(low: -0.5) |> out.left";
 
         var load = Built(source);
-        var node = Under(load, source, "atan2")!;
+        var node = Under(load, source, "clamp")!;
 
-        Applied(source, load.Map.Knob(node.Id, "a", "0.5")!.Value).ShouldBe("atan2(a: 0.5) |> out.left");
+        Applied(source, load.Map.Knob(node.Id, "low", "0.5")!.Value).ShouldBe("clamp(low: 0.5) |> out.left");
     }
 
     /// <summary>
@@ -110,12 +110,12 @@ public class SourceMapTests
     [Fact]
     public void A_knob_written_as_arithmetic_is_left_alone()
     {
-        const string source = "atan2(a: 1 / 12) |> out.left";
+        const string source = "clamp(low: 1 / 12) |> out.left";
 
         var load = Built(source);
-        var node = Under(load, source, "atan2")!;
+        var node = Under(load, source, "clamp")!;
 
-        load.Map.Knob(node.Id, "a", "2").ShouldBeNull();
+        load.Map.Knob(node.Id, "low", "2").ShouldBeNull();
     }
 
     /// <summary>
@@ -141,13 +141,13 @@ public class SourceMapTests
     [Fact]
     public void The_innermost_call_wins()
     {
-        const string source = "mul(a: sine(), b: saw()) |> out.left";
+        const string source = "clamp(in: sine(), low: saw()) |> out.left";
 
         var load = Built(source);
 
         Under(load, source, "sine")!.TypeId.ShouldBe("osc.sine");
         Under(load, source, "saw")!.TypeId.ShouldBe("osc.saw");
-        Under(load, source, "mul")!.TypeId.ShouldBe("math.mul");
+        Under(load, source, "clamp")!.TypeId.ShouldBe("math.clamp");
     }
 
     /// <summary>
@@ -157,11 +157,11 @@ public class SourceMapTests
     [Fact]
     public void A_bindings_name_points_at_the_module_it_names()
     {
-        const string source = "let hum = sine(freq: 220) |> math.mul(b: 0.5)\nhum |> out.left";
+        const string source = "let hum = sine(freq: 220) |> clamp(high: 0.5)\nhum |> out.left";
 
         var load = Built(source);
 
-        Under(load, source, "let hum")!.TypeId.ShouldBe("math.mul");
+        Under(load, source, "let hum")!.TypeId.ShouldBe("math.clamp");
         Under(load, source, "sine")!.TypeId.ShouldBe("osc.sine");
     }
 

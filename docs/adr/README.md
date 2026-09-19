@@ -61,7 +61,8 @@ context, decision, consequences.
 | [0104](0104-a-formula-is-one-block-and-exactly-the-modules-it-names.md) | A formula is one block, and exactly the modules it names *(user-directed)* |
 | [0106](0106-a-sum-in-the-text-is-one-expression.md) | A sum in the text is one Expression *(user-directed; its printing of every Expression as a call replaced by [0107](0107-an-expression-is-printed-as-the-sum-it-is.md))* |
 | [0107](0107-an-expression-is-printed-as-the-sum-it-is.md) | An Expression is printed as the sum it is *(user-directed; a sum with a pipeline for an operand made a call by [0108](0108-a-preset-arrives-with-its-arithmetic-folded.md))* |
-| [0108](0108-a-preset-arrives-with-its-arithmetic-folded.md) | A preset arrives with its arithmetic folded into Expressions *(user-directed)* |
+| [0108](0108-a-preset-arrives-with-its-arithmetic-folded.md) | A preset arrives with its arithmetic folded into Expressions *(user-directed; what it leaves alone narrowed by [0109](0109-the-expression-stands-for-the-small-maths-modules.md))* |
+| [0109](0109-the-expression-stands-for-the-small-maths-modules.md) | The Expression stands for the small Maths modules *(user-directed)* |
 | [0064](0064-a-pixel-runs-only-what-a-pixel-changes.md) | A pixel runs only what a pixel changes |
 | [0074](0074-a-cell-is-a-plane-on-the-video-path.md) | A cell is a plane on the video path *(user-directed)* |
 | [0075](0075-a-cycle-carries-its-own-delay.md) | A cycle carries its own delay *(user-directed)* |

@@ -110,21 +110,64 @@ public class ExpressionFusionTests
         Formula(Of(fused, Expression).ShouldHaveSingleItem()).ShouldBe("a * 2");
     }
 
-    /// <summary>A module a panel knob turns is the knob's to turn, so it stays a module.</summary>
+    /// <summary>
+    /// A number a panel knob turns stays on a socket, and the socket follows the
+    /// knob: written into the formula, it would stop moving.
+    /// </summary>
     [Fact]
-    public void A_module_on_a_panel_knob_is_left_alone()
+    public void A_number_on_a_panel_knob_stays_on_a_socket()
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
         var coord = b.Add(NodeCatalog.CoordTypeId);
         var scaled = Knobbed(b, "math.mul", coord, 2f);
         var knob = b.Patch.AddControl("Size", 0.5f);
-        ControlMap.Link(scaled, 1, new ControlLink(knob.Id, 0f, 4f));
+        var link = new ControlLink(knob.Id, 0f, 4f);
+        ControlMap.Link(scaled, 1, link);
         Shown(b, Knobbed(b, "math.add", scaled, 1f));
 
         var fused = Fused(b.Patch);
 
-        Of(fused, "math.mul").ShouldHaveSingleItem();
-        Formula(Of(fused, Expression).ShouldHaveSingleItem()).ShouldBe("a + 1");
+        var expression = Of(fused, Expression).ShouldHaveSingleItem();
+
+        Formula(expression).ShouldBe("a * b + 1");
+        expression.InputValues[1].ShouldBe(2f);
+        ControlMap.Of(expression, 1).ShouldBe(link);
+    }
+
+    /// <summary>
+    /// Two numbers either side of an operator stay on sockets: the formula's reader
+    /// would add them as floats, where the program adds them in its registers.
+    /// </summary>
+    [Fact]
+    public void Two_numbers_either_side_of_an_operator_stay_on_sockets()
+    {
+        var b = new PatchBuilder(NodeCatalog.BuiltIn);
+        var constant = b.Add("math.add", (0, 0.1f), (1, 0.2f));
+        var sink = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 1f));
+        b.Wire(constant, 0, sink, NodeCatalog.OutputLeftPort);
+
+        var fused = Fused(b.Patch);
+
+        var expression = Of(fused, Expression).ShouldHaveSingleItem();
+
+        Formula(expression).ShouldBe("a + b");
+        expression.InputValues[0].ShouldBe(0.1f);
+        expression.InputValues[1].ShouldBe(0.2f);
+    }
+
+    /// <summary>A named module is an Expression under its name, which nothing folds into anything else.</summary>
+    [Fact]
+    public void A_named_module_keeps_its_name()
+    {
+        var b = new PatchBuilder(NodeCatalog.BuiltIn);
+        var coord = b.Add(NodeCatalog.CoordTypeId);
+        var scaled = Knobbed(b, "math.mul", coord, 2f);
+        scaled.Name = "double";
+        Shown(b, Knobbed(b, "math.add", scaled, 1f));
+
+        var fused = Fused(b.Patch);
+
+        Of(fused, Expression).Select(n => (n.Name, Formula(n))).ShouldBe([("double", "a * 2"), (null, "a + 1")], ignoreOrder: true);
     }
 
     /// <summary>Four sockets, so a chain reading a fifth signal leaves that branch to fold on its own.</summary>
@@ -151,9 +194,12 @@ public class ExpressionFusionTests
         Of(fused, Expression).Select(Formula).Order().ShouldBe(["a * b", "a + b + (c + d)"]);
     }
 
-    /// <summary>A loop reads what its wire carried the evaluation before, which a formula cannot say.</summary>
+    /// <summary>
+    /// Which wire of a loop carries the evaluation before is the graph's to decide,
+    /// so each module on one is an Expression of its own and folds into nothing.
+    /// </summary>
     [Fact]
-    public void A_module_in_a_loop_is_left_alone()
+    public void A_module_on_a_loop_stands_on_its_own()
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
         var clock = b.Add(NodeCatalog.TimeTypeId);
@@ -164,7 +210,37 @@ public class ExpressionFusionTests
 
         var fused = Fused(b.Patch);
 
-        Of(fused, Expression).ShouldBeEmpty();
+        Of(fused, Expression).Select(Formula).Order().ShouldBe(["a * 0.9", "a + b"]);
+    }
+
+    /// <summary>Expressions fold into one another the way the modules they stand for do.</summary>
+    [Fact]
+    public void Expressions_fold_into_one_another()
+    {
+        var b = new PatchBuilder(NodeCatalog.BuiltIn);
+        var coord = b.Add(NodeCatalog.CoordTypeId);
+        var inner = b.Add(Expression);
+        inner.SetState("expression", new System.Text.Json.Nodes.JsonObject { ["formula"] = "a * 60" });
+        b.Wire(coord, 0, inner, 0);
+        var fract = b.Add("math.fract");
+        b.Wire(inner, 0, fract, 0);
+        var outer = b.Add(Expression);
+        outer.SetState("expression", new System.Text.Json.Nodes.JsonObject { ["formula"] = "a * 2 - 1" });
+        b.Wire(fract, 0, outer, 0);
+        Shown(b, outer);
+
+        var fused = Fused(b.Patch);
+
+        Formula(Of(fused, Expression).ShouldHaveSingleItem()).ShouldBe("fract(a * 60) * 2 - 1");
+    }
+
+    /// <summary>No shipped engine preset keeps a Maths module an Expression stands for.</summary>
+    [Fact]
+    public void No_shipped_preset_keeps_a_retired_module()
+    {
+        foreach (var preset in Presets.All)
+            preset.Build(NodeCatalog.BuiltIn).Nodes
+                .ShouldNotContain(n => ExpressionFusion.Retired(NodeCatalog.BuiltIn.Require(n.TypeId)), preset.Name);
     }
 
     /// <summary>A formula stops growing where it would no longer read on a line.</summary>

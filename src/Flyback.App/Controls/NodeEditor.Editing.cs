@@ -230,7 +230,7 @@ public sealed partial class NodeEditor
 
         var centre = at ?? ToGraph(new Point(Bounds.Width / 2, Bounds.Height / 2));
 
-        var node = NodeInstance.Create(def, centre.X - NodeGeometry.Width / 2, centre.Y - NodeGeometry.Height(def) / 2);
+        var node = Created(ref def, centre);
         patch.Nodes.Add(node);
         Select(node.Id);
         NotifyPatchChanged();
@@ -254,8 +254,7 @@ public sealed partial class NodeEditor
 
         if (!patch.CanAdd(typeId)) return AddNode(typeId, drop.At);
 
-        var centre = drop.At;
-        var node = NodeInstance.Create(def, centre.X - NodeGeometry.Width / 2, centre.Y - NodeGeometry.Height(def) / 2);
+        var node = Created(ref def, drop.At);
 
         patch.Nodes.Add(node);
 
@@ -272,6 +271,25 @@ public sealed partial class NodeEditor
         Select(node.Id);
         NotifyPatchChanged();
         return node;
+    }
+
+    /// <summary>
+    /// A new module centred on <paramref name="centre"/>, and for a Maths module an
+    /// Expression stands for, the Expression it is instead (ADR-0109).
+    /// </summary>
+    private static NodeInstance Created(ref NodeDef def, Point centre)
+    {
+        var x = centre.X - NodeGeometry.Width / 2;
+
+        if (ExpressionFusion.Standing(def, NodeCatalog.Current, 0, 0) is { } standing)
+        {
+            def = NodeCatalog.Require(NodeCatalog.ExpressionTypeId);
+            standing.X = x;
+            standing.Y = centre.Y - NodeGeometry.Height(def) / 2;
+            return standing;
+        }
+
+        return NodeInstance.Create(def, x, centre.Y - NodeGeometry.Height(def) / 2);
     }
 
     /// <summary>

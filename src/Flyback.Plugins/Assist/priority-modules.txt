@@ -35,33 +35,12 @@ seq.notes
 seq.values
 env.adsr
 
-math.add
-math.sub
-math.mul
-math.div
-math.mod
-math.pow
-math.min
-math.max
-math.atan2
-math.hypot
-math.abs
-math.neg
-math.sin
-math.cos
-math.tan
-math.sqrt
-math.floor
-math.fract
-math.sign
-math.exp
-math.log
+math.expression
 math.clamp
 math.mix
 math.mixer
 math.desk
 math.smoothstep
-math.step
 math.remap
 
 space.rotate

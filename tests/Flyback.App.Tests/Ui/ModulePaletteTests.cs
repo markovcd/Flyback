@@ -389,6 +389,32 @@ public class ModulePaletteTests : UiTest
     }
 
     /// <summary>
+    /// A Maths module an Expression stands for is not listed, and asked for by name
+    /// it is offered as the Expression it is, which is what picking it adds.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_retired_maths_module_is_offered_as_its_expression()
+    {
+        var window = Open();
+
+        RightClick(window, Empty(window));
+
+        var palette = Palette(window).ShouldNotBeNull();
+
+        All<Button>(palette).ShouldNotContain(b => b.Content is string && ((string)b.Content).StartsWith("Multiply"));
+
+        All<TextBox>(palette).First().Text = "multiply";
+        Settle(window);
+
+        Press(All<Button>(palette).Single(b => b.Content as string == "Multiply: a * b"));
+
+        var added = Editor(window).SelectedNode.ShouldNotBeNull();
+
+        added.TypeId.ShouldBe(NodeCatalog.ExpressionTypeId);
+        NodeCatalog.FormulaOf(added).ShouldBe("a * b");
+    }
+
+    /// <summary>
     /// Typing narrows it, which is the fast way to a module and the reason the
     /// filter is the first thing in the list.
     /// </summary>

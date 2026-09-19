@@ -157,8 +157,8 @@ internal static class Handbook
         - An oscillator accumulates `(in - in_before) x freq`, so its pitch
           is how fast `in` moves multiplied by `freq`. Time moves at one
           second per second, which is why `freq` on a Time-driven
-          oscillator is the frequency it says it is. **Do not put a
-          Multiply between Time and `in` to slow a tone down** — that
+          oscillator is the frequency it says it is. **Do not put an
+          Expression like `a * 0.2` between Time and `in` to slow a tone down** — that
           divides the pitch and leaves the knob lying. A 440 Hz oscillator
           fed a fifth of a second per second is an 88 Hz oscillator with a
           knob that says 440.
@@ -171,8 +171,8 @@ internal static class Handbook
         - Patch a constant in — a **Value** — to deliberately hold a module
           still. It compiles fine and is a still picture, which is
           sometimes what is wanted.
-        - **To slow a picture down**, put a Multiply after Time and wire it
-          in. Time itself is seconds and nothing else, so the place a patch
+        - **To slow a picture down**, put an Expression like `a * 0.2` after
+          Time and wire it in. Time itself is seconds and nothing else, so the place a patch
           runs slowly is visible in the patch.
 
         ## Sinks
@@ -450,7 +450,9 @@ internal static class Handbook
         // Catalogue order, not sorted: it is already deterministic (built-ins in
         // declaration order, then each plugin in load order) and re-sorting here
         // would be one more thing that could quietly stop matching itself.
-        foreach (var def in modules.All)
+        // The Maths modules an Expression stands for are left out: asked for, they
+        // arrive as one (ADR-0109), and their names are its functions.
+        foreach (var def in modules.All.Where(def => !ExpressionFusion.Retired(def)))
         {
             Describe(text, def, modules, prose: !undescribed.Contains(def.TypeId));
             text.AppendLine();
@@ -470,7 +472,7 @@ internal static class Handbook
     /// </remarks>
     internal static IReadOnlySet<string> Undescribed(ModuleCatalog modules, ProsePolicy policy)
     {
-        var described = modules.All.Where(def => def.Description.Length > 0).ToArray();
+        var described = modules.All.Where(def => def.Description.Length > 0 && !ExpressionFusion.Retired(def)).ToArray();
         var everyone = described.Select(def => def.TypeId).ToHashSet(StringComparer.Ordinal);
 
         if (everyone.Count == 0) return everyone;

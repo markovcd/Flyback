@@ -235,14 +235,22 @@ public sealed partial class PatchWorkbench
             handle = Available(typeId);
         }
 
-        var node = NodeInstance.Create(def, 0, 0);
+        // A Maths module an Expression stands for arrives as the Expression, with
+        // its knobs as they rest (ADR-0109), and the reply says so: what is wired
+        // next goes into a and b.
+        var standing = ExpressionFusion.Standing(def, modules, 0, 0);
+        var node = standing ?? NodeInstance.Create(def, 0, 0);
+
+        if (standing is not null) def = modules.Require(NodeCatalog.ExpressionTypeId);
 
         working.Nodes.Add(node);
         byHandle[handle] = node;
         handleOf[node.Id] = handle;
         Edits++;
 
-        var report = new StringBuilder($"added {handle} ({typeId}).");
+        var report = new StringBuilder(standing is null
+            ? $"added {handle} ({typeId})."
+            : $"added {handle}, an Expression for {typeId}: {NodeCatalog.FormulaOf(node)}.");
 
         if (arguments.TryGetProperty("knobs", out var knobs) && Turn(node, def, knobs) is { } refused)
             return ToolOutcome.Refused(refused);

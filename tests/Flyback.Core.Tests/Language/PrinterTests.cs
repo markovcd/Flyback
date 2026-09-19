@@ -68,12 +68,18 @@ public class PrinterTests
     }
 
     /// <summary>A patch that has been through the language once does not drift on a second pass.</summary>
+    /// <remarks>
+    /// From the first pass on rather than from the preset: a printing drops the
+    /// boxes, and Expressions either side of a box's edge that the preset kept
+    /// apart fold together when the text is read (ADR-0109).
+    /// </remarks>
     [Theory]
     [MemberData(nameof(Names))]
     public void A_second_trip_changes_nothing(string name)
     {
-        var once = Reread(Preset(name), out var first);
-        _ = Reread(once, out var second);
+        var once = Reread(Preset(name), out _);
+        var twice = Reread(once, out var first);
+        _ = Reread(twice, out var second);
 
         second.ShouldBe(first);
     }

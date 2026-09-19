@@ -147,13 +147,33 @@ public class PatchWorkbenchTests
         described.ShouldContain("value1", customMessage: "the knob, named from its type again");
     }
 
+    /// <summary>
+    /// Every module but the Maths modules an Expression stands for, which arrive
+    /// as one when asked for and are named in its description as its functions.
+    /// </summary>
     [Fact]
     public void The_briefing_names_every_module_there_is()
     {
         var briefing = Bench().Briefing;
 
         foreach (var def in NodeCatalog.BuiltIn.All)
-            briefing.ShouldContain(def.TypeId);
+        {
+            if (ExpressionFusion.Retired(def)) briefing.ShouldNotContain(def.TypeId + " |");
+            else briefing.ShouldContain(def.TypeId);
+        }
+    }
+
+    [Fact]
+    public async Task Asking_for_a_retired_maths_module_adds_its_expression()
+    {
+        var bench = Bench();
+
+        var added = await Call(bench, "add_module", """{"type_id":"math.floor","handle":"f1"}""");
+
+        added.Ok.ShouldBeTrue(added.Text);
+        added.Text.ShouldContain("an Expression for math.floor: floor(a)");
+        bench.Snapshot().FirstOf(NodeCatalog.ExpressionTypeId).ShouldNotBeNull();
+        bench.Snapshot().FirstOf("math.floor").ShouldBeNull();
     }
 
     [Fact]

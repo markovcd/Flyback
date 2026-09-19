@@ -1063,25 +1063,25 @@ public class SourceViewTests : UiTest
         var window = Open();
         var text = ShowCode(window);
 
-        Evaluate(window, "atan2(a: 0.25) |> out.left");
+        Evaluate(window, "math.mix(a: 0.25) |> out.left");
 
-        Click(window, "atan2");
+        Click(window, "math.mix");
         Editor(window).SelectedNode.ShouldNotBeNull("the caret points the panel to begin with");
 
-        // Typed in ahead of it, which is what gives the atan2 a new name.
+        // Typed in ahead of it, which is what gives the Mix a new name.
         text.Document.Insert(0, "t |> sine(freq: 2) |> ");
         Settle(window);
 
         Press(Apply(window));
         Settle(window);
 
-        Click(window, "atan2");
+        Click(window, "math.mix");
         Editor(window).SelectedNode.ShouldNotBeNull("applied, so the two agree again");
 
         Press(Undo(window));
         Settle(window);
 
-        Click(window, "atan2");
+        Click(window, "math.mix");
 
         Editor(window).SelectedNode.ShouldBeNull("the patch that came back has no such module");
         Panel(window).ShouldContain("moved on from the patch");
@@ -1106,7 +1106,7 @@ public class SourceViewTests : UiTest
         var window = Open();
         var text = ShowCode(window);
 
-        Evaluate(window, "atan2(a: 0.25) |> out.left");
+        Evaluate(window, "math.mix(a: 0.25) |> out.left");
 
         text.Document.Insert(0, "t |> sine(freq: 2) |> ");
         Settle(window);
@@ -1117,8 +1117,8 @@ public class SourceViewTests : UiTest
         Press(Undo(window));
         Settle(window);
 
-        // The sine stands where the atan2 stood, so it carries the name the
-        // patch still has for the atan2.
+        // The sine stands where the Mix stood, so it carries the name the
+        // patch still has for the Mix.
         Click(window, "sine");
 
         Editor(window).SelectedNode.ShouldBeNull("that name means another module now");
@@ -1140,7 +1140,7 @@ public class SourceViewTests : UiTest
         var window = Open();
         var text = ShowCode(window);
 
-        Evaluate(window, "atan2(a: 0.25) |> out.left");
+        Evaluate(window, "math.mix(a: 0.25) |> out.left");
 
         text.Document.Replace(text.Text.IndexOf("0.25", StringComparison.Ordinal), 4, "0.75");
         Settle(window);
@@ -1151,14 +1151,14 @@ public class SourceViewTests : UiTest
         Press(Undo(window));
         Settle(window);
 
-        Click(window, "atan2");
+        Click(window, "math.mix");
 
         Editor(window).SelectedNode.ShouldNotBeNull("nothing was renamed, so the name still means it");
     }
 
     /// <summary>The one knob the patches used here have.</summary>
     private static float Knob(MainWindow window) =>
-        Editor(window).Patch.Nodes.Single(node => node.TypeId == "math.atan2").InputValues[0];
+        Editor(window).Patch.Nodes.Single(node => node.TypeId == "math.mix").InputValues[0];
 
     /// <summary>
     /// Applying is a thing done to the document, so it goes on the document's stack
@@ -1174,7 +1174,7 @@ public class SourceViewTests : UiTest
     {
         var window = Open();
 
-        Evaluate(window, "atan2(a: 0.25) |> out.left");
+        Evaluate(window, "math.mix(a: 0.25) |> out.left");
 
         var text = Text(window);
 
@@ -1199,7 +1199,7 @@ public class SourceViewTests : UiTest
         Press(Undo(window));
         Settle(window);
 
-        text.Text.Trim().ShouldBe("atan2(a: 0.25) |> out.left");
+        text.Text.Trim().ShouldBe("math.mix(a: 0.25) |> out.left");
     }
 
     /// <summary>
@@ -1216,18 +1216,18 @@ public class SourceViewTests : UiTest
     {
         var window = Open();
 
-        Evaluate(window, "atan2(a: 1.5524476) |> out.left");
-        Click(window, "atan2");
+        Evaluate(window, "math.mix(a: 1.5524476) |> out.left");
+        Click(window, "math.mix");
 
         Turn(window, 2d);
 
-        Text(window).Text.Trim().ShouldBe("atan2(a: 2) |> out.left");
+        Text(window).Text.Trim().ShouldBe("math.mix(a: 2) |> out.left");
         Knob(window).ShouldBe(2f);
 
         Press(Undo(window));
         Settle(window);
 
-        Text(window).Text.Trim().ShouldBe("atan2(a: 1.5524476) |> out.left");
+        Text(window).Text.Trim().ShouldBe("math.mix(a: 1.5524476) |> out.left");
         Knob(window).ShouldBe(1.5524476f, "the number and what it does come back together");
     }
 
@@ -1358,10 +1358,10 @@ public class SourceViewTests : UiTest
     {
         var window = Open();
 
-        Evaluate(window, "atan2(a: 1.5524476) |> out.left");
-        Click(window, "atan2");
+        Evaluate(window, "math.mix(a: 1.5524476) |> out.left");
+        Click(window, "math.mix");
 
-        Editor(window).SelectedNode.ShouldNotBeNull().TypeId.ShouldBe("math.atan2");
+        Editor(window).SelectedNode.ShouldNotBeNull().TypeId.ShouldBe("math.mix");
     }
 
     /// <summary>
@@ -1425,12 +1425,12 @@ public class SourceViewTests : UiTest
     {
         var window = Open();
 
-        Evaluate(window, "atan2(a: 1.5524476) |> out.left");
-        Click(window, "atan2");
+        Evaluate(window, "math.mix(a: 1.5524476) |> out.left");
+        Click(window, "math.mix");
 
         Turn(window, 2d);
 
-        Text(window).Text.Trim().ShouldBe("atan2(a: 2) |> out.left");
+        Text(window).Text.Trim().ShouldBe("math.mix(a: 2) |> out.left");
     }
 
     /// <summary>
@@ -1442,8 +1442,8 @@ public class SourceViewTests : UiTest
     {
         var window = Open();
 
-        Evaluate(window, "atan2(a: 1.5524476) |> out.left");
-        Click(window, "atan2");
+        Evaluate(window, "math.mix(a: 1.5524476) |> out.left");
+        Click(window, "math.mix");
 
         var slider = All<Slider>(window).First();
 
@@ -1565,8 +1565,8 @@ public class SourceViewTests : UiTest
     {
         var window = Open();
 
-        Evaluate(window, "atan2(a: 1.5) |> out.left");
-        Click(window, "atan2");
+        Evaluate(window, "math.mix(a: 1.5) |> out.left");
+        Click(window, "math.mix");
 
         // The second row, which is the second socket — the one the text says
         // nothing about.
@@ -1577,7 +1577,7 @@ public class SourceViewTests : UiTest
 
         Turn(window, 1.5d);
 
-        Text(window).Text.Trim().ShouldBe("atan2(a: 1.5, b: 0.25) |> out.left");
+        Text(window).Text.Trim().ShouldBe("math.mix(a: 1.5, b: 0.25) |> out.left");
     }
 
     /// <summary>Types digits into whatever has the focus, the way a keyboard does.</summary>

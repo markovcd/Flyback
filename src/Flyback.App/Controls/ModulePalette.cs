@@ -359,9 +359,13 @@ public sealed class ModulePalette : UserControl
 
             foreach (var def in matches.Where(d => d.Category == category))
             {
+                // A Maths module an Expression stands for is found by its name and
+                // added as the Expression, so it says which (ADR-0109).
+                var retired = ExpressionFusion.Retired(def);
+
                 var button = new Button
                 {
-                    Content = def.Name,
+                    Content = retired ? $"{def.Name}: {ExpressionFusion.Template(def)}" : def.Name,
                     HorizontalAlignment = HorizontalAlignment.Stretch,
                     HorizontalContentAlignment = HorizontalAlignment.Left,
                     Padding = new Thickness(8, 4),
@@ -376,7 +380,8 @@ public sealed class ModulePalette : UserControl
                     ? string.Empty
                     : $"{Environment.NewLine}{Environment.NewLine}From {from.Name} ({from.Id})";
 
-                var tip = def.Description + origin;
+                var tip = (retired ? $"Adds an Expression, {ExpressionFusion.Template(def)}.{Environment.NewLine}{Environment.NewLine}" : string.Empty)
+                    + def.Description + origin;
                 if (tip.Length > 0) ToolTip.SetTip(button, tip);
 
                 var typeId = def.TypeId;
@@ -551,6 +556,10 @@ public sealed class ModulePalette : UserControl
         if (NodeCatalog.IsSink(def.TypeId)) return false;
 
         if (catalog.ProviderOf(def.TypeId) is { } from && hidden.Contains(from.Id)) return false;
+
+        // Offered as the Expression it is, and only to somebody asking for it by
+        // name: listed whole, the Maths section would be two dozen ways to add one.
+        if (ExpressionFusion.Retired(def) && text.Length == 0) return false;
 
         return text.Length == 0
             || def.Name.Contains(text, StringComparison.OrdinalIgnoreCase)

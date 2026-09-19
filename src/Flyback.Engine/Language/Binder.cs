@@ -107,11 +107,38 @@ public sealed class Binder
 
         foreach (var statement in statements) Run(statement, scope);
 
+        // A call to a Maths module the Expression stands for, and the sums and
+        // calls around it, arrive as the Expressions a preset's do (ADR-0109).
+        var into = new Dictionary<Guid, Guid>();
+        ExpressionFusion.Fuse(patch, modules, into);
+        Folded(into);
+
         // Positions are not in the language, so they are worked out afterwards
         // by the same layout the editor uses on a pasted fragment (ADR-0044).
         PatchLayout.Arrange(patch, modules);
 
         return patch;
+    }
+
+    /// <summary>
+    /// What the text says about modules the folding took away or remade: a word
+    /// that named one names the Expression it went into, and a knob or a call
+    /// written for one points nowhere, since its brackets take no formula.
+    /// </summary>
+    private void Folded(Dictionary<Guid, Guid> into)
+    {
+        if (into.Count == 0) return;
+
+        for (var i = 0; i < mentions.Count; i++)
+            if (into.TryGetValue(mentions[i].Node, out var root))
+                mentions[i] = (mentions[i].Where, root);
+
+        foreach (var id in into.Keys) calls.Remove(id);
+
+        foreach (var key in written.Keys.Where(key => into.ContainsKey(key.Node)).ToList()) written.Remove(key);
+
+        foreach (var (id, root) in into)
+            if (bound.Remove(id)) bound.Add(root);
     }
 
     // --- what a name is worth ------------------------------------------------
