@@ -65,6 +65,7 @@
 - An output with no wire on it no longer costs anything. The big presets run 2–19% fewer operations a sample, and Random's white is a sixteenth of what it was.
 
 ### Fixes
+- A list on a module's panel, like Text's font or Layer's mode, now keeps a pick back to the option it opened on.
 - Pressing Escape after "Learn MIDI controller" found no MIDI device no longer crashes.
 - A number too large for a number box — in a patch file, or typed into the text and applied — no longer crashes when its module is selected.
 - A filter, reverb, delay or loop with silence going into it no longer costs more than one with a signal. A patch with resting parts could crackle because of it.

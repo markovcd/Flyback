@@ -1620,6 +1620,7 @@ public sealed partial class MainWindow
             // rather than one pick going on. Named, two of them would fold into
             // one step — and a pick that came back to where it started would
             // leave a step that puts nothing back.
+            value = picked.Id;
             store(picked.Id);
             editor.NotifyPatchChanged();
         };
