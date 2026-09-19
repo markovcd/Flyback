@@ -1,0 +1,20 @@
+# Flyback
+
+Flyback is a patchable synthesiser for .NET 10: one module graph generates both a picture and a sound. See [README.md](README.md) for the build and run commands and `docs/adr/` for the decisions behind the design.
+
+Standing rules for working in this repo are in `.claude/rules/`, and Claude Code loads them every session:
+
+- `git-workflow.md`: commit straight to `main`, and isolate from other sessions' uncommitted work.
+- `prose-style.md`: American spelling; succinct comments that never narrate history.
+- `adrs.md`: check `docs/adr/` before proposing a refactor; number a new ADR from `main` at commit time.
+- `changelog.md`: what CHANGELOG.md may contain.
+- `website.md`: a change to anything `site/` describes updates the site in the same commit.
+- `windows-shell.md`: PowerShell and Bash-heredoc pitfalls that corrupt files.
+
+Task-specific know-how is in `.claude/skills/`, and Claude Code loads each skill when its description matches the task:
+
+- `authoring-presets`: building and measuring a showcase or teaching preset.
+- `played-presets`: presets with MIDI voices and panel knobs.
+- `convenience-modules`: the wrapper modules (Stroke, Fade, Desk, Echo, Hiss and the rest) and porting presets onto them exactly.
+- `site-screenshots`: retaking `site/assets/shots` from the real app.
+- `site-audio-tracks`: rebuilding the website's listening-row MP3s.
