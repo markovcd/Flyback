@@ -191,24 +191,25 @@ public class PresetListTests : UiTest
     }
 
     /// <summary>
-    /// A preset with no picture in it has none to show, and says why in as many words
-    /// — a patch that is only heard, or one with nothing wired yet.
+    /// A preset with no picture in it — a patch that is only heard, or one with
+    /// nothing wired yet — leaves its tile bare: no frame, and no words over it.
     /// </summary>
     [AvaloniaFact]
-    public void A_preset_with_no_picture_says_so_where_the_picture_would_be()
+    public void A_preset_with_no_picture_leaves_its_tile_bare()
     {
         var window = Open();
 
         OpenGallery(window);
 
-        string Says(string preset) => All<TextBlock>(Tile(window, preset))
-            .Single(t => t.Parent is Grid).Text ?? "";
+        // Asked for after both, so by the time it is drawn they have been too:
+        // the thumbnails are taken one at a time.
+        UntilDrawn(window, () => All<Image>(Tile(window, "Plasma")).Single().Source is not null);
 
-        UntilDrawn(window, () => Says("Clip").Length > 0 && Says("Empty").Length > 0);
-
-        Says("Clip").ShouldBe("Sound only");
-        Says("Empty").ShouldBe("Nothing yet");
-        All<Image>(Tile(window, "Clip")).Single().Source.ShouldBeNull();
+        foreach (var preset in new[] { "Clip", "Empty" })
+        {
+            All<Image>(Tile(window, preset)).Single().Source.ShouldBeNull();
+            All<TextBlock>(Tile(window, preset)).Single(t => t.Parent is Grid).Text.ShouldBeNullOrEmpty();
+        }
     }
 
     /// <summary>

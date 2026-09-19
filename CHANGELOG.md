@@ -33,7 +33,7 @@
 - Slow weather is rebuilt around five feedback loops: a drone that bends its own phase, an echo that darkens every time round, two voices that push each other down, and a picture steered by where it was bright a frame ago.
 - Settings → Graphics picks which preset Flyback opens on at the next start.
 - The preset list is sorted into headed sections: the blank canvas first, then the patches about one idea, then the ones where sound and picture are the same thought, then the showcases.
-- The preset button opens a gallery of tiles, each with a picture of what the preset draws ("Sound only" when there is none), its name and its description.
+- The preset button opens a gallery of tiles, each with a picture of what the preset draws (left bare when there is none), its name and its description.
 - Resting the pointer on a preset in the gallery for a second plays it: its picture moves on the tile and its sound fades in, with your patch muted meanwhile.
 - The teaching presets are updated, with new ones in the engine and in the Picture, Voice and Mastering plugins.
 

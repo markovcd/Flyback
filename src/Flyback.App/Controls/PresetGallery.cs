@@ -88,8 +88,8 @@ internal static class PresetGallery
     {
         var image = new Image { Stretch = Stretch.UniformToFill };
 
-        // Said while the frame is still being drawn as well as when there is none
-        // to draw, so a tile is never a bare dark rectangle that might be a fault.
+        // Said only of a preset that would not draw. One with no picture in it is
+        // left bare, its name and description being what says so.
         var words = new TextBlock
         {
             FontSize = Text.Small,

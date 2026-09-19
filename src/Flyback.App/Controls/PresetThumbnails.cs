@@ -11,14 +11,14 @@ namespace Flyback.App.Controls;
 /// A BGRA frame <see cref="PresetThumbnails.Width"/> by <see cref="PresetThumbnails.Height"/>,
 /// or null for a preset that has none to show.
 /// </param>
-/// <param name="Words">What the tile says instead. Empty when there are pixels.</param>
+/// <param name="Words">What the tile says instead. Empty when there are pixels, or nothing to say.</param>
 internal sealed record Thumbnail(byte[]? Pixels, string Words)
 {
-    /// <summary>A patch that is heard and never seen, which has no frame to take.</summary>
-    public static Thumbnail SoundOnly { get; } = new(null, "Sound only");
-
-    /// <summary>A patch with nothing wired to either half of the Output yet.</summary>
-    public static Thumbnail Nothing { get; } = new(null, "Nothing yet");
+    /// <summary>
+    /// A patch with no picture in it — one that is only heard, or one with nothing
+    /// wired yet. The tile is left bare, its name and description saying which.
+    /// </summary>
+    public static Thumbnail Blank { get; } = new(null, "");
 
     /// <summary>A patch that would not build or compile, so there is no frame to show.</summary>
     public static Thumbnail Unavailable { get; } = new(null, "No preview");
@@ -86,9 +86,7 @@ internal sealed class PresetThumbnails(ModuleCatalog modules)
             // A preset from a plugin is built here for the same reason the toolbar
             // builds it when it is picked: it needs the modules that plugin added.
             var patch = preset.Build(modules);
-            var (picture, sound) = patch.Reaches();
-
-            if (!picture) return sound ? Thumbnail.SoundOnly : Thumbnail.Nothing;
+            if (!patch.Reaches().Picture) return Thumbnail.Blank;
 
             var video = patch.CompileForVideo(
                 samples: new SampleLibrary(),
