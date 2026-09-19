@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Headless;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
+using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
@@ -153,6 +154,128 @@ public class PresetListTests : UiTest
         (Presets(window).SelectedItem as PatchPreset)!.Name.ShouldBe("Kaleidoscope");
         editor.Patch.Nodes.Select(n => n.Id).ShouldNotBe(before);
         All<ModalOverlay>(window).ShouldBeEmpty("picking one is answering the dialog");
+    }
+
+    private static TextBox Filter(MainWindow window) =>
+        All<TextBox>(window).Single(box => box.Name == "preset-filter");
+
+    private static List<PatchPreset> Showing(MainWindow window) =>
+        [.. Tiles(window).Where(t => t.IsEffectivelyVisible).Select(t => (PatchPreset)t.Tag!)];
+
+    private static void PressKey(InputElement target, Key key) =>
+        target.RaiseEvent(new KeyEventArgs { RoutedEvent = InputElement.KeyDownEvent, Key = key, Source = target });
+
+    /// <summary>
+    /// The gallery opens with the keyboard in its filter, so typing narrows it at
+    /// once, as the module list does.
+    /// </summary>
+    [AvaloniaFact]
+    public void The_filter_has_the_keyboard_when_the_gallery_opens()
+    {
+        var window = Open();
+
+        OpenGallery(window);
+
+        Filter(window).IsFocused.ShouldBeTrue();
+    }
+
+    /// <summary>
+    /// Typing leaves the presets whose name has it, and takes away every heading
+    /// with nothing left under it. Enter picks the first of what is left.
+    /// </summary>
+    [AvaloniaFact]
+    public void Typing_narrows_to_the_names_that_match_and_Enter_picks_the_first()
+    {
+        var window = Open();
+
+        OpenGallery(window);
+
+        var filter = Filter(window);
+        filter.Text = "kaleido";
+        Settle(window);
+
+        Showing(window).Select(p => p.Name).ShouldBe(["Kaleidoscope"]);
+
+        var gallery = All<StackPanel>(window).Single(p => p.Name == "gallery");
+        gallery.Children.OfType<TextBlock>().Where(h => h.IsVisible).Select(h => h.Text).ShouldBe(["ONE IDEA"]);
+
+        PressKey(filter, Key.Enter);
+        Settle(window);
+
+        (Presets(window).SelectedItem as PatchPreset)!.Name.ShouldBe("Kaleidoscope");
+        All<ModalOverlay>(window).ShouldBeEmpty();
+    }
+
+    /// <summary>A heading's own words match everything under it, as a category does in the module list.</summary>
+    [AvaloniaFact]
+    public void Typing_a_heading_keeps_its_whole_run()
+    {
+        var window = Open();
+
+        OpenGallery(window);
+
+        Filter(window).Text = "showcase";
+        Settle(window);
+
+        var showcases = Presets(window).ItemsSource!.Cast<PatchPreset>().Where(p => p.Kind == PresetKind.Showcase);
+
+        Showing(window).ShouldBe(showcases);
+    }
+
+    /// <summary>The arrows walk what is left, and Enter picks where they stopped.</summary>
+    [AvaloniaFact]
+    public void The_arrows_walk_the_matches()
+    {
+        var window = Open();
+
+        OpenGallery(window);
+
+        var filter = Filter(window);
+        filter.Text = "a";
+        Settle(window);
+
+        var matches = Showing(window);
+        matches.Count.ShouldBeGreaterThan(2);
+
+        PressKey(filter, Key.Down);
+        PressKey(filter, Key.Down);
+        PressKey(filter, Key.Up);
+        PressKey(filter, Key.Enter);
+        Settle(window);
+
+        (Presets(window).SelectedItem as PatchPreset).ShouldBe(matches[1]);
+    }
+
+    /// <summary>
+    /// Nothing matching says so. Escape empties the box, and on an empty box closes
+    /// the gallery.
+    /// </summary>
+    [AvaloniaFact]
+    public void Escape_empties_the_filter_before_it_closes_the_gallery()
+    {
+        var window = Open();
+
+        OpenGallery(window);
+
+        var filter = Filter(window);
+        filter.Text = "zzzz";
+        Settle(window);
+
+        Showing(window).ShouldBeEmpty();
+        All<TextBlock>(window).ShouldContain(t => t.IsEffectivelyVisible && t.Text == "Nothing matches “zzzz”.");
+
+        filter.Focus();
+        window.KeyPressQwerty(PhysicalKey.Escape, RawInputModifiers.None);
+        Settle(window);
+
+        filter.Text.ShouldBeEmpty();
+        Showing(window).Count.ShouldBe(Tiles(window).Count);
+        All<ModalOverlay>(window).ShouldNotBeEmpty();
+
+        window.KeyPressQwerty(PhysicalKey.Escape, RawInputModifiers.None);
+        Settle(window);
+
+        All<ModalOverlay>(window).ShouldBeEmpty();
     }
 
     /// <summary>The one on the canvas is outlined, so the gallery says where somebody is.</summary>

@@ -949,9 +949,8 @@ public sealed partial class MainWindow : Window
         presetsButton.Click += async (_, _) =>
         {
             var showing = presets.SelectedItem as PatchPreset;
-            var chosen = await this.ShowDialog<PatchPreset?>(
-                "Start from a preset",
-                PresetGallery.Build([.. plugins.Presets.OrderBy(p => p.Kind)], showing, thumbnails, PointedAt, Yours()));
+            var gallery = PresetGallery.Build([.. plugins.Presets.OrderBy(p => p.Kind)], showing, thumbnails, PointedAt, Yours());
+            var chosen = await this.ShowDialog<PatchPreset?>("Start from a preset", gallery.Tiles, gallery.Filter);
 
             PointedAt(null);
 

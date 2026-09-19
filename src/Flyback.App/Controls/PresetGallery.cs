@@ -6,12 +6,20 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Platform;
 using Avalonia.Media.Imaging;
+using Avalonia.Interactivity;
+using Avalonia.Threading;
 using Flyback.Core.Graph;
 
 namespace Flyback.App.Controls;
 
 /// <summary>A tile of the gallery: the preset it picks, and the picture it shows it by.</summary>
 internal sealed record PointedTile(PatchPreset Preset, Image Picture);
+
+/// <summary>
+/// The gallery as a dialog shows it: the box that narrows it, which stays put, and
+/// the tiles, which scroll beneath it.
+/// </summary>
+internal sealed record GalleryParts(TextBox Filter, Control Tiles);
 
 /// <summary>
 /// The presets somebody saved, and what the gallery may do about them: save the
@@ -75,14 +83,15 @@ internal static class PresetGallery
     /// The presets somebody saved, headed after all the rest, or null for a gallery
     /// without that section.
     /// </param>
-    public static Control Build(
+    public static GalleryParts Build(
         IReadOnlyList<PatchPreset> ordered,
         PatchPreset? showing,
         PresetThumbnails thumbnails,
         Action<PointedTile?>? pointedAt = null,
         YourPresets? yours = null)
     {
-        var gallery = new StackPanel { Name = "gallery", Spacing = 6, Margin = new Thickness(16, 8, 16, 16) };
+        var gallery = new StackPanel { Name = "gallery", Spacing = 6 };
+        var search = new Search();
 
         foreach (var run in ordered.GroupBy(preset => preset.Kind))
         {
@@ -101,11 +110,22 @@ internal static class PresetGallery
                 tiles.Children.Add(Tile(preset, preset == showing, Colors.PresetAccent(preset.Kind), thumbnails, pointedAt));
 
             gallery.Children.Add(tiles);
+            search.Add((TextBlock)gallery.Children[^2], tiles);
         }
 
-        if (yours is not null) Yours(gallery, yours, showing, thumbnails, pointedAt);
+        if (yours is not null) Yours(gallery, yours, showing, thumbnails, pointedAt, search);
 
-        return gallery;
+        search.Apply();
+
+        // The hint beside the runs rather than among them, so the gallery stays
+        // what it has always been: a heading, then its tiles, and again.
+        var tilesAndHint = new StackPanel
+        {
+            Margin = new Thickness(16, 0, 16, 16),
+            Children = { search.Hint, gallery },
+        };
+
+        return new GalleryParts(search.Box, tilesAndHint);
     }
 
     /// <summary>
@@ -118,22 +138,25 @@ internal static class PresetGallery
         YourPresets yours,
         PatchPreset? showing,
         PresetThumbnails thumbnails,
-        Action<PointedTile?>? pointedAt)
+        Action<PointedTile?>? pointedAt,
+        Search search)
     {
         var accent = Colors.Feedback;
 
-        gallery.Children.Add(new TextBlock
+        var heading = new TextBlock
         {
             Text = YoursHeading,
             FontSize = Text.Caption,
             FontWeight = FontWeight.SemiBold,
             Foreground = new SolidColorBrush(accent),
             Margin = new Thickness(0, 10, 0, 2),
-        });
+        };
 
         var tiles = new WrapPanel { Name = "yours", ItemSpacing = 8, LineSpacing = 8 };
 
+        gallery.Children.Add(heading);
         gallery.Children.Add(tiles);
+        search.Add(heading, tiles);
 
         Fill();
 
@@ -158,6 +181,9 @@ internal static class PresetGallery
 
                 tiles.Children.Add(tile);
             }
+
+            // Whatever is typed goes on narrowing the run this rebuilt.
+            search.Apply();
         }
     }
 
@@ -407,6 +433,165 @@ internal static class PresetGallery
         }
 
         if (thumbnail.Pixels is { } pixels) image.Source = Bitmap(pixels);
+    }
+
+    /// <summary>
+    /// The box that narrows the gallery, and the keys it answers — the module
+    /// palette's, so that finding a preset is the same few keystrokes as finding
+    /// a module.
+    /// </summary>
+    /// <remarks>
+    /// Hides tiles rather than rebuilding them as the palette does, because a tile
+    /// carries a picture drawn off the UI thread and may be playing one. A run is
+    /// hidden with its heading, so no heading stands over nothing. The focus stays
+    /// in the box the whole time and the arrows walk the tiles without taking it,
+    /// so typing goes on narrowing while they move.
+    /// </remarks>
+    private sealed class Search
+    {
+        private readonly List<(TextBlock Heading, Panel Tiles)> runs = [];
+
+        /// <summary>The preset tiles showing, in the order they are shown, which is what the arrows walk.</summary>
+        private readonly List<Button> listed = [];
+
+        /// <summary>Which of <see cref="listed"/> the arrows have reached, and what Enter would pick.</summary>
+        private int highlighted = -1;
+
+        /// <summary>What the highlighted tile was painted before it was highlighted, to be put back.</summary>
+        private IBrush? unhighlighted;
+
+        public TextBox Box { get; } = new()
+        {
+            Name = "preset-filter",
+            PlaceholderText = "Filter presets",
+            FontSize = Text.Body,
+            Margin = new Thickness(16, 8, 16, 2),
+        };
+
+        public TextBlock Hint { get; } = new()
+        {
+            TextWrapping = TextWrapping.Wrap,
+            FontSize = Text.Small,
+            Foreground = Text.Muted,
+            Margin = new Thickness(0, 10, 0, 0),
+            IsVisible = false,
+        };
+
+        public Search()
+        {
+            Box.TextChanged += (_, _) => Apply();
+
+            Box.KeyDown += (_, e) =>
+            {
+                switch (e.Key)
+                {
+                    case Key.Down:
+                        Highlight(highlighted + 1);
+                        break;
+
+                    case Key.Up:
+                        Highlight(highlighted - 1);
+                        break;
+
+                    case Key.Enter:
+                        if (highlighted >= 0 && highlighted < listed.Count)
+                            listed[highlighted].RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                        break;
+
+                    // Empties the box; an empty one lets the key through, so a
+                    // second press closes the gallery — one key, always a step back.
+                    case Key.Escape when Box.Text is { Length: > 0 }:
+                        Box.Text = string.Empty;
+                        break;
+
+                    default:
+                        return;
+                }
+
+                e.Handled = true;
+            };
+
+            // Posted, because the dialog gives its sheet the focus as it goes up,
+            // which is after this is put in it.
+            Box.AttachedToVisualTree += (_, _) => Dispatcher.UIThread.Post(() => Box.Focus());
+        }
+
+        public void Add(TextBlock heading, Panel tiles) => runs.Add((heading, tiles));
+
+        /// <summary>
+        /// Shows what matches the box. A preset matches on its name or on the
+        /// heading it is under, but not on its description: every preset has a
+        /// sentence of prose, and matching it turns a search for a common word
+        /// into most of the gallery.
+        /// </summary>
+        public void Apply()
+        {
+            var text = Box.Text?.Trim() ?? string.Empty;
+
+            Unhighlight();
+            listed.Clear();
+
+            var anything = false;
+
+            foreach (var (heading, tiles) in runs)
+            {
+                var headed = Has(heading.Text, text);
+                var any = false;
+
+                foreach (var child in tiles.Children)
+                {
+                    // Anything that is not a preset is the card that saves one,
+                    // which nobody is looking for by name.
+                    var shown = child is Button { Tag: PatchPreset preset }
+                        ? headed || Has(preset.Name, text)
+                        : text.Length == 0 || headed;
+
+                    child.IsVisible = shown;
+                    any |= shown;
+
+                    if (shown && child is Button { Tag: PatchPreset } tile) listed.Add(tile);
+                }
+
+                heading.IsVisible = tiles.IsVisible = any;
+                anything |= any;
+            }
+
+            Hint.Text = $"Nothing matches “{text}”.";
+            Hint.IsVisible = !anything;
+
+            // The first match, so a few letters and Enter picks what you were
+            // after without an arrow key.
+            Highlight(0);
+        }
+
+        private static bool Has(string? said, string text) =>
+            text.Length == 0 || (said?.Contains(text, StringComparison.OrdinalIgnoreCase) ?? false);
+
+        /// <summary>
+        /// Moves the highlight, clamped to the ends rather than wrapping, as the
+        /// module palette's is.
+        /// </summary>
+        private void Highlight(int index)
+        {
+            if (listed.Count == 0) return;
+
+            Unhighlight();
+
+            highlighted = Math.Clamp(index, 0, listed.Count - 1);
+
+            var tile = listed[highlighted];
+
+            unhighlighted = tile.Background;
+            tile.Background = new SolidColorBrush(Colors.Attention, 0.28);
+            tile.BringIntoView();
+        }
+
+        private void Unhighlight()
+        {
+            if (highlighted >= 0 && highlighted < listed.Count) listed[highlighted].Background = unhighlighted;
+
+            highlighted = -1;
+        }
     }
 
     private static WriteableBitmap Bitmap(byte[] pixels)

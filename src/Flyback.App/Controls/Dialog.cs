@@ -48,7 +48,12 @@ internal static class Dialog
         /// be the one that loses nothing, and an enum whose first member is Cancel
         /// gets that from the language.
         /// </remarks>
-        public async Task<TResult> ShowDialog<TResult>(string title, Control content)
+        /// <param name="header">
+        /// Shown between the title and the content, and kept there while the
+        /// content scrolls — a filter that scrolled away with what it filters
+        /// would be the wrong way round.
+        /// </param>
+        public async Task<TResult> ShowDialog<TResult>(string title, Control content, Control? header = null)
         {
             // Avalonia's own layer for things drawn over a window — what a flyout
             // or a tooltip is put in. Using it rather than a panel of our own
@@ -62,7 +67,7 @@ internal static class Dialog
             // whatever had it is its own small rudeness.
             var before = owner.FocusManager.GetFocusedElement();
 
-            var overlay = new ModalOverlay(title, content);
+            var overlay = new ModalOverlay(title, content, header);
 
             layer.Children.Add(overlay);
             overlay.Focus();
@@ -116,7 +121,7 @@ internal sealed class ModalOverlay : Border
     /// </summary>
     private Visual? layer;
 
-    public ModalOverlay(string title, Control content)
+    public ModalOverlay(string title, Control content, Control? header = null)
     {
         Name = "modal";
         Background = new SolidColorBrush(Colors.Scrim);
@@ -130,7 +135,7 @@ internal sealed class ModalOverlay : Border
         // when the sheet was clicked would be one a missed button press could
         // dismiss, and the two dialogs that are read rather than answered are
         // exactly the ones somebody clicks around in while reading.
-        Child = Frame(title, content);
+        Child = Frame(title, content, header);
     }
 
     /// <summary>Completes when the dialog has been answered or dismissed.</summary>
@@ -208,7 +213,7 @@ internal sealed class ModalOverlay : Border
         e.Handled = true;
     }
 
-    private Control Frame(string title, Control content)
+    private Control Frame(string title, Control content, Control? header)
     {
         var heading = new TextBlock
         {
@@ -251,6 +256,12 @@ internal sealed class ModalOverlay : Border
 
         DockPanel.SetDock(bar, Dock.Top);
         inside.Children.Add(bar);
+
+        if (header is not null)
+        {
+            DockPanel.SetDock(header, Dock.Top);
+            inside.Children.Add(header);
+        }
 
         // Scrolled rather than clipped. Everything shown this way today fits in
         // any window this one is allowed to be, but a settings panel grows a row
