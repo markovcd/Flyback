@@ -1098,6 +1098,17 @@ public sealed partial class MainWindow : Window
     }
 
     /// <summary>
+    /// Set while the settings window is up, so the app is not closed under it.
+    /// </summary>
+    /// <remarks>
+    /// The window is a panel over this one, so the frame's cross stays live
+    /// underneath it. Closing through it would leave the settings neither saved
+    /// nor discarded — the one answer the window exists to get — so the close is
+    /// refused until Save or Cancel has given it.
+    /// </remarks>
+    private bool settingsAreUp;
+
+    /// <summary>
     /// The settings window. One button on the toolbar rather than one per thing
     /// that has settings, so what it holds can grow without the bar doing the
     /// same. A tab a section: the agent, the picture, recording and sound
@@ -1183,7 +1194,18 @@ public sealed partial class MainWindow : Window
 
         cancel.Click += (_, _) => Dialog.Close(cancel, false);
 
-        var saved = await this.ShowDialog<bool>("Settings", content);
+        bool saved;
+
+        settingsAreUp = true;
+
+        try
+        {
+            saved = await this.ShowDialog<bool>("Settings", content);
+        }
+        finally
+        {
+            settingsAreUp = false;
+        }
 
         // Cancel, the cross and Escape all answer false — see Dialog.ShowDialog —
         // which is every way out of this window that is not Save. Whatever was typed

@@ -114,6 +114,32 @@ public sealed class UsageSettingsTests : UiTest, IDisposable
     }
 
     [AvaloniaFact]
+    public void The_app_does_not_close_while_the_settings_are_up()
+    {
+        var window = Open(settingsPath);
+        var dialog = OpenSettings(window);
+
+        window.Close();
+        Dispatcher.UIThread.RunJobs();
+
+        window.IsVisible.ShouldBeTrue("the settings are still waiting on Save or Cancel");
+        All<ModalOverlay>(window).ShouldHaveSingleItem().ShouldBe(dialog);
+    }
+
+    [AvaloniaFact]
+    public void The_app_closes_once_the_settings_are_down()
+    {
+        var window = Open(settingsPath);
+
+        Close(window, OpenSettings(window), "Cancel");
+
+        window.Close();
+        Dispatcher.UIThread.RunJobs();
+
+        window.IsVisible.ShouldBeFalse();
+    }
+
+    [AvaloniaFact]
     public void Switching_it_off_stops_this_run_too()
     {
         var sink = new Collected();

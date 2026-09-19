@@ -259,8 +259,9 @@ public sealed partial class MainWindow
         // Already asking. The close is refused and nothing else happens: putting
         // the question up a second time is the one response that would make the
         // window look broken, and there is nothing else to do with a close that
-        // arrived while the same close is still being answered.
-        if (questionIsUp)
+        // arrived while the same close is still being answered. The settings
+        // window is refused the same way, for the answer it is still waiting on.
+        if (questionIsUp || settingsAreUp)
         {
             e.Cancel = true;
             return;

@@ -66,6 +66,7 @@
 - A module moved with a middle-button pan or a zoom in the middle of the drag stays under the pointer, and the move can be undone.
 - In text, an output named straight after a call, as in `tempo(bpm: 104).beats`, is read rather than dropped for the first output.
 - In text, anything left on a line after its statement is a complaint rather than skipped.
+- Flyback no longer closes while the settings window is open.
 - Several other bugfixes.
 
 ## 0.3.0 — 2026-09-17
