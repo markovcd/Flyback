@@ -77,11 +77,11 @@ the word Expression does. A name given to it wins, as for any module.
 
 ## Consequences
 
-**Overworld's picture is written in formulas.** 510 modules become 381, and eight
-stills rendered across the track are the same bytes before and after. The sound
-was not moved. It would move the same way, but a preset's sound is heard live,
-and a quarter fewer blocks there buys less than it does in a picture drawn a
-pixel at a time.
+**Overworld is written in formulas.** 510 modules become 306, and both of its
+programs are the same size they were. Eight stills rendered across the track are
+the same bytes before and after, and so is the whole track rendered to a WAV.
+What is left as Maths modules stands alone, one module where a formula would only
+rename it.
 
 **A number in a formula is not a knob.** It cannot be turned, followed by a
 panel knob ([0086](0086-panel-knobs-are-read-as-live-values.md)) or ridden from
