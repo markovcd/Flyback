@@ -201,12 +201,16 @@ public sealed partial class NodeEditor
     /// </remarks>
     private void EndGesture()
     {
+        var ended = drag != Drag.None;
+
         drag = Drag.None;
         panSuspended = Drag.None;
 
         pendingNarrow = null;
         dragOrigins.Clear();
         marqueeBase.Clear();
+
+        if (ended) GestureFinished?.Invoke(this, EventArgs.Empty);
     }
 
     private void PressNode(NodeInstance node, bool adding)
@@ -330,6 +334,12 @@ public sealed partial class NodeEditor
         wireGesture++;
         lifted = null;
 
+        // Before a wire is lifted off, so whatever hears about that change already
+        // sees a gesture under way — the shell holds back moving the canvas until it
+        // ends.
+        drag = Drag.Wire;
+        wireEnd = graph;
+
         if (!isOutput && patch.IncomingTo(nodeId, portIndex) is { } existing)
         {
             lifted = (existing, patch.Connections.IndexOf(existing));
@@ -360,9 +370,6 @@ public sealed partial class NodeEditor
             wirePort = portIndex;
             wireFromOutput = isOutput;
         }
-
-        drag = Drag.Wire;
-        wireEnd = graph;
     }
 
     protected override void OnPointerMoved(PointerEventArgs e)

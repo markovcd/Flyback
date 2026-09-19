@@ -231,6 +231,12 @@ public sealed partial class MainWindow : Window
     private Grid? canvasPane;
 
     /// <summary>
+    /// Set while the patch has lost its picture during a gesture on the swapped
+    /// canvas, and the layout is waiting for the gesture to end to go back.
+    /// </summary>
+    private bool previewHideWaiting;
+
+    /// <summary>
     /// Puts the picture in the wide column and the canvas where the picture
     /// was. Enabled only while there is a picture to put there — see
     /// <see cref="ShowPreview"/>.
@@ -517,6 +523,13 @@ public sealed partial class MainWindow : Window
             ProbeSelectionChanged();
         };
         editor.HistoryChanged += (_, _) => RefreshEditState();
+
+        // Asked again rather than simply put away: the wire may have been dropped
+        // back onto 'color', and then there is nothing to put back.
+        editor.GestureFinished += (_, _) =>
+        {
+            if (previewHideWaiting) ShowPreview(HasPicture);
+        };
         editor.Reported += (_, message) => Report(message);
 
         // The other copy of everything said: a status bar is written over by the
@@ -782,6 +795,12 @@ public sealed partial class MainWindow : Window
     /// </remarks>
     private void ShowPreview(bool shown)
     {
+        // Pulling the wire off 'color' swapped back would move the canvas out from
+        // under the hand still holding that wire, so nothing moves until the
+        // button comes up — see the editor's GestureFinished, which asks again.
+        previewHideWaiting = !shown && swapButton.IsChecked == true && editor.Gesturing;
+        if (previewHideWaiting) return;
+
         // Ahead of the full screen guard, so the button is right by the time the
         // toolbar comes back.
         swapButton.IsEnabled = shown;

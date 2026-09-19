@@ -444,6 +444,13 @@ public sealed partial class NodeEditor : Control
     public bool Gesturing => drag != Drag.None;
 
     /// <summary>
+    /// A gesture has ended — the button came up, or the pointer was taken away —
+    /// and <see cref="Gesturing"/> is false again. For the shell, which holds back
+    /// moving the canvas while the pointer is on it.
+    /// </summary>
+    public event EventHandler? GestureFinished;
+
+    /// <summary>
     /// What the owner of this canvas keeps beside the patch, noted with every step
     /// so an undo hands back the state that step was taken in.
     /// </summary>

@@ -1,6 +1,9 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
+using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
+using Avalonia.Input;
 using Avalonia.VisualTree;
 using Flyback.App.Controls;
 using Flyback.Core.Graph;
@@ -135,5 +138,58 @@ public class SwapPreviewTests : UiTest
         Swap(window).IsEnabled.ShouldBeTrue();
         Swap(window).IsChecked.ShouldBe(false);
         editor.Bounds.Width.ShouldBe(canvasWas, 0.5);
+    }
+
+    /// <summary>A point in graph space, in the window's own coordinates.</summary>
+    private static Point OnWindow(MainWindow window, Point graph)
+    {
+        var editor = Editor(window);
+
+        return editor.TranslatePoint(editor.GraphToScreen.Transform(graph), window)
+            ?? throw new InvalidOperationException("the editor is not in this window");
+    }
+
+    /// <summary>
+    /// Pulling the wire off 'color' on the swapped canvas takes the picture away
+    /// at the press, but the canvas stays under the hand until the button is up.
+    /// </summary>
+    [AvaloniaFact]
+    public void Unplugging_color_on_the_canvas_swaps_back_only_once_the_button_is_up()
+    {
+        var window = Open();
+        var editor = Editor(window);
+
+        Press(window, Swap(window));
+
+        // Framed in the narrow cell, so the Output's socket is somewhere a
+        // pointer can reach.
+        editor.FrameAll();
+        Settle(window);
+
+        var swappedWidth = editor.Bounds.Width;
+
+        var output = editor.Patch.Output;
+        var socket = NodeGeometry.InputPort(
+            output, NodeCatalog.BuiltIn.Require(output.TypeId), NodeCatalog.OutputColorPort);
+
+        // Down on the socket and away over the Output's own body, where letting
+        // go is a miss and the wire is simply gone.
+        var body = new Point(output.X + NodeGeometry.Width / 2, output.Y + NodeGeometry.HeaderHeight / 2);
+
+        window.MouseDown(OnWindow(window, socket), MouseButton.Left);
+        window.MouseMove(OnWindow(window, body));
+        Settle(window);
+
+        editor.Patch.IncomingTo(output.Id, NodeCatalog.OutputColorPort)
+            .ShouldBeNull("the wire comes off at the press");
+        Swap(window).IsChecked.ShouldBe(true, "but nothing moves while the wire is held");
+        editor.Bounds.Width.ShouldBe(swappedWidth, 0.5);
+
+        window.MouseUp(OnWindow(window, body), MouseButton.Left);
+        Settle(window);
+
+        Swap(window).IsChecked.ShouldBe(false);
+        Swap(window).IsEnabled.ShouldBeFalse();
+        editor.Bounds.Width.ShouldBeGreaterThan(swappedWidth, "the canvas has its column back");
     }
 }
