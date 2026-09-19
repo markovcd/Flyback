@@ -18,13 +18,42 @@ internal static class WhatsNew
 {
     private static readonly FontFamily Code = new("Consolas, Menlo, DejaVu Sans Mono, monospace");
 
-    public static string Title(ReleaseNotes notes) => $"What's new in Flyback {notes.Version.ToString(3)}";
+    /// <summary>
+    /// What the dialog is headed: the release installed, or where more than one
+    /// release is shown, the one it was updated from.
+    /// </summary>
+    public static string Title(ReleaseNotes notes) =>
+        notes.Sections.Count > 1 && notes.Since is { } since
+            ? $"What's new since Flyback {since.ToString(3)}"
+            : $"What's new in Flyback {notes.Version.ToString(3)}";
 
     public static Control View(ReleaseNotes notes)
     {
         var page = new StackPanel { Name = "whatsNew", Spacing = 6, Width = 520, Margin = new Thickness(20, 12, 20, 20) };
 
-        foreach (var line in notes.Text.Split('\n'))
+        foreach (var section in notes.Sections)
+        {
+            // One release's notes need no heading of their own: the title names it.
+            if (notes.Sections.Count > 1)
+            {
+                var release = Inline(section.Heading);
+
+                release.FontSize = Text.Heading;
+                release.FontWeight = FontWeight.SemiBold;
+                if (page.Children.Count > 0) release.Margin = new Thickness(0, 22, 0, 0);
+
+                page.Children.Add(release);
+            }
+
+            Add(page, section.Text);
+        }
+
+        return page;
+    }
+
+    private static void Add(StackPanel page, string text)
+    {
+        foreach (var line in text.Split('\n'))
         {
             if (line.StartsWith("### ", StringComparison.Ordinal))
             {
@@ -51,8 +80,6 @@ internal static class WhatsNew
                 page.Children.Add(paragraph);
             }
         }
-
-        return page;
     }
 
     private static Control Bullet(string text)

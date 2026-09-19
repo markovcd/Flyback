@@ -57,10 +57,10 @@ public sealed class UpdateFolderTests : IDisposable
         Stage("0.3.0");
         Stage("0.4.0");
         File.WriteAllText(Path.Combine(scratch, "flyback-0.4.0-win-x64.zip.partial"), "");
-        Folder.Note("Updated to Flyback 0.3.0.");
+        Folder.Note("Updated to Flyback 0.3.0.", replaced: new Version(0, 2, 0));
 
-        Folder.Tidy(Running).ShouldBe("Updated to Flyback 0.3.0.");
-        Folder.Tidy(Running).ShouldBeNull("the note is said once");
+        Folder.Tidy(Running).ShouldBe(("Updated to Flyback 0.3.0.", new Version(0, 2, 0)));
+        Folder.Tidy(Running).ShouldBe((null, null), "the note is said once");
 
         Folder.Ready().ShouldBe([new Version(0, 4, 0)]);
         Directory.GetFiles(scratch).ShouldBeEmpty();
@@ -69,7 +69,16 @@ public sealed class UpdateFolderTests : IDisposable
     [Fact]
     public void Tidying_a_folder_that_does_not_exist_is_nothing()
     {
-        Folder.Tidy(Running).ShouldBeNull();
+        Folder.Tidy(Running).ShouldBe((null, null));
+    }
+
+    [Fact]
+    public void A_copy_says_which_release_it_is_from_its_files()
+    {
+        var tests = Path.TrimEndingDirectorySeparator(AppContext.BaseDirectory);
+
+        Here(tests).ProductVersion().ShouldBe(Flyback.App.Controls.About.Version);
+        Here(scratch).ProductVersion().ShouldBeNull("there is no copy there");
     }
 
     private static Installation Here(string root) => new(root, "Flyback.exe", "win-x64", Bundle: false);
@@ -121,7 +130,7 @@ public sealed class UpdateFolderTests : IDisposable
         Updater.Apply(Here(payload), Here(installed), new Version(0, 4, 0), Folder);
 
         File.ReadAllText(Path.Combine(installed, "Flyback.exe")).ShouldBe("new");
-        Folder.Tidy(new Version(0, 4, 0)).ShouldBe("Updated to Flyback 0.4.0.");
+        Folder.Tidy(new Version(0, 4, 0)).ShouldBe(("Updated to Flyback 0.4.0.", null), "the copy replaced is no release");
     }
 
     [Fact]
@@ -138,7 +147,7 @@ public sealed class UpdateFolderTests : IDisposable
         Updater.Apply(Here(payload), Here(installed), new Version(0, 4, 0), Folder);
 
         Folder.Failures(new Version(0, 4, 0)).ShouldBe(1);
-        Folder.Tidy(Running).ShouldNotBeNull().ShouldStartWith("Could not update to Flyback 0.4.0, and will try again");
+        Folder.Tidy(Running).Note.ShouldNotBeNull().ShouldStartWith("Could not update to Flyback 0.4.0, and will try again");
 
         File.Delete(installed);
     }

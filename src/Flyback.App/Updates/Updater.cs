@@ -133,13 +133,16 @@ internal static class Updater
 
         try
         {
+            // Before it is replaced, since afterwards the copy is this version.
+            var replaced = target.Release();
+
             Installer.Install(self.Root, target.Root);
 
             // The new files are not what the bundle was signed with, and the
             // bundle may hold plugins nobody signed at all.
             if (target.Bundle) Sign(target.Root);
 
-            folder.Note(Installed(version));
+            folder.Note(Installed(version), replaced);
         }
         catch (Exception ex)
         {

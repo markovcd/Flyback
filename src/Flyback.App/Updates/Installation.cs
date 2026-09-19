@@ -43,6 +43,29 @@ internal sealed record Installation(string Root, string Executable, string Rid, 
     }
 
     /// <summary>
+    /// The release this copy is, read from its files rather than asked of it, or
+    /// null for a build that is not a release or a copy that cannot be read. The
+    /// shell's own assembly beside the executable says, on every platform, since a
+    /// release is published as a folder rather than one file.
+    /// </summary>
+    public Version? Release() => ReleaseFeed.Released(ProductVersion());
+
+    /// <summary>The informational version the shell's assembly in this copy was built with.</summary>
+    internal string? ProductVersion()
+    {
+        var assembly = Path.Combine(Root, Path.GetDirectoryName(Executable) ?? "", "Flyback.dll");
+
+        try
+        {
+            return File.Exists(assembly) ? FileVersionInfo.GetVersionInfo(assembly).ProductVersion : null;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return null;
+        }
+    }
+
+    /// <summary>
     /// Where this platform's copy sits inside a package unpacked to
     /// <paramref name="unpacked"/>: the release workflow zips each platform's
     /// folder under its identifier, and a Mac's holds the bundle.

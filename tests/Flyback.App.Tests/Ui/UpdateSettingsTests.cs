@@ -117,16 +117,37 @@ public sealed class UpdateSettingsTests : UiTest, IDisposable
     [AvaloniaFact]
     public void What_the_release_changed_is_shown_instead()
     {
-        var notes = new ReleaseNotes(new Version(0, 4, 0), "### Modules\n- Added `Echo`, a delay.");
+        var notes = new ReleaseNotes(new Version(0, 4, 0), null, [new("0.4.0 — 2026-09-30", "### Modules\n- Added `Echo`, a delay.")]);
         var window = Open(note: "Updated to Flyback 0.4.0.", whatsNew: notes);
-
-        for (var attempt = 0; attempt < 20 && !All<ModalOverlay>(window).Any(); attempt++)
-            Dispatcher.UIThread.RunJobs();
-
-        var dialog = All<ModalOverlay>(window).Single();
+        var dialog = WhatsNewDialog(window);
 
         All<TextBlock>(dialog).ShouldContain(t => t.Text == "What's new in Flyback 0.4.0");
         All<TextBlock>(dialog).ShouldContain(t => t.Inlines!.Text == "Added Echo, a delay.");
+        All<TextBlock>(dialog).ShouldNotContain(t => t.Inlines!.Text == "0.4.0 — 2026-09-30", "the title names the one release");
         All<ReportLine>(window).Single().History.ShouldNotContain("Updated to Flyback 0.4.0.");
+    }
+
+    [AvaloniaFact]
+    public void Every_release_since_the_one_replaced_is_shown_under_its_own_heading()
+    {
+        var notes = new ReleaseNotes(new Version(0, 5, 0), new Version(0, 3, 0),
+            [new("0.5.0 — 2026-10-14", "- Fifth."), new("0.4.0 — 2026-09-30", "- Fourth.")]);
+        var dialog = WhatsNewDialog(Open(note: "Updated to Flyback 0.5.0.", whatsNew: notes));
+
+        All<TextBlock>(dialog).ShouldContain(t => t.Text == "What's new since Flyback 0.3.0");
+        var page = All<StackPanel>(dialog).Single(p => p.Name == "whatsNew");
+
+        All<TextBlock>(page)
+            .Select(t => t.Inlines?.Text)
+            .Where(text => !string.IsNullOrEmpty(text))
+            .ShouldBe(["0.5.0 — 2026-10-14", "Fifth.", "0.4.0 — 2026-09-30", "Fourth."]);
+    }
+
+    private static ModalOverlay WhatsNewDialog(MainWindow window)
+    {
+        for (var attempt = 0; attempt < 20 && !All<ModalOverlay>(window).Any(); attempt++)
+            Dispatcher.UIThread.RunJobs();
+
+        return All<ModalOverlay>(window).Single();
     }
 }

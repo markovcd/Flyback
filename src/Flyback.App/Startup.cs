@@ -49,7 +49,7 @@ internal static class Startup
     public static string? UpdateNote { get; private set; }
 
     /// <summary>
-    /// What the release just installed changed, where <see cref="UpdateNote"/> says it
+    /// What changed since the release that was replaced, where <see cref="UpdateNote"/> says it
     /// installed and its changelog has a section for it — shown in place of the note.
     /// </summary>
     public static ReleaseNotes? WhatsNew { get; private set; }
@@ -64,10 +64,10 @@ internal static class Startup
         // one running is cleared away while nothing is reading it.
         var running = ReleaseFeed.Running();
 
-        UpdateNote = Updater.Folder.Tidy(running);
+        (UpdateNote, var replaced) = Updater.Folder.Tidy(running);
 
         if (running is not null && UpdateNote == Updater.Installed(running))
-            WhatsNew = ReleaseNotes.Of(running);
+            WhatsNew = ReleaseNotes.Of(running, since: replaced);
 
         if (UpdateNote is not null) Trace.WriteLine($"updates: {UpdateNote}");
 

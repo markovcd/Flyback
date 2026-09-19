@@ -21,6 +21,7 @@ internal sealed class UpdateFolder(string root)
     private const string PartialSuffix = ".partial";
     private const string FailuresName = "failures";
     private const string NoteName = "note.txt";
+    private const string ReplacedName = "replaced.txt";
 
     public string Root { get; } = root;
 
@@ -82,36 +83,34 @@ internal sealed class UpdateFolder(string root)
     /// </summary>
     public bool HasNote => File.Exists(Path.Combine(Root, NoteName));
 
-    /// <summary>Leaves <paramref name="sentence"/> for the next window to say.</summary>
-    public void Note(string sentence)
+    /// <summary>
+    /// Leaves <paramref name="sentence"/> for the next window to say, and with it the
+    /// release an install replaced, where it was one — which is where the changes
+    /// the window shows start from.
+    /// </summary>
+    public void Note(string sentence, Version? replaced = null)
     {
         Directory.CreateDirectory(Root);
+
+        var path = Path.Combine(Root, ReplacedName);
+
+        if (replaced is null) File.Delete(path);
+        else File.WriteAllText(path, replaced.ToString(3));
+
         File.WriteAllText(Path.Combine(Root, NoteName), sentence);
     }
 
     /// <summary>
     /// Takes away what <paramref name="running"/> has no more use for — versions no
     /// newer than itself, and anything half-downloaded — and hands back the note
-    /// the last install left, once. Never throws: a folder still held by the process
-    /// that just installed from it is cleared next time instead.
+    /// the last install left, once, with the release it replaced where that is known.
+    /// Never throws: a folder still held by the process that just installed from it
+    /// is cleared next time instead.
     /// </summary>
-    public string? Tidy(Version? running)
+    public (string? Note, Version? Replaced) Tidy(Version? running)
     {
-        string? note = null;
-
-        try
-        {
-            var path = Path.Combine(Root, NoteName);
-
-            if (File.Exists(path))
-            {
-                note = File.ReadAllText(path).Trim();
-                File.Delete(path);
-            }
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-        {
-        }
+        var note = Take(NoteName);
+        var replaced = Take(ReplacedName) is { } text ? ReleaseFeed.Parse(text) : null;
 
         ClearPartials();
 
@@ -119,7 +118,27 @@ internal sealed class UpdateFolder(string root)
             foreach (var version in Ready().Where(version => version <= running))
                 Delete(VersionFolder(version));
 
-        return string.IsNullOrEmpty(note) ? null : note;
+        return (string.IsNullOrEmpty(note) ? null : note, replaced);
+    }
+
+    /// <summary>What the file <paramref name="name"/> at the top says, taking it away; or null.</summary>
+    private string? Take(string name)
+    {
+        try
+        {
+            var path = Path.Combine(Root, name);
+
+            if (!File.Exists(path)) return null;
+
+            var text = File.ReadAllText(path).Trim();
+            File.Delete(path);
+
+            return text;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return null;
+        }
     }
 
     /// <summary>Takes away anything a download was cut off in the middle of.</summary>

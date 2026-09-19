@@ -81,9 +81,11 @@ installed one after it is replaced**, with `codesign --sign -`, which is part of
 macOS.
 
 **What happened is said once**, by the window that opens after. An install that
-worked opens a dialog with the new version's section of the changelog, which the
-build carries inside itself; one that failed says why on the status bar, as does a
-build whose changelog has no section for its own version. A version that fails three times
+worked opens a dialog with the changelog's sections for every release after the one
+it replaced, up to its own — the build carries the changelog inside itself, and
+reads which release it replaced from that copy's `Flyback.dll` before overwriting
+it, so a jump over a release shows both. One that failed says why on the status
+bar, as does a build whose changelog has no section for its own version. A version that fails three times
 is left for the next release, and a failure is never retried in the same start.
 
 **It is on by default**, in `update.json` beside the other settings files, and the
