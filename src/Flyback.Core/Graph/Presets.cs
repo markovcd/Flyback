@@ -91,6 +91,8 @@ public static partial class Presets
             "Stereo from one voice: left and right fed differently rather than panned."),
         new("Staircase", Staircase,
             "A slope caught six times a second by a Sample & Hold, which makes steps, and steps are a tune."),
+        new("Nebula", Nebula,
+            "Everything the video side can do, folded, warped and trailing its own frames."),
 
         // --- the two sinks meeting ---------------------------------------------
 
@@ -124,9 +126,6 @@ public static partial class Presets
 
         // --- what one patch can be ---------------------------------------------
 
-        new("Nebula", Nebula,
-            "Everything the video side can do, folded, warped and trailing its own frames.",
-            PresetKind.Showcase),
         new("Whole band", WholeBand,
             "A whole song from the engine's own modules: seven parts in a room, twelve phrases, one picture.",
             PresetKind.Showcase),
