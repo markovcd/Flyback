@@ -293,6 +293,10 @@ public static class PatchCompiler
                     continue;
                 }
 
+                // Lowered when the module asks, under the ordinary cache — see
+                // NodeDef.AsksForItsInputs.
+                if (def.AsksForItsInputs) continue;
+
                 var incoming = patch.IncomingTo(node.Id, port);
                 Slot slotValue;
 
@@ -357,7 +361,7 @@ public static class PatchCompiler
                 {
                     Node = node.Id,
                     Trace = Watched(node, def),
-                    Resolver = port => Sweep(node, def, port),
+                    Resolver = def.AsksForItsInputs ? Asked(node, def) : port => Sweep(node, def, port),
                 },
                 node,
                 def);
@@ -403,6 +407,15 @@ public static class PatchCompiler
                 resolved = outer;
                 normals = outerNormals;
             }
+        }
+
+        // The inputs of a module that lowers them itself, each the first time it is
+        // asked for and the same register every time after.
+        Func<int, Slot> Asked(NodeInstance node, NodeDef def)
+        {
+            var asked = new Dictionary<int, Slot>();
+
+            return port => asked.TryGetValue(port, out var slot) ? slot : asked[port] = ResolveInput(node, def, port);
         }
 
         // What a node carries that is not a knob, read onto the context the module

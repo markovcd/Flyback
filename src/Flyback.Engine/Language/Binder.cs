@@ -403,8 +403,7 @@ public sealed class Binder
     {
         NumberExpr number => new Figure(number.Value, number.Style, new Site(number.Line, number.Column)),
         TextExpr text => new Named(text.Value),
-        NegateExpr negate => Negate(negate, scope),
-        BinaryExpr binary => Arithmetic(binary, scope),
+        NegateExpr or BinaryExpr => Arithmetic(expr, scope),
         NameExpr name => Read(name, scope),
         CallExpr call => Call(call, scope, piped: null),
         SelectExpr select => Select(select, scope, piped: null),
@@ -419,67 +418,277 @@ public sealed class Binder
         return null;
     }
 
-    private Value? Negate(NegateExpr expr, Scope scope)
+    // --- arithmetic ---------------------------------------------------------
+
+    /// <summary>
+    /// Arithmetic as it is being read: numbers still to be folded, the signals
+    /// between them, and the operators that join them.
+    /// </summary>
+    private abstract record Reckoned;
+
+    private sealed record Operand(Figure Figure) : Reckoned;
+
+    /// <param name="From">The output it is, which is what makes a signal read twice one socket.</param>
+    private sealed record Signal(Value Value, (Guid Node, int Port) From) : Reckoned;
+
+    /// <param name="Right">Null for a minus in front.</param>
+    private sealed record Operation(char Sign, Reckoned Left, Reckoned? Right, int Line, int Column) : Reckoned;
+
+    /// <summary>
+    /// Infix arithmetic, which is one Expression however much of it there is —
+    /// except between two numbers, where it is neither a module nor a wire but a
+    /// knob that has already been worked out.
+    /// </summary>
+    /// <remarks>
+    /// The whole tree is one formula over the signals in it, so <c>(fract(t * 60)
+    /// * 2 - 1) * aspect</c> is two Expressions and a Fraction rather than four
+    /// Maths modules and a Fraction. A tree reading more signals than an
+    /// Expression has sockets hands its busier side to an Expression of its own.
+    /// </remarks>
+    private Value? Arithmetic(Expr expr, Scope scope) => Reckon(expr, scope) switch
     {
-        if (Bind(expr.Value, scope) is not { } value) return null;
+        Operand operand => operand.Figure,
+        Signal signal => signal.Value,
+        Operation operation => Expression(operation),
+        _ => null,
+    };
 
-        // From the minus rather than from the digits, because the sign is part of
-        // the number as far as anything rewriting it is concerned.
-        if (value is Figure figure)
-            return figure with { Amount = -figure.Amount, Where = new Site(expr.Line, expr.Column) };
+    private Reckoned? Reckon(Expr expr, Scope scope)
+    {
+        switch (expr)
+        {
+            case NegateExpr negate:
+            {
+                if (Reckon(negate.Value, scope) is not { } value) return null;
 
-        return Module("math.neg", expr.Line, expr.Column) is { } def
-            ? Place(def, [(0, value)], expr.Line, expr.Column)
-            : null;
+                // From the minus rather than from the digits, because the sign is
+                // part of the number as far as anything rewriting it is concerned.
+                if (value is Operand operand)
+                {
+                    return new Operand(operand.Figure with
+                    {
+                        Amount = -operand.Figure.Amount,
+                        Where = new Site(negate.Line, negate.Column),
+                    });
+                }
+
+                return Fit(new Operation('-', value, null, negate.Line, negate.Column));
+            }
+
+            case BinaryExpr binary:
+            {
+                if (Reckon(binary.Left, scope) is not { } left) return null;
+                if (Reckon(binary.Right, scope) is not { } right) return null;
+
+                if (left is Operand a && right is Operand b) return Folded(binary, a.Figure, b.Figure);
+
+                var sign = binary.Operator switch
+                {
+                    TokenKind.Plus => '+',
+                    TokenKind.Minus => '-',
+                    TokenKind.Star => '*',
+                    TokenKind.Slash => '/',
+                    _ => '%',
+                };
+
+                return Fit(new Operation(sign, left, right, binary.Line, binary.Column));
+            }
+
+            default:
+            {
+                if (Bind(expr, scope) is not { } value) return null;
+
+                if (value is Figure figure) return new Operand(figure);
+
+                if (Output(value) is { } from) return new Signal(value, from);
+
+                Complain(expr.Line, expr.Column, "this is not a signal, so nothing can be wired from it.");
+                return null;
+            }
+        }
     }
 
     /// <summary>
-    /// Infix arithmetic, which is five of the maths modules under another
-    /// spelling — except between two numbers, where it is neither a module nor a
-    /// wire but a knob that has already been worked out.
+    /// Two numbers made one, here rather than emitted, so a knob written as 1/12
+    /// is a knob and not a Divide. A note or a duration is on a scale of its own,
+    /// so arithmetic on one is refused rather than quietly done in semitones or
+    /// decades.
     /// </summary>
-    private Value? Arithmetic(BinaryExpr expr, Scope scope)
+    private Operand? Folded(BinaryExpr expr, Figure a, Figure b)
     {
-        if (Bind(expr.Left, scope) is not { } left) return null;
-        if (Bind(expr.Right, scope) is not { } right) return null;
-
-        if (left is Figure a && right is Figure b)
+        if (a.Style != NumberStyle.Plain || b.Style != NumberStyle.Plain)
         {
-            // Folded here rather than emitted, so a knob written as 1/12 is a
-            // knob and not a Divide. A note or a duration is on a scale of its
-            // own, so arithmetic on one is refused rather than quietly done in
-            // semitones or decades.
-            if (a.Style != NumberStyle.Plain || b.Style != NumberStyle.Plain)
-            {
-                return Refuse(expr.Line, expr.Column,
-                    "arithmetic on a note or a duration would be done on a scale nobody meant.");
-            }
-
-            var folded = expr.Operator switch
-            {
-                TokenKind.Plus => a.Amount + b.Amount,
-                TokenKind.Minus => a.Amount - b.Amount,
-                TokenKind.Star => a.Amount * b.Amount,
-                TokenKind.Slash => b.Amount == 0d ? 0d : a.Amount / b.Amount,
-                _ => b.Amount == 0d ? 0d : a.Amount % b.Amount,
-            };
-
-            return new Figure(folded, NumberStyle.Plain);
+            Complain(expr.Line, expr.Column, Scaled);
+            return null;
         }
 
-        var typeId = expr.Operator switch
+        var folded = expr.Operator switch
         {
-            TokenKind.Plus => "math.add",
-            TokenKind.Minus => "math.sub",
-            TokenKind.Star => "math.mul",
-            TokenKind.Slash => "math.div",
-            _ => "math.mod",
+            TokenKind.Plus => a.Amount + b.Amount,
+            TokenKind.Minus => a.Amount - b.Amount,
+            TokenKind.Star => a.Amount * b.Amount,
+            TokenKind.Slash => b.Amount == 0d ? 0d : a.Amount / b.Amount,
+            _ => b.Amount == 0d ? 0d : a.Amount % b.Amount,
         };
 
-        return Module(typeId, expr.Line, expr.Column) is { } def
-            ? Place(def, [(0, left), (1, right)], expr.Line, expr.Column)
-            : null;
+        return new Operand(new Figure(folded, NumberStyle.Plain));
     }
+
+    private const string Scaled = "arithmetic on a note or a duration would be done on a scale nobody meant.";
+
+    /// <summary>Which output a signal is, and null for what is not one.</summary>
+    private static (Guid Node, int Port)? Output(Value value) => value switch
+    {
+        Placed placed => (placed.Id, 0),
+        Socket socket => (socket.Id, socket.Port),
+        Several { Items.Count: > 0 } several => Output(several.Items[0]),
+        _ => null,
+    };
+
+    /// <summary>
+    /// The operation as it is, if it reads no more signals than an Expression has
+    /// sockets; otherwise with its busier side made an Expression of its own, and
+    /// then the other, until it does.
+    /// </summary>
+    private Reckoned? Fit(Operation operation)
+    {
+        while (Inputs(operation).Count > Formula.Sockets.Length)
+        {
+            var left = Inputs(operation.Left).Count;
+            var right = operation.Right is null ? 0 : Inputs(operation.Right).Count;
+
+            if (left >= right)
+            {
+                if (Settled(operation.Left) is not { } settled) return null;
+                operation = operation with { Left = settled };
+            }
+            else
+            {
+                if (Settled(operation.Right!) is not { } settled) return null;
+                operation = operation with { Right = settled };
+            }
+        }
+
+        return operation;
+    }
+
+    /// <summary>An operation placed as the Expression it is, and read from then on as its output.</summary>
+    private Reckoned? Settled(Reckoned reckoned) =>
+        reckoned is not Operation operation ? reckoned
+        : Expression(operation) is { } placed && Output(placed) is { } from ? new Signal(placed, from)
+        : null;
+
+    /// <summary>The signals a tree reads, each once, in the order the formula names them.</summary>
+    private static List<Signal> Inputs(Reckoned reckoned)
+    {
+        var found = new List<Signal>();
+
+        Gather(reckoned);
+        return found;
+
+        void Gather(Reckoned part)
+        {
+            switch (part)
+            {
+                case Signal signal when found.All(seen => seen.From != signal.From):
+                    found.Add(signal);
+                    break;
+
+                case Operation operation:
+                    Gather(operation.Left);
+                    if (operation.Right is not null) Gather(operation.Right);
+                    break;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Places the Expression an operation is: its signals on a, b, c and d in the
+    /// order they are first read, and the rest written into its formula.
+    /// </summary>
+    private Value? Expression(Operation operation)
+    {
+        var inputs = Inputs(operation);
+
+        if (Written(operation, inputs) is not { } formula) return null;
+        if (Module(NodeCatalog.ExpressionTypeId, operation.Line, operation.Column) is not { } def) return null;
+
+        var placed = Place(def, [.. inputs.Select((input, socket) => (socket, input.Value))], operation.Line, operation.Column);
+
+        if (placed is Placed { Id: var id } && patch.Find(id) is { } node)
+            node.SetState(FormulaExtra.StateKey, new JsonObject { [FormulaExtra.FormulaField] = formula });
+
+        return placed;
+    }
+
+    /// <summary>
+    /// An operation as a formula, bracketed wherever reading it back would group
+    /// it differently — which, for the right of an operator of the same strength,
+    /// is always: <c>a - (b - c)</c> and <c>a + (b + c)</c> are what was written,
+    /// and floats do not reassociate.
+    /// </summary>
+    private string? Written(Reckoned reckoned, IReadOnlyList<Signal> inputs)
+    {
+        switch (reckoned)
+        {
+            case Operand { Figure: var figure }:
+            {
+                var where = figure.Where ?? new Site(0, 0);
+
+                if (figure.Style != NumberStyle.Plain)
+                {
+                    Complain(where.Line, where.Column, Scaled);
+                    return null;
+                }
+
+                var value = (float)figure.Amount;
+
+                if (!float.IsFinite(value))
+                {
+                    Complain(where.Line, where.Column, "that number is too large to hold.");
+                    return null;
+                }
+
+                return value.ToString("R", System.Globalization.CultureInfo.InvariantCulture);
+            }
+
+            case Signal signal:
+                return Formula.Sockets[inputs.ToList().FindIndex(input => input.From == signal.From)].ToString();
+
+            case Operation { Right: null } negate:
+            {
+                if (Written(negate.Left, inputs) is not { } operand) return null;
+
+                return Strength(negate.Left) < Strength(negate) ? $"-({operand})" : $"-{operand}";
+            }
+
+            case Operation operation:
+            {
+                if (Written(operation.Left, inputs) is not { } left) return null;
+                if (Written(operation.Right!, inputs) is not { } right) return null;
+
+                var strength = Strength(operation);
+
+                if (Strength(operation.Left) < strength) left = $"({left})";
+                if (Strength(operation.Right!) <= strength) right = $"({right})";
+
+                return $"{left} {operation.Sign} {right}";
+            }
+
+            default:
+                return null;
+        }
+    }
+
+    /// <summary>How tightly a part of a formula holds together: a sum least, a number or a socket most.</summary>
+    private static int Strength(Reckoned reckoned) => reckoned switch
+    {
+        Operation { Right: null } => 3,
+        Operation { Sign: '+' or '-' } => 1,
+        Operation => 2,
+        Operand { Figure.Amount: < 0 } => 3,
+        _ => 4,
+    };
 
     private Value? Read(NameExpr expr, Scope scope)
     {

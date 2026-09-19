@@ -206,7 +206,7 @@ public partial class NodeCatalog
         ExpressionTypeId, "Expression", ModuleCategories.Maths,
         [Any("a"), Any("b", 1f), Any("c"), Any("d")], [Any("out")],
         (em, i) =>
-            [i.Extra<Formula>(FormulaExtra.StateKey) is { } formula ? formula.Lower(em, i.Inputs) : em.Constant(0f)],
+            [i.Extra<Formula>(FormulaExtra.StateKey) is { } formula ? formula.Lower(em, i.Resolve) : em.Constant(0f)],
         "A formula over its four sockets, typed rather than wired: 'a * b + c', "
         + "'(floor(a * 45) + 0.5) / 45', 'smoothstep(0.2, 0.8, a) * b'. It is exactly the Maths "
         + "modules it names, so it sounds and looks the same as the patch it replaces. "
@@ -216,6 +216,7 @@ public partial class NodeCatalog
         + "is a knob. A formula that does not read gives 0 and says why.")
     {
         Extras = [new FormulaExtra(functions)],
+        AsksForItsInputs = true,
     };
 
     public const string ExpressionTypeId = "math.expression";

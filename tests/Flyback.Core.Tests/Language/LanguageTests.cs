@@ -875,7 +875,7 @@ public class LanguageTests
     [Fact]
     public void The_bracketed_form_is_what_was_meant() =>
         Build("let s = notes() [ C2 ]\nsaw(freq: (s |> note) * 2) |> out.left").Nodes
-            .ShouldContain(n => n.TypeId == "math.mul");
+            .Single(n => n.TypeId == NodeCatalog.ExpressionTypeId).StateOf("expression")!["formula"]!.GetValue<string>().ShouldBe("a * 2");
 
     /// <summary>A comma before the bracket is a habit, not a mistake worth a refusal.</summary>
     [Fact]
@@ -1046,21 +1046,93 @@ public class LanguageTests
     }
 
     [Fact]
-    public void Arithmetic_involving_a_signal_is_a_module() =>
-        Build("value(0.5) * t |> out.color").Nodes.ShouldContain(n => n.TypeId == "math.mul");
+    public void Arithmetic_involving_a_signal_is_an_expression()
+    {
+        var patch = Build("value(0.5) * t |> out.color");
+
+        var expression = patch.Nodes.Single(n => n.TypeId == NodeCatalog.ExpressionTypeId);
+
+        Formula(expression).ShouldBe("a * b");
+        patch.Nodes.ShouldNotContain(n => n.TypeId.StartsWith("math.", StringComparison.Ordinal)
+            && n.TypeId != NodeCatalog.ExpressionTypeId);
+    }
 
     [Fact]
     public void A_pipe_is_looser_than_a_multiply()
     {
-        // t * 0.2 |> sine() is (t * 0.2) |> sine(): one Multiply, fed by Time,
+        // t * 0.2 |> sine() is (t * 0.2) |> sine(): one Expression, fed by Time,
         // feeding the oscillator's domain.
         var patch = Build("t * 0.2 |> sine() |> out.left");
 
-        var mul = patch.Nodes.Single(n => n.TypeId == "math.mul");
+        var expression = patch.Nodes.Single(n => n.TypeId == NodeCatalog.ExpressionTypeId);
         var sine = patch.Nodes.Single(n => n.TypeId == "osc.sine");
 
-        patch.IncomingTo(sine.Id, 0)!.SourceNode.ShouldBe(mul.Id);
+        Formula(expression).ShouldBe("a * 0.2");
+        patch.IncomingTo(sine.Id, 0)!.SourceNode.ShouldBe(expression.Id);
     }
+
+    /// <summary>
+    /// However much arithmetic there is, it is one block: the numbers are written
+    /// into the formula and the signals are its sockets, each once.
+    /// </summary>
+    [Fact]
+    public void A_whole_sum_is_one_expression()
+    {
+        var patch = Build("(x * 2 - 1) * (y + 0.5) - -x / 3 |> out.color");
+
+        var expression = patch.Nodes.Single(n => n.TypeId == NodeCatalog.ExpressionTypeId);
+        var coord = patch.Nodes.Single(n => n.TypeId == NodeCatalog.CoordTypeId);
+
+        Formula(expression).ShouldBe("(a * 2 - 1) * (b + 0.5) - -a / 3");
+        patch.IncomingTo(expression.Id, 0)!.SourcePort.ShouldBe(NodeCatalog.CoordXPort);
+        patch.IncomingTo(expression.Id, 1)!.SourcePort.ShouldBe(NodeCatalog.CoordYPort);
+        patch.IncomingTo(expression.Id, 0)!.SourceNode.ShouldBe(coord.Id);
+    }
+
+    /// <summary>
+    /// Brackets are kept wherever dropping them would group the sum another way —
+    /// on the right of an operator as strong as itself, always, because floats do
+    /// not reassociate.
+    /// </summary>
+    [Theory]
+    [InlineData("x - (y - t)", "a - (b - c)")]
+    [InlineData("x + (y + t)", "a + (b + c)")]
+    [InlineData("x + y + t", "a + b + c")]
+    [InlineData("x * (y + t)", "a * (b + c)")]
+    [InlineData("x / y * t", "a / b * c")]
+    [InlineData("-(x + y)", "-(a + b)")]
+    [InlineData("-x * y", "-a * b")]
+    [InlineData("x % 1 / 12", "a % 1 / 12")]
+    [InlineData("x * (1 / 12)", "a * 0.083333336")]
+    public void A_formula_groups_as_the_text_did(string written, string formula) =>
+        Formula(Build($"{written} |> out.color").Nodes
+            .Single(n => n.TypeId == NodeCatalog.ExpressionTypeId)).ShouldBe(formula);
+
+    /// <summary>
+    /// Four sockets, so a sum reading five signals hands its busier side to an
+    /// Expression of its own, which the other reads as one.
+    /// </summary>
+    [Fact]
+    public void More_signals_than_sockets_is_two_expressions()
+    {
+        var patch = Build("(x + y + t + radius) * angle |> out.color");
+
+        var expressions = patch.Nodes.Where(n => n.TypeId == NodeCatalog.ExpressionTypeId).ToList();
+
+        expressions.Select(Formula).Order().ShouldBe(["a * b", "a + b + c + d"]);
+
+        var outer = expressions.Single(n => Formula(n) == "a * b");
+        var inner = expressions.Single(n => Formula(n) == "a + b + c + d");
+
+        patch.IncomingTo(outer.Id, 0)!.SourceNode.ShouldBe(inner.Id);
+    }
+
+    [Fact]
+    public void A_note_in_a_sum_with_a_signal_is_refused() =>
+        Try("x + A3 |> out.left").Report.ShouldContain("on a scale nobody meant");
+
+    private static string Formula(NodeInstance node) =>
+        node.StateOf("expression")?["formula"]?.GetValue<string>() ?? string.Empty;
 
     // --- the Output --------------------------------------------------------------
 
@@ -1214,7 +1286,7 @@ public class LanguageTests
         patch.Nodes.ShouldContain(n => n.Name == "level");
 
         // Both results reach the multiply, which is what taking them apart was for.
-        var mul = patch.Nodes.Single(n => n.TypeId == "math.mul");
+        var mul = patch.Nodes.Single(n => n.TypeId == NodeCatalog.ExpressionTypeId);
 
         patch.IncomingTo(mul.Id, 0).ShouldNotBeNull();
         patch.IncomingTo(mul.Id, 1).ShouldNotBeNull();

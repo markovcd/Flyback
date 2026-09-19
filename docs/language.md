@@ -202,8 +202,7 @@ not.
 |---|---|
 | `x`, `y`, `radius`, `angle`, `aspect` | the five outputs of `coord` |
 | `t` | the output of `time` |
-| `a + b`, `a - b`, `a * b`, `a / b`, `a % b` | `math.add`, `sub`, `mul`, `div`, `mod` |
-| `-a` | `math.neg` |
+| `a + b`, `a - b`, `a * b`, `a / b`, `a % b`, `-a` | one `math.expression` for the whole sum |
 | `A3`, `C#4`, `Bb2` | a note number, on any `PortDisplay.Note` port |
 | `20ms`, `1.5s`, `4us` | log₁₀ seconds, on any `PortDisplay.Duration` port |
 | `-2..2` | two positional arguments: a low and a high |
@@ -219,6 +218,16 @@ unary `-`, then a call and a `.port` selector. The range sits below the minus
 deliberately — `-2..2` is a range from minus two, and the other way round parses,
 compiles and means something else. So `t * 0.2 |> sine()` groups as
 `(t * 0.2) |> sine()`, which is what it looks like.
+
+**A sum is one Expression**, however much of it there is
+([0106](adr/0106-a-sum-in-the-text-is-one-expression.md)).
+`(fract(t * 60) * 2 - 1) * aspect` is an Expression reading `t`, a Fraction, and
+an Expression reading the Fraction and `aspect` whose formula is
+`(a * 2 - 1) * b`. The numbers are written into the formula and the signals are
+its sockets, each once however often it is read. A call such as `fract(...)` is
+still the module it names. A sum reading more than the four signals an
+Expression has sockets for gives its busier side an Expression of its own. It is
+the same program the Maths modules it replaces would have been, op for op.
 
 ### Duration literals
 
@@ -949,8 +958,8 @@ analyzer(voice, window: 50ms, range: 72) |> out.color
 out.volume = 0.3
 ```
 
-`root * 3.5` is a frequency times a number, which is a Multiply like any other:
-the language has no idea that one side of it is a pitch.
+`root * 3.5` is a frequency times a number, which is an Expression like any
+other: the language has no idea that one side of it is a pitch.
 
 ### Ahead and behind — [:818](../src/Flyback.Core/Graph/Presets.cs)
 
@@ -1014,8 +1023,8 @@ out.volume = 0.55
 
 `1 / 12` is two literals, so it is folded to a knob value rather than emitting a
 Divide. **Arithmetic between literals is constant-folded at parse time;
-arithmetic involving a signal emits a module.** That is what keeps `t * 0.2` a
-Multiply and `1 / 12` a number.
+arithmetic involving a signal emits an Expression.** That is what keeps
+`t * 0.2` an Expression and `1 / 12` a number.
 
 ### Nebula — [:519](../src/Flyback.Core/Graph/Presets.cs)
 

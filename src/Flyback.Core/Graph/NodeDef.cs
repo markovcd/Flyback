@@ -257,6 +257,21 @@ public sealed record NodeDef(
     /// build neither has to say nor can be wrong.
     /// </summary>
     public ModuleSinks Sinks { get; init; } = ModuleSinks.Both;
+
+    /// <summary>
+    /// Whether this module lowers its inputs itself, each at the moment it reaches
+    /// one, rather than being handed them all before it is entered.
+    /// </summary>
+    /// <remarks>
+    /// Under the walk's own cache, unlike a <see cref="PortSpec.Swept"/> input: a
+    /// signal read here and elsewhere is one register. What changes is only when
+    /// it is lowered, which is what lets an Expression emit its ops in the order
+    /// the modules it names would have — each operand where the formula arrives
+    /// at it — and a socket it never reads is never lowered at all. Read through
+    /// <see cref="EmitContext.Resolve"/>; what <see cref="EmitContext.Inputs"/>
+    /// holds for one of these is nothing.
+    /// </remarks>
+    internal bool AsksForItsInputs { get; init; }
 }
 
 /// <summary>

@@ -55,11 +55,11 @@ internal sealed class Formula
     }
 
     /// <summary>
-    /// The ops this formula stands for, reading <paramref name="sockets"/> for
-    /// <c>a</c> to <c>d</c>. A part written twice is lowered once, as it would be
-    /// were it one module wired to two places.
+    /// The ops this formula stands for, asking <paramref name="socket"/> for
+    /// <c>a</c> to <c>d</c> as it reaches each. A part written twice is lowered
+    /// once, as it would be were it one module wired to two places.
     /// </summary>
-    public Slot Lower(Emitter em, IReadOnlyList<Slot> sockets)
+    public Slot Lower(Emitter em, Func<int, Slot> socket)
     {
         var lowered = new Dictionary<string, Slot>();
 
@@ -73,7 +73,7 @@ internal sealed class Formula
             var slot = term switch
             {
                 Literal literal => em.Constant(literal.Value),
-                Socket socket => sockets[socket.Index],
+                Socket read => socket(read.Index),
                 Call call => Emit(call),
                 _ => throw new InvalidOperationException($"No lowering for {term.GetType().Name}."),
             };
