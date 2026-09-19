@@ -196,10 +196,15 @@ internal sealed class ModalOverlay : Border
 
         if (e.Key == Key.Escape) Answer(null);
 
+        // A key typed into a box is left unhandled. A text box does not mark an
+        // ordinary key press handled, and Windows delivers the character only for
+        // a key press nobody handled, so swallowing it here would leave the box
+        // unable to be typed into. The window ignores keys while a dialog is up
+        // (see MainWindow.OnKeyDown), which is what the swallowing is for.
+        if (e.Source is TextBox) return;
+
         // Anything still unhandled here was on its way to a window that is
-        // listening for Ctrl+Z, Ctrl+L and Escape whatever has the focus. A key
-        // typed into a box in the dialog never reaches this: the box handled it,
-        // and a handled event does not raise this at all.
+        // listening for Ctrl+Z, Ctrl+L and Escape whatever has the focus.
         e.Handled = true;
     }
 

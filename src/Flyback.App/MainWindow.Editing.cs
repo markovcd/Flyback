@@ -315,7 +315,9 @@ public sealed partial class MainWindow
     {
         base.OnKeyDown(e);
 
-        if (e.Handled) return;
+        // A dialog lets the keys typed into its own boxes through unhandled, so
+        // whatever it is over must not act on them.
+        if (e.Handled || this.HasDialogUp) return;
 
         // Before the modifier check, because Escape carries none. Only while the
         // preview has the window: everywhere else Escape belongs to the module

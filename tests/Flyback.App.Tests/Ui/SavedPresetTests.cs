@@ -1,5 +1,7 @@
 using Avalonia.Controls;
+using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
+using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
 using Flyback.App.Controls;
@@ -141,6 +143,29 @@ public class SavedPresetTests : UiTest, IDisposable
         Settle(window);
 
         All<Button>(window).Single(b => b.Name == "save-preset").IsEnabled.ShouldBeFalse();
+    }
+
+    /// <summary>
+    /// Windows hands a box its character only for a key press nobody handled, and a
+    /// text box leaves a letter unhandled, so the dialog around it must too.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_letter_typed_into_the_name_reaches_the_window_unhandled()
+    {
+        var window = Open();
+
+        OpenGallery(window);
+        Click(All<Button>(window).Single(b => b.Name == "keep-preset"), window);
+
+        var name = All<TextBox>(window).Single(b => b.Name == "preset-name");
+        var handled = new List<bool>();
+
+        name.Focus();
+        window.AddHandler(InputElement.KeyDownEvent, (_, e) => handled.Add(e.Handled), handledEventsToo: true);
+
+        window.KeyPressQwerty(PhysicalKey.A, RawInputModifiers.None);
+
+        handled.ShouldBe([false]);
     }
 
     [AvaloniaFact]
