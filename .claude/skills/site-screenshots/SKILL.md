@@ -11,7 +11,7 @@ The full-window shots in `site/assets/shots` (nebula.webp, whole-band.webp; 1600
 
 ## Recipe (Nebula, PowerShell)
 
-1. `Start-Process` the Debug `Flyback.exe` with the `.fbk`.
+1. Follow `.claude/rules/running-the-app.md`: wait for any other Flyback to close, then `Start-Process -PassThru` the Debug `Flyback.exe` with the `.fbk`, and drive only that process's `Id` from here on.
 2. `ShowWindow` maximize.
 3. `PostMessage` a left click on bare canvas (focus).
 4. `SendKeys ^f` (frame).

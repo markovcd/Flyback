@@ -10,6 +10,7 @@ Standing rules for working in this repo are in `.claude/rules/`, and Claude Code
 - `changelog.md`: what CHANGELOG.md may contain.
 - `website.md`: a change to anything `site/` describes updates the site in the same commit.
 - `windows-shell.md`: PowerShell and Bash-heredoc pitfalls that corrupt files.
+- `running-the-app.md`: before launching the real window, wait for any other Flyback to close, and drive only the process you started.
 
 Task-specific know-how is in `.claude/skills/`, and Claude Code loads each skill when its description matches the task:
 
