@@ -228,7 +228,7 @@ public sealed class AudioEngine(IAudioDevice device) : IDisposable
     public const float AuditionLevel = 0.35f;
 
     /// <summary>How long a preset takes to swell to <see cref="AuditionLevel"/>.</summary>
-    public static readonly TimeSpan AuditionFadeIn = TimeSpan.FromSeconds(2.5);
+    public static readonly TimeSpan AuditionFadeIn = TimeSpan.FromSeconds(1);
 
     /// <summary>How long a preset takes to die away, and the patch to go quiet or come back.</summary>
     public static readonly TimeSpan AuditionFadeOut = TimeSpan.FromSeconds(0.5);

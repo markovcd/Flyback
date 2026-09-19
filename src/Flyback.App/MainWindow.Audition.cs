@@ -16,7 +16,7 @@ namespace Flyback.App;
 public sealed partial class MainWindow
 {
     /// <summary>How long the pointer has to rest on a tile, so sweeping across the gallery plays nothing.</summary>
-    private static readonly TimeSpan AuditionDelay = TimeSpan.FromSeconds(2);
+    private static readonly TimeSpan AuditionDelay = TimeSpan.FromSeconds(1);
 
     /// <summary>The preset the pointer is resting on, or null.</summary>
     private PatchPreset? pointedAt;
