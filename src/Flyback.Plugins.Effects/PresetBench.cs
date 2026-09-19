@@ -88,6 +88,33 @@ internal abstract class PresetBench(ModuleCatalog modules)
 
     protected NodeInstance Size(NodeInstance a, int from = 0) => Through("math.abs", a, from);
 
+    /// <summary>An output to read into a socket: a module's first, unless another is named.</summary>
+    protected readonly record struct Read(NodeInstance Node, int Port = 0)
+    {
+        public static implicit operator Read(NodeInstance node) => new(node);
+    }
+
+    /// <summary>
+    /// An Expression: <paramref name="formula"/> over what is wired into its sockets,
+    /// <paramref name="sockets"/> going to a, b, c and d in that order.
+    /// </summary>
+    /// <remarks>
+    /// Spell a number a C# constant was folded from the way it was folded —
+    /// <c>1 / 45</c> rather than <c>0.0222</c>, <c>45 * 2 * pi</c> left to right — and
+    /// the formula folds it to the same float, so the Expression is the modules it
+    /// replaces to the bit.
+    /// </remarks>
+    protected NodeInstance Formula(string formula, params Read[] sockets)
+    {
+        var node = b.Add(NodeCatalog.ExpressionTypeId);
+        node.SetState("expression", new JsonObject { ["formula"] = formula });
+
+        for (var socket = 0; socket < sockets.Length; socket++)
+            b.Wire(sockets[socket].Node, sockets[socket].Port, node, socket);
+
+        return node;
+    }
+
     /// <summary>A Remap: one range onto another, neither end clamped.</summary>
     protected NodeInstance Span(
         NodeInstance a, float inLow, float inHigh, float outLow, float outHigh, int from = 0)

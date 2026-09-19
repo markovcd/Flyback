@@ -546,6 +546,13 @@ public sealed partial class PatchWorkbench
                 return ToolOutcome.Refused(
                     $"'{name}' is one of {Offered(choice)}, as a string.");
 
+            case ExtraField.Text when given.ValueKind == JsonValueKind.String:
+                value = JsonValue.Create(given.GetString() ?? string.Empty);
+                break;
+
+            case ExtraField.Text:
+                return ToolOutcome.Refused($"'{name}' is text, as a string.");
+
             default:
                 return ToolOutcome.Refused(
                     $"'{name}' is a kind of value this build cannot set. It was added by a "

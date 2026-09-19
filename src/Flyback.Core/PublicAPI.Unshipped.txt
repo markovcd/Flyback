@@ -1,1 +1,20 @@
 #nullable enable
+Flyback.Core.Graph.ExtraField.Text
+Flyback.Core.Graph.ExtraField.Text.Deconstruct(out string! Key, out string! Label, out string! Fallback) -> void
+Flyback.Core.Graph.ExtraField.Text.Equals(Flyback.Core.Graph.ExtraField.Text? other) -> bool
+Flyback.Core.Graph.ExtraField.Text.Fallback.get -> string!
+Flyback.Core.Graph.ExtraField.Text.Fallback.init -> void
+Flyback.Core.Graph.ExtraField.Text.Text(string! Key, string! Label, string! Fallback = "") -> void
+Flyback.Core.Graph.ExtraField.Text.Value(System.Text.Json.Nodes.JsonNode? stored) -> string!
+Flyback.Core.Graph.ExtraState.Text(string! key) -> string!
+const Flyback.Core.Graph.ExtraField.Text.Limit = 500 -> int
+const Flyback.Core.Graph.NodeCatalog.ExpressionTypeId = "math.expression" -> string!
+override Flyback.Core.Graph.ExtraField.Text.<Clone>$() -> Flyback.Core.Graph.ExtraField.Text!
+override Flyback.Core.Graph.ExtraField.Text.Equals(object? obj) -> bool
+override Flyback.Core.Graph.ExtraField.Text.Format(System.Text.Json.Nodes.JsonNode? stored) -> string!
+override Flyback.Core.Graph.ExtraField.Text.GetHashCode() -> int
+override Flyback.Core.Graph.ExtraField.Text.Sane(System.Text.Json.Nodes.JsonNode? stored) -> System.Text.Json.Nodes.JsonNode!
+override Flyback.Core.Graph.ExtraField.Text.ToString() -> string!
+override sealed Flyback.Core.Graph.ExtraField.Text.Equals(Flyback.Core.Graph.ExtraField? other) -> bool
+static Flyback.Core.Graph.ExtraField.Text.operator !=(Flyback.Core.Graph.ExtraField.Text? left, Flyback.Core.Graph.ExtraField.Text? right) -> bool
+static Flyback.Core.Graph.ExtraField.Text.operator ==(Flyback.Core.Graph.ExtraField.Text? left, Flyback.Core.Graph.ExtraField.Text? right) -> bool

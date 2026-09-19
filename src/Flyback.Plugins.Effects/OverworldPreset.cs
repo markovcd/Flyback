@@ -636,24 +636,22 @@ internal sealed class OverworldPreset : PresetBench
         // further from the middle it is. Then every coordinate is rounded to the middle
         // of its pixel, and the rest of the picture never sees anything finer.
         var coord = b.Add(NodeCatalog.CoordTypeId);
-        var bulge = Plus(Times(Wired("math.mul", coord, coord, 2, 2), 0.035f), 1f);
+        var bulge = Formula("a * a * 0.035 + 1", new Read(coord, 2));
         var bentX = Product(coord, bulge);
         var bentY = Wired("math.mul", coord, bulge, 1);
-        var column = Floor(Times(bentX, Rows));
-        var row = Floor(Times(bentY, Rows));
-        var px = Times(Plus(column, 0.5f), 1f / Rows);
-        var py = Times(Plus(row, 0.5f), 1f / Rows);
+        var column = Formula("floor(a * 45)", bentX);
+        var row = Formula("floor(a * 45)", bentY);
+        var px = Formula("(a + 0.5) * (1 / 45)", column);
+        var py = Formula("(a + 0.5) * (1 / 45)", row);
 
         // What is off the edge of the glass is the dark of the set around it.
-        var onGlassY = b.Add("math.step", (1, 0.99f));
-        var onGlassX = Wired("math.step", Size(bentX), coord, 0, NodeCatalog.CoordAspectPort);
-        var onGlass = Product(onGlassX, onGlassY);
+        var onGlass = Formula("step(abs(a), b) * step(abs(c), 0.99)",
+            bentX, new Read(coord, NodeCatalog.CoordAspectPort), bentY);
 
         // Every other pixel, for dithering.
         var dither = b.Add("pattern.checker", (2, 1f));
 
-        b.Wire(Size(bentY), 0, onGlassY, 0)
-         .Wire(column, 0, dither, 0)
+        b.Wire(column, 0, dither, 0)
          .Wire(row, 0, dither, 1);
 
         Box("Picture: Screen");
@@ -666,29 +664,26 @@ internal sealed class OverworldPreset : PresetBench
         // read a phrase ahead is the next phrase's, and the last quarter of each phrase
         // blends into it, which is a slew the picture can have.
         float[] times = [0.15f, 0f, 0f, 0f, 0.3f, 0.5f, 0.5f, 1f, 0.85f, 0.65f, 0.4f, 0.45f, 0.2f];
-        var today = b.Add("math.mix");
+        var today = Formula("mix(a, b, smoothstep(0.75, 1, c))",
+            Lane(beats, times), Lane(Plus(beats, 32f), times), phraseGone);
         var dusk = Rises(today, 0f, 0.5f);
         var dark = Rises(today, 0.5f, 1f);
-
-        b.Wire(Lane(beats, times), 0, today, 0)
-         .Wire(Lane(Plus(beats, 32f), times), 0, today, 1)
-         .Wire(Rises(phraseGone, 0.75f, 1f), 0, today, 2);
 
         // Two colors for each time of day, one at the top of the sky and one at the
         // horizon, and seven bands between them with a checkerboard where they meet.
         var zenith = ByDay(dusk, dark, (0.2f, 0.4f, 0.95f), (0.3f, 0.12f, 0.5f), (0.02f, 0.02f, 0.12f));
         var horizon = ByDay(dusk, dark, (0.55f, 0.82f, 1f), (1f, 0.5f, 0.3f), (0.12f, 0.1f, 0.32f));
-        var band = Times(Floor(Sum(Times(Rises(py, GroundTop, 0.95f), 7f), Times(dither, 0.5f))), 1f / 7f);
+        var band = Formula("floor(smoothstep(-0.6, 0.95, a) * 7 + b * 0.5) * (1 / 7)", py, dither);
         var sky = Between(horizon, zenith, band);
 
         // Stars are Cells laid over the pixels themselves, one point to every seven
         // pixels square, and a star wherever a point falls on a pixel. Only at night,
         // only high up, and each twinkling on its own cell's number.
         var cells = b.Add(CellsType, (2, 0f), (3, 1f / 7f), (4, 0.9f));
-        var twinkle = Span(Sine(Sum(Times(cells, 40f, 2), Times(clock, 3f))), -1f, 1f, 0.2f, 1f);
-        var stars = Product(
-            Product(From(1f, Rises(cells, 0.08f, 0.09f)), twinkle),
-            Product(Rises(today, 0.6f, 0.9f), Rises(py, 0f, 0.4f)));
+        var twinkle = Formula("remap(sin(a * 40 + b * 3), -1, 1, 0.2, 1)", new Read(cells, 2), clock);
+        var stars = Formula(
+            "(1 - smoothstep(0.08, 0.09, a)) * b * (smoothstep(0.6, 0.9, c) * smoothstep(0, 0.4, d))",
+            cells, twinkle, today, py);
 
         b.Wire(Plus(column, 0.5f), 0, cells, 0)
          .Wire(Plus(row, 0.5f), 0, cells, 1);
@@ -699,13 +694,12 @@ internal sealed class OverworldPreset : PresetBench
 
         // One disc that is the sun by day, sinks and reddens at dusk, and comes back up
         // pale as the moon. It swells on the kick.
-        var discY = Sum(Span(dusk, 0f, 1f, 0.55f, 0.25f), Times(dark, 0.35f));
         var disc = b.Add(CircleType);
         var discFill = b.Add(FillType, (1, 0.0005f));
         var discColor = ByDay(dusk, dark, (1f, 0.9f, 0.35f), (1f, 0.4f, 0.2f), (0.92f, 0.92f, 0.8f));
 
         b.Wire(Plus(px, -1.05f), 0, disc, 0)
-         .Wire(Less(py, discY), 0, disc, 1)
+         .Wire(Formula("a - (remap(b, 0, 1, 0.55, 0.25) + c * 0.35)", py, dusk, dark), 0, disc, 1)
          .Wire(Span(kickStroke, 0f, 1f, 0.16f, 0.185f), 0, disc, 2)
          .Wire(disc, 0, discFill, 0);
 
@@ -719,17 +713,13 @@ internal sealed class OverworldPreset : PresetBench
         // cloud and the higher its bright middle. They drift at a twelfth of the
         // ground's speed, and only in the upper sky.
         var puff = b.Add("pattern.noise", (3, 1f));
-        var cloud = b.Add("math.step", (0, 0.63f));
-        var core = b.Add("math.step", (0, 0.71f));
-        var cloudLight = Product(
-            Sum(Times(cloud, 0.55f), Times(core, 0.4f)),
-            Product(Rises(py, 0.05f, 0.35f), From(1f, Times(dark, 0.65f))));
+        var cloudLight = Formula(
+            "(step(0.63, a) * 0.55 + step(0.71, a) * 0.4) * (smoothstep(0.05, 0.35, b) * (1 - c * 0.65))",
+            puff, py, dark);
 
-        b.Wire(Times(Sum(px, Times(beats, 0.02f)), 2.2f), 0, puff, 0)
+        b.Wire(Formula("(a + b * 0.02) * 2.2", px, beats), 0, puff, 0)
          .Wire(Times(py, 3.2f), 0, puff, 1)
-         .Wire(Times(clock, 0.02f), 0, puff, 2)
-         .Wire(puff, 0, cloud, 1)
-         .Wire(puff, 0, core, 1);
+         .Wire(Times(clock, 0.02f), 0, puff, 2);
 
         var withClouds = Ink(withDisc, cloudLight, 0.85f, 0.85f, 0.9f);
 
@@ -744,11 +734,11 @@ internal sealed class OverworldPreset : PresetBench
         var ridge = Span(rock, 0.25f, 0.75f, -0.2f, 0.3f);
         var underRidge = Wired("math.step", py, ridge);
         var farBlue = b.Add("color.mix", (2, 0.55f));
-        var snow = Product(
-            Product(Rises(ridge, 0.17f, 0.19f), From(1f, Rises(Less(ridge, py), 0.04f, 0.045f))),
-            From(1f, Times(dark, 0.6f)));
+        var snow = Formula(
+            "smoothstep(0.17, 0.19, a) * (1 - smoothstep(0.04, 0.045, a - b)) * (1 - c * 0.6)",
+            ridge, py, dark);
 
-        b.Wire(Sum(px, Times(beats, 0.04f)), 0, rock, 0)
+        b.Wire(Formula("a + b * 0.04", px, beats), 0, rock, 0)
          .Wire(horizon, 0, farBlue, 0)
          .Wire(Rgb(0.18f, 0.2f, 0.42f), 0, farBlue, 1);
 
@@ -761,24 +751,23 @@ internal sealed class OverworldPreset : PresetBench
         // Nearer, and two and a half times as fast: two sines for a line of hills, a
         // lighter band along the top of them, and a darker checker down their faces,
         // laid on the pixels and moved with the hills.
-        var hillX = Sum(px, Times(beats, 0.1f));
-        var hillTop = Plus(
-            Sum(Times(Sine(Times(hillX, 3f)), 0.1f), Times(Sine(Plus(Times(hillX, 7.3f), 1f)), 0.05f)),
-            -0.32f);
+        var hillX = Formula("a + b * 0.1", px, beats);
+        var hillTop = Formula("sin(a * 3) * 0.1 + sin(a * 7.3 + 1) * 0.05 - 0.32", hillX);
         var underHill = Wired("math.step", py, hillTop);
-        var hillDepth = Less(hillTop, py);
         var weave = b.Add("pattern.checker", (2, 0.25f));
         var grass = ByDay(dusk, dark, (0.2f, 0.62f, 0.28f), (0.35f, 0.4f, 0.25f), (0.08f, 0.2f, 0.18f));
         var hillColor = b.Add("color.gain");
 
-        b.Wire(Floor(Sum(column, Times(beats, 0.1f * Rows))), 0, weave, 0)
+        // How far under the hilltop the pixel is decides both: the band is the top of
+        // that, and the checker only shows once it is well down the face.
+        var hillShade = Formula(
+            "(1 - smoothstep(0.025, 0.03, a - b)) * 0.35 - c * (smoothstep(0.1, 0.12, a - b) * 0.2) + 1",
+            hillTop, py, weave);
+
+        b.Wire(Formula("floor(a + b * (0.1 * 45))", column, beats), 0, weave, 0)
          .Wire(row, 0, weave, 1)
          .Wire(grass, 0, hillColor, 0)
-         .Wire(
-             Plus(Less(
-                 Times(From(1f, Rises(hillDepth, 0.025f, 0.03f)), 0.35f),
-                 Product(weave, Times(Rises(hillDepth, 0.1f, 0.12f), 0.2f))), 1f),
-             0, hillColor, 1);
+         .Wire(hillShade, 0, hillColor, 1);
 
         var withHills = Between(withMountains, hillColor, underHill);
 
@@ -789,24 +778,22 @@ internal sealed class OverworldPreset : PresetBench
         // Bricks, a tile to the beat. Across is the pixel's place along the ground and
         // down is its depth under the grass, in bricks of eight pixels by four, every
         // other row set half a brick over. The mortar is the first pixel of each brick
-        // either way.
-        var along = Sum(px, Times(beats, 0.25f));
-        var depth = From(GroundTop, py);
-        var courses = Times(depth, 1f / (Tile * 0.5f));
-        var across = Sum(Times(along, 1f / Tile), Times(Floor(courses), 0.5f));
-        var jointAcross = b.Add("math.step", (0, 1f / 8f));
-        var jointDown = b.Add("math.step", (0, 1f / 4f));
-        var mortar = Wired("math.max", From(1f, jointAcross), From(1f, jointDown));
+        // either way. A tile is eight pixels of forty-five, which is how the formulas
+        // write it.
+        var along = Formula("a + b * 0.25", px, beats);
+        var depth = Formula("-0.6 - a", py);
+        var courses = Formula("a * (1 / (8 / 45 * 0.5))", depth);
+        var mortar = Formula(
+            "1 - max(1 - step(1 / 8, fract(a * (1 / (8 / 45)) + floor(b) * 0.5)), 1 - step(1 / 4, fract(b))) * 0.55",
+            along, courses);
         var brick = ByDay(dusk, dark, (0.78f, 0.42f, 0.2f), (0.7f, 0.32f, 0.22f), (0.3f, 0.16f, 0.14f));
         var bricks = b.Add("color.gain");
         var turf = ByDay(dusk, dark, (0.35f, 0.85f, 0.3f), (0.5f, 0.6f, 0.25f), (0.1f, 0.25f, 0.15f));
         var underTurf = Rises(depth, 0.05f, 0.052f);
         var underGround = b.Add("math.step", (1, GroundTop));
 
-        b.Wire(Fraction(across), 0, jointAcross, 1)
-         .Wire(Fraction(courses), 0, jointDown, 1)
-         .Wire(brick, 0, bricks, 0)
-         .Wire(From(1f, Times(mortar, 0.55f)), 0, bricks, 1)
+        b.Wire(brick, 0, bricks, 0)
+         .Wire(mortar, 0, bricks, 1)
          .Wire(py, 0, underGround, 0);
 
         var withGround = Between(withHills, Between(turf, bricks, underTurf), underGround);
@@ -818,15 +805,15 @@ internal sealed class OverworldPreset : PresetBench
         // A row of the blocks that hold something, one every four tiles, over the
         // hero's head: a dark rim, a gold face that flashes with the lead, and a dot.
         // The snare knocks them up, and they only hang there once the verse is in.
-        var blockAt = Times(Plus(Fraction(Times(along, 1f / (4f * Tile))), -0.5f), 4f * Tile);
-        var blockY = Less(py, Plus(Times(snareStroke, 0.03f), 0.02f));
+        var blockAt = Formula("(fract(a * (1 / (4 * (8 / 45)))) - 0.5) * (4 * (8 / 45))", along);
+        var blockY = Formula("a - (b * 0.03 + 0.02)", py, snareStroke);
         var shown = Rises(song, 0.65f, 0.7f);
         var rim = Rgb(0.45f, 0.22f, 0.05f);
         var face = b.Add("color.gain");
         var pixel = 1f / Rows;
 
         b.Wire(Rgb(1f, 0.72f, 0.18f), 0, face, 0)
-         .Wire(Plus(Times(Stroke(beats, 1f, 3f), 0.35f), 0.75f), 0, face, 1);
+         .Wire(Formula("a * 0.35 + 0.75", Stroke(beats, 1f, 3f)), 0, face, 1);
 
         var withBlocks = Between(
             Between(
@@ -840,13 +827,15 @@ internal sealed class OverworldPreset : PresetBench
 
         // Between the blocks and higher, a coin turning on the beat: a disc read
         // across a plane narrowed by the size of a sine. Only in the chorus.
-        var coinAt = Times(Plus(Fraction(Plus(Times(along, 1f / (4f * Tile)), 0.5f)), -0.5f), 4f * Tile);
-        var turn = Plus(Times(Size(Sine(Times(beats, MathF.PI))), 0.85f), 0.15f);
         var coin = b.Add(CircleType, (2, 0.045f));
         var coinFill = b.Add(FillType, (1, 0.0005f));
 
-        b.Wire(Wired("math.div", coinAt, turn), 0, coin, 0)
-         .Wire(Less(py, Plus(Times(Sine(Times(beats, MathF.PI * 0.5f)), 0.02f), 0.22f)), 0, coin, 1)
+        b.Wire(
+             Formula(
+                 "(fract(a * (1 / (4 * (8 / 45))) + 0.5) - 0.5) * (4 * (8 / 45)) / (abs(sin(b * pi)) * 0.85 + 0.15)",
+                 along, beats),
+             0, coin, 0)
+         .Wire(Formula("a - (sin(b * (pi * 0.5)) * 0.02 + 0.22)", py, beats), 0, coin, 1)
          .Wire(coin, 0, coinFill, 0);
 
         var withCoins = Ink(withBlocks, Product(coinFill, chorus), 1f, 0.85f, 0.25f);
@@ -859,12 +848,12 @@ internal sealed class OverworldPreset : PresetBench
         // of them and which the night leaves out, and legs that swap on the eighth.
         // In a build the suit cycles through every color, which is what being
         // unstoppable looks like.
-        var hopPhase = Fraction(Times(beats, 0.5f));
-        var hop = Product(Times(Product(hopPhase, From(1f, hopPhase)), 4f * 0.28f), Rises(song, 0.5f, 0.6f));
         var heroX = Plus(px, -HeroX);
-        var heroY = Less(Plus(py, -GroundTop), hop);
-        var eighth = Fraction(Times(beats, 2f));
-        var stride = Times(Rises(eighth, 0.5f, 0.501f), 0.022f);
+        var heroY = Formula(
+            "a + 0.6 - fract(b * 0.5) * (1 - fract(b * 0.5)) * (4 * 0.28) * smoothstep(0.5, 0.6, c)",
+            py, beats, song);
+        var eighth = Formula("fract(a * 2)", beats);
+        var stride = Formula("smoothstep(0.5, 0.501, a) * 0.022", eighth);
 
         var legs = Wired("math.max",
             Block(Sum(heroX, stride), heroY, -0.011f, 0.03f, 0.012f, 0.03f),
@@ -895,17 +884,13 @@ internal sealed class OverworldPreset : PresetBench
 
         // A dark strip along the top with how far through the level it is: which
         // phrase, and how far into it, as a bar that fills from the left.
-        var strip = b.Add("math.step", (0, 0.86f));
-        var progress = Sum(Times(song, 1f, 2), Times(phraseGone, 1f / 13f));
-        var filled = Wired("math.step", px, Plus(Times(progress, 2.8f), -1.4f));
-        var inBar = Product(
-            Product(From(1f, Rises(Size(Plus(py, -0.925f)), 0.019f, 0.021f)), filled),
-            Rises(px, -1.42f, -1.4f));
+        var inBar = Formula(
+            "(1 - smoothstep(0.019, 0.021, abs(b - 0.925))) * step(a, (c + d * (1 / 13)) * 2.8 - 1.4) * smoothstep(-1.42, -1.4, a)",
+            px, py, new Read(song, 2), phraseGone);
         var dimmed = b.Add("color.gain");
 
-        b.Wire(py, 0, strip, 1)
-         .Wire(withHero, 0, dimmed, 0)
-         .Wire(From(1f, Times(strip, 0.75f)), 0, dimmed, 1);
+        b.Wire(withHero, 0, dimmed, 0)
+         .Wire(Formula("1 - step(0.86, a) * 0.75", py), 0, dimmed, 1);
 
         var withHud = Ink(dimmed, inBar, 1f, 0.85f, 0.3f);
 
@@ -917,18 +902,17 @@ internal sealed class OverworldPreset : PresetBench
         // rows of the tube show between the rows of pixels, and the kick lifts all of
         // it a little. The glass's edge is last but for the phosphor, which glows a
         // moment after and reads whatever reached the Output.
-        var flash = Product(Stroke(beats, 1f / 32f, 20f), chorus);
+        var flash = Formula("a * b * 0.5", Stroke(beats, 1f / 32f, 20f), chorus);
         var chip = b.Add(PosteriseType, (1, 6f));
         var lines = b.Add("color.gain");
         var shaded = Vignette(lines, 0.6f, 2.2f, 0.4f);
         var glass = b.Add("color.gain");
         var glow = b.Add(TrailsType, (TrailsPersist, 0.35f));
 
-        b.Wire(Ink(withHud, Times(flash, 0.5f), 1f, 1f, 1f), 0, chip, 0)
+        b.Wire(Ink(withHud, flash, 1f, 1f, 1f), 0, chip, 0)
          .Wire(chip, 0, lines, 0)
          .Wire(
-             Product(Span(Sine(Times(bentY, Rows * 2f * MathF.PI)), -1f, 1f, 0.78f, 1f),
-                 Span(kickStroke, 0f, 1f, 1f, 1.12f)),
+             Formula("remap(sin(a * (45 * 2 * pi)), -1, 1, 0.78, 1) * remap(b, 0, 1, 1, 1.12)", bentY, kickStroke),
              0, lines, 1)
          .Wire(shaded, 0, glass, 0)
          .Wire(onGlass, 0, glass, 1)

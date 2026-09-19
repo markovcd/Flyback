@@ -147,8 +147,8 @@ public static class PatchPrinter
     /// </summary>
     /// <remarks>
     /// A number on whatever scale the field reads on, a switch as one or nought,
-    /// and a choice as the one string the language has, since what is stored is
-    /// an id. A shape this build has never heard of is left alone rather than
+    /// and a choice or a line of text as the one string the language has, since
+    /// what is stored is an id or what was typed. A shape this build has never heard of is left alone rather than
     /// written wrongly.
     /// </remarks>
     public static string? Field(NodeInstance node, NodeExtra extra, ExtraField field)
@@ -160,6 +160,7 @@ public static class PatchPrinter
             ExtraField.Number number => Writer.Value(number.Value(stored), number.Spec.Display),
             ExtraField.Toggle toggle => toggle.Value(stored) ? "1" : "0",
             ExtraField.Choice choice => Quotable(choice.Value(stored)),
+            ExtraField.Text text => Quotable(text.Value(stored)),
             _ => null,
         };
     }
@@ -174,6 +175,7 @@ public static class PatchPrinter
             ExtraField.Number number => Math.Abs(number.Value(stored) - number.Spec.Default) < 1e-7f,
             ExtraField.Toggle toggle => toggle.Value(stored) == toggle.On,
             ExtraField.Choice choice => choice.Value(stored) == choice.Fallback,
+            ExtraField.Text text => text.Value(stored) == text.Fallback,
             _ => true,
         };
     }

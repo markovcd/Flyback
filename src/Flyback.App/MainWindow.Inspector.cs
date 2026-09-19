@@ -1472,8 +1472,84 @@ public sealed partial class MainWindow
                 .OfType<ExtraField.Choice>()
                 .FirstOrDefault(again => again.Key == field.Key)?.Options ?? choice.Options),
 
+        ExtraField.Text text => TextRow(
+            field.Label,
+            text.Value(node.StateOf(extra.Key)?[field.Key]),
+            next =>
+            {
+                Store(node, extra, field, JsonValue.Create(next));
+
+                // What is typed may be what the module is called — an
+                // Expression is titled by its formula — so the panel's own
+                // title is drawn again with it.
+                Dispatcher.UIThread.Post(BuildInspector);
+            }),
+
         _ => null,
     };
+
+    /// <summary>
+    /// A label and a line to type into, on the same grid a knob's row uses.
+    /// </summary>
+    /// <remarks>
+    /// Kept when Enter is pressed or the focus goes elsewhere, and put back by
+    /// Escape, as a name being typed is. Stored once, when it is kept, rather
+    /// than at every key: a formula half typed is not one anybody meant, and
+    /// each would be a step in the history.
+    /// </remarks>
+    private Control TextRow(string label, string value, Action<string> store)
+    {
+        var row = Row("*");
+
+        var caption = Caption(label);
+
+        var box = new TextBox
+        {
+            Text = value,
+            MaxLength = ExtraField.Text.Limit,
+            FontSize = Text.Body,
+            TextWrapping = TextWrapping.Wrap,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+
+        box.KeyDown += (_, e) =>
+        {
+            switch (e.Key)
+            {
+                case Key.Enter:
+                    Keep();
+                    break;
+
+                case Key.Escape:
+                    box.Text = value;
+                    break;
+
+                default:
+                    return;
+            }
+
+            e.Handled = true;
+        };
+
+        box.LostFocus += (_, _) => Keep();
+
+        Grid.SetColumn(caption, 0);
+        Grid.SetColumn(box, 1);
+        row.Children.Add(caption);
+        row.Children.Add(box);
+
+        return row;
+
+        void Keep()
+        {
+            var typed = box.Text ?? string.Empty;
+            if (typed == value) return;
+
+            value = typed;
+            store(typed);
+            editor.NotifyPatchChanged();
+        }
+    }
 
     /// <summary>
     /// A label and a list to pick from, on the same grid a knob's row uses.

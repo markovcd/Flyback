@@ -164,4 +164,31 @@ public class SetExtraTests
         described.Text.ShouldContain("time");
         described.Text.ShouldContain("set_extra");
     }
+
+    /// <summary>
+    /// An Expression's formula is declared rather than drawn by a control of its
+    /// own, so this is the tool that writes it — and a formula that does not read
+    /// is written anyway and complained about, the way the panel would have it.
+    /// </summary>
+    [Fact]
+    public async Task A_formula_is_text_and_takes_a_string()
+    {
+        var bench = Bench();
+        await Call(bench, "add_module", """{"type_id":"math.expression","handle":"e1"}""");
+
+        var set = await Call(bench, "set_extra",
+            """{"handle":"e1","extra":"expression","field":"formula","value":"sin(a * tau) * b"}""");
+
+        set.Ok.ShouldBeTrue(set.Text);
+        set.Text.ShouldContain("formula sin(a * tau) * b");
+
+        var node = bench.Snapshot().FirstOf("math.expression").ShouldNotBeNull();
+        node.StateOf("expression")!["formula"]!.GetValue<string>().ShouldBe("sin(a * tau) * b");
+
+        var number = await Call(bench, "set_extra",
+            """{"handle":"e1","extra":"expression","field":"formula","value":3}""");
+
+        number.Ok.ShouldBeFalse();
+        number.Text.ShouldContain("as a string");
+    }
 }

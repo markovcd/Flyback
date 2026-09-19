@@ -57,6 +57,7 @@ context, decision, consequences.
 | [0057](0057-a-shape-is-a-distance-and-one-module-inks-it.md) | A shape is a distance, and one module inks it *(user-directed)* |
 | [0095](0095-a-module-may-be-a-handful-of-others-if-it-is-exactly-them.md) | A module may be a handful of others, if it is exactly them *(user-directed; the Bell it left out counted again and added by [0097](0097-a-wrapping-module-carries-a-setting-where-what-it-wraps-differed.md))* |
 | [0097](0097-a-wrapping-module-carries-a-setting-where-what-it-wraps-differed.md) | A wrapping module carries a setting where what it wraps differed *(user-directed)* |
+| [0104](0104-a-formula-is-one-block-and-exactly-the-modules-it-names.md) | A formula is one block, and exactly the modules it names *(user-directed)* |
 | [0064](0064-a-pixel-runs-only-what-a-pixel-changes.md) | A pixel runs only what a pixel changes |
 | [0074](0074-a-cell-is-a-plane-on-the-video-path.md) | A cell is a plane on the video path *(user-directed)* |
 | [0075](0075-a-cycle-carries-its-own-delay.md) | A cycle carries its own delay *(user-directed)* |

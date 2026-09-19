@@ -6,6 +6,23 @@ public partial class NodeCatalog
 {
     private static IEnumerable<NodeDef> Maths()
     {
+        var primitives = Primitives().ToList();
+
+        foreach (var def in primitives) yield return def;
+
+        yield return Mixer();
+
+        yield return Desk();
+
+        yield return Expression(Formula.Functions(primitives));
+    }
+
+    /// <summary>
+    /// The Maths modules that are one op or a handful — everything an Expression
+    /// may call.
+    /// </summary>
+    private static IEnumerable<NodeDef> Primitives()
+    {
         yield return Binary("math.add", "Add", OpCode.Add, 0f, "a + b");
         yield return Binary("math.sub", "Subtract", OpCode.Sub, 0f, "a - b");
         yield return Binary("math.mul", "Multiply", OpCode.Mul, 1f, "a * b");
@@ -40,10 +57,6 @@ public partial class NodeCatalog
             [Any("a"), Any("b", 1f), Any("t", 0.5f, 0f, 1f)], [Any("out")],
             (em, i) => [em.Ternary(OpCode.Mix, i[0], i[1], i[2])],
             "Blends from a to b as t goes 0 to 1.");
-
-        yield return Mixer();
-
-        yield return Desk();
 
         yield return new NodeDef(
             "math.smoothstep", "Smoothstep", ModuleCategories.Maths,
@@ -177,4 +190,87 @@ public partial class NodeCatalog
             + "the next Desk's 'bus' inputs they are added at full level, so the last Desk in the "
             + "chain is the master.");
     }
+
+    /// <summary>
+    /// A formula over four sockets, typed rather than wired: one block where the
+    /// arithmetic would otherwise be a column of Multiplies and Adds.
+    /// </summary>
+    /// <remarks>
+    /// It is the Maths modules its formula names and nothing else — see
+    /// <see cref="Formula"/> — so a formula is heard and seen exactly as the
+    /// modules it spells would be. The sockets rest where the Multiply's do, on
+    /// nought and one, so the formula a fresh one carries passes 'a' through
+    /// until something is wired into it.
+    /// </remarks>
+    private static NodeDef Expression(IReadOnlyDictionary<string, NodeDef> functions) => new(
+        ExpressionTypeId, "Expression", ModuleCategories.Maths,
+        [Any("a"), Any("b", 1f), Any("c"), Any("d")], [Any("out")],
+        (em, i) =>
+            [i.Extra<Formula>(FormulaExtra.StateKey) is { } formula ? formula.Lower(em, i.Inputs) : em.Constant(0f)],
+        "A formula over its four sockets, typed rather than wired: 'a * b + c', "
+        + "'(floor(a * 45) + 0.5) / 45', 'smoothstep(0.2, 0.8, a) * b'. It is exactly the Maths "
+        + "modules it names, so it sounds and looks the same as the patch it replaces. "
+        + "It knows + - * / %, a minus in front, brackets, numbers, pi and tau, and "
+        + Formula.Listed(functions) + " — an argument left off is that module's knob "
+        + "at rest. A number that should be turned belongs on a socket instead, where it "
+        + "is a knob. A formula that does not read gives 0 and says why.")
+    {
+        Extras = [new FormulaExtra(functions)],
+    };
+
+    public const string ExpressionTypeId = "math.expression";
+}
+
+/// <summary>An Expression's formula: one line of text, read where the module is compiled.</summary>
+/// <remarks>
+/// Declared as a <see cref="ExtraField.Text"/> field, so the panel, the text
+/// language and the assistant write it the way they write any plugin's field
+/// (ADR-0055). What is its own is reading it: a formula that does not read is a
+/// complaint here and nought out of the module, the bargain a missing file has
+/// with a Sample.
+/// </remarks>
+internal sealed record FormulaExtra(IReadOnlyDictionary<string, NodeDef> Functions) : NodeExtra
+{
+    /// <summary>What this is filed under, in a saved patch and on a context.</summary>
+    public const string StateKey = "expression";
+
+    /// <summary>The one field: the formula as typed.</summary>
+    public const string FormulaField = "formula";
+
+    /// <summary>What a fresh one carries: the Multiply and Add a formula most often replaces.</summary>
+    public const string Fresh = "a * b + c";
+
+    public override string Key => StateKey;
+
+    public override IReadOnlyList<ExtraField> Fields { get; } = [new ExtraField.Text(FormulaField, "formula", Fresh)];
+
+    public override EmitContext Fold(EmitContext ctx, NodeInstance node, ExtraEnv env)
+    {
+        var text = Of(node);
+
+        if (Formula.Read(text, Functions, out var problem) is { } formula) return ctx.With(Key, formula);
+
+        env.Report(new CompileIssue(
+            node.Id,
+            $"'{env.Title}' does not read as a formula: {problem}. It gives 0 until it does."));
+
+        return ctx;
+    }
+
+    /// <summary>The formula an instance carries, as typed.</summary>
+    public static string Of(NodeInstance node) =>
+        ((ExtraField.Text)FieldOf).Value(node.StateOf(StateKey)?[FormulaField]);
+
+    /// <summary>
+    /// What an unnamed Expression is called: its formula, which says more than
+    /// the word Expression does. Null for every other module, and for one whose
+    /// formula is blank.
+    /// </summary>
+    public static string? Caption(NodeInstance node, NodeDef def) =>
+        def.Extra<FormulaExtra>() is not null && Of(node).Trim() is { Length: > 0 } formula ? formula : null;
+
+    public override string Announce() =>
+        $"  {StateKey} {FormulaField}, the formula as a string — not a knob";
+
+    private static readonly ExtraField FieldOf = new ExtraField.Text(FormulaField, "formula", Fresh);
 }

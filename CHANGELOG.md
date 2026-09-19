@@ -12,6 +12,7 @@
 ### Modules
 - Added Stroke (a drum envelope counted off the beat), Fade (brings a part in as a level rises), Wander (a slow random value) and Drum (a kick or tom from one envelope) to Voice.
 - Added Desk, a four-channel stereo mixer with a trim that chains into bigger ones.
+- Added Expression, one block that computes a formula you type over its four inputs, such as `(floor(a * 45) + 0.5) / 45`. On the canvas it is titled by its formula.
 - Added Trails, which leaves the last frame fading behind the picture.
 - Added Hiss (a hi-hat, a snare's wires or a riser from one envelope) and Bell (struck metal from two sines) to Voice.
 - Added FM to Voice, a four-operator FM synth for electric pianos, brass and bells, with five algorithms.

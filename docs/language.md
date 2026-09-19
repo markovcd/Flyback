@@ -313,12 +313,19 @@ arguments like any knob:
 ```
 let land = fractal(octaves: "6")
 let keys = midi.in(device: "Launchkey 49", voice: 2)
+let px   = expression(x, formula: "(floor(a * 45) + 0.5) / 45")
 ```
 
-Three shapes and three spellings. A **number** is written on whatever scale the
+Four shapes and three spellings. A **number** is written on whatever scale the
 field reads on, so a note-scaled one is its note and a time-scaled one is its
 time — exactly as a knob is. A **switch** is `1` or `0`. A **choice** is a
-string, because what is stored is an id and an id is not a number.
+string, because what is stored is an id and an id is not a number, and so is
+**text**, which is what was typed — an Expression's formula is the one the
+engine ships.
+
+The formula is not this language, though it reads like its arithmetic: it is
+read where the Expression is compiled, over the sockets `a` to `d` rather than
+over names, so `x` and `t` mean nothing inside it and are wired in instead.
 
 A field is addressed by its **key**, which is what a saved patch files it under,
 and its label is accepted too because that is the word the inspector shows. Only

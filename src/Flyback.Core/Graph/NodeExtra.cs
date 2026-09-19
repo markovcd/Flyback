@@ -238,6 +238,13 @@ public sealed class ExtraState(IReadOnlyList<ExtraField> fields, JsonNode? store
     public string Chosen(string key) =>
         Field(key) is ExtraField.Choice field ? field.Value(stored?[key]) : string.Empty;
 
+    /// <summary>
+    /// What a text field holds, or its fallback where nothing sensible does — and
+    /// the empty string for a key that is not text at all.
+    /// </summary>
+    public string Text(string key) =>
+        Field(key) is ExtraField.Text field ? field.Value(stored?[key]) : string.Empty;
+
     private ExtraField? Field(string key) => fields.FirstOrDefault(f => f.Key == key);
 }
 

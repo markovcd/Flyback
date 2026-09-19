@@ -126,6 +126,37 @@ public abstract record ExtraField(string Key, string Label)
         }
     }
 
+    /// <summary>
+    /// A line of text somebody types — what a module reads rather than a name it
+    /// picks from a list.
+    /// </summary>
+    /// <remarks>
+    /// Kept as typed: what it means is the module's to say, and a module that
+    /// cannot read it says so where it compiles rather than having it corrected
+    /// here. Only held to a length, so a file cannot hand the panel a novel.
+    /// </remarks>
+    /// <param name="Fallback">What a fresh instance carries, and what anything but a string falls back to.</param>
+    public sealed record Text(string Key, string Label, string Fallback = "") : ExtraField(Key, Label)
+    {
+        /// <summary>The most a value may hold, in characters.</summary>
+        public const int Limit = 500;
+
+        public override JsonNode Sane(JsonNode? stored) => JsonValue.Create(Value(stored));
+
+        public override string Format(JsonNode? stored) => Value(stored);
+
+        /// <summary>What was typed, or the fallback where nothing was.</summary>
+        public string Value(JsonNode? stored)
+        {
+            var typed = stored?.GetValueKind() == JsonValueKind.String
+                && stored.AsValue().TryGetValue<string>(out var held)
+                    ? held
+                    : Fallback;
+
+            return typed.Length > Limit ? typed[..Limit] : typed;
+        }
+    }
+
     /// <summary>Something that is either on or off.</summary>
     /// <param name="On">What a fresh instance carries.</param>
     public sealed record Toggle(string Key, string Label, bool On = false) : ExtraField(Key, Label)
