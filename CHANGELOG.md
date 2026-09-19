@@ -37,6 +37,7 @@
 - The preset list is sorted into headed sections: the blank canvas first, then the patches about one idea, then the ones where sound and picture are the same thought, then the showcases.
 - The preset button opens a gallery of tiles, each with a picture of what the preset draws (a speaker for one that is only heard), its name and its description.
 - Resting the pointer on a preset in the gallery for a second plays it: its picture moves on the tile and its sound fades in, with your patch muted meanwhile.
+- The patch on the canvas can be saved as a preset of your own, listed under Your presets at the end of the gallery.
 - The teaching presets are updated, with new ones in the engine and in the Picture, Voice and Mastering plugins.
 
 ### Recording and export

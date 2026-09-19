@@ -1,0 +1,157 @@
+using Avalonia.Controls;
+using Avalonia.Headless.XUnit;
+using Avalonia.Interactivity;
+using Avalonia.Threading;
+using Flyback.App.Controls;
+using Flyback.Core.Graph;
+using Shouldly;
+
+namespace Flyback.App.Tests.Ui;
+
+/// <summary>
+/// The patch on the canvas saved as a preset from the gallery, which then lists it
+/// under a heading of its own after every preset the program offers.
+/// </summary>
+public class SavedPresetTests : UiTest, IDisposable
+{
+    private readonly string folder = Path.Combine(
+        Path.GetTempPath(),
+        "flyback-presets-" + Guid.NewGuid().ToString("N"));
+
+    public void Dispose()
+    {
+        if (Directory.Exists(folder)) Directory.Delete(folder, recursive: true);
+
+        GC.SuppressFinalize(this);
+    }
+
+    private MainWindow Open()
+    {
+        var window = new MainWindow(presetFolder: folder);
+
+        window.Show();
+        window.UpdateLayout();
+        Dispatcher.UIThread.RunJobs();
+
+        return window;
+    }
+
+    private static ComboBox Presets(MainWindow window) =>
+        All<ComboBox>(window).Single(box => box.Name == "presets");
+
+    private static void OpenGallery(MainWindow window)
+    {
+        All<Button>(window).Single(b => b.Name == "presets-glyph")
+            .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+
+        for (var attempt = 0; attempt < 20 && !All<ModalOverlay>(window).Any(); attempt++)
+            Dispatcher.UIThread.RunJobs();
+
+        Settle(window);
+    }
+
+    private static void Click(Button button, MainWindow window)
+    {
+        button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Settle(window);
+    }
+
+    private static WrapPanel Yours(MainWindow window) =>
+        All<WrapPanel>(window).Single(p => p.Name == "yours");
+
+    private static List<PatchPreset> SavedTiles(MainWindow window) =>
+        [.. All<Button>(Yours(window)).Where(b => b.Name == "tile").Select(b => (PatchPreset)b.Tag!)];
+
+    /// <summary>Saves the patch on the canvas under <paramref name="name"/>, the way a person would.</summary>
+    private static void SaveAs(MainWindow window, string name)
+    {
+        Click(All<Button>(window).Single(b => b.Name == "keep-preset"), window);
+
+        All<TextBox>(window).Single(b => b.Name == "preset-name").Text = name;
+        Settle(window);
+
+        Click(All<Button>(window).Single(b => b.Name == "save-preset"), window);
+    }
+
+    [AvaloniaFact]
+    public void The_saved_run_comes_last_with_a_way_to_save_one()
+    {
+        var window = Open();
+
+        OpenGallery(window);
+
+        var gallery = All<StackPanel>(window).Single(p => p.Name == "gallery");
+
+        gallery.Children[^2].ShouldBeOfType<TextBlock>().Text.ShouldBe(PresetGallery.YoursHeading);
+        gallery.Children[^1].ShouldBeSameAs(Yours(window));
+
+        SavedTiles(window).ShouldBeEmpty("nothing has been saved yet");
+        All<Button>(Yours(window)).ShouldContain(b => b.Name == "keep-preset");
+    }
+
+    [AvaloniaFact]
+    public void A_patch_saved_as_a_preset_is_a_tile_and_a_file()
+    {
+        var window = Open();
+        var offered = Presets(window).ItemsSource!.Cast<PatchPreset>().Count();
+
+        OpenGallery(window);
+        SaveAs(window, "Mine");
+
+        SavedTiles(window).Select(p => p.Name).ShouldBe(["Mine"]);
+        File.Exists(Path.Combine(folder, "Mine" + PatchBundle.Extension)).ShouldBeTrue();
+
+        var listed = Presets(window).ItemsSource!.Cast<PatchPreset>().ToList();
+
+        listed.Count.ShouldBe(offered + 1);
+        listed[^1].Name.ShouldBe("Mine", "a saved preset comes after every other");
+    }
+
+    [AvaloniaFact]
+    public void Clicking_a_saved_preset_puts_it_on_the_canvas()
+    {
+        var window = Open();
+        var editor = All<NodeEditor>(window).Single();
+        var saved = editor.Patch.Nodes.Select(n => n.TypeId).Order().ToList();
+
+        OpenGallery(window);
+        SaveAs(window, "Mine");
+
+        // Somewhere else first, so arriving back is visibly the saved one.
+        Click(All<Button>(window).Single(b => b.Name == "tile" && ((PatchPreset)b.Tag!).Name == "Empty"), window);
+        editor.Patch.Nodes.Count.ShouldBe(1);
+
+        OpenGallery(window);
+        Click(All<Button>(Yours(window)).Single(b => b.Name == "tile"), window);
+
+        (Presets(window).SelectedItem as PatchPreset)!.Name.ShouldBe("Mine");
+        editor.Patch.Nodes.Select(n => n.TypeId).Order().ShouldBe(saved);
+    }
+
+    [AvaloniaFact]
+    public void A_built_in_name_is_refused()
+    {
+        var window = Open();
+
+        OpenGallery(window);
+
+        Click(All<Button>(window).Single(b => b.Name == "keep-preset"), window);
+
+        All<TextBox>(window).Single(b => b.Name == "preset-name").Text = "Plasma";
+        Settle(window);
+
+        All<Button>(window).Single(b => b.Name == "save-preset").IsEnabled.ShouldBeFalse();
+    }
+
+    [AvaloniaFact]
+    public void A_window_given_no_folder_has_no_saved_run()
+    {
+        var window = new MainWindow();
+
+        window.Show();
+        Settle(window);
+        OpenGallery(window);
+
+        All<WrapPanel>(window).ShouldNotContain(p => p.Name == "yours");
+    }
+}

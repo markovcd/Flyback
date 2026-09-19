@@ -391,6 +391,12 @@ public sealed partial class MainWindow : Window
     /// Where the kept groups live. Null is the usual place; a path is for the
     /// tests, which must not write into the folder a person's own groups are in.
     /// </param>
+    /// <param name="presetFolder">
+    /// Where the presets somebody saved live. Null keeps none and offers no way to
+    /// save one — unlike <paramref name="groupFolder"/>, for the reason
+    /// <paramref name="outputSettingsPath"/> gives. The program itself passes
+    /// <see cref="PresetLibrary.DefaultFolder"/>.
+    /// </param>
     /// <param name="openPath">
     /// A file to open once there is a window for it, or null for the usual
     /// start on the default preset — see <see cref="Startup.OpenPath"/>.
@@ -442,9 +448,13 @@ public sealed partial class MainWindow : Window
         string? usageSettingsPath = null,
         Usage? usage = null,
         ReleaseNotes? whatsNew = null,
-        string? recoveryFolder = null)
+        string? recoveryFolder = null,
+        string? presetFolder = null)
     {
         this.groupFolder = groupFolder;
+
+        // Before the layout, because the toolbar lists what is saved.
+        if (presetFolder is not null) savedPresets = new PresetLibrary(presetFolder);
         this.outputSettingsPath = outputSettingsPath;
         this.updateSettingsPath = updateSettingsPath;
         this.usageSettingsPath = usageSettingsPath;
@@ -567,9 +577,23 @@ public sealed partial class MainWindow : Window
         // with the canvas from the first frame (ADR-0093).
         var offered = OrderedPresets();
         var openIndex = PresetRow(offered, outputSettings.DefaultPreset);
-        var opening = offered[openIndex];
 
-        Became(opening.Name, beside: null);
+        Patch opened;
+
+        try
+        {
+            opened = Arrive(offered[openIndex]);
+        }
+        catch (Exception ex)
+        {
+            // Only a saved preset can fail here — one whose file has gone bad, or
+            // that needs a plugin taken away since. The window still opens, on
+            // the preset it would have opened on had none been chosen.
+            Report($"Could not open the '{offered[openIndex].Name}' preset: {ex.Message}");
+
+            openIndex = PresetRow(offered, "");
+            opened = Arrive(offered[openIndex]);
+        }
 
         // Set before the patch, whose first play says which preset it is, and
         // before the picker's own index, so its handler — which rebuilds the
@@ -577,7 +601,7 @@ public sealed partial class MainWindow : Window
         // nothing: the patch below is already built.
         presetShowing = openIndex;
 
-        editor.Patch = opening.Build(plugins.Modules);
+        editor.Patch = opened;
         if (presetsPicker is not null) presetsPicker.SelectedIndex = openIndex;
 
         // No manual switch any more — Volume is the one now, and the Recompile
@@ -868,7 +892,12 @@ public sealed partial class MainWindow : Window
     /// within a kind the engine's own still come before any plugin's — the list
     /// is the same wherever the program is installed.
     /// </summary>
-    private List<PatchPreset> OrderedPresets() => plugins.Presets.OrderBy(p => p.Kind).ToList();
+    /// <remarks>
+    /// The presets somebody saved come after all of those, so a save never moves
+    /// the row any other preset is on.
+    /// </remarks>
+    private List<PatchPreset> OrderedPresets() =>
+        [.. plugins.Presets.OrderBy(p => p.Kind), .. savedPresets?.All.Select(entry => entry.Preset) ?? []];
 
     /// <summary>
     /// The row of <paramref name="presets"/> holding the preset called
@@ -891,7 +920,7 @@ public sealed partial class MainWindow : Window
 
     private Control BuildToolbar()
     {
-        var ordered = OrderedPresets();
+        offeredPresets = OrderedPresets();
 
         // Not shown, and never opened: what this holds is which preset is on the
         // canvas, and its selection changing is how a pick from the gallery
@@ -901,8 +930,8 @@ public sealed partial class MainWindow : Window
         var presets = new Picker
         {
             Name = "presets",
-            ItemsSource = ordered,
-            SelectedIndex = ordered.FindIndex(preset => preset.Kind != PresetKind.Blank),
+            ItemsSource = offeredPresets,
+            SelectedIndex = offeredPresets.FindIndex(preset => preset.Kind != PresetKind.Blank),
             Width = 34,
             Height = 30,
             Opacity = 0,
@@ -916,17 +945,18 @@ public sealed partial class MainWindow : Window
         // tidy. It opens the gallery, and a tile picked there is a row of the
         // picker above chosen, so there is one road to changing the preset and it
         // is the one that asks about unsaved work.
-        var presetsButton = Drawn("presets-glyph", Glyphs.Presets(), "Start from a built-in preset patch…");
+        var presetsButton = Drawn("presets-glyph", Glyphs.Presets(), "Start from a preset patch, or save this one as a preset…");
         presetsButton.Click += async (_, _) =>
         {
             var showing = presets.SelectedItem as PatchPreset;
             var chosen = await this.ShowDialog<PatchPreset?>(
                 "Start from a preset",
-                PresetGallery.Build(ordered, showing, thumbnails, PointedAt));
+                PresetGallery.Build([.. plugins.Presets.OrderBy(p => p.Kind)], showing, thumbnails, PointedAt, Yours()));
 
             PointedAt(null);
 
-            if (chosen is not null) presets.SelectedIndex = ordered.IndexOf(chosen);
+            // Looked up in the list as it is now, which a save in the gallery may have changed.
+            if (chosen is not null) presets.SelectedIndex = offeredPresets.IndexOf(chosen);
         };
 
         // Stacked in one cell so the toolbar keeps the one slot it had.
@@ -961,17 +991,15 @@ public sealed partial class MainWindow : Window
                 // A preset from a plugin is built here, not when it was
                 // registered, so this is where a plugin that offered a patch
                 // using modules it failed to add finally shows up.
-                var built = preset.Build(plugins.Modules);
-
+                //
                 // Named before it is shown, because showing it is what redraws the
                 // title — and named at all because a preset is one of the three ways a
                 // patch arrives and the only one with no file to be named after. It has
                 // no folder either, and disowns whatever the last document was carrying:
-                // a preset naming a sound means the one beside the program, not the one
-                // inside a bundle somebody happened to open first.
-                Became(preset.Name, beside: null);
-
-                editor.Patch = built;
+                // a preset naming a sound means the one beside the program, or the one
+                // in its own bundle, not the one inside a bundle somebody happened to
+                // open first.
+                editor.Patch = Arrive(preset);
                 preview.Rewind();
 
                 // A preset has no file to have saved a conversation with, so it

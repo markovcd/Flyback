@@ -56,8 +56,12 @@ internal sealed class PresetThumbnails(ModuleCatalog modules)
 
     private const double Step = 1d / 20d;
 
-    /// <summary>Kept by name, because that is what a preset is known by everywhere else.</summary>
-    private readonly Dictionary<string, Task<Thumbnail>> drawn = [];
+    /// <summary>
+    /// Kept by the preset itself rather than its name: a preset somebody saved can
+    /// be saved again under the same name as a different patch, and is then a
+    /// different preset to draw.
+    /// </summary>
+    private readonly Dictionary<PatchPreset, Task<Thumbnail>> drawn = new(ReferenceEqualityComparer.Instance);
 
     private readonly SemaphoreSlim oneAtATime = new(1);
 
@@ -68,9 +72,9 @@ internal sealed class PresetThumbnails(ModuleCatalog modules)
     /// </summary>
     public Task<Thumbnail> Of(PatchPreset preset)
     {
-        if (drawn.TryGetValue(preset.Name, out var known)) return known;
+        if (drawn.TryGetValue(preset, out var known)) return known;
 
-        return drawn[preset.Name] = Task.Run(async () =>
+        return drawn[preset] = Task.Run(async () =>
         {
             await oneAtATime.WaitAsync();
 
