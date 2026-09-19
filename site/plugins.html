@@ -267,7 +267,7 @@
         </thead>
         <tbody>
           <tr><td><code>AddModules</code></td><td>Modules in the palette, keyed by a provider</td><td>—</td></tr>
-          <tr><td><code>AddPresets</code></td><td>Patches in the preset list</td><td>—</td></tr>
+          <tr><td><code>AddPresets</code></td><td>Patches in the preset gallery</td><td>—</td></tr>
           <tr><td><code>AddAudioOutput</code></td><td>A sound backend</td><td>Open a device</td></tr>
           <tr><td><code>AddSecretStore</code></td><td>Somewhere the OS holds a secret</td><td>Read or write one</td></tr>
           <tr><td><code>AddPatchAssistant</code></td><td>Something that can author a patch</td><td>Open a connection, or need a credential present</td></tr>
@@ -540,7 +540,7 @@ em.UnitWrite(cell, smoothed);           <span class="c">// what it holds next ti
     function is handed the catalog when the preset is <em>picked</em>, not when it is registered — so it can
     freely use the modules the same plugin just added.</p>
 
-    <p>A fourth argument, the <code>PresetKind</code>, says which heading of the preset list it belongs under:
+    <p>A fourth argument, the <code>PresetKind</code>, says which heading of the preset gallery it belongs under:
     <code>Idea</code> for one idea at one sink, which is the default; <code>Interplay</code> where sound and
     picture are the same thought; <code>Showcase</code> for a whole piece. Say which, or yours is filed as an
     idea whatever it is.</p>

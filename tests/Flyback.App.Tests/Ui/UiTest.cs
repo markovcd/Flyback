@@ -84,9 +84,8 @@ public class UiTest
 
     /// <summary>Picks the preset called <paramref name="name"/> out of a preset list.</summary>
     /// <remarks>
-    /// By name rather than by row, because the toolbar's list is headed section by
-    /// section: a row number there is a preset until a kind gains one, and then it
-    /// is a heading and picking it does nothing at all.
+    /// By name rather than by row, because a row number names one preset until a
+    /// plugin adds another ahead of it.
     /// </remarks>
     protected static void Pick(ComboBox presets, string name)
     {

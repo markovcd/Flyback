@@ -38,7 +38,7 @@ public class PickerTests : UiTest
     private static ComboBox Presets(MainWindow window) => All<ComboBox>(window)
         .First(box => box.ItemsSource?.Cast<object>().Any(item => Label(item) == "Plasma") == true);
 
-    /// <summary>The toolbar button standing in front of the Picker above.</summary>
+    /// <summary>The toolbar button that opens the gallery, standing in front of the Picker above.</summary>
     private static Button PresetsButton(MainWindow window) =>
         All<Button>(window).Single(b => b.Name == "presets-glyph");
 
@@ -62,21 +62,21 @@ public class PickerTests : UiTest
         Tree(presets).Count().ShouldBeGreaterThan(1, "an untemplated control is its own whole tree");
     }
 
-    /// <summary>
-    /// Pressing the toolbar button opens the very dropdown a wide picker used
-    /// to open by itself — the button only stands in front of it now.
-    /// </summary>
+    /// <summary>Pressing the toolbar button puts the gallery of presets up.</summary>
     [AvaloniaFact]
-    public void Pressing_the_preset_button_opens_the_list()
+    public void Pressing_the_preset_button_opens_the_gallery()
     {
         var window = Open();
-        var presets = Presets(window);
         var button = PresetsButton(window);
 
         button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+
+        for (var attempt = 0; attempt < 20 && !All<ModalOverlay>(window).Any(); attempt++)
+            Dispatcher.UIThread.RunJobs();
+
         Settle(window);
 
-        presets.IsDropDownOpen.ShouldBeTrue();
+        All<ModalOverlay>(window).ShouldHaveSingleItem();
     }
 
     [AvaloniaFact]

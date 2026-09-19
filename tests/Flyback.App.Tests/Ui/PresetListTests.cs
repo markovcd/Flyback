@@ -1,20 +1,19 @@
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
+using Avalonia.Interactivity;
+using Avalonia.Media;
+using Avalonia.Media.Imaging;
 using Avalonia.Threading;
+using Flyback.App.Controls;
 using Flyback.Core.Graph;
 using Shouldly;
 
 namespace Flyback.App.Tests.Ui;
 
 /// <summary>
-/// The preset list is in kind order and says which kind is which: a heading over
-/// each run of one.
+/// The presets are offered as a gallery of tiles: in kind order, a heading over each
+/// run of one, each tile carrying the preset's own name, description and picture.
 /// </summary>
-/// <remarks>
-/// A row of the list rather than a line drawn on the first preset of the run,
-/// which is what it was at first: a row lights up whole, so a heading carried on
-/// one lit with it and read as a label for that one preset.
-/// </remarks>
 public class PresetListTests : UiTest
 {
     private static MainWindow Open()
@@ -28,9 +27,45 @@ public class PresetListTests : UiTest
         return window;
     }
 
-    /// <summary>The toolbar's list of patches to start from.</summary>
+    /// <summary>What holds which preset is on the canvas.</summary>
     private static ComboBox Presets(MainWindow window) =>
         All<ComboBox>(window).Single(box => box.Name == "presets");
+
+    /// <summary>Presses the toolbar's preset button, which puts the gallery up.</summary>
+    private static void OpenGallery(MainWindow window)
+    {
+        All<Button>(window).Single(b => b.Name == "presets-glyph")
+            .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+
+        for (var attempt = 0; attempt < 20 && !All<ModalOverlay>(window).Any(); attempt++)
+            Dispatcher.UIThread.RunJobs();
+
+        Settle(window);
+    }
+
+    private static List<Button> Tiles(MainWindow window) =>
+        All<Button>(window).Where(b => b.Name == "tile").ToList();
+
+    private static Button Tile(MainWindow window, string name) =>
+        Tiles(window).Single(t => ((PatchPreset)t.Tag!).Name == name);
+
+    /// <summary>
+    /// A tile's picture is drawn off the UI thread, so it arrives a moment after the
+    /// gallery does.
+    /// </summary>
+    private static void UntilDrawn(MainWindow window, Func<bool> done)
+    {
+        var deadline = DateTime.UtcNow.AddSeconds(60);
+
+        while (!done() && DateTime.UtcNow < deadline)
+        {
+            Dispatcher.UIThread.RunJobs();
+            Thread.Sleep(20);
+        }
+
+        Settle(window);
+        done().ShouldBeTrue("the thumbnail was never drawn");
+    }
 
     /// <summary>
     /// The words a kind is headed with, which are not the words the enum uses:
@@ -48,76 +83,130 @@ public class PresetListTests : UiTest
     public void A_heading_stands_over_each_run_of_a_kind()
     {
         var window = Open();
-        var presets = Presets(window);
-        var rows = presets.ItemsSource!.Cast<object>().ToList();
 
+        OpenGallery(window);
+
+        var gallery = All<StackPanel>(window).Single(p => p.Name == "gallery");
         var headed = new List<PresetKind>();
-        var under = (PresetKind?)null;
 
-        for (var row = 0; row < rows.Count; row++)
+        for (var row = 0; row < gallery.Children.Count; row += 2)
         {
-            if (rows[row] is PatchPreset preset)
-            {
-                under.ShouldNotBeNull("a preset stands before the first heading")
-                    .ShouldBe(preset.Kind, $"“{preset.Name}” is under the heading for another kind");
-                continue;
-            }
+            var heading = gallery.Children[row].ShouldBeOfType<TextBlock>();
+            var tiles = gallery.Children[row + 1].ShouldBeOfType<WrapPanel>();
 
-            // Anything else in the list is a heading, and a heading is a heading
-            // for what is below it.
-            rows.Count.ShouldBeGreaterThan(row + 1, "a heading with nothing under it");
+            var kinds = tiles.Children.Select(t => ((PatchPreset)((Button)t).Tag!).Kind).Distinct().ToList();
 
-            var first = rows[row + 1].ShouldBeOfType<PatchPreset>();
-
-            headed.ShouldNotContain(first.Kind, "a kind is headed once, where its presets begin");
-            headed.Add(first.Kind);
-            under = first.Kind;
-
-            // Built from the list's own template, that being where the words are.
-            var drawn = presets.ItemTemplate!.Build(rows[row]).ShouldBeOfType<TextBlock>();
-
-            drawn.Text.ShouldBe(Headings[first.Kind]);
+            kinds.Count.ShouldBe(1, "a run holds one kind");
+            heading.Text.ShouldBe(Headings[kinds[0]]);
+            headed.ShouldNotContain(kinds[0], "a kind is headed once, where its presets begin");
+            headed.Add(kinds[0]);
         }
 
         headed.ShouldBe([PresetKind.Blank, PresetKind.Idea, PresetKind.Interplay, PresetKind.Showcase]);
     }
 
     /// <summary>
-    /// And it is not something to point at. A heading that took the pointer would
-    /// light under it like a preset does, saying the one below it is all the
-    /// heading is about.
+    /// Every preset the list offers is a tile, saying what the list said: its name
+    /// and its one line.
     /// </summary>
     [AvaloniaFact]
-    public void A_heading_is_not_a_row_anybody_can_point_at()
+    public void Each_preset_is_a_tile_with_its_name_and_description()
     {
         var window = Open();
-        var presets = Presets(window);
 
-        presets.IsDropDownOpen = true;
+        OpenGallery(window);
+
+        var offered = Presets(window).ItemsSource!.Cast<PatchPreset>().ToList();
+        var tiles = Tiles(window);
+
+        tiles.Select(t => (PatchPreset)t.Tag!).ShouldBe(offered);
+
+        foreach (var tile in tiles)
+        {
+            var preset = (PatchPreset)tile.Tag!;
+            var said = All<TextBlock>(tile).Select(t => t.Text).ToList();
+
+            said.ShouldContain(preset.Name);
+
+            if (preset.Description.Length > 0) said.ShouldContain(preset.Description);
+        }
+    }
+
+    /// <summary>
+    /// Clicking a tile is choosing that preset: the canvas takes it and the gallery
+    /// comes down.
+    /// </summary>
+    [AvaloniaFact]
+    public void Clicking_a_tile_puts_that_preset_on_the_canvas()
+    {
+        var window = Open();
+        var editor = All<NodeEditor>(window).Single();
+        var before = editor.Patch.Nodes.Select(n => n.Id).ToList();
+
+        OpenGallery(window);
+
+        Tile(window, "Kaleidoscope").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Settle(window);
 
-        var rows = presets.ItemsSource!.Cast<object>().ToList();
-        var checkedHeadings = 0;
+        (Presets(window).SelectedItem as PatchPreset)!.Name.ShouldBe("Kaleidoscope");
+        editor.Patch.Nodes.Select(n => n.Id).ShouldNotBe(before);
+        All<ModalOverlay>(window).ShouldBeEmpty("picking one is answering the dialog");
+    }
 
-        for (var row = 0; row < rows.Count; row++)
+    /// <summary>The one on the canvas is outlined, so the gallery says where somebody is.</summary>
+    [AvaloniaFact]
+    public void The_preset_on_the_canvas_is_outlined()
+    {
+        var window = Open();
+
+        OpenGallery(window);
+
+        var showing = ((PatchPreset)Presets(window).SelectedItem!).Name;
+
+        foreach (var tile in Tiles(window))
         {
-            // A list this long is built as it is scrolled, so the rows below the
-            // dropdown have no container to ask yet.
-            if (presets.ContainerFromIndex(row) is not { } container) continue;
+            var outlined = tile.BorderBrush is ISolidColorBrush { Color.A: > 0 };
 
-            if (rows[row] is PatchPreset)
-            {
-                container.IsHitTestVisible.ShouldBeTrue("a preset is what the list is for");
-                continue;
-            }
-
-            checkedHeadings++;
-
-            container.IsHitTestVisible.ShouldBeFalse("a heading is only read");
-            container.Focusable.ShouldBeFalse("a heading is only read");
+            outlined.ShouldBe(((PatchPreset)tile.Tag!).Name == showing);
         }
+    }
 
-        checkedHeadings.ShouldBeGreaterThan(0, "the open list showed no heading to check");
+    /// <summary>A preset that draws is shown by what it draws.</summary>
+    [AvaloniaFact]
+    public void A_picture_preset_shows_its_own_frame()
+    {
+        var window = Open();
+
+        OpenGallery(window);
+
+        var image = All<Image>(Tile(window, "Plasma")).Single();
+
+        UntilDrawn(window, () => image.Source is not null);
+
+        var frame = image.Source.ShouldBeAssignableTo<WriteableBitmap>()!;
+
+        frame.PixelSize.Width.ShouldBe(PresetThumbnails.Width);
+    }
+
+    /// <summary>
+    /// A preset with no picture in it has none to show, and says why in as many words
+    /// — a patch that is only heard, or one with nothing wired yet.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_preset_with_no_picture_says_so_where_the_picture_would_be()
+    {
+        var window = Open();
+
+        OpenGallery(window);
+
+        string Says(string preset) => All<TextBlock>(Tile(window, preset))
+            .Single(t => t.Parent is Grid).Text ?? "";
+
+        UntilDrawn(window, () => Says("Clip").Length > 0 && Says("Empty").Length > 0);
+
+        Says("Clip").ShouldBe("Sound only");
+        Says("Empty").ShouldBe("Nothing yet");
+        All<Image>(Tile(window, "Clip")).Single().Source.ShouldBeNull();
     }
 
     /// <summary>
