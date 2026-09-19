@@ -4,7 +4,7 @@
 
 ### Updates
 - Flyback updates itself: it checks for a signed release at startup, downloads it in the background, and installs it the next time it starts, then shows what changed since the version it replaced. On by default, in the new Settings → Updates tab.
-- Flyback counts how it is used — the version, the operating system, which plugins and sound backend are in use, how many of each kind of module a patch has when it plays, and which assistant is asked. Nothing about you, your machine or your patches. On by default, in the new Settings → Usage tab.
+- Flyback counts how it is used — the version, the operating system, the rough size of the machine, which plugins and sound backend are in use, how many of each kind of module a patch has when it plays, which assistant is asked, how long a run lasts and what it did, and where it crashed. Nothing about you, your machine or your patches. On by default, in the new Settings → Usage tab.
 
 ### Plugins
 - A plugin built for a Flyback that has since changed what plugins are built against is left out at startup, and About says whether the plugin or Flyback is the one to update.

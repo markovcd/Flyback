@@ -90,6 +90,12 @@ internal sealed class MidiHub(IMidiInput? hardware = null) : IDisposable
     public event Action<string, MidiMessage>? Controlled;
 
     /// <summary>
+    /// Anything at all arrived from a device — never from the computer keyboard.
+    /// Raised on the driver's thread, before the message is acted on.
+    /// </summary>
+    public event Action? Heard;
+
+    /// <summary>
     /// What there is to play with: the computer's own keys, and then whatever is
     /// plugged in. Asked afresh every time, because devices come and go while the
     /// program runs. The keyboard is first and always there, which is what makes
@@ -391,6 +397,8 @@ internal sealed class MidiHub(IMidiInput? hardware = null) : IDisposable
     /// </summary>
     private void Receive(string source, MidiMessage message)
     {
+        Heard?.Invoke();
+
         if (message.Action == MidiAction.Control)
         {
             Controlled?.Invoke(source, message);

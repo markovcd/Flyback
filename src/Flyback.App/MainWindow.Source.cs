@@ -3,6 +3,7 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Flyback.App.Controls;
+using Flyback.App.Statistics;
 using Flyback.Core.Graph;
 using Flyback.Core.Language;
 
@@ -797,6 +798,8 @@ public sealed partial class MainWindow
     private void ShowCode(bool shown)
     {
         showingCode = shown;
+
+        if (shown) usage.Count(Used.Text);
 
         if (shown && !sourceOwned) PrintForReading();
 

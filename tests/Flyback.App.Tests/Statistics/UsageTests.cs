@@ -17,6 +17,8 @@ public sealed class UsageTests
         public List<UsageEvent> Events { get; } = [];
 
         public void Send(UsageEvent happened) => Events.Add(happened);
+
+        public void Drain(TimeSpan most) { }
     }
 
     private readonly Collected sink = new();
@@ -170,5 +172,174 @@ public sealed class UsageTests
             Usage.Off.Played(["flyback.oscillator"]);
             Usage.Off.Assistant("openai");
         });
+    }
+
+    [Fact]
+    public void A_run_says_how_it_was_launched_and_how_big_the_machine_is_in_bands()
+    {
+        new Usage(sink, new Launch(First: true, Updated: false, File: true))
+            .Started([], "wasapi", screens: [1080, 1600]);
+
+        Only.Props["first"].ShouldBe(true);
+        Only.Props["updated"].ShouldBe(false);
+        Only.Props["file"].ShouldBe(true);
+        Only.Props["screens"].ShouldBe("2");
+        Only.Props["screen"].ShouldBe("1440-2159");
+        Only.Props["cores"].ShouldBeOfType<string>();
+        Only.Props["memory"].ShouldBeOfType<string>();
+    }
+
+    [Theory]
+    [InlineData(0, "<1")]
+    [InlineData(1, "1-4")]
+    [InlineData(7, "5-14")]
+    [InlineData(480, "480+")]
+    [InlineData(9000, "480+")]
+    public void A_length_is_sent_as_its_band(int minutes, string band) =>
+        Usage.Band(minutes, [1, 5, 15, 30, 60, 120, 240, 480]).ShouldBe(band);
+
+    [Fact]
+    public void A_band_one_wide_is_a_single_number() =>
+        Usage.Band(1, [0, 1, 2, 5]).ShouldBe("1");
+
+    [Fact]
+    public void A_play_says_its_wires_and_the_preset_it_came_from()
+    {
+        var shipped = Presets.All[0].Name;
+
+        Run.Played(["flyback.oscillator"], wires: 4, preset: shipped);
+
+        Only.Props["wires"].ShouldBe(4);
+        Only.Props["preset"].ShouldBe(shipped);
+    }
+
+    [Fact]
+    public void A_patch_from_a_file_names_no_preset()
+    {
+        Run.Played(["flyback.oscillator"]);
+
+        Only.Props["preset"].ShouldBe("none");
+    }
+
+    [Fact]
+    public void A_plugins_preset_is_not_named_beside_a_plugin_nobody_shipped()
+    {
+        var run = Run;
+
+        run.Started(["acme.modular"], "wasapi");
+        run.Played(["flyback.oscillator"], preset: "Acme's Own");
+
+        sink.Events[1].Props["preset"].ShouldBe(Usage.Other);
+    }
+
+    [Fact]
+    public void A_plugins_preset_is_named_while_every_plugin_is_one_Flyback_ships()
+    {
+        var run = Run;
+
+        run.Started(["flyback.effects"], "wasapi");
+        run.Played(["flyback.oscillator"], preset: "Acid");
+
+        sink.Events[1].Props["preset"].ShouldBe("Acid");
+    }
+
+    [Fact]
+    public void The_end_of_a_run_says_what_it_did_in_bands()
+    {
+        var run = new Usage(sink, running: () => TimeSpan.FromMinutes(42));
+
+        for (var modules = 1; modules <= 7; modules++) run.Played(Enumerable.Repeat("flyback.oscillator", modules));
+        run.Count(Used.Recorded);
+        run.Count(Used.Saved);
+        run.Count(Used.Saved);
+        run.Drew(59.7, gpu: true);
+        run.Drew(60.1, gpu: true);
+        run.Drew(12, gpu: false);
+
+        run.Ended();
+
+        var ended = sink.Events.Last();
+
+        ended.Name.ShouldBe("ended");
+        ended.Props["minutes"].ShouldBe("30-59");
+        ended.Props["plays"].ShouldBe("5-9", "every play is counted, not only the ones reported");
+        ended.Props["recorded"].ShouldBe("1");
+        ended.Props["saved"].ShouldBe("2-4");
+        ended.Props["fullScreen"].ShouldBe("0");
+        ended.Props["renderer"].ShouldBe("gpu");
+        ended.Props["fps"].ShouldBe("55-89");
+    }
+
+    [Fact]
+    public void A_run_that_never_drew_says_nothing_about_drawing()
+    {
+        var run = Run;
+
+        run.Ended();
+        run.Ended();
+
+        Only.Props.ShouldNotContainKey("fps");
+        Only.Props.ShouldNotContainKey("renderer");
+    }
+
+    [Fact]
+    public void Every_message_to_an_assistant_is_counted_though_it_is_named_once()
+    {
+        var run = Run;
+
+        run.Assistant("openai");
+        run.Assistant("openai");
+        run.Ended();
+
+        sink.Events.Count(e => e.Name == "assistant").ShouldBe(1);
+        sink.Events.Last().Props["asked"].ShouldBe("2-4");
+    }
+
+    [Fact]
+    public void A_crash_says_its_kind_and_where_and_never_its_message()
+    {
+        Exception thrown;
+
+        try
+        {
+            Usage.Band(1, []);
+            throw new InvalidOperationException("unreachable");
+        }
+        catch (Exception ex)
+        {
+            thrown = new InvalidOperationException(@"C:\Users\somebody\secret.fbk", ex);
+        }
+
+        var run = Run;
+
+        run.Crashed(thrown);
+        run.Crashed(thrown);
+
+        Only.Name.ShouldBe("crashed");
+        Only.Props["type"].ShouldBe(typeof(IndexOutOfRangeException).FullName);
+        Only.Props["at"].ShouldBe("Flyback.App.Statistics.Usage.Band");
+        Only.Props.Values.ShouldAllBe(value => !value.ToString()!.Contains("somebody"));
+    }
+
+    [Fact]
+    public void A_crash_that_never_reached_Flyback_is_placed_nowhere() =>
+        Usage.Place(new InvalidOperationException()).ShouldBe(Usage.Other);
+
+    private sealed class AcmeException : Exception;
+
+    [Fact]
+    public void An_exception_type_nobody_shipped_is_not_named() =>
+        Usage.KnownType(typeof(AcmeException)).ShouldBe(Usage.Other);
+
+    [Fact]
+    public void Switched_off_it_says_nothing_at_the_end_or_at_a_crash()
+    {
+        var run = Run;
+
+        run.Stop();
+        run.Ended();
+        run.Crashed(new InvalidOperationException());
+
+        sink.Events.ShouldBeEmpty();
     }
 }

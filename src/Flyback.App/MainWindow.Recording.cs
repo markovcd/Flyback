@@ -3,6 +3,7 @@ using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using Flyback.App.Capture;
 using Flyback.App.Controls;
+using Flyback.App.Statistics;
 using Flyback.Core.Graph;
 using Flyback.Core.Render;
 
@@ -477,6 +478,8 @@ public sealed partial class MainWindow
             if (said || gone) return;
 
             var status = running.Status;
+
+            if (status.Stopped is null) usage.Count(Used.Recorded);
 
             Report(status.Stopped is { } failure
                 ? $"Recording stopped: {failure}"

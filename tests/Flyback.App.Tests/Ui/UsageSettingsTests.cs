@@ -27,6 +27,8 @@ public sealed class UsageSettingsTests : UiTest, IDisposable
         public List<UsageEvent> Events { get; } = [];
 
         public void Send(UsageEvent happened) => Events.Add(happened);
+
+        public void Drain(TimeSpan most) { }
     }
 
     public void Dispose()

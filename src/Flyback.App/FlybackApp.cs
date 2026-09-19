@@ -41,7 +41,27 @@ public sealed class FlybackApp : Application
         {
             // Before the window, because the window says what it started as as
             // soon as it has asked for a sound device (ADR-0094).
-            var usage = Usage.Start(UsageSettings.Load(UsageSettings.File));
+            var usage = Usage.Start(
+                UsageSettings.Load(UsageSettings.File),
+                new Launch(First: Startup.FirstRun, Updated: Startup.Updated, File: Startup.OpenPath is not null));
+
+            // A crash is said with the little that may be said about it, and the
+            // process kept for as long as that takes and no longer (ADR-0103).
+            AppDomain.CurrentDomain.UnhandledException += (_, e) =>
+            {
+                if (e.ExceptionObject is not Exception ex) return;
+
+                usage.Crashed(ex);
+                usage.Drain(Usage.LongestWait);
+            };
+
+            // The end of the run is where what it did is added up, and the only
+            // moment anything waits for a statistic to arrive.
+            desktop.Exit += (_, _) =>
+            {
+                usage.Ended();
+                usage.Drain(Usage.LongestWait);
+            };
 
             var window = new MainWindow(
                 openPath: Startup.OpenPath,

@@ -54,6 +54,9 @@ internal sealed class Aptabase : IUsageSink, IDisposable
     private readonly string sessionId = SessionId();
     private readonly Body.Info info;
 
+    /// <summary>Events posted and not yet answered, for <see cref="Drain"/> to wait on.</summary>
+    private readonly HashSet<Task> inFlight = [];
+
     private Aptabase(HttpClient http, Version running)
     {
         this.http = http;
@@ -135,10 +138,11 @@ internal sealed class Aptabase : IUsageSink, IDisposable
     /// <summary>
     /// Starts sending, and returns. Nothing waits for an event and nothing is sent
     /// twice: a statistic that did not arrive is one run out of however many, and
-    /// the caller has a window to draw (ADR-0094).
+    /// the caller has a window to draw (ADR-0094). Only <see cref="Drain"/> waits.
     /// </summary>
-    public void Send(UsageEvent happened) =>
-        _ = Task.Run(async () =>
+    public void Send(UsageEvent happened)
+    {
+        var sending = Task.Run(async () =>
         {
             try
             {
@@ -149,6 +153,36 @@ internal sealed class Aptabase : IUsageSink, IDisposable
                 Trace.WriteLine($"usage: {ex.Message}");
             }
         });
+
+        lock (inFlight) inFlight.Add(sending);
+
+        _ = sending.ContinueWith(
+            done => { lock (inFlight) inFlight.Remove(done); },
+            TaskScheduler.Default);
+    }
+
+    /// <summary>
+    /// Waits for whatever is still on its way, and gives up on it after
+    /// <paramref name="most"/> — which is how long a closing window is kept open
+    /// for a statistic, and no longer (ADR-0103).
+    /// </summary>
+    public void Drain(TimeSpan most)
+    {
+        Task[] pending;
+
+        lock (inFlight) pending = [.. inFlight];
+
+        if (pending.Length == 0) return;
+
+        try
+        {
+            Task.WaitAll(pending, most);
+        }
+        catch (Exception ex)
+        {
+            Trace.WriteLine($"usage: {ex.Message}");
+        }
+    }
 
     /// <summary>Throws where the service refused it or could not be reached.</summary>
     internal async Task SendAsync(UsageEvent happened, CancellationToken cancel)

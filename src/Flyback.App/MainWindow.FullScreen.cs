@@ -1,4 +1,5 @@
 using Avalonia.Controls;
+using Flyback.App.Statistics;
 
 namespace Flyback.App;
 
@@ -57,6 +58,8 @@ public sealed partial class MainWindow
         if (columns is null || previewBox is null || toolbar is null || statusBar is null) return;
 
         previewIsFullScreen = full;
+
+        if (full) usage.Count(Used.FullScreen);
 
         if (full) Collapse();
         else Restore();

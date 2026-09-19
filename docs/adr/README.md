@@ -126,7 +126,8 @@ context, decision, consequences.
 | [0033](0033-patches-authored-by-an-agent-behind-the-plugin-boundary.md) | Patches may be authored by an agent, behind the plugin boundary *(user-directed; its all-or-nothing prose budget replaced by [0098](0098-the-briefing-has-a-budget-and-a-list-that-outranks-it.md))* |
 | [0034](0034-settings-in-a-file-the-key-in-the-operating-system.md) | Settings in a file, the key in the operating system's store *(user-directed)* |
 | [0088](0088-a-release-installs-itself-at-the-next-start.md) | A release installs itself at the next start, if its signature says it is ours *(user-directed)* |
-| [0094](0094-a-run-says-what-it-played-and-nothing-about-who-played-it.md) | A run says what it played, and nothing about who played it *(user-directed)* |
+| [0094](0094-a-run-says-what-it-played-and-nothing-about-who-played-it.md) | A run says what it played, and nothing about who played it *(user-directed; two more events and a wait at the end added by [0103](0103-a-run-says-how-it-ended-in-bands.md))* |
+| [0103](0103-a-run-says-how-it-ended-in-bands.md) | A run says how it ended, in bands *(user-directed)* |
 | [0047](0047-the-agent-may-listen-where-the-model-can.md) | The agent gets an ear, which is a second model *(user-directed)* |
 | [0066](0066-a-second-wire-format-so-one-model-can-hear.md) | A second wire format, so one model can hear what it built *(user-directed)* |
 | [0069](0069-an-assistant-declares-its-own-settings.md) | An assistant declares its own settings *(user-directed; its field vocabulary shared with every plugin by [0085](0085-a-sound-backend-declares-its-own-settings.md))* |

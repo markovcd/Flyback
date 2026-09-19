@@ -4,6 +4,7 @@ using Avalonia.Input;
 using Avalonia.Platform.Storage;
 using Flyback.App.Assist;
 using Flyback.App.Controls;
+using Flyback.App.Statistics;
 using Flyback.Core;
 using Flyback.Core.Graph;
 using Flyback.Core.Language;
@@ -79,6 +80,8 @@ public sealed partial class MainWindow
         ClearPresetSelection();
 
         editor.MarkSaved();
+
+        usage.Count(Used.Saved);
     }
 
     /// <summary>
@@ -181,6 +184,8 @@ public sealed partial class MainWindow
 
             // Whatever preset the list still showed is not this patch.
             ClearPresetSelection();
+
+            usage.Count(Used.Opened);
 
             editor.Patch = loaded.Patch;
             preview.Rewind();
@@ -529,6 +534,8 @@ public sealed partial class MainWindow
             // Whatever preset the list still showed is not this patch.
             ClearPresetSelection();
 
+            usage.Count(Used.Opened);
+
             editor.Patch = load.Patch;
             preview.Rewind();
 
@@ -599,6 +606,8 @@ public sealed partial class MainWindow
 
             // Whatever preset the list still showed is not this patch.
             ClearPresetSelection();
+
+            usage.Count(Used.Opened);
 
             editor.Patch = bundle.Patch;
             preview.Rewind();

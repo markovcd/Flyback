@@ -536,8 +536,11 @@ x |> sine(freq: 1.5)
         next time Flyback starts, and only if it is signed with Flyback's release key. The window that opens then
         shows what changed since the version it replaced. Turn it off under <strong>Settings → Updates</strong>.</p>
         <p>It also counts how it is used: the version, the operating system, which of its own plugins loaded and
-        which sound backend opened, how many of each kind of module are in a patch when it plays, and whether an
-        assistant was asked and which provider. No patch, nothing typed, and nothing that identifies you or your
+        which sound backend opened, roughly how many cores, how much memory and how tall a screen the machine has,
+        how many of each kind of module are in a patch when it plays, whether an assistant was asked and which
+        provider, and when a run ends, roughly how long it lasted, what it did and how fast the picture was drawn.
+        If Flyback crashes, it sends the kind of error and where in Flyback it happened, never the message. Every
+        figure is sent as a coarse band. No patch, nothing typed, and nothing that identifies you or your
         machine — two runs cannot be told apart from one. Turn it off under <strong>Settings → Usage</strong>.</p>
         <p>On macOS the build is <code>Flyback.app</code>, and it opens <code>.fbk</code>, <code>.fbkb</code> and
         <code>.fbks</code> files by double-click.</p>

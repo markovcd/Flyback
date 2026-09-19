@@ -1,5 +1,6 @@
 using Avalonia;
 using Flyback.App.Controls;
+using Flyback.App.Statistics;
 using Flyback.Core.Graph;
 
 namespace Flyback.App;
@@ -48,6 +49,8 @@ public sealed partial class MainWindow
 
             if (wiring is { } drop) editor.AddNodeWired(typeId, drop);
             else editor.AddNode(typeId, addingAt);
+
+            usage.Count(Used.Added);
 
             // Back to the canvas, or the next keypress would go to a filter box
             // that is no longer on screen.

@@ -462,7 +462,7 @@ public sealed partial class MainWindow : Window
         // Here rather than at the launch, because what a run started as includes
         // which backend actually opened, and that is only known once one has been
         // asked for.
-        this.usage.Started(plugins.Plugins.Select(plugin => plugin.Info.Id), sound.Output?.Id);
+        this.usage.Started(plugins.Plugins.Select(plugin => plugin.Info.Id), sound.Output?.Id, ScreenHeights());
         audio = new AudioEngine(sound.Device) { Compiler = compiler };
 
         // Nothing is opened by this. The backend is asked what is plugged in
@@ -485,6 +485,10 @@ public sealed partial class MainWindow : Window
         // A device that would not open. The patch goes on naming it and goes on
         // being silent, and this line is the only thing that would say why.
         midi.Trouble += message => Report(message);
+
+        // That an instrument was played at all, counted for the end of the run
+        // and nothing about what was played on it (ADR-0103).
+        midi.Heard += () => this.usage.Count(Used.Instrument);
 
         WireControls();
 
@@ -561,12 +565,13 @@ public sealed partial class MainWindow : Window
 
         Became(opening.Name, beside: null);
 
-        editor.Patch = opening.Build(plugins.Modules);
-
-        // Set before the picker's own index, so its handler — which rebuilds the
+        // Set before the patch, whose first play says which preset it is, and
+        // before the picker's own index, so its handler — which rebuilds the
         // patch on a change — sees the row it is already showing and does
-        // nothing: the patch above is already built.
+        // nothing: the patch below is already built.
         presetShowing = openIndex;
+
+        editor.Patch = opening.Build(plugins.Modules);
         if (presetsPicker is not null) presetsPicker.SelectedIndex = openIndex;
 
         // No manual switch any more — Volume is the one now, and the Recompile
@@ -841,6 +846,8 @@ public sealed partial class MainWindow : Window
 
         Grid.SetColumn(canvasPane, swapped ? 2 : 0);
         Grid.SetRowSpan(canvasPane, swapped ? 1 : 3);
+
+        if (swapped) usage.Count(Used.Swapped);
     }
 
     /// <summary>
@@ -970,6 +977,8 @@ public sealed partial class MainWindow : Window
                 if (showingCode) ReadIntoText();
 
                 presetShowing = wanted;
+
+                usage.Count(Used.Preset);
 
                 // The question above may have been answered with a save, and a
                 // save takes the selection off this list: what was saved is a
@@ -1216,6 +1225,8 @@ public sealed partial class MainWindow : Window
         bool saved;
 
         settingsAreUp = true;
+
+        usage.Count(Used.Settings);
 
         try
         {

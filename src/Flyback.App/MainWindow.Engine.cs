@@ -328,7 +328,10 @@ public sealed partial class MainWindow
             // counting (ADR-0094). Here rather than at a compile: a patch is
             // recompiled on every knob frame, and what it is made of is only
             // interesting where somebody is listening to it.
-            usage.Played(editor.Patch.Nodes.Select(node => node.TypeId));
+            usage.Played(
+                editor.Patch.Nodes.Select(node => node.TypeId),
+                editor.Patch.Connections.Count,
+                OrderedPresets().ElementAtOrDefault(presetShowing)?.Name);
 
             // Sound cannot stretch, so it leads and the picture follows — and
             // the same tick is where the picture is told what the speakers have
@@ -386,6 +389,10 @@ public sealed partial class MainWindow
         // Which renderer produced the rate is part of what it means, so it is
         // said alongside — what is actually drawing, not what was asked for.
         var backend = preview.Backend == PreviewBackend.Gpu ? "GPU" : "CPU";
+
+        // Only while the window is somebody's: a window behind others is drawn
+        // at whatever rate the system leaves it, which says nothing about Flyback.
+        if (IsActive) usage.Drew(preview.FramesPerSecond, preview.Backend == PreviewBackend.Gpu);
 
         status.Text = string.Create(
             CultureInfo.InvariantCulture,

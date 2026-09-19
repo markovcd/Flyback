@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Flyback.App.Updates;
+using Flyback.Core;
 using Flyback.Core.Graph;
 using Flyback.Plugins.Assist;
 using Flyback.Plugins.Hosting;
@@ -54,8 +55,19 @@ internal static class Startup
     /// </summary>
     public static ReleaseNotes? WhatsNew { get; private set; }
 
+    /// <summary>
+    /// Whether there was no settings folder when this launch began: the first start
+    /// on this machine. Asked before anything here writes one.
+    /// </summary>
+    public static bool FirstRun { get; private set; }
+
+    /// <summary>Whether a release Flyback downloaded itself installed just before this launch.</summary>
+    public static bool Updated { get; private set; }
+
     public static void Load(string? openPath = null, bool interpreted = false, UpdateSettings? updates = null)
     {
+        FirstRun = !Directory.Exists(GlobalConstants.DataFolder);
+
         OpenPath = openPath;
         Interpreted = interpreted;
         Updates = updates ?? new UpdateSettings();
@@ -66,8 +78,9 @@ internal static class Startup
 
         (UpdateNote, var replaced) = Updater.Folder.Tidy(running);
 
-        if (running is not null && UpdateNote == Updater.Installed(running))
-            WhatsNew = ReleaseNotes.Of(running, since: replaced);
+        Updated = running is not null && UpdateNote == Updater.Installed(running);
+
+        if (Updated) WhatsNew = ReleaseNotes.Of(running!, since: replaced);
 
         if (UpdateNote is not null) Trace.WriteLine($"updates: {UpdateNote}");
 

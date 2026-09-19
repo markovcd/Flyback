@@ -34,7 +34,7 @@ public sealed partial class MainWindow
     /// <remarks>
     /// The whole of what is counted is written out here rather than summarised,
     /// because a count nobody asked for is only fair while the person can read what
-    /// it is. It is the same list as ADR-0094's, in the order the events happen.
+    /// it is. It is the same list as ADR-0094's and ADR-0103's, in the order the events happen.
     /// </remarks>
     private void BuildUsageSection()
     {
@@ -47,10 +47,16 @@ public sealed partial class MainWindow
         usageSection.Children.Add(new TextBlock
         {
             Text = "What is counted: this version, the operating system, which of Flyback's own "
-                + "plugins loaded and which sound backend opened, how many of each kind of module "
-                + "are in a patch when it plays, and whether an assistant was asked and which "
-                + "provider it was. Nothing else — no patch, no file, no knob, nothing typed, and "
-                + "no name of a plugin Flyback does not ship.",
+                + "plugins loaded and which sound backend opened; roughly how many cores, how much "
+                + "memory and how tall a screen this machine has; whether this is its first start "
+                + "or the first after an update; how many of each kind of module and how many "
+                + "wires are in a patch when it plays, and which of Flyback's presets it came from; "
+                + "whether an assistant was asked and which provider it was; and when the run "
+                + "ends, roughly how long it lasted, how often things like recording, saving or "
+                + "going full screen were done, and how fast the picture was drawn. If Flyback "
+                + "crashes, the kind of error and where in Flyback it happened, without its "
+                + "message. Nothing else — no patch, no file, no knob, nothing typed, and no name "
+                + "of a plugin Flyback does not ship.",
             FontSize = Text.Small,
             Foreground = Text.Muted,
             TextWrapping = TextWrapping.Wrap,
@@ -65,6 +71,22 @@ public sealed partial class MainWindow
             Foreground = Text.Muted,
             TextWrapping = TextWrapping.Wrap,
         });
+    }
+
+    /// <summary>
+    /// How tall each screen is in pixels, for what a run started as to put in a band;
+    /// empty where the platform will not say.
+    /// </summary>
+    private IReadOnlyList<int> ScreenHeights()
+    {
+        try
+        {
+            return Screens.All.Select(screen => screen.Bounds.Height).ToList();
+        }
+        catch (Exception)
+        {
+            return [];
+        }
     }
 
     private void ShowUsageSettings(UsageSettings settings) =>
