@@ -49,6 +49,9 @@ internal sealed record YourPresets(
 /// </remarks>
 internal static class PresetGallery
 {
+    /// <summary>The style class of a tile whose preset is being asked about deleting.</summary>
+    private const string Asking = "asking";
+
     private const double TileWidth = 192;
     private const double PictureHeight = TileWidth * PresetThumbnails.Height / PresetThumbnails.Width;
 
@@ -314,10 +317,16 @@ internal static class PresetGallery
 
         tile.ContextFlyout = new MenuFlyout { Items = { item } };
 
+        // The answers are buttons inside the tile, and a click bubbles from them to
+        // it: unstopped, answering would open the preset it was asked about.
+        words.AddHandler(Button.ClickEvent, (_, e) => e.Handled = true);
+
         item.Click += (_, _) =>
         {
             var last = words.Children.Count - 1;
             var description = words.Children[last];
+
+            tile.Classes.Add(Asking);
 
             words.Children[last] = Question.Row(
                 $"Delete “{preset.Name}”?",
@@ -326,6 +335,8 @@ internal static class PresetGallery
                 "Keep it.",
                 gone =>
                 {
+                    tile.Classes.Remove(Asking);
+
                     if (gone) remove();
                     else words.Children[last] = description;
                 });
@@ -405,7 +416,12 @@ internal static class PresetGallery
             },
         };
 
-        tile.Click += (_, _) => Dialog.Close<PatchPreset?>(tile, preset);
+        // A tile being asked about is not one to open: a click anywhere on it
+        // while the question is up is a miss for the answers.
+        tile.Click += (_, _) =>
+        {
+            if (!tile.Classes.Contains(Asking)) Dialog.Close<PatchPreset?>(tile, preset);
+        };
         tile.PointerEntered += (_, _) => pointedAt?.Invoke(new PointedTile(preset, image));
         tile.PointerExited += (_, _) => pointedAt?.Invoke(null);
 

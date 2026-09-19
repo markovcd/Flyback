@@ -145,6 +145,72 @@ public class SavedPresetTests : UiTest, IDisposable
         All<Button>(window).Single(b => b.Name == "save-preset").IsEnabled.ShouldBeFalse();
     }
 
+    /// <summary>Saves "Mine", then asks to delete it, and returns its tile with the question up.</summary>
+    private static Button AskToDelete(MainWindow window)
+    {
+        OpenGallery(window);
+        SaveAs(window, "Mine");
+
+        var tile = All<Button>(Yours(window)).Single(b => b.Name == "tile");
+
+        ((MenuFlyout)tile.ContextFlyout!).Items.OfType<MenuItem>().Single()
+            .RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
+        Settle(window);
+
+        return tile;
+    }
+
+    private static Button Answer(Button tile, string glyph) =>
+        All<Button>(tile).Single(b => b.Content as string == glyph);
+
+    [AvaloniaFact]
+    public void A_tile_being_asked_about_deleting_does_not_open()
+    {
+        var window = Open();
+        var tile = AskToDelete(window);
+        var showing = Presets(window).SelectedItem;
+
+        Click(tile, window);
+
+        All<ModalOverlay>(window).ShouldNotBeEmpty("the gallery is still up");
+        Presets(window).SelectedItem.ShouldBeSameAs(showing);
+    }
+
+    [AvaloniaFact]
+    public void Keeping_a_preset_that_was_asked_about_does_not_open_it()
+    {
+        var window = Open();
+        var tile = AskToDelete(window);
+        var showing = Presets(window).SelectedItem;
+
+        Click(Answer(tile, "✕"), window);
+
+        All<ModalOverlay>(window).ShouldNotBeEmpty("the gallery is still up");
+        Presets(window).SelectedItem.ShouldBeSameAs(showing);
+        SavedTiles(window).Select(p => p.Name).ShouldBe(["Mine"]);
+
+        // The question is gone, so the tile is an ordinary one again.
+        Click(All<Button>(Yours(window)).Single(b => b.Name == "tile"), window);
+
+        All<ModalOverlay>(window).ShouldBeEmpty();
+        (Presets(window).SelectedItem as PatchPreset)!.Name.ShouldBe("Mine");
+    }
+
+    [AvaloniaFact]
+    public void Deleting_a_preset_does_not_open_it_either()
+    {
+        var window = Open();
+        var tile = AskToDelete(window);
+        var showing = Presets(window).SelectedItem;
+
+        Click(Answer(tile, "✔"), window);
+
+        All<ModalOverlay>(window).ShouldNotBeEmpty("the gallery is still up");
+        Presets(window).SelectedItem.ShouldBeSameAs(showing);
+        SavedTiles(window).ShouldBeEmpty();
+        File.Exists(Path.Combine(folder, "Mine" + PatchBundle.Extension)).ShouldBeFalse();
+    }
+
     /// <summary>
     /// Windows hands a box its character only for a key press nobody handled, and a
     /// text box leaves a letter unhandled, so the dialog around it must too.
