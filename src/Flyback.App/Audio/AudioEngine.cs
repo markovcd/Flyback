@@ -43,6 +43,16 @@ public sealed class AudioEngine(IAudioDevice device) : IDisposable
     // One while a rewind is waiting for the callback to carry it out.
     private int rewindPending;
 
+    /// <summary>The preset asked to be heard, or null. Written by the UI thread, read by the callback.</summary>
+    private Audition? wantedAudition;
+
+    /// <summary>The preset actually being heard, which trails <see cref="wantedAudition"/> by a fade. The callback's alone.</summary>
+    private Audition? heardAudition;
+
+    /// <summary>How far through its fade each half of the mix is, from 0 to 1. The callback's alone.</summary>
+    private float patchFade = 1f;
+    private float auditionFade;
+
     public bool IsRunning => current.IsRunning;
 
     /// <summary>The rate the device actually opened at, which a recording has to match.</summary>
@@ -214,6 +224,79 @@ public sealed class AudioEngine(IAudioDevice device) : IDisposable
         Meters.Silence(state.Program, watching, state.Live);
     }
 
+    /// <summary>How loud a preset is auditioned at its fullest, against the patch's own level.</summary>
+    public const float AuditionLevel = 0.35f;
+
+    /// <summary>How long a preset takes to swell to <see cref="AuditionLevel"/>.</summary>
+    public static readonly TimeSpan AuditionFadeIn = TimeSpan.FromSeconds(2.5);
+
+    /// <summary>How long a preset takes to die away, and the patch to go quiet or come back.</summary>
+    public static readonly TimeSpan AuditionFadeOut = TimeSpan.FromSeconds(0.5);
+
+    /// <summary>
+    /// A preset made ready to be heard over the patch: its own program, memory,
+    /// knobs and renderer, so that it starts from nought and leaves the patch's
+    /// state alone.
+    /// </summary>
+    public sealed class Audition
+    {
+        internal Audition(CompiledPatch program, DelayState? memory, LiveValues live, AudioRenderer renderer)
+        {
+            Program = program;
+            Memory = memory;
+            Live = live;
+            Renderer = renderer;
+        }
+
+        internal CompiledPatch Program { get; }
+        internal DelayState? Memory { get; }
+        internal LiveValues Live { get; }
+        internal AudioRenderer Renderer { get; }
+
+        /// <summary>Where it is rendered before it is mixed in, sized here so the callback never allocates.</summary>
+        internal float[] Scratch { get; } = new float[4096];
+    }
+
+    /// <summary>
+    /// Compiles <paramref name="patch"/> to be auditioned. Touches nothing that is
+    /// playing, so it may be called from any thread — a showcase patch takes long
+    /// enough to compile that the caller should not be the UI thread.
+    /// </summary>
+    /// <returns>Null for a patch that makes no sound.</returns>
+    public Audition? PrepareAudition(Patch patch, ISampleLibrary? samples = null)
+    {
+        if (!patch.Reaches().Sound) return null;
+
+        var program = patch.CompileForAudio(samples: samples, played: true).Program;
+        var own = new AudioRenderer(renderer.SampleRate) { Aspect = renderer.Aspect };
+
+        own.Prepare(program);
+
+        // Where its panel knobs rest, since nobody is going to turn them.
+        var live = new LiveValues(program.LiveInputs);
+        foreach (var control in patch.Controls ?? []) live.Set(control.Key, control.Value);
+
+        return new Audition(program, own.DelayMemoryFor(program), live, own);
+    }
+
+    /// <summary>
+    /// Plays <paramref name="audition"/> in place of the patch. Not abruptly: the
+    /// patch fades out and the preset swells in over it, taking over from any
+    /// other preset once that one has faded.
+    /// </summary>
+    /// <remarks>
+    /// Mixed in the callback rather than given a device of its own, because the
+    /// one device is all there is — and it has to be running for this to be heard,
+    /// which is the caller's to see to.
+    /// </remarks>
+    public void StartAudition(Audition audition) => Volatile.Write(ref wantedAudition, audition);
+
+    /// <summary>Fades the preset out and the patch back in.</summary>
+    public void EndAudition() => Volatile.Write(ref wantedAudition, null);
+
+    /// <summary>Whether a preset has been asked to be heard over the patch.</summary>
+    public bool IsAuditioning => Volatile.Read(ref wantedAudition) is not null;
+
     private void Fill(Span<float> buffer)
     {
         var state = Volatile.Read(ref activeState);
@@ -222,11 +305,74 @@ public sealed class AudioEngine(IAudioDevice device) : IDisposable
 
         renderer.Render(state.Program, buffer, state.Memory, state.Live);
 
+        Mix(buffer);
+
         // After the render and before anything else, so what is recorded is what
         // was heard — the same samples, not a second evaluation that would drift
         // from them the moment a knob moved between the two.
         Volatile.Read(ref capture)?.WriteAudio(buffer);
     }
+
+    /// <summary>
+    /// Fades the patch in <paramref name="buffer"/> towards where an audition wants
+    /// it, and adds the audition over it. A new audition takes over from an old one
+    /// only once the old one has faded all the way out, and only between buffers,
+    /// so what one buffer hears is one preset.
+    /// </summary>
+    private void Mix(Span<float> buffer)
+    {
+        var wanted = Volatile.Read(ref wantedAudition);
+
+        if (heardAudition != wanted && auditionFade <= 0f) heardAudition = wanted;
+
+        var heard = heardAudition;
+
+        if (heard is null && wanted is null && patchFade >= 1f) return;
+
+        var patchTarget = wanted is null ? 1f : 0f;
+        var auditionTarget = heard is not null && heard == wanted ? 1f : 0f;
+
+        var rate = (float)renderer.SampleRate;
+        var quick = 1f / (float)(AuditionFadeOut.TotalSeconds * rate);
+        var swell = 1f / (float)(AuditionFadeIn.TotalSeconds * rate);
+        var auditionStep = auditionTarget > auditionFade ? swell : quick;
+
+        var frames = buffer.Length / 2;
+        var chunk = heard is null ? frames : heard.Scratch.Length / 2;
+
+        for (var start = 0; start < frames; start += chunk)
+        {
+            var count = Math.Min(chunk, frames - start);
+            var scratch = heard is null ? default : heard.Scratch.AsSpan(0, count * 2);
+
+            if (heard is not null) heard.Renderer.Render(heard.Program, scratch, heard.Memory, heard.Live);
+
+            for (var frame = 0; frame < count; frame++)
+            {
+                patchFade = Toward(patchFade, patchTarget, quick);
+                auditionFade = Toward(auditionFade, auditionTarget, auditionStep);
+
+                // Squared, so a fade eases in rather than arriving at a slope: an
+                // ear hears level in proportion, and a straight line is heard as a
+                // jump at the quiet end.
+                var patchGain = patchFade * patchFade;
+                var at = (start + frame) * 2;
+
+                buffer[at] *= patchGain;
+                buffer[at + 1] *= patchGain;
+
+                if (heard is null) continue;
+
+                var auditionGain = AuditionLevel * auditionFade * auditionFade;
+
+                buffer[at] += scratch[frame * 2] * auditionGain;
+                buffer[at + 1] += scratch[frame * 2 + 1] * auditionGain;
+            }
+        }
+    }
+
+    private static float Toward(float value, float target, float step) =>
+        value < target ? MathF.Min(value + step, target) : MathF.Max(value - step, target);
 
     public void Dispose() => current.Dispose();
 }

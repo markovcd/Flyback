@@ -294,6 +294,10 @@ public sealed partial class MainWindow
         // asked about again when the take is over.
         if (!wanted && recorder is not null) return;
 
+        // Nor while a preset from the gallery is being heard through it, which
+        // is what started it if the patch had not.
+        if (!wanted && audio.IsAuditioning) return;
+
         if (wanted != audio.IsRunning) SetAudioEnabled(wanted);
     }
 

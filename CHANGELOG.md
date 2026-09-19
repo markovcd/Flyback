@@ -34,6 +34,7 @@
 - Settings → Graphics picks which preset Flyback opens on at the next start.
 - The preset list is sorted into headed sections: the blank canvas first, then the patches about one idea, then the ones where sound and picture are the same thought, then the showcases.
 - The preset button opens a gallery of tiles, each with a picture of what the preset draws ("Sound only" when there is none), its name and its description.
+- Resting the pointer on a preset in the gallery for two seconds plays its sound quietly, fading in, with your patch muted meanwhile.
 - The teaching presets are updated, with new ones in the engine and in the Picture, Voice and Mastering plugins.
 
 ### Recording and export

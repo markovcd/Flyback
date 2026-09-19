@@ -812,7 +812,9 @@ public sealed partial class MainWindow : Window
             var showing = presets.SelectedItem as PatchPreset;
             var chosen = await this.ShowDialog<PatchPreset?>(
                 "Start from a preset",
-                PresetGallery.Build(ordered, showing, thumbnails));
+                PresetGallery.Build(ordered, showing, thumbnails, PointedAt));
+
+            PointedAt(null);
 
             if (chosen is not null) presets.SelectedIndex = ordered.IndexOf(chosen);
         };

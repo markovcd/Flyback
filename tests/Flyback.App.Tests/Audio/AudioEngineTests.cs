@@ -415,4 +415,72 @@ public class AudioEngineTests
         engine.Start();
         device.IsRunning.ShouldBeTrue();
     }
+    /// <summary>The loudest sample in <paramref name="buffer"/>.</summary>
+    private static float Peak(float[] buffer) => buffer.Max(MathF.Abs);
+
+    /// <summary>Buffers enough to cover <paramref name="time"/>.</summary>
+    private static int BuffersFor(TimeSpan time) =>
+        (int)Math.Ceiling(time.TotalSeconds * GlobalConstants.SampleRate / BufferFrames);
+
+    /// <summary>
+    /// A preset heard from the gallery begins at nothing and swells, and never
+    /// reaches the level the patch itself plays at.
+    /// </summary>
+    [Fact]
+    public void An_audition_swells_in_and_stays_quieter_than_a_patch()
+    {
+        using var device = new LoopbackDevice();
+        using var engine = new AudioEngine(device);
+
+        engine.Start();
+        engine.StartAudition(engine.PrepareAudition(Tone(220f)).ShouldNotBeNull());
+
+        var first = device.Pump();
+        var buffers = Enumerable.Range(0, BuffersFor(AudioEngine.AuditionFadeIn) + 4).Select(_ => device.Pump()).ToList();
+
+        Peak(first).ShouldBeLessThan(0.01f);
+        Peak(buffers[buffers.Count / 4]).ShouldBeLessThan(Peak(buffers[^1]));
+        Peak(buffers[^1]).ShouldBe(AudioEngine.AuditionLevel, tolerance: 0.02f);
+        LargestStep([first, .. buffers]).ShouldBeLessThan(0.05f);
+    }
+
+    /// <summary>
+    /// The patch that was playing goes quiet while a preset is auditioned, rather
+    /// than the two being heard at once, and comes back when it ends.
+    /// </summary>
+    [Fact]
+    public void A_patch_is_faded_out_under_an_audition_and_back_in_after()
+    {
+        using var device = new LoopbackDevice();
+        using var engine = new AudioEngine(device);
+
+        engine.Update(Tone(220f));
+        engine.Start();
+        var playing = Peak(device.Pump());
+
+        engine.StartAudition(engine.PrepareAudition(Tone(330f)).ShouldNotBeNull());
+        engine.IsAuditioning.ShouldBeTrue();
+
+        var fadingOut = Enumerable.Range(0, BuffersFor(AudioEngine.AuditionFadeOut) + 1).Select(_ => device.Pump()).ToList();
+
+        engine.EndAudition();
+        engine.IsAuditioning.ShouldBeFalse();
+
+        var back = Enumerable.Range(0, 2 * BuffersFor(AudioEngine.AuditionFadeOut) + 1).Select(_ => device.Pump()).ToList();
+
+        // Barely begun when the patch has gone: at its lowest it is the audition
+        // alone, which has hardly swelled in the time the patch took to go.
+        fadingOut.Min(Peak).ShouldBeLessThan(0.1f);
+        LargestStep([.. fadingOut, .. back]).ShouldBeLessThan(0.05f);
+        Peak(back[^1]).ShouldBe(playing, tolerance: 0.01f);
+    }
+
+    [Fact]
+    public void A_patch_that_makes_no_sound_is_not_auditioned()
+    {
+        using var device = new LoopbackDevice();
+        using var engine = new AudioEngine(device);
+
+        engine.PrepareAudition(new PatchBuilder(NodeCatalog.BuiltIn).Patch).ShouldBeNull();
+    }
 }

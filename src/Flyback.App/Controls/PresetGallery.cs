@@ -43,10 +43,15 @@ internal static class PresetGallery
     /// kind, with the tile of <paramref name="showing"/> outlined as the one on the
     /// canvas.
     /// </summary>
+    /// <param name="pointedAt">
+    /// Told the preset whose tile the pointer has come to rest on, and null when it
+    /// leaves one — what the caller auditions.
+    /// </param>
     public static Control Build(
         IReadOnlyList<PatchPreset> ordered,
         PatchPreset? showing,
-        PresetThumbnails thumbnails)
+        PresetThumbnails thumbnails,
+        Action<PatchPreset?>? pointedAt = null)
     {
         var gallery = new StackPanel { Name = "gallery", Spacing = 6, Margin = new Thickness(16, 8, 16, 16) };
 
@@ -64,7 +69,7 @@ internal static class PresetGallery
             var tiles = new WrapPanel { ItemSpacing = 8, LineSpacing = 8 };
 
             foreach (var preset in run)
-                tiles.Children.Add(Tile(preset, preset == showing, thumbnails));
+                tiles.Children.Add(Tile(preset, preset == showing, thumbnails, pointedAt));
 
             gallery.Children.Add(tiles);
         }
@@ -72,7 +77,11 @@ internal static class PresetGallery
         return gallery;
     }
 
-    private static Button Tile(PatchPreset preset, bool showing, PresetThumbnails thumbnails)
+    private static Button Tile(
+        PatchPreset preset,
+        bool showing,
+        PresetThumbnails thumbnails,
+        Action<PatchPreset?>? pointedAt)
     {
         var image = new Image { Stretch = Stretch.UniformToFill };
 
@@ -131,6 +140,8 @@ internal static class PresetGallery
         };
 
         tile.Click += (_, _) => Dialog.Close<PatchPreset?>(tile, preset);
+        tile.PointerEntered += (_, _) => pointedAt?.Invoke(preset);
+        tile.PointerExited += (_, _) => pointedAt?.Invoke(null);
 
         _ = Fill(image, words, thumbnails.Of(preset));
 
