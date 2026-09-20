@@ -19,3 +19,4 @@ Task-specific know-how is in `.claude/skills/`, and Claude Code loads each skill
 - `convenience-modules`: the wrapper modules (Stroke, Fade, Desk, Echo, Hiss and the rest) and porting presets onto them exactly.
 - `site-screenshots`: retaking `site/assets/shots` from the real app.
 - `site-audio-tracks`: rebuilding the website's listening-row MP3s.
+- `gap-mining`: finding what the catalogue is missing, by reading what an unchecked agent reaches for.
