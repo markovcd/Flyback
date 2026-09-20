@@ -11,13 +11,13 @@ A preset with sound plays through the user's speakers while it is captured, for 
 
 ## Recipe (Nebula, PowerShell)
 
-1. Follow `.claude/rules/running-the-app.md`: wait for any other Flyback to close, then `Start-Process -PassThru` the Debug `Flyback.exe` with the `.fbk`, and drive only that process's `Id` from here on.
+1. Follow `.claude/rules/running-the-app.md`: wait for any other Flyback to close, then `Start-Process -PassThru` the Debug `Flyback.exe` with the `.fbk`, drive only that process's `Id` from here on, and mark the window red while you are driving it.
 2. `ShowWindow` maximize.
 3. `PostMessage` a left click on bare canvas (focus).
 4. `SendKeys ^f` (frame).
 5. `PostMessage` one `WM_MOUSEWHEEL` notch out for margins (Nebula, Whole band; Plasma, Euclid kit and the tutorial are framed without it).
 6. Click Rewind, then sleep until `t` is about 6.5 s (that is where Nebula is orange and magenta like the hero image; the others are caught at about 8 s).
-7. `PrintWindow(hwnd, dc, 2)`, cropped to the DWM extended frame bounds.
+7. Put the title bar back to its own color and title, then `PrintWindow(hwnd, dc, 2)`, cropped to the DWM extended frame bounds. The crop keeps the title bar, so the red marking and the danger title are in the shot until they are cleared.
 8. Kill the process, then PIL resize 2560x1380 -> 1600x863 and save webp at quality 88.
 
 ## Coordinates and popups
