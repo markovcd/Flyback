@@ -7,6 +7,7 @@ using Avalonia.Threading;
 using Flyback.App.Controls;
 using Flyback.Core;
 using Shouldly;
+using Xunit;
 
 namespace Flyback.App.Tests.Ui;
 
@@ -119,6 +120,52 @@ public class AboutTests : UiTest
 
         All<TextBox>(window).ShouldBeEmpty("nothing that could be mistaken for an address");
         Words(window).ShouldContain(t => t.Contains("no donation address"));
+    }
+
+    /// <summary>
+    /// Bech32 carries a checksum over the whole address, so the one fact nobody
+    /// can check by reading is checkable after all: a character mistyped into
+    /// the constant fails here rather than swallowing somebody's donation.
+    /// </summary>
+    [Fact]
+    public void The_donation_address_passes_its_own_checksum()
+    {
+        if (About.BitcoinAddress.Length == 0)
+            return;
+
+        const string alphabet = "qpzry9x8gf2tvdw0s3jn54khce6mua7l";
+        var address = About.BitcoinAddress;
+
+        address.ShouldBe(address.ToLowerInvariant(), "bech32 is one case throughout, and lower case is the readable one");
+        address.ShouldStartWith("bc1q");
+        address.Length.ShouldBe(42, "a mainnet pay-to-witness-public-key-hash address");
+
+        // The human-readable part "bc", expanded as bech32 asks, then the data.
+        List<int> values = ['b' >> 5, 'c' >> 5, 0, 'b' & 31, 'c' & 31];
+
+        values.AddRange(address[3..].Select(c => alphabet.IndexOf(c)));
+        values.ShouldNotContain(-1, "every character is in the bech32 alphabet");
+
+        Polymod(values).ShouldBe(1, "the bech32 checksum");
+    }
+
+    /// <summary>BIP-173's checksum, which comes to 1 over a whole valid address.</summary>
+    private static int Polymod(IEnumerable<int> values)
+    {
+        int[] generator = [0x3B6A57B2, 0x26508E6D, 0x1EA119FA, 0x3D4233DD, 0x2A1462B3];
+        var checksum = 1;
+
+        foreach (var value in values)
+        {
+            var top = checksum >> 25;
+            checksum = ((checksum & 0x1FFFFFF) << 5) ^ value;
+
+            for (var i = 0; i < 5; i++)
+                if (((top >> i) & 1) != 0)
+                    checksum ^= generator[i];
+        }
+
+        return checksum;
     }
 
     /// <summary>

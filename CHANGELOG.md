@@ -75,6 +75,7 @@
 - Unsaved work survives a crash: the next start offers to restore it.
 - A module carries its category's color down its body and a mark of what it does behind its sockets, with a drawing of its own for the ones you would name; groups are drawn to match.
 - Ctrl+B switches a module or a whole box off: what is patched into it comes straight out of it, and nothing does where nothing is patched in.
+- About has a bitcoin address to donate to, with a Copy button.
 
 ### Performance
 - An output with no wire on it no longer costs anything. The big presets run 2–19% fewer operations a sample, and Random's white is a sixteenth of what it was.

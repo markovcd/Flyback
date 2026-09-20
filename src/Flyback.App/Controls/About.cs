@@ -43,9 +43,10 @@ internal static class About
     /// Empty is shown as empty. An address is a string nobody can check by
     /// reading — one wrong character sends the money to nobody at all — so this
     /// is never stood in for, guessed at, or filled with an example: until there
-    /// is a real one here, the window says there is not.
+    /// is a real one here, the window says there is not. What reading cannot do
+    /// the bech32 checksum can, and a test spends it on every build.
     /// </remarks>
-    public const string BitcoinAddress = "";
+    public const string BitcoinAddress = "bc1qdu86tdtksg6mlqspdxmc2de9qppte3a5430lmg";
 
     /// <summary>
     /// The build's version — a release's own, or a dev build's plus the commit it was

@@ -170,3 +170,28 @@
     document.querySelectorAll("video[data-autoplay]").forEach(function (v) { watcher.observe(v); });
   }
 })();
+
+// The donation address is taken by button, or selected where the clipboard is
+// refused. Either way nobody retypes it.
+(function () {
+  document.querySelectorAll(".donate .copy").forEach(function (button) {
+    var code = button.parentNode.querySelector("code");
+
+    button.addEventListener("click", function () {
+      var written = navigator.clipboard && navigator.clipboard.writeText(code.textContent);
+
+      if (!written) return select();
+
+      written.then(function () { button.textContent = "Copied"; }, select);
+    });
+
+    function select() {
+      var range = document.createRange();
+      range.selectNodeContents(code);
+      var selection = window.getSelection();
+      selection.removeAllRanges();
+      selection.addRange(range);
+      button.textContent = "Press Ctrl+C";
+    }
+  });
+})();
