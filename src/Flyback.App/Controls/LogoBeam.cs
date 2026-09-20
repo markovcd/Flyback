@@ -85,6 +85,16 @@ internal static class LogoBeam
             (3, Colors.Sink.G / 255f),
             (4, Colors.Sink.B / 255f));
 
+        // The surface the rest of it is drawn on, so the box reads as part of the
+        // dialog rather than as a black tile cut into it. Added on top rather
+        // than put underneath, which for light laid on a dark is the same sum,
+        // and it gives the trails a floor to fade to instead of black.
+        var ground = b.Add(
+            "color.ink",
+            (2, Colors.Panel.R / 255f),
+            (3, Colors.Panel.G / 255f),
+            (4, Colors.Panel.B / 255f));
+
         // Everything is drawn before the Trails rather than over it: what it
         // reads back is the frame, so a color laid on afterwards is added to its
         // own echo every frame until it is white.
@@ -120,7 +130,8 @@ internal static class LogoBeam
          .Wire(coord, NodeCatalog.CoordYPort, bar, 1)
          .Wire(bar, 0, retrace, 1)
 
-         .Wire(retrace, 0, trail, 0)
+         .Wire(retrace, 0, ground, 0)
+         .Wire(ground, 0, trail, 0)
          .Wire(trail, 0, output, NodeCatalog.OutputColorPort);
 
         return b.Build();

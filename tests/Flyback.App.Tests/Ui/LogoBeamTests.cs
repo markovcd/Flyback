@@ -65,12 +65,14 @@ public class LogoBeamTests
         green.ShouldBeGreaterThan((byte)40);
     }
 
-    /// <summary>And draws nothing where the mark is not.</summary>
+    /// <summary>
+    /// Where the mark is not, the frame is the surface the dialog is drawn on:
+    /// the box has to read as part of the window rather than a black tile cut
+    /// into it.
+    /// </summary>
     [Fact]
-    public void It_leaves_the_rest_of_the_frame_alone()
+    public void It_grounds_the_frame_on_the_dialog_s_own_surface()
     {
-        var (blue, green, red) = Pixel(Drawn(200), 220, 220);
-
-        (blue + green + red).ShouldBeLessThan(12);
+        Pixel(Drawn(200), 220, 220).ShouldBe((Colors.Panel.B, Colors.Panel.G, Colors.Panel.R));
     }
 }

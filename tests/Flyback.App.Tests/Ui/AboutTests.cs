@@ -153,9 +153,12 @@ public class AboutTests : UiTest
         Until(() => Playing(window)).ShouldBeTrue("no frame was ever drawn");
     }
 
-    /// <summary>And one more click puts the drawing back.</summary>
+    /// <summary>
+    /// And nothing puts the drawing back but closing the window, so a click meant
+    /// for something else cannot take the picture away again.
+    /// </summary>
     [AvaloniaFact]
-    public void Clicking_it_again_puts_the_drawing_back()
+    public void Nothing_it_is_clicked_with_afterwards_stops_it()
     {
         var window = Showing();
         var at = Middle(window);
@@ -163,9 +166,9 @@ public class AboutTests : UiTest
         Click(window, at, 7);
         Until(() => Playing(window)).ShouldBeTrue("no frame was ever drawn");
 
-        Click(window, at, 1);
+        Click(window, at, 8);
 
-        All<LogoMark>(window).Single().IsVisible.ShouldBeTrue();
-        Playing(window).ShouldBeFalse("the frames should have stopped");
+        All<LogoMark>(window).Single().IsVisible.ShouldBeFalse();
+        Playing(window).ShouldBeTrue();
     }
 }

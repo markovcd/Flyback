@@ -111,7 +111,7 @@ internal static class About
     /// <summary>
     /// The mark, and what it does for somebody who keeps clicking it: on the
     /// seventh it stops being a drawing and becomes the patch it is a picture
-    /// of, until it is clicked again or the window closes.
+    /// of, for as long as the window is open.
     /// </summary>
     /// <remarks>
     /// Drawn at twice its size and scaled down, so the beam has an edge on a
@@ -142,15 +142,8 @@ internal static class About
 
         mark.PointerPressed += (_, _) =>
         {
-            if (motion is not null)
-            {
-                Stop();
-                return;
-            }
+            if (motion is not null || ++counted < clicks) return;
 
-            if (++counted < clicks) return;
-
-            counted = 0;
             drawn.IsVisible = false;
             played.IsVisible = true;
             motion = PresetMotion.Play(LogoBeam.Patch(), played, clock: null, side * 2, side * 2);
@@ -158,18 +151,9 @@ internal static class About
 
         // The frames are drawn on a thread of their own, which nothing else here
         // would ever stop.
-        mark.DetachedFromVisualTree += (_, _) => Stop();
+        mark.DetachedFromVisualTree += (_, _) => motion?.Dispose();
 
         return mark;
-
-        void Stop()
-        {
-            motion?.Dispose();
-            motion = null;
-            counted = 0;
-            played.IsVisible = false;
-            drawn.IsVisible = true;
-        }
     }
 
     /// <summary>
