@@ -65,6 +65,7 @@
 - The assistant can change the largest presets, and changes what is there instead of rebuilding it.
 - The assistant can read the presets, yours included, for ideas.
 - A long block in the transcript arrives folded behind its first line, and a turn in flight says so at the end of the transcript.
+- Every frame the assistant renders is shown in the transcript under the caption that came with it.
 
 ### Canvas and interface
 - Ctrl+Shift+L, or Ctrl+click on the Tidy button, lays out only the selected modules and leaves the rest of the patch where it is.

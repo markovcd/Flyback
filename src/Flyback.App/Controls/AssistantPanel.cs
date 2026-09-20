@@ -103,19 +103,6 @@ public sealed class AssistantPanel : UserControl
         IsVisible = false,
     };
 
-    /// <summary>
-    /// The last frame the assistant looked at, and nothing at all until it has
-    /// looked at one. Hidden rather than merely empty: a fixed width in an Auto
-    /// column holds its 160 pixels open whether or not there is a picture in it,
-    /// and that is a strip of dead panel beside the transcript and the
-    /// instruction box for the whole of every run that never renders.
-    /// </summary>
-    private readonly Image lastFrame = new()
-    {
-        Width = 160,
-        Stretch = Stretch.Uniform,
-        IsVisible = false,
-    };
     private readonly TextBlock footer = new()
     {
         FontSize = Text.Small,
@@ -642,9 +629,6 @@ public sealed class AssistantPanel : UserControl
         lines.Clear();
         saying = null;
 
-        lastFrame.Source = null;
-        lastFrame.IsVisible = false;
-
         waiting = null;
         waitingOn = null;
         settled = null;
@@ -746,7 +730,7 @@ public sealed class AssistantPanel : UserControl
         working.Children.Add(progress);
         heartbeat.Tick += (_, _) => Beat();
 
-        var left = new DockPanel { Margin = new Thickness(0, 0, 10, 0) };
+        var body = new DockPanel { Margin = new Thickness(12, 10) };
         DockPanel.SetDock(working, Dock.Top);
         // The button floats over the corner of the box rather than sitting
         // beside it, so the two are one thing to lay out.
@@ -759,29 +743,10 @@ public sealed class AssistantPanel : UserControl
 
         DockPanel.SetDock(writing, Dock.Bottom);
         DockPanel.SetDock(footer, Dock.Bottom);
-        left.Children.Add(working);
-        left.Children.Add(footer);
-        left.Children.Add(writing);
-        left.Children.Add(transcript);
-
-        // Two columns, since the settings went to the toolbar and nothing else
-        // here was ever a button: what is left is the conversation and, when
-        // there has been one, the frame the assistant last looked at.
-        var columns = new Grid
-        {
-            Margin = new Thickness(12, 10),
-            ColumnDefinitions =
-            [
-                new ColumnDefinition(GridLength.Star),
-                new ColumnDefinition(GridLength.Auto),
-            ],
-        };
-
-        Grid.SetColumn(left, 0);
-        Grid.SetColumn(lastFrame, 1);
-
-        columns.Children.Add(left);
-        columns.Children.Add(lastFrame);
+        body.Children.Add(working);
+        body.Children.Add(footer);
+        body.Children.Add(writing);
+        body.Children.Add(transcript);
 
         // No height of its own. What this is worth is entirely a matter of what
         // is being read — a one-line refusal or forty turns of transcript — so
@@ -793,7 +758,7 @@ public sealed class AssistantPanel : UserControl
             BorderBrush = new SolidColorBrush(Colors.Edge),
             BorderThickness = new Thickness(0, 1, 0, 0),
             MinHeight = 140,
-            Child = columns,
+            Child = body,
         };
     }
 
@@ -1654,9 +1619,6 @@ public sealed class AssistantPanel : UserControl
             if (because is { Length: > 0 }) Put(Voice.Note, because);
         }
 
-        lastFrame.Source = null;
-        lastFrame.IsVisible = false;
-
         return run;
     }
 
@@ -1821,19 +1783,49 @@ public sealed class AssistantPanel : UserControl
         ConversationChanged?.Invoke(this, EventArgs.Empty);
     }
 
+    /// <summary>
+    /// A frame the assistant looked at, in the transcript under the caption that
+    /// came with it.
+    /// </summary>
+    /// <remarks>
+    /// Full width and capped in height, because a render is a contact sheet: one
+    /// frame is a picture and four are a strip, and both have to be readable
+    /// without either taking the transcript over.
+    /// </remarks>
     private void Picture(byte[] png)
     {
+        Bitmap frame;
+
         try
         {
-            lastFrame.Source = new Bitmap(new MemoryStream(png));
-            lastFrame.IsVisible = true;
+            frame = new Bitmap(new MemoryStream(png));
         }
         catch
         {
-            // A frame that will not decode is not worth the window, and it does
-            // not get to claim the width either. The caption that came with it
-            // is already in the transcript.
+            // A frame that will not decode is nothing to show. The caption that
+            // came with it is already in the transcript.
+            return;
         }
+
+        saying = null;
+
+        saidPanel.Children.Add(new Border
+        {
+            Name = "frame",
+            BorderBrush = new SolidColorBrush(Colors.Edge),
+            BorderThickness = new Thickness(1),
+            Margin = new Thickness(0, 2, 0, 4),
+
+            // Sized by the picture rather than by the panel, so a single frame
+            // does not sit in a box with bars either side of it.
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Child = new Image
+            {
+                Source = frame,
+                Stretch = Stretch.Uniform,
+                MaxHeight = 260,
+            },
+        });
     }
 
     private void Add(string text, IBrush color, double size, bool fold = true)

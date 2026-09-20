@@ -6,6 +6,7 @@ using Avalonia.Interactivity;
 using Flyback.App.Assist;
 using Flyback.App.Controls;
 using Flyback.Core.Graph;
+using Flyback.Core.Render;
 using Flyback.Plugins.Assist;
 using Flyback.Plugins.Hosting;
 using Flyback.Plugins.Secrets;
@@ -328,6 +329,76 @@ public class AssistantPanelTests : UiTest
         Settle(window);
 
         Thinking(window).IsVisible.ShouldBeFalse("the turn ended");
+    }
+
+    // --- a frame the assistant looked at --------------------------------------
+
+    /// <summary>One that renders, so the panel has a picture to place.</summary>
+    private sealed class Looks() : Provider(new AssistantSchema(
+        "looks",
+        [new AssistantModel("looks")],
+        "NONE",
+        "none needed"))
+    {
+        public override string Id => "looks";
+
+        public override string Name => "Renders once";
+
+        public override IPatchSession Start(PatchWorkbench workbench, AssistantConfig config) => new Look();
+    }
+
+    private sealed class Look : IPatchSession
+    {
+        public async IAsyncEnumerable<PatchEvent> Ask(
+            string instruction,
+            [EnumeratorCancellation] CancellationToken cancel)
+        {
+            await Task.Yield();
+
+            yield return new PatchEvent.Saw(Frame(), "1 frame at 0.5s, 2 by 1.");
+            yield return new PatchEvent.Said("that is a blue field.");
+        }
+
+        private static byte[] Frame()
+        {
+            var png = new MemoryStream();
+
+            PngWriter.WriteBgra(png, new byte[2 * 1 * 4], 2, 1, 2 * 4);
+
+            return png.ToArray();
+        }
+
+        public void Dispose()
+        {
+        }
+    }
+
+    private static Border Frame(Window window) =>
+        All<Border>(window).Single(border => border.Name == "frame");
+
+    /// <summary>
+    /// In the transcript between the caption above it and whatever came next,
+    /// rather than off in a column of its own beside the conversation.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_frame_the_assistant_looked_at_sits_in_the_transcript()
+    {
+        var window = Showing(With(new Looks()), Configured("looks"));
+
+        Instruction(window).Text = "make something";
+        Settle(window);
+
+        SendButton(window).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Settle(window);
+        Settle(window);
+
+        var frame = Frame(window);
+        var flow = (Panel)frame.Parent!;
+        var at = flow.Children.IndexOf(frame);
+
+        flow.Children[at - 1].ShouldBeOfType<SelectableTextBlock>().Text.ShouldBe("1 frame at 0.5s, 2 by 1.");
+        flow.Children[at + 1].ShouldBeOfType<SelectableTextBlock>().Text.ShouldBe("that is a blue field.");
+        frame.Child.ShouldBeOfType<Image>().Source.ShouldNotBeNull();
     }
 
     /// <summary>The settings, in a window of their own, as opening them makes one.</summary>
