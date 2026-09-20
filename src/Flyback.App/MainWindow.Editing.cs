@@ -265,7 +265,14 @@ public sealed partial class MainWindow
     {
         base.OnClosing(e);
 
-        if (e.Cancel || leaving) return;
+        if (e.Cancel) return;
+
+        // Every attempt, not only the one that goes through: the window's monitor
+        // is no longer asked for once it has closed, and a refused close leaves it
+        // as it is.
+        RememberLayout();
+
+        if (leaving) return;
 
         // Already asking. The close is refused and nothing else happens: putting
         // the question up a second time is the one response that would make the

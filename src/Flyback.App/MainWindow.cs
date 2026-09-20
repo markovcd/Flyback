@@ -473,7 +473,8 @@ public sealed partial class MainWindow : Window
         ReleaseNotes? whatsNew = null,
         string? recoveryFolder = null,
         string? presetFolder = null,
-        string? canvasSettingsPath = null)
+        string? canvasSettingsPath = null,
+        string? layoutPath = null)
     {
         this.groupFolder = groupFolder;
 
@@ -492,6 +493,9 @@ public sealed partial class MainWindow : Window
         if (updateSettingsPath is not null) updateSettings = UpdateSettings.Load(updateSettingsPath);
         if (usageSettingsPath is not null) usageSettings = UsageSettings.Load(usageSettingsPath);
         if (canvasSettingsPath is not null) canvasSettings = CanvasSettings.Load(canvasSettingsPath);
+
+        this.layoutPath = layoutPath;
+        if (layoutPath is not null) layout = WindowLayout.Load(layoutPath);
 
         BuildUpdatesSection();
         ShowUpdateSettings(updateSettings);
@@ -553,8 +557,9 @@ public sealed partial class MainWindow : Window
         Height = 800;
         MinWidth = 860;
         MinHeight = 560;
-        WindowStartupLocation = WindowStartupLocation.CenterScreen;
+        WindowStartupLocation = WindowStartupLocation.Manual;
         Background = new SolidColorBrush(Colors.Window);
+        ApplyWindowLayout();
 
         editor.PatchChanged += (_, _) =>
         {
@@ -648,6 +653,8 @@ public sealed partial class MainWindow : Window
 
         // Last, so it is what the bar is showing when the window first appears.
         if (whatsNew is null && updateNote is not null) Report(updateNote);
+
+        ApplyPanelLayout();
 
         var ticker = new DispatcherTimer(DispatcherPriority.Background) { Interval = TimeSpan.FromMilliseconds(250) };
         ticker.Tick += (_, _) => UpdateStatus();
