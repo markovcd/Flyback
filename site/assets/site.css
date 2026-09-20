@@ -30,7 +30,7 @@
   /* the one color that means "look here" */
   --attention: #FFB040;
 
-  /* module accents */
+  /* module families, borrowed to color a heading or a card's edge */
   --sink: #E05A5A;
   --source: #4A9EDE;
   --oscillator: #4FC387;
@@ -45,11 +45,6 @@
   --shaping: #D87A48;
   --echo: #3EA0B0;
   --reading: #92A8C8;
-
-  /* sockets */
-  --port-color: #E8C860;
-  --port-any: #9EC89E;
-  --port-scalar: #B8BCC4;
 
   --beam-core: #FFF3DC;
 
@@ -212,38 +207,29 @@ ul, ol { margin: 14px 0 0; padding-left: 22px; }
 li { margin: 7px 0; }
 li::marker { color: var(--normalled); }
 
-/* ---- nodes: the one card shape, borrowed from the patch canvas ----------- */
+/*
+  ---- cards ----------------------------------------------------------------
 
-.node {
-  --accent: var(--maths);
-  background:
-    linear-gradient(color-mix(in srgb, var(--accent) 24%, var(--node)), color-mix(in srgb, var(--accent) 6%, var(--node)));
+  A module is shown by a picture of one, taken by PatchShotTests or
+  SkinShotTests. Nothing here draws a module, a socket or a wire, and nothing
+  here should start to: the canvas is the only thing that knows what one looks
+  like, and a second drawing of it goes stale the moment a module changes.
+*/
+
+.card {
+  background: var(--panel);
   border: 1px solid var(--edge);
+  border-top: 2px solid var(--accent, var(--separator));
   border-radius: var(--radius);
-  overflow: hidden;
-  box-shadow: 0 10px 30px -18px rgba(0, 0, 0, 0.9);
+  padding: 16px 18px 18px;
 }
-.node > header {
-  background: linear-gradient(var(--accent), color-mix(in srgb, var(--accent) 72%, #000));
-  border-top: 1px solid rgba(255, 255, 255, 0.16);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.3);
-  color: #fff;
-  font-size: 13px; font-weight: 600;
-  padding: 6px 12px;
-  display: flex; align-items: center; justify-content: space-between; gap: 8px;
-  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.25);
+.card > header {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 10px;
+  color: var(--bright); font-size: 15.5px; font-weight: 650; margin-bottom: 8px;
 }
-.node > header small { font-weight: 500; opacity: 0.85; font-size: 11.5px; letter-spacing: 0.04em; text-transform: uppercase; }
-.node > .body { padding: 14px 16px 16px; }
-.node > .body p:first-child { margin-top: 0; }
-.node p { font-size: 15px; line-height: 1.6; }
-
-.ports { list-style: none; padding: 0; margin: 10px 0 0; font-size: 13px; }
-.ports li { display: flex; align-items: center; gap: 8px; margin: 3px 0; color: var(--label); }
-.ports li::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: var(--port-scalar); flex: none; }
-.ports li.color::before { background: var(--port-color); }
-.ports li.any::before { background: var(--port-any); }
-.ports li span { margin-left: auto; color: var(--value); font-variant-numeric: tabular-nums; }
+.card > header small { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+.card > .body > p:first-child { margin-top: 0; }
+.card p { font-size: 15px; line-height: 1.6; }
 
 /* ---- windows: a screenshot framed as the app's own title bar ------------- */
 

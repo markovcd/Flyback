@@ -532,23 +532,23 @@ Extras = [<span class="k">new</span> GlideExtra()],
     <p>There are four tiers, and it is worth knowing which one you need before you start.</p>
 
     <div class="tiers">
-      <article class="node" style="--accent: var(--oscillator)">
+      <article class="card" style="--accent: var(--oscillator)">
         <header>Pure <small>Most modules</small></header>
         <div class="body"><p>No memory at all. Identical at both sinks, free on the video path, survives to the GPU backend
         untouched. Reach for this unless you cannot.</p></div>
       </article>
-      <article class="node" style="--accent: var(--echo)">
+      <article class="card" style="--accent: var(--echo)">
         <header>One evaluation <small>Emitter cells</small></header>
         <div class="body"><p>A cell that carries a value from the last evaluation to this one. Filters, allpass stages, slew
         limiters, sample-and-hold. Available to any plugin, no engine change.</p></div>
       </article>
-      <article class="node" style="--accent: var(--feedback)">
+      <article class="card" style="--accent: var(--feedback)">
         <header>A plane <small>Emitter planes</small></header>
         <div class="body"><p>A cell the screen keeps too: one value per pixel, carried from the previous frame.
         What a loop drawn on the canvas uses. Available to any plugin; ask for one only when a picture should
         accumulate.</p></div>
       </article>
-      <article class="node" style="--accent: var(--shaping)">
+      <article class="card" style="--accent: var(--shaping)">
         <header>A buffer <small>Delay · Allpass</small></header>
         <div class="body"><p>Thousands of past samples — a delay line or a reverb tail. Needs an opcode, so it cannot come from
         a plugin; use the two that exist.</p></div>

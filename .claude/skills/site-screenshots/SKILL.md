@@ -1,9 +1,21 @@
 ---
 name: site-screenshots
-description: Use when a UI or preset change makes a screenshot in site/assets/shots stale and it needs retaking from the real Flyback app without a human at the keyboard - the PowerShell window-capture recipe and its coordinate quirks.
+description: Use when a UI or preset change makes a screenshot in site/assets/shots stale, or when the site needs a new picture of a patch or a module - the headless shot tests for canvas-only crops, and the PowerShell window-capture recipe and its coordinate quirks for the full-window ones.
 ---
 
 # Recapturing site screenshots
+
+## The canvas-only shots come from a test, not a window
+
+`patch-*.webp` (the patch figures) and `skin-*.webp` (the plugin guide's backgrounds) are headless captures of a real `NodeEditor`, cropped to the modules. Nothing here is driven by hand:
+
+```bash
+SHOT_DIR=<somewhere> ./tests/Flyback.App.Tests/bin/Release/net10.0/Flyback.App.Tests.exe -method "*PatchShotTests*"
+```
+
+`SkinShotTests` for the other set. Both skip without `SHOT_DIR`. Convert the PNGs to webp at quality 88 and copy them in, keeping the `width`/`height` attributes on the site's `<img>` in step with the new pixel size. A new patch figure is a new `.fbks` in `PatchShotTests`, never a drawing — see ADR-0119.
+
+## The full-window shots
 
 The full-window shots in `site/assets/shots` (nebula.webp, whole-band.webp, euclid-kit.webp, plasma*.webp, tutorial-canvas.webp; 1600x863) are the maximized app with a saved preset opened from the command line (`Flyback.exe nebula.fbk`), patch framed, caught at a chosen `t`. A preset dumped with `PatchIO.ToJson` from a scratch test is the `.fbk`; set every `Group.Collapsed` in the dump for the shots that show shut boxes (whole-band, euclid-kit). tutorial-canvas.webp is the tutorial's section-6 text saved as `t5.fbks`. The website has to stay accurate, so a stale screenshot is retaken in the same commit as the UI change.
 

@@ -25,8 +25,6 @@
 <style>
   .doc-head { border-bottom: 1px solid var(--edge); }
   .patch-fig { margin: 24px 0 0; }
-  .patch-fig .canvas { padding: 16px; border: 1px solid var(--edge); border-radius: var(--radius); overflow-x: auto; }
-  .patch-fig .canvas > div { min-width: var(--min, 420px); }
 
   .result { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; margin-top: 24px; align-items: start; }
   @media (min-width: 720px) { .result { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); } }
@@ -157,15 +155,12 @@
       module headers on the canvas.</figcaption>
     </figure>
 
-    <div class="patch-fig">
-      <div class="canvas"><div style="--min: 380px">
-        <figure style="margin: 0" data-label="Rings wired into the Output's color. Rings' x and y show Coordinates, because they are connected to it without a wire."
-          data-patch='{"nodes":[
-            {"id":"rings","name":"Rings","cat":"patterns","x":8,"y":8,"w":160,"outs":["out"],"ins":[["x","Coordinates x"],["y","Coordinates y"],["freq","4"],["offset","0"]]},
-            {"id":"out","name":"Output","cat":"output","x":230,"y":16,"outs":[],"ins":[["color","","color"],["left","0"],["right","0"],["volume","0.5"]]}
-          ],"wires":[["rings",0,"out",0]]}'></figure>
-      </div></div>
-    </div>
+    <figure class="patch-fig">
+      <a class="zoom" href="assets/shots/patch-rings.webp" target="_blank" rel="noopener">
+        <img class="shot" loading="lazy" src="assets/shots/patch-rings.webp" width="748" height="235"
+             alt="Rings' out wired into the Output's color. Rings' x and y read Coordinates x and Coordinates y, shown in gray because they are normalled rather than wired.">
+      </a>
+    </figure>
 
     <div class="result">
       <p style="margin: 0">The preview shows gray rings. You did not wire anything into Rings' <code>x</code> and
@@ -202,18 +197,12 @@
       <li>Set HSV's <code>saturation</code> to about <code>0.85</code>.</li>
     </ol>
 
-    <div class="patch-fig">
-      <div class="canvas"><div style="--min: 620px">
-        <figure style="margin: 0" data-label="Time feeds Rings' offset and an Expression, a times 0.1; the Expression sets HSV's hue, Rings sets HSV's value, and HSV's color goes to the Output."
-          data-patch='{"nodes":[
-            {"id":"time","name":"Time","cat":"sources","x":8,"y":130,"outs":["t"],"ins":[]},
-            {"id":"rings","name":"Rings","cat":"patterns","x":170,"y":0,"w":160,"outs":["out"],"ins":[["x","Coordinates x"],["y","Coordinates y"],["freq","4"],"offset"]},
-            {"id":"mul","name":"Expression","formula":"a * 0.1","cat":"maths","x":170,"y":140,"outs":[["out","any"]],"ins":["a","b","c","d"]},
-            {"id":"hsv","name":"HSV","cat":"color","x":380,"y":40,"outs":[["color","color"]],"ins":["hue",["saturation","0.85"],"value"]},
-            {"id":"out","name":"Output","cat":"output","x":540,"y":40,"outs":[],"ins":[["color","","color"],["left","0"],["right","0"],["volume","0.5"]]}
-          ],"wires":[["time",0,"rings",3],["time",0,"mul",0],["mul",0,"hsv",0],["rings",0,"hsv",2],["hsv",0,"out",0]]}'></figure>
-      </div></div>
-    </div>
+    <figure class="patch-fig">
+      <a class="zoom" href="assets/shots/patch-rings-moving.webp" target="_blank" rel="noopener">
+        <img class="shot" loading="lazy" src="assets/shots/patch-rings-moving.webp" width="1599" height="479"
+             alt="Time feeds Rings' offset and an Expression, a times 0.1; the Expression sets HSV's hue, Rings sets HSV's value, and HSV's color goes to the Output.">
+      </a>
+    </figure>
 
     <div class="result">
       <p style="margin: 0">The rings now travel and slowly change color. HSV takes
@@ -241,16 +230,12 @@
       <li>Use the Output's <code>volume</code> to set the level. At zero, the sound device is closed.</li>
     </ol>
 
-    <div class="patch-fig">
-      <div class="canvas"><div style="--min: 480px">
-        <figure style="margin: 0" data-label="Frequency at 110 hertz wired into a Sine's freq, and the Sine wired into the Output's left. The Sine's in reads Time."
-          data-patch='{"nodes":[
-            {"id":"freq","name":"Frequency","cat":"pitch","x":8,"y":40,"outs":["out"],"ins":[["hz","110"]]},
-            {"id":"sine","name":"Sine","cat":"oscillators","x":170,"y":8,"outs":[["out","any"]],"ins":[["in","Time"],"freq",["phase","0"],["amp","1"],["bias","0"]]},
-            {"id":"out","name":"Output","cat":"output","x":340,"y":20,"outs":[],"ins":[["color","","color"],"left",["right","0"],["volume","0.5"]]}
-          ],"wires":[["freq",0,"sine",1],["sine",0,"out",1]]}'></figure>
-      </div></div>
-    </div>
+    <figure class="patch-fig">
+      <a class="zoom" href="assets/shots/patch-tone.webp" target="_blank" rel="noopener">
+        <img class="shot" loading="lazy" src="assets/shots/patch-tone.webp" width="1173" height="291"
+             alt="Frequency at 110 hertz wired into a Sine's freq, and the Sine's out wired into the Output's left. The Sine's in reads Time.">
+      </a>
+    </figure>
 
     <p>The Sine's <code>in</code> is normalled to Time. That is what makes an oscillator oscillate as soon as it
     is placed. In the rings patch you wired a position into Rings instead, which is why it drew across the

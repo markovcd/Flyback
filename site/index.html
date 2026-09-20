@@ -74,13 +74,10 @@
   .section-head p { color: var(--label); }
 
   /* ---- one graph, two sinks ---- */
-  .twosinks { display: grid; grid-template-columns: minmax(0, 1fr); gap: 28px; margin-top: 40px; align-items: center; }
-  @media (min-width: 1000px) { .twosinks { grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); gap: 40px; } }
-  .diagram { padding: 20px; border-radius: 8px; border: 1px solid var(--edge); }
-  .diagram-scroll { overflow-x: auto; }
-  .diagram-scroll > figure { margin: 0; min-width: 640px; }
+  .diagram { margin-top: 40px; }
+  .twosinks { display: grid; grid-template-columns: minmax(0, 1fr); gap: 28px; margin-top: 28px; align-items: start; }
+  @media (min-width: 1000px) { .twosinks { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 40px; } }
   .as-text pre { margin: 0; }
-  .as-text .window { margin-top: 16px; }
   .facts { display: grid; gap: 14px; margin-top: 40px; }
   @media (min-width: 760px) { .facts { grid-template-columns: repeat(3, 1fr); } }
   .fact { border-top: 2px solid var(--separator); padding-top: 14px; }
@@ -113,7 +110,7 @@
   .track .body > p { font-size: 14.5px; color: var(--muted); margin: 0 0 16px; flex: 1; }
   .player audio { width: 100%; height: 36px; }
 
-  /* ---- features as modules ---- */
+  /* ---- features ---- */
   .modules { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; margin-top: 40px; }
   @media (min-width: 640px) { .modules { grid-template-columns: repeat(2, 1fr); } }
   @media (min-width: 1040px) { .modules { grid-template-columns: repeat(4, 1fr); } }
@@ -210,29 +207,15 @@
       runs that list once per pixel, and the speakers run it once per sample.</p>
     </div>
 
-    <div class="twosinks">
-      <div class="diagram canvas">
-        <div class="diagram-scroll">
-          <figure data-label="The Plasma patch: Coordinates x and y each feed a Sine, Time slowly shifts the second Sine's phase through an Expression multiplying it by 0.2, a second Expression adds the two Sines, and the sum is remapped to the range 0 to 1 and used as the hue of an HSV color wired into the Output."
-            data-patch='{"nodes":[
-              {"id":"coord","name":"Coordinates","cat":"sources","x":8,"y":110,"outs":["x","y","radius","angle","aspect"],"ins":[]},
-              {"id":"time","name":"Time","cat":"sources","x":8,"y":250,"outs":["t"],"ins":[]},
-              {"id":"mul","name":"Expression","formula":"a * 0.2","cat":"maths","x":160,"y":250,"outs":[["out","any"]],"ins":[["a","",""],["b","1"],["c","0"],["d","0"]]},
-              {"id":"sine1","name":"Sine","cat":"oscillators","x":160,"y":0,"outs":[["out","any"]],"ins":["in",["freq","1.5"],["phase","0"],["amp","1"],["bias","0"]]},
-              {"id":"sine2","name":"Sine","cat":"oscillators","x":312,"y":150,"outs":[["out","any"]],"ins":["in",["freq","1.1"],"phase",["amp","1"],["bias","0"]]},
-              {"id":"add","name":"Expression","formula":"a + b","cat":"maths","x":464,"y":100,"outs":[["out","any"]],"ins":["a","b",["c","0"],["d","0"]]},
-              {"id":"remap","name":"Remap","cat":"maths","x":616,"y":90,"outs":[["out","any"]],"ins":["in",["in low","-2"],["in high","2"],["out low","0"],["out high","1"]]},
-              {"id":"hsv","name":"HSV","cat":"color","x":768,"y":80,"outs":[["color","color"]],"ins":["hue",["saturation","0.85"],["value","1"]]},
-              {"id":"out","name":"Output","cat":"output","x":920,"y":90,"outs":[],"ins":[["color","","color"],["left","0"],["right","0"],["volume","0.5"]]}
-            ],"wires":[
-              ["coord",0,"sine1",0],["coord",1,"sine2",0],["time",0,"mul",0],["mul",0,"sine2",2],
-              ["sine1",0,"add",0],["sine2",0,"add",1],["add",0,"remap",0],["remap",0,"hsv",0],["hsv",0,"out",0]
-            ]}'>
-            <figcaption>The Plasma preset on the canvas: nine modules and nine wires.</figcaption>
-          </figure>
-        </div>
-      </div>
+    <figure class="diagram">
+      <a class="zoom" href="assets/shots/patch-plasma.webp" target="_blank" rel="noopener">
+        <img class="shot" loading="lazy" src="assets/shots/patch-plasma.webp" width="2144" height="376"
+             alt="The Plasma patch on the canvas: Coordinates x and y each feed a Sine, Time goes through a Multiply into the second Sine's phase, an Add sums the two Sines, a Remap brings the sum into 0 to 1, and an HSV turns it into the color wired into the Output.">
+      </a>
+      <figcaption>The Plasma preset on the canvas: nine modules and nine wires.</figcaption>
+    </figure>
 
+    <div class="twosinks">
       <div class="as-text">
         <pre><code class="fbks"># The same patch, as text.
 let slowly = t * 0.2
@@ -241,12 +224,12 @@ let slowly = t * 0.2
   |> remap(-2..2, 0..1)
   |> color.hsv(saturation: 0.85, value: 1)
   |> out.color</code></pre>
-        <div class="window">
-          <video data-autoplay muted loop playsinline preload="none" poster="assets/shots/preview-plasma.webp" width="960" height="540"
-                 aria-label="The Plasma patch rendering: diamonds of rainbow hue drifting slowly.">
-            <source src="assets/clips/plasma.mp4" type="video/mp4">
-          </video>
-        </div>
+      </div>
+      <div class="window">
+        <video data-autoplay muted loop playsinline preload="none" poster="assets/shots/preview-plasma.webp" width="960" height="540"
+               aria-label="The Plasma patch rendering: diamonds of rainbow hue drifting slowly.">
+          <source src="assets/clips/plasma.mp4" type="video/mp4">
+        </video>
       </div>
     </div>
 
@@ -314,7 +297,7 @@ let slowly = t * 0.2
       encoded to MP3. Nothing was added: every note, drum and echo comes out of the patch.</p>
 
       <div class="tracks">
-        <article class="node track" style="--accent: var(--shaping)">
+        <article class="card track" style="--accent: var(--shaping)">
           <header>Acid <small>Effects plugin</small></header>
           <div class="body">
             <p>A 303 line with accents and slides, through a four-pole filter into two delays, over a galloping bass.
@@ -325,7 +308,7 @@ let slowly = t * 0.2
           </div>
         </article>
 
-        <article class="node track" style="--accent: var(--feedback)">
+        <article class="card track" style="--accent: var(--feedback)">
           <header>Slow weather <small>Effects plugin</small></header>
           <div class="body">
             <p>A generative patch with no clock in it: four random voltages read out of noise choose the notes and open
@@ -401,45 +384,45 @@ let slowly = t * 0.2
     </div>
 
     <div class="modules">
-      <article class="node" style="--accent: var(--source)">
-        <header>Patch editor <small>Sources</small></header>
+      <article class="card" style="--accent: var(--source)">
+        <header>Patch editor</header>
         <div class="body"><p>Right-click the canvas or press <kbd>Space</kbd> to add a module where you are pointing.
         Drag from a socket to wire it, drag a wire off to unplug it, and group modules into boxes.
         <kbd>Ctrl</kbd>+<kbd>B</kbd> switches one off, passing what is patched into it straight through.</p></div>
       </article>
-      <article class="node" style="--accent: var(--oscillator)">
-        <header>Thirteen families <small>Oscillators</small></header>
+      <article class="card" style="--accent: var(--oscillator)">
+        <header>Thirteen families</header>
         <div class="body"><p>Sources, oscillators, patterns, forms, geometry, color, maths, pitch, timing, shaping,
         time effects, feedback and measurement modules, with a preset for each family.</p></div>
       </article>
-      <article class="node" style="--accent: var(--feedback)">
-        <header>Feedback <small>Feedback</small></header>
+      <article class="card" style="--accent: var(--feedback)">
+        <header>Feedback</header>
         <div class="body"><p>Read the previous frame back in, or wire a module into itself. A loop is a delay:
         a filter or a comb for the ears, a trail or a tunnel for the eyes.</p></div>
       </article>
-      <article class="node" style="--accent: var(--space)">
-        <header>A text language <small>Geometry</small></header>
+      <article class="card" style="--accent: var(--space)">
+        <header>A text language</header>
         <div class="body"><p>Press <kbd>F2</kbd> and the patch is text you can edit, diff and generate. It
         builds back to exactly the same program and saves as <code>.fbks</code>.</p></div>
       </article>
-      <article class="node" style="--accent: var(--note)">
-        <header>Play it <small>Pitch</small></header>
+      <article class="card" style="--accent: var(--note)">
+        <header>Play it</header>
         <div class="body"><p>MIDI input on Windows, macOS and Linux, with polyphonic voices. With no controller,
         the computer keyboard is the instrument. Knobs follow a MIDI controller too.</p></div>
       </article>
-      <article class="node" style="--accent: var(--reading)">
-        <header>Record and render <small>Measurement</small></header>
+      <article class="card" style="--accent: var(--reading)">
+        <header>Record and render</header>
         <div class="body"><p>Record a live take, knobs and all, with <kbd>Ctrl</kbd>+<kbd>R</kbd>.
         For exact, repeatable exports use <code>flyback-cli render</code>. MP4, WebM, MOV, MP3, M4A and FLAC
         where ffmpeg is installed; AVI and WAV are written by Flyback itself and need nothing.</p></div>
       </article>
-      <article class="node" style="--accent: var(--tint)">
-        <header>Assistant <small>Color</small></header>
+      <article class="card" style="--accent: var(--tint)">
+        <header>Assistant</header>
         <div class="body"><p>Describe a patch and have one built, over any chat-completions endpoint or Gemini,
         whose models can listen to the patch themselves. What comes back is an edit you can undo.</p></div>
       </article>
-      <article class="node" style="--accent: var(--sequencer)">
-        <header>Plugins <small>Timing</small></header>
+      <article class="card" style="--accent: var(--sequencer)">
+        <header>Plugins</header>
         <div class="body"><p>Modules, presets, sound backends and assistants all load from a folder. The
         Picture, Voice, Effects and Mastering modules ship as plugins themselves. <a href="plugins.html">Write your own.</a></p></div>
       </article>
