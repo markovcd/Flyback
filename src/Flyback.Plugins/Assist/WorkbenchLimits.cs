@@ -8,11 +8,6 @@ namespace Flyback.Plugins.Assist;
 /// enforced behind its back: an agent told it has run out of room can finish tidily,
 /// where one silently refused keeps trying the same thing.
 /// </remarks>
-/// <param name="MaxAdded">
-/// The most modules a run may add to the patch it began with, net of any it
-/// removes. It bounds what is built, not how large the patch already was, so the
-/// largest preset can be changed and a loop that has lost the thread still stops.
-/// </param>
 /// <param name="MaxToolCalls">The cost fuse. Tool calls are cheap; a run that never ends is not.</param>
 /// <param name="LatestTime">The furthest into a patch a render may look, in seconds.</param>
 /// <param name="WarmUpStep">
@@ -30,7 +25,6 @@ namespace Flyback.Plugins.Assist;
 /// judged by ear in a second or two, and this is paid per turn.
 /// </param>
 public sealed record WorkbenchLimits(
-    int MaxAdded = 120,
     int MaxToolCalls = 200,
     int FrameWidth = 320,
     int FrameHeight = 180,

@@ -1,7 +1,8 @@
 # ADR-0113: The assistant's limit counts what a run adds
 
 **Status:** Accepted · 2026-09-20 · *user-directed* · amends the limits in
-[0065](0065-a-text-language-that-parses-to-a-patch.md)
+[0065](0065-a-text-language-that-parses-to-a-patch.md); the limit itself
+superseded by [0114](0114-the-workbench-does-not-limit-how-large-a-patch-is.md)
 
 ## Context
 

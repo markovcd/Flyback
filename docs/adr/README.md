@@ -144,4 +144,5 @@ context, decision, consequences.
 | [0085](0085-a-sound-backend-declares-its-own-settings.md) | A sound backend declares its own settings *(user-directed)* |
 | [0072](0072-a-conversation-is-saved-with-the-patch-it-is-about.md) | A conversation is saved with the patch it is about *(user-directed)* |
 | [0098](0098-the-briefing-has-a-budget-and-a-list-that-outranks-it.md) | The briefing has a budget, and a list that outranks it *(user-directed; its default raised to 100,000 by [0101](0101-a-one-knob-maximizer-is-a-module-of-its-own.md))* |
-| [0113](0113-the-assistants-limit-counts-what-a-run-adds.md) | The assistant's limit counts what a run adds *(user-directed)* |
+| [0113](0113-the-assistants-limit-counts-what-a-run-adds.md) | The assistant's limit counts what a run adds *(user-directed; the limit superseded by [0114](0114-the-workbench-does-not-limit-how-large-a-patch-is.md))* |
+| [0114](0114-the-workbench-does-not-limit-how-large-a-patch-is.md) | The workbench does not limit how large a patch is *(user-directed)* |

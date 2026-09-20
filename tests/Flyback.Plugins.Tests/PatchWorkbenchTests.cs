@@ -1,6 +1,5 @@
 using System.Text.Json;
 using Flyback.Core.Graph;
-using Flyback.Core.Language;
 using Flyback.Plugins.Assist;
 using Shouldly;
 using Xunit;
@@ -1204,62 +1203,23 @@ public class PatchWorkbenchTests
         bench.Snapshot().Nodes.ShouldContain(n => n.TypeId == "value");
     }
 
-    [Fact]
-    public async Task A_patch_that_adds_more_than_the_limit_is_refused()
-    {
-        // Three modules over the Output the bench began with.
-        var bench = Bench(new WorkbenchLimits(MaxAdded: 2));
-
-        var written = await Call(bench, "write_patch", JsonSerializer.Serialize(new
-        {
-            source = "rings() |> hsv() |> gain(gain: 0.5) |> out.color",
-        }));
-
-        written.Ok.ShouldBeFalse();
-        written.Text.ShouldContain("may add 2");
-    }
-
     /// <summary>
-    /// The limit is on what a run builds, so a patch that began past it — Whole band
-    /// has more modules than the limit — can still be changed a little at a time.
+    /// How large a patch is is not the workbench's to refuse: Whole band has more
+    /// modules than anything a person would write by hand.
     /// </summary>
     [Fact]
-    public async Task A_patch_that_began_larger_than_the_limit_can_still_be_changed()
+    public async Task A_large_patch_can_be_written_and_added_to()
     {
-        var large = PatchLanguage.Build("rings() |> hsv() |> gain(gain: 0.5) |> out.color", NodeCatalog.BuiltIn).Patch;
-        var bench = new PatchWorkbench(NodeCatalog.BuiltIn, large, limits: new WorkbenchLimits(MaxAdded: 1));
+        var source = string.Join('\n', Enumerable.Range(0, 300).Select(i => $"let v{i} = value()"))
+            + "\nrings() |> out.color";
 
-        (await Call(bench, "add_module", """{"type_id":"osc.sine"}""")).Ok.ShouldBeTrue();
-
-        var second = await Call(bench, "add_module", """{"type_id":"osc.saw"}""");
-        second.Ok.ShouldBeFalse();
-        second.Text.ShouldContain("as many as a run may add");
-    }
-
-    [Fact]
-    public async Task Writing_a_large_patch_back_unchanged_adds_nothing()
-    {
-        var source = "rings() |> hsv() |> gain(gain: 0.5) |> out.color";
-        var large = PatchLanguage.Build(source, NodeCatalog.BuiltIn).Patch;
-        var bench = new PatchWorkbench(NodeCatalog.BuiltIn, large, limits: new WorkbenchLimits(MaxAdded: 0));
+        var bench = Bench();
 
         var written = await Call(bench, "write_patch", JsonSerializer.Serialize(new { source }));
         written.Ok.ShouldBeTrue(written.Text);
+        bench.Snapshot().Nodes.Count.ShouldBeGreaterThan(300);
 
-        var grown = await Call(bench, "write_patch", JsonSerializer.Serialize(new { source = source + "\nvalue()" }));
-        grown.Ok.ShouldBeFalse();
-    }
-
-    [Fact]
-    public async Task Removing_a_module_makes_room_to_add_another()
-    {
-        var bench = Bench(new WorkbenchLimits(MaxAdded: 1));
-
-        (await Call(bench, "add_module", """{"type_id":"osc.sine","handle":"tone"}""")).Ok.ShouldBeTrue();
-        (await Call(bench, "add_module", """{"type_id":"osc.saw"}""")).Ok.ShouldBeFalse();
-
-        (await Call(bench, "remove_module", """{"handle":"tone"}""")).Ok.ShouldBeTrue();
-        (await Call(bench, "add_module", """{"type_id":"osc.saw"}""")).Ok.ShouldBeTrue();
+        (await Call(bench, "add_module", """{"type_id":"osc.sine"}""")).Ok.ShouldBeTrue();
     }
 
     /// <summary>
@@ -1732,18 +1692,6 @@ public class PatchWorkbenchTests
     }
 
     // --- caps ---------------------------------------------------------------
-
-    [Fact]
-    public async Task Running_out_of_room_for_modules_is_said_rather_than_thrown()
-    {
-        var bench = Bench(new WorkbenchLimits(MaxAdded: 1));
-
-        (await Call(bench, "add_module", """{"type_id":"osc.sine"}""")).Ok.ShouldBeTrue();
-
-        var second = await Call(bench, "add_module", """{"type_id":"osc.saw"}""");
-        second.Ok.ShouldBeFalse();
-        second.Text.ShouldContain("as many as a run may add");
-    }
 
     [Fact]
     public async Task Running_out_of_tool_calls_is_said_rather_than_thrown()

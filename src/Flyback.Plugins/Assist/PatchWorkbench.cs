@@ -37,9 +37,6 @@ public sealed partial class PatchWorkbench
     private readonly IImageLibrary? pictures;
     private readonly WorkbenchLimits limits;
     private readonly string startingPoint;
-
-    /// <summary>How many modules the patch began with, which is what <see cref="WorkbenchLimits.MaxAdded"/> counts from.</summary>
-    private readonly int startingNodes;
     private readonly Dictionary<string, NodeInstance> byHandle = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<Guid, string> handleOf = [];
 
@@ -89,7 +86,6 @@ public sealed partial class PatchWorkbench
         this.startingPoint = PatchIO.ToJson(startingPoint, modules);
 
         Adopt(PatchIO.Read(this.startingPoint, modules).Patch);
-        startingNodes = working.Nodes.Count;
 
         Undescribed =(prose ?? ProsePolicy.Default).Undescribed(modules);
         Briefing = Handbook.Render(modules, Undescribed, hearing);
@@ -211,10 +207,6 @@ public sealed partial class PatchWorkbench
 
         if (modules.Get(typeId) is not { } def)
             return ToolOutcome.Refused($"there is no module with type id '{typeId}'. {Nearest(typeId)}");
-
-        if (working.Nodes.Count - startingNodes >= limits.MaxAdded)
-            return ToolOutcome.Refused(
-                $"{limits.MaxAdded} modules have been added to the patch this started from, which is as many as a run may add.");
 
         // Every patch already has its Output and cannot have a second. The
         // second sink is the mistake that hides itself — compilation roots at
@@ -740,13 +732,6 @@ public sealed partial class PatchWorkbench
         // line and a column apiece, which is enough to fix it and try again.
         if (!load.Ok)
             return ToolOutcome.Refused($"this patch does not read:{Environment.NewLine}{load.Report}");
-
-        if (load.Patch.Nodes.Count - startingNodes > limits.MaxAdded)
-        {
-            return ToolOutcome.Refused(
-                $"that is {load.Patch.Nodes.Count} modules, {load.Patch.Nodes.Count - startingNodes} more than "
-                + $"this started with, and a run may add {limits.MaxAdded}.");
-        }
 
         Adopt(load.Patch);
         proposal = null;
