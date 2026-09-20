@@ -8,6 +8,12 @@ Flyback is a patchable synthesiser for .NET 10. One graph can generate both a pi
 
 The [website](https://markovcd.github.io/Flyback/) has screenshots, tutorials and the plugin guide. See [CHANGELOG.md](CHANGELOG.md) for what changed in each release, and the [releases page](https://github.com/markovcd/Flyback/releases) for downloads.
 
+## The premise
+
+Flyback is built strictly with AI. Every line of code, test, document and commit here is written by an agent; a human directs the work and decides what ships, but does not hand-write the source.
+
+That is a constraint on authorship, not on engineering. The project holds to the same standards any modern codebase would: a CI gate that restores, compiles and runs the whole test suite on every push and pull request, signed releases built from the same image the gate stops inside, architecture decisions recorded in `docs/adr/`, and a changelog per release. Nothing merges that the gate has not passed.
+
 ## Quick start
 
 ```bash
