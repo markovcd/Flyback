@@ -76,7 +76,11 @@ command in the same shell, or it will report phantom misses.
 
 The count that matters is **how many independent agents** reached for a name, not
 how many times it appears. One agent writing `blur` twelve times in one document
-is one reach; four agents each writing it once is four.
+is one reach; three agents each writing it once is three.
+
+With a run of three, the scale is short: three of three is a strong finding, two
+of three is a reading worth acting on, and one of three is a lead to hold rather
+than a result to report as one.
 
 So harvest per agent, into one file each, and count across files:
 

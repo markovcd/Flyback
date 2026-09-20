@@ -1,6 +1,6 @@
 ---
 name: vibe-check
-description: Check a project against what a model reaches for when it is not allowed to look things up. Use when asked what is missing, what to build next, what should exist but does not, to find a roadmap, or to audit a project's vocabulary for holes — the names an unchecked agent invents are the holes. The same instrument settles a design fork: give unsteered agents one task and read which shape they converge on, for weighing options or being stuck between approaches. Not a review of code that exists — for how a diff or a design feels, use `/ick` or the taste-check agent instead.
+description: Check a project against what a model reaches for when it is not allowed to look things up. Use when asked what is missing, what to build next, what should exist but does not, to find a roadmap, or to audit a project's vocabulary for holes — the names an unchecked agent invents are the holes. The same instrument settles a design fork: give unsteered agents one task and read which shape they converge on, for weighing options or being stuck between approaches. Expensive — three throwaway agents, several hundred thousand tokens — so it weighs the cost, offers the cheap alternatives and asks before spawning anything. Not a review of code that exists — for how a diff or a design feels, use `/ick` or the taste-check agent instead.
 ---
 
 # Vibe Check
@@ -32,17 +32,66 @@ one tells you anything.
 So the instrument is a deliberately unverified agent, and the discipline moves
 from the agent to you: it is allowed to be wrong, and you are the one who checks.
 
+## Weigh it first, and ask before spawning
+
+**This does not run on sight.** Three agents each build a whole feature — code,
+tests, docs, site edits — and every line of it is deleted. A run costs several
+hundred thousand tokens and the better part of an hour, and the yield is
+typically one word. That trade is worth making for a decision that is expensive
+to unmake and worthless for one that is not.
+
+So: decide whether it earns its cost, say so, and **ask the user to confirm
+before anything is spawned.** Put the cost in the question — they cannot weigh
+what they cannot see.
+
+**It earns its cost when**
+
+- the answer becomes public API, a file format, a stored key, or anything else
+  with a version number on it
+- the thing being named will be read far more often than it is written, so a
+  wrong name is paid for forever
+- you have caught yourself unable to tell whether your own preference is taste
+  or habit
+- you want the *count*, not an opinion: "three of three reached for this" is a
+  different object from "I think this"
+
+**It does not earn its cost when**
+
+- the decision is a rename away from being undone
+- you already have strong evidence and are shopping for agreement
+- the question is about code that exists — that is `/ick` or the `taste-check`
+  agent, which read work rather than what an agent reaches for
+- you are under time pressure, because it takes as long as it takes
+
+**Offer the cheap alternatives in the same breath.** Most questions are answered
+by one of these, and the user should get to pick:
+
+| Instead | What it gives | Cost |
+|---|---|---|
+| `first-instinct` agent, or `/gut` | One fast answer with no deliberation. The right tool when you want *an* opinion rather than a count | One small agent |
+| One specimen instead of three | A name, with no repetition behind it. Weak evidence, but real, and honest about being weak | A third of a run |
+| Grep the catalogue and decide | Where the vocabulary is small enough to hold in your head | Nothing |
+| Ask the user outright | They built the thing and often already know; a question costs one turn | Nothing |
+| Ship the reversible version | Name it, see if it chafes, rename it later. Beats measuring when the measurement costs more than the mistake | Nothing |
+
+If the user says no, take the nearest alternative and say which.
+
 ## The instrument
 
 Agents spawned here are **specimens, not contributors.** Nothing they write is
 kept. Say so in the prompt, run them with `isolation: "worktree"` so their edits
 are contained, and never merge their branch.
 
-Run three to five at once on *different* tasks. Independent reaches at the same
+**Run three at once**, on *different* tasks. Independent reaches at the same
 vocabulary are what turn a single guess into a repetition count, and the count is
-most of the signal.
+most of the signal. Three is the floor for a count that means anything — two
+agreeing is a coincidence, two out of three is a reading — and a fourth mostly
+buys confidence in a signal three have already shown.
 
 ## Protocol
+
+**0. Weigh it and ask.** See above. Nothing below happens until the user has
+said yes to the cost.
 
 **1. Fix the ground truth first.** Before spawning anything, capture the closed
 set of names the project owns, as a list you can diff against mechanically.
@@ -60,8 +109,8 @@ fall out of the build without anyone stopping to consider them. Ranked by yield:
 | Write the tutorial, the cookbook, ten worked examples | Secondary. Rich in calling conventions, but it is not what a vibe agent does naturally — use it for a second specimen, not the first |
 | Ask it to design, plan, propose, or list what is missing | **Never.** It will deliberate, and deliberation is the thing you removed. Asking the instrument what it thinks gets you a considered opinion, which is a worse and completely different artifact. The method only works by accident — and that holds when you are weighing a fork too, which is why **Consulting it on a fork** below still hands it a task rather than a question |
 
-**3. Spawn, in the background.** See the prompt template below. Do not block on
-them; they report back on their own.
+**3. Spawn all three, in the background.** See the prompt template below. Do not
+block on them; they report back on their own.
 
 **4. Harvest** every identifier of the right shape from both their prose and their
 worktree diff — see `references/harvesting.md`.
@@ -104,9 +153,10 @@ The short version; `references/reading-the-signal.md` has the rest.
 - **The name is the signal. The signature is contamination.** A hallucinated
   calling convention is borrowed from whatever system the model learned it in,
   and is usually the one shape your architecture cannot afford.
-- **Repetition is strength.** A name reached for by four agents, or reached for
-  repeatedly by one as *the* canonical example, is a much louder finding than a
-  name that appeared once in a list.
+- **Repetition is strength.** A name reached for by all three agents, or reached
+  for repeatedly by one as *the* canonical example, is a much louder finding than
+  a name that appeared once in a list. Two of three is already a reading; one of
+  three is a lead, not a finding.
 - **Check affordance before calling it a gap.** Some names miss because the
   architecture deliberately forbids them. That is a finding too, but a different
   one: it means the shape is foreign, not that the feature is wanted.
@@ -131,9 +181,14 @@ When the question is not "what is missing" but "which of these shapes is right,"
 the same instrument answers — and it answers better than asking would.
 
 **Do not ask it which.** An agent handed two options will weigh them, and a
-weighed answer is the thing you already have too much of. Instead give several
+weighed answer is the thing you already have too much of. Instead give all three
 agents the *same task*, with no mention that there is a fork at all, and read the
 choice out of what they built.
+
+The gate above applies here too, and bites harder: a fork only needs the one
+choice out of each specimen, where hole-hunting gets every name they write as a
+by-product. Ask before spawning, and say plainly that `first-instinct` will
+answer the same question for a fraction of it.
 
 | Outcome | What it means | Do |
 |---|---|---|
@@ -141,7 +196,7 @@ choice out of what they built.
 | They split | The domain has no default here | The fork is real and nobody's priors will settle it. Stop looking for an authority and decide on your own constraints |
 | Nobody builds the option you were leaning toward | Weak but real | Ask why you were drawn to it. It may be foreign to the domain, or it may be the thing that makes your project worth having |
 
-Two cautions.
+Three cautions.
 
 **Keep the prompts identical and innocent.** Any hint of the fork in the wording
 is the only thing you will end up measuring. If you cannot write the task without
@@ -153,10 +208,27 @@ decision. Run the same affordance check as for a hole
 (`references/reading-the-signal.md`). Flyback's `blur(radius: 3)` is what every
 agent would reach for and still the one form the engine cannot afford.
 
+**The loudest reading may be the one you throw away.** Three agents converging on
+a shape your architecture has already declined is the likeliest single outcome of
+a fork run, and it arrives looking like an answer. Decide what you would do with
+each outcome *before* the reports land.
+
 For a single fast opinion on a design question, `first-instinct` and `gut` are
 cheaper and already exist. Reach for this instead when you want the convergence
-reading across several independent tries, or when you do not trust yourself to
-have asked a neutral question.
+reading across three independent tries, or when you do not trust yourself to have
+asked a neutral question.
+
+## Two failure modes worth knowing
+
+**Denying the vocabulary can deny the integration point.** If the file a feature
+must be wired into is one of the files you forbade, every specimen builds a
+complete implementation that nothing calls, and every report ends in an apology
+for the same missing line. The names still land, but the last stretch of each run
+is wasted. Check the deny list against where the feature has to attach, and
+forbid the vocabulary rather than the whole directory holding it.
+
+**They will all stall in the same place, and it is not a finding.** Three agents
+reporting the identical gap is a property of the prompt, not of the project.
 
 ## Worked example
 
