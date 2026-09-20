@@ -6,13 +6,20 @@ namespace Flyback.App.Controls;
 
 /// <summary>
 /// The mark as a patch rather than a drawing: a beam sweeping the two ramps and
-/// trailing behind itself, over the retrace it flies back along.
+/// trailing behind itself, over the retrace it flies back along, on the face of a
+/// tube that scans, bows and drifts out of sync.
 /// </summary>
 /// <remarks>
 /// Every coordinate is <c>docs/logo.svg</c>'s 256-unit box mapped onto the frame's
 /// -1..1, which is the same mapping <see cref="LogoMark"/> scales by, so the
-/// drawing and the patch put the mark in one place and swapping between them
-/// does not move it.
+/// drawing and the patch put the mark in one place at the middle of the face and
+/// part towards the corners, by as much as the glass bows.
+/// <para>
+/// The tube is light and nothing else: every one of its faults multiplies what is
+/// emitted, and the surface underneath is laid on afterwards untouched. So the
+/// box is the dialog's own color wherever the beam has not been, and a scan line
+/// darkens a glow rather than cutting a stripe out of the window.
+/// </para>
 /// </remarks>
 internal static class LogoBeam
 {
@@ -23,6 +30,22 @@ internal static class LogoBeam
 
     /// <summary>How long one ramp takes, in seconds. Two of them are a cycle.</summary>
     private const double Ramp = 1.25;
+
+    /// <summary>How far the glass pushes the picture out at the corners.</summary>
+    private const double Bulge = 0.22;
+
+    /// <summary>
+    /// How many bright lines the face is scanned in, across the frame's two units.
+    /// </summary>
+    /// <remarks>
+    /// Few, because the frames are drawn at twice the size they are shown and a
+    /// line thinner than a couple of pixels averages back into a flat gray on the
+    /// way down.
+    /// </remarks>
+    private const double Lines = 12;
+
+    /// <summary>How long the hum bar takes to cross the face, in seconds.</summary>
+    private const double Roll = 4.7;
 
     /// <summary>
     /// The patch. Picture only: it is opened from a dialog, where a sound nobody
@@ -44,6 +67,20 @@ internal static class LogoBeam
 
         var coord = b.Add(NodeCatalog.CoordTypeId);
         var clock = b.Add(NodeCatalog.TimeTypeId);
+
+        // The glass: both axes pushed out by the square of the radius, which is
+        // what everything drawn on the face is measured against from here on.
+        var bulge = Formula(b, $"1 + {N(Bulge)} * (a * a + b * b)");
+        var bowedX = Formula(b, "a * b");
+        var faceY = Formula(b, "a * b");
+
+        // The hum bar, crossing the face bottom to top. It lifts what it passes
+        // over and drags the lines under it sideways.
+        var band = Formula(b, $"2 * fract(a / {N(Roll)}) - 1");
+        var hum = Formula(b, "exp(-18 * (a - b) * (a - b))");
+
+        // The bar's drag, and a fine per-line wobble that never settles.
+        var faceX = Formula(b, "a + c * 0.055 * sin(d * 11) + sin(b * 34 + d * 9) * 0.0035");
 
         // Where in the cycle the beam is, which half of it that is, and how far
         // along that half's ramp. The last twentieth of each half is the flyback
@@ -85,6 +122,20 @@ internal static class LogoBeam
             (3, Colors.Sink.G / 255f),
             (4, Colors.Sink.B / 255f));
 
+        // The raster, the snow and the mains, as one number the emitted light is
+        // multiplied by: the scan line, a grain that boils, the hum bar's lift and
+        // a flutter a little either side of seven a second.
+        var scan = Formula(b, $"0.7 + 0.3 * cos(a * {N(Lines / 2)} * tau)");
+        var boil = Formula(b, "a * 14");
+        var snow = b.Add("pattern.noise", (3, 10f));
+        var lift = Formula(b, "a * (0.89 + b * 0.22) * (1 + c * 0.28) * (1 + sin(d * 46) * 0.02)");
+
+        var emitted = b.Add("color.gain");
+
+        // The corners of a tube, which is the one fault that is the glass rather
+        // than the beam, so it is measured on the bowed face too.
+        var face = b.Add("color.vignette", (3, 0.55f), (4, 1.6f), (5, 0.22f));
+
         // The surface the rest of it is drawn on, so the box reads as part of the
         // dialog rather than as a black tile cut into it. Added on top rather
         // than put underneath, which for light laid on a dark is the same sum,
@@ -102,7 +153,23 @@ internal static class LogoBeam
 
         var output = b.Add(NodeCatalog.OutputTypeId);
 
-        b.Wire(clock, 0, phase, 0)
+        b.Wire(coord, NodeCatalog.CoordXPort, bulge, 0)
+         .Wire(coord, NodeCatalog.CoordYPort, bulge, 1)
+         .Wire(coord, NodeCatalog.CoordXPort, bowedX, 0)
+         .Wire(bulge, 0, bowedX, 1)
+         .Wire(coord, NodeCatalog.CoordYPort, faceY, 0)
+         .Wire(bulge, 0, faceY, 1)
+
+         .Wire(clock, 0, band, 0)
+         .Wire(faceY, 0, hum, 0)
+         .Wire(band, 0, hum, 1)
+
+         .Wire(bowedX, 0, faceX, 0)
+         .Wire(faceY, 0, faceX, 1)
+         .Wire(hum, 0, faceX, 2)
+         .Wire(clock, 0, faceX, 3)
+
+         .Wire(clock, 0, phase, 0)
          .Wire(phase, 0, half, 0)
          .Wire(phase, 0, along, 0)
          .Wire(along, 0, beamX, 0)
@@ -110,9 +177,9 @@ internal static class LogoBeam
          .Wire(along, 0, beamY, 0)
          .Wire(half, 0, beamY, 1)
 
-         .Wire(coord, NodeCatalog.CoordXPort, awayX, 0)
+         .Wire(faceX, 0, awayX, 0)
          .Wire(beamX, 0, awayX, 1)
-         .Wire(coord, NodeCatalog.CoordYPort, awayY, 0)
+         .Wire(faceY, 0, awayY, 0)
          .Wire(beamY, 0, awayY, 1)
          .Wire(awayX, 0, distance, 0)
          .Wire(awayY, 0, distance, 1)
@@ -126,11 +193,25 @@ internal static class LogoBeam
          .Wire(lit, 0, beam, 2)
 
          .Wire(beam, 0, retrace, 0)
-         .Wire(coord, NodeCatalog.CoordXPort, bar, 0)
-         .Wire(coord, NodeCatalog.CoordYPort, bar, 1)
+         .Wire(faceX, 0, bar, 0)
+         .Wire(faceY, 0, bar, 1)
          .Wire(bar, 0, retrace, 1)
 
-         .Wire(retrace, 0, ground, 0)
+         .Wire(faceY, 0, scan, 0)
+         .Wire(clock, 0, boil, 0)
+         .Wire(boil, 0, snow, 2)
+         .Wire(scan, 0, lift, 0)
+         .Wire(snow, 0, lift, 1)
+         .Wire(hum, 0, lift, 2)
+         .Wire(clock, 0, lift, 3)
+
+         .Wire(retrace, 0, emitted, 0)
+         .Wire(lift, 0, emitted, 1)
+         .Wire(emitted, 0, face, 0)
+         .Wire(faceX, 0, face, 1)
+         .Wire(faceY, 0, face, 2)
+
+         .Wire(face, 0, ground, 0)
          .Wire(ground, 0, trail, 0)
          .Wire(trail, 0, output, NodeCatalog.OutputColorPort);
 
