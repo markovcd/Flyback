@@ -94,5 +94,5 @@ mode, not evidence, and it is contagious in a summary.
 
 In the report, every invented name stays marked as invented, every count stays
 attached to its claim, and the reader is told plainly that these came from agents
-that were instructed not to check. A gap-mining report that reads like a feature
+that were instructed not to check. A vibe-check report that reads like a feature
 list has failed, however good the findings are.

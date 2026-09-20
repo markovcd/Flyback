@@ -1,13 +1,17 @@
 ---
-name: gap-mining
-description: Find what a project is missing by reading what a model hallucinates into it. Use when asked what is missing, what to build next, what should exist but does not, to discover a roadmap, or to audit a project's vocabulary for holes. The same instrument also settles a design fork — give unsteered agents the task and read which shape they converge on — so it applies when weighing options or stuck between approaches. Runs throwaway vibe-mode agents and reports what their mistakes and their choices reveal.
+name: vibe-check
+description: Check a project against what a model reaches for when it is not allowed to look things up. Use when asked what is missing, what to build next, what should exist but does not, to find a roadmap, or to audit a project's vocabulary for holes — the names an unchecked agent invents are the holes. The same instrument settles a design fork: give unsteered agents one task and read which shape they converge on, for weighing options or being stuck between approaches. Not a review of code that exists — for how a diff or a design feels, use `/ick` or the taste-check agent instead.
 ---
 
-# Gap Mining
+# Vibe Check
 
 A model writing about your project from instinct names the things it expects to
 find. Where a name misses your actual vocabulary, you have found a hole that
 everything else in its training fills and you do not.
+
+Not to be confused with `/ick` and the `taste-check` agent, which take the same
+English phrase. Those read work that exists and say how it feels. This one reads
+what an agent reaches for and says what is not there.
 
 The mistake is the measurement. You are not reviewing the agent's work — you are
 reading what it reached for.
