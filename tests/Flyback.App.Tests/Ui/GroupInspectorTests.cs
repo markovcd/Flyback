@@ -177,6 +177,7 @@ public class GroupInspectorTests : UiTest
     /// it does — a button without one is a button nobody can identify.
     /// </summary>
     [AvaloniaTheory]
+    [InlineData("switch-group")]
     [InlineData("open-group")]
     [InlineData("keep-group")]
     [InlineData("ungroup")]

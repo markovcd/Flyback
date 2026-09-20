@@ -161,6 +161,14 @@ public sealed partial class NodeEditor
     public int Groupable => SelectedNodes.Count(n => !NodeCatalog.IsSink(n.TypeId));
 
     /// <summary>
+    /// Whether a group is switched off, which it is only where every module in it
+    /// is — the reading a selection already gets, so a box and what it holds never
+    /// disagree.
+    /// </summary>
+    public bool SwitchedOff(NodeGroup group) =>
+        group.Members.Count > 0 && group.Members.All(id => patch.Find(id) is { Off: true });
+
+    /// <summary>
     /// The group the selection is exactly, and null where it is anything else —
     /// which is what tells "ungroup this" from "group these".
     /// </summary>
@@ -492,7 +500,29 @@ public sealed partial class NodeEditor
         }
     }
 
+    /// <summary>
+    /// Draws a box, faintly and struck through where every module in it is
+    /// switched off.
+    /// </summary>
+    /// <remarks>
+    /// The same marking a module that is off wears, for the same reason: a box is
+    /// the one place the modules cannot say it themselves. An open group is left
+    /// alone — the strike through each of its modules is right there.
+    /// </remarks>
     private void DrawBox(DrawingContext context, NodeGroup group, GroupSockets sockets, Rect bounds)
+    {
+        if (!SwitchedOff(group))
+        {
+            DrawBoxFace(context, group, sockets, bounds, off: false);
+            return;
+        }
+
+        using (context.PushOpacity(OffOpacity))
+            DrawBoxFace(context, group, sockets, bounds, off: true);
+    }
+
+    private void DrawBoxFace(
+        DrawingContext context, NodeGroup group, GroupSockets sockets, Rect bounds, bool off)
     {
         // Selected when its modules are, because pressing the box is what selects
         // them — there is nothing else it could mean for a box to be picked.
@@ -515,9 +545,16 @@ public sealed partial class NodeEditor
 
         DrawHeaderRelief(context, header);
 
-        context.DrawText(
-            Text(group.Title(), 12.5, HeaderTextBrush, bounds.Width - 16, true),
-            new Point(bounds.X + 9, bounds.Y + 5));
+        var title = Text(group.Title(), 12.5, HeaderTextBrush, bounds.Width - 16, true);
+        var titleAt = new Point(bounds.X + 9, bounds.Y + 5);
+
+        context.DrawText(title, titleAt);
+
+        if (off)
+            context.DrawLine(
+                OffStrike,
+                new Point(titleAt.X, titleAt.Y + title.Height / 2),
+                new Point(titleAt.X + title.Width, titleAt.Y + title.Height / 2));
 
         for (var i = 0; i < sockets.Outputs.Count; i++)
             DrawBoxSocket(context, sockets.Outputs[i], NodeGeometry.GroupOutputPort(bounds, i), bounds);

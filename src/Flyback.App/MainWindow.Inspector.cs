@@ -499,7 +499,12 @@ public sealed partial class MainWindow
             // it: the button that keeps a group in the module list is offered on
             // the strength of it, and is refused to a group with none. So a
             // rename has to rebuild this panel and not only the title in it.
-            var shape = new StringBuilder($"g{group.Id:N}{(group.Collapsed ? 'c' : 'o')}{group.Name}");
+            // Whether it is off, for the reason the module panel keeps it below:
+            // switching is not a selection change, and the button says which way
+            // it goes.
+            var shape = new StringBuilder(
+                $"g{group.Id:N}{(group.Collapsed ? 'c' : 'o')}"
+                + $"{(editor.SelectionIsOff ? '-' : '+')}{group.Name}");
 
             // Whether each is wired as well as which they are: a socket keeps its
             // row when the wire comes off, but it grows the button that takes it
@@ -842,6 +847,21 @@ public sealed partial class MainWindow
         if (editor.Locked) return;
 
         var actions = ActionRow();
+
+        // First in the row, as it is on a module's panel: the one action here that
+        // changes what the patch does rather than how it is drawn. It switches the
+        // modules, since that is all a group is — a box round some of them.
+        var switching = editor.Switchable;
+
+        if (switching > 0)
+            Act(
+                "switch-group",
+                Glyphs.Switch(),
+                editor.SelectionIsOff
+                    ? $"Switch the {switching} modules in this box back on  (Ctrl+B)"
+                    : $"Switch the {switching} modules in this box off, passing what is patched "
+                      + "into it straight through  (Ctrl+B)",
+                editor.SwitchSelected);
 
         Act(
             group.Collapsed ? "open-group" : "close-group",

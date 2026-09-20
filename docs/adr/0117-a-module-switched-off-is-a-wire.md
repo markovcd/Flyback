@@ -63,13 +63,24 @@ back on is a patch, not a misreading).
 **The canvas draws it faint, with its name struck through**, and its wires as
 faintly. Not a second color: what the module is has not changed, and the category
 accent is how a patch is read at a glance (ADR-0116). The strike is what says it
-outright, since a patch drawn small is faint everywhere.
+outright, since a patch drawn small is faint everywhere. A shut box wears the
+same marking while every module in it is off, because a box is the one place the
+modules cannot say it themselves; an open group is left alone, the strike through
+each of them being right there.
 
 **Ctrl+B on the canvas**, the letter a desk uses, and a glyph at the head of the
 panel's action row (ADR-0111). One key both ways rather than a pair with Shift,
 as group and open have: a module is off or it is on, and there is nothing between
 them for a second key to mean. A selection with anything still on goes off, so a
 press never leaves it half and half.
+
+**A group is switched by switching its modules.** Pressing a box selects what is
+in it, so the key already reaches a whole group; what it was missing is the glyph
+on the panel a group gets of its own, which is at the head of that row too. There
+is no state on the group itself — a group is a fact about the canvas and the
+compiler is never told (see `NodeGroup`), so a second place to be off would be a
+second answer to a question the modules already answer. A group is off while
+every module in it is, which is the reading a selection has.
 
 **The text language says `off name`**, a statement of its own beside
 `name.port = 0.6`. A module that is off is always given a binding when the patch
