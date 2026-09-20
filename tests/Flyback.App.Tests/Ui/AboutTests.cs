@@ -20,9 +20,9 @@ public class AboutTests : UiTest
 {
     private const string SamplePluginReport = "Loaded:\n    Test Plugin  (test.plugin)";
 
-    private static Window Showing(string pluginReport = SamplePluginReport)
+    private Window Showing(string pluginReport = SamplePluginReport)
     {
-        var window = new Window { SizeToContent = SizeToContent.WidthAndHeight, Content = About.View(pluginReport) };
+        var window = Owned(new Window { SizeToContent = SizeToContent.WidthAndHeight, Content = About.View(pluginReport) });
 
         window.Show();
         Settle(window);
