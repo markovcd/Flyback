@@ -1,0 +1,33 @@
+# The gate, on every change: restore, compile, and every test in the solution.
+#
+# The same image the release is built from, stopped at the tests — `--target
+# gate` is the Dockerfile's first stage, so what runs here is what runs before a
+# release and nothing that only a release needs. It also carries the libraries
+# the headless UI tests want and the ffmpeg the recording tests look for, which
+# a workflow that installed a bare SDK would have to list a second time.
+
+name: Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# A push on top of a push leaves the older run testing a commit nobody is
+# waiting on.
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build and test
+        run: docker build --target gate .

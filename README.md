@@ -2,6 +2,8 @@
 
 # Flyback
 
+[![Build](https://github.com/markovcd/Flyback/actions/workflows/ci.yml/badge.svg)](https://github.com/markovcd/Flyback/actions/workflows/ci.yml)
+
 Flyback is a patchable synthesiser for .NET 10. One graph can generate both a picture and a sound. The visual path and the audio path share the same module graph and are compiled down to the same flat instruction stream.
 
 The [website](https://markovcd.github.io/Flyback/) has screenshots, tutorials and the plugin guide. See [CHANGELOG.md](CHANGELOG.md) for what changed in each release, and the [releases page](https://github.com/markovcd/Flyback/releases) for downloads.
@@ -72,6 +74,12 @@ To choose a specific set of runtimes:
 
 ```bash
 docker build --build-arg RIDS="win-x64 win-arm64 osx-arm64 osx-x64 linux-x64" --output artifacts .
+```
+
+To restore, compile and run the whole test suite without publishing anything, which is what the Build workflow (`.github/workflows/ci.yml`) does on every push and pull request:
+
+```bash
+docker build --target gate .
 ```
 
 ## Releases and updates
@@ -196,7 +204,9 @@ src/
 tests/
   Flyback.Core.Tests      core engine tests
   Flyback.Core.Specs      specification-style tests and examples
+  Flyback.Core.Benchmarks engine benchmarks
   Flyback.App.Tests       app and UI tests
+  Flyback.Cli.Tests       command line tests
   Flyback.Plugins.Tests   plugin and runtime behavior tests
   Flyback.Plugins.OpenAi.Tests  chat-completions session tests
   Flyback.Plugins.Gemini.Tests  generateContent session tests

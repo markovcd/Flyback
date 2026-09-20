@@ -7,12 +7,15 @@
 #
 #   docker build --output artifacts .
 #
-# See "Building with Docker" in the README for what comes out and how to get at
-# it.
+# Everything before the publishes is a stage of its own, so the gate can be
+# asked for without the part that takes the time:
+#
+#   docker build --target gate .
+#
+# which is what CI runs on every change. See "Building with Docker" in the
+# README for what comes out and how to get at it.
 
 ARG SDK=mcr.microsoft.com/dotnet/sdk:10.0
-
-FROM ${SDK} AS build
 
 # One runtime identifier per platform. The project supports two more — win-arm64
 # and osx-x64 — and asking for them is an argument rather than an edit:
@@ -31,8 +34,13 @@ ARG CONFIGURATION=Release
 # still works; the release workflow is what passes the real one.
 ARG VERSION=0.1.0
 
+# Everything a change has to get past. An argument declared above the first FROM
+# is one default for both stages, and a stage asks for one by repeating it bare.
+FROM ${SDK} AS gate
+ARG CONFIGURATION
+
 # What the SDK image does not already have. libSkiaSharp is what the headless
-# UI tests rasterise with, and it will not load at all without fontconfig
+# UI tests rasterize with, and it will not load at all without fontconfig
 # beside it — which reads as a DllNotFoundException in every UI test rather
 # than as anything to do with fonts. libX11 is Attention's ICCCM urgency hint
 # on the Linux side (see Attention.cs) — XOpenDisplay already returns null and
@@ -83,6 +91,11 @@ RUN --mount=type=cache,target=/root/.nuget/packages \
 RUN --mount=type=cache,target=/root/.nuget/packages \
     dotnet test --solution Flyback.slnx -c ${CONFIGURATION} --no-build
 
+FROM gate AS publish
+ARG RIDS
+ARG CONFIGURATION
+ARG VERSION
+
 # One publish per identifier, each restoring its own runtime pack. Self-contained
 # and single-file are the project's own doing rather than flags here — see
 # Flyback.App.csproj, which turns both on the moment there is an identifier to
@@ -126,4 +139,4 @@ RUN --mount=type=cache,target=/root/.nuget/packages \
 # carry their mode, which a cross-publish from Windows cannot manage — see the
 # README for keeping it on the way out.
 FROM scratch AS artifacts
-COPY --from=build /out/ /
+COPY --from=publish /out/ /
