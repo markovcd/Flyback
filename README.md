@@ -145,9 +145,11 @@ what that means and waits for a yes; `--yes` answers for a script, which has nob
 `--keys` says where each key would come from and asks nothing of anybody, and `--dry-run` prints
 what was found and leaves the settings alone.
 
-Settings → Agent runs the same survey from a button. That one goes out with the provider, the
-form and the key as they stand on the settings window rather than with what was last saved,
-which is how a key or an endpoint can be tried before it is kept.
+Settings → Agent runs the same survey from a button, about the one model the form is set to.
+It goes out with the provider, the form and the key as they stand on the settings window rather
+than with what was last saved, which is how a model, a key or an endpoint can be tried before
+any of them is kept. What it finds is written over that model's line in the list this command
+left; filling the list is the command's job, since only it asks about every model.
 
 ### Completion
 

@@ -118,6 +118,63 @@ public class ModelSurveyTests
         schema.Surveyed(SettingValues.None.With(Survey.Key, "{ oh dear")).ShouldBeSameAs(schema);
     }
 
+    // --- asking about the one that is chosen ----------------------------------
+
+    /// <summary>
+    /// The translation a window cannot do for itself: it says "the chosen one"
+    /// and the provider says which, because which setting names the model is the
+    /// provider's business (ADR-0069).
+    /// </summary>
+    [Fact]
+    public void Asking_for_the_chosen_one_names_the_model_that_is_set()
+    {
+        var asked = Written().Asking(
+            new SurveyOptions { Chosen = true },
+            SettingValues.None.With(AssistantSchema.ModelKey, "written-pro"));
+
+        asked.Only.ShouldBe(["written-pro"]);
+    }
+
+    /// <summary>
+    /// With a survey written down and no model picked, the box shows what the
+    /// survey found rather than what the schema was written with. A probe of "the
+    /// one on the form" that asked about the other one would be a button that
+    /// spends money on the wrong question.
+    /// </summary>
+    [Fact]
+    public void Asking_for_the_chosen_one_names_what_the_box_actually_shows()
+    {
+        var stored = Stored(new ModelReport("gemini-9-flash"));
+
+        var asked = Written().Asking(new SurveyOptions { Chosen = true }, stored);
+
+        asked.Only.ShouldBe(["gemini-9-flash"]);
+    }
+
+    /// <summary>
+    /// A list somebody named by hand and the whole shortlist are both left
+    /// exactly as they were: this resolves one question and touches nothing else.
+    /// </summary>
+    [Fact]
+    public void Asking_for_anything_else_is_passed_through()
+    {
+        var options = new SurveyOptions(Only: ["one", "two"], All: true);
+
+        Written().Asking(options, SettingValues.None).ShouldBeSameAs(options);
+    }
+
+    /// <summary>Everything listed is not what was chosen, so the narrower one wins.</summary>
+    [Fact]
+    public void The_chosen_one_is_asked_about_rather_than_everything_listed()
+    {
+        var asked = Written().Asking(
+            new SurveyOptions(All: true) { Chosen = true },
+            SettingValues.None);
+
+        asked.Only.ShouldBe(["written-flash"]);
+        asked.All.ShouldBeFalse();
+    }
+
     private static AssistantSchema Written() => new(
         "written-flash",
         [new AssistantModel("written-flash", Hearing: true), new AssistantModel("written-pro")],

@@ -512,12 +512,13 @@ flyback-cli pack my-patch.fbk -o my-patch.fbkb</code></pre>
       press puts your text back.</li>
     </ol>
 
-    <p>Conversations are saved beside the patch they are about. <strong>Probe models</strong>, in
-    <strong>Settings &rarr; Agent</strong>, asks the endpoint which models it has and what each one accepts,
-    and fills the model list in for you. It goes out with the provider, the form and the key as they stand,
-    saved or not, so a key can be tried before it is kept. <code>flyback-cli probe</code> does the same from a
-    terminal. Either one is billed traffic &mdash; three requests for every model the endpoint lists &mdash; so
-    the command asks before it starts, and <code>--yes</code> is how a script gets past the question.</p>
+    <p>Conversations are saved beside the patch they are about. <strong>Probe this model</strong>, in
+    <strong>Settings &rarr; Agent</strong>, asks the endpoint whether the model you have chosen is really there
+    and what it accepts. It goes out with the provider, the form and the key as they stand, saved or not, so a
+    model, a key or an endpoint can be tried before any of them is kept. <code>flyback-cli probe</code> asks the
+    same of every model the endpoint has, which is what fills the model list in for you. Both are billed traffic
+    &mdash; three requests a model &mdash; so the command asks before it starts, and <code>--yes</code> is how a
+    script gets past the question.</p>
 
     <p>Every request tells the model what each module does, up to the <strong>Briefing budget</strong> in
     <strong>Settings → Agent</strong>, 100,000 characters by default. With many plugins installed that can run

@@ -933,6 +933,13 @@ public class AssistantPanelTests : UiTest, IDisposable
         /// <summary>What the last probe went out with, which is the whole question.</summary>
         public AssistantConfig? Asked { get; private set; }
 
+        /// <summary>
+        /// What it was asked about, once this has worked out what the caller
+        /// meant. Resolved here because that is where it is resolved for real:
+        /// the window says "the chosen one" and the provider says which.
+        /// </summary>
+        public SurveyOptions? Wanted { get; private set; }
+
         public Task<IReadOnlyList<ModelReport>> Survey(
             AssistantConfig config,
             SurveyOptions options,
@@ -940,10 +947,13 @@ public class AssistantPanelTests : UiTest, IDisposable
             CancellationToken cancel = default)
         {
             Asked = config;
+            Wanted = Schema.Asking(options, config.Values);
 
+            // An endpoint that has whatever it was asked about, which takes both
+            // kinds of input — so a report landing on the form is visible in it.
             return answering is null
                 ? Task.FromResult<IReadOnlyList<ModelReport>>(
-                    [new ModelReport("found-one"), new ModelReport("found-two")])
+                    [.. (Wanted.Only ?? []).Select(id => new ModelReport(id) { Hearing = true })])
                 : answering(cancel);
         }
     }
@@ -959,8 +969,8 @@ public class AssistantPanelTests : UiTest, IDisposable
     private static Button ProbeButton(Window host) =>
         All<Button>(host).Single(button => button.Name == "probe");
 
-    private static TextBlock ProbeNote(Window host) =>
-        All<TextBlock>(host).Single(block => block.Name == "probeNote");
+    private static string ProbeNote(Window host) =>
+        All<TextBlock>(host).Single(block => block.Name == "probeNote").Text ?? string.Empty;
 
     /// <summary>The key field, told apart from the message box by hiding what is typed.</summary>
     private static TextBox KeyBox(Window host) =>
@@ -995,13 +1005,50 @@ public class AssistantPanelTests : UiTest, IDisposable
     }
 
     /// <summary>
+    /// One model, because the button is billed by the question and the one worth
+    /// asking about is the one that is going to be used.
+    /// </summary>
+    /// <remarks>
+    /// Which setting names it is the provider's business (ADR-0069), so what the
+    /// window asks for is "the chosen one" and the provider resolves it — which
+    /// is what the fake does here, through the same helper both adapters use.
+    /// </remarks>
+    [AvaloniaFact]
+    public void The_probe_asks_about_the_model_on_the_form_and_no_others()
+    {
+        var provider = new Surveying();
+        var host = Settings(Showing(With(provider), Configured("surveying")));
+
+        KeyBox(host).Text = "sk-typed";
+        All<ComboBox>(host).Single(box => box.Name == AssistantSchema.ModelKey).Text = "the-one-i-picked";
+        Settle(host);
+
+        Click(ProbeButton(host));
+        Settle(host);
+
+        provider.Wanted.ShouldNotBeNull();
+        provider.Wanted!.Chosen.ShouldBeTrue();
+        provider.Wanted.Only.ShouldBe(["the-one-i-picked"]);
+        provider.Wanted.All.ShouldBeFalse();
+    }
+
+    /// <summary>A survey of two models, as a full probe leaves one behind.</summary>
+    private static string Listed(params string[] models) =>
+        Survey.Write(models.Select(id => new ModelReport(id)));
+
+    /// <summary>
     /// What a probe found is on the form like anything else on it, and this
-    /// window keeps nothing until Save.
+    /// window keeps nothing until Save. What it did not ask about is left alone:
+    /// one model answering says nothing about the rest of the list.
     /// </summary>
     [AvaloniaFact]
-    public void What_the_probe_finds_fills_the_model_list_and_waits_for_Save()
+    public void What_the_probe_finds_is_written_over_the_model_it_is_about()
     {
-        var saved = Configured("surveying");
+        var saved = Configured(
+            "surveying",
+            (Survey.Key, Listed("first", "second")),
+            (AssistantSchema.ModelKey, "second"));
+
         var window = Showing(With(new Surveying()), saved);
         var panel = All<AssistantPanel>(window).Single();
         var host = Settings(window);
@@ -1014,14 +1061,65 @@ public class AssistantPanelTests : UiTest, IDisposable
 
         var models = All<ComboBox>(host).Single(box => box.Name == AssistantSchema.ModelKey);
 
-        ((IEnumerable<string>)models.ItemsSource!).ShouldBe(["found-one", "found-two"]);
-        Survey.Read(saved.Of("surveying").Text(Survey.Key)).ShouldBeEmpty("nothing is kept until Save");
+        ((IEnumerable<string>)models.ItemsSource!).ShouldBe(["first", "second"], "the list is not rebuilt");
+        Survey.Read(saved.Of("surveying").Text(Survey.Key))
+            .ShouldAllBe(model => !model.Hearing, "nothing is kept until Save");
 
         panel.SaveSettings();
 
-        Survey.Read(saved.Of("surveying").Text(Survey.Key))
-            .Select(model => model.Id)
-            .ShouldBe(["found-one", "found-two"]);
+        var written = Survey.Read(saved.Of("surveying").Text(Survey.Key));
+
+        written.Select(model => model.Id).ShouldBe(["first", "second"]);
+        written.Single(model => model.Id == "second").Hearing.ShouldBeTrue("this is the one that answered");
+        written.Single(model => model.Id == "first").Hearing.ShouldBeFalse("and this one was never asked");
+    }
+
+    /// <summary>
+    /// With nothing written down there is nothing to write over, and one model is
+    /// not an inventory: storing it as one would take every other name off the
+    /// box on the strength of never having asked about them.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_probe_of_one_model_does_not_become_the_whole_list()
+    {
+        var saved = Configured("surveying");
+        var window = Showing(With(new Surveying()), saved);
+        var panel = All<AssistantPanel>(window).Single();
+        var host = Settings(window);
+
+        KeyBox(host).Text = "sk-typed";
+        Settle(host);
+
+        Click(ProbeButton(host));
+        Settle(host);
+
+        panel.SaveSettings();
+
+        Survey.Read(saved.Of("surveying").Text(Survey.Key)).ShouldBeEmpty();
+        ProbeNote(host).ShouldContain("quiet answers:", Case.Sensitive);
+    }
+
+    /// <summary>
+    /// The one answer worth the money: the model is not there, or the key does
+    /// not reach it. Nothing on the form is disturbed by finding out.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_model_the_endpoint_will_not_answer_for_is_said_and_nothing_else()
+    {
+        var saved = Configured("surveying", (Survey.Key, Listed("first")));
+        var host = Settings(Showing(With(new Surveying(_ => Task.FromResult<IReadOnlyList<ModelReport>>([]))), saved));
+
+        KeyBox(host).Text = "sk-typed";
+        Settle(host);
+
+        Click(ProbeButton(host));
+        Settle(host);
+
+        ProbeNote(host).ShouldContain("did not answer");
+
+        var models = All<ComboBox>(host).Single(box => box.Name == AssistantSchema.ModelKey);
+
+        ((IEnumerable<string>)models.ItemsSource!).ShouldBe(["first"]);
     }
 
     /// <summary>
@@ -1074,8 +1172,8 @@ public class AssistantPanelTests : UiTest, IDisposable
         Click(ProbeButton(host));
         Settle(host);
 
-        ProbeButton(host).Content.ShouldBe("Probe models");
-        ProbeNote(host).Text.ShouldBe("Stopped. Nothing was kept.");
+        ProbeButton(host).Content.ShouldBe("Probe this model");
+        ProbeNote(host).ShouldBe("Stopped. Nothing was kept.");
     }
 
     private sealed class FakeStore : ISecretStore

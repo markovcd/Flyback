@@ -53,7 +53,23 @@ public sealed record ModelReport(string Id)
 public sealed record SurveyOptions(
     IReadOnlyList<string>? Only = null,
     bool All = false,
-    bool Bounds = false);
+    bool Bounds = false)
+{
+    /// <summary>
+    /// Ask about the one model this configuration is already set to, and nothing
+    /// else.
+    /// </summary>
+    /// <remarks>
+    /// The question a window can ask and a command cannot: which of a provider's
+    /// settings names the model is the provider's own business (ADR-0069), so the
+    /// caller says which model it means by saying "the chosen one" and the
+    /// provider turns that into a name — see <see cref="AssistantSchema.Asking"/>.
+    /// A provider that has not heard of this probes its shortlist as before,
+    /// which costs money rather than answers, so the ordinary shape resolves it
+    /// in one shared place.
+    /// </remarks>
+    public bool Chosen { get; init; }
+}
 
 /// <summary>
 /// A provider that can be asked what its endpoint actually accepts.

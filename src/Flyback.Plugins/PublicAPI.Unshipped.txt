@@ -1,1 +1,4 @@
 #nullable enable
+Flyback.Plugins.Assist.AssistantSchema.Asking(Flyback.Plugins.Assist.SurveyOptions! options, Flyback.Plugins.Settings.SettingValues! values) -> Flyback.Plugins.Assist.SurveyOptions!
+Flyback.Plugins.Assist.SurveyOptions.Chosen.get -> bool
+Flyback.Plugins.Assist.SurveyOptions.Chosen.init -> void

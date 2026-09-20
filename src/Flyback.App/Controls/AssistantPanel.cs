@@ -230,8 +230,9 @@ public sealed class AssistantPanel : UserControl
     private readonly StackPanel keySection = new() { Spacing = 8 };
 
     /// <summary>
-    /// Asks the endpoint what it offers. The same survey the <c>probe</c> command
-    /// runs, on what is on this form rather than on what was last saved.
+    /// Asks the endpoint about the model on the form. The same survey the
+    /// <c>probe</c> command runs, narrowed to the one model and pointed at what is
+    /// on this form rather than at what was last saved.
     /// </summary>
     private readonly Button probe = new() { Name = "probe", FontSize = Text.Body };
 
@@ -248,8 +249,8 @@ public sealed class AssistantPanel : UserControl
     private readonly TextBlock probeWarning = new()
     {
         Name = "probeWarning",
-        Text = "Every question is a real request on your key: a probe costs money, "
-            + "three requests for each model the endpoint lists.",
+        Text = "Every question is a real request on your key: this costs money, "
+            + "three requests for the one model.",
         FontSize = Text.Small,
         Foreground = Amber,
         Width = 260,
@@ -822,9 +823,10 @@ public sealed class AssistantPanel : UserControl
         fields.Children.Add(Text.Quiet("Provider"));
         fields.Children.Add(providerBox);
         probeSection.Children.Add(Note(
-            "Asks the endpoint which models it has and what each will take, using the provider, the "
-            + "form above and the key on it — saved or not. It takes a minute or two. What it finds "
-            + "fills the model list, and is written down when you Save."));
+            "Asks the endpoint whether the model above is really there and what it will take, using "
+            + "the provider, the form and the key as they stand — saved or not. What it finds is "
+            + "written down when you Save. The flyback-cli probe command asks about every model the "
+            + "endpoint has, which is what fills the list."));
         probeSection.Children.Add(probeWarning);
         probeSection.Children.Add(probe);
         probeSection.Children.Add(probeNote);
@@ -1291,25 +1293,27 @@ public sealed class AssistantPanel : UserControl
         var running = probing is not null;
         var key = KeyOnTheForm();
 
-        probe.Content = running ? "Stop" : "Probe models";
+        probe.Content = running ? "Stop" : "Probe this model";
         probe.IsEnabled = running || key is not null;
 
         ToolTip.SetTip(probe, running
-            ? "Stop — it ends after the model it is on"
+            ? "Stop — it ends at the next thing it asks"
             : key is null
                 ? $"No key for {assistant.Name}. Paste one above; it does not have to be saved first."
                 : null);
     }
 
     /// <summary>
-    /// Asks the endpoint what it offers, with what is on this form rather than
-    /// with what was last saved.
+    /// Asks the endpoint about the model on the form, with what is on the form
+    /// rather than with what was last saved.
     /// </summary>
     /// <remarks>
     /// The same survey <c>flyback-cli probe</c> runs, and the one button here that
-    /// spends money on being pressed. What it finds goes onto the form and nowhere
-    /// else: this window keeps nothing until Save, so a probe run to see what an
-    /// endpoint has can be thrown away with everything else by Cancel.
+    /// spends money on being pressed — which is why it asks about one model rather
+    /// than about a list. Which setting names that model is the provider's business,
+    /// so this asks for "the chosen one" and the provider works out what it means
+    /// (ADR-0069). What comes back goes onto the form and nowhere else: this window
+    /// keeps nothing until Save.
     /// </remarks>
     private async Task ProbeAsync()
     {
@@ -1337,7 +1341,11 @@ public sealed class AssistantPanel : UserControl
 
         try
         {
-            var found = await survey.Survey(config, new SurveyOptions(), new Commentary(Say), stopping.Token);
+            var found = await survey.Survey(
+                config,
+                new SurveyOptions { Chosen = true },
+                new Commentary(Say),
+                stopping.Token);
 
             // Somebody picked another provider while this ran. One provider's
             // models on another's form would be worse than the answer being
@@ -1350,12 +1358,25 @@ public sealed class AssistantPanel : UserControl
 
             if (found.Count == 0)
             {
-                Say("Nothing answered, so what was on the list is still there.", amber: true);
+                Say("The endpoint did not answer for that model. Nothing was changed.", amber: true);
                 return;
             }
 
-            form.Put(Survey.Key, Survey.Write(found));
-            Say($"{Tally(found.Count, "model")} answered. Save to keep them.");
+            var said = string.Join(" ", found.Select(Says));
+            var known = Survey.Read(form.Values.Text(Survey.Key, string.Empty));
+
+            // A probe of one model is a fact about that model and about nothing
+            // else. Written over the list a full survey left, where there is one;
+            // never written down as a list of its own, which would take every
+            // other name off the box on the strength of never having asked.
+            if (known.Count == 0)
+            {
+                Say(said);
+                return;
+            }
+
+            form.Put(Survey.Key, Survey.Write(Merged(known, found)));
+            Say($"{said} Save to keep it.");
         }
         catch (OperationCanceledException)
         {
@@ -1373,6 +1394,39 @@ public sealed class AssistantPanel : UserControl
 
             Refresh();
         }
+    }
+
+    /// <summary>What one model answered, in the words the command uses for it.</summary>
+    private static string Says(ModelReport model)
+    {
+        var senses = new List<string>();
+
+        if (model.Vision) senses.Add("sees");
+        if (model.Hearing) senses.Add("hears");
+
+        return $"{model.Id} answers: {(senses.Count == 0 ? "text only" : string.Join(", ", senses))}.";
+    }
+
+    /// <summary>
+    /// What was written down, with each fresh report put over the model it is
+    /// about. One nobody had asked about before goes on the end, so the box keeps
+    /// the order the survey that filled it left.
+    /// </summary>
+    private static IReadOnlyList<ModelReport> Merged(
+        IReadOnlyList<ModelReport> known,
+        IReadOnlyList<ModelReport> found)
+    {
+        var merged = known.ToList();
+
+        foreach (var model in found)
+        {
+            var at = merged.FindIndex(one => string.Equals(one.Id, model.Id, StringComparison.OrdinalIgnoreCase));
+
+            if (at < 0) merged.Add(model);
+            else merged[at] = model;
+        }
+
+        return merged;
     }
 
     /// <summary>What the probe has to say, or nothing at all.</summary>

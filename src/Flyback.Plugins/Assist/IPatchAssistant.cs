@@ -209,6 +209,26 @@ public sealed record AssistantSchema(
     }
 
     /// <summary>
+    /// What a survey should ask about, with <see cref="SurveyOptions.Chosen"/>
+    /// resolved into the model these settings name.
+    /// </summary>
+    /// <remarks>
+    /// The one translation an ordinary provider owes a caller that cannot know
+    /// which of its settings is the model. Everything else is passed through,
+    /// including a list somebody named by hand — asking for both is asking for
+    /// the chosen one.
+    /// <para>
+    /// Through <see cref="Surveyed"/> and <see cref="Read"/>, as the form is, so
+    /// the model this names is the one the box shows: with a survey written down
+    /// and no model picked, the two defaults are not the same name.
+    /// </para>
+    /// </remarks>
+    public SurveyOptions Asking(SurveyOptions options, SettingValues values) =>
+        options.Chosen
+            ? options with { Only = [Surveyed(values).Read(values).Model], All = false }
+            : options;
+
+    /// <summary>
     /// What a form filled in this way actually means, which is not quite what it
     /// says.
     /// </summary>

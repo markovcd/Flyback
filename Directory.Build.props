@@ -58,7 +58,7 @@
       with the first line added since a release, the major with the first line
       marked *REMOVED*. A release moves what is unshipped into what is shipped.
     -->
-    <PluginContractVersion>1.1.0</PluginContractVersion>
+    <PluginContractVersion>1.2.0</PluginContractVersion>
   </PropertyGroup>
 
   <!--

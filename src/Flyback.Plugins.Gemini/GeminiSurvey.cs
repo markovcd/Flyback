@@ -23,7 +23,7 @@ public sealed partial class GeminiAssistant : IModelSurvey
 
         using var probe = new GeminiProbe(config.ApiKey, chosen.BaseUrl ?? Schema.DefaultBaseUrl!);
 
-        return await probe.Run(options, said, cancel).ConfigureAwait(false);
+        return await probe.Run(Schema.Asking(options, config.Values), said, cancel).ConfigureAwait(false);
     }
 }
 
