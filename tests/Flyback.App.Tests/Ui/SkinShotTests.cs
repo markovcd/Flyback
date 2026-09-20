@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
@@ -79,7 +79,7 @@ public class SkinShotTests : UiTest
     /// </summary>
     private const double Wide = 1400, Tall = 900;
 
-    private static void Shoot(string folder, string name, string title, ModuleSkin? skin)
+    private void Shoot(string folder, string name, string title, ModuleSkin? skin)
     {
         var was = NodeCatalog.Current;
 

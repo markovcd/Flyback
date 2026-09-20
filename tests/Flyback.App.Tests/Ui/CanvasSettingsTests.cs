@@ -1,4 +1,4 @@
-using Avalonia.Controls;
+﻿using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
@@ -17,7 +17,7 @@ namespace Flyback.App.Tests.Ui;
 /// start, which is the whole point of the second one — somebody clearing it is
 /// asking for the thing in front of them to stop moving.
 /// </remarks>
-public sealed class CanvasSettingsTests : UiTest, IDisposable
+public sealed class CanvasSettingsTests : UiTest
 {
     private readonly string settingsPath = Path.Combine(
         Path.GetTempPath(),
@@ -26,8 +26,10 @@ public sealed class CanvasSettingsTests : UiTest, IDisposable
 
     private const int CanvasTab = 1;
 
-    public void Dispose()
+    public override void Dispose()
     {
+        base.Dispose();
+
         var folder = Path.GetDirectoryName(settingsPath);
 
         if (folder is not null && Directory.Exists(folder)) Directory.Delete(folder, recursive: true);
