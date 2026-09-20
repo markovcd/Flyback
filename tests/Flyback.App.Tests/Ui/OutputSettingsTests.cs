@@ -389,7 +389,7 @@ public class OutputSettingsTests : UiTest
     /// behind it — the plugin by both the name About lists it under and the id
     /// its folder goes by, so it can be found and taken away again.
     /// </summary>
-    [Fact]
+    [AvaloniaFact]
     public void A_backend_is_named_with_the_plugin_that_offered_it()
     {
         MainWindow.Attributed("Played by WASAPI (shared mode)", new PluginInfo("win.io", "Windows sound and MIDI"))

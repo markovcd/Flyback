@@ -32,6 +32,13 @@ namespace Flyback.App.Tests.Ui;
 /// input and — with Skia underneath — rasterises. What it does not do is open a
 /// window. The Fluent theme is not decoration: every templated control the
 /// inspector uses is an empty shell without it.
+/// <para>
+/// Every test in a class deriving from this one is an <c>[AvaloniaFact]</c> or an
+/// <c>[AvaloniaTheory]</c>, whether it touches a control or not. A plain
+/// <c>[Fact]</c> runs on a thread of the pool's choosing, and disposing there
+/// reaches the dispatcher from the wrong thread — which throws only when there
+/// happens to be work queued, so it shows up as another test failing, later.
+/// </para>
 /// </remarks>
 public class UiTest : IDisposable
 {
