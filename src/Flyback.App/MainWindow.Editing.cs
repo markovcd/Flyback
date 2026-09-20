@@ -250,6 +250,17 @@ public sealed partial class MainWindow
     /// Nothing may block inside a closing handler, so a window with unsaved work
     /// in it cancels the close, asks, and closes itself again on the way back.
     /// </summary>
+    /// <summary>
+    /// Closes without asking about unsaved work, for a test tearing its window
+    /// down: there is nobody to answer the question, and a cancelled close would
+    /// leave the window and its engine running for the rest of the assembly.
+    /// </summary>
+    internal void CloseWithoutAsking()
+    {
+        leaving = true;
+        Close();
+    }
+
     protected override async void OnClosing(WindowClosingEventArgs e)
     {
         base.OnClosing(e);

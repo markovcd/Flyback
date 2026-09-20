@@ -1,4 +1,4 @@
-using System.IO.Compression;
+﻿using System.IO.Compression;
 using System.Reflection;
 using System.Threading;
 using Avalonia.Controls;
@@ -25,15 +25,17 @@ namespace Flyback.App.Tests.Ui;
 /// <see cref="MainWindow"/> actually listens for, which is what lets a route
 /// every other file-opening test has to leave to the picker be exercised here.
 /// </remarks>
-public class FileDropTests : UiTest, IDisposable
+public class FileDropTests : UiTest
 {
     private const string Program = GlobalConstants.ApplicationName;
 
     private readonly string folder = Path.Combine(
         Path.GetTempPath(), "flyback-drop-" + Guid.NewGuid().ToString("N"));
 
-    public void Dispose()
+    public override void Dispose()
     {
+        base.Dispose();
+
         if (Directory.Exists(folder)) Directory.Delete(folder, recursive: true);
     }
 
@@ -52,9 +54,9 @@ public class FileDropTests : UiTest, IDisposable
         return path;
     }
 
-    private static MainWindow Open()
+    private MainWindow Open()
     {
-        var window = new MainWindow();
+        var window = NewMainWindow();
 
         window.Show();
         Settle(window);

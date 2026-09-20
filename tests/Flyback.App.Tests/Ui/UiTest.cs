@@ -25,8 +25,15 @@ namespace Flyback.App.Tests.Ui;
 /// window. The Fluent theme is not decoration: every templated control the
 /// inspector uses is an empty shell without it.
 /// </remarks>
-public class UiTest
+public class UiTest : IDisposable
 {
+    /// <summary>
+    /// The windows this test opened, closed when it ends. Headless runs the whole
+    /// assembly on one UI thread, so a window left open keeps its preview, its
+    /// timers and its engine on that thread for every test that follows.
+    /// </summary>
+    private readonly List<Window> opened = [];
+
     public static AppBuilder BuildAvaloniaApp() => AppBuilder
         .Configure<TestApp>()
         .UseSkia()
@@ -47,19 +54,50 @@ public class UiTest
     /// The inspector's own minimum, so a test sees the layout at the narrowest
     /// the panel is allowed to be rather than at whatever a window happened to be.
     /// </param>
-    protected static Window Show(Control content, double width = 300)
+    protected Window Show(Control content, double width = 300)
     {
-        var window = new Window
+        var window = Owned(new Window
         {
             Width = width,
             SizeToContent = SizeToContent.Height,
             Content = content,
-        };
+        });
 
         window.Show();
         Settle(window);
 
         return window;
+    }
+
+    /// <summary>A shell whose window this test owns, and which is closed with it.</summary>
+    protected MainWindow NewMainWindow() => Owned(new MainWindow());
+
+    /// <summary>Hands a window this test made over to be closed when it ends.</summary>
+    protected T Owned<T>(T window) where T : Window
+    {
+        opened.Add(window);
+
+        return window;
+    }
+
+    public virtual void Dispose()
+    {
+        // In reverse, so a window opened over another goes first.
+        for (var index = opened.Count - 1; index >= 0; index--)
+        {
+            var window = opened[index];
+
+            // A shell asks about unsaved work and cancels the close to do it,
+            // which nothing here would answer.
+            if (window is MainWindow shell) shell.CloseWithoutAsking();
+            else window.Close();
+        }
+
+        opened.Clear();
+
+        Dispatcher.UIThread.RunJobs();
+
+        GC.SuppressFinalize(this);
     }
 
     /// <summary>Runs layout to completion, after something has changed the tree.</summary>

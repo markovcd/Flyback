@@ -1,4 +1,4 @@
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Headless;
@@ -23,9 +23,9 @@ namespace Flyback.App.Tests.Ui;
 /// </remarks>
 public class SourceViewTests : UiTest
 {
-    private static MainWindow Open()
+    private MainWindow Open()
     {
-        var window = new MainWindow();
+        var window = NewMainWindow();
 
         window.Show();
         window.UpdateLayout();

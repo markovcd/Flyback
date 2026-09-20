@@ -1,4 +1,4 @@
-using Avalonia.Controls;
+﻿using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
@@ -13,7 +13,7 @@ namespace Flyback.App.Tests.Ui;
 /// The Usage tab of the settings window: the switch, and that clearing it stops the
 /// run it is cleared in rather than only the next one (ADR-0094).
 /// </summary>
-public sealed class UsageSettingsTests : UiTest, IDisposable
+public sealed class UsageSettingsTests : UiTest
 {
     private readonly string settingsPath = Path.Combine(
         Path.GetTempPath(),
@@ -31,8 +31,10 @@ public sealed class UsageSettingsTests : UiTest, IDisposable
         public void Drain(TimeSpan most) { }
     }
 
-    public void Dispose()
+    public override void Dispose()
     {
+        base.Dispose();
+
         var folder = Path.GetDirectoryName(settingsPath);
 
         if (folder is not null && Directory.Exists(folder)) Directory.Delete(folder, recursive: true);

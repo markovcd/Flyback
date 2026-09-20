@@ -1,4 +1,4 @@
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Headless;
@@ -26,21 +26,23 @@ namespace Flyback.App.Tests.Ui;
 /// press one. The other half is that it is a panel rather than a window, so nothing
 /// about being modal comes from the platform.
 /// </remarks>
-public class UnsavedDialogTests : UiTest, IDisposable
+public class UnsavedDialogTests : UiTest
 {
     /// <summary>Where the tests that write a file write it.</summary>
     private readonly string folder = Path.Combine(
         Path.GetTempPath(), "flyback-unsaved-" + Guid.NewGuid().ToString("N"));
 
-    public void Dispose()
+    public override void Dispose()
     {
+        base.Dispose();
+
         if (Directory.Exists(folder)) Directory.Delete(folder, recursive: true);
     }
 
     /// <summary>A window whose patch has been edited, so closing it has to ask.</summary>
-    private static MainWindow OpenAndEdit()
+    private MainWindow OpenAndEdit()
     {
-        var window = new MainWindow();
+        var window = NewMainWindow();
 
         window.Show();
         Settle(window);
@@ -93,7 +95,7 @@ public class UnsavedDialogTests : UiTest, IDisposable
     [AvaloniaFact]
     public void Closing_over_typing_that_was_never_applied_asks_as_well()
     {
-        var window = new MainWindow();
+        var window = NewMainWindow();
 
         window.Show();
         Settle(window);
@@ -366,9 +368,9 @@ public class UnsavedDialogTests : UiTest, IDisposable
     }
 
     /// <summary>A window whose document is text that has been applied and written nowhere.</summary>
-    private static MainWindow OpenOnUnsavedText()
+    private MainWindow OpenOnUnsavedText()
     {
-        var window = new MainWindow();
+        var window = NewMainWindow();
 
         window.Show();
         Settle(window);
@@ -517,7 +519,7 @@ public class UnsavedDialogTests : UiTest, IDisposable
         SampleExtra.Set(player, carriedPath);
         b.Wire(player, 0, output, NodeCatalog.OutputLeftPort);
 
-        var window = new MainWindow();
+        var window = NewMainWindow();
 
         window.Show();
         Settle(window);

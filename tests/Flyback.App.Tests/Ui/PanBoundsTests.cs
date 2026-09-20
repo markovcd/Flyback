@@ -1,4 +1,4 @@
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
@@ -26,7 +26,7 @@ public class PanBoundsTests : UiTest
     private const double ReachAcross = NodeEditor.ViewReachAcross;
     private const double ReachDown = NodeEditor.ViewReachDown;
 
-    private static (NodeEditor Editor, Window Window) Editing()
+    private (NodeEditor Editor, Window Window) Editing()
     {
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
         builder.Add("value", 0, 0);

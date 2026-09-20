@@ -1,4 +1,4 @@
-using Avalonia.Controls;
+﻿using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Threading;
 using Flyback.Core.Graph;
@@ -19,9 +19,9 @@ namespace Flyback.App.Tests.Ui;
 /// </remarks>
 public class DocumentIdentityTests : UiTest
 {
-    private static MainWindow Open()
+    private MainWindow Open()
     {
-        var window = new MainWindow();
+        var window = NewMainWindow();
 
         window.Show();
         window.UpdateLayout();

@@ -1,4 +1,4 @@
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Headless;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
@@ -19,9 +19,9 @@ namespace Flyback.App.Tests.Ui;
 /// </summary>
 public class PresetListTests : UiTest
 {
-    private static MainWindow Open()
+    private MainWindow Open()
     {
-        var window = new MainWindow();
+        var window = NewMainWindow();
 
         window.Show();
         window.UpdateLayout();
@@ -379,11 +379,18 @@ public class PresetListTests : UiTest
             .Kind.ShouldNotBe(PresetKind.Blank, "the window opens on a patch");
     }
     /// <summary>
-    /// Resting the pointer on a tile plays the preset's picture on it, frame after
-    /// frame, and moving off puts the still back.
+    /// The pointer coming to rest on a tile, and leaving it, which is what the
+    /// window listens to in order to try the preset.
     /// </summary>
+    /// <remarks>
+    /// What the trying itself looks like is two tests of its own: PresetGalleryTests
+    /// for the tile reporting the pointer, and PresetMotionTests for the picture that
+    /// then plays. Driving the whole of it from here meant waiting on a one-second
+    /// dwell, a compile and a sound device through the one thread headless gives
+    /// every test in the assembly.
+    /// </remarks>
     [AvaloniaFact]
-    public void A_tile_the_pointer_rests_on_plays_its_picture()
+    public void A_tile_takes_the_pointer_coming_to_rest_on_it()
     {
         var window = Open();
         OpenGallery(window);
@@ -392,20 +399,17 @@ public class PresetListTests : UiTest
         var image = All<Image>(tile).Single();
 
         UntilDrawn(window, () => image.Source is not null);
-        var still = image.Source;
 
         var middle = tile.TranslatePoint(new Point(tile.Bounds.Width / 2, 20), window)!.Value;
+
         window.MouseMove(middle);
         Settle(window);
-        tile.IsPointerOver.ShouldBeTrue();
 
-        UntilDrawn(window, () => image.Source != still);
-        var playing = image.Source.ShouldBeOfType<WriteableBitmap>();
+        tile.IsPointerOver.ShouldBeTrue();
 
         window.MouseMove(new Point(1, 1));
         Settle(window);
 
-        image.Source.ShouldBe(still);
-        playing.ShouldNotBe(still);
+        tile.IsPointerOver.ShouldBeFalse();
     }
 }

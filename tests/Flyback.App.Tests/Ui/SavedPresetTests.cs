@@ -1,4 +1,4 @@
-using Avalonia.Controls;
+﻿using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
@@ -14,14 +14,16 @@ namespace Flyback.App.Tests.Ui;
 /// The patch on the canvas saved as a preset from the gallery, which then lists it
 /// under a heading of its own after every preset the program offers.
 /// </summary>
-public class SavedPresetTests : UiTest, IDisposable
+public class SavedPresetTests : UiTest
 {
     private readonly string folder = Path.Combine(
         Path.GetTempPath(),
         "flyback-presets-" + Guid.NewGuid().ToString("N"));
 
-    public void Dispose()
+    public override void Dispose()
     {
+        base.Dispose();
+
         if (Directory.Exists(folder)) Directory.Delete(folder, recursive: true);
 
         GC.SuppressFinalize(this);
@@ -237,7 +239,7 @@ public class SavedPresetTests : UiTest, IDisposable
     [AvaloniaFact]
     public void A_window_given_no_folder_has_no_saved_run()
     {
-        var window = new MainWindow();
+        var window = NewMainWindow();
 
         window.Show();
         Settle(window);

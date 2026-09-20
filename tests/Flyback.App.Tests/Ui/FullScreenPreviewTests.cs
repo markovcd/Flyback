@@ -1,4 +1,4 @@
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
@@ -22,9 +22,9 @@ namespace Flyback.App.Tests.Ui;
 /// </remarks>
 public class FullScreenPreviewTests : UiTest
 {
-    private static MainWindow Open()
+    private MainWindow Open()
     {
-        var window = new MainWindow();
+        var window = NewMainWindow();
 
         window.Show();
         Settle(window);

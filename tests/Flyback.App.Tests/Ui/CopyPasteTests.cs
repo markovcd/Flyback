@@ -1,4 +1,4 @@
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
@@ -38,7 +38,7 @@ public class CopyPasteTests : UiTest
         return b.Patch;
     }
 
-    private static (NodeEditor Editor, Window Window) Editing(Patch patch)
+    private (NodeEditor Editor, Window Window) Editing(Patch patch)
     {
         var editor = new NodeEditor { Width = Wide, Height = Tall };
         var window = Show(editor, Wide);

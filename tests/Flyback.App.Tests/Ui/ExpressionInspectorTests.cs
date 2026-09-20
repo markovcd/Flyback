@@ -1,4 +1,4 @@
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Controls.Primitives;
@@ -23,7 +23,7 @@ namespace Flyback.App.Tests.Ui;
 /// </summary>
 public class ExpressionInspectorTests : UiTest
 {
-    private static MainWindow Open(out NodeInstance expression, string? written = null)
+    private MainWindow Open(out NodeInstance expression, string? written = null)
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
 
@@ -35,7 +35,7 @@ public class ExpressionInspectorTests : UiTest
         var screen = b.Add(NodeCatalog.OutputTypeId, 700, 40);
         b.Wire(coord, 0, formula, 0).Wire(formula, 0, screen, NodeCatalog.OutputColorPort);
 
-        var window = new MainWindow();
+        var window = NewMainWindow();
 
         window.Show();
         window.UpdateLayout();

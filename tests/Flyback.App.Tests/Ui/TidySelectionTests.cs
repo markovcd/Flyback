@@ -1,4 +1,4 @@
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
@@ -48,7 +48,7 @@ public class TidySelectionTests : UiTest
         return b.Patch;
     }
 
-    private static (NodeEditor Editor, Window Window) Editing(Patch patch)
+    private (NodeEditor Editor, Window Window) Editing(Patch patch)
     {
         var editor = new NodeEditor { Width = Wide, Height = Tall };
         var window = Show(editor, Wide);
@@ -186,9 +186,9 @@ public class TidySelectionTests : UiTest
 
     // --- the key and the button ---------------------------------------------
 
-    private static MainWindow Open()
+    private MainWindow Open()
     {
-        var window = new MainWindow();
+        var window = NewMainWindow();
 
         window.Show();
         window.UpdateLayout();
@@ -204,7 +204,7 @@ public class TidySelectionTests : UiTest
         All<Button>(window).Single(b => b.Name == "tidy");
 
     /// <summary>A patch of two chains, opened in the real window.</summary>
-    private static (MainWindow Window, NodeInstance[] Near, NodeInstance[] Far) Opened()
+    private (MainWindow Window, NodeInstance[] Near, NodeInstance[] Far) Opened()
     {
         var window = Open();
         var patch = Apart(out var near, out var far);

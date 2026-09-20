@@ -1,4 +1,4 @@
-using Avalonia.Controls;
+﻿using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Threading;
@@ -21,9 +21,9 @@ namespace Flyback.App.Tests.Ui;
 /// </remarks>
 public class PreviewVisibilityTests : UiTest
 {
-    private static MainWindow Open(Patch patch)
+    private MainWindow Open(Patch patch)
     {
-        var window = new MainWindow();
+        var window = NewMainWindow();
 
         window.Show();
         Settle(window);

@@ -1,4 +1,4 @@
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Input;
@@ -22,7 +22,7 @@ namespace Flyback.App.Tests.Ui;
 /// </remarks>
 public class RenameModuleTests : UiTest
 {
-    private static MainWindow Open(out NodeInstance sine)
+    private MainWindow Open(out NodeInstance sine)
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
 
@@ -30,7 +30,7 @@ public class RenameModuleTests : UiTest
         var screen = b.Add(NodeCatalog.OutputTypeId, 700, 40);
         b.Wire(osc, 0, screen, NodeCatalog.OutputColorPort);
 
-        var window = new MainWindow();
+        var window = NewMainWindow();
 
         window.Show();
         window.UpdateLayout();

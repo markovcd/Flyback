@@ -1,4 +1,4 @@
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
@@ -19,7 +19,7 @@ public class WirePanTests : UiTest
     private const double Wide = 1200;
     private const double Tall = 800;
 
-    private static (NodeEditor Editor, Window Window, NodeInstance Source, NodeInstance Fed) Editing()
+    private (NodeEditor Editor, Window Window, NodeInstance Source, NodeInstance Fed) Editing()
     {
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
         var source = builder.Add("osc.sine", 40, 40);

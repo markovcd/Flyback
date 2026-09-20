@@ -1,4 +1,4 @@
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
@@ -33,7 +33,7 @@ public class ReportLineTests : UiTest
 
     private static string TimeOf(TextBlock block) => block.Text ?? string.Empty;
 
-    private static (Window Window, ReportLine Line) Open(double width = 260)
+    private (Window Window, ReportLine Line) Open(double width = 260)
     {
         var line = new ReportLine();
         var window = Show(line, width);
@@ -502,7 +502,7 @@ public class ReportLineTests : UiTest
     [AvaloniaFact]
     public void The_status_bar_keeps_a_share_of_its_width_for_the_report()
     {
-        var window = new MainWindow();
+        var window = NewMainWindow();
 
         window.Show();
         Settle(window);

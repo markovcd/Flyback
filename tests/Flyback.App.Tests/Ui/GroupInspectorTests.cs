@@ -1,4 +1,4 @@
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Input;
@@ -23,7 +23,7 @@ namespace Flyback.App.Tests.Ui;
 /// </remarks>
 public class GroupInspectorTests : UiTest
 {
-    private static MainWindow Open(out NodeGroup group)
+    private MainWindow Open(out NodeGroup group)
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
 
@@ -36,7 +36,7 @@ public class GroupInspectorTests : UiTest
          .Wire(osc, 0, product, 0)
          .Wire(product, 0, screen, NodeCatalog.OutputLeftPort);
 
-        var window = new MainWindow();
+        var window = NewMainWindow();
 
         window.Show();
         window.UpdateLayout();
@@ -312,7 +312,7 @@ public class GroupInspectorTests : UiTest
     }
 
     /// <summary>Two pairs, each drawn as a box, with both boxes selected.</summary>
-    private static MainWindow Both(out NodeGroup top, out NodeGroup low)
+    private MainWindow Both(out NodeGroup top, out NodeGroup low)
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
 
@@ -327,7 +327,7 @@ public class GroupInspectorTests : UiTest
          .Wire(second, 0, other, 0)
          .Wire(other, 0, screen, NodeCatalog.OutputRightPort);
 
-        var window = new MainWindow();
+        var window = NewMainWindow();
 
         window.Show();
         window.UpdateLayout();

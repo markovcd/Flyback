@@ -1,4 +1,4 @@
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
@@ -21,14 +21,16 @@ namespace Flyback.App.Tests.Ui;
 /// but a folder on the disk — a folder these tests point somewhere harmless,
 /// because the usual one is where a person's own groups are.
 /// </remarks>
-public class SavedGroupTests : UiTest, IDisposable
+public class SavedGroupTests : UiTest
 {
     private readonly string folder = Path.Combine(
         Path.GetTempPath(),
         "flyback-kept-" + Guid.NewGuid().ToString("N"));
 
-    public void Dispose()
+    public override void Dispose()
     {
+        base.Dispose();
+
         if (Directory.Exists(folder)) Directory.Delete(folder, recursive: true);
 
         GC.SuppressFinalize(this);

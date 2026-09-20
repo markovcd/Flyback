@@ -1,4 +1,4 @@
-using System.Runtime.InteropServices;
+﻿using System.Runtime.InteropServices;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
@@ -36,7 +36,7 @@ public class CanvasEdgeTests : UiTest
     /// in the frame — a module in the way would be the one thing that could make
     /// a pixel test pass or fail for the wrong reason.
     /// </summary>
-    private static (NodeEditor Editor, Window Window) AtTheRightEdge()
+    private (NodeEditor Editor, Window Window) AtTheRightEdge()
     {
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
         builder.Add(NodeCatalog.OutputTypeId, Edge - 4000, 0);

@@ -1,4 +1,4 @@
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Headless;
@@ -24,9 +24,9 @@ namespace Flyback.App.Tests.Ui;
 /// </remarks>
 public class MidiInputTests : UiTest
 {
-    private static MainWindow Open(Patch patch)
+    private MainWindow Open(Patch patch)
     {
-        var window = new MainWindow();
+        var window = NewMainWindow();
 
         window.Show();
         window.UpdateLayout();

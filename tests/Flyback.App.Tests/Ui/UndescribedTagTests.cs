@@ -1,4 +1,4 @@
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
@@ -16,7 +16,7 @@ namespace Flyback.App.Tests.Ui;
 /// </summary>
 public class UndescribedTagTests : UiTest
 {
-    private static (MainWindow Window, NodeInstance Sine, NodeInstance Clock) Open()
+    private (MainWindow Window, NodeInstance Sine, NodeInstance Clock) Open()
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
 
@@ -26,7 +26,7 @@ public class UndescribedTagTests : UiTest
 
         b.Wire(sine, 0, output, NodeCatalog.OutputColorPort);
 
-        var window = new MainWindow();
+        var window = NewMainWindow();
 
         window.Show();
         window.UpdateLayout();

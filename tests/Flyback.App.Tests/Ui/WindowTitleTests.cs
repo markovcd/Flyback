@@ -1,4 +1,4 @@
-using Avalonia.Controls;
+﻿using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Headless.XUnit;
 using Avalonia.Interactivity;
@@ -21,7 +21,7 @@ namespace Flyback.App.Tests.Ui;
 /// headless platform does not put up, and the name is written down in one place for
 /// all three.
 /// </remarks>
-public class WindowTitleTests : UiTest, IDisposable
+public class WindowTitleTests : UiTest
 {
     private const string Program = GlobalConstants.ApplicationName;
 
@@ -29,16 +29,16 @@ public class WindowTitleTests : UiTest, IDisposable
     private readonly string folder = Path.Combine(
         Path.GetTempPath(), "flyback-title-" + Guid.NewGuid().ToString("N"));
 
-    public void Dispose()
+    public override void Dispose()
     {
-        if (Directory.Exists(folder)) Directory.Delete(folder, recursive: true);
+        base.Dispose();
 
-        GC.SuppressFinalize(this);
+        if (Directory.Exists(folder)) Directory.Delete(folder, recursive: true);
     }
 
-    private static MainWindow Open()
+    private MainWindow Open()
     {
-        var window = new MainWindow();
+        var window = NewMainWindow();
 
         window.Show();
         window.UpdateLayout();

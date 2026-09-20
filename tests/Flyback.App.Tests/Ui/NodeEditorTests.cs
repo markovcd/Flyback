@@ -1,4 +1,4 @@
-using System.Runtime.InteropServices;
+﻿using System.Runtime.InteropServices;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
@@ -32,7 +32,7 @@ public class NodeEditorTests : UiTest
     /// An editor showing a patch, laid out large enough that framing it does not
     /// shrink the nodes to nothing.
     /// </summary>
-    private static (NodeEditor Editor, Window Window) Editing(Patch patch)
+    private (NodeEditor Editor, Window Window) Editing(Patch patch)
     {
         var editor = new NodeEditor { Width = Wide, Height = Tall };
         var window = Show(editor, Wide);

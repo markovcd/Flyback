@@ -1,4 +1,4 @@
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
@@ -40,7 +40,7 @@ public class SwitchOffTests : UiTest
         return builder.Patch;
     }
 
-    private static (NodeEditor Editor, Window Window) Editing(Patch patch)
+    private (NodeEditor Editor, Window Window) Editing(Patch patch)
     {
         var editor = new NodeEditor { Width = Wide, Height = Tall };
         var window = Show(editor, Wide);
@@ -174,9 +174,9 @@ public class SwitchOffTests : UiTest
 
     // --- the panel's button --------------------------------------------------
 
-    private static MainWindow Open(Patch patch)
+    private MainWindow Open(Patch patch)
     {
-        var window = new MainWindow();
+        var window = NewMainWindow();
 
         window.Show();
         window.UpdateLayout();

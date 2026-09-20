@@ -1,4 +1,4 @@
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Headless;
@@ -26,7 +26,7 @@ public class StepListTests : UiTest
         return (new StepList(node, def.Extra<StepsExtra>()!.Spec, _ => { }), node);
     }
 
-    private static Window Showing(out NodeInstance node, string typeId = "seq.notes")
+    private Window Showing(out NodeInstance node, string typeId = "seq.notes")
     {
         var (list, built) = Build(typeId);
         node = built;

@@ -1,4 +1,4 @@
-using Avalonia.Controls;
+﻿using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
@@ -13,7 +13,7 @@ namespace Flyback.App.Tests.Ui;
 /// The Updates tab of the settings window, and the line the window opens with after
 /// an update was installed (ADR-0088).
 /// </summary>
-public sealed class UpdateSettingsTests : UiTest, IDisposable
+public sealed class UpdateSettingsTests : UiTest
 {
     private readonly string settingsPath = Path.Combine(
         Path.GetTempPath(),
@@ -22,8 +22,10 @@ public sealed class UpdateSettingsTests : UiTest, IDisposable
 
     private const int UpdatesTab = 6;
 
-    public void Dispose()
+    public override void Dispose()
     {
+        base.Dispose();
+
         var folder = Path.GetDirectoryName(settingsPath);
 
         if (folder is not null && Directory.Exists(folder)) Directory.Delete(folder, recursive: true);

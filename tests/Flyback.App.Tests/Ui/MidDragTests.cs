@@ -1,4 +1,4 @@
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
@@ -50,9 +50,9 @@ public class MidDragTests : UiTest
             .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
 
     /// <summary>An oscillator, something to feed, and the Output they need.</summary>
-    private static (MainWindow Window, NodeInstance Source, NodeInstance Fed) Open()
+    private (MainWindow Window, NodeInstance Source, NodeInstance Fed) Open()
     {
-        var window = new MainWindow();
+        var window = NewMainWindow();
 
         window.Show();
         window.UpdateLayout();

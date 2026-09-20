@@ -1,4 +1,4 @@
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
@@ -23,9 +23,9 @@ namespace Flyback.App.Tests.Ui;
 /// </remarks>
 public class ProbeSelectionTests : UiTest
 {
-    private static MainWindow Open(Patch patch)
+    private MainWindow Open(Patch patch)
     {
-        var window = new MainWindow();
+        var window = NewMainWindow();
 
         window.Show();
         window.UpdateLayout();

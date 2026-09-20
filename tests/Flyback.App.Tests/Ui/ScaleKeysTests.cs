@@ -1,4 +1,4 @@
-using Avalonia.Controls;
+﻿using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Interactivity;
 using Flyback.App.Controls;
@@ -21,7 +21,7 @@ public class ScaleKeysTests : UiTest
 {
     private static readonly int[] Major = [0, 2, 4, 5, 7, 9, 11];
 
-    private static Window Open(out NodeInstance node, out Func<int> edits)
+    private Window Open(out NodeInstance node, out Func<int> edits)
     {
         var def = NodeCatalog.BuiltIn.Require(NodeCatalog.QuantiserTypeId);
         var built = NodeInstance.Create(def, 0, 0);

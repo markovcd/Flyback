@@ -1,4 +1,4 @@
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Headless;
@@ -25,7 +25,7 @@ namespace Flyback.App.Tests.Ui;
 /// parent. Opening it twice is the sequence that throws if the window ever stops
 /// being taken apart first.
 /// </remarks>
-public class OutputSettingsTests : UiTest, IDisposable
+public class OutputSettingsTests : UiTest
 {
     /// <summary>Where a window under test keeps its settings, so none land in the machine's own.</summary>
     private readonly string settingsPath = Path.Combine(
@@ -33,8 +33,10 @@ public class OutputSettingsTests : UiTest, IDisposable
         "flyback-output-settings-" + Guid.NewGuid().ToString("N"),
         "output.json");
 
-    public void Dispose()
+    public override void Dispose()
     {
+        base.Dispose();
+
         var folder = Path.GetDirectoryName(settingsPath);
 
         if (folder is not null && Directory.Exists(folder)) Directory.Delete(folder, recursive: true);

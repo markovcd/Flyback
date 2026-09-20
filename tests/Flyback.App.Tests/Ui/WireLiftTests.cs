@@ -1,4 +1,4 @@
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
@@ -31,9 +31,9 @@ public class WireLiftTests : UiTest
     /// Two oscillators to be the source, and two Adds to be fed, with the Output
     /// already there.
     /// </summary>
-    private static Board Open()
+    private Board Open()
     {
-        var window = new MainWindow();
+        var window = NewMainWindow();
 
         window.Show();
         window.UpdateLayout();

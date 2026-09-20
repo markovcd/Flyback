@@ -1,4 +1,4 @@
-using Avalonia.Headless.XUnit;
+﻿using Avalonia.Headless.XUnit;
 using Avalonia.Threading;
 using Flyback.App.Controls;
 using Flyback.Core;
@@ -15,13 +15,15 @@ namespace Flyback.App.Tests.Ui;
 /// The question at startup is behind a dialog; what is pinned here is what
 /// answering Restore does, which is the part that could lose the work a second time.
 /// </remarks>
-public class RecoveryWindowTests : UiTest, IDisposable
+public class RecoveryWindowTests : UiTest
 {
     private readonly string folder = Path.Combine(
         Path.GetTempPath(), "flyback-recovery-window-" + Guid.NewGuid().ToString("N"));
 
-    public void Dispose()
+    public override void Dispose()
     {
+        base.Dispose();
+
         if (Directory.Exists(folder)) Directory.Delete(folder, recursive: true);
 
         GC.SuppressFinalize(this);

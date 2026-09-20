@@ -1,4 +1,4 @@
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Interactivity;
@@ -23,7 +23,7 @@ namespace Flyback.App.Tests.Ui;
 /// that reacts to what a provider can do cannot be looked at in front of none.
 /// Driving an actual run is the plugin tests' job.
 /// </remarks>
-public class AssistantPanelTests : UiTest, IDisposable
+public class AssistantPanelTests : UiTest
 {
     /// <summary>What the button shows when pressing it would ask.</summary>
     private const string Send = "⏎";
@@ -37,8 +37,10 @@ public class AssistantPanelTests : UiTest, IDisposable
         "flyback-panel-settings-" + Guid.NewGuid().ToString("N"),
         "assistant.json");
 
-    public void Dispose()
+    public override void Dispose()
     {
+        base.Dispose();
+
         var folder = Path.GetDirectoryName(settingsPath);
 
         if (folder is not null && Directory.Exists(folder)) Directory.Delete(folder, recursive: true);
