@@ -113,7 +113,7 @@
         <thead><tr><th scope="col">Button</th><th scope="col">What it does</th></tr></thead>
         <tbody>
           <tr><td>Presets</td><td>Replaces the patch with a built-in one or one of yours, or saves it as one of yours.</td></tr>
-          <tr><td>Open, Save</td><td>Reads or writes a <code>.fbk</code> patch, a <code>.fbkb</code> bundle, or a <code>.fbks</code> text file.</td></tr>
+          <tr><td>Open, Save</td><td>Reads or writes a <code>.fbk</code> patch, a <code>.fbkb</code> bundle, or a <code>.fbks</code> text file. <kbd>Ctrl</kbd>+<kbd>O</kbd> and <kbd>Ctrl</kbd>+<kbd>S</kbd>.</td></tr>
           <tr><td>Undo, Redo</td><td><kbd>Ctrl</kbd>+<kbd>Z</kbd> and <kbd>Ctrl</kbd>+<kbd>Y</kbd> (or <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd>).</td></tr>
           <tr><td>Tidy</td><td>Lays the modules out left to right, shutting boxes if the drawing will not
           otherwise fit. <kbd>Ctrl</kbd>+<kbd>L</kbd>, and undoable. <kbd>Ctrl</kbd>+click, or
@@ -541,8 +541,10 @@ flyback-cli pack my-patch.fbk -o my-patch.fbkb</code></pre>
           <tr><td><kbd>Space</kbd> or right-click</td><td>Open the module list at the pointer</td></tr>
           <tr><td>type, <kbd>↑</kbd> <kbd>↓</kbd>, <kbd>Enter</kbd></td><td>Filter the list, move through it, add the highlighted module</td></tr>
           <tr><td><kbd>Esc</kbd></td><td>Clear the filter, then close the list; leave full-screen preview</td></tr>
+          <tr><td><kbd>Ctrl</kbd>+<kbd>O</kbd> / <kbd>Ctrl</kbd>+<kbd>S</kbd></td><td>Open a patch / save this one</td></tr>
           <tr><td><kbd>Ctrl</kbd>+<kbd>Z</kbd> / <kbd>Ctrl</kbd>+<kbd>Y</kbd></td><td>Undo / redo</td></tr>
           <tr><td><kbd>Ctrl</kbd>+<kbd>C</kbd> <kbd>X</kbd> <kbd>V</kbd></td><td>Copy, cut, paste</td></tr>
+          <tr><td><kbd>Ctrl</kbd>+<kbd>D</kbd></td><td>Duplicate the selection beside itself, leaving the clipboard alone</td></tr>
           <tr><td><kbd>Ctrl</kbd>+<kbd>A</kbd></td><td>Select everything</td></tr>
           <tr><td><kbd>Delete</kbd></td><td>Remove the selection</td></tr>
           <tr><td><kbd>Ctrl</kbd>+<kbd>G</kbd> / <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>G</kbd></td><td>Group / ungroup</td></tr>

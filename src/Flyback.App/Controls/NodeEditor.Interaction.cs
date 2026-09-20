@@ -682,6 +682,14 @@ public sealed partial class NodeEditor
                     e.Handled = true;
                     return;
 
+                // Duplicate, which the three above do not add up to: this
+                // leaves the clipboard alone, so whatever was put there earlier
+                // is still there to paste afterwards.
+                case Key.D when Editable:
+                    DuplicateSelection();
+                    e.Handled = true;
+                    return;
+
                 case Key.A:
                     SelectAll();
                     e.Handled = true;

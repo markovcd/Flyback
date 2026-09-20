@@ -69,6 +69,57 @@ public class CopyPasteTests : UiTest
 
     private static int Count(Patch patch, string typeId) => patch.Nodes.Count(n => n.TypeId == typeId);
 
+    // --- duplicating --------------------------------------------------------
+
+    /// <summary>
+    /// Ctrl+D leaves a second copy beside the original, selected, and does not go
+    /// near the clipboard — so something copied earlier is still there to paste.
+    /// </summary>
+    [AvaloniaFact]
+    public async Task Duplicating_copies_beside_the_original_and_spares_the_clipboard()
+    {
+        var patch = Chain(out var time, out var osc, out _);
+        var (editor, window) = Editing(patch);
+
+        Click(editor, window, time);
+        (await editor.CopySelectionAsync()).ShouldBeNull();
+
+        var copied = (await Clipboard(window).TryGetTextAsync()).ShouldNotBeNull();
+
+        Click(editor, window, osc);
+        window.KeyPressQwerty(PhysicalKey.D, RawInputModifiers.Control);
+        Settle(window);
+
+        Count(editor.Patch, "osc.sine").ShouldBe(2);
+
+        var made = editor.SelectedNodes.ShouldHaveSingleItem();
+        made.Id.ShouldNotBe(osc.Id, "what is selected is the copy, ready to be dragged off");
+        (made.X, made.Y).ShouldBe((osc.X + 28, osc.Y + 28));
+
+        (await Clipboard(window).TryGetTextAsync()).ShouldBe(copied);
+    }
+
+    /// <summary>
+    /// The Output cannot be duplicated any more than it can be copied, and a
+    /// gesture that silently did nothing would read as a broken one.
+    /// </summary>
+    [AvaloniaFact]
+    public void Duplicating_only_the_Output_says_so()
+    {
+        var patch = Chain(out _, out _, out var sink);
+        var (editor, window) = Editing(patch);
+
+        var said = new List<string>();
+        editor.Reported += (_, line) => said.Add(line);
+
+        Click(editor, window, sink);
+        window.KeyPressQwerty(PhysicalKey.D, RawInputModifiers.Control);
+        Settle(window);
+
+        Count(editor.Patch, NodeCatalog.OutputTypeId).ShouldBe(1);
+        said.ShouldHaveSingleItem().ShouldContain("cannot be duplicated");
+    }
+
     // --- copying ------------------------------------------------------------
 
     /// <summary>

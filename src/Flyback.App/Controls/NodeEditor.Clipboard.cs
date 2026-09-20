@@ -94,6 +94,39 @@ public sealed partial class NodeEditor
     }
 
     /// <summary>
+    /// Puts a second copy of the selection on the canvas, a step down and right of
+    /// the original and selected, so one drag carries it wherever it is wanted.
+    /// </summary>
+    /// <remarks>
+    /// The clipboard is not touched. A fragment and somewhere to put it are both
+    /// already here, so nothing has to go out to the system and back through JSON
+    /// — and what was copied earlier survives duplicating something else. Where it
+    /// lands is the other difference from a paste: a paste goes to the middle of
+    /// the view, and a duplicate is about the module being looked at.
+    /// </remarks>
+    public void DuplicateSelection()
+    {
+        if (selection.Count == 0) return;
+
+        var fragment = PatchClipboard.Copy(patch, selection);
+
+        // Selected, and yet nothing of it can be duplicated — which can only be
+        // the Output on its own. Said, because a gesture that silently does
+        // nothing reads as a broken one.
+        if (fragment.Nodes.Count == 0)
+        {
+            Reported?.Invoke(this, "The Output cannot be duplicated.");
+            return;
+        }
+
+        // Far enough to read as a second copy rather than a redraw of the first,
+        // and near enough to still be under the hand.
+        const double step = 28;
+
+        AddFragment(fragment, Drawn(fragment, fragment.Nodes).Center + new Vector(step, step));
+    }
+
+    /// <summary>
     /// Merges a fragment into the patch and leaves what arrived selected, so it can
     /// be dragged straight into place.
     /// </summary>

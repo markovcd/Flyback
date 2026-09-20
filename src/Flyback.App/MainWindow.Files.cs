@@ -120,6 +120,16 @@ public sealed partial class MainWindow
         if (!kept) Report($"Saved {file.Name}, but the conversation about it could not be kept with it.");
     }
 
+    /// <summary>
+    /// The Open gesture whole: what is unsaved is asked about, and then the
+    /// picker. The toolbar's button and Ctrl+O both come through here, so the
+    /// question cannot be stepped round by reaching for the keyboard.
+    /// </summary>
+    private async Task OpenAnotherPatchAsync()
+    {
+        if (await MayReplaceThePatchAsync()) await OpenPatchAsync();
+    }
+
     private async Task OpenPatchAsync()
     {
         var all = new FilePickerFileType(GlobalConstants.ApplicationName)

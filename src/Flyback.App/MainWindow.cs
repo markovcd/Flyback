@@ -1069,10 +1069,7 @@ public sealed partial class MainWindow : Window
         };
 
         var open = Drawn("open", Glyphs.Open(), "Open a patch…");
-        open.Click += async (_, _) =>
-        {
-            if (await MayReplaceThePatchAsync()) await OpenPatchAsync();
-        };
+        open.Click += async (_, _) => await OpenAnotherPatchAsync();
 
         var save = Drawn("save", Glyphs.Save(), "Save this patch…");
         save.Click += async (_, _) => await SavePatchAsync();

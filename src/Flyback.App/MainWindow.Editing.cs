@@ -421,6 +421,21 @@ public sealed partial class MainWindow
                 ShowControls(!controlsPanel.IsVisible);
                 e.Handled = true;
                 break;
+
+            // The document itself, on the letters every program uses for it.
+            // Both were the toolbar's alone, and the hand that has just
+            // finished an edit is on the keyboard rather than the pointer.
+            // Saving is one gesture here — the picker is where a name is
+            // chosen — so there is no second key for saving under another one.
+            case Key.O:
+                _ = OpenAnotherPatchAsync();
+                e.Handled = true;
+                break;
+
+            case Key.S:
+                _ = SavePatchAsync();
+                e.Handled = true;
+                break;
         }
     }
 
