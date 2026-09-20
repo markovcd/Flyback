@@ -33,8 +33,6 @@ static Flyback.Core.Graph.PatchLayout.Arrange(Flyback.Core.Graph.Patch! patch, F
 Flyback.Core.Graph.NodeDef.Through(int output) -> int
 Flyback.Core.Graph.NodeInstance.Off.get -> bool
 Flyback.Core.Graph.NodeInstance.Off.set -> void
-Flyback.Core.Graph.ModuleSkin.Artwork.Animate.get -> bool
-Flyback.Core.Graph.ModuleSkin.Artwork.Animate.init -> void
 Flyback.Core.Graph.ModuleSkin.Artwork.Artwork(System.ReadOnlyMemory<byte> Bytes) -> void
 Flyback.Core.Graph.ModuleSkin.Artwork.Bytes.get -> System.ReadOnlyMemory<byte>
 Flyback.Core.Graph.ModuleSkin.Artwork.Bytes.init -> void

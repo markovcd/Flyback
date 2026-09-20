@@ -253,21 +253,6 @@ public class ModuleSkinTests
         art.At(250).ShouldBe(art.Frames[0], "the run should loop");
     }
 
-    /// <summary>
-    /// Opting out of the animation holds the first frame, which is what stops the
-    /// canvas repainting — see <c>NodeEditor.KeepMoving</c>.
-    /// </summary>
-    [AvaloniaFact]
-    public void An_animation_opted_out_of_is_one_frame()
-    {
-        var still = ModuleArtwork.Of(
-            new ModuleSkin.Artwork(Convert.FromBase64String(TwoFrameGif)) { Animate = false });
-
-        still.ShouldNotBeNull();
-        still.Frames.Count.ShouldBe(1);
-        still.Runs.ShouldBe(0);
-    }
-
     [AvaloniaFact]
     public void An_svg_is_read_as_a_picture()
     {

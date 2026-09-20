@@ -35,8 +35,7 @@ public sealed class CanvasSettings
     /// <remarks>
     /// Separate from <see cref="PluginSkins"/> because they answer different
     /// complaints: one is "I do not want a plugin choosing how my patch looks",
-    /// the other is "I do not want anything moving while I work". A module may
-    /// have asked for a still picture itself, and this cannot put that back.
+    /// the other is "I do not want anything moving while I work".
     /// </remarks>
     public bool AnimateSkins { get; set; } = true;
 

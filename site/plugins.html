@@ -403,7 +403,7 @@ Skin = <span class="k">new</span> ModuleSkin.Palette(<span class="k">new</span> 
 Skin = <span class="k">new</span> ModuleSkin.Grain(<span class="k">new</span> Swatch(<span class="s">0x4A</span>, <span class="s">0x7E</span>, <span class="s">0xC8</span>), GrainCut.Beaded)
 
 <span class="c">// A picture: SVG, PNG or GIF, scaled to cover the body and clipped to it.</span>
-Skin = <span class="k">new</span> ModuleSkin.Artwork(bytes) { Animate = <span class="k">false</span>, ContrastText = <span class="k">true</span> }</code></pre>
+Skin = <span class="k">new</span> ModuleSkin.Artwork(bytes) { ContrastText = <span class="k">true</span> }</code></pre>
 
     <div class="scroll">
       <table>
@@ -415,8 +415,7 @@ Skin = <span class="k">new</span> ModuleSkin.Artwork(bytes) { Animate = <span cl
           <tr><td><code>Palette.Floor</code></td><td>What the wash falls to at the floor. Left out, it falls to the accent, the way a built-in module does.</td></tr>
           <tr><td><code>Palette.Glyph</code></td><td>The mark across the body, as SVG path data on the same twenty-four unit box the engine's own marks are drawn on. Stroked, not filled. Path data that will not parse draws nothing rather than taking the canvas down. Left out, the category's mark stands.</td></tr>
           <tr><td><code>Grain.Cut</code></td><td><code>Hatched</code> (diagonal rules), <code>Milled</code> (fine upright rules) or <code>Beaded</code> (a grid of dots), tiled over the body in graph units so the texture holds its pitch at any zoom. A grain <em>is</em> a palette and carries all of its fields; the cut is a second channel, and the one that still says whose the module is in a grayscale screenshot or to somebody who cannot separate two hues.</td></tr>
-          <tr><td><code>Artwork.Bytes</code></td><td>The picture itself, most often read out of the plugin's own embedded resources. Bytes rather than a path, so a skin needs nothing deployed beside the assembly. Bytes that are not a picture are no picture: the module falls back to its category.</td></tr>
-          <tr><td><code>Artwork.Animate</code></td><td>Whether an animated GIF runs. Off holds it at its first frame. The canvas repaints only while a module that is animating is actually on it.</td></tr>
+          <tr><td><code>Artwork.Bytes</code></td><td>The picture itself, most often read out of the plugin's own embedded resources. Bytes rather than a path, so a skin needs nothing deployed beside the assembly. Bytes that are not a picture are no picture: the module falls back to its category. An animated GIF runs, and the canvas repaints only while a module that is animating is actually on it.</td></tr>
           <tr><td><code>ContrastText</code></td><td>On any of the three. Whether the text on the module is worked out from the background behind it rather than drawn white — see below.</td></tr>
         </tbody>
       </table>

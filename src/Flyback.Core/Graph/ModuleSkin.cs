@@ -110,13 +110,5 @@ public abstract record ModuleSkin
     /// resources. Bytes rather than a path, so a skin needs nothing deployed
     /// beside the assembly and nothing read off disk while the canvas paints.
     /// </param>
-    public sealed record Artwork(ReadOnlyMemory<byte> Bytes) : ModuleSkin
-    {
-        /// <summary>
-        /// Whether an animated GIF runs. Off holds it at its first frame, which is
-        /// what a patch of forty modules wants and what anybody who finds a
-        /// moving module distracting wants.
-        /// </summary>
-        public bool Animate { get; init; } = true;
-    }
+    public sealed record Artwork(ReadOnlyMemory<byte> Bytes) : ModuleSkin;
 }

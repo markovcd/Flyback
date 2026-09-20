@@ -54,9 +54,12 @@ clipped to it. Bytes rather than a path, so a skin needs nothing deployed beside
 the assembly and nothing read off disk while the canvas paints. It runs behind
 the header band rather than stopping below it, because it *is* the background
 and the band is the one part of the block that is not; the band's relief is
-still drawn, so the title bar reads. An animated GIF runs unless `Animate` is off, and the
-canvas asks for another frame only while a module that is animating was actually
-drawn — a patch with none repaints when the patch changes, as it always has.
+still drawn, so the title bar reads. An animated GIF runs, and the canvas asks
+for another frame only while a module that is animating was actually drawn — a
+patch with none repaints when the patch changes, as it always has. Whether it
+runs at all is the person's call in the Canvas settings, not the plugin's: a
+plugin that shipped a moving picture meant it to move, and anybody it distracts
+turns off every one of them at once.
 
 **Text is white unless the module asks otherwise.** `ContrastText` is opt-in on
 all three. White is what the rest of the canvas is written in, and a plugin that

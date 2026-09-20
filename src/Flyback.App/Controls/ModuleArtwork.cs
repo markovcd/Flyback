@@ -129,7 +129,7 @@ internal sealed class ModuleArtwork
         if (info.Width <= 0 || info.Height <= 0) return null;
 
         var timings = codec.FrameInfo;
-        var count = skin.Animate ? Math.Min(timings.Length, Longest) : 1;
+        var count = Math.Min(timings.Length, Longest);
 
         // A still is one frame however the codec counts them, and a GIF of one
         // frame is a still: neither gets a clock.
