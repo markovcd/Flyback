@@ -102,7 +102,7 @@ public class AssistantPluginTests
         proposed.Patch.CompileForVideo(NodeCatalog.BuiltIn).Issues.ShouldBeEmpty();
     }
 
-    // --- the real one, loaded off disk --------------------------------------
+    // --- the real ones, loaded off disk -------------------------------------
 
     private static IPatchAssistant OpenAi =>
         Loaded.Assistants.Single(a => a.Id == "openai");
@@ -150,6 +150,34 @@ public class AssistantPluginTests
     public void A_complete_configuration_has_nothing_missing()
     {
         OpenAi.Unavailable(Configured("sk-something", "gpt-4o")).ShouldBeNull();
+    }
+
+    private static IPatchAssistant Gemini =>
+        Loaded.Assistants.Single(a => a.Id == "gemini");
+
+    [Fact]
+    public void The_generate_content_assistant_reaches_the_catalogue()
+    {
+        var assistant = Gemini;
+
+        assistant.Credential.EnvironmentVariable.ShouldBe("GEMINI_API_KEY");
+
+        // The other answer to the question above, from the same declared form:
+        // this format is spoken in one place, so the endpoint is a row that says
+        // so rather than a row that is missing.
+        var endpoint = assistant.Form(SettingValues.None)
+            .OfType<SettingField.Text>()
+            .ShouldHaveSingleItem();
+
+        endpoint.Enabled.ShouldBeFalse();
+        endpoint.Because.ShouldNotBeNullOrWhiteSpace();
+    }
+
+    [Fact]
+    public void A_fixed_endpoint_leaves_only_the_key_to_ask_for()
+    {
+        Gemini.Unavailable(AssistantConfig.Unset).ShouldNotBeNull();
+        Gemini.Unavailable(Configured("AIza-something", "gemini-3.6-flash")).ShouldBeNull();
     }
 
     /// <summary>
