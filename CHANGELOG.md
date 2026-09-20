@@ -63,7 +63,7 @@
 ### Canvas and interface
 - Ctrl+Shift+L, or Ctrl+click on the Tidy button, lays out only the selected modules and leaves the rest of the patch where it is.
 - A toolbar button swaps the preview and the canvas, for a bigger picture while you patch.
-- The buttons at the foot of the module panel are icons rather than words.
+- The module panel's buttons are icons, in a row under the name.
 - Unsaved work survives a crash: the next start offers to restore it.
 
 ### Performance

@@ -96,6 +96,20 @@ public class GroupInspectorTests : UiTest
     private static string Tip(MainWindow window, string name) =>
         ToolTip.GetTip(Button(window, name)) as string ?? string.Empty;
 
+    private static StackPanel Panel(MainWindow window) =>
+        All<StackPanel>(window).Single(p => p.Name == "inspector");
+
+    private static TextBlock Lined(MainWindow window, string text) =>
+        All<TextBlock>(window).First(t => t.Text == text);
+
+    private static TextBlock Description(MainWindow window) =>
+        All<TextBlock>(window).First(t => t.Text?.StartsWith("Several modules drawn as one") == true);
+
+    /// <summary>How far down the window the middle of a control is.</summary>
+    private static double Middle(MainWindow window, Visual control) =>
+        control.TranslatePoint(new Point(0, control.Bounds.Height / 2), window)?.Y
+        ?? throw new InvalidOperationException("the control is not in this window");
+
     [AvaloniaFact]
     public void The_panel_is_about_the_group_rather_than_a_module_inside_it()
     {
@@ -141,6 +155,21 @@ public class GroupInspectorTests : UiTest
         // The count the caption used to carry, now in the only place a glyph
         // can say anything.
         Tip(window, "delete-group").ShouldContain("2 modules");
+    }
+
+    /// <summary>
+    /// Under the name and above everything that describes what is selected: the
+    /// buttons are the first thing on the panel that can be pressed.
+    /// </summary>
+    [AvaloniaFact]
+    public void The_buttons_are_at_the_top_of_the_panel()
+    {
+        var window = Open(out _);
+        var row = Middle(window, Button(window, "delete-group"));
+
+        row.ShouldBeGreaterThan(Middle(window, Lined(window, "Group")), "under the name");
+        row.ShouldBeLessThan(Middle(window, Description(window)), "and above the description");
+        row.ShouldBeLessThan(Middle(window, Lined(window, "In")));
     }
 
     /// <summary>
@@ -267,6 +296,11 @@ public class GroupInspectorTests : UiTest
 
         Buttons(window).ShouldContain("open-groups");
         Tip(window, "open-groups").ShouldContain("2 boxes");
+
+        // A module's panel puts the row where the group's does: under the name,
+        // ahead of everything the module is made of.
+        Middle(window, Button(window, "open-groups"))
+            .ShouldBeLessThan(Middle(window, All<Slider>(Panel(window)).First()));
 
         Press(window, "open-groups");
 

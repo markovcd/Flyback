@@ -24,10 +24,19 @@ the boxes the selection touches. None of that fits on a button without words.
 own `Drawn` helper.** Same size, same padding, same named-and-tipped shape —
 `Drawn(name, icon, tip)` was already there and needed nothing.
 
-**They sit in one horizontal `ActionRow` at the foot of the panel**, rather
-than one to a line. A glyph is the width of a button, so a column of them
-would leave the panel empty beside it. Grouping comes first and deleting last,
-so the destructive button is at the far end of the row.
+**They sit in one horizontal `ActionRow` under the name, above the
+description**, rather than one to a line at the foot of the panel. A glyph is
+the width of a button, so a column of them would leave the panel empty beside
+it; at the top they are reached without reading past a module's description and
+knobs or a box's sockets, which is what the panel is mostly made of. Grouping
+comes first and deleting last, so the destructive button is at the far end of
+the row.
+
+**Where the row goes is settled before its buttons are decided.** Both panels
+remember the index under the name — a module's after its category line, a
+group's after `Group · 3 modules` — and insert the row there once they know
+what is in it. A knob does not decide whether a module can be grouped, so the
+two cannot be built in one pass.
 
 **The counts move into the tips**, which is the only place a button without
 words can say anything: "Delete these 3 modules  (Delete)", "Open the 2 boxes
@@ -56,6 +65,10 @@ made for `record`.
 **The open button still turns round.** It is `open-group` with one glyph while
 the box is shut and `close-group` with the other while it is open, so what a
 test sees changes with the box, as the caption used to.
+
+**A module's description starts one row further down**, and so do its knobs
+and a box's sockets. The row is four buttons at its widest, so what it costs
+the panel is one line.
 
 **Two site screenshots were retaken**, `plasma-inspector.webp` and
 `plasma-code.webp`, which both showed `Delete module` under a module's knobs.

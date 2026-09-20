@@ -591,6 +591,12 @@ public sealed partial class MainWindow
             Foreground = new SolidColorBrush(Colors.Accent(def.Category)),
         });
 
+        // What can be done to the module goes under its name, above the
+        // description — see ActionRow. Where it goes is settled here and what is
+        // in it at the end, because a knob does not decide whether a module can
+        // be grouped.
+        var above = inspector.Children.Count;
+
         if (!string.IsNullOrEmpty(def.Description))
             inspector.Children.Add(new TextBlock
             {
@@ -697,12 +703,12 @@ public sealed partial class MainWindow
             going > 1 ? $"Delete these {going} modules  (Delete)" : "Delete this module  (Delete)",
             editor.DeleteSelected);
 
-        inspector.Children.Add(actions);
+        inspector.Children.Insert(above, actions);
 
         Undescribed();
 
-        // Last, under everything that can be done to the module: it is a note
-        // about the assistant, and the one thing on the panel not about the patch.
+        // Last, under everything the module has: it is a note about the
+        // assistant, and the one thing on the panel not about the patch.
         void Undescribed()
         {
             if (!editor.Undescribed.Contains(def.TypeId)) return;
@@ -728,8 +734,8 @@ public sealed partial class MainWindow
     }
 
     /// <summary>
-    /// The strip of buttons at the foot of the panel: what can be done to what is
-    /// selected, each a glyph with the sentence in its tip.
+    /// The strip of buttons under the name at the top of the panel: what can be
+    /// done to what is selected, each a glyph with the sentence in its tip.
     /// </summary>
     /// <remarks>
     /// A row rather than a column, because a glyph is the width of a button and a
@@ -741,7 +747,7 @@ public sealed partial class MainWindow
     {
         Orientation = Orientation.Horizontal,
         Spacing = 6,
-        Margin = new Thickness(0, 16, 0, 0),
+        Margin = new Thickness(0, 2, 0, 6),
         HorizontalAlignment = HorizontalAlignment.Left,
     };
 
@@ -774,6 +780,9 @@ public sealed partial class MainWindow
             FontSize = Text.Small,
             Foreground = Text.Muted,
         });
+
+        // Under the name, above the description, where a module's own row sits.
+        var above = inspector.Children.Count;
 
         inspector.Children.Add(new TextBlock
         {
@@ -848,7 +857,7 @@ public sealed partial class MainWindow
             $"Delete the box and the {group.Members.Count} modules in it  (Delete)",
             editor.DeleteSelected);
 
-        inspector.Children.Add(actions);
+        inspector.Children.Insert(above, actions);
 
         // One heading and a row per socket, each named for the module and port
         // inside that it stands for — which is exactly what the box draws, so
