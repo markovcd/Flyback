@@ -97,6 +97,7 @@ context, decision, consequences.
 | [0110](0110-the-layout-can-be-given-the-selection-instead-of-the-patch.md) | The layout can be given the selection instead of the patch *(user-directed)* |
 | [0093](0093-a-startup-preset-is-a-graphics-setting.md) | A startup preset is a Graphics setting *(user-directed)* |
 | [0103](0103-unsaved-work-outlives-a-crash.md) | Unsaved work outlives a crash *(user-directed)* |
+| [0111](0111-the-panels-actions-are-a-row-of-glyphs.md) | The panel's actions are a row of glyphs *(user-directed)* |
 
 ### Sound
 

@@ -649,15 +649,17 @@ public sealed partial class MainWindow
             return;
         }
 
-        // Grouping sits above deleting rather than beside it, so the destructive
-        // button keeps the place a hand already knows.
+        var actions = ActionRow();
+
+        // Grouping comes ahead of deleting, so the destructive button is at the far
+        // end of the row rather than the first thing under the pointer.
         //
-        // Its label counts the way delete's does — see NodeEditor.Groupable — and
-        // it is offered on the same terms Ctrl+G is: a button reading "Group 1
-        // module" would offer something the graph refuses. Ungrouping is not here,
+        // Its tip counts the way delete's does — see NodeEditor.Groupable — and it
+        // is offered on the same terms Ctrl+G is: a button offering to group one
+        // module would offer something the graph refuses. Ungrouping is not here,
         // because a selection that is exactly a group gets a panel of its own.
         if (editor.Groupable >= NodeGroup.Fewest)
-            Act($"Group {editor.Groupable} modules", editor.GroupSelected, 14);
+            Act("group", Glyphs.Group(), $"Draw these {editor.Groupable} modules as one box  (Ctrl+G)", editor.GroupSelected);
 
         // For a selection that reaches into groups without being one: the group
         // panel above answers only a selection that is exactly one, and a
@@ -666,18 +668,36 @@ public sealed partial class MainWindow
         var open = editor.SelectedGroups.Count(g => !g.Collapsed);
 
         if (shut > 0)
-            Act(shut > 1 ? $"Open {shut} groups" : "Open group", editor.OpenSelectedGroups, 8);
+            Act(
+                "open-groups",
+                Glyphs.OpenBox(),
+                shut > 1
+                    ? $"Open the {shut} boxes the selection touches  (Ctrl+E)"
+                    : "Open the box, showing the modules in it  (Ctrl+E)",
+                editor.OpenSelectedGroups);
 
         if (open > 0)
-            Act(open > 1 ? $"Close {open} groups" : "Close group", editor.CloseSelectedGroups, 8);
+            Act(
+                "close-groups",
+                Glyphs.ShutBox(),
+                open > 1
+                    ? $"Close the {open} boxes the selection touches  (Ctrl+Shift+E)"
+                    : "Close the box, drawing its modules as one  (Ctrl+Shift+E)",
+                editor.CloseSelectedGroups);
 
-        // Delete takes the whole selection, the same as the key does, so the
-        // label counts it. Sinks are left out of the count because the graph
-        // refuses them: a button offering to delete three when it can only
-        // manage two would be lying about what pressing it does.
+        // Delete takes the whole selection, the same as the key does, so the tip
+        // counts it. Sinks are left out of the count because the graph refuses
+        // them: a button offering to delete three when it can only manage two
+        // would be lying about what pressing it does.
         var going = editor.SelectedNodes.Count(n => !NodeCatalog.IsSink(n.TypeId));
 
-        Act(going > 1 ? $"Delete {going} modules" : "Delete module", editor.DeleteSelected, 14);
+        Act(
+            "delete-modules",
+            Glyphs.Delete(),
+            going > 1 ? $"Delete these {going} modules  (Delete)" : "Delete this module  (Delete)",
+            editor.DeleteSelected);
+
+        inspector.Children.Add(actions);
 
         Undescribed();
 
@@ -698,19 +718,32 @@ public sealed partial class MainWindow
             });
         }
 
-        void Act(string caption, Action gesture, double above)
+        void Act(string name, Control icon, string tip, Action gesture)
         {
-            var button = new Button
-            {
-                Content = caption,
-                Margin = new Thickness(0, above, 0, 0),
-                HorizontalAlignment = HorizontalAlignment.Left,
-            };
+            var button = Drawn(name, icon, tip);
 
             button.Click += (_, _) => gesture();
-            inspector.Children.Add(button);
+            actions.Children.Add(button);
         }
     }
+
+    /// <summary>
+    /// The strip of buttons at the foot of the panel: what can be done to what is
+    /// selected, each a glyph with the sentence in its tip.
+    /// </summary>
+    /// <remarks>
+    /// A row rather than a column, because a glyph is the width of a button and a
+    /// column of them would leave the panel empty beside it. The tip is the only
+    /// place a button without words can say what it does, so every one has one and
+    /// it carries the count where there is one to carry.
+    /// </remarks>
+    private static StackPanel ActionRow() => new()
+    {
+        Orientation = Orientation.Horizontal,
+        Spacing = 6,
+        Margin = new Thickness(0, 16, 0, 0),
+        HorizontalAlignment = HorizontalAlignment.Left,
+    };
 
     /// <summary>
     /// The name at the top of the panel, which a double-click turns into a box to
@@ -771,31 +804,35 @@ public sealed partial class MainWindow
         // deleting a module is — see BuildInspector.
         if (editor.Locked) return;
 
-        Act(group.Collapsed ? "Open group" : "Close group", editor.ToggleSelectedGroup, 14);
+        var actions = ActionRow();
 
-        // Keeping one is not an edit to the patch, so it sits with the two that
-        // are not either and above the two that are. What the module list will
-        // call it is its name and nothing else — so a group with none is offered
-        // the button greyed rather than a button that saves "3 modules" under a
-        // heading full of other things called "3 modules". The way out is one
-        // gesture up: the title at the top of this panel renames on a
-        // double-click.
+        Act(
+            group.Collapsed ? "open-group" : "close-group",
+            group.Collapsed ? Glyphs.OpenBox() : Glyphs.ShutBox(),
+            group.Collapsed
+                ? "Open the box, showing the modules in it"
+                : "Close the box, drawing its modules as one",
+            editor.ToggleSelectedGroup);
 
-        // The button hands itself to what it does, because the answer to it may
-        // have to be asked in the place the button is standing — see KeepGroup.
-        Button keep = null!;
-
-        keep = Act("Save to palette", () => KeepGroup(group, keep), 8);
-        keep.IsEnabled = !string.IsNullOrWhiteSpace(group.Name);
+        // Keeping one is not an edit to the patch, so it sits with the one that is
+        // not either and ahead of the two that are. What the module list will call
+        // it is its name and nothing else — so a group with none is offered the
+        // button greyed rather than a button that saves "3 modules" under a heading
+        // full of other things called "3 modules". The way out is one gesture up:
+        // the title at the top of this panel renames on a double-click.
+        var named = !string.IsNullOrWhiteSpace(group.Name);
 
         // Which of the two things pressing it does, said before it is pressed.
         // Replacing is the one worth knowing about in advance — it is somebody
         // else's group going, and the name is the only warning there is.
-        ToolTip.SetTip(keep, !keep.IsEnabled
+        var keep = Act("keep-group", Glyphs.Keep(), !named
             ? "The module list calls a kept group by its name — double-click the title above to give it one."
             : groups?.Named(group.Name) is not null
                 ? $"Replaces the “{group.Name}” already in the module list. It will ask first."
-                : $"Keeps “{group.Name}” under Groups in the module list, ready to add again.");
+                : $"Keeps “{group.Name}” under Groups in the module list, ready to add again.",
+            () => KeepGroup(group, actions));
+
+        keep.IsEnabled = named;
 
         // The greyed one is precisely the one with something to explain, and a
         // tip that will not show on a disabled control explains it to nobody.
@@ -803,8 +840,15 @@ public sealed partial class MainWindow
         // same for the same reason.
         ToolTip.SetShowOnDisabled(keep, true);
 
-        Act("Ungroup", editor.UngroupSelected, 8);
-        Act($"Delete {group.Members.Count} modules", editor.DeleteSelected, 8);
+        Act("ungroup", Glyphs.Ungroup(), "Take the box off, leaving the modules where they are  (Ctrl+Shift+G)", editor.UngroupSelected);
+
+        Act(
+            "delete-group",
+            Glyphs.Delete(),
+            $"Delete the box and the {group.Members.Count} modules in it  (Delete)",
+            editor.DeleteSelected);
+
+        inspector.Children.Add(actions);
 
         // One heading and a row per socket, each named for the module and port
         // inside that it stands for — which is exactly what the box draws, so
@@ -871,17 +915,12 @@ public sealed partial class MainWindow
             return row;
         }
 
-        Button Act(string caption, Action gesture, double above)
+        Button Act(string name, Control icon, string tip, Action gesture)
         {
-            var button = new Button
-            {
-                Content = caption,
-                Margin = new Thickness(0, above, 0, 0),
-                HorizontalAlignment = HorizontalAlignment.Left,
-            };
+            var button = Drawn(name, icon, tip);
 
             button.Click += (_, _) => gesture();
-            inspector.Children.Add(button);
+            actions.Children.Add(button);
 
             return button;
         }
@@ -894,17 +933,18 @@ public sealed partial class MainWindow
     /// <remarks>
     /// Replacing is somebody's group going for good, with nothing on this side of
     /// it to undo, and a name typed a second time by accident is the ordinary way
-    /// to lose one. Asked in the place the button was standing, the way the module
-    /// list asks about a row that is going: a dialog would be right if this could
-    /// lose work, and what it can lose is one entry in a list.
+    /// to lose one. Asked in the place the button was standing — the row of them
+    /// gives way to the question — the way the module list asks about a row that is
+    /// going: a dialog would be right if this could lose work, and what it can lose
+    /// is one entry in a list.
     /// </remarks>
-    private void KeepGroup(NodeGroup group, Button keep)
+    private void KeepGroup(NodeGroup group, StackPanel actions)
     {
         if (groups is null || string.IsNullOrWhiteSpace(group.Name)) return;
 
-        var at = inspector.Children.IndexOf(keep);
+        var at = inspector.Children.IndexOf(actions);
 
-        // Nothing kept under that name, or no button left to ask in — either way
+        // Nothing kept under that name, or no row left to ask in — either way
         // there is nothing to ask about.
         if (groups.Named(group.Name) is null || at < 0)
         {
@@ -914,7 +954,7 @@ public sealed partial class MainWindow
 
         inspector.Children[at] = Question.Row(
             $"Replace “{group.Name}”?",
-            keep.Margin,
+            actions.Margin,
             $"Replace the kept “{group.Name}” with this group.",
             "Leave the kept one alone.",
             replace =>
@@ -922,8 +962,8 @@ public sealed partial class MainWindow
                 if (replace) SaveGroup(group);
 
                 // Put back exactly what a fresh panel would have, which is the
-                // button reading whatever it should read now — a replaced group
-                // is one this list already knows, so its tip changes.
+                // button saying whatever it should say now — a replaced group is
+                // one this list already knows, so its tip changes.
                 BuildInspector();
             });
     }

@@ -97,12 +97,18 @@ public class SavedGroupTests : UiTest, IDisposable
         Settle(window);
     }
 
-    private static Button Button(Visual root, string caption) =>
-        All<Button>(root).First(b => b.Content as string == caption);
+    /// <summary>The name of the panel button that keeps a group, which is a glyph.</summary>
+    private const string Keep = "keep-group";
 
-    private static void Press(MainWindow window, Visual root, string caption)
+    /// <summary>
+    /// By caption, or — for a button that is a glyph rather than a word — by name.
+    /// </summary>
+    private static Button Button(Visual root, string by) =>
+        All<Button>(root).First(b => b.Content as string == by || b.Name == by);
+
+    private static void Press(MainWindow window, Visual root, string by)
     {
-        var button = Button(root, caption);
+        var button = Button(root, by);
 
         button.Focus();
         button.RaiseEvent(new RoutedEventArgs(Avalonia.Controls.Button.ClickEvent));
@@ -118,6 +124,9 @@ public class SavedGroupTests : UiTest, IDisposable
 
     private static string[] Captions(Visual root) =>
         [.. All<Button>(root).Select(b => b.Content as string ?? string.Empty)];
+
+    private static string[] Buttons(Visual root) =>
+        [.. All<Button>(root).Select(b => b.Name ?? string.Empty)];
 
     private static string[] Lines(Visual root) =>
         [.. All<TextBlock>(root).Select(t => t.Text ?? string.Empty)];
@@ -142,7 +151,7 @@ public class SavedGroupTests : UiTest, IDisposable
     {
         var window = Open(out var group, named: null);
 
-        var greyed = Button(window, "Save to palette");
+        var greyed = Button(window, Keep);
 
         greyed.IsEnabled.ShouldBeFalse();
 
@@ -156,7 +165,7 @@ public class SavedGroupTests : UiTest, IDisposable
         Editor(window).NotifyPatchChanged();
         Settle(window);
 
-        Button(window, "Save to palette").IsEnabled.ShouldBeTrue("named, it can be kept");
+        Button(window, Keep).IsEnabled.ShouldBeTrue("named, it can be kept");
     }
 
     [AvaloniaFact]
@@ -164,7 +173,7 @@ public class SavedGroupTests : UiTest, IDisposable
     {
         var window = Open(out _);
 
-        Press(window, window, "Save to palette");
+        Press(window, window, Keep);
         OpenList(window);
 
         var palette = Palette(window);
@@ -183,7 +192,7 @@ public class SavedGroupTests : UiTest, IDisposable
         var window = Open(out _);
         var editor = Editor(window);
 
-        Press(window, window, "Save to palette");
+        Press(window, window, Keep);
         OpenList(window);
         Press(window, Palette(window), "Voice");
 
@@ -245,7 +254,7 @@ public class SavedGroupTests : UiTest, IDisposable
     {
         var window = Open(out _);
 
-        Press(window, window, "Save to palette");
+        Press(window, window, Keep);
         OpenList(window);
 
         var palette = Palette(window);
@@ -273,7 +282,7 @@ public class SavedGroupTests : UiTest, IDisposable
     {
         var window = Open(out _);
 
-        Press(window, window, "Save to palette");
+        Press(window, window, Keep);
         OpenList(window);
 
         var palette = Palette(window);
@@ -300,7 +309,7 @@ public class SavedGroupTests : UiTest, IDisposable
     {
         var window = Open(out _);
 
-        Press(window, window, "Save to palette");
+        Press(window, window, Keep);
         OpenList(window);
 
         var palette = Palette(window);
@@ -336,7 +345,7 @@ public class SavedGroupTests : UiTest, IDisposable
     {
         var window = Open(out _);
 
-        Press(window, window, "Save to palette");
+        Press(window, window, Keep);
         OpenList(window);
 
         var palette = Palette(window);
@@ -367,14 +376,14 @@ public class SavedGroupTests : UiTest, IDisposable
     {
         var window = Open(out _);
 
-        Press(window, window, "Save to palette");
+        Press(window, window, Keep);
         Directory.GetFiles(folder).Length.ShouldBe(1);
 
-        Press(window, window, "Save to palette");
+        Press(window, window, Keep);
 
         Lines(window).ShouldContain("Replace “Voice”?");
         Captions(window).ShouldContain("✔");
-        Captions(window).ShouldNotContain("Save to palette", "the button is the question while it is asked");
+        Buttons(window).ShouldNotContain(Keep, "the button is the question while it is asked");
 
         // One row, at the height the button was: the panel does not move under
         // the hand that has just pressed it.
@@ -392,7 +401,7 @@ public class SavedGroupTests : UiTest, IDisposable
         var window = Open(out _);
         var editor = Editor(window);
 
-        Press(window, window, "Save to palette");
+        Press(window, window, Keep);
 
         var before = File.ReadAllText(Directory.GetFiles(folder).Single());
 
@@ -409,14 +418,14 @@ public class SavedGroupTests : UiTest, IDisposable
         editor.NotifyPatchChanged();
         SelectBox(window, editor.Patch, second);
 
-        Press(window, window, "Save to palette");
+        Press(window, window, Keep);
         Press(window, window, "✕");
 
         Directory.GetFiles(folder).Length.ShouldBe(1);
         File.ReadAllText(Directory.GetFiles(folder).Single()).ShouldBe(before, "nothing was written");
 
         // And the button is back, ready to be pressed on purpose this time.
-        Captions(window).ShouldContain("Save to palette");
+        Buttons(window).ShouldContain(Keep);
     }
 
     [AvaloniaFact]
@@ -425,7 +434,7 @@ public class SavedGroupTests : UiTest, IDisposable
         var window = Open(out _);
         var editor = Editor(window);
 
-        Press(window, window, "Save to palette");
+        Press(window, window, Keep);
 
         var before = File.ReadAllText(Directory.GetFiles(folder).Single());
 
@@ -440,7 +449,7 @@ public class SavedGroupTests : UiTest, IDisposable
         editor.NotifyPatchChanged();
         SelectBox(window, editor.Patch, second);
 
-        Press(window, window, "Save to palette");
+        Press(window, window, Keep);
         Press(window, window, "✔");
 
         var files = Directory.GetFiles(folder);
@@ -461,7 +470,7 @@ public class SavedGroupTests : UiTest, IDisposable
     {
         var window = Open(out _);
 
-        Press(window, window, "Save to palette");
+        Press(window, window, Keep);
 
         Lines(window).ShouldNotContain("Replace “Voice”?");
         Directory.GetFiles(folder).Length.ShouldBe(1);

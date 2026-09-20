@@ -8,7 +8,8 @@ using Avalonia.Media;
 namespace Flyback.App.Controls;
 
 /// <summary>
-/// The toolbar icons that are drawn rather than typed.
+/// The icons that are drawn rather than typed: the toolbar's, and the ones on the
+/// panel's action buttons.
 /// </summary>
 /// <remarks>
 /// A folder and a floppy disk are what open and save look like everywhere, and
@@ -72,6 +73,40 @@ internal static class Glyphs
         "M2.5,6 L5,6 L8.5,3 L8.5,13 L5,10 L2.5,10 Z "
         + "M10.5,6 Q11.8,8 10.5,10 "
         + "M12.5,4 Q15,8 12.5,12");
+
+    /// <summary>
+    /// Two modules inside a frame — what grouping makes, in the canvas's own
+    /// terms. Corners rather than a whole box, which at this size fills in.
+    /// </summary>
+    public static Control Group() => Stroked(
+        "M2,5 L2,2 L5,2 M11,2 L14,2 L14,5 M14,11 L14,14 L11,14 M5,14 L2,14 L2,11 "
+        + "M4,6 L7,6 L7,10 L4,10 Z "
+        + "M9,6 L12,6 L12,10 L9,10 Z");
+
+    /// <summary>The same two modules with the frame off them, adrift.</summary>
+    public static Control Ungroup() => Stroked(
+        "M2.5,2.5 L6.5,2.5 L6.5,6.5 L2.5,6.5 Z "
+        + "M9.5,9.5 L13.5,9.5 L13.5,13.5 L9.5,13.5 Z");
+
+    /// <summary>Arrows pushing apart along the diagonal: a box showing what is inside.</summary>
+    public static Control OpenBox() => Stroked(
+        "M7,3.5 L3.5,3.5 L3.5,7 M3.5,3.5 L7.5,7.5 "
+        + "M9,12.5 L12.5,12.5 L12.5,9 M12.5,12.5 L8.5,8.5");
+
+    /// <summary>The same arrows drawn inward: the modules gathered back into the box.</summary>
+    public static Control ShutBox() => Stroked(
+        "M3.5,7 L7,7 L7,3.5 M7,7 L3.5,3.5 "
+        + "M12.5,9 L9,9 L9,12.5 M9,9 L12.5,12.5");
+
+    /// <summary>A bin with a lid: the one button on the panel that takes something away.</summary>
+    public static Control Delete() => Stroked(
+        "M2.5,4.5 L13.5,4.5 "
+        + "M6,4.5 L6,2.5 L10,2.5 L10,4.5 "
+        + "M4,4.5 L4.8,13.5 L11.2,13.5 L12,4.5 "
+        + "M6.5,7 L6.5,11 M9.5,7 L9.5,11");
+
+    /// <summary>A bookmark — a group put by, to be added again later.</summary>
+    public static Control Keep() => Stroked("M4.5,2.5 L11.5,2.5 L11.5,13.5 L8,10.5 L4.5,13.5 Z");
 
     /// <summary>
     /// Outlined rather than filled, to sit at the weight of the glyphs beside

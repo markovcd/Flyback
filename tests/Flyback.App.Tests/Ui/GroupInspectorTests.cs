@@ -7,6 +7,7 @@ using Avalonia.Threading;
 using Flyback.App.Controls;
 using Flyback.Core.Graph;
 using Shouldly;
+using Xunit;
 
 namespace Flyback.App.Tests.Ui;
 
@@ -82,8 +83,18 @@ public class GroupInspectorTests : UiTest
     private static string[] Lines(MainWindow window) =>
         [.. All<TextBlock>(window).Select(t => t.Text ?? string.Empty)];
 
+    /// <summary>
+    /// The panel's buttons are glyphs, so a test asks for one by name and reads
+    /// what it does off its tip — which is where the words went.
+    /// </summary>
     private static string[] Buttons(MainWindow window) =>
-        [.. All<Button>(window).Select(b => b.Content as string ?? string.Empty)];
+        [.. All<Button>(window).Select(b => b.Name ?? string.Empty)];
+
+    private static Button Button(MainWindow window, string name) =>
+        All<Button>(window).First(b => b.Name == name);
+
+    private static string Tip(MainWindow window, string name) =>
+        ToolTip.GetTip(Button(window, name)) as string ?? string.Empty;
 
     [AvaloniaFact]
     public void The_panel_is_about_the_group_rather_than_a_module_inside_it()
@@ -123,9 +134,41 @@ public class GroupInspectorTests : UiTest
         var window = Open(out _);
         var buttons = Buttons(window);
 
-        buttons.ShouldContain("Open group");
-        buttons.ShouldContain("Ungroup");
-        buttons.ShouldContain("Delete 2 modules");
+        buttons.ShouldContain("open-group");
+        buttons.ShouldContain("ungroup");
+        buttons.ShouldContain("delete-group");
+
+        // The count the caption used to carry, now in the only place a glyph
+        // can say anything.
+        Tip(window, "delete-group").ShouldContain("2 modules");
+    }
+
+    /// <summary>
+    /// Each of them is a drawn icon, and the tip is the only place it says what
+    /// it does — a button without one is a button nobody can identify.
+    /// </summary>
+    [AvaloniaTheory]
+    [InlineData("open-group")]
+    [InlineData("keep-group")]
+    [InlineData("ungroup")]
+    [InlineData("delete-group")]
+    public void Every_button_on_the_panel_is_an_icon_that_says_what_it_does(string name)
+    {
+        var window = Open(out var group);
+
+        group.Rename("Voice");
+        Editor(window).NotifyPatchChanged();
+        Settle(window);
+
+        var icon = Button(window, name).Content.ShouldBeOfType<Avalonia.Controls.Shapes.Path>();
+
+        icon.Data.ShouldNotBeNull();
+
+        // Taken from the button rather than set here, so that hovering, pressing
+        // and grey-out all reach it.
+        icon.Stroke.ShouldNotBeNull("the stroke follows the button's own foreground");
+
+        Tip(window, name).Length.ShouldBeGreaterThan(8);
     }
 
     /// <summary>
@@ -137,10 +180,10 @@ public class GroupInspectorTests : UiTest
     {
         var window = Open(out var group);
 
-        Press(window, "Open group");
+        Press(window, "open-group");
 
         group.Collapsed.ShouldBeFalse();
-        Buttons(window).ShouldContain("Close group");
+        Buttons(window).ShouldContain("close-group");
     }
 
     [AvaloniaFact]
@@ -222,15 +265,16 @@ public class GroupInspectorTests : UiTest
     {
         var window = Both(out var top, out var low);
 
-        Buttons(window).ShouldContain("Open 2 groups");
+        Buttons(window).ShouldContain("open-groups");
+        Tip(window, "open-groups").ShouldContain("2 boxes");
 
-        Press(window, "Open 2 groups");
+        Press(window, "open-groups");
 
         top.Collapsed.ShouldBeFalse();
         low.Collapsed.ShouldBeFalse();
 
         // Opening is not a selection change, so the panel has to be rebuilt on it.
-        Buttons(window).ShouldContain("Close 2 groups");
+        Buttons(window).ShouldContain("close-groups");
     }
 
     /// <summary>Two pairs, each drawn as a box, with both boxes selected.</summary>
@@ -271,9 +315,9 @@ public class GroupInspectorTests : UiTest
         return window;
     }
 
-    private static void Press(MainWindow window, string caption)
+    private static void Press(MainWindow window, string name)
     {
-        var button = All<Button>(window).First(b => b.Content as string == caption);
+        var button = Button(window, name);
         var at = button.TranslatePoint(new Point(button.Bounds.Width / 2, button.Bounds.Height / 2), window)
             ?? throw new InvalidOperationException("the button is not in this window");
 
