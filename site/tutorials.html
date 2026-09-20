@@ -204,7 +204,7 @@
           data-patch='{"nodes":[
             {"id":"time","name":"Time","cat":"sources","x":8,"y":130,"outs":["t"],"ins":[]},
             {"id":"rings","name":"Rings","cat":"patterns","x":170,"y":0,"w":160,"outs":["out"],"ins":[["x","Coordinates x"],["y","Coordinates y"],["freq","4"],"offset"]},
-            {"id":"mul","name":"a * 0.1","cat":"maths","x":170,"y":140,"outs":[["out","any"]],"ins":["a","b","c","d"]},
+            {"id":"mul","name":"Expression","formula":"a * 0.1","cat":"maths","x":170,"y":140,"outs":[["out","any"]],"ins":["a","b","c","d"]},
             {"id":"hsv","name":"HSV","cat":"color","x":380,"y":40,"outs":[["color","color"]],"ins":["hue",["saturation","0.85"],"value"]},
             {"id":"out","name":"Output","cat":"output","x":540,"y":40,"outs":[],"ins":[["color","","color"],["left","0"],["right","0"],["volume","0.5"]]}
           ],"wires":[["time",0,"rings",3],["time",0,"mul",0],["mul",0,"hsv",0],["rings",0,"hsv",2],["hsv",0,"out",0]]}'></figure>

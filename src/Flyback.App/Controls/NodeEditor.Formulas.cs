@@ -7,8 +7,8 @@ using Flyback.Core.Graph;
 namespace Flyback.App.Controls;
 
 /// <summary>
-/// An Expression's formula written out in its body, beside the socket letters,
-/// where the header shows a name or only the start of it.
+/// An Expression's formula written out in its body, beside the socket letters.
+/// The header is the module's name, as for any other module.
 /// </summary>
 public sealed partial class NodeEditor
 {
@@ -33,11 +33,9 @@ public sealed partial class NodeEditor
     /// The formula as it is drawn in the body, where that is, and whether it is
     /// cut short. Null for any module but an Expression.
     /// </summary>
-    private (FormattedText Text, Point At, Rect Area, bool Cut)? FormulaBlock(NodeInstance node, NodeDef def, Rect bounds)
+    internal (FormattedText Text, Point At, Rect Area, bool Cut)? FormulaBlock(NodeInstance node, NodeDef def, Rect bounds)
     {
         if (NodeCatalog.FormulaOf(node) is not { } formula || string.IsNullOrWhiteSpace(formula)) return null;
-
-        if (!InBody(node, def, bounds, formula)) return null;
 
         var reserve = Reserve(node, def, bounds, formula);
 
@@ -57,24 +55,6 @@ public sealed partial class NodeEditor
         // the output rather than floating in the middle of the body.
         return (text, new Point(area.X, area.Y + 2), area, cut);
     }
-
-    /// <summary>
-    /// What a module's header says: its title, except for an Expression whose
-    /// formula is written in its body, which is called Expression there so the
-    /// formula is said once.
-    /// </summary>
-    internal string HeaderTitle(NodeInstance node, NodeDef def, Rect bounds) =>
-        node.Name is null && NodeCatalog.FormulaOf(node) is { } formula && InBody(node, def, bounds, formula)
-            ? def.Name
-            : node.Title(def);
-
-    /// <summary>
-    /// Whether an Expression's formula goes in its body: where it has a name for
-    /// the header, or a formula too long for one.
-    /// </summary>
-    private bool InBody(NodeInstance node, NodeDef def, Rect bounds, string formula) =>
-        !string.IsNullOrWhiteSpace(formula)
-        && (node.Name is not null || Overflows(formula.Trim(), HeaderSize, HeaderWidth(bounds, def)));
 
     /// <summary>
     /// How much of the right of the body the formula keeps clear of: the output's

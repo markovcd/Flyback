@@ -390,7 +390,7 @@ public sealed partial class NodeEditor
             new RoundedRect(header, NodeGeometry.CornerRadius, NodeGeometry.CornerRadius, 0, 0));
 
         context.DrawText(
-            Text(HeaderTitle(node, def, bounds), HeaderSize, HeaderTextBrush, HeaderWidth(bounds, def), true),
+            Text(node.Title(def), HeaderSize, HeaderTextBrush, HeaderWidth(bounds, def), true),
             new Point(bounds.X + 9, bounds.Y + 5));
 
         if (Tagged(def)) DrawTag(context, bounds);

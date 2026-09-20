@@ -126,12 +126,11 @@ public sealed class NodeInstance
         double.IsNaN(value) ? 0d : Math.Clamp(value, -edge, edge);
 
     /// <summary>
-    /// What to call this one: the name it was given, or its definition's — or,
-    /// for an Expression, its formula. The one way anything should ask, so a
-    /// renamed module reads the same on the canvas, in the panel and in a
-    /// compiler complaint.
+    /// What to call this one: the name it was given, or its definition's. The one
+    /// way anything should ask, so a renamed module reads the same on the canvas,
+    /// in the panel and in a compiler complaint.
     /// </summary>
-    public string Title(NodeDef def) => Name ?? FormulaExtra.Caption(this, def) ?? def.Name;
+    public string Title(NodeDef def) => Name ?? def.Name;
 
     /// <summary>
     /// Renames this module, or puts it back to its definition's name.

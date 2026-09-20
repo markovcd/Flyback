@@ -533,8 +533,7 @@ public sealed partial class NodeEditor
     /// </summary>
     /// <remarks>
     /// An Expression's input is the exception, named for what is wired into it:
-    /// its title is its formula, and "Clock.beats" says what socket a is where
-    /// the formula would say it four times over.
+    /// "Clock.beats" says what socket a carries where "Expression.a" says nothing.
     /// </remarks>
     public (string Label, PortSpec Spec)? Named(GroupSocket socket)
     {

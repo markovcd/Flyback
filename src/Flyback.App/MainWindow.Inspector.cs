@@ -1529,15 +1529,7 @@ public sealed partial class MainWindow
         ExtraField.Text text => TextRow(
             text,
             text.Value(node.StateOf(extra.Key)?[field.Key]),
-            next =>
-            {
-                Store(node, extra, field, JsonValue.Create(next));
-
-                // What is typed may be what the module is called — an
-                // Expression is titled by its formula — so the panel's own
-                // title is drawn again with it.
-                Dispatcher.UIThread.Post(BuildInspector);
-            }),
+            next => Store(node, extra, field, JsonValue.Create(next))),
 
         _ => null,
     };

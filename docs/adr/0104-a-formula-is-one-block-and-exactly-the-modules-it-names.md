@@ -1,9 +1,16 @@
 # ADR-0104: A formula is one block, and exactly the modules it names
 
-**Status:** Accepted · 2026-09-19 · *user-directed* · follows
+**Status:** Superseded in part · 2026-09-19 · *user-directed* · follows
 [0095](0095-a-module-may-be-a-handful-of-others-if-it-is-exactly-them.md),
 [0055](0055-a-plugins-extra-declares-its-editor.md) and
-[0065](0065-a-text-language-that-parses-to-a-patch.md)
+[0065](0065-a-text-language-that-parses-to-a-patch.md) · what an Expression is
+called is superseded by
+[0112](0112-a-formula-is-read-in-the-body-and-the-header-is-a-name.md), which
+writes the formula in the body and leaves the header a name
+
+Everything else here holds: the formula is still one field on one module, still
+exactly the modules it names, and still a complaint and a nought when it does
+not read.
 
 ## Context
 
@@ -74,6 +81,7 @@ Sample.
 **An Expression is called by its formula until somebody names it.** Its header
 on the canvas and its title on the panel are the formula, which says more than
 the word Expression does. A name given to it wins, as for any module.
+Superseded by [0112](0112-a-formula-is-read-in-the-body-and-the-header-is-a-name.md).
 
 ## Consequences
 

@@ -84,11 +84,11 @@ public class ExpressionInspectorTests : UiTest
         var window = Open(out _);
 
         Formula(window).Text.ShouldBe("a * b + c");
-        Title(window).Text.ShouldBe("a * b + c");
+        Title(window).Text.ShouldBe("Expression");
     }
 
     [AvaloniaFact]
-    public void Enter_keeps_what_was_typed_and_the_module_is_called_by_it()
+    public void Enter_keeps_what_was_typed()
     {
         var window = Open(out var expression);
 
@@ -100,8 +100,7 @@ public class ExpressionInspectorTests : UiTest
         Press(window, Key.Enter);
 
         Held(expression).ShouldBe("fract(a * 3)");
-        Title(window).Text.ShouldBe("fract(a * 3)");
-        expression.Title(NodeCatalog.BuiltIn.Require(NodeCatalog.ExpressionTypeId)).ShouldBe("fract(a * 3)");
+        Title(window).Text.ShouldBe("Expression", "the formula is not what it is called");
     }
 
     [AvaloniaFact]

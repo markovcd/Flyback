@@ -266,14 +266,6 @@ internal sealed record FormulaExtra(IReadOnlyDictionary<string, NodeDef> Functio
     public static string Of(NodeInstance node) =>
         ((ExtraField.Text)FieldOf).Value(node.StateOf(StateKey)?[FormulaField]);
 
-    /// <summary>
-    /// What an unnamed Expression is called: its formula, which says more than
-    /// the word Expression does. Null for every other module, and for one whose
-    /// formula is blank.
-    /// </summary>
-    public static string? Caption(NodeInstance node, NodeDef def) =>
-        def.Extra<FormulaExtra>() is not null && Of(node).Trim() is { Length: > 0 } formula ? formula : null;
-
     public override string Announce() =>
         $"  {StateKey} {FormulaField}, the formula as a string — not a knob";
 

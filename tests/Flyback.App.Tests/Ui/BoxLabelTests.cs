@@ -9,9 +9,8 @@ using Xunit;
 namespace Flyback.App.Tests.Ui;
 
 /// <summary>
-/// What a shut box and a module's header say when what they name is a formula:
-/// one line each, cut where it is too long, and a box's socket named for what
-/// feeds it.
+/// What a shut box and a module's header say around an Expression: one line
+/// each, cut where it is too long, and a box's socket named for what feeds it.
 /// </summary>
 public class BoxLabelTests : UiTest
 {
@@ -76,7 +75,7 @@ public class BoxLabelTests : UiTest
         var sockets = b.Patch.SocketsOf(group);
 
         editor.Named(sockets.Inputs.ShouldHaveSingleItem()).ShouldNotBeNull().Label.ShouldBe("Time.t");
-        editor.Named(sockets.Outputs.ShouldHaveSingleItem()).ShouldNotBeNull().Label.ShouldBe("a * 2.out");
+        editor.Named(sockets.Outputs.ShouldHaveSingleItem()).ShouldNotBeNull().Label.ShouldBe("Expression.out");
     }
 
     /// <summary>
@@ -94,11 +93,11 @@ public class BoxLabelTests : UiTest
         NodeEditor.Reads(formula, socket).ShouldBe(reads);
 
     /// <summary>
-    /// A formula is said once: in the header where it fits there, and otherwise in
-    /// the body under a header that says what the module is, or what it is called.
+    /// The formula is written in the body whatever its length and whatever the
+    /// module is called, wrapping over the rows where one line will not hold it.
     /// </summary>
     [AvaloniaFact]
-    public void The_header_does_not_repeat_a_formula_the_body_shows()
+    public void Every_expression_writes_its_formula_in_its_body()
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
         var longOne = Expression(b, Long, 0);
@@ -113,10 +112,13 @@ public class BoxLabelTests : UiTest
 
         var def = NodeCatalog.BuiltIn.Require(NodeCatalog.ExpressionTypeId);
 
-        string Header(NodeInstance node) => editor.HeaderTitle(node, def, NodeGeometry.Bounds(node, def));
+        double Height(NodeInstance node) =>
+            editor.FormulaBlock(node, def, NodeGeometry.Bounds(node, def)).ShouldNotBeNull().Text.Height;
 
-        Header(longOne).ShouldBe("Expression");
-        Header(shortOne).ShouldBe("a * 2");
-        Header(named).ShouldBe("gain");
+        Height(named).ShouldBe(Height(shortOne), "a name does not move the formula out of the body");
+        Height(longOne).ShouldBeGreaterThan(Height(shortOne), "a long one wraps rather than going missing");
+
+        named.Title(def).ShouldBe("gain", "a name goes in the header, where the formula never does");
+        shortOne.Title(def).ShouldBe("Expression");
     }
 }

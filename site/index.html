@@ -215,10 +215,10 @@
             data-patch='{"nodes":[
               {"id":"coord","name":"Coordinates","cat":"sources","x":8,"y":110,"outs":["x","y","radius","angle","aspect"],"ins":[]},
               {"id":"time","name":"Time","cat":"sources","x":8,"y":250,"outs":["t"],"ins":[]},
-              {"id":"mul","name":"a * 0.2","cat":"maths","x":160,"y":250,"outs":[["out","any"]],"ins":[["a","",""],["b","1"],["c","0"],["d","0"]]},
+              {"id":"mul","name":"Expression","formula":"a * 0.2","cat":"maths","x":160,"y":250,"outs":[["out","any"]],"ins":[["a","",""],["b","1"],["c","0"],["d","0"]]},
               {"id":"sine1","name":"Sine","cat":"oscillators","x":160,"y":0,"outs":[["out","any"]],"ins":["in",["freq","1.5"],["phase","0"],["amp","1"],["bias","0"]]},
               {"id":"sine2","name":"Sine","cat":"oscillators","x":312,"y":150,"outs":[["out","any"]],"ins":["in",["freq","1.1"],"phase",["amp","1"],["bias","0"]]},
-              {"id":"add","name":"a + b","cat":"maths","x":464,"y":100,"outs":[["out","any"]],"ins":["a","b",["c","0"],["d","0"]]},
+              {"id":"add","name":"Expression","formula":"a + b","cat":"maths","x":464,"y":100,"outs":[["out","any"]],"ins":["a","b",["c","0"],["d","0"]]},
               {"id":"remap","name":"Remap","cat":"maths","x":616,"y":90,"outs":[["out","any"]],"ins":["in",["in low","-2"],["in high","2"],["out low","0"],["out high","1"]]},
               {"id":"hsv","name":"HSV","cat":"color","x":768,"y":80,"outs":[["color","color"]],"ins":["hue",["saturation","0.85"],["value","1"]]},
               {"id":"out","name":"Output","cat":"output","x":920,"y":90,"outs":[],"ins":[["color","","color"],["left","0"],["right","0"],["volume","0.5"]]}

@@ -53,7 +53,7 @@
   // Patch diagrams, drawn with the canvas's geometry: a header, one row per
   // socket with the outputs first, outputs on the right edge and inputs on the
   // left. A figure carries its patch as JSON in data-patch:
-  //   { nodes: [{ id, name, cat, x, y, w?, outs: [name | [name, kind]],
+  //   { nodes: [{ id, name, cat, x, y, w?, formula?, outs: [name | [name, kind]],
   //               ins: [name | [name, value?, kind?]] }],
   //     wires: [[fromId, outIndex, toId, inIndex]] }
   var SVG = "http://www.w3.org/2000/svg";
@@ -132,6 +132,9 @@
         style: "fill: " + accent + ";",
       }, g);
       text(g, n.x + 8, n.y + HEADER / 2 + 0.5, n.name, "fill: #fff; font-size: 11px; font-weight: 600;");
+
+      // An Expression's formula is written in its body, clear of the socket letters.
+      if (n.formula) text(g, n.x + 18, n.y + HEADER + ROW / 2, n.formula, "fill: var(--value); font-size: 10px;");
 
       n.outs.forEach(function (o, i) {
         var s = spec(o), p = outPoint(n, i);

@@ -192,18 +192,15 @@ public class ExpressionTests
     }
 
     [Fact]
-    public void It_is_called_by_its_formula_until_it_is_named()
+    public void It_is_called_Expression_until_it_is_named()
     {
         var def = NodeCatalog.BuiltIn.Require(Expression);
         var node = new PatchBuilder(NodeCatalog.BuiltIn).Add(Expression);
 
-        node.Title(def).ShouldBe("a * b + c");
+        node.Title(def).ShouldBe("Expression");
 
         Formula(node, "  sin(a * tau)  ");
-        node.Title(def).ShouldBe("sin(a * tau)");
-
-        Formula(node, "   ");
-        node.Title(def).ShouldBe("Expression");
+        node.Title(def).ShouldBe("Expression", "the formula is written in the body, not the header");
 
         node.Rename(def, "wobble");
         node.Title(def).ShouldBe("wobble");
