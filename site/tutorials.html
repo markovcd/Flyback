@@ -116,7 +116,8 @@
           <tr><td>Open, Save</td><td>Reads or writes a <code>.fbk</code> patch, a <code>.fbkb</code> bundle, or a <code>.fbks</code> text file.</td></tr>
           <tr><td>Undo, Redo</td><td><kbd>Ctrl</kbd>+<kbd>Z</kbd> and <kbd>Ctrl</kbd>+<kbd>Y</kbd> (or <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd>).</td></tr>
           <tr><td>Tidy</td><td>Lays the modules out left to right, shutting boxes if the drawing will not
-          otherwise fit. <kbd>Ctrl</kbd>+<kbd>L</kbd>, and undoable.</td></tr>
+          otherwise fit. <kbd>Ctrl</kbd>+<kbd>L</kbd>, and undoable. <kbd>Ctrl</kbd>+click, or
+          <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd>, lays out only what is selected.</td></tr>
           <tr><td>Code</td><td>Shows the patch as text. <kbd>F2</kbd>.</td></tr>
           <tr><td>Knobs</td><td>Shows the knob panel under the canvas. <kbd>Ctrl</kbd>+<kbd>K</kbd>.</td></tr>
           <tr><td>Rewind, Record</td><td>Sets the clock back to zero, and starts or stops a live recording — counted in, as the Recording settings say. <kbd>Ctrl</kbd>+<kbd>R</kbd>.</td></tr>
@@ -417,6 +418,10 @@ out.volume = 0.5</code></pre>
       <li><strong>Tidy</strong> with <kbd>Ctrl</kbd>+<kbd>L</kbd>, and frame everything with
       <kbd>Ctrl</kbd>+<kbd>F</kbd>. A patch too wide for the canvas with every box open has its widest
       boxes shut until the drawing fits, and the status line says which.</li>
+      <li><strong>Tidy one corner</strong> with <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd>, or
+      <kbd>Ctrl</kbd>+click on the Tidy button. Only the selected modules move, they stay where they
+      already were rather than going to the middle of the canvas, and the view does not shift. A box is
+      laid out whole or not at all, so select all of one to include it.</li>
     </ul>
 
     <figure class="wide-shot">

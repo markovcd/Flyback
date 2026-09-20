@@ -802,12 +802,16 @@ public sealed partial class MainWindow
     /// other's counterpart (<see cref="Core.Language.SourceLayout"/> and
     /// <see cref="Core.Graph.PatchLayout"/>).
     /// </summary>
-    private void Tidy()
+    /// <param name="onlySelected">
+    /// Lay out only the selected modules. A canvas gesture: the text has no selected
+    /// modules to lay out, so it folds whole either way.
+    /// </param>
+    private void Tidy(bool onlySelected = false)
     {
         if (Gesturing) return;
 
         if (Coding) source.Tidy();
-        else editor.Tidy();
+        else editor.Tidy(onlySelected);
     }
 
     /// <summary>

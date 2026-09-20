@@ -984,7 +984,6 @@ static Flyback.Core.Graph.NodeExtra.operator !=(Flyback.Core.Graph.NodeExtra? le
 static Flyback.Core.Graph.NodeExtra.operator ==(Flyback.Core.Graph.NodeExtra? left, Flyback.Core.Graph.NodeExtra? right) -> bool
 static Flyback.Core.Graph.NodeInstance.Create(Flyback.Core.Graph.NodeDef! def, double x, double y, System.Guid? id = null) -> Flyback.Core.Graph.NodeInstance!
 static Flyback.Core.Graph.PatchControl.KeyOf(System.Guid control) -> string!
-static Flyback.Core.Graph.PatchLayout.Arrange(Flyback.Core.Graph.Patch! patch, Flyback.Core.Graph.ModuleCatalog? modules = null, Flyback.Core.Graph.PatchLayout.Metrics? metrics = null) -> Flyback.Core.Graph.PatchLayout.Arrangement
 static Flyback.Core.Graph.PatchLayout.Arrangement.operator !=(Flyback.Core.Graph.PatchLayout.Arrangement left, Flyback.Core.Graph.PatchLayout.Arrangement right) -> bool
 static Flyback.Core.Graph.PatchLayout.Arrangement.operator ==(Flyback.Core.Graph.PatchLayout.Arrangement left, Flyback.Core.Graph.PatchLayout.Arrangement right) -> bool
 static Flyback.Core.Graph.PatchLayout.Metrics.Default.get -> Flyback.Core.Graph.PatchLayout.Metrics

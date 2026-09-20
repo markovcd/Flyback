@@ -542,4 +542,200 @@ public class PatchLayoutTests
     [Fact]
     public void An_empty_patch_lays_out_without_complaint() =>
         Should.NotThrow(() => PatchLayout.Arrange(new Patch(), NodeCatalog.BuiltIn));
+
+    // --- laying out part of a patch -----------------------------------------
+
+    /// <summary>
+    /// A chain of three fed by one module, with a second chain of two well away
+    /// from it. Enough that laying out either one alone has something to do and
+    /// something to leave alone.
+    /// </summary>
+    private static Patch Apart(out NodeInstance[] near, out NodeInstance[] far)
+    {
+        var b = new PatchBuilder(NodeCatalog.BuiltIn);
+
+        var time = b.Add("time", 400, -900);
+        var osc = b.Add("osc.sine", -800, -400, (1, 220f));
+        var gain = b.Add("math.mul", -200, -1200, (1, 0.5f));
+
+        var coord = b.Add("coord", 2400, 1600);
+        var rings = b.Add("pattern.rings", 1800, 2200);
+
+        var sink = b.Add(NodeCatalog.OutputTypeId, 3000, 0);
+
+        b.Wire(time, 0, osc, 0)
+         .Wire(osc, 0, gain, 0)
+         .Wire(gain, 0, sink, NodeCatalog.OutputLeftPort)
+         .Wire(coord, 0, rings, 0)
+         .Wire(rings, 0, sink, NodeCatalog.OutputColorPort);
+
+        near = [time, osc, gain];
+        far = [coord, rings];
+
+        return b.Patch;
+    }
+
+    private static HashSet<Guid> Named(params NodeInstance[] nodes) => [.. nodes.Select(n => n.Id)];
+
+    /// <summary>
+    /// A layout given part of a patch moves that part and nothing else. What it
+    /// is for is a corner of a big patch that has gone tangled, where laying the
+    /// whole thing out would throw away every placement elsewhere.
+    /// </summary>
+    [Fact]
+    public void Laying_out_part_of_a_patch_moves_only_the_modules_it_names()
+    {
+        var patch = Apart(out var near, out var far);
+        var before = patch.Nodes.ToDictionary(n => n.Id, n => (n.X, n.Y));
+
+        PatchLayout.Arrange(patch, NodeCatalog.BuiltIn, null, Named(near));
+
+        foreach (var node in far)
+            (node.X, node.Y).ShouldBe(before[node.Id], $"{node.TypeId} was not named");
+
+        near.ShouldContain(
+            n => n.X != before[n.Id].X || n.Y != before[n.Id].Y,
+            "the named modules should have moved");
+    }
+
+    /// <summary>And what it does move reads left to right, the same as a whole patch does.</summary>
+    [Fact]
+    public void The_part_that_is_laid_out_reads_left_to_right()
+    {
+        var patch = Apart(out var near, out _);
+
+        PatchLayout.Arrange(patch, NodeCatalog.BuiltIn, null, Named(near));
+
+        var (time, osc, gain) = (near[0], near[1], near[2]);
+
+        time.X.ShouldBeLessThan(osc.X);
+        osc.X.ShouldBeLessThan(gain.X);
+    }
+
+    /// <summary>
+    /// And it lands where it was rather than in the middle of the canvas, which
+    /// is what keeps the part being worked on under the view it is being worked
+    /// on through.
+    /// </summary>
+    [Fact]
+    public void The_part_that_is_laid_out_stays_where_it_was()
+    {
+        var patch = Apart(out _, out var far);
+
+        var was = Middle(far);
+
+        PatchLayout.Arrange(patch, NodeCatalog.BuiltIn, null, Named(far));
+
+        var (x, y) = Middle(far);
+
+        // A column of two where there were two scattered: the middle moves by
+        // the room the drawing took back, and not by the half-canvas that
+        // landing it in the centre would have cost.
+        Math.Abs(x - was.X).ShouldBeLessThan(Size.Width);
+        Math.Abs(y - was.Y).ShouldBeLessThan(Size.Height(NodeCatalog.BuiltIn.Require("coord")));
+    }
+
+    private static (double X, double Y) Middle(NodeInstance[] nodes)
+    {
+        var boxes = nodes.Select(Box).ToArray();
+
+        return (
+            (boxes.Min(b => b.Left) + boxes.Max(b => b.Right)) / 2,
+            (boxes.Min(b => b.Top) + boxes.Max(b => b.Bottom)) / 2);
+    }
+
+    /// <summary>
+    /// A box with a module nobody named in it is left alone whole. A box is drawn
+    /// from where all of its modules are, so moving some of them would slide the
+    /// ring off the ones that stayed.
+    /// </summary>
+    [Fact]
+    public void A_box_only_partly_named_is_not_laid_out_at_all()
+    {
+        var patch = Apart(out var near, out _);
+
+        patch.Group(near.Select(n => n.Id)).ShouldNotBeNull().Rename("Tone");
+
+        var before = patch.Nodes.ToDictionary(n => n.Id, n => (n.X, n.Y));
+
+        PatchLayout.Arrange(patch, NodeCatalog.BuiltIn, null, Named(near[0], near[1]));
+
+        foreach (var node in patch.Nodes)
+            (node.X, node.Y).ShouldBe(before[node.Id], "a box is laid out whole or not at all");
+    }
+
+    /// <summary>And a box named whole is, inside and out.</summary>
+    [Fact]
+    public void A_box_named_whole_is_laid_out_among_itself()
+    {
+        var patch = Apart(out var near, out var far);
+
+        patch.Group(near.Select(n => n.Id)).ShouldNotBeNull().Rename("Tone");
+
+        var before = patch.Nodes.ToDictionary(n => n.Id, n => (n.X, n.Y));
+
+        PatchLayout.Arrange(patch, NodeCatalog.BuiltIn, null, Named(near));
+
+        near[0].X.ShouldBeLessThan(near[1].X);
+
+        foreach (var node in far)
+            (node.X, node.Y).ShouldBe(before[node.Id]);
+    }
+
+    /// <summary>
+    /// Naming one module is a layout with nothing to arrange, and it leaves that
+    /// module where it stands rather than sliding it anywhere.
+    /// </summary>
+    [Fact]
+    public void Laying_out_one_module_moves_it_nowhere()
+    {
+        var patch = Apart(out var near, out _);
+        var before = patch.Nodes.ToDictionary(n => n.Id, n => (n.X, n.Y));
+
+        PatchLayout.Arrange(patch, NodeCatalog.BuiltIn, null, Named(near[1]));
+
+        foreach (var node in patch.Nodes)
+            (node.X, node.Y).ShouldBe(before[node.Id]);
+    }
+
+    /// <summary>
+    /// And laying out part of a patch twice is laying it out once, the same as
+    /// the whole of one: the second press has nothing left to do.
+    /// </summary>
+    [Fact]
+    public void Laying_out_part_of_a_patch_twice_is_laying_it_out_once()
+    {
+        var patch = Apart(out var near, out _);
+
+        PatchLayout.Arrange(patch, NodeCatalog.BuiltIn, null, Named(near));
+
+        var once = patch.Nodes.ToDictionary(n => n.Id, n => (n.X, n.Y));
+
+        PatchLayout.Arrange(patch, NodeCatalog.BuiltIn, null, Named(near));
+
+        foreach (var node in patch.Nodes)
+            (node.X, node.Y).ShouldBe(once[node.Id]);
+    }
+
+    /// <summary>
+    /// A part laid out against the edge of the canvas is slid back inside it. The
+    /// coordinates clamp as they are written, so a drawing left hanging over the
+    /// boundary would stack against it instead.
+    /// </summary>
+    [Fact]
+    public void A_part_laid_out_at_the_edge_of_the_canvas_is_slid_back_inside_it()
+    {
+        var patch = Apart(out var near, out _);
+
+        foreach (var node in near)
+        {
+            node.X = NodeInstance.Across;
+            node.Y = NodeInstance.Down;
+        }
+
+        PatchLayout.Arrange(patch, NodeCatalog.BuiltIn, null, Named(near));
+
+        near.Select(n => n.X).Distinct().Count().ShouldBe(near.Length, "they should be in columns");
+        near.Max(n => n.X).ShouldBeLessThanOrEqualTo(NodeInstance.Across);
+    }
 }

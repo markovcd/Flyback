@@ -383,9 +383,10 @@ public sealed partial class MainWindow
 
             // Lay out. Beside the two above because it is the same kind of
             // thing: an edit that Ctrl+Z takes off again — the modules across
-            // the canvas, or the lines down the page.
+            // the canvas, or the lines down the page. With Shift, only the
+            // selected modules move (ADR-0110).
             case Key.L:
-                Tidy();
+                Tidy(again);
                 e.Handled = true;
                 break;
 

@@ -60,6 +60,7 @@
 - The assistant is told what every module does again. Settings → Agent sets how long that briefing may get and names an editable list of modules that are always included. Any module left out is marked on the canvas.
 
 ### Canvas and interface
+- Ctrl+Shift+L, or Ctrl+click on the Tidy button, lays out only the selected modules and leaves the rest of the patch where it is.
 - A toolbar button swaps the preview and the canvas, for a bigger picture while you patch.
 - Unsaved work survives a crash: the next start offers to restore it.
 

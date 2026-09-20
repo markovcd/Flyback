@@ -61,6 +61,8 @@ public sealed partial class MainWindow
         + "puts it back; double-click a box to open it.\n"
         + "Ctrl+E opens every box the selection touches at once, "
         + "Ctrl+Shift+E shuts them again.\n"
+        + "Ctrl+Shift+L lays out only what is selected, where "
+        + "Ctrl+L lays out the whole patch.\n"
         + "Delete removes what is selected, Ctrl+F frames the patch.";
 
     /// <summary>

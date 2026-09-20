@@ -81,7 +81,7 @@ context, decision, consequences.
 | [0017](0017-draw-the-node-editor-in-one-control.md) | Draw the node editor in one custom control |
 | [0018](0018-never-render-frames-on-the-ui-thread.md) | Never render frames on the UI thread |
 | [0039](0039-one-window-class-across-a-file-per-region.md) | One window class, across a file per region |
-| [0044](0044-lay-patches-out-in-layers-not-with-springs.md) | Lay patches out in layers, not with springs *(user-directed; what becomes of a drawing too large for the canvas settled by [0092](0092-a-drawing-too-wide-for-the-canvas-shuts-a-box.md))* |
+| [0044](0044-lay-patches-out-in-layers-not-with-springs.md) | Lay patches out in layers, not with springs *(user-directed; what becomes of a drawing too large for the canvas settled by [0092](0092-a-drawing-too-wide-for-the-canvas-shuts-a-box.md); runnable over a selection by [0110](0110-the-layout-can-be-given-the-selection-instead-of-the-patch.md))* |
 | [0045](0045-what-is-copied-is-a-patch-file.md) | What is copied is a patch file *(user-directed)* |
 | [0046](0046-the-module-list-is-a-gesture-not-a-panel.md) | The module list is a gesture, not a panel *(user-directed)* |
 | [0070](0070-a-preset-declares-no-coordinates.md) | A preset declares no coordinates *(user-directed)* |
@@ -94,6 +94,7 @@ context, decision, consequences.
 | [0090](0090-a-take-is-counted-in-and-starts-at-zero.md) | A take is counted in, and starts at zero *(user-directed; its fixed three seconds and unconditional rewind made settings by [0091](0091-how-a-take-begins-is-two-settings.md))* |
 | [0091](0091-how-a-take-begins-is-two-settings.md) | How a take begins is two settings *(user-directed)* |
 | [0092](0092-a-drawing-too-wide-for-the-canvas-shuts-a-box.md) | A drawing too wide for the canvas shuts a box, and one that cannot fit moves nothing *(user-directed)* |
+| [0110](0110-the-layout-can-be-given-the-selection-instead-of-the-patch.md) | The layout can be given the selection instead of the patch *(user-directed)* |
 | [0093](0093-a-startup-preset-is-a-graphics-setting.md) | A startup preset is a Graphics setting *(user-directed)* |
 | [0103](0103-unsaved-work-outlives-a-crash.md) | Unsaved work outlives a crash *(user-directed)* |
 

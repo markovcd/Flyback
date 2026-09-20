@@ -160,6 +160,14 @@ public static class PatchLayout
     /// <param name="patch">The patch to place. Modified in place.</param>
     /// <param name="modules">Which catalogue the type ids mean, defaulting to the installed one.</param>
     /// <param name="metrics">How big the nodes are, defaulting to the editor's own.</param>
+    /// <param name="only">
+    /// The modules to place, or null for every one of them. Given a few, the rest of
+    /// the patch is not touched and the drawing lands on the middle of where those
+    /// few were rather than on the middle of the canvas, so a corner of a patch
+    /// tidies itself where it stands — over a module nobody picked, if that is where
+    /// it falls. A box with a module outside the set in it is left alone whole, since
+    /// a box is drawn from where all of its modules are. See ADR-0110.
+    /// </param>
     /// <remarks>
     /// A drawing wider than the canvas is narrowed by shutting a box rather than by
     /// squeezing, because there is nothing there to squeeze: an open group is a ring
@@ -180,10 +188,15 @@ public static class PatchLayout
     public static Arrangement Arrange(
         Patch patch,
         ModuleCatalog? modules = null,
-        Metrics? metrics = null)
+        Metrics? metrics = null,
+        IReadOnlySet<Guid>? only = null)
     {
         var catalog = modules ?? NodeCatalog.Current;
         var size = metrics ?? Metrics.Default;
+
+        // Where the drawing goes. Read before the first pass, because a pass moves
+        // the very modules it would be measured from.
+        var middle = only is null ? default : Middle(patch, Placed(patch, catalog, only), size);
 
         // Where everything was, to put back if it turns out there is no drawing to
         // be had. Taken before the first pass rather than inside one, because a
@@ -193,7 +206,7 @@ public static class PatchLayout
 
         while (true)
         {
-            var pass = Once(patch, catalog, size);
+            var pass = Once(patch, catalog, size, only, middle);
 
             if (pass.Fitted) return new Arrangement(true, shut);
 
@@ -213,30 +226,20 @@ public static class PatchLayout
     /// <summary>
     /// One go at the whole drawing, over the boxes as they now stand.
     /// </summary>
-    private static Pass Once(Patch patch, ModuleCatalog catalog, Metrics size)
+    private static Pass Once(
+        Patch patch,
+        ModuleCatalog catalog,
+        Metrics size,
+        IReadOnlySet<Guid>? only,
+        (double X, double Y) middle)
     {
-        // A node whose module is not installed is left where it is: it cannot be
-        // measured, and moving it to a guessed height would scatter the one
-        // thing a patch from a missing plugin still has going for it.
-        var defs = new Dictionary<Guid, NodeDef>();
-        foreach (var node in patch.Nodes)
-            if (catalog.Get(node.TypeId) is { } def)
-                defs[node.Id] = def;
-
-        // And a group holding one of those is left alone whole rather than moved
-        // in part. A box is drawn from where all of its modules are, so placing
-        // some of them and not the rest slides the box off the ones that stayed.
-        var groups = new List<NodeGroup>();
-
-        foreach (var group in patch.Groups ?? [])
-        {
-            if (group.Members.Count == 0) continue;
-
-            if (group.Members.All(defs.ContainsKey)) groups.Add(group);
-            else foreach (var id in group.Members) defs.Remove(id);
-        }
+        var defs = Placed(patch, catalog, only);
 
         if (defs.Count == 0) return new Pass(true, null);
+
+        var groups = (patch.Groups ?? [])
+            .Where(group => group.Members.Count > 0 && group.Members.All(defs.ContainsKey))
+            .ToList();
 
         var nodes = patch.Nodes.Where(n => defs.ContainsKey(n.Id)).ToDictionary(n => n.Id);
 
@@ -282,9 +285,67 @@ public static class PatchLayout
 
         Lay(blocks, Links(patch, defs, blocks, of), sink, size);
 
-        if (Settle(blocks)) return new Pass(true, null);
+        if (Settle(blocks, middle)) return new Pass(true, null);
 
         return new Pass(false, Worst(blocks, open, size));
+    }
+
+    /// <summary>
+    /// Which modules a pass places: the ones the catalogue knows, and of those the
+    /// ones <paramref name="only"/> names where it names any.
+    /// </summary>
+    /// <remarks>
+    /// A module whose plugin is missing is left where it is: it cannot be measured,
+    /// and moving it to a guessed height would scatter the one thing a patch from a
+    /// missing plugin still has going for it. A group holding one of those — or, for
+    /// a selection, holding a module nobody picked — is left alone whole rather than
+    /// moved in part, since a box is drawn from where all of its modules are and
+    /// placing some of them slides the box off the ones that stayed.
+    /// </remarks>
+    private static Dictionary<Guid, NodeDef> Placed(
+        Patch patch,
+        ModuleCatalog catalog,
+        IReadOnlySet<Guid>? only)
+    {
+        var defs = new Dictionary<Guid, NodeDef>();
+
+        foreach (var node in patch.Nodes)
+            if ((only is null || only.Contains(node.Id)) && catalog.Get(node.TypeId) is { } def)
+                defs[node.Id] = def;
+
+        foreach (var group in patch.Groups ?? [])
+            if (group.Members.Count > 0 && !group.Members.All(defs.ContainsKey))
+                foreach (var id in group.Members)
+                    defs.Remove(id);
+
+        return defs;
+    }
+
+    /// <summary>
+    /// The middle of where <paramref name="defs"/>'s modules are now, which is where
+    /// the drawing made of them goes back.
+    /// </summary>
+    /// <remarks>
+    /// Measured off the modules rather than off the boxes round them: a padded box
+    /// shifts the middle by a few pixels, and a few pixels is not what anybody is
+    /// looking at when a corner of the patch tidies itself in place.
+    /// </remarks>
+    private static (double X, double Y) Middle(Patch patch, Dictionary<Guid, NodeDef> defs, Metrics size)
+    {
+        double left = double.MaxValue, top = double.MaxValue;
+        double right = double.MinValue, bottom = double.MinValue;
+
+        foreach (var node in patch.Nodes)
+        {
+            if (!defs.TryGetValue(node.Id, out var def)) continue;
+
+            left = Math.Min(left, node.X);
+            top = Math.Min(top, node.Y);
+            right = Math.Max(right, node.X + size.Width);
+            bottom = Math.Max(bottom, node.Y + size.Height(def));
+        }
+
+        return left > right ? default : ((left + right) / 2, (top + bottom) / 2);
     }
 
     /// <summary>
@@ -341,34 +402,39 @@ public static class PatchLayout
     }
 
     /// <summary>
-    /// Puts the finished drawing in the middle of the canvas, or writes nothing and
-    /// says it does not fit on one. The placement runs from a corner because a
-    /// column is easier to reason about running one way; the middle is where that
-    /// corner goes, since it is the only choice that uses the whole canvas.
+    /// Puts the finished drawing down with its middle on <paramref name="middle"/>,
+    /// or writes nothing and says it does not fit the canvas. The placement runs
+    /// from a corner because a column is easier to reason about running one way;
+    /// landing it by the middle is what lets a drawing of part of a patch go back
+    /// where that part came from, and the middle of the canvas is the only choice
+    /// that uses the whole of it for the rest.
     /// </summary>
     /// <remarks>
     /// Measured before a coordinate is written, which is the whole of how a drawing
     /// too big for the canvas leaves the patch alone: a coordinate is held inside
     /// the canvas as it is set, so there is no writing one down and reading it back
-    /// to find out.
+    /// to find out. A drawing that fits but hangs over an edge is slid back in for
+    /// the same reason, since the clamp would stack it against the boundary.
     /// </remarks>
-    private static bool Settle(List<Block> blocks)
+    private static bool Settle(List<Block> blocks, (double X, double Y) middle)
     {
         var left = blocks.Min(block => block.X);
         var top = blocks.Min(block => block.Y);
         var right = blocks.Max(block => block.X + block.Width);
         var bottom = blocks.Max(block => block.Y + block.Height);
 
-        if (right - left > NodeInstance.Across * 2 || bottom - top > NodeInstance.Down * 2)
-            return false;
+        var across = (right - left) / 2;
+        var down = (bottom - top) / 2;
 
-        var across = (left + right) / 2;
-        var down = (top + bottom) / 2;
+        if (across > NodeInstance.Across || down > NodeInstance.Down) return false;
+
+        var x = Math.Clamp(middle.X, -NodeInstance.Across + across, NodeInstance.Across - across);
+        var y = Math.Clamp(middle.Y, -NodeInstance.Down + down, NodeInstance.Down - down);
 
         foreach (var block in blocks)
         {
-            block.X -= across;
-            block.Y -= down;
+            block.X += x - (left + right) / 2;
+            block.Y += y - (top + bottom) / 2;
             block.Put();
         }
 

@@ -27,3 +27,5 @@ static Flyback.Core.Graph.NodeCatalog.FormulaOf(Flyback.Core.Graph.NodeInstance!
 static Flyback.Core.Graph.ExpressionFusion.Retired(Flyback.Core.Graph.NodeDef! def) -> bool
 static Flyback.Core.Graph.ExpressionFusion.Template(Flyback.Core.Graph.NodeDef! retired) -> string!
 static Flyback.Core.Graph.ExpressionFusion.Standing(Flyback.Core.Graph.NodeDef! retired, Flyback.Core.Graph.ModuleCatalog! modules, double x, double y) -> Flyback.Core.Graph.NodeInstance?
+*REMOVED*static Flyback.Core.Graph.PatchLayout.Arrange(Flyback.Core.Graph.Patch! patch, Flyback.Core.Graph.ModuleCatalog? modules = null, Flyback.Core.Graph.PatchLayout.Metrics? metrics = null) -> Flyback.Core.Graph.PatchLayout.Arrangement
+static Flyback.Core.Graph.PatchLayout.Arrange(Flyback.Core.Graph.Patch! patch, Flyback.Core.Graph.ModuleCatalog? modules = null, Flyback.Core.Graph.PatchLayout.Metrics? metrics = null, System.Collections.Generic.IReadOnlySet<System.Guid>? only = null) -> Flyback.Core.Graph.PatchLayout.Arrangement

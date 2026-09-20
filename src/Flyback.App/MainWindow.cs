@@ -3,6 +3,8 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Controls.Templates;
+using Avalonia.Input;
+using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Threading;
@@ -343,7 +345,8 @@ public sealed partial class MainWindow : Window
 
     /// <summary>What the layout button does to the canvas, which is what it says by default.</summary>
     private const string TidyTip =
-        "Lay the modules out so the patch reads left to right  (Ctrl+L)";
+        "Lay the modules out so the patch reads left to right  (Ctrl+L). "
+        + "Ctrl+click lays out only what is selected, leaving the rest where it is  (Ctrl+Shift+L)";
 
     private AssistantPanel? assistant;
     private ColumnDefinition? assistantColumn;
@@ -1058,7 +1061,22 @@ public sealed partial class MainWindow : Window
         // recordButton.
         ToolTip.SetShowOnDisabled(tidy, true);
 
-        tidy.Click += (_, _) => Tidy();
+        // A Click says which button was pressed and nothing about what was held
+        // down while it was, so that is read on the way in. The key offers both
+        // layouts and so does the button, because a modifier is how a toolbar
+        // offers the narrower of two things without a second glyph for it.
+        var modifiers = KeyModifiers.None;
+
+        tidy.AddHandler(
+            PointerPressedEvent,
+            (object? _, PointerPressedEventArgs e) => modifiers = e.KeyModifiers,
+            RoutingStrategies.Tunnel);
+
+        tidy.Click += (_, _) =>
+        {
+            Tidy((modifiers & (KeyModifiers.Control | KeyModifiers.Meta)) != 0);
+            modifiers = KeyModifiers.None;
+        };
 
         // The same, for a patch with no picture to swap in.
         ToolTip.SetShowOnDisabled(swapButton, true);

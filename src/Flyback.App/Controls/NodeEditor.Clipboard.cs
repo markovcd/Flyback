@@ -217,6 +217,10 @@ public sealed partial class NodeEditor
     /// Lays the patch out so it reads left to right with its wires clear of one
     /// another, and frames the result. One edit, so one Ctrl+Z puts every node back.
     /// </summary>
+    /// <param name="onlySelected">
+    /// Lay out the selection alone, leaving the rest of the patch exactly where it
+    /// is and the view where it was. See ADR-0110.
+    /// </param>
     /// <remarks>
     /// Nothing the compiler reads changes, so the patch compiles to exactly the same
     /// program before and after (ADR-0044) — a box shut to make the drawing fit is a
@@ -224,18 +228,28 @@ public sealed partial class NodeEditor
     /// same one press. A patch too big to draw even with every box shut is left
     /// exactly as it was, and said instead of shown.
     /// </remarks>
-    public void Tidy()
+    public void Tidy(bool onlySelected = false)
     {
         if (patch.Nodes.Count == 0) return;
 
-        var laid = PatchLayout.Arrange(patch, NodeCatalog.Current, NodeGeometry.Metrics);
+        if (onlySelected && selection.Count == 0)
+        {
+            Reported?.Invoke(this, "Nothing is selected. Ctrl+L lays the whole patch out.");
+            return;
+        }
+
+        var laid = PatchLayout.Arrange(
+            patch,
+            NodeCatalog.Current,
+            NodeGeometry.Metrics,
+            onlySelected ? selection : null);
 
         if (!laid.Fitted)
         {
             Reported?.Invoke(
                 this,
-                "This patch is too big to draw on the canvas even with every box shut, "
-                + "so nothing has been moved.");
+                $"This {(onlySelected ? "selection" : "patch")} is too big to draw on the canvas "
+                + "even with every box shut, so nothing has been moved.");
 
             return;
         }
@@ -244,13 +258,17 @@ public sealed partial class NodeEditor
         if (SelectWholeBoxes()) SelectionChanged?.Invoke(this, EventArgs.Empty);
 
         NotifyPatchChanged();
-        FrameAll();
+
+        // The selection went back where it was, so there is nothing to bring into
+        // view — and moving the view would lose the part of the patch being worked
+        // on, which is the whole of why only part of it was laid out.
+        if (!onlySelected) FrameAll();
 
         if (laid.Shut.Count > 0)
             Reported?.Invoke(
                 this,
-                "With every box open this patch is wider than the canvas, so "
-                + $"{Named(laid.Shut)} {(laid.Shut.Count == 1 ? "was" : "were")} shut.");
+                $"With every box open this {(onlySelected ? "selection" : "patch")} is wider than "
+                + $"the canvas, so {Named(laid.Shut)} {(laid.Shut.Count == 1 ? "was" : "were")} shut.");
     }
 
     /// <summary>
