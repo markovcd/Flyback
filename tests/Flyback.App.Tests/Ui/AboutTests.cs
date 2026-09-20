@@ -103,23 +103,27 @@ public class AboutTests : UiTest
 
     /// <summary>
     /// An address is a string nobody can check by reading, and one wrong
-    /// character sends the money nowhere at all. Until a real one is set, the
-    /// window must show no address rather than a plausible-looking stand-in — so
-    /// this fails the day somebody puts an example in to see how it looks.
+    /// character sends the money nowhere at all, so the window never spells one
+    /// out. With an address set it is in the code and nowhere else; with none
+    /// set there is nothing there that could be taken for one — which fails the
+    /// day somebody puts an example in to see how it looks.
     /// </summary>
     [AvaloniaFact]
-    public void No_address_is_shown_while_none_is_set()
+    public void The_window_never_spells_the_address_out()
     {
         var window = Showing();
 
-        if (About.BitcoinAddress.Length > 0)
+        All<TextBox>(window).ShouldBeEmpty("nothing that could be mistaken for an address");
+
+        if (About.BitcoinAddress.Length == 0)
         {
-            All<TextBox>(window).ShouldHaveSingleItem().Text.ShouldBe(About.BitcoinAddress);
+            All<QrCode>(window).ShouldBeEmpty("no code either, with nothing to encode");
+            Words(window).ShouldContain(t => t.Contains("no donation address"));
+
             return;
         }
 
-        All<TextBox>(window).ShouldBeEmpty("nothing that could be mistaken for an address");
-        Words(window).ShouldContain(t => t.Contains("no donation address"));
+        Words(window).ShouldNotContain(t => t.Contains(About.BitcoinAddress), "the code is the only place it is");
     }
 
     /// <summary>

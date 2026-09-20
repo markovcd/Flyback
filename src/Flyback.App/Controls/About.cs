@@ -157,16 +157,14 @@ internal static class About
         return mark;
     }
 
-    /// <summary>
-    /// The address as a code to scan and as text to copy, neither of which is
-    /// retyping it.
-    /// </summary>
+    /// <summary>The address as a code to scan, and as a click to copy it by.</summary>
     /// <remarks>
-    /// The code is encoded from the same constant the text below it shows, so the
-    /// two cannot come to disagree. The text is selectable and monospaced, because
-    /// the one thing worse than no address is one that was read wrongly. Where
-    /// none is set the section says so in as many words rather than showing a
-    /// blank line somebody might take for a rendering fault.
+    /// The code is encoded from the constant rather than kept as a picture, so it
+    /// cannot come to name an address this build does not. Nothing spells the
+    /// address out: scanning it or copying it are the two ways to have it, and
+    /// neither is retyping it. Where none is set the section says so in as many
+    /// words rather than showing a blank line somebody might take for a rendering
+    /// fault.
     /// </remarks>
     private static Control Donation()
     {
@@ -201,18 +199,9 @@ internal static class About
 
         ToolTip.SetTip(code, "Click to copy the address");
 
-        var address = new TextBox
-        {
-            Text = BitcoinAddress,
-            IsReadOnly = true,
-            FontFamily = new FontFamily("Consolas, Menlo, DejaVu Sans Mono, monospace"),
-            FontSize = Text.Body,
-            TextWrapping = TextWrapping.Wrap,
-        };
-
         // Said under the code rather than in the tip, which is not on screen any
         // more by the time there is anything to say.
-        var said = Quiet(string.Empty);
+        var said = Quiet("Click the code to copy the address.");
 
         code.PointerPressed += async (_, _) =>
         {
@@ -223,7 +212,6 @@ internal static class About
         };
 
         block.Children.Add(code);
-        block.Children.Add(address);
         block.Children.Add(said);
 
         return block;
