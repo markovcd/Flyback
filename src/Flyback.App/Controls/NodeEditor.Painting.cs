@@ -199,6 +199,11 @@ public sealed partial class NodeEditor
             var to = InputAnchor(target, targetDef, connection.TargetPort);
             var color = Colors.PortColor(sourceDef.Outputs[connection.SourcePort].Kind);
 
+            // A wire onto or off a module that is switched off is drawn as faintly
+            // as the module is: what it shows is where the patch runs again once
+            // that module comes back.
+            var strength = source.Off || target.Off ? OffOpacity : 1;
+
             // Dashed where the wire runs backwards, which is the whole of how a
             // loop shows itself: what this one carries is the evaluation before,
             // and a solid wire would say it carried this one.
@@ -207,8 +212,8 @@ public sealed partial class NodeEditor
             // Heavier and at full strength, which is the same signal the pending
             // wire gives: this one is in play.
             var pen = theirs
-                ? new Pen(new SolidColorBrush(color), LiftedWireThickness, dashes)
-                : new Pen(new SolidColorBrush(color, RestingWireOpacity), WireThickness, dashes);
+                ? new Pen(new SolidColorBrush(color, strength), LiftedWireThickness, dashes)
+                : new Pen(new SolidColorBrush(color, RestingWireOpacity * strength), WireThickness, dashes);
 
             // How a wire is routed is a question of where its ends are, not of
             // what it carries: one that has to travel leftwards goes round, and a
@@ -434,7 +439,27 @@ public sealed partial class NodeEditor
             new Point(header.Right, header.Bottom - 0.5));
     }
 
+    /// <summary>
+    /// Draws a module, faintly where it is switched off.
+    /// </summary>
+    /// <remarks>
+    /// Faint rather than differently colored: what the module is has not changed,
+    /// and its category's accent is how the canvas is read at a glance. The strike
+    /// through the name is what says it outright, since a patch drawn small is
+    /// faint everywhere.
+    /// </remarks>
     private void DrawNode(DrawingContext context, NodeInstance node, NodeDef def)
+    {
+        if (!node.Off)
+        {
+            DrawModule(context, node, def);
+            return;
+        }
+
+        using (context.PushOpacity(OffOpacity)) DrawModule(context, node, def);
+    }
+
+    private void DrawModule(DrawingContext context, NodeInstance node, NodeDef def)
     {
         var bounds = NodeGeometry.Bounds(node, def);
         var isSelected = selection.Contains(node.Id);
@@ -457,9 +482,16 @@ public sealed partial class NodeEditor
 
         DrawHeaderRelief(context, header);
 
-        context.DrawText(
-            Text(node.Title(def), HeaderSize, HeaderTextBrush, HeaderWidth(bounds, def), true),
-            new Point(bounds.X + 9, bounds.Y + 5));
+        var title = Text(node.Title(def), HeaderSize, HeaderTextBrush, HeaderWidth(bounds, def), true);
+        var titleAt = new Point(bounds.X + 9, bounds.Y + 5);
+
+        context.DrawText(title, titleAt);
+
+        if (node.Off)
+            context.DrawLine(
+                OffStrike,
+                new Point(titleAt.X, titleAt.Y + title.Height / 2),
+                new Point(titleAt.X + title.Width, titleAt.Y + title.Height / 2));
 
         if (Tagged(def)) DrawTag(context, bounds);
 

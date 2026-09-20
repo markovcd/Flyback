@@ -535,7 +535,11 @@ public sealed partial class MainWindow
         foreach (var touched in editor.SelectedGroups)
             groups.Append($"{touched.Id:N}{(touched.Collapsed ? 'c' : 'o')}");
 
-        return $"{node.Id:N}{new string(patched)}{groups}{linked}";
+        // Switching a module off is not a selection change either, and the button
+        // that does it says which way it goes.
+        var switched = editor.SelectionIsOff ? '-' : '+';
+
+        return $"{node.Id:N}{new string(patched)}{groups}{linked}{switched}";
     }
 
     /// <summary>
@@ -656,6 +660,30 @@ public sealed partial class MainWindow
         }
 
         var actions = ActionRow();
+
+        // First in the row, because it is the one action here that changes what
+        // the patch does rather than how it is drawn. It counts the selection the
+        // way delete does, and leaves the Output out of the count for the same
+        // reason: that one is never switched off.
+        var switching = editor.Switchable;
+
+        if (switching > 0)
+        {
+            var back = editor.SelectionIsOff;
+
+            Act(
+                "switch-modules",
+                Glyphs.Switch(),
+                (switching > 1, back) switch
+                {
+                    (true, true) => $"Switch these {switching} modules back on  (Ctrl+B)",
+                    (true, false) => $"Switch these {switching} modules off  (Ctrl+B)",
+                    (false, true) => "Switch this module back on  (Ctrl+B)",
+                    (false, false) =>
+                        "Switch this module off, passing what is patched into it straight through  (Ctrl+B)",
+                },
+                editor.SwitchSelected);
+        }
 
         // Grouping comes ahead of deleting, so the destructive button is at the far
         // end of the row rather than the first thing under the pointer.

@@ -39,7 +39,7 @@ a decision.
 
 ## 2. Statements
 
-Eight forms, and no others.
+Nine forms, and no others.
 
 ```
 # a comment, to end of line
@@ -50,6 +50,7 @@ def NAME(a, b) = body            # a subgraph with holes in it
 pipeline |> out.color            # a terminated pipeline: the only side effect
 NAME.port = 0.6                  # set a knob
 NAME.port <- pipeline            # back-wire, which is how a cycle is closed
+off NAME                         # switch a module off, so it is a wire
 group "Name" { statements }      # draw these together on the canvas
 ```
 
@@ -297,7 +298,38 @@ scan(someField, radius: 0, x: across, y: down) |> out.left
 
 ---
 
-## 7. What a module carries that is not a knob
+## 7. `off`
+
+A module can be switched off, and one that is off is a wire
+([0117](adr/0117-a-module-switched-off-is-a-wire.md)):
+
+```
+let wash = grain |> vignette(amount: 0.6)
+
+off wash
+```
+
+The statement takes one name and no port — a socket cannot be switched off,
+only the module it is on. It reads the same way the canvas's Ctrl+B does:
+whatever is patched into the module comes out of it unchanged, and where
+nothing is patched in, nothing comes out and the socket at the far end rests on
+its own knob, exactly as it would with the wire pulled out. So an effect in a
+chain passes its signal on and a voice with nothing feeding it falls silent,
+which is one rule and not two.
+
+Which socket is handed on is the pipe rule of section 3 read backwards: the one
+called `in`, failing that the one the output is named after, failing that the
+first. Only a wire is handed on, never a normal — `off` on an oscillator is
+silence and not the clock.
+
+`out` cannot be switched off. Write `out.volume = 0`.
+
+A printing writes `off` for every module that is off, and gives each one a
+binding to be said by, including the `x` and `t` of section 5.
+
+---
+
+## 8. What a module carries that is not a knob
 
 A sequencer's notes, a quantiser's scale, a player's file
 ([0061](adr/0061-what-a-module-carries-is-kept-in-one-store.md)) go in a
@@ -411,7 +443,7 @@ and writing `~` there is a patch that plays the same and is not the same patch.
 
 ---
 
-## 8. `def` — a subgraph with holes in it
+## 9. `def` — a subgraph with holes in it
 
 ```
 def voice(note, bands, hue, rate, phase) =
@@ -447,7 +479,7 @@ four calls here.
 
 ---
 
-## 9. Groups
+## 10. Groups
 
 A group is a box drawn round nodes on the canvas. The compiler is never told
 about it, so it is presentation — but the largest preset in the box uses ten of
@@ -467,7 +499,7 @@ and which of its sockets are exposed, stay editor state and do not survive a
 
 ---
 
-## 10. Cycles
+## 11. Cycles
 
 A pipeline cannot express a loop, so the back-wire does:
 
@@ -493,7 +525,7 @@ other ([0074](adr/0074-a-cell-is-a-plane-on-the-video-path.md)). To read
 
 ---
 
-## 11. If you know TidalCycles
+## 12. If you know TidalCycles
 
 The step notation is borrowed, so expectations will arrive with it. Four
 differences, in the order they will bite.
@@ -522,7 +554,7 @@ each paying only for what it reaches
 
 ---
 
-## 12. What `print` loses
+## 13. What `print` loses
 
 | Survives | Lost |
 |---|---|
@@ -531,6 +563,7 @@ each paying only for what it reaches
 | a plugin's declared fields, as named arguments | **groups**, entirely — name, membership and all |
 | `let` names, as the node's own label | comments, formatting, and every `def`, expanded |
 | plugin requirements, recomputed on write | — |
+| which modules are switched off | — |
 
 A knob or a field still holding what a fresh module holds is written nowhere. A
 printing is for reading, and every module restating its whole shape would bury
@@ -574,7 +607,7 @@ beside the first.
 
 ---
 
-## 13. Grammar
+## 14. Grammar
 
 ```ebnf
 patch      = { statement } ;
@@ -586,6 +619,7 @@ statement  = comment
            | pipeline
            | selector "=" expr
            | selector "<-" pipeline
+           | "off" ident
            | "group" string "{" { statement } "}" ;
 
 body       = pipeline | "{" { statement } result "}" ;
@@ -613,7 +647,7 @@ note       = ("A".."G") [ "#" | "b" ] [ "-" ] digit ;
 duration   = number ( "us" | "ms" | "s" ) ;
 ```
 
-`step` is the mini-notation of section 7. A `name` with dots is a type id
+`step` is the mini-notation of section 8. A `name` with dots is a type id
 written in full; a `selector` with a dot is a binding and one of its ports.
 `outputs` is the same choice made on a module with no name. The grammar lets
 one follow another and the binder refuses the second, since one output has no
@@ -621,7 +655,7 @@ outputs of its own.
 
 ---
 
-## 14. Every shipped preset, transliterated
+## 15. Every shipped preset, transliterated
 
 This is the proof that the syntax reaches the catalogue. Each patch is read out
 of [`Presets.cs`](../src/Flyback.Core/Graph/Presets.cs) and written here. Where
@@ -1389,7 +1423,7 @@ in the patch is written in full, and one that stands alone can be rounded.
 
 ---
 
-## 15. What writing these out changed
+## 16. What writing these out changed
 
 The transliteration was done before any parser existed, precisely so that the
 holes would show up while the design was still cheap to move. Four did.

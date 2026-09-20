@@ -107,6 +107,11 @@ public sealed class Parser(IReadOnlyList<Token> tokens, List<LanguageIssue> issu
         // still starts a pipeline the way any other name does.
         if (AtWord("keyboard") && Ahead().Kind == TokenKind.Identifier) return Keyboard(line, column);
 
+        // The same rule again: what follows a module being switched off is the
+        // name of one, and anything else here is a pipeline that begins with a
+        // binding somebody happened to call 'off'.
+        if (AtWord("off") && Ahead().Kind == TokenKind.Identifier) return Off(line, column);
+
         // A knob or a back-wire begins the same way an ordinary pipeline does,
         // so which it is only shows up at the operator after the name.
         if (Current.Kind == TokenKind.Identifier
@@ -366,6 +371,20 @@ public sealed class Parser(IReadOnlyList<Token> tokens, List<LanguageIssue> issu
         at++;
 
         return new KeyboardStatement(block, line, column);
+    }
+
+    /// <summary>
+    /// <c>off name</c>. One name and no port: a socket cannot be switched off,
+    /// only the module it is on.
+    /// </summary>
+    private Statement Off(int line, int column)
+    {
+        at++;
+
+        var target = new NameExpr(Current.Text, null, Current.Line, Current.Column);
+        at++;
+
+        return new OffStatement(target, line, column);
     }
 
     private void SkipToBreakOrBrace()

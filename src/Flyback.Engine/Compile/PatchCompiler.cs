@@ -186,6 +186,10 @@ public static class PatchCompiler
         {
             foreach (var node in patch.Nodes)
             {
+                // A Scope switched off is a module out of the patch, and its tap
+                // is the one thing nothing else would have declined for it: the
+                // whole of its use is a side effect, so it is never reached.
+                if (node.Off) continue;
                 if (catalog.Get(node.TypeId) is not { TapsSignal: true } def) continue;
                 if (def.Inputs.Count == 0) continue;
 
@@ -297,10 +301,10 @@ public static class PatchCompiler
                 // NodeDef.AsksForItsInputs.
                 if (def.AsksForItsInputs) continue;
 
-                var incoming = patch.IncomingTo(node.Id, port);
+                var incoming = Live(patch.IncomingTo(node.Id, port), out var delayed);
                 Slot slotValue;
 
-                if (incoming is not null && backwards.Contains(incoming))
+                if (incoming is not null && delayed)
                 {
                     // The wire that closes a loop, which is read rather than
                     // followed: what it carries is the evaluation before, and
@@ -505,10 +509,10 @@ public static class PatchCompiler
         Slot ResolveInput(NodeInstance node, NodeDef def, int port)
         {
             var spec = def.Inputs[port];
-            var incoming = patch.IncomingTo(node.Id, port);
+            var incoming = Live(patch.IncomingTo(node.Id, port), out var delayed);
             Slot slotValue;
 
-            if (incoming is not null && backwards.Contains(incoming))
+            if (incoming is not null && delayed)
                 slotValue = Delayed(incoming);
             else if (incoming is not null && patch.Find(incoming.SourceNode) is { } source)
                 slotValue = Pick(Resolve(source), incoming.SourcePort);
@@ -583,6 +587,43 @@ public static class PatchCompiler
             loops.Enqueue((wire, slot));
 
             return emitter.PlaneRead(slot);
+        }
+
+        // The wire that is actually feeding a socket. One arriving from a module
+        // that is off carries instead whatever is patched into that module — see
+        // NodeDef.Through — however many off modules it passes through, and
+        // nothing at all where the chain ends at a socket with no wire on it. A
+        // socket handed nothing does what an unpatched socket does, so turning a
+        // module off is pulling its wires out rather than sending silence down
+        // them.
+        Connection? Live(Connection? wire, out bool delayed)
+        {
+            HashSet<Guid>? through = null;
+
+            delayed = false;
+
+            while (wire is not null)
+            {
+                // A wire anywhere along the chain that runs backwards makes the
+                // whole of it carry the evaluation before: a module switched off
+                // inside a loop is still inside it, and the cut is where it was.
+                delayed |= backwards.Contains(wire);
+
+                if (patch.Find(wire.SourceNode) is not { Off: true } off) return wire;
+                if (catalog.Get(off.TypeId) is not { } def) return null;
+
+                // A ring of modules that are all off has nothing at the end to
+                // arrive at, and the walk has to stop somewhere.
+                if (!(through ??= []).Add(off.Id)) return null;
+
+                var port = def.Through(wire.SourcePort);
+
+                wire = port < 0 ? null : patch.IncomingTo(off.Id, port);
+            }
+
+            // Nothing arrives, so there is nothing for the cut to have delayed.
+            delayed = false;
+            return null;
         }
 
         // Which of a node's results a wire carries, and silence for a socket that

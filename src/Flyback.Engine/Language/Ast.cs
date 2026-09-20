@@ -130,6 +130,12 @@ public sealed record BackWireStatement(NameExpr Target, Expr Value, int Line, in
     : Statement(Line, Column);
 
 /// <summary>
+/// <c>off name</c>, which takes a module out of the signal path: what is
+/// patched into it comes out of it, and nothing does where nothing is.
+/// </summary>
+public sealed record OffStatement(NameExpr Target, int Line, int Column) : Statement(Line, Column);
+
+/// <summary>
 /// <c>keyboard scale [ C D E G A ]</c> or <c>keyboard piano</c>: how the
 /// computer keyboard is laid out, which belongs to the patch rather than to any
 /// module in it.

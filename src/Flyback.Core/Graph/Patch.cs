@@ -74,6 +74,18 @@ public sealed class NodeInstance
     public string? Name { get; set; }
 
     /// <summary>
+    /// Whether this module is switched off: out of the signal path, handing on
+    /// whatever is patched into it and nothing where nothing is.
+    /// </summary>
+    /// <remarks>
+    /// Which socket it hands on is <see cref="NodeDef.Through"/>'s answer.
+    /// Written into the file only while it is true, so a patch with nothing off
+    /// reads as it always did.
+    /// </remarks>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public bool Off { get; set; }
+
+    /// <summary>
     /// Per-input constants, used for any input with nothing wired into it.
     /// Length always matches the definition's input count.
     /// </summary>
@@ -168,6 +180,7 @@ public sealed class NodeInstance
         Id = id ?? Id,
         TypeId = TypeId,
         Name = Name,
+        Off = Off,
         X = X + dx,
         Y = Y + dy,
         InputValues = [.. InputValues],

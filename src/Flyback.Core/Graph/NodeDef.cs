@@ -212,6 +212,39 @@ public sealed record NodeDef(
     public T? Extra<T>() where T : NodeExtra => Extras.OfType<T>().FirstOrDefault();
 
     /// <summary>
+    /// Which input an instance that is switched off hands on at
+    /// <paramref name="output"/>, or -1 for a module with no inputs to hand on.
+    /// </summary>
+    /// <remarks>
+    /// The socket called <c>in</c>, which is the signal input wherever it sits
+    /// in the list; failing that the one the output is named after, so a
+    /// geometry module off hands its <c>x</c> to its <c>x</c>; failing that the
+    /// first, the catalogue being written with the principal socket at the top.
+    /// The same ladder the language's pipe rule climbs, for the same reason: it
+    /// is which socket a signal passing through this module travels on.
+    /// <para>
+    /// Only a wire on that socket is handed on. A normal is not — every
+    /// oscillator's <c>in</c> is normalled to Time, and a voice switched off has
+    /// to fall silent rather than pass a ramp down the patch.
+    /// </para>
+    /// </remarks>
+    public int Through(int output)
+    {
+        if (Inputs.Count == 0) return -1;
+
+        for (var port = 0; port < Inputs.Count; port++)
+            if (string.Equals(Inputs[port].Name, "in", StringComparison.OrdinalIgnoreCase))
+                return port;
+
+        if (output >= 0 && output < Outputs.Count)
+            for (var port = 0; port < Inputs.Count; port++)
+                if (string.Equals(Inputs[port].Name, Outputs[output].Name, StringComparison.OrdinalIgnoreCase))
+                    return port;
+
+        return 0;
+    }
+
+    /// <summary>
     /// Whether an instance of this module watches what the speakers played — in
     /// other words, whether its first input is a root of the audio program as
     /// well as a socket.

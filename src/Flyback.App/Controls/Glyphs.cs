@@ -105,6 +105,15 @@ internal static class Glyphs
         + "M4,4.5 L4.8,13.5 L11.2,13.5 L12,4.5 "
         + "M6.5,7 L6.5,11 M9.5,7 L9.5,11");
 
+    /// <summary>
+    /// The power mark: a ring broken at the top with a stroke standing in the
+    /// gap, which is what a switch looks like on every piece of equipment a
+    /// patch would be played through.
+    /// </summary>
+    public static Control Switch() => Stroked(
+        "M4.8,4.6 A5,5 0 1 0 11.2,4.6 "
+        + "M8,2 L8,7.5");
+
     /// <summary>A bookmark — a group put by, to be added again later.</summary>
     public static Control Keep() => Stroked("M4.5,2.5 L11.5,2.5 L11.5,13.5 L8,10.5 L4.5,13.5 Z");
 

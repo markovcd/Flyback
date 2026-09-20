@@ -66,6 +66,16 @@ public sealed partial class NodeEditor : Control
         1,
         new DashStyle([4, 3], 0));
 
+    /// <summary>
+    /// How strongly a module that is switched off is drawn, and its wires with
+    /// it. Faint enough to read as out of the patch at any zoom, and not so faint
+    /// that what it is wired to cannot be followed.
+    /// </summary>
+    private const double OffOpacity = 0.38;
+
+    /// <summary>The line through the name of a module that is switched off.</summary>
+    private static readonly IPen OffStrike = new Pen(HeaderTextBrush, 1.5);
+
     private static readonly IBrush MarqueeFill = new SolidColorBrush(Colors.Attention, 0.08);
     private static readonly IPen PortOutline = new Pen(new SolidColorBrush(Colors.Outline), 1.2);
 

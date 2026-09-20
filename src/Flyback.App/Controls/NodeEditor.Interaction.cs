@@ -707,6 +707,14 @@ public sealed partial class NodeEditor
                     e.Handled = true;
                     return;
 
+                // Bypass, on the letter a desk uses for it. One key both ways,
+                // unlike group and open above: a module is off or it is on, and
+                // there is nothing in between for a second key to mean.
+                case Key.B when Editable:
+                    SwitchSelected();
+                    e.Handled = true;
+                    return;
+
                 // Under Control with the rest of them, rather than on a bare
                 // letter of its own. Every bare letter belongs to the instrument
                 // now — see MainWindow's key handling — and a gesture that

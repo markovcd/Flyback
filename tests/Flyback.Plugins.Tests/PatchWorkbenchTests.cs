@@ -565,6 +565,39 @@ public class PatchWorkbenchTests
     }
 
     [Fact]
+    public async Task Switching_a_module_off_leaves_it_in_the_patch()
+    {
+        var bench = await Lit();
+
+        var off = await Call(bench, "switch_module", """{"handle":"knob1"}""");
+
+        off.Ok.ShouldBeTrue(off.Text);
+
+        var patch = bench.Snapshot();
+
+        patch.Nodes.Count.ShouldBe(2);
+        patch.Connections.ShouldHaveSingleItem();
+        patch.Nodes.Single(n => n.TypeId == "value").Off.ShouldBeTrue();
+
+        var on = await Call(bench, "switch_module", """{"handle":"knob1","off":false}""");
+
+        on.Ok.ShouldBeTrue(on.Text);
+        bench.Snapshot().Nodes.Single(n => n.TypeId == "value").Off.ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task The_Output_cannot_be_switched_off()
+    {
+        var bench = await Lit();
+
+        var refused = await Call(bench, "switch_module", """{"handle":"output1"}""");
+
+        refused.Ok.ShouldBeFalse();
+        refused.Text.ShouldContain("volume");
+        bench.Snapshot().Output.Off.ShouldBeFalse();
+    }
+
+    [Fact]
     public async Task Reset_puts_back_the_patch_that_was_open()
     {
         var bench = Bench();
@@ -1762,6 +1795,7 @@ public class PatchWorkbenchTests
     [InlineData("connect", """{"from":"nothing","to":"nothing","to_port":"x"}""")]
     [InlineData("disconnect", """{"handle":"nothing","port":"x"}""")]
     [InlineData("remove_module", "{}")]
+    [InlineData("switch_module", """{"handle":"nothing"}""")]
     [InlineData("propose", "{}")]
     [InlineData("nonsense", "{}")]
     public async Task Anything_it_cannot_do_is_refused_rather_than_thrown(string tool, string arguments)

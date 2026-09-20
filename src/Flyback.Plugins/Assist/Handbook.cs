@@ -91,6 +91,11 @@ internal static class Handbook
           pass and `a(3,8)` is three sounding steps spread over eight. `E5%0` is
           that note silenced, which is not the same as a rest.
         - **A file is a string**: `sample("kick.wav")`, `picture("photo.png")`.
+        - **`off name`**, on a line of its own, switches a module off: what is
+          patched into it comes straight out of it, and nothing does where
+          nothing is patched in. `switch_module` says the same thing to a patch
+          that already exists, and a patch you are shown that has one keeps it
+          only if you write the line again.
         - **`keyboard scale [ C D E G A ]`**, on a line of its own, lays the
           computer keyboard out for whoever plays a MIDI In: the notes side by
           side along each row. Once a patch; say nothing for a piano.

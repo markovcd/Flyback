@@ -443,9 +443,10 @@ public static class PatchPrinter
 
         // One Coordinates and one Time become the bare words the language has
         // for them. A second of either is an ordinary module, since only one can
-        // be what 'x' means.
-        var coord = patch.Nodes.FirstOrDefault(n => n.TypeId == NodeCatalog.CoordTypeId)?.Id ?? Guid.Empty;
-        var clock = patch.Nodes.FirstOrDefault(n => n.TypeId == NodeCatalog.TimeTypeId)?.Id ?? Guid.Empty;
+        // be what 'x' means — and so is one that is switched off, which has to
+        // keep a name of its own to be said as off.
+        var coord = patch.Nodes.FirstOrDefault(n => n.TypeId == NodeCatalog.CoordTypeId && !n.Off)?.Id ?? Guid.Empty;
+        var clock = patch.Nodes.FirstOrDefault(n => n.TypeId == NodeCatalog.TimeTypeId && !n.Off)?.Id ?? Guid.Empty;
 
         // Where a wire runs backwards into a module, that module is written as a
         // name and the wire as a back-wire onto it — the one statement in the
@@ -464,6 +465,7 @@ public static class PatchPrinter
                 || looped.Contains(node.Id)
                 || leaving.Count != 1
                 || leaving.Any(c => c.SourcePort != 0)
+                || node.Off
                 || Usable(node.Name);
 
             if (must) bound.Add(node.Id);
@@ -534,7 +536,7 @@ public static class PatchPrinter
         if (name.Any(c => !char.IsAsciiLetterOrDigit(c) && c != '_')) return false;
         if (Lexer.Note(name) is not null) return false;
 
-        return name is not ("let" or "def" or "group" or "out" or "in" or "x" or "y" or "t" or "radius" or "angle" or "aspect");
+        return name is not ("let" or "def" or "group" or "off" or "out" or "in" or "x" or "y" or "t" or "radius" or "angle" or "aspect");
     }
 
     /// <summary>
@@ -604,6 +606,7 @@ public static class PatchPrinter
             }
 
             Cycles();
+            Switched();
 
             var ordered = Ordered();
 
@@ -684,6 +687,22 @@ public static class PatchPrinter
                 var name = def.Inputs[wire.TargetPort].Name.Replace(' ', '_');
 
                 statements.Add(new Part($"{plan.Names[wire.TargetNode]}.{name} <- {from.Text}", from.Calls));
+            }
+        }
+
+        /// <summary>
+        /// The modules that are switched off, each said after the binding that
+        /// gives it a name — see <see cref="Prepare"/>, which is where one is
+        /// made sure of having one.
+        /// </summary>
+        private void Switched()
+        {
+            foreach (var node in patch.Nodes)
+            {
+                if (!node.Off || NodeCatalog.IsSink(node.TypeId)) continue;
+                if (!plan.Names.TryGetValue(node.Id, out var name)) continue;
+
+                statements.Add(Part.Of($"off {name}"));
             }
         }
 

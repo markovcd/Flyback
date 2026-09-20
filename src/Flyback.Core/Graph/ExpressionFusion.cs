@@ -116,9 +116,12 @@ public static class ExpressionFusion
                 : formulas[node.Id] = Formula.Read(FormulaExtra.Of(node), extra.Functions, out _);
 
         // An Expression with a wire into a socket its formula never reads is left
-        // alone: folding it would take the wire away.
+        // alone: folding it would take the wire away. So is a module that is
+        // switched off, which is a wire rather than arithmetic (ADR-0117) —
+        // folding across one would fold away the fact that it is off.
         bool Candidate(NodeInstance node) =>
-            node.InputValues.All(float.IsFinite)
+            !node.Off
+            && node.InputValues.All(float.IsFinite)
             && (node.TypeId == NodeCatalog.ExpressionTypeId
                 ? FormulaOf(node) is not null
                     && Reads(node, expression.Inputs.Count) is var reads

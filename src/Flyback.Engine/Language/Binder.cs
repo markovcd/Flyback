@@ -208,6 +208,7 @@ public sealed class Binder
         BackWireStatement back => Aimed(back.Target) + " <-",
         GroupStatement group => "group " + group.Name,
         DefStatement def => "def " + def.Name,
+        OffStatement off => "off " + off.Target.Name,
         KeyboardStatement => "keyboard",
         PipelineStatement pipeline => Ending(pipeline.Value) ?? Anonymous(),
         _ => Anonymous(),
@@ -269,6 +270,10 @@ public sealed class Binder
 
             case KeyboardStatement keyboard:
                 Lay(keyboard);
+                break;
+
+            case OffStatement off:
+                Switch(off, scope);
                 break;
         }
     }
@@ -398,6 +403,38 @@ public sealed class Binder
         if (Bind(statement.Value, scope) is not { } value) return;
 
         Feed(value, 0, node.Id, port, statement.Line, statement.Column);
+    }
+
+    /// <summary>
+    /// Takes a module out of the signal path — see <see cref="NodeInstance.Off"/>.
+    /// </summary>
+    private void Switch(OffStatement statement, Scope scope)
+    {
+        var target = statement.Target;
+
+        if (target.Name == "out")
+        {
+            Complain(target.Line, target.Column,
+                "the Output cannot be switched off. Switch off what is patched into it, "
+                + "or write 'out.volume = 0'.");
+            return;
+        }
+
+        if (scope.Find(target.Name) is not { } value)
+        {
+            Complain(target.Line, target.Column, $"nothing here is called '{target.Name}'.");
+            return;
+        }
+
+        if (value is not Placed placed || patch.Find(placed.Id) is not { } node)
+        {
+            Complain(target.Line, target.Column,
+                $"'{target.Name}' is not a module, so there is nothing to switch off.");
+            return;
+        }
+
+        mentions.Add((new Site(target.Line, target.Column), node.Id));
+        node.Off = true;
     }
 
     private void Box(GroupStatement statement, Scope scope)

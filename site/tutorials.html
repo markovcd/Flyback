@@ -317,7 +317,9 @@ out.volume = 0.6</code></pre>
     <code>in</code> if the module has one, otherwise into the first socket the call did not name. Named
     arguments set knobs or take other wires. <code>x</code>, <code>y</code> and <code>t</code> are
     Coordinates and Time, and arithmetic such as <code>a * b</code> is an Expression, one block that computes
-    the whole sum.</p>
+    the whole sum. A line of <code>off slow</code> switches that module off, which is
+    <kbd>Ctrl</kbd>+<kbd>B</kbd> on the canvas: what is patched into it comes straight out of it, and nothing
+    does where nothing is patched in.</p>
 
     <ol class="steps">
       <li>Change <code>rings(freq: 3</code> to <code>rings(freq: 8</code>.</li>

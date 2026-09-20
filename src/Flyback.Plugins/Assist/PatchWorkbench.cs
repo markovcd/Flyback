@@ -685,6 +685,36 @@ public sealed partial class PatchWorkbench
             $"unwired {Handle(node)}.{def.Inputs[port].Name}, which is back on {resting}. {Issues()}");
     }
 
+    /// <summary>
+    /// Switches a module off, or back on — see <see cref="NodeInstance.Off"/>.
+    /// </summary>
+    private ToolOutcome SwitchModule(JsonElement arguments)
+    {
+        if (!Node(arguments, "handle", out var node, out var def, out var refusal))
+            return ToolOutcome.Refused(refusal);
+
+        if (NodeCatalog.IsSink(node.TypeId))
+        {
+            return ToolOutcome.Refused(
+                "the Output cannot be switched off. Set its 'volume' to 0, or switch off what is wired into it.");
+        }
+
+        var off = Flag(arguments, "off", fallback: true);
+
+        node.Off = off;
+        Edits++;
+
+        if (!off) return Fine($"switched {Handle(node)} back on. {Issues()}");
+
+        var through = def.Through(0);
+
+        var handing = through < 0 || working.IncomingTo(node.Id, through) is null
+            ? "Nothing is patched into it, so it hands on nothing and whatever it fed is back on its own knob."
+            : $"It hands on what is patched into its '{def.Inputs[through].Name}'.";
+
+        return Fine($"switched {Handle(node)} off. {handing} {Issues()}");
+    }
+
     private ToolOutcome RemoveModule(JsonElement arguments)
     {
         if (!Node(arguments, "handle", out var node, out _, out var refusal))
@@ -1243,6 +1273,22 @@ public sealed partial class PatchWorkbench
                 }
                 """),
 
+            Does("switch_module", SwitchModule,
+                "Switches a module off, or back on with 'off' false. A module that is off is a "
+                + "wire: what is patched into it comes straight out of it, and where nothing is "
+                + "patched in nothing comes out and whatever it fed is back on its own knob. Use "
+                + "it to hear a patch without one part of it, which deleting the module would "
+                + "lose the settings of.",
+                """
+                {
+                  "properties": {
+                    "handle": { "type": "string" },
+                    "off": { "type": "boolean", "description": "False switches it back on. Defaults to true." }
+                  },
+                  "required": ["handle"]
+                }
+                """),
+
             Does("remove_module", RemoveModule,
                 "Deletes a module and every wire attached to it.",
                 """
@@ -1611,6 +1657,17 @@ public sealed partial class PatchWorkbench
         index = -1;
         return false;
     }
+
+    /// <summary>
+    /// A true-or-false argument, and <paramref name="fallback"/> where it was not
+    /// sent — a switch nobody threw is one the caller had no opinion about.
+    /// </summary>
+    private static bool Flag(JsonElement arguments, string field, bool fallback) =>
+        arguments.ValueKind == JsonValueKind.Object
+        && arguments.TryGetProperty(field, out var found)
+        && found.ValueKind is JsonValueKind.True or JsonValueKind.False
+            ? found.GetBoolean()
+            : fallback;
 
     private static bool Text(JsonElement arguments, string field, out string value)
     {

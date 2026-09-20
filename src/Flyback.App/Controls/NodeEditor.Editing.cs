@@ -336,6 +336,49 @@ public sealed partial class NodeEditor
     }
 
     /// <summary>
+    /// How many of the selected modules can be switched off: everything but the
+    /// Output, which is where the patch ends and is always in the path.
+    /// </summary>
+    public int Switchable => SelectedNodes.Count(n => !NodeCatalog.IsSink(n.TypeId));
+
+    /// <summary>
+    /// Whether the next press would switch the selection back on, which it does
+    /// only for one that is entirely off.
+    /// </summary>
+    public bool SelectionIsOff =>
+        Switchable > 0 && SelectedNodes.Where(n => !NodeCatalog.IsSink(n.TypeId)).All(n => n.Off);
+
+    /// <summary>
+    /// Switches the selected modules off, or back on where every one of them is
+    /// already off — see <see cref="NodeInstance.Off"/>.
+    /// </summary>
+    /// <remarks>
+    /// One edit however many modules move, the way deleting is: one gesture asked
+    /// for all of them. A selection with anything still on goes off, so a press
+    /// never leaves it half and half.
+    /// </remarks>
+    public void SwitchSelected()
+    {
+        var switching = SelectedNodes.Where(n => !NodeCatalog.IsSink(n.TypeId)).ToArray();
+
+        if (switching.Length == 0) return;
+
+        var off = !SelectionIsOff;
+
+        foreach (var node in switching) node.Off = off;
+
+        NotifyPatchChanged();
+
+        var what = off ? "Switched off" : "Switched on";
+
+        Reported?.Invoke(
+            this,
+            switching.Length == 1
+                ? $"{what} one module."
+                : $"{what} {switching.Length} modules.");
+    }
+
+    /// <summary>
     /// Removes every selected module except the Output, which the graph refuses. A
     /// refused module is left selected, since losing the selection would take its
     /// settings panel away.
