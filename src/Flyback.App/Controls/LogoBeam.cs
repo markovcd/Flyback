@@ -16,9 +16,10 @@ namespace Flyback.App.Controls;
 /// part towards the corners, by as much as the glass bows.
 /// <para>
 /// The tube is light and nothing else: every one of its faults multiplies what is
-/// emitted, and the surface underneath is laid on afterwards untouched. So the
-/// box is the dialog's own color wherever the beam has not been, and a scan line
-/// darkens a glow rather than cutting a stripe out of the window.
+/// emitted, and the surface underneath is laid on afterwards untouched. So a scan
+/// line darkens a glow rather than cutting a stripe out of the window, and the
+/// glass is the dialog's own color wherever the beam has not been. Past the rim
+/// is the dark of the set around it.
 /// </para>
 /// </remarks>
 internal static class LogoBeam
@@ -46,6 +47,16 @@ internal static class LogoBeam
 
     /// <summary>How long the hum bar takes to cross the face, in seconds.</summary>
     private const double Roll = 4.7;
+
+    /// <summary>How far the glass reaches, measured on the face the rim is read on.</summary>
+    private const double Glass = 1.25;
+
+    /// <summary>
+    /// How much harder the rim bows than the picture, which is what rounds it:
+    /// the bow carries the corners furthest out, so they are what the glass cuts
+    /// off first.
+    /// </summary>
+    private const double Rim = 0.35;
 
     /// <summary>
     /// The patch. Picture only: it is opened from a dialog, where a sound nobody
@@ -146,6 +157,16 @@ internal static class LogoBeam
             (3, Colors.Panel.G / 255f),
             (4, Colors.Panel.B / 255f));
 
+        // The edge of the glass, and the dark of the set beyond it.
+        var onGlass = Formula(
+            b,
+            $"(1 - smoothstep({N(Glass - 0.04)}, {N(Glass)}, "
+            + $"abs(a) * (1 + {N(Rim)} * (a * a + b * b))))"
+            + $" * (1 - smoothstep({N(Glass - 0.04)}, {N(Glass)}, "
+            + $"abs(b) * (1 + {N(Rim)} * (a * a + b * b))))");
+
+        var set = b.Add("color.gain");
+
         // Everything is drawn before the Trails rather than over it: what it
         // reads back is the frame, so a color laid on afterwards is added to its
         // own echo every frame until it is white.
@@ -212,7 +233,13 @@ internal static class LogoBeam
          .Wire(faceY, 0, face, 2)
 
          .Wire(face, 0, ground, 0)
-         .Wire(ground, 0, trail, 0)
+
+         .Wire(bowedX, 0, onGlass, 0)
+         .Wire(faceY, 0, onGlass, 1)
+         .Wire(ground, 0, set, 0)
+         .Wire(onGlass, 0, set, 1)
+
+         .Wire(set, 0, trail, 0)
          .Wire(trail, 0, output, NodeCatalog.OutputColorPort);
 
         return b.Build();

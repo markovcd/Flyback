@@ -66,13 +66,28 @@ public class LogoBeamTests
     }
 
     /// <summary>
-    /// Where the mark is not, the frame is the surface the dialog is drawn on:
-    /// the box has to read as part of the window rather than a black tile cut
+    /// Where the mark is not, the glass is the surface the dialog is drawn on:
+    /// the tube has to read as part of the window rather than a black tile cut
     /// into it.
     /// </summary>
     [Fact]
-    public void It_grounds_the_frame_on_the_dialog_s_own_surface()
+    public void It_grounds_the_glass_on_the_dialog_s_own_surface()
     {
-        Pixel(Drawn(200), 220, 220).ShouldBe((Colors.Panel.B, Colors.Panel.G, Colors.Panel.R));
+        Pixel(Drawn(200), 170, 200).ShouldBe((Colors.Panel.B, Colors.Panel.G, Colors.Panel.R));
+    }
+
+    /// <summary>
+    /// The corners are off the glass, which is the set around it and darker than
+    /// anything the tube does. Read in the very corner, well past the rim's own
+    /// soft edge.
+    /// </summary>
+    [Fact]
+    public void It_leaves_the_corners_to_the_set_around_the_glass()
+    {
+        var (blue, green, red) = Pixel(Drawn(200), 250, 6);
+
+        blue.ShouldBeLessThan(Colors.Panel.B);
+        green.ShouldBeLessThan(Colors.Panel.G);
+        red.ShouldBeLessThan(Colors.Panel.R);
     }
 }
