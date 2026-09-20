@@ -90,6 +90,44 @@ public class ProsePolicyTests : IDisposable
     }
 
     [Fact]
+    public void Within_the_budget_the_presets_are_described()
+    {
+        var briefing = new PatchWorkbench(Shipped, new Patch()).Briefing;
+
+        briefing.ShouldContain("Plasma | Two sine fields crossed");
+        briefing.ShouldNotContain("Some presets below have no description line");
+    }
+
+    /// <summary>
+    /// Every preset stays in the list by name, and a description that has no room is
+    /// left out and said so, the way a module's is.
+    /// </summary>
+    [Fact]
+    public void Past_the_budget_the_presets_lose_their_descriptions_and_say_so()
+    {
+        var bench = Bench(new ProsePolicy(1, new HashSet<string>()));
+
+        bench.Briefing.ShouldContain("Some presets below have no description line");
+        bench.Briefing.ShouldContain(Environment.NewLine + "Plasma" + Environment.NewLine);
+        bench.Briefing.ShouldNotContain("Two sine fields crossed");
+        bench.Tools.Select(t => t.Name).ShouldContain("describe_preset");
+    }
+
+    [Fact]
+    public async Task A_preset_left_out_of_the_list_is_described_when_it_is_read()
+    {
+        var bench = Bench(new ProsePolicy(1, new HashSet<string>()));
+
+        var read = await bench.InvokeAsync(
+            "describe_preset",
+            System.Text.Json.JsonDocument.Parse("""{"name":"Plasma"}""").RootElement,
+            CancellationToken.None);
+
+        read.Ok.ShouldBeTrue(read.Text);
+        read.Text.ShouldContain("Two sine fields crossed");
+    }
+
+    [Fact]
     public void Past_the_budget_the_briefing_stays_inside_it_and_says_what_is_missing()
     {
         var bench = Bench(Tight);

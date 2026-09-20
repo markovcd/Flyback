@@ -35,6 +35,7 @@ public sealed class AssistantPanel : UserControl
     private static readonly IBrush Live = new SolidColorBrush(Colors.Feedback);
 
     private readonly PluginCatalog plugins;
+    private readonly Func<IReadOnlyList<PatchPreset>>? presets;
     private readonly Func<Patch> current;
 
     /// <summary>
@@ -483,6 +484,11 @@ public sealed class AssistantPanel : UserControl
     /// Told which provider a message went to, and nothing else. Null is nobody
     /// listening, which is every test.
     /// </param>
+    /// <param name="presets">
+    /// The presets a conversation may read for ideas, asked for as each one starts so
+    /// that one saved since the last is in it. Null is the ones the plugins offer,
+    /// with none of somebody's own.
+    /// </param>
     public AssistantPanel(
         PluginCatalog plugins,
         Func<Patch> current,
@@ -492,8 +498,10 @@ public sealed class AssistantPanel : UserControl
         string? settingsPath = null,
         ISampleLibrary? samples = null,
         IImageLibrary? pictures = null,
-        Action<string>? asked = null)
+        Action<string>? asked = null,
+        Func<IReadOnlyList<PatchPreset>>? presets = null)
     {
+        this.presets = presets;
         this.asked = asked;
         this.settingsPath = settingsPath;
         settings = saved ?? AssistantSettings.Load(settingsPath);
@@ -1570,7 +1578,7 @@ public sealed class AssistantPanel : UserControl
         run?.Dispose();
         run = new AssistantRun(
             with, config, plugins.Modules, current(), settings.TurnLimit,
-            samples: samples, pictures: pictures, resuming: resuming, prose: Policy());
+            samples: samples, pictures: pictures, resuming: resuming, prose: Policy(), presets: presets?.Invoke() ?? plugins.Presets);
         runConfig = config;
         runAssistant = with;
 

@@ -37,6 +37,9 @@ public sealed partial class PatchWorkbench
     private readonly IImageLibrary? pictures;
     private readonly WorkbenchLimits limits;
     private readonly string startingPoint;
+
+    /// <summary>The presets a model may read: everything but the blank ones, which have nothing in them to learn from.</summary>
+    private readonly IReadOnlyList<PatchPreset> presets;
     private readonly Dictionary<string, NodeInstance> byHandle = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<Guid, string> handleOf = [];
 
@@ -66,6 +69,11 @@ public sealed partial class PatchWorkbench
     /// How much of the catalogue's prose the briefing carries, and <see cref="ProsePolicy.Default"/>
     /// where nobody said.
     /// </param>
+    /// <param name="presets">
+    /// The presets a model may read for ideas, and the ones that ship where nobody
+    /// said. Offered with <c>describe_preset</c>, and none offers neither the tool
+    /// nor the list.
+    /// </param>
     public PatchWorkbench(
         ModuleCatalog modules,
         Patch startingPoint,
@@ -74,11 +82,13 @@ public sealed partial class PatchWorkbench
         WorkbenchLimits? limits = null,
         ISampleLibrary? samples = null,
         IImageLibrary? pictures = null,
-        ProsePolicy? prose = null)
+        ProsePolicy? prose = null,
+        IReadOnlyList<PatchPreset>? presets = null)
     {
         this.modules = modules;
         this.samples = samples;
         this.pictures = pictures;
+        this.presets = [.. (presets ?? Presets.All).Where(preset => preset.Kind != PresetKind.Blank)];
         this.limits = limits ?? new WorkbenchLimits();
 
         // Kept as text so Reset cannot hand back something an earlier edit
@@ -87,13 +97,17 @@ public sealed partial class PatchWorkbench
 
         Adopt(PatchIO.Read(this.startingPoint, modules).Patch);
 
-        Undescribed =(prose ?? ProsePolicy.Default).Undescribed(modules);
-        Briefing = Handbook.Render(modules, Undescribed, hearing);
+        var policy = prose ?? ProsePolicy.Default;
+
+        Undescribed = policy.Undescribed(modules);
+
+        var briefing = Handbook.Render(modules, Undescribed, hearing);
+        Briefing = briefing + Handbook.Presets(this.presets, policy.Budget - briefing.Length);
 
         // Only where there is something the briefing did not say. Offered on every
         // run they would be two more tools to weigh on every turn, for looking up
         // what is already in front of the model.
-        var vocabulary = BuildTools(vision, hearing, lookups: Undescribed.Count > 0);
+        var vocabulary = BuildTools(vision, hearing, lookups: Undescribed.Count > 0, readsPresets: this.presets.Count > 0);
 
         Tools = [.. vocabulary.Where(tool => tool.Offered).Select(tool => tool.Spec)];
         bodies = vocabulary.ToDictionary(tool => tool.Spec.Name, tool => tool.Run, StringComparer.Ordinal);
@@ -856,6 +870,34 @@ public sealed partial class PatchWorkbench
         return Fine(text.ToString());
     }
 
+    private ToolOutcome DescribePreset(JsonElement arguments)
+    {
+        if (!Text(arguments, "name", out var name))
+            return ToolOutcome.Refused("'name' is required and must be a string.");
+
+        if (presets.FirstOrDefault(p => string.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase)) is not { } preset)
+        {
+            return ToolOutcome.Refused(
+                $"there is no preset called '{name}'. The presets are: {string.Join(", ", presets.Select(p => p.Name))}.");
+        }
+
+        Patch patch;
+
+        try
+        {
+            patch = preset.Build(modules);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            return ToolOutcome.Refused($"'{preset.Name}' cannot be built here: {ex.Message}");
+        }
+
+        return Fine(
+            $"{preset.Name}: {preset.Description}{Environment.NewLine}"
+            + PatchPrinter.Print(patch, modules) + Environment.NewLine
+            + $"{patch.Nodes.Count} modules, {patch.Connections.Count} wires.");
+    }
+
     private ToolOutcome FindModules(JsonElement arguments)
     {
         if (!Text(arguments, "query", out var query))
@@ -964,7 +1006,7 @@ public sealed partial class PatchWorkbench
         bool offered = true) =>
         new(new PatchTool(name, description, schema), run, offered);
 
-    private IReadOnlyList<Tool> BuildTools(bool vision, Listener hearing, bool lookups)
+    private IReadOnlyList<Tool> BuildTools(bool vision, Listener hearing, bool lookups, bool readsPresets)
     {
         List<Tool> tools =
         [
@@ -1283,6 +1325,14 @@ public sealed partial class PatchWorkbench
                 { "properties": { "query": { "type": "string" } }, "required": ["query"] }
                 """,
                 offered: lookups),
+
+            Does("describe_preset", DescribePreset,
+                "Reads one of the presets in the list at the end of the briefing, written in the "
+                + "Flyback language, to see how it is built. It does not touch the patch on the bench.",
+                """
+                { "properties": { "name": { "type": "string" } }, "required": ["name"] }
+                """,
+                offered: readsPresets),
         ];
 
         return tools;

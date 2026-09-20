@@ -144,3 +144,4 @@ context, decision, consequences.
 | [0072](0072-a-conversation-is-saved-with-the-patch-it-is-about.md) | A conversation is saved with the patch it is about *(user-directed)* |
 | [0098](0098-the-briefing-has-a-budget-and-a-list-that-outranks-it.md) | The briefing has a budget, and a list that outranks it *(user-directed; its default raised to 100,000 by [0101](0101-a-one-knob-maximizer-is-a-module-of-its-own.md))* |
 | [0113](0113-the-workbench-does-not-limit-how-large-a-patch-is.md) | The workbench does not limit how large a patch is *(user-directed)* |
+| [0115](0115-the-assistant-may-read-the-presets.md) | The assistant may read the presets *(user-directed)* |

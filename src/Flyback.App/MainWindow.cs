@@ -675,7 +675,8 @@ public sealed partial class MainWindow : Window
             (message, detail) => Report(message, detail),
             samples: Sounds,
             pictures: Pictures,
-            asked: usage.Assistant)
+            asked: usage.Assistant,
+            presets: () => OrderedPresets())
         {
             IsVisible = false,
         };

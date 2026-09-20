@@ -19,6 +19,10 @@ namespace Flyback.Plugins.Assist;
 /// modules the briefing leaves out without a conversation to ask, and the briefing
 /// stays the same bytes from one request to the next (see <see cref="Handbook"/>).
 /// </para>
+/// <para>
+/// The list of presets has room of its own, set aside before any of this: every
+/// preset is named, and a description is kept while it fits in what is left.
+/// </para>
 /// </remarks>
 /// <param name="Budget">The most characters the whole briefing may run to.</param>
 /// <param name="Priority">Type ids whose descriptions are never left out.</param>

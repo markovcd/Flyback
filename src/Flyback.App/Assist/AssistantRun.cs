@@ -58,6 +58,7 @@ public sealed class AssistantRun : IDisposable
     /// <param name="pictures"></param>
     /// <param name="resuming">A conversation saved with that patch, to carry on rather than start afresh.</param>
     /// <param name="prose">How much of the catalogue's prose the briefing carries.</param>
+    /// <param name="presets">The presets the model may read for ideas, and the shipped ones where nobody said.</param>
     public AssistantRun(
         IPatchAssistant assistant,
         AssistantConfig config,
@@ -68,7 +69,8 @@ public sealed class AssistantRun : IDisposable
         ISampleLibrary? samples = null,
         IImageLibrary? pictures = null,
         SavedConversation? resuming = null,
-        ProsePolicy? prose = null)
+        ProsePolicy? prose = null,
+        IReadOnlyList<PatchPreset>? presets = null)
     {
         Before = startingPoint;
         MaxTurns = maxTurns;
@@ -86,10 +88,10 @@ public sealed class AssistantRun : IDisposable
         // played the sound.
         var senses = assistant.Senses(config.Values);
 
-        var restored = resuming is null ? null : Restored(resuming, modules, senses, limits, samples, pictures, prose);
+        var restored = resuming is null ? null : Restored(resuming, modules, senses, limits, samples, pictures, prose, presets);
 
         Workbench = restored ?? new PatchWorkbench(
-            modules, startingPoint, senses.Vision, senses.Hearing, limits, samples, pictures, prose);
+            modules, startingPoint, senses.Vision, senses.Hearing, limits, samples, pictures, prose, presets);
 
         if (restored is null)
         {
@@ -119,7 +121,8 @@ public sealed class AssistantRun : IDisposable
         WorkbenchLimits? limits,
         ISampleLibrary? samples,
         IImageLibrary? pictures,
-        ProsePolicy? prose)
+        ProsePolicy? prose,
+        IReadOnlyList<PatchPreset>? presets)
     {
         try
         {
@@ -131,7 +134,8 @@ public sealed class AssistantRun : IDisposable
                 limits,
                 samples,
                 pictures,
-                prose);
+                prose,
+                presets);
 
             bench.Restore(saved.Bench);
 

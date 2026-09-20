@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Flyback.Core.Graph;
+using Flyback.Core.Language;
 using Flyback.Plugins.Assist;
 using Shouldly;
 using Xunit;
@@ -184,6 +185,97 @@ public class PatchWorkbenchTests
         briefing.ShouldContain("Change what is there and leave the rest alone.");
         briefing.ShouldContain("Say what you did.");
         briefing.ShouldContain("Keep the sum out of clipping.");
+    }
+
+    // --- presets ------------------------------------------------------------
+
+    private static PatchWorkbench WithPresets(params PatchPreset[] presets) =>
+        new(NodeCatalog.BuiltIn, new Patch(), presets: presets);
+
+    [Fact]
+    public void The_briefing_lists_the_presets_but_not_the_blank_ones()
+    {
+        var briefing = Bench().Briefing;
+
+        briefing.ShouldContain("# Presets");
+        briefing.ShouldContain("Plasma | Two sine fields crossed");
+        briefing.ShouldNotContain("Empty | The Output");
+    }
+
+    [Fact]
+    public async Task A_preset_can_be_read_in_the_language_it_is_written_in()
+    {
+        var bench = Bench();
+
+        var described = await Call(bench, "describe_preset", """{"name":"plasma"}""");
+        described.Ok.ShouldBeTrue(described.Text);
+
+        // The line naming it and the line counting it are prose about the patch.
+        var lines = described.Text.Split(Environment.NewLine);
+        lines[0].ShouldStartWith("Plasma: ");
+        lines[^1].ShouldContain(" modules, ");
+
+        PatchLanguage.Build(string.Join('\n', lines[1..^1]), NodeCatalog.BuiltIn).Ok.ShouldBeTrue();
+    }
+
+    [Fact]
+    public async Task Reading_a_preset_leaves_the_patch_on_the_bench_alone()
+    {
+        var bench = Bench();
+        var before = bench.Snapshot().Nodes.Count;
+
+        (await Call(bench, "describe_preset", """{"name":"Plasma"}""")).Ok.ShouldBeTrue();
+
+        bench.Snapshot().Nodes.Count.ShouldBe(before);
+        bench.Edits.ShouldBe(0);
+    }
+
+    [Fact]
+    public async Task A_preset_that_is_not_there_is_refused_with_the_ones_that_are()
+    {
+        var refused = await Call(Bench(), "describe_preset", """{"name":"nonesuch"}""");
+
+        refused.Ok.ShouldBeFalse();
+        refused.Text.ShouldContain("Plasma");
+    }
+
+    [Fact]
+    public async Task A_preset_that_cannot_be_built_here_is_said_rather_than_thrown()
+    {
+        var bench = WithPresets(new PatchPreset("Broken", _ => throw new InvalidOperationException("a plugin is missing")));
+
+        var refused = await Call(bench, "describe_preset", """{"name":"Broken"}""");
+
+        refused.Ok.ShouldBeFalse();
+        refused.Text.ShouldContain("cannot be built here");
+        refused.Text.ShouldContain("a plugin is missing");
+    }
+
+    /// <summary>
+    /// Whoever saved a preset has no description to give it, and it is offered and
+    /// read like any other.
+    /// </summary>
+    [Fact]
+    public async Task A_preset_somebody_saved_is_listed_and_can_be_read()
+    {
+        var mine = new PatchPreset("My tone", modules => PatchLanguage.Build("sine(freq: 220) |> out.left", modules).Patch);
+        var bench = WithPresets(mine);
+
+        bench.Briefing.ShouldContain(Environment.NewLine + "My tone" + Environment.NewLine);
+
+        var described = await Call(bench, "describe_preset", """{"name":"My tone"}""");
+        described.Ok.ShouldBeTrue(described.Text);
+        described.Text.ShouldContain("sine");
+    }
+
+    [Fact]
+    public void With_no_presets_there_is_neither_a_list_nor_a_tool()
+    {
+        var bench = WithPresets();
+
+        bench.Briefing.ShouldNotContain("# Presets");
+        bench.Tools.Select(t => t.Name).ShouldNotContain("describe_preset");
+        Bench().Tools.Select(t => t.Name).ShouldContain("describe_preset");
     }
 
     [Fact]

@@ -8,7 +8,7 @@
 [0065](0065-a-text-language-that-parses-to-a-patch.md) gave the assistant
 `write_patch` because the largest preset could not be built one call at a time.
 `WorkbenchLimits` then capped a patch at 120 modules in total, and Whole band has
-232. `add_module` refused on it and so did `write_patch`, so the one patch that
+183. `add_module` refused on it and so did `write_patch`, so the one patch that
 motivated the language could not be extended at all.
 
 Asked to add a part to Whole band, a model that could not add modules rebuilt the

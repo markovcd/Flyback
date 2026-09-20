@@ -437,6 +437,90 @@ internal static class Handbook
         """;
 
     /// <summary>
+    /// What the list of presets is given out of the budget before the modules divide
+    /// the rest, whether or not there are any. Fixed rather than measured, so that
+    /// which modules lose their descriptions depends on the modules alone and the
+    /// canvas can mark them with no conversation to ask; the shipped presets take
+    /// 2,220 of it and a name is all a saved one costs.
+    /// </summary>
+    internal const int PresetsReserve = 4_000;
+
+    private const string PresetsPreamble = """
+        # Presets
+
+        Whole patches that are already built, the ones this instrument ships and
+        whatever the person has saved. `describe_preset` gives one in the
+        language, to read how it works — how a filter is made out of what there
+        is, how a picture is tied to a tune. Take the idea and build what was
+        asked for; do not hand a preset back as the answer.
+
+        """;
+
+    private const string PresetsUnexplained = """
+        Some presets below have no description line. They have one all the same,
+        left out to keep this list short: `describe_preset` gives it.
+
+        """;
+
+    /// <summary>
+    /// The presets a model may read, one line each, or nothing where there are none.
+    /// </summary>
+    /// <remarks>
+    /// Held to the same budget as the modules, and after them: every name is listed,
+    /// and a description is kept only while there is room left once the modules have
+    /// theirs. A description left out is said so, and <c>describe_preset</c> gives it.
+    /// </remarks>
+    /// <param name="presets"></param>
+    /// <param name="room">
+    /// What is left of the briefing's budget after everything before this, which may
+    /// be nothing at all.
+    /// </param>
+    internal static string Presets(IReadOnlyList<PatchPreset> presets, int room)
+    {
+        if (presets.Count == 0) return string.Empty;
+
+        room -= PresetsPreamble.Length + presets.Sum(preset => preset.Name.Length + Environment.NewLine.Length);
+
+        // The note saying a description was left out costs room of its own, so it is
+        // paid for as soon as it is known that one will be — which is exactly when
+        // the descriptions do not all fit.
+        var left = presets.Sum(Cost) > room;
+
+        if (left) room -= PresetsUnexplained.Length;
+
+        var kept = new bool[presets.Count];
+
+        for (var i = 0; i < presets.Count; i++)
+        {
+            var cost = Cost(presets[i]);
+
+            if (cost == 0 || cost > room) continue;
+
+            kept[i] = true;
+            room -= cost;
+        }
+
+        var text = new StringBuilder(PresetsPreamble);
+
+        if (left) text.Append(PresetsUnexplained);
+
+        for (var i = 0; i < presets.Count; i++)
+        {
+            text.Append(presets[i].Name);
+
+            if (kept[i]) text.Append(" | ").Append(presets[i].Description);
+
+            text.AppendLine();
+        }
+
+        return text.ToString();
+
+        // What a line adds for a description: the separator and the text.
+        static int Cost(PatchPreset preset) =>
+            preset.Description.Length == 0 ? 0 : 3 + preset.Description.Length;
+    }
+
+    /// <summary>
     /// Said only when some module's description was left out, since otherwise
     /// a module with none would read as a module with nothing to say.
     /// </summary>
@@ -506,7 +590,7 @@ internal static class Handbook
         var fixedCost = new[] { Listener.None, Listener.Another, Listener.Itself }
             .Max(hearing => Render(modules, everyone, hearing).Length);
 
-        var room = policy.Budget - fixedCost;
+        var room = policy.Budget - PresetsReserve - fixedCost;
 
         if (described.Sum(Cost) <= room + Unexplained.Length) return new HashSet<string>(StringComparer.Ordinal);
 
