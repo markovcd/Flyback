@@ -70,21 +70,34 @@ feedback.trails
 
 # From the plugins Flyback ships with: the voice of nearly every track, and the
 # shapes most pictures start from.
-flyback.voice.filter
+flyback.voice.bell
 flyback.voice.decay
 flyback.voice.drive
 flyback.voice.drum
 flyback.voice.euclid
 flyback.voice.fade
+flyback.voice.filter
 flyback.voice.hiss
+flyback.voice.osc
+flyback.voice.random
+flyback.voice.slew
+flyback.voice.stroke
+flyback.voice.wander
 
+flyback.effects.chorus
 flyback.effects.delay
 flyback.effects.echo
 flyback.effects.reverb
 
-flyback.picture.circle
 flyback.picture.box
+flyback.picture.cells
+flyback.picture.circle
 flyback.picture.combine
 flyback.picture.fill
+flyback.picture.fractal
+flyback.picture.grade
 flyback.picture.layer
 flyback.picture.palette
+flyback.picture.polygon
+flyback.picture.posterise
+flyback.picture.star

@@ -21,7 +21,9 @@ public class ProsePolicyTests : IDisposable
         if (Directory.Exists(folder)) Directory.Delete(folder, recursive: true);
     }
 
-    private static readonly ModuleCatalog Shipped = PluginHost.Load().Modules;
+    private static readonly PluginCatalog Everything = PluginHost.Load();
+
+    private static ModuleCatalog Shipped => Everything.Modules;
 
     /// <summary>
     /// Room enough for the built-ins without their descriptions and a few thousand
@@ -52,6 +54,26 @@ public class ProsePolicyTests : IDisposable
     {
         foreach (var id in PriorityModules.Parse(PriorityModules.Shipped))
             Shipped.Get(id).ShouldNotBeNull($"the priority list names '{id}', which no shipped module is");
+    }
+
+    /// <summary>
+    /// A module five or more of the shipped presets use is common enough that the
+    /// assistant is told what it is whatever the budget, so the list keeps up with
+    /// the presets rather than with the catalogue it was written against.
+    /// </summary>
+    [Fact]
+    public void Every_module_the_presets_lean_on_is_on_the_shipped_list()
+    {
+        var list = PriorityModules.Parse(PriorityModules.Shipped);
+
+        var uses = Everything.Presets
+            .SelectMany(preset => preset.Build(Shipped).Nodes.Select(node => node.TypeId).Distinct(StringComparer.Ordinal))
+            .GroupBy(id => id, StringComparer.Ordinal)
+            .Where(module => module.Count() >= 5)
+            .Where(module => Shipped.Get(module.Key) is { Description.Length: > 0 } def && !ExpressionFusion.Retired(def));
+
+        foreach (var module in uses)
+            list.ShouldContain(module.Key, $"{module.Count()} presets use '{module.Key}' and the priority list leaves it out");
     }
 
     [Fact]
