@@ -4,7 +4,6 @@
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
     <OutputType>Exe</OutputType>
-    <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
     <!--
       Overrides the root Directory.Build.props. Reqnroll resolves its default
       feature language ("en-us") through CultureInfo, which throws outright under
@@ -22,7 +21,7 @@
   <ItemGroup>
     <PackageReference Include="Reqnroll.xunit.v3" Version="3.3.4" />
     <PackageReference Include="Shouldly" Version="4.3.0" />
-    <PackageReference Include="xunit.v3" Version="3.2.2" />
+    <PackageReference Include="xunit.v3" Version="4.0.1" />
   </ItemGroup>
 
 </Project>

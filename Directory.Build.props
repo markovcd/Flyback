@@ -59,6 +59,16 @@
       marked *REMOVED*. A release moves what is unshipped into what is shipped.
     -->
     <PluginContractVersion>1.2.0</PluginContractVersion>
+
+    <!--
+      Verify.XunitV3 is MIT, but the Verify package under it ships an Open
+      Source Maintenance Fee agreement and refuses to build until one of its
+      exemptions is claimed. Flyback is MIT and earns nothing, which is the
+      one below. The date is the last month it covers; the build says so again
+      when it runs out.
+    -->
+    <Verify_SponsorshipExemption>OpenSource</Verify_SponsorshipExemption>
+    <Verify_SponsorshipExemptionUntil>2027-09</Verify_SponsorshipExemptionUntil>
   </PropertyGroup>
 
   <!--

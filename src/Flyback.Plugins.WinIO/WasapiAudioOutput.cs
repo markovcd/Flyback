@@ -35,6 +35,9 @@ public sealed class WasapiAudioOutput : IAudioOutput
 
     public bool IsSupported => OperatingSystem.IsWindows();
 
+    // The guard is written out at each call rather than shared, because the
+    // platform analyser reads it there and cannot see through IsSupported.
+
     /// <summary>
     /// One question: which output plays. The list is what is plugged in and enabled
     /// right now, read afresh each time the form is drawn.
@@ -48,7 +51,7 @@ public sealed class WasapiAudioOutput : IAudioOutput
     /// </remarks>
     public IReadOnlyList<SettingField> Form(SettingValues values)
     {
-        if (!IsSupported) return [];
+        if (!OperatingSystem.IsWindows()) return [];
 
         var endpoints = WasapiAudioDevice.Endpoints();
         var chosen = values.Text(DeviceKey, SystemDefault);
@@ -71,6 +74,9 @@ public sealed class WasapiAudioOutput : IAudioOutput
 
     public IAudioDevice Create(AudioFormat format, SettingValues settings)
     {
+        if (!OperatingSystem.IsWindows())
+            throw new PlatformNotSupportedException("WASAPI is only available on Windows.");
+
         var device = settings.Text(DeviceKey, SystemDefault);
 
         return new WasapiAudioDevice(format, device == SystemDefault ? null : device);

@@ -77,15 +77,11 @@ RUN --mount=type=cache,target=/root/.nuget/packages \
 # The gate. Every test in the solution — the engine's, the shell's headless UI
 # ones, the plugins' — and the build stops here if any of them does.
 #
-# The runner's own console output names the assembly that failed and the count,
-# and under BuildKit's plain progress not the tests — those are only in the log
-# file it points at, which is thrown away with the layer. So a failure prints
-# every such log before it fails the step. They are UTF-16, hence the tr.
+# --solution rather than a bare path: global.json runs `dotnet test` on
+# Microsoft.Testing.Platform, which names what it is given. It prints each
+# failing test to the console, so there is nothing to fish out of a log.
 RUN --mount=type=cache,target=/root/.nuget/packages \
-    dotnet test Flyback.slnx -c ${CONFIGURATION} --no-build \
- || { status=$?; \
-      find tests -path '*/TestResults/*.log' -exec sh -c 'tr -d "\000" < "$1"' _ {} \; ; \
-      exit $status; }
+    dotnet test --solution Flyback.slnx -c ${CONFIGURATION} --no-build
 
 # One publish per identifier, each restoring its own runtime pack. Self-contained
 # and single-file are the project's own doing rather than flags here — see

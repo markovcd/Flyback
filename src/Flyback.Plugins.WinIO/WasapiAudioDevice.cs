@@ -1,7 +1,7 @@
+using System.Runtime.Versioning;
 using Flyback.Plugins.Audio;
 using Flyback.Plugins.Settings;
 using NAudio.CoreAudioApi;
-using NAudio.CoreAudioApi.Interfaces;
 using NAudio.Wave;
 
 namespace Flyback.Plugins.WinIO;
@@ -14,9 +14,10 @@ namespace Flyback.Plugins.WinIO;
 /// <param name="endpoint">
 /// The render endpoint's id, or null for whatever Windows is playing through.
 /// </param>
+[SupportedOSPlatform("windows")]
 public sealed class WasapiAudioDevice(AudioFormat format, string? endpoint = null) : IAudioDevice
 {
-    private WasapiOut? activeOutput;
+    private WasapiPlayer? activeOutput;
 
     public int SampleRate { get; } = format.SampleRate;
 
@@ -111,7 +112,12 @@ public sealed class WasapiAudioDevice(AudioFormat format, string? endpoint = nul
             device = enumerator.GetDefaultAudioEndpoint(DataFlow.Render, Role.Console);
         }
 
-        var output = new WasapiOut(device, AudioClientShareMode.Shared, true, format.LatencyMilliseconds);
+        var output = new WasapiPlayerBuilder()
+            .WithDevice(device)
+            .WithSharedMode()
+            .WithEventSync()
+            .WithLatency(format.LatencyMilliseconds)
+            .Build();
 
         output.Init(new CallbackSampleProvider(
             WaveFormat.CreateIeeeFloatWaveFormat(SampleRate, format.Channels),
@@ -166,26 +172,36 @@ public sealed class WasapiAudioDevice(AudioFormat format, string? endpoint = nul
     /// default is what plays, and the enumerator is kept with it, since that is what
     /// the registration belongs to.
     /// </summary>
-    private sealed class DefaultFollower : IMMNotificationClient, IDisposable
+    private sealed class DefaultFollower : IDisposable
     {
-        private readonly MMDeviceEnumerator enumerator = new();
+        private readonly MMDeviceEnumerator enumerator;
+        private readonly MMDeviceNotificationClient client;
         private readonly Action changed;
 
-        private DefaultFollower(Action changed) => this.changed = changed;
+        private DefaultFollower(MMDeviceEnumerator enumerator, MMDeviceNotificationClient client, Action changed)
+        {
+            this.enumerator = enumerator;
+            this.client = client;
+            this.changed = changed;
+
+            client.DefaultDeviceChanged += OnDefaultDeviceChanged;
+        }
 
         /// <summary>A follower, or null where Windows will not say — the sound still plays, it just stays put.</summary>
         public static DefaultFollower? Watch(Action changed)
         {
-            var follower = new DefaultFollower(changed);
+            var enumerator = new MMDeviceEnumerator();
 
             try
             {
-                follower.enumerator.RegisterEndpointNotificationCallback(follower);
-                return follower;
+                // Raised on the Windows audio worker thread rather than marshalled
+                // to whichever thread turned the sound on, which may be the shell's.
+                // The handler only queues, so it never blocks that thread.
+                return new DefaultFollower(enumerator, enumerator.CreateNotificationClient(useSynchronizationContext: false), changed);
             }
             catch
             {
-                follower.enumerator.Dispose();
+                enumerator.Dispose();
                 return null;
             }
         }
@@ -194,30 +210,15 @@ public sealed class WasapiAudioDevice(AudioFormat format, string? endpoint = nul
         /// Once per change: Windows reports the console, multimedia and communications
         /// roles separately, and the console role is the one a plain output plays through.
         /// </summary>
-        public void OnDefaultDeviceChanged(DataFlow flow, Role role, string defaultDeviceId)
+        private void OnDefaultDeviceChanged(object? sender, DefaultDeviceChangedEventArgs change)
         {
-            if (flow == DataFlow.Render && role == Role.Console) changed();
+            if (change.Flow == DataFlow.Render && change.Role == Role.Console) changed();
         }
-
-        public void OnDeviceStateChanged(string deviceId, DeviceState newState) { }
-
-        public void OnDeviceAdded(string pwstrDeviceId) { }
-
-        public void OnDeviceRemoved(string deviceId) { }
-
-        public void OnPropertyValueChanged(string pwstrDeviceId, PropertyKey key) { }
 
         public void Dispose()
         {
-            try
-            {
-                enumerator.UnregisterEndpointNotificationCallback(this);
-            }
-            catch
-            {
-                // Nothing to undo if Windows has already let it go.
-            }
-
+            client.DefaultDeviceChanged -= OnDefaultDeviceChanged;
+            client.Dispose();
             enumerator.Dispose();
         }
     }
@@ -246,18 +247,18 @@ public sealed class WasapiAudioDevice(AudioFormat format, string? endpoint = nul
     }
 
     /// <summary>
-    /// Hands NAudio's pull-model read straight to the callback. Slicing the
-    /// array NAudio already owns keeps this allocation-free.
+    /// Hands NAudio's pull-model read straight to the callback. The buffer NAudio
+    /// already owns is written in place, so this is allocation-free.
     /// </summary>
     private sealed class CallbackSampleProvider(WaveFormat format, int channels, AudioCallback fill) : ISampleProvider
     {
         public WaveFormat WaveFormat => format;
 
-        public int Read(float[] buffer, int offset, int count)
+        public int Read(Span<float> buffer)
         {
             // Whole frames only; a frame must never be split across calls.
-            count -= count % channels;
-            fill(buffer.AsSpan(offset, count));
+            var count = buffer.Length - buffer.Length % channels;
+            fill(buffer[..count]);
             return count;
         }
     }

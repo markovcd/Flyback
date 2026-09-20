@@ -46,8 +46,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- Sound only. The MIDI half calls winmm, which Windows has always had. -->
-    <PackageReference Include="NAudio" Version="2.3.0" />
+    <!--
+      Sound only, and only WASAPI: the NAudio metapackage leaves the Windows
+      backends out of a target framework that does not name Windows. The MIDI
+      half calls winmm, which Windows has always had.
+    -->
+    <PackageReference Include="NAudio.Wasapi" Version="3.1.0" />
   </ItemGroup>
 
 </Project>

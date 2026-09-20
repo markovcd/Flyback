@@ -4,11 +4,6 @@
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
     <OutputType>Exe</OutputType>
-    <!--
-      Same runner arrangement as the other test projects: xunit.v3's in-process
-      runner on Microsoft.Testing.Platform, and no Microsoft.NET.Test.Sdk.
-    -->
-    <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
   </PropertyGroup>
 
   <!--
@@ -24,6 +19,11 @@
 
   <ItemGroup>
     <PackageReference Include="Shouldly" Version="4.3.0" />
+    <!--
+      Held at 3.x: Avalonia.Headless.XUnit is compiled against xunit.v3 3.2.2's
+      extensibility core, and its discoverer throws MissingMethodException on
+      4.x. Moves when Avalonia ships a build against it.
+    -->
     <PackageReference Include="xunit.v3" Version="3.2.2" />
   </ItemGroup>
 
@@ -35,11 +35,11 @@
     boxes in the step list rendered empty.
   -->
   <ItemGroup>
-    <PackageReference Include="Avalonia.Headless" Version="12.1.1" />
-    <PackageReference Include="Avalonia.Headless.XUnit" Version="12.1.1" />
-    <PackageReference Include="Avalonia.Skia" Version="12.1.1" />
-    <PackageReference Include="Avalonia.Fonts.Inter" Version="12.1.1" />
-    <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.1" />
+    <PackageReference Include="Avalonia.Headless" Version="12.1.2" />
+    <PackageReference Include="Avalonia.Headless.XUnit" Version="12.1.2" />
+    <PackageReference Include="Avalonia.Skia" Version="12.1.2" />
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="12.1.2" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.2" />
   </ItemGroup>
 
 </Project>
