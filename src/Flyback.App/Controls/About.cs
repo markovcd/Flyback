@@ -71,12 +71,7 @@ internal static class About
     {
         var heading = new Grid { ColumnDefinitions = new ColumnDefinitions("64,*") };
 
-        var mark = new LogoMark
-        {
-            Width = 56,
-            Height = 56,
-            VerticalAlignment = VerticalAlignment.Top,
-        };
+        var mark = Mark();
 
         var titles = new StackPanel { Spacing = 2, Margin = new Thickness(12, 0, 0, 0) };
 
@@ -111,6 +106,70 @@ internal static class About
         page.Children.Add(new TextBlock { Text = pluginReport, FontSize = Text.Body, TextWrapping = TextWrapping.Wrap });
 
         return page;
+    }
+
+    /// <summary>
+    /// The mark, and what it does for somebody who keeps clicking it: on the
+    /// seventh it stops being a drawing and becomes the patch it is a picture
+    /// of, until it is clicked again or the window closes.
+    /// </summary>
+    /// <remarks>
+    /// Drawn at twice its size and scaled down, so the beam has an edge on a
+    /// display that would otherwise show it one pixel wide.
+    /// </remarks>
+    private static Control Mark()
+    {
+        const int side = 56;
+        const int clicks = 7;
+
+        var drawn = new LogoMark();
+        var played = new Image { IsVisible = false };
+
+        var mark = new Panel
+        {
+            Width = side,
+            Height = side,
+            VerticalAlignment = VerticalAlignment.Top,
+
+            // Neither a bare Control nor an empty Panel is hit-testable, and the
+            // clicks have to land on something.
+            Background = Brushes.Transparent,
+            Children = { drawn, played },
+        };
+
+        var counted = 0;
+        PresetMotion? motion = null;
+
+        mark.PointerPressed += (_, _) =>
+        {
+            if (motion is not null)
+            {
+                Stop();
+                return;
+            }
+
+            if (++counted < clicks) return;
+
+            counted = 0;
+            drawn.IsVisible = false;
+            played.IsVisible = true;
+            motion = PresetMotion.Play(LogoBeam.Patch(), played, clock: null, side * 2, side * 2);
+        };
+
+        // The frames are drawn on a thread of their own, which nothing else here
+        // would ever stop.
+        mark.DetachedFromVisualTree += (_, _) => Stop();
+
+        return mark;
+
+        void Stop()
+        {
+            motion?.Dispose();
+            motion = null;
+            counted = 0;
+            played.IsVisible = false;
+            drawn.IsVisible = true;
+        }
     }
 
     /// <summary>

@@ -35,15 +35,30 @@ internal sealed class PresetMotion : IDisposable
     /// <summary>Whether a frame has been put on the tile, and the still has to be put back.</summary>
     private bool showing;
 
-    private PresetMotion(Image picture) => this.picture = picture;
+    private readonly int width;
+    private readonly int height;
+
+    private PresetMotion(Image picture, int width, int height)
+    {
+        this.picture = picture;
+        this.width = width;
+        this.height = height;
+    }
 
     /// <summary>
     /// Plays <paramref name="patch"/> on <paramref name="picture"/> until disposed.
     /// A patch with no picture, or one that will not compile, leaves the tile as it is.
     /// </summary>
-    public static PresetMotion Play(Patch patch, Image picture, Func<double>? clock)
+    /// <param name="width">How wide the frames are drawn, a tile's width by default.</param>
+    /// <param name="height">How tall they are drawn, which is what sets the aspect.</param>
+    public static PresetMotion Play(
+        Patch patch,
+        Image picture,
+        Func<double>? clock,
+        int width = PresetThumbnails.Width,
+        int height = PresetThumbnails.Height)
     {
-        var motion = new PresetMotion(picture);
+        var motion = new PresetMotion(picture, width, height);
 
         _ = Task.Run(() => motion.RunAsync(patch, clock ?? WallClock(), motion.stop.Token));
 
@@ -74,9 +89,7 @@ internal sealed class PresetMotion : IDisposable
             return;
         }
 
-        const int width = PresetThumbnails.Width;
-        const int height = PresetThumbnails.Height;
-        const int stride = width * 4;
+        var stride = width * 4;
 
         var renderer = new SynthRenderer();
         var pixels = new byte[stride * height];
@@ -121,7 +134,7 @@ internal sealed class PresetMotion : IDisposable
 
         using (var locked = bitmap.Lock())
         {
-            for (var y = 0; y < PresetThumbnails.Height; y++)
+            for (var y = 0; y < height; y++)
                 Marshal.Copy(pixels, y * stride, locked.Address + y * locked.RowBytes, stride);
         }
 

@@ -1,5 +1,9 @@
+using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
+using Avalonia.Input;
+using Avalonia.Threading;
 using Flyback.App.Controls;
 using Flyback.Core;
 using Shouldly;
@@ -51,6 +55,42 @@ public class AboutTests : UiTest
         Words(window).ShouldContain(About.Website);
     }
 
+    /// <summary>Clicks the mark, wherever it has ended up in the window.</summary>
+    private static void Click(Window window, Point at, int times)
+    {
+        for (var click = 0; click < times; click++)
+        {
+            window.MouseDown(at, MouseButton.Left);
+            window.MouseUp(at, MouseButton.Left);
+        }
+
+        Settle(window);
+    }
+
+    /// <summary>The middle of the mark, which is where the clicks go.</summary>
+    private static Point Middle(Window window)
+    {
+        var mark = All<LogoMark>(window).Single();
+
+        return mark.TranslatePoint(mark.Bounds.Center - mark.Bounds.Position, window) ?? default;
+    }
+
+    /// <summary>Frames are drawn off the UI thread, so it has to be let go of for one to arrive.</summary>
+    private static bool Until(Func<bool> done, double seconds = 30)
+    {
+        var deadline = DateTime.UtcNow.AddSeconds(seconds);
+
+        while (!done() && DateTime.UtcNow < deadline)
+        {
+            Dispatcher.UIThread.RunJobs();
+            Thread.Sleep(5);
+        }
+
+        return done();
+    }
+
+    private static bool Playing(Window window) => All<Image>(window).Any(picture => picture.Source is not null);
+
     /// <summary>The mark is drawn rather than loaded, so it is a control like any other.</summary>
     [AvaloniaFact]
     public void It_shows_the_logo()
@@ -91,5 +131,41 @@ public class AboutTests : UiTest
         var window = Showing();
 
         Words(window).ShouldContain(SamplePluginReport);
+    }
+
+    /// <summary>
+    /// Seven clicks on the mark and it stops being a drawing: the patch it is a
+    /// picture of plays in its place. Six leave it exactly as it was, which is
+    /// what keeps it from going off under somebody double-clicking the dialog.
+    /// </summary>
+    [AvaloniaFact]
+    public void The_mark_comes_alive_on_the_seventh_click()
+    {
+        var window = Showing();
+        var at = Middle(window);
+
+        Click(window, at, 6);
+        All<LogoMark>(window).Single().IsVisible.ShouldBeTrue("six clicks are not seven");
+
+        Click(window, at, 1);
+        All<LogoMark>(window).Single().IsVisible.ShouldBeFalse();
+
+        Until(() => Playing(window)).ShouldBeTrue("no frame was ever drawn");
+    }
+
+    /// <summary>And one more click puts the drawing back.</summary>
+    [AvaloniaFact]
+    public void Clicking_it_again_puts_the_drawing_back()
+    {
+        var window = Showing();
+        var at = Middle(window);
+
+        Click(window, at, 7);
+        Until(() => Playing(window)).ShouldBeTrue("no frame was ever drawn");
+
+        Click(window, at, 1);
+
+        All<LogoMark>(window).Single().IsVisible.ShouldBeTrue();
+        Playing(window).ShouldBeFalse("the frames should have stopped");
     }
 }
