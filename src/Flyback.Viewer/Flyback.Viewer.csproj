@@ -1,0 +1,51 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!--
+      A console subsystem program, for the reason the shell is one: started from a
+      terminal it inherits the terminal, so stderr is read by whoever typed the
+      command and the prompt waits. See Flyback.App.csproj.
+    -->
+    <OutputType>Exe</OutputType>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <AssemblyName>flyback-viewer</AssemblyName>
+    <RootNamespace>Flyback.Viewer</RootNamespace>
+    <ApplicationIcon>..\..\flyback.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <!--
+    Published into the shell's own folder beside flyback-cli, and self-contained
+    for the same reason: three front ends on one engine, one plugin host and one
+    runtime, held once.
+  -->
+  <PropertyGroup Condition="'$(RuntimeIdentifier)' != ''">
+    <SelfContained>true</SelfContained>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Flyback.Core\Flyback.Core.csproj" />
+    <ProjectReference Include="..\Flyback.Engine\Flyback.Engine.csproj" />
+    <ProjectReference Include="..\Flyback.Plugins\Flyback.Plugins.csproj" />
+    <ProjectReference Include="..\Flyback.Ui\Flyback.Ui.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="12.1.2" />
+    <PackageReference Include="Avalonia.Desktop" Version="12.1.2" />
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="12.1.2" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.2" />
+    <PackageReference Include="System.CommandLine" Version="2.0.12" />
+  </ItemGroup>
+
+  <!--
+    No PluginProject items, for the CLI's reason exactly: the target that lays the
+    plugin folder out clears it first, so a third program declaring them would
+    take the shell's sound backends away on its way past. The shell ships them,
+    and this program reads the folder beside it.
+  -->
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Flyback.App.Tests" />
+  </ItemGroup>
+
+</Project>

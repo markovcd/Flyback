@@ -1,3 +1,4 @@
+using Flyback.App.Capture;
 using Flyback.App.Audio;
 using Flyback.Core;
 using Flyback.Core.Compile;
@@ -491,5 +492,113 @@ public class AudioEngineTests
         using var engine = new AudioEngine(device);
 
         engine.PrepareAudition(new PatchBuilder(NodeCatalog.BuiltIn).Patch).ShouldBeNull();
+    }
+
+    private sealed class Tap : IAudioSink
+    {
+        public float[] Heard = [];
+
+        public void WriteAudio(ReadOnlySpan<float> interleaved) => Heard = interleaved.ToArray();
+    }
+
+    [Fact]
+    public void Full_gain_is_the_sound_exactly_as_it_was()
+    {
+        float[] Play(float? gain)
+        {
+            using var device = new LoopbackDevice();
+            using var engine = new AudioEngine(device);
+
+            engine.Update(Tone(220f));
+            if (gain is { } level) engine.Gain = level;
+            engine.Start();
+
+            return device.Pump();
+        }
+
+        Play(1f).ShouldBe(Play(null));
+    }
+
+    [Fact]
+    public void Zero_gain_is_silence_and_the_recording_still_hears_the_patch()
+    {
+        using var device = new LoopbackDevice();
+        using var engine = new AudioEngine(device);
+        var tap = new Tap();
+
+        engine.Update(Tone(220f));
+        engine.Gain = 0f;
+        engine.Capture = tap;
+        engine.Start();
+
+        Peak(device.Pump()).ShouldBe(0f);
+        Peak(tap.Heard).ShouldBeGreaterThan(0.1f);
+    }
+
+    [Fact]
+    public void A_level_between_turns_the_speakers_down_by_that_much()
+    {
+        using var device = new LoopbackDevice();
+        using var engine = new AudioEngine(device);
+        using var half = new LoopbackDevice();
+        using var reference = new AudioEngine(half);
+
+        engine.Update(Tone(220f));
+        engine.Gain = 0.5f;
+        engine.Start();
+
+        reference.Update(Tone(220f));
+        reference.Start();
+
+        Peak(device.Pump()).ShouldBe(Peak(half.Pump()) * 0.5f, tolerance: 1e-5f);
+    }
+
+    [Fact]
+    public void Seeking_a_stopped_engine_starts_the_sound_there()
+    {
+        using var device = new LoopbackDevice();
+        using var engine = new AudioEngine(device);
+
+        engine.Update(Tone(220f));
+        engine.SeekTo(12);
+        engine.Start();
+
+        device.Pump(GlobalConstants.SampleRate / 10);
+
+        engine.Time.ShouldBeGreaterThanOrEqualTo(12.0);
+        engine.Time.ShouldBeLessThan(12.5);
+    }
+
+    [Fact]
+    public void Seeking_a_running_engine_is_carried_out_by_the_next_buffer()
+    {
+        using var device = new LoopbackDevice();
+        using var engine = new AudioEngine(device);
+
+        engine.Update(Tone(220f));
+        engine.Start();
+        device.Pump(GlobalConstants.SampleRate);
+
+        engine.SeekTo(30);
+        device.Pump(GlobalConstants.SampleRate / 10);
+
+        engine.Time.ShouldBeGreaterThanOrEqualTo(30.0);
+        engine.Time.ShouldBeLessThan(30.5);
+    }
+
+    [Fact]
+    public void A_rewind_after_a_seek_takes_it_back()
+    {
+        using var device = new LoopbackDevice();
+        using var engine = new AudioEngine(device);
+
+        engine.Update(Tone(220f));
+        engine.Start();
+
+        engine.SeekTo(30);
+        engine.Rewind();
+        device.Pump(512);
+
+        engine.Time.ShouldBeLessThan(0.1);
     }
 }

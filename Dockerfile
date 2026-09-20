@@ -102,15 +102,16 @@ ARG VERSION
 # build for. Not --no-build: a build for another platform is a different build
 # from the one the tests just ran against.
 #
-# Two programs per platform, into one folder. The shell and the command line are
-# the same engine, the same plugin host and the same runtime behind two fronts,
-# so publishing them over each other leaves one copy of all of it: the second
-# publish rewrites the shared files with the same bytes and adds an executable,
-# its deps.json and its runtimeconfig.json. Two folders would be two runtimes.
+# Three programs per platform, into one folder. The shell, the command line and
+# the viewer are the same engine, the same plugin host and the same runtime
+# behind three fronts, so publishing them over each other leaves one copy of all
+# of it: each later publish rewrites the shared files with the same bytes and
+# adds an executable, its deps.json and its runtimeconfig.json. Three folders
+# would be three runtimes.
 #
 # The shell goes first, because on macOS its publish is what lays out the bundle
-# — and after that the command line goes *inside* the bundle, where the payload
-# it shares now lives.
+# — and after that the command line and the viewer go *inside* the bundle, where
+# the payload they share now lives.
 #
 # macOS goes one folder deeper and then loses that folder again. Publishing for
 # an osx identifier lays out Flyback.app *beside* the publish output, so the
@@ -132,6 +133,7 @@ RUN --mount=type=cache,target=/root/.nuget/packages \
         osx-*) rm -rf ${out}; out=/out/${rid}/Flyback.app/Contents/MacOS ;; \
       esac; \
       dotnet publish src/Flyback.Cli -c ${CONFIGURATION} -r ${rid} -o ${out} -p:Version=${VERSION}; \
+      dotnet publish src/Flyback.Viewer -c ${CONFIGURATION} -r ${rid} -o ${out} -p:Version=${VERSION}; \
     done
 
 # Nothing but the artifacts, so that `--output` writes the publish folders and

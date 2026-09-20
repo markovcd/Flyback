@@ -74,6 +74,24 @@ internal static class Glyphs
         + "M10.5,6 Q11.8,8 10.5,10 "
         + "M12.5,4 Q15,8 12.5,12");
 
+    /// <summary>The loudspeaker with its waves crossed out: the same cone, turned down.</summary>
+    public static Control Muted() => Stroked(
+        "M2.5,6 L5,6 L8.5,3 L8.5,13 L5,10 L2.5,10 Z "
+        + "M10.5,6 L14.5,10 M14.5,6 L10.5,10");
+
+    /// <summary>Two bars, filled — what stops a picture on its frame.</summary>
+    public static Control Pause() =>
+        Filled(Geometry.Parse("M4,3 L7,3 L7,13 L4,13 Z M9,3 L12,3 L12,13 L9,13 Z"));
+
+    /// <summary>A triangle pointing right, filled — what starts it again.</summary>
+    public static Control Play() => Filled(Geometry.Parse("M4.5,3 L13,8 L4.5,13 Z"));
+
+    /// <summary>Three dots in a row: the place a hidden toolbar is, waiting to be reached for.</summary>
+    public static Control Dots() => Filled(Geometry.Parse(
+        "M2,6.5 A1.5,1.5 0 1 1 2,9.5 A1.5,1.5 0 1 1 2,6.5 Z "
+        + "M6.5,6.5 A1.5,1.5 0 1 1 6.5,9.5 A1.5,1.5 0 1 1 6.5,6.5 Z "
+        + "M11,6.5 A1.5,1.5 0 1 1 11,9.5 A1.5,1.5 0 1 1 11,6.5 Z"));
+
     /// <summary>
     /// Two modules inside a frame — what grouping makes, in the canvas's own
     /// terms. Corners rather than a whole box, which at this size fills in.

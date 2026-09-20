@@ -43,6 +43,23 @@ public sealed class AudioEngine(IAudioDevice device) : IDisposable
     // One while a rewind is waiting for the callback to carry it out.
     private int rewindPending;
 
+    // Where a seek wants the cursor, as the bits of a double; NoSeek when none does.
+    private long seekPending = NoSeek;
+    private static readonly long NoSeek = BitConverter.DoubleToInt64Bits(double.NaN);
+
+    private float gain = 1f;
+
+    /// <summary>
+    /// How loud the speakers are turned down to, from 0 to 1, against what the patch
+    /// made. Applied after the capture sink is written, so a recording keeps what the
+    /// patch made rather than what the monitor was set to.
+    /// </summary>
+    public float Gain
+    {
+        get => Volatile.Read(ref gain);
+        set => Volatile.Write(ref gain, Math.Clamp(value, 0f, 1f));
+    }
+
     /// <summary>The preset asked to be heard, or null. Written by the UI thread, read by the callback.</summary>
     private Audition? wantedAudition;
 
@@ -134,9 +151,26 @@ public sealed class AudioEngine(IAudioDevice device) : IDisposable
     /// </remarks>
     public void Rewind()
     {
+        Interlocked.Exchange(ref seekPending, NoSeek);
         Volatile.Write(ref rewindPending, 1);
 
         if (!current.IsRunning) Restart(Volatile.Read(ref activeState));
+    }
+
+    /// <summary>
+    /// Rewinds and then plays on from <paramref name="seconds"/>. What a program
+    /// remembers — delay lines, feedback — starts empty, as after a
+    /// <see cref="Rewind"/>: a patch reached by seeking is not one played into.
+    /// </summary>
+    public void SeekTo(double seconds)
+    {
+        Interlocked.Exchange(ref seekPending, BitConverter.DoubleToInt64Bits(seconds));
+        Volatile.Write(ref rewindPending, 1);
+
+        if (current.IsRunning) return;
+
+        Restart(Volatile.Read(ref activeState));
+        renderer.SeekTo(seconds);
     }
 
     private void Restart(State state)
@@ -304,7 +338,14 @@ public sealed class AudioEngine(IAudioDevice device) : IDisposable
     {
         var state = Volatile.Read(ref activeState);
 
-        if (Interlocked.Exchange(ref rewindPending, 0) == 1) Restart(state);
+        if (Interlocked.Exchange(ref rewindPending, 0) == 1)
+        {
+            Restart(state);
+
+            var seek = Interlocked.Exchange(ref seekPending, NoSeek);
+
+            if (seek != NoSeek) renderer.SeekTo(BitConverter.Int64BitsToDouble(seek));
+        }
 
         renderer.Render(state.Program, buffer, state.Memory, state.Live);
 
@@ -314,6 +355,12 @@ public sealed class AudioEngine(IAudioDevice device) : IDisposable
         // was heard — the same samples, not a second evaluation that would drift
         // from them the moment a knob moved between the two.
         Volatile.Read(ref capture)?.WriteAudio(buffer);
+
+        var level = Volatile.Read(ref gain);
+
+        if (level >= 1f) return;
+
+        for (var i = 0; i < buffer.Length; i++) buffer[i] *= level;
     }
 
     /// <summary>
