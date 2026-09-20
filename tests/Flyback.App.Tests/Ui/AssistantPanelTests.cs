@@ -1,4 +1,5 @@
-﻿using Avalonia;
+﻿using System.Runtime.CompilerServices;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Interactivity;
@@ -187,6 +188,148 @@ public class AssistantPanelTests : UiTest
         Fresh(window).IsEnabled.ShouldBeFalse();
     }
 
+    // --- long blocks fold -----------------------------------------------------
+
+    /// <summary>
+    /// What a tool answers with: a caption, and then the patch written out, which
+    /// is the length that made the transcript unreadable.
+    /// </summary>
+    private static string Machinery() => "Outrun: a whole synthwave track.\n"
+        + string.Join('\n', Enumerable.Range(0, 40).Select(index => $"let value{index} = x |> value(v: {index})"));
+
+    private static Button Fold(Window window) => All<Button>(window).Single(b => b.Name == "fold");
+
+    private static SelectableTextBlock Block(Window window, string text) =>
+        All<SelectableTextBlock>(window).Single(block => block.Text == text);
+
+    [AvaloniaFact]
+    public void A_block_too_long_to_read_on_the_way_past_arrives_folded()
+    {
+        var (window, panel) = Over(new Patch());
+        var machinery = Machinery();
+
+        panel.Open(Saved(new TranscriptLine(Voice.Note, machinery)));
+        Settle(window);
+
+        Block(window, machinery).IsVisible.ShouldBeFalse();
+        (Fold(window).Content as string).ShouldBe("▸ Outrun: a whole synthwave track. · 41 lines");
+    }
+
+    [AvaloniaFact]
+    public void A_folded_block_opens_and_closes_on_its_header()
+    {
+        var (window, panel) = Over(new Patch());
+        var machinery = Machinery();
+
+        panel.Open(Saved(new TranscriptLine(Voice.Note, machinery)));
+        Settle(window);
+
+        Fold(window).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Settle(window);
+
+        Block(window, machinery).IsVisible.ShouldBeTrue();
+        (Fold(window).Content as string).ShouldStartWith("▾ ");
+
+        Fold(window).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Settle(window);
+
+        Block(window, machinery).IsVisible.ShouldBeFalse();
+    }
+
+    [AvaloniaFact]
+    public void A_block_short_enough_to_read_is_left_alone()
+    {
+        var (window, panel) = Over(new Patch());
+
+        panel.Open(Saved(new TranscriptLine(Voice.Note, "Rendered one frame.")));
+        Settle(window);
+
+        All<Button>(window).ShouldNotContain(b => b.Name == "fold");
+        Block(window, "Rendered one frame.").IsVisible.ShouldBeTrue();
+    }
+
+    /// <summary>
+    /// The proposal is what the turn was for, so however long it runs it is read
+    /// rather than offered.
+    /// </summary>
+    [AvaloniaFact]
+    public void What_the_assistant_proposed_is_never_folded()
+    {
+        var (window, panel) = Over(new Patch());
+        var proposal = Machinery();
+
+        panel.Open(Saved(new TranscriptLine(Voice.Proposed, proposal)));
+        Settle(window);
+
+        All<Button>(window).ShouldNotContain(b => b.Name == "fold");
+        Block(window, proposal).IsVisible.ShouldBeTrue();
+    }
+
+    // --- a turn in flight -----------------------------------------------------
+
+    /// <summary>
+    /// One that answers when the test says so, which is the only way to look at a
+    /// panel with a turn still running in it.
+    /// </summary>
+    private sealed class Held() : Provider(new AssistantSchema(
+        "held",
+        [new AssistantModel("held", Vision: false)],
+        "NONE",
+        "none needed"))
+    {
+        public TaskCompletionSource Release { get; } = new();
+
+        public override string Id => "held";
+
+        public override string Name => "Answers on cue";
+
+        public override IPatchSession Start(PatchWorkbench workbench, AssistantConfig config) =>
+            new Turn(Release.Task);
+    }
+
+    private sealed class Turn(Task release) : IPatchSession
+    {
+        public async IAsyncEnumerable<PatchEvent> Ask(
+            string instruction,
+            [EnumeratorCancellation] CancellationToken cancel)
+        {
+            await release;
+
+            yield return new PatchEvent.Said("there you are.");
+        }
+
+        public void Dispose()
+        {
+        }
+    }
+
+    private static TextBlock Thinking(Window window) =>
+        All<TextBlock>(window).Single(block => block.Name == "thinking");
+
+    [AvaloniaFact]
+    public void A_turn_in_flight_says_so_at_the_end_of_the_transcript()
+    {
+        var held = new Held();
+        var window = Showing(With(held), Configured("held"));
+
+        Thinking(window).IsVisible.ShouldBeFalse("nothing has been asked yet");
+
+        Instruction(window).Text = "make something";
+        Settle(window);
+
+        SendButton(window).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Settle(window);
+
+        Thinking(window).IsVisible.ShouldBeTrue();
+        Thinking(window).Text.ShouldStartWith("Thinking");
+
+        held.Release.SetResult();
+        Settle(window);
+        Settle(window);
+
+        Thinking(window).IsVisible.ShouldBeFalse("the turn ended");
+    }
+
     /// <summary>The settings, in a window of their own, as opening them makes one.</summary>
     private static Window Settings(Window panel)
     {
@@ -244,7 +387,7 @@ public class AssistantPanelTests : UiTest
 
         public virtual string? Unavailable(AssistantConfig config) => null;
 
-        public IPatchSession Start(PatchWorkbench workbench, AssistantConfig config) =>
+        public virtual IPatchSession Start(PatchWorkbench workbench, AssistantConfig config) =>
             throw new NotSupportedException("this one is only ever asked what it can do.");
     }
 

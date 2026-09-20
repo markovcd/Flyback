@@ -86,6 +86,24 @@ public sealed class AssistantPanel : UserControl
     private readonly ScrollViewer transcript = new();
 
     /// <summary>
+    /// That the assistant has the turn, at the end of the transcript where the
+    /// next thing it says will appear.
+    /// </summary>
+    /// <remarks>
+    /// The beacon above says a run is alive; this says where. Minutes can pass
+    /// between one paragraph and the next, and the eye is on the conversation
+    /// rather than on the header by then.
+    /// </remarks>
+    private readonly TextBlock thinking = new()
+    {
+        Name = "thinking",
+        FontSize = Text.Body,
+        Foreground = Live,
+        Margin = new Thickness(10, 0, 10, 8),
+        IsVisible = false,
+    };
+
+    /// <summary>
     /// The last frame the assistant looked at, and nothing at all until it has
     /// looked at one. Hidden rather than merely empty: a fixed width in an Auto
     /// column holds its 160 pixels open whether or not there is a picture in it,
@@ -139,6 +157,16 @@ public sealed class AssistantPanel : UserControl
     };
 
     private readonly DispatcherTimer heartbeat = new() { Interval = TimeSpan.FromMilliseconds(200) };
+
+    /// <summary>How many lines a block may run to before it arrives folded.</summary>
+    /// <remarks>
+    /// Enough for a caption or a refusal to stand as it is, and short of what any
+    /// tool answers with.
+    /// </remarks>
+    private const int FoldsOver = 8;
+
+    /// <summary>How much of a folded block's first line its header shows.</summary>
+    private const int Widest = 52;
 
     /// <summary>What the one button shows in each of its two jobs.</summary>
     private const string SendGlyph = "⏎";
@@ -674,7 +702,14 @@ public sealed class AssistantPanel : UserControl
 
     private Control Build()
     {
-        transcript.Content = saidPanel;
+        // The live line below the transcript rather than in it, so nothing has to
+        // move it back to the end every time something is written.
+        var flow = new StackPanel();
+
+        flow.Children.Add(saidPanel);
+        flow.Children.Add(thinking);
+
+        transcript.Content = flow;
         transcript.VerticalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Auto;
 
         // Tunnelling, and both halves of the gesture answered here: the box would
@@ -1183,6 +1218,10 @@ public sealed class AssistantPanel : UserControl
         progress.Text = stopping
             ? $"Stopping — it ends at the next thing the assistant does · {Spell(elapsed)}"
             : $"Working · {Spell(elapsed)}{done}";
+
+        // Every third tick, so the dots are read as a rhythm rather than as a
+        // flicker. Three of them, then none again.
+        thinking.Text = (stopping ? "Stopping" : "Thinking") + new string('.', pulse / 3 % 4);
     }
 
     private void StartWorking()
@@ -1193,8 +1232,10 @@ public sealed class AssistantPanel : UserControl
         pulse = 0;
 
         working.IsVisible = true;
+        thinking.IsVisible = true;
         heartbeat.Start();
         Beat();
+        transcript.ScrollToEnd();
     }
 
     private void StopWorking()
@@ -1203,6 +1244,7 @@ public sealed class AssistantPanel : UserControl
         asking = false;
         stopping = false;
         working.IsVisible = false;
+        thinking.IsVisible = false;
     }
 
     private static string Spell(TimeSpan elapsed) => elapsed.TotalSeconds < 60d
@@ -1749,8 +1791,10 @@ public sealed class AssistantPanel : UserControl
                 Add(text, Text.Muted, 11);
                 break;
 
+            // The answer, however long it runs. Folding it would hide the one
+            // thing the turn was for.
             case Voice.Proposed:
-                Add(text, Brushes.White, Text.Body);
+                Add(text, Brushes.White, Text.Body, fold: false);
                 break;
 
             case Voice.Failed:
@@ -1792,13 +1836,19 @@ public sealed class AssistantPanel : UserControl
         }
     }
 
-    private void Add(string text, IBrush color, double size)
+    private void Add(string text, IBrush color, double size, bool fold = true)
     {
         // Anything else in the transcript ends the paragraph the assistant was
         // in the middle of. Without this, prose lands on the end of whatever
         // block happens to be last and of about the right size — which was the
         // person's own message, run together with the reply to it.
         saying = null;
+
+        if (fold && Rows(text) > FoldsOver)
+        {
+            Fold(text, color, size);
+            return;
+        }
 
         saidPanel.Children.Add(new SelectableTextBlock
         {
@@ -1808,6 +1858,75 @@ public sealed class AssistantPanel : UserControl
             FontSize = size,
         });
     }
+
+    /// <summary>
+    /// A block too long to read on the way past, behind its first line and a
+    /// count of the rest.
+    /// </summary>
+    /// <remarks>
+    /// What a tool answered is usually the patch written out, which is screens of
+    /// text between one thing the assistant said and the next. Folded, the
+    /// transcript is the conversation again, and the working is a click away.
+    /// </remarks>
+    private void Fold(string text, IBrush color, double size)
+    {
+        var body = new SelectableTextBlock
+        {
+            Text = text,
+            TextWrapping = TextWrapping.Wrap,
+            Foreground = color,
+            FontSize = size,
+            Margin = new Thickness(11, 1, 0, 3),
+            IsVisible = false,
+        };
+
+        var header = new Button
+        {
+            Name = "fold",
+            Content = Gist(text, open: false),
+            FontSize = size,
+            Foreground = color,
+            Background = Brushes.Transparent,
+            BorderThickness = new Thickness(0),
+            Padding = new Thickness(0, 1),
+            MinHeight = 0,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            HorizontalContentAlignment = HorizontalAlignment.Left,
+        };
+
+        header.Click += (_, _) =>
+        {
+            body.IsVisible = !body.IsVisible;
+            header.Content = Gist(text, body.IsVisible);
+        };
+
+        var block = new StackPanel();
+
+        block.Children.Add(header);
+        block.Children.Add(body);
+
+        saidPanel.Children.Add(block);
+    }
+
+    /// <summary>
+    /// The one line a folded block shows: which way it opens, what it was about,
+    /// and how much of it there is.
+    /// </summary>
+    private static string Gist(string text, bool open)
+    {
+        var first = text
+            .Split('\n')
+            .Select(line => line.Trim())
+            .FirstOrDefault(line => line.Length > 0) ?? string.Empty;
+
+        // The column is narrow and a button does not wrap, so what will not fit
+        // is cut here rather than drawn past the edge of the panel.
+        var gist = first.Length > Widest ? string.Concat(first.AsSpan(0, Widest - 1).TrimEnd(), "…") : first;
+
+        return $"{(open ? "▾" : "▸")} {gist} · {Tally(Rows(text), "line")}";
+    }
+
+    private static int Rows(string text) => text.AsSpan().Count('\n') + 1;
 
     /// <summary>
     /// What the person just asked for, set apart from what comes back.
