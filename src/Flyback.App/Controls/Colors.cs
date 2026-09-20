@@ -169,6 +169,27 @@ internal static class Colors
         _ => Unknown,
     };
 
+    /// <summary>A color a plugin handed over, in the toolkit's own terms.</summary>
+    public static Color Of(Swatch swatch) => Color.FromRgb(swatch.Red, swatch.Green, swatch.Blue);
+
+    /// <summary>
+    /// The two colors a module's background is worked out from: the palette its
+    /// author gave, or its category's accent standing as both.
+    /// </summary>
+    public static (Color Accent, Color Floor) Palette(NodeDef def)
+    {
+        if (def.Skin is not ModuleSkin.Palette palette)
+        {
+            var category = Accent(def.Category);
+
+            return (category, category);
+        }
+
+        var accent = Of(palette.Accent);
+
+        return (accent, palette.Floor is { } floor ? Of(floor) : accent);
+    }
+
     /// <summary>
     /// What color a preset's kind is drawn in where it heads that kind's run of
     /// the preset list.
@@ -213,6 +234,65 @@ internal static class Colors
 
     private static byte Part(byte from, byte to, double amount) =>
         (byte)Math.Clamp(Math.Round(from + (to - from) * amount), 0, 255);
+
+    // --- writing on a color the palette did not choose -----------------------
+
+    /// <summary>How much of the light there is in a color, from nought to one.</summary>
+    public static double Luma(Color color) =>
+        (0.2126 * color.R + 0.7152 * color.G + 0.0722 * color.B) / 255;
+
+    /// <summary>Whether text over this is better off dark than light.</summary>
+    public static bool Light(Color color) => Luma(color) >= 0.5;
+
+    /// <summary>
+    /// What to write on <paramref name="background"/> so it can be read: the
+    /// inverse of the color, driven toward the pole the background is not until
+    /// the two are <see cref="Separation"/> apart in light.
+    /// </summary>
+    /// <remarks>
+    /// The inverse alone is the obvious rule and it fails in the middle: a
+    /// mid-grey inverts to itself, and anything near one inverts to something
+    /// barely off it. So the inverse is the hue and the drive is the contrast,
+    /// and the drive is solved for rather than picked — <c>Luma</c> is linear in
+    /// each channel, so the amount that buys exactly the separation wanted is an
+    /// equation, and text over a gradient stays continuous instead of stepping
+    /// where a threshold would have been.
+    /// <para>
+    /// <paramref name="lift"/> is decided once for a whole run of text rather
+    /// than per stop, because the two answers are equally readable and picking
+    /// them independently is what splits a word down the middle.
+    /// </para>
+    /// </remarks>
+    public static Color Contrast(Color background, bool lift)
+    {
+        var inverse = Color.FromRgb(
+            (byte)(255 - background.R),
+            (byte)(255 - background.G),
+            (byte)(255 - background.B));
+
+        var ground = Luma(background);
+        var ink = Luma(inverse);
+
+        var drive = lift
+            ? (ground + Separation - ink) / Math.Max(1 - ink, Floor)
+            : 1 - (ground - Separation) / Math.Max(ink, Floor);
+
+        return Blend(inverse, lift ? White : Black, Math.Clamp(drive, 0, 1));
+    }
+
+    /// <summary>
+    /// How far apart in light <see cref="Contrast"/> holds text and its
+    /// background. Half the range: the most any pair can be held to, since a
+    /// background exactly in the middle is half from either pole.
+    /// </summary>
+    private const double Separation = 0.5;
+
+    /// <summary>Keeps the drive off a division by nought at either pole.</summary>
+    private const double Floor = 1.0 / 255;
+
+    private static Color White { get; } = Color.FromRgb(0xFF, 0xFF, 0xFF);
+
+    private static Color Black { get; } = Color.FromRgb(0x00, 0x00, 0x00);
 
     // --- sockets ------------------------------------------------------------
 

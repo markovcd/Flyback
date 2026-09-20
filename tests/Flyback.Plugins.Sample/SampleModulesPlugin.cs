@@ -40,13 +40,28 @@ public sealed class SampleModulesPlugin : IFlybackPlugin
                 var radius = em.Binary(OpCode.Hypot, i[0], i[1]);
                 return [em.Unary(OpCode.Sin, em.Mul(em.Add(em.Mul(radius, i[2]), i[3]), Tau))];
             },
-            "Concentric sine rings. Drive offset from Time to pulse outward."),
+            "Concentric sine rings. Drive offset from Time to pulse outward.")
+        {
+            // A background of its own, which a plugin's category gets none of:
+            // "Sample" is nothing the shell has an accent for, so these would
+            // otherwise both be grey. A grain over the color, and a mark on the
+            // same twenty-four unit box the engine's own are drawn on.
+            Skin = new ModuleSkin.Grain(new Swatch(0x4A, 0x7E, 0xC8), GrainCut.Beaded)
+            {
+                Glyph = "M4,12 A8,8 0 1,1 20,12 A8,8 0 1,1 4,12 M9,12 A3,3 0 1,1 15,12 A3,3 0 1,1 9,12",
+            },
+        },
 
         new NodeDef(
             "flyback.sample.halve", "Halve", "Sample",
             [new PortSpec("in", PortKind.Any)],
             [new PortSpec("out", PortKind.Any)],
             (em, i) => [em.Mul(i[0], 0.5f)],
-            "Halves whatever arrives — scalar or color."),
+            "Halves whatever arrives — scalar or color.")
+        {
+            // The same blue without the grain, so the two read as one plugin and
+            // still tell each other apart.
+            Skin = new ModuleSkin.Palette(new Swatch(0x4A, 0x7E, 0xC8)),
+        },
     ]);
 }

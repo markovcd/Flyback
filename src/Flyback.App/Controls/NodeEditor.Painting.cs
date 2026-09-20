@@ -1,5 +1,7 @@
+using System.Diagnostics;
 using Avalonia;
 using Avalonia.Media;
+using Avalonia.Threading;
 using Flyback.Core.Graph;
 
 namespace Flyback.App.Controls;
@@ -73,7 +75,51 @@ public sealed partial class NodeEditor
         // on the canvas rather than in it — neither is part of the patch.
         DrawEdge(context);
         DrawMarquee(context);
+
+        KeepMoving();
     }
+
+    /// <summary>
+    /// Asks for another frame where a module drawn this pass was animating, and
+    /// otherwise lets the canvas go still.
+    /// </summary>
+    /// <remarks>
+    /// Driven by what was drawn rather than by what is in the patch, so the clock
+    /// starts when a moving module appears and stops when the last one is
+    /// deleted, switched to a still or scrolled behind a shut group. One pending
+    /// tick at a time, since a pass that draws forty animations still wants one
+    /// repaint.
+    /// </remarks>
+    private void KeepMoving()
+    {
+        if (!moving || ticking) return;
+
+        moving = false;
+        ticking = true;
+
+        DispatcherTimer.RunOnce(
+            () =>
+            {
+                ticking = false;
+                InvalidateVisual();
+            },
+            TimeSpan.FromMilliseconds(Tick));
+    }
+
+    private bool moving, ticking;
+
+    /// <summary>
+    /// How often the canvas repaints while a module on it is animating. Under
+    /// the shortest delay a GIF is usually written at, and well over what it
+    /// costs to redraw a patch.
+    /// </summary>
+    private const double Tick = 40;
+
+    /// <summary>
+    /// What every animation on the canvas is read against, so two modules showing
+    /// the same picture show the same frame of it.
+    /// </summary>
+    private static readonly Stopwatch clock = Stopwatch.StartNew();
 
     /// <summary>
     /// Rules the edge of the canvas.
@@ -459,37 +505,119 @@ public sealed partial class NodeEditor
         using (context.PushOpacity(OffOpacity)) DrawModule(context, node, def);
     }
 
+    /// <summary>
+    /// Sets a plugin's picture behind its module, scaled to cover the body and
+    /// clipped to it.
+    /// </summary>
+    /// <remarks>
+    /// Cover rather than stretch, so nothing anybody drew comes out the wrong
+    /// shape; what falls outside the block is cut off. Drawing it asks for the
+    /// next frame, which is the whole of what makes an animation run — a canvas
+    /// with no moving module on it is asked for nothing and repaints when the
+    /// patch changes, as it always has.
+    /// </remarks>
+    private void DrawArtwork(DrawingContext context, ModuleArtwork picture, RoundedRect body)
+    {
+        var image = picture.At(clock.Elapsed.TotalMilliseconds);
+        var size = image.Size;
+
+        if (size.Width <= 0 || size.Height <= 0) return;
+
+        if (picture.Runs > 0) moving = true;
+
+        var bounds = body.Rect;
+        var scale = Math.Max(bounds.Width / size.Width, bounds.Height / size.Height);
+
+        using (context.PushClip(body))
+        {
+            context.DrawImage(
+                image,
+                new Rect(size),
+                bounds.CenterRect(new Rect(0, 0, size.Width * scale, size.Height * scale)));
+        }
+    }
+
+    /// <summary>
+    /// The band of background a line of text takes its color from: the header for
+    /// the title, the row for everything else.
+    /// </summary>
+    private const double TitleInk = 16, RowInk = 14;
+
+    /// <summary>
+    /// How far the quieter columns are pulled back into the background — the step
+    /// from a name to a number and from a number to a normal, at the spacing
+    /// <see cref="LabelBrush"/>, <see cref="ValueBrush"/> and
+    /// <see cref="NormalBrush"/> already stand at over the node grey.
+    /// </summary>
+    private const double ValueFade = 0.35, NormalFade = 0.55;
+
     private void DrawModule(DrawingContext context, NodeInstance node, NodeDef def)
     {
         var bounds = NodeGeometry.Bounds(node, def);
         var isSelected = selection.Contains(node.Id);
+        var (accent, floor) = Colors.Palette(def);
+        var backdrop = ModuleBackdrop.Of(def, isSelected);
+
+        // A module given a background of its own was given one the shell cannot
+        // judge white against, so where its author asked, every line of text on
+        // it is colored from the background that line covers instead.
+        var follow = def.Skin is { ContrastText: true };
+
+        IBrush Ink(double centre, double height, double fade, IBrush plain) => follow
+            ? NodeSkin.Ink(
+                backdrop.At(bounds, centre - height / 2),
+                backdrop.At(bounds, centre + height / 2),
+                backdrop.Lift(bounds, centre),
+                fade)
+            : plain;
 
         var body = new RoundedRect(bounds, NodeGeometry.CornerRadius);
+        var border = !isSelected ? NodeBorder : focus == node.Id ? SelectionPen : SelectionPenSecondary;
 
-        context.DrawRectangle(
-            NodeSkin.Body(def.Category, isSelected),
-            !isSelected ? NodeBorder : focus == node.Id ? SelectionPen : SelectionPenSecondary,
-            body);
+        if (backdrop.Picture is { } picture)
+        {
+            DrawArtwork(context, picture, body);
+            context.DrawRectangle(null, border, body);
+        }
+        else
+        {
+            context.DrawRectangle(NodeSkin.Body(accent, floor, isSelected), border, body);
 
-        DrawMark(context, body, ModuleGlyphs.For(def), NodeSkin.Mark(def.Category));
+            // Over the wash and under the mark, because it is the surface the
+            // mark is set into rather than a second thing on the body.
+            if (def.Skin is ModuleSkin.Grain { Cut: var cut })
+                using (context.PushClip(body))
+                    context.FillRectangle(
+                        NodeSkin.Cut(cut, NodeSkin.BodyTop(accent, isSelected)),
+                        bounds);
 
-        // Header band, square at the bottom so it reads as a title bar.
+            DrawMark(context, body, ModuleGlyphs.For(def), NodeSkin.Mark(accent));
+        }
+
+        // Header band, square at the bottom so it reads as a title bar. A picture
+        // runs under it instead: it is the background, and the band is the one
+        // part of the block that is not.
         var header = new Rect(bounds.X, bounds.Y, bounds.Width, NodeGeometry.HeaderHeight);
-        context.DrawRectangle(
-            NodeSkin.Header(def.Category),
-            null,
-            new RoundedRect(header, NodeGeometry.CornerRadius, NodeGeometry.CornerRadius, 0, 0));
+
+        if (backdrop.Picture is null)
+            context.DrawRectangle(
+                NodeSkin.Header(accent, floor, isSelected),
+                null,
+                new RoundedRect(header, NodeGeometry.CornerRadius, NodeGeometry.CornerRadius, 0, 0));
 
         DrawHeaderRelief(context, header);
 
-        var title = Text(node.Title(def), HeaderSize, HeaderTextBrush, HeaderWidth(bounds, def), true);
         var titleAt = new Point(bounds.X + 9, bounds.Y + 5);
+
+        var titleBrush = Ink(titleAt.Y + TitleInk / 2, TitleInk, fade: 0, HeaderTextBrush);
+
+        var title = Text(node.Title(def), HeaderSize, titleBrush, HeaderWidth(bounds, def), true);
 
         context.DrawText(title, titleAt);
 
         if (node.Off)
             context.DrawLine(
-                OffStrike,
+                follow ? new Pen(titleBrush, 1.5) : OffStrike,
                 new Point(titleAt.X, titleAt.Y + title.Height / 2),
                 new Point(titleAt.X + title.Width, titleAt.Y + title.Height / 2));
 
@@ -501,7 +629,7 @@ public sealed partial class NodeEditor
         {
             var port = def.Outputs[i];
             var centre = NodeGeometry.OutputPort(node, i);
-            var label = Text(port.Name, 11.5, LabelBrush, bounds.Width - 24, true);
+            var label = Text(port.Name, 11.5, Ink(centre.Y, RowInk, 0, LabelBrush), bounds.Width - 24, true);
 
             context.DrawText(label, new Point(bounds.Right - 14 - label.Width, centre.Y - label.Height / 2));
             DrawPort(context, centre, port.Kind);
@@ -515,7 +643,7 @@ public sealed partial class NodeEditor
 
             var linked = DrawLinkedRow(context, node, port, i, bounds, centre, connected);
 
-            var label = Text(port.Name, 11.5, LabelBrush, bounds.Width * 0.55, true);
+            var label = Text(port.Name, 11.5, Ink(centre.Y, RowInk, 0, LabelBrush), bounds.Width * 0.55, true);
             context.DrawText(label, new Point(bounds.X + 14, centre.Y - label.Height / 2));
 
             // An unconnected input shows what it will compile to: the module
@@ -527,14 +655,19 @@ public sealed partial class NodeEditor
                 // name and a qualified one at that — "Coordinates x" does not
                 // fit where "0.25" does, and trimmed to "Coordinates…" it would
                 // stop telling x from y.
-                var name = Text(source, 11.5, NormalBrush, bounds.Width * 0.5, true);
+                var name = Text(source, 11.5, Ink(centre.Y, RowInk, NormalFade, NormalBrush), bounds.Width * 0.5, true);
                 context.DrawText(name, new Point(bounds.Right - 12 - name.Width, centre.Y - name.Height / 2));
             }
             else if (!linked && !connected && i < node.InputValues.Length && (formula is null || Reads(formula, i)))
             {
                 // A socket its formula never reads has a knob that turns nothing,
                 // so an Expression shows the values of the ones it does and no more.
-                var value = Text(port.Format(node.InputValues[i]), 11.5, ValueBrush, bounds.Width * 0.4, true);
+                var value = Text(
+                    port.Format(node.InputValues[i]),
+                    11.5,
+                    Ink(centre.Y, RowInk, ValueFade, ValueBrush),
+                    bounds.Width * 0.4,
+                    true);
                 context.DrawText(value, new Point(bounds.Right - 12 - value.Width, centre.Y - value.Height / 2));
             }
 

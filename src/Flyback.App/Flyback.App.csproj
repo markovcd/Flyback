@@ -101,6 +101,19 @@
       shell, which already carries Avalonia, Skia and a font.
     -->
     <PackageReference Include="Avalonia.AvaloniaEdit" Version="12.0.0" />
+
+    <!--
+      SVG, for the picture a plugin may hang behind its own module. Avalonia
+      decodes PNG and, through the Skia it already carries, the frames of a GIF;
+      SVG it does not read at all, and a vector artwork drawn at whatever zoom
+      the canvas is at is the case worth having. Svg.Skia under it, MIT, by the
+      author of AvaloniaEdit's port. Named for Avalonia 12 — the Avalonia.Svg.Skia
+      package is the same library's Avalonia 11 line and stops there.
+
+      ADR-0019's rule is the engine's, and Core still answers to it: this is the
+      shell, which already carries Avalonia, Skia and a font.
+    -->
+    <PackageReference Include="Svg.Controls.Skia.Avalonia" Version="12.0.0.17" />
   </ItemGroup>
 
   <ItemGroup>

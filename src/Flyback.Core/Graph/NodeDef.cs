@@ -245,6 +245,12 @@ public sealed record NodeDef(
     }
 
     /// <summary>
+    /// What this module is painted, or null to take its category's accent —
+    /// see <see cref="ModuleSkin"/>.
+    /// </summary>
+    public ModuleSkin? Skin { get; init; }
+
+    /// <summary>
     /// Whether an instance of this module watches what the speakers played — in
     /// other words, whether its first input is a root of the audio program as
     /// well as a socket.

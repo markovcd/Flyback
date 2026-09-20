@@ -44,7 +44,9 @@ transfer curve for Shaping, decaying repeats for the time effects.
 
 **A category nothing here knows draws nothing.** A plugin may name its own
 category, and it already falls back to grey in `Colors.Accent`; inventing a
-shape for it would be worse than leaving the body bare.
+shape for it would be worse than leaving the body bare. A plugin that wants
+better than grey says so itself, by painting its module's background —
+[0118](0118-a-plugin-paints-its-own-module-background.md).
 
 **Both bands get a face**: a white hairline along the top of a header, held
 off the rounded corners, and a dark seam where it meets the body.

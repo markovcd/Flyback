@@ -8,6 +8,7 @@
 
 ### Plugins
 - A plugin built for a Flyback that has since changed what plugins are built against is left out at startup, and About says whether the plugin or Flyback is the one to update.
+- A plugin can paint its own module's background: a color of its own, a texture over it, or a picture.
 
 ### Modules
 - Added Stroke (a drum envelope counted off the beat), Fade (brings a part in as a level rises), Wander (a slow random value) and Drum (a kick or tom from one envelope) to Voice.

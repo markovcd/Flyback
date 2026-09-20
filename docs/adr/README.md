@@ -100,6 +100,7 @@ context, decision, consequences.
 | [0111](0111-the-panels-actions-are-a-row-of-glyphs.md) | The panel's actions are a row of glyphs *(user-directed)* |
 | [0116](0116-a-module-is-drawn-as-its-category-and-a-standout-as-itself.md) | A module is drawn as its category, and a standout as itself *(user-directed)* |
 | [0117](0117-a-module-switched-off-is-a-wire.md) | A module switched off is a wire *(user-directed)* |
+| [0118](0118-a-plugin-paints-its-own-module-background.md) | A plugin paints its own module's background *(user-directed)* |
 
 ### Sound
 

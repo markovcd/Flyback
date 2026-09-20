@@ -1,16 +1,17 @@
 using Avalonia;
 using Avalonia.Media;
 using Avalonia.Media.Immutable;
+using Flyback.Core.Graph;
 
 namespace Flyback.App.Controls;
 
 /// <summary>
-/// What a module is painted with, worked out from its category's accent: the
-/// wash down its body, the band across its header, and the color its mark is
-/// drawn in.
+/// What a module is painted with, worked out from one accent: the wash down its
+/// body, the band across its header, the color its mark is drawn in, and — for a
+/// module that asked for it — the ink its text is written in.
 /// </summary>
 /// <remarks>
-/// Built once per category and kept, because painting asks for these per module
+/// Built once per accent and kept, because painting asks for these per module
 /// per frame and a gradient brush is not free to make. The canvas is one control
 /// on one thread (ADR-0017), so the caches need no guard.
 /// <para>
@@ -25,56 +26,74 @@ internal static class NodeSkin
     /// <summary>How much accent is in the body, under the header and at the floor.</summary>
     private const double TopTint = 0.24, FloorTint = 0.06;
 
-    private static readonly Dictionary<(string Category, bool Selected), IBrush> bodies = [];
-    private static readonly Dictionary<string, IBrush> headers = [];
-    private static readonly Dictionary<string, IPen> marks = [];
+    /// <summary>How much of the header band is accent, the rest being the body under it.</summary>
+    private const double HeaderStrength = 0.95;
+
+    /// <summary>How much light the band has left by the time it meets the body.</summary>
+    private const double HeaderFall = 0.72;
+
+    private static readonly Dictionary<(Color Accent, Color Floor, bool Selected), IBrush> bodies = [];
+    private static readonly Dictionary<(Color Accent, Color Floor, bool Selected), IBrush> headers = [];
+    private static readonly Dictionary<Color, IPen> marks = [];
+    private static readonly Dictionary<(Color From, Color To, bool Lift, int Fade), IBrush> inks = [];
 
     /// <summary>The wash down a module's body, tinted by what the module does.</summary>
-    public static IBrush Body(string category, bool selected)
+    public static IBrush Body(Color accent, Color floor, bool selected)
     {
-        if (bodies.TryGetValue((category, selected), out var kept)) return kept;
+        if (bodies.TryGetValue((accent, floor, selected), out var kept)) return kept;
 
-        var ground = selected ? Colors.NodeSelected : Colors.Node;
-        var accent = Colors.Accent(category);
+        var made = Down(BodyTop(accent, selected), BodyFloor(floor, selected));
 
-        var made = Down(
-            Colors.Blend(ground, accent, TopTint),
-            Colors.Blend(ground, accent, FloorTint));
-
-        bodies[(category, selected)] = made;
+        bodies[(accent, floor, selected)] = made;
 
         return made;
     }
 
     /// <summary>The header band. Lit at the top and falling away, so it has a face.</summary>
-    public static IBrush Header(string category)
+    public static IBrush Header(Color accent, Color floor, bool selected)
     {
-        if (headers.TryGetValue(category, out var kept)) return kept;
+        if (headers.TryGetValue((accent, floor, selected), out var kept)) return kept;
 
-        var accent = Colors.Accent(category);
-        var made = Down(Color.FromArgb(0xF2, accent.R, accent.G, accent.B), Colors.Shade(accent, 0.72));
+        var made = Down(HeaderTop(accent, selected), HeaderFloor(floor));
 
-        headers[category] = made;
+        headers[(accent, floor, selected)] = made;
 
         return made;
     }
+
+    public static Color BodyTop(Color accent, bool selected) =>
+        Colors.Blend(Ground(selected), accent, TopTint);
+
+    public static Color BodyFloor(Color accent, bool selected) =>
+        Colors.Blend(Ground(selected), accent, FloorTint);
+
+    /// <summary>
+    /// The lit edge of the band — the accent, with the body showing through the
+    /// last few percent of it.
+    /// </summary>
+    public static Color HeaderTop(Color accent, bool selected) =>
+        Colors.Blend(BodyTop(accent, selected), accent, HeaderStrength);
+
+    public static Color HeaderFloor(Color accent) => Colors.Shade(accent, HeaderFall);
+
+    private static Color Ground(bool selected) => selected ? Colors.NodeSelected : Colors.Node;
 
     /// <summary>
     /// What the mark across the body is stroked with — see <see cref="ModuleGlyphs"/>.
     /// Thickness in the glyph's own units, so it grows with whatever the mark is
     /// scaled to.
     /// </summary>
-    public static IPen Mark(string category)
+    public static IPen Mark(Color accent)
     {
-        if (marks.TryGetValue(category, out var kept)) return kept;
+        if (marks.TryGetValue(accent, out var kept)) return kept;
 
         var made = new ImmutablePen(
-            new ImmutableSolidColorBrush(Colors.Accent(category), MarkOpacity),
+            new ImmutableSolidColorBrush(accent, MarkOpacity),
             ModuleGlyphs.Thickness,
             lineCap: PenLineCap.Round,
             lineJoin: PenLineJoin.Round);
 
-        marks[category] = made;
+        marks[accent] = made;
 
         return made;
     }
@@ -84,6 +103,106 @@ internal static class NodeSkin
     /// that reading one is never a matter of looking past the other.
     /// </summary>
     private const double MarkOpacity = 0.17;
+
+    /// <summary>
+    /// Text colored from the background it covers: the readable opposite of what
+    /// is behind the top of the text and behind its bottom, as a gradient down
+    /// the text, so what a pixel is drawn in follows the pixel behind it.
+    /// </summary>
+    /// <param name="lift">
+    /// Which way the ink is driven, decided by the caller for a whole surface —
+    /// see <see cref="Colors.Contrast"/>.
+    /// </param>
+    /// <param name="fade">
+    /// How far back into the background the ink is pulled — nought for a name,
+    /// more for the quieter columns, which is how they keep their place without
+    /// being given a color of their own.
+    /// </param>
+    public static IBrush Ink(Color from, Color to, bool lift, double fade)
+    {
+        var back = Steps(fade);
+
+        if (inks.TryGetValue((from, to, lift, back), out var kept)) return kept;
+
+        var made = Down(Written(from, back, lift), Written(to, back, lift));
+
+        inks[(from, to, lift, back)] = made;
+
+        return made;
+    }
+
+    private static Color Written(Color under, int fade, bool lift) =>
+        Colors.Blend(Colors.Contrast(under, lift), under, Fraction(fade));
+
+    /// <summary>
+    /// A fade counted in sixty-fourths, so an ink is keyed on something
+    /// countable and a fade moved by a sixty-fourth is not a fade moved.
+    /// </summary>
+    private static int Steps(double fraction) => (int)Math.Round(Math.Clamp(fraction, 0, 1) * Fades);
+
+    private static double Fraction(int steps) => steps / (double)Fades;
+
+    private const int Fades = 64;
+
+    /// <summary>
+    /// The texture cut across a module's body, tiled in graph units so it holds
+    /// its pitch as the canvas is zoomed.
+    /// </summary>
+    /// <remarks>
+    /// Drawn in the same color the module's text would be drawn in, at a fraction
+    /// of its strength: derived from the background by the one rule, so a cut
+    /// shows on a pale accent and on a dark one without either being named.
+    /// </remarks>
+    public static IBrush Cut(GrainCut cut, Color over)
+    {
+        if (cuts.TryGetValue((cut, over), out var kept)) return kept;
+
+        var ink = Colors.Contrast(over, !Colors.Light(over));
+        var pen = new ImmutablePen(new ImmutableSolidColorBrush(ink, CutOpacity), CutWidth);
+
+        var made = new DrawingBrush(
+            cut == GrainCut.Beaded
+                ? new GeometryDrawing
+                {
+                    Brush = new ImmutableSolidColorBrush(ink, CutOpacity),
+                    Geometry = new EllipseGeometry(new Rect(Tile / 2 - 1, Tile / 2 - 1, 2, 2)),
+                }
+                : new GeometryDrawing { Pen = pen, Geometry = Geometry.Parse(Cuts[cut]) })
+        {
+            TileMode = TileMode.Tile,
+            Stretch = Stretch.None,
+            SourceRect = new RelativeRect(0, 0, Tile, Tile, RelativeUnit.Absolute),
+            DestinationRect = new RelativeRect(0, 0, Tile, Tile, RelativeUnit.Absolute),
+        };
+
+        cuts[(cut, over)] = made;
+
+        return made;
+    }
+
+    private static readonly Dictionary<(GrainCut Cut, Color Over), IBrush> cuts = [];
+
+    /// <summary>
+    /// The paths the tiling cuts are made of, on the tile's own square. The
+    /// diagonal is drawn three times so it meets itself across the seam.
+    /// </summary>
+    private static readonly Dictionary<GrainCut, string> Cuts = new()
+    {
+        [GrainCut.Hatched] = "M0,8 L8,0 M-2,2 L2,-2 M6,10 L10,6",
+        [GrainCut.Milled] = "M2,0 L2,8 M6,0 L6,8",
+    };
+
+    /// <summary>The square a cut repeats on, in graph units.</summary>
+    private const double Tile = 8;
+
+    private const double CutWidth = 1;
+
+    /// <summary>
+    /// How strongly a cut shows. Under the mark, because a texture covers the
+    /// whole body where a mark is one shape in the corner of it: at the mark's
+    /// own weight the labels would be read over hatching everywhere.
+    /// </summary>
+    private const double CutOpacity = 0.10;
 
     /// <summary>A gradient from the top of whatever it fills to the bottom.</summary>
     public static IBrush Down(Color top, Color bottom) => new ImmutableLinearGradientBrush(

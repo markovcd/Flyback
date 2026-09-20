@@ -30,7 +30,37 @@ internal static class ModuleGlyphs
 
     /// <summary>What to draw across <paramref name="def"/>, or null where nothing is known.</summary>
     public static Geometry? For(NodeDef def) =>
-        Own.TryGetValue(def.TypeId, out var mine) ? mine : OfCategory(def.Category);
+        def.Skin is ModuleSkin.Palette { Glyph: { } given } ? Given(given)
+        : Own.TryGetValue(def.TypeId, out var mine) ? mine
+        : OfCategory(def.Category);
+
+    /// <summary>
+    /// A plugin's own path data on the same twenty-four unit box, read once and
+    /// kept — the failure too, so a path that will not parse is not parsed again
+    /// every frame. Nothing is drawn for one, which is what a mark does when it
+    /// is not there.
+    /// </summary>
+    private static Geometry? Given(string data)
+    {
+        if (given.TryGetValue(data, out var kept)) return kept;
+
+        Geometry? read;
+
+        try
+        {
+            read = Path(data);
+        }
+        catch (Exception)
+        {
+            read = null;
+        }
+
+        given[data] = read;
+
+        return read;
+    }
+
+    private static readonly Dictionary<string, Geometry?> given = [];
 
     /// <summary>What a module of <paramref name="category"/> is drawn as by default.</summary>
     public static Geometry? OfCategory(string category) =>

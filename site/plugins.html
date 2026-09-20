@@ -341,6 +341,64 @@
     <code>Video</code> for one that wants a pixel or a past frame. It changes nothing that is emitted; the
     assistant's handbook reads it, so set it whenever it is not <code>Both</code>.</p>
 
+    <h3>How a module is drawn</h3>
+
+    <p>By default a module is drawn as its category, and a category the engine does not know draws grey
+    (ADR-0116). <code>Skin</code>, an init property on the <code>NodeDef</code>, gives a module a background
+    of its own instead. <strong>Only the background changes.</strong> The block keeps its shape, its header,
+    where its title sits, its sockets and its description — a canvas of modules that each laid themselves
+    out differently would stop being a patch.</p>
+
+    <p>There are three backgrounds. Colors are a <code>Swatch(red, green, blue)</code>, because Core names no
+    toolkit.</p>
+
+    <pre><code><span class="c">// A palette: drawn exactly the way every built-in module is.</span>
+Skin = <span class="k">new</span> ModuleSkin.Palette(<span class="k">new</span> Swatch(<span class="s">0x2E</span>, <span class="s">0x8B</span>, <span class="s">0x57</span>))
+{
+    Floor = <span class="k">new</span> Swatch(<span class="s">0x10</span>, <span class="s">0x20</span>, <span class="s">0x30</span>),
+    Glyph = <span class="s">"M4,12 A8,8 0 1,1 20,12 A8,8 0 1,1 4,12"</span>,
+}
+
+<span class="c">// A grain: the same palette with a texture cut across it.</span>
+Skin = <span class="k">new</span> ModuleSkin.Grain(<span class="k">new</span> Swatch(<span class="s">0x4A</span>, <span class="s">0x7E</span>, <span class="s">0xC8</span>), GrainCut.Beaded)
+
+<span class="c">// A picture: SVG, PNG or GIF, scaled to cover the body and clipped to it.</span>
+Skin = <span class="k">new</span> ModuleSkin.Artwork(bytes) { Animate = <span class="k">false</span>, ContrastText = <span class="k">true</span> }</code></pre>
+
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr><th scope="col">Field</th><th scope="col">What it does</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>Palette.Accent</code></td><td>The one color everything is worked out from, standing exactly where the category's accent would: the wash down the body, the band across the header, and the mark behind the labels.</td></tr>
+          <tr><td><code>Palette.Floor</code></td><td>What the wash falls to at the floor. Left out, it falls to the accent, the way a built-in module does.</td></tr>
+          <tr><td><code>Palette.Glyph</code></td><td>The mark across the body, as SVG path data on the same twenty-four unit box the engine's own marks are drawn on. Stroked, not filled. Path data that will not parse draws nothing rather than taking the canvas down. Left out, the category's mark stands.</td></tr>
+          <tr><td><code>Grain.Cut</code></td><td><code>Hatched</code> (diagonal rules), <code>Milled</code> (fine upright rules) or <code>Beaded</code> (a grid of dots), tiled over the body in graph units so the texture holds its pitch at any zoom. A grain <em>is</em> a palette and carries all of its fields; the cut is a second channel, and the one that still says whose the module is in a grayscale screenshot or to somebody who cannot separate two hues.</td></tr>
+          <tr><td><code>Artwork.Bytes</code></td><td>The picture itself, most often read out of the plugin's own embedded resources. Bytes rather than a path, so a skin needs nothing deployed beside the assembly. Bytes that are not a picture are no picture: the module falls back to its category.</td></tr>
+          <tr><td><code>Artwork.Animate</code></td><td>Whether an animated GIF runs. Off holds it at its first frame. The canvas repaints only while a module that is animating is actually on it.</td></tr>
+          <tr><td><code>ContrastText</code></td><td>On any of the three. Whether the text on the module is worked out from the background behind it rather than drawn white — see below.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Text that can be read on any background</h3>
+
+    <p>Every module on the canvas is titled in white, and a module that picks a dark color should not be the
+    one whose title is a different color from every other. So white stays the default and
+    <code>ContrastText</code> is opt-in. It is for the case the shell cannot rescue on its own: a pale,
+    saturated or busy background, where white is simply gone.</p>
+
+    <p>Where it is asked for, every line of text on the module — the title, the socket names, the numbers,
+    the normalled module names — is <strong>derived from the background that line covers</strong>, by one
+    rule with no table in it. The ink is the <em>inverse</em> of what is behind it, driven toward whichever
+    pole the background is not until the two are half the luminance range apart. Inverting alone is the
+    obvious rule and it fails silently in the middle: a mid-grey inverts to itself. The drive is solved for
+    rather than stepped, so text over a gradient stays continuous instead of breaking where a threshold would
+    have been, and the direction is decided once for a whole surface, so a word is never dark at one end and
+    light at the other. Over a picture the same rule reads the artwork's own horizontal bands in place of the
+    gradient's stops.</p>
+
     <h3>Carrying something that is not a knob</h3>
 
     <p>A socket carries a number a patch can drive. Some decisions are not that — they are decisions

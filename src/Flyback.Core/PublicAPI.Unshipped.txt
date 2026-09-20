@@ -33,3 +33,86 @@ static Flyback.Core.Graph.PatchLayout.Arrange(Flyback.Core.Graph.Patch! patch, F
 Flyback.Core.Graph.NodeDef.Through(int output) -> int
 Flyback.Core.Graph.NodeInstance.Off.get -> bool
 Flyback.Core.Graph.NodeInstance.Off.set -> void
+Flyback.Core.Graph.ModuleSkin.Artwork.Animate.get -> bool
+Flyback.Core.Graph.ModuleSkin.Artwork.Animate.init -> void
+Flyback.Core.Graph.ModuleSkin.Artwork.Artwork(System.ReadOnlyMemory<byte> Bytes) -> void
+Flyback.Core.Graph.ModuleSkin.Artwork.Bytes.get -> System.ReadOnlyMemory<byte>
+Flyback.Core.Graph.ModuleSkin.Artwork.Bytes.init -> void
+Flyback.Core.Graph.ModuleSkin.Artwork.Deconstruct(out System.ReadOnlyMemory<byte> Bytes) -> void
+Flyback.Core.Graph.ModuleSkin.Artwork.Equals(Flyback.Core.Graph.ModuleSkin.Artwork? other) -> bool
+Flyback.Core.Graph.ModuleSkin.Artwork
+Flyback.Core.Graph.ModuleSkin.ContrastText.get -> bool
+Flyback.Core.Graph.ModuleSkin.ContrastText.init -> void
+Flyback.Core.Graph.ModuleSkin.ModuleSkin(Flyback.Core.Graph.ModuleSkin! original) -> void
+Flyback.Core.Graph.ModuleSkin.Palette.Accent.get -> Flyback.Core.Graph.Swatch
+Flyback.Core.Graph.ModuleSkin.Palette.Accent.init -> void
+Flyback.Core.Graph.ModuleSkin.Palette.Deconstruct(out Flyback.Core.Graph.Swatch Accent) -> void
+Flyback.Core.Graph.ModuleSkin.Palette.Floor.get -> Flyback.Core.Graph.Swatch?
+Flyback.Core.Graph.ModuleSkin.Palette.Floor.init -> void
+Flyback.Core.Graph.ModuleSkin.Palette.Glyph.get -> string?
+Flyback.Core.Graph.ModuleSkin.Palette.Glyph.init -> void
+Flyback.Core.Graph.ModuleSkin.Palette.Palette(Flyback.Core.Graph.Swatch Accent) -> void
+Flyback.Core.Graph.ModuleSkin.Palette
+Flyback.Core.Graph.ModuleSkin
+Flyback.Core.Graph.NodeDef.Skin.get -> Flyback.Core.Graph.ModuleSkin?
+Flyback.Core.Graph.NodeDef.Skin.init -> void
+Flyback.Core.Graph.Swatch.Blue.get -> byte
+Flyback.Core.Graph.Swatch.Blue.init -> void
+Flyback.Core.Graph.Swatch.Deconstruct(out byte Red, out byte Green, out byte Blue) -> void
+Flyback.Core.Graph.Swatch.Equals(Flyback.Core.Graph.Swatch other) -> bool
+Flyback.Core.Graph.Swatch.Green.get -> byte
+Flyback.Core.Graph.Swatch.Green.init -> void
+Flyback.Core.Graph.Swatch.Red.get -> byte
+Flyback.Core.Graph.Swatch.Red.init -> void
+Flyback.Core.Graph.Swatch.Swatch() -> void
+Flyback.Core.Graph.Swatch.Swatch(byte Red, byte Green, byte Blue) -> void
+Flyback.Core.Graph.Swatch
+abstract Flyback.Core.Graph.ModuleSkin.<Clone>$() -> Flyback.Core.Graph.ModuleSkin!
+override Flyback.Core.Graph.ModuleSkin.Artwork.<Clone>$() -> Flyback.Core.Graph.ModuleSkin.Artwork!
+override Flyback.Core.Graph.ModuleSkin.Artwork.Equals(object? obj) -> bool
+override Flyback.Core.Graph.ModuleSkin.Artwork.GetHashCode() -> int
+override Flyback.Core.Graph.ModuleSkin.Artwork.ToString() -> string!
+override Flyback.Core.Graph.ModuleSkin.Equals(object? obj) -> bool
+override Flyback.Core.Graph.ModuleSkin.GetHashCode() -> int
+override Flyback.Core.Graph.ModuleSkin.Palette.<Clone>$() -> Flyback.Core.Graph.ModuleSkin.Palette!
+override Flyback.Core.Graph.ModuleSkin.Palette.Equals(object? obj) -> bool
+override Flyback.Core.Graph.ModuleSkin.Palette.GetHashCode() -> int
+override Flyback.Core.Graph.ModuleSkin.Palette.ToString() -> string!
+override Flyback.Core.Graph.ModuleSkin.ToString() -> string!
+override Flyback.Core.Graph.Swatch.GetHashCode() -> int
+override sealed Flyback.Core.Graph.ModuleSkin.Artwork.Equals(Flyback.Core.Graph.ModuleSkin? other) -> bool
+override sealed Flyback.Core.Graph.ModuleSkin.Palette.Equals(Flyback.Core.Graph.ModuleSkin? other) -> bool
+static Flyback.Core.Graph.ModuleSkin.Artwork.operator !=(Flyback.Core.Graph.ModuleSkin.Artwork? left, Flyback.Core.Graph.ModuleSkin.Artwork? right) -> bool
+static Flyback.Core.Graph.ModuleSkin.Artwork.operator ==(Flyback.Core.Graph.ModuleSkin.Artwork? left, Flyback.Core.Graph.ModuleSkin.Artwork? right) -> bool
+static Flyback.Core.Graph.ModuleSkin.Palette.operator !=(Flyback.Core.Graph.ModuleSkin.Palette? left, Flyback.Core.Graph.ModuleSkin.Palette? right) -> bool
+static Flyback.Core.Graph.ModuleSkin.Palette.operator ==(Flyback.Core.Graph.ModuleSkin.Palette? left, Flyback.Core.Graph.ModuleSkin.Palette? right) -> bool
+static Flyback.Core.Graph.ModuleSkin.operator !=(Flyback.Core.Graph.ModuleSkin? left, Flyback.Core.Graph.ModuleSkin? right) -> bool
+static Flyback.Core.Graph.ModuleSkin.operator ==(Flyback.Core.Graph.ModuleSkin? left, Flyback.Core.Graph.ModuleSkin? right) -> bool
+static Flyback.Core.Graph.Swatch.operator !=(Flyback.Core.Graph.Swatch left, Flyback.Core.Graph.Swatch right) -> bool
+static Flyback.Core.Graph.Swatch.operator ==(Flyback.Core.Graph.Swatch left, Flyback.Core.Graph.Swatch right) -> bool
+virtual Flyback.Core.Graph.ModuleSkin.EqualityContract.get -> System.Type!
+virtual Flyback.Core.Graph.ModuleSkin.Equals(Flyback.Core.Graph.ModuleSkin? other) -> bool
+virtual Flyback.Core.Graph.ModuleSkin.PrintMembers(System.Text.StringBuilder! builder) -> bool
+~override Flyback.Core.Graph.Swatch.Equals(object obj) -> bool
+~override Flyback.Core.Graph.Swatch.ToString() -> string
+Flyback.Core.Graph.GrainCut
+Flyback.Core.Graph.GrainCut.Beaded = 2 -> Flyback.Core.Graph.GrainCut
+Flyback.Core.Graph.GrainCut.Hatched = 0 -> Flyback.Core.Graph.GrainCut
+Flyback.Core.Graph.GrainCut.Milled = 1 -> Flyback.Core.Graph.GrainCut
+Flyback.Core.Graph.ModuleSkin.Grain
+Flyback.Core.Graph.ModuleSkin.Grain.Cut.get -> Flyback.Core.Graph.GrainCut
+Flyback.Core.Graph.ModuleSkin.Grain.Cut.init -> void
+Flyback.Core.Graph.ModuleSkin.Grain.Deconstruct(out Flyback.Core.Graph.Swatch Accent, out Flyback.Core.Graph.GrainCut Cut) -> void
+Flyback.Core.Graph.ModuleSkin.Grain.Equals(Flyback.Core.Graph.ModuleSkin.Grain? other) -> bool
+Flyback.Core.Graph.ModuleSkin.Grain.Grain(Flyback.Core.Graph.Swatch Accent, Flyback.Core.Graph.GrainCut Cut) -> void
+Flyback.Core.Graph.ModuleSkin.Palette.Palette(Flyback.Core.Graph.ModuleSkin.Palette! original) -> void
+override Flyback.Core.Graph.ModuleSkin.Grain.<Clone>$() -> Flyback.Core.Graph.ModuleSkin.Grain!
+override Flyback.Core.Graph.ModuleSkin.Grain.Equals(object? obj) -> bool
+override Flyback.Core.Graph.ModuleSkin.Grain.GetHashCode() -> int
+override Flyback.Core.Graph.ModuleSkin.Grain.ToString() -> string!
+override Flyback.Core.Graph.ModuleSkin.Palette.EqualityContract.get -> System.Type!
+override Flyback.Core.Graph.ModuleSkin.Palette.PrintMembers(System.Text.StringBuilder! builder) -> bool
+override sealed Flyback.Core.Graph.ModuleSkin.Grain.Equals(Flyback.Core.Graph.ModuleSkin.Palette? other) -> bool
+static Flyback.Core.Graph.ModuleSkin.Grain.operator !=(Flyback.Core.Graph.ModuleSkin.Grain? left, Flyback.Core.Graph.ModuleSkin.Grain? right) -> bool
+static Flyback.Core.Graph.ModuleSkin.Grain.operator ==(Flyback.Core.Graph.ModuleSkin.Grain? left, Flyback.Core.Graph.ModuleSkin.Grain? right) -> bool
+virtual Flyback.Core.Graph.ModuleSkin.Palette.Equals(Flyback.Core.Graph.ModuleSkin.Palette? other) -> bool
