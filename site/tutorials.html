@@ -490,6 +490,17 @@ flyback-cli render drone.fbk -o drone.wav --seconds 30 --loudness
 # text patches work anywhere a patch does
 flyback-cli render my-patch.fbks -o my-patch.png</code></pre>
 
+    <h3>Play it without the editor</h3>
+    <p><code>flyback-viewer</code> ships beside the app too. It opens a patch, or a preset by name, and plays it,
+    picture and sound, with nothing else in the window and nothing written to disk. Its defaults are the
+    settings the app saved, and every one has a flag.</p>
+<pre><code>flyback-viewer drone.fbk
+flyback-viewer --preset "Dub" --size 1080p --mute
+flyback-cli viewer drone.fbk --hidden --for 10</code></pre>
+    <p>Hover the bottom right corner of the window for the sound, pause and rewind buttons, and double-click the
+    picture for full screen. <code>--hidden</code> opens no window at all, which is how to hear a patch without
+    anything landing on the screen.</p>
+
     <h3>Check, inspect and share</h3>
 <pre><code>flyback-cli check my-patch.fbk --strict     # exit code 0, 1 or 2; good for CI
 flyback-cli info my-patch.fbk               # modules, wires and compile cost

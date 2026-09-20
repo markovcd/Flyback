@@ -525,7 +525,7 @@ let slowly = t * 0.2
       <div>
         <h3>From a release</h3>
         <p>Each <a href="https://github.com/markovcd/Flyback/releases">release</a> has a self-contained folder per
-        platform, with the app, the command line tool and the plugins side by side. There is nothing to install:
+        platform, with the app, the command line tool, the viewer and the plugins side by side. There is nothing to install:
         unpack it and run <code>Flyback</code>.</p>
         <p>After that it keeps itself up to date: a new release is downloaded in the background and installed the
         next time Flyback starts, and only if it is signed with Flyback's release key. The window that opens then
@@ -552,7 +552,9 @@ dotnet run --project src/Flyback.App -c Release</code></pre>
 <pre><code>flyback-cli render nebula.fbk -o nebula.png --size 1920x1080 --at 2.5
 flyback-cli render drone.fbk -o drone.mp4 --seconds 30 --fps 30
 flyback-cli check nebula.fbk --strict
-flyback-cli print nebula.fbk -o nebula.fbks</code></pre>
+flyback-cli print nebula.fbk -o nebula.fbks
+flyback-viewer nebula.fbk --size 1080p
+flyback-cli viewer --preset "Dub" --hidden --for 10</code></pre>
       </div>
     </div>
   </div>

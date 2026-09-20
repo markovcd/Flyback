@@ -19,6 +19,7 @@ context, decision, consequences.
 | [0067](0067-a-module-keeps-its-name-and-its-memory-across-a-rebuild.md) | A module keeps its name, and its memory, across a rebuild *(user-directed)* |
 | [0068](0068-the-file-that-was-opened-decides-who-owns-the-patch.md) | The file that was opened decides who owns the patch *(user-directed)* |
 | [0119](0119-the-website-shows-a-module-by-photographing-one.md) | The website shows a module by photographing one *(user-directed)* |
+| [0123](0123-a-third-program-plays-a-patch-and-writes-nothing.md) | A third program plays a patch and writes nothing *(user-directed)* |
 
 ### The engine
 
@@ -87,7 +88,7 @@ context, decision, consequences.
 | [0046](0046-the-module-list-is-a-gesture-not-a-panel.md) | The module list is a gesture, not a panel *(user-directed)* |
 | [0070](0070-a-preset-declares-no-coordinates.md) | A preset declares no coordinates *(user-directed)* |
 | [0071](0071-two-undo-stacks-and-which-one-a-press-lands-on.md) | Two undo stacks, and which one a press lands on |
-| [0078](0078-export-leaves-the-shell-for-the-cli-that-already-writes-it.md) | Export leaves the shell for the CLI that already writes it *(user-directed; its Output-panel `Record…` row moved to the toolbar by [0080](0080-record-moves-to-the-toolbar-with-a-glyph-and-ctrl-r.md))* |
+| [0078](0078-export-leaves-the-shell-for-the-cli-that-already-writes-it.md) | Export leaves the shell for the CLI that already writes it *(user-directed; its Output-panel `Record…` row moved to the toolbar by [0080](0080-record-moves-to-the-toolbar-with-a-glyph-and-ctrl-r.md); playing without the editor is [0123](0123-a-third-program-plays-a-patch-and-writes-nothing.md))* |
 | [0080](0080-record-moves-to-the-toolbar-with-a-glyph-and-ctrl-r.md) | Record moves to the toolbar, with a glyph and Ctrl+R *(user-directed; its Output-panel `Rewind` row moved to the toolbar by [0081](0081-rewind-moves-to-the-toolbar-beside-record.md); its press given a count-in by [0090](0090-a-take-is-counted-in-and-starts-at-zero.md))* |
 | [0081](0081-rewind-moves-to-the-toolbar-beside-record.md) | Rewind moves to the toolbar, beside Record *(user-directed; every take does it first by [0090](0090-a-take-is-counted-in-and-starts-at-zero.md))* |
 | [0082](0082-the-output-settings-move-to-the-settings-window.md) | The Output settings move to the settings window, and are kept *(user-directed; its next-launch latency made immediate by [0085](0085-a-sound-backend-declares-its-own-settings.md))* |
@@ -104,6 +105,7 @@ context, decision, consequences.
 | [0118](0118-a-plugin-paints-its-own-module-background.md) | A plugin paints its own module's background *(user-directed)* |
 | [0121](0121-the-window-is-left-as-it-was-left.md) | The window is left as it was left *(user-directed)* |
 | [0122](0122-the-panel-wears-the-block-it-is-about.md) | The panel wears the block it is about *(user-directed; the face it borrows is [0116](0116-a-module-is-drawn-as-its-category-and-a-standout-as-itself.md))* |
+| [0124](0124-what-two-shells-draw-with-is-a-project-of-its-own.md) | What two shells draw with is a project of its own *(user-directed)* |
 
 ### Sound
 

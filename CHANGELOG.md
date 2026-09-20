@@ -59,6 +59,9 @@
 - `flyback-cli render --loudness` says how loud the sound came out, in LUFS, and its true peak.
 - A Scope or an Analyzer is drawn in an exported clip.
 
+### Viewer
+- A third program, `flyback-viewer`, opens a patch and plays it: picture and sound, no editor, and nothing written.
+
 ### Assistant
 - The assistant is told what every module does again. Settings → Agent sets how long that briefing may get and names an editable list of modules that are always included. Any module left out is marked on the canvas.
 - Settings → Agent has a Probe this model button, which asks the endpoint about the model on the form using the provider, settings and key as they stand there, saved or not. `flyback-cli probe`, which asks about every model, now asks before it starts; `--yes` is for a script.

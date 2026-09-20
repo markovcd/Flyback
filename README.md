@@ -37,6 +37,7 @@ dotnet run --project src/Flyback.App -c Release
 - MIDI input support through platform backends (Windows, macOS and Linux)
 - CLI tools for rendering, checking, inspecting and bundling patches
 - A text language a patch can be written in, saved as and read back from — the same instrument, as source
+- A viewer that opens a patch and plays it at once, picture and sound, with no editor and nothing written
 - Plugin-based architecture for platform-specific audio/video backends and extensions
 - Patch bundles that package the patch with its referenced sample and image files
 - Agentic patch authoring through a model-backed assistant that can listen, propose changes and work inside the same patch graph — over any chat-completions endpoint, or over Gemini, whose models hear the patch themselves
@@ -49,13 +50,15 @@ dotnet run --project src/Flyback.App -c Release
 ```bash
 dotnet publish src/Flyback.App -c Release -r win-x64 -o artifacts/win-x64
 dotnet publish src/Flyback.Cli -c Release -r win-x64 -o artifacts/win-x64
+dotnet publish src/Flyback.Viewer -c Release -r win-x64 -o artifacts/win-x64
 ```
 
-This produces a self-contained folder with the app and CLI, plus the shared runtime and plugin folders:
+This produces a self-contained folder with the app, the CLI and the viewer, plus the shared runtime and plugin folders:
 
 ```text
 Flyback.exe          the app
 flyback-cli.exe      the command line tool
+flyback-viewer.exe   the player: opens a patch and plays it, and writes nothing
 Flyback.Core.dll     the patch model and the module API, which plugins are built against
 Flyback.Engine.dll   the compiler, the language and the renderers
 Flyback.Plugins.dll  shared plugin host
@@ -130,6 +133,7 @@ flyback-cli print nebula.fbk --check
 flyback-cli render nebula.fbks -o nebula.png
 flyback-cli probe --keys
 flyback-cli probe --provider all
+flyback-cli viewer nebula.fbk
 ```
 
 ### Commands
@@ -138,6 +142,7 @@ flyback-cli probe --provider all
 - `check`: compiles the patch and reports issues
 - `info`: shows module and wire counts and compile cost
 - `pack`: packs a patch together with the files it references
+- `viewer`: starts `flyback-viewer` with everything after the word, so `flyback-cli viewer --help` is the viewer's own help
 - `print`: writes the patch out as text in the language, and can check that the text builds back to the same program
 - `modules`: lists the modules this build has, and which plugin defines each
 - `probe`: asks an assistant which models it has and what each one accepts
@@ -197,6 +202,20 @@ A bundle is a zip archive with the patch and any sample/picture files it uses. I
 
 The app saves and opens all three. A `.fbks` is a copy rather than a document: it keeps the instrument exactly — the text builds back to the same program, op for op — but not the groups or the canvas layout, so saving one leaves the open document as it was.
 
+## Viewer
+
+`flyback-viewer` opens a patch and plays it, picture and sound, with no editor around it. It writes nothing — no settings, layout, recovery file or statistics — and takes its defaults from the same `output.json` the editor saves, every one of them overridable on the command line.
+
+```bash
+flyback-viewer nebula.fbk
+flyback-viewer --preset "Dub" --size 1080p --mute
+flyback-viewer drone.fbk --from 30 --cpu --for 10
+flyback-viewer --preset "Whole band" --hidden --for 10
+flyback-viewer --help
+```
+
+Hover the bottom right corner of the window for the sound, pause and rewind buttons; double-click the picture for full screen. `--background` opens the window without taking focus, and `--hidden` opens none at all.
+
 ## How it works
 
 A patch is a graph, but during rendering it is compiled into a flat straight-line program over registers. Unused sections are not compiled, and the inner loop is designed to be cheap and predictable.
@@ -210,6 +229,8 @@ src/
   Flyback.Core      patch model, module API and the built-in modules
   Flyback.Engine    compiler, text language, renderers and file formats
   Flyback.Plugins   plugin host and built-in plugin logic
+  Flyback.Ui        the preview, sound device and look the app and the viewer share
+  Flyback.Viewer    the player: opens a patch and plays it
 
 tests/
   Flyback.Core.Tests      core engine tests
