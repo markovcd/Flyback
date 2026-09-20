@@ -2,6 +2,8 @@
 
 This covers launching the real Flyback window (full Avalonia, not a headless `UiTest`) to check something or to take a screenshot.
 
+If all that needs looking at is a patch's picture or sound, use `flyback-viewer` instead (`looking-at-a-patch.md`): it is quicker and there is no editor window to guard.
+
 ## Another Flyback may be open, and it is not yours
 
 Before starting one, list what is running: `Get-Process Flyback` with its `Id`, `StartTime`, `MainWindowTitle` and `Path`. An instance you did not start belongs to the user or to another session, whichever checkout or build its path points at.
