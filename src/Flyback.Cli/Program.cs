@@ -37,6 +37,10 @@ internal static class Program
             // No console. Whatever is reading this can have the default.
         }
 
+        // The player is a program of its own, so it is handed the rest of the line
+        // before there is anything to load or parse: its --help is its own.
+        if (ViewerCommand.Claims(args)) return ViewerCommand.Run(args[1..], Console.Error);
+
         // Before anything reads a patch: a file may name modules that only a
         // plugin defines, and a catalogue settled after the fact would have let
         // it compile against the wrong one.
@@ -61,6 +65,7 @@ internal static class Program
             Pack(patch, json),
             Modules(json),
             Probe(plugins, json),
+            ViewerCommand.Build(),
         };
 
         // What dotnet-suggest asks for completions with, and the only reason the
