@@ -6,7 +6,7 @@ Standing rules for working in this repo are in `.claude/rules/`, and Claude Code
 
 - `git-workflow.md`: commit straight to `main`, and isolate from other sessions' uncommitted work.
 - `prose-style.md`: American spelling; succinct comments that never narrate history.
-- `adrs.md`: check `docs/adr/` before proposing a refactor; number a new ADR from `main` at commit time.
+- `adrs.md`: check `docs/adr/` before proposing a refactor; rewrite a day-old ADR in place; number a new ADR from `main` at commit time.
 - `changelog.md`: what CHANGELOG.md may contain.
 - `website.md`: a change to anything `site/` describes updates the site in the same commit.
 - `windows-shell.md`: PowerShell and Bash-heredoc pitfalls that corrupt files.
