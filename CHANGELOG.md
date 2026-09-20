@@ -58,6 +58,7 @@
 
 ### Assistant
 - The assistant is told what every module does again. Settings → Agent sets how long that briefing may get and names an editable list of modules that are always included. Any module left out is marked on the canvas.
+- Settings → Agent has a Probe models button, which asks the endpoint what it offers using the provider, settings and key on the form whether or not they have been saved. `flyback-cli probe` asks before it starts, since either one is billed traffic; `--yes` is for a script.
 
 ### Canvas and interface
 - Ctrl+Shift+L, or Ctrl+click on the Tidy button, lays out only the selected modules and leaves the rest of the patch where it is.

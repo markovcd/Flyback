@@ -233,9 +233,12 @@ public class AssistantPanelTests : UiTest, IDisposable
 
         public AssistantCredential Credential => Schema.Credential;
 
-        public IReadOnlyList<SettingField> Form(SettingValues values) => Schema.Form(values);
+        // Through Surveyed, as both shipped adapters declare themselves: a
+        // survey of the endpoint replaces the written-down models, and a fake
+        // that skipped it would be a fake nothing could probe.
+        public IReadOnlyList<SettingField> Form(SettingValues values) => Schema.Surveyed(values).Form(values);
 
-        public AssistantSenses Senses(SettingValues values) => Schema.Senses(values);
+        public AssistantSenses Senses(SettingValues values) => Schema.Surveyed(values).Senses(values);
 
         public virtual string? Unavailable(AssistantConfig config) => null;
 
@@ -911,6 +914,168 @@ public class AssistantPanelTests : UiTest, IDisposable
         Settle(host);
 
         messages.ShouldHaveSingleItem("nothing about the key changed on the second save");
+    }
+
+    // --- probing the endpoint -------------------------------------------------
+
+    /// <summary>
+    /// One that can be asked what it offers, which is the half of the settings
+    /// the probe button is for. It answers from here rather than over a network,
+    /// and keeps what it was asked with.
+    /// </summary>
+    private sealed class Surveying(Func<CancellationToken, Task<IReadOnlyList<ModelReport>>>? answering = null)
+        : Provider(new AssistantSchema("quiet", [new AssistantModel("quiet")], "NONE", "none needed")), IModelSurvey
+    {
+        public override string Id => "surveying";
+
+        public override string Name => "Can be asked";
+
+        /// <summary>What the last probe went out with, which is the whole question.</summary>
+        public AssistantConfig? Asked { get; private set; }
+
+        public Task<IReadOnlyList<ModelReport>> Survey(
+            AssistantConfig config,
+            SurveyOptions options,
+            IProgress<string>? said = null,
+            CancellationToken cancel = default)
+        {
+            Asked = config;
+
+            return answering is null
+                ? Task.FromResult<IReadOnlyList<ModelReport>>(
+                    [new ModelReport("found-one"), new ModelReport("found-two")])
+                : answering(cancel);
+        }
+    }
+
+    /// <summary>A survey that answers only by being stopped.</summary>
+    private static async Task<IReadOnlyList<ModelReport>> Never(CancellationToken cancel)
+    {
+        await Task.Delay(Timeout.Infinite, cancel);
+
+        return [];
+    }
+
+    private static Button ProbeButton(Window host) =>
+        All<Button>(host).Single(button => button.Name == "probe");
+
+    private static TextBlock ProbeNote(Window host) =>
+        All<TextBlock>(host).Single(block => block.Name == "probeNote");
+
+    /// <summary>The key field, told apart from the message box by hiding what is typed.</summary>
+    private static TextBox KeyBox(Window host) =>
+        All<TextBox>(host).Single(box => box.PasswordChar != default);
+
+    private static void Click(Button button) =>
+        button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+
+    /// <summary>
+    /// The point of the button: the settings window is where somebody finds out
+    /// whether a key and an endpoint work at all, and they have not been saved
+    /// yet because that is what they are trying to find out.
+    /// </summary>
+    [AvaloniaFact]
+    public void The_probe_goes_out_with_what_is_on_the_form_rather_than_what_was_saved()
+    {
+        var provider = new Surveying();
+        var host = Settings(Showing(
+            With(provider),
+            Configured("surveying", (AssistantSchema.ModelKey, "saved-model"))));
+
+        KeyBox(host).Text = "sk-typed";
+        All<ComboBox>(host).Single(box => box.Name == AssistantSchema.ModelKey).Text = "typed-model";
+        Settle(host);
+
+        Click(ProbeButton(host));
+        Settle(host);
+
+        provider.Asked.ShouldNotBeNull();
+        provider.Asked!.ApiKey.ShouldBe("sk-typed");
+        provider.Asked.Values.Text(AssistantSchema.ModelKey).ShouldBe("typed-model");
+    }
+
+    /// <summary>
+    /// What a probe found is on the form like anything else on it, and this
+    /// window keeps nothing until Save.
+    /// </summary>
+    [AvaloniaFact]
+    public void What_the_probe_finds_fills_the_model_list_and_waits_for_Save()
+    {
+        var saved = Configured("surveying");
+        var window = Showing(With(new Surveying()), saved);
+        var panel = All<AssistantPanel>(window).Single();
+        var host = Settings(window);
+
+        KeyBox(host).Text = "sk-typed";
+        Settle(host);
+
+        Click(ProbeButton(host));
+        Settle(host);
+
+        var models = All<ComboBox>(host).Single(box => box.Name == AssistantSchema.ModelKey);
+
+        ((IEnumerable<string>)models.ItemsSource!).ShouldBe(["found-one", "found-two"]);
+        Survey.Read(saved.Of("surveying").Text(Survey.Key)).ShouldBeEmpty("nothing is kept until Save");
+
+        panel.SaveSettings();
+
+        Survey.Read(saved.Of("surveying").Text(Survey.Key))
+            .Select(model => model.Id)
+            .ShouldBe(["found-one", "found-two"]);
+    }
+
+    /// <summary>
+    /// A key that has not been saved is still a key. Without one there is
+    /// nothing to ask with, and the button says so rather than doing nothing.
+    /// </summary>
+    [AvaloniaFact]
+    public void The_probe_waits_for_a_key_and_not_for_it_to_be_saved()
+    {
+        var host = Settings(Showing(With(new Surveying()), Configured("surveying")));
+
+        ProbeButton(host).IsEnabled.ShouldBeFalse("there is no key to ask with");
+
+        KeyBox(host).Text = "sk-typed";
+        Settle(host);
+
+        ProbeButton(host).IsEnabled.ShouldBeTrue();
+    }
+
+    /// <summary>
+    /// Gone rather than dead for a provider that cannot answer it: a survey is
+    /// something a provider either has or has not, and a button that could never
+    /// work is a question about itself.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_provider_that_cannot_be_asked_has_no_probe_button()
+    {
+        var host = Settings(Showing(With(new Deaf()), Configured("deaf")));
+
+        ProbeButton(host).IsEffectivelyVisible.ShouldBeFalse();
+    }
+
+    /// <summary>
+    /// The one button in both its jobs, as the message box's is. A survey walks a
+    /// list of models over minutes, so the way out of one has to be the way in.
+    /// </summary>
+    [AvaloniaFact]
+    public void The_probe_button_stops_the_probe_it_started()
+    {
+        var host = Settings(Showing(With(new Surveying(Never)), Configured("surveying")));
+
+        KeyBox(host).Text = "sk-typed";
+        Settle(host);
+
+        Click(ProbeButton(host));
+        Settle(host);
+
+        ProbeButton(host).Content.ShouldBe("Stop");
+
+        Click(ProbeButton(host));
+        Settle(host);
+
+        ProbeButton(host).Content.ShouldBe("Probe models");
+        ProbeNote(host).Text.ShouldBe("Stopped. Nothing was kept.");
     }
 
     private sealed class FakeStore : ISecretStore

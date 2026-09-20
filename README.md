@@ -140,9 +140,14 @@ completely.
 
 `probe` is the one command that reaches off the machine. It asks a provider's endpoint what it
 offers and records the answer in the settings file both programs read, so the app's model box
-fills itself in without being told. It takes minutes and the provider bills for it, which is
-why it is a command rather than a button; `--keys` says where each key would come from and
-asks nothing of anybody, and `--dry-run` prints what was found and leaves the settings alone.
+fills itself in without being told. It takes minutes and the provider bills for it, so it says
+what that means and waits for a yes; `--yes` answers for a script, which has nobody to ask.
+`--keys` says where each key would come from and asks nothing of anybody, and `--dry-run` prints
+what was found and leaves the settings alone.
+
+Settings → Agent runs the same survey from a button. That one goes out with the provider, the
+form and the key as they stand on the settings window rather than with what was last saved,
+which is how a key or an endpoint can be tried before it is kept.
 
 ### Completion
 

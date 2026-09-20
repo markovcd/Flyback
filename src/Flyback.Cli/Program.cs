@@ -133,11 +133,17 @@ internal static class Program
             Description = "Say where each provider's key would come from, and ask nothing of anybody.",
         };
 
+        var yes = new Option<bool>("--yes", "-y")
+        {
+            Description = "Start without the question. A probe is billed traffic, so it is asked for "
+                + "first unless this says not to.",
+        };
+
         var command = new Command(
             "probe",
             "Ask an assistant's endpoint which models it has and what each one accepts.")
         {
-            provider, model, all, bounds, dry, keys, json,
+            provider, model, all, bounds, dry, keys, yes, json,
         };
 
         command.SetAction((result, cancellation) => ProbeCommand.Run(
@@ -149,10 +155,12 @@ internal static class Program
                 result.GetValue(bounds),
                 result.GetValue(dry),
                 result.GetValue(json),
-                result.GetValue(keys)),
+                result.GetValue(keys),
+                result.GetValue(yes)),
             Console.Out,
             Console.Error,
-            cancellation));
+            cancellation,
+            asking: Console.IsInputRedirected ? null : Console.In));
 
         return command;
     }

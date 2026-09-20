@@ -173,6 +173,137 @@ public class ProbeCommandTests : IDisposable
         said.ShouldContain("one-flash: sees, hears");
     }
 
+    // --- the question before it spends anything -------------------------------
+
+    /// <summary>
+    /// The command bills somebody the moment it starts, so it says what that
+    /// means and waits. A yes gets exactly what a yes has always got.
+    /// </summary>
+    [Fact]
+    public async Task It_says_what_a_probe_costs_and_waits_for_a_yes()
+    {
+        Keyed("ONE_KEY");
+
+        var (code, said, _) = await Probe(new Options { Provider = "one", Yes = false, Answer = "y" });
+
+        said.ShouldContain("billed");
+        said.ShouldContain("Go ahead?");
+
+        code.ShouldBe(Exit.Ok);
+        said.ShouldContain("one-flash");
+        AssistantSettings.Load(path).Of("one").Text(Survey.Key).ShouldNotBeEmpty();
+    }
+
+    /// <summary>
+    /// Nothing is sent, which is the whole of what a no means here — not that the
+    /// answer was thrown away after the requests had been paid for.
+    /// </summary>
+    [Fact]
+    public async Task A_no_asks_the_endpoint_nothing()
+    {
+        Keyed("ONE_KEY");
+
+        var provider = new Surveyable("one", "ONE_KEY");
+
+        var (code, said, _) = await Probe(
+            new Options { Provider = "one", Yes = false, Answer = "n" },
+            provider);
+
+        code.ShouldBe(Exit.Failed);
+        said.ShouldContain("Nothing was asked.");
+        provider.Asked.ShouldBeFalse();
+    }
+
+    /// <summary>
+    /// A stray keypress and a bare Return are both a no. The money is somebody
+    /// else's, so the only thing that spends it is the word.
+    /// </summary>
+    [Theory]
+    [InlineData("")]
+    [InlineData("maybe")]
+    [InlineData("Y E S")]
+    public async Task Anything_short_of_yes_is_a_no(string answer)
+    {
+        Keyed("ONE_KEY");
+
+        var provider = new Surveyable("one", "ONE_KEY");
+
+        var (code, _, _) = await Probe(
+            new Options { Provider = "one", Yes = false, Answer = answer },
+            provider);
+
+        code.ShouldBe(Exit.Failed);
+        provider.Asked.ShouldBeFalse();
+    }
+
+    /// <summary>
+    /// A script has nobody to answer, and a command that took silence for a yes
+    /// would spend money on the strength of nothing having objected.
+    /// </summary>
+    [Fact]
+    public async Task With_nobody_to_ask_it_says_so_rather_than_going_ahead()
+    {
+        Keyed("ONE_KEY");
+
+        var provider = new Surveyable("one", "ONE_KEY");
+
+        var (code, _, complained) = await Probe(
+            new Options { Provider = "one", Yes = false },
+            provider);
+
+        code.ShouldBe(Exit.Failed);
+        complained.ShouldContain("--yes");
+        provider.Asked.ShouldBeFalse();
+    }
+
+    /// <summary>
+    /// Being asked to agree to a charge and then told there was never going to be
+    /// one is worse than either sentence on its own.
+    /// </summary>
+    [Fact]
+    public async Task A_probe_that_could_not_run_anyway_is_not_worth_a_question()
+    {
+        var (code, said, complained) = await Probe(new Options { Provider = "one", Yes = false });
+
+        code.ShouldBe(Exit.Failed);
+        said.ShouldNotContain("Go ahead?");
+        complained.ShouldContain("No key for One");
+    }
+
+    /// <summary>
+    /// <c>--keys</c> asks nothing of anybody, so there is nothing to agree to.
+    /// </summary>
+    [Fact]
+    public async Task Keys_is_not_worth_a_question()
+    {
+        Keyed("ONE_KEY");
+
+        var (code, said, _) = await Probe(new Options { Keys = true, Yes = false });
+
+        code.ShouldBe(Exit.Ok);
+        said.ShouldNotContain("Go ahead?");
+    }
+
+    /// <summary>
+    /// A dry run asks the endpoint everything a real one does and is billed for
+    /// all of it. What it skips is the writing down.
+    /// </summary>
+    [Fact]
+    public async Task A_dry_run_is_asked_about_too()
+    {
+        Keyed("ONE_KEY");
+
+        var provider = new Surveyable("one", "ONE_KEY");
+
+        var (code, said, _) = await Probe(
+            new Options { Provider = "one", Dry = true, Yes = false, Answer = "n" },
+            provider);
+
+        code.ShouldBe(Exit.Failed);
+        said.ShouldContain("Go ahead?");
+        provider.Asked.ShouldBeFalse();
+    }
+
     [Fact]
     public async Task Keys_says_where_each_would_come_from_and_asks_nothing()
     {
@@ -228,11 +359,12 @@ public class ProbeCommandTests : IDisposable
 
         var code = await ProbeCommand.Run(
             plugins,
-            new ProbeOptions(options.Provider, [], false, false, options.Dry, false, options.Keys),
+            new ProbeOptions(options.Provider, [], false, false, options.Dry, false, options.Keys, options.Yes),
             said,
             complained,
             CancellationToken.None,
-            path);
+            path,
+            options.Answer is null ? null : new StringReader(options.Answer));
 
         return (code, said.ToString(), complained.ToString());
     }
@@ -245,6 +377,19 @@ public class ProbeCommandTests : IDisposable
         public bool Dry { get; init; }
 
         public bool Keys { get; init; }
+
+        /// <summary>
+        /// Past the question by default: what nearly all of these are about is
+        /// which provider gets asked, and the few about the question itself turn
+        /// this off and answer it.
+        /// </summary>
+        public bool Yes { get; init; } = true;
+
+        /// <summary>
+        /// What somebody types at the question. Null is nobody there at all,
+        /// which is a pipe or a script rather than an empty answer.
+        /// </summary>
+        public string? Answer { get; init; }
     }
 
     /// <summary>

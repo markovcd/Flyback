@@ -15,6 +15,11 @@ namespace Flyback.Cli;
 /// that costs nothing, which is the point: whether a key is found is the question
 /// everything else depends on.
 /// </param>
+/// <param name="Yes">
+/// Start without asking first. For a script, which has nobody to answer the question
+/// — and which is the only reason a command that spends money on being run has a way
+/// past it.
+/// </param>
 internal sealed record ProbeOptions(
     string? Provider,
     IReadOnlyList<string> Only,
@@ -22,7 +27,8 @@ internal sealed record ProbeOptions(
     bool Bounds,
     bool Dry,
     bool Json,
-    bool Keys = false);
+    bool Keys = false,
+    bool Yes = false);
 
 /// <summary>
 /// Asks a provider what its endpoint actually offers, and keeps the answer.
@@ -40,13 +46,19 @@ internal static class ProbeCommand
     /// Somewhere other than the usual place, for the tests. A command that both
     /// reads and writes the real file is one no test can call safely.
     /// </param>
+    /// <param name="asking">
+    /// Where the question is answered, or null where there is nobody to answer it —
+    /// a script, a pipe, a test. Whether this machine has a console is the caller's
+    /// to know; what to do about it is here.
+    /// </param>
     public static async Task<int> Run(
         PluginCatalog plugins,
         ProbeOptions options,
         TextWriter output,
         TextWriter error,
         CancellationToken cancel,
-        string? settingsPath = null)
+        string? settingsPath = null,
+        TextReader? asking = null)
     {
         var settings = AssistantSettings.Load(settingsPath);
 
@@ -58,7 +70,22 @@ internal static class ProbeCommand
         if (options.Keys) return Keys(plugins, credentials, output);
 
         if (Everyone(plugins, options.Provider))
+        {
+            if (plugins.Assistants.Count == 0)
+            {
+                error.WriteLine("No assistant is installed.");
+
+                return Exit.Failed;
+            }
+
+            if (plugins.Assistants.Any(one => Ready(one, credentials))
+                && !Agreed(options, asking, output, error))
+            {
+                return Exit.Failed;
+            }
+
             return await Each(plugins, settings, credentials, options, output, error, cancel, settingsPath).ConfigureAwait(false);
+        }
 
         // The named one, then the one this machine was left on, then whichever
         // the catalogue would put in front of somebody. The middle is what makes
@@ -82,7 +109,82 @@ internal static class ProbeCommand
             return Exit.Failed;
         }
 
+        if (Ready(assistant, credentials) && !Agreed(options, asking, output, error)) return Exit.Failed;
+
         return await One(settings, credentials, assistant, options, output, error, cancel, settingsPath).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Whether this one would actually send anything: it can be surveyed, and
+    /// there is a key to survey it with.
+    /// </summary>
+    /// <remarks>
+    /// What the question is gated on. Nothing is spent without both, and
+    /// <see cref="One"/> says which is missing far better than a question could —
+    /// being asked to agree to a charge and then told there was never going to be
+    /// one is worse than either sentence alone.
+    /// </remarks>
+    private static bool Ready(IPatchAssistant assistant, Credentials credentials) =>
+        assistant is IModelSurvey
+        && credentials.Of(assistant.Id, assistant.Credential.EnvironmentVariable) is not null;
+
+    /// <summary>
+    /// Says what this is about to spend and waits for a yes.
+    /// </summary>
+    /// <remarks>
+    /// Asked once however many providers are about to be walked, and asked before
+    /// anything is sent — which is the whole of what it is for. <c>--dry-run</c> is
+    /// no excuse to skip it: a dry run asks the endpoint everything a real one does
+    /// and is billed for all of it, and only declines to write the answer down.
+    /// <para>
+    /// Nobody to ask is not a yes. That is what <c>--yes</c> is for, and saying so is
+    /// more use than a command that hangs on a pipe, or one that helps itself to
+    /// somebody's money because nothing objected.
+    /// </para>
+    /// </remarks>
+    private static bool Agreed(ProbeOptions options, TextReader? asking, TextWriter output, TextWriter error)
+    {
+        if (options.Yes) return true;
+
+        if (asking is null)
+        {
+            error.WriteLine("This asks before it spends anything, and there is nobody here to ask.");
+            error.WriteLine("Pass --yes to go ahead without the question.");
+
+            return false;
+        }
+
+        // Beside the answer rather than in it: under --json this command's output
+        // is a document somebody is piping somewhere, and a question written into
+        // it is a question nobody sees and a file nothing can parse.
+        var talk = options.Json ? error : output;
+
+        talk.WriteLine("A probe is real traffic on a real key, and every question it asks is billed.");
+        talk.WriteLine(
+            "Each model is asked to answer, then to take a picture, then to take a sound — three "
+            + "requests apiece, and a provider's list runs to dozens of models.");
+
+        if (options.Bounds)
+        {
+            talk.WriteLine(
+                "--bounds adds a search per model on top of that, and makes each one think for real "
+                + "near the top of its range.");
+        }
+
+        talk.Write("Go ahead? [y/N] ");
+
+        var answer = asking.ReadLine()?.Trim();
+
+        // Yes is typed out or it is not yes. Nothing else — no default, no empty
+        // line, no end of input — is taken for agreement to spend money.
+        var agreed = string.Equals(answer, "y", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(answer, "yes", StringComparison.OrdinalIgnoreCase);
+
+        talk.WriteLine();
+
+        if (!agreed) talk.WriteLine("Nothing was asked.");
+
+        return agreed;
     }
 
     /// <summary>
@@ -115,13 +217,6 @@ internal static class ProbeCommand
         CancellationToken cancel,
         string? settingsPath)
     {
-        if (plugins.Assistants.Count == 0)
-        {
-            error.WriteLine("No assistant is installed.");
-
-            return Exit.Failed;
-        }
-
         var any = false;
         var first = true;
 

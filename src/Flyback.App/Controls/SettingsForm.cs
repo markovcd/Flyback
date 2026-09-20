@@ -91,6 +91,23 @@ public sealed class SettingsForm : UserControl
     }
 
     /// <summary>
+    /// Sets one value from outside, as though the plugin had been answered with
+    /// it, and asks for the form again.
+    /// </summary>
+    /// <remarks>
+    /// Not an answer, so <see cref="Changed"/> stays quiet: nobody typed it. It is
+    /// how something found out about the plugin rather than asked of somebody — a
+    /// survey of an endpoint — lands on the form without this having to know what
+    /// it is.
+    /// </remarks>
+    public void Put(string key, string value)
+    {
+        Values = Values.With(key, value);
+
+        Declare();
+    }
+
+    /// <summary>
     /// Asks the plugin what the form should be now, and makes it so.
     /// </summary>
     /// <remarks>
