@@ -1,10 +1,12 @@
 using System.Reflection;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Input.Platform;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Avalonia.Styling;
 using Flyback.Core;
 
 namespace Flyback.App.Controls;
@@ -104,7 +106,7 @@ internal static class About
         page.Children.Add(Donation());
         page.Children.Add(Rule());
         page.Children.Add(Caption("Plugins"));
-        page.Children.Add(new TextBlock { Text = pluginReport, FontSize = Text.Body, TextWrapping = TextWrapping.Wrap });
+        page.Children.Add(Report(pluginReport));
 
         return page;
     }
@@ -168,38 +170,23 @@ internal static class About
     /// </remarks>
     private static Control Donation()
     {
-        const int side = 148;
-
-        var block = new StackPanel { Spacing = 8 };
+        const int side = 132;
 
         if (BitcoinAddress.Length == 0)
-        {
-            block.Children.Add(Quiet("There is no donation address set in this build."));
-            return block;
-        }
-
-        block.Children.Add(new TextBlock
-        {
-            Text = "If this was worth anything to you, a little bitcoin is welcome.",
-            TextWrapping = TextWrapping.Wrap,
-        });
-
-        block.Children.Add(Quiet(
-            "It buys tokens, which is what Flyback is written with. "
-            + "Strictly non-profit: nothing here is sold and nobody is paid out of it."));
+            return Quiet("There is no donation address set in this build.");
 
         var code = new QrCode
         {
             Text = BitcoinAddress,
             Width = side,
             Height = side,
-            HorizontalAlignment = HorizontalAlignment.Left,
+            VerticalAlignment = VerticalAlignment.Top,
             Cursor = new Cursor(StandardCursorType.Hand),
         };
 
         ToolTip.SetTip(code, "Click to copy the address");
 
-        // Said under the code rather than in the tip, which is not on screen any
+        // Said beside the code rather than in the tip, which is not on screen any
         // more by the time there is anything to say.
         var said = Quiet("Click the code to copy the address.");
 
@@ -211,10 +198,72 @@ internal static class About
             said.Text = "Copied.";
         };
 
+        // Beside the words rather than under them: the window is as tall as the
+        // screen allows, and a code stacked under three lines of text is the
+        // difference between fitting and scrolling.
+        var words = new StackPanel { Spacing = 8, Margin = new Thickness(14, 0, 0, 0) };
+
+        words.Children.Add(new TextBlock
+        {
+            Text = "If this was worth anything to you, a little bitcoin is welcome.",
+            TextWrapping = TextWrapping.Wrap,
+        });
+
+        words.Children.Add(Quiet(
+            "It buys tokens, which is what Flyback is written with. "
+            + "Strictly non-profit: nothing here is sold and nobody is paid out of it."));
+
+        words.Children.Add(said);
+
+        var block = new Grid { ColumnDefinitions = new ColumnDefinitions($"{side},*") };
+
+        Grid.SetColumn(code, 0);
+        Grid.SetColumn(words, 1);
         block.Children.Add(code);
-        block.Children.Add(said);
+        block.Children.Add(words);
 
         return block;
+    }
+
+    /// <summary>
+    /// The plugin report in a box of its own, so it is the report that scrolls and
+    /// not the whole window.
+    /// </summary>
+    /// <remarks>
+    /// Read-only and selectable, so a path or an id can be copied out of it, and
+    /// on the window's own panel color in every state: the theme's box repaints
+    /// itself on hover and focus, which would make it look editable.
+    /// </remarks>
+    private static TextBox Report(string text)
+    {
+        var panel = new SolidColorBrush(Colors.Panel);
+
+        var box = new TextBox
+        {
+            Text = text,
+            IsReadOnly = true,
+            AcceptsReturn = true,
+            TextWrapping = TextWrapping.NoWrap,
+            FontSize = Text.Body,
+            Height = 130,
+            Background = panel,
+            BorderThickness = new Thickness(0),
+            Padding = new Thickness(0),
+        };
+
+        ScrollViewer.SetHorizontalScrollBarVisibility(box, ScrollBarVisibility.Auto);
+        ScrollViewer.SetVerticalScrollBarVisibility(box, ScrollBarVisibility.Auto);
+
+        foreach (var state in new[] { ":pointerover", ":focus", ":focus:pointerover", ":disabled" })
+        {
+            var restyled = new Style(x => x.OfType<TextBox>().Class(state).Template().OfType<Border>().Name("PART_BorderElement"));
+
+            restyled.Setters.Add(new Setter(Border.BackgroundProperty, panel));
+            restyled.Setters.Add(new Setter(Border.BorderThicknessProperty, new Thickness(0)));
+            box.Styles.Add(restyled);
+        }
+
+        return box;
     }
 
     /// <summary>A line of text that opens <paramref name="uri"/> in the system browser.</summary>

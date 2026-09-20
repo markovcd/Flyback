@@ -4,6 +4,7 @@ using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Media;
 using Avalonia.Threading;
 using Flyback.App.Controls;
 using Shouldly;
@@ -70,6 +71,48 @@ public class DialogTests : UiTest
         Dismiss(window, dialog);
 
         All<ModalOverlay>(window).ShouldBeEmpty("the cross should have taken it down");
+    }
+
+    /// <summary>
+    /// About fits its window: the dialog's own scroller has nothing to scroll, and
+    /// the plugin report, which can be any length, is the thing with a bar.
+    /// </summary>
+    [AvaloniaFact]
+    public void About_does_not_scroll_as_a_whole()
+    {
+        var window = Open();
+        var dialog = Show(window, "about");
+        var outer = All<ScrollViewer>(dialog).First();
+
+        outer.Extent.Height.ShouldBeLessThanOrEqualTo(outer.Viewport.Height, "the whole window would have a scroll bar");
+    }
+
+    /// <summary>
+    /// The plugin report is on the dialog's color when the pointer is over it and
+    /// when it is focused, which is when the theme repaints an ordinary box.
+    /// </summary>
+    [AvaloniaFact]
+    public void The_plugin_report_keeps_the_dialogs_color_under_the_pointer_and_focus()
+    {
+        var window = Open();
+        var dialog = Show(window, "about");
+        var box = All<TextBox>(dialog).Single();
+        var border = All<Border>(box).First(b => b.Name == "PART_BorderElement");
+        var dialogColor = ((ISolidColorBrush)All<Border>(dialog).Single(b => b.Name == "dialog").Background!).Color;
+
+        ((ISolidColorBrush)border.Background!).Color.ShouldBe(dialogColor, "at rest");
+
+        window.MouseMove(box.TranslatePoint(new Point(10, 10), window)!.Value);
+        Settle(window);
+
+        box.IsPointerOver.ShouldBeTrue("the pointer should be over the box for this to mean anything");
+        ((ISolidColorBrush)border.Background!).Color.ShouldBe(dialogColor, "under the pointer");
+
+        box.Focus();
+        Settle(window);
+
+        box.IsFocused.ShouldBeTrue("the box should have taken focus for this to mean anything");
+        ((ISolidColorBrush)border.Background!).Color.ShouldBe(dialogColor, "focused");
     }
 
     /// <summary>Every dialog casts a shadow on the sheet behind it, so its edge reads against a busy patch.</summary>

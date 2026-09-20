@@ -3,10 +3,12 @@ using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
+using Avalonia.Media;
 using Avalonia.Threading;
 using Flyback.App.Controls;
 using Flyback.Core;
 using Shouldly;
+using Colors = Flyback.App.Controls.Colors;
 using Xunit;
 
 namespace Flyback.App.Tests.Ui;
@@ -113,7 +115,7 @@ public class AboutTests : UiTest
     {
         var window = Showing();
 
-        All<TextBox>(window).ShouldBeEmpty("nothing that could be mistaken for an address");
+        All<TextBox>(window).ShouldNotContain(box => (box.Text ?? string.Empty).Contains("bc1"), "no box spells an address out");
 
         if (About.BitcoinAddress.Length == 0)
         {
@@ -197,7 +199,38 @@ public class AboutTests : UiTest
     {
         var window = Showing();
 
-        Words(window).ShouldContain(SamplePluginReport);
+        All<TextBox>(window).ShouldHaveSingleItem().Text.ShouldBe(SamplePluginReport);
+    }
+
+    /// <summary>
+    /// The report is read, selected and copied from, never typed into, and it
+    /// wears the window's own color rather than a field's.
+    /// </summary>
+    [AvaloniaFact]
+    public void The_plugin_report_is_read_only_on_the_windows_own_color()
+    {
+        var window = Showing();
+        var box = All<TextBox>(window).ShouldHaveSingleItem();
+
+        box.IsReadOnly.ShouldBeTrue();
+        box.AcceptsReturn.ShouldBeTrue("a report is several lines");
+        ((ISolidColorBrush)box.Background!).Color.ShouldBe(Colors.Panel);
+    }
+
+    /// <summary>
+    /// However long the report, the window is the same size: it is the report
+    /// that scrolls, and the window around it never grows a bar of its own.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_long_report_scrolls_itself_and_leaves_the_window_the_same_height()
+    {
+        var shortHeight = Showing().Bounds.Height;
+
+        var lines = Enumerable.Range(0, 200).Select(n => $"    Plugin {n}  (plugin.{n})");
+        var window = Showing(string.Join(Environment.NewLine, lines));
+
+        window.Bounds.Height.ShouldBe(shortHeight);
+        All<TextBox>(window).ShouldHaveSingleItem().Bounds.Height.ShouldBeLessThan(200);
     }
 
     /// <summary>
