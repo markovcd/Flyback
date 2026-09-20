@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <IsPackable>false</IsPackable>
@@ -19,12 +19,7 @@
 
   <ItemGroup>
     <PackageReference Include="Shouldly" Version="4.3.0" />
-    <!--
-      Held at 3.x: Avalonia.Headless.XUnit is compiled against xunit.v3 3.2.2's
-      extensibility core, and its discoverer throws MissingMethodException on
-      4.x. Moves when Avalonia ships a build against it.
-    -->
-    <PackageReference Include="xunit.v3" Version="3.2.2" />
+    <PackageReference Include="xunit.v3" Version="4.0.1" />
   </ItemGroup>
 
   <!--
@@ -36,10 +31,31 @@
   -->
   <ItemGroup>
     <PackageReference Include="Avalonia.Headless" Version="12.1.2" />
-    <PackageReference Include="Avalonia.Headless.XUnit" Version="12.1.2" />
     <PackageReference Include="Avalonia.Skia" Version="12.1.2" />
     <PackageReference Include="Avalonia.Fonts.Inter" Version="12.1.2" />
     <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.2" />
+  </ItemGroup>
+
+  <!--
+    Headless/ is Avalonia.Headless.XUnit's own source (MIT, from
+    src/Headless/Avalonia.Headless.XUnit in AvaloniaUI/Avalonia), compiled here
+    instead of referenced as a package. The shipped assembly is built against
+    xunit.v3 3.2.2 and its discoverer throws MissingMethodException on 4.x,
+    which loses every UI test in this assembly at discovery; built from source
+    it is compiled against whatever xunit the project uses.
+
+    Kept as close to upstream as it can be, so a newer Avalonia can be diffed
+    against it: what changed is the xunit 4 extensibility API it sits on — the
+    scheduling values ISelfExecutingXunitTestCase.Run now carries, threaded down
+    to the runner contexts, and a discoverer override whose signature moved. The
+    four AvaloniaTestFramework* files are left out, being the assembly-attribute
+    route that [AvaloniaFact] does not take.
+
+    Delete the folder and reference the package again once Avalonia ships one
+    built against xunit.v3 4.
+  -->
+  <ItemGroup>
+    <Compile Update="Headless\*.cs" Visible="true" />
   </ItemGroup>
 
 </Project>

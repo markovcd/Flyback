@@ -1,10 +1,12 @@
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Styling;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Avalonia.Themes.Fluent;
+using Xunit.Sdk;
+using Xunit.v3;
 using Flyback.Core.Graph;
 using Shouldly;
 using Flyback.App.Tests.Ui;
@@ -12,6 +14,12 @@ using Flyback.App.Tests.Ui;
 // Every [AvaloniaFact] and [AvaloniaTheory] in this assembly runs against this
 // application, on a UI thread the session owns. Declared once, at the assembly.
 [assembly: AvaloniaTestApplication(typeof(UiTest))]
+
+// xunit 4 runs every test in parallel by default, regardless of collection. The
+// UI ones all queue on the one thread headless gives the assembly, so that buys
+// nothing and only puts more of them in the queue at once. This is what xunit 3
+// did, and what the timings here were measured against.
+[assembly: Parallelization(Mode = ParallelMode.Collections)]
 
 namespace Flyback.App.Tests.Ui;
 
