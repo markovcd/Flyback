@@ -158,16 +158,20 @@ internal static class About
     }
 
     /// <summary>
-    /// The address, and a way to take a copy of it that is not retyping it.
+    /// The address as a code to scan and as text to copy, neither of which is
+    /// retyping it.
     /// </summary>
     /// <remarks>
-    /// Selectable and monospaced, because the one thing worse than no address is
-    /// one that was read wrongly. Where none is set the section says so in as
-    /// many words rather than showing a blank line somebody might take for a
-    /// rendering fault.
+    /// The code is encoded from the same constant the text below it shows, so the
+    /// two cannot come to disagree. The text is selectable and monospaced, because
+    /// the one thing worse than no address is one that was read wrongly. Where
+    /// none is set the section says so in as many words rather than showing a
+    /// blank line somebody might take for a rendering fault.
     /// </remarks>
     private static Control Donation()
     {
+        const int side = 148;
+
         var block = new StackPanel { Spacing = 8 };
 
         if (BitcoinAddress.Length == 0)
@@ -182,6 +186,17 @@ internal static class About
             TextWrapping = TextWrapping.Wrap,
         });
 
+        var code = new QrCode
+        {
+            Text = BitcoinAddress,
+            Width = side,
+            Height = side,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Cursor = new Cursor(StandardCursorType.Hand),
+        };
+
+        ToolTip.SetTip(code, "Click to copy the address");
+
         var address = new TextBox
         {
             Text = BitcoinAddress,
@@ -191,18 +206,21 @@ internal static class About
             TextWrapping = TextWrapping.Wrap,
         };
 
-        var copy = new Button { Content = "Copy", Width = 78, HorizontalAlignment = HorizontalAlignment.Right };
+        // Said under the code rather than in the tip, which is not on screen any
+        // more by the time there is anything to say.
+        var said = Quiet(string.Empty);
 
-        copy.Click += async (_, _) =>
+        code.PointerPressed += async (_, _) =>
         {
-            if (TopLevel.GetTopLevel(copy)?.Clipboard is { } clipboard)
+            if (TopLevel.GetTopLevel(code)?.Clipboard is { } clipboard)
                 await clipboard.SetTextAsync(BitcoinAddress);
 
-            copy.Content = "Copied";
+            said.Text = "Copied.";
         };
 
+        block.Children.Add(code);
         block.Children.Add(address);
-        block.Children.Add(copy);
+        block.Children.Add(said);
 
         return block;
     }

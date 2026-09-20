@@ -123,11 +123,27 @@ public class AboutTests : UiTest
     }
 
     /// <summary>
+    /// The code is the address encoded, not a picture of one kept beside it, and
+    /// it says what clicking it does before anybody clicks it.
+    /// </summary>
+    [AvaloniaFact]
+    public void The_address_is_also_a_code_that_says_it_can_be_copied()
+    {
+        if (About.BitcoinAddress.Length == 0) return;
+
+        var window = Showing();
+        var code = All<QrCode>(window).ShouldHaveSingleItem();
+
+        code.Text.ShouldBe(About.BitcoinAddress);
+        ToolTip.GetTip(code).ShouldBe("Click to copy the address");
+    }
+
+    /// <summary>
     /// Bech32 carries a checksum over the whole address, so the one fact nobody
     /// can check by reading is checkable after all: a character mistyped into
     /// the constant fails here rather than swallowing somebody's donation.
     /// </summary>
-    [Fact]
+    [AvaloniaFact]
     public void The_donation_address_passes_its_own_checksum()
     {
         if (About.BitcoinAddress.Length == 0)

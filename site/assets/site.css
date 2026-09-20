@@ -367,14 +367,17 @@ nav.toc a:hover { color: var(--bright); border-left-color: var(--attention); bac
 .site-foot .brand-foot { display: flex; align-items: center; gap: 10px; margin-right: auto; color: var(--label); }
 .site-foot .brand-foot img { width: 22px; height: 22px; }
 
-/* The address is shown whole and copied by button: retyping one is how money goes nowhere. */
-.site-foot .donate { margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--edge); gap: 10px 14px; }
+/* The address is shown whole and copied by clicking the code: retyping one is how money goes nowhere. */
+.site-foot .donate { margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--edge); gap: 16px; align-items: center; }
+.site-foot .donate .ask { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
 .site-foot .donate code { user-select: all; overflow-wrap: anywhere; }
-.site-foot .copy {
-  font: inherit; color: var(--label); cursor: pointer;
-  background: var(--node); border: 1px solid var(--separator); border-radius: 4px; padding: 3px 12px;
+.site-foot .donate .said { color: var(--attention); min-height: 1em; }
+.site-foot .qr {
+  padding: 0; line-height: 0; cursor: pointer;
+  background: none; border: 1px solid var(--edge); border-radius: 4px;
 }
-.site-foot .copy:hover { color: var(--attention); border-color: var(--attention); }
+.site-foot .qr:hover, .site-foot .qr:focus-visible { border-color: var(--attention); }
+.site-foot .qr img { display: block; border-radius: 3px; }
 
 /* ---- the audio player: a toolbar button beside the track's waveform ---- */
 
