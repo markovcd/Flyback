@@ -20,3 +20,5 @@ Task-specific know-how is in `.claude/skills/`, and Claude Code loads each skill
 - `site-screenshots`: retaking `site/assets/shots` from the real app.
 - `site-audio-tracks`: rebuilding the website's listening-row MP3s.
 - `gap-mining`: finding what the catalogue is missing, by reading what an unchecked agent reaches for.
+
+`.claude/settings.json` turns on the `Flyback Vibe` output style (`.claude/output-styles/vibe.md`) for every session in this repo. It governs wording only: what gets checked, weighed and recommended is unchanged.
