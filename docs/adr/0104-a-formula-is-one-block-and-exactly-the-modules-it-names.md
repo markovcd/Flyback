@@ -1,16 +1,9 @@
 # ADR-0104: A formula is one block, and exactly the modules it names
 
-**Status:** Superseded in part · 2026-09-19 · *user-directed* · follows
+**Status:** Accepted · 2026-09-19 · *user-directed* · follows
 [0095](0095-a-module-may-be-a-handful-of-others-if-it-is-exactly-them.md),
 [0055](0055-a-plugins-extra-declares-its-editor.md) and
-[0065](0065-a-text-language-that-parses-to-a-patch.md) · what an Expression is
-called is superseded by
-[0112](0112-a-formula-is-read-in-the-body-and-the-header-is-a-name.md), which
-writes the formula in the body and leaves the header a name
-
-Everything else here holds: the formula is still one field on one module, still
-exactly the modules it names, and still a complaint and a nought when it does
-not read.
+[0065](0065-a-text-language-that-parses-to-a-patch.md)
 
 ## Context
 
@@ -78,10 +71,14 @@ what stopped it and at which character, and is an error. The module outputs
 nought until the formula reads, which is the bargain a missing file has with a
 Sample.
 
-**An Expression is called by its formula until somebody names it.** Its header
-on the canvas and its title on the panel are the formula, which says more than
-the word Expression does. A name given to it wins, as for any module.
-Superseded by [0112](0112-a-formula-is-read-in-the-body-and-the-header-is-a-name.md).
+**The formula is written in the body, and the header is a name.** The body draws
+it beside the socket letters, wrapped over as many lines as there are, cut with an
+ellipsis and tipped in full when it is longer than that. The header is the module's
+name, as on every other module: an Expression is called Expression until somebody
+renames it, and `Title` is the name it was given or its definition's. Nothing
+measures a formula to decide what a module is called, so the panel's title, a
+compiler's complaint and a shut box's socket say what they would for a Sine. One
+layout, whatever a formula's length and whether the module has a name.
 
 ## Consequences
 
@@ -95,6 +92,11 @@ rename it.
 panel knob ([0086](0086-panel-knobs-are-read-as-live-values.md)) or ridden from
 a controller. A value somebody should play belongs on a socket, where it is one.
 This is the price of the block being one block, and the description says so.
+
+**A canvas of Expressions is a column of identical headers.** What tells them
+apart is the formula under it, which is the line worth reading anyway. A patch
+where that is not enough gets names, which is what names are for. A shut box's
+output socket says `Expression.out`, and an input takes the name of what feeds it.
 
 **The primitives stay the specification.** Nothing is removed, and a formula
 means what the modules it names would have done. The tests that say so build the

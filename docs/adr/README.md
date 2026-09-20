@@ -58,12 +58,11 @@ context, decision, consequences.
 | [0105](0105-text-is-a-shape-baked-into-a-picture.md) | Text is a shape, baked into a picture *(user-directed)* |
 | [0095](0095-a-module-may-be-a-handful-of-others-if-it-is-exactly-them.md) | A module may be a handful of others, if it is exactly them *(user-directed; the Bell it left out counted again and added by [0097](0097-a-wrapping-module-carries-a-setting-where-what-it-wraps-differed.md))* |
 | [0097](0097-a-wrapping-module-carries-a-setting-where-what-it-wraps-differed.md) | A wrapping module carries a setting where what it wraps differed *(user-directed)* |
-| [0104](0104-a-formula-is-one-block-and-exactly-the-modules-it-names.md) | A formula is one block, and exactly the modules it names *(user-directed; what an Expression is called superseded by [0112](0112-a-formula-is-read-in-the-body-and-the-header-is-a-name.md))* |
+| [0104](0104-a-formula-is-one-block-and-exactly-the-modules-it-names.md) | A formula is one block, and exactly the modules it names *(user-directed)* |
 | [0106](0106-a-sum-in-the-text-is-one-expression.md) | A sum in the text is one Expression *(user-directed; its printing of every Expression as a call replaced by [0107](0107-an-expression-is-printed-as-the-sum-it-is.md))* |
 | [0107](0107-an-expression-is-printed-as-the-sum-it-is.md) | An Expression is printed as the sum it is *(user-directed; a sum with a pipeline for an operand made a call by [0108](0108-a-preset-arrives-with-its-arithmetic-folded.md))* |
 | [0108](0108-a-preset-arrives-with-its-arithmetic-folded.md) | A preset arrives with its arithmetic folded into Expressions *(user-directed; what it leaves alone narrowed by [0109](0109-the-expression-stands-for-the-small-maths-modules.md))* |
 | [0109](0109-the-expression-stands-for-the-small-maths-modules.md) | The Expression stands for the small Maths modules *(user-directed)* |
-| [0112](0112-a-formula-is-read-in-the-body-and-the-header-is-a-name.md) | A formula is read in the body, and the header is a name *(user-directed)* |
 | [0064](0064-a-pixel-runs-only-what-a-pixel-changes.md) | A pixel runs only what a pixel changes |
 | [0074](0074-a-cell-is-a-plane-on-the-video-path.md) | A cell is a plane on the video path *(user-directed)* |
 | [0075](0075-a-cycle-carries-its-own-delay.md) | A cycle carries its own delay *(user-directed)* |
@@ -144,5 +143,4 @@ context, decision, consequences.
 | [0085](0085-a-sound-backend-declares-its-own-settings.md) | A sound backend declares its own settings *(user-directed)* |
 | [0072](0072-a-conversation-is-saved-with-the-patch-it-is-about.md) | A conversation is saved with the patch it is about *(user-directed)* |
 | [0098](0098-the-briefing-has-a-budget-and-a-list-that-outranks-it.md) | The briefing has a budget, and a list that outranks it *(user-directed; its default raised to 100,000 by [0101](0101-a-one-knob-maximizer-is-a-module-of-its-own.md))* |
-| [0113](0113-the-assistants-limit-counts-what-a-run-adds.md) | The assistant's limit counts what a run adds *(user-directed; the limit superseded by [0114](0114-the-workbench-does-not-limit-how-large-a-patch-is.md))* |
-| [0114](0114-the-workbench-does-not-limit-how-large-a-patch-is.md) | The workbench does not limit how large a patch is *(user-directed)* |
+| [0113](0113-the-workbench-does-not-limit-how-large-a-patch-is.md) | The workbench does not limit how large a patch is *(user-directed)* |
