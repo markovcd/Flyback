@@ -1067,10 +1067,10 @@ public sealed partial class MainWindow : Window
             }
         };
 
-        var open = Drawn("open", Glyphs.Open(), "Open a patch…");
+        var open = Drawn("open", Glyphs.Open(), "Open a patch (CTRL+O)…");
         open.Click += async (_, _) => await OpenAnotherPatchAsync();
 
-        var save = Drawn("save", Glyphs.Save(), "Save this patch…");
+        var save = Drawn("save", Glyphs.Save(), "Save this patch (CTRL+S)…");
         save.Click += async (_, _) => await SavePatchAsync();
 
         // All three go to whichever view is showing — see MainWindow.Source.
