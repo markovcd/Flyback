@@ -371,13 +371,10 @@ nav.toc a:hover { color: var(--bright); border-left-color: var(--attention); bac
 .site-foot .donate { margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--edge); gap: 16px; align-items: center; }
 .site-foot .donate .ask { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
 .site-foot .donate code { user-select: all; overflow-wrap: anywhere; }
-.site-foot .donate .said { color: var(--attention); min-height: 1em; }
-.site-foot .qr {
-  padding: 0; line-height: 0; cursor: pointer;
-  background: none; border: 1px solid var(--edge); border-radius: 4px;
-}
-.site-foot .qr:hover, .site-foot .qr:focus-visible { border-color: var(--attention); }
-.site-foot .qr img { display: block; border-radius: 3px; }
+.site-foot .donate .said { color: var(--muted); min-height: 1em; }
+.site-foot .qr { padding: 0; line-height: 0; cursor: pointer; background: none; border: 0; border-radius: 6px; }
+.site-foot .qr:hover, .site-foot .qr:focus-visible { outline: 2px solid var(--attention); outline-offset: 3px; }
+.site-foot .qr img { display: block; border-radius: 6px; }
 
 /* ---- the audio player: a toolbar button beside the track's waveform ---- */
 

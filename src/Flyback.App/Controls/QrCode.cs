@@ -208,7 +208,7 @@ public sealed class QrCode : Control
     }
 
     /// <summary>The top-left corner of each of the three finder patterns.</summary>
-    private static (int Row, int Column)[] Corners(int size) => [(0, 0), (0, size - 7), (size - 7, 0)];
+    internal static (int Row, int Column)[] Corners(int size) => [(0, 0), (0, size - 7), (size - 7, 0)];
 
     /// <summary>A finder pattern and the light separator around it.</summary>
     private static void Finder(bool[,] modules, bool[,] reserved, int size, int row, int column)
@@ -397,11 +397,23 @@ public sealed class QrCode : Control
         return penalty + (run >= 5 ? run - 2 : 0);
     }
 
-    /// <summary>Draws the code as squares, as large as fits and centered.</summary>
+    /// <summary>What the code is drawn in: the darkest surface on the beam's own cream.</summary>
     /// <remarks>
-    /// Dark on light with the quiet border around it, whatever the theme is: a
-    /// reader needs the contrast that way round and needs the border to find the
-    /// edges at all.
+    /// A reader thresholds what it sees into dark and light, so the two have to be
+    /// exactly that — which rules out the accents, every one of which is a mid tone
+    /// chosen to sit on a dark panel. These two are the palette's ends, 17 to 1
+    /// apart, and the cream is the one the mark's beam is already drawn in.
+    /// </remarks>
+    public static Color Ink => Colors.Edge;
+
+    public static Color Paper => Colors.BeamCore;
+
+    /// <summary>Draws the code as large as fits, centered.</summary>
+    /// <remarks>
+    /// Rounded, and the three finders as rings rather than as forty-nine separate
+    /// squares, which is shape rather than color and so costs a reader nothing.
+    /// The quiet border is part of the code: without it there is no telling where
+    /// the code stops.
     /// </remarks>
     public override void Render(DrawingContext context)
     {
@@ -420,13 +432,31 @@ public sealed class QrCode : Control
         var left = (Bounds.Width - drawn) / 2;
         var top = (Bounds.Height - drawn) / 2;
 
-        context.FillRectangle(Brushes.White, new Rect(left, top, drawn, drawn));
+        var ink = new SolidColorBrush(Ink);
+        var paper = new SolidColorBrush(Paper);
+
+        Rect At(double row, double column, double span) =>
+            new(left + quiet + column * module, top + quiet + row * module, span * module, span * module);
+
+        void Block(IBrush brush, Rect rect, double radius) =>
+            context.DrawRectangle(brush, null, new RoundedRect(rect, radius * module));
+
+        Block(paper, new Rect(left, top, drawn, drawn), 2);
+
+        foreach (var (row, column) in Corners(count))
+        {
+            Block(ink, At(row, column, 7), 2);
+            Block(paper, At(row + 1, column + 1, 5), 1.4);
+            Block(ink, At(row + 2, column + 2, 3), 0.9);
+        }
 
         for (var row = 0; row < count; row++)
         for (var column = 0; column < count; column++)
-            if (modules[row, column])
-                context.FillRectangle(
-                    Brushes.Black,
-                    new Rect(left + quiet + column * module, top + quiet + row * module, module, module));
+            if (modules[row, column] && !InFinder(count, row, column))
+                Block(ink, At(row, column, 1), 0.25);
     }
+
+    /// <summary>Whether a module belongs to one of the finders, which are drawn whole.</summary>
+    internal static bool InFinder(int size, int row, int column) =>
+        Corners(size).Any(at => row - at.Row is >= 0 and < 7 && column - at.Column is >= 0 and < 7);
 }

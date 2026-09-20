@@ -1,8 +1,10 @@
+using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Text;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
+using Avalonia.Media;
 using Avalonia.Platform;
 using Flyback.App.Controls;
 using Shouldly;
@@ -126,8 +128,8 @@ public class QrCodeTests : UiTest
     }
 
     /// <summary>
-    /// The code as an SVG, dark on light with its quiet border, a module to a unit.
-    /// Each row's dark modules come out as runs, which is most of the file saved.
+    /// The code as an SVG, a module to a unit, in the same ink, paper and rounding
+    /// the control draws it in — the website's copy has to be the same picture.
     /// </summary>
     private static string Svg(bool[,] modules)
     {
@@ -135,27 +137,35 @@ public class QrCodeTests : UiTest
 
         var size = modules.GetLength(0);
         var box = size + 2 * Quiet;
+        var ink = Hex(QrCode.Ink);
+        var paper = Hex(QrCode.Paper);
         var svg = new StringBuilder();
 
-        svg.Append($"<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 {box} {box}\" shape-rendering=\"crispEdges\">");
-        svg.Append($"<rect width=\"{box}\" height=\"{box}\" fill=\"#fff\"/><g fill=\"#000\">");
+        string Block(string fill, double row, double column, double span, double radius) =>
+            $"<rect fill=\"{fill}\" x=\"{Round(column + Quiet)}\" y=\"{Round(row + Quiet)}\""
+            + $" width=\"{Round(span)}\" height=\"{Round(span)}\" rx=\"{Round(radius)}\"/>";
+
+        svg.Append($"<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 {box} {box}\">");
+        svg.Append($"<rect fill=\"{paper}\" width=\"{box}\" height=\"{box}\" rx=\"2\"/>");
+
+        foreach (var (row, column) in QrCode.Corners(size))
+        {
+            svg.Append(Block(ink, row, column, 7, 2));
+            svg.Append(Block(paper, row + 1, column + 1, 5, 1.4));
+            svg.Append(Block(ink, row + 2, column + 2, 3, 0.9));
+        }
 
         for (var row = 0; row < size; row++)
         for (var column = 0; column < size; column++)
-        {
-            if (!modules[row, column]) continue;
+            if (modules[row, column] && !QrCode.InFinder(size, row, column))
+                svg.Append(Block(ink, row, column, 1, 0.25));
 
-            var run = 1;
-
-            while (column + run < size && modules[row, column + run])
-                run++;
-
-            svg.Append($"<rect x=\"{column + Quiet}\" y=\"{row + Quiet}\" width=\"{run}\" height=\"1\"/>");
-            column += run - 1;
-        }
-
-        return svg.Append("</g></svg>").ToString();
+        return svg.Append("</svg>").ToString();
     }
+
+    private static string Hex(Color color) => $"#{color.R:x2}{color.G:x2}{color.B:x2}";
+
+    private static string Round(double value) => value.ToString("0.##", CultureInfo.InvariantCulture);
 
     /// <summary>
     /// Reads a code the way a reader does: the mask comes out of the format bits,
