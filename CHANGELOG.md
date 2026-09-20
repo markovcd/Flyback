@@ -18,6 +18,7 @@
 - Arithmetic in the text view, such as `(x * 2 - 1) * aspect`, is one Expression, and an Expression shows there as arithmetic.
 - Add, Multiply, Floor and the other one- and two-input Maths modules are Expressions now: the module list finds them by name and adds the Expression.
 - Added Trails, which leaves the last frame fading behind the picture.
+- Added Blur, which softens the picture.
 - Added Hiss (a hi-hat, a snare's wires or a riser from one envelope) and Bell (struck metal from two sines) to Voice.
 - Added FM to Voice, a four-operator FM synth for electric pianos, brass and bells, with five algorithms.
 - Added Echo to Effects, a stereo delay whose times are counted in steps of the tempo.
