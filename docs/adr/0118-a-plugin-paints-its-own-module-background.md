@@ -84,12 +84,42 @@ once at decode time into thirty-two horizontal averages, with transparency
 counted as the node grey behind it, and the ink rule runs against those in place
 of a gradient's stops.
 
+**The person using Flyback has the last word, in two switches rather than one.**
+Settings → Canvas. *Let a plugin paint its own modules*, cleared, draws every
+module as its category and ignores every skin; *Play animated module
+backgrounds*, cleared, holds every animation at its first frame. Two switches
+because they answer different complaints — "I do not want a plugin choosing how
+my patch looks" and "I do not want anything moving while I work" — and somebody
+with the second has no reason to lose the first. Both default to what the
+author asked for: a plugin that is worth installing is worth believing about its
+own modules until it is not.
+
+**The switches are asked at the point of painting, not baked in.** `ModuleSkins`
+is where everything that draws a module asks whether it may, and the animation is
+stopped at the draw rather than at the decode, so clearing a box is the next
+frame rather than every picture on the canvas being read again.
+
 ## Consequences
 
 **The contrast rule is arithmetic, and is tested as arithmetic.** 5,832 points
 across the color cube, each asserting the ink and the background are half the
 range apart. That is the whole promise, and it is the kind that fails on exactly
 the one background nobody happened to pick.
+
+**The plain inverse fails on an ordinary color, not a contrived one.** Swept over
+the cube, its worst case is a separation of nought — text that cannot be seen at
+all — and it lands on `#73875A`, an olive green anybody might choose for a
+plugin. The whole mid-luminance shell of the cube is bad and a grey is only its
+most obvious member. The drive brings the worst case to 0.498 and leaves every
+background the engine itself draws at the exact plain inverse, since those never
+needed driving. `#73875A` is pinned in the tests as the witness.
+
+**The direction flips at the midpoint, and that is allowed to stand.** A
+background at luminance 0.5 is half the range from either pole, so `#7F7F7F`
+takes near-white and `#808080` near-black. The flip is inherent to maximizing
+contrast — it sits exactly where both answers are worth the same, both give
+0.502, and both read. It cannot split a word, because the direction is settled
+once per surface.
 
 **One direction per surface is a real limit, and it is the right one.** Where a
 line of text sits on a patch of the background far from that surface's mean —

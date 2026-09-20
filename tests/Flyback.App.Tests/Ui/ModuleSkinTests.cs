@@ -53,15 +53,45 @@ public class ModuleSkinTests
     }
 
     /// <summary>
-    /// The case the plain inverse cannot do, and the reason the rule is not just
-    /// an inverse: a mid-grey inverts to itself.
+    /// The worst a plain inverse does anywhere in the cube, and the whole reason
+    /// the rule is not just an inverse: this olive inverts to a color of exactly
+    /// its own luminance, which is text that cannot be seen at all.
     /// </summary>
+    /// <remarks>
+    /// An ordinary color somebody would pick, not a corner: the failure is the
+    /// whole mid-luminance shell of the cube, and a grey is only its most obvious
+    /// member.
+    /// </remarks>
     [Fact]
-    public void A_mid_grey_is_not_written_on_in_mid_grey()
+    public void The_one_color_a_plain_inverse_cannot_be_read_on()
     {
-        var grey = Color.FromRgb(0x80, 0x80, 0x80);
+        var olive = Color.FromRgb(0x73, 0x87, 0x5A);
 
-        Colors.Contrast(grey, lift: !Colors.Light(grey)).ShouldNotBe(grey);
+        var inverse = Color.FromRgb(
+            (byte)(255 - olive.R),
+            (byte)(255 - olive.G),
+            (byte)(255 - olive.B));
+
+        Math.Abs(Colors.Luma(inverse) - Colors.Luma(olive))
+            .ShouldBeLessThan(0.001, "this is the color the plain rule is invisible on");
+
+        Math.Abs(Colors.Luma(Colors.Contrast(olive, lift: !Colors.Light(olive))) - Colors.Luma(olive))
+            .ShouldBeGreaterThan(0.45);
+    }
+
+    /// <summary>
+    /// And where the direction flips, either side reads. The flip is where both
+    /// answers are worth the same, so neither side of it is the wrong one.
+    /// </summary>
+    [Theory]
+    [InlineData(0x7F)]
+    [InlineData(0x80)]
+    public void Both_sides_of_the_middle_are_written_on(byte level)
+    {
+        var grey = Color.FromRgb(level, level, level);
+
+        Math.Abs(Colors.Luma(Colors.Contrast(grey, lift: !Colors.Light(grey))) - Colors.Luma(grey))
+            .ShouldBeGreaterThan(0.45);
     }
 
     /// <summary>

@@ -515,15 +515,20 @@ public sealed partial class NodeEditor
     /// next frame, which is the whole of what makes an animation run — a canvas
     /// with no moving module on it is asked for nothing and repaints when the
     /// patch changes, as it always has.
+    /// <para>
+    /// Stopped here rather than at the decode, so switching the setting is the
+    /// next frame rather than every picture on the canvas being read again.
+    /// </para>
     /// </remarks>
     private void DrawArtwork(DrawingContext context, ModuleArtwork picture, RoundedRect body)
     {
-        var image = picture.At(clock.Elapsed.TotalMilliseconds);
+        var running = ModuleSkins.Animated && picture.Runs > 0;
+        var image = running ? picture.At(clock.Elapsed.TotalMilliseconds) : picture.Frames[0];
         var size = image.Size;
 
         if (size.Width <= 0 || size.Height <= 0) return;
 
-        if (picture.Runs > 0) moving = true;
+        if (running) moving = true;
 
         var bounds = body.Rect;
         var scale = Math.Max(bounds.Width / size.Width, bounds.Height / size.Height);
@@ -561,7 +566,7 @@ public sealed partial class NodeEditor
         // A module given a background of its own was given one the shell cannot
         // judge white against, so where its author asked, every line of text on
         // it is colored from the background that line covers instead.
-        var follow = def.Skin is { ContrastText: true };
+        var follow = ModuleSkins.Of(def) is { ContrastText: true };
 
         IBrush Ink(double centre, double height, double fade, IBrush plain) => follow
             ? NodeSkin.Ink(
@@ -585,7 +590,7 @@ public sealed partial class NodeEditor
 
             // Over the wash and under the mark, because it is the surface the
             // mark is set into rather than a second thing on the body.
-            if (def.Skin is ModuleSkin.Grain { Cut: var cut })
+            if (ModuleSkins.Of(def) is ModuleSkin.Grain { Cut: var cut })
                 using (context.PushClip(body))
                     context.FillRectangle(
                         NodeSkin.Cut(cut, NodeSkin.BodyTop(accent, isSelected)),

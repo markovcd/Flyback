@@ -178,7 +178,7 @@ internal static class Colors
     /// </summary>
     public static (Color Accent, Color Floor) Palette(NodeDef def)
     {
-        if (def.Skin is not ModuleSkin.Palette palette)
+        if (ModuleSkins.Of(def) is not ModuleSkin.Palette palette)
         {
             var category = Accent(def.Category);
 

@@ -20,7 +20,7 @@ public sealed class UsageSettingsTests : UiTest, IDisposable
         "flyback-usage-settings-" + Guid.NewGuid().ToString("N"),
         "usage.json");
 
-    private const int UsageTab = 6;
+    private const int UsageTab = 7;
 
     private sealed class Collected : IUsageSink
     {

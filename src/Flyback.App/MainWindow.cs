@@ -439,6 +439,10 @@ public sealed partial class MainWindow : Window
     /// Where the Usage section is read from and saved to, null keeping it nowhere
     /// for the reason <paramref name="outputSettingsPath"/> does.
     /// </param>
+    /// <param name="canvasSettingsPath">
+    /// Where the Canvas section is read from and saved to, null keeping it nowhere
+    /// for the reason <paramref name="outputSettingsPath"/> does.
+    /// </param>
     /// <param name="usage">
     /// What this run says about itself (ADR-0094). Null says nothing, which is what
     /// every test gets: none of them has any business reaching a network.
@@ -459,7 +463,8 @@ public sealed partial class MainWindow : Window
         Usage? usage = null,
         ReleaseNotes? whatsNew = null,
         string? recoveryFolder = null,
-        string? presetFolder = null)
+        string? presetFolder = null,
+        string? canvasSettingsPath = null)
     {
         this.groupFolder = groupFolder;
 
@@ -468,6 +473,7 @@ public sealed partial class MainWindow : Window
         this.outputSettingsPath = outputSettingsPath;
         this.updateSettingsPath = updateSettingsPath;
         this.usageSettingsPath = usageSettingsPath;
+        this.canvasSettingsPath = canvasSettingsPath;
         this.usage = usage ?? Usage.Off;
 
         // Before anything is compiled, so no build is started only to be taken off.
@@ -476,12 +482,16 @@ public sealed partial class MainWindow : Window
         if (outputSettingsPath is not null) outputSettings = OutputSettings.Load(outputSettingsPath);
         if (updateSettingsPath is not null) updateSettings = UpdateSettings.Load(updateSettingsPath);
         if (usageSettingsPath is not null) usageSettings = UsageSettings.Load(usageSettingsPath);
+        if (canvasSettingsPath is not null) canvasSettings = CanvasSettings.Load(canvasSettingsPath);
 
         BuildUpdatesSection();
         ShowUpdateSettings(updateSettings);
 
         BuildUsageSection();
         ShowUsageSettings(usageSettings);
+
+        BuildCanvasSection();
+        ShowCanvasSettings(canvasSettings);
 
         sound = OpenAudio(plugins, outputSettings);
 
@@ -1211,7 +1221,7 @@ public sealed partial class MainWindow : Window
         // time this is opened. The window around them is built fresh, so each
         // section the window owns has to be taken back from the last one first.
         foreach (var section in new[]
-                 { graphicsSection, recordingSection, soundSection, midiSection, updatesSection, usageSection })
+                 { graphicsSection, canvasSection, recordingSection, soundSection, midiSection, updatesSection, usageSection })
             if (section.Parent is ContentControl lender) lender.Content = null;
 
         var save = new Button { Content = "Save", Width = 84 };
@@ -1239,6 +1249,7 @@ public sealed partial class MainWindow : Window
         };
 
         tabs.Items.Add(SectionTab("Graphics", graphicsSection));
+        tabs.Items.Add(SectionTab("Canvas", canvasSection));
         tabs.Items.Add(SectionTab("Recording", recordingSection));
         tabs.Items.Add(SectionTab("Sound", soundSection));
         tabs.Items.Add(SectionTab("MIDI", midiSection));
@@ -1275,6 +1286,7 @@ public sealed partial class MainWindow : Window
             SaveOutputSettings();
             SaveUpdateSettings();
             SaveUsageSettings();
+            SaveCanvasSettings();
 
             // Saving is the end of the errand, so the window goes with it.
             Dialog.Close(save, true);
@@ -1307,6 +1319,7 @@ public sealed partial class MainWindow : Window
         ShowOutputSettings(outputSettings);
         ShowUpdateSettings(updateSettings);
         ShowUsageSettings(usageSettings);
+        ShowCanvasSettings(canvasSettings);
     }
 
     /// <summary>

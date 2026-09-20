@@ -31,7 +31,7 @@ internal readonly struct ModuleBackdrop
 
     public static ModuleBackdrop Of(NodeDef def, bool selected)
     {
-        var picture = def.Skin is ModuleSkin.Artwork artwork ? ModuleArtwork.Of(artwork) : null;
+        var picture = ModuleSkins.Of(def) is ModuleSkin.Artwork artwork ? ModuleArtwork.Of(artwork) : null;
         var (accent, floor) = Colors.Palette(def);
 
         return new ModuleBackdrop(

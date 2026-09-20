@@ -352,6 +352,58 @@
     <p>There are three backgrounds. Colors are a <code>Swatch(red, green, blue)</code>, because Core names no
     toolkit.</p>
 
+    <div class="skins">
+      <article class="node" style="--accent: #2E8B57">
+        <header>Palette</header>
+        <div class="body">
+          <ul class="ports"><li>out<span>0</span></li><li class="any">in<span>0.5</span></li></ul>
+          <small class="what">One color, standing where the category's accent would.</small>
+        </div>
+      </article>
+
+      <article class="node" style="--accent: #2E8B57; --floor: #102030">
+        <header>Palette, with a floor</header>
+        <div class="body">
+          <ul class="ports"><li>out<span>0</span></li><li class="any">in<span>0.5</span></li></ul>
+          <small class="what">The wash falls to a second color instead of back to the first.</small>
+        </div>
+      </article>
+
+      <article class="node grain hatched" style="--accent: #2E8B57">
+        <header>Grain, hatched</header>
+        <div class="body">
+          <ul class="ports"><li>out<span>0</span></li><li class="any">in<span>0.5</span></li></ul>
+          <small class="what">Diagonal rules, the coarsest of the three cuts.</small>
+        </div>
+      </article>
+
+      <article class="node grain milled contrast" style="--accent: #F2E07A">
+        <header>Grain, milled</header>
+        <div class="body">
+          <ul class="ports"><li>out<span>0</span></li><li class="any">in<span>0.5</span></li></ul>
+          <small class="what">Fine upright rules, on a pale accent with <code>ContrastText</code>: the title
+          went dark and the labels stayed light, because they sit on different surfaces.</small>
+        </div>
+      </article>
+
+      <article class="node grain beaded" style="--accent: #7A4AC8">
+        <header>Grain, beaded</header>
+        <div class="body">
+          <ul class="ports"><li>out<span>0</span></li><li class="any">in<span>0.5</span></li></ul>
+          <small class="what">A grid of dots, the quietest cut.</small>
+        </div>
+      </article>
+
+      <article class="node artwork contrast dark" style="background-image: url('data:image/svg+xml;utf8,&lt;svg xmlns=&quot;http://www.w3.org/2000/svg&quot; viewBox=&quot;0 0 100 60&quot;&gt;&lt;defs&gt;&lt;linearGradient id=&quot;g&quot; x1=&quot;0&quot; y1=&quot;0&quot; x2=&quot;0&quot; y2=&quot;1&quot;&gt;&lt;stop offset=&quot;0&quot; stop-color=&quot;%23ffb347&quot;/&gt;&lt;stop offset=&quot;1&quot; stop-color=&quot;%232a1050&quot;/&gt;&lt;/linearGradient&gt;&lt;/defs&gt;&lt;rect width=&quot;100&quot; height=&quot;60&quot; fill=&quot;url(%23g)&quot;/&gt;&lt;circle cx=&quot;74&quot; cy=&quot;16&quot; r=&quot;11&quot; fill=&quot;%23ffe9a0&quot;/&gt;&lt;/svg&gt;')">
+        <header>Artwork</header>
+        <div class="body">
+          <ul class="ports"><li>out<span>0</span></li><li class="any">in<span>0.5</span></li></ul>
+          <small class="what">An SVG, covered and clipped. It runs behind the header band, which keeps only
+          its relief.</small>
+        </div>
+      </article>
+    </div>
+
     <pre><code><span class="c">// A palette: drawn exactly the way every built-in module is.</span>
 Skin = <span class="k">new</span> ModuleSkin.Palette(<span class="k">new</span> Swatch(<span class="s">0x2E</span>, <span class="s">0x8B</span>, <span class="s">0x57</span>))
 {
@@ -381,6 +433,13 @@ Skin = <span class="k">new</span> ModuleSkin.Artwork(bytes) { Animate = <span cl
         </tbody>
       </table>
     </div>
+
+    <p><strong>The person using Flyback has the last word.</strong> Two switches under
+    <strong>Settings → Canvas</strong> answer two different complaints. <em>Let a plugin paint its own
+    modules</em>, cleared, draws every module as its category and ignores every skin, which is what somebody
+    who does not want a plugin choosing how their patch looks is asking for. <em>Play animated module
+    backgrounds</em>, cleared, holds every animation at its first frame. Write a skin that is worth having
+    and neither gets cleared; write one that fights the canvas and it will be.</p>
 
     <h3>Text that can be read on any background</h3>
 

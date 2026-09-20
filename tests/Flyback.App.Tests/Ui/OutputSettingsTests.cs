@@ -128,7 +128,7 @@ public class OutputSettingsTests : UiTest, IDisposable
 
     private static TabControl Tabs(Visual within) => All<TabControl>(within).Single(t => t.Name == "settingsTabs");
 
-    private const int GraphicsTab = 0, RecordingTab = 1, SoundTab = 2;
+    private const int GraphicsTab = 0, RecordingTab = 2, SoundTab = 3;
 
     /// <summary>Answers the settings window by its Save, or by its cross.</summary>
     private static void CloseSettings(MainWindow window, ModalOverlay dialog, bool save) =>
@@ -181,7 +181,7 @@ public class OutputSettingsTests : UiTest, IDisposable
         var tabs = Tabs(dialog);
 
         tabs.Items.Cast<TabItem>().Select(t => (t.Header as TextBlock)?.Text)
-            .ShouldBe(["Graphics", "Recording", "Sound", "MIDI", "Agent", "Updates", "Usage"]);
+            .ShouldBe(["Graphics", "Canvas", "Recording", "Sound", "MIDI", "Agent", "Updates", "Usage"]);
         tabs.SelectedIndex.ShouldBe(0);
         tabs.TabStripPlacement.ShouldBe(Dock.Left, "the sections are a list down the left");
         ShowingSettings(dialog).ShouldBeTrue("the Graphics tab opens by default");

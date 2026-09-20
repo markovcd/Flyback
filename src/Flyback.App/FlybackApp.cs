@@ -73,7 +73,8 @@ public sealed class FlybackApp : Application
                 usageSettingsPath: UsageSettings.File,
                 usage: usage,
                 recoveryFolder: Recovery.Folder,
-                presetFolder: PresetLibrary.DefaultFolder);
+                presetFolder: PresetLibrary.DefaultFolder,
+                canvasSettingsPath: CanvasSettings.File);
             desktop.MainWindow = window;
 
             // Once there is a window, so a slow network is never a slow start.

@@ -216,15 +216,16 @@ li::marker { color: var(--normalled); }
 
 .node {
   --accent: var(--maths);
+  --floor: var(--accent);
   background:
-    linear-gradient(color-mix(in srgb, var(--accent) 24%, var(--node)), color-mix(in srgb, var(--accent) 6%, var(--node)));
+    linear-gradient(color-mix(in srgb, var(--accent) 24%, var(--node)), color-mix(in srgb, var(--floor) 6%, var(--node)));
   border: 1px solid var(--edge);
   border-radius: var(--radius);
   overflow: hidden;
   box-shadow: 0 10px 30px -18px rgba(0, 0, 0, 0.9);
 }
 .node > header {
-  background: linear-gradient(var(--accent), color-mix(in srgb, var(--accent) 72%, #000));
+  background: linear-gradient(var(--accent), color-mix(in srgb, var(--floor) 72%, #000));
   border-top: 1px solid rgba(255, 255, 255, 0.16);
   border-bottom: 1px solid rgba(0, 0, 0, 0.3);
   color: #fff;
@@ -355,6 +356,45 @@ nav.toc a:hover { color: var(--bright); border-left-color: var(--attention); bac
   color: var(--bright); font-size: 13px; font-weight: 650;
   display: grid; place-items: center;
 }
+
+/* ---- skins: the three backgrounds a plugin may give its own module -------
+   Built from the same arithmetic Colors.cs and NodeSkin.cs use, so a card here
+   is what the canvas actually draws rather than a picture of one. */
+
+.skins { display: grid; gap: 14px; margin: 24px 0 0; }
+@media (min-width: 560px) { .skins { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 900px) { .skins { grid-template-columns: repeat(3, 1fr); } }
+.skins .node > .body { padding: 10px 14px 12px; }
+.skins .ports { margin: 0; }
+.skins .what { display: block; margin-top: 10px; font-size: 12px; color: var(--muted); line-height: 1.5; }
+
+/* The texture, over the body and never over the header band, at the tenth of
+   its ink the canvas draws it at. */
+.node.grain > .body { position: relative; }
+.node.grain > .body::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none; opacity: 0.1;
+  --ink: #fff;
+}
+.node.hatched > .body::before {
+  background-image: repeating-linear-gradient(-45deg, var(--ink) 0 1px, transparent 1px 8px);
+}
+.node.milled > .body::before {
+  background-image: repeating-linear-gradient(90deg, var(--ink) 0 1px, transparent 1px 4px);
+}
+.node.beaded > .body::before {
+  background-image: radial-gradient(circle at 4px 4px, var(--ink) 1.1px, transparent 1.3px);
+  background-size: 8px 8px;
+}
+
+/* A picture runs behind the header band rather than stopping below it, so the
+   band is only its relief. */
+.node.artwork { background-size: cover; background-position: center; }
+.node.artwork > header { background: none; }
+
+/* Text worked out from the background, where the module asked for it. */
+.node.contrast > header { color: #112587; text-shadow: none; }
+.node.contrast.dark > header { color: #1a2d0b; }
+.node.contrast > .body .ports li { color: #dfe2ea; }
 
 .tiers { display: grid; gap: 14px; margin: 24px 0 0; }
 @media (min-width: 720px) { .tiers { grid-template-columns: repeat(2, 1fr); } }

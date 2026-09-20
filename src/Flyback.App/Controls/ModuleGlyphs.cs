@@ -30,7 +30,7 @@ internal static class ModuleGlyphs
 
     /// <summary>What to draw across <paramref name="def"/>, or null where nothing is known.</summary>
     public static Geometry? For(NodeDef def) =>
-        def.Skin is ModuleSkin.Palette { Glyph: { } given } ? Given(given)
+        ModuleSkins.Of(def) is ModuleSkin.Palette { Glyph: { } given } ? Given(given)
         : Own.TryGetValue(def.TypeId, out var mine) ? mine
         : OfCategory(def.Category);
 
