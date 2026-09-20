@@ -57,6 +57,7 @@ public sealed partial class MainWindow
         + "wire from somewhere else instead.\n"
         + "Drag the background to select, middle-drag to pan, "
         + "wheel to zoom.\n"
+        + "Esc backs out of a drag and puts back whatever it had moved.\n"
         + "Ctrl+click adds to a selection, Ctrl+A takes everything.\n"
         + "Ctrl+C, Ctrl+X and Ctrl+V copy, cut and paste, "
         + "and Ctrl+D duplicates without touching the clipboard.\n"

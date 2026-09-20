@@ -78,6 +78,7 @@
 - About has a bitcoin address to donate to, as a QR code that copies it when clicked.
 - Flyback reopens as you left it: window size or maximized, monitor, panel sizes, which panels are open, the text view and the swapped preview. A second copy is placed by the system rather than on top of the first.
 - Ctrl+O and Ctrl+S open and save, and Ctrl+D duplicates the selection beside itself.
+- Esc backs out of a drag on the canvas, putting the module back where it was or the wire back on the socket it came off.
 
 ### Performance
 - An output with no wire on it no longer costs anything. The big presets run 2–19% fewer operations a sample, and Random's white is a sixteenth of what it was.

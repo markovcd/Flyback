@@ -359,6 +359,15 @@ public sealed partial class NodeEditor : Control
     private readonly HashSet<Guid> marqueeBase = [];
 
     /// <summary>
+    /// What was selected when the rubber band was started, which is what backing
+    /// out of one puts back. Not <see cref="marqueeBase"/>: that holds what the
+    /// band adds to, which is nothing at all for a band without the modifier —
+    /// and a band abandoned has to give back the selection it swept away either
+    /// way.
+    /// </summary>
+    private readonly HashSet<Guid> marqueeWas = [];
+
+    /// <summary>
     /// Where the pointer was last seen, in graph space. Kept so that a gesture
     /// with no position of its own — the space bar — can still open the module
     /// list where the hand is rather than in the middle of the view.

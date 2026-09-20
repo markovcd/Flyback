@@ -128,6 +128,9 @@ public sealed partial class NodeEditor
         marqueeBase.Clear();
         if (ctrl) marqueeBase.UnionWith(selection);
 
+        marqueeWas.Clear();
+        marqueeWas.UnionWith(selection);
+
         drag = Drag.Marquee;
         Sweep();
 
@@ -209,8 +212,81 @@ public sealed partial class NodeEditor
         pendingNarrow = null;
         dragOrigins.Clear();
         marqueeBase.Clear();
+        marqueeWas.Clear();
 
         if (ended) GestureFinished?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>
+    /// Puts back whatever the gesture under way has already changed, and says
+    /// whether there was one to back out of.
+    /// </summary>
+    /// <remarks>
+    /// Backing out is not the same as stopping, because two of the three have
+    /// changed something before the hand has chosen anything: a wire lifted off an
+    /// input is off it from the press — see <see cref="StartWire"/> — and a rubber
+    /// band has replaced the selection on its first move. A module drag has carried
+    /// modules and recorded nothing, so merely ending it would leave them wherever
+    /// the hand had got to.
+    /// <para>
+    /// A pan is not backed out of: it holds nothing and the view is where somebody
+    /// put it. So with one under way, what this ends is whatever the pan suspended.
+    /// </para>
+    /// </remarks>
+    private bool Abort()
+    {
+        var panning = drag == Drag.Pan;
+        var aborting = panning ? panSuspended : drag;
+
+        if (aborting == Drag.None) return false;
+
+        switch (aborting)
+        {
+            // Straight back into the place in the list it came out of, under the
+            // name the lifting was recorded under: the patch is then the one the
+            // gesture began with, which the history sees and drops the step for. A
+            // wire being drawn new has nothing to put back and falls past this.
+            case Drag.Wire when lifted is { } was:
+                lifted = null;
+                patch.Connections.Insert(Math.Min(was.At, patch.Connections.Count), was.Wire);
+                NotifyPatchChanged(WireGesture);
+                break;
+
+            case Drag.Node:
+                foreach (var moving in SelectedNodes)
+                {
+                    if (!dragOrigins.TryGetValue(moving.Id, out var from)) continue;
+
+                    moving.X = from.X;
+                    moving.Y = from.Y;
+                }
+
+                break;
+
+            case Drag.Marquee:
+                selection.Clear();
+                selection.UnionWith(marqueeWas);
+                Refocus();
+                SelectionChanged?.Invoke(this, EventArgs.Empty);
+                break;
+        }
+
+        // The button is still down, and the release that follows finds nothing
+        // under way and completes nothing — which is what makes this an abort
+        // rather than a pause. The cursor is put right here because the hand need
+        // never move again, and a move would otherwise be the only thing to do it.
+        if (panning)
+        {
+            panSuspended = Drag.None;
+        }
+        else
+        {
+            EndGesture();
+            if (lastPointer is { } over) Cursor = CursorOver(over);
+        }
+
+        InvalidateVisual();
+        return true;
     }
 
     private void PressNode(NodeInstance node, bool adding)
@@ -654,6 +730,18 @@ public sealed partial class NodeEditor
     protected override void OnKeyDown(KeyEventArgs e)
     {
         base.OnKeyDown(e);
+
+        // Back out of the gesture under way, which is what this key means
+        // everywhere else here — the module filter, a rename box, the full-screen
+        // preview. Before the modifier check below, because the hand wanting out
+        // may still be holding the Ctrl that began it: a wire comes off an output
+        // with Ctrl down, and a selection is added to the same way. Unhandled with
+        // nothing under way, so the window's own Escape still gets it.
+        if (e.Key == Key.Escape && Abort())
+        {
+            e.Handled = true;
+            return;
+        }
 
         // Copy and paste are handled here rather than on the window, unlike undo
         // and redo. Ctrl+C in a text box means the text in it, and a window-wide
