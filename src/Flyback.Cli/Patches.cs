@@ -1,8 +1,4 @@
-using Flyback.Core;
-using Flyback.Core.Compile;
-using Flyback.Core.Render;
 using Flyback.Core.Graph;
-using Flyback.Core.Language;
 
 namespace Flyback.Cli;
 
@@ -24,21 +20,6 @@ internal static class Exit
     public const int Failed = 2;
 }
 
-/// <summary>
-/// A patch off disk and the files it names, however they were named: a folder beside
-/// the patch, or a bundle holding both.
-/// </summary>
-/// <remarks>
-/// The one place either kind is opened, so nothing downstream knows there are two. A
-/// bundle is read into memory and never unpacked, which is the case for reading one
-/// this way: a build server holding a single file can render a patch whose
-/// photographs it has never seen, and writes nothing but the frame.
-/// </remarks>
-internal readonly record struct Opened(
-    Patch Patch,
-    ISampleLibrary Samples,
-    IImageLibrary Pictures);
-
 /// <summary>Reading a patch off disk, and saying why when that does not work.</summary>
 internal static class Patches
 {
@@ -48,112 +29,34 @@ internal static class Patches
     /// </summary>
     public static Opened? Open(FileInfo file, TextWriter error)
     {
-        if (!Bundled(file))
-        {
-            return Read(file, error) is { } loose
-                ? new Opened(
-                    loose,
-                    new SampleLibrary { Beside = file.DirectoryName },
-                    new ImageLibrary { Beside = file.DirectoryName })
-                : null;
-        }
+        var open = PatchFile.Open(file);
 
-        try
-        {
-            using var archive = File.OpenRead(file.FullName);
+        Say(open.Problems, error);
 
-            var bundle = PatchBundle.Read(archive);
-            var files = BundleFiles.Of(bundle);
-
-            return new Opened(bundle.Patch, files, files);
-        }
-        catch (Exception ex)
-        {
-            // The same breadth Read takes below, for the same reason: a file that
-            // is not a bundle, one that is damaged and one that cannot be opened
-            // are one sentence to whoever typed the path.
-            error.WriteLine($"{GlobalConstants.ApplicationName}: {file.Name}: {ex.Message}");
-            return null;
-        }
+        return open.Patch;
     }
 
     /// <summary>Whether a path names a bundle rather than a patch.</summary>
-    public static bool Bundled(FileInfo file) =>
-        string.Equals(file.Extension, PatchBundle.Extension, StringComparison.OrdinalIgnoreCase);
+    public static bool Bundled(FileInfo file) => PatchFile.Bundled(file);
 
     /// <summary>Whether a path names the patch written as text rather than as a document.</summary>
-    public static bool Sourced(FileInfo file) =>
-        string.Equals(file.Extension, $".{PatchLanguage.FileExtension}", StringComparison.OrdinalIgnoreCase);
-
-    /// <summary>
-    /// The patch a source file describes, or null with every complaint already written
-    /// to <paramref name="error"/>.
-    /// </summary>
-    /// <remarks>
-    /// Refused whole where it does not read, which is where this differs from a
-    /// document: a patch short of a plugin still has something to look at, and a
-    /// source file that does not parse has produced nothing. Each complaint carries
-    /// the line and column it is on.
-    /// </remarks>
-    private static Patch? Built(FileInfo file, string text, TextWriter error)
-    {
-        var load = PatchLanguage.Build(text);
-
-        if (load.Ok) return load.Patch;
-
-        error.WriteLine($"{GlobalConstants.ApplicationName}: {file.Name}: this patch does not read.");
-
-        foreach (var issue in load.Issues)
-            error.WriteLine($"    {file.Name}:{issue.Line}:{issue.Column}: {issue.Message}");
-
-        return null;
-    }
+    public static bool Sourced(FileInfo file) => PatchFile.Sourced(file);
 
     /// <summary>
     /// The patch in a file, or null with the reason already written to
-    /// <paramref name="error"/>. Every complaint the reader can make is one
-    /// <see cref="PatchLoad"/> already words, and none is rephrased here: the shell
-    /// should say what the program says.
+    /// <paramref name="error"/>.
     /// </summary>
     public static Patch? Read(FileInfo file, TextWriter error)
     {
-        if (!file.Exists)
-        {
-            error.WriteLine($"{GlobalConstants.ApplicationName}: {file.FullName}: no such file");
-            return null;
-        }
+        var read = PatchFile.Read(file);
 
-        PatchLoad load;
+        Say(read.Problems, error);
 
-        try
-        {
-            var text = File.ReadAllText(file.FullName);
+        return read.Patch;
+    }
 
-            if (Sourced(file)) return Built(file, text, error);
-
-            load = PatchIO.Read(text);
-        }
-        catch (Exception ex)
-        {
-            // A file that is not a patch at all, or one this cannot get at.
-            // Deliberately broad: every one of them is the same sentence to
-            // whoever typed the path, and none of them should be a stack trace.
-            error.WriteLine($"{GlobalConstants.ApplicationName}: {file.Name}: {ex.Message}");
-            return null;
-        }
-
-        if (!load.IsComplete)
-        {
-            error.WriteLine($"{GlobalConstants.ApplicationName}: {file.Name}: this patch did not load completely.");
-            error.WriteLine(load.Detail);
-
-            // Handed back all the same when there is something to work with. A
-            // patch short of one plugin still compiles, still renders, and
-            // still tells you more about itself than a refusal would — and
-            // 'check' exists precisely to be run on a file like this.
-            if (load.TooNew) return null;
-        }
-
-        return load.Patch;
+    private static void Say(IReadOnlyList<string> problems, TextWriter error)
+    {
+        foreach (var problem in problems) error.WriteLine(problem);
     }
 }

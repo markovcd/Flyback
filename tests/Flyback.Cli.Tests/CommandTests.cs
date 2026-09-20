@@ -697,7 +697,7 @@ public class CommandTests
     [InlineData("640X360", 640, 360)]
     [InlineData("8192x8192", 8192, 8192)]
     public void A_size_it_can_draw_is_read(string text, int width, int height) =>
-        Program.Frame(text).ShouldBe((width, height));
+        FrameSize.Of(text).ShouldBe((width, height));
 
     /// <summary>
     /// A frame is asked for as a number somebody typed, and every buffer behind
@@ -712,13 +712,13 @@ public class CommandTests
     [InlineData("wide x tall")]
     [InlineData("27000x27000")]
     [InlineData("100000x100000")]
-    public void A_size_it_cannot_draw_is_refused(string text) => Program.Frame(text).ShouldBeNull();
+    public void A_size_it_cannot_draw_is_refused(string text) => FrameSize.Of(text).ShouldBeNull();
 
     [Fact]
     public void A_frame_too_large_is_refused_for_being_too_large()
     {
-        Program.Refuse("27000x27000").ShouldContain("729,000,000 pixels");
-        Program.Refuse("nonsense").ShouldContain("WIDTHxHEIGHT");
+        FrameSize.Refuse("27000x27000").ShouldContain("729,000,000 pixels");
+        FrameSize.Refuse("nonsense").ShouldContain("WIDTHxHEIGHT");
     }
 
     /// <summary>A directory of its own per test, taken away afterwards.</summary>
