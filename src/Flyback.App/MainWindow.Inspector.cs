@@ -1529,7 +1529,11 @@ public sealed partial class MainWindow
         ExtraField.Text text => TextRow(
             text,
             text.Value(node.StateOf(extra.Key)?[field.Key]),
-            next => Store(node, extra, field, JsonValue.Create(next))),
+            next => Store(node, extra, field, JsonValue.Create(next)),
+
+            // An Expression's formula is the one field whose text is a language,
+            // so it is the one that can be marked as unread.
+            node.TypeId == NodeCatalog.ExpressionTypeId ? NodeCatalog.FormulaProblem : null),
 
         _ => null,
     };
@@ -1545,7 +1549,16 @@ public sealed partial class MainWindow
     /// each would be a step in the history. In a box of several lines Enter
     /// starts the next one, so there it is Ctrl+Enter that keeps it.
     /// </remarks>
-    private Control TextRow(ExtraField.Text field, string value, Action<string> store)
+    /// <param name="problem">
+    /// What stops the module reading a value, where the module reads one. It is
+    /// asked about what was kept rather than about what is being typed, since
+    /// half a formula does not read and nobody meant it yet.
+    /// </param>
+    private Control TextRow(
+        ExtraField.Text field,
+        string value,
+        Action<string> store,
+        Func<string, string?>? problem = null)
     {
         var row = Row("*");
 
@@ -1588,6 +1601,8 @@ public sealed partial class MainWindow
 
         box.LostFocus += (_, _) => Keep();
 
+        Mark();
+
         Grid.SetColumn(caption, 0);
         Grid.SetColumn(box, 1);
         row.Children.Add(caption);
@@ -1605,6 +1620,7 @@ public sealed partial class MainWindow
 
             value = typed;
             store(typed);
+            Mark();
             editor.NotifyPatchChanged();
 
             // Kept is the hand coming off, and the only sign of it there will be:
@@ -1612,7 +1628,29 @@ public sealed partial class MainWindow
             // is let go of over a box that is no longer there.
             HandCameOff();
         }
+
+        // The mark is on what the module is computing, not on what is under the
+        // caret, so it stays while an unread value is being corrected.
+        void Mark()
+        {
+            var said = problem?.Invoke(value);
+
+            if (said is null)
+            {
+                box.ClearValue(TemplatedControl.ForegroundProperty);
+                box.ClearValue(TemplatedControl.BorderBrushProperty);
+                ToolTip.SetTip(box, null);
+                return;
+            }
+
+            box.Foreground = Unread;
+            box.BorderBrush = Unread;
+            ToolTip.SetTip(box, $"This does not read: {said}. It gives 0 until it does.");
+        }
     }
+
+    /// <summary>What a value the module cannot read is marked in.</summary>
+    private static readonly IBrush Unread = new SolidColorBrush(Colors.Sink);
 
     /// <summary>
     /// A label and a list to pick from, on the same grid a knob's row uses.

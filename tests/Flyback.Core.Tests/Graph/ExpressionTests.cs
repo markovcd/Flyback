@@ -172,6 +172,16 @@ public class ExpressionTests
         registers[result.Program.OutputBase].ShouldBe(0d);
     }
 
+    /// <summary>The same reading, asked before anything is compiled with it.</summary>
+    [Theory]
+    [InlineData("a * b + c", null)]
+    [InlineData("sin(a) * 2", null)]
+    [InlineData("a +", "it ends where a value was expected, at character 4")]
+    [InlineData("wobble(a)", "there is no function 'wobble', at character 1")]
+    [InlineData("", "there is nothing in it, at character 1")]
+    public void What_stops_a_formula_reading_can_be_asked_for(string formula, string? problem) =>
+        NodeCatalog.FormulaProblem(formula).ShouldBe(problem);
+
     [Fact]
     public void A_color_on_a_socket_is_worked_on_a_channel_at_a_time()
     {

@@ -24,6 +24,7 @@ Flyback.Core.Graph.ExpressionFusion
 static Flyback.Core.Graph.ExpressionFusion.Fuse(Flyback.Core.Graph.Patch! patch, Flyback.Core.Graph.ModuleCatalog! modules) -> Flyback.Core.Graph.Patch!
 static Flyback.Core.Graph.Presets.Fused(Flyback.Core.Graph.PatchPreset! preset) -> Flyback.Core.Graph.PatchPreset!
 static Flyback.Core.Graph.NodeCatalog.FormulaOf(Flyback.Core.Graph.NodeInstance! node) -> string?
+static Flyback.Core.Graph.NodeCatalog.FormulaProblem(string! formula) -> string?
 static Flyback.Core.Graph.ExpressionFusion.Retired(Flyback.Core.Graph.NodeDef! def) -> bool
 static Flyback.Core.Graph.ExpressionFusion.Template(Flyback.Core.Graph.NodeDef! retired) -> string!
 static Flyback.Core.Graph.ExpressionFusion.Standing(Flyback.Core.Graph.NodeDef! retired, Flyback.Core.Graph.ModuleCatalog! modules, double x, double y) -> Flyback.Core.Graph.NodeInstance?

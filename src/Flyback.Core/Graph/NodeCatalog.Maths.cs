@@ -224,6 +224,19 @@ public partial class NodeCatalog
     /// <summary>An Expression's formula as typed, and null for any other module.</summary>
     public static string? FormulaOf(NodeInstance node) =>
         node.TypeId == ExpressionTypeId ? FormulaExtra.Of(node) : null;
+
+    /// <summary>
+    /// What stops <paramref name="formula"/> being read, and where, or null where
+    /// nothing does. The reading the module compiles with, so the panel can say
+    /// what the compiler is about to.
+    /// </summary>
+    public static string? FormulaProblem(string formula)
+    {
+        if (Get(ExpressionTypeId)?.Extra<FormulaExtra>() is not { } extra) return null;
+
+        Formula.Read(formula, extra.Functions, out var problem);
+        return problem;
+    }
 }
 
 /// <summary>An Expression's formula: one line of text, read where the module is compiled.</summary>
