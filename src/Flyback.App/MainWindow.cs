@@ -149,6 +149,15 @@ public sealed partial class MainWindow : Window
     /// </summary>
     private readonly SettingsForm soundForm = new() { Name = "soundForm", Beside = true };
 
+    /// <summary>Which backend plays, and which plugin it came from, above the rows it asks for.</summary>
+    private readonly TextBlock soundNote = new()
+    {
+        Name = "soundNote",
+        FontSize = Text.Small,
+        Foreground = Text.Muted,
+        TextWrapping = TextWrapping.Wrap,
+    };
+
     /// <summary>
     /// What the Graphics, Recording and Sound sections were last saved as, and so
     /// what closing the settings window without Save puts them back to.

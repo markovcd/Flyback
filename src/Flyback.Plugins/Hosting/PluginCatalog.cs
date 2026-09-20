@@ -37,6 +37,7 @@ public sealed class PluginCatalog
     /// <param name="presets">Patches to start from: the engine's own first, then each plugin's.</param>
     /// <param name="secretStores">The places a key may be kept, or none where nothing can keep one.</param>
     /// <param name="midiInputs">The ways of hearing what is plugged in, or none where there is no such way.</param>
+    /// <param name="providers">Who registered each of the above, for <see cref="Provider"/>.</param>
     internal PluginCatalog(
         IReadOnlyList<LoadedPlugin> plugins,
         IReadOnlyList<IAudioOutput> audioOutputs,
@@ -45,8 +46,15 @@ public sealed class PluginCatalog
         IReadOnlyList<PluginProblem> problems,
         IReadOnlyList<IPatchAssistant>? assistants = null,
         IReadOnlyList<ISecretStore>? secretStores = null,
-        IReadOnlyList<IMidiInput>? midiInputs = null)
+        IReadOnlyList<IMidiInput>? midiInputs = null,
+        IReadOnlyDictionary<object, PluginInfo>? providers = null)
     {
+        // Copied under reference equality: two backends are the same one only if
+        // they are the same object, whatever their ids or their Equals say.
+        this.providers = providers is null
+            ? new Dictionary<object, PluginInfo>(ReferenceEqualityComparer.Instance)
+            : new Dictionary<object, PluginInfo>(providers, ReferenceEqualityComparer.Instance);
+
         Plugins = plugins;
         AudioOutputs = audioOutputs;
         Modules = modules;
@@ -56,6 +64,8 @@ public sealed class PluginCatalog
         SecretStores = secretStores ?? [];
         MidiInputs = midiInputs ?? [];
     }
+
+    private readonly Dictionary<object, PluginInfo> providers;
 
     public IReadOnlyList<LoadedPlugin> Plugins { get; }
 
@@ -86,6 +96,23 @@ public sealed class PluginCatalog
     public IReadOnlyList<PatchPreset> Presets { get; }
 
     public IReadOnlyList<PluginProblem> Problems { get; }
+
+    /// <summary>
+    /// The plugin that registered a backend, an assistant or a secret store, or
+    /// null for anything this catalogue did not see registered.
+    /// </summary>
+    /// <remarks>
+    /// What the settings window names on the tab that configures a backend: which
+    /// device plays is the plugin's answer, not Flyback's, and on a machine with
+    /// two sound plugins installed there is otherwise nothing saying which one is
+    /// being set.
+    /// </remarks>
+    public PluginInfo? Provider(object registered)
+    {
+        ArgumentNullException.ThrowIfNull(registered);
+
+        return providers.GetValueOrDefault(registered);
+    }
 
     /// <summary>
     /// The backend to use here: supported, highest priority, ties broken on id

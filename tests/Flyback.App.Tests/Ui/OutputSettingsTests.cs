@@ -10,6 +10,7 @@ using Avalonia.VisualTree;
 using Flyback.App.Controls;
 using Flyback.Core.Graph;
 using Flyback.Core.Render;
+using Flyback.Plugins;
 using Shouldly;
 using Xunit;
 
@@ -86,9 +87,9 @@ public class OutputSettingsTests : UiTest
     /// A toolbar control by the name it was given. The buttons up there are
     /// glyphs now, and a glyph is a poor thing to write an assertion against.
     /// </summary>
-    private static T Named<T>(MainWindow window, string name)
+    private static T Named<T>(Visual within, string name)
         where T : Control =>
-        All<T>(window).Single(c => c.Name == name);
+        All<T>(within).Single(c => c.Name == name);
 
     /// <summary>What every button in the window is labelled, in tree order.</summary>
     private static IEnumerable<string?> Buttons(MainWindow window) =>
@@ -130,7 +131,7 @@ public class OutputSettingsTests : UiTest
 
     private static TabControl Tabs(Visual within) => All<TabControl>(within).Single(t => t.Name == "settingsTabs");
 
-    private const int GraphicsTab = 0, RecordingTab = 2, SoundTab = 3;
+    private const int GraphicsTab = 0, RecordingTab = 2, SoundTab = 3, MidiTab = 4;
 
     /// <summary>Answers the settings window by its Save, or by its cross.</summary>
     private static void CloseSettings(MainWindow window, ModalOverlay dialog, bool save) =>
@@ -360,6 +361,43 @@ public class OutputSettingsTests : UiTest
 
     private static CheckBox RewindFirst(Visual within) =>
         All<CheckBox>(within).Single(c => c.Name == "rewindBeforeTake");
+
+    /// <summary>
+    /// Both device tabs say where the device comes from, because everything
+    /// either one configures is a plugin's, and neither tab otherwise names one.
+    /// Nothing is loaded here, so what they say is the other half: that nothing
+    /// plays and nothing is heard, rather than a tab of rows about nothing.
+    /// </summary>
+    [AvaloniaFact]
+    public void The_device_tabs_say_where_the_device_comes_from()
+    {
+        var window = Open();
+        var dialog = OpenSettings(window, SoundTab);
+
+        Named<TextBlock>(dialog, "soundNote").Text
+            .ShouldBe("No sound plugin is installed, so nothing plays. See About for where plugins are looked for.");
+
+        Tabs(dialog).SelectedIndex = MidiTab;
+        Settle(window);
+
+        Named<TextBlock>(dialog, "midiNote").Text
+            .ShouldBe("No MIDI plugin is installed, so the only instrument is the computer's own keyboard.");
+    }
+
+    /// <summary>
+    /// With one installed, the sentence names the backend and then the plugin
+    /// behind it — the plugin by both the name About lists it under and the id
+    /// its folder goes by, so it can be found and taken away again.
+    /// </summary>
+    [Fact]
+    public void A_backend_is_named_with_the_plugin_that_offered_it()
+    {
+        MainWindow.Attributed("Played by WASAPI (shared mode)", new PluginInfo("win.io", "Windows sound and MIDI"))
+            .ShouldBe("Played by WASAPI (shared mode), from the Windows sound and MIDI plugin (win.io).");
+
+        MainWindow.Attributed("Played by WASAPI (shared mode)", null)
+            .ShouldBe("Played by WASAPI (shared mode).");
+    }
 
     [AvaloniaFact]
     public void Recording_and_sound_start_on_the_defaults()

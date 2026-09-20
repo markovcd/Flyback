@@ -721,6 +721,11 @@ em.UnitWrite(cell, smoothed);           <span class="c">// what it holds next ti
     <code>Start</code>, which is what lets Save swap devices in place. Leave <code>Form</code> out and the tab
     shows only latency. All three shipped backends use it to pick the output device.</p>
 
+    <p>The tab says whose rows those are: <em>Played by WASAPI (shared mode), from the Windows sound and MIDI
+    plugin (win.io)</em>, taken from the <code>Name</code> and <code>Id</code> of your <code>PluginInfo</code>.
+    The MIDI tab says the same of whatever is hearing the keyboard, so name a plugin as you would want it
+    read there.</p>
+
     <p><code>IAudioDevice.Start</code> is handed a callback that fills an interleaved stereo buffer on the
     audio thread. It <strong>must not block, allocate or throw</strong>. If you cannot honor the requested
     format exactly, open the nearest thing you can and report the truth through

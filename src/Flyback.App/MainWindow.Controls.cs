@@ -38,6 +38,15 @@ public sealed partial class MainWindow
     /// <summary>The settings window's MIDI section.</summary>
     private readonly StackPanel midiSection = new() { Spacing = 8, Width = 280 };
 
+    /// <summary>Which backend hears a keyboard, and which plugin it came from.</summary>
+    private readonly TextBlock midiNote = new()
+    {
+        Name = "midiNote",
+        FontSize = Text.Small,
+        Foreground = Text.Muted,
+        TextWrapping = TextWrapping.Wrap,
+    };
+
     private readonly ComboBox takeover = new Picker
     {
         Name = "takeover",
@@ -164,8 +173,14 @@ public sealed partial class MainWindow
     {
         ToolTip.SetTip(takeover,
             "When a controller's knob is not where the knob on screen is: jump straight to the controller, "
-            + "or leave the knob alone until the controller passes it.");
+            + "or leave the knob alone until the controller passes it. Flyback's own, whichever plugin "
+            + "hears the controller.");
 
+        midiNote.Text = plugins.PreferredMidiInput is { } input
+            ? Attributed($"Heard through {input.Name}", plugins.Provider(input))
+            : "No MIDI plugin is installed, so the only instrument is the computer's own keyboard.";
+
+        midiSection.Children.Add(midiNote);
         midiSection.Children.Add(Field("Knobs", takeover));
     }
 

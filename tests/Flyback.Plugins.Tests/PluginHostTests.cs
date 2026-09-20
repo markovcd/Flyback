@@ -30,6 +30,17 @@ public class PluginHostTests
 
     private static PluginCatalog Shipped() => PluginHost.Load();
 
+    /// <summary>Which plugin each shipped backend was registered by, sound then MIDI.</summary>
+    public static TheoryData<string, string> BackendPlugins => new()
+    {
+        { "alsa", "linux.io" },
+        { "coreaudio", "mac.io" },
+        { "wasapi", "win.io" },
+        { "alsaseq", "linux.io" },
+        { "coremidi", "mac.io" },
+        { "winmm", "win.io" },
+    };
+
     [Theory]
     [MemberData(nameof(PlatformPlugins))]
     public void The_shipped_plugin_is_found(string id)
@@ -213,6 +224,34 @@ public class PluginHostTests
         Directory.CreateDirectory(Path.Combine(folder.Path, "Nothing"));
 
         PluginHost.Load(folder.Path).Problems.ShouldBeEmpty();
+    }
+
+    /// <summary>
+    /// A backend goes by its own name — "WASAPI (shared mode)" — which says
+    /// nothing about what to install or uninstall to change it. The settings
+    /// window names the plugin beside it, and this is where it reads that from.
+    /// </summary>
+    [Theory]
+    [MemberData(nameof(BackendPlugins))]
+    public void A_backend_knows_which_plugin_registered_it(string backend, string plugin)
+    {
+        var catalog = Shipped();
+
+        object offered = catalog.AudioOutputs.FirstOrDefault(o => o.Id == backend)
+            ?? (object?)catalog.MidiInputs.FirstOrDefault(i => i.Id == backend)
+            ?? throw new InvalidOperationException($"no backend '{backend}' was registered.");
+
+        catalog.Provider(offered)!.Id.ShouldBe(plugin);
+    }
+
+    /// <summary>
+    /// Asked about something it never saw registered — a backend from another
+    /// catalogue, or one a test made up — it says so rather than guessing.
+    /// </summary>
+    [Fact]
+    public void Something_no_plugin_registered_has_no_provider()
+    {
+        Shipped().Provider(new object()).ShouldBeNull();
     }
 
     private sealed class TempFolder : IDisposable

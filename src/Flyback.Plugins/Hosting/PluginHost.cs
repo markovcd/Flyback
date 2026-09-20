@@ -48,7 +48,8 @@ public static class PluginHost
             problems,
             registry.Assistants,
             registry.SecretStores,
-            registry.MidiInputs);
+            registry.MidiInputs,
+            registry.Providers);
     }
 
     private static void LoadFolder(
@@ -185,8 +186,13 @@ public static class PluginHost
         private readonly List<ISecretStore> secretStores = [];
         private readonly List<IMidiInput> midiInputs = [];
 
+        /// <summary>Who registered each thing kept above, keyed by the thing itself.</summary>
+        private readonly Dictionary<object, PluginInfo> providers = new(ReferenceEqualityComparer.Instance);
+
         /// <summary>Whoever is registering right now, for blaming in messages.</summary>
         public PluginInfo Source { get; set; } = new("", "");
+
+        public IReadOnlyDictionary<object, PluginInfo> Providers => providers;
 
         public IReadOnlyList<IAudioOutput> AudioOutputs => audioOutputs;
 
@@ -248,6 +254,7 @@ public static class PluginHost
             }
 
             audioOutputs.Add(output);
+            providers[output] = Source;
         }
 
         public void AddPatchAssistant(IPatchAssistant assistant)
@@ -261,6 +268,7 @@ public static class PluginHost
             }
 
             assistants.Add(assistant);
+            providers[assistant] = Source;
         }
 
         public void AddSecretStore(ISecretStore store)
@@ -274,6 +282,7 @@ public static class PluginHost
             }
 
             secretStores.Add(store);
+            providers[store] = Source;
         }
 
         public void AddMidiInput(IMidiInput input)
@@ -287,6 +296,7 @@ public static class PluginHost
             }
 
             midiInputs.Add(input);
+            providers[input] = Source;
         }
     }
 }

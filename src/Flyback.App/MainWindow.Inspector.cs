@@ -12,6 +12,7 @@ using Flyback.App.Controls;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Core.Render;
+using Flyback.Plugins;
 using Flyback.Plugins.Settings;
 using Colors = Flyback.App.Controls.Colors;
 
@@ -1270,14 +1271,35 @@ public sealed partial class MainWindow
     {
         ToolTip.SetTip(latency,
             "How far behind the patch the speakers may run. Lower answers a key sooner; "
-            + "raise it if the sound crackles.");
+            + "raise it if the sound crackles. Flyback asks this of every backend, "
+            + "whichever plugin is playing.");
 
-        // First, because which device plays is the question people come to this
-        // tab with. Nothing here knows what the backend will ask (ADR-0085).
+        soundNote.Text = plugins.PreferredAudioOutput is { } output
+            ? Attributed($"Played by {output.Name}", plugins.Provider(output))
+            : "No sound plugin is installed, so nothing plays. See About for where plugins are looked for.";
+
+        // The note first, so the rows under it are read as the backend's answers
+        // rather than Flyback's; then the form, because which device plays is the
+        // question people come to this tab with. Nothing here knows what the
+        // backend will ask (ADR-0085).
+        soundSection.Children.Add(soundNote);
+
         if (plugins.PreferredAudioOutput is not null) soundSection.Children.Add(soundForm);
 
         soundSection.Children.Add(Field("Latency", latency));
     }
+
+    /// <summary>
+    /// What a settings tab says about the backend behind it, with the plugin that
+    /// offered it named: a machine with two sound plugins installed has nothing
+    /// else to say which one these rows belong to.
+    /// </summary>
+    /// <param name="plugin">
+    /// Null for a backend no plugin registered, which leaves the sentence as it
+    /// came — an id in brackets that names nothing is worse than no id.
+    /// </param>
+    internal static string Attributed(string what, PluginInfo? plugin) =>
+        plugin is null ? $"{what}." : $"{what}, from the {plugin.Name} plugin ({plugin.Id}).";
 
     /// <summary>
     /// How wide the column every row puts its name in is. One number rather than
