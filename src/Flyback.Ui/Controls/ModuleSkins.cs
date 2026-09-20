@@ -11,7 +11,7 @@ namespace Flyback.App.Controls;
 /// Static, like <see cref="NodeCatalog.Current"/> and for the same reason: it is
 /// a property of the running program rather than of any one control, and the
 /// three static helpers that read a skin — <see cref="Colors.Palette"/>,
-/// <see cref="ModuleGlyphs.For"/> and <see cref="ModuleBackdrop.Of"/> — would
+/// <c>ModuleGlyphs.For</c> and <c>ModuleBackdrop.Of</c> — would
 /// otherwise each need it threading through them from a window they know nothing
 /// about. The canvas is one control on one thread (ADR-0017).
 /// </remarks>

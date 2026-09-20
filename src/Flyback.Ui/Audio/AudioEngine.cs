@@ -74,7 +74,7 @@ public sealed class AudioEngine(IAudioDevice device) : IDisposable
 
     /// <summary>
     /// The shape Coordinates' <c>aspect</c> reads while playing live. Follows the
-    /// preview's resolution — see <see cref="MainWindow.UseOutputSettings"/> —
+    /// preview's resolution — see <c>MainWindow.UseOutputSettings</c> —
     /// rather than a fixed shape, so a Scan reaches the same edges live as it
     /// does in an export of the same patch (ADR-0077).
     /// </summary>

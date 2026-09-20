@@ -54,8 +54,8 @@ public sealed partial class MainWindow : Window
 
     private readonly ComboBox resolution = new Picker
     {
-        ItemsSource = Resolutions.Select(r => r.Label).ToList(),
-        SelectedIndex = DefaultResolution,
+        ItemsSource = Resolutions.All.Select(r => r.Label).ToList(),
+        SelectedIndex = Resolutions.Default,
         HorizontalAlignment = HorizontalAlignment.Stretch,
     };
 
@@ -505,7 +505,7 @@ public sealed partial class MainWindow : Window
         BuildCanvasSection();
         ShowCanvasSettings(canvasSettings);
 
-        sound = OpenAudio(plugins, outputSettings);
+        sound = Sound.Open(plugins, outputSettings);
 
         // Here rather than at the launch, because what a run started as includes
         // which backend actually opened, and that is only known once one has been

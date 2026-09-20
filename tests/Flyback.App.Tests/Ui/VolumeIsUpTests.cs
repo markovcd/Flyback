@@ -1,3 +1,4 @@
+using Flyback.App.Audio;
 using Flyback.Core.Graph;
 using Shouldly;
 using Xunit;
@@ -25,21 +26,21 @@ public class VolumeIsUpTests
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
         builder.Add(NodeCatalog.OutputTypeId);
 
-        MainWindow.VolumeIsUp(builder.Patch).ShouldBeTrue();
+        Sound.VolumeIsUp(builder.Patch).ShouldBeTrue();
     }
 
     [Fact]
     public void Nought_is_not_up() =>
-        MainWindow.VolumeIsUp(AtVolume(0f)).ShouldBeFalse();
+        Sound.VolumeIsUp(AtVolume(0f)).ShouldBeFalse();
 
     /// <summary>Nothing below nought either — the range does not go there, but a saved file might.</summary>
     [Fact]
     public void Below_nought_is_not_up() =>
-        MainWindow.VolumeIsUp(AtVolume(-1f)).ShouldBeFalse();
+        Sound.VolumeIsUp(AtVolume(-1f)).ShouldBeFalse();
 
     [Fact]
     public void Anything_above_nought_is_up() =>
-        MainWindow.VolumeIsUp(AtVolume(0.01f)).ShouldBeTrue();
+        Sound.VolumeIsUp(AtVolume(0.01f)).ShouldBeTrue();
 
     /// <summary>
     /// Wired, there is no default left to read — the row shows "patched" rather
@@ -54,7 +55,7 @@ public class VolumeIsUpTests
 
         builder.Wire(source, 0, output, NodeCatalog.OutputVolumePort);
 
-        MainWindow.VolumeIsUp(builder.Patch).ShouldBeTrue();
+        Sound.VolumeIsUp(builder.Patch).ShouldBeTrue();
     }
 
     /// <summary>
@@ -79,6 +80,6 @@ public class VolumeIsUpTests
         var knob = builder.Patch.AddControl(value: 1f);
         ControlMap.Link(output, NodeCatalog.OutputVolumePort, new ControlLink(knob.Id, 0f, 1f));
 
-        MainWindow.VolumeIsUp(builder.Patch).ShouldBeTrue("the knob Volume follows is all the way up");
+        Sound.VolumeIsUp(builder.Patch).ShouldBeTrue("the knob Volume follows is all the way up");
     }
 }

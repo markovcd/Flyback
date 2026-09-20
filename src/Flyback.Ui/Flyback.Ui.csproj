@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    What the two windows that play a patch draw and sound with: the preview, the
+    sound device, the look and the settings both read. The namespaces stay
+    Flyback.App, the way Flyback.Engine holds Flyback.Core, so a file that moved
+    here needed no edit to keep working (ADR-0124).
+
+    Avalonia itself and nothing that belongs to only one shell: the editor's code
+    view and SVG artwork stay with the editor.
+  -->
+  <PropertyGroup>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <RootNamespace>Flyback.App</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Flyback.Core\Flyback.Core.csproj" />
+    <ProjectReference Include="..\Flyback.Engine\Flyback.Engine.csproj" />
+    <ProjectReference Include="..\Flyback.Plugins\Flyback.Plugins.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="12.1.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Flyback" />
+    <InternalsVisibleTo Include="flyback-viewer" />
+    <InternalsVisibleTo Include="Flyback.App.Tests" />
+  </ItemGroup>
+
+</Project>

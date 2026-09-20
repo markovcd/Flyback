@@ -99,28 +99,6 @@ public sealed partial class MainWindow
         + "Apply the text to catch the patch up, or take the edit back. Modules the "
         + "edit did not move are still here to select.";
 
-    private static readonly (string Label, PixelSize Size)[] Resolutions =
-    [
-        ("320 x 180", new PixelSize(320, 180)),
-        ("480 x 270", new PixelSize(480, 270)),
-        ("640 x 360", new PixelSize(640, 360)),
-        ("960 x 540", new PixelSize(960, 540)),
-        ("1280 x 720", new PixelSize(1280, 720)),
-        ("1920 x 1080", new PixelSize(1920, 1080)),
-        ("2560 x 1440", new PixelSize(2560, 1440)),
-        ("3840 x 2160", new PixelSize(3840, 2160)),
-
-        // Not 16:9 — the picture and the live sound's aspect both follow
-        // whichever of these is picked, ADR-0083.
-        ("1024 x 768", new PixelSize(1024, 768)),   // 4:3
-        ("1080 x 1080", new PixelSize(1080, 1080)), // 1:1, square
-        ("1080 x 1920", new PixelSize(1080, 1920)), // 9:16, portrait
-        ("2560 x 1080", new PixelSize(2560, 1080)), // 21:9, ultrawide
-    ];
-
-    /// <summary>960 x 540: enough to judge a patch by, cheap enough to keep up.</summary>
-    private const int DefaultResolution = 3;
-
     /// <summary>The frame rates a take can be recorded at: film, PAL, the usual, and the two doubles.</summary>
     private static readonly double[] FrameRates = [24, 25, 30, 50, 60];
 
@@ -291,7 +269,7 @@ public sealed partial class MainWindow
     /// </summary>
     private void UseOutputSettings(OutputSettings settings)
     {
-        var size = Resolutions[SizeRow(settings)].Size;
+        var size = Resolutions.All[SizeRow(settings)].Size;
 
         preview.Resolution = size;
         preview.Use(settings.Gpu ? PreviewBackend.Gpu : PreviewBackend.Cpu);
@@ -308,10 +286,10 @@ public sealed partial class MainWindow
     /// <summary>The row of the size list a saved size is, or the default for one the list no longer offers.</summary>
     private static int SizeRow(OutputSettings settings)
     {
-        var row = Array.FindIndex(Resolutions,
+        var row = Array.FindIndex(Resolutions.All,
             r => r.Size.Width == settings.Width && r.Size.Height == settings.Height);
 
-        return row < 0 ? DefaultResolution : row;
+        return row < 0 ? Resolutions.Default : row;
     }
 
     /// <summary>
@@ -327,7 +305,7 @@ public sealed partial class MainWindow
         // what it holds is not read while it is grey, and the row is put back.
         if (!resolution.IsEnabled) resolution.SelectedIndex = SizeRow(outputSettings);
 
-        var size = Resolutions[Math.Max(resolution.SelectedIndex, 0)].Size;
+        var size = Resolutions.All[Math.Max(resolution.SelectedIndex, 0)].Size;
         var before = outputSettings;
 
         outputSettings = new OutputSettings

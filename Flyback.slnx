@@ -11,6 +11,7 @@
     <Project Path="src/Flyback.Core/Flyback.Core.csproj" />
     <Project Path="src/Flyback.Engine/Flyback.Engine.csproj" />
     <Project Path="src/Flyback.Plugins/Flyback.Plugins.csproj" />
+    <Project Path="src/Flyback.Ui/Flyback.Ui.csproj" />
     <Project Path="src/Flyback.Plugins.LinuxIO/Flyback.Plugins.LinuxIO.csproj" />
     <Project Path="src/Flyback.Plugins.MacIO/Flyback.Plugins.MacIO.csproj" />
     <Project Path="src/Flyback.Plugins.Picture/Flyback.Plugins.Picture.csproj" />

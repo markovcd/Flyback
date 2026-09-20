@@ -65,7 +65,7 @@ public sealed class SavedPreset(string Name, string Path)
 /// The presets somebody saved, as files in a folder of their own.
 /// </summary>
 /// <remarks>
-/// The same shape as <see cref="GroupLibrary"/>: a file per preset and no index,
+/// The same shape as <c>GroupLibrary</c>: a file per preset and no index,
 /// so a bundle dropped into the folder is in the gallery the next time it opens,
 /// and one can be mailed to somebody. Reading never throws; writing does, because
 /// failing to keep what somebody just asked to keep should be said.
