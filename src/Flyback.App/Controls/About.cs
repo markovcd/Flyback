@@ -186,6 +186,10 @@ internal static class About
             TextWrapping = TextWrapping.Wrap,
         });
 
+        block.Children.Add(Quiet(
+            "It buys tokens, which is what Flyback is written with. "
+            + "Strictly non-profit: nothing here is sold and nobody is paid out of it."));
+
         var code = new QrCode
         {
             Text = BitcoinAddress,

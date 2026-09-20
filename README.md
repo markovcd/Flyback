@@ -14,6 +14,8 @@ Flyback is built strictly with AI. Every line of code, test, document and commit
 
 That is a constraint on authorship, not on engineering. The project holds to the same standards any modern codebase would: a CI gate that restores, compiles and runs the whole test suite on every push and pull request, signed releases built from the same image the gate stops inside, architecture decisions recorded in `docs/adr/`, and a changelog per release. Nothing merges that the gate has not passed.
 
+Tokens are the one thing the project spends money on, and a donation goes on that budget. Flyback is strictly non-profit: nothing in it is sold, nothing is behind a payment, and nobody is paid out of it. The address is in About and in the site's footer.
+
 [CONTRIBUTING.md](CONTRIBUTING.md) is how to work in it.
 
 ## Quick start

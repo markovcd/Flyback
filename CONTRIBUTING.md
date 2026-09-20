@@ -10,7 +10,7 @@ Point one at the repository and let it read the ground rules first:
 - `.claude/rules/` holds the standing rules — git workflow, prose style, ADRs, tests, the changelog, the website, Windows shell pitfalls.
 - `.claude/skills/` holds task-specific know-how: authoring presets, the convenience modules, retaking screenshots, rebuilding the site's audio.
 
-A hand-written patch is welcome as a report of what is wrong, but it is outside the premise, so say in the pull request that it was written by hand. It will be rewritten by an agent before it lands.
+A hand-written patch is accepted as it stands. The premise is how the project is written, not a bar put in front of somebody who turned up with a fix — say in the pull request that you wrote it by hand, and it lands as written once the gate is green.
 
 ## Read the decisions before proposing a change of shape
 
@@ -87,6 +87,10 @@ A commit subject is a declarative sentence stating what is now true, not a Conve
 ## Pull requests
 
 One change per pull request, with the gate green. History on `main` is linear, so rebase rather than merge. The Build workflow runs on every pull request and cancels an older run when a newer push lands on the same ref.
+
+## Money
+
+Flyback is strictly non-profit. Nothing in it is sold, nothing is held behind a payment, and nobody takes an income from it. Writing it costs tokens, and that is what a donation pays for — the address in About and in the site's footer goes on the token budget and on nothing else. Contributing does not earn anything, here or later.
 
 ## License
 
