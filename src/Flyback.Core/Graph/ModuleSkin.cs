@@ -102,13 +102,26 @@ public abstract record ModuleSkin
     public sealed record Grain(Swatch Accent, GrainCut Cut) : Palette(Accent);
 
     /// <summary>
-    /// A picture behind the module: SVG, PNG or GIF, scaled to cover the body and
-    /// clipped to it.
+    /// A picture behind the module: SVG, PNG or GIF, scaled to cover what it is
+    /// drawn on and clipped to it.
     /// </summary>
     /// <param name="Bytes">
     /// The file itself, which a plugin most often reads out of its own embedded
     /// resources. Bytes rather than a path, so a skin needs nothing deployed
     /// beside the assembly and nothing read off disk while the canvas paints.
     /// </param>
-    public sealed record Artwork(ReadOnlyMemory<byte> Bytes) : ModuleSkin;
+    public sealed record Artwork(ReadOnlyMemory<byte> Bytes) : ModuleSkin
+    {
+        /// <summary>
+        /// A second picture for the panel, where the first is the block's. Null and
+        /// the block's is used for both.
+        /// </summary>
+        /// <remarks>
+        /// The two surfaces are different shapes — a block is a wide strip a few
+        /// sockets tall, the panel is most of a column — and cover crops whatever
+        /// does not fit. One picture that suits both is the common case and stays
+        /// one line; a plugin that cares gives the panel its own.
+        /// </remarks>
+        public ReadOnlyMemory<byte>? Panel { get; init; }
+    }
 }

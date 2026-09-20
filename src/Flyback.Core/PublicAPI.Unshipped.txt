@@ -38,6 +38,8 @@ Flyback.Core.Graph.ModuleSkin.Artwork.Bytes.get -> System.ReadOnlyMemory<byte>
 Flyback.Core.Graph.ModuleSkin.Artwork.Bytes.init -> void
 Flyback.Core.Graph.ModuleSkin.Artwork.Deconstruct(out System.ReadOnlyMemory<byte> Bytes) -> void
 Flyback.Core.Graph.ModuleSkin.Artwork.Equals(Flyback.Core.Graph.ModuleSkin.Artwork? other) -> bool
+Flyback.Core.Graph.ModuleSkin.Artwork.Panel.get -> System.ReadOnlyMemory<byte>?
+Flyback.Core.Graph.ModuleSkin.Artwork.Panel.init -> void
 Flyback.Core.Graph.ModuleSkin.Artwork
 Flyback.Core.Graph.ModuleSkin.ContrastText.get -> bool
 Flyback.Core.Graph.ModuleSkin.ContrastText.init -> void

@@ -61,6 +61,13 @@ runs at all is the person's call in the Canvas settings, not the plugin's: a
 plugin that shipped a moving picture meant it to move, and anybody it distracts
 turns off every one of them at once.
 
+**A picture may come in twos: the block's and the panel's.** `Panel` is a second
+file beside `Bytes`, for the plugin that cares that the two surfaces are
+different shapes — a block is a wide strip a few sockets tall, the panel on the
+right is most of a column, and cover crops whatever does not fit. One file is
+still the common case and stays one line: left out, the block's picture is drawn
+on both, and is decoded once for the two.
+
 **Text is white unless the module asks otherwise.** `ContrastText` is opt-in on
 all three. White is what the rest of the canvas is written in, and a plugin that
 picked a dark color should not be the one module whose title is a different
@@ -142,8 +149,10 @@ vector artwork drawn at whatever zoom the canvas is at is the case worth having.
 engine's, and Core still answers to it. The package is named for Avalonia 12 —
 `Avalonia.Svg.Skia` is the same library's Avalonia 11 line and stops there.
 
-**Decoding is bounded and cached.** A picture is read once per skin, the failure
-too, so bytes that are not a picture are not decoded again every frame. Frames
+**Decoding is bounded and cached.** A picture is read once per skin and surface,
+the failure too, so bytes that are not a picture are not decoded again every
+frame; a skin with one picture is one entry, since both surfaces ask for the same
+bytes. Frames
 are capped at 120 and the longest side at 512, because a module is a couple of
 hundred pixels of canvas and every frame is held decoded.
 

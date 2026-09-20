@@ -463,29 +463,6 @@ public sealed partial class NodeEditor
     private const double MarkLeast = 18, MarkMost = 52;
 
     /// <summary>
-    /// The two lines that give a header band a face: light along its top edge,
-    /// and a seam where it meets the body.
-    /// </summary>
-    /// <remarks>
-    /// The light is held off the corners, where a straight line across a rounded
-    /// one reads as an overhang rather than as an edge catching the light.
-    /// </remarks>
-    private static void DrawHeaderRelief(DrawingContext context, Rect header)
-    {
-        var inset = NodeGeometry.CornerRadius;
-
-        context.DrawLine(
-            HeaderGloss,
-            new Point(header.X + inset, header.Y + 0.75),
-            new Point(header.Right - inset, header.Y + 0.75));
-
-        context.DrawLine(
-            HeaderSeam,
-            new Point(header.X, header.Bottom - 0.5),
-            new Point(header.Right, header.Bottom - 0.5));
-    }
-
-    /// <summary>
     /// Draws a module, faintly where it is switched off.
     /// </summary>
     /// <remarks>
@@ -577,7 +554,7 @@ public sealed partial class NodeEditor
             : plain;
 
         var body = new RoundedRect(bounds, NodeGeometry.CornerRadius);
-        var border = !isSelected ? NodeBorder : focus == node.Id ? SelectionPen : SelectionPenSecondary;
+        var border = !isSelected ? NodeSkin.Edge : focus == node.Id ? SelectionPen : SelectionPenSecondary;
 
         if (backdrop.Picture is { } picture)
         {
@@ -610,7 +587,7 @@ public sealed partial class NodeEditor
                 null,
                 new RoundedRect(header, NodeGeometry.CornerRadius, NodeGeometry.CornerRadius, 0, 0));
 
-        DrawHeaderRelief(context, header);
+        NodeSkin.Relief(context, header);
 
         var titleAt = new Point(bounds.X + 9, bounds.Y + 5);
 

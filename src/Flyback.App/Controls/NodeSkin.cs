@@ -204,6 +204,127 @@ internal static class NodeSkin
     /// </summary>
     private const double CutOpacity = 0.10;
 
+    // --- the line round a block, and a box, which belongs to no category -----
+
+    /// <summary>The line round a block and round a socket on one.</summary>
+    public static IPen Edge { get; } =
+        new ImmutablePen(new ImmutableSolidColorBrush(Colors.Outline), 1.5);
+
+    /// <summary>
+    /// A box's body, which is the node grey lifted a little rather than tinted: the
+    /// same statement its header makes, that a box belongs to no category.
+    /// </summary>
+    public static IBrush Box(bool selected) => selected ? boxSelected : box;
+
+    /// <summary>The two colors a box's body is washed between.</summary>
+    public static (Color Top, Color Floor) BoxWash { get; } =
+        (Colors.Blend(Colors.Node, Colors.Separator, 0.3), Colors.Node);
+
+    private static readonly IBrush box = Down(BoxWash.Top, BoxWash.Floor);
+
+    private static readonly IBrush boxSelected =
+        Down(Colors.Blend(Colors.NodeSelected, Colors.Separator, 0.3), Colors.NodeSelected);
+
+    /// <summary>
+    /// A box's header, in the one color on the canvas that belongs to no category. A
+    /// module's header is tinted by what it does; a box does nothing, so it is drawn
+    /// in the outline color and reads as canvas furniture rather than as a module
+    /// whose kind you have forgotten.
+    /// </summary>
+    public static IBrush BoxHeader { get; } =
+        Down(Colors.Blend(Colors.Outline, Colors.Separator, 0.55), Colors.Outline);
+
+    /// <summary>
+    /// The mark across a box, which is the same picture the toolbar's group button
+    /// carries — modules inside a frame.
+    /// </summary>
+    public static IPen BoxMark { get; } = new ImmutablePen(
+        new ImmutableSolidColorBrush(Colors.Separator, 0.5),
+        ModuleGlyphs.Thickness,
+        lineCap: PenLineCap.Round,
+        lineJoin: PenLineJoin.Round);
+
+    // --- the face of a header band ------------------------------------------
+
+    /// <summary>
+    /// The two lines that give a header band a face: light along its top edge, and a
+    /// seam where it meets the body.
+    /// </summary>
+    /// <remarks>
+    /// The light is held off the corners, where a straight line across a rounded one
+    /// reads as an overhang rather than as an edge catching the light. Both are white
+    /// and black rather than palette colors, because what they are is a light and a
+    /// shadow on whatever color the band happens to be.
+    /// </remarks>
+    public static void Relief(DrawingContext context, Rect header)
+    {
+        var inset = NodeGeometry.CornerRadius;
+
+        context.DrawLine(
+            gloss,
+            new Point(header.X + inset, header.Y + 0.75),
+            new Point(header.Right - inset, header.Y + 0.75));
+
+        context.DrawLine(
+            seam,
+            new Point(header.X, header.Bottom - 0.5),
+            new Point(header.Right, header.Bottom - 0.5));
+    }
+
+    private static readonly IPen gloss = new ImmutablePen(
+        new ImmutableSolidColorBrush(Avalonia.Media.Colors.White, 0.16), 1.2);
+
+    private static readonly IPen seam = new ImmutablePen(
+        new ImmutableSolidColorBrush(Avalonia.Media.Colors.Black, 0.3), 1);
+
+    /// <summary>
+    /// How a block's background gives way on the panel: full strength in the top
+    /// right corner and gone by about the middle of it, as an opacity mask so a
+    /// wash, a grain, a picture and a mark all disappear the same way.
+    /// </summary>
+    /// <remarks>
+    /// The panel is not a canvas: what ends the face is the reading running on
+    /// underneath it rather than a line round it.
+    /// <para>
+    /// Measured in the panel's own pixels rather than in fractions of it, because a
+    /// gradient given relative ends is skewed by the shape of what it fills — the
+    /// angle would tilt every time the splitter moved. Fixed angle, and only how far
+    /// it runs follows the panel.
+    /// </para>
+    /// </remarks>
+    public static IBrush Fade(Rect bounds)
+    {
+        var key = ((int)Math.Round(bounds.Width), (int)Math.Round(bounds.Height));
+
+        if (fades.TryGetValue(key, out var kept)) return kept;
+
+        var reach = new Vector(-1, Steep).Normalize()
+            * new Vector(bounds.Width / 2, bounds.Height / 2).Length;
+
+        var from = new Point(bounds.Right, bounds.Y);
+
+        var made = new ImmutableLinearGradientBrush(
+            [
+                new ImmutableGradientStop(0, Avalonia.Media.Colors.White),
+                new ImmutableGradientStop(1, Avalonia.Media.Color.FromArgb(0, 255, 255, 255)),
+            ],
+            startPoint: new RelativePoint(from, RelativeUnit.Absolute),
+            endPoint: new RelativePoint(from + reach, RelativeUnit.Absolute));
+
+        fades[key] = made;
+
+        return made;
+    }
+
+    /// <summary>
+    /// How far the fade is driven down against how far it is driven left. Past the
+    /// corner-to-corner diagonal on purpose: the fill belongs to the head of the
+    /// panel, and a shallower one reads as a stripe across it.
+    /// </summary>
+    private const double Steep = 1.6;
+
+    private static readonly Dictionary<(int Width, int Height), IBrush> fades = [];
+
     /// <summary>A gradient from the top of whatever it fills to the bottom.</summary>
     public static IBrush Down(Color top, Color bottom) => new ImmutableLinearGradientBrush(
         [new ImmutableGradientStop(0, top), new ImmutableGradientStop(1, bottom)],

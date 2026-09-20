@@ -270,25 +270,6 @@ public sealed partial class MainWindow : Window
         "Nothing is wired into the Output's 'color', so there is no picture to swap in.";
 
     /// <summary>
-    /// Behind the inspector, and brighter when there is nothing selected for it
-    /// to sit behind. Never hit-testable, so it cannot swallow a click meant for
-    /// a slider underneath.
-    /// </summary>
-    private readonly LogoMark watermark = new()
-    {
-        // Fills the panel and centres itself, so it grows with the splitter
-        // instead of being sized for one particular panel width.
-        HorizontalAlignment = HorizontalAlignment.Stretch,
-        VerticalAlignment = VerticalAlignment.Stretch,
-        Margin = new Thickness(20),
-
-        // The no-selection value, so it is never briefly full strength if
-        // something ever builds the panel before the first selection lands.
-        Opacity = 0.14,
-        IsHitTestVisible = false,
-    };
-
-    /// <summary>
     /// The module list, shown at the pointer when the canvas is right-clicked
     /// rather than standing open down one side — ADR-0046. Built once and kept,
     /// because it holds which plugins are ticked and that is a setting rather
@@ -310,9 +291,27 @@ public sealed partial class MainWindow : Window
     private readonly StackPanel inspector = new()
     {
         Name = "inspector",
-        Margin = new Thickness(12),
+        Margin = new Thickness(PanelInset),
         Spacing = 8,
     };
+
+    /// <summary>
+    /// How far the panel's rows keep off its edges. Named because the plate at the
+    /// head of it takes the inset back off again to reach them — see BuildInspector.
+    /// </summary>
+    internal const double PanelInset = 12;
+
+    /// <summary>
+    /// The selected block's background, behind everything on the panel and fading
+    /// out down it, with the block's mark set large in it.
+    /// </summary>
+    private readonly ModuleWash wash = new();
+
+    /// <summary>
+    /// Where the plate stands: above the scroller rather than in it, so the name and
+    /// the buttons are there at every scroll position.
+    /// </summary>
+    private readonly ContentControl plateHost = new() { Name = "plate-host" };
     private readonly TextBlock status = new()
     {
         VerticalAlignment = VerticalAlignment.Center,
@@ -1409,6 +1408,7 @@ public sealed partial class MainWindow : Window
         // line, so what it is to look like has to be said here — the same way
         // the palette's is, and for the same reason.
         Styles.Add(ReportLine.Trim());
+        Styles.Add(ModulePlate.Naming());
 
         // The gap a StackPanel gives for free, added by hand here since this is
         // a grid. On the children rather than the grid, so the first column

@@ -58,34 +58,66 @@ internal sealed class ModuleArtwork
     public Color Band(double fraction) =>
         Bands[Math.Clamp((int)(fraction * Bands.Length), 0, Bands.Length - 1)];
 
+    /// <summary>
+    /// Draws the still frame scaled to cover <paramref name="bounds"/> and clipped
+    /// to it — cover rather than stretch, so nothing anybody drew comes out the
+    /// wrong shape.
+    /// </summary>
+    public void Cover(DrawingContext context, Rect bounds)
+    {
+        var image = Frames[0];
+        var size = image.Size;
+
+        if (size.Width <= 0 || size.Height <= 0) return;
+
+        var scale = Math.Max(bounds.Width / size.Width, bounds.Height / size.Height);
+
+        using (context.PushClip(bounds))
+        {
+            context.DrawImage(
+                image,
+                new Rect(size),
+                bounds.CenterRect(new Rect(0, 0, size.Width * scale, size.Height * scale)));
+        }
+    }
+
     // --- decoding -----------------------------------------------------------
 
     /// <summary>
-    /// The picture this skin carries, read once and kept — the failure too, so
-    /// bytes that are not a picture are not decoded again every frame. Null is
-    /// what a module falls back to its category on.
+    /// The picture this skin carries for the surface asked about, read once and
+    /// kept — the failure too, so bytes that are not a picture are not decoded
+    /// again every frame. Null is what a module falls back to its category on.
     /// </summary>
-    public static ModuleArtwork? Of(ModuleSkin.Artwork skin)
+    /// <param name="panel">
+    /// The panel's picture rather than the block's. A skin with only one is the
+    /// same picture either way, and is read once for both.
+    /// </param>
+    public static ModuleArtwork? Of(ModuleSkin.Artwork skin, bool panel = false)
     {
-        if (read.TryGetValue(skin, out var kept)) return kept;
+        var own = panel && skin.Panel is not null;
+        var key = (skin, own);
+
+        if (read.TryGetValue(key, out var kept)) return kept;
+
+        var bytes = own ? skin.Panel!.Value : skin.Bytes;
 
         ModuleArtwork? made;
 
         try
         {
-            made = IsVector(skin.Bytes.Span) ? Vector(skin) : Raster(skin);
+            made = IsVector(bytes.Span) ? Vector(bytes) : Raster(bytes);
         }
         catch (Exception)
         {
             made = null;
         }
 
-        read[skin] = made;
+        read[key] = made;
 
         return made;
     }
 
-    private static readonly Dictionary<ModuleSkin.Artwork, ModuleArtwork?> read = [];
+    private static readonly Dictionary<(ModuleSkin.Artwork Skin, bool Panel), ModuleArtwork?> read = [];
 
     /// <summary>
     /// Whether the bytes are SVG, which is a question about text where every
@@ -103,9 +135,9 @@ internal sealed class ModuleArtwork
     /// <summary>How far into the file the sniff looks for an SVG root.</summary>
     private const int Sniff = 1024;
 
-    private static ModuleArtwork? Vector(ModuleSkin.Artwork skin)
+    private static ModuleArtwork? Vector(ReadOnlyMemory<byte> bytes)
     {
-        var source = SvgSource.LoadFromStream(new MemoryStream(skin.Bytes.ToArray()));
+        var source = SvgSource.LoadFromStream(new MemoryStream(bytes.ToArray()));
 
         if (source is null) return null;
 
@@ -118,9 +150,9 @@ internal sealed class ModuleArtwork
         return new ModuleArtwork([image], [], Sampled(read));
     }
 
-    private static ModuleArtwork? Raster(ModuleSkin.Artwork skin)
+    private static ModuleArtwork? Raster(ReadOnlyMemory<byte> bytes)
     {
-        using var codec = SKCodec.Create(new SKMemoryStream(skin.Bytes.ToArray()));
+        using var codec = SKCodec.Create(new SKMemoryStream(bytes.ToArray()));
 
         if (codec is null) return null;
 

@@ -43,7 +43,6 @@ public sealed partial class NodeEditor : Control
     private static readonly IBrush HeaderTextBrush = Brushes.White;
     private static readonly IPen GridPen = new Pen(new SolidColorBrush(Colors.Grid));
     private static readonly IPen GridPenMajor = new Pen(new SolidColorBrush(Colors.GridMajor));
-    private static readonly IPen NodeBorder = new Pen(new SolidColorBrush(Colors.Outline), 1.5);
     private static readonly IPen SelectionPen = new Pen(new SolidColorBrush(Colors.Attention), 2);
 
     /// <summary>
@@ -78,47 +77,6 @@ public sealed partial class NodeEditor : Control
 
     private static readonly IBrush MarqueeFill = new SolidColorBrush(Colors.Attention, 0.08);
     private static readonly IPen PortOutline = new Pen(new SolidColorBrush(Colors.Outline), 1.2);
-
-    /// <summary>
-    /// The light along the top of a header band and the seam under it — see
-    /// <see cref="DrawHeaderRelief"/>. Both are white and black rather than
-    /// palette colors, because what they are is a light and a shadow on whatever
-    /// color the band happens to be.
-    /// </summary>
-    private static readonly IPen HeaderGloss =
-        new Pen(new SolidColorBrush(Avalonia.Media.Colors.White, 0.16), 1.2);
-
-    private static readonly IPen HeaderSeam =
-        new Pen(new SolidColorBrush(Avalonia.Media.Colors.Black, 0.3), 1);
-
-    /// <summary>
-    /// A box's header, in the one color on the canvas that belongs to no
-    /// category. A module's header is tinted by what it does; a group does
-    /// nothing, so it is drawn in the outline color and reads as canvas
-    /// furniture rather than as a module whose kind you have forgotten.
-    /// </summary>
-    private static readonly IBrush GroupHeaderFill = NodeSkin.Down(
-        Colors.Blend(Colors.Outline, Colors.Separator, 0.55), Colors.Outline);
-
-    /// <summary>
-    /// A box's body, which is the node grey lifted a little rather than tinted:
-    /// the same statement the header makes, that a box belongs to no category.
-    /// </summary>
-    private static readonly IBrush GroupFill = NodeSkin.Down(
-        Colors.Blend(Colors.Node, Colors.Separator, 0.3), Colors.Node);
-
-    private static readonly IBrush GroupFillSelected = NodeSkin.Down(
-        Colors.Blend(Colors.NodeSelected, Colors.Separator, 0.3), Colors.NodeSelected);
-
-    /// <summary>
-    /// The mark across a box, which is the same picture the toolbar's group
-    /// button carries — modules inside a frame.
-    /// </summary>
-    private static readonly IPen GroupMark = new Pen(
-        new SolidColorBrush(Colors.Separator, 0.5),
-        ModuleGlyphs.Thickness,
-        lineCap: PenLineCap.Round,
-        lineJoin: PenLineJoin.Round);
 
     /// <summary>
     /// The dashed ring round a group that is open — see OpenGroup.

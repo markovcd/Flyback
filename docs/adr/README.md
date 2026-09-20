@@ -103,6 +103,7 @@ context, decision, consequences.
 | [0117](0117-a-module-switched-off-is-a-wire.md) | A module switched off is a wire *(user-directed)* |
 | [0118](0118-a-plugin-paints-its-own-module-background.md) | A plugin paints its own module's background *(user-directed)* |
 | [0121](0121-the-window-is-left-as-it-was-left.md) | The window is left as it was left *(user-directed)* |
+| [0122](0122-the-panel-wears-the-block-it-is-about.md) | The panel wears the block it is about *(user-directed; the face it borrows is [0116](0116-a-module-is-drawn-as-its-category-and-a-standout-as-itself.md))* |
 
 ### Sound
 

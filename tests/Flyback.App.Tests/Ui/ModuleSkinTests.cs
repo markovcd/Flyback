@@ -267,6 +267,34 @@ public class ModuleSkinTests
     }
 
     /// <summary>
+    /// A skin may carry a second picture for the panel, the two surfaces being
+    /// different shapes. The block keeps the first either way.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_second_picture_is_the_panel_s()
+    {
+        var dark = Encoding.UTF8.GetBytes(
+            """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"><rect width="10" height="10" fill="#101820"/></svg>""");
+
+        var skin = new ModuleSkin.Artwork(Convert.FromBase64String(FlatPng)) { Panel = dark };
+
+        var block = ModuleArtwork.Of(skin).ShouldNotBeNull();
+        var panel = ModuleArtwork.Of(skin, panel: true).ShouldNotBeNull();
+
+        Colors.Light(block.Mean).ShouldBeTrue("the block keeps the amber");
+        Colors.Light(panel.Mean).ShouldBeFalse("the panel takes the second picture");
+    }
+
+    /// <summary>One picture is both surfaces, and is read once for the two.</summary>
+    [AvaloniaFact]
+    public void One_picture_serves_the_block_and_the_panel()
+    {
+        var skin = new ModuleSkin.Artwork(Convert.FromBase64String(FlatPng));
+
+        ModuleArtwork.Of(skin, panel: true).ShouldBeSameAs(ModuleArtwork.Of(skin));
+    }
+
+    /// <summary>
     /// Bytes that are not a picture are not a crash: the module falls back to its
     /// category, the way an unreadable mark draws nothing.
     /// </summary>

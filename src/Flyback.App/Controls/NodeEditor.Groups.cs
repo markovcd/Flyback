@@ -531,19 +531,19 @@ public sealed partial class NodeEditor
         var body = new RoundedRect(bounds, NodeGeometry.CornerRadius);
 
         context.DrawRectangle(
-            isSelected ? GroupFillSelected : GroupFill,
-            isSelected ? SelectionPenSecondary : NodeBorder,
+            NodeSkin.Box(isSelected),
+            isSelected ? SelectionPenSecondary : NodeSkin.Edge,
             body);
 
-        DrawMark(context, body, ModuleGlyphs.Group, GroupMark);
+        DrawMark(context, body, ModuleGlyphs.Group, NodeSkin.BoxMark);
 
         var header = new Rect(bounds.X, bounds.Y, bounds.Width, NodeGeometry.HeaderHeight);
         context.DrawRectangle(
-            GroupHeaderFill,
+            NodeSkin.BoxHeader,
             null,
             new RoundedRect(header, NodeGeometry.CornerRadius, NodeGeometry.CornerRadius, 0, 0));
 
-        DrawHeaderRelief(context, header);
+        NodeSkin.Relief(context, header);
 
         var title = Text(group.Title(), 12.5, HeaderTextBrush, bounds.Width - 16, true);
         var titleAt = new Point(bounds.X + 9, bounds.Y + 5);

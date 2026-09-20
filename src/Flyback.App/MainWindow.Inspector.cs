@@ -436,23 +436,40 @@ public sealed partial class MainWindow
         Grid.SetColumn(splitter, column);
         Grid.SetRow(splitter, 1);
 
-        // The mark sits behind the inspector rather than beside it, and never
-        // takes a click — an empty panel is a better place for it than a corner
-        // of the toolbar, and it is out of the way once there is something to read.
+        // The plate is docked rather than scrolled: what a block is and the buttons
+        // that act on it are wanted wherever the reading has been scrolled to.
+        var reading = new DockPanel();
+
+        DockPanel.SetDock(plateHost, Dock.Top);
+
+        reading.Children.Add(plateHost);
+        reading.Children.Add(new ScrollViewer
+        {
+            Content = inspector,
+
+            // Explicitly transparent: a theme that gave the scroll viewer a
+            // background would paint straight over the wash and the mark.
+            Background = Brushes.Transparent,
+        });
+
+        // The block's face sits behind the inspector rather than beside it, and
+        // never takes a click.
         var inspectorBorder = new Border
         {
             Background = new SolidColorBrush(Colors.Panel),
-            Child = new Panel
-            {
-                Children =
-                {
-                    watermark,
+            Child = new Panel { Children = { wash, reading } },
+        };
 
-                    // Explicitly transparent: a theme that gave the scroll
-                    // viewer a background would paint straight over the mark.
-                    new ScrollViewer { Content = inspector, Background = Brushes.Transparent },
-                },
-            },
+        // The mark starts under the plate, whatever height the name and the buttons
+        // have left it at.
+        // The band and the mark are drawn on the wash, so it is told how deep the
+        // name's row is and how far down the plate reaches.
+        plateHost.PropertyChanged += (_, e) =>
+        {
+            if (e.Property != BoundsProperty) return;
+
+            wash.Below = plateHost.Bounds.Height;
+            wash.BandHeight = (plateHost.Content as ModulePlate)?.Band ?? 0;
         };
         Grid.SetColumn(inspectorBorder, column);
         Grid.SetRow(inspectorBorder, 2);
@@ -560,21 +577,17 @@ public sealed partial class MainWindow
     {
         inspectorShape = InspectorShape();
         inspector.Children.Clear();
-
-        var selected = editor.SelectedNode is { } chosen && NodeCatalog.Get(chosen.TypeId) is not null;
+        plateHost.Content = null;
 
         // What an empty panel says depends on which canvas is under it. Naming
         // gestures that are switched off would be worse than saying nothing: a
         // person following them would conclude the program was broken rather
         // than that the patch belongs to the text — see ADR-0068.
-
-        // Louder with nothing in front of it, faint once there are values to
-        // read. A watermark that competed with a column of sliders would be a
-        // decoration in the way of the thing it decorates.
-        watermark.Opacity = selected ? 0.06 : 0.14;
-
         if (editor.SelectedNode is not { } node || NodeCatalog.Get(node.TypeId) is not { } def)
         {
+            wash.Clear();
+            plateHost.Content = null;
+
             inspector.Children.Add(new TextBlock
             {
                 Text = adrift ? Adrifting : editor.Locked ? LockedHelp : Help,
@@ -595,20 +608,30 @@ public sealed partial class MainWindow
             return;
         }
 
-        inspector.Children.Add(BuildTitle(node, def));
+        // The block's own face, so the panel and the canvas are plainly the same
+        // module. Its name and what can be done to it stand on the plate; the rows
+        // below stay on the panel, which is what a column of numbers is read on.
+        var plate = ModulePlate.Of(def);
 
-        inspector.Children.Add(new TextBlock
+        wash.Show(def);
+
+        plate.Named.Children.Add(BuildTitle(node, def, plate.Ink));
+
+        plate.Named.Children.Add(new TextBlock
         {
             Text = def.Category,
             FontSize = Text.Small,
-            Foreground = new SolidColorBrush(Colors.Accent(def.Category)),
+            Foreground = plate.Quiet,
+            TextAlignment = TextAlignment.Right,
         });
+
+        plateHost.Content = plate;
 
         // What can be done to the module goes under its name, above the
         // description — see ActionRow. Where it goes is settled here and what is
         // in it at the end, because a knob does not decide whether a module can
         // be grouped.
-        var above = inspector.Children.Count;
+        var above = plate.Under.Children.Count;
 
         if (!string.IsNullOrEmpty(def.Description))
             inspector.Children.Add(new TextBlock
@@ -740,7 +763,7 @@ public sealed partial class MainWindow
             going > 1 ? $"Delete these {going} modules  (Delete)" : "Delete this module  (Delete)",
             editor.DeleteSelected);
 
-        inspector.Children.Insert(above, actions);
+        plate.Under.Children.Insert(above, actions);
 
         Undescribed();
 
@@ -785,7 +808,10 @@ public sealed partial class MainWindow
         Orientation = Orientation.Horizontal,
         Spacing = 6,
         Margin = new Thickness(0, 2, 0, 6),
-        HorizontalAlignment = HorizontalAlignment.Left,
+
+        // The right, where the name and the category are: everything the plate
+        // carries is read down the one edge.
+        HorizontalAlignment = HorizontalAlignment.Right,
     };
 
     /// <summary>
@@ -809,17 +835,26 @@ public sealed partial class MainWindow
     /// </remarks>
     private void BuildGroupInspector(NodeGroup group)
     {
-        inspector.Children.Add(BuildGroupTitle(group));
+        // The box's own face, in the grays the canvas draws one in — a box belongs to
+        // no category, so there is no accent to carry over.
+        var plate = ModulePlate.Box();
 
-        inspector.Children.Add(new TextBlock
+        wash.ShowBox();
+
+        plate.Named.Children.Add(BuildGroupTitle(group, plate.Ink));
+
+        plate.Named.Children.Add(new TextBlock
         {
             Text = group.Name is null ? "Group" : $"Group · {group.Counted}",
             FontSize = Text.Small,
-            Foreground = Text.Muted,
+            Foreground = plate.Quiet,
+            TextAlignment = TextAlignment.Right,
         });
 
+        plateHost.Content = plate;
+
         // Under the name, above the description, where a module's own row sits.
-        var above = inspector.Children.Count;
+        var above = plate.Under.Children.Count;
 
         inspector.Children.Add(new TextBlock
         {
@@ -909,7 +944,7 @@ public sealed partial class MainWindow
             $"Delete the box and the {group.Members.Count} modules in it  (Delete)",
             editor.DeleteSelected);
 
-        inspector.Children.Insert(above, actions);
+        plate.Under.Children.Insert(above, actions);
 
         // One heading and a row per socket, each named for the module and port
         // inside that it stands for — which is exactly what the box draws, so
@@ -1003,17 +1038,18 @@ public sealed partial class MainWindow
     {
         if (groups is null || string.IsNullOrWhiteSpace(group.Name)) return;
 
-        var at = inspector.Children.IndexOf(actions);
+        var host = actions.Parent as Panel;
+        var at = host?.Children.IndexOf(actions) ?? -1;
 
         // Nothing kept under that name, or no row left to ask in — either way
         // there is nothing to ask about.
-        if (groups.Named(group.Name) is null || at < 0)
+        if (groups.Named(group.Name) is null || host is null || at < 0)
         {
             SaveGroup(group);
             return;
         }
 
-        inspector.Children[at] = Question.Row(
+        host.Children[at] = Question.Row(
             $"Replace “{group.Name}”?",
             actions.Margin,
             $"Replace the kept “{group.Name}” with this group.",
@@ -1035,7 +1071,7 @@ public sealed partial class MainWindow
     /// told to forget — small, immediate, and about the thing under it.
     /// </summary>
 
-    private Control BuildGroupTitle(NodeGroup group)
+    private Control BuildGroupTitle(NodeGroup group, IBrush ink)
     {
         var title = new TextBlock
         {
@@ -1043,6 +1079,8 @@ public sealed partial class MainWindow
             FontSize = Text.Title,
             FontWeight = FontWeight.SemiBold,
             TextTrimming = TextTrimming.CharacterEllipsis,
+            TextAlignment = TextAlignment.Right,
+            Foreground = ink,
             Background = Brushes.Transparent,
         };
 
@@ -1050,24 +1088,30 @@ public sealed partial class MainWindow
             ? "Double-click to give this group a name of its own."
             : $"Double-click to rename. Empty the box to go back to '{group.Counted}'.");
 
+        title.Cursor = Renaming;
+
         title.DoubleTapped += (_, e) =>
         {
             e.Handled = true;
 
             BeginRename(
                 title,
+                ink,
                 group.Name,
                 group.Counted,
                 NodeGroup.NameLimit,
                 typed => group.Rename(typed),
                 () => group.Name,
-                () => BuildGroupTitle(group));
+                () => BuildGroupTitle(group, ink));
         };
 
         return title;
     }
 
-    private Control BuildTitle(NodeInstance node, NodeDef def)
+    /// <summary>What the pointer turns into over a name that double-clicks into a box.</summary>
+    private static readonly Cursor Renaming = new(StandardCursorType.Hand);
+
+    private Control BuildTitle(NodeInstance node, NodeDef def, IBrush ink)
     {
         var title = new TextBlock
         {
@@ -1075,6 +1119,8 @@ public sealed partial class MainWindow
             FontSize = Text.Title,
             FontWeight = FontWeight.SemiBold,
             TextTrimming = TextTrimming.CharacterEllipsis,
+            TextAlignment = TextAlignment.Right,
+            Foreground = ink,
             Background = Brushes.Transparent,
         };
 
@@ -1091,10 +1137,14 @@ public sealed partial class MainWindow
             ? "Double-click to give this module a name of its own."
             : $"Double-click to rename. Empty the box to go back to '{def.Name}'.");
 
+        // A name that can be changed says so under the pointer. Only here, because
+        // a locked canvas's name is the text's and this one is not a button.
+        title.Cursor = Renaming;
+
         title.DoubleTapped += (_, e) =>
         {
             e.Handled = true;
-            BeginRename(node, def, title);
+            BeginRename(node, def, ink, title);
         };
 
         return title;
@@ -1111,15 +1161,16 @@ public sealed partial class MainWindow
     /// the tree already, and it puts itself back from inside its own
     /// <c>LostFocus</c>.
     /// </remarks>
-    private void BeginRename(NodeInstance node, NodeDef def, Control title) =>
+    private void BeginRename(NodeInstance node, NodeDef def, IBrush ink, Control title) =>
         BeginRename(
             title,
+            ink,
             node.Name,
             def.Name,
             NodeInstance.NameLimit,
             typed => node.Rename(def, typed),
             () => node.Name,
-            () => BuildTitle(node, def));
+            () => BuildTitle(node, def, ink));
 
     /// <summary>
     /// Turns a title into a box to type another name into, and puts the title back
@@ -1132,6 +1183,7 @@ public sealed partial class MainWindow
     /// history are the same for both.
     /// </remarks>
     /// <param name="title"></param>
+    /// <param name="ink">What the name is written in, which the box is written in too.</param>
     /// <param name="held">The name it has, which is null on one nobody has named.</param>
     /// <param name="fallback">What it is called when it has no name of its own.</param>
     /// <param name="limit"></param>
@@ -1140,6 +1192,7 @@ public sealed partial class MainWindow
     /// <param name="rebuild">The title to put back.</param>
     private void BeginRename(
         Control title,
+        IBrush ink,
         string? held,
         string fallback,
         int limit,
@@ -1147,14 +1200,21 @@ public sealed partial class MainWindow
         Func<string?> current,
         Func<Control> rebuild)
     {
-        var at = inspector.Children.IndexOf(title);
+        // The name stands on the plate rather than on the panel, so the box goes back
+        // where the name was.
+        if (title.Parent is not Panel host) return;
+
+        var at = host.Children.IndexOf(title);
         if (at < 0) return;
 
+        // Dressed as the name it replaces: same size, same weight, same ink, and
+        // none of a box's own furniture. The name does not move when it is
+        // double-clicked — what changes is that there is a caret in it.
         var box = new TextBox
         {
             // The name it has, not the one it shows. Opening this on something
             // nobody has renamed leaves an empty box, because empty is what it
-            // means — and what it would go back to is in the watermark, where it
+            // means — and what it would go back to is the placeholder, which
             // reads as the thing you would get rather than as text to delete
             // before typing.
             Text = held ?? string.Empty,
@@ -1162,6 +1222,14 @@ public sealed partial class MainWindow
             MaxLength = limit,
             FontSize = Text.Title,
             FontWeight = FontWeight.SemiBold,
+            TextAlignment = TextAlignment.Right,
+            Foreground = ink,
+            CaretBrush = ink,
+            Background = Brushes.Transparent,
+            BorderThickness = new Thickness(0),
+            Padding = new Thickness(0),
+            MinHeight = 0,
+            Classes = { ModulePlate.NameBoxClass },
         };
 
         // Enter takes the focus off the box as it closes it, which would bring
@@ -1183,7 +1251,7 @@ public sealed partial class MainWindow
 
         box.LostFocus += (_, _) => Close(keep: true);
 
-        inspector.Children[at] = box;
+        host.Children[at] = box;
 
         box.Focus();
         box.SelectAll();
@@ -1196,8 +1264,8 @@ public sealed partial class MainWindow
             var before = current();
             if (keep) rename(box.Text);
 
-            var where = inspector.Children.IndexOf(box);
-            if (where >= 0) inspector.Children[where] = rebuild();
+            var where = host.Children.IndexOf(box);
+            if (where >= 0) host.Children[where] = rebuild();
 
             // Only where it is actually a rename: the canvas draws its headers
             // from the same name and this is what redraws them, and a step in
