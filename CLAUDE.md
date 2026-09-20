@@ -5,7 +5,7 @@ Flyback is a patchable synthesiser for .NET 10: one module graph generates both 
 Standing rules for working in this repo are in `.claude/rules/`, and Claude Code loads them every session:
 
 - `git-workflow.md`: commit straight to `main`, and isolate from other sessions' uncommitted work.
-- `packages.md`: check the packages before starting anything big; take cheap upgrades, ask about expensive ones.
+- `packages.md`: check the packages and the SDK before starting anything big; take cheap upgrades, hand off expensive ones.
 - `prose-style.md`: American spelling; succinct comments that never narrate history.
 - `adrs.md`: check `docs/adr/` before proposing a refactor; rewrite a day-old ADR in place; number a new ADR from `main` at commit time.
 - `changelog.md`: what CHANGELOG.md may contain.
