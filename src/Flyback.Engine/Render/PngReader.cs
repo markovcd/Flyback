@@ -42,13 +42,13 @@ public static class PngReader
     private static readonly byte[] Signature = [0x89, (byte)'P', (byte)'N', (byte)'G', 0x0D, 0x0A, 0x1A, 0x0A];
 
     /// <summary>
-    /// The most pixels a picture may hold, which is about the frame a very large
-    /// display would want and forty times what a preview is. A cap because a
-    /// header is four bytes of width and four of height, and a file claiming a
-    /// billion of each would otherwise be asked for as an allocation before
-    /// anything had a chance to disbelieve it.
+    /// The most pixels a picture may hold — <see cref="SynthRenderer.MostPixels"/>,
+    /// because a picture read back in is a frame. A cap because a header is four
+    /// bytes of width and four of height, and a file claiming a billion of each
+    /// would otherwise be asked for as an allocation before anything had a chance
+    /// to disbelieve it.
     /// </summary>
-    private const long MostPixels = 64L * 1024 * 1024;
+    private const long MostPixels = SynthRenderer.MostPixels;
 
     public static LoadedImage? Read(string path, out PngFault fault)
     {
@@ -370,13 +370,38 @@ public static class PngReader
         if (length > int.MaxValue - 16) return false;
 
         name = Encoding.ASCII.GetString(head[4..]);
-        data = new byte[length];
 
-        if (!Fill(input, data)) return false;
+        if (!Take(input, (int)length, out data)) return false;
 
         Span<byte> checksum = stackalloc byte[4];
         Fill(input, checksum);
 
+        return true;
+    }
+
+    /// <summary>
+    /// Exactly <paramref name="length"/> bytes, grown to as it reads rather than
+    /// asked for up front — a pipe cannot be asked how much is behind it, and a
+    /// length nothing backs would otherwise be an allocation.
+    /// </summary>
+    private static bool Take(Stream input, int length, out byte[] data)
+    {
+        data = [];
+
+        var block = new byte[Math.Min(length, 1 << 16)];
+        var got = new MemoryStream(block.Length);
+
+        while (got.Length < length)
+        {
+            var wanted = (int)Math.Min(block.Length, length - got.Length);
+            var read = input.Read(block, 0, wanted);
+
+            if (read <= 0) return false;
+
+            got.Write(block, 0, read);
+        }
+
+        data = got.ToArray();
         return true;
     }
 

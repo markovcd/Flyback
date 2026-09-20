@@ -61,6 +61,13 @@ public static class WavReader
     /// </summary>
     public const int MostSamples = GlobalConstants.SampleRate * 60 * 10;
 
+    /// <summary>
+    /// How much of a <c>fmt </c> chunk is worth keeping: forty bytes covers the
+    /// sixteen every WAVE has and the extension a 0xFFFE one adds, and nothing
+    /// past that is read.
+    /// </summary>
+    private const int MostFormatBytes = 40;
+
     public static LoadedSample? Read(string path, out WavFault fault)
     {
         if (!File.Exists(path))
@@ -104,6 +111,7 @@ public static class WavReader
         var format = 0;
 
         var chunk = new byte[8];
+        Span<byte> body = stackalloc byte[MostFormatBytes];
 
         while (Fill(input, chunk))
         {
@@ -114,20 +122,26 @@ public static class WavReader
 
             if (name == "fmt ")
             {
-                var body = new byte[size];
-                if (!Fill(input, body)) return null;
                 if (size < 16) return null;
 
-                format = BinaryPrimitives.ReadUInt16LittleEndian(body.AsSpan(0, 2));
-                channels = BinaryPrimitives.ReadUInt16LittleEndian(body.AsSpan(2, 2));
-                rate = BinaryPrimitives.ReadInt32LittleEndian(body.AsSpan(4, 4));
-                bits = BinaryPrimitives.ReadUInt16LittleEndian(body.AsSpan(14, 2));
+                // Only the front of it is read, and the length is a number in the
+                // file: asking for what it claims is how a corrupt header becomes
+                // an allocation of two gigabytes.
+                var wanted = Math.Min(size, MostFormatBytes);
+
+                if (!Fill(input, body[..wanted])) return null;
+                if (!Skip(input, size - wanted)) return null;
+
+                format = BinaryPrimitives.ReadUInt16LittleEndian(body[..2]);
+                channels = BinaryPrimitives.ReadUInt16LittleEndian(body.Slice(2, 2));
+                rate = BinaryPrimitives.ReadInt32LittleEndian(body.Slice(4, 4));
+                bits = BinaryPrimitives.ReadUInt16LittleEndian(body.Slice(14, 2));
 
                 // The extension carries the real tag in the first two bytes of
                 // its sub-format GUID, and the rest of the GUID is the same for
                 // every one of them.
-                if (format == FormatExtensible && size >= 26)
-                    format = BinaryPrimitives.ReadUInt16LittleEndian(body.AsSpan(24, 2));
+                if (format == FormatExtensible && wanted >= 26)
+                    format = BinaryPrimitives.ReadUInt16LittleEndian(body.Slice(24, 2));
             }
             else if (name == "data")
             {
@@ -137,7 +151,12 @@ public static class WavReader
                     return null;
                 }
 
-                return Decode(input, size, format, channels, bits, rate, out fault);
+                // Held to what is actually behind it where that can be asked, for
+                // the reason the format chunk is: the length is the file's word
+                // and the buffer is ours.
+                var behind = input.CanSeek ? (int)Math.Min(size, input.Length - input.Position) : size;
+
+                return Decode(input, behind, format, channels, bits, rate, out fault);
             }
             else
             {

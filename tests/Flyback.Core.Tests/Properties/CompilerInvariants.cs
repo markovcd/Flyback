@@ -87,6 +87,46 @@ public class CompilerInvariants
     }
 
     /// <summary>
+    /// The same modules, actually run — for the eye and for the ear, with memory
+    /// behind them. Lowering without falling over is not the same as evaluating
+    /// without falling over, and a module reached only by its own preset is
+    /// reached by neither.
+    /// </summary>
+    [Theory]
+    [MemberData(nameof(ModuleTypeIds))]
+    public void Every_module_evaluates(string typeId)
+    {
+        if (typeId == NodeCatalog.OutputTypeId) return;
+
+        var def = NodeCatalog.Require(typeId);
+        var builder = new PatchBuilder();
+        var module = builder.Add(typeId, 0, 0);
+        var output = builder.Add(NodeCatalog.OutputTypeId, 400, 0);
+
+        if (def.Outputs.Count > 0) builder.Wire(module, 0, output, 0);
+
+        foreach (var program in (CompiledPatch[])
+                 [builder.Patch.CompileForVideo().Program, builder.Patch.CompileForAudio().Program])
+        {
+            var registers = program.AllocateRegisters();
+            var delays = new DelayState(program, GlobalConstants.SampleRate);
+
+            foreach (var t in (double[])[0d, 0.5d, 61.125d])
+            foreach (var y in (double[])[-1d, 0d, 0.75d])
+            foreach (var x in (double[])[-1.5d, 0d, 1.5d])
+            {
+                Should.NotThrow(
+                    () => program.Evaluate(x, y, t, registers, default, delays, aspect: 16d / 9d),
+                    $"{typeId} at ({x}, {y}, {t})");
+
+                for (var i = 0; i < program.OutputWidth; i++)
+                    double.IsNaN(registers[program.OutputBase + i])
+                        .ShouldBeFalse($"{typeId} put NaN on output {i} at ({x}, {y}, {t})");
+            }
+        }
+    }
+
+    /// <summary>
     /// The output color must be three registers that actually exist, or the
     /// renderer reads past the end of its scratch buffer.
     /// </summary>

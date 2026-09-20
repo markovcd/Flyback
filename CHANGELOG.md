@@ -89,6 +89,9 @@
 - In text, an output named straight after a call, as in `tempo(bpm: 104).beats`, is read rather than dropped for the first output.
 - In text, anything left on a line after its statement is a complaint rather than skipped.
 - Flyback no longer closes while the settings window is open.
+- A corrupt sample or picture is reported rather than taking Flyback down with it.
+- Sign answers 0 for a value that is not a number instead of stopping the render, and agrees with the GPU about an infinite one.
+- `flyback-cli render --size` says a frame is too large rather than failing at the arithmetic.
 - Several other bugfixes.
 
 ## 0.3.0 — 2026-09-17

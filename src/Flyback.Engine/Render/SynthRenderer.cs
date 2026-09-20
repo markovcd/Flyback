@@ -26,6 +26,21 @@ public sealed class SynthRenderer
         MaxDegreeOfParallelism = Math.Max(1, Environment.ProcessorCount - 1),
     };
 
+    /// <summary>
+    /// The most pixels a frame may be, which is about what a very large display
+    /// would want and forty times what a preview is.
+    /// </summary>
+    /// <remarks>
+    /// A frame is asked for as a number somebody else chose — a size on the
+    /// command line, a width and a height in a file — and every buffer behind it
+    /// is that number times four. Unbounded, it is the multiplication rather than
+    /// the memory that gives way first: 27000x27000 overflows an int and the
+    /// renderer is handed a buffer that is the wrong size instead of a refusal.
+    /// The one place the number lives, so the frame Flyback draws and the picture
+    /// it will read back are the same size.
+    /// </remarks>
+    public const long MostPixels = 64L * 1024 * 1024;
+
     private float[] currentFrame = [];
     private float[] previousFrame = [];
     private int bufferWidth;

@@ -239,6 +239,11 @@ public static class GlslEmitter
         float lg (float a)          { return a <= 0.0 ? 0.0 : log(a); }
         float sat(float v)          { return fin(v) ? clamp(v, 0.0, 1.0) : 0.0; }
 
+        // GLSL leaves sign undefined at a NaN, where the interpreter answers zero.
+        // Written out rather than guarding the input, which would read an infinity
+        // as nought and disagree about its sign.
+        float sg (float v)          { return v > 0.0 ? 1.0 : v < 0.0 ? -1.0 : 0.0; }
+
         // GLSL leaves atan undefined at the origin, where Math.Atan2 answers zero.
         float at2(float y, float x) { return (x == 0.0 && y == 0.0) ? 0.0 : atan(y, x); }
 
@@ -606,10 +611,7 @@ public static class GlslEmitter
                 OpCode.Ceil => $"ceil({a})",
                 OpCode.Fract => $"fr({a})",
 
-                // Guarded on the way in, where the interpreter is not: Math.Sign
-                // throws on a NaN rather than answering one, and a shader has
-                // nowhere to throw to.
-                OpCode.Sign => $"sign(gd({a}))",
+                OpCode.Sign => $"sg({a})",
 
                 OpCode.Exp => $"gd(exp({a}))",
                 OpCode.Log => $"lg({a})",

@@ -314,6 +314,33 @@ public class SampleTests : IDisposable
     }
 
     /// <summary>
+    /// A file that is there and is wrong, which is the harder half: whatever the
+    /// reader does with a corrupt header, the compiler does with it, and the
+    /// compiler runs on every edit.
+    /// </summary>
+    [Fact]
+    public void A_file_that_cannot_be_read_is_reported_rather_than_thrown()
+    {
+        var path = Path.Combine(folder, "broken.wav");
+
+        // A RIFF/WAVE whose format chunk claims two gigabytes.
+        using (var file = File.Create(path))
+        {
+            file.Write("RIFF"u8);
+            file.Write([0xFF, 0xFF, 0xFF, 0x7F]);
+            file.Write("WAVE"u8);
+            file.Write("fmt "u8);
+            file.Write([0xFF, 0xFF, 0xFF, 0x7F]);
+        }
+
+        var (patch, _) = Playing(path);
+
+        var compiled = Should.NotThrow(() => patch.CompileForAudio(NodeCatalog.BuiltIn, Library()));
+
+        compiled.Issues.ShouldContain(i => i.Message.Contains("broken.wav"));
+    }
+
+    /// <summary>
     /// A patch is still a patch. What compiles is silence where the recording
     /// would have been, so the editor goes on drawing and the rest of the sound
     /// goes on playing while the file is found again.

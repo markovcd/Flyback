@@ -389,7 +389,7 @@ public sealed class CompiledPatch(
                 case OpCode.Floor: Reg(ref bank, op.Out) = Math.Floor(Reg(ref bank, op.A)); break;
                 case OpCode.Ceil: Reg(ref bank, op.Out) = Math.Ceiling(Reg(ref bank, op.A)); break;
                 case OpCode.Fract: Reg(ref bank, op.Out) = Fract(Reg(ref bank, op.A)); break;
-                case OpCode.Sign: Reg(ref bank, op.Out) = Math.Sign(Reg(ref bank, op.A)); break;
+                case OpCode.Sign: Reg(ref bank, op.Out) = Signum(Reg(ref bank, op.A)); break;
                 case OpCode.Exp: Reg(ref bank, op.Out) = Guard(Math.Exp(Reg(ref bank, op.A))); break;
                 case OpCode.Log:
                 {
@@ -624,6 +624,14 @@ public sealed class CompiledPatch(
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static double Guard(double v) => double.IsFinite(v) ? v : 0d;
+
+    /// <summary>
+    /// -1, 0 or 1, and 0 for anything that is not a number.
+    /// <see cref="Math.Sign(double)"/> raises on a NaN, which is the one answer an
+    /// op in this switch may not give.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static double Signum(double v) => v > 0d ? 1d : v < 0d ? -1d : 0d;
 
     /// <summary>
     /// Feedback held below one. At exactly one a delay line never decays and at

@@ -237,6 +237,29 @@ public class PngReaderTests
         fault.ShouldBe(PngFault.Empty);
     }
 
+    /// <summary>
+    /// A chunk length is a number in the file and nothing else. A reader that
+    /// takes it as an allocation turns a corrupt picture into two gigabytes asked
+    /// for before anything has looked at what is behind it.
+    /// </summary>
+    [Fact]
+    public void A_chunk_that_lies_about_its_length_costs_nothing()
+    {
+        var file = new byte[]
+        {
+            0x89, (byte)'P', (byte)'N', (byte)'G', 0x0D, 0x0A, 0x1A, 0x0A,
+            0x7F, 0xFF, 0xFF, 0x00,
+            (byte)'I', (byte)'H', (byte)'D', (byte)'R',
+        };
+
+        var before = GC.GetAllocatedBytesForCurrentThread();
+        Read(file, out var fault).ShouldBeNull();
+        var spent = GC.GetAllocatedBytesForCurrentThread() - before;
+
+        fault.ShouldBe(PngFault.NotPng);
+        spent.ShouldBeLessThan(1 << 20, $"a {file.Length}-byte file asked for {spent} bytes");
+    }
+
     // --- the library -----------------------------------------------------------
 
     [Fact]

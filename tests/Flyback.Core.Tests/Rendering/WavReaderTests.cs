@@ -150,6 +150,31 @@ public class WavReaderTests
         Refused(written).ShouldBe(WavFault.Unsupported);
     }
 
+    /// <summary>
+    /// A chunk length is a number in the file and nothing else. A reader that
+    /// takes it as an allocation turns a twenty-byte file into an
+    /// <see cref="OutOfMemoryException"/> — and a patch naming that file into one
+    /// the compiler cannot get past, on every edit.
+    /// </summary>
+    [Fact]
+    public void A_chunk_that_lies_about_its_length_costs_nothing()
+    {
+        var file = new MemoryStream();
+        file.Write("RIFF"u8);
+        file.Write([0xFF, 0xFF, 0xFF, 0x7F]);
+        file.Write("WAVE"u8);
+        file.Write("fmt "u8);
+        file.Write([0xFF, 0xFF, 0xFF, 0x7F]);
+        file.Position = 0;
+
+        var before = GC.GetAllocatedBytesForCurrentThread();
+        WavReader.Read(file, out var fault).ShouldBeNull();
+        var spent = GC.GetAllocatedBytesForCurrentThread() - before;
+
+        fault.ShouldBe(WavFault.NotWave);
+        spent.ShouldBeLessThan(1 << 20, $"a {file.Length}-byte file asked for {spent} bytes");
+    }
+
     [Fact]
     public void A_file_that_is_not_there_is_missing_rather_than_a_throw()
     {

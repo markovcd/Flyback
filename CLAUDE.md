@@ -21,4 +21,8 @@ Task-specific know-how is in `.claude/skills/`, and Claude Code loads each skill
 - `site-audio-tracks`: rebuilding the website's listening-row MP3s.
 - `vibe-check`: finding what the catalogue is missing, by reading what an unchecked agent reaches for.
 
+Commands in `.claude/commands/` are run by name rather than matched:
+
+- `/bughunt`: hunt for bugs, confirm each as a failing test, fix it, and file the test where it belongs.
+
 `.claude/settings.json` turns on the `Flyback Vibe` output style (`.claude/output-styles/vibe.md`) for every session in this repo. It governs wording only: what gets checked, weighed and recommended is unchanged.

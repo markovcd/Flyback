@@ -33,7 +33,7 @@ internal static class IlOps
     [MethodImpl(Inline)] public static double Floor(double a) => Math.Floor(a);
     [MethodImpl(Inline)] public static double Ceil(double a) => Math.Ceiling(a);
     [MethodImpl(Inline)] public static double Fract(double a) => CompiledPatch.Fract(a);
-    [MethodImpl(Inline)] public static double Sign(double a) => Math.Sign(a);
+    [MethodImpl(Inline)] public static double Sign(double a) => CompiledPatch.Signum(a);
     [MethodImpl(Inline)] public static double Exp(double a) => CompiledPatch.Guard(Math.Exp(a));
     [MethodImpl(Inline)] public static double Log(double a) => a <= 0d ? 0d : Math.Log(a);
 
