@@ -2,3 +2,11 @@
 Flyback.Plugins.Assist.AssistantSchema.Asking(Flyback.Plugins.Assist.SurveyOptions! options, Flyback.Plugins.Settings.SettingValues! values) -> Flyback.Plugins.Assist.SurveyOptions!
 Flyback.Plugins.Assist.SurveyOptions.Chosen.get -> bool
 Flyback.Plugins.Assist.SurveyOptions.Chosen.init -> void
+*REMOVED*Flyback.Plugins.Assist.WorkbenchLimits.Deconstruct(out int MaxNodes, out int MaxToolCalls, out int FrameWidth, out int FrameHeight, out int MaxFrames, out double LatestTime, out double WarmUpStep, out int ListenRate, out double LongestListen) -> void
+*REMOVED*Flyback.Plugins.Assist.WorkbenchLimits.MaxNodes.get -> int
+*REMOVED*Flyback.Plugins.Assist.WorkbenchLimits.MaxNodes.init -> void
+*REMOVED*Flyback.Plugins.Assist.WorkbenchLimits.WorkbenchLimits(int MaxNodes = 120, int MaxToolCalls = 200, int FrameWidth = 320, int FrameHeight = 180, int MaxFrames = 4, double LatestTime = 8, double WarmUpStep = 0.03333333333333333, int ListenRate = 24000, double LongestListen = 4) -> void
+Flyback.Plugins.Assist.WorkbenchLimits.Deconstruct(out int MaxAdded, out int MaxToolCalls, out int FrameWidth, out int FrameHeight, out int MaxFrames, out double LatestTime, out double WarmUpStep, out int ListenRate, out double LongestListen) -> void
+Flyback.Plugins.Assist.WorkbenchLimits.MaxAdded.get -> int
+Flyback.Plugins.Assist.WorkbenchLimits.MaxAdded.init -> void
+Flyback.Plugins.Assist.WorkbenchLimits.WorkbenchLimits(int MaxAdded = 120, int MaxToolCalls = 200, int FrameWidth = 320, int FrameHeight = 180, int MaxFrames = 4, double LatestTime = 8, double WarmUpStep = 0.03333333333333333, int ListenRate = 24000, double LongestListen = 4) -> void

@@ -58,14 +58,15 @@ internal static class Handbook
         x |> sine(freq: 1.5)
           |> add(y |> sine(freq: 1.1, phase: slowly))
           |> remap(-2..2, 0..1)
-          |> hsv(saturation: 0.85, value: 1)
+          |> color.hsv(saturation: 0.85, value: 1)
           |> out.color
         ```
 
         - **`|>` is a wire.** What is on the left goes into the module on the
           right. A module is named by the last part of its type id, so
           `space.kaleidoscope` is `kaleidoscope` — except `hsv`, `mix` and
-          `midi.in`, which have to be written in full.
+          `midi.in`, which have to be written in full: `color.hsv`,
+          `color.mix` or `math.mix`, `midi.in`.
         - **Where the signal lands**: a socket called `in` takes it; failing
           that a leading `x` and `y` take a position, two signals at once, which
           is how Space and Pattern modules chain; failing that the first socket
@@ -324,6 +325,29 @@ internal static class Handbook
         `add_module`, `connect` and `set_knobs` are for *changing* a patch that
         already exists: a knob to turn, a wire to move. Reach for them when the
         person asks for an adjustment, not to assemble something from nothing.
+
+        **Change what is there and leave the rest alone.** When the patch on the
+        bench is not empty and the person asked for a change, start from what
+        `describe_patch` gives you. A change to a few modules is `add_module`,
+        `connect`, `set_knobs` and `remove_module`. A change to many is
+        `write_patch` with that description altered only where you were asked,
+        which gives every module a new identity and is the price of one call.
+        Every module you were not asked about stays as it was. If you cannot
+        make the change without building something else, say so and stop — a
+        different patch that resembles the request is not the request.
+
+        **Say what you did.** The summary you propose names what you added,
+        removed or rewired, and anything you did that was not asked for. If the
+        request assumed something the patch does not have — a picture where
+        there is none, a part that does not exist — say that first, then say
+        what you did about it.
+
+        **Keep the sum out of clipping.** Voices add, and a sum past 1 distorts.
+        If you can measure the peak and it is above -1 dBFS, lower the levels
+        before you propose; about -6 dBFS is comfortable. Where you cannot
+        measure it, scale the voices so they cannot add past 1. Bring down the
+        peak, not the whole mix: the fix should cost about as much loudness as
+        the overshoot.
 
         Check it when the shape is right and adjust what you found. When you are
         happy, call `propose` with a one-line summary. Nothing you do reaches
