@@ -216,14 +216,17 @@ li::marker { color: var(--normalled); }
 
 .node {
   --accent: var(--maths);
-  background: var(--node);
+  background:
+    linear-gradient(color-mix(in srgb, var(--accent) 24%, var(--node)), color-mix(in srgb, var(--accent) 6%, var(--node)));
   border: 1px solid var(--edge);
   border-radius: var(--radius);
   overflow: hidden;
   box-shadow: 0 10px 30px -18px rgba(0, 0, 0, 0.9);
 }
 .node > header {
-  background: var(--accent);
+  background: linear-gradient(var(--accent), color-mix(in srgb, var(--accent) 72%, #000));
+  border-top: 1px solid rgba(255, 255, 255, 0.16);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.3);
   color: #fff;
   font-size: 13px; font-weight: 600;
   padding: 6px 12px;

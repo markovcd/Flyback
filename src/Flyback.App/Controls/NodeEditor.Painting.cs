@@ -371,23 +371,91 @@ public sealed partial class NodeEditor
     private static double Bend(double from, double to) =>
         Math.Clamp(Math.Abs(to - from) * 0.75, ReturnWireReach / 3, ReturnWireReach);
 
+    /// <summary>
+    /// Sets a module's mark in the body, right of the labels and under the
+    /// header, which is drawn after it.
+    /// </summary>
+    /// <remarks>
+    /// Sized to the body rather than fixed, so a module of one row gets a small
+    /// whole mark instead of the bottom third of a large one, and capped so a
+    /// tall module's does not become the module. Drawn under the text on purpose
+    /// and held faint enough that nothing has to be read past it.
+    /// </remarks>
+    private static void DrawMark(DrawingContext context, RoundedRect body, Geometry? glyph, IPen pen)
+    {
+        if (glyph is null) return;
+
+        var bounds = body.Rect;
+        var room = bounds.Height - NodeGeometry.HeaderHeight;
+
+        // Too little room for a mark to be anything but a smudge.
+        if (room - MarkInset * 2 < MarkLeast) return;
+
+        var size = Math.Min(room - MarkInset * 2, MarkMost);
+        var scale = size / ModuleGlyphs.Box;
+
+        var at = new Point(
+            bounds.Right - MarkInset - size,
+            bounds.Y + NodeGeometry.HeaderHeight + (room - size) / 2);
+
+        using (context.PushTransform(
+            Matrix.CreateScale(scale, scale) * Matrix.CreateTranslation(at.X, at.Y)))
+        {
+            context.DrawGeometry(null, pen, glyph);
+        }
+    }
+
+    /// <summary>How far a mark keeps off the sides of the body it is set in.</summary>
+    private const double MarkInset = 4;
+
+    /// <summary>The sizes a mark is held between — see <see cref="DrawMark"/>.</summary>
+    private const double MarkLeast = 18, MarkMost = 52;
+
+    /// <summary>
+    /// The two lines that give a header band a face: light along its top edge,
+    /// and a seam where it meets the body.
+    /// </summary>
+    /// <remarks>
+    /// The light is held off the corners, where a straight line across a rounded
+    /// one reads as an overhang rather than as an edge catching the light.
+    /// </remarks>
+    private static void DrawHeaderRelief(DrawingContext context, Rect header)
+    {
+        var inset = NodeGeometry.CornerRadius;
+
+        context.DrawLine(
+            HeaderGloss,
+            new Point(header.X + inset, header.Y + 0.75),
+            new Point(header.Right - inset, header.Y + 0.75));
+
+        context.DrawLine(
+            HeaderSeam,
+            new Point(header.X, header.Bottom - 0.5),
+            new Point(header.Right, header.Bottom - 0.5));
+    }
+
     private void DrawNode(DrawingContext context, NodeInstance node, NodeDef def)
     {
         var bounds = NodeGeometry.Bounds(node, def);
         var isSelected = selection.Contains(node.Id);
-        var accent = Colors.Accent(def.Category);
+
+        var body = new RoundedRect(bounds, NodeGeometry.CornerRadius);
 
         context.DrawRectangle(
-            isSelected ? NodeFillSelected : NodeFill,
+            NodeSkin.Body(def.Category, isSelected),
             !isSelected ? NodeBorder : focus == node.Id ? SelectionPen : SelectionPenSecondary,
-            new RoundedRect(bounds, NodeGeometry.CornerRadius));
+            body);
+
+        DrawMark(context, body, ModuleGlyphs.For(def), NodeSkin.Mark(def.Category));
 
         // Header band, square at the bottom so it reads as a title bar.
         var header = new Rect(bounds.X, bounds.Y, bounds.Width, NodeGeometry.HeaderHeight);
         context.DrawRectangle(
-            new SolidColorBrush(accent, 0.85),
+            NodeSkin.Header(def.Category),
             null,
             new RoundedRect(header, NodeGeometry.CornerRadius, NodeGeometry.CornerRadius, 0, 0));
+
+        DrawHeaderRelief(context, header);
 
         context.DrawText(
             Text(node.Title(def), HeaderSize, HeaderTextBrush, HeaderWidth(bounds, def), true),

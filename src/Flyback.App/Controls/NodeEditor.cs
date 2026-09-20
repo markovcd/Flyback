@@ -37,8 +37,6 @@ public sealed partial class NodeEditor : Control
     }
 
     private static readonly IBrush Background = new SolidColorBrush(Colors.Canvas);
-    private static readonly IBrush NodeFill = new SolidColorBrush(Colors.Node);
-    private static readonly IBrush NodeFillSelected = new SolidColorBrush(Colors.NodeSelected);
     private static readonly IBrush LabelBrush = new SolidColorBrush(Colors.Label);
     private static readonly IBrush ValueBrush = new SolidColorBrush(Colors.Value);
     private static readonly IBrush NormalBrush = new SolidColorBrush(Colors.Normalled);
@@ -72,15 +70,45 @@ public sealed partial class NodeEditor : Control
     private static readonly IPen PortOutline = new Pen(new SolidColorBrush(Colors.Outline), 1.2);
 
     /// <summary>
-    /// Ground beyond the canvas edge.
+    /// The light along the top of a header band and the seam under it — see
+    /// <see cref="DrawHeaderRelief"/>. Both are white and black rather than
+    /// palette colors, because what they are is a light and a shadow on whatever
+    /// color the band happens to be.
     /// </summary>
+    private static readonly IPen HeaderGloss =
+        new Pen(new SolidColorBrush(Avalonia.Media.Colors.White, 0.16), 1.2);
+
+    private static readonly IPen HeaderSeam =
+        new Pen(new SolidColorBrush(Avalonia.Media.Colors.Black, 0.3), 1);
+
     /// <summary>
     /// A box's header, in the one color on the canvas that belongs to no
     /// category. A module's header is tinted by what it does; a group does
     /// nothing, so it is drawn in the outline color and reads as canvas
     /// furniture rather than as a module whose kind you have forgotten.
     /// </summary>
-    private static readonly IBrush GroupHeaderFill = new SolidColorBrush(Colors.Outline, 0.85);
+    private static readonly IBrush GroupHeaderFill = NodeSkin.Down(
+        Colors.Blend(Colors.Outline, Colors.Separator, 0.55), Colors.Outline);
+
+    /// <summary>
+    /// A box's body, which is the node grey lifted a little rather than tinted:
+    /// the same statement the header makes, that a box belongs to no category.
+    /// </summary>
+    private static readonly IBrush GroupFill = NodeSkin.Down(
+        Colors.Blend(Colors.Node, Colors.Separator, 0.3), Colors.Node);
+
+    private static readonly IBrush GroupFillSelected = NodeSkin.Down(
+        Colors.Blend(Colors.NodeSelected, Colors.Separator, 0.3), Colors.NodeSelected);
+
+    /// <summary>
+    /// The mark across a box, which is the same picture the toolbar's group
+    /// button carries — modules inside a frame.
+    /// </summary>
+    private static readonly IPen GroupMark = new Pen(
+        new SolidColorBrush(Colors.Separator, 0.5),
+        ModuleGlyphs.Thickness,
+        lineCap: PenLineCap.Round,
+        lineJoin: PenLineJoin.Round);
 
     /// <summary>
     /// The dashed ring round a group that is open — see OpenGroup.
@@ -118,7 +146,35 @@ public sealed partial class NodeEditor : Control
     /// has to say "this area" at a glance without becoming a second background
     /// for everything standing on it.
     /// </summary>
-    private static readonly IBrush OpenGroupFill = new SolidColorBrush(Colors.Separator, 0.06);
+    /// <remarks>
+    /// Brightest where it meets the strip the title is on and falling away to
+    /// nothing at the floor, so the region reads as light coming off the strip
+    /// rather than as a panel laid over the canvas.
+    /// </remarks>
+    private static readonly IBrush OpenGroupFill = NodeSkin.Down(
+        Colors.Faded(Colors.Separator, 0.12), Colors.Faded(Colors.Separator, 0.025));
+
+    /// <summary>
+    /// The tab the title sits on, above the ring.
+    /// </summary>
+    /// <remarks>
+    /// The strip used to be bare, which left the name adrift over the canvas
+    /// with nothing joining it to the region it names. A tab is what a named
+    /// region wears everywhere; it is still not a header, because it is only as
+    /// wide as the name.
+    /// </remarks>
+    private static readonly IBrush OpenGroupTab = new SolidColorBrush(Colors.Separator, 0.22);
+
+    private static readonly IBrush OpenGroupTabSelected = new SolidColorBrush(Colors.Attention, 0.22);
+
+    /// <summary>How much wider than its title a tab is drawn, and how far in the title sits.</summary>
+    private const double TabPadding = 9;
+
+    /// <summary>
+    /// How round a region's corners are. Softer than a module's, because it is a
+    /// region and not a thing.
+    /// </summary>
+    private const double GroupCornerRadius = 10;
 
     private static readonly IBrush Beyond = new SolidColorBrush(Colors.Edge);
 

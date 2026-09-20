@@ -469,10 +469,26 @@ public sealed partial class NodeEditor
             context.DrawRectangle(
                 OpenGroupFill,
                 isSelected ? OpenGroupPenSelected : OpenGroupPen,
-                new RoundedRect(outline, NodeGeometry.CornerRadius));
+                new RoundedRect(outline, GroupCornerRadius));
 
-            var label = Text(group.Title(), 11.5, NormalBrush, outline.Width - 12, true);
-            context.DrawText(label, new Point(handle.X + 6, handle.Y + (handle.Height - label.Height) / 2));
+            var label = Text(group.Title(), 11.5, LabelBrush, outline.Width - TabPadding * 2, true);
+
+            // A tab only as wide as the name it carries, sitting on the ring: it
+            // joins the name to the region without becoming the header a shut box
+            // wears.
+            var tab = new Rect(
+                handle.X,
+                handle.Y,
+                Math.Min(label.Width + TabPadding * 2, outline.Width),
+                handle.Height);
+
+            context.DrawRectangle(
+                isSelected ? OpenGroupTabSelected : OpenGroupTab,
+                null,
+                new RoundedRect(tab, GroupCornerRadius, GroupCornerRadius, 0, 0));
+
+            context.DrawText(
+                label, new Point(tab.X + TabPadding, tab.Y + (tab.Height - label.Height) / 2));
         }
     }
 
@@ -482,16 +498,22 @@ public sealed partial class NodeEditor
         // them — there is nothing else it could mean for a box to be picked.
         var isSelected = group.Members.Count > 0 && group.Members.All(selection.Contains);
 
+        var body = new RoundedRect(bounds, NodeGeometry.CornerRadius);
+
         context.DrawRectangle(
-            isSelected ? NodeFillSelected : NodeFill,
+            isSelected ? GroupFillSelected : GroupFill,
             isSelected ? SelectionPenSecondary : NodeBorder,
-            new RoundedRect(bounds, NodeGeometry.CornerRadius));
+            body);
+
+        DrawMark(context, body, ModuleGlyphs.Group, GroupMark);
 
         var header = new Rect(bounds.X, bounds.Y, bounds.Width, NodeGeometry.HeaderHeight);
         context.DrawRectangle(
             GroupHeaderFill,
             null,
             new RoundedRect(header, NodeGeometry.CornerRadius, NodeGeometry.CornerRadius, 0, 0));
+
+        DrawHeaderRelief(context, header);
 
         context.DrawText(
             Text(group.Title(), 12.5, HeaderTextBrush, bounds.Width - 16, true),

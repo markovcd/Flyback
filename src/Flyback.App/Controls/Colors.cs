@@ -188,6 +188,32 @@ internal static class Colors
         _ => Sink,
     };
 
+    // --- mixing -------------------------------------------------------------
+
+    /// <summary>
+    /// <paramref name="amount"/> of <paramref name="over"/> laid on
+    /// <paramref name="ground"/>, opaque.
+    /// </summary>
+    /// <remarks>
+    /// Mixed here rather than drawn as a translucent second rectangle: what these
+    /// make are gradient stops and cached brushes, and a stop has one color.
+    /// </remarks>
+    public static Color Blend(Color ground, Color over, double amount) => Color.FromRgb(
+        Part(ground.R, over.R, amount),
+        Part(ground.G, over.G, amount),
+        Part(ground.B, over.B, amount));
+
+    /// <summary>The same color with the light taken out of it.</summary>
+    public static Color Shade(Color color, double by) => Color.FromArgb(
+        color.A, Part(0, color.R, by), Part(0, color.G, by), Part(0, color.B, by));
+
+    /// <summary>The same color, this much of the way to invisible.</summary>
+    public static Color Faded(Color color, double alpha) =>
+        Color.FromArgb(Part(0, 255, alpha), color.R, color.G, color.B);
+
+    private static byte Part(byte from, byte to, double amount) =>
+        (byte)Math.Clamp(Math.Round(from + (to - from) * amount), 0, 255);
+
     // --- sockets ------------------------------------------------------------
 
     public static Color ColorPort { get; } = Color.FromRgb(0xE8, 0xC8, 0x60);

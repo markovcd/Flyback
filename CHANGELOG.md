@@ -68,6 +68,7 @@
 - The module panel's buttons are icons, in a row under the name.
 - An Expression's formula is shown in red while it does not read, and says what stopped it.
 - Unsaved work survives a crash: the next start offers to restore it.
+- A module carries its category's color down its body and a mark of what it does behind its sockets, with a drawing of its own for the ones you would name; groups are drawn to match.
 
 ### Performance
 - An output with no wire on it no longer costs anything. The big presets run 2–19% fewer operations a sample, and Random's white is a sixteenth of what it was.
