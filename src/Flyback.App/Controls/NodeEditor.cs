@@ -7,20 +7,6 @@ using Flyback.Core.Graph;
 namespace Flyback.App.Controls;
 
 /// <summary>
-/// A wire let go over empty canvas: where it landed, and which socket is still
-/// holding the other end.
-/// </summary>
-/// <param name="At">Where it was dropped, in graph space — where the new module goes.</param>
-/// <param name="Node">The module the wire is still attached to.</param>
-/// <param name="Port">Which of that module's sockets.</param>
-/// <param name="FromOutput">
-/// True when the loose end is looking for an input, because the end still held
-/// is an output. The whole of which direction the new wire runs.
-/// </param>
-/// <param name="Kind">What flows down it, which is a hint about where it belongs on the far end.</param>
-public readonly record struct WireDrop(Point At, Guid Node, int Port, bool FromOutput, PortKind Kind);
-
-/// <summary>
 /// The patch bay. Everything is drawn directly rather than built from controls,
 /// which keeps panning and zooming over a few hundred modules cheap and puts
 /// layout, painting and hit-testing in one place.

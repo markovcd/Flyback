@@ -243,7 +243,7 @@ public sealed partial class NodeEditor
     /// way.
     /// </summary>
     /// <remarks>
-    /// Which socket it lands on is <see cref="Fitting"/>'s decision. Nothing is
+    /// Which socket it lands on is <see cref="WireDrop.SocketOn"/>'s decision. Nothing is
     /// refused for being the wrong kind, because nothing is: the compiler broadcasts
     /// a scalar and takes luma from a color, so the question is only which socket
     /// was meant.
@@ -260,9 +260,7 @@ public sealed partial class NodeEditor
 
         // Both halves before the one record, so one press of undo takes the
         // module and the wire away together.
-        var sockets = drop.FromOutput ? def.Inputs : def.Outputs;
-
-        if (Fitting(sockets, drop.Kind) is { } socket)
+        if (drop.SocketOn(def) is { } socket)
         {
             if (drop.FromOutput) patch.Connect(drop.Node, drop.Port, node.Id, socket);
             else patch.Connect(node.Id, socket, drop.Node, drop.Port);
@@ -290,33 +288,6 @@ public sealed partial class NodeEditor
         }
 
         return NodeInstance.Create(def, x, centre.Y - NodeGeometry.Height(def) / 2);
-    }
-
-    /// <summary>
-    /// Which socket of a new module a dropped wire belongs on, or null where the
-    /// module has none of that kind at all.
-    /// </summary>
-    /// <remarks>
-    /// The port a module is about comes first: <see cref="PortSpec.Domain"/> and
-    /// <see cref="PortSpec.Swept"/> are the socket the module exists to have
-    /// something in, which is what the compiler already warns about. Then an exact
-    /// match of kind, which tells a Scan's <c>view</c> from its <c>out</c>. Then the
-    /// first socket, which is where this would land anyway — the catalogue is
-    /// written with the principal one first.
-    /// </remarks>
-    private static int? Fitting(IReadOnlyList<PortSpec> sockets, PortKind kind)
-    {
-        if (sockets.Count == 0) return null;
-
-        for (var i = 0; i < sockets.Count; i++)
-            if (sockets[i].Domain || sockets[i].Swept)
-                return i;
-
-        for (var i = 0; i < sockets.Count; i++)
-            if (sockets[i].Kind == kind)
-                return i;
-
-        return 0;
     }
 
     /// <summary>
