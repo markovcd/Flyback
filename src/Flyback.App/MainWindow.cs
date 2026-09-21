@@ -277,7 +277,7 @@ public sealed partial class MainWindow : Window
     /// was. Enabled only while there is a picture to put there — see
     /// <see cref="ShowPreview"/>.
     /// </summary>
-    private readonly ToggleButton swapButton = Toggle("swap", "⇄", NoPictureToSwapTip);
+    private readonly ToggleButton swapButton = ToolbarButtons.Toggle("swap", "⇄", NoPictureToSwapTip);
 
     /// <summary>What the swap button says while it can be pressed.</summary>
     private const string SwapTip =
@@ -358,10 +358,10 @@ public sealed partial class MainWindow : Window
         HorizontalAlignment = HorizontalAlignment.Stretch,
     };
     private readonly ToggleButton assistantButton =
-        Toggle("assistant", "✦", "Describe a patch and have one built.");
+        ToolbarButtons.Toggle("assistant", "✦", "Describe a patch and have one built.");
 
-    private readonly Button undoButton = Glyph("undo", "↶", "Take back the last edit  (Ctrl+Z)");
-    private readonly Button redoButton = Glyph("redo", "↷", "Put it back  (Ctrl+Shift+Z)");
+    private readonly Button undoButton = ToolbarButtons.Glyph("undo", "↶", "Take back the last edit  (Ctrl+Z)");
+    private readonly Button redoButton = ToolbarButtons.Glyph("redo", "↷", "Put it back  (Ctrl+Shift+Z)");
 
     /// <summary>
     /// Held because what laying out means, and whether it is worth doing at
@@ -962,7 +962,7 @@ public sealed partial class MainWindow : Window
         // tidy. It opens the gallery, and a tile picked there is a row of the
         // picker above chosen, so there is one road to changing the preset and it
         // is the one that asks about unsaved work.
-        var presetsButton = Drawn("presets-glyph", Glyphs.Presets(), "Start from a preset patch, or save this one as a preset…");
+        var presetsButton = ToolbarButtons.Drawn("presets-glyph", Glyphs.Presets(), "Start from a preset patch, or save this one as a preset…");
         presetsButton.Click += async (_, _) =>
         {
             var showing = presets.SelectedItem as PatchPreset;
@@ -1048,17 +1048,17 @@ public sealed partial class MainWindow : Window
             }
         };
 
-        var open = Drawn("open", Glyphs.Open(), "Open a patch (CTRL+O)…");
+        var open = ToolbarButtons.Drawn("open", Glyphs.Open(), "Open a patch (CTRL+O)…");
         open.Click += async (_, _) => await OpenAnotherPatchAsync();
 
-        var save = Drawn("save", Glyphs.Save(), "Save this patch (CTRL+S)…");
+        var save = ToolbarButtons.Drawn("save", Glyphs.Save(), "Save this patch (CTRL+S)…");
         save.Click += async (_, _) => await SavePatchAsync();
 
         // All three go to whichever view is showing — see MainWindow.Source.
         undoButton.Click += (_, _) => Undo();
         redoButton.Click += (_, _) => Redo();
 
-        var tidy = tidyButton = Drawn("tidy", Glyphs.Tidy(), TidyTip);
+        var tidy = tidyButton = ToolbarButtons.Drawn("tidy", Glyphs.Tidy(), TidyTip);
 
         // A locked canvas says why in its tip, and that is wasted unless a
         // disabled button is still allowed to show it — see the same call on
@@ -1089,12 +1089,12 @@ public sealed partial class MainWindow : Window
         // The glyph and the tip are set here, alongside every other toolbar
         // button; what the tip actually says is decided per patch by
         // MarkRecordable, which runs before this is ever shown.
-        Marked(recordButton, "record", Glyphs.Record(), RecordTip);
+        ToolbarButtons.Marked(recordButton, "record", Glyphs.Record(), RecordTip);
 
-        Marked(pauseButton, "pause", Glyphs.Pause(), PauseTip);
+        ToolbarButtons.Marked(pauseButton, "pause", Glyphs.Pause(), PauseTip);
         pauseButton.Click += (_, _) => TogglePause();
 
-        Marked(rewindButton, "rewind", Glyphs.Rewind(), RewindTip);
+        ToolbarButtons.Marked(rewindButton, "rewind", Glyphs.Rewind(), RewindTip);
         rewindButton.Click += (_, _) => RewindToZero();
 
         WireSource();
@@ -1103,16 +1103,16 @@ public sealed partial class MainWindow : Window
         // What is done to the patch, in the order it is done: pick one, open or
         // save one, take an edit back. Tidy sits with undo and redo rather than
         // with the files, because it is an edit and is taken back like one.
-        var patchwork = Row();
+        var patchwork = ToolbarButtons.Group();
 
         patchwork.Children.Add(presetsSlot);
         patchwork.Children.Add(open);
         patchwork.Children.Add(save);
-        patchwork.Children.Add(Separator());
+        patchwork.Children.Add(ToolbarButtons.Separator());
         patchwork.Children.Add(undoButton);
         patchwork.Children.Add(redoButton);
         patchwork.Children.Add(tidy);
-        patchwork.Children.Add(Separator());
+        patchwork.Children.Add(ToolbarButtons.Separator());
         patchwork.Children.Add(codeButton);
         patchwork.Children.Add(controlsButton);
         patchwork.Children.Add(swapButton);
@@ -1120,7 +1120,7 @@ public sealed partial class MainWindow : Window
         // On its own, between what is done to the patch and what is done to
         // the program: pausing, rewinding and recording are neither — all are
         // facts about the performance, not an edit Ctrl+Z takes back.
-        var transport = Row();
+        var transport = ToolbarButtons.Group();
         transport.Children.Add(pauseButton);
         transport.Children.Add(rewindButton);
         transport.Children.Add(recordButton);
@@ -1132,16 +1132,16 @@ public sealed partial class MainWindow : Window
             : "No assistant plugin is installed. See About for where plugins are looked for.");
         assistantButton.IsCheckedChanged += (_, _) => ShowAssistant(assistantButton.IsChecked == true);
 
-        var settings = Glyph("settings", "⚙", "Open the settings.");
+        var settings = ToolbarButtons.Glyph("settings", "⚙", "Open the settings.");
         settings.Click += async (_, _) => await ShowSettingsAsync();
 
-        var about = Glyph("about", "ⓘ", "What this is, who wrote it, and what it may be done with.");
+        var about = ToolbarButtons.Glyph("about", "ⓘ", "What this is, who wrote it, and what it may be done with.");
         about.Click += async (_, _) => await ShowAboutAsync();
 
         // The other end of the bar, because none of these is about the patch:
         // they are the program itself, and a thing reached for once a session
         // does not belong in the path of the things reached for constantly.
-        var program = Row();
+        var program = ToolbarButtons.Group();
 
         program.Children.Add(assistantButton);
         program.Children.Add(settings);
@@ -1151,13 +1151,13 @@ public sealed partial class MainWindow : Window
         // far edge — everything reached from the toolbar sits together at the
         // near side instead of one end chasing the window's width. Unmargined
         // itself: patchwork and program each carry their own margin already,
-        // from Row(), and stacking a second one here would double the gaps.
+        // from ToolbarButtons.Group(), and stacking a second one here would double the gaps.
         var bar = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
 
         bar.Children.Add(patchwork);
-        bar.Children.Add(Separator());
+        bar.Children.Add(ToolbarButtons.Separator());
         bar.Children.Add(transport);
-        bar.Children.Add(Separator());
+        bar.Children.Add(ToolbarButtons.Separator());
         bar.Children.Add(program);
 
         return new Border
@@ -1414,58 +1414,4 @@ public sealed partial class MainWindow : Window
             Child = bar,
         };
     }
-
-    // --- shared bits of chrome -----------------------------------------------
-
-    /// <summary>One group of toolbar controls, laid out along it.</summary>
-    private static StackPanel Row() => new()
-    {
-        Orientation = Orientation.Horizontal,
-        Spacing = 8,
-        Margin = new Thickness(12, 8),
-        VerticalAlignment = VerticalAlignment.Center,
-    };
-
-    /// <summary>
-    /// A toolbar button that is a symbol rather than a word.
-    /// </summary>
-    /// <remarks>
-    /// With the labels gone the tip is the only place the button says what it does,
-    /// so every one has one and it is a sentence rather than a repeat of the icon's
-    /// name. Named as well, so a test can find the button without reading a glyph.
-    /// </remarks>
-    private static Button Glyph(string name, string glyph, string tip) =>
-        Marked(new Button(), name, glyph, tip);
-
-    /// <summary>The same, for the two icons that are drawn rather than typed.</summary>
-    private static Button Drawn(string name, Control icon, string tip) =>
-        Marked(new Button(), name, icon, tip);
-
-    /// <summary>The same, for a button that stays down.</summary>
-    private static ToggleButton Toggle(string name, string glyph, string tip) =>
-        Marked(new ToggleButton(), name, glyph, tip);
-
-    private static T Marked<T>(T button, string name, object content, string tip)
-        where T : ContentControl
-    {
-        button.Name = name;
-        button.Content = content;
-        button.Width = 34;
-        button.Height = 30;
-        button.Padding = new Thickness(0);
-        button.FontSize = Text.Heading;
-        button.HorizontalContentAlignment = HorizontalAlignment.Center;
-        button.VerticalContentAlignment = VerticalAlignment.Center;
-
-        ToolTip.SetTip(button, tip);
-
-        return button;
-    }
-
-    private static Control Separator() => new Border
-    {
-        Width = 1,
-        Margin = new Thickness(4, 4),
-        Background = new SolidColorBrush(Colors.Separator),
-    };
 }

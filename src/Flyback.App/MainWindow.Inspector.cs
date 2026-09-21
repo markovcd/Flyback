@@ -638,7 +638,7 @@ public sealed partial class MainWindow
 
         void Act(string name, Control icon, string tip, Action gesture)
         {
-            var button = Drawn(name, icon, tip);
+            var button = ToolbarButtons.Drawn(name, icon, tip);
 
             button.Click += (_, _) => gesture();
             actions.Children.Add(button);
@@ -854,7 +854,7 @@ public sealed partial class MainWindow
 
         Button Act(string name, Control icon, string tip, Action gesture)
         {
-            var button = Drawn(name, icon, tip);
+            var button = ToolbarButtons.Drawn(name, icon, tip);
 
             button.Click += (_, _) => gesture();
             actions.Children.Add(button);

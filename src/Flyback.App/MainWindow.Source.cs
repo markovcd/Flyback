@@ -28,7 +28,7 @@ public sealed partial class MainWindow
     private readonly SourceView source = new();
 
     private readonly ToggleButton codeButton =
-        Toggle("code", "{ }", "Show the patch as text  (F2)");
+        ToolbarButtons.Toggle("code", "{ }", "Show the patch as text  (F2)");
 
     /// <summary>
     /// Whether the text is the document. False for a patch that came from a

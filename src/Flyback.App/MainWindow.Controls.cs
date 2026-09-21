@@ -65,7 +65,7 @@ public sealed partial class MainWindow
     };
 
     private readonly ToggleButton controlsButton =
-        Toggle("controls", "◎", "Show the knob panel, for turning the patch by hand or from a MIDI controller  (Ctrl+K)");
+        ToolbarButtons.Toggle("controls", "◎", "Show the knob panel, for turning the patch by hand or from a MIDI controller  (Ctrl+K)");
 
     private ControlHub controls = null!;
 
