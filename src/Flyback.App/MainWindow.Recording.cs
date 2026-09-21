@@ -102,6 +102,8 @@ public sealed partial class MainWindow
             : finishing is not null ? StillFinishing
             : kinds.Count > 0 ? RecordTip
             : NothingToRecord);
+
+        SyncTransport();
     }
 
     /// <summary>
@@ -148,6 +150,9 @@ public sealed partial class MainWindow
         });
 
         if (file?.TryGetLocalPath() is not { } path) return;
+
+        // A take is of a patch that is playing, and a paused one has no sound to record.
+        Resume();
 
         // Before the count rather than only inside Start: a count-in is three
         // seconds of standing ready, and spending them to be told there is no

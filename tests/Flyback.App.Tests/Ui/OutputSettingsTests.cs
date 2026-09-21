@@ -714,6 +714,7 @@ public class OutputSettingsTests : UiTest
     [InlineData("about")]
     [InlineData("tidy")]
     [InlineData("record")]
+    [InlineData("pause")]
     [InlineData("rewind")]
     public void Every_toolbar_icon_says_what_it_is(string name)
     {

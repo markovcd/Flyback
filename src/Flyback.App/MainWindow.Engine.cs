@@ -244,7 +244,9 @@ public sealed partial class MainWindow
     /// </remarks>
     private void SyncAudioToVolume()
     {
-        var wanted = sound.Output is not null && !audioBlocked && Sound.VolumeIsUp(editor.Patch);
+        SyncTransport();
+
+        var wanted = !paused && Audible;
 
         // Never off in the middle of a take. One with sound in it is paced by the
         // samples it is handed, so a device stopped under it stops the file —
@@ -309,7 +311,7 @@ public sealed partial class MainWindow
         }
         else
         {
-            preview.Clock = null;
+            preview.Clock = paused ? () => frozenAt : null;
             audio.Stop();
 
             // The picture goes on being drawn with nothing playing, so every

@@ -65,7 +65,7 @@ internal sealed partial class ViewerWindow : Window
 
         layout.Children.Add(previewBox);
 
-        if (!options.NoOverlay) layout.Children.Add(BuildOverlay(options));
+        if (!options.NoOverlay) layout.Children.Add(BuildOverlay());
 
         Content = layout;
 
@@ -88,6 +88,35 @@ internal sealed partial class ViewerWindow : Window
     internal ViewerPlayer Player => player;
 
     internal PreviewHost Preview => preview;
+
+    /// <summary>The transport over the picture, or null for a run that asked for none.</summary>
+    internal TransportOverlay? Overlay { get; private set; }
+
+    private TransportOverlay BuildOverlay()
+    {
+        var overlay = Overlay = new TransportOverlay(this)
+        {
+            Muted = player.Muted,
+            Paused = player.Paused,
+            Sounding = player.Sounding,
+        };
+
+        overlay.MuteClicked += () =>
+        {
+            player.Mute(!player.Muted);
+            overlay.Muted = player.Muted;
+        };
+
+        overlay.PauseClicked += () =>
+        {
+            player.Toggle();
+            overlay.Paused = player.Paused;
+        };
+
+        overlay.RewindClicked += player.Rewind;
+
+        return overlay;
+    }
 
     /// <summary>The picture, fitted inside <see cref="LargestStart"/> at its own shape.</summary>
     private static PixelSize Fitted(PixelSize picture)

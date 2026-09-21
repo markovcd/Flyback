@@ -287,20 +287,20 @@ public class ViewerWindowTests : UiTest
 
         Point At(double away)
         {
-            var dots = window.Dots;
+            var dots = window.Overlay!.Dots;
             var centre = dots.TranslatePoint(new Point(dots.Bounds.Width / 2, dots.Bounds.Height / 2), window)!.Value;
 
             return new Point(centre.X - away, centre.Y);
         }
 
         window.MouseMove(At(600));
-        var far = window.DotsOpacity;
+        var far = window.Overlay!.DotsOpacity;
 
         window.MouseMove(At(150));
-        var middle = window.DotsOpacity;
+        var middle = window.Overlay!.DotsOpacity;
 
         window.MouseMove(At(0));
-        var near = window.DotsOpacity;
+        var near = window.Overlay!.DotsOpacity;
 
         far.ShouldBeLessThan(0.1);
         middle.ShouldBeGreaterThan(far);
@@ -311,9 +311,9 @@ public class ViewerWindowTests : UiTest
     [AvaloniaFact]
     public void The_curve_is_a_floor_a_ceiling_and_a_square_between()
     {
-        ViewerWindow.Proximity(1000).ShouldBe(0.06, 1e-9);
-        ViewerWindow.Proximity(0).ShouldBe(1.0, 1e-9);
-        ViewerWindow.Proximity(150).ShouldBeLessThan(0.5);
+        TransportOverlay.Proximity(1000).ShouldBe(0.06, 1e-9);
+        TransportOverlay.Proximity(0).ShouldBe(1.0, 1e-9);
+        TransportOverlay.Proximity(150).ShouldBeLessThan(0.5);
     }
 
     [AvaloniaFact]

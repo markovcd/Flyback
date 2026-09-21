@@ -454,7 +454,15 @@ public sealed partial class MainWindow
         Grid.SetColumn(inspectorBorder, column);
         Grid.SetRow(inspectorBorder, 2);
 
+        // Over the preview's own cell while it has the window, and nowhere otherwise.
+        var overlay = transportOverlay = new TransportOverlay(this) { IsVisible = false };
+
+        overlay.PauseClicked += TogglePause;
+        overlay.MuteClicked += ToggleMute;
+        overlay.RewindClicked += RewindToZero;
+
         grid.Children.Add(previewBox);
+        grid.Children.Add(overlay);
         grid.Children.Add(splitter);
         grid.Children.Add(inspectorBorder);
     }

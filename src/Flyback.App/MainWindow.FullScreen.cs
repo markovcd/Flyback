@@ -77,6 +77,20 @@ public sealed partial class MainWindow
         foreach (var child in columns.Children)
             child.IsVisible = full ? child == previewBox : visibleBefore?.GetValueOrDefault(child, true) ?? true;
 
+        // The controls stand over whichever cell the preview is in.
+        if (transportOverlay is { } overlay)
+        {
+            if (full)
+            {
+                Grid.SetColumn(overlay, Grid.GetColumn(previewBox));
+                Grid.SetRow(overlay, Grid.GetRow(previewBox));
+                Grid.SetRowSpan(overlay, Grid.GetRowSpan(previewBox));
+                SyncTransport();
+            }
+
+            overlay.IsVisible = full;
+        }
+
         // ShowPreview stands aside while the preview has the window, and the patch
         // may have lost its picture meanwhile. Only ever put away here: the row has
         // just been given back the height it was dragged to.

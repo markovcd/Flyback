@@ -45,6 +45,12 @@ public sealed partial class MainWindow : Window
     {
         audio.Rewind();
         preview.Rewind();
+
+        // A paused clock reads the time it froze at, so the next tick would undo the rewind.
+        if (!paused) return;
+
+        frozenAt = 0;
+        preview.Time = 0;
     }
 
     /// <summary>What the rewind button does — the same sentence its Output-panel tip used to carry.</summary>
@@ -1120,6 +1126,9 @@ public sealed partial class MainWindow : Window
         // MarkRecordable, which runs before this is ever shown.
         Marked(recordButton, "record", Glyphs.Record(), RecordTip);
 
+        Marked(pauseButton, "pause", Glyphs.Pause(), PauseTip);
+        pauseButton.Click += (_, _) => TogglePause();
+
         Marked(rewindButton, "rewind", Glyphs.Rewind(), RewindTip);
         rewindButton.Click += (_, _) => RewindToZero();
 
@@ -1144,9 +1153,10 @@ public sealed partial class MainWindow : Window
         patchwork.Children.Add(swapButton);
 
         // On its own, between what is done to the patch and what is done to
-        // the program: recording and rewinding are neither — both are facts
-        // about the performance, not an edit Ctrl+Z takes back.
+        // the program: pausing, rewinding and recording are neither — all are
+        // facts about the performance, not an edit Ctrl+Z takes back.
         var transport = Row();
+        transport.Children.Add(pauseButton);
         transport.Children.Add(rewindButton);
         transport.Children.Add(recordButton);
 

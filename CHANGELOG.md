@@ -75,6 +75,7 @@
 - The panel on the right wears the selected block's own face: its category band, the wash under it and its mark, with the name and the buttons on it.
 - Ctrl+Shift+L, or Ctrl+click on the Tidy button, lays out only the selected modules and leaves the rest of the patch where it is.
 - A toolbar button swaps the preview and the canvas, for a bigger picture while you patch.
+- A toolbar button pauses and plays the patch, and the full-screen preview has the viewer's sound, pause and rewind buttons in its corner.
 - The module panel's buttons are icons, in a row under the name.
 - An Expression's formula is shown in red while it does not read, and says what stopped it.
 - Unsaved work survives a crash: the next start restores it and says so in the status bar.
