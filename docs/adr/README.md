@@ -68,6 +68,7 @@ context, decision, consequences.
 | [0064](0064-a-pixel-runs-only-what-a-pixel-changes.md) | A pixel runs only what a pixel changes |
 | [0074](0074-a-cell-is-a-plane-on-the-video-path.md) | A cell is a plane on the video path *(user-directed)* |
 | [0075](0075-a-cycle-carries-its-own-delay.md) | A cycle carries its own delay *(user-directed)* |
+| [0126](0126-a-bus-is-a-wire-with-no-cable.md) | A bus is a wire with no cable *(user-directed)* |
 | [0076](0076-the-processor-runs-a-program-as-il-once-it-is-built.md) | The processor runs a program as IL once it is built *(user-directed)* |
 | [0096](0096-an-op-nothing-reads-is-left-out.md) | An op nothing reads is left out *(user-directed)* |
 | [0077](0077-the-picture-is-heard-only-through-a-scan.md) | The picture is heard only through a Scan *(user-directed; its aspect table's shell-export row retired by [0078](0078-export-leaves-the-shell-for-the-cli-that-already-writes-it.md); its Live-engine row amended by [0083](0083-the-live-engines-aspect-follows-the-preview.md))* |

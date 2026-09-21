@@ -67,6 +67,8 @@ public sealed partial class NodeEditor
 
             DrawConnections(context, lifted, theirs: true);
 
+            DrawBusLinks(context);
+
             DrawPendingWire(context);
         }
 
@@ -593,7 +595,7 @@ public sealed partial class NodeEditor
 
         var titleBrush = Ink(titleAt.Y + TitleInk / 2, TitleInk, fade: 0, HeaderTextBrush);
 
-        var title = Text(node.Title(def), HeaderSize, titleBrush, HeaderWidth(bounds, def), true);
+        var title = Text(Heading(node, def), HeaderSize, titleBrush, HeaderWidth(bounds, def), true);
 
         context.DrawText(title, titleAt);
 

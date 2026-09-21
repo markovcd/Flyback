@@ -34,6 +34,9 @@ public sealed class SpeakerSteps(PatchContext context)
             buffer[frame * 2 + 1].ShouldBe(buffer[frame * 2], $"frame {frame}");
     }
 
+    [Then("the speakers play {float}")]
+    public void ThenTheSpeakersPlay(float expected) => context.SampleAt(0).ShouldBe(expected, Tolerance);
+
     [Then("the sound is about {float} at {float} seconds")]
     public void ThenTheSoundAt(float expected, float seconds) =>
         context.SampleAt(Samples(seconds)).ShouldBe(expected, Tolerance, $"at {seconds} s");

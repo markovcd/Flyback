@@ -104,6 +104,14 @@ internal static class ModuleGlyphs
         ["feedback"] = Path(
             "M12,4 A8,8 0 0 1 20,12 A8,8 0 0 1 12,20 A8,8 0 0 1 4,12 M1.4,14.7 L4,11.6 L6.6,14.7"),
 
+        // Waves leaving a point and arriving at one: the two ends of a bus.
+        [NodeCatalog.SendTypeId] = Path(
+            "M4,12 A2,2 0 1 1 8,12 A2,2 0 1 1 4,12 M9.5,8.5 A5,5 0 0 1 9.5,15.5 "
+            + "M12.4,5.6 A9,9 0 0 1 12.4,18.4 M15.2,2.8 A13,13 0 0 1 15.2,21.2"),
+        [NodeCatalog.ReceiveTypeId] = Path(
+            "M16,12 A2,2 0 1 1 20,12 A2,2 0 1 1 16,12 M14.5,8.5 A5,5 0 0 0 14.5,15.5 "
+            + "M11.6,5.6 A9,9 0 0 0 11.6,18.4 M8.8,2.8 A13,13 0 0 0 8.8,21.2"),
+
         // Braces: a module that is whatever is written inside it.
         [NodeCatalog.ExpressionTypeId] = Path(
             "M9.5,4 C6.5,4 8,10.5 4.5,12 C8,13.5 6.5,20 9.5,20 "

@@ -34,7 +34,7 @@ public static class ModuleCategories
     /// <summary>Building a color, taking one apart, and correcting one.</summary>
     public const string Color = "Color";
 
-    /// <summary>Arithmetic, and the desk that sums four of anything.</summary>
+    /// <summary>Arithmetic, the desk that sums four of anything, and the bus that carries one without a wire.</summary>
     public const string Maths = "Maths";
 
     /// <summary>

@@ -34,6 +34,14 @@ public sealed class CompilerSteps(PatchContext context)
         }
     }
 
+    /// <summary>A remark, not an error: the socket it feeds rests on its knob.</summary>
+    [Then("Flyback points out that nothing is sent on {string}")]
+    public void ThenNothingIsSentOn(string bus)
+    {
+        ShouldMention(context.Sound, $"No Send is on '{bus}'");
+        context.Sound.HasErrors.ShouldBeFalse(Said(context.Sound));
+    }
+
     [Then("drawing the picture does not compute the tone")]
     public void ThenThePictureSkipsTheTone()
     {

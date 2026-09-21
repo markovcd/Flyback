@@ -116,3 +116,6 @@ override sealed Flyback.Core.Graph.ModuleSkin.Grain.Equals(Flyback.Core.Graph.Mo
 static Flyback.Core.Graph.ModuleSkin.Grain.operator !=(Flyback.Core.Graph.ModuleSkin.Grain? left, Flyback.Core.Graph.ModuleSkin.Grain? right) -> bool
 static Flyback.Core.Graph.ModuleSkin.Grain.operator ==(Flyback.Core.Graph.ModuleSkin.Grain? left, Flyback.Core.Graph.ModuleSkin.Grain? right) -> bool
 virtual Flyback.Core.Graph.ModuleSkin.Palette.Equals(Flyback.Core.Graph.ModuleSkin.Palette? other) -> bool
+const Flyback.Core.Graph.NodeCatalog.ReceiveTypeId = "bus.receive" -> string!
+const Flyback.Core.Graph.NodeCatalog.SendTypeId = "bus.send" -> string!
+static Flyback.Core.Graph.NodeCatalog.BusOf(Flyback.Core.Graph.NodeInstance! node) -> string?

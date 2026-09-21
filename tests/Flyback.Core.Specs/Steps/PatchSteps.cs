@@ -1,3 +1,5 @@
+using System.Text.Json.Nodes;
+using Flyback.Core.Graph;
 using Reqnroll;
 using Shouldly;
 using Flyback.Core.Specs.Support;
@@ -410,6 +412,39 @@ public sealed class PatchSteps(PatchContext context)
         context.SwitchOff("halve again");
     }
 
+    // --- buses ----------------------------------------------------------------
+
+    [Given("a level of {float} is sent on the bus {string}")]
+    public void GivenALevelIsSent(float level, string bus)
+    {
+        Level("level", level);
+        Send("send", bus);
+        context.Wire("level", "out", "send", "in");
+    }
+
+    [Given("the bus {string} is received at the speakers")]
+    public void GivenTheBusIsHeard(string bus) => Hear(Receive(bus));
+
+    [Given("two parts listening to the bus {string} are added together at the speakers")]
+    public void GivenTwoPartsAreHeard(string bus)
+    {
+        context.Add("sum", "math.add");
+        context.Wire(Receive(bus), "out", "sum", "a");
+        context.Wire(Receive(bus), "out", "sum", "b");
+        Hear("sum");
+    }
+
+    [Given("a bus that brings back what it carried and adds a quarter")]
+    public void GivenALoopThroughABus()
+    {
+        context.Add("nudge", "math.add");
+        context.SetInput("nudge", "b", 0.25f);
+        Send("send", "loop");
+        context.Wire(Receive("loop"), "out", "nudge", "a");
+        context.Wire("nudge", "out", "send", "in");
+        Hear("send");
+    }
+
     // --- building blocks ------------------------------------------------------
 
     private void Level(string name, float level)
@@ -469,6 +504,21 @@ public sealed class PatchSteps(PatchContext context)
         context.Add("screen", "output");
         context.Wire(source, port, "screen", "color");
     }
+
+    private void Send(string name, string bus) => OnBus(context.Add(name, NodeCatalog.SendTypeId), bus);
+
+    /// <summary>A fresh Receive on <paramref name="bus"/>, named for how many there are.</summary>
+    private string Receive(string bus)
+    {
+        var name = $"receive {++receives}";
+        OnBus(context.Add(name, NodeCatalog.ReceiveTypeId), bus);
+        return name;
+    }
+
+    private int receives;
+
+    private static void OnBus(NodeInstance node, string bus) =>
+        node.SetState("bus", new JsonObject { ["bus"] = bus });
 
     private void Hear(string source)
     {

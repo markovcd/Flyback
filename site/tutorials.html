@@ -418,6 +418,10 @@ out.volume = 0.5</code></pre>
       What is copied is a small patch file, so you can paste it into another patch or a text editor.</li>
       <li><strong>Rewire quickly.</strong> Drag from a socket onto empty canvas to add a module that is already
       plugged in. <kbd>Ctrl</kbd>+drag an output that has one wire to feed that wire from somewhere else.</li>
+      <li><strong>Carry a signal without a wire</strong> with a Send and a Receive on the same bus. Whatever is
+      patched into the Send comes out of every Receive on its bus, so a kick at one end of the patch can key a
+      Duck at the other. Select either end to see its partners. In text they are <code>send(bus: "kick")</code>
+      and <code>receive(bus: "kick")</code>.</li>
       <li><strong>Tidy</strong> with <kbd>Ctrl</kbd>+<kbd>L</kbd>, and frame everything with
       <kbd>Ctrl</kbd>+<kbd>F</kbd>. A patch too wide for the canvas with every box open has its widest
       boxes shut until the drawing fits, and the status line says which.</li>

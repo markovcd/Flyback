@@ -14,6 +14,7 @@
 ### Modules
 - Added Stroke (a drum envelope counted off the beat), Fade (brings a part in as a level rises), Wander (a slow random value) and Drum (a kick or tom from one envelope) to Voice.
 - Added Desk, a four-channel stereo mixer with a trim that chains into bigger ones.
+- Added Send and Receive, which carry a signal across the patch on a named bus instead of a wire.
 - Added Expression, one block that computes a formula you type over its four inputs, such as `(floor(a * 45) + 0.5) / 45`.
 - Arithmetic in the text view, such as `(x * 2 - 1) * aspect`, is one Expression, and an Expression shows there as arithmetic.
 - Add, Multiply, Floor and the other one- and two-input Maths modules are Expressions now: the module list finds them by name and adds the Expression.

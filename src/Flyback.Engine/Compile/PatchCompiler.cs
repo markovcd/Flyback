@@ -93,6 +93,9 @@ public static class PatchCompiler
 
         var issues = new List<CompileIssue>();
 
+        // Buses first, so everything below sees them as the wires they stand for.
+        patch = Buses.Joined(patch, (node, message) => issues.Add(new CompileIssue(node, message, IssueSeverity.Warning)));
+
         // What every Scope in the patch contributes, which is opposite things to
         // the two programs — a tap to the one that plays, a buffer to the one
         // that draws. See TapSpec.
