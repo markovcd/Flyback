@@ -40,6 +40,7 @@
 - Dub, in the Effects plugin: dub techno to play rather than listen to. Drums and a sub run on their own, four keys hold a chord over them, and eight panel knobs ride the filter, the echo, the room and the mix, moving the picture with the sound. It needs the Voice and Picture plugins.
 - Overworld, in the Effects plugin: a chiptune track on a console's four voices, with a key change and the music ducked under the kick, under a side-scroller drawn a pixel at a time. It needs the Voice, Picture and Mastering plugins.
 - Captions, in the Picture plugin: lines of text paged and typed out by the clock.
+- Dodge, in the Picture plugin: a game played on the keys Z to M, steering through the one gap in each falling wall.
 - Acid, Bronze, Mycelium, Nebula, Outrun, Phase, Slow weather and Whole band are rebuilt on the new modules, with up to a fifth fewer modules each.
 - Every preset's arithmetic arrives as Expressions, a seventh to a third fewer modules in the big ones, sounding and looking the same.
 - Acid is a whole track now: a hundred and twenty-eight bars in two themes, with builds, a breakdown, a bass line and a second 303, and a line that accents and slides.

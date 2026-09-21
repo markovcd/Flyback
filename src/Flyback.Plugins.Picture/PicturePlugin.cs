@@ -88,6 +88,12 @@ public sealed class PicturePlugin : IFlybackPlugin
                 LayersPreset.Name,
                 LayersPreset.Build,
                 "A sunset composed back to front: a sky, a sun screened over it, a sea multiplied in, a line inked on top."),
+            new PatchPreset(
+                DodgePreset.Name,
+                DodgePreset.Build,
+                "A game to play on the keys: walls fall down seven lanes, Z to M, and the key under "
+                + "each gap is where you have to be when it arrives.",
+                PresetKind.Showcase),
         ]);
     }
 }
