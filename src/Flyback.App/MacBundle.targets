@@ -1,6 +1,26 @@
 <Project>
 
   <!--
+    A plist string tag has to hold three dot-separated integers, and $(Version)
+    is a plain build's "0.1.0-dev" as often as a release's "1.4.0" (see
+    Directory.Build.props). Stripped here rather than in Info.plist, which just
+    carries the token both plist keys are substituted with after it is copied.
+  -->
+  <UsingTask TaskName="ReplaceInFile" TaskFactory="RoslynCodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll">
+    <ParameterGroup>
+      <Path ParameterType="System.String" Required="true" />
+      <OldValue ParameterType="System.String" Required="true" />
+      <NewValue ParameterType="System.String" Required="true" />
+    </ParameterGroup>
+    <Task>
+      <Using Namespace="System.IO" />
+      <Code Type="Fragment" Language="cs">
+        File.WriteAllText(Path, File.ReadAllText(Path).Replace(OldValue, NewValue));
+      </Code>
+    </Task>
+  </UsingTask>
+
+  <!--
     macOS does not run a folder of files: it runs a bundle. Publishing for an
     osx runtime identifier therefore lays one out beside the publish output,
 
@@ -36,6 +56,11 @@
     <PropertyGroup>
       <MacBundleContents>$([MSBuild]::EnsureTrailingSlash($([System.IO.Path]::Combine('$(MacBundlePath)', 'Contents'))))</MacBundleContents>
       <MacBundleExecutable>$(MacBundleContents)MacOS/$(AssemblyName)</MacBundleExecutable>
+
+      <!-- major.minor.patch: everything from a prerelease "-" or a build "+" on is cut. -->
+      <MacBundleVersion>$(Version)</MacBundleVersion>
+      <MacBundleVersion Condition="$(MacBundleVersion.Contains('-'))">$(MacBundleVersion.Substring(0, $(MacBundleVersion.IndexOf('-'))))</MacBundleVersion>
+      <MacBundleVersion Condition="$(MacBundleVersion.Contains('+'))">$(MacBundleVersion.Substring(0, $(MacBundleVersion.IndexOf('+'))))</MacBundleVersion>
     </PropertyGroup>
 
     <ItemGroup>
@@ -50,6 +75,7 @@
           DestinationFiles="@(MacBundlePayload->'$(MacBundleContents)MacOS/%(RecursiveDir)%(Filename)%(Extension)')" />
 
     <Copy SourceFiles="$(MSBuildThisFileDirectory)Info.plist" DestinationFolder="$(MacBundleContents)" />
+    <ReplaceInFile Path="$(MacBundleContents)Info.plist" OldValue="__VERSION__" NewValue="$(MacBundleVersion)" />
     <Copy SourceFiles="$(MSBuildThisFileDirectory)..\..\flyback.icns" DestinationFolder="$(MacBundleContents)Resources" />
 
     <!--

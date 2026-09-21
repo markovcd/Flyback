@@ -24,11 +24,12 @@
   <key>CFBundlePackageType</key>
   <string>APPL</string>
 
+  <!-- Substituted by MacBundle.targets with $(Version), stripped to major.minor.patch. -->
   <key>CFBundleShortVersionString</key>
-  <string>1.0</string>
+  <string>__VERSION__</string>
 
   <key>CFBundleVersion</key>
-  <string>1.0</string>
+  <string>__VERSION__</string>
 
   <!-- Without this the window is scaled up from 1x and the preview looks soft. -->
   <key>NSHighResolutionCapable</key>
