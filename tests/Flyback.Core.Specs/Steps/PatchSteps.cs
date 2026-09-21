@@ -1,7 +1,9 @@
+using System.Globalization;
 using System.Text.Json.Nodes;
-using Flyback.Core.Graph;
 using Reqnroll;
 using Shouldly;
+using Flyback.Core.Graph;
+using Flyback.Core.Language;
 using Flyback.Core.Specs.Support;
 
 namespace Flyback.Core.Specs.Steps;
@@ -361,6 +363,25 @@ public sealed class PatchSteps(PatchContext context)
         context.HighestFrequency = Math.Max(context.HighestFrequency, frequency);
     }
 
+    // --- timing and pitch, written in the text language ------------------------
+
+    [Given(@"^a sequencer of ([\d., ]+) stepping (\d+) times a second$")]
+    public void GivenASequencer(string values, int rate) =>
+        Written($"values(rate: {rate}) [ {string.Join(' ', values.Split(',', StringSplitOptions.TrimEntries))} ] |> out.left");
+
+    [Given("the gate of a sequencer stepping {int} times a second")]
+    public void GivenASequencersGate(int rate) =>
+        Written($"let s = values(rate: {rate}) [ 0.5 ]{(char)10}s.gate |> out.left");
+
+    [Given(@"^a pitch of ([\d.]+) kept to (C major|all twelve notes)$")]
+    public void GivenAPitchInKey(float pitch, string scale) =>
+        Written($"value({Number(pitch)}) |> quantiser() [ {(scale == "C major" ? "C D E F G A B" : "C C# D D# E F F# G G# A A# B")} ] |> out.left");
+
+    /// <summary>The gate is open from the start and closes at half a second.</summary>
+    [Given("an envelope with a {int} ms attack, {int} ms decay, sustain of {float} and {int} ms release, held for half a second")]
+    public void GivenAnEnvelope(int attack, int decay, float sustain, int release) =>
+        Written($"adsr(gate: 1 - step(0.5, t), attack: {attack}ms, decay: {decay}ms, sustain: {Number(sustain)}, release: {release}ms) |> out.left");
+
     // --- switching off --------------------------------------------------------
 
     [Given("a level of {float} shown through a module that halves it")]
@@ -469,6 +490,19 @@ public sealed class PatchSteps(PatchContext context)
     }
 
     // --- building blocks ------------------------------------------------------
+
+    /// <summary>A patch written in the text language, heard at full volume.</summary>
+    private void Written(string source)
+    {
+        var load = PatchLanguage.Build(source, NodeCatalog.BuiltIn);
+        load.Ok.ShouldBeTrue(load.Report);
+
+        context.Replace(load.Patch);
+        context.Name("screen", load.Patch.Nodes.Single(n => NodeCatalog.IsSink(n.TypeId)));
+        context.SetInput("screen", "volume", 1f);
+    }
+
+    private static string Number(float value) => value.ToString(CultureInfo.InvariantCulture);
 
     private void Level(string name, float level)
     {

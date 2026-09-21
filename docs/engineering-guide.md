@@ -792,8 +792,10 @@ Scenario: Turning a tone's frequency while it plays does not click
 
 Every new feature ships with at least one scenario (see `.claude/rules/tests.md`).
 The wiring behind each phrase lives in the steps: `PatchSteps` builds and edits
-patches, and `ScreenSteps`, `SpeakerSteps` and `CompilerSteps` check the picture,
-the sound and what the compiler says, sharing a fresh `PatchContext` per scenario.
+patches, `ScreenSteps`, `SpeakerSteps` and `CompilerSteps` check the picture, the
+sound and what the compiler says, `EditingSteps` saves, opens, writes out, undoes
+and pastes, and `PresetSteps` checks every shipped preset. They share a fresh
+`PatchContext` and `Session` per scenario.
 Building never compiles; each check compiles for its own sink. The sound steps
 evaluate the audio program at 1 kHz without the renderer's filters, so a sample is
 exactly what the patch computed. C# tests cover the edges.

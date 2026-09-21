@@ -23,6 +23,28 @@ public sealed class SpeakerSteps(PatchContext context)
     [Then("the speakers are silent")]
     public void ThenSilent() => context.RenderAudio().ShouldAllBe(v => v == 0f);
 
+    [Then("the speakers are not silent")]
+    public void ThenNotSilent() => context.RenderAudio().Any(v => Math.Abs(v) > 0.01f).ShouldBeTrue();
+
+    [Then("the note that comes out is {float}")]
+    public void ThenTheNote(float note) => context.SampleAt(0).ShouldBe(note, Tolerance);
+
+    /// <summary>
+    /// Heard from scratch at both times, so the only difference between them is
+    /// how large the clock reads.
+    /// </summary>
+    [Then("a second of it an hour in sounds as its first second did")]
+    public void ThenAnHourInSoundsTheSame()
+    {
+        var first = context.Listen(0, PatchContext.SampleRate);
+        var late = context.Listen(3600, PatchContext.SampleRate);
+
+        first.Max(Math.Abs).ShouldBeGreaterThan(0.5, "the tone is not sounding");
+
+        for (var i = 0; i < first.Length; i++)
+            late[i].ShouldBe(first[i], 1e-6, $"sample {i}");
+    }
+
     [Then("both speakers play the same sound")]
     public void ThenBothSpeakersMatch()
     {

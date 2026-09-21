@@ -34,8 +34,7 @@ public sealed class PatchContext
     private const string Video = "video";
     private const string Audio = "audio";
 
-    private readonly PatchBuilder builder = new();
-    private readonly Dictionary<string, NodeInstance> named = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, Guid> named = new(StringComparer.OrdinalIgnoreCase);
     private readonly List<double> heard = [];
 
     private CompileResult? result;
@@ -43,7 +42,7 @@ public sealed class PatchContext
     private DelayState? memory;
     private CompiledPatch? memoryFor;
 
-    public Patch Patch => builder.Patch;
+    public Patch Patch { get; private set; } = new();
 
     /// <summary>Every sample of the left channel played so far, across every edit.</summary>
     public IReadOnlyList<double> Heard => heard;
@@ -55,25 +54,42 @@ public sealed class PatchContext
 
     public NodeInstance Add(string name, string typeId)
     {
-        var node = builder.Add(typeId, 0, 0);
-        named[name] = node;
+        var node = NodeInstance.Create(NodeCatalog.Require(typeId), 0, 0);
+        Patch.Nodes.Add(node);
+        named[name] = node.Id;
         Changed();
         return node;
     }
 
-    /// <summary>Places a node whose type the catalogue does not know, as a patch from a newer Flyback would.</summary>
+    /// <summary>Gives a module already in the patch a name the steps can use.</summary>
+    public void Name(string name, NodeInstance node) => named[name] = node.Id;
+
+    /// <summary>Swaps in the patch an undo, a reopened file or a text hands back. Names follow the ids.</summary>
+    public void Replace(Patch patch)
+    {
+        Patch = patch;
+        Changed();
+    }
+
+    public void Remove(string name)
+    {
+        Patch.Remove(Node(name).Id);
+        Changed();
+    }
+
+    /// <summary>Places a node whose type the catalog does not know, as a patch from a newer Flyback would.</summary>
     public NodeInstance AddUnknown(string name, string typeId)
     {
         var node = new NodeInstance { Id = Guid.NewGuid(), TypeId = typeId, InputValues = [] };
         Patch.Nodes.Add(node);
-        named[name] = node;
+        named[name] = node.Id;
         Changed();
         return node;
     }
 
     public NodeInstance Node(string name) =>
-        named.TryGetValue(name, out var node)
-            ? node
+        named.TryGetValue(name, out var id)
+            ? Patch.Find(id) ?? throw new KeyNotFoundException($"'{name}' is no longer in the patch.")
             : throw new KeyNotFoundException($"No node named '{name}' in this scenario.");
 
     public void Wire(string source, string sourcePort, string target, string targetPort)
@@ -168,6 +184,23 @@ public sealed class PatchContext
             program.Evaluate(0d, 0d, (double)heard.Count / SampleRate, registers, default, memory);
             heard.Add(registers[program.OutputBase]);
         }
+    }
+
+    /// <summary>A stretch of the sound starting <paramref name="from"/> seconds in, from fresh memory.</summary>
+    public double[] Listen(double from, int samples)
+    {
+        var program = Sound.Program;
+        var fresh = new DelayState(program, SampleRate);
+        var registers = program.AllocateRegisters();
+        var heardHere = new double[samples];
+
+        for (var i = 0; i < samples; i++)
+        {
+            program.Evaluate(0d, 0d, from + (double)i / SampleRate, registers, default, fresh);
+            heardHere[i] = registers[program.OutputBase];
+        }
+
+        return heardHere;
     }
 
     /// <summary>Plays on until the sample at <paramref name="index"/> has been heard.</summary>

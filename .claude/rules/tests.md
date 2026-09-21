@@ -82,8 +82,9 @@ to do. Written as wiring, it only restates the code, and nobody can tell from it
 whether the behavior is the right one.
 
 **How to apply:** name the feature file and the scenarios after what the user
-gets. Add the phrase to `PatchSteps` if it builds or edits a patch, or to `ScreenSteps`,
-`SpeakerSteps` or `CompilerSteps` if it checks one, and keep the numbers there
+gets. Add the phrase to `PatchSteps` if it builds or edits a patch, to `EditingSteps`
+if it saves, opens, undoes or pastes one, or to `ScreenSteps`, `SpeakerSteps` or
+`CompilerSteps` if it checks one, and keep the numbers there
 unless the number is the requirement ("peaks at a quarter of a second"). A
 feature the specs project cannot reach (the editor, a plugin) takes its scenario
 where it can be reached, or says in the commit why it has none.
