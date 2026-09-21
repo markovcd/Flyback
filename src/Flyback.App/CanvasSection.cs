@@ -5,14 +5,12 @@ using Flyback.App.Controls;
 
 namespace Flyback.App;
 
-public sealed partial class MainWindow
+/// <summary>
+/// The Canvas section of the settings window: how much of a plugin's own
+/// module background the canvas draws (ADR-0118).
+/// </summary>
+internal sealed class CanvasSection
 {
-    /// <summary>
-    /// The Canvas section of the settings window: how much of a plugin's own
-    /// module background the canvas draws (ADR-0118).
-    /// </summary>
-    private readonly StackPanel canvasSection = new() { Spacing = 10, Width = 280 };
-
     private readonly CheckBox pluginSkins = new()
     {
         Name = "pluginSkins",
@@ -29,14 +27,25 @@ public sealed partial class MainWindow
         VerticalAlignment = VerticalAlignment.Center,
     };
 
-    /// <summary>What the Canvas section was last saved as, and so what closing without Save puts it back to.</summary>
-    private CanvasSettings canvasSettings = new();
+    /// <summary>What the section was last saved as, and so what closing without Save puts it back to.</summary>
+    private CanvasSettings saved = new();
 
-    /// <summary>Where <see cref="canvasSettings"/> is kept, or null to keep it nowhere.</summary>
-    private readonly string? canvasSettingsPath;
+    /// <summary>Where <see cref="saved"/> is kept, or null to keep it nowhere.</summary>
+    private readonly string? path;
 
-    private void BuildCanvasSection()
+    private readonly Control canvas;
+
+    private readonly Action<string, string?> report;
+
+    /// <param name="canvas">The canvas, redrawn whenever what it draws changes.</param>
+    internal CanvasSection(string? path, Control canvas, Action<string, string?> report)
     {
+        this.path = path;
+        this.canvas = canvas;
+        this.report = report;
+
+        if (path is not null) saved = CanvasSettings.Load(path);
+
         ToolTip.SetTip(pluginSkins,
             "A plugin may give its modules a color, a texture or a picture of their own. "
             + "Clear this to draw every module as its category, the way Flyback's own are drawn.");
@@ -45,9 +54,9 @@ public sealed partial class MainWindow
             "A module whose background is an animated GIF plays it. Clear this to hold every "
             + "one at its first frame — the canvas then redraws only when the patch changes.");
 
-        canvasSection.Children.Add(pluginSkins);
+        View.Children.Add(pluginSkins);
 
-        canvasSection.Children.Add(new TextBlock
+        View.Children.Add(new TextBlock
         {
             Text = "A module's shape, its header, its sockets and its description are the same "
                 + "whatever a plugin says; only the background behind it changes. A plugin may "
@@ -58,9 +67,9 @@ public sealed partial class MainWindow
             TextWrapping = TextWrapping.Wrap,
         });
 
-        canvasSection.Children.Add(animateSkins);
+        View.Children.Add(animateSkins);
 
-        canvasSection.Children.Add(new TextBlock
+        View.Children.Add(new TextBlock
         {
             Text = "A module's author may have asked for a still picture already, and clearing "
                 + "this cannot put that back.",
@@ -68,42 +77,46 @@ public sealed partial class MainWindow
             Foreground = Text.Muted,
             TextWrapping = TextWrapping.Wrap,
         });
+
+        Show();
     }
+
+    internal StackPanel View { get; } = new() { Spacing = 10, Width = 280 };
 
     /// <summary>
-    /// Puts the section on the controls and on the canvas both, since what the
-    /// canvas draws is read from <see cref="ModuleSkins"/> rather than from here.
+    /// Puts what was last saved on the controls and on the canvas both, since what
+    /// the canvas draws is read from <see cref="ModuleSkins"/> rather than from here.
     /// </summary>
-    private void ShowCanvasSettings(CanvasSettings settings)
+    internal void Show()
     {
-        pluginSkins.IsChecked = settings.PluginSkins;
-        animateSkins.IsChecked = settings.AnimateSkins;
+        pluginSkins.IsChecked = saved.PluginSkins;
+        animateSkins.IsChecked = saved.AnimateSkins;
 
-        ModuleSkins.Honored = settings.PluginSkins;
-        ModuleSkins.Animated = settings.AnimateSkins;
+        ModuleSkins.Honored = saved.PluginSkins;
+        ModuleSkins.Animated = saved.AnimateSkins;
 
-        editor.InvalidateVisual();
+        canvas.InvalidateVisual();
     }
 
-    private void SaveCanvasSettings()
+    internal void Save()
     {
-        canvasSettings = new CanvasSettings
+        saved = new CanvasSettings
         {
             PluginSkins = pluginSkins.IsChecked == true,
             AnimateSkins = animateSkins.IsChecked == true,
         };
 
-        ShowCanvasSettings(canvasSettings);
+        Show();
 
-        if (canvasSettingsPath is null) return;
+        if (path is null) return;
 
         try
         {
-            canvasSettings.Save(canvasSettingsPath);
+            saved.Save(path);
         }
         catch (Exception ex)
         {
-            Report($"Could not save the canvas settings: {ex.Message}", canvasSettingsPath);
+            report($"Could not save the canvas settings: {ex.Message}", path);
         }
     }
 }

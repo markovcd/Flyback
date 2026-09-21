@@ -80,6 +80,12 @@ public sealed partial class MainWindow : Window
     /// </summary>
     private readonly StackPanel soundSection = new() { Spacing = 8, Width = 280 };
 
+    private readonly CanvasSection canvasSection;
+
+    private readonly UpdatesSection updatesSection;
+
+    private readonly UsageSection usageSection;
+
     private readonly ComboBox frameRate = new Picker
     {
         Name = "frameRate",
@@ -492,30 +498,19 @@ public sealed partial class MainWindow : Window
         // Before the layout, because the toolbar lists what is saved.
         if (presetFolder is not null) savedPresets = new PresetLibrary(presetFolder);
         this.outputSettingsPath = outputSettingsPath;
-        this.updateSettingsPath = updateSettingsPath;
-        this.usageSettingsPath = usageSettingsPath;
-        this.canvasSettingsPath = canvasSettingsPath;
         this.usage = usage ?? Usage.Off;
 
         // Before anything is compiled, so no build is started only to be taken off.
         compiler.Enabled = !interpreted;
 
         if (outputSettingsPath is not null) outputSettings = OutputSettings.Load(outputSettingsPath);
-        if (updateSettingsPath is not null) updateSettings = UpdateSettings.Load(updateSettingsPath);
-        if (usageSettingsPath is not null) usageSettings = UsageSettings.Load(usageSettingsPath);
-        if (canvasSettingsPath is not null) canvasSettings = CanvasSettings.Load(canvasSettingsPath);
 
         this.layoutPath = layoutPath;
         if (layoutPath is not null) layout = WindowLayout.Load(layoutPath);
 
-        BuildUpdatesSection();
-        ShowUpdateSettings(updateSettings);
-
-        BuildUsageSection();
-        ShowUsageSettings(usageSettings);
-
-        BuildCanvasSection();
-        ShowCanvasSettings(canvasSettings);
+        updatesSection = new UpdatesSection(updateSettingsPath, (message, detail) => Report(message, detail));
+        usageSection = new UsageSection(usageSettingsPath, this.usage, (message, detail) => Report(message, detail));
+        canvasSection = new CanvasSection(canvasSettingsPath, editor, (message, detail) => Report(message, detail));
 
         sound = Sound.Open(plugins, outputSettings);
 
@@ -1223,7 +1218,7 @@ public sealed partial class MainWindow : Window
         // time this is opened. The window around them is built fresh, so each
         // section the window owns has to be taken back from the last one first.
         foreach (var section in new[]
-                 { graphicsSection, canvasSection, recordingSection, soundSection, midiSection, updatesSection, usageSection })
+                 { graphicsSection, canvasSection.View, recordingSection, soundSection, midiSection, updatesSection.View, usageSection.View })
             if (section.Parent is ContentControl lender) lender.Content = null;
 
         var save = new Button { Content = "Save", Width = 84 };
@@ -1251,13 +1246,13 @@ public sealed partial class MainWindow : Window
         };
 
         tabs.Items.Add(SectionTab("Graphics", graphicsSection));
-        tabs.Items.Add(SectionTab("Canvas", canvasSection));
+        tabs.Items.Add(SectionTab("Canvas", canvasSection.View));
         tabs.Items.Add(SectionTab("Recording", recordingSection));
         tabs.Items.Add(SectionTab("Sound", soundSection));
         tabs.Items.Add(SectionTab("MIDI", midiSection));
         tabs.Items.Add(SectionTab("Agent", panel.SettingsSection()));
-        tabs.Items.Add(SectionTab("Updates", updatesSection));
-        tabs.Items.Add(SectionTab("Usage", usageSection));
+        tabs.Items.Add(SectionTab("Updates", updatesSection.View));
+        tabs.Items.Add(SectionTab("Usage", usageSection.View));
 
         var content = new StackPanel { Spacing = 12, Margin = new Thickness(18, 4, 18, 18) };
 
@@ -1286,9 +1281,9 @@ public sealed partial class MainWindow : Window
         {
             panel.SaveSettings();
             SaveOutputSettings();
-            SaveUpdateSettings();
-            SaveUsageSettings();
-            SaveCanvasSettings();
+            updatesSection.Save();
+            usageSection.Save();
+            canvasSection.Save();
 
             // Saving is the end of the errand, so the window goes with it.
             Dialog.Close(save, true);
@@ -1319,9 +1314,9 @@ public sealed partial class MainWindow : Window
 
         panel.DiscardSettings();
         ShowOutputSettings(outputSettings);
-        ShowUpdateSettings(updateSettings);
-        ShowUsageSettings(usageSettings);
-        ShowCanvasSettings(canvasSettings);
+        updatesSection.Show();
+        usageSection.Show();
+        canvasSection.Show();
     }
 
     /// <summary>
