@@ -182,8 +182,8 @@ internal sealed class OutrunPreset : PresetBench
         // the beater is over long before the shell is.
         var kick = Drum(kickStroke, 45f, 125f, 4f, 2.5f);
 
-        // The sidechain: the kick's level, upside down, on the bass.
-        var duck = Span(kickStroke, 0f, 1f, 1f, 0.35f);
+        // The sidechain: the kick's level on the bass.
+        var duck = Ducking(kickStroke, 0.65f);
 
         Box("Kick");
 
@@ -249,7 +249,7 @@ internal sealed class OutrunPreset : PresetBench
         // The sub, an octave under and added after the Drive so that it stays a sine.
         var sub = b.Add("osc.sine", (3, 0.5f));
         var bass = Enters(
-            Product(Sum(bassGrit, Product(sub, bassLine, 1)), duck), song, 0.25f, 0.3f);
+            Product(Sum(bassGrit, Product(sub, bassLine, 1)), duck, DuckGain), song, 0.25f, 0.3f);
 
         // How far the pluck opens the Filter is the arrangement.
         b.Wire(beats, 0, bassLine, 0)

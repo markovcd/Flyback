@@ -119,3 +119,4 @@ virtual Flyback.Core.Graph.ModuleSkin.Palette.Equals(Flyback.Core.Graph.ModuleSk
 const Flyback.Core.Graph.NodeCatalog.ReceiveTypeId = "bus.receive" -> string!
 const Flyback.Core.Graph.NodeCatalog.SendTypeId = "bus.send" -> string!
 static Flyback.Core.Graph.NodeCatalog.BusOf(Flyback.Core.Graph.NodeInstance! node) -> string?
+const Flyback.Core.Graph.NodeCatalog.DuckTypeId = "audio.duck" -> string!

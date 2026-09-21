@@ -412,6 +412,29 @@ public sealed class PatchSteps(PatchContext context)
         context.SwitchOff("halve again");
     }
 
+    // --- ducking --------------------------------------------------------------
+
+    [Given("a pad at {float} ducked by {float} under a kick at full level")]
+    public void GivenADuckedPad(float pad, float depth)
+    {
+        Level("kick", 1f);
+        Ducked(pad, depth);
+    }
+
+    /// <summary>The kick is one minus a Threshold on Time, so it is full until it stops.</summary>
+    [Given("a pad at {float} ducked by {float} under a kick that stops after {float} seconds")]
+    public void GivenAPadDuckedUnderAStoppingKick(float pad, float depth, float seconds)
+    {
+        context.Add("clock", "time");
+        context.Add("stops", "math.step");
+        context.Add("kick", "math.sub");
+        context.SetInput("stops", "edge", seconds);
+        context.Wire("clock", "t", "stops", "in");
+        context.SetInput("kick", "a", 1f);
+        context.Wire("stops", "out", "kick", "b");
+        Ducked(pad, depth);
+    }
+
     // --- buses ----------------------------------------------------------------
 
     [Given("a level of {float} is sent on the bus {string}")]
@@ -505,6 +528,18 @@ public sealed class PatchSteps(PatchContext context)
         context.Wire(source, port, "screen", "color");
     }
 
+    /// <summary>A pad under a Duck keyed by whatever is called "kick", recovering over a tenth of a second.</summary>
+    private void Ducked(float pad, float depth)
+    {
+        Level("pad", pad);
+        context.Add("duck", NodeCatalog.DuckTypeId);
+        context.SetInput("duck", "depth", depth);
+        context.SetInput("duck", "release", -1f);
+        context.Wire("pad", "out", "duck", "left");
+        context.Wire("kick", "out", "duck", "key");
+        Hear("duck", "left");
+    }
+
     private void Send(string name, string bus) => OnBus(context.Add(name, NodeCatalog.SendTypeId), bus);
 
     /// <summary>A fresh Receive on <paramref name="bus"/>, named for how many there are.</summary>
@@ -520,10 +555,10 @@ public sealed class PatchSteps(PatchContext context)
     private static void OnBus(NodeInstance node, string bus) =>
         node.SetState("bus", new JsonObject { ["bus"] = bus });
 
-    private void Hear(string source)
+    private void Hear(string source, string port = "out")
     {
         context.Add("screen", "output");
-        context.Wire(source, "out", "screen", "left");
+        context.Wire(source, port, "screen", "left");
         context.SetInput("screen", "volume", 1f);
     }
 }

@@ -324,11 +324,11 @@ internal static class MyceliumPreset
         var kickPunch = b.Add(DrumType, (2, 41f), (3, 150f), (4, 5f), (5, 2.5f));
         var kickOut = b.Add("math.mul");
 
-        // The sidechain: the kick's own level, upside down, on the bass. Down to a
+        // The sidechain: the kick's own level on the bass. Down to a
         // third rather than to nothing, because a hole on every beat is heard and the
         // point of a duck is that nobody hears it.
         var kickLevel = b.Add("math.mul");
-        var duck = b.Add("math.remap", (1, 0f), (2, 1f), (3, 1f), (4, 0.3f));
+        var duck = b.Add(NodeCatalog.DuckTypeId, (3, 0.7f), (5, -4f), (6, -4f));
 
         b.Wire(eighths, 0, kickHits, 1)
          .Wire(kickHits, 0, thump, 0)
@@ -337,7 +337,7 @@ internal static class MyceliumPreset
          .Wire(drumsIn, 0, kickOut, 1)
          .Wire(thump, 0, kickLevel, 0)
          .Wire(drumsIn, 0, kickLevel, 1)
-         .Wire(kickLevel, 0, duck, 0);
+         .Wire(kickLevel, 0, duck, 2);
 
         b.Group("Kick", kickHits, thump, kickPunch, kickOut, kickLevel, duck);
 
@@ -459,7 +459,7 @@ internal static class MyceliumPreset
          .Wire(bassGrit, 0, bassSum, 0)
          .Wire(sub, 0, bassSum, 1)
          .Wire(bassSum, 0, bassDucked, 0)
-         .Wire(duck, 0, bassDucked, 1)
+         .Wire(duck, 2, bassDucked, 1)
          .Wire(bassDucked, 0, bassOut, 0)
          .Wire(bassIn, 0, bassOut, 1);
 

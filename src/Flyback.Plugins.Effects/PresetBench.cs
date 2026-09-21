@@ -124,6 +124,25 @@ internal abstract class PresetBench(ModuleCatalog modules)
         return node;
     }
 
+    /// <summary>Which of a Duck's outputs is the level it applies.</summary>
+    protected const int DuckGain = 2;
+
+    /// <summary>
+    /// A Duck keyed by <paramref name="key"/>, for its <see cref="DuckGain"/>: one
+    /// while the key is quiet, down by <paramref name="depth"/> while it is full.
+    /// </summary>
+    /// <remarks>
+    /// Its times rest at their quickest, so a key that is already an envelope ducks
+    /// in the envelope's own shape.
+    /// </remarks>
+    protected NodeInstance Ducking(
+        NodeInstance key, float depth, float attack = -4f, float release = -4f, float full = 1f, int from = 0)
+    {
+        var node = b.Add(NodeCatalog.DuckTypeId, (3, depth), (4, full), (5, attack), (6, release));
+        b.Wire(key, from, node, 2);
+        return node;
+    }
+
     /// <summary>A Smoothstep: nothing under <paramref name="from"/>, one over <paramref name="to"/>.</summary>
     protected NodeInstance Rises(NodeInstance a, float from, float to, int output = 0)
     {

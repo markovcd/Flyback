@@ -429,7 +429,7 @@ public class LanguageTests
           let kick = sine(freq: sweep |> remap(0..1, 46..200)) * kickLevel * kickHard * 1.7
                        |> clamp(-1, 1)
 
-          let duck = kickLevel |> remap(0..1, 1..0.45)
+          let duck = duck(key: kickLevel, depth: 0.55, attack: 100us, release: 100us)
         }
 
         group "Hats" {
@@ -496,7 +496,7 @@ public class LanguageTests
           band.a <- band
           low.a <- low
 
-          let bass = ((low * pluck * 2.2 |> clamp(-1, 1)) + sine(freq: bassHz, amp: 0.75) * pluck) * duck
+          let bass = ((low * pluck * 2.2 |> clamp(-1, 1)) + sine(freq: bassHz, amp: 0.75) * pluck) * duck.gain
         }
 
         group "Strings" {
@@ -561,7 +561,7 @@ public class LanguageTests
           let swelled = math.mix(b: song.gate, t: 0.00001)
           swelled.a <- swelled
 
-          let padLevel = swelled * duck
+          let padLevel = swelled * duck.gain
           let padL = padToneL * padLevel
           let padR = padToneR * padLevel
         }

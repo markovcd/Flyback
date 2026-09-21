@@ -128,6 +128,7 @@ context, decision, consequences.
 | [0079](0079-the-gain-knob-becomes-volume-and-nought-is-off.md) | The gain knob becomes Volume, and nought is off *(user-directed)* |
 | [0100](0100-mastering-is-a-plugin-of-stateful-primitives.md) | Mastering is a plugin of stateful primitives *(user-directed)* |
 | [0101](0101-a-one-knob-maximizer-is-a-module-of-its-own.md) | A one-knob maximizer is a module of its own *(user-directed)* |
+| [0125](0125-a-duck-is-a-sidechain-with-the-depth-on-a-knob.md) | A Duck is a sidechain with the depth on a knob *(user-directed)* |
 
 ### Boundaries
 

@@ -306,7 +306,7 @@ internal sealed class FracturePreset : PresetBench
         // The sub stays a sine, and the kick ducks both.
         var sub = b.Add("osc.sine", (3, 0.45f));
         var bass = Enters(
-            Product(Sum(grit, sub), Span(kickStroke, 0f, 1f, 1f, 0.4f)), song, 0.62f, 0.7f);
+            Product(Sum(grit, sub), Ducking(kickStroke, 0.6f), DuckGain), song, 0.62f, 0.7f);
 
         b.Wire(beats, 0, firstLine, 0)
          .Wire(beats, 0, secondLine, 0)

@@ -26,8 +26,8 @@ namespace Flyback.Plugins.Effects;
 /// every pitch before its Note.
 /// </para>
 /// <para>
-/// What is new is the end of the chain. Everything pitched goes through a Compressor
-/// whose key is the kick, so the music ducks under every hit; then the drums are added
+/// What is new is the end of the chain. Everything pitched goes through a Duck keyed by
+/// the kick, so the music ducks under every hit; then the drums are added
 /// back, and an EQ, a Width and a Limiter finish it. The width has something to widen
 /// because the arp leans left and the harmony right, as two pulse channels on a pair of
 /// speakers would. It is a Limiter rather than the Maximizer because the Maximizer is
@@ -64,8 +64,6 @@ internal sealed class OverworldPreset : PresetBench
     private const string PosteriseType = "flyback.picture.posterise";
 
     private const string EqType = "flyback.mastering.eq";
-
-    private const string CompressorType = "flyback.mastering.compressor";
 
     private const string WidthType = "flyback.mastering.width";
 
@@ -553,13 +551,13 @@ internal sealed class OverworldPreset : PresetBench
 
         Chained(music, space);
 
-        // The sidechain: a compressor on everything pitched, keyed by the kick alone,
-        // fast to duck and a sixth of a second to come back.
-        var ducked = b.Add(CompressorType, (3, -18f), (4, 4f), (5, -2.5f), (6, -0.8f), (7, 6f), (8, 2f));
+        // The sidechain: everything pitched ducked by the kick alone, fast to go down
+        // and a sixth of a second to come back.
+        var ducked = b.Add(NodeCatalog.DuckTypeId, (3, 0.4f), (5, -2.5f), (6, -0.8f));
 
         b.Wire(space, 0, ducked, 0)
          .Wire(space, 1, ducked, 1)
-         .Wire(Times(kick, 0.25f), 0, ducked, 2);
+         .Wire(kick, 0, ducked, 2);
 
         // The drums added back after it, on a Desk of their own chained into the
         // master, which is the only one with a trim.
@@ -570,7 +568,8 @@ internal sealed class OverworldPreset : PresetBench
         Channel(drums, 2, 0.6f, snare);
         Channel(drums, 3, 0.9f, hats, from: High);
 
-        Channel(master, 1, 1f, ducked, ducked, rightFrom: 1);
+        // Two decibels over unity, which is where the music sits against the drums.
+        Channel(master, 1, 1.2589254f, ducked, ducked, rightFrom: 1);
 
         Chained(drums, master);
 

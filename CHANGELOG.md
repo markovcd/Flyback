@@ -14,6 +14,7 @@
 ### Modules
 - Added Stroke (a drum envelope counted off the beat), Fade (brings a part in as a level rises), Wander (a slow random value) and Drum (a kick or tom from one envelope) to Voice.
 - Added Desk, a four-channel stereo mixer with a trim that chains into bigger ones.
+- Added Duck, a sidechain that turns a part down while a kick, or any other key, is loud.
 - Added Send and Receive, which carry a signal across the patch on a named bus instead of a wire.
 - Added Expression, one block that computes a formula you type over its four inputs, such as `(floor(a * 45) + 0.5) / 45`.
 - Arithmetic in the text view, such as `(x * 2 - 1) * aspect`, is one Expression, and an Expression shows there as arithmetic.
@@ -37,7 +38,7 @@
 - Phase, in the Effects plugin: phase music after Steve Reich, two players on one pattern drifting through all twelve canons, with a picture of two dials that shows where they are. It needs the Voice and Picture plugins.
 - Fracture, in the Effects plugin: drum and bass at 170 with a synthesized break that gets chopped, rolled and reversed, a Reese bass, and a picture cut into strips along with the drums. It needs the Voice and Picture plugins.
 - Dub, in the Effects plugin: dub techno to play rather than listen to. Drums and a sub run on their own, four keys hold a chord over them, and eight panel knobs ride the filter, the echo, the room and the mix, moving the picture with the sound. It needs the Voice and Picture plugins.
-- Overworld, in the Effects plugin: a chiptune track on a console's four voices, with a key change and a kick-keyed compressor at the end of the chain, under a side-scroller drawn a pixel at a time. It needs the Voice, Picture and Mastering plugins.
+- Overworld, in the Effects plugin: a chiptune track on a console's four voices, with a key change and the music ducked under the kick, under a side-scroller drawn a pixel at a time. It needs the Voice, Picture and Mastering plugins.
 - Captions, in the Picture plugin: lines of text paged and typed out by the clock.
 - Acid, Bronze, Mycelium, Nebula, Outrun, Phase, Slow weather and Whole band are rebuilt on the new modules, with up to a fifth fewer modules each.
 - Every preset's arithmetic arrives as Expressions, a seventh to a third fewer modules in the big ones, sounding and looking the same.

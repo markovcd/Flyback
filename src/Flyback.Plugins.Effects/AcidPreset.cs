@@ -296,8 +296,8 @@ internal sealed class AcidPreset : PresetBench
         var kickStroke = Enters(Product(Stroke(beats, 1f, 5f), hush), song, 0.1f, 0.15f);
         var kick = Drum(kickStroke, 46f, 170f, 5f, 3f);
 
-        // The sidechain: the kick's level, upside down, on the bass and the pad.
-        var duck = Span(kickStroke, 0f, 1f, 1f, 0.3f);
+        // The sidechain: the kick's level on the bass and the pad.
+        var duck = Ducking(kickStroke, 0.7f);
 
         Box("Kick");
 
@@ -435,7 +435,7 @@ internal sealed class AcidPreset : PresetBench
         // so that it stays a sine.
         var sub = b.Add("osc.sine", (3, 0.85f));
         var bass = Enters(
-            Product(Product(Sum(bassGrit, Product(sub, bassLine, 1)), duck), hush), song, 0.4f, 0.45f);
+            Product(Product(Sum(bassGrit, Product(sub, bassLine, 1)), duck, DuckGain), hush), song, 0.4f, 0.45f);
 
         b.Wire(root, 0, under, 0)
          .Wire(beats, 0, bassLine, 0)
@@ -524,7 +524,7 @@ internal sealed class AcidPreset : PresetBench
          .Wire(Sum(Sum(strings, third), fifth), 0, padTone, 0)
          .Wire(Span(hand, 0f, 1f, 1500f, 4000f), 0, padTone, 1)
          .Wire(song, 0, thin, 0)
-         .Wire(Enters(Product(padTone, duck), thin, 0.5f, 0.35f), 0, pad, 0);
+         .Wire(Enters(Product(padTone, duck, DuckGain), thin, 0.5f, 0.35f), 0, pad, 0);
 
         Box("Pad");
 

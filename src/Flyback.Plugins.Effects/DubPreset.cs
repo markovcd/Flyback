@@ -141,7 +141,8 @@ internal sealed class DubPreset : PresetBench
 
         // The sidechain: the chords and the sub lean away from the kick, by as much
         // as the kick is up.
-        var duck = From(1f, Times(Product(kickStroke, drumsUp), 0.55f));
+        var duck = Ducking(kickStroke, 0f);
+        b.Wire(Times(drumsUp, 0.55f), 0, duck, 3);
 
         Box("Kick");
 
@@ -235,8 +236,8 @@ internal sealed class DubPreset : PresetBench
         // signal two.
         var warm = b.Add(DriveType, (1, 1.5f));
         var wide = b.Add(ChorusModule.TypeId, (1, 0.3f), (2, 0.5f), (3, 0.5f));
-        var chordLeft = Product(wide, duck);
-        var chordRight = Wired("math.mul", wide, duck, 1);
+        var chordLeft = Product(wide, duck, DuckGain);
+        var chordRight = Wired("math.mul", wide, duck, 1, DuckGain);
 
         b.Wire(chord, 0, warm, 0)
          .Wire(warm, 0, wide, 0);
@@ -279,7 +280,7 @@ internal sealed class DubPreset : PresetBench
         // The gate with its corners taken off: three milliseconds up, an eighth of a
         // second down.
         var bassGate = b.Add(SlewType, (1, -2.5f), (2, -0.9f));
-        var subOut = Product(Product(bassTone, bassGate), duck);
+        var subOut = Product(Product(bassTone, bassGate), duck, DuckGain);
 
         b.Wire(keys[0], 2, struck, 1)
          .Wire(folded, 0, root, 1)

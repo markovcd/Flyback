@@ -97,7 +97,7 @@ public sealed class EffectsPlugin : IFlybackPlugin
                 OverworldPreset.Name,
                 OverworldPreset.Build,
                 "A whole chiptune track on a console's four voices — two pulses, a stepped triangle "
-                + "and crunching noise — with a key change, mastered through a kick-keyed compressor, "
+                + "and crunching noise — with a key change, the music ducked under the kick, "
                 + "under a side-scroller drawn a pixel at a time.",
                 PresetKind.Showcase),
         ]);

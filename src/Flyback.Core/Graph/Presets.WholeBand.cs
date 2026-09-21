@@ -271,10 +271,12 @@ public static partial class Presets
             // knock a sine has not got.
             var kick = b.Add("math.clamp", (1, -1f), (2, 1f));
 
-            // The sidechain: the kick's level, upside down, on the bass and the pad.
-            var duck = Span(kickLevel, 0f, 1f, 1f, 0.45f);
+            // The sidechain: the kick's level on the bass and the pad, followed at
+            // once so the duck has the envelope's own shape.
+            var duck = b.Add(NodeCatalog.DuckTypeId, (3, 0.55f), (5, -4f), (6, -4f));
 
-            b.Wire(kickGate, 0, kickLevel, 0)
+            b.Wire(kickLevel, 0, duck, 2)
+             .Wire(kickGate, 0, kickLevel, 0)
              .Wire(kickGate, 0, kickSweep, 0)
              .Wire(Span(kickSweep, 0f, 1f, 46f, 200f), 0, kickBody, 1)
              .Wire(Times(Product(Product(kickBody, kickLevel), kickHard), 1.7f), 0, kick, 0);
@@ -382,7 +384,7 @@ public static partial class Presets
             // a sine at the same pitch added after it so that it stays a sine.
             var grit = b.Add("math.clamp", (1, -1f), (2, 1f));
             var sub = b.Add("osc.sine", (3, 0.75f));
-            var bass = Product(Sum(grit, Product(sub, pluck)), duck);
+            var bass = Product(Sum(grit, Product(sub, pluck)), duck, second: 2);
 
             b.Wire(Times(Product(low, pluck), 2.2f), 0, grit, 0)
              .Wire(bassHz, 0, sub, 1);
@@ -478,7 +480,7 @@ public static partial class Presets
 
             // A chord that cuts out is a mistake and one that swells is not, so its
             // level gets where the lane says over about a second.
-            var padLevel = Product(Smoothed(song, 0.00001f, Gate), duck);
+            var padLevel = Product(Smoothed(song, 0.00001f, Gate), duck, second: 2);
 
             b.Wire(padRoot, 0, padL, 0).Wire(padMiddle, 0, padL, 2).Wire(padFifth, 0, padL, 4)
              .Wire(padRoot, 0, padR, 0).Wire(padMiddle, 0, padR, 2).Wire(padFifth, 0, padR, 4)

@@ -130,6 +130,7 @@ public static partial class NodeCatalog
             .Concat(Strings())
             .Concat(Sequencers())
             .Concat(Envelopes())
+            .Append(Duck())
             .Concat(Maths())
             .Concat(Bus())
             .Concat(Space())

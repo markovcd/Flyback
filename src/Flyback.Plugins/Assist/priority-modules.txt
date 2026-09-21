@@ -34,6 +34,7 @@ seq.hold
 seq.notes
 seq.values
 env.adsr
+audio.duck
 
 math.expression
 math.clamp
