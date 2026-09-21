@@ -75,6 +75,38 @@ public sealed class PresetLibrary
     /// <summary>Beside the kept groups, in the folder the settings are in.</summary>
     public static string DefaultFolder => Path.Combine(GlobalConstants.DataFolder, "presets");
 
+    /// <summary>
+    /// Every preset there is to start from, in the order the editor and the viewer
+    /// list them: the blank canvas, then ideas, then interplay, then the big ones. A
+    /// stable sort, so within a kind the engine's own still come before any plugin's —
+    /// the list is the same wherever the program is installed.
+    /// </summary>
+    /// <remarks>
+    /// The presets somebody saved come after all of those, so a save never moves
+    /// the row any other preset is on.
+    /// </remarks>
+    public static List<PatchPreset> Ordered(IEnumerable<PatchPreset> shipped, PresetLibrary? saved) =>
+        [.. shipped.OrderBy(p => p.Kind), .. saved?.All.Select(entry => entry.Preset) ?? []];
+
+    /// <summary>
+    /// The row of <paramref name="presets"/> holding the preset called
+    /// <paramref name="name"/>, or the row holding the first patch in the list
+    /// for one it does not offer — a plugin taken away, or a settings file nobody
+    /// has written to yet.
+    /// </summary>
+    public static int Opening(IReadOnlyList<PatchPreset> presets, string? name)
+    {
+        var row = presets.ToList().FindIndex(preset => preset.Name == name);
+
+        if (row >= 0) return row;
+
+        // Nothing chosen yet, or a name this build no longer offers: the first
+        // preset that is a patch, which is not the first preset. The blank canvas
+        // heads the list, and a program that shipped thirty patches and opened on
+        // none of them would be one whose presets nobody found.
+        return Math.Max(presets.ToList().FindIndex(preset => preset.Kind != PresetKind.Blank), 0);
+    }
+
     private List<SavedPreset> kept = [];
 
     /// <param name="folder">Somewhere other than the usual place, for the tests.</param>

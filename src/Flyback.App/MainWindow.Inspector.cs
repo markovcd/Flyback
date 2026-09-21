@@ -244,7 +244,7 @@ public sealed partial class MainWindow
 
         defaultPreset.SelectedIndex = offered.IndexOf(chosen) is >= 0 and var listed
             ? listed
-            : PresetRow(presets, chosen);
+            : PresetLibrary.Opening(presets, chosen);
     }
 
     private static int Nearest(IReadOnlyList<double> rows, double value) =>

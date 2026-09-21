@@ -66,7 +66,7 @@ internal static class Program
 
         if (options.ListPresets)
         {
-            foreach (var preset in ViewerSource.Ordered(plugins, library)) Console.Out.WriteLine(preset.Name);
+            foreach (var preset in PresetLibrary.Ordered(plugins.Presets, library)) Console.Out.WriteLine(preset.Name);
 
             return Exit.Ok;
         }

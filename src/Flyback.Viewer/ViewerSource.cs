@@ -10,13 +10,6 @@ namespace Flyback.Viewer;
 internal static class ViewerSource
 {
     /// <summary>
-    /// Every preset there is, in the order the editor lists them: shipped ones by kind,
-    /// then the ones somebody saved.
-    /// </summary>
-    public static IReadOnlyList<PatchPreset> Ordered(PluginCatalog plugins, PresetLibrary library) =>
-        [.. plugins.Presets.OrderBy(preset => preset.Kind), .. library.All.Select(saved => saved.Preset)];
-
-    /// <summary>
     /// The patch to play and what to call it, or null with the reason written to
     /// <paramref name="error"/>.
     /// </summary>
@@ -25,7 +18,7 @@ internal static class ViewerSource
     {
         if (options.Patch is { } path) return OpenFile(path, error);
 
-        var ordered = Ordered(plugins, library);
+        var ordered = PresetLibrary.Ordered(plugins.Presets, library);
 
         PatchPreset? wanted;
 
@@ -42,18 +35,15 @@ internal static class ViewerSource
         }
         else
         {
-            // What the editor opens on: the one the settings name, or for a name this
-            // build no longer offers the first that is a patch rather than a blank.
-            wanted = ordered.FirstOrDefault(preset => preset.Name == settings.DefaultPreset)
-                ?? ordered.FirstOrDefault(preset => preset.Kind != PresetKind.Blank)
-                ?? (ordered.Count > 0 ? ordered[0] : null);
-
-            if (wanted is null)
+            if (ordered.Count == 0)
             {
                 error.WriteLine($"{GlobalConstants.ApplicationName}: there is no preset to play.");
 
                 return null;
             }
+
+            // What the editor opens on.
+            wanted = ordered[PresetLibrary.Opening(ordered, settings.DefaultPreset)];
         }
 
         return Build(wanted, library, plugins, error);

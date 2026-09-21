@@ -621,7 +621,7 @@ public sealed partial class MainWindow : Window
         // offers — said here so the title and the toolbar's own selection agree
         // with the canvas from the first frame (ADR-0093).
         var offered = OrderedPresets();
-        var openIndex = PresetRow(offered, outputSettings.DefaultPreset);
+        var openIndex = PresetLibrary.Opening(offered, outputSettings.DefaultPreset);
 
         Patch opened;
 
@@ -636,7 +636,7 @@ public sealed partial class MainWindow : Window
             // the preset it would have opened on had none been chosen.
             Report($"Could not open the '{offered[openIndex].Name}' preset: {ex.Message}");
 
-            openIndex = PresetRow(offered, "");
+            openIndex = PresetLibrary.Opening(offered, "");
             opened = Arrive(offered[openIndex]);
         }
 
@@ -937,38 +937,8 @@ public sealed partial class MainWindow : Window
         }
     }
 
-    /// <summary>
-    /// Every preset there is to start from, in the order both the toolbar's own
-    /// list and the Graphics section's "Startup patch" show them: the blank
-    /// canvas, then ideas, then interplay, then the big ones. A stable sort, so
-    /// within a kind the engine's own still come before any plugin's — the list
-    /// is the same wherever the program is installed.
-    /// </summary>
-    /// <remarks>
-    /// The presets somebody saved come after all of those, so a save never moves
-    /// the row any other preset is on.
-    /// </remarks>
-    private List<PatchPreset> OrderedPresets() =>
-        [.. plugins.Presets.OrderBy(p => p.Kind), .. savedPresets?.All.Select(entry => entry.Preset) ?? []];
-
-    /// <summary>
-    /// The row of <paramref name="presets"/> holding the preset called
-    /// <paramref name="name"/>, or the row holding the first patch in the list
-    /// for one it does not offer — a plugin taken away, or a settings file nobody
-    /// has written to yet.
-    /// </summary>
-    private static int PresetRow(IReadOnlyList<PatchPreset> presets, string name)
-    {
-        var row = presets.ToList().FindIndex(preset => preset.Name == name);
-
-        if (row >= 0) return row;
-
-        // Nothing chosen yet, or a name this build no longer offers: the first
-        // preset that is a patch, which is not the first preset. The blank canvas
-        // heads the list, and a program that shipped thirty patches and opened on
-        // none of them would be one whose presets nobody found.
-        return Math.Max(presets.ToList().FindIndex(preset => preset.Kind != PresetKind.Blank), 0);
-    }
+    /// <summary>Every preset the toolbar and the "Startup patch" list offer, in <see cref="PresetLibrary.Ordered"/>'s order.</summary>
+    private List<PatchPreset> OrderedPresets() => PresetLibrary.Ordered(plugins.Presets, savedPresets);
 
     private Control BuildToolbar()
     {
