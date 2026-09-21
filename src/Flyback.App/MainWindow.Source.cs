@@ -510,15 +510,23 @@ public sealed partial class MainWindow
         if (PatchPrinter.Held(node, def) is { Length: > 0 } path) Put(Map.File(id, path), id, ref lost);
     }
 
-    /// <summary>Puts the keyboard's layout into the text, as the one line that says it.</summary>
+    /// <summary>
+    /// Puts what belongs to the whole patch into the text: its description and the
+    /// keyboard's layout, each as the one line that says it.
+    /// </summary>
     private void Lay()
     {
-        if (Map.Keyboard(PatchPrinter.Keyboard(editor.Patch.KeyboardScale)) is not { } edit) return;
-        if (!source.Apply(edit)) return;
+        Put(Map.Description(PatchPrinter.Description(editor.Patch.Description)));
+        Put(Map.Keyboard(PatchPrinter.Keyboard(editor.Patch.KeyboardScale)));
 
-        if (!sourceOwned) printed = source.Source;
+        void Put(Change? change)
+        {
+            if (change is not { } edit || !source.Apply(edit)) return;
 
-        mapped = null;
+            if (!sourceOwned) printed = source.Source;
+
+            mapped = null;
+        }
     }
 
     /// <summary>

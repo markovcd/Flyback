@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- A patch has a description, edited by double-clicking it in the panel with nothing selected, written as `description "..."` in the text and shown in the preset gallery.
+
 ## 0.4.0 — 2026-09-21
 
 256 commits since 0.3.0.

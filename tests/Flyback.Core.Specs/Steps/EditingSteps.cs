@@ -92,6 +92,9 @@ public sealed class EditingSteps(PatchContext context, Session session)
         Text.Ok.ShouldBeTrue(Text.Report);
     }
 
+    [Then("the patch says it is {string}")]
+    public void ThenDescribedAs(string description) => context.Patch.Description.ShouldBe(description);
+
     [Then("it reads without complaint")]
     public void ThenReadsCleanly() => Text.Ok.ShouldBeTrue(Text.Report);
 

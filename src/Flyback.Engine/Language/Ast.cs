@@ -143,6 +143,12 @@ public sealed record OffStatement(NameExpr Target, int Line, int Column) : State
 /// <param name="Scale">The block as it was written, and null for a piano.</param>
 public sealed record KeyboardStatement(string? Scale, int Line, int Column) : Statement(Line, Column);
 
+/// <summary>
+/// <c>description "..."</c>: what the patch is for, in a line of prose, which may
+/// run on as further strings on the lines below.
+/// </summary>
+public sealed record DescriptionStatement(string Text, int Line, int Column) : Statement(Line, Column);
+
 /// <summary><c>group "Name" { ... }</c>, a box drawn round what is declared inside it.</summary>
 public sealed record GroupStatement(
     string Name,

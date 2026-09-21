@@ -128,6 +128,39 @@ public static class PatchPrinter
                 : "keyboard scale [ " + string.Join(' ', scale.Select(Pitch.ClassName)) + " ]";
 
     /// <summary>
+    /// What the patch is for, as the statement that says it, or null where it says
+    /// nothing. Run on over as many strings as keep it to the page's width.
+    /// </summary>
+    public static string? Description(string? description)
+    {
+        if (Patch.Tidied(description) is not { } said) return null;
+
+        const string opening = "description ";
+        const string after = "  ";
+
+        var lines = new List<string>();
+        var line = new StringBuilder();
+
+        foreach (var word in said.Split(' '))
+        {
+            var lead = lines.Count == 0 ? opening : after;
+
+            if (line.Length > 0 && lead.Length + line.Length + word.Length + 3 > SourceLayout.Width)
+            {
+                lines.Add($"{lead}\"{line}\"");
+                line.Clear();
+            }
+
+            if (line.Length > 0) line.Append(' ');
+            line.Append(word);
+        }
+
+        lines.Add($"{(lines.Count == 0 ? opening : after)}\"{line}\"");
+
+        return string.Join('\n', lines);
+    }
+
+    /// <summary>
     /// The file a module names rather than carries (ADR-0052), or null where it
     /// names none.
     /// </summary>
@@ -612,6 +645,12 @@ public static class PatchPrinter
 
             // First, because it is about the whole patch and not about any line
             // below it.
+            if (Description(patch.Description) is { } description)
+            {
+                text.AppendLine(description);
+                text.AppendLine();
+            }
+
             if (Keyboard(patch.KeyboardScale) is { } keyboard)
             {
                 text.AppendLine(keyboard);

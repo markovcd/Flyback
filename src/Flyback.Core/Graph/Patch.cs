@@ -278,6 +278,55 @@ public sealed class Patch
     /// </remarks>
     public List<int>? KeyboardScale { get; set; }
 
+    /// <summary>The longest a description may be, in characters.</summary>
+    public const int DescriptionLimit = 400;
+
+    /// <summary>
+    /// What the patch is for, in a line of prose, and null where nobody has said.
+    /// Set through <see cref="Describe"/>.
+    /// </summary>
+    public string? Description { get; set; }
+
+    /// <summary>
+    /// Says what the patch is for, or takes the description away with a blank.
+    /// </summary>
+    /// <remarks>
+    /// Held to one line with no straight double quote, because the text language
+    /// writes it as a string and a string there has neither: breaks become spaces
+    /// and quotes turn typographic.
+    /// </remarks>
+    public void Describe(string? to) => Description = Tidied(to);
+
+    /// <summary>What <see cref="Describe"/> would keep of <paramref name="text"/>.</summary>
+    public static string? Tidied(string? text)
+    {
+        if (string.IsNullOrWhiteSpace(text)) return null;
+
+        var tidy = new System.Text.StringBuilder(text.Length);
+        var opening = true;
+
+        foreach (var word in text.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries))
+        {
+            if (tidy.Length > 0) tidy.Append(' ');
+
+            foreach (var c in word)
+            {
+                if (c != '"')
+                {
+                    tidy.Append(c);
+                    continue;
+                }
+
+                tidy.Append(opening ? '“' : '”');
+                opening = !opening;
+            }
+        }
+
+        var kept = tidy.ToString();
+
+        return kept.Length > DescriptionLimit ? kept[..DescriptionLimit].TrimEnd() : kept;
+    }
+
     public NodeInstance? Find(Guid id) => Nodes.FirstOrDefault(n => n.Id == id);
 
     /// <summary>The knob called <paramref name="id"/>, or null where the panel has none.</summary>

@@ -385,6 +385,17 @@ internal static class PresetGallery
             Content = new Viewbox { Width = 40, Height = 40, Child = Glyphs.Speaker() },
         };
 
+        // What the preset says until its patch is open, and then what the patch says.
+        var description = new TextBlock
+        {
+            Name = "description",
+            Text = preset.Description,
+            FontSize = Text.Caption,
+            Foreground = Text.Muted,
+            TextWrapping = TextWrapping.Wrap,
+            IsVisible = preset.Description.Length > 0,
+        };
+
         var picture = new Border
         {
             Name = "thumbnail",
@@ -415,14 +426,7 @@ internal static class PresetGallery
                 {
                     picture,
                     new TextBlock { Text = preset.Name, FontSize = Text.Body, FontWeight = FontWeight.SemiBold },
-                    new TextBlock
-                    {
-                        Text = preset.Description,
-                        FontSize = Text.Caption,
-                        Foreground = Text.Muted,
-                        TextWrapping = TextWrapping.Wrap,
-                        IsVisible = preset.Description.Length > 0,
-                    },
+                    description,
                 },
             },
         };
@@ -436,7 +440,7 @@ internal static class PresetGallery
         tile.PointerEntered += (_, _) => pointedAt?.Invoke(new PointedTile(preset, image));
         tile.PointerExited += (_, _) => pointedAt?.Invoke(null);
 
-        _ = Fill(image, words, speaker, thumbnails.Of(preset));
+        _ = Fill(image, words, speaker, description, thumbnails.Of(preset));
 
         return tile;
     }
@@ -445,11 +449,18 @@ internal static class PresetGallery
     /// Puts the thumbnail on its tile when it is drawn. Awaited from the UI thread,
     /// so what follows the wait is on it too.
     /// </summary>
-    private static async Task Fill(Image image, TextBlock words, Control speaker, Task<Thumbnail> drawing)
+    private static async Task Fill(
+        Image image, TextBlock words, Control speaker, TextBlock description, Task<Thumbnail> drawing)
     {
         var thumbnail = await drawing;
 
-        if (thumbnail == Thumbnail.SoundOnly)
+        if (thumbnail.Description is { } said)
+        {
+            description.Text = said;
+            description.IsVisible = true;
+        }
+
+        if (thumbnail.Pixels is null && thumbnail.Words == Thumbnail.SoundOnly.Words)
         {
             speaker.IsVisible = true;
             ToolTip.SetTip(speaker, thumbnail.Words);

@@ -107,6 +107,16 @@ public sealed class Parser(IReadOnlyList<Token> tokens, List<LanguageIssue> issu
         // still starts a pipeline the way any other name does.
         if (AtWord("keyboard") && Ahead().Kind == TokenKind.Identifier) return Keyboard(line, column);
 
+        // One string, or several running on, each line's a space apart from the last's.
+        if (AtWord("description") && Ahead().Kind == TokenKind.Text)
+        {
+            var parts = new List<string>();
+
+            for (at++; Current.Kind == TokenKind.Text; at++) parts.Add(Current.Text);
+
+            return new DescriptionStatement(string.Join(' ', parts), line, column);
+        }
+
         // The same rule again: what follows a module being switched off is the
         // name of one, and anything else here is a pipeline that begins with a
         // binding somebody happened to call 'off'.

@@ -41,12 +41,31 @@ public enum PresetKind
 /// A patch to start from, and how it is offered. Built on demand, because a
 /// preset from a plugin needs that plugin's modules in the catalogue.
 /// </summary>
-/// <param name="Description">One line saying what the patch is for, shown under its name.</param>
+/// <param name="Description">
+/// One line saying what the patch is for, written into the patch it builds
+/// where that patch does not say already.
+/// </param>
 public sealed record PatchPreset(
     string Name,
     Func<ModuleCatalog, Patch> Build,
     string Description = "",
-    PresetKind Kind = PresetKind.Idea);
+    PresetKind Kind = PresetKind.Idea)
+{
+    private readonly Func<ModuleCatalog, Patch> build = Build;
+
+    /// <summary>Builds the patch, carrying <see cref="Description"/> unless it has one of its own.</summary>
+    public Func<ModuleCatalog, Patch> Build
+    {
+        get => modules =>
+        {
+            var patch = build(modules);
+
+            if (patch.Description is null) patch.Describe(Description);
+            return patch;
+        };
+        init => build = value;
+    }
+}
 
 /// <summary>Patches that ship with the synth, so it never opens on a blank canvas.</summary>
 public static partial class Presets

@@ -34,6 +34,17 @@ public sealed class PresetSteps(Session session)
         return load.Ok ? Differences(patch, load.Patch) : load.Report;
     });
 
+    [Then("each one opens saying what it is for")]
+    public void ThenEachIsDescribed()
+    {
+        var missing = session.Presets
+            .Where(preset => preset.Build(NodeCatalog.BuiltIn).Description is not { Length: > 0 })
+            .Select(preset => preset.Name)
+            .ToList();
+
+        missing.ShouldBeEmpty(string.Join(", ", missing));
+    }
+
     /// <summary>Runs <paramref name="fault"/> on every preset and fails once, naming each preset that had one.</summary>
     private void Each(Func<Patch, string> fault)
     {

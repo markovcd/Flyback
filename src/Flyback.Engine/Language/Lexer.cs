@@ -248,10 +248,15 @@ public static class Lexer
         or TokenKind.OpenBrace or TokenKind.Plus or TokenKind.Minus or TokenKind.Star
         or TokenKind.Slash or TokenKind.Percent;
 
-    /// <summary>Whether a line starting on this token is carrying on the one above.</summary>
+    /// <summary>
+    /// Whether a line starting on this token is carrying on the one above. A
+    /// string among them because no statement opens on one, and a description
+    /// too long for one line goes on as a string on the next.
+    /// </summary>
     private static bool Continues(TokenKind kind) => kind
         is TokenKind.Pipe or TokenKind.Plus or TokenKind.Minus or TokenKind.Star
-        or TokenKind.Slash or TokenKind.Percent or TokenKind.CloseParen or TokenKind.Block;
+        or TokenKind.Slash or TokenKind.Percent or TokenKind.CloseParen or TokenKind.Block
+        or TokenKind.Text;
 
     /// <summary>
     /// The text inside a bracketed block, counting nesting so that a subdivided

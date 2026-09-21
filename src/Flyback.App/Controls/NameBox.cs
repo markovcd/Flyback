@@ -30,6 +30,7 @@ internal static class NameBox
     /// <param name="current">The name as it stands, read again afterwards to see whether it moved.</param>
     /// <param name="rebuild">The title to put back.</param>
     /// <param name="changed">Tells the canvas the patch changed.</param>
+    /// <param name="prose">Set as a line of body text that wraps, for a description, rather than as a title.</param>
     internal static void Open(
         Control title,
         IBrush ink,
@@ -39,7 +40,8 @@ internal static class NameBox
         Action<string?> rename,
         Func<string?> current,
         Func<Control> rebuild,
-        Action changed)
+        Action changed,
+        bool prose = false)
     {
         // The name stands on the plate rather than on the panel, so the box goes back
         // where the name was.
@@ -61,9 +63,10 @@ internal static class NameBox
             Text = held ?? string.Empty,
             PlaceholderText = fallback,
             MaxLength = limit,
-            FontSize = Text.Title,
-            FontWeight = FontWeight.SemiBold,
-            TextAlignment = TextAlignment.Right,
+            FontSize = prose ? Text.Body : Text.Title,
+            FontWeight = prose ? FontWeight.Normal : FontWeight.SemiBold,
+            TextAlignment = prose ? TextAlignment.Left : TextAlignment.Right,
+            TextWrapping = prose ? TextWrapping.Wrap : TextWrapping.NoWrap,
             Foreground = ink,
             CaretBrush = ink,
             Background = Brushes.Transparent,

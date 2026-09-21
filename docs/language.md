@@ -39,7 +39,7 @@ a decision.
 
 ## 2. Statements
 
-Nine forms, and no others.
+Ten forms, and no others.
 
 ```
 # a comment, to end of line
@@ -52,11 +52,12 @@ NAME.port = 0.6                  # set a knob
 NAME.port <- pipeline            # back-wire, which is how a cycle is closed
 off NAME                         # switch a module off, so it is a wire
 group "Name" { statements }      # draw these together on the canvas
+description "What it is for"     # say what the patch is for, once
 ```
 
 Statements are newline-separated. A pipeline may be broken across lines freely;
-a line ending in `|>` or `,`, or a line beginning with `|>`, continues the one
-before it. Whatever a statement leaves unread on its line is a complaint, never
+a line ending in `|>` or `,`, or a line beginning with `|>` or a string,
+continues the one before it. Whatever a statement leaves unread on its line is a complaint, never
 something skipped.
 
 ---
@@ -354,6 +355,19 @@ The picked notes sit side by side along the `A` row, with the `Q` row an octave
 up and the `Z` row an octave down. `keyboard piano` is the tracker layout, and
 what a patch that says nothing gets.
 
+What the patch is for belongs to it the same way. It is one line of prose, the
+one the preset gallery shows under a patch's name and the panel shows with
+nothing selected, and a printing puts it first. Too long for the page, it runs
+on as further strings, each joined to the last by a space:
+
+```
+description "A photograph put through the same geometry a generated field goes through,"
+  "once you choose one."
+```
+
+A string has no escapes, so a description never holds a straight double quote;
+one typed into the panel is turned into a curly one.
+
 A block goes **after** the brackets and there is at most one, so it needs no
 name. A file goes **inside** them and has no name either — a call carries at
 most one string without one, and that string is the file. Both are positional
@@ -620,7 +634,8 @@ statement  = comment
            | selector "=" expr
            | selector "<-" pipeline
            | "off" ident
-           | "group" string "{" { statement } "}" ;
+           | "group" string "{" { statement } "}"
+           | "description" string { string } ;
 
 body       = pipeline | "{" { statement } result "}" ;
 result     = pipeline | "(" pipeline { "," pipeline } ")" ;
@@ -669,8 +684,8 @@ The Output, alone. An empty file.
 ### Picture in — [:885](../src/Flyback.Core/Graph/Presets.cs)
 
 ```
-# A photograph put through the same geometry a generated field goes through, once you
-# choose one.
+description "A photograph put through the same geometry a generated field goes through,"
+  "once you choose one."
 
 scale(scale: sine(freq: 0.05) |> remap(-1..1, 0.85..1.4))
   |> rotate(angle: t * 0.05)
@@ -686,7 +701,7 @@ in the editor, and `picture("sunset.png")` is how a patch that has one says so.
 ### Clip — [:860](../src/Flyback.Core/Graph/Presets.cs)
 
 ```
-# A WAV file played and retriggered every two seconds, once you choose one.
+description "A WAV file played and retriggered every two seconds, once you choose one."
 
 sample(level: 0.9, trigger: pulse(freq: 0.5, width: 0.02)) |> out.left
 
@@ -696,7 +711,7 @@ out.volume = 0.7
 ### Plasma — [:249](../src/Flyback.Core/Graph/Presets.cs)
 
 ```
-# Two sine fields crossed and read as hue.
+description "Two sine fields crossed and read as hue — the hello world of video synths."
 
 let slowly = t * 0.2
 
@@ -710,7 +725,7 @@ x |> sine(freq: 1.5)
 ### Kaleidoscope — [:283](../src/Flyback.Core/Graph/Presets.cs)
 
 ```
-# Rotating wedges filled with noise that boils over time.
+description "Rotating wedges filled with noise that boils over time."
 
 rotate(angle: t * 0.15)
   |> kaleidoscope(segments: 6)
@@ -725,7 +740,8 @@ times.
 ### Grid — [:711](../src/Flyback.Core/Graph/Presets.cs)
 
 ```
-# Tile, mirror and polar in a row, so what each does to the plane is separable.
+description "Tile, mirror and polar in a row, so what each one does to the plane is"
+  "separable."
 
 let plane = translate(dx: sine(freq: 0.06))
               |> tile(tiles: 3)
@@ -744,7 +760,8 @@ by name for the hue. That is the fan-out the preset draws with two wires.
 ### Feedback tunnel — [:591](../src/Flyback.Core/Graph/Presets.cs)
 
 ```
-# Each frame re-read slightly rotated, scaled and dimmed, with fresh rings on top.
+description "Each frame re-read slightly rotated, scaled and dimmed, with fresh rings"
+  "on top."
 
 let pulse = t * 0.25
 
@@ -766,8 +783,8 @@ is the module's *third* port.
 ### Three channels — [:1028](../src/Flyback.Core/Graph/Presets.cs)
 
 ```
-# One field read three times, a little apart: a color is three signals, and here
-# they disagree.
+description "One field read three times, a little apart: a color is three signals, and"
+  "here they disagree."
 
 let apart = sine(freq: 0.08) |> remap(-1..1, 0..0.1)
 let plane = rotate(angle: t * 0.06) |> kaleidoscope(segments: 6) |> translate(dx: 0.55)
@@ -787,7 +804,8 @@ outside.
 ### Trails — [:1107](../src/Flyback.Core/Graph/Presets.cs)
 
 ```
-# A dot on a looping path and a Trails keeping where it has been.
+description "A dot on a looping path and a Trails keeping where it has been, so a point"
+  "draws a ribbon."
 
 let px = sine(freq: 0.3, amp: 0.5)
 let py = sine(freq: 0.2, phase: 0.25, amp: 0.3)
@@ -806,8 +824,8 @@ Smoothstep's edges are the wrong way round on purpose, which reads it backwards.
 ### Loop — [:939](../src/Flyback.Core/Graph/Presets.cs)
 
 ```
-# A wire running backwards: a lowpass built from an add and a multiply, with its
-# one number swept.
+description "A wire running backwards: a lowpass built from an add and a multiply, with"
+  "its one number swept."
 
 let keep = sine(freq: 0.1) |> remap(-1..1, 0.92..0.996)
 let sum  = square(freq: frequency(110)) * (1 - keep) |> add()
@@ -824,7 +842,7 @@ are what make this a filter that comes out as loud as it went in.
 ### Two channels — [:988](../src/Flyback.Core/Graph/Presets.cs)
 
 ```
-# Stereo from one voice: left and right fed differently rather than panned.
+description "Stereo from one voice: left and right fed differently rather than panned."
 
 let root  = note(A2)
 let twin  = note(root.note, cents: 9)
@@ -843,8 +861,8 @@ which is the whole trick — nine cents of detune on the same note number.
 ### Staircase — [:1158](../src/Flyback.Core/Graph/Presets.cs)
 
 ```
-# A slope caught six times a second by a Sample & Hold, which makes steps, and
-# steps are a tune.
+description "A slope caught six times a second by a Sample & Hold, which makes steps,"
+  "and steps are a tune."
 
 let clock = pulse(freq: 6)
 let slope = sine(freq: 0.11) + sine(freq: 0.37, amp: 0.5)
@@ -863,7 +881,8 @@ is caught on the same edge that plucks it.
 ### Drone — [:319](../src/Flyback.Core/Graph/Presets.cs)
 
 ```
-# One slow oscillator setting both the hue of the image and the tremolo on the tone.
+description "One slow oscillator setting both the hue of the image and the tremolo on"
+  "the tone."
 
 let slow = sine(freq: 0.15, amp: 0.5, bias: 0.5)
 
@@ -882,7 +901,8 @@ twice.
 ### Sequence — [:139](../src/Flyback.Core/Graph/Presets.cs)
 
 ```
-# One sequencer heard and seen at once: the steps are the tune and the color.
+description "One sequencer heard and seen at once: the steps are the tune and the"
+  "color."
 
 let steps = notes(rate: 3, gate_length: 0.66) [ A3 C4 D4 E4 G4 E4 D4 C4 ]
 
@@ -906,7 +926,7 @@ is the patch that decides `def` must be able to hand back more than one thing,
 since a voice contributes a tone, a tint, and one fader that opens both.
 
 ```
-# Four faders that are one signal each, opening a voice and a band together.
+description "Four faders that are one signal each, opening a voice and a band together."
 
 def voice(pitch, bands, hue, rate, phase) = {
   let level = sine(freq: rate, phase: phase, amp: 0.5, bias: 0.5)
@@ -938,7 +958,8 @@ you mean.
 ### Heard — [:192](../src/Flyback.Core/Graph/Presets.cs)
 
 ```
-# A drum the picture listens to rather than being told about, through a Meter.
+description "A drum the picture listens to rather than being told about, through a"
+  "Meter."
 
 let voiced = sine(freq: frequency(70))
                * (pulse(freq: 2, width: 0.08)
@@ -964,7 +985,8 @@ by as much as a room does.
 ### Duck — [:263](../src/Flyback.Core/Graph/Presets.cs)
 
 ```
-# A pad that gets out of the way each time the kick hits, on a Scope drawing how far.
+description "A pad that gets out of the way each time the kick hits, on a Scope drawing"
+  "how far."
 
 let kick = sine(freq: frequency(55))
              * (pulse(freq: 2, width: 0.08)
@@ -986,8 +1008,8 @@ rather than the pad, so a dip is a line falling rather than a waveform thinning.
 ### Waveform — [:763](../src/Flyback.Core/Graph/Presets.cs)
 
 ```
-# Sine, triangle, square and saw faded one into the next, on a Scope drawing the
-# shape being heard.
+description "Sine, triangle, square and saw faded one into the next, on a Scope drawing"
+  "the shape being heard."
 
 let pitch = frequency(110)
 
@@ -1010,8 +1032,8 @@ last.
 ### Sidebands — [:1207](../src/Flyback.Core/Graph/Presets.cs)
 
 ```
-# One sine bending another's phase at audio rate, on an Analyzer showing the
-# partials that grows.
+description "One sine bending another's phase at audio rate, on an Analyzer showing the"
+  "partials that grows."
 
 let strike = pulse(freq: 0.5, width: 0.1)
                |> adsr(attack: 2ms, decay: 1500ms, sustain: 0, release: 300ms)
@@ -1034,7 +1056,8 @@ other: the language has no idea that one side of it is a pitch.
 ### Ahead and behind — [:818](../src/Flyback.Core/Graph/Presets.cs)
 
 ```
-# A Probe on one half of the screen and a Scope on the other.
+description "A Probe and a Scope on one signal, which is the only way to see how they"
+  "differ."
 
 let tone = saw(freq: sine(freq: 0.4) |> remap(-1..1, 90..320))
 
@@ -1054,7 +1077,7 @@ become the edge.
 ### Ring scan — [:361](../src/Flyback.Core/Graph/Presets.cs)
 
 ```
-# One field read twice: drawn as rings, and played by a Scan running round them.
+description "A loop swept round a field at audio rate, so the picture is the waveform."
 
 let bands = rings(freq: 4)
 let where = sine(freq: 0.2) |> remap(-1..1, 0.2..0.75)
@@ -1073,7 +1096,8 @@ out.volume = 0.25
 ### In key — [:414](../src/Flyback.Core/Graph/Presets.cs)
 
 ```
-# A wandering field snapped to a pentatonic scale and struck on the beat.
+description "One noise field snapped to a pentatonic: heard as a melody, seen as the"
+  "terraces it was cut into."
 
 let field = noise(z: t * 0.3, scale: 2.2)
 let beat  = pulse(freq: tempo(180), width: 0.12)
@@ -1099,7 +1123,8 @@ arithmetic involving a signal emits an Expression.** That is what keeps
 ### Nebula — [:519](../src/Flyback.Core/Graph/Presets.cs)
 
 ```
-# Kaleidoscoped noise warped into filaments, over a feedback trail.
+description "Everything the video side can do, folded, warped and trailing its own"
+  "frames."
 
 let boil  = t * 0.12
 let pulse = t * 0.2
@@ -1127,7 +1152,8 @@ modules in fifteen groups. It is also the patch that argues hardest for `group`,
 since the C# builds it that way already.
 
 ```
-# What one patch can be rather than what one module does.
+description "A whole song from the engine's own modules: seven parts in a room, twelve"
+  "phrases, one picture."
 
 group "Clock" {
   let beat = tempo(112)

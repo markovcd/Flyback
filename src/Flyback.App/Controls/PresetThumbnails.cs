@@ -13,7 +13,8 @@ namespace Flyback.App.Controls;
 /// or null for a preset that has none to show.
 /// </param>
 /// <param name="Words">What the tile says instead. Empty when there are pixels, or nothing to say.</param>
-internal sealed record Thumbnail(byte[]? Pixels, string Words)
+/// <param name="Description">What the patch says it is for, and null where it says nothing or would not open.</param>
+internal sealed record Thumbnail(byte[]? Pixels, string Words, string? Description = null)
 {
     /// <summary>
     /// A patch that is heard and never seen, which has no frame to take. Shown as a
@@ -102,12 +103,13 @@ internal sealed class PresetThumbnails(ModuleCatalog modules)
             // builds it when it is picked: it needs the modules that plugin added.
             var (patch, samples, pictures) = PresetLibrary.Open(preset, Saved, modules);
             var (picture, sound) = patch.Reaches();
+            var described = patch.Description;
 
-            if (!picture) return sound ? Thumbnail.SoundOnly : Thumbnail.Nothing;
+            if (!picture) return (sound ? Thumbnail.SoundOnly : Thumbnail.Nothing) with { Description = described };
 
             var video = patch.CompileForVideo(samples: samples, pictures: pictures);
 
-            if (video.HasErrors) return Thumbnail.Unavailable;
+            if (video.HasErrors) return Thumbnail.Unavailable with { Description = described };
 
             var stride = Width * 4;
             var pixels = new byte[stride * Height];
@@ -116,7 +118,7 @@ internal sealed class PresetThumbnails(ModuleCatalog modules)
             for (var step = 0; step * Step <= Settle; step++)
                 renderer.Render(video.Program, step * Step, Width, Height, pixels, stride);
 
-            return new Thumbnail(pixels, "");
+            return new Thumbnail(pixels, "", described);
         }
         catch (Exception)
         {

@@ -203,6 +203,7 @@ public sealed class Binder
         DefStatement def => "def " + def.Name,
         OffStatement off => "off " + off.Target.Name,
         KeyboardStatement => "keyboard",
+        DescriptionStatement => "description",
         PipelineStatement pipeline => Ending(pipeline.Value) ?? Anonymous(),
         _ => Anonymous(),
     };
@@ -263,6 +264,10 @@ public sealed class Binder
 
             case KeyboardStatement keyboard:
                 Lay(keyboard);
+                break;
+
+            case DescriptionStatement description:
+                Describe(description);
                 break;
 
             case OffStatement off:
@@ -1295,6 +1300,19 @@ public sealed class Binder
 
         laid = true;
         patch.KeyboardScale = statement.Scale is { } block ? Pitch.Scale(StepNotation.Classes(block, statement.Line, issues)) : null;
+    }
+
+    /// <summary>Says what the patch is for, once.</summary>
+    private void Describe(DescriptionStatement statement)
+    {
+        if (patch.Description is not null)
+        {
+            Complain(statement.Line, statement.Column,
+                "the patch is already described further up. It has one description, so it says so once.");
+            return;
+        }
+
+        patch.Describe(statement.Text);
     }
 
     /// <summary>

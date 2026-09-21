@@ -651,6 +651,10 @@ em.UnitWrite(cell, smoothed);           <span class="c">// what it holds next ti
     function is handed the catalog when the preset is <em>picked</em>, not when it is registered — so it can
     freely use the modules the same plugin just added.</p>
 
+    <p>A third argument is a line saying what the preset is for. The patch it builds carries it as its own
+    description, unless the patch sets one itself with <code>patch.Describe(...)</code>, and that is what the
+    gallery shows under the name.</p>
+
     <p>A fourth argument, the <code>PresetKind</code>, says which heading of the preset gallery it belongs under:
     <code>Idea</code> for one idea at one sink, which is the default; <code>Interplay</code> where sound and
     picture are the same thought; <code>Showcase</code> for a whole piece. Say which, or yours is filed as an

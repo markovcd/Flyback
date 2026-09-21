@@ -461,6 +461,8 @@ public sealed partial class MainWindow
             wash.Clear();
             plateHost.Content = null;
 
+            inspector.Children.Add(BuildPatchDescription());
+
             inspector.Children.Add(new TextBlock
             {
                 Text = adrift ? InspectorHelp.Adrifting : editor.Locked ? InspectorHelp.Locked : InspectorHelp.Canvas,
@@ -969,6 +971,69 @@ public sealed partial class MainWindow
         };
 
         return title;
+    }
+
+    /// <summary>
+    /// What the patch is for, at the top of an empty panel, which a double-click
+    /// turns into a box to write it in.
+    /// </summary>
+    /// <remarks>
+    /// Editable on a locked canvas too: it is written back into the text, as the
+    /// keyboard's layout is. Not while the text has moved on from the patch, when
+    /// the line it would land on may not be the one playing.
+    /// </remarks>
+    private Control BuildPatchDescription()
+    {
+        var said = editor.Patch.Description;
+        var ink = new SolidColorBrush(Colors.Label);
+
+        var description = new TextBlock
+        {
+            Name = "patch-description",
+            Text = said ?? "Double-click to say what this patch is for.",
+            TextWrapping = TextWrapping.Wrap,
+            FontSize = Text.Body,
+            FontStyle = said is null ? FontStyle.Italic : FontStyle.Normal,
+            Foreground = said is null ? Text.Muted : ink,
+            Background = Brushes.Transparent,
+            Margin = new Thickness(0, 0, 0, 14),
+        };
+
+        if (adrift)
+        {
+            description.IsVisible = said is not null;
+            return description;
+        }
+
+        if (said is not null) ToolTip.SetTip(description, "Double-click to change it. Empty the box to take it away.");
+
+        description.Cursor = NameBox.Renaming;
+
+        description.DoubleTapped += (_, e) =>
+        {
+            e.Handled = true;
+
+            NameBox.Open(
+                description,
+                ink,
+                editor.Patch.Description,
+                "What is this patch for?",
+                Patch.DescriptionLimit,
+                typed => editor.Patch.Describe(typed),
+                () => editor.Patch.Description,
+                BuildPatchDescription,
+                () =>
+                {
+                    // Finished as it closes: Enter takes the box away before any
+                    // key comes up in the panel to say so.
+                    Relaid();
+                    editor.NotifyPatchChanged();
+                    HandCameOff();
+                },
+                prose: true);
+        };
+
+        return description;
     }
 
     /// <summary>

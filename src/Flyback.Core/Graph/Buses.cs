@@ -72,6 +72,7 @@ internal static class Buses
             Groups = patch.Groups,
             Controls = patch.Controls,
             KeyboardScale = patch.KeyboardScale,
+            Description = patch.Description,
         };
 
         // The wire into the Send a Receive hears, followed through a Send that

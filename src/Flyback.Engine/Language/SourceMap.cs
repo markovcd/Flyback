@@ -262,7 +262,22 @@ public sealed class SourceMap
     /// with none to replace a new one goes at the top, where a printing puts it.
     /// </remarks>
     /// <param name="line">What <see cref="PatchPrinter.Keyboard"/> writes, and null for a piano.</param>
-    public Change? Keyboard(string? line)
+    public Change? Keyboard(string? line) => PatchLine("keyboard", TokenKind.Identifier, line);
+
+    /// <summary>
+    /// The edit that makes the text describe the patch as <paramref name="line"/>
+    /// says, or null where the text already does.
+    /// </summary>
+    /// <param name="line">What <see cref="PatchPrinter.Description"/> writes, and null for none.</param>
+    public Change? Description(string? line) => PatchLine("description", TokenKind.Text, line);
+
+    /// <summary>
+    /// The edit that puts <paramref name="line"/> where the text says the thing
+    /// <paramref name="word"/> opens, takes that out for a null line, or puts the
+    /// line at the top where the text says nothing.
+    /// </summary>
+    /// <param name="next">What follows the word in a statement of this kind.</param>
+    private Change? PatchLine(string word, TokenKind next, string? line)
     {
         (int From, int To)? found = null;
         var start = true;
@@ -273,13 +288,25 @@ public sealed class SourceMap
 
             if (start
                 && token.Kind == TokenKind.Identifier
-                && token.Text == "keyboard"
+                && token.Text == word
                 && i + 1 < tokens.Count
-                && tokens[i + 1].Kind == TokenKind.Identifier)
+                && tokens[i + 1].Kind == next)
             {
-                var to = Offset(tokens[i + 1]) + tokens[i + 1].Text.Length;
+                var after = tokens[i + 1];
+
+                // A string's token holds what is between its quotes.
+                var to = Offset(after) + after.Text.Length + (next == TokenKind.Text ? 2 : 0);
 
                 if (i + 2 < tokens.Count && tokens[i + 2].Kind == TokenKind.Block) to = Closed(Offset(tokens[i + 2]));
+
+                // A description runs on over the strings on the lines below it.
+                for (var j = i + 2; next == TokenKind.Text && j < tokens.Count; j++)
+                {
+                    if (tokens[j].Kind == TokenKind.NewLine) continue;
+                    if (tokens[j].Kind != TokenKind.Text) break;
+
+                    to = Offset(tokens[j]) + tokens[j].Text.Length + 2;
+                }
 
                 found = (Offset(token), to);
             }

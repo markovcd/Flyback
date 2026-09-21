@@ -1,1 +1,6 @@
 #nullable enable
+const Flyback.Core.Graph.Patch.DescriptionLimit = 400 -> int
+Flyback.Core.Graph.Patch.Description.get -> string?
+Flyback.Core.Graph.Patch.Description.set -> void
+Flyback.Core.Graph.Patch.Describe(string? to) -> void
+static Flyback.Core.Graph.Patch.Tidied(string? text) -> string?
