@@ -4,6 +4,12 @@
 
 - A patch has a description, edited by double-clicking it in the panel with nothing selected, written as `description "..."` in the text and shown in the preset gallery.
 - Saving a preset under a name already saved asks first, in place.
+- Settings → Graphics sends the full-screen picture to another monitor, or to a chosen one, and leaves the editor where it is.
+- A patch's knobs can be played over the full-screen picture, in the editor and the viewer.
+- Dragging the right button on an unpatched input turns its value.
+- A turning knob holds the pointer still, so the edge of the screen never stops it.
+- A dragged side panel comes back at the width it was left at.
+- A patch or bundle from somebody else reaches only its own files.
 
 ## 0.4.0 — 2026-09-21
 
@@ -65,12 +71,9 @@
 - Ctrl+Shift+L, or Ctrl+click on Tidy, lays out only the selected modules.
 - A toolbar button swaps the preview and the canvas.
 - Ctrl+P pauses and plays the patch, and the full-screen preview has the viewer's controls.
-- Settings → Graphics sends the full-screen picture to another monitor, or to a chosen one, and leaves the editor where it is.
-- A patch's knobs can be played over the full-screen picture, in the editor and the viewer.
 - An Expression's formula is red while it does not read, and says what stopped it.
 - Unsaved work survives a crash and is restored at the next start.
 - Ctrl+B switches a module or a box off, and holding the right button does it until you let go.
-- Dragging the right button on an unpatched input turns its value.
 - About has a bitcoin address to donate to, as a QR code.
 - Flyback reopens as you left it: window, panels, text view and swapped preview.
 - Ctrl+O and Ctrl+S open and save, and Ctrl+D duplicates the selection.
