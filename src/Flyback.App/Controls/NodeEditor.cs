@@ -401,7 +401,7 @@ public sealed partial class NodeEditor : Control
             // before the canvas was bounded, or by hand, may put one half off
             // the edge — brought in here, before the history opens on it, so
             // that what a patch was opened as is a patch that fits.
-            HoldInside();
+            Scene.HoldInside();
 
             // A different document rather than an edit to this one, so what
             // came before it is not something to undo into.
@@ -416,6 +416,9 @@ public sealed partial class NodeEditor : Control
             HistoryChanged?.Invoke(this, EventArgs.Empty);
         }
     }
+
+    /// <summary>What the canvas shows of the patch, and what is under a point on it.</summary>
+    internal CanvasScene Scene => new(patch);
 
     /// <summary>
     /// Whether the patch belongs to somebody else, and this is a view of it.

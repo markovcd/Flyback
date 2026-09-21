@@ -804,7 +804,7 @@ public sealed partial class MainWindow
             });
 
             foreach (var socket in sockets)
-                if (editor.Named(socket) is var (label, spec))
+                if (editor.Scene.Named(socket) is var (label, spec))
                     inspector.Children.Add(Socket(socket, label, spec));
         }
 

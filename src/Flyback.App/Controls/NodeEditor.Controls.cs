@@ -45,7 +45,7 @@ public sealed partial class NodeEditor
     /// <summary>The input row under <paramref name="graph"/>, on a module that is drawn.</summary>
     private bool HitInputRow(Point graph, out Guid nodeId, out int port)
     {
-        if (HitNode(graph) is { } node && NodeCatalog.Get(node.TypeId) is { } def)
+        if (Scene.HitNode(graph) is { } node && NodeCatalog.Get(node.TypeId) is { } def)
         {
             for (var i = 0; i < def.Inputs.Count; i++)
             {

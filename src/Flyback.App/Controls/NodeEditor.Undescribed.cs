@@ -66,7 +66,7 @@ public sealed partial class NodeEditor
     /// pointed at.
     /// </summary>
     private NodeInstance? HitTag(Point graph) =>
-        HitNode(graph) is { } node
+        Scene.HitNode(graph) is { } node
         && NodeCatalog.Get(node.TypeId) is { } def
         && Tagged(def)
         && TagBounds(NodeGeometry.Bounds(node, def)).Inflate(2).Contains(graph)

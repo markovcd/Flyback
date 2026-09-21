@@ -9,143 +9,13 @@ namespace Flyback.App.Controls;
 /// make and break one, and how a shut box and an open one are painted.
 /// </summary>
 /// <remarks>
-/// The group itself belongs to the patch; what this adds is the two anchors
-/// every wire crossing the boundary is drawn to, which is the seam the whole
-/// feature hangs on — a box's socket is a real port on a real module, borrowed.
+/// The group itself belongs to the patch, and where a box stands and what its
+/// sockets are is <see cref="CanvasScene"/>'s — a box's socket is a real port on
+/// a real module, borrowed.
 /// </remarks>
 public sealed partial class NodeEditor
 {
     // --- groups ---------------------------------------------------------------
-    //
-    // Everything below is drawing and pointing. Nothing here touches the graph:
-    // a collapsed box is several modules that are not being painted and one that
-    // is, and every wire still runs between exactly the modules it always ran
-    // between. See NodeGroup.
-
-    /// <summary>
-    /// Every group that is currently a box, with the sockets it shows and the room
-    /// it takes up.
-    /// </summary>
-    /// <remarks>
-    /// Worked out afresh each time rather than kept: the sockets come off the wires
-    /// and their order off where the modules sit, so a cache would have to be
-    /// dropped on every wire drawn, every module moved and every undo.
-    /// </remarks>
-    private IEnumerable<(NodeGroup Group, GroupSockets Sockets, Rect Bounds)> Boxes()
-    {
-        if (patch.Groups is null) yield break;
-
-        foreach (var group in patch.Groups)
-        {
-            if (!group.Collapsed) continue;
-
-            var sockets = patch.SocketsOf(group);
-            var bounds = NodeGeometry.GroupBounds(patch, group, sockets);
-
-            if (bounds.Width > 0) yield return (group, sockets, bounds);
-        }
-    }
-
-    /// <summary>Whether this module is inside a box, and so is not drawn itself.</summary>
-    private bool Shut(Guid nodeId) => patch.CollapsedGroupOf(nodeId) is not null;
-
-    /// <summary>
-    /// Every rectangle the canvas has something in: a box for each group that is
-    /// shut, a ring for each that is open, and the modules not behind a box.
-    /// </summary>
-    /// <remarks>
-    /// What framing and pasting ask, rather than the list of modules. A module
-    /// behind a shut box is not on the canvas at all — nothing paints it and
-    /// <see cref="PatchLayout"/> parks it behind the box — so framing to one zooms
-    /// out to fit a picture nobody can see.
-    /// </remarks>
-    private IEnumerable<Rect> OnCanvas()
-    {
-        foreach (var (_, _, bounds) in Boxes()) yield return bounds;
-
-        if (patch.Groups is not null)
-            foreach (var group in patch.Groups)
-                if (OpenGroup(group) is var (outline, handle))
-                    yield return outline.Union(handle);
-
-        foreach (var node in patch.Nodes)
-        {
-            if (Shut(node.Id)) continue;
-
-            // A module whose plugin is missing has no height to ask for. Counted
-            // at nothing rather than skipped, so its corner is still somewhere
-            // the canvas is occupied.
-            var height = NodeCatalog.Get(node.TypeId) is { } def ? NodeGeometry.Height(def) : 0;
-
-            yield return new Rect(node.X, node.Y, NodeGeometry.Width, height);
-        }
-    }
-
-    /// <summary>Whether both ends of a wire are inside the same box.</summary>
-    private bool Hidden(Connection wire) =>
-        patch.CollapsedGroupOf(wire.SourceNode) is { } group
-        && ReferenceEquals(patch.CollapsedGroupOf(wire.TargetNode), group);
-
-    /// <summary>
-    /// Where an output is to be reached, which is the box standing in front of it
-    /// where one is and the module itself where none is.
-    /// </summary>
-    /// <remarks>
-    /// The one seam the whole feature hangs on: painting, hit-testing and wire
-    /// dragging ask this rather than <see cref="NodeGeometry"/>, so none of them
-    /// has to know a box can exist. A socket on a box names a module and a port, so
-    /// what comes back is still an answer about the module.
-    /// </remarks>
-    private Point OutputAnchor(NodeInstance node, int port)
-    {
-        if (patch.CollapsedGroupOf(node.Id) is { } group)
-        {
-            var sockets = patch.SocketsOf(group);
-            var row = sockets.IndexOfOutput(new GroupSocket(node.Id, port, IsOutput: true));
-
-            if (row >= 0)
-                return NodeGeometry.GroupOutputPort(
-                    NodeGeometry.GroupBounds(patch, group, sockets), row);
-        }
-
-        return NodeGeometry.OutputPort(node, port);
-    }
-
-    /// <inheritdoc cref="OutputAnchor"/>
-    private Point InputAnchor(NodeInstance node, NodeDef def, int port)
-    {
-        if (patch.CollapsedGroupOf(node.Id) is { } group)
-        {
-            var sockets = patch.SocketsOf(group);
-            var row = sockets.IndexOfInput(new GroupSocket(node.Id, port, IsOutput: false));
-
-            if (row >= 0)
-                return NodeGeometry.GroupInputPort(
-                    NodeGeometry.GroupBounds(patch, group, sockets), sockets, row);
-        }
-
-        return NodeGeometry.InputPort(node, def, port);
-    }
-
-    private NodeGroup? HitBox(Point graph)
-    {
-        foreach (var (group, _, bounds) in Boxes())
-            if (bounds.Contains(graph))
-                return group;
-
-        return null;
-    }
-
-    private NodeGroup? HitOpenGroupHandle(Point graph)
-    {
-        if (patch.Groups is null) return null;
-
-        foreach (var group in patch.Groups)
-            if (OpenGroup(group) is var (_, handle) && handle.Contains(graph))
-                return group;
-
-        return null;
-    }
 
     /// <summary>
     /// How many of the selected modules a group would actually take, which is every
@@ -158,14 +28,6 @@ public sealed partial class NodeEditor
     /// has to agree with <see cref="Patch.Group"/> exactly.
     /// </remarks>
     public int Groupable => SelectedNodes.Count(n => !NodeCatalog.IsSink(n.TypeId));
-
-    /// <summary>
-    /// Whether a group is switched off, which it is only where every module in it
-    /// is — the reading a selection already gets, so a box and what it holds never
-    /// disagree.
-    /// </summary>
-    public bool SwitchedOff(NodeGroup group) =>
-        group.Members.Count > 0 && group.Members.All(id => patch.Find(id) is { Off: true });
 
     /// <summary>
     /// The group the selection is exactly, and null where it is anything else —
@@ -407,50 +269,6 @@ public sealed partial class NodeEditor
     }
 
     /// <summary>
-    /// The outline drawn round a group that is open, and the strip above it that
-    /// shuts it again.
-    /// </summary>
-    /// <remarks>
-    /// An open group has no box, so without this there would be nothing to say one
-    /// was there and no way back but the inspector. The strip is where a
-    /// double-click lands: a thing that opens by being double-clicked should shut
-    /// the same way.
-    /// </remarks>
-    private (Rect Outline, Rect Handle)? OpenGroup(NodeGroup group)
-    {
-        if (group.Collapsed) return null;
-
-        var x = double.MaxValue;
-        var y = double.MaxValue;
-        var right = double.MinValue;
-        var bottom = double.MinValue;
-
-        foreach (var id in group.Members)
-            if (patch.Find(id) is { } node && NodeCatalog.Get(node.TypeId) is { } def)
-            {
-                var bounds = NodeGeometry.Bounds(node, def);
-
-                x = Math.Min(x, bounds.X);
-                y = Math.Min(y, bounds.Y);
-                right = Math.Max(right, bounds.Right);
-                bottom = Math.Max(bottom, bounds.Bottom);
-            }
-
-        // ReSharper disable once CompareOfFloatsByEqualityOperator
-        if (x == double.MaxValue) return null;
-
-        var outline = new Rect(x, y, right - x, bottom - y).Inflate(NodeGeometry.GroupPadding);
-
-        var handle = new Rect(
-            outline.X,
-            outline.Y - NodeGeometry.GroupHandleHeight,
-            outline.Width,
-            NodeGeometry.GroupHandleHeight);
-
-        return (outline, handle);
-    }
-
-    /// <summary>
     /// The ring, the ground inside it and the title above it, for every group that
     /// is open.
     /// </summary>
@@ -467,7 +285,7 @@ public sealed partial class NodeEditor
 
         foreach (var group in patch.Groups)
         {
-            if (OpenGroup(group) is not var (outline, handle)) continue;
+            if (Scene.OpenGroup(group) is not var (outline, handle)) continue;
 
             // Selected when its modules are, which is the rule a shut box uses —
             // and it is the same gesture that selects them, since pressing the
@@ -511,7 +329,7 @@ public sealed partial class NodeEditor
     /// </remarks>
     private void DrawBox(DrawingContext context, NodeGroup group, GroupSockets sockets, Rect bounds)
     {
-        if (!SwitchedOff(group))
+        if (!Scene.SwitchedOff(group))
         {
             DrawBoxFace(context, group, sockets, bounds, off: false);
             return;
@@ -571,7 +389,7 @@ public sealed partial class NodeEditor
     /// </summary>
     private void DrawBoxSocket(DrawingContext context, GroupSocket socket, Point centre, Rect bounds)
     {
-        if (Named(socket) is not var (label, spec)) return;
+        if (Scene.Named(socket) is not var (label, spec)) return;
 
         var width = bounds.Width - SocketLabelRoom;
         var text = CanvasText.Text(CanvasText.Fit(label, width), 11.5, CanvasText.LabelBrush, width, true);
@@ -583,36 +401,6 @@ public sealed partial class NodeEditor
                 : new Point(bounds.X + 14, centre.Y - text.Height / 2));
 
         NodeSkin.DrawPort(context, centre, spec.Kind);
-    }
-
-    /// <summary>
-    /// What a socket is called and what it is, or null where it names a module or a
-    /// port that is not there. "filter.cutoff" rather than a name of its own: the
-    /// socket is a way of pointing at an inner port and reads as one.
-    /// </summary>
-    /// <remarks>
-    /// An Expression's input is the exception, named for what is wired into it:
-    /// "Clock.beats" says what socket a carries where "Expression.a" says nothing.
-    /// </remarks>
-    public (string Label, PortSpec Spec)? Named(GroupSocket socket)
-    {
-        if (patch.Find(socket.Node) is not { } node) return null;
-        if (NodeCatalog.Get(node.TypeId) is not { } def) return null;
-
-        var ports = socket.IsOutput ? def.Outputs : def.Inputs;
-        if (socket.Port >= ports.Count) return null;
-
-        if (!socket.IsOutput
-            && node.TypeId == NodeCatalog.ExpressionTypeId
-            && patch.IncomingTo(node.Id, socket.Port) is { } wire
-            && patch.Find(wire.SourceNode) is { } source
-            && NodeCatalog.Get(source.TypeId) is { } from
-            && wire.SourcePort < from.Outputs.Count)
-        {
-            return ($"{source.Title(from)}.{from.Outputs[wire.SourcePort].Name}", ports[socket.Port]);
-        }
-
-        return ($"{node.Title(def)}.{ports[socket.Port].Name}", ports[socket.Port]);
     }
 
     /// <summary>How much of a box's width its sockets and their margins take from a label.</summary>

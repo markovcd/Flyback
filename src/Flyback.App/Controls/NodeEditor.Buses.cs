@@ -37,14 +37,14 @@ public sealed partial class NodeEditor
         foreach (var id in selection)
         {
             if (patch.Find(id) is not { } end || NodeCatalog.BusOf(end) is not { } bus) continue;
-            if (Shut(end.Id) || NodeCatalog.Get(end.TypeId) is not { } def) continue;
+            if (Scene.Shut(end.Id) || NodeCatalog.Get(end.TypeId) is not { } def) continue;
 
             var partner = end.TypeId == NodeCatalog.SendTypeId ? NodeCatalog.ReceiveTypeId : NodeCatalog.SendTypeId;
             var from = NodeGeometry.Bounds(end, def);
 
             foreach (var other in patch.Nodes)
             {
-                if (other.TypeId != partner || Shut(other.Id)) continue;
+                if (other.TypeId != partner || Scene.Shut(other.Id)) continue;
                 if (!string.Equals(NodeCatalog.BusOf(other), bus, StringComparison.OrdinalIgnoreCase)) continue;
                 if (NodeCatalog.Get(other.TypeId) is not { } otherDef) continue;
 

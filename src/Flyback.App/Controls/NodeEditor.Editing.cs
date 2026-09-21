@@ -79,7 +79,7 @@ public sealed partial class NodeEditor
         // whose modules are all on the canvas. Every edit that places one comes
         // through here — a paste, a module added, a layout — and none of them
         // knows how large what it placed is.
-        HoldInside();
+        Scene.HoldInside();
 
         var stepped = history.Record(patch, coalesce, Mark);
 
@@ -179,7 +179,7 @@ public sealed partial class NodeEditor
     {
         patch = next;
         patch.EnsureOutput();
-        HoldInside();
+        Scene.HoldInside();
 
         selection.RemoveWhere(id => patch.Find(id) is null);
 

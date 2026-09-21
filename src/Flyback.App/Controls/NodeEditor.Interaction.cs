@@ -47,7 +47,7 @@ public sealed partial class NodeEditor
             // than about adding another one beside it. And nowhere at all on a
             // locked canvas, where the list would offer to place something the
             // next evaluation would take straight back off.
-            if (!Locked && !HitPort(graph, out _, out _, out _) && HitNode(graph) is null)
+            if (!Locked && !Scene.HitPort(graph, out _, out _, out _) && Scene.HitNode(graph) is null)
                 MenuRequested?.Invoke(this, graph);
 
             return;
@@ -70,7 +70,7 @@ public sealed partial class NodeEditor
         // A socket on a locked canvas is not a handle. Falls through to the
         // module under it, so a press on a port still selects the module — which
         // is what somebody reading a patch was reaching for anyway.
-        if (!Locked && HitPort(graph, out var portNode, out var portIndex, out var isOutput))
+        if (!Locked && Scene.HitPort(graph, out var portNode, out var portIndex, out var isOutput))
         {
             StartWire(portNode, portIndex, isOutput, lifting: ctrl, graph);
             e.Pointer.Capture(this);
@@ -81,7 +81,7 @@ public sealed partial class NodeEditor
         // A box before a module, because that is the order they are painted in:
         // a box is drawn at its members' least corner, which need not be where
         // any of them is, and over whatever module happens to be there.
-        if (HitBox(graph) is null && HitNode(graph) is { } node)
+        if (Scene.HitBox(graph) is null && Scene.HitNode(graph) is { } node)
         {
             PressNode(node, ctrl);
             HoldOff([node.Id]);
@@ -95,7 +95,7 @@ public sealed partial class NodeEditor
         // what is inside it, which is what makes dragging one work without a drag
         // of its own — the modules are selected, so the ordinary group drag moves
         // them and the box follows because it is drawn from where they are.
-        if (HitBox(graph) is { } box)
+        if (Scene.HitBox(graph) is { } box)
         {
             // Opening a box is an edit, so a locked canvas selects it instead —
             // the same answer Ctrl+E gets.
@@ -114,7 +114,7 @@ public sealed partial class NodeEditor
             return;
         }
 
-        if (HitOpenGroupHandle(graph) is { } opened)
+        if (Scene.HitOpenGroupHandle(graph) is { } opened)
         {
             if (e.ClickCount == 2 && !Locked) ToggleBox(opened);
             else PressGroup(opened, ctrl);
@@ -149,30 +149,11 @@ public sealed partial class NodeEditor
     /// Selects what the rubber band is currently over, together with whatever it
     /// was told to keep.
     /// </summary>
-    /// <remarks>
-    /// A module counts as swept when the band touches it rather than when it
-    /// swallows it whole. Touching is the more forgiving of the two and it is
-    /// what the gesture looks like it should do — dragging across a row of
-    /// modules takes the row, without having to reach past the ends of it.
-    /// </remarks>
     private void Sweep()
     {
-        var band = Band(marqueeFrom, marqueeTo);
         var wanted = new HashSet<Guid>(marqueeBase);
 
-        foreach (var node in patch.Nodes)
-            if (!Shut(node.Id)
-                && NodeCatalog.Get(node.TypeId) is { } def
-                && NodeGeometry.Bounds(node, def).Intersects(band))
-                wanted.Add(node.Id);
-
-        // A box is swept as the modules it stands for, all of them together and
-        // none of them without the rest. Sweeping half a box would select a
-        // module the band never touched — the one under it — which is the same
-        // reason a module under a box does not answer a click.
-        foreach (var (group, _, bounds) in Boxes())
-            if (bounds.Intersects(band))
-                wanted.UnionWith(group.Members);
+        wanted.UnionWith(Scene.Swept(CanvasScene.Band(marqueeFrom, marqueeTo)));
 
         // Only when it actually changed. This runs on every pointer move, and
         // the inspector is rebuilt from scratch whenever a selection is
@@ -329,70 +310,6 @@ public sealed partial class NodeEditor
     }
 
     /// <summary>
-    /// As much of a drag as keeps every module in it inside the canvas.
-    /// </summary>
-    /// <remarks>
-    /// The whole gesture is cut back to what the nearest module to an edge can
-    /// take, rather than each module being clamped where it lands: clamping one at
-    /// a time would flatten the group against the edge, the ones already there
-    /// stopped while the rest kept coming. Each axis is narrowed by every module in
-    /// turn, and all the ranges hold zero — standing still at worst.
-    /// </remarks>
-    private Vector Held(Vector delta, Dictionary<Guid, Point> origins)
-    {
-        var (x, y) = (delta.X, delta.Y);
-
-        foreach (var (id, from) in origins)
-        {
-            if (patch.Find(id) is not { } node) continue;
-            if (NodeCatalog.Get(node.TypeId) is not { } def) continue;
-
-            var room = Room(def);
-
-            x = Math.Clamp(x, room.X - from.X, room.Right - from.X);
-            y = Math.Clamp(y, room.Y - from.Y, room.Bottom - from.Y);
-        }
-
-        return new Vector(x, y);
-    }
-
-    /// <summary>
-    /// Where a module's corner may be put, so the whole of it is on the canvas: the
-    /// canvas less the room the module takes up. A coordinate names the top left
-    /// and the body hangs below and right of it, so holding the coordinate inside
-    /// leaves the body outside.
-    /// </summary>
-    private static Rect Room(NodeDef def) => new(
-        CanvasBounds.X,
-        CanvasBounds.Y,
-        Math.Max(0, CanvasBounds.Width - NodeGeometry.Width),
-        Math.Max(0, CanvasBounds.Height - NodeGeometry.Height(def)));
-
-    /// <summary>
-    /// Puts every module wholly inside the canvas.
-    /// </summary>
-    /// <remarks>
-    /// The coordinate holds itself inside on its own
-    /// (<see cref="NodeInstance.Across"/>), but what it holds is a corner, and how
-    /// far the body reaches past it is the view's arithmetic. So a paste, a layout
-    /// or a file may leave a module standing half off, and this is where it is
-    /// known enough to be put right. A module the catalogue does not have is left
-    /// where it is, since nothing here can measure one.
-    /// </remarks>
-    private void HoldInside()
-    {
-        foreach (var node in patch.Nodes)
-        {
-            if (NodeCatalog.Get(node.TypeId) is not { } def) continue;
-
-            var room = Room(def);
-
-            node.X = Math.Clamp(node.X, room.X, room.Right);
-            node.Y = Math.Clamp(node.Y, room.Y, room.Bottom);
-        }
-    }
-
-    /// <summary>
     /// Grabbing a connected socket picks the existing wire up by the end that was
     /// not grabbed, so re-patching works the way it does on a real rig.
     /// </summary>
@@ -510,7 +427,7 @@ public sealed partial class NodeEditor
                 return;
 
             case Drag.Node when dragOrigins.Count > 0:
-                var delta = Held(graph - dragOrigin, dragOrigins);
+                var delta = Scene.Held(graph - dragOrigin, dragOrigins);
 
                 foreach (var moving in SelectedNodes)
                 {
@@ -551,11 +468,11 @@ public sealed partial class NodeEditor
     /// </remarks>
     private Cursor CursorOver(Point graph)
     {
-        if (HitPort(graph, out _, out _, out _)) return PortCursor;
+        if (Scene.HitPort(graph, out _, out _, out _)) return PortCursor;
 
-        var draggable = HitNode(graph) is not null
-            || HitBox(graph) is not null
-            || HitOpenGroupHandle(graph) is not null;
+        var draggable = Scene.HitNode(graph) is not null
+            || Scene.HitBox(graph) is not null
+            || Scene.HitOpenGroupHandle(graph) is not null;
 
         return draggable ? NodeCursor : ArrowCursor;
     }
@@ -676,12 +593,12 @@ public sealed partial class NodeEditor
 
     private void CompleteWire(Point graph)
     {
-        if (!HitPort(graph, out var node, out var port, out var isOutput))
+        if (!Scene.HitPort(graph, out var node, out var port, out var isOutput))
         {
             // Let go over nothing at all. Dropped on a module's body it is a
             // miss — the sockets are where a wire means something — but dropped
             // on bare canvas it is a request for something to plug into.
-            if (HitNode(graph) is null) OfferSomethingToPlugInto(graph);
+            if (Scene.HitNode(graph) is null) OfferSomethingToPlugInto(graph);
 
             return;
         }

@@ -48,13 +48,13 @@ public sealed partial class NodeEditor
         if (HitTag(graph) is { } tag) return (tag.Id, AssistantPanel.UndescribedNote);
 
         // A box's socket row, by the half of the box its label is drawn in.
-        foreach (var (_, sockets, bounds) in Boxes())
+        foreach (var (_, sockets, bounds) in Scene.Boxes())
         {
             if (!bounds.Contains(graph)) continue;
 
             for (var p = 0; p < sockets.Outputs.Count; p++)
                 if (OnRow(NodeGeometry.GroupOutputPort(bounds, p), graph, bounds, left: false)
-                    && Named(sockets.Outputs[p]) is var (label, _)
+                    && Scene.Named(sockets.Outputs[p]) is var (label, _)
                     && CanvasText.Overflows(label, 11.5, bounds.Width - SocketLabelRoom))
                 {
                     return (sockets.Outputs[p], label);
@@ -62,7 +62,7 @@ public sealed partial class NodeEditor
 
             for (var p = 0; p < sockets.Inputs.Count; p++)
                 if (OnRow(NodeGeometry.GroupInputPort(bounds, sockets, p), graph, bounds, left: true)
-                    && Named(sockets.Inputs[p]) is var (label, _)
+                    && Scene.Named(sockets.Inputs[p]) is var (label, _)
                     && CanvasText.Overflows(label, 11.5, bounds.Width - SocketLabelRoom))
                 {
                     return (sockets.Inputs[p], label);
@@ -71,7 +71,7 @@ public sealed partial class NodeEditor
             return (null, null);
         }
 
-        if (HitNode(graph) is { } node && NodeCatalog.Get(node.TypeId) is { } def)
+        if (Scene.HitNode(graph) is { } node && NodeCatalog.Get(node.TypeId) is { } def)
         {
             var bounds = NodeGeometry.Bounds(node, def);
             var title = node.Title(def);

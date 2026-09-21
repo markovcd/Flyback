@@ -285,13 +285,13 @@ public class SwitchOffTests : UiTest
 
         clock.Off.ShouldBeTrue();
         osc.Off.ShouldBeTrue();
-        editor.SwitchedOff(group).ShouldBeTrue();
+        editor.Scene.SwitchedOff(group).ShouldBeTrue();
 
         Switch(window);
 
         clock.Off.ShouldBeFalse();
         osc.Off.ShouldBeFalse();
-        editor.SwitchedOff(group).ShouldBeFalse();
+        editor.Scene.SwitchedOff(group).ShouldBeFalse();
     }
 
     /// <summary>
@@ -307,7 +307,7 @@ public class SwitchOffTests : UiTest
 
         clock.Off = true;
 
-        editor.SwitchedOff(group).ShouldBeFalse();
+        editor.Scene.SwitchedOff(group).ShouldBeFalse();
     }
 
     /// <summary>

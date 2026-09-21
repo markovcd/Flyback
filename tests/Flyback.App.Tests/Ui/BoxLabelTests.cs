@@ -74,8 +74,8 @@ public class BoxLabelTests : UiTest
 
         var sockets = b.Patch.SocketsOf(group);
 
-        editor.Named(sockets.Inputs.ShouldHaveSingleItem()).ShouldNotBeNull().Label.ShouldBe("Time.t");
-        editor.Named(sockets.Outputs.ShouldHaveSingleItem()).ShouldNotBeNull().Label.ShouldBe("Expression.out");
+        editor.Scene.Named(sockets.Inputs.ShouldHaveSingleItem()).ShouldNotBeNull().Label.ShouldBe("Time.t");
+        editor.Scene.Named(sockets.Outputs.ShouldHaveSingleItem()).ShouldNotBeNull().Label.ShouldBe("Expression.out");
     }
 
     /// <summary>

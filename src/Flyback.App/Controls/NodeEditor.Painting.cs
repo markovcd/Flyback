@@ -59,10 +59,10 @@ public sealed partial class NodeEditor
             DrawConnections(context, lifted, theirs: false);
 
             foreach (var node in patch.Nodes)
-                if (!Shut(node.Id) && NodeCatalog.Get(node.TypeId) is { } def)
+                if (!Scene.Shut(node.Id) && NodeCatalog.Get(node.TypeId) is { } def)
                     DrawNode(context, node, def);
 
-            foreach (var (group, sockets, bounds) in Boxes())
+            foreach (var (group, sockets, bounds) in Scene.Boxes())
                 DrawBox(context, group, sockets, bounds);
 
             DrawConnections(context, lifted, theirs: true);
@@ -142,7 +142,7 @@ public sealed partial class NodeEditor
     {
         if (drag != Drag.Marquee) return;
 
-        var band = Band(
+        var band = CanvasScene.Band(
             GraphToScreen.Transform(marqueeFrom),
             GraphToScreen.Transform(marqueeTo));
 
@@ -152,18 +152,6 @@ public sealed partial class NodeEditor
 
         context.DrawRectangle(MarqueeFill, MarqueePen, band);
     }
-
-    /// <summary>
-    /// The rectangle between two corners, whichever way round they are. Built by hand
-    /// rather than from <c>new Rect(a, b)</c>, which takes the first point as the top
-    /// left: started from any other corner that gives a negative width, and a
-    /// rectangle like that draws nothing and intersects nothing.
-    /// </summary>
-    private static Rect Band(Point a, Point b) => new(
-        Math.Min(a.X, b.X),
-        Math.Min(a.Y, b.Y),
-        Math.Abs(b.X - a.X),
-        Math.Abs(b.Y - a.Y));
 
     private void DrawGrid(DrawingContext context)
     {
@@ -231,7 +219,7 @@ public sealed partial class NodeEditor
             // A wire with both ends inside one collapsed box is a wire the box
             // is standing in front of. Not drawn faintly or routed around — it
             // is simply not on the canvas while the box is shut.
-            if (Hidden(connection)) continue;
+            if (Scene.Hidden(connection)) continue;
 
             var source = patch.Find(connection.SourceNode);
             var target = patch.Find(connection.TargetNode);
@@ -243,8 +231,8 @@ public sealed partial class NodeEditor
             if (connection.SourcePort >= sourceDef.Outputs.Count) continue;
             if (connection.TargetPort >= targetDef.Inputs.Count) continue;
 
-            var from = OutputAnchor(source, connection.SourcePort);
-            var to = InputAnchor(target, targetDef, connection.TargetPort);
+            var from = Scene.OutputAnchor(source, connection.SourcePort);
+            var to = Scene.InputAnchor(target, targetDef, connection.TargetPort);
             var color = Colors.PortColor(sourceDef.Outputs[connection.SourcePort].Kind);
 
             // A wire onto or off a module that is switched off is drawn as faintly
@@ -298,7 +286,7 @@ public sealed partial class NodeEditor
             if (patch.Find(wireNode) is not { } node) return null;
             if (NodeCatalog.Get(node.TypeId) is not { } def) return null;
 
-            return wireFromOutput ? OutputAnchor(node, wirePort) : InputAnchor(node, def, wirePort);
+            return wireFromOutput ? Scene.OutputAnchor(node, wirePort) : Scene.InputAnchor(node, def, wirePort);
         }
     }
 

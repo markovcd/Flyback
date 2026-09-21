@@ -123,7 +123,7 @@ public sealed partial class NodeEditor
         // and near enough to still be under the hand.
         const double step = 28;
 
-        AddFragment(fragment, Drawn(fragment, fragment.Nodes).Center + new Vector(step, step));
+        AddFragment(fragment, CanvasScene.Drawn(fragment, fragment.Nodes).Center + new Vector(step, step));
     }
 
     /// <summary>
@@ -144,7 +144,7 @@ public sealed partial class NodeEditor
         var arriving = fragment.Nodes.Where(n => !NodeCatalog.IsSink(n.TypeId)).ToArray();
         if (arriving.Length == 0) return [];
 
-        var box = Drawn(fragment, arriving);
+        var box = CanvasScene.Drawn(fragment, arriving);
 
         var (dx, dy) = at is { } point
             ? (point.X - box.Center.X, point.Y - box.Center.Y)
@@ -178,7 +178,7 @@ public sealed partial class NodeEditor
         const double step = 28;
         const int tries = 40;
 
-        var taken = OnCanvas().ToArray();
+        var taken = Scene.OnCanvas().ToArray();
 
         var centre = ToGraph(new Point(Bounds.Width / 2, Bounds.Height / 2));
         var dx = centre.X - group.Center.X;
@@ -196,54 +196,6 @@ public sealed partial class NodeEditor
         }
 
         return (dx, dy);
-    }
-
-    /// <summary>
-    /// The one rectangle that holds what a fragment will look like on the canvas.
-    /// </summary>
-    /// <remarks>
-    /// Which is not where its modules are, for a fragment with a shut box in it: a
-    /// box is drawn at its members' least corner and one module wide, however far
-    /// apart they were left. Placed by the spread instead, a group saved from a
-    /// chain laid out by hand lands half its hidden width away from the click.
-    /// </remarks>
-    private static Rect Drawn(Patch fragment, IReadOnlyList<NodeInstance> arriving)
-    {
-        var shut = fragment.Groups?.Where(group => group.Collapsed).ToArray() ?? [];
-        var hidden = shut.SelectMany(group => group.Members).ToHashSet();
-
-        var seen = BoxAround([.. arriving.Where(node => !hidden.Contains(node.Id))]);
-
-        foreach (var group in shut)
-        {
-            var box = NodeGeometry.GroupBounds(fragment, group, fragment.SocketsOf(group));
-
-            seen = seen == default ? box : seen.Union(box);
-        }
-
-        return seen;
-    }
-
-    /// <summary>The one rectangle that holds all of these modules.</summary>
-    private static Rect BoxAround(IReadOnlyList<NodeInstance> nodes)
-    {
-        double left = double.MaxValue, top = double.MaxValue;
-        double right = double.MinValue, bottom = double.MinValue;
-
-        foreach (var node in nodes)
-        {
-            // A module whose plugin is missing has no height to ask for. Counted
-            // at nothing rather than skipped, so its corner still keeps a paste
-            // off it.
-            var height = NodeCatalog.Get(node.TypeId) is { } def ? NodeGeometry.Height(def) : 0;
-
-            left = Math.Min(left, node.X);
-            top = Math.Min(top, node.Y);
-            right = Math.Max(right, node.X + NodeGeometry.Width);
-            bottom = Math.Max(bottom, node.Y + height);
-        }
-
-        return left > right ? default : new Rect(left, top, right - left, bottom - top);
     }
 
     /// <summary>
@@ -343,7 +295,7 @@ public sealed partial class NodeEditor
 
         double left = double.MaxValue, top = double.MaxValue, right = double.MinValue, bottom = double.MinValue;
 
-        foreach (var bounds in OnCanvas())
+        foreach (var bounds in Scene.OnCanvas())
         {
             left = Math.Min(left, bounds.Left);
             top = Math.Min(top, bounds.Top);
