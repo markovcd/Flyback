@@ -9,7 +9,9 @@ namespace Flyback.Plugins.Effects;
 /// for any of it to come round on. What makes it change rather than merely vary
 /// is the loops: a drone that bends its own phase, an echo that darkens and
 /// smears itself every time round, two followers that let one voice push another
-/// down, and a picture steered by where it was bright a frame ago.
+/// down, and a picture steered by where it was bright a frame ago. Over that,
+/// four visitors come and go on random voltages of their own, and each marks the
+/// picture while it stays.
 /// </summary>
 /// <remarks>
 /// A loop is one evaluation of delay (ADR-0075): a sample to the ear, and to the
@@ -18,7 +20,8 @@ namespace Flyback.Plugins.Effects;
 /// construction and none of them by luck.
 /// <para>
 /// Nothing in it is bright on purpose. Every voice is a sine, a sine bent a
-/// little or one triangle, the wind is pink noise through a bandpass, the echo
+/// little, one triangle or a dark plucked string, the wind, rain and thunder are
+/// pink noise through a filter, the echo
 /// passes a lowpass on every repeat and the room darkens as it rings — so the
 /// spectrum tilts down the way a quiet room's does, about three decibels an
 /// octave through the middle, and nothing above a kilohertz or so is ever the
@@ -49,6 +52,8 @@ internal sealed class SlowWeatherPreset : PresetBench
 
     private const string SlewType = "flyback.voice.slew";
 
+    private const string RandomType = "flyback.voice.random";
+
     /// <summary>The outputs read by number below, named so a wire says which.</summary>
     private const int Hz = 0;
 
@@ -69,6 +74,8 @@ internal sealed class SlowWeatherPreset : PresetBench
     private const int BusRight = 3;
 
     private const int Tail = 1;
+
+    private const int Held = 2;
 
     /// <summary>
     /// How much of the last evaluation an envelope follower keeps. At the
@@ -99,13 +106,31 @@ internal sealed class SlowWeatherPreset : PresetBench
     /// at its longest and softest, which makes it a hump a note rather than a
     /// switch: the voices below use it as their swell.
     /// </summary>
-    private NodeInstance Quantised(NodeInstance voltage, float[] notes)
+    private NodeInstance Quantised(NodeInstance voltage, float[] notes, int from = 0)
     {
         var steps = b.Add("seq.notes", (1, notes.Length), (2, 1f), (3, 0.5f));
         StepsExtra.Set(steps, [.. notes.Select(n => new Step(n))]);
-        b.Wire(voltage, 0, steps, 0);
+        b.Wire(voltage, from, steps, 0);
         return steps;
     }
+
+    /// <summary>
+    /// Whether a visitor is here: nought while its own Wander is under
+    /// <paramref name="from"/>, one over <paramref name="to"/>. Read the Fade's
+    /// gate; the same number opens the voice and marks the picture.
+    /// </summary>
+    private NodeInstance Presence(float rate, float seed, float from, float to) =>
+        Enters(Wander(rate, seed), from, to);
+
+    /// <summary>
+    /// A Random's held value: a new number from -1 to 1 <paramref name="rate"/>
+    /// times a second, on the same edges as a Stroke of the same rate.
+    /// </summary>
+    private NodeInstance Dice(float rate, float seed, float amp = 1f, float bias = 0f) =>
+        b.Add(RandomType, (1, rate), (2, seed), (3, amp), (4, bias));
+
+    /// <summary>A Desk channel's level socket, for a channel whose level is a wire.</summary>
+    private static int LevelOf(int channel) => (channel - 1) * 3 + 2;
 
     /// <summary>
     /// A level, followed. The loop is an integrator on the size of the signal —
@@ -282,15 +307,106 @@ internal sealed class SlowWeatherPreset : PresetBench
 
         Box("Pad");
 
+        // --- visitors --------------------------------------------------------
+
+        // Four voices that are not always here. Each has a Wander of its own that
+        // has to climb past a threshold before it is let in, so they arrive and
+        // leave on no schedule, sometimes together and often none for a while.
+        // The gate that lets each one in also marks the picture while it stays.
+
+        // A music box: a plucked string at the top of the scale, on a count of
+        // about two a second that skips most of its beats. The note is held from
+        // the pluck, so a ringing string is never retuned under itself.
+        var boxHere = Presence(0.037f, 6f, 0.56f, 0.68f);
+        var boxStroke = Stroke(clock, 2.4f, 4f);
+        var boxOdds = Dice(2.4f, 11f);
+        var boxSteps = Quantised(Dice(2.4f, 10f, 0.5f, 0.5f), [74f, 77f, 79f, 81f, 84f, 86f, 89f], Held);
+        var boxPluck = Formula("step(0.5, a) * step(0.15, b)", boxStroke, new Read(boxOdds, Held));
+        var boxHz = b.Add(NodeCatalog.HoldTypeId);
+        var box = b.Add(NodeCatalog.StringTypeId, (3, 0.35f), (4, 0.3f));
+
+        b.Wire(Through("audio.note", boxSteps), Hz, boxHz, 0)
+         .Wire(boxPluck, 0, boxHz, 1)
+         .Wire(boxPluck, 0, box, 1)
+         .Wire(boxHz, 0, box, 2);
+
+        Box("Visitor: Music Box");
+
+        // A call from far off: a sine gliding between notes of the low half of
+        // the scale, in phrases of about five seconds it mostly lets pass, with
+        // a vibrato that deepens as the phrase swells.
+        var callHere = Presence(0.043f, 7f, 0.56f, 0.68f);
+        var phrase = Stroke(clock, 0.21f, 1f);
+        var callOdds = Dice(0.21f, 12f);
+        var callSwell = Formula(
+            "sin(a * pi) * sin(a * pi) * step(-0.3, b)", new Read(phrase, StrokePhase), new Read(callOdds, Held));
+        var callSteps = Quantised(Dice(1.3f, 13f, 0.5f, 0.5f), [53f, 55f, 57f, 60f, 62f, 65f, 67f], Held);
+        var glide = b.Add(SlewType, (1, -0.45f), (2, -0.45f));
+        var vibrato = b.Add("osc.sine", (1, 5.3f));
+
+        b.Wire(Through("audio.note", callSteps), Hz, glide, 0);
+
+        var callHz = Formula("a * (1 + 0.012 * b * c)", glide, vibrato, callSwell);
+        var callVoice = Sum(Tone(callHz, callSwell), Tone(Times(callHz, 2.01f), Times(callSwell, 0.2f)));
+        var callDriftL = b.Add("osc.sine", (1, 0.0371f), (3, 0.35f), (4, 0.6f));
+        var callDriftR = b.Add("osc.sine", (1, 0.0293f), (2, 0.5f), (3, 0.35f), (4, 0.6f));
+        var callL = Product(callVoice, callDriftL);
+        var callR = Product(callVoice, callDriftR);
+
+        Box("Visitor: Call");
+
+        // Rain: pink hiss high up for the wash, and drops. A drop is a sine that
+        // rises in pitch as it dies, on three counts that never line up, each
+        // skipping about half its beats and each drop at a pitch of its own.
+        var rainHere = Presence(0.031f, 8f, 0.55f, 0.67f);
+
+        NodeInstance Drop(float rate, float seed)
+        {
+            var fall = Stroke(clock, rate, 7f);
+            var dice = Dice(rate, seed);
+            var hz = Formula("(700 + 800 * fract(a * 7.31)) * (1.6 - 0.6 * b)", new Read(dice, Held), fall);
+            return Tone(hz, Formula("a * step(0, b)", fall, new Read(dice, Held)));
+        }
+
+        var dropL = Drop(5.3f, 14f);
+        var dropR = Drop(7.7f, 15f);
+        var dropMid = Drop(3.1f, 16f);
+        var rainWash = Hiss(null, 5200f, 0.15f, "high", 0.35f, "pink", 9f);
+        var rainL = Formula("a + b * 0.5 + c", dropL, dropMid, rainWash);
+        var rainR = Formula("a + b * 0.5 + c", dropR, dropMid, rainWash);
+
+        Box("Visitor: Rain");
+
+        // Thunder, far off: a slot every five seconds or so that it takes about
+        // half the time, heard as low pink noise swelling a beat after the flash
+        // and rolling away over the rest of the slot, its cutoff falling with it.
+        var stormHere = Presence(0.023f, 9f, 0.58f, 0.7f);
+        var strike = Stroke(clock, 0.19f, 1f);
+        var strikeOdds = Dice(0.19f, 3f);
+        var roll = Formula(
+            "(1 - a) * (1 - a) * (1 - a) * smoothstep(0.02, 0.12, a) * step(0, b)",
+            new Read(strike, StrokePhase), new Read(strikeOdds, Held));
+        var grumble = Wander(1.7f, 10f, 0.45f, 1f);
+        var rumble = Hiss(Product(roll, grumble), 120f, 0.35f, "low", 4f, "pink", 11f);
+
+        b.Wire(Span(roll, 0f, 1f, 70f, 260f), 0, rumble, HissCutoff);
+
+        Box("Visitor: Thunder");
+
         // --- the melody desk -------------------------------------------------
 
-        // The two voices that come and go, on a desk of their own, because what
-        // the wind below listens to is the sum of exactly these: the ground is
+        // The voices that come and go, on a desk of their own, because what the
+        // wind below listens to is the sum of exactly these: the ground is
         // nearly always on and would drown the reading.
         var melody = b.Add(DeskType);
 
         Channel(melody, 1, 0.5f, thicken, thicken, 0, ChorusWide);
         Channel(melody, 2, 0.6f, bellL, bellR);
+        Channel(melody, 3, 0f, box);
+        Channel(melody, 4, 0f, callL, callR);
+
+        b.Wire(Times(boxHere, 0.45f, FadeGate), 0, melody, LevelOf(3))
+         .Wire(Times(callHere, 0.5f, FadeGate), 0, melody, LevelOf(4));
 
         Box("Melody Desk");
 
@@ -324,7 +440,12 @@ internal sealed class SlowWeatherPreset : PresetBench
 
         Channel(desk, 1, 0.34f, shaped);
         Channel(desk, 2, 0.36f, windL, windR);
+        Channel(desk, 3, 0f, rainL, rainR);
+        Channel(desk, 4, 0f, rumble);
         Chained(melody, desk);
+
+        b.Wire(Times(rainHere, 0.3f, FadeGate), 0, desk, LevelOf(3))
+         .Wire(Times(stormHere, 0.9f, FadeGate), 0, desk, LevelOf(4));
 
         Box("Desk");
 
@@ -404,7 +525,7 @@ internal sealed class SlowWeatherPreset : PresetBench
         var fold = b.Add("space.kaleidoscope");
 
         b.Wire(Sum(creep, Span(tide, 0f, 1f, -0.6f, 0.6f)), 0, placed, TransformAngle)
-         .Wire(Span(wander, 0f, 1f, 0.75f, 1.45f), 0, placed, TransformZoom)
+         .Wire(Formula("a * (1 - 0.3 * b * c)", Span(wander, 0f, 1f, 0.75f, 1.45f), callSwell, new Read(callHere, FadeGate)), 0, placed, TransformZoom)
          .Wire(placed, 0, fold, 0)
          .Wire(placed, 1, fold, 1)
          .Wire(Span(tide, 0f, 1f, 2f, 9f), 0, fold, 2);
@@ -445,7 +566,7 @@ internal sealed class SlowWeatherPreset : PresetBench
          .Wire(Span(flutter, 0f, 1f, 0.25f, 0.85f), 0, bend, 3)
          .Wire(bend, 0, veil, 0)
          .Wire(bend, 1, veil, 1)
-         .Wire(Span(padSteps, 0f, 1f, 1.4f, 3.6f, Index), 0, veil, 2)
+         .Wire(Sum(Span(padSteps, 0f, 1f, 1.4f, 3.6f, Index), Times(boxHere, 2.5f, FadeGate)), 0, veil, 2)
          .Wire(Times(clock, 0.09f), 0, veil, 3);
 
         // Wide edges, unlike every other preset that does this. A hard threshold
@@ -464,7 +585,8 @@ internal sealed class SlowWeatherPreset : PresetBench
         // A Vignette with no picture in it, read for its 'shade': the only thing
         // in the patch that knows where the edge of the frame is.
         var falloff = Vignette(null, 0f, 2.2f, 0.3f);
-        var glow = Span(padSteps, 0f, 1f, 0.9f, 1.6f, Gate);
+        var glow = Formula(
+            "a * (1 - 0.4 * b)", Span(padSteps, 0f, 1f, 0.9f, 1.6f, Gate), new Read(stormHere, FadeGate));
         var visible = b.Add("math.clamp", (1, 0f), (2, 1f));
 
         b.Wire(Product(Product(memory, glow), falloff, VignetteShade), 0, visible, 0);
@@ -472,11 +594,11 @@ internal sealed class SlowWeatherPreset : PresetBench
         // Hue off the cloud and the slowest voltage together, so the palette
         // moves across the frame and drifts as a whole at the same time, and the
         // creep under both means it never settles even where the two do.
-        var hue = Fraction(Sum(Sum(Times(cloud, 0.55f), Times(tide, 0.4f)), creep));
+        var hue = Fraction(Sum(Sum(Sum(Times(cloud, 0.55f), Times(tide, 0.4f)), creep), Times(callHere, 0.22f, FadeGate)));
         var fresh = b.Add("color.hsv");
 
         b.Wire(hue, 0, fresh, 0)
-         .Wire(Span(flutter, 0f, 1f, 0.3f, 0.75f), 0, fresh, 1)
+         .Wire(Formula("a * (1 - 0.6 * b)", Span(flutter, 0f, 1f, 0.3f, 0.75f), new Read(rainHere, FadeGate)), 0, fresh, 1)
          .Wire(visible, 0, fresh, 2);
 
         // The memory above forgets in place; this is the drift. A Trails with
@@ -489,10 +611,45 @@ internal sealed class SlowWeatherPreset : PresetBench
 
         b.Wire(drift, Tail, combine, 0)
          .Wire(fresh, 0, combine, 1)
-         .Wire(Span(wander, 0f, 1f, 0.12f, 0.35f), 0, combine, 2)
-         .Wire(combine, 0, output, NodeCatalog.OutputColorPort);
+         .Wire(Span(wander, 0f, 1f, 0.12f, 0.35f), 0, combine, 2);
 
         Box("Picture: Color");
+
+        // --- the picture: visitors -------------------------------------------
+
+        // Each visitor bends something above while it stays: the music box
+        // tightens the rings, the call turns the hue and breathes the zoom with
+        // its phrase, the rain drains the color and the storm darkens it. These
+        // are what each one lays on top as light, after the Trails reads the
+        // frame, so a glint or a flash drifts away in the tail.
+
+        // Glints where a pluck lands, at a new place every pluck.
+        var glintField = b.Add("pattern.noise", (3, 11f));
+        b.Wire(Times(boxOdds, 9f, Held), 0, glintField, 2);
+        var glints = Formula(
+            "smoothstep(0.7, 0.8, a) * b * step(0.15, c) * d",
+            glintField, boxStroke, new Read(boxOdds, Held), new Read(boxHere, FadeGate));
+
+        // Rain as streaks: noise stretched along a slant and scrolled down it.
+        var place = b.Add(NodeCatalog.CoordTypeId);
+        var streakField = b.Add("pattern.noise", (3, 1f));
+        b.Wire(Formula("(a + b * 0.18) * 48", place, new Read(place, 1)), 0, streakField, 0)
+         .Wire(Formula("a * 1.5 + b * 2.8", new Read(place, 1), clock), 0, streakField, 1);
+        var streaks = Formula("smoothstep(0.64, 0.78, a) * b * 0.45", streakField, new Read(rainHere, FadeGate));
+
+        // Lightning: a flicker at the head of each strike, a beat ahead of its
+        // thunder, lighting the cloud rather than the whole frame.
+        var flash = Formula(
+            "(1 - smoothstep(0, 0.05, a)) * step(0, b) * (0.6 + 0.4 * sin(a * 420)) * c * (0.3 + d)",
+            new Read(strike, StrokePhase), new Read(strikeOdds, Held), new Read(stormHere, FadeGate), cloud);
+
+        var lit = Ink(combine, glints, 1f, 0.86f, 0.55f);
+        var wet = Ink(lit, streaks, 0.6f, 0.74f, 1f);
+        var struck = Ink(wet, flash, 0.88f, 0.9f, 1f);
+
+        b.Wire(struck, 0, output, NodeCatalog.OutputColorPort);
+
+        Box("Picture: Visitors");
 
         return b.Build();
     }
