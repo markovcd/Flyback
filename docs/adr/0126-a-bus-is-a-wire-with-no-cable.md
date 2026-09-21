@@ -39,6 +39,19 @@ and the compiler says so. Of two Sends on one bus, the one with the lower id is
 heard, because list order moves whenever the canvas brings a module to the
 front, and the other is reported.
 
+**Two edits keep a Send and its Receives together, as a wire's sockets would.**
+A bus is matched by what is typed on each end, so nothing follows a change
+unless something makes it (`BusEdits`):
+- Typing a new bus on a Send in its panel moves the Receives on the old one with
+  it, in the same undo step. Only where they were that Send's and stay so: it was
+  the one its bus was heard from, and no other Send is on the bus it goes to.
+  Otherwise moving them would change what they play, and the compiler's remark is
+  the honest result.
+- A pasted Send that lands on a bus the patch already sends on is given the next
+  free name, `kick 2`, with the Receives pasted alongside it. A Receive pasted
+  alone keeps its bus: another listener is what pasting one is for.
+- The text language is left alone, since both ends are written out there.
+
 **The canvas shows the bus, not a wire.** The header reads `Send · kick`.
 While one end is selected, a straight dotted line joins it to the others, so
 it cannot be mistaken for a wire, which is curved and always drawn.

@@ -124,6 +124,32 @@ public sealed class EditingSteps(PatchContext context, Session session)
     [When("the level and the halving module are copied and pasted")]
     public void WhenThePairIsPasted() => Paste([context.Node("level").Id, context.Node("halve").Id]);
 
+    [When("the Send is put on the bus {string}")]
+    public void WhenTheSendIsRenamed(string bus)
+    {
+        BusEdits.Rename(context.Patch, context.Node("send"), bus);
+        context.Replace(context.Patch);
+    }
+
+    [When("the Send and its listener are copied and pasted")]
+    public void WhenTheBusPairIsPasted() => Paste([context.Node("send").Id, context.Node("receive 1").Id]);
+
+    [When("the listener alone is copied and pasted")]
+    public void WhenTheListenerIsPasted() => Paste([context.Node("receive 1").Id]);
+
+    [Then("the copy is on a bus of its own")]
+    public void ThenTheCopyHasItsOwnBus()
+    {
+        var bus = NodeCatalog.BusOf(Pasted(NodeCatalog.SendTypeId)).ShouldNotBeNull();
+
+        bus.ShouldNotBe(NodeCatalog.BusOf(context.Node("send")));
+        NodeCatalog.BusOf(Pasted(NodeCatalog.ReceiveTypeId)).ShouldBe(bus);
+    }
+
+    [Then("the copy listens to the bus {string}")]
+    public void ThenTheCopyListensTo(string bus) =>
+        NodeCatalog.BusOf(Pasted(NodeCatalog.ReceiveTypeId)).ShouldBe(bus);
+
     [When("everything is copied and pasted")]
     public void WhenEverythingIsPasted() => Paste([.. context.Patch.Nodes.Select(n => n.Id)]);
 

@@ -22,6 +22,16 @@ public partial class NodeCatalog
             ? ((ExtraField.Text)BusExtra.Fields[0]).Value(node.StateOf(BusKey)?[BusField]).Trim()
             : null;
 
+    /// <summary>Puts a Send or a Receive on <paramref name="bus"/>.</summary>
+    internal static void PutOnBus(NodeInstance node, string bus)
+    {
+        var held = BusExtra.Stored(node.StateOf(BusKey));
+        var field = BusExtra.Fields[0];
+
+        held[BusField] = field.Sane(System.Text.Json.Nodes.JsonValue.Create(bus));
+        node.SetState(BusKey, held);
+    }
+
     /// <remarks>
     /// A wire with no cable: whatever is patched into a Send comes out of every
     /// Receive on the same bus. See <see cref="Graph.Buses"/> for how it is compiled.

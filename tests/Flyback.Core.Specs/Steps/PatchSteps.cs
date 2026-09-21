@@ -478,6 +478,14 @@ public sealed class PatchSteps(PatchContext context)
         Hear("sum");
     }
 
+    [Given("something else is sent on the bus {string}")]
+    public void GivenSomethingElseIsSent(string bus)
+    {
+        Level("other level", 0.9f);
+        Send("other send", bus);
+        context.Wire("other level", "out", "other send", "in");
+    }
+
     [Given("a bus that brings back what it carried and adds a quarter")]
     public void GivenALoopThroughABus()
     {

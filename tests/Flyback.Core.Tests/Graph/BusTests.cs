@@ -225,4 +225,88 @@ public class BusTests
         again.Issues.ShouldBeEmpty();
         Heard(again.Patch, 64).ShouldBe(Heard(built.Patch, 64));
     }
+
+    // --- edits that would pull a Send and its Receives apart --------------------
+
+    private static NodeInstance Fresh(string typeId, string bus) =>
+        On(NodeInstance.Create(Modules.Require(typeId), 0, 0), bus);
+
+    private static Patch Of(params NodeInstance[] nodes)
+    {
+        var patch = new Patch();
+        foreach (var node in nodes) patch.Nodes.Add(node);
+
+        return patch;
+    }
+
+    [Fact]
+    public void A_renamed_Send_takes_every_Receive_on_its_bus_and_no_other()
+    {
+        var send = Fresh(NodeCatalog.SendTypeId, "kick");
+        var first = Fresh(NodeCatalog.ReceiveTypeId, "kick");
+        var second = Fresh(NodeCatalog.ReceiveTypeId, "KICK");
+        var other = Fresh(NodeCatalog.ReceiveTypeId, "snare");
+
+        var moved = BusEdits.Rename(Of(send, first, second, other), send, " thump ");
+
+        moved.ShouldBe([first, second], ignoreOrder: true);
+        NodeCatalog.BusOf(send).ShouldBe("thump");
+        NodeCatalog.BusOf(first).ShouldBe("thump");
+        NodeCatalog.BusOf(second).ShouldBe("thump");
+        NodeCatalog.BusOf(other).ShouldBe("snare");
+    }
+
+    /// <summary>The Receives were playing the other Send, which is the first by id, so they stay with it.</summary>
+    [Fact]
+    public void A_Send_nobody_heard_is_renamed_alone()
+    {
+        var a = Fresh(NodeCatalog.SendTypeId, "kick");
+        var b = Fresh(NodeCatalog.SendTypeId, "kick");
+        var receive = Fresh(NodeCatalog.ReceiveTypeId, "kick");
+
+        var unheard = a.Id.CompareTo(b.Id) < 0 ? b : a;
+
+        BusEdits.Rename(Of(a, b, receive), unheard, "thump").ShouldBeEmpty();
+
+        NodeCatalog.BusOf(unheard).ShouldBe("thump");
+        NodeCatalog.BusOf(receive).ShouldBe("kick");
+    }
+
+    [Fact]
+    public void Renaming_a_Receive_moves_nothing_else()
+    {
+        var send = Fresh(NodeCatalog.SendTypeId, "kick");
+        var receive = Fresh(NodeCatalog.ReceiveTypeId, "kick");
+
+        BusEdits.Rename(Of(send, receive), receive, "snare").ShouldBeEmpty();
+
+        NodeCatalog.BusOf(send).ShouldBe("kick");
+        NodeCatalog.BusOf(receive).ShouldBe("snare");
+    }
+
+    [Fact]
+    public void A_pasted_pair_counts_on_past_the_buses_that_are_taken()
+    {
+        var send = Fresh(NodeCatalog.SendTypeId, "kick 2");
+        var receive = Fresh(NodeCatalog.ReceiveTypeId, "kick 2");
+        var stray = Fresh(NodeCatalog.ReceiveTypeId, "kick 3");
+        var patch = Of(send, receive, stray);
+
+        var pasted = PatchClipboard.Paste(patch, PatchClipboard.Copy(patch, [send.Id, receive.Id]));
+
+        pasted.Select(NodeCatalog.BusOf).ShouldAllBe(bus => bus == "kick 4");
+        NodeCatalog.BusOf(send).ShouldBe("kick 2");
+        Warnings(patch).ShouldNotContain(w => w.Contains("Another Send", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void A_Send_pasted_onto_a_bus_nobody_sends_on_keeps_its_name()
+    {
+        var source = Of(Fresh(NodeCatalog.SendTypeId, "kick"));
+        var into = Of(Fresh(NodeCatalog.ReceiveTypeId, "kick"));
+
+        var pasted = PatchClipboard.Paste(into, PatchClipboard.Copy(source, [source.Nodes[0].Id]));
+
+        NodeCatalog.BusOf(pasted.Single()).ShouldBe("kick");
+    }
 }

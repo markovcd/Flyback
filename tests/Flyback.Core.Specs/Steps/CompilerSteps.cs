@@ -42,6 +42,10 @@ public sealed class CompilerSteps(PatchContext context)
         context.Sound.HasErrors.ShouldBeFalse(Said(context.Sound));
     }
 
+    [Then("every Send is heard")]
+    public void ThenEverySendIsHeard() =>
+        context.Sound.Issues.ShouldNotContain(i => i.Message.Contains("Another Send", StringComparison.Ordinal), Said(context.Sound));
+
     [Then("drawing the picture does not compute the tone")]
     public void ThenThePictureSkipsTheTone()
     {

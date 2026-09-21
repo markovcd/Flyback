@@ -1378,7 +1378,19 @@ public sealed partial class MainWindow
         ExtraField.Text text => Rows.TextRow(
             text,
             text.Value(node.StateOf(extra.Key)?[field.Key]),
-            next => Store(node, extra, field, JsonValue.Create(next)),
+            next =>
+            {
+                if (node.TypeId != NodeCatalog.SendTypeId)
+                {
+                    Store(node, extra, field, JsonValue.Create(next));
+                    return;
+                }
+
+                // A Send's only text is its bus, and its Receives go where it goes.
+                foreach (var receive in BusEdits.Rename(editor.Patch, node, next)) Restated(receive.Id, field.Key);
+
+                Restated(node.Id, field.Key);
+            },
 
             // An Expression's formula is the one field whose text is a language,
             // so it is the one that can be marked as unread.

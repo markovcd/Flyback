@@ -81,6 +81,10 @@ public static class PatchClipboard
     /// is a thing to refuse with a sentence, and the caller is where there is
     /// somewhere to say it — see <see cref="PatchLoad.IsComplete"/>.
     /// <para>
+    /// A Send that arrives on a bus the patch already sends on is given one of its
+    /// own, with the Receives that came with it — see <see cref="BusEdits.Separate"/>.
+    /// </para>
+    /// <para>
     /// A group is drawn again round the modules that arrived, with a fresh id and
     /// its sockets pointed at their new ones — the unwired ones included, so a box
     /// arrives with the edge somebody arranged. Made after the wires, so
@@ -150,6 +154,8 @@ public static class PatchClipboard
                 ],
             });
         }
+
+        BusEdits.Separate(into, added);
 
         return added;
     }
