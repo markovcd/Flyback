@@ -326,26 +326,54 @@ public static class PatchLayout
     /// the drawing made of them goes back.
     /// </summary>
     /// <remarks>
-    /// Measured off the modules rather than off the boxes round them: a padded box
-    /// shifts the middle by a few pixels, and a few pixels is not what anybody is
-    /// looking at when a corner of the patch tidies itself in place.
+    /// Measured off what <see cref="Settle"/> lands — a box as its padded ring, a
+    /// shut one as the one block at its corner — so a drawing already laid out
+    /// goes back exactly where it is.
     /// </remarks>
     private static (double X, double Y) Middle(Patch patch, Dictionary<Guid, NodeDef> defs, Metrics size)
     {
         double left = double.MaxValue, top = double.MaxValue;
         double right = double.MinValue, bottom = double.MinValue;
 
-        foreach (var node in patch.Nodes)
-        {
-            if (!defs.TryGetValue(node.Id, out var def)) continue;
+        var boxed = new HashSet<Guid>();
 
-            left = Math.Min(left, node.X);
-            top = Math.Min(top, node.Y);
-            right = Math.Max(right, node.X + size.Width);
-            bottom = Math.Max(bottom, node.Y + size.Height(def));
+        foreach (var group in patch.Groups ?? [])
+        {
+            var members = patch.Nodes.Where(n => group.Members.Contains(n.Id) && defs.ContainsKey(n.Id)).ToList();
+
+            if (members.Count == 0) continue;
+
+            boxed.UnionWith(members.Select(n => n.Id));
+
+            var x = members.Min(n => n.X);
+            var y = members.Min(n => n.Y);
+
+            if (group.Collapsed)
+            {
+                Take(x, y, x + size.Width, y + size.GroupHeight(patch.SocketsOf(group)));
+                continue;
+            }
+
+            Take(
+                x - size.GroupPadding,
+                y - size.GroupPadding - size.GroupHandleHeight,
+                members.Max(n => n.X + size.Width) + size.GroupPadding,
+                members.Max(n => n.Y + size.Height(defs[n.Id])) + size.GroupPadding);
         }
 
+        foreach (var node in patch.Nodes)
+            if (!boxed.Contains(node.Id) && defs.TryGetValue(node.Id, out var def))
+                Take(node.X, node.Y, node.X + size.Width, node.Y + size.Height(def));
+
         return left > right ? default : ((left + right) / 2, (top + bottom) / 2);
+
+        void Take(double l, double t, double r, double b)
+        {
+            left = Math.Min(left, l);
+            top = Math.Min(top, t);
+            right = Math.Max(right, r);
+            bottom = Math.Max(bottom, b);
+        }
     }
 
     /// <summary>

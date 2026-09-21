@@ -719,6 +719,29 @@ public class PatchLayoutTests
     }
 
     /// <summary>
+    /// A box goes back where it stands, open or shut: the middle is measured off
+    /// the box as drawn, so a second press moves nothing.
+    /// </summary>
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void Laying_out_a_box_twice_is_laying_it_out_once(bool shut)
+    {
+        var patch = Apart(out var near, out _);
+
+        patch.Group(near.Select(n => n.Id)).ShouldNotBeNull().Collapsed = shut;
+
+        PatchLayout.Arrange(patch, NodeCatalog.BuiltIn, null, Named(near));
+
+        var once = patch.Nodes.ToDictionary(n => n.Id, n => (n.X, n.Y));
+
+        PatchLayout.Arrange(patch, NodeCatalog.BuiltIn, null, Named(near));
+
+        foreach (var node in patch.Nodes)
+            (node.X, node.Y).ShouldBe(once[node.Id]);
+    }
+
+    /// <summary>
     /// A part laid out against the edge of the canvas is slid back inside it. The
     /// coordinates clamp as they are written, so a drawing left hanging over the
     /// boundary would stack against it instead.
