@@ -24,7 +24,7 @@ internal sealed partial class ViewerWindow : Window
     /// <summary>The largest a window opens at when it was not told a size.</summary>
     private static readonly PixelSize LargestStart = new(1280, 720);
 
-    private readonly PreviewHost preview = new();
+    private readonly PreviewHost? preview;
     private readonly Border previewBox;
     private readonly ViewerPlayer player;
 
@@ -48,6 +48,9 @@ internal sealed partial class ViewerWindow : Window
 
         // Focus stays where it was: the window is shown without being activated.
         ShowActivated = !options.Background;
+
+        // No surface at all without a picture: a PreviewHost in the tree renders on a timer.
+        if (options.Video) preview = new PreviewHost();
 
         player = new ViewerPlayer(opened, device, options, preview);
 
@@ -95,7 +98,8 @@ internal sealed partial class ViewerWindow : Window
     /// <summary>The player behind the window, for whoever drives it.</summary>
     internal ViewerPlayer Player => player;
 
-    internal PreviewHost Preview => preview;
+    /// <summary>The picture's surface, or null for a run with no picture.</summary>
+    internal PreviewHost? Preview => preview;
 
     /// <summary>The transport over the picture, or null for a run that asked for none.</summary>
     internal TransportOverlay? Overlay { get; private set; }

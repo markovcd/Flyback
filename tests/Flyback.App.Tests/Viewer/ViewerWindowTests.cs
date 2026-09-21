@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
+using Avalonia.VisualTree;
 using Flyback.App.Controls;
 using Flyback.App.Tests.Ui;
 using Flyback.Core;
@@ -114,17 +115,18 @@ public class ViewerWindowTests : UiTest
     {
         var window = Open(Plasma(), Options());
 
-        ReferenceEquals(window.Preview.Program, CompiledPatch.Black).ShouldBeFalse();
-        window.Preview.Resolution.ShouldBe(new PixelSize(320, 180));
+        ReferenceEquals(window.Preview!.Program, CompiledPatch.Black).ShouldBeFalse();
+        window.Preview!.Resolution.ShouldBe(new PixelSize(320, 180));
         window.Player.Paused.ShouldBeFalse();
     }
 
     [AvaloniaFact]
-    public void No_video_leaves_the_preview_with_no_program()
+    public void No_video_builds_no_preview()
     {
         var window = Open(Plasma(), Options() with { NoVideo = true });
 
-        ReferenceEquals(window.Preview.Program, CompiledPatch.Black).ShouldBeTrue();
+        window.Preview.ShouldBeNull();
+        window.GetVisualDescendants().OfType<PreviewHost>().ShouldBeEmpty();
     }
 
     [AvaloniaFact]
@@ -142,7 +144,7 @@ public class ViewerWindowTests : UiTest
     {
         var window = Open(Plasma(), Options() with { From = 30 });
 
-        window.Preview.Time.ShouldBeGreaterThanOrEqualTo(30);
+        window.Preview!.Time.ShouldBeGreaterThanOrEqualTo(30);
     }
 
     [AvaloniaFact]
@@ -151,13 +153,13 @@ public class ViewerWindowTests : UiTest
         var window = Open(Plasma(), Options() with { Paused = true, From = 3 });
 
         window.Player.Paused.ShouldBeTrue();
-        window.Preview.Clock.ShouldNotBeNull();
-        window.Preview.Clock!().ShouldBe(3);
+        window.Preview!.Clock.ShouldNotBeNull();
+        window.Preview!.Clock!().ShouldBe(3);
 
         Settle(window);
 
-        window.Preview.Time.ShouldBe(3);
-        window.Preview.Clock!().ShouldBe(3);
+        window.Preview!.Time.ShouldBe(3);
+        window.Preview!.Clock!().ShouldBe(3);
     }
 
     [AvaloniaFact]
@@ -168,8 +170,8 @@ public class ViewerWindowTests : UiTest
         window.Player.Rewind();
         Settle(window);
 
-        window.Preview.Time.ShouldBe(0);
-        window.Preview.Clock!().ShouldBe(0);
+        window.Preview!.Time.ShouldBe(0);
+        window.Preview!.Clock!().ShouldBe(0);
         window.Player.Paused.ShouldBeTrue();
     }
 
@@ -277,7 +279,7 @@ public class ViewerWindowTests : UiTest
 
         var window = Open(Files(patch), Options());
 
-        var picture = window.Preview.Live;
+        var picture = window.Preview!.Live;
         var sound = window.Player.Audio.Live;
 
         picture.At(picture.Keys.ToList().IndexOf(knob.Key)).ShouldBe(0.3, 1e-6);
@@ -291,10 +293,10 @@ public class ViewerWindowTests : UiTest
         var window = Open(Files(Tone()), Options(), device);
 
         device.IsRunning.ShouldBeTrue();
-        window.Preview.Clock.ShouldNotBeNull();
+        window.Preview!.Clock.ShouldNotBeNull();
 
         Loudest(device.Pump()).ShouldBeGreaterThan(0.1f);
-        window.Preview.Clock!().ShouldBeGreaterThan(0);
+        window.Preview!.Clock!().ShouldBeGreaterThan(0);
     }
 
     [AvaloniaFact]
@@ -317,7 +319,7 @@ public class ViewerWindowTests : UiTest
         var window = Open(Files(Tone()), Options() with { NoAudio = true }, device);
 
         device.IsRunning.ShouldBeFalse();
-        window.Preview.Clock.ShouldBeNull();
+        window.Preview!.Clock.ShouldBeNull();
     }
 
     [AvaloniaFact]
@@ -379,8 +381,8 @@ public class ViewerWindowTests : UiTest
     {
         var window = Open(Plasma(), Options());
 
-        var centre = window.Preview.TranslatePoint(
-            new Point(window.Preview.Bounds.Width / 2, window.Preview.Bounds.Height / 2), window)!.Value;
+        var centre = window.Preview!.TranslatePoint(
+            new Point(window.Preview!.Bounds.Width / 2, window.Preview!.Bounds.Height / 2), window)!.Value;
 
         window.MouseDown(centre, MouseButton.Left);
         window.MouseUp(centre, MouseButton.Left);
@@ -455,6 +457,6 @@ public class ViewerWindowTests : UiTest
 
         window.Width.ShouldBe(700);
         window.Height.ShouldBe(400);
-        window.Preview.Resolution.ShouldBe(new PixelSize(320, 180));
+        window.Preview!.Resolution.ShouldBe(new PixelSize(320, 180));
     }
 }
