@@ -763,6 +763,7 @@ const Flyback.Core.Graph.ModuleCategories.Oscillators = "Oscillators" -> string!
 const Flyback.Core.Graph.ModuleCategories.Output = "Output" -> string!
 const Flyback.Core.Graph.ModuleCategories.Patterns = "Patterns" -> string!
 const Flyback.Core.Graph.ModuleCategories.Pitch = "Pitch" -> string!
+const Flyback.Core.Graph.ModuleCategories.Routing = "Routing" -> string!
 const Flyback.Core.Graph.ModuleCategories.Shaping = "Shaping" -> string!
 const Flyback.Core.Graph.ModuleCategories.Sources = "Sources" -> string!
 const Flyback.Core.Graph.ModuleCategories.TimeEffects = "Time effects" -> string!
@@ -774,8 +775,13 @@ const Flyback.Core.Graph.NodeCatalog.CoordAspectPort = 4 -> int
 const Flyback.Core.Graph.NodeCatalog.CoordTypeId = "coord" -> string!
 const Flyback.Core.Graph.NodeCatalog.CoordXPort = 0 -> int
 const Flyback.Core.Graph.NodeCatalog.CoordYPort = 1 -> int
+const Flyback.Core.Graph.NodeCatalog.DelayTypeId = "audio.delay" -> string!
+const Flyback.Core.Graph.NodeCatalog.DeskTypeId = "math.desk" -> string!
+const Flyback.Core.Graph.NodeCatalog.DriveTypeId = "audio.drive" -> string!
 const Flyback.Core.Graph.NodeCatalog.DuckTypeId = "audio.duck" -> string!
 const Flyback.Core.Graph.NodeCatalog.ExpressionTypeId = "math.expression" -> string!
+const Flyback.Core.Graph.NodeCatalog.FeedbackTypeId = "feedback" -> string!
+const Flyback.Core.Graph.NodeCatalog.FilterTypeId = "audio.filter" -> string!
 const Flyback.Core.Graph.NodeCatalog.HoldTypeId = "seq.hold" -> string!
 const Flyback.Core.Graph.NodeCatalog.InkModeKey = "mode" -> string!
 const Flyback.Core.Graph.NodeCatalog.InkOver = "over" -> string!
@@ -783,6 +789,8 @@ const Flyback.Core.Graph.NodeCatalog.InkStateKey = "ink" -> string!
 const Flyback.Core.Graph.NodeCatalog.MaxSteps = 32 -> int
 const Flyback.Core.Graph.NodeCatalog.MeterTypeId = "meter" -> string!
 const Flyback.Core.Graph.NodeCatalog.MidiTypeId = "midi.in" -> string!
+const Flyback.Core.Graph.NodeCatalog.MixerTypeId = "math.mixer" -> string!
+const Flyback.Core.Graph.NodeCatalog.NoiseTypeId = "pattern.noise" -> string!
 const Flyback.Core.Graph.NodeCatalog.OutputColorPort = 0 -> int
 const Flyback.Core.Graph.NodeCatalog.OutputLeftPort = 1 -> int
 const Flyback.Core.Graph.NodeCatalog.OutputRightPort = 2 -> int
@@ -790,18 +798,27 @@ const Flyback.Core.Graph.NodeCatalog.OutputTypeId = "output" -> string!
 const Flyback.Core.Graph.NodeCatalog.OutputVolumePort = 3 -> int
 const Flyback.Core.Graph.NodeCatalog.PictureTypeId = "picture" -> string!
 const Flyback.Core.Graph.NodeCatalog.ProbeTypeId = "probe" -> string!
+const Flyback.Core.Graph.NodeCatalog.PulseTypeId = "osc.pulse" -> string!
 const Flyback.Core.Graph.NodeCatalog.QuantiserTypeId = "audio.quantiser" -> string!
+const Flyback.Core.Graph.NodeCatalog.RandomTypeId = "audio.random" -> string!
 const Flyback.Core.Graph.NodeCatalog.ReceiveTypeId = "bus.receive" -> string!
+const Flyback.Core.Graph.NodeCatalog.ReverbTypeId = "audio.reverb" -> string!
 const Flyback.Core.Graph.NodeCatalog.SampleTypeId = "audio.sample" -> string!
+const Flyback.Core.Graph.NodeCatalog.SawTypeId = "osc.saw" -> string!
 const Flyback.Core.Graph.NodeCatalog.ScanTypeId = "scan" -> string!
 const Flyback.Core.Graph.NodeCatalog.ScopeTypeId = "scope" -> string!
 const Flyback.Core.Graph.NodeCatalog.SendTypeId = "bus.send" -> string!
+const Flyback.Core.Graph.NodeCatalog.SineTypeId = "osc.sine" -> string!
+const Flyback.Core.Graph.NodeCatalog.SlewTypeId = "audio.slew" -> string!
+const Flyback.Core.Graph.NodeCatalog.SquareTypeId = "osc.square" -> string!
 const Flyback.Core.Graph.NodeCatalog.StringTypeId = "osc.string" -> string!
 const Flyback.Core.Graph.NodeCatalog.TempoTypeId = "seq.tempo" -> string!
 const Flyback.Core.Graph.NodeCatalog.TimeTypeId = "time" -> string!
 const Flyback.Core.Graph.NodeCatalog.TransformOrderKey = "order" -> string!
 const Flyback.Core.Graph.NodeCatalog.TransformStateKey = "transform" -> string!
+const Flyback.Core.Graph.NodeCatalog.TriangleTypeId = "osc.triangle" -> string!
 const Flyback.Core.Graph.NodeCatalog.TurnThenZoom = "turn" -> string!
+const Flyback.Core.Graph.NodeCatalog.ValueTypeId = "value" -> string!
 const Flyback.Core.Graph.NodeCatalog.VideoChannels = 3 -> int
 const Flyback.Core.Graph.NodeGroup.Fewest = 2 -> int
 const Flyback.Core.Graph.NodeGroup.NameLimit = 26 -> int
@@ -1019,6 +1036,7 @@ static Flyback.Core.Graph.ControlMap.Link(Flyback.Core.Graph.NodeInstance! node,
 static Flyback.Core.Graph.ControlMap.Of(Flyback.Core.Graph.NodeInstance! node, int port) -> Flyback.Core.Graph.ControlLink?
 static Flyback.Core.Graph.ControlMap.Unlink(Flyback.Core.Graph.NodeInstance! node, int port) -> bool
 static Flyback.Core.Graph.Cycles.Backwards(Flyback.Core.Graph.Patch! patch) -> System.Collections.Generic.IReadOnlySet<Flyback.Core.Graph.Connection!>!
+static Flyback.Core.Graph.Cycles.BackwardsThroughBuses(Flyback.Core.Graph.Patch! patch) -> System.Collections.Generic.IReadOnlySet<Flyback.Core.Graph.Connection!>!
 static Flyback.Core.Graph.Cycles.Owner(Flyback.Core.Graph.Connection! wire) -> System.Guid
 static Flyback.Core.Graph.EmitContext.operator !=(Flyback.Core.Graph.EmitContext left, Flyback.Core.Graph.EmitContext right) -> bool
 static Flyback.Core.Graph.EmitContext.operator ==(Flyback.Core.Graph.EmitContext left, Flyback.Core.Graph.EmitContext right) -> bool
@@ -1075,14 +1093,18 @@ static Flyback.Core.Graph.NodeCatalog.BusOf(Flyback.Core.Graph.NodeInstance! nod
 static Flyback.Core.Graph.NodeCatalog.Categories.get -> System.Collections.Generic.IEnumerable<string!>!
 static Flyback.Core.Graph.NodeCatalog.Clock.get -> Flyback.Core.Graph.PortNormal
 static Flyback.Core.Graph.NodeCatalog.Current.get -> Flyback.Core.Graph.ModuleCatalog!
+static Flyback.Core.Graph.NodeCatalog.DelayEchoed(Flyback.Core.Compile.Emitter! em, Flyback.Core.Compile.Slot dry, Flyback.Core.Compile.Slot time, Flyback.Core.Compile.Slot feedback, Flyback.Core.Compile.Slot mix) -> Flyback.Core.Compile.Slot
 static Flyback.Core.Graph.NodeCatalog.Down.get -> Flyback.Core.Graph.PortNormal
+static Flyback.Core.Graph.NodeCatalog.FilterResponses(Flyback.Core.Compile.Emitter! em, Flyback.Core.Compile.Slot dry, Flyback.Core.Compile.Slot cutoff, Flyback.Core.Compile.Slot resonance) -> Flyback.Core.Compile.Slot[]!
 static Flyback.Core.Graph.NodeCatalog.FormulaOf(Flyback.Core.Graph.NodeInstance! node) -> string?
 static Flyback.Core.Graph.NodeCatalog.FormulaProblem(string! formula) -> string?
 static Flyback.Core.Graph.NodeCatalog.Get(string! typeId) -> Flyback.Core.Graph.NodeDef?
 static Flyback.Core.Graph.NodeCatalog.Install(Flyback.Core.Graph.ModuleCatalog! catalog) -> void
 static Flyback.Core.Graph.NodeCatalog.IsChart(string! typeId) -> bool
 static Flyback.Core.Graph.NodeCatalog.IsSink(string! typeId) -> bool
+static Flyback.Core.Graph.NodeCatalog.LegacyTypeIds.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
 static Flyback.Core.Graph.NodeCatalog.Normalled(Flyback.Core.Graph.PortSpec spec) -> string?
+static Flyback.Core.Graph.NodeCatalog.RandomNoise(Flyback.Core.Compile.Emitter! em, Flyback.Core.Compile.Slot domain, Flyback.Core.Compile.Slot seed) -> (Flyback.Core.Compile.Slot White, Flyback.Core.Compile.Slot Pink)
 static Flyback.Core.Graph.NodeCatalog.Require(string! typeId) -> Flyback.Core.Graph.NodeDef!
 static Flyback.Core.Graph.NodeCatalog.Screen.get -> Flyback.Core.Graph.NodeCatalog.SinkKind
 static Flyback.Core.Graph.NodeCatalog.SinkKind.operator !=(Flyback.Core.Graph.NodeCatalog.SinkKind left, Flyback.Core.Graph.NodeCatalog.SinkKind right) -> bool
