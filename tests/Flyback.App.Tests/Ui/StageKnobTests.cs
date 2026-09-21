@@ -64,8 +64,19 @@ public class StageKnobTests : UiTest
 
     private static TransportOverlay Transport(Visual window) => All<TransportOverlay>(window).Single();
 
+    /// <summary>Brings the pointer to a stage's dots, which opens it.</summary>
+    private static void Reach(Window window, TuckedAway stage)
+    {
+        var dots = stage.Dots;
+
+        window.MouseMove(dots.TranslatePoint(new Point(dots.Bounds.Width / 2, dots.Bounds.Height / 2), window)!.Value);
+        Settle(window);
+    }
+
     private static void TurnUp(Window window, Control knob, double by)
     {
+        Reach(window, All<StageKnobs>(window).Single());
+
         var from = knob.TranslatePoint(new Point(knob.Bounds.Width / 2, knob.Bounds.Height / 2), window)!.Value;
 
         window.MouseDown(from, MouseButton.Left);
@@ -91,6 +102,46 @@ public class StageKnobTests : UiTest
         Stage(window).IsEffectivelyVisible.ShouldBeTrue();
         Stage(window).Knobs.Count.ShouldBe(1);
         Transport(window).HasKnobs.ShouldBeTrue("there are knobs, so a button to hide them");
+    }
+
+    [AvaloniaFact]
+    public void The_knobs_wait_behind_dots_until_the_pointer_reaches_for_them()
+    {
+        var (patch, knob) = Board();
+        var window = FullScreen(patch);
+
+        Stage(window).IsOpen.ShouldBeFalse("tucked away, as the transport is");
+
+        Reach(window, Stage(window));
+
+        Stage(window).IsOpen.ShouldBeTrue();
+        Stage(window).Knobs[knob!.Id].IsEffectivelyVisible.ShouldBeTrue();
+        Stage(window).DotsOpacity.ShouldBe(0, "the knobs stand where the dots were");
+    }
+
+    [AvaloniaFact]
+    public void A_long_row_of_knobs_keeps_clear_of_the_transport()
+    {
+        var (patch, _) = Board();
+
+        for (var i = 0; i < 40; i++) patch.AddControl($"Knob {i}", 0.5f);
+
+        var window = FullScreen(patch);
+
+        Reach(window, Stage(window));
+        Reach(window, Transport(window));
+
+        Transport(window).IsOpen.ShouldBeTrue();
+
+        var transport = Transport(window);
+        var corner = new Rect(transport.TranslatePoint(default, window)!.Value, transport.Bounds.Size);
+
+        foreach (var knob in Stage(window).Knobs.Values)
+        {
+            var at = new Rect(knob.TranslatePoint(default, window)!.Value, knob.Bounds.Size);
+
+            at.Intersects(corner).ShouldBeFalse();
+        }
     }
 
     [AvaloniaFact]

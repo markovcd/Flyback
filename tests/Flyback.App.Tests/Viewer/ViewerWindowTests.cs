@@ -482,7 +482,8 @@ public class ViewerWindowTests : UiTest
         window.MouseMove(At(150));
         var middle = window.Overlay!.DotsOpacity;
 
-        window.MouseMove(At(0));
+        // Just short of them: reaching them swaps them for the buttons.
+        window.MouseMove(At(30));
         var near = window.Overlay!.DotsOpacity;
 
         far.ShouldBeLessThan(0.1);

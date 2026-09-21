@@ -9,22 +9,17 @@ namespace Flyback.App.Controls;
 
 /// <summary>
 /// The patch's knobs over a full-window picture, for playing and nothing else: no
-/// names, no numbers, no menu. The tip is the only text, and it says both.
+/// names, no numbers, no menu, and tucked behind three dots bottom center until
+/// reached for. The tip is the only text, and it says both.
 /// </summary>
 /// <remarks>
 /// Knows nothing of where a knob's value goes. The owner lays the knobs out with <see cref="Show"/>,
 /// moves one a controller turned with <see cref="Move"/>, and hears a hand turn one
 /// through <see cref="Turning"/>.
 /// </remarks>
-public sealed class StageKnobs : Border
+public sealed class StageKnobs : TuckedAway
 {
-    private readonly WrapPanel row = new()
-    {
-        Orientation = Orientation.Horizontal,
-        HorizontalAlignment = HorizontalAlignment.Center,
-        ItemSpacing = 14,
-        LineSpacing = 14,
-    };
+    private readonly WrapPanel row;
 
     private readonly Dictionary<Guid, StageKnob> knobs = [];
 
@@ -33,16 +28,39 @@ public sealed class StageKnobs : Border
     private string shape = string.Empty;
 
     public StageKnobs()
+        : this(new WrapPanel
+        {
+            Orientation = Orientation.Horizontal,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            ItemSpacing = 14,
+            LineSpacing = 14,
+        })
     {
-        Child = row;
-        Margin = new Thickness(16);
-        HorizontalAlignment = HorizontalAlignment.Center;
-        VerticalAlignment = VerticalAlignment.Bottom;
-        Background = null;
+    }
+
+    private StageKnobs(WrapPanel row)
+        : base(row, HorizontalAlignment.Center)
+    {
+        this.row = row;
+        Margin = new Thickness(12);
 
         // The picture under it takes the window on a double-click, and a knob
         // double-clicked back to the middle is not asking for that.
         DoubleTapped += (_, e) => e.Handled = true;
+    }
+
+    /// <summary>
+    /// The transport opens on the same row, so its corner is kept clear on both sides
+    /// and a long row wraps upward instead; a picture too narrow for that gets the lot.
+    /// </summary>
+    protected override Size MeasureOverride(Size availableSize)
+    {
+        var clear = TransportOverlay.Span - Margin.Left + 8;
+        var margin = availableSize.Width >= 2 * clear + 3 * 54 ? new Thickness(clear, 0) : default;
+
+        if (row.Margin != margin) row.Margin = margin;
+
+        return base.MeasureOverride(availableSize);
     }
 
     /// <summary>A hand turned a knob: its id and where it now sits.</summary>

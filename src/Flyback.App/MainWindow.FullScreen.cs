@@ -189,7 +189,7 @@ public sealed partial class MainWindow
             Content = picture,
         };
 
-        var transport = pictureTransport = new TransportOverlay(window);
+        var transport = pictureTransport = new TransportOverlay();
 
         transport.PauseClicked += TogglePause;
         transport.MuteClicked += ToggleMute;

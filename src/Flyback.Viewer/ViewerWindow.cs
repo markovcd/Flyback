@@ -157,7 +157,7 @@ internal sealed partial class ViewerWindow : Window
 
     private TransportOverlay BuildOverlay()
     {
-        var overlay = Overlay = new TransportOverlay(this)
+        var overlay = Overlay = new TransportOverlay()
         {
             Muted = player.Muted,
             Paused = player.Paused,
