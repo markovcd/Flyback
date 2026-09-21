@@ -490,7 +490,7 @@ public sealed partial class MainWindow
                 // here the row already says it, and rebuilding would take the box
                 // out from under the number being typed into it — after its
                 // first digit, a box taking its value a keystroke at a time.
-                inspectorShape = InspectorShape();
+                inspectorShape = InspectorShape.Of(editor);
 
                 editor.NotifyPatchChanged($"{node.Id} range {index}");
             };
