@@ -69,12 +69,12 @@ internal static class EuclidKitPreset
         // --- hats and snare: noise through a filter ----------------------------------
 
         var hatLevel = b.Add(DecayModule.TypeId, (1, -4f), (2, -1.5f), (3, 1f));
-        var hiss = b.Add(RandomModule.TypeId, (2, 3f));
-        var hats = b.Add(FilterModule.TypeId, (1, 8_000f), (2, 0.1f));
+        var hiss = b.Add(NodeCatalog.RandomTypeId, (2, 3f));
+        var hats = b.Add(NodeCatalog.FilterTypeId, (1, 8_000f), (2, 0.1f));
 
         var snareLevel = b.Add(DecayModule.TypeId, (1, -3.5f), (2, -0.95f), (3, 0.6f));
-        var rattle = b.Add(RandomModule.TypeId, (2, 7f));
-        var snare = b.Add(FilterModule.TypeId, (1, 1_900f), (2, 0.35f));
+        var rattle = b.Add(NodeCatalog.RandomTypeId, (2, 7f));
+        var snare = b.Add(NodeCatalog.FilterTypeId, (1, 1_900f), (2, 0.35f));
 
         b.Wire(hatBeat, 0, hatLevel, 0)
          .Wire(hatLevel, 0, hiss, 3)
@@ -88,16 +88,16 @@ internal static class EuclidKitPreset
         // --- bass: random notes on the step, snapped to the scale, glided ------------
 
         // Same domain and rate as the Euclids, so a new note lands exactly on a step.
-        var notes = b.Add(RandomModule.TypeId, (2, 11f), (3, 6f), (4, 45f));
+        var notes = b.Add(NodeCatalog.RandomTypeId, (2, 11f), (3, 6f), (4, 45f));
         var scale = b.Add(NodeCatalog.QuantiserTypeId);
         ScaleExtra.Set(scale, Scale);
 
         var pitch = b.Add("audio.note");
-        var glide = b.Add(SlewModule.TypeId, (1, -1.5f), (2, -1.5f));
+        var glide = b.Add(NodeCatalog.SlewTypeId, (1, -1.5f), (2, -1.5f));
         var bassOsc = b.Add("osc.saw", (3, 0.8f));
 
-        var drift = b.Add(RandomModule.TypeId, (1, 0.15f), (2, 5f), (3, 700f), (4, 1_100f));
-        var tone = b.Add(FilterModule.TypeId, (2, 0.5f));
+        var drift = b.Add(NodeCatalog.RandomTypeId, (1, 0.15f), (2, 5f), (3, 700f), (4, 1_100f));
+        var tone = b.Add(NodeCatalog.FilterTypeId, (2, 0.5f));
         var bassLevel = b.Add(DecayModule.TypeId, (1, -3f), (2, -0.8f), (3, 0.4f));
         var bass = b.Add("math.mul");
 

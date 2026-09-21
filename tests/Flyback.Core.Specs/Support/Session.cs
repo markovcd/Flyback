@@ -12,6 +12,9 @@ public sealed class Session
     /// <summary>The picture before the patch went through a file or a text, to compare against after.</summary>
     public Frame? Before { get; set; }
 
+    /// <summary>The sound before the patch went through a file, to compare against after.</summary>
+    public IReadOnlyList<double>? BeforeSound { get; set; }
+
     public string? File { get; set; }
 
     public PatchLoad? Opened { get; set; }

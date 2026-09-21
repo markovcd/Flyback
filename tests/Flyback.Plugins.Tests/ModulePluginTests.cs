@@ -84,10 +84,9 @@ public class ModulePluginTests
     /// loaded, so the list does not accumulate words for modules that were removed.
     /// </summary>
     /// <remarks>
-    /// Asked here because three of the sections are held entirely by plugins — Forms
-    /// by Picture, Shaping by Voice, Time effects by Effects — which is the
-    /// arrangement rather than an accident: the names are declared centrally so a
-    /// plugin files into a section the engine already knows.
+    /// Asked here because Forms is held entirely by Picture, which is the arrangement
+    /// rather than an accident: the names are declared centrally so a plugin files
+    /// into a section the engine already knows.
     /// </remarks>
     [Fact]
     public void Every_section_the_engine_names_is_filled_by_something_shipped()

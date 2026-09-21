@@ -40,7 +40,7 @@ public class PlayedPresetTests
         types.Count(t => t == NodeCatalog.MidiTypeId).ShouldBe(Voices);
         types.Count(t => t == NodeCatalog.StringTypeId).ShouldBe(Voices);
         types.Count(t => t == "audio.note").ShouldBe(Voices);
-        types.Count(t => t == "flyback.effects.reverb").ShouldBe(1);
+        types.Count(t => t == NodeCatalog.ReverbTypeId).ShouldBe(1);
         types.Count(t => t == "math.mixer").ShouldBe(1);
 
         patch.Nodes

@@ -33,11 +33,11 @@ internal sealed class AcidPreset : PresetBench
     private const string Picture = "flyback.picture";
 
     /// <summary>The modules this borrows, named by id rather than by type.</summary>
-    private const string FilterType = "flyback.voice.filter";
+    private const string FilterType = NodeCatalog.FilterTypeId;
 
-    private const string DriveType = "flyback.voice.drive";
+    private const string DriveType = NodeCatalog.DriveTypeId;
 
-    private const string SlewType = "flyback.voice.slew";
+    private const string SlewType = NodeCatalog.SlewTypeId;
 
     private const string DecayType = "flyback.voice.decay";
 
@@ -537,7 +537,7 @@ internal sealed class AcidPreset : PresetBench
 
         // One room on a send, for what should sound further off than the drums.
         var roomSend = b.Add("math.mixer", (1, 0.5f), (3, 0.6f), (5, 0.4f), (7, 0.15f));
-        var room = b.Add(ReverbModule.TypeId, (1, 0.8f), (2, 0.75f), (3, 1f));
+        var room = b.Add(NodeCatalog.ReverbTypeId, (1, 0.8f), (2, 0.75f), (3, 1f));
 
         // The slow weather, which keeps the patch changing once the patterns have been
         // heard: the Drive after the filter from a purr to a snarl, and the resonance

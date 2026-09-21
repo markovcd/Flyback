@@ -69,8 +69,8 @@ public class HissTests
     {
         var b = new PatchBuilder(Catalog);
         var level = b.Add("coord");
-        var random = b.Add("flyback.voice.random", (2, 3f));
-        var filter = b.Add("flyback.voice.filter", (1, 1900f), (2, 0.3f));
+        var random = b.Add(NodeCatalog.RandomTypeId, (2, 3f));
+        var filter = b.Add(NodeCatalog.FilterTypeId, (1, 1900f), (2, 0.3f));
         var played = b.Add("math.mul");
         var leveled = b.Add("math.mul", (1, 2.5f));
         var sink = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 1f));

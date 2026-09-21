@@ -9,7 +9,7 @@ namespace Flyback.Plugins.Effects;
 /// </summary>
 /// <remarks>
 /// The arithmetic of what it replaces: the tempo times the steps in a beat, a Divide
-/// for each side with the count of steps on top, and a <see cref="DelayModule"/>
+/// for each side with the count of steps on top, and one of the engine's own Delays
 /// for each. How the two are fed is a setting because it changes what is wired to
 /// what. In a row the right tap hears the left one, so the repeats cross from side
 /// to side, and only the left feeds back — the right repeats what reaches it
@@ -80,11 +80,11 @@ internal static class EchoModule
         var leftTime = em.Binary(OpCode.Div, node[2], steps);
         var rightTime = em.Binary(OpCode.Div, node[3], steps);
 
-        var left = DelayModule.Echoed(em, node[0], leftTime, node[4], node[5]);
+        var left = NodeCatalog.DelayEchoed(em, node[0], leftTime, node[4], node[5]);
 
         var right = apart
-            ? DelayModule.Echoed(em, node[0], rightTime, node[4], node[5])
-            : DelayModule.Echoed(em, left, rightTime, em.Constant(0f), node[5]);
+            ? NodeCatalog.DelayEchoed(em, node[0], rightTime, node[4], node[5])
+            : NodeCatalog.DelayEchoed(em, left, rightTime, em.Constant(0f), node[5]);
 
         return [left, right];
     }

@@ -85,3 +85,11 @@ ring a kick pushes and the kick are one number on both sinks
 before the power, or the tail before the Maximum, gets those as second outputs;
 one that wants something else in the middle builds the long form, which is
 still there.
+
+## Amendment, 2026-09-21: the same sentence, six more primitives
+
+"The engine's own presets may not need a plugin" was written here for Desk and
+Trails and left `Presets.WholeBand.cs` still hand-building a filter and white
+noise, because Voice's were out of reach. Filter, Random, Slew, Drive, Delay and
+Reverb are the engine's own now for the same reason
+([0128](0128-filter-random-slew-drive-delay-and-reverb-are-the-engines-own.md)).

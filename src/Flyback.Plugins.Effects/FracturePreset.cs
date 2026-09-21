@@ -43,13 +43,13 @@ internal sealed class FracturePreset : PresetBench
 
     private const string EuclidType = "flyback.voice.euclid";
 
-    private const string RandomType = "flyback.voice.random";
+    private const string RandomType = NodeCatalog.RandomTypeId;
 
-    private const string SlewType = "flyback.voice.slew";
+    private const string SlewType = NodeCatalog.SlewTypeId;
 
-    private const string FilterType = "flyback.voice.filter";
+    private const string FilterType = NodeCatalog.FilterTypeId;
 
-    private const string DriveType = "flyback.voice.drive";
+    private const string DriveType = NodeCatalog.DriveTypeId;
 
     private const string BoxType = "flyback.picture.box";
 
@@ -416,7 +416,7 @@ internal sealed class FracturePreset : PresetBench
         // eighth and the beat after it — and one hall for what should sound far away.
         var taps = Echo(Sum(bells, Times(lead, 0.6f)), beat, 3f, 2f, 0.5f, 1f);
         var roomSend = b.Add("math.mixer", (1, 0.6f), (3, 0.5f), (5, 0.25f), (7, 0.7f));
-        var room = b.Add(ReverbModule.TypeId, (1, 0.85f), (2, 0.8f), (3, 1f));
+        var room = b.Add(NodeCatalog.ReverbTypeId, (1, 0.85f), (2, 0.8f), (3, 1f));
 
         b.Wire(Span(ramp, 0f, 1f, 250f, 7000f), 0, riser, HissCutoff)
          .Wire(bells, 0, roomSend, 0)

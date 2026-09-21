@@ -5,7 +5,7 @@ namespace Flyback.Plugins.Voice;
 
 /// <summary>
 /// A wavefolder: the thing that puts harmonics in, and the opposite half of what
-/// <see cref="FilterModule"/> does — a filter can only subtract from what an
+/// the engine's own Filter does — a filter can only subtract from what an
 /// oscillator produces, where this manufactures new partials out of a sine.
 /// </summary>
 /// <remarks>

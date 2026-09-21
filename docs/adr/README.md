@@ -58,7 +58,7 @@ context, decision, consequences.
 | [0086](0086-panel-knobs-are-read-as-live-values.md) | Panel knobs are read as live values, and a MIDI controller turns a knob rather than a socket *(user-directed)* |
 | [0057](0057-a-shape-is-a-distance-and-one-module-inks-it.md) | A shape is a distance, and one module inks it *(user-directed)* |
 | [0105](0105-text-is-a-shape-baked-into-a-picture.md) | Text is a shape, baked into a picture *(user-directed)* |
-| [0095](0095-a-module-may-be-a-handful-of-others-if-it-is-exactly-them.md) | A module may be a handful of others, if it is exactly them *(user-directed; the Bell it left out counted again and added by [0097](0097-a-wrapping-module-carries-a-setting-where-what-it-wraps-differed.md))* |
+| [0095](0095-a-module-may-be-a-handful-of-others-if-it-is-exactly-them.md) | A module may be a handful of others, if it is exactly them *(user-directed; the Bell it left out counted again and added by [0097](0097-a-wrapping-module-carries-a-setting-where-what-it-wraps-differed.md); its "the engine's own presets may not need a plugin" reused for six primitives by [0128](0128-filter-random-slew-drive-delay-and-reverb-are-the-engines-own.md))* |
 | [0097](0097-a-wrapping-module-carries-a-setting-where-what-it-wraps-differed.md) | A wrapping module carries a setting where what it wraps differed *(user-directed)* |
 | [0104](0104-a-formula-is-one-block-and-exactly-the-modules-it-names.md) | A formula is one block, and exactly the modules it names *(user-directed)* |
 | [0106](0106-a-sum-in-the-text-is-one-expression.md) | A sum in the text is one Expression *(user-directed; its printing of every Expression as a call replaced by [0107](0107-an-expression-is-printed-as-the-sum-it-is.md))* |
@@ -123,12 +123,13 @@ context, decision, consequences.
 | [0049](0049-record-the-gpu-frame-not-the-interpreter.md) | Record the GPU frame, not the interpreter *(user-directed)* |
 | [0038](0038-a-sequencers-notes-are-a-list-on-the-node.md) | A sequencer's notes are a list on the node *(user-directed)* |
 | [0037](0037-one-output-block-that-every-patch-has.md) | One Output block, which every patch has *(user-directed; its `gain` socket renamed `volume` by [0079](0079-the-gain-knob-becomes-volume-and-nought-is-off.md); its picture settings moved to the settings window by [0082](0082-the-output-settings-move-to-the-settings-window.md))* |
-| [0041](0041-a-plugin-can-hold-state-without-a-new-opcode.md) | A plugin can hold state without a new opcode *(user-directed)* |
+| [0041](0041-a-plugin-can-hold-state-without-a-new-opcode.md) | A plugin can hold state without a new opcode *(user-directed; the filter itself, and five more like it, moved into the engine by [0128](0128-filter-random-slew-drive-delay-and-reverb-are-the-engines-own.md))* |
 | [0042](0042-the-clock-and-the-memory-flag-belong-to-the-emitter.md) | The clock and the memory flag belong to the emitter |
 | [0079](0079-the-gain-knob-becomes-volume-and-nought-is-off.md) | The gain knob becomes Volume, and nought is off *(user-directed)* |
 | [0100](0100-mastering-is-a-plugin-of-stateful-primitives.md) | Mastering is a plugin of stateful primitives *(user-directed)* |
 | [0101](0101-a-one-knob-maximizer-is-a-module-of-its-own.md) | A one-knob maximizer is a module of its own *(user-directed)* |
 | [0125](0125-a-duck-is-a-sidechain-with-the-depth-on-a-knob.md) | A Duck is a sidechain with the depth on a knob *(user-directed)* |
+| [0128](0128-filter-random-slew-drive-delay-and-reverb-are-the-engines-own.md) | Filter, Random, Slew, Drive, Delay and Reverb are the engine's own *(user-directed)* |
 
 ### Boundaries
 

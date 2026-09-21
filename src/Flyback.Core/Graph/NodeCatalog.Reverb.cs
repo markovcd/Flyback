@@ -1,41 +1,16 @@
 using Flyback.Core.Compile;
-using Flyback.Core.Graph;
 
-namespace Flyback.Plugins.Effects;
+namespace Flyback.Core.Graph;
 
-/// <summary>
-/// A room. Eight feedback combs in parallel give the echo density, each losing
-/// its highs a little faster than its lows on every trip round; two chains of
-/// four allpasses smear what comes out until the repeats stop being audible as
-/// repeats. Schroeder's arrangement with Moorer's correction.
-/// </summary>
-/// <remarks>
-/// A comb with a plain gain returns every repeat as bright as the one before,
-/// which is the metallic ring that gives a cheap reverb away — no real space does
-/// it, because air and soft surfaces take the top off every reflection. A
-/// one-pole lowpass inside each loop is the whole of that, cornered at
-/// <see cref="Absorption"/>.
-/// <para>
-/// The rest is density: eight combs and four allpasses fill the gaps between
-/// early repeats that would otherwise be heard as separate events. The comb
-/// delays wander by a fraction of a percent under mutually prime sines, which
-/// stops a sustained note settling into a standing pattern.
-/// </para>
-/// <para>
-/// <c>out</c> and <c>wide</c> share one comb bank and part company at the
-/// allpasses. Two full banks would decorrelate the tail's envelope as well as its
-/// smear, and would double the seventeen delay lines this reads every sample.
-/// </para>
-/// </remarks>
-internal static class ReverbModule
+public partial class NodeCatalog
 {
-    public const string TypeId = "flyback.effects.reverb";
+    public const string ReverbTypeId = "audio.reverb";
 
     /// <summary>
     /// Comb delays in seconds, mutually prime so their repeats do not line up.
     /// Lining up is exactly what makes a reverb ring on one note.
     /// </summary>
-    private static readonly float[] Combs =
+    private static readonly float[] ReverbCombs =
         [0.0253f, 0.0269f, 0.0290f, 0.0308f, 0.0322f, 0.0338f, 0.0353f, 0.0367f];
 
     /// <summary>
@@ -43,55 +18,55 @@ internal static class ReverbModule
     /// lengths themselves and for the same reason: eight combs breathing together
     /// would be a chorus on the tail rather than the absence of a resonance.
     /// </summary>
-    private static readonly float[] Wanders =
+    private static readonly float[] ReverbWanders =
         [0.51f, 0.63f, 0.77f, 0.89f, 1.03f, 1.17f, 1.29f, 1.41f];
 
     /// <summary>Shorter than any comb, or the smearing becomes another echo.</summary>
-    private static readonly float[] Allpasses = [0.0126f, 0.0100f, 0.0077f, 0.0051f];
+    private static readonly float[] ReverbAllpasses = [0.0126f, 0.0100f, 0.0077f, 0.0051f];
 
     /// <summary>
     /// The same chain for the other channel, every length moved by half a
     /// millisecond: small enough that both chains smear the same way, different
     /// enough that they do not smear into the same pattern.
     /// </summary>
-    private static readonly float[] Widened = [0.0131f, 0.0105f, 0.0082f, 0.0056f];
+    private static readonly float[] ReverbWidened = [0.0131f, 0.0105f, 0.0082f, 0.0056f];
 
     /// <summary>What 'size' at 1 multiplies every delay by. Also what sizes the buffers.</summary>
-    private const float Widest = 2f;
+    private const float ReverbWidest = 2f;
 
     /// <summary>
-    /// A little more buffer than <see cref="Widest"/> alone would ask for, so
+    /// A little more buffer than <see cref="ReverbWidest"/> alone would ask for, so
     /// that a comb at full size still has somewhere to wander into rather than
     /// pinning against the end of its own line.
     /// </summary>
-    private const float Headroom = 1.01f;
+    private const float ReverbHeadroom = 1.01f;
 
     /// <summary>
     /// How far a comb's length wanders, as a fraction of itself. Enough to stop
     /// a resonance settling, far too little to be heard as pitch movement — past
     /// about a percent the tail starts to warble and the room turns into a tape.
     /// </summary>
-    private const float Wander = 0.0015f;
+    private const float ReverbWander = 0.0015f;
 
-    private const float AllpassGain = 0.5f;
+    private const float ReverbAllpassGain = 0.5f;
 
     /// <summary>Shortest and longest gap before the first reflection arrives.</summary>
-    private const float NearestWall = 0.005f;
+    private const float ReverbNearestWall = 0.005f;
 
-    private const float FurthestWall = 0.05f;
+    private const float ReverbFurthestWall = 0.05f;
 
     /// <summary>
     /// Where the tail loses its highs, in hertz — the corner of the lowpass inside
     /// every comb's loop. A constant and not a socket: it is a property of the
     /// surfaces a room is made of rather than a gesture anyone performs.
     /// </summary>
-    private const float Absorption = 4_000f;
+    private const float ReverbAbsorption = 4_000f;
 
     /// <summary>Where the bank stops listening, in hertz. Below hearing and above nothing.</summary>
-    private const float Rumble = 20f;
+    private const float ReverbRumble = 20f;
 
     /// <summary>
-    /// What the arithmetic in <see cref="Level"/> does not account for, measured
+    /// What the arithmetic in <see cref="ReverbLevel"/> does not account for, measured
     /// rather than derived: about four decibels.
     /// </summary>
     /// <remarks>
@@ -101,10 +76,34 @@ internal static class ReverbModule
     /// off the bottom. Each is small and none is worth modelling to recover a
     /// number that can be measured.
     /// </remarks>
-    private const float Makeup = 1.7f;
+    private const float ReverbMakeup = 1.7f;
 
-    public static NodeDef Definition { get; } = new(
-        TypeId, "Reverb", ModuleCategories.TimeEffects,
+    /// <summary>
+    /// A room. Eight feedback combs in parallel give the echo density, each losing
+    /// its highs a little faster than its lows on every trip round; two chains of
+    /// four allpasses smear what comes out until the repeats stop being audible as
+    /// repeats. Schroeder's arrangement with Moorer's correction.
+    /// </summary>
+    /// <remarks>
+    /// A comb with a plain gain returns every repeat as bright as the one before,
+    /// which is the metallic ring that gives a cheap reverb away — no real space does
+    /// it, because air and soft surfaces take the top off every reflection. A
+    /// one-pole lowpass inside each loop is the whole of that, cornered at
+    /// <see cref="ReverbAbsorption"/>.
+    /// <para>
+    /// The rest is density: eight combs and four allpasses fill the gaps between
+    /// early repeats that would otherwise be heard as separate events. The comb
+    /// delays wander by a fraction of a percent under mutually prime sines, which
+    /// stops a sustained note settling into a standing pattern.
+    /// </para>
+    /// <para>
+    /// <c>out</c> and <c>wide</c> share one comb bank and part company at the
+    /// allpasses. Two full banks would decorrelate the tail's envelope as well as its
+    /// smear, and would double the seventeen delay lines this reads every sample.
+    /// </para>
+    /// </remarks>
+    private static NodeDef Reverb() => new(
+        ReverbTypeId, "Reverb", ModuleCategories.TimeEffects,
         [
             new PortSpec("in", PortKind.Scalar, 0f, -1f, 1f),
             new PortSpec("size", PortKind.Scalar, 0.5f, 0f, 1f),
@@ -112,7 +111,7 @@ internal static class ReverbModule
             new PortSpec("mix", PortKind.Scalar, 0.3f, 0f, 1f),
         ],
         [new PortSpec("out"), new PortSpec("wide")],
-        Emit,
+        ReverbEmit,
         "A room. 'size' stretches every delay together and sets how long the first reflection "
         + "takes to arrive, so it moves from a tiled bathroom to a hall; 'decay' is how long "
         + "the tail takes to die, and it darkens as it goes the way a real one does. The "
@@ -121,7 +120,7 @@ internal static class ReverbModule
         + "are the same tail smeared two different ways: patch both for stereo, or use 'out' "
         + "alone. Audio only — on the picture it has nothing to remember, and is a wire.");
 
-    private static Slot[] Emit(Emitter em, EmitContext inputs)
+    private static Slot[] ReverbEmit(Emitter em, EmitContext inputs)
     {
         var zero = em.Constant(0f);
         var one = em.Constant(1f);
@@ -149,10 +148,10 @@ internal static class ReverbModule
             OpCode.Delay,
             dry,
             zero,
-            em.Add(em.Mul(size, FurthestWall - NearestWall), NearestWall),
-            FurthestWall);
+            em.Add(em.Mul(size, ReverbFurthestWall - ReverbNearestWall), ReverbNearestWall),
+            ReverbFurthestWall);
 
-        var scaled = em.Mul(Blocked(em, entrance, step), Level(em, feedback, one));
+        var scaled = em.Mul(ReverbBlocked(em, entrance, step), ReverbLevel(em, feedback, one));
 
         // One damping coefficient for all eight loops, because it is a function
         // of the corner and of the rate and of nothing that varies between them.
@@ -161,7 +160,7 @@ internal static class ReverbModule
         // audio path's oversampled rate and at any other — ADR-0042.
         var damping = em.Ternary(
             OpCode.Clamp,
-            em.Sub(one, em.Unary(OpCode.Exp, em.Mul(step, -MathF.Tau * Absorption))),
+            em.Sub(one, em.Unary(OpCode.Exp, em.Mul(step, -MathF.Tau * ReverbAbsorption))),
             zero,
             one);
 
@@ -169,9 +168,9 @@ internal static class ReverbModule
 
         Slot? sum = null;
 
-        for (var i = 0; i < Combs.Length; i++)
+        for (var i = 0; i < ReverbCombs.Length; i++)
         {
-            var length = Combs[i];
+            var length = ReverbCombs[i];
 
             // The loop is drawn by hand rather than left to the delay op's own
             // feedback, because what goes back round has to be damped on the way
@@ -182,14 +181,14 @@ internal static class ReverbModule
 
             var wobble = em.Unary(
                 OpCode.Sin,
-                em.Mul(em.Phase(now, em.Constant(Wanders[i]), zero), MathF.Tau));
+                em.Mul(em.Phase(now, em.Constant(ReverbWanders[i]), zero), MathF.Tau));
 
             var heard = em.DelayLine(
                 OpCode.Delay,
                 em.Add(scaled, em.UnitRead(carried)),
                 zero,
-                em.Mul(em.Mul(stretch, length), em.Add(em.Mul(wobble, Wander), 1f)),
-                length * Widest * Headroom);
+                em.Mul(em.Mul(stretch, length), em.Add(em.Mul(wobble, ReverbWander), 1f)),
+                length * ReverbWidest * ReverbHeadroom);
 
             // A one-pole lowpass, running at whatever rate the program runs at.
             // Its gain at DC is one, which leaves the level below untouched:
@@ -204,7 +203,7 @@ internal static class ReverbModule
         }
 
         var wet = sum!.Value;
-        var gain = em.Constant(AllpassGain);
+        var gain = em.Constant(ReverbAllpassGain);
 
         // What the module means where there is nothing to remember. Every delay
         // line is a wire on the video path, so the bank would hand the picture back
@@ -221,12 +220,12 @@ internal static class ReverbModule
 
             foreach (var length in lengths)
                 smeared = em.DelayLine(
-                    OpCode.Allpass, smeared, gain, em.Mul(stretch, length), length * Widest);
+                    OpCode.Allpass, smeared, gain, em.Mul(stretch, length), length * ReverbWidest);
 
             return em.Ternary(OpCode.Mix, dry, em.Ternary(OpCode.Mix, dry, smeared, live), mix);
         }
 
-        return [Room(Allpasses), Room(Widened)];
+        return [Room(ReverbAllpasses), Room(ReverbWidened)];
     }
 
     /// <summary>
@@ -242,10 +241,10 @@ internal static class ReverbModule
     /// so what comes out does not line up, and uncorrelated signals add as power,
     /// so the bank is the root of eight of one of them rather than eight.
     /// </remarks>
-    private static Slot Level(Emitter em, Slot feedback, Slot one) =>
+    private static Slot ReverbLevel(Emitter em, Slot feedback, Slot one) =>
         em.Mul(
             em.Unary(OpCode.Sqrt, em.Sub(one, em.Mul(feedback, feedback))),
-            Makeup / MathF.Sqrt(Combs.Length));
+            ReverbMakeup / MathF.Sqrt(ReverbCombs.Length));
 
     /// <summary>
     /// A one-pole highpass on the way into the bank, cornered below hearing.
@@ -258,12 +257,12 @@ internal static class ReverbModule
     /// are mostly DC. Blocking it at the door is what lets the tail be loud and the
     /// bank be safe at once.
     /// </remarks>
-    private static Slot Blocked(Emitter em, Slot signal, Slot step)
+    private static Slot ReverbBlocked(Emitter em, Slot signal, Slot step)
     {
         var previousIn = em.AllocateUnitSlot();
         var previousOut = em.AllocateUnitSlot();
 
-        var pole = em.Unary(OpCode.Exp, em.Mul(step, -MathF.Tau * Rumble));
+        var pole = em.Unary(OpCode.Exp, em.Mul(step, -MathF.Tau * ReverbRumble));
 
         var lastIn = em.UnitRead(previousIn);
         var lastOut = em.UnitRead(previousOut);

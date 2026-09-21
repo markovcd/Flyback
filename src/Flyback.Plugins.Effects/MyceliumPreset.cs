@@ -34,13 +34,13 @@ internal static class MyceliumPreset
 
     private const string DecayType = "flyback.voice.decay";
 
-    private const string SlewType = "flyback.voice.slew";
+    private const string SlewType = NodeCatalog.SlewTypeId;
 
-    private const string FilterType = "flyback.voice.filter";
+    private const string FilterType = NodeCatalog.FilterTypeId;
 
-    private const string DriveType = "flyback.voice.drive";
+    private const string DriveType = NodeCatalog.DriveTypeId;
 
-    private const string RandomType = "flyback.voice.random";
+    private const string RandomType = NodeCatalog.RandomTypeId;
 
     private const string HissType = "flyback.voice.hiss";
 
@@ -1099,7 +1099,7 @@ internal static class MyceliumPreset
         var roomSend = b.Add("math.mixer", (1, 0.5f), (3, 0.5f), (5, 0.8f), (7, 0.8f));
         var snareSend = b.Add("math.mul", (1, 0.3f));
         var roomIn = b.Add("math.add");
-        var room = b.Add(ReverbModule.TypeId, (1, 0.85f), (2, 0.8f), (3, 1f));
+        var room = b.Add(NodeCatalog.ReverbTypeId, (1, 0.85f), (2, 0.8f), (3, 1f));
 
         b.Wire(wide, 0, roomSend, 0)
          .Wire(taps, 0, roomSend, 2)

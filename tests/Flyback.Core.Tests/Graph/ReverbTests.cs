@@ -1,0 +1,435 @@
+using Flyback.Core.Compile;
+using Flyback.Core.Graph;
+using Shouldly;
+
+namespace Flyback.Core.Tests.Graph;
+
+/// <summary>The Reverb module, driven sample by sample with real delay state behind it.</summary>
+/// <remarks>
+/// The signal goes in through Coordinates' x, because
+/// <see cref="CompiledPatch.Evaluate"/> takes x per evaluation — the one way to feed
+/// a module an arbitrary waveform. Everything runs at 1 kHz, so a delay in seconds is
+/// a whole number of samples.
+/// </remarks>
+public class ReverbTests
+{
+    private const int Rate = 1_000;
+
+    /// <summary>
+    /// How long a module that asks whether it has a memory takes to find out. The
+    /// flag is a cell read before it is written, like everything else here, so the
+    /// first evaluation of a program reads the answer the video path gets — which
+    /// for a Reverb means one sample of dry before the room appears, inaudible at
+    /// any rate the speakers actually run at.
+    /// </summary>
+    private const int Settled = 1;
+
+    private static ModuleCatalog Modules => NodeCatalog.BuiltIn;
+
+    [Fact]
+    public void It_is_offered_under_time_effects()
+    {
+        var def = Modules.Get(NodeCatalog.ReverbTypeId).ShouldNotBeNull();
+
+        def.Name.ShouldBe("Reverb");
+        def.Category.ShouldBe(ModuleCategories.TimeEffects);
+        def.Outputs.Select(p => p.Name).ShouldBe(["out", "wide"]);
+    }
+
+    [Fact]
+    public void A_reverb_at_no_mix_is_exactly_a_wire()
+    {
+        var signal = Noise(64);
+        var output = Through(signal, (1, 0.8f), (2, 0.9f), (3, 0f));
+
+        for (var i = 0; i < signal.Length; i++) output[i].ShouldBe(signal[i], 1e-5f);
+    }
+
+    /// <summary>
+    /// The thing that makes it a reverb rather than an echo: sound keeps arriving
+    /// after the input has stopped, and it fades rather than repeating.
+    /// </summary>
+    [Fact]
+    public void A_reverb_rings_on_after_the_input_stops()
+    {
+        var signal = new float[4_000];
+        for (var i = 0; i < 20; i++) signal[i] = 1f;
+
+        var output = Through(signal, (1, 0.5f), (2, 0.8f), (3, 1f));
+
+        var early = Energy(output, 200, 1_000);
+        var late = Energy(output, 1_000, 2_000);
+        var latest = Energy(output, 3_000, 4_000);
+
+        early.ShouldBeGreaterThan(0f);
+        late.ShouldBeGreaterThan(0f);
+
+        // Still going long after the input, and quieter every time you look.
+        latest.ShouldBeLessThan(late);
+        late.ShouldBeLessThan(early);
+    }
+
+    [Fact]
+    public void A_longer_decay_rings_for_longer()
+    {
+        var signal = new float[4_000];
+        for (var i = 0; i < 20; i++) signal[i] = 1f;
+
+        var quick = Through(signal, (1, 0.5f), (2, 0.2f), (3, 1f));
+        var slow = Through(signal, (1, 0.5f), (2, 0.95f), (3, 1f));
+
+        Energy(quick, 2_000, 4_000).ShouldBeLessThan(Energy(slow, 2_000, 4_000));
+    }
+
+    /// <summary>
+    /// The tail comes back at about the level that went in, whatever the decay — which
+    /// is what makes 'mix' a crossfade between two comparable things.
+    /// </summary>
+    /// <remarks>
+    /// Scaled off the comb's broadband gain and not its gain at DC, which is six to
+    /// twenty decibels above what it does to an actual tail. Getting that wrong is
+    /// inaudible from inside the module and only visible against the dry signal.
+    /// </remarks>
+    [Fact]
+    public void The_tail_comes_back_at_about_the_level_that_went_in()
+    {
+        var signal = White(24_000);
+        var went = Rms(signal, 12_000, 24_000);
+
+        foreach (var decay in new[] { 0f, 0.4f, 0.7f, 1f })
+        {
+            var wet = Through(signal, (1, 0.5f), (2, decay), (3, 1f));
+            var came = Rms(wet, 12_000, 24_000);
+
+            // Within six decibels either way. Loose because a comb bank's gain
+            // depends on what is played through it — and this harness runs at
+            // 1 kHz, where interpolating a fractional delay costs far more of the
+            // band than it does at the rate the speakers see — but tight enough
+            // to catch a badly mis-scaled tail.
+            came.ShouldBeGreaterThan(went * 0.5f);
+            came.ShouldBeLessThan(went * 2f);
+
+            // A tail is a great many echoes arriving at once, so it peaks higher
+            // above its own average than the signal that made it does. Some of
+            // that is the point and all of it is why a patch puts a limiter after
+            // a reverb; what matters here is that it stays a crest factor rather
+            // than becoming a runaway.
+            Peak(wet).ShouldBeLessThan(Peak(signal) * 4f);
+        }
+    }
+
+    /// <summary>
+    /// Nothing a comb bank is fed can run away with it, and the input a bank
+    /// amplifies most is the one a patch here is likeliest to produce: DC. An
+    /// envelope, an offset Remap and a slow LFO are all mostly DC, and all of them
+    /// are ordinary things to wire into a reverb.
+    /// </summary>
+    [Fact]
+    public void A_reverb_does_not_get_louder_than_what_went_in()
+    {
+        var signal = new float[8_000];
+        Array.Fill(signal, 1f);
+
+        foreach (var decay in new[] { 0f, 0.5f, 0.95f, 1f })
+        {
+            var output = Through(signal, (1, 0.5f), (2, decay), (3, 1f));
+
+            foreach (var sample in output)
+            {
+                float.IsFinite(sample).ShouldBeTrue();
+                MathF.Abs(sample).ShouldBeLessThan(2f);
+            }
+
+            // And it is the highpass at the door doing it rather than luck: what
+            // survives a steady input is the edge at the start of it, not the
+            // steadiness afterwards.
+            Rms(output, 4_000, 8_000).ShouldBeLessThan(0.05f);
+        }
+    }
+
+    /// <summary>
+    /// What separates the room from the pipe: every trip round a comb loses a little
+    /// more of the top, so the tail darkens as it dies rather than keeping one timbre
+    /// — the metallic ring a cheap reverb is recognised by.
+    /// </summary>
+    /// <remarks>
+    /// The one test here that cannot run at 1 kHz: the corner is fixed at four
+    /// thousand hertz, which at this harness's rate is past Nyquist and therefore no
+    /// filtering at all.
+    /// </remarks>
+    [Fact]
+    public void The_tail_darkens_as_it_dies()
+    {
+        const int heard = GlobalConstants.SampleRate;
+
+        var signal = new float[heard];
+        for (var i = 0; i < heard / 100; i++) signal[i] = 1f;
+
+        var tail = ThroughAt(heard, signal, (1, 0.5f), (2, 0.9f), (3, 1f));
+
+        var young = Brightness(tail, heard / 10, heard / 5);
+        var old = Brightness(tail, heard / 2, heard);
+
+        // A third of the brightness it started with, and the fraction is what
+        // makes this a test rather than a formality: a bank with no filter in it
+        // still darkens, because interpolating a fractional delay is itself a
+        // gentle lowpass and the loop applies it again on every pass. That alone
+        // reaches about a half. Only the damping reaches a fifth.
+        old.ShouldBeLessThan(young * 0.35f);
+    }
+
+    /// <summary>
+    /// One comb bank feeding two allpass chains of different lengths: the same
+    /// tail arriving at the same time in both channels, smeared into two
+    /// patterns that are not each other. That difference is the whole of the
+    /// width, since nothing upstream of the allpasses differs at all.
+    /// </summary>
+    [Fact]
+    public void The_two_outputs_are_one_tail_smeared_two_ways()
+    {
+        var signal = new float[2_000];
+        for (var i = 0; i < 20; i++) signal[i] = 1f;
+
+        var (left, right) = Stereo(signal, (1, 0.5f), (2, 0.8f), (3, 1f));
+
+        var carried = Energy(left, 200, 2_000);
+
+        // An allpass passes every frequency at unity, so both chains hand on the
+        // energy the bank gave them and neither channel is the loud one.
+        carried.ShouldBeGreaterThan(0f);
+        Energy(right, 200, 2_000).ShouldBe(carried, carried * 0.25f);
+
+        // And they are not the same signal, which is the point of having two.
+        var apart = 0f;
+        for (var i = 200; i < 2_000; i++) apart += MathF.Abs(left[i] - right[i]);
+
+        apart.ShouldBeGreaterThan(0.1f);
+    }
+
+    /// <summary>
+    /// A bigger room answers later. Both halves of 'size' push the same way — the
+    /// gap before the first reflection opens up, and every delay behind it
+    /// stretches — so the onset is the one place the whole control is visible at
+    /// once.
+    /// </summary>
+    [Fact]
+    public void A_bigger_room_takes_longer_to_answer()
+    {
+        var tiled = Through(Impulse(512), (1, 0f), (2, 0.5f), (3, 1f));
+        var hall = Through(Impulse(512), (1, 1f), (2, 0.5f), (3, 1f));
+
+        // Nothing at all until the first reflection arrives, in either room.
+        Onset(tiled).ShouldBeGreaterThan(Settled);
+        Onset(tiled).ShouldBeLessThan(Onset(hall));
+    }
+
+    /// <summary>
+    /// A Reverb is eight wires in parallel with no state, so what it would hand
+    /// the picture back is some multiple of itself — and which multiple depends
+    /// on the decay, so the brightness of a video patch would follow a knob about
+    /// how long a sound takes to die. The memory flag decides it instead: no
+    /// memory, no room.
+    /// </summary>
+    [Fact]
+    public void With_no_state_a_reverb_passes_the_picture_through()
+    {
+        foreach (var (x, seen) in Painted())
+            seen.ShouldBe(x, 1e-5f);
+    }
+
+    /// <summary>
+    /// The picture is the same picture whatever the decay is set to, which is the
+    /// half of it that a fixed scaling could never have managed.
+    /// </summary>
+    [Fact]
+    public void The_decay_knob_does_not_touch_the_picture()
+    {
+        foreach (var decay in new[] { 0f, 0.5f, 1f })
+            foreach (var (x, seen) in Painted((2, decay)))
+                seen.ShouldBe(x, 1e-5f);
+    }
+
+    // --- harness ----------------------------------------------------------------
+
+    private static float[] Through(float[] signal, params (int Port, float Value)[] knobs) =>
+        ThroughAt(Rate, signal, knobs);
+
+    /// <summary>
+    /// The same at a rate of its own, for the one test whose behaviour is written
+    /// in hertz and so cannot be seen at 1 kHz at all.
+    /// </summary>
+    private static float[] ThroughAt(int rate, float[] signal, params (int Port, float Value)[] knobs)
+    {
+        var patch = new Patch();
+
+        var coord = Add(patch, "coord");
+        var effect = Add(patch, NodeCatalog.ReverbTypeId, knobs);
+        var sink = Add(patch, NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 1f));
+
+        patch.Connect(coord.Id, 0, effect.Id, 0);
+        patch.Connect(effect.Id, 0, sink.Id, NodeCatalog.OutputLeftPort);
+
+        var program = patch.CompileForAudio(Modules).Program;
+        var delays = new DelayState(program.DelayLengths, rate, program.PhaseCount, program.UnitCount);
+        var registers = program.AllocateRegisters();
+        var output = new float[signal.Length];
+
+        for (var i = 0; i < signal.Length; i++)
+        {
+            program.Evaluate(signal[i], 0f, i / (double)rate, registers, default, delays);
+            output[i] = (float)registers[program.OutputBase];
+        }
+
+        return output;
+    }
+
+    /// <summary>
+    /// The same, wired to the two outputs the speakers actually have. Separate
+    /// from <see cref="Through"/> rather than folded into it because a patch with
+    /// nothing on the right is a mono patch — the sink reads the left register
+    /// twice — and every test above means to be one.
+    /// </summary>
+    private static (float[] Left, float[] Right) Stereo(float[] signal, params (int Port, float Value)[] knobs)
+    {
+        var patch = new Patch();
+
+        var coord = Add(patch, "coord");
+        var effect = Add(patch, NodeCatalog.ReverbTypeId, knobs);
+        var sink = Add(patch, NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 1f));
+
+        patch.Connect(coord.Id, 0, effect.Id, 0);
+        patch.Connect(effect.Id, 0, sink.Id, NodeCatalog.OutputLeftPort);
+        patch.Connect(effect.Id, 1, sink.Id, NodeCatalog.OutputRightPort);
+
+        var program = patch.CompileForAudio(Modules).Program;
+        var delays = new DelayState(program.DelayLengths, Rate, program.PhaseCount, program.UnitCount);
+        var registers = program.AllocateRegisters();
+
+        var left = new float[signal.Length];
+        var right = new float[signal.Length];
+
+        for (var i = 0; i < signal.Length; i++)
+        {
+            program.Evaluate(signal[i], 0f, i / (double)Rate, registers, default, delays);
+            left[i] = (float)registers[program.OutputBase];
+            right[i] = (float)registers[program.OutputBase + 1];
+        }
+
+        return (left, right);
+    }
+
+    /// <summary>Compiles the module into the video sink and reads it with no state, as SynthRenderer does.</summary>
+    private static (float X, float Seen)[] Painted(params (int Port, float Value)[] knobs)
+    {
+        var patch = new Patch();
+
+        var coord = Add(patch, "coord");
+        var effect = Add(patch, NodeCatalog.ReverbTypeId, [(3, 1f), .. knobs]);
+        var screen = Add(patch, NodeCatalog.OutputTypeId);
+
+        patch.Connect(coord.Id, 0, effect.Id, 0);
+        patch.Connect(effect.Id, 0, screen.Id, 0);
+
+        var program = patch.CompileForVideo(Modules).Program;
+        var registers = program.AllocateRegisters();
+
+        return
+        [
+            .. new[] { 0f, 0.25f, 0.5f, 1f }.Select(x =>
+            {
+                program.Evaluate(x, 0f, 0f, registers, default);
+                return (x, (float)registers[program.OutputBase]);
+            }),
+        ];
+    }
+
+    private static NodeInstance Add(Patch patch, string typeId, params (int Port, float Value)[] knobs)
+    {
+        var node = NodeInstance.Create(Modules.Require(typeId), 0, 0);
+
+        foreach (var (port, value) in knobs) node.InputValues[port] = value;
+
+        patch.Nodes.Add(node);
+        return node;
+    }
+
+    private static float[] Impulse(int length)
+    {
+        var signal = new float[length];
+        signal[0] = 1f;
+        return signal;
+    }
+
+    /// <summary>Deterministic, so a failure is reproducible.</summary>
+    private static float[] Noise(int length) =>
+        [.. Enumerable.Range(0, length).Select(i => MathF.Sin(i * 12.9898f) * 0.5f)];
+
+    private static float Energy(float[] signal, int from, int to)
+    {
+        var sum = 0f;
+        for (var i = from; i < to && i < signal.Length; i++) sum += signal[i] * signal[i];
+        return sum;
+    }
+
+    /// <summary>
+    /// How much of a stretch of signal is high frequency, as the energy of its
+    /// first difference against its own. Differencing is a highpass, so the ratio
+    /// rises with brightness and — being a ratio — says nothing about level,
+    /// which is what lets it compare two tails that are fading at once.
+    /// </summary>
+    private static float Brightness(float[] signal, int from, int to)
+    {
+        var edges = 0f;
+
+        for (var i = Math.Max(from, 1); i < to && i < signal.Length; i++)
+        {
+            var slope = signal[i] - signal[i - 1];
+            edges += slope * slope;
+        }
+
+        return edges / Energy(signal, from, to);
+    }
+
+    /// <summary>
+    /// Where the first reflection arrives, which is the room answering. Counted
+    /// past <see cref="Settled"/>, whose one sample of dry is not the room.
+    /// </summary>
+    private static int Onset(float[] signal)
+    {
+        for (var i = Settled; i < signal.Length; i++)
+            if (MathF.Abs(signal[i]) > 1e-4f) return i;
+
+        return signal.Length;
+    }
+
+    private static float Peak(float[] signal)
+    {
+        var most = 0f;
+        foreach (var sample in signal) most = MathF.Max(most, MathF.Abs(sample));
+        return most;
+    }
+
+    private static float Rms(float[] signal, int from, int to) =>
+        MathF.Sqrt(Energy(signal, from, to) / (Math.Min(to, signal.Length) - from));
+
+    /// <summary>
+    /// White, and deterministic so a failure is reproducible. <see cref="Noise"/>
+    /// is neither — sampling a sine per index folds it down to one slow tone —
+    /// and a comb bank is exactly the thing that would answer a single tone with
+    /// whatever its response happens to be at that frequency rather than with its
+    /// gain.
+    /// </summary>
+    private static float[] White(int length)
+    {
+        var state = 22_695_477u;
+        var signal = new float[length];
+
+        for (var i = 0; i < length; i++)
+        {
+            state = state * 1_664_525u + 1_013_904_223u;
+            signal[i] = (state >> 8) / (float)(1 << 23) - 1f;
+        }
+
+        return signal;
+    }
+}

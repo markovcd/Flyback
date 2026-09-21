@@ -35,11 +35,11 @@ internal sealed class OutrunPreset : PresetBench
     /// <summary>The modules this borrows, named by id rather than by type.</summary>
     private const string SupersawType = "flyback.voice.osc";
 
-    private const string SlewType = "flyback.voice.slew";
+    private const string SlewType = NodeCatalog.SlewTypeId;
 
-    private const string FilterType = "flyback.voice.filter";
+    private const string FilterType = NodeCatalog.FilterTypeId;
 
-    private const string DriveType = "flyback.voice.drive";
+    private const string DriveType = NodeCatalog.DriveTypeId;
 
     private const string CellsType = "flyback.picture.cells";
 
@@ -201,7 +201,7 @@ internal sealed class OutrunPreset : PresetBench
         // And the sound of the decade: a hall far too big for a drum, shut off a
         // fifth of a second after the hit instead of being left to die. The gate is
         // the same ramp that struck the drum, so it cannot open late.
-        var hall = b.Add(ReverbModule.TypeId, (1, 0.9f), (2, 0.85f), (3, 1f));
+        var hall = b.Add(NodeCatalog.ReverbTypeId, (1, 0.9f), (2, 0.85f), (3, 1f));
         var gate = From(1f, Rises(backbeat, 0.2f, 0.26f, StrokePhase));
         var snareL = Sum(snareDry, Times(Product(gate, hall), 0.8f));
         var snareR = Sum(snareDry, Times(Product(gate, hall, 1), 0.8f));
@@ -387,7 +387,7 @@ internal sealed class OutrunPreset : PresetBench
         var send = b.Add("math.mixer", (1, 0.6f), (3, 0.7f), (5, 0.3f));
         var taps = Echo(send, beat, 3f, 2f, 0.45f, 1f);
         var roomSend = b.Add("math.mixer", (1, 0.7f), (3, 0.4f), (5, 0.5f), (7, 0.5f));
-        var room = b.Add(ReverbModule.TypeId, (1, 0.85f), (2, 0.8f), (3, 1f));
+        var room = b.Add(NodeCatalog.ReverbTypeId, (1, 0.85f), (2, 0.8f), (3, 1f));
 
         b.Wire(arpTone, 0, send, 0)
          .Wire(lead, 0, send, 2)

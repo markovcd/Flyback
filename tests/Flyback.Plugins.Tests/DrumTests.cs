@@ -95,7 +95,7 @@ public class DrumTests
 
         if (drive > 0f)
         {
-            var driven = b.Add("flyback.voice.drive", (1, drive));
+            var driven = b.Add(NodeCatalog.DriveTypeId, (1, drive));
             b.Wire(tone, 0, driven, 0).Wire(driven, 0, sink, NodeCatalog.OutputLeftPort);
         }
         else

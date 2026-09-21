@@ -34,9 +34,9 @@ internal sealed class BronzePreset : PresetBench
     /// <summary>The modules this borrows, named by id rather than by type.</summary>
     private const string EuclidType = "flyback.voice.euclid";
 
-    private const string SlewType = "flyback.voice.slew";
+    private const string SlewType = NodeCatalog.SlewTypeId;
 
-    private const string DriveType = "flyback.voice.drive";
+    private const string DriveType = NodeCatalog.DriveTypeId;
 
     private const string FoldType = "flyback.voice.fold";
 
@@ -406,7 +406,7 @@ internal sealed class BronzePreset : PresetBench
         // most by what should sound furthest away.
         var nearSend = b.Add("math.mixer", (1, 0.9f), (3, 0.35f), (5, 0.35f), (7, 0.4f));
         var farSend = b.Add("math.mixer", (1, 0.35f), (3, 0.25f), (5, 0.3f), (7, 0.2f));
-        var room = b.Add(ReverbModule.TypeId, (1, 0.8f), (2, 0.75f), (3, 1f));
+        var room = b.Add(NodeCatalog.ReverbTypeId, (1, 0.8f), (2, 0.75f), (3, 1f));
 
         b.Wire(suling, 0, nearSend, 0)
          .Wire(polos, 0, nearSend, 2)

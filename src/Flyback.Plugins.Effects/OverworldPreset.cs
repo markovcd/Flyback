@@ -47,11 +47,11 @@ internal sealed class OverworldPreset : PresetBench
     private const string Mastering = "flyback.mastering";
 
     /// <summary>The modules this borrows, named by id rather than by type.</summary>
-    private const string FilterType = "flyback.voice.filter";
+    private const string FilterType = NodeCatalog.FilterTypeId;
 
-    private const string SlewType = "flyback.voice.slew";
+    private const string SlewType = NodeCatalog.SlewTypeId;
 
-    private const string RandomType = "flyback.voice.random";
+    private const string RandomType = NodeCatalog.RandomTypeId;
 
     private const string BoxType = "flyback.picture.box";
 
@@ -522,7 +522,7 @@ internal sealed class OverworldPreset : PresetBench
         // a send for the lead, the harmony, the arp and the snare.
         var taps = Echo(Filtered(leadDry, 3000f, 0f), beat, 3f, 3f, 0.4f, 1f);
         var roomSend = b.Add("math.mixer", (1, 0.6f), (3, 0.5f), (5, 0.3f), (7, 0.35f));
-        var room = b.Add(ReverbModule.TypeId, (1, 0.6f), (2, 0.55f), (3, 1f));
+        var room = b.Add(NodeCatalog.ReverbTypeId, (1, 0.6f), (2, 0.55f), (3, 1f));
 
         b.Wire(leadDry, 0, roomSend, 0)
          .Wire(twin, 0, roomSend, 2)

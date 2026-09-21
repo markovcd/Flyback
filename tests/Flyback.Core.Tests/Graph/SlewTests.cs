@@ -1,35 +1,27 @@
-using Flyback.Core;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
-using Flyback.Plugins.Hosting;
 using Shouldly;
-using Xunit;
 
-namespace Flyback.Plugins.Tests;
+namespace Flyback.Core.Tests.Graph;
 
-/// <summary>
-/// The Slew module, driven sample by sample through Coordinates' x with real state behind it.
-/// </summary>
+/// <summary>The Slew module, driven sample by sample through Coordinates' x with real state behind it.</summary>
 public class SlewTests
 {
-    private const string SlewType = "flyback.voice.slew";
-
     private const int Rise = 1;
     private const int Fall = 2;
 
     private const int Rate = GlobalConstants.SampleRate;
 
-    private static readonly ModuleCatalog Catalog = PluginHost.Load().Modules;
+    private static ModuleCatalog Modules => NodeCatalog.BuiltIn;
 
     [Fact]
-    public void The_voice_plugin_offers_it_under_timing_for_audio()
+    public void It_is_offered_under_timing_for_audio()
     {
-        var def = Catalog.Get(SlewType).ShouldNotBeNull();
+        var def = Modules.Get(NodeCatalog.SlewTypeId).ShouldNotBeNull();
 
         def.Name.ShouldBe("Slew");
         def.Category.ShouldBe(ModuleCategories.Timing);
         def.Sinks.ShouldBe(ModuleSinks.Audio);
-        Catalog.ProviderOf(SlewType)!.Id.ShouldBe("flyback.voice");
     }
 
     /// <summary>The shared clock and memory flag, and one cell of its own.</summary>
@@ -37,7 +29,7 @@ public class SlewTests
     public void It_keeps_one_cell_of_its_own()
     {
         var patch = Wired(out _);
-        patch.CompileForAudio(Catalog).Program.UnitCount.ShouldBe(3);
+        patch.CompileForAudio(Modules).Program.UnitCount.ShouldBe(3);
     }
 
     [Fact]
@@ -105,7 +97,7 @@ public class SlewTests
     public void On_the_picture_it_is_a_wire()
     {
         var patch = Wired(out var sink, NodeCatalog.OutputColorPort, (Rise, 0f));
-        var program = patch.CompileForVideo(Catalog).Program;
+        var program = patch.CompileForVideo(Modules).Program;
         var registers = program.AllocateRegisters();
 
         foreach (var x in new[] { -0.75f, 0f, 0.5f, 1f })
@@ -120,7 +112,7 @@ public class SlewTests
     private static float[] Through(float[] signal, params (int Port, float Value)[] knobs)
     {
         var patch = Wired(out _, NodeCatalog.OutputLeftPort, knobs);
-        var program = patch.CompileForAudio(Catalog).Program;
+        var program = patch.CompileForAudio(Modules).Program;
 
         var state = new DelayState(program.DelayLengths, Rate, program.PhaseCount, program.UnitCount);
         var registers = program.AllocateRegisters();
@@ -140,11 +132,11 @@ public class SlewTests
     {
         var patch = new Patch();
 
-        var coord = NodeInstance.Create(Catalog.Require("coord"), 0, 0);
-        var slew = NodeInstance.Create(Catalog.Require(SlewType), 0, 0);
+        var coord = NodeInstance.Create(Modules.Require("coord"), 0, 0);
+        var slew = NodeInstance.Create(Modules.Require(NodeCatalog.SlewTypeId), 0, 0);
         foreach (var (port, value) in knobs) slew.InputValues[port] = value;
 
-        sink = NodeInstance.Create(Catalog.Require(NodeCatalog.OutputTypeId), 0, 0);
+        sink = NodeInstance.Create(Modules.Require(NodeCatalog.OutputTypeId), 0, 0);
         sink.InputValues[NodeCatalog.OutputVolumePort] = 1f;
 
         patch.Nodes.Add(coord);

@@ -98,3 +98,11 @@ onto the emitter, where they are emitted once for the whole program.)*
 rest of the curve.** A decade above the cutoff the response is a little under the
 hundredth an analogue prototype would give, because a sampled filter bends
 towards Nyquist. The tests pin the measured value rather than the ideal one.
+
+## Amendment, 2026-09-21: the filter itself moved
+
+The filter, and Random, Slew, Drive, Delay and Reverb beside it, are the
+engine's own now
+([0128](0128-filter-random-slew-drive-delay-and-reverb-are-the-engines-own.md)).
+What this ADR decided still holds — a plugin can hold state without a new
+opcode, and a plugin still may — but none of these six still needs to be one.

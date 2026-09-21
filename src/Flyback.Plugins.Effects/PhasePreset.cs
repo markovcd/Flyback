@@ -233,7 +233,7 @@ internal sealed class PhasePreset : PresetBench
         // right with a little of each in the other side, which is where the canons
         // are heard: as one line moving between two places.
         var roomSend = b.Add("math.mixer", (1, 0.4f), (3, 0.4f), (5, 0.6f), (7, 0.5f));
-        var room = b.Add(ReverbModule.TypeId, (1, 0.55f), (2, 0.55f), (3, 1f));
+        var room = b.Add(NodeCatalog.ReverbTypeId, (1, 0.55f), (2, 0.55f), (3, 1f));
 
         // The sides are the first Desk. Its first channel is each player loud on their
         // own side and its second is the two of them crossed and quiet, which is a pan

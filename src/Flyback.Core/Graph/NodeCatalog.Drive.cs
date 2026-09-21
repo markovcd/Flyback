@@ -1,22 +1,10 @@
 using Flyback.Core.Compile;
-using Flyback.Core.Graph;
 
-namespace Flyback.Plugins.Voice;
+namespace Flyback.Core.Graph;
 
-/// <summary>
-/// Saturation: the gentler half of adding harmonics. Where <see cref="FoldModule"/>
-/// turns a signal round at full scale, this leans it over and lets it approach, so
-/// what comes out is the same waveform with its peaks rounded off.
-/// </summary>
-/// <remarks>
-/// The curve is <c>x / (1 + |x|)</c>: slope one at the origin, an asymptote at full
-/// scale, and no transcendental function in it. Peak-normalised as it saturates, so
-/// turning drive up makes the signal dirtier and never louder — what it does make is
-/// denser, the quiet parts coming up as the loud ones stop moving.
-/// </remarks>
-internal static class DriveModule
+public partial class NodeCatalog
 {
-    public const string TypeId = "flyback.voice.drive";
+    public const string DriveTypeId = "audio.drive";
 
     /// <summary>
     /// The least drive the curve is evaluated at. At zero the normalisation is
@@ -25,21 +13,32 @@ internal static class DriveModule
     /// </summary>
     private const float Least = 0.05f;
 
-    public static NodeDef Definition { get; } = new(
-        TypeId, "Drive", ModuleCategories.Shaping,
+    /// <summary>
+    /// Saturation: the gentler half of adding harmonics. Where the Voice plugin's
+    /// Fold turns a signal round at full scale, this leans it over and lets it
+    /// approach, so what comes out is the same waveform with its peaks rounded off.
+    /// </summary>
+    /// <remarks>
+    /// The curve is <c>x / (1 + |x|)</c>: slope one at the origin, an asymptote at full
+    /// scale, and no transcendental function in it. Peak-normalised as it saturates, so
+    /// turning drive up makes the signal dirtier and never louder — what it does make is
+    /// denser, the quiet parts coming up as the loud ones stop moving.
+    /// </remarks>
+    private static NodeDef Drive() => new(
+        DriveTypeId, "Drive", ModuleCategories.Shaping,
         [
             new PortSpec("in", PortKind.Any, 0f, -1f, 1f),
             new PortSpec("drive", PortKind.Scalar, 2f, 0f, 16f),
         ],
         [new PortSpec("out", PortKind.Any)],
-        Emit,
+        DriveEmit,
         "Soft saturation. Rounds the peaks off a signal instead of folding them back, which "
         + "is the difference between a tone that thickens and one that changes shape. "
         + "Normalised as it goes, so more drive is dirtier and never louder — and because "
         + "the quiet parts come up while the loud ones stop moving, it doubles as a "
         + "compressor. Untyped, and on the screen it reads as contrast that never clips.");
 
-    private static Slot[] Emit(Emitter em, EmitContext inputs)
+    private static Slot[] DriveEmit(Emitter em, EmitContext inputs)
     {
         var drive = em.Binary(OpCode.Max, inputs[1], em.Constant(Least));
         var driven = em.Mul(inputs[0], drive);

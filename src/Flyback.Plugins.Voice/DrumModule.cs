@@ -10,7 +10,7 @@ namespace Flyback.Plugins.Voice;
 /// <remarks>
 /// The pitch falls faster than the level because it is the level to a power, so the
 /// beater is over long before the shell is and there is one envelope to get right
-/// rather than two to keep in step. The saturation is <see cref="DriveModule"/>'s
+/// rather than two to keep in step. The saturation is the engine's own Drive's
 /// curve and its normalisation, so a 'drive' here is the same number as one there;
 /// at nought it is skipped rather than evaluated at the curve's floor, which is
 /// nearly clean and not quite.
@@ -21,7 +21,7 @@ internal static class DrumModule
 
     private const float Tau = 6.283185307179586f;
 
-    /// <summary>The least drive the curve is evaluated at — see <see cref="DriveModule"/>.</summary>
+    /// <summary>The least drive the curve is evaluated at — see the engine's own Drive.</summary>
     private const float Least = 0.05f;
 
     /// <summary>Under this 'drive' is off.</summary>

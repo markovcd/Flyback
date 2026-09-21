@@ -34,9 +34,10 @@ internal sealed class SlowWeatherPreset : PresetBench
 
     /// <summary>
     /// The plugin the voices are borrowed from. The effects live beside this
-    /// preset; the Filter, Wander, Random and Slew are in Voice, so this is a
-    /// patch that reaches across a boundary and has to say so when the other
-    /// plugin is not there.
+    /// preset; Wander and Hiss are in Voice, so this is a patch that reaches
+    /// across a boundary and has to say so when the other plugin is not there.
+    /// Filter, Random and Slew are the engine's own (ADR-0128), so this preset
+    /// reaches no boundary for them.
     /// </summary>
     private const string Voice = "flyback.voice";
 
@@ -44,15 +45,15 @@ internal sealed class SlowWeatherPreset : PresetBench
 
     private const string PhaserType = "flyback.effects.phaser";
 
-    private const string DelayType = "flyback.effects.delay";
+    private const string DelayType = NodeCatalog.DelayTypeId;
 
-    private const string ReverbType = "flyback.effects.reverb";
+    private const string ReverbType = NodeCatalog.ReverbTypeId;
 
-    private const string FilterType = "flyback.voice.filter";
+    private const string FilterType = NodeCatalog.FilterTypeId;
 
-    private const string SlewType = "flyback.voice.slew";
+    private const string SlewType = NodeCatalog.SlewTypeId;
 
-    private const string RandomType = "flyback.voice.random";
+    private const string RandomType = NodeCatalog.RandomTypeId;
 
     /// <summary>The outputs read by number below, named so a wire says which.</summary>
     private const int Hz = 0;

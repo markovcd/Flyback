@@ -31,6 +31,7 @@
 - The computer keyboard can be laid out by scale, chosen on any MIDI In and saved with the patch: the notes you pick are played one to a key along the A row, with the Q row an octave up and the Z row an octave down.
 - Settings → MIDI chooses whether the first MIDI In added to a patch lays the computer keyboard out as a piano or a scale.
 - Added Text to Picture: lines of text in one of two pixel fonts, drawn as a shape, with a socket that picks the line and one that types it out.
+- Filter, Random, Slew, Drive, Delay and Reverb are built into Flyback itself now, so a patch can use them with no plugin installed; a patch saved with the old Voice or Effects ones still opens.
 
 ### Presets
 - Mycelium, in the Effects plugin: a psybient track of ninety-six bars in six sections, with a picture driven by the same signals. It is the largest preset, and needs the Voice and Picture plugins.

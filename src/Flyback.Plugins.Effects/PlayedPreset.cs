@@ -24,7 +24,7 @@ internal static class PlayedPreset
 
         // Four notes summed; a level of a half each leaves room for a full chord.
         var desk = b.Add("math.mixer", (1, 0.5f), (3, 0.5f), (5, 0.5f), (7, 0.5f));
-        var room = b.Add(ReverbModule.TypeId, (1, 0.45f), (2, 0.45f), (3, 0.2f));
+        var room = b.Add(NodeCatalog.ReverbTypeId, (1, 0.45f), (2, 0.45f), (3, 0.2f));
         var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 0.6f));
 
         for (var voice = 1; voice <= Voices; voice++)

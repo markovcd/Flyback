@@ -1,35 +1,34 @@
 using Flyback.Core.Compile;
-using Flyback.Core.Graph;
 
-namespace Flyback.Plugins.Voice;
+namespace Flyback.Core.Graph;
 
-/// <summary>
-/// A one-pole lag: glide on a pitch, smoothing on anything else.
-/// </summary>
-/// <remarks>
-/// Exponential, so a glide takes the same time whatever the distance. The knob is
-/// the time to get within <see cref="Remaining"/> of the target.
-/// </remarks>
-internal static class SlewModule
+public partial class NodeCatalog
 {
-    public const string TypeId = "flyback.voice.slew";
+    public const string SlewTypeId = "audio.slew";
 
     private const float Remaining = 0.01f;
 
-    private static readonly float TimeConstants = -MathF.Log(Remaining);
+    private static readonly float SlewTimeConstants = -MathF.Log(Remaining);
 
     /// <summary>The ADSR's floor: a patched knob can reach below the slider.</summary>
-    private const float Shortest = 1e-4f;
+    private const float SlewShortest = 1e-4f;
 
-    public static NodeDef Definition { get; } = new(
-        TypeId, "Slew", ModuleCategories.Timing,
+    /// <summary>
+    /// A one-pole lag: glide on a pitch, smoothing on anything else.
+    /// </summary>
+    /// <remarks>
+    /// Exponential, so a glide takes the same time whatever the distance. The knob is
+    /// the time to get within <see cref="Remaining"/> of the target.
+    /// </remarks>
+    private static NodeDef Slew() => new(
+        SlewTypeId, "Slew", ModuleCategories.Timing,
         [
             new PortSpec("in", PortKind.Scalar, 0f, -1f, 1f),
             new PortSpec("rise", PortKind.Scalar, -1f, -4f, 1.5f, Display: PortDisplay.Duration),
             new PortSpec("fall", PortKind.Scalar, -1f, -4f, 1.5f, Display: PortDisplay.Duration),
         ],
         [new PortSpec("out")],
-        Emit,
+        SlewEmit,
         "Follows 'in', but takes its time. Between a Note Sequencer and a Note it is glide; "
         + "after a gate or a Sequencer it smooths the steps. 'rise' is how long it takes to "
         + "catch an input that went up, 'fall' one that went down, and the time is the same "
@@ -38,7 +37,7 @@ internal static class SlewModule
         Sinks = ModuleSinks.Audio,
     };
 
-    private static Slot[] Emit(Emitter em, EmitContext node)
+    private static Slot[] SlewEmit(Emitter em, EmitContext node)
     {
         var target = node[0];
         var step = em.Interval();
@@ -51,7 +50,7 @@ internal static class SlewModule
         var time = em.Ternary(OpCode.Mix, Seconds(node[2]), Seconds(node[1]), rising);
 
         // 1 - e^(-step/tau) rather than step/tau, so a large step closes the gap and no more.
-        var tau = em.Mul(time, 1f / TimeConstants);
+        var tau = em.Mul(time, 1f / SlewTimeConstants);
         var closed = em.Sub(
             em.Constant(1f),
             em.Unary(OpCode.Exp, em.Unary(OpCode.Neg, em.Binary(OpCode.Div, step, tau))));
@@ -68,6 +67,6 @@ internal static class SlewModule
         Slot Seconds(Slot decades) => em.Binary(
             OpCode.Max,
             em.Binary(OpCode.Pow, em.Constant(10f), decades),
-            em.Constant(Shortest));
+            em.Constant(SlewShortest));
     }
 }

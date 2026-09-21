@@ -72,8 +72,8 @@ public class EchoTests
         var sixteenths = b.Add("math.mul", (1, 4f));
         var dotted = b.Add("math.div", (0, 3f));
         var straight = b.Add("math.div", (0, 2f));
-        var tapL = b.Add("flyback.effects.delay", (2, 0.45f), (3, 0.7f));
-        var tapR = b.Add("flyback.effects.delay", (2, inARow ? 0f : 0.45f), (3, 0.7f));
+        var tapL = b.Add(NodeCatalog.DelayTypeId, (2, 0.45f), (3, 0.7f));
+        var tapR = b.Add(NodeCatalog.DelayTypeId, (2, inARow ? 0f : 0.45f), (3, 0.7f));
         var click = Click(b);
         var sink = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 1f));
 

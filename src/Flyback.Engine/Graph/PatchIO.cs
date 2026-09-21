@@ -154,6 +154,8 @@ public static class PatchIO
             JsonSerializer.Deserialize<Patch>(json, Options) ?? new Patch(),
             version);
 
+        if (Realias(patch)) patch.Requires = RequirementsOf(patch, catalog);
+
         var missing = (patch.Requires ?? [])
             .Where(r => !catalog.HasProvider(r.Id))
             .ToList();
@@ -215,6 +217,40 @@ public static class PatchIO
     {
         _ = from;
         return patch;
+    }
+
+    /// <summary>
+    /// Rewrites every node using one of <see cref="NodeCatalog.LegacyTypeIds"/> to
+    /// its new id, so a patch saved under the old one is saved under the new one
+    /// the next time it is written. Answers whether anything changed, which is what
+    /// tells the caller <c>Requires</c> is now stale and has to be worked out again.
+    /// </summary>
+    private static bool Realias(Patch patch)
+    {
+        var changed = false;
+
+        for (var i = 0; i < patch.Nodes.Count; i++)
+        {
+            var node = patch.Nodes[i];
+
+            if (!NodeCatalog.LegacyTypeIds.TryGetValue(node.TypeId, out var renamed)) continue;
+
+            patch.Nodes[i] = new NodeInstance
+            {
+                Id = node.Id,
+                TypeId = renamed,
+                X = node.X,
+                Y = node.Y,
+                Name = node.Name,
+                Off = node.Off,
+                InputValues = node.InputValues,
+                State = node.State,
+            };
+
+            changed = true;
+        }
+
+        return changed;
     }
 
     /// <summary>

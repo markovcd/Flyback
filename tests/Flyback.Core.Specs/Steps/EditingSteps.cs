@@ -1,5 +1,6 @@
 using Reqnroll;
 using Shouldly;
+using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Core.Language;
 using Flyback.Core.Specs.Support;
@@ -33,6 +34,25 @@ public sealed class EditingSteps(PatchContext context, Session session)
         json.ShouldContain(layout);
         session.File = json.Replace(layout, $"\"Version\": {PatchIO.FormatVersion + 1}");
     }
+
+    /// <summary>
+    /// A file as it would have read before ADR-0128 moved the filter into the
+    /// engine: the same patch, with its type id swapped back to what a build from
+    /// before that ADR would have written.
+    /// </summary>
+    [Given("a {float} Hz sine through a filter, saved under the filter's old id {string}")]
+    public void GivenAFilteredSineSavedUnderAnOldId(float frequency, string oldId)
+    {
+        FilteredSine(frequency);
+        session.BeforeSound = Played();
+
+        var json = PatchIO.ToJson(context.Patch);
+        json.ShouldContain($"\"{NodeCatalog.FilterTypeId}\"");
+        session.File = json.Replace($"\"{NodeCatalog.FilterTypeId}\"", $"\"{oldId}\"");
+    }
+
+    [Then("it sounds exactly as it did before it was saved")]
+    public void ThenItSoundsAsItDid() => Played().ShouldBe(session.BeforeSound.ShouldNotBeNull());
 
     [When("the patch is saved and opened again")]
     public void WhenSavedAndOpened()
@@ -200,5 +220,33 @@ public sealed class EditingSteps(PatchContext context, Session session)
         context.Add("screen", "output");
         context.Wire("coords", "x", "tint", "hue");
         context.Wire("tint", "color", "screen", "color");
+    }
+
+    private void FilteredSine(float frequency)
+    {
+        context.Add("tone", "osc.sine");
+        context.SetInput("tone", "freq", frequency);
+        context.Add("filter", NodeCatalog.FilterTypeId);
+        context.Wire("tone", "out", "filter", "in");
+        context.Add("screen", "output");
+        context.Wire("filter", "low", "screen", "left");
+        context.SetInput("screen", "volume", 1f);
+    }
+
+    /// <summary>The audio program for the patch as it now stands, evaluated a fixed stretch, from fresh memory.</summary>
+    private double[] Played()
+    {
+        var program = context.Patch.CompileForAudio(NodeCatalog.BuiltIn).Program;
+        var state = new DelayState(program, PatchContext.SampleRate);
+        var registers = program.AllocateRegisters();
+        var heard = new double[200];
+
+        for (var i = 0; i < heard.Length; i++)
+        {
+            program.Evaluate(0d, 0d, i / (double)PatchContext.SampleRate, registers, default, state);
+            heard[i] = registers[program.OutputBase];
+        }
+
+        return heard;
     }
 }

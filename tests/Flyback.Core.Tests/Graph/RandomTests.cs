@@ -1,19 +1,14 @@
-using Flyback.Core;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
-using Flyback.Plugins.Hosting;
 using Shouldly;
-using Xunit;
 
-namespace Flyback.Plugins.Tests;
+namespace Flyback.Core.Tests.Graph;
 
 /// <summary>
 /// The Random module: white and pink noise, and the stepped and drifting values.
 /// </summary>
 public class RandomTests
 {
-    private const string RandomType = "flyback.voice.random";
-
     private const int White = 0;
     private const int Pink = 1;
     private const int Stepped = 2;
@@ -27,24 +22,23 @@ public class RandomTests
     /// <summary>The oversampled rate the audio path evaluates at.</summary>
     private const double Inner = GlobalConstants.SampleRate * 4;
 
-    private static readonly ModuleCatalog Catalog = PluginHost.Load().Modules;
+    private static ModuleCatalog Modules => NodeCatalog.BuiltIn;
 
     [Fact]
-    public void The_voice_plugin_offers_it_beside_the_oscillators()
+    public void It_is_offered_under_oscillators()
     {
-        var def = Catalog.Get(RandomType).ShouldNotBeNull();
+        var def = Modules.Get(NodeCatalog.RandomTypeId).ShouldNotBeNull();
 
         def.Name.ShouldBe("Random");
         def.Category.ShouldBe(ModuleCategories.Oscillators);
         def.Outputs.Select(p => p.Name).ShouldBe(["white", "pink", "random", "drift"]);
-        Catalog.ProviderOf(RandomType)!.Id.ShouldBe("flyback.voice");
     }
 
     /// <summary>The language shortens a type id to its last segment, so this must not collide.</summary>
     [Fact]
     public void Its_short_name_is_its_own()
     {
-        Catalog.All.Count(d => d.TypeId.Split('.')[^1] == "random").ShouldBe(1);
+        Modules.All.Count(d => d.TypeId.Split('.')[^1] == "random").ShouldBe(1);
     }
 
     [Fact]
@@ -170,7 +164,7 @@ public class RandomTests
         int port, params (int Port, float Value)[] knobs)
     {
         var patch = Wired(port, NodeCatalog.OutputLeftPort, knobs);
-        var program = patch.CompileForAudio(Catalog).Program;
+        var program = patch.CompileForAudio(Modules).Program;
         var registers = program.AllocateRegisters();
 
         return (program, t =>
@@ -183,7 +177,7 @@ public class RandomTests
     private static Func<double, float> Picture(int port)
     {
         var patch = Wired(port, NodeCatalog.OutputColorPort);
-        var program = patch.CompileForVideo(Catalog).Program;
+        var program = patch.CompileForVideo(Modules).Program;
         var registers = program.AllocateRegisters();
 
         return t =>
@@ -197,10 +191,10 @@ public class RandomTests
     {
         var patch = new Patch();
 
-        var random = NodeInstance.Create(Catalog.Require(RandomType), 0, 0);
+        var random = NodeInstance.Create(Modules.Require(NodeCatalog.RandomTypeId), 0, 0);
         foreach (var (at, value) in knobs) random.InputValues[at] = value;
 
-        var sink = NodeInstance.Create(Catalog.Require(NodeCatalog.OutputTypeId), 0, 0);
+        var sink = NodeInstance.Create(Modules.Require(NodeCatalog.OutputTypeId), 0, 0);
         sink.InputValues[NodeCatalog.OutputVolumePort] = 1f;
 
         patch.Nodes.Add(random);

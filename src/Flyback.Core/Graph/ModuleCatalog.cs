@@ -63,7 +63,15 @@ public sealed class ModuleCatalog
         .OrderBy(ModuleCategories.Order)
         .ThenBy(name => name, StringComparer.Ordinal);
 
-    public NodeDef? Get(string typeId) => index.GetValueOrDefault(typeId);
+    /// <remarks>
+    /// Falls back to <see cref="NodeCatalog.LegacyTypeIds"/> where the exact id is
+    /// not one this catalogue has, so an id a module answered to before it moved
+    /// still resolves — from a file <c>PatchIO</c> has not yet rewritten, from the
+    /// text language written out in full, or from an assistant's tool call.
+    /// </remarks>
+    public NodeDef? Get(string typeId) =>
+        index.GetValueOrDefault(typeId)
+        ?? (NodeCatalog.LegacyTypeIds.TryGetValue(typeId, out var renamed) ? index.GetValueOrDefault(renamed) : null);
 
     public NodeDef Require(string typeId) =>
         Get(typeId) ?? throw new KeyNotFoundException($"Unknown node type '{typeId}'.");

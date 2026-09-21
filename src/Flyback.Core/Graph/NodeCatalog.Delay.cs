@@ -1,15 +1,10 @@
 using Flyback.Core.Compile;
-using Flyback.Core.Graph;
 
-namespace Flyback.Plugins.Effects;
+namespace Flyback.Core.Graph;
 
-/// <summary>
-/// An echo: the signal heard again a moment later, fed back on itself so it
-/// repeats and fades.
-/// </summary>
-internal static class DelayModule
+public partial class NodeCatalog
 {
-    public const string TypeId = "flyback.effects.delay";
+    public const string DelayTypeId = "audio.delay";
 
     /// <summary>
     /// The longest delay the line will hold, and therefore what the buffer costs:
@@ -19,8 +14,12 @@ internal static class DelayModule
     /// </summary>
     private const float Longest = 2f;
 
-    public static NodeDef Definition { get; } = new(
-        TypeId, "Delay", ModuleCategories.TimeEffects,
+    /// <summary>
+    /// An echo: the signal heard again a moment later, fed back on itself so it
+    /// repeats and fades.
+    /// </summary>
+    private static NodeDef Delay() => new(
+        DelayTypeId, "Delay", ModuleCategories.TimeEffects,
         [
             new PortSpec("in", PortKind.Scalar, 0f, -1f, 1f),
             new PortSpec("time", PortKind.Scalar, 0.25f, 0.001f, Longest),
@@ -28,16 +27,13 @@ internal static class DelayModule
             new PortSpec("mix", PortKind.Scalar, 0.4f, 0f, 1f),
         ],
         [new PortSpec("out")],
-        Emit,
+        (em, inputs) => [DelayEchoed(em, inputs[0], inputs[1], inputs[2], inputs[3])],
         "An echo. 'time' is in seconds and can be swept — the line interpolates, so it glides "
         + "rather than steps. 'feedback' is how much comes back round for the next repeat. "
         + "Audio only: with no picture to remember, it passes straight through.");
 
-    private static Slot[] Emit(Emitter em, EmitContext inputs) =>
-        [Echoed(em, inputs[0], inputs[1], inputs[2], inputs[3])];
-
-    /// <summary>One Delay's worth of ops, for a module with a Delay inside it — see <see cref="EchoModule"/>.</summary>
-    public static Slot Echoed(Emitter em, Slot dry, Slot time, Slot feedback, Slot mix)
+    /// <summary>One Delay's worth of ops, for a module with a Delay inside it — see the Effects plugin's Echo.</summary>
+    public static Slot DelayEchoed(Emitter em, Slot dry, Slot time, Slot feedback, Slot mix)
     {
         var echo = em.DelayLine(OpCode.Delay, dry, feedback, time, Longest);
 

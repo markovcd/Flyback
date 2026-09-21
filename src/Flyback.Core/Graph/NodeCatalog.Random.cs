@@ -1,19 +1,10 @@
 using Flyback.Core.Compile;
-using Flyback.Core.Graph;
 
-namespace Flyback.Plugins.Voice;
+namespace Flyback.Core.Graph;
 
-/// <summary>
-/// White and pink noise, and a random value that steps or drifts at a rate.
-/// </summary>
-/// <remarks>
-/// Stateless: every output reads the engine's value noise at whole lattice points,
-/// which returns the hash itself, so it is identical on both sinks and on the GPU.
-/// Pink is Voss–McCartney — one held row per octave, summed.
-/// </remarks>
-internal static class RandomModule
+public partial class NodeCatalog
 {
-    public const string TypeId = "flyback.voice.random";
+    public const string RandomTypeId = "audio.random";
 
     /// <summary>White's lattice points per second (2²²), well above the oversampled audio rate.</summary>
     private const float Grain = 4_194_304f;
@@ -32,17 +23,25 @@ internal static class RandomModule
     /// <summary>A row of y that the within-second index, which is never negative, never reaches.</summary>
     private const float ChanceRow = -1f;
 
-    public static NodeDef Definition { get; } = new(
-        TypeId, "Random", ModuleCategories.Oscillators,
+    /// <summary>
+    /// White and pink noise, and a random value that steps or drifts at a rate.
+    /// </summary>
+    /// <remarks>
+    /// Stateless: every output reads the engine's value noise at whole lattice points,
+    /// which returns the hash itself, so it is identical on both sinks and on the GPU.
+    /// Pink is Voss–McCartney — one held row per octave, summed.
+    /// </remarks>
+    private static NodeDef Random() => new(
+        RandomTypeId, "Random", ModuleCategories.Oscillators,
         [
-            new PortSpec("in", NormalledTo: NodeCatalog.Clock, Domain: true),
+            new PortSpec("in", NormalledTo: Clock, Domain: true),
             new PortSpec("rate", PortKind.Scalar, 4f, 0f, 64f),
             new PortSpec("seed", PortKind.Scalar, 0f, 0f, 16f, Display: PortDisplay.Integer),
             new PortSpec("amp", PortKind.Scalar, 1f, 0f, 2f),
             new PortSpec("bias", PortKind.Scalar, 0f, -2f, 2f),
         ],
         [new PortSpec("white"), new PortSpec("pink"), new PortSpec("random"), new PortSpec("drift")],
-        Emit,
+        RandomEmit,
         "Noise and chance, each -1 to 1 before 'amp' and 'bias'. 'white' is bright hiss for "
         + "hats and snares; 'pink' is darker, like rain. 'random' jumps to a new value 'rate' "
         + "times a second and holds it; 'drift' glides between the same values. Modules with "
@@ -51,46 +50,46 @@ internal static class RandomModule
 
     /// <summary>
     /// White and pink over a domain, each -1 to 1, for a module that is noise
-    /// through something — see <see cref="HissModule"/>.
+    /// through something — see the Voice plugin's Hiss.
     /// </summary>
     /// <remarks>
     /// Neither has a memory, so two modules asking with the same domain and seed
     /// are handed the same samples: a module that makes its own noise plays what
     /// one fed from a shared Random played.
     /// </remarks>
-    public static (Slot White, Slot Pink) Noise(Emitter em, Slot domain, Slot seed)
+    public static (Slot White, Slot Pink) RandomNoise(Emitter em, Slot domain, Slot seed)
     {
         // Split into whole seconds and the fraction, because domain * Grain would
         // overflow the hash's int after about nine minutes.
         var lanes = em.Mul(em.Unary(OpCode.Floor, domain), Lanes);
         var within = em.Unary(OpCode.Fract, domain);
 
-        var white = Hash(em, lanes, em.Unary(OpCode.Floor, em.Mul(within, Grain)), seed);
+        var white = RandomHash(em, lanes, em.Unary(OpCode.Floor, em.Mul(within, Grain)), seed);
 
         var pink = em.Constant(0f);
         for (var row = 0; row < Rows; row++)
         {
             var index = em.Unary(OpCode.Floor, em.Mul(within, MathF.Pow(2f, Fastest - row)));
-            pink = em.Add(pink, Hash(em, em.Add(lanes, row + 1f), index, seed));
+            pink = em.Add(pink, RandomHash(em, em.Add(lanes, row + 1f), index, seed));
         }
 
         return (white, em.Ternary(OpCode.Clamp, em.Mul(pink, PinkScale), em.Constant(-1f), em.Constant(1f)));
     }
 
     /// <summary>The hash at a lattice point, -1 to 1. The seed is the third axis, so a fractional seed crossfades two.</summary>
-    private static Slot Hash(Emitter em, Slot x, Slot y, Slot seed) =>
+    private static Slot RandomHash(Emitter em, Slot x, Slot y, Slot seed) =>
         em.Add(em.Mul(em.Ternary(OpCode.Noise3, x, y, seed), 2f), -1f);
 
-    private static Slot[] Emit(Emitter em, EmitContext node)
+    private static Slot[] RandomEmit(Emitter em, EmitContext node)
     {
         var domain = node[0];
         var seed = node[2];
 
-        var (white, pink) = Noise(em, domain, seed);
+        var (white, pink) = RandomNoise(em, domain, seed);
 
         var along = em.Mul(domain, node[1]);
-        var random = Hash(em, em.Unary(OpCode.Floor, along), em.Constant(ChanceRow), seed);
-        var drift = Hash(em, along, em.Constant(ChanceRow), seed);
+        var random = RandomHash(em, em.Unary(OpCode.Floor, along), em.Constant(ChanceRow), seed);
+        var drift = RandomHash(em, along, em.Constant(ChanceRow), seed);
 
         return [Scaled(white), Scaled(pink), Scaled(random), Scaled(drift)];
 

@@ -37,7 +37,7 @@ internal static class TimbrePreset
         var pitch = b.Add("audio.frequency", (0, 110f));
         var saw = b.Add("osc.saw", (3, 0.9f));
         var fold = b.Add(FoldModule.TypeId);
-        var filter = b.Add(FilterModule.TypeId, (2, 0.75f));
+        var filter = b.Add(NodeCatalog.FilterTypeId, (2, 0.75f));
 
         var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 0.3f));
 

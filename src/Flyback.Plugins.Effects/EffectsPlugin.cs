@@ -3,9 +3,12 @@ using Flyback.Core.Graph;
 namespace Flyback.Plugins.Effects;
 
 /// <summary>
-/// The effects built on a delay line: repeats, repeats in time, a room, and the
-/// three sweeps.
+/// The effects built on a delay line: a tempo echo, chorus, flanger and phaser.
 /// </summary>
+/// <remarks>
+/// Delay and Reverb, the plainer pair this plugin's own modules are built on, are
+/// the engine's own, nothing about them being particular to an effect (ADR-0128).
+/// </remarks>
 public sealed class EffectsPlugin : IFlybackPlugin
 {
     internal static ModuleProvider Provider { get; } = new("flyback.effects", "Effects");
@@ -13,16 +16,15 @@ public sealed class EffectsPlugin : IFlybackPlugin
     public PluginInfo Info { get; } = new(
         "flyback.effects",
         "Effects",
-        "Delay, a tempo echo, reverb, chorus, flanger and phaser — everything built on a delay line.");
+        "A tempo echo, chorus, flanger and phaser — built, like the engine's own Delay and "
+        + "Reverb, on a delay line.");
 
     public void Register(IPluginRegistry registry)
     {
         registry.AddModules(
             Provider,
             [
-                DelayModule.Definition,
                 EchoModule.Definition,
-                ReverbModule.Definition,
                 ChorusModule.Definition,
                 FlangerModule.Definition,
                 PhaserModule.Definition,

@@ -41,15 +41,15 @@ internal sealed class DubPreset : PresetBench
     private const string Picture = "flyback.picture";
 
     /// <summary>The modules this borrows, named by id rather than by type.</summary>
-    private const string SlewType = "flyback.voice.slew";
+    private const string SlewType = NodeCatalog.SlewTypeId;
 
-    private const string FilterType = "flyback.voice.filter";
+    private const string FilterType = NodeCatalog.FilterTypeId;
 
-    private const string DriveType = "flyback.voice.drive";
+    private const string DriveType = NodeCatalog.DriveTypeId;
 
     private const string EuclidType = "flyback.voice.euclid";
 
-    private const string RandomType = "flyback.voice.random";
+    private const string RandomType = NodeCatalog.RandomTypeId;
 
     private const string CircleType = "flyback.picture.circle";
 
@@ -324,7 +324,7 @@ internal sealed class DubPreset : PresetBench
         // while it rings bends what is in it. The knob is how long it rings and how
         // much of it comes back.
         var roomSend = b.Add("math.mixer", (1, 0.6f), (3, 0.4f), (5, 0.4f), (7, 0.15f));
-        var room = b.Add(ReverbModule.TypeId, (1, 0.85f), (3, 1f));
+        var room = b.Add(NodeCatalog.ReverbTypeId, (1, 0.85f), (3, 1f));
         Follows(room, 2, space, 0.5f, 0.93f);
 
         b.Wire(warm, 0, send, 0)

@@ -1,27 +1,10 @@
 using Flyback.Core.Compile;
-using Flyback.Core.Graph;
 
-namespace Flyback.Plugins.Voice;
+namespace Flyback.Core.Graph;
 
-/// <summary>
-/// A resonant filter: the thing that takes harmonics away, and the gesture every
-/// subtractive synth is built around. Two integrators in the topology Zavalishin
-/// calls TPT — the same pair read at three points, which is why all three
-/// responses come out at once.
-/// </summary>
-/// <remarks>
-/// Stateful, so like <c>Delay</c> and <c>Reverb</c> it does its job for the
-/// speakers and something simpler for the screen. What is different is that
-/// nothing here needed a new opcode: the integrators are a pair of
-/// one-evaluation cells, which <see cref="Emitter.AllocateUnitSlot"/> already
-/// hands out. Two things follow and neither is the filter's own — working out what
-/// rate it runs at, and what it means on a path with no rate at all — which
-/// <see cref="Emitter.Interval"/> and <see cref="Emitter.HasMemory"/> answer once
-/// per program. See ADR-0041 and ADR-0042.
-/// </remarks>
-internal static class FilterModule
+public partial class NodeCatalog
 {
-    public const string TypeId = "flyback.voice.filter";
+    public const string FilterTypeId = "audio.filter";
 
     /// <summary>
     /// The highest cutoff the coefficient is allowed to stand for, as a fraction
@@ -42,31 +25,43 @@ internal static class FilterModule
 
     private const float Ringing = 0.05f;
 
-    public static NodeDef Definition { get; } = new(
-        TypeId, "Filter", ModuleCategories.Shaping,
+    /// <summary>
+    /// A resonant filter: the thing that takes harmonics away, and the gesture every
+    /// subtractive synth is built around. Two integrators in the topology Zavalishin
+    /// calls TPT — the same pair read at three points, which is why all three
+    /// responses come out at once.
+    /// </summary>
+    /// <remarks>
+    /// Stateful, so like <c>Delay</c> and <c>Reverb</c> it does its job for the
+    /// speakers and something simpler for the screen. What is different is that
+    /// nothing here needed a new opcode: the integrators are a pair of
+    /// one-evaluation cells, which <see cref="Emitter.AllocateUnitSlot()"/> already
+    /// hands out. Two things follow and neither is the filter's own — working out what
+    /// rate it runs at, and what it means on a path with no rate at all — which
+    /// <see cref="Emitter.Interval"/> and <see cref="Emitter.HasMemory"/> answer once
+    /// per program. See ADR-0041 and ADR-0042.
+    /// </remarks>
+    private static NodeDef Filter() => new(
+        FilterTypeId, "Filter", ModuleCategories.Shaping,
         [
             new PortSpec("in", PortKind.Scalar, 0f, -1f, 1f),
             new PortSpec("cutoff", PortKind.Scalar, 800f, 20f, 12_000f),
             new PortSpec("resonance", PortKind.Scalar, 0.2f, 0f, 1f),
         ],
         [new PortSpec("low"), new PortSpec("band"), new PortSpec("high")],
-        Emit,
+        (em, i) => FilterResponses(em, i[0], i[1], i[2]),
         "A resonant filter, all three responses at once. 'cutoff' is in hertz and is meant to "
         + "be swept — patch an oscillator or an envelope into it, which is the sound this "
         + "module exists for. 'resonance' peaks the corner and will ring on a sharp edge. "
         + "Audio only: a picture is one evaluation with nothing before it, so 'low' passes "
         + "straight through and the other two are silent.");
 
-    private static Slot[] Emit(Emitter em, EmitContext inputs) =>
-        Responses(em, inputs[0], inputs[1], inputs[2]);
-
     /// <summary>
     /// Low, band and high of <paramref name="dry"/>, for a module with a filter
-    /// inside it — see <see cref="HissModule"/>.
+    /// inside it — see the Voice plugin's Hiss.
     /// </summary>
-    public static Slot[] Responses(Emitter em, Slot dry, Slot cutoff, Slot resonance)
+    public static Slot[] FilterResponses(Emitter em, Slot dry, Slot cutoff, Slot resonance)
     {
-
         // Nothing in a module is told the sample rate, and neither of these is a
         // socket: the interval is measured off the renderer's own clock and the
         // flag says whether there is a memory behind this program at all. Both

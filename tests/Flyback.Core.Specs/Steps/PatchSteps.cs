@@ -336,6 +336,20 @@ public sealed class PatchSteps(PatchContext context)
         context.HighestFrequency = frequency;
     }
 
+    /// <summary>Filter and Delay are the engine's own (ADR-0128), so this needs no plugin.</summary>
+    [Given("a {float} Hz sine through the engine's own filter and delay")]
+    public void GivenAFilteredAndDelayedSine(float frequency)
+    {
+        context.Add("tone", "osc.sine");
+        context.SetInput("tone", "freq", frequency);
+        context.Add("filter", NodeCatalog.FilterTypeId);
+        context.Add("delay", NodeCatalog.DelayTypeId);
+        context.Wire("tone", "out", "filter", "in");
+        context.Wire("filter", "low", "delay", "in");
+        Hear("delay");
+        context.HighestFrequency = frequency;
+    }
+
     /// <summary>A Threshold on Time picks between the two pitches, so the frequency moves with no edit.</summary>
     [Given("a sine whose frequency jumps from {float} Hz to {float} Hz at {float} seconds")]
     public void GivenAJumpingSine(float from, float to, float seconds)

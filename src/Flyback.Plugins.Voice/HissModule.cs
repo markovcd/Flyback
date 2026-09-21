@@ -8,12 +8,12 @@ namespace Flyback.Plugins.Voice;
 /// wires of a snare, a clap, a riser, wind.
 /// </summary>
 /// <remarks>
-/// A <see cref="RandomModule"/>, a <see cref="FilterModule"/> and the Multiply that
-/// plays them, which is every noise part there is. Which noise and which of the
-/// filter's three responses are settings rather than sockets, because they decide
-/// what is emitted: pink is thirteen lookups nobody should pay for a hat. The noise
-/// has no memory, so a patch that gave several Filters one Random and now gives
-/// each part a Hiss with the same seed plays the samples it played.
+/// The engine's own Random and Filter, and the Multiply that plays them, which is
+/// every noise part there is. Which noise and which of the filter's three responses
+/// are settings rather than sockets, because they decide what is emitted: pink is
+/// thirteen lookups nobody should pay for a hat. The noise has no memory, so a patch
+/// that gave several Filters one Random and now gives each part a Hiss with the same
+/// seed plays the samples it played.
 /// </remarks>
 internal static class HissModule
 {
@@ -75,8 +75,8 @@ internal static class HissModule
     {
         var settings = node.Extra<ExtraState>(StateKey);
 
-        var (white, pink) = RandomModule.Noise(em, node[0], node[5]);
-        var responses = FilterModule.Responses(em, settings?.Chosen(NoiseKey) == Pink ? pink : white, node[2], node[3]);
+        var (white, pink) = NodeCatalog.RandomNoise(em, node[0], node[5]);
+        var responses = NodeCatalog.FilterResponses(em, settings?.Chosen(NoiseKey) == Pink ? pink : white, node[2], node[3]);
 
         var heard = settings?.Chosen(BandKey) switch
         {

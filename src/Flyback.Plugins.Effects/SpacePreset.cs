@@ -24,8 +24,8 @@ internal static class SpacePreset
         var tone = b.Add("osc.sine");
         var struck = b.Add("math.mul");
 
-        var echo = b.Add("flyback.effects.delay", (1, 0.33f), (2, 0.5f), (3, 0.45f));
-        var room = b.Add("flyback.effects.reverb", (1, 0.7f), (2, 0.75f), (3, 0.35f));
+        var echo = b.Add(NodeCatalog.DelayTypeId, (1, 0.33f), (2, 0.5f), (3, 0.45f));
+        var room = b.Add(NodeCatalog.ReverbTypeId, (1, 0.7f), (2, 0.75f), (3, 0.35f));
 
         var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 0.5f));
 
