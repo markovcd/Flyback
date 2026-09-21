@@ -29,7 +29,10 @@ public sealed class WindowsFileTypesTests : IDisposable
 
     public void Dispose()
     {
-        Registry.CurrentUser.DeleteSubKeyTree(scratch, throwOnMissingSubKey: false);
+        if (OperatingSystem.IsWindows())
+        {
+            Registry.CurrentUser.DeleteSubKeyTree(scratch, throwOnMissingSubKey: false);
+        }
 
         Directory.Delete(folder, recursive: true);
     }
