@@ -500,8 +500,9 @@ before it builds anything, then zips each platform, writes `SHA256SUMS` and sign
 it. `pages.yml` publishes `site/` unbuilt on every push to `main` that touches it,
 which is why a site edit goes in the same commit as the change it describes.
 
-A plain build reports `0.1.0+<seven-character commit>`. A release passes
-`-p:Version=`.
+A plain build reports `0.1.0-dev+<seven-character commit>`, or `0.1.0-dev` where
+there is no checkout to read a commit from, and the suffix is what keeps it from
+updating itself or being counted. A release passes `-p:Version=`.
 
 ---
 

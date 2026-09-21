@@ -26,9 +26,10 @@ internal static class ReleaseFeed
     /// The version this program is, or null for a build that is not a release.
     /// </summary>
     /// <remarks>
-    /// A plain build carries the commit after a plus — see Directory.Build.props —
-    /// and reports the same 0.1.0 whatever it was built from, so it has no place in
-    /// the order releases come in and is never updated.
+    /// A plain build carries a suffix, and the commit after a plus where there is
+    /// one — see Directory.Build.props — and reports the same 0.1.0 whatever it was
+    /// built from, so it has no place in the order releases come in and is never
+    /// updated.
     /// </remarks>
     public static Version? Running() =>
         Released(typeof(ReleaseFeed).Assembly

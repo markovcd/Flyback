@@ -115,6 +115,7 @@
 - A corrupt sample or picture is reported rather than taking Flyback down with it.
 - Sign answers 0 for a value that is not a number instead of stopping the render, and agrees with the GPU about an infinite one.
 - `flyback-cli render --size` says a frame is too large rather than failing at the arithmetic.
+- A Flyback built from a source archive or a plain `docker build` no longer updates itself or counts its use.
 - Several other bugfixes.
 
 ## 0.3.0 — 2026-09-17

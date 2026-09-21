@@ -93,7 +93,7 @@ jobs:
 
       # Same command as "Docker builds" in the README, plus the version so the
       # published binaries — assembly version, file version, and the About
-      # window — report the release number rather than the Dockerfile's 0.1.0
+      # window — report the release number rather than the Dockerfile's 0.1.0-dev
       # default. Restores, builds, runs the whole test suite, and publishes
       # one self-contained folder per platform for the project's default RID
       # set.

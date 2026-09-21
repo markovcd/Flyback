@@ -31,8 +31,10 @@ ARG CONFIGURATION=Release
 # their own file properties — see Directory.Build.props for how Version
 # reaches AssemblyVersion, AssemblyFileVersion and AssemblyInformationalVersion.
 # Defaulted rather than required, so a plain `docker build --output artifacts .`
-# still works; the release workflow is what passes the real one.
-ARG VERSION=0.1.0
+# still works; the release workflow is what passes the real one. The default
+# carries a suffix because a bare version is a release to ReleaseFeed and to
+# Usage, and .dockerignore leaves no commit here to mark the build otherwise.
+ARG VERSION=0.1.0-dev
 
 # Everything a change has to get past. An argument declared above the first FROM
 # is one default for both stages, and a stage asks for one by repeating it bare.

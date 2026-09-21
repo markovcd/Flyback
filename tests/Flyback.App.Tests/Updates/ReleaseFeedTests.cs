@@ -64,6 +64,8 @@ public class ReleaseFeedTests
     [InlineData("0.3.0", "0.3.0")]
     [InlineData("1.12.4", "1.12.4")]
     [InlineData("0.1.0+37fc87f", null)]
+    [InlineData("0.1.0-dev+37fc87f", null)]
+    [InlineData("0.1.0-dev", null)]
     [InlineData("0.4.0-beta", null)]
     [InlineData("0.4", null)]
     [InlineData(null, null)]

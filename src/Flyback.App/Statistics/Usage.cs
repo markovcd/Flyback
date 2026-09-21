@@ -180,8 +180,7 @@ public sealed class Usage
     /// <param name="settings"><inheritdoc cref="Start(UsageSettings, Launch?)"/></param>
     /// <param name="running">
     /// The release this is, or null for a build that is not one. Taken rather than
-    /// read from the assembly because a build with no git checkout beside it — the
-    /// Docker one — carries a bare version and cannot be told from a release.
+    /// read from the assembly so a test can say which it is.
     /// </param>
     /// <param name="launch">How this run began.</param>
     internal static Usage Start(UsageSettings settings, Version? running, Launch? launch = null)

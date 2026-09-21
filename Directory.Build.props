@@ -22,13 +22,16 @@
       The version a plain build reports. Every version-bearing assembly
       attribute (AssemblyVersion, AssemblyFileVersion,
       AssemblyInformationalVersion) is derived from this single property,
-      which is what About.cs reads back.
+      which is what About.cs reads back. The suffix is what says it is not a
+      release where there is no commit to say so: a build from a source
+      archive has no .git, and a bare version is one ReleaseFeed updates and
+      Usage counts.
     -->
-    <Version Condition="'$(Version)' == ''">0.1.0</Version>
+    <Version Condition="'$(Version)' == ''">0.1.0-dev</Version>
 
     <!--
       A release build's version already names a real release and stands on
-      its own. A dev build's does not — every plain build is "0.1.0" until
+      its own. A dev build's does not — every plain build is "0.1.0-dev" until
       the next release, so the commit it was built from is what actually
       tells two of them apart. ShortenSourceRevisionId below trims that
       commit to seven characters before GenerateAssemblyInfo appends it.
@@ -78,7 +81,7 @@
     $(SourceRevisionId) is the full 40-character commit hash the SDK reads
     from .git; AddSourceRevisionToInformationalVersion appends it verbatim.
     Hooked between the target that sets it and the one that appends it, so a
-    dev build's version reads "0.1.0+37fc87f" rather than the full hash.
+    dev build's version reads "0.1.0-dev+37fc87f" rather than the full hash.
   -->
   <Target Name="ShortenSourceRevisionId"
           AfterTargets="InitializeSourceControlInformation"
