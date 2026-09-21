@@ -84,7 +84,7 @@
 - Unsaved work survives a crash: the next start restores it and says so in the status bar.
 - A module carries its category's color down its body and a mark of what it does behind its sockets, with a drawing of its own for the ones you would name; groups are drawn to match.
 - Ctrl+B switches a module or a whole box off: what is patched into it comes straight out of it, and nothing does where nothing is patched in.
-- Holding the right button on a module, or on a shut box, mutes it until you let go.
+- Holding the right button on a module, or on a shut box, switches it off until you let go, or on if it was off.
 - About has a bitcoin address to donate to, as a QR code that copies it when clicked.
 - Flyback reopens as you left it: window size or maximized, monitor, panel sizes, which panels are open, the text view and the swapped preview. A second copy is placed by the system rather than on top of the first.
 - Ctrl+O and Ctrl+S open and save, and Ctrl+D duplicates the selection beside itself.

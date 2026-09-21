@@ -98,15 +98,39 @@ public class HoldMuteTests : UiTest
     }
 
     [AvaloniaFact]
-    public void A_module_that_was_already_off_stays_off()
+    public void A_module_that_is_off_is_on_while_the_button_is_down_and_off_again_after()
     {
         var (editor, window) = Editing(Chain(out _, out var osc, out _));
 
         osc.Off = true;
 
         Down(editor, window, Body(osc));
+
+        osc.Off.ShouldBeFalse();
+
         Up(editor, window, Body(osc));
 
+        osc.Off.ShouldBeTrue();
+    }
+
+    [AvaloniaFact]
+    public void A_box_that_is_entirely_off_is_on_while_held()
+    {
+        var patch = Chain(out var clock, out var osc, out _);
+        var group = patch.Group([clock.Id, osc.Id]).ShouldNotBeNull();
+        var (editor, window) = Editing(patch);
+
+        clock.Off = true;
+        osc.Off = true;
+
+        Down(editor, window, Header(editor, group));
+
+        clock.Off.ShouldBeFalse();
+        osc.Off.ShouldBeFalse();
+
+        Up(editor, window, Header(editor, group));
+
+        clock.Off.ShouldBeTrue();
         osc.Off.ShouldBeTrue();
     }
 

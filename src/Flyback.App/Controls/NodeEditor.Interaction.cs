@@ -53,12 +53,12 @@ public sealed partial class NodeEditor
                 && Scene.HitNode(graph) is null)
                 MenuRequested?.Invoke(this, graph);
 
-            // Over a module, or a shut box, the button is held to mute it; see
+            // Over a module, or a shut box, the button is held to flip it; see
             // NodeEditor.Hold.cs. Over a socket, or an open group's strip, it does nothing.
             if (!Scene.HitPort(graph, out _, out _, out _))
             {
-                if (Scene.HitBox(graph) is { } shut) HoldOff(shut.Members);
-                else if (Scene.HitNode(graph) is { } under) HoldOff([under.Id]);
+                if (Scene.HitBox(graph) is { } shut) Hold(shut.Members);
+                else if (Scene.HitNode(graph) is { } under) Hold([under.Id]);
 
                 if (this.held.Count > 0) e.Pointer.Capture(this);
             }
