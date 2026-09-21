@@ -1,6 +1,6 @@
 # ADR-0017: Draw the node editor in one custom control
 
-**Status:** Accepted · 2026-08-11 · amended 2026-09-09, where the one control becomes one class across a file per region
+**Status:** Accepted · 2026-08-11 · amended 2026-09-09, where the one control becomes one class across a file per region; amended 2026-09-21, where what reads only the patch leaves the control
 
 ## Context
 
@@ -82,3 +82,14 @@ scale, invisible at the scale this runs.
 Rendering is also unclipped per node: a long port name is trimmed with an
 ellipsis via `MaxTextWidth`, but nothing enforces that a module's contents stay
 inside its own bounds. `NodeGeometry` sizing keeps them there by construction.
+
+## Amendment, 2026-09-21: what the canvas shows is not the control
+
+What the canvas shows and what lies under a point read only the patch, so they
+are a `CanvasScene` over it, reached as `Scene` and built afresh each time the
+patch is. The wire curves are `WirePath`, an Expression's formula block is
+`FormulaLayout`, canvas text is `CanvasText`, and socket and mark painting joined
+`NodeSkin`. `NodeEditor.Formulas.cs` is gone and what was left of hit-testing is
+`NodeEditor.Selection.cs`. There is still one control and one `Render`; the
+editor keeps the gestures, the selection and the painting of modules, which share
+its state and would need it passed in.

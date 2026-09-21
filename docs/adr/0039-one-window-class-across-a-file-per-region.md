@@ -1,6 +1,6 @@
 # ADR-0039: One window class, across a file per region
 
-**Status:** Accepted · 2026-08-18 · amended 2026-09-09, where a region grows past the size this promised and the fix is a shared row rather than another file
+**Status:** Accepted · 2026-08-18 · amended 2026-09-09, where a region grows past the size this promised and the fix is a shared row rather than another file; amended 2026-09-21, where the pieces that need nothing of the window become classes
 
 ## Context
 
@@ -116,3 +116,22 @@ The lesson for the rule is that a file per region bounds how much is *in front o
 a reader, and nothing else. It does not bound duplication inside a region, and a
 region that is a panel of forms will always tend to grow one row builder per kind
 of thing there is. The answer there is a shared row, not a further file.
+
+## Amendment, 2026-09-21: the pieces that were never the window's
+
+The test this record set for a region becoming a class is whether it needs the
+window's fields passed in and handed back. Applied piece by piece rather than
+region by region, a good deal passes it. The inspector's row builders need only
+"the patch changed" and "the hand came off"; the inspector's shape, the rename
+box, the file kinds, the take names, the clock text, returning the window to its
+monitor, the toolbar's button makers and the plugin summary need nothing of the
+window at all; the Canvas, Updates and Usage settings sections each need one
+call back. Those are classes now (`InspectorRows`, `InspectorShape`, `NameBox`,
+`PatchFileKinds`, `Takes`, `StatusClock`, `MonitorPlacement`, `ToolbarButtons`,
+`PluginSummary`, `CanvasSection`, `UpdatesSection`, `UsageSection`), and
+`MainWindow.Canvas.cs` and `MainWindow.Updates.cs` are gone.
+
+What stayed is what failed the test: the text view's ownership and write-back
+state, which the undo landing, the files and the recovery all write, and the
+output settings, which reach fifteen of the window's controls. The regions are
+still partial files; what left them was never part of the region.
