@@ -185,6 +185,45 @@
     <Compile Update="MainWindow.Updates.cs">
       <DependentUpon>MainWindow.cs</DependentUpon>
     </Compile>
+    <Compile Update="Controls\NodeEditor.Buses.cs">
+      <DependentUpon>NodeEditor.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Controls\NodeEditor.Controls.cs">
+      <DependentUpon>NodeEditor.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Controls\NodeEditor.Hold.cs">
+      <DependentUpon>NodeEditor.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Controls\NodeEditor.Selection.cs">
+      <DependentUpon>NodeEditor.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Controls\NodeEditor.Tips.cs">
+      <DependentUpon>NodeEditor.cs</DependentUpon>
+    </Compile>
+    <Compile Update="MainWindow.Audition.cs">
+      <DependentUpon>MainWindow.cs</DependentUpon>
+    </Compile>
+    <Compile Update="MainWindow.Controls.cs">
+      <DependentUpon>MainWindow.cs</DependentUpon>
+    </Compile>
+    <Compile Update="MainWindow.Encoding.cs">
+      <DependentUpon>MainWindow.cs</DependentUpon>
+    </Compile>
+    <Compile Update="MainWindow.Layout.cs">
+      <DependentUpon>MainWindow.cs</DependentUpon>
+    </Compile>
+    <Compile Update="MainWindow.Presets.cs">
+      <DependentUpon>MainWindow.cs</DependentUpon>
+    </Compile>
+    <Compile Update="MainWindow.Recovery.cs">
+      <DependentUpon>MainWindow.cs</DependentUpon>
+    </Compile>
+    <Compile Update="MainWindow.Transport.cs">
+      <DependentUpon>MainWindow.cs</DependentUpon>
+    </Compile>
+    <Compile Update="MainWindow.Usage.cs">
+      <DependentUpon>MainWindow.cs</DependentUpon>
+    </Compile>
   </ItemGroup>
 
   <ItemGroup>

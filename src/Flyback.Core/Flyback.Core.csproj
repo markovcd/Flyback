@@ -57,6 +57,12 @@
     <Compile Update="Graph\Presets.WholeBand.cs">
       <DependentUpon>Presets.cs</DependentUpon>
     </Compile>
+    <Compile Update="Graph\NodeCatalog.Buses.cs">
+      <DependentUpon>NodeCatalog.cs</DependentUpon>
+    </Compile>
+    <Compile Update="Graph\NodeCatalog.Duck.cs">
+      <DependentUpon>NodeCatalog.cs</DependentUpon>
+    </Compile>
   </ItemGroup>
 
   <ItemGroup>
