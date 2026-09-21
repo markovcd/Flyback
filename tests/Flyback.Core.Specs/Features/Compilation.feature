@@ -39,13 +39,8 @@ Feature: Compiling a patch
     When the patch is compiled
     Then compilation reports no issues
 
-  # An oscillator accumulates how far its 'in' moved, so one left on a constant
-  # holds a single value: silence at the speakers, a flat field on the screen.
-  # That was the one mistake a patch could make that read perfectly and did
-  # nothing, and the compiler used to be all there was to catch it. Every domain
-  # is normalled to Time now, so there is nothing left to catch: an oscillator
-  # with nothing plugged in runs, and the clock it runs on is in the program
-  # without a Time module anywhere in the patch.
+  # An oscillator with nothing plugged into its domain runs, and the clock it
+  # runs on is in the program without a Time module anywhere in the patch.
   Scenario: A domain with nothing patched into it is driven by Time
     Given a patch containing:
       | name   | module       |
@@ -70,7 +65,7 @@ Feature: Compiling a patch
     Then the centre pixel is about 0, 0, 0
 
   # Patching overrides the normal exactly as it overrides a knob. Nothing reads
-  # the clock any more, so nothing loads it.
+  # the clock, so nothing loads it.
   Scenario: A wire into a normalled socket replaces what was normalled to it
     Given a patch containing:
       | name   | module       |
@@ -118,20 +113,6 @@ Feature: Compiling a patch
     When the patch is compiled
     Then compilation reports an issue containing "Unknown module"
     And the rendered image is entirely black
-
-  # The wire that closes the loop carries the evaluation before, so a cycle is a
-  # patch rather than a complaint — see ADR-0075.
-  Scenario: A cycle compiles rather than being reported
-    Given a patch containing:
-      | name   | module       |
-      | first  | math.add     |
-      | second | math.add     |
-      | screen | output       |
-    And "first" output "out" is wired to "second" input "a"
-    And "second" output "out" is wired to "first" input "a"
-    And "second" output "out" is wired to "screen" input "color"
-    When the patch is compiled
-    Then compilation reports no issues
 
   Scenario: A well-formed patch compiles cleanly
     Given a patch containing:

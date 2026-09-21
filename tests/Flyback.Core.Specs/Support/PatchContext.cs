@@ -95,6 +95,59 @@ public sealed class PatchContext
         return buffer;
     }
 
+    /// <summary>
+    /// The rate the sound is heard at sample by sample. Low enough that a second is
+    /// a thousand samples and a step in the feature files is a millisecond.
+    /// </summary>
+    public const int SampleRate = 1_000;
+
+    private readonly List<double> heard = [];
+    private DelayState? memory;
+    private CompiledPatch? memoryFor;
+
+    /// <summary>Every sample of the left channel played so far, across every rebuild.</summary>
+    public IReadOnlyList<double> Heard => heard;
+
+    /// <summary>
+    /// Evaluates the audio program straight, without the renderer's oversampling
+    /// and filters, so a sample is exactly what the patch computed. Memory is
+    /// carried to a rebuilt program the way the live engine carries it.
+    /// </summary>
+    public void Play(int samples)
+    {
+        var program = Program;
+
+        if (!ReferenceEquals(memoryFor, program))
+        {
+            var fresh = new DelayState(program, SampleRate);
+            if (memory is not null) fresh.Adopt(memory);
+            memory = fresh;
+            memoryFor = program;
+        }
+
+        var registers = program.AllocateRegisters();
+
+        for (var i = 0; i < samples; i++)
+        {
+            program.Evaluate(0d, 0d, (double)heard.Count / SampleRate, registers, default, memory);
+            heard.Add(registers[program.OutputBase]);
+        }
+    }
+
+    /// <summary>Plays on until the sample at <paramref name="index"/> has been heard.</summary>
+    public double SampleAt(int index)
+    {
+        if (heard.Count <= index) Play(index + 1 - heard.Count);
+        return heard[index];
+    }
+
+    /// <summary>Changes a knob and recompiles for the speakers, as an edit made while the sound plays does.</summary>
+    public void Turn(string name, string port, float value)
+    {
+        SetInput(name, port, value);
+        CompileFor("audio");
+    }
+
     public int CountOps(OpCode code) => Program.Ops.Count(op => op.Code == code);
 
     /// <summary>

@@ -606,7 +606,7 @@ changed: saved patches name it.
 | Project | Tests | Notes |
 |---|---|---|
 | `Flyback.Core.Tests` | Model, compiler, backends, language, renderers | The only user of Verify (snapshots) and CsCheck (properties) |
-| `Flyback.Core.Specs` | Compiler behavior as Gherkin scenarios | Reqnroll; no C# test methods |
+| `Flyback.Core.Specs` | Compiler and playback behavior as Gherkin scenarios | Reqnroll; no C# test methods |
 | `Flyback.App.Tests` | Editor, viewer, audio engine, capture, updates | Headless Avalonia |
 | `Flyback.Cli.Tests` | Commands run in-process | |
 | `Flyback.Plugins.Tests` | The host, every shipped module and preset | Loads real plugins off disk |
@@ -776,7 +776,7 @@ commit is a finding, not a chore.
 
 ### Specs
 
-`Flyback.Core.Specs` states compiler behavior as prose a reader can check:
+`Flyback.Core.Specs` states compiler and playback behavior as prose a reader can check:
 
 ```gherkin
 Scenario: Every socket normalled to Time shares one reading of it
@@ -794,9 +794,11 @@ Scenario: Every socket normalled to Time shares one reading of it
 ```
 
 One binding class, `PatchSteps`, serves every feature, with a fresh `PatchContext`
-per scenario. Add a scenario when the behavior is a rule of the compiler that fits
-the existing steps (dead code, port typing, guarded arithmetic, feedback,
-defaults). Write a C# test for anything else.
+per scenario. Add a scenario when the behavior is a rule a patch author relies on
+and fits the existing steps (dead code, port typing, guarded arithmetic, loops,
+phase, switched-off modules, memory across an edit). The sound steps evaluate the
+audio program at 1 kHz without the renderer's filters, so a sample is exactly what
+the patch computed. Write a C# test for anything else.
 
 ### Skips and optional outputs
 

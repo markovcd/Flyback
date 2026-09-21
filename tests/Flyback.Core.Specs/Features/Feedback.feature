@@ -1,9 +1,8 @@
 Feature: Feedback reads the previous frame
-  The camera-pointed-at-its-own-monitor effect. A pixel cannot depend on itself,
-  so the frame delay is an explicit module rather than a cycle in the graph —
-  and the graph stays acyclic.
+  The camera-pointed-at-its-own-monitor effect. Feedback reads the whole of the
+  previous frame, anywhere on it; a loop in the graph reads only this pixel's.
 
-  Specified by ADR-0012.
+  Specified by ADR-0012, with ADR-0075 for loops.
 
   Scenario: Feedback reads black before any frame has been rendered
     Given a patch containing:
