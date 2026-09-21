@@ -367,14 +367,21 @@ public static class ExpressionFusion
     }
 
     /// <summary>
-    /// A call, with two numbers either side of an operator put on sockets: the
-    /// formula's reader would add them up as floats where the program adds them
-    /// in its registers.
+    /// A call, with two numbers either side of an operator, or one under a minus,
+    /// put on sockets: the formula's reader would add them up as floats where the
+    /// program adds them in its registers.
     /// </summary>
-    private static Call Make(string typeId, IReadOnlyList<Term> arguments) =>
-        Folding.Contains(typeId) && arguments is [Literal left, Literal right]
-            ? new Call(typeId, [new Knob(left.Value, null, Guid.NewGuid(), 0), new Knob(right.Value, null, Guid.NewGuid(), 1)])
-            : new Call(typeId, arguments);
+    private static Call Make(string typeId, IReadOnlyList<Term> arguments) => arguments switch
+    {
+        [Literal left, Literal right] when Folding.Contains(typeId) =>
+            new Call(typeId, [new Knob(left.Value, null, Guid.NewGuid(), 0), new Knob(right.Value, null, Guid.NewGuid(), 1)]),
+
+        // The reader takes a minus on a number for the number, and would then
+        // add it to the number beside it.
+        [Literal only] when typeId == "math.neg" => new Call(typeId, [new Knob(only.Value, null, Guid.NewGuid(), 0)]),
+
+        _ => new Call(typeId, arguments),
+    };
 
     /// <summary>
     /// Every module on a loop. Nothing on one folds into anything, nor anything

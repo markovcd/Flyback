@@ -155,6 +155,27 @@ public class ExpressionFusionTests
         expression.InputValues[1].ShouldBe(0.2f);
     }
 
+    /// <summary>
+    /// A negated number stays on a socket too: the reader takes <c>-1</c> for a
+    /// number, and would divide it by the one beside it as floats.
+    /// </summary>
+    [Fact]
+    public void A_negated_number_stays_on_a_socket()
+    {
+        var b = new PatchBuilder(NodeCatalog.BuiltIn);
+        var ratio = b.Add("math.div", (1, 1e-7f));
+        b.Wire(b.Add("math.neg", (0, 1f)), 0, ratio, 0);
+        var sink = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 1f));
+        b.Wire(ratio, 0, sink, NodeCatalog.OutputLeftPort);
+
+        var fused = Fused(b.Patch);
+
+        var expression = Of(fused, Expression).ShouldHaveSingleItem();
+
+        Formula(expression).ShouldBe("-a / 1E-07");
+        expression.InputValues[0].ShouldBe(1f);
+    }
+
     /// <summary>A named module is an Expression under its name, which nothing folds into anything else.</summary>
     [Fact]
     public void A_named_module_keeps_its_name()
