@@ -21,9 +21,6 @@ public sealed partial class MainWindow
     /// <summary>The knobs over the picture while it has the window.</summary>
     private readonly StageKnobs stageKnobs = new() { IsVisible = false };
 
-    /// <summary>Whether the knobs are wanted over the full-screen picture, where the patch has any.</summary>
-    private bool stageKnobsWanted = true;
-
     /// <summary>The edge above the panel, dragged to give it more rows or fewer.</summary>
     private readonly GridSplitter controlsSplitter = new()
     {
@@ -193,22 +190,15 @@ public sealed partial class MainWindow
     /// <summary>Every set of knobs over a picture: the window's own, and the other monitor's while it has one.</summary>
     private IEnumerable<StageKnobs> Stages => pictureKnobs is { } away ? [stageKnobs, away] : [stageKnobs];
 
-    /// <summary>Shows or hides the knobs over the full-screen picture.</summary>
-    private void ToggleStageKnobs()
-    {
-        stageKnobsWanted = !stageKnobsWanted;
-        SyncStageKnobs();
-    }
-
     /// <summary>
     /// Puts the knobs over the picture where it is full screen, they are wanted and
     /// the patch has any.
     /// </summary>
     private void SyncStageKnobs()
     {
-        stageKnobs.IsVisible = previewIsFullScreen && stageKnobsWanted && stageKnobs.Any;
+        stageKnobs.IsVisible = previewIsFullScreen && stageKnobs.Any;
 
-        if (pictureKnobs is { } away) away.IsVisible = stageKnobsWanted && away.Any;
+        if (pictureKnobs is { } away) away.IsVisible = away.Any;
     }
 
     /// <summary>The settings window's MIDI section: what a controller does to a knob that sits elsewhere.</summary>

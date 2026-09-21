@@ -420,11 +420,9 @@ public sealed partial class MainWindow
                 e.Handled = true;
                 break;
 
-            // The panel has no room while the picture has the window, so there
-            // the knobs over the picture come and go instead.
+            // The panel has no room while the picture has the window.
             case Key.K:
-                if (previewIsFullScreen) ToggleStageKnobs();
-                else ShowControls(!controlsPanel.IsVisible);
+                if (!previewIsFullScreen) ShowControls(!controlsPanel.IsVisible);
 
                 e.Handled = true;
                 break;

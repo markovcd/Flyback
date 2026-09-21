@@ -85,12 +85,6 @@ public class StageKnobTests : UiTest
         Settle(window);
     }
 
-    private static void CtrlK(Window window)
-    {
-        window.KeyPressQwerty(PhysicalKey.K, RawInputModifiers.Control);
-        Settle(window);
-    }
-
     // --- the editor ----------------------------------------------------------
 
     [AvaloniaFact]
@@ -203,43 +197,6 @@ public class StageKnobTests : UiTest
     }
 
     [AvaloniaFact]
-    public void Ctrl_K_hides_and_shows_them_while_the_picture_has_the_window()
-    {
-        var (patch, _) = Board();
-        var window = FullScreen(patch);
-
-        CtrlK(window);
-        Stage(window).IsVisible.ShouldBeFalse();
-
-        CtrlK(window);
-        Stage(window).IsVisible.ShouldBeTrue();
-    }
-
-    [AvaloniaFact]
-    public void Hiding_them_is_kept_across_leaving_and_entering_full_screen()
-    {
-        var (patch, _) = Board();
-        var window = FullScreen(patch);
-
-        CtrlK(window);
-        Stage(window).IsVisible.ShouldBeFalse();
-
-        window.KeyPress(Key.Escape, RawInputModifiers.None, PhysicalKey.Escape, null);
-        Settle(window);
-
-        var preview = All<PreviewHost>(window).Single();
-        var at = preview.TranslatePoint(new Point(preview.Bounds.Width / 2, preview.Bounds.Height / 3), window)!.Value;
-
-        window.MouseDown(at, MouseButton.Left);
-        window.MouseUp(at, MouseButton.Left);
-        window.MouseDown(at, MouseButton.Left);
-        window.MouseUp(at, MouseButton.Left);
-        Settle(window);
-
-        Stage(window).IsVisible.ShouldBeFalse("hidden until asked for again");
-    }
-
-    [AvaloniaFact]
     public void A_knob_says_nothing_but_its_tip_with_its_name_and_reading()
     {
         var (patch, knob) = Board();
@@ -289,19 +246,6 @@ public class StageKnobTests : UiTest
         Stage(window).IsVisible.ShouldBeFalse("back in the editor, and out of the way");
     }
 
-    [AvaloniaFact]
-    public void Ctrl_K_on_the_picture_s_own_window_hides_its_knobs()
-    {
-        var (patch, _) = Board();
-        var window = SentAway(patch);
-        var picture = window.OwnedWindows.Single();
-
-        picture.KeyPressQwerty(PhysicalKey.K, RawInputModifiers.Control);
-        Settle(window);
-
-        Stage(picture).IsVisible.ShouldBeFalse();
-    }
-
     // --- the viewer ----------------------------------------------------------
 
     private ViewerWindow Viewer(Patch patch, bool noOverlay = false)
@@ -335,19 +279,6 @@ public class StageKnobTests : UiTest
         var window = Viewer(patch);
 
         Stage(window).IsVisible.ShouldBeFalse();
-    }
-
-    [AvaloniaFact]
-    public void Ctrl_K_hides_and_shows_them_in_the_viewer()
-    {
-        var (patch, _) = Board();
-        var window = Viewer(patch);
-
-        CtrlK(window);
-        Stage(window).IsVisible.ShouldBeFalse();
-
-        CtrlK(window);
-        Stage(window).IsVisible.ShouldBeTrue();
     }
 
     [AvaloniaFact]

@@ -96,8 +96,6 @@ internal sealed partial class ViewerWindow : Window
             // Space, which no layout plays, and the editor's Ctrl+P.
             else if ((bare && e.Key == Key.Space) || (command && e.Key == Key.P)) TogglePause();
 
-            else if (command && e.Key == Key.K) ToggleKnobs();
-
             else if (!bare || !player.KeyDown(e.Key)) return;
 
             e.Handled = true;
@@ -144,13 +142,6 @@ internal sealed partial class ViewerWindow : Window
         player.Turned += (id, value) => Dispatcher.UIThread.Post(() => knobs.Move(id, value));
 
         return knobs;
-    }
-
-    private void ToggleKnobs()
-    {
-        if (Knobs is not { Any: true } knobs) return;
-
-        knobs.IsVisible = !knobs.IsVisible;
     }
 
     private TransportOverlay BuildOverlay()

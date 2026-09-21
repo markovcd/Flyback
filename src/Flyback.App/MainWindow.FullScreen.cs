@@ -207,8 +207,7 @@ public sealed partial class MainWindow
         {
             var command = (e.KeyModifiers & (KeyModifiers.Control | KeyModifiers.Meta)) != 0;
 
-            if (command && e.Key == Key.K) ToggleStageKnobs();
-            else if (command && e.Key == Key.P) TogglePause();
+            if (command && e.Key == Key.P) TogglePause();
             else if (e.Key == Key.Escape) window.Close();
             else return;
 
