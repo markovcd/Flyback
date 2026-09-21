@@ -297,7 +297,7 @@ public sealed partial class NodeEditor
                 isSelected ? OpenGroupPenSelected : OpenGroupPen,
                 new RoundedRect(outline, GroupCornerRadius));
 
-            var label = CanvasText.Text(group.Title(), 11.5, CanvasText.LabelBrush, outline.Width - TabPadding * 2, true);
+            var label = CanvasText.Text(group.Title(), CanvasText.RowSize, CanvasText.LabelBrush, outline.Width - TabPadding * 2, true);
 
             // A tab only as wide as the name it carries, sitting on the ring: it
             // joins the name to the region without becoming the header a shut box
@@ -346,24 +346,30 @@ public sealed partial class NodeEditor
         // them — there is nothing else it could mean for a box to be picked.
         var isSelected = group.Members.Count > 0 && group.Members.All(selection.Contains);
 
+        // A box has no focus of its own — a module does — but the inspector's
+        // subject can be one of a shut box's hidden members, the same way
+        // pressing the box leaves focus on one of them. That is the rule a
+        // module's border follows, so a box follows it too.
+        var isFocused = focus is { } f && group.Members.Contains(f);
+
         var body = new RoundedRect(bounds, NodeGeometry.CornerRadius);
 
         context.DrawRectangle(
             NodeSkin.Box(isSelected),
-            isSelected ? SelectionPenSecondary : NodeSkin.Edge,
+            !isSelected ? NodeSkin.Edge : isFocused ? SelectionPen : SelectionPenSecondary,
             body);
 
         NodeSkin.DrawMark(context, body, ModuleGlyphs.Group, NodeSkin.BoxMark);
 
         var header = new Rect(bounds.X, bounds.Y, bounds.Width, NodeGeometry.HeaderHeight);
         context.DrawRectangle(
-            NodeSkin.BoxHeader,
+            NodeSkin.BoxHeaderOf(isSelected),
             null,
             new RoundedRect(header, NodeGeometry.CornerRadius, NodeGeometry.CornerRadius, 0, 0));
 
         NodeSkin.Relief(context, header);
 
-        var title = CanvasText.Text(group.Title(), 12.5, HeaderTextBrush, bounds.Width - 16, true);
+        var title = CanvasText.Text(group.Title(), HeaderSize, HeaderTextBrush, bounds.Width - 16, true);
         var titleAt = new Point(bounds.X + 9, bounds.Y + 5);
 
         context.DrawText(title, titleAt);
@@ -392,7 +398,7 @@ public sealed partial class NodeEditor
         if (Scene.Named(socket) is not var (label, spec)) return;
 
         var width = bounds.Width - SocketLabelRoom;
-        var text = CanvasText.Text(CanvasText.Fit(label, width), 11.5, CanvasText.LabelBrush, width, true);
+        var text = CanvasText.Text(CanvasText.Fit(label, width), CanvasText.RowSize, CanvasText.LabelBrush, width, true);
 
         context.DrawText(
             text,

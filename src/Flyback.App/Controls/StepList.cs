@@ -34,10 +34,15 @@ internal sealed class StepList
     internal const string RowTag = "step-row";
 
     private static readonly IBrush Faint = new SolidColorBrush(Colors.Muted);
-    private static readonly IBrush Accent = new SolidColorBrush(Colors.Source);
 
     private readonly NodeInstance node;
     private readonly StepSpec spec;
+
+    /// <summary>
+    /// The module's own accent — sequencers live in Timing, but a plugin's own
+    /// skin is followed the way <see cref="ScaleKeys"/> follows one.
+    /// </summary>
+    private readonly IBrush accent;
     /// <summary>
     /// Told that the notes changed, and under what name to file it. A volume is
     /// a bar one drags, so a note's own edits carry the row they came from and
@@ -63,11 +68,12 @@ internal sealed class StepList
     private int dragTo;
     private Point dragOrigin;
 
-    public StepList(NodeInstance node, StepSpec spec, Action<string?> changed)
+    public StepList(NodeInstance node, StepSpec spec, Color accent, Action<string?> changed)
     {
         this.node = node;
         this.spec = spec;
         this.changed = changed;
+        this.accent = new SolidColorBrush(accent);
 
         notes = StepsExtra.Of(node);
 
@@ -189,7 +195,7 @@ internal sealed class StepList
         var line = new Border
         {
             Height = 2,
-            Background = Accent,
+            Background = accent,
             Opacity = 0,
             VerticalAlignment = VerticalAlignment.Center,
             Margin = new Thickness(16, 0, 22, 0),
@@ -285,7 +291,7 @@ internal sealed class StepList
 
         ToolTip.SetTip(length, "How long this note lasts, in steps. 2 is twice as long as 1.");
 
-        var volume = new LevelBar
+        var volume = new LevelBar(accent)
         {
             Value = step.Volume,
             Margin = new Thickness(3, 0, 6, 0),
@@ -481,13 +487,17 @@ internal sealed class StepList
 internal sealed class LevelBar : Control
 {
     private static readonly IBrush Track = new SolidColorBrush(Colors.GridMajor);
-    private static readonly IBrush Fill = new SolidColorBrush(Colors.Oscillator);
     private static readonly IBrush Empty = new SolidColorBrush(Colors.Inactive);
+
+    /// <summary>How full it is drawn, the module's own accent rather than a fixed color — see <see cref="StepList"/>.</summary>
+    private readonly IBrush fill;
 
     private double level;
 
-    public LevelBar()
+    public LevelBar(IBrush fill)
     {
+        this.fill = fill;
+
         Height = 12;
         MinWidth = 40;
         Cursor = new Cursor(StandardCursorType.Hand);
@@ -525,7 +535,7 @@ internal sealed class LevelBar : Control
         }
 
         var width = Math.Max(full.Width * level, full.Height);
-        context.DrawRectangle(Fill, null, new RoundedRect(full.WithWidth(width), radius));
+        context.DrawRectangle(fill, null, new RoundedRect(full.WithWidth(width), radius));
     }
 
     protected override void OnPointerPressed(PointerPressedEventArgs e)

@@ -35,12 +35,19 @@ bottom third of a large one, and capped at 52 units so a tall module's mark
 does not become the module.
 
 **A module earns a mark of its own by being the only one of itself.** The four
-fixed waveforms and the pulse, the clock and the plane everything is normalled
-to, the sink, the loop, the braces of an Expression, the four sources that are
-not a computed signal, and the three modules that show a signal rather than
-measure it. **Everything else is drawn as its category**, which is fourteen
-more paths — a wave in a ring for the Oscillators, an envelope for Timing, a
-transfer curve for Shaping, decaying repeats for the time effects.
+fixed waveforms, the pulse and the plucked string, the clock and the plane
+everything is normalled to, the sink, the turn a Feedback reads and the loop a
+Scan reads, the two ends of a bus, the braces of an Expression, the four
+sources that are not a computed signal, the tempo and the sample-and-hold, the
+desk that sums four of anything, the noise field, the sidechain duck, the
+scale quantiser, the random, the filter and the drive, the delay and the
+reverb, and Measurement's five ways of looking at a signal — two charts, a
+spectrum, a level and a loop. A shipped plugin's standouts earn theirs the same
+way, as a `Palette` skin in their category's own accent
+([0118](0118-a-plugin-paints-its-own-module-background.md)). **Everything else is drawn as its
+category**, which is fourteen more paths — a wave in a ring for the
+Oscillators, an envelope for Timing, a transfer curve for Shaping, decaying
+repeats for the time effects.
 
 **A category nothing here knows draws nothing.** A plugin may name its own
 category, and it already falls back to grey in `Colors.Accent`; inventing a
@@ -85,8 +92,12 @@ a normalled module's name — "Coordinates y", the longest thing drawn in that
 column — is still read without looking past it. Raising it makes the marks
 better and the busiest modules worse.
 
-**The site screenshots showing a patch were retaken**, and `site.css` mirrors the
-body wash and the header's relief on the node cards the site is built from. Two
-were left: `settings.webp`, whose canvas is under a dialog's scrim, and
-`palette.webp`, which is about the module list's heading colors and whose canvas
-shows modules the catalogue no longer has.
+**The site screenshots showing a patch were retaken.** `site.css` draws no
+module of its own —
+[0119](0119-the-website-shows-a-module-by-photographing-one.md) replaced the
+drawn node cards with photographs of the real canvas — so the wash and the
+mark reach the site the same way any other change to a module's appearance
+does, the next time its shots are retaken. Two were left: `settings.webp`,
+whose canvas is under a dialog's scrim, and `palette.webp`, which is about the
+module list's heading colors and whose canvas shows modules the catalogue no
+longer has.

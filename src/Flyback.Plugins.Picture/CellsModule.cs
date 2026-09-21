@@ -1,5 +1,6 @@
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
+using Flyback.Plugins;
 
 namespace Flyback.Plugins.Picture;
 
@@ -77,7 +78,14 @@ internal static class CellsModule
         + "square grid, so a patch can slide between organic and mechanical. 'z' drifts the "
         + "points. It is the most expensive module in the catalogue — eighteen noise lookups a "
         + "pixel, which is what measuring nine squares costs — so it is a joy on the GPU and "
-        + "slow on the interpreter, which is what a command-line render uses.");
+        + "slow on the interpreter, which is what a command-line render uses.")
+    {
+        Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Patterns))
+        {
+            Glyph = "M12,2 L20,7 L20,15 L12,20 L4,15 L4,7 Z "
+                + "M12,2 L12,11 M4,7 L12,11 M20,7 L12,11 M12,11 L12,20 M4,15 L12,11 M20,15 L12,11",
+        },
+    };
 
     private static Slot[] Emit(Emitter em, EmitContext node)
     {

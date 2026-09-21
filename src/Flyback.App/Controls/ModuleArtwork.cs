@@ -59,26 +59,40 @@ internal sealed class ModuleArtwork
         Bands[Math.Clamp((int)(fraction * Bands.Length), 0, Bands.Length - 1)];
 
     /// <summary>
-    /// Draws the still frame scaled to cover <paramref name="bounds"/> and clipped
-    /// to it — cover rather than stretch, so nothing anybody drew comes out the
-    /// wrong shape.
+    /// Draws the frame at <paramref name="elapsed"/> milliseconds into the run —
+    /// or always the first where <see cref="ModuleSkins.Animated"/> is off, or
+    /// there is nothing to run — scaled to cover <paramref name="clip"/> and
+    /// clipped to it. Cover rather than stretch, so nothing anybody drew comes
+    /// out the wrong shape.
     /// </summary>
-    public void Cover(DrawingContext context, Rect bounds)
+    /// <remarks>
+    /// The one place either surface draws a picture, so the block and the panel
+    /// can never disagree about whether it is moving or where it is clipped to.
+    /// </remarks>
+    /// <returns>
+    /// Whether the frame drawn was one of a run still going — what the caller
+    /// asks another frame for.
+    /// </returns>
+    public bool Paint(DrawingContext context, RoundedRect clip, double elapsed)
     {
-        var image = Frames[0];
+        var running = ModuleSkins.Animated && Runs > 0;
+        var image = running ? At(elapsed) : Frames[0];
         var size = image.Size;
 
-        if (size.Width <= 0 || size.Height <= 0) return;
+        if (size.Width <= 0 || size.Height <= 0) return false;
 
+        var bounds = clip.Rect;
         var scale = Math.Max(bounds.Width / size.Width, bounds.Height / size.Height);
 
-        using (context.PushClip(bounds))
+        using (context.PushClip(clip))
         {
             context.DrawImage(
                 image,
                 new Rect(size),
                 bounds.CenterRect(new Rect(0, 0, size.Width * scale, size.Height * scale)));
         }
+
+        return running;
     }
 
     // --- decoding -----------------------------------------------------------

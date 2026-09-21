@@ -1,5 +1,6 @@
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
+using Flyback.Plugins;
 
 namespace Flyback.Plugins.Picture;
 
@@ -50,7 +51,13 @@ internal static class PolygonModule
         + "corner at the top — a triangle points up. 'sides' is rounded down and never goes "
         + "below three: an in-between count is a shape that does not close, so the knob steps "
         + "between whole polygons rather than sliding through broken ones. It costs the same "
-        + "however many sides it is asked for.");
+        + "however many sides it is asked for.")
+    {
+        Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Forms))
+        {
+            Glyph = "M12,3 L20.5,9.2 L17.3,19.3 L6.7,19.3 L3.5,9.2 Z",
+        },
+    };
 
     private static Slot[] Emit(Emitter em, EmitContext node)
     {

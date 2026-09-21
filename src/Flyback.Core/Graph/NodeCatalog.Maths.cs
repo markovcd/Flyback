@@ -141,6 +141,8 @@ public partial class NodeCatalog
     /// the trim and the rails, and the next Desk adds them in at unity — so only the
     /// last in the chain trims and only the last can clip.
     /// </remarks>
+    public const string DeskTypeId = "math.desk";
+
     private static NodeDef Desk()
     {
         const int channels = 4;
@@ -161,7 +163,7 @@ public partial class NodeCatalog
         ports[trim] = Num("trim", 1f, 0f, 2f);
 
         return new NodeDef(
-            "math.desk", "Desk", ModuleCategories.Maths,
+            DeskTypeId, "Desk", ModuleCategories.Maths,
             ports, [Num("left"), Num("right"), Num("bus left"), Num("bus right")],
             (em, i) =>
             {

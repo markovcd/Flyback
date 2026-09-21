@@ -1,5 +1,6 @@
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
+using Flyback.Plugins;
 
 namespace Flyback.Plugins.Mastering;
 
@@ -55,6 +56,14 @@ internal static class EqModule
         + "at 'mid freq' and a shelf over 'high freq', gains in dB.")
     {
         Sinks = ModuleSinks.Audio,
+        Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Shaping))
+        {
+            Glyph = "M2,20 C3.5,20 3.5,13 6,13 L8,13 C10,13 10.5,6 12,6 C13.5,6 14,13 16,13 "
+                + "C18,13 18,16 20,16 L22,16 "
+                + "M5.5,13 A1.5,1.5 0 1 1 8.5,13 A1.5,1.5 0 1 1 5.5,13 "
+                + "M10.5,6 A1.5,1.5 0 1 1 13.5,6 A1.5,1.5 0 1 1 10.5,6 "
+                + "M17.5,16 A1.5,1.5 0 1 1 20.5,16 A1.5,1.5 0 1 1 17.5,16",
+        },
     };
 
     private static Slot[] Emit(Emitter em, EmitContext node)

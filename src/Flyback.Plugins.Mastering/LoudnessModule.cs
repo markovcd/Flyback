@@ -1,5 +1,6 @@
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
+using Flyback.Plugins;
 
 namespace Flyback.Plugins.Mastering;
 
@@ -67,6 +68,10 @@ internal static class LoudnessModule
         + "'peak' is dBFS, falling 20 dB in 1.7 s.")
     {
         Sinks = ModuleSinks.Audio,
+        Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Measurement))
+        {
+            Glyph = "M3,6 L21,6 M3,10 L18,10 M3,14 L15,14 M3,18 L12,18",
+        },
     };
 
     private static Slot[] Emit(Emitter em, EmitContext node)

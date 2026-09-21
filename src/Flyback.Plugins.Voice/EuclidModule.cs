@@ -1,5 +1,6 @@
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
+using Flyback.Plugins;
 
 namespace Flyback.Plugins.Voice;
 
@@ -39,7 +40,15 @@ internal static class EuclidModule
         + "Decay or an ADSR; 'hit' is 1 for the whole step. 'index' is how far through the loop "
         + "it is, 0 to 1. 'stroke' is an envelope with no trigger: 1 at the start of each hit "
         + "step, fallen to 0 by the end of it, bent by 'curve' the way a Stroke's is — patch it "
-        + "into a Drum's 'level'. On the picture it runs across its domain like a Sequencer.");
+        + "into a Drum's 'level'. On the picture it runs across its domain like a Sequencer.")
+    {
+        Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Timing))
+        {
+            Glyph = "M3,12 A9,9 0 1 1 21,12 A9,9 0 1 1 3,12 "
+                + "M12,3 L12,6 M18.36,5.64 L16.24,7.76 M21,12 L18,12 M18.36,18.36 L16.24,16.24 "
+                + "M12,21 L12,18 M5.64,18.36 L7.76,16.24 M3,12 L6,12 M5.64,5.64 L7.76,7.76",
+        },
+    };
 
     private static Slot[] Emit(Emitter em, EmitContext node)
     {

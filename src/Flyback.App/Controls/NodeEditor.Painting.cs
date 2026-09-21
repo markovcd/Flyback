@@ -353,24 +353,7 @@ public sealed partial class NodeEditor
     /// </remarks>
     private void DrawArtwork(DrawingContext context, ModuleArtwork picture, RoundedRect body)
     {
-        var running = ModuleSkins.Animated && picture.Runs > 0;
-        var image = running ? picture.At(clock.Elapsed.TotalMilliseconds) : picture.Frames[0];
-        var size = image.Size;
-
-        if (size.Width <= 0 || size.Height <= 0) return;
-
-        if (running) moving = true;
-
-        var bounds = body.Rect;
-        var scale = Math.Max(bounds.Width / size.Width, bounds.Height / size.Height);
-
-        using (context.PushClip(body))
-        {
-            context.DrawImage(
-                image,
-                new Rect(size),
-                bounds.CenterRect(new Rect(0, 0, size.Width * scale, size.Height * scale)));
-        }
+        if (picture.Paint(context, body, clock.Elapsed.TotalMilliseconds)) moving = true;
     }
 
     /// <summary>
@@ -412,6 +395,10 @@ public sealed partial class NodeEditor
 
         if (backdrop.Picture is { } picture)
         {
+            // A picture rarely covers the body edge to edge, and ADR-0118 counts
+            // what it leaves transparent as the node grey rather than the canvas
+            // behind it.
+            context.DrawRectangle(NodeSkin.GroundFill(isSelected), null, body);
             DrawArtwork(context, picture, body);
             context.DrawRectangle(null, border, body);
         }
@@ -457,7 +444,7 @@ public sealed partial class NodeEditor
                 new Point(titleAt.X, titleAt.Y + title.Height / 2),
                 new Point(titleAt.X + title.Width, titleAt.Y + title.Height / 2));
 
-        if (Tagged(def)) DrawTag(context, bounds);
+        if (Tagged(def)) DrawTag(context, bounds, follow ? titleBrush : null);
 
         var formula = NodeCatalog.FormulaOf(node);
 
@@ -465,7 +452,7 @@ public sealed partial class NodeEditor
         {
             var port = def.Outputs[i];
             var centre = NodeGeometry.OutputPort(node, i);
-            var label = CanvasText.Text(port.Name, 11.5, Ink(centre.Y, RowInk, 0, CanvasText.LabelBrush), bounds.Width - 24, true);
+            var label = CanvasText.Text(port.Name, CanvasText.RowSize, Ink(centre.Y, RowInk, 0, CanvasText.LabelBrush), bounds.Width - 24, true);
 
             context.DrawText(label, new Point(bounds.Right - 14 - label.Width, centre.Y - label.Height / 2));
             NodeSkin.DrawPort(context, centre, port.Kind);
@@ -477,9 +464,9 @@ public sealed partial class NodeEditor
             var centre = NodeGeometry.InputPort(node, def, i);
             var connected = patch.IncomingTo(node.Id, i) is not null;
 
-            var linked = DrawLinkedRow(context, node, port, i, bounds, centre, connected);
+            var linked = DrawLinkedRow(context, node, port, i, bounds, centre, connected, follow, Ink);
 
-            var label = CanvasText.Text(port.Name, 11.5, Ink(centre.Y, RowInk, 0, CanvasText.LabelBrush), bounds.Width * 0.55, true);
+            var label = CanvasText.Text(port.Name, CanvasText.RowSize, Ink(centre.Y, RowInk, 0, CanvasText.LabelBrush), bounds.Width * 0.55, true);
             context.DrawText(label, new Point(bounds.X + 14, centre.Y - label.Height / 2));
 
             // An unconnected input shows what it will compile to: the module
@@ -491,7 +478,7 @@ public sealed partial class NodeEditor
                 // name and a qualified one at that — "Coordinates x" does not
                 // fit where "0.25" does, and trimmed to "Coordinates…" it would
                 // stop telling x from y.
-                var name = CanvasText.Text(source, 11.5, Ink(centre.Y, RowInk, NormalFade, NormalBrush), bounds.Width * 0.5, true);
+                var name = CanvasText.Text(source, CanvasText.RowSize, Ink(centre.Y, RowInk, NormalFade, NormalBrush), bounds.Width * 0.5, true);
                 context.DrawText(name, new Point(bounds.Right - 12 - name.Width, centre.Y - name.Height / 2));
             }
             else if (!linked && !connected && i < node.InputValues.Length && (formula is null || FormulaLayout.Reads(formula, i)))
@@ -500,7 +487,7 @@ public sealed partial class NodeEditor
                 // so an Expression shows the values of the ones it does and no more.
                 var value = CanvasText.Text(
                     port.Format(node.InputValues[i]),
-                    11.5,
+                    CanvasText.RowSize,
                     Ink(centre.Y, RowInk, ValueFade, CanvasText.ValueBrush),
                     bounds.Width * 0.4,
                     true);
@@ -510,6 +497,7 @@ public sealed partial class NodeEditor
             NodeSkin.DrawPort(context, centre, port.Kind);
         }
 
-        if (FormulaLayout.FormulaBlock(patch, node, def, bounds) is var (text, at, _, _)) context.DrawText(text, at);
+        if (FormulaLayout.FormulaBlock(patch, node, def, bounds, y => Ink(y, RowInk, ValueFade, CanvasText.ValueBrush)) is var (text, at, _, _))
+            context.DrawText(text, at);
     }
 }

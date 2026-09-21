@@ -86,11 +86,16 @@ internal static class ModuleGlyphs
     {
         // The four fixed waveforms and the fifth with a duty cycle, each drawn
         // as the wave it is — the one case where the picture is the definition.
-        ["osc.sine"] = Path("M2,12 C3.6,3.5 6.4,3.5 8,12 C9.6,20.5 12.4,20.5 14,12 C15.6,3.5 18.4,3.5 20,12"),
-        ["osc.saw"] = Path("M2,18 L8,6 L8,18 L14,6 L14,18 L20,6 L20,18"),
-        ["osc.triangle"] = Path("M2,18 L7,6 L12,18 L17,6 L22,18"),
-        ["osc.square"] = Path("M2,18 L2,6 L9,6 L9,18 L16,18 L16,6 L22,6"),
-        ["osc.pulse"] = Path("M2,18 L5,18 L5,6 L8,6 L8,18 L15,18 L15,6 L18,6 L18,18 L22,18"),
+        [NodeCatalog.SineTypeId] = Path("M2,12 C3.6,3.5 6.4,3.5 8,12 C9.6,20.5 12.4,20.5 14,12 C15.6,3.5 18.4,3.5 20,12"),
+        [NodeCatalog.SawTypeId] = Path("M2,18 L8,6 L8,18 L14,6 L14,18 L20,6 L20,18"),
+        [NodeCatalog.TriangleTypeId] = Path("M2,18 L7,6 L12,18 L17,6 L22,18"),
+        [NodeCatalog.SquareTypeId] = Path("M2,18 L2,6 L9,6 L9,18 L16,18 L16,6 L22,6"),
+        [NodeCatalog.PulseTypeId] = Path("M2,18 L5,18 L5,6 L8,6 L8,18 L15,18 L15,6 L18,6 L18,18 L22,18"),
+
+        // A wave that dies away rather than repeating: the one oscillator that
+        // is struck rather than run.
+        [NodeCatalog.StringTypeId] = Path(
+            "M2,12 C3.6,4 6.4,4 8,12 C9.4,17 11.4,17 12.6,12 C13.6,8.5 14.8,8.5 15.6,12 L21,12"),
 
         // A clock, and the plane it is read across: the two sockets everything
         // else here is normalled to.
@@ -101,7 +106,7 @@ internal static class ModuleGlyphs
             + "M18.6,7.4 A2.3,2.3 0 1 1 14,7.4 A2.3,2.3 0 1 1 18.6,7.4"),
 
         // The wire that runs backwards, drawn as the turn it is.
-        ["feedback"] = Path(
+        [NodeCatalog.FeedbackTypeId] = Path(
             "M12,4 A8,8 0 0 1 20,12 A8,8 0 0 1 12,20 A8,8 0 0 1 4,12 M1.4,14.7 L4,11.6 L6.6,14.7"),
 
         // Waves leaving a point and arriving at one: the two ends of a bus.
@@ -126,13 +131,68 @@ internal static class ModuleGlyphs
         [NodeCatalog.PictureTypeId] = Path(
             "M3,5 L21,5 L21,19 L3,19 Z M3,16 L9,10 L13.5,14.5 L16.5,11.5 L21,16 "
             + "M14.9,9.4 A1.8,1.8 0 1 1 18.5,9.4 A1.8,1.8 0 1 1 14.9,9.4"),
-        ["value"] = Path("M4,12 A8,8 0 1 1 20,12 A8,8 0 1 1 4,12 M12,12 L12,5"),
+        [NodeCatalog.ValueTypeId] = Path("M4,12 A8,8 0 1 1 20,12 A8,8 0 1 1 4,12 M12,12 L12,5"),
 
-        // The three that show a signal rather than measure it.
-        ["scope"] = Path(
+        // A tempo swung like a metronome, and a level held flat until the next
+        // trigger: the two ways Timing counts out when rather than what.
+        [NodeCatalog.TempoTypeId] = Path(
+            "M5,21 L12,3 L19,21 Z M12,7 L16,18 M17.3,18 A1.3,1.3 0 1 1 14.7,18 A1.3,1.3 0 1 1 17.3,18"),
+        [NodeCatalog.HoldTypeId] = Path(
+            "M2,17 L6,17 L6,10 L10,10 L10,14 L14,14 L14,6 L18,6 L18,12 L22,12"),
+
+        // A mixing desk: four rails and the slider each is resting at.
+        [NodeCatalog.DeskTypeId] = Path(
+            "M5,4 L5,20 M10,4 L10,20 M15,4 L15,20 M20,4 L20,20 "
+            + "M3,8 L7,8 M8,14 L12,14 M13,6 L17,6 M18,16 L22,16"),
+
+        // A sweep snapped to even steps, which is what a Quantiser does to
+        // whatever arrives.
+        [NodeCatalog.QuantiserTypeId] = Path(
+            "M3,19 L21,5 M3,19 L3,15 L7,15 L7,11 L11,11 L11,9 L15,9 L15,7 L19,7 L19,5"),
+
+        // A field with no pattern to it.
+        [NodeCatalog.NoiseTypeId] = Path("M2,12 L4,6 L6,16 L8,4 L10,14 L12,7 L14,18 L16,9 L18,15 L20,5 L22,12"),
+
+        // The key hitting, and the level it ducked growing back from nothing
+        // rather than swinging at one height throughout.
+        [NodeCatalog.DuckTypeId] = Path(
+            "M3,20 L3,3 M5.5,12 C6.7,10.5 9.3,10.5 10.5,12 "
+            + "C11.7,8 15.3,8 16.5,12 C17.2,5.5 20.8,5.5 22,12"),
+
+        // Values scattered with no order to them.
+        [NodeCatalog.RandomTypeId] = Path(
+            "M3.6,7 A1.4,1.4 0 1 1 6.4,7 A1.4,1.4 0 1 1 3.6,7 "
+            + "M10.6,4.5 A1.4,1.4 0 1 1 13.4,4.5 A1.4,1.4 0 1 1 10.6,4.5 "
+            + "M16.6,10 A1.4,1.4 0 1 1 19.4,10 A1.4,1.4 0 1 1 16.6,10 "
+            + "M6.6,16 A1.4,1.4 0 1 1 9.4,16 A1.4,1.4 0 1 1 6.6,16 "
+            + "M15.6,19 A1.4,1.4 0 1 1 18.4,19 A1.4,1.4 0 1 1 15.6,19"),
+
+        // A resonant peak on the cutoff, and a wave with its tops clipped flat.
+        [NodeCatalog.FilterTypeId] = Path("M2,14 L9,14 C11,14 11,6 13,6 C15,6 14,10 16,10 C18,10 19,17 22,17"),
+        [NodeCatalog.DriveTypeId] = Path(
+            "M2,12 C3,6 4.5,6 6,6 L9,6 C10.5,6 11,9 12,12 C13,15 13.5,18 15,18 L18,18 C19.5,18 21,18 22,12"),
+
+        // Two repeats, the second quieter, and a room with sound bouncing in it.
+        [NodeCatalog.DelayTypeId] = Path("M3,19 L6,4 L9,19 M13,19 L15.5,10 L18,19"),
+        [NodeCatalog.ReverbTypeId] = Path(
+            "M3,4 L21,4 L21,20 L3,20 Z M6,12 A2,2 0 1 1 10,12 A2,2 0 1 1 6,12 "
+            + "M13.6,8 A1.4,1.4 0 1 1 16.4,8 A1.4,1.4 0 1 1 13.6,8 "
+            + "M14.6,16 A1.4,1.4 0 1 1 17.4,16 A1.4,1.4 0 1 1 14.6,16"),
+
+        // Measurement's five ways of looking at a signal: two charts, one
+        // ruled where it is now and one biased into the past, that same past
+        // turned into a spectrum, a level read as a number instead of drawn,
+        // and a loop read as a waveform.
+        [NodeCatalog.ProbeTypeId] = Path(
+            "M3,5 L21,5 L21,19 L3,19 Z M12,5 L12,19 "
+            + "M4,12 C6,7 8,7 10,12 C11,14 13,14 14,12 C16,7 18,7 20,12"),
+        [NodeCatalog.ScopeTypeId] = Path(
             "M3,5 L21,5 L21,19 L3,19 Z M5.5,15 C7.5,15 7.5,9 10,9 C12.5,9 12.5,15 15,15 C17,15 17,10 18.5,10"),
-        ["meter"] = Path("M8,4 L13,4 L13,20 L8,20 Z M15.5,6 L19.5,6 M15.5,11 L19.5,11 M15.5,16 L19.5,16"),
-        ["analyzer"] = Path("M4,20 L4,13 M8,20 L8,6 M12,20 L12,10 M16,20 L16,4 M20,20 L20,15 M2,21.5 L22,21.5"),
+        [NodeCatalog.AnalyzerTypeId] = Path("M4,20 L4,13 M8,20 L8,6 M12,20 L12,10 M16,20 L16,4 M20,20 L20,15 M2,21.5 L22,21.5"),
+        [NodeCatalog.MeterTypeId] = Path("M8,4 L13,4 L13,20 L8,20 Z M15.5,6 L19.5,6 M15.5,11 L19.5,11 M15.5,16 L19.5,16"),
+        [NodeCatalog.ScanTypeId] = Path(
+            "M3,5 L21,5 L21,19 L3,19 Z M5,12 L19,12 "
+            + "M10,10.3 L12,8.3 L14,10.3 M10,13.7 L12,15.7 L14,13.7"),
     };
 
     /// <summary>

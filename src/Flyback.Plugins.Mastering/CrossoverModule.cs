@@ -1,5 +1,6 @@
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
+using Flyback.Plugins;
 
 namespace Flyback.Plugins.Mastering;
 
@@ -38,6 +39,11 @@ internal static class CrossoverModule
         + "Compressors, a multiband compressor.")
     {
         Sinks = ModuleSinks.Audio,
+        Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Shaping))
+        {
+            Glyph = "M2,12 L7.7,12 M10.3,12 L18,5 M10.3,12 L18,19 "
+                + "M7.7,12 A1.3,1.3 0 1 1 10.3,12 A1.3,1.3 0 1 1 7.7,12",
+        },
     };
 
     private static Slot[] Emit(Emitter em, EmitContext node)

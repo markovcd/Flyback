@@ -1,5 +1,6 @@
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
+using Flyback.Plugins;
 
 namespace Flyback.Plugins.Mastering;
 
@@ -67,6 +68,10 @@ internal static class CompressorModule
         + "gain applied.")
     {
         Sinks = ModuleSinks.Audio,
+        Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Shaping))
+        {
+            Glyph = "M3,20 L11,12 L21,10 M9.7,12 A1.3,1.3 0 1 1 12.3,12 A1.3,1.3 0 1 1 9.7,12",
+        },
     };
 
     private static Slot[] Emit(Emitter em, EmitContext node)

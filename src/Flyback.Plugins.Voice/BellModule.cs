@@ -1,5 +1,6 @@
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
+using Flyback.Plugins;
 
 namespace Flyback.Plugins.Voice;
 
@@ -35,7 +36,14 @@ internal static class BellModule
         + "frequency into 'freq'. 'ratio' is where the overtone sits above the pitch: a whole "
         + "number is a clean organ tone, 2.76 is a bronze bar, 1.41 a small bright chime, 3.5 "
         + "glass. 'index' is how much of it there is when the note is struck; it fades with the "
-        + "level, so every note starts bright and rings pure.");
+        + "level, so every note starts bright and rings pure.")
+    {
+        Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Oscillators))
+        {
+            Glyph = "M12,3 C8,3 8,8 6,10 C4,12 3,14 3,16 L21,16 C21,14 20,12 18,10 C16,8 16,3 12,3 Z "
+                + "M9,18.5 A3,3 0 0 0 15,18.5",
+        },
+    };
 
     private static Slot[] Emit(Emitter em, EmitContext node)
     {

@@ -4,24 +4,30 @@ namespace Flyback.Core.Graph;
 
 public partial class NodeCatalog
 {
+    public const string SineTypeId = "osc.sine";
+    public const string SawTypeId = "osc.saw";
+    public const string TriangleTypeId = "osc.triangle";
+    public const string SquareTypeId = "osc.square";
+    public const string PulseTypeId = "osc.pulse";
+
     private static IEnumerable<NodeDef> Oscillators()
     {
-        yield return Oscillator("osc.sine", "Sine", (em, p) => em.Unary(OpCode.Sin, em.Mul(p, Tau)),
+        yield return Oscillator(SineTypeId, "Sine", (em, p) => em.Unary(OpCode.Sin, em.Mul(p, Tau)),
             "The basic waveform. Smooth bands and blobs.");
 
-        yield return Oscillator("osc.saw", "Saw", (em, p) => em.Add(em.Mul(em.Unary(OpCode.Fract, p), 2f), -1f),
+        yield return Oscillator(SawTypeId, "Saw", (em, p) => em.Add(em.Mul(em.Unary(OpCode.Fract, p), 2f), -1f),
             "Ramps up then snaps back. Hard edges, good for stripes.");
 
-        yield return Oscillator("osc.triangle", "Triangle",
+        yield return Oscillator(TriangleTypeId, "Triangle",
             (em, p) => em.Add(em.Mul(em.Unary(OpCode.Abs, em.Add(em.Unary(OpCode.Fract, p), -0.5f)), 4f), -1f),
             "Linear up and down. Softer than saw, sharper than sine.");
 
-        yield return Oscillator("osc.square", "Square",
+        yield return Oscillator(SquareTypeId, "Square",
             (em, p) => em.Add(em.Mul(em.Binary(OpCode.Step, em.Constant(0.5f), em.Unary(OpCode.Fract, p)), 2f), -1f),
             "Two values, nothing between. Pure hard-edged bands.");
 
         yield return new NodeDef(
-            "osc.pulse", "Pulse", ModuleCategories.Oscillators,
+            PulseTypeId, "Pulse", ModuleCategories.Oscillators,
             [
                 Domain("in"), Num("freq", 1f, 0f, 16f), Num("phase", 0f, 0f, 1f), Num("width", 0.5f, 0f, 1f),
                 Num("amp", 1f, 0f, 2f), Num("bias", 0f, -2f, 2f)

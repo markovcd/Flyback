@@ -1,5 +1,6 @@
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
+using Flyback.Plugins;
 
 namespace Flyback.Plugins.Voice;
 
@@ -34,7 +35,13 @@ internal static class StrokeModule
         + "fall, 1 a straight line, 3 a pluck, 8 a click. 'offset' slides the hits by a share "
         + "of a stroke: a 'rate' of 0.5 with an 'offset' of 0.5 is beats two and four. 'phase' "
         + "is how far through the stroke it is, 0 to 1. The same on the picture as in the "
-        + "speakers, so whatever it strikes can flash with it.");
+        + "speakers, so whatever it strikes can flash with it.")
+    {
+        Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Timing))
+        {
+            Glyph = "M3,18 L10,18 L13,4 L16,18 L21,18",
+        },
+    };
 
     private static Slot[] Emit(Emitter em, EmitContext node)
     {

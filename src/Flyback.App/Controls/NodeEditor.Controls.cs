@@ -76,7 +76,16 @@ public sealed partial class NodeEditor
     /// Tints a row while linking, and draws a linked socket's value in the knob's
     /// color. Returns whether it drew the value, so the ordinary one is not drawn too.
     /// </summary>
-    private bool DrawLinkedRow(DrawingContext context, NodeInstance node, PortSpec port, int index, Rect bounds, Point centre, bool connected)
+    /// <param name="follow">Whether the module is asking for its text colored from its background.</param>
+    /// <param name="ink">
+    /// The same helper the rest of a row's text is colored through — see
+    /// <see cref="NodeSkin.Ink"/>. The Attention hue is a shell color the module's own
+    /// background may not read against, so it gives way to the row's ink when the
+    /// module asks for one.
+    /// </param>
+    private bool DrawLinkedRow(
+        DrawingContext context, NodeInstance node, PortSpec port, int index, Rect bounds, Point centre,
+        bool connected, bool follow, Func<double, double, double, IBrush, IBrush> ink)
     {
         var link = ControlMap.Of(node, index);
         var control = link is { } l ? patch.Control(l.Control) : null;
@@ -89,11 +98,13 @@ public sealed partial class NodeEditor
 
         if (connected || control is null || link is not { } found) return false;
 
-        var value = CanvasText.Text(port.Format(found.At(control.Value)), 11.5, LinkedBrush, bounds.Width * 0.4, true);
+        var brush = follow ? ink(centre.Y, RowInk, ValueFade, CanvasText.ValueBrush) : LinkedBrush;
+
+        var value = CanvasText.Text(port.Format(found.At(control.Value)), CanvasText.RowSize, brush, bounds.Width * 0.4, true);
         var right = bounds.Right - 12;
 
         context.DrawText(value, new Point(right - value.Width, centre.Y - value.Height / 2));
-        context.DrawEllipse(LinkedBrush, null, new Point(right - value.Width - 6, centre.Y), 2.5, 2.5);
+        context.DrawEllipse(brush, null, new Point(right - value.Width - 6, centre.Y), 2.5, 2.5);
 
         return true;
     }

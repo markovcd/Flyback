@@ -55,7 +55,7 @@ public sealed partial class NodeEditor
             for (var p = 0; p < sockets.Outputs.Count; p++)
                 if (OnRow(NodeGeometry.GroupOutputPort(bounds, p), graph, bounds, left: false)
                     && Scene.Named(sockets.Outputs[p]) is var (label, _)
-                    && CanvasText.Overflows(label, 11.5, bounds.Width - SocketLabelRoom))
+                    && CanvasText.Overflows(label, CanvasText.RowSize, bounds.Width - SocketLabelRoom))
                 {
                     return (sockets.Outputs[p], label);
                 }
@@ -63,7 +63,7 @@ public sealed partial class NodeEditor
             for (var p = 0; p < sockets.Inputs.Count; p++)
                 if (OnRow(NodeGeometry.GroupInputPort(bounds, sockets, p), graph, bounds, left: true)
                     && Scene.Named(sockets.Inputs[p]) is var (label, _)
-                    && CanvasText.Overflows(label, 11.5, bounds.Width - SocketLabelRoom))
+                    && CanvasText.Overflows(label, CanvasText.RowSize, bounds.Width - SocketLabelRoom))
                 {
                     return (sockets.Inputs[p], label);
                 }
@@ -82,8 +82,9 @@ public sealed partial class NodeEditor
                 return (node.Id, title);
             }
 
-            // A formula too long for the body is cut on its last line.
-            if (FormulaLayout.FormulaBlock(patch, node, def, bounds) is { Cut: true, Area: var area }
+            // A formula too long for the body is cut on its last line. The ink
+            // it would be drawn in is beside the point here — only its area is.
+            if (FormulaLayout.FormulaBlock(patch, node, def, bounds, static _ => CanvasText.ValueBrush) is { Cut: true, Area: var area }
                 && area.Contains(graph)
                 && NodeCatalog.FormulaOf(node) is { } formula)
             {

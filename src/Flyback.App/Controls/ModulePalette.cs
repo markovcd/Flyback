@@ -26,6 +26,12 @@ public sealed class ModulePalette : UserControl
 
     private const double PopupWidth = 180;
 
+    /// <summary>How big a module's mark is drawn at, left of its name.</summary>
+    private const double GlyphSize = 13;
+
+    /// <summary>How strongly the mark shows: quiet, since the name is what is being read.</summary>
+    private const double GlyphOpacity = 0.8;
+
     /// <summary>How solid the list is over the patch it is being added to.</summary>
     public const double Translucency = 0.8;
 
@@ -387,7 +393,7 @@ public sealed class ModulePalette : UserControl
                 var typeId = def.TypeId;
                 button.Click += (_, _) => chosen(typeId);
 
-                modules.Children.Add(button);
+                modules.Children.Add(Row(def, button));
                 listed.Add(button);
             }
         }
@@ -524,6 +530,38 @@ public sealed class ModulePalette : UserControl
     /// jump under the hand: the answers are where the ✕ that asked is, and it now
     /// means what it always meant on this row — no, put it back.
     /// </remarks>
+
+    /// <summary>
+    /// A module's button, with its mark set quietly to the left where one is
+    /// known — the same drawing the canvas gives it, in its own accent, honoring
+    /// a plugin's skin. The button is untouched, so what is picked and how it
+    /// reads to a keyboard or a test does not change.
+    /// </summary>
+    private static Control Row(NodeDef def, Button button)
+    {
+        if (ModuleGlyphs.For(def) is not { } mark) return button;
+
+        var icon = new Avalonia.Controls.Shapes.Path
+        {
+            Data = mark,
+            Stretch = Stretch.Uniform,
+            Width = GlyphSize,
+            Height = GlyphSize,
+            StrokeThickness = ModuleGlyphs.Thickness,
+            Stroke = new SolidColorBrush(Colors.Palette(def).Accent, GlyphOpacity),
+            Margin = new Thickness(6, 0, 0, 0),
+            VerticalAlignment = VerticalAlignment.Center,
+            IsHitTestVisible = false,
+        };
+
+        var row = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*") };
+        Grid.SetColumn(button, 1);
+
+        row.Children.Add(icon);
+        row.Children.Add(button);
+
+        return row;
+    }
 
     private static TextBlock Heading(string text, Color color) => new()
     {

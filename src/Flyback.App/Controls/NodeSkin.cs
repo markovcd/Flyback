@@ -79,6 +79,15 @@ internal static class NodeSkin
     private static Color Ground(bool selected) => selected ? Colors.NodeSelected : Colors.Node;
 
     /// <summary>
+    /// The plain node color, with no accent mixed in — what shows through a
+    /// transparent picture, since ADR-0118 counts transparency as the node grey.
+    /// </summary>
+    public static IBrush GroundFill(bool selected) => selected ? groundSelected : ground;
+
+    private static readonly IBrush ground = new ImmutableSolidColorBrush(Colors.Node);
+    private static readonly IBrush groundSelected = new ImmutableSolidColorBrush(Colors.NodeSelected);
+
+    /// <summary>
     /// What the mark across the body is stroked with — see <see cref="ModuleGlyphs"/>.
     /// Thickness in the glyph's own units, so it grows with whatever the mark is
     /// scaled to.
@@ -158,7 +167,7 @@ internal static class NodeSkin
         if (cuts.TryGetValue((cut, over), out var kept)) return kept;
 
         var ink = Colors.Contrast(over, !Colors.Light(over));
-        var pen = new ImmutablePen(new ImmutableSolidColorBrush(ink, CutOpacity));
+        var pen = new ImmutablePen(new ImmutableSolidColorBrush(ink, CutOpacity), CutWidth);
 
         var made = new DrawingBrush(
             cut == GrainCut.Beaded
@@ -235,6 +244,16 @@ internal static class NodeSkin
         Down(Colors.Blend(Colors.Outline, Colors.Separator, 0.55), Colors.Outline);
 
     /// <summary>
+    /// A box's header, selected or not — mirrors <see cref="Box"/>: the same band,
+    /// with the selection color standing in for <see cref="Colors.Separator"/> the
+    /// way a selected box's body stands its ground in <see cref="Colors.NodeSelected"/>.
+    /// </summary>
+    public static IBrush BoxHeaderOf(bool selected) => selected ? boxHeaderSelected : BoxHeader;
+
+    private static readonly IBrush boxHeaderSelected =
+        Down(Colors.Blend(Colors.Outline, Colors.Attention, 0.55), Colors.Outline);
+
+    /// <summary>
     /// The mark across a box, which is the same picture the toolbar's group button
     /// carries — modules inside a frame.
     /// </summary>
@@ -281,13 +300,27 @@ internal static class NodeSkin
 
     public static void DrawPort(DrawingContext context, Point centre, PortKind kind) =>
         context.DrawEllipse(
-            new SolidColorBrush(Colors.PortColor(kind)),
+            PortFill(kind),
             PortOutline,
             centre,
             NodeGeometry.PortRadius,
             NodeGeometry.PortRadius);
 
-    private static readonly IPen PortOutline = new Pen(new SolidColorBrush(Colors.Outline), 1.2);
+    /// <summary>Cached per kind, since a socket is drawn several times a frame.</summary>
+    private static IBrush PortFill(PortKind kind)
+    {
+        if (portFills.TryGetValue(kind, out var kept)) return kept;
+
+        var made = new ImmutableSolidColorBrush(Colors.PortColor(kind));
+
+        portFills[kind] = made;
+
+        return made;
+    }
+
+    private static readonly Dictionary<PortKind, IBrush> portFills = [];
+
+    private static readonly IPen PortOutline = new ImmutablePen(new ImmutableSolidColorBrush(Colors.Outline), 1.2);
 
     /// <summary>
     /// Sets a module's mark in the body, right of the labels and under the

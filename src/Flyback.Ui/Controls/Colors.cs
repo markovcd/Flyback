@@ -118,7 +118,7 @@ internal static class Colors
     /// <summary>
     /// The modules that know what a note is. Lime, next along from the Timing
     /// yellow: a pitch and a rhythm are the two halves of the same subject and
-    /// should read as neighbours rather than as strangers.
+    /// should read as neighbors rather than as strangers.
     /// </summary>
     public static Color Note { get; } = Color.FromRgb(0xA8, 0xCE, 0x52);
 

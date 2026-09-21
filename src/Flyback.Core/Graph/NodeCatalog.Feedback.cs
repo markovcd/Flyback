@@ -4,10 +4,12 @@ namespace Flyback.Core.Graph;
 
 public partial class NodeCatalog
 {
+    public const string FeedbackTypeId = "feedback";
+
     private static IEnumerable<NodeDef> Feedback()
     {
         yield return new NodeDef(
-            "feedback", "Feedback", ModuleCategories.Feedback,
+            FeedbackTypeId, "Feedback", ModuleCategories.Feedback,
             [..Position()], [Col("color")],
             (em, i) => [em.Triple(OpCode.SampleFeedback, i[0], i[1])],
             "Reads the previous frame. Feed it back through space transforms to make a self-referential loop.")

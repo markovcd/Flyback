@@ -1,5 +1,6 @@
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
+using Flyback.Plugins;
 
 namespace Flyback.Plugins.Effects;
 
@@ -68,7 +69,14 @@ internal static class PhaserModule
         + "signal. Where a flanger's notches are a comb — every multiple of one frequency — "
         + "these are not related to each other, which is why it sweeps rather than whooshes. "
         + "'feedback' sharpens them. 'lfo' is the sweep, and works on the picture. Audio only "
-        + "otherwise: with nothing to remember it is exactly a wire.");
+        + "otherwise: with nothing to remember it is exactly a wire.")
+    {
+        Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.TimeEffects))
+        {
+            Glyph = "M2,16 C6,16 6,8 10,8 C14,8 14,16 18,16 C20,16 21,16 22,16 "
+                + "M4,4 L14,4 M4,4 L6.3,1.8 M4,4 L6.3,6.2 M14,4 L11.7,1.8 M14,4 L11.7,6.2",
+        },
+    };
 
     private static Slot[] Emit(Emitter em, EmitContext inputs)
     {

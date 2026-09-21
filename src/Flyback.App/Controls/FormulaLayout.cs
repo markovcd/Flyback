@@ -12,7 +12,7 @@ namespace Flyback.App.Controls;
 /// </summary>
 internal static class FormulaLayout
 {
-    private const double FormulaSize = 11;
+    private const double FormulaSize = Text.Small;
 
     /// <summary>Where the formula starts, clear of the socket letters.</summary>
     private const double FormulaInset = 30;
@@ -33,8 +33,14 @@ internal static class FormulaLayout
     /// The formula as it is drawn in the body, where that is, and whether it is
     /// cut short. Null for any module but an Expression.
     /// </summary>
+    /// <param name="ink">
+    /// The value column's own ink for the module — see
+    /// <see cref="NodeSkin.Ink"/> — asked at the block's own centre so a module
+    /// with <see cref="ModuleSkin.ContrastText"/> on reads its formula the same
+    /// as it reads a knob.
+    /// </param>
     internal static (FormattedText Text, Point At, Rect Area, bool Cut)? FormulaBlock(
-        Patch patch, NodeInstance node, NodeDef def, Rect bounds)
+        Patch patch, NodeInstance node, NodeDef def, Rect bounds, Func<double, IBrush> ink)
     {
         if (NodeCatalog.FormulaOf(node) is not { } formula || string.IsNullOrWhiteSpace(formula)) return null;
 
@@ -46,11 +52,13 @@ internal static class FormulaLayout
             Math.Max(0, bounds.Width - FormulaInset - reserve),
             Math.Max(0, bounds.Height - NodeGeometry.HeaderHeight - NodeGeometry.FooterPadding - 2));
 
-        var whole = Wrapped(formula.Trim(), area.Width, lines: 0);
-        var lineHeight = Wrapped("a", area.Width, lines: 0).Height;
+        var brush = ink(area.Center.Y);
+
+        var whole = Wrapped(formula.Trim(), area.Width, lines: 0, brush);
+        var lineHeight = Wrapped("a", area.Width, lines: 0, brush).Height;
         var lines = Math.Max(1, (int)(area.Height / lineHeight));
         var cut = whole.Height > lines * lineHeight + 0.5;
-        var text = cut ? Wrapped(formula.Trim(), area.Width, lines) : whole;
+        var text = cut ? Wrapped(formula.Trim(), area.Width, lines, brush) : whole;
 
         // Level with the rows when it is short, so a one-line formula sits beside
         // the output rather than floating in the middle of the body.
@@ -66,20 +74,20 @@ internal static class FormulaLayout
         var reserve = 0d;
 
         foreach (var port in def.Outputs)
-            reserve = Math.Max(reserve, CanvasText.Text(port.Name, 11.5, CanvasText.LabelBrush, bounds.Width - 24, true).Width + 22);
+            reserve = Math.Max(reserve, CanvasText.Text(port.Name, CanvasText.RowSize, CanvasText.LabelBrush, bounds.Width - 24, true).Width + 22);
 
         for (var i = 0; i < def.Inputs.Count && i < node.InputValues.Length; i++)
         {
             if (patch.IncomingTo(node.Id, i) is not null || ControlMap.Of(node, i) is not null || !Reads(formula, i)) continue;
 
-            var value = CanvasText.Text(def.Inputs[i].Format(node.InputValues[i]), 11.5, CanvasText.ValueBrush, bounds.Width * 0.4, true);
+            var value = CanvasText.Text(def.Inputs[i].Format(node.InputValues[i]), CanvasText.RowSize, CanvasText.ValueBrush, bounds.Width * 0.4, true);
             reserve = Math.Max(reserve, value.Width + 20);
         }
 
         return reserve;
     }
 
-    private static FormattedText Wrapped(string text, double width, int lines)
+    private static FormattedText Wrapped(string text, double width, int lines, IBrush brush)
     {
         var formatted = new FormattedText(
             text,
@@ -87,7 +95,7 @@ internal static class FormulaLayout
             FlowDirection.LeftToRight,
             Typeface.Default,
             FormulaSize,
-            CanvasText.ValueBrush) { MaxTextWidth = width };
+            brush) { MaxTextWidth = width };
 
         if (lines > 0)
         {

@@ -1,5 +1,6 @@
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
+using Flyback.Plugins;
 
 namespace Flyback.Plugins.Picture;
 
@@ -40,7 +41,14 @@ internal static class StarModule
         + "to a needle at 1 — the five-pointed star it starts on is the one on a flag, and "
         + "sweeping the knob grows the points rather than spinning the shape. 'points' is "
         + "rounded down like a Polygon's 'sides', and two of them is a lens rather than a "
-        + "star. Exact, so an outline round one is the width it says even at the tips.");
+        + "star. Exact, so an outline round one is the width it says even at the tips.")
+    {
+        Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Forms))
+        {
+            Glyph = "M12,2.5 L14.7,9.4 L22,10 L16.4,14.8 L18.2,22 L12,17.9 L5.8,22 L7.6,14.8 "
+                + "L2,10 L9.3,9.4 Z",
+        },
+    };
 
     private static Slot[] Emit(Emitter em, EmitContext node)
     {

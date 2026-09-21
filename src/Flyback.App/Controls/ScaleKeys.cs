@@ -63,7 +63,8 @@ internal sealed class ScaleKeys
     /// <summary>
     /// What a key that is on is painted: the module's own accent, so a lit key
     /// belongs to the block it is on rather than to a palette of its own — and
-    /// follows if the Quantiser is ever filed under a different category.
+    /// follows if the Quantiser is ever filed under a different category, or a
+    /// plugin's own skin.
     /// </summary>
     private readonly IBrush on;
 
@@ -78,7 +79,7 @@ internal sealed class ScaleKeys
     /// <summary>The scale a module carries.</summary>
     public ScaleKeys(NodeInstance node, NodeDef def, Action<string?> changed)
         : this(
-            def.Category,
+            Colors.Palette(def).Accent,
             () => ScaleExtra.Of(node),
             scale =>
             {
@@ -90,16 +91,16 @@ internal sealed class ScaleKeys
     }
 
     /// <summary>
-    /// A scale kept anywhere, under the accent of <paramref name="category"/> —
-    /// which is how the patch's keyboard is edited from the module that plays it.
+    /// A scale kept anywhere, under <paramref name="accent"/> — which is how the
+    /// patch's keyboard is edited from the module that plays it.
     /// </summary>
-    public ScaleKeys(string category, Func<List<int>> read, Action<List<int>> write, bool played)
+    public ScaleKeys(Color accent, Func<List<int>> read, Action<List<int>> write, bool played)
     {
         this.read = read;
         this.write = write;
         this.played = played;
 
-        on = new SolidColorBrush(Colors.Accent(category));
+        on = new SolidColorBrush(accent);
 
         var panel = new StackPanel { Margin = new Thickness(0, played ? 6 : 14, 0, 0) };
 

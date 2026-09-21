@@ -9,3 +9,12 @@ static Flyback.Core.Graph.NodeCatalog.FilterResponses(Flyback.Core.Compile.Emitt
 static Flyback.Core.Graph.NodeCatalog.RandomNoise(Flyback.Core.Compile.Emitter! em, Flyback.Core.Compile.Slot domain, Flyback.Core.Compile.Slot seed) -> (Flyback.Core.Compile.Slot White, Flyback.Core.Compile.Slot Pink)
 static Flyback.Core.Graph.NodeCatalog.DelayEchoed(Flyback.Core.Compile.Emitter! em, Flyback.Core.Compile.Slot dry, Flyback.Core.Compile.Slot time, Flyback.Core.Compile.Slot feedback, Flyback.Core.Compile.Slot mix) -> Flyback.Core.Compile.Slot
 static Flyback.Core.Graph.NodeCatalog.LegacyTypeIds.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
+const Flyback.Core.Graph.NodeCatalog.SineTypeId = "osc.sine" -> string!
+const Flyback.Core.Graph.NodeCatalog.SawTypeId = "osc.saw" -> string!
+const Flyback.Core.Graph.NodeCatalog.TriangleTypeId = "osc.triangle" -> string!
+const Flyback.Core.Graph.NodeCatalog.SquareTypeId = "osc.square" -> string!
+const Flyback.Core.Graph.NodeCatalog.PulseTypeId = "osc.pulse" -> string!
+const Flyback.Core.Graph.NodeCatalog.FeedbackTypeId = "feedback" -> string!
+const Flyback.Core.Graph.NodeCatalog.ValueTypeId = "value" -> string!
+const Flyback.Core.Graph.NodeCatalog.DeskTypeId = "math.desk" -> string!
+const Flyback.Core.Graph.NodeCatalog.NoiseTypeId = "pattern.noise" -> string!

@@ -1,5 +1,6 @@
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
+using Flyback.Plugins;
 
 namespace Flyback.Plugins.Voice;
 
@@ -44,7 +45,13 @@ internal static class DrumModule
         + "'pitch' is where it comes to rest, in hertz: 45 is a kick, 100 to 250 a tom. 'sweep' "
         + "is how many hertz above that the hit starts, and 'bend' how quickly it falls — high "
         + "is a click at the front, low a long dive. 'drive' thickens it without making it "
-        + "louder, and 0 is clean.");
+        + "louder, and 0 is clean.")
+    {
+        Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Oscillators))
+        {
+            Glyph = "M4,6 A8,3 0 1 1 20,6 A8,3 0 1 1 4,6 M4,6 L4,18 A8,3 0 1 0 20,18 L20,6",
+        },
+    };
 
     private static Slot[] Emit(Emitter em, EmitContext node)
     {

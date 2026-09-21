@@ -29,6 +29,9 @@ public partial class NodeCatalog
     /// </summary>
     public const string PictureTypeId = "picture";
 
+    /// <summary>The knob module. Named here for the reason every other own mark is.</summary>
+    public const string ValueTypeId = "value";
+
     public const int CoordXPort = 0;
     public const int CoordYPort = 1;
     public const int CoordAspectPort = 4;
@@ -95,7 +98,7 @@ public partial class NodeCatalog
         };
 
         yield return new NodeDef(
-            "value", "Value", ModuleCategories.Sources,
+            ValueTypeId, "Value", ModuleCategories.Sources,
             [Num("value", 0.5f)], [Num("out")],
             (_, i) => [i[0]],
             "A knob. Handy when several modules should share one number.");

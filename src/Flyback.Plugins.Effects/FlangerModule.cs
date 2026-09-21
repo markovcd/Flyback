@@ -1,5 +1,6 @@
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
+using Flyback.Plugins;
 
 namespace Flyback.Plugins.Effects;
 
@@ -43,7 +44,13 @@ internal static class FlangerModule
         + "of thickening it. Sweeping drags a comb of notches through the sound. 'feedback' "
         + "sharpens them, and going negative moves them to where the peaks were — the two "
         + "signs are two different effects. 'lfo' is the sweep, and works on the picture. "
-        + "Audio only otherwise: with nothing to remember it is a wire.");
+        + "Audio only otherwise: with nothing to remember it is a wire.")
+    {
+        Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.TimeEffects))
+        {
+            Glyph = "M2,12 L4,4 L6,12 L8,4 L10,12 L12,4 L14,12 L16,4 L18,12 L20,4 L22,12",
+        },
+    };
 
     private static Slot[] Emit(Emitter em, EmitContext inputs)
     {

@@ -113,7 +113,8 @@ public class BoxLabelTests : UiTest
         var def = NodeCatalog.BuiltIn.Require(NodeCatalog.ExpressionTypeId);
 
         double Height(NodeInstance node) =>
-            FormulaLayout.FormulaBlock(editor.Patch, node, def, NodeGeometry.Bounds(node, def)).ShouldNotBeNull().Text.Height;
+            FormulaLayout.FormulaBlock(editor.Patch, node, def, NodeGeometry.Bounds(node, def), static _ => CanvasText.ValueBrush)
+                .ShouldNotBeNull().Text.Height;
 
         Height(named).ShouldBe(Height(shortOne), "a name does not move the formula out of the body");
         Height(longOne).ShouldBeGreaterThan(Height(shortOne), "a long one wraps rather than going missing");

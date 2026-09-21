@@ -235,6 +235,38 @@ public class SwitchOffTests : UiTest
         All<Button>(window).Select(b => b.Name).ShouldNotContain("switch-modules");
     }
 
+    /// <summary>
+    /// The panel matches the canvas for a module switched off (ADR-0117): the
+    /// wash fades and the name is struck through, and both come back the moment
+    /// the module is switched back on.
+    /// </summary>
+    [AvaloniaFact]
+    public void The_panel_fades_and_strikes_a_switched_off_module()
+    {
+        var patch = Chain(out _, out var osc, out _);
+        var window = Open(patch);
+
+        ClickOn(window, osc);
+
+        // Read afresh each time: the panel rebuilds a new plate and a new title
+        // on every toggle, the same as a fresh selection does.
+        var wash = All<ModuleWash>(window).Single();
+        TextBlock Title() => All<ModulePlate>(window).Single().Named.Children[0].ShouldBeOfType<TextBlock>();
+
+        wash.Off.ShouldBeFalse();
+        Title().TextDecorations.ShouldBeNull();
+
+        Switch(window);
+
+        wash.Off.ShouldBeTrue();
+        Title().TextDecorations.ShouldNotBeNull();
+
+        Switch(window);
+
+        wash.Off.ShouldBeFalse();
+        Title().TextDecorations.ShouldBeNull();
+    }
+
     // --- a box ---------------------------------------------------------------
 
     private static NodeGroup Boxed(Patch patch, params NodeInstance[] members) =>

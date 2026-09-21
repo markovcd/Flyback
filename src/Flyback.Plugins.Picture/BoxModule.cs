@@ -1,5 +1,6 @@
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
+using Flyback.Plugins;
 
 namespace Flyback.Plugins.Picture;
 
@@ -35,7 +36,14 @@ internal static class BoxModule
         "A rectangle, as a distance. 'width' and 'height' are half-sizes, so they read as how "
         + "far it reaches from the middle — the same way a radius does, and the reason a box "
         + "and a circle of the same number are the same size. 'corner' rounds the corners off, "
-        + "up to the point where the shape is a capsule and then a disc.");
+        + "up to the point where the shape is a capsule and then a disc.")
+    {
+        Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Forms))
+        {
+            Glyph = "M6,4 L18,4 A2,2 0 0 1 20,6 L20,18 A2,2 0 0 1 18,20 L6,20 A2,2 0 0 1 4,18 "
+                + "L4,6 A2,2 0 0 1 6,4 Z",
+        },
+    };
 
     private static Slot[] Emit(Emitter em, EmitContext node)
     {

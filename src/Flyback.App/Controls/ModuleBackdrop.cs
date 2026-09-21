@@ -29,9 +29,14 @@ internal readonly struct ModuleBackdrop
     /// <summary>The picture behind the module, or null where it is painted instead.</summary>
     public ModuleArtwork? Picture { get; }
 
-    public static ModuleBackdrop Of(NodeDef def, bool selected)
+    /// <param name="panel">
+    /// The panel's own picture rather than the block's — see
+    /// <see cref="ModuleArtwork.Of"/>. The canvas never asks for this; it is
+    /// the plate reading the same background the wash beside it is drawing.
+    /// </param>
+    public static ModuleBackdrop Of(NodeDef def, bool selected, bool panel = false)
     {
-        var picture = ModuleSkins.Of(def) is ModuleSkin.Artwork artwork ? ModuleArtwork.Of(artwork) : null;
+        var picture = ModuleSkins.Of(def) is ModuleSkin.Artwork artwork ? ModuleArtwork.Of(artwork, panel) : null;
         var (accent, floor) = Colors.Palette(def);
 
         return new ModuleBackdrop(
@@ -41,6 +46,29 @@ internal readonly struct ModuleBackdrop
             NodeSkin.BodyFloor(floor, selected),
             picture);
     }
+
+    /// <summary>
+    /// The header's own gradient — or, behind a picture, its topmost band stood
+    /// in for both ends, so a name reads against what is actually near the top
+    /// of the picture rather than the whole of it averaged together.
+    /// </summary>
+    public (Color Top, Color Floor) HeaderGradient =>
+        Picture is { } picture ? (picture.Band(0), picture.Band(0)) : (headerTop, headerFloor);
+
+    /// <summary>Which way the header's own text is lifted — the header half of <see cref="Lift"/>.</summary>
+    public bool HeaderLift => Picture is { } picture
+        ? !Colors.Light(picture.Mean)
+        : !Colors.Light(Colors.Blend(headerTop, headerFloor, 0.5));
+
+    /// <summary>
+    /// The body's own top color — or, behind a picture, its topmost band again —
+    /// which is what a line standing on the body just under the header reads
+    /// against.
+    /// </summary>
+    public Color BodyInk => Picture is { } picture ? picture.Band(0) : bodyTop;
+
+    /// <summary>Which way that line is lifted — the body half of <see cref="Lift"/>.</summary>
+    public bool BodyLift => Picture is { } picture ? !Colors.Light(picture.Mean) : !Colors.Light(bodyTop);
 
     /// <summary>The color behind the point <paramref name="y"/> down the module.</summary>
     public Color At(Rect bounds, double y)

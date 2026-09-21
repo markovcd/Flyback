@@ -23,7 +23,7 @@ public sealed partial class NodeEditor
     /// What a module's header says: its title, and the bus where it is a Send or a
     /// Receive. A module named after its own bus is called what it is instead.
     /// </summary>
-    private static string Heading(NodeInstance node, NodeDef def)
+    internal static string Heading(NodeInstance node, NodeDef def)
     {
         if (NodeCatalog.BusOf(node) is not { } bus) return node.Title(def);
 

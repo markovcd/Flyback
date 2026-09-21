@@ -1,5 +1,6 @@
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
+using Flyback.Plugins;
 
 namespace Flyback.Plugins.Voice;
 
@@ -82,6 +83,12 @@ internal static class FmModule
                         Stack),
                 ]),
         ],
+        Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Oscillators))
+        {
+            Glyph = "M2,9 C4,4 6,4 8,9 C10,14 12,14 14,9 C16,4 18,4 20,9 "
+                + "M2,16 C3,13 4,13 5,16 C6,19 7,19 8,16 C9,13 10,13 11,16 "
+                + "C12,19 13,19 14,16 C15,13 16,13 17,16 C18,19 19,19 20,16",
+        },
     };
 
     private static Slot[] Emit(Emitter em, EmitContext node)

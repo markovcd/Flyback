@@ -1,5 +1,6 @@
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
+using Flyback.Plugins;
 
 namespace Flyback.Plugins.Voice;
 
@@ -33,7 +34,13 @@ internal static class FoldModule
         + "sine grows a spectrum. 'bias' shifts the signal before the fold, so the folds stop "
         + "being symmetric and even harmonics appear. Untyped like the maths modules, so it "
         + "folds a color as readily as a tone — and on the screen the same knob turns a "
-        + "gradient into bands.");
+        + "gradient into bands.")
+    {
+        Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Shaping))
+        {
+            Glyph = "M3,6 L21,6 M3,18 L21,18 M4,18 L8,6 L12,18 L16,6 L20,18",
+        },
+    };
 
     private static Slot[] Emit(Emitter em, EmitContext inputs)
     {

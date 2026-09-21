@@ -1,5 +1,6 @@
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
+using Flyback.Plugins;
 
 namespace Flyback.Plugins.Mastering;
 
@@ -70,6 +71,10 @@ internal static class LimiterModule
         + "delays the sound by as much. 'gain' is the gain applied.")
     {
         Sinks = ModuleSinks.Audio,
+        Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Shaping))
+        {
+            Glyph = "M4,7 L20,7 M2,18 C4,10 5,7 7,7 L17,7 C19,7 20,10 22,18",
+        },
     };
 
     private static Slot[] Emit(Emitter em, EmitContext node)

@@ -1,5 +1,6 @@
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
+using Flyback.Plugins;
 
 namespace Flyback.Plugins.Mastering;
 
@@ -34,7 +35,14 @@ internal static class WidthModule
         [new PortSpec("left"), new PortSpec("right"), new PortSpec("mid"), new PortSpec("side")],
         Emit,
         "'width' 0 is mono, 2 twice as wide; 'mono below' (Hz, 0 is off) centers the bass. "
-        + "'mid' and 'side' are the halved sum and difference.");
+        + "'mid' and 'side' are the halved sum and difference.")
+    {
+        Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Shaping))
+        {
+            Glyph = "M6,12 A6,4 0 1 1 18,12 A6,4 0 1 1 6,12 "
+                + "M6,12 L1,12 M1,12 L3.5,9.8 M1,12 L3.5,14.2 M18,12 L23,12 M23,12 L20.5,9.8 M23,12 L20.5,14.2",
+        },
+    };
 
     private static Slot[] Emit(Emitter em, EmitContext node)
     {

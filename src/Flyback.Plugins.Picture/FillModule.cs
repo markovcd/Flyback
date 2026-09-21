@@ -1,5 +1,6 @@
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
+using Flyback.Plugins;
 
 namespace Flyback.Plugins.Picture;
 
@@ -43,7 +44,13 @@ internal static class FillModule
         + "across and centred on it, so a form and its own outline are two wires from one "
         + "module. Both are 0..1, which is what a color's 'value' wants and what a Mixer "
         + "blends. Sizes are in the picture's own units rather than in pixels, so a patch "
-        + "looks the same at any size it is rendered at.");
+        + "looks the same at any size it is rendered at.")
+    {
+        Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Forms))
+        {
+            Glyph = "M12,3 C16,9 19,13 19,16.5 A7,7 0 1 1 5,16.5 C5,13 8,9 12,3 Z",
+        },
+    };
 
     private static Slot[] Emit(Emitter em, EmitContext node)
     {

@@ -1,6 +1,7 @@
 using System.Text.Json.Nodes;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
+using Flyback.Plugins;
 
 namespace Flyback.Plugins.Picture;
 
@@ -64,6 +65,10 @@ internal static class TextModule
         + "height of a capital.")
     {
         Extras = [new LinesExtra()],
+        Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Forms))
+        {
+            Glyph = "M5,20 L11,4 L17,20 M7.4,14 L14.6,14",
+        },
     };
 
     /// <summary>

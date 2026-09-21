@@ -1,5 +1,6 @@
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
+using Flyback.Plugins;
 
 namespace Flyback.Plugins.Effects;
 
@@ -44,7 +45,14 @@ internal static class ChorusModule
         + "copy is never quite in tune with the original. 'out' and 'wide' are swept in "
         + "opposite directions — patch both for stereo, or use 'out' alone. 'lfo' is the "
         + "sweep itself, and is the one output that works on the picture. Audio only "
-        + "otherwise: with nothing to remember it is a wire.");
+        + "otherwise: with nothing to remember it is a wire.")
+    {
+        Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.TimeEffects))
+        {
+            Glyph = "M2,9 C4,6 6,6 8,9 C10,12 12,12 14,9 C16,6 18,6 20,9 "
+                + "M2,15 C4,12 6,12 8,15 C10,18 12,18 14,15 C16,12 18,12 20,15",
+        },
+    };
 
     private static Slot[] Emit(Emitter em, EmitContext inputs)
     {

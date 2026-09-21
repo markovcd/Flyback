@@ -1,5 +1,6 @@
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
+using Flyback.Plugins;
 
 namespace Flyback.Plugins.Picture;
 
@@ -55,7 +56,13 @@ internal static class CombineModule
         + "melts the seam where they meet — at 0 the corners are sharp and this is exactly a "
         + "Minimum and a Maximum, and turned up the two forms flow into each other. Chain "
         + "them for more than two shapes; the outputs are distances like the inputs, so "
-        + "anything here can be combined again, filled or outlined.");
+        + "anything here can be combined again, filled or outlined.")
+    {
+        Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Forms))
+        {
+            Glyph = "M9,7 A6,6 0 1 0 9,19 A6,6 0 1 0 9,7 M15,7 A6,6 0 1 0 15,19 A6,6 0 1 0 15,7",
+        },
+    };
 
     private static Slot[] Emit(Emitter em, EmitContext node)
     {

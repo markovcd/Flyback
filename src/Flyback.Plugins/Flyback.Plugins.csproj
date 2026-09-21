@@ -34,6 +34,18 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!--
+      CategoryAccents is shared rather than public: a plugin in this repository
+      may match a category's exact accent, but nothing here promises a
+      third-party one the same color forever.
+    -->
+    <InternalsVisibleTo Include="Flyback.Plugins.Picture" />
+    <InternalsVisibleTo Include="Flyback.Plugins.Voice" />
+    <InternalsVisibleTo Include="Flyback.Plugins.Effects" />
+    <InternalsVisibleTo Include="Flyback.Plugins.Mastering" />
+  </ItemGroup>
+
+  <ItemGroup>
     <EmbeddedResource Include="Assist\priority-modules.txt" LogicalName="priority-modules.txt" />
   </ItemGroup>
 

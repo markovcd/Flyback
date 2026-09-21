@@ -1,6 +1,8 @@
+using System.Diagnostics;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
+using Avalonia.Threading;
 using Flyback.Core.Graph;
 
 namespace Flyback.App.Controls;
@@ -34,10 +36,23 @@ internal sealed class ModuleWash : Control
     /// <summary>How far the mark keeps off the panel's edges.</summary>
     private const double MarkInset = 12;
 
+    /// <summary>
+    /// How faint the whole face is drawn for a module that is switched off —
+    /// the same fade the canvas draws the block itself at (ADR-0117).
+    /// </summary>
+    private const double OffOpacity = 0.38;
+
+    /// <summary>How often the panel repaints while its picture is animating — see <see cref="KeepMoving"/>.</summary>
+    private const double Tick = 40;
+
+    /// <summary>What an animated picture on the panel is read against — its own clock, since the panel is not the canvas.</summary>
+    private static readonly Stopwatch clock = Stopwatch.StartNew();
+
     private IBrush? wash, band, grain;
     private ModuleArtwork? picture;
     private Geometry? glyph;
     private IPen? mark;
+    private bool moving, ticking;
 
     /// <summary>
     /// How far down the panel the plate reaches, so the mark starts under it rather
@@ -72,6 +87,22 @@ internal sealed class ModuleWash : Control
         }
     }
 
+    /// <summary>
+    /// Whether the module shown is switched off, which fades the whole face —
+    /// the panel's answer to ADR-0117, the way the canvas fades the block.
+    /// </summary>
+    public bool Off
+    {
+        get;
+        set
+        {
+            if (field == value) return;
+
+            field = value;
+            InvalidateVisual();
+        }
+    }
+
     /// <summary>Shows the module's own background, or nothing where none is wanted.</summary>
     public void Show(NodeDef? def)
     {
@@ -99,7 +130,7 @@ internal sealed class ModuleWash : Control
         InvalidateVisual();
     }
 
-    /// <summary>The greys a box is drawn in, which belongs to no category.</summary>
+    /// <summary>The grays a box is drawn in, which belongs to no category.</summary>
     public void ShowBox()
     {
         wash = NodeSkin.Box(selected: false);
@@ -120,6 +151,7 @@ internal sealed class ModuleWash : Control
         picture = null;
         glyph = null;
         mark = null;
+        Off = false;
 
         InvalidateVisual();
     }
@@ -132,42 +164,75 @@ internal sealed class ModuleWash : Control
 
         if (bounds.Width <= 0 || bounds.Height <= 0) return;
 
-        // One mask over the fill, so a picture, a wash and a grain all disappear
-        // the same way.
-        using (context.PushOpacityMask(NodeSkin.Fade(bounds), bounds))
+        using (context.PushOpacity(Off ? OffOpacity : 1))
         {
-            if (picture is { } art)
+            // One mask over the fill, so a picture, a wash and a grain all disappear
+            // the same way.
+            using (context.PushOpacityMask(NodeSkin.Fade(bounds), bounds))
             {
-                art.Cover(context, bounds);
-            }
-            else
-            {
-                context.FillRectangle(wash!, bounds);
+                if (picture is { } art)
+                {
+                    if (art.Paint(context, new RoundedRect(bounds), clock.Elapsed.TotalMilliseconds))
+                        moving = true;
+                }
+                else
+                {
+                    context.FillRectangle(wash!, bounds);
 
-                if (grain is { } cut) context.FillRectangle(cut, bounds);
+                    if (grain is { } cut) context.FillRectangle(cut, bounds);
+                }
+
+                DrawBand(context, bounds);
             }
 
-            DrawBand(context, bounds);
+            // Outside the mask: the mark stands where the fill has already gone, and it
+            // is the one thing here that has to be there at any panel height.
+            DrawMark(context, bounds);
         }
 
-        // Outside the mask: the mark stands where the fill has already gone, and it
-        // is the one thing here that has to be there at any panel height.
-        DrawMark(context, bounds);
+        KeepMoving();
     }
 
     /// <summary>
     /// The band the name stands on, across the top of the panel and square: this is
-    /// the head of the panel rather than a block on a canvas.
+    /// the head of the panel rather than a block on a canvas. Its relief is drawn
+    /// even behind a picture — see <see cref="Render"/> — because the title bar
+    /// reads the same way over artwork as it does over paint (ADR-0118).
     /// </summary>
     private void DrawBand(DrawingContext context, Rect bounds)
     {
-        if (band is null || BandHeight <= 0) return;
+        if (BandHeight <= 0) return;
 
         var top = new Rect(bounds.X, bounds.Y, bounds.Width, Math.Min(BandHeight, bounds.Height));
 
-        context.FillRectangle(band, top);
+        if (band is not null) context.FillRectangle(band, top);
 
         NodeSkin.Relief(context, top);
+    }
+
+    /// <summary>
+    /// Asks for another frame while the picture just drawn was animating, and
+    /// only while the panel is actually on screen — an inspector nobody is
+    /// looking at has no reason to keep a timer running.
+    /// </summary>
+    private void KeepMoving()
+    {
+        if (!moving || ticking || !IsEffectivelyVisible)
+        {
+            moving = false;
+            return;
+        }
+
+        moving = false;
+        ticking = true;
+
+        DispatcherTimer.RunOnce(
+            () =>
+            {
+                ticking = false;
+                if (IsEffectivelyVisible) InvalidateVisual();
+            },
+            TimeSpan.FromMilliseconds(Tick));
     }
 
     /// <summary>

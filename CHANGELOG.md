@@ -80,6 +80,7 @@
 ### Canvas and interface
 - Ctrl+scroll, Ctrl+plus and Ctrl+minus over the text view change its font size, Ctrl+0 resets it, and the size is remembered.
 - The panel on the right wears the selected block's own face: its category band, the wash under it and its mark, with the name and the buttons on it.
+- More modules, the shipped plugins' included, have a mark of their own, the module list shows each module's mark, and the panel draws a module exactly as the canvas does.
 - Ctrl+Shift+L, or Ctrl+click on the Tidy button, lays out only the selected modules and leaves the rest of the patch where it is.
 - A toolbar button swaps the preview and the canvas, for a bigger picture while you patch.
 - A toolbar button, or Ctrl+P, pauses and plays the patch, and the full-screen preview has the viewer's sound, pause and rewind buttons in its corner.

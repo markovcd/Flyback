@@ -1,5 +1,6 @@
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
+using Flyback.Plugins;
 
 namespace Flyback.Plugins.Picture;
 
@@ -31,7 +32,15 @@ internal static class LineModule
         + "is how far it reaches either side of the line, as a Box's sizes are half-sizes. "
         + "Patch it into a Fill to see it. 'along' runs from 0 at the first end to 1 at the "
         + "second, for a stroke that fades, changes color, or breaks into dashes through a "
-        + "Square. Drive the ends from oscillators and it moves.");
+        + "Square. Drive the ends from oscillators and it moves.")
+    {
+        Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Forms))
+        {
+            Glyph = "M6,18 L18,6 "
+                + "M4.7,18 A1.3,1.3 0 1 1 7.3,18 A1.3,1.3 0 1 1 4.7,18 "
+                + "M16.7,6 A1.3,1.3 0 1 1 19.3,6 A1.3,1.3 0 1 1 16.7,6",
+        },
+    };
 
     private static Slot[] Emit(Emitter em, EmitContext node)
     {

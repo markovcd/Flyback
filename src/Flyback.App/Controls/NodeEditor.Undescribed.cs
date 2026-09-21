@@ -50,14 +50,20 @@ public sealed partial class NodeEditor
     /// <summary>How much of the header a tag takes from the title, gap included.</summary>
     private const double TagRoom = TagWidth + TagInset;
 
-    private static void DrawTag(DrawingContext context, Rect bounds)
+    /// <param name="ink">
+    /// The title's own ink, for a module drawn with <see cref="ModuleSkin.ContrastText"/>
+    /// on — null draws the ordinary white, which is every module without a skin.
+    /// </param>
+    private static void DrawTag(DrawingContext context, Rect bounds, IBrush? ink)
     {
         var tag = TagBounds(bounds);
+        var pen = ink is null ? TagPen : new Pen(ink);
+        var dots = ink ?? TagDots;
 
-        context.DrawRectangle(null, TagPen, new RoundedRect(tag, 3));
+        context.DrawRectangle(null, pen, new RoundedRect(tag, 3));
 
         for (var i = -1; i <= 1; i++)
-            context.DrawEllipse(TagDots, null, new Point(tag.Center.X + i * 4, tag.Center.Y), 1.1, 1.1);
+            context.DrawEllipse(dots, null, new Point(tag.Center.X + i * 4, tag.Center.Y), 1.1, 1.1);
     }
 
     /// <summary>

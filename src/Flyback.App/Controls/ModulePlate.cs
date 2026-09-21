@@ -73,7 +73,7 @@ internal sealed class ModulePlate : Decorator
 
     /// <summary>
     /// What the line under the name is written in. White pulled back rather than the
-    /// canvas's label grey, because it stands on the band beside the name rather than
+    /// canvas's label gray, because it stands on the band beside the name rather than
     /// on the body: one surface, one ink, one of them quieter.
     /// </summary>
     private static readonly IBrush Label =
@@ -122,16 +122,7 @@ internal sealed class ModulePlate : Decorator
     public IBrush Quiet { get; }
 
     /// <summary>A module, from its category's accent or from the palette its author gave it.</summary>
-    public static ModulePlate Of(NodeDef def)
-    {
-        var (accent, floor) = Colors.Palette(def);
-        var skin = ModuleSkins.Of(def);
-        var picture = skin is ModuleSkin.Artwork artwork ? ModuleArtwork.Of(artwork, panel: true) : null;
-
-        // A picture is the background, so the band is not drawn over it: the name
-        // stands on what the plugin hung there.
-        return new ModulePlate(Inks(accent, floor, skin, picture));
-    }
+    public static ModulePlate Of(NodeDef def) => new(Inks(def, ModuleSkins.Of(def)));
 
     /// <summary>
     /// A box, which belongs to no category and wears the grays the canvas draws one
@@ -140,35 +131,42 @@ internal sealed class ModulePlate : Decorator
     public static ModulePlate Box() => new((Brushes.White, Label));
 
     /// <summary>
-    /// White over the label grey, which is what the canvas writes on a block — or,
-    /// where the skin asks for it, each line colored from the background it covers.
+    /// White over the label gray, which is what the canvas writes on a block — or,
+    /// where the skin asks for it, each line colored from the background it
+    /// covers. Read off <see cref="ModuleBackdrop"/> rather than worked out again
+    /// here, and from the panel's own picture (ADR-0118), so the plate can never
+    /// pick a direction the canvas's own title would not.
     /// </summary>
-    private static (IBrush Ink, IBrush Quiet) Inks(
-        Color accent, Color floor, ModuleSkin? skin, ModuleArtwork? picture)
+    private static (IBrush Ink, IBrush Quiet) Inks(NodeDef def, ModuleSkin? skin)
     {
         if (skin is not { ContrastText: true }) return (Brushes.White, Label);
 
-        if (picture is { } art)
-        {
-            var over = !Colors.Light(art.Mean);
-
-            return (
-                NodeSkin.Ink(art.Mean, art.Mean, over, 0),
-                NodeSkin.Ink(art.Mean, art.Mean, over, QuietFade));
-        }
-
-        // Both from the band, the two lines standing on it together.
-        var (bandTop, bandFloor) = (NodeSkin.HeaderTop(accent, false), NodeSkin.HeaderFloor(floor));
-        var lift = Lift(bandTop, bandFloor);
+        var backdrop = ModuleBackdrop.Of(def, selected: false, panel: true);
+        var (top, floor) = backdrop.HeaderGradient;
+        var lift = backdrop.HeaderLift;
 
         return (
-            NodeSkin.Ink(bandTop, bandFloor, lift, 0),
-            NodeSkin.Ink(bandTop, bandFloor, lift, QuietFade));
+            NodeSkin.Ink(top, floor, lift, 0),
+            NodeSkin.Ink(top, floor, lift, QuietFade));
     }
 
     /// <summary>
-    /// Which way the ink is driven, taken from the whole surface a run of text sits
-    /// on so that every line down it agrees.
+    /// The ink given to a line standing on the body, just under the header —
+    /// the description and the normalled note — where the skin asks for
+    /// contrast text. Plain <see cref="Text.Muted"/> otherwise, which is what
+    /// those rows have always been written in.
     /// </summary>
-    private static bool Lift(Color top, Color floor) => !Colors.Light(Colors.Blend(top, floor, 0.5));
+    /// <remarks>
+    /// Taken from the body's own top color rather than a point down the wash,
+    /// which fades out by about the middle of the panel (<see cref="NodeSkin.Fade"/>)
+    /// — exact enough for a couple of rows of muted prose near the top of it.
+    /// </remarks>
+    public static IBrush BodyQuiet(NodeDef def)
+    {
+        if (ModuleSkins.Of(def) is not { ContrastText: true }) return Text.Muted;
+
+        var backdrop = ModuleBackdrop.Of(def, selected: false, panel: true);
+
+        return NodeSkin.Ink(backdrop.BodyInk, backdrop.BodyInk, backdrop.BodyLift, QuietFade);
+    }
 }

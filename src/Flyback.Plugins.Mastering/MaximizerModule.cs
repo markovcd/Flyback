@@ -1,5 +1,6 @@
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
+using Flyback.Plugins;
 
 namespace Flyback.Plugins.Mastering;
 
@@ -78,6 +79,10 @@ internal static class MaximizerModule
         + "dB. 'style' 1 glues, 2 punches, 3 brightens, 4 is loudest.")
     {
         Sinks = ModuleSinks.Audio,
+        Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Shaping))
+        {
+            Glyph = "M12,20 L12,6 M7,11 L12,6 L17,11 M4,4 L20,4",
+        },
     };
 
     private static Slot[] Emit(Emitter em, EmitContext node)

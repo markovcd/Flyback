@@ -6,6 +6,9 @@ namespace Flyback.App.Controls;
 /// <summary>How a line of text is laid out on the canvas, and cut to the room it has.</summary>
 internal static class CanvasText
 {
+    /// <summary>The size every row of text on a module or a box is set at.</summary>
+    internal const double RowSize = 11.5;
+
     internal static readonly IBrush LabelBrush = new SolidColorBrush(Colors.Label);
     internal static readonly IBrush ValueBrush = new SolidColorBrush(Colors.Value);
 
@@ -40,7 +43,7 @@ internal static class CanvasText
     {
         var dot = label.LastIndexOf('.');
 
-        if (!Overflows(label, 11.5, width) || dot <= 0) return label;
+        if (!Overflows(label, RowSize, width) || dot <= 0) return label;
 
         var (head, port) = (label[..dot], label[dot..]);
         var (fits, over) = (0, head.Length);
@@ -49,7 +52,7 @@ internal static class CanvasText
         {
             var mid = (fits + over) / 2;
 
-            if (Overflows(Cut(mid), 11.5, width)) over = mid;
+            if (Overflows(Cut(mid), RowSize, width)) over = mid;
             else fits = mid;
         }
 

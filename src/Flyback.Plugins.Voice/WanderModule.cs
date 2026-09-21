@@ -1,5 +1,6 @@
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
+using Flyback.Plugins;
 
 namespace Flyback.Plugins.Voice;
 
@@ -34,7 +35,13 @@ internal static class WanderModule
         + "Patch it into anything that should keep changing once the sequence has been heard "
         + "— a cutoff, a level, a hue. Whole 'seed's share nothing; two Wanders with the same "
         + "'seed' and 'rate' move together, and on the picture it is the same value at every "
-        + "pixel, so the screen follows what the speakers follow.");
+        + "pixel, so the screen follows what the speakers follow.")
+    {
+        Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Oscillators))
+        {
+            Glyph = "M2,14 C5,6 6,18 9,10 C11,4 13,16 15,8 C17,3 19,14 22,11",
+        },
+    };
 
     private static Slot[] Emit(Emitter em, EmitContext node)
     {

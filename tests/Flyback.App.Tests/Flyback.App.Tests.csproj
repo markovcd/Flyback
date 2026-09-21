@@ -19,6 +19,19 @@
     <ProjectReference Include="..\..\src\Flyback.Viewer\Flyback.Viewer.csproj" />
   </ItemGroup>
 
+  <!--
+    Referenced directly rather than loaded from a plugins/ folder: PluginGlyphsTests
+    wants every shipped plugin's NodeDefs to check their marks, and this assembly
+    builds no plugins/ folder of its own for PluginHost.Load() to find (that is
+    Flyback.App's, and Flyback.Plugins.Tests's).
+  -->
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Flyback.Plugins.Picture\Flyback.Plugins.Picture.csproj" />
+    <ProjectReference Include="..\..\src\Flyback.Plugins.Voice\Flyback.Plugins.Voice.csproj" />
+    <ProjectReference Include="..\..\src\Flyback.Plugins.Effects\Flyback.Plugins.Effects.csproj" />
+    <ProjectReference Include="..\..\src\Flyback.Plugins.Mastering\Flyback.Plugins.Mastering.csproj" />
+  </ItemGroup>
+
   <ItemGroup>
     <PackageReference Include="Shouldly" Version="4.3.0" />
     <PackageReference Include="xunit.v3" Version="4.0.1" />

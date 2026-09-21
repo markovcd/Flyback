@@ -1,10 +1,16 @@
-﻿using System.Text;
+﻿using System.Runtime.InteropServices;
+using System.Text;
 using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
+using Avalonia.Media;
 using Avalonia.Media.Imaging;
+using Avalonia.Platform;
 using Flyback.App.Controls;
 using Flyback.Core.Graph;
+using Shouldly;
+using Colors = Flyback.App.Controls.Colors;
 
 namespace Flyback.App.Tests.Ui;
 
@@ -21,6 +27,84 @@ namespace Flyback.App.Tests.Ui;
 /// </remarks>
 public class SkinShotTests : UiTest
 {
+    /// <summary>
+    /// ADR-0118 counts a picture's transparency as the node grey behind it. That
+    /// is true of the bands a skinned module's ink is worked out from; it was not
+    /// true of what the canvas actually drew, which left a transparent picture
+    /// showing the canvas through it instead.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_transparent_picture_is_backed_by_the_node_grey()
+    {
+        var empty = Encoding.UTF8.GetBytes(
+            """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"></svg>""");
+
+        var was = NodeCatalog.Current;
+
+        var def = new NodeDef(
+            "shot.clear", "Clear", ModuleCategories.Maths,
+            [new PortSpec("in", PortKind.Any)],
+            [new PortSpec("out", PortKind.Any)],
+            (em, i) => [i[0]])
+        { Skin = new ModuleSkin.Artwork(empty) };
+
+        var added = was.With(new ModuleProvider("shot", "Shot"), [def]);
+
+        NodeCatalog.Install(added.Catalog);
+
+        try
+        {
+            var builder = new PatchBuilder(added.Catalog);
+            var node = builder.Add(def.TypeId, Across, Down);
+
+            var editor = new NodeEditor { Width = Wide, Height = Tall };
+            var window = Show(editor, Wide);
+
+            editor.Patch = builder.Patch;
+            Settle(window);
+            editor.FrameAll();
+            Settle(window);
+
+            var bounds = NodeGeometry.Bounds(node, def);
+
+            // Low in the body and left of the mark, clear of the header and of
+            // any label — an empty svg leaves the whole block transparent, so
+            // this is nothing but whatever the canvas painted underneath it.
+            var probe = new Point(bounds.X + 6, bounds.Bottom - 6);
+            var at = editor.TranslatePoint(editor.GraphToScreen.Transform(probe), window)
+                ?? throw new InvalidOperationException("the editor is not in this window");
+
+            var pixel = Pixel(window, at);
+
+            Math.Abs(pixel.R - Colors.Node.R).ShouldBeLessThanOrEqualTo(4, $"was {pixel}");
+            Math.Abs(pixel.G - Colors.Node.G).ShouldBeLessThanOrEqualTo(4, $"was {pixel}");
+            Math.Abs(pixel.B - Colors.Node.B).ShouldBeLessThanOrEqualTo(4, $"was {pixel}");
+        }
+        finally
+        {
+            NodeCatalog.Install(was);
+        }
+    }
+
+    /// <summary>The color the window actually drew at <paramref name="at"/>.</summary>
+    private static Color Pixel(Window window, Point at)
+    {
+        using var frame = window.CaptureRenderedFrame()
+            ?? throw new InvalidOperationException("the window rendered nothing");
+
+        using var locked = frame.Lock();
+
+        var x = (int)Math.Round(at.X);
+        var y = (int)Math.Round(at.Y);
+
+        var bytes = new byte[4];
+        Marshal.Copy(locked.Address + y * locked.RowBytes + x * 4, bytes, 0, 4);
+
+        return locked.Format == PixelFormat.Bgra8888
+            ? Color.FromRgb(bytes[2], bytes[1], bytes[0])
+            : Color.FromRgb(bytes[0], bytes[1], bytes[2]);
+    }
+
     private static string? Where => Environment.GetEnvironmentVariable("SHOT_DIR");
 
     [AvaloniaFact]

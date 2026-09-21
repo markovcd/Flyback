@@ -1,5 +1,6 @@
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
+using Flyback.Plugins;
 
 namespace Flyback.Plugins.Voice;
 
@@ -69,6 +70,10 @@ internal static class HissModule
                 ]),
         ],
         Sinks = ModuleSinks.Audio,
+        Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Oscillators))
+        {
+            Glyph = "M2,12 L4,8 L5,15 L7,6 L9,17 L11,9 L13,14 L15,7 L17,16 L19,10 L21,13 L22,11",
+        },
     };
 
     private static Slot[] Emit(Emitter em, EmitContext node)

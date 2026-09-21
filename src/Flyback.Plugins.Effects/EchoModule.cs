@@ -1,5 +1,6 @@
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
+using Flyback.Plugins;
 
 namespace Flyback.Plugins.Effects;
 
@@ -69,6 +70,10 @@ internal static class EchoModule
                     Division,
                 ]),
         ],
+        Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.TimeEffects))
+        {
+            Glyph = "M6,20 A9,9 0 0 1 6,4 M9,20 A6,6 0 0 1 9,8 M12,20 A3,3 0 0 1 12,14",
+        },
     };
 
     private static Slot[] Emit(Emitter em, EmitContext node)

@@ -314,6 +314,36 @@ public class ModuleSkinTests
     private const string TwoFrameGif =
         "R0lGODlhAQABAPAAAAAAAP///yH/C05FVFNDQVBFMi4wAwEAAAAh+QQACgAAACwAAAAAAQABAAACAkQBACH5BAAKAAAALAAAAAABAAEAAAICTAEAOw==";
 
+    // --- the panel ------------------------------------------------------------
+
+    /// <summary>
+    /// Plain text is not ContrastText's story to tell: a module that never asked
+    /// for it keeps its description in the ordinary muted gray.
+    /// </summary>
+    [Fact]
+    public void Description_ink_is_plain_without_contrast_text()
+    {
+        var def = Bare() with { Skin = new ModuleSkin.Palette(new Swatch(0x20, 0x20, 0x20)) };
+
+        ModulePlate.BodyQuiet(def).ShouldBeSameAs(Text.Muted);
+    }
+
+    /// <summary>
+    /// A module that asks for contrast text gets its description colored from
+    /// its own body rather than the shell's ordinary muted gray — the same
+    /// background the wash paints there (ADR-0118).
+    /// </summary>
+    [Fact]
+    public void Description_ink_follows_contrast_text()
+    {
+        var def = Bare() with
+        {
+            Skin = new ModuleSkin.Palette(new Swatch(0x20, 0x20, 0x20)) { ContrastText = true },
+        };
+
+        ModulePlate.BodyQuiet(def).ShouldNotBeSameAs(Text.Muted);
+    }
+
     /// <summary>A module with nothing said about how it is drawn.</summary>
     private static NodeDef Bare() => NodeCatalog.Require("math.add");
 }

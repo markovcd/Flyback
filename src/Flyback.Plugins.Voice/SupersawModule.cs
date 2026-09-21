@@ -1,5 +1,6 @@
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
+using Flyback.Plugins;
 
 namespace Flyback.Plugins.Voice;
 
@@ -72,7 +73,13 @@ internal static class SupersawModule
         Emit,
         "Seven detuned saws in one module. 'detune' spreads them apart, 'mix' fades the "
         + "six outer voices in against the centre — at 0 it is exactly a plain Saw. "
-        + "Patch 'out' and 'wide' to the two channels for stereo, or use 'out' alone.");
+        + "Patch 'out' and 'wide' to the two channels for stereo, or use 'out' alone.")
+    {
+        Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Oscillators))
+        {
+            Glyph = "M3,20 L9,4 M6,20 L12,4 M9,20 L15,4 M12,20 L18,4 M15,20 L21,4",
+        },
+    };
 
     /// <summary>
     /// Everything is peak-normalised as it is mixed, so the output stays inside

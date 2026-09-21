@@ -1,6 +1,7 @@
 using System.Text.Json.Nodes;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
+using Flyback.Plugins;
 
 namespace Flyback.Plugins.Picture;
 
@@ -74,6 +75,10 @@ internal static class FractalModule
         + "dearest thing here.")
     {
         Extras = [new OctaveExtra()],
+        Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Patterns))
+        {
+            Glyph = "M12,3 L20,19 L4,19 Z M12,10 L16,17.5 L8,17.5 Z",
+        },
     };
 
     /// <summary>

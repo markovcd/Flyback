@@ -1,5 +1,6 @@
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
+using Flyback.Plugins;
 
 namespace Flyback.Plugins.Picture;
 
@@ -20,7 +21,14 @@ internal static class CircleModule
         Emit,
         "A circle, as the distance to its rim: negative inside, zero on the edge, positive "
         + "outside. Patch it into a Fill to see it. It is exact everywhere, which makes it "
-        + "the one to reach for when a Combine is going to smooth it against something else.");
+        + "the one to reach for when a Combine is going to smooth it against something else.")
+    {
+        Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Forms))
+        {
+            Glyph = "M4,12 A8,8 0 1 1 20,12 A8,8 0 1 1 4,12 "
+                + "M13.2,12 A1.2,1.2 0 1 1 10.8,12 A1.2,1.2 0 1 1 13.2,12",
+        },
+    };
 
     private static Slot[] Emit(Emitter em, EmitContext node) =>
         [em.Sub(em.Binary(OpCode.Hypot, node[0], node[1]), node[2])];

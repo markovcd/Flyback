@@ -480,6 +480,7 @@ public sealed partial class MainWindow
         var plate = ModulePlate.Of(def);
 
         wash.Show(def);
+        wash.Off = node.Off;
 
         plate.Named.Children.Add(BuildTitle(node, def, plate.Ink));
 
@@ -504,7 +505,7 @@ public sealed partial class MainWindow
             {
                 Text = def.Description,
                 TextWrapping = TextWrapping.Wrap,
-                Foreground = Text.Muted,
+                Foreground = ModulePlate.BodyQuiet(def),
                 FontSize = Text.Body,
                 Margin = new Thickness(0, 4, 0, 6),
             });
@@ -695,6 +696,7 @@ public sealed partial class MainWindow
         var plate = ModulePlate.Box();
 
         wash.ShowBox();
+        wash.Off = editor.SelectionIsOff;
 
         plate.Named.Children.Add(BuildGroupTitle(group, plate.Ink));
 
@@ -931,6 +933,10 @@ public sealed partial class MainWindow
             TextAlignment = TextAlignment.Right,
             Foreground = ink,
             Background = Brushes.Transparent,
+
+            // Struck through while every module in the box is off — see
+            // ADR-0117, and BuildTitle's own strike for a single module.
+            TextDecorations = editor.SelectionIsOff ? TextDecorations.Strikethrough : null,
         };
 
         ToolTip.SetTip(title, group.Name is null
@@ -973,13 +979,20 @@ public sealed partial class MainWindow
     {
         var title = new TextBlock
         {
-            Text = node.Title(def),
+            // The same heading the canvas draws — a Send or a Receive names its
+            // bus alongside its own name (NodeEditor.Buses.Heading) — so the
+            // panel and the block read the same. The rename box beneath this
+            // still edits node.Name, not the bus suffix.
+            Text = NodeEditor.Heading(node, def),
             FontSize = Text.Title,
             FontWeight = FontWeight.SemiBold,
             TextTrimming = TextTrimming.CharacterEllipsis,
             TextAlignment = TextAlignment.Right,
             Foreground = ink,
             Background = Brushes.Transparent,
+
+            // Struck through while the module is switched off — see ADR-0117.
+            TextDecorations = node.Off ? TextDecorations.Strikethrough : null,
         };
 
         // A name on a source-built module is the name the `let` gave it, so
@@ -1180,7 +1193,7 @@ public sealed partial class MainWindow
                  + "carrying the signal you would have plugged in. Patch the socket to read "
                  + "something else instead — unplug it again and this comes back.",
             TextWrapping = TextWrapping.Wrap,
-            Foreground = Text.Muted,
+            Foreground = ModulePlate.BodyQuiet(def),
             FontSize = Text.Body,
             Margin = new Thickness(0, 0, 0, 6),
         };
@@ -1208,7 +1221,8 @@ public sealed partial class MainWindow
     {
         // A sequencer's tune is a list rather than a row of knobs (ADR-0038),
         // so it is edited as one — added to, taken from and reordered.
-        StepsExtra steps => new StepList(node, steps.Spec, because => Edited(node, because)).View,
+        StepsExtra steps => new StepList(
+            node, steps.Spec, Colors.Palette(def).Accent, because => Edited(node, because)).View,
 
         // A quantiser's scale is a set rather than a sequence, so it is edited
         // as the octave it is a subset of rather than as a list of numbers.
@@ -1284,7 +1298,7 @@ public sealed partial class MainWindow
 
         if (editor.Patch.KeyboardScale is not null)
             panel.Children.Add(new ScaleKeys(
-                def.Category,
+                Colors.Palette(def).Accent,
                 () => [.. editor.Patch.KeyboardScale ?? []],
                 scale =>
                 {
