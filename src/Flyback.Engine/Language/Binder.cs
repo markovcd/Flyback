@@ -586,8 +586,9 @@ public sealed class Binder
             TokenKind.Star => a.Amount * b.Amount,
             // ReSharper disable once CompareOfFloatsByEqualityOperator
             TokenKind.Slash => b.Amount == 0d ? 0d : a.Amount / b.Amount,
+            // The remainder Modulo takes, which wraps a negative number upwards.
             // ReSharper disable once CompareOfFloatsByEqualityOperator
-            _ => b.Amount == 0d ? 0d : a.Amount % b.Amount,
+            _ => b.Amount == 0d ? 0d : a.Amount - b.Amount * Math.Floor(a.Amount / b.Amount),
         };
 
         return new Operand(new Figure(folded, NumberStyle.Plain));

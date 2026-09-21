@@ -1060,6 +1060,15 @@ public class LanguageTests
         patch.Nodes.Single(n => n.TypeId == "value").InputValues[0].ShouldBe(1f / 12f, 0.0001f);
     }
 
+    /// <summary>A remainder worked out between two numbers is the one Modulo takes of a signal.</summary>
+    [Fact]
+    public void A_remainder_between_two_numbers_wraps_the_way_modulo_does()
+    {
+        var patch = Build("value(-5 % 3) |> out.color");
+
+        patch.Nodes.Single(n => n.TypeId == "value").InputValues[0].ShouldBe(1f);
+    }
+
     [Fact]
     public void Arithmetic_involving_a_signal_is_an_expression()
     {

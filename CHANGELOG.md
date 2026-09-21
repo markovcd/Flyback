@@ -107,6 +107,7 @@
 - A module moved with a middle-button pan or a zoom in the middle of the drag stays under the pointer, and the move can be undone.
 - In text, an output named straight after a call, as in `tempo(bpm: 104).beats`, is read rather than dropped for the first output.
 - In text, anything left on a line after its statement is a complaint rather than skipped.
+- In text, `%` between two numbers takes the remainder Modulo does: `-5 % 3` is 1.
 - Flyback no longer closes while the settings window is open.
 - A corrupt sample or picture is reported rather than taking Flyback down with it.
 - Sign answers 0 for a value that is not a number instead of stopping the render, and agrees with the GPU about an infinite one.
