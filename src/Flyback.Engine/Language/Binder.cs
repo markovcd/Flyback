@@ -20,8 +20,7 @@ public sealed class Binder
     private readonly List<LanguageIssue> issues;
     private readonly Patch patch = new();
 
-    private readonly Dictionary<string, NodeDef> byShortName = new(StringComparer.OrdinalIgnoreCase);
-    private readonly HashSet<string> ambiguous = new(StringComparer.OrdinalIgnoreCase);
+    private readonly ModuleNames moduleNames;
     private readonly Dictionary<string, DefStatement> defs = new(StringComparer.Ordinal);
     private readonly HashSet<string> expanding = new(StringComparer.Ordinal);
 
@@ -75,13 +74,7 @@ public sealed class Binder
         this.modules = modules;
         this.issues = issues;
 
-        foreach (var def in modules.All)
-        {
-            var dot = def.TypeId.LastIndexOf('.');
-            var plain = dot < 0 ? def.TypeId : def.TypeId[(dot + 1)..];
-
-            if (!byShortName.TryAdd(plain, def)) ambiguous.Add(plain);
-        }
+        moduleNames = new ModuleNames(modules);
     }
 
     /// <summary>
@@ -1427,69 +1420,14 @@ public sealed class Binder
     /// <summary>
     /// Whether a name is a module or a def, asked without complaining about it.
     /// </summary>
-    private bool Known(string name) =>
-        defs.ContainsKey(name) || modules.Get(name) is not null
-        || byShortName.ContainsKey(name) || ambiguous.Contains(name);
+    private bool Known(string name) => defs.ContainsKey(name) || moduleNames.Knows(name);
 
     private NodeDef? Module(string name, int line, int column)
     {
-        if (modules.Get(name) is { } exact) return exact;
+        if (moduleNames.Find(name, out var refusal) is { } def) return def;
 
-        if (ambiguous.Contains(name))
-        {
-            var both = modules.All
-                .Where(d => d.TypeId.EndsWith('.' + name) || d.TypeId == name)
-                .Select(d => d.TypeId)
-                .Order(StringComparer.Ordinal);
-
-            Complain(line, column,
-                $"'{name}' could be {string.Join(" or ", both)}. Write the one you mean in full.");
-
-            return null;
-        }
-
-        if (byShortName.TryGetValue(name, out var def)) return def;
-
-        Complain(line, column, $"there is no module called '{name}'.{Nearest(name)}");
+        Complain(line, column, refusal);
         return null;
-    }
-
-    /// <summary>The closest name there is, where one is close enough to be worth offering.</summary>
-    private string Nearest(string name)
-    {
-        var best = byShortName.Keys
-            .Select(k => (Name: k, Distance: Distance(k, name)))
-            .Where(k => k.Distance <= Math.Max(1, name.Length / 3))
-            .OrderBy(k => k.Distance)
-            .ThenBy(k => k.Name, StringComparer.Ordinal)
-            .Select(k => k.Name)
-            .FirstOrDefault();
-
-        return best is null ? string.Empty : $" Did you mean '{best}'?";
-    }
-
-    private static int Distance(string a, string b)
-    {
-        var previous = new int[b.Length + 1];
-        var current = new int[b.Length + 1];
-
-        for (var j = 0; j <= b.Length; j++) previous[j] = j;
-
-        for (var i = 1; i <= a.Length; i++)
-        {
-            current[0] = i;
-
-            for (var j = 1; j <= b.Length; j++)
-            {
-                var swap = char.ToLowerInvariant(a[i - 1]) == char.ToLowerInvariant(b[j - 1]) ? 0 : 1;
-
-                current[j] = Math.Min(Math.Min(current[j - 1] + 1, previous[j] + 1), previous[j - 1] + swap);
-            }
-
-            (previous, current) = (current, previous);
-        }
-
-        return previous[b.Length];
     }
 
     /// <summary>
