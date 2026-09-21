@@ -557,11 +557,25 @@ public static class PatchCompiler
             }
 
             var turned = emitter.Live(control.Key);
-            var reading = emitter.Add(emitter.Mul(turned, link.Max - link.Min), link.Min);
+            var reading = link.Knee > 0f
+                ? Tapered(turned, link)
+                : emitter.Add(emitter.Mul(turned, link.Max - link.Min), link.Min);
 
             return spec.Stepped
                 ? emitter.Unary(OpCode.Floor, emitter.Add(reading, 0.5f))
                 : reading;
+        }
+
+        // ControlLink.At as ops: low + knee * (e^(travel * ln(1 + span / knee)) - 1),
+        // with the travel turned round where the range is.
+        Slot Tapered(Slot turned, ControlLink link)
+        {
+            var low = MathF.Min(link.Min, link.Max);
+            var span = MathF.Abs(link.Max - link.Min);
+            var travel = link.Max < link.Min ? emitter.Add(emitter.Mul(turned, -1f), 1f) : turned;
+            var rise = emitter.Unary(OpCode.Exp, emitter.Mul(travel, MathF.Log(1f + span / link.Knee)));
+
+            return emitter.Add(emitter.Mul(emitter.Add(rise, -1f), link.Knee), low);
         }
 
         // What a wire running backwards hands over: the plane its output left

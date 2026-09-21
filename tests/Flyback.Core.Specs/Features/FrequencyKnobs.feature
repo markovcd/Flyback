@@ -17,3 +17,14 @@ Feature: A frequency knob reaches from a slow wobble to the top of hearing
       | Square   |
       | Pulse    |
 
+
+  Scenario: A panel knob linked to an oscillator's frequency sweeps it as the slider does
+    Given a Sine from the catalogue
+    When a panel knob is linked to its frequency
+    Then the panel knob halfway round sets it to 20 Hz
+
+  Scenario: Any panel knob can be made logarithmic
+    Given a panel knob sweeping a socket from 100 to 10000
+    When the knob is made logarithmic
+    Then the panel knob halfway round sets it to 1000
+    And made even again, halfway round sets it to 5050

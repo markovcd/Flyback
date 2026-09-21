@@ -94,6 +94,50 @@ public class ControlTests
         Heard(program, live).ShouldBe(0.8d, 1e-6);
     }
 
+    [Theory]
+    [InlineData(0f, 20_000f)]
+    [InlineData(20_000f, 0f)]
+    [InlineData(100f, 1000f)]
+    public void A_tapered_link_played_reads_what_it_rests_on(float min, float max)
+    {
+        var (patch, value) = Built();
+        var knob = patch.AddControl();
+        var link = new ControlLink(knob.Id, min, max) { Knee = 0.02f };
+        ControlMap.Link(value, 0, link);
+
+        var program = patch.CompileForAudio(NodeCatalog.BuiltIn, played: true).Program;
+        var live = new LiveValues(program.LiveInputs);
+
+        foreach (var at in new[] { 0f, 0.25f, 0.5f, 0.9f, 1f })
+        {
+            live.Set(knob.Key, at);
+            Heard(program, live).ShouldBe(link.At(at), Math.Max(Math.Abs(link.At(at)) * 1e-4, 1e-4));
+        }
+    }
+
+    [Fact]
+    public void A_tapered_link_sweeps_in_decades()
+    {
+        var link = new ControlLink(Guid.NewGuid(), 0f, 20_000f) { Knee = 0.02f };
+
+        link.At(0.5f).ShouldBe(20f, 0.1f);
+        link.Inverse(link.At(0.3f)).ShouldBe(0.3f, 1e-5f);
+    }
+
+    [Fact]
+    public void A_link_keeps_its_taper_through_a_file_and_an_even_one_writes_none()
+    {
+        var (patch, value) = Built();
+        var knob = patch.AddControl();
+        ControlMap.Link(value, 0, new ControlLink(knob.Id, 0f, 20_000f) { Knee = 0.02f });
+
+        var read = PatchIO.Read(PatchIO.ToJson(patch, NodeCatalog.BuiltIn), NodeCatalog.BuiltIn).Patch;
+        ControlMap.Of(read.Find(value.Id)!, 0).ShouldNotBeNull().Knee.ShouldBe(0.02f);
+
+        ControlMap.Link(value, 0, new ControlLink(knob.Id, 0f, 1f));
+        PatchIO.ToJson(patch, NodeCatalog.BuiltIn).ShouldNotContain("knee");
+    }
+
     [Fact]
     public void One_knob_drives_several_sockets_through_one_live_input()
     {

@@ -9,3 +9,7 @@ Flyback.Core.Graph.PortSpec.Knee.get -> float
 Flyback.Core.Graph.PortSpec.Knee.init -> void
 Flyback.Core.Graph.PortSpec.Travel(float value, float min, float max) -> double
 static Flyback.Core.Graph.NodeCatalog.Freq.get -> Flyback.Core.Graph.PortSpec
+Flyback.Core.Graph.ControlLink.Knee.get -> float
+Flyback.Core.Graph.ControlLink.Knee.init -> void
+static Flyback.Core.Graph.ControlLink.For(System.Guid control, Flyback.Core.Graph.PortSpec socket, float resting) -> Flyback.Core.Graph.ControlLink
+Flyback.Core.Graph.ControlLink.Swept(bool inDecades, Flyback.Core.Graph.PortSpec socket) -> Flyback.Core.Graph.ControlLink

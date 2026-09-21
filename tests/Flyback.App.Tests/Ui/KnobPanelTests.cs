@@ -405,6 +405,29 @@ public class KnobPanelTests : UiTest
         Order(window).ShouldBe("Knob 2,Knob 1,Knob 3");
     }
 
+    [AvaloniaFact]
+    public void The_knob_menu_makes_a_knob_logarithmic_and_even_again()
+    {
+        var (patch, value) = Board();
+        var knob = patch.AddControl();
+        ControlMap.Link(value, 0, new ControlLink(knob.Id, 100f, 10_000f));
+        var window = Open(patch);
+
+        var menu = All<Button>(Panel(window)).First(b => b.Name == "knob-menu").Flyout.ShouldBeOfType<MenuFlyout>();
+        var log = menu.Items.OfType<MenuItem>().Single(i => (i.Header as string) == "Logarithmic");
+
+        log.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(MenuItem.ClickEvent));
+        Settle(window);
+
+        var swept = ControlMap.Of(Editor(window).Patch.Find(value.Id)!, 0).ShouldNotBeNull();
+        swept.At(0.5f).ShouldBe(1000f, 1f);
+
+        log.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(MenuItem.ClickEvent));
+        Settle(window);
+
+        ControlMap.Of(Editor(window).Patch.Find(value.Id)!, 0).ShouldNotBeNull().Knee.ShouldBe(0f);
+    }
+
     /// <summary>
     /// Escape after a learn that found no controller to learn from. The field
     /// Escape cancels must never be left holding a source that has been disposed.

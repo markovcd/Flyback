@@ -149,6 +149,37 @@ public sealed partial class MainWindow
             editor.NotifyPatchChanged();
         };
 
+        controlsPanel.Logarithmic = id =>
+        {
+            var links = ControlMap.Following(editor.Patch, id).ToList();
+
+            return links.Count == 0 ? null : links.All(f => f.Link.Knee > 0f);
+        };
+
+        controlsPanel.LogarithmicRequested += (id, inDecades) =>
+        {
+            if (editor.Patch.Control(id) is not { } knob) return;
+
+            var following = ControlMap.Following(editor.Patch, id).ToList();
+
+            foreach (var (node, port, link) in following)
+            {
+                if (NodeCatalog.Get(node.TypeId) is not { } def || port >= def.Inputs.Count) continue;
+
+                var swept = link.Swept(inDecades, def.Inputs[port]);
+                ControlMap.Link(node, port, swept);
+
+                // One socket keeps reading what it read, so the switch is not heard.
+                if (following.Count == 1)
+                {
+                    knob.Value = swept.Inverse(link.At(knob.Value));
+                    controls.Set(id, knob.Value);
+                }
+            }
+
+            editor.NotifyPatchChanged();
+        };
+
         controlsPanel.MoveRequested += (id, index) =>
         {
             if (editor.Patch.MoveControl(id, index)) editor.NotifyPatchChanged();
@@ -324,7 +355,7 @@ public sealed partial class MainWindow
         }
 
         var resting = pick.Port < node.InputValues.Length ? node.InputValues[pick.Port] : spec.Default;
-        var link = new ControlLink(id, Math.Min(spec.Min, resting), Math.Max(spec.Max, resting));
+        var link = ControlLink.For(id, spec, resting);
 
         // A knob linked for the first time is turned to where the socket already is,
         // so linking changes nothing that is heard or seen.

@@ -8,6 +8,7 @@
 - A patch's knobs can be played over the full-screen picture, in the editor and the viewer.
 - Dragging the right button on an unpatched input turns its value.
 - An oscillator's `freq` knob sweeps in decades from a slow wobble up to 20 kHz.
+- A panel knob can sweep its sockets logarithmically, from its menu.
 - A turning knob holds the pointer still, so the edge of the screen never stops it.
 - A dragged side panel comes back at the width it was left at.
 - A patch or bundle from somebody else reaches only its own files.

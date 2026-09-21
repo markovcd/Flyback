@@ -9,6 +9,7 @@ namespace Flyback.Core.Specs.Steps;
 public sealed class KnobSteps
 {
     private PortSpec knob;
+    private ControlLink link;
 
     [Given("a {word} from the catalogue")]
     public void GivenAModule(string name)
@@ -25,6 +26,26 @@ public sealed class KnobSteps
 
     [Then("the upper half of its travel is audible")]
     public void ThenUpperHalfIsAudible() => At(0.5).ShouldBeGreaterThanOrEqualTo(19.9f);
+
+    [When("a panel knob is linked to its frequency")]
+    public void WhenLinked() => link = ControlLink.For(Guid.NewGuid(), knob, knob.Default);
+
+    [Given("a panel knob sweeping a socket from {float} to {float}")]
+    public void GivenALinkedRange(float min, float max)
+    {
+        knob = new PortSpec("level", Min: 0f, Max: 1f);
+        link = new ControlLink(Guid.NewGuid(), min, max);
+    }
+
+    [When("the knob is made logarithmic")]
+    public void WhenLogarithmic() => link = link.Swept(true, knob);
+
+    [Then("the panel knob halfway round sets it to {float}")]
+    [Then("the panel knob halfway round sets it to {float} Hz")]
+    public void ThenHalfwayReads(float value) => link.At(0.5f).ShouldBe(value, value * 1e-3f);
+
+    [Then("made even again, halfway round sets it to {float}")]
+    public void ThenEvenAgain(float value) => link.Swept(false, knob).At(0.5f).ShouldBe(value, value * 1e-3f);
 
     private void Spans(float bottom, float top)
     {

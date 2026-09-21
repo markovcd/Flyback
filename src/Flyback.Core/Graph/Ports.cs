@@ -189,24 +189,8 @@ public readonly record struct PortSpec(
     public float Knee { get; init; }
 
     /// <summary>How far along a control spanning <paramref name="min"/> to <paramref name="max"/> <paramref name="value"/> sits, 0 to 1.</summary>
-    public double Travel(float value, float min, float max)
-    {
-        if (max <= min) return 0.5;
-
-        var at = Math.Clamp(value, min, max) - (double)min;
-
-        return Knee > 0f
-            ? Math.Log(1 + at / Knee) / Math.Log(1 + (max - (double)min) / Knee)
-            : at / (max - (double)min);
-    }
+    public double Travel(float value, float min, float max) => Taper.Travel(value, min, max, Knee);
 
     /// <summary>The value <paramref name="travel"/> of the way along a control spanning <paramref name="min"/> to <paramref name="max"/>.</summary>
-    public float At(double travel, float min, float max)
-    {
-        travel = Math.Clamp(travel, 0, 1);
-
-        return Knee > 0f
-            ? (float)(min + Knee * (Math.Pow(1 + (max - (double)min) / Knee, travel) - 1))
-            : (float)(min + (max - (double)min) * travel);
-    }
+    public float At(double travel, float min, float max) => Taper.At(travel, min, max, Knee);
 }

@@ -66,6 +66,12 @@ internal sealed class ControlsPanel : Border
 
     public event Action<Guid>? RemoveRequested;
 
+    /// <summary>A knob's sockets were asked to follow it in decades, or evenly.</summary>
+    public event Action<Guid, bool>? LogarithmicRequested;
+
+    /// <summary>Whether a knob sweeps its sockets in decades, given its id; null where it drives none.</summary>
+    public Func<Guid, bool?>? Logarithmic { get; set; }
+
     /// <summary>A knob was moved: its id, and the place it should have once taken out of its old one.</summary>
     public event Action<Guid, int>? MoveRequested;
 
@@ -471,6 +477,19 @@ internal sealed class ControlsPanel : Border
 
             if (control.Midi is not null)
                 flyout.Items.Add(Item("Learn another controller", () => panel.LearnRequested?.Invoke(control.Id)));
+
+            // Ticked as it opens: whether it is depends on the links, which change
+            // without the cell being rebuilt.
+            var log = new MenuItem { Header = "Logarithmic", ToggleType = MenuItemToggleType.CheckBox };
+            log.Click += (_, _) => panel.LogarithmicRequested?.Invoke(control.Id, panel.Logarithmic?.Invoke(control.Id) != true);
+            flyout.Items.Add(log);
+
+            flyout.Opening += (_, _) =>
+            {
+                var sweeps = panel.Logarithmic?.Invoke(control.Id);
+                log.IsEnabled = sweeps is not null;
+                log.IsChecked = sweeps == true;
+            };
 
             flyout.Items.Add(new Separator());
 
