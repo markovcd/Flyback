@@ -1,8 +1,12 @@
 using System.Text.Json;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
+using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
+using Avalonia.Input;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 using Shouldly;
 
 namespace Flyback.App.Tests.Ui;
@@ -121,6 +125,31 @@ public sealed class WindowLayoutTests : UiTest
         grid.ColumnDefinitions[2].Width.Value.ShouldBe(1);
         grid.ColumnDefinitions[4].Width.Value.ShouldBe(1);
         grid.RowDefinitions[2].Height.Value.ShouldBe(3);
+    }
+
+    [AvaloniaFact]
+    public void A_column_dragged_to_a_width_comes_back_at_it()
+    {
+        var window = Open();
+        var grid = All<Grid>(window).Single(g => g.Name == "columns");
+        var splitter = All<GridSplitter>(grid).Single(s => Grid.GetColumn(s) == 3);
+        var from = splitter.TranslatePoint(new Point(2, 20), window)!.Value;
+
+        window.MouseDown(from, MouseButton.Left);
+        window.MouseMove(from - new Point(150, 0));
+        window.MouseUp(from - new Point(150, 0), MouseButton.Left);
+        Settle(window);
+
+        var wide = grid.ColumnDefinitions[2].ActualWidth;
+        var side = grid.ColumnDefinitions[4].ActualWidth;
+
+        Left(window, layoutPath);
+
+        var again = Open();
+        var back = All<Grid>(again).Single(g => g.Name == "columns");
+
+        back.ColumnDefinitions[2].ActualWidth.ShouldBe(wide, 2);
+        back.ColumnDefinitions[4].ActualWidth.ShouldBe(side, 2);
     }
 
     [AvaloniaFact]

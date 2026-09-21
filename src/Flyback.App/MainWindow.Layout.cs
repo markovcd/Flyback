@@ -113,6 +113,15 @@ public sealed partial class MainWindow
         var state = away ? stateBefore : WindowState;
         var size = WindowState == WindowState.Normal ? ClientSize : normalSize;
 
+        // A splitter leaves star weights in pixels, far past what the file accepts.
+        var (canvas, side) = Share(Column(WideColumn), Column(SideColumn),
+            WindowLayout.DefaultCanvasWeight + WindowLayout.DefaultSideWeight);
+
+        var (preview, inspector) = Share(
+            previewBox is { IsVisible: true } || away ? Row(0) : Weight(previewShare),
+            Under(inspectorBox, Weight),
+            WindowLayout.DefaultPreviewWeight + WindowLayout.DefaultInspectorWeight);
+
         return new WindowLayout
         {
             Maximized = state == WindowState.Maximized,
@@ -120,10 +129,10 @@ public sealed partial class MainWindow
             Height = size?.Height ?? layout?.Height ?? 0,
             Monitor = MonitorPlacement.Describe(Screens.ScreenFromWindow(this)) ?? layout?.Monitor,
 
-            CanvasWeight = Column(WideColumn),
-            SideWeight = Column(SideColumn),
-            PreviewWeight = previewBox is { IsVisible: true } || away ? Row(0) : Weight(previewShare),
-            InspectorWeight = Under(inspectorBox, Weight),
+            CanvasWeight = canvas,
+            SideWeight = side,
+            PreviewWeight = preview,
+            InspectorWeight = inspector,
 
             AssistantWidth = assistant is { IsVisible: true } ? assistantColumn!.Width.Value : assistantShare.Value,
             AssistantOpen = assistant?.IsVisible == true,
@@ -136,5 +145,8 @@ public sealed partial class MainWindow
         };
 
         static double Weight(GridLength length) => length.IsStar ? length.Value : 1;
+
+        static (double, double) Share(double a, double b, double total) =>
+            a + b > 0 ? (a / (a + b) * total, b / (a + b) * total) : (total / 2, total / 2);
     }
 }
