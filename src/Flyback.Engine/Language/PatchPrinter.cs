@@ -1014,7 +1014,7 @@ public static class PatchPrinter
             return null;
         }
 
-        private static string Step(Graph.Step step, bool note)
+        private static string Step(Step step, bool note)
         {
             // A rest has no pitch to write. A note at no volume keeps its own,
             // and the two are different steps however alike they sound.

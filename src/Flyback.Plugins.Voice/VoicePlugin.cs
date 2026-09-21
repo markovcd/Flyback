@@ -49,18 +49,15 @@ public sealed class VoicePlugin : IFlybackPlugin
             new PatchPreset(
                 SupersawPreset.Name,
                 SupersawPreset.Build,
-                "Seven detuned saws, wired the way the module is meant to be driven.",
-                PresetKind.Idea),
+                "Seven detuned saws, wired the way the module is meant to be driven."),
             new PatchPreset(
                 TimbrePreset.Name,
                 TimbrePreset.Build,
-                "A saw folded and then filtered: make the harmonics first, take them away second.",
-                PresetKind.Idea),
+                "A saw folded and then filtered: make the harmonics first, take them away second."),
             new PatchPreset(
                 StruckPreset.Name,
                 StruckPreset.Build,
-                "A kick, a hat and a wandering bell: each a Stroke into one module, all counted off one Tempo.",
-                PresetKind.Idea),
+                "A kick, a hat and a wandering bell: each a Stroke into one module, all counted off one Tempo."),
             new PatchPreset(
                 EuclidKitPreset.Name,
                 EuclidKitPreset.Build,

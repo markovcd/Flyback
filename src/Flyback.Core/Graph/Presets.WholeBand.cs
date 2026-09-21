@@ -202,7 +202,7 @@ public static partial class Presets
             var song = Lane(
                 new Step(0.1f, 1f, 0.9f), new Step(0.3f, 1f, 0.8f), new Step(0.6f, 1f, 0.45f),
                 new Step(0.7f, 1f, 0.5f), new Step(1f, 1f, 0.75f), new Step(1f, 1f, 0.75f),
-                new Step(0.7f, 1f, 0.5f), new Step(0.2f, 1f, 1f), new Step(1f, 1f, 0.8f),
+                new Step(0.7f, 1f, 0.5f), new Step(0.2f), new Step(1f, 1f, 0.8f),
                 new Step(1f, 1f, 0.8f), new Step(0.45f, 1f, 0.6f), new Step(0.1f, 1f, 0.9f));
 
             // Which half of the song it is: nought is the verse, and its chords and

@@ -359,6 +359,6 @@ internal sealed class ModuleArtwork
         AlphaFormat.Premul,
         bitmap.GetPixels(),
         new PixelSize(bitmap.Width, bitmap.Height),
-        new Avalonia.Vector(96, 96),
+        new Vector(96, 96),
         bitmap.RowBytes);
 }

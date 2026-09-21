@@ -411,7 +411,7 @@ public class ProbeCommandTests : IDisposable
 
         public IReadOnlyList<SettingField> Form(SettingValues values) => [];
 
-        public AssistantSenses Senses(SettingValues values) => new(false, Listener.None);
+        public AssistantSenses Senses(SettingValues values) => new(false);
 
         public string? Unavailable(AssistantConfig config) => null;
 
@@ -447,7 +447,7 @@ public class ProbeCommandTests : IDisposable
 
         public IReadOnlyList<SettingField> Form(SettingValues values) => [];
 
-        public AssistantSenses Senses(SettingValues values) => new(false, Listener.None);
+        public AssistantSenses Senses(SettingValues values) => new(false);
 
         public string? Unavailable(AssistantConfig config) => null;
 

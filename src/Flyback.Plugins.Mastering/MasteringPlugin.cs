@@ -36,8 +36,7 @@ public sealed class MasteringPlugin : IFlybackPlugin
                 BeforeAndAfterPreset.Name,
                 BeforeAndAfterPreset.Build,
                 "A small mix with an EQ, a Compressor and a Maximizer after it, switched out and in "
-                + "every four bars.",
-                PresetKind.Idea),
+                + "every four bars."),
         ]);
     }
 }

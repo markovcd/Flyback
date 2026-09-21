@@ -209,9 +209,9 @@ internal sealed class FracturePreset : PresetBench
         StepsExtra.Set(pattern,
         [
             new Step(1f, 1f, 0f), new Step(0f, 1f, 0f), new Step(0.8f, 1f, 0f), new Step(0f, 1f, 0f),
-            new Step(0f, 1f, 1f), new Step(0f, 1f, 0f), new Step(0f, 1f, 0f), new Step(0f, 1f, 0.35f),
+            new Step(0f), new Step(0f, 1f, 0f), new Step(0f, 1f, 0f), new Step(0f, 1f, 0.35f),
             new Step(0f, 1f, 0f), new Step(0f, 1f, 0.35f), new Step(1f, 1f, 0f), new Step(0.7f, 1f, 0f),
-            new Step(0f, 1f, 1f), new Step(0f, 1f, 0f), new Step(0f, 1f, 0f), new Step(0f, 1f, 0.4f),
+            new Step(0f), new Step(0f, 1f, 0f), new Step(0f, 1f, 0f), new Step(0f, 1f, 0.4f),
         ]);
 
 

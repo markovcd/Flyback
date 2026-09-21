@@ -133,7 +133,7 @@ internal sealed class ReportLine : UserControl
     {
         var style = new Style(x => x.OfType<FlyoutPresenter>().Class(PresenterClass));
 
-        style.Setters.Add(new Setter(TemplatedControl.PaddingProperty, new Thickness(0)));
+        style.Setters.Add(new Setter(PaddingProperty, new Thickness(0)));
         style.Setters.Add(new Setter(
             ScrollViewer.HorizontalScrollBarVisibilityProperty, ScrollBarVisibility.Disabled));
         style.Setters.Add(new Setter(

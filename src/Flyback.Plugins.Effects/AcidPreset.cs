@@ -381,10 +381,10 @@ internal sealed class AcidPreset : PresetBench
         var answer = b.Add("seq.notes", (1, 4f), (2, 0.6f), (3, 0.02f));
         StepsExtra.Set(answer,
         [
-            new Step(64f, 1f, 0f), new Step(64f, 1f, 0f), new Step(64f, 1f, Accent), new Step(64f, 1f, 0f),
+            new Step(64f, 1f, 0f), new Step(64f, 1f, 0f), new Step(64f), new Step(64f, 1f, 0f),
             new Step(64f, 1f, 0f), new Step(67f, 1f, 0f), new Step(67f, 1f, Plain), new Step(69f, 1f, Plain),
-            new Step(69f, 1f, 0f), new Step(72f, 1f, 0f), new Step(72f, 1f, Accent), new Step(69f, 1f, Plain),
-            new Step(69f, 1f, 0f), new Step(67f, 1f, Plain), new Step(69f, 1f, Accent), new Step(69f, 1f, 0f),
+            new Step(69f, 1f, 0f), new Step(72f, 1f, 0f), new Step(72f), new Step(69f, 1f, Plain),
+            new Step(69f, 1f, 0f), new Step(67f, 1f, Plain), new Step(69f), new Step(69f, 1f, 0f),
         ]);
         var square = b.Add("osc.pulse", (3, 0.5f), (4, 0.8f));
         var chirp = b.Add(DecayType, (1, -3f), (2, -0.75f), (3, 0.7f));

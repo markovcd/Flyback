@@ -1,5 +1,4 @@
 using Flyback.Core;
-using Flyback.Core.Render;
 using Flyback.Plugins.Settings;
 
 namespace Flyback.Plugins.Audio;

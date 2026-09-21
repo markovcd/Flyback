@@ -1,6 +1,5 @@
 ﻿using System.IO.Compression;
 using System.Reflection;
-using System.Threading;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
@@ -11,7 +10,6 @@ using Flyback.App.Controls;
 using Flyback.Core;
 using Flyback.Core.Graph;
 using Shouldly;
-using Xunit;
 
 namespace Flyback.App.Tests.Ui;
 

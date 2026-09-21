@@ -120,7 +120,7 @@ public class ExpressionFusionTests
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
         var coord = b.Add(NodeCatalog.CoordTypeId);
         var scaled = Knobbed(b, "math.mul", coord, 2f);
-        var knob = b.Patch.AddControl("Size", 0.5f);
+        var knob = b.Patch.AddControl("Size");
         var link = new ControlLink(knob.Id, 0f, 4f);
         ControlMap.Link(scaled, 1, link);
         Shown(b, Knobbed(b, "math.add", scaled, 1f));

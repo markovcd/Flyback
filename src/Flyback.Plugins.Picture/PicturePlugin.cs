@@ -62,8 +62,7 @@ public sealed class PicturePlugin : IFlybackPlugin
             new PatchPreset(
                 FourFormsPreset.Name,
                 FourFormsPreset.Build,
-                "Four forms on a turning ring, with the seam between them opening and closing.",
-                PresetKind.Idea),
+                "Four forms on a turning ring, with the seam between them opening and closing."),
             new PatchPreset(
                 ShapesPreset.Name,
                 ShapesPreset.Build,
@@ -72,28 +71,23 @@ public sealed class PicturePlugin : IFlybackPlugin
             new PatchPreset(
                 CaptionsPreset.Name,
                 CaptionsPreset.Build,
-                "Lines of text, chosen by the clock and typed out as each one arrives.",
-                PresetKind.Idea),
+                "Lines of text, chosen by the clock and typed out as each one arrives."),
             new PatchPreset(
                 SpectrumPreset.Name,
                 SpectrumPreset.Build,
-                "Plasma's field colored out of a palette instead of off the hue wheel, then graded.",
-                PresetKind.Idea),
+                "Plasma's field colored out of a palette instead of off the hue wheel, then graded."),
             new PatchPreset(
                 MarblePreset.Name,
                 MarblePreset.Build,
-                "A fractal bent by a fractal, which is stone.",
-                PresetKind.Idea),
+                "A fractal bent by a fractal, which is stone."),
             new PatchPreset(
                 StainedGlassPreset.Name,
                 StainedGlassPreset.Build,
-                "Cells as panes: the cell picks a color, the edge is the lead, and jitter slides grid to scatter.",
-                PresetKind.Idea),
+                "Cells as panes: the cell picks a color, the edge is the lead, and jitter slides grid to scatter."),
             new PatchPreset(
                 LayersPreset.Name,
                 LayersPreset.Build,
-                "A sunset composed back to front: a sky, a sun screened over it, a sea multiplied in, a line inked on top.",
-                PresetKind.Idea),
+                "A sunset composed back to front: a sky, a sun screened over it, a sea multiplied in, a line inked on top."),
         ]);
     }
 }

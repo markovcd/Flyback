@@ -268,7 +268,7 @@ internal sealed class SlowWeatherPreset : PresetBench
          .Wire(detune, 0, padTwin, 2)
          .Wire(padNote, Hz, padLower, 1)
          .Wire(padTwin, Hz, padUpper, 1)
-         .Wire(Times(padNote, 2f, Hz), 0, padOctave, 1);
+         .Wire(Times(padNote, 2f), 0, padOctave, 1);
 
         // The swell, on a floor, so the hump reaches something rather than
         // nothing; then breathed on, then ducked under the bell.
@@ -303,7 +303,7 @@ internal sealed class SlowWeatherPreset : PresetBench
         // quiet and goes when they return. Nothing here decides when that is.
         var melodyHeard = Followed(melody, BusLeft, -0.3f, 0.7f);
         var hush = Ducked(melodyHeard, 2.2f, 0.1f);
-        var windDrift = Wander(0.029f, 5f, 0.25f, 1f);
+        var windDrift = Wander(0.029f, 5f, 0.25f);
         var windVoiced = Hiss(Product(hush, windDrift), 800f, 0.6f, "band", noise: "pink", seed: 4f);
 
         b.Wire(Span(flutter, 0f, 1f, 500f, 3000f), 0, windVoiced, HissCutoff);

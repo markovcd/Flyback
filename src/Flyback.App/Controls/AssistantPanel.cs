@@ -13,7 +13,6 @@ using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Plugins.Assist;
 using Flyback.Plugins.Hosting;
-using Flyback.Plugins.Settings;
 
 namespace Flyback.App.Controls;
 

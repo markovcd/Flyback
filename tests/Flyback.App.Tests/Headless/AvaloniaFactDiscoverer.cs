@@ -1,5 +1,4 @@
-﻿using System;
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using Xunit.Internal;
 using Xunit.Sdk;
 using Xunit.v3;

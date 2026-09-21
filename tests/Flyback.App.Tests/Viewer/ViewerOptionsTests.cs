@@ -1,6 +1,5 @@
 using System.CommandLine;
 using Avalonia;
-using Flyback.App;
 using Flyback.Plugins.Hosting;
 using Flyback.Viewer;
 using Shouldly;

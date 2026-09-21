@@ -559,7 +559,7 @@ public class SessionTests
     }
 
     private static OpenAiSession Session(Canned canned) => new(
-        new PatchWorkbench(NodeCatalog.BuiltIn, new Patch(), vision: false, Listener.None),
+        new PatchWorkbench(NodeCatalog.BuiltIn, new Patch(), vision: false),
         new AssistantChoices("some-model"),
         "no-key-needed",
         "https://nowhere.invalid/v1",

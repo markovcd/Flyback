@@ -48,8 +48,8 @@ internal static class GradeModule
         [
             new PortSpec("color", PortKind.Color),
             new PortSpec("saturation", PortKind.Scalar, 1f, 0f, 3f),
-            new PortSpec("contrast", PortKind.Scalar, 1f, 0f, 4f),
-            new PortSpec("gamma", PortKind.Scalar, 1f, 0.1f, 4f),
+            new PortSpec("contrast", PortKind.Scalar, 1f, 0f),
+            new PortSpec("gamma", PortKind.Scalar, 1f, 0.1f),
         ],
         [new PortSpec("color", PortKind.Color)],
         Emit,

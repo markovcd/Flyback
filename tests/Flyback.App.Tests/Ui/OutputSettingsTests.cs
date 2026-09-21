@@ -6,7 +6,6 @@ using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
-using Avalonia.VisualTree;
 using Flyback.App.Controls;
 using Flyback.Core.Graph;
 using Flyback.Core.Render;
@@ -295,7 +294,7 @@ public class OutputSettingsTests : UiTest
 
         var next = Open(settingsPath);
 
-        next.Title.ShouldBe($"{chosen} — {Flyback.Core.GlobalConstants.ApplicationName}");
+        next.Title.ShouldBe($"{chosen} — {Core.GlobalConstants.ApplicationName}");
         (StartupPreset(OpenSettings(next)).SelectedItem as string).ShouldBe(chosen);
     }
 

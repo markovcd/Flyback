@@ -28,7 +28,7 @@ public class ControlTests
     {
         var registers = program.AllocateRegisters();
 
-        program.Evaluate(0d, 0d, 0d, registers, default, null, live: live ?? new LiveValues(program.LiveInputs));
+        program.Evaluate(0d, 0d, 0d, registers, default, live: live ?? new LiveValues(program.LiveInputs));
 
         return registers[program.OutputBase];
     }

@@ -334,7 +334,7 @@ public class CommandTests
 
         // Only where this machine has no ffmpeg of its own to fall back on, since
         // a path that is not there falls back to PATH by design.
-        if (Core.Render.Ffmpeg.OnPath() is not null) return;
+        if (Ffmpeg.OnPath() is not null) return;
 
         code.ShouldBe(Exit.Failed);
         error.ShouldContain("ffmpeg");

@@ -79,7 +79,7 @@ public class LiveRecorderTests : IDisposable
     // --- the same take, through ffmpeg (ADR-0089) ----------------------------
 
     /// <summary>What is on this machine, asked once.</summary>
-    private static readonly string? Encoder = Flyback.Core.Render.Ffmpeg.Resolve(null);
+    private static readonly string? Encoder = Ffmpeg.Resolve(null);
 
     private RecordingSettings Through(ClipFormat format) => new(
         path + format.Extension,

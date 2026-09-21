@@ -70,7 +70,7 @@ internal static class MaximizerModule
             new PortSpec("left", PatchOnly: true),
             new PortSpec("right", NormalledFrom: Left, PatchOnly: true),
             new PortSpec("amount", PortKind.Scalar, 0.5f, 0f, 1f),
-            new PortSpec("style", PortKind.Scalar, 1f, 1f, 4f, Display: PortDisplay.Integer),
+            new PortSpec("style", PortKind.Scalar, 1f, 1f, Display: PortDisplay.Integer),
         ],
         [new PortSpec("left"), new PortSpec("right")],
         Emit,

@@ -1,5 +1,4 @@
 using System.Reflection;
-using Flyback.App.Assist;
 using Flyback.Plugins.Assist;
 using Flyback.Plugins.Settings;
 using Shouldly;

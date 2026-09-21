@@ -333,8 +333,8 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
             pictures[i] = gl.GenTexture();
             gl.BindTexture(GL_TEXTURE_2D, pictures[i]);
 
-            var pinned = System.Runtime.InteropServices.GCHandle.Alloc(
-                bytes, System.Runtime.InteropServices.GCHandleType.Pinned);
+            var pinned = GCHandle.Alloc(
+                bytes, GCHandleType.Pinned);
 
             try
             {

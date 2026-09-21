@@ -158,7 +158,7 @@ internal static class NodeSkin
         if (cuts.TryGetValue((cut, over), out var kept)) return kept;
 
         var ink = Colors.Contrast(over, !Colors.Light(over));
-        var pen = new ImmutablePen(new ImmutableSolidColorBrush(ink, CutOpacity), CutWidth);
+        var pen = new ImmutablePen(new ImmutableSolidColorBrush(ink, CutOpacity));
 
         var made = new DrawingBrush(
             cut == GrainCut.Beaded
@@ -275,7 +275,7 @@ internal static class NodeSkin
         new ImmutableSolidColorBrush(Avalonia.Media.Colors.White, 0.16), 1.2);
 
     private static readonly IPen seam = new ImmutablePen(
-        new ImmutableSolidColorBrush(Avalonia.Media.Colors.Black, 0.3), 1);
+        new ImmutableSolidColorBrush(Avalonia.Media.Colors.Black, 0.3));
 
     /// <summary>
     /// How a block's background gives way on the panel: full strength in the top
@@ -306,7 +306,7 @@ internal static class NodeSkin
         var made = new ImmutableLinearGradientBrush(
             [
                 new ImmutableGradientStop(0, Avalonia.Media.Colors.White),
-                new ImmutableGradientStop(1, Avalonia.Media.Color.FromArgb(0, 255, 255, 255)),
+                new ImmutableGradientStop(1, Color.FromArgb(0, 255, 255, 255)),
             ],
             startPoint: new RelativePoint(from, RelativeUnit.Absolute),
             endPoint: new RelativePoint(from + reach, RelativeUnit.Absolute));

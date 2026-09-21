@@ -11,7 +11,6 @@ using Flyback.Core.Graph;
 using Flyback.Core.Render;
 using Shouldly;
 using Xunit;
-using System.Threading;
 
 namespace Flyback.App.Tests.Ui;
 

@@ -150,7 +150,7 @@ internal sealed class DubPreset : PresetBench
         // Open on the off-beat, and sixteenths under it that come and go on a Wander.
         var hatStroke = Sum(
             Times(Stroke(beats, 1f, 3.5f, 0.5f), 0.7f),
-            Product(Times(Stroke(beats, 4f, 8f), 0.3f), Wander(0.07f, 2f, 0.3f, 1f)));
+            Product(Times(Stroke(beats, 4f, 8f), 0.3f), Wander(0.07f, 2f, 0.3f)));
         var hats = Hiss(hatStroke, 9000f, 0.15f, "high");
 
         Box("Hats");

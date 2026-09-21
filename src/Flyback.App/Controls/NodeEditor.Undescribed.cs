@@ -1,6 +1,4 @@
 using Avalonia;
-using Avalonia.Controls;
-using Avalonia.Input;
 using Avalonia.Media;
 using Flyback.Core.Graph;
 
@@ -20,7 +18,7 @@ public sealed partial class NodeEditor
 {
     private const double TagWidth = 16, TagHeight = 10, TagInset = 7;
 
-    private static readonly IPen TagPen = new Pen(new SolidColorBrush(Avalonia.Media.Colors.White, 0.75), 1);
+    private static readonly IPen TagPen = new Pen(new SolidColorBrush(Avalonia.Media.Colors.White, 0.75));
     private static readonly IBrush TagDots = new SolidColorBrush(Avalonia.Media.Colors.White, 0.75);
 
     private IReadOnlySet<string> undescribed = new HashSet<string>();

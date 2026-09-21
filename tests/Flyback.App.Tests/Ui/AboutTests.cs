@@ -9,7 +9,6 @@ using Flyback.App.Controls;
 using Flyback.Core;
 using Shouldly;
 using Colors = Flyback.App.Controls.Colors;
-using Xunit;
 
 namespace Flyback.App.Tests.Ui;
 

@@ -182,7 +182,7 @@ public sealed class OutputSettings
     /// </remarks>
     private static OutputSettings Fresh() => new()
     {
-        VideoFormat = ClipFormats.Preferred(Core.Render.Ffmpeg.Resolve(null) is not null).Id,
+        VideoFormat = ClipFormats.Preferred(Ffmpeg.Resolve(null) is not null).Id,
     };
 
     /// <summary>Never throws. A settings file is not worth a failure to start.</summary>

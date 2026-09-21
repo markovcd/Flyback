@@ -257,10 +257,10 @@ public sealed class ModulePalette : UserControl
     {
         var style = new Style(x => x.OfType<FlyoutPresenter>().Class(PresenterClass));
 
-        style.Setters.Add(new Setter(TemplatedControl.PaddingProperty, new Thickness(0)));
-        style.Setters.Add(new Setter(TemplatedControl.BorderThicknessProperty, new Thickness(0)));
-        style.Setters.Add(new Setter(TemplatedControl.BackgroundProperty, Brushes.Transparent));
-        style.Setters.Add(new Setter(TemplatedControl.CornerRadiusProperty, new CornerRadius(4)));
+        style.Setters.Add(new Setter(PaddingProperty, new Thickness(0)));
+        style.Setters.Add(new Setter(BorderThicknessProperty, new Thickness(0)));
+        style.Setters.Add(new Setter(BackgroundProperty, Brushes.Transparent));
+        style.Setters.Add(new Setter(CornerRadiusProperty, new CornerRadius(4)));
 
         return style;
     }

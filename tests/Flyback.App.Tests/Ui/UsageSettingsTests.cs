@@ -5,7 +5,6 @@ using Avalonia.Threading;
 using Flyback.App.Controls;
 using Flyback.App.Statistics;
 using Shouldly;
-using Xunit;
 
 namespace Flyback.App.Tests.Ui;
 

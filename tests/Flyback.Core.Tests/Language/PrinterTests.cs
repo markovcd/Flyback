@@ -17,10 +17,10 @@ namespace Flyback.Core.Tests.Language;
 /// </remarks>
 public class PrinterTests
 {
-    public static TheoryData<string> Names => [.. Flyback.Core.Graph.Presets.All.Select(p => p.Name)];
+    public static TheoryData<string> Names => [.. Presets.All.Select(p => p.Name)];
 
     private static Patch Preset(string name) =>
-        Flyback.Core.Graph.Presets.All.Single(p => p.Name == name).Build(NodeCatalog.BuiltIn);
+        Presets.All.Single(p => p.Name == name).Build(NodeCatalog.BuiltIn);
 
     private static Patch Reread(Patch patch, out string source)
     {

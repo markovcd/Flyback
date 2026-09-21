@@ -1756,8 +1756,8 @@ public sealed partial class MainWindow
 
             if (said is null)
             {
-                box.ClearValue(TemplatedControl.ForegroundProperty);
-                box.ClearValue(TemplatedControl.BorderBrushProperty);
+                box.ClearValue(ForegroundProperty);
+                box.ClearValue(BorderBrushProperty);
                 ToolTip.SetTip(box, null);
                 return;
             }

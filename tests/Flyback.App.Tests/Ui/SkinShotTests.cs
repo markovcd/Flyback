@@ -1,6 +1,5 @@
 ﻿using System.Text;
 using Avalonia;
-using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Media.Imaging;
@@ -87,8 +86,7 @@ public class SkinShotTests : UiTest
             "shot." + name, title, ModuleCategories.Maths,
             [new PortSpec("in", PortKind.Any), new PortSpec("level", PortKind.Scalar, 0.5f, 0f, 1f)],
             [new PortSpec("out", PortKind.Any)],
-            (em, i) => [em.Mul(i[0], i[1])],
-            "")
+            (em, i) => [em.Mul(i[0], i[1])])
         { Skin = skin };
 
         var added = was.With(new ModuleProvider("shot", "Shot"), [def]);

@@ -88,7 +88,7 @@ public static partial class NodeCatalog
     public static PortNormal Clock => new(TimeTypeId);
 
     /// <summary>The hidden x and y every socket that wants a position is normalled to.</summary>
-    public static PortNormal Across => new(CoordTypeId, CoordXPort);
+    public static PortNormal Across => new(CoordTypeId);
 
     public static PortNormal Down => new(CoordTypeId, CoordYPort);
 

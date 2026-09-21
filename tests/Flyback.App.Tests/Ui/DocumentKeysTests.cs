@@ -39,7 +39,7 @@ public class DocumentKeysTests : UiTest
         // window's own OnKeyDown has already had this by the time it arrives.
         window.AddHandler(
             InputElement.KeyDownEvent,
-            (object? _, KeyEventArgs e) => handled = e.Handled,
+            (_, e) => handled = e.Handled,
             RoutingStrategies.Bubble,
             handledEventsToo: true);
 

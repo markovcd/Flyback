@@ -1,6 +1,5 @@
 using Flyback.Core.Graph;
 using Shouldly;
-using Xunit;
 
 namespace Flyback.Core.Tests.Graph;
 

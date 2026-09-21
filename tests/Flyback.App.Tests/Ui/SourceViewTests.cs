@@ -543,7 +543,7 @@ public class SourceViewTests : UiTest
 
         text.Text.ShouldContain("\n  |> ");
         text.Text.ReplaceLineEndings("\n").Split('\n')
-            .ShouldAllBe(line => line.Length <= Flyback.Core.Language.SourceLayout.Width);
+            .ShouldAllBe(line => line.Length <= Core.Language.SourceLayout.Width);
     }
 
     /// <summary>
@@ -909,12 +909,12 @@ public class SourceViewTests : UiTest
         var window = Open();
         var editor = Editor(window);
 
-        var reading = Flyback.Core.Language.PatchPrinter.Print(editor.Patch);
+        var reading = Core.Language.PatchPrinter.Print(editor.Patch);
 
         // An edit on the canvas, before the text view has ever been opened, so
         // nothing writes it into a printing on the way.
         editor.Patch.Remove(editor.Patch.Nodes
-            .First(node => node.TypeId != Flyback.Core.Graph.NodeCatalog.OutputTypeId).Id);
+            .First(node => node.TypeId != Core.Graph.NodeCatalog.OutputTypeId).Id);
 
         editor.NotifyPatchChanged();
         Settle(window);
@@ -1039,7 +1039,7 @@ public class SourceViewTests : UiTest
         ShowCode(window);
 
         text.Text.ShouldBe(
-            Flyback.Core.Language.PatchPrinter.Print(Editor(window).Patch),
+            Core.Language.PatchPrinter.Print(Editor(window).Patch),
             "nothing was typed, so the text is a printing of what is on the canvas");
     }
 
@@ -1746,8 +1746,8 @@ public class SourceViewTests : UiTest
 
         var editor = Editor(window);
         var turned = editor.Patch.Nodes.First(n =>
-            n.TypeId != Flyback.Core.Graph.NodeCatalog.OutputTypeId
-            && Flyback.Core.Graph.NodeCatalog.BuiltIn.Require(n.TypeId).Inputs.Count > 0);
+            n.TypeId != Core.Graph.NodeCatalog.OutputTypeId
+            && Core.Graph.NodeCatalog.BuiltIn.Require(n.TypeId).Inputs.Count > 0);
 
         editor.Select(turned.Id);
         Settle(window);
@@ -1854,33 +1854,33 @@ public class SourceViewTests : UiTest
     /// By reflection: the window takes its plugins from a static no test can put a
     /// provider into, so no turn can be run against a real window.
     /// </remarks>
-    private static Action<Flyback.Core.Graph.Patch> AssistantApplies(MainWindow window)
+    private static Action<Core.Graph.Patch> AssistantApplies(MainWindow window)
     {
         var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
 
-        return (Action<Flyback.Core.Graph.Patch>)typeof(AssistantPanel)
+        return (Action<Core.Graph.Patch>)typeof(AssistantPanel)
             .GetField("apply", flags)!
             .GetValue(All<AssistantPanel>(window).Single())!;
     }
 
     /// <summary>Two oscillators mixed into the left speaker: a patch no text here describes.</summary>
-    private static Flyback.Core.Graph.Patch Drone()
+    private static Core.Graph.Patch Drone()
     {
-        var b = new Flyback.Core.Graph.PatchBuilder(Flyback.Core.Graph.NodeCatalog.BuiltIn);
+        var b = new Core.Graph.PatchBuilder(Core.Graph.NodeCatalog.BuiltIn);
 
-        var output = b.Add(Flyback.Core.Graph.NodeCatalog.OutputTypeId, 900, 40);
+        var output = b.Add(Core.Graph.NodeCatalog.OutputTypeId, 900, 40);
         var one = b.Add("osc.sine", 40, 40);
         var two = b.Add("osc.sine", 40, 240);
         var mix = b.Add("math.add", 400, 40);
 
         b.Wire(one, 0, mix, 0)
             .Wire(two, 0, mix, 1)
-            .Wire(mix, 0, output, Flyback.Core.Graph.NodeCatalog.OutputLeftPort);
+            .Wire(mix, 0, output, Core.Graph.NodeCatalog.OutputLeftPort);
 
         return b.Patch;
     }
 
-    private static int Oscillators(Flyback.Core.Graph.Patch patch) =>
+    private static int Oscillators(Core.Graph.Patch patch) =>
         patch.Nodes.Count(n => n.TypeId == "osc.sine");
 
     /// <summary>
@@ -1900,7 +1900,7 @@ public class SourceViewTests : UiTest
         Editor(window).Locked.ShouldBeFalse("a printing is a reading; the canvas still owns the patch");
         Notice(window).ShouldNotBeNull();
 
-        Oscillators(Flyback.Core.Language.PatchLanguage.Build(text.Text).Patch).ShouldBe(2);
+        Oscillators(Core.Language.PatchLanguage.Build(text.Text).Patch).ShouldBe(2);
     }
 
     /// <summary>
@@ -1922,7 +1922,7 @@ public class SourceViewTests : UiTest
 
         editor.Locked.ShouldBeTrue("the text is still the document");
         Oscillators(editor.Patch).ShouldBe(2, "the assistant's patch is on the canvas");
-        Oscillators(Flyback.Core.Language.PatchLanguage.Build(Text(window).Text).Patch).ShouldBe(2);
+        Oscillators(Core.Language.PatchLanguage.Build(Text(window).Text).Patch).ShouldBe(2);
     }
 
     /// <summary>

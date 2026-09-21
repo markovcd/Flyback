@@ -80,7 +80,7 @@ public class PresetLibraryTests : IDisposable
     {
         var library = Library();
 
-        library.Save("Tone", Tone(220f), Nothing, NodeCatalog.BuiltIn);
+        library.Save("Tone", Tone(), Nothing, NodeCatalog.BuiltIn);
         var before = library.All.Single().Preset;
 
         library.Save("tone", Tone(440f), Nothing, NodeCatalog.BuiltIn);

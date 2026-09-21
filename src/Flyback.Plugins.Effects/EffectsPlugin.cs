@@ -33,18 +33,15 @@ public sealed class EffectsPlugin : IFlybackPlugin
             new PatchPreset(
                 SpacePreset.Name,
                 SpacePreset.Build,
-                "A plucked tone through the delay into the reverb: repeats first, then the room.",
-                PresetKind.Idea),
+                "A plucked tone through the delay into the reverb: repeats first, then the room."),
             new PatchPreset(
                 ModulationPreset.Name,
                 ModulationPreset.Build,
-                "Flanger, phaser and chorus in the order a pedalboard would have them.",
-                PresetKind.Idea),
+                "Flanger, phaser and chorus in the order a pedalboard would have them."),
             new PatchPreset(
                 PlayedPreset.Name,
                 PlayedPreset.Build,
-                "The one preset you have to play: each key plucks a string, with a touch of reverb.",
-                PresetKind.Idea),
+                "The one preset you have to play: each key plucks a string, with a touch of reverb."),
             new PatchPreset(
                 AcidPreset.Name,
                 AcidPreset.Build,

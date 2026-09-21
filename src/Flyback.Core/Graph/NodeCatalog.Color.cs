@@ -73,7 +73,7 @@ public partial class NodeCatalog
         "color.ink", "Ink", ModuleCategories.Color,
         [
             Col("under"),
-            Num("mask", 1f, 0f, 4f),
+            Num("mask", 1f, 0f),
             Num("r", 1f, 0f, 1f),
             Num("g", 1f, 0f, 1f),
             Num("b", 1f, 0f, 1f),
@@ -120,8 +120,8 @@ public partial class NodeCatalog
         [
             Col("color"),
             ..Position(),
-            Num("from", 0.5f, 0f, 4f),
-            Num("to", 2f, 0f, 4f),
+            Num("from", 0.5f, 0f),
+            Num("to", 2f, 0f),
             Num("dark", 0.35f, 0f, 1f),
         ],
         [Col("color"), Num("shade")],

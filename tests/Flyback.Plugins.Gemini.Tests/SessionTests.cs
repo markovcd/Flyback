@@ -283,7 +283,7 @@ public class SessionTests
 
         var told = canned.Sent[^1].ToJsonString();
 
-        told.ShouldContain("one steady low tone and nothing else", Case.Insensitive);
+        told.ShouldContain("one steady low tone and nothing else");
         told.ShouldNotContain("audio/wav");
     }
 

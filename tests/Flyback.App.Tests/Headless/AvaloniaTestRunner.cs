@@ -1,6 +1,3 @@
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
 using Avalonia.Threading;
 using Xunit.Sdk;
 using Xunit.v3;

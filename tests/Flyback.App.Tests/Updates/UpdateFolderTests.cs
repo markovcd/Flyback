@@ -77,7 +77,7 @@ public sealed class UpdateFolderTests : IDisposable
     {
         var tests = Path.TrimEndingDirectorySeparator(AppContext.BaseDirectory);
 
-        Here(tests).ProductVersion().ShouldBe(Flyback.App.Controls.About.Version);
+        Here(tests).ProductVersion().ShouldBe(Controls.About.Version);
         Here(scratch).ProductVersion().ShouldBeNull("there is no copy there");
     }
 

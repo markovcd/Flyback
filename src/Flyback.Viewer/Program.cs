@@ -1,4 +1,3 @@
-using System.CommandLine;
 using System.Diagnostics;
 using System.Text;
 using Avalonia;
@@ -92,7 +91,7 @@ internal static class Program
     }
 
     /// <summary>The device to play through, or null where none was asked for or none could be had.</summary>
-    private static Flyback.Plugins.Audio.IAudioDevice? Device(ViewerOptions options, OutputSettings settings, PluginCatalog plugins)
+    private static Plugins.Audio.IAudioDevice? Device(ViewerOptions options, OutputSettings settings, PluginCatalog plugins)
     {
         if (options.NoAudio) return null;
 

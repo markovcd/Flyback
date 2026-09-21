@@ -597,7 +597,7 @@ public class AudioEngineTests
 
         engine.SeekTo(30);
         engine.Rewind();
-        device.Pump(512);
+        device.Pump();
 
         engine.Time.ShouldBeLessThan(0.1);
     }

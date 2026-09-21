@@ -1,4 +1,3 @@
-using System.Globalization;
 using Avalonia;
 
 namespace Flyback.App.Controls;
