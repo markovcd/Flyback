@@ -216,59 +216,8 @@ public sealed class AssistantPanel : UserControl
     /// </summary>
     private readonly StackPanel keySection = new() { Spacing = 8 };
 
-    /// <summary>
-    /// Asks the endpoint about the model on the form. The same survey the
-    /// <c>probe</c> command runs, narrowed to the one model and pointed at what is
-    /// on this form rather than at what was last saved.
-    /// </summary>
-    private readonly Button probe = new() { Name = "probe", FontSize = Text.Body };
-
-    /// <summary>
-    /// What a probe costs, said in amber above the button rather than in the grey
-    /// paragraph over it.
-    /// </summary>
-    /// <remarks>
-    /// The one control in this window that spends money on being clicked, and the
-    /// amount is not small: three requests a model against a list that runs to
-    /// dozens. Somebody about to press it has to have been told, and a sentence in
-    /// the middle of an explanation is a sentence nobody read.
-    /// </remarks>
-    private readonly TextBlock probeWarning = new()
-    {
-        Name = "probeWarning",
-        Text = "Every question is a real request on your key: this costs money, "
-            + "three requests for the one model.",
-        FontSize = Text.Small,
-        Foreground = Amber,
-        Width = 260,
-        TextWrapping = TextWrapping.Wrap,
-        HorizontalAlignment = HorizontalAlignment.Left,
-    };
-
-    /// <summary>
-    /// What the probe is doing, or what it found. Speaks only once one has been
-    /// run: the standing explanation is the lines above it, which do not move.
-    /// </summary>
-    private readonly TextBlock probeNote = new()
-    {
-        Name = "probeNote",
-        FontSize = Text.Small,
-        Foreground = Text.Muted,
-        Width = 260,
-        TextWrapping = TextWrapping.Wrap,
-        IsVisible = false,
-        HorizontalAlignment = HorizontalAlignment.Left,
-    };
-
-    /// <summary>
-    /// The probe button and everything under it, hidden for a provider that
-    /// cannot be asked — most of them can, and the one that cannot has nothing
-    /// to say about why a dead button is there.
-    /// </summary>
-    private readonly StackPanel probeSection = new() { Spacing = 8 };
-
-    /// <summary>The probe going on, if one is. Its presence is what "running" means.</summary>
-    private CancellationTokenSource? probing;
+    /// <summary>The probe button and everything under it.</summary>
+    private readonly ProbeSection probeSection;
 
     /// <summary>
     /// Whether to keep a file of what gets sent and said. Off by default, since
@@ -490,6 +439,7 @@ public sealed class AssistantPanel : UserControl
 
         credentials = new Credentials(plugins.PreferredSecretStore);
         assistant = Choose();
+        probeSection = new ProbeSection(() => assistant, KeyOnTheForm, form, Refresh);
 
         Content = Build();
 
@@ -779,22 +729,12 @@ public sealed class AssistantPanel : UserControl
 
         fields.Children.Add(Text.Quiet("Provider"));
         fields.Children.Add(providerBox);
-        probeSection.Children.Add(Note(
-            "Asks the endpoint whether the model above is really there and what it will take, using "
-            + "the provider, the form and the key as they stand — saved or not. What it finds is "
-            + "written down when you Save. The flyback-cli probe command asks about every model the "
-            + "endpoint has, which is what fills the list."));
-        probeSection.Children.Add(probeWarning);
-        probeSection.Children.Add(probe);
-        probeSection.Children.Add(probeNote);
-
-        probe.Click += (_, _) => _ = ProbeAsync();
 
         // The probe goes on what is on the form, so a key typed and not yet
         // saved is a key it can use — and the button has to notice it arrive.
         keyBox.PropertyChanged += (_, e) =>
         {
-            if (e.Property == TextBox.TextProperty) ShowProbeState();
+            if (e.Property == TextBox.TextProperty) probeSection.ShowState();
         };
 
         fields.Children.Add(form);
@@ -883,7 +823,7 @@ public sealed class AssistantPanel : UserControl
     /// </remarks>
     internal void DiscardSettings()
     {
-        StopProbing();
+        probeSection.Stop();
 
         settings.Provider = openedProvider ?? string.Empty;
         assistant = Choose();
@@ -969,7 +909,7 @@ public sealed class AssistantPanel : UserControl
         // What a probe still running would have found is not on the form yet, so
         // it is not what is being saved. It ends here rather than outliving the
         // window it was started from.
-        StopProbing();
+        probeSection.Stop();
 
         settings.RememberKey = rememberBox.IsChecked == true;
         settings.LogConversations = logBox.IsChecked == true;
@@ -1069,7 +1009,7 @@ public sealed class AssistantPanel : UserControl
         // anybody who never hovers.
         ToolTip.SetTip(instruction, excuse);
         ShowKeyState();
-        ShowProbeState();
+        probeSection.ShowState();
 
         // The standing disclosure of what gets sent and where the key came from
         // lives in the status bar; the footer here only ever speaks up for
@@ -1239,180 +1179,6 @@ public sealed class AssistantPanel : UserControl
         return string.IsNullOrWhiteSpace(keyBox.Text)
             ? credentials.Of(assistant.Id, assistant.Credential.EnvironmentVariable)
             : keyBox.Text;
-    }
-
-    /// <summary>
-    /// The probe button, in whichever of its two jobs applies, and dead where
-    /// there is no key to go with.
-    /// </summary>
-    private void ShowProbeState()
-    {
-        probeSection.IsVisible = assistant is IModelSurvey;
-
-        if (assistant is not IModelSurvey) return;
-
-        var running = probing is not null;
-        var key = KeyOnTheForm();
-
-        probe.Content = running ? "Stop" : "Probe this model";
-        probe.IsEnabled = running || key is not null;
-
-        ToolTip.SetTip(probe, running
-            ? "Stop — it ends at the next thing it asks"
-            : key is null
-                ? $"No key for {assistant.Name}. Paste one above; it does not have to be saved first."
-                : null);
-    }
-
-    /// <summary>
-    /// Asks the endpoint about the model on the form, with what is on the form
-    /// rather than with what was last saved.
-    /// </summary>
-    /// <remarks>
-    /// The same survey <c>flyback-cli probe</c> runs, and the one button here that
-    /// spends money on being pressed — which is why it asks about one model rather
-    /// than about a list. Which setting names that model is the provider's business,
-    /// so this asks for "the chosen one" and the provider works out what it means
-    /// (ADR-0069). What comes back goes onto the form and nowhere else: this window
-    /// keeps nothing until Save.
-    /// </remarks>
-    private async Task ProbeAsync()
-    {
-        if (probing is { } running)
-        {
-            running.Cancel();
-            return;
-        }
-
-        if (assistant is not IModelSurvey survey) return;
-        if (KeyOnTheForm() is not { } key) return;
-
-        // Read now rather than on the other side of the await. The form stays
-        // live under a probe, and what comes back is about what was on it when
-        // the button went down.
-        var asked = assistant;
-        var config = new AssistantConfig(key, form.Values);
-
-        using var stopping = new CancellationTokenSource();
-
-        probing = stopping;
-
-        Say("Asking the endpoint…");
-        ShowProbeState();
-
-        try
-        {
-            var found = await survey.Survey(
-                config,
-                new SurveyOptions { Chosen = true },
-                new Commentary(Say),
-                stopping.Token);
-
-            // Somebody picked another provider while this ran. One provider's
-            // models on another's form would be worse than the answer being
-            // lost, and the answer is already lost either way.
-            if (!ReferenceEquals(assistant, asked))
-            {
-                Say($"{asked.Name} answered after the provider changed, so nothing was kept.", amber: true);
-                return;
-            }
-
-            if (found.Count == 0)
-            {
-                Say("The endpoint did not answer for that model. Nothing was changed.", amber: true);
-                return;
-            }
-
-            var said = string.Join(" ", found.Select(Says));
-            var known = Survey.Read(form.Values.Text(Survey.Key, string.Empty));
-
-            // A probe of one model is a fact about that model and about nothing
-            // else. Written over the list a full survey left, where there is one;
-            // never written down as a list of its own, which would take every
-            // other name off the box on the strength of never having asked.
-            if (known.Count == 0)
-            {
-                Say(said);
-                return;
-            }
-
-            form.Put(Survey.Key, Survey.Write(Merged(known, found)));
-            Say($"{said} Save to keep it.");
-        }
-        catch (OperationCanceledException)
-        {
-            Say("Stopped. Nothing was kept.");
-        }
-        catch (Exception ex)
-        {
-            // A provider's own failure. The window survives it, and the sentence
-            // is the whole of what anybody can act on.
-            Say(ex.Message, amber: true);
-        }
-        finally
-        {
-            probing = null;
-
-            Refresh();
-        }
-    }
-
-    /// <summary>What one model answered, in the words the command uses for it.</summary>
-    private static string Says(ModelReport model)
-    {
-        var senses = new List<string>();
-
-        if (model.Vision) senses.Add("sees");
-        if (model.Hearing) senses.Add("hears");
-
-        return $"{model.Id} answers: {(senses.Count == 0 ? "text only" : string.Join(", ", senses))}.";
-    }
-
-    /// <summary>
-    /// What was written down, with each fresh report put over the model it is
-    /// about. One nobody had asked about before goes on the end, so the box keeps
-    /// the order the survey that filled it left.
-    /// </summary>
-    private static IReadOnlyList<ModelReport> Merged(
-        IReadOnlyList<ModelReport> known,
-        IReadOnlyList<ModelReport> found)
-    {
-        var merged = known.ToList();
-
-        foreach (var model in found)
-        {
-            var at = merged.FindIndex(one => string.Equals(one.Id, model.Id, StringComparison.OrdinalIgnoreCase));
-
-            if (at < 0) merged.Add(model);
-            else merged[at] = model;
-        }
-
-        return merged;
-    }
-
-    /// <summary>What the probe has to say, or nothing at all.</summary>
-    private void Say(string line, bool amber = false)
-    {
-        probeNote.Text = line;
-        probeNote.IsVisible = line.Length > 0;
-        probeNote.Foreground = amber ? Amber : Text.Muted;
-    }
-
-    /// <summary>Ends a probe the settings window is closing out from under.</summary>
-    private void StopProbing() => probing?.Cancel();
-
-    /// <summary>
-    /// A survey's running commentary, put back on the UI thread. It is reported
-    /// from whichever thread the last request came back on, and a control may not
-    /// be touched from there.
-    /// </summary>
-    /// <remarks>
-    /// Order holds: every line is posted before the survey's own task completes,
-    /// so the last of them is queued ahead of what this method says afterwards.
-    /// </remarks>
-    private sealed class Commentary(Action<string, bool> say) : IProgress<string>
-    {
-        public void Report(string value) => Dispatcher.UIThread.Post(() => say(value, false));
     }
 
     /// <summary>
