@@ -56,9 +56,11 @@
       written into the second file (the error names the line), so the question
       of which number moves is asked in the commit that moves it: the minor
       with the first line added since a release, the major with the first line
-      marked *REMOVED*. A release moves what is unshipped into what is shipped.
+      marked *REMOVED*. Each moves at most once between releases: an
+      Unshipped.txt that already has lines means the move has been made.
+      A release moves what is unshipped into what is shipped.
     -->
-    <PluginContractVersion>1.2.0</PluginContractVersion>
+    <PluginContractVersion>1.1.0</PluginContractVersion>
 
     <!--
       Verify.XunitV3 is MIT, but the Verify package under it ships an Open
