@@ -10,7 +10,7 @@ Flyback keeps about 70 ADRs in `docs/adr/`. They are not background reading: the
 
 Proposing these reads as not having done the reading, and the rationale comments are usually better than the reasoning that would replace them.
 
-The refactors worth proposing are the ones where code has drifted away from a decision the repo made (ADR-0017 claims the node editor is 477 lines; it is 2708), or where an established in-repo pattern was never extended (`Colors.cs` solved color tokens and stopped, leaving 92 `FontSize` literals). Rank by code lines, not total: comment density runs 31-65%, so a 905-line preset can be 381 lines of code.
+The refactors worth proposing are the ones where code has drifted away from a decision the repo made (ADR-0017 claims the node editor is 477 lines; it is 2708), or where an established in-repo pattern was never extended. Grep for the drift before proposing it: a pattern that looks unfinished may already have been carried through (`Text.cs` did for font sizes what `Colors.cs` did for colors). Rank by code lines, not total: comment density runs 31-65%, so a 905-line preset can be 381 lines of code.
 
 ## Rewrite a day-old ADR in place
 
