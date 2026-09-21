@@ -733,7 +733,9 @@ editor's logic is reachable as `internal static` methods (`NodeEditor.Fit`,
 The Headless xunit adapter is vendored under `tests/Flyback.App.Tests/Headless`
 because the published package does not discover tests on xunit.v3 4.x. The
 assembly runs with `ParallelMode.Collections`, since every UI test queues on the
-one thread anyway.
+one thread anyway. Each UI test blocks a pool thread while it waits for that
+thread, so `PoolHeadroom` raises the pool's minimum well past xunit's slot count;
+without it a machine short of memory stalls everything else that needs the pool.
 
 ### Doubles
 
