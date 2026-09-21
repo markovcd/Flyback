@@ -1,5 +1,9 @@
-﻿using Avalonia.Controls;
+﻿using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
+using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
+using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
 using Flyback.App.Controls;
@@ -151,6 +155,83 @@ public sealed class CanvasSettingsTests : UiTest
 
         Skins(next).IsChecked.ShouldBe(false);
         Animation(next).IsChecked.ShouldBe(false);
+    }
+
+    private static AvaloniaEdit.TextEditor ShowText(MainWindow window)
+    {
+        All<ToggleButton>(window).Single(b => b.Name == "code").IsChecked = true;
+        Settle(window);
+
+        return All<AvaloniaEdit.TextEditor>(window).Single(t => t.Name == "source");
+    }
+
+    private static void Wheel(MainWindow window, Control over, double notches, RawInputModifiers held)
+    {
+        var at = over.TranslatePoint(new Point(over.Bounds.Width / 2, over.Bounds.Height / 2), window)
+            ?? throw new InvalidOperationException("the control is not in this window");
+
+        window.MouseWheel(at, new Vector(0, notches), held);
+        Settle(window);
+    }
+
+    [AvaloniaFact]
+    public void Ctrl_scrolling_over_the_text_resizes_it_and_the_size_is_read_back_at_the_next_launch()
+    {
+        var window = Open(settingsPath);
+        var text = ShowText(window);
+        var before = text.FontSize;
+
+        Wheel(window, text, 1, RawInputModifiers.Control);
+        Wheel(window, text, 1, RawInputModifiers.Control);
+        Wheel(window, text, -1, RawInputModifiers.Control);
+
+        text.FontSize.ShouldBe(before + 1);
+        CanvasSettings.Load(settingsPath).EditorFontSize.ShouldBe(before + 1);
+
+        ShowText(Open(settingsPath)).FontSize.ShouldBe(before + 1);
+    }
+
+    [AvaloniaFact]
+    public void Scrolling_over_the_text_without_Ctrl_leaves_its_size_alone()
+    {
+        var window = Open(settingsPath);
+        var text = ShowText(window);
+        var before = text.FontSize;
+
+        Wheel(window, text, 1, RawInputModifiers.None);
+
+        text.FontSize.ShouldBe(before);
+        File.Exists(settingsPath).ShouldBeFalse();
+    }
+
+    [AvaloniaFact]
+    public void The_text_size_stops_at_its_limits()
+    {
+        var window = Open(settingsPath);
+        var text = ShowText(window);
+
+        for (var i = 0; i < 60; i++) Wheel(window, text, 1, RawInputModifiers.Control);
+
+        text.FontSize.ShouldBe(CanvasSettings.MaxEditorFontSize);
+
+        for (var i = 0; i < 60; i++) Wheel(window, text, -1, RawInputModifiers.Control);
+
+        text.FontSize.ShouldBe(CanvasSettings.MinEditorFontSize);
+    }
+
+    [AvaloniaFact]
+    public void Saving_the_switches_keeps_the_text_size()
+    {
+        var window = Open(settingsPath);
+
+        Wheel(window, ShowText(window), 1, RawInputModifiers.Control);
+
+        var dialog = OpenSettings(window);
+
+        Skins(dialog).IsChecked = false;
+        Close(window, dialog, "Save");
+
+        CanvasSettings.Load(settingsPath).EditorFontSize.ShouldBe(CanvasSettings.DefaultEditorFontSize + 1);
     }
 
     [AvaloniaFact]

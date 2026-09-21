@@ -177,6 +177,8 @@ public sealed partial class MainWindow
 
             RefreshEditState();
         };
+        source.EditorFontSize = canvasSection.EditorFontSize;
+        source.EditorFontSizeChanged += (_, size) => canvasSection.SaveEditorFontSize(size);
         source.Moved += (_, at) => PointAt(at);
         source.HandBackRequested += async (_, _) => await HandBackAsync();
 

@@ -39,6 +39,15 @@ public sealed class CanvasSettings
     /// </remarks>
     public bool AnimateSkins { get; set; } = true;
 
+    /// <summary>The text editor's font size, set by Ctrl+scroll over it.</summary>
+    public double EditorFontSize { get; set; } = DefaultEditorFontSize;
+
+    public const double DefaultEditorFontSize = 13;
+
+    public const double MinEditorFontSize = 8;
+
+    public const double MaxEditorFontSize = 40;
+
     public static string File => Path.Combine(GlobalConstants.DataFolder, "canvas.json");
 
     /// <summary>Never throws. A settings file is not worth a failure to start.</summary>
@@ -46,9 +55,15 @@ public sealed class CanvasSettings
     {
         try
         {
-            return System.IO.File.Exists(path)
+            var loaded = System.IO.File.Exists(path)
                 ? JsonSerializer.Deserialize<CanvasSettings>(System.IO.File.ReadAllText(path), Options) ?? new()
                 : new CanvasSettings();
+
+            loaded.EditorFontSize = double.IsFinite(loaded.EditorFontSize)
+                ? Math.Clamp(loaded.EditorFontSize, MinEditorFontSize, MaxEditorFontSize)
+                : DefaultEditorFontSize;
+
+            return loaded;
         }
         catch
         {

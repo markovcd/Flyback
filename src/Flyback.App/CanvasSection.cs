@@ -98,16 +98,31 @@ internal sealed class CanvasSection
         canvas.InvalidateVisual();
     }
 
+    /// <summary>The text editor's font size, kept beside the switches but changed by the editor itself.</summary>
+    internal double EditorFontSize => saved.EditorFontSize;
+
+    /// <summary>Saves the editor's font size on its own, leaving the switches as last saved.</summary>
+    internal void SaveEditorFontSize(double size)
+    {
+        saved.EditorFontSize = size;
+        Write();
+    }
+
     internal void Save()
     {
         saved = new CanvasSettings
         {
             PluginSkins = pluginSkins.IsChecked == true,
             AnimateSkins = animateSkins.IsChecked == true,
+            EditorFontSize = saved.EditorFontSize,
         };
 
         Show();
+        Write();
+    }
 
+    private void Write()
+    {
         if (path is null) return;
 
         try

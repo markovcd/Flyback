@@ -75,6 +75,7 @@
 - Every frame the assistant renders is shown in the transcript under the caption that came with it.
 
 ### Canvas and interface
+- Ctrl+scroll over the text view changes its font size, and the size is remembered.
 - The panel on the right wears the selected block's own face: its category band, the wash under it and its mark, with the name and the buttons on it.
 - Ctrl+Shift+L, or Ctrl+click on the Tidy button, lays out only the selected modules and leaves the rest of the patch where it is.
 - A toolbar button swaps the preview and the canvas, for a bigger picture while you patch.

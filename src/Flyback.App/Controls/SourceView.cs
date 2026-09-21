@@ -142,6 +142,9 @@ internal sealed class SourceView : UserControl
         // class handler, and a handler added the ordinary way is never reached.
         text.AddHandler(KeyDownEvent, Applied, RoutingStrategies.Tunnel);
 
+        // Tunneled for the same reason: the editor's scroller takes the wheel.
+        text.AddHandler(PointerWheelChangedEvent, Zoomed, RoutingStrategies.Tunnel);
+
         // A run of typing is one thing to take back. The stack takes an operation
         // per change and a change is a keystroke, so without this a sentence comes
         // back a letter at a time.
@@ -265,6 +268,36 @@ internal sealed class SourceView : UserControl
         e.Handled = true;
         EvaluateRequested?.Invoke(this, EventArgs.Empty);
     }
+
+    /// <summary>Ctrl+scroll over the text steps its size by a point.</summary>
+    private void Zoomed(object? sender, PointerWheelEventArgs e)
+    {
+        if ((e.KeyModifiers & (KeyModifiers.Control | KeyModifiers.Meta)) == 0) return;
+
+        e.Handled = true;
+
+        if (e.Delta.Y == 0) return;
+
+        EditorFontSize += e.Delta.Y > 0 ? 1 : -1;
+    }
+
+    /// <summary>The text's font size, in points, held between <see cref="CanvasSettings"/>'s bounds.</summary>
+    public double EditorFontSize
+    {
+        get => text.FontSize;
+        set
+        {
+            var size = Math.Clamp(value, CanvasSettings.MinEditorFontSize, CanvasSettings.MaxEditorFontSize);
+
+            if (size == text.FontSize) return;
+
+            text.FontSize = size;
+            EditorFontSizeChanged?.Invoke(this, size);
+        }
+    }
+
+    /// <summary>The font size changed, carrying the new one.</summary>
+    public event EventHandler<double>? EditorFontSizeChanged;
 
     /// <summary>Somebody has asked for this text to become the patch.</summary>
     public event EventHandler? EvaluateRequested;
