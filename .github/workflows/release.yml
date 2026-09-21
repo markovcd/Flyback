@@ -91,6 +91,21 @@ jobs:
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
 
+      # Before anything is built: ReleaseNotes.Of reads a release's notes from the
+      # heading the changelog gives its section (`## X.Y.Z — date`), and a build
+      # whose version has none never opens the "What's new" window (ADR-0088). A
+      # forgotten rename of "## Unreleased" would only be noticed after publishing.
+      - name: Check the changelog has this version's heading
+        run: |
+          set -euo pipefail
+
+          version="${{ steps.version.outputs.version }}"
+
+          if ! grep -qE "^## v?${version//./\\.}([[:space:]]|\$)" CHANGELOG.md; then
+            echo "CHANGELOG.md has no '## $version' heading — rename '## Unreleased' before releasing" >&2
+            exit 1
+          fi
+
       # Same command as "Docker builds" in the README, plus the version so the
       # published binaries — assembly version, file version, and the About
       # window — report the release number rather than the Dockerfile's 0.1.0-dev
