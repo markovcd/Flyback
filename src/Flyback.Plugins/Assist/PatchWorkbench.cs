@@ -335,12 +335,6 @@ public sealed partial class PatchWorkbench
     }
 
     /// <summary>
-    /// Replaces a quantiser's scale outright, for the reason a tune is replaced
-    /// outright: a set sent whole cannot come out in the wrong order or half
-    /// applied, and twelve calls to switch twelve notes is twelve chances to end
-    /// up with a scale nobody asked for.
-    /// </summary>
-    /// <summary>
     /// The computer keyboard's layout, which is the patch's rather than any
     /// module's (ADR-0099) — so it takes no handle.
     /// </summary>
@@ -385,6 +379,12 @@ public sealed partial class PatchWorkbench
         return Fine($"laid the computer keyboard out as {PatchPrinter.Keyboard(working.KeyboardScale)}. {Issues()}");
     }
 
+    /// <summary>
+    /// Replaces a quantiser's scale outright, for the reason a tune is replaced
+    /// outright: a set sent whole cannot come out in the wrong order or half
+    /// applied, and twelve calls to switch twelve notes is twelve chances to end
+    /// up with a scale nobody asked for.
+    /// </summary>
     private ToolOutcome SetScale(JsonElement arguments)
     {
         if (!Node(arguments, "handle", out var node, out var def, out var refusal))
