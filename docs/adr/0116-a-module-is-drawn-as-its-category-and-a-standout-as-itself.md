@@ -97,5 +97,4 @@ module of its own —
 [0119](0119-the-website-shows-a-module-by-photographing-one.md) replaced the
 drawn node cards with photographs of the real canvas — so the wash and the
 mark reach the site the same way any other change to a module's appearance
-does, the next time its shots are retaken. One was left: `settings.webp`,
-whose canvas is under a dialog's scrim.
+does, the next time its shots are retaken.
