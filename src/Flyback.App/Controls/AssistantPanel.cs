@@ -6,7 +6,6 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
-using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using Flyback.App.Assist;
 using Flyback.Core;
@@ -83,26 +82,7 @@ public sealed class AssistantPanel : UserControl
         Padding = new Thickness(8, 6, 8, 34),
     };
 
-    private readonly StackPanel saidPanel = new() { Spacing = 4, Margin = new Thickness(10, 8) };
-    private readonly ScrollViewer transcript = new();
-
-    /// <summary>
-    /// That the assistant has the turn, at the end of the transcript where the
-    /// next thing it says will appear.
-    /// </summary>
-    /// <remarks>
-    /// The beacon above says a run is alive; this says where. Minutes can pass
-    /// between one paragraph and the next, and the eye is on the conversation
-    /// rather than on the header by then.
-    /// </remarks>
-    private readonly TextBlock thinking = new()
-    {
-        Name = "thinking",
-        FontSize = Text.Body,
-        Foreground = Live,
-        Margin = new Thickness(10, 0, 10, 8),
-        IsVisible = false,
-    };
+    private readonly TranscriptView transcript = new();
 
     private readonly TextBlock footer = new()
     {
@@ -145,16 +125,6 @@ public sealed class AssistantPanel : UserControl
     };
 
     private readonly DispatcherTimer heartbeat = new() { Interval = TimeSpan.FromMilliseconds(200) };
-
-    /// <summary>How many lines a block may run to before it arrives folded.</summary>
-    /// <remarks>
-    /// Enough for a caption or a refusal to stand as it is, and short of what any
-    /// tool answers with.
-    /// </remarks>
-    private const int FoldsOver = 8;
-
-    /// <summary>How much of a folded block's first line its header shows.</summary>
-    private const int Widest = 52;
 
     /// <summary>What the one button shows in each of its two jobs.</summary>
     private const string SendGlyph = "⏎";
@@ -406,9 +376,6 @@ public sealed class AssistantPanel : UserControl
 
     private IPatchAssistant? runAssistant;
 
-    /// <summary>The transcript as shown, line by line, which is what is saved with the patch.</summary>
-    private readonly List<TranscriptLine> lines = [];
-
     /// <summary>
     /// A conversation that arrived with the patch and has not been asked anything
     /// yet. Carried on by the first message that may carry it on — see
@@ -438,13 +405,6 @@ public sealed class AssistantPanel : UserControl
     /// was saved, or a document arrived with one or without one.
     /// </summary>
     public event EventHandler? ConversationChanged;
-
-    /// <summary>
-    /// The paragraph the assistant is in the middle of, or null when it is not
-    /// in the middle of one. Held rather than found, because what "the last
-    /// block" is changes the moment anything else is written.
-    /// </summary>
-    private SelectableTextBlock? saying;
 
     /// <summary>Built the first time the settings window asks for it, and kept.</summary>
     private Control? section;
@@ -584,9 +544,9 @@ public sealed class AssistantPanel : UserControl
 
         if (waiting is not null)
         {
-            foreach (var line in waiting.Transcript) Put(line.Voice, line.Text);
+            foreach (var line in waiting.Transcript) transcript.Put(line.Voice, line.Text);
 
-            Put(Voice.Note, "Saved with this patch. The next message carries this conversation on.", keep: false);
+            transcript.Put(Voice.Note, "Saved with this patch. The next message carries this conversation on.", keep: false);
         }
 
         ConversationChanged?.Invoke(this, EventArgs.Empty);
@@ -626,9 +586,7 @@ public sealed class AssistantPanel : UserControl
         log.Dispose();
         log = ConversationLog.Start(false, string.Empty);
 
-        saidPanel.Children.Clear();
-        lines.Clear();
-        saying = null;
+        transcript.Clear();
 
         waiting = null;
         waitingOn = null;
@@ -687,16 +645,6 @@ public sealed class AssistantPanel : UserControl
 
     private Control Build()
     {
-        // The live line below the transcript rather than in it, so nothing has to
-        // move it back to the end every time something is written.
-        var flow = new StackPanel();
-
-        flow.Children.Add(saidPanel);
-        flow.Children.Add(thinking);
-
-        transcript.Content = flow;
-        transcript.VerticalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Auto;
-
         // Tunnelling, and both halves of the gesture answered here: the box would
         // otherwise take Enter for itself on the way back up, and what it does
         // with a modifier held is its business rather than something to bet the
@@ -1148,7 +1096,7 @@ public sealed class AssistantPanel : UserControl
         send.IsEnabled = asking
             || (blocked is null && !string.IsNullOrWhiteSpace(instruction.Text));
 
-        fresh.IsEnabled = !asking && (lines.Count > 0 || run is not null || waiting is not null);
+        fresh.IsEnabled = !asking && (transcript.Lines.Count > 0 || run is not null || waiting is not null);
 
         ToolTip.SetTip(fresh, "Start a new conversation about this patch. The one set aside stays saved "
             + "with the patch until the patch is saved again.");
@@ -1179,7 +1127,7 @@ public sealed class AssistantPanel : UserControl
 
         var done = bench is null || bench.ToolCalls == 0
             ? string.Empty
-            : $" · {Tally(bench.ToolCalls, "tool call")}, {Tally(bench.Edits, "edit")}";
+            : $" · {TranscriptView.Tally(bench.ToolCalls, "tool call")}, {TranscriptView.Tally(bench.Edits, "edit")}";
 
         progress.Text = stopping
             ? $"Stopping — it ends at the next thing the assistant does · {Spell(elapsed)}"
@@ -1187,7 +1135,7 @@ public sealed class AssistantPanel : UserControl
 
         // Every third tick, so the dots are read as a rhythm rather than as a
         // flicker. Three of them, then none again.
-        thinking.Text = (stopping ? "Stopping" : "Thinking") + new string('.', pulse / 3 % 4);
+        transcript.Thinking.Text = (stopping ? "Stopping" : "Thinking") + new string('.', pulse / 3 % 4);
     }
 
     private void StartWorking()
@@ -1198,7 +1146,7 @@ public sealed class AssistantPanel : UserControl
         pulse = 0;
 
         working.IsVisible = true;
-        thinking.IsVisible = true;
+        transcript.Thinking.IsVisible = true;
         heartbeat.Start();
         Beat();
         transcript.ScrollToEnd();
@@ -1210,15 +1158,12 @@ public sealed class AssistantPanel : UserControl
         asking = false;
         stopping = false;
         working.IsVisible = false;
-        thinking.IsVisible = false;
+        transcript.Thinking.IsVisible = false;
     }
 
     private static string Spell(TimeSpan elapsed) => elapsed.TotalSeconds < 60d
         ? $"{elapsed.TotalSeconds:0}s"
         : $"{(int)elapsed.TotalMinutes}m {elapsed.Seconds:00}s";
-
-    private static string Tally(int count, string noun) =>
-        count == 1 ? $"1 {noun}" : $"{count} {noun}s";
 
     /// <summary>
     /// Says whether there is a key without ever showing one.
@@ -1598,7 +1543,7 @@ public sealed class AssistantPanel : UserControl
             // Nothing is cleared: the transcript on screen is this conversation's.
             if (!run.PickedUp)
             {
-                Put(Voice.Note,
+                transcript.Put(Voice.Note,
                     $"{with.Name} could not pick up what was said before, so it starts again from the patch it had built.");
             }
 
@@ -1612,12 +1557,11 @@ public sealed class AssistantPanel : UserControl
         // Said rather than silently done, and only where there was something to
         // lose: the transcript emptying is otherwise the only sign that the
         // thing being talked to has just been replaced.
-        if (saidPanel.Children.Count > 0)
+        if (!transcript.IsEmpty)
         {
-            saidPanel.Children.Clear();
-            lines.Clear();
+            transcript.Clear();
 
-            if (because is { Length: > 0 }) Put(Voice.Note, because);
+            if (because is { Length: > 0 }) transcript.Put(Voice.Note, because);
         }
 
         return run;
@@ -1635,7 +1579,7 @@ public sealed class AssistantPanel : UserControl
 
         asked?.Invoke(assistant.Id);
 
-        Put(Voice.You, wanted);
+        transcript.Put(Voice.You, wanted);
         log.Write("you", wanted);
 
         instruction.Text = string.Empty;
@@ -1669,7 +1613,7 @@ public sealed class AssistantPanel : UserControl
             // AssistantRun already turns a provider's failure into an event, so
             // anything arriving here is the shell's own fault rather than a
             // plugin's — but the window still survives it.
-            Put(Voice.Failed, $"Something went wrong: {ex.Message}");
+            transcript.Put(Voice.Failed, $"Something went wrong: {ex.Message}");
             report($"The assistant stopped: {ex.Message}", null);
         }
         finally
@@ -1684,18 +1628,18 @@ public sealed class AssistantPanel : UserControl
         switch (happened)
         {
             case PatchEvent.Said said:
-                Put(Voice.Said, said.Text);
+                transcript.Put(Voice.Said, said.Text);
                 log.Write("said", said.Text);
                 break;
 
             case PatchEvent.Did did:
-                Put(Voice.Note, did.Summary);
+                transcript.Put(Voice.Note, did.Summary);
                 log.Write("did", did.Summary);
                 break;
 
             case PatchEvent.Saw saw:
-                Put(Voice.Note, saw.Caption);
-                Picture(saw.Png);
+                transcript.Put(Voice.Note, saw.Caption);
+                transcript.Picture(saw.Png);
                 log.Write("saw", saw.Caption);
                 break;
 
@@ -1705,7 +1649,7 @@ public sealed class AssistantPanel : UserControl
             // at once — the transcript says a sound was rendered and heard,
             // which is what somebody watching this needs to know.
             case PatchEvent.Heard heard:
-                Put(Voice.Note, heard.Caption);
+                transcript.Put(Voice.Note, heard.Caption);
                 log.Write("heard", heard.Caption);
                 break;
 
@@ -1713,61 +1657,23 @@ public sealed class AssistantPanel : UserControl
             {
                 var spent = $"{cost.Input} in ({cost.CacheRead} cached), {cost.Output} out.";
 
-                Put(Voice.Aside, spent);
+                transcript.Put(Voice.Aside, spent);
                 log.Write("cost", spent);
                 break;
             }
 
             case PatchEvent.Proposed proposed:
-                Put(Voice.Proposed, $"Proposed: {proposed.Summary}");
+                transcript.Put(Voice.Proposed, $"Proposed: {proposed.Summary}");
                 log.Write("proposed", proposed.Summary);
                 break;
 
             case PatchEvent.Failed failed:
-                Put(Voice.Failed, failed.Message);
+                transcript.Put(Voice.Failed, failed.Message);
                 log.Write("failed", failed.Message);
                 break;
         }
 
         transcript.ScrollToEnd();
-    }
-
-    /// <summary>
-    /// One line of the transcript, drawn as its voice is drawn and kept, so that it
-    /// is saved with the patch — unless it is only about this showing of it.
-    /// </summary>
-    private void Put(Voice voice, string text, bool keep = true)
-    {
-        if (keep) lines.Add(new TranscriptLine(voice, text));
-
-        switch (voice)
-        {
-            case Voice.You:
-                Asked(text);
-                break;
-
-            case Voice.Said:
-                Append(text);
-                break;
-
-            case Voice.Aside:
-                Add(text, Text.Muted, 11);
-                break;
-
-            // The answer, however long it runs. Folding it would hide the one
-            // thing the turn was for.
-            case Voice.Proposed:
-                Add(text, Brushes.White, Text.Body, fold: false);
-                break;
-
-            case Voice.Failed:
-                Add(text, Amber, Text.Small);
-                break;
-
-            default:
-                Add(text, Text.Muted, Text.Small);
-                break;
-        }
     }
 
     /// <summary>
@@ -1778,190 +1684,10 @@ public sealed class AssistantPanel : UserControl
     {
         if (run is null) return;
 
-        settled = run.Save(lines);
+        settled = run.Save(transcript.Lines);
         unsaved = true;
 
         ConversationChanged?.Invoke(this, EventArgs.Empty);
-    }
-
-    /// <summary>
-    /// A frame the assistant looked at, in the transcript under the caption that
-    /// came with it.
-    /// </summary>
-    /// <remarks>
-    /// Full width and capped in height, because a render is a contact sheet: one
-    /// frame is a picture and four are a strip, and both have to be readable
-    /// without either taking the transcript over.
-    /// </remarks>
-    private void Picture(byte[] png)
-    {
-        Bitmap frame;
-
-        try
-        {
-            frame = new Bitmap(new MemoryStream(png));
-        }
-        catch
-        {
-            // A frame that will not decode is nothing to show. The caption that
-            // came with it is already in the transcript.
-            return;
-        }
-
-        saying = null;
-
-        saidPanel.Children.Add(new Border
-        {
-            Name = "frame",
-            BorderBrush = new SolidColorBrush(Colors.Edge),
-            BorderThickness = new Thickness(1),
-            Margin = new Thickness(0, 2, 0, 4),
-
-            // Sized by the picture rather than by the panel, so a single frame
-            // does not sit in a box with bars either side of it.
-            HorizontalAlignment = HorizontalAlignment.Left,
-            Child = new Image
-            {
-                Source = frame,
-                Stretch = Stretch.Uniform,
-                MaxHeight = 260,
-            },
-        });
-    }
-
-    private void Add(string text, IBrush color, double size, bool fold = true)
-    {
-        // Anything else in the transcript ends the paragraph the assistant was
-        // in the middle of. Without this, prose lands on the end of whatever
-        // block happens to be last and of about the right size — which was the
-        // person's own message, run together with the reply to it.
-        saying = null;
-
-        if (fold && Rows(text) > FoldsOver)
-        {
-            Fold(text, color, size);
-            return;
-        }
-
-        saidPanel.Children.Add(new SelectableTextBlock
-        {
-            Text = text,
-            TextWrapping = TextWrapping.Wrap,
-            Foreground = color,
-            FontSize = size,
-        });
-    }
-
-    /// <summary>
-    /// A block too long to read on the way past, behind its first line and a
-    /// count of the rest.
-    /// </summary>
-    /// <remarks>
-    /// What a tool answered is usually the patch written out, which is screens of
-    /// text between one thing the assistant said and the next. Folded, the
-    /// transcript is the conversation again, and the working is a click away.
-    /// </remarks>
-    private void Fold(string text, IBrush color, double size)
-    {
-        var body = new SelectableTextBlock
-        {
-            Text = text,
-            TextWrapping = TextWrapping.Wrap,
-            Foreground = color,
-            FontSize = size,
-            Margin = new Thickness(11, 1, 0, 3),
-            IsVisible = false,
-        };
-
-        var header = new Button
-        {
-            Name = "fold",
-            Content = Gist(text, open: false),
-            FontSize = size,
-            Foreground = color,
-            Background = Brushes.Transparent,
-            BorderThickness = new Thickness(0),
-            Padding = new Thickness(0, 1),
-            MinHeight = 0,
-            HorizontalAlignment = HorizontalAlignment.Left,
-            HorizontalContentAlignment = HorizontalAlignment.Left,
-        };
-
-        header.Click += (_, _) =>
-        {
-            body.IsVisible = !body.IsVisible;
-            header.Content = Gist(text, body.IsVisible);
-        };
-
-        var block = new StackPanel();
-
-        block.Children.Add(header);
-        block.Children.Add(body);
-
-        saidPanel.Children.Add(block);
-    }
-
-    /// <summary>
-    /// The one line a folded block shows: which way it opens, what it was about,
-    /// and how much of it there is.
-    /// </summary>
-    private static string Gist(string text, bool open)
-    {
-        var first = text
-            .Split('\n')
-            .Select(line => line.Trim())
-            .FirstOrDefault(line => line.Length > 0) ?? string.Empty;
-
-        // The column is narrow and a button does not wrap, so what will not fit
-        // is cut here rather than drawn past the edge of the panel.
-        var gist = first.Length > Widest ? string.Concat(first.AsSpan(0, Widest - 1).TrimEnd(), "…") : first;
-
-        return $"{(open ? "▾" : "▸")} {gist} · {Tally(Rows(text), "line")}";
-    }
-
-    private static int Rows(string text) => text.AsSpan().Count('\n') + 1;
-
-    /// <summary>
-    /// What the person just asked for, set apart from what comes back.
-    /// </summary>
-    /// <remarks>
-    /// A conversation is kept now rather than cleared per message, so the two
-    /// sides have to be told apart by looking: a gap above, and the accent the
-    /// rest of the panel uses for its own voice.
-    /// </remarks>
-    private void Asked(string text)
-    {
-        saying = null;
-
-        saidPanel.Children.Add(new SelectableTextBlock
-        {
-            Text = text,
-            TextWrapping = TextWrapping.Wrap,
-            Foreground = Brushes.White,
-            FontSize = Text.Body,
-            FontWeight = FontWeight.SemiBold,
-            Margin = new Thickness(0, saidPanel.Children.Count > 0 ? 14 : 0, 0, 2),
-        });
-    }
-
-    /// <summary>Streamed prose arrives in pieces, so it lands on the end of the last one.</summary>
-    private void Append(string text)
-    {
-        if (saying is not null)
-        {
-            saying.Text += text;
-            return;
-        }
-
-        saying = new SelectableTextBlock
-        {
-            Text = text,
-            TextWrapping = TextWrapping.Wrap,
-            Foreground = Brushes.White,
-            FontSize = Text.Body,
-        };
-
-        saidPanel.Children.Add(saying);
     }
 
     // --- accepting ----------------------------------------------------------
@@ -1999,7 +1725,7 @@ public sealed class AssistantPanel : UserControl
         // canvas made of the proposal, since a text document builds its own copy.
         run.Rebase(current());
 
-        Put(Voice.Aside, overwrote
+        transcript.Put(Voice.Aside, overwrote
             ? "Applied — this replaced the edits you made while it ran. Ctrl+Z puts them back."
             : "Applied. Ctrl+Z puts the patch back as it was.");
 
