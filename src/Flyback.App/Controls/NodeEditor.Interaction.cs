@@ -47,8 +47,21 @@ public sealed partial class NodeEditor
             // than about adding another one beside it. And nowhere at all on a
             // locked canvas, where the list would offer to place something the
             // next evaluation would take straight back off.
-            if (!Locked && !Scene.HitPort(graph, out _, out _, out _) && Scene.HitNode(graph) is null)
+            if (!Locked
+                && !Scene.HitPort(graph, out _, out _, out _)
+                && Scene.HitBox(graph) is null
+                && Scene.HitNode(graph) is null)
                 MenuRequested?.Invoke(this, graph);
+
+            // Over a module, or a shut box, the button is held to mute it; see
+            // NodeEditor.Hold.cs. Over a socket, or an open group's strip, it does nothing.
+            if (!Scene.HitPort(graph, out _, out _, out _))
+            {
+                if (Scene.HitBox(graph) is { } shut) HoldOff(shut.Members);
+                else if (Scene.HitNode(graph) is { } under) HoldOff([under.Id]);
+
+                if (this.held.Count > 0) e.Pointer.Capture(this);
+            }
 
             return;
         }
@@ -84,7 +97,6 @@ public sealed partial class NodeEditor
         if (Scene.HitBox(graph) is null && Scene.HitNode(graph) is { } node)
         {
             PressNode(node, ctrl);
-            HoldOff([node.Id]);
             e.Pointer.Capture(this);
             InvalidateVisual();
             return;
@@ -99,15 +111,8 @@ public sealed partial class NodeEditor
         {
             // Opening a box is an edit, so a locked canvas selects it instead —
             // the same answer Ctrl+E gets.
-            if (e.ClickCount == 2 && !Locked)
-            {
-                ToggleBox(box);
-            }
-            else
-            {
-                PressGroup(box, ctrl);
-                HoldOff(box.Members);
-            }
+            if (e.ClickCount == 2 && !Locked) ToggleBox(box);
+            else PressGroup(box, ctrl);
 
             e.Pointer.Capture(this);
             InvalidateVisual();
@@ -193,8 +198,6 @@ public sealed partial class NodeEditor
     private void EndGesture()
     {
         var ended = drag != Drag.None;
-
-        ReleaseHeld();
 
         drag = Drag.None;
         panSuspended = Drag.None;
@@ -487,6 +490,12 @@ public sealed partial class NodeEditor
         // move that crossed this release, and the wire (or drag, or marquee)
         // it interrupted must not be finished off by a button that was never
         // the one holding it.
+        if (e.InitialPressMouseButton == MouseButton.Right)
+        {
+            ReleaseHeld();
+            return;
+        }
+
         if (e.InitialPressMouseButton == MouseButton.Middle)
         {
             if (panSuspended != Drag.None)
@@ -510,9 +519,6 @@ public sealed partial class NodeEditor
 
             return;
         }
-
-        // Before the move is recorded, so the step holds the patch with everything on.
-        ReleaseHeld();
 
         // The button that began the gesture came up while the pan it was put on
         // hold for was still going, so this release is the pan's own and the last

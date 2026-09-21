@@ -10,7 +10,7 @@ using Shouldly;
 namespace Flyback.App.Tests.Ui;
 
 /// <summary>
-/// Holding the left button on a module, or on a shut box, switches it off until
+/// Holding the right button on a module, or on a shut box, switches it off until
 /// the button comes up.
 /// </summary>
 public class HoldMuteTests : UiTest
@@ -59,13 +59,13 @@ public class HoldMuteTests : UiTest
 
     private static void Down(NodeEditor editor, Window window, Point graph)
     {
-        window.MouseDown(On(editor, window, graph), MouseButton.Left);
+        window.MouseDown(On(editor, window, graph), MouseButton.Right);
         Settle(window);
     }
 
     private static void Up(NodeEditor editor, Window window, Point graph)
     {
-        window.MouseUp(On(editor, window, graph), MouseButton.Left);
+        window.MouseUp(On(editor, window, graph), MouseButton.Right);
         Settle(window);
     }
 
@@ -151,22 +151,28 @@ public class HoldMuteTests : UiTest
     }
 
     [AvaloniaFact]
-    public void A_dragged_module_comes_back_on_and_the_move_is_one_step_with_it_on()
+    public void Holding_does_not_select_the_module()
+    {
+        var (editor, window) = Editing(Chain(out var clock, out var osc, out _));
+
+        editor.Select(clock.Id);
+        Down(editor, window, Body(osc));
+
+        editor.SelectedNodes.Select(n => n.Id).ShouldBe([clock.Id]);
+
+        Up(editor, window, Body(osc));
+    }
+
+    [AvaloniaFact]
+    public void The_left_button_does_not_mute()
     {
         var (editor, window) = Editing(Chain(out _, out var osc, out _));
 
-        var from = Body(osc);
-        var to = new Point(from.X + 60, from.Y + 90);
-
-        Down(editor, window, from);
-        window.MouseMove(On(editor, window, to));
-        osc.Off.ShouldBeTrue();
-
-        Up(editor, window, to);
+        window.MouseDown(On(editor, window, Body(osc)), MouseButton.Left);
 
         osc.Off.ShouldBeFalse();
-        editor.Undo().ShouldBeTrue();
-        editor.Patch.Find(osc.Id).ShouldNotBeNull().Off.ShouldBeFalse();
+
+        window.MouseUp(On(editor, window, Body(osc)), MouseButton.Left);
     }
 
     [AvaloniaFact]

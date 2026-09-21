@@ -3,7 +3,7 @@ using Flyback.Core.Graph;
 namespace Flyback.App.Controls;
 
 /// <summary>
-/// Muting a module for as long as the left button is down on it: a way to hear
+/// Muting a module for as long as the right button is down on it: a way to hear
 /// what it contributes by taking it away, with nothing to undo afterward.
 /// </summary>
 /// <remarks>

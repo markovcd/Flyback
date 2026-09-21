@@ -304,14 +304,11 @@ public class NodeEditorTests : UiTest
     /// <summary>
     /// Pressed and not released, which is a module mid-drag. It has not been
     /// moved, so every wire is where it was and the only thing that can differ
-    /// between the two frames is how they are drawn. The Output, since holding any
-    /// other module mutes it and a muted module's wires are drawn faint.
+    /// between the two frames is how they are drawn.
     /// </summary>
-    private static void HoldDown(NodeEditor editor, Window window)
+    private static void HoldDown(NodeEditor editor, Window window, NodeInstance node)
     {
-        var sink = editor.Patch.Nodes.Single(n => NodeCatalog.IsSink(n.TypeId));
-
-        window.MouseDown(Screen(editor, window, Body(sink)), MouseButton.Left);
+        window.MouseDown(Screen(editor, window, Body(node)), MouseButton.Left);
         Settle(window);
     }
 
@@ -332,10 +329,10 @@ public class NodeEditorTests : UiTest
     [AvaloniaFact]
     public void Dragging_a_module_brings_its_own_wires_in_front_of_the_others()
     {
-        var patch = Crossing(out _, out var obstacle);
+        var patch = Crossing(out var source, out var obstacle);
         var (editor, window) = Editing(patch);
 
-        HoldDown(editor, window);
+        HoldDown(editor, window, source);
 
         WirePixelsOver(editor, window, obstacle).ShouldBeGreaterThan(0);
     }
@@ -348,13 +345,13 @@ public class NodeEditorTests : UiTest
     [AvaloniaFact]
     public void And_draws_them_heavier_than_they_rest_at()
     {
-        var patch = Crossing(out _, out _);
+        var patch = Crossing(out var source, out _);
         var (editor, window) = Editing(patch);
 
         var resting = WireWidth(editor, window, OpenColumn);
         resting.ShouldBeGreaterThan(0, "the wire has to be visible at rest as well");
 
-        HoldDown(editor, window);
+        HoldDown(editor, window, source);
 
         WireWidth(editor, window, OpenColumn).ShouldBeGreaterThan(resting);
     }
@@ -571,7 +568,7 @@ public class NodeEditorTests : UiTest
         Drag(editor, window, from, from + new Vector(180, 120));
 
         Now(editor, source).ShouldNotBeNull().X.ShouldBe(180, 1);
-        recompiles.ShouldBe(2, "the hold mutes and unmutes; where a module sits is not in the program");
+        recompiles.ShouldBe(0, "where a module sits is not in the program");
         editor.CanUndo.ShouldBeTrue();
 
         editor.Undo().ShouldBeTrue();
