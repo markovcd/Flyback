@@ -101,7 +101,6 @@ public class StageKnobTests : UiTest
 
         Stage(window).IsEffectivelyVisible.ShouldBeTrue();
         Stage(window).Knobs.Count.ShouldBe(1);
-        Transport(window).HasKnobs.ShouldBeTrue("there are knobs, so a button to hide them");
     }
 
     [AvaloniaFact]
@@ -145,13 +144,12 @@ public class StageKnobTests : UiTest
     }
 
     [AvaloniaFact]
-    public void A_patch_with_no_knobs_shows_none_and_no_button_for_them()
+    public void A_patch_with_no_knobs_shows_none()
     {
         var (patch, _) = Board(knob: false);
         var window = FullScreen(patch);
 
         Stage(window).IsVisible.ShouldBeFalse();
-        Transport(window).HasKnobs.ShouldBeFalse();
     }
 
     [AvaloniaFact]
@@ -212,21 +210,18 @@ public class StageKnobTests : UiTest
 
         CtrlK(window);
         Stage(window).IsVisible.ShouldBeFalse();
-        Transport(window).KnobsShown.ShouldBeFalse();
 
         CtrlK(window);
         Stage(window).IsVisible.ShouldBeTrue();
-        Transport(window).KnobsShown.ShouldBeTrue();
     }
 
     [AvaloniaFact]
-    public void The_transport_button_hides_them_too_and_the_choice_is_kept()
+    public void Hiding_them_is_kept_across_leaving_and_entering_full_screen()
     {
         var (patch, _) = Board();
         var window = FullScreen(patch);
 
-        Transport(window).KnobsButton.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
-        Settle(window);
+        CtrlK(window);
         Stage(window).IsVisible.ShouldBeFalse();
 
         window.KeyPress(Key.Escape, RawInputModifiers.None, PhysicalKey.Escape, null);
@@ -327,7 +322,6 @@ public class StageKnobTests : UiTest
         var window = Viewer(patch);
 
         Stage(window).IsEffectivelyVisible.ShouldBeTrue();
-        Transport(window).HasKnobs.ShouldBeTrue();
 
         TurnUp(window, Stage(window).Knobs[knob!.Id], 80);
 
@@ -341,7 +335,6 @@ public class StageKnobTests : UiTest
         var window = Viewer(patch);
 
         Stage(window).IsVisible.ShouldBeFalse();
-        Transport(window).HasKnobs.ShouldBeFalse();
     }
 
     [AvaloniaFact]

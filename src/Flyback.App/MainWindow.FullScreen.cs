@@ -194,7 +194,6 @@ public sealed partial class MainWindow
         transport.PauseClicked += TogglePause;
         transport.MuteClicked += ToggleMute;
         transport.RewindClicked += RewindToZero;
-        transport.KnobsClicked += ToggleStageKnobs;
 
         picture.Children.Add(transport);
 

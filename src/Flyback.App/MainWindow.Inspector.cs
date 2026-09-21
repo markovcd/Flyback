@@ -410,7 +410,6 @@ public sealed partial class MainWindow
         overlay.PauseClicked += TogglePause;
         overlay.MuteClicked += ToggleMute;
         overlay.RewindClicked += RewindToZero;
-        overlay.KnobsClicked += ToggleStageKnobs;
 
         grid.Children.Add(previewBox);
         grid.Children.Add(stageKnobs);

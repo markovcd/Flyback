@@ -8,7 +8,7 @@ using Avalonia.Styling;
 namespace Flyback.App.Controls;
 
 /// <summary>
-/// Sound, pause, rewind and the knobs over a full-window picture, tucked behind three
+/// Sound, pause and rewind over a full-window picture, tucked behind three
 /// dots in the bottom right corner. Bare glyphs on no bar, drawn the way the knobs are.
 /// </summary>
 /// <remarks>
@@ -22,15 +22,13 @@ public sealed class TransportOverlay : TuckedAway
     private const double Inset = 12;
 
     /// <summary>How far in from the right edge the open transport reaches.</summary>
-    public const double Span = Inset + 4 * Size + 3 * Gap;
+    public const double Span = Inset + 3 * Size + 2 * Gap;
 
     private readonly Button muteButton;
     private readonly Button pauseButton;
-    private readonly Button knobsButton;
 
     private bool paused;
     private bool muted;
-    private bool knobsShown = true;
 
     public TransportOverlay()
         : this(new StackPanel { Orientation = Orientation.Horizontal, Spacing = Gap })
@@ -49,13 +47,9 @@ public sealed class TransportOverlay : TuckedAway
 
         var rewind = Tool(Glyphs.Rewind(), "Back to the start", () => RewindClicked?.Invoke());
 
-        knobsButton = Tool(Glyphs.Knob(), "Show or hide the knobs  (Ctrl+K)", () => KnobsClicked?.Invoke());
-        knobsButton.IsVisible = false;
-
         buttons.Children.Add(muteButton);
         buttons.Children.Add(pauseButton);
         buttons.Children.Add(rewind);
-        buttons.Children.Add(knobsButton);
 
         // The theme paints a hovered or pressed button a fill; over a picture that
         // is a grey box, so the glyph brightens instead.
@@ -82,9 +76,6 @@ public sealed class TransportOverlay : TuckedAway
 
     /// <summary>Raised when the rewind button is pressed.</summary>
     public event Action? RewindClicked;
-
-    /// <summary>Raised when the knobs button is pressed; the owner flips <see cref="KnobsShown"/>.</summary>
-    public event Action? KnobsClicked;
 
     /// <summary>Whether play is held. The pause button shows what a press does next.</summary>
     public bool Paused
@@ -118,27 +109,6 @@ public sealed class TransportOverlay : TuckedAway
         get => muteButton.IsEnabled;
         set => muteButton.IsEnabled = value;
     }
-
-    /// <summary>Whether the patch has knobs, and so a button to show them.</summary>
-    public bool HasKnobs
-    {
-        get => knobsButton.IsVisible;
-        set => knobsButton.IsVisible = value;
-    }
-
-    /// <summary>Whether the knobs are over the picture. The button is dimmed while they are not.</summary>
-    public bool KnobsShown
-    {
-        get => knobsShown;
-        set
-        {
-            knobsShown = value;
-            knobsButton.Opacity = value ? 1 : 0.45;
-        }
-    }
-
-    /// <summary>The knobs button, for the tests that press it.</summary>
-    internal Button KnobsButton => knobsButton;
 
     /// <summary>A glyph at the knobs' scale, so its strokes weigh what theirs do.</summary>
     private static Viewbox Face(Control glyph) => new() { Width = 22, Height = 22, Child = glyph };

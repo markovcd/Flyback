@@ -151,8 +151,6 @@ internal sealed partial class ViewerWindow : Window
         if (Knobs is not { Any: true } knobs) return;
 
         knobs.IsVisible = !knobs.IsVisible;
-
-        if (Overlay is { } overlay) overlay.KnobsShown = knobs.IsVisible;
     }
 
     private TransportOverlay BuildOverlay()
@@ -162,7 +160,6 @@ internal sealed partial class ViewerWindow : Window
             Muted = player.Muted,
             Paused = player.Paused,
             Sounding = player.Sounding,
-            HasKnobs = Knobs is { Any: true },
         };
 
         overlay.MuteClicked += () =>
@@ -174,8 +171,6 @@ internal sealed partial class ViewerWindow : Window
         overlay.PauseClicked += TogglePause;
 
         overlay.RewindClicked += player.Rewind;
-
-        overlay.KnobsClicked += ToggleKnobs;
 
         return overlay;
     }

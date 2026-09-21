@@ -202,19 +202,13 @@ public sealed partial class MainWindow
 
     /// <summary>
     /// Puts the knobs over the picture where it is full screen, they are wanted and
-    /// the patch has any, and the overlay's button in step.
+    /// the patch has any.
     /// </summary>
     private void SyncStageKnobs()
     {
         stageKnobs.IsVisible = previewIsFullScreen && stageKnobsWanted && stageKnobs.Any;
 
         if (pictureKnobs is { } away) away.IsVisible = stageKnobsWanted && away.Any;
-
-        foreach (var overlay in Transports)
-        {
-            overlay.HasKnobs = stageKnobs.Any;
-            overlay.KnobsShown = stageKnobsWanted;
-        }
     }
 
     /// <summary>The settings window's MIDI section: what a controller does to a knob that sits elsewhere.</summary>
