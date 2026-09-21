@@ -341,11 +341,11 @@ public sealed partial class MainWindow
         if (e.Handled || this.HasDialogUp) return;
 
         // Before the modifier check, because Escape carries none. Only while the
-        // preview has the window: everywhere else Escape belongs to the module
+        // picture is full screen: everywhere else Escape belongs to the module
         // filter, which handles its own before this is ever reached.
-        if (e.Key == Key.Escape && previewIsFullScreen)
+        if (e.Key == Key.Escape && (previewIsFullScreen || pictureWindow is not null))
         {
-            ShowFullScreenPreview(false);
+            LeaveFullScreen();
             e.Handled = true;
             return;
         }

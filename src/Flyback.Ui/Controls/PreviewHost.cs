@@ -205,6 +205,12 @@ public sealed class PreviewHost : Decorator, IPreviewSurface
     }
 
     /// <summary>
+    /// Builds a fresh renderer of the kind running, for a host moved to another
+    /// window: a renderer stops for good once it leaves the visual tree.
+    /// </summary>
+    public void Renew() => Switch(Backend);
+
+    /// <summary>
     /// Puts a renderer in place, whatever was there before.
     /// </summary>
     /// <remarks>

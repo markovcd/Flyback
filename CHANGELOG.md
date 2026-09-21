@@ -60,6 +60,7 @@
 - Ctrl+Shift+L, or Ctrl+click on Tidy, lays out only the selected modules.
 - A toolbar button swaps the preview and the canvas.
 - Ctrl+P pauses and plays the patch, and the full-screen preview has the viewer's controls.
+- Settings → Graphics sends the full-screen picture to another monitor, or to a chosen one, and leaves the editor where it is.
 - An Expression's formula is red while it does not read, and says what stopped it.
 - Unsaved work survives a crash and is restored at the next start.
 - Ctrl+B switches a module or a box off, and holding the right button does it until you let go.

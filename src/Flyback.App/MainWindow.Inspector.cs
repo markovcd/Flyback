@@ -129,6 +129,7 @@ public sealed partial class MainWindow
         if (gpuButton.IsEnabled) gpuButton.SelectedIndex = settings.Gpu ? 0 : 1;
 
         ShowStartupPatch(settings.DefaultPreset);
+        ShowFullScreenSetting(settings);
 
         frameRate.SelectedIndex = Nearest(FrameRates, settings.FrameRate);
         previewFrameRate.SelectedIndex = Nearest(PreviewFrameRates, settings.PreviewFrameRate);
@@ -253,6 +254,7 @@ public sealed partial class MainWindow
 
         var size = Resolutions.All[Math.Max(resolution.SelectedIndex, 0)].Size;
         var before = outputSettings;
+        var fullScreen = ReadFullScreenSetting();
 
         outputSettings = new OutputSettings
         {
@@ -263,6 +265,9 @@ public sealed partial class MainWindow
             Gpu = gpuButton.IsEnabled ? gpuButton.SelectedIndex == 0 : outputSettings.Gpu,
 
             DefaultPreset = startupPatch,
+
+            FullScreen = fullScreen.On,
+            FullScreenMonitor = fullScreen.Monitor,
 
             FrameRate = FrameRates[Math.Max(frameRate.SelectedIndex, 0)],
             PreviewFrameRate = PreviewFrameRates[Math.Max(previewFrameRate.SelectedIndex, 0)],
@@ -1086,6 +1091,11 @@ public sealed partial class MainWindow
         graphicsSection.Children.Add(InspectorRows.Field("Size", resolution));
         graphicsSection.Children.Add(InspectorRows.Field("Preview rate", previewFrameRate));
         graphicsSection.Children.Add(InspectorRows.Field("Render", gpuButton));
+        ToolTip.SetTip(fullScreenOn,
+            "Where double-clicking the preview puts the picture. On another monitor the editor "
+            + "stays where it is, and double-clicking the picture or pressing Esc brings it back.");
+
+        graphicsSection.Children.Add(InspectorRows.Field("Full screen", fullScreenOn));
         graphicsSection.Children.Add(InspectorRows.Field("Startup patch", defaultPreset));
     }
 

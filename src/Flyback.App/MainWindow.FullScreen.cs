@@ -1,16 +1,24 @@
+using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Input;
+using Avalonia.Layout;
+using Avalonia.Media;
+using Avalonia.Platform;
+using Flyback.App.Controls;
 using Flyback.App.Statistics;
 
 namespace Flyback.App;
 
 /// <summary>
-/// The preview taking the whole window, and giving it back.
+/// The preview taking the whole window, or a whole monitor of its own, and giving it back.
 /// </summary>
 /// <remarks>
-/// Nothing is reparented: the preview stays where it is and the shell around it is put
-/// away instead. The GPU surface is an <c>OpenGlControlBase</c>, and moving one
-/// between parents tears its context down and builds it again — a picture that blinked
-/// every time somebody wanted a closer look.
+/// On the window's own monitor nothing is reparented: the preview stays where it is and
+/// the shell around it is put away instead. The GPU surface is an <c>OpenGlControlBase</c>,
+/// and moving one between parents tears its context down and builds it again — a picture
+/// that blinked every time somebody wanted a closer look. On another monitor the move is
+/// the point, so the preview goes to a window there and the renderer is built again once
+/// each way (ADR-0129).
 /// </remarks>
 public sealed partial class MainWindow
 {
@@ -49,7 +57,154 @@ public sealed partial class MainWindow
 
     private static GridLength Everything => new(1, GridUnitType.Star);
 
-    private void ToggleFullScreenPreview() => ShowFullScreenPreview(!previewIsFullScreen);
+    /// <summary>Which monitor full screen fills — the Graphics section.</summary>
+    private readonly ComboBox fullScreenOn = new Picker
+    {
+        Name = "fullScreenOn",
+        HorizontalAlignment = HorizontalAlignment.Stretch,
+    };
+
+    /// <summary>The monitors <see cref="fullScreenOn"/> lists after its first two rows, in order.</summary>
+    private List<MonitorSpot> fullScreenMonitors = [];
+
+    /// <summary>
+    /// Lists the monitors plugged in now, and the chosen one if it is not, and
+    /// selects what <paramref name="settings"/> says.
+    /// </summary>
+    private void ShowFullScreenSetting(OutputSettings settings)
+    {
+        var screens = Screens.All;
+
+        fullScreenMonitors = [.. screens.Select(s => MonitorPlacement.Describe(s)!)];
+
+        List<string> rows =
+        [
+            "Same monitor",
+            "Another monitor",
+            .. screens.Select(s => $"{s.DisplayName ?? "Monitor"} · {s.Bounds.Width}×{s.Bounds.Height}{(s.IsPrimary ? " · main" : "")}"),
+        ];
+
+        var chosen = settings.FullScreenMonitor is { } wanted ? MonitorPlacement.Find(wanted, fullScreenMonitors) : null;
+
+        // Kept on the list while unplugged, so saving anything else does not forget it.
+        if (settings.FullScreenMonitor is { } away && chosen is null)
+        {
+            fullScreenMonitors.Add(away);
+            rows.Add($"{away.Name ?? "Monitor"} · {away.Width}×{away.Height} · not plugged in");
+            chosen = fullScreenMonitors.Count - 1;
+        }
+
+        fullScreenOn.ItemsSource = rows;
+        fullScreenOn.SelectedIndex = settings.FullScreen switch
+        {
+            FullScreenOn.OtherMonitor => 1,
+            FullScreenOn.ChosenMonitor when chosen is { } row => 2 + row,
+            _ => 0,
+        };
+    }
+
+    /// <summary>What <see cref="fullScreenOn"/> holds, as the settings keep it.</summary>
+    private (FullScreenOn On, MonitorSpot? Monitor) ReadFullScreenSetting() => fullScreenOn.SelectedIndex switch
+    {
+        1 => (FullScreenOn.OtherMonitor, outputSettings.FullScreenMonitor),
+        >= 2 and var row when row - 2 < fullScreenMonitors.Count => (FullScreenOn.ChosenMonitor, fullScreenMonitors[row - 2]),
+        _ => (FullScreenOn.SameMonitor, outputSettings.FullScreenMonitor),
+    };
+
+    /// <summary>The window holding the preview on another monitor, while it is there.</summary>
+    private Window? pictureWindow;
+
+    /// <summary>Goes full screen on the monitor the Graphics section names, or comes back.</summary>
+    private void ToggleFullScreenPreview()
+    {
+        if (previewIsFullScreen || pictureWindow is not null)
+        {
+            LeaveFullScreen();
+            return;
+        }
+
+        if (MonitorPlacement.FullScreenTarget(this, outputSettings.FullScreen, outputSettings.FullScreenMonitor) is { } screen)
+            ShowPictureOn(screen);
+        else
+            ShowFullScreenPreview(true);
+    }
+
+    private void LeaveFullScreen()
+    {
+        pictureWindow?.Close();
+        ShowFullScreenPreview(false);
+    }
+
+    /// <summary>
+    /// Moves the preview to a full-screen window on <paramref name="screen"/>, leaving
+    /// the editor as it is with a note where the picture was.
+    /// </summary>
+    internal void ShowPictureOn(Screen screen)
+    {
+        if (previewBox is null || pictureWindow is not null || previewIsFullScreen) return;
+
+        usage.Count(Used.FullScreen);
+
+        previewBox.Child = new TextBlock
+        {
+            Name = "pictureAway",
+            Text = $"The picture is on {screen.DisplayName ?? "another monitor"}. Double-click here or press Esc to bring it back.",
+            FontSize = Text.Small,
+            Foreground = Text.Muted,
+            TextWrapping = TextWrapping.Wrap,
+            TextAlignment = TextAlignment.Center,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center,
+            Margin = new Thickness(16),
+        };
+
+        preview.Renew();
+
+        // Not activated, so the keyboard stays with the editor.
+        var window = pictureWindow = new Window
+        {
+            Title = "Flyback picture",
+            Background = Brushes.Black,
+            ShowInTaskbar = false,
+            ShowActivated = false,
+            WindowStartupLocation = WindowStartupLocation.Manual,
+            Position = screen.Bounds.Position,
+            Width = screen.Bounds.Width / screen.Scaling,
+            Height = screen.Bounds.Height / screen.Scaling,
+            Content = preview,
+        };
+
+        window.DoubleTapped += (_, e) =>
+        {
+            window.Close();
+            e.Handled = true;
+        };
+
+        window.KeyDown += (_, e) =>
+        {
+            if (e.Key != Key.Escape) return;
+
+            window.Close();
+            e.Handled = true;
+        };
+
+        // Full screen once it is open, so it fills the monitor it was put on.
+        window.Opened += (_, _) => window.WindowState = WindowState.FullScreen;
+        window.Closed += (_, _) => BringPictureBack(window);
+
+        window.Show(this);
+    }
+
+    private void BringPictureBack(Window window)
+    {
+        if (pictureWindow != window || previewBox is null) return;
+
+        pictureWindow = null;
+        window.Content = null;
+
+        preview.Renew();
+        previewBox.Child = preview;
+    }
 
     /// <summary>Hands the window to the preview, or takes it back.</summary>
     private void ShowFullScreenPreview(bool full)

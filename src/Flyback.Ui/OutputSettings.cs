@@ -142,6 +142,15 @@ public sealed class OutputSettings
     /// </summary>
     public KeyboardLayout Keyboard { get; set; }
 
+    /// <summary>Which monitor double-clicking the preview fills — the Graphics section.</summary>
+    public FullScreenOn FullScreen { get; set; }
+
+    /// <summary>
+    /// The monitor <see cref="FullScreenOn.ChosenMonitor"/> means. Kept while another
+    /// choice is in force, and while that monitor is unplugged.
+    /// </summary>
+    public MonitorSpot? FullScreenMonitor { get; set; }
+
     /// <summary>What is set for one backend, and nothing for one nobody has configured.</summary>
     public SettingValues SoundOf(string backend) =>
         Sound.TryGetValue(backend, out var held) ? new SettingValues(held) : SettingValues.None;
@@ -235,6 +244,7 @@ public sealed class OutputSettings
 
             if (!Enum.IsDefined(settings.Takeover)) settings.Takeover = Takeover.Jump;
             if (!Enum.IsDefined(settings.Keyboard)) settings.Keyboard = KeyboardLayout.Piano;
+            if (!Enum.IsDefined(settings.FullScreen)) settings.FullScreen = FullScreenOn.SameMonitor;
 
             return settings;
         }

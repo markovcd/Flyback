@@ -50,6 +50,31 @@ public class OutputSettingsFileTests : IDisposable
     }
 
     [Fact]
+    public void The_full_screen_monitor_comes_back()
+    {
+        new OutputSettings
+        {
+            FullScreen = FullScreenOn.ChosenMonitor,
+            FullScreenMonitor = new MonitorSpot { Name = "right", X = 1920, Width = 2560, Height = 1440 },
+        }.Save(File);
+
+        var settings = OutputSettings.Load(File);
+
+        settings.FullScreen.ShouldBe(FullScreenOn.ChosenMonitor);
+        settings.FullScreenMonitor.ShouldNotBeNull().Name.ShouldBe("right");
+        settings.FullScreenMonitor.X.ShouldBe(1920);
+    }
+
+    [Fact]
+    public void A_full_screen_choice_this_build_does_not_have_is_the_same_monitor()
+    {
+        Directory.CreateDirectory(folder);
+        System.IO.File.WriteAllText(File, """{ "fullScreen": 42 }""");
+
+        OutputSettings.Load(File).FullScreen.ShouldBe(FullScreenOn.SameMonitor);
+    }
+
+    [Fact]
     public void How_a_controller_takes_over_a_knob_comes_back()
     {
         new OutputSettings { Takeover = App.Midi.Takeover.PickUp }.Save(File);

@@ -8,7 +8,7 @@ namespace Flyback.App;
 internal static class MonitorPlacement
 {
     /// <summary>A monitor as the layout file keeps it, or null for none.</summary>
-    internal static WindowLayout.MonitorSpot? Describe(Screen? screen) => screen is null
+    internal static MonitorSpot? Describe(Screen? screen) => screen is null
         ? null
         : new()
         {
@@ -27,7 +27,7 @@ internal static class MonitorPlacement
     /// The offset from the corner of its monitor is kept rather than the window
     /// being centered, so copies the platform cascaded stay cascaded.
     /// </remarks>
-    internal static void Return(Window window, WindowLayout.MonitorSpot? wanted)
+    internal static void Return(Window window, MonitorSpot? wanted)
     {
         if (window.Screens.ScreenFromWindow(window) is not { } here) return;
 
@@ -70,26 +70,69 @@ internal static class MonitorPlacement
     }
 
     /// <summary>
-    /// The monitor <paramref name="wanted"/> describes: the same name and place if
-    /// there is one, else the same place, else the same name when it is the only one.
+    /// The monitor the full-screen picture goes to, or null for the window's own,
+    /// which is also the answer when the one asked for is not plugged in.
     /// </summary>
-    private static Screen? Find(WindowLayout.MonitorSpot wanted, IReadOnlyList<Screen> all)
+    internal static Screen? FullScreenTarget(Window window, FullScreenOn on, MonitorSpot? chosen)
+    {
+        if (window.Screens.ScreenFromWindow(window) is not { } here) return null;
+
+        var all = window.Screens.All;
+        var at = Pick(on, chosen, [.. all.Select(s => Describe(s)!)], Index(all, here));
+
+        return at is { } row && !Same(all[row], here) ? all[row] : null;
+    }
+
+    /// <summary>
+    /// Which of <paramref name="all"/> the picture goes to, given the window is on
+    /// row <paramref name="here"/>. Another monitor is the leftmost that is not the
+    /// window's; the chosen one is found as the layout's is.
+    /// </summary>
+    internal static int? Pick(FullScreenOn on, MonitorSpot? chosen, IReadOnlyList<MonitorSpot> all, int here) => on switch
+    {
+        FullScreenOn.OtherMonitor => Enumerable.Range(0, all.Count)
+            .Where(row => row != here)
+            .OrderBy(row => all[row].X)
+            .ThenBy(row => all[row].Y)
+            .Cast<int?>()
+            .FirstOrDefault() ?? here,
+        FullScreenOn.ChosenMonitor => (chosen is null ? null : Find(chosen, all)) ?? here,
+        _ => here,
+    };
+
+    /// <summary>
+    /// The row of <paramref name="all"/> <paramref name="wanted"/> describes: the same
+    /// name and place if there is one, else the same place, else the same name when
+    /// it is the only one.
+    /// </summary>
+    internal static int? Find(MonitorSpot wanted, IReadOnlyList<MonitorSpot> all)
     {
         var name = string.IsNullOrEmpty(wanted.Name) ? null : wanted.Name;
 
-        bool Place(Screen s) =>
-            s.Bounds.X == wanted.X && s.Bounds.Y == wanted.Y
-            && s.Bounds.Width == wanted.Width && s.Bounds.Height == wanted.Height;
+        bool Place(MonitorSpot s) =>
+            s.X == wanted.X && s.Y == wanted.Y && s.Width == wanted.Width && s.Height == wanted.Height;
 
-        var both = all.Where(s => name is not null && s.DisplayName == name && Place(s)).ToList();
-        if (both.Count == 1) return both[0];
+        bool Named(MonitorSpot s) => name is not null && s.Name == name;
 
-        var places = all.Where(Place).ToList();
-        if (places.Count == 1) return places[0];
+        return Only(s => Named(s) && Place(s)) ?? Only(Place) ?? Only(Named);
 
-        var names = all.Where(s => name is not null && s.DisplayName == name).ToList();
-        return names.Count == 1 ? names[0] : null;
+        int? Only(Func<MonitorSpot, bool> test)
+        {
+            var rows = Enumerable.Range(0, all.Count).Where(row => test(all[row])).Take(2).ToList();
+            return rows.Count == 1 ? rows[0] : null;
+        }
     }
 
-    private static bool Same(Screen a, Screen b) => a.Bounds == b.Bounds && a.DisplayName == b.DisplayName;
+    private static Screen? Find(MonitorSpot wanted, IReadOnlyList<Screen> all) =>
+        Find(wanted, [.. all.Select(s => Describe(s)!)]) is { } row ? all[row] : null;
+
+    private static int Index(IReadOnlyList<Screen> all, Screen screen)
+    {
+        for (var row = 0; row < all.Count; row++)
+            if (Same(all[row], screen)) return row;
+
+        return 0;
+    }
+
+    internal static bool Same(Screen a, Screen b) => a.Bounds == b.Bounds && a.DisplayName == b.DisplayName;
 }
