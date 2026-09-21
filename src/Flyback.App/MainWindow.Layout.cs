@@ -52,8 +52,8 @@ public sealed partial class MainWindow
     {
         if (layout is not { } saved || columns is null || previewRow is null || assistantColumn is null) return;
 
-        columns.ColumnDefinitions[0].Width = new GridLength(saved.CanvasWeight, GridUnitType.Star);
-        columns.ColumnDefinitions[2].Width = new GridLength(saved.SideWeight, GridUnitType.Star);
+        columns.ColumnDefinitions[WideColumn].Width = new GridLength(saved.CanvasWeight, GridUnitType.Star);
+        columns.ColumnDefinitions[SideColumn].Width = new GridLength(saved.SideWeight, GridUnitType.Star);
 
         previewShare = new GridLength(saved.PreviewWeight, GridUnitType.Star);
         if (previewBox is { IsVisible: true }) previewRow.Height = previewShare;
@@ -66,7 +66,7 @@ public sealed partial class MainWindow
         assistantButton.IsChecked = saved.AssistantOpen && assistantButton.IsEnabled;
 
         controlsShare = new GridLength(saved.ControlsHeight, GridUnitType.Pixel);
-        if (controlsRow is not null && controlsPanel.IsVisible) controlsRow.Height = controlsShare;
+        if (ControlsRow is { } controlsRow && controlsPanel.IsVisible) controlsRow.Height = controlsShare;
         ShowControls(saved.ControlsOpen);
 
         // Only while there is a picture to swap in, which is the button's own rule.
@@ -104,6 +104,13 @@ public sealed partial class MainWindow
             ? rowsBefore[index].Size
             : columns!.RowDefinitions[index].Height);
 
+        // The row a panel stands in, whichever grid it is in while swapped. Full
+        // screen zeroes the outer grid's rows only.
+        double Under(Control? panel, Func<GridLength, double> measure) =>
+            panel?.Parent == columns && away && rowsBefore is not null
+                ? measure(rowsBefore[2].Size)
+                : measure((panel?.Parent as Grid)?.RowDefinitions[2].Height ?? new GridLength(1, GridUnitType.Star));
+
         var state = away ? stateBefore : WindowState;
         var size = WindowState == WindowState.Normal ? ClientSize : normalSize;
 
@@ -114,15 +121,15 @@ public sealed partial class MainWindow
             Height = size?.Height ?? layout?.Height ?? 0,
             Monitor = Describe(Screens.ScreenFromWindow(this)) ?? layout?.Monitor,
 
-            CanvasWeight = Column(0),
-            SideWeight = Column(2),
+            CanvasWeight = Column(WideColumn),
+            SideWeight = Column(SideColumn),
             PreviewWeight = previewBox is { IsVisible: true } || away ? Row(0) : Weight(previewShare),
-            InspectorWeight = Row(2),
+            InspectorWeight = Under(inspectorBox, Weight),
 
             AssistantWidth = assistant is { IsVisible: true } ? assistantColumn!.Width.Value : assistantShare.Value,
             AssistantOpen = assistant?.IsVisible == true,
 
-            ControlsHeight = controlsPanel.IsVisible && controlsRow is not null ? controlsRow.Height.Value : controlsShare.Value,
+            ControlsHeight = controlsPanel.IsVisible ? Under(controlsPanel, length => length.Value) : controlsShare.Value,
             ControlsOpen = controlsPanel.IsVisible,
 
             Code = showingCode,

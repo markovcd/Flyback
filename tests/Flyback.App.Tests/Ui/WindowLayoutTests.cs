@@ -118,8 +118,8 @@ public sealed class WindowLayoutTests : UiTest
         var window = Open();
         var grid = All<Grid>(window).Single(g => g.Name == "columns");
 
-        grid.ColumnDefinitions[0].Width.Value.ShouldBe(1);
         grid.ColumnDefinitions[2].Width.Value.ShouldBe(1);
+        grid.ColumnDefinitions[4].Width.Value.ShouldBe(1);
         grid.RowDefinitions[2].Height.Value.ShouldBe(3);
     }
 

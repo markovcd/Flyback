@@ -80,6 +80,48 @@ public class SwapPreviewTests : UiTest
     }
 
     /// <summary>
+    /// Only the picture and the canvas trade: the assistant stays leftmost, now
+    /// beside the picture, and the knobs stay under whatever is in the wide column.
+    /// </summary>
+    [AvaloniaFact]
+    public void The_assistant_and_the_knobs_keep_their_places()
+    {
+        var window = Open();
+
+        All<ToggleButton>(window).Single(b => b.Name == "assistant").IsChecked = true;
+        All<ToggleButton>(window).Single(b => b.Name == "controls").IsChecked = true;
+        Settle(window);
+
+        var assistant = All<AssistantPanel>(window).Single();
+        var knobs = All<ControlsPanel>(window).Single();
+        var editor = Editor(window);
+        var preview = Preview(window);
+
+        Press(window, Swap(window));
+
+        Rect On(Visual visual) => new(
+            visual.TranslatePoint(default, window) ?? throw new InvalidOperationException("not in this window"),
+            visual.Bounds.Size);
+
+        var (a, k, p, e) = (On(assistant), On(knobs), On(preview), On(editor));
+
+        a.Left.ShouldBe(0, 1, "the assistant is still leftmost");
+        a.Right.ShouldBeLessThanOrEqualTo(p.Left, "and beside the picture");
+        k.Top.ShouldBeGreaterThanOrEqualTo(p.Bottom, "the knobs are under the picture");
+        k.Left.ShouldBe(p.Left, 1);
+        k.Width.ShouldBe(p.Width, 1);
+        e.Left.ShouldBeGreaterThan(p.Right, "the canvas has the narrow column");
+
+        Press(window, Swap(window));
+
+        (a, k, p, e) = (On(assistant), On(knobs), On(preview), On(editor));
+
+        a.Right.ShouldBeLessThanOrEqualTo(e.Left, "the assistant is beside the canvas again");
+        k.Top.ShouldBeGreaterThanOrEqualTo(e.Bottom, "with the knobs under it");
+        p.Left.ShouldBeGreaterThan(e.Right);
+    }
+
+    /// <summary>
     /// For the reason the full screen preview's tests give: moving the GPU surface
     /// to another parent would tear its context down.
     /// </summary>

@@ -84,7 +84,7 @@ public class ModulePaletteTests : UiTest
         var window = Open();
         var columns = All<Grid>(window).First(g => g.Name == "columns");
 
-        columns.ColumnDefinitions.Count.ShouldBe(3, "canvas, splitter, inspector");
+        columns.ColumnDefinitions.Count.ShouldBe(5, "assistant, splitter, canvas, splitter, inspector");
         All<ModulePalette>(window).ShouldBeEmpty("nothing is showing it yet");
     }
 

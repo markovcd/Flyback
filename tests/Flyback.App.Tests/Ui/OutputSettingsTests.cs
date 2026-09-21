@@ -639,8 +639,8 @@ public class OutputSettingsTests : UiTest
         assistant.Bounds.Height.ShouldBe(editor.Bounds.Height, 1);
 
         // Translated into the window's own coordinates, since the two are no
-        // longer siblings — the assistant hangs directly off the canvas and the
-        // editor off the patch grid nested inside it.
+        // siblings: the assistant hangs off the window's grid and the editor off
+        // the patch grid inside it.
         var assistantLeft = assistant.TranslatePoint(new Point(0, 0), window)
             ?? throw new InvalidOperationException("the assistant is not in this window");
         var editorLeft = editor.TranslatePoint(new Point(0, 0), window)

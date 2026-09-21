@@ -434,7 +434,7 @@ public sealed partial class MainWindow
 
         // The block's face sits behind the inspector rather than beside it, and
         // never takes a click.
-        var inspectorBorder = new Border
+        var inspectorBorder = inspectorBox = new Border
         {
             Background = new SolidColorBrush(Colors.Panel),
             Child = new Panel { Children = { wash, reading } },

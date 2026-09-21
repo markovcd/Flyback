@@ -241,11 +241,18 @@ public sealed partial class MainWindow : Window
     private GridLength previewShare = new(1, GridUnitType.Star);
 
     /// <summary>
-    /// The canvas, the text and the assistant beside them: what trades places
-    /// with the preview — see <see cref="SwapPreview"/>. Null only before
+    /// The canvas and the text, over the knobs or the inspector: what trades
+    /// places with the preview — see <see cref="SwapPreview"/>. Null only before
     /// <see cref="BuildLayout"/> has run.
     /// </summary>
-    private Grid? canvasPane;
+    private Grid? patchPane;
+
+    /// <summary>The inspector's panel, which goes under the canvas while swapped.</summary>
+    private Border? inspectorBox;
+
+    /// <summary>The columns of <see cref="columns"/> the patch and the preview trade.</summary>
+    private const int WideColumn = 2;
+    private const int SideColumn = 4;
 
     /// <summary>
     /// Set while the patch has lost its picture during a gesture on the swapped
@@ -725,12 +732,15 @@ public sealed partial class MainWindow : Window
 
         // The two flexible columns are star-sized: GridSplitter redistributes
         // star weights, and a fixed-pixel column next to one just gets squeezed.
+        // The assistant's is a pixel width, so a resize of the window goes to the
+        // patch and leaves the conversation the width it was left at. Leftmost and
+        // at full height, since what it talks about is the patch (ADR-0087).
         //
-        // The rows are the right-hand column's — preview, splitter, inspector —
-        // and the canvas spans all three. One grid rather than a panel nested in
-        // a column, so the preview and the canvas trade places by changing cells:
-        // the preview is never taken off its parent, which would tear its GPU
-        // context down (see MainWindow.FullScreen).
+        // The rows belong to whichever column the preview is in — preview,
+        // splitter, then the inspector or, swapped, the knobs — and the patch
+        // spans all three in the other. One grid, so the preview and the canvas
+        // trade places by changing cells: the preview is never taken off its
+        // parent, which would tear its GPU context down (see MainWindow.FullScreen).
         columns = new Grid
         {
             // Named because the fullscreen preview's test has to find exactly
@@ -739,6 +749,8 @@ public sealed partial class MainWindow : Window
             Name = "columns",
             ColumnDefinitions =
             [
+                new ColumnDefinition(assistantShare),
+                new ColumnDefinition(GridLength.Auto),
                 new ColumnDefinition(new GridLength(3, GridUnitType.Star)) { MinWidth = 280 },
                 new ColumnDefinition(GridLength.Auto),
                 new ColumnDefinition(new GridLength(1.6, GridUnitType.Star)) { MinWidth = 300 },
@@ -751,32 +763,12 @@ public sealed partial class MainWindow : Window
             ],
         };
 
-        // Columns rather than a dock, so the edge between the assistant and the
-        // patch can be dragged. The assistant's is a pixel width rather than the
-        // star the patch's is, so a resize of the window goes to the patch —
-        // the thing being worked on — and leaves the conversation the width it
-        // was left at.
-        //
-        // In the canvas column rather than across the window, because what the
-        // assistant is talking about is the patch — beside it rather than under,
-        // so the conversation reads at the window's full height instead of a
-        // slice of the patch's own (ADR-0087).
-        var canvas = canvasPane = new Grid
-        {
-            ColumnDefinitions =
-            [
-                new ColumnDefinition(assistantShare),
-                new ColumnDefinition(GridLength.Auto),
-                new ColumnDefinition(new GridLength(1, GridUnitType.Star)) { MinWidth = 280 },
-            ],
-        };
-
-        assistantColumn = canvas.ColumnDefinitions[0];
+        assistantColumn = columns.ColumnDefinitions[0];
         assistantSplitter = new GridSplitter { Background = Brushes.Transparent, Width = 5 };
 
-        // Rows of their own again, now that the assistant has left this axis for
-        // the column beside it: just the patch and its controls.
-        var patch = new Grid
+        // The canvas over whatever the preview's column is not holding: the
+        // knobs, or swapped, the inspector.
+        var patch = patchPane = new Grid
         {
             RowDefinitions =
             [
@@ -785,8 +777,6 @@ public sealed partial class MainWindow : Window
                 new RowDefinition(new GridLength(0)),
             ],
         };
-
-        controlsRow = patch.RowDefinitions[2];
 
         // The text sits in the canvas's own row rather than under it: they are
         // two views of one patch and only ever one of them shows, so putting
@@ -802,26 +792,22 @@ public sealed partial class MainWindow : Window
         patch.Children.Add(controlsSplitter);
         patch.Children.Add(controlsPanel);
 
-        Grid.SetColumn(assistant, 0);
-        Grid.SetColumn(assistantSplitter, 1);
-        Grid.SetColumn(patch, 2);
-
-        canvas.Children.Add(assistant);
-        canvas.Children.Add(assistantSplitter);
-        canvas.Children.Add(patch);
-
         BuildPalette();
-        Grid.SetColumn(canvas, 0);
-        Grid.SetRowSpan(canvas, 3);
 
-        var rightSplitter = new GridSplitter { Width = 5, Background = Brushes.Transparent };
-        Grid.SetColumn(rightSplitter, 1);
-        Grid.SetRowSpan(rightSplitter, 3);
+        foreach (var (child, column) in new (Control, int)[]
+                 {
+                     (assistant, 0),
+                     (assistantSplitter, 1),
+                     (patch, WideColumn),
+                     (new GridSplitter { Width = 5, Background = Brushes.Transparent }, 3),
+                 })
+        {
+            Grid.SetColumn(child, column);
+            Grid.SetRowSpan(child, 3);
+            columns.Children.Add(child);
+        }
 
-        columns.Children.Add(canvas);
-        columns.Children.Add(rightSplitter);
-
-        BuildRightPanel(columns, column: 2);
+        BuildRightPanel(columns, SideColumn);
 
         // Hidden costs nothing, which is why this needs no dialog — and this
         // application has none.
@@ -899,25 +885,50 @@ public sealed partial class MainWindow : Window
     }
 
     /// <summary>
-    /// Puts the preview in the canvas's wide column at full height, and the canvas
-    /// in the preview's cell above the inspector — or puts both back.
+    /// Puts the preview in the wide column over the knobs, and the canvas in the
+    /// narrow one over the inspector — or puts both back.
     /// </summary>
     /// <remarks>
-    /// Only cells change, and the columns keep their widths: the wide one stays
-    /// wide, and what stands in it is what gets the room. The assistant goes with
-    /// the canvas, since it sits in the canvas's own grid.
+    /// The columns keep their widths, and the assistant keeps its place beside
+    /// the wide one. The knobs and the inspector trade grids, and the sizes of the
+    /// rows they stand in trade with them.
     /// </remarks>
     private void SwapPreview(bool swapped)
     {
-        if (previewBox is null || canvasPane is null) return;
+        if (columns is null || previewBox is null || patchPane is null
+            || inspectorBox is null || previewSplitter is null) return;
 
-        Grid.SetColumn(previewBox, swapped ? 0 : 2);
-        Grid.SetRowSpan(previewBox, swapped ? 3 : 1);
+        if (swapped == (Grid.GetColumn(previewBox) == WideColumn)) return;
 
-        Grid.SetColumn(canvasPane, swapped ? 2 : 0);
-        Grid.SetRowSpan(canvasPane, swapped ? 1 : 3);
+        var (pictureColumn, patchColumn) = swapped ? (WideColumn, SideColumn) : (SideColumn, WideColumn);
+
+        Grid.SetColumn(previewBox, pictureColumn);
+        Grid.SetColumn(patchPane, patchColumn);
+
+        Hang(swapped ? controlsSplitter : previewSplitter, columns, pictureColumn, 1);
+        Hang(swapped ? controlsPanel : inspectorBox, columns, pictureColumn, 2);
+        Hang(swapped ? previewSplitter : controlsSplitter, patchPane, 0, 1);
+        Hang(swapped ? inspectorBox : controlsPanel, patchPane, 0, 2);
+
+        var outer = columns.RowDefinitions[2];
+        var inner = patchPane.RowDefinitions[2];
+
+        (outer.MinHeight, inner.MinHeight) = (inner.MinHeight, outer.MinHeight);
+        (outer.Height, inner.Height) = (inner.Height, outer.Height);
 
         if (swapped) usage.Count(Used.Swapped);
+
+        static void Hang(Control child, Grid grid, int column, int row)
+        {
+            if (child.Parent != grid)
+            {
+                (child.Parent as Panel)?.Children.Remove(child);
+                grid.Children.Add(child);
+            }
+
+            Grid.SetColumn(child, column);
+            Grid.SetRow(child, row);
+        }
     }
 
     /// <summary>

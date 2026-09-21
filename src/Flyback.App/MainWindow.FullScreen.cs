@@ -30,6 +30,9 @@ public sealed partial class MainWindow
     /// </summary>
     private WindowState stateBefore;
 
+    /// <summary>Which of the grid's children were showing before the preview took over.</summary>
+    private Dictionary<Control, bool>? visibleBefore;
+
     /// <summary>Whether the preview currently has the window.</summary>
     private bool previewIsFullScreen;
 
@@ -67,10 +70,12 @@ public sealed partial class MainWindow
         toolbar.IsVisible = !full;
         statusBar.IsVisible = !full;
 
-        // Everything in the grid is visible in the ordinary way of things while the
-        // preview is — the assistant, which is not, hangs off the canvas rather than
-        // off the grid — so putting it back is a plain yes rather than a remembered one.
-        foreach (var child in columns.Children) child.IsVisible = !full || child == previewBox;
+        // Remembered, since the assistant and the knobs stand in this grid and
+        // are as often hidden as not.
+        if (full) visibleBefore = columns.Children.ToDictionary(child => child, child => child.IsVisible);
+
+        foreach (var child in columns.Children)
+            child.IsVisible = full ? child == previewBox : visibleBefore?.GetValueOrDefault(child, true) ?? true;
 
         // ShowPreview stands aside while the preview has the window, and the patch
         // may have lost its picture meanwhile. Only ever put away here: the row has

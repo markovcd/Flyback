@@ -27,7 +27,8 @@ public sealed partial class MainWindow
         IsVisible = false,
     };
 
-    private RowDefinition? controlsRow;
+    /// <summary>The row the panel stands in, under the canvas or, swapped, under the preview.</summary>
+    private RowDefinition? ControlsRow => controlsPanel.Parent is Grid grid ? grid.RowDefinitions[2] : null;
 
     /// <summary>
     /// The panel's height, kept while it is hidden. One row of knobs to start with;
@@ -220,9 +221,12 @@ public sealed partial class MainWindow
     /// <summary>Shows or hides the panel, keeping the toolbar button in step.</summary>
     private void ShowControls(bool shown)
     {
+        // The full screen preview owns every row, the knobs' too while swapped.
+        if (previewIsFullScreen) return;
+
         // Only on a change: showing a panel already shown would put back the height
         // it had when last hidden, over whatever it has been dragged to since.
-        if (controlsRow is not null && shown != controlsPanel.IsVisible)
+        if (ControlsRow is { } controlsRow && shown != controlsPanel.IsVisible)
         {
             // A pixel row rather than an auto one, so the splitter has a height to
             // change; zeroed while hidden, with its minimum, the way the assistant's is.
