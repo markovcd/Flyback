@@ -53,6 +53,9 @@ internal sealed class PresetThumbnails(ModuleCatalog modules)
     public const int Width = 320;
     public const int Height = 180;
 
+    /// <summary>Where saved presets are kept, so one is drawn with the files in its bundle. Null where none are.</summary>
+    public PresetLibrary? Saved { get; set; }
+
     /// <summary>What a patch that reads its previous frame is given to settle in.</summary>
     private const double Settle = 1.5d;
 
@@ -97,14 +100,12 @@ internal sealed class PresetThumbnails(ModuleCatalog modules)
         {
             // A preset from a plugin is built here for the same reason the toolbar
             // builds it when it is picked: it needs the modules that plugin added.
-            var patch = preset.Build(modules);
+            var (patch, samples, pictures) = PresetLibrary.Open(preset, Saved, modules);
             var (picture, sound) = patch.Reaches();
 
             if (!picture) return sound ? Thumbnail.SoundOnly : Thumbnail.Nothing;
 
-            var video = patch.CompileForVideo(
-                samples: new SampleLibrary(),
-                pictures: new ImageLibrary());
+            var video = patch.CompileForVideo(samples: samples, pictures: pictures);
 
             if (video.HasErrors) return Thumbnail.Unavailable;
 

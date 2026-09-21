@@ -8,6 +8,9 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Styling;
 using Flyback.Core;
+using Flyback.Core.Compile;
+using Flyback.Core.Graph;
+using Flyback.Core.Render;
 
 namespace Flyback.App.Controls;
 
@@ -149,7 +152,8 @@ internal static class About
 
             drawn.IsVisible = false;
             played.IsVisible = true;
-            motion = PresetMotion.Play(LogoBeam.Patch(), played, clock: null, side * 2, side * 2);
+            motion = PresetMotion.Play(
+                new Opened(LogoBeam.Patch(), new SampleLibrary(), new ImageLibrary()), played, clock: null, side * 2, side * 2);
         };
 
         // The frames are drawn on a thread of their own, which nothing else here

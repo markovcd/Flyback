@@ -522,6 +522,8 @@ public sealed partial class MainWindow : Window
 
         // Before the layout, because the toolbar lists what is saved.
         if (presetFolder is not null) savedPresets = new PresetLibrary(presetFolder);
+
+        thumbnails.Saved = savedPresets;
         this.outputSettingsPath = outputSettingsPath;
         this.usage = usage ?? Usage.Off;
 

@@ -57,15 +57,16 @@ public sealed partial class MainWindow
         // past is not part of it.
         var hear = sound.Output is not null && !audioBlocked && recorder is null;
 
-        Patch patch;
+        Opened opened;
         AudioEngine.Audition? audition;
 
         try
         {
-            (patch, audition) = await Task.Run(() =>
+            (opened, audition) = await Task.Run(() =>
             {
-                var built = tile.Preset.Build(plugins.Modules);
-                return (built, hear ? audio.PrepareAudition(built) : null);
+                // With what it plays, which for a preset somebody saved is in its bundle.
+                var built = PresetLibrary.Open(tile.Preset, savedPresets, plugins.Modules);
+                return (built, hear ? audio.PrepareAudition(built.Patch, built.Samples) : null);
             });
         }
         catch (Exception)
@@ -86,7 +87,7 @@ public sealed partial class MainWindow
             clock = () => audition.Time;
         }
 
-        motion = PresetMotion.Play(patch, tile.Picture, clock);
+        motion = PresetMotion.Play(opened, tile.Picture, clock);
     }
 
     /// <summary>

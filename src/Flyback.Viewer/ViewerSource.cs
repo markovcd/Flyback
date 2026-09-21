@@ -64,15 +64,7 @@ internal static class ViewerSource
     {
         try
         {
-            if (library.Holding(preset) is { } saved)
-            {
-                var bundle = saved.Open(plugins.Modules);
-                var files = BundleFiles.Of(bundle);
-
-                return (new Opened(bundle.Patch, files, files), preset.Name);
-            }
-
-            return (new Opened(preset.Build(plugins.Modules), new SampleLibrary(), new ImageLibrary()), preset.Name);
+            return (PresetLibrary.Open(preset, library, plugins.Modules), preset.Name);
         }
         catch (Exception ex)
         {

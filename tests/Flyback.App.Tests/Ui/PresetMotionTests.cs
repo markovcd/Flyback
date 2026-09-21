@@ -5,7 +5,9 @@ using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using Avalonia.Threading;
 using Flyback.App.Controls;
+using Flyback.Core.Compile;
 using Flyback.Core.Graph;
+using Flyback.Core.Render;
 using Shouldly;
 
 namespace Flyback.App.Tests.Ui;
@@ -18,6 +20,8 @@ namespace Flyback.App.Tests.Ui;
 public class PresetMotionTests : UiTest
 {
     private static Patch Plasma() => Presets.All.Single(p => p.Name == "Plasma").Build(NodeCatalog.BuiltIn);
+
+    private static Opened Files(Patch patch) => new(patch, new SampleLibrary(), new ImageLibrary());
 
     /// <summary>A still of the size a tile shows, standing in for the thumbnail.</summary>
     private static WriteableBitmap AStill() => new(
@@ -49,7 +53,7 @@ public class PresetMotionTests : UiTest
         var still = AStill();
         var picture = new Image { Source = still };
 
-        using var motion = PresetMotion.Play(Plasma(), picture, () => 0);
+        using var motion = PresetMotion.Play(Files(Plasma()), picture, () => 0);
 
         Until(() => !ReferenceEquals(picture.Source, still)).ShouldBeTrue("no frame was ever handed over");
 
@@ -62,7 +66,7 @@ public class PresetMotionTests : UiTest
         var still = AStill();
         var picture = new Image { Source = still };
 
-        var motion = PresetMotion.Play(Plasma(), picture, () => 0);
+        var motion = PresetMotion.Play(Files(Plasma()), picture, () => 0);
 
         Until(() => !ReferenceEquals(picture.Source, still)).ShouldBeTrue("no frame was ever handed over");
 
@@ -81,7 +85,7 @@ public class PresetMotionTests : UiTest
         var still = AStill();
         var picture = new Image { Source = still };
 
-        using var motion = PresetMotion.Play(new Patch(), picture, () => 0);
+        using var motion = PresetMotion.Play(Files(new Patch()), picture, () => 0);
 
         // Short, because this waits to prove nothing happens: the patch is turned
         // away before a renderer is ever built.

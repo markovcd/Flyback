@@ -1,4 +1,6 @@
+using Flyback.App.Controls;
 using Flyback.Core.Graph;
+using Flyback.Core.Render;
 using Shouldly;
 using Xunit;
 
@@ -37,6 +39,54 @@ public class PresetLibraryTests : IDisposable
     }
 
     private static byte[]? Nothing(string path) => null;
+
+    /// <summary>A white picture, as the bytes of the file a patch would name.</summary>
+    private static byte[] White()
+    {
+        var pixels = new byte[4 * 4 * 4];
+        Array.Fill(pixels, (byte)255);
+
+        using var file = new MemoryStream();
+        PngWriter.WriteBgra(file, pixels, 4, 4, 16);
+
+        return file.ToArray();
+    }
+
+    /// <summary>
+    /// A preset saved with the picture it shows is opened with it, and its tile is
+    /// drawn from it.
+    /// </summary>
+    [Fact]
+    public async Task A_saved_preset_is_opened_and_drawn_with_the_files_in_its_bundle()
+    {
+        var patch = new Patch();
+        var shown = NodeInstance.Create(NodeCatalog.BuiltIn.Require(NodeCatalog.PictureTypeId), 0, 0);
+        var sink = NodeInstance.Create(NodeCatalog.BuiltIn.Require(NodeCatalog.OutputTypeId), 300, 0);
+
+        PictureExtra.Set(shown, "white.png");
+        patch.Nodes.Add(shown);
+        patch.Nodes.Add(sink);
+        patch.Connect(shown.Id, 0, sink.Id, NodeCatalog.OutputColorPort);
+
+        var library = Library();
+        var saved = library.Save("Shown", patch, name => name == "white.png" ? White() : null, NodeCatalog.BuiltIn);
+
+        var opened = PresetLibrary.Open(saved.Preset, library, NodeCatalog.BuiltIn);
+
+        // Packing renames what it carries, so the name is asked of the patch that came back.
+        var named = PictureExtra.Of(opened.Patch.Nodes.Single(n => n.TypeId == NodeCatalog.PictureTypeId));
+
+        opened.Pictures.Find(named).ShouldNotBeNull(opened.Pictures.Explain(named));
+
+        var tile = await new PresetThumbnails(NodeCatalog.BuiltIn) { Saved = library }.Of(saved.Preset);
+
+        tile.Pixels.ShouldNotBeNull();
+        tile.Pixels.ShouldContain((byte)255);
+
+        var bare = await new PresetThumbnails(NodeCatalog.BuiltIn).Of(saved.Preset);
+
+        bare.Pixels.ShouldBeNull("without its bundle the picture is a file that cannot be found");
+    }
 
     [Fact]
     public void A_saved_preset_is_a_bundle_listed_by_its_name()

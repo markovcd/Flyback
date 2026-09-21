@@ -46,13 +46,13 @@ internal sealed class PresetMotion : IDisposable
     }
 
     /// <summary>
-    /// Plays <paramref name="patch"/> on <paramref name="picture"/> until disposed.
+    /// Plays <paramref name="opened"/> on <paramref name="picture"/> until disposed.
     /// A patch with no picture, or one that will not compile, leaves the tile as it is.
     /// </summary>
     /// <param name="width">How wide the frames are drawn, a tile's width by default.</param>
     /// <param name="height">How tall they are drawn, which is what sets the aspect.</param>
     public static PresetMotion Play(
-        Patch patch,
+        Opened opened,
         Image picture,
         Func<double>? clock,
         int width = PresetThumbnails.Width,
@@ -60,7 +60,7 @@ internal sealed class PresetMotion : IDisposable
     {
         var motion = new PresetMotion(picture, width, height);
 
-        _ = Task.Run(() => motion.RunAsync(patch, clock ?? WallClock(), motion.stop.Token));
+        _ = Task.Run(() => motion.RunAsync(opened, clock ?? WallClock(), motion.stop.Token));
 
         return motion;
     }
@@ -71,15 +71,15 @@ internal sealed class PresetMotion : IDisposable
         return () => watch.Elapsed.TotalSeconds;
     }
 
-    private async Task RunAsync(Patch patch, Func<double> clock, CancellationToken token)
+    private async Task RunAsync(Opened opened, Func<double> clock, CancellationToken token)
     {
         CompiledPatch program;
 
         try
         {
-            if (!patch.Reaches().Picture) return;
+            if (!opened.Patch.Reaches().Picture) return;
 
-            var video = patch.CompileForVideo(samples: new SampleLibrary(), pictures: new ImageLibrary());
+            var video = opened.Patch.CompileForVideo(samples: opened.Samples, pictures: opened.Pictures);
             if (video.HasErrors) return;
 
             program = video.Program;

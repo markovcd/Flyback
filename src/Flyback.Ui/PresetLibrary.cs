@@ -1,5 +1,7 @@
 using Flyback.Core;
+using Flyback.Core.Compile;
 using Flyback.Core.Graph;
+using Flyback.Core.Render;
 
 namespace Flyback.App;
 
@@ -155,6 +157,22 @@ public sealed class PresetLibrary
     /// <summary>The saved preset <paramref name="preset"/> is, or null for one that is not saved here.</summary>
     public SavedPreset? Holding(PatchPreset preset) =>
         kept.FirstOrDefault(entry => ReferenceEquals(entry.Preset, preset));
+
+    /// <summary>
+    /// A preset as the patch it is and the files it plays: a saved one's own bundle,
+    /// and none for one that is built.
+    /// </summary>
+    /// <param name="saved">Where saved presets are kept, or null where none are.</param>
+    public static Opened Open(PatchPreset preset, PresetLibrary? saved, ModuleCatalog modules)
+    {
+        if (saved?.Holding(preset) is not { } held)
+            return new Opened(preset.Build(modules), new SampleLibrary(), new ImageLibrary());
+
+        var bundle = held.Open(modules);
+        var files = BundleFiles.Of(bundle);
+
+        return new Opened(bundle.Patch, files, files);
+    }
 
     /// <summary>
     /// What is wrong with <paramref name="name"/> as a file name, or null where
