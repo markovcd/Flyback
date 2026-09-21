@@ -209,8 +209,8 @@
 
     <figure class="diagram">
       <a class="zoom" href="assets/shots/patch-plasma.webp" target="_blank" rel="noopener">
-        <img class="shot" loading="lazy" src="assets/shots/patch-plasma.webp" width="2144" height="376"
-             alt="The Plasma patch on the canvas: Coordinates x and y each feed a Sine, Time goes through a Multiply into the second Sine's phase, an Add sums the two Sines, a Remap brings the sum into 0 to 1, and an HSV turns it into the color wired into the Output.">
+        <img class="shot" loading="lazy" src="assets/shots/patch-plasma.webp" width="2144" height="418"
+             alt="The Plasma patch on the canvas: Coordinates x and y each feed a Sine, Time goes through an Expression reading a * 0.2 into the second Sine's phase, an Expression reading a + b sums the two Sines, a Remap brings the sum into 0 to 1, and an HSV turns it into the color wired into the Output.">
       </a>
       <figcaption>The Plasma preset on the canvas: nine modules and nine wires.</figcaption>
     </figure>
@@ -371,6 +371,11 @@ let slowly = t * 0.2
                 referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
         <figcaption><strong>Whole band</strong> Three minutes twenty-three, with sound.</figcaption>
       </figure>
+      <p class="quiet" style="margin-top: 32px">The gallery has more. Outrun is a synthwave track on four dark
+      chords under a slatted sun, a ridge and a grid that scrolls to the beat. Overworld is a chiptune on a
+      console's four voices, under a side-scroller drawn a pixel at a time. Dub is dub techno to play: four keys
+      hold a chord and eight knobs ride the filter, the echo and the room. Dodge is a game on the keys
+      <kbd>Z</kbd> to <kbd>M</kbd>, steering through the one gap in each falling wall.</p>
       <p class="quiet" style="margin-top: 32px">More tracks go up on the
       <a href="https://www.youtube.com/@flyback-modular">Flyback channel on YouTube</a>.</p>
     </div>
@@ -540,7 +545,8 @@ let slowly = t * 0.2
         machine — two runs cannot be told apart from one. Turn it off under <strong>Settings → Usage</strong>.</p>
         <p>To open <code>.fbk</code>, <code>.fbkb</code> and <code>.fbks</code> files by double-click, pick the editor
         or the viewer under <strong>Settings → Files</strong>. On macOS the build is <code>Flyback.app</code>, which
-        always receives them and passes them on to the viewer if that is the choice.</p>
+        always receives them and passes them on to the viewer if that is the choice. The command
+        line tool and the viewer are inside it, in <code>Flyback.app/Contents/MacOS</code>.</p>
         <p><a class="button" href="tutorials.html" style="margin-top: 10px">Your first patch →</a></p>
       </div>
       <div>

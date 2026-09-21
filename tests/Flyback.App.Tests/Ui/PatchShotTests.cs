@@ -30,8 +30,9 @@ public class PatchShotTests : UiTest
 
         Directory.CreateDirectory(folder);
 
-        // index.html, beside the same patch written as text.
-        Shoot(folder, "plasma", Presets.Plasma(NodeCatalog.BuiltIn));
+        // index.html, beside the same patch written as text: the preset as the
+        // gallery hands it over, its arithmetic folded into Expressions.
+        Shoot(folder, "plasma", Presets.All.Single(p => p.Name == "Plasma").Build(NodeCatalog.BuiltIn));
 
         // tutorials.html, one per step of the patch the tutorials build.
         Shoot(folder, "rings", Built(

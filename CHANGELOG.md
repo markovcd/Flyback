@@ -74,6 +74,7 @@
 - The assistant can read the presets, yours included, for ideas.
 - A long block in the transcript arrives folded behind its first line, and a turn in flight says so at the end of the transcript.
 - Every frame the assistant renders is shown in the transcript under the caption that came with it.
+- The assistant panel is a column beside the patch, the full height of the window.
 
 ### Canvas and interface
 - Ctrl+scroll over the text view changes its font size, and the size is remembered.
@@ -91,6 +92,7 @@
 - Flyback reopens as you left it: window size or maximized, monitor, panel sizes, which panels are open, the text view and the swapped preview. A second copy is placed by the system rather than on top of the first.
 - Ctrl+O and Ctrl+S open and save, and Ctrl+D duplicates the selection beside itself.
 - Esc backs out of a drag on the canvas, putting the module back where it was or the wire back on the socket it came off.
+- The status bar shows the time as minutes and seconds, as in 1:05.25.
 
 ### Performance
 - An output with no wire on it no longer costs anything. The big presets run 2–19% fewer operations a sample, and Random's white is a sixteenth of what it was.
