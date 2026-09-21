@@ -51,6 +51,36 @@ public class ViewerOptionsTests
         return ran.Options ?? throw new InvalidOperationException("the command never ran");
     }
 
+    /// <summary>NaN compares false with everything, so a range check alone lets it through.</summary>
+    [Theory]
+    [InlineData("--for", "NaN")]
+    [InlineData("--loop", "NaN")]
+    [InlineData("--fps", "NaN")]
+    [InlineData("--from", "NaN")]
+    [InlineData("--volume", "NaN")]
+    [InlineData("--for", "Infinity")]
+    public void A_number_that_is_not_one_is_refused(string flag, string typed)
+    {
+        var ran = Run(Machine, flag, typed);
+
+        ran.ParseErrors.ShouldBeGreaterThan(0);
+        ran.Options.ShouldBeNull();
+    }
+
+    /// <summary>What does not read as a number is the parser's to refuse, not a validator's to throw on.</summary>
+    [Theory]
+    [InlineData("--for")]
+    [InlineData("--fps")]
+    [InlineData("--volume")]
+    [InlineData("--latency")]
+    public void A_word_where_a_number_goes_is_refused(string flag)
+    {
+        var ran = Run(Machine, flag, "abc");
+
+        ran.ParseErrors.ShouldBeGreaterThan(0);
+        ran.Options.ShouldBeNull();
+    }
+
     [Fact]
     public void With_no_flags_the_settings_file_is_the_run()
     {

@@ -1,4 +1,5 @@
 using System.CommandLine;
+using System.CommandLine.Parsing;
 using System.Globalization;
 using Avalonia;
 using Flyback.App;
@@ -116,9 +117,7 @@ internal static class ViewerArguments
 
         volume.Validators.Add(result =>
         {
-            var value = result.GetValueOrDefault<float>();
-
-            if (value is < 0f or > 1f) result.AddError("--volume is a level from 0 to 1.");
+            if (Typed<float>(result) is { } value && value is not (>= 0f and <= 1f)) result.AddError("--volume is a level from 0 to 1.");
         });
 
         var mute = new Option<bool>("--mute")
@@ -135,9 +134,8 @@ internal static class ViewerArguments
 
         latency.Validators.Add(result =>
         {
-            var value = result.GetValueOrDefault<int>();
-
-            if (value < OutputSettings.ShortestLatency || value > OutputSettings.LongestLatency)
+            if (Typed<int>(result) is { } value
+                && (value < OutputSettings.ShortestLatency || value > OutputSettings.LongestLatency))
                 result.AddError($"--latency is {OutputSettings.ShortestLatency} to {OutputSettings.LongestLatency} milliseconds.");
         });
 
@@ -299,17 +297,34 @@ internal static class ViewerArguments
         return Exit.Failed;
     }
 
+    /// <summary>
+    /// What was typed, as the option's type; null where it does not read as one,
+    /// which the parser says for itself.
+    /// </summary>
+    private static T? Typed<T>(OptionResult result)
+        where T : struct
+    {
+        try
+        {
+            return result.GetValueOrDefault<T>();
+        }
+        catch (InvalidOperationException)
+        {
+            return null;
+        }
+    }
+
     private static void Atleast(Option<double> option, double least) =>
         option.Validators.Add(result =>
         {
-            if (result.GetValueOrDefault<double>() < least)
+            if (Typed<double>(result) is { } value && (!double.IsFinite(value) || value < least))
                 result.AddError($"{option.Name} cannot be less than {least.ToString(CultureInfo.InvariantCulture)}.");
         });
 
     private static void Above(Option<double> option, double least) =>
         option.Validators.Add(result =>
         {
-            if (result.GetValueOrDefault<double>() <= least)
+            if (Typed<double>(result) is { } value && (!double.IsFinite(value) || value <= least))
                 result.AddError($"{option.Name} has to be more than {least.ToString(CultureInfo.InvariantCulture)}.");
         });
 }
