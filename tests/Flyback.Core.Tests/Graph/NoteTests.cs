@@ -313,7 +313,21 @@ public class NoteTests
         var def = NodeCatalog.BuiltIn.Require(TypeId);
 
         def.Inputs[0].Format(57f).ShouldBe("A3");
-        def.Inputs[1].Format(1.5f).ShouldBe("1.5");
+        def.Inputs[2].Format(12.5f).ShouldBe("12.5");
         NodeCatalog.BuiltIn.Require("audio.frequency").Inputs[0].Format(220f).ShouldBe("220");
+    }
+
+    /// <summary>
+    /// A knob lands on whole octaves, since a fraction of one is a different note
+    /// rather than a finer setting; a wire into the socket still carries any value.
+    /// </summary>
+    [Fact]
+    public void The_octave_knob_rests_on_whole_octaves()
+    {
+        var def = NodeCatalog.BuiltIn.Require(TypeId);
+
+        def.Inputs[1].Stepped.ShouldBeTrue();
+        def.Inputs[1].Format(-1f).ShouldBe("-1");
+        def.Inputs[2].Stepped.ShouldBeFalse();
     }
 }

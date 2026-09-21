@@ -147,7 +147,7 @@ public partial class NodeCatalog
             "audio.note", "Note", ModuleCategories.Pitch,
             [
                 Pitched("note", 57f),
-                Num("octave"),
+                new PortSpec("octave", PortKind.Scalar, 0f, -4f, 4f, Display: PortDisplay.Integer),
                 Num("cents", 0f, -100f, 100f),
             ],
             [Num("hz"), Num("note")],
