@@ -14,7 +14,7 @@
 ### Modules
 - Added Stroke (a drum envelope counted off the beat), Fade (brings a part in as a level rises), Wander (a slow random value) and Drum (a kick or tom from one envelope) to Voice.
 - Added Desk, a four-channel stereo mixer with a trim that chains into bigger ones.
-- Added Duck, a sidechain that turns a part down while a kick, or any other key, is loud.
+- Added Duck, a sidechain that turns a part down while a kick, or any other key, is loud, and a Duck preset that shows it.
 - Added Send and Receive, which carry a signal across the patch on a named bus instead of a wire.
 - Added Expression, one block that computes a formula you type over its four inputs, such as `(floor(a * 45) + 0.5) / 45`.
 - Arithmetic in the text view, such as `(x * 2 - 1) * aspect`, is one Expression, and an Expression shows there as arithmetic.

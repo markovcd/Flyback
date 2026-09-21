@@ -214,6 +214,21 @@ public class LanguageTests
         """);
 
     [Fact]
+    public void Duck() => Alike("Duck", """
+        let kick = sine(freq: frequency(55))
+                     * (pulse(freq: 2, width: 0.08)
+                          |> adsr(attack: 2.5ms, decay: 126ms, sustain: 0, release: 100ms))
+
+        let pad = saw(freq: frequency(110), amp: 0.25) + saw(freq: frequency(165), amp: 0.2)
+                    |> duck(key: kick, depth: 0.8, release: 200ms)
+
+        pad + kick |> out.left
+        scope(pad.gain, window: 2s, scale: 1.25) |> out.color
+
+        out.volume = 0.5
+        """);
+
+    [Fact]
     public void AheadAndBehind() => Alike("Ahead and behind", """
         let tone = saw(freq: sine(freq: 0.4) |> remap(-1..1, 90..320))
 

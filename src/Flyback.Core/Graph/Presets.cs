@@ -123,6 +123,9 @@ public static partial class Presets
         new("Heard", Heard,
             "A drum the picture listens to rather than being told about, through a Meter.",
             PresetKind.Interplay),
+        new("Duck", Duck,
+            "A pad that gets out of the way each time the kick hits, on a Scope drawing how far.",
+            PresetKind.Interplay),
         new("Waveform", Waveform,
             "Sine, triangle, square and saw faded one into the next, on a Scope drawing the shape being heard.",
             PresetKind.Interplay),
@@ -248,6 +251,66 @@ public static partial class Presets
          .Wire(heard, 0, color, 0)
          .Wire(lit, 0, color, 2)
          .Wire(color, 0, output, NodeCatalog.OutputColorPort);
+
+        return b.Build();
+    }
+
+    /// <summary>
+    /// A kick and a pad, and a Duck turning the pad down under every hit so the
+    /// kick has the room to itself. The Scope draws the level the Duck applies,
+    /// which falls with every hit and climbs back before the next.
+    /// </summary>
+    public static Patch Duck(ModuleCatalog modules)
+    {
+        var b = new PatchBuilder(modules);
+
+        // Heard's kick: two beats a second, its length the envelope's.
+        var beat = b.Add("osc.pulse", (1, 2f), (3, 0.08f));
+        var level = b.Add(NodeCatalog.AdsrTypeId, (1, -2.6f), (2, -0.9f), (3, 0f), (4, -1f));
+        var pitch = b.Add("audio.frequency", (0, 55f));
+        var body = b.Add("osc.sine");
+        var kick = b.Add("math.mul");
+
+        // A root and a fifth on two saws, held: nothing moves in the pad but the duck.
+        var root = b.Add("audio.frequency", (0, 110f));
+        var fifth = b.Add("audio.frequency", (0, 165f));
+        var low = b.Add("osc.saw", (3, 0.25f));
+        var high = b.Add("osc.saw", (3, 0.2f));
+        var pad = b.Add("math.add");
+
+        // The module this patch is about. Keyed by the kick's sound: down by four fifths
+        // of how loud the kick is, and a fifth of a second to come back. The kick's
+        // envelope would key it just as well.
+        var duck = b.Add(NodeCatalog.DuckTypeId, (3, 0.8f), (5, -3f), (6, -0.7f));
+
+        // The kick added back after the Duck, which never turns down what keys it.
+        var mix = b.Add("math.add");
+
+        // Two seconds across, which is four hits and the pad coming back after each.
+        // The gain never goes below nought, so it sits above the middle line, with
+        // room over one.
+        var chart = b.Add(NodeCatalog.ScopeTypeId, (1, 0.3f), (2, 1.25f));
+
+        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 0.5f));
+
+        b.Wire(beat, 0, level, 0)
+         .Wire(pitch, 0, body, 1)
+         .Wire(body, 0, kick, 0)
+         .Wire(level, 0, kick, 1)
+
+         .Wire(root, 0, low, 1)
+         .Wire(fifth, 0, high, 1)
+         .Wire(low, 0, pad, 0)
+         .Wire(high, 0, pad, 1)
+
+         .Wire(pad, 0, duck, 0)
+         .Wire(kick, 0, duck, 2)
+         .Wire(duck, 0, mix, 0)
+         .Wire(kick, 0, mix, 1)
+         .Wire(mix, 0, output, NodeCatalog.OutputLeftPort)
+
+         .Wire(duck, 2, chart, 0)
+         .Wire(chart, 0, output, NodeCatalog.OutputColorPort);
 
         return b.Build();
     }

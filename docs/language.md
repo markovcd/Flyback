@@ -961,6 +961,28 @@ Both of the Meter's readings: `peak` is the hit and lights the rings, `level` �
 which is what the bare name means — takes the hue, so the color lags the flash
 by as much as a room does.
 
+### Duck — [:263](../src/Flyback.Core/Graph/Presets.cs)
+
+```
+# A pad that gets out of the way each time the kick hits, on a Scope drawing how far.
+
+let kick = sine(freq: frequency(55))
+             * (pulse(freq: 2, width: 0.08)
+                  |> adsr(attack: 2.5ms, decay: 126ms, sustain: 0, release: 100ms))
+
+let pad = saw(freq: frequency(110), amp: 0.25) + saw(freq: frequency(165), amp: 0.2)
+            |> duck(key: kick, depth: 0.8, release: 200ms)
+
+pad + kick |> out.left
+scope(pad.gain, window: 2s, scale: 1.25) |> out.color
+
+out.volume = 0.5
+```
+
+The kick's sound is the key, and it is added back after the Duck, which never
+turns down what keys it. The Scope charts `gain`, the level the Duck applies,
+rather than the pad, so a dip is a line falling rather than a waveform thinning.
+
 ### Waveform — [:763](../src/Flyback.Core/Graph/Presets.cs)
 
 ```
