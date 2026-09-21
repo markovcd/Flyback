@@ -7,7 +7,8 @@ namespace Flyback.App.Controls;
 
 /// <summary>
 /// A rotary knob from 0 to 1, turned by dragging up and down. Shift turns it finely,
-/// the wheel steps it, and a double-click puts it back to the middle.
+/// the wheel steps it, and a double-click puts it back to the middle. The pointer is held still and
+/// hidden while it turns, so the edge of the screen never stops a turn.
 /// </summary>
 internal class Knob : Control
 {
@@ -31,8 +32,12 @@ internal class Knob : Control
     private static readonly IBrush Face = new SolidColorBrush(Colors.Node);
     private static readonly IBrush LitFace = new SolidColorBrush(Colors.Attention, 0.18);
 
+    private static readonly Cursor Upright = new(StandardCursorType.SizeNorthSouth);
+    private static readonly Cursor Hidden = new(StandardCursorType.None);
+
     private Point? grabbed;
-    private double grabbedValue;
+    private Point last;
+    private IPointerAnchor? anchor;
 
     static Knob()
     {
@@ -44,8 +49,11 @@ internal class Knob : Control
     {
         Width = 44;
         Height = 44;
-        Cursor = new Cursor(StandardCursorType.SizeNorthSouth);
+        Cursor = Upright;
     }
+
+    /// <summary>Holds the pointer where a turn begins. Null leaves the pointer free.</summary>
+    internal Func<Visual, IPointerAnchor?> Anchor { get; set; } = PointerAnchor.Take;
 
     public double Value
     {
@@ -98,22 +106,38 @@ internal class Knob : Control
             return;
         }
 
-        grabbed = e.GetPosition(this);
-        grabbedValue = Value;
+        grabbed = last = e.GetPosition(this);
         e.Pointer.Capture(this);
         e.Handled = true;
+
+        anchor = Anchor(this);
+        if (anchor is not null) Cursor = Hidden;
     }
 
     protected override void OnPointerMoved(PointerEventArgs e)
     {
         base.OnPointerMoved(e);
 
-        if (grabbed is not { } from) return;
+        if (grabbed is not { } home) return;
+
+        var at = e.GetPosition(this);
+
+        // The warp's own echo, which would otherwise warp again.
+        if (anchor is not null && at == home) return;
 
         var fine = (e.KeyModifiers & KeyModifiers.Shift) != 0 ? 5d : 1d;
-        var travelled = from.Y - e.GetPosition(this).Y;
 
-        Turn(grabbedValue + travelled / (Travel * fine));
+        Turn(Value + (last.Y - at.Y) / (Travel * fine));
+
+        if (anchor?.Return() == true)
+        {
+            last = home;
+        }
+        else
+        {
+            last = at;
+            LetGo();
+        }
     }
 
     protected override void OnPointerReleased(PointerReleasedEventArgs e)
@@ -123,7 +147,19 @@ internal class Knob : Control
         if (grabbed is null) return;
 
         grabbed = null;
+        LetGo();
         e.Pointer.Capture(null);
+        Released?.Invoke();
+    }
+
+    protected override void OnPointerCaptureLost(PointerCaptureLostEventArgs e)
+    {
+        base.OnPointerCaptureLost(e);
+
+        if (grabbed is null) return;
+
+        grabbed = null;
+        LetGo();
         Released?.Invoke();
     }
 
@@ -136,6 +172,13 @@ internal class Knob : Control
         Turn(Value + Math.Sign(e.Delta.Y) * step);
         Released?.Invoke();
         e.Handled = true;
+    }
+
+    private void LetGo()
+    {
+        anchor?.Dispose();
+        anchor = null;
+        Cursor = Upright;
     }
 
     private void Turn(double to)
