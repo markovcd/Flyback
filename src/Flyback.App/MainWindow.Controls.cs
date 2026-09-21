@@ -18,6 +18,12 @@ public sealed partial class MainWindow
 {
     private readonly ControlsPanel controlsPanel = new() { IsVisible = false };
 
+    /// <summary>The knobs over the picture while it has the window.</summary>
+    private readonly StageKnobs stageKnobs = new() { IsVisible = false };
+
+    /// <summary>Whether the knobs are wanted over the full-screen picture, where the patch has any.</summary>
+    private bool stageKnobsWanted = true;
+
     /// <summary>The edge above the panel, dragged to give it more rows or fewer.</summary>
     private readonly GridSplitter controlsSplitter = new()
     {
@@ -101,14 +107,7 @@ public sealed partial class MainWindow
 
         controlsButton.IsCheckedChanged += (_, _) => ShowControls(controlsButton.IsChecked == true);
 
-        controlsPanel.Reading = (id, value) =>
-        {
-            var following = ControlMap.Following(editor.Patch, id).Take(2).ToList();
-
-            return following is [var (node, port, link)] && NodeCatalog.Get(node.TypeId) is { } def && port < def.Inputs.Count
-                ? def.Inputs[port].Format(link.At(value))
-                : null;
-        };
+        controlsPanel.Reading = (id, value) => StageKnobs.Reading(editor.Patch, id, value);
 
         controlsPanel.Describe = id =>
         {
@@ -130,16 +129,8 @@ public sealed partial class MainWindow
             Link(added.Id);
         };
 
-        controlsPanel.Turning += (id, value) =>
-        {
-            if (editor.Patch.Control(id) is not { } control) return;
-
-            control.Value = value;
-            controls.Set(id, value);
-            controlsPanel.Move(id, value, heard: false);
-            editor.InvalidateVisual();
-            preview.Refresh();
-        };
+        controlsPanel.Turning += TurnKnob;
+        stageKnobs.Turning += TurnKnob;
 
         controlsPanel.LinkRequested += id => Link(editor.LinkingControl == id ? null : id);
 
@@ -175,6 +166,45 @@ public sealed partial class MainWindow
         };
 
         editor.SocketPicked += (_, pick) => PickSocket(pick);
+    }
+
+    /// <summary>A knob turned by hand, on the panel or over the picture.</summary>
+    private void TurnKnob(Guid id, float value)
+    {
+        if (editor.Patch.Control(id) is not { } control) return;
+
+        control.Value = value;
+        controls.Set(id, value);
+        controlsPanel.Move(id, value, heard: false);
+        foreach (var stage in Stages) stage.Move(id, value);
+        editor.InvalidateVisual();
+        preview.Refresh();
+    }
+
+    /// <summary>Every set of knobs over a picture: the window's own, and the other monitor's while it has one.</summary>
+    private IEnumerable<StageKnobs> Stages => pictureKnobs is { } away ? [stageKnobs, away] : [stageKnobs];
+
+    /// <summary>Shows or hides the knobs over the full-screen picture.</summary>
+    private void ToggleStageKnobs()
+    {
+        stageKnobsWanted = !stageKnobsWanted;
+        SyncStageKnobs();
+    }
+
+    /// <summary>
+    /// Puts the knobs over the picture where it is full screen, they are wanted and
+    /// the patch has any, and the overlay's button in step.
+    /// </summary>
+    private void SyncStageKnobs()
+    {
+        stageKnobs.IsVisible = previewIsFullScreen && stageKnobsWanted && stageKnobs.Any;
+
+        if (pictureKnobs is { } away) away.IsVisible = stageKnobsWanted && away.Any;
+
+        if (transportOverlay is not { } overlay) return;
+
+        overlay.HasKnobs = stageKnobs.Any;
+        overlay.KnobsShown = stageKnobsWanted;
     }
 
     /// <summary>The settings window's MIDI section: what a controller does to a knob that sits elsewhere.</summary>
@@ -251,6 +281,8 @@ public sealed partial class MainWindow
 
         controls.Follow(editor.Patch, preview.Live, audio.Live);
         controlsPanel.Show(knobs);
+        foreach (var stage in Stages) stage.Show(editor.Patch);
+        SyncStageKnobs();
 
         if (knobs.Count > 0 && knobsShown == 0) ShowControls(true);
         knobsShown = knobs.Count;
@@ -392,6 +424,7 @@ public sealed partial class MainWindow
 
             control.Value = value;
             controlsPanel.Move(id, value, heard: true);
+            foreach (var stage in Stages) stage.Move(id, value);
         }
 
         editor.InvalidateVisual();

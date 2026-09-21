@@ -10,7 +10,7 @@ using Avalonia.Threading;
 namespace Flyback.App.Controls;
 
 /// <summary>
-/// Sound, pause and rewind over a full-window picture: three dots bottom right that
+/// Sound, pause, rewind and the knobs over a full-window picture: three dots bottom right that
 /// solidify as the pointer nears them, and a toolbar that opens from them.
 /// </summary>
 /// <remarks>
@@ -37,10 +37,12 @@ public sealed class TransportOverlay : Border
     private readonly Control toolbar;
     private readonly Button muteButton;
     private readonly Button pauseButton;
+    private readonly Button knobsButton;
     private readonly DispatcherTimer tuck = new() { Interval = Grace };
 
     private bool paused;
     private bool muted;
+    private bool knobsShown = true;
 
     /// <param name="host">The window whose pointer the dots follow, wherever in it that is.</param>
     public TransportOverlay(TopLevel host)
@@ -64,11 +66,15 @@ public sealed class TransportOverlay : Border
 
         var rewind = Tool(Glyphs.Rewind(), "Back to the start", () => RewindClicked?.Invoke());
 
+        knobsButton = Tool(Glyphs.Knob(), "Show or hide the knobs  (Ctrl+K)", () => KnobsClicked?.Invoke());
+        knobsButton.IsVisible = false;
+
         var buttons = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 2 };
 
         buttons.Children.Add(muteButton);
         buttons.Children.Add(pauseButton);
         buttons.Children.Add(rewind);
+        buttons.Children.Add(knobsButton);
 
         toolbar = new Border
         {
@@ -95,7 +101,6 @@ public sealed class TransportOverlay : Border
         Margin = new Thickness(12);
         HorizontalAlignment = HorizontalAlignment.Right;
         VerticalAlignment = VerticalAlignment.Bottom;
-        Background = Brushes.Transparent;
 
         // Tunnelled at the window, so the dots know how near the pointer is however
         // far from them it is, and whatever else has taken the event.
@@ -132,6 +137,9 @@ public sealed class TransportOverlay : Border
     /// <summary>Raised when the rewind button is pressed.</summary>
     public event Action? RewindClicked;
 
+    /// <summary>Raised when the knobs button is pressed; the owner flips <see cref="KnobsShown"/>.</summary>
+    public event Action? KnobsClicked;
+
     /// <summary>Whether play is held. The pause button shows what a press does next.</summary>
     public bool Paused
     {
@@ -164,6 +172,27 @@ public sealed class TransportOverlay : Border
         get => muteButton.IsEnabled;
         set => muteButton.IsEnabled = value;
     }
+
+    /// <summary>Whether the patch has knobs, and so a button to show them.</summary>
+    public bool HasKnobs
+    {
+        get => knobsButton.IsVisible;
+        set => knobsButton.IsVisible = value;
+    }
+
+    /// <summary>Whether the knobs are over the picture. The button is dimmed while they are not.</summary>
+    public bool KnobsShown
+    {
+        get => knobsShown;
+        set
+        {
+            knobsShown = value;
+            knobsButton.Opacity = value ? 1 : 0.45;
+        }
+    }
+
+    /// <summary>The knobs button, for the tests that press it.</summary>
+    internal Button KnobsButton => knobsButton;
 
     /// <summary>The dots, for the tests that steer a pointer at them.</summary>
     internal Control Dots => dots;
@@ -201,12 +230,17 @@ public sealed class TransportOverlay : Border
         tuck.Stop();
         toolbar.Opacity = 1;
         toolbar.IsHitTestVisible = true;
+
+        // Solid only while open, so the gap between toolbar and dots holds the
+        // pointer, and the tucked-away toolbar's place takes no clicks from the knobs.
+        Background = Brushes.Transparent;
     }
 
     private void Hidden()
     {
         toolbar.Opacity = 0;
         toolbar.IsHitTestVisible = false;
+        Background = null;
     }
 
     /// <summary>

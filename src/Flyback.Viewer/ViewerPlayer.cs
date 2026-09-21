@@ -27,7 +27,7 @@ namespace Flyback.Viewer;
 /// A patch that is played is played here too: the computer's keys and whatever MIDI
 /// device its MIDI In names reach it through the editor's own <see cref="MidiHub"/>,
 /// and a knob bound to a controller follows it through <see cref="ControlHub"/>. A
-/// knob with no controller stays where the patch left it, there being no panel.
+/// hand turns one through <see cref="Turn"/>.
 /// </para>
 /// </remarks>
 internal sealed class ViewerPlayer : IDisposable
@@ -39,6 +39,7 @@ internal sealed class ViewerPlayer : IDisposable
     private readonly MidiHub midi;
     private readonly ControlHub controls;
     private readonly bool keyed;
+    private readonly Patch patch;
     private bool audible;
 
     private DispatcherTimer? ticker;
@@ -68,6 +69,8 @@ internal sealed class ViewerPlayer : IDisposable
 
         var (patch, samples, pictures) = opened;
 
+        this.patch = patch;
+
         audio.Aspect = SynthRenderer.AspectOf(options.Size.Width, options.Size.Height);
         audio.Update(patch, samples);
 
@@ -96,6 +99,7 @@ internal sealed class ViewerPlayer : IDisposable
 
         midi = new MidiHub(instruments);
         controls = new ControlHub(midi) { Takeover = takeover };
+        controls.Turned += (id, value) => Turned?.Invoke(id, value);
 
         midi.Trouble += message => Console.Error.WriteLine($"{GlobalConstants.ApplicationName}: {message}");
 
@@ -149,6 +153,22 @@ internal sealed class ViewerPlayer : IDisposable
 
     /// <summary>Where the picture is, in seconds.</summary>
     public double Time => preview?.Time ?? audio.Time;
+
+    /// <summary>The patch playing, whose knobs are there to be turned.</summary>
+    public Patch Patch => patch;
+
+    /// <summary>A controller turned a knob: its id and where it now sits. Raised on the driver's thread.</summary>
+    public event Action<Guid, float>? Turned;
+
+    /// <summary>Turns a knob by hand.</summary>
+    public void Turn(Guid id, float value)
+    {
+        if (patch.Control(id) is not { } control) return;
+
+        control.Value = value;
+        controls.Set(id, value);
+        preview?.Refresh();
+    }
 
     /// <summary>Raised when <c>--for</c> has run out.</summary>
     public event Action? Finished;

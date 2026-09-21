@@ -114,6 +114,9 @@ public sealed partial class MainWindow
     /// <summary>The window holding the preview on another monitor, while it is there.</summary>
     private Window? pictureWindow;
 
+    /// <summary>The knobs over the picture in <see cref="pictureWindow"/>.</summary>
+    private StageKnobs? pictureKnobs;
+
     /// <summary>Goes full screen on the monitor the Graphics section names, or comes back.</summary>
     private void ToggleFullScreenPreview()
     {
@@ -160,6 +163,16 @@ public sealed partial class MainWindow
 
         preview.Renew();
 
+        var knobs = pictureKnobs = new StageKnobs();
+
+        knobs.Show(editor.Patch);
+        knobs.Turning += TurnKnob;
+
+        var picture = new Panel();
+
+        picture.Children.Add(preview);
+        picture.Children.Add(knobs);
+
         // Not activated, so the keyboard stays with the editor.
         var window = pictureWindow = new Window
         {
@@ -171,7 +184,7 @@ public sealed partial class MainWindow
             Position = screen.Bounds.Position,
             Width = screen.Bounds.Width / screen.Scaling,
             Height = screen.Bounds.Height / screen.Scaling,
-            Content = preview,
+            Content = picture,
         };
 
         window.DoubleTapped += (_, e) =>
@@ -182,9 +195,10 @@ public sealed partial class MainWindow
 
         window.KeyDown += (_, e) =>
         {
-            if (e.Key != Key.Escape) return;
+            if (e.Key == Key.K && (e.KeyModifiers & (KeyModifiers.Control | KeyModifiers.Meta)) != 0) ToggleStageKnobs();
+            else if (e.Key == Key.Escape) window.Close();
+            else return;
 
-            window.Close();
             e.Handled = true;
         };
 
@@ -193,6 +207,7 @@ public sealed partial class MainWindow
         window.Closed += (_, _) => BringPictureBack(window);
 
         window.Show(this);
+        SyncStageKnobs();
     }
 
     private void BringPictureBack(Window window)
@@ -200,6 +215,9 @@ public sealed partial class MainWindow
         if (pictureWindow != window || previewBox is null) return;
 
         pictureWindow = null;
+        pictureKnobs = null;
+
+        if (window.Content is Panel picture) picture.Children.Clear();
         window.Content = null;
 
         preview.Renew();
@@ -237,19 +255,29 @@ public sealed partial class MainWindow
         {
             if (full)
             {
-                Grid.SetColumn(overlay, Grid.GetColumn(previewBox));
-                Grid.SetRow(overlay, Grid.GetRow(previewBox));
-                Grid.SetRowSpan(overlay, Grid.GetRowSpan(previewBox));
+                Over(overlay);
                 SyncTransport();
             }
 
             overlay.IsVisible = full;
         }
 
+        Over(stageKnobs);
+        SyncStageKnobs();
+
         // ShowPreview stands aside while the preview has the window, and the patch
         // may have lost its picture meanwhile. Only ever put away here: the row has
         // just been given back the height it was dragged to.
         if (!full && !HasPicture) ShowPreview(false);
+
+        void Over(Control control)
+        {
+            if (!full) return;
+
+            Grid.SetColumn(control, Grid.GetColumn(previewBox));
+            Grid.SetRow(control, Grid.GetRow(previewBox));
+            Grid.SetRowSpan(control, Grid.GetRowSpan(previewBox));
+        }
 
         void Collapse()
         {

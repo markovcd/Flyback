@@ -3,6 +3,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
+using Avalonia.Threading;
 using Flyback.App.Controls;
 using Flyback.App.Midi;
 using Flyback.Core.Graph;
@@ -77,7 +78,11 @@ internal sealed partial class ViewerWindow : Window
 
         layout.Children.Add(previewBox);
 
-        if (!options.NoOverlay) layout.Children.Add(BuildOverlay());
+        if (!options.NoOverlay)
+        {
+            layout.Children.Add(BuildKnobs());
+            layout.Children.Add(BuildOverlay());
+        }
 
         Content = layout;
 
@@ -90,6 +95,8 @@ internal sealed partial class ViewerWindow : Window
 
             // Space, which no layout plays, and the editor's Ctrl+P.
             else if ((bare && e.Key == Key.Space) || (command && e.Key == Key.P)) TogglePause();
+
+            else if (command && e.Key == Key.K) ToggleKnobs();
 
             else if (!bare || !player.KeyDown(e.Key)) return;
 
@@ -123,6 +130,31 @@ internal sealed partial class ViewerWindow : Window
     /// <summary>The transport over the picture, or null for a run that asked for none.</summary>
     internal TransportOverlay? Overlay { get; private set; }
 
+    /// <summary>The knobs over the picture, or null for a run that asked for no overlay.</summary>
+    internal StageKnobs? Knobs { get; private set; }
+
+    private StageKnobs BuildKnobs()
+    {
+        var knobs = Knobs = new StageKnobs();
+
+        knobs.Show(player.Patch);
+        knobs.IsVisible = knobs.Any;
+        knobs.Turning += player.Turn;
+
+        player.Turned += (id, value) => Dispatcher.UIThread.Post(() => knobs.Move(id, value));
+
+        return knobs;
+    }
+
+    private void ToggleKnobs()
+    {
+        if (Knobs is not { Any: true } knobs) return;
+
+        knobs.IsVisible = !knobs.IsVisible;
+
+        if (Overlay is { } overlay) overlay.KnobsShown = knobs.IsVisible;
+    }
+
     private TransportOverlay BuildOverlay()
     {
         var overlay = Overlay = new TransportOverlay(this)
@@ -130,6 +162,7 @@ internal sealed partial class ViewerWindow : Window
             Muted = player.Muted,
             Paused = player.Paused,
             Sounding = player.Sounding,
+            HasKnobs = Knobs is { Any: true },
         };
 
         overlay.MuteClicked += () =>
@@ -141,6 +174,8 @@ internal sealed partial class ViewerWindow : Window
         overlay.PauseClicked += TogglePause;
 
         overlay.RewindClicked += player.Rewind;
+
+        overlay.KnobsClicked += ToggleKnobs;
 
         return overlay;
     }

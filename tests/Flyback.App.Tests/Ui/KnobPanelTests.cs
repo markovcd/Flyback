@@ -77,7 +77,7 @@ public class KnobPanelTests : UiTest
 
     private static void Turn(MainWindow window, double up)
     {
-        var knob = All<Knob>(window).First();
+        var knob = All<Knob>(Panel(window)).First();
         var from = OnWindow(window, knob, new Point(knob.Bounds.Width / 2, knob.Bounds.Height / 2));
 
         window.MouseDown(from, MouseButton.Left);

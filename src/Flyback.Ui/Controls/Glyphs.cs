@@ -86,6 +86,10 @@ internal static class Glyphs
     /// <summary>A triangle pointing right, filled — what starts it again.</summary>
     public static Control Play() => Filled(Geometry.Parse("M4.5,3 L13,8 L4.5,13 Z"));
 
+    /// <summary>A ring with a pointer in it: a knob, seen from above.</summary>
+    public static Control Knob() => Stroked(
+        "M2.5,8 A5.5,5.5 0 1 1 13.5,8 A5.5,5.5 0 1 1 2.5,8 Z M8,8 L10.5,5.5");
+
     /// <summary>Three dots in a row: the place a hidden toolbar is, waiting to be reached for.</summary>
     public static Control Dots() => Filled(Geometry.Parse(
         "M2,6.5 A1.5,1.5 0 1 1 2,9.5 A1.5,1.5 0 1 1 2,6.5 Z "

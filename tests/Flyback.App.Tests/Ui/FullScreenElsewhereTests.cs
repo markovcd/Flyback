@@ -30,7 +30,7 @@ public class FullScreenElsewhereTests : UiTest
     }
 
     private static PreviewHost Preview(MainWindow window) =>
-        window.OwnedWindows.Select(w => w.Content).OfType<PreviewHost>().SingleOrDefault()
+        window.OwnedWindows.SelectMany(All<PreviewHost>).SingleOrDefault()
         ?? All<PreviewHost>(window).Single();
 
     private static void SendAway(MainWindow window)

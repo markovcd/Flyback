@@ -9,7 +9,7 @@ namespace Flyback.App.Controls;
 /// A rotary knob from 0 to 1, turned by dragging up and down. Shift turns it finely,
 /// the wheel steps it, and a double-click puts it back to the middle.
 /// </summary>
-internal sealed class Knob : Control
+internal class Knob : Control
 {
     public static readonly StyledProperty<double> ValueProperty =
         AvaloniaProperty.Register<Knob, double>(nameof(Value), 0.5, coerce: (_, v) => Math.Clamp(v, 0d, 1d));
@@ -21,9 +21,9 @@ internal sealed class Knob : Control
     private const double Travel = 160;
 
     /// <summary>Where the sweep starts and how far it goes, in degrees clockwise from the right.</summary>
-    private const double Start = 135;
+    protected const double Start = 135;
 
-    private const double Sweep = 270;
+    protected const double Sweep = 270;
 
     private static readonly IPen Track = new Pen(new SolidColorBrush(Colors.Separator), 3.5, lineCap: PenLineCap.Round);
     private static readonly IPen Arc = new Pen(new SolidColorBrush(Colors.Attention), 3.5, lineCap: PenLineCap.Round);
@@ -148,7 +148,7 @@ internal sealed class Knob : Control
         if (Value != before) Turned?.Invoke(Value);
     }
 
-    private static Geometry ArcGeometry(Point centre, double radius, double from, double sweep)
+    protected static Geometry ArcGeometry(Point centre, double radius, double from, double sweep)
     {
         var geometry = new StreamGeometry();
 
@@ -166,8 +166,8 @@ internal sealed class Knob : Control
         return geometry;
     }
 
-    private static double Radians(double degrees) => degrees * Math.PI / 180;
+    protected static double Radians(double degrees) => degrees * Math.PI / 180;
 
-    private static Point Along(Point centre, double distance, double angle) =>
+    protected static Point Along(Point centre, double distance, double angle) =>
         new(centre.X + distance * Math.Cos(angle), centre.Y + distance * Math.Sin(angle));
 }
