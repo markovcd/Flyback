@@ -84,6 +84,7 @@ public sealed partial class NodeEditor
         if (HitBox(graph) is null && HitNode(graph) is { } node)
         {
             PressNode(node, ctrl);
+            HoldOff([node.Id]);
             e.Pointer.Capture(this);
             InvalidateVisual();
             return;
@@ -98,8 +99,15 @@ public sealed partial class NodeEditor
         {
             // Opening a box is an edit, so a locked canvas selects it instead —
             // the same answer Ctrl+E gets.
-            if (e.ClickCount == 2 && !Locked) ToggleBox(box);
-            else PressGroup(box, ctrl);
+            if (e.ClickCount == 2 && !Locked)
+            {
+                ToggleBox(box);
+            }
+            else
+            {
+                PressGroup(box, ctrl);
+                HoldOff(box.Members);
+            }
 
             e.Pointer.Capture(this);
             InvalidateVisual();
@@ -204,6 +212,8 @@ public sealed partial class NodeEditor
     private void EndGesture()
     {
         var ended = drag != Drag.None;
+
+        ReleaseHeld();
 
         drag = Drag.None;
         panSuspended = Drag.None;
@@ -584,6 +594,9 @@ public sealed partial class NodeEditor
             return;
         }
 
+        // Before the move is recorded, so the step holds the patch with everything on.
+        ReleaseHeld();
+
         // The button that began the gesture came up while the pan it was put on
         // hold for was still going, so this release is the pan's own and the last
         // one there will be. What was on hold ends here as it would have: a module
@@ -649,6 +662,8 @@ public sealed partial class NodeEditor
     protected override void OnPointerCaptureLost(PointerCaptureLostEventArgs e)
     {
         base.OnPointerCaptureLost(e);
+
+        ReleaseHeld();
 
         if (drag == Drag.None) return;
 
