@@ -25,14 +25,54 @@ public sealed class ProsePolicyTests : IDisposable
 
     private static ModuleCatalog Shipped => Everything.Modules;
 
+    private static readonly IReadOnlySet<string> Listed = new HashSet<string> { "osc.string", "scan" };
+
+    /// <summary>The briefing with nothing cut that can be: what no budget gets it under.</summary>
+    private static readonly int Floor = Bench(new ProsePolicy(1, Listed)).Briefing.Length;
+
     /// <summary>
     /// Room enough for the built-ins without their descriptions and a few thousand
     /// characters of them, which is a catalogue past its budget.
     /// </summary>
-    private static readonly ProsePolicy Tight = new(30_000, new HashSet<string> { "osc.string", "scan" });
+    private static readonly ProsePolicy Tight = new(Floor + Handbook.PresetsReserve + 3_000, Listed);
 
-    private static PatchWorkbench Bench(ProsePolicy prose) =>
-        new(NodeCatalog.BuiltIn, new Patch(), hearing: Listener.Another, prose: prose);
+    private static PatchWorkbench Bench(ProsePolicy prose, IReadOnlyList<PatchPreset>? presets = null) =>
+        new(NodeCatalog.BuiltIn, new Patch(), hearing: Listener.Another, prose: prose, presets: presets);
+
+    /// <summary>Far more presets than the room set aside for them has names for.</summary>
+    private static readonly PatchPreset[] Saved =
+    [
+        .. Enumerable.Range(1, 600).Select(i => new PatchPreset($"Saved patch {i:000}", _ => new Patch(), "Something somebody kept.")),
+    ];
+
+    /// <summary>
+    /// From where the modules' headers alone use up the budget, whatever the modules
+    /// leave is all the presets get, and they take no more once their own few hundred
+    /// characters of notes are paid for.
+    /// </summary>
+    [Fact]
+    public void Down_to_what_cannot_be_cut_the_briefing_fits_its_budget()
+    {
+        var modules = Bench(new ProsePolicy(1, Listed), presets: []).Briefing.Length;
+
+        for (var budget = modules + 1_000; budget <= Tight.Budget; budget += 97)
+            Bench(new ProsePolicy(budget, Listed), Saved).Briefing.Length.ShouldBeLessThanOrEqualTo(budget, $"a budget of {budget}");
+    }
+
+    /// <summary>
+    /// The presets' share is set aside before anybody's saved presets are counted, so
+    /// a long list keeps the names that fit and says the rest are there.
+    /// </summary>
+    [Fact]
+    public void Past_the_room_set_aside_for_presets_their_names_are_cut_too()
+    {
+        var bench = Bench(Tight, Saved);
+
+        bench.Briefing.Length.ShouldBeLessThanOrEqualTo(Tight.Budget);
+        bench.Briefing.ShouldContain("Not every preset is named below");
+        bench.Briefing.ShouldContain(Environment.NewLine + "Saved patch 001" + Environment.NewLine);
+        bench.Briefing.ShouldNotContain("Saved patch 600");
+    }
 
     /// <summary>
     /// Every module that ships is described to the assistant, with room to spare
@@ -99,17 +139,22 @@ public sealed class ProsePolicyTests : IDisposable
     }
 
     /// <summary>
-    /// Every preset stays in the list by name, and a description that has no room is
-    /// left out and said so, the way a module's is.
+    /// Descriptions go before names: a preset keeps its name while a description that
+    /// has no room is left out and said so, the way a module's is.
     /// </summary>
     [Fact]
     public void Past_the_budget_the_presets_lose_their_descriptions_and_say_so()
     {
-        var bench = Bench(new ProsePolicy(1, new HashSet<string>()));
+        var names = Presets.All
+            .Where(preset => preset.Kind != PresetKind.Blank)
+            .Sum(preset => preset.Name.Length + Environment.NewLine.Length);
+
+        var bench = Bench(new ProsePolicy(Floor + names, Listed));
 
         bench.Briefing.ShouldContain("Some presets below have no description line");
-        bench.Briefing.ShouldContain(Environment.NewLine + "Plasma" + Environment.NewLine);
-        bench.Briefing.ShouldNotContain("Two sine fields crossed");
+        bench.Briefing.ShouldNotContain("Not every preset is named below");
+        bench.Briefing.ShouldContain(Environment.NewLine + "Whole band" + Environment.NewLine);
+        bench.Briefing.ShouldNotContain(Presets.All.Single(preset => preset.Name == "Whole band").Description);
         bench.Tools.Select(t => t.Name).ShouldContain("describe_preset");
     }
 

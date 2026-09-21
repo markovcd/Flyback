@@ -467,13 +467,21 @@ internal static class Handbook
 
         """;
 
+    private const string PresetsUnnamed = """
+        Not every preset is named below either: `describe_preset` asked for a
+        name that is not one answers with all of them.
+
+        """;
+
     /// <summary>
     /// The presets a model may read, one line each, or nothing where there are none.
     /// </summary>
     /// <remarks>
-    /// Held to the same budget as the modules, and after them: every name is listed,
-    /// and a description is kept only while there is room left once the modules have
-    /// theirs. A description left out is said so, and <c>describe_preset</c> gives it.
+    /// Held to the same budget as the modules, and after them: descriptions are cut
+    /// first and names after them, each kept in list order while it fits, and whatever is
+    /// left out is said so. Never longer than <paramref name="room"/> unless the
+    /// preamble and those notes alone are, since the modules' share cannot know how
+    /// many presets somebody has saved.
     /// </remarks>
     /// <param name="presets"></param>
     /// <param name="room">
@@ -484,44 +492,65 @@ internal static class Handbook
     {
         if (presets.Count == 0) return string.Empty;
 
-        room -= PresetsPreamble.Length + presets.Sum(preset => preset.Name.Length + Environment.NewLine.Length);
+        room -= PresetsPreamble.Length;
 
-        // The note saying a description was left out costs room of its own, so it is
-        // paid for as soon as it is known that one will be — which is exactly when
-        // the descriptions do not all fit.
-        var left = presets.Sum(Cost) > room;
+        var names = presets.Sum(Named);
+        var all = presets.Sum(Described);
+
+        var left = names + all > room;
+        var unnamed = left && names + PresetsUnexplained.Length > room;
 
         if (left) room -= PresetsUnexplained.Length;
+        if (unnamed) room -= PresetsUnnamed.Length;
+        else room -= names;
 
-        var kept = new bool[presets.Count];
+        var named = new bool[presets.Count];
+        var described = new bool[presets.Count];
 
         for (var i = 0; i < presets.Count; i++)
         {
-            var cost = Cost(presets[i]);
+            if (unnamed)
+            {
+                if (Named(presets[i]) > room) continue;
 
-            if (cost == 0 || cost > room) continue;
+                named[i] = true;
+                room -= Named(presets[i]);
+            }
+            else
+            {
+                named[i] = true;
 
-            kept[i] = true;
-            room -= cost;
+                var cost = Described(presets[i]);
+
+                if (cost == 0 || cost > room) continue;
+
+                described[i] = true;
+                room -= cost;
+            }
         }
 
         var text = new StringBuilder(PresetsPreamble);
 
         if (left) text.Append(PresetsUnexplained);
+        if (unnamed) text.Append(PresetsUnnamed);
 
         for (var i = 0; i < presets.Count; i++)
         {
+            if (!named[i]) continue;
+
             text.Append(presets[i].Name);
 
-            if (kept[i]) text.Append(" | ").Append(presets[i].Description);
+            if (described[i]) text.Append(" | ").Append(presets[i].Description);
 
             text.AppendLine();
         }
 
         return text.ToString();
 
+        static int Named(PatchPreset preset) => preset.Name.Length + Environment.NewLine.Length;
+
         // What a line adds for a description: the separator and the text.
-        static int Cost(PatchPreset preset) =>
+        static int Described(PatchPreset preset) =>
             preset.Description.Length == 0 ? 0 : 3 + preset.Description.Length;
     }
 

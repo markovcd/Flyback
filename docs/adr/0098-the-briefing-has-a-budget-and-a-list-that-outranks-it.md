@@ -71,3 +71,17 @@ A small local model is not protected by any of this. The briefing without a
 single description is over 30,000 characters with what ships, which is past the
 default context of the runtimes that serve those models. Fitting one means
 asking the endpoint how big its context is, and that is a separate question.
+
+## Amendment, 2026-09-21: a preset's name can be cut too
+
+The presets are given a fixed 4,000 characters before the modules divide the
+rest, so what the modules keep depends on the catalogue alone. Every preset was
+still named whatever room was left, and a few hundred saved presets, or a
+catalogue whose headers use up the budget, pushed the briefing past it.
+
+Now a preset's name is cut once every preset description has been, in list order
+while the names fit, and a note says that some are missing and that
+`describe_preset` asked for a name it does not know answers with all of them.
+What the briefing still runs over by is only what cannot be cut: every module's
+header and sockets, the priority descriptions, and the presets' preamble and
+notes.
