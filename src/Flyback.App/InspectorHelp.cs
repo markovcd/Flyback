@@ -21,6 +21,7 @@ internal static class InspectorHelp
         + "The preview size and the renderer are in Settings, on the toolbar.\n\n"
         + "Record, on the toolbar, writes what the patch is doing to a file — "
         + "knobs and all, as it happens. Ctrl+R starts and stops it.\n\n"
+        + "Ctrl+P pauses the patch, and plays it on.\n\n"
         + "Drag from a socket to patch it into another, or onto bare "
         + "canvas to add a module already plugged in.\n"
         + "Drag a connected input to unplug it and take the wire "

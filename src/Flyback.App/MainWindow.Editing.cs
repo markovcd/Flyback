@@ -425,6 +425,12 @@ public sealed partial class MainWindow
                 e.Handled = true;
                 break;
 
+            // With Ctrl because the bare letter is a note, and Space adds a module.
+            case Key.P:
+                TogglePause();
+                e.Handled = true;
+                break;
+
             // The document itself, on the letters every program uses for it.
             // Both were the toolbar's alone, and the hand that has just
             // finished an edit is on the keyboard rather than the pointer.

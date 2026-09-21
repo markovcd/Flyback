@@ -15,9 +15,9 @@ namespace Flyback.App;
 /// </remarks>
 public sealed partial class MainWindow
 {
-    private const string PauseTip = "Pause the patch, in the picture and in the sound.";
+    private const string PauseTip = "Pause the patch, in the picture and in the sound.  (Ctrl+P)";
 
-    private const string PlayTip = "Play the patch on from where it stopped.";
+    private const string PlayTip = "Play the patch on from where it stopped.  (Ctrl+P)";
 
     private readonly Button pauseButton = new();
 

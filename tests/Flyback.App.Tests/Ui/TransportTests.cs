@@ -70,6 +70,22 @@ public class TransportTests : UiTest
     }
 
     [AvaloniaFact]
+    public void Ctrl_P_pauses_and_plays_on()
+    {
+        var window = Open();
+
+        window.KeyPressQwerty(PhysicalKey.P, RawInputModifiers.Control);
+        Settle(window);
+
+        window.Paused.ShouldBeTrue();
+
+        window.KeyPressQwerty(PhysicalKey.P, RawInputModifiers.Control);
+        Settle(window);
+
+        window.Paused.ShouldBeFalse();
+    }
+
+    [AvaloniaFact]
     public void The_button_says_what_a_press_does_next()
     {
         var window = Open();
