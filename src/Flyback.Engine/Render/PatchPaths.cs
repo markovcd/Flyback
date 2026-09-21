@@ -107,10 +107,14 @@ public static class PatchPaths
 
         try
         {
-            return string.Equals(
-                Path.GetPathRoot(full),
-                Path.GetPathRoot(Path.GetFullPath(beside)),
-                StringComparison.OrdinalIgnoreCase);
+            var root = Path.GetPathRoot(Path.GetFullPath(beside));
+
+            return root is not null
+                && Remote(root)
+                && string.Equals(
+                    Path.GetPathRoot(full)?.Replace('/', '\\'),
+                    root.Replace('/', '\\'),
+                    StringComparison.OrdinalIgnoreCase);
         }
         catch (Exception ex) when (ex is ArgumentException or PathTooLongException or NotSupportedException)
         {
