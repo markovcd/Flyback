@@ -70,6 +70,8 @@ public sealed partial class NodeEditor
             DrawBusLinks(context);
 
             DrawPendingWire(context);
+
+            DrawDial(context);
         }
 
         // Outside the transform, so a hairline stays a hairline and the dashes

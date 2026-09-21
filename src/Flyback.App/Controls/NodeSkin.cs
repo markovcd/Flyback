@@ -306,6 +306,44 @@ internal static class NodeSkin
             NodeGeometry.PortRadius,
             NodeGeometry.PortRadius);
 
+    /// <summary>
+    /// A socket filled clockwise from the top in <paramref name="fill"/> as far as
+    /// <paramref name="share"/> of the way round, and in its kind's color beyond.
+    /// </summary>
+    public static void DrawPort(DrawingContext context, Point centre, PortKind kind, double share, IBrush fill)
+    {
+        var radius = NodeGeometry.PortRadius;
+
+        context.DrawEllipse(PortFill(kind), null, centre, radius, radius);
+
+        if (share >= 0.999)
+        {
+            context.DrawEllipse(fill, null, centre, radius, radius);
+        }
+        else if (share > 0.001)
+        {
+            var angle = share * 2 * Math.PI;
+            var geometry = new StreamGeometry();
+
+            using (var sink = geometry.Open())
+            {
+                sink.BeginFigure(centre, true);
+                sink.LineTo(new Point(centre.X, centre.Y - radius));
+                sink.ArcTo(
+                    new Point(centre.X + radius * Math.Sin(angle), centre.Y - radius * Math.Cos(angle)),
+                    new Size(radius, radius),
+                    0,
+                    share > 0.5,
+                    SweepDirection.Clockwise);
+                sink.EndFigure(true);
+            }
+
+            context.DrawGeometry(fill, null, geometry);
+        }
+
+        context.DrawEllipse(null, PortOutline, centre, radius, radius);
+    }
+
     /// <summary>Cached per kind, since a socket is drawn several times a frame.</summary>
     private static IBrush PortFill(PortKind kind)
     {

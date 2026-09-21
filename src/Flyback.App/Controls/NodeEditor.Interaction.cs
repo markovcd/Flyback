@@ -43,6 +43,14 @@ public sealed partial class NodeEditor
 
         if (properties.IsRightButtonPressed)
         {
+            // Over an unpatched input, the button held down is a knob for its value.
+            if (drag == Drag.None && StartDial(graph, screen))
+            {
+                e.Pointer.Capture(this);
+                e.Handled = true;
+                return;
+            }
+
             // Not over a module: a right-click there is about that module rather
             // than about adding another one beside it. And nowhere at all on a
             // locked canvas, where the list would offer to place something the
@@ -54,7 +62,7 @@ public sealed partial class NodeEditor
                 MenuRequested?.Invoke(this, graph);
 
             // Over a module, or a shut box, the button is held to flip it; see
-            // NodeEditor.Hold.cs. Over a socket, or an open group's strip, it does nothing.
+            // NodeEditor.Hold.cs. Over any other socket, or an open group's strip, it does nothing.
             if (!Scene.HitPort(graph, out _, out _, out _))
             {
                 if (Scene.HitBox(graph) is { } shut) Hold(shut.Members);
@@ -228,6 +236,8 @@ public sealed partial class NodeEditor
     /// </remarks>
     private bool Abort()
     {
+        if (EndDial(restore: true)) return true;
+
         var panning = drag == Drag.Pan;
         var aborting = panning ? panSuspended : drag;
 
@@ -386,6 +396,12 @@ public sealed partial class NodeEditor
 
         lastPointer = graph;
 
+        if (dialed is not null)
+        {
+            MoveDial(screen, e.KeyModifiers);
+            return;
+        }
+
         // The middle button's own state, sampled here rather than trusted to a
         // Pressed/Released pair: a second button going down while the first is
         // already captured for a wire, a node or a marquee does not reliably
@@ -492,6 +508,8 @@ public sealed partial class NodeEditor
         // the one holding it.
         if (e.InitialPressMouseButton == MouseButton.Right)
         {
+            if (EndDial()) e.Pointer.Capture(null);
+
             ReleaseHeld();
             return;
         }
@@ -586,6 +604,7 @@ public sealed partial class NodeEditor
     {
         base.OnPointerCaptureLost(e);
 
+        EndDial();
         ReleaseHeld();
 
         if (drag == Drag.None) return;
@@ -663,7 +682,7 @@ public sealed partial class NodeEditor
     /// that has gone. Ignored rather than queued: letting go leaves the press to be
     /// made again.
     /// </remarks>
-    private bool Editable => !Locked && drag == Drag.None;
+    private bool Editable => !Locked && drag == Drag.None && dialed is null;
 
     protected override void OnKeyDown(KeyEventArgs e)
     {

@@ -65,6 +65,7 @@
 - An Expression's formula is red while it does not read, and says what stopped it.
 - Unsaved work survives a crash and is restored at the next start.
 - Ctrl+B switches a module or a box off, and holding the right button does it until you let go.
+- Dragging the right button on an unpatched input turns its value.
 - About has a bitcoin address to donate to, as a QR code.
 - Flyback reopens as you left it: window, panels, text view and swapped preview.
 - Ctrl+O and Ctrl+S open and save, and Ctrl+D duplicates the selection.

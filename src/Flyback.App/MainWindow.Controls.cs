@@ -166,6 +166,15 @@ public sealed partial class MainWindow
         };
 
         editor.SocketPicked += (_, pick) => PickSocket(pick);
+
+        // A socket's own knob on the canvas: heard as it turns, written into the
+        // text and the panel when the hand comes off it.
+        editor.InputTurned += (_, pick) => Turned(pick.Node, pick.Port);
+        editor.InputLetGo += (_, pick) =>
+        {
+            HandCameOff();
+            if (editor.SelectedNode?.Id == pick.Node) BuildInspector();
+        };
     }
 
     /// <summary>A knob turned by hand, on the panel or over the picture.</summary>
