@@ -390,7 +390,7 @@ public class LanguageTests
     /// <summary>
     /// The showcase, and the one that proves the language scales: over two
     /// hundred modules in fifteen groups, every group reading names the ones
-    /// before it made, and eighteen loops written as the wire that closes each.
+    /// before it made.
     /// </summary>
     [Fact]
     public void WholeBand() => Alike("Whole band", """
@@ -423,7 +423,7 @@ public class LanguageTests
         }
 
         group "Noise" {
-          let hiss = fract(sin(t * 3571) * 4371.3) |> remap(0..1, -1..1)
+          let hiss = random()
         }
 
         group "Kick" {
@@ -457,10 +457,7 @@ public class LanguageTests
 
           let hatLevel = shut + open * 0.6
 
-          let under = math.mix(b: hiss, t: 0.2291)
-          under.a <- under
-
-          let hats = (hiss - under) * hatLevel
+          let hats = (hiss |> filter(cutoff: 7000, resonance: 0)).high * hatLevel
         }
 
         group "Snare" {
@@ -473,10 +470,7 @@ public class LanguageTests
 
           let snareLevel = snareGate |> adsr(attack: 0.5ms, decay: 158ms, sustain: 0, release: 63ms)
 
-          let rumble = math.mix(b: hiss, t: 0.036)
-          let wires  = math.mix(b: hiss - rumble, t: 0.2127)
-          rumble.a <- rumble
-          wires.a <- wires
+          let wires = (hiss |> filter(cutoff: 1100, resonance: 0)).high |> filter(cutoff: 6500, resonance: 0)
 
           let shell = sine(freq: frequency(185), amp: 0.6) * (snareLevel * snareLevel)
           let snare = (wires * 2.2 * snareLevel + shell) * snareHard
@@ -494,24 +488,16 @@ public class LanguageTests
           let bassGate = math.mix(verseBass.gate, chorusBass.gate, theme) * (song |> step(edge: 0.4))
           let bassHz   = math.mix(verseBass, chorusBass, theme) + root + 33 |> note()
 
-          let accent = math.mix(b: bassGate, t: 0.001)
-          accent.a <- accent
+          let accent = bassGate |> slew(rise: 25.1188643ms, fall: 25.1188643ms)
 
           let pluck = (bassGate |> adsr(attack: 1ms, decay: 126ms, sustain: 0.4, release: 63ms)) * accent
 
-          let f = pluck |> remap(in_low: 0, out_low: 0.002291,
-                                 out_high: song |> remap(0..1, 0.02945..0.08508))
+          let cutoff = pluck |> remap(in_low: 0, out_low: 70,
+                                      out_high: song |> remap(0..1, 900..2600))
 
-          let fromLow = saw(freq: bassHz, amp: 0.8) |> sub()
-          let ringing = mul(b: 0.45)
-          let band    = add(b: f * (fromLow - ringing))
-          let low     = add(b: f * band)
-          fromLow.b <- low
-          ringing.a <- band
-          band.a <- band
-          low.a <- low
+          let low = saw(freq: bassHz, amp: 0.8) |> filter(cutoff: cutoff, resonance: 0.8)
 
-          let bass = ((low * pluck * 2.2 |> clamp(-1, 1)) + sine(freq: bassHz, amp: 0.75) * pluck) * duck.gain
+          let bass = ((low * pluck |> drive(drive: 3)) + sine(freq: bassHz, amp: 0.75) * pluck) * duck.gain
         }
 
         group "Strings" {
@@ -523,28 +509,18 @@ public class LanguageTests
             69 72.6 76 72.6  69 76 72.6 69
           ]
 
-          let stringTone = song |> remap(0..1, 0.02945..0.072)
+          let stringTone = song |> remap(0..1, 900..2200)
 
-          let firstOnce = math.mix(
-            b: string(trigger: firstArp.gate,
-                      freq: firstArp |> tune(transpose: root) [ C D E F G G# A B ],
-                      decay: 708ms),
-            t: stringTone)
-          let firstTwice = math.mix(b: firstOnce, t: stringTone)
-          firstOnce.a <- firstOnce
-          firstTwice.a <- firstTwice
+          let firstPlucked = string(trigger: firstArp.gate,
+                                    freq: firstArp |> tune(transpose: root) [ C D E F G G# A B ],
+                                    decay: 708ms)
 
-          let secondOnce = math.mix(
-            b: string(trigger: secondArp.gate * (song |> step(edge: 0.2)),
-                      freq: secondArp |> tune(transpose: root) [ C D E F G G# A B ],
-                      decay: 708ms),
-            t: stringTone)
-          let secondTwice = math.mix(b: secondOnce, t: stringTone)
-          secondOnce.a <- secondOnce
-          secondTwice.a <- secondTwice
+          let secondPlucked = string(trigger: secondArp.gate * (song |> step(edge: 0.2)),
+                                     freq: secondArp |> tune(transpose: root) [ C D E F G G# A B ],
+                                     decay: 708ms)
 
-          let firstString  = firstTwice * 2.2
-          let secondString = secondTwice * 2.2
+          let firstString  = (firstPlucked |> filter(cutoff: stringTone, resonance: 0)) * 2.2
+          let secondString = (secondPlucked |> filter(cutoff: stringTone, resonance: 0)) * 2.2
 
           let strings  = firstString + secondString
           let between  = strings * 0.5
@@ -560,23 +536,16 @@ public class LanguageTests
           let padFifth  = pulse(freq: root + 64 |> note(),
                                 width: sine(freq: 0.29, amp: 0.22, bias: 0.5), amp: 0.5)
 
-          let padTone = song |> remap(0..1, 0.02291..0.07854)
+          let padTone = song |> remap(0..1, 700..2400)
 
-          let padToneL = math.mix(
-            b: mixer(in_1: padRoot, level_1: 0.8, in_2: padMiddle, level_2: 0.9,
-                     in_3: padFifth, level_3: 0.35),
-            t: padTone)
-          let padToneR = math.mix(
-            b: mixer(in_1: padRoot, level_1: 0.8, in_2: padMiddle, level_2: 0.35,
-                     in_3: padFifth, level_3: 0.9),
-            t: padTone)
-          padToneL.a <- padToneL
-          padToneR.a <- padToneR
+          let padToneL = mixer(in_1: padRoot, level_1: 0.8, in_2: padMiddle, level_2: 0.9,
+                               in_3: padFifth, level_3: 0.35)
+                           |> filter(cutoff: padTone, resonance: 0)
+          let padToneR = mixer(in_1: padRoot, level_1: 0.8, in_2: padMiddle, level_2: 0.35,
+                               in_3: padFifth, level_3: 0.9)
+                           |> filter(cutoff: padTone, resonance: 0)
 
-          let swelled = math.mix(b: song.gate, t: 0.00001)
-          swelled.a <- swelled
-
-          let padLevel = swelled * duck.gain
+          let padLevel = (song.gate |> slew(rise: 2.51188643s, fall: 2.51188643s)) * duck.gain
           let padL = padToneL * padLevel
           let padR = padToneR * padLevel
         }
@@ -604,11 +573,9 @@ public class LanguageTests
           let leadEnv = leadGate |> adsr(attack: 3.16ms, decay: 112ms,
                                          sustain: theme |> remap(0..1, 0.3..0.7), release: 141ms)
 
-          let leadTone  = leadEnv |> remap(0..1, 0.01636..0.1702)
-          let leadToneL = math.mix(b: saw(freq: tuned, amp: 0.7) + fifth, t: leadTone)
-          let leadToneR = math.mix(b: saw(freq: wide,  amp: 0.7) + fifth, t: leadTone)
-          leadToneL.a <- leadToneL
-          leadToneR.a <- leadToneR
+          let leadTone  = leadEnv |> remap(0..1, 500..5200)
+          let leadToneL = saw(freq: tuned, amp: 0.7) + fifth |> filter(cutoff: leadTone, resonance: 0)
+          let leadToneR = saw(freq: wide,  amp: 0.7) + fifth |> filter(cutoff: leadTone, resonance: 0)
 
           let leadLevel = leadEnv * (theme |> remap(0..1, 0.6..0.9))
           let leadL = leadToneL * leadLevel
@@ -616,23 +583,10 @@ public class LanguageTests
         }
 
         group "Room" {
-          let dark = math.mix(
-            b: mixer(in_1: snare, level_1: 0.5, in_2: leadL + leadR, level_2: 0.4,
-                     in_3: strings, level_3: 0.5, in_4: hats, level_4: 0.12),
-            t: 0.08508)
-          dark.a <- dark
-
-          let dry = dark * 3
-
-          let roomL = (dark |> string(freq: 22.47, decay: 1.25892542s, brightness: 0.25))
-                        + (dark |> string(freq: 29.99, decay: 1.25892542s, brightness: 0.25))
-                        + (dark |> string(freq: 37.78, decay: 1.25892542s, brightness: 0.25))
-                        - dry
-
-          let roomR = (dark |> string(freq: 25.22, decay: 1.25892542s, brightness: 0.25))
-                        + (dark |> string(freq: 33.66, decay: 1.25892542s, brightness: 0.25))
-                        + (dark |> string(freq: 40.03, decay: 1.25892542s, brightness: 0.25))
-                        - dry
+          let room = mixer(in_1: snare, level_1: 0.5, in_2: leadL + leadR, level_2: 0.4,
+                           in_3: strings, level_3: 0.5, in_4: hats, level_4: 0.12)
+                       |> filter(cutoff: 2600, resonance: 0)
+                       |> reverb(size: 0.3, decay: 0.5, mix: 1)
         }
 
         group "Desk" {
@@ -644,7 +598,7 @@ public class LanguageTests
           let master = desk(left_1: stringsL, right_1: stringsR, level_1: 0.8,
                             left_2: padL, right_2: padR, level_2: 0.42,
                             left_3: leadL, right_3: leadR, level_3: 0.6,
-                            left_4: roomL, right_4: roomR, level_4: 0.17,
+                            left_4: room, right_4: room.wide, level_4: 0.17,
                             bus_left: drums.bus_left, bus_right: drums.bus_right,
                             trim: 0.7)
 

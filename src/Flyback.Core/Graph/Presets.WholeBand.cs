@@ -11,18 +11,10 @@ public static partial class Presets
     /// one of the parts moves.
     /// </summary>
     /// <remarks>
-    /// The catalogue this is held to has no filter, no reverb and no noise, so the
-    /// three are built, and each is a thing worth seeing built. A Mix whose 'a' is
-    /// its own output is a lowpass, and its 't' is the cutoff. Two Adds that each
-    /// feed themselves are the two integrators of a filter with a resonance. And a
-    /// String that is never plucked, given a signal and tuned under the bottom of
-    /// the keyboard, is the comb a reverb is made of.
-    /// <para>
     /// The arrangement is three lanes of one step a phrase, and each part decides
     /// what it needs of them. Nothing in a lane has any memory, so the picture reads
-    /// the same lanes the sound does — but it never reads a loop or an envelope,
+    /// the same lanes the sound does — but it never reads a filter or an envelope,
     /// which mean something else where there is no evaluation before this one.
-    /// </para>
     /// </remarks>
     public static Patch WholeBand(ModuleCatalog modules) => new Band(modules).Assemble();
 
@@ -45,12 +37,8 @@ public static partial class Presets
         /// <summary>A Sequencer's second output.</summary>
         private const int Gate = 1;
 
-        /// <summary>
-        /// What turns hertz into the 't' of a Mix that is a lowpass, or the 'f' of the
-        /// two-integrator filter: 2π over how many times a second the audio path is
-        /// evaluated, which is four times forty-eight thousand.
-        /// </summary>
-        private const float PerEvaluation = MathF.Tau / 192_000f;
+        /// <summary>A Filter's outputs.</summary>
+        private const int Low = 0, High = 2;
 
         /// <summary>
         /// A natural minor on A, and the G sharp as well: the one note the E chord
@@ -101,8 +89,6 @@ public static partial class Presets
 
         private NodeInstance Sum(NodeInstance a, NodeInstance c) => Wired("math.add", a, c);
 
-        private NodeInstance Less(NodeInstance a, NodeInstance c) => Wired("math.sub", a, c);
-
         private NodeInstance Product(NodeInstance a, NodeInstance c, int from = 0, int second = 0) =>
             Wired("math.mul", a, c, from, second);
 
@@ -131,20 +117,21 @@ public static partial class Presets
             return mix;
         }
 
-        /// <summary>
-        /// A lowpass of one pole, which is a Mix that is its own 'a': each evaluation
-        /// it moves <paramref name="share"/> of the way from where it was to what has
-        /// arrived. Wire the 't' instead and the cutoff is a signal.
-        /// </summary>
-        private NodeInstance Smoothed(NodeInstance a, float share, int from = 0)
+        /// <summary>A Filter cornered at <paramref name="hz"/>; wire its 'cutoff' instead and the corner is a signal.</summary>
+        private NodeInstance Filtered(NodeInstance a, float hz = 800f, float resonance = 0f, int from = 0)
         {
-            var mix = b.Add("math.mix", (2, share));
-            b.Wire(mix, 0, mix, 0).Wire(a, from, mix, 1);
-            return mix;
+            var filter = b.Add(NodeCatalog.FilterTypeId, (1, hz), (2, resonance));
+            b.Wire(a, from, filter, 0);
+            return filter;
         }
 
-        /// <summary>What a lowpass at <paramref name="hz"/> leaves behind: the signal less its bottom.</summary>
-        private NodeInstance Thinned(NodeInstance a, float hz) => Less(a, Smoothed(a, hz * PerEvaluation));
+        /// <summary>A Slew that takes <paramref name="decades"/> (ten to the power, in seconds) either way.</summary>
+        private NodeInstance Slewed(NodeInstance a, float decades, int from = 0)
+        {
+            var slew = b.Add(NodeCatalog.SlewTypeId, (1, decades), (2, decades));
+            b.Wire(a, from, slew, 0);
+            return slew;
+        }
 
         /// <summary>
         /// What is left of each <paramref name="rate"/>th of a beat, to the power
@@ -184,8 +171,7 @@ public static partial class Presets
             // --- the clock -------------------------------------------------------
 
             // Every part reads the count of beats rather than the clock, so the tempo
-            // is this one knob. The clock itself is here for the hash the noise is
-            // made of, and for the picture's drifts.
+            // is this one knob. The clock itself is here for the picture's drifts.
             tempo = b.Add(NodeCatalog.TempoTypeId, (0, 112f));
             var clock = b.Add(NodeCatalog.TimeTypeId);
 
@@ -239,11 +225,8 @@ public static partial class Presets
 
             // --- the noise -------------------------------------------------------
 
-            // Nothing in the catalogue makes a noise a point in time can hear, so it
-            // is built: a large multiple of the clock, a sine of it, a larger multiple
-            // of that, and the fraction.
-            var white = Through("math.fract", Times(Through("math.sin", Times(clock, 3571f)), 4371.3f));
-            var hiss = Span(white, 0f, 1f, -1f, 1f);
+            // White, which the hats and the snare each take a band of.
+            var hiss = b.Add(NodeCatalog.RandomTypeId);
 
             Box("Noise");
 
@@ -303,7 +286,7 @@ public static partial class Presets
             var open = Product(Knobbed("math.pow", offBeat, 3f), theme);
 
             var hatLevel = Sum(shut, Times(open, 0.6f));
-            var hats = Product(Thinned(hiss, 7000f), hatLevel);
+            var hats = Product(Filtered(hiss, 7000f), hatLevel, High);
 
             Box("Hats");
 
@@ -328,7 +311,7 @@ public static partial class Presets
             // The wires are the noise with its bottom and its top taken off, and the
             // shell is a sine under them that is gone sooner: the envelope squared.
             var snareLevel = b.Add(NodeCatalog.AdsrTypeId, (1, -3.3f), (2, -0.8f), (3, 0f), (4, -1.2f));
-            var wires = Product(Times(Smoothed(Thinned(hiss, 1100f), 6500f * PerEvaluation), 2.2f), snareLevel);
+            var wires = Product(Times(Filtered(Filtered(hiss, 1100f), 6500f, from: High), 2.2f, Low), snareLevel);
             var shell = b.Add("osc.sine", (3, 0.6f));
             var snare = Product(
                 Sum(wires, Product(shell, Product(snareLevel, snareLevel))),
@@ -357,36 +340,26 @@ public static partial class Presets
             // The gate is as high as the note is loud, so smoothed it is the accent,
             // and the envelope times it is what opens the filter as well as the note.
             var bassEnv = b.Add(NodeCatalog.AdsrTypeId, (1, -3f), (2, -0.9f), (3, 0.4f), (4, -1.2f));
-            var pluck = Product(bassEnv, Smoothed(bassGate, 0.001f));
+            var pluck = Product(bassEnv, Slewed(bassGate, -1.6f));
 
-            // The filter: two Adds that are each their own 'a', which makes each an
-            // integrator. What goes into the first is the saw less what both of them
-            // hold, so the second settles on the saw's bottom and the first on the
-            // band round the cutoff — and how much of the first is taken off again is
-            // how much it rings. The cutoff is 'f', from seventy hertz with the
+            // The filter rings, and its cutoff runs from seventy hertz with the
             // envelope shut to as far up as the song has got.
             var saw = b.Add("osc.saw", (3, 0.8f));
-            var f = b.Add("math.remap", (1, 0f), (2, 1f), (3, 70f * PerEvaluation));
-            var band = b.Add("math.add");
-            var low = b.Add("math.add");
-            var high = Less(Less(saw, low), Times(band, 0.45f));
+            var cutoff = b.Add("math.remap", (1, 0f), (2, 1f), (3, 70f));
+            var filter = Filtered(saw, resonance: 0.8f);
 
             b.Wire(bassGate, 0, bassEnv, 0)
              .Wire(bassHz, 0, saw, 1)
-             .Wire(pluck, 0, f, 0)
-             .Wire(Span(song, 0f, 1f, 900f * PerEvaluation, 2600f * PerEvaluation), 0, f, 4)
-             .Wire(band, 0, band, 0)
-             .Wire(Product(f, high), 0, band, 1)
-             .Wire(low, 0, low, 0)
-             .Wire(Product(f, band), 0, low, 1);
+             .Wire(pluck, 0, cutoff, 0)
+             .Wire(Span(song, 0f, 1f, 900f, 2600f), 0, cutoff, 4)
+             .Wire(cutoff, 0, filter, 1);
 
-            // Overdriven then clipped, which is the cheapest waveshaper there is, and
-            // a sine at the same pitch added after it so that it stays a sine.
-            var grit = b.Add("math.clamp", (1, -1f), (2, 1f));
+            // Driven, and a sine at the same pitch added after it so that it stays a sine.
+            var grit = b.Add(NodeCatalog.DriveTypeId, (1, 3f));
             var sub = b.Add("osc.sine", (3, 0.75f));
             var bass = Product(Sum(grit, Product(sub, pluck)), duck, second: 2);
 
-            b.Wire(Times(Product(low, pluck), 2.2f), 0, grit, 0)
+            b.Wire(Product(filter, pluck, Low), 0, grit, 0)
              .Wire(bassHz, 0, sub, 1);
 
             Box("Bass");
@@ -414,18 +387,16 @@ public static partial class Presets
             var secondPlucked = b.Add(NodeCatalog.StringTypeId, (3, -0.15f));
 
             // A pluck is a burst of noise and the String loses very little of its top
-            // by itself, so each goes through two lowpasses in a row, which open as the
-            // song fills — from a nylon string to a steel one — and is made up after
-            // them for what they took.
-            var stringTone = Span(song, 0f, 1f, 900f * PerEvaluation, 2200f * PerEvaluation);
+            // by itself, so each goes through a lowpass, which opens as the song fills
+            // — from a nylon string to a steel one — and is made up after it for what
+            // it took.
+            var stringTone = Span(song, 0f, 1f, 900f, 2200f);
 
             NodeInstance Mellowed(NodeInstance plucked)
             {
-                var once = b.Add("math.mix");
-                var twice = b.Add("math.mix");
-                b.Wire(once, 0, once, 0).Wire(plucked, 0, once, 1).Wire(stringTone, 0, once, 2)
-                 .Wire(twice, 0, twice, 0).Wire(once, 0, twice, 1).Wire(stringTone, 0, twice, 2);
-                return Times(twice, 2.2f);
+                var filter = Filtered(plucked);
+                b.Wire(stringTone, 0, filter, 1);
+                return Times(filter, 2.2f, Low);
             }
 
             var firstString = Mellowed(firstPlucked);
@@ -474,21 +445,21 @@ public static partial class Presets
             // opens with the song.
             var padL = b.Add("math.mixer", (1, 0.8f), (3, 0.9f), (5, 0.35f));
             var padR = b.Add("math.mixer", (1, 0.8f), (3, 0.35f), (5, 0.9f));
-            var padTone = Span(song, 0f, 1f, 700f * PerEvaluation, 2400f * PerEvaluation);
-            var padToneL = b.Add("math.mix");
-            var padToneR = b.Add("math.mix");
+            var padTone = Span(song, 0f, 1f, 700f, 2400f);
+            var padToneL = Filtered(padL);
+            var padToneR = Filtered(padR);
 
             // A chord that cuts out is a mistake and one that swells is not, so its
-            // level gets where the lane says over about a second.
-            var padLevel = Product(Smoothed(song, 0.00001f, Gate), duck, second: 2);
+            // level gets where the lane says over a couple of seconds.
+            var padLevel = Product(Slewed(song, 0.4f, Gate), duck, second: 2);
 
             b.Wire(padRoot, 0, padL, 0).Wire(padMiddle, 0, padL, 2).Wire(padFifth, 0, padL, 4)
              .Wire(padRoot, 0, padR, 0).Wire(padMiddle, 0, padR, 2).Wire(padFifth, 0, padR, 4)
-             .Wire(padToneL, 0, padToneL, 0).Wire(padL, 0, padToneL, 1).Wire(padTone, 0, padToneL, 2)
-             .Wire(padToneR, 0, padToneR, 0).Wire(padR, 0, padToneR, 1).Wire(padTone, 0, padToneR, 2);
+             .Wire(padTone, 0, padToneL, 1)
+             .Wire(padTone, 0, padToneR, 1);
 
-            var padOutL = Product(padToneL, padLevel);
-            var padOutR = Product(padToneR, padLevel);
+            var padOutL = Product(padToneL, padLevel, Low);
+            var padOutR = Product(padToneR, padLevel, Low);
 
             Box("Pad");
 
@@ -537,9 +508,9 @@ public static partial class Presets
             // Left and right differ in which saw they carry and in nothing else, which
             // is where the width comes from. Each goes through a lowpass the envelope
             // opens, so a note starts bright and closes as it is held.
-            var leadTone = Span(leadEnv, 0f, 1f, 500f * PerEvaluation, 5200f * PerEvaluation);
-            var leadToneL = b.Add("math.mix");
-            var leadToneR = b.Add("math.mix");
+            var leadTone = Span(leadEnv, 0f, 1f, 500f, 5200f);
+            var leadToneL = Filtered(Sum(leadA, fifth));
+            var leadToneR = Filtered(Sum(leadB, fifth));
             var leadLevel = Product(leadEnv, Span(theme, 0f, 1f, 0.6f, 0.9f));
 
             b.Wire(leadNote, 1, wide, 0)
@@ -549,40 +520,26 @@ public static partial class Presets
              .Wire(Through("audio.note", Plus(leadStep, 7f)), 0, fifthOsc, 1)
              .Wire(leadGate, 0, leadEnv, 0)
              .Wire(Span(theme, 0f, 1f, 0.3f, 0.7f), 0, leadEnv, 3)
-             .Wire(leadToneL, 0, leadToneL, 0).Wire(Sum(leadA, fifth), 0, leadToneL, 1).Wire(leadTone, 0, leadToneL, 2)
-             .Wire(leadToneR, 0, leadToneR, 0).Wire(Sum(leadB, fifth), 0, leadToneR, 1).Wire(leadTone, 0, leadToneR, 2);
+             .Wire(leadTone, 0, leadToneL, 1)
+             .Wire(leadTone, 0, leadToneR, 1);
 
-            var leadL = Product(leadToneL, leadLevel);
-            var leadR = Product(leadToneR, leadLevel);
+            var leadL = Product(leadToneL, leadLevel, Low);
+            var leadR = Product(leadToneR, leadLevel, Low);
 
             Box("Lead");
 
             // --- the room --------------------------------------------------------
 
-            // What should sound further off than the drums, darkened, into six Strings
-            // nobody plucks. A String is a delay one period long that feeds itself, and
-            // tuned between twenty and forty hertz that period is the width of a small
-            // room — three to a side, each a quarter tone off any note the song has, so
-            // the room rings for all of them alike. Each hands back what went in as well, which is
-            // taken off again after them.
+            // What should sound further off than the drums, darkened, into a small
+            // room and nothing of it dry.
             var send = b.Add("math.mixer", (1, 0.5f), (3, 0.4f), (5, 0.5f), (7, 0.12f));
-            var dark = Smoothed(send, 2600f * PerEvaluation);
+            var room = b.Add(NodeCatalog.ReverbTypeId, (1, 0.3f), (2, 0.5f), (3, 1f));
 
             b.Wire(snare, 0, send, 0)
              .Wire(Sum(leadL, leadR), 0, send, 2)
              .Wire(strings, 0, send, 4)
-             .Wire(hats, 0, send, 6);
-
-            NodeInstance Wall(float hz)
-            {
-                var wall = b.Add(NodeCatalog.StringTypeId, (2, hz), (3, 0.1f), (4, 0.25f));
-                b.Wire(dark, 0, wall, 0);
-                return wall;
-            }
-
-            var dry = Times(dark, 3f);
-            var roomL = Less(Sum(Sum(Wall(22.47f), Wall(29.99f)), Wall(37.78f)), dry);
-            var roomR = Less(Sum(Sum(Wall(25.22f), Wall(33.66f)), Wall(40.03f)), dry);
+             .Wire(hats, 0, send, 6)
+             .Wire(Filtered(send, 2600f), Low, room, 0);
 
             Box("Room");
 
@@ -611,8 +568,8 @@ public static partial class Presets
              .Wire(padOutR, 0, music, 4)
              .Wire(leadL, 0, music, 6)
              .Wire(leadR, 0, music, 7)
-             .Wire(roomL, 0, music, 9)
-             .Wire(roomR, 0, music, 10)
+             .Wire(room, 0, music, 9)
+             .Wire(room, 1, music, 10)
 
              .Wire(drums, 2, music, 12)
              .Wire(drums, 3, music, 13)
