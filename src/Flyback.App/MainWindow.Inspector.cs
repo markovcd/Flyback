@@ -149,10 +149,6 @@ public sealed partial class MainWindow
     }
 
     /// <summary>
-    /// The row of a list nearest a saved value, so a value written by hand that
-    /// the list does not offer shows as the closest one that it does.
-    /// </summary>
-    /// <summary>
     /// Shows which preset the window starts on, listing the one chosen even where
     /// this launch does not offer it.
     /// </summary>
@@ -178,6 +174,10 @@ public sealed partial class MainWindow
             : PresetLibrary.Opening(presets, chosen);
     }
 
+    /// <summary>
+    /// The row of a list nearest a saved value, so a value written by hand that
+    /// the list does not offer shows as the closest one that it does.
+    /// </summary>
     private static int Nearest(IReadOnlyList<double> rows, double value) =>
         Enumerable.Range(0, rows.Count).MinBy(row => Math.Abs(rows[row] - value));
 
@@ -667,17 +667,6 @@ public sealed partial class MainWindow
     };
 
     /// <summary>
-    /// The name at the top of the panel, which a double-click turns into a box to
-    /// type another one into.
-    /// </summary>
-    /// <remarks>
-    /// A module is a thing on a canvas before it is a type, and a patch with four
-    /// Mixers in it is one you have to follow a wire to read. The name is only ever
-    /// a label: nothing is found by it. Transparent rather than unpainted, because
-    /// a <see cref="TextBlock"/> with no background is not there as far as the
-    /// pointer is concerned.
-    /// </remarks>
-    /// <summary>
     /// What a group shows: its name, its edge, and what can be done to it.
     /// </summary>
     /// <remarks>
@@ -917,12 +906,6 @@ public sealed partial class MainWindow
             });
     }
 
-    /// <summary>
-    /// A question and its two answers on one row: the tick acts, the cross backs
-    /// out. The same shape and glyphs the module list uses to ask about a row it is
-    /// told to forget — small, immediate, and about the thing under it.
-    /// </summary>
-
     private Control BuildGroupTitle(NodeGroup group, IBrush ink)
     {
         var title = new TextBlock
@@ -961,6 +944,17 @@ public sealed partial class MainWindow
         return title;
     }
 
+    /// <summary>
+    /// The name at the top of the panel, which a double-click turns into a box to
+    /// type another one into.
+    /// </summary>
+    /// <remarks>
+    /// A module is a thing on a canvas before it is a type, and a patch with four
+    /// Mixers in it is one you have to follow a wire to read. The name is only ever
+    /// a label: nothing is found by it. Transparent rather than unpainted, because
+    /// a <see cref="TextBlock"/> with no background is not there as far as the
+    /// pointer is concerned.
+    /// </remarks>
     private Control BuildTitle(NodeInstance node, NodeDef def, IBrush ink)
     {
         var title = new TextBlock

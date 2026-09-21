@@ -555,19 +555,6 @@ public sealed partial class MainWindow
     private bool Coding => showingCode;
 
     /// <summary>
-    /// Takes back the last thing done to whichever view is showing — or, where that
-    /// view has nothing left, the last thing done to the patch.
-    /// </summary>
-    /// <remarks>
-    /// Where the text is the document, its stack is the document's history from
-    /// either view: typing, applying and turning a knob are one run of things
-    /// somebody did, so the last two go on that stack rather than on a second one
-    /// to be interleaved later by guessing. Where the graph is the document the two
-    /// are independent and undo follows the view. Either way the gesture falls
-    /// through when its stack is empty, or applying a printing — loaded rather than
-    /// typed — would be the one thing nobody could take back.
-    /// </remarks>
-    /// <summary>
     /// Which stack a press of undo or redo lands on, and nothing where it lands on
     /// neither.
     /// </summary>
@@ -617,6 +604,19 @@ public sealed partial class MainWindow
     /// </remarks>
     private int? sinceHandover;
 
+    /// <summary>
+    /// Takes back the last thing done to whichever view is showing — or, where that
+    /// view has nothing left, the last thing done to the patch.
+    /// </summary>
+    /// <remarks>
+    /// Where the text is the document, its stack is the document's history from
+    /// either view: typing, applying and turning a knob are one run of things
+    /// somebody did, so the last two go on that stack rather than on a second one
+    /// to be interleaved later by guessing. Where the graph is the document the two
+    /// are independent and undo follows the view. Either way the gesture falls
+    /// through when its stack is empty, or applying a printing — loaded rather than
+    /// typed — would be the one thing nobody could take back.
+    /// </remarks>
     private void Undo()
     {
         if (Gesturing) return;

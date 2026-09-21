@@ -18,6 +18,10 @@ namespace Flyback.App.Controls;
 /// </remarks>
 internal static class Question
 {
+    /// <summary>
+    /// A question and its two answers on one row: the tick acts, the cross backs
+    /// out.
+    /// </summary>
     /// <param name="margin">Where the row sits in whatever is holding it.</param>
     /// <param name="answered">
     /// True for the tick and false for the cross. Always called exactly once,
