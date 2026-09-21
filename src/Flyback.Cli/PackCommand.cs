@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Flyback.Core;
 using Flyback.Core.Graph;
+using Flyback.Core.Render;
 
 namespace Flyback.Cli;
 
@@ -80,22 +81,10 @@ internal static class PackCommand
     }
 
     /// <summary>
-    /// The bytes of a file the patch names, measured from beside the patch, and
-    /// null for anything that cannot be read. Deliberately broad: a path that is
-    /// nonsense, a file that has gone and one that is locked are all the same
-    /// answer to a bundle, which reports them together.
+    /// The bytes of a file the patch names, and null for anything a bundle will
+    /// not carry — see <see cref="PatchPaths.Carriable"/>. A path that is
+    /// nonsense, a file that has gone and one that is not a sound or a picture
+    /// are all the same answer to a bundle, which reports them together.
     /// </summary>
-    private static byte[]? Bytes(string beside, string path)
-    {
-        try
-        {
-            var full = Path.IsPathRooted(path) ? path : Path.Combine(beside, path);
-
-            return File.Exists(full) ? File.ReadAllBytes(full) : null;
-        }
-        catch (Exception)
-        {
-            return null;
-        }
-    }
+    private static byte[]? Bytes(string beside, string path) => PatchPaths.Carriable(path, beside);
 }

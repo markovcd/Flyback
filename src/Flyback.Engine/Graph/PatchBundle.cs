@@ -199,6 +199,7 @@ public static class PatchBundle
         {
             if (!entry.FullName.StartsWith(FilesFolder, StringComparison.OrdinalIgnoreCase)) continue;
             if (entry.FullName.EndsWith('/')) continue;
+            if (!Flat(entry.FullName[FilesFolder.Length..])) continue;
 
             using var reading = entry.Open();
             using var bytes = new MemoryStream();
@@ -284,6 +285,16 @@ public static class PatchBundle
 
         return tried;
     }
+
+    /// <summary>
+    /// Whether a name under <see cref="FilesFolder"/> is one <see cref="Write"/>
+    /// could have made: a plain file name, with no folder to climb out through.
+    /// </summary>
+    private static bool Flat(string name) =>
+        name.Length > 0
+        && name.IndexOfAny(['/', '\\', ':']) < 0
+        && name != "." && name != ".."
+        && name.IndexOfAny(Path.GetInvalidFileNameChars()) < 0;
 
     /// <summary>The last part of a path, whichever kind of separator it used, and never empty.</summary>
     private static string Safe(string path)

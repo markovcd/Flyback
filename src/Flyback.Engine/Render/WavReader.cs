@@ -23,6 +23,9 @@ public enum WavFault
     /// <summary>A WAVE this reader does not know how to read.</summary>
     Unsupported,
 
+    /// <summary>On another machine, where a patch is not allowed to reach.</summary>
+    Elsewhere,
+
     /// <summary>A WAVE with no audio in it.</summary>
     Empty,
 }

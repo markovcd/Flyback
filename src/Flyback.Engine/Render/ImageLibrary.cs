@@ -38,6 +38,7 @@ public sealed class ImageLibrary : IImageLibrary
         PngFault.NotPng => "it is not a PNG.",
         PngFault.Unsupported => "it is a PNG this cannot read — 8 or 16 bit, and not interlaced.",
         PngFault.Corrupt => "the picture in it is damaged.",
+        PngFault.Elsewhere => "it is on another machine. Copy it beside the patch.",
         PngFault.Empty => "there is no picture in it.",
         _ => "it could not be read.",
     };
@@ -46,7 +47,7 @@ public sealed class ImageLibrary : IImageLibrary
     public void Forget(string? path = null)
     {
         if (path is null) known.Clear();
-        else known.Remove(Full(path));
+        else if (PatchPaths.Resolve(path, Beside) is { } full) known.Remove(full);
     }
 
     /// <summary>How many files this is holding, which is what a test asks to see a cache work.</summary>
@@ -56,31 +57,11 @@ public sealed class ImageLibrary : IImageLibrary
     {
         if (string.IsNullOrWhiteSpace(path)) return (null, PngFault.Missing);
 
-        var full = Full(path);
+        if (PatchPaths.Resolve(path, Beside) is not { } full) return (null, PngFault.Elsewhere);
 
         if (known.TryGetValue(full, out var already)) return already;
 
         var picture = PngReader.Read(full, out var fault);
         return known[full] = (picture, fault);
-    }
-
-    private string Full(string path)
-    {
-        var trimmed = path.Trim();
-
-        try
-        {
-            return Beside is { Length: > 0 } folder && !Path.IsPathRooted(trimmed)
-                ? Path.GetFullPath(Path.Combine(folder, trimmed))
-                : Path.GetFullPath(trimmed);
-        }
-        catch (ArgumentException)
-        {
-            return trimmed;
-        }
-        catch (PathTooLongException)
-        {
-            return trimmed;
-        }
     }
 }

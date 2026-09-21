@@ -48,6 +48,7 @@ public sealed class SampleLibrary : ISampleLibrary
         WavFault.Missing => "there is no file there.",
         WavFault.NotWave => "it is not a WAV file.",
         WavFault.Unsupported => "it is a WAV this cannot read — PCM only, 8 to 32 bit or float.",
+        WavFault.Elsewhere => "it is on another machine. Copy it beside the patch.",
         WavFault.Empty => "there is no audio in it.",
         _ => "it could not be read.",
     };
@@ -59,7 +60,7 @@ public sealed class SampleLibrary : ISampleLibrary
     public void Forget(string? path = null)
     {
         if (path is null) known.Clear();
-        else known.Remove(Full(path));
+        else if (PatchPaths.Resolve(path, Beside) is { } full) known.Remove(full);
     }
 
     /// <summary>How many files this is holding, which is what a test asks to see a cache work.</summary>
@@ -69,38 +70,11 @@ public sealed class SampleLibrary : ISampleLibrary
     {
         if (string.IsNullOrWhiteSpace(path)) return (null, WavFault.Missing);
 
-        var full = Full(path);
+        if (PatchPaths.Resolve(path, Beside) is not { } full) return (null, WavFault.Elsewhere);
 
         if (known.TryGetValue(full, out var already)) return already;
 
         var clip = WavReader.Read(full, out var fault);
         return known[full] = (clip, fault);
-    }
-
-    /// <summary>
-    /// The path as the filesystem will be asked for it: a relative one measured
-    /// from <see cref="Beside"/>, and anything else left as it is.
-    /// </summary>
-    private string Full(string path)
-    {
-        var trimmed = path.Trim();
-
-        try
-        {
-            return Beside is { Length: > 0 } folder && !Path.IsPathRooted(trimmed)
-                ? Path.GetFullPath(Path.Combine(folder, trimmed))
-                : Path.GetFullPath(trimmed);
-        }
-        catch (ArgumentException)
-        {
-            // A path with characters no filesystem will take. Handed back as it
-            // came so the complaint quotes what the patch actually says, and the
-            // read that follows will fail the ordinary way.
-            return trimmed;
-        }
-        catch (PathTooLongException)
-        {
-            return trimmed;
-        }
     }
 }

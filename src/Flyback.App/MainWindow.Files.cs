@@ -363,11 +363,8 @@ public sealed partial class MainWindow
 
         foreach (var path in PatchBundle.Files(editor.Patch, plugins.Modules))
         {
-            if (Path.IsPathRooted(path) || !held.Bytes.TryGetValue(path, out var bytes)) continue;
-
-            var into = Path.Combine(folder, path.Replace('/', Path.DirectorySeparatorChar));
-
-            if (File.Exists(into)) continue;
+            if (!held.Bytes.TryGetValue(path, out var bytes)) continue;
+            if (PatchPaths.Inside(folder, path) is not { } into || File.Exists(into)) continue;
 
             Directory.CreateDirectory(Path.GetDirectoryName(into)!);
             File.WriteAllBytes(into, bytes);
@@ -393,18 +390,7 @@ public sealed partial class MainWindow
     {
         if (carried is { } held && held.Bytes.TryGetValue(path, out var bytes)) return bytes;
 
-        try
-        {
-            var full = Path.IsPathRooted(path) || soundFolder.Beside is not { Length: > 0 } folder
-                ? path
-                : Path.Combine(folder, path);
-
-            return File.Exists(full) ? File.ReadAllBytes(full) : null;
-        }
-        catch (Exception)
-        {
-            return null;
-        }
+        return PatchPaths.Carriable(path, soundFolder.Beside);
     }
 
     /// <summary>

@@ -14,6 +14,7 @@ public enum PngFault
     Unsupported,
     Corrupt,
     Empty,
+    Elsewhere,
 }
 
 /// <summary>

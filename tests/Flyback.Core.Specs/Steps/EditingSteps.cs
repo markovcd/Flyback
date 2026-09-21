@@ -1,8 +1,10 @@
+using System.IO.Compression;
 using Reqnroll;
 using Shouldly;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Core.Language;
+using Flyback.Core.Render;
 using Flyback.Core.Specs.Support;
 
 namespace Flyback.Core.Specs.Steps;
@@ -214,6 +216,85 @@ public sealed class EditingSteps(PatchContext context, Session session)
         var fragment = PatchClipboard.Copy(context.Patch, ids);
         session.Pasted = PatchClipboard.Paste(context.Patch, fragment, 40, 40);
         context.Replace(context.Patch);
+    }
+
+    // --- somebody else's files ------------------------------------------------
+
+    private string? folder;
+    private string? pictured;
+    private BundleReport shared;
+    private byte[]? bundle;
+    private LoadedBundle unpacked;
+
+    [AfterScenario]
+    public void RemoveTheFolder()
+    {
+        if (folder is not null) Directory.Delete(folder, recursive: true);
+    }
+
+    [Given("a picture module pointed at a private key on this machine")]
+    public void GivenAPictureThatIsAKey()
+    {
+        folder = Directory.CreateTempSubdirectory("flyback-specs").FullName;
+        pictured = Path.Combine(folder, "id_rsa");
+        File.WriteAllText(pictured, "-----BEGIN OPENSSH PRIVATE KEY-----");
+
+        PictureExtra.Set(context.Add("shown", NodeCatalog.PictureTypeId), pictured);
+    }
+
+    [Given("a picture module pointed at a picture on another machine")]
+    public void GivenAPictureElsewhere()
+    {
+        pictured = @"\\somebody\share\moon.png";
+
+        PictureExtra.Set(context.Add("shown", NodeCatalog.PictureTypeId), pictured);
+    }
+
+    [When("the patch is saved as a bundle")]
+    public void WhenSavedAsABundle()
+    {
+        shared = PatchBundle.Write(new MemoryStream(), context.Patch, path => PatchPaths.Carriable(path, folder));
+    }
+
+    [Then("the bundle carries nothing, and says the key could not be read")]
+    public void ThenTheKeyStaysBehind()
+    {
+        shared.Carried.ShouldBeEmpty();
+        shared.Missing.ShouldBe([pictured!]);
+    }
+
+    [Given("a bundle holding a file named to climb out of its folder")]
+    public void GivenABundleThatClimbsOut()
+    {
+        PictureExtra.Set(context.Add("shown", NodeCatalog.PictureTypeId), "moon.png");
+
+        using var packed = new MemoryStream();
+        PatchBundle.Write(packed, context.Patch, _ => [1, 2, 3]);
+
+        using (var zip = new ZipArchive(packed, ZipArchiveMode.Update, leaveOpen: true))
+        using (var writing = zip.CreateEntry(PatchBundle.FilesFolder + "../../Startup/run.bat").Open())
+            writing.Write([1, 2, 3]);
+
+        bundle = packed.ToArray();
+    }
+
+    [When("the bundle is opened")]
+    public void WhenTheBundleIsOpened()
+    {
+        unpacked = PatchBundle.Read(new MemoryStream(bundle.ShouldNotBeNull()));
+    }
+
+    [Then("it carries only the files it packed")]
+    public void ThenOnlyItsOwnFiles() =>
+        unpacked.Files.Keys.ShouldBe([PatchBundle.FilesFolder + "moon.png"]);
+
+    [Then("the picture is not looked for, because it is on another machine")]
+    public void ThenNotLookedFor()
+    {
+        var pictures = new ImageLibrary();
+
+        pictures.Find(pictured!).ShouldBeNull();
+        pictures.Explain(pictured!).ShouldContain("another machine");
     }
 
     private void Rainbow()

@@ -417,6 +417,36 @@ public class PatchBundleTests
             .ShouldBeSameAs(((IImageLibrary)files).Find("files/moon.png"));
     }
 
+    /// <summary>
+    /// A bundle is somebody else's file, and an entry named to climb out of
+    /// <see cref="PatchBundle.FilesFolder"/> would be written wherever it points
+    /// when the patch is saved loose.
+    /// </summary>
+    [Theory]
+    [InlineData("files/../../Startup/run.bat")]
+    [InlineData(@"files/..\..\Startup\run.bat")]
+    [InlineData("files/sub/run.bat")]
+    [InlineData("files/C:run.bat")]
+    [InlineData("files/..")]
+    public void A_bundle_entry_that_is_not_a_plain_file_name_is_not_read(string name)
+    {
+        Packed(Both(), out var archive);
+
+        var stream = new MemoryStream();
+        stream.Write(archive);
+
+        using (var zip = new ZipArchive(stream, ZipArchiveMode.Update, leaveOpen: true))
+        using (var writing = zip.CreateEntry(name).Open())
+            writing.Write([1, 2, 3]);
+
+        stream.Position = 0;
+
+        var read = PatchBundle.Read(stream, NodeCatalog.BuiltIn);
+
+        read.Files.Keys.ShouldNotContain(name);
+        read.Files.Count.ShouldBe(2);
+    }
+
     // --- harness ---------------------------------------------------------------
 
     private static BundleReport Packed(Patch patch, out byte[] archive, Func<string, byte[]?>? open = null)
