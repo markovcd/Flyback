@@ -1256,7 +1256,7 @@ public sealed class Binder
 
         if (def.Extra<ScaleExtra>() is not null)
         {
-            ScaleExtra.Set(node, Classes(block, line));
+            ScaleExtra.Set(node, StepNotation.Classes(block, line, issues));
             return;
         }
 
@@ -1300,34 +1300,7 @@ public sealed class Binder
         }
 
         laid = true;
-        patch.KeyboardScale = statement.Scale is { } block ? Pitch.Scale(Classes(block, statement.Line)) : null;
-    }
-
-    /// <summary>The pitch classes a scale block names, by letter or by number.</summary>
-    private List<int> Classes(string block, int line)
-    {
-        var classes = new List<int>();
-
-        foreach (var word in block.Split([' ', '\t', '\r', '\n', ','], StringSplitOptions.RemoveEmptyEntries))
-        {
-            // A class is a note with no octave, so it is read as one in the
-            // octave that starts at zero and then reduced.
-            if (Lexer.Note(word + "0") is { } note)
-            {
-                classes.Add(((int)note % Pitch.Classes + Pitch.Classes) % Pitch.Classes);
-                continue;
-            }
-
-            if (int.TryParse(word, out var number) && number is >= 0 and < Pitch.Classes)
-            {
-                classes.Add(number);
-                continue;
-            }
-
-            issues.Add(new LanguageIssue(line, 1, $"'{word}' is not a note of the octave."));
-        }
-
-        return classes;
+        patch.KeyboardScale = statement.Scale is { } block ? Pitch.Scale(StepNotation.Classes(block, statement.Line, issues)) : null;
     }
 
     /// <summary>

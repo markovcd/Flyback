@@ -55,6 +55,33 @@ public static class StepNotation
         return new StepBlock(steps, passes);
     }
 
+    /// <summary>The pitch classes a scale block names, by letter or by number.</summary>
+    internal static List<int> Classes(string block, int line, List<LanguageIssue> issues)
+    {
+        var classes = new List<int>();
+
+        foreach (var word in block.Split([' ', '\t', '\r', '\n', ','], StringSplitOptions.RemoveEmptyEntries))
+        {
+            // A class is a note with no octave, so it is read as one in the
+            // octave that starts at zero and then reduced.
+            if (Lexer.Note(word + "0") is { } note)
+            {
+                classes.Add(((int)note % Pitch.Classes + Pitch.Classes) % Pitch.Classes);
+                continue;
+            }
+
+            if (int.TryParse(word, out var number) && number is >= 0 and < Pitch.Classes)
+            {
+                classes.Add(number);
+                continue;
+            }
+
+            issues.Add(new LanguageIssue(line, 1, $"'{word}' is not a note of the octave."));
+        }
+
+        return classes;
+    }
+
     private static int Lcm(int a, int b) => a / Gcd(a, b) * b;
 
     private static int Gcd(int a, int b) => b == 0 ? a : Gcd(b, a % b);
