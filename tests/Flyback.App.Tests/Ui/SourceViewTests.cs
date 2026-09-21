@@ -6,6 +6,7 @@ using Avalonia.Headless.XUnit;
 using Avalonia.Threading;
 using AvaloniaEdit;
 using Flyback.App.Controls;
+using Flyback.Core.Graph;
 using Shouldly;
 
 namespace Flyback.App.Tests.Ui;
@@ -1393,7 +1394,11 @@ public class SourceViewTests : UiTest
     {
         var slider = All<Slider>(window).First();
 
-        slider.Value = to;
+        // The first knob's slider, which on a socket with a knee is travel rather than value.
+        var node = Editor(window).SelectedNode.ShouldNotBeNull();
+        var spec = NodeCatalog.Require(node.TypeId).Inputs.First(p => NodeCatalog.Normalled(p) is null && !p.NeedsAWire);
+
+        slider.Value = spec.Knee > 0f ? spec.Travel((float)to, spec.Min, spec.Max) : to;
         Settle(window);
 
         Release(slider);

@@ -348,12 +348,18 @@ internal sealed class InspectorRows(Action<string?> changed, Action handOff)
         Grid.SetColumn(caption, 0);
         row.Children.Add(caption);
 
+        // Widen the range if a saved value sits outside the module's usual span.
+        var min = Math.Min(spec.Min, value);
+        var max = Math.Max(spec.Max, value);
+
+        // A socket with a knee slides in travel rather than in value.
+        var tapered = spec.Knee > 0f;
+
         var slider = new Slider
         {
-            // Widen the range if a saved value sits outside the module's usual span.
-            Minimum = Math.Min(spec.Min, value),
-            Maximum = Math.Max(spec.Max, value),
-            Value = value,
+            Minimum = tapered ? 0 : min,
+            Maximum = tapered ? 1 : max,
+            Value = Place(value),
             VerticalAlignment = VerticalAlignment.Center,
             Margin = new Thickness(4, 0),
 
@@ -390,7 +396,7 @@ internal sealed class InspectorRows(Action<string?> changed, Action handOff)
         slider.PropertyChanged += (_, e) =>
         {
             if (e.Property == RangeBase.ValueProperty && e.NewValue is double d)
-                Apply((float)d);
+                Apply(tapered ? spec.At(d, min, max) : (float)d);
         };
 
         numeric.ValueChanged += (_, e) =>
@@ -419,12 +425,14 @@ internal sealed class InspectorRows(Action<string?> changed, Action handOff)
 
             updating = true;
             store(next);
-            slider.Value = next;
+            slider.Value = Place(next);
             numeric.Value = Boxed.Of(next);
             name.Text = spec.Format(next);
             updating = false;
 
             changed(because);
         }
+
+        double Place(float at) => tapered ? spec.Travel(at, min, max) : at;
     }
 }

@@ -259,13 +259,13 @@ public class InspectorWiringTests : UiTest
         // The first knob on a Sine is 'freq': 'in' is above it and is normalled,
         // so it has a row and no slider in it.
         var knob = All<Slider>(window).First();
-        var was = knob.Value;
+        var was = sine.InputValues[1];
 
-        knob.Value = was + 0.25;
+        knob.Value += 0.25;
         Settle(window);
 
         All<Slider>(window).ShouldContain(knob);
-        sine.InputValues[1].ShouldBe((float)(was + 0.25), 0.001f);
+        sine.InputValues[1].ShouldBeGreaterThan(was);
     }
 
     /// <summary>Lets go of the pointer over a control, which is what ends a gesture.</summary>
@@ -301,14 +301,17 @@ public class InspectorWiringTests : UiTest
         Select(window, sine);
 
         var knob = All<Slider>(window).First();
-        var was = (float)knob.Value;
+        var was = sine.InputValues[1];
+        var at = knob.Value;
 
-        knob.Value = was + 0.25;
+        knob.Value = at + 0.25;
         Settle(window);
         Release(knob);
         Settle(window);
 
-        knob.Value = was + 0.5;
+        var first = Editor(window).Patch.Find(sine.Id).ShouldNotBeNull().InputValues[1];
+
+        knob.Value = at + 0.5;
         Settle(window);
         Release(knob);
         Settle(window);
@@ -316,7 +319,7 @@ public class InspectorWiringTests : UiTest
         Editor(window).Undo().ShouldBeTrue();
 
         Editor(window).Patch.Find(sine.Id).ShouldNotBeNull()
-            .InputValues[1].ShouldBe(was + 0.25f, 0.001f, "the second drag is what came back");
+            .InputValues[1].ShouldBe(first, 0.001f, "the second drag is what came back");
 
         Editor(window).Undo().ShouldBeTrue("and the first is still there to take back");
 

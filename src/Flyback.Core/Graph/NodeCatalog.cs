@@ -93,6 +93,12 @@ public static partial class NodeCatalog
     public static PortNormal Down => new(CoordTypeId, CoordYPort);
 
     /// <summary>
+    /// An oscillator's rate, from standing still to the top of hearing: the lower
+    /// half of the knob's travel is LFO territory up to 20 Hz, the upper half is pitch.
+    /// </summary>
+    public static PortSpec Freq => new("freq", PortKind.Scalar, 1f, 0f, 20_000f) { Knee = 0.02f };
+
+    /// <summary>
     /// The axis a module is read across rather than a value it uses. Named at the
     /// port because only the module knows which input that is.
     /// </summary>

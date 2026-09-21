@@ -98,7 +98,7 @@ A module is declared like this, in one of the `NodeCatalog.*.cs` partials:
 yield return new NodeDef(
     "osc.pulse", "Pulse", ModuleCategories.Oscillators,
     [
-        Domain("in"), Num("freq", 1f, 0f, 16f), Num("phase", 0f, 0f, 1f), Num("width", 0.5f, 0f, 1f),
+        Domain("in"), Freq, Num("phase", 0f, 0f, 1f), Num("width", 0.5f, 0f, 1f),
         Num("amp", 1f, 0f, 2f), Num("bias", 0f, -2f, 2f)
     ],
     [Num("out")],

@@ -4,3 +4,8 @@ Flyback.Core.Graph.Patch.Description.get -> string?
 Flyback.Core.Graph.Patch.Description.set -> void
 Flyback.Core.Graph.Patch.Describe(string? to) -> void
 static Flyback.Core.Graph.Patch.Tidied(string? text) -> string?
+Flyback.Core.Graph.PortSpec.At(double travel, float min, float max) -> float
+Flyback.Core.Graph.PortSpec.Knee.get -> float
+Flyback.Core.Graph.PortSpec.Knee.init -> void
+Flyback.Core.Graph.PortSpec.Travel(float value, float min, float max) -> double
+static Flyback.Core.Graph.NodeCatalog.Freq.get -> Flyback.Core.Graph.PortSpec

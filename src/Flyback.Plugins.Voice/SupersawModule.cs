@@ -62,7 +62,7 @@ internal static class SupersawModule
             // a knob it was seven saws holding still, which is the same nothing
             // one saw holds.
             new PortSpec("in", NormalledTo: NodeCatalog.Clock, Domain: true),
-            new PortSpec("freq", PortKind.Scalar, 1f, 0f, 16f),
+            NodeCatalog.Freq,
             new PortSpec("detune", PortKind.Scalar, 0.3f, 0f, 1f),
             new PortSpec("mix", PortKind.Scalar, 0.75f, 0f, 1f),
             new PortSpec("phase", PortKind.Scalar, 0f, 0f, 1f),

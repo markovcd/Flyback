@@ -176,4 +176,37 @@ public readonly record struct PortSpec(
 
     /// <summary>Whether the editor should let this value rest only on whole numbers.</summary>
     public bool Stepped => Display is PortDisplay.Note or PortDisplay.Integer;
+
+    /// <summary>
+    /// How far above the bottom of the range a control stops sweeping evenly and
+    /// starts sweeping in decades, or 0 for an even sweep throughout. Only the
+    /// editor reads it; the stored value is the value.
+    /// </summary>
+    /// <remarks>
+    /// A frequency from a slow wobble to the top of hearing is six decades, and
+    /// swept evenly every LFO setting is inside the first thousandth of the travel.
+    /// </remarks>
+    public float Knee { get; init; }
+
+    /// <summary>How far along a control spanning <paramref name="min"/> to <paramref name="max"/> <paramref name="value"/> sits, 0 to 1.</summary>
+    public double Travel(float value, float min, float max)
+    {
+        if (max <= min) return 0.5;
+
+        var at = Math.Clamp(value, min, max) - (double)min;
+
+        return Knee > 0f
+            ? Math.Log(1 + at / Knee) / Math.Log(1 + (max - (double)min) / Knee)
+            : at / (max - (double)min);
+    }
+
+    /// <summary>The value <paramref name="travel"/> of the way along a control spanning <paramref name="min"/> to <paramref name="max"/>.</summary>
+    public float At(double travel, float min, float max)
+    {
+        travel = Math.Clamp(travel, 0, 1);
+
+        return Knee > 0f
+            ? (float)(min + Knee * (Math.Pow(1 + (max - (double)min) / Knee, travel) - 1))
+            : (float)(min + (max - (double)min) * travel);
+    }
 }

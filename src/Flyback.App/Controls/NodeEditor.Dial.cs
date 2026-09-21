@@ -26,7 +26,7 @@ public sealed partial class NodeEditor
     private static readonly Cursor DialCursor = new(StandardCursorType.SizeNorthSouth);
 
     /// <summary>The socket being turned, and the range it turns across.</summary>
-    private (Guid Node, int Port, float Min, float Max, float Was, bool Stepped)? dialed;
+    private (Guid Node, int Port, float Min, float Max, float Was, PortSpec Spec)? dialed;
 
     /// <summary>How far along its range the socket is turned, 0 to 1, kept apart from the value so a stepped socket still turns smoothly.</summary>
     private double dialAt;
@@ -70,8 +70,8 @@ public sealed partial class NodeEditor
         var min = Math.Min(spec.Min, value);
         var max = Math.Max(spec.Max, value);
 
-        dialed = (nodeId, port, min, max, value, spec.Stepped);
-        dialAt = max > min ? (value - min) / (max - min) : 0.5;
+        dialed = (nodeId, port, min, max, value, spec);
+        dialAt = spec.Travel(value, min, max);
         dialLast = dialHome = screen;
 
         tipped = null;
@@ -105,8 +105,8 @@ public sealed partial class NodeEditor
             DropDialAnchor();
         }
 
-        var value = (float)(d.Min + (d.Max - d.Min) * dialAt);
-        if (d.Stepped) value = MathF.Round(value);
+        var value = d.Spec.At(dialAt, d.Min, d.Max);
+        if (d.Spec.Stepped) value = MathF.Round(value);
 
         SetDialed(d.Node, d.Port, value);
     }
@@ -156,7 +156,7 @@ public sealed partial class NodeEditor
             || NodeCatalog.Get(node.TypeId) is not { } def)
             return;
 
-        var share = d.Max > d.Min ? Math.Clamp((node.InputValues[d.Port] - d.Min) / (d.Max - d.Min), 0d, 1d) : dialAt;
+        var share = d.Max > d.Min ? d.Spec.Travel(node.InputValues[d.Port], d.Min, d.Max) : dialAt;
 
         NodeSkin.DrawPort(context, Scene.InputAnchor(node, def, d.Port), def.Inputs[d.Port].Kind, share, DialedBrush);
     }
