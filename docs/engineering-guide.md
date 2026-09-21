@@ -793,8 +793,8 @@ Scenario: Every socket normalled to Time shares one reading of it
   Then the program contains exactly 1 "LoadT" op
 ```
 
-One binding class, `PatchSteps`, serves every feature, with a fresh `PatchContext`
-per scenario. Every new feature ships with at least one scenario, written as the
+`PatchSteps` holds the general vocabulary and `RequirementSteps` the phrases a
+patch author would use, sharing a fresh `PatchContext` per scenario. Every new feature ships with at least one scenario, written as the
 requirement a user relies on rather than as the wiring that proves it; the steps
 carry the mechanics (see `.claude/rules/tests.md`). The sound steps evaluate the
 audio program at 1 kHz without the renderer's filters, so a sample is exactly what

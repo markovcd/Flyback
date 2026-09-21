@@ -1,4 +1,3 @@
-using System.Globalization;
 using Reqnroll;
 using Shouldly;
 using Flyback.Core.Compile;
@@ -7,16 +6,14 @@ using Flyback.Core.Specs.Support;
 namespace Flyback.Core.Specs.Steps;
 
 /// <summary>
-/// The whole vocabulary the feature files are written in. Kept as one binding
-/// class because the steps are general — every scenario names modules, wires
-/// them, compiles and then inspects either the program or a rendered pixel.
+/// The general vocabulary: name modules, wire them, compile, and inspect the
+/// program or a rendered pixel. Phrases a patch author would use are in
+/// <see cref="RequirementSteps"/>.
 /// </summary>
 [Binding]
 public sealed class PatchSteps(PatchContext context)
 {
     private const float Tolerance = 1.5f / 255f;
-
-    private const double SampleTolerance = 1e-3;
 
     [Given("a patch containing:")]
     public void GivenAPatchContaining(DataTable modules)
@@ -45,50 +42,11 @@ public sealed class PatchSteps(PatchContext context)
     public void GivenTruncatedInputValues(string name, int count) =>
         context.Node(name).InputValues = [.. context.Node(name).InputValues.Take(count)];
 
-    [Given("{string} is switched off")]
-    public void GivenSwitchedOff(string name) => context.Node(name).Off = true;
-
     [When("the patch is compiled")]
     public void WhenThePatchIsCompiled() => context.Compile();
 
     [When("the patch is compiled for {word}")]
     public void WhenThePatchIsCompiledFor(string sink) => context.CompileFor(sink);
-
-    [When("the sound plays for {int} sample(s)")]
-    public void WhenTheSoundPlays(int samples) => context.Play(samples);
-
-    [When("{string} input {string} is turned to {float}")]
-    public void WhenAKnobIsTurned(string name, string port, float value) => context.Turn(name, port, value);
-
-    [Then("the sound at {float} seconds is about {float}")]
-    public void ThenTheSoundAt(float seconds, float expected) =>
-        context.SampleAt((int)Math.Round(seconds * PatchContext.SampleRate))
-            .ShouldBe(expected, SampleTolerance, $"at {seconds} s");
-
-    [Then("the sound begins {string}")]
-    public void ThenTheSoundBegins(string samples)
-    {
-        var expected = samples.Split(',').Select(s => double.Parse(s, CultureInfo.InvariantCulture)).ToArray();
-
-        for (var i = 0; i < expected.Length; i++)
-            context.SampleAt(i).ShouldBe(expected[i], SampleTolerance, $"sample {i}");
-    }
-
-    [Then("the last sample of the sound is about {float}")]
-    public void ThenTheLastSample(float expected) =>
-        context.Heard[^1].ShouldBe(expected, SampleTolerance);
-
-    [Then("no two neighboring samples of the sound differ by more than {float}")]
-    public void ThenNoJump(float most)
-    {
-        var heard = context.Heard;
-
-        heard.Count.ShouldBeGreaterThan(1, "nothing has been played");
-
-        for (var i = 1; i < heard.Count; i++)
-            Math.Abs(heard[i] - heard[i - 1])
-                .ShouldBeLessThanOrEqualTo(most, $"between samples {i - 1} and {i}");
-    }
 
     [Then("the audio is silent")]
     public void ThenTheAudioIsSilent() =>
