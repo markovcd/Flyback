@@ -9,6 +9,7 @@ using Flyback.App.Tests.Ui;
 using Flyback.Core;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
+using Flyback.Core.Language;
 using Flyback.Core.Render;
 using Flyback.Plugins.Audio;
 using Flyback.Viewer;
@@ -284,6 +285,70 @@ public class ViewerWindowTests : UiTest
 
         picture.At(picture.Keys.ToList().IndexOf(knob.Key)).ShouldBe(0.3, 1e-6);
         sound.At(sound.Keys.ToList().IndexOf(knob.Key)).ShouldBe(0.3, 1e-6);
+    }
+
+    /// <summary>A gate off the computer's keys, straight into the speakers and onto the screen.</summary>
+    private static Patch Keyed()
+    {
+        var load = PatchLanguage.Build(
+            """
+            let key = midi.in()
+
+            key.gate |> out.left
+            key.gate |> out.color
+            out.volume = 1
+            """,
+            NodeCatalog.BuiltIn);
+
+        if (!load.Ok) throw new InvalidOperationException(load.Report);
+
+        return load.Patch;
+    }
+
+    [AvaloniaFact]
+    public void A_key_held_in_the_window_is_a_note_in_the_sound_and_the_picture()
+    {
+        var device = new Loopback();
+        var window = Open(Files(Keyed()), Options(), device);
+
+        window.Player.Keyed.ShouldBeTrue();
+        Loudest(device.Pump()).ShouldBe(0f);
+
+        window.KeyPressQwerty(PhysicalKey.Z, RawInputModifiers.None);
+
+        Loudest(device.Pump()).ShouldBeGreaterThan(0.5f);
+        window.Preview!.Live.Keys.Zip(Enumerable.Range(0, int.MaxValue))
+            .Where(k => k.First.EndsWith("/gate", StringComparison.Ordinal))
+            .Select(k => window.Preview!.Live.At(k.Second))
+            .ShouldContain(1f);
+
+        window.KeyReleaseQwerty(PhysicalKey.Z, RawInputModifiers.None);
+
+        // Falling rather than gone: a gate is a step, and the engine's DC filter rings after one.
+        Loudest(device.Pump(4096)[^512..]).ShouldBeLessThan(0.1f);
+    }
+
+    [AvaloniaFact]
+    public void A_patch_that_reads_no_keys_leaves_a_letter_alone()
+    {
+        var window = Open(Files(Tone()), Options());
+
+        window.Player.Keyed.ShouldBeFalse();
+        window.Player.KeyDown(Key.Z).ShouldBeFalse();
+    }
+
+    [AvaloniaFact]
+    public void Space_pauses_and_plays_on_and_so_does_the_editors_key()
+    {
+        var window = Open(Plasma(), Options());
+
+        window.KeyPressQwerty(PhysicalKey.Space, RawInputModifiers.None);
+        window.Player.Paused.ShouldBeTrue();
+        window.Overlay!.Paused.ShouldBeTrue();
+
+        window.KeyPressQwerty(PhysicalKey.P, RawInputModifiers.Control);
+        window.Player.Paused.ShouldBeFalse();
+        window.Overlay!.Paused.ShouldBeFalse();
     }
 
     [AvaloniaFact]

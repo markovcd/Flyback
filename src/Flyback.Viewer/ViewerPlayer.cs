@@ -1,12 +1,15 @@
 using System.Diagnostics;
 using Avalonia.Threading;
+using Avalonia.Input;
 using Flyback.App.Audio;
 using Flyback.App.Controls;
+using Flyback.App.Midi;
 using Flyback.Core;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Core.Render;
 using Flyback.Plugins.Audio;
+using Flyback.Plugins.Midi;
 
 namespace Flyback.Viewer;
 
@@ -20,6 +23,12 @@ namespace Flyback.Viewer;
 /// preview is timed by the sound's own clock. Stopped, the preview is held on a clock
 /// of its own that does not move. The patch is compiled once and never again, so
 /// nothing here reacts to an edit — there is nowhere to make one.
+/// <para>
+/// A patch that is played is played here too: the computer's keys and whatever MIDI
+/// device its MIDI In names reach it through the editor's own <see cref="MidiHub"/>,
+/// and a knob bound to a controller follows it through <see cref="ControlHub"/>. A
+/// knob with no controller stays where the patch left it, there being no panel.
+/// </para>
 /// </remarks>
 internal sealed class ViewerPlayer : IDisposable
 {
@@ -27,6 +36,9 @@ internal sealed class ViewerPlayer : IDisposable
     private readonly PreviewHost? preview;
     private readonly AudioEngine audio;
     private readonly IlCompiler compiler = new();
+    private readonly MidiHub midi;
+    private readonly ControlHub controls;
+    private readonly bool keyed;
     private bool audible;
 
     private DispatcherTimer? ticker;
@@ -38,7 +50,15 @@ internal sealed class ViewerPlayer : IDisposable
 
     /// <param name="preview">The picture's surface, or null where there is no picture to draw.</param>
     /// <param name="device">The sound device, or null where there is none to play through.</param>
-    public ViewerPlayer(Opened opened, IAudioDevice? device, ViewerOptions options, PreviewHost? preview)
+    /// <param name="instruments">Where MIDI devices come from, or null where no plugin offers any.</param>
+    /// <param name="takeover">How a bound knob meets a controller that is somewhere else.</param>
+    public ViewerPlayer(
+        Opened opened,
+        IAudioDevice? device,
+        ViewerOptions options,
+        PreviewHost? preview,
+        IMidiInput? instruments = null,
+        Takeover takeover = Takeover.Jump)
     {
         this.options = options;
         this.preview = options.Video ? preview : null;
@@ -74,6 +94,22 @@ internal sealed class ViewerPlayer : IDisposable
             surface.BackendChanged += _ => Submit();
         }
 
+        midi = new MidiHub(instruments);
+        controls = new ControlHub(midi) { Takeover = takeover };
+
+        midi.Trouble += message => Console.Error.WriteLine($"{GlobalConstants.ApplicationName}: {message}");
+
+        // A key going down while the clock is stopped is a change with no time behind it.
+        if (this.preview is { } redrawn) midi.Played += redrawn.Refresh;
+
+        LiveValues[] blocks = this.preview is { } shown ? [shown.Live, audio.Live] : [audio.Live];
+
+        midi.Lay(patch.KeyboardScale);
+        midi.Follow(blocks);
+        controls.Follow(patch, blocks);
+
+        keyed = blocks.Any(block => block.Keys.Any(key => key.StartsWith(MidiSources.Keyboard + "/", StringComparison.Ordinal)));
+
         audible = device is not null && !options.NoAudio && Sound.VolumeIsUp(patch);
         Muted = options.Mute;
         Paused = options.Paused;
@@ -98,6 +134,18 @@ internal sealed class ViewerPlayer : IDisposable
     public bool Paused { get; private set; }
 
     public bool Muted { get; private set; }
+
+    /// <summary>Whether either running program reads the computer's keys, so a letter is a note.</summary>
+    public bool Keyed => keyed;
+
+    /// <summary>A key as a note, or as one of the pair that moves the rows. False where it is neither.</summary>
+    public bool KeyDown(Key key) => keyed && (midi.Shift(key) is not null || midi.KeyDown(key));
+
+    /// <summary>Lets a note go. Unguarded, since a missed release is a note that never ends.</summary>
+    public void KeyUp(Key key) => midi.KeyUp(key);
+
+    /// <summary>Lets every held note go, for a window that has lost the keyboard.</summary>
+    public void AllOff() => midi.AllOff();
 
     /// <summary>Where the picture is, in seconds.</summary>
     public double Time => preview?.Time ?? audio.Time;
@@ -265,6 +313,8 @@ internal sealed class ViewerPlayer : IDisposable
     public void Dispose()
     {
         ticker?.Stop();
+
+        midi.Dispose();
 
         audio.Stop();
         audio.Dispose();

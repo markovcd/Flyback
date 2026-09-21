@@ -5,12 +5,19 @@ using Avalonia.Styling;
 using Avalonia.Themes.Fluent;
 using Avalonia.Threading;
 using Flyback.Core.Graph;
+using Flyback.App.Midi;
 using Flyback.Plugins.Audio;
+using Flyback.Plugins.Midi;
 
 namespace Flyback.Viewer;
 
-/// <summary>What one run plays: the patch, the device it plays through, and how.</summary>
-internal sealed record ViewerLaunch(Opened Opened, IAudioDevice? Device, ViewerOptions Options);
+/// <summary>What one run plays: the patch, the device it plays through, what it is played from, and how.</summary>
+internal sealed record ViewerLaunch(
+    Opened Opened,
+    IAudioDevice? Device,
+    ViewerOptions Options,
+    IMidiInput? Instruments = null,
+    Takeover Takeover = Takeover.Jump);
 
 public sealed class ViewerApp : Application
 {
@@ -41,7 +48,8 @@ public sealed class ViewerApp : Application
                 // or Ctrl+C.
                 desktop.ShutdownMode = ShutdownMode.OnExplicitShutdown;
 
-                var player = new ViewerPlayer(launch.Opened, launch.Device, launch.Options, preview: null);
+                var player = new ViewerPlayer(
+                    launch.Opened, launch.Device, launch.Options, preview: null, launch.Instruments, launch.Takeover);
 
                 player.Finished += () => desktop.Shutdown();
                 desktop.Exit += (_, _) => player.Dispose();
@@ -50,7 +58,8 @@ public sealed class ViewerApp : Application
             }
             else
             {
-                desktop.MainWindow = new ViewerWindow(launch.Opened, launch.Device, launch.Options);
+                desktop.MainWindow = new ViewerWindow(
+                    launch.Opened, launch.Device, launch.Options, launch.Instruments, launch.Takeover);
             }
         }
 

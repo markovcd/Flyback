@@ -31,6 +31,16 @@ machine.** `--background` shows the window without activating it. `--hidden` ope
 no window: the patch plays and nothing appears, so it implies `--no-video`, and it
 is refused alongside any flag that shapes a window.
 
+**A patch that is played is played here.** The computer's keys, the MIDI device a
+MIDI In names, and the controller a panel knob is bound to reach the running
+programs through the editor's own `MidiHub` and `ControlHub`, which live in
+`Flyback.Ui` for that reason. Without it a preset made to be performed, Dub or
+Dodge, opened as its backing track and nothing else. A knob with no controller
+stays where the patch left it: there is no panel, and a panel is editing. Letters
+are notes only while a running program reads the keyboard, Space pauses because no
+layout plays it, and Ctrl+P does because the editor's does. A `--hidden` run has no
+window and so no keys, and still hears its MIDI devices.
+
 **The full screen is not the editor's.** A double-click on the picture takes the
 screen and a double-click or Escape gives it back. The editor's version zeroes grid
 tracks around a preview that must not be reparented; the viewer has no tracks, and
@@ -60,6 +70,9 @@ framework.
   that lays the plugin folder out clears it first. Run from its own build output it
   has no sound backend and says so.
 - The patch is compiled once. Nothing in the viewer reacts to an edit, because
-  there is nowhere to make one.
+  there is nowhere to make one. The hubs are pointed at the two programs once, for
+  the same reason.
+- A window shown with `--background` does not take the keyboard, so a look an agent
+  takes plays no notes by accident.
 - `--size` honors what `output.json` says as written; the editor snaps a saved size
   to a row of its list. For anything the editor wrote they agree.

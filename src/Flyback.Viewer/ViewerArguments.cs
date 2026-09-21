@@ -199,7 +199,10 @@ internal static class ViewerArguments
             Description = "Read the defaults from another output.json.",
         };
 
-        var root = new RootCommand("Flyback Viewer — open a patch and play it, picture and sound, and write nothing.")
+        var root = new RootCommand(
+            "Flyback Viewer — open a patch and play it, picture and sound, and write nothing. "
+            + "A patch made to be played takes the computer's keys and its MIDI devices; "
+            + "Space, or Ctrl+P, pauses it.")
         {
             patch, preset, presets,
             size, fps, gpu, cpu, noVideo, window, maximized, fullScreen,

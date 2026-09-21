@@ -4,8 +4,10 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
 using Flyback.App.Controls;
+using Flyback.App.Midi;
 using Flyback.Core.Graph;
 using Flyback.Plugins.Audio;
+using Flyback.Plugins.Midi;
 
 namespace Flyback.Viewer;
 
@@ -31,7 +33,12 @@ internal sealed partial class ViewerWindow : Window
     /// <summary>What the window was before it went full screen, for a maximized one does not return to normal.</summary>
     private WindowState stateBefore = WindowState.Normal;
 
-    public ViewerWindow(Opened opened, IAudioDevice? device, ViewerOptions options)
+    public ViewerWindow(
+        Opened opened,
+        IAudioDevice? device,
+        ViewerOptions options,
+        IMidiInput? instruments = null,
+        Takeover takeover = Takeover.Jump)
     {
         Title = options.Title ?? "Flyback Viewer";
         Background = Brushes.Black;
@@ -52,7 +59,7 @@ internal sealed partial class ViewerWindow : Window
         // No surface at all without a picture: a PreviewHost in the tree renders on a timer.
         if (options.Video) preview = new PreviewHost();
 
-        player = new ViewerPlayer(opened, device, options, preview);
+        player = new ViewerPlayer(opened, device, options, preview, instruments, takeover);
 
         previewBox = new Border { Background = Brushes.Black, Child = preview };
 
@@ -76,11 +83,23 @@ internal sealed partial class ViewerWindow : Window
 
         KeyDown += (_, e) =>
         {
-            if (e.Key != Key.Escape || WindowState != WindowState.FullScreen) return;
+            var command = (e.KeyModifiers & (KeyModifiers.Control | KeyModifiers.Meta)) != 0;
+            var bare = !command && (e.KeyModifiers & KeyModifiers.Alt) == 0;
 
-            ToggleFullScreen();
+            if (e.Key == Key.Escape && WindowState == WindowState.FullScreen) ToggleFullScreen();
+
+            // Space, which no layout plays, and the editor's Ctrl+P.
+            else if ((bare && e.Key == Key.Space) || (command && e.Key == Key.P)) TogglePause();
+
+            else if (!bare || !player.KeyDown(e.Key)) return;
+
             e.Handled = true;
         };
+
+        KeyUp += (_, e) => player.KeyUp(e.Key);
+
+        // A key held as the window loses the keyboard is never seen coming up.
+        Deactivated += (_, _) => player.AllOff();
 
         Opened += (_, _) =>
         {
@@ -119,16 +138,21 @@ internal sealed partial class ViewerWindow : Window
             overlay.Muted = player.Muted;
         };
 
-        overlay.PauseClicked += () =>
-        {
-            player.Toggle();
-            overlay.Paused = player.Paused;
-            overlay.Sounding = player.Sounding;
-        };
+        overlay.PauseClicked += TogglePause;
 
         overlay.RewindClicked += player.Rewind;
 
         return overlay;
+    }
+
+    private void TogglePause()
+    {
+        player.Toggle();
+
+        if (Overlay is not { } overlay) return;
+
+        overlay.Paused = player.Paused;
+        overlay.Sounding = player.Sounding;
     }
 
     /// <summary>The picture, fitted inside <see cref="LargestStart"/> at its own shape.</summary>

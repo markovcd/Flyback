@@ -65,7 +65,7 @@
 - A Scope or an Analyzer is drawn in an exported clip.
 
 ### Viewer
-- A third program, `flyback-viewer`, opens a patch and plays it: picture and sound, no editor, and nothing written.
+- A third program, `flyback-viewer`, opens a patch and plays it: picture and sound, no editor, and nothing written. A patch made to be played takes the keys and MIDI there too.
 
 ### Assistant
 - The assistant is told what every module does again. Settings → Agent sets how long that briefing may get and names an editable list of modules that are always included. Any module left out is marked on the canvas.

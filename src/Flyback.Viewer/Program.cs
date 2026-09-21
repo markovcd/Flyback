@@ -81,7 +81,9 @@ internal static class Program
         ViewerApp.Launch = new ViewerLaunch(
             opened,
             device,
-            options with { Title = options.Title ?? $"Flyback Viewer — {name}" });
+            options with { Title = options.Title ?? $"Flyback Viewer — {name}" },
+            plugins.PreferredMidiInput,
+            settings.Takeover);
 
         return AppBuilder.Configure<ViewerApp>()
             .UsePlatformDetect()
