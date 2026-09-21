@@ -1,7 +1,6 @@
 using System.Diagnostics;
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Platform;
 
 namespace Flyback.App;
 
@@ -44,7 +43,7 @@ public sealed partial class MainWindow
 
         // The platform places the window, so which monitor it chose is only known
         // once it is up.
-        Opened += (_, _) => ReturnToMonitor(saved.Monitor);
+        Opened += (_, _) => MonitorPlacement.Return(this, saved.Monitor);
     }
 
     /// <summary>The panels and the views. After the first patch is on the canvas.</summary>
@@ -119,7 +118,7 @@ public sealed partial class MainWindow
             Maximized = state == WindowState.Maximized,
             Width = size?.Width ?? layout?.Width ?? 0,
             Height = size?.Height ?? layout?.Height ?? 0,
-            Monitor = Describe(Screens.ScreenFromWindow(this)) ?? layout?.Monitor,
+            Monitor = MonitorPlacement.Describe(Screens.ScreenFromWindow(this)) ?? layout?.Monitor,
 
             CanvasWeight = Column(WideColumn),
             SideWeight = Column(SideColumn),
@@ -138,89 +137,4 @@ public sealed partial class MainWindow
 
         static double Weight(GridLength length) => length.IsStar ? length.Value : 1;
     }
-
-    private static WindowLayout.MonitorSpot? Describe(Screen? screen) => screen is null
-        ? null
-        : new()
-        {
-            Name = screen.DisplayName,
-            X = screen.Bounds.X,
-            Y = screen.Bounds.Y,
-            Width = screen.Bounds.Width,
-            Height = screen.Bounds.Height,
-        };
-
-    /// <summary>
-    /// Moves the window to the monitor it was left on, if the platform put it
-    /// somewhere else, and keeps it inside that monitor's usable area.
-    /// </summary>
-    /// <remarks>
-    /// The offset from the corner of its monitor is kept rather than the window
-    /// being centered, so copies the platform cascaded stay cascaded.
-    /// </remarks>
-    private void ReturnToMonitor(WindowLayout.MonitorSpot? wanted)
-    {
-        if (Screens.ScreenFromWindow(this) is not { } here) return;
-
-        var target = (wanted is null ? null : Find(wanted, Screens.All)) ?? here;
-
-        var state = WindowState;
-
-        if (Same(target, here))
-        {
-            if (state == WindowState.Normal) Fit(target, Position);
-            return;
-        }
-
-        // A maximized window does not move between monitors.
-        if (state != WindowState.Normal) WindowState = WindowState.Normal;
-
-        Fit(target, target.WorkingArea.Position + (Position - here.WorkingArea.Position));
-
-        if (state != WindowState.Normal) WindowState = state;
-    }
-
-    /// <summary>Puts the window at <paramref name="at"/>, shrunk and shifted to fit inside <paramref name="screen"/>.</summary>
-    private void Fit(Screen screen, PixelPoint at)
-    {
-        var area = screen.WorkingArea;
-        var scale = screen.Scaling;
-
-        var width = Math.Min(Width, area.Width / scale);
-        var height = Math.Min(Height, area.Height / scale);
-
-        if (width < Width) Width = Math.Max(width, MinWidth);
-        if (height < Height) Height = Math.Max(height, MinHeight);
-
-        var wide = (int)Math.Ceiling(Width * scale);
-        var tall = (int)Math.Ceiling(Height * scale);
-
-        Position = new PixelPoint(
-            Math.Clamp(at.X, area.X, Math.Max(area.X, area.Right - wide)),
-            Math.Clamp(at.Y, area.Y, Math.Max(area.Y, area.Bottom - tall)));
-    }
-
-    /// <summary>
-    /// The monitor <paramref name="wanted"/> describes: the same name and place if
-    /// there is one, else the same place, else the same name when it is the only one.
-    /// </summary>
-    private static Screen? Find(WindowLayout.MonitorSpot wanted, IReadOnlyList<Screen> all)
-    {
-        var name = string.IsNullOrEmpty(wanted.Name) ? null : wanted.Name;
-
-        bool Place(Screen s) =>
-            s.Bounds.X == wanted.X && s.Bounds.Y == wanted.Y
-            && s.Bounds.Width == wanted.Width && s.Bounds.Height == wanted.Height;
-
-        var both = all.Where(s => name is not null && s.DisplayName == name && Place(s)).ToList();
-        if (both.Count == 1) return both[0];
-
-        var places = all.Where(Place).ToList();
-        if (places.Count == 1) return places[0];
-
-        var names = all.Where(s => name is not null && s.DisplayName == name).ToList();
-        return names.Count == 1 ? names[0] : null;
-    }
-
-    private static bool Same(Screen a, Screen b) => a.Bounds == b.Bounds && a.DisplayName == b.DisplayName;
 }
