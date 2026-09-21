@@ -153,6 +153,12 @@ public class SavedPresetTests : UiTest
         OpenGallery(window);
         SaveAs(window, "Mine");
 
+        return AskAboutTheTile(window);
+    }
+
+    /// <summary>Asks to delete the one saved tile, with the gallery up, and returns it.</summary>
+    private static Button AskAboutTheTile(MainWindow window)
+    {
         var tile = All<Button>(Yours(window)).Single(b => b.Name == "tile");
 
         ((MenuFlyout)tile.ContextFlyout!).Items.OfType<MenuItem>().Single()
@@ -211,6 +217,71 @@ public class SavedPresetTests : UiTest
         Presets(window).SelectedItem.ShouldBeSameAs(showing);
         SavedTiles(window).ShouldBeEmpty();
         File.Exists(Path.Combine(folder, "Mine" + PatchBundle.Extension)).ShouldBeFalse();
+    }
+
+    /// <summary>Closes whatever dialog is up by its cross.</summary>
+    private static void Dismiss(MainWindow window)
+    {
+        All<Button>(All<ModalOverlay>(window).Single()).Single(b => b.Name == "dismiss")
+            .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+
+        for (var attempt = 0; attempt < 20 && All<ModalOverlay>(window).Any(); attempt++)
+            Dispatcher.UIThread.RunJobs();
+
+        Settle(window);
+    }
+
+    /// <summary>Opens the settings, and from their Startup patch row the gallery over them.</summary>
+    private static Button OpenStartupGallery(MainWindow window)
+    {
+        Click(All<Button>(window).Single(b => b.Name == "settings"), window);
+
+        for (var attempt = 0; attempt < 20 && !All<ModalOverlay>(window).Any(); attempt++)
+            Dispatcher.UIThread.RunJobs();
+
+        Settle(window);
+
+        var row = All<Button>(window).Single(b => b.Name == "defaultPreset");
+
+        Click(row, window);
+
+        for (var attempt = 0; attempt < 20 && All<ModalOverlay>(window).Count() < 2; attempt++)
+            Dispatcher.UIThread.RunJobs();
+
+        Settle(window);
+
+        return row;
+    }
+
+    [AvaloniaFact]
+    public void The_startup_patch_is_picked_from_a_gallery_that_saves_and_deletes_nothing()
+    {
+        var window = Open();
+
+        OpenGallery(window);
+        SaveAs(window, "Mine");
+        Dismiss(window);
+
+        var row = OpenStartupGallery(window);
+        var mine = All<Button>(Yours(window)).Single(b => b.Name == "tile");
+
+        All<Button>(window).ShouldNotContain(b => b.Name == "keep-preset");
+        mine.ContextFlyout.ShouldBeNull();
+
+        Click(mine, window);
+
+        All<ModalOverlay>(window).Count().ShouldBe(1, "the settings are still up under the gallery");
+        All<TextBlock>(row).Single(t => t.Name == "defaultPresetName").Text.ShouldBe("Mine");
+    }
+
+    [AvaloniaFact]
+    public void With_nothing_saved_the_startup_gallery_has_no_saved_run()
+    {
+        var window = Open();
+
+        OpenStartupGallery(window);
+
+        All<WrapPanel>(window).ShouldNotContain(p => p.Name == "yours");
     }
 
     /// <summary>

@@ -36,7 +36,14 @@ internal sealed record YourPresets(
     Func<IReadOnlyList<PatchPreset>> All,
     Func<string, (bool Allowed, string Hint)> Check,
     Func<string, bool> Keep,
-    Action<PatchPreset> Remove);
+    Action<PatchPreset> Remove)
+{
+    /// <summary>Whether the run is only picked from: no card to save one, and no tile that deletes.</summary>
+    public bool PickOnly { get; private init; }
+
+    /// <summary>The same presets, to pick from and nothing else.</summary>
+    public YourPresets ToPickFrom() => this with { PickOnly = true };
+}
 
 /// <summary>
 /// Every preset as a tile — a picture, its name and what it is for — under a heading
@@ -134,7 +141,8 @@ internal static class PresetGallery
     /// <summary>
     /// The run of presets somebody saved: a card to save the patch on the canvas as
     /// one, and then a tile each. Shown with none saved, since the card is how the
-    /// first one gets there.
+    /// first one gets there — unless the run is only picked from, which has no card
+    /// and so nothing to show.
     /// </summary>
     private static void Yours(
         StackPanel gallery,
@@ -144,6 +152,8 @@ internal static class PresetGallery
         Action<PointedTile?>? pointedAt,
         Search search)
     {
+        if (yours.PickOnly && yours.All().Count == 0) return;
+
         var accent = Colors.Feedback;
 
         var heading = new TextBlock
@@ -168,13 +178,14 @@ internal static class PresetGallery
         void Fill()
         {
             tiles.Children.Clear();
-            tiles.Children.Add(KeepCard(yours, Fill));
+
+            if (!yours.PickOnly) tiles.Children.Add(KeepCard(yours, Fill));
 
             foreach (var preset in yours.All())
             {
                 var tile = Tile(preset, preset == showing, accent, thumbnails, pointedAt);
 
-                Removable(tile, preset, () =>
+                if (!yours.PickOnly) Removable(tile, preset, () =>
                 {
                     // Whatever is being tried may be the one going.
                     pointedAt?.Invoke(null);

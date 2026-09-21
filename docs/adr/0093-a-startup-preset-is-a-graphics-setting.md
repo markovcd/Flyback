@@ -57,3 +57,21 @@ who has not touched the new row.
 opened on.** It was already computed from what the toolbar's list showed;
 now what the toolbar's list shows is what was asked for, rather than a name
 picked independently of the patch built beside it.
+
+## Amendment, 2026-09-21: the row opens the gallery
+
+The toolbar's list became a gallery of tiles, and a plain picker of names beside
+it was the one place a preset was still chosen blind. The "Startup patch" row is
+a button that reads the chosen name and opens the same gallery, tiles, filter and
+audition included, over the settings window. A tile picked there is the draft the
+decision above describes: it names the row and changes nothing else.
+
+**That gallery saves and deletes nothing.** The presets somebody saved are there
+to be picked, with no card to keep the patch on the canvas and no Delete on a
+tile, because a settings window that is cancelled has to leave nothing behind.
+With none saved the run is not shown at all.
+
+**A name this launch does not offer is still the name on the button**, and what
+Save writes back, which is what listing it at the end of the picker was for. It
+is built fresh at every click, so a preset saved or deleted since is there or
+gone.

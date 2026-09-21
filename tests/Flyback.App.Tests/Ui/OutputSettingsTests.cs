@@ -245,20 +245,45 @@ public class OutputSettingsTests : UiTest
 
     // --- which preset the window opens on next (ADR-0093) --------------------
 
-    private static ComboBox StartupPreset(Visual within) => All<ComboBox>(within).Single(c => c.Name == "defaultPreset");
+    private static Button StartupPreset(Visual within) => All<Button>(within).Single(c => c.Name == "defaultPreset");
+
+    /// <summary>The name the Startup patch row shows.</summary>
+    private static string? StartupName(Visual within) =>
+        All<TextBlock>(within).Single(t => t.Name == "defaultPresetName").Text;
+
+    /// <summary>The patches among the engine's presets, by name, in the order the gallery shows them.</summary>
+    private static List<string> Patches =>
+        [.. Presets.All.Where(p => p.Kind is not PresetKind.Blank).Select(p => p.Name)];
+
+    /// <summary>Picks the startup patch the way a person would: the row's button, then a tile of the gallery it opens.</summary>
+    private static void PickStartupPreset(MainWindow window, ModalOverlay dialog, string name)
+    {
+        StartupPreset(dialog).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+
+        for (var attempt = 0; attempt < 20 && All<ModalOverlay>(window).Count() < 2; attempt++)
+            Dispatcher.UIThread.RunJobs();
+
+        Settle(window);
+
+        All<Button>(window).Single(b => b.Name == "tile" && ((PatchPreset)b.Tag!).Name == name)
+            .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+
+        for (var attempt = 0; attempt < 20 && All<ModalOverlay>(window).Count() > 1; attempt++)
+            Dispatcher.UIThread.RunJobs();
+
+        Settle(window);
+    }
 
     /// <summary>
-    /// A machine with no settings file opens the Startup patch box on the first
-    /// preset that is a patch — which is not the first preset, the blank canvas
-    /// heading the list.
+    /// A machine with no settings file names the first preset that is a patch —
+    /// which is not the first preset, the blank canvas heading the list.
     /// </summary>
     [AvaloniaFact]
     public void The_startup_preset_starts_on_the_first_patch()
     {
         var window = Open();
 
-        (StartupPreset(OpenSettings(window)).SelectedItem as string)
-            .ShouldBe(Presets.All.First(p => p.Kind is not PresetKind.Blank).Name);
+        StartupName(OpenSettings(window)).ShouldBe(Patches[0]);
     }
 
     /// <summary>What is picked here is a launch's business, not this one's.</summary>
@@ -271,9 +296,9 @@ public class OutputSettingsTests : UiTest
 
         var dialog = OpenSettings(window);
 
-        StartupPreset(dialog).SelectedIndex = 2;
-        Settle(window);
+        PickStartupPreset(window, dialog, Patches[2]);
 
+        StartupName(dialog).ShouldBe(Patches[2]);
         editor.Patch.ShouldBeSameAs(before);
 
         CloseSettings(window, dialog, save: true);
@@ -287,9 +312,9 @@ public class OutputSettingsTests : UiTest
         var window = Open(settingsPath);
         var dialog = OpenSettings(window);
 
-        var chosen = StartupPreset(dialog).ItemsSource!.Cast<string>().ElementAt(3);
-        StartupPreset(dialog).SelectedIndex = 3;
+        var chosen = Patches[3];
 
+        PickStartupPreset(window, dialog, chosen);
         CloseSettings(window, dialog, save: true);
 
         OutputSettings.Load(settingsPath).DefaultPreset.ShouldBe(chosen);
@@ -297,7 +322,7 @@ public class OutputSettingsTests : UiTest
         var next = Open(settingsPath);
 
         next.Title.ShouldBe($"{chosen} — {Core.GlobalConstants.ApplicationName}");
-        (StartupPreset(OpenSettings(next)).SelectedItem as string).ShouldBe(chosen);
+        StartupName(OpenSettings(next)).ShouldBe(chosen);
     }
 
     /// <summary>Changed and not saved is dropped, like every other Graphics row.</summary>
@@ -307,14 +332,14 @@ public class OutputSettingsTests : UiTest
         var window = Open(settingsPath);
         var dialog = OpenSettings(window);
 
-        var before = StartupPreset(dialog).SelectedItem as string;
+        var before = StartupName(dialog);
 
-        StartupPreset(dialog).SelectedIndex = 4;
+        PickStartupPreset(window, dialog, Patches[4]);
         CloseSettings(window, dialog, save: false);
 
         File.Exists(settingsPath).ShouldBeFalse();
 
-        (StartupPreset(OpenSettings(window)).SelectedItem as string).ShouldBe(before);
+        StartupName(OpenSettings(window)).ShouldBe(before);
     }
 
     /// <summary>

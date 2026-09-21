@@ -47,7 +47,7 @@
 - Acid is a whole track now: a hundred and twenty-eight bars in two themes, with builds, a breakdown, a bass line and a second 303, and a line that accents and slides.
 - Whole band is a whole song now: twelve phrases with verses, a chorus, a bridge and fills, and a snare, plucked strings, a pad and a room added to the band.
 - Slow weather is rebuilt around five feedback loops: a drone that bends its own phase, an echo that darkens every time round, two voices that push each other down, and a picture steered by where it was bright a frame ago, visited at random by a music box, a far-off call, rain and thunder that each mark the picture.
-- Settings → Graphics picks which preset Flyback opens on at the next start.
+- Settings → Graphics picks which preset Flyback opens on at the next start, from the gallery.
 - The preset list is sorted into headed sections: the blank canvas first, then the patches about one idea, then the ones where sound and picture are the same thought, then the showcases.
 - The preset button opens a gallery of tiles, each with a picture of what the preset draws (a speaker for one that is only heard), its name and its description.
 - Resting the pointer on a preset in the gallery for a second plays it: its picture moves on the tile and its sound fades in, with your patch muted meanwhile.

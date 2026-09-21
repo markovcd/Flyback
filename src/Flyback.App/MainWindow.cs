@@ -105,14 +105,26 @@ public sealed partial class MainWindow : Window
 
     /// <summary>
     /// Which preset the window opens on at the next launch — the Graphics section
-    /// (ADR-0093). Its list is filled in by <see cref="BuildGraphicsSection"/>,
-    /// once the plugin catalogue's own presets are there to offer.
+    /// (ADR-0093). It reads <see cref="startupPatch"/>, and a click picks another
+    /// from the gallery.
     /// </summary>
-    private readonly ComboBox defaultPreset = new Picker
+    private readonly Button defaultPreset = new()
     {
         Name = "defaultPreset",
         HorizontalAlignment = HorizontalAlignment.Stretch,
+        HorizontalContentAlignment = HorizontalAlignment.Stretch,
     };
+
+    /// <summary>The name on <see cref="defaultPreset"/>.</summary>
+    private readonly TextBlock defaultPresetName = new()
+    {
+        Name = "defaultPresetName",
+        TextTrimming = TextTrimming.CharacterEllipsis,
+        VerticalAlignment = VerticalAlignment.Center,
+    };
+
+    /// <summary>The name <see cref="defaultPreset"/> shows, and what Save writes.</summary>
+    private string startupPatch = "";
 
     private readonly NumericUpDown jpegQuality = new()
     {

@@ -149,29 +149,43 @@ public sealed partial class MainWindow
     }
 
     /// <summary>
-    /// Shows which preset the window starts on, listing the one chosen even where
+    /// Shows which preset the window starts on, naming the one chosen even where
     /// this launch does not offer it.
     /// </summary>
     /// <remarks>
     /// A plugin's preset, on a launch the plugin is away from. The window opened
-    /// on the first patch instead, and showing that row here would have the next
-    /// Save — of anything at all — write it over the choice. Listed at the end, as
-    /// a choice row lists a device that is switched off, the choice is what Save
-    /// writes back and is still there when the plugin is. Nothing chosen yet shows
-    /// the row the window opens on, which is what saving it then means.
+    /// on the first patch instead, and naming that one here would have the next
+    /// Save — of anything at all — write it over the choice. Nothing chosen yet
+    /// names the patch the window opens on, which is what saving it then means.
     /// </remarks>
     private void ShowStartupPatch(string chosen)
     {
         var presets = OrderedPresets();
-        var offered = presets.Select(preset => preset.Name).ToList();
 
-        if (chosen.Length > 0 && !offered.Contains(chosen)) offered.Add(chosen);
+        startupPatch = chosen.Length > 0 ? chosen : presets[PresetLibrary.Opening(presets, chosen)].Name;
+        defaultPresetName.Text = startupPatch;
+    }
 
-        defaultPreset.ItemsSource = offered;
+    /// <summary>
+    /// Picks the startup patch from the gallery the toolbar opens, with nothing in
+    /// it to save or delete: what is chosen here is a name, and Cancel drops it.
+    /// </summary>
+    private async Task PickStartupPatchAsync()
+    {
+        var showing = OrderedPresets().FirstOrDefault(preset => preset.Name == startupPatch);
 
-        defaultPreset.SelectedIndex = offered.IndexOf(chosen) is >= 0 and var listed
-            ? listed
-            : PresetLibrary.Opening(presets, chosen);
+        var gallery = PresetGallery.Build(
+            [.. plugins.Presets.OrderBy(p => p.Kind)],
+            showing,
+            thumbnails,
+            PointedAt,
+            Yours()?.ToPickFrom());
+
+        var chosen = await this.ShowDialog<PatchPreset?>("Startup patch", gallery.Tiles, gallery.Filter, fill: true);
+
+        PointedAt(null);
+
+        if (chosen is not null) ShowStartupPatch(chosen.Name);
     }
 
     /// <summary>
@@ -248,7 +262,7 @@ public sealed partial class MainWindow
             // was wanted, so the last answer is kept for a launch that has one.
             Gpu = gpuButton.IsEnabled ? gpuButton.SelectedIndex == 0 : outputSettings.Gpu,
 
-            DefaultPreset = defaultPreset.SelectedItem as string ?? outputSettings.DefaultPreset,
+            DefaultPreset = startupPatch,
 
             FrameRate = FrameRates[Math.Max(frameRate.SelectedIndex, 0)],
             PreviewFrameRate = PreviewFrameRates[Math.Max(previewFrameRate.SelectedIndex, 0)],
@@ -1032,10 +1046,29 @@ public sealed partial class MainWindow
             + "show, or to ease off a slow machine — the Recording section picks a take's own "
             + "rate, and reads whatever the preview last drew whatever this says.");
 
-        // What it lists is ShowStartupPatch's, which knows what was chosen.
         ToolTip.SetTip(defaultPreset,
             "Which preset the window opens on the next time it starts. Picking one on the "
             + "toolbar right now does not change this — it only changes what is on the canvas.");
+
+        // Drawn as the pickers above it are, so the row reads as a value to change
+        // rather than a button to press, with the mark of a row that opens a window.
+        var opens = new TextBlock { Text = "⋯", Foreground = Text.Muted, VerticalAlignment = VerticalAlignment.Center };
+
+        Grid.SetColumn(opens, 1);
+
+        defaultPreset.Content = new Grid
+        {
+            ColumnDefinitions = new ColumnDefinitions("*,Auto"),
+            Children = { defaultPresetName, opens },
+        };
+
+        defaultPreset.Padding = new Thickness(12, 5, 10, 7);
+        defaultPreset.MinHeight = 32;
+        defaultPreset.BorderThickness = new Thickness(1);
+        defaultPreset.Bind(Button.BackgroundProperty, defaultPreset.GetResourceObservable("ComboBoxBackground"));
+        defaultPreset.Bind(Button.BorderBrushProperty, defaultPreset.GetResourceObservable("ComboBoxBorderBrush"));
+
+        defaultPreset.Click += async (_, _) => await PickStartupPatchAsync();
 
         graphicsSection.Children.Add(InspectorRows.Field("Size", resolution));
         graphicsSection.Children.Add(InspectorRows.Field("Preview rate", previewFrameRate));
