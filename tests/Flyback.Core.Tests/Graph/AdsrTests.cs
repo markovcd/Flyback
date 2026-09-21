@@ -112,6 +112,7 @@ public class AdsrTests
     {
         var readings = Run(Enumerable.Repeat(0f, 200));
 
+        // ReSharper disable once CompareOfFloatsByEqualityOperator
         readings.ShouldAllBe(v => v == 0f);
     }
 
@@ -261,6 +262,7 @@ public class AdsrTests
         var readings = Run(Gate(5, 5), memory: false);
 
         readings[..5].ShouldAllBe(v => Math.Abs(v - 1f) < 1e-5f);
+        // ReSharper disable once CompareOfFloatsByEqualityOperator
         readings[5..].ShouldAllBe(v => v == 0f);
     }
 

@@ -41,6 +41,7 @@ public class HissTests
     [Fact]
     public void With_no_level_it_is_silent()
     {
+        // ReSharper disable once CompareOfFloatsByEqualityOperator
         Played(Held(0f), "white", "high").ShouldAllBe(s => s == 0d);
     }
 

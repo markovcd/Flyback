@@ -594,6 +594,7 @@ public class PatchLayoutTests
             (node.X, node.Y).ShouldBe(before[node.Id], $"{node.TypeId} was not named");
 
         near.ShouldContain(
+            // ReSharper disable once CompareOfFloatsByEqualityOperator
             n => n.X != before[n.Id].X || n.Y != before[n.Id].Y,
             "the named modules should have moved");
     }

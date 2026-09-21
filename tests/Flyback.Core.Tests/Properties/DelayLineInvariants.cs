@@ -197,6 +197,7 @@ public class DelayLineInvariants
         state.Clear();
 
         Run(OpCode.Delay, 0.9f, new float[64], state)
+            // ReSharper disable once CompareOfFloatsByEqualityOperator
             .ShouldAllBe(sample => sample == 0f);
     }
 

@@ -437,6 +437,7 @@ public sealed partial class NodeEditor
                 bottom = Math.Max(bottom, bounds.Bottom);
             }
 
+        // ReSharper disable once CompareOfFloatsByEqualityOperator
         if (x == double.MaxValue) return null;
 
         var outline = new Rect(x, y, right - x, bottom - y).Inflate(NodeGeometry.GroupPadding);

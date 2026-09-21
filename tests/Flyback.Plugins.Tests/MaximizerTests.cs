@@ -112,6 +112,7 @@ public class MaximizerTests
 
         // The first evaluation is the one every module passes straight through,
         // before its memory says it has one.
+        // ReSharper disable once CompareOfFloatsByEqualityOperator
         heard.Skip(1).Take(Late - 1).ShouldAllBe(s => s == 0f);
         heard[Late].ShouldNotBe(0f);
     }

@@ -253,6 +253,7 @@ public partial class NodeCatalog
         // costs what it always cost. Only an uneven pattern pays for its
         // unevenness, and it pays by measuring everything against a position
         // rather than an index.
+        // ReSharper disable once CompareOfFloatsByEqualityOperator
         var even = notes.All(s => s.Length == notes[0].Length);
 
         Slot cursor;
@@ -267,6 +268,7 @@ public partial class NodeCatalog
             // Left alone at the usual length of one, the division folds away,
             // so the commonest pattern pays nothing for having a per-note
             // length at all.
+            // ReSharper disable once CompareOfFloatsByEqualityOperator
             var counted = unit == 1f
                 ? travelled
                 : em.Binary(OpCode.Div, travelled, em.Constant(unit));

@@ -179,6 +179,7 @@ public class AnalyzerTests
 
         Traces.Refresh(drawn, heard, new DelayState([], 192_000, traceCount: heard.TraceCount));
 
+        // ReSharper disable once CompareOfFloatsByEqualityOperator
         drawn.Taps[0].Trace.Samples.ShouldAllBe(v => v == 0f);
     }
 

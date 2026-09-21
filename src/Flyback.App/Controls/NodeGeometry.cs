@@ -70,6 +70,7 @@ internal static class NodeGeometry
         // A group whose modules have all gone is drawn nowhere rather than at
         // infinity. Patch.Remove drops one before it can happen, and this is
         // what a hand-edited file gets instead of a crash.
+        // ReSharper disable once CompareOfFloatsByEqualityOperator
         if (x == double.MaxValue) return default;
 
         return new Rect(x, y, Width, GroupHeight(sockets));

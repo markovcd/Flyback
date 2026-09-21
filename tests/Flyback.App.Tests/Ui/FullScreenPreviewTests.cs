@@ -205,6 +205,7 @@ public class FullScreenPreviewTests : UiTest
 
         DoubleClick(window);
         columns.ColumnDefinitions.Select(c => c.MinWidth)
+            // ReSharper disable once CompareOfFloatsByEqualityOperator
             .ShouldAllBe(m => m == 0, "a minimum would hold a collapsed column open");
 
         PressEscape(window);

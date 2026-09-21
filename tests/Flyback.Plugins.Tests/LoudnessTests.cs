@@ -64,6 +64,7 @@ public class LoudnessTests
     {
         var signal = Sine(997d, 0.5f, 0.5).Concat(Hold(0f, 0.5)).ToArray();
 
+        // ReSharper disable once CompareOfFloatsByEqualityOperator
         Play(Type, Hold(0f, 0.1), heard: (Momentary, Momentary)).Left.ShouldAllBe(l => l == -70f);
         Play(Type, signal, heard: (Momentary, Momentary)).Left[^1].ShouldBe(-70f);
     }

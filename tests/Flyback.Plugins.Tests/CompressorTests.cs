@@ -91,6 +91,7 @@ public class CompressorTests
     [Fact]
     public void The_gain_is_one_until_it_has_something_to_do()
     {
+        // ReSharper disable once CompareOfFloatsByEqualityOperator
         Play(Type, Hold(0.01f, 0.1), heard: (0, Gain)).Right.ShouldAllBe(g => g == 1f);
     }
 

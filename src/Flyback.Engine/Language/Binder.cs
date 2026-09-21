@@ -591,7 +591,9 @@ public sealed class Binder
             TokenKind.Plus => a.Amount + b.Amount,
             TokenKind.Minus => a.Amount - b.Amount,
             TokenKind.Star => a.Amount * b.Amount,
+            // ReSharper disable once CompareOfFloatsByEqualityOperator
             TokenKind.Slash => b.Amount == 0d ? 0d : a.Amount / b.Amount,
+            // ReSharper disable once CompareOfFloatsByEqualityOperator
             _ => b.Amount == 0d ? 0d : a.Amount % b.Amount,
         };
 
@@ -1350,6 +1352,7 @@ public sealed class Binder
 
         JsonNode? written = value switch
         {
+            // ReSharper disable once CompareOfFloatsByEqualityOperator
             Figure figure when field is ExtraField.Toggle => JsonValue.Create(figure.Amount != 0d),
             Figure figure => JsonValue.Create((float)figure.Amount),
             Named named when field is ExtraField.Text { Multiline: true } => JsonValue.Create(named.Path.Replace(PatchPrinter.LineBreak, '\n')),

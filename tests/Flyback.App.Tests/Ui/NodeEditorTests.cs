@@ -913,6 +913,7 @@ public class NodeEditorTests : UiTest
 
         editor.Tidy();
         editor.Patch.Nodes
+            // ReSharper disable once CompareOfFloatsByEqualityOperator
             .ShouldContain(n => n.X != before[n.Id].X || n.Y != before[n.Id].Y, "something should have moved");
 
         editor.Undo().ShouldBeTrue();

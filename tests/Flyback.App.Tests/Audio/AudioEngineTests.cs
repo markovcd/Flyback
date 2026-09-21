@@ -249,6 +249,7 @@ public class AudioEngineTests
         // Nothing played yet, so nothing charted: the promise is that it shows
         // what happened, never what would have.
         engine.Listen(drawn, LiveValues.None);
+        // ReSharper disable once CompareOfFloatsByEqualityOperator
         drawn.Taps[0].Trace.Samples.ShouldAllBe(v => v == 0f);
 
         // A fiftieth of a second is under a thousand frames, so this fills the

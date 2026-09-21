@@ -66,6 +66,7 @@ public class DecayTests
     {
         var output = Through(Pulse(Rate, Rate), (Attack, -3f), (DecayPort, -1f));
 
+        // ReSharper disable once CompareOfFloatsByEqualityOperator
         output[(Rate / 5)..].ShouldAllBe(s => s == 0f);
     }
 

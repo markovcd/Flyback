@@ -258,7 +258,7 @@ internal sealed class LiveRecorder : IFrameSink, IAudioSink, IDisposable
             // What a format says on the way out — ffmpeg refusing the
             // arguments, an AVI at its 4 GB ceiling — is the only account of
             // why the file is not what was asked for.
-            stopped ??= ex.Message;
+            Interlocked.CompareExchange(ref stopped, ex.Message, null);
         }
     }
 

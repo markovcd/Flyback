@@ -144,6 +144,7 @@ internal sealed class Knob : Control
 
         Value = to;
 
+        // ReSharper disable once CompareOfFloatsByEqualityOperator
         if (Value != before) Turned?.Invoke(Value);
     }
 

@@ -448,6 +448,7 @@ internal sealed class MidiHub(IMidiInput? hardware = null) : IDisposable
         var indexes = ReadIndexes(source).Select(index => index.Voice).ToList();
         var voice = indexes
             .Select(index => voices[index - 1])
+            // ReSharper disable once CompareOfFloatsByEqualityOperator
             .FirstOrDefault(candidate => candidate.Playing && candidate.Pitch == Math.Clamp(note, 0, 127));
 
         if (voice is null)
@@ -503,6 +504,7 @@ internal sealed class MidiHub(IMidiInput? hardware = null) : IDisposable
     {
         foreach (var voice in Voices(source))
         {
+            // ReSharper disable once CompareOfFloatsByEqualityOperator
             if (voice.Playing && voice.Pitch == Math.Clamp(note, 0, 127))
             {
                 voice.Up(note);

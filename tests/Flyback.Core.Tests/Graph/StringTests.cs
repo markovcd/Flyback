@@ -41,6 +41,7 @@ public class StringTests
     [Fact]
     public void Left_alone_it_is_silent()
     {
+        // ReSharper disable once CompareOfFloatsByEqualityOperator
         Play(Rate / 2, pluckAt: -1).ShouldAllBe(s => s == 0f);
     }
 

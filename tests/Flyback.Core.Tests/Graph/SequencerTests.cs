@@ -433,6 +433,7 @@ public class SequencerTests
 
         StepsExtra.Of(placed).Count.ShouldBe(8);
         StepsExtra.Of(placed)[0].Value.ShouldBe(57f);
+        // ReSharper disable once CompareOfFloatsByEqualityOperator
         StepsExtra.Of(placed).ShouldAllBe(s => s.Length == 1f && s.Volume == 1f);
     }
 

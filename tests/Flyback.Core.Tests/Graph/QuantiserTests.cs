@@ -462,6 +462,7 @@ public class QuantiserTests
             var note = pitchRegisters[pitch.OutputBase];
             var open = gateRegisters[gate.OutputBase] >= 0.5;
 
+            // ReSharper disable once CompareOfFloatsByEqualityOperator
             if (i > 0 && note != previous)
             {
                 changes++;

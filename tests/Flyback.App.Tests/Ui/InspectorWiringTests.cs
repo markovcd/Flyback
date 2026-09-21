@@ -341,6 +341,7 @@ public class InspectorWiringTests : UiTest
 
         Should.NotThrow(() => Select(window, opened));
 
+        // ReSharper disable once CompareOfFloatsByEqualityOperator
         opened.InputValues.ShouldAllBe(v => v == 1e30f, "showing a number must not change it");
         Knobs(window).ShouldBeGreaterThan(0);
     }

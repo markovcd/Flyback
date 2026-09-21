@@ -1205,7 +1205,9 @@ public class LanguageTests
             Build("notes() [ A3!3 ] |> out.left").Nodes.Single(n => n.TypeId == "seq.notes"));
 
         steps.Count.ShouldBe(3);
+        // ReSharper disable once CompareOfFloatsByEqualityOperator
         steps.Select(s => s.Value).ShouldAllBe(v => v == 57f);
+        // ReSharper disable once CompareOfFloatsByEqualityOperator
         steps.Select(s => s.Length).ShouldAllBe(l => l == 1f);
     }
 

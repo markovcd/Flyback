@@ -52,6 +52,7 @@ public class FmTests
     [InlineData("organ")]
     public void With_no_level_it_is_silent(string algorithm)
     {
+        // ReSharper disable once CompareOfFloatsByEqualityOperator
         Played(Held(0f), algorithm).ShouldAllBe(s => s == 0d);
     }
 

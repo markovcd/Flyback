@@ -68,9 +68,11 @@ public class RenameModuleTests : UiTest
 
     /// <summary>The heading on the panel — the one control there at that size.</summary>
     private static TextBlock Title(MainWindow window) =>
+        // ReSharper disable once CompareOfFloatsByEqualityOperator
         All<TextBlock>(window).First(t => t.FontSize == 17);
 
     private static TextBox? Box(MainWindow window) =>
+        // ReSharper disable once CompareOfFloatsByEqualityOperator
         All<TextBox>(window).FirstOrDefault(t => t.FontSize == 17);
 
     private static void DoubleClickTitle(MainWindow window)

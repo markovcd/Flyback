@@ -74,6 +74,7 @@ public class ExpressionInspectorTests : UiTest
         node.StateOf("expression")?["formula"]?.GetValue<string>() ?? string.Empty;
 
     private static TextBlock Title(MainWindow window) =>
+        // ReSharper disable once CompareOfFloatsByEqualityOperator
         All<TextBlock>(window).First(t => t.FontSize == 17);
 
     private static Color? Ink(MainWindow window) => (Formula(window).Foreground as ISolidColorBrush)?.Color;

@@ -333,6 +333,7 @@ public class CycleInvariants
 
         var output = Run(ProgramOf(emitter, read), new float[4], stateless: true);
 
+        // ReSharper disable once CompareOfFloatsByEqualityOperator
         output.ShouldAllBe(v => v == 0f);
     }
 

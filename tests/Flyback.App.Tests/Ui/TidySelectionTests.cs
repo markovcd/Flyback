@@ -98,6 +98,7 @@ public class TidySelectionTests : UiTest
             (node.X, node.Y).ShouldBe(before[node.Id], $"{node.TypeId} is not selected");
 
         near.ShouldContain(
+            // ReSharper disable once CompareOfFloatsByEqualityOperator
             n => n.X != before[n.Id].X || n.Y != before[n.Id].Y,
             "the selection should have been laid out");
     }
@@ -115,6 +116,7 @@ public class TidySelectionTests : UiTest
 
         editor.Tidy();
 
+        // ReSharper disable once CompareOfFloatsByEqualityOperator
         far.ShouldContain(n => n.X != before[n.Id].X || n.Y != before[n.Id].Y);
     }
 
@@ -252,6 +254,7 @@ public class TidySelectionTests : UiTest
             (node.X, node.Y).ShouldBe(before[node.Id], "only the selection moves");
 
         near.ShouldContain(
+            // ReSharper disable once CompareOfFloatsByEqualityOperator
             n => n.X != before[n.Id].X || n.Y != before[n.Id].Y,
             "the selection should have been laid out");
     }
@@ -276,6 +279,7 @@ public class TidySelectionTests : UiTest
         window.UpdateLayout();
         Dispatcher.UIThread.RunJobs();
 
+        // ReSharper disable once CompareOfFloatsByEqualityOperator
         far.ShouldContain(n => n.X != before[n.Id].X || n.Y != before[n.Id].Y);
     }
 
@@ -299,6 +303,7 @@ public class TidySelectionTests : UiTest
             (node.X, node.Y).ShouldBe(before[node.Id], "only the selection moves");
 
         near.ShouldContain(
+            // ReSharper disable once CompareOfFloatsByEqualityOperator
             n => n.X != before[n.Id].X || n.Y != before[n.Id].Y,
             "the selection should have been laid out");
     }
@@ -315,6 +320,7 @@ public class TidySelectionTests : UiTest
 
         Press(window, RawInputModifiers.None);
 
+        // ReSharper disable once CompareOfFloatsByEqualityOperator
         far.ShouldContain(n => n.X != before[n.Id].X || n.Y != before[n.Id].Y);
     }
 

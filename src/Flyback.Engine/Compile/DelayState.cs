@@ -436,6 +436,7 @@ public sealed class DelayState
         if (traceCount != traces.Length || planeCount != planes.Length) return false;
 
         for (var i = 0; i < lengths.Length; i++)
+            // ReSharper disable once CompareOfFloatsByEqualityOperator
             if (lengths[i] != lengthsInSeconds[i])
                 return false;
 

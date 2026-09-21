@@ -1018,6 +1018,7 @@ public static class PatchPrinter
         {
             // A rest has no pitch to write. A note at no volume keeps its own,
             // and the two are different steps however alike they sound.
+            // ReSharper disable once CompareOfFloatsByEqualityOperator
             var head = step.Volume <= 0f && step.Value == 0f
                 ? "~"
                 : note ? Pitch.Name(step.Value) : Number(step.Value);
@@ -1079,6 +1080,7 @@ public static class PatchPrinter
                 // same float it will land on. Near enough is not enough: this has
                 // to be the knob, not a knob a thousandth away from it, or a patch
                 // would drift a little every time it went through here.
+                // ReSharper disable once CompareOfFloatsByEqualityOperator
                 if ((float)Math.Log10(back * unit) == decades) return written + name;
             }
 
@@ -1115,6 +1117,7 @@ public static class PatchPrinter
                 // the number takes on the way back: the lexer reads a double and
                 // the binder casts it to the knob.
                 if (double.TryParse(written, NumberStyles.Float, CultureInfo.InvariantCulture, out var back)
+                    // ReSharper disable once CompareOfFloatsByEqualityOperator
                     && (float)back == value)
                 {
                     return written;

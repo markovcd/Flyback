@@ -98,11 +98,13 @@ internal static class SupersawModule
 
         for (var v = 0; v < voices.Length; v++)
         {
+            // ReSharper disable once CompareOfFloatsByEqualityOperator
             var frequency = Spread[v] == 0f
                 ? freq
                 : em.Mul(freq, em.Add(em.Mul(detune, Spread[v] * MaxDetune), 1f));
 
             var phase = em.Add(em.Mul(drive, frequency), inputs[4]);
+            // ReSharper disable once CompareOfFloatsByEqualityOperator
             if (Offsets[v] != 0f) phase = em.Add(phase, Offsets[v]);
 
             voices[v] = em.Add(em.Mul(em.Unary(OpCode.Fract, phase), 2f), -1f);

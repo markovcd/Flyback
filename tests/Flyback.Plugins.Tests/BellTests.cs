@@ -38,6 +38,7 @@ public class BellTests
     [Fact]
     public void With_no_level_it_is_silent()
     {
+        // ReSharper disable once CompareOfFloatsByEqualityOperator
         Played(Held(0f)).ShouldAllBe(s => s == 0d);
     }
 

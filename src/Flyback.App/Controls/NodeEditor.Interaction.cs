@@ -624,6 +624,7 @@ public sealed partial class NodeEditor
     {
         var moved = SelectedNodes.Any(node =>
             dragOrigins.TryGetValue(node.Id, out var from)
+            // ReSharper disable once CompareOfFloatsByEqualityOperator
             && (node.X != from.X || node.Y != from.Y));
 
         if (!moved || !history.Record(patch, mark: Mark)) return false;

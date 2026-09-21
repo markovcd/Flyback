@@ -172,6 +172,7 @@ public sealed class LoudnessMeter
             {
                 var n = t * Phases + p;
                 var x = (n - middle) / Phases;
+                // ReSharper disable once CompareOfFloatsByEqualityOperator
                 var sinc = x == 0d ? 1d : Math.Sin(Math.PI * x) / (Math.PI * x);
 
                 // Kaiser at beta 8: sidelobes low enough that the interpolation, not

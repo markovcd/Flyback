@@ -751,6 +751,7 @@ public static class PatchLayout
             // Ties broken on the order already held, so the sort is stable in
             // the way that matters: two blocks wanting the same place keep the
             // one they had rather than swapping on every sweep.
+            // ReSharper disable once CompareOfFloatsByEqualityOperator
             column.Sort((a, b) => wish[a] != wish[b]
                 ? wish[a].CompareTo(wish[b])
                 : index[a].CompareTo(index[b]));

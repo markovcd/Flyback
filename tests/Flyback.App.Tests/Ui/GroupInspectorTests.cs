@@ -75,9 +75,11 @@ public class GroupInspectorTests : UiTest
     }
 
     private static TextBlock Title(MainWindow window) =>
+        // ReSharper disable once CompareOfFloatsByEqualityOperator
         All<TextBlock>(window).First(t => t.FontSize == 17);
 
     private static TextBox? Box(MainWindow window) =>
+        // ReSharper disable once CompareOfFloatsByEqualityOperator
         All<TextBox>(window).FirstOrDefault(t => t.FontSize == 17);
 
     private static string[] Lines(MainWindow window) =>

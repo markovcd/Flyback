@@ -85,6 +85,7 @@ public readonly record struct ControlLink(Guid Control, float Min, float Max)
 
     /// <summary>Where the knob has to sit for the socket to read <paramref name="reading"/>, held to 0..1.</summary>
     public float Inverse(float reading) =>
+        // ReSharper disable once CompareOfFloatsByEqualityOperator
         Max == Min ? 0f : Math.Clamp((reading - Min) / (Max - Min), 0f, 1f);
 }
 

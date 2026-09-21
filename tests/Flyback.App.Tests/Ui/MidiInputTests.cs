@@ -389,6 +389,7 @@ public class MidiInputTests : UiTest
 
         // Double-clicking the panel's heading turns it into a box with the focus
         // in it, which is the only text box a module's own panel offers.
+        // ReSharper disable once CompareOfFloatsByEqualityOperator
         var title = All<TextBlock>(window).First(t => t.FontSize == 17);
         var at = title.TranslatePoint(
             new Point(title.Bounds.Width / 2, title.Bounds.Height / 2), window)!.Value;
@@ -399,6 +400,7 @@ public class MidiInputTests : UiTest
         window.MouseUp(at, MouseButton.Left);
         Settle(window);
 
+        // ReSharper disable once CompareOfFloatsByEqualityOperator
         All<TextBox>(window).FirstOrDefault(t => t.FontSize == 17)
             .ShouldNotBeNull("the heading should have become a box");
 

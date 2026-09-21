@@ -408,6 +408,7 @@ internal sealed class Formula
                     "add" => l.Value + r.Value,
                     "sub" => l.Value - r.Value,
                     "mul" => l.Value * r.Value,
+                    // ReSharper disable once CompareOfFloatsByEqualityOperator
                     "div" => r.Value == 0f ? 0f : l.Value / r.Value,
                     _ => null,
                 };
