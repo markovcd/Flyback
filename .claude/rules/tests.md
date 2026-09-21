@@ -49,3 +49,39 @@ keep their time and say why in a comment. Everything else gets made fast.
 Not a note for later. An outlier found while running the suite for another reason
 is fixed in a commit of its own, before or after the work in hand but not inside
 it.
+
+## A feature ships with a scenario
+
+Every new feature gets at least one Gherkin scenario in `tests/Flyback.Core.Specs`,
+in the same commit as the feature. C# tests still cover the edges; the scenario
+states the requirement.
+
+The scenario reads as a business requirement, not a script of actions. It says
+what someone patching or playing Flyback can rely on, in their words, and leaves
+the wiring, port indexes and op codes to the step definitions.
+
+```gherkin
+# Yes: the requirement
+Scenario: Turning a knob while a tone plays does not restart it
+  Given a tone is playing at 10 Hz
+  When its frequency is turned to 12 Hz
+  Then the tone carries on without a click
+
+# No: the mechanics
+Scenario: Phase is adopted across a recompile
+  Given "tone" output "out" is wired to "screen" input "left"
+  And "screen" input "volume" is set to 1
+  When the sound plays for 125 samples
+  Then no two neighboring samples differ by more than 0.08
+```
+
+**Why:** a scenario is the one test a reader checks against what Flyback is meant
+to do. Written as wiring, it only restates the code, and nobody can tell from it
+whether the behavior is the right one.
+
+**How to apply:** name the feature file and the scenarios after what the user
+gets. Add a step to `PatchSteps` for a new phrase, and keep the numbers there
+unless the number is the requirement ("peaks at a quarter of a second"). A
+feature the specs project cannot reach (the editor, a plugin) takes its scenario
+where it can be reached, or says in the commit why it has none. Existing
+scenarios written as mechanics are rewritten when their feature is next touched.

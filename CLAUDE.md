@@ -9,7 +9,7 @@ Standing rules for working in this repo are in `.claude/rules/`, and Claude Code
 - `prose-style.md`: American spelling; succinct comments that never narrate history.
 - `adrs.md`: check `docs/adr/` before proposing a refactor; rewrite a day-old ADR in place; number a new ADR from `main` at commit time.
 - `changelog.md`: what CHANGELOG.md may contain.
-- `tests.md`: rank a run by duration, and treat an unexplained slow test as a defect.
+- `tests.md`: rank a run by duration, treat an unexplained slow test as a defect, and ship every feature with a Gherkin scenario written as a requirement.
 - `website.md`: a change to anything `site/` describes updates the site in the same commit.
 - `windows-shell.md`: PowerShell and Bash-heredoc pitfalls that corrupt files.
 - `looking-at-a-patch.md`: if only the picture or the sound needs looking at, use `flyback-viewer`, not the editor and not a render.

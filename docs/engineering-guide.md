@@ -794,11 +794,11 @@ Scenario: Every socket normalled to Time shares one reading of it
 ```
 
 One binding class, `PatchSteps`, serves every feature, with a fresh `PatchContext`
-per scenario. Add a scenario when the behavior is a rule a patch author relies on
-and fits the existing steps (dead code, port typing, guarded arithmetic, loops,
-phase, switched-off modules, memory across an edit). The sound steps evaluate the
+per scenario. Every new feature ships with at least one scenario, written as the
+requirement a user relies on rather than as the wiring that proves it; the steps
+carry the mechanics (see `.claude/rules/tests.md`). The sound steps evaluate the
 audio program at 1 kHz without the renderer's filters, so a sample is exactly what
-the patch computed. Write a C# test for anything else.
+the patch computed. C# tests cover the edges.
 
 ### Skips and optional outputs
 
