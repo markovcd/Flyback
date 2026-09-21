@@ -173,7 +173,7 @@ public sealed partial class MainWindow
     /// one entry for the run rather than one per update.
     /// </param>
     /// <param name="message"></param>
-    private void Report(string message, string? detail = null, bool progress = false) =>
+    internal void Report(string message, string? detail = null, bool progress = false) =>
         report.Say(message, detail, progress);
 
     /// <summary>

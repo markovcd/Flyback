@@ -9,6 +9,7 @@ using Avalonia.Media;
 using Avalonia.Threading;
 using Flyback.App.Audio;
 using Flyback.App.Controls;
+using Flyback.App.Files;
 using Flyback.App.Midi;
 using Flyback.App.Statistics;
 using Flyback.App.Updates;
@@ -85,6 +86,8 @@ public sealed partial class MainWindow : Window
     private readonly UpdatesSection updatesSection;
 
     private readonly UsageSection usageSection;
+
+    private readonly FilesSection filesSection;
 
     private readonly ComboBox frameRate = new Picker
     {
@@ -469,6 +472,14 @@ public sealed partial class MainWindow : Window
     /// Where the Canvas section is read from and saved to, null keeping it nowhere
     /// for the reason <paramref name="outputSettingsPath"/> does.
     /// </param>
+    /// <param name="fileTypeSettingsPath">
+    /// Where the Files section is read from and saved to, null keeping it nowhere
+    /// for the reason <paramref name="outputSettingsPath"/> does.
+    /// </param>
+    /// <param name="fileTypes">
+    /// What the Files section tells the operating system. Null tells it nothing,
+    /// which is what every test gets.
+    /// </param>
     /// <param name="usage">
     /// What this run says about itself (ADR-0094). Null says nothing, which is what
     /// every test gets: none of them has any business reaching a network.
@@ -491,7 +502,9 @@ public sealed partial class MainWindow : Window
         string? recoveryFolder = null,
         string? presetFolder = null,
         string? canvasSettingsPath = null,
-        string? layoutPath = null)
+        string? layoutPath = null,
+        string? fileTypeSettingsPath = null,
+        FileTypes? fileTypes = null)
     {
         this.groupFolder = groupFolder;
 
@@ -511,6 +524,7 @@ public sealed partial class MainWindow : Window
         updatesSection = new UpdatesSection(updateSettingsPath, (message, detail) => Report(message, detail));
         usageSection = new UsageSection(usageSettingsPath, this.usage, (message, detail) => Report(message, detail));
         canvasSection = new CanvasSection(canvasSettingsPath, editor, (message, detail) => Report(message, detail));
+        filesSection = new FilesSection(fileTypeSettingsPath, fileTypes, (message, detail) => Report(message, detail));
 
         sound = Sound.Open(plugins, outputSettings);
 
@@ -1218,7 +1232,7 @@ public sealed partial class MainWindow : Window
         // time this is opened. The window around them is built fresh, so each
         // section the window owns has to be taken back from the last one first.
         foreach (var section in new[]
-                 { graphicsSection, canvasSection.View, recordingSection, soundSection, midiSection, updatesSection.View, usageSection.View })
+                 { graphicsSection, canvasSection.View, recordingSection, soundSection, midiSection, filesSection.View, updatesSection.View, usageSection.View })
             if (section.Parent is ContentControl lender) lender.Content = null;
 
         var save = new Button { Content = "Save", Width = 84 };
@@ -1251,6 +1265,7 @@ public sealed partial class MainWindow : Window
         tabs.Items.Add(SectionTab("Sound", soundSection));
         tabs.Items.Add(SectionTab("MIDI", midiSection));
         tabs.Items.Add(SectionTab("Agent", panel.SettingsSection()));
+        tabs.Items.Add(SectionTab("Files", filesSection.View));
         tabs.Items.Add(SectionTab("Updates", updatesSection.View));
         tabs.Items.Add(SectionTab("Usage", usageSection.View));
 
@@ -1284,6 +1299,7 @@ public sealed partial class MainWindow : Window
             updatesSection.Save();
             usageSection.Save();
             canvasSection.Save();
+            filesSection.Save();
 
             // Saving is the end of the errand, so the window goes with it.
             Dialog.Close(save, true);
@@ -1317,6 +1333,7 @@ public sealed partial class MainWindow : Window
         updatesSection.Show();
         usageSection.Show();
         canvasSection.Show();
+        filesSection.Show();
     }
 
     /// <summary>
@@ -1354,12 +1371,12 @@ public sealed partial class MainWindow : Window
     /// <summary>
     /// The settings tabs' size, list and section together: wide enough for the
     /// list beside a 280-pixel section with room for its scroll bar, and tall
-    /// enough for an assistant's usual form to fit without one.
+    /// enough for every tab in one column and an assistant's usual form without a scroll bar.
     /// </summary>
     private const double SettingsWidth = 480;
 
     /// <inheritdoc cref="SettingsWidth"/>
-    private const double SettingsHeight = 420;
+    private const double SettingsHeight = 460;
 
     /// <summary>
     /// The About window. Its contents are built fresh each time rather than kept

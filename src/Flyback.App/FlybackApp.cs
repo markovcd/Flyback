@@ -1,9 +1,11 @@
+using System.Diagnostics;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml.Styling;
 using Avalonia.Platform.Storage;
 using Avalonia.Styling;
 using Avalonia.Themes.Fluent;
+using Flyback.App.Files;
 using Flyback.App.Statistics;
 using Flyback.App.Updates;
 
@@ -75,7 +77,9 @@ public sealed class FlybackApp : Application
                 recoveryFolder: Recovery.Folder,
                 presetFolder: PresetLibrary.DefaultFolder,
                 canvasSettingsPath: CanvasSettings.File,
-                layoutPath: WindowLayout.File);
+                layoutPath: WindowLayout.File,
+                fileTypeSettingsPath: FileTypeSettings.File,
+                fileTypes: FileTypes.ForThisCopy());
             desktop.MainWindow = window;
 
             // Once there is a window, so a slow network is never a slow start.
@@ -91,15 +95,51 @@ public sealed class FlybackApp : Application
             {
                 activatable.Activated += (_, e) =>
                 {
-                    if (e is FileActivatedEventArgs { Files: [var first, ..] }
-                        && first is IStorageFile file)
+                    if (e is not FileActivatedEventArgs { Files: [var first, ..] }
+                        || first is not IStorageFile file) return;
+
+                    if (OperatingSystem.IsMacOS()
+                        && FileTypeSettings.Load(FileTypeSettings.File).Opener == FileOpener.Viewer
+                        && file.TryGetLocalPath() is { } path)
                     {
-                        _ = window.OpenActivatedFileAsync(file);
+                        PassToViewer(path, desktop, window);
+                        return;
                     }
+
+                    _ = window.OpenActivatedFileAsync(file);
                 };
             }
         }
 
         base.OnFrameworkInitializationCompleted();
     }
+
+    /// <summary>
+    /// Finder can only hand a file to the bundle, so the editor starts the viewer
+    /// with it (ADR-0127).
+    /// </summary>
+    /// <remarks>
+    /// An editor that was only started to receive the file closes again. Finder
+    /// sends the file within moments of the launch, and there is no other sign of
+    /// which launch it was.
+    /// </remarks>
+    private static void PassToViewer(string path, IClassicDesktopStyleApplicationLifetime desktop, MainWindow window)
+    {
+        var viewer = Path.Combine(AppContext.BaseDirectory, FileTypes.ViewerName);
+
+        try
+        {
+            using var _ = Process.Start(new ProcessStartInfo(viewer) { ArgumentList = { path }, UseShellExecute = false });
+        }
+        catch (Exception ex)
+        {
+            window.Report($"The viewer did not start: {ex.Message}", viewer);
+            return;
+        }
+
+        if (DateTime.Now - Process.GetCurrentProcess().StartTime < LaunchedForAFile && window.HoldsNoWork)
+            desktop.Shutdown();
+    }
+
+    private static readonly TimeSpan LaunchedForAFile = TimeSpan.FromSeconds(5);
 }

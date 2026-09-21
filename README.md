@@ -73,7 +73,7 @@ Supported publish targets include:
 - `osx-arm64`
 - `linux-x64`
 
-macOS bundles are published as `Flyback.app` beside the output folder, and can open a `.fbk`, `.fbkb` or `.fbks` file by double-click, by "Open With", or by a drop on the Dock icon — `Info.plist` declares the three, and `FlybackApp` reads them off the activation Finder delivers instead of a command line. Linux has no such bundle to carry the same declaration in, so `src/Flyback.App/linux/` holds a `.desktop` file and a MIME package a package built from this publish output can install to get the same "Open With" from a file manager; see the comment in `flyback.desktop` for where they go. Windows needs neither — dragging a file onto `Flyback.exe`, or onto a shortcut to it, already launches it with that file named on the command line.
+macOS bundles are published as `Flyback.app` beside the output folder, whose `Info.plist` declares `.fbk`, `.fbkb` and `.fbks`. On Windows and Linux, Settings → Files registers the editor or the viewer to open them, for the current user.
 
 ## Docker builds
 

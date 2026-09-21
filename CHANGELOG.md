@@ -4,6 +4,7 @@
 
 ### Updates
 - Flyback updates itself: it checks for a signed release at startup, downloads it in the background, and installs it the next time it starts, then shows what changed since the version it replaced. On by default, in the new Settings → Updates tab.
+- Settings → Files picks what opens a .fbk, .fbkb or .fbks file: nothing, the editor or the viewer.
 - Flyback counts how it is used — the version, the operating system, the rough size of the machine, which plugins and sound backend are in use, how many of each kind of module a patch has when it plays, which assistant is asked, how long a run lasts and what it did, and where it crashed. Nothing about you, your machine or your patches. On by default, in the new Settings → Usage tab.
 
 ### Plugins

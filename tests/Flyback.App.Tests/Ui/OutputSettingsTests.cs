@@ -183,9 +183,11 @@ public class OutputSettingsTests : UiTest
         var tabs = Tabs(dialog);
 
         tabs.Items.Cast<TabItem>().Select(t => (t.Header as TextBlock)?.Text)
-            .ShouldBe(["Graphics", "Canvas", "Recording", "Sound", "MIDI", "Agent", "Updates", "Usage"]);
+            .ShouldBe(["Graphics", "Canvas", "Recording", "Sound", "MIDI", "Agent", "Files", "Updates", "Usage"]);
         tabs.SelectedIndex.ShouldBe(0);
         tabs.TabStripPlacement.ShouldBe(Dock.Left, "the sections are a list down the left");
+        tabs.Items.Cast<TabItem>().Select(t => t.Bounds.X).Distinct().Count()
+            .ShouldBe(1, "every tab fits in the one column");
         ShowingSettings(dialog).ShouldBeTrue("the Graphics tab opens by default");
 
         var frame = All<Border>(dialog).Single(b => b.Name == "dialog");

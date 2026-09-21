@@ -19,7 +19,7 @@ public sealed class UpdateSettingsTests : UiTest
         "flyback-update-settings-" + Guid.NewGuid().ToString("N"),
         "update.json");
 
-    private const int UpdatesTab = 6;
+    private const int UpdatesTab = 7;
 
     public override void Dispose()
     {

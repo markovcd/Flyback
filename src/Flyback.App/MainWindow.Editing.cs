@@ -104,6 +104,9 @@ public sealed partial class MainWindow
     private bool SomethingToLose =>
         editor.IsModified || SourceIsUnapplied || assistant?.ConversationUnsaved == true;
 
+    /// <summary>Whether the window could close without asking anything.</summary>
+    internal bool HoldsNoWork => !SomethingToLose;
+
     /// <summary>
     /// Whether text about to stop being the document may go. Asks only about typing
     /// that is nowhere else: text already written out as <c>.fbks</c> is on disk.
