@@ -101,6 +101,8 @@ public partial class NodeCatalog
     /// level is a socket like any other, which is what makes a fader something an
     /// oscillator can sweep.
     /// </remarks>
+    public const string MixerTypeId = "math.mixer";
+
     private static NodeDef Mixer()
     {
         const int channels = 4;
@@ -113,7 +115,7 @@ public partial class NodeCatalog
         }
 
         return new NodeDef(
-            "math.mixer", "Mixer", ModuleCategories.Maths,
+            MixerTypeId, "Mixer", ModuleCategories.Routing,
             ports, [Any("out")],
             (em, i) =>
             {
@@ -163,7 +165,7 @@ public partial class NodeCatalog
         ports[trim] = Num("trim", 1f, 0f, 2f);
 
         return new NodeDef(
-            DeskTypeId, "Desk", ModuleCategories.Maths,
+            DeskTypeId, "Desk", ModuleCategories.Routing,
             ports, [Num("left"), Num("right"), Num("bus left"), Num("bus right")],
             (em, i) =>
             {

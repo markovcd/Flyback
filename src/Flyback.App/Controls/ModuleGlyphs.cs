@@ -140,6 +140,10 @@ internal static class ModuleGlyphs
         [NodeCatalog.HoldTypeId] = Path(
             "M2,17 L6,17 L6,10 L10,10 L10,14 L14,14 L14,6 L18,6 L18,12 L22,12"),
 
+        // Four lines meeting in one: what a mixer does to its inputs.
+        [NodeCatalog.MixerTypeId] = Path(
+            "M3,4 L12,12 M3,9.3 L12,12 M3,14.7 L12,12 M3,20 L12,12 M12,12 L21,12"),
+
         // A mixing desk: four rails and the slider each is resting at.
         [NodeCatalog.DeskTypeId] = Path(
             "M5,4 L5,20 M10,4 L10,20 M15,4 L15,20 M20,4 L20,20 "
@@ -257,6 +261,11 @@ internal static class ModuleGlyphs
         [ModuleCategories.Measurement] = Path(
             "M2.5,18.5 A9.5,9.5 0 0 1 21.5,18.5 M12,18.5 L17.2,10.4 "
             + "M10.5,18.5 A1.5,1.5 0 1 1 13.5,18.5 A1.5,1.5 0 1 1 10.5,18.5"),
+
+        // A patch cable between two jacks.
+        [ModuleCategories.Routing] = Path(
+            "M3,17 A2.5,2.5 0 1 1 8,17 A2.5,2.5 0 1 1 3,17 "
+            + "M16,7 A2.5,2.5 0 1 1 21,7 A2.5,2.5 0 1 1 16,7 M5.5,14.5 C5.5,4 18.5,20 18.5,9.5"),
 
         // A screen on a stand: the sink, which is the whole of this category.
         [ModuleCategories.Output] = Path("M3,5 L21,5 L21,16 L3,16 Z M12,16 L12,20 M8.5,20 L15.5,20"),

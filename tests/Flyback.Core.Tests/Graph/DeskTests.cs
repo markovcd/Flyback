@@ -38,7 +38,7 @@ public class DeskTests
         var def = NodeCatalog.BuiltIn.Require(Desk);
 
         def.Name.ShouldBe("Desk");
-        def.Category.ShouldBe(ModuleCategories.Maths);
+        def.Category.ShouldBe(ModuleCategories.Routing);
         def.Inputs.Count.ShouldBe(15);
         def.Outputs.Select(p => p.Name).ShouldBe(["left", "right", "bus left", "bus right"]);
 

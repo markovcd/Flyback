@@ -39,7 +39,7 @@ public partial class NodeCatalog
     private static IEnumerable<NodeDef> Bus()
     {
         yield return new NodeDef(
-            SendTypeId, "Send", ModuleCategories.Maths,
+            SendTypeId, "Send", ModuleCategories.Routing,
             [Any("in")],
             [Any("out")],
             (_, i) => [i[0]],
@@ -50,7 +50,7 @@ public partial class NodeCatalog
         };
 
         yield return new NodeDef(
-            ReceiveTypeId, "Receive", ModuleCategories.Maths,
+            ReceiveTypeId, "Receive", ModuleCategories.Routing,
             [],
             [Any("out")],
             (em, _) => [em.Constant(0f)],

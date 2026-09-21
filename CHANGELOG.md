@@ -25,6 +25,7 @@
 - Added the Mastering plugin: EQ, Width, Crossover, Compressor, Limiter, Maximizer and a LUFS meter.
 - The computer keyboard can be laid out by scale, chosen on any MIDI In, and Settings → MIDI picks what the first MIDI In gets.
 - Filter, Random, Slew, Drive, Delay and Reverb are built into Flyback, so a patch can use them with no plugin installed.
+- Mixer, Desk, Send and Receive have a section of their own, Routing.
 
 ### Presets
 - Mycelium: a psybient track of ninety-six bars, and the largest preset.

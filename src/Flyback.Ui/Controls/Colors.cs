@@ -141,6 +141,12 @@ internal static class Colors
     /// </summary>
     public static Color Reading { get; } = Color.FromRgb(0x92, 0xA8, 0xC8);
 
+    /// <summary>
+    /// The mixers and the bus. A muted clay, quiet beside the families that make
+    /// a signal, because routing carries theirs rather than one of its own.
+    /// </summary>
+    public static Color Routing { get; } = Color.FromRgb(0xC0, 0x9C, 0x88);
+
     /// <summary>A category nothing here knows, which a plugin may well introduce.</summary>
     public static Color Unknown { get; } = Color.FromRgb(0x88, 0x88, 0x88);
 
@@ -166,6 +172,7 @@ internal static class Colors
         ModuleCategories.Shaping => Shaping,
         ModuleCategories.TimeEffects => Echo,
         ModuleCategories.Measurement => Reading,
+        ModuleCategories.Routing => Routing,
         _ => Unknown,
     };
 

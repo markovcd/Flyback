@@ -28,6 +28,7 @@ internal static class CategoryAccents
         ModuleCategories.Shaping => new Swatch(0xD8, 0x7A, 0x48),
         ModuleCategories.TimeEffects => new Swatch(0x3E, 0xA0, 0xB0),
         ModuleCategories.Measurement => new Swatch(0x92, 0xA8, 0xC8),
+        ModuleCategories.Routing => new Swatch(0xC0, 0x9C, 0x88),
         _ => new Swatch(0x88, 0x88, 0x88),
     };
 }

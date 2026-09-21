@@ -61,6 +61,14 @@ public class ModuleCategoriesTests
         added.Catalog.Categories.Last().ShouldBe("Granular Resynthesis");
     }
 
+    /// <summary>Maths is arithmetic; the mixers and the bus are Routing.</summary>
+    [Fact]
+    public void Routing_holds_the_mixers_and_the_bus() =>
+        NodeCatalog.BuiltIn.All
+            .Where(d => d.Category == ModuleCategories.Routing)
+            .Select(d => d.Name)
+            .ShouldBe(["Mixer", "Desk", "Send", "Receive"], ignoreOrder: true);
+
     /// <summary>
     /// No two sections are the same word, which is what "Space" meaning two
     /// things had made possible.

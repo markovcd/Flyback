@@ -34,7 +34,7 @@ public static class ModuleCategories
     /// <summary>Building a color, taking one apart, and correcting one.</summary>
     public const string Color = "Color";
 
-    /// <summary>Arithmetic, the desk that sums four of anything, and the bus that carries one without a wire.</summary>
+    /// <summary>Arithmetic: a function of its inputs and nothing else.</summary>
     public const string Maths = "Maths";
 
     /// <summary>
@@ -67,6 +67,9 @@ public static class ModuleCategories
     /// </summary>
     public const string Measurement = "Measurement";
 
+    /// <summary>Getting signals where they are going: the mixers, and the bus that needs no wire.</summary>
+    public const string Routing = "Routing";
+
     /// <summary>The sink, which is one module and always exactly one.</summary>
     public const string Output = "Output";
 
@@ -90,6 +93,7 @@ public static class ModuleCategories
         TimeEffects,
         Feedback,
         Measurement,
+        Routing,
         Output,
     ];
 
