@@ -51,6 +51,7 @@ Flyback.Plugins.Assist.AssistantModel.Vision.get -> bool
 Flyback.Plugins.Assist.AssistantModel.Vision.init -> void
 Flyback.Plugins.Assist.AssistantSchema
 Flyback.Plugins.Assist.AssistantSchema.<Clone>$() -> Flyback.Plugins.Assist.AssistantSchema!
+Flyback.Plugins.Assist.AssistantSchema.Asking(Flyback.Plugins.Assist.SurveyOptions! options, Flyback.Plugins.Settings.SettingValues! values) -> Flyback.Plugins.Assist.SurveyOptions!
 Flyback.Plugins.Assist.AssistantSchema.AssistantSchema(string! DefaultModel, System.Collections.Generic.IReadOnlyList<Flyback.Plugins.Assist.AssistantModel!>! SuggestedModels, string! EnvironmentVariable, string! CredentialHelp, string? DefaultBaseUrl = null, bool BaseUrlEditable = false) -> void
 Flyback.Plugins.Assist.AssistantSchema.BaseUrlEditable.get -> bool
 Flyback.Plugins.Assist.AssistantSchema.BaseUrlEditable.init -> void
@@ -222,7 +223,7 @@ Flyback.Plugins.Assist.PatchWorkbench.Briefing.get -> string!
 Flyback.Plugins.Assist.PatchWorkbench.Edits.get -> int
 Flyback.Plugins.Assist.PatchWorkbench.HasProposal.get -> bool
 Flyback.Plugins.Assist.PatchWorkbench.InvokeAsync(string! tool, System.Text.Json.JsonElement arguments, System.Threading.CancellationToken cancel) -> System.Threading.Tasks.Task<Flyback.Plugins.Assist.ToolOutcome!>!
-Flyback.Plugins.Assist.PatchWorkbench.PatchWorkbench(Flyback.Core.Graph.ModuleCatalog! modules, Flyback.Core.Graph.Patch! startingPoint, bool vision = true, Flyback.Plugins.Assist.Listener hearing = Flyback.Plugins.Assist.Listener.None, Flyback.Plugins.Assist.WorkbenchLimits? limits = null, Flyback.Core.Compile.ISampleLibrary? samples = null, Flyback.Core.Compile.IImageLibrary? pictures = null, Flyback.Plugins.Assist.ProsePolicy? prose = null) -> void
+Flyback.Plugins.Assist.PatchWorkbench.PatchWorkbench(Flyback.Core.Graph.ModuleCatalog! modules, Flyback.Core.Graph.Patch! startingPoint, bool vision = true, Flyback.Plugins.Assist.Listener hearing = Flyback.Plugins.Assist.Listener.None, Flyback.Plugins.Assist.WorkbenchLimits? limits = null, Flyback.Core.Compile.ISampleLibrary? samples = null, Flyback.Core.Compile.IImageLibrary? pictures = null, Flyback.Plugins.Assist.ProsePolicy? prose = null, System.Collections.Generic.IReadOnlyList<Flyback.Core.Graph.PatchPreset!>? presets = null) -> void
 Flyback.Plugins.Assist.PatchWorkbench.ProposalSummary.get -> string!
 Flyback.Plugins.Assist.PatchWorkbench.Reopen() -> void
 Flyback.Plugins.Assist.PatchWorkbench.Restore(Flyback.Plugins.Assist.WorkbenchState! state) -> void
@@ -250,6 +251,8 @@ Flyback.Plugins.Assist.SurveyOptions.All.get -> bool
 Flyback.Plugins.Assist.SurveyOptions.All.init -> void
 Flyback.Plugins.Assist.SurveyOptions.Bounds.get -> bool
 Flyback.Plugins.Assist.SurveyOptions.Bounds.init -> void
+Flyback.Plugins.Assist.SurveyOptions.Chosen.get -> bool
+Flyback.Plugins.Assist.SurveyOptions.Chosen.init -> void
 Flyback.Plugins.Assist.SurveyOptions.Deconstruct(out System.Collections.Generic.IReadOnlyList<string!>? Only, out bool All, out bool Bounds) -> void
 Flyback.Plugins.Assist.SurveyOptions.Equals(Flyback.Plugins.Assist.SurveyOptions? other) -> bool
 Flyback.Plugins.Assist.SurveyOptions.Only.get -> System.Collections.Generic.IReadOnlyList<string!>?
@@ -270,7 +273,7 @@ Flyback.Plugins.Assist.ToolOutcome.Wav.get -> byte[]?
 Flyback.Plugins.Assist.ToolOutcome.Wav.init -> void
 Flyback.Plugins.Assist.WorkbenchLimits
 Flyback.Plugins.Assist.WorkbenchLimits.<Clone>$() -> Flyback.Plugins.Assist.WorkbenchLimits!
-Flyback.Plugins.Assist.WorkbenchLimits.Deconstruct(out int MaxNodes, out int MaxToolCalls, out int FrameWidth, out int FrameHeight, out int MaxFrames, out double LatestTime, out double WarmUpStep, out int ListenRate, out double LongestListen) -> void
+Flyback.Plugins.Assist.WorkbenchLimits.Deconstruct(out int MaxToolCalls, out int FrameWidth, out int FrameHeight, out int MaxFrames, out double LatestTime, out double WarmUpStep, out int ListenRate, out double LongestListen) -> void
 Flyback.Plugins.Assist.WorkbenchLimits.Equals(Flyback.Plugins.Assist.WorkbenchLimits? other) -> bool
 Flyback.Plugins.Assist.WorkbenchLimits.FrameHeight.get -> int
 Flyback.Plugins.Assist.WorkbenchLimits.FrameHeight.init -> void
@@ -284,13 +287,11 @@ Flyback.Plugins.Assist.WorkbenchLimits.LongestListen.get -> double
 Flyback.Plugins.Assist.WorkbenchLimits.LongestListen.init -> void
 Flyback.Plugins.Assist.WorkbenchLimits.MaxFrames.get -> int
 Flyback.Plugins.Assist.WorkbenchLimits.MaxFrames.init -> void
-Flyback.Plugins.Assist.WorkbenchLimits.MaxNodes.get -> int
-Flyback.Plugins.Assist.WorkbenchLimits.MaxNodes.init -> void
 Flyback.Plugins.Assist.WorkbenchLimits.MaxToolCalls.get -> int
 Flyback.Plugins.Assist.WorkbenchLimits.MaxToolCalls.init -> void
 Flyback.Plugins.Assist.WorkbenchLimits.WarmUpStep.get -> double
 Flyback.Plugins.Assist.WorkbenchLimits.WarmUpStep.init -> void
-Flyback.Plugins.Assist.WorkbenchLimits.WorkbenchLimits(int MaxNodes = 120, int MaxToolCalls = 200, int FrameWidth = 320, int FrameHeight = 180, int MaxFrames = 4, double LatestTime = 8, double WarmUpStep = 0.03333333333333333, int ListenRate = 24000, double LongestListen = 4) -> void
+Flyback.Plugins.Assist.WorkbenchLimits.WorkbenchLimits(int MaxToolCalls = 200, int FrameWidth = 320, int FrameHeight = 180, int MaxFrames = 4, double LatestTime = 8, double WarmUpStep = 0.03333333333333333, int ListenRate = 24000, double LongestListen = 4) -> void
 Flyback.Plugins.Assist.WorkbenchState
 Flyback.Plugins.Assist.WorkbenchState.<Clone>$() -> Flyback.Plugins.Assist.WorkbenchState!
 Flyback.Plugins.Assist.WorkbenchState.Deconstruct(out string! Start, out string! Working, out System.Collections.Generic.IReadOnlyDictionary<string!, System.Guid>! Handles, out int Edits, out int ToolCalls) -> void
@@ -359,6 +360,7 @@ Flyback.Plugins.Hosting.PluginCatalog.PreferredMidiInput.get -> Flyback.Plugins.
 Flyback.Plugins.Hosting.PluginCatalog.PreferredSecretStore.get -> Flyback.Plugins.Secrets.ISecretStore?
 Flyback.Plugins.Hosting.PluginCatalog.Presets.get -> System.Collections.Generic.IReadOnlyList<Flyback.Core.Graph.PatchPreset!>!
 Flyback.Plugins.Hosting.PluginCatalog.Problems.get -> System.Collections.Generic.IReadOnlyList<Flyback.Plugins.Hosting.PluginProblem!>!
+Flyback.Plugins.Hosting.PluginCatalog.Provider(object! registered) -> Flyback.Plugins.PluginInfo?
 Flyback.Plugins.Hosting.PluginCatalog.SecretStores.get -> System.Collections.Generic.IReadOnlyList<Flyback.Plugins.Secrets.ISecretStore!>!
 Flyback.Plugins.Hosting.PluginHost
 Flyback.Plugins.Hosting.PluginProblem

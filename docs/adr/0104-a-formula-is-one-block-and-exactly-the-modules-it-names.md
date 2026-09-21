@@ -108,3 +108,14 @@ arithmetic and is not a subset of it: `x` and `t` mean nothing inside a formula,
 because a formula reads its sockets and the patch wires the signals in. Folding
 the two readers into one would put the Engine's parser in Core for the sake of
 four sockets.
+
+## Amendment, 2026-09-21: the contract ships at 1.0.0, not 1.1.0
+
+No release has ever carried the plugin contract — v0.3.0 predates
+[0102](0102-a-plugin-is-compiled-against-a-contract-with-a-version-of-its-own.md)
+— so there is no shipped 1.0.0 for this Expression addition to move the minor
+of. The first release folds everything `PublicAPI.Unshipped.txt` has gathered,
+this addition and the `PatchLayout.Arrange` selection parameter alike, straight
+into `PublicAPI.Shipped.txt` at `PluginContractVersion` 1.0.0. A minor bump for
+one addition among several, on a contract nothing has been built against yet,
+would say a version moved that no plugin had reason to know existed.
