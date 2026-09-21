@@ -201,10 +201,11 @@ public sealed partial class MainWindow
 
         if (pictureKnobs is { } away) away.IsVisible = stageKnobsWanted && away.Any;
 
-        if (transportOverlay is not { } overlay) return;
-
-        overlay.HasKnobs = stageKnobs.Any;
-        overlay.KnobsShown = stageKnobsWanted;
+        foreach (var overlay in Transports)
+        {
+            overlay.HasKnobs = stageKnobs.Any;
+            overlay.KnobsShown = stageKnobsWanted;
+        }
     }
 
     /// <summary>The settings window's MIDI section: what a controller does to a knob that sits elsewhere.</summary>

@@ -117,6 +117,9 @@ public sealed partial class MainWindow
     /// <summary>The knobs over the picture in <see cref="pictureWindow"/>.</summary>
     private StageKnobs? pictureKnobs;
 
+    /// <summary>The dots and transport over the picture in <see cref="pictureWindow"/>.</summary>
+    private TransportOverlay? pictureTransport;
+
     /// <summary>Goes full screen on the monitor the Graphics section names, or comes back.</summary>
     private void ToggleFullScreenPreview()
     {
@@ -186,6 +189,15 @@ public sealed partial class MainWindow
             Content = picture,
         };
 
+        var transport = pictureTransport = new TransportOverlay(window);
+
+        transport.PauseClicked += TogglePause;
+        transport.MuteClicked += ToggleMute;
+        transport.RewindClicked += RewindToZero;
+        transport.KnobsClicked += ToggleStageKnobs;
+
+        picture.Children.Add(transport);
+
         window.DoubleTapped += (_, e) =>
         {
             window.Close();
@@ -194,7 +206,10 @@ public sealed partial class MainWindow
 
         window.KeyDown += (_, e) =>
         {
-            if (e.Key == Key.K && (e.KeyModifiers & (KeyModifiers.Control | KeyModifiers.Meta)) != 0) ToggleStageKnobs();
+            var command = (e.KeyModifiers & (KeyModifiers.Control | KeyModifiers.Meta)) != 0;
+
+            if (command && e.Key == Key.K) ToggleStageKnobs();
+            else if (command && e.Key == Key.P) TogglePause();
             else if (e.Key == Key.Escape) window.Close();
             else return;
 
@@ -211,6 +226,7 @@ public sealed partial class MainWindow
         window.Closed += (_, _) => BringPictureBack(window);
 
         window.Show(this);
+        SyncTransport();
         SyncStageKnobs();
     }
 
@@ -220,6 +236,7 @@ public sealed partial class MainWindow
 
         pictureWindow = null;
         pictureKnobs = null;
+        pictureTransport = null;
 
         if (window.Content is Panel picture) picture.Children.Clear();
         window.Content = null;

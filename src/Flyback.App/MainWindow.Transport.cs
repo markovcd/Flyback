@@ -93,10 +93,15 @@ public sealed partial class MainWindow
 
         ToolTip.SetTip(pauseButton, paused ? PlayTip : PauseTip);
 
-        if (transportOverlay is not { } overlay) return;
-
-        overlay.Paused = paused;
-        overlay.Muted = muted;
-        overlay.Sounding = Audible;
+        foreach (var overlay in Transports)
+        {
+            overlay.Paused = paused;
+            overlay.Muted = muted;
+            overlay.Sounding = Audible;
+        }
     }
+
+    /// <summary>Every transport over a picture: the window's own, and the other monitor's while it has one.</summary>
+    private IEnumerable<TransportOverlay> Transports =>
+        new[] { transportOverlay, pictureTransport }.OfType<TransportOverlay>();
 }

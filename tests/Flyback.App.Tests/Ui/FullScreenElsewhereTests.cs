@@ -109,4 +109,23 @@ public class FullScreenElsewhereTests : UiTest
         preview.Child.ShouldNotBeSameAs(away);
         preview.Child.ShouldNotBeNull().IsEffectivelyVisible.ShouldBeTrue();
     }
+
+    [AvaloniaFact]
+    public void The_picture_on_another_monitor_has_its_own_transport_in_step_with_the_editor()
+    {
+        var window = Open();
+
+        SendAway(window);
+
+        var picture = window.OwnedWindows.ShouldHaveSingleItem();
+        var transport = All<TransportOverlay>(picture).ShouldHaveSingleItem();
+        var paused = transport.Paused;
+
+        transport.IsEffectivelyVisible.ShouldBeTrue();
+
+        window.KeyPressQwerty(PhysicalKey.P, RawInputModifiers.Control);
+        Settle(window);
+
+        transport.Paused.ShouldBe(!paused, "pausing in the editor shows on the picture's transport");
+    }
 }
