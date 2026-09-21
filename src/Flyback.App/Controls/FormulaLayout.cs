@@ -10,7 +10,7 @@ namespace Flyback.App.Controls;
 /// An Expression's formula written out in its body, beside the socket letters.
 /// The header is the module's name, as for any other module.
 /// </summary>
-public sealed partial class NodeEditor
+internal static class FormulaLayout
 {
     private const double FormulaSize = 11;
 
@@ -33,11 +33,12 @@ public sealed partial class NodeEditor
     /// The formula as it is drawn in the body, where that is, and whether it is
     /// cut short. Null for any module but an Expression.
     /// </summary>
-    internal (FormattedText Text, Point At, Rect Area, bool Cut)? FormulaBlock(NodeInstance node, NodeDef def, Rect bounds)
+    internal static (FormattedText Text, Point At, Rect Area, bool Cut)? FormulaBlock(
+        Patch patch, NodeInstance node, NodeDef def, Rect bounds)
     {
         if (NodeCatalog.FormulaOf(node) is not { } formula || string.IsNullOrWhiteSpace(formula)) return null;
 
-        var reserve = Reserve(node, def, bounds, formula);
+        var reserve = Reserve(patch, node, def, bounds, formula);
 
         var area = new Rect(
             bounds.X + FormulaInset,
@@ -60,7 +61,7 @@ public sealed partial class NodeEditor
     /// How much of the right of the body the formula keeps clear of: the output's
     /// name, and the value of each knob the formula reads.
     /// </summary>
-    private double Reserve(NodeInstance node, NodeDef def, Rect bounds, string formula)
+    private static double Reserve(Patch patch, NodeInstance node, NodeDef def, Rect bounds, string formula)
     {
         var reserve = 0d;
 

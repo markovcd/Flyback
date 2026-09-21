@@ -506,7 +506,7 @@ public sealed partial class NodeEditor
                 var name = CanvasText.Text(source, 11.5, Ink(centre.Y, RowInk, NormalFade, NormalBrush), bounds.Width * 0.5, true);
                 context.DrawText(name, new Point(bounds.Right - 12 - name.Width, centre.Y - name.Height / 2));
             }
-            else if (!linked && !connected && i < node.InputValues.Length && (formula is null || Reads(formula, i)))
+            else if (!linked && !connected && i < node.InputValues.Length && (formula is null || FormulaLayout.Reads(formula, i)))
             {
                 // A socket its formula never reads has a knob that turns nothing,
                 // so an Expression shows the values of the ones it does and no more.
@@ -522,6 +522,6 @@ public sealed partial class NodeEditor
             NodeSkin.DrawPort(context, centre, port.Kind);
         }
 
-        if (FormulaBlock(node, def, bounds) is var (text, at, _, _)) context.DrawText(text, at);
+        if (FormulaLayout.FormulaBlock(patch, node, def, bounds) is var (text, at, _, _)) context.DrawText(text, at);
     }
 }

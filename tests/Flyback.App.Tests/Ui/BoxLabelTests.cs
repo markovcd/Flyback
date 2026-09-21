@@ -90,7 +90,7 @@ public class BoxLabelTests : UiTest
     [InlineData("fract(a) + tau", 2, false)]
     [InlineData("a*b", 1, true)]
     public void A_formula_reads_the_sockets_it_names(string formula, int socket, bool reads) =>
-        NodeEditor.Reads(formula, socket).ShouldBe(reads);
+        FormulaLayout.Reads(formula, socket).ShouldBe(reads);
 
     /// <summary>
     /// The formula is written in the body whatever its length and whatever the
@@ -113,7 +113,7 @@ public class BoxLabelTests : UiTest
         var def = NodeCatalog.BuiltIn.Require(NodeCatalog.ExpressionTypeId);
 
         double Height(NodeInstance node) =>
-            editor.FormulaBlock(node, def, NodeGeometry.Bounds(node, def)).ShouldNotBeNull().Text.Height;
+            FormulaLayout.FormulaBlock(editor.Patch, node, def, NodeGeometry.Bounds(node, def)).ShouldNotBeNull().Text.Height;
 
         Height(named).ShouldBe(Height(shortOne), "a name does not move the formula out of the body");
         Height(longOne).ShouldBeGreaterThan(Height(shortOne), "a long one wraps rather than going missing");
