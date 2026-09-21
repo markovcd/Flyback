@@ -1,122 +1,90 @@
 # Changelog
 
-## Unreleased
+## 0.4.0 — 2026-09-21
+
+256 commits since 0.3.0.
 
 ### Updates
-- Flyback updates itself: it checks for a signed release at startup, downloads it in the background, and installs it the next time it starts, then shows what changed since the version it replaced. On by default, in the new Settings → Updates tab.
+- Flyback updates itself: it checks for a signed release at startup, installs it the next time it starts and shows what changed. On by default, in the new Settings → Updates tab.
 - Settings → Files picks what opens a .fbk, .fbkb or .fbks file: nothing, the editor or the viewer.
-- Flyback counts how it is used — the version, the operating system, the rough size of the machine, which plugins and sound backend are in use, how many of each kind of module a patch has when it plays, which assistant is asked, how long a run lasts and what it did, and where it crashed. Nothing about you, your machine or your patches. On by default, in the new Settings → Usage tab.
+- Flyback counts how it is used, and nothing about you, your machine or your patches. On by default, in the new Settings → Usage tab.
 
 ### Plugins
-- A plugin built for a Flyback that has since changed what plugins are built against is left out at startup, and About says whether the plugin or Flyback is the one to update.
-- A plugin can paint its own module's background: a color of its own, a texture over it, or a picture. On by default, and its animation separately, in the new Settings → Canvas tab.
-- Settings → Sound and Settings → MIDI name the plugin playing the sound and hearing the keyboard, or say that none is installed.
+- A plugin built for a Flyback that has since moved on is left out at startup, and About says whether the plugin or Flyback is the one to update.
+- A plugin can paint its own module's background, in the new Settings → Canvas tab.
+- Settings → Sound and Settings → MIDI name the plugin playing the sound and hearing the keyboard.
 
 ### Modules
-- Added Stroke (a drum envelope counted off the beat), Fade (brings a part in as a level rises), Wander (a slow random value) and Drum (a kick or tom from one envelope) to Voice.
-- Added Desk, a four-channel stereo mixer with a trim that chains into bigger ones.
-- Added Duck, a sidechain that turns a part down while a kick, or any other key, is loud, and a Duck preset that shows it.
-- Added Send and Receive, which carry a signal across the patch on a named bus instead of a wire.
-- Added Expression, one block that computes a formula you type over its four inputs, such as `(floor(a * 45) + 0.5) / 45`.
-- Arithmetic in the text view, such as `(x * 2 - 1) * aspect`, is one Expression, and an Expression shows there as arithmetic.
-- Add, Multiply, Floor and the other one- and two-input Maths modules are Expressions now: the module list finds them by name and adds the Expression.
-- Added Trails, which leaves the last frame fading behind the picture.
-- Added Blur, which softens the picture.
-- Added Hiss (a hi-hat, a snare's wires or a riser from one envelope) and Bell (struck metal from two sines) to Voice.
-- Added FM to Voice, a four-operator FM synth for electric pianos, brass and bells, with five algorithms.
-- Added Echo to Effects, a stereo delay whose times are counted in steps of the tempo.
-- Added Transform (zoom, turn and slide in one), Ink (draws a shape in one color), Vignette (darkens the corners) and Tune (a Quantiser and a Note in one).
-- Euclid has a `stroke` output, an envelope on the steps that are hits, and Tempo has `beats`, the count of beats so far.
-- Added the Mastering plugin, for the end of a patch: EQ, Width, Crossover (three bands), Compressor, Limiter (nothing past a ceiling), Maximizer (one knob for a louder, denser mix) and Loudness (a LUFS meter).
-- The computer keyboard can be laid out by scale, chosen on any MIDI In and saved with the patch: the notes you pick are played one to a key along the A row, with the Q row an octave up and the Z row an octave down.
-- Settings → MIDI chooses whether the first MIDI In added to a patch lays the computer keyboard out as a piano or a scale.
-- Added Text to Picture: lines of text in one of two pixel fonts, drawn as a shape, with a socket that picks the line and one that types it out.
-- Filter, Random, Slew, Drive, Delay and Reverb are built into Flyback itself now, so a patch can use them with no plugin installed; a patch saved with the old Voice or Effects ones still opens.
+- Added Stroke, Fade, Wander, Drum, Hiss, Bell and FM to Voice.
+- Added Desk (a four-channel mixer), Duck (a sidechain) and Echo (a delay counted in steps of the tempo).
+- Added Send and Receive, which carry a signal across the patch on a named bus.
+- Added Expression, one block that computes a formula you type over its four inputs. Arithmetic in the text view is one, and Add, Multiply, Floor and the other one- and two-input Maths modules are Expressions now.
+- Added Trails, Blur, Transform, Ink and Vignette for the picture, and Tune, a Quantiser and a Note in one.
+- Added Text to Picture: lines of text in one of two pixel fonts, typed out by a signal.
+- Euclid has a `stroke` output, and Tempo has `beats`.
+- Added the Mastering plugin: EQ, Width, Crossover, Compressor, Limiter, Maximizer and a LUFS meter.
+- The computer keyboard can be laid out by scale, chosen on any MIDI In, and Settings → MIDI picks what the first MIDI In gets.
+- Filter, Random, Slew, Drive, Delay and Reverb are built into Flyback, so a patch can use them with no plugin installed.
 
 ### Presets
-- Mycelium, in the Effects plugin: a psybient track of ninety-six bars in six sections, with a picture driven by the same signals. It is the largest preset, and needs the Voice and Picture plugins.
-- Bronze, in the Effects plugin: a gamelan in a five-note pelog tuning, on a tempo that slows and quickens, with a mandala struck by the same beats. It needs the Voice and Picture plugins.
-- Outrun, in the Effects plugin: a synthwave track on four dark chords, under a drawn scene of a slatted sun, a ridge and a grid that scrolls to the beat. It needs the Voice and Picture plugins.
-- Phase, in the Effects plugin: phase music after Steve Reich, two players on one pattern drifting through all twelve canons, with a picture of two dials that shows where they are. It needs the Voice and Picture plugins.
-- Fracture, in the Effects plugin: drum and bass at 170 with a synthesized break that gets chopped, rolled and reversed, a Reese bass, and a picture cut into strips along with the drums. It needs the Voice and Picture plugins.
-- Dub, in the Effects plugin: dub techno to play rather than listen to. Drums and a sub run on their own, four keys hold a chord over them, and eight panel knobs ride the filter, the echo, the room and the mix, moving the picture with the sound. It needs the Voice and Picture plugins.
-- Overworld, in the Effects plugin: a chiptune track on a console's four voices, with a key change and the music ducked under the kick, under a side-scroller drawn a pixel at a time. It needs the Voice, Picture and Mastering plugins.
-- Captions, in the Picture plugin: lines of text paged and typed out by the clock.
-- Dodge, in the Picture plugin: a game played on the keys Z to M, steering through the one gap in each falling wall.
-- Acid, Bronze, Mycelium, Nebula, Outrun, Phase, Slow weather and Whole band are rebuilt on the new modules, with up to a fifth fewer modules each.
-- Every preset's arithmetic arrives as Expressions, a seventh to a third fewer modules in the big ones, sounding and looking the same.
-- Acid is a whole track now: a hundred and twenty-eight bars in two themes, with builds, a breakdown, a bass line and a second 303, and a line that accents and slides.
-- Whole band is a whole song now: twelve phrases with verses, a chorus, a bridge and fills, and a snare, plucked strings, a pad and a room added to the band.
-- Slow weather is rebuilt around five feedback loops: a drone that bends its own phase, an echo that darkens every time round, two voices that push each other down, and a picture steered by where it was bright a frame ago, visited at random by a music box, a far-off call, rain and thunder that each mark the picture.
-- Settings → Graphics picks which preset Flyback opens on at the next start, from the gallery.
-- The preset list is sorted into headed sections: the blank canvas first, then the patches about one idea, then the ones where sound and picture are the same thought, then the showcases.
-- The preset button opens a gallery of tiles, each with a picture of what the preset draws (a speaker for one that is only heard), its name and its description.
-- Resting the pointer on a preset in the gallery for a second plays it: its picture moves on the tile and its sound fades in, with your patch muted meanwhile.
-- The patch on the canvas can be saved as a preset of your own, listed under Your presets at the end of the gallery.
-- The preset gallery has a filter box, like the module list.
-- The teaching presets are updated, with new ones in the engine and in the Picture, Voice and Mastering plugins.
+- Mycelium: a psybient track of ninety-six bars, and the largest preset.
+- Bronze: a gamelan in a five-note pelog tuning, with a mandala struck by the same beats.
+- Outrun: a synthwave track under a drawn scene of a sun, a ridge and a grid.
+- Phase: phase music after Steve Reich, with a picture of two dials.
+- Fracture: drum and bass at 170 with a synthesized break, chopped and reversed.
+- Dub: dub techno to play, with four keys of chord and eight panel knobs.
+- Overworld: a chiptune track under a side-scroller drawn a pixel at a time.
+- Captions, Dodge (a game played on the keys Z to M) and Duck join the Picture and Effects plugins.
+- Acid is a whole track of a hundred and twenty-eight bars, Whole band is a whole song, and Slow weather is rebuilt around five feedback loops.
+- The other presets are rebuilt on the new modules, a seventh to a third fewer modules in the big ones, sounding and looking the same, and the teaching presets are updated.
+- The preset button opens a gallery of tiles that filters as you type and plays a preset when the pointer rests on it, sorted under headings, with your own presets saved at the end.
+- Settings → Graphics picks which preset Flyback opens on.
 
 ### Recording and export
-- Record counts down on the status bar and takes the patch back to zero, so a take starts where the patch does. Ctrl+R during the count calls it off.
-- Settings → Recording sets how long the count-in is, or turns it off, and whether a take rewinds to zero first.
-- MP4, WebM, MOV, MP3, M4A and FLAC, encoded by ffmpeg where it is installed. An MP4 is around twenty-five times smaller than the AVI.
-- Settings → Recording picks the video and sound formats, and where ffmpeg is if it is not on your `PATH`.
-- `flyback-cli render` takes the format from the extension, with `--format` and `--ffmpeg` to override it.
-- `flyback-cli render --loudness` says how loud the sound came out, in LUFS, and its true peak.
+- Recording counts in and starts at zero, and exports MP4, WebM, MOV, MP3, M4A and FLAC through ffmpeg; `flyback-cli render` takes the format from the extension, and `--loudness` reports LUFS.
 - A Scope or an Analyzer is drawn in an exported clip.
 
 ### Viewer
-- A third program, `flyback-viewer`, opens a patch and plays it: picture and sound, no editor, and nothing written. A patch made to be played takes the keys and MIDI there too.
+- A third program, `flyback-viewer`, opens a patch and plays it: picture and sound, no editor, nothing written.
 
 ### Assistant
-- The assistant is told what every module does again. Settings → Agent sets how long that briefing may get and names an editable list of modules that are always included. Any module left out is marked on the canvas.
-- Settings → Agent has a Probe this model button, which asks the endpoint about the model on the form using the provider, settings and key as they stand there, saved or not. `flyback-cli probe`, which asks about every model, now asks before it starts; `--yes` is for a script.
-- The assistant can change the largest presets, and changes what is there instead of rebuilding it.
-- The assistant can read the presets, yours included, for ideas.
-- A long block in the transcript arrives folded behind its first line, and a turn in flight says so at the end of the transcript.
-- Every frame the assistant renders is shown in the transcript under the caption that came with it.
-- The assistant panel is a column beside the patch, the full height of the window.
+- The assistant is told what every module does again, within a budget Settings → Agent sets.
+- Settings → Agent has a Probe this model button.
+- The assistant can change the largest presets and read the presets for ideas.
+- A long block in the transcript arrives folded, every frame the assistant renders is shown under its caption, and the panel is a column beside the patch.
 
 ### Canvas and interface
-- Ctrl+scroll, Ctrl+plus and Ctrl+minus over the text view change its font size, Ctrl+0 resets it, and the size is remembered.
-- The panel on the right wears the selected block's own face: its category band, the wash under it and its mark, with the name and the buttons on it.
-- More modules, the shipped plugins' included, have a mark of their own, the module list shows each module's mark, and the panel draws a module exactly as the canvas does.
-- Ctrl+Shift+L, or Ctrl+click on the Tidy button, lays out only the selected modules and leaves the rest of the patch where it is.
-- A toolbar button swaps the preview and the canvas, for a bigger picture while you patch.
-- A toolbar button, or Ctrl+P, pauses and plays the patch, and the full-screen preview has the viewer's sound, pause and rewind buttons in its corner.
-- The module panel's buttons are icons, in a row under the name.
-- An Expression's formula is shown in red while it does not read, and says what stopped it.
-- Unsaved work survives a crash: the next start restores it and says so in the status bar.
-- A module carries its category's color down its body and a mark of what it does behind its sockets, with a drawing of its own for the ones you would name; groups are drawn to match.
-- Ctrl+B switches a module or a whole box off: what is patched into it comes straight out of it, and nothing does where nothing is patched in.
-- Holding the right button on a module, or on a shut box, switches it off until you let go, or on if it was off.
-- About has a bitcoin address to donate to, as a QR code that copies it when clicked.
-- Flyback reopens as you left it: window size or maximized, monitor, panel sizes, which panels are open, the text view and the swapped preview. A second copy is placed by the system rather than on top of the first.
-- Ctrl+O and Ctrl+S open and save, and Ctrl+D duplicates the selection beside itself.
-- Esc backs out of a drag on the canvas, putting the module back where it was or the wire back on the socket it came off.
+- Ctrl+scroll, Ctrl+plus and Ctrl+minus change the text view's font size, and Ctrl+0 resets it.
+- A module wears its category's color and a mark of its own, drawn the same on the canvas, in the module list and in the panel.
+- Ctrl+Shift+L, or Ctrl+click on Tidy, lays out only the selected modules.
+- A toolbar button swaps the preview and the canvas.
+- Ctrl+P pauses and plays the patch, and the full-screen preview has the viewer's controls.
+- An Expression's formula is red while it does not read, and says what stopped it.
+- Unsaved work survives a crash and is restored at the next start.
+- Ctrl+B switches a module or a box off, and holding the right button does it until you let go.
+- About has a bitcoin address to donate to, as a QR code.
+- Flyback reopens as you left it: window, panels, text view and swapped preview.
+- Ctrl+O and Ctrl+S open and save, and Ctrl+D duplicates the selection.
+- Esc backs out of a drag on the canvas.
 - The status bar shows the time as minutes and seconds, as in 1:05.25.
 
 ### Performance
-- An output with no wire on it no longer costs anything. The big presets run 2–19% fewer operations a sample, and Random's white is a sixteenth of what it was.
+- An output with no wire on it no longer costs anything, and the big presets run 2–19% fewer operations a sample.
 
 ### Fixes
-- Opening a patch, from a file, a preset or a recovery, takes the sound back to zero seconds along with the picture.
-- A list on a module's panel, like Text's font or Layer's mode, now keeps a pick back to the option it opened on.
-- Pressing Escape after "Learn MIDI controller" found no MIDI device no longer crashes.
-- A number too large for a number box — in a patch file, or typed into the text and applied — no longer crashes when its module is selected.
-- A filter, reverb, delay or loop with silence going into it no longer costs more than one with a signal. A patch with resting parts could crackle because of it.
-- Tidy no longer mislays modules on a patch too tall or too wide for the canvas, and lays the big presets out about a third shorter.
-- A bundle saved by a newer Flyback, or one using a module you do not have, is refused rather than opened as an empty or partial patch that the next save would write over it.
-- Answering "Save…" to the unsaved-changes question and then saving a text copy no longer closes the patch as if it had been saved.
+- Opening a patch takes the sound back to zero along with the picture.
+- A list on a module's panel keeps a pick back to the option it opened on.
+- A filter, reverb, delay or loop with silence going into it no longer costs more than one with a signal, which could make a patch with resting parts crackle.
+- Tidy no longer mislays modules on a patch too tall or too wide for the canvas.
+- A bundle saved by a newer Flyback, or using a module you do not have, is refused rather than opened as a partial patch that the next save would write over it.
+- Answering "Save…" and then saving a text copy no longer closes the patch as if it had been saved.
 - Fading Volume to zero during a recording no longer stops the file there.
 - A module moved with a middle-button pan or a zoom in the middle of the drag stays under the pointer, and the move can be undone.
-- In text, an output named straight after a call, as in `tempo(bpm: 104).beats`, is read rather than dropped for the first output.
-- In text, anything left on a line after its statement is a complaint rather than skipped.
-- In text, `%` between two numbers takes the remainder Modulo does: `-5 % 3` is 1.
+- In text, `tempo(bpm: 104).beats` is read rather than dropped for the first output, anything left on a line after its statement is a complaint, and `%` takes the remainder Modulo does.
 - Flyback no longer closes while the settings window is open.
-- A corrupt sample or picture is reported rather than taking Flyback down with it.
-- Sign answers 0 for a value that is not a number instead of stopping the render, and agrees with the GPU about an infinite one.
-- `flyback-cli render --size` says a frame is too large rather than failing at the arithmetic.
+- A corrupt sample or picture, a number too large for a number box, Escape after "Learn MIDI controller" found no device, and a frame too large for `flyback-cli render --size` are reported rather than crashing.
+- Sign answers 0 for a value that is not a number, and agrees with the GPU about an infinite one.
+- The macOS bundle carries the real version.
 - A Flyback built from a source archive or a plain `docker build` no longer updates itself or counts its use.
 - Several other bugfixes.
 
