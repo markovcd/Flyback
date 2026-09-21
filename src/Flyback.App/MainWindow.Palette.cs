@@ -16,6 +16,22 @@ namespace Flyback.App;
 /// </remarks>
 public sealed partial class MainWindow
 {
+    /// <summary>
+    /// Lays the computer keyboard out by the MIDI section's default when the first
+    /// MIDI In is about to join a patch, so the layout lands in the same edit as the module.
+    /// </summary>
+    private void LayFirstKeyboard(string typeId)
+    {
+        if (typeId != NodeCatalog.MidiTypeId
+            || outputSettings.Keyboard != Midi.KeyboardLayout.Scale
+            || editor.Patch.KeyboardScale is not null
+            || editor.Patch.FirstOf(NodeCatalog.MidiTypeId) is not null)
+            return;
+
+        editor.Patch.KeyboardScale = [.. Major];
+        Relaid();
+    }
+
     private void BuildPalette()
     {
         groups = new GroupLibrary(plugins.Modules, groupFolder);
@@ -46,6 +62,8 @@ public sealed partial class MainWindow
         void Add(string typeId)
         {
             paletteFlyout.Hide();
+
+            LayFirstKeyboard(typeId);
 
             if (wiring is { } drop) editor.AddNodeWired(typeId, drop);
             else editor.AddNode(typeId, addingAt);

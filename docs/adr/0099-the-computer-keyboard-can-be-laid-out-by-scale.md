@@ -60,3 +60,12 @@ assistant sets it with `set_keyboard`, which takes no handle.
 - The file gained a field and the language a statement, neither of which an
   older build reads. An older build opens the patch as a piano, which is the one
   wrong answer that still plays.
+
+## Amendment, 2026-09-21: a default for a patch's first MIDI In
+
+Settings → MIDI has a **New keyboard** choice, Piano or Scale, kept with the
+other output settings and Piano until changed. It is read once: when a MIDI In
+is added from the palette to a patch that has no MIDI In and no scale, and
+Scale is the default, the patch takes C major in the same edit as the module.
+A patch that already has a MIDI In or a scale, one that is opened rather than
+added to, and one whose text is the document are never touched.

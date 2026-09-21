@@ -55,6 +55,14 @@ public sealed partial class MainWindow
         HorizontalAlignment = HorizontalAlignment.Stretch,
     };
 
+    private readonly ComboBox keyboardLayout = new Picker
+    {
+        Name = "keyboardLayout",
+        ItemsSource = new[] { "Piano", "Scale" },
+        SelectedIndex = 0,
+        HorizontalAlignment = HorizontalAlignment.Stretch,
+    };
+
     private readonly ToggleButton controlsButton =
         Toggle("controls", "◎", "Show the knob panel, for turning the patch by hand or from a MIDI controller  (Ctrl+K)");
 
@@ -176,12 +184,17 @@ public sealed partial class MainWindow
             + "or leave the knob alone until the controller passes it. Flyback's own, whichever plugin "
             + "hears the controller.");
 
+        ToolTip.SetTip(keyboardLayout,
+            "How the computer keyboard is laid out on a patch when its first MIDI In is added: as a piano, "
+            + "or as a scale, one note to a key. Patches that already have a MIDI In keep their own.");
+
         midiNote.Text = plugins.PreferredMidiInput is { } input
             ? Attributed($"Heard through {input.Name}", plugins.Provider(input))
             : "No MIDI plugin is installed, so the only instrument is the computer's own keyboard.";
 
         midiSection.Children.Add(midiNote);
         midiSection.Children.Add(Field("Knobs", takeover));
+        midiSection.Children.Add(Field("New keyboard", keyboardLayout));
     }
 
     /// <summary>

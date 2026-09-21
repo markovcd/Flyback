@@ -211,6 +211,7 @@ public sealed partial class MainWindow
         ffmpegBox.Text = settings.FfmpegPath;
         latency.SelectedIndex = Nearest(Latencies.Select(ms => (double)ms).ToArray(), settings.LatencyMilliseconds);
         takeover.SelectedIndex = settings.Takeover == Midi.Takeover.PickUp ? 1 : 0;
+        keyboardLayout.SelectedIndex = settings.Keyboard == Midi.KeyboardLayout.Scale ? 1 : 0;
 
         if (plugins.PreferredAudioOutput is { } output)
             soundForm.Show(output.Form, settings.SoundOf(output.Id));
@@ -345,6 +346,7 @@ public sealed partial class MainWindow
             Sound = new(before.Sound, StringComparer.Ordinal),
 
             Takeover = takeover.SelectedIndex == 1 ? Midi.Takeover.PickUp : Midi.Takeover.Jump,
+            Keyboard = keyboardLayout.SelectedIndex == 1 ? Midi.KeyboardLayout.Scale : Midi.KeyboardLayout.Piano,
         };
 
         // So an emptied box says what it kept, the next time it is looked at.

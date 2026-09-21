@@ -136,6 +136,12 @@ public sealed class OutputSettings
     /// <summary>What a MIDI controller does to a knob sitting somewhere else — the MIDI section.</summary>
     public Takeover Takeover { get; set; }
 
+    /// <summary>
+    /// How the computer keyboard is laid out on a patch when its first MIDI In is
+    /// added — the MIDI section. A patch that already has one, or has none, is not touched.
+    /// </summary>
+    public KeyboardLayout Keyboard { get; set; }
+
     /// <summary>What is set for one backend, and nothing for one nobody has configured.</summary>
     public SettingValues SoundOf(string backend) =>
         Sound.TryGetValue(backend, out var held) ? new SettingValues(held) : SettingValues.None;
@@ -228,6 +234,7 @@ public sealed class OutputSettings
             settings.Sound ??= new(StringComparer.Ordinal);
 
             if (!Enum.IsDefined(settings.Takeover)) settings.Takeover = Takeover.Jump;
+            if (!Enum.IsDefined(settings.Keyboard)) settings.Keyboard = KeyboardLayout.Piano;
 
             return settings;
         }

@@ -345,7 +345,8 @@ out.volume = 0.6</code></pre>
     <code>gate</code> (high while a key is held), <code>velocity</code> and <code>trigger</code> (a pulse at the
     start of each note). With a MIDI keyboard connected, pick it on the module's <strong>listens to</strong>
     field. Without one, the computer keyboard plays instead. <strong>Settings → MIDI</strong> names the
-    plugin doing the hearing.</p>
+    plugin doing the hearing and sets whether the first MIDI In a patch gets lays the computer keyboard out as a
+    piano or as a scale.</p>
 
     <pre><code class="fbks"># Z to M plays C3 to B3, Q to U the octave above.
 let key = midi.in()
