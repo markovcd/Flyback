@@ -57,6 +57,7 @@ public sealed partial class MainWindow
         : new YourPresets(
             () => [.. savedPresets.All.Select(entry => entry.Preset)],
             CheckPresetName,
+            name => savedPresets?.Named(name) is not null,
             KeepPreset,
             RemovePreset);
 
@@ -74,7 +75,7 @@ public sealed partial class MainWindow
             return (false, "A built-in preset is already called that.");
 
         return savedPresets.Named(name) is { } already
-            ? (true, $"Replaces the “{already.Name}” saved already.")
+            ? (true, $"Replaces the “{already.Name}” saved already. It will ask first.")
             : (true, "");
     }
 

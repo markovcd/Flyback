@@ -147,6 +147,61 @@ public class SavedPresetTests : UiTest
         All<Button>(window).Single(b => b.Name == "save-preset").IsEnabled.ShouldBeFalse();
     }
 
+    /// <summary>Saves "Mine", then presses Save on the same name again, which puts the question up.</summary>
+    private static void AskToReplace(MainWindow window)
+    {
+        OpenGallery(window);
+        SaveAs(window, "Mine");
+
+        Click(All<Button>(window).Single(b => b.Name == "keep-preset"), window);
+
+        All<TextBox>(window).Single(b => b.Name == "preset-name").Text = "Mine";
+        Settle(window);
+
+        Click(All<Button>(window).Single(b => b.Name == "save-preset"), window);
+    }
+
+    private static Button ReplaceAnswer(MainWindow window, string glyph) =>
+        All<Button>(All<Border>(window).Single(b => b.Name == "keep-card")).Single(b => b.Content as string == glyph);
+
+    [AvaloniaFact]
+    public void Saving_over_a_preset_asks_before_replacing_it()
+    {
+        var window = Open();
+
+        AskToReplace(window);
+
+        var kept = Path.Combine(folder, "Mine" + PatchBundle.Extension);
+        var before = File.GetLastWriteTimeUtc(kept);
+
+        ReplaceAnswer(window, "✔").ShouldNotBeNull();
+        File.GetLastWriteTimeUtc(kept).ShouldBe(before, "nothing is replaced until the question is answered yes");
+    }
+
+    [AvaloniaFact]
+    public void Answering_no_to_a_replace_goes_back_to_the_name()
+    {
+        var window = Open();
+
+        AskToReplace(window);
+        Click(ReplaceAnswer(window, "✕"), window);
+
+        All<TextBox>(window).Single(b => b.Name == "preset-name").Text.ShouldBe("Mine");
+        SavedTiles(window).Select(p => p.Name).ShouldBe(["Mine"]);
+    }
+
+    [AvaloniaFact]
+    public void Answering_yes_to_a_replace_saves_over_it()
+    {
+        var window = Open();
+
+        AskToReplace(window);
+        Click(ReplaceAnswer(window, "✔"), window);
+
+        SavedTiles(window).Select(p => p.Name).ShouldBe(["Mine"], "one name, one tile");
+        All<Button>(window).ShouldContain(b => b.Name == "keep-preset", "the card is the offer again");
+    }
+
     /// <summary>Saves "Mine", then asks to delete it, and returns its tile with the question up.</summary>
     private static Button AskToDelete(MainWindow window)
     {

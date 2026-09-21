@@ -30,11 +30,13 @@ internal sealed record GalleryParts(TextBox Filter, Control Tiles);
 /// Whether a name may be saved under, and a line saying so — why not, or that it
 /// replaces one already saved.
 /// </param>
+/// <param name="Replaces">Whether saving under a name would replace a preset already saved, which is asked about first.</param>
 /// <param name="Keep">Saves the patch on the canvas under a name <paramref name="Check"/> allowed. False where that failed.</param>
 /// <param name="Remove">Deletes one.</param>
 internal sealed record YourPresets(
     Func<IReadOnlyList<PatchPreset>> All,
     Func<string, (bool Allowed, string Hint)> Check,
+    Func<string, bool> Replaces,
     Func<string, bool> Keep,
     Action<PatchPreset> Remove)
 {
@@ -313,7 +315,39 @@ internal static class PresetGallery
 
         void Save()
         {
-            if (yours.Keep(name.Text ?? string.Empty)) saved();
+            var wanted = name.Text ?? string.Empty;
+
+            if (!yours.Replaces(wanted))
+            {
+                if (yours.Keep(wanted)) saved();
+                return;
+            }
+
+            // A preset is a file and there is no undo for replacing one, so the
+            // form gives way to the question and comes back, name intact, on no.
+            card.Child = new Border
+            {
+                Padding = new Thickness(8),
+                VerticalAlignment = VerticalAlignment.Center,
+                Child = Question.Row(
+                    $"Replace “{wanted.Trim()}”?",
+                    default,
+                    "Replace the saved preset with this patch.",
+                    "Leave the saved one alone.",
+                    replace =>
+                    {
+                        if (replace)
+                        {
+                            if (yours.Keep(wanted)) saved();
+                            else card.Child = form;
+                        }
+                        else
+                        {
+                            card.Child = form;
+                            name.Focus();
+                        }
+                    }),
+            };
         }
     }
 

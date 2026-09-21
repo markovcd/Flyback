@@ -3,6 +3,7 @@
 ## Unreleased
 
 - A patch has a description, edited by double-clicking it in the panel with nothing selected, written as `description "..."` in the text and shown in the preset gallery.
+- Saving a preset under a name already saved asks first, in place.
 
 ## 0.4.0 — 2026-09-21
 
