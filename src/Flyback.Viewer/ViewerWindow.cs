@@ -79,7 +79,13 @@ internal sealed partial class ViewerWindow : Window
             e.Handled = true;
         };
 
-        Opened += (_, _) => player.Begin();
+        Opened += (_, _) =>
+        {
+            player.Begin();
+
+            // A device that refused to start leaves nothing for the speaker button to do.
+            if (Overlay is { } overlay) overlay.Sounding = player.Sounding;
+        };
 
         player.Finished += Close;
 
@@ -113,6 +119,7 @@ internal sealed partial class ViewerWindow : Window
         {
             player.Toggle();
             overlay.Paused = player.Paused;
+            overlay.Sounding = player.Sounding;
         };
 
         overlay.RewindClicked += player.Rewind;

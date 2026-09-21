@@ -45,6 +45,36 @@ public class ViewerWindowTests : UiTest
         }
     }
 
+    /// <summary>A sound card that will not open, counting how often it was asked.</summary>
+    private sealed class Refusing : IAudioDevice
+    {
+        public int Asked { get; private set; }
+
+        public int SampleRate => GlobalConstants.SampleRate;
+
+        public bool IsRunning => false;
+
+        public void Start(AudioCallback callback)
+        {
+            Asked++;
+            throw new InvalidOperationException("the device is in use");
+        }
+
+        public void Stop() { }
+
+        public void Dispose() { }
+    }
+
+    /// <summary>A player with no window on a clock the test moves, begun.</summary>
+    private static ViewerPlayer Clocked(ViewerOptions options, Func<double> seconds, IAudioDevice? device = null, Opened? opened = null)
+    {
+        var player = new ViewerPlayer(opened ?? Plasma(), device, options, null) { Now = () => TimeSpan.FromSeconds(seconds()) };
+
+        player.Begin();
+
+        return player;
+    }
+
     private static Opened Plasma() => Files(Presets.All.Single(p => p.Name == "Plasma").Build(NodeCatalog.BuiltIn));
 
     private static Opened Files(Patch patch) => new(patch, new SampleLibrary(), new ImageLibrary());
@@ -141,6 +171,92 @@ public class ViewerWindowTests : UiTest
         window.Preview.Time.ShouldBe(0);
         window.Preview.Clock!().ShouldBe(0);
         window.Player.Paused.ShouldBeTrue();
+    }
+
+    [AvaloniaFact]
+    public void A_run_opened_paused_does_not_count_down_its_for()
+    {
+        var now = 0.0;
+        using var player = Clocked(Options() with { Paused = true, For = 3 }, () => now);
+        var finished = false;
+        player.Finished += () => finished = true;
+
+        now = 10;
+        player.Tick();
+
+        finished.ShouldBeFalse();
+    }
+
+    [AvaloniaFact]
+    public void A_pause_holds_the_for_countdown()
+    {
+        var now = 0.0;
+        using var player = Clocked(Options() with { For = 3 }, () => now);
+        var finished = 0;
+        player.Finished += () => finished++;
+
+        now = 2;
+        player.Pause();
+        now = 12;
+        player.Tick();
+        player.Resume();
+        now = 12.5;
+        player.Tick();
+
+        finished.ShouldBe(0);
+
+        now = 13.1;
+        player.Tick();
+        now = 14;
+        player.Tick();
+
+        finished.ShouldBe(1);
+    }
+
+    [AvaloniaFact]
+    public void Loop_rewinds_on_played_time_and_a_rewind_starts_its_count_again()
+    {
+        var now = 0.0;
+        var device = new Loopback();
+        using var player = Clocked(Options() with { Loop = 2 }, () => now, device, Files(Tone()));
+
+        device.Pump(GlobalConstants.SampleRate / 2);
+        now = 1.5;
+        player.Tick();
+        player.Audio.Time.ShouldBeGreaterThan(0.4);
+
+        // Paused for longer than a loop: nothing rewinds.
+        player.Pause();
+        now = 10;
+        player.Tick();
+        player.Resume();
+        player.Audio.Time.ShouldBeGreaterThan(0.4);
+
+        // A rewind by hand starts the count again, so 1.5 s later is not yet a loop.
+        player.Rewind();
+        device.Pump(GlobalConstants.SampleRate / 2);
+        now = 11.5;
+        player.Tick();
+        player.Audio.Time.ShouldBeGreaterThan(0.4);
+
+        now = 12.1;
+        player.Tick();
+        device.Pump(1024);
+        player.Audio.Time.ShouldBeLessThan(0.1);
+    }
+
+    [AvaloniaFact]
+    public void A_device_that_will_not_start_is_asked_once()
+    {
+        var device = new Refusing();
+        using var player = Clocked(Options(), () => 0, device, Files(Tone()));
+
+        player.Sounding.ShouldBeFalse();
+
+        player.Pause();
+        player.Resume();
+
+        device.Asked.ShouldBe(1);
     }
 
     [AvaloniaFact]

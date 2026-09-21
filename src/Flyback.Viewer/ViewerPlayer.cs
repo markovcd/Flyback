@@ -27,10 +27,13 @@ internal sealed class ViewerPlayer : IDisposable
     private readonly PreviewHost? preview;
     private readonly AudioEngine audio;
     private readonly IlCompiler compiler = new();
-    private readonly bool audible;
+    private bool audible;
 
-    private DispatcherTimer? closing;
-    private DispatcherTimer? looping;
+    private DispatcherTimer? ticker;
+    private TimeSpan last;
+    private double played;
+    private double sinceLoop;
+    private bool finished;
     private double frozenAt;
 
     /// <param name="preview">The picture's surface, or null where there is no picture to draw.</param>
@@ -102,26 +105,57 @@ internal sealed class ViewerPlayer : IDisposable
     /// <summary>Raised when <c>--for</c> has run out.</summary>
     public event Action? Finished;
 
+    /// <summary>The wall clock <c>--for</c> and <c>--loop</c> count played time against.</summary>
+    internal Func<TimeSpan> Now { get; init; } = Watch();
+
     /// <summary>Starts playing, or holds the first frame where the run was asked to open paused.</summary>
     public void Begin()
     {
-        if (options.For is { } seconds)
+        last = Now();
+
+        if (options.For is not null || options.Loop is not null)
         {
-            closing = Every(seconds, () =>
-            {
-                closing?.Stop();
-                Finished?.Invoke();
-            });
+            ticker = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(100) };
+            ticker.Tick += (_, _) => Tick();
+            ticker.Start();
         }
 
-        if (options.Loop is { } every) looping = Every(every, Rewind);
-
         Apply();
+    }
+
+    /// <summary>
+    /// Adds the time played since the last tick, then finishes a <c>--for</c> that
+    /// has run out or rewinds a <c>--loop</c> that has come round. Time paused is not counted.
+    /// </summary>
+    internal void Tick()
+    {
+        var now = Now();
+        var delta = (now - last).TotalSeconds;
+
+        last = now;
+
+        if (Paused || finished) return;
+
+        played += delta;
+        sinceLoop += delta;
+
+        if (options.For is { } seconds && played >= seconds)
+        {
+            finished = true;
+            ticker?.Stop();
+            Finished?.Invoke();
+
+            return;
+        }
+
+        if (options.Loop is { } every && sinceLoop >= every) Rewind();
     }
 
     public void Pause()
     {
         if (Paused) return;
+
+        Tick();
 
         frozenAt = preview?.Time ?? audio.Time;
         Paused = true;
@@ -132,6 +166,7 @@ internal sealed class ViewerPlayer : IDisposable
     {
         if (!Paused) return;
 
+        last = Now();
         Paused = false;
         Apply();
     }
@@ -156,6 +191,7 @@ internal sealed class ViewerPlayer : IDisposable
 
         // Or the next tick reads the old frozen time and the rewind is undone.
         frozenAt = 0;
+        sinceLoop = 0;
 
         if (preview is not null) preview.Time = 0;
     }
@@ -207,6 +243,9 @@ internal sealed class ViewerPlayer : IDisposable
             Trace.WriteLine($"sound: {ex.Message}");
             Console.Error.WriteLine($"{GlobalConstants.ApplicationName}: no sound — {ex.Message}");
 
+            // Not tried again on every resume, only to say the same thing again.
+            audible = false;
+
             return false;
         }
     }
@@ -216,20 +255,16 @@ internal sealed class ViewerPlayer : IDisposable
         if (preview is { Backend: PreviewBackend.Cpu } surface) compiler.Submit(surface.Program, IlLane.Picture);
     }
 
-    private static DispatcherTimer Every(double seconds, Action tick)
+    private static Func<TimeSpan> Watch()
     {
-        var timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(seconds) };
+        var watch = Stopwatch.StartNew();
 
-        timer.Tick += (_, _) => tick();
-        timer.Start();
-
-        return timer;
+        return () => watch.Elapsed;
     }
 
     public void Dispose()
     {
-        closing?.Stop();
-        looping?.Stop();
+        ticker?.Stop();
 
         audio.Stop();
         audio.Dispose();
