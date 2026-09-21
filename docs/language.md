@@ -520,7 +520,7 @@ A pipeline cannot express a loop, so the back-wire does:
 ```
 # An integrator: each evaluation adds a little of the source to what it held.
 
-let sum = square(freq: frequency(110)) * 0.06 |> add()
+let sum = square(freq: 110) * 0.06 |> add()
 
 sum.b <- sum * 0.94
 sum |> out.left
@@ -828,7 +828,7 @@ description "A wire running backwards: a lowpass built from an add and a multipl
   "its one number swept."
 
 let keep = sine(freq: 0.1) |> remap(-1..1, 0.92..0.996)
-let sum  = square(freq: frequency(110)) * (1 - keep) |> add()
+let sum  = square(freq: 110) * (1 - keep) |> add()
 
 sum.b <- sum * keep
 sum |> out.left
@@ -886,7 +886,7 @@ description "One slow oscillator setting both the hue of the image and the tremo
 
 let slow = sine(freq: 0.15, amp: 0.5, bias: 0.5)
 
-sine(freq: frequency(110)) * slow |> out.left
+sine(freq: 110) * slow |> out.left
 
 rings(freq: 3, offset: t)
   |> hsv(hue: slow, saturation: 0.85)
@@ -961,7 +961,7 @@ you mean.
 description "A drum the picture listens to rather than being told about, through a"
   "Meter."
 
-let voiced = sine(freq: frequency(70))
+let voiced = sine(freq: 70)
                * (pulse(freq: 2, width: 0.08)
                     |> adsr(attack: 2.5ms, decay: 126ms, sustain: 0, release: 100ms))
 
@@ -988,11 +988,11 @@ by as much as a room does.
 description "A pad that gets out of the way each time the kick hits, on a Scope drawing"
   "how far."
 
-let kick = sine(freq: frequency(55))
+let kick = sine(freq: 55)
              * (pulse(freq: 2, width: 0.08)
                   |> adsr(attack: 2.5ms, decay: 126ms, sustain: 0, release: 100ms))
 
-let pad = saw(freq: frequency(110), amp: 0.25) + saw(freq: frequency(165), amp: 0.2)
+let pad = saw(freq: 110, amp: 0.25) + saw(freq: 165, amp: 0.2)
             |> duck(key: kick, depth: 0.8, release: 200ms)
 
 pad + kick |> out.left
@@ -1011,7 +1011,7 @@ rather than the pad, so a dip is a line falling rather than a waveform thinning.
 description "Sine, triangle, square and saw faded one into the next, on a Scope drawing"
   "the shape being heard."
 
-let pitch = frequency(110)
+let pitch = 110
 
 let voice = mixer(
   in_1: sine(freq: pitch),     level_1: max(sine(freq: 0.08, phase: 0.25), 0),
@@ -1081,7 +1081,7 @@ description "A loop swept round a field at audio rate, so the picture is the wav
 
 let bands = rings(freq: 4)
 let where = sine(freq: 0.2) |> remap(-1..1, 0.2..0.75)
-let loop  = scan(bands, rate: frequency(110), radius: 0.35, x: where, scale: 1)
+let loop  = scan(bands, rate: 110, radius: 0.35, x: where, scale: 1)
 
 loop |> out.left
 
@@ -1233,7 +1233,7 @@ group "Snare" {
 
   let wires = (hiss |> filter(cutoff: 1100, resonance: 0)).high |> filter(cutoff: 6500, resonance: 0)
 
-  let shell = sine(freq: frequency(185), amp: 0.6) * (snareLevel * snareLevel)
+  let shell = sine(freq: 185, amp: 0.6) * (snareLevel * snareLevel)
   let snare = (wires * 2.2 * snareLevel + shell) * snareHard
 }
 

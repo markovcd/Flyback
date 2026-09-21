@@ -28,7 +28,7 @@ public class PatchSinkTests
         NodeCatalog.IsSink(NodeCatalog.OutputTypeId).ShouldBeTrue();
 
         // Sat in the Output category of the palette, and no such thing to the compiler.
-        NodeCatalog.IsSink("audio.frequency").ShouldBeFalse();
+        NodeCatalog.IsSink(NodeCatalog.ValueTypeId).ShouldBeFalse();
         NodeCatalog.IsSink("osc.sine").ShouldBeFalse();
     }
 

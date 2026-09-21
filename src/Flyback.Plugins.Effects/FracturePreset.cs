@@ -243,14 +243,13 @@ internal sealed class FracturePreset : PresetBench
         // that is most of what a break sounds like.
         var kit = b.Add(DriveType, (1, 3f));
         var crush = Product(Rises(die, 0.2f, 0.5f, Held), chopped);
-        var ticks = b.Add("osc.square");
+        var ticks = b.Add("osc.square", (1, 5200f));
         var coarse = b.Add(NodeCatalog.HoldTypeId);
         var drums = b.Add("math.mix");
 
         b.Wire(drumBeats, 0, pattern, 0)
          .Wire(noise, 0, rattle, 0)
          .Wire(drumBeats, 0, hatHits, 0)
-         .Wire(b.Add("audio.frequency", (0, 5200f)), 0, ticks, 1)
          .Wire(Sum(Sum(kick, snare), hats), 0, kit, 0)
          .Wire(kit, 0, coarse, 0)
          .Wire(ticks, 0, coarse, 1)

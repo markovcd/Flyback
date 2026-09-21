@@ -159,22 +159,13 @@ public class SupersawTests
         audio.Program.Ops.ShouldNotBeEmpty();
     }
 
-    /// <summary>
-    /// The mistake the preset exists to prevent: pitch has to come from a
-    /// Frequency module, because 'freq' counts cycles per unit of 'in' and its
-    /// knob would leave the oscillator down at one hertz, clicking.
-    /// </summary>
+    /// <summary>The preset plays at a pitch, not at the knob's resting one hertz.</summary>
     [Fact]
-    public void The_preset_takes_its_pitch_from_a_frequency_module()
+    public void The_preset_plays_at_an_audible_pitch()
     {
         var patch = PluginHost.Load().Presets.Single(p => p.Name == "Supersaw").Build(Catalog);
 
-        var voice = patch.Nodes.First(n =>
-            n.TypeId == Supersaw && patch.IncomingTo(n.Id, Freq) is not null);
-
-        var source = patch.Find(patch.IncomingTo(voice.Id, Freq)!.SourceNode);
-
-        source.ShouldNotBeNull().TypeId.ShouldBe("audio.frequency");
+        patch.Nodes.Single(n => n.TypeId == Supersaw).InputValues[Freq].ShouldBe(110f);
     }
 
     /// <summary>Both outputs used, or the stereo spread is there for nothing.</summary>

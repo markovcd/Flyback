@@ -226,19 +226,17 @@
     so a mono patch is stereo already.</p>
 
     <ol class="steps">
-      <li>Add a <strong>Sine</strong> and a <strong>Frequency</strong> (from the Pitch family). The Sine's own
-      <code>freq</code> knob sweeps from a slow wobble up to 20 kHz; Frequency is a knob in hertz
-      alone.</li>
-      <li>Wire Frequency's <code>out</code> into the Sine's <code>freq</code>, and set Frequency to
-      <code>110</code>.</li>
-      <li>Wire the Sine's <code>out</code> into the Output's <code>left</code>. You hear a low A.</li>
+      <li>Add a <strong>Sine</strong> and wire its <code>out</code> into the Output's <code>left</code>. At its
+      starting <code>freq</code> of 1 it is a wobble once a second, too slow to hear.</li>
+      <li>Turn <code>freq</code> up. The knob sweeps in decades: its lower half is slow wobbles, its upper half
+      is pitch, up to 20 kHz. Type <code>110</code> and you hear a low A.</li>
       <li>Use the Output's <code>volume</code> to set the level. At zero, the sound device is closed.</li>
     </ol>
 
     <figure class="patch-fig">
       <a class="zoom" href="assets/shots/patch-tone.webp" target="_blank" rel="noopener">
-        <img class="shot" loading="lazy" src="assets/shots/patch-tone.webp" width="1173" height="291"
-             alt="Frequency at 110 hertz wired into a Sine's freq, and the Sine's out wired into the Output's left. The Sine's in reads Time.">
+        <img class="shot" loading="lazy" src="assets/shots/patch-tone.webp" width="748" height="291"
+             alt="A Sine at 110 hertz wired into the Output's left. The Sine's in reads Time.">
       </a>
     </figure>
 
@@ -276,7 +274,7 @@
       <div class="window">
         <a class="zoom" href="assets/shots/tutorial-canvas.webp" target="_blank" rel="noopener">
           <img loading="lazy" src="assets/shots/tutorial-canvas.webp" width="1600" height="863"
-               alt="The finished patch on the canvas: Frequency into Sine, Sine and a Sine named slow into an Expression multiplying them, slow into HSV's hue, Rings with Time on its offset into HSV's value, and HSV and the Expression into the Output. The preview shows red rings.">
+               alt="The finished patch on the canvas: a Sine and a Sine named slow into an Expression multiplying them, slow into HSV's hue, Rings with Time on its offset into HSV's value, and HSV and the Expression into the Output. The preview shows red rings.">
         </a>
       </div>
       <figcaption>The finished patch. As the tone swells, the rings move through the color wheel with it, because
@@ -295,7 +293,7 @@
     <pre><code class="fbks"># One slow oscillator setting both the hue of the image and the tremolo on the tone.
 let slow = sine(freq: 0.15, amp: 0.5, bias: 0.5)
 
-sine(freq: frequency(110)) * slow |> out.left
+sine(freq: 110) * slow |> out.left
 
 rings(freq: 3, offset: t)
   |> color.hsv(hue: slow, saturation: 0.85)

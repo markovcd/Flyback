@@ -256,19 +256,19 @@ internal sealed class BronzePreset : PresetBench
         // fresh. A millisecond or two of rise, as a share of the cycle, because a
         // sine switched on at full height is a click and down here a click is heard.
         var gongStroke = Product(gongFall, Rises(gongFall, 0f, 0.0015f, StrokePhase));
-        var gongHz = b.Add("audio.frequency", (0, 69.3f));
+        var gongHz = b.Add(NodeCatalog.ValueTypeId, (0, 69.3f));
         var gong = Sum(
             Bell(gongHz, gongStroke, 2.41f, 0.3f),
             Tone(Plus(gongHz, 1.3f), gongStroke));
 
         // The smaller gong answers it half way round, a pelog fifth up.
         var kempurStroke = Stroke(beats, 1f / Cycle, 9f, 0.5f);
-        var kempur = Bell(b.Add("audio.frequency", (0, 102.1f)), kempurStroke, 2.41f, 0.35f);
+        var kempur = Bell(b.Add(NodeCatalog.ValueTypeId, (0, 102.1f)), kempurStroke, 2.41f, 0.35f);
 
         // And the timekeeper: one dry note on every beat, which is what the rest of
         // the orchestra is listening to while the tempo moves.
         var timeStroke = Enters(Stroke(beats, 1f, 16f), song, 0.36f, 0.4f);
-        var kempli = Bell(b.Add("audio.frequency", (0, 620f)), timeStroke, 1.41f, 0.6f);
+        var kempli = Bell(b.Add(NodeCatalog.ValueTypeId, (0, 620f)), timeStroke, 1.41f, 0.6f);
 
         Box("Gongs");
 

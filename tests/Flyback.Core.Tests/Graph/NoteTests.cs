@@ -314,7 +314,6 @@ public class NoteTests
 
         def.Inputs[0].Format(57f).ShouldBe("A3");
         def.Inputs[2].Format(12.5f).ShouldBe("12.5");
-        NodeCatalog.BuiltIn.Require("audio.frequency").Inputs[0].Format(220f).ShouldBe("220");
     }
 
     /// <summary>

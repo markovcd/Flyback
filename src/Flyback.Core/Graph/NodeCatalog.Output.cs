@@ -137,13 +137,6 @@ public partial class NodeCatalog
             + "is not just quiet — it is the speakers switched off, the device closed rather than fed silence.");
 
         yield return new NodeDef(
-            "audio.frequency", "Frequency", ModuleCategories.Pitch,
-            [Num("hz", 220f, 20f, 4000f)], [Num("out")],
-            (_, i) => [i[0]],
-            "A knob in hertz rather than in the single digits the visual modules use. "
-            + "Patch it into an oscillator's freq to work at audible pitches.");
-
-        yield return new NodeDef(
             "audio.note", "Note", ModuleCategories.Pitch,
             [
                 Pitched("note", 57f),

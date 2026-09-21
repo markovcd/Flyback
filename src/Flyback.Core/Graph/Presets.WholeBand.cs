@@ -164,8 +164,6 @@ public static partial class Presets
         private static Step[] Hits(params float[] strengths) =>
             [.. strengths.Select(s => s > 0f ? new Step(s) : Rest())];
 
-        private NodeInstance Hz(float hz) => b.Add("audio.frequency", (0, hz));
-
         public Patch Assemble()
         {
             // --- the clock -------------------------------------------------------
@@ -312,13 +310,12 @@ public static partial class Presets
             // shell is a sine under them that is gone sooner: the envelope squared.
             var snareLevel = b.Add(NodeCatalog.AdsrTypeId, (1, -3.3f), (2, -0.8f), (3, 0f), (4, -1.2f));
             var wires = Product(Times(Filtered(Filtered(hiss, 1100f), 6500f, from: High), 2.2f, Low), snareLevel);
-            var shell = b.Add("osc.sine", (3, 0.6f));
+            var shell = b.Add("osc.sine", (1, 185f), (3, 0.6f));
             var snare = Product(
                 Sum(wires, Product(shell, Product(snareLevel, snareLevel))),
                 Wired(NodeCatalog.HoldTypeId, snareHard, snareGate));
 
-            b.Wire(snareGate, 0, snareLevel, 0)
-             .Wire(Hz(185f), 0, shell, 1);
+            b.Wire(snareGate, 0, snareLevel, 0);
 
             Box("Snare");
 

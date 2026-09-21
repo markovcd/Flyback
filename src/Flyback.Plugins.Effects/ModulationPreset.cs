@@ -23,8 +23,7 @@ internal static class ModulationPreset
 
         // No clock: the saw's 'in' is normalled to Time (ADR-0050), so the whole
         // patch is the effects and the one thing they are applied to.
-        var pitch = b.Add("audio.frequency", (0, 165f));
-        var saw = b.Add("osc.saw", (3, 0.9f));
+        var saw = b.Add("osc.saw", (1, 165f), (3, 0.9f));
 
         var flanger = b.Add(FlangerModule.TypeId, (1, 0.18f), (2, 0.8f), (3, 0.45f), (4, 0.35f));
         var phaser = b.Add(PhaserModule.TypeId, (1, 0.4f), (2, 0.75f), (3, 0.5f), (4, 0.5f));
@@ -32,8 +31,7 @@ internal static class ModulationPreset
 
         var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 0.6f));
 
-        b.Wire(pitch, 0, saw, 1)
-         .Wire(saw, 0, flanger, 0)
+        b.Wire(saw, 0, flanger, 0)
          .Wire(flanger, 0, phaser, 0)
          .Wire(phaser, 0, chorus, 0)
          .Wire(chorus, 0, output, NodeCatalog.OutputLeftPort)

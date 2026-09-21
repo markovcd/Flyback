@@ -34,8 +34,7 @@ internal static class TimbrePreset
         var drive = b.Add("math.remap", (3, 1f), (4, 4f));
 
         // 110 Hz, folded into a spectrum, then filtered back down out of it.
-        var pitch = b.Add("audio.frequency", (0, 110f));
-        var saw = b.Add("osc.saw", (3, 0.9f));
+        var saw = b.Add("osc.saw", (1, 110f), (3, 0.9f));
         var fold = b.Add(FoldModule.TypeId);
         var filter = b.Add(NodeCatalog.FilterTypeId, (2, 0.75f));
 
@@ -44,7 +43,6 @@ internal static class TimbrePreset
         b.Wire(sweep, 0, cutoff, 0)
          .Wire(wobble, 0, drive, 0)
 
-         .Wire(pitch, 0, saw, 1)
          .Wire(saw, 0, fold, 0)
          .Wire(drive, 0, fold, 1)
          .Wire(fold, 0, filter, 0)
@@ -52,7 +50,7 @@ internal static class TimbrePreset
          .Wire(filter, 0, output, NodeCatalog.OutputLeftPort);
 
         b.Group("The Two Hands", sweep, wobble, cutoff, drive)
-         .Group("The Tone", pitch, saw, fold, filter);
+         .Group("The Tone", saw, fold, filter);
 
         return b.Build();
     }

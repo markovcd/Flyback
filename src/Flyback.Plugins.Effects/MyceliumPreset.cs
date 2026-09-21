@@ -353,8 +353,7 @@ internal static class MyceliumPreset
         // made loud because a bandpass keeps only what fits between its skirts, and a
         // sine at the shell's pitch is the drum under them.
         var rattle = Banded(b.Add(HissType, (1, 1f), (2, 1900f), (3, 0.3f), (4, 2.7f)));
-        var frequency = b.Add("audio.frequency", (0, 185f));
-        var shell = b.Add("osc.sine", (3, 0.5f));
+        var shell = b.Add("osc.sine", (1, 185f), (3, 0.5f));
         var snareSum = b.Add("math.add");
         var snareHit = b.Add("math.mul");
 
@@ -364,7 +363,6 @@ internal static class MyceliumPreset
 
         b.Wire(beat, 0, halfBeat, 0)
          .Wire(halfBeat, 0, backbeat, 1)
-         .Wire(frequency, 0, shell, 1)
          .Wire(rattle, 0, snareSum, 0)
          .Wire(shell, 0, snareSum, 1)
          .Wire(snareSum, 0, snareHit, 0)
@@ -372,7 +370,7 @@ internal static class MyceliumPreset
          .Wire(snareHit, 0, snareOut, 0)
          .Wire(song, 0, snareOut, 1);
 
-        b.Group("Snare", halfBeat, backbeat, rattle, frequency, shell, snareSum, snareHit, snareOut);
+        b.Group("Snare", halfBeat, backbeat, rattle, shell, snareSum, snareHit, snareOut);
 
         // --- the hats --------------------------------------------------------
 

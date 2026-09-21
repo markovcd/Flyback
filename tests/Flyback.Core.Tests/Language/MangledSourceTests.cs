@@ -23,7 +23,7 @@ public class MangledSourceTests
     private static readonly string[] Sources =
     [
         "x |> sine(freq: 1.5) |> hsv(saturation: 0.85, value: 1) |> out.color",
-        "let slow = sine(freq: 0.15, amp: 0.5, bias: 0.5)\nsine(freq: frequency(110)) * slow |> out.left",
+        "let slow = sine(freq: 0.15, amp: 0.5, bias: 0.5)\nsine(freq: 110) * slow |> out.left",
         "(x * 2 - 1) * (y + 0.5) - -x / 3 |> out.color",
         "rotate(angle: t * 0.15) |> kaleidoscope(segments: 6) |> out.color",
         "seq(steps: [0 3 7 12], rate: 4) |> out.left",

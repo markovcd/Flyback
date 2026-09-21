@@ -101,7 +101,7 @@ public class LanguageTests
     public void Drone() => Same("Drone", """
         let slow = sine(freq: 0.15, amp: 0.5, bias: 0.5)
 
-        sine(freq: frequency(110)) * slow |> out.left
+        sine(freq: 110) * slow |> out.left
 
         rings(freq: 3, offset: t)
           |> hsv(hue: slow, saturation: 0.85)
@@ -142,7 +142,7 @@ public class LanguageTests
     [Fact]
     public void Loop() => Same("Loop", """
         let keep = sine(freq: 0.1) |> remap(-1..1, 0.92..0.996)
-        let sum  = square(freq: frequency(110)) * (1 - keep) |> add()
+        let sum  = square(freq: 110) * (1 - keep) |> add()
 
         sum.b <- sum * keep
         sum |> out.left
@@ -165,7 +165,7 @@ public class LanguageTests
 
     [Fact]
     public void Waveform() => Alike("Waveform", """
-        let pitch = frequency(110)
+        let pitch = 110
 
         let voice = mixer(
           in_1: sine(freq: pitch),     level_1: max(sine(freq: 0.08, phase: 0.25), 0),
@@ -196,7 +196,7 @@ public class LanguageTests
 
     [Fact]
     public void Heard() => Alike("Heard", """
-        let voiced = sine(freq: frequency(70))
+        let voiced = sine(freq: 70)
                        * (pulse(freq: 2, width: 0.08)
                             |> adsr(attack: 2.5ms, decay: 126ms, sustain: 0, release: 100ms))
 
@@ -215,11 +215,11 @@ public class LanguageTests
 
     [Fact]
     public void Duck() => Alike("Duck", """
-        let kick = sine(freq: frequency(55))
+        let kick = sine(freq: 55)
                      * (pulse(freq: 2, width: 0.08)
                           |> adsr(attack: 2.5ms, decay: 126ms, sustain: 0, release: 100ms))
 
-        let pad = saw(freq: frequency(110), amp: 0.25) + saw(freq: frequency(165), amp: 0.2)
+        let pad = saw(freq: 110, amp: 0.25) + saw(freq: 165, amp: 0.2)
                     |> duck(key: kick, depth: 0.8, release: 200ms)
 
         pad + kick |> out.left
@@ -244,7 +244,7 @@ public class LanguageTests
     public void RingScan() => Same("Ring scan", """
         let bands = rings(freq: 4)
         let where = sine(freq: 0.2) |> remap(-1..1, 0.2..0.75)
-        let loop  = scan(bands, rate: frequency(110), radius: 0.35, x: where, scale: 1)
+        let loop  = scan(bands, rate: 110, radius: 0.35, x: where, scale: 1)
 
         loop |> out.left
 
@@ -472,7 +472,7 @@ public class LanguageTests
 
           let wires = (hiss |> filter(cutoff: 1100, resonance: 0)).high |> filter(cutoff: 6500, resonance: 0)
 
-          let shell = sine(freq: frequency(185), amp: 0.6) * (snareLevel * snareLevel)
+          let shell = sine(freq: 185, amp: 0.6) * (snareLevel * snareLevel)
           let snare = (wires * 2.2 * snareLevel + shell) * snareHard
         }
 
@@ -1232,13 +1232,12 @@ public class LanguageTests
     public void A_def_is_stamped_out_at_every_call_site()
     {
         var patch = Build("""
-            def tone(hz) = sine(freq: frequency(hz), amp: 0.5)
+            def tone(hz) = sine(freq: hz, amp: 0.5)
 
             tone(110) + tone(220) |> out.left
             """);
 
-        patch.Nodes.Count(n => n.TypeId == "osc.sine").ShouldBe(2);
-        patch.Nodes.Count(n => n.TypeId == "audio.frequency").ShouldBe(2);
+        patch.Nodes.Where(n => n.TypeId == "osc.sine").Select(n => n.InputValues[1]).Order().ShouldBe([110f, 220f]);
     }
 
     [Fact]
@@ -1247,7 +1246,7 @@ public class LanguageTests
         var patch = Build("""
             def voice(hz) = {
               let level = sine(freq: 0.1, amp: 0.5, bias: 0.5)
-              let tone  = sine(freq: frequency(hz))
+              let tone  = sine(freq: hz)
               (tone, level)
             }
 
@@ -1281,7 +1280,7 @@ public class LanguageTests
     {
         var patch = Build("""
             group "Voice" {
-              let pitch = frequency(110)
+              let pitch = value(110)
               let tone  = sine(freq: pitch)
             }
 

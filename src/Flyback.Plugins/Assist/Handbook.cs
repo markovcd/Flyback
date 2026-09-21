@@ -108,7 +108,7 @@ internal static class Handbook
           cannot say:
 
         ```
-        let sum = square(freq: frequency(110)) * 0.06 |> add()
+        let sum = square(freq: 110) * 0.06 |> add()
 
         sum.b <- sum * 0.94
         sum |> out.left

@@ -74,7 +74,7 @@ public class BellTests
     {
         var b = new PatchBuilder(Catalog);
         var level = b.Add("coord");
-        var hz = b.Add("audio.frequency", (0, 277.2f));
+        var hz = b.Add(NodeCatalog.ValueTypeId, (0, 277.2f));
         var above = b.Add("math.mul", (1, ratio));
         var lean = b.Add("math.mul", (1, index));
         var partial = b.Add("osc.sine");

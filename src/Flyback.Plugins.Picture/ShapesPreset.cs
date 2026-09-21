@@ -57,8 +57,7 @@ internal static class ShapesPreset
         var lit = b.Add("math.add");
 
         // Ear: the field itself, read round a loop that crosses the points.
-        var pitch = b.Add("audio.frequency", (0, 110f));
-        var scan = b.Add(NodeCatalog.ScanTypeId, (3, 0.42f), (6, 0.5f));
+        var scan = b.Add(NodeCatalog.ScanTypeId, (2, 110f), (3, 0.42f), (6, 0.5f));
 
         // A distance is a small number: the star's field swings a tenth either
         // side of nought where a pattern swings one, so what the loop reads is
@@ -85,14 +84,13 @@ internal static class ShapesPreset
          // The same field, heard. Nothing between it and the speakers but the
          // loop; 'right' carries 'left' through with no wire.
          .Wire(cut, 2, scan, 0)
-         .Wire(pitch, 0, scan, 2)
          .Wire(scan, 0, lift, 0)
          .Wire(lift, 0, output, NodeCatalog.OutputLeftPort);
 
         b.Group("Sweeps", rock, grow)
          .Group("Shape", turn, star, hole, cut, ink)
          .Group("Eye", tint, lit)
-         .Group("Ear", pitch, scan, lift);
+         .Group("Ear", scan, lift);
 
         return b.Build();
     }

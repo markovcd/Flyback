@@ -237,8 +237,7 @@ public static partial class Presets
 
         var level = b.Add(NodeCatalog.AdsrTypeId, (1, -2.6f), (2, -0.9f), (3, 0f), (4, -1f));
 
-        var pitch = b.Add("audio.frequency", (0, 70f));
-        var tone = b.Add("osc.sine");
+        var tone = b.Add("osc.sine", (1, 70f));
         var voiced = b.Add("math.mul");
 
         // The wire this patch is about: a signal on its way to the speakers,
@@ -257,7 +256,6 @@ public static partial class Presets
         var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 0.6f));
 
         b.Wire(beat, 0, level, 0)
-         .Wire(pitch, 0, tone, 1)
          .Wire(tone, 0, voiced, 0)
          .Wire(level, 0, voiced, 1)
          .Wire(voiced, 0, output, NodeCatalog.OutputLeftPort)
@@ -286,15 +284,12 @@ public static partial class Presets
         // Heard's kick: two beats a second, its length the envelope's.
         var beat = b.Add("osc.pulse", (1, 2f), (3, 0.08f));
         var level = b.Add(NodeCatalog.AdsrTypeId, (1, -2.6f), (2, -0.9f), (3, 0f), (4, -1f));
-        var pitch = b.Add("audio.frequency", (0, 55f));
-        var body = b.Add("osc.sine");
+        var body = b.Add("osc.sine", (1, 55f));
         var kick = b.Add("math.mul");
 
         // A root and a fifth on two saws, held: nothing moves in the pad but the duck.
-        var root = b.Add("audio.frequency", (0, 110f));
-        var fifth = b.Add("audio.frequency", (0, 165f));
-        var low = b.Add("osc.saw", (3, 0.25f));
-        var high = b.Add("osc.saw", (3, 0.2f));
+        var low = b.Add("osc.saw", (1, 110f), (3, 0.25f));
+        var high = b.Add("osc.saw", (1, 165f), (3, 0.2f));
         var pad = b.Add("math.add");
 
         // The module this patch is about. Keyed by the kick's sound: down by four fifths
@@ -313,12 +308,9 @@ public static partial class Presets
         var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 0.5f));
 
         b.Wire(beat, 0, level, 0)
-         .Wire(pitch, 0, body, 1)
          .Wire(body, 0, kick, 0)
          .Wire(level, 0, kick, 1)
 
-         .Wire(root, 0, low, 1)
-         .Wire(fifth, 0, high, 1)
          .Wire(low, 0, pad, 0)
          .Wire(high, 0, pad, 1)
 
@@ -425,7 +417,6 @@ public static partial class Presets
         var slow = b.Add("osc.sine", (1, 0.15f), (3, 0.5f), (4, 0.5f));
 
         // Ear.
-        var pitch = b.Add("audio.frequency", (0, 110f));
         var tone = b.Add("osc.sine", (1, 110f));
         var tremolo = b.Add("math.mul");
 
@@ -437,8 +428,7 @@ public static partial class Presets
         // oscillator legible: two wires into the same module, from the same sine.
         var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 0.6f));
 
-        b.Wire(pitch, 0, tone, 1)
-         .Wire(tone, 0, tremolo, 0)
+        b.Wire(tone, 0, tremolo, 0)
          .Wire(slow, 0, tremolo, 1)
          .Wire(tremolo, 0, output, NodeCatalog.OutputLeftPort)
          .Wire(time, 0, rings, 3)
@@ -470,12 +460,10 @@ public static partial class Presets
         var sweep = b.Add("osc.sine", (1, 0.2f));
         var where = b.Add("math.remap", (1, -1f), (2, 1f), (3, 0.2f), (4, 0.75f));
 
-        var pitch = b.Add("audio.frequency", (0, 110f));
-
         // 'clock' is the sweep's own time base and takes no wire — it is a
         // domain, so it is normalled to Time; 'rate' is the pitch; 'radius' and
         // 'x' choose which loop through the field is read.
-        var scan = b.Add(NodeCatalog.ScanTypeId, (3, 0.35f), (6, 1f));
+        var scan = b.Add(NodeCatalog.ScanTypeId, (2, 110f), (3, 0.35f), (6, 1f));
 
         // Eye: the field under the trace, dim enough that the loop reads on top
         // of it rather than competing with it.
@@ -488,7 +476,6 @@ public static partial class Presets
         // Ear: the field itself into the sweep, and out the other side as a
         // sample. Nothing between the picture and the speakers but the loop.
         b.Wire(rings, 0, scan, 0)
-         .Wire(pitch, 0, scan, 2)
          .Wire(sweep, 0, where, 0)
          .Wire(where, 0, scan, 4)
          .Wire(scan, 0, output, NodeCatalog.OutputLeftPort)
@@ -861,7 +848,6 @@ public static partial class Presets
     {
         var b = new PatchBuilder(modules);
 
-        var pitch = b.Add("audio.frequency", (0, 110f));
         var blend = b.Add("math.mixer");
 
         // About thirty milliseconds, which is three cycles and a bit: enough to
@@ -891,7 +877,7 @@ public static partial class Presets
         {
             var (shape, phase) = shapes[s];
 
-            var tone = b.Add(shape);
+            var tone = b.Add(shape, (1, 110f));
 
             // The fader: the top half of a slow sine. A Mixer's level is a
             // multiply and nothing else, so the bottom half would bring the
@@ -899,8 +885,7 @@ public static partial class Presets
             var turn = b.Add("osc.sine", (1, 0.08f), (2, phase));
             var fader = b.Add("math.max", (1, 0f));
 
-            b.Wire(pitch, 0, tone, 1)
-             .Wire(tone, 0, blend, s * 2)
+            b.Wire(tone, 0, blend, s * 2)
              .Wire(turn, 0, fader, 0)
              .Wire(fader, 0, blend, s * 2 + 1);
         }
@@ -1037,11 +1022,9 @@ public static partial class Presets
     {
         var b = new PatchBuilder(modules);
 
-        var pitch = b.Add("audio.frequency", (0, 110f));
-
         // The thing being filtered. A square, because its corners are what a
         // lowpass visibly and audibly takes off.
-        var source = b.Add("osc.square");
+        var source = b.Add("osc.square", (1, 110f));
 
         // How much of the last evaluation is kept, which is the whole of the
         // filter: the nearer one, the lower the cutoff. The useful range is all
@@ -1064,8 +1047,7 @@ public static partial class Presets
         // so that is the one which runs backwards and carries the evaluation
         // before — the whole of what makes this a filter rather than a ring of
         // wires with nothing in it. The canvas draws that one dashed.
-        b.Wire(pitch, 0, source, 1)
-         .Wire(sweep, 0, keep, 0)
+        b.Wire(sweep, 0, keep, 0)
          .Wire(keep, 0, share, 1)
          .Wire(source, 0, fresh, 0)
          .Wire(share, 0, fresh, 1)

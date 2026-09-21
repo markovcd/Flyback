@@ -209,7 +209,7 @@ internal sealed class PhasePreset : PresetBench
         var clapsB = b.Add(EuclidType, (1, 1f), (2, Round), (3, 7f));
         var strokeA = Product(knock, clapsA, 1);
         var strokeB = Product(knock, clapsB, 1);
-        var wood = b.Add("audio.frequency", (0, 1150f));
+        var wood = b.Add(NodeCatalog.ValueTypeId, (0, 1150f));
         var woodA = Tone(wood, strokeA);
         var woodB = Tone(wood, strokeB);
 

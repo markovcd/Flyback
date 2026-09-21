@@ -76,8 +76,7 @@ public partial class NodeCatalog
         // frequency and that is what a frequency is. Nobody writes music in
         // those: a tempo is a number between about 60 and 180 and it is written
         // down in beats a minute. This is the one module that knows the
-        // difference, exactly as Frequency is the one that knows a pitch is in
-        // hertz rather than in the single digits a picture is drawn from.
+        // difference.
         yield return new NodeDef(
             TempoTypeId, "Tempo", ModuleCategories.Timing,
             [Num("bpm", 120f, 20f, 300f), Domain("in")],

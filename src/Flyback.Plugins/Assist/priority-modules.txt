@@ -14,7 +14,6 @@ output
 time
 coord
 value
-audio.frequency
 audio.note
 audio.quantiser
 audio.tune

@@ -51,7 +51,7 @@ public class PatchShotTests : UiTest
 
         Shoot(folder, "tone", Built(
             """
-            sine(freq: frequency(110)) |> out.left
+            sine(freq: 110) |> out.left
             out.volume = 0.5
             """));
     }

@@ -20,8 +20,7 @@ internal static class SpacePreset
         // 'in' takes no wire — it is a domain, normalled to Time (ADR-0050).
         var pluck = b.Add("osc.saw", (1, 2f), (3, -0.5f), (4, 0.5f));
 
-        var pitch = b.Add("audio.frequency", (0, 330f));
-        var tone = b.Add("osc.sine");
+        var tone = b.Add("osc.sine", (1, 330f));
         var struck = b.Add("math.mul");
 
         var echo = b.Add(NodeCatalog.DelayTypeId, (1, 0.33f), (2, 0.5f), (3, 0.45f));
@@ -29,8 +28,7 @@ internal static class SpacePreset
 
         var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 0.5f));
 
-        b.Wire(pitch, 0, tone, 1)
-         .Wire(tone, 0, struck, 0)
+        b.Wire(tone, 0, struck, 0)
          .Wire(pluck, 0, struck, 1)
          .Wire(struck, 0, echo, 0)
          .Wire(echo, 0, room, 0)
