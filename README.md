@@ -243,7 +243,7 @@ tests/
   Flyback.Plugins.Gemini.Tests  generateContent session tests
 ```
 
-See the `docs/adr` folder for design notes and architecture decisions.
+[`docs/engineering-guide.md`](docs/engineering-guide.md) is how the codebase is put together, how its code is written and how its tests are written. See the `docs/adr` folder for the architecture decisions behind it.
 
 [`docs/language.md`](docs/language.md) is the reference for the text language — a
 second way to author a patch, decided in

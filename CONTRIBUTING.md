@@ -14,7 +14,7 @@ A hand-written patch is accepted as it stands. The premise is how the project is
 
 ## Read the decisions before proposing a change of shape
 
-`docs/adr/` holds the architecture decision records, in [Michael Nygard's](https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions) format: context, decision, consequences. They are not background reading — several of them pre-emptively decline the refactor a first scan of the code would surface, and the rationale comments in the code are usually better than the reasoning that would replace them. [docs/adr/README.md](docs/adr/README.md) is the index.
+`docs/adr/` holds the architecture decision records, in [Michael Nygard's](https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions) format: context, decision, consequences. They are not background reading — several of them pre-emptively decline the refactor a first scan of the code would surface, and the rationale comments in the code are usually better than the reasoning that would replace them. [docs/adr/README.md](docs/adr/README.md) is the index, and [docs/engineering-guide.md](docs/engineering-guide.md) is the map of the codebase they add up to: the architecture, the code style and how a test is written.
 
 ## The gate
 

@@ -1,6 +1,6 @@
 # Flyback
 
-Flyback is a patchable synthesiser for .NET 10: one module graph generates both a picture and a sound. See [README.md](README.md) for the build and run commands and `docs/adr/` for the decisions behind the design.
+Flyback is a patchable synthesiser for .NET 10: one module graph generates both a picture and a sound. See [README.md](README.md) for the build and run commands, [docs/engineering-guide.md](docs/engineering-guide.md) for the architecture, the code style and how tests are written, and `docs/adr/` for the decisions behind the design.
 
 Standing rules for working in this repo are in `.claude/rules/`, and Claude Code loads them every session:
 
