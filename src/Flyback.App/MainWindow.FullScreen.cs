@@ -180,10 +180,9 @@ public sealed partial class MainWindow
             Background = Brushes.Black,
             ShowInTaskbar = false,
             ShowActivated = false,
-            WindowStartupLocation = WindowStartupLocation.Manual,
-            Position = screen.Bounds.Position,
-            Width = screen.Bounds.Width / screen.Scaling,
-            Height = screen.Bounds.Height / screen.Scaling,
+            WindowStartupLocation = WindowStartupLocation.CenterOwner,
+            Width = 160,
+            Height = 90,
             Content = picture,
         };
 
@@ -202,8 +201,13 @@ public sealed partial class MainWindow
             e.Handled = true;
         };
 
-        // Full screen once it is open, so it fills the monitor it was put on.
-        window.Opened += (_, _) => window.WindowState = WindowState.FullScreen;
+        // Moved only once it is open: Windows tells a hidden window nothing when it
+        // crosses to a monitor of another scale, and it would draw at the old one.
+        window.Opened += (_, _) =>
+        {
+            window.Position = screen.Bounds.Position;
+            window.WindowState = WindowState.FullScreen;
+        };
         window.Closed += (_, _) => BringPictureBack(window);
 
         window.Show(this);
