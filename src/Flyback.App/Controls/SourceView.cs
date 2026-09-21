@@ -144,6 +144,7 @@ internal sealed class SourceView : UserControl
 
         // Tunneled for the same reason: the editor's scroller takes the wheel.
         text.AddHandler(PointerWheelChangedEvent, Zoomed, RoutingStrategies.Tunnel);
+        text.AddHandler(KeyDownEvent, Resized, RoutingStrategies.Tunnel);
 
         // A run of typing is one thing to take back. The stack takes an operation
         // per change and a change is a keystroke, so without this a sentence comes
@@ -279,6 +280,29 @@ internal sealed class SourceView : UserControl
         if (e.Delta.Y == 0) return;
 
         EditorFontSize += e.Delta.Y > 0 ? 1 : -1;
+    }
+
+    /// <summary>Ctrl+plus and Ctrl+minus step the size a point; Ctrl+0 puts it back.</summary>
+    private void Resized(object? sender, KeyEventArgs e)
+    {
+        if ((e.KeyModifiers & (KeyModifiers.Control | KeyModifiers.Meta)) == 0) return;
+
+        switch (e.Key)
+        {
+            case Key.OemPlus or Key.Add:
+                EditorFontSize += 1;
+                break;
+            case Key.OemMinus or Key.Subtract:
+                EditorFontSize -= 1;
+                break;
+            case Key.D0 or Key.NumPad0:
+                EditorFontSize = CanvasSettings.DefaultEditorFontSize;
+                break;
+            default:
+                return;
+        }
+
+        e.Handled = true;
     }
 
     /// <summary>The text's font size, in points, held between <see cref="CanvasSettings"/>'s bounds.</summary>

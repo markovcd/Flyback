@@ -77,7 +77,7 @@
 - The assistant panel is a column beside the patch, the full height of the window.
 
 ### Canvas and interface
-- Ctrl+scroll over the text view changes its font size, and the size is remembered.
+- Ctrl+scroll, Ctrl+plus and Ctrl+minus over the text view change its font size, Ctrl+0 resets it, and the size is remembered.
 - The panel on the right wears the selected block's own face: its category band, the wash under it and its mark, with the name and the buttons on it.
 - Ctrl+Shift+L, or Ctrl+click on the Tidy button, lays out only the selected modules and leaves the rest of the patch where it is.
 - A toolbar button swaps the preview and the canvas, for a bigger picture while you patch.

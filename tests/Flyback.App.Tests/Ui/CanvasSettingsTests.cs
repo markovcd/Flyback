@@ -192,6 +192,31 @@ public sealed class CanvasSettingsTests : UiTest
     }
 
     [AvaloniaFact]
+    public void Ctrl_plus_and_minus_resize_the_text_and_Ctrl_0_puts_it_back()
+    {
+        var window = Open(settingsPath);
+        var text = ShowText(window);
+
+        text.TextArea.Focus();
+        Settle(window);
+
+        window.KeyPress(Key.OemPlus, RawInputModifiers.Control, PhysicalKey.Equal, "=");
+        window.KeyPress(Key.OemPlus, RawInputModifiers.Control, PhysicalKey.Equal, "=");
+        window.KeyPress(Key.OemMinus, RawInputModifiers.Control, PhysicalKey.Minus, "-");
+        Settle(window);
+
+        text.FontSize.ShouldBe(CanvasSettings.DefaultEditorFontSize + 1);
+        CanvasSettings.Load(settingsPath).EditorFontSize.ShouldBe(CanvasSettings.DefaultEditorFontSize + 1);
+
+        window.KeyPress(Key.D0, RawInputModifiers.Control, PhysicalKey.Digit0, "0");
+        Settle(window);
+
+        text.FontSize.ShouldBe(CanvasSettings.DefaultEditorFontSize);
+        text.Text.ShouldNotContain("=");
+        CanvasSettings.Load(settingsPath).EditorFontSize.ShouldBe(CanvasSettings.DefaultEditorFontSize);
+    }
+
+    [AvaloniaFact]
     public void Scrolling_over_the_text_without_Ctrl_leaves_its_size_alone()
     {
         var window = Open(settingsPath);
