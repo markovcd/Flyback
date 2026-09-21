@@ -185,10 +185,6 @@ public sealed partial class MainWindow
         };
     }
 
-    /// <summary>The format one of the two pickers is on.</summary>
-    private static ClipFormat Chosen(IReadOnlyList<ClipFormat> formats, ComboBox picker) =>
-        formats[Math.Clamp(picker.SelectedIndex, 0, formats.Count - 1)];
-
     /// <summary>
     /// The format a take is written as, and the ffmpeg for it. Read from what was
     /// saved rather than from the pickers, since a settings window left open on a
@@ -196,7 +192,7 @@ public sealed partial class MainWindow
     /// </summary>
     /// <param name="path">
     /// Where the take is going. Its extension decides, so a name typed over the
-    /// picker's suggestion means what it says — see <see cref="TakeFormat"/>.
+    /// picker's suggestion means what it says — see <see cref="Takes.Format"/>.
     /// </param>
     /// <returns>
     /// The format, and null for <c>Ffmpeg</c> where none is needed or none was
@@ -204,32 +200,11 @@ public sealed partial class MainWindow
     /// </returns>
     private (ClipFormat Format, string? Ffmpeg) Encoder(string path)
     {
-        var format = TakeFormat(
+        var format = Takes.Format(
             path,
             ClipFormats.Wanted(outputSettings.VideoFormat, picture: true),
             ClipFormats.Wanted(outputSettings.SoundFormat, picture: false));
 
         return (format, format.NeedsFfmpeg ? Ffmpeg.Resolve(outputSettings.FfmpegPath) : null);
-    }
-
-    /// <summary>
-    /// The format a file name asks for, given the two the settings are on.
-    /// </summary>
-    /// <remarks>
-    /// An extension two formats share means the one chosen in the settings:
-    /// <c>.mp4</c> is H.265 to somebody who picked H.265, and no name could say
-    /// so otherwise. Any other extension means the first format that has it, and
-    /// one nothing writes means the video format chosen.
-    /// </remarks>
-    internal static ClipFormat TakeFormat(string path, ClipFormat video, ClipFormat sound)
-    {
-        var extension = Path.GetExtension(path);
-
-        foreach (var chosen in new[] { video, sound })
-        {
-            if (extension.Equals(chosen.Extension, StringComparison.OrdinalIgnoreCase)) return chosen;
-        }
-
-        return ClipFormats.ByExtension(path) ?? video;
     }
 }

@@ -346,15 +346,6 @@ public sealed partial class MainWindow
         base.OnClosed(e);
     }
 
-    /// <summary>Seconds as minutes:seconds.hundredths, e.g. 1:05.25.</summary>
-    internal static string Clock(double seconds)
-    {
-        var hundredths = (long)Math.Floor(Math.Max(seconds, 0d) * 100d);
-        return string.Create(
-            CultureInfo.InvariantCulture,
-            $"{hundredths / 6000}:{hundredths / 100 % 60:00}.{hundredths % 100:00}");
-    }
-
     private void UpdateStatus()
     {
         var nodes = editor.Patch.Nodes.Count;
@@ -371,6 +362,6 @@ public sealed partial class MainWindow
 
         status.Text = string.Create(
             CultureInfo.InvariantCulture,
-            $"{nodes} modules · {wires} wires · {ops} ops   |   t = {Clock(preview.Time)}   |   {preview.FramesPerSecond:0} fps   |   {backend}");
+            $"{nodes} modules · {wires} wires · {ops} ops   |   t = {StatusClock.Text(preview.Time)}   |   {preview.FramesPerSecond:0} fps   |   {backend}");
     }
 }

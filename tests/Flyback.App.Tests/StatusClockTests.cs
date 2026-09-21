@@ -14,5 +14,5 @@ public class StatusClockTests
     [InlineData(3600d, "60:00.00")]
     [InlineData(-1d, "0:00.00")]
     public void Time_is_minutes_seconds_and_fractions(double seconds, string shown) =>
-        MainWindow.Clock(seconds).ShouldBe(shown);
+        StatusClock.Text(seconds).ShouldBe(shown);
 }

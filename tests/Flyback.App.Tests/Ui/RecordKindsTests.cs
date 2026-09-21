@@ -25,7 +25,7 @@ public class RecordKindsTests
     }
 
     private static string[] Names(Patch patch) =>
-        [.. MainWindow.RecordKinds(patch).Select(k => k.Name)];
+        [.. PatchFileKinds.RecordKinds(patch).Select(k => k.Name)];
 
     /// <summary>What the two formats written here are called, which is what a window with no settings offers.</summary>
     private static string Movie => ClipFormats.MotionJpegAvi.Label;
@@ -59,7 +59,7 @@ public class RecordKindsTests
     [Fact]
     public void The_kinds_offered_are_the_formats_chosen()
     {
-        var kinds = MainWindow.RecordKinds(
+        var kinds = PatchFileKinds.RecordKinds(
             Wired(picture: true, sound: true), ClipFormats.H264Mp4, ClipFormats.Mp3);
 
         kinds.Select(k => k.Name).ShouldBe([ClipFormats.H264Mp4.Label, ClipFormats.Mp3.Label]);
@@ -73,11 +73,11 @@ public class RecordKindsTests
     [Fact]
     public void A_shared_extension_means_the_format_chosen()
     {
-        MainWindow.TakeFormat("take.mp4", ClipFormats.H265Mp4, ClipFormats.Wav).ShouldBe(ClipFormats.H265Mp4);
-        MainWindow.TakeFormat("take.MP4", ClipFormats.MotionJpegAvi, ClipFormats.Wav).ShouldBe(ClipFormats.H264Mp4);
-        MainWindow.TakeFormat("take.webm", ClipFormats.H265Mp4, ClipFormats.Wav).ShouldBe(ClipFormats.Vp9WebM);
-        MainWindow.TakeFormat("take.flac", ClipFormats.H265Mp4, ClipFormats.Wav).ShouldBe(ClipFormats.Flac);
-        MainWindow.TakeFormat("take", ClipFormats.H265Mp4, ClipFormats.Wav).ShouldBe(ClipFormats.H265Mp4);
+        Takes.Format("take.mp4", ClipFormats.H265Mp4, ClipFormats.Wav).ShouldBe(ClipFormats.H265Mp4);
+        Takes.Format("take.MP4", ClipFormats.MotionJpegAvi, ClipFormats.Wav).ShouldBe(ClipFormats.H264Mp4);
+        Takes.Format("take.webm", ClipFormats.H265Mp4, ClipFormats.Wav).ShouldBe(ClipFormats.Vp9WebM);
+        Takes.Format("take.flac", ClipFormats.H265Mp4, ClipFormats.Wav).ShouldBe(ClipFormats.Flac);
+        Takes.Format("take", ClipFormats.H265Mp4, ClipFormats.Wav).ShouldBe(ClipFormats.H265Mp4);
     }
 
     /// <summary>The picker suggests the patch's name, which a preset's may not be fit for as it stands.</summary>
@@ -88,7 +88,7 @@ public class RecordKindsTests
     [InlineData("  ", "take")]
     [InlineData("...", "take")]
     public void A_take_is_named_for_its_patch(string? patch, string expected) =>
-        MainWindow.FileNameFor(patch).ShouldBe(expected);
+        Takes.FileNameFor(patch).ShouldBe(expected);
 
     /// <summary>A still is not a recording, whatever the patch draws.</summary>
     [Fact]
@@ -105,7 +105,7 @@ public class RecordKindsTests
     /// </summary>
     [Fact]
     public void A_patch_that_reaches_nothing_is_offered_nothing() =>
-        MainWindow.RecordKinds(Wired(picture: false, sound: false)).ShouldBeEmpty();
+        PatchFileKinds.RecordKinds(Wired(picture: false, sound: false)).ShouldBeEmpty();
 
     /// <summary>
     /// Whatever can be exported can be recorded, save for the still. A patch that
@@ -121,7 +121,7 @@ public class RecordKindsTests
 
             if (preset.Name == "Empty") continue;
 
-            MainWindow.RecordKinds(patch)
+            PatchFileKinds.RecordKinds(patch)
                 .ShouldNotBeEmpty($"the '{preset.Name}' preset should have something to record");
         }
     }

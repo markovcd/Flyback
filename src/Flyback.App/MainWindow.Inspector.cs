@@ -263,8 +263,8 @@ public sealed partial class MainWindow
             CountInSeconds = CountIns[Math.Max(countIn.SelectedIndex, 0)],
             RewindBeforeTake = rewindBeforeTake.IsChecked == true,
 
-            VideoFormat = Chosen(ClipFormats.Pictures, videoFormat).Id,
-            SoundFormat = Chosen(ClipFormats.Sounds, soundFormat).Id,
+            VideoFormat = Takes.Chosen(ClipFormats.Pictures, videoFormat).Id,
+            SoundFormat = Takes.Chosen(ClipFormats.Sounds, soundFormat).Id,
 
             // Trimmed, because a path pasted in with a space on the end is a
             // path nobody meant and one File.Exists would refuse.

@@ -28,16 +28,16 @@ public class SaveKindsTests
     /// </summary>
     [Fact]
     public void A_patch_is_offered_its_own_kind_first_and_the_text_last() =>
-        Names(MainWindow.SaveKinds(bundled: false)).ShouldBe(["Flyback patch", "Flyback bundle", "Flyback text"]);
+        Names(PatchFileKinds.SaveKinds(bundled: false)).ShouldBe(["Flyback patch", "Flyback bundle", "Flyback text"]);
 
     /// <summary>A bundle saved again stays one without anybody typing the extension.</summary>
     [Fact]
     public void A_bundle_is_offered_its_own_kind_first() =>
-        Names(MainWindow.SaveKinds(bundled: true)).ShouldBe(["Flyback bundle", "Flyback patch", "Flyback text"]);
+        Names(PatchFileKinds.SaveKinds(bundled: true)).ShouldBe(["Flyback bundle", "Flyback patch", "Flyback text"]);
 
     [Fact]
     public void Everything_that_can_be_saved_can_be_opened() =>
-        Names(MainWindow.OpenKinds()).ShouldBe(Names(MainWindow.SaveKinds(bundled: false)));
+        Names(PatchFileKinds.OpenKinds()).ShouldBe(Names(PatchFileKinds.SaveKinds(bundled: false)));
 
     // --- what a name means -----------------------------------------------------
 
@@ -47,7 +47,7 @@ public class SaveKindsTests
     [InlineData("nebula.fbk", false)]
     [InlineData("nebula.fbks", false)]
     public void A_bundle_is_known_by_its_extension(string name, bool bundle) =>
-        MainWindow.Bundled(name).ShouldBe(bundle);
+        PatchFileKinds.Bundled(name).ShouldBe(bundle);
 
     /// <summary>
     /// The two text-ish extensions differ by one character, and getting this
@@ -59,13 +59,13 @@ public class SaveKindsTests
     [InlineData("nebula.fbk", false)]
     [InlineData("nebula.fbkb", false)]
     public void The_text_is_known_by_its_extension(string name, bool text) =>
-        MainWindow.Sourced(name).ShouldBe(text);
+        PatchFileKinds.Sourced(name).ShouldBe(text);
 
     [Fact]
     public void No_name_is_two_kinds_at_once()
     {
         foreach (var name in new[] { "a.fbk", "a.fbkb", "a.fbks" })
-            (MainWindow.Bundled(name) && MainWindow.Sourced(name)).ShouldBeFalse(name);
+            (PatchFileKinds.Bundled(name) && PatchFileKinds.Sourced(name)).ShouldBeFalse(name);
     }
 
     // --- what is written -------------------------------------------------------
@@ -100,10 +100,10 @@ public class SaveKindsTests
     [Fact]
     public void A_text_document_is_offered_its_own_kind_first()
     {
-        Names(MainWindow.SaveKinds(bundled: false, sourced: true))
+        Names(PatchFileKinds.SaveKinds(bundled: false, sourced: true))
             .ShouldBe(["Flyback text", "Flyback patch", "Flyback bundle"]);
 
-        MainWindow.SaveExtension(bundled: false, sourced: true).ShouldBe(PatchLanguage.FileExtension);
+        PatchFileKinds.SaveExtension(bundled: false, sourced: true).ShouldBe(PatchLanguage.FileExtension);
     }
 
     /// <summary>The extension offered is the first kind's, whichever that is.</summary>
@@ -112,6 +112,6 @@ public class SaveKindsTests
     [InlineData(true, false)]
     [InlineData(false, true)]
     public void The_extension_offered_is_the_first_kinds(bool bundled, bool sourced) =>
-        MainWindow.SaveKinds(bundled, sourced)[0].Patterns.ShouldNotBeNull()
-            .ShouldContain($"*.{MainWindow.SaveExtension(bundled, sourced)}");
+        PatchFileKinds.SaveKinds(bundled, sourced)[0].Patterns.ShouldNotBeNull()
+            .ShouldContain($"*.{PatchFileKinds.SaveExtension(bundled, sourced)}");
 }

@@ -58,8 +58,6 @@ public sealed partial class MainWindow
     /// <summary>Set once the window has closed, after which nothing may be reported.</summary>
     private bool gone;
 
-    private const string DefaultTakeName = "take";
-
     private static readonly string RecordTip =
         "Record what the patch is doing now, knobs and all, as it happens.  (Ctrl+R)  A video "
         + "takes the picture off the GPU at whatever the Recording settings say, at "
@@ -145,7 +143,7 @@ public sealed partial class MainWindow
         {
             Title = "Record",
             FileTypeChoices = kinds,
-            SuggestedFileName = FileNameFor(patchName),
+            SuggestedFileName = Takes.FileNameFor(patchName),
             DefaultExtension = kinds[0].Patterns?[0].TrimStart('*', '.'),
         });
 
@@ -243,23 +241,10 @@ public sealed partial class MainWindow
     private void CallOffCount() => counting?.Cancel();
 
     /// <summary>
-    /// A patch's name as a file's. A preset is named for a person to read, and may
-    /// hold what no file name can.
-    /// </summary>
-    internal static string FileNameFor(string? patchName)
-    {
-        if (string.IsNullOrWhiteSpace(patchName)) return DefaultTakeName;
-
-        var cleaned = string.Join("_", patchName.Split(Path.GetInvalidFileNameChars())).Trim(' ', '.');
-
-        return cleaned.Length > 0 ? cleaned : DefaultTakeName;
-    }
-
-    /// <summary>
     /// What the picker offers: the guard on what the patch reaches, asked with the
     /// two formats the settings are on.
     /// </summary>
-    private IReadOnlyList<FilePickerFileType> RecordingKinds() => RecordKinds(
+    private IReadOnlyList<FilePickerFileType> RecordingKinds() => PatchFileKinds.RecordKinds(
         editor.Patch,
         ClipFormats.Wanted(outputSettings.VideoFormat, picture: true),
         ClipFormats.Wanted(outputSettings.SoundFormat, picture: false));
@@ -394,8 +379,8 @@ public sealed partial class MainWindow
 
         Report(
             status.Frames > 0
-                ? $"Recording {Clock(status.Seconds)} — {status.Frames} frames{repeated} → {name}{lost}"
-                : $"Recording {Clock(status.Seconds)} → {name}{lost}",
+                ? $"Recording {StatusClock.Text(status.Seconds)} — {status.Frames} frames{repeated} → {name}{lost}"
+                : $"Recording {StatusClock.Text(status.Seconds)} → {name}{lost}",
             progress: true);
     }
 
@@ -487,7 +472,7 @@ public sealed partial class MainWindow
 
             Report(status.Stopped is { } failure
                 ? $"Recording stopped: {failure}"
-                : $"Recorded {Clock(status.Seconds)} to {name}.");
+                : $"Recorded {StatusClock.Text(status.Seconds)} to {name}.");
         }
         catch (Exception ex)
         {
