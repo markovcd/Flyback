@@ -30,7 +30,7 @@ public static class WavWriter
 
     public static void Write(Stream output, ReadOnlySpan<float> interleaved, int sampleRate, int channels)
     {
-        if (channels < 1) throw new ArgumentOutOfRangeException(nameof(channels));
+        ArgumentOutOfRangeException.ThrowIfLessThan(channels, 1);
 
         WriteHeader(output, interleaved.Length * sizeof(short), sampleRate, channels);
 

@@ -900,7 +900,7 @@ public sealed class Binder
     }
 
     /// <summary>How many signals a value carries when it is piped.</summary>
-    private int Width(Value value) => value switch
+    private static int Width(Value value) => value switch
     {
         Placed placed => placed.Def.Outputs.Count,
         Several several => several.Items.Count,
@@ -908,7 +908,7 @@ public sealed class Binder
     };
 
     /// <summary>The <paramref name="index"/>th signal of a value, for wiring.</summary>
-    private Value Part(Value value, int index) => value switch
+    private static Value Part(Value value, int index) => value switch
     {
         Placed placed => new Socket(placed.Id, index),
         Several several => several.Items[index],

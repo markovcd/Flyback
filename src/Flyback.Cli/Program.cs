@@ -263,7 +263,7 @@ internal static class Program
 
             return Task.FromResult(
                 RenderCommand.Run(
-                    loaded, options, Console.Error, Progress(), cancellation, samples, pictures));
+                    loaded, options, Console.Error, Progress(), samples, pictures, cancellation: cancellation));
         });
 
         return command;

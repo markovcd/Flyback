@@ -152,7 +152,7 @@ public sealed class AlsaMidiInput : IMidiInput
         }
         finally
         {
-            LibAsoundSeq.Close(seq);
+            _ = LibAsoundSeq.Close(seq);
         }
     }
 

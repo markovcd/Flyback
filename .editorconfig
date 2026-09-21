@@ -1,0 +1,15 @@
+root = true
+
+[*.cs]
+# A builder returning Control, or a parser rule returning Statement, is the abstraction on purpose, and none of it is hot.
+dotnet_diagnostic.CA1859.severity = none
+# Step, Stop and Resume are the words for them; the plugin surface is C# only.
+dotnet_diagnostic.CA1716.severity = none
+# Integer is a kind of port, not a type name.
+dotnet_diagnostic.CA1720.severity = none
+
+[tests/**.cs]
+# Test names are sentences.
+dotnet_diagnostic.CA1707.severity = none
+# An expected array is built once, for the one call that checks it.
+dotnet_diagnostic.CA1861.severity = none

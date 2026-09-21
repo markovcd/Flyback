@@ -31,7 +31,7 @@ internal sealed class AudioRing
     /// </param>
     public AudioRing(int capacity)
     {
-        if (capacity < 1) throw new ArgumentOutOfRangeException(nameof(capacity));
+        ArgumentOutOfRangeException.ThrowIfLessThan(capacity, 1);
 
         buffer = new float[capacity];
     }

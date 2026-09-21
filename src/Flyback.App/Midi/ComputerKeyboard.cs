@@ -118,7 +118,9 @@ internal sealed class ComputerKeyboard
         set
         {
             field = value is null ? null : Pitch.Scale(value);
+#pragma warning disable CA2245 // Re-clamped by its setter to the new layout's reach.
             Octave = Octave;
+#pragma warning restore CA2245
         }
     }
 

@@ -15,7 +15,7 @@ namespace Flyback.Core.Tests.Graph;
 /// rather than carrying it, and is checked hardest: it must be said out loud, by
 /// name, on both sinks, and must still compile to something that renders.
 /// </remarks>
-public class SampleTests : IDisposable
+public sealed class SampleTests : IDisposable
 {
     private readonly string folder = Directory.CreateTempSubdirectory("flyback-samples").FullName;
 

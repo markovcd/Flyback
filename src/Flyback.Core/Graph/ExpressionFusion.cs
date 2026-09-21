@@ -419,7 +419,7 @@ public static class ExpressionFusion
                     work.Push((node, child + 1));
                     var target = targets[child];
 
-                    if (!index.ContainsKey(target))
+                    if (!index.TryGetValue(target, out var reached))
                     {
                         index[target] = low[target] = counter++;
                         stack.Push(target);
@@ -428,7 +428,7 @@ public static class ExpressionFusion
                     }
                     else if (onStack.Contains(target))
                     {
-                        low[node] = Math.Min(low[node], index[target]);
+                        low[node] = Math.Min(low[node], reached);
                     }
 
                     continue;

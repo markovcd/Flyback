@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
@@ -243,6 +244,7 @@ internal sealed class Aptabase : IUsageSink, IDisposable
             /// Always false. A build that is not a release never gets this far —
             /// see <see cref="Usage.Start"/> — so everything counted is a release.
             /// </summary>
+            [SuppressMessage("Performance", "CA1822", Justification = "Serialized: the service reads it off every event.")]
             public bool IsDebug => false;
         }
     }

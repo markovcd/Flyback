@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
@@ -7,6 +8,7 @@ namespace Flyback.Core.Compile;
 /// The previous frame, exposed to <see cref="OpCode.SampleFeedback"/>. Stored
 /// as linear float RGB so repeated feedback passes don't quantise to 8 bits.
 /// </summary>
+[SuppressMessage("Design", "CA1051", Justification = "Read per pixel by feedback.")]
 public readonly struct FeedbackFrame(float[]? pixels, int width, int height)
 {
     public readonly float[]? Pixels = pixels;

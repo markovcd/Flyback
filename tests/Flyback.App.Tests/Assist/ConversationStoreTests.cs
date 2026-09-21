@@ -13,7 +13,7 @@ namespace Flyback.App.Tests.Assist;
 /// No patch file is ever written: what is kept is found by a path and a text, and
 /// neither has to exist on the disk for that.
 /// </remarks>
-public class ConversationStoreTests : IDisposable
+public sealed class ConversationStoreTests : IDisposable
 {
     private const string Text = """{"nodes":[]}""";
 

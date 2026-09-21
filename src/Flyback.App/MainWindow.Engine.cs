@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using Flyback.App.Audio;
 using Flyback.App.Controls;
@@ -18,6 +19,7 @@ namespace Flyback.App;
 /// invalidation to get wrong. The device comes from a plugin, so nothing here knows
 /// what a backend is called.
 /// </remarks>
+[SuppressMessage("Design", "CA1001", Justification = "Torn down in OnClosed; a window is closed, not disposed.")]
 public sealed partial class MainWindow
 {
     /// <summary>

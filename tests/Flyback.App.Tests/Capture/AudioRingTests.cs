@@ -194,6 +194,6 @@ public class AudioRingTests
         for (var i = 0; i < total; i++)
             // ReSharper disable once CompareOfFloatsByEqualityOperator
             if (seen[i] != i)
-                throw new Exception($"sample {i} came back as {seen[i]}");
+                seen[i].ShouldBe(i, $"sample {i}");
     }
 }

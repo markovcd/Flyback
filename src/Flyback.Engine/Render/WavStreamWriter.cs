@@ -39,8 +39,8 @@ public sealed class WavStreamWriter : IDisposable
     public WavStreamWriter(Stream output, int sampleRate, int channels)
     {
         if (!output.CanSeek) throw new ArgumentException("A WAV header is patched after the fact, so this has to seek.", nameof(output));
-        if (channels < 1) throw new ArgumentOutOfRangeException(nameof(channels));
-        if (sampleRate <= 0) throw new ArgumentOutOfRangeException(nameof(sampleRate));
+        ArgumentOutOfRangeException.ThrowIfLessThan(channels, 1);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(sampleRate);
 
         this.output = output;
         this.channels = channels;

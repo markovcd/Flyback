@@ -125,9 +125,9 @@ internal sealed unsafe class CoreMidiPort : IMidiPort
         // gets round to it.
         if (port != 0)
         {
-            if (source != 0) MidiServices.DisconnectSource(port, source);
+            if (source != 0) _ = MidiServices.DisconnectSource(port, source);
 
-            MidiServices.DisposePort(port);
+            _ = MidiServices.DisposePort(port);
             port = 0;
         }
 
@@ -135,7 +135,7 @@ internal sealed unsafe class CoreMidiPort : IMidiPort
 
         if (client != 0)
         {
-            MidiServices.DisposeClient(client);
+            _ = MidiServices.DisposeClient(client);
             client = 0;
         }
 

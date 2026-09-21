@@ -124,7 +124,7 @@ internal static partial class LibAsound
         }
         finally
         {
-            FreeHints(hints);
+            _ = FreeHints(hints);
         }
 
         return found;

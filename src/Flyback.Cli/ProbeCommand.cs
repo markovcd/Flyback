@@ -84,7 +84,7 @@ internal static class ProbeCommand
                 return Exit.Failed;
             }
 
-            return await Each(plugins, settings, credentials, options, output, error, cancel, settingsPath).ConfigureAwait(false);
+            return await Each(plugins, settings, credentials, options, output, error, settingsPath, cancel).ConfigureAwait(false);
         }
 
         // The named one, then the one this machine was left on, then whichever
@@ -111,7 +111,7 @@ internal static class ProbeCommand
 
         if (Ready(assistant, credentials) && !Agreed(options, asking, output, error)) return Exit.Failed;
 
-        return await One(settings, credentials, assistant, options, output, error, cancel, settingsPath).ConfigureAwait(false);
+        return await One(settings, credentials, assistant, options, output, error, settingsPath, cancel).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -214,8 +214,8 @@ internal static class ProbeCommand
         ProbeOptions options,
         TextWriter output,
         TextWriter error,
-        CancellationToken cancel,
-        string? settingsPath)
+        string? settingsPath,
+        CancellationToken cancel)
     {
         var any = false;
         var first = true;
@@ -226,7 +226,7 @@ internal static class ProbeCommand
 
             first = false;
 
-            var code = await One(settings, credentials, assistant, options, output, error, cancel, settingsPath)
+            var code = await One(settings, credentials, assistant, options, output, error, settingsPath, cancel)
                 .ConfigureAwait(false);
 
             any |= code == Exit.Ok;
@@ -242,8 +242,8 @@ internal static class ProbeCommand
         ProbeOptions options,
         TextWriter output,
         TextWriter error,
-        CancellationToken cancel,
-        string? settingsPath)
+        string? settingsPath,
+        CancellationToken cancel)
     {
         if (assistant is not IModelSurvey survey)
         {

@@ -22,7 +22,7 @@ internal sealed class FrameMailbox
 
     public FrameMailbox(int bytes)
     {
-        if (bytes < 1) throw new ArgumentOutOfRangeException(nameof(bytes));
+        ArgumentOutOfRangeException.ThrowIfLessThan(bytes, 1);
 
         producing = new byte[bytes];
         pending = new byte[bytes];

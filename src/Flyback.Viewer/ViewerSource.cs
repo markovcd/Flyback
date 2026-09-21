@@ -46,7 +46,7 @@ internal static class ViewerSource
             // build no longer offers the first that is a patch rather than a blank.
             wanted = ordered.FirstOrDefault(preset => preset.Name == settings.DefaultPreset)
                 ?? ordered.FirstOrDefault(preset => preset.Kind != PresetKind.Blank)
-                ?? ordered.FirstOrDefault();
+                ?? (ordered.Count > 0 ? ordered[0] : null);
 
             if (wanted is null)
             {

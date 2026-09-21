@@ -66,8 +66,8 @@ public static class MovieRenderer
         CompiledPatch? audio,
         MovieSettings settings,
         IProgress<double>? progress = null,
-        CancellationToken cancellation = default,
-        LoudnessMeter? loudness = null)
+        LoudnessMeter? loudness = null,
+        CancellationToken cancellation = default)
     {
         Check(settings);
 
@@ -82,7 +82,7 @@ public static class MovieRenderer
             audio is null ? 0 : NodeCatalog.AudioChannels,
             settings.Ffmpeg));
 
-        return Render(clip, video, audio, settings, progress, cancellation, loudness);
+        return Render(clip, video, audio, settings, progress, loudness, cancellation);
     }
 
     /// <param name="video">The picture's compiled program, rooted at the Output's color.</param>
@@ -123,7 +123,7 @@ public static class MovieRenderer
             audio is null ? 0 : GlobalConstants.SampleRate,
             audio is null ? 0 : NodeCatalog.AudioChannels));
 
-        return Render(clip, video, audio, settings, progress, cancellation, null);
+        return Render(clip, video, audio, settings, progress, null, cancellation);
     }
 
     /// <summary>Everything that has to be true of a clip before a file is opened for it.</summary>
@@ -146,8 +146,8 @@ public static class MovieRenderer
         CompiledPatch? audio,
         MovieSettings settings,
         IProgress<double>? progress,
-        CancellationToken cancellation,
-        LoudnessMeter? loudness)
+        LoudnessMeter? loudness,
+        CancellationToken cancellation)
     {
         var width = settings.Width;
         var height = settings.Height;

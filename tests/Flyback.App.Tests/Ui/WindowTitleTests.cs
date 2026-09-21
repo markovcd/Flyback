@@ -21,7 +21,7 @@ namespace Flyback.App.Tests.Ui;
 /// headless platform does not put up, and the name is written down in one place for
 /// all three.
 /// </remarks>
-public class WindowTitleTests : UiTest
+public sealed class WindowTitleTests : UiTest
 {
     private const string Program = GlobalConstants.ApplicationName;
 

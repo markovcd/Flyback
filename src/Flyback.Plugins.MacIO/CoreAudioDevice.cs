@@ -69,11 +69,11 @@ public sealed unsafe class CoreAudioDevice(AudioFormat format, string? uid = nul
 
     public bool IsRunning => running;
 
-    public void Start(AudioCallback callback)
+    public void Start(AudioCallback fill)
     {
         if (unit != IntPtr.Zero) return;
 
-        fill = callback;
+        this.fill = fill;
         self = GCHandle.Alloc(this);
 
         try
@@ -96,13 +96,13 @@ public sealed unsafe class CoreAudioDevice(AudioFormat format, string? uid = nul
     {
         if (unit != IntPtr.Zero)
         {
-            AudioToolbox.AudioOutputUnitStop(unit);
+            _ = AudioToolbox.AudioOutputUnitStop(unit);
 
             // Both calls are synchronous with the audio thread — once they have
             // returned the callback is not running and cannot start again, which
             // is what makes it safe to drop the context below.
-            AudioToolbox.AudioUnitUninitialize(unit);
-            AudioToolbox.AudioComponentInstanceDispose(unit);
+            _ = AudioToolbox.AudioUnitUninitialize(unit);
+            _ = AudioToolbox.AudioComponentInstanceDispose(unit);
 
             unit = IntPtr.Zero;
         }
@@ -165,7 +165,7 @@ public sealed unsafe class CoreAudioDevice(AudioFormat format, string? uid = nul
         {
             // The instance exists but never became this device's unit, so Stop
             // will not find it. Nobody else can free it either.
-            AudioToolbox.AudioComponentInstanceDispose(opened);
+            _ = AudioToolbox.AudioComponentInstanceDispose(opened);
             throw;
         }
 

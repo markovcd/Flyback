@@ -10,7 +10,7 @@ namespace Flyback.App.Tests.Assist;
 /// The first file this application has ever written about itself, and the one
 /// thing that must never appear in it.
 /// </summary>
-public class AssistantSettingsTests : IDisposable
+public sealed class AssistantSettingsTests : IDisposable
 {
     private readonly string path = Path.Combine(
         Path.GetTempPath(),

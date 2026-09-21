@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics;
 using Avalonia;
 using Avalonia.Controls;
@@ -20,6 +21,7 @@ namespace Flyback.App.Controls;
 /// dispatcher pumps messages while waiting, a paint re-enters, and the compositor
 /// batch that paint waits on can never be committed.
 /// </remarks>
+[SuppressMessage("Design", "CA1001", Justification = "The bitmap goes when the control leaves the visual tree.")]
 public sealed class PreviewSurface : Control, IPreviewSurface
 {
     private readonly SynthRenderer renderer = new();
@@ -146,6 +148,8 @@ public sealed class PreviewSurface : Control, IPreviewSurface
     protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
     {
         timer.Stop();
+        bitmap?.Dispose();
+        bitmap = null;
         base.OnDetachedFromVisualTree(e);
     }
 

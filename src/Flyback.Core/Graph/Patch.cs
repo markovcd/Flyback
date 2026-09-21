@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 
@@ -570,6 +571,7 @@ public sealed class Patch
     /// so a second is never reached: whatever is wired into it looks connected,
     /// renders nothing, and raises no complaint, because the patch compiled.
     /// </remarks>
+    [SuppressMessage("Performance", "CA1822", Justification = "Plugin contract: asked of a patch.")]
     public bool CanAdd(string typeId) => !NodeCatalog.IsSink(typeId);
 
     /// <summary>

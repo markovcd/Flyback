@@ -10,7 +10,7 @@ namespace Flyback.Plugins.Tests;
 /// How much of the catalogue's prose the assistant is told, and the list of
 /// modules that are told about whatever it costs.
 /// </summary>
-public class ProsePolicyTests : IDisposable
+public sealed class ProsePolicyTests : IDisposable
 {
     private readonly string folder = Path.Combine(Path.GetTempPath(), "flyback-priority-" + Guid.NewGuid().ToString("N"));
 

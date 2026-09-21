@@ -65,7 +65,7 @@ public sealed class AlsaAudioDevice(AudioFormat format, string? device = null) :
 
     public bool IsRunning => running;
 
-    public void Start(AudioCallback callback)
+    public void Start(AudioCallback fill)
     {
         if (pcm != IntPtr.Zero) return;
 
@@ -99,12 +99,12 @@ public sealed class AlsaAudioDevice(AudioFormat format, string? device = null) :
         {
             // Open succeeded, so this handle is ours to close and nothing else
             // knows about it yet.
-            LibAsound.Close(opened);
+            _ = LibAsound.Close(opened);
             throw;
         }
 
         pcm = opened;
-        fill = callback;
+        this.fill = fill;
 
         // Allocated here, on the caller's thread, so the writer never does. A
         // quarter of the latency is what libasound chose for its own period.
@@ -134,8 +134,8 @@ public sealed class AlsaAudioDevice(AudioFormat format, string? device = null) :
 
         if (pcm != IntPtr.Zero)
         {
-            LibAsound.Drop(pcm);
-            LibAsound.Close(pcm);
+            _ = LibAsound.Drop(pcm);
+            _ = LibAsound.Close(pcm);
             pcm = IntPtr.Zero;
         }
 

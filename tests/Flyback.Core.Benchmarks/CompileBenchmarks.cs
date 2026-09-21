@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using BenchmarkDotNet.Attributes;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
@@ -16,6 +17,7 @@ namespace Flyback.Core.Benchmarks;
 /// <see cref="Rebind"/> is what a knob move spends on the UI thread.
 /// </remarks>
 [MemoryDiagnoser]
+[SuppressMessage("Design", "CA1001", Justification = "BenchmarkDotNet disposes it in GlobalCleanup.")]
 public class CompileBenchmarks
 {
     private Patch graph = null!;

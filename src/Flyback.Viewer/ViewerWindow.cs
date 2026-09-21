@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -17,6 +18,7 @@ namespace Flyback.Viewer;
 /// program reads the file and opens the device, so the window can be built headless.
 /// Nothing here is written anywhere.
 /// </remarks>
+[SuppressMessage("Design", "CA1001", Justification = "The player is disposed when the window closes.")]
 internal sealed partial class ViewerWindow : Window
 {
     /// <summary>The largest a window opens at when it was not told a size.</summary>

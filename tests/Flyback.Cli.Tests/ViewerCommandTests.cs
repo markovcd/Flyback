@@ -12,7 +12,7 @@ namespace Flyback.Cli.Tests;
 /// which is one seam for the whole process.
 /// </remarks>
 [Collection("viewer")]
-public class ViewerCommandTests : IDisposable
+public sealed class ViewerCommandTests : IDisposable
 {
     private readonly string folder = Path.Combine(Path.GetTempPath(), "flyback-viewer-cmd-" + Guid.NewGuid().ToString("N"));
     private readonly Func<string> before = ViewerCommand.Beside;

@@ -13,7 +13,7 @@ namespace Flyback.Core.Tests.Rendering;
 /// would open it on every knob turn. The tests that matter show a second look never
 /// reaches the disk, and that emptying the cache empties exactly as much as it says.
 /// </remarks>
-public class ImageLibraryTests : IDisposable
+public sealed class ImageLibraryTests : IDisposable
 {
     private readonly string folder = Directory.CreateTempSubdirectory("flyback-pictures").FullName;
 

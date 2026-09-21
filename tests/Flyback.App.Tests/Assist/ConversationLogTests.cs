@@ -8,7 +8,7 @@ namespace Flyback.App.Tests.Assist;
 /// A file that is not written at all until somebody asks for it, and never
 /// throws on the way to trying.
 /// </summary>
-public class ConversationLogTests : IDisposable
+public sealed class ConversationLogTests : IDisposable
 {
     private readonly string folder = Path.Combine(
         Path.GetTempPath(), "flyback-conversations-" + Guid.NewGuid().ToString("N"));

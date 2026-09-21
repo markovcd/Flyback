@@ -15,7 +15,7 @@ public class AvaloniaTheoryDiscoverer : TheoryDiscoverer
         ITheoryAttribute theoryAttribute,
         ITheoryDataRow dataRow,
         object?[] testMethodArguments,
-        string? displayName)
+        string? index)
     {
         var details = TestIntrospectionHelper.GetTestCaseDetailsForTheoryDataRow(
             discoveryOptions,

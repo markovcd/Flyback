@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Core.Render;
@@ -46,6 +47,7 @@ internal sealed record Thumbnail(byte[]? Pixels, string Words)
 /// the window's: those keep a dictionary that the UI thread is also reading.
 /// </para>
 /// </remarks>
+[SuppressMessage("Design", "CA1001", Justification = "A SemaphoreSlim that never hands out its wait handle holds nothing to free.")]
 internal sealed class PresetThumbnails(ModuleCatalog modules)
 {
     public const int Width = 320;

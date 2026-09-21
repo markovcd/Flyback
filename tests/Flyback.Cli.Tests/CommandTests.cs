@@ -581,7 +581,6 @@ public class CommandTests
                 new RenderOptions(frame, 32, 18, 0d, 1d, 30d, 80),
                 e,
                 null,
-                default,
                 Patches.Open(bundle, e)!.Value.Samples,
                 Patches.Open(bundle, e)!.Value.Pictures))
             .Code.ShouldBe(Exit.Ok);

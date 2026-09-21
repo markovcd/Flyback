@@ -145,13 +145,13 @@ internal static partial class Attention
             var flags = Marshal.ReadInt64(hints);
             Marshal.WriteInt64(hints, urgent ? flags | XUrgencyHint : flags & ~XUrgencyHint);
 
-            XSetWMHints(display, handle.Handle, hints);
-            XFree(hints);
-            XFlush(display);
+            _ = XSetWMHints(display, handle.Handle, hints);
+            _ = XFree(hints);
+            _ = XFlush(display);
         }
         finally
         {
-            XCloseDisplay(display);
+            _ = XCloseDisplay(display);
         }
     }
 

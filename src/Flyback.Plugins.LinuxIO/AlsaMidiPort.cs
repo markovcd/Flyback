@@ -141,7 +141,7 @@ internal sealed unsafe class AlsaMidiPort : IMidiPort
         // returns.
         if (seq != IntPtr.Zero)
         {
-            LibAsoundSeq.Close(seq);
+            _ = LibAsoundSeq.Close(seq);
             seq = IntPtr.Zero;
         }
     }

@@ -255,7 +255,7 @@ public sealed class FfmpegClipWriter : IClipWriter
     /// Ends one process's input and waits for it, giving back what went wrong or
     /// null where nothing did.
     /// </summary>
-    private string? Close(Process process)
+    private static string? Close(Process process)
     {
         try
         {

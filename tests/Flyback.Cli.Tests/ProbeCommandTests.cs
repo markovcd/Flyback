@@ -17,7 +17,7 @@ namespace Flyback.Cli.Tests;
 /// the parts of this command worth proving are exactly the parts that decide
 /// whether to ask at all.
 /// </remarks>
-public class ProbeCommandTests : IDisposable
+public sealed class ProbeCommandTests : IDisposable
 {
     private readonly string path = Path.Combine(
         Path.GetTempPath(),

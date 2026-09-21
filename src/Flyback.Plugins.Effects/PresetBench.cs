@@ -140,7 +140,7 @@ internal abstract class PresetBench(ModuleCatalog modules)
     /// <paramref name="high"/>, left resting where the knob rests. A
     /// <paramref name="low"/> over the <paramref name="high"/> turns the knob round.
     /// </summary>
-    protected void Follows(NodeInstance node, int port, PatchControl knob, float low, float high)
+    protected static void Follows(NodeInstance node, int port, PatchControl knob, float low, float high)
     {
         var link = new ControlLink(knob.Id, low, high);
 

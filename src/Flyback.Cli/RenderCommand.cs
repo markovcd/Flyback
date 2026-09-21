@@ -50,10 +50,10 @@ internal static class RenderCommand
         RenderOptions options,
         TextWriter error,
         IProgress<double>? progress = null,
-        CancellationToken cancellation = default,
         ISampleLibrary? samples = null,
         IImageLibrary? pictures = null,
-        TextWriter? output = null)
+        TextWriter? output = null,
+        CancellationToken cancellation = default)
     {
         var still = options.Out.Extension.Equals(".png", StringComparison.OrdinalIgnoreCase);
 
@@ -154,7 +154,7 @@ internal static class RenderCommand
             }
             else
             {
-                code = Movie(video!.Program, audio?.Program, format, options, ffmpeg, error, progress, cancellation, loudness);
+                code = Movie(video!.Program, audio?.Program, format, options, ffmpeg, error, progress, loudness, cancellation);
             }
         }
         catch (Exception ex)
@@ -232,8 +232,8 @@ internal static class RenderCommand
         string? ffmpeg,
         TextWriter error,
         IProgress<double>? progress,
-        CancellationToken cancellation,
-        LoudnessMeter? loudness)
+        LoudnessMeter? loudness,
+        CancellationToken cancellation)
     {
         var settings = new MovieSettings(
             options.Width, options.Height, options.Seconds, options.Fps, options.Quality, format, ffmpeg);
@@ -247,8 +247,8 @@ internal static class RenderCommand
             audio,
             settings,
             progress,
-            cancellation,
-            loudness);
+            loudness,
+            cancellation);
 
         if (written >= settings.FrameCount) return Exit.Ok;
 

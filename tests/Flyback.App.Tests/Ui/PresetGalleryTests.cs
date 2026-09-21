@@ -27,11 +27,11 @@ public class PresetGalleryTests : UiTest
         return (Show(parts.Tiles, width: 900), parts.Tiles, reported);
     }
 
-    private Button Tile(Control tiles, string name) =>
+    private static Button Tile(Control tiles, string name) =>
         All<Button>(tiles).Single(button => button.Name == "tile" && ((PatchPreset)button.Tag!).Name == name);
 
     /// <summary>Puts the pointer on a control, or on none of them for null.</summary>
-    private void Point(Window window, Control? onto)
+    private static void Point(Window window, Control? onto)
     {
         var at = onto is null
             ? new Point(1, 1)

@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Shapes;
@@ -26,6 +27,7 @@ namespace Flyback.App.Controls;
 /// is abandoned or bad costs nothing — everything between happens on
 /// <see cref="AssistantRun"/>'s copy.
 /// </remarks>
+[SuppressMessage("Design", "CA1001", Justification = "The run ends with its conversation, in SetAside.")]
 public sealed class AssistantPanel : UserControl
 {
     private static readonly IBrush Amber = new SolidColorBrush(Colors.Attention);

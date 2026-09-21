@@ -78,9 +78,9 @@ internal sealed unsafe class WinMidiPort : IMidiPort
             // Stop, hand back, close, in that order. Reset is what makes the
             // close succeed rather than being refused for a device that is still
             // holding something.
-            WinMm.Stop(device);
-            WinMm.Reset(device);
-            WinMm.Close(device);
+            _ = WinMm.Stop(device);
+            _ = WinMm.Reset(device);
+            _ = WinMm.Close(device);
 
             device = IntPtr.Zero;
         }

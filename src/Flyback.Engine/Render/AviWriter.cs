@@ -69,8 +69,8 @@ public sealed class AviWriter : IDisposable
     {
         if (!output.CanSeek) throw new ArgumentException("An AVI header is patched after the fact, so this has to seek.", nameof(output));
         if (width <= 0 || height <= 0) throw new ArgumentOutOfRangeException(nameof(width), "A frame needs both dimensions.");
-        if (framesPerSecond <= 0d) throw new ArgumentOutOfRangeException(nameof(framesPerSecond));
-        if (channels < 0) throw new ArgumentOutOfRangeException(nameof(channels));
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(framesPerSecond);
+        ArgumentOutOfRangeException.ThrowIfNegative(channels);
         if (channels > 0 && sampleRate <= 0) throw new ArgumentOutOfRangeException(nameof(sampleRate));
 
         this.output = output;

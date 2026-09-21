@@ -20,7 +20,7 @@ internal sealed class CapturePacer
 
     public CapturePacer(double framesPerSecond)
     {
-        if (framesPerSecond <= 0d) throw new ArgumentOutOfRangeException(nameof(framesPerSecond));
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(framesPerSecond);
 
         this.framesPerSecond = framesPerSecond;
     }

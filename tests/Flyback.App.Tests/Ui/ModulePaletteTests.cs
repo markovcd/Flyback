@@ -462,7 +462,7 @@ public class ModulePaletteTests : UiTest
         // is a Button and a section is a TextBlock above it.
         var headings = All<TextBlock>(palette)
             .Select(t => t.Text ?? string.Empty)
-            .Where(text => text.Length > 0 && text == text.ToUpperInvariant())
+            .Where(text => text.Length > 0 && !text.Any(char.IsLower))
             .ToList();
 
         headings.ShouldNotBeEmpty();

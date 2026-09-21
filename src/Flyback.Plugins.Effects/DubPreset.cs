@@ -484,7 +484,7 @@ internal sealed class DubPreset : PresetBench
     /// A Desk's fader handed to a panel knob: nothing with the knob down, and the
     /// level the channel was given where the knob rests.
     /// </summary>
-    private void Ridden(NodeInstance desk, int channel, PatchControl knob)
+    private static void Ridden(NodeInstance desk, int channel, PatchControl knob)
     {
         var fader = (channel - 1) * 3 + 2;
 
