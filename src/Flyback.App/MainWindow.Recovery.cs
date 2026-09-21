@@ -1,8 +1,4 @@
 using System.Diagnostics;
-using Avalonia;
-using Avalonia.Controls;
-using Avalonia.Layout;
-using Avalonia.Media;
 using Avalonia.Threading;
 using Flyback.App.Controls;
 using Flyback.Core;
@@ -13,7 +9,7 @@ namespace Flyback.App;
 
 /// <summary>
 /// Unsaved work kept on disk while it is unsaved, so a crash costs a few seconds of
-/// it rather than all of it, and offered back at the next start — ADR-0103.
+/// it rather than all of it, and put back at the next start — ADR-0103.
 /// </summary>
 /// <remarks>
 /// Asked on a timer rather than on every edit: a knob held and turned is an edit a
@@ -40,17 +36,6 @@ public sealed partial class MainWindow
     private RecoveredWork? kept;
 
     private DispatcherTimer? recoveryTicker;
-
-    /// <summary>What to do about work a crash left behind.</summary>
-    private enum Leftover
-    {
-        /// <summary>Asked about again at the next start, which is what dismissing the question means.</summary>
-        Later,
-
-        Restore,
-
-        Discard,
-    }
 
     /// <summary>Starts keeping unsaved work in <paramref name="folder"/>.</summary>
     private void KeepRecovery(string folder)
@@ -123,70 +108,19 @@ public sealed partial class MainWindow
         a is null || b is null ? a == b : a with { Files = null } == b with { Files = null } && a.Files == b.Files;
 
     /// <summary>
-    /// Offers back the most recent work a crash left behind, where there is any. One a
-    /// start: a second is offered at the next, since a window holds one document.
+    /// Puts back the most recent work a crash left behind, where there is any, and says
+    /// so on the status bar. One a start: a second waits for the next, since a window
+    /// holds one document.
     /// </summary>
-    private async Task OfferRecoveryAsync()
+    private void RestoreLeftover()
     {
         if (recoveryFolder is null) return;
 
         if (Recovery.Orphans(recoveryFolder) is not [var path, ..]) return;
 
-        if (Recovery.Read(path) is not { } work)
-        {
-            Recovery.Forget(path);
-            return;
-        }
-
-        var answer = await AskAboutLeftoverAsync(work);
-
-        if (answer == Leftover.Later) return;
-
-        if (answer == Leftover.Restore && !Recover(work)) return;
+        if (Recovery.Read(path) is { } work && !Recover(work)) return;
 
         Recovery.Forget(path);
-    }
-
-    private async Task<Leftover> AskAboutLeftoverAsync(RecoveredWork work)
-    {
-        var buttons = new StackPanel
-        {
-            Orientation = Orientation.Horizontal,
-            Spacing = 8,
-            HorizontalAlignment = HorizontalAlignment.Right,
-        };
-
-        buttons.Children.Add(Answering("Restore", Leftover.Restore));
-        buttons.Children.Add(Answering("Discard", Leftover.Discard));
-
-        var named = work.Name is null ? "a patch" : work.Name;
-
-        var asking = new StackPanel
-        {
-            Margin = new Thickness(20),
-            Spacing = 16,
-            MaxWidth = 420,
-            Children =
-            {
-                new TextBlock
-                {
-                    Text = $"{GlobalConstants.ApplicationName} closed without saving the changes to {named}. "
-                        + "Restore them? They open unsaved, as they were.",
-                    TextWrapping = TextWrapping.Wrap,
-                },
-                buttons,
-            },
-        };
-
-        return await this.ShowDialog<Leftover>("Unsaved work", asking);
-
-        static Button Answering(string text, Leftover with)
-        {
-            var button = new Button { Content = text, MinWidth = 96 };
-            button.Click += (_, _) => Dialog.Close(button, with);
-
-            return button;
-        }
     }
 
     /// <summary>
@@ -236,7 +170,7 @@ public sealed partial class MainWindow
         // Kept at once, since the orphan it came from is about to go.
         KeepWork(later: false);
 
-        Report($"Restored {work.Name ?? "the patch"}. It has not been saved.");
+        Report($"Restored {work.Name ?? "the patch"} after a crash. It has not been saved.");
 
         return true;
     }

@@ -58,3 +58,15 @@ nothing but its lock. A bundle carrying large pictures or sounds is written with
 them, which is a larger file each time it changes; it is written only when the document changes and never on the UI
 thread. The snapshot is a file in the data folder and nobody's document: it is
 not offered by the open dialog and is not meant to be found by hand.
+
+## Amendment, 2026-09-21: restored without asking
+
+The start no longer asks. The most recent orphan is put on the canvas as soon as
+the window opens, and the status bar says so ("Restored drift after a crash. It
+has not been saved."). The question was a step between a crash and the work it
+was there to save, and Discard was never wanted: the restored document opens
+unsaved, so closing it asks the usual question and it can be thrown away there.
+A patch that is refused stays kept, as before, and the bar says it was not
+restored. An orphan that cannot be read is deleted. The order at startup is
+unchanged: What's New, then the restore, then the file the launch was asked to
+open.

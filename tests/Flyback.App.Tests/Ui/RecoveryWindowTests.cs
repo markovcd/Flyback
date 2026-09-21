@@ -70,6 +70,27 @@ public class RecoveryWindowTests : UiTest
     }
 
     [AvaloniaFact]
+    public void A_start_after_a_crash_restores_without_asking_and_says_so()
+    {
+        var crashed = Recovery.Open(folder)!;
+
+        crashed.Keep(Work(APatch()));
+        crashed.Abandon();
+
+        var window = Open(folder);
+
+        Dispatcher.UIThread.RunJobs();
+
+        window.Title.ShouldBe($"drift — {GlobalConstants.ApplicationName} •");
+        All<ReportLine>(window).Single().History.ShouldContain(line => line.StartsWith("Restored drift"));
+        Recovery.Orphans(folder).ShouldBeEmpty("the snapshot was restored, so nothing is left to offer");
+
+        // Saved, so the close asks nothing and lets go of the lock.
+        All<NodeEditor>(window).Single().MarkSaved();
+        window.Close();
+    }
+
+    [AvaloniaFact]
     public void Restored_work_is_kept_at_once_and_let_go_on_closing()
     {
         var window = Open(folder);

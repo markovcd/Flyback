@@ -76,7 +76,7 @@
 - A toolbar button swaps the preview and the canvas, for a bigger picture while you patch.
 - The module panel's buttons are icons, in a row under the name.
 - An Expression's formula is shown in red while it does not read, and says what stopped it.
-- Unsaved work survives a crash: the next start offers to restore it.
+- Unsaved work survives a crash: the next start restores it and says so in the status bar.
 - A module carries its category's color down its body and a mark of what it does behind its sockets, with a drawing of its own for the ones you would name; groups are drawn to match.
 - Ctrl+B switches a module or a whole box off: what is patched into it comes straight out of it, and nothing does where nothing is patched in.
 - About has a bitcoin address to donate to, as a QR code that copies it when clicked.

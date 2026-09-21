@@ -671,7 +671,7 @@ public sealed partial class MainWindow : Window
         {
             if (whatsNew is not null) await this.ShowDialog(WhatsNew.Title(whatsNew), WhatsNew.View(whatsNew));
 
-            await OfferRecoveryAsync();
+            RestoreLeftover();
 
             if (openPath is { } path && await MayReplaceThePatchAsync()) await OpenPathAsync(path);
         };
