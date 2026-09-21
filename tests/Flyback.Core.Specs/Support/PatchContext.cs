@@ -9,6 +9,11 @@ namespace Flyback.Core.Specs.Support;
 /// instance per scenario and injects it into every binding class that asks for
 /// it, so scenarios cannot leak into each other.
 /// </summary>
+/// <remarks>
+/// Steps that build the patch never compile it. Whatever looks at the screen or
+/// listens to the speakers compiles for that sink on the way, and again after
+/// any edit.
+/// </remarks>
 public sealed class PatchContext
 {
     /// <summary>
@@ -20,31 +25,49 @@ public sealed class PatchContext
 
     public const int Height = 18;
 
+    /// <summary>
+    /// The rate the sound is heard at sample by sample. Low enough that a second is
+    /// a thousand samples and a step in the feature files is a millisecond.
+    /// </summary>
+    public const int SampleRate = 1_000;
+
+    private const string Video = "video";
+    private const string Audio = "audio";
+
     private readonly PatchBuilder builder = new();
     private readonly Dictionary<string, NodeInstance> named = new(StringComparer.OrdinalIgnoreCase);
+    private readonly List<double> heard = [];
 
     private CompileResult? result;
+    private string? compiledFor;
+    private DelayState? memory;
+    private CompiledPatch? memoryFor;
 
     public Patch Patch => builder.Patch;
 
-    public CompileResult Result =>
-        result ?? throw new InvalidOperationException("The patch has not been compiled yet.");
+    /// <summary>Every sample of the left channel played so far, across every edit.</summary>
+    public IReadOnlyList<double> Heard => heard;
 
-    public CompiledPatch Program => Result.Program;
+    /// <summary>The highest frequency the scenario's tone reaches, which bounds how steeply a smooth wave can move.</summary>
+    public double HighestFrequency { get; set; }
+
+    // --- building -------------------------------------------------------------
 
     public NodeInstance Add(string name, string typeId)
     {
         var node = builder.Add(typeId, 0, 0);
         named[name] = node;
+        Changed();
         return node;
     }
 
-    /// <summary>Places a node whose type the catalogue does not know, as a stale saved patch would.</summary>
+    /// <summary>Places a node whose type the catalogue does not know, as a patch from a newer Flyback would.</summary>
     public NodeInstance AddUnknown(string name, string typeId)
     {
         var node = new NodeInstance { Id = Guid.NewGuid(), TypeId = typeId, InputValues = [] };
         Patch.Nodes.Add(node);
         named[name] = node;
+        Changed();
         return node;
     }
 
@@ -53,60 +76,73 @@ public sealed class PatchContext
             ? node
             : throw new KeyNotFoundException($"No node named '{name}' in this scenario.");
 
-    public NodeDef Definition(string name) => NodeCatalog.Require(Node(name).TypeId);
-
-    public void Wire(string source, string sourcePort, string target, string targetPort) =>
+    public void Wire(string source, string sourcePort, string target, string targetPort)
+    {
         Patch.Connect(
             Node(source).Id,
             PortIndex(Definition(source).Outputs, sourcePort, source, "output"),
             Node(target).Id,
             PortIndex(Definition(target).Inputs, targetPort, target, "input"));
+        Changed();
+    }
 
-    /// <summary>
-    /// Wires from a source port by position rather than by name, which is the
-    /// only option when the source module's type is not in the catalogue.
-    /// </summary>
-    public void Wire(string source, int sourcePort, string target, string targetPort) =>
-        Patch.Connect(
-            Node(source).Id,
-            sourcePort,
-            Node(target).Id,
-            PortIndex(Definition(target).Inputs, targetPort, target, "input"));
+    /// <summary>Wires from an output by position, the only option when the source's type is unknown.</summary>
+    public void Wire(string source, int sourcePort, string target, string targetPort)
+    {
+        Patch.Connect(Node(source).Id, sourcePort, Node(target).Id, PortIndex(Definition(target).Inputs, targetPort, target, "input"));
+        Changed();
+    }
 
-    public void SetInput(string name, string port, float value) =>
+    public void SetInput(string name, string port, float value)
+    {
         Node(name).InputValues[PortIndex(Definition(name).Inputs, port, name, "input")] = value;
+        Changed();
+    }
 
-    public void Compile() => CompileFor("video");
+    public float StoredInput(string name, string port) =>
+        Node(name).InputValues[PortIndex(Definition(name).Inputs, port, name, "input")];
 
-    /// <summary>
-    /// Compiles from one sink or the other. The two programs are independent —
-    /// that independence is what most of the audio scenarios are about.
-    /// </summary>
-    public void CompileFor(string sink) =>
-        result = sink.Equals("audio", StringComparison.OrdinalIgnoreCase)
-            ? Patch.CompileForAudio()
-            : Patch.CompileForVideo();
+    /// <summary>Drops the stored values past the first few, as a patch saved before the module gained them.</summary>
+    public void Truncate(string name, int count)
+    {
+        Node(name).InputValues = [.. Node(name).InputValues.Take(count)];
+        Changed();
+    }
 
-    /// <summary>Renders a short stereo buffer from the currently compiled program.</summary>
+    public void SwitchOff(string name)
+    {
+        Node(name).Off = true;
+        Changed();
+    }
+
+    // --- compiling ------------------------------------------------------------
+
+    public CompileResult Picture => CompiledFor(Video);
+
+    public CompileResult Sound => CompiledFor(Audio);
+
+    private CompileResult CompiledFor(string sink)
+    {
+        if (result is null || compiledFor != sink)
+        {
+            result = sink == Audio ? Patch.CompileForAudio() : Patch.CompileForVideo();
+            compiledFor = sink;
+        }
+
+        return result;
+    }
+
+    private void Changed() => result = null;
+
+    // --- the speakers ---------------------------------------------------------
+
+    /// <summary>A short stereo buffer through the real renderer, oversampling and filters included.</summary>
     public float[] RenderAudio(int frames = 2_000)
     {
         var buffer = new float[frames * 2];
-        new AudioRenderer().Render(Program, buffer);
+        new AudioRenderer().Render(Sound.Program, buffer);
         return buffer;
     }
-
-    /// <summary>
-    /// The rate the sound is heard at sample by sample. Low enough that a second is
-    /// a thousand samples and a step in the feature files is a millisecond.
-    /// </summary>
-    public const int SampleRate = 1_000;
-
-    private readonly List<double> heard = [];
-    private DelayState? memory;
-    private CompiledPatch? memoryFor;
-
-    /// <summary>Every sample of the left channel played so far, across every rebuild.</summary>
-    public IReadOnlyList<double> Heard => heard;
 
     /// <summary>
     /// Evaluates the audio program straight, without the renderer's oversampling
@@ -115,7 +151,7 @@ public sealed class PatchContext
     /// </summary>
     public void Play(int samples)
     {
-        var program = Program;
+        var program = Sound.Program;
 
         if (!ReferenceEquals(memoryFor, program))
         {
@@ -141,14 +177,7 @@ public sealed class PatchContext
         return heard[index];
     }
 
-    /// <summary>Changes a knob and recompiles for the speakers, as an edit made while the sound plays does.</summary>
-    public void Turn(string name, string port, float value)
-    {
-        SetInput(name, port, value);
-        CompileFor("audio");
-    }
-
-    public int CountOps(OpCode code) => Program.Ops.Count(op => op.Code == code);
+    // --- the screen -----------------------------------------------------------
 
     /// <summary>
     /// Renders from a cold renderer each time, so a scenario that asks about
@@ -156,44 +185,40 @@ public sealed class PatchContext
     /// </summary>
     public Frame Render(int frames = 1, int width = Width, int height = Height)
     {
+        var program = Picture.Program;
         var renderer = new SynthRenderer();
         var stride = width * 4;
         var buffer = new byte[stride * height];
 
         for (var frame = 0; frame < frames; frame++)
-            renderer.Render(Program, 0f, width, height, buffer, stride);
+            renderer.Render(program, 0f, width, height, buffer, stride);
 
         return new Frame(buffer, width, height);
     }
 
-    public (float R, float G, float B) RenderCentre(int frames) => Render(frames).Centre;
-
-    public float StoredInput(string name, string port) =>
-        Node(name).InputValues[PortIndex(Definition(name).Inputs, port, name, "input")];
-
     /// <summary>
-    /// Renders, clears the feedback history the way the Rewind button does, then
-    /// renders again — so the assertion is about Reset rather than about this
-    /// helper handing back a fresh renderer.
+    /// Renders, clears the history the way the Rewind button does, then renders
+    /// again, so the assertion is about Reset rather than about a fresh renderer.
     /// </summary>
-    public (float R, float G, float B) RenderCentreAfterReset(int before, int after)
+    public Frame RenderAfterRewind(int before, int after)
     {
+        var program = Picture.Program;
         var renderer = new SynthRenderer();
         var stride = Width * 4;
         var buffer = new byte[stride * Height];
 
         for (var frame = 0; frame < before; frame++)
-            renderer.Render(Program, 0f, Width, Height, buffer, stride);
+            renderer.Render(program, 0f, Width, Height, buffer, stride);
 
         renderer.Reset();
 
         for (var frame = 0; frame < after; frame++)
-            renderer.Render(Program, 0f, Width, Height, buffer, stride);
+            renderer.Render(program, 0f, Width, Height, buffer, stride);
 
-        return new Frame(buffer, Width, Height).Centre;
+        return new Frame(buffer, Width, Height);
     }
 
-    public bool RenderedFrameIsBlack(int frames) => Render(frames).IsBlack;
+    private NodeDef Definition(string name) => NodeCatalog.Require(Node(name).TypeId);
 
     private static int PortIndex(IReadOnlyList<PortSpec> ports, string name, string node, string kind)
     {

@@ -1,225 +1,479 @@
 using Reqnroll;
 using Shouldly;
-using Flyback.Core.Compile;
 using Flyback.Core.Specs.Support;
 
 namespace Flyback.Core.Specs.Steps;
 
 /// <summary>
-/// The general vocabulary: name modules, wire them, compile, and inspect the
-/// program or a rendered pixel. Phrases a patch author would use are in
-/// <see cref="RequirementSteps"/>.
+/// The patches the scenarios talk about, each built from a phrase a patch author
+/// would use, and the edits made to them. Nothing here compiles: the steps that
+/// look or listen do that.
 /// </summary>
 [Binding]
 public sealed class PatchSteps(PatchContext context)
 {
-    private const float Tolerance = 1.5f / 255f;
+    /// <summary>Samples a loop needs before halving-plus-a-quarter sits on a half to within a sample's tolerance.</summary>
+    private const int Settle = 30;
 
-    [Given("a patch containing:")]
-    public void GivenAPatchContaining(DataTable modules)
+    // --- levels and colors ----------------------------------------------------
+
+    [Given("a level of {float} on the screen")]
+    public void GivenALevel(float level)
     {
-        foreach (var row in modules.Rows)
-            context.Add(row["name"], row["module"]);
+        Level("level", level);
+        Show("level");
     }
 
-    [Given("a node named {string} of unknown type {string}")]
-    public void GivenANodeOfUnknownType(string name, string typeId) => context.AddUnknown(name, typeId);
-
-    [Given("{string} output {string} is wired to {string} input {string}")]
-    public void GivenAWire(string source, string sourcePort, string target, string targetPort) =>
-        context.Wire(source, sourcePort, target, targetPort);
-
-    [Given("{string} output {int} is wired to {string} input {string}")]
-    public void GivenAWireFromPortIndex(string source, int sourcePort, string target, string targetPort) =>
-        context.Wire(source, sourcePort, target, targetPort);
-
-    [Given("{string} input {string} is set to {float}")]
-    public void GivenAnInputValue(string name, string port, float value) =>
-        context.SetInput(name, port, value);
-
-    /// <summary>Simulates a patch saved before a module gained an input (ADR-0020).</summary>
-    [Given("{string} has only {int} stored input values")]
-    public void GivenTruncatedInputValues(string name, int count) =>
-        context.Node(name).InputValues = [.. context.Node(name).InputValues.Take(count)];
-
-    [When("the patch is compiled")]
-    public void WhenThePatchIsCompiled() => context.Compile();
-
-    [When("the patch is compiled for {word}")]
-    public void WhenThePatchIsCompiledFor(string sink) => context.CompileFor(sink);
-
-    [Then("the audio is silent")]
-    public void ThenTheAudioIsSilent() =>
-        // Silence means exactly zero, not nearly zero — see AudioRendererTests.
-        // ReSharper disable once CompareOfFloatsByEqualityOperator
-        context.RenderAudio().ShouldAllBe(v => v == 0f);
-
-    [Then("the audio is not silent")]
-    public void ThenTheAudioIsNotSilent() =>
-        context.RenderAudio().Any(v => Math.Abs(v) > 0.01f).ShouldBeTrue();
-
-    [Then("both audio channels are identical")]
-    public void ThenBothChannelsMatch()
+    [Given("a rainbow across the screen")]
+    public void GivenARainbow()
     {
-        var buffer = context.RenderAudio();
-
-        for (var frame = 0; frame < buffer.Length / 2; frame++)
-            buffer[frame * 2 + 1].ShouldBe(buffer[frame * 2]);
+        Rainbow();
+        Show("tint", "color");
     }
 
-    [Then("compilation reports no issues")]
-    public void ThenNoIssues() =>
-        context.Result.Issues.ShouldBeEmpty(
-            string.Join(" | ", context.Result.Issues.Select(i => i.Message)));
+    [Given("pure red patched into an input that takes a single value")]
+    public void GivenRedIntoASingleValue()
+    {
+        Rgb("red", 1f, 0f, 0f);
+        context.Add("turn", "space.rotate");
+        context.Wire("red", "color", "turn", "x");
+        Show("turn", "x");
+    }
+
+    [Given("the color {float}, {float}, {float} halved by a Multiply")]
+    public void GivenAColorHalved(float r, float g, float b)
+    {
+        Rgb("tint", r, g, b);
+        context.Add("half", "math.mul");
+        context.Wire("tint", "color", "half", "a");
+        context.SetInput("half", "b", 0.5f);
+        Show("half");
+    }
+
+    [Given("the color {float}, {float}, {float} split, with its green on the screen")]
+    public void GivenAColorSplit(float r, float g, float b)
+    {
+        Rgb("tint", r, g, b);
+        context.Add("channel", "color.split");
+        context.Wire("tint", "color", "channel", "color");
+        Show("channel", "g");
+    }
+
+    [Given("an adder whose knob reads {float}, with a level of {float} patched in over it")]
+    public void GivenAnOverriddenAdder(float knob, float level)
+    {
+        context.Add("sum", "math.add");
+        context.SetInput("sum", "a", knob);
+        context.SetInput("sum", "b", 0f);
+        Level("level", level);
+        context.Wire("level", "out", "sum", "a");
+        Show("sum");
+    }
+
+    [Then("the adder's knob still reads {float}")]
+    public void ThenTheKnobIsKept(float expected) => context.StoredInput("sum", "a").ShouldBe(expected);
+
+    // --- the Output -----------------------------------------------------------
+
+    [Given("an Output with nothing patched into it")]
+    public void GivenAnEmptyOutput() => context.Add("screen", "output");
+
+    [Given("a sine with no Output to reach")]
+    public void GivenNoOutput() => context.Add("wave", "osc.sine");
+
+    [Given("a module from a newer Flyback patched to the screen")]
+    public void GivenAnUnknownModule()
+    {
+        context.Add("screen", "output");
+        context.AddUnknown("mystery", "module.from.the.future");
+        context.Wire("mystery", 0, "screen", "color");
+    }
+
+    [Given("a noise picture on the screen and a sine tone at the speakers")]
+    public void GivenAPictureAndATone()
+    {
+        context.Add("coords", "coord");
+        context.Add("grain", "pattern.noise");
+        context.Add("clock", "time");
+        context.Add("tone", "osc.sine");
+        context.Wire("coords", "x", "grain", "x");
+        context.Wire("clock", "t", "tone", "in");
+        Show("grain");
+        context.Wire("tone", "out", "screen", "left");
+    }
+
+    // --- space ----------------------------------------------------------------
+
+    [Given("rings drawn across the screen")]
+    public void GivenRings()
+    {
+        context.Add("coords", "coord");
+        context.Add("rings", "pattern.rings");
+        context.Wire("coords", "x", "rings", "x");
+        context.Wire("coords", "y", "rings", "y");
+        context.SetInput("rings", "freq", 3f);
+        Show("rings");
+    }
+
+    [Given("a brightness that follows height on the screen")]
+    public void GivenHeight()
+    {
+        context.Add("coords", "coord");
+        context.Add("spread", "math.remap");
+        context.Wire("coords", "y", "spread", "in");
+        Show("spread");
+    }
+
+    [Given("a disc of radius one half on the screen")]
+    public void GivenADisc()
+    {
+        context.Add("coords", "coord");
+        context.Add("edge", "math.step");
+        context.Wire("coords", "radius", "edge", "in");
+        context.SetInput("edge", "edge", 0.5f);
+        Show("edge");
+    }
+
+    [Given("noise left unwired beside a picture on the screen")]
+    public void GivenUnwiredNoise()
+    {
+        context.Add("coords", "coord");
+        context.Add("rubbish", "pattern.noise");
+        Show("coords", "x");
+    }
+
+    [Given("the horizontal position feeding all three inputs of a color")]
+    public void GivenOnePositionThreeTimes()
+    {
+        context.Add("coords", "coord");
+        context.Add("tint", "color.hsv");
+        context.Wire("coords", "x", "tint", "hue");
+        context.Wire("coords", "x", "tint", "saturation");
+        context.Wire("coords", "x", "tint", "value");
+        Show("tint", "color");
+    }
+
+    // --- oscillators on the screen --------------------------------------------
+
+    [Given("a sine on the screen with nothing patched into it")]
+    public void GivenAFreeSine()
+    {
+        context.Add("osc", "osc.sine");
+        Show("osc");
+    }
+
+    [Given("a sine on the screen with its unpatched domain knob at a quarter cycle")]
+    public void GivenAFreeSineWithAKnob()
+    {
+        GivenAFreeSine();
+        context.SetInput("osc", "in", 0.25f);
+    }
+
+    [Given("a sine on the screen driven by the horizontal position")]
+    public void GivenASineAcross()
+    {
+        context.Add("coords", "coord");
+        GivenAFreeSine();
+        context.Wire("coords", "x", "osc", "in");
+    }
+
+    [Given("a sine on the screen driven by Time")]
+    public void GivenASineOnTime()
+    {
+        context.Add("clock", "time");
+        GivenAFreeSine();
+        context.Wire("clock", "t", "osc", "in");
+    }
+
+    [Given("two oscillators mixed on the screen with nothing patched into either")]
+    public void GivenTwoFreeOscillators()
+    {
+        context.Add("first", "osc.sine");
+        context.Add("second", "osc.saw");
+        context.Add("mix", "math.add");
+        context.Wire("first", "out", "mix", "a");
+        context.Wire("second", "out", "mix", "b");
+        Show("mix");
+    }
 
     /// <summary>
-    /// Nothing is wrong, which is a weaker claim than nothing was said. A patch
-    /// may compile to exactly what was meant and still be worth a remark.
+    /// The domain is wired rather than left on its knob, because a normalled socket
+    /// ignores its knob; what is on trial is amplitude and offset, not stored at all.
     /// </summary>
-    [Then("compilation reports nothing wrong")]
-    public void ThenNothingWrong() =>
-        context.Result.HasErrors.ShouldBeFalse(
-            string.Join(" | ", context.Result.Issues.Select(i => i.Message)));
-
-    [Then("compilation reports an issue containing {string}")]
-    public void ThenAnIssueContaining(string fragment) =>
-        context.Result.Issues
-            .Any(i => i.Message.Contains(fragment, StringComparison.OrdinalIgnoreCase))
-            .ShouldBeTrue($"issues were: {string.Join(" | ", context.Result.Issues.Select(i => i.Message))}");
-
-    [Then("the program contains no {string} ops")]
-    public void ThenNoOpsOfKind(string opCode) => context.CountOps(Parse(opCode)).ShouldBe(0);
-
-    [Then("the program contains exactly {int} {string} op(s)")]
-    public void ThenExactlyNOps(int expected, string opCode) =>
-        context.CountOps(Parse(opCode)).ShouldBe(expected);
-
-    [Then("{string} input {string} still holds {float}")]
-    public void ThenTheStoredValueIsUnchanged(string name, string port, float expected) =>
-        context.StoredInput(name, port).ShouldBe(expected);
-
-    [Then("the program contains at least one {string} op")]
-    public void ThenAtLeastOneOp(string opCode) =>
-        context.CountOps(Parse(opCode)).ShouldBeGreaterThan(0);
-
-    [Then("the centre pixel is about {float}, {float}, {float}")]
-    public void ThenTheCentrePixelIs(float r, float g, float b)
+    [Given("a sine held at a quarter cycle, saved before it had amplitude and offset knobs")]
+    public void GivenAnOldSine()
     {
-        var (actualR, actualG, actualB) = context.RenderCentre(1);
-
-        actualR.ShouldBe(r, Tolerance, "red");
-        actualG.ShouldBe(g, Tolerance, "green");
-        actualB.ShouldBe(b, Tolerance, "blue");
+        Level("knob", 0.25f);
+        context.Add("osc", "osc.sine");
+        context.SetInput("osc", "freq", 1f);
+        context.Truncate("osc", 2);
+        context.Wire("knob", "out", "osc", "in");
+        Show("osc");
     }
 
-    [Then("rendering {int} frame(s) gives a centre brightness of about {float}")]
-    public void ThenBrightnessAfterFrames(int frames, float expected)
-    {
-        var (r, g, b) = context.RenderCentre(frames);
+    // --- feedback -------------------------------------------------------------
 
-        r.ShouldBe(expected, Tolerance, $"red after {frames} frame(s)");
-        g.ShouldBe(expected, Tolerance, $"green after {frames} frame(s)");
-        b.ShouldBe(expected, Tolerance, $"blue after {frames} frame(s)");
+    [Given("feedback shown on the screen")]
+    public void GivenFeedback()
+    {
+        context.Add("previous", "feedback");
+        Show("previous", "color");
     }
 
-    [Then("rewinding after {int} frames and rendering {int} frame(s) gives a centre brightness of about {float}")]
-    public void ThenBrightnessAfterRewind(int before, int after, float expected)
+    [Given("feedback brightened by {float} each frame")]
+    public void GivenGrowingFeedback(float step)
     {
-        var (r, g, b) = context.RenderCentreAfterReset(before, after);
-
-        r.ShouldBe(expected, Tolerance, "red after rewind");
-        g.ShouldBe(expected, Tolerance, "green after rewind");
-        b.ShouldBe(expected, Tolerance, "blue after rewind");
+        Brightener();
+        context.SetInput("brighten", "bias", step);
     }
 
-    [Then("the rendered image is entirely black")]
-    public void ThenTheImageIsBlack() => context.RenderedFrameIsBlack(1).ShouldBeTrue();
-
-    [Then("the rendered image is not black")]
-    public void ThenTheImageIsNotBlack() => context.RenderedFrameIsBlack(1).ShouldBeFalse();
-
-    /// <summary>
-    /// Asks about the stored byte rather than about a fraction, which is the
-    /// only way to say that nothing was encoded on the way out (ADR-0014).
-    /// </summary>
-    [Then("the centre pixel is byte {int}")]
-    public void ThenTheCentrePixelIsByte(int expected) =>
-        context.Render().RedByteAt(PatchContext.Width / 2, PatchContext.Height / 2).ShouldBe((byte)expected);
-
-    [Then("the frame gets brighter towards the top")]
-    public void ThenTheFrameGetsBrighterUpwards()
+    [Given("feedback brightened each frame by {float} plus one divided by zero")]
+    public void GivenFeedbackWithADivisionByZero(float step)
     {
-        var frame = context.Render();
-
-        var bottom = frame.AtFraction(0.5f, 0.9f).R;
-        var middle = frame.AtFraction(0.5f, 0.5f).R;
-        var top = frame.AtFraction(0.5f, 0.1f).R;
-
-        middle.ShouldBeGreaterThan(bottom, "the middle of the frame should outrank the bottom");
-        top.ShouldBeGreaterThan(middle, "the top of the frame should outrank the middle");
+        Brightener();
+        DivisionByZero();
+        context.Add("offset", "math.add");
+        context.Wire("broken", "out", "offset", "a");
+        context.SetInput("offset", "b", step);
+        context.Wire("offset", "out", "brighten", "bias");
     }
 
-    /// <summary>
-    /// Counts the disc across the middle row and down the middle column. If x
-    /// were normalised to -1..1 like y instead of being widened by the aspect
-    /// ratio, the disc would come out as an ellipse as wide as the frame's
-    /// shape and these two counts would differ by that ratio.
-    /// </summary>
-    [Then("a circle is as wide as it is tall at {int} by {int}")]
-    public void ThenACircleIsRound(int width, int height)
+    // --- impossible arithmetic ------------------------------------------------
+
+    [Given("a rainbow across the screen, brightened by one divided by zero")]
+    public void GivenARainbowDividedByZero()
     {
-        var (across, down) = context.Render(1, width, height).DarkExtent();
-
-        across.ShouldBeGreaterThan(0, "no disc was found on the middle row");
-        down.ShouldBeGreaterThan(0, "no disc was found down the middle column");
-
-        // A pixel either side: the middle row of an even-height frame is half a
-        // pixel off centre, so it cuts the disc just below its widest point.
-        Math.Abs(across - down)
-            .ShouldBeLessThanOrEqualTo(1, $"the disc is {across} across and {down} down");
+        Rainbow();
+        DivisionByZero();
+        context.Add("brighten", "color.gain");
+        context.Wire("tint", "color", "brighten", "color");
+        context.SetInput("brighten", "gain", 1f);
+        context.Wire("broken", "out", "brighten", "bias");
+        Show("brighten", "color");
     }
 
-    /// <summary>
-    /// Renders the same patch at two densities and compares every pixel of the coarser
-    /// one against the point in the finer one that samples the same coordinate.
-    /// </summary>
-    /// <remarks>
-    /// The two grids line up only if the finer is an odd multiple of the coarser:
-    /// centres sit at <c>(i + 0.5) / size</c>, so pixel <c>i</c> and pixel
-    /// <c>k * i + (k - 1) / 2</c> are the same point exactly when <c>k</c> is odd.
-    /// That makes this an equality rather than an approximation, and pins the
-    /// half-pixel offset at the same time.
-    /// </remarks>
-    [Then("the frame at {int} by {int} matches the frame at {int} by {int}")]
-    public void ThenTheFramesMatch(int fineWidth, int fineHeight, int coarseWidth, int coarseHeight)
+    [Given("the {word} of {float} and {float} plus one half on the screen")]
+    public void GivenACalculation(string calculation, float a, float b)
     {
-        var scale = fineWidth / coarseWidth;
-
-        (fineWidth % coarseWidth).ShouldBe(0, "the finer frame must be a whole multiple of the coarser");
-        (fineHeight / coarseHeight).ShouldBe(scale, "both axes must be scaled by the same factor");
-        (scale % 2).ShouldBe(1, "the multiple must be odd for the two grids' pixel centres to coincide");
-
-        var coarse = context.Render(1, coarseWidth, coarseHeight);
-        var fine = context.Render(1, fineWidth, fineHeight);
-        var offset = (scale - 1) / 2;
-
-        for (var y = 0; y < coarseHeight; y++)
-        for (var x = 0; x < coarseWidth; x++)
+        context.Add("maths", calculation switch
         {
-            var here = coarse.At(x, y);
-            var there = fine.At(x * scale + offset, y * scale + offset);
-            var where = $"at ({x}, {y}) of {coarseWidth}x{coarseHeight}";
-
-            // One byte of slack, for the two frames rounding a value that lands
-            // on a byte boundary in opposite directions.
-            here.R.ShouldBe(there.R, 1f / 255f, $"red {where}");
-            here.G.ShouldBe(there.G, 1f / 255f, $"green {where}");
-            here.B.ShouldBe(there.B, 1f / 255f, $"blue {where}");
-        }
+            "quotient" => "math.div",
+            "remainder" => "math.mod",
+            "power" => "math.pow",
+            _ => throw new ArgumentException($"No calculation called '{calculation}'."),
+        });
+        context.SetInput("maths", "a", a);
+        context.SetInput("maths", "b", b);
+        PlusOneHalf();
     }
 
-    private static OpCode Parse(string name) =>
-        Enum.TryParse<OpCode>(name, ignoreCase: true, out var code)
-            ? code
-            : throw new ArgumentException($"'{name}' is not an OpCode.");
+    [Given(@"^the (square root|logarithm|exponential) of (-?[\d.]+) plus one half on the screen$")]
+    public void GivenAFunction(string function, float input)
+    {
+        context.Add("maths", function switch
+        {
+            "square root" => "math.sqrt",
+            "logarithm" => "math.log",
+            _ => "math.exp",
+        });
+        context.SetInput("maths", "in", input);
+        PlusOneHalf();
+    }
+
+    [Given("a level of {float} clamped between {float} and {float}")]
+    public void GivenAClamp(float level, float low, float high)
+    {
+        Level("level", level);
+        context.Add("hold", "math.clamp");
+        context.Wire("level", "out", "hold", "in");
+        context.SetInput("hold", "low", low);
+        context.SetInput("hold", "high", high);
+        Show("hold");
+    }
+
+    // --- a loop ---------------------------------------------------------------
+
+    [Given("a loop that halves what it made last and adds a quarter")]
+    public void GivenALoop()
+    {
+        context.Add("half", "math.mul");
+        context.Add("nudge", "math.add");
+        context.Add("screen", "output");
+        context.SetInput("half", "b", 0.5f);
+        context.SetInput("nudge", "b", 0.25f);
+        context.Wire("half", "out", "nudge", "a");
+        context.Wire("nudge", "out", "half", "a");
+    }
+
+    [Given("the loop is heard at the speakers")]
+    public void GivenTheLoopIsHeard()
+    {
+        context.Wire("nudge", "out", "screen", "left");
+        context.SetInput("screen", "volume", 1f);
+    }
+
+    [Given("the loop is shown on the screen")]
+    public void GivenTheLoopIsShown() => context.Wire("nudge", "out", "screen", "color");
+
+    [When("the loop has played until it settles")]
+    public void WhenTheLoopSettles() => context.Play(Settle);
+
+    [When("what it adds is turned to {float}")]
+    public void WhenWhatItAddsIsTurned(float value) => context.SetInput("nudge", "b", value);
+
+    // --- a tone ---------------------------------------------------------------
+
+    [Given("a {float} Hz sine is playing")]
+    public void GivenASine(float frequency)
+    {
+        context.Add("tone", "osc.sine");
+        context.SetInput("tone", "freq", frequency);
+        Hear("tone");
+        context.HighestFrequency = frequency;
+    }
+
+    /// <summary>A Threshold on Time picks between the two pitches, so the frequency moves with no edit.</summary>
+    [Given("a sine whose frequency jumps from {float} Hz to {float} Hz at {float} seconds")]
+    public void GivenAJumpingSine(float from, float to, float seconds)
+    {
+        context.Add("clock", "time");
+        context.Add("switch", "math.step");
+        context.Add("pitch", "math.remap");
+        context.Add("tone", "osc.sine");
+        context.SetInput("switch", "edge", seconds);
+        context.Wire("clock", "t", "switch", "in");
+        context.Wire("switch", "out", "pitch", "in");
+        context.SetInput("pitch", "in low", 0f);
+        context.SetInput("pitch", "in high", 1f);
+        context.SetInput("pitch", "out low", from);
+        context.SetInput("pitch", "out high", to);
+        context.Wire("pitch", "out", "tone", "freq");
+        Hear("tone");
+        context.HighestFrequency = Math.Max(from, to);
+    }
+
+    [When("its frequency is turned to {float} Hz")]
+    public void WhenTheFrequencyIsTurned(float frequency)
+    {
+        context.SetInput("tone", "freq", frequency);
+        context.HighestFrequency = Math.Max(context.HighestFrequency, frequency);
+    }
+
+    // --- switching off --------------------------------------------------------
+
+    [Given("a level of {float} shown through a module that halves it")]
+    public void GivenALevelHalved(float level)
+    {
+        Level("level", level);
+        Halver("halve", "level");
+        Show("halve");
+    }
+
+    [Given("a level of {float} shown through two modules that each halve it")]
+    public void GivenALevelHalvedTwice(float level)
+    {
+        Level("level", level);
+        Halver("halve", "level");
+        Halver("halve again", "halve");
+        Show("halve again");
+    }
+
+    [Given("the horizontal position shown through a module that halves it")]
+    public void GivenThePositionHalved()
+    {
+        context.Add("coords", "coord");
+        context.Add("halve", "math.mul");
+        context.SetInput("halve", "b", 0.5f);
+        context.Wire("coords", "x", "halve", "a");
+        Show("halve");
+    }
+
+    [Given("a switched-off module with nothing patched in, feeding an adder set to {float} plus {float}")]
+    public void GivenAnEmptyModuleFeedingAnAdder(float a, float b)
+    {
+        context.Add("halve", "math.mul");
+        context.Add("sum", "math.add");
+        context.SetInput("sum", "a", a);
+        context.SetInput("sum", "b", b);
+        context.Wire("halve", "out", "sum", "a");
+        context.SwitchOff("halve");
+        Show("sum");
+    }
+
+    [When("the halving module is switched off")]
+    public void WhenTheHalverIsOff() => context.SwitchOff("halve");
+
+    [When("both halving modules are switched off")]
+    public void WhenBothHalversAreOff()
+    {
+        context.SwitchOff("halve");
+        context.SwitchOff("halve again");
+    }
+
+    // --- building blocks ------------------------------------------------------
+
+    private void Level(string name, float level)
+    {
+        context.Add(name, "value");
+        context.SetInput(name, "value", level);
+    }
+
+    private void Rgb(string name, float r, float g, float b)
+    {
+        context.Add(name, "color.rgb");
+        context.SetInput(name, "r", r);
+        context.SetInput(name, "g", g);
+        context.SetInput(name, "b", b);
+    }
+
+    private void Rainbow()
+    {
+        context.Add("coords", "coord");
+        context.Add("tint", "color.hsv");
+        context.Wire("coords", "x", "tint", "hue");
+    }
+
+    private void DivisionByZero()
+    {
+        context.Add("broken", "math.div");
+        context.SetInput("broken", "a", 1f);
+        context.SetInput("broken", "b", 0f);
+    }
+
+    private void Brightener()
+    {
+        context.Add("previous", "feedback");
+        context.Add("brighten", "color.gain");
+        context.Wire("previous", "color", "brighten", "color");
+        context.SetInput("brighten", "gain", 1f);
+        Show("brighten", "color");
+    }
+
+    private void PlusOneHalf()
+    {
+        context.Add("offset", "math.add");
+        context.Wire("maths", "out", "offset", "a");
+        context.SetInput("offset", "b", 0.5f);
+        Show("offset");
+    }
+
+    private void Halver(string name, string from)
+    {
+        context.Add(name, "math.mul");
+        context.SetInput(name, "b", 0.5f);
+        context.Wire(from, "out", name, "a");
+    }
+
+    private void Show(string source, string port = "out")
+    {
+        context.Add("screen", "output");
+        context.Wire(source, port, "screen", "color");
+    }
+
+    private void Hear(string source)
+    {
+        context.Add("screen", "output");
+        context.Wire(source, "out", "screen", "left");
+        context.SetInput("screen", "volume", 1f);
+    }
 }

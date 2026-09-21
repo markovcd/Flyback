@@ -1,48 +1,18 @@
-Feature: Feedback reads the previous frame
-  The camera-pointed-at-its-own-monitor effect. Feedback reads the whole of the
-  previous frame, anywhere on it; a loop in the graph reads only this pixel's.
+Feature: Feedback shows the previous frame
+  The camera pointed at its own monitor. Feedback reads the whole of the
+  previous frame, anywhere on it; a loop in the patch reads only this spot's.
 
   Specified by ADR-0012, with ADR-0075 for loops.
 
-  Scenario: Feedback reads black before any frame has been rendered
-    Given a patch containing:
-      | name     | module       |
-      | previous | feedback     |
-      | screen   | output       |
-    And "previous" output "color" is wired to "screen" input "color"
-    When the patch is compiled
-    Then compilation reports no issues
-    And the program contains at least one "SampleFeedback" op
-    And the rendered image is entirely black
+  Scenario: Before the first frame there is nothing to feed back
+    Given feedback shown on the screen
+    Then the patch is accepted without complaint
+    And the screen is black
 
-  # Each frame adds a fixed amount to whatever it read from the last one, so the
-  # image can only get brighter if the history is genuinely being carried
-  # forward. History is kept in float, which is why three passes land on 0.3
-  # rather than drifting.
-  Scenario: Each frame accumulates on top of the one before it
-    Given a patch containing:
-      | name     | module       |
-      | previous | feedback     |
-      | brighten | color.gain  |
-      | screen   | output       |
-    And "previous" output "color" is wired to "brighten" input "color"
-    And "brighten" input "gain" is set to 1
-    And "brighten" input "bias" is set to 0.1
-    And "brighten" output "color" is wired to "screen" input "color"
-    When the patch is compiled
-    Then rendering 1 frame gives a centre brightness of about 0.1
-    And rendering 2 frames gives a centre brightness of about 0.2
-    And rendering 3 frames gives a centre brightness of about 0.3
+  Scenario: Each frame builds on the one before it
+    Given feedback brightened by 0.1 each frame
+    Then each frame builds on the last: 0.1, 0.2, 0.3
 
-  Scenario: Rewinding clears the accumulated history
-    Given a patch containing:
-      | name     | module       |
-      | previous | feedback     |
-      | brighten | color.gain  |
-      | screen   | output       |
-    And "previous" output "color" is wired to "brighten" input "color"
-    And "brighten" input "gain" is set to 1
-    And "brighten" input "bias" is set to 0.1
-    And "brighten" output "color" is wired to "screen" input "color"
-    When the patch is compiled
-    Then rewinding after 5 frames and rendering 1 frame gives a centre brightness of about 0.1
+  Scenario: Rewinding clears what has built up
+    Given feedback brightened by 0.1 each frame
+    Then after 5 frames and a rewind the next frame is back at 0.1

@@ -776,29 +776,25 @@ commit is a finding, not a chore.
 
 ### Specs
 
-`Flyback.Core.Specs` states compiler and playback behavior as prose a reader can check:
+`Flyback.Core.Specs` states what a patch author can rely on, as requirements a
+reader can check:
 
 ```gherkin
-Scenario: Every socket normalled to Time shares one reading of it
-  Given a patch containing:
-    | name   | module   |
-    | first  | osc.sine |
-    | second | osc.saw  |
-    | mix    | math.add |
-    | screen | output   |
-  And "first" output "out" is wired to "mix" input "a"
-  And "second" output "out" is wired to "mix" input "b"
-  And "mix" output "out" is wired to "screen" input "color"
-  When the patch is compiled
-  Then the program contains exactly 1 "LoadT" op
+Scenario: Turning a tone's frequency while it plays does not click
+  Given a 10 Hz sine is playing
+  When it has played 0.125 seconds
+  And its frequency is turned to 12 Hz
+  And it plays on for 0.1 seconds
+  Then the sound never clicks
 ```
 
-`PatchSteps` holds the general vocabulary and `RequirementSteps` the phrases a
-patch author would use, sharing a fresh `PatchContext` per scenario. Every new feature ships with at least one scenario, written as the
-requirement a user relies on rather than as the wiring that proves it; the steps
-carry the mechanics (see `.claude/rules/tests.md`). The sound steps evaluate the
-audio program at 1 kHz without the renderer's filters, so a sample is exactly what
-the patch computed. C# tests cover the edges.
+Every new feature ships with at least one scenario (see `.claude/rules/tests.md`).
+The wiring behind each phrase lives in the steps: `PatchSteps` builds and edits
+patches, and `ScreenSteps`, `SpeakerSteps` and `CompilerSteps` check the picture,
+the sound and what the compiler says, sharing a fresh `PatchContext` per scenario.
+Building never compiles; each check compiles for its own sink. The sound steps
+evaluate the audio program at 1 kHz without the renderer's filters, so a sample is
+exactly what the patch computed. C# tests cover the edges.
 
 ### Skips and optional outputs
 

@@ -1,127 +1,61 @@
-Feature: Compiling a patch
-  Compilation walks back from the Output node and lowers what it reaches.
-  A patch is edited live, so every failure has to degrade into something that
-  still renders rather than throwing — the editor must survive a half-built
-  graph.
+Feature: A patch in any state still plays
+  A patch is edited live, so every state it passes through on the way to a
+  finished one has to show and sound like something. What is wrong is said, not
+  thrown.
 
-  Specified by ADR-0011, and by ADR-0050 for the sockets that are already
-  carrying a signal before anything is patched into them.
+  Specified by ADR-0011, and by ADR-0050 for sockets that carry a signal before
+  anything is patched into them.
 
-  # Only a graph assembled by hand can be in this state — every patch that comes
-  # from a preset, a file or the editor carries its Output. Answered with a
-  # value rather than a throw all the same: saying what is wrong with a patch is
-  # the compiler's job, and refusing to look at one is not.
-  Scenario: A patch with no Output at all renders black and says so
-    Given a patch containing:
-      | name | module   |
-      | wave | osc.sine |
-    When the patch is compiled
-    Then compilation reports an issue containing "no Output"
-    And the rendered image is entirely black
+  # Only a patch assembled by hand can lack its Output; the editor, presets and
+  # files always carry one.
+  Scenario: A patch with no Output at all is black and says so
+    Given a sine with no Output to reach
+    Then Flyback says the patch has no Output
+    And the screen is black
 
-  # The ordinary case: the sink is there, as it always is, and nothing reaches
-  # it. What compiles is a constant — one flat color and silence — which is a
-  # legal program and not a patch anybody meant.
-  Scenario: A sink with nothing wired into it is remarked on
-    Given a patch containing:
-      | name   | module |
-      | screen | output |
-    When the patch is compiled
-    Then compilation reports an issue containing "Nothing is wired into the Output"
-    And compilation reports nothing wrong
+  # A flat color and silence look exactly like a patch that is working, so the
+  # one thing worth saying is said.
+  Scenario: An Output with nothing patched into it is pointed out
+    Given an Output with nothing patched into it
+    Then Flyback points out that nothing reaches the Output
+    And the speakers are silent
 
-  Scenario: A sink with something wired into it is not remarked on
-    Given a patch containing:
-      | name   | module       |
-      | knob   | value        |
-      | screen | output       |
-    And "knob" output "out" is wired to "screen" input "color"
-    When the patch is compiled
-    Then compilation reports no issues
+  Scenario: An Output with something patched into it is not remarked on
+    Given a level of 0.5 on the screen
+    Then the patch is accepted without complaint
 
-  # An oscillator with nothing plugged into its domain runs, and the clock it
-  # runs on is in the program without a Time module anywhere in the patch.
-  Scenario: A domain with nothing patched into it is driven by Time
-    Given a patch containing:
-      | name   | module       |
-      | osc    | osc.sine     |
-      | screen | output       |
-    And "osc" output "out" is wired to "screen" input "color"
-    When the patch is compiled
-    Then compilation reports no issues
-    And the program contains at least one "LoadT" op
+  Scenario: A module from a newer Flyback is reported rather than crashing
+    Given a module from a newer Flyback patched to the screen
+    Then Flyback reports an unknown module
+    And the screen is black
 
-  # The knob is not what a normalled socket compiles to, which is the whole of
-  # what "normalled" means. Left at a quarter cycle it would have drawn a flat
-  # white field for ever; driven by Time it starts at nothing and moves.
-  Scenario: A normalled socket ignores the value stored against it
-    Given a patch containing:
-      | name   | module       |
-      | osc    | osc.sine     |
-      | screen | output       |
-    And "osc" input "in" is set to 0.25
-    And "osc" output "out" is wired to "screen" input "color"
-    When the patch is compiled
-    Then the centre pixel is about 0, 0, 0
+  Scenario: A finished patch is accepted without complaint
+    Given a rainbow across the screen
+    Then the patch is accepted without complaint
+    And the screen is not black
 
-  # Patching overrides the normal exactly as it overrides a knob. Nothing reads
-  # the clock, so nothing loads it.
-  Scenario: A wire into a normalled socket replaces what was normalled to it
-    Given a patch containing:
-      | name   | module       |
-      | coords | coord        |
-      | osc    | osc.sine     |
-      | screen | output       |
-    And "coords" output "x" is wired to "osc" input "in"
-    And "osc" output "out" is wired to "screen" input "color"
-    When the patch is compiled
-    Then compilation reports no issues
-    And the program contains no "LoadT" ops
+  # An oscillator's domain is normalled to Time, so it runs with nothing plugged
+  # in and no Time module anywhere in the patch.
+  Scenario: An oscillator with nothing patched in runs on the clock
+    Given a sine on the screen with nothing patched into it
+    Then the patch is accepted without complaint
+    And the patch reads the clock
 
-  # One hidden module however many sockets are normalled to it, which is what
-  # keeps this from costing a load per oscillator.
-  Scenario: Every socket normalled to Time shares one reading of it
-    Given a patch containing:
-      | name   | module       |
-      | first  | osc.sine     |
-      | second | osc.saw      |
-      | mix    | math.add     |
-      | screen | output       |
-    And "first" output "out" is wired to "mix" input "a"
-    And "second" output "out" is wired to "mix" input "b"
-    And "mix" output "out" is wired to "screen" input "color"
-    When the patch is compiled
-    Then the program contains exactly 1 "LoadT" op
+  # The knob is not what a normalled socket follows. Left at a quarter cycle the
+  # sine would be a flat white field; on the clock it starts at nothing.
+  Scenario: An oscillator with nothing patched in ignores the knob on its domain
+    Given a sine on the screen with its unpatched domain knob at a quarter cycle
+    Then the screen shows 0
 
-  Scenario: A domain that is driven is not remarked on
-    Given a patch containing:
-      | name   | module       |
-      | clock  | time         |
-      | osc    | osc.sine     |
-      | screen | output       |
-    And "clock" output "t" is wired to "osc" input "in"
-    And "osc" output "out" is wired to "screen" input "color"
-    When the patch is compiled
-    Then compilation reports no issues
+  Scenario: Patching into an oscillator's domain takes it off the clock
+    Given a sine on the screen driven by the horizontal position
+    Then the patch is accepted without complaint
+    And the patch does not read the clock
 
-  Scenario: An unknown module is reported rather than throwing
-    Given a patch containing:
-      | name   | module       |
-      | screen | output       |
-    And a node named "mystery" of unknown type "module.from.the.future"
-    And "mystery" output 0 is wired to "screen" input "color"
-    When the patch is compiled
-    Then compilation reports an issue containing "Unknown module"
-    And the rendered image is entirely black
+  Scenario: Oscillators left on the clock share one reading of it
+    Given two oscillators mixed on the screen with nothing patched into either
+    Then the patch reads the clock once
 
-  Scenario: A well-formed patch compiles cleanly
-    Given a patch containing:
-      | name   | module       |
-      | coords | coord        |
-      | tint   | color.hsv   |
-      | screen | output       |
-    And "coords" output "x" is wired to "tint" input "hue"
-    And "tint" output "color" is wired to "screen" input "color"
-    When the patch is compiled
-    Then compilation reports no issues
-    And the program contains at least one "HsvToRgb" op
+  Scenario: An oscillator driven by Time is not remarked on
+    Given a sine on the screen driven by Time
+    Then the patch is accepted without complaint

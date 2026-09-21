@@ -62,10 +62,12 @@ the wiring, port indexes and op codes to the step definitions.
 
 ```gherkin
 # Yes: the requirement
-Scenario: Turning a knob while a tone plays does not restart it
-  Given a tone is playing at 10 Hz
-  When its frequency is turned to 12 Hz
-  Then the tone carries on without a click
+Scenario: Turning a tone's frequency while it plays does not click
+  Given a 10 Hz sine is playing
+  When it has played 0.125 seconds
+  And its frequency is turned to 12 Hz
+  And it plays on for 0.1 seconds
+  Then the sound never clicks
 
 # No: the mechanics
 Scenario: Phase is adopted across a recompile
@@ -80,8 +82,8 @@ to do. Written as wiring, it only restates the code, and nobody can tell from it
 whether the behavior is the right one.
 
 **How to apply:** name the feature file and the scenarios after what the user
-gets. Add a step to `PatchSteps` for a new phrase, and keep the numbers there
+gets. Add the phrase to `PatchSteps` if it builds or edits a patch, or to `ScreenSteps`,
+`SpeakerSteps` or `CompilerSteps` if it checks one, and keep the numbers there
 unless the number is the requirement ("peaks at a quarter of a second"). A
 feature the specs project cannot reach (the editor, a plugin) takes its scenario
-where it can be reached, or says in the commit why it has none. Existing
-scenarios written as mechanics are rewritten when their feature is next touched.
+where it can be reached, or says in the commit why it has none.
