@@ -277,6 +277,58 @@ internal static class NodeSkin
     private static readonly IPen seam = new ImmutablePen(
         new ImmutableSolidColorBrush(Avalonia.Media.Colors.Black, 0.3));
 
+    // --- sockets and marks ---------------------------------------------------
+
+    public static void DrawPort(DrawingContext context, Point centre, PortKind kind) =>
+        context.DrawEllipse(
+            new SolidColorBrush(Colors.PortColor(kind)),
+            PortOutline,
+            centre,
+            NodeGeometry.PortRadius,
+            NodeGeometry.PortRadius);
+
+    private static readonly IPen PortOutline = new Pen(new SolidColorBrush(Colors.Outline), 1.2);
+
+    /// <summary>
+    /// Sets a module's mark in the body, right of the labels and under the
+    /// header, which is drawn after it.
+    /// </summary>
+    /// <remarks>
+    /// Sized to the body rather than fixed, so a module of one row gets a small
+    /// whole mark instead of the bottom third of a large one, and capped so a
+    /// tall module's does not become the module. Drawn under the text on purpose
+    /// and held faint enough that nothing has to be read past it.
+    /// </remarks>
+    public static void DrawMark(DrawingContext context, RoundedRect body, Geometry? glyph, IPen pen)
+    {
+        if (glyph is null) return;
+
+        var bounds = body.Rect;
+        var room = bounds.Height - NodeGeometry.HeaderHeight;
+
+        // Too little room for a mark to be anything but a smudge.
+        if (room - MarkInset * 2 < MarkLeast) return;
+
+        var size = Math.Min(room - MarkInset * 2, MarkMost);
+        var scale = size / ModuleGlyphs.Box;
+
+        var at = new Point(
+            bounds.Right - MarkInset - size,
+            bounds.Y + NodeGeometry.HeaderHeight + (room - size) / 2);
+
+        using (context.PushTransform(
+            Matrix.CreateScale(scale, scale) * Matrix.CreateTranslation(at.X, at.Y)))
+        {
+            context.DrawGeometry(null, pen, glyph);
+        }
+    }
+
+    /// <summary>How far a mark keeps off the sides of the body it is set in.</summary>
+    private const double MarkInset = 4;
+
+    /// <summary>The sizes a mark is held between — see <see cref="DrawMark"/>.</summary>
+    private const double MarkLeast = 18, MarkMost = 52;
+
     /// <summary>
     /// How a block's background gives way on the panel: full strength in the top
     /// right corner and gone by about the middle of it, as an opacity mask so a

@@ -55,7 +55,7 @@ public sealed partial class NodeEditor
             for (var p = 0; p < sockets.Outputs.Count; p++)
                 if (OnRow(NodeGeometry.GroupOutputPort(bounds, p), graph, bounds, left: false)
                     && Named(sockets.Outputs[p]) is var (label, _)
-                    && Overflows(label, 11.5, bounds.Width - SocketLabelRoom))
+                    && CanvasText.Overflows(label, 11.5, bounds.Width - SocketLabelRoom))
                 {
                     return (sockets.Outputs[p], label);
                 }
@@ -63,7 +63,7 @@ public sealed partial class NodeEditor
             for (var p = 0; p < sockets.Inputs.Count; p++)
                 if (OnRow(NodeGeometry.GroupInputPort(bounds, sockets, p), graph, bounds, left: true)
                     && Named(sockets.Inputs[p]) is var (label, _)
-                    && Overflows(label, 11.5, bounds.Width - SocketLabelRoom))
+                    && CanvasText.Overflows(label, 11.5, bounds.Width - SocketLabelRoom))
                 {
                     return (sockets.Inputs[p], label);
                 }
@@ -77,7 +77,7 @@ public sealed partial class NodeEditor
             var title = node.Title(def);
 
             if (new Rect(bounds.X, bounds.Y, bounds.Width, NodeGeometry.HeaderHeight).Contains(graph)
-                && Overflows(title, HeaderSize, HeaderWidth(bounds, def)))
+                && CanvasText.Overflows(title, HeaderSize, HeaderWidth(bounds, def)))
             {
                 return (node.Id, title);
             }

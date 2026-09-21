@@ -37,8 +37,6 @@ public sealed partial class NodeEditor : Control
     }
 
     private static readonly IBrush Background = new SolidColorBrush(Colors.Canvas);
-    private static readonly IBrush LabelBrush = new SolidColorBrush(Colors.Label);
-    private static readonly IBrush ValueBrush = new SolidColorBrush(Colors.Value);
     private static readonly IBrush NormalBrush = new SolidColorBrush(Colors.Normalled);
     private static readonly IBrush HeaderTextBrush = Brushes.White;
     private static readonly IPen GridPen = new Pen(new SolidColorBrush(Colors.Grid));
@@ -76,7 +74,6 @@ public sealed partial class NodeEditor : Control
     private static readonly IPen OffStrike = new Pen(HeaderTextBrush, 1.5);
 
     private static readonly IBrush MarqueeFill = new SolidColorBrush(Colors.Attention, 0.08);
-    private static readonly IPen PortOutline = new Pen(new SolidColorBrush(Colors.Outline), 1.2);
 
     /// <summary>
     /// The dashed ring round a group that is open — see OpenGroup.

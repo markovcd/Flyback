@@ -425,46 +425,6 @@ public sealed partial class NodeEditor
         Math.Clamp(Math.Abs(to - from) * 0.75, ReturnWireReach / 3, ReturnWireReach);
 
     /// <summary>
-    /// Sets a module's mark in the body, right of the labels and under the
-    /// header, which is drawn after it.
-    /// </summary>
-    /// <remarks>
-    /// Sized to the body rather than fixed, so a module of one row gets a small
-    /// whole mark instead of the bottom third of a large one, and capped so a
-    /// tall module's does not become the module. Drawn under the text on purpose
-    /// and held faint enough that nothing has to be read past it.
-    /// </remarks>
-    private static void DrawMark(DrawingContext context, RoundedRect body, Geometry? glyph, IPen pen)
-    {
-        if (glyph is null) return;
-
-        var bounds = body.Rect;
-        var room = bounds.Height - NodeGeometry.HeaderHeight;
-
-        // Too little room for a mark to be anything but a smudge.
-        if (room - MarkInset * 2 < MarkLeast) return;
-
-        var size = Math.Min(room - MarkInset * 2, MarkMost);
-        var scale = size / ModuleGlyphs.Box;
-
-        var at = new Point(
-            bounds.Right - MarkInset - size,
-            bounds.Y + NodeGeometry.HeaderHeight + (room - size) / 2);
-
-        using (context.PushTransform(
-            Matrix.CreateScale(scale, scale) * Matrix.CreateTranslation(at.X, at.Y)))
-        {
-            context.DrawGeometry(null, pen, glyph);
-        }
-    }
-
-    /// <summary>How far a mark keeps off the sides of the body it is set in.</summary>
-    private const double MarkInset = 4;
-
-    /// <summary>The sizes a mark is held between — see <see cref="DrawMark"/>.</summary>
-    private const double MarkLeast = 18, MarkMost = 52;
-
-    /// <summary>
     /// Draws a module, faintly where it is switched off.
     /// </summary>
     /// <remarks>
@@ -530,7 +490,7 @@ public sealed partial class NodeEditor
     /// <summary>
     /// How far the quieter columns are pulled back into the background — the step
     /// from a name to a number and from a number to a normal, at the spacing
-    /// <see cref="LabelBrush"/>, <see cref="ValueBrush"/> and
+    /// <see cref="CanvasText.LabelBrush"/>, <see cref="CanvasText.ValueBrush"/> and
     /// <see cref="NormalBrush"/> already stand at over the node grey.
     /// </summary>
     private const double ValueFade = 0.35, NormalFade = 0.55;
@@ -575,7 +535,7 @@ public sealed partial class NodeEditor
                         NodeSkin.Cut(cut, NodeSkin.BodyTop(accent, isSelected)),
                         bounds);
 
-            DrawMark(context, body, ModuleGlyphs.For(def), NodeSkin.Mark(accent));
+            NodeSkin.DrawMark(context, body, ModuleGlyphs.For(def), NodeSkin.Mark(accent));
         }
 
         // Header band, square at the bottom so it reads as a title bar. A picture
@@ -595,7 +555,7 @@ public sealed partial class NodeEditor
 
         var titleBrush = Ink(titleAt.Y + TitleInk / 2, TitleInk, fade: 0, HeaderTextBrush);
 
-        var title = Text(Heading(node, def), HeaderSize, titleBrush, HeaderWidth(bounds, def), true);
+        var title = CanvasText.Text(Heading(node, def), HeaderSize, titleBrush, HeaderWidth(bounds, def), true);
 
         context.DrawText(title, titleAt);
 
@@ -613,10 +573,10 @@ public sealed partial class NodeEditor
         {
             var port = def.Outputs[i];
             var centre = NodeGeometry.OutputPort(node, i);
-            var label = Text(port.Name, 11.5, Ink(centre.Y, RowInk, 0, LabelBrush), bounds.Width - 24, true);
+            var label = CanvasText.Text(port.Name, 11.5, Ink(centre.Y, RowInk, 0, CanvasText.LabelBrush), bounds.Width - 24, true);
 
             context.DrawText(label, new Point(bounds.Right - 14 - label.Width, centre.Y - label.Height / 2));
-            DrawPort(context, centre, port.Kind);
+            NodeSkin.DrawPort(context, centre, port.Kind);
         }
 
         for (var i = 0; i < def.Inputs.Count; i++)
@@ -627,7 +587,7 @@ public sealed partial class NodeEditor
 
             var linked = DrawLinkedRow(context, node, port, i, bounds, centre, connected);
 
-            var label = Text(port.Name, 11.5, Ink(centre.Y, RowInk, 0, LabelBrush), bounds.Width * 0.55, true);
+            var label = CanvasText.Text(port.Name, 11.5, Ink(centre.Y, RowInk, 0, CanvasText.LabelBrush), bounds.Width * 0.55, true);
             context.DrawText(label, new Point(bounds.X + 14, centre.Y - label.Height / 2));
 
             // An unconnected input shows what it will compile to: the module
@@ -639,23 +599,23 @@ public sealed partial class NodeEditor
                 // name and a qualified one at that — "Coordinates x" does not
                 // fit where "0.25" does, and trimmed to "Coordinates…" it would
                 // stop telling x from y.
-                var name = Text(source, 11.5, Ink(centre.Y, RowInk, NormalFade, NormalBrush), bounds.Width * 0.5, true);
+                var name = CanvasText.Text(source, 11.5, Ink(centre.Y, RowInk, NormalFade, NormalBrush), bounds.Width * 0.5, true);
                 context.DrawText(name, new Point(bounds.Right - 12 - name.Width, centre.Y - name.Height / 2));
             }
             else if (!linked && !connected && i < node.InputValues.Length && (formula is null || Reads(formula, i)))
             {
                 // A socket its formula never reads has a knob that turns nothing,
                 // so an Expression shows the values of the ones it does and no more.
-                var value = Text(
+                var value = CanvasText.Text(
                     port.Format(node.InputValues[i]),
                     11.5,
-                    Ink(centre.Y, RowInk, ValueFade, ValueBrush),
+                    Ink(centre.Y, RowInk, ValueFade, CanvasText.ValueBrush),
                     bounds.Width * 0.4,
                     true);
                 context.DrawText(value, new Point(bounds.Right - 12 - value.Width, centre.Y - value.Height / 2));
             }
 
-            DrawPort(context, centre, port.Kind);
+            NodeSkin.DrawPort(context, centre, port.Kind);
         }
 
         if (FormulaBlock(node, def, bounds) is var (text, at, _, _)) context.DrawText(text, at);

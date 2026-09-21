@@ -1,4 +1,3 @@
-using System.Globalization;
 using Avalonia;
 using Avalonia.Media;
 using Flyback.Core.Graph;
@@ -480,7 +479,7 @@ public sealed partial class NodeEditor
                 isSelected ? OpenGroupPenSelected : OpenGroupPen,
                 new RoundedRect(outline, GroupCornerRadius));
 
-            var label = Text(group.Title(), 11.5, LabelBrush, outline.Width - TabPadding * 2, true);
+            var label = CanvasText.Text(group.Title(), 11.5, CanvasText.LabelBrush, outline.Width - TabPadding * 2, true);
 
             // A tab only as wide as the name it carries, sitting on the ring: it
             // joins the name to the region without becoming the header a shut box
@@ -536,7 +535,7 @@ public sealed partial class NodeEditor
             isSelected ? SelectionPenSecondary : NodeSkin.Edge,
             body);
 
-        DrawMark(context, body, ModuleGlyphs.Group, NodeSkin.BoxMark);
+        NodeSkin.DrawMark(context, body, ModuleGlyphs.Group, NodeSkin.BoxMark);
 
         var header = new Rect(bounds.X, bounds.Y, bounds.Width, NodeGeometry.HeaderHeight);
         context.DrawRectangle(
@@ -546,7 +545,7 @@ public sealed partial class NodeEditor
 
         NodeSkin.Relief(context, header);
 
-        var title = Text(group.Title(), 12.5, HeaderTextBrush, bounds.Width - 16, true);
+        var title = CanvasText.Text(group.Title(), 12.5, HeaderTextBrush, bounds.Width - 16, true);
         var titleAt = new Point(bounds.X + 9, bounds.Y + 5);
 
         context.DrawText(title, titleAt);
@@ -575,7 +574,7 @@ public sealed partial class NodeEditor
         if (Named(socket) is not var (label, spec)) return;
 
         var width = bounds.Width - SocketLabelRoom;
-        var text = Text(Fit(label, width), 11.5, LabelBrush, width, true);
+        var text = CanvasText.Text(CanvasText.Fit(label, width), 11.5, CanvasText.LabelBrush, width, true);
 
         context.DrawText(
             text,
@@ -583,7 +582,7 @@ public sealed partial class NodeEditor
                 ? new Point(bounds.Right - 14 - text.Width, centre.Y - text.Height / 2)
                 : new Point(bounds.X + 14, centre.Y - text.Height / 2));
 
-        DrawPort(context, centre, spec.Kind);
+        NodeSkin.DrawPort(context, centre, spec.Kind);
     }
 
     /// <summary>
@@ -618,65 +617,4 @@ public sealed partial class NodeEditor
 
     /// <summary>How much of a box's width its sockets and their margins take from a label.</summary>
     private const double SocketLabelRoom = 26;
-
-    /// <summary>
-    /// A box socket's label as it fits in <paramref name="width"/>, cut in the
-    /// middle where it is too long: the port after the last dot is what tells a
-    /// box's sockets apart, so it stays.
-    /// </summary>
-    internal static string Fit(string label, double width)
-    {
-        var dot = label.LastIndexOf('.');
-
-        if (!Overflows(label, 11.5, width) || dot <= 0) return label;
-
-        var (head, port) = (label[..dot], label[dot..]);
-        var (fits, over) = (0, head.Length);
-
-        while (over - fits > 1)
-        {
-            var mid = (fits + over) / 2;
-
-            if (Overflows(Cut(mid), 11.5, width)) over = mid;
-            else fits = mid;
-        }
-
-        return Cut(fits);
-
-        string Cut(int keep) => head[..keep].TrimEnd() + "…" + port;
-    }
-
-    /// <summary>Whether a label is cut short where it is drawn in <paramref name="width"/>.</summary>
-    private static bool Overflows(string label, double size, double width) =>
-        Text(label, size, LabelBrush, width, false).Width > width;
-
-    private static void DrawPort(DrawingContext context, Point centre, PortKind kind) =>
-        context.DrawEllipse(
-            new SolidColorBrush(Colors.PortColor(kind)),
-            PortOutline,
-            centre,
-            NodeGeometry.PortRadius,
-            NodeGeometry.PortRadius);
-
-    internal static FormattedText Text(string text, double size, IBrush brush, double maxWidth, bool trim)
-    {
-        var formatted = new FormattedText(
-            text,
-            CultureInfo.InvariantCulture,
-            FlowDirection.LeftToRight,
-            Typeface.Default,
-            size,
-            brush);
-
-        // One line and an ellipsis. A formula has spaces to break at, and wrapped
-        // it runs down over the rows below.
-        if (trim)
-        {
-            formatted.MaxTextWidth = maxWidth;
-            formatted.MaxLineCount = 1;
-            formatted.Trimming = TextTrimming.CharacterEllipsis;
-        }
-
-        return formatted;
-    }
 }

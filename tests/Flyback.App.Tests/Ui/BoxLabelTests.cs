@@ -30,8 +30,8 @@ public class BoxLabelTests : UiTest
     [AvaloniaFact]
     public void A_long_title_is_drawn_on_one_line()
     {
-        var one = NodeEditor.Text("a", 12.5, Brushes.White, 180, true);
-        var long_ = NodeEditor.Text(Long, 12.5, Brushes.White, 180, true);
+        var one = CanvasText.Text("a", 12.5, Brushes.White, 180, true);
+        var long_ = CanvasText.Text(Long, 12.5, Brushes.White, 180, true);
 
         long_.Height.ShouldBe(one.Height, 0.5);
         long_.Width.ShouldBeLessThanOrEqualTo(180);
@@ -41,13 +41,13 @@ public class BoxLabelTests : UiTest
     [AvaloniaFact]
     public void A_long_socket_label_keeps_its_port()
     {
-        var fitted = NodeEditor.Fit(Long + ".out", 170);
+        var fitted = CanvasText.Fit(Long + ".out", 170);
 
         fitted.ShouldEndWith("….out");
         fitted.ShouldStartWith("(1 - smoothstep");
-        NodeEditor.Text(fitted, 11.5, Brushes.White, 1000, false).Width.ShouldBeLessThanOrEqualTo(170);
+        CanvasText.Text(fitted, 11.5, Brushes.White, 1000, false).Width.ShouldBeLessThanOrEqualTo(170);
 
-        NodeEditor.Fit("filter.cutoff", 170).ShouldBe("filter.cutoff");
+        CanvasText.Fit("filter.cutoff", 170).ShouldBe("filter.cutoff");
     }
 
     /// <summary>

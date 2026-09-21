@@ -65,13 +65,13 @@ public sealed partial class NodeEditor
         var reserve = 0d;
 
         foreach (var port in def.Outputs)
-            reserve = Math.Max(reserve, Text(port.Name, 11.5, LabelBrush, bounds.Width - 24, true).Width + 22);
+            reserve = Math.Max(reserve, CanvasText.Text(port.Name, 11.5, CanvasText.LabelBrush, bounds.Width - 24, true).Width + 22);
 
         for (var i = 0; i < def.Inputs.Count && i < node.InputValues.Length; i++)
         {
             if (patch.IncomingTo(node.Id, i) is not null || ControlMap.Of(node, i) is not null || !Reads(formula, i)) continue;
 
-            var value = Text(def.Inputs[i].Format(node.InputValues[i]), 11.5, ValueBrush, bounds.Width * 0.4, true);
+            var value = CanvasText.Text(def.Inputs[i].Format(node.InputValues[i]), 11.5, CanvasText.ValueBrush, bounds.Width * 0.4, true);
             reserve = Math.Max(reserve, value.Width + 20);
         }
 
@@ -86,7 +86,7 @@ public sealed partial class NodeEditor
             FlowDirection.LeftToRight,
             Typeface.Default,
             FormulaSize,
-            ValueBrush) { MaxTextWidth = width };
+            CanvasText.ValueBrush) { MaxTextWidth = width };
 
         if (lines > 0)
         {

@@ -89,7 +89,7 @@ public sealed partial class NodeEditor
 
         if (connected || control is null || link is not { } found) return false;
 
-        var value = Text(port.Format(found.At(control.Value)), 11.5, LinkedBrush, bounds.Width * 0.4, true);
+        var value = CanvasText.Text(port.Format(found.At(control.Value)), 11.5, LinkedBrush, bounds.Width * 0.4, true);
         var right = bounds.Right - 12;
 
         context.DrawText(value, new Point(right - value.Width, centre.Y - value.Height / 2));
