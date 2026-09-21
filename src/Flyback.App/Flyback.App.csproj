@@ -27,11 +27,11 @@
     with no .NET on it: the runtime is inside it, and so is everything the shell
     is built from, so the machine it lands on needs no .NET installed.
 
-    A folder rather than one file, and the reason is the other program. The two
-    shells share an engine, a plugin host and a runtime; published side by side
-    as folders they hold one copy of all of it, and published as single files
-    they would hold two — two runtimes, in two executables, because a bundle
-    shares nothing with anything. It also puts the plugin boundary on disk for
+    A folder rather than one file, and the reason is the other programs. The
+    editor, the CLI and the viewer share an engine, a plugin host and a runtime;
+    published side by side as folders they hold one copy of all of it, and
+    published as single files they would hold three — three runtimes, in three
+    executables, because a bundle shares nothing with anything. It also puts the plugin boundary on disk for
     free, where a plugin can be compiled against it.
 
     Conditioned on there being a runtime identifier because carrying a runtime is

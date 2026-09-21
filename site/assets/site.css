@@ -1,6 +1,6 @@
 /*
   The site wears the app's theme. Every color below is named after, and equal to,
-  one in src/Flyback.App/Controls/Colors.cs; the code colors are Flyback.xshd's.
+  one in src/Flyback.Ui/Controls/Colors.cs; the code colors are Flyback.xshd's.
   The app has no light theme, so neither does this.
 */
 
