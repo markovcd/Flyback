@@ -67,6 +67,22 @@ public class InfixPrinterTests
         PatchPrinter.Print(Build(printed), NodeCatalog.BuiltIn).ShouldBe(printed);
     }
 
+    /// <summary>
+    /// A line that opens on a minus carries on the line above, so a statement
+    /// never opens on one.
+    /// </summary>
+    [Theory]
+    [InlineData("let wave = sine(freq: 3)\n(-wave) |> out.color\nwave |> out.left", "(-wave) |> out.color")]
+    [InlineData("let wave = sine(freq: 3)\n(-wave) |> clamp() |> out.color\nwave |> out.left", "(-wave) |> clamp() |> out.color")]
+    public void A_sum_opening_a_statement_on_a_minus_is_bracketed(string source, string line)
+    {
+        var original = Build(source);
+        var printed = PatchPrinter.Print(original, NodeCatalog.BuiltIn);
+
+        printed.ShouldContain(line);
+        SameInstrument(original, Build(printed), printed);
+    }
+
     [Fact]
     public void A_sum_is_printed_as_the_sum()
     {

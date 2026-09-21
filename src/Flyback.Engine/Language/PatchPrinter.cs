@@ -586,7 +586,7 @@ public static class PatchPrinter
                     {
                         var from = From(wire);
 
-                        statements.Add(new Part($"{from.Text} |> out.{name}", from.Calls));
+                        statements.Add(new Part($"{Headed(from.Text)} |> out.{name}", from.Calls));
                         continue;
                     }
 
@@ -625,6 +625,33 @@ public static class PatchPrinter
             // a pass that knows nothing about how either was made — see
             // SourceLayout, and PatchLayout on the other side of it.
             return (SourceLayout.Wrap(text.ToString()), [.. ordered.SelectMany(part => part.Calls)]);
+        }
+
+        /// <summary>
+        /// Text fit to open a statement: a minus that leads a line carries on the
+        /// line above, so a sum that opens on one is bracketed up to its first pipe.
+        /// </summary>
+        private static string Headed(string text)
+        {
+            if (!text.StartsWith('-')) return text;
+
+            var depth = 0;
+            var quoted = false;
+
+            for (var i = 0; i < text.Length - 1; i++)
+            {
+                var c = text[i];
+
+                if (c == '"') quoted = !quoted;
+                if (quoted) continue;
+
+                if (c is '(' or '[') depth++;
+                else if (c is ')' or ']') depth--;
+                else if (depth == 0 && c == '|' && text[i + 1] == '>')
+                    return $"({text[..i].TrimEnd()}) {text[i..]}";
+            }
+
+            return $"({text})";
         }
 
         /// <summary>
