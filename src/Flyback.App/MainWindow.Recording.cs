@@ -389,8 +389,8 @@ public sealed partial class MainWindow
 
         Report(
             status.Frames > 0
-                ? $"Recording {status.Seconds:0.0}s — {status.Frames} frames{repeated} → {name}{lost}"
-                : $"Recording {status.Seconds:0.0}s → {name}{lost}",
+                ? $"Recording {Clock(status.Seconds)} — {status.Frames} frames{repeated} → {name}{lost}"
+                : $"Recording {Clock(status.Seconds)} → {name}{lost}",
             progress: true);
     }
 
@@ -482,7 +482,7 @@ public sealed partial class MainWindow
 
             Report(status.Stopped is { } failure
                 ? $"Recording stopped: {failure}"
-                : $"Recorded {status.Seconds:0.0}s to {name}.");
+                : $"Recorded {Clock(status.Seconds)} to {name}.");
         }
         catch (Exception ex)
         {
