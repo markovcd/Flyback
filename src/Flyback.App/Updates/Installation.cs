@@ -93,11 +93,14 @@ internal sealed record Installation(string Root, string Executable, string Rid, 
         }
     }
 
+    /// <summary>The other programs published beside the shell, any of which keeps a copy in use.</summary>
+    internal static readonly string[] OtherPrograms = ["flyback-cli", "flyback-viewer"];
+
     /// <summary>
-    /// Whether any other process is running out of this copy: a second window, or
-    /// the command line exporting a take (ADR-0078). Files it has open cannot be
-    /// replaced on Windows, and on every platform it would go on running the old
-    /// version beside the new one.
+    /// Whether any other process is running out of this copy: a second window, the
+    /// command line exporting a take (ADR-0078), or the viewer. Files it has open
+    /// cannot be replaced on Windows, and on every platform it would go on running
+    /// the old version beside the new one.
     /// </summary>
     public bool InUseByAnother()
     {
@@ -105,7 +108,7 @@ internal sealed record Installation(string Root, string Executable, string Rid, 
         var prefix = Root + Path.DirectorySeparatorChar;
         var comparison = OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
 
-        foreach (var name in new[] { shell, "flyback-cli" })
+        foreach (var name in new[] { shell }.Concat(OtherPrograms))
         {
             foreach (var process in Process.GetProcessesByName(name))
             {
