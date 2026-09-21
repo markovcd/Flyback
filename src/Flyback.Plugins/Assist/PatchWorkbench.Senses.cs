@@ -4,6 +4,7 @@ using System.Text.Json;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Core.Render;
+using static Flyback.Plugins.Assist.ToolArguments;
 
 namespace Flyback.Plugins.Assist;
 
