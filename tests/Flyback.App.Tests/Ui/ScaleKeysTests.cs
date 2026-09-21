@@ -1,6 +1,12 @@
-﻿using Avalonia.Controls;
+﻿using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Controls.Presenters;
+using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Interactivity;
+using Avalonia.Media;
+using Avalonia.Threading;
+using Avalonia.VisualTree;
 using Flyback.App.Controls;
 using Flyback.Core.Graph;
 using Shouldly;
@@ -190,6 +196,40 @@ public class ScaleKeysTests : UiTest
         // And the paint follows the state rather than the press: the key that
         // was on now matches the one that was always off.
         on.Background.ShouldBe(off.Background);
+    }
+
+    /// <summary>
+    /// The theme repaints a hovered button, which is exactly when the eye is on
+    /// the key: what is painted under the pointer has to still say on or off.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_hovered_key_is_still_painted_as_on_or_off()
+    {
+        var window = Open(out _, out _);
+
+        var on = Key(window, 0);
+        var off = Key(window, 1);
+
+        var restingOn = Painted(on);
+        var restingOff = Painted(off);
+
+        Hover(window, on);
+        Painted(on).ShouldBe(restingOn);
+
+        Hover(window, off);
+        Painted(off).ShouldBe(restingOff);
+        Painted(on).ShouldBe(restingOn);
+
+        static IBrush? Painted(Button key) =>
+            key.GetVisualDescendants().OfType<ContentPresenter>().First().Background;
+
+        static void Hover(Window window, Button key)
+        {
+            var at = key.TranslatePoint(new Point(key.Width / 2, key.Height - 6), window)!.Value;
+
+            window.MouseMove(at);
+            Dispatcher.UIThread.RunJobs();
+        }
     }
 
     /// <summary>

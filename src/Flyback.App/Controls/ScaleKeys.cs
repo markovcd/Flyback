@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Presenters;
 using Avalonia.Controls.Primitives;
 using Avalonia.Layout;
 using Avalonia.Media;
@@ -41,6 +42,10 @@ internal sealed class ScaleKeys
     private static readonly IBrush OnText = Brushes.Black;
     private static readonly IBrush OffText = new SolidColorBrush(Colors.Value);
     private static readonly IPen Edge = new Pen(new SolidColorBrush(Colors.Outline));
+    private static readonly IBrush Ring = Brushes.White;
+
+    private const string LitClass = "lit";
+    private const string OffClass = "off";
 
     /// <summary>The scale as it stands, from wherever it is kept.</summary>
     private readonly Func<List<int>> read;
@@ -125,6 +130,22 @@ internal sealed class ScaleKeys
                 new Setter(ContentControl.HorizontalContentAlignmentProperty, HorizontalAlignment.Center),
             },
         });
+
+        // The theme repaints a hovered button's fill and text from its own resources,
+        // which hides whether the key is on. Hover says "this one" with a ring and
+        // leaves the fill and text to say on or off.
+        foreach (var (state, fill, text) in new[] { (LitClass, on, OnText), (OffClass, Off, OffText) })
+        {
+            var hovered = new Style(x => x
+                .OfType<Button>().Class(KeyTag).Class(state).Class(":pointerover")
+                .Template().OfType<ContentPresenter>().Name("PART_ContentPresenter"));
+
+            hovered.Setters.Add(new Setter(ContentPresenter.BackgroundProperty, fill));
+            hovered.Setters.Add(new Setter(ContentPresenter.ForegroundProperty, text));
+            hovered.Setters.Add(new Setter(ContentPresenter.BorderBrushProperty, Ring));
+            hovered.Setters.Add(new Setter(ContentPresenter.BorderThicknessProperty, new Thickness(2)));
+            panel.Styles.Add(hovered);
+        }
 
         View = panel;
         Refresh();
@@ -273,6 +294,8 @@ internal sealed class ScaleKeys
             key.BorderBrush = Edge.Brush;
             key.Foreground = lit ? OnText : OffText;
             key.Opacity = lit ? 1 : 0.75;
+            key.Classes.Set(LitClass, lit);
+            key.Classes.Set(OffClass, !lit);
         }
 
         summary.Text = played ? Played(scale) : scale.Count switch
