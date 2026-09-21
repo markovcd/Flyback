@@ -90,9 +90,9 @@ public sealed partial class MainWindow
 
         // The gutter every other row uses, then the box, then the button — one
         // column more than Field builds, which is why this row is built here.
-        var row = Row("*,Auto", SettingsGutter);
+        var row = InspectorRows.Row("*,Auto", InspectorRows.SettingsGutter);
 
-        var label = Caption("ffmpeg", SettingsGutter);
+        var label = InspectorRows.Caption("ffmpeg", InspectorRows.SettingsGutter);
 
         Grid.SetColumn(label, 0);
         Grid.SetColumn(ffmpegBox, 1);
@@ -102,8 +102,8 @@ public sealed partial class MainWindow
         row.Children.Add(ffmpegBox);
         row.Children.Add(browse);
 
-        section.Children.Add(Field("Video", videoFormat));
-        section.Children.Add(Field("Sound", soundFormat));
+        section.Children.Add(InspectorRows.Field("Video", videoFormat));
+        section.Children.Add(InspectorRows.Field("Sound", soundFormat));
         section.Children.Add(row);
         section.Children.Add(ffmpegNote);
     }

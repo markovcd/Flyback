@@ -194,8 +194,8 @@ public sealed partial class MainWindow
             : "No MIDI plugin is installed, so the only instrument is the computer's own keyboard.";
 
         midiSection.Children.Add(midiNote);
-        midiSection.Children.Add(Field("Knobs", takeover));
-        midiSection.Children.Add(Field("New keyboard", keyboardLayout));
+        midiSection.Children.Add(InspectorRows.Field("Knobs", takeover));
+        midiSection.Children.Add(InspectorRows.Field("New keyboard", keyboardLayout));
     }
 
     /// <summary>
@@ -403,9 +403,9 @@ public sealed partial class MainWindow
     /// </summary>
     private Control LinkedRow(NodeInstance node, PortSpec spec, int index, ControlLink link, PatchControl knob)
     {
-        var row = Row("*,58,14,58,26");
+        var row = InspectorRows.Row("*,58,14,58,26");
 
-        var caption = Caption(spec.Name);
+        var caption = InspectorRows.Caption(spec.Name);
         Grid.SetColumn(caption, 0);
         row.Children.Add(caption);
 
