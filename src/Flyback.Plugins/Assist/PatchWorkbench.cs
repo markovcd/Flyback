@@ -38,8 +38,9 @@ public sealed partial class PatchWorkbench
     private readonly WorkbenchLimits limits;
     private readonly string startingPoint;
 
-    /// <summary>The presets a model may read: everything but the blank ones, which have nothing in them to learn from.</summary>
-    private readonly IReadOnlyList<PatchPreset> presets;
+    /// <summary>The lookups that read the catalogue and the presets rather than the patch.</summary>
+    private readonly CatalogReference catalogue;
+
     private readonly Dictionary<string, NodeInstance> byHandle = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<Guid, string> handleOf = [];
 
@@ -88,8 +89,12 @@ public sealed partial class PatchWorkbench
         this.modules = modules;
         this.samples = samples;
         this.pictures = pictures;
-        this.presets = [.. (presets ?? Presets.All).Where(preset => preset.Kind != PresetKind.Blank)];
         this.limits = limits ?? new WorkbenchLimits();
+
+        // Everything but the blank ones, which have nothing in them to learn from.
+        IReadOnlyList<PatchPreset> readable = [.. (presets ?? Presets.All).Where(preset => preset.Kind != PresetKind.Blank)];
+
+        catalogue = new CatalogReference(modules, readable);
 
         // Kept as text so Reset cannot hand back something an earlier edit
         // reached into, and so the starting point is provably reloadable.
@@ -102,12 +107,12 @@ public sealed partial class PatchWorkbench
         Undescribed = policy.Undescribed(modules);
 
         var briefing = Handbook.Render(modules, Undescribed, hearing);
-        Briefing = briefing + Handbook.Presets(this.presets, policy.Budget - briefing.Length);
+        Briefing = briefing + Handbook.Presets(readable, policy.Budget - briefing.Length);
 
         // Only where there is something the briefing did not say. Offered on every
         // run they would be two more tools to weigh on every turn, for looking up
         // what is already in front of the model.
-        var vocabulary = BuildTools(vision, hearing, lookups: Undescribed.Count > 0, readsPresets: this.presets.Count > 0);
+        var vocabulary = BuildTools(vision, hearing, lookups: Undescribed.Count > 0, readsPresets: readable.Count > 0);
 
         Tools = [.. vocabulary.Where(tool => tool.Offered).Select(tool => tool.Spec)];
         bodies = vocabulary.ToDictionary(tool => tool.Spec.Name, tool => tool.Run, StringComparer.Ordinal);
@@ -220,7 +225,7 @@ public sealed partial class PatchWorkbench
             return ToolOutcome.Refused("'type_id' is required and must be a string.");
 
         if (modules.Get(typeId) is not { } def)
-            return ToolOutcome.Refused($"there is no module with type id '{typeId}'. {Nearest(typeId)}");
+            return ToolOutcome.Refused($"there is no module with type id '{typeId}'. {catalogue.Nearest(typeId)}");
 
         // Every patch already has its Output and cannot have a second. The
         // second sink is the mistake that hides itself — compilation roots at
@@ -265,7 +270,7 @@ public sealed partial class PatchWorkbench
         if (arguments.TryGetProperty("knobs", out var knobs) && Turn(node, def, knobs) is { } refused)
             return ToolOutcome.Refused(refused);
 
-        report.Append(' ').Append(Sockets(def)).Append(' ').Append(Issues());
+        report.Append(' ').Append(CatalogReference.Sockets(def)).Append(' ').Append(Issues());
         return Fine(report.ToString());
     }
 
@@ -279,7 +284,7 @@ public sealed partial class PatchWorkbench
 
         if (Turn(node, def, knobs) is { } bad) return ToolOutcome.Refused(bad);
 
-        return Fine($"set. {Sockets(def)} {Issues()}");
+        return Fine($"set. {CatalogReference.Sockets(def)} {Issues()}");
     }
 
     /// <summary>
@@ -614,7 +619,7 @@ public sealed partial class PatchWorkbench
         {
             if (!Port(sourceDef.Outputs, fromName, out fromPort))
                 return ToolOutcome.Refused(
-                    $"{Handle(source)} has no output called '{fromName}'. Its outputs are: {List(sourceDef.Outputs)}.");
+                    $"{Handle(source)} has no output called '{fromName}'. Its outputs are: {CatalogReference.List(sourceDef.Outputs)}.");
         }
         else if (sourceDef.Outputs.Count == 1)
         {
@@ -624,7 +629,7 @@ public sealed partial class PatchWorkbench
         {
             return ToolOutcome.Refused(
                 $"{Handle(source)} has more than one output, so 'from_port' is needed. "
-                + $"Its outputs are: {List(sourceDef.Outputs)}.");
+                + $"Its outputs are: {CatalogReference.List(sourceDef.Outputs)}.");
         }
 
         if (!Text(arguments, "to_port", out var toName))
@@ -632,7 +637,7 @@ public sealed partial class PatchWorkbench
 
         if (!Port(targetDef.Inputs, toName, out var toPort))
             return ToolOutcome.Refused(
-                $"{Handle(target)} has no input called '{toName}'. Its inputs are: {List(targetDef.Inputs)}.");
+                $"{Handle(target)} has no input called '{toName}'. Its inputs are: {CatalogReference.List(targetDef.Inputs)}.");
 
         var replaced = working.IncomingTo(target.Id, toPort) is { } existing
             ? $" (replacing {Handle(working.Find(existing.SourceNode))}.{Name(existing, sourceOf: true)})"
@@ -656,7 +661,7 @@ public sealed partial class PatchWorkbench
 
         if (!Port(def.Inputs, portName, out var port))
             return ToolOutcome.Refused(
-                $"{Handle(node)} has no input called '{portName}'. Its inputs are: {List(def.Inputs)}.");
+                $"{Handle(node)} has no input called '{portName}'. Its inputs are: {CatalogReference.List(def.Inputs)}.");
 
         // What a socket falls back to when nothing is patched into it: the module
         // it is normalled to where there is one, and its knob otherwise. Both
@@ -876,98 +881,6 @@ public sealed partial class PatchWorkbench
         }
 
         return string.Join(", ", carried);
-    }
-
-    private ToolOutcome DescribeModule(JsonElement arguments)
-    {
-        if (!Text(arguments, "type_id", out var typeId))
-            return ToolOutcome.Refused("'type_id' is required and must be a string.");
-
-        if (modules.Get(typeId) is null)
-            return ToolOutcome.Refused($"there is no module with type id '{typeId}'. {Nearest(typeId)}");
-
-        var text = new StringBuilder();
-        Describe(text, typeId);
-        return Fine(text.ToString());
-    }
-
-    private ToolOutcome DescribePreset(JsonElement arguments)
-    {
-        if (!Text(arguments, "name", out var name))
-            return ToolOutcome.Refused("'name' is required and must be a string.");
-
-        if (presets.FirstOrDefault(p => string.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase)) is not { } preset)
-        {
-            return ToolOutcome.Refused(
-                $"there is no preset called '{name}'. The presets are: {string.Join(", ", presets.Select(p => p.Name))}.");
-        }
-
-        Patch patch;
-
-        try
-        {
-            patch = preset.Build(modules);
-        }
-        catch (Exception ex) when (ex is not OperationCanceledException)
-        {
-            return ToolOutcome.Refused($"'{preset.Name}' cannot be built here: {ex.Message}");
-        }
-
-        return Fine(
-            $"{preset.Name}: {preset.Description}{Environment.NewLine}"
-            + PatchPrinter.Print(patch, modules) + Environment.NewLine
-            + $"{patch.Nodes.Count} modules, {patch.Connections.Count} wires.");
-    }
-
-    private ToolOutcome FindModules(JsonElement arguments)
-    {
-        if (!Text(arguments, "query", out var query))
-            return ToolOutcome.Refused("'query' is required and must be a string.");
-
-        var hits = modules.All
-            .Where(d => d.TypeId.Contains(query, StringComparison.OrdinalIgnoreCase)
-                || d.Name.Contains(query, StringComparison.OrdinalIgnoreCase)
-                || d.Category.Contains(query, StringComparison.OrdinalIgnoreCase)
-                || d.Description.Contains(query, StringComparison.OrdinalIgnoreCase))
-            .Take(30)
-            .ToArray();
-
-        if (hits.Length == 0) return Fine($"nothing matches '{query}'.");
-
-        return Fine(string.Join(
-            Environment.NewLine,
-            hits.Select(d => $"{d.TypeId} | {d.Name} | {d.Category}")));
-    }
-
-    private void Describe(StringBuilder text, string typeId)
-    {
-        var def = modules.Require(typeId);
-
-        text.Append(def.TypeId).Append(" | ").Append(def.Name).Append(" | ").Append(def.Category);
-
-        if (def.Sinks is not ModuleSinks.Both)
-            text.Append(" | ").Append(def.Sinks is ModuleSinks.Audio ? "audio only" : "video only");
-
-        text.AppendLine();
-
-        for (var i = 0; i < def.Inputs.Count; i++)
-        {
-            var port = def.Inputs[i];
-            text.Append("  in  ").Append(i).Append(' ').Append(port.Name)
-                .Append(" = ").Append(port.Format(port.Default))
-                .Append(" [").Append(Number(port.Min)).Append("..").Append(Number(port.Max)).Append(']')
-                .AppendLine(port.Kind == PortKind.Color ? " color" : port.Kind == PortKind.Any ? " any" : "");
-        }
-
-        for (var i = 0; i < def.Outputs.Count; i++)
-            text.Append("  out ").Append(i).Append(' ').AppendLine(def.Outputs[i].Name);
-
-        // What the module carries that is neither a socket nor a knob, which
-        // the two loops above cannot show — the whole reason a model asking
-        // about a Sequencer or a Quantiser would otherwise miss half of it.
-        foreach (var extra in def.Extras) text.AppendLine(Vocabulary.Announce(extra));
-
-        if (def.Description.Length > 0) text.AppendLine(def.Description);
     }
 
     // --- layout -------------------------------------------------------------
@@ -1348,7 +1261,7 @@ public sealed partial class PatchWorkbench
                 """,
                 offered: hearing is not Listener.None),
 
-            Does("describe_module", DescribeModule,
+            Does("describe_module", catalogue.DescribeModule,
                 "Everything about one module: its ports, their defaults and ranges, and what it is "
                 + "for.",
                 """
@@ -1356,14 +1269,14 @@ public sealed partial class PatchWorkbench
                 """,
                 offered: lookups),
 
-            Does("find_modules", FindModules,
+            Does("find_modules", catalogue.FindModules,
                 "Searches the module list by type id, name, category or description.",
                 """
                 { "properties": { "query": { "type": "string" } }, "required": ["query"] }
                 """,
                 offered: lookups),
 
-            Does("describe_preset", DescribePreset,
+            Does("describe_preset", catalogue.DescribePreset,
                 "Reads one of the presets in the list at the end of the briefing, written in the "
                 + "Flyback language, to see how it is built. It does not touch the patch on the bench.",
                 """
@@ -1508,7 +1421,7 @@ public sealed partial class PatchWorkbench
                 return $"'{portName}' needs a numeric 'value'.";
 
             if (!Port(def.Inputs, portName, out var port))
-                return $"{Handle(node)} has no input called '{portName}'. Its inputs are: {List(def.Inputs)}.";
+                return $"{Handle(node)} has no input called '{portName}'. Its inputs are: {CatalogReference.List(def.Inputs)}.";
 
             // A normalled socket has no knob to turn: it compiles to the module
             // it is normalled to, and the value stored against it is never read.
@@ -1551,8 +1464,6 @@ public sealed partial class PatchWorkbench
     private static float Knob(NodeInstance node, int port, NodeDef def) =>
         port < node.InputValues.Length ? node.InputValues[port] : def.Inputs[port].Default;
 
-    private static string Sockets(NodeDef def) => $"Its ports: in {List(def.Inputs)}; out {List(def.Outputs)}.";
-
     private string Issues()
     {
         // Both programs, for the reason 'propose' asks after both: the video
@@ -1593,37 +1504,13 @@ public sealed partial class PatchWorkbench
         return text.ToString();
     }
 
-    private string Nearest(string typeId)
-    {
-        var tail = typeId[(typeId.LastIndexOf('.') + 1)..];
-
-        var close = modules.All
-            .Where(d => d.TypeId.Contains(tail, StringComparison.OrdinalIgnoreCase)
-                || d.Name.Contains(tail, StringComparison.OrdinalIgnoreCase))
-            .Take(6)
-            .Select(d => d.TypeId)
-            .ToArray();
-
-        return close.Length == 0
-            ? "Use find_modules, or read the module list again."
-            : $"Did you mean: {string.Join(", ", close)}?";
-    }
-
     private string Name(Connection wire, bool sourceOf)
     {
         if (working.Find(sourceOf ? wire.SourceNode : wire.TargetNode) is not { } node) return "?";
         if (modules.Get(node.TypeId) is not { } def) return "?";
 
-        return sourceOf ? PortName(def.Outputs, wire.SourcePort) : PortName(def.Inputs, wire.TargetPort);
+        return sourceOf ? CatalogReference.PortName(def.Outputs, wire.SourcePort) : CatalogReference.PortName(def.Inputs, wire.TargetPort);
     }
-
-    private static string PortName(IReadOnlyList<PortSpec> ports, int index) =>
-        index >= 0 && index < ports.Count ? ports[index].Name : index.ToString(CultureInfo.InvariantCulture);
-
-    private static string List(IReadOnlyList<PortSpec> ports) =>
-        ports.Count == 0
-            ? "(none)"
-            : string.Join(", ", ports.Select((p, i) => $"{i} {p.Name}"));
 
     private static ToolOutcome Fine(string text) => ToolOutcome.Fine(text);
 }
