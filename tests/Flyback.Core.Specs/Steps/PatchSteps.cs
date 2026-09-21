@@ -511,6 +511,14 @@ public sealed class PatchSteps(PatchContext context)
         Hear("send");
     }
 
+    [Given("the bus {string} is fed round from its own Receive")]
+    public void GivenABusFedFromItself(string bus)
+    {
+        Send("send", bus);
+        context.Wire(Receive(bus), "out", "send", "in");
+        Hear("send");
+    }
+
     // --- building blocks ------------------------------------------------------
 
     /// <summary>A patch written in the text language, heard at full volume.</summary>

@@ -44,6 +44,7 @@ internal static class Buses
         }
 
         var wires = new List<Connection>(patch.Connections.Count);
+        var ringed = new HashSet<Guid>();
 
         foreach (var wire in patch.Connections)
         {
@@ -58,6 +59,9 @@ internal static class Buses
             if (Feed(receive) is { } feed)
                 wires.Add(wire with { SourceNode = feed.SourceNode, SourcePort = feed.SourcePort });
         }
+
+        foreach (var receive in ringed)
+            warn?.Invoke(receive, $"'{NodeCatalog.BusOf(patch.Find(receive)!)}' is fed round from its own Receive, so it carries nothing.");
 
         return new Patch
         {
@@ -74,6 +78,7 @@ internal static class Buses
         // is itself fed by a Receive. Switched off, either end carries nothing.
         Connection? Feed(NodeInstance receive)
         {
+            var heard = receive.Id;
             var through = new HashSet<Guid>();
 
             while (through.Add(receive.Id))
@@ -87,6 +92,7 @@ internal static class Buses
             }
 
             // Buses fed round into each other, with nothing at the end to hear.
+            ringed.Add(heard);
             return null;
         }
     }

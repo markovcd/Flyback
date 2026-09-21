@@ -52,3 +52,8 @@ Feature: A signal can travel on a bus instead of a wire
   Scenario: A bus can close a loop, which remembers the sample before
     Given a bus that brings back what it carried and adds a quarter
     Then each sample builds on the last: 0.25, 0.5, 0.75
+
+  Scenario: A bus fed only from its own Receive is silent, and says so
+    Given the bus "echo" is fed round from its own Receive
+    Then the speakers play 0
+    And Flyback points out that "echo" is fed round from its own Receive

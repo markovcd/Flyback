@@ -42,6 +42,14 @@ public sealed class CompilerSteps(PatchContext context)
         context.Sound.HasErrors.ShouldBeFalse(Said(context.Sound));
     }
 
+    /// <summary>A remark, not an error: the Receive rests on its knob.</summary>
+    [Then("Flyback points out that {string} is fed round from its own Receive")]
+    public void ThenTheBusIsFedFromItself(string bus)
+    {
+        ShouldMention(context.Sound, $"'{bus}' is fed round from its own Receive");
+        context.Sound.HasErrors.ShouldBeFalse(Said(context.Sound));
+    }
+
     [Then("every Send is heard")]
     public void ThenEverySendIsHeard() =>
         context.Sound.Issues.ShouldNotContain(i => i.Message.Contains("Another Send", StringComparison.Ordinal), Said(context.Sound));

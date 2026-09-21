@@ -207,7 +207,7 @@ public sealed partial class NodeEditor
         // What a loop is made of, and the one thing about a wire the canvas
         // cannot read off its two ends — see Cycles.Backwards, which the compiler
         // asks the same question of.
-        var backwards = Cycles.Backwards(patch);
+        var backwards = Cycles.BackwardsThroughBuses(patch);
 
         foreach (var connection in patch.Connections)
         {

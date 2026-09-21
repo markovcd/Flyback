@@ -20,3 +20,4 @@ const Flyback.Core.Graph.NodeCatalog.DeskTypeId = "math.desk" -> string!
 const Flyback.Core.Graph.NodeCatalog.NoiseTypeId = "pattern.noise" -> string!
 const Flyback.Core.Graph.ModuleCategories.Routing = "Routing" -> string!
 const Flyback.Core.Graph.NodeCatalog.MixerTypeId = "math.mixer" -> string!
+static Flyback.Core.Graph.Cycles.BackwardsThroughBuses(Flyback.Core.Graph.Patch! patch) -> System.Collections.Generic.IReadOnlySet<Flyback.Core.Graph.Connection!>!

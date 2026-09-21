@@ -105,6 +105,25 @@ public static class Cycles
     }
 
     /// <summary>
+    /// The wires of <paramref name="patch"/> the compiler delays: those that close
+    /// a loop once its buses are joined, named as they are drawn.
+    /// </summary>
+    /// <remarks>
+    /// Joining a bus moves a wire's source and keeps its target, and an input takes
+    /// one wire, so the target socket names the drawn wire a joined one stands for.
+    /// </remarks>
+    public static IReadOnlySet<Connection> BackwardsThroughBuses(Patch patch)
+    {
+        var joined = Buses.Joined(patch);
+
+        if (ReferenceEquals(joined, patch)) return Backwards(patch);
+
+        var cut = Backwards(joined).Select(wire => (wire.TargetNode, wire.TargetPort)).ToHashSet();
+
+        return patch.Connections.Where(wire => cut.Contains((wire.TargetNode, wire.TargetPort))).ToHashSet();
+    }
+
+    /// <summary>
     /// Where the walk starts: the Output, and then whatever it could not reach.
     /// </summary>
     /// <remarks>

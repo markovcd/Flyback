@@ -185,6 +185,58 @@ public class BusTests
         Heard(b.Patch, 3).ShouldBe([0.25f, 0.5f, 0.75f], 1e-6f);
     }
 
+    /// <summary>The wire the canvas dashes is the one the compiler delays: out of the Receive.</summary>
+    [Fact]
+    public void A_loop_through_a_bus_is_cut_at_the_wire_out_of_the_receive()
+    {
+        var b = new PatchBuilder(Modules);
+
+        var receive = b.Add(NodeCatalog.ReceiveTypeId);
+        var step = b.Add("math.add", (1, 0.25f));
+        var send = b.Add(NodeCatalog.SendTypeId);
+
+        b.Wire(receive, 0, step, 0);
+        b.Wire(step, 0, send, 0);
+        b.Wire(send, 0, Sink(b), NodeCatalog.OutputLeftPort);
+
+        Cycles.Backwards(b.Patch).ShouldBeEmpty("no wire loops on the canvas");
+        Cycles.BackwardsThroughBuses(b.Patch).ShouldHaveSingleItem()
+            .ShouldBe(new Connection(receive.Id, 0, step.Id, 0));
+    }
+
+    [Fact]
+    public void A_bus_fed_from_its_own_receive_carries_nothing_and_says_so()
+    {
+        var b = new PatchBuilder(Modules);
+
+        var send = On(b.Add(NodeCatalog.SendTypeId), "echo");
+        var receive = On(b.Add(NodeCatalog.ReceiveTypeId), "echo");
+
+        b.Wire(receive, 0, send, 0);
+        b.Wire(send, 0, Sink(b), NodeCatalog.OutputLeftPort);
+
+        Heard(b.Patch).ShouldBe([0f]);
+        Warnings(b.Patch).ShouldHaveSingleItem().ShouldContain("'echo' is fed round from its own Receive");
+        Cycles.BackwardsThroughBuses(b.Patch).ShouldBeEmpty("nothing is delayed");
+    }
+
+    [Fact]
+    public void Two_buses_fed_round_into_each_other_both_say_so()
+    {
+        var b = new PatchBuilder(Modules);
+
+        var sendA = On(b.Add(NodeCatalog.SendTypeId), "a");
+        var sendB = On(b.Add(NodeCatalog.SendTypeId), "b");
+        var receiveA = On(b.Add(NodeCatalog.ReceiveTypeId), "a");
+        var receiveB = On(b.Add(NodeCatalog.ReceiveTypeId), "b");
+
+        b.Wire(receiveA, 0, sendB, 0);
+        b.Wire(receiveB, 0, sendA, 0);
+        b.Wire(sendA, 0, Sink(b), NodeCatalog.OutputLeftPort);
+
+        Warnings(b.Patch).Count(m => m.Contains("is fed round from its own Receive")).ShouldBe(2);
+    }
+
     [Fact]
     public void A_send_switched_off_puts_nothing_on_the_bus()
     {
