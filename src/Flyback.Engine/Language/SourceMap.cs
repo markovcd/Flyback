@@ -272,12 +272,58 @@ public sealed class SourceMap
     public Change? Description(string? line) => PatchLine("description", TokenKind.Text, line);
 
     /// <summary>
+    /// The edit that makes the text credit the patch as <paramref name="line"/>
+    /// says, or null where the text already does. A new one goes under the description.
+    /// </summary>
+    /// <param name="line">What <see cref="PatchPrinter.Author"/> writes, and null for none.</param>
+    public Change? Author(string? line) => PatchLine("author", TokenKind.Text, line, "description");
+
+    /// <summary>
+    /// The edit that makes the text tag the patch as <paramref name="line"/>
+    /// says, or null where the text already does. A new one goes under the
+    /// author, or under the description where nobody is credited.
+    /// </summary>
+    /// <param name="line">What <see cref="PatchPrinter.Tags"/> writes, and null for none.</param>
+    public Change? Tags(string? line) => PatchLine("tags", TokenKind.Text, line, "author", "description");
+
+    /// <summary>
     /// The edit that puts <paramref name="line"/> where the text says the thing
-    /// <paramref name="word"/> opens, takes that out for a null line, or puts the
-    /// line at the top where the text says nothing.
+    /// <paramref name="word"/> opens, or takes that out for a null line. Where the
+    /// text says nothing, the line goes under the first of <paramref name="under"/>
+    /// it does say, and at the top where it says none of them.
     /// </summary>
     /// <param name="next">What follows the word in a statement of this kind.</param>
-    private Change? PatchLine(string word, TokenKind next, string? line)
+    private Change? PatchLine(string word, TokenKind next, string? line, params string[] under)
+    {
+        if (Opened(word, next) is { } span)
+        {
+            if (line is not null)
+                return source[span.From..span.To] == line ? null : new Change(span.From, span.To - span.From, line);
+
+            // The line and the break after it, so taking it out leaves no gap.
+            var end = span.To;
+            while (end < source.Length && source[end] is ' ' or '\t') end++;
+            if (end < source.Length && source[end] == '\r') end++;
+            if (end < source.Length && source[end] == '\n') end++;
+
+            return new Change(span.From, end - span.From, string.Empty);
+        }
+
+        if (line is null) return null;
+
+        foreach (var above in under)
+        {
+            if (Opened(above, TokenKind.Text) is { } before) return new Change(before.To, 0, "\n" + line);
+        }
+
+        return new Change(0, 0, line + "\n\n");
+    }
+
+    /// <summary>
+    /// Where the first statement <paramref name="word"/> opens stands, and null
+    /// where the text has none.
+    /// </summary>
+    private (int From, int To)? Opened(string word, TokenKind next)
     {
         (int From, int To)? found = null;
         var start = true;
@@ -299,7 +345,8 @@ public sealed class SourceMap
 
                 if (i + 2 < tokens.Count && tokens[i + 2].Kind == TokenKind.Block) to = Closed(Offset(tokens[i + 2]));
 
-                // A description runs on over the strings on the lines below it.
+                // A description runs on over the strings on the lines below it, and
+                // tags are a string each.
                 for (var j = i + 2; next == TokenKind.Text && j < tokens.Count; j++)
                 {
                     if (tokens[j].Kind == TokenKind.NewLine) continue;
@@ -314,21 +361,7 @@ public sealed class SourceMap
             start = token.Kind is TokenKind.NewLine or TokenKind.OpenBrace;
         }
 
-        if (found is { } span)
-        {
-            if (line is not null)
-                return source[span.From..span.To] == line ? null : new Change(span.From, span.To - span.From, line);
-
-            // The line and the break after it, so taking it out leaves no gap.
-            var end = span.To;
-            while (end < source.Length && source[end] is ' ' or '\t') end++;
-            if (end < source.Length && source[end] == '\r') end++;
-            if (end < source.Length && source[end] == '\n') end++;
-
-            return new Change(span.From, end - span.From, string.Empty);
-        }
-
-        return line is null ? null : new Change(0, 0, line + "\n\n");
+        return found;
     }
 
     /// <summary>The offset a line and a column name, clamped to the text.</summary>

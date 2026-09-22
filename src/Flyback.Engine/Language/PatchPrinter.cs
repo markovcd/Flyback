@@ -160,6 +160,14 @@ public static class PatchPrinter
         return string.Join('\n', lines);
     }
 
+    /// <summary>Who made the patch, as the statement that says it, or null where nobody is credited.</summary>
+    public static string? Author(string? author) =>
+        Patch.TidiedAuthor(author) is { } said ? $"author \"{said}\"" : null;
+
+    /// <summary>The patch's tags, as the one line that says them, or null where it has none.</summary>
+    public static string? Tags(IEnumerable<string>? tags) =>
+        Patch.TidiedTags(tags) is { } kept ? "tags " + string.Join(' ', kept.Select(tag => $"\"{tag}\"")) : null;
+
     /// <summary>
     /// The file a module names rather than carries (ADR-0052), or null where it
     /// names none.
@@ -645,9 +653,11 @@ public static class PatchPrinter
 
             // First, because it is about the whole patch and not about any line
             // below it.
-            if (Description(patch.Description) is { } description)
+            string?[] about = [Description(patch.Description), Author(patch.Author), Tags(patch.Tags)];
+
+            if (about.Any(line => line is not null))
             {
-                text.AppendLine(description);
+                foreach (var line in about.OfType<string>()) text.AppendLine(line);
                 text.AppendLine();
             }
 

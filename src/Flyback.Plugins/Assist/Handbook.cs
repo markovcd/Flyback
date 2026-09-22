@@ -101,6 +101,8 @@ internal static class Handbook
           side along each row. Once a patch; say nothing for a piano.
         - **`description "What the patch is for."`**, on a line of its own and
           first, is the patch's one line of prose. Once a patch.
+        - **`author "Who made it"`** and **`tags "drone" "slow"`** go under
+          it, each once a patch.
         - **A length of time is written as one.** `attack: 10ms`, not
           `attack: 0.01`. These sockets hold a power of ten, so a bare number is
           refused rather than read as a hundred times what you meant.

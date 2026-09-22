@@ -430,6 +430,17 @@ internal static class PresetGallery
             IsVisible = preset.Description.Length > 0,
         };
 
+        // Who made it, once the patch is open and says.
+        var credit = new TextBlock
+        {
+            Name = "credit",
+            FontSize = Text.Caption,
+            FontStyle = FontStyle.Italic,
+            Foreground = Text.Muted,
+            TextTrimming = TextTrimming.CharacterEllipsis,
+            IsVisible = false,
+        };
+
         var picture = new Border
         {
             Name = "thumbnail",
@@ -461,6 +472,7 @@ internal static class PresetGallery
                     picture,
                     new TextBlock { Text = preset.Name, FontSize = Text.Body, FontWeight = FontWeight.SemiBold },
                     description,
+                    credit,
                 },
             },
         };
@@ -474,7 +486,7 @@ internal static class PresetGallery
         tile.PointerEntered += (_, _) => pointedAt?.Invoke(new PointedTile(preset, image));
         tile.PointerExited += (_, _) => pointedAt?.Invoke(null);
 
-        _ = Fill(image, words, speaker, description, thumbnails.Of(preset));
+        _ = Fill(image, words, speaker, description, credit, thumbnails.Of(preset));
 
         return tile;
     }
@@ -484,7 +496,7 @@ internal static class PresetGallery
     /// so what follows the wait is on it too.
     /// </summary>
     private static async Task Fill(
-        Image image, TextBlock words, Control speaker, TextBlock description, Task<Thumbnail> drawing)
+        Image image, TextBlock words, Control speaker, TextBlock description, TextBlock credit, Task<Thumbnail> drawing)
     {
         var thumbnail = await drawing;
 
@@ -492,6 +504,12 @@ internal static class PresetGallery
         {
             description.Text = said;
             description.IsVisible = true;
+        }
+
+        if (thumbnail.Author is { } author)
+        {
+            credit.Text = "by " + author;
+            credit.IsVisible = true;
         }
 
         if (thumbnail.Pixels is null && thumbnail.Words == Thumbnail.SoundOnly.Words)

@@ -97,6 +97,12 @@ public sealed class EditingSteps(PatchContext context, Session session)
     [Then("the patch says it is {string}")]
     public void ThenDescribedAs(string description) => context.Patch.Description.ShouldBe(description);
 
+    [Then("the patch says it was made by {string}")]
+    public void ThenCredited(string author) => context.Patch.Author.ShouldBe(author);
+
+    [Then("the patch is tagged {string}")]
+    public void ThenTagged(string tags) => context.Patch.Tags.ShouldBe(tags.Split(", "));
+
     [Then("it reads without complaint")]
     public void ThenReadsCleanly() => Text.Ok.ShouldBeTrue(Text.Report);
 

@@ -298,7 +298,70 @@ public sealed class Patch
     public void Describe(string? to) => Description = Tidied(to);
 
     /// <summary>What <see cref="Describe"/> would keep of <paramref name="text"/>.</summary>
-    public static string? Tidied(string? text)
+    public static string? Tidied(string? text) => Tidied(text, DescriptionLimit);
+
+    /// <summary>The longest an author may be, in characters.</summary>
+    public const int AuthorLimit = 80;
+
+    /// <summary>
+    /// Who made the patch, and null where nobody has said. Set through
+    /// <see cref="Credit"/>, which holds it to one line as a description is held.
+    /// </summary>
+    public string? Author { get; set; }
+
+    /// <summary>Says who made the patch, or takes the credit away with a blank.</summary>
+    public void Credit(string? to) => Author = TidiedAuthor(to);
+
+    /// <summary>What <see cref="Credit"/> would keep of <paramref name="author"/>.</summary>
+    public static string? TidiedAuthor(string? author) => Tidied(author, AuthorLimit);
+
+    /// <summary>The longest a tag may be, in characters.</summary>
+    public const int TagLimit = 24;
+
+    /// <summary>The most tags a patch carries.</summary>
+    public const int TagCount = 8;
+
+    /// <summary>
+    /// Words to find the patch by, and null where it has none. Set through
+    /// <see cref="Tag"/>.
+    /// </summary>
+    public List<string>? Tags { get; set; }
+
+    /// <summary>Tags the patch with <paramref name="to"/>, or takes its tags away with none.</summary>
+    public void Tag(IEnumerable<string>? to) => Tags = TidiedTags(to);
+
+    /// <summary>
+    /// What <see cref="Tag"/> would keep of <paramref name="tags"/>: each one
+    /// lower case, with no straight double quote and a hyphen for any run of
+    /// spaces, cut to <see cref="TagLimit"/>, and the first <see cref="TagCount"/>
+    /// different ones. Null where none is left.
+    /// </summary>
+    public static List<string>? TidiedTags(IEnumerable<string>? tags)
+    {
+        if (tags is null) return null;
+
+        var kept = new List<string>();
+
+        foreach (var tag in tags)
+        {
+            if (tag is null) continue;
+
+            var words = tag.Replace("\"", "", StringComparison.Ordinal)
+                .Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
+            var tidy = string.Join('-', words).ToLowerInvariant();
+
+            if (tidy.Length > TagLimit) tidy = tidy[..TagLimit].TrimEnd('-');
+            if (tidy.Length == 0 || kept.Contains(tidy)) continue;
+
+            kept.Add(tidy);
+
+            if (kept.Count == TagCount) break;
+        }
+
+        return kept.Count > 0 ? kept : null;
+    }
+
+    private static string? Tidied(string? text, int limit)
     {
         if (string.IsNullOrWhiteSpace(text)) return null;
 
@@ -324,7 +387,7 @@ public sealed class Patch
 
         var kept = tidy.ToString();
 
-        return kept.Length > DescriptionLimit ? kept[..DescriptionLimit].TrimEnd() : kept;
+        return kept.Length > limit ? kept[..limit].TrimEnd() : kept;
     }
 
     public NodeInstance? Find(Guid id) => Nodes.FirstOrDefault(n => n.Id == id);

@@ -511,12 +511,14 @@ public sealed partial class MainWindow
     }
 
     /// <summary>
-    /// Puts what belongs to the whole patch into the text: its description and the
-    /// keyboard's layout, each as the one line that says it.
+    /// Puts what belongs to the whole patch into the text: its description, author,
+    /// tags and the keyboard's layout, each as the one line that says it.
     /// </summary>
     private void Lay()
     {
         Put(Map.Description(PatchPrinter.Description(editor.Patch.Description)));
+        Put(Map.Author(PatchPrinter.Author(editor.Patch.Author)));
+        Put(Map.Tags(PatchPrinter.Tags(editor.Patch.Tags)));
         Put(Map.Keyboard(PatchPrinter.Keyboard(editor.Patch.KeyboardScale)));
 
         void Put(Change? change)

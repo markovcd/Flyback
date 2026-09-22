@@ -39,7 +39,7 @@ a decision.
 
 ## 2. Statements
 
-Ten forms, and no others.
+Twelve forms, and no others.
 
 ```
 # a comment, to end of line
@@ -53,6 +53,8 @@ NAME.port <- pipeline            # back-wire, which is how a cycle is closed
 off NAME                         # switch a module off, so it is a wire
 group "Name" { statements }      # draw these together on the canvas
 description "What it is for"     # say what the patch is for, once
+author "Who made it"             # say who made the patch, once
+tags "drone" "slow"              # words to find the patch by, once
 ```
 
 Statements are newline-separated. A pipeline may be broken across lines freely;
@@ -368,6 +370,18 @@ description "A photograph put through the same geometry a generated field goes t
 A string has no escapes, so a description never holds a straight double quote;
 one typed into the panel is turned into a curly one.
 
+Who made the patch and the words to find it by go under the description, a
+line each:
+
+```
+author "Ada"
+tags "drone" "slow-build"
+```
+
+An author is held to one line the way a description is. A tag is lower case,
+with a hyphen for a space and no quote, and a patch keeps its first eight
+different ones.
+
 A block goes **after** the brackets and there is at most one, so it needs no
 name. A file goes **inside** them and has no name either — a call carries at
 most one string without one, and that string is the file. Both are positional
@@ -635,7 +649,9 @@ statement  = comment
            | selector "<-" pipeline
            | "off" ident
            | "group" string "{" { statement } "}"
-           | "description" string { string } ;
+           | "description" string { string }
+           | "author" string
+           | "tags" string { string } ;
 
 body       = pipeline | "{" { statement } result "}" ;
 result     = pipeline | "(" pipeline { "," pipeline } ")" ;

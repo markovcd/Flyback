@@ -14,7 +14,8 @@ namespace Flyback.App.Controls;
 /// </param>
 /// <param name="Words">What the tile says instead. Empty when there are pixels, or nothing to say.</param>
 /// <param name="Description">What the patch says it is for, and null where it says nothing or would not open.</param>
-internal sealed record Thumbnail(byte[]? Pixels, string Words, string? Description = null)
+/// <param name="Author">Who the patch says made it, and null where it says nobody or would not open.</param>
+internal sealed record Thumbnail(byte[]? Pixels, string Words, string? Description = null, string? Author = null)
 {
     /// <summary>
     /// A patch that is heard and never seen, which has no frame to take. Shown as a
@@ -103,12 +104,14 @@ internal sealed class PresetThumbnails(ModuleCatalog modules, IlCompiler? compil
             var (patch, samples, pictures) = PresetLibrary.Open(preset, Saved, modules);
             var (picture, sound) = patch.Reaches();
             var described = patch.Description;
+            var author = patch.Author;
 
-            if (!picture) return (sound ? Thumbnail.SoundOnly : Thumbnail.Nothing) with { Description = described };
+            if (!picture)
+                return (sound ? Thumbnail.SoundOnly : Thumbnail.Nothing) with { Description = described, Author = author };
 
             var video = patch.CompileForVideo(samples: samples, pictures: pictures);
 
-            if (video.HasErrors) return Thumbnail.Unavailable with { Description = described };
+            if (video.HasErrors) return Thumbnail.Unavailable with { Description = described, Author = author };
 
             compiler?.Compile(video.Program, IlLane.AuditionPicture);
 
@@ -119,7 +122,7 @@ internal sealed class PresetThumbnails(ModuleCatalog modules, IlCompiler? compil
             for (var step = 0; step * Step <= Settle; step++)
                 renderer.Render(video.Program, step * Step, Width, Height, pixels, stride);
 
-            return new Thumbnail(pixels, "", described);
+            return new Thumbnail(pixels, "", described, author);
         }
         catch (Exception)
         {

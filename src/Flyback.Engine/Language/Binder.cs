@@ -204,6 +204,8 @@ public sealed class Binder
         OffStatement off => "off " + off.Target.Name,
         KeyboardStatement => "keyboard",
         DescriptionStatement => "description",
+        AuthorStatement => "author",
+        TagsStatement => "tags",
         PipelineStatement pipeline => Ending(pipeline.Value) ?? Anonymous(),
         _ => Anonymous(),
     };
@@ -268,6 +270,14 @@ public sealed class Binder
 
             case DescriptionStatement description:
                 Describe(description);
+                break;
+
+            case AuthorStatement author:
+                Credit(author);
+                break;
+
+            case TagsStatement tags:
+                Tag(tags);
                 break;
 
             case OffStatement off:
@@ -1313,6 +1323,32 @@ public sealed class Binder
         }
 
         patch.Describe(statement.Text);
+    }
+
+    /// <summary>Says who made the patch, once.</summary>
+    private void Credit(AuthorStatement statement)
+    {
+        if (patch.Author is not null)
+        {
+            Complain(statement.Line, statement.Column,
+                "the patch is already credited further up. It has one author line, so it says so once.");
+            return;
+        }
+
+        patch.Credit(statement.Text);
+    }
+
+    /// <summary>Tags the patch, once.</summary>
+    private void Tag(TagsStatement statement)
+    {
+        if (patch.Tags is not null)
+        {
+            Complain(statement.Line, statement.Column,
+                "the patch is already tagged further up. It has one tags line, so it says so once.");
+            return;
+        }
+
+        patch.Tag(statement.Tags);
     }
 
     /// <summary>

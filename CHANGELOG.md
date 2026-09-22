@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Patches carry an author and tags, edited in the panel and written as `author "..."` and `tags "..."` in the text.
 - A patch has a description, edited by double-clicking it in the panel with nothing selected, written as `description "..."` in the text and shown in the preset gallery.
 - Saving a preset under a name already saved asks first, in place.
 - Settings → Graphics sends the full-screen picture to another monitor, or to a chosen one, and leaves the editor where it is.

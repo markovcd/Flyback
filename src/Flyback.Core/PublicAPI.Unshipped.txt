@@ -4,6 +4,17 @@ Flyback.Core.Graph.Patch.Description.get -> string?
 Flyback.Core.Graph.Patch.Description.set -> void
 Flyback.Core.Graph.Patch.Describe(string? to) -> void
 static Flyback.Core.Graph.Patch.Tidied(string? text) -> string?
+const Flyback.Core.Graph.Patch.AuthorLimit = 80 -> int
+const Flyback.Core.Graph.Patch.TagCount = 8 -> int
+const Flyback.Core.Graph.Patch.TagLimit = 24 -> int
+Flyback.Core.Graph.Patch.Author.get -> string?
+Flyback.Core.Graph.Patch.Author.set -> void
+Flyback.Core.Graph.Patch.Credit(string? to) -> void
+Flyback.Core.Graph.Patch.Tag(System.Collections.Generic.IEnumerable<string!>? to) -> void
+Flyback.Core.Graph.Patch.Tags.get -> System.Collections.Generic.List<string!>?
+Flyback.Core.Graph.Patch.Tags.set -> void
+static Flyback.Core.Graph.Patch.TidiedAuthor(string? author) -> string?
+static Flyback.Core.Graph.Patch.TidiedTags(System.Collections.Generic.IEnumerable<string!>? tags) -> System.Collections.Generic.List<string!>?
 Flyback.Core.Graph.PortSpec.At(double travel, float min, float max) -> float
 Flyback.Core.Graph.PortSpec.Knee.get -> float
 Flyback.Core.Graph.PortSpec.Knee.init -> void

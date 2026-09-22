@@ -36,6 +36,8 @@
       <Word>group</Word>
       <Word>off</Word>
       <Word>description</Word>
+      <Word>author</Word>
+      <Word>tags</Word>
     </Keywords>
 
     <!--

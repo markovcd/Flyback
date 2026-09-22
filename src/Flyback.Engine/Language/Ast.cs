@@ -149,6 +149,12 @@ public sealed record KeyboardStatement(string? Scale, int Line, int Column) : St
 /// </summary>
 public sealed record DescriptionStatement(string Text, int Line, int Column) : Statement(Line, Column);
 
+/// <summary><c>author "..."</c>: who made the patch.</summary>
+public sealed record AuthorStatement(string Text, int Line, int Column) : Statement(Line, Column);
+
+/// <summary><c>tags "..." "..."</c>: words to find the patch by, one string each.</summary>
+public sealed record TagsStatement(IReadOnlyList<string> Tags, int Line, int Column) : Statement(Line, Column);
+
 /// <summary><c>group "Name" { ... }</c>, a box drawn round what is declared inside it.</summary>
 public sealed record GroupStatement(
     string Name,

@@ -461,6 +461,8 @@ public sealed partial class MainWindow
             plateHost.Content = null;
 
             inspector.Children.Add(BuildPatchDescription());
+            inspector.Children.Add(BuildPatchAuthor());
+            inspector.Children.Add(BuildPatchTags());
 
             inspector.Children.Add(new TextBlock
             {
@@ -981,46 +983,103 @@ public sealed partial class MainWindow
     /// keyboard's layout is. Not while the text has moved on from the patch, when
     /// the line it would land on may not be the one playing.
     /// </remarks>
-    private Control BuildPatchDescription()
+    private Control BuildPatchDescription() => BuildPatchLine(
+        "patch-description",
+        editor.Patch.Description,
+        editor.Patch.Description,
+        "Double-click to say what this patch is for.",
+        "What is this patch for?",
+        Patch.DescriptionLimit,
+        typed => editor.Patch.Describe(typed),
+        () => editor.Patch.Description,
+        BuildPatchDescription,
+        new Thickness(0, 0, 0, 6));
+
+    /// <summary>Who made the patch, under its description, edited the same way.</summary>
+    private Control BuildPatchAuthor() => BuildPatchLine(
+        "patch-author",
+        editor.Patch.Author is { } author ? "by " + author : null,
+        editor.Patch.Author,
+        "Double-click to say who made it.",
+        "Who made this patch?",
+        Patch.AuthorLimit,
+        typed => editor.Patch.Credit(typed),
+        () => editor.Patch.Author,
+        BuildPatchAuthor,
+        new Thickness(0, 0, 0, 6));
+
+    /// <summary>
+    /// The patch's tags, under its author, edited as one line of words apart by
+    /// spaces or commas.
+    /// </summary>
+    private Control BuildPatchTags() => BuildPatchLine(
+        "patch-tags",
+        editor.Patch.Tags is { } tags ? string.Join(", ", tags) : null,
+        editor.Patch.Tags is { } held ? string.Join(' ', held) : null,
+        "Double-click to tag it.",
+        "drone slow ambient",
+        Patch.TagCount * (Patch.TagLimit + 2),
+        typed => editor.Patch.Tag(typed?.Replace(',', ' ').Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries)),
+        () => editor.Patch.Tags is { } now ? string.Join(' ', now) : null,
+        BuildPatchTags,
+        new Thickness(0, 0, 0, 14));
+
+    /// <summary>
+    /// One thing said about the whole patch, which a double-click turns into a box
+    /// to write it in.
+    /// </summary>
+    /// <param name="shown">What the panel shows, and null where nothing is said.</param>
+    /// <param name="held">What the box opens holding.</param>
+    /// <param name="asking">What the panel shows in its place where nothing is said.</param>
+    private Control BuildPatchLine(
+        string name,
+        string? shown,
+        string? held,
+        string asking,
+        string fallback,
+        int limit,
+        Action<string?> set,
+        Func<string?> current,
+        Func<Control> rebuild,
+        Thickness margin)
     {
-        var said = editor.Patch.Description;
         var ink = new SolidColorBrush(Colors.Label);
 
-        var description = new TextBlock
+        var line = new TextBlock
         {
-            Name = "patch-description",
-            Text = said ?? "Double-click to say what this patch is for.",
+            Name = name,
+            Text = shown ?? asking,
             TextWrapping = TextWrapping.Wrap,
             FontSize = Text.Body,
-            FontStyle = said is null ? FontStyle.Italic : FontStyle.Normal,
-            Foreground = said is null ? Text.Muted : ink,
+            FontStyle = shown is null ? FontStyle.Italic : FontStyle.Normal,
+            Foreground = shown is null ? Text.Muted : ink,
             Background = Brushes.Transparent,
-            Margin = new Thickness(0, 0, 0, 14),
+            Margin = margin,
         };
 
         if (adrift)
         {
-            description.IsVisible = said is not null;
-            return description;
+            line.IsVisible = shown is not null;
+            return line;
         }
 
-        if (said is not null) ToolTip.SetTip(description, "Double-click to change it. Empty the box to take it away.");
+        if (shown is not null) ToolTip.SetTip(line, "Double-click to change it. Empty the box to take it away.");
 
-        description.Cursor = NameBox.Renaming;
+        line.Cursor = NameBox.Renaming;
 
-        description.DoubleTapped += (_, e) =>
+        line.DoubleTapped += (_, e) =>
         {
             e.Handled = true;
 
             NameBox.Open(
-                description,
+                line,
                 ink,
-                editor.Patch.Description,
-                "What is this patch for?",
-                Patch.DescriptionLimit,
-                typed => editor.Patch.Describe(typed),
-                () => editor.Patch.Description,
-                BuildPatchDescription,
+                held,
+                fallback,
+                limit,
+                set,
+                current,
+                rebuild,
                 () =>
                 {
                     // Finished as it closes: Enter takes the box away before any
@@ -1032,7 +1091,7 @@ public sealed partial class MainWindow
                 prose: true);
         };
 
-        return description;
+        return line;
     }
 
     /// <summary>

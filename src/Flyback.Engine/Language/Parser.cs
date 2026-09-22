@@ -109,13 +109,12 @@ public sealed class Parser(IReadOnlyList<Token> tokens, List<LanguageIssue> issu
 
         // One string, or several running on, each line's a space apart from the last's.
         if (AtWord("description") && Ahead().Kind == TokenKind.Text)
-        {
-            var parts = new List<string>();
+            return new DescriptionStatement(string.Join(' ', Strings()), line, column);
 
-            for (at++; Current.Kind == TokenKind.Text; at++) parts.Add(Current.Text);
+        if (AtWord("author") && Ahead().Kind == TokenKind.Text)
+            return new AuthorStatement(string.Join(' ', Strings()), line, column);
 
-            return new DescriptionStatement(string.Join(' ', parts), line, column);
-        }
+        if (AtWord("tags") && Ahead().Kind == TokenKind.Text) return new TagsStatement(Strings(), line, column);
 
         // The same rule again: what follows a module being switched off is the
         // name of one, and anything else here is a pipeline that begins with a
@@ -354,6 +353,16 @@ public sealed class Parser(IReadOnlyList<Token> tokens, List<LanguageIssue> issu
         if (!Expect(TokenKind.CloseBrace, "'}' to close the group")) return null;
 
         return new GroupStatement(name, body, line, column);
+    }
+
+    /// <summary>The strings after the word that opens a statement, in order.</summary>
+    private List<string> Strings()
+    {
+        var parts = new List<string>();
+
+        for (at++; Current.Kind == TokenKind.Text; at++) parts.Add(Current.Text);
+
+        return parts;
     }
 
     private Statement? Keyboard(int line, int column)
