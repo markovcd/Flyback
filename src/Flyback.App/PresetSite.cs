@@ -54,6 +54,10 @@ internal sealed class PresetSite(HttpClient http, Uri root)
     public Task<byte[]> DownloadAsync(SitePreset preset, CancellationToken cancel) =>
         http.GetByteArrayAsync(preset.File, cancel);
 
+    /// <summary>Reports the preset to the site's admin. Throws where the site does not take it.</summary>
+    public Task ReportAsync(SitePreset preset, string reason, string? details, CancellationToken cancel) =>
+        SiteReports.SendAsync(http, Root, "preset", preset.Id, reason, details, cancel);
+
     /// <summary>The preset's still, or null where it has none or it cannot be fetched.</summary>
     public async Task<byte[]?> StillAsync(SitePreset preset, CancellationToken cancel)
     {

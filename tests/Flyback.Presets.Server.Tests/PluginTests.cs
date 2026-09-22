@@ -382,4 +382,33 @@ public sealed class PluginTests : IDisposable
 
         (await Status(HttpMethod.Patch, $"/api/v1/plugins/{second}", JsonContent.Create(new { published = true }), admin)).ShouldBe(HttpStatusCode.Conflict);
     }
+
+    [Fact]
+    public async Task A_published_plugin_can_be_reported_and_the_admin_sees_it_by_name()
+    {
+        var sent = await Submit(Package("win"));
+        var id = sent.GetProperty("id").GetString()!;
+        JsonContent Report() => JsonContent.Create(new { reason = "harmful", details = "It deleted my presets." });
+
+        (await Status(HttpMethod.Post, $"/api/v1/plugins/{id}/reports", Report())).ShouldBe(HttpStatusCode.NotFound);
+
+        await Publish(id);
+
+        (await Status(HttpMethod.Post, $"/api/v1/plugins/{id}/reports", Report())).ShouldBe(HttpStatusCode.NoContent);
+
+        using var admin = await Admin();
+        var reports = await admin.GetFromJsonAsync<JsonElement>(new Uri("/api/v1/reports", UriKind.Relative), TestContext.Current.CancellationToken);
+        var only = reports.EnumerateArray().ShouldHaveSingleItem();
+
+        only.GetProperty("kind").GetString().ShouldBe("plugin");
+        only.GetProperty("subject").GetString().ShouldBe(id);
+        only.GetProperty("name").GetString().ShouldBe(sent.GetProperty("name").GetString());
+        only.GetProperty("reason").GetString().ShouldBe("harmful");
+        only.GetProperty("details").GetString().ShouldBe("It deleted my presets.");
+
+        (await Status(HttpMethod.Delete, $"/api/v1/plugins/{id}", by: admin)).ShouldBe(HttpStatusCode.NoContent);
+
+        (await admin.GetFromJsonAsync<JsonElement>(new Uri("/api/v1/reports", UriKind.Relative), TestContext.Current.CancellationToken))
+            .GetArrayLength().ShouldBe(0);
+    }
 }

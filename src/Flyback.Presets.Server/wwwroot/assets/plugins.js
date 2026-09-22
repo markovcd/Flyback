@@ -289,6 +289,7 @@
         if (what === "deleted") location.href = "plugins.html";
         else location.reload();
       }));
+      else text.appendChild(FlybackReports.form("plugin", plugin.id, plugin.name));
 
       var card = make("article", { class: "card" });
       card.appendChild(make("header", null, "What it says it does"));

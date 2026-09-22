@@ -345,4 +345,67 @@ public sealed class ServerTests : IDisposable
             third.StatusCode.ShouldBe(HttpStatusCode.TooManyRequests);
         }
     }
+
+    private async Task<HttpStatusCode> Report(string id, object report)
+    {
+        using var response = await client.PostAsJsonAsync(new Uri($"/api/v1/presets/{id}/reports", UriKind.Relative), report, TestContext.Current.CancellationToken);
+
+        return response.StatusCode;
+    }
+
+    [Fact]
+    public async Task Anyone_can_report_a_preset_and_only_the_admin_reads_the_reports()
+    {
+        var id = (await Submit(PatchFile(), name: "Drone")).GetProperty("id").GetString()!;
+
+        (await Report(id, new { reason = "offensive", details = "  Look at the picture.  " })).ShouldBe(HttpStatusCode.NoContent);
+        (await Report(id, new { reason = "broken" })).ShouldBe(HttpStatusCode.NoContent);
+
+        (await Status("/api/v1/reports")).ShouldBe(HttpStatusCode.Unauthorized);
+
+        using var admin = await Admin();
+        var reports = (await admin.GetFromJsonAsync<JsonElement>(new Uri("/api/v1/reports", UriKind.Relative), TestContext.Current.CancellationToken))
+            .EnumerateArray().ToList();
+
+        reports.Select(r => r.GetProperty("reason").GetString()).ShouldBe(["broken", "offensive"]);
+        reports.ShouldAllBe(r => r.GetProperty("kind").GetString() == "preset" && r.GetProperty("name").GetString() == "Drone");
+        reports[1].GetProperty("details").GetString().ShouldBe("Look at the picture.");
+        reports[0].GetProperty("details").ValueKind.ShouldBe(JsonValueKind.Null);
+
+        (await Delete(client, "/api/v1/reports/" + reports[0].GetProperty("id").GetString())).ShouldBe(HttpStatusCode.Unauthorized);
+        (await Delete(admin, "/api/v1/reports/" + reports[0].GetProperty("id").GetString())).ShouldBe(HttpStatusCode.NoContent);
+
+        (await admin.GetFromJsonAsync<JsonElement>(new Uri("/api/v1/reports", UriKind.Relative), TestContext.Current.CancellationToken))
+            .GetArrayLength().ShouldBe(1);
+    }
+
+    [Fact]
+    public async Task A_report_needs_a_known_reason_and_a_preset_that_is_there_to_see()
+    {
+        var id = (await Submit(PatchFile())).GetProperty("id").GetString()!;
+
+        (await Report(id, new { reason = "boring" })).ShouldBe(HttpStatusCode.BadRequest);
+        (await Report(id, new { details = "No reason given." })).ShouldBe(HttpStatusCode.BadRequest);
+        (await Report(id, new { reason = "other", details = new string('x', 1001) })).ShouldBe(HttpStatusCode.BadRequest);
+        (await Report("nothing-here", new { reason = "other" })).ShouldBe(HttpStatusCode.NotFound);
+
+        using var admin = await Admin();
+        (await Change(admin, id, new { published = false })).ShouldBe(HttpStatusCode.OK);
+
+        (await Report(id, new { reason = "other" })).ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task Deleting_a_preset_takes_its_reports_with_it()
+    {
+        var id = (await Submit(PatchFile())).GetProperty("id").GetString()!;
+
+        (await Report(id, new { reason = "stolen" })).ShouldBe(HttpStatusCode.NoContent);
+
+        using var admin = await Admin();
+        (await Delete(admin, "/api/v1/presets/" + id)).ShouldBe(HttpStatusCode.NoContent);
+
+        (await admin.GetFromJsonAsync<JsonElement>(new Uri("/api/v1/reports", UriKind.Relative), TestContext.Current.CancellationToken))
+            .GetArrayLength().ShouldBe(0);
+    }
 }

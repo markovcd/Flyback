@@ -51,6 +51,7 @@ Settings, all optional, as environment variables:
 | `Presets__Database` | `/data/presets.db` | the SQLite file |
 | `Presets__Media` | `/media` | the folder the render machine writes |
 | `Presets__PostsPerHour` | `20` | submissions one address may make in an hour |
+| `Presets__ReportsPerHour` | `10` | reports one address may make in an hour |
 | `Presets__Admin__User` | | the admin's user name |
 | `Presets__Admin__Password` | | the admin's password; admin mode is off while either is blank |
 
@@ -59,6 +60,8 @@ Settings, all optional, as environment variables:
 Set the admin's user and password in `compose.yaml` and sign in at `/admin.html`. Signed in, the shelf shows unpublished presets too, and every preset has Rename, Unpublish (or Publish) and Delete. An unpublished preset is gone from the shelf, its page and its download for everyone else, and is not rendered until it is published again.
 
 Plugins wait for the admin: a submitted `.fbkp` is unpublished until Publish is pressed on it at `/plugins.html`, and nobody else can see or download it before then. Plugins are never rendered, and have nothing in `media/`.
+
+Anyone can report a published preset or plugin, from its page or from the editor, with a reason and a line of detail. Reports are listed at `/admin.html` once signed in, each linking to what it is about, where it can be unpublished or deleted; Dismiss clears one, and deleting a preset or plugin clears its reports.
 
 Sign-in is a cookie, kept for two weeks. Its keys live in `data/keys/`, so restarting the container does not sign the admin out. Serve the site over HTTPS, since the password crosses the wire at sign-in. Ten wrong tries from one address lock that address out for a quarter of an hour.
 

@@ -201,7 +201,7 @@ public sealed class PluginHubTests : UiTest
         string Offered(string id) => All<Grid>(hub.View).Single(g => g.Tag is SitePlugin p && p.Id == id) is var row
             && All<Button>(row).FirstOrDefault(b => b.Name == "install") is { } button
                 ? (string)button.Content!
-                : All<TextBlock>(row).Last().Text!;
+                : All<TextBlock>(row).Single(t => t.Name == "siteState").Text!;
 
         Offered("n1").ShouldBe("Install");
         Offered("e2").ShouldBe("Update available");
@@ -391,5 +391,49 @@ public sealed class PluginHubTests : UiTest
     {
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) =>
             throw new HttpRequestException("No connection could be made.");
+    }
+
+    [AvaloniaFact]
+    public void A_site_plugin_is_reported_to_the_site_with_the_reason_picked()
+    {
+        using var site = new FakePluginSite(new Shared("r1", "Ripple"));
+        var (hub, window) = Open(site);
+
+        Press(All<Button>(hub.View).Single(b => b.Name == "report"));
+        Pump(() => All<RadioButton>(window).Any());
+
+        All<RadioButton>(window).Single(r => (string?)r.Tag == "harmful").IsChecked = true;
+        All<TextBox>(window).Single(t => t.Name == "details").Text = "  It deleted my presets.  ";
+        Press(All<Button>(window).Single(b => b.Name == "send"));
+        Pump(() => hub.Header is Panel header && All<TextBlock>(header).Single(t => t.Name == "pluginNotice").IsVisible);
+
+        var (path, body) = site.Reports.ShouldHaveSingleItem();
+
+        path.ShouldBe("/api/v1/plugins/r1/reports");
+        body.ShouldContain("\"reason\":\"harmful\"");
+        body.ShouldContain("\"details\":\"It deleted my presets.\"");
+        All<TextBlock>(hub.Header).Single(t => t.Name == "pluginNotice").Text.ShouldBe("Reported “Ripple” to the preset site's admin.");
+        All<RadioButton>(window).ShouldBeEmpty("the dialog is down");
+    }
+
+    [AvaloniaFact]
+    public void A_report_the_site_does_not_take_says_so_and_can_be_sent_again()
+    {
+        using var site = new FakePluginSite(new Shared("r1", "Ripple")) { RefuseReports = true };
+        var (hub, window) = Open(site);
+
+        Press(All<Button>(hub.View).Single(b => b.Name == "report"));
+        Pump(() => All<RadioButton>(window).Any());
+
+        var send = All<Button>(window).Single(b => b.Name == "send");
+
+        send.IsEnabled.ShouldBeFalse("nothing is picked yet");
+
+        All<RadioButton>(window).First().IsChecked = true;
+        Press(send);
+        Pump(() => All<TextBlock>(window).Single(t => t.Name == "reportStatus").IsVisible);
+
+        All<TextBlock>(window).Single(t => t.Name == "reportStatus").Text!.ShouldStartWith("The report was not sent.");
+        send.IsEnabled.ShouldBeTrue();
     }
 }

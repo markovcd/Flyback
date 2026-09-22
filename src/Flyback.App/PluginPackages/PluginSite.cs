@@ -96,6 +96,10 @@ internal sealed class PluginSite(HttpClient http, Uri root)
         return bytes;
     }
 
+    /// <summary>Reports the plugin to the site's admin. Throws where the site does not take it.</summary>
+    public Task ReportAsync(SitePlugin plugin, string reason, string? details, CancellationToken cancel) =>
+        SiteReports.SendAsync(http, Root, "plugin", plugin.Id, reason, details, cancel);
+
     /// <summary>The plugin's preview image, or null where it has none or it cannot be fetched.</summary>
     public async Task<byte[]?> PreviewAsync(SitePlugin plugin, CancellationToken cancel)
     {

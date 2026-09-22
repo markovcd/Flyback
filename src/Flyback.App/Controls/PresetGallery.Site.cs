@@ -181,9 +181,21 @@ internal static partial class PresetGallery
                 Content = words,
             };
 
-            ToolTip.SetTip(tile, $"Download “{preset.Name}” from the preset site and open it.");
+            ToolTip.SetTip(tile, $"Download “{preset.Name}” from the preset site and open it. Right-click to report it.");
 
             tile.Click += (_, _) => Dialog.Close<object?>(tile, preset);
+
+            var report = new MenuItem { Name = "report-preset", Header = "Report…" };
+
+            report.Click += async (_, _) =>
+            {
+                if (await ReportView.AskAsync(tile, preset.Name, (reason, details, cancel) => site.ReportAsync(preset, reason, details, cancel)) is not { } said) return;
+
+                status.Text = said;
+                status.IsVisible = true;
+            };
+
+            tile.ContextFlyout = new MenuFlyout { Items = { report } };
 
             _ = ShowStillAsync(preset, picture, cancel);
 

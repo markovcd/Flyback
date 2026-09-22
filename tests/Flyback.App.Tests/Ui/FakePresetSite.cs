@@ -18,6 +18,12 @@ internal sealed class FakePresetSite(params Posted[] presets) : HttpMessageHandl
 
     public List<Uri> Asked { get; } = [];
 
+    /// <summary>Each report posted, by the path it was posted to, with its JSON.</summary>
+    public List<(string Path, string Body)> Reports { get; } = [];
+
+    /// <summary>Answers every report with a 500, as a site that is down does.</summary>
+    public bool RefuseReports { get; set; }
+
     public int PageSize { get; set; } = 24;
 
     public PresetSite Site() => new(new HttpClient(this), Root);
@@ -28,6 +34,8 @@ internal sealed class FakePresetSite(params Posted[] presets) : HttpMessageHandl
 
         lock (Asked) Asked.Add(uri);
 
+        if (request.Method == HttpMethod.Post && uri.AbsolutePath.EndsWith("/reports", StringComparison.Ordinal)) return Task.FromResult(Report(request));
+
         if (uri.AbsolutePath == "/api/v1/presets") return Task.FromResult(Json(List(uri)));
 
         var posted = presets.FirstOrDefault(p => uri.AbsolutePath == $"/api/v1/presets/{p.Id}/file");
@@ -35,6 +43,15 @@ internal sealed class FakePresetSite(params Posted[] presets) : HttpMessageHandl
         return Task.FromResult(posted?.File is { } bytes
             ? new HttpResponseMessage(HttpStatusCode.OK) { Content = new ByteArrayContent(bytes) }
             : new HttpResponseMessage(HttpStatusCode.NotFound));
+    }
+
+    private HttpResponseMessage Report(HttpRequestMessage request)
+    {
+        if (RefuseReports) return new HttpResponseMessage(HttpStatusCode.InternalServerError);
+
+        lock (Reports) Reports.Add((request.RequestUri!.AbsolutePath, request.Content!.ReadAsStringAsync().GetAwaiter().GetResult()));
+
+        return new HttpResponseMessage(HttpStatusCode.NoContent);
     }
 
     private object List(Uri uri)

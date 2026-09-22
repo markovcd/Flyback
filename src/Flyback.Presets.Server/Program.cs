@@ -47,6 +47,13 @@ builder.Services.AddRateLimiter(limits =>
     limits.AddPolicy("sign-in", http => RateLimitPartition.GetFixedWindowLimiter(
         http.Connection.RemoteIpAddress?.ToString() ?? "unknown",
         _ => new FixedWindowRateLimiterOptions { PermitLimit = 10, Window = TimeSpan.FromMinutes(15) }));
+    limits.AddPolicy("report", http => RateLimitPartition.GetFixedWindowLimiter(
+        http.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = http.RequestServices.GetRequiredService<IConfiguration>().GetValue("Presets:ReportsPerHour", 10),
+            Window = TimeSpan.FromHours(1),
+        }));
 });
 
 // Kept beside the database, so a restarted container does not sign the admin out.
@@ -70,6 +77,7 @@ var media = new MediaFolder(Setting("Presets:Media", "/media"));
 Directory.CreateDirectory(media.Root);
 
 var plugins = new PluginStore(database);
+var reports = new ReportStore(database);
 
 app.UseForwardedHeaders();
 app.UseDefaultFiles();
@@ -102,7 +110,9 @@ object View(StoredPreset preset) => new
 
 var api = app.MapGroup("/api/v1");
 
-api.MapPlugins(plugins, reviewing: Signed);
+api.MapPlugins(plugins, reports, reviewing: Signed);
+api.MapReports(reports, reviewing: Signed);
+api.MapReport("/presets/{id}/reports", ReportStore.Preset, reports, id => store.Find(id) is not null);
 
 api.MapGet("/presets", (HttpContext http, string? q, string? tag, int? page, bool? pending) =>
 {
@@ -189,9 +199,14 @@ api.MapPatch("/presets/{id}", (HttpContext http, string id, PresetChange change)
 });
 
 api.MapDelete("/presets/{id}", (HttpContext http, string id) =>
-    !Signed(http) ? Results.Unauthorized()
-    : store.Delete(id) ? Results.NoContent()
-    : Results.NotFound());
+{
+    if (!Signed(http)) return Results.Unauthorized();
+    if (!store.Delete(id)) return Results.NotFound();
+
+    reports.Forget(ReportStore.Preset, id);
+
+    return Results.NoContent();
+});
 
 app.Run();
 

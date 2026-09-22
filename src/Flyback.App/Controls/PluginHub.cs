@@ -337,12 +337,16 @@ internal sealed class PluginHub : IDisposable
         {
             var order = PluginChanges.Compare(plugin.Plugin.Version, have.Version);
 
-            actions.Children.Add(Text.Quiet(order switch
+            var state = Text.Quiet(order switch
             {
                 > 0 => "Update available",
                 0 => "Installed",
                 _ => $"{have.Version} installed",
-            }));
+            });
+
+            state.Name = "siteState";
+            actions.Children.Add(state);
+            actions.Children.Add(ReportButton(plugin));
 
             return;
         }
@@ -353,6 +357,39 @@ internal sealed class PluginHub : IDisposable
         button.Click += (_, _) => _ = FetchAsync(plugin);
 
         actions.Children.Add(button);
+        actions.Children.Add(ReportButton(plugin));
+    }
+
+    /// <summary>Reports a site plugin to the site's admin, and says so above the lists.</summary>
+    private Button ReportButton(SitePlugin plugin)
+    {
+        var button = new Button
+        {
+            Name = "report",
+            Content = "Report…",
+            FontSize = Text.Small,
+            Padding = new Thickness(6, 2),
+            Margin = new Thickness(0, 4, 0, 0),
+            HorizontalAlignment = HorizontalAlignment.Right,
+            Background = Brushes.Transparent,
+            Foreground = Text.Muted,
+        };
+
+        ToolTip.SetTip(button, $"Tell the plugin site's admin what is wrong with {plugin.Plugin.Name}.");
+
+        button.Click += async (_, _) =>
+        {
+            if (site is null) return;
+
+            var said = await ReportView.AskAsync(button, plugin.Plugin.Name, (reason, details, cancel) => site.ReportAsync(plugin, reason, details, cancel));
+
+            if (said is null) return;
+
+            notice.Text = said;
+            notice.IsVisible = true;
+        };
+
+        return button;
     }
 
     /// <summary>The installed plugin <paramref name="plugin"/> would replace, or null for none.</summary>

@@ -196,4 +196,25 @@ public sealed class SitePresetTests : UiTest
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) =>
             throw new HttpRequestException("No connection could be made.");
     }
+
+    [AvaloniaFact]
+    public void A_shared_preset_is_reported_from_its_tile()
+    {
+        using var site = new FakePresetSite(new Posted("a", "Aurora", "Ann"));
+        var (window, parts) = Gallery(site);
+
+        var tile = All<Button>(parts.Tiles).Single(b => b.Name == "site-tile");
+        var report = ((MenuFlyout)tile.ContextFlyout!).Items.OfType<MenuItem>().Single(m => m.Name == "report-preset");
+
+        report.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
+        Pump(() => All<RadioButton>(window).Any());
+
+        All<RadioButton>(window).Single(r => (string?)r.Tag == "stolen").IsChecked = true;
+        Press(All<Button>(window).Single(b => b.Name == "send"));
+        Pump(() => site.Reports.Count == 1 && Status(parts)!.StartsWith("Reported", StringComparison.Ordinal));
+
+        site.Reports.ShouldHaveSingleItem().Path.ShouldBe("/api/v1/presets/a/reports");
+        Status(parts).ShouldBe("Reported “Aurora” to the preset site's admin.");
+        All<TextBlock>(parts.Tiles).Single(t => t.Name == "site-status").IsVisible.ShouldBeTrue();
+    }
 }

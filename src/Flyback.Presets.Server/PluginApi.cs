@@ -14,7 +14,7 @@ internal static class PluginApi
 {
     public const int PageSize = 24;
 
-    public static void MapPlugins(this RouteGroupBuilder api, PluginStore store, Func<HttpContext, bool> reviewing)
+    public static void MapPlugins(this RouteGroupBuilder api, PluginStore store, ReportStore reports, Func<HttpContext, bool> reviewing)
     {
         api.MapGet("/plugins", (HttpContext http, string? q, string? tag, string? platform, string? module, int? page) =>
         {
@@ -98,10 +98,17 @@ internal static class PluginApi
             return store.Find(id, unpublished: true) is { } plugin ? Results.Ok(View(plugin)) : Results.NotFound();
         });
 
+        api.MapReport("/plugins/{id}/reports", ReportStore.Plugin, reports, id => store.Find(id) is not null);
+
         api.MapDelete("/plugins/{id}", (HttpContext http, string id) =>
-            !reviewing(http) ? Results.Unauthorized()
-            : store.Delete(id) ? Results.NoContent()
-            : Results.NotFound());
+        {
+            if (!reviewing(http)) return Results.Unauthorized();
+            if (!store.Delete(id)) return Results.NotFound();
+
+            reports.Forget(ReportStore.Plugin, id);
+
+            return Results.NoContent();
+        });
     }
 
     private static object View(StoredPlugin plugin) => new

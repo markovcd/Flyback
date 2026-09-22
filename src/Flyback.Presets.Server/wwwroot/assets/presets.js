@@ -1,4 +1,4 @@
-// The preset site: a shelf of presets, one preset, the form that submits one, and admin sign-in.
+// The preset site: a shelf of presets, one preset, the form that submits one, and admin sign-in and reports.
 (function () {
   var api = "api/v1/";
 
@@ -253,6 +253,7 @@
         if (what === "deleted") location.href = "./";
         else location.reload();
       }));
+      else text.appendChild(FlybackReports.form("preset", preset.id, preset.name));
 
       if (preset.media.audio && preset.media.peaks) {
         var track = make("article", { class: "card track" });
@@ -340,10 +341,13 @@
     var form = document.getElementById("sign-in");
     var inside = document.getElementById("signed-in");
     var status = document.getElementById("status");
+    var reports = document.getElementById("reports");
 
     function show(signed) {
       form.hidden = signed;
       inside.hidden = !signed;
+      reports.hidden = !signed;
+      if (signed) FlybackReports.list(reports);
     }
 
     function tell(text) {

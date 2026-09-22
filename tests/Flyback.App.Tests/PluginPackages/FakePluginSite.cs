@@ -27,6 +27,12 @@ internal sealed class FakePluginSite(params Shared[] plugins) : HttpMessageHandl
 
     public List<Uri> Asked { get; } = [];
 
+    /// <summary>Each report posted, by the path it was posted to, with its JSON.</summary>
+    public List<(string Path, string Body)> Reports { get; } = [];
+
+    /// <summary>Answers every report with a 500, as a site that is down does.</summary>
+    public bool RefuseReports { get; set; }
+
     /// <summary>Served in place of every package, to show a download is checked against the listed hash.</summary>
     public byte[]? Tampered { get; set; }
 
@@ -42,6 +48,8 @@ internal sealed class FakePluginSite(params Shared[] plugins) : HttpMessageHandl
 
         var path = uri.AbsolutePath;
 
+        if (request.Method == HttpMethod.Post && path.EndsWith("/reports", StringComparison.Ordinal)) return Task.FromResult(Report(request));
+
         if (path == "/api/v1/plugins") return Task.FromResult(Json(List(uri)));
 
         var shared = plugins.FirstOrDefault(p => path == $"/api/v1/plugins/{p.Id}/file");
@@ -49,6 +57,15 @@ internal sealed class FakePluginSite(params Shared[] plugins) : HttpMessageHandl
         return Task.FromResult(shared?.Package is { } bytes
             ? new HttpResponseMessage(HttpStatusCode.OK) { Content = new ByteArrayContent(Tampered ?? bytes) }
             : new HttpResponseMessage(HttpStatusCode.NotFound));
+    }
+
+    private HttpResponseMessage Report(HttpRequestMessage request)
+    {
+        if (RefuseReports) return new HttpResponseMessage(HttpStatusCode.InternalServerError);
+
+        lock (Reports) Reports.Add((request.RequestUri!.AbsolutePath, request.Content!.ReadAsStringAsync().GetAwaiter().GetResult()));
+
+        return new HttpResponseMessage(HttpStatusCode.NoContent);
     }
 
     private object List(Uri uri)
