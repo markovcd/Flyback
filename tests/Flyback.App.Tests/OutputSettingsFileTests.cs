@@ -181,14 +181,14 @@ public class OutputSettingsFileTests : IDisposable
         {
             VideoFormat = ClipFormats.Vp9WebM.Id,
             SoundFormat = ClipFormats.Mp3.Id,
-            FfmpegPath = @"C:	oolsfmpeg.exe",
+            FfmpegPath = @"C:\tools\ffmpeg.exe",
         }.Save(File);
 
         var settings = OutputSettings.Load(File);
 
         settings.VideoFormat.ShouldBe(ClipFormats.Vp9WebM.Id);
         settings.SoundFormat.ShouldBe(ClipFormats.Mp3.Id);
-        settings.FfmpegPath.ShouldBe(@"C:	oolsfmpeg.exe");
+        settings.FfmpegPath.ShouldBe(@"C:\tools\ffmpeg.exe");
     }
 
     /// <summary>
