@@ -305,6 +305,8 @@ public sealed class AudioEngine(IAudioDevice device) : IDisposable
         if (!patch.Reaches().Sound) return null;
 
         var program = patch.CompileForAudio(samples: samples, played: true).Program;
+        Compiler?.Submit(program, IlLane.AuditionSound);
+
         var own = new AudioRenderer(renderer.SampleRate) { Aspect = renderer.Aspect };
 
         own.Prepare(program);

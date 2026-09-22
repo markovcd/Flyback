@@ -13,6 +13,7 @@
 - A turning knob holds the pointer still, so the edge of the screen never stops it.
 - A dragged side panel comes back at the width it was left at.
 - A patch or bundle from somebody else reaches only its own files.
+- The preset gallery's tiles and auditions run as compiled code.
 
 ## 0.4.0 — 2026-09-21
 

@@ -157,6 +157,45 @@ public class IlCompilerTests
         sound.Il.ShouldNotBeNull();
     }
 
+    /// <summary>A gallery tile's still is drawn from IL built before its first frame, not after.</summary>
+    [Fact]
+    public void A_program_compiled_on_the_spot_has_its_il_when_the_call_returns()
+    {
+        using var compiler = new IlCompiler();
+        var program = Plasma(0.5f);
+
+        compiler.Compile(program, IlLane.AuditionPicture);
+
+        program.Il.ShouldNotBeNull().Source.ShouldBeSameAs(program);
+    }
+
+    [Fact]
+    public void Nothing_is_compiled_on_the_spot_while_it_is_off()
+    {
+        using var compiler = new IlCompiler { Enabled = false };
+        var program = Plasma(0.5f);
+
+        compiler.Compile(program, IlLane.AuditionPicture);
+
+        program.Il.ShouldBeNull();
+    }
+
+    /// <summary>A preset tried in the gallery does not take the patch's own lanes from it.</summary>
+    [Fact]
+    public async Task An_audition_does_not_replace_the_patch_in_its_lanes()
+    {
+        using var compiler = new IlCompiler();
+        var patch = Presets.Drone(NodeCatalog.Current).CompileForAudio().Program;
+        var tried = Presets.Plasma(NodeCatalog.Current).CompileForAudio().Program;
+
+        compiler.Submit(patch, IlLane.Sound);
+        compiler.Submit(tried, IlLane.AuditionSound);
+        await compiler.Settled();
+
+        patch.Il.ShouldNotBeNull();
+        tried.Il.ShouldNotBeNull();
+    }
+
     /// <summary>Plasma with one of its knobs at <paramref name="speed"/>, which changes a constant and nothing else.</summary>
     private static CompiledPatch Plasma(float speed)
     {

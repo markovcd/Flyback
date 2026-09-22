@@ -247,7 +247,7 @@ public sealed partial class MainWindow : Window
     private Picker? presetsPicker;
 
     /// <summary>The frames the preset gallery's tiles are drawn with, and the ones it has already drawn.</summary>
-    private readonly PresetThumbnails thumbnails = new(Startup.Plugins.Modules);
+    private readonly PresetThumbnails thumbnails;
 
     /// <summary>
     /// Which row of <see cref="presetsPicker"/> is on the canvas, or -1 for a
@@ -523,7 +523,7 @@ public sealed partial class MainWindow : Window
         // Before the layout, because the toolbar lists what is saved.
         if (presetFolder is not null) savedPresets = new PresetLibrary(presetFolder);
 
-        thumbnails.Saved = savedPresets;
+        thumbnails = new PresetThumbnails(Startup.Plugins.Modules, compiler) { Saved = savedPresets };
         this.outputSettingsPath = outputSettingsPath;
         this.usage = usage ?? Usage.Off;
 

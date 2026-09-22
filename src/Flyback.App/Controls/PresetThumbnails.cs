@@ -37,10 +37,9 @@ internal sealed record Thumbnail(byte[]? Pixels, string Words, string? Descripti
 /// rather than from a file that would have to be re-shot every time a patch changed.
 /// </summary>
 /// <remarks>
-/// Drawn by the interpreter, the way <c>flyback render</c> draws a still, one preset
-/// at a time and only when the gallery is first opened: the window has a live
-/// preview and an audio callback to leave cores for, and a gallery nobody opens
-/// costs nothing. The frame is taken after a second and a half of frames rather than
+/// Compiled to IL before its frames are drawn, one preset at a time and only when
+/// the gallery is first opened: the window has a live preview and an audio
+/// callback to leave cores for, and a gallery nobody opens costs nothing. The frame is taken after a second and a half of frames rather than
 /// the first, because a patch that reads the frame before is legitimately black
 /// on its first.
 /// <para>
@@ -49,7 +48,7 @@ internal sealed record Thumbnail(byte[]? Pixels, string Words, string? Descripti
 /// </para>
 /// </remarks>
 [SuppressMessage("Design", "CA1001", Justification = "A SemaphoreSlim that never hands out its wait handle holds nothing to free.")]
-internal sealed class PresetThumbnails(ModuleCatalog modules)
+internal sealed class PresetThumbnails(ModuleCatalog modules, IlCompiler? compiler = null)
 {
     public const int Width = 320;
     public const int Height = 180;
@@ -110,6 +109,8 @@ internal sealed class PresetThumbnails(ModuleCatalog modules)
             var video = patch.CompileForVideo(samples: samples, pictures: pictures);
 
             if (video.HasErrors) return Thumbnail.Unavailable with { Description = described };
+
+            compiler?.Compile(video.Program, IlLane.AuditionPicture);
 
             var stride = Width * 4;
             var pixels = new byte[stride * Height];

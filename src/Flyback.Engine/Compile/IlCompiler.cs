@@ -1,10 +1,19 @@
 namespace Flyback.Core.Compile;
 
-/// <summary>Which of the two programs a patch compiles to a submission stands for.</summary>
+/// <summary>Which program playing somewhere a submission stands for.</summary>
 public enum IlLane
 {
+    /// <summary>The patch's picture in the preview.</summary>
     Picture,
+
+    /// <summary>The patch's sound.</summary>
     Sound,
+
+    /// <summary>A preset's picture playing on its gallery tile.</summary>
+    AuditionPicture,
+
+    /// <summary>A preset's sound played while its tile is pointed at.</summary>
+    AuditionSound,
 }
 
 /// <summary>
@@ -72,9 +81,9 @@ public sealed class IlCompiler : IDisposable
     }
 
     /// <summary>
-    /// Raised, on the compiler's thread, when a program could not be built or did
-    /// not agree with the interpreter. That program goes on being interpreted, and
-    /// a program of the same shape is not tried again.
+    /// Raised, on the compiler's thread, when the patch's own picture or sound could
+    /// not be built or did not agree with the interpreter. That program goes on being
+    /// interpreted, and a program of the same shape is not tried again.
     /// </summary>
     public event Action<string>? Failed;
 
@@ -132,6 +141,37 @@ public sealed class IlCompiler : IDisposable
         }
     }
 
+    /// <summary>
+    /// Builds IL for <paramref name="program"/> on the calling thread and attaches
+    /// it, for a caller about to run a program briefly that nothing else plays.
+    /// Leaves it interpreted where IL is off or its shape will not build.
+    /// </summary>
+    public void Compile(CompiledPatch program, IlLane lane)
+    {
+        ArgumentNullException.ThrowIfNull(program);
+
+        var key = new IlKey(new IlShape(program), PartsFor((int)lane));
+        IlMethods? methods;
+
+        lock (gate)
+        {
+            if (disposed || !enabled || refused.Contains(key)) return;
+            built.TryGetValue(key, out methods);
+        }
+
+        if (methods is null) _ = Build(program, key.Parts, out methods);
+
+        lock (gate)
+        {
+            if (methods is null) refused.Add(key);
+            else
+            {
+                Keep(key, methods);
+                if (enabled) program.Attach(IlProgram.Bind(methods, program));
+            }
+        }
+    }
+
     /// <summary>Completes once nothing is waiting to be built. For tests, and for anything that needs to know the swap has happened.</summary>
     public Task Settled()
     {
@@ -157,7 +197,7 @@ public sealed class IlCompiler : IDisposable
     /// </summary>
     private static IlParts PartsFor(int lane) => (IlLane)lane switch
     {
-        IlLane.Sound => IlParts.Whole,
+        IlLane.Sound or IlLane.AuditionSound => IlParts.Whole,
         _ => IlParts.Staged,
     };
 
@@ -234,7 +274,7 @@ public sealed class IlCompiler : IDisposable
                     }
                 }
 
-                if (failure is not null) Failed?.Invoke(failure);
+                if (failure is not null && (IlLane)lane is IlLane.Picture or IlLane.Sound) Failed?.Invoke(failure);
             }
         }
     }

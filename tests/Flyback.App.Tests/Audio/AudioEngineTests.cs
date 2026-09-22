@@ -487,6 +487,19 @@ public class AudioEngineTests
     }
 
     [Fact]
+    public async Task An_audition_is_compiled_like_the_patch()
+    {
+        using var device = new LoopbackDevice();
+        using var compiler = new IlCompiler();
+        using var engine = new AudioEngine(device) { Compiler = compiler };
+
+        var audition = engine.PrepareAudition(Tone(220f)).ShouldNotBeNull();
+        await compiler.Settled();
+
+        audition.Program.Il.ShouldNotBeNull();
+    }
+
+    [Fact]
     public void A_patch_that_makes_no_sound_is_not_auditioned()
     {
         using var device = new LoopbackDevice();

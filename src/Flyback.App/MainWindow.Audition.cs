@@ -87,7 +87,7 @@ public sealed partial class MainWindow
             clock = () => audition.Time;
         }
 
-        motion = PresetMotion.Play(opened, tile.Picture, clock);
+        motion = PresetMotion.Play(opened, tile.Picture, clock, compiler: compiler);
     }
 
     /// <summary>

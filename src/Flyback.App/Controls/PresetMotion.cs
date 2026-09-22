@@ -17,7 +17,7 @@ namespace Flyback.App.Controls;
 /// the preset is being tried.
 /// </summary>
 /// <remarks>
-/// Drawn by the interpreter at the thumbnail's size on a thread of its own, the
+/// Drawn at the thumbnail's size, interpreted until the compiler has its IL, on a thread of its own, the
 /// way the still was, and handed to the tile a frame at a time. Paced by the
 /// clock it is given — the auditioned sound's, where there is one, so the
 /// picture moves with what is heard — and by a stopwatch otherwise.
@@ -51,16 +51,18 @@ internal sealed class PresetMotion : IDisposable
     /// </summary>
     /// <param name="width">How wide the frames are drawn, a tile's width by default.</param>
     /// <param name="height">How tall they are drawn, which is what sets the aspect.</param>
+    /// <param name="compiler">What builds the picture's IL, or null to leave it interpreted.</param>
     public static PresetMotion Play(
         Opened opened,
         Image picture,
         Func<double>? clock,
         int width = PresetThumbnails.Width,
-        int height = PresetThumbnails.Height)
+        int height = PresetThumbnails.Height,
+        IlCompiler? compiler = null)
     {
         var motion = new PresetMotion(picture, width, height);
 
-        _ = Task.Run(() => motion.RunAsync(opened, clock ?? WallClock(), motion.stop.Token));
+        _ = Task.Run(() => motion.RunAsync(opened, clock ?? WallClock(), compiler, motion.stop.Token));
 
         return motion;
     }
@@ -71,7 +73,7 @@ internal sealed class PresetMotion : IDisposable
         return () => watch.Elapsed.TotalSeconds;
     }
 
-    private async Task RunAsync(Opened opened, Func<double> clock, CancellationToken token)
+    private async Task RunAsync(Opened opened, Func<double> clock, IlCompiler? compiler, CancellationToken token)
     {
         CompiledPatch program;
 
@@ -83,6 +85,7 @@ internal sealed class PresetMotion : IDisposable
             if (video.HasErrors) return;
 
             program = video.Program;
+            compiler?.Submit(program, IlLane.AuditionPicture);
         }
         catch (Exception)
         {
