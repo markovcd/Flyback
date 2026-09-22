@@ -96,6 +96,7 @@ public sealed class PluginInstallTests : UiTest
         Texts(dialog).ShouldContain(Packages.Folder);
         All<SelectableTextBlock>(dialog).Single(t => t.Name == "pluginAdds").Text.ShouldBe("modules, presets");
         All<SelectableTextBlock>(dialog).Single(t => t.Name == "pluginReaches").Text.ShouldBe("nothing outside Flyback that it names");
+        All<SelectableTextBlock>(dialog).Single(t => t.Name == "pluginContract").Text!.ShouldContain("Flyback.Plugins ");
         All<Border>(dialog).ShouldContain(b => b.Name == "pluginWarning");
         Named(dialog, "install").IsEnabled.ShouldBeTrue();
         Directory.Exists(Plugins).ShouldBeFalse("nothing is written before Install is pressed");

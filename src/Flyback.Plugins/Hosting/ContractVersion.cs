@@ -29,6 +29,10 @@ internal static class ContractVersion
         typeof(NodeDef).Assembly.GetName(),
     ];
 
+    /// <summary>Whether <paramref name="name"/> is one of the assemblies a plugin is compiled against.</summary>
+    public static bool IsContract(string? name) =>
+        Offered.Any(o => string.Equals(o.Name, name, StringComparison.OrdinalIgnoreCase));
+
     /// <summary>
     /// Why <paramref name="plugin"/> cannot be loaded, or null where it can.
     /// </summary>

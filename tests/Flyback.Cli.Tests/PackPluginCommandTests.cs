@@ -89,6 +89,8 @@ public sealed class PackPluginCommandTests : IDisposable
         Written.Builds.ShouldBe(["win", "linux", "any"]);
         Written.Files("any").ShouldNotContain(f => f.Path.Contains('/'), "the other runtimes' builds are not part of the portable one");
         output.ShouldContain("adds      modules");
+        output.ShouldContain("against   Flyback.");
+        output.ShouldContain("Flyback.Plugins ");
         output.ShouldContain($"sha256    {Written.Sha256}");
     }
 

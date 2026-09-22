@@ -837,8 +837,9 @@ flyback-cli pack-plugin bin/Release/net10.0 -o ripple.fbkp</code></pre>
     <p>Flyback refuses a package outright if a file in it could land outside the plugin's folder
     (<code>..</code>, a drive, a backslash, a name Windows keeps for a device), if two of its files differ
     only in case, or if it is larger than 128 MB, or 512 MB unpacked. The Install button is off, with the
-    reason under it, when there is no build for this system or the build was compiled against a contract this
-    Flyback does not offer. Nothing in a package is signed: the dialog shows its SHA-256 for comparing with
+    reason under it, when there is no build for this system, or when the plugin or any assembly it carries
+    was compiled against a contract this Flyback does not offer; the dialog shows which versions of
+    <code>Flyback.Plugins</code> and <code>Flyback.Core</code> it was built against. Nothing in a package is signed: the dialog shows its SHA-256 for comparing with
     what you publish.</p>
 
     <div class="note">

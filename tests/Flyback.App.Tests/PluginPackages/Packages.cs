@@ -1,4 +1,8 @@
+using System.Buffers.Binary;
 using System.IO.Compression;
+using System.Reflection.Metadata;
+using System.Reflection.Metadata.Ecma335;
+using System.Reflection.PortableExecutable;
 using System.Text;
 using Flyback.Plugins.Picture;
 
@@ -48,6 +52,42 @@ internal static class Packages
 
         return memory.ToArray();
     }
+
+    /// <summary>
+    /// A copy of <paramref name="image"/> that says it was compiled against
+    /// <paramref name="version"/> of <paramref name="reference"/>, which is how an old or
+    /// a future plugin looks without one having been built.
+    /// </summary>
+    public static byte[] BuiltAgainst(byte[] image, string reference, Version version)
+    {
+        var copy = (byte[])image.Clone();
+
+        using var reader = new PEReader(new MemoryStream(image));
+
+        var metadata = reader.GetMetadataReader();
+        var table = reader.PEHeaders.MetadataStartOffset + metadata.GetTableMetadataOffset(TableIndex.AssemblyRef);
+        var size = metadata.GetTableRowSize(TableIndex.AssemblyRef);
+
+        foreach (var handle in metadata.AssemblyReferences)
+        {
+            if (metadata.GetString(metadata.GetAssemblyReference(handle).Name) != reference) continue;
+
+            // A row starts with the version: major, minor, build and revision, two bytes each.
+            var row = table + (MetadataTokens.GetRowNumber(handle) - 1) * size;
+
+            BinaryPrimitives.WriteUInt16LittleEndian(copy.AsSpan(row), (ushort)version.Major);
+            BinaryPrimitives.WriteUInt16LittleEndian(copy.AsSpan(row + 2), (ushort)version.Minor);
+            BinaryPrimitives.WriteUInt16LittleEndian(copy.AsSpan(row + 4), (ushort)Math.Max(0, version.Build));
+            BinaryPrimitives.WriteUInt16LittleEndian(copy.AsSpan(row + 6), (ushort)Math.Max(0, version.Revision));
+
+            return copy;
+        }
+
+        throw new InvalidOperationException($"it does not reference {reference}");
+    }
+
+    /// <summary>The contract version this Flyback offers.</summary>
+    public static Version Contract { get; } = typeof(Flyback.Plugins.IFlybackPlugin).Assembly.GetName().Version!;
 
     /// <summary>A package with the picture plugin for Windows and one more entry named <paramref name="name"/>.</summary>
     public static byte[] With(string name, byte[]? bytes = null) =>

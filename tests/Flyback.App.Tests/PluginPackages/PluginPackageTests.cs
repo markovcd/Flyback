@@ -122,7 +122,42 @@ public sealed class PluginPackageTests : IDisposable
     [Fact]
     public void A_plugin_built_against_this_contract_may_be_installed()
     {
-        PluginPackage.Read(Packages.For("win", "osx", "linux")).Refusal(PluginPackage.ThisPlatform).ShouldBeNull();
+        var package = PluginPackage.Read(Packages.For("win", "osx", "linux"));
+
+        package.Refusal(PluginPackage.ThisPlatform).ShouldBeNull();
+        package.Description("win").BuiltAgainst.ShouldBe($"Flyback.Core {Packages.Contract.ToString(3)}, Flyback.Plugins {Packages.Contract.ToString(3)}");
+    }
+
+    [Fact]
+    public void A_plugin_built_against_an_earlier_major_of_the_contract_needs_rebuilding()
+    {
+        var old = Packages.BuiltAgainst(Packages.Assembly, "Flyback.Plugins", new Version(Packages.Contract.Major - 1, 4, 0));
+        var package = PluginPackage.Read(Packages.Zip([($"win/{Packages.AssemblyName}", old)]));
+
+        package.Refusal("win").ShouldBe(
+            $"Built against Flyback.Plugins {Packages.Contract.Major - 1}.4.0, and this Flyback offers {Packages.Contract.ToString(3)}. The plugin needs rebuilding.");
+    }
+
+    [Fact]
+    public void A_plugin_built_against_a_later_minor_of_Core_needs_a_newer_Flyback()
+    {
+        var future = Packages.BuiltAgainst(Packages.Assembly, "Flyback.Core", new Version(Packages.Contract.Major, Packages.Contract.Minor + 1, 0));
+        var package = PluginPackage.Read(Packages.Zip([($"win/{Packages.AssemblyName}", future)]));
+
+        package.Refusal("win").ShouldEndWith("It needs a newer Flyback.");
+        package.Refusal("win").ShouldStartWith("Built against Flyback.Core");
+    }
+
+    [Fact]
+    public void An_assembly_the_plugin_carries_is_held_to_the_contract_too()
+    {
+        var helper = Packages.BuiltAgainst(
+            File.ReadAllBytes(typeof(MainWindow).Assembly.Location), "Flyback.Core", new Version(Packages.Contract.Major - 1, 0, 0));
+
+        var package = PluginPackage.Read(Packages.With("win/Helper.dll", helper));
+
+        package.Refusal("win").ShouldStartWith("Flyback.dll, which the plugin carries, was built against Flyback.Core");
+        package.Refusal("win").ShouldEndWith("The plugin needs rebuilding.");
     }
 
     [Theory]

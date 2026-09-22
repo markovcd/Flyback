@@ -65,6 +65,8 @@ internal static class PluginInstallView
             Fact(facts, "Adds", plugin.Adds.Count > 0 ? string.Join(", ", plugin.Adds) : "nothing Flyback can find", "pluginAdds");
             Fact(facts, "Reaches", plugin.Reaches.Count > 0 ? string.Join(", ", plugin.Reaches) : "nothing outside Flyback that it names", "pluginReaches");
             Fact(facts, "Assembly", $"{plugin.Assembly}.dll");
+
+            if (plugin.BuiltAgainst.Length > 0) Fact(facts, "Built against", plugin.BuiltAgainst, "pluginContract");
             Fact(facts, "Built for", Builds(package, platform));
 
             if (package.BuildFor(platform) is { } build)

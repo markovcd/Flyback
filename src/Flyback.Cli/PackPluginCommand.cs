@@ -325,6 +325,7 @@ internal static class PackPluginCommand
         writer.WriteLine($"  adds      {(plugin.Adds.Count > 0 ? string.Join(", ", plugin.Adds) : "nothing Flyback can find")}");
         writer.WriteLine($"  reaches   {(plugin.Reaches.Count > 0 ? string.Join(", ", plugin.Reaches) : "nothing outside Flyback that it names")}");
         writer.WriteLine($"  assembly  {plugin.Assembly}.dll");
+        writer.WriteLine($"  against   {plugin.BuiltAgainst}");
         writer.WriteLine($"  builds    {string.Join(", ", package.Builds)}");
         writer.WriteLine($"  sha256    {package.Sha256}");
     }

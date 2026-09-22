@@ -218,7 +218,11 @@ internal sealed record AssemblyFacts(
 /// <param name="Assembly">The plugin assembly's name, which is also the folder it is installed into.</param>
 /// <param name="Adds">What it can register: modules, presets, a sound output and so on.</param>
 /// <param name="Reaches">What outside Flyback its code names, from any assembly in the build.</param>
-/// <param name="References">What the plugin assembly was compiled against, for the contract check.</param>
+/// <param name="Compiled">
+/// Every assembly in the build and what it was compiled against, the plugin's first.
+/// A helper the plugin carries is compiled against the contract as much as the plugin
+/// is, and is missed only when it is first called.
+/// </param>
 internal sealed partial record PluginDescription(
     string Assembly,
     string Name,
@@ -227,8 +231,35 @@ internal sealed partial record PluginDescription(
     string Description,
     IReadOnlyList<string> Adds,
     IReadOnlyList<string> Reaches,
-    IReadOnlyList<AssemblyName> References)
+    IReadOnlyList<(string Assembly, IReadOnlyList<AssemblyName> References)> Compiled)
 {
+    /// <summary>
+    /// The versions of <c>Flyback.Plugins</c> and <c>Flyback.Core</c> the plugin assembly
+    /// was compiled against, as the dialog shows them, or an empty string for neither.
+    /// </summary>
+    public string BuiltAgainst => string.Join(", ", Compiled[0].References
+        .Where(r => ContractVersion.IsContract(r.Name))
+        .OrderBy(r => r.Name, StringComparer.Ordinal)
+        .Select(r => $"{r.Name} {r.Version?.ToString(3)}"));
+
+    /// <summary>
+    /// Why no assembly in the build may be loaded by this Flyback, naming it where it is
+    /// not the plugin's own, or null where every one may.
+    /// </summary>
+    public string? ContractRefusal()
+    {
+        foreach (var (assembly, references) in Compiled)
+        {
+            if (ContractVersion.Reason(references) is not { } reason) continue;
+
+            return assembly == Assembly
+                ? reason
+                : $"{assembly}.dll, which the plugin carries, was {char.ToLowerInvariant(reason[0])}{reason[1..]}";
+        }
+
+        return null;
+    }
+
     /// <summary>
     /// Describes a build from its files, each by its path inside the build and a way to
     /// open it.
@@ -238,6 +269,7 @@ internal sealed partial record PluginDescription(
     public static PluginDescription? Of(IEnumerable<(string Path, Func<Stream> Open)> files)
     {
         var entries = new List<AssemblyFacts>();
+        var compiled = new List<AssemblyFacts>();
         var adds = new SortedSet<string>(StringComparer.Ordinal);
         var reaches = new SortedSet<string>(StringComparer.Ordinal);
 
@@ -259,6 +291,7 @@ internal sealed partial record PluginDescription(
 
             adds.UnionWith(facts.Adds);
             reaches.UnionWith(facts.Reaches);
+            compiled.Add(facts);
 
             if (facts.IsPlugin && !path.Contains('/')) entries.Add(facts);
         }
@@ -281,7 +314,7 @@ internal sealed partial record PluginDescription(
             Paragraph(Named(entry, "Description"), 1000),
             [.. adds],
             [.. reaches],
-            entry.References);
+            [.. compiled.OrderBy(facts => facts == entry ? 0 : 1).Select(facts => (facts.Name, facts.References))]);
     }
 
     /// <summary>Describes a plugin folder already on disk.</summary>

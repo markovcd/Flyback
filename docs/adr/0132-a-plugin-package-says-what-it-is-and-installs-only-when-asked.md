@@ -44,11 +44,15 @@ and code it loads while running (reflection, `Emit`, a load context). The dialog
 says that native code and loaded code can reach more than they name, and that the
 name and author are whatever the author wrote.
 
-**The dialog installs nothing on its own.** It shows the above, the systems the
+**The dialog installs nothing on its own.** It shows the above, the versions of
+`Flyback.Plugins` and `Flyback.Core` the plugin was compiled against, the systems the
 package has builds for and the package's SHA-256, under a warning that a plugin can
 do anything the user can. Install is off, with the reason written under it, where
-there is no build for this system or its plugin was compiled against a contract this
-Flyback does not offer. Escape, the cross and Cancel install nothing.
+there is no build for this system, or where any assembly in the build — the plugin
+or a helper it carries — was compiled against a contract this Flyback does not
+offer by [0102](0102-a-plugin-is-compiled-against-a-contract-with-a-version-of-its-own.md)'s
+rule. A helper is named, since the host only asks the plugin itself and would miss
+it until it was first called. Escape, the cross and Cancel install nothing.
 
 **Only this system's build is installed**, into `plugins/<plugin assembly>`, with
 `package.sha256` beside it. That marker is what says a package put the folder there.
